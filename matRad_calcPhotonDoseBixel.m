@@ -1,0 +1,68 @@
+function dose = matRad_calcPhotonDoseBixel(SAD,Interp_kernel1,...
+                  Interp_kernel2,Interp_kernel3,radDepths,geoDists,...
+                  latDistsX,latDistsZ)
+                                        
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% call dose = matRad_calcPhotonDoseBixel
+% to calculate the dose for an individual bixel
+% photon dose calculation modeled according to Bortfeld et. al:
+% Decomposition of pencil beam kernels for fast dose calculation in
+% three-dimensional treatment planning (Med. Phys. 1993)
+% http://www.ncbi.nlm.nih.gov/pubmed/8497215
+% dose: dose vector 1xnumel(ct)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+%
+% m.bangert@dkfz.de
+%
+% This file is part of matRad.
+%
+% matrad is free software: you can redistribute it and/or modify it under 
+% the terms of the GNU General Public License as published by the Free 
+% Software Foundation, either version 3 of the License, or (at your option)
+% any later version.
+%
+% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
+% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+% details.
+%
+% You should have received a copy of the GNU General Public License in the
+% file license.txt along with matRad. If not, see
+% <http://www.gnu.org/licenses/>.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% get base data
+mu    = 0.005066; % 1/mm
+beta1 = 0.3252;
+beta2 = 0.0160;
+beta3 = 0.0051;
+
+% Define function_Di
+func_Di = @(beta,x) beta/(beta-mu) * (exp(-mu*x) - exp(-beta*x)); 
+
+% scale lateral distances to iso center plane
+latDistsX = (latDistsX) ./ geoDists .* SAD;
+latDistsZ = (latDistsZ) ./ geoDists .* SAD;
+       
+% Calulate lateral distances using grid interpolation.
+lat1 = Interp_kernel1(latDistsX,latDistsZ);
+lat2 = Interp_kernel2(latDistsX,latDistsZ);
+lat3 = Interp_kernel3(latDistsX,latDistsZ);
+
+% now add everything together (eq 19 w/o inv sq corr -> see below)
+dose = lat1 .* func_Di(beta1,radDepths) + ...
+       lat2 .* func_Di(beta2,radDepths) + ...
+       lat3 .* func_Di(beta3,radDepths);
+
+% inverse square correction
+dose = dose .* (SAD./geoDists(:)).^2;
+
+% check if we have valid dose values
+if sum(isnan(dose)) ||  sum(dose<0)>0
+   error(['Error in photon dose calc\n\n'])
+end
