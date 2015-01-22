@@ -29,15 +29,3 @@ file license.txt along with matRad. If not, see
 <http://www.gnu.org/licenses/>.
 
 ---
-
-We are currently working on the first beta release which is anticiapted
-in spring 2015.
-
----
-
-# Preliminary programming rules
-* use a prefix 'matRad_' before all matrad code files!
-* use capital letters to indicate a new word within variable names, e.g. numOfBeams not (!) num_of_beams
-* use extension '_vox' for every varibale that specifies a location in voxel coordinates!
-* all visualization code should be in one location within an %.m file
-* if we have multiple visulaizations use a variable visMode = 0,1,2,...
