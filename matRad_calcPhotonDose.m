@@ -68,7 +68,7 @@ zCoordsV = (zCoordsV(:)-0.5)*pln.resolution(3)-pln.isoCenter(3);
 coords_inside = [xCoordsV yCoordsV zCoordsV];
 
 % set lateral cutoff value
-lateralCutoff = 80; % [mm]
+lateralCutoff = 20; % [mm]
 
 %% kernel convolution
 % load polynomial fits for kernels ppKernel1, ppKernel2, ppKernel3
