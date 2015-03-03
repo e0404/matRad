@@ -1,4 +1,26 @@
 function matRad_visCtDose(dose,cst,pln,ct,slice,plane)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad visualization of two-dimensional dose distributions on ct including
+% segmentation
+% 
+% call
+%   matRad_visCtDose(dose,cst,pln,ct,slice,plane)
+%
+% input
+%   dose:   dose cube
+%   cst:    matRad cst struct
+%   pln:    matRad plan meta information struct
+%   ct:     ct cube
+%   slice:  number of slice for initial visualization (optional)
+%   plane:  integer to select coronal (1), sagital (2), or axial (3) plane (optional)
+%
+% output
+%   -   
+%
+% References
+%   -
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

@@ -1,4 +1,26 @@
-function dose = matRad_calcProtonDoseBixel(radDepths,radialDist_sq,protonBaseData)
+function dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,baseData)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad visualization of two-dimensional dose distributions on ct including
+% segmentation
+% 
+% call
+%   dose = matRad_calcPhotonDoseBixel(SAD,Interp_kernel1,...
+%                  Interp_kernel2,Interp_kernel3,radDepths,geoDists,...
+%                  latDistsX,latDistsZ)
+%
+% input
+%   radDepths:      radiological depths
+%   radialDist_sq:  squared radial distance in BEV from central ray
+%   baseData:       base data required for particle dose calculation
+%
+% output
+%   dose:   particle dose at specified locations as linear vector
+%
+% References
+%   -
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015, Mark Bangert, on behalf of the matRad development team
@@ -24,10 +46,10 @@ function dose = matRad_calcProtonDoseBixel(radDepths,radialDist_sq,protonBaseDat
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % interpolate sigma
-sigma = interp1(protonBaseData.depths,protonBaseData.sigma,radDepths);
+sigma = interp1(baseData.depths,baseData.sigma,radDepths);
 
 % interpolate sigma
-Z = interp1(protonBaseData.depths,protonBaseData.Z,radDepths);
+Z = interp1(baseData.depths,baseData.Z,radDepths);
 
 % calculate dose
 dose = exp( -radialDist_sq ./ (2*sigma.^2)) .* Z ./(2*pi*sigma.^2);

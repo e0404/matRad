@@ -1,8 +1,22 @@
-function matRad_progress(CurrentIndex, TotalNumberOfEvaluations)
-% This tool creates a progress bar for your loops. Call it every time your
-% loop is in the next iteration and it prints your progress in % of the
-% total number of steps to be carried out.
-% Index has to start with '1', otherwise it doesn't work.
+function matRad_progress(currentIndex, totalNumberOfEvaluations)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad progress bar
+% 
+% call
+%   matRad_progress(currentIndex, totalNumberOfEvaluations)
+%
+% input
+%   currentIndex:               current iteration index
+%   totalNumberOfEvaluations:   maximum iteration index
+%
+% output
+%   graphical display of progess. make sure there is no other output
+%   written during the loop to prevent confusion
+%
+% References
+%   -
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -29,20 +43,20 @@ function matRad_progress(CurrentIndex, TotalNumberOfEvaluations)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  
 % If it's not the first step, erase the stuff printed before
-if (CurrentIndex == 1 || nargin > 2)
+if (currentIndex == 1 || nargin > 2)
     fprintf('Progress: ');
 end;
  
-if (CurrentIndex > 1 && nargin < 3)
-  Length = numel(sprintf('%3.2f %%',(CurrentIndex-1)/TotalNumberOfEvaluations*100));
+if (currentIndex > 1 && nargin < 3)
+  Length = numel(sprintf('%3.2f %%',(currentIndex-1)/totalNumberOfEvaluations*100));
   fprintf(repmat('\b',1,Length));
 end
  
 % Print the progress tool
-fprintf('%3.2f %%',CurrentIndex/TotalNumberOfEvaluations*100);
+fprintf('%3.2f %%',currentIndex/totalNumberOfEvaluations*100);
  
 % After the last iteration print a newline command
-if (CurrentIndex == TotalNumberOfEvaluations)
+if (currentIndex == totalNumberOfEvaluations)
     fprintf('\n');
 end
  

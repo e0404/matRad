@@ -1,8 +1,24 @@
-function result_Sequencing = matRad_xiaLeafSequencing(w,stf,pln,numOfLevels,visBool)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 'Multileaf collimator leaf sequencing algorithm for intensity modulated 
-% beams with multiple static segments' by Xia and Verhey
-% -> http://online.medphys.org/resource/1/mphya6/v25/i8/p1424_s1
+function resultSequencing = matRad_xiaLeafSequencing(w,stf,pln,numOfLevels,visBool)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% multileaf collimator leaf sequencing algorithm for intensity modulated 
+% beams with multiple static segments
+% 
+% call
+%   resultSequencing = matRad_xiaLeafSequencing(w,stf,pln,numOfLevels,visBool)
+%
+% input
+%   w:                  bixel weight vector
+%   stf:                matRad steering information struct
+%   pln:                matRad plan meta information struct
+%   numOfLevels:        number of stratification levels
+%   visBool:            toggle on/off visualization (optional)
+%
+% output
+%   resultSequencing:   matRad sequencing result struct   
+%
+% References
+%   http://online.medphys.org/resource/1/mphya6/v25/i8/p1424_s1
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -36,7 +52,7 @@ end
 
 mode = 'rl'; % sliding window (sw) or reducing level (rl)
 
-result_Sequencing.w = NaN*w;
+resultSequencing.w = NaN*w;
 
 numOfBeams = numel(stf);
 
@@ -227,13 +243,13 @@ for i = 1:numOfBeams
         
     end
     
-    result_Sequencing.beam(i).numOfShapes  = k;
-    result_Sequencing.beam(i).shapes       = shapes(:,:,1:k);
-    result_Sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
-    result_Sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
-    result_Sequencing.beam(i).fluence      = D_0;
+    resultSequencing.beam(i).numOfShapes  = k;
+    resultSequencing.beam(i).shapes       = shapes(:,:,1:k);
+    resultSequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
+    resultSequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
+    resultSequencing.beam(i).fluence      = D_0;
     
-    result_Sequencing.w(1+offset:numOfRaysPerBeam+offset) = D_0(indInFluenceMx)/numOfLevels*calFac;
+    resultSequencing.w(1+offset:numOfRaysPerBeam+offset) = D_0(indInFluenceMx)/numOfLevels*calFac;
 
     offset = offset + numOfRaysPerBeam;
 

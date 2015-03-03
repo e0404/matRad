@@ -1,7 +1,23 @@
 function matRad_calcDVH(d,cst,lineStyleIndicator)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad_calcDVH(d,cst,lineStyleIndicator)
-% to calculate a dvh. use lineStyleIndicator to overlay multiple dvhs
+% matRad dvh calculation
+% 
+% call
+%   matRad_calcDVH(d,cst,lineStyleIndicator)
+%
+% input
+%   d:                  dose cube
+%   cst:                matRad cst struct
+%   lineStyleIndicator: integer (1,2,3,4) to indicate the current linestyle
+%                       (hint: use different lineStyles to overlay
+%                       different dvhs)
+%
+% output
+%   graphical display of DVH & dose statistics in console   
+%
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

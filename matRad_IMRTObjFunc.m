@@ -1,11 +1,23 @@
 function [f, g, d] = matRad_IMRTObjFunc(w,dij,cst)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% call [f, g, d] = mPlan2D_IMRTObjFunc(w,dij,optInfoArrays)
-% to calculate the objective function value f, the gradient g, and the dose
-% distribution d
-% f: objective function value
-% g: gradient vector
-% d: dose vector
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad objective function for inverse planning
+% 
+% call
+%   [f, g, d] = matRad_IMRTObjFunc(w,dij,cst)
+%
+% input
+%   w:   bixel weight vector
+%   dij: dose influence matrix
+%   cst: matRad cst struct
+%
+% output
+%   f: objective function value
+%   g: gradient
+%   d: dose distribution
+%
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

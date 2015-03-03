@@ -1,5 +1,31 @@
-function [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter,...
-                                                      resolution,sourcePoint,targetPoint,cubes,visBool)
+function [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter,resolution,sourcePoint,targetPoint,cubes,visBool)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% siddon ray tracing through three dimensional cube to calculate the
+% radiological depth
+% 
+% call
+%   [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter,resolution,sourcePoint,targetPoint,cubes,visBool)
+%
+% input
+%   isocenter:      isocenter within cube [voxels]
+%   resolution:     resolution of the cubes [mm/voxel]
+%   sourcePoint:    source point of ray tracing
+%   targetPoint:    target point of ray tracing
+%   cubes:          cell array of cubes for ray tracing (it is possible to pass
+%                   multiple cubes for ray tracing to save computation time)
+%   visBool:        toggle on/off visualization (optional)
+%
+% output
+%   alphas
+%   l
+%   rho
+%   d12
+%   vis
+%
+% References
+%   http://www.ncbi.nlm.nih.gov/pubmed/4000088
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

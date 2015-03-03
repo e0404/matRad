@@ -1,7 +1,23 @@
 function isoCenter = matRad_getIsoCenter(cst,ct,pln,visBool)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% returns the iso center of all target volumes on voi
-% isoCenter: iso center [mm]
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% computes the isocenter as the joint center of gravity of all volumes of
+% interest that are labeled as target within th cst struct
+% 
+% call
+%   isoCenter = matRad_getIsoCenter(cst,ct,pln,visBool)
+%
+% input
+%   cst:        matRad cst struct
+%   ct:         ct cube
+%   pln:        matRad plan meta information struct
+%   visBool:    toggle on/off visualization (optional)
+% output
+%   isoCenter:  isocenter in [mm]   
+%
+% References
+%   -
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

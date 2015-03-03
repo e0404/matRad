@@ -1,10 +1,21 @@
 function [wOpt,dOpt] = matRad_inversePlanning(dij,cst)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% call [w,dOpt] = mPlan2D_inversePlanning(dij,voi,cst)
-% to optimize the intensity modulation according to the constraints
-% specified in cst
-% wOpt: optimized bixel weight vector
-% dOpt: optimized fluence
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad inverse planning wrapper function
+% 
+% call
+%   [wOpt,dOpt] = matRad_inversePlanning(dij,cst)
+%
+% input
+%   dij:    matRad dij struct
+%   cst:    matRad cst struct
+%
+% output
+%   wOpt:   optimized bixel weight vector
+%   dOpt:   optimized dose distribution (as cube)
+%
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

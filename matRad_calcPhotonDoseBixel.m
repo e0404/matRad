@@ -1,15 +1,28 @@
 function dose = matRad_calcPhotonDoseBixel(SAD,Interp_kernel1,...
                   Interp_kernel2,Interp_kernel3,radDepths,geoDists,...
                   latDistsX,latDistsZ)
-                                        
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% call dose = matRad_calcPhotonDoseBixel
-% to calculate the dose for an individual bixel
-% photon dose calculation modeled according to Bortfeld et. al:
-% Decomposition of pencil beam kernels for fast dose calculation in
-% three-dimensional treatment planning (Med. Phys. 1993)
-% http://www.ncbi.nlm.nih.gov/pubmed/8497215
-% dose: dose vector 1xnumel(ct)
+% matRad photon dose calculation for an individual bixel
+% 
+% call
+%   dose = matRad_calcPhotonDoseBixel(SAD,Interp_kernel1,...
+%                  Interp_kernel2,Interp_kernel3,radDepths,geoDists,...
+%                  latDistsX,latDistsZ)
+%
+% input
+%   SAD:                source to axsi distance
+%   Interp_kernel1/2/3: kernels for dose calculation
+%   radDepths:          radiological depths
+%   geoDists:           geometrical distance from virtual photon source
+%   latDistsX:          lateral distance in X direction in BEV from central ray
+%   latDistsZ:          lateral distance in Z direction in BEV from central ray
+%
+% output
+%   dose:   photon dose at specified locations as linear vector
+%
+% References
+%   http://www.ncbi.nlm.nih.gov/pubmed/8497215
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -64,5 +77,5 @@ dose = dose .* (SAD./geoDists(:)).^2;
 
 % check if we have valid dose values
 if sum(isnan(dose)) ||  sum(dose<0)>0
-   error(['Error in photon dose calc\n\n'])
+   error('Error in photon dose calc\n\n');
 end

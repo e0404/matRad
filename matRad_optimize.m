@@ -1,12 +1,23 @@
 function [w,dose] = matRad_optimize(objFunc,wInit)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% call [w,dose] = mPlan2D_optimize(objFunc,wInit)
-% to minimize objFunc with respect to wInit
-% w: optimized parameter vector w
-% dose: optimized dose
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright (c) by Mark Bangert 2014
-% m.bangert@dkzf.de
+% projected L-BFGS optimizer including a positivity constraints on the
+% optimization variable
+% 
+% call
+%   [w,dose] = matRad_optimize(objFunc,wInit)
+%
+% input
+%   objFunc:    objective function to be optimized
+%   wInit:      start solution for optimizer
+%
+% output
+%   w:      optimized bixel vector
+%   dose:   optimized dose distribution
+%
+% References
+%   Kelley: Iterative methods for optimization
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
