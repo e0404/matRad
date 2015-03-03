@@ -51,11 +51,15 @@ dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 
 % Allocate space for dij.dose sparse matrix
 dij.dose = spalloc(numel(ct),dij.totalNumOfBixels,1);
+dij.mAlpha = spalloc(numel(ct),dij.totalNumOfBixels,1);
+dij.mBeta = 0.04;
 
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 doseTmpContainer = cell(numOfBixelsContainer,1);
-
+if pln.bioOptimization == true 
+    alphaTmpContainer = cell(numOfBixelsContainer,1);
+end
 % Only take voxels inside patient.
 V = unique([cell2mat(cst(:,8))]);
 
@@ -66,6 +70,52 @@ xCoordsV = (xCoordsV(:)-0.5)*pln.resolution(1)-pln.isoCenter(1);
 yCoordsV = (yCoordsV(:)-0.5)*pln.resolution(2)-pln.isoCenter(2);
 zCoordsV = (zCoordsV(:)-0.5)*pln.resolution(3)-pln.isoCenter(3);
 coords_inside=[xCoordsV yCoordsV zCoordsV];
+
+
+% generates tissue class matrix for biological optimization
+% and initializes alpha/beta interpolants
+if pln.bioOptimization == true 
+    mT = zeros(size(V,1),2);
+    mT(:,1) = V;
+    for i=1:size(cst,1)
+        % find indices of structures related to V
+        [~, row] = ismember(cst{i,8},V,'rows');        
+        mT(row,2)=cst{i,9}.TissueClass;
+    end
+    
+    
+    load('GSI_Chardoma_Carbon_BioData.mat');
+    % get number measured points - determined through experiments 
+    sVectorLength = 0;
+    for i=1:numel(stBioData)
+        for j=1:size(stBioData{1,i},2)       
+            sVectorLength =sVectorLength + size(stBioData{1,i}(j).Depths,1);
+        end    
+    end
+
+    mDesign = zeros(sVectorLength,4);
+    idx = 1;
+
+    for i=1:numel(stBioData)
+        for j=1:size(stBioData{1,i},2)  
+            tmpLength = size(stBioData{1,i}(j).Depths,1);
+            mDesign(idx:idx+tmpLength-1,1)=stBioData{1,i}(j).Depths;
+            %mDesign(idx:idx+tmpLength-1,1)=R0 - stBioData{1,i}(j).Depths; 
+            mDesign(idx:idx+tmpLength-1,2)=stBioData{1,i}(j).Energy;
+            mDesign(idx:idx+tmpLength-1,3)=i;
+            mDesign(idx:idx+tmpLength-1,4)=stBioData{1,i}(j).Alpha;
+            idx = idx+tmpLength;
+        end    
+    end
+    
+    BioInterp = scatteredInterpolant(mDesign(:,1:3),mDesign(:,4));
+    
+end
+
+
+
+
+
 
 % load protonBaseData
 if strcmp(pln.radiationMode,'protons')
@@ -90,6 +140,13 @@ sourcePoint_bev = [0 -pln.SAD 0];
 counter = 0;
 
 fprintf('matRad: Particle dose calculation... ');
+
+if strcmp(pln.radiationMode,'protons')
+    mLQParams = @(FreeParameter) matRad_ProtonLQParameter(FreeParameter,0);
+elseif strcmp(pln.radiationMode,'carbon')
+    mLQParams = @(vRadDepths,vRadialDist_sq,sEnergy,mT,cst,Interp) matRad_CarbonLQParameter(vRadDepths,vRadialDist_sq,sEnergy,mT,cst,Interp,0);
+end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams; % loop over all beams
     
@@ -124,21 +181,26 @@ for i = 1:dij.numOfBeams; % loop over all beams
             % set lateral cutoff for calculation of geometric distances
             lateralCutoff = 3*baseData(find(max(stf(i).ray(j).energy) == [baseData.energy])).sigma(end);
 
-            % Ray tracing for beam i and bixel j
+            % Ray tracing for beam i and ray j
             [ix,radDepths,~,latDistsX,latDistsZ] = matRad_calcRadGeoDists(ct,V,...
                     pln.isoCenter,rot_coords,pln.resolution,stf(i).sourcePoint,...
                     stf(i).ray(j).targetPoint,sourcePoint_bev,...
                     stf(i).ray(j).targetPoint_bev,X_geo,Y_geo,Z_geo,lateralCutoff,visBool);
-
+            
             radialDist_sq = latDistsX.^2 + latDistsZ.^2;    
-
+            
+            % just use tissue classes of voxels found by ray tracer
+            if pln.bioOptimization == true 
+                    mT_j= mT(ix,:);
+            end
+            
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
 
                 counter = counter + 1;
                 % Display progress
                 matRad_progress(counter,dij.totalNumOfBixels);
 
-                % remember beam and bixel number
+                % remember beam and  bixel number
                 dij.beamNum(counter)  = i;
                 dij.rayNum(counter)   = j;
                 dij.bixelNum(counter) = k;
@@ -150,19 +212,40 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 currIx = radDepths <= baseData(energyIx).depths(end) & ...
                          radialDist_sq <= 9*baseData(energyIx).sigma(end)^2;
 
-                % calculate photon dose for beam i and bixel j
+                % calculate particle dose for bixel k on ray j of beam i
                 bixelDose = matRad_calcParticleDoseBixel(...
                     radDepths(currIx),...
                     radialDist_sq(currIx),...
                     baseData(energyIx));
-
+                
+                if pln.bioOptimization == true 
+                    % calculate alpha and beta values for bixel k on ray j of
+                    % beam i
+                    [bixelAlpha bixelBeta] = mLQParams(...
+                        radDepths(currIx),...
+                        radialDist_sq(currIx),...
+                        baseData(energyIx),...
+                        mT_j(currIx,:),...
+                        cst(:,8),...
+                        BioInterp);
+                    
+                    
+                end
+                
+                
                 % Save dose for every bixel in cell array
                 doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelDose,numel(ct),1);
-
+                if pln.bioOptimization == true
+                    alphaTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelAlpha,numel(ct),1);
+                end
                 % save computation time and memory by sequentially filling the 
                 % sparse matrix dose.dij from the cell array
                 if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
                     dij.dose(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                    
+                    if pln.bioOptimization == true
+                        dij.alpha(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                    end
                 end
 
             end
