@@ -1,6 +1,6 @@
 function matRad_calcDVH(d,cst,lineStyleIndicator)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% call mPlan2D_calcDVH(d,voi,cst,lineStyleIndicator)
+% matRad_calcDVH(d,cst,lineStyleIndicator)
 % to calculate a dvh. use lineStyleIndicator to overlay multiple dvhs
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

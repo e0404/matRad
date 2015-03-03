@@ -1,5 +1,29 @@
 function matRad_visCtDose(dose,cst,pln,ct,slice,plane)
 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+%
+% m.bangert@dkfz.de
+%
+% This file is part of matRad.
+%
+% matrad is free software: you can redistribute it and/or modify it under 
+% the terms of the GNU General Public License as published by the Free 
+% Software Foundation, either version 3 of the License, or (at your option)
+% any later version.
+%
+% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
+% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+% details.
+%
+% You should have received a copy of the GNU General Public License in the
+% file license.txt along with matRad. If not, see
+% <http://www.gnu.org/licenses/>.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 if nargin > 0
     
     data.dose = dose;
@@ -100,7 +124,7 @@ if ~isempty(data.dose) && data.doseColorwashCheckboxValue
     
     dose_rgb = data.dose./max(data.dose(:));
     
-    % Save RGB indices for dose in zslice´s voxels.
+    % Save RGB indices for dose in zsliceÂ´s voxels.
     if data.plane == 1  % Axial plane
         dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(data.slice,:,:))),jet);
     elseif data.plane == 2 % Sagital plane
