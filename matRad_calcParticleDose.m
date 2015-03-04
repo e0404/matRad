@@ -95,11 +95,21 @@ if pln.bioOptimization == true
 
     mDesign = zeros(sVectorLength,4);
     idx = 1;
-
+    
+    Z = 6;
+    A = 12;
+    kp = 0.0022;
+    p = 1.77;
+    E0 = 276;
+    Rprot=kp*E0^p;
+    kn = A^(1-p)/(Z^2)*kp;
+    Rion = kn*E0^p
+    
     for i=1:numel(stBioData)
         for j=1:size(stBioData{1,i},2)  
             tmpLength = size(stBioData{1,i}(j).Depths,1);
             mDesign(idx:idx+tmpLength-1,1)=stBioData{1,i}(j).Depths;
+            %R0 = Spotposition in MTPS
             %mDesign(idx:idx+tmpLength-1,1)=R0 - stBioData{1,i}(j).Depths; 
             mDesign(idx:idx+tmpLength-1,2)=stBioData{1,i}(j).Energy;
             mDesign(idx:idx+tmpLength-1,3)=i;
@@ -144,7 +154,7 @@ fprintf('matRad: Particle dose calculation... ');
 if strcmp(pln.radiationMode,'protons')
     mLQParams = @(FreeParameter) matRad_ProtonLQParameter(FreeParameter,0);
 elseif strcmp(pln.radiationMode,'carbon')
-    mLQParams = @(vRadDepths,vRadialDist_sq,sEnergy,mT,cst,Interp) matRad_CarbonLQParameter(vRadDepths,vRadialDist_sq,sEnergy,mT,cst,Interp,0);
+    mLQParams = @(vRadDepths,vRadialDist_sq,sEnergy,mT,Interp) matRad_CarbonLQParameter(vRadDepths,vRadialDist_sq,sEnergy,mT,Interp,0);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -226,7 +236,6 @@ for i = 1:dij.numOfBeams; % loop over all beams
                         radialDist_sq(currIx),...
                         baseData(energyIx),...
                         mT_j(currIx,:),...
-                        cst(:,8),...
                         BioInterp);
                     
                     
@@ -244,7 +253,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                     dij.dose(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
                     
                     if pln.bioOptimization == true
-                        dij.alpha(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                        dij.mAlpha(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
                     end
                 end
 

@@ -42,8 +42,8 @@ pln.SAD             = 1000; %[mm]
 pln.resolution      = ctResolution; %[mm/voxel]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,pln,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0:90:359]; % [°]
-pln.couchAngles     = [0 0 0 0]; % [°]
+pln.gantryAngles    = [0:180:359]; % [°]
+pln.couchAngles     = [0 0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct);
 pln.voxelDimensions = size(ct);
@@ -66,7 +66,7 @@ doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1));
 matRad_visCtDose(doseVis,cst,pln,ct);
 
 %% inverse planning for imrt
-[wOpt,dOpt] = matRad_inversePlanning(dij,cst);
+[wOpt,dOpt] = matRad_inversePlanning(dij,cst,pln);
 matRad_visCtDose(dOpt,cst,pln,ct);
 
 %% sequencing

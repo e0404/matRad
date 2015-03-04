@@ -1,4 +1,4 @@
-function [wOpt,dOpt] = matRad_inversePlanning(dij,cst)
+function [wOpt,dOpt] = matRad_inversePlanning(dij,cst,pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % call [w,dOpt] = mPlan2D_inversePlanning(dij,voi,cst)
 % to optimize the intensity modulation according to the constraints
@@ -38,7 +38,12 @@ function [wOpt,dOpt] = matRad_inversePlanning(dij,cst)
 wInit = ones(dij.totalNumOfBixels,1);
 
 % define objective function
-objFunc =  @(x) matRad_IMRTObjFunc(x,dij.dose,cst);
+
+if pln.bioOptimization == false 
+    objFunc =  @(x) matRad_IMRTObjFunc(x,dij.dose,cst);
+else
+    objFunc =  @(x) matRad_IMRTBioObjFunc(x,dij.dose,cst);
+end
 
 % minimize objetive function
 [wOpt,dOpt] = matRad_optimize(objFunc,wInit);
