@@ -42,7 +42,7 @@ wInit = ones(dij.totalNumOfBixels,1);
 if pln.bioOptimization == false 
     objFunc =  @(x) matRad_IMRTObjFunc(x,dij.dose,cst);
 else
-    objFunc =  @(x) matRad_IMRTBioObjFunc(x,dij.dose,cst);
+    objFunc =  @(x) matRad_IMRTBioObjFunc(x,dij,cst);
 end
 
 % minimize objetive function

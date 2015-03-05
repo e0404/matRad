@@ -96,21 +96,18 @@ if pln.bioOptimization == true
     mDesign = zeros(sVectorLength,4);
     idx = 1;
     
-    Z = 6;
-    A = 12;
-    kp = 0.0022;
-    p = 1.77;
-    E0 = 276;
-    Rprot=kp*E0^p;
-    kn = A^(1-p)/(Z^2)*kp;
-    Rion = kn*E0^p
-    
+    Z = 6; % charge 
+    A = 12; % mass number
+    kp = 0.0022; % referennce parameter for proton-range
+    p = 1.77;   % referennce parameter for proton-range
+  
     for i=1:numel(stBioData)
         for j=1:size(stBioData{1,i},2)  
             tmpLength = size(stBioData{1,i}(j).Depths,1);
-            mDesign(idx:idx+tmpLength-1,1)=stBioData{1,i}(j).Depths;
-            %R0 = Spotposition in MTPS
-            %mDesign(idx:idx+tmpLength-1,1)=R0 - stBioData{1,i}(j).Depths; 
+            %mDesign(idx:idx+tmpLength-1,1)=stBioData{1,i}(j).Depths;
+            E0 = stBioData{1,i}(j).Energy;
+            R0 = ((A/(Z^2))*kp*175^p);
+            mDesign(idx:idx+tmpLength-1,1)=R0 - stBioData{1,i}(j).Depths; 
             mDesign(idx:idx+tmpLength-1,2)=stBioData{1,i}(j).Energy;
             mDesign(idx:idx+tmpLength-1,3)=i;
             mDesign(idx:idx+tmpLength-1,4)=stBioData{1,i}(j).Alpha;
@@ -118,13 +115,27 @@ if pln.bioOptimization == true
         end    
     end
     
-    BioInterp = scatteredInterpolant(mDesign(:,1:3),mDesign(:,4));
+
     
+    
+    % different approach
+    x = mDesign(:,1);
+    y = mDesign(:,2);
+    z = mDesign(:,3);
+    v = mDesign(:,4);
+    deltax = 50;
+    deltay = 50;
+    xlin = linspace(min(x)-deltax,max(x)+deltax,100);
+    ylin = linspace(min(y)-deltay,max(y)+deltay,50);
+    zlin = linspace(min(z),max(z),4);
+
+    [X, Y, Z] = meshgrid(xlin,ylin,zlin);
+    f = scatteredInterpolant(x,y,z,v);
+    BioInterp.V = f(X,Y,Z);
+    BioInterp.X = X;
+    BioInterp.Y = Y;
+    BioInterp.Z = Z;
 end
-
-
-
-
 
 
 % load protonBaseData
@@ -154,8 +165,9 @@ fprintf('matRad: Particle dose calculation... ');
 if strcmp(pln.radiationMode,'protons')
     mLQParams = @(FreeParameter) matRad_ProtonLQParameter(FreeParameter,0);
 elseif strcmp(pln.radiationMode,'carbon')
-    mLQParams = @(vRadDepths,vRadialDist_sq,sEnergy,mT,Interp) matRad_CarbonLQParameter(vRadDepths,vRadialDist_sq,sEnergy,mT,Interp,0);
+    mLQParams = @(vRadDepths,vRadialDist_sq,sEnergy,mT,Interp,mDesign) matRad_CarbonLQParameter(vRadDepths,vRadialDist_sq,sEnergy,mT,Interp,mDesign,0);
 end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams; % loop over all beams
@@ -230,18 +242,19 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 
                 if pln.bioOptimization == true 
                     % calculate alpha and beta values for bixel k on ray j of
-                    % beam i
-                    [bixelAlpha bixelBeta] = mLQParams(...
+                    % beam i - call duration 0.0020
+                    
+                    [bixelAlpha, ~] = mLQParams(...
                         radDepths(currIx),...
                         radialDist_sq(currIx),...
                         baseData(energyIx),...
                         mT_j(currIx,:),...
-                        BioInterp);
-                    
+                        BioInterp,...
+                        mDesign);
+                    CalcAlphaTime = CalcAlphaTime+toc;
                     
                 end
-                
-                
+
                 % Save dose for every bixel in cell array
                 doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelDose,numel(ct),1);
                 if pln.bioOptimization == true
