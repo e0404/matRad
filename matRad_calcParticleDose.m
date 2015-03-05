@@ -52,7 +52,7 @@ dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 % Allocate space for dij.dose sparse matrix
 dij.dose = spalloc(numel(ct),dij.totalNumOfBixels,1);
 dij.mAlpha = spalloc(numel(ct),dij.totalNumOfBixels,1);
-dij.mBeta = 0.04;
+dij.mBeta = 0.05;
 
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
@@ -242,7 +242,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 
                 if pln.bioOptimization == true 
                     % calculate alpha and beta values for bixel k on ray j of
-                    % beam i - call duration 0.0020
+                    % beam i - call duration 0.0020s
                     
                     [bixelAlpha, ~] = mLQParams(...
                         radDepths(currIx),...
@@ -251,7 +251,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                         mT_j(currIx,:),...
                         BioInterp,...
                         mDesign);
-                    CalcAlphaTime = CalcAlphaTime+toc;
+                
                     
                 end
 
