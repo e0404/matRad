@@ -13,13 +13,15 @@ function [f, g, d] = matRad_IMRTBioObjFunc(w,dij,cst)
 % m.bangert@dkzf.de
 
 % Calculate biological effect
-%d = dij.dose*w;
-d = (dij.mAlpha.*dij.dose)*w + (sqrt(dij.mBeta).*dij.dose*w).^2;
-d(isnan(d))=0;
+d = dij.dose*w;
+a = (dij.mAlpha.*dij.dose)*w;
+b = (sqrt(dij.mBeta).*dij.dose*w);
+%d = (dij.mAlpha.*dij.dose)*w + (sqrt(dij.mBeta).*dij.dose*w).^2;
+%d(isnan(d))=0;
 
 
 % Numbers of voxels
-numVoxels = size(dij,1);
+numVoxels = size(dij.dose,1);
 
 % Initializes f
 f = 0;
@@ -39,18 +41,23 @@ for  i = 1:size(cst,1)
         % Maximum penalty
         rho_max = cst{i,6};
         
-        % get dose vector in current VOI
+        % get dose, alpha and beta vector in current VOI
         d_i = d(cst{i,8});
+        a_i = a(cst{i,8});
+        a_i(isnan(a_i))=0;
+        b_i = b(cst{i,8});
+        b_i(isnan(b_i))=0;
         
-        % Maximun deviation: Dose minus maximun dose.
-        deviation_max = d_i - cst{i,4};
+        % Maximun deviation: biologic effect minus maximun prescribed biological effect.
+        deviation_max = (a_i.*d_i)+sqrt(b_i).*d_i.^2 - cst{i,4};
         
         % Minimun deviation: Dose minus minimun dose.
-        deviation_min = d_i - cst{i,5};
+        deviation_min = (a_i.*d_i)+sqrt(b_i).*d_i.^2 - cst{i,5};
         
         % Apply positive operator H.
         deviation_max(deviation_max<0) = 0;
         deviation_min(deviation_min>0) = 0;
+        
         
         % Calculate the objective function
         f = f + (rho_max/size(cst{i,8},1))*(deviation_max'*deviation_max) + ...
@@ -59,8 +66,13 @@ for  i = 1:size(cst,1)
         % Calculate delta
         delta(cst{i,8}) = delta(cst{i,8}) + (rho_max/size(cst{i,8},1))*deviation_max +...
             (rho_min/size(cst{i,8},1))*deviation_min;
+        
+
     end
 end
 
 % Calculate gradient.
-g = 2 * (delta' * dij)';
+g = 2 * (delta' * dij.dose)';
+
+
+end
