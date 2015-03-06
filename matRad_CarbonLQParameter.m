@@ -29,10 +29,12 @@ vBeta = 0.04;
 %vBeta = ones(size(vRadDepths,1),1)*0.4;
 
 
-% vIsNan = isnan(vAlpha);
-% if(sum(vIsNan(:))>0)
-%     error('some alpha values couldnt be interpolated')
-% end
+%  vIsNan = isnan(vAlpha);
+%  if(sum(vIsNan(:))>0)
+%      Disp('code goes here');
+%      error('some alpha values couldnt be interpolated');
+%  end
+vAlpha(isnan(vAlpha))=0;
 
 %% plot alpha
 %  [vRadDepthsSort, SortIndex] = sort(vRadDepths);

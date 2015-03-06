@@ -45,6 +45,22 @@ else
     objFunc =  @(x) matRad_IMRTBioObjFunc(x,dij,cst);
 end
 
+
+[f, g, ~] = matRad_IMRTBioObjFunc(wInit,dij,cst);
+% test gradient
+epsilon = 1e-5;
+for i = 1:numel(wInit)
+    
+    wDelta = wInit;
+    wDelta(i) = wDelta(i) + epsilon;
+    [fDelta, ~, ~] = matRad_IMRTBioObjFunc(wInit,dij,cst);
+    
+    numGrad = (fDelta-f)/epsilon;
+    
+    fprintf(['Component # ' num2str(i) ' - percent diff in numerical and analytical gradient = ' ...
+        num2str((numGrad/g(i)-1)*100) '\n']);   
+end
+
 % minimize objetive function
 [wOpt,dOpt] = matRad_optimize(objFunc,wInit);
 
