@@ -16,7 +16,7 @@ function [f, g, d] = matRad_IMRTBioObjFunc(w,dij,cst)
 d = dij.dose*w;
 a = ((dij.mAlpha.*dij.dose)*w);
 a(isnan(a))=0;
-b = sqrt(dij.mBeta).* (d.^2);
+b = (dij.mBeta).* (dij.dose*w.^2);
 b(isnan(b))=0;
 
 
@@ -42,7 +42,6 @@ for  i = 1:size(cst,1)
         rho_max = cst{i,6};
         
         % get dose, alpha and beta vector in current VOI
-        d_i = d(cst{i,8});
         a_i = a(cst{i,8});
         b_i = b(cst{i,8});
         
@@ -71,9 +70,32 @@ end
 
 % Calculate gradient.
 %g = 2 * (delta' * dij.dose)';
+a_w = dij.mAlpha*w;
+b_w = 2.*(dij.mBeta.* dij.dose*w);
+b_w(isnan(b_w))=0;
 
-g = 2 * ((delta.*(a + 2*b.*d))'*dij.dose)';
+vTmp = a_w+b_w;
+g = 2 * ((delta.*vTmp)'*dij.dose)';
 
-    
+%g = 2 * ((delta.*(a + 2*b.*d))'*dij.dose)';
 
-end
+%% frist gradient from weight w1  
+vFac=(dij.mAlpha(:,1)+0.1.*dij.dose*w);
+g1 = (delta.*vFac)' *dij.dose(:,1);
+
+%% calculate all gradients
+vec = 0.1.*dij.dose*w;
+n = length(0.1.*dij.dose*w);
+mDia= spdiags(vec(:),0,n,n);
+mColumnMulti = mDia*dij.mAlpha;
+mInnerDeviation = mColumnMulti.*dij.dose;
+
+g2=  2*(delta'*mInnerDeviation)';
+
+
+M = sparse(vec * (ones(size(dij.mAlpha,2),1))');
+
+
+
+
+

@@ -45,15 +45,15 @@ else
     objFunc =  @(x) matRad_IMRTBioObjFunc(x,dij,cst);
 end
 
-
+%[f_ref, g_ref, ~] = matRad_IMRTObjFunc(wInit,dij.dose,cst);
 [f, g, ~] = matRad_IMRTBioObjFunc(wInit,dij,cst);
 % test gradient
-epsilon = 1e-5;
+epsilon = 0.005;
 for i = 1:numel(wInit)
     
     wDelta = wInit;
     wDelta(i) = wDelta(i) + epsilon;
-    [fDelta, ~, ~] = matRad_IMRTBioObjFunc(wInit,dij,cst);
+    [fDelta, ~, ~] = matRad_IMRTBioObjFunc(wDelta,dij,cst);
     
     numGrad = (fDelta-f)/epsilon;
     
