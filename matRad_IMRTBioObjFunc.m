@@ -70,12 +70,11 @@ end
 
 % Calculate gradient.
 %g = 2 * (delta' * dij.dose)';
-a_w = dij.mAlpha*w;
-b_w = 2.*(dij.mBeta.* dij.dose*w);
-b_w(isnan(b_w))=0;
-
-vTmp = a_w+b_w;
-g = 2 * ((delta.*vTmp)'*dij.dose)';
+% a_w = dij.mAlpha*w;
+% b_w = 2.*(dij.mBeta.* dij.dose*w);
+% b_w(isnan(b_w))=0;
+% vTmp = a_w+b_w;
+% g = 2 * ((delta.*vTmp)'*dij.dose)';
 
 %g = 2 * ((delta.*(a + 2*b.*d))'*dij.dose)';
 
@@ -84,16 +83,32 @@ vFac=(dij.mAlpha(:,1)+0.1.*dij.dose*w);
 g1 = (delta.*vFac)' *dij.dose(:,1);
 
 %% calculate all gradients
-vec = 0.1.*dij.dose*w;
+vec = exp(0.1.*dij.dose*w);
 n = length(0.1.*dij.dose*w);
 mDia= spdiags(vec(:),0,n,n);
-mColumnMulti = mDia*dij.mAlpha;
-mInnerDeviation = mColumnMulti.*dij.dose;
 
-g2=  2*(delta'*mInnerDeviation)';
+mAlphaExp = spfun(@exp,dij.mAlpha);
+mColumnMultiExp=mDia*mAlphaExp;
+mColumnMulti2 = spfun(@log,mColumnMultiExp);
+mInnerDeviation2= mColumnMulti2.*dij.dose;
 
 
-M = sparse(vec * (ones(size(dij.mAlpha,2),1))');
+g=  2*(delta'*mInnerDeviation2)';
+
+% 
+% 
+% A=[4 3; 2 6];
+% B = [2 3];
+% 
+% Ae = exp(A);
+% Be = exp(B);
+% Bee = diag(Be);
+% 
+% C=Bee * Ae;
+% res=log(C);
+
+
+
 
 
 
