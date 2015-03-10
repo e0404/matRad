@@ -1,4 +1,4 @@
-function [f, g, d] = matRad_IMRTBioObjFunc(w,dij,cst)
+function [f, g, bd] = matRad_IMRTBioObjFunc(w,dij,cst)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -12,13 +12,16 @@ function [f, g, d] = matRad_IMRTBioObjFunc(w,dij,cst)
 % Copyright (c) by Mark Bangert 2014
 % m.bangert@dkzf.de
 
+%profile on
 % Calculate biological effect
 d = dij.dose*w;
-a = ((dij.mAlpha.*dij.dose)*w);
-a(isnan(a))=0;
+a = (dij.mAlphaDose*w);
+%a(isnan(a))=0;
 b = (dij.mBeta).* (dij.dose*w.^2);
-b(isnan(b))=0;
+%b(isnan(b))=0;
 
+%biological dose
+bd = a+b;
 
 % Numbers of voxels
 numVoxels = size(dij.dose,1);
@@ -68,43 +71,68 @@ for  i = 1:size(cst,1)
     end
 end
 
-% Calculate gradient.
-%g = 2 * (delta' * dij.dose)';
-% a_w = dij.mAlpha*w;
-% b_w = 2.*(dij.mBeta.* dij.dose*w);
-% b_w(isnan(b_w))=0;
-% vTmp = a_w+b_w;
-% g = 2 * ((delta.*vTmp)'*dij.dose)';
 
-%g = 2 * ((delta.*(a + 2*b.*d))'*dij.dose)';
 
 %% frist gradient from weight w1  
-vFac=(dij.mAlpha(:,1)+0.1.*dij.dose*w);
-g1 = (delta.*vFac)' *dij.dose(:,1);
+% tic
+% vFac=(dij.mAlpha(:,1)+0.1.*dij.dose*w);
+% g1 = 2*(delta.*vFac)' *dij.dose(:,1);
+% toc
 
 %% calculate all gradients
-vec = exp(0.1.*dij.dose*w);
-n = length(0.1.*dij.dose*w);
-mDia= spdiags(vec(:),0,n,n);
+% vec = exp(2*dij.mBeta.*dij.dose*w);
+% n = length(vec);
+% %takes 0.370s
+% mDia= spdiags(vec(:),0,n,n);
+% % both spfun take 1.7s because two sparse matrixes are created
+% mColumnExp=mDia*spfun(@exp,dij.mAlpha);
+% mColumn = spfun(@log,mColumnExp);
+% mInnerDev= mColumn.*dij.dose;
+% g=  2*(delta'*mInnerDev)';
 
-mAlphaExp = spfun(@exp,dij.mAlpha);
-mColumnMultiExp=mDia*mAlphaExp;
-mColumnMulti2 = spfun(@log,mColumnMultiExp);
-mInnerDeviation2= mColumnMulti2.*dij.dose;
+
+% if nargout > 1
+%     tic
+%     vVec = (2*dij.mBeta.*d);
+%     n = length(vVec);
+%     mA = spdiags(vVec(:),0,n,n)*dij.doseSkeleton;
+%     mA = mA+dij.mAlpha;
+%     mA= mA.*dij.dose;
+%     g = 2*(delta'*mA)';
+%     toc
+% end
+
+if nargout > 1
+
+    lambda = (2*dij.mBeta.*d);
+    n = length(lambda);
+    w= (delta' * dij.mAlphaDose)';
+    u= (delta'*spdiags(lambda(:),0,n,n)*dij.doseSkeleton)';  
+    v= (delta'* dij.dose)';
+    
+    V =u.*v/sum(delta(:));
+    
+    g2 = 2*(V+w);
+
+    %diff = abs(g(1)-g2(1));
+end
 
 
-g=  2*(delta'*mInnerDeviation2)';
 
-% 
+%% repmat and bsxfun cannot be used 
+%% for loop over all rows takes 0.25s per row -> *7000 ~= 30min
+
+
+%% example to illustrate the idea of adding columnwise vector B
 % 
 % A=[4 3; 2 6];
 % B = [2 3];
 % 
-% Ae = exp(A);
-% Be = exp(B);
-% Bee = diag(Be);
+% expA = exp(A);
+% expB = exp(B);
+% diaB = diag(expB);
 % 
-% C=Bee * Ae;
+% C=diaB * expA;
 % res=log(C);
 
 

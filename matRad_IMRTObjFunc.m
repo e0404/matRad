@@ -57,5 +57,7 @@ for  i = 1:size(cst,1)
     end
 end
 
-% Calculate gradient.
-g = 2 * (delta' * dij)';
+if nargout > 1
+    % Calculate gradient.
+    g = 2 * (delta' * dij)';
+end

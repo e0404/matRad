@@ -25,21 +25,24 @@ r_k            = ones(mem-1,1);
 a_k            = ones(1,mem-1);
 
 % 1st calculation of objective function and gradient
+tic
 [objFuncValue(1),dx(:,1),dose] = objFunc(wInit);
+toc
 objFuncValue(2) = 2*objFuncValue(1);
 
 
 
 % variables for termination criteria
 iter      = 0;
-numOfIter = 20;
+numOfIter = 10;
 prec      = 1e-4;
-
+vTimes = zeros(numOfIter,1);
+profile on
 % convergence if change in objective function smaller than prec or maximum
 % number of iteration reached. no convergence if lbfgs has just been rest
 continueOpt = 1;
 while continueOpt == 1
-    
+    tic
     % implementation of L-BFGS according to
     % http://en.wikipedia.org/wiki/L-BFGS
     
@@ -135,9 +138,11 @@ while continueOpt == 1
     fprintf(1,'Iteration %d: alpha = %f, Obj func = %f\n',iter,alpha,objFuncValue(1));
     
     continueOpt = (iter < numOfIter && abs((objFuncValue(2)-objFuncValue(1))/objFuncValue(1))>prec) || historyCounter < 2;
-    
+    vTimes(iter) = toc;
 end
-
+profile off
+profile viewer
+figure,plot(vTimes),xlabel('Iterations'),ylabel('Time in seconds');
 fprintf(['\n' num2str(iter) ' iteration(s) performed to converge\n'])
 
 w = x(:,1);

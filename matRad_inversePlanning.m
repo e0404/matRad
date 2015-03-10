@@ -37,6 +37,9 @@ function [wOpt,dOpt] = matRad_inversePlanning(dij,cst,pln)
 % intial fluence profile = uniform bixel intensities
 wInit = ones(dij.totalNumOfBixels,1);
 
+
+dij.doseSkeleton = spones(dij.dose);
+dij.mAlphaDose = dij.mAlpha.*dij.dose;
 % define objective function
 
 if pln.bioOptimization == false 
@@ -45,21 +48,6 @@ else
     objFunc =  @(x) matRad_IMRTBioObjFunc(x,dij,cst);
 end
 
-%[f_ref, g_ref, ~] = matRad_IMRTObjFunc(wInit,dij.dose,cst);
-% [f, g, ~] = matRad_IMRTBioObjFunc(wInit,dij,cst);
-% % test gradient
-% epsilon = 0.005;
-% for i = 1:numel(wInit)
-%     
-%     wDelta = wInit;
-%     wDelta(i) = wDelta(i) + epsilon;
-%     [fDelta, ~, ~] = matRad_IMRTBioObjFunc(wDelta,dij,cst);
-%     
-%     numGrad = (fDelta-f)/epsilon;
-%     
-%     fprintf(['Component # ' num2str(i) ' - percent diff in numerical and analytical gradient = ' ...
-%         num2str((numGrad/g(i)-1)*100) '\n']);   
-% end
 
 % minimize objetive function
 [wOpt,dOpt] = matRad_optimize(objFunc,wInit);
