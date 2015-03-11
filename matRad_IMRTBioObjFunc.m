@@ -71,7 +71,7 @@ for  i = 1:size(cst,1)
 end
 
 
-%% this works but has two expensive operations 
+%% this works but still has two expensive operations 
 if nargout > 1
     lambda = (2*dij.mBeta.*d);
     n = length(lambda);

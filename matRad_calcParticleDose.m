@@ -144,7 +144,7 @@ if pln.bioOptimization == true
     BioInterp.Y = Y;
     BioInterp.Z = Z;
     
-    fprintf('matRad: done... ');
+    fprintf('...done \n');
 end
 
 
@@ -175,7 +175,7 @@ fprintf('matRad: Particle dose calculation... ');
 if strcmp(pln.radiationMode,'protons')
     mLQParams = @(FreeParameter) matRad_ProtonLQParameter(FreeParameter,0);
 elseif strcmp(pln.radiationMode,'carbon')
-    mLQParams = @(vRadDepths,sEnergy,mT,Interp) matRad_CarbonLQParameter(vRadDepths,sEnergy,mT,Interp,1);
+    mLQParams = @(vRadDepths,sEnergy,mT,Interp) matRad_CarbonLQParameter(vRadDepths,sEnergy,mT,Interp,0);
 end
 
 
