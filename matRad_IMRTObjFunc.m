@@ -1,14 +1,48 @@
 function [f, g, d] = matRad_IMRTObjFunc(w,dij,cst)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% call [f, g, d] = mPlan2D_IMRTObjFunc(w,dij,optInfoArrays)
-% to calculate the objective function value f, the gradient g, and the dose
-% distribution d
-% f: objective function value
-% g: gradient vector
-% d: dose vector
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright (c) by Mark Bangert 2014
-% m.bangert@dkzf.de
+% matRad objective function for inverse planning
+% 
+% call
+%   [f, g, d] = matRad_IMRTObjFunc(w,dij,cst)
+%
+% input
+%   w:   bixel weight vector
+%   dij: dose influence matrix
+%   cst: matRad cst struct
+%
+% output
+%   f: objective function value
+%   g: gradient
+%   d: dose distribution
+%
+% References
+%   -
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+%
+% m.bangert@dkfz.de
+%
+% This file is part of matRad.
+%
+% matrad is free software: you can redistribute it and/or modify it under 
+% the terms of the GNU General Public License as published by the Free 
+% Software Foundation, either version 3 of the License, or (at your option)
+% any later version.
+%
+% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
+% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+% details.
+%
+% You should have received a copy of the GNU General Public License in the
+% file license.txt along with matRad. If not, see
+% <http://www.gnu.org/licenses/>.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Calculate dose
 d = dij*w;
@@ -57,7 +91,5 @@ for  i = 1:size(cst,1)
     end
 end
 
-if nargout > 1
-    % Calculate gradient.
-    g = 2 * (delta' * dij)';
-end
+% Calculate gradient.
+g = 2 * (delta' * dij)';

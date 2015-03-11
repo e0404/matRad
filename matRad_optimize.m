@@ -1,12 +1,47 @@
 function [w,dose] = matRad_optimize(objFunc,wInit)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% call [w,dose] = mPlan2D_optimize(objFunc,wInit)
-% to minimize objFunc with respect to wInit
-% w: optimized parameter vector w
-% dose: optimized dose
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright (c) by Mark Bangert 2014
-% m.bangert@dkzf.de
+% projected L-BFGS optimizer including a positivity constraints on the
+% optimization variable
+% 
+% call
+%   [w,dose] = matRad_optimize(objFunc,wInit)
+%
+% input
+%   objFunc:    objective function to be optimized
+%   wInit:      start solution for optimizer
+%
+% output
+%   w:      optimized bixel vector
+%   dose:   optimized dose distribution
+%
+% References
+%   Kelley: Iterative methods for optimization
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+%
+% m.bangert@dkfz.de
+%
+% This file is part of matRad.
+%
+% matrad is free software: you can redistribute it and/or modify it under 
+% the terms of the GNU General Public License as published by the Free 
+% Software Foundation, either version 3 of the License, or (at your option)
+% any later version.
+%
+% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
+% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+% details.
+%
+% You should have received a copy of the GNU General Public License in the
+% file license.txt along with matRad. If not, see
+% <http://www.gnu.org/licenses/>.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 numOfParameters = numel(wInit);
 

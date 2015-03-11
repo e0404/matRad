@@ -1,10 +1,24 @@
 function stf = matRad_generateStf(ct,cst,pln,visMode)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% call stf = matRad_generateStf(voi,cst,pln,visBool)
+% matRad steering information generation
+% 
+% call
+%   stf = matRad_generateStf(ct,cst,pln,visMode)
+%
+% input
+%   ct:         ct cube
+%   cst:        matRad cst struct
+%   pln:        matRad plan meta information struct
+%   visMode:    toggle on/off different visualizations by setting this value to 1,2,3 (optional)
+%
+% output
+%   stf:        matRad steering information struct
+%
+% References
+%   -
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%Visualization mode. 0 = No visualization. 1 = Target visualization
-                                        % 2 = Outer sheel visualization.
-% to generate an stf struct
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015, Mark Bangert, on behalf of the matRad development team

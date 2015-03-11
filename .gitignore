@@ -42,4 +42,6 @@ Network Trash Folder
 Temporary Items
 .apdisk
 *.asv
-tissue label.mat
+
+# do not check in dose calc base data generation
+doseCalcDataGeneration

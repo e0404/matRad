@@ -3,13 +3,41 @@ function [ix,radDepths,geoDists,x_latDists,z_latDists] = ...
                                  resolution,sourcePoint,targetPoint,sourcePoint_bev,...
                                  targetPoint_bev,X,Y,Z,lateralCutOff,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% call [radDepths,geoDists,latDists] = mPlan2D_siddonRayTracer2D(ct,resolution,sourcePoint_vox,targetPoint_vox,visBool)
-% to perform a ray tracing according to Siddon:
-% Fast calculation of the exact radiological path for a three-dimensional CT array
-% http://www.ncbi.nlm.nih.gov/pubmed/4000088
-% radDepths: radiological depths of all voxels projected to the central ray
-% geoDists:  geometrical distances from the source of all voxels projected to the central ray
-% latDists: geometrical distance of all voxels from the central ray
+% matRad calculation of radiological and geometrical distances used for
+% dose calcultion
+% 
+% call
+%   [ix,radDepths,geoDists,x_latDists,z_latDists] = ...
+%          matRad_calcRadGeoDists(ct,V,isocenter,rot_coords,...
+%                                 resolution,sourcePoint,targetPoint,sourcePoint_bev,...
+%                                 targetPoint_bev,X,Y,Z,lateralCutOff,visBool)
+%
+% input
+%   ct:                 ct cube
+%   V:                  linear indices of voxels where we want to perform computations
+%   isocenter:          isocenter
+%   rot_coords:
+%   resolution:
+%   sourcePoint:
+%   targetPoint:
+%   sourcePoint_bev:
+%   targetPoint_bev:
+%   X:
+%   Y:
+%   Z:
+%   lateralCutOff:
+%   visBool:
+%
+% output
+%   ix:   
+%   radDepths:   
+%   geoDists:   
+%   x_latDists:   
+%   z_latDists:   
+%
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

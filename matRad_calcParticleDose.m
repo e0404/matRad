@@ -1,9 +1,23 @@
 function dij = matRad_calcParticleDose(ct,stf,pln,cst,visBool)
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% call dij = matRad_calcPhotonDose(ct,stf,pln)
-% to start the wrapper for the photon dose calculation
-% results are stored in the struct dij
+% matRad particle dose calculation wrapper
+% 
+% call
+%   dij = matRad_calcParticleDose(ct,stf,pln,cst,visBool)
+%
+% input
+%   ct:         ct cube
+%   stf:        matRad steering information struct
+%   pln:        matRad plan meta information struct
+%   cst:        matRad cst struct
+%   visBool:    toggle on/off visualization (optional)
+%
+% output
+%   dij:        matRad dij struct
+%
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

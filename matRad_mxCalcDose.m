@@ -1,7 +1,21 @@
 function d = matRad_mxCalcDose(dij,w)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% call d = matRad_mxCalcDose(dij,w)
-% to calculate the dose d with bixel weights w and dij.dose
+% matrix based dose calculation
+% 
+% call
+%   d = matRad_mxCalcDose(dij,w)
+%
+% input
+%   dij:    dose influence matrix
+%   w:      bixel weight vector
+%
+% output
+%   d: dose distribution (in the form of a one-dimensional vector, _not_ a
+%   cube)
+%
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

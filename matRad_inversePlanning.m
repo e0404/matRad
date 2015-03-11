@@ -1,10 +1,21 @@
-function [wOpt,dOpt] = matRad_inversePlanning(dij,cst,pln)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% call [w,dOpt] = mPlan2D_inversePlanning(dij,voi,cst)
-% to optimize the intensity modulation according to the constraints
-% specified in cst
-% wOpt: optimized bixel weight vector
-% dOpt: optimized fluence
+function [wOpt,dOpt] = matRad_inversePlanning(dij,cst)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad inverse planning wrapper function
+% 
+% call
+%   [wOpt,dOpt] = matRad_inversePlanning(dij,cst)
+%
+% input
+%   dij:    matRad dij struct
+%   cst:    matRad cst struct
+%
+% output
+%   wOpt:   optimized bixel weight vector
+%   dOpt:   optimized dose distribution (as cube)
+%
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -37,19 +48,8 @@ function [wOpt,dOpt] = matRad_inversePlanning(dij,cst,pln)
 % intial fluence profile = uniform bixel intensities
 wInit = ones(dij.totalNumOfBixels,1);
 
-% prepare matrices
-if pln.bioOptimization ==true
-    dij.doseSkeleton = spones(dij.dose);
-    dij.mAlphaDose = dij.mAlpha.*dij.dose;
-end
-
 % define objective function
-if pln.bioOptimization == true 
-   objFunc =  @(x) matRad_IMRTBioObjFunc(x,dij,cst);
-else    
-   objFunc =  @(x) matRad_IMRTObjFunc(x,dij.dose,cst);
-end
-
+objFunc =  @(x) matRad_IMRTObjFunc(x,dij.dose,cst);
 
 % minimize objetive function
 [wOpt,dOpt] = matRad_optimize(objFunc,wInit);
