@@ -4,7 +4,7 @@ function [vAlpha, vBeta]= matRad_CarbonLQParameter(vRadDepths,sEnergy,mT,Interp,
 
 vAlpha = interp3(Interp.X,Interp.Y,Interp.Z,Interp.V,...
     (vRadDepths)./10,ones(size(vRadDepths,1),1)*sEnergy.energy,mT(:,2));
-vAlpha(isnan(vAlpha))=0;
+vAlpha(isnan(vAlpha))=0.4;
 vBeta = 0.04;
 
 %% plot interpolation

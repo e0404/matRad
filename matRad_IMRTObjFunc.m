@@ -1,4 +1,4 @@
-function [f, g, d] = matRad_IMRTObjFunc(w,dij,cst)
+function [f, g, d, bd] = matRad_IMRTObjFunc(w,dij,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad objective function for inverse planning
 % 
@@ -43,6 +43,8 @@ function [f, g, d] = matRad_IMRTObjFunc(w,dij,cst)
 % <http://www.gnu.org/licenses/>.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+bd=NaN;
 
 % Calculate dose
 d = dij*w;

@@ -42,15 +42,15 @@ pln.SAD             = 1000; %[mm]
 pln.resolution      = ctResolution; %[mm/voxel]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,pln,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0:90:359]; % [°]
-pln.couchAngles     = [0 0 0 0]; % [°]
+pln.gantryAngles    = [90]; % [°]
+pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct);
 pln.voxelDimensions = size(ct);
 pln.radiationMode   = 'carbon'; % either photons / protons / carbon
 pln.bioOptimization = true;   % false indicates physical optimization and true indicates biological optimization
 % initial visualization
-matRad_visCtDose([],cst,pln,ct);
+%matRad_visCtDose([],cst,pln,ct);
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
@@ -67,8 +67,10 @@ matRad_visCtDose(doseVis,cst,pln,ct);
 
 %% inverse planning for imrt
 [wOpt,dOpt] = matRad_inversePlanning(dij,cst,pln);
-matRad_visCtDose(dOpt,cst,pln,ct);
-
+matRad_visCtDose(dOpt.phys,cst,pln,ct);
+if isnan(dOpt.bio) == 0
+ matRad_visCtDose(dOpt.bio,cst,pln,ct);
+end
 %% sequencing
 Sequencing = matRad_xiaLeafSequencing(wOpt,stf,pln,7,0);
 dSeq = matRad_mxCalcDose(dij,Sequencing.w);

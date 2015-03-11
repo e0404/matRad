@@ -1,4 +1,4 @@
-function [f, g, bd] = matRad_IMRTBioObjFunc(w,dij,cst)
+function [f, g, d, bd] = matRad_IMRTBioObjFunc(w,dij,cst)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -7,7 +7,8 @@ function [f, g, bd] = matRad_IMRTBioObjFunc(w,dij,cst)
 % distribution d
 % f: objective function value
 % g: gradient vector
-% bd: biological dose vector
+% bd: biological effect vector
+% d: physical dose vector
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Copyright (c) by Mark Bangert 2014
 % m.bangert@dkzf.de
@@ -16,7 +17,12 @@ function [f, g, bd] = matRad_IMRTBioObjFunc(w,dij,cst)
 % Calculate biological effect
 d = dij.dose*w;
 a = (dij.mAlphaDose*w);
-b = (dij.mBeta).* (dij.dose*w.^2);
+b = (sqrt(dij.mBeta).*d).^2;
+
+%Voxel.prescribedEffect = Voxel.photonAlpha .* Voxel.PrescribedDose + Voxel.photonBeta .* Voxel.PrescribedDose.^2;
+a_Photon = 0.1;
+b_Photon = 0.05;
+
 
 
 %biological effect
@@ -37,6 +43,10 @@ for  i = 1:size(cst,1)
     % Only take OAR or target VOI.
     if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
         
+        % prescribed effect
+        %Emax = a_Photon*cst{i,4}+b_Photon*cst{i,4}^2;
+        %Emin = a_Photon*cst{i,5}+b_Photon*cst{i,5}^2;
+
         % Minimun penalty
         rho_min = cst{i,7};
         
@@ -46,7 +56,8 @@ for  i = 1:size(cst,1)
         % get dose, alpha and beta vector in current VOI
         a_i = a(cst{i,8});
         b_i = b(cst{i,8});
-        
+        d_i = d(cst{i,8});
+        test = a_i+b_i;
         % Maximun deviation: biologic effect minus maximun prescribed biological effect.
         deviation_max = a_i + b_i - cst{i,4};
         

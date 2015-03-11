@@ -63,7 +63,10 @@ end
 [wOpt,dOpt] = matRad_optimize(objFunc,wInit);
 
 % reshape from 1D vector to 2D array
-dOpt = reshape(dOpt,dij.dimensions);
+dOpt.phys = reshape(dOpt.phys,dij.dimensions);
 
+if isnan(dOpt.bio) == 0
+    dOpt.bio = reshape(dOpt.bio,dij.dimensions);
+end
 % Make a sound when finished.
 beep;
