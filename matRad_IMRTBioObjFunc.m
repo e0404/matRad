@@ -16,11 +16,10 @@ function [f, g, bd] = matRad_IMRTBioObjFunc(w,dij,cst)
 % Calculate biological effect
 d = dij.dose*w;
 a = (dij.mAlphaDose*w);
-%a(isnan(a))=0;
 b = (dij.mBeta).* (dij.dose*w.^2);
-%b(isnan(b))=0;
 
-%biological dose
+
+%biological effect
 bd = a+b;
 
 % Numbers of voxels
@@ -72,68 +71,14 @@ for  i = 1:size(cst,1)
 end
 
 
-
-%% frist gradient from weight w1  
-% tic
-% vFac=(dij.mAlpha(:,1)+0.1.*dij.dose*w);
-% g1 = 2*(delta.*vFac)' *dij.dose(:,1);
-% toc
-
-%% calculate all gradients
-% vec = exp(2*dij.mBeta.*dij.dose*w);
-% n = length(vec);
-% %takes 0.370s
-% mDia= spdiags(vec(:),0,n,n);
-% % both spfun take 1.7s because two sparse matrixes are created
-% mColumnExp=mDia*spfun(@exp,dij.mAlpha);
-% mColumn = spfun(@log,mColumnExp);
-% mInnerDev= mColumn.*dij.dose;
-% g=  2*(delta'*mInnerDev)';
-
-
-% if nargout > 1
-%     tic
-%     vVec = (2*dij.mBeta.*d);
-%     n = length(vVec);
-%     mA = spdiags(vVec(:),0,n,n)*dij.doseSkeleton;
-%     mA = mA+dij.mAlpha;
-%     mA= mA.*dij.dose;
-%     g = 2*(delta'*mA)';
-%     toc
-% end
-
+%% this works but has two expensive operations 
 if nargout > 1
-
     lambda = (2*dij.mBeta.*d);
     n = length(lambda);
-    w= (delta' * dij.mAlphaDose)';
-    u= (delta'*spdiags(lambda(:),0,n,n)*dij.doseSkeleton)';  
-    v= (delta'* dij.dose)';
-    
-    V =u.*v/sum(delta(:));
-    
-    g2 = 2*(V+w);
-
-    %diff = abs(g(1)-g2(1));
+    vBias= (delta' * dij.mAlphaDose)';
+    mPsi= (delta'*((spdiags(lambda(:),0,n,n)*dij.doseSkeleton).*dij.dose))';
+    g = 2*(vBias+mPsi);
 end
-
-
-
-%% repmat and bsxfun cannot be used 
-%% for loop over all rows takes 0.25s per row -> *7000 ~= 30min
-
-
-%% example to illustrate the idea of adding columnwise vector B
-% 
-% A=[4 3; 2 6];
-% B = [2 3];
-% 
-% expA = exp(A);
-% expB = exp(B);
-% diaB = diag(expB);
-% 
-% C=diaB * expA;
-% res=log(C);
 
 
 

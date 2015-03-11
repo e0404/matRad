@@ -34,10 +34,10 @@ objFuncValue(2) = 2*objFuncValue(1);
 
 % variables for termination criteria
 iter      = 0;
-numOfIter = 10;
+numOfIter = 15;
 prec      = 1e-4;
 vTimes = zeros(numOfIter,1);
-profile on
+%profile on
 % convergence if change in objective function smaller than prec or maximum
 % number of iteration reached. no convergence if lbfgs has just been rest
 continueOpt = 1;
@@ -140,8 +140,8 @@ while continueOpt == 1
     continueOpt = (iter < numOfIter && abs((objFuncValue(2)-objFuncValue(1))/objFuncValue(1))>prec) || historyCounter < 2;
     vTimes(iter) = toc;
 end
-profile off
-profile viewer
+%profile off
+%profile viewer
 figure,plot(vTimes),xlabel('Iterations'),ylabel('Time in seconds');
 fprintf(['\n' num2str(iter) ' iteration(s) performed to converge\n'])
 

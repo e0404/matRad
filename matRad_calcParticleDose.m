@@ -74,7 +74,8 @@ coords_inside=[xCoordsV yCoordsV zCoordsV];
 
 % generates tissue class matrix for biological optimization
 % and initializes alpha/beta interpolants
-if pln.bioOptimization == true 
+if pln.bioOptimization == true
+    fprintf('matRad: Creating biological tissue interpolant... ');
     mT = zeros(size(V,1),2);
     mT(:,1) = V;
     for i=1:size(cst,1)
@@ -83,58 +84,53 @@ if pln.bioOptimization == true
         mT(row,2)=cst{i,9}.TissueClass;
     end
     
-    
     load('GSI_Chardoma_Carbon_BioData.mat');
-    % get number measured points - determined through experiments 
-    sVectorLength = 0;
+    % get number of measured points
+    sNumPoints = 0;
     for i=1:numel(stBioData)
         for j=1:size(stBioData{1,i},2)       
-            sVectorLength =sVectorLength + size(stBioData{1,i}(j).Depths,1);
+            sNumPoints =sNumPoints + size(stBioData{1,i}(j).Depths,1);
         end    
     end
 
-    mDesign = zeros(sVectorLength,4);
+    mData = zeros(sNumPoints,4);
     idx = 1;
     
     Z = 6; % charge 
     A = 12; % mass number
     kp = 0.0022; % referennce parameter for proton-range
     p = 1.77;   % referennce parameter for proton-range
-  
+    % parse measured data
     for i=1:numel(stBioData)
         for j=1:size(stBioData{1,i},2)  
             tmpLength = size(stBioData{1,i}(j).Depths,1);
-            %mDesign(idx:idx+tmpLength-1,1)=stBioData{1,i}(j).Depths;
             E0 = stBioData{1,i}(j).Energy;
-            R0 = ((A/(Z^2))*kp*175^p);
-            mDesign(idx:idx+tmpLength-1,1)=R0 - stBioData{1,i}(j).Depths; 
-            mDesign(idx:idx+tmpLength-1,2)=stBioData{1,i}(j).Energy;
-            mDesign(idx:idx+tmpLength-1,3)=i;
-            mDesign(idx:idx+tmpLength-1,4)=stBioData{1,i}(j).Alpha;
+            R0 = ((A/(Z^2))*kp*E0^p);
+            mData(idx:idx+tmpLength-1,1)=R0 - stBioData{1,i}(j).Depths; 
+            mData(idx:idx+tmpLength-1,2)=stBioData{1,i}(j).Energy;
+            mData(idx:idx+tmpLength-1,3)=i;
+            mData(idx:idx+tmpLength-1,4)=stBioData{1,i}(j).Alpha;
             idx = idx+tmpLength;
         end    
     end
     
-
-    
-    
-    % different approach
-    x = mDesign(:,1);
-    y = mDesign(:,2);
-    z = mDesign(:,3);
-    v = mDesign(:,4);
-    deltax = 50;
-    deltay = 50;
-    xlin = linspace(min(x)-deltax,max(x)+deltax,100);
-    ylin = linspace(min(y)-deltay,max(y)+deltay,50);
-    zlin = linspace(min(z),max(z),4);
-
+    % create interpolant and query linear spaced sampling points 
+    delta_x = 50;
+    delta_y = 30;
+    NumPointsDepth = 200;
+    NumPointsEnergy = 100;
+    NumPointsTissue = max(mData(:,3));
+    xlin = linspace(min(mData(:,1))-delta_x,max(mData(:,1))+delta_x,NumPointsDepth);
+    ylin = linspace(min(mData(:,2))-delta_y,max(mData(:,2))+delta_y,NumPointsEnergy);
+    zlin = linspace(min(mData(:,3)),max(mData(:,3)),NumPointsTissue);
     [X, Y, Z] = meshgrid(xlin,ylin,zlin);
-    f = scatteredInterpolant(x,y,z,v);
+    f = scatteredInterpolant(mData(:,1),mData(:,2),mData(:,3),mData(:,4));
     BioInterp.V = f(X,Y,Z);
     BioInterp.X = X;
     BioInterp.Y = Y;
     BioInterp.Z = Z;
+    
+    fprintf('matRad: done... ');
 end
 
 
@@ -165,7 +161,7 @@ fprintf('matRad: Particle dose calculation... ');
 if strcmp(pln.radiationMode,'protons')
     mLQParams = @(FreeParameter) matRad_ProtonLQParameter(FreeParameter,0);
 elseif strcmp(pln.radiationMode,'carbon')
-    mLQParams = @(vRadDepths,vRadialDist_sq,sEnergy,mT,Interp,mDesign) matRad_CarbonLQParameter(vRadDepths,vRadialDist_sq,sEnergy,mT,Interp,mDesign,0);
+    mLQParams = @(vRadDepths,sEnergy,mT,Interp) matRad_CarbonLQParameter(vRadDepths,sEnergy,mT,Interp,1);
 end
 
 
@@ -242,15 +238,12 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 
                 if pln.bioOptimization == true 
                     % calculate alpha and beta values for bixel k on ray j of
-                    % beam i - call duration 0.0020s
-                    
+                    % beam i - call duration 0.0020s                    
                     [bixelAlpha, ~] = mLQParams(...
                         radDepths(currIx),...
-                        radialDist_sq(currIx),...
                         baseData(energyIx),...
                         mT_j(currIx,:),...
-                        BioInterp,...
-                        mDesign);
+                        BioInterp);
                 
                     
                 end

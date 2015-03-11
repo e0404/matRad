@@ -37,15 +37,17 @@ function [wOpt,dOpt] = matRad_inversePlanning(dij,cst,pln)
 % intial fluence profile = uniform bixel intensities
 wInit = ones(dij.totalNumOfBixels,1);
 
+% prepare matrices
+if pln.bioOptimization ==true
+    dij.doseSkeleton = spones(dij.dose);
+    dij.mAlphaDose = dij.mAlpha.*dij.dose;
+end
 
-dij.doseSkeleton = spones(dij.dose);
-dij.mAlphaDose = dij.mAlpha.*dij.dose;
 % define objective function
-
-if pln.bioOptimization == false 
-    objFunc =  @(x) matRad_IMRTObjFunc(x,dij.dose,cst);
-else
-    objFunc =  @(x) matRad_IMRTBioObjFunc(x,dij,cst);
+if pln.bioOptimization == true 
+   objFunc =  @(x) matRad_IMRTBioObjFunc(x,dij,cst);
+else    
+   objFunc =  @(x) matRad_IMRTObjFunc(x,dij.dose,cst);
 end
 
 
