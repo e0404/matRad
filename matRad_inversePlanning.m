@@ -63,10 +63,21 @@ end
 [wOpt,dOpt] = matRad_optimize(objFunc,wInit);
 
 % reshape from 1D vector to 2D array
-dOpt.phys = reshape(dOpt.phys,dij.dimensions);
+dOpt.PhysicalDose = reshape(dOpt.PhysicalDose,dij.dimensions);
 
-if isnan(dOpt.bio) == 0
-    dOpt.bio = reshape(dOpt.bio,dij.dimensions);
+if pln.bioOptimization == true
+    a_x= 0.1;
+    b_x= 0.05;
+    dOpt.BiologicalDose = ((sqrt(a_x.^2 + 4 .* b_x .* dOpt.Effect') - a_x)./(2.*b_x))';
+    dOpt.BiologicalDose = reshape(dOpt.BiologicalDose,dij.dimensions);
+    
+    dOpt.RBE = dOpt.BiologicalDose./dOpt.PhysicalDose;
+    %dOpt.RBE = ((sqrt(a_x.^2 + 4 .* b_x .* dOpt.Effect') - a_x)./(2.*b_x.*dOpt.PhysicalDose'))';
+    %dOpt.RBE= reshape(dOpt.RBE,dij.dimensions);
+    
+    dOpt.Effect = reshape(dOpt.Effect,dij.dimensions);
 end
+
+
 % Make a sound when finished.
 beep;

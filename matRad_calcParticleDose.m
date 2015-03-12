@@ -99,6 +99,8 @@ if pln.bioOptimization == true
     end
     
     load('GSI_Chardoma_Carbon_BioData.mat');
+    
+
     % get number of measured points
     sNumPoints = 0;
     for i=1:numel(stBioData)
@@ -131,7 +133,7 @@ if pln.bioOptimization == true
     % create interpolant and query linear spaced sampling points 
     delta_x = 50;
     delta_y = 30;
-    NumPointsDepth = 200;
+    NumPointsDepth = 100;
     NumPointsEnergy = 100;
     NumPointsTissue = max(mData(:,3));
     xlin = linspace(min(mData(:,1))-delta_x,max(mData(:,1))+delta_x,NumPointsDepth);

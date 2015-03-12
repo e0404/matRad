@@ -52,22 +52,29 @@ if nargin > 0
     data.cst  = cst;
     data.pln  = pln;
     data.ct   = ct;
-
-    % Reshape dose to cube size
-    if ~isempty(data.dose) && ~isempty(data.ct)
-        data.dose = reshape(data.dose,size(ct));
-    elseif ~isempty(data.dose) && ~isempty(data.pln)
-        data.dose = reshape(data.dose,dose.pln.voxelDimensions);
-    elseif ~isempty(data.dose)
-        error('Cannot reshape dose');   
+    if ~isempty(data.dose)
+        data.fName =fieldnames(data.dose);
+        for i=1:size(data.fName,1)
+            % Reshape dose to cube size
+            tmp = getfield(data.dose,data.fName{i,1});
+            if ~isempty(tmp) && ~isempty(data.ct)
+                data.dose = setfield(data.dose,data.fName{i,1},reshape(tmp,size(ct)));
+            elseif ~isempty(data.dose) && ~isempty(data.pln)
+                data.dose = setfield(data.dose,data.fName{i,1},reshape(data.dose,dose.pln.voxelDimensions));
+            elseif ~isempty(data.dose)
+                error('Cannot reshape dose');   
+            end
+        end
     end
     
     if ~isempty(data.dose)
         data.doseColorwashCheckboxValue = 1;
         data.doseIsoCheckboxValue = 1;
+        data.SelectedDisplayOption = 1;
     else
         data.doseColorwashCheckboxValue = 0;
         data.doseIsoCheckboxValue = 0;
+        data.SelectedDisplayOption = 1;
     end
     
     if ~isempty(data.ct)
@@ -141,49 +148,57 @@ if ~isempty(data.ct) && data.ctCheckboxValue
 
 end
 
-    %% dose colorwash
-if ~isempty(data.dose) && data.doseColorwashCheckboxValue
-    
-    dose_rgb = data.dose./max(data.dose(:));
-    
-    % Save RGB indices for dose in zslice´s voxels.
-    if data.plane == 1  % Axial plane
-        dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(data.slice,:,:))),jet);
-    elseif data.plane == 2 % Sagital plane
-        dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(:,data.slice,:))),jet);
-    elseif data.plane == 3 % Coronal plane
-        dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(:,:,data.slice))),jet);
+if ~isempty(data.dose)
+    mVolume = getfield(data.dose,data.fName{data.SelectedDisplayOption});
+%     %% dose colorwash
+    if ~isempty(mVolume) && data.doseColorwashCheckboxValue
+
+        dose_rgb = mVolume./max(mVolume(:));
+
+        % Save RGB indices for dose in zslice´s voxels.
+        if data.plane == 1  % Axial plane
+            dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(data.slice,:,:))),jet);
+        elseif data.plane == 2 % Sagital plane
+            dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(:,data.slice,:))),jet);
+        elseif data.plane == 3 % Coronal plane
+            dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(:,:,data.slice))),jet);
+        end
+        % Show dose
+        axes(myAxes);
+        doseImageHandle = image(dose_rgb);
+
+        % Make dose transparent
+        if ~isempty(data.ct)
+            set(doseImageHandle,'AlphaData',.45);
+        end
+
     end
-    % Show dose
-    axes(myAxes);
-    doseImageHandle = image(dose_rgb);
-    
-    % Make dose transparent
-    if ~isempty(data.ct)
-        set(doseImageHandle,'AlphaData',.45);
+
+    %% dose iso dose lines
+    if ~isempty(mVolume) && data.doseIsoCheckboxValue
+         
+        delta = (max(mVolume(:))-min(mVolume(:)))*0.2;
+        vSpacingIsoDose = linspace(min(mVolume(:))+delta,max(mVolume(:)),10+delta);
+        vSpacingIsoDose= round(vSpacingIsoDose.*100)/100;
+        %vSpacingIsoDose = linspace(0.5,2.5,10);
+        
+        if data.plane == 1  % Coronal plane
+            [~,myContour] = contour(myAxes,squeeze(mVolume(data.slice,:,:)),vSpacingIsoDose);
+        elseif data.plane == 2 % Sagittal plane
+            [~,myContour] = contour(myAxes,squeeze(mVolume(:,data.slice,:)),vSpacingIsoDose);
+        elseif data.plane == 3 % Axial plane
+            [~,myContour] = contour(myAxes,squeeze(mVolume(:,:,data.slice)),vSpacingIsoDose);
+        end
+
+        % turn off legend for this data set
+        hAnnotation = get(myContour,'Annotation');
+        hLegendEntry = get(hAnnotation','LegendInformation');
+        set(hLegendEntry,'IconDisplayStyle','off')
+
+        set(myContour,'LabelSpacing',80,'ShowText','on')
     end
 
 end
-
-%% dose iso dose lines
-if ~isempty(data.dose) && data.doseIsoCheckboxValue
-    
-    if data.plane == 1  % Coronal plane
-        [~,myContour] = contour(myAxes,squeeze(data.dose(data.slice,:,:)),5:5:100);
-    elseif data.plane == 2 % Sagittal plane
-        [~,myContour] = contour(myAxes,squeeze(data.dose(:,data.slice,:)),5:5:100);
-    elseif data.plane == 3 % Axial plane
-        [~,myContour] = contour(myAxes,squeeze(data.dose(:,:,data.slice)),5:5:100);
-    end
-    
-    % turn off legend for this data set
-    hAnnotation = get(myContour,'Annotation');
-    hLegendEntry = get(hAnnotation','LegendInformation');
-    set(hLegendEntry,'IconDisplayStyle','off')
-    
-    set(myContour,'LabelSpacing',80,'ShowText','on')
-end
-
     %% VOIs
 if ~isempty(data.cst) && data.contourCheckboxValue
 
@@ -343,8 +358,41 @@ slider = uicontrol('Parent', gcf,...
         'Value', data.slice,...
         'SliderStep',[1/(size(data.ct,data.plane)-1) 1/(size(data.ct,data.plane)-1)],...
         'Callback', @sliderCallback);
+    
+doseSetText = uicontrol('Parent', gcf,...
+        'Style', 'text',...
+        'BackgroundColor', [0.8 0.8 0.8],...
+        'String', 'Display options',...
+        'FontSize', 10,...
+        'Units', 'normalized',...
+        'Position', [0.03 0.45 0.109 0.03]);
+ 
+if isempty(data.dose)
+    strTmp ={'no options available'};
+else
+    strTmp = data.fName;
+end
+
+dosePopup = uicontrol('Parent', gcf,...
+        'Style', 'popupmenu',...
+        'String', strTmp ,...
+        'FontSize', 10,...
+        'Value',data.SelectedDisplayOption,...
+        'Units', 'normalized',...
+        'Position', [0.05 0.4 0.109 0.03],...
+        'Callback', @dosepopupCallback);
 
 %% definition of callbacks
+
+    function dosepopupCallback(hObj,event)
+      data=guidata(gcf);
+      data.SelectedDisplayOption = get(hObj,'Value');
+      guidata(gcf,data);
+      matRad_visCtDose;
+ 
+end
+
+
      function doseColorwashCheckboxCallback(hObj,event)
         data = guidata(gcf);
         data.doseColorwashCheckboxValue = get(hObj,'Value');
@@ -398,5 +446,7 @@ slider = uicontrol('Parent', gcf,...
         guidata(gcf,data);
         matRad_visCtDose;
     end
+
+
 
 end

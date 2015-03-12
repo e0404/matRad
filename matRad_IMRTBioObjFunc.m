@@ -19,14 +19,13 @@ d = dij.dose*w;
 a = (dij.mAlphaDose*w);
 b = (sqrt(dij.mBeta).*d).^2;
 
-%Voxel.prescribedEffect = Voxel.photonAlpha .* Voxel.PrescribedDose + Voxel.photonBeta .* Voxel.PrescribedDose.^2;
-a_Photon = 0.1;
-b_Photon = 0.05;
-
-
-
 %biological effect
 bd = a+b;
+
+% alpha beta photon parameters to calculate prescribed effect
+a_x = 0.1;
+b_x = 0.05;
+
 
 % Numbers of voxels
 numVoxels = size(dij.dose,1);
@@ -44,8 +43,8 @@ for  i = 1:size(cst,1)
     if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
         
         % prescribed effect
-        %Emax = a_Photon*cst{i,4}+b_Photon*cst{i,4}^2;
-        %Emin = a_Photon*cst{i,5}+b_Photon*cst{i,5}^2;
+        Emax = a_x*cst{i,4}+b_x*cst{i,4}^2;
+        Emin = a_x*cst{i,5}+b_x*cst{i,5}^2;
 
         % Minimun penalty
         rho_min = cst{i,7};
@@ -53,16 +52,14 @@ for  i = 1:size(cst,1)
         % Maximum penalty
         rho_max = cst{i,6};
         
-        % get dose, alpha and beta vector in current VOI
-        a_i = a(cst{i,8});
-        b_i = b(cst{i,8});
-        d_i = d(cst{i,8});
-        test = a_i+b_i;
+        % get biological dose vector in current VOI
+        bd_i = bd(cst{i,8});
+        
         % Maximun deviation: biologic effect minus maximun prescribed biological effect.
-        deviation_max = a_i + b_i - cst{i,4};
+        deviation_max = bd_i - Emax;
         
         % Minimun deviation: Dose minus minimun dose.
-        deviation_min = a_i + b_i - cst{i,5};
+        deviation_min = bd_i - Emin;
         
         % Apply positive operator H.
         deviation_max(deviation_max<0) = 0;

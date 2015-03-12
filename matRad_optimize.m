@@ -60,14 +60,14 @@ r_k            = ones(mem-1,1);
 a_k            = ones(1,mem-1);
 
 % 1st calculation of objective function and gradient
-[objFuncValue(1),dx(:,1),dose.phys, dose.bio] = objFunc(wInit);
+[objFuncValue(1),dx(:,1),dose.PhysicalDose, dose.Effect] = objFunc(wInit);
 objFuncValue(2) = 2*objFuncValue(1);
 
 
 
 % variables for termination criteria
 iter      = 0;
-numOfIter = 100;
+numOfIter = 20;
 prec      = 1e-4;
 
 % convergence if change in objective function smaller than prec or maximum
@@ -139,7 +139,7 @@ while continueOpt == 1
 
     objFuncValue(2) = objFuncValue(1);
     
-    [objFuncValue(1),dx(:,1),dose.phys, dose.bio] = objFunc(x(:,1));
+    [objFuncValue(1),dx(:,1),dose.PhysicalDose, dose.Effect] = objFunc(x(:,1));
         
     s_k = -diff(x,[],2);
     y_k = -diff(dx,[],2);
@@ -176,3 +176,6 @@ fprintf(['\n' num2str(iter) ' iteration(s) performed to converge\n'])
 
 w = x(:,1);
 
+if isnan(dose.Effect)
+   dose = rmfield(dose,'Effect');
+end

@@ -42,4 +42,4 @@ function d = matRad_mxCalcDose(dij,w)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-d = reshape(dij.dose*w,dij.dimensions);
+d.PhysicalDose = reshape(dij.dose*w,dij.dimensions);
