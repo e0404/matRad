@@ -1,22 +1,60 @@
 function [vAlpha, vBeta]= matRad_CarbonLQParameter(vRadDepths,sEnergy,mT,Interp,visBool)
 
+[vRadDepthsSort, SortIndex] = sort(vRadDepths);
+vRadDepthsSort= vRadDepthsSort./10;
 
 
-vAlpha = interp3(Interp.X,Interp.Y,Interp.Z,Interp.V,...
-    (vRadDepths)./10,ones(size(vRadDepths,1),1)*sEnergy.energy,mT(:,2));
+R0=sEnergy.range/10;
+vAlpha = zeros(size(vRadDepths,1),1);
+vAlpha2 = zeros(size(vRadDepths,1),1);
+unsorted =1:1:numel(vRadDepths);
+newInd(SortIndex) =unsorted;
+
+tDepth = zeros(81,4);
+tDepth(:,1)=R0-Interp.tDepth(:,1);
+tDepth(:,2)=R0-Interp.tDepth(:,2);
+tDepth(:,3)=R0-Interp.tDepth(:,3);
+tDepth(:,4)=R0-Interp.tDepth(:,4);
 
 
-if ~all(vAlpha(:)) || sum(isnan(vAlpha))>0
-   str = 'some alpha values couldnt be interpolated'; 
-end
+
+[c index] = min(abs(Interp.tTEnergies-sEnergy.energy));
+closestValues = Interp.tTEnergies(index);
+
+vAlpha = interp1(tDepth(:,index), Interp.tTAlpha(:,index), vRadDepthsSort);
+
+% for IX = 1 : numel(vRadDepthsSort)
+%    
+%         dummyAlpha = zeros(numel(Interp.tTEnergies),1);
+%         
+%         for JX = 1 : numel(Interp.tTEnergies)
+%             dummyAlpha(JX) = interp1(tDepth(:,JX), Interp.tTAlpha(:,JX), vRadDepthsSort(IX));
+%         end
+%         
+%         vAlpha2(IX) = interp1(Interp.tTEnergies, dummyAlpha, sEnergy.energy);
+%     
+% end
+
+% 
+% figure,subplot(121),plot(vRadDepthsSort,vAlpha);
+%         subplot(122),plot(vRadDepthsSort,vAlpha2);
+vAlpha = vAlpha(newInd);
+
+% vAlpha = interp3(Interp.X,Interp.Y,Interp.Z,Interp.V,...
+%     (vRadDepths)./10,ones(size(vRadDepths,1),1)*sEnergy.energy,mT(:,2));
 
 
-sigma = 0.1; 
-vAlphaNoise = vAlpha + sigma*randn(size(vAlpha));
+% if ~all(vAlpha(:)) || sum(isnan(vAlpha))>0
+%    str = 'some alpha values couldnt be interpolated'; 
+% end
+
+% 
+% sigma = 0.1; 
+% vAlphaNoise = vAlpha + sigma*randn(size(vAlpha));
 
 
 
-vAlpha(isnan(vAlpha))=0.54;
+% vAlpha(isnan(vAlpha))=0.54;
 vBeta = 0.05;
 
 %% plot interpolation

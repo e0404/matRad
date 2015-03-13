@@ -33,16 +33,17 @@ clc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-load TG119_withTissueClass2Gy.mat
+%load TG119_withTissueClass.mat
 %load PROSTATE.mat
 %load LIVER2Gy.mat
+load phantom.mat
 
 % meta information for treatment plan
-pln.SAD             = 10000; %[mm]
+pln.SAD             = 1000; %[mm]
 pln.resolution      = ctResolution; %[mm/voxel]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,pln,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0]; % [°]
+pln.gantryAngles    = [90]; % [°]
 pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct);
@@ -63,7 +64,7 @@ elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
 end
 %% Dose visualization
 doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1));
-matRad_visCtDose(doseVis,cst,pln,ct);
+%matRad_visCtDose(doseVis,cst,pln,ct);
 
 %% inverse planning for imrt
 [wOpt,dOpt] = matRad_inversePlanning(dij,cst,pln);
@@ -76,3 +77,11 @@ matRad_visCtDose(dOpt,cst,pln,ct);
 
 %% dvh and conformity index
 % matRad_calcDVH(dSeq,cst)
+
+test = zeros(167,167,129);
+test(70:90,70:90,50:80)=100;
+ind = find(test);
+
+cst{2,8}=ind;
+
+

@@ -117,36 +117,61 @@ if pln.bioOptimization == true
     kp = 0.0022; % referennce parameter for proton-range
     p = 1.77;   % referennce parameter for proton-range
     % parse measured data
-    for i=1:numel(stBioData)
-        for j=1:size(stBioData{1,i},2)  
-            tmpLength = size(stBioData{1,i}(j).Depths,1);
-            E0 = stBioData{1,i}(j).Energy;
-            R0 = ((A/(Z^2))*kp*E0^p);
-            mData(idx:idx+tmpLength-1,1)=R0 - stBioData{1,i}(j).Depths; 
-            mData(idx:idx+tmpLength-1,2)=stBioData{1,i}(j).Energy;
-            mData(idx:idx+tmpLength-1,3)=i;
-            mData(idx:idx+tmpLength-1,4)=stBioData{1,i}(j).Alpha;
-            idx = idx+tmpLength;
-        end    
-    end
-    
-    % create interpolant and query linear spaced sampling points 
-    delta_x = 50;
-    delta_y = 30;
-    NumPointsDepth = 100;
-    NumPointsEnergy = 100;
-    NumPointsTissue = max(mData(:,3));
-    xlin = linspace(min(mData(:,1))-delta_x,max(mData(:,1))+delta_x,NumPointsDepth);
-    ylin = linspace(min(mData(:,2))-delta_y,max(mData(:,2))+delta_y,NumPointsEnergy);
-    zlin = linspace(min(mData(:,3)),max(mData(:,3)),NumPointsTissue);
-    [X, Y, Z] = meshgrid(xlin,ylin,zlin);
-    f = scatteredInterpolant(mData(:,1),mData(:,2),mData(:,3),mData(:,4));
-    BioInterp.V = f(X,Y,Z);
-    BioInterp.X = X;
-    BioInterp.Y = Y;
-    BioInterp.Z = Z;
+%     for i=1:numel(stBioData)
+%         for j=1:size(stBioData{1,i},2)  
+%             tmpLength = size(stBioData{1,i}(j).Depths,1);
+%             E0 = stBioData{1,i}(j).Energy;
+%             R0 = ((A/(Z^2))*kp*E0^p);
+%             mData(idx:idx+tmpLength-1,1)=R0 - stBioData{1,i}(j).Depths; 
+%             mData(idx:idx+tmpLength-1,2)=stBioData{1,i}(j).Energy;
+%             mData(idx:idx+tmpLength-1,3)=i;
+%             mData(idx:idx+tmpLength-1,4)=stBioData{1,i}(j).Alpha;
+%             idx = idx+tmpLength;
+%         end    
+%     end
+%     
+%     % create interpolant and query linear spaced sampling points 
+%     delta_x = 50;
+%     delta_y = 30;
+%     NumPointsDepth = 100;
+%     NumPointsEnergy = 100;
+%     NumPointsTissue = max(mData(:,3));
+%     xlin = linspace(min(mData(:,1))-delta_x,max(mData(:,1))+delta_x,NumPointsDepth);
+%     ylin = linspace(min(mData(:,2))-delta_y,max(mData(:,2))+delta_y,NumPointsEnergy);
+%     zlin = linspace(min(mData(:,3)),max(mData(:,3)),NumPointsTissue);
+%     [X, Y, Z] = meshgrid(xlin,ylin,zlin);
+%     f = scatteredInterpolant(mData(:,1),mData(:,2),mData(:,3),mData(:,4));
+%     BioInterp.V = f(X,Y,Z);
+%     BioInterp.X = X;
+%     BioInterp.Y = Y;
+%     BioInterp.Z = Z;
     
     fprintf('...done \n');
+    
+    
+    
+    tTEnergies = [88.83 178.01 276.09 430.1];
+    tTAlpha = zeros(81,4);
+    tTAlpha(:,1)=stBioData{1,1}(1,1).Alpha;
+    tTAlpha(:,2)=stBioData{1,1}(1,2).Alpha;
+    tTAlpha(:,3)=stBioData{1,1}(1,3).Alpha;
+    tTAlpha(:,4)=stBioData{1,1}(1,4).Alpha;
+    tDepth = zeros(81,4);
+    tDepth(:,1)=stBioData{1,1}(1,1).Depths;
+    tDepth(:,2)=stBioData{1,1}(1,2).Depths;
+    tDepth(:,3)=stBioData{1,1}(1,3).Depths;
+    tDepth(:,4)=stBioData{1,1}(1,4).Depths;
+    
+    BioInterp.tTEnergies =tTEnergies;
+    BioInterp.tTAlpha=tTAlpha;
+    BioInterp.tDepth=tDepth;
+    
+    
+%     figure, subplot(221),plot(tDepth(:,1),tTAlpha(:,1)),title('88MeV'),
+%             subplot(222),plot(tDepth(:,2),tTAlpha(:,1)),title('178MeV'),
+%             subplot(223),plot(tDepth(:,3),tTAlpha(:,1)),title('276MeV'),
+%             subplot(224),plot(tDepth(:,4),tTAlpha(:,1)),title('430MeV')
+    
 end
 
 
@@ -252,6 +277,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                     radialDist_sq(currIx),...
                     baseData(energyIx));
                 
+            
                 if pln.bioOptimization == true 
                     % calculate alpha and beta values for bixel k on ray j of
                     % beam i - call duration 0.0020s                    
@@ -263,7 +289,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 
                     
                 end
-
+   
                 % Save dose for every bixel in cell array
                 doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelDose,numel(ct),1);
                 if pln.bioOptimization == true
