@@ -79,7 +79,7 @@ for  i = 1:size(cst,1)
 end
 
 
-%% this works but still has two expensive operations 
+% this works but still has two expensive operations 
 if nargout > 1
     lambda = (2*dij.mBeta.*d);
     n = length(lambda);
@@ -87,7 +87,6 @@ if nargout > 1
     mPsi= (delta'*((spdiags(lambda(:),0,n,n)*dij.doseSkeleton).*dij.dose))';
     g = 2*(vBias+mPsi);
 end
-
 
 
 

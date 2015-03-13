@@ -5,10 +5,14 @@ vRadDepthsSort= vRadDepthsSort./10;
 
 
 R0=sEnergy.range/10;
-vAlpha = zeros(size(vRadDepths,1),1);
+
 vAlpha2 = zeros(size(vRadDepths,1),1);
-unsorted =1:1:numel(vRadDepths);
+
+unsorted =1:length(vRadDepths);
 newInd(SortIndex) =unsorted;
+
+
+
 
 tDepth = zeros(81,4);
 tDepth(:,1)=R0-Interp.tDepth(:,1);
@@ -21,7 +25,7 @@ tDepth(:,4)=R0-Interp.tDepth(:,4);
 [c index] = min(abs(Interp.tTEnergies-sEnergy.energy));
 closestValues = Interp.tTEnergies(index);
 
-vAlpha = interp1(tDepth(:,index), Interp.tTAlpha(:,index), vRadDepthsSort);
+vAlphaSorted = interp1(tDepth(:,index), Interp.tTAlpha(:,index), vRadDepthsSort);
 
 % for IX = 1 : numel(vRadDepthsSort)
 %    
@@ -35,10 +39,16 @@ vAlpha = interp1(tDepth(:,index), Interp.tTAlpha(:,index), vRadDepthsSort);
 %     
 % end
 
-% 
-% figure,subplot(121),plot(vRadDepthsSort,vAlpha);
-%         subplot(122),plot(vRadDepthsSort,vAlpha2);
-vAlpha = vAlpha(newInd);
+
+vAlpha=vAlphaSorted(newInd);
+%
+%str =sprintf('Range of this beam is %f',R0);
+%figure,plot(vRadDepthsSort,vAlphaSorted),title(str);
+
+%figure,subplot(121),plot(vRadDepthsSort,vAlphaSorted);
+%        subplot(122),plot(vRadDepthsSort,vAlpha2);
+        
+
 
 % vAlpha = interp3(Interp.X,Interp.Y,Interp.Z,Interp.V,...
 %     (vRadDepths)./10,ones(size(vRadDepths,1),1)*sEnergy.energy,mT(:,2));

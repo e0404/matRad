@@ -117,34 +117,34 @@ if pln.bioOptimization == true
     kp = 0.0022; % referennce parameter for proton-range
     p = 1.77;   % referennce parameter for proton-range
     % parse measured data
-%     for i=1:numel(stBioData)
-%         for j=1:size(stBioData{1,i},2)  
-%             tmpLength = size(stBioData{1,i}(j).Depths,1);
-%             E0 = stBioData{1,i}(j).Energy;
-%             R0 = ((A/(Z^2))*kp*E0^p);
-%             mData(idx:idx+tmpLength-1,1)=R0 - stBioData{1,i}(j).Depths; 
-%             mData(idx:idx+tmpLength-1,2)=stBioData{1,i}(j).Energy;
-%             mData(idx:idx+tmpLength-1,3)=i;
-%             mData(idx:idx+tmpLength-1,4)=stBioData{1,i}(j).Alpha;
-%             idx = idx+tmpLength;
-%         end    
-%     end
-%     
-%     % create interpolant and query linear spaced sampling points 
-%     delta_x = 50;
-%     delta_y = 30;
-%     NumPointsDepth = 100;
-%     NumPointsEnergy = 100;
-%     NumPointsTissue = max(mData(:,3));
-%     xlin = linspace(min(mData(:,1))-delta_x,max(mData(:,1))+delta_x,NumPointsDepth);
-%     ylin = linspace(min(mData(:,2))-delta_y,max(mData(:,2))+delta_y,NumPointsEnergy);
-%     zlin = linspace(min(mData(:,3)),max(mData(:,3)),NumPointsTissue);
-%     [X, Y, Z] = meshgrid(xlin,ylin,zlin);
-%     f = scatteredInterpolant(mData(:,1),mData(:,2),mData(:,3),mData(:,4));
-%     BioInterp.V = f(X,Y,Z);
-%     BioInterp.X = X;
-%     BioInterp.Y = Y;
-%     BioInterp.Z = Z;
+    for i=1:numel(stBioData)
+        for j=1:size(stBioData{1,i},2)  
+            tmpLength = size(stBioData{1,i}(j).Depths,1);
+            E0 = stBioData{1,i}(j).Energy;
+            R0 = ((A/(Z^2))*kp*E0^p);
+            mData(idx:idx+tmpLength-1,1)=stBioData{1,i}(j).Depths; 
+            mData(idx:idx+tmpLength-1,2)=stBioData{1,i}(j).Energy;
+            %mData(idx:idx+tmpLength-1,3)=i;
+            mData(idx:idx+tmpLength-1,3)=stBioData{1,i}(j).Alpha;
+            idx = idx+tmpLength;
+        end    
+    end
+    
+    % create interpolant and query linear spaced sampling points 
+    delta_x = 50;
+    delta_y = 30;
+    NumPointsDepth = 100;
+    NumPointsEnergy = 100;
+    NumPointsTissue = max(mData(:,3));
+    xlin = linspace(min(mData(:,1))-delta_x,max(mData(:,1))+delta_x,NumPointsDepth);
+    ylin = linspace(min(mData(:,2))-delta_y,max(mData(:,2))+delta_y,NumPointsEnergy);
+    %zlin = linspace(min(mData(:,3)),max(mData(:,3)),NumPointsTissue);
+    [X, Y] = meshgrid(xlin,ylin);
+    f = scatteredInterpolant(mData(:,1),mData(:,2),mData(:,3));
+    BioInterp.V = f(X,Y);
+    BioInterp.X = X;
+    BioInterp.Y = Y;
+    %BioInterp.Z = Z;
     
     fprintf('...done \n');
     

@@ -71,10 +71,12 @@ if nargin > 0
         data.doseColorwashCheckboxValue = 1;
         data.doseIsoCheckboxValue = 1;
         data.SelectedDisplayOption = 1;
+        data.typeofplot = 1;
     else
         data.doseColorwashCheckboxValue = 0;
         data.doseIsoCheckboxValue = 0;
         data.SelectedDisplayOption = 1;
+        data.typeofplot = 1;
     end
     
     if ~isempty(data.ct)
@@ -110,6 +112,8 @@ if nargin > 0
         data.axis = [1 size(data.ct,1) 1 size(data.ct,2)];
     end
     
+    data.profileY = round(size(data.ct,2)/2);
+    
     % Open figure
     myWindow = figure('Name','matRad CT/dose/VOI bowser','NumberTitle','off','units','normalized','outerposition',[0 0 1 1],'ToolBar','figure');
     myAxes   = axes('Position', [0.35 0.1 0.55 0.8],'YDir','reverse');
@@ -120,8 +124,9 @@ else
     
     myWindow = gcf;
     data = guidata(myWindow);
-
-    data.axis = axis;
+    
+    vAxis = [1 size(data.ct,1) 1 size(data.ct,2)];
+    data.axis = vAxis;
     
     clf;
     
@@ -133,7 +138,7 @@ end
 
 
     %% ct
-if ~isempty(data.ct) && data.ctCheckboxValue
+if ~isempty(data.ct) && data.ctCheckboxValue && data.typeofplot ==1
     
     if data.plane == 1 % Coronal plane
         ct_rgb = ind2rgb(uint8(63*squeeze(data.ct(data.slice,:,:))/max(data.ct(:))),bone);
@@ -148,7 +153,7 @@ if ~isempty(data.ct) && data.ctCheckboxValue
 
 end
 
-if ~isempty(data.dose)
+if ~isempty(data.dose) && data.typeofplot ==1
     mVolume = getfield(data.dose,data.fName{data.SelectedDisplayOption});
 %     %% dose colorwash
     if ~isempty(mVolume) && data.doseColorwashCheckboxValue
@@ -175,7 +180,7 @@ if ~isempty(data.dose)
     end
 
     %% dose iso dose lines
-    if ~isempty(mVolume) && data.doseIsoCheckboxValue
+    if ~isempty(mVolume) && data.doseIsoCheckboxValue && data.typeofplot ==1
          
         delta = (max(mVolume(:))-min(mVolume(:)))*0.2;
         vSpacingIsoDose = linspace(min(mVolume(:))+delta,max(mVolume(:)),10+delta);
@@ -183,11 +188,11 @@ if ~isempty(data.dose)
         %vSpacingIsoDose = linspace(0.5,2.5,10);
         
         if data.plane == 1  % Coronal plane
-            [~,myContour] = contour(myAxes,squeeze(mVolume(data.slice,:,:)),vSpacingIsoDose);
+            [~,myContour] = contour(myAxes,squeeze(mVolume(data.slice,:,:)),5:5:100);
         elseif data.plane == 2 % Sagittal plane
-            [~,myContour] = contour(myAxes,squeeze(mVolume(:,data.slice,:)),vSpacingIsoDose);
+            [~,myContour] = contour(myAxes,squeeze(mVolume(:,data.slice,:)),5:5:100);
         elseif data.plane == 3 % Axial plane
-            [~,myContour] = contour(myAxes,squeeze(mVolume(:,:,data.slice)),vSpacingIsoDose);
+            [~,myContour] = contour(myAxes,squeeze(mVolume(:,:,data.slice)),5:5:100);
         end
 
         % turn off legend for this data set
@@ -200,7 +205,7 @@ if ~isempty(data.dose)
 
 end
     %% VOIs
-if ~isempty(data.cst) && data.contourCheckboxValue
+if ~isempty(data.cst) && data.contourCheckboxValue && data.typeofplot ==1
 
     colors = jet;
     colors = colors(round(linspace(1,63,size(data.cst,1))),:);
@@ -226,7 +231,7 @@ if ~isempty(data.cst) && data.contourCheckboxValue
 end
     
 %% Set axis labels
-if   data.plane == 3  % Axial plane
+if   data.plane == 3% Axial plane
     if ~isempty(data.pln)
         set(gca,'XTick',0:50/data.pln.resolution(1):1000)
         set(gca,'YTick',0:50/data.pln.resolution(2):1000)
@@ -271,9 +276,52 @@ elseif data.plane == 1 % Coronal plane
 end
 
 axis equal;
-
 axis(data.axis);
+    
+
+
+if data.typeofplot ==2
+   
+    %% to do detect central dose ray.
+    vMean = mean(data.dose.PhysicalDose,3);
+    
+    set(gca,'YDir','normal');
+    ylabel('dose values')
+    cc=hsv(12);
+    ymax=0;
+    delta =3;
+    SlicerVal =  data.profileY;
+    
+    for i=1:size(data.fName,1)
+        vDose=getfield(data.dose,data.fName{i,1});
+        vDose = vDose(SlicerVal-delta:SlicerVal+delta,:,data.slice);
+        vDose(isnan(vDose))=0;
+        vDose=mean(vDose);
+        plot(vDose,'color',cc(i,:),'LineWidth',3),hold on;        
+        if max(vDose)>ymax
+            ymax=max(vDose);
+        end
+    end
+    
+    
+    for i=1:size(data.cst,1)
+        if strcmp(data.cst{i,3},'TARGET')==1
+           mTarget = unique(data.cst{i,8});
+        end
         
+    end
+    ymax = ymax +10;
+    [~, xCoordsV, ~] = ind2sub(size(data.ct),mTarget);
+    plot([min(xCoordsV) min(xCoordsV)], [0 ymax],'--','Linewidth',2,'color','k'),hold on
+    plot([max(xCoordsV) max(xCoordsV)], [0 ymax],'--','Linewidth',2,'color','k'),hold on
+    
+    str = sprintf('Profile plot of y at %d / %d ',SlicerVal*data.pln.resolution(2),size(data.ct,2)*data.pln.resolution(2));
+    legend(data.fName),title(str,'FontSize',14),grid on
+    ylim([0 ymax]);
+    set(gca,'YTick',[0 ymax/4 ymax/2 3*ymax/4 ymax]);
+    set(gca,'YTickLabel',[0 ymax/4 ymax/2 3*ymax/4 ymax]);
+
+end
     
 %% definition of ui
 dataSetText = uicontrol('Parent', gcf,...
@@ -362,7 +410,7 @@ slider = uicontrol('Parent', gcf,...
 doseSetText = uicontrol('Parent', gcf,...
         'Style', 'text',...
         'BackgroundColor', [0.8 0.8 0.8],...
-        'String', 'Display options',...
+        'String', 'Display options:',...
         'FontSize', 10,...
         'Units', 'normalized',...
         'Position', [0.03 0.45 0.109 0.03]);
@@ -382,7 +430,60 @@ dosePopup = uicontrol('Parent', gcf,...
         'Position', [0.05 0.4 0.109 0.03],...
         'Callback', @dosepopupCallback);
 
+displayOptionText = uicontrol('Parent', gcf,...
+        'Style', 'text',...
+        'BackgroundColor', [0.8 0.8 0.8],...
+        'String', 'Type of plot:',...
+        'FontSize', 10,...
+        'Units', 'normalized',...
+        'Position', [0.025 0.55 0.109 0.03]);    
+    
+displayPopup = uicontrol('Parent', gcf,...
+        'Style', 'popupmenu',...
+        'String', {'intensity','profile'} ,...
+        'FontSize', 10,...
+        'Value',data.typeofplot,...
+        'Units', 'normalized',...
+        'Position', [0.05 0.50 0.109 0.03],...
+        'Callback', @displaypopupCallback);
+
+if data.typeofplot == 2
+       TmpStr ='on';
+else
+       TmpStr ='off';
+end
+ProfileSlider = uicontrol('Parent', gcf,...
+        'Style', 'slider',...
+        'Units', 'normalized',...
+        'Position', [0.2 0.50 0.109 0.03],...
+        'Min', 1,...
+        'Max',  size(data.ct,2),...
+        'Value', data.profileY,...
+        'SliderStep',[1/(size(data.ct,2)-1), 1/(size(data.ct,2)-1)],...
+        'Callback', @ProfilesliderCallback,...
+        'Enable',TmpStr,...
+        'Visible',TmpStr);    
+    
 %% definition of callbacks
+function ProfilesliderCallback(hObj,event)
+      data=guidata(gcf);
+      data.profileY = round(get(hObj,'Value'));
+      guidata(gcf,data);
+      matRad_visCtDose;
+end
+
+ function displaypopupCallback(hObj,event)
+      data=guidata(gcf);
+      data.typeofplot = get(hObj,'Value');
+     
+      guidata(gcf,data);
+      matRad_visCtDose;
+ 
+ end
+
+
+
+
 
     function dosepopupCallback(hObj,event)
       data=guidata(gcf);
@@ -390,7 +491,7 @@ dosePopup = uicontrol('Parent', gcf,...
       guidata(gcf,data);
       matRad_visCtDose;
  
-end
+     end
 
 
      function doseColorwashCheckboxCallback(hObj,event)

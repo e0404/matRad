@@ -42,8 +42,8 @@ load phantom.mat
 pln.SAD             = 1000; %[mm]
 pln.resolution      = ctResolution; %[mm/voxel]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,pln,0);
-pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [90]; % [°]
+pln.bixelWidth      = 25; % [mm] / also corresponds to lateral spot spacing for particles
+pln.gantryAngles    = [270]; % [°]
 pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct);
@@ -78,10 +78,5 @@ matRad_visCtDose(dOpt,cst,pln,ct);
 %% dvh and conformity index
 % matRad_calcDVH(dSeq,cst)
 
-test = zeros(167,167,129);
-test(70:90,70:90,50:80)=100;
-ind = find(test);
-
-cst{2,8}=ind;
 
 
