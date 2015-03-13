@@ -55,34 +55,32 @@ if pln.bioOptimization == true
 end
 % define objective function
 if pln.bioOptimization == true
-    %objFunc =  @(x) matRad_IMRTBioObjFunc(x,dij,cst);
-    %objFuncInit =  @(x) matRad_IMRTObjFunc(x,dij.dose,cst);
-    %objFunc=@(x) MTPSbiologicalObjectiveFunction(x, dij.dose, dij.mAlpha, dij.mBeta, cst);
-    objFunc=@(x) MTPSbiologicalObjectiveFunction(x, dij.dose, cst);
+    objFunc= @(x) matRad_IMRTBioObjFunc(x,dij,cst);
+    %objFunc=@(x) MTPSbiologicalObjectiveFunction(x, dij.dose, cst);
 else 
     objFunc =  @(x) matRad_IMRTObjFunc(x,dij.dose,cst);
 end
 
-    
- % Solve it!
- wInit = rand(292,1);
- numVoxels = size(dij.dose,1);
- %PrescribedDose = zeros(numVoxels,1);
- PrescribedDose(cst{2,8})=cst{2,4};
- 
+% w = ones(dij.totalNumOfBixels,1);
+% [f, g, ~] = matRad_IMRTBioObjFunc(w,dij,cst);
+% epsilon = 0.1;
+%  
+% for i = 1:numel(w)
+%    
+%     wDelta = w;
+%     wDelta(i) = wDelta(i) + epsilon;
+%     [fDelta, ~, ~] = matRad_IMRTBioObjFunc(wDelta,dij,cst);
+%    
+%     numGrad = (fDelta-f)/epsilon;
+%    
+%     fprintf(['Component # ' num2str(i) ' - percent diff in numerical and analytical gradient = '...
+%         num2str((numGrad/g(i)-1)*100) '\n']);
+%       
+% end
 
- becker =@(wInit) (dij.dose*wInit-50)'*(dij.dose*wInit-50);
- options = optimset('Display', 'iter','MaxIter',100);
- vOpt = fminsearch(becker,wInit,options);
- 
- 
- wOpt = fmincon(objFunc,wInit,[],[],[],[],zeros(numel(wInit),1),Inf,[],options);
- dOpt.PhysicalDose =dij.dose*wOpt;
- dOpt.Effect = (dij.mAlpha .* dij.dose) * wOpt + (sqrt(BetaIJ) .* dij.dose * wOpt).^2;
- 
 % minimize objetive function
 %[wOpt,dOpt] = matRad_optimizeInit(objFuncInit,wInit);
-[wOpt,dOpt] = matRad_optimize(objFunc,wOpt);
+[wOpt,dOpt] = matRad_optimize(objFunc,wInit);
 
 % reshape from 1D vector to 2D array
 dOpt.PhysicalDose = reshape(dOpt.PhysicalDose,dij.dimensions);

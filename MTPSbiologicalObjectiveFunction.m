@@ -1,14 +1,13 @@
 function ObjVal = MTPSbiologicalObjectiveFunction(Weight, DIJ, cst)
 % A phyisical objective function
-numVoxels = size(DIJ,1);
-PrescribedEffect = zeros(numVoxels,1);
-PrescribedDose = zeros(numVoxels,1);
 
-PrescribedDose(cst{2,8})=cst{2,4};
-PrescribedEffect(cst{2,8}) = 0.1*cst{2,4}+0.05*cst{2,4}^2;
+d=DIJ*Weight;
+d_i=d(cst{2,8});
+d_t=ones(size(d_i))*cst{2,4};
+
 
 %ObjVal = (AlphaIJ .* DIJ) * Weight + (sqrt(BetaIJ) .* DIJ * Weight).^2  -  PrescribedEffect;
-ObjVal =  DIJ*Weight -  PrescribedDose;
+ObjVal =  d_i -  d_t;
 
 
 %ObjVal(ObjVal(cst{2,8}) < 0) = 0;

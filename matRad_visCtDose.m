@@ -182,17 +182,17 @@ if ~isempty(data.dose) && data.typeofplot ==1
     %% dose iso dose lines
     if ~isempty(mVolume) && data.doseIsoCheckboxValue && data.typeofplot ==1
          
-        delta = (max(mVolume(:))-min(mVolume(:)))*0.2;
-        vSpacingIsoDose = linspace(min(mVolume(:))+delta,max(mVolume(:)),10+delta);
+        delta = (max(mVolume(:))-min(mVolume(:)))*0.1;
+        vSpacingIsoDose = linspace(min(mVolume(:))+delta,max(mVolume(:))+delta,10);
         vSpacingIsoDose= round(vSpacingIsoDose.*100)/100;
-        %vSpacingIsoDose = linspace(0.5,2.5,10);
+       % vSpacingIsoDose = 5:5:100;
         
         if data.plane == 1  % Coronal plane
-            [~,myContour] = contour(myAxes,squeeze(mVolume(data.slice,:,:)),5:5:100);
+            [~,myContour] = contour(myAxes,squeeze(mVolume(data.slice,:,:)),vSpacingIsoDose);
         elseif data.plane == 2 % Sagittal plane
-            [~,myContour] = contour(myAxes,squeeze(mVolume(:,data.slice,:)),5:5:100);
+            [~,myContour] = contour(myAxes,squeeze(mVolume(:,data.slice,:)),vSpacingIsoDose);
         elseif data.plane == 3 % Axial plane
-            [~,myContour] = contour(myAxes,squeeze(mVolume(:,:,data.slice)),5:5:100);
+            [~,myContour] = contour(myAxes,squeeze(mVolume(:,:,data.slice)),vSpacingIsoDose);
         end
 
         % turn off legend for this data set
@@ -284,24 +284,57 @@ if data.typeofplot ==2
    
     %% to do detect central dose ray.
     vMean = mean(data.dose.PhysicalDose,3);
-    
+    clf;
+    myAxes   = axes('Position', [0.35 0.1 0.55 0.8]);
     set(gca,'YDir','normal');
     ylabel('dose values')
-    cc=hsv(12);
+    ccc={'b','g','r','k'};
     ymax=0;
-    delta =3;
+    delta =3; % make it bixel distance dependend
     SlicerVal =  data.profileY;
+
+
+    vY=getfield(data.dose,'PhysicalDose');
+    vY=vY(SlicerVal-delta:SlicerVal+delta,:,data.slice);
+    vY(isnan(vY))=0;
+    vY_avg=mean(vY);
+    vX=linspace(1,data.pln.resolution(1)*numel(vY_avg),numel(vY_avg));
+    plot(vX,vY_avg,'color',ccc{1,1},'LineWidth',3),hold on; 
     
-    for i=1:size(data.fName,1)
-        vDose=getfield(data.dose,data.fName{i,1});
-        vDose = vDose(SlicerVal-delta:SlicerVal+delta,:,data.slice);
-        vDose(isnan(vDose))=0;
-        vDose=mean(vDose);
-        plot(vDose,'color',cc(i,:),'LineWidth',3),hold on;        
-        if max(vDose)>ymax
-            ymax=max(vDose);
-        end
+    if max(vY)>ymax
+             ymax=max(vY);
     end
+    
+    if data.pln.bioOptimization == 1
+        
+        vY=getfield(data.dose,'Effect');
+        vY=vY(SlicerVal-delta:SlicerVal+delta,:,data.slice);
+        vY(isnan(vY))=0;
+        vY_avg=mean(vY);
+        plot(vX,vY_avg,'color',ccc{1,2},'LineWidth',3),hold on; 
+      
+        vBD=getfield(data.dose,'BiologicalDose');
+        vBD=vBD(SlicerVal-delta:SlicerVal+delta,:,data.slice);
+        vBD(isnan(vBD))=0;
+        vBD_avg=mean(vBD);
+        
+        vRBE=getfield(data.dose,'RBE');
+        vRBE=vRBE(SlicerVal-delta:SlicerVal+delta,:,data.slice);
+        vRBE(isnan(vRBE))=0;
+        vRBE_avg=mean(vRBE);
+        
+        
+        [ax,h1,h2]=plotyy(vX,vBD_avg,vX,vRBE_avg,'plot'),hold on;
+        
+        
+        set(get(ax(2),'Ylabel'),'String','RBE');
+        set(h1,'Linewidth',3,'color',ccc{1,3});
+        set(h2,'Linewidth',3,'color',ccc{1,4});
+        
+       
+    end
+       
+    
     
     
     for i=1:size(data.cst,1)
@@ -310,14 +343,19 @@ if data.typeofplot ==2
         end
         
     end
-    ymax = ymax +10;
+    ymax = ymax +ymax*0.1;
     [~, xCoordsV, ~] = ind2sub(size(data.ct),mTarget);
+    xCoordsV=xCoordsV.*data.pln.resolution(1);
     plot([min(xCoordsV) min(xCoordsV)], [0 ymax],'--','Linewidth',2,'color','k'),hold on
     plot([max(xCoordsV) max(xCoordsV)], [0 ymax],'--','Linewidth',2,'color','k'),hold on
     
     str = sprintf('Profile plot of y at %d / %d ',SlicerVal*data.pln.resolution(2),size(data.ct,2)*data.pln.resolution(2));
     legend(data.fName),title(str,'FontSize',14),grid on
-    ylim([0 ymax]);
+    ylim([0 2.5]);
+    axis auto
+    if ymax<0.5
+        ymax = 0.5;
+    end
     set(gca,'YTick',[0 ymax/4 ymax/2 3*ymax/4 ymax]);
     set(gca,'YTickLabel',[0 ymax/4 ymax/2 3*ymax/4 ymax]);
 
@@ -444,7 +482,7 @@ displayPopup = uicontrol('Parent', gcf,...
         'FontSize', 10,...
         'Value',data.typeofplot,...
         'Units', 'normalized',...
-        'Position', [0.05 0.50 0.109 0.03],...
+        'Position', [0.05 0.50 0.059 0.03],...
         'Callback', @displaypopupCallback);
 
 if data.typeofplot == 2
@@ -455,7 +493,7 @@ end
 ProfileSlider = uicontrol('Parent', gcf,...
         'Style', 'slider',...
         'Units', 'normalized',...
-        'Position', [0.2 0.50 0.109 0.03],...
+        'Position', [0.15 0.50 0.06 0.03],...
         'Min', 1,...
         'Max',  size(data.ct,2),...
         'Value', data.profileY,...
