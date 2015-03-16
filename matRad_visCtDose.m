@@ -291,18 +291,22 @@ if data.typeofplot ==2
     myAxes   = axes('Position', [0.35 0.1 0.55 0.8]);
     set(gca,'YDir','normal');
     ylabel('dose values')
-    ccc={'b','g','r','k'};
+    ccc={'k','g','r','b','m','y','c'};
     ymax=0;
     delta =3; % make it bixel distance dependend
 
 
     vY=getfield(data.dose,'PhysicalDose');
+
+     
+     
     mActualSlice = vY(:,:,data.slice);
     
     mRotActualSlice =imrotate(mActualSlice,data.pln.gantryAngles(1),'crop');
     vW =ones(size(mRotActualSlice,2),1);
     
     vProjected =vW'*mRotActualSlice;
+    vProjectedx = mRotActualSlice*vW;
     %find first and last nonzero element
     indices = find(vProjected);
     
@@ -317,7 +321,7 @@ if data.typeofplot ==2
     vY(isnan(vY))=0;
     vY_avg=mean(vY,2);
     vX=linspace(1,data.pln.resolution(1)*numel(vY_avg),numel(vY_avg));
-    plot(vX,vY_avg,'color',ccc{1,1},'LineWidth',3),hold on; 
+    h1=plot(vX,vY_avg,'color',ccc{1,1},'LineWidth',3),hold on; 
     
     if max(vY_avg(:))>ymax
              ymax=max(vY_avg(:));
@@ -331,7 +335,7 @@ if data.typeofplot ==2
         vY=mRotActualSlice(:,ind-delta:ind+delta);
         vY(isnan(vY))=0;
         vY_avg=mean(vY,2);
-        plot(vX,vY_avg,'color',ccc{1,2},'LineWidth',3),hold on; 
+        h2=plot(vX,vY_avg,'color',ccc{1,2},'LineWidth',3),hold on; 
       
         vBD=getfield(data.dose,'BiologicalDose');
         mActualSlice = vBD(:,:,data.slice);
@@ -348,12 +352,17 @@ if data.typeofplot ==2
         vRBE_avg=mean(vRBE,2);
         
         
-        [ax,h1,h2]=plotyy(vX,vBD_avg,vX,vRBE_avg,'plot'),hold on;
-        
+        [ax,h3,h4]=plotyy(vX,vBD_avg,vX,vRBE_avg,'plot'),hold on;
+      
         
         set(get(ax(2),'Ylabel'),'String','RBE');
-        set(h1,'Linewidth',3,'color',ccc{1,3});
-        set(h2,'Linewidth',3,'color',ccc{1,4});
+        set(get(ax(1),'Ylabel'),'String','RBE x dose');
+        set(h3,'Linewidth',3,'color',ccc{1,3});
+        set(h4,'Linewidth',3,'color',ccc{1,4});
+        set(ax(1),'ycolor','r')
+        set(ax(2),'ycolor','b')
+        
+      
         
          if max(vBD_avg(:))>ymax
              ymax=max(vBD_avg(:));
@@ -371,19 +380,25 @@ if data.typeofplot ==2
     end
     ymax = ymax +ymax*0.1;
     
-    [xCoordsV, yCoordsV, ~] = ind2sub(size(data.ct),mTarget);
-    xCoordsV=xCoordsV.*data.pln.resolution(1);
-    yCoordsV=yCoordsV.*data.pln.resolution(2);
-    rotM = [cos(data.pln.gantryAngles(1)) -sin(data.pln.gantryAngles(1));...
-            sin(data.pln.gantryAngles(1)) cos(data.pln.gantryAngles(1))];
-    
-    rotated = [xCoordsV yCoordsV]*rotM;
-    Idx = round(ind*data.pln.resolution(1));
-    plot([min(rotated(:,1)) min(rotated(:,1))],[0 ymax],'--','Linewidth',2,'color','k'),hold on
-    plot([max(rotated(:,1)) max(rotated(:,1))], [0 ymax],'--','Linewidth',2,'color','k'),hold on
+
+    mTargetStack = zeros(size(data.ct));
+    mTargetStack(mTarget)=1;
+    %figure,imshow(Helper(:,:,data.slice))
+    mTargetSlice = mTargetStack(:,:,data.slice);
+    mRotTargetSlice =imrotate(mTargetSlice,data.pln.gantryAngles(1),'crop');
+    vRay = find(mRotTargetSlice(:,ind))*data.pln.resolution(2);
+    if ~isempty(vRay)
+        h5=plot([vRay(1) vRay(1)],[0 ymax],'--','Linewidth',2,'color','k'),hold on
+        plot([vRay(end) vRay(end)], [0 ymax],'--','Linewidth',2,'color','k'),hold on
+    end
     
     str = sprintf('profile plot of zentral axis of first beam at %d° in slice %d / %d ',data.pln.gantryAngles(1),data.profileY*data.pln.resolution(2),size(data.ct,2)*data.pln.resolution(2));
-    legend(data.fName),title(str,'FontSize',14),grid on
+    title(str,'FontSize',14),grid on
+    if data.pln.bioOptimization == 1
+        legend([h1;h2;h3;h4;h5],'Physical Dose','Effect','Biological Dose','RBE','target boundary');
+    else
+        legend([h1;h5],'Physical Dose','target boundary');
+    end
     %ylim([0 2.5]);
     axis auto
     if ymax<0.5
