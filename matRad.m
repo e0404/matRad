@@ -33,7 +33,9 @@ clc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
+%load TG119.mat
 %load TG119_withTissueClass.mat
+%load TG119_withTissueClass2Gy.mat
 %load PROSTATE.mat
 %load LIVER2Gy.mat
 load phantom2Gy.mat

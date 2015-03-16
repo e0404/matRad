@@ -112,7 +112,7 @@ if nargin > 0
         data.axis = [1 size(data.ct,1) 1 size(data.ct,2)];
     end
     
-    data.profileY = round(size(data.ct,2)/2);
+    data.profileY = NaN;
     
     % Open figure
     myWindow = figure('Name','matRad CT/dose/VOI bowser','NumberTitle','off','units','normalized','outerposition',[0 0 1 1],'ToolBar','figure');
@@ -283,7 +283,10 @@ axis(data.axis);
 if data.typeofplot ==2
    
     %% to do detect central dose ray.
-    vMean = mean(data.dose.PhysicalDose,3);
+    %2D Drehung der aktuellen slice um auf die BEV zu kommen
+
+   
+    
     clf;
     myAxes   = axes('Position', [0.35 0.1 0.55 0.8]);
     set(gca,'YDir','normal');
@@ -291,37 +294,58 @@ if data.typeofplot ==2
     ccc={'b','g','r','k'};
     ymax=0;
     delta =3; % make it bixel distance dependend
-    SlicerVal =  data.profileY;
 
 
     vY=getfield(data.dose,'PhysicalDose');
-    vY=vY(SlicerVal-delta:SlicerVal+delta,:,data.slice);
+    mActualSlice = vY(:,:,data.slice);
+    
+    mRotActualSlice =imrotate(mActualSlice,data.pln.gantryAngles(1),'crop');
+    vW =ones(size(mRotActualSlice,2),1);
+    
+    vProjected =vW'*mRotActualSlice;
+    %find first and last nonzero element
+    indices = find(vProjected);
+    
+   ind = round((indices(end)+indices(1))/2);
+    
+    if isnan(data.profileY)
+        data.profileY = ind;
+    else
+        ind=data.profileY;
+    end
+    vY=mRotActualSlice(:,ind-delta:ind+delta);
     vY(isnan(vY))=0;
-    vY_avg=mean(vY);
+    vY_avg=mean(vY,2);
     vX=linspace(1,data.pln.resolution(1)*numel(vY_avg),numel(vY_avg));
     plot(vX,vY_avg,'color',ccc{1,1},'LineWidth',3),hold on; 
     
-    if max(vY)>ymax
-             ymax=max(vY);
+    if max(vY_avg(:))>ymax
+             ymax=max(vY_avg(:));
     end
     
     if data.pln.bioOptimization == 1
         
         vY=getfield(data.dose,'Effect');
-        vY=vY(SlicerVal-delta:SlicerVal+delta,:,data.slice);
+        mActualSlice = vY(:,:,data.slice);
+        mRotActualSlice =imrotate(mActualSlice,data.pln.gantryAngles(1),'crop');
+        vY=mRotActualSlice(:,ind-delta:ind+delta);
         vY(isnan(vY))=0;
-        vY_avg=mean(vY);
+        vY_avg=mean(vY,2);
         plot(vX,vY_avg,'color',ccc{1,2},'LineWidth',3),hold on; 
       
         vBD=getfield(data.dose,'BiologicalDose');
-        vBD=vBD(SlicerVal-delta:SlicerVal+delta,:,data.slice);
+        mActualSlice = vBD(:,:,data.slice);
+        mRotActualSlice =imrotate(mActualSlice,data.pln.gantryAngles(1),'crop');
+        vBD=mRotActualSlice(:,ind-delta:ind+delta);
         vBD(isnan(vBD))=0;
-        vBD_avg=mean(vBD);
+        vBD_avg=mean(vBD,2);
         
         vRBE=getfield(data.dose,'RBE');
-        vRBE=vRBE(SlicerVal-delta:SlicerVal+delta,:,data.slice);
+        mActualSlice = vRBE(:,:,data.slice);
+        mRotActualSlice =imrotate(mActualSlice,data.pln.gantryAngles(1),'crop');
+        vRBE=mRotActualSlice(:,ind-delta:ind+delta);
         vRBE(isnan(vRBE))=0;
-        vRBE_avg=mean(vRBE);
+        vRBE_avg=mean(vRBE,2);
         
         
         [ax,h1,h2]=plotyy(vX,vBD_avg,vX,vRBE_avg,'plot'),hold on;
@@ -331,7 +355,9 @@ if data.typeofplot ==2
         set(h1,'Linewidth',3,'color',ccc{1,3});
         set(h2,'Linewidth',3,'color',ccc{1,4});
         
-       
+         if max(vBD_avg(:))>ymax
+             ymax=max(vBD_avg(:));
+         end
     end
        
     
@@ -344,14 +370,21 @@ if data.typeofplot ==2
         
     end
     ymax = ymax +ymax*0.1;
-    [~, xCoordsV, ~] = ind2sub(size(data.ct),mTarget);
-    xCoordsV=xCoordsV.*data.pln.resolution(1);
-    plot([min(xCoordsV) min(xCoordsV)], [0 ymax],'--','Linewidth',2,'color','k'),hold on
-    plot([max(xCoordsV) max(xCoordsV)], [0 ymax],'--','Linewidth',2,'color','k'),hold on
     
-    str = sprintf('Profile plot of y at %d / %d ',SlicerVal*data.pln.resolution(2),size(data.ct,2)*data.pln.resolution(2));
+    [xCoordsV, yCoordsV, ~] = ind2sub(size(data.ct),mTarget);
+    xCoordsV=xCoordsV.*data.pln.resolution(1);
+    yCoordsV=yCoordsV.*data.pln.resolution(2);
+    rotM = [cos(data.pln.gantryAngles(1)) -sin(data.pln.gantryAngles(1));...
+            sin(data.pln.gantryAngles(1)) cos(data.pln.gantryAngles(1))];
+    
+    rotated = [xCoordsV yCoordsV]*rotM;
+    Idx = round(ind*data.pln.resolution(1));
+    plot([min(rotated(:,1)) min(rotated(:,1))],[0 ymax],'--','Linewidth',2,'color','k'),hold on
+    plot([max(rotated(:,1)) max(rotated(:,1))], [0 ymax],'--','Linewidth',2,'color','k'),hold on
+    
+    str = sprintf('profile plot of zentral axis of first beam at %d° in slice %d / %d ',data.pln.gantryAngles(1),data.profileY*data.pln.resolution(2),size(data.ct,2)*data.pln.resolution(2));
     legend(data.fName),title(str,'FontSize',14),grid on
-    ylim([0 2.5]);
+    %ylim([0 2.5]);
     axis auto
     if ymax<0.5
         ymax = 0.5;
