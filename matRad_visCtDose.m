@@ -371,10 +371,11 @@ if data.typeofplot ==2
        
     
     
-    
+    Prescription=0;
     for i=1:size(data.cst,1)
         if strcmp(data.cst{i,3},'TARGET')==1
            mTarget = unique(data.cst{i,8});
+           Prescription = data.cst{i,4};
         end
         
     end
@@ -392,12 +393,14 @@ if data.typeofplot ==2
         plot([vRay(end) vRay(end)], [0 ymax],'--','Linewidth',2,'color','k'),hold on
     end
     
+    h6=plot([0 size(data.ct,1)*data.pln.resolution(1)],[Prescription Prescription],'--','Linewidth',2,'color','m')
+    
     str = sprintf('profile plot of zentral axis of first beam at %d° in slice %d / %d ',data.pln.gantryAngles(1),data.profileY*data.pln.resolution(2),size(data.ct,2)*data.pln.resolution(2));
     title(str,'FontSize',14),grid on
     if data.pln.bioOptimization == 1
-        legend([h1;h2;h3;h4;h5],'Physical Dose','Effect','Biological Dose','RBE','target boundary');
+        legend([h1;h2;h3;h4;h5;h6],'Physical Dose','Effect','Biological Dose','RBE','target boundary','prescription');
     else
-        legend([h1;h5],'Physical Dose','target boundary');
+        legend([h1;h5;h6],'Physical Dose','target boundary','prescription');
     end
     %ylim([0 2.5]);
     axis auto

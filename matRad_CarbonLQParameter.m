@@ -27,9 +27,16 @@ closestValues = Interp.tTEnergies(index);
 
 vAlphaSorted = interp1(tDepth(:,index), Interp.tTAlpha(:,index), vRadDepthsSort);
 
+%mean = vAlphaSorted;
+%std = vAlphaSorted.*0.2;
+
+%vAlphaSorted = mean +std.*randn(numel(mean),1);
+
+%figure,plot(vAlphaSortedNoise)
+
 % add white Gaussian noise to signal
 
-vAlphaSorted = vAlphaSorted-vAlphaSorted.*0.25;
+%vAlphaSorted = vAlphaSorted+vAlphaSorted.*0.25;
 
 % for IX = 1 : numel(vRadDepthsSort)
 %    
