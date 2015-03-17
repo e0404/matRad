@@ -355,8 +355,8 @@ if data.typeofplot ==2
         [ax,h3,h4]=plotyy(vX,vBD_avg,vX,vRBE_avg,'plot'),hold on;
       
         
-        set(get(ax(2),'Ylabel'),'String','RBE');
-        set(get(ax(1),'Ylabel'),'String','RBE x dose');
+        set(get(ax(2),'Ylabel'),'String','RBE','FontSize',14);
+        set(get(ax(1),'Ylabel'),'String','RBE x dose','FontSize',14);
         set(h3,'Linewidth',3,'color',ccc{1,3});
         set(h4,'Linewidth',3,'color',ccc{1,4});
         set(ax(1),'ycolor','r')
@@ -409,6 +409,7 @@ if data.typeofplot ==2
     end
     set(gca,'YTick',[0 ymax/4 ymax/2 3*ymax/4 ymax]);
     set(gca,'YTickLabel',[0 ymax/4 ymax/2 3*ymax/4 ymax]);
+    xlabel('depth [mm]','FontSize',16);
 
 end
     

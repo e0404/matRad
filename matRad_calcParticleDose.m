@@ -162,9 +162,30 @@ if pln.bioOptimization == true
     tDepth(:,3)=stBioData{1,1}(1,3).Depths;
     tDepth(:,4)=stBioData{1,1}(1,4).Depths;
     
-    BioInterp.tTEnergies =tTEnergies;
-    BioInterp.tTAlpha=tTAlpha;
-    BioInterp.tDepth=tDepth;
+    interEnergy = linspace(80,450,30);
+    interDepth = linspace(-36,36,100);
+    vAlpha2 = zeros(length(interDepth),length(interEnergy));
+    vDepth2 = zeros(length(interDepth),length(interEnergy));
+
+    for k = 1:length(interEnergy)
+        for IX = 1 : length(interDepth)
+
+            dummyAlpha = zeros(numel(tTEnergies),1);
+
+            for JX = 1 : numel(tTEnergies)
+                dummyAlpha(JX) = interp1(tDepth(:,JX), tTAlpha(:,JX), interDepth(IX));
+            end
+
+            vAlpha2(IX,k) = interp1(tTEnergies, dummyAlpha, interEnergy(k));           
+        end
+        vDepth2(:,k) = interDepth;
+    end
+ 
+    
+    
+    BioInterp.tTEnergies =interEnergy;
+    BioInterp.tTAlpha=vAlpha2;
+    BioInterp.tDepth=vDepth2;
     
     
 %     figure, subplot(221),plot(tDepth(:,1),tTAlpha(:,1)),title('88MeV'),

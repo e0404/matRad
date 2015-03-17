@@ -6,27 +6,29 @@ vRadDepthsSort= vRadDepthsSort./10;
 
 R0=sEnergy.range/10;
 
-vAlpha2 = zeros(size(vRadDepths,1),1);
-
 unsorted =1:length(vRadDepths);
 newInd(SortIndex) =unsorted;
 
 
 
+%% rough interpolation
+% tDepth = zeros(81,4);
+% tDepth(:,1)=R0-Interp.tDepth(:,1);
+% tDepth(:,2)=R0-Interp.tDepth(:,2);
+% tDepth(:,3)=R0-Interp.tDepth(:,3);
+% tDepth(:,4)=R0-Interp.tDepth(:,4);
+% [c index] = min(abs(Interp.tTEnergies-sEnergy.energy));
+% closestValues = Interp.tTEnergies(index);
+% vAlphaSorted = interp1(tDepth(:,index), Interp.tTAlpha(:,index), vRadDepthsSort);
+%% fine interpolation
 
-tDepth = zeros(81,4);
-tDepth(:,1)=R0-Interp.tDepth(:,1);
-tDepth(:,2)=R0-Interp.tDepth(:,2);
-tDepth(:,3)=R0-Interp.tDepth(:,3);
-tDepth(:,4)=R0-Interp.tDepth(:,4);
+  [c index] = min(abs(Interp.tTEnergies-sEnergy.energy));
+  closestValues = Interp.tTEnergies(index);
+  vAlphaSorted = interp1(R0-Interp.tDepth(:,index), Interp.tTAlpha(:,index), vRadDepthsSort);
 
+ %%
 
-
-[c index] = min(abs(Interp.tTEnergies-sEnergy.energy));
-closestValues = Interp.tTEnergies(index);
-
-vAlphaSorted = interp1(tDepth(:,index), Interp.tTAlpha(:,index), vRadDepthsSort);
-
+ 
 %mean = vAlphaSorted;
 %std = vAlphaSorted.*0.2;
 
@@ -36,7 +38,7 @@ vAlphaSorted = interp1(tDepth(:,index), Interp.tTAlpha(:,index), vRadDepthsSort)
 
 % add white Gaussian noise to signal
 
-%vAlphaSorted = vAlphaSorted+vAlphaSorted.*0.25;
+%vAlphaSorted = vAlphaSorted-vAlphaSorted.*0.25;
 
 % for IX = 1 : numel(vRadDepthsSort)
 %    
