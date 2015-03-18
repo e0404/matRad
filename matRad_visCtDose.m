@@ -293,7 +293,7 @@ if data.typeofplot ==2
     ylabel('dose values')
     ccc={'k','g','r','b','m','y','c'};
     ymax=0;
-    delta =3; % make it bixel distance dependend
+    delta =0; % make it bixel distance dependend
 
 
     vY=getfield(data.dose,'PhysicalDose');
@@ -336,6 +336,14 @@ if data.typeofplot ==2
         vY(isnan(vY))=0;
         vY_avg=mean(vY,2);
         h2=plot(vX,vY_avg,'color',ccc{1,2},'LineWidth',3),hold on; 
+        
+        vY=getfield(data.dose,'Alpha');
+        mActualSlice = vY(:,:,data.slice);
+        mRotActualSlice =imrotate(mActualSlice,data.pln.gantryAngles(1),'crop');
+        vY=mRotActualSlice(:,ind-delta:ind+delta);
+        vY(isnan(vY))=0;
+        vY_avg=mean(vY,2);
+        h3=plot(vX,vY_avg,'color',ccc{1,7},'LineWidth',3),hold on; 
       
         vBD=getfield(data.dose,'BiologicalDose');
         mActualSlice = vBD(:,:,data.slice);
@@ -352,13 +360,13 @@ if data.typeofplot ==2
         vRBE_avg=mean(vRBE,2);
         
         
-        [ax,h3,h4]=plotyy(vX,vBD_avg,vX,vRBE_avg,'plot'),hold on;
+        [ax,h4,h5]=plotyy(vX,vBD_avg,vX,vRBE_avg,'plot'),hold on;
       
         
         set(get(ax(2),'Ylabel'),'String','RBE','FontSize',14);
         set(get(ax(1),'Ylabel'),'String','RBE x dose','FontSize',14);
-        set(h3,'Linewidth',3,'color',ccc{1,3});
-        set(h4,'Linewidth',3,'color',ccc{1,4});
+        set(h4,'Linewidth',3,'color',ccc{1,3});
+        set(h5,'Linewidth',3,'color',ccc{1,4});
         set(ax(1),'ycolor','r')
         set(ax(2),'ycolor','b')
         
@@ -389,18 +397,18 @@ if data.typeofplot ==2
     mRotTargetSlice =imrotate(mTargetSlice,data.pln.gantryAngles(1),'crop');
     vRay = find(mRotTargetSlice(:,ind))*data.pln.resolution(2);
     if ~isempty(vRay)
-        h5=plot([vRay(1) vRay(1)],[0 ymax],'--','Linewidth',2,'color','k'),hold on
+        h6=plot([vRay(1) vRay(1)],[0 ymax],'--','Linewidth',2,'color','k'),hold on
         plot([vRay(end) vRay(end)], [0 ymax],'--','Linewidth',2,'color','k'),hold on
     end
     
-    h6=plot([0 size(data.ct,1)*data.pln.resolution(1)],[Prescription Prescription],'--','Linewidth',2,'color','m')
+    h7=plot([0 size(data.ct,1)*data.pln.resolution(1)],[Prescription Prescription],'--','Linewidth',2,'color','m')
     
     str = sprintf('profile plot of zentral axis of first beam at %d° in slice %d / %d ',data.pln.gantryAngles(1),data.profileY*data.pln.resolution(2),size(data.ct,2)*data.pln.resolution(2));
     title(str,'FontSize',14),grid on
     if data.pln.bioOptimization == 1
-        legend([h1;h2;h3;h4;h5;h6],'Physical Dose','Effect','Biological Dose','RBE','target boundary','prescription');
+        legend([h1;h2;h3;h4;h5;h6;h7],'Physical Dose','Effect','Alpha','Biological Dose','RBE','target boundary','prescription');
     else
-        legend([h1;h5;h6],'Physical Dose','target boundary','prescription');
+        legend([h1;h6;h7],'Physical Dose','target boundary','prescription');
     end
     %ylim([0 2.5]);
     axis auto

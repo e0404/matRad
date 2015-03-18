@@ -86,6 +86,14 @@ zCoordsV = (zCoordsV(:)-0.5)*pln.resolution(3)-pln.isoCenter(3);
 coords_inside=[xCoordsV yCoordsV zCoordsV];
 
 
+% load protonBaseData
+if strcmp(pln.radiationMode,'protons')
+    load protonBaseData;
+elseif strcmp(pln.radiationMode,'carbon')
+    load carbonBaseData;
+end
+
+
 % generates tissue class matrix for biological optimization
 % and initializes alpha/beta interpolants
 if pln.bioOptimization == true
@@ -100,57 +108,12 @@ if pln.bioOptimization == true
     
     load('GSI_Chardoma_Carbon_BioData.mat');
     
-
-    % get number of measured points
-    sNumPoints = 0;
-    for i=1:numel(stBioData)
-        for j=1:size(stBioData{1,i},2)       
-            sNumPoints =sNumPoints + size(stBioData{1,i}(j).Depths,1);
-        end    
-    end
-
-    mData = zeros(sNumPoints,4);
-    idx = 1;
-    
-    Z = 6; % charge 
-    A = 12; % mass number
-    kp = 0.0022; % referennce parameter for proton-range
-    p = 1.77;   % referennce parameter for proton-range
-    % parse measured data
-    for i=1:numel(stBioData)
-        for j=1:size(stBioData{1,i},2)  
-            tmpLength = size(stBioData{1,i}(j).Depths,1);
-            E0 = stBioData{1,i}(j).Energy;
-            R0 = ((A/(Z^2))*kp*E0^p);
-            mData(idx:idx+tmpLength-1,1)=stBioData{1,i}(j).Depths; 
-            mData(idx:idx+tmpLength-1,2)=stBioData{1,i}(j).Energy;
-            %mData(idx:idx+tmpLength-1,3)=i;
-            mData(idx:idx+tmpLength-1,3)=stBioData{1,i}(j).Alpha;
-            idx = idx+tmpLength;
-        end    
-    end
-    
-    % create interpolant and query linear spaced sampling points 
-%     delta_x = 50;
-%     delta_y = 30;
-%     NumPointsDepth = 100;
-%     NumPointsEnergy = 100;
-%     NumPointsTissue = max(mData(:,3));
-%     xlin = linspace(min(mData(:,1))-delta_x,max(mData(:,1))+delta_x,NumPointsDepth);
-%     ylin = linspace(min(mData(:,2))-delta_y,max(mData(:,2))+delta_y,NumPointsEnergy);
-%     %zlin = linspace(min(mData(:,3)),max(mData(:,3)),NumPointsTissue);
-%     [X, Y] = meshgrid(xlin,ylin);
-%     f = scatteredInterpolant(mData(:,1),mData(:,2),mData(:,3));
-%     BioInterp.V = f(X,Y);
-%     BioInterp.X = X;
-%     BioInterp.Y = Y;
-    %BioInterp.Z = Z;
-    
-    fprintf('...done \n');
     
     
     
-    tTEnergies = [88.83 178.01 276.09 430.1];
+    
+    tTEnergies = [stBioData{1,1}(1,1).Energy stBioData{1,1}(1,2).Energy ...
+                  stBioData{1,1}(1,3).Energy stBioData{1,1}(1,4).Energy];
     tTAlpha = zeros(81,4);
     tTAlpha(:,1)=stBioData{1,1}(1,1).Alpha;
     tTAlpha(:,2)=stBioData{1,1}(1,2).Alpha;
@@ -162,46 +125,53 @@ if pln.bioOptimization == true
     tDepth(:,3)=stBioData{1,1}(1,3).Depths;
     tDepth(:,4)=stBioData{1,1}(1,4).Depths;
     
-    interEnergy = linspace(80,450,30);
-    interDepth = linspace(-36,36,100);
-    vAlpha2 = zeros(length(interDepth),length(interEnergy));
-    vDepth2 = zeros(length(interDepth),length(interEnergy));
-
-    for k = 1:length(interEnergy)
-        for IX = 1 : length(interDepth)
+    
+    vEnergies = zeros(numel(baseData),1);
+    for i = 1:numel(baseData)
+        vEnergies(i)=baseData(1,i).energy;
+    end
+    vEnergies = sort(vEnergies);
+    vDepth = linspace(min(tDepth(:)),max(tDepth(:)),300);
+    mAlpha = zeros(numel(vDepth),numel(vEnergies));
+    mDepth =zeros(numel(vDepth),numel(vEnergies));
+   
+    for i=1:numel(vEnergies)
+        for IX = 1 : numel(vDepth)
 
             dummyAlpha = zeros(numel(tTEnergies),1);
 
             for JX = 1 : numel(tTEnergies)
-                dummyAlpha(JX) = interp1(tDepth(:,JX), tTAlpha(:,JX), interDepth(IX));
+                dummyAlpha(JX) = interp1(tDepth(:,JX), tTAlpha(:,JX), vDepth(IX),'linear');
             end
 
-            vAlpha2(IX,k) = interp1(tTEnergies, dummyAlpha, interEnergy(k));           
+            mAlpha(IX,i) = interp1(tTEnergies, dummyAlpha, vEnergies(i),'linear');
+
         end
-        vDepth2(:,k) = interDepth;
+        mDepth(:,i)=vDepth;
     end
- 
+
+    BioInterp.tTEnergies =vEnergies;
+    BioInterp.tTAlpha=mAlpha;
+    BioInterp.tDepth=mDepth;
     
     
-    BioInterp.tTEnergies =interEnergy;
-    BioInterp.tTAlpha=vAlpha2;
-    BioInterp.tDepth=vDepth2;
-    
-    
-%     figure, subplot(221),plot(tDepth(:,1),tTAlpha(:,1)),title('88MeV'),
-%             subplot(222),plot(tDepth(:,2),tTAlpha(:,1)),title('178MeV'),
-%             subplot(223),plot(tDepth(:,3),tTAlpha(:,1)),title('276MeV'),
-%             subplot(224),plot(tDepth(:,4),tTAlpha(:,1)),title('430MeV')
-    
-end
+%      figure, subplot(221),plot(tDepth(:,1),tTAlpha(:,1)),title('88MeV'),
+%             subplot(222),plot(tDepth(:,2),tTAlpha(:,2)),title('178MeV'),
+%             subplot(223),plot(tDepth(:,3),tTAlpha(:,3)),title('276MeV'),
+%             subplot(224),plot(tDepth(:,4),tTAlpha(:,4)),title('430MeV')
+%     
+%     figure,
+%     for i=1:size(mDepth,2)
+%         str = sprintf('Energy %d',vEnergies(i));
+%         plot(mDepth(:,i),mAlpha(:,i)),title(str);
+%         waitforbuttonpress
+%     end
 
 
-% load protonBaseData
-if strcmp(pln.radiationMode,'protons')
-    load protonBaseData;
-elseif strcmp(pln.radiationMode,'carbon')
-    load carbonBaseData;
+   
+        fprintf('...done \n');
 end
+
 
 % It make a meshgrid with CT position in millimeter for calculate
 % geometrical distances

@@ -94,8 +94,8 @@ if pln.bioOptimization == true
     dOpt.RBE = dOpt.BiologicalDose./dOpt.PhysicalDose;
     %dOpt.RBE = ((sqrt(a_x.^2 + 4 .* b_x .* dOpt.Effect') - a_x)./(2.*b_x.*dOpt.PhysicalDose'))';
     %dOpt.RBE= reshape(dOpt.RBE,dij.dimensions);
-    
     dOpt.Effect = reshape(dOpt.Effect,dij.dimensions);
+    dOpt.Alpha = reshape(dij.mAlpha*wOpt,dij.dimensions);
 end
 
 

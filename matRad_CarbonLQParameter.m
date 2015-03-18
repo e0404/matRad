@@ -24,10 +24,9 @@ newInd(SortIndex) =unsorted;
 
   [c index] = min(abs(Interp.tTEnergies-sEnergy.energy));
   closestValues = Interp.tTEnergies(index);
-  vAlphaSorted = interp1(R0-Interp.tDepth(:,index), Interp.tTAlpha(:,index), vRadDepthsSort);
+  vAlphaSorted = interp1(R0-Interp.tDepth(:,index), Interp.tTAlpha(:,index), vRadDepthsSort,'pchip');
 
  %%
-
  
 %mean = vAlphaSorted;
 %std = vAlphaSorted.*0.2;
@@ -45,7 +44,7 @@ newInd(SortIndex) =unsorted;
 %         dummyAlpha = zeros(numel(Interp.tTEnergies),1);
 %         
 %         for JX = 1 : numel(Interp.tTEnergies)
-%             dummyAlpha(JX) = interp1(tDepth(:,JX), Interp.tTAlpha(:,JX), vRadDepthsSort(IX));
+%             dummyAlpha(JX) = interp1(R0-Interp.tDepth(:,JX), Interp.tTAlpha(:,JX), vRadDepthsSort(IX));
 %         end
 %         
 %         vAlpha2(IX) = interp1(Interp.tTEnergies, dummyAlpha, sEnergy.energy);
@@ -58,8 +57,8 @@ vAlpha=vAlphaSorted(newInd);
 %str =sprintf('Range of this beam is %f',R0);
 %figure,plot(vRadDepthsSort,vAlphaSorted),title(str);
 
-%figure,subplot(121),plot(vRadDepthsSort,vAlphaSorted);
-%        subplot(122),plot(vRadDepthsSort,vAlpha2);
+% figure,subplot(121),plot(vRadDepthsSort,vAlphaSorted),title('own interpolation');
+%         subplot(122),plot(vRadDepthsSort,vAlpha2),title('MTPS');
         
 
 

@@ -42,10 +42,10 @@ load LIVER2Gy.mat
 %load phantom2Gy.mat
 
 % meta information for treatment plan
-pln.SAD             = 1000; %[mm]
+pln.SAD             = 10000; %[mm]
 pln.resolution      = ctResolution; %[mm/voxel]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,pln,0);
-pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
+pln.bixelWidth      = 3; % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = [300]; % [°]
 pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
