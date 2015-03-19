@@ -108,59 +108,55 @@ if pln.bioOptimization == true
     
     load('GSI_Chardoma_Carbon_BioData.mat');
     
-    
-    
-    
-    
-    tTEnergies = [stBioData{1,1}(1,1).Energy stBioData{1,1}(1,2).Energy ...
+    % works for now just with one tissue class
+    vEnergiesMeasured = [stBioData{1,1}(1,1).Energy stBioData{1,1}(1,2).Energy ...
                   stBioData{1,1}(1,3).Energy stBioData{1,1}(1,4).Energy];
-    tTAlpha = zeros(81,4);
-    tTAlpha(:,1)=stBioData{1,1}(1,1).Alpha;
-    tTAlpha(:,2)=stBioData{1,1}(1,2).Alpha;
-    tTAlpha(:,3)=stBioData{1,1}(1,3).Alpha;
-    tTAlpha(:,4)=stBioData{1,1}(1,4).Alpha;
-    tDepth = zeros(81,4);
-    tDepth(:,1)=stBioData{1,1}(1,1).Depths;
-    tDepth(:,2)=stBioData{1,1}(1,2).Depths;
-    tDepth(:,3)=stBioData{1,1}(1,3).Depths;
-    tDepth(:,4)=stBioData{1,1}(1,4).Depths;
     
+              % extract experimental measured biological data          
+    for i = 1:length(stBioData{1,1})
+        vAlphaMeasured(:,i) = stBioData{1,1}(1,i).Alpha;
+        vDepthMeasured(:,i) = stBioData{1,1}(1,i).Depths;
+    end
     
-    vEnergies = zeros(numel(baseData),1);
+    % extract available beam energies from baseData
     for i = 1:numel(baseData)
         vEnergies(i)=baseData(1,i).energy;
     end
     vEnergies = sort(vEnergies);
-    vDepth = linspace(min(tDepth(:)),max(tDepth(:)),300);
-    mAlpha = zeros(numel(vDepth),numel(vEnergies));
-    mDepth =zeros(numel(vDepth),numel(vEnergies));
+    
+    mAlphaIntrp = zeros(size(vAlphaMeasured,1),numel(vEnergies));
+    mDepthIntrp =zeros(size(vAlphaMeasured,1),numel(vEnergies));
    
     for i=1:numel(vEnergies)
-        for IX = 1 : numel(vDepth)
+        [~, Index] = min(abs(vEnergiesMeasured-vEnergies(i)));
+        vDepth = vDepthMeasured(:,Index);
+        for j = 1 : numel(vDepth)
 
-            dummyAlpha = zeros(numel(tTEnergies),1);
+            dummyAlpha = zeros(numel(vEnergiesMeasured),1);
 
-            for JX = 1 : numel(tTEnergies)
-                dummyAlpha(JX) = interp1(tDepth(:,JX), tTAlpha(:,JX), vDepth(IX),'linear');
+            for k = 1 : numel(vEnergiesMeasured)
+                dummyAlpha(k) = interp1(vDepthMeasured(:,k), vAlphaMeasured(:,k), vDepth(j),'linear');
             end
 
-            mAlpha(IX,i) = interp1(tTEnergies, dummyAlpha, vEnergies(i),'linear');
+            mAlpha(j,i) = interp1(vEnergiesMeasured, dummyAlpha, vEnergies(i),'linear');
 
         end
         mDepth(:,i)=vDepth;
     end
 
-    BioInterp.tTEnergies =vEnergies;
-    BioInterp.tTAlpha=mAlpha;
-    BioInterp.tDepth=mDepth;
+    BioInterp.vEnergies =vEnergies;
+    BioInterp.mAlpha=mAlpha;
+    BioInterp.mDepth=mDepth;
     
     
-%      figure, subplot(221),plot(tDepth(:,1),tTAlpha(:,1)),title('88MeV'),
-%             subplot(222),plot(tDepth(:,2),tTAlpha(:,2)),title('178MeV'),
-%             subplot(223),plot(tDepth(:,3),tTAlpha(:,3)),title('276MeV'),
-%             subplot(224),plot(tDepth(:,4),tTAlpha(:,4)),title('430MeV')
-%     
+    
+%     figure,subplot(221),plot(vDepthMeasured(:,1),vAlphaMeasured(:,1)),title('88MeV'),
+%            subplot(222),plot(vDepthMeasured(:,2),vAlphaMeasured(:,2)),title('178MeV'),
+%            subplot(223),plot(vDepthMeasured(:,3),vAlphaMeasured(:,3)),title('276MeV'),
+%            subplot(224),plot(vDepthMeasured(:,4),vAlphaMeasured(:,4)),title('430MeV'),
+%            title('existing alpha curves from GSI - chordoma cells ')
 %     figure,
+%     title('interpolated alpha curves for chordoma cells for available energies ')
 %     for i=1:size(mDepth,2)
 %         str = sprintf('Energy %d',vEnergies(i));
 %         plot(mDepth(:,i),mAlpha(:,i)),title(str);
