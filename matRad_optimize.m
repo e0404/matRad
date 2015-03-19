@@ -67,7 +67,7 @@ objFuncValue(2) = 2*objFuncValue(1);
 
 % variables for termination criteria
 iter      = 0;
-numOfIter = 300;
+numOfIter = 200;
 prec      = 1e-7;
 
 % convergence if change in objective function smaller than prec or maximum

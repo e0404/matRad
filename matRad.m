@@ -40,12 +40,13 @@ clc
 load LIVER2Gy.mat
 %load LIVER.mat
 %load phantom2Gy.mat
+%load PencilPhantom1.mat
 tic
 % meta information for treatment plan
 pln.SAD             = 10000; %[mm]
 pln.resolution      = ctResolution; %[mm/voxel]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,pln,0);
-pln.bixelWidth      = 2; % [mm] / also corresponds to lateral spot spacing for particles
+pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = [300]; % [°]
 pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
@@ -81,5 +82,10 @@ toc
 %% dvh and conformity index
 % matRad_calcDVH(dSeq,cst)
 
+
+%% generate phantom
+
+% V = unique([cell2mat(cst(:,8))]);
+% 
 
 

@@ -212,7 +212,7 @@ if ~isempty(data.cst) && data.contourCheckboxValue && data.typeofplot ==1
 
     mask = zeros(size(data.ct)); % create zero cube with same dimeonsions like dose cube
     for s = 1:size(data.cst,1)
-        if ~strcmp(data.cst{s,3},'IGNORED')
+        if ~strcmp(data.cst{s,3},'IGNORED') %&& ~strcmp(data.cst{s,2},'DoseFalloff')
             mask(:) = 0;
             mask(data.cst{s,8}) = 1;
             if data.plane == 1 && sum(sum(mask(data.slice,:,:))) > 0
@@ -227,7 +227,7 @@ if ~isempty(data.cst) && data.contourCheckboxValue && data.typeofplot ==1
 
     myLegend = legend('show');
     set(myLegend,'Position',[.85 .5 .1 .2]);
-    set(myLegend,'FontSize',26);
+    set(myLegend,'FontSize',20);
     
 end
     
@@ -282,133 +282,130 @@ axis(data.axis);
 
 
 if data.typeofplot ==2
-   
-    %% to do detect central dose ray.
-    %2D Drehung der aktuellen slice um auf die BEV zu kommen
 
-   
-    
+    % clear view and initialize some values
     clf;
     myAxes   = axes('Position', [0.35 0.1 0.55 0.8]);
     set(gca,'YDir','normal');
-    ylabel('dose values')
+    ylabel('dose')
     ccc={'k','g','r','b','m','y','c'};
     ymax=0;
+    %it is possible to add a certain width to the profile plot
     delta =0; % make it bixel distance dependend
 
-
-    vY=getfield(data.dose,'PhysicalDose');
-
-     
-     
-    mActualSlice = vY(:,:,data.slice);
     
+    mDose=getfield(data.dose,'PhysicalDose');
+    mActualSlice = mDose(:,:,data.slice);
     mRotActualSlice =imrotate(mActualSlice,data.pln.gantryAngles(1),'crop');
     vW =ones(size(mRotActualSlice,2),1);
     
     vProjected =vW'*mRotActualSlice;
-    vProjectedx = mRotActualSlice*vW;
-    %find first and last nonzero element
-    indices = find(vProjected);
-    
-   ind = round((indices(end)+indices(1))/2);
+    %find first and last nonzero element of projected data 
+    %which can be seen as determinng the beam width
+    idx = find(vProjected);
+    idxCentAxis = round((idx(end)+idx(1))/2);
     
     if isnan(data.profileY)
-        data.profileY = ind;
+        data.profileY = idxCentAxis;
     else
-        ind=data.profileY;
+        idxCentAxis=data.profileY;
     end
-    vY=mRotActualSlice(:,ind-delta:ind+delta);
+    
+    % plot the physical dose
+    vY=mRotActualSlice(:,idxCentAxis-delta:idxCentAxis+delta);
     vY(isnan(vY))=0;
     vY_avg=mean(vY,2);
     vX=linspace(1,data.pln.resolution(1)*numel(vY_avg),numel(vY_avg));
     h1=plot(vX,vY_avg,'color',ccc{1,1},'LineWidth',3),hold on; 
     
+    % assess x and y axis limits
     xLim  = find(vY_avg);
     xmin= xLim(1)*data.pln.resolution(1)-20;
     xmax= xLim(end)*data.pln.resolution(1)+20;
-    
     if max(vY_avg(:))>ymax
              ymax=max(vY_avg(:));
     end
     
+    
     if data.pln.bioOptimization == 1
         
-        vY=getfield(data.dose,'Effect');
-        mActualSlice = vY(:,:,data.slice);
+        mEffect=getfield(data.dose,'Effect');
+        mActualSlice = mEffect(:,:,data.slice);
         mRotActualSlice =imrotate(mActualSlice,data.pln.gantryAngles(1),'crop');
-        vY=mRotActualSlice(:,ind-delta:ind+delta);
-        vY(isnan(vY))=0;
-        vY_avg=mean(vY,2);
-        h2=plot(vX,vY_avg,'color',ccc{1,2},'LineWidth',3),hold on; 
+        mEffect=mRotActualSlice(:,idxCentAxis-delta:idxCentAxis+delta);
+        mEffect(isnan(mEffect))=0;
+        vEffect=mean(mEffect,2);
+        h2=plot(vX,vEffect,'color',ccc{1,2},'LineWidth',3),hold on; 
         
-        vY=getfield(data.dose,'Alpha');
-        mActualSlice = vY(:,:,data.slice);
+        mAlpha=getfield(data.dose,'Alpha');
+        mActualSlice = mAlpha(:,:,data.slice);
         mRotActualSlice =imrotate(mActualSlice,data.pln.gantryAngles(1),'crop');
-        vY=mRotActualSlice(:,ind-delta:ind+delta);
-        vY(isnan(vY))=0;
-        vY_avg=mean(vY,2);
-        h3=plot(vX,vY_avg,'color',ccc{1,7},'LineWidth',3),hold on; 
+        mAlpha=mRotActualSlice(:,idxCentAxis-delta:idxCentAxis+delta);
+        mAlpha(isnan(mAlpha))=0;
+        vAlpha=mean(mAlpha,2);
+        h3=plot(vX,vAlpha,'color',ccc{1,7},'LineWidth',3),hold on; 
       
-        vBD=getfield(data.dose,'BiologicalDose');
-        mActualSlice = vBD(:,:,data.slice);
+        mBioDose=getfield(data.dose,'BiologicalDose');
+        mActualSlice = mBioDose(:,:,data.slice);
         mRotActualSlice =imrotate(mActualSlice,data.pln.gantryAngles(1),'crop');
-        vBD=mRotActualSlice(:,ind-delta:ind+delta);
-        vBD(isnan(vBD))=0;
-        vBD_avg=mean(vBD,2);
+        mBioDose=mRotActualSlice(:,idxCentAxis-delta:idxCentAxis+delta);
+        mBioDose(isnan(mBioDose))=0;
+        vBioDose=mean(mBioDose,2);
         
-        vRBE=getfield(data.dose,'RBE');
-        mActualSlice = vRBE(:,:,data.slice);
+        mRBE=getfield(data.dose,'RBE');
+        mActualSlice = mRBE(:,:,data.slice);
         mRotActualSlice =imrotate(mActualSlice,data.pln.gantryAngles(1),'crop');
-        vRBE=mRotActualSlice(:,ind-delta:ind+delta);
-        vRBE(isnan(vRBE))=0;
-        vRBE_avg=mean(vRBE,2);
+        mRBE=mRotActualSlice(:,idxCentAxis-delta:idxCentAxis+delta);
+        mRBE(isnan(mRBE))=0;
+        vRBE=mean(mRBE,2);
         
-        
-        [ax,h4,h5]=plotyy(vX,vBD_avg,vX,vRBE_avg,'plot'),hold on;
+        % plot biological dose against RBE
+        [ax,h4,h5]=plotyy(vX,vBioDose,vX,vRBE,'plot'),hold on;
       
         
-        set(get(ax(2),'Ylabel'),'String','RBE','FontSize',14);
-        set(get(ax(1),'Ylabel'),'String','RBE x dose','FontSize',14);
+        set(get(ax(2),'Ylabel'),'String','RBE','FontSize',16);
+        set(get(ax(1),'Ylabel'),'String','RBE x dose','FontSize',16);
         set(h4,'Linewidth',4,'color',ccc{1,3});
         set(h5,'Linewidth',3,'color',ccc{1,4});
         set(ax(1),'ycolor','r')
         set(ax(2),'ycolor','b')
       
         
-         if max(vBD_avg(:))>ymax
-             ymax=max(vBD_avg(:));
+         if max(vBioDose(:))>ymax
+             ymax=max(vBioDose(:));
          end
     end
        
     
-    
-    Prescription=0;
+    % asses the prescripted dose and target coordinates 
+    % todo: ptv, ctv, gtv are all labeld as target
+    sPrescrpDose=0;
     for i=1:size(data.cst,1)
         if strcmp(data.cst{i,3},'TARGET')==1
            mTarget = unique(data.cst{i,8});
-           Prescription = data.cst{i,4};
+           sPrescrpDose = data.cst{i,4};
         end
         
     end
+    
     ymax = ymax +ymax*0.1;
     
-
+    % plot target boundaries
     mTargetStack = zeros(size(data.ct));
     mTargetStack(mTarget)=1;
-    %figure,imshow(Helper(:,:,data.slice))
     mTargetSlice = mTargetStack(:,:,data.slice);
     mRotTargetSlice =imrotate(mTargetSlice,data.pln.gantryAngles(1),'crop');
-    vRay = find(mRotTargetSlice(:,ind))*data.pln.resolution(2);
+    vRay = find(mRotTargetSlice(:,idxCentAxis))*data.pln.resolution(2);
     if ~isempty(vRay)
         h6=plot([vRay(1) vRay(1)],[0 ymax],'--','Linewidth',2,'color','k'),hold on
         plot([vRay(end) vRay(end)], [0 ymax],'--','Linewidth',2,'color','k'),hold on
-        
         xmax = vRay(end)+30;
-        
+    else
+        h6 =0;
     end
     
-    h7=plot([0 size(data.ct,1)*data.pln.resolution(1)],[Prescription Prescription],'--','Linewidth',2,'color','m')
+    % plot prescription
+    h7=plot([0 size(data.ct,1)*data.pln.resolution(1)],[sPrescrpDose sPrescrpDose],'--','Linewidth',2,'color','m')
     
     str = sprintf('profile plot of zentral axis of first beam at %d° in slice %d / %d ',data.pln.gantryAngles(1),data.profileY*data.pln.resolution(2),size(data.ct,2)*data.pln.resolution(2));
     title(str,'FontSize',14),grid on
@@ -419,6 +416,7 @@ if data.typeofplot ==2
         legend([h1;h6;h7],'Physical Dose','target boundary','prescription');
     end
     
+    % set axis limits
     if data.pln.bioOptimization == 0
         xlim([xmin xmax]);
     else
@@ -428,8 +426,12 @@ if data.typeofplot ==2
     if ymax<0.5
         ymax = 0.5;
     end
-    set(gca,'YTick',[0 ymax/4 ymax/2 3*ymax/4 ymax]);
-    set(gca,'YTickLabel',[0 ymax/4 ymax/2 3*ymax/4 ymax]);
+    % set axis labels and ticks
+    ymax=round(ymax*100)/100;
+    yVal=round((linspace(0,ymax,10)).*100)/100;
+    
+    set(gca,'YTick',yVal);
+    set(gca,'YTickLabel',yVal);
     xlabel('depth [mm]','FontSize',16);
     
     
@@ -553,7 +555,7 @@ displayOptionText = uicontrol('Parent', gcf,...
     
 displayPopup = uicontrol('Parent', gcf,...
         'Style', 'popupmenu',...
-        'String', {'intensity','profile'} ,...
+        'String', {'Intensity Plot','Profile Plot'} ,...
         'FontSize', 10,...
         'Value',data.typeofplot,...
         'Units', 'normalized',...
