@@ -40,12 +40,12 @@ clc
 load LIVER2Gy.mat
 %load LIVER.mat
 %load phantom2Gy.mat
-
+tic
 % meta information for treatment plan
 pln.SAD             = 10000; %[mm]
 pln.resolution      = ctResolution; %[mm/voxel]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,pln,0);
-pln.bixelWidth      = 3; % [mm] / also corresponds to lateral spot spacing for particles
+pln.bixelWidth      = 2; % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = [300]; % [°]
 pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
@@ -72,7 +72,7 @@ doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1));
 %% inverse planning for imrt
 [wOpt,dOpt] = matRad_inversePlanning(dij,cst,pln);
 matRad_visCtDose(dOpt,cst,pln,ct);
-
+toc
 %% sequencing
 % Sequencing = matRad_xiaLeafSequencing(wOpt,stf,pln,7,0);
 % dSeq = matRad_mxCalcDose(dij,Sequencing.w);

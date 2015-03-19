@@ -23,11 +23,10 @@ newInd(SortIndex) =unsorted;
 %% fine interpolation
 
   [c index] = min(abs(Interp.tTEnergies-sEnergy.energy));
-  closestValues = Interp.tTEnergies(index);
-  vAlphaSorted = interp1(R0-Interp.tDepth(:,index), Interp.tTAlpha(:,index), vRadDepthsSort,'pchip');
+  vAlphaSorted = interp1(R0-Interp.tDepth(:,index), Interp.tTAlpha(:,index), vRadDepthsSort);
 
  %%
- 
+
 %mean = vAlphaSorted;
 %std = vAlphaSorted.*0.2;
 
@@ -37,7 +36,7 @@ newInd(SortIndex) =unsorted;
 
 % add white Gaussian noise to signal
 
-%vAlphaSorted = vAlphaSorted-vAlphaSorted.*0.25;
+%vAlphaSorted = vAlphaSorted+vAlphaSorted.*0.20;
 
 % for IX = 1 : numel(vRadDepthsSort)
 %    
@@ -54,8 +53,8 @@ newInd(SortIndex) =unsorted;
 
 vAlpha=vAlphaSorted(newInd);
 %
-%str =sprintf('Range of this beam is %f',R0);
-%figure,plot(vRadDepthsSort,vAlphaSorted),title(str);
+% str =sprintf('Range of this beam is %f',R0);
+% figure,plot(vRadDepthsSort,vAlphaSorted),title(str);
 
 % figure,subplot(121),plot(vRadDepthsSort,vAlphaSorted),title('own interpolation');
 %         subplot(122),plot(vRadDepthsSort,vAlpha2),title('MTPS');

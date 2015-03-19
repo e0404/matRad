@@ -131,11 +131,17 @@ if pln.bioOptimization == true
         vEnergies(i)=baseData(1,i).energy;
     end
     vEnergies = sort(vEnergies);
-    vDepth = linspace(min(tDepth(:)),max(tDepth(:)),300);
+    vDepth = zeros(size(tDepth,1),1);
+    
+    
     mAlpha = zeros(numel(vDepth),numel(vEnergies));
     mDepth =zeros(numel(vDepth),numel(vEnergies));
    
     for i=1:numel(vEnergies)
+        
+        [~, index] = min(abs(vEnergies(i)-tTEnergies));
+        vDepth = tDepth(:,index);
+        
         for IX = 1 : numel(vDepth)
 
             dummyAlpha = zeros(numel(tTEnergies),1);

@@ -227,6 +227,7 @@ if ~isempty(data.cst) && data.contourCheckboxValue && data.typeofplot ==1
 
     myLegend = legend('show');
     set(myLegend,'Position',[.85 .5 .1 .2]);
+    set(myLegend,'FontSize',26);
     
 end
     
@@ -323,6 +324,10 @@ if data.typeofplot ==2
     vX=linspace(1,data.pln.resolution(1)*numel(vY_avg),numel(vY_avg));
     h1=plot(vX,vY_avg,'color',ccc{1,1},'LineWidth',3),hold on; 
     
+    xLim  = find(vY_avg);
+    xmin= xLim(1)*data.pln.resolution(1)-20;
+    xmax= xLim(end)*data.pln.resolution(1)+20;
+    
     if max(vY_avg(:))>ymax
              ymax=max(vY_avg(:));
     end
@@ -365,11 +370,10 @@ if data.typeofplot ==2
         
         set(get(ax(2),'Ylabel'),'String','RBE','FontSize',14);
         set(get(ax(1),'Ylabel'),'String','RBE x dose','FontSize',14);
-        set(h4,'Linewidth',3,'color',ccc{1,3});
+        set(h4,'Linewidth',4,'color',ccc{1,3});
         set(h5,'Linewidth',3,'color',ccc{1,4});
         set(ax(1),'ycolor','r')
         set(ax(2),'ycolor','b')
-        
       
         
          if max(vBD_avg(:))>ymax
@@ -399,25 +403,36 @@ if data.typeofplot ==2
     if ~isempty(vRay)
         h6=plot([vRay(1) vRay(1)],[0 ymax],'--','Linewidth',2,'color','k'),hold on
         plot([vRay(end) vRay(end)], [0 ymax],'--','Linewidth',2,'color','k'),hold on
+        
+        xmax = vRay(end)+30;
+        
     end
     
     h7=plot([0 size(data.ct,1)*data.pln.resolution(1)],[Prescription Prescription],'--','Linewidth',2,'color','m')
     
     str = sprintf('profile plot of zentral axis of first beam at %d° in slice %d / %d ',data.pln.gantryAngles(1),data.profileY*data.pln.resolution(2),size(data.ct,2)*data.pln.resolution(2));
     title(str,'FontSize',14),grid on
+    axis auto
     if data.pln.bioOptimization == 1
-        legend([h1;h2;h3;h4;h5;h6;h7],'Physical Dose','Effect','Alpha','Biological Dose','RBE','target boundary','prescription');
+        legend([h1;h2;h3;h4;h5;h6;h7],'Physical Dose','Effect','Alpha','Biological Dose','RBE','target boundary','prescription');      
     else
         legend([h1;h6;h7],'Physical Dose','target boundary','prescription');
     end
-    %ylim([0 2.5]);
-    axis auto
+    
+    if data.pln.bioOptimization == 0
+        xlim([xmin xmax]);
+    else
+        xlim(ax(1),[xmin xmax]);
+        xlim(ax(2),[xmin xmax]);
+    end
     if ymax<0.5
         ymax = 0.5;
     end
     set(gca,'YTick',[0 ymax/4 ymax/2 3*ymax/4 ymax]);
     set(gca,'YTickLabel',[0 ymax/4 ymax/2 3*ymax/4 ymax]);
     xlabel('depth [mm]','FontSize',16);
+    
+    
 
 end
     
