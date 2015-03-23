@@ -148,7 +148,9 @@ if pln.bioOptimization == true
     BioInterp.mAlpha=mAlpha;
     BioInterp.mDepth=mDepth;
     
-    
+    tic
+    test =matRadParseBioData('C:\Users\wieserh\Documents\matRad\bio_database\database_AB2');
+    toc
     
 %     figure,subplot(221),plot(vDepthMeasured(:,1),vAlphaMeasured(:,1)),title('88MeV'),
 %            subplot(222),plot(vDepthMeasured(:,2),vAlphaMeasured(:,2)),title('178MeV'),
