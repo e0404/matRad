@@ -10,6 +10,10 @@ R0=sEnergy.range/10;
 unsorted =1:length(vRadDepths);
 newInd(SortIndex) =unsorted;
 
+if sEnergy.energy>230 && sEnergy.energy<250  
+    str = 'asdf';
+end
+
 
 [~, index] = min(abs([Interp(:).energy]-sEnergy.energy));
 NumTissueClass = size(Interp(1).alpha,2);

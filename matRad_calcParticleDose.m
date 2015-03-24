@@ -107,7 +107,7 @@ if pln.bioOptimization == true
     end
     
     SourceOfBioData = 'GSI';%'GSI';%'CNAO';
-    
+    Counter = 0;
     switch SourceOfBioData
         % use existing four alpha curves for chordoma cells measured at the
         % GSI in Darmstadt
@@ -129,15 +129,16 @@ if pln.bioOptimization == true
                             dummyAlpha(k) = interp1(BioData(currTissClass).depths(:,k), BioData(currTissClass).alpha(:,k), vDepth(j),'linear');
                             dummyBeta(k) = interp1(BioData(currTissClass).depths(:,k), BioData(currTissClass).beta(:,k), vDepth(j),'linear');
                         end
-                        mAlpha(j) = interp1(BioData(currTissClass).energy, dummyAlpha, EnergyBaseData(i),'linear');
-                        mBeta(j) = interp1(BioData(currTissClass).energy, dummyBeta, EnergyBaseData(i),'linear');
+                        vAlpha(j) = interp1(BioData(currTissClass).energy, dummyAlpha, EnergyBaseData(i),'linear');
+                        vBeta(j) = interp1(BioData(currTissClass).energy, dummyBeta, EnergyBaseData(i),'linear');
                     end
                     
-                    baseData(i).alpha(:,currTissClass) = mAlpha';
-                    baseData(i).beta(:,currTissClass) = mBeta'; 
+                    baseData(i).alpha(:,currTissClass) = vAlpha';
+                    baseData(i).beta(:,currTissClass) = vBeta'; 
                     baseData(i).res_range(:,currTissClass) = vDepth;
                     
-                    matRad_progress(currTissClass*i, totalNumberOfEvaluations);
+                    Counter = Counter+1;
+                    matRad_progress(Counter, totalNumberOfEvaluations);
                 end
                 
             end
