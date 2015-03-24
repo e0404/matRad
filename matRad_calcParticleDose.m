@@ -66,7 +66,7 @@ dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 % Allocate space for dij.dose sparse matrix
 dij.dose = spalloc(numel(ct),dij.totalNumOfBixels,1);
 dij.mAlpha = spalloc(numel(ct),dij.totalNumOfBixels,1);
-dij.mBeta = 0.05;
+dij.mBeta = spalloc(numel(ct),dij.totalNumOfBixels,1);
 
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
@@ -98,76 +98,127 @@ end
 % and initializes alpha/beta interpolants
 if pln.bioOptimization == true
     fprintf('matRad: Creating biological tissue interpolant... ');
-    mT = zeros(size(V,1),2);
-    mT(:,1) = V;
+    mTissueClass = zeros(size(V,1),2);
+    mTissueClass(:,1) = V;
     for i=1:size(cst,1)
         % find indices of structures related to V
         [~, row] = ismember(cst{i,8},V,'rows');        
-        mT(row,2)=cst{i,9}.TissueClass;
+        mTissueClass(row,2)=cst{i,9}.TissueClass;
     end
     
-    load('GSI_Chardoma_Carbon_BioData.mat');
+    SourceOfBioData = 'GSI';%'GSI';%'CNAO';
     
-    % works for now just with one tissue class
-    vEnergiesMeasured = [stBioData{1,1}(1,1).Energy stBioData{1,1}(1,2).Energy ...
-                  stBioData{1,1}(1,3).Energy stBioData{1,1}(1,4).Energy];
-    
-              % extract experimental measured biological data          
-    for i = 1:length(stBioData{1,1})
-        vAlphaMeasured(:,i) = stBioData{1,1}(1,i).Alpha;
-        vDepthMeasured(:,i) = stBioData{1,1}(1,i).Depths;
-    end
-    
-    % extract available beam energies from baseData
-    for i = 1:numel(baseData)
-        vEnergies(i)=baseData(1,i).energy;
-    end
-    vEnergies = sort(vEnergies);
-    
-    mAlphaIntrp = zeros(size(vAlphaMeasured,1),numel(vEnergies));
-    mDepthIntrp =zeros(size(vAlphaMeasured,1),numel(vEnergies));
-   
-    for i=1:numel(vEnergies)
-        [~, Index] = min(abs(vEnergiesMeasured-vEnergies(i)));
-        vDepth = vDepthMeasured(:,Index);
-        for j = 1 : numel(vDepth)
+    switch SourceOfBioData
+        % use existing four alpha curves for chordoma cells measured at the
+        % GSI in Darmstadt
+        case 'GSI'
+            load('GSI_Chardoma_Carbon_BioData.mat');
+            load('GSI_Chardoma_Carbon_BioData2.mat');     
+            
+            EnergyBaseData = [baseData(:).energy];
+            totalNumberOfEvaluations=length(BioData)*numel(EnergyBaseData);
+            for currTissClass = 1:length(BioData)
+              
+                for i=1:numel(EnergyBaseData)
+                    [~, Index] = min(abs(BioData(currTissClass).energy-EnergyBaseData(i)));
+                    vDepth = BioData(currTissClass).depths(:,Index);
+                    for j = 1 : numel(vDepth)
+                        dummyAlpha = zeros(numel(BioData(currTissClass).energy),1);
+                        dummyBeta = zeros(numel(BioData(currTissClass).energy),1);
+                        for k = 1 : numel(BioData(currTissClass).energy)
+                            dummyAlpha(k) = interp1(BioData(currTissClass).depths(:,k), BioData(currTissClass).alpha(:,k), vDepth(j),'linear');
+                            dummyBeta(k) = interp1(BioData(currTissClass).depths(:,k), BioData(currTissClass).beta(:,k), vDepth(j),'linear');
+                        end
+                        mAlpha(j) = interp1(BioData(currTissClass).energy, dummyAlpha, EnergyBaseData(i),'linear');
+                        mBeta(j) = interp1(BioData(currTissClass).energy, dummyBeta, EnergyBaseData(i),'linear');
+                    end
+                    
+                    baseData(i).alpha(:,currTissClass) = mAlpha';
+                    baseData(i).beta(:,currTissClass) = mBeta'; 
+                    baseData(i).res_range(:,currTissClass) = vDepth;
+                    
+                    matRad_progress(currTissClass*i, totalNumberOfEvaluations);
+                end
+                
+            end
+%             % works for now just with one tissue class
+%             vEnergiesMeasured = [stBioData{1,1}(1,1).Energy stBioData{1,1}(1,2).Energy ...
+%                           stBioData{1,1}(1,3).Energy stBioData{1,1}(1,4).Energy];
+% 
+%             % extract experimental measured biological data          
+%             for i = 1:length(stBioData{1,1})
+%                 vAlphaMeasured(:,i) = stBioData{1,1}(1,i).Alpha;
+%                 vDepthMeasured(:,i) = stBioData{1,1}(1,i).Depths;
+%             end
+% 
+%             % extract available beam energies from baseData
+%             for i = 1:numel(baseData)
+%                 vEnergies(i)=baseData(1,i).energy;
+%             end
+%             vEnergies = sort(vEnergies);
+% 
+%             mBeta =zeros(size(vAlphaMeasured,1),1);
+%             mAlpha=zeros(size(vAlphaMeasured,1),1);
+% 
+%             for i=1:numel(vEnergies)
+%                 [~, Index] = min(abs(vEnergiesMeasured-vEnergies(i)));
+%                 vDepth = vDepthMeasured(:,Index);
+%                 for j = 1 : numel(vDepth)
+%                     dummyAlpha = zeros(numel(vEnergiesMeasured),1);
+%                     for k = 1 : numel(vEnergiesMeasured)
+%                         dummyAlpha(k) = interp1(vDepthMeasured(:,k), vAlphaMeasured(:,k), vDepth(j),'linear');
+%                     end
+%                     mAlpha(j) = interp1(vEnergiesMeasured, dummyAlpha, vEnergies(i),'linear');
+%                     mBeta(j) = 0.05;
+%                 end
+%                 baseData(i).res_range = vDepth;
+%                 baseData(i).alpha = mAlpha;
+%                 baseData(i).beta = mBeta;       
+%             end
+                %    figure,subplot(221),plot(vDepthMeasured(:,1),vAlphaMeasured(:,1)),title('88MeV'),
+                %            subplot(222),plot(vDepthMeasured(:,2),vAlphaMeasured(:,2)),title('178MeV'),
+                %            subplot(223),plot(vDepthMeasured(:,3),vAlphaMeasured(:,3)),title('276MeV'),
+                %            subplot(224),plot(vDepthMeasured(:,4),vAlphaMeasured(:,4)),title('430MeV'),
+                %            title('existing alpha curves from GSI - chordoma cells ')
+                %     figure,
+                %     title('interpolated alpha curves for chordoma cells for available energies ')
+                %     for i=1:length(BioInterp)
+                %         str = sprintf('Energy %d',baseData(i).energy);
+                %         plot(BioInterp(i).depths,BioInterp(i).alpha),title(str);
+                %         waitforbuttonpress
+                %     end
+            
+        case 'CNAO'
+            
+            baseDataBio =matRadParseBioData('C:\Users\wieserh\Documents\matRad\bio_database\database_AB2');
+              for j= 1:length(baseDataBio)
+                    [~, index] = min(abs([baseData.energy]-baseDataBio(j).energy));
+                    PaddingValueAlpha = min(baseDataBio(j).dEdxA./baseData(index).Z);
+                    baseData(j).alpha = interp1(baseDataBio(j).depths*10, baseDataBio(j).dEdxA./baseData(index).Z, baseData(j).depths,'linear',PaddingValueAlpha);
+                    PaddingValueBeta = min(baseDataBio(j).dEdxA./baseData(index).Z);
+                    baseData(j).beta = interp1(baseDataBio(j).depths*10, baseDataBio(j).dEdxB./baseData(index).Z, baseData(j).depths,'linear',PaddingValueBeta);
+                    baseData(j).res_range = (baseData(j).range - baseData(j).depths)./10;
+              end
 
-            dummyAlpha = zeros(numel(vEnergiesMeasured),1);
+%             figure,
+%             title('interpolated alpha curves for chordoma cells for available energies ')
+%             for i=1:50
+%                 str = sprintf('Energy %d',baseData(i).energy);
+%                 plot(baseData(i).res_range,baseData(i).alpha),title(str);
+%                 waitforbuttonpress
+%             end
 
-            for k = 1 : numel(vEnergiesMeasured)
-                dummyAlpha(k) = interp1(vDepthMeasured(:,k), vAlphaMeasured(:,k), vDepth(j),'linear');
+        % just fill the remaining ones with the last known data
+            for j = length(baseDataBio)+1:1:length(baseData)
+                baseData(j).alpha     = baseData(length(baseDataBio)).alpha; 
+                baseData(j).beta      =  baseData(length(baseDataBio)).beta;
+                baseData(j).res_range =  baseData(length(baseDataBio)).res_range;
             end
 
-            mAlpha(j,i) = interp1(vEnergiesMeasured, dummyAlpha, vEnergies(i),'linear');
-
-        end
-        mDepth(:,i)=vDepth;
     end
 
-    BioInterp.vEnergies =vEnergies;
-    BioInterp.mAlpha=mAlpha;
-    BioInterp.mDepth=mDepth;
-    
-    tic
-    test =matRadParseBioData('C:\Users\wieserh\Documents\matRad\bio_database\database_AB2');
-    toc
-    
-%     figure,subplot(221),plot(vDepthMeasured(:,1),vAlphaMeasured(:,1)),title('88MeV'),
-%            subplot(222),plot(vDepthMeasured(:,2),vAlphaMeasured(:,2)),title('178MeV'),
-%            subplot(223),plot(vDepthMeasured(:,3),vAlphaMeasured(:,3)),title('276MeV'),
-%            subplot(224),plot(vDepthMeasured(:,4),vAlphaMeasured(:,4)),title('430MeV'),
-%            title('existing alpha curves from GSI - chordoma cells ')
-%     figure,
-%     title('interpolated alpha curves for chordoma cells for available energies ')
-%     for i=1:size(mDepth,2)
-%         str = sprintf('Energy %d',vEnergies(i));
-%         plot(mDepth(:,i),mAlpha(:,i)),title(str);
-%         waitforbuttonpress
-%     end
 
-
-   
-        fprintf('...done \n');
+     fprintf('...done \n');
 end
 
 
@@ -239,7 +290,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
             
             % just use tissue classes of voxels found by ray tracer
             if pln.bioOptimization == true 
-                    mT_j= mT(ix,:);
+                    mTissueClass_j= mTissueClass(ix,:);
             end
             
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
@@ -270,11 +321,11 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 if pln.bioOptimization == true 
                     % calculate alpha and beta values for bixel k on ray j of
                     % beam i - call duration 0.0020s                    
-                    [bixelAlpha, ~] = mLQParams(...
+                    [bixelAlpha, bixelBeta] = mLQParams(...
                         radDepths(currIx),...
                         baseData(energyIx),...
-                        mT_j(currIx,:),...
-                        BioInterp);
+                        mTissueClass_j(currIx,:),...
+                        baseData);
                 
                     
                 end
@@ -283,6 +334,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelDose,numel(ct),1);
                 if pln.bioOptimization == true
                     alphaTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelAlpha,numel(ct),1);
+                    betaTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelBeta,numel(ct),1);
                 end
                 % save computation time and memory by sequentially filling the 
                 % sparse matrix dose.dij from the cell array
@@ -291,6 +343,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                     
                     if pln.bioOptimization == true
                         dij.mAlpha(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                        dij.mBeta(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
                     end
                 end
 

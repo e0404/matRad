@@ -52,6 +52,7 @@ wInit = ones(dij.totalNumOfBixels,1);
 if pln.bioOptimization == true
    dij.doseSkeleton = spones(dij.dose);
    dij.mAlphaDose = dij.mAlpha.*dij.dose;
+   dij.mBetaDose = sqrt(dij.mBeta).*dij.dose;
 end
 % define objective function
 if pln.bioOptimization == true

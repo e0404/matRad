@@ -17,13 +17,15 @@ function [f, g, d, bd] = matRad_IMRTBioObjFunc(w,dij,cst)
 % Calculate biological effect
 d = dij.dose*w;
 a = (dij.mAlphaDose*w);
-b = (sqrt(dij.mBeta).*d).^2;
+%b1 = (sqrt(0.05).*d).^2;
+
+b =(dij.mBetaDose*w).^2;
 
 %biological effect
 bd = a+b;
 
-% alpha beta photon parameters to calculate prescribed effect
-a_x = 0.1;
+% alpha photon  and beta photon parameters to calculate prescribed effect
+a_x = 0.1; 
 b_x = 0.05;
 
 
@@ -81,7 +83,7 @@ end
 
 % this works but still has two expensive operations 
 if nargout > 1
-    lambda = (2*dij.mBeta.*d);
+    lambda = (2*dij.mBetaDose*w);
     n = length(lambda);
     vBias= (delta' * dij.mAlphaDose)';
     mPsi= (delta'*((spdiags(lambda(:),0,n,n)*dij.doseSkeleton).*dij.dose))';
