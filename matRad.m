@@ -43,11 +43,11 @@ load phantom2Gy.mat
 %load PencilPhantom1.mat
 tic
 % meta information for treatment plan
-pln.SAD             = 10000; %[mm]
+pln.SAD             = 1000; %[mm]
 pln.resolution      = ctResolution; %[mm/voxel]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,pln,0);
-pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0]; % [°]
+pln.bixelWidth      = 3; % [mm] / also corresponds to lateral spot spacing for particles
+pln.gantryAngles    = [270]; % [°]
 pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct);
@@ -87,5 +87,4 @@ toc
 
 % V = unique([cell2mat(cst(:,8))]);
 % 
-
 

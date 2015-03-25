@@ -45,3 +45,7 @@ Temporary Items
 
 # do not check in dose calc base data generation
 doseCalcDataGeneration
+*.txt
+*.fig
+*.orig
+*.bmp

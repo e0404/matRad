@@ -181,10 +181,10 @@ if pln.bioOptimization == true
                         baseData(i).alpha = mAlpha;
                         baseData(i).beta = mBeta;       
                     end
-%                    figure,subplot(221),plot(vDepthMeasured(:,1),vAlphaMeasured(:,1)),title('88MeV'),
-%                            subplot(222),plot(vDepthMeasured(:,2),vAlphaMeasured(:,2)),title('178MeV'),
-%                            subplot(223),plot(vDepthMeasured(:,3),vAlphaMeasured(:,3)),title('276MeV'),
-%                            subplot(224),plot(vDepthMeasured(:,4),vAlphaMeasured(:,4)),title('430MeV'),
+%                    figure,subplot(221),plot(vDepthMeasured(:,1),vAlphaMeasured(:,1),'LineWidth',3),title('88MeV','FontSize',20),grid on
+%                            subplot(222),plot(vDepthMeasured(:,2),vAlphaMeasured(:,2),'LineWidth',3),title('178MeV','FontSize',20), grid on
+%                            subplot(223),plot(vDepthMeasured(:,3),vAlphaMeasured(:,3),'LineWidth',3),title('276MeV','FontSize',20), grid on
+%                            subplot(224),plot(vDepthMeasured(:,4),vAlphaMeasured(:,4),'LineWidth',3),title('430MeV','FontSize',20), grid on
 %                            title('existing alpha curves from GSI - chordoma cells ')
 %                     figure,
 %                     title('interpolated alpha curves for chordoma cells for available energies ')
@@ -199,9 +199,28 @@ if pln.bioOptimization == true
         case 'CNAO'
             baseDataBio =matRadParseBioData([pwd filesep 'database_AB2']);
             if MultiClass == true
-                
-                
-                
+                 % assume that we have 3 tissue classes
+                 NumTissueClasses =3;
+                 for currTissClass = 1:NumTissueClasses
+                     for j= 1:length(baseDataBio)
+                            [~, index] = min(abs([baseData.energy]-baseDataBio(j).energy));
+                            PaddingValueAlpha = min(baseDataBio(j).dEdxA./baseData(index).Z);
+                            baseData(j).alpha(:,currTissClass) = interp1(baseDataBio(j).depths*10, baseDataBio(j).dEdxA./baseData(index).Z, baseData(j).depths,'linear',PaddingValueAlpha);
+                            
+                            PaddingValueBeta = min(baseDataBio(j).dEdxB./baseData(index).Z);
+                            baseData(j).beta(:,currTissClass) = (interp1(baseDataBio(j).depths*10, baseDataBio(j).dEdxB./baseData(index).Z, baseData(j).depths,'linear',PaddingValueBeta)).^2;
+                            
+                            baseData(j).res_range(:,currTissClass) = (baseData(j).range - baseData(j).depths)./10;
+                     end
+
+                    % just fill the remaining ones with the last known data
+                    for j = length(baseDataBio)+1:1:length(baseData)
+                        baseData(j).alpha(:,currTissClass)     = baseData(length(baseDataBio)).alpha(:,1); 
+                        baseData(j).beta(:,currTissClass)      =  baseData(length(baseDataBio)).beta(:,1);
+                        baseData(j).res_range(:,currTissClass) =  baseData(length(baseDataBio)).res_range(:,1);
+                    end
+
+                 end
                 
             else
                 
@@ -209,8 +228,8 @@ if pln.bioOptimization == true
                         [~, index] = min(abs([baseData.energy]-baseDataBio(j).energy));
                         PaddingValueAlpha = min(baseDataBio(j).dEdxA./baseData(index).Z);
                         baseData(j).alpha = interp1(baseDataBio(j).depths*10, baseDataBio(j).dEdxA./baseData(index).Z, baseData(j).depths,'linear',PaddingValueAlpha);
-                        PaddingValueBeta = min(baseDataBio(j).dEdxA./baseData(index).Z);
-                        baseData(j).beta = interp1(baseDataBio(j).depths*10, baseDataBio(j).dEdxB./baseData(index).Z, baseData(j).depths,'linear',PaddingValueBeta);
+                        PaddingValueBeta = min(baseDataBio(j).dEdxB./baseData(index).Z);
+                        baseData(j).beta = (interp1(baseDataBio(j).depths*10, baseDataBio(j).dEdxB./baseData(index).Z, baseData(j).depths,'linear',PaddingValueBeta)).^2;
                         baseData(j).res_range = (baseData(j).range - baseData(j).depths)./10;
                  end
 
@@ -222,6 +241,15 @@ if pln.bioOptimization == true
                 end
 
             end
+            
+%               figure,      subplot(221),plot(baseData(1).res_range(:,1),baseData(1).beta(:,1),'LineWidth',3),title('115MeV','FontSize',20),grid on, hold on
+%                                        plot([min(baseData(1).res_range(:,1)) max(baseData(1).res_range(:,1))],[0.05 0.05],'color','r','LineWidth',3),hold off
+%                            subplot(222),plot(baseData(21).res_range(:,1),baseData(21).beta(:,1),'LineWidth',3),title('178MeV','FontSize',20), grid on, hold on
+%                                        plot([min(baseData(21).res_range(:,1)) max(baseData(21).res_range(:,1))],[0.05 0.05],'color','r','LineWidth',3),hold off
+%                            subplot(223),plot(baseData(60).res_range(:,1),baseData(60).beta(:,1),'LineWidth',3),title('277MeV','FontSize',20), grid on, hold on
+%                                        plot([min(baseData(60).res_range(:,1)) max(baseData(60).res_range(:,1))],[0.05 0.05],'color','r','LineWidth',3),hold off
+%                            subplot(224),plot(baseData(121).res_range(:,1),baseData(121).beta(:,1),'LineWidth',3),title('398MeV','FontSize',20), grid on, hold on
+%                                        plot([min(baseData(121).res_range(:,1)) max(baseData(121).res_range(:,1))],[0.05 0.05],'color','r','LineWidth',3),hold off
     end
 
      fprintf('...done \n');
