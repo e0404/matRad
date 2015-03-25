@@ -66,6 +66,7 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     % load
     voi = zeros(size(ct));
     voi(V) = 1;
+    voi = imdilate(voi,ones(3,3,3));
 
     if strcmp(pln.radiationMode,'protons')
         load protonBaseData;
