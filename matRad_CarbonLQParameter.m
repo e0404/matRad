@@ -22,18 +22,27 @@ for i = 1:NumTissueClass
 end
 
 mAlpha=double(mAlphaSorted(newInd,:));
-vAlpha=mAlpha(mTissueClass(:,2));
 
 
-if min(Interp(index).beta(:)) == max(Interp(index).beta(:))
-    vBeta(:) = 0.05;
-else
-    for i = 1:NumTissueClass
-        mBetaSorted(:,i) = interp1(R0-Interp(index).res_range(:,i), Interp(index).beta(:,i), vRadDepthsSort,'pchip');
-    end
-    mBeta=double(mBetaSorted(newInd,:));
-    vBeta=mBeta(mTissueClass(:,2));
+for i = 1:NumTissueClass
+    mBetaSorted(:,i) = interp1(R0-Interp(index).res_range(:,i), Interp(index).beta(:,i), vRadDepthsSort,'pchip');
 end
+
+mBeta=double(mBetaSorted(newInd,:));
+
+if size(mAlpha,2)>1
+    vAlpha=zeros(length(mAlpha),1);
+    vBeta=zeros(length(mBeta),1);
+    for i = 1:length(mAlpha)
+        vAlpha(i)=mAlpha(i,mTissueClass(i,2));
+        vBeta(i)=mBeta(i,mTissueClass(i,2));
+    end
+else
+    vAlpha=mAlpha;
+    vBeta=mBeta;
+end
+
+
 %%
 %mean = vAlphaSorted;
 %std = vAlphaSorted.*0.2;
