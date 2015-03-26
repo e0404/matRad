@@ -91,7 +91,7 @@ coords_inside=[xCoordsV yCoordsV zCoordsV];
 if strcmp(pln.radiationMode,'protons')
     load protonBaseData;
 elseif strcmp(pln.radiationMode,'carbon')
-    load carbonBaseDataCNAO;
+    load carbonBaseData;
     dij.baseData=baseData;
 end
 

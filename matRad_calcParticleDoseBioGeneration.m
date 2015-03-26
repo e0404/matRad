@@ -186,9 +186,11 @@ if pln.bioOptimization == true
             
         case 'CNAO'
             baseDataBio =matRadParseBioData([pwd filesep 'database_AB2']);
-            TissueName = {'NormalTissue','chordoma','CHO','brainstem'}
+            TissueName = {'NormalTissue','chordoma','CHO','brainstem'};
             alpha_x = [0.3 0.1 0.18 0.053];
             beta_x = [0.1 0.05 0.028 0.0266];
+             alpha_x = [0.1 0.1 0.1 0.1];
+            beta_x = [0.05 0.05 0.05 0.05];
             
             if MultiClass == true
                  % assume that we have 3 tissue classes
@@ -198,49 +200,47 @@ if pln.bioOptimization == true
                             [~, index] = min(abs([baseData.energy]-baseDataBio(j).energy));
                             
                             PaddingValueAlpha = min(baseDataBio(j).dEdxA./baseData(index).Z);
-                            tmp=interp1(baseDataBio(j).depths,baseDataBio(j).dEdxA,baseData(j).depths./10,'linear','extrap' );
+                            tmp=interp1(baseDataBio(j).depths,baseDataBio(j).dEdxA,...
+                                baseData(j).depths./10,'linear','extrap');
                             baseData(j).alpha(:,currTissClass) = tmp./baseData(index).Z;
                             
-                            PaddingValueBeta = min(baseDataBio(j).dEdxB./baseData(index).Z);
-                            tmp=interp1(baseDataBio(j).depths,baseDataBio(j).dEdxB,baseData(j).depths./10,'linear','extrap' );
-                            baseData(j).beta(:,currTissClass) = tmp./baseData(index).Z;
-                            %baseData(j).beta(:,currTissClass) = (interp1(baseDataBio(j).depths*10, baseDataBio(j).dEdxB./baseData(index).Z, baseData(j).depths,'pchip',PaddingValueBeta)).^2;
+                            
+                            tmp=interp1(baseDataBio(j).depths,baseDataBio(j).dEdxB,...
+                                baseData(j).depths./10,'linear');
+                            tmpNaN = (tmp./baseData(index).Z).^2;
+                            a = find(~isnan(tmpNaN));
+                            tmpNaN(isnan(tmpNaN))=tmpNaN(a(end));
+                            baseData(j).beta(:,currTissClass)=tmpNaN;
                             
                             baseData(j).res_range(:,currTissClass) = (baseData(j).range - baseData(j).depths)./10;
-                            Counter = Counter+1;
+
                             
-                            baseData(j).Tissue(currTissClass).Name = TissueName{1,currTissClass};
-                            baseData(j).Tissue(currTissClass).Class = currTissClass;
-                            baseData(j).Tissue(currTissClass).alphaX = alpha_x(currTissClass);
-                            baseData(j).Tissue(currTissClass).betaX = beta_x(currTissClass);
+                            Counter = Counter+1;
+                       
+                             baseData(j).Tissue(currTissClass).Name = TissueName{1,currTissClass};
+                             baseData(j).Tissue(currTissClass).Class = currTissClass;
+                             baseData(j).Tissue(currTissClass).alphaX = alpha_x(currTissClass);
+                             baseData(j).Tissue(currTissClass).betaX = beta_x(currTissClass);
+
+                            
                             
                             matRad_progress(Counter, NumTissueClasses*length(baseDataBio));
                      end
                  end
-                
-            else
-                
-                 for j= 1:length(baseDataBio)
-                        [~, index] = min(abs([baseData.energy]-baseDataBio(j).energy));
-                        PaddingValueAlpha = min(baseDataBio(j).dEdxA./baseData(index).Z);
-                        baseData(j).alpha = interp1(baseDataBio(j).depths*10, baseDataBio(j).dEdxA./baseData(index).Z, baseData(j).depths,'linear',PaddingValueAlpha);
-                        PaddingValueBeta = min(baseDataBio(j).dEdxB./baseData(index).Z);
-                        baseData(j).beta = (interp1(baseDataBio(j).depths*10, baseDataBio(j).dEdxB./baseData(index).Z, baseData(j).depths,'linear',PaddingValueBeta)).^2;
-                        baseData(j).res_range = (baseData(j).range - baseData(j).depths)./10;
-                 end
+
             end
       
     end
 
       
-              figure,      subplot(221),plot(baseData(1).depths(:,1),baseData(1).alpha(:,1),'LineWidth',3),title('115MeV','FontSize',20),grid on, hold on
-                                       %plot([min(baseData(1).res_range(:,1)) max(baseData(1).res_range(:,1))],[0.05 0.05],'color','r','LineWidth',3),hold off
-                           subplot(222),plot(baseData(20).depths(:,1),baseData(21).alpha(:,1),'LineWidth',3),title('178MeV','FontSize',20), grid on, hold on
-                                       %plot([min(baseData(21).res_range(:,1)) max(baseData(21).res_range(:,1))],[0.05 0.05],'color','r','LineWidth',3),hold off
-                           subplot(223),plot(baseData(60).depths(:,1),baseData(60).alpha(:,1),'LineWidth',3),title('277MeV','FontSize',20), grid on, hold on
-                                       %plot([min(baseData(60).res_range(:,1)) max(baseData(60).res_range(:,1))],[0.05 0.05],'color','r','LineWidth',3),hold off
-                           subplot(224),plot(baseData(121).depths(:,1),baseData(121).alpha(:,1),'LineWidth',3),title('398MeV','FontSize',20), grid on, hold on
-                                       %plot([min(baseData(121).res_range(:,1)) max(baseData(121).res_range(:,1))],[0.05 0.05],'color','r','LineWidth',3),hold off
+%               figure,      subplot(221),plot(baseData(1).depths(:,1),baseData(1).beta(:,1),'LineWidth',3),title('115MeV','FontSize',20),grid on, hold on
+%                                        %plot([min(baseData(1).depths(:,1)) max(baseData(1).depths(:,1))],[0.05 0.05],'color','r','LineWidth',3),hold off
+%                            subplot(222),plot(baseData(20).depths(:,1),baseData(21).beta(:,1),'LineWidth',3),title('178MeV','FontSize',20), grid on, hold on
+%                                        %plot([min(baseData(21).depths(:,1)) max(baseData(21).depths(:,1))],[0.05 0.05],'color','r','LineWidth',3),hold off
+%                            subplot(223),plot(baseData(60).depths(:,1),baseData(60).beta(:,1),'LineWidth',3),title('277MeV','FontSize',20), grid on, hold on
+%                                        %plot([min(baseData(60).depths(:,1)) max(baseData(60).depths(:,1))],[0.05 0.05],'color','r','LineWidth',3),hold off
+%                            subplot(224),plot(baseData(121).depths(:,1),baseData(121).beta(:,1),'LineWidth',3),title('398MeV','FontSize',20), grid on, hold on
+%                                        %plot([min(baseData(121).depths(:,1)) max(baseData(121).depths(:,1))],[0.05 0.05],'color','r','LineWidth',3),hold off
 
      fprintf('...done \n');
 end

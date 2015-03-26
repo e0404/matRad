@@ -42,7 +42,7 @@ load RefPhantom3GyE.mat
 pln.SAD             = 10000; %[mm]
 pln.resolution      = ctResolution; %[mm/voxel]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,pln,0);
-pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
+pln.bixelWidth      = 2; % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = [0]; % [°]
 pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
@@ -51,7 +51,7 @@ pln.voxelDimensions = size(ct);
 pln.radiationMode   = 'carbon'; % either photons / protons / carbon
 pln.bioOptimization = true;   % false indicates physical optimization and true indicates biological optimization
 % initial visualization
-matRad_visCtDose([],cst,pln,ct);
+% matRad_visCtDose([],cst,pln,ct);
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
@@ -60,7 +60,7 @@ stf = matRad_generateStf(ct,cst,pln);
 if strcmp(pln.radiationMode,'photons')
     dij = matRad_calcPhotonDose(ct,stf,pln,cst,0);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-    dij = matRad_calcParticleDoseBioGeneration(ct,stf,pln,cst,0);
+    dij = matRad_calcParticleDose(ct,stf,pln,cst,0);
 end
 %% Dose visualization
 doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1));
@@ -70,11 +70,11 @@ doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1));
 [wOpt,dOpt] = matRad_inversePlanning(dij,cst,pln);
 matRad_visCtDose(dOpt,cst,pln,ct);
 
-%% sequencing
-Sequencing = matRad_xiaLeafSequencing(wOpt,stf,pln,7,0);
-dSeq = matRad_mxCalcDose(dij,Sequencing.w);
-matRad_visCtDose(dSeq,cst,pln,ct);
-
-%% dvh and conformity index
-matRad_calcDVH(dSeq,cst)
-
+% %% sequencing
+% Sequencing = matRad_xiaLeafSequencing(wOpt,stf,pln,7,0);
+% dSeq = matRad_mxCalcDose(dij,Sequencing.w);
+% matRad_visCtDose(dSeq,cst,pln,ct);
+% 
+% %% dvh and conformity index
+% matRad_calcDVH(dSeq,cst)
+% 
