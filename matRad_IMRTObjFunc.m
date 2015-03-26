@@ -1,4 +1,4 @@
-function [f, g, d] = matRad_IMRTObjFunc(w,dij,cst)
+function [f, g, d, bd] = matRad_IMRTObjFunc(w,dij,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad objective function for inverse planning
 % 
@@ -43,6 +43,8 @@ function [f, g, d] = matRad_IMRTObjFunc(w,dij,cst)
 % <http://www.gnu.org/licenses/>.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+bd=NaN;
 
 % Calculate dose
 d = dij*w;
@@ -92,4 +94,6 @@ for  i = 1:size(cst,1)
 end
 
 % Calculate gradient.
-g = 2 * (delta' * dij)';
+if nargout > 1
+    g = 2 * (delta' * dij)';
+end
