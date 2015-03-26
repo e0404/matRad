@@ -1,11 +1,8 @@
-function [vAlpha,vBeta] = matRad_ProtonLQParameter(FreeParameter,visBool)
+function [vAlpha,vBeta] = matRad_ProtonLQParameter(vRadDepths,sEnergy,mTissueClass,Interp,visBool)
 
-vAlpha = FreeParameter;
-vBeta = FreeParameter;
+fprintf('\n matRad: NOT YET IMPLEMENTED - set pln.bioOptimization = false; \n');
 
-Z = 6;
-A = 12;
-a = 0.0022;
-p = 1.77;
-E0 = (Z^2/A)^(1/p) * a^(-1/p) * R0^(1/p);
+vAlpha = 0;
+vBeta = 0;
 
+error('Biological Optimization for protons not yet implemented')

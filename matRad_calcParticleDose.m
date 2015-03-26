@@ -73,6 +73,7 @@ numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 doseTmpContainer = cell(numOfBixelsContainer,1);
 if pln.bioOptimization == true 
     alphaTmpContainer = cell(numOfBixelsContainer,1);
+    betaTmpContainer = cell(numOfBixelsContainer,1);
 end
 % Only take voxels inside patient.
 V = unique([cell2mat(cst(:,8))]);
@@ -90,135 +91,32 @@ coords_inside=[xCoordsV yCoordsV zCoordsV];
 if strcmp(pln.radiationMode,'protons')
     load protonBaseData;
 elseif strcmp(pln.radiationMode,'carbon')
-    load carbonBaseData;
+    load carbonBaseDataCNAO;
+    dij.baseData=baseData;
 end
 
 
 % generates tissue class matrix for biological optimization
-% and initializes alpha/beta interpolants
 if pln.bioOptimization == true
-    fprintf('matRad: Creating biological tissue interpolant... ');
+    fprintf('matRad: loading biological base data... ');
     mTissueClass = zeros(size(V,1),2);
     mTissueClass(:,1) = V;
     for i=1:size(cst,1)
         % find indices of structures related to V
-        [~, row] = ismember(cst{i,8},V,'rows');        
-        mTissueClass(row,2)=cst{i,9}.TissueClass;
+        [~, row] = ismember(cst{i,8},V,'rows');  
+        if size(cst,2)>8
+            if ~isempty(cst{i,9}) && isfield(cst{i,9},'TissueClass')
+                mTissueClass(row,2)=cst{i,9}.TissueClass;
+            end
+        else
+            mTissueClass(row,2)=1;
+            fprintf(['matRad: tissue type of ' cst{i,2} ' was set to normal tissue \n']);
+        end
     end
     
-    SourceOfBioData = 'CNAO';%'GSI';%'CNAO';
-    MultiClass = false;
-    Counter = 0;
-    switch SourceOfBioData
-        % use existing four alpha curves for chordoma cells measured at the
-        % GSI in Darmstadt
-        case 'GSI'
-            load('GSI_Chardoma_Carbon_BioData.mat');
-            load('GSI_Chardoma_Carbon_BioData2.mat'); 
-            
-            if MultiClass == true
-                EnergyBaseData = [baseData(:).energy];
-                totalNumberOfEvaluations=length(BioData)*numel(EnergyBaseData);
-                for currTissClass = 1:length(BioData)
-
-                    for i=1:numel(EnergyBaseData)
-                        [~, Index] = min(abs(BioData(currTissClass).energy-EnergyBaseData(i)));
-                        vDepth = BioData(currTissClass).depths(:,Index);
-                        for j = 1 : numel(vDepth)
-                            dummyAlpha = zeros(numel(BioData(currTissClass).energy),1);
-                            dummyBeta = zeros(numel(BioData(currTissClass).energy),1);
-                            for k = 1 : numel(BioData(currTissClass).energy)
-                                dummyAlpha(k) = interp1(BioData(currTissClass).depths(:,k), BioData(currTissClass).alpha(:,k), vDepth(j),'linear');
-                                dummyBeta(k) = interp1(BioData(currTissClass).depths(:,k), BioData(currTissClass).beta(:,k), vDepth(j),'linear');
-                            end
-                            vAlpha(j) = interp1(BioData(currTissClass).energy, dummyAlpha, EnergyBaseData(i),'linear');
-                            vBeta(j) = interp1(BioData(currTissClass).energy, dummyBeta, EnergyBaseData(i),'linear');
-                        end
-
-                        baseData(i).alpha(:,currTissClass) = vAlpha';
-                        baseData(i).beta(:,currTissClass) = vBeta'; 
-                        baseData(i).res_range(:,currTissClass) = vDepth;
-                        Counter = Counter+1;
-                        matRad_progress(Counter, totalNumberOfEvaluations);
-                    end
-                end
-                
-                
-            else
-                
-                
-                    % works for now just with one tissue class
-                    vEnergiesMeasured = [stBioData{1,1}(1,1).Energy stBioData{1,1}(1,2).Energy ...
-                                  stBioData{1,1}(1,3).Energy stBioData{1,1}(1,4).Energy];
-
-                    % extract experimental measured biological data          
-                    for i = 1:length(stBioData{1,1})
-                        vAlphaMeasured(:,i) = stBioData{1,1}(1,i).Alpha;
-                        vDepthMeasured(:,i) = stBioData{1,1}(1,i).Depths;
-                    end
-
-                    % extract available beam energies from baseData
-                    for i = 1:numel(baseData)
-                        vEnergies(i)=baseData(1,i).energy;
-                    end
-                    vEnergies = sort(vEnergies);
-
-                    mBeta =zeros(size(vAlphaMeasured,1),1);
-                    mAlpha=zeros(size(vAlphaMeasured,1),1);
-
-                    for i=1:numel(vEnergies)
-                        [~, Index] = min(abs(vEnergiesMeasured-vEnergies(i)));
-                        vDepth = vDepthMeasured(:,Index);
-                        for j = 1 : numel(vDepth)
-                            dummyAlpha = zeros(numel(vEnergiesMeasured),1);
-                            for k = 1 : numel(vEnergiesMeasured)
-                                dummyAlpha(k) = interp1(vDepthMeasured(:,k), vAlphaMeasured(:,k), vDepth(j),'linear');
-                            end
-                            mAlpha(j) = interp1(vEnergiesMeasured, dummyAlpha, vEnergies(i),'linear');
-                            mBeta(j) = 0.05;
-                        end
-                        baseData(i).res_range = vDepth;
-                        baseData(i).alpha = mAlpha;
-                        baseData(i).beta = mBeta;       
-                    end
-
-            end
-            
-        case 'CNAO'
-            baseDataBio =matRadParseBioData([pwd filesep 'database_AB2']);
-            if MultiClass == true
-                 % assume that we have 3 tissue classes
-                 NumTissueClasses =3;
-                 for currTissClass = 1:NumTissueClasses
-                     for j= 1:length(baseDataBio)
-                            [~, index] = min(abs([baseData.energy]-baseDataBio(j).energy));
-                            PaddingValueAlpha = min(baseDataBio(j).dEdxA./baseData(index).Z);
-                            baseData(j).alpha(:,currTissClass) = interp1(baseDataBio(j).depths*10, baseDataBio(j).dEdxA./baseData(index).Z, baseData(j).depths,'linear',PaddingValueAlpha);
-                            
-                            PaddingValueBeta = min(baseDataBio(j).dEdxB./baseData(index).Z);
-                            baseData(j).beta(:,currTissClass) = (interp1(baseDataBio(j).depths*10, baseDataBio(j).dEdxB./baseData(index).Z, baseData(j).depths,'linear',PaddingValueBeta)).^2;
-                            
-                            baseData(j).res_range(:,currTissClass) = (baseData(j).range - baseData(j).depths)./10;
-                            Counter = Counter+1;
-                            matRad_progress(Counter, NumTissueClasses*length(baseDataBio));
-                     end
-                 end
-                
-            else
-                
-                 for j= 1:length(baseDataBio)
-                        [~, index] = min(abs([baseData.energy]-baseDataBio(j).energy));
-                        PaddingValueAlpha = min(baseDataBio(j).dEdxA./baseData(index).Z);
-                        baseData(j).alpha = interp1(baseDataBio(j).depths*10, baseDataBio(j).dEdxA./baseData(index).Z, baseData(j).depths,'linear',PaddingValueAlpha);
-                        PaddingValueBeta = min(baseDataBio(j).dEdxB./baseData(index).Z);
-                        baseData(j).beta = (interp1(baseDataBio(j).depths*10, baseDataBio(j).dEdxB./baseData(index).Z, baseData(j).depths,'linear',PaddingValueBeta)).^2;
-                        baseData(j).res_range = (baseData(j).range - baseData(j).depths)./10;
-                 end
-
-
-            end
-      end
-
+    
+    
+    
      fprintf('...done \n');
 end
 
@@ -241,7 +139,7 @@ counter = 0;
 fprintf('matRad: Particle dose calculation... ');
 
 if strcmp(pln.radiationMode,'protons')
-    mLQParams = @(FreeParameter) matRad_ProtonLQParameter(FreeParameter,0);
+    mLQParams = @(vRadDepths,sEnergy,mT,Interp) matRad_ProtonLQParameter(vRadDepths,sEnergy,mT,Interp,0);
 elseif strcmp(pln.radiationMode,'carbon')
     mLQParams = @(vRadDepths,sEnergy,mT,Interp) matRad_CarbonLQParameter(vRadDepths,sEnergy,mT,Interp,0);
 end

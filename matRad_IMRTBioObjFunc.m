@@ -24,10 +24,9 @@ b =(dij.mBetaDose*w).^2;
 %biological effect
 bd = a+b;
 
-% alpha photon  and beta photon parameters to calculate prescribed effect
+% default alpha photon and beta photon parameters to calculate prescribed effect
 a_x = 0.1; 
 b_x = 0.05;
-
 
 % Numbers of voxels
 numVoxels = size(dij.dose,1);
@@ -44,6 +43,13 @@ for  i = 1:size(cst,1)
     % Only take OAR or target VOI.
     if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
         
+        % get tissue specific alpha photon and beta photon to calculate
+        % prescriped effect
+        if ~isempty(cst{i,9})
+            Class = cst{i,9}.TissueClass;
+            a_x = dij.baseData(1).Tissue(find([dij.baseData(1).Tissue.Class]==Class)).alphaX;
+            b_x = dij.baseData(1).Tissue(find([dij.baseData(1).Tissue.Class]==Class)).betaX;
+        end
         % prescribed effect
         Emax = a_x*cst{i,4}+b_x*cst{i,4}^2;
         Emin = a_x*cst{i,5}+b_x*cst{i,5}^2;

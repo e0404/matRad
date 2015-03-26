@@ -67,8 +67,8 @@ objFuncValue(2) = 2*objFuncValue(1);
 
 % variables for termination criteria
 iter      = 0;
-numOfIter = 200;
-prec      = 1e-7;
+numOfIter = 100;
+prec      = 1e-5;
 
 % convergence if change in objective function smaller than prec or maximum
 % number of iteration reached. no convergence if lbfgs has just been rest

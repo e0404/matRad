@@ -327,7 +327,7 @@ if data.typeofplot ==2
     end
     
     
-    if data.pln.bioOptimization == 1
+    if data.pln.bioOptimization == 1 && strcmp(data.pln.radiationMode,'carbon')
         
         mEffect=getfield(data.dose,'Effect');
         mActualSlice = mEffect(:,:,data.slice);
@@ -409,14 +409,14 @@ if data.typeofplot ==2
     str = sprintf('profile plot of zentral axis of first beam at %d° in slice %d / %d ',data.pln.gantryAngles(1),data.profileY*data.pln.resolution(2),size(data.ct,2)*data.pln.resolution(2));
     title(str,'FontSize',14),grid on
     axis auto
-    if data.pln.bioOptimization == 1
+    if data.pln.bioOptimization == 1 && strcmp(data.pln.radiationMode,'carbon')
         legend([h1;h2;h3;h4;h5;h6;h7],'Physical Dose','Effect','Alpha','Biological Dose','RBE','target boundary','prescription');      
     else
         legend([h1;h6;h7],'Physical Dose','target boundary','prescription');
     end
     
     % set axis limits
-    if data.pln.bioOptimization == 0
+    if data.pln.bioOptimization == 0 || ~strcmp(data.pln.radiationMode,'carbon')
         xlim([xmin xmax]);
     else
         xlim(ax(1),[xmin xmax]);
