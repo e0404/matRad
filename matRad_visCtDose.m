@@ -369,6 +369,7 @@ if data.typeofplot ==2
         set(h5,'Linewidth',3,'color',ccc{1,4});
         set(ax(1),'ycolor','r')
         set(ax(2),'ycolor','b')
+        set(ax,'FontSize',16);
       
         
          if max(vBioDose(:))>ymax
@@ -387,8 +388,6 @@ if data.typeofplot ==2
         end
         
     end
-    
-    ymax = ymax +ymax*0.1;
     
     % plot target boundaries
     mTargetStack = zeros(size(data.ct));
@@ -427,9 +426,8 @@ if data.typeofplot ==2
         ymax = 0.5;
     end
     % set axis labels and ticks
-    ymax=round(ymax*100)/100;
-    yVal=round((linspace(0,ymax,10)).*100)/100;
-    
+    ymax= 0:sPrescrpDose/8:sPrescrpDose+sPrescrpDose/8;
+    yVal=round(ymax*100)/100;
     set(gca,'YTick',yVal);
     set(gca,'YTickLabel',yVal);
     xlabel('depth [mm]','FontSize',16);
