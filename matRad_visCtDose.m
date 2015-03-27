@@ -1,4 +1,4 @@
-function matRad_visCtDose(dose,cst,pln,ct,slice,plane)
+function matRad_visCtDose(optResult,cst,pln,ct,slice,plane)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
@@ -48,35 +48,36 @@ function matRad_visCtDose(dose,cst,pln,ct,slice,plane)
 
 if nargin > 0
     
-    data.dose = dose;
+    data.optResult = optResult;
     data.cst  = cst;
     data.pln  = pln;
     data.ct   = ct;
-    if ~isempty(data.dose)
-        data.fName =fieldnames(data.dose);
+    if ~isempty(data.optResult)
+        data.fName =fieldnames(data.optResult);
         for i=1:size(data.fName,1)
-            % Reshape dose to cube size
-            tmp = getfield(data.dose,data.fName{i,1});
-            if ~isempty(tmp) && ~isempty(data.ct)
-                data.dose = setfield(data.dose,data.fName{i,1},reshape(tmp,size(ct)));
-            elseif ~isempty(data.dose) && ~isempty(data.pln)
-                data.dose = setfield(data.dose,data.fName{i,1},reshape(data.dose,dose.pln.voxelDimensions));
-            elseif ~isempty(data.dose)
+            % Reshape dose to cube in voxel dimensions
+            CurrentCube = getfield(data.optResult,data.fName{i,1});
+            if ~isempty(CurrentCube) && ~isempty(data.ct) && isequal(size(CurrentCube),size(data.ct))
+                data.optResult = setfield(data.optResult,data.fName{i,1},reshape(CurrentCube,size(ct)));
+            %try to reshape using voxelDimensions from pln struct    
+            elseif ~isempty(data.optResult) && ~isempty(data.pln) && isequal(size(CurrentCube),size(data.ct))
+                data.optResult = setfield(data.optResult,data.fName{i,1},reshape(CurrentCube,data.pln.voxelDimensions));
+            elseif ~isempty(data.optResult) && ~strcmp(data.fName{i,1},'w')
                 error('Cannot reshape dose');   
             end
         end
     end
     
-    if ~isempty(data.dose)
+    if ~isempty(data.optResult)
         data.doseColorwashCheckboxValue = 1;
         data.doseIsoCheckboxValue = 1;
-        data.SelectedDisplayOption = 1;
-        data.typeofplot = 1;
+        data.SelectedDisplayOption = 2;
+        data.TypeOfPlot = 1;
     else
         data.doseColorwashCheckboxValue = 0;
         data.doseIsoCheckboxValue = 0;
-        data.SelectedDisplayOption = 1;
-        data.typeofplot = 1;
+        data.SelectedDisplayOption = 2;
+        data.TypeOfPlot = 1;
     end
     
     if ~isempty(data.ct)
@@ -138,7 +139,7 @@ end
 
 
     %% ct
-if ~isempty(data.ct) && data.ctCheckboxValue && data.typeofplot ==1
+if ~isempty(data.ct) && data.ctCheckboxValue && data.TypeOfPlot ==1
     
     if data.plane == 1 % Coronal plane
         ct_rgb = ind2rgb(uint8(63*squeeze(data.ct(data.slice,:,:))/max(data.ct(:))),bone);
@@ -153,8 +154,8 @@ if ~isempty(data.ct) && data.ctCheckboxValue && data.typeofplot ==1
 
 end
 
-if ~isempty(data.dose) && data.typeofplot ==1
-    mVolume = getfield(data.dose,data.fName{data.SelectedDisplayOption});
+if ~isempty(data.optResult) && data.TypeOfPlot ==1
+    mVolume = getfield(data.optResult,data.fName{data.SelectedDisplayOption});
 %     %% dose colorwash
     if ~isempty(mVolume) && data.doseColorwashCheckboxValue
 
@@ -180,7 +181,7 @@ if ~isempty(data.dose) && data.typeofplot ==1
     end
 
     %% dose iso dose lines
-    if ~isempty(mVolume) && data.doseIsoCheckboxValue && data.typeofplot ==1
+    if ~isempty(mVolume) && data.doseIsoCheckboxValue && data.TypeOfPlot ==1
          
         delta = (max(mVolume(:))-min(mVolume(:)))*0.1;
         vSpacingIsoDose = linspace(min(mVolume(:))+delta,max(mVolume(:))+delta,10);
@@ -205,7 +206,7 @@ if ~isempty(data.dose) && data.typeofplot ==1
 
 end
     %% VOIs
-if ~isempty(data.cst) && data.contourCheckboxValue && data.typeofplot ==1
+if ~isempty(data.cst) && data.contourCheckboxValue && data.TypeOfPlot ==1
 
     colors = jet;
     colors = colors(round(linspace(1,63,size(data.cst,1))),:);
@@ -281,11 +282,11 @@ axis(data.axis);
     
 
 
-if data.typeofplot ==2
+if data.TypeOfPlot ==2
 
     % clear view and initialize some values
     clf;
-    myAxes   = axes('Position', [0.35 0.1 0.55 0.8]);
+    myAxes = axes('Position', [0.35 0.1 0.55 0.8]);
     set(gca,'YDir','normal');
     ylabel('dose')
     ccc={'k','g','r','b','m','y','c'};
@@ -294,7 +295,7 @@ if data.typeofplot ==2
     delta =0; % make it bixel distance dependend
 
     
-    mDose=getfield(data.dose,'PhysicalDose');
+    mDose=getfield(data.optResult,'physicalDose');
     mActualSlice = mDose(:,:,data.slice);
     mRotActualSlice =imrotate(mActualSlice,data.pln.gantryAngles(1),'crop');
     vW =ones(size(mRotActualSlice,2),1);
@@ -329,7 +330,7 @@ if data.typeofplot ==2
     
     if data.pln.bioOptimization == 1 && strcmp(data.pln.radiationMode,'carbon')
         
-        mEffect=getfield(data.dose,'Effect');
+        mEffect=getfield(data.optResult,'effect');
         mActualSlice = mEffect(:,:,data.slice);
         mRotActualSlice =imrotate(mActualSlice,data.pln.gantryAngles(1),'crop');
         mEffect=mRotActualSlice(:,idxCentAxis-delta:idxCentAxis+delta);
@@ -337,7 +338,7 @@ if data.typeofplot ==2
         vEffect=mean(mEffect,2);
         h2=plot(vX,vEffect,'color',ccc{1,2},'LineWidth',3),hold on; 
         
-        mAlpha=getfield(data.dose,'Alpha');
+        mAlpha=getfield(data.optResult,'alpha');
         mActualSlice = mAlpha(:,:,data.slice);
         mRotActualSlice =imrotate(mActualSlice,data.pln.gantryAngles(1),'crop');
         mAlpha=mRotActualSlice(:,idxCentAxis-delta:idxCentAxis+delta);
@@ -345,14 +346,14 @@ if data.typeofplot ==2
         vAlpha=mean(mAlpha,2);
         h3=plot(vX,vAlpha,'color',ccc{1,7},'LineWidth',3),hold on; 
       
-        mBioDose=getfield(data.dose,'BiologicalDose');
+        mBioDose=getfield(data.optResult,'RBEWeightedDose');
         mActualSlice = mBioDose(:,:,data.slice);
         mRotActualSlice =imrotate(mActualSlice,data.pln.gantryAngles(1),'crop');
         mBioDose=mRotActualSlice(:,idxCentAxis-delta:idxCentAxis+delta);
         mBioDose(isnan(mBioDose))=0;
         vBioDose=mean(mBioDose,2);
         
-        mRBE=getfield(data.dose,'RBE');
+        mRBE=getfield(data.optResult,'RBE');
         mActualSlice = mRBE(:,:,data.slice);
         mRotActualSlice =imrotate(mActualSlice,data.pln.gantryAngles(1),'crop');
         mRBE=mRotActualSlice(:,idxCentAxis-delta:idxCentAxis+delta);
@@ -529,7 +530,7 @@ doseSetText = uicontrol('Parent', gcf,...
         'Position', [0.03 0.43 0.109 0.03],...
         'FontSize',14);    ;
  
-if isempty(data.dose)
+if isempty(data.optResult)
     strTmp ={'no options available'};
 else
     strTmp = data.fName;
@@ -557,12 +558,12 @@ PopUpTypeOfPlot = uicontrol('Parent', gcf,...
         'Style', 'popupmenu',...
         'String', {'Intensity Plot','Profile Plot'} ,...
         'FontSize', 10,...
-        'Value',data.typeofplot,...
+        'Value',data.TypeOfPlot,...
         'Units', 'normalized',...
         'Position', [0.05 0.50 0.059 0.03],...
         'Callback', @displaypopupCallback);
 
-if data.typeofplot == 2
+if data.TypeOfPlot == 2
        TmpStr ='on';
 else
        TmpStr ='off';
@@ -589,7 +590,7 @@ end
 
  function displaypopupCallback(hObj,event)
       data=guidata(gcf);
-      data.typeofplot = get(hObj,'Value');
+      data.TypeOfPlot = get(hObj,'Value');
      
       guidata(gcf,data);
       matRad_visCtDose;

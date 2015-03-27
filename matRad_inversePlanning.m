@@ -75,7 +75,7 @@ if pln.bioOptimization == true
         end
     end
     
-    optResult.effect = exp( - (dij.mAlphaDose*optResult.w+(dij.mSqrtBetaDose*optResult.w).^2) );
+    optResult.effect = (dij.mAlphaDose*optResult.w+(dij.mSqrtBetaDose*optResult.w).^2);
     optResult.effect = reshape(optResult.effect,dij.dimensions);
     
     optResult.RBEWeightedDose = ((sqrt(a_x.^2 + 4 .* b_x .* optResult.effect) - a_x)./(2.*b_x));
@@ -86,7 +86,14 @@ if pln.bioOptimization == true
     %optResult.RBE= reshape(optResult.RBE,dij.dimensions);
     
     optResult.alpha = (dij.mAlphaDose.*spfun(@(x)1/x,dij.dose)) * optResult.w;
-    optResult.alpha = reshape(optResult.alpha,dij.dimensions);
+    
+    % takes 1.5 seconds
+    [m,n] = size(dij.mAlphaDose);
+    [i,j,a] = find(dij.mAlphaDose);
+    [i,j,b] = find(dij.dose);
+    c = a./b;
+    optResult.alpha = sparse(i,j,c,m,n);
+    optResult.alpha = reshape(optResult.alpha* optResult.w,dij.dimensions);
     
     optResult.beta = ( (dij.mSqrtBetaDose.*spfun(@(x)1/x,dij.dose)) * optResult.w ).^2;
     optResult.beta = reshape(optResult.beta,dij.dimensions);
