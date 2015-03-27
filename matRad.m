@@ -39,11 +39,11 @@ clc
 load BOXPHANTOM.mat
 
 % meta information for treatment plan
-pln.SAD             = 10000; %[mm]
+pln.SAD             = 1000; %[mm]
 pln.resolution      = ctResolution; %[mm/voxel]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,pln,0);
 pln.bixelWidth      = 2; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0]; % [°]
+pln.gantryAngles    = [270]; % [°]
 pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct);
@@ -66,11 +66,11 @@ end
 
 %% Dose visualization
 doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1));
-matRad_visCtDose(doseVis,cst,pln,ct);
+%matRad_visCtDose(doseVis,cst,pln,ct);
 
 %% inverse planning for imrt
 optResult = matRad_inversePlanning(dij,cst,pln);
-%matRad_visCtDose(dOpt,cst,pln,ct);
+matRad_visCtDose(optResult,cst,pln,ct);
 
 % %% sequencing
 % Sequencing = matRad_xiaLeafSequencing(wOpt,stf,pln,7,0);

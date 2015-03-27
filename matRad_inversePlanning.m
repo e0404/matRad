@@ -82,21 +82,24 @@ if pln.bioOptimization == true
     
     optResult.RBE = optResult.RBEWeightedDose./optResult.physicalDose;
     % a different way to calculate RBE is as follows - leads to the same
-    %optResult.RBE = ((sqrt(a_x.^2 + 4 .* b_x .* optResult.effect') - a_x)./(2.*b_x.*optResult.physicalDose'))';
-    %optResult.RBE= reshape(optResult.RBE,dij.dimensions);
+    optResult.RBE = ((sqrt(a_x.^2 + 4 .* b_x .* optResult.effect) - a_x)./(2.*b_x.*optResult.physicalDose));
+    optResult.RBE= reshape(optResult.RBE,dij.dimensions);
     
     optResult.alpha = (dij.mAlphaDose.*spfun(@(x)1/x,dij.dose)) * optResult.w;
     
     % takes 1.5 seconds
     [m,n] = size(dij.mAlphaDose);
-    [i,j,a] = find(dij.mAlphaDose);
-    [i,j,b] = find(dij.dose);
-    c = a./b;
-    optResult.alpha = sparse(i,j,c,m,n);
+    [i,j,b] = find(dij.mAlphaDose);
+    [i,j,a] = find(dij.dose);
+    optResult.alpha = sparse(i,j,b./a,m,n);
     optResult.alpha = reshape(optResult.alpha* optResult.w,dij.dimensions);
     
-    optResult.beta = ( (dij.mSqrtBetaDose.*spfun(@(x)1/x,dij.dose)) * optResult.w ).^2;
-    optResult.beta = reshape(optResult.beta,dij.dimensions);
+    [i,j,c] = find(dij.mSqrtBetaDose);
+    optResult.beta = sparse(i,j,c./a,m,n);
+    optResult.beta = reshape(optResult.beta* optResult.w,dij.dimensions);
+    
+    %optResult.beta = ( (dij.mSqrtBetaDose.*spfun(@(x)1/x,dij.dose)) * optResult.w ).^2;
+    %optResult.beta = reshape(optResult.beta,dij.dimensions);
     
 end
 
