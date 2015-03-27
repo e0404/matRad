@@ -26,8 +26,8 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%clear
-%close all
+clear
+close all
 clc
 
 % load patient data, i.e. ct, voi, cst
@@ -36,7 +36,7 @@ clc
 %load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-load RefPhantom3GyE.mat
+load BOXPHANTOM.mat
 
 % meta information for treatment plan
 pln.SAD             = 10000; %[mm]
@@ -50,6 +50,7 @@ pln.numOfVoxels     = numel(ct);
 pln.voxelDimensions = size(ct);
 pln.radiationMode   = 'carbon'; % either photons / protons / carbon
 pln.bioOptimization = true;   % false indicates physical optimization and true indicates biological optimization
+
 % initial visualization
 % matRad_visCtDose([],cst,pln,ct);
 
@@ -62,13 +63,14 @@ if strcmp(pln.radiationMode,'photons')
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst,0);
 end
+
 %% Dose visualization
 doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1));
-%matRad_visCtDose(doseVis,cst,pln,ct);
+matRad_visCtDose(doseVis,cst,pln,ct);
 
 %% inverse planning for imrt
-[wOpt,dOpt] = matRad_inversePlanning(dij,cst,pln);
-matRad_visCtDose(dOpt,cst,pln,ct);
+optResult = matRad_inversePlanning(dij,cst,pln);
+%matRad_visCtDose(dOpt,cst,pln,ct);
 
 % %% sequencing
 % Sequencing = matRad_xiaLeafSequencing(wOpt,stf,pln,7,0);
