@@ -1,4 +1,4 @@
-function [w,dose] = matRad_optimize(objFunc,wInit)
+function optResult = matRad_optimize(objFunc,wInit)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % projected L-BFGS optimizer including a positivity constraints on the
 % optimization variable
@@ -60,15 +60,13 @@ r_k            = ones(mem-1,1);
 a_k            = ones(1,mem-1);
 
 % 1st calculation of objective function and gradient
-[objFuncValue(1),dx(:,1),dose.PhysicalDose, dose.Effect] = objFunc(wInit);
+[objFuncValue(1),dx(:,1)] = objFunc(wInit);
 objFuncValue(2) = 2*objFuncValue(1);
-
-
 
 % variables for termination criteria
 iter      = 0;
-numOfIter = 100;
-prec      = 1e-5;
+numOfIter = 1000;
+prec      = 1e-4;
 
 % convergence if change in objective function smaller than prec or maximum
 % number of iteration reached. no convergence if lbfgs has just been rest
@@ -139,7 +137,7 @@ while continueOpt == 1
 
     objFuncValue(2) = objFuncValue(1);
     
-    [objFuncValue(1),dx(:,1),dose.PhysicalDose, dose.Effect] = objFunc(x(:,1));
+    [objFuncValue(1),dx(:,1)] = objFunc(x(:,1));
         
     s_k = -diff(x,[],2);
     y_k = -diff(dx,[],2);
@@ -174,8 +172,4 @@ end
 
 fprintf(['\n' num2str(iter) ' iteration(s) performed to converge\n'])
 
-w = x(:,1);
-
-if isnan(dose.Effect)
-   dose = rmfield(dose,'Effect');
-end
+optResult.w = x(:,1);

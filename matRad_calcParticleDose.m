@@ -65,15 +65,15 @@ dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 
 % Allocate space for dij.dose sparse matrix
 dij.dose = spalloc(numel(ct),dij.totalNumOfBixels,1);
-dij.mAlpha = spalloc(numel(ct),dij.totalNumOfBixels,1);
-dij.mBeta = spalloc(numel(ct),dij.totalNumOfBixels,1);
 
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 doseTmpContainer = cell(numOfBixelsContainer,1);
 if pln.bioOptimization == true 
-    alphaTmpContainer = cell(numOfBixelsContainer,1);
-    betaTmpContainer = cell(numOfBixelsContainer,1);
+    alphaDoseTmpContainer = cell(numOfBixelsContainer,1);
+    betaDoseTmpContainer = cell(numOfBixelsContainer,1);
+    dij.mAlphaDose = spalloc(numel(ct),dij.totalNumOfBixels,1);
+    dij.mSqrtBetaDose = spalloc(numel(ct),dij.totalNumOfBixels,1);
 end
 % Only take voxels inside patient.
 V = unique([cell2mat(cst(:,8))]);
@@ -86,40 +86,38 @@ yCoordsV = (yCoordsV(:)-0.5)*pln.resolution(2)-pln.isoCenter(2);
 zCoordsV = (zCoordsV(:)-0.5)*pln.resolution(3)-pln.isoCenter(3);
 coords_inside=[xCoordsV yCoordsV zCoordsV];
 
-
 % load protonBaseData
 if strcmp(pln.radiationMode,'protons')
     load protonBaseData;
 elseif strcmp(pln.radiationMode,'carbon')
-    load carbonBaseDataCNAO;
-    dij.baseData=baseData;
+    load carbonBaseData;
 end
-
 
 % generates tissue class matrix for biological optimization
 if pln.bioOptimization == true
     fprintf('matRad: loading biological base data... ');
-    mTissueClass = zeros(size(V,1),2);
-    mTissueClass(:,1) = V;
+    mTissueClass = zeros(size(V,1),1);
     for i=1:size(cst,1)
         % find indices of structures related to V
         [~, row] = ismember(cst{i,8},V,'rows');  
         if size(cst,2)>8
             if ~isempty(cst{i,9}) && isfield(cst{i,9},'TissueClass')
-                mTissueClass(row,2)=cst{i,9}.TissueClass;
+                mTissueClass(row) = cst{i,9}.TissueClass;
             end
         else
-            mTissueClass(row,2)=1;
+            mTissueClass(row) = 1;
             fprintf(['matRad: tissue type of ' cst{i,2} ' was set to normal tissue \n']);
         end
+        
+        % check consitency of biological baseData and cst settings
+        baseDataAlphaBetaRatios =  reshape([baseData(:).alphaBetaRatio],numel(baseData(1).alphaBetaRatio),size(baseData,2));
+        if norm(baseDataAlphaBetaRatios(cst{i,9}.TissueClass,:) - cst{i,9}.alphaX/cst{i,9}.betaX)>0
+            error('biological base data and cst inconsistent\n');
+        end
+        
     end
-    
-    
-    
-    
-     fprintf('...done \n');
+    fprintf('...done \n');
 end
-
 
 % It make a meshgrid with CT position in millimeter for calculate
 % geometrical distances
@@ -137,13 +135,6 @@ sourcePoint_bev = [0 -pln.SAD 0];
 counter = 0;
 
 fprintf('matRad: Particle dose calculation... ');
-
-if strcmp(pln.radiationMode,'protons')
-    mLQParams = @(vRadDepths,sEnergy,mT,Interp) matRad_ProtonLQParameter(vRadDepths,sEnergy,mT,Interp,0);
-elseif strcmp(pln.radiationMode,'carbon')
-    mLQParams = @(vRadDepths,sEnergy,mT,Interp) matRad_CarbonLQParameter(vRadDepths,sEnergy,mT,Interp,0);
-end
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams; % loop over all beams
@@ -216,33 +207,30 @@ for i = 1:dij.numOfBeams; % loop over all beams
                     radialDist_sq(currIx),...
                     baseData(energyIx));
                 
-            
+                % Save dose for every bixel in cell array
+                doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelDose,numel(ct),1);
+                            
                 if pln.bioOptimization == true 
                     % calculate alpha and beta values for bixel k on ray j of
                     % beam i - call duration 0.0020s                    
-                    [bixelAlpha, bixelBeta] = mLQParams(...
+                    [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
                         radDepths(currIx),...
                         baseData(energyIx),...
                         mTissueClass_j(currIx,:),...
                         baseData);
                 
-                    
+                    alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelAlpha.*bixelDose,numel(ct),1);
+                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelBeta.*bixelDose,numel(ct),1);
                 end
-   
-                % Save dose for every bixel in cell array
-                doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelDose,numel(ct),1);
-                if pln.bioOptimization == true
-                    alphaTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelAlpha,numel(ct),1);
-                    betaTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelBeta,numel(ct),1);
-                end
-                % save computation time and memory by sequentially filling the 
+                
+                % save computation time and memory by sequentially filling the
                 % sparse matrix dose.dij from the cell array
                 if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
                     dij.dose(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
                     
                     if pln.bioOptimization == true
-                        dij.mAlpha(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
-                        dij.mBeta(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                        dij.mAlphaDose(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                        dij.mSqrtBetaDose(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
                     end
                 end
 

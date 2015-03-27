@@ -1,4 +1,4 @@
-function [wOpt,dOpt] = matRad_inversePlanning(dij,cst,pln)
+function optResult = matRad_inversePlanning(dij,cst,pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
@@ -11,8 +11,7 @@ function [wOpt,dOpt] = matRad_inversePlanning(dij,cst,pln)
 %   pln:    matRad pln struct
 %
 % output
-%   wOpt:   optimized bixel weight vector
-%   dOpt:   optimized dose distribution (as cube)
+%   XXX
 %
 % References
 %   -
@@ -43,55 +42,56 @@ function [wOpt,dOpt] = matRad_inversePlanning(dij,cst,pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% generate meta information for optimization
-%optInfoArrays = mr_genOptInfoArrays(cst);
-
 % intial fluence profile = uniform bixel intensities
 wInit = ones(dij.totalNumOfBixels,1);
 
-%precalculate hadamard product of sparse matrices
-if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
-   dij.doseSkeleton = spones(dij.dose);
-   dij.mAlphaDose = dij.mAlpha.*dij.dose;
-   dij.mBetaDose = sqrt(dij.mBeta).*dij.dose;
+% precalculate hadamard product of sparse matrices
+if pln.bioOptimization == true
+   dij.doseSkeleton  = spones(dij.dose);
 end
+
 % define objective function
-if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
-    objFunc =  @(x) matRad_IMRTBioObjFunc(x,dij,cst);
+if pln.bioOptimization == true
+    objFunc =  @(x) matRad_bioObjFunc(x,dij,cst);
 else 
-    objFunc =  @(x) matRad_IMRTObjFunc(x,dij.dose,cst);
+    objFunc =  @(x) matRad_objFunc(x,dij,cst);
 end
 
 % minimize objetive function
-[wOpt,dOpt] = matRad_optimize(objFunc,wInit);
+optResult = matRad_optimize(objFunc,wInit);
 
-% reshape from 1D vector to 2D array
-dOpt.PhysicalDose = reshape(dOpt.PhysicalDose,dij.dimensions);
+% calc dose and reshape from 1D vector to 2D array
+optResult.physicalDose = reshape(dij.dose*optResult.w,dij.dimensions);
 
-if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')    
-    a_x = zeros(size(dOpt.Effect,1),1);
-    b_x = zeros(size(dOpt.Effect,1),1);
+if pln.bioOptimization == true
+    a_x = zeros(size(optResult.physicalDose));
+    b_x = zeros(size(optResult.physicalDose));
     
     for  i = 1:size(cst,1)
         % Only take OAR or target VOI.
         if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') 
-            ind =find([dij.baseData(1).Tissue.Class]==cst{i,9}.TissueClass);
-            a_x(cst{i,8})=dij.baseData(1).Tissue(ind).alphaX;
-            b_x(cst{i,8})=dij.baseData(1).Tissue(ind).betaX;
+            a_x(cst{i,8}) = cst{i,9}.alphaX;
+            b_x(cst{i,8}) = cst{i,9}.betaX;
         end
     end
     
-    dOpt.BiologicalDose = ((sqrt(a_x.^2 + 4 .* b_x .* dOpt.Effect) - a_x)./(2.*b_x));
-    dOpt.BiologicalDose = reshape(dOpt.BiologicalDose,dij.dimensions);
+    optResult.effect = exp( - (dij.mAlphaDose*optResult.w+(dij.mSqrtBetaDose*optResult.w).^2) );
+    optResult.effect = reshape(optResult.effect,dij.dimensions);
     
-    dOpt.RBE = dOpt.BiologicalDose./dOpt.PhysicalDose;
+    optResult.RBEWeightedDose = ((sqrt(a_x.^2 + 4 .* b_x .* optResult.effect) - a_x)./(2.*b_x));
+    
+    optResult.RBE = optResult.RBEWeightedDose./optResult.physicalDose;
     % a different way to calculate RBE is as follows - leads to the same
-    %dOpt.RBE = ((sqrt(a_x.^2 + 4 .* b_x .* dOpt.Effect') - a_x)./(2.*b_x.*dOpt.PhysicalDose'))';
-    %dOpt.RBE= reshape(dOpt.RBE,dij.dimensions);
-    dOpt.Effect = reshape(dOpt.Effect,dij.dimensions);
-    dOpt.Alpha = reshape(dij.mAlpha*wOpt,dij.dimensions);
+    %optResult.RBE = ((sqrt(a_x.^2 + 4 .* b_x .* optResult.effect') - a_x)./(2.*b_x.*optResult.physicalDose'))';
+    %optResult.RBE= reshape(optResult.RBE,dij.dimensions);
+    
+    optResult.alpha = (dij.mAlphaDose.*spfun(@(x)1/x,dij.dose)) * optResult.w;
+    optResult.alpha = reshape(optResult.alpha,dij.dimensions);
+    
+    optResult.beta = ( (dij.mSqrtBetaDose.*spfun(@(x)1/x,dij.dose)) * optResult.w ).^2;
+    optResult.beta = reshape(optResult.beta,dij.dimensions);
+    
 end
-
 
 % Make a sound when finished.
 beep;
