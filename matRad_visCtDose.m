@@ -1,4 +1,4 @@
-function matRad_visCtDose(optResult,cst,pln,ct,slice,plane)
+ function matRad_visCtDose(optResult,cst,pln,ct,slice,plane)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
@@ -424,7 +424,7 @@ if data.TypeOfPlot ==2
     title(str,'FontSize',14),grid on
     axis auto
     
-    legend([PlotHandles{:,1}],PlotHandles{:,2});
+    legend([PlotHandles{:,1}],PlotHandles{:,2},'Location','NorthWest');
     
     
     % set axis limits

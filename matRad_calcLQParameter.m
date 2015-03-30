@@ -32,6 +32,13 @@ index = find([baseData(:).energy]== sEnergy.energy);
 numOfTissueClass = size(baseData(1).alpha,2);
 
 for i = 1:numOfTissueClass
-    vAlpha(mTissueClass==i) = interp1(baseData(index).depths,baseData(index).alpha(:,i),vRadDepths(mTissueClass==i),'linear');
-    vBeta(mTissueClass==i)  = interp1(baseData(index).depths,baseData(index).beta(:,i), vRadDepths(mTissueClass==i),'linear');
+    vAlpha(mTissueClass==i) = interp1(baseData(index).depths,baseData(index).alpha(:,i),vRadDepths,'linear');
+    vBeta(mTissueClass==i)  = interp1(baseData(index).depths,baseData(index).beta(:,i), vRadDepths,'linear');
 end
+
+
+% [vRadSort vSortIndex] = sort(vRadDepths);
+% vAlphaSort = vAlpha(vSortIndex);
+% figure,plot(vRadSort,vAlphaSort);
+
+
