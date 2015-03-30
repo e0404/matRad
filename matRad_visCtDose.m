@@ -333,9 +333,9 @@ if data.TypeOfPlot ==2
     
     if data.pln.bioOptimization == 1
         
-        %will disable alpha-plot
-        data.fName{7,2}=0;
         %will disable beta-plot
+        %data.fName{7,2}=0;
+        %will disable alpha-plot
         %data.fName{6,2}=0;
         
         % plot counter
