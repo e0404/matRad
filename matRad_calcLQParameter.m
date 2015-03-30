@@ -1,4 +1,4 @@
-function [vAlpha, vBeta]= matRad_calcLQParameter(vRadDepths,sEnergy,mTissueClass,baseData)
+function [vAlpha, vBeta]= matRad_calcLQParameter(vRadDepths,mTissueClass,baseData)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -27,21 +27,10 @@ function [vAlpha, vBeta]= matRad_calcLQParameter(vRadDepths,sEnergy,mTissueClass
 vAlpha = NaN*ones(numel(vRadDepths),1);
 vBeta  = NaN*ones(numel(vRadDepths),1);
 
-% find corresponding index
-index = find([baseData(:).energy]== sEnergy.energy);
 numOfTissueClass = size(baseData(1).alpha,2);
 
 for i = 1:numOfTissueClass
-    vAlpha(mTissueClass==i) = interp1(baseData(index).depths,baseData(index).alpha(:,i),vRadDepths,'linear');
-    vBeta(mTissueClass==i)  = interp1(baseData(index).depths,baseData(index).beta(:,i), vRadDepths,'linear');
+    vAlpha(mTissueClass==i) = interp1(baseData.depths,baseData.alpha(:,i),vRadDepths,'linear');
+    vBeta(mTissueClass==i)  = interp1(baseData.depths,baseData.beta(:,i), vRadDepths,'linear');
 end
 
-% if sEnergy.energy >176 && sEnergy.energy<180
-% [vRadSort vSortIndex] = sort(vRadDepths);
-% vAlphaSort = vAlpha(vSortIndex);
-% vBetaSort = vBeta(vSortIndex);
-% figure, subplot(121),plot(vRadSort,vAlphaSort,'LineWidth',3),title(['Interpolated alpha at energy ' num2str(sEnergy.energy)],'FontSize',16);
-%         grid on, set(gca,'FontSize',12)
-%         subplot(122),plot(baseData(index).depths,baseData(index).alpha(:,1),'LineWidth',3),title(['alpha from base data at energy ' num2str(sEnergy.energy)],'FontSize',16);
-%         grid on, set(gca,'FontSize',12)       
-% end

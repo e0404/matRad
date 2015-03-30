@@ -35,15 +35,17 @@ clc
 %load HEAD_AND_NECK
 %load TG119.mat
 %load PROSTATE.mat
-%load LIVER.mat
-load BOXPHANTOM.mat
+load LIVER2.mat
+%load BOXPHANTOM.mat
+
+doseTime=tic;
 
 % meta information for treatment plan
 pln.SAD             = 10000; %[mm]
 pln.resolution      = ctResolution; %[mm/voxel]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,pln,0);
-pln.bixelWidth      = 3; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0]; % [°]
+pln.bixelWidth      = 2; % [mm] / also corresponds to lateral spot spacing for particles
+pln.gantryAngles    = [300]; % [°]
 pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct);
@@ -67,8 +69,10 @@ end
 %% Dose visualization
 doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1));
 %matRad_visCtDose(doseVis,cst,pln,ct);
+doseTime=toc(doseTime);
 
 %% inverse planning for imrt
+optTime=tic;
 optResult = matRad_inversePlanning(dij,cst,pln);
 matRad_visCtDose(optResult,cst,pln,ct);
 
@@ -80,3 +84,7 @@ matRad_visCtDose(optResult,cst,pln,ct);
 % %% dvh and conformity index
 % matRad_calcDVH(dSeq,cst)
 % 
+optTime=toc(optTime);
+
+whos('dij')
+DoseElements=nnz(dij.dose);

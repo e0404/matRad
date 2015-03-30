@@ -47,7 +47,8 @@ wInit = ones(dij.totalNumOfBixels,1);
 
 % precalculate hadamard product of sparse matrices
 if pln.bioOptimization == true
-   dij.doseSkeleton  = spones(dij.dose);
+   dij.doseSkeleton   = spones(dij.dose);
+   dij.mSqrtBetaDose2 = 2*dij.mSqrtBetaDose;
 end
 
 % define objective function
@@ -64,14 +65,18 @@ optResult = matRad_optimize(objFunc,wInit);
 optResult.physicalDose = reshape(dij.dose*optResult.w,dij.dimensions);
 
 if pln.bioOptimization == true
+    
     a_x = zeros(size(optResult.physicalDose));
     b_x = zeros(size(optResult.physicalDose));
-    
+    sPrescription=0;
     for  i = 1:size(cst,1)
         % Only take OAR or target VOI.
         if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') 
             a_x(cst{i,8}) = cst{i,9}.alphaX;
             b_x(cst{i,8}) = cst{i,9}.betaX;
+            if isequal(cst{i,3},'TARGET') 
+                sPrescription=cst{i,4};
+            end
         end
     end
     
@@ -80,28 +85,20 @@ if pln.bioOptimization == true
     
     optResult.RBEWeightedDose = ((sqrt(a_x.^2 + 4 .* b_x .* optResult.effect) - a_x)./(2.*b_x));
     
+    %only consider RBE at certain dose level
+    sCutOffPhysDose = 0.05;
     optResult.RBE = optResult.RBEWeightedDose./optResult.physicalDose;
+    optResult.RBE(optResult.physicalDose < sPrescription*sCutOffPhysDose)=0;
+
     % a different way to calculate RBE is as follows - leads to the same
     %optResult.RBE = ((sqrt(a_x.^2 + 4 .* b_x .* optResult.effect) - a_x)./(2.*b_x.*optResult.physicalDose));
     %optResult.RBE= reshape(optResult.RBE,dij.dimensions);
+      
+    optResult.alpha = (dij.mAlphaDose.*spfun(@(x)1./x,dij.dose)) * optResult.w;
+    optResult.alpha = reshape(optResult.alpha,dij.dimensions);
+    optResult.beta = ( (dij.mSqrtBetaDose.*spfun(@(x)1./x,dij.dose)) * optResult.w ).^2;
+    optResult.beta = reshape(optResult.beta,dij.dimensions);
     
-    
-    
-    % takes 1.5 seconds
-    [m,n] = size(dij.mAlphaDose);
-    [i,j,b] = find(dij.mAlphaDose);
-    [i,j,a] = find(dij.dose);
-    optResult.alpha = sparse(i,j,b./a,m,n);
-    optResult.alpha = reshape(optResult.alpha* optResult.w,dij.dimensions);
-    %optResult.alpha = (dij.mAlphaDose.*spfun(@(x)1/x,dij.dose)) * optResult.w;
-    %optResult.alpha = reshape(optResult.alpha* optResult.w,dij.dimensions);
-    
-    [i,j,c] = find(dij.mSqrtBetaDose);
-    optResult.beta = sparse(i,j,c./a,m,n);
-    optResult.beta = reshape(optResult.beta* optResult.w,dij.dimensions);
-    
-    %optResult.beta = ( (dij.mSqrtBetaDose.*spfun(@(x)1/x,dij.dose)) * optResult.w ).^2;
-    %optResult.beta = reshape(optResult.beta,dij.dimensions);
     
 end
 

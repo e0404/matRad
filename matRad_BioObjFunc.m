@@ -76,9 +76,11 @@ for  i = 1:size(cst,1)
     end
 end
 
-% this works but still has two expensive operations 
+% gradient calculation - compromises one expensive calculation
 if nargout > 1
-    lambda = (2*dij.mSqrtBetaDose*w);
+    profile on
+    lambda = dij.mSqrtBetaDose2*w;
+    %lambda = (spfun(@(x)2.*x,dij.mSqrtBetaDose))*w;
     n = length(lambda);
     vBias= (delta' * dij.mAlphaDose)';
     mPsi= (delta'*((spdiags(lambda(:),0,n,n)*dij.doseSkeleton).*dij.dose))';
