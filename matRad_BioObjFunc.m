@@ -14,9 +14,7 @@ function [f, g] = matRad_bioObjFunc(w,dij,cst)
 % m.bangert@dkzf.de
 
 % calculate biological effect
-linTerm  = dij.mAlphaDose*w;
-quadTerm = dij.mSqrtBetaDose*w;
-e = linTerm + quadTerm.^2;
+e = (dij.mAlphaDose*w) + (dij.mSqrtBetaDose*w).^2;
 
 % default alpha photon and beta photon parameters to calculate prescribed effect
 a_x = 0.1; 
@@ -81,10 +79,10 @@ end
 % gradient calculation - compromises one expensive calculation
 if nargout > 1
     profile on
-   
+    lambda = dij.mSqrtBetaDose2*w;
+    %lambda = (spfun(@(x)2.*x,dij.mSqrtBetaDose))*w;
+    n = length(lambda);
     vBias= (delta' * dij.mAlphaDose)';
-    %mPsi= (delta'*((spdiags(2*quadTerm(:),0,n,n)*dij.doseSkeleton).*dij.dose))';
-    mPsi = ((2*delta.*quadTerm)'*dij.dose)';
+    mPsi= (delta'*((spdiags(lambda(:),0,n,n)*dij.doseSkeleton).*dij.dose))';
     g = 2*(vBias+mPsi);
-    
 end
