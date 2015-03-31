@@ -46,10 +46,9 @@ function optResult = matRad_inversePlanning(dij,cst,pln)
 wInit = ones(dij.totalNumOfBixels,1);
 
 % precalculate hadamard product of sparse matrices
-if pln.bioOptimization == true
-   dij.doseSkeleton   = spones(dij.dose);
-   dij.mSqrtBetaDose2 = 2*dij.mSqrtBetaDose;
-end
+% if pln.bioOptimization == true
+%    dij.doseSkeleton   = spones(dij.dose);
+% end
 
 % define objective function
 if pln.bioOptimization == true
@@ -94,11 +93,11 @@ if pln.bioOptimization == true
     %optResult.RBE = ((sqrt(a_x.^2 + 4 .* b_x .* optResult.effect) - a_x)./(2.*b_x.*optResult.physicalDose));
     %optResult.RBE= reshape(optResult.RBE,dij.dimensions);
       
-    optResult.alpha = (dij.mAlphaDose.*spfun(@(x)1./x,dij.dose)) * optResult.w;
-    optResult.alpha = reshape(optResult.alpha,dij.dimensions);
-    optResult.beta = ( (dij.mSqrtBetaDose.*spfun(@(x)1./x,dij.dose)) * optResult.w ).^2;
-    optResult.beta = reshape(optResult.beta,dij.dimensions);
-    
+%      optResult.alpha = (dij.mAlphaDose.*spfun(@(x)1./x,dij.dose)) * optResult.w;
+%      optResult.alpha = reshape(optResult.alpha,dij.dimensions);
+%      optResult.beta = ( (dij.mSqrtBetaDose.*spfun(@(x)1./x,dij.dose)) * optResult.w ).^2;
+%      optResult.beta = reshape(optResult.beta,dij.dimensions);
+%     
     
 end
 
