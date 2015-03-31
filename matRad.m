@@ -35,8 +35,8 @@ clc
 %load HEAD_AND_NECK
 %load TG119.mat
 %load PROSTATE.mat
-load LIVER2.mat
-%load BOXPHANTOM.mat
+%load LIVER.mat
+load BOXPHANTOM.mat
 
 doseTime=tic;
 
@@ -44,9 +44,9 @@ doseTime=tic;
 pln.SAD             = 10000; %[mm]
 pln.resolution      = ctResolution; %[mm/voxel]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,pln,0);
-pln.bixelWidth      = 2; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [300]; % [°]
-pln.couchAngles     = [0]; % [°]
+pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
+pln.gantryAngles    = [0]; % [°]
+pln.couchAngles     = [45]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct);
 pln.voxelDimensions = size(ct);
