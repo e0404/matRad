@@ -80,8 +80,6 @@ end
 
 % gradient calculation - compromises one expensive calculation
 if nargout > 1
-    profile on
-   
     vBias= (delta' * dij.mAlphaDose)';
     %mPsi= (delta'*((spdiags(2*quadTerm(:),0,n,n)*dij.doseSkeleton).*dij.dose))';
     mPsi = ((2*delta.*quadTerm)'*dij.dose)';
