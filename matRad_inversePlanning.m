@@ -47,6 +47,11 @@ wInit = ones(dij.totalNumOfBixels,1);
 
 % define objective function
 if pln.bioOptimization == true
+    % account for fractionation
+    for i = 1:size(cst,1)
+        cst{i,4} = cst{i,4}./pln.numOfFractions;
+        cst{i,5} = cst{i,5}./pln.numOfFractions;
+    end
     objFunc =  @(x) matRad_bioObjFunc(x,dij,cst);
 else 
     objFunc =  @(x) matRad_objFunc(x,dij,cst);
@@ -56,7 +61,7 @@ end
 optResult = matRad_optimize(objFunc,wInit);
 
 % calc dose and reshape from 1D vector to 2D array
-optResult.physicalDose = reshape(dij.dose*optResult.w,dij.dimensions);
+optResult.physicalDose = reshape(dij.physicalDose*optResult.w,dij.dimensions);
 
 if pln.bioOptimization == true
     
@@ -81,9 +86,9 @@ if pln.bioOptimization == true
     %optResult.RBE = ((sqrt(a_x.^2 + 4 .* b_x .* optResult.effect) - a_x)./(2.*b_x.*optResult.physicalDose));
     %optResult.RBE= reshape(optResult.RBE,dij.dimensions);
       
-    optResult.alpha = (dij.mAlphaDose.*spfun(@(x)1./x,dij.dose)) * optResult.w;
+    optResult.alpha = (dij.mAlphaDose.*spfun(@(x)1./x,dij.physicalDose)) * optResult.w;
     optResult.alpha = reshape(optResult.alpha,dij.dimensions);
-    optResult.beta = ( (dij.mSqrtBetaDose.*spfun(@(x)1./x,dij.dose)) * optResult.w ).^2;
+    optResult.beta = ( (dij.mSqrtBetaDose.*spfun(@(x)1./x,dij.physicalDose)) * optResult.w ).^2;
     optResult.beta = reshape(optResult.beta,dij.dimensions);
          
 end

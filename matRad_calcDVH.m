@@ -62,16 +62,23 @@ colorMx    = colorMx(1:floor(64/numOfVois):64,:);
 
 lineStyles = {'-',':','--','-.'};
 
-n         = 100;
-dvhPoints = linspace(0,100,n);
+n         = 1000;
+if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0
+    dvhPoints = linspace(0,max(d.RBEWeightedDose(:))*1.05,n);
+else
+    dvhPoints = linspace(0,max(d.physicalDose(:))*1.05,n);
+end
 dvh       = NaN * ones(1,n);
 
 for i = 1:numOfVois
 
     indices     = cst{i,8};
     numOfVoxels = numel(indices);
-    doseInVoi   = d(indices);
-
+    if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0
+        doseInVoi   = d.RBEWeightedDose(indices);   
+    else
+        doseInVoi   = d.physicalDose(indices);
+    end
     fprintf('%3d %20s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy)\n', ...
         cst{i,1},cst{i,2},mean(doseInVoi),std(doseInVoi),max(doseInVoi),min(doseInVoi))
 
@@ -92,19 +99,25 @@ legendHandle = legend('show');
 
 fontSizeValue = 14;
 
-axis([0 100 0 110])
+xmax = ceil(max(doseInVoi(:))+0.2*max(doseInVoi(:)))+1;
+axis([0 xmax 0 110])
 plot([0 100],[0 0],'k','LineWidth',2)
 set(gca,'YTick',0:20:120)
-set(gca,'XTick',0:10:120)
-set(gca,'XTickLabel',{0,[],20,[],40,[],60,[],80,[],100})
+
+%x_r = round(linspace(0,xmax,8).*100)/100;
+%set(gca,'XTick',x_r)
+%set(gca,'XTickLabel',{0,[],20,[],40,[],60,[],80,[],100})
 grid on
 box(gca,'on');
 set(gca,'LineWidth',1.5,'FontSize',fontSizeValue);
 set(gcf,'Color','w');
 ylabel('Volume [%]','FontSize',fontSizeValue)
-xlabel('Dose [Gy]','FontSize',fontSizeValue)
 
-return;
+if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0
+    xlabel('RBE x Dose [GyE]','FontSize',fontSizeValue)
+else
+    xlabel('Dose [Gy]','FontSize',fontSizeValue)
+end
 
 %% calculate conformity index
 % find target volumes and sort them according to their prescribed dose
@@ -121,12 +134,17 @@ targetVol            = targetVol(ranking);
 
 for i = 1:numel(targetVol)
     
-    targetVolIndices        = voi(:) == cst{targetVol(i),1};
+    targetVolIndices = zeros(numel(d.physicalDose),1);
+    targetVolIndices(cst{targetVol(i),8}) = 1;
     for j = i+1:numel(targetVol)
-        targetVolIndices    = targetVolIndices | voi(:) == cst{targetVol(j),1};
+        targetVolIndices(cst{targetVol(j),8}) = 1;
     end
     
-    treatedVolIndices       = d(:) >= .95*targetDose(i);
+    if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0
+        treatedVolIndices       = d.RBEWeightedDose(:) >= .95*targetDose(i);
+    else
+        treatedVolIndices       = d.physicalDose(:) >= .95*targetDose(i);
+    end
     treatedTargetVolIndices = targetVolIndices & treatedVolIndices;
     
     % van't Riet conformity number according to http://www.sciencedirect.com/science/article/pii/S0360301605027197

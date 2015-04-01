@@ -33,8 +33,8 @@ clc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-%load TG119.mat
-load PROSTATE.mat
+load TG119.mat
+%load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
 
@@ -43,16 +43,17 @@ pln.SAD             = 10000; %[mm]
 pln.resolution      = ctResolution; %[mm/voxel]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,pln,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [270]; % [Â°]
-pln.couchAngles     = [0]; % [Â°]
+pln.gantryAngles    = [0]; % [°]
+pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct);
 pln.voxelDimensions = size(ct);
-pln.radiationMode   = 'photons'; % either photons / protons / carbon
-pln.bioOptimization = false;   % false indicates physical optimization and true indicates biological optimization
+pln.radiationMode   = 'carbon'; % either photons / protons / carbon
+pln.bioOptimization = true;   % false indicates physical optimization and true indicates biological optimization
+pln.numOfFractions  = 30;
 
 % initial visualization
-% matRad_visCtDose([],cst,pln,ct);
+matRad_visCtDose([],cst,pln,ct);
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
@@ -73,10 +74,11 @@ optResult = matRad_inversePlanning(dij,cst,pln);
 matRad_visCtDose(optResult,cst,pln,ct);
 
 %% sequencing
-Sequencing = matRad_xiaLeafSequencing(wOpt,stf,pln,7,0);
-dSeq = matRad_mxCalcDose(dij,Sequencing.w);
-matRad_visCtDose(dSeq,cst,pln,ct);
-
+if strcmp(pln.radiationMode,'photons')
+    Sequencing = matRad_xiaLeafSequencing(optResult.w,stf,pln,7,0);
+    optResult = matRad_mxCalcDose(dij,Sequencing.w);
+    matRad_visCtDose(optResult,cst,pln,ct);
+end
 %% dvh and conformity index
-matRad_calcDVH(dSeq,cst)
+matRad_calcDVH(optResult,cst)
 
