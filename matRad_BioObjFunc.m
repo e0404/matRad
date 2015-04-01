@@ -78,10 +78,9 @@ for  i = 1:size(cst,1)
     end
 end
 
-% gradient calculation - compromises one expensive calculation
+% gradient calculation
 if nargout > 1
     vBias= (delta' * dij.mAlphaDose)';
-    %mPsi= (delta'*((spdiags(2*quadTerm(:),0,n,n)*dij.doseSkeleton).*dij.dose))';
     mPsi = ((2*delta.*quadTerm)'*dij.dose)';
     g = 2*(vBias+mPsi);    
 end
