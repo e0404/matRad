@@ -34,24 +34,22 @@ clc
 
 %load HEAD_AND_NECK
 %load TG1192.mat
-%load PROSTATE.mat
+load PROSTATE.mat
 %load LIVER.mat
-load BOXPHANTOM.mat
-
-doseTime=tic;
+%load BOXPHANTOM.mat
 
 % meta information for treatment plan
 pln.SAD             = 10000; %[mm]
 pln.resolution      = ctResolution; %[mm/voxel]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,pln,0);
-pln.bixelWidth      = 3; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [300]; % [°]
+pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
+pln.gantryAngles    = [270]; % [°]
 pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct);
 pln.voxelDimensions = size(ct);
-pln.radiationMode   = 'carbon'; % either photons / protons / carbon
-pln.bioOptimization = true;   % false indicates physical optimization and true indicates biological optimization
+pln.radiationMode   = 'photons'; % either photons / protons / carbon
+pln.bioOptimization = false;   % false indicates physical optimization and true indicates biological optimization
 
 % initial visualization
 % matRad_visCtDose([],cst,pln,ct);
@@ -76,15 +74,11 @@ optTime=tic;
 optResult = matRad_inversePlanning(dij,cst,pln);
 matRad_visCtDose(optResult,cst,pln,ct);
 
-% %% sequencing
-% Sequencing = matRad_xiaLeafSequencing(wOpt,stf,pln,7,0);
-% dSeq = matRad_mxCalcDose(dij,Sequencing.w);
-% matRad_visCtDose(dSeq,cst,pln,ct);
-% 
-% %% dvh and conformity index
-% matRad_calcDVH(dSeq,cst)
-% 
+%% sequencing
+Sequencing = matRad_xiaLeafSequencing(wOpt,stf,pln,7,0);
+dSeq = matRad_mxCalcDose(dij,Sequencing.w);
+matRad_visCtDose(dSeq,cst,pln,ct);
 
-optTime=toc(optTime);
-whos('dij')
-DoseElements=nnz(dij.dose);
+%% dvh and conformity index
+matRad_calcDVH(dSeq,cst)
+
