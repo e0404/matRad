@@ -62,15 +62,11 @@ if pln.bioOptimization == true
     
     a_x = zeros(size(optResult.physicalDose));
     b_x = zeros(size(optResult.physicalDose));
-    sPrescription=0;
     for  i = 1:size(cst,1)
         % Only take OAR or target VOI.
         if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') 
             a_x(cst{i,8}) = cst{i,9}.alphaX;
             b_x(cst{i,8}) = cst{i,9}.betaX;
-            if isequal(cst{i,3},'TARGET') 
-                sPrescription=cst{i,4};
-            end
         end
     end
     
@@ -79,11 +75,8 @@ if pln.bioOptimization == true
     
     optResult.RBEWeightedDose = ((sqrt(a_x.^2 + 4 .* b_x .* optResult.effect) - a_x)./(2.*b_x));
     
-    %only consider RBE at certain dose level
-    sCutOffPhysDose = 0.05;
     optResult.RBE = optResult.RBEWeightedDose./optResult.physicalDose;
-    optResult.RBE(optResult.physicalDose < sPrescription*sCutOffPhysDose)=0;
-
+    
     % a different way to calculate RBE is as follows - leads to the same
     %optResult.RBE = ((sqrt(a_x.^2 + 4 .* b_x .* optResult.effect) - a_x)./(2.*b_x.*optResult.physicalDose));
     %optResult.RBE= reshape(optResult.RBE,dij.dimensions);
