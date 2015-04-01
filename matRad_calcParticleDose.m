@@ -215,12 +215,11 @@ for i = 1:dij.numOfBeams; % loop over all beams
                     % beam i - call duration 0.0020s                    
                     [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
                         radDepths(currIx),...
-                        baseData(energyIx),...
                         mTissueClass_j(currIx,:),...
-                        baseData);
+                        baseData(energyIx));
                 
                     alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelAlpha.*bixelDose,numel(ct),1);
-                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelBeta.*bixelDose,numel(ct),1);
+                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,numel(ct),1);
                 end
                 
                 % save computation time and memory by sequentially filling the

@@ -45,11 +45,6 @@ function optResult = matRad_inversePlanning(dij,cst,pln)
 % intial fluence profile = uniform bixel intensities
 wInit = ones(dij.totalNumOfBixels,1);
 
-% precalculate hadamard product of sparse matrices
-if pln.bioOptimization == true
-   dij.doseSkeleton  = spones(dij.dose);
-end
-
 % define objective function
 if pln.bioOptimization == true
     objFunc =  @(x) matRad_bioObjFunc(x,dij,cst);
@@ -64,33 +59,40 @@ optResult = matRad_optimize(objFunc,wInit);
 optResult.physicalDose = reshape(dij.dose*optResult.w,dij.dimensions);
 
 if pln.bioOptimization == true
+    
     a_x = zeros(size(optResult.physicalDose));
     b_x = zeros(size(optResult.physicalDose));
-    
+    sPrescription=0;
     for  i = 1:size(cst,1)
         % Only take OAR or target VOI.
         if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') 
             a_x(cst{i,8}) = cst{i,9}.alphaX;
             b_x(cst{i,8}) = cst{i,9}.betaX;
+            if isequal(cst{i,3},'TARGET') 
+                sPrescription=cst{i,4};
+            end
         end
     end
     
-    optResult.effect = exp( - (dij.mAlphaDose*optResult.w+(dij.mSqrtBetaDose*optResult.w).^2) );
+    optResult.effect = (dij.mAlphaDose*optResult.w+(dij.mSqrtBetaDose*optResult.w).^2);
     optResult.effect = reshape(optResult.effect,dij.dimensions);
     
     optResult.RBEWeightedDose = ((sqrt(a_x.^2 + 4 .* b_x .* optResult.effect) - a_x)./(2.*b_x));
     
+    %only consider RBE at certain dose level
+    sCutOffPhysDose = 0.05;
     optResult.RBE = optResult.RBEWeightedDose./optResult.physicalDose;
+    optResult.RBE(optResult.physicalDose < sPrescription*sCutOffPhysDose)=0;
+
     % a different way to calculate RBE is as follows - leads to the same
-    %optResult.RBE = ((sqrt(a_x.^2 + 4 .* b_x .* optResult.effect') - a_x)./(2.*b_x.*optResult.physicalDose'))';
+    %optResult.RBE = ((sqrt(a_x.^2 + 4 .* b_x .* optResult.effect) - a_x)./(2.*b_x.*optResult.physicalDose));
     %optResult.RBE= reshape(optResult.RBE,dij.dimensions);
-    
-    optResult.alpha = (dij.mAlphaDose.*spfun(@(x)1/x,dij.dose)) * optResult.w;
+      
+    optResult.alpha = (dij.mAlphaDose.*spfun(@(x)1./x,dij.dose)) * optResult.w;
     optResult.alpha = reshape(optResult.alpha,dij.dimensions);
-    
-    optResult.beta = ( (dij.mSqrtBetaDose.*spfun(@(x)1/x,dij.dose)) * optResult.w ).^2;
+    optResult.beta = ( (dij.mSqrtBetaDose.*spfun(@(x)1./x,dij.dose)) * optResult.w ).^2;
     optResult.beta = reshape(optResult.beta,dij.dimensions);
-    
+         
 end
 
 % Make a sound when finished.
