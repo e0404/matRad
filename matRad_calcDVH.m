@@ -1,4 +1,4 @@
-function matRad_calcDVH(d,cst,lineStyleIndicator)
+function matRad_calcDVH(d,cst,pln,lineStyleIndicator)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dvh calculation
 % 
@@ -46,7 +46,7 @@ function matRad_calcDVH(d,cst,lineStyleIndicator)
 
 % create new figure and set default line style indicator if not explictly
 % specified
-if nargin < 3
+if nargin < 4
     figure
     hold on
     lineStyleIndicator = 1;
@@ -70,8 +70,11 @@ for i = 1:numOfVois
 
     indices     = cst{i,8};
     numOfVoxels = numel(indices);
-    doseInVoi   = d(indices);
-
+    if pln.bioOptimization == false
+        doseInVoi   = d.physicalDose(indices);
+    else
+        doseInVoi   = d.RBEWeightedDose(indices);   
+    end
     fprintf('%3d %20s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy)\n', ...
         cst{i,1},cst{i,2},mean(doseInVoi),std(doseInVoi),max(doseInVoi),min(doseInVoi))
 
@@ -92,17 +95,25 @@ legendHandle = legend('show');
 
 fontSizeValue = 14;
 
-axis([0 100 0 110])
+xmax = ceil(max(doseInVoi(:))+0.2*max(doseInVoi(:)))+1;
+axis([0 xmax 0 110])
 plot([0 100],[0 0],'k','LineWidth',2)
 set(gca,'YTick',0:20:120)
-set(gca,'XTick',0:10:120)
-set(gca,'XTickLabel',{0,[],20,[],40,[],60,[],80,[],100})
+%set(gca,'YTick',0:20:120)
+x_r=round(linspace(0,xmax,8).*100)/100 
+set(gca,'XTick',x_r)
+%set(gca,'XTickLabel',{0,[],20,[],40,[],60,[],80,[],100})
 grid on
 box(gca,'on');
 set(gca,'LineWidth',1.5,'FontSize',fontSizeValue);
 set(gcf,'Color','w');
 ylabel('Volume [%]','FontSize',fontSizeValue)
-xlabel('Dose [Gy]','FontSize',fontSizeValue)
+
+ if pln.bioOptimization == false
+    xlabel('Dose [Gy]','FontSize',fontSizeValue)
+ else
+    xlabel('RBE x Dose [GyE]','FontSize',fontSizeValue)
+ end
 
 return;
 

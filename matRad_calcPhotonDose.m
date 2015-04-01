@@ -64,8 +64,8 @@ dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
 dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
 dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 
-% Allocate space for dij.dose sparse matrix
-dij.dose = spalloc(numel(ct),dij.totalNumOfBixels,1);
+% Allocate space for dij.physicalDose sparse matrix
+dij.physicalDose = spalloc(numel(ct),dij.totalNumOfBixels,1);
 
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
@@ -195,7 +195,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
         % save computation time and memory by sequentially filling the 
         % sparse matrix dose.dij from the cell array
         if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
-            dij.dose(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+            dij.physicalDose(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
         end
         
     end

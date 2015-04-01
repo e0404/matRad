@@ -73,7 +73,12 @@ if nargin > 0
     if ~isempty(data.optResult)
         data.doseColorwashCheckboxValue = 1;
         data.doseIsoCheckboxValue = 1;
-        data.SelectedDisplayOption = 2;
+        if data.pln.bioOptimization ==false
+            data.SelectedDisplayOption = 1;
+        else
+            data.SelectedDisplayOption = 2;
+        end
+        
         data.TypeOfPlot = 1;
     else
         data.doseColorwashCheckboxValue = 0;

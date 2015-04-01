@@ -45,10 +45,10 @@ function [f, g] = matRad_objFunc(w,dij,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Calculate dose
-d = dij.dose*w;
+d = dij.physicalDose*w;
 
 % Numbers of voxels
-numVoxels = size(dij.dose,1);
+numVoxels = size(dij.physicalDose,1);
 
 % Initializes f
 f = 0;
@@ -93,5 +93,5 @@ end
 
 % Calculate gradient.
 if nargout > 1
-    g = 2 * (delta' * dij.dose)';
+    g = 2 * (delta' * dij.physicalDose)';
 end

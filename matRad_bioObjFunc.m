@@ -23,7 +23,7 @@ a_x = 0.1;
 b_x = 0.05;
 
 % Numbers of voxels
-numVoxels = size(dij.dose,1);
+numVoxels = size(dij.physicalDose,1);
 
 % Initializes f
 f = 0;
@@ -60,7 +60,7 @@ for  i = 1:size(cst,1)
         % Maximun deviation: biologic effect minus maximun prescribed biological effect.
         deviation_max = e_i - Emax;
         
-        % Minimun deviation: Dose minus minimun dose.
+        % Minimun deviation: effect minus minimun effect.
         deviation_min = e_i - Emin;
         
         % Apply positive operator H.
@@ -81,6 +81,6 @@ end
 % gradient calculation
 if nargout > 1
     vBias= (delta' * dij.mAlphaDose)';
-    mPsi = ((2*delta.*quadTerm)'*dij.dose)';
+    mPsi = ((2*delta.*quadTerm)'*dij.physicalDose)';
     g = 2*(vBias+mPsi);    
 end
