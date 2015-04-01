@@ -47,6 +47,11 @@ wInit = ones(dij.totalNumOfBixels,1);
 
 % define objective function
 if pln.bioOptimization == true
+    % account for fractionation
+    for i = 1:size(cst,1)
+        cst{i,4} = cst{i,4}./pln.numOfFractions;
+        cst{i,5} = cst{i,5}./pln.numOfFractions;
+    end
     objFunc =  @(x) matRad_bioObjFunc(x,dij,cst);
 else 
     objFunc =  @(x) matRad_objFunc(x,dij,cst);

@@ -73,12 +73,7 @@ if nargin > 0
     if ~isempty(data.optResult)
         data.doseColorwashCheckboxValue = 1;
         data.doseIsoCheckboxValue = 1;
-        if data.pln.bioOptimization ==false
-            data.SelectedDisplayOption = 1;
-        else
-            data.SelectedDisplayOption = 2;
-        end
-        
+        data.SelectedDisplayOption = 2;
         data.TypeOfPlot = 1;
     else
         data.doseColorwashCheckboxValue = 0;
@@ -325,7 +320,7 @@ if data.TypeOfPlot ==2
     mY(isnan(mY))=0;
     mY_avg=mean(mY,2);
     vX=linspace(1,data.pln.resolution(1)*numel(mY_avg),numel(mY_avg));
-    PlotHandles{1}=plot(vX,mY_avg,'color',cColor{1,1},'LineWidth',3),hold on; 
+    PlotHandles{1} = plot(vX,mY_avg,'color',cColor{1,1},'LineWidth',3); hold on; 
     PlotHandles{1,2}='physicalDose';
     % assess x and y axis limits
     xLim  = find(mY_avg);
@@ -354,7 +349,7 @@ if data.TypeOfPlot ==2
                 mY = mRotActualSlice(:,idxCentAxis-delta:idxCentAxis+delta);
                 mY(isnan(mY))=0;
                 mY=mean(mY,2);
-                PlotHandles{Cnt,1} = plot(vX,mY,'color',cColor{1,Cnt},'LineWidth',3),hold on; 
+                PlotHandles{Cnt,1} = plot(vX,mY,'color',cColor{1,Cnt},'LineWidth',3);hold on; 
                 PlotHandles{Cnt,2} =data.fName{i,1};
                 Cnt = Cnt+1;
             end           
@@ -374,7 +369,7 @@ if data.TypeOfPlot ==2
         vRBE=mean(mRBE,2);
         
         % plot biological dose against RBE
-        [ax, PlotHandles{Cnt,1}, PlotHandles{Cnt+1,1}]=plotyy(vX,vBED,vX,vRBE,'plot'),hold on;
+        [ax, PlotHandles{Cnt,1}, PlotHandles{Cnt+1,1}]=plotyy(vX,vBED,vX,vRBE,'plot');hold on;
         PlotHandles{Cnt,2}='RBEWeightedDose';
         PlotHandles{Cnt+1,2}='RBE';
          
@@ -414,8 +409,8 @@ if data.TypeOfPlot ==2
     PlotHandles{Cnt,2} ='target boundary';
     
     if ~isempty(vRay)
-        PlotHandles{Cnt,1}=plot([vRay(1) vRay(1)],[0 ymax],'--','Linewidth',2,'color','k'),hold on
-        plot([vRay(end) vRay(end)], [0 ymax],'--','Linewidth',2,'color','k'),hold on
+        PlotHandles{Cnt,1}=plot([vRay(1) vRay(1)],[0 ymax],'--','Linewidth',2,'color','k');hold on
+        plot([vRay(end) vRay(end)], [0 ymax],'--','Linewidth',2,'color','k');hold on
         xmax = vRay(end)+30;
     else
         PlotHandles{Cnt,1} =0;
@@ -423,7 +418,7 @@ if data.TypeOfPlot ==2
     
     Cnt = Cnt+1;
     % plot prescription
-    PlotHandles{Cnt,1}=plot([0 size(data.ct,1)*data.pln.resolution(1)],[sPrescrpDose sPrescrpDose],'--','Linewidth',2,'color','m')
+    PlotHandles{Cnt,1}=plot([0 size(data.ct,1)*data.pln.resolution(1)],[sPrescrpDose sPrescrpDose],'--','Linewidth',2,'color','m');
     PlotHandles{Cnt,2}='prescription';
     str = sprintf('profile plot of zentral axis of first beam at %d° at %d / %d in slice %d',data.pln.gantryAngles(1),data.LateralOffset*data.pln.resolution(2),size(data.ct,2)*data.pln.resolution(2), data.slice);
     title(str,'FontSize',14),grid on

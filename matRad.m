@@ -43,13 +43,14 @@ pln.SAD             = 10000; %[mm]
 pln.resolution      = ctResolution; %[mm/voxel]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,pln,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0]; % [Â°]
-pln.couchAngles     = [0]; % [Â°]
+pln.gantryAngles    = [0]; % [°]
+pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct);
 pln.voxelDimensions = size(ct);
-pln.radiationMode   = 'photons'; % either photons / protons / carbon
-pln.bioOptimization = false;   % false indicates physical optimization and true indicates biological optimization
+pln.radiationMode   = 'carbon'; % either photons / protons / carbon
+pln.bioOptimization = true;   % false indicates physical optimization and true indicates biological optimization
+pln.numOfFractions  = 30;
 
 % initial visualization
 matRad_visCtDose([],cst,pln,ct);
@@ -79,5 +80,5 @@ if strcmp(pln.radiationMode,'photons')
     matRad_visCtDose(optResult,cst,pln,ct);
 end
 %% dvh and conformity index
-matRad_calcDVH(optResult,cst,pln)
+matRad_calcDVH(optResult,cst)
 
