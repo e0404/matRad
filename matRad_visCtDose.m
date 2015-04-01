@@ -47,12 +47,12 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin > 0
-    
     data.optResult = optResult;
     data.cst  = cst;
     data.pln  = pln;
     data.ct   = ct;
     if ~isempty(data.optResult)
+        data.optResult = rmfield(data.optResult,'w');
         data.fName =fieldnames(data.optResult);
         for i=1:size(data.fName,1)
             %indicates if it should be plotted later on
@@ -73,12 +73,12 @@ if nargin > 0
     if ~isempty(data.optResult)
         data.doseColorwashCheckboxValue = 1;
         data.doseIsoCheckboxValue = 1;
-        data.SelectedDisplayOption = 2;
+        data.SelectedDisplayOption = 'physicalDose';
         data.TypeOfPlot = 1;
     else
         data.doseColorwashCheckboxValue = 0;
         data.doseIsoCheckboxValue = 0;
-        data.SelectedDisplayOption = 2;
+        data.SelectedDisplayOption = 'physicalDose';
         data.TypeOfPlot = 1;
     end
     
@@ -157,7 +157,7 @@ if ~isempty(data.ct) && data.ctCheckboxValue && data.TypeOfPlot ==1
 end
 
 if ~isempty(data.optResult) && data.TypeOfPlot ==1
-    mVolume = getfield(data.optResult,data.fName{data.SelectedDisplayOption});
+    mVolume = getfield(data.optResult,data.SelectedDisplayOption);
 %     %% dose colorwash
     if ~isempty(mVolume) && data.doseColorwashCheckboxValue && ~isvector(mVolume)
 
@@ -322,14 +322,20 @@ if data.TypeOfPlot ==2
     vX=linspace(1,data.pln.resolution(1)*numel(mY_avg),numel(mY_avg));
     PlotHandles{1} = plot(vX,mY_avg,'color',cColor{1,1},'LineWidth',3); hold on; 
     PlotHandles{1,2}='physicalDose';
-    % assess x and y axis limits
+    set(gca,'FontSize',18);
+    % assess x - limits
     xLim  = find(mY_avg);
-    xmin= xLim(1)*data.pln.resolution(1)-20;
-    xmax= xLim(end)*data.pln.resolution(1)+20;
-    if max(mY_avg(:))>ymax
-             ymax=max(mY_avg(:));
+    if ~isempty(xLim)
+        xmin= xLim(1)*data.pln.resolution(1)-20;
+        xmax= xLim(end)*data.pln.resolution(1)+20;
+    else
+        vLim = axis;
+        xmin = vLim(1);
+        xmax = vLim(2);
     end
     
+    % plot counter
+    Cnt=2;
     
     if data.pln.bioOptimization == 1
         
@@ -338,8 +344,6 @@ if data.TypeOfPlot ==2
         %will disable alpha-plot
         %data.fName{6,2}=0;
         
-        % plot counter
-        Cnt=2;
         for i=1:1:length(data.fName)
             mCurrentCube = getfield(data.optResult,data.fName{i,1});
             if ~isvector(mCurrentCube) && ~strcmp(data.fName{i,1},'RBEWeightedDose') ...
@@ -374,56 +378,57 @@ if data.TypeOfPlot ==2
         PlotHandles{Cnt+1,2}='RBE';
          
         % set plotyy properties
-        set(get(ax(2),'Ylabel'),'String','RBE','FontSize',16);
-        set(get(ax(1),'Ylabel'),'String','RBE x dose','FontSize',16);
+        set(get(ax(2),'Ylabel'),'String','RBE','FontSize',18);
+        set(get(ax(1),'Ylabel'),'String','RBE x dose','FontSize',18);
         set(PlotHandles{Cnt,1},'Linewidth',4,'color','r');
         set(PlotHandles{Cnt+1,1},'Linewidth',3,'color','b');
         set(ax(1),'ycolor','r')
         set(ax(2),'ycolor','b')
-        set(ax,'FontSize',16);
+        set(ax,'FontSize',18);
         Cnt=Cnt+1;
-        %get maximum of vBED for ylim
-        if max(vBED(:))>ymax
-            ymax=max(vBED(:));
-        end
+       
     end
        
     
     % asses the prescripted dose and target coordinates 
-    % todo: ptv, ctv, gtv are all labeld as target -> priorites
+    % todo: ptv, ctv, gtv are all labeld as target -> priorities
     sPrescrpDose=0;
     for i=1:size(data.cst,1)
         if strcmp(data.cst{i,3},'TARGET')==1
            mTarget = unique(data.cst{i,8});
            sPrescrpDose = data.cst{i,4};
         end
-        
     end
+    
+     % plot prescription
+    if sum(strcmp(fieldnames(data.optResult),'RBEWeightedDose')) > 0
+            sPrescrpDose = sPrescrpDose./data.pln.numFractions;
+    end
+    PlotHandles{Cnt,1}=plot([0 size(data.ct,1)*data.pln.resolution(1)],[sPrescrpDose sPrescrpDose],'--','Linewidth',3,'color','m');
+    PlotHandles{Cnt,2}='prescription';
+    str = sprintf('profile plot of zentral axis of first beam at %d° at %d / %d in slice %d',data.pln.gantryAngles(1),data.LateralOffset*data.pln.resolution(2),size(data.ct,2)*data.pln.resolution(2), data.slice);
+    title(str,'FontSize',14),grid on
+    Cnt = Cnt+1;
+    
+    
     
     % plot target boundaries
     mTargetStack = zeros(size(data.ct));
     mTargetStack(mTarget)=1;
     mRotTargetSlice =imrotate(mTargetStack(:,:,data.slice),data.pln.gantryAngles(1),'crop');
     vRay = find(mRotTargetSlice(:,idxCentAxis))*data.pln.resolution(2);
-    Cnt=Cnt+1;
-    PlotHandles{Cnt,2} ='target boundary';
     
+    PlotHandles{Cnt,2} ='target boundary';
+    vLim = axis;
     if ~isempty(vRay)
-        PlotHandles{Cnt,1}=plot([vRay(1) vRay(1)],[0 ymax],'--','Linewidth',2,'color','k');hold on
-        plot([vRay(end) vRay(end)], [0 ymax],'--','Linewidth',2,'color','k');hold on
+        PlotHandles{Cnt,1}=plot([vRay(1) vRay(1)],[0 vLim(4)],'--','Linewidth',2,'color','k');hold on
+        plot([vRay(end) vRay(end)], [0 vLim(4)],'--','Linewidth',2,'color','k');hold on
         xmax = vRay(end)+30;
     else
         PlotHandles{Cnt,1} =0;
     end
     
-    Cnt = Cnt+1;
-    % plot prescription
-    PlotHandles{Cnt,1}=plot([0 size(data.ct,1)*data.pln.resolution(1)],[sPrescrpDose sPrescrpDose],'--','Linewidth',2,'color','m');
-    PlotHandles{Cnt,2}='prescription';
-    str = sprintf('profile plot of zentral axis of first beam at %d° at %d / %d in slice %d',data.pln.gantryAngles(1),data.LateralOffset*data.pln.resolution(2),size(data.ct,2)*data.pln.resolution(2), data.slice);
-    title(str,'FontSize',14),grid on
-    axis auto
-    
+
     legend([PlotHandles{:,1}],PlotHandles{:,2},'Location','NorthWest');
     
     
@@ -434,16 +439,8 @@ if data.TypeOfPlot ==2
         xlim(ax(1),[xmin xmax]);
         xlim(ax(2),[xmin xmax]);
     end
-    if ymax<0.5
-        ymax = 0.5;
-    end
-    % set axis labels and ticks
-    ymax= 0:sPrescrpDose/8:sPrescrpDose+sPrescrpDose/8;
-    yVal=round(ymax*100)/100;
-    set(gca,'YTick',yVal);
-    set(gca,'YTickLabel',yVal);
     xlabel('depth [mm]','FontSize',16);
-    
+   
     
 
 end
@@ -545,13 +542,14 @@ if isempty(data.optResult)
     strTmp ={'no options available'};
 else
     strTmp = data.fName(:,1);
+    idx = find(strcmp(data.fName(:,1),data.SelectedDisplayOption));
 end
 
 dosePopup = uicontrol('Parent', gcf,...
         'Style', 'popupmenu',...
         'String', strTmp ,...
         'FontSize', 10,...
-        'Value',data.SelectedDisplayOption,...
+        'Value',idx,...
         'Units', 'normalized',...
         'Position', [0.05 0.4 0.109 0.03],...
         'Callback', @dosepopupCallback);
@@ -614,7 +612,7 @@ end
 
     function dosepopupCallback(hObj,event)
       data=guidata(gcf);
-      data.SelectedDisplayOption = get(hObj,'Value');
+      data.SelectedDisplayOption = data.fName{get(hObj,'Value'),1};
       guidata(gcf,data);
       matRad_visCtDose;
  

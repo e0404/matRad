@@ -1,4 +1,4 @@
-function matRad_calcDVH(d,cst,lineStyleIndicator)
+function matRad_calcDVH(d,pln,cst,lineStyleIndicator)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dvh calculation
 % 
@@ -46,7 +46,7 @@ function matRad_calcDVH(d,cst,lineStyleIndicator)
 
 % create new figure and set default line style indicator if not explictly
 % specified
-if nargin < 3
+if nargin < 4
     figure
     hold on
     lineStyleIndicator = 1;
@@ -126,7 +126,11 @@ targetDose = [];
 for i = 1:size(cst,1)
     if strcmp(cst{i,3},'TARGET')
         targetVol  = [targetVol i];
-        targetDose = [targetDose cst{i,4}];
+        if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0
+            targetDose = [targetDose cst{i,4}/pln.numOfFractions];
+        else
+            targetDose = [targetDose cst{i,4}];
+        end
     end
 end
 [targetDose,ranking] = sort(targetDose);

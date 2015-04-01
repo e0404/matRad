@@ -80,5 +80,5 @@ if strcmp(pln.radiationMode,'photons')
     matRad_visCtDose(optResult,cst,pln,ct);
 end
 %% dvh and conformity index
-matRad_calcDVH(optResult,cst)
+matRad_calcDVH(optResult,pln,cst)
 
