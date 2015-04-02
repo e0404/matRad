@@ -43,13 +43,13 @@ pln.SAD             = 10000; %[mm]
 pln.resolution      = ctResolution; %[mm/voxel]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,pln,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0]; % [°]
-pln.couchAngles     = [0]; % [°]
+pln.gantryAngles    = [0:72:359]; % [°]
+pln.couchAngles     = [0 0 0 0 0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct);
 pln.voxelDimensions = size(ct);
-pln.radiationMode   = 'carbon'; % either photons / protons / carbon
-pln.bioOptimization = true;   % false indicates physical optimization and true indicates biological optimization
+pln.radiationMode   = 'photons'; % either photons / protons / carbon
+pln.bioOptimization = false;   % false indicates physical optimization and true indicates biological optimization
 pln.numOfFractions  = 30;
 
 % initial visualization
@@ -75,9 +75,9 @@ matRad_visCtDose(optResult,cst,pln,ct);
 
 %% sequencing
 if strcmp(pln.radiationMode,'photons')
-    Sequencing = matRad_xiaLeafSequencing(optResult.w,stf,pln,7,0);
-    optResult = matRad_mxCalcDose(dij,Sequencing.w);
-    matRad_visCtDose(optResult,cst,pln,ct);
+    Sequencing = matRad_xiaLeafSequencing(optResult.w,stf,7,1);
+    seqResult = matRad_mxCalcDose(dij,Sequencing.w);
+    matRad_visCtDose(seqResult,cst,pln,ct);
 end
 %% dvh and conformity index
 matRad_calcDVH(optResult,cst)
