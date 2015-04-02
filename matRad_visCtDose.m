@@ -53,10 +53,22 @@ if nargin > 0
     data.ct   = ct;
     if ~isempty(data.optResult)
         data.optResult = rmfield(data.optResult,'w');
+        
+        if isfield(data.optResult,'RBE')
+            Index = min(find(strcmp(data.cst(:,3),'TARGET')));
+            mTmp = zeros(data.pln.voxelDimensions);
+            mTmp(data.cst{Index,8})=1;
+            data.optResult.RBETarget = data.optResult.RBE.*mTmp;
+        end
+        
         data.fName =fieldnames(data.optResult);
         for i=1:size(data.fName,1)
             %indicates if it should be plotted later on
-            data.fName{i,2}=1;
+            if strcmp(data.fName{i,1},'RBETarget')
+                data.fName{i,2}=0;
+            else
+                data.fName{i,2}=1;
+            end
             % Reshape dose to cube in voxel dimensions
             CurrentCube = getfield(data.optResult,data.fName{i,1});
             if ~isempty(CurrentCube) && ~isempty(data.ct) && isequal(size(CurrentCube),size(data.ct))
@@ -158,6 +170,7 @@ end
 
 if ~isempty(data.optResult) && data.TypeOfPlot ==1
     mVolume = getfield(data.optResult,data.SelectedDisplayOption);
+   
 %     %% dose colorwash
     if ~isempty(mVolume) && data.doseColorwashCheckboxValue && ~isvector(mVolume)
 
@@ -385,7 +398,7 @@ if data.TypeOfPlot ==2
         set(ax(1),'ycolor','r')
         set(ax(2),'ycolor','b')
         set(ax,'FontSize',18);
-        Cnt=Cnt+1;
+        Cnt=Cnt+2;
        
     end
        
@@ -402,7 +415,7 @@ if data.TypeOfPlot ==2
     
      % plot prescription
     if sum(strcmp(fieldnames(data.optResult),'RBEWeightedDose')) > 0
-            sPrescrpDose = sPrescrpDose./data.pln.numFractions;
+            sPrescrpDose = sPrescrpDose./data.pln.numOfFractions;
     end
     PlotHandles{Cnt,1}=plot([0 size(data.ct,1)*data.pln.resolution(1)],[sPrescrpDose sPrescrpDose],'--','Linewidth',3,'color','m');
     PlotHandles{Cnt,2}='prescription';
@@ -540,6 +553,7 @@ doseSetText = uicontrol('Parent', gcf,...
  
 if isempty(data.optResult)
     strTmp ={'no options available'};
+    idx =0;
 else
     strTmp = data.fName(:,1);
     idx = find(strcmp(data.fName(:,1),data.SelectedDisplayOption));
