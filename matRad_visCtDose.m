@@ -59,10 +59,10 @@ if nargin > 0
             data.fName{i,2}=1;
             % Reshape dose to cube in voxel dimensions
             CurrentCube = getfield(data.optResult,data.fName{i,1});
-            if ~isempty(CurrentCube) && ~isempty(data.ct) && isequal(size(CurrentCube),size(data.ct))
-                data.optResult = setfield(data.optResult,data.fName{i,1},reshape(CurrentCube,size(ct)));
+            if ~isempty(CurrentCube) && ~isempty(data.ct.cube) && isequal(size(CurrentCube),size(data.ct.cube))
+                data.optResult = setfield(data.optResult,data.fName{i,1},reshape(CurrentCube,size(ct.cube)));
             %try to reshape using voxelDimensions from pln struct    
-            elseif ~isempty(data.optResult) && ~isempty(data.pln) && isequal(size(CurrentCube),size(data.ct))
+            elseif ~isempty(data.optResult) && ~isempty(data.pln) && isequal(size(CurrentCube),size(data.ct.cube))
                 data.optResult = setfield(data.optResult,data.fName{i,1},reshape(CurrentCube,data.pln.voxelDimensions));
             elseif ~isempty(data.optResult) && ~strcmp(data.fName{i,1},'w')
                 error('Cannot reshape dose');   
@@ -82,7 +82,7 @@ if nargin > 0
         data.TypeOfPlot = 1;
     end
     
-    if ~isempty(data.ct)
+    if ~isempty(data.ct.cube)
         data.ctCheckboxValue = 1;
     else
         data.ctCheckboxValue = 0;
@@ -102,17 +102,17 @@ if nargin > 0
     end
     
     if nargin < 5
-        data.slice = round(pln.isoCenter(data.plane)/pln.resolution(data.plane));
+        data.slice = round(pln.isoCenter(data.plane)/ct.resolution(data.plane));
     else
         data.slice = slice;
     end
     
     if data.plane == 1
-        data.axis = [1 size(data.ct,1) 1 size(data.ct,3)];
+        data.axis = [1 size(data.ct.cube,1) 1 size(data.ct.cube,3)];
     elseif data.plane == 2        
-        data.axis = [1 size(data.ct,3) 1 size(data.ct,2)];
+        data.axis = [1 size(data.ct.cube,3) 1 size(data.ct.cube,2)];
     elseif data.plane == 3
-        data.axis = [1 size(data.ct,1) 1 size(data.ct,2)];
+        data.axis = [1 size(data.ct.cube,1) 1 size(data.ct.cube,2)];
     end
     
     data.LateralOffset = NaN;
@@ -128,7 +128,7 @@ else
     myWindow = gcf;
     data = guidata(myWindow);
     
-    vAxis = [1 size(data.ct,1) 1 size(data.ct,2)];
+    vAxis = [1 size(data.ct.cube,1) 1 size(data.ct.cube,2)];
     data.axis = vAxis;
     
     clf;
@@ -141,14 +141,14 @@ end
 
 
     %% ct
-if ~isempty(data.ct) && data.ctCheckboxValue && data.TypeOfPlot ==1
+if ~isempty(data.ct.cube) && data.ctCheckboxValue && data.TypeOfPlot ==1
     
     if data.plane == 1 % Coronal plane
-        ct_rgb = ind2rgb(uint8(63*squeeze(data.ct(data.slice,:,:))/max(data.ct(:))),bone);
+        ct_rgb = ind2rgb(uint8(63*squeeze(data.ct.cube(data.slice,:,:))/max(data.ct.cube(:))),bone);
     elseif data.plane == 2 % Sagital plane
-        ct_rgb = ind2rgb(uint8(63*squeeze(data.ct(:,data.slice,:))/max(data.ct(:))),bone);
+        ct_rgb = ind2rgb(uint8(63*squeeze(data.ct.cube(:,data.slice,:))/max(data.ct.cube(:))),bone);
     elseif data.plane == 3 % Axial plane
-        ct_rgb = ind2rgb(uint8(63*squeeze(data.ct(:,:,data.slice))/max(data.ct(:))),bone);
+        ct_rgb = ind2rgb(uint8(63*squeeze(data.ct.cube(:,:,data.slice))/max(data.ct.cube(:))),bone);
     end
     
     axes(myAxes)
@@ -176,7 +176,7 @@ if ~isempty(data.optResult) && data.TypeOfPlot ==1
         doseImageHandle = image(dose_rgb);
 
         % Make dose transparent
-        if ~isempty(data.ct)
+        if ~isempty(data.ct.cube)
             set(doseImageHandle,'AlphaData',.45);
         end
 
@@ -213,11 +213,11 @@ if ~isempty(data.cst) && data.contourCheckboxValue && data.TypeOfPlot ==1
     colors = jet;
     colors = colors(round(linspace(1,63,size(data.cst,1))),:);
 
-    mask = zeros(size(data.ct)); % create zero cube with same dimeonsions like dose cube
+    mask = zeros(size(data.ct.cube)); % create zero cube with same dimeonsions like dose cube
     for s = 1:size(data.cst,1)
         if ~strcmp(data.cst{s,3},'IGNORED') %&& ~strcmp(data.cst{s,2},'DoseFalloff')
             mask(:) = 0;
-            mask(data.cst{s,8}) = 1;
+            mask(data.cst{s,4}) = 1;
             if data.plane == 1 && sum(sum(mask(data.slice,:,:))) > 0
                 contour(myAxes,squeeze(mask(data.slice,:,:)),.5*[1 1],'Color',colors(s,:),'LineWidth',2,'DisplayName',data.cst{s,2});
             elseif data.plane == 2 && sum(sum(mask(:,data.slice,:))) > 0
@@ -237,10 +237,10 @@ end
 %% Set axis labels
 if   data.plane == 3% Axial plane
     if ~isempty(data.pln)
-        set(gca,'XTick',0:50/data.pln.resolution(1):1000)
-        set(gca,'YTick',0:50/data.pln.resolution(2):1000)
-        set(gca,'XTickLabel',0:50:1000*data.pln.resolution(1))
-        set(gca,'YTickLabel',0:50:1000*data.pln.resolution(2))
+        set(gca,'XTick',0:50/data.ct.resolution(1):1000)
+        set(gca,'YTick',0:50/data.ct.resolution(2):1000)
+        set(gca,'XTickLabel',0:50:1000*data.ct.resolution(1))
+        set(gca,'YTickLabel',0:50:1000*data.ct.resolution(2))
         xlabel('x [mm]')
         ylabel('y [mm]')
         title('Axial plane')
@@ -251,10 +251,10 @@ if   data.plane == 3% Axial plane
     end
 elseif data.plane == 2 % Sagittal plane
     if ~isempty(data.pln)
-        set(gca,'XTick',0:50/data.pln.resolution(3):1000)
-        set(gca,'YTick',0:50/data.pln.resolution(2):1000)
-        set(gca,'XTickLabel',0:50:1000*data.pln.resolution(3))
-        set(gca,'YTickLabel',0:50:1000*data.pln.resolution(2))
+        set(gca,'XTick',0:50/data.ct.resolution(3):1000)
+        set(gca,'YTick',0:50/data.ct.resolution(2):1000)
+        set(gca,'XTickLabel',0:50:1000*data.ct.resolution(3))
+        set(gca,'YTickLabel',0:50:1000*data.ct.resolution(2))
         xlabel('z [mm]')
         ylabel('y [mm]')
         title('Sagital plane');
@@ -265,10 +265,10 @@ elseif data.plane == 2 % Sagittal plane
     end
 elseif data.plane == 1 % Coronal plane
     if ~isempty(data.pln)
-        set(gca,'XTick',0:50/data.pln.resolution(3):1000)
-        set(gca,'YTick',0:50/data.pln.resolution(1):1000)
-        set(gca,'XTickLabel',0:50:1000*data.pln.resolution(3))
-        set(gca,'YTickLabel',0:50:1000*data.pln.resolution(1))
+        set(gca,'XTick',0:50/data.ct.resolution(3):1000)
+        set(gca,'YTick',0:50/data.ct.resolution(1):1000)
+        set(gca,'XTickLabel',0:50:1000*data.ct.resolution(3))
+        set(gca,'YTickLabel',0:50:1000*data.ct.resolution(1))
         xlabel('z [mm]')
         ylabel('x [mm]')
         title('Coronal plane')
@@ -319,13 +319,13 @@ if data.TypeOfPlot ==2
     mY=mRotActualSlice(:,idxCentAxis-delta:idxCentAxis+delta);
     mY(isnan(mY))=0;
     mY_avg=mean(mY,2);
-    vX=linspace(1,data.pln.resolution(1)*numel(mY_avg),numel(mY_avg));
+    vX=linspace(1,data.ct.resolution(1)*numel(mY_avg),numel(mY_avg));
     PlotHandles{1} = plot(vX,mY_avg,'color',cColor{1,1},'LineWidth',3); hold on; 
     PlotHandles{1,2}='physicalDose';
     % assess x and y axis limits
     xLim  = find(mY_avg);
-    xmin= xLim(1)*data.pln.resolution(1)-20;
-    xmax= xLim(end)*data.pln.resolution(1)+20;
+    xmin= xLim(1)*data.ct.resolution(1)-20;
+    xmax= xLim(end)*data.ct.resolution(1)+20;
     if max(mY_avg(:))>ymax
              ymax=max(mY_avg(:));
     end
@@ -401,10 +401,10 @@ if data.TypeOfPlot ==2
     end
     
     % plot target boundaries
-    mTargetStack = zeros(size(data.ct));
+    mTargetStack = zeros(size(data.ct.cube));
     mTargetStack(mTarget)=1;
     mRotTargetSlice =imrotate(mTargetStack(:,:,data.slice),data.pln.gantryAngles(1),'crop');
-    vRay = find(mRotTargetSlice(:,idxCentAxis))*data.pln.resolution(2);
+    vRay = find(mRotTargetSlice(:,idxCentAxis))*data.ct.resolution(2);
     Cnt=Cnt+1;
     PlotHandles{Cnt,2} ='target boundary';
     
@@ -418,9 +418,9 @@ if data.TypeOfPlot ==2
     
     Cnt = Cnt+1;
     % plot prescription
-    PlotHandles{Cnt,1}=plot([0 size(data.ct,1)*data.pln.resolution(1)],[sPrescrpDose sPrescrpDose],'--','Linewidth',2,'color','m');
+    PlotHandles{Cnt,1}=plot([0 size(data.ct.cube,1)*data.ct.resolution(1)],[sPrescrpDose sPrescrpDose],'--','Linewidth',2,'color','m');
     PlotHandles{Cnt,2}='prescription';
-    str = sprintf('profile plot of zentral axis of first beam at %d° at %d / %d in slice %d',data.pln.gantryAngles(1),data.LateralOffset*data.pln.resolution(2),size(data.ct,2)*data.pln.resolution(2), data.slice);
+    str = sprintf('profile plot of zentral axis of first beam at %d° at %d / %d in slice %d',data.pln.gantryAngles(1),data.LateralOffset*data.ct.resolution(2),size(data.ct.cube,2)*data.ct.resolution(2), data.slice);
     title(str,'FontSize',14),grid on
     axis auto
     
@@ -527,9 +527,9 @@ slider = uicontrol('Parent', gcf,...
         'Units', 'normalized',...
         'Position', [0.05 0.10 0.2 0.02],...
         'Min', 1,...
-        'Max',  size(data.ct,data.plane),...
+        'Max',  size(data.ct.cube,data.plane),...
         'Value', data.slice,...
-        'SliderStep',[1/(size(data.ct,data.plane)-1) 1/(size(data.ct,data.plane)-1)],...
+        'SliderStep',[1/(size(data.ct.cube,data.plane)-1) 1/(size(data.ct.cube,data.plane)-1)],...
         'Callback', @sliderCallback);
     
 doseSetText = uicontrol('Parent', gcf,...
@@ -584,9 +584,9 @@ ProfileSlider = uicontrol('Parent', gcf,...
         'Units', 'normalized',...
         'Position', [0.15 0.50 0.06 0.03],...
         'Min', 1,...
-        'Max',  size(data.ct,2),...
+        'Max',  size(data.ct.cube,2),...
         'Value', data.LateralOffset,...
-        'SliderStep',[1/(size(data.ct,2)-1), 1/(size(data.ct,2)-1)],...
+        'SliderStep',[1/(size(data.ct.cube,2)-1), 1/(size(data.ct.cube,2)-1)],...
         'Callback', @ProfilesliderCallback,...
         'Enable',TmpStr,...
         'Visible',TmpStr);    
@@ -608,10 +608,6 @@ end
  
  end
 
-
-
-
-
     function dosepopupCallback(hObj,event)
       data=guidata(gcf);
       data.SelectedDisplayOption = get(hObj,'Value');
@@ -619,7 +615,6 @@ end
       matRad_visCtDose;
  
      end
-
 
      function doseColorwashCheckboxCallback(hObj,event)
         data = guidata(gcf);
@@ -654,13 +649,13 @@ end
         plane = get(hObj,'Value');
         if data.plane ~= plane;
             data.plane = plane;
-            data.slice = round(data.pln.isoCenter(data.plane)/data.pln.resolution(data.plane));
+            data.slice = round(data.pln.isoCenter(data.plane)/data.ct.resolution(data.plane));
             if data.plane == 1
-                axis([1 size(data.ct,3) 1 size(data.ct,1)]);
+                axis([1 size(data.ct.cube,3) 1 size(data.ct.cube,1)]);
             elseif data.plane == 2        
-                axis([1 size(data.ct,3) 1 size(data.ct,2)]);
+                axis([1 size(data.ct.cube,3) 1 size(data.ct.cube,2)]);
             elseif data.plane == 3
-                axis([1 size(data.ct,2) 1 size(data.ct,1)]);
+                axis([1 size(data.ct.cube,2) 1 size(data.ct.cube,1)]);
             end
             guidata(gcf,data);
             matRad_visCtDose;
@@ -674,7 +669,5 @@ end
         guidata(gcf,data);
         matRad_visCtDose;
     end
-
-
 
 end

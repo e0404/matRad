@@ -53,7 +53,7 @@ end
 % meta information for dij
 dij.numOfBeams         = pln.numOfBeams;
 dij.numOfVoxels        = pln.numOfVoxels;
-dij.resolution         = pln.resolution;
+dij.resolution         = ct.resolution;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
@@ -65,21 +65,21 @@ dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
 dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 
 % Allocate space for dij.physicalDose sparse matrix
-dij.physicalDose = spalloc(numel(ct),dij.totalNumOfBixels,1);
+dij.physicalDose = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
 
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 doseTmpContainer = cell(numOfBixelsContainer,1);
 
 % take only voxels inside patient
-V = unique([cell2mat(cst(:,8))]);
+V = unique([cell2mat(cst(:,4))]);
 
 % Convert CT subscripts to linear indices.
-[yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct),V);
+[yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct.cube),V);
 
-xCoordsV = (xCoordsV(:)-0.5)*pln.resolution(1)-pln.isoCenter(1);
-yCoordsV = (yCoordsV(:)-0.5)*pln.resolution(2)-pln.isoCenter(2);
-zCoordsV = (zCoordsV(:)-0.5)*pln.resolution(3)-pln.isoCenter(3);
+xCoordsV = (xCoordsV(:)-0.5)*ct.resolution(1)-pln.isoCenter(1);
+yCoordsV = (yCoordsV(:)-0.5)*ct.resolution(2)-pln.isoCenter(2);
+zCoordsV = (zCoordsV(:)-0.5)*ct.resolution(3)-pln.isoCenter(3);
 coords_inside = [xCoordsV yCoordsV zCoordsV];
 
 % set lateral cutoff value
@@ -124,8 +124,8 @@ else
 end
 
 % generate meshgrid with CT position [mm]
-[X_geo,Y_geo,Z_geo] = meshgrid(pln.resolution(1)*(0.5:1:size(ct,1)),...
-    pln.resolution(2)*(0.5:1:size(ct,2)),pln.resolution(3)*(0.5:1:size(ct,3)));
+[X_geo,Y_geo,Z_geo] = meshgrid(ct.resolution(1)*(0.5:1:size(ct.cube,1)),...
+    ct.resolution(2)*(0.5:1:size(ct.cube,2)),ct.resolution(3)*(0.5:1:size(ct.cube,3)));
 
 % take only voxels inside patient
 X_geo = X_geo(V);
@@ -173,8 +173,8 @@ for i = 1:dij.numOfBeams; % loop over all beams
         dij.bixelNum(counter) = j;
         
         % Ray tracing for beam i and bixel j
-        [ix,radDepths,geoDists,latDistsX,latDistsZ] = matRad_calcRadGeoDists(ct,V,...
-            pln.isoCenter,rot_coords,pln.resolution,stf(i).sourcePoint,...
+        [ix,radDepths,geoDists,latDistsX,latDistsZ] = matRad_calcRadGeoDists(ct.cube,V,...
+            pln.isoCenter,rot_coords,ct.resolution,stf(i).sourcePoint,...
             stf(i).ray(j).targetPoint,sourcePoint_bev,...
             stf(i).ray(j).targetPoint_bev,X_geo,Y_geo,Z_geo,lateralCutoff,visBool);
         
@@ -190,7 +190,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
        
        
         % Save dose for every bixel in cell array
-        doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix),1,bixelDose,numel(ct),1);
+        doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix),1,bixelDose,numel(ct.cube),1);
                 
         % save computation time and memory by sequentially filling the 
         % sparse matrix dose.dij from the cell array

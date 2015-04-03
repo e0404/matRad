@@ -47,14 +47,31 @@ wInit = ones(dij.totalNumOfBixels,1);
 
 % define objective function
 if pln.bioOptimization == true
-    % account for fractionation
+    % check if you are running a supported rad
+    
+    % check if only allowed objectives were defined
     for i = 1:size(cst,1)
-        cst{i,4} = cst{i,4}./pln.numOfFractions;
-        cst{i,5} = cst{i,5}./pln.numOfFractions;
+        for j = 1:size(cst{i,6},2)
+            if sum(strcmp(cst{i,6}(j).type,{'square overdosing', ...
+                                            'square underdosing', ...
+                                            'square deviation'})) < 1
+                error([cst{3,6}(j).type ' objective not supported ' ...
+                    'during biological optimization for particles\n' ...
+                    'please run matRad_modCst\n']);
+            else % adjust internally for fractionation effects
+                cst{i,6}(j).parameter(2) = cst{i,6}(j).parameter(2)/pln.numOfFractions;
+            end
+        end
     end
+    
+    % set objective function
     objFunc =  @(x) matRad_bioObjFunc(x,dij,cst);
-else 
+    
+else
+    
+    % set objective function
     objFunc =  @(x) matRad_objFunc(x,dij,cst);
+    
 end
 
 % minimize objetive function
@@ -70,8 +87,8 @@ if pln.bioOptimization == true
     for  i = 1:size(cst,1)
         % Only take OAR or target VOI.
         if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') 
-            a_x(cst{i,8}) = cst{i,9}.alphaX;
-            b_x(cst{i,8}) = cst{i,9}.betaX;
+            a_x(cst{i,4}) = cst{i,5}.alphaX;
+            b_x(cst{i,4}) = cst{i,5}.betaX;
         end
     end
     

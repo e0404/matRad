@@ -18,10 +18,6 @@ linTerm  = dij.mAlphaDose*w;
 quadTerm = dij.mSqrtBetaDose*w;
 e = linTerm + quadTerm.^2;
 
-% default alpha photon and beta photon parameters to calculate prescribed effect
-a_x = 0.1; 
-b_x = 0.05;
-
 % Numbers of voxels
 numVoxels = size(dij.physicalDose,1);
 
@@ -37,44 +33,70 @@ for  i = 1:size(cst,1)
     % Only take OAR or target VOI.
     if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
         
+        % get effect vector in current VOI
+        e_i = e(cst{i,4});
+        
         % get tissue specific alpha photon and beta photon to calculate
         % prescriped effect
-        if ~isempty(cst{i,9})
-            a_x = cst{i,9}.alphaX;
-            b_x = cst{i,9}.betaX;
+        a_x = cst{i,5}.alphaX;
+        b_x = cst{i,5}.betaX;
+        
+        % loop over the number of constraints for the current VOI
+        for j = 1:size(cst{i,6},2)
+            
+            % get Penalty
+            rho = cst{i,6}(j).parameter(1);
+            
+            % refernce effect
+            e_ref = a_x*cst{i,6}(j).parameter(2)+b_x*cst{i,6}(j).parameter(2)^2;
+            
+            if isequal(cst{i,6}(j).type, 'square underdosing')
+  
+                % underdose : effect minus reference effect
+                underdose = e_i - e_ref;
+
+                % apply positive operator
+                underdose(underdose>0) = 0;
+                
+                % calculate objective function
+                f = f + (rho/size(cst{i,4},1))*(underdose'*underdose);
+                
+                % calculate delta
+                delta(cst{i,4}) = delta(cst{i,4}) + (rho/size(cst{i,4},1))*underdose;
+                
+            elseif isequal(cst{i,6}(j).type, 'square overdosing')
+                
+                % overdose : Dose minus prefered dose
+                overdose = e_i - e_ref;
+                
+                % apply positive operator
+                overdose(overdose<0) = 0;
+                
+                % calculate objective function
+                f = f + (rho/size(cst{i,4},1))*(overdose'*overdose);
+                
+                %calculate delta
+                delta(cst{i,4}) = delta(cst{i,4}) + (rho/size(cst{i,4},1))*overdose;
+                
+            elseif isequal(cst{i,6}(j).type, 'square deviation')
+                
+                % deviation : Dose minus prefered dose
+                deviation = e_i - e_ref;
+                
+                % claculate objective function
+                f = f + (rho/size(cst{i,4},1))*(deviation'*deviation);
+                
+                % calculate delta
+                delta(cst{i,4}) = delta(cst{i,4}) + (rho/size(cst{i,4},1))*deviation;
+                
+            else
+                
+                error('undefined objective in cst struct');
+                
+            end
+
         end
         
-        % prescribed effect
-        Emax = a_x*cst{i,4}+b_x*cst{i,4}^2;
-        Emin = a_x*cst{i,5}+b_x*cst{i,5}^2;
-
-        % Minimun penalty
-        rho_min = cst{i,7};
-        
-        % Maximum penalty
-        rho_max = cst{i,6};
-        
-        % get effect vector in current VOI
-        e_i = e(cst{i,8});
-        
-        % Maximun deviation: biologic effect minus maximun prescribed biological effect.
-        deviation_max = e_i - Emax;
-        
-        % Minimun deviation: effect minus minimun effect.
-        deviation_min = e_i - Emin;
-        
-        % Apply positive operator H.
-        deviation_max(deviation_max<0) = 0;
-        deviation_min(deviation_min>0) = 0;
-                
-        % Calculate the objective function
-        f = f + (rho_max/size(cst{i,8},1))*(deviation_max'*deviation_max) + ...
-            (rho_min/size(cst{i,8},1))*(deviation_min'*deviation_min);
-        
-        % Calculate delta
-        delta(cst{i,8}) = delta(cst{i,8}) + (rho_max/size(cst{i,8},1))*deviation_max +...
-            (rho_min/size(cst{i,8},1))*deviation_min;
-
     end
 end
 
