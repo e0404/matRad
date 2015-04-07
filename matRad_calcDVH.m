@@ -99,8 +99,7 @@ legendHandle = legend('show');
 
 fontSizeValue = 14;
 
-xmax = ceil(max(doseInVoi(:))+0.2*max(doseInVoi(:)))+1;
-axis([0 xmax 0 110])
+ylim([0 110])
 plot([0 100],[0 0],'k','LineWidth',2)
 set(gca,'YTick',0:20:120)
 

@@ -553,7 +553,7 @@ doseSetText = uicontrol('Parent', gcf,...
  
 if isempty(data.optResult)
     strTmp ={'no options available'};
-    idx =0;
+    idx =1;
 else
     strTmp = data.fName(:,1);
     idx = find(strcmp(data.fName(:,1),data.SelectedDisplayOption));
