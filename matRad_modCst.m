@@ -91,7 +91,7 @@ if nargin > 0
         % display only not ignored VOI
         if ~isequal(data.cst{i,3},'IGNORED')
             
-            dataSetText = uicontrol('Style', 'text', 'String', data.cst{i,2},'FontSize', 10,...
+            data.dataSetText(objectiveCounter) = uicontrol('Style', 'text', 'String', data.cst{i,2},'FontSize', 10,...
                 'units', 'normalized','Position', [0.03 0.9-objectiveCounter*0.03 0.075 0.02]);
             
             if isequal(data.cst{i,3}, 'TARGET')
@@ -120,7 +120,7 @@ if nargin > 0
                 end
                 
                 popupObjFunc(1,i) = uicontrol('Style', 'popup',...
-                    'String',{'square underdosing','square overdosing','square deviation', 'mean', 'EUD'},...
+                    'String',{'Please select ...','square underdosing','square overdosing','square deviation', 'mean', 'EUD'},...
                     'FontSize', 10, 'units', 'normalized','Position', [0.27 0.9-objectiveCounter*0.03 0.075 0.02],'Value', ObjFunc,...
                     'Callback', @popupObjFuncCallback, 'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter));
                 
@@ -156,6 +156,7 @@ if nargin > 0
     end
     
     data.editPenalty =editPenalty;
+    data.popupObjFunc=popupObjFunc;
     if exist('editDose','var')
         data.editDose = editDose;
     end
@@ -183,14 +184,14 @@ end
         val = get(hObj, 'Value');
         before = data.cst{tag(1),6}(tag(2)).type;
         
-        if (~isequal(before, 'mean') && ~isequal(before, 'EUD') && val == 4)
+        if (~isequal(before, 'mean') && ~isequal(before, 'EUD') && val == 5)
             
             set(data.editDose(tag(3)),'String','');
             set(data.editDose(tag(3)),'Visible','off');          
             % delete previous dose parameter
             data.cst{tag(1),6}(tag(2)).parameter=data.cst{tag(1),6}(tag(2)).parameter(1);
         
-        elseif (~isequal(before, 'mean') && ~isequal(before,'EUD') && val ==5)
+        elseif (~isequal(before, 'mean') && ~isequal(before,'EUD') && val ==6)
             
             set(data.editDose(tag(3)),'String','');
             set(data.editDose(tag(3)),'Visible','off'); 
@@ -201,7 +202,7 @@ end
                 'FontSize', 10, 'units', 'normalized','Position', [0.63 0.9-tag(3)*0.03 0.075 0.02],...
                 'Tag', sprintf('%d,%d,%d',tag(1),tag(2),tag(3)),'Callback', @editExponentCallback);
             
-        elseif (isequal(before, 'EUD') && val ~= 4 && val ~= 5)
+        elseif (isequal(before, 'EUD') && val ~= 5 && val ~= 6)
             
             data.editDose(tag(3)) = uicontrol('Style', 'edit', 'units', 'normalized',...
                 'FontSize', 10, 'Position', [0.51 0.9-tag(3)*0.03 0.075 0.02],...
@@ -209,18 +210,18 @@ end
             
             set(data.editExponent(tag(3)),'Visible','off'); 
             
-        elseif (isequal(before, 'mean') && val ~= 4 && val ~= 5)
+        elseif (isequal(before, 'mean') && val ~= 5 && val ~= 6)
             
             set(data.editDose(tag(3)),'Visible','on');            
             
-        elseif (isequal(before, 'EUD') && val == 4)
+        elseif (isequal(before, 'EUD') && val == 5)
                         
             set(data.editExponent(tag(3)),'Visible','off'); 
             
             %vorheriger Exponent wird gelöscht
             data.cst{tag(1),6}(tag(2)).exponent = [];
             
-        elseif (isequal(before, 'mean') && val == 5)
+        elseif (isequal(before, 'mean') && val == 6)
             
             data.editExponent(tag(3)) = uicontrol('Style', 'edit',...
                 'FontSize', 10, 'units', 'normalized','Position', [0.63 0.9-tag(3)*0.03 0.075 0.02],...
@@ -233,15 +234,15 @@ end
         % overwrite cst struct directly in workspace
         assignin('base',data.inputname,data.cst);            
 
-        if val == 1
+        if val == 2
             data.cst{tag(1),6}(tag(2)).type = 'square underdosing';
-        elseif val == 2
-            data.cst{tag(1),6}(tag(2)).type = 'square overdosing';
         elseif val == 3
-            data.cst{tag(1),6}(tag(2)).type = 'square deviation';
+            data.cst{tag(1),6}(tag(2)).type = 'square overdosing';
         elseif val == 4
-            data.cst{tag(1),6}(tag(2)).type = 'mean';
+            data.cst{tag(1),6}(tag(2)).type = 'square deviation';
         elseif val == 5
+            data.cst{tag(1),6}(tag(2)).type = 'mean';
+        elseif val == 6
             data.cst{tag(1),6}(tag(2)).type = 'EUD';
         end
         guidata(gcf, data);
@@ -298,35 +299,82 @@ end
 
     function pushbuttonAcceptCallback(hObj, event) 
        
-        FlagValidParameters = true;
+        %% read data from gui, check for validity and write it into cst file
         
-        for m = 1:size(data.cst,1)
-            for n = 1:size(data.cst{m,6},2)
-                
-                if sum(strcmp(data.cst{m,6}(n).type,{'square deviation','square underdosing','square overdosing'}))>0
-                    if length(data.cst{m,6}(n).parameter) ~= 2;
-                           warndlg('Empty fields detected !');
-                           FlagValidParameters = false;
-                    end
-                    
-                elseif sum(strcmp(data.cst{m,6}(n).type,{'mean'}))>0
-                    if length(data.cst{m,6}(n).parameter) ~= 1;
-                           warndlg('Empty fields detected !');
-                           FlagValidParameters=false;
-                    end
-                    
-                elseif sum(strcmp(data.cst{m,6}(n).type,{'EUD'}))>0
-                    
-                    if length(data.cst{m,6}(n).parameter) ~= 1 || isfield(data.cst{m,6}(n),'exponent') ~=1
-                           warndlg('Empty fields detected !');
-                           FlagValidParameters = false;
-                    end 
+        FlagValidParameters = true;
+        ObjFuncArray = get(data.popupObjFunc(1),'String');
+            
+        for i=1:size(data.cst,1)
+           Str1 = data.cst{i,2};
+           CntObjF = 1;
+           for j=1:length(data.editPenalty)   
+                list = get(data.dataSetText(1,j),'String');
+                value = get(data.dataSetText(1,j),'Value');
+                if iscell(list)
+                    Str2 = list{value};
+                else
+                    Str2=list;
                 end
-                
-            end
+
+                    if strcmp(Str1,Str2)
+                           data.cst{i,6}(CntObjF).type = ObjFuncArray{get(data.popupObjFunc(j),'Value'),1};
+                           if strcmp(data.cst{i,6}(CntObjF).type,'Please select ...')
+                               warndlg('Unselected Objective Function');
+                               FlagValidParameters=false;
+                           end
+
+                           data.cst{i,6}(CntObjF).parameter(1,1)=str2double(get(data.editPenalty(1,j),'String'));
+                           if isempty(data.cst{i,6}(CntObjF).parameter(1,1))
+                               warndlg('Please set all penalties');
+                                FlagValidParameters=false;
+                           end
+                                
+                               SelObjFunc = get(data.popupObjFunc(j),'Value');
+                               
+                               switch SelObjFunc
+
+                                   case 6
+                                        data.cst{i,6}(CntObjF).exponent =str2double(get(data.editExponent(j),'Value'));
+                                        if isempty(data.cst{i,6}(CntObjF).exponent)
+                                            warndlg('Please set all exponents');
+                                             FlagValidParameters=false;
+                                        end
+                                        
+                                        if length(data.cst{i,6}(CntObjF).parameter)>1;
+                                            data.cst{i,6}(CntObjF).parameter = data.cst{i,6}(CntObjF).parameter(1);
+                                        end
+                                        
+
+                                   case 5
+                                       if isfield(data.cst{i,6}(CntObjF),'exponent')
+                                            data.cst{i,6}(CntObjF).exponent= isNaN;
+                                       end
+                                        if length(data.cst{i,6}(CntObjF).parameter)>1;
+                                            data.cst{i,6}(CntObjF).parameter = data.cst{i,6}(CntObjF).parameter(1);
+                                        end
+                                       
+                                   case {2,3,4} 
+                                       data.cst{i,6}(CntObjF).parameter(1,2)=str2double(get(data.editDose(j),'String'));
+                                       if isempty(data.cst{i,6}(CntObjF).parameter(1,2))
+                                           warndlg('Please set all dose values');
+                                            FlagValidParameters=false;
+                                       end
+                                       
+                                       if isfield(data.cst{i,6}(CntObjF),'exponent')
+                                            data.cst{i,6}(CntObjF).exponent= nan;
+                                       end
+                                       
+                               end
+
+                            CntObjF = CntObjF+1;   
+                     end
+
+                    
+               end           
             
         end
         
+        % write gui data in cst file 
         if FlagValidParameters
             close(structWindow);
         end
@@ -334,44 +382,47 @@ end
     end
 
     function pushbuttonAddCallback(hObj, event)
-        tag = str2num(get(hObj,'Tag'))+l; %erste freie zeile
-        popupVOI = uicontrol('Style', 'popup', 'String', cst(:,2),'FontSize', 10,...
-            'units', 'normalized', 'Position', [0.03 0.9-tag*0.03 0.075 0.02],...
-            'Callback', @popupVOICallback, 'Tag', sprintf('%d',tag));
+        rowIdx = str2num(get(hObj,'Tag'))+l; %erste freie zeile
+        StringArray = cell(length(cst(:,2))+1,1);
+        StringArray{1,1}='Select VOI..';
+        StringArray(2:end,1)=cst(:,2);
+        popupVOI = uicontrol('Style', 'popup', 'String', StringArray,'FontSize', 10,...
+            'units', 'normalized', 'Position', [0.03 0.9-rowIdx*0.03 0.075 0.02],...
+            'Callback', @popupVOICallback, 'Tag', sprintf('%d',rowIdx));
         
         
         function popupVOICallback(hObj, event)
-            
-            VOI = get(hObj, 'Value');
-            tag = str2num(get(hObj,'Tag'));
+           
+            VOI = get(hObj, 'Value')-1;
+            rowIdx = str2num(get(hObj,'Tag'));
             
             if isequal(data.cst{VOI,3}, 'IGNORED')
                 popupBodyType = uicontrol('Style', 'popup', 'String', {'TARGET', 'OAR'},...
-                    'FontSize', 10,'units', 'normalized', 'Position',[0.15 0.9-tag*0.03 0.075 0.02],...
+                    'FontSize', 10,'units', 'normalized', 'Position',[0.15 0.9-rowIdx*0.03 0.075 0.02],...
                     'Callback', @popupBodyTypeCallback, 'Tag', sprintf('%d', VOI));
                 
             else
                 dataSetText = uicontrol('Style', 'text', 'String', data.cst{VOI,3},...
-                    'FontSize', 10, 'units', 'normalized', 'Position',[0.15 0.9-tag*0.03 0.075 0.02]);
+                    'FontSize', 10, 'units', 'normalized', 'Position',[0.15 0.9-rowIdx*0.03 0.075 0.02]);
             
             end
             
-            popupObjFuncAdd = uicontrol('Style', 'popup',...
+            data.popupObjFunc(1,rowIdx) = uicontrol('Style', 'popup',...
                 'String', {'Please select ...','square underdosing','square overdosing','square deviation', 'mean', 'EUD'},...
-                'FontSize',10,'units', 'normalized', 'Position', [0.27 0.9-tag*0.03 0.075 0.02],...
-                'Callback', @popupObjFuncAddCallback, 'Tag', sprintf('%d, %d', VOI, tag));
+                'FontSize',10,'units', 'normalized', 'Position', [0.27 0.9-rowIdx*0.03 0.075 0.02],...
+                'Callback', @popupObjFuncAddCallback, 'Tag', sprintf('%d, %d', VOI, rowIdx));
             
-            data.editPenalty(1,tag) = uicontrol('Style', 'edit', 'FontSize', 10, ...
-                'units', 'normalized', 'Position', [0.39 0.9-tag*0.03 0.075 0.02],...
+            data.editPenalty(1,rowIdx) = uicontrol('Style', 'edit', 'FontSize', 10, ...
+                'units', 'normalized', 'Position', [0.39 0.9-rowIdx*0.03 0.075 0.02],...
                 'Callback', @editPenaltyAddCallback, 'Tag', sprintf('%d', VOI));
             
               
-           data.editDose(1,tag) = uicontrol('Style', 'edit', 'FontSize', 10,...
-                 'units', 'normalized', 'Position', [0.51 0.9-tag*0.03 0.075 0.02],...
+           data.editDose(1,rowIdx) = uicontrol('Style', 'edit', 'FontSize', 10,...
+                 'units', 'normalized', 'Position', [0.51 0.9-rowIdx*0.03 0.075 0.02],...
                  'Callback', @editDoseAddCallback, 'Tag', sprintf('%d', VOI));
                     
-           data.editExponent(1,tag) = uicontrol('Style', 'edit', 'FontSize', 10,...
-                  'units', 'normalized', 'Position', [0.63 0.9-tag*0.03 0.075 0.02],...
+           data.editExponent(1,rowIdx) = uicontrol('Style', 'edit', 'FontSize', 10,...
+                  'units', 'normalized', 'Position', [0.63 0.9-rowIdx*0.03 0.075 0.02],...
                   'Callback', @editExponentAddCallback, 'Tag', sprintf('%d', VOI));
             
             function popupBodyTypeCallback(hObj, event)
@@ -397,33 +448,18 @@ end
                     set(data.editDose(1,tag(2)),'Visible','on')
                     set(data.editExponent(1,tag(2)),'Visible','off')
 
-                    if isfield(data.cst{tag(1),6}(size(data.cst{tag(1),6},2)),'exponent')
-                        %data.cst{tag(1),6}(size(data.cst{tag(1),6},2)) = rmfield(data.cst{tag(1),6}(size(data.cst{tag(1),6},2)),'exponent');
-                    end
-
                 elseif val == 5
                     data.cst{tag(1),6}(size(data.cst{tag(1),6},2)+1).type = 'mean';
                     set(data.editDose(tag(2)),'String','');
                     set(data.editExponent(tag(2)),'String','');
                     set(data.editDose(1,tag(2)),'Visible','off')
-                    set(data.editExponent(1,tag(2)),'Visible','off')
-                     if isfield(data.cst{tag(1),6}(size(data.cst{tag(1),6},2)),'exponent')
-                        %data.cst{tag(1),6}(size(data.cst{tag(1),6},2)) = rmfield(data.cst{tag(1),6}(size(data.cst{tag(1),6},2)),'exponent');
-                     end
-                     if length(data.cst{tag(1),6}(size(data.cst{tag(1),6},2)).parameter)>1
-                        data.cst{tag(1),6}(size(data.cst{tag(1),6},2)).parameter=data.cst{tag(1),6}(size(data.cst{tag(1),6},2)).parameter(1);
-                     end
+                    set(data.editExponent(1,tag(2)),'Visible','off')                    
                     
                 elseif val == 6
                     data.cst{tag(1),6}(size(data.cst{tag(1),6},2)+1).type = 'EUD';
                     set(data.editDose(tag(2)),'String','');
                     set(data.editDose(1,tag(2)),'Visible','off')
-                    set(data.editExponent(1,tag(2)),'Visible','on')
-                    
-                    if length(data.cst{tag(1),6}(size(data.cst{tag(1),6},2)).parameter)>1
-                        data.cst{tag(1),6}(size(data.cst{tag(1),6},2)).parameter=data.cst{tag(1),6}(size(data.cst{tag(1),6},2)).parameter(1);
-                    end
-                    
+                    set(data.editExponent(1,tag(2)),'Visible','on')                          
                 end
                 
                 guidata(gcf, data);
@@ -434,7 +470,7 @@ end
             
             function editPenaltyAddCallback(hObj, event)
                 tag= str2num(get(hObj,'Tag')); %Nummer des VOIs 
-                 FlagValidity = CheckValidity(str2num(get(hObj, 'String')),hObj);
+                FlagValidity = CheckValidity(str2num(get(hObj, 'String')),hObj);
                 data.cst{tag,6}(size(data.cst{tag,6},2)).parameter(1) = str2num(get(hObj, 'String'));
                 guidata(gcf, data);
                 % overwrite cst struct directly in workspace

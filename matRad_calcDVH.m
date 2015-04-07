@@ -100,7 +100,6 @@ legendHandle = legend('show');
 fontSizeValue = 14;
 
 ylim([0 110])
-plot([0 100],[0 0],'k','LineWidth',2)
 set(gca,'YTick',0:20:120)
 
 %x_r = round(linspace(0,xmax,8).*100)/100;
@@ -126,9 +125,13 @@ for i = 1:size(cst,1)
     if strcmp(cst{i,3},'TARGET')
         targetVol  = [targetVol i];
         if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0
-            targetDose = [targetDose cst{i,4}/pln.numOfFractions];
+            for j = 1:length(cst{i,6})
+                targetDose = [targetDose cst{i,6}(j).parameter(1,2)/pln.numOfFractions];
+            end
         else
-            targetDose = [targetDose cst{i,4}];
+            for j = 1:length(cst{i,6})
+                targetDose = [targetDose cst{i,6}(j).parameter(1,2)];
+            end
         end
     end
 end
