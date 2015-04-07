@@ -62,7 +62,7 @@ colorMx    = colorMx(1:floor(64/numOfVois):64,:);
 
 lineStyles = {'-',':','--','-.'};
 
-n         = 1000;
+n = 1000;
 if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0
     dvhPoints = linspace(0,max(d.RBEWeightedDose(:))*1.05,n);
 else
@@ -72,7 +72,7 @@ dvh       = NaN * ones(1,n);
 
 for i = 1:numOfVois
 
-    indices     = cst{i,8};
+    indices     = cst{i,4};
     numOfVoxels = numel(indices);
     if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0
         doseInVoi   = d.RBEWeightedDose(indices);   
@@ -138,9 +138,9 @@ targetVol            = targetVol(ranking);
 for i = 1:numel(targetVol)
     
     targetVolIndices = zeros(numel(d.physicalDose),1);
-    targetVolIndices(cst{targetVol(i),8}) = 1;
+    targetVolIndices(cst{targetVol(i),4}) = 1;
     for j = i+1:numel(targetVol)
-        targetVolIndices(cst{targetVol(j),8}) = 1;
+        targetVolIndices(cst{targetVol(j),4}) = 1;
     end
     
     if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0

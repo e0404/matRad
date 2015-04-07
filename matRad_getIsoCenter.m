@@ -1,4 +1,4 @@
-function isoCenter = matRad_getIsoCenter(cst,ct,pln,visBool)
+function isoCenter = matRad_getIsoCenter(cst,ct,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % computes the isocenter as the joint center of gravity of all volumes of
 % interest that are labeled as target within th cst struct
@@ -54,7 +54,7 @@ V = [];
 % Save target indices in V variable.
 for i=1:size(cst,1)
     if isequal(cst{i,3},'TARGET')
-        V = [V;cst{i,8}];
+        V = [V;cst{i,4}];
     end
 end
 
@@ -63,12 +63,12 @@ end
 V = unique(V);
 
 % Transform subcripts from linear indices 
-[yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct),V);
+[yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct.cube),V);
 
 % Transform to [mm]
-xCoordsV = xCoordsV * pln.resolution(1);
-yCoordsV = yCoordsV * pln.resolution(2);
-zCoordsV = zCoordsV * pln.resolution(3);
+xCoordsV = xCoordsV * ct.resolution(1);
+yCoordsV = yCoordsV * ct.resolution(2);
+zCoordsV = zCoordsV * ct.resolution(3);
 
 % Calculated isocenter.
 isoCenter = mean([xCoordsV yCoordsV zCoordsV]);

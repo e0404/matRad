@@ -53,7 +53,7 @@ end
 V = [];
 for i=1:size(cst,1)
     if isequal(cst{i,3},'TARGET')
-        V = [V;cst{i,8}];
+        V = [V;cst{i,4}];
     end
 end
 
@@ -64,7 +64,7 @@ V = unique(V);
 if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     
     % load
-    voi = zeros(size(ct));
+    voi = zeros(size(ct.cube));
     voi(V) = 1;
     voi = imdilate(voi,ones(3,3,3));
 
@@ -82,13 +82,13 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
 end
 
 % Convert linear indices to 3D voxel coordinates
-[coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(size(ct),V);
+[coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(size(ct.cube),V);
 
 % Correct for iso center position. Whit this correction Isocenter is
 % (0,0,0) [mm]
-coordsX = coordsX_vox*pln.resolution(1) - pln.isoCenter(1);
-coordsY = coordsY_vox*pln.resolution(2) - pln.isoCenter(2);
-coordsZ = coordsZ_vox*pln.resolution(3) - pln.isoCenter(3);
+coordsX = coordsX_vox*ct.resolution(1) - pln.isoCenter(1);
+coordsY = coordsY_vox*ct.resolution(2) - pln.isoCenter(2);
+coordsZ = coordsZ_vox*ct.resolution(3) - pln.isoCenter(3);
 
 % Define steering file like struct. Prellocating for speed.
 stf = struct;
@@ -174,7 +174,7 @@ for i = 1:length(pln.gantryAngles)
         for j = 1:stf(i).numOfRays
             
             % ray tracing necessary to determine depth of the target
-            [~,l,rho,~] = matRad_siddonRayTracer(pln.isoCenter,pln.resolution,stf(i).sourcePoint,stf(i).ray(j).targetPoint,{ct,voi});
+            [~,l,rho,~] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,stf(i).sourcePoint,stf(i).ray(j).targetPoint,{ct.cube,voi});
             
             if sum(rho{2}) > 0 % target hit
                 
@@ -237,19 +237,19 @@ for i = 1:length(pln.gantryAngles)
             
             % generate a 3D rectangular grid centered at isocenter in
             % voxel coordinates
-            [X,Y,Z] = meshgrid((1:size(ct,1))-pln.isoCenter(1)/pln.resolution(2), ...
-                               (1:size(ct,2))-pln.isoCenter(2)/pln.resolution(1), ...
-                               (1:size(ct,3))-pln.isoCenter(3)/pln.resolution(3));
+            [X,Y,Z] = meshgrid((1:size(ct.cube,1))-pln.isoCenter(1)/ct.resolution(2), ...
+                               (1:size(ct.cube,2))-pln.isoCenter(2)/ct.resolution(1), ...
+                               (1:size(ct.cube,3))-pln.isoCenter(3)/ct.resolution(3));
             
             % computes surface
-            patSurfCube = 0*ct;
-            patSurfCube(unique(cell2mat(cst(1:end,8)))) = 1;
+            patSurfCube = 0*ct.cube;
+            patSurfCube(unique(cell2mat(cst(:,4)))) = 1;
             [f,v] = isosurface(X,Y,Z,patSurfCube,.5);
             
             % convert isosurface from voxel to [mm]
-            v(:,1) = v(:,1)*pln.resolution(1);
-            v(:,2) = v(:,2)*pln.resolution(2);
-            v(:,3) = v(:,3)*pln.resolution(3);
+            v(:,1) = v(:,1)*ct.resolution(1);
+            v(:,2) = v(:,2)*ct.resolution(2);
+            v(:,3) = v(:,3)*ct.resolution(3);
             
             % rotate surface
             rotated_surface = v*rotMx_XZ*rotMx_XY;

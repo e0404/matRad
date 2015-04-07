@@ -54,44 +54,107 @@ numVoxels = size(dij.physicalDose,1);
 f = 0;
 
 % Initializes delta
-delta = zeros(numVoxels,1);
+delta_underdose = zeros(numVoxels,1);
+delta_overdose  = zeros(numVoxels,1);
+delta_deviation = zeros(numVoxels,1);
+delta_mean      = zeros(numVoxels,1);
+delta_EUD       = zeros(numVoxels,1);
 
-% Compute optimization function for every VOI.
+% compute objective function for every VOI.
 for  i = 1:size(cst,1)
     
     % Only take OAR or target VOI.
     if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
         
-        % Minimun penalty
-        rho_min = cst{i,7};
-        
-        % Maximum penalty
-        rho_max = cst{i,6};
-        
         % get dose vector in current VOI
-        d_i = d(cst{i,8});
+        d_i = d(cst{i,4});
+                
+        % loop over the number of constraints for the current VOI
+        for j = 1:size(cst{i,6},2)
+            
+            % get Penalty
+            rho = cst{i,6}(j).parameter(1);
+            
+            if isequal(cst{i,6}(j).type, 'square underdosing')
+  
+                % underdose : Dose minus prefered dose
+                underdose = d_i - cst{i,6}(j).parameter(2);
+                
+                % apply positive operator
+                underdose(underdose>0) = 0;
+                
+                % calculate objective function
+                f = f + (rho/size(cst{i,4},1))*(underdose'*underdose);
+                
+                % calculate delta
+                delta_underdose(cst{i,4}) = delta_underdose(cst{i,4}) +...
+                    (rho/size(cst{i,4},1))*underdose;
+                
+            elseif isequal(cst{i,6}(j).type, 'square overdosing')
+                
+                % overdose : Dose minus prefered dose
+                overdose = d_i - cst{i,6}(j).parameter(2);
+                
+                % apply positive operator
+                overdose(overdose<0) = 0;
+                
+                % calculate objective function
+                f = f + (rho/size(cst{i,4},1))*(overdose'*overdose);
+                
+                %calculate delta
+                delta_overdose(cst{i,4}) = delta_overdose(cst{i,4}) + ...
+                    (rho/size(cst{i,4},1))*overdose;
+                
+            elseif isequal(cst{i,6}(j).type, 'square deviation')
+                
+                % deviation : Dose minus prefered dose
+                deviation = d_i - cst{i,6}(j).parameter(2);
+                
+                % claculate objective function
+                f = f + (rho/size(cst{i,4},1))*(deviation'*deviation);
+                
+                % calculate delta
+                delta_deviation(cst{i,4}) = delta_deviation(cst{i,4}) +...
+                    (rho/size(cst{i,4},1))*deviation;
+                
+            elseif isequal(cst{i,6}(j).type, 'mean')              
+                
+                % calculate objective function
+                f = f + (rho/size(cst{i,4},1))*sum(d_i);
+                
+                % calculate delta
+                delta_mean(cst{i,4}) = delta_mean(cst{i,4}) + ...
+                    (rho/size(cst{i,4},1))*ones(size(cst{i,4},1),1);
+                
+            elseif isequal(cst{i,6}(j).type, 'EUD') 
+                
+                % get exponent for EUD
+                exponent = cst{i,6}(j).exponent;
+                
+                % calculate objective function and delta
+                if sum(d_i.^exponent)>0
+                    
+                    f = f + rho*nthroot((1/size(cst{i,4},1))*sum(d_i.^exponent),exponent);
+                    
+                    delta_EUD(cst{i,4}) = delta_EUD(cst{i,4}) + ...
+                        rho*nthroot(1/size(cst{i,4},1),exponent) * sum(d_i.^exponent)^((1-exponent)/exponent) * (d_i.^(exponent-1));
+                    
+                end
+                
+            else
+                
+                error('undefined objective in cst struct');
+                
+            end
+      
+        end
         
-        % Maximun deviation: Dose minus maximun dose.
-        deviation_max = d_i - cst{i,4};
-        
-        % Minimun deviation: Dose minus minimun dose.
-        deviation_min = d_i - cst{i,5};
-        
-        % Apply positive operator H.
-        deviation_max(deviation_max<0) = 0;
-        deviation_min(deviation_min>0) = 0;
-        
-        % Calculate the objective function
-        f = f + (rho_max/size(cst{i,8},1))*(deviation_max'*deviation_max) + ...
-            (rho_min/size(cst{i,8},1))*(deviation_min'*deviation_min);
-        
-        % Calculate delta
-        delta(cst{i,8}) = delta(cst{i,8}) + (rho_max/size(cst{i,8},1))*deviation_max +...
-            (rho_min/size(cst{i,8},1))*deviation_min;
     end
 end
-
-% Calculate gradient.
+   
 if nargout > 1
-    g = 2 * (delta' * dij.physicalDose)';
+    % Calculate gradient
+    g = (( 2*(delta_underdose + delta_overdose + delta_deviation) + delta_mean + delta_EUD )' * dij.physicalDose)';
+end
+
 end

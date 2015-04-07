@@ -52,7 +52,7 @@ end
 % meta information for dij
 dij.numOfBeams         = pln.numOfBeams;
 dij.numOfVoxels        = pln.numOfVoxels;
-dij.resolution         = pln.resolution;
+dij.resolution         = ct.resolution;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
@@ -64,27 +64,27 @@ dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
 dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 
 % Allocate space for dij.physicalDose sparse matrix
-dij.physicalDose = spalloc(numel(ct),dij.totalNumOfBixels,1);
+dij.physicalDose = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
 
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 doseTmpContainer = cell(numOfBixelsContainer,1);
 if pln.bioOptimization == true 
     alphaDoseTmpContainer = cell(numOfBixelsContainer,1);
-    betaDoseTmpContainer = cell(numOfBixelsContainer,1);
-    dij.mAlphaDose = spalloc(numel(ct),dij.totalNumOfBixels,1);
-    dij.mSqrtBetaDose = spalloc(numel(ct),dij.totalNumOfBixels,1);
+    betaDoseTmpContainer  = cell(numOfBixelsContainer,1);
+    dij.mAlphaDose        = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
+    dij.mSqrtBetaDose     = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
 end
 % Only take voxels inside patient.
-V = unique([cell2mat(cst(:,8))]);
+V = unique([cell2mat(cst(:,4))]);
 
 % Convert CT subscripts to linear indices.
-[yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct),V);
+[yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct.cube),V);
 
-xCoordsV = (xCoordsV(:)-0.5)*pln.resolution(1)-pln.isoCenter(1);
-yCoordsV = (yCoordsV(:)-0.5)*pln.resolution(2)-pln.isoCenter(2);
-zCoordsV = (zCoordsV(:)-0.5)*pln.resolution(3)-pln.isoCenter(3);
-coords_inside=[xCoordsV yCoordsV zCoordsV];
+xCoordsV = (xCoordsV(:)-0.5)*ct.resolution(1)-pln.isoCenter(1);
+yCoordsV = (yCoordsV(:)-0.5)*ct.resolution(2)-pln.isoCenter(2);
+zCoordsV = (zCoordsV(:)-0.5)*ct.resolution(3)-pln.isoCenter(3);
+coords_inside = [xCoordsV yCoordsV zCoordsV];
 
 % load protonBaseData
 if strcmp(pln.radiationMode,'protons')
@@ -99,19 +99,17 @@ if pln.bioOptimization == true
     mTissueClass = zeros(size(V,1),1);
     for i=1:size(cst,1)
         % find indices of structures related to V
-        [~, row] = ismember(cst{i,8},V,'rows');  
-        if size(cst,2)>8
-            if ~isempty(cst{i,9}) && isfield(cst{i,9},'TissueClass')
-                mTissueClass(row) = cst{i,9}.TissueClass;
-            end
+        [~, row] = ismember(cst{i,4},V,'rows');  
+        if ~isempty(cst{i,5}) && isfield(cst{i,5},'TissueClass')
+            mTissueClass(row) = cst{i,5}.TissueClass;
         else
             mTissueClass(row) = 1;
-            fprintf(['matRad: tissue type of ' cst{i,2} ' was set to normal tissue \n']);
+            fprintf(['matRad: tissue type of ' cst{i,2} ' was set to 1 \n']);
         end
         
         % check consitency of biological baseData and cst settings
         baseDataAlphaBetaRatios =  reshape([baseData(:).alphaBetaRatio],numel(baseData(1).alphaBetaRatio),size(baseData,2));
-        if norm(baseDataAlphaBetaRatios(cst{i,9}.TissueClass,:) - cst{i,9}.alphaX/cst{i,9}.betaX)>0
+        if norm(baseDataAlphaBetaRatios(cst{i,5}.TissueClass,:) - cst{i,5}.alphaX/cst{i,5}.betaX)>0
             error('biological base data and cst inconsistent\n');
         end
         
@@ -121,8 +119,8 @@ end
 
 % It make a meshgrid with CT position in millimeter for calculate
 % geometrical distances
-[X_geo,Y_geo,Z_geo] = meshgrid(pln.resolution(1)*(0.5:1:size(ct,1)),...
-    pln.resolution(2)*(0.5:1:size(ct,2)),pln.resolution(3)*(0.5:1:size(ct,3)));
+[X_geo,Y_geo,Z_geo] = meshgrid(ct.resolution(1)*(0.5:1:size(ct.cube,1)),...
+    ct.resolution(2)*(0.5:1:size(ct.cube,2)),ct.resolution(3)*(0.5:1:size(ct.cube,3)));
 
 % take only voxels inside patient
 X_geo = X_geo(V);
@@ -171,8 +169,8 @@ for i = 1:dij.numOfBeams; % loop over all beams
             lateralCutoff = 3*baseData(find(max(stf(i).ray(j).energy) == [baseData.energy])).sigma(end);
 
             % Ray tracing for beam i and ray j
-            [ix,radDepths,~,latDistsX,latDistsZ] = matRad_calcRadGeoDists(ct,V,...
-                    pln.isoCenter,rot_coords,pln.resolution,stf(i).sourcePoint,...
+            [ix,radDepths,~,latDistsX,latDistsZ] = matRad_calcRadGeoDists(ct.cube,V,...
+                    pln.isoCenter,rot_coords,ct.resolution,stf(i).sourcePoint,...
                     stf(i).ray(j).targetPoint,sourcePoint_bev,...
                     stf(i).ray(j).targetPoint_bev,X_geo,Y_geo,Z_geo,lateralCutoff,visBool);
             
@@ -208,7 +206,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                     baseData(energyIx));
                 
                 % Save dose for every bixel in cell array
-                doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelDose,numel(ct),1);
+                doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelDose,numel(ct.cube),1);
                             
                 if pln.bioOptimization == true 
                     % calculate alpha and beta values for bixel k on ray j of
@@ -218,8 +216,8 @@ for i = 1:dij.numOfBeams; % loop over all beams
                         mTissueClass_j(currIx,:),...
                         baseData(energyIx));
                 
-                    alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelAlpha.*bixelDose,numel(ct),1);
-                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,numel(ct),1);
+                    alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelAlpha.*bixelDose,numel(ct.cube),1);
+                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,numel(ct.cube),1);
                 end
                 
                 % save computation time and memory by sequentially filling the

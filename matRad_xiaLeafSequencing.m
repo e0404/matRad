@@ -1,4 +1,4 @@
-function resultSequencing = matRad_xiaLeafSequencing(w,stf,pln,numOfLevels,visBool)
+function resultSequencing = matRad_xiaLeafSequencing(w,stf,numOfLevels,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated 
 % beams with multiple static segments
@@ -46,7 +46,7 @@ function resultSequencing = matRad_xiaLeafSequencing(w,stf,pln,numOfLevels,visBo
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % if visBool not set toogle off visualization
-if nargin < 5
+if nargin < 4
     visBool = 0;
 end
 
@@ -65,42 +65,36 @@ for i = 1:numOfBeams
     % get relevant weights for current beam
     wOfCurrBeams = w(1+offset:numOfRaysPerBeam+offset);%REVIEW OFFSET
     
-    X = zeros(numOfRaysPerBeam,1)*NaN;
-    Z = zeros(numOfRaysPerBeam,1)*NaN;
-    
-    
+    X = ones(numOfRaysPerBeam,1)*NaN;
+    Z = ones(numOfRaysPerBeam,1)*NaN;
+        
     for j=1:stf(i).numOfRays
       X(j) = stf(i).ray(j).rayPos_bev(:,1);
       Z(j) = stf(i).ray(j).rayPos_bev(:,3);
     end
-    
-    
+        
     % sort bixels into matrix
     minX = min(X);
     maxX = max(X);
     minZ = min(Z);
     maxZ = max(Z);
     
-    dimOfFluenceMxX = (maxX-minX)/pln.bixelWidth + 1;
-    dimOfFluenceMxZ = (maxZ-minZ)/pln.bixelWidth + 1;
+    dimOfFluenceMxX = (maxX-minX)/stf(i).bixelWidth + 1;
+    dimOfFluenceMxZ = (maxZ-minZ)/stf(i).bixelWidth + 1;
     
     %Create the fluence matrix.
     fluenceMx = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
     
-    % Calculate X and Z positio of every fluence's matrix spot
+    % Calculate X and Z position of every fluence's matrix spot
     % z axis = axis of leaf movement!
-    xPos = (X-minX)/pln.bixelWidth+1;
-    zPos = (Z-minZ)/pln.bixelWidth+1;
+    xPos = (X-minX)/stf(i).bixelWidth+1;
+    zPos = (Z-minZ)/stf(i).bixelWidth+1;
     
     % Make subscripts for fluence matrix
     indInFluenceMx = zPos + (xPos-1)*dimOfFluenceMxZ;
     
     %Save weights in fluence matrix.
     fluenceMx(indInFluenceMx) = wOfCurrBeams;
-    
-    %imagesc(fluenceMx)
-    %xlabel('x - direction parallel to leaf motion ')
-    %ylabel('z - direction perpendicular to leaf motion ')
     
     % prepare sequencer
     calFac = max(fluenceMx(:));
@@ -120,7 +114,8 @@ for i = 1:numOfBeams
     % Set k=0, this variable is used for residuals intensity matrices D_k.
     k = 0;
     
-    shapes = NaN*ones(dimOfFluenceMxZ,dimOfFluenceMxX,10000);%ANSWER TO MARK WHY 10.000!!!!
+    % container to remember generated shapes; allocate space for 10000 shapes
+    shapes = NaN*ones(dimOfFluenceMxZ,dimOfFluenceMxX,10000);
     
     if visBool
         clf
@@ -202,16 +197,18 @@ for i = 1:numOfBeams
             
         end
         
+        shape_k       = openingMx * d_k;
+                
                 if visBool
                     subplot(2,2,4)
-                    imagesc(openingMx)
+                    imagesc(shape_k)
                     hold on
                     xlabel('x - direction parallel to leaf motion ')
                     ylabel('z - direction perpendicular to leaf motion ')
                     title(['d_k = ' num2str(d_k)]);
                     for j = 1:dimOfFluenceMxZ
-                       leftLeafIx = find(openingMx(j,:)>0,1,'first');
-                       rightLeafIx = find(openingMx(j,:)>0,1,'last');
+                       leftLeafIx = find(shape_k(j,:)>0,1,'first');
+                       rightLeafIx = find(shape_k(j,:)>0,1,'last');
                        if leftLeafIx > 1
                            plot([.5 leftLeafIx-.5],j-[.5 .5] ,'w','LineWidth',2)
                            plot([.5 leftLeafIx-.5],j+[.5 .5] ,'w','LineWidth',2)
@@ -234,7 +231,6 @@ for i = 1:numOfBeams
                     pause(1);
                 end 
 
-        shape_k       = openingMx * d_k;
         shapes(:,:,k) = shape_k;
         shapesWeight(k) = d_k;
         D_k = D_k - shape_k;
