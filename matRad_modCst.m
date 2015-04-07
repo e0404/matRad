@@ -376,7 +376,7 @@ end
         
         % write gui data in cst file 
         if FlagValidParameters
-            close(structWindow);
+            close();
         end
         
     end

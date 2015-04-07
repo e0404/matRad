@@ -82,16 +82,15 @@ if nargin > 0
         end
     end
     
+    data.SelectedBeam = 1;
+    data.TypeOfPlot = 1;
+     data.SelectedDisplayOption = 'physicalDose';
     if ~isempty(data.optResult)
         data.doseColorwashCheckboxValue = 1;
         data.doseIsoCheckboxValue = 1;
-        data.SelectedDisplayOption = 'physicalDose';
-        data.TypeOfPlot = 1;
     else
         data.doseColorwashCheckboxValue = 0;
-        data.doseIsoCheckboxValue = 0;
-        data.SelectedDisplayOption = 'physicalDose';
-        data.TypeOfPlot = 1;
+        data.doseIsoCheckboxValue = 0;        
     end
     
     if ~isempty(data.ct.cube)
@@ -311,7 +310,7 @@ if data.TypeOfPlot ==2
     Cnt=1;
     
     mPhysDose=getfield(data.optResult,'physicalDose');
-    mRotActualSlice =imrotate(mPhysDose(:,:,data.slice),data.pln.gantryAngles(1),'crop');
+    mRotActualSlice =imrotate(mPhysDose(:,:,data.slice),data.pln.gantryAngles(data.SelectedBeam),'crop');
     
     
     vW =ones(size(mRotActualSlice,2),1);
@@ -362,7 +361,7 @@ if data.TypeOfPlot ==2
             if ~isvector(mCurrentCube) && ~strcmp(data.fName{i,1},'RBEWeightedDose') ...
                     && ~strcmp(data.fName{i,1},'RBE') && ~strcmp(data.fName{i,1},'physicalDose')...
                     && data.fName{i,2}
-                mRotActualSlice = imrotate(mCurrentCube(:,:,data.slice),data.pln.gantryAngles(1),'crop');
+                mRotActualSlice = imrotate(mCurrentCube(:,:,data.slice),data.pln.gantryAngles(data.SelectedBeam),'crop');
                 mY = mRotActualSlice(:,idxCentAxis-delta:idxCentAxis+delta);
                 mY(isnan(mY))=0;
                 mY=mean(mY,2);
@@ -374,13 +373,13 @@ if data.TypeOfPlot ==2
         
         % plot always RBEWeightedDose against RBE
         mRBEWeightedDose=getfield(data.optResult,'RBEWeightedDose');
-        mRotActualSlice =imrotate(mRBEWeightedDose(:,:,data.slice),data.pln.gantryAngles(1),'crop');
+        mRotActualSlice =imrotate(mRBEWeightedDose(:,:,data.slice),data.pln.gantryAngles(data.SelectedBeam),'crop');
         mBED=mRotActualSlice(:,idxCentAxis-delta:idxCentAxis+delta);
         mBED(isnan(mBED))=0;
         vBED=mean(mBED,2);
         
         mRBE=getfield(data.optResult,'RBE');
-        mRotActualSlice =imrotate(mRBE(:,:,data.slice),data.pln.gantryAngles(1),'crop');
+        mRotActualSlice =imrotate(mRBE(:,:,data.slice),data.pln.gantryAngles(data.SelectedBeam),'crop');
         mRBE=mRotActualSlice(:,idxCentAxis-delta:idxCentAxis+delta);
         mRBE(isnan(mRBE))=0;
         vRBE=mean(mRBE,2);
@@ -422,16 +421,16 @@ if data.TypeOfPlot ==2
     end
     PlotHandles{Cnt,1}=plot([0 size(data.ct.cube,1)*data.ct.resolution(1)],[sPrescrpDose sPrescrpDose],'--','Linewidth',3,'color','m');
     PlotHandles{Cnt,2}='prescription';
-    str = sprintf('profile plot of zentral axis of first beam at %d at %d / %d in slice %d',data.pln.gantryAngles(1),data.LateralOffset*data.ct.resolution(2),size(data.ct,2)*data.ct.resolution(2), data.slice);
+    str = sprintf('profile plot of zentral axis of %d beam (%d°) at %d / %d in slice %d',...
+        data.SelectedBeam ,data.pln.gantryAngles(data.SelectedBeam),data.LateralOffset*data.ct.resolution(2),...
+        size(data.ct.cube,2)*data.ct.resolution(2), data.slice);
     title(str,'FontSize',14),grid on
     Cnt = Cnt+1;
-    
-    
     
     % plot target boundaries
     mTargetStack = zeros(size(data.ct.cube));
     mTargetStack(mTarget)=1;
-    mRotTargetSlice =imrotate(mTargetStack(:,:,data.slice),data.pln.gantryAngles(1),'crop');
+    mRotTargetSlice =imrotate(mTargetStack(:,:,data.slice),data.pln.gantryAngles(data.SelectedBeam),'crop');
     vRay = find(mRotTargetSlice(:,idxCentAxis))*data.ct.resolution(2);
     
     PlotHandles{Cnt,2} ='target boundary';
@@ -552,8 +551,8 @@ doseSetText = uicontrol('Parent', gcf,...
         'FontSize', 10,...
         'Units', 'normalized',...
         'Position', [0.03 0.43 0.109 0.03],...
-        'FontSize',14);    ;
- 
+        'FontSize',14);   
+    
 if isempty(data.optResult)
     strTmp ={'no options available'};
     idx =1;
@@ -590,24 +589,54 @@ PopUpTypeOfPlot = uicontrol('Parent', gcf,...
         'Callback', @displaypopupCallback);
 
 if data.TypeOfPlot == 2
-       TmpStr ='on';
-else
-       TmpStr ='off';
-end
-ProfileSlider = uicontrol('Parent', gcf,...
-        'Style', 'slider',...
-        'Units', 'normalized',...
-        'Position', [0.15 0.50 0.06 0.03],...
-        'Min', 1,...
-        'Max',  size(data.ct.cube,2),...
-        'Value', data.LateralOffset,...
-        'SliderStep',[1/(size(data.ct.cube,2)-1), 1/(size(data.ct.cube,2)-1)],...
-        'Callback', @ProfilesliderCallback,...
-        'Enable',TmpStr,...
-        'Visible',TmpStr);    
+
+    profileSliderText = uicontrol('Parent', gcf,...
+            'Style', 'text',...
+            'BackgroundColor', [0.8 0.8 0.8],...
+            'String', 'profile slider',...
+            'FontSize', 10,...
+            'Units', 'normalized',...
+            'Position', [0.17 0.53 0.109 0.03],...
+            'FontSize',14);   
     
+    profileSlider = uicontrol('Parent', gcf,...
+            'Style', 'slider',...
+            'Units', 'normalized',...
+            'Position', [0.2 0.50 0.06 0.03],...
+            'Min', 1,...
+            'Max',  size(data.ct.cube,2),...
+            'Value', data.LateralOffset,...
+            'SliderStep',[1/(size(data.ct.cube,2)-1), 1/(size(data.ct.cube,2)-1)],...
+            'Callback', @profileSliderCallback);  
+    
+    
+    if data.pln.numOfBeams>1
+
+        beamSliderText = uicontrol('Parent', gcf,...
+            'Style', 'text',...
+            'BackgroundColor', [0.8 0.8 0.8],...
+            'String', 'beam selection',...
+            'FontSize', 10,...
+            'Units', 'normalized',...
+            'Position', [0.17 0.43 0.109 0.03],...
+            'FontSize',14);   
+
+        beamSlider = uicontrol('Parent', gcf,...
+                'Style', 'slider',...
+                'Units', 'normalized',...
+                'Position', [0.2 0.40 0.059 0.03],...
+                'Min', 1,...
+                'Max',  data.pln.numOfBeams,...
+                'Value', data.SelectedBeam,...
+                'SliderStep',[1 1],...
+                'Callback', @beamSliderCallback);     
+        
+    end 
+    
+    
+end   
 %% definition of callbacks
-function ProfilesliderCallback(hObj,event)
+function profileSliderCallback(hObj,event)
       data=guidata(gcf);
       data.LateralOffset = round(get(hObj,'Value'));
       guidata(gcf,data);
@@ -684,5 +713,14 @@ end
         guidata(gcf,data);
         matRad_visCtDose;
     end
+
+ function beamSliderCallback(hObj, event)
+        data = guidata(gcf);
+        data.SelectedBeam = get(hObj, 'Value');
+        data.SelectedBeam = floor(data.SelectedBeam);
+        guidata(gcf,data);
+        matRad_visCtDose;
+    end
+
 
 end
