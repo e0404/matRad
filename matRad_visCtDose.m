@@ -57,7 +57,7 @@ if nargin > 0
         if isfield(data.optResult,'RBE')
             Index = min(find(strcmp(data.cst(:,3),'TARGET')));
             mTmp = zeros(data.pln.voxelDimensions);
-            mTmp(data.cst{Index,8})=1;
+            mTmp(data.cst{Index,4})=1;
             data.optResult.RBETarget = data.optResult.RBE.*mTmp;
         end
         
@@ -339,8 +339,8 @@ if data.TypeOfPlot ==2
     % assess x - limits
     xLim  = find(mY_avg);
     if ~isempty(xLim)
-        xmin= xLim(1)*data.pln.resolution(1)-20;
-        xmax= xLim(end)*data.pln.resolution(1)+20;
+        xmin= xLim(1)*data.ct.resolution(1)-20;
+        xmax= xLim(end)*data.ct.resolution(1)+20;
     else
         vLim = axis;
         xmin = vLim(1);
@@ -404,12 +404,15 @@ if data.TypeOfPlot ==2
        
     
     % asses the prescripted dose and target coordinates 
-    % todo: ptv, ctv, gtv are all labeld as target -> priorities
+    % todo: ptv, ctv, gtv are all labeld as target
     sPrescrpDose=0;
     for i=1:size(data.cst,1)
         if strcmp(data.cst{i,3},'TARGET')==1
-           mTarget = unique(data.cst{i,8});
-           sPrescrpDose = data.cst{i,4};
+           mTarget = unique(data.cst{i,4});
+           for j = 1: 1:size(data.cst{i,6},2)
+            sPrescrpDose(j) = data.cst{i,6}(j).parameter(2);
+           end
+           sPrescrpDose = mean(sPrescrpDose);
         end
     end
     
@@ -417,9 +420,9 @@ if data.TypeOfPlot ==2
     if sum(strcmp(fieldnames(data.optResult),'RBEWeightedDose')) > 0
             sPrescrpDose = sPrescrpDose./data.pln.numOfFractions;
     end
-    PlotHandles{Cnt,1}=plot([0 size(data.ct,1)*data.pln.resolution(1)],[sPrescrpDose sPrescrpDose],'--','Linewidth',3,'color','m');
+    PlotHandles{Cnt,1}=plot([0 size(data.ct.cube,1)*data.ct.resolution(1)],[sPrescrpDose sPrescrpDose],'--','Linewidth',3,'color','m');
     PlotHandles{Cnt,2}='prescription';
-    str = sprintf('profile plot of zentral axis of first beam at %d� at %d / %d in slice %d',data.pln.gantryAngles(1),data.LateralOffset*data.pln.resolution(2),size(data.ct,2)*data.pln.resolution(2), data.slice);
+    str = sprintf('profile plot of zentral axis of first beam at %d at %d / %d in slice %d',data.pln.gantryAngles(1),data.LateralOffset*data.ct.resolution(2),size(data.ct,2)*data.ct.resolution(2), data.slice);
     title(str,'FontSize',14),grid on
     Cnt = Cnt+1;
     

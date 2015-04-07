@@ -70,7 +70,7 @@ matRad_visCtDose(doseVis,cst,pln,ct);
 
 %% change objective function settings if desired
 matRad_modCst(cst)
-
+uiwait
 %% inverse planning for imrt
 optResult = matRad_inversePlanning(dij,cst,pln);
 matRad_visCtDose(optResult,cst,pln,ct);
