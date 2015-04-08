@@ -47,16 +47,28 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin > 0
-    
     data.optResult = optResult;
     data.cst  = cst;
     data.pln  = pln;
     data.ct   = ct;
     if ~isempty(data.optResult)
+        data.optResult = rmfield(data.optResult,'w');
+        
+        if isfield(data.optResult,'RBE')
+            Index = min(find(strcmp(data.cst(:,3),'TARGET')));
+            mTmp = zeros(data.pln.voxelDimensions);
+            mTmp(data.cst{Index,4})=1;
+            data.optResult.RBETarget = data.optResult.RBE.*mTmp;
+        end
+        
         data.fName =fieldnames(data.optResult);
         for i=1:size(data.fName,1)
             %indicates if it should be plotted later on
-            data.fName{i,2}=1;
+            if strcmp(data.fName{i,1},'RBETarget')
+                data.fName{i,2}=0;
+            else
+                data.fName{i,2}=1;
+            end
             % Reshape dose to cube in voxel dimensions
             CurrentCube = getfield(data.optResult,data.fName{i,1});
             if ~isempty(CurrentCube) && ~isempty(data.ct.cube) && isequal(size(CurrentCube),size(data.ct.cube))
@@ -70,16 +82,15 @@ if nargin > 0
         end
     end
     
+    data.SelectedBeam = 1;
+    data.TypeOfPlot = 1;
+     data.SelectedDisplayOption = 'physicalDose';
     if ~isempty(data.optResult)
         data.doseColorwashCheckboxValue = 1;
         data.doseIsoCheckboxValue = 1;
-        data.SelectedDisplayOption = 2;
-        data.TypeOfPlot = 1;
     else
         data.doseColorwashCheckboxValue = 0;
-        data.doseIsoCheckboxValue = 0;
-        data.SelectedDisplayOption = 2;
-        data.TypeOfPlot = 1;
+        data.doseIsoCheckboxValue = 0;        
     end
     
     if ~isempty(data.ct.cube)
@@ -157,7 +168,8 @@ if ~isempty(data.ct.cube) && data.ctCheckboxValue && data.TypeOfPlot ==1
 end
 
 if ~isempty(data.optResult) && data.TypeOfPlot ==1
-    mVolume = getfield(data.optResult,data.fName{data.SelectedDisplayOption});
+    mVolume = getfield(data.optResult,data.SelectedDisplayOption);
+   
 %     %% dose colorwash
     if ~isempty(mVolume) && data.doseColorwashCheckboxValue && ~isvector(mVolume)
 
@@ -298,7 +310,7 @@ if data.TypeOfPlot ==2
     Cnt=1;
     
     mPhysDose=getfield(data.optResult,'physicalDose');
-    mRotActualSlice =imrotate(mPhysDose(:,:,data.slice),data.pln.gantryAngles(1),'crop');
+    mRotActualSlice =imrotate(mPhysDose(:,:,data.slice),data.pln.gantryAngles(data.SelectedBeam),'crop');
     
     
     vW =ones(size(mRotActualSlice,2),1);
@@ -322,14 +334,20 @@ if data.TypeOfPlot ==2
     vX=linspace(1,data.ct.resolution(1)*numel(mY_avg),numel(mY_avg));
     PlotHandles{1} = plot(vX,mY_avg,'color',cColor{1,1},'LineWidth',3); hold on; 
     PlotHandles{1,2}='physicalDose';
-    % assess x and y axis limits
+    set(gca,'FontSize',18);
+    % assess x - limits
     xLim  = find(mY_avg);
-    xmin= xLim(1)*data.ct.resolution(1)-20;
-    xmax= xLim(end)*data.ct.resolution(1)+20;
-    if max(mY_avg(:))>ymax
-             ymax=max(mY_avg(:));
+    if ~isempty(xLim)
+        xmin= xLim(1)*data.ct.resolution(1)-20;
+        xmax= xLim(end)*data.ct.resolution(1)+20;
+    else
+        vLim = axis;
+        xmin = vLim(1);
+        xmax = vLim(2);
     end
     
+    % plot counter
+    Cnt=2;
     
     if data.pln.bioOptimization == 1
         
@@ -338,14 +356,12 @@ if data.TypeOfPlot ==2
         %will disable alpha-plot
         %data.fName{6,2}=0;
         
-        % plot counter
-        Cnt=2;
         for i=1:1:length(data.fName)
             mCurrentCube = getfield(data.optResult,data.fName{i,1});
             if ~isvector(mCurrentCube) && ~strcmp(data.fName{i,1},'RBEWeightedDose') ...
                     && ~strcmp(data.fName{i,1},'RBE') && ~strcmp(data.fName{i,1},'physicalDose')...
                     && data.fName{i,2}
-                mRotActualSlice = imrotate(mCurrentCube(:,:,data.slice),data.pln.gantryAngles(1),'crop');
+                mRotActualSlice = imrotate(mCurrentCube(:,:,data.slice),data.pln.gantryAngles(data.SelectedBeam),'crop');
                 mY = mRotActualSlice(:,idxCentAxis-delta:idxCentAxis+delta);
                 mY(isnan(mY))=0;
                 mY=mean(mY,2);
@@ -357,13 +373,13 @@ if data.TypeOfPlot ==2
         
         % plot always RBEWeightedDose against RBE
         mRBEWeightedDose=getfield(data.optResult,'RBEWeightedDose');
-        mRotActualSlice =imrotate(mRBEWeightedDose(:,:,data.slice),data.pln.gantryAngles(1),'crop');
+        mRotActualSlice =imrotate(mRBEWeightedDose(:,:,data.slice),data.pln.gantryAngles(data.SelectedBeam),'crop');
         mBED=mRotActualSlice(:,idxCentAxis-delta:idxCentAxis+delta);
         mBED(isnan(mBED))=0;
         vBED=mean(mBED,2);
         
         mRBE=getfield(data.optResult,'RBE');
-        mRotActualSlice =imrotate(mRBE(:,:,data.slice),data.pln.gantryAngles(1),'crop');
+        mRotActualSlice =imrotate(mRBE(:,:,data.slice),data.pln.gantryAngles(data.SelectedBeam),'crop');
         mRBE=mRotActualSlice(:,idxCentAxis-delta:idxCentAxis+delta);
         mRBE(isnan(mRBE))=0;
         vRBE=mean(mRBE,2);
@@ -374,56 +390,60 @@ if data.TypeOfPlot ==2
         PlotHandles{Cnt+1,2}='RBE';
          
         % set plotyy properties
-        set(get(ax(2),'Ylabel'),'String','RBE','FontSize',16);
-        set(get(ax(1),'Ylabel'),'String','RBE x dose','FontSize',16);
+        set(get(ax(2),'Ylabel'),'String','RBE','FontSize',18);
+        set(get(ax(1),'Ylabel'),'String','RBE x dose','FontSize',18);
         set(PlotHandles{Cnt,1},'Linewidth',4,'color','r');
         set(PlotHandles{Cnt+1,1},'Linewidth',3,'color','b');
         set(ax(1),'ycolor','r')
         set(ax(2),'ycolor','b')
-        set(ax,'FontSize',16);
-        Cnt=Cnt+1;
-        %get maximum of vBED for ylim
-        if max(vBED(:))>ymax
-            ymax=max(vBED(:));
-        end
+        set(ax,'FontSize',18);
+        Cnt=Cnt+2;
+       
     end
        
     
     % asses the prescripted dose and target coordinates 
-    % todo: ptv, ctv, gtv are all labeld as target -> priorites
+    % todo: ptv, ctv, gtv are all labeld as target
     sPrescrpDose=0;
     for i=1:size(data.cst,1)
         if strcmp(data.cst{i,3},'TARGET')==1
-           mTarget = unique(data.cst{i,8});
-           sPrescrpDose = data.cst{i,4};
+           mTarget = unique(data.cst{i,4});
+           for j = 1: 1:size(data.cst{i,6},2)
+            sPrescrpDose(j) = data.cst{i,6}(j).parameter(2);
+           end
+           sPrescrpDose = mean(sPrescrpDose);
         end
-        
     end
+    
+     % plot prescription
+    if sum(strcmp(fieldnames(data.optResult),'RBEWeightedDose')) > 0
+            sPrescrpDose = sPrescrpDose./data.pln.numOfFractions;
+    end
+    PlotHandles{Cnt,1}=plot([0 size(data.ct.cube,1)*data.ct.resolution(1)],[sPrescrpDose sPrescrpDose],'--','Linewidth',3,'color','m');
+    PlotHandles{Cnt,2}='prescription';
+    str = sprintf('profile plot of zentral axis of %d beam (%d°) at %d / %d in slice %d',...
+        data.SelectedBeam ,data.pln.gantryAngles(data.SelectedBeam),data.LateralOffset*data.ct.resolution(2),...
+        size(data.ct.cube,2)*data.ct.resolution(2), data.slice);
+    title(str,'FontSize',14),grid on
+    Cnt = Cnt+1;
     
     % plot target boundaries
     mTargetStack = zeros(size(data.ct.cube));
     mTargetStack(mTarget)=1;
-    mRotTargetSlice =imrotate(mTargetStack(:,:,data.slice),data.pln.gantryAngles(1),'crop');
+    mRotTargetSlice =imrotate(mTargetStack(:,:,data.slice),data.pln.gantryAngles(data.SelectedBeam),'crop');
     vRay = find(mRotTargetSlice(:,idxCentAxis))*data.ct.resolution(2);
-    Cnt=Cnt+1;
-    PlotHandles{Cnt,2} ='target boundary';
     
+    PlotHandles{Cnt,2} ='target boundary';
+    vLim = axis;
     if ~isempty(vRay)
-        PlotHandles{Cnt,1}=plot([vRay(1) vRay(1)],[0 ymax],'--','Linewidth',2,'color','k');hold on
-        plot([vRay(end) vRay(end)], [0 ymax],'--','Linewidth',2,'color','k');hold on
+        PlotHandles{Cnt,1}=plot([vRay(1) vRay(1)],[0 vLim(4)],'--','Linewidth',2,'color','k');hold on
+        plot([vRay(end) vRay(end)], [0 vLim(4)],'--','Linewidth',2,'color','k');hold on
         xmax = vRay(end)+30;
     else
         PlotHandles{Cnt,1} =0;
     end
     
-    Cnt = Cnt+1;
-    % plot prescription
-    PlotHandles{Cnt,1}=plot([0 size(data.ct.cube,1)*data.ct.resolution(1)],[sPrescrpDose sPrescrpDose],'--','Linewidth',2,'color','m');
-    PlotHandles{Cnt,2}='prescription';
-    str = sprintf('profile plot of zentral axis of first beam at %d° at %d / %d in slice %d',data.pln.gantryAngles(1),data.LateralOffset*data.ct.resolution(2),size(data.ct.cube,2)*data.ct.resolution(2), data.slice);
-    title(str,'FontSize',14),grid on
-    axis auto
-    
+
     legend([PlotHandles{:,1}],PlotHandles{:,2},'Location','NorthWest');
     
     
@@ -434,16 +454,8 @@ if data.TypeOfPlot ==2
         xlim(ax(1),[xmin xmax]);
         xlim(ax(2),[xmin xmax]);
     end
-    if ymax<0.5
-        ymax = 0.5;
-    end
-    % set axis labels and ticks
-    ymax= 0:sPrescrpDose/8:sPrescrpDose+sPrescrpDose/8;
-    yVal=round(ymax*100)/100;
-    set(gca,'YTick',yVal);
-    set(gca,'YTickLabel',yVal);
     xlabel('depth [mm]','FontSize',16);
-    
+   
     
 
 end
@@ -539,19 +551,21 @@ doseSetText = uicontrol('Parent', gcf,...
         'FontSize', 10,...
         'Units', 'normalized',...
         'Position', [0.03 0.43 0.109 0.03],...
-        'FontSize',14);    ;
- 
+        'FontSize',14);   
+    
 if isempty(data.optResult)
     strTmp ={'no options available'};
+    idx =1;
 else
     strTmp = data.fName(:,1);
+    idx = find(strcmp(data.fName(:,1),data.SelectedDisplayOption));
 end
 
 dosePopup = uicontrol('Parent', gcf,...
         'Style', 'popupmenu',...
         'String', strTmp ,...
         'FontSize', 10,...
-        'Value',data.SelectedDisplayOption,...
+        'Value',idx,...
         'Units', 'normalized',...
         'Position', [0.05 0.4 0.109 0.03],...
         'Callback', @dosepopupCallback);
@@ -575,24 +589,54 @@ PopUpTypeOfPlot = uicontrol('Parent', gcf,...
         'Callback', @displaypopupCallback);
 
 if data.TypeOfPlot == 2
-       TmpStr ='on';
-else
-       TmpStr ='off';
-end
-ProfileSlider = uicontrol('Parent', gcf,...
-        'Style', 'slider',...
-        'Units', 'normalized',...
-        'Position', [0.15 0.50 0.06 0.03],...
-        'Min', 1,...
-        'Max',  size(data.ct.cube,2),...
-        'Value', data.LateralOffset,...
-        'SliderStep',[1/(size(data.ct.cube,2)-1), 1/(size(data.ct.cube,2)-1)],...
-        'Callback', @ProfilesliderCallback,...
-        'Enable',TmpStr,...
-        'Visible',TmpStr);    
+
+    profileSliderText = uicontrol('Parent', gcf,...
+            'Style', 'text',...
+            'BackgroundColor', [0.8 0.8 0.8],...
+            'String', 'profile slider',...
+            'FontSize', 10,...
+            'Units', 'normalized',...
+            'Position', [0.17 0.53 0.109 0.03],...
+            'FontSize',14);   
     
+    profileSlider = uicontrol('Parent', gcf,...
+            'Style', 'slider',...
+            'Units', 'normalized',...
+            'Position', [0.2 0.50 0.06 0.03],...
+            'Min', 1,...
+            'Max',  size(data.ct.cube,2),...
+            'Value', data.LateralOffset,...
+            'SliderStep',[1/(size(data.ct.cube,2)-1), 1/(size(data.ct.cube,2)-1)],...
+            'Callback', @profileSliderCallback);  
+    
+    
+    if data.pln.numOfBeams>1
+
+        beamSliderText = uicontrol('Parent', gcf,...
+            'Style', 'text',...
+            'BackgroundColor', [0.8 0.8 0.8],...
+            'String', 'beam selection',...
+            'FontSize', 10,...
+            'Units', 'normalized',...
+            'Position', [0.17 0.43 0.109 0.03],...
+            'FontSize',14);   
+
+        beamSlider = uicontrol('Parent', gcf,...
+                'Style', 'slider',...
+                'Units', 'normalized',...
+                'Position', [0.2 0.40 0.059 0.03],...
+                'Min', 1,...
+                'Max',  data.pln.numOfBeams,...
+                'Value', data.SelectedBeam,...
+                'SliderStep',[1 1],...
+                'Callback', @beamSliderCallback);     
+        
+    end 
+    
+    
+end   
 %% definition of callbacks
-function ProfilesliderCallback(hObj,event)
+function profileSliderCallback(hObj,event)
       data=guidata(gcf);
       data.LateralOffset = round(get(hObj,'Value'));
       guidata(gcf,data);
@@ -610,7 +654,7 @@ end
 
     function dosepopupCallback(hObj,event)
       data=guidata(gcf);
-      data.SelectedDisplayOption = get(hObj,'Value');
+      data.SelectedDisplayOption = data.fName{get(hObj,'Value'),1};
       guidata(gcf,data);
       matRad_visCtDose;
  
@@ -669,5 +713,14 @@ end
         guidata(gcf,data);
         matRad_visCtDose;
     end
+
+ function beamSliderCallback(hObj, event)
+        data = guidata(gcf);
+        data.SelectedBeam = get(hObj, 'Value');
+        data.SelectedBeam = floor(data.SelectedBeam);
+        guidata(gcf,data);
+        matRad_visCtDose;
+    end
+
 
 end

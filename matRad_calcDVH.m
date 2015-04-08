@@ -99,9 +99,7 @@ legendHandle = legend('show');
 
 fontSizeValue = 14;
 
-xmax = ceil(max(doseInVoi(:))+0.2*max(doseInVoi(:)))+1;
-axis([0 xmax 0 110])
-plot([0 100],[0 0],'k','LineWidth',2)
+ylim([0 110])
 set(gca,'YTick',0:20:120)
 
 %x_r = round(linspace(0,xmax,8).*100)/100;
@@ -117,39 +115,4 @@ if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0
     xlabel('RBE x Dose [GyE]','FontSize',fontSizeValue)
 else
     xlabel('Dose [Gy]','FontSize',fontSizeValue)
-end
-
-%% calculate conformity index
-% find target volumes and sort them according to their prescribed dose
-targetVol = [];
-targetDose = [];
-for i = 1:size(cst,1)
-    if strcmp(cst{i,3},'TARGET')
-        targetVol  = [targetVol i];
-        targetDose = [targetDose cst{i,6}.parameter(2)];
-    end
-end
-[targetDose,ranking] = sort(targetDose);
-targetVol            = targetVol(ranking);
-
-for i = 1:numel(targetVol)
-    
-    targetVolIndices = zeros(numel(d.physicalDose),1);
-    targetVolIndices(cst{targetVol(i),4}) = 1;
-    for j = i+1:numel(targetVol)
-        targetVolIndices(cst{targetVol(j),4}) = 1;
-    end
-    
-    if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0
-        treatedVolIndices       = d.RBEWeightedDose(:) >= .95*targetDose(i);
-    else
-        treatedVolIndices       = d.physicalDose(:) >= .95*targetDose(i);
-    end
-    treatedTargetVolIndices = targetVolIndices & treatedVolIndices;
-    
-    % van't Riet conformity number according to http://www.sciencedirect.com/science/article/pii/S0360301605027197
-    CN = sum(treatedTargetVolIndices)^2/sum(targetVolIndices)/sum(treatedVolIndices);
-
-    fprintf('%3d %20s - van''t Riet''s CN = %5.2f\n',cst{targetVol(i),1},cst{targetVol(i),2},CN);
-
 end
