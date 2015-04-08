@@ -1,4 +1,4 @@
-function matRad_calcDVH(d,cst,lineStyleIndicator)
+function matRad_calcDVH(d,pln,cst,lineStyleIndicator)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dvh calculation
 % 
@@ -46,7 +46,7 @@ function matRad_calcDVH(d,cst,lineStyleIndicator)
 
 % create new figure and set default line style indicator if not explictly
 % specified
-if nargin < 3
+if nargin < 4
     figure
     hold on
     lineStyleIndicator = 1;
@@ -99,9 +99,7 @@ legendHandle = legend('show');
 
 fontSizeValue = 14;
 
-xmax = ceil(max(doseInVoi(:))+0.2*max(doseInVoi(:)))+1;
-axis([0 xmax 0 110])
-plot([0 100],[0 0],'k','LineWidth',2)
+ylim([0 110])
 set(gca,'YTick',0:20:120)
 
 %x_r = round(linspace(0,xmax,8).*100)/100;
@@ -126,7 +124,15 @@ targetDose = [];
 for i = 1:size(cst,1)
     if strcmp(cst{i,3},'TARGET')
         targetVol  = [targetVol i];
-        targetDose = [targetDose cst{i,6}.parameter(2)];
+        if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0
+            for j = 1:length(cst{i,6})
+                targetDose = [targetDose cst{i,6}(j).parameter(1,2)/pln.numOfFractions];
+            end
+        else
+            for j = 1:length(cst{i,6})
+                targetDose = [targetDose cst{i,6}(j).parameter(1,2)];
+            end
+        end
     end
 end
 [targetDose,ranking] = sort(targetDose);
