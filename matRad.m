@@ -32,23 +32,23 @@ clc
 
 % load patient data, i.e. ct, voi, cst
 
-load HEAD_AND_NECK
+%load HEAD_AND_NECK
 %load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-%load BOXPHANTOM.mat
+load BOXPHANTOM.mat
 
 % meta information for treatment plan
-pln.SAD             = 1000; %[mm]
+pln.SAD             = 10000; %[mm]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0:40:359]; % [°]
-pln.couchAngles     = zeros(1,numel(pln.gantryAngles)); % [°]
+pln.gantryAngles    = [0]; % [°]
+pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct.cube);
 pln.voxelDimensions = size(ct.cube);
-pln.radiationMode   = 'photons'; % either photons / protons / carbon
-pln.bioOptimization = false;   % false indicates physical optimization and true indicates biological optimization
+pln.radiationMode   = 'carbon'; % either photons / protons / carbon
+pln.bioOptimization = true;   % false indicates physical optimization and true indicates biological optimization
 pln.numOfFractions  = 30;
 
 % initial visualization
