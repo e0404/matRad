@@ -47,8 +47,8 @@ pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct.cube);
 pln.voxelDimensions = size(ct.cube);
-pln.radiationMode   = 'carbon'; % either photons / protons / carbon
-pln.bioOptimization = true;   % false indicates physical optimization and true indicates biological optimization
+pln.radiationMode   = 'photons'; % either photons / protons / carbon
+pln.bioOptimization = false;   % false indicates physical optimization and true indicates biological optimization
 pln.numOfFractions  = 30;
 
 % initial visualization
@@ -70,7 +70,7 @@ matRad_visCtDose(doseVis,cst,pln,ct);
 
 %% change objective function settings if desired
 matRad_modCst(cst)
-uiwait
+
 %% inverse planning for imrt
 optResult = matRad_inversePlanning(dij,cst,pln);
 matRad_visCtDose(optResult,cst,pln,ct);
@@ -83,5 +83,5 @@ if strcmp(pln.radiationMode,'photons')
 end
 
 %% dvh and conformity index
-matRad_calcDVH(optResult,pln,cst)
+matRad_calcDVH(optResult,cst)
 
