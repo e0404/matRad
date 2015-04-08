@@ -200,6 +200,3 @@ for i = 1:dij.numOfBeams; % loop over all beams
         
     end
 end
-
-% Make a sound when finished.
-beep;
