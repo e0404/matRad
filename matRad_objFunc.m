@@ -66,32 +66,16 @@ for  i = 1:size(cst,1)
     % Only take OAR or target VOI.
     if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
         
-        
-        % get current indices of VOI
-        idx = cst{i,4};
+        % get dose vector in current VOI
+        d_i = d(cst{i,4});
                 
         % loop over the number of constraints for the current VOI
         for j = 1:size(cst{i,6},2)
             
-            % get current priority
-            prior = cst{i,6}(j).priority;
-            
-            for k=1:size(cst,1)
-             for l=1:size(cst{k,6},2)
-                if cst{k,6}(l).priority<prior && ~(k==i&&l==j)
-                    % remove indices from VOI with higher priority from
-                    % current VOI
-                    idx=setdiff(idx,cst{k,4});
-                end
-             end
-            end
-            
-            % get dose vector in current VOI
-            d_i = d(idx);
             % get Penalty
             rho = cst{i,6}(j).parameter(1);
             
-            if isequal(cst{i,6}(j).type, 'square underdosing') && ~isempty(d_i)
+            if isequal(cst{i,6}(j).type, 'square underdosing')
   
                 % underdose : Dose minus prefered dose
                 underdose = d_i - cst{i,6}(j).parameter(2);
@@ -100,13 +84,13 @@ for  i = 1:size(cst,1)
                 underdose(underdose>0) = 0;
                 
                 % calculate objective function
-                f = f + (rho/size(idx,1))*(underdose'*underdose);
+                f = f + (rho/size(cst{i,4},1))*(underdose'*underdose);
                 
                 % calculate delta
-                delta_underdose(idx) = delta_underdose(idx) +...
-                    (rho/size(idx,1))*underdose;
+                delta_underdose(cst{i,4}) = delta_underdose(cst{i,4}) +...
+                    (rho/size(cst{i,4},1))*underdose;
                 
-            elseif isequal(cst{i,6}(j).type, 'square overdosing') && ~isempty(d_i)
+            elseif isequal(cst{i,6}(j).type, 'square overdosing')
                 
                 % overdose : Dose minus prefered dose
                 overdose = d_i - cst{i,6}(j).parameter(2);
@@ -115,34 +99,34 @@ for  i = 1:size(cst,1)
                 overdose(overdose<0) = 0;
                 
                 % calculate objective function
-                f = f + (rho/size(idx,1))*(overdose'*overdose);
+                f = f + (rho/size(cst{i,4},1))*(overdose'*overdose);
                 
                 %calculate delta
-                delta_overdose(idx) = delta_overdose(cst{i,4}) + ...
-                    (rho/size(idx,1))*overdose;
+                delta_overdose(cst{i,4}) = delta_overdose(cst{i,4}) + ...
+                    (rho/size(cst{i,4},1))*overdose;
                 
-            elseif isequal(cst{i,6}(j).type, 'square deviation') && ~isempty(d_i)
+            elseif isequal(cst{i,6}(j).type, 'square deviation')
                 
                 % deviation : Dose minus prefered dose
                 deviation = d_i - cst{i,6}(j).parameter(2);
                 
                 % claculate objective function
-                f = f + (rho/size(idx,1))*(deviation'*deviation);
+                f = f + (rho/size(cst{i,4},1))*(deviation'*deviation);
                 
                 % calculate delta
-                delta_deviation(idx) = delta_deviation(idx) +...
-                    (rho/size(idx,1))*deviation;
+                delta_deviation(cst{i,4}) = delta_deviation(cst{i,4}) +...
+                    (rho/size(cst{i,4},1))*deviation;
                 
-            elseif isequal(cst{i,6}(j).type, 'mean') && ~isempty(d_i)              
+            elseif isequal(cst{i,6}(j).type, 'mean')              
                 
                 % calculate objective function
                 f = f + (rho/size(cst{i,4},1))*sum(d_i);
                 
                 % calculate delta
-                delta_mean(idx) = delta_mean(idx) + ...
-                    (rho/size(idx,1))*ones(size(idx,1),1);
+                delta_mean(cst{i,4}) = delta_mean(cst{i,4}) + ...
+                    (rho/size(cst{i,4},1))*ones(size(cst{i,4},1),1);
                 
-            elseif isequal(cst{i,6}(j).type, 'EUD') && ~isempty(d_i)
+            elseif isequal(cst{i,6}(j).type, 'EUD') 
                 
                 % get exponent for EUD
                 exponent = cst{i,6}(j).exponent;
@@ -150,14 +134,14 @@ for  i = 1:size(cst,1)
                 % calculate objective function and delta
                 if sum(d_i.^exponent)>0
                     
-                    f = f + rho*nthroot((1/size(idx,1))*sum(d_i.^exponent),exponent);
+                    f = f + rho*nthroot((1/size(cst{i,4},1))*sum(d_i.^exponent),exponent);
                     
-                    delta_EUD(idx) = delta_EUD(idx) + ...
-                        rho*nthroot(1/size(idx,1),exponent) * sum(d_i.^exponent)^((1-exponent)/exponent) * (d_i.^(exponent-1));
+                    delta_EUD(cst{i,4}) = delta_EUD(cst{i,4}) + ...
+                        rho*nthroot(1/size(cst{i,4},1),exponent) * sum(d_i.^exponent)^((1-exponent)/exponent) * (d_i.^(exponent-1));
                     
                 end
                 
-            elseif ~isempty(d_i)
+            else
                 
                 error('undefined objective in cst struct');
                 

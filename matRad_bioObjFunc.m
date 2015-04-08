@@ -32,33 +32,17 @@ for  i = 1:size(cst,1)
     
     % Only take OAR or target VOI.
     if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
-
+        
+        % get effect vector in current VOI
+        e_i = e(cst{i,4});
+        
         % get tissue specific alpha photon and beta photon to calculate
         % prescriped effect
         a_x = cst{i,5}.alphaX;
         b_x = cst{i,5}.betaX;
         
-        % get current indices of VOI
-        idx = cst{i,4};
-        
         % loop over the number of constraints for the current VOI
         for j = 1:size(cst{i,6},2)
-            
-            % get current priority
-            prior = cst{i,6}(j).priority;
-            
-            for k=1:size(cst,1)
-             for l=1:size(cst{k,6},2)
-                if cst{k,6}(l).priority<prior && ~(k==i&&l==j)
-                    % remove indices from VOI with higher priority from
-                    % current VOI
-                    idx=setdiff(idx,cst{k,4});
-                end
-             end
-            end
-            
-            % get prioritised effect vector in current VOI
-            e_i = e(idx);
             
             % get Penalty
             rho = cst{i,6}(j).parameter(1);
@@ -66,7 +50,7 @@ for  i = 1:size(cst,1)
             % refernce effect
             e_ref = a_x*cst{i,6}(j).parameter(2)+b_x*cst{i,6}(j).parameter(2)^2;
             
-            if isequal(cst{i,6}(j).type, 'square underdosing')&& ~isempty(e_i)
+            if isequal(cst{i,6}(j).type, 'square underdosing')
   
                 % underdose : effect minus reference effect
                 underdose = e_i - e_ref;
@@ -78,9 +62,9 @@ for  i = 1:size(cst,1)
                 f = f + (rho/size(cst{i,4},1))*(underdose'*underdose);
                 
                 % calculate delta
-                delta(idx) = delta(idx) + (rho/size(idx,1))*underdose;
+                delta(cst{i,4}) = delta(cst{i,4}) + (rho/size(cst{i,4},1))*underdose;
                 
-            elseif isequal(cst{i,6}(j).type, 'square overdosing')&& ~isempty(e_i)
+            elseif isequal(cst{i,6}(j).type, 'square overdosing')
                 
                 % overdose : Dose minus prefered dose
                 overdose = e_i - e_ref;
@@ -89,23 +73,23 @@ for  i = 1:size(cst,1)
                 overdose(overdose<0) = 0;
                 
                 % calculate objective function
-                f = f + (rho/size(idx,1))*(overdose'*overdose);
+                f = f + (rho/size(cst{i,4},1))*(overdose'*overdose);
                 
                 %calculate delta
-                delta(idx) = delta(idx) + (rho/size(idx,1))*overdose;
+                delta(cst{i,4}) = delta(cst{i,4}) + (rho/size(cst{i,4},1))*overdose;
                 
-            elseif isequal(cst{i,6}(j).type, 'square deviation') && ~isempty(e_i)
+            elseif isequal(cst{i,6}(j).type, 'square deviation')
                 
                 % deviation : Dose minus prefered dose
                 deviation = e_i - e_ref;
                 
                 % claculate objective function
-                f = f + (rho/size(idx,1))*(deviation'*deviation);
+                f = f + (rho/size(cst{i,4},1))*(deviation'*deviation);
                 
                 % calculate delta
-                delta(idx) = delta(idx) + (rho/size(idx,1))*deviation;
+                delta(cst{i,4}) = delta(cst{i,4}) + (rho/size(cst{i,4},1))*deviation;
                 
-            elseif ~isempty(e_i)
+            else
                 
                 error('undefined objective in cst struct');
                 
