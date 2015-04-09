@@ -121,6 +121,3 @@ if pln.bioOptimization == true
     optResult.beta = reshape(optResult.beta,dij.dimensions);
          
 end
-
-% Make a sound when finished.
-beep;
