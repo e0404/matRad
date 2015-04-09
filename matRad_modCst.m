@@ -194,7 +194,6 @@ numOfAddedConstraints = 0;
     set(pushbuttonAdd,'TooltipString',sprintf('Click here to add another objective function of your choice')) ;
  
 uiwait
-%waitfor(data.structWindow);
 
 %% Definition Callback
 
@@ -345,8 +344,10 @@ uiwait
                     Str2=list;
                 end
 
-                    if strcmp(data.cst{i,2},Str2) && strcmp(get(data.VOIText(1,j),'Enable'),'on')
-                          NewCST{i,1}(CntObjF).type = ObjFuncArray{get(data.popupObjFunc(1,j),'Value'),1};
+                    if strcmp(data.cst{i,2},Str2) && strcmp(get(data.VOIText(1,j),'Enable'),'on') && ~strcmp(data.cst{i,3},'IGNORED')
+                           
+                           NewCST{i,3} = data.cst{i,2};
+                           NewCST{i,1}(CntObjF).type = ObjFuncArray{get(data.popupObjFunc(1,j),'Value'),1};
                            if strcmp(NewCST{i,1}(CntObjF).type,'Please select ...')
                                set(data.popupObjFunc(1,j),'BackgroundColor','r');
                                FlagValidParameters=false;
@@ -388,16 +389,20 @@ uiwait
 
                            end
 
-                           CntObjF = CntObjF+1;   
+                           CntObjF = CntObjF+1;
                     end   
                end           
             
         end
 
         if FlagValidParameters
-            for o = 1:size(data.cst,1)
-                data.cst(o,6) = NewCST(o,1);
-                data.cst{o,5}.Priority = NewCST{o,2}.Priority;
+            for o = 1:size(NewCST,1)
+                for p = 1:size(data.cst,1)
+                    if ~isempty(NewCST{o,1}) && strcmp(data.cst(p,2),NewCST(o,3))
+                        data.cst(o,6) = NewCST(o,1);
+                        data.cst{o,5}.Priority = NewCST{o,2}.Priority;
+                    end
+                end
             end
             guidata(gcf, data);
             assignin('base',data.inputname,data.cst);
@@ -586,7 +591,6 @@ uiwait
         switch selection, 
           case 'Yes',
                delete(data.structWindow); 
-               str='code goes here';
                
           case 'No'
               return
@@ -602,7 +606,6 @@ uiwait
         switch selection, 
           case 'Yes',
                delete(data.structWindow); 
-               str='code goes here';
                
           case 'No'
               return
@@ -610,6 +613,7 @@ uiwait
         end
     end
 
-%uiresume
+uiresume
+close
  
 end

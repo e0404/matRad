@@ -49,6 +49,15 @@ if nargin < 4
     visMode = 0;
 end
 
+%
+if ~strcmp(pln.radiationMode,'carbon') && pln.bioOptimization
+    fprintf('\n ********************************************************************************************************* \n');
+    fprintf('\n effect based optimization not possible using current setup - physical optimization is carried out instead \n');
+    fprintf('\n ********************************************************************************************************* \n');
+end
+
+
+
 % find all target voxels from cst cell array
 V = [];
 for i=1:size(cst,1)
