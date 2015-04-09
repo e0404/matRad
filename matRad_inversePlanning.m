@@ -46,7 +46,7 @@ function optResult = matRad_inversePlanning(dij,cst,pln)
 wInit = ones(dij.totalNumOfBixels,1);
 
 % define objective function
-if pln.bioOptimization == true
+if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
     % check if you are running a supported rad
     
     % check if only allowed objectives were defined
@@ -92,7 +92,7 @@ optResult = matRad_optimize(objFunc,wInit);
 % calc dose and reshape from 1D vector to 2D array
 optResult.physicalDose = reshape(dij.physicalDose*optResult.w,dij.dimensions);
 
-if pln.bioOptimization == true
+if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
     
     a_x = zeros(size(optResult.physicalDose));
     b_x = zeros(size(optResult.physicalDose));
