@@ -55,9 +55,10 @@ if nargin > 0
         data.optResult = rmfield(data.optResult,'w');
         
         if isfield(data.optResult,'RBE')
-            Index = min(find(strcmp(data.cst(:,3),'TARGET')));
+            Index = find(strcmp(data.cst(:,3),'TARGET'));
+            [~, I] = max((cellfun('length',data.cst(Index,4))));
             mTmp = zeros(data.pln.voxelDimensions);
-            mTmp(data.cst{Index,4})=1;
+            mTmp(data.cst{Index(I),4})=1;
             data.optResult.RBETarget = data.optResult.RBE.*mTmp;
             data.optResult.RBETruncated10Perc = data.optResult.RBE;
             data.optResult.RBETruncated1Perc = data.optResult.RBE;
@@ -80,6 +81,8 @@ if nargin > 0
                 data.fName{i,3} = '[Gy^{-1}]';
             elseif strcmp(data.fName{i,1},'beta')
                 data.fName{i,3} = '[Gy^{-2}]';
+            elseif strcmp(data.fName{i,1},'RBEWeightedDose')
+                data.fName{i,3} = '[Gy(RBE)]';
             else
                 data.fName{i,3} = '[a.u.]';
             end
@@ -145,7 +148,6 @@ if nargin > 0
     % Open figure
     myWindow = figure('Name','matRad CT/dose/VOI bowser','NumberTitle','off','units','normalized','outerposition',[0 0 1 1],'ToolBar','figure');
     myAxes   = axes('Position', [0.35 0.1 0.55 0.8],'YDir','reverse');
-    
     guidata(myWindow,data);
     
 else
@@ -201,12 +203,6 @@ if ~isempty(data.optResult) && data.TypeOfPlot ==1
         % Show dose
         axes(myAxes);
         doseImageHandle = image(dose_rgb);
-        cBarHandel = colorbar('location','EastOutside');
-        
-        Idx = find(strcmp(data.SelectedDisplayOption,data.fName(:,1)));
-        set(get(cBarHandel,'ylabel'),'String', [data.fName{Idx,1} ' in ' data.fName{Idx,3} ],'fontsize',16);
-        set(cBarHandel,'yAxisLocation','right');
-        set(cBarHandel,'FontSize',14);
         
         % Make dose transparent
         if ~isempty(data.ct.cube)
@@ -216,8 +212,8 @@ if ~isempty(data.optResult) && data.TypeOfPlot ==1
     end
 
     %% dose iso dose lines
-    if ~isempty(mVolume) && data.doseIsoCheckboxValue && data.TypeOfPlot ==1 && ~isvector(mVolume)
-              
+    if ~isempty(mVolume) && data.TypeOfPlot ==1 && ~isvector(mVolume)
+           
         if data.plane == 1  % Coronal plane
             [~,myContour] = contour(myAxes,squeeze(mVolume(data.slice,:,:)));
         elseif data.plane == 2 % Sagittal plane
@@ -230,9 +226,19 @@ if ~isempty(data.optResult) && data.TypeOfPlot ==1
         hAnnotation = get(myContour,'Annotation');
         hLegendEntry = get(hAnnotation','LegendInformation');
         set(hLegendEntry,'IconDisplayStyle','off')
-        set(myContour,'LabelSpacing',100,'ShowText','on')
+        set(myContour,'LabelSpacing',100,'ShowText','off')
+        if data.doseIsoCheckboxValue == 0
+            set(myContour,'Visible','off')
+        end
     end
 
+    cBarHandel = colorbar('peer',myAxes);
+    Idx = find(strcmp(data.SelectedDisplayOption,data.fName(:,1)));
+    set(get(cBarHandel,'ylabel'),'String', [data.fName{Idx,1} ' in ' data.fName{Idx,3} ],'fontsize',16);
+    set(cBarHandel,'yAxisLocation','right');
+    set(cBarHandel,'FontSize',14);
+    
+    
 end
     %% VOIs
 if ~isempty(data.cst) && data.contourCheckboxValue && data.TypeOfPlot ==1
@@ -315,9 +321,8 @@ if data.TypeOfPlot ==2 &&~isempty(data.optResult)
      
     % clear view and initialize some values
     clf;
-    myAxes = axes('Position', [0.35 0.1 0.55 0.8]);
+    axes('Position', [0.35 0.1 0.55 0.8]);
     set(gca,'YDir','normal');
-
     ylabel('{\color{black}dose in Gy}')
     
     cColor={'black','green','magenta','cyan','yellow','red','blue'};
@@ -353,8 +358,8 @@ if data.TypeOfPlot ==2 &&~isempty(data.optResult)
     % assess x - limits
     xLim  = find(mY_avg);
     if ~isempty(xLim)
-        xmin= xLim(1)*data.ct.resolution(1)-20;
-        xmax= xLim(end)*data.ct.resolution(1)+20;
+        xmin= xLim(1)*data.ct.resolution(1)+1;
+        xmax= xLim(end)*data.ct.resolution(1)-1;
     else
         vLim = axis;
         xmin = vLim(1);
@@ -365,8 +370,10 @@ if data.TypeOfPlot ==2 &&~isempty(data.optResult)
     Cnt=2;
     
     if data.pln.bioOptimization == 1 && strcmp(data.pln.radiationMode,'carbon')
+        %disbale specific plots
         %data.fName{6,2}=0;
         %data.fName{5,2}=0;
+        %data.fName{2,2}=0;
         
         % generate two lines for ylabel
         StringYLabel1 = '\fontsize{18}{\color{red}RBE x dose [Gy(RBE)] \color{black}physicalDose [Gy] ';
@@ -429,10 +436,12 @@ if data.TypeOfPlot ==2 &&~isempty(data.optResult)
     
     % asses target coordinates 
     tmpPrior = intmax;
+    tmpSize = 0;
     for i=1:size(data.cst,1)
-        if strcmp(data.cst{i,3},'TARGET')==1 && tmpPrior>data.cst{i,5}.Priority
+        if strcmp(data.cst{i,3},'TARGET') && tmpPrior>=data.cst{i,5}.Priority && tmpSize<numel(data.cst{i,4})
            mTarget = unique(data.cst{i,4});
            tmpPrior=data.cst{i,5}.Priority;
+           tmpSize=numel(data.cst{i,4});
            VOI = data.cst{i,2};
         end
     end
@@ -471,10 +480,8 @@ if data.TypeOfPlot ==2 &&~isempty(data.optResult)
         xlim(ax(1),[xmin xmax]);
         xlim(ax(2),[xmin xmax]);
     end
-    xlabel('depth [mm]','FontSize',16);
+    xlabel('depth [cm]','FontSize',16);
    
-    
-
 end
     
 %% definition of ui
