@@ -55,19 +55,36 @@ if nargin > 0
         data.optResult = rmfield(data.optResult,'w');
         
         if isfield(data.optResult,'RBE')
-            Index = min(find(strcmp(data.cst(:,3),'TARGET')));
+            Index = find(strcmp(data.cst(:,3),'TARGET'));
+            [~, I] = max((cellfun('length',data.cst(Index,4))));
             mTmp = zeros(data.pln.voxelDimensions);
-            mTmp(data.cst{Index,4})=1;
+            mTmp(data.cst{Index(I),4})=1;
             data.optResult.RBETarget = data.optResult.RBE.*mTmp;
+            data.optResult.RBETruncated10Perc = data.optResult.RBE;
+            data.optResult.RBETruncated1Perc = data.optResult.RBE;
+            data.optResult.RBETruncated10Perc(data.optResult.physicalDose<0.1*max(data.optResult.physicalDose(:))) = 0;
+            data.optResult.RBETruncated1Perc(data.optResult.physicalDose<0.01*max(data.optResult.physicalDose(:))) = 0;
         end
         
         data.fName =fieldnames(data.optResult);
         for i=1:size(data.fName,1)
             %indicates if it should be plotted later on
-            if strcmp(data.fName{i,1},'RBETarget')
+            if strcmp(data.fName{i,1},'RBETarget') || strcmp(data.fName{i,1},'RBETruncated1Perc') || strcmp(data.fName{i,1},'RBETruncated10Perc')
                 data.fName{i,2}=0;
             else
                 data.fName{i,2}=1;
+            end
+            % determine units
+            if strcmp(data.fName{i,1},'physicalDose')
+                data.fName{i,3} = '[Gy]';
+            elseif strcmp(data.fName{i,1},'alpha')
+                data.fName{i,3} = '[Gy^{-1}]';
+            elseif strcmp(data.fName{i,1},'beta')
+                data.fName{i,3} = '[Gy^{-2}]';
+            elseif strcmp(data.fName{i,1},'RBEWeightedDose')
+                data.fName{i,3} = '[Gy(RBE)]';
+            else
+                data.fName{i,3} = '[a.u.]';
             end
             % Reshape dose to cube in voxel dimensions
             CurrentCube = getfield(data.optResult,data.fName{i,1});
@@ -131,7 +148,6 @@ if nargin > 0
     % Open figure
     myWindow = figure('Name','matRad CT/dose/VOI bowser','NumberTitle','off','units','normalized','outerposition',[0 0 1 1],'ToolBar','figure');
     myAxes   = axes('Position', [0.35 0.1 0.55 0.8],'YDir','reverse');
-    
     guidata(myWindow,data);
     
 else
@@ -168,6 +184,7 @@ if ~isempty(data.ct.cube) && data.ctCheckboxValue && data.TypeOfPlot ==1
 end
 
 if ~isempty(data.optResult) && data.TypeOfPlot ==1
+    
     mVolume = getfield(data.optResult,data.SelectedDisplayOption);
    
 %     %% dose colorwash
@@ -186,38 +203,42 @@ if ~isempty(data.optResult) && data.TypeOfPlot ==1
         % Show dose
         axes(myAxes);
         doseImageHandle = image(dose_rgb);
-
+        
         % Make dose transparent
         if ~isempty(data.ct.cube)
-            set(doseImageHandle,'AlphaData',.45);
+            set(doseImageHandle,'AlphaData',.6);
         end
 
     end
 
     %% dose iso dose lines
-    if ~isempty(mVolume) && data.doseIsoCheckboxValue && data.TypeOfPlot ==1 && ~isvector(mVolume)
-         
-        delta = (max(mVolume(:))-min(mVolume(:)))*0.1;
-        vSpacingIsoDose = linspace(min(mVolume(:))+delta,max(mVolume(:))+delta,10);
-        vSpacingIsoDose= round(vSpacingIsoDose.*100)/100;
-       % vSpacingIsoDose = 5:5:100;
-        
+    if ~isempty(mVolume) && data.TypeOfPlot ==1 && ~isvector(mVolume)
+           
         if data.plane == 1  % Coronal plane
-            [~,myContour] = contour(myAxes,squeeze(mVolume(data.slice,:,:)),vSpacingIsoDose);
+            [~,myContour] = contour(myAxes,squeeze(mVolume(data.slice,:,:)));
         elseif data.plane == 2 % Sagittal plane
-            [~,myContour] = contour(myAxes,squeeze(mVolume(:,data.slice,:)),vSpacingIsoDose);
+            [~,myContour] = contour(myAxes,squeeze(mVolume(:,data.slice,:)));
         elseif data.plane == 3 % Axial plane
-             [~,myContour] = contour(myAxes,squeeze(mVolume(:,:,data.slice)),vSpacingIsoDose);
+             [~,myContour] = contour(myAxes,squeeze(mVolume(:,:,data.slice)));
         end
 
         % turn off legend for this data set
         hAnnotation = get(myContour,'Annotation');
         hLegendEntry = get(hAnnotation','LegendInformation');
         set(hLegendEntry,'IconDisplayStyle','off')
-
-        set(myContour,'LabelSpacing',80,'ShowText','on')
+        set(myContour,'LabelSpacing',100,'ShowText','off')
+        if data.doseIsoCheckboxValue == 0
+            set(myContour,'Visible','off')
+        end
     end
 
+    cBarHandel = colorbar('peer',myAxes);
+    Idx = find(strcmp(data.SelectedDisplayOption,data.fName(:,1)));
+    set(get(cBarHandel,'ylabel'),'String', [data.fName{Idx,1} ' in ' data.fName{Idx,3} ],'fontsize',16);
+    set(cBarHandel,'yAxisLocation','right');
+    set(cBarHandel,'FontSize',14);
+    
+    
 end
     %% VOIs
 if ~isempty(data.cst) && data.contourCheckboxValue && data.TypeOfPlot ==1
@@ -240,8 +261,8 @@ if ~isempty(data.cst) && data.contourCheckboxValue && data.TypeOfPlot ==1
         end
     end
 
-    myLegend = legend('show');
-    set(myLegend,'Position',[.85 .5 .1 .2]);
+    myLegend = legend('show','location','NorthEast');
+    %set(myLegend,'Position',[.85 .5 .1 .2]);
     set(myLegend,'FontSize',20);
     
 end
@@ -253,13 +274,13 @@ if   data.plane == 3% Axial plane
         set(gca,'YTick',0:50/data.ct.resolution(2):1000)
         set(gca,'XTickLabel',0:50:1000*data.ct.resolution(1))
         set(gca,'YTickLabel',0:50:1000*data.ct.resolution(2))
-        xlabel('x [mm]')
-        ylabel('y [mm]')
-        title('Axial plane')
+        xlabel('x [mm]','FontSize',16)
+        ylabel('y [mm]','FontSize',16)
+        title('Axial plane','FontSize',16)
     else
-        xlabel('x [voxels]')
-        ylabel('y [voxels]')
-        title('Axial plane')
+        xlabel('x [voxels]','FontSize',16)
+        ylabel('y [voxels]','FontSize',16)
+        title('Axial plane','FontSize',16)
     end
 elseif data.plane == 2 % Sagittal plane
     if ~isempty(data.pln)
@@ -267,13 +288,13 @@ elseif data.plane == 2 % Sagittal plane
         set(gca,'YTick',0:50/data.ct.resolution(2):1000)
         set(gca,'XTickLabel',0:50:1000*data.ct.resolution(3))
         set(gca,'YTickLabel',0:50:1000*data.ct.resolution(2))
-        xlabel('z [mm]')
-        ylabel('y [mm]')
-        title('Sagital plane');
+        xlabel('z [mm]','FontSize',16)
+        ylabel('y [mm]','FontSize',16)
+        title('Sagital plane','FontSize',15);
     else
-        xlabel('z [voxels]')
-        ylabel('y [voxels]')
-        title('Sagital plane');
+        xlabel('z [voxels]','FontSize',16)
+        ylabel('y [voxels]','FontSize',16)
+        title('Sagital plane','FontSize',15);
     end
 elseif data.plane == 1 % Coronal plane
     if ~isempty(data.pln)
@@ -281,33 +302,32 @@ elseif data.plane == 1 % Coronal plane
         set(gca,'YTick',0:50/data.ct.resolution(1):1000)
         set(gca,'XTickLabel',0:50:1000*data.ct.resolution(3))
         set(gca,'YTickLabel',0:50:1000*data.ct.resolution(1))
-        xlabel('z [mm]')
-        ylabel('x [mm]')
-        title('Coronal plane')
+        xlabel('z [mm]','FontSize',16)
+        ylabel('x [mm]','FontSize',16)
+        title('Coronal plane','FontSize',16)
     else
-        xlabel('z [voxels]')
-        ylabel('x [voxels]')
-        title('Coronal plane')
+        xlabel('z [voxels]','FontSize',16)
+        ylabel('x [voxels]','FontSize',16)
+        title('Coronal plane','FontSize',16)
     end
 end
 
 axis equal;
 axis(data.axis);
-    
+set(gca,'FontSize',16);    
 
 
-if data.TypeOfPlot ==2
-
+if data.TypeOfPlot ==2 &&~isempty(data.optResult)
+     
     % clear view and initialize some values
     clf;
-    myAxes = axes('Position', [0.35 0.1 0.55 0.8]);
+    axes('Position', [0.35 0.1 0.55 0.8]);
     set(gca,'YDir','normal');
-    ylabel('dose')
-    cColor={'k','g','m','y','c','r','b'};
-    ymax=0;
+    ylabel('{\color{black}dose in Gy}')
+    
+    cColor={'black','green','magenta','cyan','yellow','red','blue'};
     %a certain width to the profile plot can be added
-    delta =0; % make it bixel distance dependend
-    Cnt=1;
+    delta =0;
     
     mPhysDose=getfield(data.optResult,'physicalDose');
     mRotActualSlice =imrotate(mPhysDose(:,:,data.slice),data.pln.gantryAngles(data.SelectedBeam),'crop');
@@ -338,8 +358,8 @@ if data.TypeOfPlot ==2
     % assess x - limits
     xLim  = find(mY_avg);
     if ~isempty(xLim)
-        xmin= xLim(1)*data.ct.resolution(1)-20;
-        xmax= xLim(end)*data.ct.resolution(1)+20;
+        xmin= xLim(1)*data.ct.resolution(1)+1;
+        xmax= xLim(end)*data.ct.resolution(1)-1;
     else
         vLim = axis;
         xmin = vLim(1);
@@ -349,14 +369,16 @@ if data.TypeOfPlot ==2
     % plot counter
     Cnt=2;
     
-    if data.pln.bioOptimization == 1
-        
-        %will disable beta-plot
-        %data.fName{7,2}=0;
-        %will disable alpha-plot
+    if data.pln.bioOptimization == 1 && strcmp(data.pln.radiationMode,'carbon')
+        %disbale specific plots
         %data.fName{6,2}=0;
+        %data.fName{5,2}=0;
+        %data.fName{2,2}=0;
         
-        for i=1:1:length(data.fName)
+        % generate two lines for ylabel
+        StringYLabel1 = '\fontsize{18}{\color{red}RBE x dose [Gy(RBE)] \color{black}physicalDose [Gy] ';
+        StringYLabel2 = '';
+        for i=1:1:size(data.fName,1)
             mCurrentCube = getfield(data.optResult,data.fName{i,1});
             if ~isvector(mCurrentCube) && ~strcmp(data.fName{i,1},'RBEWeightedDose') ...
                     && ~strcmp(data.fName{i,1},'RBE') && ~strcmp(data.fName{i,1},'physicalDose')...
@@ -367,10 +389,20 @@ if data.TypeOfPlot ==2
                 mY=mean(mY,2);
                 PlotHandles{Cnt,1} = plot(vX,mY,'color',cColor{1,Cnt},'LineWidth',3);hold on; 
                 PlotHandles{Cnt,2} =data.fName{i,1};
+                if strcmp(data.fName{i,1},'effect')
+                    unit = 'a.u.';
+                elseif strcmp(data.fName{i,1},'alpha')
+                    unit = 'Gy^{-1}';
+                elseif strcmp(data.fName{i,1},'beta')
+                    unit = 'Gy^{-2}';
+                end
+              
+                StringYLabel2 = [StringYLabel2  ' \color{'  cColor{1,Cnt} '}' data.fName{i,1} ' [' unit ']'];
+                
                 Cnt = Cnt+1;
             end           
         end
-        
+        StringYLabel2 = [StringYLabel2 '}'];
         % plot always RBEWeightedDose against RBE
         mRBEWeightedDose=getfield(data.optResult,'RBEWeightedDose');
         mRotActualSlice =imrotate(mRBEWeightedDose(:,:,data.slice),data.pln.gantryAngles(data.SelectedBeam),'crop');
@@ -390,8 +422,8 @@ if data.TypeOfPlot ==2
         PlotHandles{Cnt+1,2}='RBE';
          
         % set plotyy properties
-        set(get(ax(2),'Ylabel'),'String','RBE','FontSize',18);
-        set(get(ax(1),'Ylabel'),'String','RBE x dose','FontSize',18);
+        set(get(ax(2),'Ylabel'),'String','RBE [a.u.]','FontSize',18);       
+        ylabel({StringYLabel1;StringYLabel2})
         set(PlotHandles{Cnt,1},'Linewidth',4,'color','r');
         set(PlotHandles{Cnt+1,1},'Linewidth',3,'color','b');
         set(ax(1),'ycolor','r')
@@ -402,30 +434,24 @@ if data.TypeOfPlot ==2
     end
        
     
-    % asses the prescripted dose and target coordinates 
-    % todo: ptv, ctv, gtv are all labeld as target
-    sPrescrpDose=0;
+    % asses target coordinates 
+    tmpPrior = intmax;
+    tmpSize = 0;
     for i=1:size(data.cst,1)
-        if strcmp(data.cst{i,3},'TARGET')==1
+        if strcmp(data.cst{i,3},'TARGET') && tmpPrior>=data.cst{i,5}.Priority && tmpSize<numel(data.cst{i,4})
            mTarget = unique(data.cst{i,4});
-           for j = 1: 1:size(data.cst{i,6},2)
-            sPrescrpDose(j) = data.cst{i,6}(j).parameter(2);
-           end
-           sPrescrpDose = mean(sPrescrpDose);
+           tmpPrior=data.cst{i,5}.Priority;
+           tmpSize=numel(data.cst{i,4});
+           VOI = data.cst{i,2};
         end
     end
     
-     % plot prescription
-    if sum(strcmp(fieldnames(data.optResult),'RBEWeightedDose')) > 0
-            sPrescrpDose = sPrescrpDose./data.pln.numOfFractions;
-    end
-    PlotHandles{Cnt,1}=plot([0 size(data.ct.cube,1)*data.ct.resolution(1)],[sPrescrpDose sPrescrpDose],'--','Linewidth',3,'color','m');
-    PlotHandles{Cnt,2}='prescription';
+
     str = sprintf('profile plot of zentral axis of %d beam (%d°) at %d / %d in slice %d',...
         data.SelectedBeam ,data.pln.gantryAngles(data.SelectedBeam),data.LateralOffset*data.ct.resolution(2),...
         size(data.ct.cube,2)*data.ct.resolution(2), data.slice);
-    title(str,'FontSize',14),grid on
-    Cnt = Cnt+1;
+    title(str,'FontSize',16),grid on
+    
     
     % plot target boundaries
     mTargetStack = zeros(size(data.ct.cube));
@@ -433,11 +459,11 @@ if data.TypeOfPlot ==2
     mRotTargetSlice =imrotate(mTargetStack(:,:,data.slice),data.pln.gantryAngles(data.SelectedBeam),'crop');
     vRay = find(mRotTargetSlice(:,idxCentAxis))*data.ct.resolution(2);
     
-    PlotHandles{Cnt,2} ='target boundary';
+    PlotHandles{Cnt,2} =[VOI ' boundary'];
     vLim = axis;
     if ~isempty(vRay)
-        PlotHandles{Cnt,1}=plot([vRay(1) vRay(1)],[0 vLim(4)],'--','Linewidth',2,'color','k');hold on
-        plot([vRay(end) vRay(end)], [0 vLim(4)],'--','Linewidth',2,'color','k');hold on
+        PlotHandles{Cnt,1}=plot([vRay(1) vRay(1)],[0 vLim(4)],'--','Linewidth',3,'color','k');hold on
+        plot([vRay(end) vRay(end)], [0 vLim(4)],'--','Linewidth',3,'color','k');hold on
         xmax = vRay(end)+30;
     else
         PlotHandles{Cnt,1} =0;
@@ -454,10 +480,8 @@ if data.TypeOfPlot ==2
         xlim(ax(1),[xmin xmax]);
         xlim(ax(2),[xmin xmax]);
     end
-    xlabel('depth [mm]','FontSize',16);
+    xlabel('depth [cm]','FontSize',16);
    
-    
-
 end
     
 %% definition of ui
@@ -561,6 +585,12 @@ else
     idx = find(strcmp(data.fName(:,1),data.SelectedDisplayOption));
 end
 
+if data.TypeOfPlot == 2
+    isEnabled = 'off';
+else
+    isEnabled = 'on';
+end
+
 dosePopup = uicontrol('Parent', gcf,...
         'Style', 'popupmenu',...
         'String', strTmp ,...
@@ -568,7 +598,8 @@ dosePopup = uicontrol('Parent', gcf,...
         'Value',idx,...
         'Units', 'normalized',...
         'Position', [0.05 0.4 0.109 0.03],...
-        'Callback', @dosepopupCallback);
+        'Callback', @dosepopupCallback,...
+        'Enable',isEnabled);
 
 PopUpTypeOfPlotText = uicontrol('Parent', gcf,...
         'Style', 'text',...
@@ -654,7 +685,9 @@ end
 
     function dosepopupCallback(hObj,event)
       data=guidata(gcf);
-      data.SelectedDisplayOption = data.fName{get(hObj,'Value'),1};
+      if isfield(data,'fName')
+        data.SelectedDisplayOption = data.fName{get(hObj,'Value'),1};
+      end
       guidata(gcf,data);
       matRad_visCtDose;
  
