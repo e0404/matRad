@@ -106,10 +106,16 @@ numOfAddedConstraints = 0;
         if ~isequal(data.cst{i,3},'IGNORED')
             
             % loop over the number of objectives for the current VOI
-            for k = 1:size(data.cst{i,6},2)
+            k=1;
+            while 1
+                
+                strEnable='on';
+                if isempty(data.cst{i,6})
+                    strEnable='off';
+                end
                 
                 data.VOIText(objectiveCounter) = uicontrol('Style', 'text', 'String', data.cst{i,2},'FontSize', 10,...
-                    'units', 'normalized','Position', [0.01+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02]);
+                    'units', 'normalized','Position', [0.01+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02],'Enable',strEnable);
 
                 if isequal(data.cst{i,3}, 'TARGET')
                     BodyType = 1;
@@ -119,9 +125,15 @@ numOfAddedConstraints = 0;
 
                 data.popupVOIType(objectiveCounter) = uicontrol('Style', 'popup', 'String', {'TARGET', 'OAR'},...
                     'FontSize', 10,'units', 'normalized','Position', [0.1+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02],...
-                    'Callback', @popupBodyTypeCallback, 'Value', BodyType);
+                    'Callback', @popupBodyTypeCallback, 'Value', BodyType,'Enable',strEnable);
                 
-                if isequal(data.cst{i,6}(k).type, 'square underdosing')
+                if isempty(data.cst{i,6})
+                    ObjFunc = 1;
+                    data.cst{i,6}(k).parameter(1)=nan;
+                    data.cst{i,6}(k).parameter(2)=nan;
+                    data.cst{i,6}(k).exponent=nan;
+                    data.cst{i,6}(k).type ='';
+                elseif isequal(data.cst{i,6}(k).type, 'square underdosing')
                     ObjFunc = 2;
                 elseif isequal(data.cst{i,6}(k).type, 'square overdosing')
                     ObjFunc = 3;
@@ -136,21 +148,21 @@ numOfAddedConstraints = 0;
                 data.popupObjFunc(1,objectiveCounter) = uicontrol('Style', 'popup',...
                     'String',{'Please select ...','square underdosing','square overdosing','square deviation', 'mean', 'EUD'},...
                     'FontSize', 10, 'units', 'normalized','Position', [0.3+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02],'Value', ObjFunc,...
-                    'Callback', @popupObjFuncCallback, 'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter));
+                    'Callback', @popupObjFuncCallback, 'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter),'Enable',strEnable);
                 
                 data.editPriority(1,objectiveCounter) = uicontrol('Style', 'edit', 'String', data.cst{i,5}.Priority,...
                      'FontSize', 10, 'units', 'normalized','Position', [0.2+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02],...
-                     'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter), 'Callback', @editPriorityCallback);    
+                     'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter), 'Callback', @editPriorityCallback,'Enable',strEnable);    
                 
                 data.editPenalty(1,objectiveCounter) = uicontrol('Style', 'edit', 'String', data.cst{i,6}(k).parameter(1),...
                      'FontSize', 10, 'units', 'normalized','Position', [0.4+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02],...
-                     'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter), 'Callback', @editPenaltyCallback);    
+                     'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter), 'Callback', @editPenaltyCallback,'Enable',strEnable);    
                 
                 if (~isequal(data.cst{i,6}(k).type, 'mean') && ~isequal(data.cst{i,6}(k).type, 'EUD')) 
                     
                     data.editDose(1,objectiveCounter) = uicontrol('Style', 'edit', 'String', data.cst{i,6}(k).parameter(2),...
                         'FontSize', 10, 'units', 'normalized','Position', [0.5+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02],...
-                        'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter),'Callback', @editDoseCallback);
+                        'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter),'Callback', @editDoseCallback,'Enable',strEnable);
                     
                 end
                  
@@ -158,18 +170,30 @@ numOfAddedConstraints = 0;
                     
                     data.editExponent(1,objectiveCounter) = uicontrol('Style', 'edit', 'String', data.cst{i,6}(k).exponent,...
                         'FontSize', 10, 'units', 'normalized','Position', [0.6+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02],...
-                        'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter),'Callback', @editExponentCallback);
+                        'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter),'Callback', @editExponentCallback,'Enable',strEnable);
                     
                 end
                 
-                data.btnEnable(1,objectiveCounter) = uicontrol('Style', 'pushbutton', 'String', 'Disable',...
+                btnEnableString = 'Disable';
+                if strcmp(strEnable,'off')
+                    strEnable='on';
+                    btnEnableString = 'Enable';
+                end
+                data.btnEnable(1,objectiveCounter) = uicontrol('Style', 'pushbutton', 'String', btnEnableString,...
                     'FontSize', 10, 'units', 'normalized', 'Position', [0.7+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02],...
-                    'Callback', @pushbuttonEnableCallback, 'Tag', sprintf('%d,%d,%d', i,k,objectiveCounter));
+                    'Callback', @pushbuttonEnableCallback, 'Tag', sprintf('%d,%d,%d', i,k,objectiveCounter),'Enable',strEnable);
                 
                 objectiveCounter = objectiveCounter+1;
+              
+                  if k>=size(data.cst{i,6},2)
+                    break
+                  else
+                      k=k+1;
+                  end
                 
             end
         end
+        
 
     end
 
@@ -343,10 +367,11 @@ uiwait
                 else
                     Str2=list;
                 end
-
+                NewCST{i,3} = data.cst{i,2};
+                
                     if strcmp(data.cst{i,2},Str2) && strcmp(get(data.VOIText(1,j),'Enable'),'on') && ~strcmp(data.cst{i,3},'IGNORED')
                            
-                           NewCST{i,3} = data.cst{i,2};
+                           
                            NewCST{i,1}(CntObjF).type = ObjFuncArray{get(data.popupObjFunc(1,j),'Value'),1};
                            if strcmp(NewCST{i,1}(CntObjF).type,'Please select ...')
                                set(data.popupObjFunc(1,j),'BackgroundColor','r');
@@ -395,12 +420,16 @@ uiwait
             
         end
 
-        if FlagValidParameters
+       if FlagValidParameters
             for o = 1:size(NewCST,1)
                 for p = 1:size(data.cst,1)
-                    if ~isempty(NewCST{o,1}) && strcmp(data.cst(p,2),NewCST(o,3))
+                    if  strcmp(data.cst(p,2),NewCST(o,3))
                         data.cst(o,6) = NewCST(o,1);
-                        data.cst{o,5}.Priority = NewCST{o,2}.Priority;
+                        if isfield(NewCST{o,2},'Priority')
+                            data.cst{o,5}.Priority = NewCST{o,2}.Priority;
+                        else
+                            data.cst{o,5}.Priority=nan;
+                        end
                     end
                 end
             end
@@ -549,13 +578,15 @@ uiwait
         set(data.editPenalty(tag(3)),'Enable',ToggleString);
         set(data.VOIText(tag(3)),'Enable',ToggleString);
         set(data.popupVOIType(tag(3)),'Enable',ToggleString);
+        set(data.editPriority(tag(3)),'Enable',ToggleString);
+        
         switch Identifier
             case 6
                 set(data.editExponent(tag(3)),'Enable',ToggleString);
             case 5
                 set(data.editExponent(tag(3)),'Enable',ToggleString);
                 set(data.editDose(tag(3)),'Enable',ToggleString);
-            case {2,3,4}
+            case {1,2,3,4}
                  set(data.editDose(tag(3)),'Enable',ToggleString);
         end
 
