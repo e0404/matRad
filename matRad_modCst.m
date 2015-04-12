@@ -105,11 +105,17 @@ numOfAddedConstraints = 0;
         % display only not ignored VOI
         if ~isequal(data.cst{i,3},'IGNORED')
             
-            % loop over the number of objectives for the current VOI
-            for k = 1:size(data.cst{i,6},2)
+            % loop over the number of objectives for the current VOI 
+            k=1;
+            while 1
+                
+                strEnable='on';
+                if isempty(data.cst{i,6})
+                    strEnable='off';
+                end
                 
                 data.VOIText(objectiveCounter) = uicontrol('Style', 'text', 'String', data.cst{i,2},'FontSize', 10,...
-                    'units', 'normalized','Position', [0.01+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02]);
+                    'units', 'normalized','Position', [0.01+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02],'Enable',strEnable);
 
                 if isequal(data.cst{i,3}, 'TARGET')
                     BodyType = 1;
@@ -119,9 +125,15 @@ numOfAddedConstraints = 0;
 
                 data.popupVOIType(objectiveCounter) = uicontrol('Style', 'popup', 'String', {'TARGET', 'OAR'},...
                     'FontSize', 10,'units', 'normalized','Position', [0.1+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02],...
-                    'Callback', @popupBodyTypeCallback, 'Value', BodyType);
+                    'Callback', @popUpVOITypeCallback, 'Value', BodyType,'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter),'Enable',strEnable);
                 
-                if isequal(data.cst{i,6}(k).type, 'square underdosing')
+                if isempty(data.cst{i,6})
+                    ObjFunc = 1;
+                    data.cst{i,6}(k).parameter(1)=nan;
+                    data.cst{i,6}(k).parameter(2)=nan;
+                    data.cst{i,6}(k).exponent=nan;
+                    data.cst{i,6}(k).type ='';
+                elseif isequal(data.cst{i,6}(k).type, 'square underdosing')
                     ObjFunc = 2;
                 elseif isequal(data.cst{i,6}(k).type, 'square overdosing')
                     ObjFunc = 3;
@@ -136,21 +148,21 @@ numOfAddedConstraints = 0;
                 data.popupObjFunc(1,objectiveCounter) = uicontrol('Style', 'popup',...
                     'String',{'Please select ...','square underdosing','square overdosing','square deviation', 'mean', 'EUD'},...
                     'FontSize', 10, 'units', 'normalized','Position', [0.3+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02],'Value', ObjFunc,...
-                    'Callback', @popupObjFuncCallback, 'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter));
+                    'Callback', @popupObjFuncCallback, 'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter),'Enable',strEnable);
                 
                 data.editPriority(1,objectiveCounter) = uicontrol('Style', 'edit', 'String', data.cst{i,5}.Priority,...
                      'FontSize', 10, 'units', 'normalized','Position', [0.2+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02],...
-                     'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter), 'Callback', @editPriorityCallback);    
+                     'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter), 'Callback', @editPriorityCallback,'Enable',strEnable);    
                 
                 data.editPenalty(1,objectiveCounter) = uicontrol('Style', 'edit', 'String', data.cst{i,6}(k).parameter(1),...
                      'FontSize', 10, 'units', 'normalized','Position', [0.4+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02],...
-                     'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter), 'Callback', @editPenaltyCallback);    
+                     'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter), 'Callback', @editPenaltyCallback,'Enable',strEnable);    
                 
                 if (~isequal(data.cst{i,6}(k).type, 'mean') && ~isequal(data.cst{i,6}(k).type, 'EUD')) 
                     
                     data.editDose(1,objectiveCounter) = uicontrol('Style', 'edit', 'String', data.cst{i,6}(k).parameter(2),...
                         'FontSize', 10, 'units', 'normalized','Position', [0.5+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02],...
-                        'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter),'Callback', @editDoseCallback);
+                        'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter),'Callback', @editDoseCallback,'Enable',strEnable);
                     
                 end
                  
@@ -158,18 +170,31 @@ numOfAddedConstraints = 0;
                     
                     data.editExponent(1,objectiveCounter) = uicontrol('Style', 'edit', 'String', data.cst{i,6}(k).exponent,...
                         'FontSize', 10, 'units', 'normalized','Position', [0.6+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02],...
-                        'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter),'Callback', @editExponentCallback);
+                        'Tag', sprintf('%d,%d,%d',i,k,objectiveCounter),'Callback', @editExponentCallback,'Enable',strEnable);
                     
                 end
                 
-                data.btnEnable(1,objectiveCounter) = uicontrol('Style', 'pushbutton', 'String', 'Disable',...
+                btnEnableString = 'Disable';
+                if strcmp(strEnable,'off')
+                    strEnable='on';
+                    btnEnableString = 'Enable';
+                end
+                data.btnEnable(1,objectiveCounter) = uicontrol('Style', 'pushbutton', 'String', btnEnableString,...
                     'FontSize', 10, 'units', 'normalized', 'Position', [0.7+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02],...
-                    'Callback', @pushbuttonEnableCallback, 'Tag', sprintf('%d,%d,%d', i,k,objectiveCounter));
+                    'Callback', @pushbuttonEnableCallback, 'Tag', sprintf('%d,%d,%d', i,k,objectiveCounter),'Enable',strEnable);
                 
                 objectiveCounter = objectiveCounter+1;
                 
+                % necesarry to ensure behaviour of do-while loop
+                  if k>=size(data.cst{i,6},2)
+                    break
+                  else
+                      k=k+1;
+                  end
+
             end
         end
+        
 
     end
 
@@ -197,7 +222,7 @@ uiwait
 
 %% Definition Callback
 
-    function popupObjFuncCallback(hObj, event)
+    function popupObjFuncCallback(hObj, ~)
         tag = str2num(get(hObj,'Tag'));
         val = get(hObj, 'Value');
         before = data.cst{tag(1),6}(tag(2)).type;
@@ -258,24 +283,24 @@ uiwait
         end
         guidata(gcf, data);
         
-        function editExponentCallback(hObj, event)
+        function editExponentCallback(hObj, ~)
             tag = str2num(get(hObj,'Tag'));
-            isValid = CheckValidity(str2num(get(hObj,'String')),data.editExponent(tag(3)));
+            CheckValidity(str2num(get(hObj,'String')),data.editExponent(tag(3)));
         end
         
-        function editDoseCallback(hObj, event)
+        function editDoseCallback(hObj, ~)
             tag = str2num(get(hObj, 'Tag'));
-            isValid = CheckValidity(str2num(get(hObj,'String')),data.editDose(tag(3)));
+            CheckValidity(str2num(get(hObj,'String')),data.editDose(tag(3)));
         end
     
     end
 
-    function editPriorityCallback(hObj, event)
+    function editPriorityCallback(hObj, ~)
         
         data = guidata(gcf);
         
         tag = str2num(get(hObj,'Tag'));
-        isValid = CheckValidity(str2num(get(hObj,'String')),data.editPriority(tag(3)));
+        CheckValidity(str2num(get(hObj,'String')),data.editPriority(tag(3)));
                 
         % change all priorities that belong to the same VOI
         list = get(data.VOIText(1,tag(3)),'String');
@@ -286,7 +311,7 @@ uiwait
             CurrentVOI = list;
         end
         
-        CurrentPriority = str2double(get(hObj,'String'));
+        CurrentPriority = str2num(get(hObj,'String'));
 
         for m = 1:size(data.VOIText,2)               
             list = get(data.VOIText(1,m),'String');
@@ -303,64 +328,101 @@ uiwait
 
         end
         
-        
-   
-        
     end
 
-    function editPenaltyCallback(hObj, event)
+    function editPenaltyCallback(hObj, ~)
         tag = str2num(get(hObj,'Tag'));
-        isValid = CheckValidity(str2num(get(hObj,'String')),data.editPenalty(tag(3)));
+        CheckValidity(str2num(get(hObj,'String')),data.editPenalty(tag(3))); 
+    end
+
+    function editDoseCallback(hObj, ~)
+        tag = str2num(get(hObj,'Tag'));
+        CheckValidity(str2num(get(hObj,'String')),data.editDose(tag(3)));
+    end
+
+    function editExponentCallback(hObj, ~)
+        tag = str2num(get(hObj,'Tag'));
+        CheckValidity(str2num(get(hObj,'String')),data.editExponent(tag(3)));
+    end
+
+    function popUpVOITypeCallback(hObj, ~)          
         
+        data = guidata(gcf);
+        tag = str2num(get(hObj,'Tag')); 
+        % change all priorities that belong to the same VOI
+        list = get(data.VOIText(1,tag(3)),'String');
+        value = get(data.VOIText(1,tag(3)),'Value');
+        if iscell(list)
+            CurrentVOI = list{value};
+        else
+            CurrentVOI = list;
+        end
+        % change all VOI Types that belong to the same VOI
+        CurrVOIType = get(data.popupVOIType(1,tag(3)),'Value');
+        for m = 1:size(data.VOIText,2)               
+            list = get(data.VOIText(1,m),'String');
+            value = get(data.VOIText(1,m),'Value');
+            if iscell(list)
+                LoopVOI = list{value};
+            else
+                LoopVOI = list;
+            end
+            if strcmp(CurrentVOI,LoopVOI)                
+                set(data.popupVOIType(1,m),'Value',CurrVOIType);
+            end
+
+        end
     end
 
-    function editDoseCallback(hObj, event)
-        tag = str2num(get(hObj,'Tag'));
-        isValid = CheckValidity(str2num(get(hObj,'String')),data.editDose(tag(3)));
-    end
 
-    function editExponentCallback(hObj, event)
-        tag = str2num(get(hObj,'Tag'));
-        isValid = CheckValidity(str2num(get(hObj,'String')),data.editExponent(tag(3)));
-    end
-
-    function pushbuttonAcceptCallback(hObj, event) 
+    function pushbuttonAcceptCallback(~, ~) 
        
-        %% read data from gui, check for validity and write it into cst file
+        % read data from gui, check for validity and write it into cst file
         FlagValidParameters = true;
         ObjFuncArray = get(data.popupObjFunc(1,1),'String');
         NewCST = []; 
         
-        for i = 1:size(data.cst,1)
+        % loop over all rows in cst and gui and generate new cst
+        for Cnt = 1:size(data.cst,1)
            
            CntObjF = 1;
 
            for j=1:length(data.editPenalty)   
-                list = get(data.VOIText(1,j),'String');
-                value = get(data.VOIText(1,j),'Value');
-                if iscell(list)
-                    Str2 = list{value};
+               
+                ListVOIText = get(data.VOIText(1,j),'String');
+                CurrentIndex = get(data.VOIText(1,j),'Value');
+                if iscell(ListVOIText)
+                    CurrTxtVOI = ListVOIText{CurrentIndex};
                 else
-                    Str2=list;
+                    CurrTxtVOI=ListVOIText;
                 end
-
-                    if strcmp(data.cst{i,2},Str2) && strcmp(get(data.VOIText(1,j),'Enable'),'on') && ~strcmp(data.cst{i,3},'IGNORED')
+                
+                NewCST{Cnt,3} = data.cst{Cnt,2};
+                    if strcmp(data.cst{Cnt,2},CurrTxtVOI) && strcmp(get(data.VOIText(1,j),'Enable'),'on')
                            
-                           NewCST{i,3} = data.cst{i,2};
-                           NewCST{i,1}(CntObjF).type = ObjFuncArray{get(data.popupObjFunc(1,j),'Value'),1};
-                           if strcmp(NewCST{i,1}(CntObjF).type,'Please select ...')
+                           %get type of voi
+                           Content = get(data.popupVOIType(1,j),'String');
+                           NewCST{Cnt,4} = Content{get(data.popupVOIType(1,j),'Value')};
+                           %get objective function
+                           NewCST{Cnt,1}(CntObjF).type = ObjFuncArray{get(data.popupObjFunc(1,j),'Value'),1};
+                           if strcmp(NewCST{Cnt,1}(CntObjF).type,'Please select ...')
                                set(data.popupObjFunc(1,j),'BackgroundColor','r');
                                FlagValidParameters=false;
                            end
 
-                           NewCST{i,1}(CntObjF).parameter(1,1)=str2double(get(data.editPenalty(1,j),'String'));
-                           if isempty(NewCST{i,1}(CntObjF).parameter(1,1)) || isnan(NewCST{i,1}(CntObjF).parameter(1,1))
+                           % get penalty
+                           if isempty((get(data.editPenalty(1,j),'String'))) || isnan(str2num(get(data.editPenalty(1,j),'String')))
+                                NewCST{Cnt,1}(CntObjF).parameter=[];
                                 set(data.editPenalty(1,j),'BackgroundColor','r');
-                                FlagValidParameters=false;
+                                FlagValidParameters=false;  
+                           else
+                                NewCST{Cnt,1}(CntObjF).parameter(1,1)=str2num(get(data.editPenalty(1,j),'String'));
                            end
-                              
-                           NewCST{i,2}.Priority=str2double(get(data.editPriority(1,j),'String'));
-                           if isempty(NewCST{i,2}.Priority) || isnan(NewCST{i,2}.Priority)
+                           
+                           
+                           % get priority
+                           NewCST{Cnt,2}.Priority=str2num(get(data.editPriority(1,j),'String'));
+                           if isempty(NewCST{Cnt,2}.Priority) || isnan(NewCST{Cnt,2}.Priority)
                                 set(data.editPriority(1,j),'BackgroundColor','r');
                                 FlagValidParameters=false;
                            end
@@ -370,8 +432,8 @@ uiwait
                            switch SelObjFunc
 
                                case 6
-                                    NewCST{i,1}(CntObjF).exponent =str2double(get(data.editExponent(1,j),'String'));
-                                    if isempty(NewCST{i,1}(CntObjF).exponent) || isnan(NewCST{i,1}(CntObjF).exponent)
+                                    NewCST{Cnt,1}(CntObjF).exponent =str2num(get(data.editExponent(1,j),'String'));
+                                    if isempty(NewCST{Cnt,1}(CntObjF).exponent) || isnan(NewCST{Cnt,1}(CntObjF).exponent)
                                         set(data.editExponent(1,j),'BackgroundColor','r');
                                         FlagValidParameters=false;
                                     end
@@ -380,27 +442,34 @@ uiwait
                                     % do nothing in
                                     % this case
                                     
-                               case {2,3,4} 
-                                   NewCST{i,1}(CntObjF).parameter(1,2)=str2double(get(data.editDose(1,j),'String'));
-                                   if isempty(NewCST{i,1}(CntObjF).parameter(1,2)) || isnan(NewCST{i,1}(CntObjF).parameter(1,2))
-                                       set(data.editDose(1,j),'BackgroundColor','r');
-                                       FlagValidParameters=false;
+                               case {1,2,3,4} 
+
+                                   if isempty((get(data.editDose(1,j),'String'))) || isnan(str2num(get(data.editDose(1,j),'String')))
+                                        NewCST{Cnt,1}(CntObjF).parameter=[];
+                                        set(data.editDose(1,j),'BackgroundColor','r');
+                                        FlagValidParameters=false;  
+                                   else
+                                        NewCST{Cnt,1}(CntObjF).parameter(1,2)=str2num(get(data.editDose(1,j),'String'));
                                    end
 
                            end
 
                            CntObjF = CntObjF+1;
                     end   
-               end           
+           end           
             
         end
 
-        if FlagValidParameters
-            for o = 1:size(NewCST,1)
-                for p = 1:size(data.cst,1)
-                    if ~isempty(NewCST{o,1}) && strcmp(data.cst(p,2),NewCST(o,3))
-                        data.cst(o,6) = NewCST(o,1);
-                        data.cst{o,5}.Priority = NewCST{o,2}.Priority;
+       if FlagValidParameters
+            for IdxCst = 1:size(NewCST,1)
+                for IdxNewCst = 1:size(data.cst,1)
+                    if  strcmp(data.cst(IdxNewCst,2),NewCST(IdxCst,3))
+                        data.cst(IdxCst,6) = NewCST(IdxCst,1);
+                        if isfield(NewCST{IdxCst,2},'Priority')
+                            data.cst{IdxCst,5}.Priority = NewCST{IdxCst,2}.Priority;
+                        else
+                            data.cst{IdxCst,5}.Priority=nan;
+                        end
                     end
                 end
             end
@@ -413,7 +482,7 @@ uiwait
         
     end
 
-    function pushbuttonAddCallback(hObj, event)
+    function pushbuttonAddCallback(hObj, ~)
         rowIdx = str2num(get(hObj,'Tag'))+numOfAddedConstraints;
         StringArray = cell(length(cst(:,2))+1,1);
         StringArray{1,1}='Select VOI..';
@@ -422,22 +491,40 @@ uiwait
             'units', 'normalized', 'Position', [0.01+data.horViewOffset 0.9-rowIdx*0.03 0.075 0.02],...
             'Callback', @popupVOICallback, 'Tag', sprintf('%d',rowIdx));
         
-        function popupVOICallback(hObj, event)
+        function popupVOICallback(hObj, ~)
            
             VOI = get(hObj, 'Value')-1;
             rowIdx = str2num(get(hObj,'Tag'));
             
-            if isequal(data.cst{VOI,3}, 'IGNORED')
-                data.popupVOIType(1,rowIdx) = uicontrol('Style', 'popup', 'String', {'TARGET', 'OAR'},...
-                    'FontSize', 10,'units', 'normalized', 'Position',[0.1+data.horViewOffset 0.9-rowIdx*0.03 0.075 0.02],...
-                    'Callback', @popupBodyTypeCallback, 'Tag', sprintf('%d,%d,%d', VOI,0,rowIdx));
-                
+            % try to get VOI type of existing VOI
+            list = get(data.VOIText(1,rowIdx),'String');
+            value = get(data.VOIText(1,rowIdx),'Value');
+            if iscell(list)
+                CurrentVOI = list{value};
             else
-                data.popupVOIType(1,rowIdx) = uicontrol('Style', 'text', 'String', data.cst{VOI,3},...
-                    'FontSize', 10, 'units', 'normalized', 'Position',[0.1+data.horViewOffset 0.9-rowIdx*0.03 0.075 0.02]);
-            
+                CurrentVOI = list;
+            end
+            ValueVOIType = 2;
+            % change all VOI Types that belong to the same VOI
+            for m = 1:size(data.VOIText,2)-1               
+                list = get(data.VOIText(1,m),'String');
+                value = get(data.VOIText(1,m),'Value');
+                if iscell(list)
+                    LoopVOI = list{value};
+                else
+                    LoopVOI = list;
+                end
+                if strcmp(CurrentVOI,LoopVOI) && m<=size(data.popupVOIType,2)
+                    ValueVOIType = get(data.popupVOIType(1,m),'Value');
+                end
+
             end
             
+            data.popupVOIType(1,rowIdx) = uicontrol('Style', 'popup', 'String', {'TARGET', 'OAR'},...
+                    'Value', ValueVOIType,'FontSize', 10,'units', 'normalized', 'Position',[0.1+data.horViewOffset 0.9-rowIdx*0.03 0.075 0.02],...
+                    'Callback', @popUpVOITypeCallback, 'Tag', sprintf('%d,%d,%d', VOI,0,rowIdx));
+                
+          
             data.popupObjFunc(1,rowIdx) = uicontrol('Style', 'popup',...
                 'String', {'Please select ...','square underdosing','square overdosing','square deviation', 'mean', 'EUD'},...
                 'FontSize',10,'units', 'normalized', 'Position', [0.3+data.horViewOffset 0.9-rowIdx*0.03 0.075 0.02],...
@@ -458,12 +545,11 @@ uiwait
                 end
                 
                 if strcmp(CurrentVOI,LoopVOI)  
-                   DefaultPriority=str2double(get(data.editPriority(1,n),'String'));
+                   DefaultPriority=str2num(get(data.editPriority(1,n),'String'));
                 end
 
             end
-            
-            
+                     
             data.editPriority(1,rowIdx) = uicontrol('Style', 'edit', 'FontSize', 10, ...
                 'units', 'normalized', 'Position', [0.2+data.horViewOffset 0.9-rowIdx*0.03 0.075 0.02],...
                 'String',DefaultPriority,...
@@ -485,22 +571,9 @@ uiwait
                 'FontSize', 10, 'units', 'normalized', 'Position', [0.7+data.horViewOffset 0.9-rowIdx*0.03 0.075 0.02],...
                 'Callback', @pushbuttonEnableCallback, 'Tag', sprintf('%d,%d,%d', VOI,nan,rowIdx));
             
-            function popupBodyTypeCallback(hObj, event)
-            
-                tag = str2num(get(hObj,'Tag')); %Zeilennummer des ausgewählten VOIs
-                val = num2str(get(hObj, 'Value'));
-                if val == '1',                
-                    data.cst{tag,3} = 'TARGET';   
-                else 
-                    data.cst{tag,3} = 'OAR';
-                end
-                guidata(gcf, data);
-                % overwrite cst struct directly in workspace
-                assignin('base',data.inputname,data.cst);
-            end
-            
-            function popupObjFuncAddCallback(hObj, event)
-                tag = str2num(get(hObj,'Tag')); % number of voi
+           
+            function popupObjFuncAddCallback(hObj, ~)
+                tag = str2num(get(hObj,'Tag'));
                 val = get(hObj, 'Value');
               
                 if val == 2 || val == 3 || val == 4 
@@ -522,16 +595,23 @@ uiwait
                     set(data.editExponent(1,tag(3)),'Visible','on');                         
                 end
                 
+                if val > 1
+                     set(hObj,'BackgroundColor',[0.94 0.94 0.94]);
+                else
+                     set(hObj,'BackgroundColor','r');
+                end 
+                
                 guidata(gcf, data);             
             end
-  
+            
+            guidata(gcf,data);
         end
        
         numOfAddedConstraints = numOfAddedConstraints + 1;
-        
+        guidata(gcf,data);
     end
 
-    function pushbuttonEnableCallback(hObj, event)
+    function pushbuttonEnableCallback(hObj, ~)
         tag = str2num(get(hObj,'Tag'));%Nummer des VOI, Nummer der Bedingung, Nummer der Zeile in Figure
         Identifier = get(data.popupObjFunc(tag(3)),'value');
         
@@ -549,16 +629,18 @@ uiwait
         set(data.editPenalty(tag(3)),'Enable',ToggleString);
         set(data.VOIText(tag(3)),'Enable',ToggleString);
         set(data.popupVOIType(tag(3)),'Enable',ToggleString);
+        set(data.editPriority(tag(3)),'Enable',ToggleString);
+        
         switch Identifier
             case 6
                 set(data.editExponent(tag(3)),'Enable',ToggleString);
             case 5
                 set(data.editExponent(tag(3)),'Enable',ToggleString);
                 set(data.editDose(tag(3)),'Enable',ToggleString);
-            case {2,3,4}
+            case {1,2,3,4}
                  set(data.editDose(tag(3)),'Enable',ToggleString);
         end
-
+    guidata(gcf,data);
     end
 
     function FlagValidity = CheckValidity(Val,hObj) 
@@ -583,7 +665,7 @@ uiwait
       
     end
 
-    function CloseCallback(hObj, event)
+    function CloseCallback(~, ~)
        
         selection = questdlg({'Are you done setting up objectives for optimization?','Changes have been saved.'},...
           'Closing Configuration Form',...
@@ -598,7 +680,7 @@ uiwait
         end
     end
 
-    function CloseCallbackX(hObj, event)
+    function CloseCallbackX(~, ~)
        
         selection = questdlg({'Really want to quit?','Changes will not be saved.'},...
           'Closing Configuration Form',...
