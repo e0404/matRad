@@ -41,7 +41,7 @@ function matRad_modCst(cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 numOfAddedConstraints = 0;
-
+numOfRows = 0;
     % create figure
     structWindow = figure('Name','matRad VOI/dose/penalty','NumberTitle','off',...
         'units','normalized','outerposition',[0 0 1 1],'ToolBar','figure','CloseRequestFcn',@CloseCallbackX);
@@ -51,6 +51,9 @@ numOfAddedConstraints = 0;
     data.cst           = cst;
     data.structWindow  = structWindow;
     data.horViewOffset = 0.06;
+    data.structDelete  = [];
+    data.deleteCnt     = 1;
+    data.AddIndex      = [];
     guidata(gcf,data);
 
     dataSetText = uicontrol('Style', 'text','String', 'Currently set parameters',...
@@ -93,7 +96,7 @@ numOfAddedConstraints = 0;
         'Position', [0.60+data.horViewOffset 0.9 0.075 0.03]);
     set(dataSetText,'TooltipString',sprintf('Exponent in case of EUD objective function')) ;
     
-    dataSetText = uicontrol('Style', 'text', 'String', 'Toggle obj. func.',...
+    dataSetText = uicontrol('Style', 'text', 'String', 'toggle obj. func.',...
         'FontSize', 11, 'units', 'normalized','BackgroundColor', [0.8 0.8 0.8],...
         'Position', [0.70+data.horViewOffset 0.9 0.075 0.03]);
     set(dataSetText,'TooltipString',sprintf('if enabled objective function will be used for optimization \n if disabled objective function will not be considered')) ;
@@ -179,9 +182,14 @@ numOfAddedConstraints = 0;
                     strEnable='on';
                     btnEnableString = 'Enable';
                 end
+                
                 data.btnEnable(1,objectiveCounter) = uicontrol('Style', 'pushbutton', 'String', btnEnableString,...
                     'FontSize', 10, 'units', 'normalized', 'Position', [0.7+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02],...
                     'Callback', @pushbuttonEnableCallback, 'Tag', sprintf('%d,%d,%d', i,k,objectiveCounter),'Enable',strEnable);
+                
+                data.btnDelete(1,objectiveCounter) = uicontrol('Style', 'pushbutton','String','delete',...
+                    'FontSize', 10, 'units', 'normalized','Position',[0.8+data.horViewOffset 0.9-objectiveCounter*0.03 0.05 0.02],...
+                    'Callback', @pushbtnDeleteCallback,'Tag', sprintf('%d,%d,%d', i,k,objectiveCounter)); 
                 
                 objectiveCounter = objectiveCounter+1;
                 
@@ -197,7 +205,7 @@ numOfAddedConstraints = 0;
         
 
     end
-
+    numOfRows = numOfAddedConstraints;
     guidata(gcf, data);
     
     % accept and exit
@@ -379,7 +387,7 @@ uiwait
        
         % read data from gui, check for validity and write it into cst file
         FlagValidParameters = true;
-        ObjFuncArray = get(data.popupObjFunc(1,1),'String');
+        ObjFuncArray = get(data.popupObjFunc(1,find(sum(~isnan(data.popupObjFunc),1) > 0, 1 ,'first')),'String');
         NewCST = []; 
         
         % loop over all rows in cst and gui and generate new cst
@@ -397,9 +405,8 @@ uiwait
                     CurrTxtVOI=ListVOIText;
                 end
                 
-                NewCST{Cnt,3} = data.cst{Cnt,2};
                     if strcmp(data.cst{Cnt,2},CurrTxtVOI) && strcmp(get(data.VOIText(1,j),'Enable'),'on')
-                           
+                           NewCST{Cnt,3} = data.cst{Cnt,2};
                            %get type of voi
                            Content = get(data.popupVOIType(1,j),'String');
                            NewCST{Cnt,4} = Content{get(data.popupVOIType(1,j),'Value')};
@@ -460,6 +467,33 @@ uiwait
             
         end
 
+       % delete objectives in existing cst
+       vIndex2Del = ones(size(data.cst,1),1);
+       if FlagValidParameters
+            for IdxCst = 1:size(data.cst,1)
+                for ObjCnt = 1:size(data.cst{IdxCst,6},2)
+                   for DelCnt = 1:size(data.structDelete,2)                  
+                        if strcmp(data.cst(IdxCst,2),data.structDelete(DelCnt).VOI) ...
+                                && strcmp(data.cst{IdxCst,6}(ObjCnt).type,data.structDelete(DelCnt).ObjFunc)                          
+                                vIndex2Del(IdxCst)=0;
+                        end
+                   end
+                end
+            end
+            
+            Counter = 1 ;
+            for IdxCst = 1:size(data.cst,1)
+               if vIndex2Del(IdxCst)
+                  tmpCst{Counter,1}=data.cst(IdxCst,:);
+                  Counter = Counter + 1;
+               end
+            end
+       end
+       
+       data.cst = [];
+       data.cst = tmpCst{:,:};
+       
+       % write new cst in existing cst 
        if FlagValidParameters
             for IdxCst = 1:size(NewCST,1)
                 for IdxNewCst = 1:size(data.cst,1)
@@ -483,7 +517,12 @@ uiwait
     end
 
     function pushbuttonAddCallback(hObj, ~)
-        rowIdx = str2num(get(hObj,'Tag'))+numOfAddedConstraints;
+        rowIdx = str2num(get(hObj,'Tag'))+numOfRows;
+        
+        tmp = data.AddIndex;
+        tmp(end+1) = rowIdx;
+        data.AddIndex = tmp;
+        
         StringArray = cell(length(cst(:,2))+1,1);
         StringArray{1,1}='Select VOI..';
         StringArray(2:end,1)=cst(:,2);
@@ -571,6 +610,9 @@ uiwait
                 'FontSize', 10, 'units', 'normalized', 'Position', [0.7+data.horViewOffset 0.9-rowIdx*0.03 0.075 0.02],...
                 'Callback', @pushbuttonEnableCallback, 'Tag', sprintf('%d,%d,%d', VOI,nan,rowIdx));
             
+           data.btnDelete(1,rowIdx) = uicontrol('Style', 'pushbutton','String','delete',...
+                    'FontSize', 10, 'units', 'normalized','Position',[0.8+data.horViewOffset 0.9-rowIdx*0.03 0.05 0.02],...
+                    'Callback', @pushbtnDeleteCallback,'Tag', sprintf('%d,%d,%d', i,k,rowIdx)); 
            
             function popupObjFuncAddCallback(hObj, ~)
                 tag = str2num(get(hObj,'Tag'));
@@ -608,6 +650,7 @@ uiwait
         end
        
         numOfAddedConstraints = numOfAddedConstraints + 1;
+        numOfRows = numOfAddedConstraints;
         guidata(gcf,data);
     end
 
@@ -640,7 +683,71 @@ uiwait
             case {1,2,3,4}
                  set(data.editDose(tag(3)),'Enable',ToggleString);
         end
-    guidata(gcf,data);
+        guidata(gcf,data);
+    end
+
+    function pushbtnDeleteCallback(hObj, ~)
+        
+        tag = str2num(get(hObj,'Tag'));%Nummer des VOI, Nummer der Bedingung, Nummer der Zeile in Figure
+
+        delete(data.btnDelete(tag(3)));
+        data.btnDelete(tag(3)) = nan;
+        delete(data.btnEnable(tag(3)));
+        data.btnEnable(tag(3))=nan;
+        
+        if isfield(data,'editDose')
+           if tag(3)<= length(data.editDose)
+               delete(data.editDose(tag(3)))
+               data.editDose(tag(3)) = nan;
+           end
+        end
+
+        if isfield(data,'editExponent')
+            if tag(3)<= length(data.editExponent)
+                 delete(data.editExponent(tag(3)))
+                 data.editExponent(tag(3))=nan;
+            end
+        end
+               
+        delete(data.editPenalty(tag(3)));
+        data.editPenalty(tag(3))=nan;
+        delete(data.editPriority(tag(3)));
+        data.editPriority(tag(3))=nan;
+        
+        % remember VOI in order to delete from cst
+        list = get(data.VOIText(1,tag(3)),'String');
+        value = get(data.VOIText(1,tag(3)),'Value');
+        if  iscell(list)
+            CurrentVOI = list{value};
+        else
+            CurrentVOI = list;
+        end
+        
+        
+        % remember corresponding obj function in order to delete from cst
+        list = get(data.popupObjFunc(1,tag(3)),'String');
+        value = get(data.popupObjFunc(1,tag(3)),'Value');
+        
+        % only consider existing objective functions because added
+        % contraints arent stored yet in cst
+        if value>1 && isempty(data.AddIndex) || value>1 && sum(ismember(data.AddIndex,tag(3)))<1
+
+            data.structDelete(data.deleteCnt).VOI=CurrentVOI;
+            data.structDelete(data.deleteCnt).ObjFunc=list{value};
+            data.deleteCnt = data.deleteCnt+1;
+            
+        end
+   
+        delete(data.VOIText(1,tag(3)));
+        data.VOIText(tag(3))=nan;
+        
+        delete(data.popupObjFunc(tag(3)));
+        data.popupObjFunc(tag(3))=nan;
+        
+        delete(data.popupVOIType(tag(3)));
+        data.popupVOIType(tag(3))=nan;
+        numOfAddedConstraints = numOfAddedConstraints-1;
+        guidata(gcf,data);
     end
 
     function FlagValidity = CheckValidity(Val,hObj) 
