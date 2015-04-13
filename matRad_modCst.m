@@ -109,9 +109,8 @@ numOfRows = 0;
         if ~isequal(data.cst{i,3},'IGNORED')
             
             % loop over the number of objectives for the current VOI 
-            k=1;
-            while 1
-
+           for k = 1:size(data.cst{i,6},2)
+               
                 data.VOIText(objectiveCounter) = uicontrol('Style', 'text', 'String', data.cst{i,2},'FontSize', 10,...
                     'units', 'normalized','Position', [0.01+data.horViewOffset 0.9-objectiveCounter*0.03 0.075 0.02]);
 
@@ -178,18 +177,12 @@ numOfRows = 0;
                 
                 objectiveCounter = objectiveCounter+1;
                 
-                % necesarry to ensure behaviour of do-while loop
-                  if k>=size(data.cst{i,6},2)
-                    break
-                  else
-                      k=k+1;
-                  end
-
             end
         end
         
 
     end
+    % once gui is loaded according to cst set numOfRows = numOfAddedConstraints
     numOfRows = numOfAddedConstraints;
     guidata(gcf, data);
     
@@ -473,14 +466,14 @@ uiwait
         end
 
        % delete objectives in existing cst
-       vIndex2Del = ones(size(data.cst,1),1);
+       IndexToDel = ones(size(data.cst,1),1);
        if FlagValidParameters
             for IdxCst = 1:size(data.cst,1)
                 for ObjCnt = 1:size(data.cst{IdxCst,6},2)
                    for DelCnt = 1:size(data.structDelete,2)                  
                         if strcmp(data.cst(IdxCst,2),data.structDelete(DelCnt).VOI) ...
                                 && strcmp(data.cst{IdxCst,6}(ObjCnt).type,data.structDelete(DelCnt).ObjFunc)                          
-                                vIndex2Del(IdxCst)=0;
+                                IndexToDel(IdxCst)=0;
                         end
                    end
                 end
@@ -488,7 +481,7 @@ uiwait
             
             Counter = 1 ;
             for IdxCst = 1:size(data.cst,1)
-               if vIndex2Del(IdxCst)
+               if IndexToDel(IdxCst)
                   tmpCst(Counter,:)=data.cst(IdxCst,:);
                   tmpCst{Counter,1}=Counter-1;
                   Counter = Counter + 1;
@@ -528,6 +521,7 @@ uiwait
     function pushbuttonAddCallback(hObj, ~)
         rowIdx = str2num(get(hObj,'Tag'))+numOfRows;
         
+        % dynamically store index of new added objective
         tmp = data.AddIndex;
         tmp(end+1) = rowIdx;
         data.AddIndex = tmp;
