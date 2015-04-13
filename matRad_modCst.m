@@ -283,10 +283,8 @@ uiwait
     function editPriorityCallback(hObj, ~)
         
         data = guidata(gcf);
-        
         tag = str2num(get(hObj,'Tag'));
-        CheckValidity(str2num(get(hObj,'String')),data.editPriority(tag(3)));
-                
+        CheckValidity(str2num(get(hObj,'String')),data.editPriority(tag(3)));      
         % change all priorities that belong to the same VOI
         list = get(data.VOIText(1,tag(3)),'String');
         value = get(data.VOIText(1,tag(3)),'Value');
@@ -299,12 +297,18 @@ uiwait
         CurrentPriority = str2num(get(hObj,'String'));
 
         for m = 1:size(data.VOIText,2)               
-            list = get(data.VOIText(1,m),'String');
-            value = get(data.VOIText(1,m),'Value');
-            if iscell(list)
-                LoopVOI = list{value};
+            if ~isnan(data.VOIText(1,m))
+             ListVOIText = get(data.VOIText(1,m),'String');
+             CurrentIndex = get(data.VOIText(1,m),'Value');
             else
-                LoopVOI = list;
+               ListVOIText=[];
+               CurrentIndex=[];
+            end
+            
+            if iscell(ListVOIText)
+                LoopVOI = ListVOIText{CurrentIndex};
+            else
+                LoopVOI = ListVOIText;
             end
 
             if strcmp(CurrentVOI,LoopVOI)  
