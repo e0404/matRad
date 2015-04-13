@@ -41,7 +41,7 @@ function matRad_modCst(cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 numOfAddedConstraints = 0;
-numOfRows = 0;
+
     % create figure
     structWindow = figure('Name','matRad VOI/dose/penalty','NumberTitle','off',...
         'units','normalized','outerposition',[0 0 1 1],'ToolBar','figure','CloseRequestFcn',@CloseCallbackX);
@@ -182,8 +182,7 @@ numOfRows = 0;
         
 
     end
-    % once gui is loaded according to cst set numOfRows = numOfAddedConstraints
-    numOfRows = numOfAddedConstraints;
+
     guidata(gcf, data);
     
     % accept and exit
@@ -519,7 +518,7 @@ uiwait
     end
 
     function pushbuttonAddCallback(hObj, ~)
-        rowIdx = str2num(get(hObj,'Tag'))+numOfRows;
+        rowIdx = str2num(get(hObj,'Tag'))+numOfAddedConstraints;
         
         % dynamically store index of new added objective
         tmp = data.AddIndex;
@@ -636,8 +635,7 @@ uiwait
             guidata(gcf,data);
         end
        
-        numOfAddedConstraints = numOfAddedConstraints + 1;
-        numOfRows=numOfRows+1;
+        numOfAddedConstraints = numOfAddedConstraints + 1;    
         guidata(gcf,data);
     end
 
@@ -699,7 +697,6 @@ uiwait
         
         delete(data.popupVOIType(tag(3)));
         data.popupVOIType(tag(3))=nan;
-        numOfAddedConstraints = numOfAddedConstraints-1;
         guidata(gcf,data);
     end
 
