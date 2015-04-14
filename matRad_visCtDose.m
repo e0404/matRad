@@ -47,29 +47,22 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin > 0
+    data.CutOffLevel = 0.05;
     data.optResult = optResult;
     data.cst  = cst;
     data.pln  = pln;
     data.ct   = ct;
     if ~isempty(data.optResult)
         data.optResult = rmfield(data.optResult,'w');
-        
         if isfield(data.optResult,'RBE')
-            Index = find(strcmp(data.cst(:,3),'TARGET'));
-            [~, I] = max((cellfun('length',data.cst(Index,4))));
-            mTmp = zeros(data.pln.voxelDimensions);
-            mTmp(data.cst{Index(I),4})=1;
-            data.optResult.RBETarget = data.optResult.RBE.*mTmp;
             data.optResult.RBETruncated10Perc = data.optResult.RBE;
-            data.optResult.RBETruncated1Perc = data.optResult.RBE;
             data.optResult.RBETruncated10Perc(data.optResult.physicalDose<0.1*max(data.optResult.physicalDose(:))) = 0;
-            data.optResult.RBETruncated1Perc(data.optResult.physicalDose<0.01*max(data.optResult.physicalDose(:))) = 0;
         end
         
         data.fName =fieldnames(data.optResult);
         for i=1:size(data.fName,1)
             %indicates if it should be plotted later on
-            if strcmp(data.fName{i,1},'RBETarget') || strcmp(data.fName{i,1},'RBETruncated1Perc') || strcmp(data.fName{i,1},'RBETruncated10Perc')
+            if strcmp(data.fName{i,1},'RBETruncated10Perc')
                 data.fName{i,2}=0;
             else
                 data.fName{i,2}=1;
@@ -177,7 +170,6 @@ if ~isempty(data.ct.cube) && data.ctCheckboxValue && data.TypeOfPlot ==1
     elseif data.plane == 3 % Axial plane
         ct_rgb = ind2rgb(uint8(63*squeeze(data.ct.cube(:,:,data.slice))/max(data.ct.cube(:))),bone);
     end
-    
     axes(myAxes)
     ctImageHandle = image(ct_rgb);
 
@@ -186,18 +178,23 @@ end
 if ~isempty(data.optResult) && data.TypeOfPlot ==1
     
     mVolume = getfield(data.optResult,data.SelectedDisplayOption);
-   
+    % make sure to exploit full color range
+    mVolume(data.optResult.physicalDose<data.CutOffLevel*max(data.optResult.physicalDose(:)))=0;
+    
 %     %% dose colorwash
     if ~isempty(mVolume) && data.doseColorwashCheckboxValue && ~isvector(mVolume)
 
         dose_rgb = mVolume./max(mVolume(:));
 
         % Save RGB indices for dose in zslice´s voxels.
-        if data.plane == 1  % Axial plane
+        if data.plane == 1  % Coronal plane
+            mSlice = squeeze(mVolume(data.slice,:,:));
             dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(data.slice,:,:))),jet);
         elseif data.plane == 2 % Sagital plane
+             mSlice = squeeze(mVolume(:,data.slice,:));
             dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(:,data.slice,:))),jet);
-        elseif data.plane == 3 % Coronal plane
+        elseif data.plane == 3 % Axial plane
+             mSlice =squeeze(mVolume(:,:,data.slice));
             dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(:,:,data.slice))),jet);
         end
         % Show dose
@@ -206,27 +203,39 @@ if ~isempty(data.optResult) && data.TypeOfPlot ==1
         
         % Make dose transparent
         if ~isempty(data.ct.cube)
-            set(doseImageHandle,'AlphaData',.6);
+            %set(doseImageHandle,'AlphaData',.6);
+        if data.plane == 1  % Coronal plane
+            set(doseImageHandle,'AlphaData',  .6*double(squeeze(data.optResult.physicalDose(data.slice,:,:))>data.CutOffLevel*max(data.optResult.physicalDose(:))  )  ) ;
+        elseif data.plane == 2 % Sagital plane
+            set(doseImageHandle,'AlphaData',  .6*double(squeeze(data.optResult.physicalDose(:,data.slice,:))>data.CutOffLevel*max(data.optResult.physicalDose(:))  )  ) ;
+        elseif data.plane == 3 % Axial plane
+            if strcmp(data.SelectedDisplayOption,'RBETruncated10Perc')
+                set(doseImageHandle,'AlphaData',  .6*double(squeeze(data.optResult.physicalDose(:,:,data.slice))>0.1*max(data.optResult.physicalDose(:))  )  ) ;
+            else
+                set(doseImageHandle,'AlphaData',  .6*double(squeeze(data.optResult.physicalDose(:,:,data.slice))>data.CutOffLevel*max(data.optResult.physicalDose(:))  )  ) ;
+            end
+        end
+        
         end
 
     end
 
     %% dose iso dose lines
     if ~isempty(mVolume) && data.TypeOfPlot ==1 && ~isvector(mVolume)
-           
+           vLevels = round(linspace(0,ceil(max(mVolume(:))),4).*100)/100;
         if data.plane == 1  % Coronal plane
-            [~,myContour] = contour(myAxes,squeeze(mVolume(data.slice,:,:)));
+            [~,myContour] = contour(myAxes,squeeze(mVolume(data.slice,:,:)),vLevels);
         elseif data.plane == 2 % Sagittal plane
-            [~,myContour] = contour(myAxes,squeeze(mVolume(:,data.slice,:)));
+            [~,myContour] = contour(myAxes,squeeze(mVolume(:,data.slice,:)),vLevels);
         elseif data.plane == 3 % Axial plane
-             [~,myContour] = contour(myAxes,squeeze(mVolume(:,:,data.slice)));
+             [~,myContour] = contour(myAxes,squeeze(mVolume(:,:,data.slice)),vLevels);
         end
 
         % turn off legend for this data set
         hAnnotation = get(myContour,'Annotation');
         hLegendEntry = get(hAnnotation','LegendInformation');
         set(hLegendEntry,'IconDisplayStyle','off')
-        set(myContour,'LabelSpacing',100,'ShowText','off')
+        set(myContour,'LabelSpacing',100,'ShowText','on')
         if data.doseIsoCheckboxValue == 0
             set(myContour,'Visible','off')
         end
@@ -238,6 +247,14 @@ if ~isempty(data.optResult) && data.TypeOfPlot ==1
     set(cBarHandel,'yAxisLocation','right');
     set(cBarHandel,'FontSize',14);
     
+    if isempty(strfind(data.SelectedDisplayOption,'RBE'))
+        set(cBarHandel,'YLim',[0 max(mVolume(:))]);
+        caxis([0, max(mVolume(:))])
+    else
+        set(cBarHandel,'YLim',[0 max(mSlice(:))]);
+        caxis([0, max(mSlice(:))])
+    end
+
     
 end
     %% VOIs
@@ -329,8 +346,37 @@ if data.TypeOfPlot ==2 &&~isempty(data.optResult)
     %a certain width to the profile plot can be added
     delta =0;
     
+    IND = 1:1:size(data.ct.cube,1)*size(data.ct.cube,2)*size(data.ct.cube,3);
+    [yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(data.ct.cube),IND);
+    
+    rotMx_XY = [ cosd(data.pln.gantryAngles(data.SelectedBeam)) -sind(data.pln.gantryAngles(data.SelectedBeam)) 0;
+                 sind(data.pln.gantryAngles(data.SelectedBeam)) cosd(data.pln.gantryAngles(data.SelectedBeam)) 0;
+                      0                                         0                                              1];
+    % Rotation around Y axis (Couch movement)
+    rotMx_XZ = [cosd(data.pln.couchAngles(data.SelectedBeam)) 0 -sind(data.pln.couchAngles(data.SelectedBeam));
+                0                                        1 0;
+                sind(data.pln.couchAngles(data.SelectedBeam)) 0 cosd(data.pln.couchAngles(data.SelectedBeam))];
+    
+    coords_inside = [xCoordsV' yCoordsV' zCoordsV'];
+    [rot_coords] = coords_inside*rotMx_XZ*rotMx_XY;
+
     mPhysDose=getfield(data.optResult,'physicalDose');
-    mRotActualSlice =imrotate(mPhysDose(:,:,data.slice),data.pln.gantryAngles(data.SelectedBeam),'crop');
+    
+    mPhysDoseY = permute(mPhysDose,[1 3 2]);
+    mRotActualSlice =imrotate(mPhysDoseY,data.pln.gantryAngles(data.SelectedBeam),'crop');
+    
+    if data.plane == 1 % Coronal plane
+        mPhysDose = squeeze(mPhysDose(data.slice,:,:));
+    elseif data.plane == 2 % Sagital plane
+        mPhysDose = squeeze(mPhysDose(:,data.slice,:));
+    elseif data.plane == 3 % Axial plane
+        mPhysDose = squeeze(mPhysDose(:,:,data.slice));
+    end
+    
+    %mPhysDose = imrotate(mPhysDose,data.pln.couchAngles(data.SelectedBeam),'crop');
+  
+    
+    mRotActualSlice =imrotate(mPhysDose,data.pln.gantryAngles(data.SelectedBeam),'crop');
     
     
     vW =ones(size(mRotActualSlice,2),1);
@@ -369,7 +415,7 @@ if data.TypeOfPlot ==2 &&~isempty(data.optResult)
     % plot counter
     Cnt=2;
     
-    if data.pln.bioOptimization == 1 && strcmp(data.pln.radiationMode,'carbon')
+    if isfield(data.optResult,'RBE')
         %disbale specific plots
         %data.fName{6,2}=0;
         %data.fName{5,2}=0;
@@ -474,7 +520,7 @@ if data.TypeOfPlot ==2 &&~isempty(data.optResult)
     
     
     % set axis limits
-    if data.pln.bioOptimization == 0 || ~strcmp(data.pln.radiationMode,'carbon')
+    if data.pln.bioOptimization == 0 || ~isfield(data.optResult,'RBE')
         xlim([xmin xmax]);
     else
         xlim(ax(1),[xmin xmax]);
@@ -756,4 +802,26 @@ end
     end
 
 
-end
+ end
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
