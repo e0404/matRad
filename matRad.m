@@ -42,8 +42,8 @@ load BOXPHANTOM.mat
 pln.SAD             = 10000; %[mm]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0]; % [°]
-pln.couchAngles     = [0]; % [°]
+pln.gantryAngles    = [90 270]; % [°]
+pln.couchAngles     = [0 0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct.cube);
 pln.voxelDimensions = size(ct.cube);
@@ -63,10 +63,6 @@ if strcmp(pln.radiationMode,'photons')
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst,0);
 end
-
-%% Dose visualization
-doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1));
-matRad_visCtDose(doseVis,cst,pln,ct);
 
 %% change objective function settings if desired
 matRad_modCst(cst)
