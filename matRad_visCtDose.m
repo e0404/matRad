@@ -346,24 +346,27 @@ if data.TypeOfPlot ==2 &&~isempty(data.optResult)
     %a certain width to the profile plot can be added
     delta =0;
     
-    IND = 1:1:size(data.ct.cube,1)*size(data.ct.cube,2)*size(data.ct.cube,3);
-    [yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(data.ct.cube),IND);
-    
+    % Rotation around Z axis (table movement)
     rotMx_XY = [ cosd(data.pln.gantryAngles(data.SelectedBeam)) -sind(data.pln.gantryAngles(data.SelectedBeam)) 0;
                  sind(data.pln.gantryAngles(data.SelectedBeam)) cosd(data.pln.gantryAngles(data.SelectedBeam)) 0;
                       0                                         0                                              1];
     % Rotation around Y axis (Couch movement)
     rotMx_XZ = [cosd(data.pln.couchAngles(data.SelectedBeam)) 0 -sind(data.pln.couchAngles(data.SelectedBeam));
-                0                                        1 0;
+                0                                             1 0;
                 sind(data.pln.couchAngles(data.SelectedBeam)) 0 cosd(data.pln.couchAngles(data.SelectedBeam))];
     
-    coords_inside = [xCoordsV' yCoordsV' zCoordsV'];
-    [rot_coords] = coords_inside*rotMx_XZ*rotMx_XY;
+    sourcePoint = [10000 0 0];
+    targetPoint = [-10000 0 0];
+    rotSourcePoint = sourcePoint*rotMx_XY*rotMx_XZ;
+    rotTargetPoint = targetPoint*rotMx_XY*rotMx_XZ;
+    [~,~,~,~,ix,~] = matRad_siddonRayTracer(data.pln.isoCenter,data.ct.resolution,rotSourcePoint,rotTargetPoint,{data.ct.cube})
+
 
     mPhysDose=getfield(data.optResult,'physicalDose');
+    mTest = mPhysDose(ix);
+    figure,plot(mTest);
     
-    mPhysDoseY = permute(mPhysDose,[1 3 2]);
-    mRotActualSlice =imrotate(mPhysDoseY,data.pln.gantryAngles(data.SelectedBeam),'crop');
+    mRotActualSlice =imrotate(mPhysDoseY(:,:,data.slice),37,'crop');
     
     if data.plane == 1 % Coronal plane
         mPhysDose = squeeze(mPhysDose(data.slice,:,:));
