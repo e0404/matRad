@@ -42,7 +42,7 @@ load BOXPHANTOM.mat
 pln.SAD             = 10000; %[mm]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [90 270]; % [°]
+pln.gantryAngles    = [90 180]; % [°]
 pln.couchAngles     = [0 0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct.cube);
@@ -54,6 +54,9 @@ pln.numOfFractions  = 30;
 % initial visualization
 matRad_visCtDose([],cst,pln,ct);
 
+%% change objective function settings if desired
+matRad_modCst(cst)
+
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
 
@@ -63,9 +66,6 @@ if strcmp(pln.radiationMode,'photons')
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst,0);
 end
-
-%% change objective function settings if desired
-matRad_modCst(cst)
 
 %% inverse planning for imrt
 optResult = matRad_inversePlanning(dij,cst,pln);
