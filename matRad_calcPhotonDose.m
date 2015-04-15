@@ -166,7 +166,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
 
         % Display progress
         matRad_progress(counter,dij.totalNumOfBixels);
-        
+        waitbar(counter/dij.totalNumOfBixels);
         % remember beam and bixel number
         dij.beamNum(counter)  = i;
         dij.rayNum(counter)   = j;
