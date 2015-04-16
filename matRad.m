@@ -26,9 +26,9 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clear
-close all
-clc
+% clear
+% close all
+% clc
 
 % load patient data, i.e. ct, voi, cst
 
@@ -42,14 +42,17 @@ load BOXPHANTOM.mat
 pln.SAD             = 10000; %[mm]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [90 270]; % [°]
+pln.gantryAngles    = [0 180]; % [°]
 pln.couchAngles     = [0 0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct.cube);
 pln.voxelDimensions = size(ct.cube);
-pln.radiationMode   = 'carbon'; % either photons / protons / carbon
+pln.radiationMode   = 'photons'; % either photons / protons / carbon
 pln.bioOptimization = true;   % false indicates physical optimization and true indicates biological optimization
 pln.numOfFractions  = 30;
+
+%% change objective function settings if desired
+matRad_modCst(cst);
 
 % initial visualization
 matRad_visCtDose([],cst,pln,ct);
@@ -64,8 +67,9 @@ elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst,0);
 end
 
-%% change objective function settings if desired
-matRad_modCst(cst)
+%% Dose visualization
+doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),cst);
+matRad_visCtDose(doseVis,cst,pln,ct);
 
 %% inverse planning for imrt
 optResult = matRad_inversePlanning(dij,cst,pln);
@@ -74,7 +78,7 @@ matRad_visCtDose(optResult,cst,pln,ct);
 %% sequencing
 if strcmp(pln.radiationMode,'photons')
     Sequencing = matRad_xiaLeafSequencing(optResult.w,stf,7,1);
-    seqResult = matRad_mxCalcDose(dij,Sequencing.w);
+    seqResult = matRad_mxCalcDose(dij,Sequencing.w,cst);
     matRad_visCtDose(seqResult,cst,pln,ct);
 end
 
