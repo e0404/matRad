@@ -55,6 +55,7 @@ pln.numOfFractions  = 30;
 matRad_modCst(cst);
 
 % initial visualization
+matRadGUI([],cst,pln,ct);
 matRad_visCtDose([],cst,pln,ct);
 
 %% generate steering file

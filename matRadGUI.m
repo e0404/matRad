@@ -41,6 +41,7 @@ if nargout
 else
     gui_mainfcn(gui_State, varargin{:});
 end
+
 % End initialization code - DO NOT EDIT
 
 
@@ -55,9 +56,36 @@ function matRadGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for matRadGUI
 handles.output = hObject;
 
+if ~isempty(varargin)
+    if ~isempty(varargin{1,1})
+        handles.optResult = varargin{1,1};
+        handles.State = 2;
+    else
+        handles.State = 1;
+    end
+    if ~isempty(varargin{1,2})
+        handles.cst = varargin{1,2};
+    end
+    if ~isempty(varargin{1,3})
+        handles.pln = varargin{1,3};
+    end
+    if ~isempty(varargin{1,4})
+        handles.ct = varargin{1,4};
+    end
+    
+    handles.pln.isoCenter = matRad_getIsoCenter(handles.cst,handles.ct,0);
+    
+
+    % set slice slider
+    handles.plane = get(handles.popupPlane,'value');
+    set(handles.sliderSlice,'Min',1,'Max',size(handles.ct.cube,handles.plane),...
+        'Value',round(handles.pln.isoCenter(handles.plane)/handles.ct.resolution(handles.plane)),...
+         'SliderStep',[1/(size(handles.ct.cube,handles.plane)-1) 1/(size(handles.ct.cube,handles.plane)-1)]);
+
+end
 % Update handles structure
 guidata(hObject, handles);
-
+UpdatePlot(handles)
 % UIWAIT makes matRadGUI wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
