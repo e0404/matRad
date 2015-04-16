@@ -94,7 +94,8 @@ if nargin > 0
     
     data.SelectedBeam = 1;
     data.TypeOfPlot = 1;
-     data.SelectedDisplayOption = 'physicalDose';
+    data.SelectedDisplayOption = 'physicalDose';
+    data.ProfileType='lateral';
     if ~isempty(data.optResult)
         data.doseColorwashCheckboxValue = 1;
         data.doseIsoCheckboxValue = 1;
@@ -297,6 +298,7 @@ if   data.plane == 3% Axial plane
         ylabel('y [voxels]','FontSize',16)
         title('Axial plane','FontSize',16)
     end
+    data.axis = [1 size(data.ct.cube,1) 1 size(data.ct.cube,2)];
 elseif data.plane == 2 % Sagittal plane
     if ~isempty(data.pln)
         set(gca,'XTick',0:50/data.ct.resolution(3):1000)
@@ -311,6 +313,7 @@ elseif data.plane == 2 % Sagittal plane
         ylabel('y [voxels]','FontSize',16)
         title('Sagital plane','FontSize',15);
     end
+    data.axis = [1 size(data.ct.cube,3) 1 size(data.ct.cube,2)];
 elseif data.plane == 1 % Coronal plane
     if ~isempty(data.pln)
         set(gca,'XTick',0:50/data.ct.resolution(3):1000)
@@ -325,9 +328,10 @@ elseif data.plane == 1 % Coronal plane
         ylabel('x [voxels]','FontSize',16)
         title('Coronal plane','FontSize',16)
     end
+    data.axis = [1 size(data.ct.cube,3) 1 size(data.ct.cube,1)];
 end
 
-axis equal;
+%axis equal;
 axis(data.axis);
 set(gca,'FontSize',16);    
 
@@ -350,9 +354,15 @@ if data.TypeOfPlot ==2 &&~isempty(data.optResult)
      rotMx_XZ = [cosd(data.pln.couchAngles(data.SelectedBeam)) 0 sind(data.pln.couchAngles(data.SelectedBeam));
                  0                                             1 0;
                  -sind(data.pln.couchAngles(data.SelectedBeam)) 0 cosd(data.pln.couchAngles(data.SelectedBeam))];
-    
-    sourcePointBEV = [0 -data.pln.SAD   0];
-    targetPointBEV = [0 data.pln.SAD   0];
+    if strcmp(data.ProfileType,'lateral')
+        sourcePointBEV = [0 -data.pln.SAD   0];
+        targetPointBEV = [0 data.pln.SAD   0];
+        sMargin = -1;
+    elseif strcmp(data.ProfileType,'longitudinal')
+        sourcePointBEV = [-data.pln.SAD 0   0];
+        targetPointBEV = [data.pln.SAD 0  0];
+        sMargin = 30;
+    end
     rotSourcePointBEV = sourcePointBEV*rotMx_XY*rotMx_XZ;
     rotTargetPointBEV = targetPointBEV*rotMx_XY*rotMx_XZ;
     [~,~,~,~,ix,~] = matRad_siddonRayTracer(data.pln.isoCenter,data.ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{data.ct.cube});
@@ -368,8 +378,8 @@ if data.TypeOfPlot ==2 &&~isempty(data.optResult)
     % assess x - limits
     xLim  = find(vPhysDose);
     if ~isempty(xLim)
-        xmin= xLim(1)*data.ct.resolution(1)+1;
-        xmax= xLim(end)*data.ct.resolution(1)-1;
+        xmin= xLim(1)*data.ct.resolution(1)-sMargin;
+        xmax= xLim(end)*data.ct.resolution(1)+sMargin;
     else
         vLim = axis;
         xmin = vLim(1);
@@ -380,6 +390,7 @@ if data.TypeOfPlot ==2 &&~isempty(data.optResult)
     Cnt=2;
     
     if isfield(data.optResult,'RBE')
+        
         %disbale specific plots
         %data.fName{6,2}=0;
         %data.fName{5,2}=0;
@@ -457,9 +468,6 @@ if data.TypeOfPlot ==2 &&~isempty(data.optResult)
     mTargetStack = zeros(size(data.ct.cube));
     mTargetStack(mTarget)=1;
     vProfile =mTargetStack(ix);
-%     if(data.pln.gantryAngles(data.SelectedBeam)>180)
-%         vProfile=flip(vProfile);
-%     end
     vRay = find(vProfile)*data.ct.resolution(2);
     
     PlotHandles{Cnt,2} =[VOI ' boundary'];
@@ -623,7 +631,7 @@ if data.TypeOfPlot == 2
     
     uicontrol('Parent', gcf,...
             'Style', 'togglebutton',...
-            'String', 'longitudial',...
+            'String', data.ProfileType,...
             'Units', 'normalized',...
             'Position', [0.12 0.50 0.04 0.03],...
             'Callback', @toggleProfile);  
@@ -657,8 +665,13 @@ end
 %% definition of callbacks
  function toggleProfile(hObj,event)
       data=guidata(gcf);
-      data.ProfileType = get(hObj,'Value');
-     
+      
+      if strcmp(data.ProfileType,'longitudinal')
+        set(hObj,'String','lateral');
+      elseif strcmp(data.ProfileType,'lateral')
+        set(hObj,'String','longitudinal');
+      end
+      data.ProfileType = get(hObj,'String');
       guidata(gcf,data);
       matRad_visCtDose;
  end

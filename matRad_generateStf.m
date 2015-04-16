@@ -52,7 +52,7 @@ end
 %
 if ~strcmp(pln.radiationMode,'carbon') && pln.bioOptimization
     fprintf('\n ********************************************************************************************************* \n');
-    fprintf('\n effect based optimization not possible using current setup - physical optimization is carried out instead \n');
+    fprintf('\n effect based optimization not possible with current setup - physical optimization is carried out instead \n');
     fprintf('\n ********************************************************************************************************* \n');
 end
 
@@ -75,8 +75,9 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     % load
     voi = zeros(size(ct.cube));
     voi(V) = 1;
-    voi = imdilate(voi,ones(3,3,3));
 
+    voi  = matRad_addMargin(voi,ct.resolution,ct.resolution,true);
+    
     if strcmp(pln.radiationMode,'protons')
         load protonBaseData;
     elseif  strcmp(pln.radiationMode,'carbon')
