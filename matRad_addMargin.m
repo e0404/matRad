@@ -53,6 +53,9 @@ VoxelMargins =round(sMargin./vResolution);
 mVOIEnlarged=mVOI;
 NewIdx = [];
 
+[xUpperLim,yUpperLim,zUpperLim]=size(mVOI);
+
+
     for Cnt = 1:max(VoxelMargins)
         
         % for multiple loops just consider just added margin
@@ -80,13 +83,30 @@ NewIdx = [];
             end
 
             for j= -1:1:1
-                    mVOIEnlarged(xCoord(i)   ,yCoord(i)   ,zCoord(i)+dz*j)=1;
+                
+                    if zCoord(i)+dz*j > 0  && zCoord(i)+dz*j < zUpperLim
+                        
+                        mVOIEnlarged(xCoord(i)   ,yCoord(i)   ,zCoord(i)+dz*j)=1;
+                    end
                     
-                    mVOIEnlarged(xCoord(i)+dx,yCoord(i)   ,zCoord(i)+dz*j)=1;
-                    mVOIEnlarged(xCoord(i)-dx,yCoord(i)   ,zCoord(i)+dz*j)=1;
-                    mVOIEnlarged(xCoord(i)   ,yCoord(i)+dy,zCoord(i)+dz*j)=1;
-                    mVOIEnlarged(xCoord(i)   ,yCoord(i)-dy,zCoord(i)+dz*j)=1;
-                if DiaElem
+                    if xCoord(i)+dx < xUpperLim && xCoord(i)-dx >=0 ...
+                            && zCoord(i)+dz*j > 0  && zCoord(i)+dz*j < zUpperLim
+                        
+                        mVOIEnlarged(xCoord(i)+dx,yCoord(i)   ,zCoord(i)+dz*j)=1;
+                        mVOIEnlarged(xCoord(i)-dx,yCoord(i)   ,zCoord(i)+dz*j)=1;
+                    end
+                    
+                    if yCoord(i)+dy < yUpperLim && yCoord(i)-dy >=0 ...
+                            && zCoord(i)+dz*j > 0  && zCoord(i)+dz*j < zUpperLim
+                        
+                        mVOIEnlarged(xCoord(i)   ,yCoord(i)+dy,zCoord(i)+dz*j)=1;
+                        mVOIEnlarged(xCoord(i)   ,yCoord(i)-dy,zCoord(i)+dz*j)=1;
+                    end
+                    
+                if DiaElem &&  xCoord(i)+dx < xUpperLim && xCoord(i)-dx >=0 ...
+                           &&  yCoord(i)+dy < yUpperLim && yCoord(i)-dy >=0 ...
+                           && zCoord(i)+dz*j > 0  && zCoord(i)+dz*j < zUpperLim
+                       
                     mVOIEnlarged(xCoord(i)+dx,yCoord(i)+dy,zCoord(i)+dz*j)=1;
                     mVOIEnlarged(xCoord(i)+dx,yCoord(i)-dy,zCoord(i)+dz*j)=1;
                     mVOIEnlarged(xCoord(i)-dx,yCoord(i)+dy,zCoord(i)+dz*j)=1;
