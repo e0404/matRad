@@ -65,50 +65,50 @@ NewIdx = [];
         [xCoord, yCoord, zCoord] = ind2sub(size(mVOIEnlarged),NewIdx);
 
 		
-	if VoxelMargins(1)>=Cnt
-		dx=1;
-	else
-		dx=0;
-	end
+        if VoxelMargins(1)>=Cnt
+            dx=1;
+        else
+            dx=0;
+        end
 
-	if VoxelMargins(2)>=Cnt
-		dy=1;
-	else
-		dy=0;
-	end
+        if VoxelMargins(2)>=Cnt
+            dy=1;
+        else
+            dy=0;
+        end
 
-	if VoxelMargins(3)>=Cnt
-		dz=1;
-	else
-		dz=0;
-	end
+        if VoxelMargins(3)>=Cnt
+            dz=1;
+        else
+            dz=0;
+        end
 			
         for i=1:numel(xCoord)
 
             for j= -1:1:1
                 
-                    if zCoord(i)+dz*j > 0  && zCoord(i)+dz*j < zUpperLim
+                    if zCoord(i)+dz*j > 1  && zCoord(i)+dz*j < zUpperLim
                         
                         mVOIEnlarged(xCoord(i)   ,yCoord(i)   ,zCoord(i)+dz*j)=1;
                     end
                     
-                    if xCoord(i)+dx < xUpperLim && xCoord(i)-dx >=0 ...
-                            && zCoord(i)+dz*j > 0  && zCoord(i)+dz*j < zUpperLim
+                    if xCoord(i)+dx < xUpperLim && xCoord(i)-dx >=1 ...
+                            && zCoord(i)+dz*j > 1  && zCoord(i)+dz*j < zUpperLim
                         
                         mVOIEnlarged(xCoord(i)+dx,yCoord(i)   ,zCoord(i)+dz*j)=1;
                         mVOIEnlarged(xCoord(i)-dx,yCoord(i)   ,zCoord(i)+dz*j)=1;
                     end
                     
-                    if yCoord(i)+dy < yUpperLim && yCoord(i)-dy >=0 ...
-                            && zCoord(i)+dz*j > 0  && zCoord(i)+dz*j < zUpperLim
+                    if yCoord(i)+dy < yUpperLim && yCoord(i)-dy >=1 ...
+                            && zCoord(i)+dz*j > 1  && zCoord(i)+dz*j < zUpperLim
                         
                         mVOIEnlarged(xCoord(i)   ,yCoord(i)+dy,zCoord(i)+dz*j)=1;
                         mVOIEnlarged(xCoord(i)   ,yCoord(i)-dy,zCoord(i)+dz*j)=1;
                     end
                     
-                if bDiaElem &&  xCoord(i)+dx < xUpperLim && xCoord(i)-dx >=0 ...
-                           &&  yCoord(i)+dy < yUpperLim && yCoord(i)-dy >=0 ...
-                           && zCoord(i)+dz*j > 0  && zCoord(i)+dz*j < zUpperLim
+                if bDiaElem &&  xCoord(i)+dx < xUpperLim && xCoord(i)-dx >=1 ...
+                           &&  yCoord(i)+dy < yUpperLim && yCoord(i)-dy >=1 ...
+                           && zCoord(i)+dz*j > 1  && zCoord(i)+dz*j < zUpperLim
                        
                     mVOIEnlarged(xCoord(i)+dx,yCoord(i)+dy,zCoord(i)+dz*j)=1;
                     mVOIEnlarged(xCoord(i)+dx,yCoord(i)-dy,zCoord(i)+dz*j)=1;
