@@ -22,7 +22,7 @@ function varargout = matRadGUI(varargin)
 
 % Edit the above text to modify the response to help matRadGUI
 
-% Last Modified by GUIDE v2.5 16-Apr-2015 00:23:19
+% Last Modified by GUIDE v2.5 17-Apr-2015 09:03:44
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -68,6 +68,15 @@ if ~isempty(varargin)
     end
     if ~isempty(varargin{1,3})
         handles.pln = varargin{1,3};
+        
+        set(handles.editBixelWidth,'String',num2str(handles.pln.bixelWidth));
+        set(handles.editSAD,'String',num2str(handles.pln.SAD));
+        set(handles.editFraction,'String',num2str(handles.pln.numOfFractions));
+        set(handles.editGantryAngle,'String',num2str(handles.pln.gantryAngles));
+        set(handles.editCouchAngle,'String',num2str(handles.pln.couchAngles));
+        set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),handles.pln.radiationMode)));
+        set(handles.radbtnBioOpt,'Value',handles.pln.bioOptimization);
+        
     end
     if ~isempty(varargin{1,4})
         handles.ct = varargin{1,4};
@@ -306,22 +315,26 @@ UpdatePlot(handles);
 function UpdatePlot(handles)
 cla;
 plane=get(handles.popupPlane,'Value');
-slice = round(handles.pln.isoCenter(plane)/handles.ct.resolution(plane));
+slice = get(handles.sliderSlice,'Value');
 CutOffLevel= 0.05;
 
-if plane == 1 % Coronal plane
-    ct_rgb = ind2rgb(uint8(63*squeeze(handles.ct.cube(slice,:,:))/max(handles.ct.cube(:))),bone);
-    axis([1 size(handles.ct.cube,1) 1 size(handles.ct.cube,2)]);
-elseif plane == 2 % Sagital plane
-    ct_rgb = ind2rgb(uint8(63*squeeze(handles.ct.cube(:,slice,:))/max(handles.ct.cube(:))),bone);
-    axis([1 size(handles.ct.cube,3) 1 size(handles.ct.cube,2)]);
-elseif plane == 3 % Axial plane
-    ct_rgb = ind2rgb(uint8(63*squeeze(handles.ct.cube(:,:,slice))/max(handles.ct.cube(:))),bone);
-    axis([1 size(handles.ct.cube,1) 1 size(handles.ct.cube,3)]);
+%% plot ct
+
+if ~isempty(handles.ct.cube) && get(handles.popupTypeOfPlot,'Value')==1
+
+    if plane == 1 % Coronal plane
+        ct_rgb = ind2rgb(uint8(63*squeeze(handles.ct.cube(slice,:,:))/max(handles.ct.cube(:))),bone);
+        axis([1 size(handles.ct.cube,1) 1 size(handles.ct.cube,2)]);
+    elseif plane == 2 % Sagital plane
+        ct_rgb = ind2rgb(uint8(63*squeeze(handles.ct.cube(:,slice,:))/max(handles.ct.cube(:))),bone);
+        axis([1 size(handles.ct.cube,3) 1 size(handles.ct.cube,2)]);
+    elseif plane == 3 % Axial plane
+        ct_rgb = ind2rgb(uint8(63*squeeze(handles.ct.cube(:,:,slice))/max(handles.ct.cube(:))),bone);
+        axis([1 size(handles.ct.cube,1) 1 size(handles.ct.cube,3)]);
+    end
+
+    imshow(ct_rgb, 'Parent', handles.axesFig),hold on;
 end
-
-imshow(ct_rgb, 'Parent', handles.axesFig),hold on;
-
 
 colors = jet;
 colors = colors(round(linspace(1,63,size(handles.cst,1))),:);
@@ -539,3 +552,49 @@ handles.State = 3;
 close(h)
 guidata(hObject,handles);
 UpdatePlot(handles);
+
+
+% --- Executes on selection change in popupTypeOfPlot.
+function popupTypeOfPlot_Callback(hObject, eventdata, handles)
+% hObject    handle to popupTypeOfPlot (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupTypeOfPlot contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupTypeOfPlot
+
+
+% --- Executes during object creation, after setting all properties.
+function popupTypeOfPlot_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupTypeOfPlot (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in popupDisplayOption.
+function popupDisplayOption_Callback(hObject, eventdata, handles)
+% hObject    handle to popupDisplayOption (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupDisplayOption contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupDisplayOption
+
+
+% --- Executes during object creation, after setting all properties.
+function popupDisplayOption_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupDisplayOption (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
