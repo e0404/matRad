@@ -1,14 +1,16 @@
-function [ mVOIEnlarged ] = matRad_addMargin(mVOI,vResolution,sMargin,DiaElem)
+function [ mVOIEnlarged ] = matRad_addMargin(mVOI,vResolution,vMargin,bDiaElem)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad steering information generation
+% matRad add margin function
 % 
 % call
-%   stf = matRad_generateStf(ct,cst,pln,visMode)
+%   mVOIEnlarged = matRad_addMargin(mVOI,vResolution,vMargin,bDiaElem)
 %
 % input
 %   mVOI:           image stack in dimensions of X x Y x Z holding ones for
 %                   object and zeros otherwise 
-%   sMargin:        margin in mm 
+%   vResolution     ct resolution
+%   vMargin:        margin in mm 
+%   bDiaElem         if true 26-connectivity is used otherwise 6-connectivity
 %
 % output
 %   mVOIEnlarged:   enlarged VOI
@@ -43,13 +45,13 @@ function [ mVOIEnlarged ] = matRad_addMargin(mVOI,vResolution,sMargin,DiaElem)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin == 3
-    DiaElem = false;
+    bDiaElem = false;
 elseif nargin <3
     error('not enough input parameters specified for matRad_addMargin');
 end
 
 % get number of voxels which should be added in each dimension
-VoxelMargins =round(sMargin./vResolution);
+VoxelMargins =round(vMargin./vResolution);
 mVOIEnlarged=mVOI;
 NewIdx = [];
 
@@ -62,25 +64,26 @@ NewIdx = [];
         NewIdx = setdiff(find(mVOIEnlarged),NewIdx);
         [xCoord, yCoord, zCoord] = ind2sub(size(mVOIEnlarged),NewIdx);
 
+		
+	if VoxelMargins(1)>=Cnt
+		dx=1;
+	else
+		dx=0;
+	end
+
+	if VoxelMargins(2)>=Cnt
+		dy=1;
+	else
+		dy=0;
+	end
+
+	if VoxelMargins(3)>=Cnt
+		dz=1;
+	else
+		dz=0;
+	end
+			
         for i=1:numel(xCoord)
-
-            if VoxelMargins(1)>=Cnt
-                dx=1;
-            else
-                dx=0;
-            end
-
-            if VoxelMargins(2)>=Cnt
-                dy=1;
-            else
-                dy=0;
-            end
-
-            if VoxelMargins(3)>=Cnt
-                dz=1;
-            else
-                dz=0;
-            end
 
             for j= -1:1:1
                 
@@ -103,7 +106,7 @@ NewIdx = [];
                         mVOIEnlarged(xCoord(i)   ,yCoord(i)-dy,zCoord(i)+dz*j)=1;
                     end
                     
-                if DiaElem &&  xCoord(i)+dx < xUpperLim && xCoord(i)-dx >=0 ...
+                if bDiaElem &&  xCoord(i)+dx < xUpperLim && xCoord(i)-dx >=0 ...
                            &&  yCoord(i)+dy < yUpperLim && yCoord(i)-dy >=0 ...
                            && zCoord(i)+dz*j > 0  && zCoord(i)+dz*j < zUpperLim
                        

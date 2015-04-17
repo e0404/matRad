@@ -1,4 +1,4 @@
-function [alphas,l,rho,d12,ix,vis] = matRad_siddonRayTracer(isocenter,resolution,sourcePoint,targetPoint,cubes,visBool)
+function [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter,resolution,sourcePoint,targetPoint,cubes,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % siddon ray tracing through three dimensional cube to calculate the
 % radiological depth
@@ -239,6 +239,7 @@ if visBool
    vis.y_max = y_max;
    vis.z_min = z_min;
    vis.z_max = z_max;
+   vis.ix=ix;
 else
    vis = [];
 end
