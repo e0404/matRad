@@ -55,6 +55,8 @@ function matRadGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 
 % Choose default command line output for matRadGUI
 handles.output = hObject;
+%% access variables from workspace
+x=evalin('base','variableUsedinGUI');
 
 if ~isempty(varargin)
     if ~isempty(varargin{1,1})
@@ -319,7 +321,6 @@ slice = get(handles.sliderSlice,'Value');
 CutOffLevel= 0.05;
 
 %% plot ct
-
 if ~isempty(handles.ct.cube) && get(handles.popupTypeOfPlot,'Value')==1
 
     if plane == 1 % Coronal plane
@@ -336,6 +337,27 @@ if ~isempty(handles.ct.cube) && get(handles.popupTypeOfPlot,'Value')==1
     imshow(ct_rgb, 'Parent', handles.axesFig),hold on;
 end
 
+%% plot dose cube
+if ~isempty(data.optResult) && data.TypeOfPlot ==1 && get(handles.radiobtnDose,'Value')
+
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%% plot VOIs
 colors = jet;
 colors = colors(round(linspace(1,63,size(handles.cst,1))),:);
 
