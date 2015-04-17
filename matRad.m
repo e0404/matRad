@@ -37,8 +37,7 @@
 %load PROSTATE.mat
 %load LIVER.mat
 load BOXPHANTOM.mat
-global variableUsedinGUI,
-variableUsedinGUI =323;
+
 % meta information for treatment plan
 pln.SAD             = 10000; %[mm]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);

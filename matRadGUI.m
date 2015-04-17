@@ -56,7 +56,6 @@ function matRadGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for matRadGUI
 handles.output = hObject;
 %% access variables from workspace
-x=evalin('base','variableUsedinGUI');
 
 if ~isempty(varargin)
     if ~isempty(varargin{1,1})
@@ -299,7 +298,7 @@ contents                    = get(handles.popupRadMode,'String');
 handles.pln.radiationMode   =  contents{get(handles.popupRadMode,'Value')}% either photons / protons / carbon
 handles.pln.bioOptimization = logical(get(handles.radbtnBioOpt,'Value'));   % false indicates physical optimization and true indicates biological optimization
 handles.pln.numOfFractions  = str2num(get(handles.editFraction,'String'));
-
+handles.pln.voxelDimensions = size(handles.ct.cube);
 %% generate steering file
 handles.stf = matRad_generateStf(handles.ct,handles.cst,handles.pln);
 h=waitbar(0,'dose calculation ... ');
@@ -315,10 +314,56 @@ UpdatePlot(handles);
 
 
 function UpdatePlot(handles)
+%%
+    if ~isempty(handles.optResult) && ~isempty(handles.ct.cube)
+        if isfield(handles.optResult,'RBE')
+            handles.optResult.RBETruncated10Perc = handles.optResult.RBE;
+            handles.optResult.RBETruncated10Perc(handles.optResult.physicalDose<0.1*...
+                max(handles.optResult.physicalDose(:))) = 0;
+        end
+        
+        handles.fName =fieldnames(handles.optResult);
+        for i=1:size(handles.fName,1)
+            %second dimension indicates if it should be plotted later on
+            if strcmp(handles.fName{i,1},'RBETruncated10Perc') || strcmp(handles.fName{i,1},'w')
+                handles.fName{i,2}=0;
+            else
+                handles.fName{i,2}=1;
+            end
+            % determine units
+            if strcmp(handles.fName{i,1},'physicalDose')
+                handles.fName{i,3} = '[Gy]';
+            elseif strcmp(handles.fName{i,1},'alpha')
+                handles.fName{i,3} = '[Gy^{-1}]';
+            elseif strcmp(handles.fName{i,1},'beta')
+                handles.fName{i,3} = '[Gy^{-2}]';
+            elseif strcmp(handles.fName{i,1},'RBEWeightedDose')
+                handles.fName{i,3} = '[Gy(RBE)]';
+            else
+                handles.fName{i,3} = '[a.u.]';
+            end
+            % Reshape dose to cube in voxel dimensions
+            CurrentCube = getfield(handles.optResult,handles.fName{i,1});
+            if ~isempty(CurrentCube) && isequal(size(CurrentCube),size(handles.ct.cube))
+                handles.optResult = setfield(handles.optResult,handles.fName{i,1},reshape(CurrentCube,size(handles.ct.cube)));
+            %try to reshape using voxelDimensions from pln struct    
+            elseif ~isempty(handles.optResult) && isequal(size(CurrentCube),size(handles.ct.cube))
+                handles.optResult = setfield(handles.optResult,handles.fName{i,1},reshape(CurrentCube,handles.pln.voxelDimensions));
+            elseif ~isempty(handles.optResult) && ~strcmp(handles.fName{i,1},'w')
+                error('Cannot reshape dose');   
+            end
+        end
+    end
+
+
+
+
+
+%% set and get required variables
 cla;
 plane=get(handles.popupPlane,'Value');
 slice = get(handles.sliderSlice,'Value');
-CutOffLevel= 0.05;
+CutOffLevel= 0.03;
 
 %% plot ct
 if ~isempty(handles.ct.cube) && get(handles.popupTypeOfPlot,'Value')==1
@@ -338,8 +383,52 @@ if ~isempty(handles.ct.cube) && get(handles.popupTypeOfPlot,'Value')==1
 end
 
 %% plot dose cube
-if ~isempty(data.optResult) && data.TypeOfPlot ==1 && get(handles.radiobtnDose,'Value')
+if ~isempty(handles.optResult) &&  get(handles.popupTypeOfPlot,'Value')== 1 ...
+    && get(handles.radiobtnDose,'Value')
 
+    mVolume = getfield(handles.optResult,data.SelectedDisplayOption);
+    % make sure to exploit full color range
+    mVolume(data.optResult.physicalDose<data.CutOffLevel*max(data.optResult.physicalDose(:)))=0;
+    
+%     %% dose colorwash
+    if ~isempty(mVolume) && data.doseColorwashCheckboxValue && ~isvector(mVolume)
+
+        dose_rgb = mVolume./max(mVolume(:));
+    
+    % Save RGB indices for dose in zslice´s voxels.
+        if data.plane == 1  % Coronal plane
+            mSlice = squeeze(mVolume(data.slice,:,:));
+            dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(data.slice,:,:))),jet);
+        elseif data.plane == 2 % Sagital plane
+             mSlice = squeeze(mVolume(:,data.slice,:));
+            dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(:,data.slice,:))),jet);
+        elseif data.plane == 3 % Axial plane
+             mSlice =squeeze(mVolume(:,:,data.slice));
+            dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(:,:,data.slice))),jet);
+        end
+        % Show dose
+        axes(myAxes);
+        doseImageHandle = image(dose_rgb);
+     % Make dose transparent
+        if ~isempty(data.ct.cube)
+            %set(doseImageHandle,'AlphaData',.6);
+        if data.plane == 1  % Coronal plane
+            set(doseImageHandle,'AlphaData',  .6*double(squeeze(data.optResult.physicalDose(data.slice,:,:))>data.CutOffLevel*max(data.optResult.physicalDose(:))  )  ) ;
+        elseif data.plane == 2 % Sagital plane
+            set(doseImageHandle,'AlphaData',  .6*double(squeeze(data.optResult.physicalDose(:,data.slice,:))>data.CutOffLevel*max(data.optResult.physicalDose(:))  )  ) ;
+        elseif data.plane == 3 % Axial plane
+            if strcmp(data.SelectedDisplayOption,'RBETruncated10Perc')
+                set(doseImageHandle,'AlphaData',  .6*double(squeeze(data.optResult.physicalDose(:,:,data.slice))>0.1*max(data.optResult.physicalDose(:))  )  ) ;
+            else
+                set(doseImageHandle,'AlphaData',  .6*double(squeeze(data.optResult.physicalDose(:,:,data.slice))>data.CutOffLevel*max(data.optResult.physicalDose(:))  )  ) ;
+            end
+        end
+        
+        end
+
+    end
+    
+    
 end
 
 
