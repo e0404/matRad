@@ -47,7 +47,7 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin > 0
-    data.CutOffLevel = 0.05;
+    data.CutOffLevel = 0.03;
     data.optResult = optResult;
     data.cst  = cst;
     data.pln  = pln;
@@ -365,8 +365,8 @@ if data.TypeOfPlot ==2 &&~isempty(data.optResult)
     end
     rotSourcePointBEV = sourcePointBEV*rotMx_XY*rotMx_XZ;
     rotTargetPointBEV = targetPointBEV*rotMx_XY*rotMx_XZ;
-    [~,~,~,~,ix,~] = matRad_siddonRayTracer(data.pln.isoCenter,data.ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{data.ct.cube});
-
+    [~,~,~,~,vis] = matRad_siddonRayTracer(data.pln.isoCenter,data.ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{data.ct.cube},true);
+    ix = vis.ix;
     mPhysDose=getfield(data.optResult,'physicalDose'); %#ok<*GFLD>
     vPhysDose = mPhysDose(ix);
     % plot physical dose
