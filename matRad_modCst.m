@@ -532,18 +532,19 @@ uiwait
         StringArray = cell(length(cst(:,2))+1,1);
         StringArray{1,1}='Select VOI..';
         StringArray(2:end,1)=cst(:,2);
-        data.VOIText(1,rowIdx) = uicontrol('Style', 'popup', 'String', StringArray,'FontSize', 10,...
+        idx = size(data.VOIText,2)+1;
+        data.VOIText(1,idx) = uicontrol('Style', 'popup', 'String', StringArray,'FontSize', 10,...
             'units', 'normalized', 'Position', [0.01+data.horViewOffset 0.9-rowIdx*0.03 0.075 0.02],...
-            'Callback', @popupVOICallback, 'Tag', sprintf('%d',rowIdx));
+            'Callback', @popupVOICallback, 'Tag', sprintf('%d,%d',idx,rowIdx));
         
         function popupVOICallback(hObj, ~)
            
             VOI = get(hObj, 'Value')-1;
-            rowIdx = str2num(get(hObj,'Tag'));
+            [idx row] = str2num(get(hObj,'Tag'));
             
             % try to get VOI type of existing VOI
-            list = get(data.VOIText(1,rowIdx),'String');
-            value = get(data.VOIText(1,rowIdx),'Value');
+            list = get(data.VOIText(1,idx),'String');
+            value = get(data.VOIText(1,idx),'Value');
             if iscell(list)
                 CurrentVOI = list{value};
             else
@@ -573,36 +574,36 @@ uiwait
 
             end
             
-            data.popupVOIType(1,rowIdx) = uicontrol('Style', 'popup', 'String', {'TARGET', 'OAR'},...
-                    'Value', ValueVOIType,'FontSize', 10,'units', 'normalized', 'Position',[0.1+data.horViewOffset 0.9-rowIdx*0.03 0.075 0.02],...
-                    'Callback', @popUpVOITypeCallback, 'Tag', sprintf('%d,%d,%d', VOI,0,rowIdx));
+            data.popupVOIType(1,idx) = uicontrol('Style', 'popup', 'String', {'TARGET', 'OAR'},...
+                    'Value', ValueVOIType,'FontSize', 10,'units', 'normalized', 'Position',[0.1+data.horViewOffset 0.9-row*0.03 0.075 0.02],...
+                    'Callback', @popUpVOITypeCallback, 'Tag', sprintf('%d,%d,%d', VOI,0,row));
                 
           
-            data.popupObjFunc(1,rowIdx) = uicontrol('Style', 'popup',...
+            data.popupObjFunc(1,idx) = uicontrol('Style', 'popup',...
                 'String', {'Please select ...','square underdosing','square overdosing','square deviation', 'mean', 'EUD'},...
-                'FontSize',10,'units', 'normalized', 'Position', [0.3+data.horViewOffset 0.9-rowIdx*0.03 0.075 0.02],...
-                'Callback', @popupObjFuncAddCallback, 'Tag', sprintf('%d,%d,%d', VOI,0,rowIdx));
+                'FontSize',10,'units', 'normalized', 'Position', [0.3+data.horViewOffset 0.9-row*0.03 0.075 0.02],...
+                'Callback', @popupObjFuncAddCallback, 'Tag', sprintf('%d,%d,%d', VOI,0,row));
                       
-            data.editPriority(1,rowIdx) = uicontrol('Style', 'edit', 'FontSize', 10, ...
-                'units', 'normalized', 'Position', [0.2+data.horViewOffset 0.9-rowIdx*0.03 0.075 0.02],...
+            data.editPriority(1,idx) = uicontrol('Style', 'edit', 'FontSize', 10, ...
+                'units', 'normalized', 'Position', [0.2+data.horViewOffset 0.9-row*0.03 0.075 0.02],...
                 'String',DefaultPriority,...
-                'Callback', @editPriorityCallback, 'Tag', sprintf('%d,%d,%d', VOI,0,rowIdx));
+                'Callback', @editPriorityCallback, 'Tag', sprintf('%d,%d,%d', VOI,0,row));
             
-            data.editPenalty(1,rowIdx) = uicontrol('Style', 'edit', 'FontSize', 10, ...
-                'units', 'normalized', 'Position', [0.4+data.horViewOffset 0.9-rowIdx*0.03 0.075 0.02],...
-                'Callback', @editPenaltyCallback, 'Tag', sprintf('%d,%d,%d', VOI,0,rowIdx));
+            data.editPenalty(1,idx) = uicontrol('Style', 'edit', 'FontSize', 10, ...
+                'units', 'normalized', 'Position', [0.4+data.horViewOffset 0.9-row*0.03 0.075 0.02],...
+                'Callback', @editPenaltyCallback, 'Tag', sprintf('%d,%d,%d', VOI,0,row));
              
-           data.editDose(1,rowIdx) = uicontrol('Style', 'edit', 'FontSize', 10,...
-                 'units', 'normalized', 'Position', [0.5+data.horViewOffset 0.9-rowIdx*0.03 0.075 0.02],...
-                 'Callback', @editDoseCallback, 'Tag', sprintf('%d,%d,%d', VOI,0,rowIdx));
+           data.editDose(1,idx) = uicontrol('Style', 'edit', 'FontSize', 10,...
+                 'units', 'normalized', 'Position', [0.5+data.horViewOffset 0.9-row*0.03 0.075 0.02],...
+                 'Callback', @editDoseCallback, 'Tag', sprintf('%d,%d,%d', VOI,0,row));
                     
-           data.editExponent(1,rowIdx) = uicontrol('Style', 'edit', 'FontSize', 10,...
-                  'units', 'normalized', 'Position', [0.6+data.horViewOffset 0.9-rowIdx*0.03 0.075 0.02],...
-                  'Callback', @editExponentCallback, 'Tag', sprintf('%d,%d,%d', VOI,0,rowIdx));
+           data.editExponent(1,idx) = uicontrol('Style', 'edit', 'FontSize', 10,...
+                  'units', 'normalized', 'Position', [0.6+data.horViewOffset 0.9-row*0.03 0.075 0.02],...
+                  'Callback', @editExponentCallback, 'Tag', sprintf('%d,%d,%d', VOI,0,row));
               
-           data.btnDelete(1,rowIdx) = uicontrol('Style', 'pushbutton','String','delete',...
+           data.btnDelete(1,row) = uicontrol('Style', 'pushbutton','String','delete',...
                     'FontSize', 10, 'units', 'normalized','Position',[0.7+data.horViewOffset 0.9-rowIdx*0.03 0.075 0.02],...
-                    'Callback', @pushbtnDeleteCallback,'Tag', sprintf('%d,%d,%d', i,k,rowIdx)); 
+                    'Callback', @pushbtnDeleteCallback,'Tag', sprintf('%d,%d,%d', i,k,row)); 
            
             function popupObjFuncAddCallback(hObj, ~)
                 tag = str2num(get(hObj,'Tag'));
@@ -648,26 +649,26 @@ uiwait
         tag = str2num(get(hObj,'Tag'));%Nummer des VOI, Nummer der Bedingung, Nummer der Zeile in Figure
 
         delete(data.btnDelete(tag(3)));
-        data.btnDelete(tag(3)) = nan;
+        data.btnDelete(tag(3)) = [];
         
         if isfield(data,'editDose')
            if tag(3)<= length(data.editDose)
                delete(data.editDose(tag(3)))
-               data.editDose(tag(3)) = nan;
+               data.editDose(tag(3)) = [];
            end
         end
 
         if isfield(data,'editExponent')
             if tag(3)<= length(data.editExponent)
                  delete(data.editExponent(tag(3)))
-                 data.editExponent(tag(3))=nan;
+                 data.editExponent(tag(3))=[];
             end
         end
                
         delete(data.editPenalty(tag(3)));
-        data.editPenalty(tag(3))=nan;
+        data.editPenalty(tag(3))=[];
         delete(data.editPriority(tag(3)));
-        data.editPriority(tag(3))=nan;
+        data.editPriority(tag(3))=[];
         
         % remember VOI in order to delete from cst
         list = get(data.VOIText(1,tag(3)),'String');
@@ -694,13 +695,13 @@ uiwait
         end
    
         delete(data.VOIText(1,tag(3)));
-        data.VOIText(tag(3))=nan;
+        data.VOIText(tag(3))=[];
         
         delete(data.popupObjFunc(tag(3)));
-        data.popupObjFunc(tag(3))=nan;
+        data.popupObjFunc(tag(3))=[];
         
         delete(data.popupVOIType(tag(3)));
-        data.popupVOIType(tag(3))=nan;
+        data.popupVOIType(tag(3))=[];
         guidata(gcf,data);
     end
 
