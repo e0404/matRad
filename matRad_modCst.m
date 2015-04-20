@@ -468,47 +468,42 @@ uiwait
         end
 
          if FlagValidParameters
-               tmpCst=data.cst;
-               vStay = ones(size(tmpCst,1),1);
-               for m=1:size(tmpCst,1)
+               
+               for m=1:size(data.cst,1)
 
                    VOIexist   = cst(m,2);
-
+                   boolChanged = false;
+                   
                    for n = 1:size(NewCST,1)
 
                        VOIGUI = NewCST(n,3);
 
                        if strcmp(VOIexist,VOIGUI)
-                          % overite existing objectes
-                           tmpCst(m,6)=NewCST(n,1);
-                           tmpCst(m,3)=NewCST(n,4);
+                          % overite existing objectives
+                           boolChanged = true;
+                           data.cst(m,6)=NewCST(n,1);
+                           data.cst(m,3)=NewCST(n,4);
                             if isfield(NewCST{n,2},'Priority')
-                                tmpCst{m,5}.Priority = NewCST{n,2}.Priority;
+                                data.cst{m,5}.Priority = NewCST{n,2}.Priority;
                             else
-                                tmpCst{m,5}.Priority=nan;
+                                data.cst{m,5}.Priority=nan;
                             end
                        end 
                    end
 
-                   if ~ismember(VOIexist,NewCST(:,3))
-                       vStay(m)=0;
+                   if ~boolChanged
+                       data.cst{m,6}=[];
+                       data.cst{m,5}.Priority=nan;
                    end
 
                end
         end
         
-        cst = cell(sum(vStay(:)),6);
-        Idx = find(vStay);
-        for p=1:size(cst,1)
-            cst(p,:)=tmpCst(Idx(p),:);  
-        end
-        
+  
+
        
-       % write new cst in existing cst 
+       % save cst 
        if FlagValidParameters
-             data.cst=[];
-             data.cst = cst;
-      
             guidata(gcf, data);
             assignin('base',data.inputname,data.cst);
             CloseCallback();
@@ -547,7 +542,7 @@ uiwait
                 CurrentVOI = list;
             end
             ValueVOIType = 2;
-            DefaultPriority = 1;
+            DefaultPriority = 2;
             % change all VOI Types that belong to the same VOI
             for m = 1:size(data.VOIText,2)-1               
                 
