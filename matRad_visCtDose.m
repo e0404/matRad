@@ -199,7 +199,7 @@ if ~isempty(data.optResult) && data.TypeOfPlot ==1
         % Show dose
         axes(myAxes);
         doseImageHandle = image(dose_rgb);
-        
+   
         % Make dose transparent
         if ~isempty(data.ct.cube)
             %set(doseImageHandle,'AlphaData',.6);
@@ -217,9 +217,24 @@ if ~isempty(data.optResult) && data.TypeOfPlot ==1
         
         end
 
+        
+        cBarHandel = colorbar('peer',myAxes,'colormap',jet,'FontSize',14,'yAxisLocation','right');
+        Idx = find(strcmp(data.SelectedDisplayOption,data.fName(:,1)));
+        set(get(cBarHandel,'ylabel'),'String', [data.fName{Idx,1} ' in ' data.fName{Idx,3} ],'fontsize',16);
+
+        if isempty(strfind(data.SelectedDisplayOption,'RBE'))
+            set(cBarHandel,'YLim',[0 max(mVolume(:))]);
+            caxis([0, max(mVolume(:))])
+        else
+            set(cBarHandel,'YLim',[0 max(mSlice(:))]);
+            caxis([0, max(mSlice(:))])
+        end
+        
+        
     end
 
     %% dose iso dose lines
+    colormap(jet)
     if ~isempty(mVolume) && data.TypeOfPlot ==1 && ~isvector(mVolume)
            vLevels = round(linspace(0,ceil(max(mVolume(:))),6).*100)/100;
         if data.plane == 1  % Coronal plane
@@ -240,17 +255,7 @@ if ~isempty(data.optResult) && data.TypeOfPlot ==1
         end
     end
 
-    cBarHandel = colorbar('peer',myAxes,'colormap',jet,'FontSize',14,'yAxisLocation','right');
-    Idx = find(strcmp(data.SelectedDisplayOption,data.fName(:,1)));
-    set(get(cBarHandel,'ylabel'),'String', [data.fName{Idx,1} ' in ' data.fName{Idx,3} ],'fontsize',16);
-
-    if isempty(strfind(data.SelectedDisplayOption,'RBE'))
-        set(cBarHandel,'YLim',[0 max(mVolume(:))]);
-        caxis([0, max(mVolume(:))])
-    else
-        set(cBarHandel,'YLim',[0 max(mSlice(:))]);
-        caxis([0, max(mSlice(:))])
-    end
+   
 
     
 end

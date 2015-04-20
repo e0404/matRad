@@ -57,47 +57,47 @@ numOfAddedConstraints = 0;
     guidata(gcf,data);
 
     dataSetText = uicontrol('Style', 'text','String', 'Currently set parameters',...
-        'FontSize', 12, 'units', 'normalized','BackgroundColor', [0.8 0.8 0.8],...
+        'FontSize', 12, 'units', 'normalized',...
         'Position', [0.35 0.95 0.3 0.03],'FontSize',14);
     set(dataSetText,'TooltipString',sprintf('configure your treatment plan')) ;
     
     dataSetText = uicontrol('Style', 'text', 'String', 'VOI','FontSize', 11,...
-        'units', 'normalized','BackgroundColor', [0.8 0.8 0.8],...
+        'units', 'normalized',...
         'Position', [0.01+data.horViewOffset 0.9 0.075 0.03]);
     set(dataSetText,'TooltipString',sprintf('determines the volume of interest')) ;
      
     dataSetText = uicontrol('Style', 'text', 'String', 'VOI type','FontSize', 11,...
-        'units', 'normalized','BackgroundColor', [0.8 0.8 0.8],...
+        'units', 'normalized',...
         'Position', [0.1+data.horViewOffset 0.9 0.075 0.03]);
     set(dataSetText,'TooltipString',sprintf('determines the tpye of the \n selected volume of interest')) ;
                  
     dataSetText = uicontrol('Style', 'text', 'String', 'Obj. func.',...
-        'FontSize', 11, 'units', 'normalized', 'BackgroundColor', [0.8 0.8 0.8],...
+        'FontSize', 11, 'units', 'normalized', ...
         'Position', [0.3+data.horViewOffset 0.9 0.075 0.03]);
     set(dataSetText,'TooltipString',sprintf('determines the objective function for optimization')) ;
     
     dataSetText = uicontrol('Style', 'text', 'String', 'Overlap priority','FontSize', 11,...
-        'units', 'normalized','BackgroundColor', [0.8 0.8 0.8],...
+        'units', 'normalized',...
         'Position', [0.2+data.horViewOffset 0.9 0.075 0.03]);
     set(dataSetText,'TooltipString',sprintf('determines the overlap priority of the volume of interest\n 0 = highest priority & inf = lowest priority')) ;
     
     dataSetText = uicontrol('Style', 'text', 'String', 'Penalty', 'FontSize', 11,...
-        'units', 'normalized','BackgroundColor', [0.8 0.8 0.8],...
+        'units', 'normalized',...
         'Position', [0.4+data.horViewOffset 0.9 0.075 0.03]);
     set(dataSetText,'TooltipString',sprintf('determines the corresponding penalty')) ;
                                        
     dataSetText = uicontrol('Style', 'text', 'String', 'Dose','FontSize', 11,...
-        'units', 'normalized','BackgroundColor', [0.8 0.8 0.8],...
+        'units', 'normalized',...
         'Position', [0.5+data.horViewOffset 0.9 0.075 0.03]);
     set(dataSetText,'TooltipString',sprintf('prescripbed dose')) ;
                     
     dataSetText = uicontrol('Style', 'text', 'String', 'Exponent for EUD',...
-        'FontSize', 11, 'units', 'normalized','BackgroundColor', [0.8 0.8 0.8],...
+        'FontSize', 11, 'units', 'normalized',...
         'Position', [0.60+data.horViewOffset 0.9 0.075 0.03]);
     set(dataSetText,'TooltipString',sprintf('Exponent in case of EUD objective function')) ;
     
     dataSetText = uicontrol('Style', 'text', 'String',' delete obj. func.',...
-        'FontSize', 11, 'units', 'normalized','BackgroundColor', [0.8 0.8 0.8],...
+        'FontSize', 11, 'units', 'normalized',...
         'Position', [0.70+data.horViewOffset 0.9 0.075 0.03]);
     set(dataSetText,'TooltipString',sprintf('if enabled objective function will be used for optimization \n if disabled objective function will not be considered')) ;
     
@@ -458,8 +458,7 @@ uiwait
                            end
 
                            CntObjF = CntObjF+1; 
-                    end
-                       
+                    end                       
            end           
           
             if FlagFound == true
@@ -468,50 +467,48 @@ uiwait
            
         end
 
-       % delete objectives in existing cst
-       IndexToDel = ones(size(data.cst,1),1);
-       if FlagValidParameters
-            for IdxCst = 1:size(data.cst,1)
-                for ObjCnt = 1:size(data.cst{IdxCst,6},2)
-                   for DelCnt = 1:size(data.structDelete,2)                  
-                        if strcmp(data.cst(IdxCst,2),data.structDelete(DelCnt).VOI) ...
-                                && strcmp(data.cst{IdxCst,6}(ObjCnt).type,data.structDelete(DelCnt).ObjFunc)                          
-                                IndexToDel(IdxCst)=0;
-                        end
+         if FlagValidParameters
+               tmpCst=data.cst;
+               vStay = ones(size(tmpCst,1),1);
+               for m=1:size(tmpCst,1)
+
+                   VOIexist   = cst(m,2);
+
+                   for n = 1:size(NewCST,1)
+
+                       VOIGUI = NewCST(n,3);
+
+                       if strcmp(VOIexist,VOIGUI)
+                          % overite existing objectes
+                           tmpCst(m,6)=NewCST(n,1);
+                           tmpCst(m,3)=NewCST(n,4);
+                            if isfield(NewCST{n,2},'Priority')
+                                tmpCst{m,5}.Priority = NewCST{n,2}.Priority;
+                            else
+                                tmpCst{m,5}.Priority=nan;
+                            end
+                       end 
                    end
-                end
-            end
-            
-            Counter = 1 ;
-            for IdxCst = 1:size(data.cst,1)
-               if IndexToDel(IdxCst)
-                  tmpCst(Counter,:)=data.cst(IdxCst,:);
-                  tmpCst{Counter,1}=Counter-1;
-                  Counter = Counter + 1;
+
+                   if ~ismember(VOIexist,NewCST(:,3))
+                       vStay(m)=0;
+                   end
+
                end
-            end
-       end
+        end
+        
+        cst = cell(sum(vStay(:)),6);
+        Idx = find(vStay);
+        for p=1:size(cst,1)
+            cst(p,:)=tmpCst(Idx(p),:);  
+        end
+        
        
        % write new cst in existing cst 
        if FlagValidParameters
-            data.cst = [];
-            data.cst = tmpCst;
-            Counter = 1;
-            for IdxCst = 1:size(NewCST,1)
-                for IdxNewCst = 1:size(data.cst,1)
-                    if  strcmp(data.cst(IdxNewCst,2),NewCST(IdxCst,3))
-                        data.cst(Counter,6) = NewCST(IdxCst,1);
-                        data.cst(Counter,3) = NewCST(IdxCst,4);
-                        if isfield(NewCST{IdxCst,2},'Priority')
-                            data.cst{Counter,5}.Priority = NewCST{IdxCst,2}.Priority;
-                        else
-                            data.cst{Counter,5}.Priority=nan;
-                        end
-                        Counter = Counter+1;
-                    end
-                    
-                end
-            end
+             data.cst=[];
+             data.cst = cst;
+      
             guidata(gcf, data);
             assignin('base',data.inputname,data.cst);
             CloseCallback();
@@ -670,26 +667,21 @@ uiwait
         tag = str2num(get(hObj,'Tag'));%Nummer des VOI, Nummer der Bedingung, Nummer der Zeile in Figure
 
         delete(data.btnDelete(tag(3)));
-        data.btnDelete(tag(3)) = nan;
         
         if isfield(data,'editDose')
            if tag(3)<= length(data.editDose)
                delete(data.editDose(tag(3)))
-               data.editDose(tag(3)) = nan;
            end
         end
 
         if isfield(data,'editExponent')
             if tag(3)<= length(data.editExponent)
                  delete(data.editExponent(tag(3)))
-                 data.editExponent(tag(3))=nan;
             end
         end
                
         delete(data.editPenalty(tag(3)));
-        data.editPenalty(tag(3))=nan;
         delete(data.editPriority(tag(3)));
-        data.editPriority(tag(3))=nan;
         
         % remember VOI in order to delete from cst
         list = get(data.VOIText(1,tag(3)),'String');
@@ -716,13 +708,13 @@ uiwait
         end
    
         delete(data.VOIText(1,tag(3)));
-        data.VOIText(tag(3))=nan;
+        %data.VOIText(tag(3))=nan;
         
         delete(data.popupObjFunc(tag(3)));
-        data.popupObjFunc(tag(3))=nan;
+        %data.popupObjFunc(tag(3))=nan;
         
         delete(data.popupVOIType(tag(3)));
-        data.popupVOIType(tag(3))=nan;
+        %data.popupVOIType(tag(3))=nan;
         guidata(gcf,data);
     end
 
