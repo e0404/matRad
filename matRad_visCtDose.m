@@ -138,7 +138,7 @@ if nargin > 0
     end
     
     % Open figure
-    myWindow = figure('Name','matRad CT/dose/VOI bowser','NumberTitle','off','units','normalized','outerposition',[0 0 1 1],'ToolBar','figure');
+    myWindow = figure('Name','matRad CT/dose/VOI browser','NumberTitle','off','units','normalized','outerposition',[0 0 1 1],'ToolBar','figure');
     myAxes   = axes('Position', [0.35 0.1 0.55 0.8],'YDir','reverse');
     guidata(myWindow,data);
     
@@ -221,7 +221,7 @@ if ~isempty(data.optResult) && data.TypeOfPlot ==1
 
     %% dose iso dose lines
     if ~isempty(mVolume) && data.TypeOfPlot ==1 && ~isvector(mVolume)
-           vLevels = round(linspace(0,ceil(max(mVolume(:))),4).*100)/100;
+           vLevels = round(linspace(0,ceil(max(mVolume(:))),6).*100)/100;
         if data.plane == 1  % Coronal plane
             [~,myContour] = contour(myAxes,squeeze(mVolume(data.slice,:,:)),vLevels);
         elseif data.plane == 2 % Sagittal plane
@@ -229,7 +229,7 @@ if ~isempty(data.optResult) && data.TypeOfPlot ==1
         elseif data.plane == 3 % Axial plane
              [~,myContour] = contour(myAxes,squeeze(mVolume(:,:,data.slice)),vLevels);
         end
-
+        caxis(myAxes,[0, max(mVolume(:))])
         % turn off legend for this data set
         hAnnotation = get(myContour,'Annotation');
         hLegendEntry = get(hAnnotation','LegendInformation');
@@ -240,12 +240,10 @@ if ~isempty(data.optResult) && data.TypeOfPlot ==1
         end
     end
 
-    cBarHandel = colorbar('peer',myAxes);
+    cBarHandel = colorbar('peer',myAxes,'colormap',jet,'FontSize',14,'yAxisLocation','right');
     Idx = find(strcmp(data.SelectedDisplayOption,data.fName(:,1)));
     set(get(cBarHandel,'ylabel'),'String', [data.fName{Idx,1} ' in ' data.fName{Idx,3} ],'fontsize',16);
-    set(cBarHandel,'yAxisLocation','right');
-    set(cBarHandel,'FontSize',14);
-    
+
     if isempty(strfind(data.SelectedDisplayOption,'RBE'))
         set(cBarHandel,'YLim',[0 max(mVolume(:))]);
         caxis([0, max(mVolume(:))])
