@@ -33,28 +33,28 @@
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-%load TG119.mat
+load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-load BOXPHANTOM.mat
+%load BOXPHANTOM.mat
 
 % meta information for treatment plan
-pln.SAD             = 10000; %[mm]
+pln.SAD             = 1000; %[mm]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0 180]; % [°]
-pln.couchAngles     = [0 0]; % [°]
+pln.gantryAngles    = [0:72:359]; % [°]
+pln.couchAngles     = [0 0 0 0 0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct.cube);
 pln.voxelDimensions = size(ct.cube);
-pln.radiationMode   = 'carbon'; % either photons / protons / carbon
-pln.bioOptimization = true;   % false indicates physical optimization and true indicates biological optimization
+pln.radiationMode   = 'photons'; % either photons / protons / carbon
+pln.bioOptimization = false;   % false indicates physical optimization and true indicates biological optimization
 pln.numOfFractions  = 30;
 
 %% change objective function settings if desired
 matRad_modCst(cst);
 
-% initial visualization
+%% initial visualization
 matRad_visCtDose([],cst,pln,ct);
 
 %% generate steering file
@@ -77,7 +77,8 @@ matRad_visCtDose(optResult,cst,pln,ct);
 
 %% sequencing
 if strcmp(pln.radiationMode,'photons')
-    Sequencing = matRad_xiaLeafSequencing(optResult.w,stf,7,1);
+    %Sequencing = matRad_xiaLeafSequencing(optResult.w,stf,7,1);
+    Sequencing = matRad_engelLeafSequencing(optResult.w,stf,7);
     seqResult = matRad_mxCalcDose(dij,Sequencing.w,cst);
     matRad_visCtDose(seqResult,cst,pln,ct);
 end

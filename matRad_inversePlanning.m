@@ -93,7 +93,9 @@ optResult = matRad_optimize(objFunc,wInit);
 optResult.physicalDose = reshape(dij.physicalDose*optResult.w,dij.dimensions);
 
 if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
-    
+
+    fprintf('Calculating alpha/beta/effect/cube...');
+
     a_x = zeros(size(optResult.physicalDose));
     b_x = zeros(size(optResult.physicalDose));
     for  i = 1:size(cst,1)
@@ -119,5 +121,7 @@ if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
     optResult.alpha = reshape(optResult.alpha,dij.dimensions);
     optResult.beta = ( (dij.mSqrtBetaDose.*spfun(@(x)1./x,dij.physicalDose)) * optResult.w ).^2;
     optResult.beta = reshape(optResult.beta,dij.dimensions);
-         
+    
+    fprintf(' done!\n');
+    
 end

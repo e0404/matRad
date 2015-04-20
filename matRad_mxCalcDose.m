@@ -46,6 +46,8 @@ d.w = w;
 d.physicalDose = reshape(dij.physicalDose*w,dij.dimensions);
 
 if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
+    
+    fprintf('Calculating alpha/beta/effect/cube...\');
    
     a_x = zeros(size(d.physicalDose));
     b_x = zeros(size(d.physicalDose));
@@ -68,5 +70,6 @@ if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
     d.beta = ( (dij.mSqrtBetaDose.*spfun(@(x)1./x,dij.physicalDose)) * d.w ).^2;
     d.beta = reshape(d.beta,dij.dimensions);
     
+    fprintf(' done!\n')
 end
 
