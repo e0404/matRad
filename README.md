@@ -4,6 +4,8 @@
 
 This is the current development branch of matRad. If you are looking for a (more) stable release please use the master branch at <https://github.com/e0404/matRad>.
 
+---
+
 matRad is an open source treatment planning system for radiation therapy
 written in Matlab. It is meant for educational purposes and supports 
 planning of intensity-modulated radiation therapy for mutliple 
