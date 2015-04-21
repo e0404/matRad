@@ -8,6 +8,8 @@ German Cancer Reserach Center DKFZ in Heidelberg, Germany, and other
 contributors around the world. We are always looking for more people
 willing to help improve matRad. Do not hesitate and get in touch.
 
+More information can be found on the project page  at <http://e0404.github.io/matRad/>; a wiki documentation is under constant development at <https://github.com/e0404/matRad/wiki>.
+
 ---
 
 Copyright 2015, Mark Bangert, on behalf of the matRad development team
