@@ -22,7 +22,7 @@ function varargout = matRadGUI(varargin)
 
 % Edit the above text to modify the response to help matRadGUI
 
-% Last Modified by GUIDE v2.5 22-Apr-2015 15:57:08
+% Last Modified by GUIDE v2.5 22-Apr-2015 20:30:12
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -73,6 +73,7 @@ if ~isempty(varargin)
     end
     if ~isempty(varargin{1,2})
         handles.cst = varargin{1,2};
+        setCstTable(handles);
     end
     if ~isempty(varargin{1,3})
         handles.pln = varargin{1,3};
@@ -447,7 +448,12 @@ if ~isempty(handles.optResult) &&  get(handles.popupTypeOfPlot,'Value')== 1 ...
         end
 
         % plot colorbar
-        cBarHandel = colorbar('peer',handles.axesFig,'colormap',jet,'FontSize',14,'yAxisLocation','right');
+        v=version;
+        if str2num(v(1:3))>=8.5
+            cBarHandel = colorbar('peer',handles.axesFig,'colormap',jet,'FontSize',14,'yAxisLocation','right');
+        else
+            cBarHandel = colorbar('peer',handles.axesFig,'FontSize',14,'yAxisLocation','right');
+        end
         Idx = find(strcmp(handles.SelectedDisplayOption,handles.fName(:,1)));
         set(get(cBarHandel,'ylabel'),'String', [handles.fName{Idx,1} ' in ' handles.fName{Idx,3} ],'fontsize',16);
 
@@ -953,3 +959,57 @@ if strcmp(get(hObject,'Enable') ,'on')
  UpdatePlot(handles);
  
 end
+
+
+function setCstTable(handles)
+
+cst = handles.cst;
+
+columnname = {'VOI','VOI Type','Priority','Obj Func','Penalty','Dose','EUD'};
+columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
+       {'square underdosing','square overdosing','square deviation', 'mean', 'EUD'},...
+       'numeric','numeric','numeric'};
+   
+dimArr = [size(cst,1)-sum(strcmp([cst(:,3)],'IGNORED')) size(columnname,2)];
+data = cell(dimArr);
+Counter = 1;
+for i = 1:size(cst,1)
+   
+   if strcmp(cst(i,3),'IGNORED')~=1
+       for j=1:size(cst{i,6},1)
+       %VOI
+       data{Counter,1}=cst{i,2};
+       %VOI Type
+       data{Counter,2}=cst{i,3};
+       %Priority
+       data{Counter,3}=cst{i,5}.Priority;
+       %Objective Function
+       objFunc = cst{i,6}(j).type;
+       data{Counter,4}=objFunc;
+       %penalty
+       data{Counter,5}=cst{i,6}(j).parameter(1);
+       switch objFunc
+           case 'EUD'
+                data{Counter,7}=cst{i,6}(j).parameter(1);
+                data{Counter,6}='';
+           case 'mean'
+               data{Counter,6}='';
+               data{Counter,7}='';
+           case {'square underdosing','square overdosing','square deviation'}
+               %Dose
+               data{Counter,6}=cst{i,6}(j).parameter(2);
+               data{Counter,7}='';
+       end
+   
+       Counter = Counter +1;
+       end
+   end
+   
+end
+set(handles.uiTable,'ColumnName',columnname);
+set(handles.uiTable,'ColumnFormat',columnformat);
+set(handles.uiTable,'ColumnEditable',[true true true true true true true]);
+set(handles.uiTable,'ColumnWidth',{'auto','auto','auto','auto','auto','auto','auto'});
+set(handles.uiTable,'Data',data);
+
+    
