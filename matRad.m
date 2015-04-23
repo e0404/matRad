@@ -33,7 +33,7 @@
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-load TG119.mat
+%load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
 load BOXPHANTOM.mat
@@ -69,7 +69,7 @@ doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),cst);
 matRadGUI
 %% inverse planning for imrt
 optResult = matRad_inversePlanning(dij,cst,pln);
-matRadGUI;
+matRadGUI
 %% sequencing
 if strcmp(pln.radiationMode,'photons')
     %Sequencing = matRad_xiaLeafSequencing(optResult.w,stf,7,1);

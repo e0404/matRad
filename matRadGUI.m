@@ -22,7 +22,7 @@ function varargout = matRadGUI(varargin)
 
 % Edit the above text to modify the response to help matRadGUI
 
-% Last Modified by GUIDE v2.5 23-Apr-2015 16:17:12
+% Last Modified by GUIDE v2.5 23-Apr-2015 18:03:35
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -109,7 +109,7 @@ end
 try
     if ~isempty(evalin('base','pln'))
             pln=evalin('base','pln');
-            setPln(pln);       
+            setPln(handles);       
     end
 catch
 end
@@ -128,22 +128,24 @@ end
 handles.SelectedBeam=1;
 handles.plane = get(handles.popupPlane,'Value');
 
-% set beam slider 
-set(handles.sliderBeamSelection,'Min',handles.SelectedBeam,'Max',pln.numOfBeams,...
-    'Value',handles.SelectedBeam,...
-    'SliderStep',[1/pln.numOfBeams-1 1/pln.numOfBeams-1],...
-    'Enable','off');
-
-% set slice slider
-set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-    'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
-     'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
-
-
+if handles.State >0
+    % set beam slider 
+%     if length(str2num(get(handles.editGantryAngle,'String')))>1
+%         set(handles.sliderBeamSelection,'Min',handles.SelectedBeam,'Max',pln.numOfBeams,...
+%             'Value',handles.SelectedBeam,...
+%             'SliderStep',[1/(pln.numOfBeams-1) 1/(pln.numOfBeams-1)],...
+%             'Enable','off');
+%     end
+    % set slice slider
+    set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
+        'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
+         'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+end
 % Update handles structure
+guidata(hObject, handles);
 UpdateState(handles)
 UpdatePlot(handles)
-guidata(hObject, handles);
+
 % UIWAIT makes matRadGUI wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
@@ -166,25 +168,30 @@ function btnLoad_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 [FileName, FilePath] = uigetfile;
 load([FilePath FileName]);
-pln.isoCenter = matRad_getIsoCenter(cst,ct,0);
 
 setCstTable(handles,cst);
 
+
+handles.State = 1;
+set(handles.popupTypeOfPlot,'Value',1);
+assignin('base','ct',ct);
+assignin('base','cst',cst);
+
+getPln(handles);
+pln=evalin('base','pln');
 % set slice slider
 handles.plane = get(handles.popupPlane,'value');
 set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
     'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
      'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
   
-handles.State = 1;
-set(handles.popupTypeOfPlot,'Value',1);
+
+
 guidata(hObject,handles);
 UpdatePlot(handles);
 UpdateState(handles);
 
-assignin('base','pln',pln);
-assignin('base','ct',ct);
-assignin('base','cst',cst);
+
 
 
 
@@ -195,8 +202,11 @@ function editSAD_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of editSAD as text
 %        str2double(get(hObject,'String')) returns contents of editSAD as a double
-
-
+if handles.State>0
+    handles.State=1;
+    UpdateState(handles);
+    guidata(hObject,handles);
+end
 % --- Executes during object creation, after setting all properties.
 function editSAD_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to editSAD (see GCBO)
@@ -219,7 +229,11 @@ function editBixelWidth_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of editBixelWidth as text
 %        str2double(get(hObject,'String')) returns contents of editBixelWidth as a double
-
+if handles.State>0
+    handles.State=1;
+    UpdateState(handles);
+    guidata(hObject,handles);
+end
 
 % --- Executes during object creation, after setting all properties.
 function editBixelWidth_CreateFcn(hObject, eventdata, handles)
@@ -242,7 +256,11 @@ function editGantryAngle_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of editGantryAngle as text
 %        str2double(get(hObject,'String')) returns contents of editGantryAngle as a double
-
+if handles.State>0
+    handles.State=1;
+    UpdateState(handles);
+    guidata(hObject,handles);
+end
 
 % --- Executes during object creation, after setting all properties.
 function editGantryAngle_CreateFcn(hObject, eventdata, handles)
@@ -265,7 +283,11 @@ function editCouchAngle_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of editCouchAngle as text
 %        str2double(get(hObject,'String')) returns contents of editCouchAngle as a double
-
+if handles.State>0
+    handles.State=1;
+    UpdateState(handles);
+    guidata(hObject,handles);
+end
 
 % --- Executes during object creation, after setting all properties.
 function editCouchAngle_CreateFcn(hObject, eventdata, handles)
@@ -288,7 +310,11 @@ function popupRadMode_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns popupRadMode contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from popupRadMode
-
+if handles.State>0
+    handles.State=1;
+    UpdateState(handles);
+    guidata(hObject,handles);
+end
 
 % --- Executes during object creation, after setting all properties.
 function popupRadMode_CreateFcn(hObject, eventdata, handles)
@@ -311,7 +337,11 @@ function editFraction_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of editFraction as text
 %        str2double(get(hObject,'String')) returns contents of editFraction as a double
-
+if handles.State>0
+    handles.State=1;
+    UpdateState(handles);
+    guidata(hObject,handles);
+end
 
 % --- Executes during object creation, after setting all properties.
 function editFraction_CreateFcn(hObject, eventdata, handles)
@@ -333,7 +363,11 @@ function radbtnBioOpt_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of radbtnBioOpt
-
+if handles.State>0
+    handles.State=1;
+    UpdateState(handles);
+    guidata(hObject,handles);
+end
 
 % --- Executes on button press in btnCalcDose.
 function btnCalcDose_Callback(hObject, eventdata, handles)
@@ -344,21 +378,28 @@ function btnCalcDose_Callback(hObject, eventdata, handles)
 %% get cst from table
 getCstTable(handles);
 
-%% read plan from gui
-handles= getPln(handles);
+%% read plan from gui and save it to workspace
+getPln(handles);
 %% generate steering file
-handles.stf = matRad_generateStf(handles.ct,handles.cst,handles.pln);
+stf = matRad_generateStf(evalin('base','ct'),...
+                                 evalin('base','cst'),...
+                                 evalin('base','pln'));
+assignin('base','stf',stf);
 h=waitbar(0,'dose calculation ... ');
-if strcmp(handles.pln.radiationMode,'photons')
-    handles.dij = matRad_calcPhotonDose(handles.ct,handles.stf,handles.pln,handles.cst,0);
-elseif strcmp(handles.pln.radiationMode,'protons') || strcmp(handles.pln.radiationMode,'carbon')
-    handles.dij = matRad_calcParticleDose(handles.ct,handles.stf,handles.pln,handles.cst,0);
+if strcmp(evalin('base','pln.radiationMode'),'photons')
+    dij = matRad_calcPhotonDose(evalin('base','ct'),stf,evalin('base','pln'),evalin('base','cst'),0);
+elseif strcmp(evalin('base','pln.radiationMode'),'protons') || strcmp(evalin('base','pln.radiationMode'),'carbon')
+    dij = matRad_calcParticleDose(evalin('base','ct'),stf,evalin('base','pln'),evalin('base','cst'),0);
 end
-handles.optResult = matRad_mxCalcDose(handles.dij,ones(handles.dij.totalNumOfBixels,1),handles.cst);
 close(h);
+
+doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),evalin('base','cst'));
+assignin('base','dij',dij);
+assignin('base','doseVis',doseVis);
 handles.State = 2;
 handles.SelectedDisplayOptionIdx=1;
 handles.SelectedDisplayOption='physicalDose';
+handles.SelectedBeam=1;
 guidata(hObject,handles);
 UpdatePlot(handles);
 UpdateState(handles);
@@ -366,6 +407,8 @@ UpdateState(handles);
 
 function UpdatePlot(handles)
 %%
+cla(handles.axesFig,'reset');
+
 if handles.State ==0
     return
 elseif handles.State > 0
@@ -444,10 +487,10 @@ CutOffLevel= 0.03;
     cla(handles.axesFig);
     if plane == 1 % Coronal plane
         ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube(slice,:,:))/max(ct.cube(:))),bone);
-        axis([1 size(ct.cube,1) 1 size(ct.cube,2)]);
+        axis(handles.axesFig,[1 size(ct.cube,1) 1 size(ct.cube,2)]);
     elseif plane == 2 % Sagital plane
         ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube(:,slice,:))/max(ct.cube(:))),bone);
-        axis([1 size(handles.ct.cube,3) 1 size(handles.ct.cube,2)]);
+        axis(handles.axesFig,[1 size(ct.cube,3) 1 size(ct.cube,2)]);
     elseif plane == 3 % Axial plane
         ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube(:,:,slice))/max(ct.cube(:))),bone);
         axis(handles.axesFig,[1 size(ct.cube,1) 1 size(ct.cube,3)]); 
@@ -598,7 +641,7 @@ if  plane == 3% Axial plane
         title('Axial plane','FontSize',16)
     end
 elseif plane == 2 % Sagittal plane
-    if ~isempty(handles.pln)
+    if ~isempty(pln)
         set(gca,'XTick',0:50/ct.resolution(3):1000)
         set(gca,'YTick',0:50/ct.resolution(2):1000)
         set(gca,'XTickLabel',0:50:1000*ct.resolution(3))
@@ -612,7 +655,7 @@ elseif plane == 2 % Sagittal plane
         title('Sagital plane','FontSize',15);
     end
 elseif plane == 1 % Coronal plane
-    if ~isempty(handles.pln)
+    if ~isempty(pln)
         set(gca,'XTick',0:50/ct.resolution(3):1000)
         set(gca,'YTick',0:50/ct.resolution(1):1000)
         set(gca,'XTickLabel',0:50:1000*ct.resolution(3))
@@ -632,7 +675,7 @@ set(gca,'FontSize',16);
 
 
 %% profile plot
-if get(handles.popupTypeOfPlot,'Value')==2 && ~isempty(Result)
+if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
      
     % clear view and initialize some values
     cla(handles.axesFig,'reset')
@@ -881,18 +924,14 @@ function btnOptimize_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 h=waitbar(0,'dose optimization ... ');
 
-if ~isfield(handles.optResult,'totalNumOfBixels')
-    handles.optResult.totalNumOfBixels=handles.stf.totalNumOfBixels;
-end
-
-%B = evalin('base','dij');
-%assignin('base','dij2',B);
-
-handles.optResult = matRad_inversePlanning(handles.dij,handles.cst,handles.pln);
+optResult = matRad_inversePlanning(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'));
+assignin('base','optResult',optResult);
 close(h)
+
 handles.State=3;
 handles.SelectedDisplayOptionIdx=1;
 handles.SelectedDisplayOption='physicalDose';
+handles.SelectedBeam=1;
 guidata(hObject,handles);
 UpdatePlot(handles);
 UpdateState(handles);
@@ -917,9 +956,19 @@ if get(hObject,'Value') ==1   % intensity plot
     set(handles.sliderSlice,'Enable','on');
     
 elseif get(hObject,'Value') ==2 % profile plot
-    pln=evalin('base','pln');
-    if pln.numOfBeams>1
-        set(handles.sliderBeamSelection,'Enable','on')
+    
+    if length(str2num(get(handles.editGantryAngle,'String')))>1
+        set(handles.sliderBeamSelection,'Enable','on');
+        handles.SelectedBeam = 1;
+        if handles.State >0
+            pln = evalin('base','pln');
+            set(handles.sliderBeamSelection,'Min',handles.SelectedBeam,'Max',pln.numOfBeams,...
+                'Value',handles.SelectedBeam,...
+                'SliderStep',[1/(pln.numOfBeams-1) 1/(pln.numOfBeams-1)],...
+                'Enable','on');
+        end
+    else
+        handles.SelectedBeam=1;
     end
     set(handles.popupDisplayOption,'Enable','off')
     set(handles.btnProfileType,'Enable','on');
@@ -929,7 +978,7 @@ elseif get(hObject,'Value') ==2 % profile plot
     set(handles.radiobtnIsoDoseLines,'Enable','off');
     set(handles.sliderSlice,'Enable','off');
     
-    handles.SelectedBeam = get(handles.sliderBeamSelection,'Value');
+    
     
     set(handles.btnProfileType,'Enable','on')
     if strcmp(get(handles.btnProfileType,'String'),'lateral')
@@ -1115,31 +1164,31 @@ for i = 1:size(OldCst,1)
             if isempty(data{j,4}) ||~isempty(findstr(data{j,4}, 'Select'))
                FlagValidParameters=false;
             else
-                 NewCst{Cnt,4}(CntObjF).type = data{j,4};
+                 NewCst{Cnt,4}(CntObjF,1).type = data{j,4};
             end
              %Penalty
             if isempty(data{j,5})
                FlagValidParameters=false;
             else
-                 NewCst{Cnt,4}(CntObjF).parameter(1,1) = data{j,5};
+                 NewCst{Cnt,4}(CntObjF,1).parameter(1,1) = data{j,5};
             end
              
             %get exponent
-            if strcmp(NewCst{Cnt,4}(CntObjF).type,'EUD')
+            if strcmp(NewCst{Cnt,4}(CntObjF,1).type,'EUD')
                 if isempty(data{j,7})
                    FlagValidParameters=false;
                 else
-                    NewCst{Cnt,4}(CntObjF).exponent = data{j,7};
+                    NewCst{Cnt,4}(CntObjF,1).exponent = data{j,7};
                 end
             end
             
             %get dose
-            if sum(strcmp(NewCst{Cnt,4}(CntObjF).type,{'EUD','mean'})) == 0
+            if sum(strcmp(NewCst{Cnt,4}(CntObjF,1).type,{'EUD','mean'})) == 0
                 % read dose
                 if isempty(data{j,6})
                    FlagValidParameters=false;
                 else
-                     NewCst{Cnt,4}(CntObjF).parameter(1,2) = data{j,6};
+                     NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = data{j,6};
                 end
             end
             
@@ -1170,7 +1219,7 @@ if FlagValidParameters
                    boolChanged = true;
                    OldCst(m,6)=NewCst(n,4);
                    OldCst(m,3)=NewCst(n,2);
-                   OldCst{m,5}.Priority = NewCst(n,3);
+                   OldCst{m,5}.Priority = NewCst{n,3};
                end 
            end
 
@@ -1237,17 +1286,36 @@ function uiTable_CellEditCallback(hObject, eventdata, handles)
 
 % apply changes to the other cells
 
-data = hObject.Data;
+data = get(hObject,'Data');
+if eventdata.Indices(2) == 1 || eventdata.Indices(2) == 2 ...
+        || eventdata.Indices(2) == 3
+    handles.State=1;
+else
+    if handles.State ==3
+        handles.State=2;
+    end
+end
 %%
 if eventdata.Indices(2) == 3  || eventdata.Indices(2) == 5
     if CheckValidity(eventdata.NewData) ==false
             data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
     end
 end
+
+if eventdata.Indices(2) == 1 && eventdata.Indices(1) == size(data,1)
+    
+    for i = 1:size(data,1)
+        if strcmp(eventdata.NewData,data{i,1})
+           data{eventdata.Indices(1),2}=data{i,2};
+           data{eventdata.Indices(1),3}=data{i,3};
+        end
+    end
+    
+end
+
 %%
 for i=1:size(data,1)
     if i~=eventdata.Indices(1) && strcmp(data(i,1),data(eventdata.Indices(1)))
-        
         %set VOI type and priority
         data{i,2} = data{eventdata.Indices(1),2};
         data{i,3} = data{eventdata.Indices(1),3};
@@ -1286,6 +1354,8 @@ end
 set(handles.txtInfo,'String','plan changed');
 set(handles.uiTable,'data',data)
 
+UpdateState(handles);
+
 
 
 function FlagValidity = CheckValidity(Val) 
@@ -1317,49 +1387,57 @@ function UpdateState(handles)
       set(handles.txtInfo,'String','no data loaded');
       set(handles.btnCalcDose,'Enable','off');
       set(handles.btnOptimize ,'Enable','off');
+      set(handles.btnDVH,'Enable','off');
       
      case 1
       set(handles.txtInfo,'String','ready for dose calculation');
       set(handles.btnCalcDose,'Enable','on');
-      set(handles.btnOptimize ,'Enable','off');       
+      set(handles.btnOptimize ,'Enable','off');  
+      set(handles.btnDVH,'Enable','off');
          
      case 2
       set(handles.txtInfo,'String','ready for optimization');   
       set(handles.btnCalcDose,'Enable','on');
       set(handles.btnOptimize ,'Enable','on');
+      set(handles.btnDVH,'Enable','off');
      
      case 3
       set(handles.txtInfo,'String','plan is optimized');   
       set(handles.btnCalcDose,'Enable','on');
-      set(handles.btnOptimize ,'Enable','on');   
+      set(handles.btnOptimize ,'Enable','on');
+      set(handles.btnDVH,'Enable','on');
  end
 
  
  
  
 function setPln(handles)
-set(handles.editBixelWidth,'String',num2str(handles.pln.bixelWidth));
-set(handles.editSAD,'String',num2str(handles.pln.SAD));
-set(handles.editFraction,'String',num2str(handles.pln.numOfFractions));
-set(handles.editGantryAngle,'String',num2str(handles.pln.gantryAngles));
-set(handles.editCouchAngle,'String',num2str(handles.pln.couchAngles));
-set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),handles.pln.radiationMode)));
-set(handles.radbtnBioOpt,'Value',handles.pln.bioOptimization);
+pln=evalin('base','pln');
+set(handles.editBixelWidth,'String',num2str(pln.bixelWidth));
+set(handles.editSAD,'String',num2str(pln.SAD));
+set(handles.editFraction,'String',num2str(pln.numOfFractions));
+set(handles.editGantryAngle,'String',num2str((pln.gantryAngles)));
+set(handles.editCouchAngle,'String',num2str((pln.couchAngles)));
+set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),pln.radiationMode)));
+set(handles.radbtnBioOpt,'Value',pln.bioOptimization);
  
      
-function handles = getPln(handles)
-handles.pln.SAD             = str2num(get(handles.editSAD,'String')); %[mm]
-handles.pln.bixelWidth      = str2num(get(handles.editBixelWidth,'String')); % [mm] / also corresponds to lateral spot spacing for particles
-handles.pln.gantryAngles    = str2num(get(handles.editGantryAngle,'String')); % [°]
-handles.pln.couchAngles     = str2num(get(handles.editCouchAngle,'String')); % [°]
-handles.pln.numOfBeams      = numel(handles.pln.gantryAngles);
-handles.pln.numOfVoxels     = numel(handles.ct.cube);
-handles.pln.voxelDimensions = size(handles.ct.cube);
+function getPln(handles)
+pln.SAD             = str2num(get(handles.editSAD,'String')); %[mm]
+pln.bixelWidth      = str2num(get(handles.editBixelWidth,'String')); % [mm] / also corresponds to lateral spot spacing for particles
+pln.gantryAngles    = str2num(get(handles.editGantryAngle,'String')); % [°]
+pln.couchAngles     = str2num(get(handles.editCouchAngle,'String')); % [°]
+pln.numOfBeams      = numel(pln.gantryAngles);
+ct=evalin('base','ct');
+pln.numOfVoxels     = numel(ct.cube);
+pln.voxelDimensions = size(ct.cube);
 contents                    = get(handles.popupRadMode,'String'); 
-handles.pln.radiationMode   =  contents{get(handles.popupRadMode,'Value')}; % either photons / protons / carbon
-handles.pln.bioOptimization = logical(get(handles.radbtnBioOpt,'Value'));   % false indicates physical optimization and true indicates biological optimization
-handles.pln.numOfFractions  = str2num(get(handles.editFraction,'String'));
-handles.pln.voxelDimensions = size(handles.ct.cube);
+pln.radiationMode   =  contents{get(handles.popupRadMode,'Value')}; % either photons / protons / carbon
+pln.bioOptimization = logical(get(handles.radbtnBioOpt,'Value'));   % false indicates physical optimization and true indicates biological optimization
+pln.numOfFractions  = str2num(get(handles.editFraction,'String'));
+pln.voxelDimensions = size(ct.cube);
+pln.isoCenter       = matRad_getIsoCenter(evalin('base','cst'),ct,0);
+assignin('base','pln',pln);
 
 
 % --- Executes on button press in btnTableSave.
@@ -1368,3 +1446,11 @@ function btnTableSave_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 getCstTable(handles);
+
+
+% --- Executes on button press in btnDVH.
+function btnDVH_Callback(hObject, eventdata, handles)
+% hObject    handle to btnDVH (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+matRad_calcDVH(evalin('base','optResult'),evalin('base','cst'))
