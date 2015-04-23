@@ -36,7 +36,7 @@
 load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-%load BOXPHANTOM.mat
+load BOXPHANTOM.mat
 
 % meta information for treatment plan
 pln.SAD             = 1000; %[mm]
@@ -51,12 +51,8 @@ pln.radiationMode   = 'carbon'; % either photons / protons / carbon
 pln.bioOptimization = true;   % false indicates physical optimization and true indicates biological optimization
 pln.numOfFractions  = 30;
 
-%% change objective function settings if desired
-matRad_modCst(cst);
-
-%% initial visualization
-
-%matRad_visCtDose([],cst,pln,ct);
+%% initial visualization and change objective function settings if desired
+matRadGUI
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
@@ -70,12 +66,10 @@ end
 
 %% Dose visualization
 doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),cst);
-%matRad_visCtDose(doseVis,cst,pln,ct);
-matRadGUI(doseVis,cst,pln,ct);
+matRadGUI
 %% inverse planning for imrt
 optResult = matRad_inversePlanning(dij,cst,pln);
-%matRad_visCtDose(optResult,cst,pln,ct);
-matRadGUI(optResult,cst,pln,ct);
+matRadGUI;
 %% sequencing
 if strcmp(pln.radiationMode,'photons')
     %Sequencing = matRad_xiaLeafSequencing(optResult.w,stf,7,1);
