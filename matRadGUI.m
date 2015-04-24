@@ -573,18 +573,18 @@ if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1 ...
                 if plane == 1  % Coronal plane
                     Slice=squeeze(mVolume(slice,:,:));
                     if sum(Slice(:))>1
-                        [~,myContour] = contour(Slice,vLevels);
+                        [~,myContour] = contour(Slice);
                     end
                 elseif plane == 2 % Sagittal plane
                     Slice=squeeze(mVolume(:,slice,:));
                     if sum(Slice(:))>1
-                        [~,myContour] = contour(Slice,vLevels);
+                        [~,myContour] = contour(Slice);
                     end
                 elseif plane == 3 % Axial plane
                     Slice=squeeze(mVolume(:,:,slice));
                     if sum(Slice(:))>1
                         hold on
-                     [~,myContour] = contour(Slice,vLevels);
+                     [~,myContour] = contour(Slice);
                     end
                 end
 
@@ -922,11 +922,11 @@ function btnOptimize_Callback(hObject, eventdata, handles)
 % hObject    handle to btnOptimize (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-h=waitbar(0,'dose optimization ... ');
+g=waitbar(0,'dose optimization ... ');
 
 optResult = matRad_inversePlanning(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'));
 assignin('base','optResult',optResult);
-close(h)
+close(g)
 
 handles.State=3;
 handles.SelectedDisplayOptionIdx=1;
@@ -1446,6 +1446,7 @@ function btnTableSave_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 getCstTable(handles);
+
 
 
 % --- Executes on button press in btnDVH.
