@@ -52,7 +52,7 @@ pln.bioOptimization = true;   % false indicates physical optimization and true i
 pln.numOfFractions  = 30;
 
 %% initial visualization and change objective function settings if desired
-matRadGUI
+%matRadGUI
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
@@ -66,10 +66,12 @@ end
 
 %% Dose visualization
 doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),cst);
+matRad_visCtDose(doseVis,cst,pln,ct)
 matRadGUI
 %% inverse planning for imrt
 optResult = matRad_inversePlanning(dij,cst,pln);
 matRadGUI
+
 %% sequencing
 if strcmp(pln.radiationMode,'photons')
     %Sequencing = matRad_xiaLeafSequencing(optResult.w,stf,7,1);

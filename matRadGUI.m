@@ -22,7 +22,7 @@ function varargout = matRadGUI(varargin)
 
 % Edit the above text to modify the response to help matRadGUI
 
-% Last Modified by GUIDE v2.5 23-Apr-2015 18:03:35
+% Last Modified by GUIDE v2.5 27-Apr-2015 15:13:32
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -59,7 +59,7 @@ handles.output = hObject;
 axes(handles.axesLogo)
 h=imshow('matrad_hat40.png');
 
- 
+
 %% 
 % handles.State=0   no data available
 % handles.State=1   data available ready for dose calculation
@@ -129,18 +129,14 @@ handles.SelectedBeam=1;
 handles.plane = get(handles.popupPlane,'Value');
 
 if handles.State >0
-    % set beam slider 
-%     if length(str2num(get(handles.editGantryAngle,'String')))>1
-%         set(handles.sliderBeamSelection,'Min',handles.SelectedBeam,'Max',pln.numOfBeams,...
-%             'Value',handles.SelectedBeam,...
-%             'SliderStep',[1/(pln.numOfBeams-1) 1/(pln.numOfBeams-1)],...
-%             'Enable','off');
-%     end
     % set slice slider
     set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
         'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
          'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
 end
+
+handles.profileOffset = 0;
+
 % Update handles structure
 guidata(hObject, handles);
 UpdateState(handles)
@@ -185,7 +181,6 @@ set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
     'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
      'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
   
-
 
 guidata(hObject,handles);
 UpdatePlot(handles);
@@ -374,7 +369,7 @@ function btnCalcDose_Callback(hObject, eventdata, handles)
 % hObject    handle to btnCalcDose (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+set(handles.figure1,'Pointer','watch');
 %% get cst from table
 if ~getCstTable(handles);
     return
@@ -393,6 +388,8 @@ elseif strcmp(evalin('base','pln.radiationMode'),'protons') || strcmp(evalin('ba
     dij = matRad_calcParticleDose(evalin('base','ct'),stf,evalin('base','pln'),evalin('base','cst'),0);
 end
 close(h);
+
+set(handles.figure1,'Pointer','arrow');
 
 doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),evalin('base','cst'));
 assignin('base','dij',dij);
@@ -488,17 +485,20 @@ CutOffLevel= 0.03;
     cla(handles.axesFig);
     if plane == 1 % Coronal plane
         ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube(slice,:,:))/max(ct.cube(:))),bone);
-        axis(handles.axesFig,[1 size(ct.cube,1) 1 size(ct.cube,2)]);
+        %axis(handles.axesFig,[1 size(ct.cube,1) 1 size(ct.cube,2)]);
     elseif plane == 2 % Sagital plane
         ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube(:,slice,:))/max(ct.cube(:))),bone);
-        axis(handles.axesFig,[1 size(ct.cube,3) 1 size(ct.cube,2)]);
+        %axis(handles.axesFig,[1 size(ct.cube,3) 1 size(ct.cube,2)]);
     elseif plane == 3 % Axial plane
         ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube(:,:,slice))/max(ct.cube(:))),bone);
-        axis(handles.axesFig,[1 size(ct.cube,1) 1 size(ct.cube,3)]); 
+        %axis(handles.axesFig,[1 size(ct.cube,1) 1 size(ct.cube,3)]); 
     end
 
-    imshow(ct_rgb, 'Parent', handles.axesFig),hold on;
-    axes(handles.axesFig),hold on 
+    %imshow(ct_rgb, 'Parent', handles.axesFig),hold on;
+    %axes(handles.axesFig),hold on 
+    
+    axes(handles.axesFig)
+    ctImageHandle = image(ct_rgb);
 end
 
 %% plot dose cube
@@ -595,7 +595,12 @@ if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1 ...
                     hAnnotation = get(myContour,'Annotation');
                     hLegendEntry = get(hAnnotation','LegendInformation');
                     set(hLegendEntry,'IconDisplayStyle','off')
-                    set(myContour,'LabelSpacing',100,'ShowText','on')
+                    set(myContour,'LabelSpacing',100)
+                    if get(handles.radiobtnIsoDoseLinesLabels,'Value') == 0
+                        set(myContour,'ShowText','off')
+                    else
+                        set(myContour,'ShowText','on')
+                    end
                  end
         end
 
@@ -606,6 +611,7 @@ end
 
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
     colors = jet;
+    hold on,
     colors = colors(round(linspace(1,63,size(cst,1))),:);
     mask = zeros(size(ct.cube)); % create zero cube with same dimeonsions like dose cube
     for s = 1:size(cst,1)
@@ -632,7 +638,7 @@ if  plane == 3% Axial plane
         set(handles.axesFig,'XTick',0:50/ct.resolution(1):1000);
         set(handles.axesFig,'YTick',0:50/ct.resolution(2):1000);
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(1));
-        set(gca,'YTickLabel',0:50:1000*ct.resolution(2));   
+        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(2));   
         xlabel('x [mm]','FontSize',16)
         ylabel('y [mm]','FontSize',16)
         title('Axial plane','FontSize',16)
@@ -643,10 +649,10 @@ if  plane == 3% Axial plane
     end
 elseif plane == 2 % Sagittal plane
     if ~isempty(pln)
-        set(gca,'XTick',0:50/ct.resolution(3):1000)
-        set(gca,'YTick',0:50/ct.resolution(2):1000)
-        set(gca,'XTickLabel',0:50:1000*ct.resolution(3))
-        set(gca,'YTickLabel',0:50:1000*ct.resolution(2))
+        set(handles.axesFig,'XTick',0:50/ct.resolution(3):1000)
+        set(handles.axesFig,'YTick',0:50/ct.resolution(2):1000)
+        set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(3))
+        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(2))
         xlabel('z [mm]','FontSize',16);
         ylabel('y [mm]','FontSize',16);
         title('Sagital plane','FontSize',15);
@@ -657,10 +663,10 @@ elseif plane == 2 % Sagittal plane
     end
 elseif plane == 1 % Coronal plane
     if ~isempty(pln)
-        set(gca,'XTick',0:50/ct.resolution(3):1000)
-        set(gca,'YTick',0:50/ct.resolution(1):1000)
-        set(gca,'XTickLabel',0:50:1000*ct.resolution(3))
-        set(gca,'YTickLabel',0:50:1000*ct.resolution(1))
+        set(handles.axesFig,'XTick',0:50/ct.resolution(3):1000)
+        set(handles.axesFig,'YTick',0:50/ct.resolution(1):1000)
+        set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(3))
+        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(1))
         xlabel('z [mm]','FontSize',16)
         ylabel('x [mm]','FontSize',16)
         title('Coronal plane','FontSize',16)
@@ -672,7 +678,7 @@ elseif plane == 1 % Coronal plane
 end
 
 axis equal;
-set(gca,'FontSize',16);  
+set(gca,'FontSize',14);  
 
 
 %% profile plot
@@ -695,12 +701,12 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
                  -sind(pln.couchAngles(handles.SelectedBeam)) 0 cosd(pln.couchAngles(handles.SelectedBeam))];
     
     if strcmp(handles.ProfileType,'longitudinal')
-        sourcePointBEV = [0 -pln.SAD   0];
-        targetPointBEV = [0 pln.SAD   0];
+        sourcePointBEV = [handles.profileOffset -pln.SAD   0];
+        targetPointBEV = [handles.profileOffset pln.SAD   0];
         sMargin = -1;
     elseif strcmp(handles.ProfileType,'lateral')
-        sourcePointBEV = [-pln.SAD 0   0];
-        targetPointBEV = [pln.SAD 0  0];
+        sourcePointBEV = [-pln.SAD handles.profileOffset   0];
+        targetPointBEV = [pln.SAD handles.profileOffset   0];
         sMargin = 30;
     end
     rotSourcePointBEV = sourcePointBEV*rotMx_XY*rotMx_XZ;
@@ -814,9 +820,12 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
         PlotHandles{Cnt,1}=plot([vRay(1) vRay(1)],[0 vLim(4)],'--','Linewidth',3,'color','k');hold on
         plot([vRay(end) vRay(end)], [0 vLim(4)],'--','Linewidth',3,'color','k');hold on
     else
-        PlotHandles{Cnt,1} =0;
+        PlotHandles{Cnt,1} =[];
     end
-    h=legend([PlotHandles{:,1}],PlotHandles{:,2});
+    
+   Lines = PlotHandles(~cellfun(@isempty,PlotHandles(:,1)),1);
+   Labels = PlotHandles(~cellfun(@isempty,PlotHandles(:,1)),2);
+   h=legend([Lines{:}],Labels{:});
     set(h,'FontSize',10);
     % set axis limits
     if pln.bioOptimization == 0 || ~isfield(Result,'RBE')
@@ -830,8 +839,16 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
    
 end
 
-
-
+%% display command window output to textbox
+jDesktop = com.mathworks.mde.desk.MLDesktop.getInstance;
+jCmdWin = jDesktop.getClient('Command Window');
+jTextArea = jCmdWin.getComponent(0).getViewport.getView;
+cwText = char(jTextArea.getText);
+set(handles.listBoxCmd,'String',cwText);
+numLines = size(get(handles.listBoxCmd,'String'),1);
+if numLines>7
+    set(handles.listBoxCmd, 'ListBoxTop', numLines-7);
+end
 
 
 
@@ -923,12 +940,10 @@ function btnOptimize_Callback(hObject, eventdata, handles)
 % hObject    handle to btnOptimize (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-g=waitbar(0,'dose optimization ... ');
-
+set(handles.figure1,'Pointer','watch');
 optResult = matRad_inversePlanning(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'));
 assignin('base','optResult',optResult);
-close(g)
-
+set(handles.figure1,'Pointer','arrow');
 handles.State=3;
 handles.SelectedDisplayOptionIdx=1;
 handles.SelectedDisplayOption='physicalDose';
@@ -948,37 +963,60 @@ function popupTypeOfPlot_Callback(hObject, eventdata, handles)
 %        contents{get(hObject,'Value')} returns selected item from popupTypeOfPlot
 if get(hObject,'Value') ==1   % intensity plot
     set(handles.sliderBeamSelection,'Enable','off')
+    set(handles.sliderOffset,'Enable','off')
     set(handles.popupDisplayOption,'Enable','on')
     set(handles.btnProfileType,'Enable','off');
     set(handles.popupPlane,'Enable','on');
     set(handles.radiobtnContour,'Enable','on');
     set(handles.radiobtnDose,'Enable','on');
     set(handles.radiobtnIsoDoseLines,'Enable','on');
+    set(handles.radiobtnIsoDoseLinesLabels,'Enable','on');
     set(handles.sliderSlice,'Enable','on');
     
 elseif get(hObject,'Value') ==2 % profile plot
     
-    if length(str2num(get(handles.editGantryAngle,'String')))>1
-        set(handles.sliderBeamSelection,'Enable','on');
-        handles.SelectedBeam = 1;
-        if handles.State >0
-            pln = evalin('base','pln');
-            set(handles.sliderBeamSelection,'Min',handles.SelectedBeam,'Max',pln.numOfBeams,...
-                'Value',handles.SelectedBeam,...
-                'SliderStep',[1/(pln.numOfBeams-1) 1/(pln.numOfBeams-1)],...
-                'Enable','on');
+    if handles.State >0
+        if length(str2double(strsplit(get(handles.editGantryAngle,'String'),' ')))>1
+            set(handles.sliderBeamSelection,'Enable','on');
+            handles.SelectedBeam = 1;
+
+                pln = evalin('base','pln');
+                set(handles.sliderBeamSelection,'Min',handles.SelectedBeam,'Max',pln.numOfBeams,...
+                    'Value',handles.SelectedBeam,...
+                    'SliderStep',[1/(pln.numOfBeams-1) 1/(pln.numOfBeams-1)],...
+                    'Enable','on');
+
+        else
+            handles.SelectedBeam=1;
         end
-    else
-        handles.SelectedBeam=1;
+    
+        handles.profileOffset=get(handles.sliderOffset,'Value');
+
+        vMinMax = [-100 100];
+        vRange = sum(abs(vMinMax));
+
+        ct = evalin('base','ct');
+        if strcmp(get(handles.btnProfileType,'String'),'lateral')
+            SliderStep = vRange/ct.resolution(1);       
+        else
+            SliderStep = vRange/ct.resolution(2);  
+        end
+        
+        set(handles.sliderOffset,'Min',vMinMax(1),'Max',vMinMax(2),...
+                    'Value',handles.profileOffset,...
+                    'SliderStep',[1/SliderStep 1/SliderStep],...
+                    'Enable','on');
     end
-    set(handles.popupDisplayOption,'Enable','off')
+    
+    
+    set(handles.popupDisplayOption,'Enable','off');
     set(handles.btnProfileType,'Enable','on');
     set(handles.popupPlane,'Enable','off');
     set(handles.radiobtnContour,'Enable','off');
     set(handles.radiobtnDose,'Enable','off');
     set(handles.radiobtnIsoDoseLines,'Enable','off');
     set(handles.sliderSlice,'Enable','off');
-    
+    set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
     
     
     set(handles.btnProfileType,'Enable','on')
@@ -1437,10 +1475,12 @@ set(handles.radbtnBioOpt,'Value',pln.bioOptimization);
  
      
 function getPln(handles)
+
+
 pln.SAD             = str2num(get(handles.editSAD,'String')); %[mm]
 pln.bixelWidth      = str2num(get(handles.editBixelWidth,'String')); % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = str2num(get(handles.editGantryAngle,'String')); % [°]
-pln.couchAngles     = str2num(get(handles.editCouchAngle,'String')); % [°]
+pln.gantryAngles    = str2double(strsplit(get(handles.editGantryAngle,'String'),'')); % [°]
+pln.couchAngles     = str2double(strsplit(get(handles.editCouchAngle,'String'),'')); % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 ct=evalin('base','ct');
 pln.numOfVoxels     = numel(ct.cube);
@@ -1469,3 +1509,71 @@ function btnDVH_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 matRad_calcDVH(evalin('base','optResult'),evalin('base','cst'))
+
+
+% --- Executes on selection change in listBoxCmd.
+function listBoxCmd_Callback(hObject, eventdata, handles)
+% hObject    handle to listBoxCmd (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns listBoxCmd contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from listBoxCmd
+numLines = size(get(hObject,'String'),1);
+set(hObject, 'ListboxTop', numLines);
+
+% --- Executes during object creation, after setting all properties.
+function listBoxCmd_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to listBoxCmd (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in radiobtnIsoDoseLinesLabels.
+function radiobtnIsoDoseLinesLabels_Callback(hObject, eventdata, handles)
+% hObject    handle to radiobtnIsoDoseLinesLabels (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of radiobtnIsoDoseLinesLabels
+UpdatePlot(handles);
+
+
+% --- Executes on slider movement.
+function sliderOffset_Callback(hObject, eventdata, handles)
+% hObject    handle to sliderOffset (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+handles.profileOffset = get(hObject,'Value');
+UpdatePlot(handles);
+
+% --- Executes during object creation, after setting all properties.
+function sliderOffset_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to sliderOffset (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+% --------------------------------------------------------------------
+function About_Callback(hObject, eventdata, handles)
+% hObject    handle to About (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+myicon = imread('mR.png');
+h=msgbox({'http://e0404.github.io/matRad/' 'm.banger@dkfz-heidelberg.de'},'About','custom',myicon);
+
+
