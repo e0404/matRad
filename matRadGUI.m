@@ -376,8 +376,9 @@ function btnCalcDose_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 %% get cst from table
-getCstTable(handles);
-
+if ~getCstTable(handles);
+    return
+end
 %% read plan from gui and save it to workspace
 getPln(handles);
 %% generate steering file
@@ -1123,7 +1124,7 @@ set(handles.uiTable,'ColumnEditable',[true true true true true true true]);
 % set(handles.uiTable,'ColumnWidth',{'auto','auto','auto','auto','auto','auto','auto'});
 set(handles.uiTable,'Data',data);
 
-function getCstTable (handles)
+function Flag=getCstTable (handles)
 
 data = get(handles.uiTable,'Data');
 OldCst = evalin('base','cst');
@@ -1174,24 +1175,26 @@ for i = 1:size(OldCst,1)
             end
              
             %get exponent
-            if strcmp(NewCst{Cnt,4}(CntObjF,1).type,'EUD')
-                if isempty(data{j,7})
-                   FlagValidParameters=false;
-                else
-                    NewCst{Cnt,4}(CntObjF,1).exponent = data{j,7};
+            if FlagValidParameters
+            
+                if strcmp(NewCst{Cnt,4}(CntObjF,1).type,'EUD')
+                    if isempty(data{j,7})
+                       FlagValidParameters=false;
+                    else
+                        NewCst{Cnt,4}(CntObjF,1).exponent = data{j,7};
+                    end
+                end
+
+                %get dose
+                if sum(strcmp(NewCst{Cnt,4}(CntObjF,1).type,{'EUD','mean'})) == 0
+                    % read dose
+                    if isempty(data{j,6})
+                       FlagValidParameters=false;
+                    else
+                         NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = data{j,6};
+                    end
                 end
             end
-            
-            %get dose
-            if sum(strcmp(NewCst{Cnt,4}(CntObjF,1).type,{'EUD','mean'})) == 0
-                % read dose
-                if isempty(data{j,6})
-                   FlagValidParameters=false;
-                else
-                     NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = data{j,6};
-                end
-            end
-            
             CntObjF = CntObjF+1; 
             
         end
@@ -1230,8 +1233,11 @@ if FlagValidParameters
 
        end
        assignin('base','cst',OldCst);
+       Flag = true;
+       
 else       
   warndlg('not all values are set - cannot start dose calculation'); 
+  Flag = false;
 end
 %% replace old cst by new cst values and check for deleted objectives
 
@@ -1246,7 +1252,12 @@ data{sEnd+1,1} = 'Select VOI';
 data{sEnd+1,2} = 'Select VOI Type';
 data{sEnd+1,3} = 2;
 data{sEnd+1,4} = 'Select obj func';
-set(handles.uiTable,'data',data)
+set(handles.uiTable,'data',data);
+
+handles.State=1;
+guidata(hObject,handles);
+UpdateState(handles);
+
 
 % --- Executes on button press in btnuiTableDel.
 function btnuiTableDel_Callback(hObject, eventdata, handles)
@@ -1258,7 +1269,10 @@ rows = get(handles.uiTable,'UserData');
 mask = (1:size(data,1))';
 mask(rows)=[];
 data=data(mask,:);
-set(handles.uiTable,'data',data)
+set(handles.uiTable,'data',data);
+handles.State=1;
+guidata(hObject,handles);
+UpdateState(handles);
 
 % --- Executes when selected cell(s) is changed in uiTable.
 function uiTable_CellSelectionCallback(hObject, eventdata, handles)
