@@ -22,7 +22,7 @@ function varargout = matRadGUI(varargin)
 
 % Edit the above text to modify the response to help matRadGUI
 
-% Last Modified by GUIDE v2.5 27-Apr-2015 15:13:32
+% Last Modified by GUIDE v2.5 28-Apr-2015 15:47:00
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -381,13 +381,13 @@ stf = matRad_generateStf(evalin('base','ct'),...
                                  evalin('base','cst'),...
                                  evalin('base','pln'));
 assignin('base','stf',stf);
-h=waitbar(0,'dose calculation ... ');
+%h=waitbar(0,'dose calculation ... ');
 if strcmp(evalin('base','pln.radiationMode'),'photons')
     dij = matRad_calcPhotonDose(evalin('base','ct'),stf,evalin('base','pln'),evalin('base','cst'),0);
 elseif strcmp(evalin('base','pln.radiationMode'),'protons') || strcmp(evalin('base','pln.radiationMode'),'carbon')
     dij = matRad_calcParticleDose(evalin('base','ct'),stf,evalin('base','pln'),evalin('base','cst'),0);
 end
-close(h);
+%close(h);
 
 set(handles.figure1,'Pointer','arrow');
 
@@ -1477,10 +1477,15 @@ set(handles.radbtnBioOpt,'Value',pln.bioOptimization);
 function getPln(handles)
 
 
-pln.SAD             = str2num(get(handles.editSAD,'String')); %[mm]
-pln.bixelWidth      = str2num(get(handles.editBixelWidth,'String')); % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = str2double(strsplit(get(handles.editGantryAngle,'String'),'')); % [°]
-pln.couchAngles     = str2double(strsplit(get(handles.editCouchAngle,'String'),'')); % [°]
+pln.SAD             = parseStringAsNum(get(handles.editSAD,'String')); %[mm]
+pln.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String')); % [mm] / also corresponds to lateral spot spacing for particles
+pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String')); % [°]
+pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String')); % [°]
+
+if length(pln.gantryAngles) ~= length(pln.couchAngles) 
+  warndlg('number of gantryAngles != number of couchAngles'); 
+end
+
 pln.numOfBeams      = numel(pln.gantryAngles);
 ct=evalin('base','ct');
 pln.numOfVoxels     = numel(ct.cube);
@@ -1488,11 +1493,18 @@ pln.voxelDimensions = size(ct.cube);
 contents                    = get(handles.popupRadMode,'String'); 
 pln.radiationMode   =  contents{get(handles.popupRadMode,'Value')}; % either photons / protons / carbon
 pln.bioOptimization = logical(get(handles.radbtnBioOpt,'Value'));   % false indicates physical optimization and true indicates biological optimization
-pln.numOfFractions  = str2num(get(handles.editFraction,'String'));
+pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'));
 pln.voxelDimensions = size(ct.cube);
 pln.isoCenter       = matRad_getIsoCenter(evalin('base','cst'),ct,0);
 assignin('base','pln',pln);
 
+function Number = parseStringAsNum(string)
+try
+    CellGantryAngles    = strsplit(string,'');
+    Number = str2num(CellGantryAngles{1,1});
+catch
+      warndlg('could not parse all plan parameters'); 
+end
 
 % --- Executes on button press in btnTableSave.
 function btnTableSave_Callback(hObject, eventdata, handles)
@@ -1500,6 +1512,7 @@ function btnTableSave_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 getCstTable(handles);
+getPln(handles);
 
 
 
@@ -1577,3 +1590,19 @@ myicon = imread('mR.png');
 h=msgbox({'http://e0404.github.io/matRad/' 'm.banger@dkfz-heidelberg.de'},'About','custom',myicon);
 
 
+
+
+% --- Executes on button press in btnRefresh.
+function btnRefresh_Callback(hObject, eventdata, handles)
+% hObject    handle to btnRefresh (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+matRadGUI_OpeningFcn(hObject, eventdata, handles);
+
+
+% --------------------------------------------------------------------
+function toolbarSave_ClickedCallback(hObject, eventdata, handles)
+% hObject    handle to toolbarSave (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+btnTableSave_Callback(hObject, eventdata, handles);

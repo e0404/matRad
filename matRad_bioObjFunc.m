@@ -13,6 +13,8 @@ function [f, g] = matRad_bioObjFunc(w,dij,cst)
 % Copyright (c) by Mark Bangert 2014
 % m.bangert@dkzf.de
 
+
+
 % calculate biological effect
 linTerm  = dij.mAlphaDose*w;
 quadTerm = dij.mSqrtBetaDose*w;

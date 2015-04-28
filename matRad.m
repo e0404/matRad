@@ -33,15 +33,15 @@
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-%load TG119.mat
+load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-load BOXPHANTOM.mat
+%load BOXPHANTOM.mat
 
 % meta information for treatment plan
 pln.SAD             = 1000; %[mm]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
-pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
+pln.bixelWidth      = 3; % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = [0]; % [°]
 pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
@@ -66,10 +66,12 @@ end
 
 %% Dose visualization
 doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),cst);
-matRad_visCtDose(doseVis,cst,pln,ct)
-matRadGUI
+%matRadGUI
+
 %% inverse planning for imrt
+tic
 optResult = matRad_inversePlanning(dij,cst,pln);
+toc
 matRadGUI
 
 %% sequencing
@@ -82,4 +84,40 @@ end
 
 %% dvh and conformity index
 matRad_calcDVH(optResult,cst)
+
+%%
+
+% vX = [69 90];
+% vY = [69 90];
+% vZ = [56 74];
+% 
+% [i, j, l]=  ind2sub(size(ct.cube),1:1:numel(ct.cube));
+%  
+% vNew = zeros((vX(2)-vX(1))*(vY(2)-vY(1))*(vZ(2)-vZ(1)),1);
+% Counter = 1;
+% for cnt = 1:numel(ct.cube)
+%     
+%  if i(cnt)>=vX(1) && i(cnt)<= vX(2) && ...
+%     j(cnt)>=vX(1) && j(cnt)<= vX(2) && ...
+%     l(cnt)>=vX(1) && l(cnt)<= vX(2) 
+% 
+%     vNew(Counter) = cnt;
+%     Counter = Counter+1;
+% 
+%  end
+%     
+% end
+% 
+% cst{2,4}=vNew;
+
+
+
+
+
+
+
+
+
+
+
 

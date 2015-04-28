@@ -66,13 +66,14 @@ if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
     
     % set objective function
     objFunc =  @(x) matRad_bioObjFunc(x,dij,cst);
-    
+    %objFunc =  @(x) matRad_bioObjFuncRBExD(x,dij,cst);
 else
     
     % set objective function
     objFunc =  @(x) matRad_objFunc(x,dij,cst);
     
 end
+
 
 %consider VOI priorities
 for i=1:size(cst,1)
