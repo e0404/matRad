@@ -594,8 +594,8 @@ if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1 ...
                     % turn off legend for this data set
                     hAnnotation = get(myContour,'Annotation');
                     hLegendEntry = get(hAnnotation','LegendInformation');
-                    set(hLegendEntry,'IconDisplayStyle','off')
-                    set(myContour,'LabelSpacing',100)
+                    set(hLegendEntry,'IconDisplayStyle','off');
+                    set(myContour,'LabelSpacing',100);
                     if get(handles.radiobtnIsoDoseLinesLabels,'Value') == 0
                         set(myContour,'ShowText','off')
                     else
@@ -630,6 +630,9 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
 
     myLegend = legend('show','location','NorthEast');
     set(myLegend,'FontSize',12);
+    set(myLegend,'color','none');
+    set(myLegend,'TextColor', [1 1 1]);
+    legend boxoff
 end
 
 %% Set axis labels
