@@ -551,7 +551,7 @@ if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1 ...
                 cBarHandel = colorbar('peer',handles.axesFig,'FontSize',14,'yAxisLocation','right');
             end
             Idx = find(strcmp(handles.SelectedDisplayOption,fName(:,1)));
-            set(get(cBarHandel,'ylabel'),'String', [fName{Idx,1} ' in ' fName{Idx,3} ],'fontsize',16);
+            set(get(cBarHandel,'ylabel'),'String', [fName{Idx,1} ' in ' fName{Idx,3} ],'fontsize',14);
 
             if isempty(strfind(handles.SelectedDisplayOption,'RBE'))
                 set(cBarHandel,'YLim',[0 max(mVolume(:))]);
@@ -642,13 +642,13 @@ if  plane == 3% Axial plane
         set(handles.axesFig,'YTick',0:50/ct.resolution(2):1000);
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(1));
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(2));   
-        xlabel('x [mm]','FontSize',16)
-        ylabel('y [mm]','FontSize',16)
-        title('Axial plane','FontSize',16)
+        xlabel('x [mm]','FontSize',12)
+        ylabel('y [mm]','FontSize',12)
+        title('axial plane','FontSize',14)
     else
-        xlabel('x [voxels]','FontSize',16)
-        ylabel('y [voxels]','FontSize',16)
-        title('Axial plane','FontSize',16)
+        xlabel('x [voxels]','FontSize',12)
+        ylabel('y [voxels]','FontSize',12)
+        title('axial plane','FontSize',14)
     end
 elseif plane == 2 % Sagittal plane
     if ~isempty(pln)
@@ -656,13 +656,13 @@ elseif plane == 2 % Sagittal plane
         set(handles.axesFig,'YTick',0:50/ct.resolution(2):1000)
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(3))
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(2))
-        xlabel('z [mm]','FontSize',16);
-        ylabel('y [mm]','FontSize',16);
-        title('Sagital plane','FontSize',15);
+        xlabel('z [mm]','FontSize',12);
+        ylabel('y [mm]','FontSize',12);
+        title('sagital plane','FontSize',14);
     else
-        xlabel('z [voxels]','FontSize',16)
-        ylabel('y [voxels]','FontSize',16)
-        title('Sagital plane','FontSize',15);
+        xlabel('z [voxels]','FontSize',12)
+        ylabel('y [voxels]','FontSize',12)
+        title('sagital plane','FontSize',14);
     end
 elseif plane == 1 % Coronal plane
     if ~isempty(pln)
@@ -670,19 +670,17 @@ elseif plane == 1 % Coronal plane
         set(handles.axesFig,'YTick',0:50/ct.resolution(1):1000)
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(3))
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(1))
-        xlabel('z [mm]','FontSize',16)
-        ylabel('x [mm]','FontSize',16)
-        title('Coronal plane','FontSize',16)
+        xlabel('z [mm]','FontSize',12)
+        ylabel('x [mm]','FontSize',12)
+        title('coronal plane','FontSize',14)
     else
-        xlabel('z [voxels]','FontSize',16)
-        ylabel('x [voxels]','FontSize',16)
-        title('Coronal plane','FontSize',16)
+        xlabel('z [voxels]','FontSize',12)
+        ylabel('x [voxels]','FontSize',12)
+        title('coronal plane','FontSize',14)
     end
 end
 
 axis equal;
-set(gca,'FontSize',14);  
-
 
 %% profile plot
 if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
@@ -722,7 +720,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     vX=linspace(1,ct.resolution(1)*numel(vPhysDose),numel(vPhysDose));
     PlotHandles{1} = plot(handles.axesFig,vX,smooth(vPhysDose,sSmoothFactor),'color',cColor{1,1},'LineWidth',3);grid on, hold on; 
     PlotHandles{1,2}='physicalDose';
-    set(gca,'FontSize',18);
+    set(gca,'FontSize',14);
     % assess x - limits
     xLim  = find(vPhysDose);
     if ~isempty(xLim)
@@ -745,7 +743,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
         %data.fName{2,2}=0;
         
         % generate two lines for ylabel
-        StringYLabel1 = '\fontsize{18}{\color{red}RBE x dose [Gy(RBE)] \color{black}physicalDose [Gy] ';
+        StringYLabel1 = '\fontsize{14}{\color{red}RBE x dose [Gy(RBE)] \color{black}physicalDose [Gy] ';
         StringYLabel2 = '';
         for i=1:1:size(fName,1)
             mCurrentCube = getfield(Result,fName{i,1});
@@ -782,13 +780,13 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
         PlotHandles{Cnt+1,2}='RBE';
          
         % set plotyy properties
-        set(get(ax(2),'Ylabel'),'String','RBE [a.u.]','FontSize',18);       
+        set(get(ax(2),'Ylabel'),'String','RBE [a.u.]','FontSize',14);       
         ylabel({StringYLabel1;StringYLabel2})
         set(PlotHandles{Cnt,1},'Linewidth',4,'color','r');
         set(PlotHandles{Cnt+1,1},'Linewidth',3,'color','b');
         set(ax(1),'ycolor','r')
         set(ax(2),'ycolor','b')
-        set(ax,'FontSize',18);
+        set(ax,'FontSize',14);
         Cnt=Cnt+2;
        
     end
@@ -808,7 +806,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     
     str = sprintf('profile plot of zentral axis of %d beam gantry angle %d° couch angle %d°',...
         handles.SelectedBeam ,pln.gantryAngles(handles.SelectedBeam),pln.couchAngles(handles.SelectedBeam));
-    title(str,'FontSize',16),grid on
+    title(str,'FontSize',12),grid on
     
     
     % plot target boundaries
@@ -1600,7 +1598,9 @@ function btnRefresh_Callback(hObject, eventdata, handles)
 % hObject    handle to btnRefresh (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-matRadGUI_OpeningFcn(hObject, eventdata, handles);
+setPln(handles)
+setCstTable(handles,evalin('base','cst'));
+UpdatePlot(handles);
 
 
 % --------------------------------------------------------------------
