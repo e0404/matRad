@@ -33,10 +33,10 @@
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-load TG119.mat
+%load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-%load BOXPHANTOM.mat
+load BOXPHANTOM.mat
 
 % meta information for treatment plan
 pln.SAD             = 1000; %[mm]
@@ -69,9 +69,7 @@ doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),cst);
 %matRadGUI
 
 %% inverse planning for imrt
-tic
 optResult = matRad_inversePlanning(dij,cst,pln);
-toc
 matRadGUI
 
 %% sequencing
