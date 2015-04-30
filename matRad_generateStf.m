@@ -123,9 +123,9 @@ for i = 1:length(pln.gantryAngles)
                                         0                          0 1];
     
     % Rotation around Y axis (Couch movement)
-    rotMx_XZ = [cosd(pln.couchAngles(i)) 0 -sind(pln.couchAngles(i));
-                                       0 1                         0;
-                sind(pln.couchAngles(i)) 0  cosd(pln.couchAngles(i))];
+    rotMx_XZ = [ cosd(pln.couchAngles(i)) 0 sind(pln.couchAngles(i));
+                                        0 1                         0;
+                -sind(pln.couchAngles(i)) 0  cosd(pln.couchAngles(i))];
     
     % rotate target coordinates around Y axis and then around Z axis
     % i.e. 1st couch, 2nd gantry; matrix multiplication not cummutative
@@ -164,9 +164,9 @@ for i = 1:length(pln.gantryAngles)
                                                  0                         0 1];
     
     % Rotation around Y axis (couch)
-    rotMx_XZ_rotated = [ cosd(pln.couchAngles(i)) 0 sind(pln.couchAngles(i));
+    rotMx_XZ_rotated = [ cosd(pln.couchAngles(i)) 0 -sind(pln.couchAngles(i));
                                                 0 1                        0;
-                        -sind(pln.couchAngles(i)) 0 cosd(pln.couchAngles(i))];
+                         sind(pln.couchAngles(i)) 0 cosd(pln.couchAngles(i))];
     
     % Rotated Source point, first needs to be rotated around gantry, and then
     % couch.

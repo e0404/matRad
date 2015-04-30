@@ -142,14 +142,14 @@ for i = 1:dij.numOfBeams; % loop over all beams
     % rotary CT.
     
     % Rotation around Z axis (gantry movement)
-    rotMx_XY = [ cosd(pln.gantryAngles(i)) -sind(pln.gantryAngles(i)) 0;
-        sind(pln.gantryAngles(i)) cosd(pln.gantryAngles(i)) 0;
-        0 0 1];
+    rotMx_XY = [cosd(pln.gantryAngles(i)) -sind(pln.gantryAngles(i)) 0;
+                sind(pln.gantryAngles(i))  cosd(pln.gantryAngles(i)) 0;
+                                        0                          0 1];
     
     % Rotation around Y axis (Couch movement)
-    rotMx_XZ = [cosd(pln.couchAngles(i)) 0 -sind(pln.couchAngles(i));
-        0 1 0;
-        sind(pln.couchAngles(i)) 0 cosd(pln.couchAngles(i))];
+    rotMx_XZ = [ cosd(pln.couchAngles(i)) 0 sind(pln.couchAngles(i));
+                                        0 1                        0;
+                -sind(pln.couchAngles(i)) 0 cosd(pln.couchAngles(i))];
     
     % ROTATE VOI'S CT COORDINATES. First applies couch rotation and then
     % gantry. It is important to note matrix multiplication is not "commutative",

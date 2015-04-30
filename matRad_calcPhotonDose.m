@@ -152,9 +152,9 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                         0                          0 1];
     
     % rotation around Y axis (couch)
-    rotMx_XZ = [cosd(pln.couchAngles(i)) 0 -sind(pln.couchAngles(i));
-                                       0 1                         0;
-                sind(pln.couchAngles(i)) 0 cosd(pln.couchAngles(i))];
+    rotMx_XZ = [ cosd(pln.couchAngles(i)) 0 sind(pln.couchAngles(i));
+                                        0 1                         0;
+                -sind(pln.couchAngles(i)) 0 cosd(pln.couchAngles(i))];
     
     % rotate target coordinates around Y axis and then around Z axis
     % i.e. 1st couch, 2nd gantry; matrix multiplication not cummutative
