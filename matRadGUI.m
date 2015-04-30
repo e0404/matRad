@@ -162,6 +162,24 @@ function btnLoad_Callback(hObject, eventdata, handles)
 % hObject    handle to btnLoad (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+% delete existing workspace
+try
+    clear global 'optResult'
+catch 
+end
+
+try
+    clear global 'doseVis'
+catch 
+end
+
+try
+    clear global 'dij'
+catch 
+end
+
+
 [FileName, FilePath] = uigetfile;
 load([FilePath FileName]);
 
@@ -485,17 +503,11 @@ CutOffLevel= 0.03;
     cla(handles.axesFig);
     if plane == 1 % Coronal plane
         ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube(slice,:,:))/max(ct.cube(:))),bone);
-        %axis(handles.axesFig,[1 size(ct.cube,1) 1 size(ct.cube,2)]);
-    elseif plane == 2 % Sagital plane
+    elseif plane == 2 % sagittal plane
         ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube(:,slice,:))/max(ct.cube(:))),bone);
-        %axis(handles.axesFig,[1 size(ct.cube,3) 1 size(ct.cube,2)]);
     elseif plane == 3 % Axial plane
         ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube(:,:,slice))/max(ct.cube(:))),bone);
-        %axis(handles.axesFig,[1 size(ct.cube,1) 1 size(ct.cube,3)]); 
     end
-
-    %imshow(ct_rgb, 'Parent', handles.axesFig),hold on;
-    %axes(handles.axesFig),hold on 
     
     axes(handles.axesFig)
     ctImageHandle = image(ct_rgb);
@@ -518,7 +530,7 @@ if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1 ...
             if plane == 1  % Coronal plane
                  mSlice = squeeze(mVolume(slice,:,:));
                 dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(slice,:,:))),jet);
-            elseif plane == 2 % Sagital plane
+            elseif plane == 2 % sagittal plane
                  mSlice = squeeze(mVolume(:,slice,:));
                 dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(:,slice,:))),jet);
             elseif plane == 3 % Axial plane
@@ -531,7 +543,7 @@ if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1 ...
             if ~isempty(ct.cube)
                 if plane == 1  % Coronal plane
                     set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.physicalDose(slice,:,:))>CutOffLevel*max(Result.physicalDose(:))  )  ) ;
-                elseif plane == 2 % Sagital plane
+                elseif plane == 2 % sagittal plane
                     set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.physicalDose(:,slice,:))>CutOffLevel*max(Result.physicalDose(:))  )  ) ;
                 elseif plane == 3 % Axial plane
                     if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
@@ -627,12 +639,13 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
             end
         end
     end
-
+    %warning('off','MATLAB:legend:PlotEmpty')
     myLegend = legend('show','location','NorthEast');
     set(myLegend,'FontSize',12);
     set(myLegend,'color','none');
     set(myLegend,'TextColor', [1 1 1]);
     legend boxoff
+    %warning('on','MATLAB:legend:PlotEmpty')
 end
 
 %% Set axis labels
@@ -658,11 +671,11 @@ elseif plane == 2 % Sagittal plane
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(2))
         xlabel('z [mm]','FontSize',12);
         ylabel('y [mm]','FontSize',12);
-        title('sagital plane','FontSize',14);
+        title('sagittal plane','FontSize',14);
     else
         xlabel('z [voxels]','FontSize',12)
         ylabel('y [voxels]','FontSize',12)
-        title('sagital plane','FontSize',14);
+        title('sagittal plane','FontSize',14);
     end
 elseif plane == 1 % Coronal plane
     if ~isempty(pln)
@@ -680,7 +693,7 @@ elseif plane == 1 % Coronal plane
     end
 end
 
-axis equal;
+
 
 %% profile plot
 if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
@@ -872,6 +885,28 @@ function popupPlane_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns popupPlane contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from popupPlane
+
+contents = cellstr(get(hObject,'String'));
+val = contents{get(hObject,'Value')};
+
+% set slice slider
+handles.plane = get(handles.popupPlane,'value');
+% set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
+%     'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
+%      'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+%  
+try
+ct = evalin('base', 'ct');
+pln = evalin('base', 'pln');
+
+set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
+   'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
+   'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+catch
+end
+        
+
+
 UpdatePlot(handles)
 
 % --- Executes during object creation, after setting all properties.
