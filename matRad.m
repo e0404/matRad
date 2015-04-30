@@ -33,15 +33,15 @@
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-load TG119.mat
+%load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-%load BOXPHANTOM.mat
+load BOXPHANTOM.mat
 
 % meta information for treatment plan
 pln.SAD             = 1000; %[mm]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
-pln.bixelWidth      = 3; % [mm] / also corresponds to lateral spot spacing for particles
+pln.bixelWidth      = 2; % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = [0]; % [°]
 pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
@@ -52,7 +52,7 @@ pln.bioOptimization = true;   % false indicates physical optimization and true i
 pln.numOfFractions  = 30;
 
 %% initial visualization and change objective function settings if desired
-%matRadGUI
+matRadGUI
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
@@ -69,9 +69,7 @@ doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),cst);
 %matRadGUI
 
 %% inverse planning for imrt
-tic
 optResult = matRad_inversePlanning(dij,cst,pln);
-toc
 matRadGUI
 
 %% sequencing
@@ -111,13 +109,26 @@ matRad_calcDVH(optResult,cst)
 % cst{2,4}=vNew;
 
 
+% s=whos;
+% BytesTot = 0;
+% 
+% for i = 1:length(s)
+%    BytesTot = BytesTot + s(i).bytes;
+% end
+% load('E:\experimental data\optResultRBExD_liver.mat');
+% Slice = optResultRBExD_liver.physicalDose(:,:,120);
+% load('E:\experimental data\optResulteffectliver.mat');
+% Slice2 = optResulteffectliver.physicalDose(:,:,120);
+% 
+% diff = abs(Slice-Slice2);
+% diff1 = abs(optResultRBExD_liver.RBEWeightedDose(:,:,120)-optResulteffectliver.RBEWeightedDose(:,:,120));
+% figure,subplot(221),imshow(optResultRBExD_liver.physicalDose(:,:,120),[]);
+%        subplot(222),imshow(diff,[]);
+%        subplot(223),imshow(optResultRBExD_liver.RBEWeightedDose(:,:,120),[]);
+%        subplot(224),imshow(diff1,[]);
 
 
 
-
-
-
-
-
-
-
+       
+       
+       
