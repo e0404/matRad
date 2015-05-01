@@ -3,7 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% scan dicom import folder and select patient, image series, and rtss
-dicomDataDir = 'DicomFolder';
+dicomDataDir = 'C:\Users\bangertm\Dropbox\matRad\angleValidation\intra3Dicom';
 files = matRad_scanDicomImportFolder(dicomDataDir);
 
 %% import ct-cube
@@ -15,7 +15,7 @@ structures = matRad_importDicomRtss(files.rtss{1});
 
 %% creating structure cube
 for i = 1:numel(structures)
-    fprintf('\ncreating cube for %s volume...\n', structures(i).structName);
+    fprintf('creating cube for %s volume...\n', structures(i).structName);
     structures(i).indices = matRad_convRtssContours2Indices(structures(i).points,ct);
 end
 fprintf('finished!\n');
