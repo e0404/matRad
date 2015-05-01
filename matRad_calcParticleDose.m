@@ -97,7 +97,7 @@ end
 if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
     fprintf('matRad: loading biological base data... ');
     mTissueClass = zeros(size(V,1),1);
-    for i=1:size(cst,1)
+    for i = 1:size(cst,1)
         % find indices of structures related to V
         [~, row] = ismember(cst{i,4},V,'rows');  
         if ~isempty(cst{i,5}) && isfield(cst{i,5},'TissueClass')
