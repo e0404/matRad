@@ -112,7 +112,7 @@ for i = 1:length(pln.gantryAngles)
     stf(i).bixelWidth    = pln.bixelWidth;
     stf(i).radiationMode = pln.radiationMode;
     
-    % gantry and couch roation matrices according to IEC 60601 standard
+    % gantry and couch roation matrices according to IEC 61217 standard
     % instead of moving the beam around the patient, we perform an inverse
     % rotation of the patient, i.e. we consider a beam's eye view
     % coordinate system
@@ -123,9 +123,9 @@ for i = 1:length(pln.gantryAngles)
                                         0                          0 1];
     
     % Rotation around Y axis (Couch movement)
-    rotMx_XZ = [cosd(pln.couchAngles(i)) 0 -sind(pln.couchAngles(i));
-                                       0 1                         0;
-                sind(pln.couchAngles(i)) 0  cosd(pln.couchAngles(i))];
+    rotMx_XZ = [ cosd(pln.couchAngles(i)) 0 sind(pln.couchAngles(i));
+                                        0 1                         0;
+                -sind(pln.couchAngles(i)) 0  cosd(pln.couchAngles(i))];
     
     % rotate target coordinates around Y axis and then around Z axis
     % i.e. 1st couch, 2nd gantry; matrix multiplication not cummutative
@@ -164,9 +164,9 @@ for i = 1:length(pln.gantryAngles)
                                                  0                         0 1];
     
     % Rotation around Y axis (couch)
-    rotMx_XZ_rotated = [ cosd(pln.couchAngles(i)) 0 sind(pln.couchAngles(i));
+    rotMx_XZ_rotated = [ cosd(pln.couchAngles(i)) 0 -sind(pln.couchAngles(i));
                                                 0 1                        0;
-                        -sind(pln.couchAngles(i)) 0 cosd(pln.couchAngles(i))];
+                         sind(pln.couchAngles(i)) 0 cosd(pln.couchAngles(i))];
     
     % Rotated Source point, first needs to be rotated around gantry, and then
     % couch.

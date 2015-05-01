@@ -47,7 +47,7 @@ d.physicalDose = reshape(dij.physicalDose*w,dij.dimensions);
 
 if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
     
-    fprintf('Calculating alpha/beta/effect/cube...\');
+    fprintf('Calculating alpha/beta/effect/cube...');
    
     a_x = zeros(size(d.physicalDose));
     b_x = zeros(size(d.physicalDose));

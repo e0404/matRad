@@ -26,16 +26,16 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% clear
-% close all
-% clc
+ clear
+ close all
+ clc
 
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-load TG119.mat
+%load TG119.mat
 %load PROSTATE.mat
-%load LIVER.mat
+load LIVER.mat
 %load BOXPHANTOM.mat
 
 % meta information for treatment plan
@@ -51,11 +51,8 @@ pln.radiationMode   = 'photons'; % either photons / protons / carbon
 pln.bioOptimization = false;   % false indicates physical optimization and true indicates biological optimization
 pln.numOfFractions  = 30;
 
-%% change objective function settings if desired
-matRad_modCst(cst);
-
-%% initial visualization
-matRad_visCtDose([],cst,pln,ct);
+%% initial visualization and change objective function settings if desired
+matRadGUI
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
@@ -69,11 +66,11 @@ end
 
 %% Dose visualization
 doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),cst);
-matRad_visCtDose(doseVis,cst,pln,ct);
+%matRadGUI
 
 %% inverse planning for imrt
-optResult = matRad_inversePlanning(dij,cst,pln);
-matRad_visCtDose(optResult,cst,pln,ct);
+optResult = matRad_fluenceOptimization(dij,cst,pln);
+matRadGUI
 
 %% sequencing
 if strcmp(pln.radiationMode,'photons')
@@ -86,3 +83,52 @@ end
 %% dvh and conformity index
 matRad_calcDVH(optResult,cst)
 
+%%
+
+% vX = [69 90];
+% vY = [69 90];
+% vZ = [56 74];
+% 
+% [i, j, l]=  ind2sub(size(ct.cube),1:1:numel(ct.cube));
+%  
+% vNew = zeros((vX(2)-vX(1))*(vY(2)-vY(1))*(vZ(2)-vZ(1)),1);
+% Counter = 1;
+% for cnt = 1:numel(ct.cube)
+%     
+%  if i(cnt)>=vX(1) && i(cnt)<= vX(2) && ...
+%     j(cnt)>=vX(1) && j(cnt)<= vX(2) && ...
+%     l(cnt)>=vX(1) && l(cnt)<= vX(2) 
+% 
+%     vNew(Counter) = cnt;
+%     Counter = Counter+1;
+% 
+%  end
+%     
+% end
+% 
+% cst{2,4}=vNew;
+
+
+% s=whos;
+% BytesTot = 0;
+% 
+% for i = 1:length(s)
+%    BytesTot = BytesTot + s(i).bytes;
+% end
+% load('E:\experimental data\optResultRBExD_liver.mat');
+% Slice = optResultRBExD_liver.physicalDose(:,:,120);
+% load('E:\experimental data\optResulteffectliver.mat');
+% Slice2 = optResulteffectliver.physicalDose(:,:,120);
+% 
+% diff = abs(Slice-Slice2);
+% diff1 = abs(optResultRBExD_liver.RBEWeightedDose(:,:,120)-optResulteffectliver.RBEWeightedDose(:,:,120));
+% figure,subplot(221),imshow(optResultRBExD_liver.physicalDose(:,:,120),[]);
+%        subplot(222),imshow(diff,[]);
+%        subplot(223),imshow(optResultRBExD_liver.RBEWeightedDose(:,:,120),[]);
+%        subplot(224),imshow(diff1,[]);
+
+
+
+       
+       
+       

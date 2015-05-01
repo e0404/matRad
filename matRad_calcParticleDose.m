@@ -97,7 +97,7 @@ end
 if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
     fprintf('matRad: loading biological base data... ');
     mTissueClass = zeros(size(V,1),1);
-    for i=1:size(cst,1)
+    for i = 1:size(cst,1)
         % find indices of structures related to V
         [~, row] = ismember(cst{i,4},V,'rows');  
         if ~isempty(cst{i,5}) && isfield(cst{i,5},'TissueClass')
@@ -137,19 +137,19 @@ fprintf('matRad: Particle dose calculation... ');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams; % loop over all beams
     
-    %SET GANTRY AND COUCH ROTATION MATRICES ACCORDING IEC 60601 STANDARD FOR LINACS
+    %SET GANTRY AND COUCH ROTATION MATRICES ACCORDING IEC 61217 STANDARD FOR LINACS
     % Note: Signs for the following 2 matrices works for a fixed beam and
     % rotary CT.
     
     % Rotation around Z axis (gantry movement)
-    rotMx_XY = [ cosd(pln.gantryAngles(i)) -sind(pln.gantryAngles(i)) 0;
-        sind(pln.gantryAngles(i)) cosd(pln.gantryAngles(i)) 0;
-        0 0 1];
+    rotMx_XY = [cosd(pln.gantryAngles(i)) -sind(pln.gantryAngles(i)) 0;
+                sind(pln.gantryAngles(i))  cosd(pln.gantryAngles(i)) 0;
+                                        0                          0 1];
     
     % Rotation around Y axis (Couch movement)
-    rotMx_XZ = [cosd(pln.couchAngles(i)) 0 -sind(pln.couchAngles(i));
-        0 1 0;
-        sind(pln.couchAngles(i)) 0 cosd(pln.couchAngles(i))];
+    rotMx_XZ = [ cosd(pln.couchAngles(i)) 0 sind(pln.couchAngles(i));
+                                        0 1                        0;
+                -sind(pln.couchAngles(i)) 0 cosd(pln.couchAngles(i))];
     
     % ROTATE VOI'S CT COORDINATES. First applies couch rotation and then
     % gantry. It is important to note matrix multiplication is not "commutative",
