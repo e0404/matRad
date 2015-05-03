@@ -35,20 +35,20 @@
 %load HEAD_AND_NECK
 %load TG119.mat
 %load PROSTATE.mat
-%load LIVER.mat
-load BOXPHANTOM.mat
+load LIVER.mat
+%load BOXPHANTOM.mat
 
 % meta information for treatment plan
 pln.SAD             = 1000; %[mm]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
-pln.bixelWidth      = 2; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0]; % [°]
-pln.couchAngles     = [0]; % [°]
+pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
+pln.gantryAngles    = [0:72:359]; % [°]
+pln.couchAngles     = [0 0 0 0 0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct.cube);
 pln.voxelDimensions = size(ct.cube);
-pln.radiationMode   = 'carbon'; % either photons / protons / carbon
-pln.bioOptimization = true;   % false indicates physical optimization and true indicates biological optimization
+pln.radiationMode   = 'photons'; % either photons / protons / carbon
+pln.bioOptimization = false;   % false indicates physical optimization and true indicates biological optimization
 pln.numOfFractions  = 30;
 
 %% initial visualization and change objective function settings if desired
@@ -69,7 +69,7 @@ doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),cst);
 %matRadGUI
 
 %% inverse planning for imrt
-optResult = matRad_inversePlanning(dij,cst,pln);
+optResult = matRad_fluenceOptimization(dij,cst,pln);
 matRadGUI
 
 %% sequencing

@@ -409,7 +409,7 @@ end
 
 set(handles.figure1,'Pointer','arrow');
 
-doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),evalin('base','cst'));
+doseVis = matRad_mxCalcDose(dij,zeros(dij.totalNumOfBixels,1),evalin('base','cst'));
 assignin('base','dij',dij);
 assignin('base','doseVis',doseVis);
 handles.State = 2;
@@ -558,19 +558,19 @@ if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1 ...
             % plot colorbar
             v=version;
             if str2num(v(1:3))>=8.5
-                cBarHandel = colorbar(handles.axesFig,'colormap',jet,'FontSize',14,'yAxisLocation','right');
+                cBarHandel = colorbar(handles.axesFig,'colormap',jet,'FontSize',8,'yAxisLocation','right');
             else
-                cBarHandel = colorbar('peer',handles.axesFig,'FontSize',14,'yAxisLocation','right');
+                cBarHandel = colorbar('peer',handles.axesFig,'FontSize',8,'yAxisLocation','right');
             end
             Idx = find(strcmp(handles.SelectedDisplayOption,fName(:,1)));
-            set(get(cBarHandel,'ylabel'),'String', [fName{Idx,1} ' in ' fName{Idx,3} ],'fontsize',14);
+            set(get(cBarHandel,'ylabel'),'String', [fName{Idx,1} ' ' fName{Idx,3} ],'fontsize',8);
 
             if isempty(strfind(handles.SelectedDisplayOption,'RBE'))
-                set(cBarHandel,'YLim',[0 max(mVolume(:))]);
-                caxis(handles.axesFig,[0, max(mVolume(:))])
+                set(cBarHandel,'YLim',[0 max(eps,max(mVolume(:)))]);
+                caxis(handles.axesFig,[0, max(eps,max(mVolume(:)))])
             else
-                set(cBarHandel,'YLim',[0 max(mSlice(:))]);
-                caxis(handles.axesFig,[0, max(mSlice(:))])
+                set(cBarHandel,'YLim',[0 max(eps,max(mSlice(:)))]);
+                caxis(handles.axesFig,[0, max(eps,max(mSlice(:)))])
             end
 
 
@@ -641,7 +641,7 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
     end
     %warning('off','MATLAB:legend:PlotEmpty')
     myLegend = legend('show','location','NorthEast');
-    set(myLegend,'FontSize',12);
+    set(myLegend,'FontSize',8);
     set(myLegend,'color','none');
     set(myLegend,'TextColor', [1 1 1]);
     legend boxoff
@@ -655,13 +655,13 @@ if  plane == 3% Axial plane
         set(handles.axesFig,'YTick',0:50/ct.resolution(2):1000);
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(1));
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(2));   
-        xlabel('x [mm]','FontSize',12)
-        ylabel('y [mm]','FontSize',12)
-        title('axial plane','FontSize',14)
+        xlabel('x [mm]','FontSize',8)
+        ylabel('y [mm]','FontSize',8)
+        title('axial plane','FontSize',8)
     else
-        xlabel('x [voxels]','FontSize',12)
-        ylabel('y [voxels]','FontSize',12)
-        title('axial plane','FontSize',14)
+        xlabel('x [voxels]','FontSize',8)
+        ylabel('y [voxels]','FontSize',8)
+        title('axial plane','FontSize',8)
     end
 elseif plane == 2 % Sagittal plane
     if ~isempty(pln)
@@ -669,13 +669,13 @@ elseif plane == 2 % Sagittal plane
         set(handles.axesFig,'YTick',0:50/ct.resolution(2):1000)
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(3))
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(2))
-        xlabel('z [mm]','FontSize',12);
-        ylabel('y [mm]','FontSize',12);
-        title('sagittal plane','FontSize',14);
+        xlabel('z [mm]','FontSize',8);
+        ylabel('y [mm]','FontSize',8);
+        title('sagittal plane','FontSize',8);
     else
-        xlabel('z [voxels]','FontSize',12)
-        ylabel('y [voxels]','FontSize',12)
-        title('sagittal plane','FontSize',14);
+        xlabel('z [voxels]','FontSize',8)
+        ylabel('y [voxels]','FontSize',8)
+        title('sagittal plane','FontSize',8);
     end
 elseif plane == 1 % Coronal plane
     if ~isempty(pln)
@@ -683,13 +683,13 @@ elseif plane == 1 % Coronal plane
         set(handles.axesFig,'YTick',0:50/ct.resolution(1):1000)
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(3))
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(1))
-        xlabel('z [mm]','FontSize',12)
-        ylabel('x [mm]','FontSize',12)
-        title('coronal plane','FontSize',14)
+        xlabel('z [mm]','FontSize',8)
+        ylabel('x [mm]','FontSize',8)
+        title('coronal plane','FontSize',8)
     else
-        xlabel('z [voxels]','FontSize',12)
-        ylabel('x [voxels]','FontSize',12)
-        title('coronal plane','FontSize',14)
+        xlabel('z [voxels]','FontSize',8)
+        ylabel('x [voxels]','FontSize',8)
+        title('coronal plane','FontSize',8)
     end
 end
 
@@ -701,9 +701,8 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     % clear view and initialize some values
     cla(handles.axesFig,'reset')
     set(gca,'YDir','normal');
-    ylabel('{\color{black}dose in Gy}')
+    ylabel('{\color{black}dose [Gy]}')
     cColor={'black','green','magenta','cyan','yellow','red','blue'};
-    sSmoothFactor = 2;
     
     % Rotation around Z axis (table movement)
     rotMx_XY = [ cosd(pln.gantryAngles(handles.SelectedBeam)) sind(pln.gantryAngles(handles.SelectedBeam)) 0;
@@ -731,9 +730,9 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     vPhysDose = mPhysDose(ix);
     % plot physical dose
     vX=linspace(1,ct.resolution(1)*numel(vPhysDose),numel(vPhysDose));
-    PlotHandles{1} = plot(handles.axesFig,vX,smooth(vPhysDose,sSmoothFactor),'color',cColor{1,1},'LineWidth',3);grid on, hold on; 
+    PlotHandles{1} = plot(handles.axesFig,vX,vPhysDose,'color',cColor{1,1},'LineWidth',3);grid on, hold on; 
     PlotHandles{1,2}='physicalDose';
-    set(gca,'FontSize',14);
+    set(gca,'FontSize',8);
     % assess x - limits
     xLim  = find(vPhysDose);
     if ~isempty(xLim)
@@ -756,7 +755,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
         %data.fName{2,2}=0;
         
         % generate two lines for ylabel
-        StringYLabel1 = '\fontsize{14}{\color{red}RBE x dose [Gy(RBE)] \color{black}physicalDose [Gy] ';
+        StringYLabel1 = '\fontsize{8}{\color{red}RBE x dose [Gy(RBE)] \color{black}dose [Gy] ';
         StringYLabel2 = '';
         for i=1:1:size(fName,1)
             mCurrentCube = getfield(Result,fName{i,1});
@@ -764,7 +763,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
                     && ~strcmp(fName{i,1},'RBE') && ~strcmp(fName{i,1},'physicalDose')...
                     && fName{i,2}
                 vProfile = mCurrentCube(ix);
-                PlotHandles{Cnt,1} = plot(vX,smooth(vProfile,sSmoothFactor),'color',cColor{1,Cnt},'LineWidth',3);hold on; 
+                PlotHandles{Cnt,1} = plot(vX,vProfile,'color',cColor{1,Cnt},'LineWidth',3);hold on; 
                 PlotHandles{Cnt,2} =fName{i,1};
                 if strcmp(fName{i,1},'effect')
                     unit = 'a.u.';
@@ -788,18 +787,18 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
         vRBE =mRBE(ix);
         
         % plot biological dose against RBE
-        [ax, PlotHandles{Cnt,1}, PlotHandles{Cnt+1,1}]=plotyy(vX,smooth(vBED,sSmoothFactor),vX,smooth(vRBE,sSmoothFactor),'plot');hold on;
+        [ax, PlotHandles{Cnt,1}, PlotHandles{Cnt+1,1}]=plotyy(vX,vBED,vX,vRBE,'plot');hold on;
         PlotHandles{Cnt,2}='RBEWeightedDose';
         PlotHandles{Cnt+1,2}='RBE';
          
         % set plotyy properties
-        set(get(ax(2),'Ylabel'),'String','RBE [a.u.]','FontSize',14);       
+        set(get(ax(2),'Ylabel'),'String','RBE [a.u.]','FontSize',8);       
         ylabel({StringYLabel1;StringYLabel2})
         set(PlotHandles{Cnt,1},'Linewidth',4,'color','r');
         set(PlotHandles{Cnt+1,1},'Linewidth',3,'color','b');
         set(ax(1),'ycolor','r')
         set(ax(2),'ycolor','b')
-        set(ax,'FontSize',14);
+        set(ax,'FontSize',8);
         Cnt=Cnt+2;
        
     end
@@ -819,7 +818,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     
     str = sprintf('profile plot of zentral axis of %d beam gantry angle %d° couch angle %d°',...
         handles.SelectedBeam ,pln.gantryAngles(handles.SelectedBeam),pln.couchAngles(handles.SelectedBeam));
-    title(str,'FontSize',12),grid on
+    title(str,'FontSize',8),grid on
     
     
     % plot target boundaries
@@ -840,7 +839,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
    Lines = PlotHandles(~cellfun(@isempty,PlotHandles(:,1)),1);
    Labels = PlotHandles(~cellfun(@isempty,PlotHandles(:,1)),2);
    h=legend([Lines{:}],Labels{:});
-    set(h,'FontSize',10);
+    set(h,'FontSize',8);
     % set axis limits
     if pln.bioOptimization == 0 || ~isfield(Result,'RBE')
         xlim([xmin xmax]);
@@ -849,7 +848,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
         xlim(ax(1),[xmin xmax]);
         xlim(ax(2),[xmin xmax]);
     end
-    xlabel('depth [cm]','FontSize',12);
+    xlabel('depth [cm]','FontSize',8);
    
 end
 
@@ -977,7 +976,7 @@ function btnOptimize_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 set(handles.figure1,'Pointer','watch');
-optResult = matRad_inversePlanning(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'));
+optResult = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'));
 assignin('base','optResult',optResult);
 set(handles.figure1,'Pointer','arrow');
 handles.State=3;
@@ -1151,12 +1150,20 @@ end
 function setCstTable(handles,cst)
 
 
-columnname = {'VOI','VOI Type','Priority','Obj Func','Penalty','Dose','EUD'};
+columnname = {'VOI','VOI Type','Overlap','Obj Func','Penalty','Dose','Parameters'};
 columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
        {'square underdosing','square overdosing','square deviation', 'mean', 'EUD'},...
        'numeric','numeric','numeric'};
    
-dimArr = [size(cst,1)-sum(strcmp([cst(:,3)],'IGNORED')) size(columnname,2)];
+numOfObjectives = 0;
+for i = 1:size(cst,1)
+    if ~isempty(cst{i,6})
+        numOfObjectives = numOfObjectives + numel(cst{i,6});
+    end
+end
+
+%dimArr = [size(cst,1)-sum(strcmp([cst(:,3)],'IGNORED')) size(columnname,2)];
+dimArr = [numOfObjectives size(columnname,2)];
 data = cell(dimArr);
 Counter = 1;
 for i = 1:size(cst,1)

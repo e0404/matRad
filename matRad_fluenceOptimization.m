@@ -55,9 +55,8 @@ if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
             if sum(strcmp(cst{i,6}(j).type,{'square overdosing', ...
                                             'square underdosing', ...
                                             'square deviation'})) < 1
-                error([cst{3,6}(j).type ' objective not supported ' ...
-                    'during biological optimization for particles\n' ...
-                    'please run matRad_modCst\n']);
+                error([cst{i,6}(j).type ' objective not supported ' ...
+                    'during biological optimization for carbon ions']);
             else % adjust internally for fractionation effects
                 cst{i,6}(j).parameter(2) = cst{i,6}(j).parameter(2)/pln.numOfFractions;
             end
@@ -65,8 +64,8 @@ if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
     end
     
     % set objective function
-    objFunc =  @(x) matRad_bioObjFunc(x,dij,cst);
-    %objFunc =  @(x) matRad_bioObjFuncRBExD(x,dij,cst);
+    objFunc = @(x) matRad_bioObjFunc(x,dij,cst);
+    %objFunc = @(x) matRad_bioObjFuncRBExD(x,dij,cst);
 else
     
     % set objective function
@@ -112,7 +111,7 @@ for i=1:size(cst,1)
 end
 
 % minimize objetive function
-optResult = matRad_optimize(objFunc,wInit);
+optResult = matRad_projectedLBFGS(objFunc,wInit);
 
 % calc dose and reshape from 1D vector to 2D array
 optResult.physicalDose = reshape(dij.physicalDose*optResult.w,dij.dimensions);
