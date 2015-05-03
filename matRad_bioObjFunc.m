@@ -105,6 +105,11 @@ end
 % gradient calculation
 if nargout > 1
     vBias= (delta' * dij.mAlphaDose)';
-    mPsi = ((2*delta.*quadTerm)'*dij.physicalDose)';
+    mPsi = ((delta.*quadTerm)'*dij.physicalDose)';
     g = 2*(vBias+mPsi);    
+    
+    % first gradient 
+    vTemp = dij.mAlphaDose(:,1)+(dij.mSqrtBetaDose*w);
+    g1 = (delta.*vTemp)'*dij.physicalDose(:,1);
+     fprintf(['first gradient ' num2str(g1) ]);
 end

@@ -74,6 +74,30 @@ else
     
 end
 
+%% calculate numerical gradients
+FlagGradientCheck = true;
+
+if FlagGradientCheck
+    [f, g] = matRad_objFunc(wInit,dij,cst);
+    epsilon = 1;
+
+    for i = 1:numel(wInit)
+
+        wDelta = wInit;
+        wDelta(i) = wDelta(i) + epsilon;
+        [fDelta, ~] = matRad_objFunc(wDelta ,dij,cst);
+
+        numGrad = (fDelta-f)/epsilon;
+        %find ‰hnlichkeitsmaﬂ
+        diff = (numGrad/g(i))*100;
+        diff_r =round(diff.*1000)/1000; 
+        fprintf(['Component # ' num2str(i) ' - percent diff in numerical and analytical gradient = '...
+            num2str(diff_r) '\n']);
+    end
+end
+
+
+
 
 %consider VOI priorities
 for i=1:size(cst,1)
