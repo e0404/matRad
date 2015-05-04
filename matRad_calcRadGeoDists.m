@@ -432,5 +432,5 @@ if visBool == 1
     clear coor_x;
     clear coor_y;
     clear coor_z;
-    %pause;
+    pause;
 end

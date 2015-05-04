@@ -726,7 +726,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     rotTargetPointBEV = targetPointBEV*rotMx_XY*rotMx_XZ;
     [~,~,~,~,vis] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube},true);
     ix = vis.ix;
-    mPhysDose=getfield(Result,'physicalDose'); 
+    mPhysDose = getfield(Result,'physicalDose'); 
     vPhysDose = mPhysDose(ix);
     % plot physical dose
     vX=linspace(1,ct.resolution(1)*numel(vPhysDose),numel(vPhysDose));
