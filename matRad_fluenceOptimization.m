@@ -1,4 +1,4 @@
-function optResult = matRad_inversePlanning(dij,cst,pln)
+function optResult = matRad_fluenceOptimization(dij,cst,pln,varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
@@ -45,6 +45,9 @@ function optResult = matRad_inversePlanning(dij,cst,pln)
 % intial fluence profile = uniform bixel intensities
 wInit = ones(dij.totalNumOfBixels,1);
 
+% consider VOI priorities
+cst  = matRad_setOverlapPriorities(cst);
+
 % define objective function
 if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
     % check if you are running a supported rad
@@ -70,32 +73,24 @@ if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
              dij.bx(cst{i,4}) = cst{i,5}.betaX;
          end
     end
-    % calculate gamma for rbe x dose optimization
-    dij.gamma = zeros(dij.numOfVoxels,1);
-    idx = dij.bx~=0;  % find indexes
-    dij.gamma(idx)=dij.ax(idx)./(2*dij.bx(idx)); 
-    % set objective function
-    %objFunc = @(x) matRad_bioObjFunc(x,dij,cst);
-    objFunc = @(x) matRad_bioObjFuncRBExD(x,dij,cst);
+    % define if RBE x dose or biological effect should be used
+    IdentifierBioOpt = 'bioEffect';
+    %IdentifierBioOpt = 'RBExDose';
+    switch IdentifierBioOpt
+        case 'bioEffect'
+            objFunc = @(x) matRad_bioObjFunc(x,dij,cst);
+        case 'RBExDose'
+            dij.gamma = zeros(dij.numOfVoxels,1);
+            idx = dij.bx~=0;  % find indexes
+            dij.gamma(idx)=dij.ax(idx)./(2*dij.bx(idx)); 
+            objFunc = @(x) matRad_bioObjFuncRBExD(x,dij,cst);
+    end
+  
 else
     % set objective function
     objFunc =  @(x) matRad_objFunc(x,dij,cst);
     
 end
-
-%consider VOI priorities
-for i=1:size(cst,1)
- idx = cst{i,4};          
- for k=1:size(cst,1)
-    if cst{k,5}.Priority<cst{i,5}.Priority && ~(i==k)
-        % remove indices from VOI with higher priority from current VOI
-        idx=setdiff(idx,cst{k,4});
-    end
- end
- cst{i,4}=idx;
-end
-
-
 
 
 %% calculate numerical gradients
@@ -126,7 +121,7 @@ end
 
 
 % minimize objetive function
-optResult = matRad_projectedLBFGS(objFunc,wInit);
+optResult = matRad_projectedLBFGS(objFunc,wInit,varargin);
 
 % calc dose and reshape from 1D vector to 2D array
 optResult.physicalDose = reshape(dij.physicalDose*optResult.w,dij.dimensions);

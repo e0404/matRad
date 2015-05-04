@@ -22,7 +22,7 @@ function varargout = matRadGUI(varargin)
 
 % Edit the above text to modify the response to help matRadGUI
 
-% Last Modified by GUIDE v2.5 28-Apr-2015 15:47:00
+% Last Modified by GUIDE v2.5 04-May-2015 18:14:49
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -71,7 +71,7 @@ h=imshow('matrad_hat40.png');
 % if plan is changed go back to state 1
 % if table is changed including VOI Type  go back to state 1
 % if table is changed but not the VOI Types  go back to state 2
-
+handles.TableChanged = false;
 handles.State = 0;
 %B = evalin('base','dij');
 %assignin('base','dij2',B);
@@ -185,7 +185,7 @@ load([FilePath FileName]);
 
 setCstTable(handles,cst);
 
-
+handles.TableChanged = false;
 handles.State = 1;
 set(handles.popupTypeOfPlot,'Value',1);
 assignin('base','ct',ct);
@@ -409,13 +409,14 @@ end
 
 set(handles.figure1,'Pointer','arrow');
 
-doseVis = matRad_mxCalcDose(dij,zeros(dij.totalNumOfBixels,1),evalin('base','cst'));
+doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),evalin('base','cst'));
 assignin('base','dij',dij);
 assignin('base','doseVis',doseVis);
 handles.State = 2;
 handles.SelectedDisplayOptionIdx=1;
 handles.SelectedDisplayOption='Dose';
 handles.SelectedBeam=1;
+handles.TableChanged = false;
 guidata(hObject,handles);
 UpdatePlot(handles);
 UpdateState(handles);
@@ -487,7 +488,7 @@ if exist('Result')
         end
 
     set(handles.popupDisplayOption,'String',fName(:,1));
-    set(handles.popupDisplayOption,'Value',handles.SelectedDisplayOptionIdx);
+    set(handles.popupDisplayOption,'Value',find(strcmp(handles.SelectedDisplayOption,fName(:,1))));
 
     end
 
@@ -718,12 +719,12 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
                  -sind(pln.couchAngles(handles.SelectedBeam)) 0 cosd(pln.couchAngles(handles.SelectedBeam))];
     
     if strcmp(handles.ProfileType,'longitudinal')
-        sourcePointBEV = [handles.profileOffset -150   0];
-        targetPointBEV = [handles.profileOffset 150   0];
+        sourcePointBEV = [handles.profileOffset -pln.SAD   0];
+        targetPointBEV = [handles.profileOffset pln.SAD   0];
         sMargin = -1;
     elseif strcmp(handles.ProfileType,'lateral')
-        sourcePointBEV = [-150 handles.profileOffset   0];
-        targetPointBEV = [150 handles.profileOffset   0];
+        sourcePointBEV = [-pln.SAD handles.profileOffset   0];
+        targetPointBEV = [pln.SAD handles.profileOffset   0];
         sMargin = 30;
     end
     rotSourcePointBEV = sourcePointBEV*rotMx_XY*rotMx_XZ;
@@ -978,7 +979,9 @@ function btnOptimize_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 set(handles.figure1,'Pointer','watch');
-optResult = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'));
+Param.numOfIter = str2num(get(handles.editNumIter,'String'));
+Param.prec = str2num(get(handles.txtPrecisionOutput,'String'));
+optResult = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'),Param);
 assignin('base','optResult',optResult);
 set(handles.figure1,'Pointer','arrow');
 handles.State=3;
@@ -1382,13 +1385,13 @@ function uiTable_CellEditCallback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % apply changes to the other cells
-
 data = get(hObject,'Data');
 if eventdata.Indices(2) == 1 || eventdata.Indices(2) == 2 ...
         || eventdata.Indices(2) == 3
     handles.State=1;
+    handles.TableChanged = true;
 else
-    if handles.State ==3
+    if handles.State ==3 && handles.TableChanged == false
         handles.State=2;
     end
 end
@@ -1400,7 +1403,6 @@ if eventdata.Indices(2) == 3  || eventdata.Indices(2) == 5
 end
 
 if eventdata.Indices(2) == 1 && eventdata.Indices(1) == size(data,1)
-    
     for i = 1:size(data,1)
         if strcmp(eventdata.NewData,data{i,1})
            data{eventdata.Indices(1),2}=data{i,2};
@@ -1450,7 +1452,7 @@ end
 
 set(handles.txtInfo,'String','plan changed');
 set(handles.uiTable,'data',data)
-
+guidata(hObject, handles);
 UpdateState(handles);
 
 
@@ -1653,3 +1655,51 @@ function toolbarSave_ClickedCallback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 btnTableSave_Callback(hObject, eventdata, handles);
+
+
+
+function editNumIter_Callback(hObject, eventdata, handles)
+% hObject    handle to editNumIter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editNumIter as text
+%        str2double(get(hObject,'String')) returns contents of editNumIter as a double
+val=round(str2double(get(hObject,'String')));
+set(hObject,'String',num2str(val));
+
+% --- Executes during object creation, after setting all properties.
+function editNumIter_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editNumIter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on slider movement.
+function slicerPrecision_Callback(hObject, eventdata, handles)
+% hObject    handle to slicerPrecision (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+val = get(hObject,'Value');
+set(hObject,'Value',round(val))
+set(handles.txtPrecisionOutput,'String',['1e-' num2str(round(val))]);
+
+% --- Executes during object creation, after setting all properties.
+function slicerPrecision_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slicerPrecision (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end

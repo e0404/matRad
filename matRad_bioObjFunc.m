@@ -1,18 +1,47 @@
 function [f, g] = matRad_bioObjFunc(w,dij,cst)
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% call [f, g, d] = matRad_IMRTBioObjFunc(w,dij,cst)
-% to calculate the biologic objective function value f, the gradient g, and the dose
-% distribution d
-% f: objective function value
-% g: gradient vector
-% bd: biological effect vector
-% d: physical dose vector
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright (c) by Mark Bangert 2014
-% m.bangert@dkzf.de
+% matRad optimization function based on the biologcial effect
+% 
+% call
+%   [f, g] = matRad_bioObjFunc(w,dij,cst)
+%
+% input
+%   w:   weight vector
+%   dij: matRad dij struct
+%   cst: cst file
+%
+% output
+%   f: objective function value
+%   g: gradient vector
+%
+% References
+%   http://iopscience.iop.org/0031-9155/51/12/009
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+%
+% m.bangert@dkfz.de
+%
+% This file is part of matRad.
+%
+% matrad is free software: you can redistribute it and/or modify it under 
+% the terms of the GNU General Public License as published by the Free 
+% Software Foundation, either version 3 of the License, or (at your option)
+% any later version.
+%
+% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
+% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+% details.
+%
+% You should have received a copy of the GNU General Public License in the
+% file license.txt along with matRad. If not, see
+% <http://www.gnu.org/licenses/>.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 % calculate biological effect
@@ -33,8 +62,6 @@ delta_deviation = zeros(numVoxels,1);
 delta_mean      = zeros(numVoxels,1);
 delta_EUD       = zeros(numVoxels,1);
 
-
-
 % Compute optimization function for every VOI.
 for  i = 1:size(cst,1)
     
@@ -44,11 +71,6 @@ for  i = 1:size(cst,1)
         % get effect vector in current VOI
         e_i = e(cst{i,4});
         
-        % get tissue specific alpha photon and beta photon to calculate
-        % prescriped effect
-        a_x = cst{i,5}.alphaX;
-        b_x = cst{i,5}.betaX;
-        
         % loop over the number of constraints for the current VOI
         for j = 1:size(cst{i,6},2)
             
@@ -56,7 +78,7 @@ for  i = 1:size(cst,1)
             rho = cst{i,6}(j).parameter(1);
             
             % refernce effect
-            e_ref = a_x*cst{i,6}(j).parameter(2)+b_x*cst{i,6}(j).parameter(2)^2;
+            e_ref = dij.ax(cst{i,4}).*cst{i,6}(j).parameter(2)+dij.bx(cst{i,4})*cst{i,6}(j).parameter(2)^2;
             
             if isequal(cst{i,6}(j).type, 'square underdosing')
   
@@ -119,8 +141,7 @@ for  i = 1:size(cst,1)
                     delta_EUD(cst{i,4}) = delta_EUD(cst{i,4}) + ...
                         rho*nthroot(1/size(cst{i,4},1),exponent) * sum(e_i.^exponent)^((1-exponent)/exponent) * (e_i.^(exponent-1));                    
                 end    
-                
-                
+                   
             else
                 
                 error('undefined objective in cst struct');

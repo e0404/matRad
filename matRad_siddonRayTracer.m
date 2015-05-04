@@ -62,22 +62,24 @@ end
 sourcePoint = sourcePoint + isocenter;
 targetPoint = targetPoint + isocenter;
 
-%Save the numbers of planes.
+% Save the numbers of planes.
 [xNumPlanes, yNumPlanes, zNumPlanes] = size(cubes{1});
+xNumPlanes = xNumPlanes + 1;
+yNumPlanes = yNumPlanes + 1;
+zNumPlanes = zNumPlanes + 1;
 
 % eq 11
 % Calculate the distance from source to target point.
 d12 = sum((sourcePoint(1) - targetPoint(1)).^2 + (sourcePoint(2) - targetPoint(2)).^2  + (sourcePoint(3) - targetPoint(3)).^2).^.5;
 
 % eq 3
-% Position of first planes in milimeter. The 0.5 it is because calculated
-% the cental position of voxels.
+% Position of first planes in millimeter. 0.5 because the central position
+% of the first voxel is at [resolution(1) resolution(2) resolution(3)]
 xPlane_1 = .5*resolution(1);
 yPlane_1 = .5*resolution(2);
 zPlane_1 = .5*resolution(3);
 
-% Position of lasts planes in milimiter. The 0.5 it is because calculated
-% central position of lasts voxels.
+% Position of last planes in milimiter
 xPlane_end = (xNumPlanes - .5)*resolution(1);
 yPlane_end = (yNumPlanes - .5)*resolution(2);
 zPlane_end = (zNumPlanes - .5)*resolution(3);
@@ -206,14 +208,18 @@ alphas = unique([alpha_min alpha_x alpha_y alpha_z alpha_max]);
 l = d12*diff(alphas);
 
 % eq 13
-% Calculate the \alpha_{middle}
+% Calculate \alpha_{middle}
 alphas_mid = mean([alphas(1:end-1);alphas(2:end)]);
 
 % eq 12
-% Calculate the voxel indices.
-i = round(1+(sourcePoint(1) + alphas_mid*(targetPoint(1) - sourcePoint(1)) -xPlane_1)/resolution(1));
-j = round(1+(sourcePoint(2) + alphas_mid*(targetPoint(2) - sourcePoint(2)) -yPlane_1)/resolution(2));
-k = round(1+(sourcePoint(3) + alphas_mid*(targetPoint(3) - sourcePoint(3)) -zPlane_1)/resolution(3));
+% Calculate the voxel indices: first convert to physical coords
+i_mm = sourcePoint(1) + alphas_mid*(targetPoint(1) - sourcePoint(1));
+j_mm = sourcePoint(2) + alphas_mid*(targetPoint(2) - sourcePoint(2));
+k_mm = sourcePoint(3) + alphas_mid*(targetPoint(3) - sourcePoint(3));
+% then convert to voxel index
+i = round(i_mm/resolution(1));
+j = round(j_mm/resolution(2));
+k = round(k_mm/resolution(3));
 
 % Handle numerical instabilities at the borders.
 i(i<=0) = 1; j(j<=0) = 1; k(k<=0) = 1;
@@ -233,13 +239,13 @@ if visBool
    vis.alpha_x = alpha_x;
    vis.alpha_y = alpha_y;
    vis.alpha_z = alpha_z;
-   vis.x_min = x_min;
-   vis.x_max = x_max;
-   vis.y_min = y_min;
-   vis.y_max = y_max;
-   vis.z_min = z_min;
-   vis.z_max = z_max;
-   vis.ix=ix;
+   vis.x_min   = x_min;
+   vis.x_max   = x_max;
+   vis.y_min   = y_min;
+   vis.y_max   = y_max;
+   vis.z_min   = z_min;
+   vis.z_max   = z_max;
+   vis.ix      = ix;
 else
    vis = [];
 end

@@ -95,6 +95,8 @@ end
 
 % generates tissue class matrix for biological optimization
 if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
+    % consider VOI priorities
+    cst  = matRad_setOverlapPriorities(cst);
     fprintf('matRad: loading biological base data... ');
     mTissueClass = zeros(size(V,1),1);
     for i = 1:size(cst,1)
