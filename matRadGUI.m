@@ -115,8 +115,8 @@ catch
 end
 
 if handles.State ==2 || handles.State ==3
-    set(handles.popupDisplayOption,'String','physicalDose');
-    handles.SelectedDisplayOption ='physicalDose';
+    set(handles.popupDisplayOption,'String','Dose');
+    handles.SelectedDisplayOption ='Dose';
     handles.SelectedDisplayOptionIdx=1;
 else
     handles.optResult = [];
@@ -414,7 +414,7 @@ assignin('base','dij',dij);
 assignin('base','doseVis',doseVis);
 handles.State = 2;
 handles.SelectedDisplayOptionIdx=1;
-handles.SelectedDisplayOption='physicalDose';
+handles.SelectedDisplayOption='Dose';
 handles.SelectedBeam=1;
 guidata(hObject,handles);
 UpdatePlot(handles);
@@ -444,10 +444,14 @@ if exist('Result')
         if isfield(Result,'w')
             Result = rmfield(Result,'w');
         end
+        if isfield(Result,'physicalDose')
+            Result.Dose = Result.physicalDose;
+            Result=rmfield(Result,'physicalDose');
+        end
         if isfield(Result,'RBE')
             Result.RBETruncated10Perc = Result.RBE;
-            Result.RBETruncated10Perc(Result.physicalDose<0.1*...
-                max(Result.physicalDose(:))) = 0;
+            Result.RBETruncated10Perc(Result.Dose<0.1*...
+                max(Result.Dose(:))) = 0;
         end
 
         fName =fieldnames(Result);
@@ -459,7 +463,7 @@ if exist('Result')
                 fName{i,2}=1;
             end
             % determine units
-            if strcmp(fName{i,1},'physicalDose')
+            if strcmp(fName{i,1},'Dose')
                 fName{i,3} = '[Gy]';
             elseif strcmp(fName{i,1},'alpha')
                 fName{i,3} = '[Gy^{-1}]';
@@ -519,7 +523,7 @@ if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1 ...
 
         mVolume = getfield(Result,handles.SelectedDisplayOption);
         % make sure to exploit full color range
-        mVolume(Result.physicalDose<CutOffLevel*max(Result.physicalDose(:)))=0;
+        mVolume(Result.Dose<CutOffLevel*max(Result.Dose(:)))=0;
 
     %     %% dose colorwash
         if ~isempty(mVolume) && get(handles.radiobtnDose,'Value') && ~isvector(mVolume)
@@ -542,14 +546,14 @@ if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1 ...
             % make dose transparent
             if ~isempty(ct.cube)
                 if plane == 1  % Coronal plane
-                    set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.physicalDose(slice,:,:))>CutOffLevel*max(Result.physicalDose(:))  )  ) ;
+                    set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(slice,:,:))>CutOffLevel*max(Result.Dose(:))  )  ) ;
                 elseif plane == 2 % sagittal plane
-                    set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.physicalDose(:,slice,:))>CutOffLevel*max(Result.physicalDose(:))  )  ) ;
+                    set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,slice,:))>CutOffLevel*max(Result.Dose(:))  )  ) ;
                 elseif plane == 3 % Axial plane
                     if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
-                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.physicalDose(:,:,slice))>0.1*max(Result.physicalDose(:))  )  ) ;
+                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,:,slice))>0.1*max(Result.Dose(:))  )  ) ;
                     else
-                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.physicalDose(:,:,slice))>CutOffLevel*max(Result.physicalDose(:))  )  ) ;
+                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,:,slice))>CutOffLevel*max(Result.Dose(:))  )  ) ;
                     end
                 end
 
@@ -714,24 +718,24 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
                  -sind(pln.couchAngles(handles.SelectedBeam)) 0 cosd(pln.couchAngles(handles.SelectedBeam))];
     
     if strcmp(handles.ProfileType,'longitudinal')
-        sourcePointBEV = [handles.profileOffset -pln.SAD   0];
-        targetPointBEV = [handles.profileOffset pln.SAD   0];
+        sourcePointBEV = [handles.profileOffset -150   0];
+        targetPointBEV = [handles.profileOffset 150   0];
         sMargin = -1;
     elseif strcmp(handles.ProfileType,'lateral')
-        sourcePointBEV = [-pln.SAD handles.profileOffset   0];
-        targetPointBEV = [pln.SAD handles.profileOffset   0];
+        sourcePointBEV = [-150 handles.profileOffset   0];
+        targetPointBEV = [150 handles.profileOffset   0];
         sMargin = 30;
     end
     rotSourcePointBEV = sourcePointBEV*rotMx_XY*rotMx_XZ;
     rotTargetPointBEV = targetPointBEV*rotMx_XY*rotMx_XZ;
     [~,~,~,~,vis] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube},true);
     ix = vis.ix;
-    mPhysDose=getfield(Result,'physicalDose'); 
+    mPhysDose=getfield(Result,'Dose'); 
     vPhysDose = mPhysDose(ix);
     % plot physical dose
     vX=linspace(1,ct.resolution(1)*numel(vPhysDose),numel(vPhysDose));
     PlotHandles{1} = plot(handles.axesFig,vX,vPhysDose,'color',cColor{1,1},'LineWidth',3);grid on, hold on; 
-    PlotHandles{1,2}='physicalDose';
+    PlotHandles{1,2}='Dose';
     set(gca,'FontSize',8);
     % assess x - limits
     xLim  = find(vPhysDose);
@@ -760,7 +764,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
         for i=1:1:size(fName,1)
             mCurrentCube = getfield(Result,fName{i,1});
             if ~isvector(mCurrentCube) && ~strcmp(fName{i,1},'RBEWeightedDose') ...
-                    && ~strcmp(fName{i,1},'RBE') && ~strcmp(fName{i,1},'physicalDose')...
+                    && ~strcmp(fName{i,1},'RBE') && ~strcmp(fName{i,1},'Dose')...
                     && fName{i,2}
                 vProfile = mCurrentCube(ix);
                 PlotHandles{Cnt,1} = plot(vX,vProfile,'color',cColor{1,Cnt},'LineWidth',3);hold on; 
@@ -981,7 +985,7 @@ assignin('base','optResult',optResult);
 set(handles.figure1,'Pointer','arrow');
 handles.State=3;
 handles.SelectedDisplayOptionIdx=1;
-handles.SelectedDisplayOption='physicalDose';
+handles.SelectedDisplayOption='Dose';
 handles.SelectedBeam=1;
 guidata(hObject,handles);
 UpdatePlot(handles);

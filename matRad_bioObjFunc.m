@@ -27,7 +27,13 @@ numVoxels = size(dij.physicalDose,1);
 f = 0;
 
 % Initializes delta
-delta = zeros(numVoxels,1);
+delta_underdose = zeros(numVoxels,1);
+delta_overdose  = zeros(numVoxels,1);
+delta_deviation = zeros(numVoxels,1);
+delta_mean      = zeros(numVoxels,1);
+delta_EUD       = zeros(numVoxels,1);
+
+
 
 % Compute optimization function for every VOI.
 for  i = 1:size(cst,1)
@@ -64,7 +70,7 @@ for  i = 1:size(cst,1)
                 f = f + (rho/size(cst{i,4},1))*(underdose'*underdose);
                 
                 % calculate delta
-                delta(cst{i,4}) = delta(cst{i,4}) + (rho/size(cst{i,4},1))*underdose;
+                delta_underdose(cst{i,4}) = delta_underdose(cst{i,4}) + (rho/size(cst{i,4},1))*underdose;
                 
             elseif isequal(cst{i,6}(j).type, 'square overdosing')
                 
@@ -78,7 +84,7 @@ for  i = 1:size(cst,1)
                 f = f + (rho/size(cst{i,4},1))*(overdose'*overdose);
                 
                 %calculate delta
-                delta(cst{i,4}) = delta(cst{i,4}) + (rho/size(cst{i,4},1))*overdose;
+                delta_overdose(cst{i,4}) = delta_overdose(cst{i,4}) + (rho/size(cst{i,4},1))*overdose;
                 
             elseif isequal(cst{i,6}(j).type, 'square deviation')
                 
@@ -89,7 +95,31 @@ for  i = 1:size(cst,1)
                 f = f + (rho/size(cst{i,4},1))*(deviation'*deviation);
                 
                 % calculate delta
-                delta(cst{i,4}) = delta(cst{i,4}) + (rho/size(cst{i,4},1))*deviation;
+                delta_deviation(cst{i,4}) = delta_deviation(cst{i,4}) + (rho/size(cst{i,4},1))*deviation;
+            
+            elseif isequal(cst{i,6}(j).type, 'mean')              
+                
+                % calculate objective function
+                f = f + (rho/size(cst{i,4},1))*sum(e_i);
+                
+                % calculate delta
+                delta_mean(cst{i,4}) = delta_mean(cst{i,4}) + ...
+                    (rho/size(cst{i,4},1))*ones(size(cst{i,4},1),1);
+                
+             elseif isequal(cst{i,6}(j).type, 'EUD') 
+                
+                % get exponent for EUD
+                exponent = cst{i,6}(j).exponent;
+                
+                % calculate objective function and delta
+                if sum(e_i.^exponent)>0
+                    
+                    f = f + rho*nthroot((1/size(cst{i,4},1))*sum(e_i.^exponent),exponent);
+                    
+                    delta_EUD(cst{i,4}) = delta_EUD(cst{i,4}) + ...
+                        rho*nthroot(1/size(cst{i,4},1),exponent) * sum(e_i.^exponent)^((1-exponent)/exponent) * (e_i.^(exponent-1));                    
+                end    
+                
                 
             else
                 
@@ -104,12 +134,14 @@ end
 
 % gradient calculation
 if nargout > 1
+    delta = delta_underdose + delta_overdose + delta_deviation + ...
+                delta_mean + delta_EUD;
     vBias= (delta' * dij.mAlphaDose)';
     mPsi = ((delta.*quadTerm)'*dij.physicalDose)';
     g = 2*(vBias+mPsi);    
     
-    % first gradient 
-    vTemp = dij.mAlphaDose(:,1)+(dij.mSqrtBetaDose*w);
-    g1 = (delta.*vTemp)'*dij.physicalDose(:,1);
-     fprintf(['first gradient ' num2str(g1) ]);
+    % first gradient - according to Paper of Jan Wilkens - Fast Multifield
+%     vTemp = dij.mAlphaDose(:,1)+(dij.mSqrtBetaDose*w);
+%     g1 = (2*delta.*vTemp)'*dij.physicalDose(:,1);
+%     fprintf(['first gradient ' num2str(g1) '\n']);
 end

@@ -54,7 +54,9 @@ if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
         for j = 1:size(cst{i,6},2)
             if sum(strcmp(cst{i,6}(j).type,{'square overdosing', ...
                                             'square underdosing', ...
-                                            'square deviation'})) < 1
+                                            'square deviation',...
+                                            'mean',...
+                                            'EUD'})) < 1
                 error([cst{i,6}(j).type ' objective not supported ' ...
                     'during biological optimization for carbon ions']);
             else % adjust internally for fractionation effects
@@ -67,36 +69,10 @@ if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
     objFunc = @(x) matRad_bioObjFunc(x,dij,cst);
     %objFunc = @(x) matRad_bioObjFuncRBExD(x,dij,cst);
 else
-    
     % set objective function
     objFunc =  @(x) matRad_objFunc(x,dij,cst);
     
 end
-
-%% calculate numerical gradients
-FlagGradientCheck = true;
-
-if FlagGradientCheck
-    [f, g] = matRad_objFunc(wInit,dij,cst);
-    epsilon = 1;
-
-    for i = 1:numel(wInit)
-
-        wDelta = wInit;
-        wDelta(i) = wDelta(i) + epsilon;
-        [fDelta, ~] = matRad_objFunc(wDelta ,dij,cst);
-
-        numGrad = (fDelta-f)/epsilon;
-        %find ähnlichkeitsmaß
-        diff = (numGrad/g(i))*100;
-        diff_r =round(diff.*1000)/1000; 
-        fprintf(['Component # ' num2str(i) ' - percent diff in numerical and analytical gradient = '...
-            num2str(diff_r) '\n']);
-    end
-end
-
-
-
 
 %consider VOI priorities
 for i=1:size(cst,1)
@@ -109,6 +85,36 @@ for i=1:size(cst,1)
  end
  cst{i,4}=idx;
 end
+
+
+
+
+%% calculate numerical gradients
+FlagGradientCheck = false;
+
+if FlagGradientCheck
+    [f, g] = matRad_bioObjFunc(wInit,dij,cst);
+    epsilon = 1e-05;
+
+    for i = 1:numel(wInit)
+
+        wDelta = wInit;
+        wDelta(i) = wDelta(i) + epsilon;
+        [fDelta, ~] = matRad_bioObjFunc(wDelta ,dij,cst);
+
+        numGrad = (fDelta-f)/epsilon;
+        if numGrad>g(i)
+            diff = ((g(i)/(numGrad))-1)*100;
+        else
+            diff = ((numGrad/g(i))-1)*100;
+        end
+        
+        diff_r =round(diff.*1000)/1000; 
+        fprintf(['Component # ' num2str(i) ' - percent diff in numerical and analytical gradient = '...
+            num2str(diff_r) '\n']);
+    end
+end
+
 
 % minimize objetive function
 optResult = matRad_projectedLBFGS(objFunc,wInit);
