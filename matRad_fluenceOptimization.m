@@ -48,7 +48,8 @@ wInit = ones(dij.totalNumOfBixels,1);
 % define objective function
 if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
     % check if you are running a supported rad
-    
+    dij.ax = zeros(dij.numOfVoxels,1);
+    dij.bx = zeros(dij.numOfVoxels,1);
     % check if only allowed objectives were defined
     for i = 1:size(cst,1)
         for j = 1:size(cst{i,6},2)
@@ -61,11 +62,19 @@ if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
                 cst{i,6}(j).parameter(2) = cst{i,6}(j).parameter(2)/pln.numOfFractions;
             end
         end
+        
+         if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
+             dij.ax(cst{i,4}) = cst{i,5}.alphaX;
+             dij.bx(cst{i,4}) = cst{i,5}.betaX;
+         end
     end
-    
+    % calculate gamma for rbe x dose optimization
+    dij.gamma = zeros(dij.numOfVoxels,1);
+    idx = dij.bx~=0;  % find indexes
+    dij.gamma(idx)=dij.ax(idx)./(2*dij.bx(idx)); 
     % set objective function
-    objFunc = @(x) matRad_bioObjFunc(x,dij,cst);
-    %objFunc = @(x) matRad_bioObjFuncRBExD(x,dij,cst);
+    %objFunc = @(x) matRad_bioObjFunc(x,dij,cst);
+    objFunc = @(x) matRad_bioObjFuncRBExD(x,dij,cst);
 else
     
     % set objective function
