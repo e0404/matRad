@@ -643,13 +643,13 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
             end
         end
     end
-    %warning('off','MATLAB:legend:PlotEmpty')
+    warning('off','MATLAB:legend:PlotEmpty')
     myLegend = legend('show','location','NorthEast');
     set(myLegend,'FontSize',8);
     set(myLegend,'color','none');
     set(myLegend,'TextColor', [1 1 1]);
     legend boxoff
-    %warning('on','MATLAB:legend:PlotEmpty')
+    warning('on','MATLAB:legend:PlotEmpty')
 end
 
 %% Set axis labels
@@ -899,17 +899,15 @@ handles.plane = get(handles.popupPlane,'value');
 %      'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
 %  
 try
-ct = evalin('base', 'ct');
-pln = evalin('base', 'pln');
+    ct = evalin('base', 'ct');
+    pln = evalin('base', 'pln');
 
-set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-   'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
-   'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+    set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
+       'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
+       'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
 catch
 end
         
-
-
 UpdatePlot(handles)
 
 % --- Executes during object creation, after setting all properties.
