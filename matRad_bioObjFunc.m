@@ -158,14 +158,4 @@ if nargout > 1
     vBias= (delta' * dij.mAlphaDose)';
     mPsi = ((delta.*quadTerm)'*dij.physicalDose)';
     g = 2*(vBias+mPsi);    
-    
-    
-    mPsi1 = (quadTerm'*dij.physicalDose);
-    
-    % first gradient - according to Paper of Jan Wilkens - Fast Multifield
-    NumGrad = 1;  % determines which gradient should be calculated
-    vBias = dij.mAlphaDose(:,NumGrad);
-    vPsi  = 2*(dij.mSqrtBetaDose(:,NumGrad).*(dij.physicalDose*w));
-    g_single = 2*((delta'*(vBias+vPsi)));
-    fprintf(['first gradient jan wilkens' num2str(g_single) '\n']);
 end

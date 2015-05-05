@@ -387,7 +387,7 @@ function btnCalcDose_Callback(hObject, eventdata, handles)
 % hObject    handle to btnCalcDose (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-set(handles.figure1,'Pointer','watch');
+
 %% get cst from table
 if ~getCstTable(handles);
     return
@@ -399,15 +399,11 @@ stf = matRad_generateStf(evalin('base','ct'),...
                                  evalin('base','cst'),...
                                  evalin('base','pln'));
 assignin('base','stf',stf);
-%h=waitbar(0,'dose calculation ... ');
 if strcmp(evalin('base','pln.radiationMode'),'photons')
     dij = matRad_calcPhotonDose(evalin('base','ct'),stf,evalin('base','pln'),evalin('base','cst'),0);
 elseif strcmp(evalin('base','pln.radiationMode'),'protons') || strcmp(evalin('base','pln.radiationMode'),'carbon')
     dij = matRad_calcParticleDose(evalin('base','ct'),stf,evalin('base','pln'),evalin('base','cst'),0);
 end
-%close(h);
-
-set(handles.figure1,'Pointer','arrow');
 
 doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),evalin('base','cst'));
 assignin('base','dij',dij);
@@ -1395,12 +1391,23 @@ else
         handles.State=2;
     end
 end
-%%
-if eventdata.Indices(2) == 3  || eventdata.Indices(2) == 5
+%% check if input is a valid
+if eventdata.Indices(2) == 3  || eventdata.Indices(2) == 5 || eventdata.Indices(2) == 6 || eventdata.Indices(2) == 7
     if CheckValidity(eventdata.NewData) ==false
             data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
     end
 end
+
+%% if objective function is set to mean --> set dose cell to empty
+if eventdata.Indices(2)==4 && strcmp(eventdata.NewData,'mean') || ...
+    eventdata.Indices(2)==4 && strcmp(eventdata.NewData,'EUD')
+     data{eventdata.Indices(1),6}='';
+end
+%% if objective function is set to mean --> set EUD cell to empty
+if eventdata.Indices(2)==4 && strcmp(eventdata.NewData,'mean')
+    data{eventdata.Indices(1),7}='';
+end
+
 
 if eventdata.Indices(2) == 1 && eventdata.Indices(1) == size(data,1)
     for i = 1:size(data,1)
@@ -1429,8 +1436,8 @@ if eventdata.Indices(2) == 7
             data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
     end 
     % check if obj func is set to EUD otherwise reject this change
-    if ~strcmp(data{eventdata.Indices(1),4},'EUD')
-        data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
+    if ~strcmp(data{eventdata.Indices(1),4},'EUD') 
+        data{eventdata.Indices(1),eventdata.Indices(2)} = '';
     end
 end
 
@@ -1444,7 +1451,6 @@ if eventdata.Indices(2) == 6
         data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
     end
 end
-
 
 if isnan(eventdata.NewData)
     data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;

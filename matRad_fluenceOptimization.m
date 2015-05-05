@@ -93,33 +93,6 @@ else
 end
 
 
-%% calculate numerical gradients
-FlagGradientCheck = false;
-
-if FlagGradientCheck
-    [f, g] = matRad_bioObjFunc(wInit,dij,cst);
-    epsilon = 1e-05;
-
-    for i = 1:numel(wInit)
-
-        wDelta = wInit;
-        wDelta(i) = wDelta(i) + epsilon;
-        [fDelta, ~] = matRad_bioObjFunc(wDelta ,dij,cst);
-
-        numGrad = (fDelta-f)/epsilon;
-        if numGrad>g(i)
-            diff = ((g(i)/(numGrad))-1)*100;
-        else
-            diff = ((numGrad/g(i))-1)*100;
-        end
-        
-        diff_r =round(diff.*1000)/1000; 
-        fprintf(['Component # ' num2str(i) ' - percent diff in numerical and analytical gradient = '...
-            num2str(diff_r) '\n']);
-    end
-end
-
-
 % minimize objetive function
 optResult = matRad_projectedLBFGS(objFunc,wInit,varargin);
 
