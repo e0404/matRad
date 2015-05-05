@@ -1273,7 +1273,14 @@ for i = 1:size(OldCst,1)
                     if isempty(data{j,6})
                        FlagValidParameters=false;
                     else
-                         NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = double(data{j,6});
+                          if length(NewCst{Cnt,4}(CntObjF,1).parameter)==1
+                              NewCst{Cnt,4}(CntObjF,1).parameter(1,2)=1;
+                          end
+                          if iscellstr(data{j,6})
+                              NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = str2num(data{j,6});
+                          else
+                              NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = (data{j,6});
+                          end
                     end
                 end
             end
