@@ -1,4 +1,4 @@
-function optResult = matRad_optimize(objFunc,wInit,varargin)
+function optResult = matRad_projectedLBFGS(objFunc,wInit,varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % projected L-BFGS optimizer including a positivity constraints on the
 % optimization variable
@@ -47,7 +47,7 @@ function optResult = matRad_optimize(objFunc,wInit,varargin)
 % variables for termination criteria
 iter      = 0;
 if isempty(varargin{1,1})
-    numOfIter = 10;
+    numOfIter = 10000;
     prec      = 1e-4;
 else
     optParam = varargin{1,1};

@@ -63,8 +63,11 @@ if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
                                             'EUD'})) < 1
                 error([cst{i,6}(j).type ' objective not supported ' ...
                     'during biological optimization for carbon ions']);
-            else % adjust internally for fractionation effects
-                cst{i,6}(j).parameter(2) = cst{i,6}(j).parameter(2)/pln.numOfFractions;
+            else % adjust internally for fractionation effects if prescribed dose exists for 
+                 % corresponding objective function
+                if ~strcmp(cst{i,6}(j).type,'mean') && ~strcmp(cst{i,6}(j).type,'EUD')
+                    cst{i,6}(j).parameter(2) = cst{i,6}(j).parameter(2)/pln.numOfFractions;
+                end
             end
         end
         
@@ -91,7 +94,8 @@ else
     objFunc =  @(x) matRad_objFunc(x,dij,cst);
     
 end
-
+%% verify gradient calculation
+matRadVerifyGradient(objFunc,dij.totalNumOfBixels);
 
 % minimize objetive function
 optResult = matRad_projectedLBFGS(objFunc,wInit,varargin);

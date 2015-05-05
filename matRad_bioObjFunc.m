@@ -76,7 +76,9 @@ for  i = 1:size(cst,1)
             rho = cst{i,6}(j).parameter(1);
             
             % refernce effect
-            e_ref = dij.ax(cst{i,4}).*cst{i,6}(j).parameter(2)+dij.bx(cst{i,4})*cst{i,6}(j).parameter(2)^2;
+            if ~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')
+                e_ref = dij.ax(cst{i,4}).*cst{i,6}(j).parameter(2)+dij.bx(cst{i,4})*cst{i,6}(j).parameter(2)^2;
+            end
             
             if isequal(cst{i,6}(j).type, 'square underdosing')
   
@@ -153,9 +155,16 @@ end
 
 % gradient calculation
 if nargout > 1
-    delta = delta_underdose + delta_overdose + delta_deviation + ...
-                delta_mean + delta_EUD;
+    delta =delta_underdose + delta_overdose + delta_deviation; 
     vBias= (delta' * dij.mAlphaDose)';
-    mPsi = ((delta.*quadTerm)'*dij.physicalDose)';
-    g = 2*(vBias+mPsi);    
+    mPsi = (2*(delta.*quadTerm)'*dij.mSqrtBetaDose)';
+    g = 2*(vBias+mPsi); 
+    
+    if sum(delta_mean(:))>0 || sum(delta_EUD(:))>0
+        delta = delta_mean+delta_EUD;
+        vBias= (delta' * dij.mAlphaDose)';
+        mPsi = (2*(delta.*quadTerm)'*dij.mSqrtBetaDose)';
+        g =  g+(vBias+mPsi);
+    end
+    
 end
