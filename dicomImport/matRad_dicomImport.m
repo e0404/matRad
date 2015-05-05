@@ -3,7 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% scan dicom import folder and select patient, image series, and rtss
-dicomDataDir = 'C:\Users\bangertm\Dropbox\matRad\angleValidation\intra3Dicom';
+dicomDataDir = 'X:\YourDicomFolder';
 files = matRad_scanDicomImportFolder(dicomDataDir);
 
 %% import ct-cube
