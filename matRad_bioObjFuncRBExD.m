@@ -156,9 +156,17 @@ end
 
 % gradient calculation
 if nargout > 1
-    delta = (2*(delta_underdose + delta_overdose + delta_deviation) + delta_mean + delta_EUD );        
-    delta = delta./(dij.bx.*ScaledEffect);
+    delta = delta_underdose + delta_overdose + delta_deviation;        
+    delta = delta./(2*dij.bx.*ScaledEffect);
     vBias= (delta' * dij.mAlphaDose)';
     mPsi = (2*(delta.*quadTerm)'*dij.mSqrtBetaDose)';
-    g = 2*(vBias+mPsi);     
+    g = 2*(vBias+mPsi); 
+    
+    if sum(delta_mean(:))>0 || sum(delta_EUD(:))>0
+        delta = delta_mean + delta_EUD;        
+        delta = delta./(2*dij.bx.*ScaledEffect);
+        vBias= (delta' * dij.mAlphaDose)';
+        mPsi = (2*(delta.*quadTerm)'*dij.mSqrtBetaDose)';
+        g = g + (vBias+mPsi); 
+    end
 end
