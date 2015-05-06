@@ -53,6 +53,8 @@ e = linTerm + quadTerm.^2;
 % calculate RBX x dose
 ScaledEffect = (e./dij.bx)+(dij.gamma.^2);
 [idx,~] = find(~isnan(ScaledEffect));
+% sqrt(ScaledEffect) takes 40% of the time
+%ScaledEffect=sqrt(ScaledEffect);
 ScaledEffect(idx)=sqrt(ScaledEffect(idx));
 RBExD = ScaledEffect-dij.gamma;
 
@@ -83,7 +85,7 @@ for  i = 1:size(cst,1)
             
             if isequal(cst{i,6}(j).type, 'square underdosing')
   
-                % underdose : effect minus reference effect
+                % underdose : biologic effecitve dose minus reference  biologic effecitve dose
                 underdose = RBExD_i - cst{i,6}(j).parameter(2);
 
                 % apply positive operator
@@ -97,7 +99,7 @@ for  i = 1:size(cst,1)
                 
             elseif isequal(cst{i,6}(j).type, 'square overdosing')
                 
-                % overdose : Dose minus prefered dose
+                % overdose : biologic effecitve dose minus reference  biologic effecitve dose
                 overdose = RBExD_i - cst{i,6}(j).parameter(2);
                 
                 % apply positive operator
@@ -156,17 +158,18 @@ end
 
 % gradient calculation
 if nargout > 1
+    
     delta = delta_underdose + delta_overdose + delta_deviation;        
     delta = delta./(2*dij.bx.*ScaledEffect);
     vBias= (delta' * dij.mAlphaDose)';
     mPsi = (2*(delta.*quadTerm)'*dij.mSqrtBetaDose)';
     g = 2*(vBias+mPsi); 
     
-    if sum(delta_mean(:))>0 || sum(delta_EUD(:))>0
-        delta = delta_mean + delta_EUD;        
-        delta = delta./(2*dij.bx.*ScaledEffect);
-        vBias= (delta' * dij.mAlphaDose)';
-        mPsi = (2*(delta.*quadTerm)'*dij.mSqrtBetaDose)';
-        g = g + (vBias+mPsi); 
-    end
+    
+    delta = delta_mean + delta_EUD;        
+    delta = delta./(2*dij.bx.*ScaledEffect);
+    vBias= (delta' * dij.mAlphaDose)';
+    mPsi = (2*(delta.*quadTerm)'*dij.mSqrtBetaDose)';
+    g = g + (vBias+mPsi); 
+    
 end

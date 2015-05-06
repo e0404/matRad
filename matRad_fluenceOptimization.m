@@ -76,15 +76,21 @@ if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
              dij.bx(cst{i,4}) = cst{i,5}.betaX;
          end
     end
-    % define if RBE x dose or biological effect should be used
-    IdentifierBioOpt = 'bioEffect';
-    %IdentifierBioOpt = 'RBExDose';
+    % define if RBE x dose or biological effect should be used   
+    
+    if length(varargin)>1
+        IdentifierBioOpt=varargin{1,2};
+    else
+        %IdentifierBioOpt = 'bioEffect';
+        IdentifierBioOpt = 'RBExDose';
+    end
+    
     switch IdentifierBioOpt
         case 'bioEffect'
             objFunc = @(x) matRad_bioObjFunc(x,dij,cst);
         case 'RBExDose'
             dij.gamma = zeros(dij.numOfVoxels,1);
-            idx = dij.bx~=0;  % find indexes
+            idx = dij.bx~=0;  % find indices
             dij.gamma(idx)=dij.ax(idx)./(2*dij.bx(idx)); 
             objFunc = @(x) matRad_bioObjFuncRBExD(x,dij,cst);
     end
@@ -94,7 +100,7 @@ else
     objFunc =  @(x) matRad_objFunc(x,dij,cst);
     
 end
-%% verify gradient calculation
+%% verify gradients
 matRadVerifyGradient(objFunc,dij.totalNumOfBixels);
 
 % minimize objetive function
