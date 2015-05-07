@@ -1,10 +1,11 @@
-function optResult = matRad_optimize(objFunc,wInit)
+function optResult = matRad_projectedLBFGS(objFunc,wInit,varargin)
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % projected L-BFGS optimizer including a positivity constraints on the
 % optimization variable
 % 
 % call
-%   [w,dose] = matRad_optimize(objFunc,wInit)
+%   [w,dose] = matRad_projectedLBFGS(objFunc,wInit)
 %
 % input
 %   objFunc:    objective function to be optimized
@@ -43,6 +44,17 @@ function optResult = matRad_optimize(objFunc,wInit)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% variables for termination criteria
+iter      = 0;
+if isempty(varargin{1,1})
+    numOfIter = 1000;
+    prec      = 1e-3;
+else
+    optParam = varargin{1,1};
+    numOfIter = optParam{1,1}.numOfIter;
+    prec      = optParam{1,1}.prec;
+end
+
 numOfParameters = numel(wInit);
 
 % initialize LBFGS optimizer
@@ -62,11 +74,6 @@ a_k            = ones(1,mem-1);
 % 1st calculation of objective function and gradient
 [objFuncValue(1),dx(:,1)] = objFunc(wInit);
 objFuncValue(2) = 2*objFuncValue(1);
-
-% variables for termination criteria
-iter      = 0;
-numOfIter = 1000;
-prec      = 1e-3;
 
 % convergence if change in objective function smaller than prec or maximum
 % number of iteration reached. no convergence if lbfgs has just been rest

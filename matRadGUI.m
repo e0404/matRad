@@ -22,7 +22,7 @@ function varargout = matRadGUI(varargin)
 
 % Edit the above text to modify the response to help matRadGUI
 
-% Last Modified by GUIDE v2.5 28-Apr-2015 15:47:00
+% Last Modified by GUIDE v2.5 06-May-2015 10:57:20
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -165,20 +165,39 @@ function btnLoad_Callback(hObject, eventdata, handles)
 
 % delete existing workspace
 try
-    clear global 'optResult'
+    evalin('base',['clear ', 'optResult'])
 catch 
 end
 
 try
-    clear global 'doseVis'
+    evalin('base',['clear ', 'doseVis'])
 catch 
 end
 
 try
-    clear global 'dij'
+     evalin('base',['clear ', 'dij'])
 catch 
 end
 
+try
+   evalin('base',['clear ', 'cst'])
+catch 
+end
+
+try
+   evalin('base',['clear ', 'ct'])
+catch 
+end
+
+try
+    evalin('base',['clear ', 'pln'])
+catch 
+end
+
+try
+    evalin('base',['clear ', 'stf'])
+catch 
+end
 
 [FileName, FilePath] = uigetfile;
 load([FilePath FileName]);
@@ -190,9 +209,22 @@ handles.State = 1;
 set(handles.popupTypeOfPlot,'Value',1);
 assignin('base','ct',ct);
 assignin('base','cst',cst);
+% try to pln,stf,optResult... if it exists    assignin('base','pln',pln);
 
-getPln(handles);
-pln=evalin('base','pln');
+if exist('stf','var') && exist('optResult','var') && exist('dij','var') && exist('pln','var')
+    assignin('base','stf',stf);
+    assignin('base','optResult',optResult);
+    assignin('base','dij',dij);
+    assignin('base','pln',pln);
+    setPln(handles);
+    handles.State = 3;
+    handles.SelectedDisplayOption ='Dose';
+else
+    getPln(handles);
+    pln=evalin('base','pln');     
+end
+
+
 % set slice slider
 handles.plane = get(handles.popupPlane,'value');
 set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
@@ -376,6 +408,14 @@ function radbtnBioOpt_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of radbtnBioOpt
+
+if get(hObject,'Value')
+    set(handles.btnTypBioOpt,'Enable','on');
+else
+    set(handles.btnTypBioOpt,'Enable','off');
+end
+
+
 if handles.State>0
     handles.State=1;
     UpdateState(handles);
@@ -975,10 +1015,11 @@ function btnOptimize_Callback(hObject, eventdata, handles)
 % hObject    handle to btnOptimize (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-set(handles.figure1,'Pointer','watch');
-optResult = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'));
+Param.numOfIter = str2num(get(handles.editNumIter,'String'));
+Param.prec = str2num(get(handles.txtPrecisionOutput,'String'));
+OptType = get(handles.btnTypBioOpt,'String');
+optResult = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'),Param,OptType);
 assignin('base','optResult',optResult);
-set(handles.figure1,'Pointer','arrow');
 handles.State=3;
 handles.SelectedDisplayOptionIdx=1;
 handles.SelectedDisplayOption='physicalDose';
@@ -1272,7 +1313,14 @@ for i = 1:size(OldCst,1)
                     if isempty(data{j,6})
                        FlagValidParameters=false;
                     else
-                         NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = data{j,6};
+                          if length(NewCst{Cnt,4}(CntObjF,1).parameter)==1
+                              NewCst{Cnt,4}(CntObjF,1).parameter(1,2)=1;
+                          end
+                          if ischar(data{j,6})
+                              NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = str2num(data{j,6});
+                          else
+                              NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = double(data{j,6});
+                          end
                     end
                 end
             end
@@ -1515,6 +1563,12 @@ set(handles.editGantryAngle,'String',num2str((pln.gantryAngles)));
 set(handles.editCouchAngle,'String',num2str((pln.couchAngles)));
 set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),pln.radiationMode)));
 set(handles.radbtnBioOpt,'Value',pln.bioOptimization);
+if pln.bioOptimization
+    set(handles.btnTypBioOpt,'Enable','on');
+else
+    set(handles.btnTypBioOpt,'Enable','off');
+end
+
  
      
 function getPln(handles)
@@ -1650,4 +1704,83 @@ function toolbarSave_ClickedCallback(hObject, eventdata, handles)
 % hObject    handle to toolbarSave (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+% save Plan and Table to workspace
 btnTableSave_Callback(hObject, eventdata, handles);
+
+VarNames = evalin('base','who');
+Flag = sum(ismember({'ct','cst','pln','optResult','stf','dij'},VarNames));
+
+%save cst,ct,optResult,pln,stf to disk
+if Flag == 6
+    ct = evalin('base','ct');
+    cst = evalin('base','cst');
+    pln = evalin('base','pln');
+    optResult = evalin('base','optResult');
+    stf = evalin('base','stf');
+    dij = evalin('base','dij');
+    uisave({'cst','ct','pln','optResult','stf','dij'});
+else
+    %% warning dialog - only optimized plans can be saved
+     warndlg('for consistency reasons it is just possible to save optimized plans'); 
+end
+
+
+
+function editNumIter_Callback(hObject, eventdata, handles)
+% hObject    handle to editNumIter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editNumIter as text
+%        str2double(get(hObject,'String')) returns contents of editNumIter as a double
+val=round(str2double(get(hObject,'String')));
+set(hObject,'String',num2str(val));
+
+% --- Executes during object creation, after setting all properties.
+function editNumIter_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editNumIter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on slider movement.
+function slicerPrecision_Callback(hObject, eventdata, handles)
+% hObject    handle to slicerPrecision (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+val = get(hObject,'Value');
+set(hObject,'Value',round(val))
+set(handles.txtPrecisionOutput,'String',['1e-' num2str(round(val))]);
+
+% --- Executes during object creation, after setting all properties.
+function slicerPrecision_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slicerPrecision (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+% --- Executes on button press in btnTypBioOpt.
+function btnTypBioOpt_Callback(hObject, eventdata, handles)
+% hObject    handle to btnTypBioOpt (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+if strcmp(get(hObject,'String'),'bioEffect')
+    set(hObject,'String','RBExDose');
+else
+    set(hObject,'String','bioEffect');
+end

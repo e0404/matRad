@@ -1,14 +1,15 @@
-function optResult = matRad_inversePlanning(dij,cst,pln)
+function optResult = matRad_fluenceOptimization(dij,cst,pln,varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
 % call
-%   [wOpt,dOpt] = matRad_inversePlanning(dij,cst)
+%   [wOpt,dOpt] = matRad_fluenceOptimization(dij,cst)
 %
 % input
-%   dij:    matRad dij struct
-%   cst:    matRad cst struct
-%   pln:    matRad pln struct
+%   dij:      matRad dij struct
+%   cst:      matRad cst struct
+%   pln:      matRad pln struct
+%   varargin: (optinal) 
 %
 % output
 %   XXX
@@ -45,49 +46,66 @@ function optResult = matRad_inversePlanning(dij,cst,pln)
 % intial fluence profile = uniform bixel intensities
 wInit = ones(dij.totalNumOfBixels,1);
 
+% consider VOI priorities
+cst  = matRad_setOverlapPriorities(cst);
+
 % define objective function
 if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
     % check if you are running a supported rad
-    
+    dij.ax = zeros(dij.numOfVoxels,1);
+    dij.bx = zeros(dij.numOfVoxels,1);
     % check if only allowed objectives were defined
     for i = 1:size(cst,1)
         for j = 1:size(cst{i,6},2)
             if sum(strcmp(cst{i,6}(j).type,{'square overdosing', ...
                                             'square underdosing', ...
-                                            'square deviation'})) < 1
+                                            'square deviation',...
+                                            'mean',...
+                                            'EUD'})) < 1
                 error([cst{i,6}(j).type ' objective not supported ' ...
                     'during biological optimization for carbon ions']);
-            else % adjust internally for fractionation effects
-                cst{i,6}(j).parameter(2) = cst{i,6}(j).parameter(2)/pln.numOfFractions;
+            else % adjust internally for fractionation effects if prescribed dose exists for 
+                 % corresponding objective function
+                if ~strcmp(cst{i,6}(j).type,'mean') && ~strcmp(cst{i,6}(j).type,'EUD')
+                    cst{i,6}(j).parameter(2) = cst{i,6}(j).parameter(2)/pln.numOfFractions;
+                end
             end
         end
+        
+         if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
+             dij.ax(cst{i,4}) = cst{i,5}.alphaX;
+             dij.bx(cst{i,4}) = cst{i,5}.betaX;
+         end
+    end
+    % define if RBE x dose or biological effect should be used   
+    
+    if length(varargin)>1
+        IdentifierBioOpt=varargin{1,2};
+    else
+        %IdentifierBioOpt = 'bioEffect';
+        IdentifierBioOpt = 'RBExDose';
     end
     
-    % set objective function
-    objFunc = @(x) matRad_bioObjFunc(x,dij,cst);
-    %objFunc = @(x) matRad_bioObjFuncRBExD(x,dij,cst);
+    switch IdentifierBioOpt
+        case 'bioEffect'
+            objFunc = @(x) matRad_bioObjFunc(x,dij,cst);
+        case 'RBExDose'
+            dij.gamma = zeros(dij.numOfVoxels,1);
+            idx = dij.bx~=0;  % find indices
+            dij.gamma(idx)=dij.ax(idx)./(2*dij.bx(idx)); 
+            objFunc = @(x) matRad_bioObjFuncRBExD(x,dij,cst);
+    end
+  
 else
-    
     % set objective function
     objFunc =  @(x) matRad_objFunc(x,dij,cst);
     
 end
-
-
-%consider VOI priorities
-for i=1:size(cst,1)
- idx = cst{i,4};          
- for k=1:size(cst,1)
-    if cst{k,5}.Priority<cst{i,5}.Priority && ~(i==k)
-        % remove indices from VOI with higher priority from current VOI
-        idx=setdiff(idx,cst{k,4});
-    end
- end
- cst{i,4}=idx;
-end
+%% verify gradients
+%matRad_verifyGradient(objFunc,dij.totalNumOfBixels);
 
 % minimize objetive function
-optResult = matRad_projectedLBFGS(objFunc,wInit);
+optResult = matRad_projectedLBFGS(objFunc,wInit,varargin);
 
 % calc dose and reshape from 1D vector to 2D array
 optResult.physicalDose = reshape(dij.physicalDose*optResult.w,dij.dimensions);
