@@ -48,7 +48,7 @@ pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct.cube);
 pln.voxelDimensions = size(ct.cube);
 pln.radiationMode   = 'photons'; % either photons / protons / carbon
-pln.bioOptimization = false;   % false indicates physical optimization and true indicates biological optimization
+pln.bioOptimization = 'none'; % none: physical optimization; effect: effect-based optimization; RBExD: optimization of RBE-weighted dose
 pln.numOfFractions  = 30;
 
 %% initial visualization and change objective function settings if desired
@@ -64,20 +64,18 @@ elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst,0);
 end
 
-%% Dose visualization
-doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),cst);
-%matRadGUI
-
 %% inverse planning for imrt
-optResult = matRad_fluenceOptimization(dij,cst,pln);
-matRadGUI
+guiResult = matRad_fluenceOptimization(dij,cst,pln);
 
 %% sequencing
 if strcmp(pln.radiationMode,'photons')
     %Sequencing = matRad_xiaLeafSequencing(optResult.w,stf,7,1);
     Sequencing = matRad_engelLeafSequencing(optResult.w,stf,7);
-    seqResult = matRad_mxCalcDose(dij,Sequencing.w,cst);
+    guiResult = matRad_mxCalcDose(dij,Sequencing.w,cst);
 end
+
+%% start gui for visualization of result
+matRadGUI
 
 %% dvh and conformity index
 matRad_calcDVH(optResult,cst)
