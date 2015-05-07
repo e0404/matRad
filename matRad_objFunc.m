@@ -64,8 +64,8 @@ delta_EUD       = zeros(numVoxels,1);
 for  i = 1:size(cst,1)
     
     % Only take OAR or target VOI.
-    if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
-        
+    if ~isempty(cst{i,4}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
+    
         % get dose vector in current VOI
         d_i = d(cst{i,4});
                 
@@ -140,7 +140,11 @@ for  i = 1:size(cst,1)
                         rho*nthroot(1/size(cst{i,4},1),exponent) * sum(d_i.^exponent)^((1-exponent)/exponent) * (d_i.^(exponent-1));
                     
                 end
-                
+
+                if sum(~isfinite(delta_EUD)) > 0 % check for inf and nan for numerical stability
+                    error(['EUD computation for ' cst{i,2} ' failed. Reduce exponent to resolve numerical problems.']);
+                end
+
             else
                 
                 error('undefined objective in cst struct');

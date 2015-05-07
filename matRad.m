@@ -77,7 +77,6 @@ if strcmp(pln.radiationMode,'photons')
     %Sequencing = matRad_xiaLeafSequencing(optResult.w,stf,7,1);
     Sequencing = matRad_engelLeafSequencing(optResult.w,stf,7);
     seqResult = matRad_mxCalcDose(dij,Sequencing.w,cst);
-    matRad_visCtDose(seqResult,cst,pln,ct);
 end
 
 %% dvh and conformity index

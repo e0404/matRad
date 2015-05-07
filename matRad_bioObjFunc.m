@@ -64,7 +64,7 @@ delta_EUD       = zeros(numVoxels,1);
 for  i = 1:size(cst,1)
     
     % Only take OAR or target VOI.
-    if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
+    if ~isempty(cst{i,4}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
         
         % get effect vector in current VOI
         e_i = e(cst{i,4});
@@ -140,6 +140,11 @@ for  i = 1:size(cst,1)
                     
                     delta_EUD(cst{i,4}) = delta_EUD(cst{i,4}) + ...
                         rho*nthroot(1/size(cst{i,4},1),exponent) * sum(e_i.^exponent)^((1-exponent)/exponent) * (e_i.^(exponent-1));                    
+                    
+                    if sum(~isfinite(delta_EUD)) > 0 % check for inf and nan for numerical stability
+                        error(['EUD computation for ' cst{i,2} ' failed. Reduce exponent to resolve numerical problems.']);
+                    end
+                    
                 end    
                    
             else
@@ -155,18 +160,11 @@ end
 
 % gradient calculation
 if nargout > 1
-     
-    delta =  delta_underdose + delta_overdose + delta_deviation; 
-    vBias = (delta' * dij.mAlphaDose)';
-    mPsi  = (2*(delta.*quadTerm)'*dij.mSqrtBetaDose)';
-    g     = 2*(vBias+mPsi);
-
-    
-   if sum(delta_mean(:))>0 || sum(delta_EUD(:))>0
-        delta = delta_mean+delta_EUD;
-        vBias = (delta' * dij.mAlphaDose)';
-        mPsi  = (2*(delta.*quadTerm)'*dij.mSqrtBetaDose)';
-        g     =  g +(vBias+mPsi);
-   end
+ 
+    delta = 2*(delta_underdose + delta_overdose + delta_deviation) + delta_mean + delta_EUD;        
+    vBias= (delta' * dij.mAlphaDose)';
+    mPsi = (2*(delta.*quadTerm)'*dij.mSqrtBetaDose)';
+    g    =  vBias+mPsi ; 
 
 end
+

@@ -223,9 +223,9 @@ k = round(k_mm/resolution(3));
 
 % Handle numerical instabilities at the borders.
 i(i<=0) = 1; j(j<=0) = 1; k(k<=0) = 1;
-i(i>xNumPlanes) = xNumPlanes;
-j(j>yNumPlanes) = yNumPlanes;
-k(k>zNumPlanes) = zNumPlanes;
+i(i>xNumPlanes-1) = xNumPlanes-1;
+j(j>yNumPlanes-1) = yNumPlanes-1;
+k(k>zNumPlanes-1) = zNumPlanes-1;
 
 % Convert to linear indices
 ix = sub2ind(size(cubes{1}),j,i,k);

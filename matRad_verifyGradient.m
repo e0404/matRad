@@ -1,15 +1,18 @@
 function  matRad_verifyGradient(func,NumBixel)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 
+% function to check analytically calculated gradients against finite
+% differences
 % 
 % call
-%   
+%   matRad_verifyGradient(func,NumBixel)
 %
 % input
-%   
+%   func:     objective function handle
+%   NumBixel: number of degrees of freedom
 %
 % output
-%   
+%   The function will print the relative differences to the command line
+%   prompt for 100 random components
 %
 % References
 %   -
@@ -40,22 +43,14 @@ function  matRad_verifyGradient(func,NumBixel)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-
-
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
-
-%% calculate numerical gradients
-
-wInit = ones(NumBixel,1);
+wInit = rand(NumBixel,1);
 
 [f, g] = func(wInit);
 epsilon = 1e-05;
-NumRealizations = 15;
+NumRealizations = 100;
 
 for i = 1:NumRealizations
-    RandomComp = round((numel(wInit)-1).*rand(1,1));
+    RandomComp = ceil(NumBixel*rand);
     wDelta = wInit;
     wDelta(RandomComp) = wDelta(RandomComp) + epsilon;
     [fDelta, ~] = func(wDelta);

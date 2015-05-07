@@ -71,8 +71,8 @@ delta_EUD       = zeros(numVoxels,1);
 for  i = 1:size(cst,1)
     
     % Only take OAR or target VOI.
-    if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
-        
+    if ~isempty(cst{i,4}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
+    
         % get rbe x dose vector in current VOI
         RBExD_i = RBExD(cst{i,4});
          
@@ -136,14 +136,18 @@ for  i = 1:size(cst,1)
                 exponent = cst{i,6}(j).exponent;
                 
                 % calculate objective function and delta
-                if sum(e_i.^exponent)>0
+                if sum(RBExD_i.^exponent)>0
                     
                     f = f + rho*nthroot((1/size(cst{i,4},1))*sum(RBExD_i.^exponent),exponent);
                     
                     delta_EUD(cst{i,4}) = delta_EUD(cst{i,4}) + ...
                         rho*nthroot(1/size(cst{i,4},1),exponent) * sum(RBExD_i.^exponent)^((1-exponent)/exponent) * (RBExD_i.^(exponent-1));                    
                 end    
-                    
+                
+                if sum(~isfinite(delta_EUD)) > 0 % check for inf and nan for numerical stability
+                    error(['EUD computation for ' cst{i,2} ' failed. Reduce exponent to resolve numerical problems.']);
+                end
+    
             else
                 
                 error('undefined objective in cst struct');

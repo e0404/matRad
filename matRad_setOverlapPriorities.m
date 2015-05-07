@@ -42,15 +42,19 @@ function [ cst ] = matRad_setOverlapPriorities(cst)
 
 
     %consider VOI priorities
-    for i=1:size(cst,1)
+    for i = 1:size(cst,1)
          idx = cst{i,4};          
-         for k=1:size(cst,1)
+         for k = 1:size(cst,1)
             if cst{k,5}.Priority<cst{i,5}.Priority && ~(i==k)
                 % remove indices from VOI with higher priority from current VOI
-                idx=setdiff(idx,cst{k,4});
+                idx = setdiff(idx,cst{k,4});
             end
          end
-         cst{i,4}=idx;
+         cst{i,4} = idx;
+         if isempty(cst{i,4}) && ~isempty(cst{i,6})
+             warning([cst{i,2} ': Objective(s) for inverse planning defined but structure overlapped by structure with higher overlap priority. Objective(s) will not be considered during optimization']); 
+         end
+         
     end
 
 

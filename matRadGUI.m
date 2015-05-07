@@ -71,7 +71,7 @@ h=imshow('matrad_hat40.png');
 % if plan is changed go back to state 1
 % if table is changed including VOI Type  go back to state 1
 % if table is changed but not the VOI Types  go back to state 2
-
+handles.TableChanged = false;
 handles.State = 0;
 %B = evalin('base','dij');
 %assignin('base','dij2',B);
@@ -115,8 +115,8 @@ catch
 end
 
 if handles.State ==2 || handles.State ==3
-    set(handles.popupDisplayOption,'String','physicalDose');
-    handles.SelectedDisplayOption ='physicalDose';
+    set(handles.popupDisplayOption,'String','Dose');
+    handles.SelectedDisplayOption ='Dose';
     handles.SelectedDisplayOptionIdx=1;
 else
     handles.optResult = [];
@@ -204,7 +204,7 @@ load([FilePath FileName]);
 
 setCstTable(handles,cst);
 
-
+handles.TableChanged = false;
 handles.State = 1;
 set(handles.popupTypeOfPlot,'Value',1);
 assignin('base','ct',ct);
@@ -427,7 +427,7 @@ function btnCalcDose_Callback(hObject, eventdata, handles)
 % hObject    handle to btnCalcDose (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-set(handles.figure1,'Pointer','watch');
+
 %% get cst from table
 if ~getCstTable(handles);
     return
@@ -439,23 +439,20 @@ stf = matRad_generateStf(evalin('base','ct'),...
                                  evalin('base','cst'),...
                                  evalin('base','pln'));
 assignin('base','stf',stf);
-%h=waitbar(0,'dose calculation ... ');
 if strcmp(evalin('base','pln.radiationMode'),'photons')
     dij = matRad_calcPhotonDose(evalin('base','ct'),stf,evalin('base','pln'),evalin('base','cst'),0);
 elseif strcmp(evalin('base','pln.radiationMode'),'protons') || strcmp(evalin('base','pln.radiationMode'),'carbon')
     dij = matRad_calcParticleDose(evalin('base','ct'),stf,evalin('base','pln'),evalin('base','cst'),0);
 end
-%close(h);
 
-set(handles.figure1,'Pointer','arrow');
-
-doseVis = matRad_mxCalcDose(dij,zeros(dij.totalNumOfBixels,1),evalin('base','cst'));
+doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),evalin('base','cst'));
 assignin('base','dij',dij);
 assignin('base','doseVis',doseVis);
 handles.State = 2;
 handles.SelectedDisplayOptionIdx=1;
-handles.SelectedDisplayOption='physicalDose';
+handles.SelectedDisplayOption='Dose';
 handles.SelectedBeam=1;
+handles.TableChanged = false;
 guidata(hObject,handles);
 UpdatePlot(handles);
 UpdateState(handles);
@@ -484,10 +481,14 @@ if exist('Result')
         if isfield(Result,'w')
             Result = rmfield(Result,'w');
         end
+        if isfield(Result,'physicalDose')
+            Result.Dose = Result.physicalDose;
+            Result=rmfield(Result,'physicalDose');
+        end
         if isfield(Result,'RBE')
             Result.RBETruncated10Perc = Result.RBE;
-            Result.RBETruncated10Perc(Result.physicalDose<0.1*...
-                max(Result.physicalDose(:))) = 0;
+            Result.RBETruncated10Perc(Result.Dose<0.1*...
+                max(Result.Dose(:))) = 0;
         end
 
         fName =fieldnames(Result);
@@ -499,7 +500,7 @@ if exist('Result')
                 fName{i,2}=1;
             end
             % determine units
-            if strcmp(fName{i,1},'physicalDose')
+            if strcmp(fName{i,1},'Dose')
                 fName{i,3} = '[Gy]';
             elseif strcmp(fName{i,1},'alpha')
                 fName{i,3} = '[Gy^{-1}]';
@@ -523,7 +524,7 @@ if exist('Result')
         end
 
     set(handles.popupDisplayOption,'String',fName(:,1));
-    set(handles.popupDisplayOption,'Value',handles.SelectedDisplayOptionIdx);
+    set(handles.popupDisplayOption,'Value',find(strcmp(handles.SelectedDisplayOption,fName(:,1))));
 
     end
 
@@ -559,7 +560,7 @@ if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1 ...
 
         mVolume = getfield(Result,handles.SelectedDisplayOption);
         % make sure to exploit full color range
-        mVolume(Result.physicalDose<CutOffLevel*max(Result.physicalDose(:)))=0;
+        mVolume(Result.Dose<CutOffLevel*max(Result.Dose(:)))=0;
 
     %     %% dose colorwash
         if ~isempty(mVolume) && get(handles.radiobtnDose,'Value') && ~isvector(mVolume)
@@ -582,14 +583,14 @@ if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1 ...
             % make dose transparent
             if ~isempty(ct.cube)
                 if plane == 1  % Coronal plane
-                    set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.physicalDose(slice,:,:))>CutOffLevel*max(Result.physicalDose(:))  )  ) ;
+                    set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(slice,:,:))>CutOffLevel*max(Result.Dose(:))  )  ) ;
                 elseif plane == 2 % sagittal plane
-                    set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.physicalDose(:,slice,:))>CutOffLevel*max(Result.physicalDose(:))  )  ) ;
+                    set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,slice,:))>CutOffLevel*max(Result.Dose(:))  )  ) ;
                 elseif plane == 3 % Axial plane
                     if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
-                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.physicalDose(:,:,slice))>0.1*max(Result.physicalDose(:))  )  ) ;
+                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,:,slice))>0.1*max(Result.Dose(:))  )  ) ;
                     else
-                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.physicalDose(:,:,slice))>CutOffLevel*max(Result.physicalDose(:))  )  ) ;
+                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,:,slice))>CutOffLevel*max(Result.Dose(:))  )  ) ;
                     end
                 end
 
@@ -679,13 +680,13 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
             end
         end
     end
-    %warning('off','MATLAB:legend:PlotEmpty')
+    warning('off','MATLAB:legend:PlotEmpty')
     myLegend = legend('show','location','NorthEast');
     set(myLegend,'FontSize',8);
     set(myLegend,'color','none');
     set(myLegend,'TextColor', [1 1 1]);
     legend boxoff
-    %warning('on','MATLAB:legend:PlotEmpty')
+    warning('on','MATLAB:legend:PlotEmpty')
 end
 
 %% Set axis labels
@@ -766,12 +767,12 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     rotTargetPointBEV = targetPointBEV*rotMx_XY*rotMx_XZ;
     [~,~,~,~,vis] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube},true);
     ix = vis.ix;
-    mPhysDose = getfield(Result,'physicalDose'); 
+    mPhysDose=getfield(Result,'Dose'); 
     vPhysDose = mPhysDose(ix);
     % plot physical dose
     vX=linspace(1,ct.resolution(1)*numel(vPhysDose),numel(vPhysDose));
     PlotHandles{1} = plot(handles.axesFig,vX,vPhysDose,'color',cColor{1,1},'LineWidth',3);grid on, hold on; 
-    PlotHandles{1,2}='physicalDose';
+    PlotHandles{1,2}='Dose';
     set(gca,'FontSize',8);
     % assess x - limits
     xLim  = find(vPhysDose);
@@ -800,7 +801,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
         for i=1:1:size(fName,1)
             mCurrentCube = getfield(Result,fName{i,1});
             if ~isvector(mCurrentCube) && ~strcmp(fName{i,1},'RBEWeightedDose') ...
-                    && ~strcmp(fName{i,1},'RBE') && ~strcmp(fName{i,1},'physicalDose')...
+                    && ~strcmp(fName{i,1},'RBE') && ~strcmp(fName{i,1},'Dose')...
                     && fName{i,2}
                 vProfile = mCurrentCube(ix);
                 PlotHandles{Cnt,1} = plot(vX,vProfile,'color',cColor{1,Cnt},'LineWidth',3);hold on; 
@@ -935,17 +936,15 @@ handles.plane = get(handles.popupPlane,'value');
 %      'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
 %  
 try
-ct = evalin('base', 'ct');
-pln = evalin('base', 'pln');
+    ct = evalin('base', 'ct');
+    pln = evalin('base', 'pln');
 
-set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-   'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
-   'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+    set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
+       'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
+       'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
 catch
 end
         
-
-
 UpdatePlot(handles)
 
 % --- Executes during object creation, after setting all properties.
@@ -1022,7 +1021,7 @@ optResult = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst')
 assignin('base','optResult',optResult);
 handles.State=3;
 handles.SelectedDisplayOptionIdx=1;
-handles.SelectedDisplayOption='physicalDose';
+handles.SelectedDisplayOption='Dose';
 handles.SelectedBeam=1;
 guidata(hObject,handles);
 UpdatePlot(handles);
@@ -1428,25 +1427,35 @@ function uiTable_CellEditCallback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % apply changes to the other cells
-
 data = get(hObject,'Data');
 if eventdata.Indices(2) == 1 || eventdata.Indices(2) == 2 ...
         || eventdata.Indices(2) == 3
     handles.State=1;
+    handles.TableChanged = true;
 else
-    if handles.State ==3
+    if handles.State ==3 && handles.TableChanged == false
         handles.State=2;
     end
 end
-%%
-if eventdata.Indices(2) == 3  || eventdata.Indices(2) == 5
+%% check if input is a valid
+if eventdata.Indices(2) == 3  || eventdata.Indices(2) == 5 || eventdata.Indices(2) == 6 || eventdata.Indices(2) == 7
     if CheckValidity(eventdata.NewData) ==false
             data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
     end
 end
 
+%% if objective function is set to mean --> set dose cell to empty
+if eventdata.Indices(2)==4 && strcmp(eventdata.NewData,'mean') || ...
+    eventdata.Indices(2)==4 && strcmp(eventdata.NewData,'EUD')
+     data{eventdata.Indices(1),6}='';
+end
+%% if objective function is set to mean --> set EUD cell to empty
+if eventdata.Indices(2)==4 && strcmp(eventdata.NewData,'mean')
+    data{eventdata.Indices(1),7}='';
+end
+
+
 if eventdata.Indices(2) == 1 && eventdata.Indices(1) == size(data,1)
-    
     for i = 1:size(data,1)
         if strcmp(eventdata.NewData,data{i,1})
            data{eventdata.Indices(1),2}=data{i,2};
@@ -1473,8 +1482,8 @@ if eventdata.Indices(2) == 7
             data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
     end 
     % check if obj func is set to EUD otherwise reject this change
-    if ~strcmp(data{eventdata.Indices(1),4},'EUD')
-        data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
+    if ~strcmp(data{eventdata.Indices(1),4},'EUD') 
+        data{eventdata.Indices(1),eventdata.Indices(2)} = '';
     end
 end
 
@@ -1489,14 +1498,13 @@ if eventdata.Indices(2) == 6
     end
 end
 
-
 if isnan(eventdata.NewData)
     data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
 end
 
 set(handles.txtInfo,'String','plan changed');
 set(handles.uiTable,'data',data)
-
+guidata(hObject, handles);
 UpdateState(handles);
 
 
