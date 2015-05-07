@@ -22,7 +22,7 @@ function varargout = matRadGUI(varargin)
 
 % Edit the above text to modify the response to help matRadGUI
 
-% Last Modified by GUIDE v2.5 07-May-2015 17:17:34
+% Last Modified by GUIDE v2.5 07-May-2015 23:56:09
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -62,19 +62,18 @@ h=imshow('matrad_hat40.png');
 
 %% 
 % handles.State=0   no data available
-% handles.State=1   data available ready for dose calculation
-% handles.State=2   data available and dose is calculated;ready for
-%                   optimization
+% handles.State=1   data available; ready for dose calculation
+% handles.State=2   data available and dij matrix is calculated;
+%                   ready for optimization
 % handles.Sate=3    plan is optimized
 
 
 % if plan is changed go back to state 1
-% if table is changed including VOI Type  go back to state 1
-% if table is changed but not the VOI Types  go back to state 2
+% if table VOI Type or Priorities changed go to state 1
+% if objective parameters changed go back to state 2
 handles.TableChanged = false;
 handles.State = 0;
-%B = evalin('base','dij');
-%assignin('base','dij2',B);
+
 try
     if ~isempty(evalin('base','ct'))
         ct = evalin('base','ct');
@@ -93,7 +92,7 @@ catch
 end
 
 try
-    if ~isempty(evalin('base','optResult'))
+    if ~isempty(evalin('base','ResultGUI'))
         handles.State = 3;
     end
 catch
@@ -114,12 +113,13 @@ try
 catch
 end
 
+% set some default values
 if handles.State ==2 || handles.State ==3
     set(handles.popupDisplayOption,'String','Dose');
     handles.SelectedDisplayOption ='Dose';
     handles.SelectedDisplayOptionIdx=1;
 else
-    handles.optResult = [];
+    handles.ResultGUI = [];
     set(handles.popupDisplayOption,'String','no option available');
     handles.SelectedDisplayOption='';
     handles.SelectedDisplayOptionIdx=1;
@@ -165,7 +165,7 @@ function btnLoad_Callback(hObject, eventdata, handles)
 
 % delete existing workspace
 try
-    evalin('base',['clear ', 'optResult'])
+    evalin('base',['clear ', 'ResultGUI'])
 catch 
 end
 
@@ -199,6 +199,7 @@ try
 catch 
 end
 
+% read new data
 [FileName, FilePath] = uigetfile;
 load([FilePath FileName]);
 
@@ -209,11 +210,11 @@ handles.State = 1;
 set(handles.popupTypeOfPlot,'Value',1);
 assignin('base','ct',ct);
 assignin('base','cst',cst);
-% try to pln,stf,optResult... if it exists    assignin('base','pln',pln);
 
-if exist('stf','var') && exist('optResult','var') && exist('dij','var') && exist('pln','var')
+% check if a complete optimized plan was loaded
+if exist('stf','var') && exist('ResultGUI','var') && exist('dij','var') && exist('pln','var')
     assignin('base','stf',stf);
-    assignin('base','optResult',optResult);
+    assignin('base','ResultGUI',ResultGUI);
     assignin('base','dij',dij);
     assignin('base','pln',pln);
     setPln(handles);
@@ -353,8 +354,16 @@ function popupRadMode_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns popupRadMode contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popupRadMode
+contents = cellstr(get(hObject,'String')); 
+if sum(strcmp({'photons','protons'},contents{get(hObject,'Value')}))>0
+    set(handles.radbtnBioOpt,'Value',0);
+    set(handles.btnTypBioOpt,'Enable','off');
+else
+    set(handles.radbtnBioOpt,'Value',1);
+    set(handles.btnTypBioOpt,'Enable','on');
+end
+
+
 if handles.State>0
     handles.State=1;
     UpdateState(handles);
@@ -445,7 +454,8 @@ elseif strcmp(evalin('base','pln.radiationMode'),'protons') || strcmp(evalin('ba
     dij = matRad_calcParticleDose(evalin('base','ct'),stf,evalin('base','pln'),evalin('base','cst'),0);
 end
 
-doseVis = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),evalin('base','cst'));
+doseVis = matRad_mxCalcDose(dij,zeros(dij.totalNumOfBixels,1),evalin('base','cst'));
+% assign results to base worksapce
 assignin('base','dij',dij);
 assignin('base','doseVis',doseVis);
 handles.State = 2;
@@ -473,7 +483,7 @@ end
 if handles.State == 2
       Result = evalin('base','doseVis');
 elseif handles.State == 3
-      Result = evalin('base','optResult');
+      Result = evalin('base','ResultGUI');
 end
 
 if exist('Result')
@@ -926,15 +936,8 @@ function popupPlane_Callback(hObject, eventdata, handles)
 % Hints: contents = cellstr(get(hObject,'String')) returns popupPlane contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from popupPlane
 
-contents = cellstr(get(hObject,'String'));
-val = contents{get(hObject,'Value')};
-
 % set slice slider
 handles.plane = get(handles.popupPlane,'value');
-% set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-%     'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
-%      'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
-%  
 try
     ct = evalin('base', 'ct');
     pln = evalin('base', 'pln');
@@ -1017,8 +1020,9 @@ function btnOptimize_Callback(hObject, eventdata, handles)
 Param.numOfIter = str2num(get(handles.editNumIter,'String'));
 Param.prec = str2num(get(handles.txtPrecisionOutput,'String'));
 OptType = get(handles.btnTypBioOpt,'String');
-optResult = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'),Param,OptType);
-assignin('base','optResult',optResult);
+ResultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'),Param,OptType);
+assignin('base','ResultGUI',ResultGUI);
+%set some values
 handles.State=3;
 handles.SelectedDisplayOptionIdx=1;
 handles.SelectedDisplayOption='Dose';
@@ -1202,7 +1206,6 @@ for i = 1:size(cst,1)
     end
 end
 
-%dimArr = [size(cst,1)-sum(strcmp([cst(:,3)],'IGNORED')) size(columnname,2)];
 dimArr = [numOfObjectives size(columnname,2)];
 data = cell(dimArr);
 Counter = 1;
@@ -1239,7 +1242,6 @@ for i = 1:size(cst,1)
    end
    
 end
-
 
 set(handles.uiTable,'ColumnName',columnname);
 set(handles.uiTable,'ColumnFormat',columnformat);
@@ -1540,29 +1542,42 @@ function UpdateState(handles)
       set(handles.btnCalcDose,'Enable','off');
       set(handles.btnOptimize ,'Enable','off');
       set(handles.btnDVH,'Enable','off');
+      set(handles.btnSequencing,'Enable','off');
+      set(handles.editSequencingLevel,'Enable','off');
       
      case 1
       set(handles.txtInfo,'String','ready for dose calculation');
       set(handles.btnCalcDose,'Enable','on');
       set(handles.btnOptimize ,'Enable','off');  
       set(handles.btnDVH,'Enable','off');
+      set(handles.btnSequencing,'Enable','off');
+      set(handles.editSequencingLevel,'Enable','off');
          
      case 2
       set(handles.txtInfo,'String','ready for optimization');   
       set(handles.btnCalcDose,'Enable','on');
       set(handles.btnOptimize ,'Enable','on');
       set(handles.btnDVH,'Enable','off');
+      set(handles.btnSequencing,'Enable','off');
+      set(handles.editSequencingLevel,'Enable','off');
      
      case 3
       set(handles.txtInfo,'String','plan is optimized');   
       set(handles.btnCalcDose,'Enable','on');
       set(handles.btnOptimize ,'Enable','on');
       set(handles.btnDVH,'Enable','on');
+      
+      pln = evalin('base','pln');
+      
+      if strcmp(pln.radiationMode,'photons')
+          set(handles.btnSequencing,'Enable','on');
+          set(handles.editSequencingLevel,'Enable','on');
+      end
  end
 
  
  
- 
+% fill gui elements with plan 
 function setPln(handles)
 pln=evalin('base','pln');
 set(handles.editBixelWidth,'String',num2str(pln.bixelWidth));
@@ -1571,15 +1586,18 @@ set(handles.editFraction,'String',num2str(pln.numOfFractions));
 set(handles.editGantryAngle,'String',num2str((pln.gantryAngles)));
 set(handles.editCouchAngle,'String',num2str((pln.couchAngles)));
 set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),pln.radiationMode)));
-set(handles.radbtnBioOpt,'Value',pln.bioOptimization);
-if pln.bioOptimization
+if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
+                            && strcmp(pln.radiationMode,'carbon')  
+    set(handles.radbtnBioOpt,'Value',1);
     set(handles.btnTypBioOpt,'Enable','on');
+    set(handles.btnTypBioOpt,'String',pln.bioOptimization);
 else
+    set(handles.radbtnBioOpt,'Value',0);
     set(handles.btnTypBioOpt,'Enable','off');
 end
 
  
-     
+% get pln file form gui     
 function getPln(handles)
 
 
@@ -1627,7 +1645,7 @@ function btnDVH_Callback(hObject, eventdata, handles)
 % hObject    handle to btnDVH (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-matRad_calcDVH(evalin('base','optResult'),evalin('base','cst'))
+matRad_calcDVH(evalin('base','ResultGUI'),evalin('base','cst'))
 
 
 % --- Executes on selection change in listBoxCmd.
@@ -1705,6 +1723,24 @@ function btnRefresh_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 setPln(handles)
 setCstTable(handles,evalin('base','cst'));
+% set state
+
+VarNames = evalin('base','who');
+Flag = (ismember({'ct','cst','pln','stf','dij','ResultGUI'},VarNames));
+
+if sum(Flag(:))== 0
+    handles.State = 0;
+end
+if sum(Flag(1:4))==4
+    handles.State = 1;
+end
+if sum(Flag(1:5))==5
+    handles.State = 2;
+end
+if sum(Flag(1:6))==6
+    handles.State = 3;  
+end
+guidata(hObject,handles);
 UpdatePlot(handles);
 
 
@@ -1717,17 +1753,17 @@ function toolbarSave_ClickedCallback(hObject, eventdata, handles)
 btnTableSave_Callback(hObject, eventdata, handles);
 
 VarNames = evalin('base','who');
-Flag = sum(ismember({'ct','cst','pln','optResult','stf','dij'},VarNames));
+Flag = sum(ismember({'ct','cst','pln','ResultGUI','stf','dij'},VarNames));
 
-%save cst,ct,optResult,pln,stf to disk
+%save cst,ct,ResultGUI,pln,stf to disk
 if Flag == 6
     ct = evalin('base','ct');
     cst = evalin('base','cst');
     pln = evalin('base','pln');
-    optResult = evalin('base','optResult');
+    ResultGUI = evalin('base','ResultGUI');
     stf = evalin('base','stf');
     dij = evalin('base','dij');
-    uisave({'cst','ct','pln','optResult','stf','dij'});
+    uisave({'cst','ct','pln','ResultGUI','stf','dij'});
 else
     %% warning dialog - only optimized plans can be saved
      warndlg('for consistency reasons it is just possible to save optimized plans'); 
@@ -1788,16 +1824,48 @@ function btnTypBioOpt_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-if strcmp(get(hObject,'String'),'bioEffect')
-    set(hObject,'String','RBExDose');
+if strcmp(get(hObject,'String'),'effect')
+    set(hObject,'String','RBExD');
 else
-    set(hObject,'String','bioEffect');
+    set(hObject,'String','effect');
 end
 
 
-% --------------------------------------------------------------------
-function uiTable_ButtonDownFcn(hObject, eventdata, handles)
-% hObject    handle to uiTable (see GCBO)
+% --- Executes on button press in btnSequencing.
+function btnSequencing_Callback(hObject, eventdata, handles)
+% hObject    handle to btnSequencing (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-test = 1;
+  StratificationLevel = parseStringAsNum(get(handles.editSequencingLevel,'String'));
+
+  ResultGUI=evalin('base','ResultGUI');
+  
+  %Sequencing = matRad_engelLeafSequencing(ResultGUI.w,evalin('base','stf'),StratificationLevel,1);
+  Sequencing = matRad_xiaLeafSequencing(ResultGUI.w,evalin('base','stf'),StratificationLevel,1);
+    
+  assignin('base','Sequencing',Sequencing);
+
+  
+
+
+
+function editSequencingLevel_Callback(hObject, eventdata, handles)
+% hObject    handle to editSequencingLevel (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editSequencingLevel as text
+%        str2double(get(hObject,'String')) returns contents of editSequencingLevel as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editSequencingLevel_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editSequencingLevel (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

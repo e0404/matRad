@@ -50,7 +50,8 @@ wInit = ones(dij.totalNumOfBixels,1);
 cst  = matRad_setOverlapPriorities(cst);
 
 % define objective function
-if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
+if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
+        && strcmp(pln.radiationMode,'carbon')
     % check if you are running a supported rad
     dij.ax = zeros(dij.numOfVoxels,1);
     dij.bx = zeros(dij.numOfVoxels,1);
@@ -82,14 +83,13 @@ if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
     if length(varargin)>1
         IdentifierBioOpt=varargin{1,2};
     else
-        %IdentifierBioOpt = 'bioEffect';
-        IdentifierBioOpt = 'RBExDose';
+        IdentifierBioOpt = pln.bioOptimization;
     end
     
     switch IdentifierBioOpt
-        case 'bioEffect'
+        case 'effect'
             objFunc = @(x) matRad_bioObjFunc(x,dij,cst);
-        case 'RBExDose'
+        case 'RBExD'
             dij.gamma = zeros(dij.numOfVoxels,1);
             idx = dij.bx~=0;  % find indices
             dij.gamma(idx)=dij.ax(idx)./(2*dij.bx(idx)); 
@@ -110,7 +110,8 @@ optResult = matRad_projectedLBFGS(objFunc,wInit,varargin);
 % calc dose and reshape from 1D vector to 2D array
 optResult.physicalDose = reshape(dij.physicalDose*optResult.w,dij.dimensions);
 
-if pln.bioOptimization == true && strcmp(pln.radiationMode,'carbon')
+if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
+                            && strcmp(pln.radiationMode,'carbon')
 
     fprintf('Calculating alpha/beta/effect/cube...');
 

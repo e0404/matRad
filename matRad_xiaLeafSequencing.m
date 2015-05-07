@@ -118,6 +118,7 @@ for i = 1:numOfBeams
     shapes = NaN*ones(dimOfFluenceMxZ,dimOfFluenceMxX,10000);
     
     if visBool
+        figure,
         clf
         colormap jet
         subplot(2,2,1)

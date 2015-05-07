@@ -110,6 +110,7 @@ for i = 1:numOfBeams
     k = 0;
     
     if visBool
+        figure,
         clf
         colormap jet
         subplot(2,2,1) 
