@@ -22,7 +22,7 @@ function varargout = matRadGUI(varargin)
 
 % Edit the above text to modify the response to help matRadGUI
 
-% Last Modified by GUIDE v2.5 06-May-2015 10:57:20
+% Last Modified by GUIDE v2.5 07-May-2015 17:17:34
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1239,11 +1239,13 @@ for i = 1:size(cst,1)
    end
    
 end
+
+
 set(handles.uiTable,'ColumnName',columnname);
 set(handles.uiTable,'ColumnFormat',columnformat);
 set(handles.uiTable,'ColumnEditable',[true true true true true true true]);
-% set(handles.uiTable,'ColumnWidth',{'auto','auto','auto','auto','auto','auto','auto'});
 set(handles.uiTable,'Data',data);
+
 
 function Flag=getCstTable (handles)
 
@@ -1425,7 +1427,6 @@ function uiTable_CellEditCallback(hObject, eventdata, handles)
 %	NewData: EditData or its converted form set on the Data property. Empty if Data was not changed
 %	Error: error string when failed to convert EditData to appropriate value for Data
 % handles    structure with handles and user data (see GUIDATA)
-
 % apply changes to the other cells
 data = get(hObject,'Data');
 if eventdata.Indices(2) == 1 || eventdata.Indices(2) == 2 ...
@@ -1792,3 +1793,11 @@ if strcmp(get(hObject,'String'),'bioEffect')
 else
     set(hObject,'String','bioEffect');
 end
+
+
+% --------------------------------------------------------------------
+function uiTable_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to uiTable (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+test = 1;
