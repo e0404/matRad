@@ -50,7 +50,7 @@ if nargin < 4
 end
 
 %
-if ~strcmp(pln.radiationMode,'carbon') && pln.bioOptimization
+if ~strcmp(pln.radiationMode,'carbon') && sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0
     fprintf('\n ********************************************************************************************************* \n');
     fprintf('\n effect based optimization not possible with current setup - physical optimization is carried out instead \n');
     fprintf('\n ********************************************************************************************************* \n');
