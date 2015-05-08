@@ -1,5 +1,8 @@
 function varargout = matRadGUI(varargin)
-% MATRADGUI MATLAB code for matRadGUI.fig
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad GUI
+%
+% call
 %      MATRADGUI, by itself, creates a new MATRADGUI or raises the existing
 %      singleton*.
 %
@@ -19,10 +22,31 @@ function varargout = matRadGUI(varargin)
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Edit the above text to modify the response to help matRadGUI
-
-% Last Modified by GUIDE v2.5 07-May-2015 23:56:09
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+%
+% m.bangert@dkfz.de
+%
+% This file is part of matRad.
+%
+% matrad is free software: you can redistribute it and/or modify it under 
+% the terms of the GNU General Public License as published by the Free 
+% Software Foundation, either version 3 of the License, or (at your option)
+% any later version.
+%
+% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
+% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+% details.
+%
+% You should have received a copy of the GNU General Public License in the
+% file license.txt along with matRad. If not, see
+% <http://www.gnu.org/licenses/>.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -56,9 +80,14 @@ function matRadGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
 %show logo
 axes(handles.axesLogo)
-h=imshow('matrad_logo.png');
+[im, ~, alpha] = imread('matrad_logo.png');
+f = imshow(im);
+set(f, 'AlphaData', alpha);
+
 axes(handles.axesDKFZ)
-f=imshow('DKFZ_Logo.png');
+[im, ~, alpha] = imread('DKFZ_logo.png');
+f = imshow(im);
+set(f, 'AlphaData', alpha);
 %% 
 % handles.State=0   no data available
 % handles.State=1   data available; ready for dose calculation

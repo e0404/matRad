@@ -16,7 +16,7 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,visBool)
 %   dij:        matRad dij struct
 %
 % References
-%   http://www.ncbi.nlm.nih.gov/pubmed/8497215
+%   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

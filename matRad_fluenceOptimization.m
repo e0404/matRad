@@ -3,16 +3,18 @@ function optResult = matRad_fluenceOptimization(dij,cst,pln,varargin)
 % matRad inverse planning wrapper function
 % 
 % call
-%   [wOpt,dOpt] = matRad_fluenceOptimization(dij,cst)
+%   optResult = matRad_fluenceOptimization(dij,cst,pln,varargin)
 %
 % input
-%   dij:      matRad dij struct
-%   cst:      matRad cst struct
-%   pln:      matRad pln struct
-%   varargin: (optinal) 
+%   dij:        matRad dij struct
+%   cst:        matRad cst struct
+%   pln:        matRad pln struct
+%   varargin:   optinal: convergence criteria for optimization and biological
+%               optimization mode
 %
 % output
-%   XXX
+%   optResult struct containing optimized fluence vector, dose, and (for
+%   biological optimization) RBE-weighted dose etc.
 %
 % References
 %   -
@@ -55,9 +57,10 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
     % check if you are running a supported rad
     dij.ax = zeros(dij.numOfVoxels,1);
     dij.bx = zeros(dij.numOfVoxels,1);
-    % check if only allowed objectives were defined
+    
     for i = 1:size(cst,1)
         for j = 1:size(cst{i,6},2)
+            % check if only allowed objectives were defined
             if sum(strcmp(cst{i,6}(j).type,{'square overdosing', ...
                                             'square underdosing', ...
                                             'square deviation',...
@@ -78,10 +81,10 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
              dij.bx(cst{i,4}) = cst{i,5}.betaX;
          end
     end
-    % define if RBE x dose or biological effect should be used   
     
+    % define if RBE x dose or biological effect should be used   
     if length(varargin)>1
-        IdentifierBioOpt=varargin{1,2};
+        IdentifierBioOpt = varargin{1,2};
     else
         IdentifierBioOpt = pln.bioOptimization;
     end

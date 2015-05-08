@@ -1,22 +1,21 @@
 function optResult = matRad_projectedLBFGS(objFunc,wInit,varargin)
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % projected L-BFGS optimizer including a positivity constraints on the
 % optimization variable
 % 
 % call
-%   [w,dose] = matRad_projectedLBFGS(objFunc,wInit)
+%   optResult = matRad_projectedLBFGS(objFunc,wInit)
 %
 % input
 %   objFunc:    objective function to be optimized
 %   wInit:      start solution for optimizer
+%   varargin:   optional: number of iterations and precision
 %
 % output
-%   w:      optimized bixel vector
-%   dose:   optimized dose distribution
+%   optResult:  struct containing the optimized fluence vector
 %
 % References
-%   Kelley: Iterative methods for optimization
+%   [1] Kelley: Iterative methods for optimization 1999
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

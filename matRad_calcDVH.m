@@ -94,17 +94,13 @@ for i = 1:numOfVois
 end
 
 % legend
-legendHandle = legend('show');
-%set(legendHandle,'Position',[.65 .4 .147 .282],'LineWidth',2,'EdgeColor',0*[1 1 1]); % intra2
+legend('show');
 
 fontSizeValue = 14;
 
 ylim([0 110])
 set(gca,'YTick',0:20:120)
 
-%x_r = round(linspace(0,xmax,8).*100)/100;
-%set(gca,'XTick',x_r)
-%set(gca,'XTickLabel',{0,[],20,[],40,[],60,[],80,[],100})
 grid on
 box(gca,'on');
 set(gca,'LineWidth',1.5,'FontSize',fontSizeValue);

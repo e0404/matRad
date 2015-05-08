@@ -16,7 +16,7 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,visBool)
 %   dij:        matRad dij struct
 %
 % References
-%   -
+%   [1] http://iopscience.iop.org/0031-9155/41/8/005
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -167,7 +167,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
         if ~isempty(stf(i).ray(j).energy)
         
             % set lateral cutoff for calculation of geometric distances
-            lateralCutoff = 3*baseData(find(max(stf(i).ray(j).energy) == [baseData.energy])).sigma(end);
+            lateralCutoff = 3*baseData(max(stf(i).ray(j).energy) == [baseData.energy]).sigma(end);
 
             % Ray tracing for beam i and ray j
             [ix,radDepths,~,latDistsX,latDistsZ] = matRad_calcRadGeoDists(ct.cube,V,...

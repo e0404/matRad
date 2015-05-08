@@ -1,9 +1,9 @@
 function [f, g] = matRad_bioObjFuncRBExD(w,dij,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad optimization function based on the biological effecitve dose
+% matRad optimization function based on the RBE-weighted dose
 % 
 % call
-%   [f, g] = matRad_bioObjFunc(w,dij,cst)
+%   [f, g] = matRad_bioObjFuncRBExD(w,dij,cst)
 %
 % input
 %   w:   weight vector
@@ -15,7 +15,7 @@ function [f, g] = matRad_bioObjFuncRBExD(w,dij,cst)
 %   g: gradient vector
 %
 % References
-%   http://iopscience.iop.org/0031-9155/51/8/001
+%   [1] http://iopscience.iop.org/0031-9155/51/8/001
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

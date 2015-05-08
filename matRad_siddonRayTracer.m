@@ -1,7 +1,7 @@
 function [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter,resolution,sourcePoint,targetPoint,cubes,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % siddon ray tracing through three dimensional cube to calculate the
-% radiological depth
+% radiological depth according to Siddon 1985 Medical Physics
 % 
 % call
 %   [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter,resolution,sourcePoint,targetPoint,cubes,visBool)
@@ -15,16 +15,17 @@ function [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter,resolution,so
 %                   multiple cubes for ray tracing to save computation time)
 %   visBool:        toggle on/off visualization (optional)
 %
-% output
-%   alphas
-%   l
-%   rho
-%   d12
-%   ix
-%   vis
+% output (see Siddon 1985 Medical Physics for a detailed description of the
+% variales)
+%   alphas          relative distance between start and endpoint for the 
+%                    intersections with the cube
+%   l               lengths of intersestions with cubes
+%   rho             densities extracted from cubes
+%   d12             distance between start and endpoint of ray tracing
+%   vis             struct for later visualization purposes
 %
 % References
-%   http://www.ncbi.nlm.nih.gov/pubmed/4000088
+%   [1] http://www.ncbi.nlm.nih.gov/pubmed/4000088
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

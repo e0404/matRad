@@ -1,4 +1,25 @@
-function [vAlpha, vBeta]= matRad_calcLQParameter(vRadDepths,mTissueClass,baseData)
+function [vAlpha, vBeta] = matRad_calcLQParameter(vRadDepths,mTissueClass,baseData)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad inverse planning wrapper function
+% 
+% call
+%   [vAlpha, vBeta] = matRad_calcLQParameter(vRadDepths,mTissueClass,baseData)
+%
+% input
+%   vRadDepths:     radiological depths of voxels
+%   mTissueClass:   tissue classes of voxels
+%   baseData:       biological base data
+%
+% output
+%   vAlpha:         alpha values for voxels interpolated from base data
+%   vBeta:          beta values for voxels interpolated from base data
+%
+% References
+%   -
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

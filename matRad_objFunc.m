@@ -1,9 +1,11 @@
 function [f, g] = matRad_objFunc(w,dij,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad objective function for inverse planning
+% matRad objective function for inverse planning supporting mean dose
+% objectives, EUD objectives, squared overdosage, squared underdosage, and
+% squared deviation
 % 
 % call
-%   [f, g, d] = matRad_IMRTObjFunc(w,dij,cst)
+%   [f, g] = matRad_objFunc(w,dij,cst)
 %
 % input
 %   w:   bixel weight vector
@@ -13,10 +15,10 @@ function [f, g] = matRad_objFunc(w,dij,cst)
 % output
 %   f: objective function value
 %   g: gradient
-%   d: dose distribution
 %
 % References
-%   -
+%   [1] http://www.sciencedirect.com/science/article/pii/S0958394701000577
+%   [2] http://www.sciencedirect.com/science/article/pii/S0360301601025858
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

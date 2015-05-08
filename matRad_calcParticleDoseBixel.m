@@ -4,9 +4,7 @@ function dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,baseData)
 % segmentation
 % 
 % call
-%   dose = matRad_calcPhotonDoseBixel(SAD,Interp_kernel1,...
-%                  Interp_kernel2,Interp_kernel3,radDepths,geoDists,...
-%                  latDistsX,latDistsZ)
+%   dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,baseData)
 %
 % input
 %   radDepths:      radiological depths
@@ -17,7 +15,7 @@ function dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,baseData)
 %   dose:   particle dose at specified locations as linear vector
 %
 % References
-%   -
+%   [1] http://iopscience.iop.org/0031-9155/41/8/005
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -53,4 +51,3 @@ Z = interp1(baseData.depths,baseData.Z,radDepths);
 
 % calculate dose
 dose = exp( -radialDist_sq ./ (2*sigma.^2)) .* Z ./(2*pi*sigma.^2);
-                           

@@ -15,7 +15,7 @@ function [f, g] = matRad_bioObjFunc(w,dij,cst)
 %   g: gradient vector
 %
 % References
-%   http://iopscience.iop.org/0031-9155/51/12/009
+%   [1] http://iopscience.iop.org/0031-9155/51/12/009
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

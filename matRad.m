@@ -65,18 +65,17 @@ elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
 end
 
 %% inverse planning for imrt
-ResultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% sequencing
 if strcmp(pln.radiationMode,'photons')
-    %Sequencing = matRad_xiaLeafSequencing(optResult.w,stf,7,1);
-    Sequencing = matRad_engelLeafSequencing(optResult.w,stf,7);
-    ResultGUI = matRad_mxCalcDose(dij,Sequencing.w,cst);
+    %Sequencing = matRad_xiaLeafSequencing(resultGUI.w,stf,7,1);
+    Sequencing = matRad_engelLeafSequencing(resultGUI.w,stf,7);
+    resultGUI = matRad_mxCalcDose(dij,Sequencing.w,cst);
 end
 
 %% start gui for visualization of result
 matRadGUI
 
 %% dvh and conformity index
-matRad_calcDVH(optResult,cst)
-
+matRad_calcDVH(resultGUI,cst)

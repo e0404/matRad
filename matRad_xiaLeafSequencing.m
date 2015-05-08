@@ -1,7 +1,8 @@
 function resultSequencing = matRad_xiaLeafSequencing(w,stf,numOfLevels,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated 
-% beams with multiple static segments
+% beams with multiple static segments according to Xia et al. (1998)
+% Medical Physics
 % 
 % call
 %   resultSequencing = matRad_xiaLeafSequencing(w,stf,pln,numOfLevels,visBool)
@@ -9,7 +10,6 @@ function resultSequencing = matRad_xiaLeafSequencing(w,stf,numOfLevels,visBool)
 % input
 %   w:                  bixel weight vector
 %   stf:                matRad steering information struct
-%   pln:                matRad plan meta information struct
 %   numOfLevels:        number of stratification levels
 %   visBool:            toggle on/off visualization (optional)
 %
@@ -17,7 +17,7 @@ function resultSequencing = matRad_xiaLeafSequencing(w,stf,numOfLevels,visBool)
 %   resultSequencing:   matRad sequencing result struct   
 %
 % References
-%   http://online.medphys.org/resource/1/mphya6/v25/i8/p1424_s1
+%   [1] http://online.medphys.org/resource/1/mphya6/v25/i8/p1424_s1
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

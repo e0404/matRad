@@ -1,7 +1,8 @@
 function resultSequencing = matRad_engelLeafSequencing(w,stf,numOfLevels,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated 
-% beams with multiple static segments
+% beams with multiple static segments accroding to Engel et al. 2005
+% Discrete Applied Mathematics
 % 
 % call
 %   resultSequencing = matRad_engelSequencing(w,stf,pln,numOfLevels,visBool)
@@ -9,7 +10,6 @@ function resultSequencing = matRad_engelLeafSequencing(w,stf,numOfLevels,visBool
 % input
 %   w:                  bixel weight vector
 %   stf:                matRad steering information struct
-%   pln:                matRad plan meta information struct
 %   numOfLevels:        number of stratification levels
 %   visBool:            toggle on/off visualization (optional)
 %
@@ -17,7 +17,7 @@ function resultSequencing = matRad_engelLeafSequencing(w,stf,numOfLevels,visBool
 %   resultSequencing:   matRad sequencing result struct   
 %
 % References
-%   http://www.sciencedirect.com/science/article/pii/S0166218X05001411
+%   [1] http://www.sciencedirect.com/science/article/pii/S0166218X05001411
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

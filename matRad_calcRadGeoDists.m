@@ -14,29 +14,36 @@ function [ix,radDepths,geoDists,x_latDists,z_latDists] = ...
 %
 % input
 %   ct:                 ct cube
-%   V:                  linear indices of voxels where we want to perform computations
+%   V:                  linear indices of voxels inside the patient, i.e.
+%                       potentially interesting voxels
 %   isocenter:          isocenter
-%   rot_coords:
-%   resolution:
-%   sourcePoint:
-%   targetPoint:
-%   sourcePoint_bev:
-%   targetPoint_bev:
-%   X:
-%   Y:
-%   Z:
-%   lateralCutOff:
-%   visBool:
+%   rot_coords:         coordinates of the voxels with index V rotated 
+%                       according to the couch and gantry angle        
+%   resolution:         resolution of the ct cube [mm]
+%   sourcePoint:        source point in voxel coordinates
+%   targetPoint:        target point in voxel coordinates
+%   sourcePoint_bev:    source point in voxel coordinates in beam's eye view
+%   targetPoint_bev:    target point in voxel coordinated in beam's eye view
+%   X:                  x coordinates of the voxels with index V
+%   Y:                  y coordinates of the voxels with index V
+%   Z:                  z coordinates of the voxels with index V
+%   lateralCutOff:      lateral cutoff specifying the neighbourhood for
+%                       which dose calculations will actually be performed
+%   visBool:            toogle on/off visualization
 %
 % output
-%   ix:   
-%   radDepths:   
-%   geoDists:   
-%   x_latDists:   
-%   z_latDists:   
+%   ix:                 indices of voxels where we want to compute dose
+%                       influence data
+%   radDepths:          corresponding radiological depths
+%   geoDists:           corresponding geometrical distances from the
+%                       virtual radiation source
+%   x_latDists:         lateral x-distance to the central ray (where the
+%                       actual computation of the radiological depth takes place)
+%   z_latDists:         lateral z-distance to the central ray (where the
+%                       actual computation of the radiological depth takes place)
 %
 % References
-%   -
+%   [1] http://www.ncbi.nlm.nih.gov/pubmed/4000088
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -64,9 +71,6 @@ function [ix,radDepths,geoDists,x_latDists,z_latDists] = ...
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% if visBool not set toogle off visualization
-
-
 % calculate radiological depths on central ray with siddon ray tracer
 [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter,resolution, ...
                                                 sourcePoint,targetPoint, ...
@@ -82,14 +86,12 @@ dCum = cumsum(d);
 
 % This is necessary for numerical stability.
 dCumIx = min([find(dCum==0,1,'last') numel(dCum)-1]);
-
-                                            
+                                           
 % Add isocenter to source and target point. Because the algorithm does not
 % works with negatives values. This put (0,0,0) in the center of first
 % voxel
 sourcePoint = sourcePoint + isocenter;
 targetPoint = targetPoint + isocenter;
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %ROTATE A SINGLE BEAMLET AND ALIGN WITH BEAMLET WHO PASSES THROUGH
@@ -129,27 +131,6 @@ rot_coords_bev(:,3) = rot_coords(:,3)-sourcePoint_bev(3);
 
 % Rotate every CT voxel 
 rot_coords_temp = rot_coords_bev*R;
-
-% Calculate radial distances.
-%u_L = zeros(length(rot_coords_temp),3);
-%u_L(:,1) = b(1);
-%u_L(:,2) = b(2);
-%u_L(:,3) = b(3);
-
-%cross_product = cross(u_L,rot_coords_bev);
-%cross_product = [b(2)*rot_coords_bev(:,3)-b(3)*rot_coords_bev(:,2) ...
-%                 b(3)*rot_coords_bev(:,1)-b(1)*rot_coords_bev(:,3) ...
-%                 b(1)*rot_coords_bev(:,2)-b(2)*rot_coords_bev(:,1)];
-
-
-
-%rad_distancesSq = sqrt(sum(cross_product.^2,2));
-
-%Data with less than a certain of radial distance from the beamlet.
-%ix_vis = rad_distancesSq > lateralCutOff^2;
-%V(ix_vis) = [];
-%ix = find(rad_distancesSq <= lateralCutOff^2);
-%rad_distances = rad_distances(ix);
 
 % Put [0 0 0] position CT in center of the beamlet.
 x_latDists = rot_coords_temp(:,1) + sourcePoint_bev(1);

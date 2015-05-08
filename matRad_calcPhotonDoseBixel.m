@@ -10,7 +10,7 @@ function dose = matRad_calcPhotonDoseBixel(SAD,Interp_kernel1,...
 %                  latDistsX,latDistsZ)
 %
 % input
-%   SAD:                source to axsi distance
+%   SAD:                source to axis distance
 %   Interp_kernel1/2/3: kernels for dose calculation
 %   radDepths:          radiological depths
 %   geoDists:           geometrical distance from virtual photon source
@@ -21,7 +21,7 @@ function dose = matRad_calcPhotonDoseBixel(SAD,Interp_kernel1,...
 %   dose:   photon dose at specified locations as linear vector
 %
 % References
-%   http://www.ncbi.nlm.nih.gov/pubmed/8497215
+%   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

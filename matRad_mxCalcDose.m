@@ -1,6 +1,7 @@
 function d = matRad_mxCalcDose(dij,w,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matrix based dose calculation
+% matrix based dose calculation and for biological base data also RBE,
+% alpha, effect, etc.
 % 
 % call
 %   d = matRad_mxCalcDose(dij,w)
@@ -8,10 +9,12 @@ function d = matRad_mxCalcDose(dij,w,cst)
 % input
 %   dij:    dose influence matrix
 %   w:      bixel weight vector
+%   cst:    matRad cst struct
 %
 % output
-%   d: dose distribution (in the form of a one-dimensional vector, _not_ a
-%   cube)
+%   d:      struct containing the dose cube. If alpha and beta cubes are 
+%           also available, rbe cube, RBE-weighted dose etc. will also be
+%           calculated
 %
 % References
 %   -

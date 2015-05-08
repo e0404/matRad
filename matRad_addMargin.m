@@ -1,4 +1,4 @@
-function [ mVOIEnlarged ] = matRad_addMargin(mVOI,vResolution,vMargin,bDiaElem)
+function mVOIEnlarged = matRad_addMargin(mVOI,vResolution,vMargin,bDiaElem)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad add margin function
 % 
@@ -10,7 +10,7 @@ function [ mVOIEnlarged ] = matRad_addMargin(mVOI,vResolution,vMargin,bDiaElem)
 %                   object and zeros otherwise 
 %   vResolution     ct resolution
 %   vMargin:        margin in mm 
-%   bDiaElem         if true 26-connectivity is used otherwise 6-connectivity
+%   bDiaElem        if true 26-connectivity is used otherwise 6-connectivity
 %
 % output
 %   mVOIEnlarged:   enlarged VOI
