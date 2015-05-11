@@ -1266,14 +1266,14 @@ for i = 1:size(cst,1)
        data{Counter,5}=cst{i,6}(j).parameter(1);
        switch objFunc
            case 'EUD'
-                data{Counter,7}=cst{i,6}(j).parameter(1);
+                data{Counter,7}=cst{i,6}(j).parameter(1,2);
                 data{Counter,6}='';
            case 'mean'
                data{Counter,6}='';
                data{Counter,7}='';
            case {'square underdosing','square overdosing','square deviation'}
                %Dose
-               data{Counter,6}=cst{i,6}(j).parameter(2);
+               data{Counter,6}=cst{i,6}(j).parameter(1,2);
                data{Counter,7}='';
        end
    
@@ -1346,7 +1346,7 @@ for i = 1:size(OldCst,1)
                     if isempty(data{j,7})
                        FlagValidParameters=false;
                     else
-                        NewCst{Cnt,4}(CntObjF,1).exponent = data{j,7};
+                        NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = data{j,7};
                     end
                 end
 
