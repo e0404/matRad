@@ -70,7 +70,7 @@ for  i = 1:size(cst,1)
         e_i = e(cst{i,4});
         
         % loop over the number of constraints for the current VOI
-        for j = 1:size(cst{i,6},2)
+        for j = 1:size(cst{i,6},1)
             
             % get Penalty
             rho = cst{i,6}(j).parameter(1);
@@ -131,7 +131,7 @@ for  i = 1:size(cst,1)
              elseif isequal(cst{i,6}(j).type, 'EUD') 
                 
                 % get exponent for EUD
-                exponent = cst{i,6}(j).exponent;
+                exponent = cst{i,6}(j).parameter(2);
                 
                 % calculate objective function and delta
                 if sum(e_i.^exponent)>0

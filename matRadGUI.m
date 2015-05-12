@@ -120,7 +120,7 @@ catch
 end
 
 try
-    if ~isempty(evalin('base','ResultGUI'))
+    if ~isempty(evalin('base','resultGUI'))
         handles.State = 3;
     end
 catch
@@ -147,7 +147,7 @@ if handles.State ==2 || handles.State ==3
     handles.SelectedDisplayOption ='Dose';
     handles.SelectedDisplayOptionIdx=1;
 else
-    handles.ResultGUI = [];
+    handles.resultGUI = [];
     set(handles.popupDisplayOption,'String','no option available');
     handles.SelectedDisplayOption='';
     handles.SelectedDisplayOptionIdx=1;
@@ -193,7 +193,7 @@ function btnLoad_Callback(hObject, eventdata, handles)
 
 % delete existing workspace
 try
-    evalin('base',['clear ', 'ResultGUI'])
+    evalin('base',['clear ', 'resultGUI'])
 catch 
 end
 
@@ -240,9 +240,9 @@ assignin('base','ct',ct);
 assignin('base','cst',cst);
 
 % check if a complete optimized plan was loaded
-if exist('stf','var') && exist('ResultGUI','var') && exist('dij','var') && exist('pln','var')
+if exist('stf','var') && exist('resultGUI','var') && exist('dij','var') && exist('pln','var')
     assignin('base','stf',stf);
-    assignin('base','ResultGUI',ResultGUI);
+    assignin('base','resultGUI',resultGUI);
     assignin('base','dij',dij);
     assignin('base','pln',pln);
     setPln(handles);
@@ -517,7 +517,7 @@ end
 if handles.State == 2
       Result = evalin('base','doseVis');
 elseif handles.State == 3
-      Result = evalin('base','ResultGUI');
+      Result = evalin('base','resultGUI');
 end
 
 if exist('Result')
@@ -1060,8 +1060,8 @@ pause(0.3);
 Param.numOfIter = str2num(get(handles.editNumIter,'String'));
 Param.prec = str2num(get(handles.txtPrecisionOutput,'String'));
 OptType = get(handles.btnTypBioOpt,'String');
-ResultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'),Param,OptType);
-assignin('base','ResultGUI',ResultGUI);
+resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'),Param,OptType);
+assignin('base','resultGUI',resultGUI);
 %set some values
 handles.State=3;
 handles.SelectedDisplayOptionIdx=1;
@@ -1266,14 +1266,14 @@ for i = 1:size(cst,1)
        data{Counter,5}=cst{i,6}(j).parameter(1);
        switch objFunc
            case 'EUD'
-                data{Counter,7}=cst{i,6}(j).parameter(1);
+                data{Counter,7}=cst{i,6}(j).parameter(1,2);
                 data{Counter,6}='';
            case 'mean'
                data{Counter,6}='';
                data{Counter,7}='';
            case {'square underdosing','square overdosing','square deviation'}
                %Dose
-               data{Counter,6}=cst{i,6}(j).parameter(2);
+               data{Counter,6}=cst{i,6}(j).parameter(1,2);
                data{Counter,7}='';
        end
    
@@ -1346,7 +1346,7 @@ for i = 1:size(OldCst,1)
                     if isempty(data{j,7})
                        FlagValidParameters=false;
                     else
-                        NewCst{Cnt,4}(CntObjF,1).exponent = data{j,7};
+                        NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = data{j,7};
                     end
                 end
 
@@ -1718,7 +1718,7 @@ function btnDVH_Callback(hObject, eventdata, handles)
 % hObject    handle to btnDVH (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-matRad_calcDVH(evalin('base','ResultGUI'),evalin('base','cst'))
+matRad_calcDVH(evalin('base','resultGUI'),evalin('base','cst'))
 
 
 % --- Executes on selection change in listBoxCmd.
@@ -1799,7 +1799,7 @@ setCstTable(handles,evalin('base','cst'));
 % set state
 
 VarNames = evalin('base','who');
-Flag = (ismember({'ct','cst','pln','stf','dij','ResultGUI'},VarNames));
+Flag = (ismember({'ct','cst','pln','stf','dij','resultGUI'},VarNames));
 
 if sum(Flag(:))== 0
     handles.State = 0;
@@ -1826,17 +1826,17 @@ function toolbarSave_ClickedCallback(hObject, eventdata, handles)
 btnTableSave_Callback(hObject, eventdata, handles);
 
 VarNames = evalin('base','who');
-Flag = sum(ismember({'ct','cst','pln','ResultGUI','stf','dij'},VarNames));
+Flag = sum(ismember({'ct','cst','pln','resultGUI','stf','dij'},VarNames));
 
-%save cst,ct,ResultGUI,pln,stf to disk
+%save cst,ct,resultGUI,pln,stf to disk
 if Flag == 6
     ct = evalin('base','ct');
     cst = evalin('base','cst');
     pln = evalin('base','pln');
-    ResultGUI = evalin('base','ResultGUI');
+    resultGUI = evalin('base','resultGUI');
     stf = evalin('base','stf');
     dij = evalin('base','dij');
-    uisave({'cst','ct','pln','ResultGUI','stf','dij'});
+    uisave({'cst','ct','pln','resultGUI','stf','dij'});
 else
     %% warning dialog - only optimized plans can be saved
      warndlg('for consistency reasons it is just possible to save optimized plans'); 
@@ -1911,10 +1911,10 @@ function btnSequencing_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
   StratificationLevel = parseStringAsNum(get(handles.editSequencingLevel,'String'));
 
-  ResultGUI=evalin('base','ResultGUI');
+  resultGUI=evalin('base','resultGUI');
   
-  %Sequencing = matRad_engelLeafSequencing(ResultGUI.w,evalin('base','stf'),StratificationLevel,1);
-  Sequencing = matRad_xiaLeafSequencing(ResultGUI.w,evalin('base','stf'),StratificationLevel,1);
+  %Sequencing = matRad_engelLeafSequencing(resultGUI.w,evalin('base','stf'),StratificationLevel,1);
+  Sequencing = matRad_xiaLeafSequencing(resultGUI.w,evalin('base','stf'),StratificationLevel,1);
     
   assignin('base','Sequencing',Sequencing);
 
