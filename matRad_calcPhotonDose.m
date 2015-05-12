@@ -87,7 +87,7 @@ lateralCutoff = 20; % [mm]
 
 %% kernel convolution
 % load polynomial fits for kernels ppKernel1, ppKernel2, ppKernel3
-load kernels_photons.mat;
+load photonPencilBeamKernels.mat;
 
 % Display console message.
 fprintf('matRad: Kernel convolution... \n');
