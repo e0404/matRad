@@ -78,12 +78,12 @@ function matRadGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 
 % Choose default command line output for matRadGUI
 handles.output = hObject;
-%show logo
+%show matrad logo
 axes(handles.axesLogo)
 [im, ~, alpha] = imread('matrad_logo.png');
 f = imshow(im);
 set(f, 'AlphaData', alpha);
-
+% show dkfz logo
 axes(handles.axesDKFZ)
 [im, ~, alpha] = imread('DKFZ_logo.png');
 f = imshow(im);
@@ -102,6 +102,7 @@ set(f, 'AlphaData', alpha);
 handles.TableChanged = false;
 handles.State = 0;
 
+%% parse variables from base workspace
 try
     if ~isempty(evalin('base','ct'))
         ct = evalin('base','ct');
@@ -1234,10 +1235,10 @@ end
 function setCstTable(handles,cst)
 
 
-columnname = {'VOI','VOI Type','Overlap','Obj Func','Penalty','Dose','Parameters'};
+columnname = {'VOI','VOI Type','Overlap','Obj Func','Penalty','Parameters'};
 columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
        {'square underdosing','square overdosing','square deviation', 'mean', 'EUD'},...
-       'numeric','numeric','numeric'};
+       'numeric','numeric'};
    
 numOfObjectives = 0;
 for i = 1:size(cst,1)
@@ -1265,16 +1266,12 @@ for i = 1:size(cst,1)
        %penalty
        data{Counter,5}=cst{i,6}(j).parameter(1);
        switch objFunc
-           case 'EUD'
-                data{Counter,7}=cst{i,6}(j).parameter(1,2);
-                data{Counter,6}='';
            case 'mean'
                data{Counter,6}='';
-               data{Counter,7}='';
-           case {'square underdosing','square overdosing','square deviation'}
+       
+           case {'square underdosing','square overdosing','square deviation','EUD'}
                %Dose
-               data{Counter,6}=cst{i,6}(j).parameter(1,2);
-               data{Counter,7}='';
+               data{Counter,6}=cst{i,6}(j).parameter(1,2); 
        end
    
        Counter = Counter +1;
@@ -1343,10 +1340,10 @@ for i = 1:size(OldCst,1)
             if FlagValidParameters
             
                 if strcmp(NewCst{Cnt,4}(CntObjF,1).type,'EUD')
-                    if isempty(data{j,7})
+                    if isempty(data{j,6})
                        FlagValidParameters=false;
                     else
-                        NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = data{j,7};
+                        NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = (data{j,6});
                     end
                 end
 
@@ -1468,7 +1465,8 @@ function uiTable_CellEditCallback(hObject, eventdata, handles)
 %	NewData: EditData or its converted form set on the Data property. Empty if Data was not changed
 %	Error: error string when failed to convert EditData to appropriate value for Data
 % handles    structure with handles and user data (see GUIDATA)
-% apply changes to the other cells
+
+% get table data and current index of cell
 if isempty(eventdata)
     data =get(handles.uiTable,'Data');
     Index = get(handles.uiTable,'UserData');
@@ -1487,7 +1485,7 @@ else
     data = get(hObject,'Data');
 end
 
-
+% if VOI, VOI Type or Overlap was changed --> change state
 if eventdata.Indices(2) == 1 || eventdata.Indices(2) == 2 ...
         || eventdata.Indices(2) == 3
     handles.State=1;
@@ -1498,43 +1496,22 @@ else
     end
 end
 %% check if input is a valid
-%check if overlap and penalty are numbers
-if eventdata.Indices(2) == 3  || eventdata.Indices(2) == 5 
-    if CheckValidity(eventdata.NewData) ==false
+%check if overlap,penalty and and parameters are numbers
+if eventdata.Indices(2) == 3  || eventdata.Indices(2) == 5 || eventdata.Indices(2) == 6
+    if CheckValidity(eventdata.NewData) == false
             data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
     end
 end
 
-% check if EUD cell is number if EUD is set as objective, if not set it to
-% empty string
-if strcmp('EUD',data{eventdata.Indices(1),4}) && eventdata.Indices(2) == 7
-    if CheckValidity(eventdata.NewData) ==false
-            data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
-    end
-elseif eventdata.Indices(2) == 7
-     data{eventdata.Indices(1),eventdata.Indices(2)} = '';
-end
-
-% check if dose value is a number 
-if sum(strcmp({'square deviation','square underdosing','square overdosing'},...
-        data{eventdata.Indices(1),4}))>0 && eventdata.Indices(2) == 6
-    if CheckValidity(eventdata.NewData) ==false
-            data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
-    end
-elseif eventdata.Indices(2) == 6
-    data{eventdata.Indices(1),6}='';
-end
 %% if objective function is set to mean --> set dose cell to empty
-if eventdata.Indices(2)==4 && strcmp(eventdata.NewData,'mean') || ...
-    eventdata.Indices(2)==4 && strcmp(eventdata.NewData,'EUD')
+if eventdata.Indices(2)==4 && strcmp(eventdata.NewData,'mean')
+     data{eventdata.Indices(1),6}='';
+elseif strcmp(data{eventdata.Indices(1),4},'mean') && eventdata.Indices(2) == 6
      data{eventdata.Indices(1),6}='';
 end
-%% if objective function is set to mean --> set EUD cell to empty
-if eventdata.Indices(2)==4 && strcmp(eventdata.NewData,'mean')
-    data{eventdata.Indices(1),7}='';
-end
 
 
+%% if VOI was changed then change VOI type and overlap according to new VOI
 if eventdata.Indices(2) == 1 && eventdata.Indices(1) == size(data,1)
     for i = 1:size(data,1)
         if strcmp(eventdata.NewData,data{i,1})
@@ -1548,25 +1525,11 @@ end
 %% set VOI type and priority according to existing definitions
 for i=1:size(data,1)
     if i~=eventdata.Indices(1) && strcmp(data(i,1),data(eventdata.Indices(1)))
-      
         data{i,2} = data{eventdata.Indices(1),2};
         data{i,3} = data{eventdata.Indices(1),3};
     end
 end
 
-
-%% check if editing current cell makes sense
-
-%Dose column was edited
-if eventdata.Indices(2) == 6
-    if CheckValidity(eventdata.NewData) ==false
-            data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
-    end 
-    % check if obj func is set to EUD otherwise reject this change
-    if sum(strcmp(data{eventdata.Indices(1),4},{'EUD','mean'}))>0
-        data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
-    end
-end
 
 if isnan(eventdata.NewData)
     data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
