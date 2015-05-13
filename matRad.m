@@ -42,8 +42,8 @@ load LIVER.mat
 pln.SAD             = 1000; %[mm]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0:72:359]; % [°]
-pln.couchAngles     = [0 0 0 0 0]; % [°]
+pln.gantryAngles    = [0:72:359]; % [Â°]
+pln.couchAngles     = [0 0 0 0 0]; % [Â°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = numel(ct.cube);
 pln.voxelDimensions = size(ct.cube);
@@ -77,5 +77,5 @@ end
 %% start gui for visualization of result
 matRadGUI
 
-%% dvh and conformity index
+%% dvh
 matRad_calcDVH(resultGUI,cst)
