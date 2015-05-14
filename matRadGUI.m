@@ -600,15 +600,14 @@ CutOffLevel= 0.03;
 end
 
 %% plot dose cube
-if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1 ...
-        && get(handles.radiobtnDose,'Value')
+if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1
 
         mVolume = getfield(Result,handles.SelectedDisplayOption);
         % make sure to exploit full color range
         mVolume(Result.Dose<CutOffLevel*max(Result.Dose(:)))=0;
 
     %     %% dose colorwash
-        if ~isempty(mVolume) && get(handles.radiobtnDose,'Value') && ~isvector(mVolume)
+        if ~isempty(mVolume)&& ~isvector(mVolume)
 
             dose_rgb = mVolume./max(mVolume(:));
 
@@ -623,19 +622,32 @@ if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1 ...
                  mSlice = squeeze(mVolume(:,:,slice));
                 dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(:,:,slice))),jet);
             end
-            % Show dose      
+            % plot dose distribution    
             doseImageHandle = image('CData',dose_rgb,'Parent',handles.axesFig);
-            % make dose transparent
+ 
             if ~isempty(ct.cube)
                 if plane == 1  % Coronal plane
-                    set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(slice,:,:))>CutOffLevel*max(Result.Dose(:))  )  ) ;
-                elseif plane == 2 % sagittal plane
-                    set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,slice,:))>CutOffLevel*max(Result.Dose(:))  )  ) ;
-                elseif plane == 3 % Axial plane
-                    if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
-                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,:,slice))>0.1*max(Result.Dose(:))  )  ) ;
+                    if get(handles.radiobtnDose,'Value') 
+                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(slice,:,:))>CutOffLevel*max(Result.Dose(:))  )  ) ;
                     else
-                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,:,slice))>CutOffLevel*max(Result.Dose(:))  )  ) ;
+                        
+                    end   
+                    
+                elseif plane == 2 % sagittal plane
+                    if get(handles.radiobtnDose,'Value')
+                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,slice,:))>CutOffLevel*max(Result.Dose(:))  )  ) ;
+                    else
+                        
+                    end
+                elseif plane == 3 % Axial plane
+                    if get(handles.radiobtnDose,'Value')
+                        if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
+                            set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,:,slice))>0.1*max(Result.Dose(:))  )  ) ;
+                        else
+                            set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,:,slice))>CutOffLevel*max(Result.Dose(:))  )  ) ;
+                        end
+                    else
+                        set(doseImageHandle,'AlphaData',  0*double(squeeze(Result.Dose(:,:,slice))>CutOffLevel*max(Result.Dose(:)))) ;
                     end
                 end
 
@@ -665,7 +677,7 @@ if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1 ...
         
     axes(handles.axesFig),hold on 
 
-        %% dose iso dose lines
+        %% plot iso dose lines
         if get(handles.radiobtnIsoDoseLines,'Value')
                 colormap(jet)
                 vLevels = round(linspace(0,ceil(max(mVolume(:))),6).*100)/100;
