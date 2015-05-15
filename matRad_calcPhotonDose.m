@@ -50,6 +50,8 @@ if nargin < 5
     visBool = 0;
 end
 
+% initialize waitbar
+figureWait=waitbar(0,'photon dij-calculation..');
 % meta information for dij
 dij.numOfBeams         = pln.numOfBeams;
 dij.numOfVoxels        = pln.numOfVoxels;
@@ -166,7 +168,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
 
         % Display progress
         matRad_progress(counter,dij.totalNumOfBixels);
-        %waitbar(counter/dij.totalNumOfBixels);
+        waitbar(counter/dij.totalNumOfBixels);
         % remember beam and bixel number
         dij.beamNum(counter)  = i;
         dij.rayNum(counter)   = j;
@@ -200,3 +202,5 @@ for i = 1:dij.numOfBeams; % loop over all beams
         
     end
 end
+
+close(figureWait);
