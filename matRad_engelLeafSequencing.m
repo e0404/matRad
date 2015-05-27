@@ -110,15 +110,22 @@ for i = 1:numOfBeams
     k = 0;
     
     if visBool
-        figure,
-        clf
-        colormap jet
-        subplot(2,2,1) 
-        imagesc(D_k,[0 numOfLevels]) 
-        title(['Beam # ' num2str(i) ': max(D_0) = ' num2str(max(D_0(:))) ' - ' num2str(numel(unique(D_0))) ' intensity levels'])
-        xlabel('x - direction parallel to leaf motion ')
-        ylabel('z - direction perpendicular to leaf motion ')
-        colorbar
+        % create the sequencing figure
+        sz = [800 1000]; % figure size
+        screensize = get(0,'ScreenSize');
+        xpos = ceil((screensize(3)-sz(2))/2); % center the figure on the screen horizontally
+        ypos = ceil((screensize(4)-sz(1))/2); % center the figure on the screen vertically
+        seqFig = figure('position',[xpos,ypos,sz(2),sz(1)]);
+        clf(seqFig);
+        colormap(seqFig,'jet');
+        
+        seqSubPlots(1) = subplot(2,2,1,'parent',seqFig);
+        imagesc(D_k,'parent',seqSubPlots(1));
+        set(seqSubPlots(1),'CLim',[0 numOfLevels]);
+        title(seqSubPlots(1),['Beam # ' num2str(i) ': max(D_0) = ' num2str(max(D_0(:))) ' - ' num2str(numel(unique(D_0))) ' intensity levels']);
+        xlabel(seqSubPlots(1),'x - direction parallel to leaf motion ')
+        ylabel(seqSubPlots(1),'z - direction perpendicular to leaf motion ')
+        colorbar(seqSubPlots(1));
         drawnow
     end
     
@@ -140,11 +147,10 @@ for i = 1:numOfBeams
         
         %Plot residual intensity matrix.
         if visBool
-            subplot(2,2,2)
-            imagesc(D_k,[0 numOfLevels]);
-            title(['k = ' num2str(k)])
-            xlabel('x - direction parallel to leaf motion ')
-            ylabel('z - direction perpendicular to leaf motion ')
+            seqSubPlots(2) = subplot(2,2,2,'parent',seqFig);
+            imagesc(D_k,'parent',seqSubPlots(2));
+            set(seqSubPlots(2),'CLim',[0 numOfLevels]);
+            title(seqSubPlots(2),['k = ' num2str(k)]);
             drawnow
         end
        
@@ -308,29 +314,29 @@ for i = 1:numOfBeams
 
         %show the leaf positions
         if visBool
-            subplot(2,2,4)
-            imagesc(shape_k) %Visualisierung des abzuziehenden Segments
-            hold on
-            xlabel('x - direction parallel to leaf motion ')
-            ylabel('z - direction perpendicular to leaf motion ')
-            title(['d_k = ' num2str(d_k)]);
+            seqSubPlots(4) = subplot(2,2,4,'parent',seqFig);
+            imagesc(shape_k,'parent',seqSubPlots(4));
+            hold(seqSubPlots(4),'on');
+            xlabel(seqSubPlots(4),'x - direction parallel to leaf motion ')
+            ylabel(seqSubPlots(4),'z - direction perpendicular to leaf motion ')
+            title(seqSubPlots(4),['d_k = ' num2str(d_k)]);
             for j = 1:dimOfFluenceMxZ
                 leftLeafIx = find(shape_k(j,:)>0,1,'first');
                 rightLeafIx = find(shape_k(j,:)>0,1,'last');
                 if leftLeafIx > 1
-                    plot([.5 leftLeafIx-.5],j-[.5 .5] ,'w','LineWidth',2)
-                    plot([.5 leftLeafIx-.5],j+[.5 .5] ,'w','LineWidth',2)
-                    plot([ leftLeafIx-.5 leftLeafIx-.5],j+[.5 -.5] ,'w','LineWidth',2)
+                    plot(seqSubPlots(4),[.5 leftLeafIx-.5],j-[.5 .5] ,'w','LineWidth',2)
+                    plot(seqSubPlots(4),[.5 leftLeafIx-.5],j+[.5 .5] ,'w','LineWidth',2)
+                    plot(seqSubPlots(4),[ leftLeafIx-.5 leftLeafIx-.5],j+[.5 -.5] ,'w','LineWidth',2)
                 end
                 if rightLeafIx<dimOfFluenceMxX
-                    plot([dimOfFluenceMxX+.5 rightLeafIx+.5],j-[.5 .5] ,'w','LineWidth',2)
-                    plot([dimOfFluenceMxX+.5 rightLeafIx+.5],j+[.5 .5] ,'w','LineWidth',2)
-                    plot([ rightLeafIx+.5 rightLeafIx+.5],j+[.5 -.5] ,'w','LineWidth',2)
+                    plot(seqSubPlots(4),[dimOfFluenceMxX+.5 rightLeafIx+.5],j-[.5 .5] ,'w','LineWidth',2)
+                    plot(seqSubPlots(4),[dimOfFluenceMxX+.5 rightLeafIx+.5],j+[.5 .5] ,'w','LineWidth',2)
+                    plot(seqSubPlots(4),[ rightLeafIx+.5 rightLeafIx+.5],j+[.5 -.5] ,'w','LineWidth',2)
                 end
                 if isempty(rightLeafIx) && isempty (leftLeafIx)
-                    plot([dimOfFluenceMxX+.5 .5],j-[.5 .5] ,'w','LineWidth',2)
-                    plot([dimOfFluenceMxX+.5 .5],j+[.5 .5] ,'w','LineWidth',2)
-                    plot(.5*dimOfFluenceMxX*[1 1]+[0.5],j+[.5 -.5] ,'w','LineWidth',2)
+                    plot(seqSubPlots(4),[dimOfFluenceMxX+.5 .5],j-[.5 .5] ,'w','LineWidth',2)
+                    plot(seqSubPlots(4),[dimOfFluenceMxX+.5 .5],j+[.5 .5] ,'w','LineWidth',2)
+                    plot(seqSubPlots(4),.5*dimOfFluenceMxX*[1 1]+[0.5],j+[.5 -.5] ,'w','LineWidth',2)
                 end
             end
             
