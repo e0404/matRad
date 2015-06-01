@@ -1888,8 +1888,8 @@ function btnSequencing_Callback(hObject, eventdata, handles)
 
   resultGUI=evalin('base','resultGUI');
   
-  %Sequencing = matRad_engelLeafSequencing(resultGUI.w,evalin('base','stf'),StratificationLevel,1);
-  Sequencing = matRad_xiaLeafSequencing(resultGUI.w,evalin('base','stf'),StratificationLevel,1);
+  Sequencing = matRad_engelLeafSequencing(resultGUI.w,evalin('base','stf'),StratificationLevel,1);
+  %Sequencing = matRad_xiaLeafSequencing(resultGUI.w,evalin('base','stf'),StratificationLevel,1);
     
   assignin('base','Sequencing',Sequencing);
 
