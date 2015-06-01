@@ -314,7 +314,7 @@ for i = 1:numOfBeams
 
         %show the leaf positions
         if visBool
-            seqSubPlots(4) = subplot(2,2,4,'parent',seqFig);
+            seqSubPlots(4) = subplot(2,2,3.5,'parent',seqFig);
             imagesc(shape_k,'parent',seqSubPlots(4));
             hold(seqSubPlots(4),'on');
             xlabel(seqSubPlots(4),'x - direction parallel to leaf motion ')
