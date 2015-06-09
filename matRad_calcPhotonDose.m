@@ -89,7 +89,7 @@ lateralCutoff = 20; % [mm]
 
 %% kernel convolution
 % load polynomial fits for kernels ppKernel1, ppKernel2, ppKernel3
-load photonPencilBeamKernels.mat;
+load photonPencilBeamKernels_6MV.mat;
 
 % Display console message.
 fprintf('matRad: Kernel convolution... \n');
@@ -181,7 +181,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
             stf(i).ray(j).targetPoint_bev,X_geo,Y_geo,Z_geo,lateralCutoff,visBool);
         
         % calculate photon dose for beam i and bixel j
-        bixelDose = matRad_calcPhotonDoseBixel(pln.SAD, ...
+        bixelDose = matRad_calcPhotonDoseBixel(pln.SAD,mu,betas, ...
                                                Interp_kernel1,...
                                                Interp_kernel2,...
                                                Interp_kernel3,...
