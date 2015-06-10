@@ -1071,20 +1071,44 @@ function btnOptimize_Callback(hObject, eventdata, handles)
 pause(0.1);
 uiTable_CellEditCallback(hObject,[],handles);
 pause(0.3);
-
+% get optimization parameters from GUI
 Param.numOfIter = str2num(get(handles.editNumIter,'String'));
 Param.prec = str2num(get(handles.txtPrecisionOutput,'String'));
 OptType = get(handles.btnTypBioOpt,'String');
-resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'),Param,OptType);
-assignin('base','resultGUI',resultGUI);
-%set some values
-handles.State=3;
-handles.SelectedDisplayOptionIdx=1;
-handles.SelectedDisplayOption='Dose';
-handles.SelectedBeam=1;
+% optimize
+if CheckValidityPln(evalin('base','cst'))
+    resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'),Param,OptType);
+    assignin('base','resultGUI',resultGUI);
+    %set some values
+    handles.State=3;
+    handles.SelectedDisplayOptionIdx=1;
+    handles.SelectedDisplayOption='Dose';
+    handles.SelectedBeam=1;
+    UpdatePlot(handles);
+    UpdateState(handles);
+end
+
 guidata(hObject,handles);
-UpdatePlot(handles);
-UpdateState(handles);
+
+
+
+% the function CheckValidityPln checks if the provided plan is valid so
+% that it can be used subsequently for optimization
+function FlagValid = CheckValidityPln(cst)
+
+FlagValid = true;
+%check if mean constraint is always used in combination
+for i=1:size(cst,1)
+   
+        if ~isempty(strfind([cst{i,6}.type],'mean')) && isempty(strfind([cst{i,6}.type],'square'))
+             FlagValid = false;
+             warndlg('mean constraint needs to be defined in addition to a second constraint (e.g. squared deviation)');
+             break
+            
+        end
+ 
+end
+
 
 
 % --- Executes on selection change in popupTypeOfPlot.
