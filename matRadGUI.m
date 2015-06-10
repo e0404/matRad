@@ -386,9 +386,11 @@ function popupRadMode_Callback(hObject, eventdata, handles)
 contents = cellstr(get(hObject,'String')); 
 if sum(strcmp({'photons','protons'},contents{get(hObject,'Value')}))>0
     set(handles.radbtnBioOpt,'Value',0);
+    set(handles.radbtnBioOpt,'Enable','off');
     set(handles.btnTypBioOpt,'Enable','off');
 else
     set(handles.radbtnBioOpt,'Value',1);
+    set(handles.radbtnBioOpt,'Enable','on');
     set(handles.btnTypBioOpt,'Enable','on');
 end
 
@@ -1672,8 +1674,19 @@ assignin('base','pln',pln);
 
 function Number = parseStringAsNum(string)
 try
-    CellGantryAngles    = strsplit(string,'');
-    Number = str2num(CellGantryAngles{1,1});
+    CellGantryAngles    = strsplit(string);
+    Cnt = 1;
+    
+    for i = 1:length(CellGantryAngles)
+        
+        if ~strcmp(CellGantryAngles{1,i},'')
+            Number{Cnt} = str2num(CellGantryAngles{1,i});
+            Cnt = Cnt +1;
+        end
+    end
+    
+    Number = cell2mat(Number); 
+
 catch
       warndlg('could not parse all plan parameters'); 
 end
