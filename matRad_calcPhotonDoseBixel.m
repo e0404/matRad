@@ -1,4 +1,4 @@
-function dose = matRad_calcPhotonDoseBixel(SAD,Interp_kernel1,...
+function dose = matRad_calcPhotonDoseBixel(SAD,mu,betas,Interp_kernel1,...
                   Interp_kernel2,Interp_kernel3,radDepths,geoDists,...
                   latDistsX,latDistsZ)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -11,6 +11,10 @@ function dose = matRad_calcPhotonDoseBixel(SAD,Interp_kernel1,...
 %
 % input
 %   SAD:                source to axis distance
+%   mu:                 absorption in water (part of the dose calc base
+%                       data)
+%   betas:              beta parameters for the parameterization of the 
+%                       three depth dose components
 %   Interp_kernel1/2/3: kernels for dose calculation
 %   radDepths:          radiological depths
 %   geoDists:           geometrical distance from virtual photon source
@@ -49,12 +53,6 @@ function dose = matRad_calcPhotonDoseBixel(SAD,Interp_kernel1,...
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% get base data
-mu    = 0.005066; % 1/mm
-beta1 = 0.3252;
-beta2 = 0.0160;
-beta3 = 0.0051;
-
 % Define function_Di
 func_Di = @(beta,x) beta/(beta-mu) * (exp(-mu*x) - exp(-beta*x)); 
 
@@ -68,9 +66,9 @@ lat2 = Interp_kernel2(latDistsX,latDistsZ);
 lat3 = Interp_kernel3(latDistsX,latDistsZ);
 
 % now add everything together (eq 19 w/o inv sq corr -> see below)
-dose = lat1 .* func_Di(beta1,radDepths) + ...
-       lat2 .* func_Di(beta2,radDepths) + ...
-       lat3 .* func_Di(beta3,radDepths);
+dose = lat1 .* func_Di(betas(1),radDepths) + ...
+       lat2 .* func_Di(betas(2),radDepths) + ...
+       lat3 .* func_Di(betas(3),radDepths);
 
 % inverse square correction
 dose = dose .* (SAD./geoDists(:)).^2;

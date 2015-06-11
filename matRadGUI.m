@@ -386,9 +386,11 @@ function popupRadMode_Callback(hObject, eventdata, handles)
 contents = cellstr(get(hObject,'String')); 
 if sum(strcmp({'photons','protons'},contents{get(hObject,'Value')}))>0
     set(handles.radbtnBioOpt,'Value',0);
+    set(handles.radbtnBioOpt,'Enable','off');
     set(handles.btnTypBioOpt,'Enable','off');
 else
     set(handles.radbtnBioOpt,'Value',1);
+    set(handles.radbtnBioOpt,'Enable','on');
     set(handles.btnTypBioOpt,'Enable','on');
 end
 
@@ -1069,20 +1071,44 @@ function btnOptimize_Callback(hObject, eventdata, handles)
 pause(0.1);
 uiTable_CellEditCallback(hObject,[],handles);
 pause(0.3);
-
+% get optimization parameters from GUI
 Param.numOfIter = str2num(get(handles.editNumIter,'String'));
 Param.prec = str2num(get(handles.txtPrecisionOutput,'String'));
 OptType = get(handles.btnTypBioOpt,'String');
-resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'),Param,OptType);
-assignin('base','resultGUI',resultGUI);
-%set some values
-handles.State=3;
-handles.SelectedDisplayOptionIdx=1;
-handles.SelectedDisplayOption='Dose';
-handles.SelectedBeam=1;
+% optimize
+if CheckValidityPln(evalin('base','cst'))
+    resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'),Param,OptType);
+    assignin('base','resultGUI',resultGUI);
+    %set some values
+    handles.State=3;
+    handles.SelectedDisplayOptionIdx=1;
+    handles.SelectedDisplayOption='Dose';
+    handles.SelectedBeam=1;
+    UpdatePlot(handles);
+    UpdateState(handles);
+end
+
 guidata(hObject,handles);
-UpdatePlot(handles);
-UpdateState(handles);
+
+
+
+% the function CheckValidityPln checks if the provided plan is valid so
+% that it can be used subsequently for optimization
+function FlagValid = CheckValidityPln(cst)
+
+FlagValid = true;
+%check if mean constraint is always used in combination
+for i=1:size(cst,1)
+   
+        if ~isempty(strfind([cst{i,6}.type],'mean')) && isempty(strfind([cst{i,6}.type],'square'))
+             FlagValid = false;
+             warndlg('mean constraint needs to be defined in addition to a second constraint (e.g. squared deviation)');
+             break
+            
+        end
+ 
+end
+
 
 
 % --- Executes on selection change in popupTypeOfPlot.
@@ -1672,8 +1698,19 @@ assignin('base','pln',pln);
 
 function Number = parseStringAsNum(string)
 try
-    CellGantryAngles    = strsplit(string,'');
-    Number = str2num(CellGantryAngles{1,1});
+    CellGantryAngles    = strsplit(string);
+    Cnt = 1;
+    
+    for i = 1:length(CellGantryAngles)
+        
+        if ~strcmp(CellGantryAngles{1,i},'')
+            Number{Cnt} = str2num(CellGantryAngles{1,i});
+            Cnt = Cnt +1;
+        end
+    end
+    
+    Number = cell2mat(Number); 
+
 catch
       warndlg('could not parse all plan parameters'); 
 end
