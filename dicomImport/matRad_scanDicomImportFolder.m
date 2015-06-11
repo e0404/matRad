@@ -45,19 +45,24 @@ if ~isempty(fileList)
             fileList{i,4} = NaN;
         end
         try
-            fileList{i,5} = info.PatientName.FamilyName;
+            fileList{i,5} = info.SeriesNumber;
         catch
             fileList{i,5} = NaN;
         end
         try
-            fileList{i,6} = info.PatientName.GivenName;
+            fileList{i,6} = info.PatientName.FamilyName;
         catch
             fileList{i,6} = NaN;
         end
         try
-            fileList{i,7} = info.PatientBirthDate;
+            fileList{i,7} = info.PatientName.GivenName;
         catch
             fileList{i,7} = NaN;
+        end
+        try
+            fileList{i,8} = info.PatientBirthDate;
+        catch
+            fileList{i,8} = NaN;
         end
         
         matRad_progress(numOfFiles+1-i, numOfFiles);
