@@ -56,6 +56,15 @@ resultSequencing.w = NaN*w;
 
 numOfBeams = numel(stf);
 
+if visBool
+    % create the sequencing figure
+    sz = [800 1000]; % figure size
+    screensize = get(0,'ScreenSize');
+    xpos = ceil((screensize(3)-sz(2))/2); % center the figure on the screen horizontally
+    ypos = ceil((screensize(4)-sz(1))/2); % center the figure on the screen vertically
+    seqFig = figure('position',[xpos,ypos,sz(2),sz(1)]);     
+end
+
 offset = 0;
 
 for i = 1:numOfBeams
@@ -118,12 +127,6 @@ for i = 1:numOfBeams
     shapes = NaN*ones(dimOfFluenceMxZ,dimOfFluenceMxX,10000);
     
     if visBool
-        % create the sequencing figure
-        sz = [800 1000]; % figure size
-        screensize = get(0,'ScreenSize');
-        xpos = ceil((screensize(3)-sz(2))/2); % center the figure on the screen horizontally
-        ypos = ceil((screensize(4)-sz(1))/2); % center the figure on the screen vertically
-        seqFig = figure('position',[xpos,ypos,sz(2),sz(1)]);
         clf(seqFig);
         colormap(seqFig,'jet');
         
@@ -133,7 +136,7 @@ for i = 1:numOfBeams
         title(seqSubPlots(1),['Beam # ' num2str(i) ': L_0 = ' num2str(L_0) ' - ' num2str(numel(unique(D_0))) ' intensity levels'])
         xlabel(seqSubPlots(1),'x - direction parallel to leaf motion ')
         ylabel(seqSubPlots(1),'z - direction perpendicular to leaf motion ')
-        colorbar(seqSubPlots(1));
+        colorbar;
         drawnow
     end
     
@@ -150,6 +153,7 @@ for i = 1:numOfBeams
             title(seqSubPlots(2),['k = ' num2str(k) ' - ' num2str(numel(unique(D_k))) ' intensity levels remaining...']);
             xlabel(seqSubPlots(2),'x - direction parallel to leaf motion ');
             ylabel(seqSubPlots(2),'z - direction perpendicular to leaf motion ');
+            colorbar
             drawnow
         end
         
@@ -214,7 +218,7 @@ for i = 1:numOfBeams
                     hold(seqSubPlots(4),'on');
                     xlabel(seqSubPlots(4),'x - direction parallel to leaf motion ')
                     ylabel(seqSubPlots(4),'z - direction perpendicular to leaf motion ')
-                    title(seqSubPlots(4),['d_k = ' num2str(d_k)]);
+                    title(seqSubPlots(4),['beam # ' num2str(i) ' shape # ' num2str(k) ' d_k = ' num2str(d_k)]);
                     for j = 1:dimOfFluenceMxZ
                        leftLeafIx = find(shape_k(j,:)>0,1,'first');
                        rightLeafIx = find(shape_k(j,:)>0,1,'last');
