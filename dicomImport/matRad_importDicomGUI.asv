@@ -203,20 +203,13 @@ function import_button_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 selected_patient = handles.patient_listbox.String(handles.patient_listbox.Value);
-selected_ctseries = handles.ct_listbox.String(handles.ct_listbox.Value);
-selected_rtseries = handles.rtss_listbox.String(handles.rtss_listbox.Value);
+selected_ctseries = handles.ct_listbox.String(handles.ct_listbox.Value)
+selected_rtseries = 
+files.ct     = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
+    strcmp(handles.fileList(:,4), handles.ct_listbox.String(handles.ct_listbox.Value)),:);
 
-if handles.SeriesUID_radiobutton.Value == 1
-    files.ct = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
-        strcmp(handles.fileList(:,4), selected_ctseries),:);
-    files.rtss = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
-        strcmp(handles.fileList(:,4), selected_rtseries),:);
-else
-    files.ct = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
-        strcmp(handles.fileList(:,5), selected_ctseries),:);
-    files.rtss = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
-        strcmp(handles.fileList(:,5), selected_rtseries),:);
-end
+files.rtss   = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
+    strcmp(handles.fileList(:,4), handles.rtss_listbox.String(handles.rtss_listbox.Value)),:);
 
 matRad_importDicom(files);
 
@@ -271,13 +264,10 @@ function SeriesUID_radiobutton_Callback(hObject, eventdata, handles)
 if hObject.Value == 1
     handles.SeriesNumber_radiobutton.Value = 0;
 else
-    hObject.Value = 1;
-    handles.SeriesNumber_radiobutton.Value = 0;
+    handles.SeriesNumber_radiobutton.Value = 1;
 end
-selected_patient = handles.patient_listbox.String(handles.patient_listbox.Value);
-handles.ct_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),4));
-handles.rtss_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),4));
-guidata(hObject, handles);
+% Hint: get(hObject,'Value') returns toggle state of SeriesUID_radiobutton
+
 
 % --- Executes on button press in SeriesNumber_radiobutton.
 function SeriesNumber_radiobutton_Callback(hObject, eventdata, handles)
@@ -287,10 +277,6 @@ function SeriesNumber_radiobutton_Callback(hObject, eventdata, handles)
 if hObject.Value == 1
     handles.SeriesUID_radiobutton.Value = 0;
 else
-    hObject.Value = 1;
-    handles.SeriesUID_radiobutton.Value = 0;
+    handles.SeriesUID_radiobutton.Value = 1;
 end
-selected_patient = handles.patient_listbox.String(handles.patient_listbox.Value);
-handles.ct_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),5));
-handles.rtss_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),5));
-guidata(hObject, handles);
+% Hint: get(hObject,'Value') returns toggle state of SeriesNumber_radiobutton

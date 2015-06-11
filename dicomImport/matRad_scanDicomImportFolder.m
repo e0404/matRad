@@ -45,7 +45,7 @@ if ~isempty(fileList)
             fileList{i,4} = NaN;
         end
         try
-            fileList{i,5} = info.SeriesNumber;
+            fileList{i,5} = num2str(info.SeriesNumber);
         catch
             fileList{i,5} = NaN;
         end
