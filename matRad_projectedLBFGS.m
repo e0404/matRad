@@ -173,7 +173,10 @@ while continueOpt == 1
     fprintf(1,'Iteration %d: alpha = %f, Obj func = %f\n',iter,alpha,objFuncValue(1));
     
     continueOpt = (iter < numOfIter && abs((objFuncValue(2)-objFuncValue(1))/objFuncValue(1))>prec) || historyCounter < 2;
-
+    if  objFuncValue(2)== 0 && objFuncValue(1) == 0 
+        continueOpt = 0;
+        disp('!!! please review your constraints !!!')
+    end
 end
 
 fprintf(['\n' num2str(iter) ' iteration(s) performed to converge\n'])
