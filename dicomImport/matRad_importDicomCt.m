@@ -1,9 +1,51 @@
 function ct = matRad_importDicomCt(ctList, resolution, visBool)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% call ct = readCtSlices('path\to\DICOM\files', visualizationBool)
-% returns a X x Y x Z - Matrix containing the ct image
-% if visualizationBool is not specified, visualization is turned on
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad function to import dicom ct data
+% 
+% call
+%   ct = matRad_importDicomCt(ctList, resolution, visBool)
+%
+% input
+%   ctList:         list of dicom ct files
+%   resolution:   	resolution of the imported ct cube, i.e. this function
+%                   will interpolate to a different resolution if desired
+%   visBool:        optional: turn on/off visualization
+%
+% output
+%   ct:             matRad ct struct. Note that this 3D matlab array 
+%                   contains water euqivalen electron denisities.
+%                   Hounsfield units are converted using a standard lookup
+%                   table in matRad_calcWaterEqD
+%
+% References
+%   -
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+%
+% m.bangert@dkfz.de
+%
+% This file is part of matRad.
+%
+% matrad is free software: you can redistribute it and/or modify it under 
+% the terms of the GNU General Public License as published by the Free 
+% Software Foundation, either version 3 of the License, or (at your option)
+% any later version.
+%
+% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
+% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+% details.
+%
+% You should have received a copy of the GNU General Public License in the
+% file license.txt along with matRad. If not, see
+% <http://www.gnu.org/licenses/>.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 fprintf('\nimporting ct-cube...');
 
@@ -146,7 +188,6 @@ if nonStandardDirection
         'CT might not fit to contoured structures\n'])
 end
 
-
 %% interpolate cube
 
 ct = matRad_interpCtCube(origCt, info, resolution);
@@ -165,11 +206,8 @@ ct.dicomInfo.RescaleSlope            = info(1).RescaleSlope;
 ct.dicomInfo.RescaleIntercept        = info(1).RescaleIntercept;
 
 % convert to water equivalent electron densities
-fprintf('\nconversion of ct-Cube to waterEqT...');
+fprintf('\nconversion of ct-Cube to waterEqD...');
 ct.cube = matRad_calcWaterEqD(ct.cube,ct.dicomInfo.RescaleSlope,ct.dicomInfo.RescaleIntercept);
 fprintf('finished!\n');
-
-
-
 
 end
