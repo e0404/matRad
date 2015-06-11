@@ -1,4 +1,4 @@
-function structures = matRad_importDicomRtss(filename,visBool)
+function structures = matRad_importDicomRtss(filename,dicomInfo,visBool)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % function to read the locations of the structures described in the
@@ -10,7 +10,7 @@ function structures = matRad_importDicomRtss(filename,visBool)
 fprintf('\nReading structures...');
 
 
-if nargin < 2
+if nargin < 3
     visBool = 0;
 end
 
@@ -55,12 +55,18 @@ for i = 1:numOfContStructs % loop over every structure
         structY = structSlice.ContourData([2:3:end 2]);
         structZ = structSlice.ContourData([3:3:end 3]);
         
-        % sanity check
+        % sanity check 1
         if numel(unique(structZ)) > 1
             error('Detected contour points outside of single slice\n');
         end
+        
+        % sanity check 2
+        if unique(structZ) > max(dicomInfo.SlicePositions) || unique(structZ) < min(dicomInfo.SlicePositions)
+            warning(['Omitting contour data for ' structures(i).structName ' at slice position ' num2str(unique(structZ)) 'mm - no ct data available.\n']);
+        else
+            structures(i).points = vertcat(structures(i).points, [structX, structY, structZ]);
+        end
             
-        structures(i).points = vertcat(structures(i).points, [structX, structY, structZ]);
     end
     
 end

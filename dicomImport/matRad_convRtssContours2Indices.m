@@ -10,17 +10,18 @@ slicesInOrigDicomWithContours = unique(contPoints(:,3));
 for i = 1:numel(slicesInOrigDicomWithContours)
 
     dicomCtSlicePos       = slicesInOrigDicomWithContours(i);
-    dicomCtSliceThickness = ct.dicomInfo.SliceThickness(ct.dicomInfo.SlicePositions==dicomCtSlicePos);
     
-    contPointsInCurrDicomSlice = contPoints(contPoints(:,3)==dicomCtSlicePos,:);
+    dicomCtSliceThickness = ct.dicomInfo.SliceThickness(round(ct.dicomInfo.SlicePositions,2)==dicomCtSlicePos);
+    
+    contPointsInCurrDicomSlice = contPoints(contPoints(:,3) == dicomCtSlicePos,:);
     
     binIn = inpolygon(X,Y,contPointsInCurrDicomSlice(:,1),contPointsInCurrDicomSlice(:,2));
     
     slicesInMatradCt = find(dicomCtSlicePos+dicomCtSliceThickness/2 > ct.z & dicomCtSlicePos-dicomCtSliceThickness/2 <= ct.z);
-    
+        
     % loop over all slices in matRad ct
     for j = 1:numel(slicesInMatradCt)
-        voiCube(:,:,slicesInMatradCt(j)) = binIn;    
+        voiCube(:,:,slicesInMatradCt(j)) = binIn;
     end
 
 end
