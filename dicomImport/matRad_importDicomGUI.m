@@ -24,6 +24,30 @@ function varargout = matRad_importDicomGUI(varargin)
 
 % Last Modified by GUIDE v2.5 11-Jun-2015 18:41:23
 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+%
+% m.bangert@dkfz.de
+%
+% This file is part of matRad.
+%
+% matrad is free software: you can redistribute it and/or modify it under 
+% the terms of the GNU General Public License as published by the Free 
+% Software Foundation, either version 3 of the License, or (at your option)
+% any later version.
+%
+% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
+% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+% details.
+%
+% You should have received a copy of the GNU General Public License in the
+% file license.txt along with matRad. If not, see
+% <http://www.gnu.org/licenses/>.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...

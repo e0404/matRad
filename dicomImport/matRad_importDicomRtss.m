@@ -1,14 +1,53 @@
 function structures = matRad_importDicomRtss(filename,dicomInfo,visBool)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad function to read the data of the selected dicomRT structure set 
+% file into a matlab struct
+% 
+% call
+%   structures = matRad_importDicomRtss(filename,dicomInfo,visBool)
+%
+% input
+%   filename:       name of the rtss file
+%   dicomInfo:      meta information from the dicom ct files for sanity
+%                   checks
+%   visBool:        optional: turn on/off visualization
+%
+% output
+%   structures:     struct containing names, numbers, colors, and
+%                   coordinates of the polygon segmentations
+%
+% References
+%   -
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% function to read the locations of the structures described in the
-% RTSTRUCT file and return a struct containing:
-% - contour-points off all defined structures (3-dim physical coordinates)
-% - structure name and number
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+%
+% m.bangert@dkfz.de
+%
+% This file is part of matRad.
+%
+% matrad is free software: you can redistribute it and/or modify it under 
+% the terms of the GNU General Public License as published by the Free 
+% Software Foundation, either version 3 of the License, or (at your option)
+% any later version.
+%
+% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
+% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+% details.
+%
+% You should have received a copy of the GNU General Public License in the
+% file license.txt along with matRad. If not, see
+% <http://www.gnu.org/licenses/>.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 fprintf('\nReading structures...');
-
 
 if nargin < 3
     visBool = 0;

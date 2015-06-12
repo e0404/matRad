@@ -1,10 +1,52 @@
 function [ct, cst] = matRad_importDicom( files )
-%UNTITLED3 Summary of this function goes here
-%   Detailed explanation goes here
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad wrapper function to import a predefined set of dicom files into
+% matRad's native data formats
+% 
+% call
+%   [ct, cst] = matRad_importDicom( files )
+%
+% input
+%   files:  list of files to be imported (will contain cts and rt structure set)
+%
+% output
+%   ct:     matRad ct struct
+%   cst:    matRad cst struct
+%
+% References
+%   -
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+%
+% m.bangert@dkfz.de
+%
+% This file is part of matRad.
+%
+% matrad is free software: you can redistribute it and/or modify it under 
+% the terms of the GNU General Public License as published by the Free 
+% Software Foundation, either version 3 of the License, or (at your option)
+% any later version.
+%
+% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
+% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+% details.
+%
+% You should have received a copy of the GNU General Public License in the
+% file license.txt along with matRad. If not, see
+% <http://www.gnu.org/licenses/>.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 h = waitbar(0,'Please wait...');
 h.WindowStyle = 'Modal';
 steps = 2;
+
 %% import ct-cube
 waitbar(1 / steps)
 resolution = [files.resx, files.resy, files.resz]; % [mm] / lps coordinate system

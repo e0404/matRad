@@ -1,11 +1,63 @@
-function ctHU = matRad_calcWaterEqD(ct, slope, intercept)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% function to calculate the water equivalent thickness from a ct-image cube
+function ctEqD = matRad_calcWaterEqD(ct, slope, intercept)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad function to calculate the equivalent densities from a 
+% dicom ct that originally uses intensity values
 %
-% The ct-image is mad up of intensity values (IV), which can be translated
-% to HU:
-%       HU = IV * slope + intercept
-% slope and intercept are stored in the dicom file info
+% call
+%   ct = matRad_calcWaterEqD(ct, slope, intercept)
+%
+% input
+%   ct:                 unprocessed dicom ct data which are stored as
+%                       intensity values (IV)
+%   solpe:              parameter for linear conversion into HU
+%   intercept:          parameter for linear conversion into HU
+%
+%                      HU = IV * slope + intercept
+%
+% base data
+%   HU2waterEqT.mat:    look up table to convert from HU to relative 
+%                       electron densities. Note that this is just example
+%                       data. If you want to make precise computaitons for
+%                       your scanner you need to replace this lookup table
+%
+% output
+%   ctEqD:              ct cube with relative _electron_ densities 
+%
+% References
+%   -
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+%
+% m.bangert@dkfz.de
+%
+% This file is part of matRad.
+%
+% matrad is free software: you can redistribute it and/or modify it under 
+% the terms of the GNU General Public License as published by the Free 
+% Software Foundation, either version 3 of the License, or (at your option)
+% any later version.
+%
+% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
+% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+% details.
+%
+% You should have received a copy of the GNU General Public License in the
+% file license.txt along with matRad. If not, see
+% <http://www.gnu.org/licenses/>.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% 
 % 
 % using a look up table (LUT) for HU to waterEqThickness, a new cube is 
 % generated
@@ -17,8 +69,8 @@ function ctHU = matRad_calcWaterEqD(ct, slope, intercept)
 % LUT integer values are needed
 ctHU = int32(ct * slope + intercept);
 
-%% conversion from HU to waterEqThickness
-load('HU2waterEqT.mat'); % load LUT
+%% conversion from HU to water equivalent density
+load('HU2waterEqD.mat'); % load LUT
 
 % Manual adjustments if ct data is corrupt. If some values are out of range
 % of the LUT, then these values are adjusted.
@@ -32,6 +84,6 @@ ctHU(ctHU>3071) = 3071;
 %     |  ...      |   ...   |
 
 % the first row corresponds to a HU-value of -1024 -> index = ctHU+1025
-ctHU = reshape(HU2waterEqT(ctHU+1025,1),size(ctHU));
+ctEqD = reshape(HU2waterEqD(ctHU+1025,1),size(ctHU));
 
 end

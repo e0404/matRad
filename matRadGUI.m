@@ -1076,38 +1076,17 @@ Param.numOfIter = str2num(get(handles.editNumIter,'String'));
 Param.prec = str2num(get(handles.txtPrecisionOutput,'String'));
 OptType = get(handles.btnTypBioOpt,'String');
 % optimize
-if CheckValidityPln(evalin('base','cst'))
-    resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'),Param,OptType);
-    assignin('base','resultGUI',resultGUI);
-    %set some values
-    handles.State=3;
-    handles.SelectedDisplayOptionIdx=1;
-    handles.SelectedDisplayOption='Dose';
-    handles.SelectedBeam=1;
-    UpdatePlot(handles);
-    UpdateState(handles);
-end
+resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'),Param,OptType);
+assignin('base','resultGUI',resultGUI);
+%set some values
+handles.State=3;
+handles.SelectedDisplayOptionIdx=1;
+handles.SelectedDisplayOption='Dose';
+handles.SelectedBeam=1;
+UpdatePlot(handles);
+UpdateState(handles);
 
 guidata(hObject,handles);
-
-
-
-% the function CheckValidityPln checks if the provided plan is valid so
-% that it can be used subsequently for optimization
-function FlagValid = CheckValidityPln(cst)
-
-FlagValid = true;
-%check if mean constraint is always used in combination
-for i=1:size(cst,1)
-   
-        if ~isempty(strfind([cst{i,6}.type],'mean')) && isempty(strfind([cst{i,6}.type],'square'))
-             FlagValid = false;
-             warndlg('mean constraint needs to be defined in addition to a second constraint (e.g. squared deviation)');
-             break
-            
-        end
- 
-end
 
 
 
@@ -1523,7 +1502,7 @@ else
     data = get(hObject,'Data');
 end
 
-% if VOI, VOI Type or Overlap was changed --> change state
+%% if VOI, VOI Type or Overlap was changed --> change state
 if eventdata.Indices(2) == 1 || eventdata.Indices(2) == 2 ...
         || eventdata.Indices(2) == 3
     handles.State=1;
@@ -1533,6 +1512,43 @@ else
         handles.State=2;
     end
 end
+
+%% if VOI Type was changed -> check if objective function still makes sense
+if eventdata.Indices(2) == 2
+   
+    if strcmp(eventdata.NewData,'OAR')
+        
+        if sum(strcmp({'square deviation','square underdosing'},data{eventdata.Indices(1),4}))>0
+            data{eventdata.Indices(1),4} = 'square overdosing';
+        end
+        
+    else
+        
+        if sum(strcmp({'EUD','mean'},data{eventdata.Indices(1),4}))>0
+            data{eventdata.Indices(1),4} = 'square deviation';
+        end
+        
+    end
+end
+%% if objective function was changed -> check if VOI Type still makes sense
+if eventdata.Indices(2) == 4
+   
+    if strcmp(eventdata.NewData,'square deviation') || strcmp(eventdata.NewData,'square underdosing') 
+        
+        if strcmp('OAR',data{eventdata.Indices(1),2})
+            data{eventdata.Indices(1),4} = 'square overdosing';
+        end
+        
+    elseif strcmp(eventdata.NewData,'EUD') || strcmp(eventdata.NewData,'mean')
+        
+        if strcmp('TARGET',data{eventdata.Indices(1),2})
+            data{eventdata.Indices(1),4} = 'square deviation';
+        end
+        
+    end
+end
+
+
 %% check if input is a valid
 %check if overlap,penalty and and parameters are numbers
 if eventdata.Indices(2) == 3  || eventdata.Indices(2) == 5 || eventdata.Indices(2) == 6
