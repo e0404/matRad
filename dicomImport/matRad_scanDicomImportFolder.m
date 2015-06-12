@@ -64,6 +64,33 @@ if ~isempty(fileList)
         catch
             fileList{i,8} = NaN;
         end
+        try
+            if strcmp(info.Modality,'CT')
+                fileList{i,9} = num2str(info.PixelSpacing(1));
+            else
+                fileList{i,9} = NaN;
+            end
+        catch
+            fileList{i,9} = NaN;
+        end
+        try
+            if strcmp(info.Modality,'CT')
+                fileList{i,10} = num2str(info.PixelSpacing(2));
+            else
+                fileList{i,10} = NaN;
+            end
+        catch
+            fileList{i,10} = NaN;
+        end
+        try
+            if strcmp(info.Modality,'CT')
+                fileList{i,11} = num2str(info.SliceThickness);
+            else
+                fileList{i,11} = NaN;
+            end
+        catch
+            fileList{i,11} = NaN;
+        end
         
         matRad_progress(numOfFiles+1-i, numOfFiles);
         

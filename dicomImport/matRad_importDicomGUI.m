@@ -22,7 +22,7 @@ function varargout = matRad_importDicomGUI(varargin)
 
 % Edit the above text to modify the response to help matRad_importDicomGUI
 
-% Last Modified by GUIDE v2.5 11-Jun-2015 14:37:02
+% Last Modified by GUIDE v2.5 11-Jun-2015 18:41:23
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -123,16 +123,29 @@ if ~isempty(hObject.String)
     %   3. PatientID
     %   4. SeriesUID
     %   5. SeriesNumber
+    %   9. res_x
+    %   10. res_y
+    %   11. res_z
     selected_patient = handles.patient_listbox.String(handles.patient_listbox.Value);
     if handles.SeriesUID_radiobutton.Value == 1
         % this gets a list of ct series for this patient
         handles.ct_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),4));
         % this gets a list of rtss series for this patient
         handles.rtss_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),4));
+        % this gets a resolution for this patient
+        res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), handles.ct_listbox.String),9));
+        res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), handles.ct_listbox.String),10));
+        res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), handles.ct_listbox.String),11));
     else
         handles.ct_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),5));
         handles.rtss_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),5));
+        res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), handles.ct_listbox.String),9));
+        res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), handles.ct_listbox.String),10));
+        res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), handles.ct_listbox.String),11));
     end
+    handles.resx_edit.String = res_x;
+    handles.resy_edit.String = res_y;
+    handles.resz_edit.String = res_z;
     % Update handles structure
     guidata(hObject, handles);
 end
@@ -218,6 +231,9 @@ else
         strcmp(handles.fileList(:,5), selected_rtseries),:);
 end
 
+files.resx = str2double(handles.resx_edit.String);
+files.resy = str2double(handles.resy_edit.String);
+files.resz = str2double(handles.resz_edit.String);
 matRad_importDicom(files);
 
 
@@ -294,3 +310,72 @@ selected_patient = handles.patient_listbox.String(handles.patient_listbox.Value)
 handles.ct_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),5));
 handles.rtss_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),5));
 guidata(hObject, handles);
+
+
+
+function resx_edit_Callback(hObject, eventdata, handles)
+% hObject    handle to resx_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of resx_edit as text
+%        str2double(get(hObject,'String')) returns contents of resx_edit as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function resx_edit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to resx_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function resy_edit_Callback(hObject, eventdata, handles)
+% hObject    handle to resy_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of resy_edit as text
+%        str2double(get(hObject,'String')) returns contents of resy_edit as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function resy_edit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to resy_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function resz_edit_Callback(hObject, eventdata, handles)
+% hObject    handle to resz_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of resz_edit as text
+%        str2double(get(hObject,'String')) returns contents of resz_edit as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function resz_edit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to resz_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

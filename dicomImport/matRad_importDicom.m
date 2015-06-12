@@ -7,7 +7,7 @@ h.WindowStyle = 'Modal';
 steps = 2;
 %% import ct-cube
 waitbar(1 / steps)
-resolution = [2 2 2]; % [mm] / lps coordinate system
+resolution = [files.resx, files.resy, files.resz]; % [mm] / lps coordinate system
 ct = matRad_importDicomCt(files.ct, resolution); 
     
 %% import structure data
