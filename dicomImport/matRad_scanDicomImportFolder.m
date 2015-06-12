@@ -61,7 +61,7 @@ if ~isempty(fileList)
     %% check for dicom files and differentiate patients, types, and series
     numOfFiles = numel(fileList(:,1));
     h = waitbar(0,'Please wait...');
-    h.WindowStyle = 'Modal';
+    %h.WindowStyle = 'Modal';
     steps = numOfFiles;
     for i = numOfFiles:-1:1
         waitbar((numOfFiles+1-i) / steps)
@@ -142,12 +142,12 @@ if ~isempty(fileList)
         patientList = unique(fileList(:,3));
     else
         h = msgbox('No DICOM files found in patient directory!', 'Error','error');
-        h.WindowStyle = 'Modal';
+        %h.WindowStyle = 'Modal';
         %error('No DICOM files found in patient directory');
     end
 else
     h = msgbox('Search folder empty!', 'Error','error');
-    h.WindowStyle = 'Modal';
+    %h.WindowStyle = 'Modal';
     %error('Search folder empty')
     
 end
