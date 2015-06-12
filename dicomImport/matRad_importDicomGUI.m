@@ -79,6 +79,15 @@ function matRad_importDicomGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for matRad_importDicomGUI
 handles.output = hObject;
 
+axes(handles.axesMatRadLogo)
+[im, ~, alpha] = imread('matrad_logo.png');
+q = imshow(im);
+set(q, 'AlphaData', alpha);
+% show dkfz logo
+axes(handles.axesDKFZLogo)
+[im, ~, alpha] = imread('DKFZ_logo.png');
+p = imshow(im);
+set(p, 'AlphaData', alpha);
 % Update handles structure
 guidata(hObject, handles);
 
