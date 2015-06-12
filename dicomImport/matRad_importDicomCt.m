@@ -189,8 +189,9 @@ if nonStandardDirection
 end
 
 %% interpolate cube
-
+fprintf('\nInterpolating CT cube...');
 ct = matRad_interpCtCube(origCt, info, resolution);
+fprintf('finished!\n');
 
 %% remember some parameters of original dicom
 ct.dicomInfo.PixelSpacing            = info(1).PixelSpacing;

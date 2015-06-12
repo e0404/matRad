@@ -49,7 +49,7 @@ steps = 2;
 
 %% import ct-cube
 waitbar(1 / steps)
-resolution = [2 2 2]; % [mm] / lps coordinate system
+resolution = [files.resx, files.resy, files.resz]; % [mm] / lps coordinate system
 ct = matRad_importDicomCt(files.ct, resolution); 
     
 %% import structure data
@@ -74,7 +74,7 @@ close(h)
 cst = matRad_createCst(structures);
 
 %% save ct and cst
-matRadFileName = files.rtss{3}; % use default from dicom
-save([matRadFileName '.mat'],'ct','cst');
-
+matRadFileName = [files.rtss{3} '.mat']; % use default from dicom
+[FileName,PathName] = uiputfile('*','Save as...',matRadFileName);
+save([PathName, FileName],'ct','cst');
 end
