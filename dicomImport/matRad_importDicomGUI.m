@@ -22,7 +22,7 @@ function varargout = matRad_importDicomGUI(varargin)
 
 % Edit the above text to modify the response to help matRad_importDicomGUI
 
-% Last Modified by GUIDE v2.5 11-Jun-2015 18:41:23
+% Last Modified by GUIDE v2.5 12-Jun-2015 16:30:13
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -115,7 +115,8 @@ function patDir = browse_button_Callback(hObject, eventdata, handles)
 patDir = uigetdir('', 'Choose the input directory...');
 if patDir ~= 0
     patDir = [patDir '\'];
-    handles.dir_path_field.String = patDir;
+    %handles.dir_path_field.String = patDir;
+    set(handles.dir_path_field,'String',patDir);
     % Update handles structure
     guidata(hObject, handles);
     %     [fileList, patient_listbox] = matRad_scanDicomImportFolder_h(handles.dir_path_field.String);
@@ -129,11 +130,11 @@ if patDir ~= 0
 end
 
 function scan(hObject, eventdata, handles)
-[fileList, patient_listbox] = matRad_scanDicomImportFolder(handles.dir_path_field.String);
+[fileList, patient_listbox] = matRad_scanDicomImportFolder(get(handles.dir_path_field,'String'));
 if iscell(patient_listbox)
     handles.fileList =  fileList;
-    handles.patient_listbox.String = patient_listbox;
-    % Update handles structure
+    %handles.patient_listbox.String = patient_listbox;
+    set(handles.patient_listbox,'String',patient_listbox);
     guidata(hObject, handles);
 end
 
@@ -146,9 +147,9 @@ function patient_listbox_Callback(hObject, eventdata, handles)
 % Hints: contents = cellstr(get(hObject,'String')) returns patient_listbox contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from patient_listbox
 
-if ~isempty(hObject.String)
+if ~isempty(get(hObject,'String'))
     % enable Import button
-    handles.import_button.Enable = 'on';
+    set(handles.import_button,'Enable','on');
     
     % handles.filelist:
     %   1. Filepath
@@ -159,26 +160,28 @@ if ~isempty(hObject.String)
     %   9. res_x
     %   10. res_y
     %   11. res_z
-    selected_patient = handles.patient_listbox.String(handles.patient_listbox.Value);
-    if handles.SeriesUID_radiobutton.Value == 1
+    %selected_patient = handles.patient_listbox.String(handles.patient_listbox.Value);
+    patient_listbox = get(handles.patient_listbox,'String');
+    selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
+    if get(handles.SeriesUID_radiobutton,'Value') == 1
         % this gets a list of ct series for this patient
-        handles.ct_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),4));
+        set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),4)));
         % this gets a list of rtss series for this patient
-        handles.rtss_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),4));
+        set(handles.rtseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),4)));
         % this gets a resolution for this patient
-        res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), handles.ct_listbox.String),9));
-        res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), handles.ct_listbox.String),10));
-        res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), handles.ct_listbox.String),11));
+        res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), get(handles.ctseries_listbox,'String')),9));
+        res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), get(handles.ctseries_listbox,'String')),10));
+        res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), get(handles.ctseries_listbox,'String')),11));
     else
-        handles.ct_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),5));
-        handles.rtss_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),5));
-        res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), handles.ct_listbox.String),9));
-        res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), handles.ct_listbox.String),10));
-        res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), handles.ct_listbox.String),11));
+        set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),5)));
+        set(handles.rtseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),5)));
+        res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), get(handles.ctseries_listbox,'String')),9));
+        res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), get(handles.ctseries_listbox,'String')),10));
+        res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), get(handles.ctseries_listbox,'String')),11));
     end
-    handles.resx_edit.String = res_x;
-    handles.resy_edit.String = res_y;
-    handles.resz_edit.String = res_z;
+    set(handles.resx_edit,'String',res_x);
+    set(handles.resy_edit,'String',res_y);
+    set(handles.resz_edit,'String',res_z);
     % Update handles structure
     guidata(hObject, handles);
 end
@@ -196,19 +199,19 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on selection change in ct_listbox.
-function ct_listbox_Callback(hObject, eventdata, handles)
-% hObject    handle to ct_listbox (see GCBO)
+% --- Executes on selection change in ctseries_listbox.
+function ctseries_listbox_Callback(hObject, eventdata, handles)
+% hObject    handle to ctseries_listbox (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns ct_listbox contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from ct_listbox
+% Hints: contents = cellstr(get(hObject,'String')) returns ctseries_listbox contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from ctseries_listbox
 
 
 % --- Executes during object creation, after setting all properties.
-function ct_listbox_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to ct_listbox (see GCBO)
+function ctseries_listbox_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to ctseries_listbox (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -219,19 +222,19 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on selection change in rtss_listbox.
-function rtss_listbox_Callback(hObject, eventdata, handles)
-% hObject    handle to rtss_listbox (see GCBO)
+% --- Executes on selection change in rtseries_listbox.
+function rtseries_listbox_Callback(hObject, eventdata, handles)
+% hObject    handle to rtseries_listbox (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns rtss_listbox contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from rtss_listbox
+% Hints: contents = cellstr(get(hObject,'String')) returns rtseries_listbox contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from rtseries_listbox
 
 
 % --- Executes during object creation, after setting all properties.
-function rtss_listbox_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to rtss_listbox (see GCBO)
+function rtseries_listbox_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to rtseries_listbox (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -248,11 +251,14 @@ function import_button_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-selected_patient = handles.patient_listbox.String(handles.patient_listbox.Value);
-selected_ctseries = handles.ct_listbox.String(handles.ct_listbox.Value);
-selected_rtseries = handles.rtss_listbox.String(handles.rtss_listbox.Value);
+patient_listbox = get(handles.patient_listbox,'String');
+ctseries_listbox = get(handles.ctseries_listbox,'String');
+rtseries_listbox = get(handles.rtseries_listbox,'String');
+selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
+selected_ctseries = ctseries_listbox(get(handles.ctseries_listbox,'Value'));
+selected_rtseries = rtseries_listbox(get(handles.rtseries_listbox,'Value'));
 
-if handles.SeriesUID_radiobutton.Value == 1
+if get(handles.SeriesUID_radiobutton,'Value') == 1
     files.ct = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
         strcmp(handles.fileList(:,4), selected_ctseries),:);
     files.rtss = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
@@ -264,9 +270,9 @@ else
         strcmp(handles.fileList(:,5), selected_rtseries),:);
 end
 
-files.resx = str2double(handles.resx_edit.String);
-files.resy = str2double(handles.resy_edit.String);
-files.resz = str2double(handles.resz_edit.String);
+files.resx = str2double(get(handles.resx_edit,'String'));
+files.resy = str2double(get(handles.resy_edit,'String'));
+files.resz = str2double(get(handles.resz_edit,'String'));
 matRad_importDicom(files);
 
 
@@ -301,11 +307,10 @@ function dir_path_field_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of dir_path_field as text
 %        str2double(get(hObject,'String')) returns contents of dir_path_field as a double
 
-patDir = handles.dir_path_field.String;
+patDir = get(handles.dir_path_field,'String');
 if patDir(end) ~= '\';
     patDir = [patDir '\'];
-    handles.dir_path_field.String = patDir;
-    % Update handles structure
+    set(handles.dir_path_field,'String',patDir);
     guidata(hObject, handles);
 end
 scan(hObject, eventdata, handles);
@@ -317,15 +322,16 @@ function SeriesUID_radiobutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-if hObject.Value == 1
-    handles.SeriesNumber_radiobutton.Value = 0;
+if get(hObject,'Value') == 1
+    set(handles.SeriesNumber_radiobutton,'Value',0);
 else
-    hObject.Value = 1;
-    handles.SeriesNumber_radiobutton.Value = 0;
+    set(hObject,'Value',1);
+    set(handles.SeriesNumber_radiobutton,'Value',0);
 end
-selected_patient = handles.patient_listbox.String(handles.patient_listbox.Value);
-handles.ct_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),4));
-handles.rtss_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),4));
+patient_listbox = get(handles.patient_listbox,'String');
+selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
+set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),4)));
+set(handles.rtseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),4)));
 guidata(hObject, handles);
 
 % --- Executes on button press in SeriesNumber_radiobutton.
@@ -333,15 +339,16 @@ function SeriesNumber_radiobutton_Callback(hObject, eventdata, handles)
 % hObject    handle to SeriesNumber_radiobutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-if hObject.Value == 1
-    handles.SeriesUID_radiobutton.Value = 0;
+if get(hObject,'Value') == 1
+    set(handles.SeriesUID_radiobutton,'Value',0);
 else
-    hObject.Value = 1;
-    handles.SeriesUID_radiobutton.Value = 0;
+    set(hObject,'Value',1);
+    set(handles.SeriesUID_radiobutton,'Value',0);
 end
-selected_patient = handles.patient_listbox.String(handles.patient_listbox.Value);
-handles.ct_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),5));
-handles.rtss_listbox.String = unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),5));
+patient_listbox = get(handles.patient_listbox,'String');
+selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
+set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),5)));
+set(handles.rtseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),5)));
 guidata(hObject, handles);
 
 
@@ -412,3 +419,49 @@ function resz_edit_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+% 
+% % --- Executes on selection change in ctseries_listbox.
+% function ctseries_listbox_Callback(hObject, eventdata, handles)
+% % hObject    handle to ctseries_listbox (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% 
+% % Hints: contents = cellstr(get(hObject,'String')) returns ctseries_listbox contents as cell array
+% %        contents{get(hObject,'Value')} returns selected item from ctseries_listbox
+% 
+% 
+% % --- Executes during object creation, after setting all properties.
+% function ctseries_listbox_CreateFcn(hObject, eventdata, handles)
+% % hObject    handle to ctseries_listbox (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    empty - handles not created until after all CreateFcns called
+% 
+% % Hint: listbox controls usually have a white background on Windows.
+% %       See ISPC and COMPUTER.
+% if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+%     set(hObject,'BackgroundColor','white');
+% end
+% 
+% 
+% % --- Executes on selection change in rtseries_listbox.
+% function rtseries_listbox_Callback(hObject, eventdata, handles)
+% % hObject    handle to rtseries_listbox (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% 
+% % Hints: contents = cellstr(get(hObject,'String')) returns rtseries_listbox contents as cell array
+% %        contents{get(hObject,'Value')} returns selected item from rtseries_listbox
+% 
+% 
+% % --- Executes during object creation, after setting all properties.
+% function rtseries_listbox_CreateFcn(hObject, eventdata, handles)
+% % hObject    handle to rtseries_listbox (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    empty - handles not created until after all CreateFcns called
+% 
+% % Hint: listbox controls usually have a white background on Windows.
+% %       See ISPC and COMPUTER.
+% if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+%     set(hObject,'BackgroundColor','white');
+% end

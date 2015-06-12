@@ -44,7 +44,7 @@ function [ct, cst] = matRad_importDicom( files )
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 h = waitbar(0,'Please wait...');
-h.WindowStyle = 'Modal';
+%h.WindowStyle = 'Modal';
 steps = 2;
 
 %% import ct-cube
@@ -59,7 +59,7 @@ close(h)
 
 %% creating structure cube
 h = waitbar(0,'Please wait...');
-h.WindowStyle = 'Modal';
+%h.WindowStyle = 'Modal';
 steps = numel(structures);
 for i = 1:numel(structures)
     % computations take place here
@@ -76,5 +76,7 @@ cst = matRad_createCst(structures);
 %% save ct and cst
 matRadFileName = [files.rtss{3} '.mat']; % use default from dicom
 [FileName,PathName] = uiputfile('*','Save as...',matRadFileName);
-save([PathName, FileName],'ct','cst');
+if ischar(FileName)
+    save([PathName, FileName],'ct','cst');
+end
 end
