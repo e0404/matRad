@@ -76,7 +76,7 @@ cst = matRad_createCst(structures);
 %% save ct and cst
 matRadFileName = [files.rtss{3} '.mat']; % use default from dicom
 [FileName,PathName] = uiputfile('*','Save as...',matRadFileName);
-if ~(FileName==0 && PathName==0)
+if ischar(FileName)
     save([PathName, FileName],'ct','cst');
 end
 end

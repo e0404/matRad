@@ -22,7 +22,7 @@ function varargout = matRad_importDicomGUI(varargin)
 
 % Edit the above text to modify the response to help matRad_importDicomGUI
 
-% Last Modified by GUIDE v2.5 12-Jun-2015 16:03:11
+% Last Modified by GUIDE v2.5 12-Jun-2015 16:30:13
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -79,6 +79,15 @@ function matRad_importDicomGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for matRad_importDicomGUI
 handles.output = hObject;
 
+axes(handles.axesMatRadLogo)
+[im, ~, alpha] = imread('matrad_logo.png');
+q = imshow(im);
+set(q, 'AlphaData', alpha);
+% show dkfz logo
+axes(handles.axesDKFZLogo)
+[im, ~, alpha] = imread('DKFZ_logo.png');
+p = imshow(im);
+set(p, 'AlphaData', alpha);
 % Update handles structure
 guidata(hObject, handles);
 
@@ -410,3 +419,49 @@ function resz_edit_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+% 
+% % --- Executes on selection change in ctseries_listbox.
+% function ctseries_listbox_Callback(hObject, eventdata, handles)
+% % hObject    handle to ctseries_listbox (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% 
+% % Hints: contents = cellstr(get(hObject,'String')) returns ctseries_listbox contents as cell array
+% %        contents{get(hObject,'Value')} returns selected item from ctseries_listbox
+% 
+% 
+% % --- Executes during object creation, after setting all properties.
+% function ctseries_listbox_CreateFcn(hObject, eventdata, handles)
+% % hObject    handle to ctseries_listbox (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    empty - handles not created until after all CreateFcns called
+% 
+% % Hint: listbox controls usually have a white background on Windows.
+% %       See ISPC and COMPUTER.
+% if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+%     set(hObject,'BackgroundColor','white');
+% end
+% 
+% 
+% % --- Executes on selection change in rtseries_listbox.
+% function rtseries_listbox_Callback(hObject, eventdata, handles)
+% % hObject    handle to rtseries_listbox (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% 
+% % Hints: contents = cellstr(get(hObject,'String')) returns rtseries_listbox contents as cell array
+% %        contents{get(hObject,'Value')} returns selected item from rtseries_listbox
+% 
+% 
+% % --- Executes during object creation, after setting all properties.
+% function rtseries_listbox_CreateFcn(hObject, eventdata, handles)
+% % hObject    handle to rtseries_listbox (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    empty - handles not created until after all CreateFcns called
+% 
+% % Hint: listbox controls usually have a white background on Windows.
+% %       See ISPC and COMPUTER.
+% if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+%     set(hObject,'BackgroundColor','white');
+% end
