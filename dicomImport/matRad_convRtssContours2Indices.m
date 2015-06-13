@@ -1,4 +1,4 @@
-function indices = matRad_convRtssContours2Indices(contPoints,ct)
+function indices = matRad_convRtssContours2Indices(structure,ct)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to convert a polygon segmentation from an rt structure
 % set into a binary segmentation as required within matRad's cst struct
@@ -7,8 +7,7 @@ function indices = matRad_convRtssContours2Indices(contPoints,ct)
 %   indices = matRad_convRtssContours2Indices(contPoints,ct)
 %
 % input
-%   contPoints:     set of all contour points belonging to a single
-%                   structure
+%   structure:      information about a single structure
 %   ct:             matRad ct struct where the binary segmentations will
 %                   be aligned to
 %
@@ -49,29 +48,29 @@ function indices = matRad_convRtssContours2Indices(contPoints,ct)
 
 voiCube = zeros(size(ct.cube));
 
-slicesInOrigDicomWithContours = unique(contPoints(:,3));
-
 [X,Y] = meshgrid(ct.x,ct.y);
 
-% loop over all slices where contour points have been defined in the original dicom ct
-for i = 1:numel(slicesInOrigDicomWithContours)
+% loop over all closed contour items
+for i = 1:size(structure.item,2)
 
-    dicomCtSlicePos       = slicesInOrigDicomWithContours(i);
+    if ~isempty(structure.item(i).points)
+
+        dicomCtSlicePos = unique(structure.item(i).points(:,3));
     
-    round2 = @(a,b) round(a*10^b)/10^b;
-    dicomCtSliceThickness = ct.dicomInfo.SliceThickness(round2(ct.dicomInfo.SlicePositions,2)==dicomCtSlicePos);
-    
-    contPointsInCurrDicomSlice = contPoints(contPoints(:,3) == dicomCtSlicePos,:);
-    
-    binIn = inpolygon(X,Y,contPointsInCurrDicomSlice(:,1),contPointsInCurrDicomSlice(:,2));
-    
-    slicesInMatradCt = find(dicomCtSlicePos+dicomCtSliceThickness/2 > ct.z & dicomCtSlicePos-dicomCtSliceThickness/2 <= ct.z);
+        round2 = @(a,b) round(a*10^b)/10^b;
+        dicomCtSliceThickness = ct.dicomInfo.SliceThickness(round2(ct.dicomInfo.SlicePositions,2)==dicomCtSlicePos);
+
+        binIn = inpolygon(X,Y,structure.item(i).points(:,1),structure.item(i).points(:,2));
+
+        slicesInMatradCt = find(dicomCtSlicePos+dicomCtSliceThickness/2 > ct.z & dicomCtSlicePos-dicomCtSliceThickness/2 <= ct.z);
+
+        % loop over all slices in matRad ct
+        for j = 1:numel(slicesInMatradCt)
+            voiCube(:,:,slicesInMatradCt(j)) = voiCube(:,:,slicesInMatradCt(j)) | binIn;
+        end
         
-    % loop over all slices in matRad ct
-    for j = 1:numel(slicesInMatradCt)
-        voiCube(:,:,slicesInMatradCt(j)) = binIn;
     end
-
+    
 end
 
 indices = find(voiCube>0);

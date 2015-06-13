@@ -65,7 +65,7 @@ for i = 1:numel(structures)
     % computations take place here
     waitbar(i / steps)
     fprintf('creating cube for %s volume...\n', structures(i).structName);
-    structures(i).indices = matRad_convRtssContours2Indices(structures(i).points,ct);
+    structures(i).indices = matRad_convRtssContours2Indices(structures(i),ct);
 end
 fprintf('finished!\n');
 close(h)

@@ -157,11 +157,17 @@ end
 handles.SelectedBeam=1;
 handles.plane = get(handles.popupPlane,'Value');
 
-if handles.State >0
+if handles.State > 0
     % set slice slider
-    set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-        'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
-         'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+    if exist('pln','var')
+        set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
+            'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
+            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+    else
+        set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
+            'Value',round(size(ct,handles.plane)/2),...
+            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+    end        
 end
 
 handles.profileOffset = 0;
@@ -258,9 +264,8 @@ end
 % set slice slider
 handles.plane = get(handles.popupPlane,'value');
 set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-    'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
-     'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
-  
+        'Value',round(size(ct,handles.plane)/2),...
+        'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
 
 guidata(hObject,handles);
 UpdatePlot(handles);
@@ -577,14 +582,11 @@ if exist('Result')
 
 end
 
-
-
-
 %% set and get required variables
 
-plane=get(handles.popupPlane,'Value');
+plane = get(handles.popupPlane,'Value');
 slice = round(get(handles.sliderSlice,'Value'));
-CutOffLevel= 0.03;
+CutOffLevel = 0.03;
 
 %% plot ct
  if ~isempty(evalin('base','ct')) && get(handles.popupTypeOfPlot,'Value')==1
@@ -989,11 +991,17 @@ function popupPlane_Callback(hObject, eventdata, handles)
 handles.plane = get(handles.popupPlane,'value');
 try
     ct = evalin('base', 'ct');
-    pln = evalin('base', 'pln');
 
-    set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-       'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
-       'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+    if exist('pln','var')
+        set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
+            'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
+            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+    else
+        set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
+            'Value',round(size(ct,handles.plane)/2),...
+            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+    end    
+    
 catch
 end
         

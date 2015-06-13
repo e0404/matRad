@@ -68,18 +68,15 @@ numOfContStructs = numel(listOfContStructs);
 for i = 1:numOfContStructs % loop over every structure   
 
 % Is This enough?
-    structures(i).structName = structInfo.StructureSetROISequence.(...
-                                   listOfDefStructs{i}).ROIName;
+    structures(i).structName   = structInfo.StructureSetROISequence.(...
+                                 listOfDefStructs{i}).ROIName;                               
     structures(i).structNumber = structInfo.ROIContourSequence.(...
                                  listOfContStructs{i}).ReferencedROINumber;
-    structures(i).structColor = structInfo.ROIContourSequence.(...
+    structures(i).structColor  = structInfo.ROIContourSequence.(...
                                  listOfContStructs{i}).ROIDisplayColor;                         
 
     listOfSlices = fieldnames(structInfo.ROIContourSequence.(...
                                    listOfContStructs{i}).ContourSequence);
-    
-    % getting data of all structure slices
-    structures(i).points = [];
     
     for j = 1:numel(listOfSlices)
         structSlice = structInfo.ROIContourSequence.(...
@@ -103,7 +100,7 @@ for i = 1:numOfContStructs % loop over every structure
         if unique(structZ) > max(dicomInfo.SlicePositions) || unique(structZ) < min(dicomInfo.SlicePositions)
             warning(['Omitting contour data for ' structures(i).structName ' at slice position ' num2str(unique(structZ)) 'mm - no ct data available.\n']);
         else
-            structures(i).points = vertcat(structures(i).points, [structX, structY, structZ]);
+            structures(i).item(j).points = [structX, structY, structZ];
         end
             
     end

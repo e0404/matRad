@@ -69,6 +69,7 @@ if ~isempty(fileList)
             info = dicominfo(fileList{i});
         catch
             fileList(i,:) = [];
+            continue;
         end
         try
             fileList{i,2} = info.Modality;
@@ -140,8 +141,20 @@ if ~isempty(fileList)
     
     if ~isempty(fileList)
         patientList = unique(fileList(:,3));
+        % check if there is at least one RT struct and one ct file
+        % available per patient
+        for i = numel(patientList):-1:1
+            if sum(strcmp('CT',fileList(:,2)) & strcmp(patientList{i},fileList(:,3))) < 1 || ...
+               sum(strcmp('RTSTRUCT',fileList(:,2)) & strcmp(patientList{i},fileList(:,3))) < 1
+                patientList(i) = [];
+            end
+        end
+        
+        if isempty(patientList)
+            msgbox('No patient found with DICOM CT _and_ RT structure set in patient directory!', 'Error','error');
+        end
     else
-        h = msgbox('No DICOM files found in patient directory!', 'Error','error');
+        msgbox('No DICOM files found in patient directory!', 'Error','error');
         %h.WindowStyle = 'Modal';
         %error('No DICOM files found in patient directory');
     end

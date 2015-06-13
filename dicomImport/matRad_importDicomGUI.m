@@ -165,23 +165,41 @@ if ~isempty(get(hObject,'String'))
     selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
     if get(handles.SeriesUID_radiobutton,'Value') == 1
         % this gets a list of ct series for this patient
+        set(handles.ctseries_listbox,'Value',1); % set dummy value to one
         set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),4)));
         % this gets a list of rtss series for this patient
-        set(handles.rtseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),4)));
+        set(handles.rtseries_listbox,'Value',1); % set dummy value to one
+        set(handles.rtseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),4));
         % this gets a resolution for this patient
-        res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), get(handles.ctseries_listbox,'String')),9));
-        res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), get(handles.ctseries_listbox,'String')),10));
-        res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), get(handles.ctseries_listbox,'String')),11));
+        selectedCtSeriesString = get(handles.ctseries_listbox,'String');
+        if ~isempty(selectedCtSeriesString)
+            res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),9));
+            res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),10));
+            res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),11));
+        else
+            res_x = NaN; res_y = NaN; res_z = NaN;
+        end
     else
+        set(handles.ctseries_listbox,'Value',1); % set dummy value to one
         set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),5)));
-        set(handles.rtseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),5)));
-        res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), get(handles.ctseries_listbox,'String')),9));
-        res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), get(handles.ctseries_listbox,'String')),10));
-        res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), get(handles.ctseries_listbox,'String')),11));
+        set(handles.rtseries_listbox,'Value',1); % set dummy value to one
+        set(handles.rtseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),5));
+        selectedCtSeriesString = get(handles.ctseries_listbox,'String');
+        if ~isempty(selectedCtSeriesString)
+            res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),9));
+            res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),10));
+            res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),11));
+        else
+            res_x = NaN; res_y = NaN; res_z = NaN;
+        end
     end
     set(handles.resx_edit,'String',res_x);
     set(handles.resy_edit,'String',res_y);
-    set(handles.resz_edit,'String',res_z);
+    if numel(res_z) > 0
+        set(handles.resz_edit,'String','not equi');
+    else
+        set(handles.resz_edit,'String',res_z);
+    end
     % Update handles structure
     guidata(hObject, handles);
 end
@@ -253,26 +271,38 @@ function import_button_Callback(hObject, eventdata, handles)
 
 patient_listbox = get(handles.patient_listbox,'String');
 ctseries_listbox = get(handles.ctseries_listbox,'String');
-rtseries_listbox = get(handles.rtseries_listbox,'String');
+%rtseries_listbox = get(handles.rtseries_listbox,'String');
 selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
 selected_ctseries = ctseries_listbox(get(handles.ctseries_listbox,'Value'));
-selected_rtseries = rtseries_listbox(get(handles.rtseries_listbox,'Value'));
+%selected_rtseries = rtseries_listbox(get(handles.rtseries_listbox,'Value'));
 
 if get(handles.SeriesUID_radiobutton,'Value') == 1
     files.ct = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
         strcmp(handles.fileList(:,4), selected_ctseries),:);
-    files.rtss = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
-        strcmp(handles.fileList(:,4), selected_rtseries),:);
+    
+    %files.rtss = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
+    %    strcmp(handles.fileList(:,4), selected_rtseries),:);
 else
     files.ct = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
         strcmp(handles.fileList(:,5), selected_ctseries),:);
-    files.rtss = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
-        strcmp(handles.fileList(:,5), selected_rtseries),:);
+    
+    %files.rtss = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
+    %    strcmp(handles.fileList(:,5), selected_rtseries),:);
 end
+
+allRtss = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,2),'RTSTRUCT'),:);
+files.rtss = allRtss(get(handles.rtseries_listbox,'Value'),:);
 
 files.resx = str2double(get(handles.resx_edit,'String'));
 files.resy = str2double(get(handles.resy_edit,'String'));
-files.resz = str2double(get(handles.resz_edit,'String'));
+% check if valid assignment is made when z slices are not equi-distant
+if strcmp(get(handles.resz_edit,'String'),'not equi')
+    msgbox('Ct data not sliced equi-distantly in z direction! Chose uniform resolution.', 'Error','error');
+    return;
+else
+    files.resz = str2double(get(handles.resz_edit,'String'));
+end
+
 matRad_importDicom(files);
 
 
