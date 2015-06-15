@@ -1,4 +1,4 @@
-function dose = matRad_calcPhotonDoseBixel(SAD,mu,betas,Interp_kernel1,...
+function dose = matRad_calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,...
                   Interp_kernel2,Interp_kernel3,radDepths,geoDists,...
                   latDistsX,latDistsZ)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -11,7 +11,7 @@ function dose = matRad_calcPhotonDoseBixel(SAD,mu,betas,Interp_kernel1,...
 %
 % input
 %   SAD:                source to axis distance
-%   mu:                 absorption in water (part of the dose calc base
+%   m:                  absorption in water (part of the dose calc base
 %                       data)
 %   betas:              beta parameters for the parameterization of the 
 %                       three depth dose components
@@ -54,7 +54,7 @@ function dose = matRad_calcPhotonDoseBixel(SAD,mu,betas,Interp_kernel1,...
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Define function_Di
-func_Di = @(beta,x) beta/(beta-mu) * (exp(-mu*x) - exp(-beta*x)); 
+func_Di = @(beta,x) beta/(beta-m) * (exp(-m*x) - exp(-beta*x)); 
 
 % scale lateral distances to iso center plane
 latDistsX = (latDistsX) ./ geoDists .* SAD;

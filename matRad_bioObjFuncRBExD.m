@@ -84,17 +84,22 @@ for  i = 1:size(cst,1)
             
             if isequal(cst{i,6}(j).type, 'square underdosing')
   
-                % underdose : biologic effecitve dose minus reference  biologic effecitve dose
-                underdose = RBExD_i - cst{i,6}(j).parameter(2);
+                 if ~isequal(cst{i,3},'OAR')
+                    % underdose : biologic effecitve dose minus reference  biologic effecitve dose
+                    underdose = RBExD_i - cst{i,6}(j).parameter(2);
 
-                % apply positive operator
-                underdose(underdose>0) = 0;
+                    % apply positive operator
+                    underdose(underdose>0) = 0;
+
+                    % calculate objective function
+                    f = f + (rho/size(cst{i,4},1))*(underdose'*underdose);
+
+                    % calculate delta
+                    delta_underdose(cst{i,4}) = delta_underdose(cst{i,4}) + (rho/size(cst{i,4},1))*underdose;
                 
-                % calculate objective function
-                f = f + (rho/size(cst{i,4},1))*(underdose'*underdose);
-                
-                % calculate delta
-                delta_underdose(cst{i,4}) = delta_underdose(cst{i,4}) + (rho/size(cst{i,4},1))*underdose;
+                 else
+                    disp(['square underdosing constraint for ' cst{i,2} ' will be skipped'])
+                 end
                 
             elseif isequal(cst{i,6}(j).type, 'square overdosing')
                 
@@ -112,40 +117,57 @@ for  i = 1:size(cst,1)
                 
             elseif isequal(cst{i,6}(j).type, 'square deviation')
                 
-                % deviation : Dose minus prefered dose
-                deviation = RBExD_i - cst{i,6}(j).parameter(2);
+                 if ~isequal(cst{i,3},'OAR')
+                     
+                    % deviation : Dose minus prefered dose
+                    deviation = RBExD_i - cst{i,6}(j).parameter(2);
+
+                    % claculate objective function
+                    f = f + (rho/size(cst{i,4},1))*(deviation'*deviation);
+
+                    % calculate delta
+                    delta_deviation(cst{i,4}) = delta_deviation(cst{i,4}) + (rho/size(cst{i,4},1))*deviation;
+                else
+                    disp(['square deviation constraint for ' cst{i,2} ' will be skipped'])
+                end
                 
-                % claculate objective function
-                f = f + (rho/size(cst{i,4},1))*(deviation'*deviation);
-                
-                % calculate delta
-                delta_deviation(cst{i,4}) = delta_deviation(cst{i,4}) + (rho/size(cst{i,4},1))*deviation;
-               
             elseif isequal(cst{i,6}(j).type, 'mean')              
                 
-                % calculate objective function
-                f = f + (rho/size(cst{i,4},1))*sum(RBExD_i);
-                
-                % calculate delta
-                delta_mean(cst{i,4}) = delta_mean(cst{i,4}) + ...
-                    (rho/size(cst{i,4},1))*ones(size(cst{i,4},1),1);
+                 if ~isequal(cst{i,3},'TARGET')
+
+                    % calculate objective function
+                    f = f + (rho/size(cst{i,4},1))*sum(RBExD_i);
+
+                    % calculate delta
+                    delta_mean(cst{i,4}) = delta_mean(cst{i,4}) + ...
+                        (rho/size(cst{i,4},1))*ones(size(cst{i,4},1),1);
+
+                 else
+                    disp(['mean constraint for ' cst{i,2} ' will be skipped'])
+                 end
                 
             elseif isequal(cst{i,6}(j).type, 'EUD') 
                 
-                % get exponent for EUD
-                exponent = cst{i,6}(j).parameter(2);
-                
-                % calculate objective function and delta
-                if sum(RBExD_i.^exponent)>0
+                if ~isequal(cst{i,3},'TARGET')
                     
-                    f = f + rho*nthroot((1/size(cst{i,4},1))*sum(RBExD_i.^exponent),exponent);
+                    % get exponent for EUD
+                    exponent = cst{i,6}(j).parameter(2);
+
+                    % calculate objective function and delta
+                    if sum(RBExD_i.^exponent)>0
+
+                        f = f + rho*nthroot((1/size(cst{i,4},1))*sum(RBExD_i.^exponent),exponent);
+
+                        delta_EUD(cst{i,4}) = delta_EUD(cst{i,4}) + ...
+                            rho*nthroot(1/size(cst{i,4},1),exponent) * sum(RBExD_i.^exponent)^((1-exponent)/exponent) * (RBExD_i.^(exponent-1));                    
+                    end    
+
+                    if sum(~isfinite(delta_EUD)) > 0 % check for inf and nan for numerical stability
+                        error(['EUD computation for ' cst{i,2} ' failed. Reduce exponent to resolve numerical problems.']);
+                    end
                     
-                    delta_EUD(cst{i,4}) = delta_EUD(cst{i,4}) + ...
-                        rho*nthroot(1/size(cst{i,4},1),exponent) * sum(RBExD_i.^exponent)^((1-exponent)/exponent) * (RBExD_i.^(exponent-1));                    
-                end    
-                
-                if sum(~isfinite(delta_EUD)) > 0 % check for inf and nan for numerical stability
-                    error(['EUD computation for ' cst{i,2} ' failed. Reduce exponent to resolve numerical problems.']);
+                else
+                    disp(['EUD constraint for ' cst{i,2} ' will be skipped'])
                 end
     
             else
