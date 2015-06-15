@@ -1,15 +1,18 @@
 function QI = matRad_calcQualityIndicators(d,cst,refGy,refVol)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad dvh calculation
+% matRad QI calculation
 % 
 % call
-%   matRad_calcDVH(d,cst,lineStyleIndicator)
+%   matRad_calcQualityIndicators(d,cst,refGy,refVol)
 %
 % input
 %   d:                  dose cube
 %   cst:                matRad cst struct
-%   refGy:              array of dose values used for V_XGy calculation
-%   refVol:             array of volumes (0-100) used for D_X calculation
+%   refGy: (optional)   array of dose values used for V_XGy calculation
+%                       default is [40 50 60]
+%   refVol:(optional)   array of volumes (0-100) used for D_X calculation
+%                       default is [2 5 95 98]
+%                       NOTE: Call either both or none!
 %
 % output
 %   various quality indicators like CI, HI (for targets) and DX, VX within 
