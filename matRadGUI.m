@@ -1099,14 +1099,13 @@ function FlagValid = CheckValidityPln(cst)
 FlagValid = true;
 %check if mean constraint is always used in combination
 for i=1:size(cst,1)
-   
+   if ~isempty(cst{i,6})
         if ~isempty(strfind([cst{i,6}.type],'mean')) && isempty(strfind([cst{i,6}.type],'square'))
              FlagValid = false;
              warndlg('mean constraint needs to be defined in addition to a second constraint (e.g. squared deviation)');
-             break
-            
+             break      
         end
- 
+   end
 end
 
 
