@@ -47,6 +47,16 @@ linTerm  = dij.mAlphaDose*w;
 quadTerm = dij.mSqrtBetaDose*w;
 e = linTerm + quadTerm.^2;
 
+%Dcut marks the transition from linear quadratic to purely linear shape at
+%high doses
+d = dij.physicalDose*w;
+CutCaseIdx = d>dij.Dcut;
+if sum(CutCaseIdx>0)    
+    linTermViolated  = (linTerm(CutCaseIdx)./d(CutCaseIdx)).*dij.Dcut;
+    quadTermViolated = (quadTerm(CutCaseIdx)./d(CutCaseIdx)).*dij.Dcut;
+    e(CutCaseIdx) = linTermViolated + quadTermViolated +...
+        (d(CutCaseIdx)-dij.Dcut).*dij.Smax(CutCaseIdx);
+end
 % Numbers of voxels
 numVoxels = size(dij.physicalDose,1);
 

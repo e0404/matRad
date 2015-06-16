@@ -57,6 +57,17 @@ ScaledEffect = (e./dij.bx)+(dij.gamma.^2);
 ScaledEffect(idx)=sqrt(ScaledEffect(idx));
 RBExD = ScaledEffect-dij.gamma;
 
+
+%Dcut marks the transition from linear quadratic to purely linear shape at
+%high doses
+Scut =dij.Scut;
+CutCaseIdx = e>Scut;
+if sum(CutCaseIdx>0)    
+   RBExD(CutCaseIdx)= ((e(CutCaseIdx) + Scut(CutCaseIdx))./dij.Smax(CutCaseIdx)) ...
+       + dij.Dcut;
+end
+
+
 % Initializes f
 f = 0;
 

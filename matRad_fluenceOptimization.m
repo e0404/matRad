@@ -55,9 +55,9 @@ cst  = matRad_setOverlapPriorities(cst);
 if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
         && strcmp(pln.radiationMode,'carbon')
     % check if you are running a supported rad
-    dij.ax = zeros(dij.numOfVoxels,1);
-    dij.bx = zeros(dij.numOfVoxels,1);
-    
+    dij.ax  = zeros(dij.numOfVoxels,1);
+    dij.bx  = zeros(dij.numOfVoxels,1);
+    dij.Smax=zeros(dij.numOfVoxels,1);
     for i = 1:size(cst,1)
         for j = 1:size(cst{i,6},2)
             % check if only allowed objectives were defined
@@ -89,10 +89,16 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
         IdentifierBioOpt = pln.bioOptimization;
     end
     
+    %calculate maximum slope
+    dij.Dcut = 30; %[Gy]
+    dij.Smax = dij.ax + (2*dij.bx*dij.Dcut);
+    
     switch IdentifierBioOpt
         case 'effect'
             objFunc = @(x) matRad_bioObjFunc(x,dij,cst);
         case 'RBExD'
+            dij.Scut = dij.ax.*dij.Dcut + dij.bx.*dij.Dcut^2;
+            
             dij.gamma = zeros(dij.numOfVoxels,1);
             idx = dij.bx~=0;  % find indices
             dij.gamma(idx)=dij.ax(idx)./(2*dij.bx(idx)); 
