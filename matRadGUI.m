@@ -90,8 +90,8 @@ f = imshow(im);
 set(f, 'AlphaData', alpha);
 %% 
 % handles.State=0   no data available
-% handles.State=1   data available; ready for dose calculation
-% handles.State=2   data available and dij matrix is calculated;
+% handles.State=1   ct cst and pln available; ready for dose calculation
+% handles.State=2   ct cst and pln available and dij matric(s) are calculated;
 %                   ready for optimization
 % handles.Sate=3    plan is optimized
 
@@ -104,14 +104,29 @@ handles.State = 0;
 
 %% parse variables from base workspace
 try
-    if ~isempty(evalin('base','ct'))
+    if ~isempty(evalin('base','ct')) && ~isempty(evalin('base','cst'))
         ct = evalin('base','ct');
+        setCstTable(handles,evalin('base','cst'));
         handles.State = 1;
+    else
+        error('ct or cst variable is not existing in base workspace')
     end
+   
 catch
     
 end
+%set plan
+try 
+     if ~isempty(evalin('base','pln'))
+          pln=evalin('base','pln');
+          setPln(handles); 
+     else
+          handles.State = 0;
+    end
+catch
+end
 
+% parse dij structure
 try
     if ~isempty(evalin('base','doseVis'))
         handles.State = 2;
@@ -120,27 +135,14 @@ try
 catch 
 end
 
+% parse optimized results
 try
     if ~isempty(evalin('base','resultGUI'))
         handles.State = 3;
     end
 catch
 end
-%set cst
-try
-    if ~isempty(evalin('base','cst'))
-        setCstTable(handles,evalin('base','cst'));
-    end
-catch
-end
-%set plan
-try
-    if ~isempty(evalin('base','pln'))
-            pln=evalin('base','pln');
-            setPln(handles);       
-    end
-catch
-end
+
 
 % set some default values
 if handles.State ==2 || handles.State ==3
@@ -154,6 +156,7 @@ else
     handles.SelectedDisplayOptionIdx=1;
 end
 
+%per default the first beam is selected for the profile plot
 handles.SelectedBeam=1;
 handles.plane = get(handles.popupPlane,'Value');
 
@@ -167,6 +170,7 @@ if handles.State > 0
         set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
             'Value',round(size(ct,handles.plane)/2),...
             'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+            disp(' !! inconsistent state - pln data should be part of state 1 !!')
     end        
 end
 
@@ -243,30 +247,39 @@ setCstTable(handles,cst);
 handles.TableChanged = false;
 handles.State = 1;
 set(handles.popupTypeOfPlot,'Value',1);
+
+try
 assignin('base','ct',ct);
 assignin('base','cst',cst);
+catch
+    error('Could not load selected data');
+end
+% assess plan variable from GUI
+getPln(handles);
+pln=evalin('base','pln');
+if isempty(pln)
+ handles.State = 0;
+else
+ handles.State = 1;
+end
 
-% check if a complete optimized plan was loaded
-if exist('stf','var') && exist('resultGUI','var') && exist('dij','var') && exist('pln','var')
+% check if a optimized plan was loaded
+if exist('stf','var') && exist('resultGUI','var') && exist('dij','var')
     assignin('base','stf',stf);
     assignin('base','resultGUI',resultGUI);
     assignin('base','dij',dij);
-    assignin('base','pln',pln);
-    setPln(handles);
     handles.State = 3;
     handles.SelectedDisplayOption ='Dose';
-else
-    getPln(handles);
-    pln=evalin('base','pln');     
 end
 
 
 % set slice slider
 handles.plane = get(handles.popupPlane,'value');
-set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-        'Value',round(size(ct,handles.plane)/2),...
-        'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
-
+if handles.State >0
+     set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
+            'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
+            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+end
 guidata(hObject,handles);
 UpdatePlot(handles);
 UpdateState(handles);
@@ -1692,7 +1705,6 @@ end
 % get pln file form gui     
 function getPln(handles)
 
-
 pln.SAD             = parseStringAsNum(get(handles.editSAD,'String')); %[mm]
 pln.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String')); % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String')); % [°]
@@ -1718,7 +1730,9 @@ end
 pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'));
 pln.voxelDimensions = size(ct.cube);
 pln.isoCenter       = matRad_getIsoCenter(evalin('base','cst'),ct,0);
+handles.pln = pln;
 assignin('base','pln',pln);
+
 
 function Number = parseStringAsNum(string)
 try
