@@ -58,12 +58,12 @@ ScaledEffect(idx)=sqrt(ScaledEffect(idx));
 RBExD = ScaledEffect-dij.gamma;
 
 
-%Dcut marks the transition from linear quadratic to purely linear shape at
+%Scut marks the transition from linear quadratic to purely linear shape at
 %high doses
-Scut =dij.Scut;
-CutCaseIdx = e>Scut;
-if sum(CutCaseIdx>0)    
-   RBExD(CutCaseIdx)= ((e(CutCaseIdx) + Scut(CutCaseIdx))./dij.Smax(CutCaseIdx)) ...
+CutIdx = e>dij.Scut;
+if sum(CutIdx>0)
+   % correct RBExdose for voxels having a higher biological effect than Dcut
+   RBExD(CutIdx)= ((e(CutIdx) + dij.Scut(CutIdx))./dij.Smax(CutIdx)) ...
        + dij.Dcut;
 end
 
@@ -200,5 +200,5 @@ if nargout > 1
     vBias= (delta' * dij.mAlphaDose)';
     mPsi = (2*(delta.*quadTerm)'*dij.mSqrtBetaDose)';
     g    =  vBias+mPsi ; 
-        
+
 end

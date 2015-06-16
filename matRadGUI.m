@@ -412,8 +412,8 @@ else
     set(handles.btnTypBioOpt,'Enable','on');
 end
 
-
-if handles.State>0
+pln = evalin('base','pln');
+if handles.State>0 && ~strcmp(contents(get(hObject,'Value')),pln.radiationMode)
     handles.State=1;
     UpdateState(handles);
     guidata(hObject,handles);
