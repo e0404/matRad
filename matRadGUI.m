@@ -737,7 +737,7 @@ end
 %% plot VOIs
 
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
-    colors = jet;
+    colors = colorcube;
     hold on,
     colors = colors(round(linspace(1,63,size(cst,1))),:);
     mask = zeros(size(ct.cube)); % create zero cube with same dimeonsions like dose cube
@@ -1109,6 +1109,22 @@ UpdateState(handles);
 
 guidata(hObject,handles);
 
+
+% the function CheckValidityPln checks if the provided plan is valid so
+% that it can be used subsequently for optimization
+function FlagValid = CheckValidityPln(cst)
+
+FlagValid = true;
+%check if mean constraint is always used in combination
+for i=1:size(cst,1)
+   if ~isempty(cst{i,6})
+        if ~isempty(strfind([cst{i,6}.type],'mean')) && isempty(strfind([cst{i,6}.type],'square'))
+             FlagValid = false;
+             warndlg('mean constraint needs to be defined in addition to a second constraint (e.g. squared deviation)');
+             break      
+        end
+   end
+end
 
 
 % --- Executes on selection change in popupTypeOfPlot.

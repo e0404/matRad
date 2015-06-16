@@ -64,14 +64,14 @@ sourcePoint = sourcePoint + isocenter;
 targetPoint = targetPoint + isocenter;
 
 % Save the numbers of planes.
-[xNumPlanes, yNumPlanes, zNumPlanes] = size(cubes{1});
+[yNumPlanes, xNumPlanes, zNumPlanes] = size(cubes{1});
 xNumPlanes = xNumPlanes + 1;
 yNumPlanes = yNumPlanes + 1;
 zNumPlanes = zNumPlanes + 1;
 
 % eq 11
 % Calculate the distance from source to target point.
-d12 = sum((sourcePoint(1) - targetPoint(1)).^2 + (sourcePoint(2) - targetPoint(2)).^2  + (sourcePoint(3) - targetPoint(3)).^2).^.5;
+d12 = norm(sourcePoint-targetPoint);
 
 % eq 3
 % Position of first planes in millimeter. 0.5 because the central position
