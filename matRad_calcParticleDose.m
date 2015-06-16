@@ -121,8 +121,8 @@ end
 
 % It make a meshgrid with CT position in millimeter for calculate
 % geometrical distances
-[X_geo,Y_geo,Z_geo] = meshgrid(ct.resolution(1)*(0.5:1:size(ct.cube,1)),...
-    ct.resolution(2)*(0.5:1:size(ct.cube,2)),ct.resolution(3)*(0.5:1:size(ct.cube,3)));
+[X_geo,Y_geo,Z_geo] = meshgrid(ct.resolution(1)*(1:size(ct.cube,2)),...
+    ct.resolution(2)*(1:size(ct.cube,1)),ct.resolution(3)*(0.5:1:size(ct.cube,3)));
 
 % take only voxels inside patient
 X_geo = X_geo(V);
