@@ -247,8 +247,8 @@ for i = 1:length(pln.gantryAngles)
             
             % generate a 3D rectangular grid centered at isocenter in
             % voxel coordinates
-            [X,Y,Z] = meshgrid((1:size(ct.cube,1))-pln.isoCenter(1)/ct.resolution(2), ...
-                               (1:size(ct.cube,2))-pln.isoCenter(2)/ct.resolution(1), ...
+            [X,Y,Z] = meshgrid((1:size(ct.cube,2))-pln.isoCenter(1)/ct.resolution(1), ...
+                               (1:size(ct.cube,1))-pln.isoCenter(2)/ct.resolution(2), ...
                                (1:size(ct.cube,3))-pln.isoCenter(3)/ct.resolution(3));
             
             % computes surface
@@ -354,7 +354,7 @@ for i = 1:length(pln.gantryAngles)
         zlabel 'Z [mm]'
         title 'lps coordinate system'
         axis([-300 300 -300 300 -300 300]);
-        pause;
+        pause(1);
     end
     
     % Show progress

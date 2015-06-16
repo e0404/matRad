@@ -75,6 +75,7 @@ isoCenter = mean([xCoordsV yCoordsV zCoordsV]);
 
 % Visualization
 if visBool
+
     clf
     hold on
     
@@ -84,5 +85,8 @@ if visBool
     % Show isocenter: red point
     plot3(isoCenter(2),isoCenter(1),isoCenter(3),'r.','MarkerSize',30)
     
-    axis equal on tight
+    xlabel('y [mm]')
+    ylabel('x [mm]')
+    zlabel('z [mm]')
+    
 end

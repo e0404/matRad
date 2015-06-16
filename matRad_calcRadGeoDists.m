@@ -75,27 +75,16 @@ function [ix,radDepths,geoDists,x_latDists,z_latDists] = ...
 [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter,resolution, ...
                                                 sourcePoint,targetPoint, ...
                                                 {ct},visBool);
-
-% eq 14
-% It multiply voxel intersections with \rho values.
-% The zero it is neccessary for stability purpose.
-d = [0 l .* rho{1}]; %Note. It is not a number "one"; it is the letter "l"
-
-% Calculate accumulated d sum.
-dCum = cumsum(d);
-
-% This is necessary for numerical stability.
-dCumIx = min([find(dCum==0,1,'last') numel(dCum)-1]);
                                            
 % Add isocenter to source and target point. Because the algorithm does not
-% works with negatives values. This put (0,0,0) in the center of first
+% works with negatives values. This puts (0,0,0) in the center of first
 % voxel
 sourcePoint = sourcePoint + isocenter;
 targetPoint = targetPoint + isocenter;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%ROTATE A SINGLE BEAMLET AND ALIGN WITH BEAMLET WHO PASSES THROUGH
-%ISOCENTER
+% ROTATE A SINGLE BEAMLET AND ALIGN WITH BEAMLET WHO PASSES THROUGH
+% ISOCENTER
 
 % Put [0 0 0] position in the source point for beamlet who passes through
 % isocenter
@@ -107,20 +96,20 @@ a = a/norm(a);
 % Put [0 0 0] position in the source point for a single beamlet
 b = (targetPoint_bev - sourcePoint_bev)';
 
-%Normalize the vector.
+% Normalize the vector
 b = b/norm(b);
 
 % Define function for obtain rotation matrix.
 if sum(a==b)==3 % rotation matrix corresponds to eye matrix if the vectors are the same
     RU = @(a,b) eye(3);
 else
-    % Define fuction for obtain skew symmetric cross-product matrix of vector v
+    % Define fuction to obtain skew symmetric cross-product matrix of vector v
     ssc = @(v) [0 -v(3) v(2); v(3) 0 -v(1); -v(2) v(1) 0];
     RU = @(a,b) eye(3) + ssc(cross(a,b)) + ssc(cross(a,b))^2*(1-dot(a,b))/(norm(cross(a,b))^2);
 end
 
-%Calculate rotation matrix for rotate a single beamlet to be aligned to
-%beamlet who passes through isocenter.
+% Calculate rotation matrix for rotate a single beamlet to be aligned to
+% beamlet who passes through isocenter.
 R = RU(a,b);
 
 % Put [0 0 0] position in the source point for every CT voxel. This is
@@ -142,15 +131,25 @@ ix = find(rad_distancesSq <= lateralCutOff^2);
 x_latDists = x_latDists(ix);
 z_latDists = z_latDists(ix);
 
-% It calculates geometrical distances 
-geoDists = d12 * ((X(ix)-sourcePoint(1))*(targetPoint(1) - sourcePoint(1)) + ...
-                  (Y(ix)-sourcePoint(2))*(targetPoint(2) - sourcePoint(2)) + ...
-                  (Z(ix)-sourcePoint(3))*(targetPoint(3) - sourcePoint(3))) / ...
-                  norm(targetPoint-sourcePoint)^2;
+% calculate geometrical distances 
+geoDists = ( (X(ix)-sourcePoint(1))*(targetPoint(1) - sourcePoint(1)) + ...
+             (Y(ix)-sourcePoint(2))*(targetPoint(2) - sourcePoint(2)) + ...
+             (Z(ix)-sourcePoint(3))*(targetPoint(3) - sourcePoint(3)) ) ...
+              / norm(targetPoint-sourcePoint);
 
-              
+% eq 14
+% It multiply voxel intersections with \rho values.
+% The zero it is neccessary for stability purpose.
+d = [0 l .* rho{1}]; %Note. It is not a number "one"; it is the letter "l"
+
+% Calculate accumulated d sum.
+dCum = cumsum(d);
+
+% This is necessary for numerical stability.
+dCumIx = min([find(dCum==0,1,'last') numel(dCum)-1]);
+
 % Calculate the radiological path
-radDepths = interp1(alphas(dCumIx:end)*d12,dCum((dCumIx:end)),geoDists,'linear',0);
+radDepths = interp1(alphas(dCumIx:end)*d12,dCum(dCumIx:end),geoDists,'linear',0);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
