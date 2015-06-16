@@ -57,7 +57,7 @@ end
 numOfVois = size(cst,1);
 
 %% calculate and print the dvh
-colorMx    = jet;
+colorMx    = colorcube;
 colorMx    = colorMx(1:floor(64/numOfVois):64,:);
 
 lineStyles = {'-',':','--','-.'};

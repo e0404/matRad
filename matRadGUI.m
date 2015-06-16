@@ -724,7 +724,7 @@ end
 %% plot VOIs
 
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
-    colors = jet;
+    colors = colorcube;
     hold on,
     colors = colors(round(linspace(1,63,size(cst,1))),:);
     mask = zeros(size(ct.cube)); % create zero cube with same dimeonsions like dose cube
