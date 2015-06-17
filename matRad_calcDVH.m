@@ -1,4 +1,4 @@
-function matRad_calcDVH(d,cst,lineStyleIndicator)
+function matRad_calcDVH(result,cst,lineStyleIndicator)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dvh calculation
 % 
@@ -6,7 +6,7 @@ function matRad_calcDVH(d,cst,lineStyleIndicator)
 %   matRad_calcDVH(d,cst,lineStyleIndicator)
 %
 % input
-%   d:                  dose cube
+%   result:             result struct from fluence optimization/sequencing
 %   cst:                matRad cst struct
 %   lineStyleIndicator: integer (1,2,3,4) to indicate the current linestyle
 %                       (hint: use different lineStyles to overlay
@@ -64,9 +64,9 @@ lineStyles = {'-',':','--','-.'};
 
 n = 1000;
 if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0
-    dvhPoints = linspace(0,max(d.RBEWeightedDose(:))*1.05,n);
+    dvhPoints = linspace(0,max(result.RBEWeightedDose(:))*1.05,n);
 else
-    dvhPoints = linspace(0,max(d.physicalDose(:))*1.05,n);
+    dvhPoints = linspace(0,max(result.physicalDose(:))*1.05,n);
 end
 dvh       = NaN * ones(1,n);
 
@@ -75,9 +75,9 @@ for i = 1:numOfVois
     indices     = cst{i,4};
     numOfVoxels = numel(indices);
     if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0
-        doseInVoi   = d.RBEWeightedDose(indices);   
+        doseInVoi   = result.RBEWeightedDose(indices);   
     else
-        doseInVoi   = d.physicalDose(indices);
+        doseInVoi   = result.physicalDose(indices);
     end
     fprintf('%3d %20s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy)\n', ...
         cst{i,1},cst{i,2},mean(doseInVoi),std(doseInVoi),max(doseInVoi),min(doseInVoi))
