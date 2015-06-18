@@ -80,12 +80,12 @@ function matRadGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
 %show matrad logo
 axes(handles.axesLogo)
-[im, ~, alpha] = imread('matrad_logo.png');
+[im, ~, alpha] = imread(['dicomImport' filesep 'matrad_logo.png']);
 f = imshow(im);
 set(f, 'AlphaData', alpha);
 % show dkfz logo
 axes(handles.axesDKFZ)
-[im, ~, alpha] = imread('DKFZ_logo.png');
+[im, ~, alpha] = imread(['dicomImport' filesep 'DKFZ_logo.png']);
 f = imshow(im);
 set(f, 'AlphaData', alpha);
 %% 
@@ -1849,8 +1849,7 @@ function About_Callback(hObject, eventdata, handles)
 % hObject    handle to About (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-myicon = imread('mR.png');
-h=msgbox({'http://e0404.github.io/matRad/' 'm.banger@dkfz-heidelberg.de'},'About','custom',myicon);
+h=msgbox({'https://github.com/e0404/matRad/' 'matrad@dkfz.de'},'About','custom',myicon);
 
 
 
