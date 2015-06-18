@@ -47,6 +47,20 @@ linTerm  = dij.mAlphaDose*w;
 quadTerm = dij.mSqrtBetaDose*w;
 e = linTerm + quadTerm.^2;
 
+%Dcut marks the transition from linear quadratic to purely linear shape at
+%high doses
+d = dij.physicalDose*w;
+CutIdx = d>dij.Dcut;
+
+if sum(CutIdx>0)
+
+    linTermHighDose  = (linTerm(CutIdx)./d(CutIdx)).*dij.Dcut;
+    quadTermHighDose = (quadTerm(CutIdx)./d(CutIdx)).*dij.Dcut;
+    % correct bio effect for voxels having a higher dose than Dcut
+    e(CutIdx) = linTermHighDose + quadTermHighDose.^2 +...
+        (d(CutIdx)-dij.Dcut).*dij.Smax(CutIdx);
+end
+
 % Numbers of voxels
 numVoxels = size(dij.physicalDose,1);
 
@@ -183,6 +197,6 @@ if nargout > 1
     vBias= (delta' * dij.mAlphaDose)';
     mPsi = (2*(delta.*quadTerm)'*dij.mSqrtBetaDose)';
     g    =  vBias+mPsi ; 
-
+    
 end
 
