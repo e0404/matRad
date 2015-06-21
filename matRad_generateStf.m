@@ -56,8 +56,6 @@ if ~strcmp(pln.radiationMode,'carbon') && sum(strcmp(pln.bioOptimization,{'effec
     fprintf('\n ********************************************************************************************************* \n');
 end
 
-
-
 % find all target voxels from cst cell array
 V = [];
 for i=1:size(cst,1)
@@ -69,15 +67,19 @@ end
 % Remove double voxels
 V = unique(V);
 
+% add margin
+addmarginBool = 1;
+if addmarginBool
+    voi    = zeros(size(ct.cube));
+    voi(V) = 1;
+    voi    = matRad_addMargin(voi,ct.resolution,ct.resolution,true);
+    V      = find(voi>0);
+end
+
 % prepare structures necessary for particles
 if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     
-    % load
-    voi = zeros(size(ct.cube));
-    voi(V) = 1;
-
-    voi  = matRad_addMargin(voi,ct.resolution,ct.resolution,true);
-    
+    % load base data    
     if strcmp(pln.radiationMode,'protons')
         load protonBaseData;
     elseif  strcmp(pln.radiationMode,'carbon')
@@ -272,7 +274,7 @@ for i = 1:length(pln.gantryAngles)
         end
         
         % plot projection matrix: coordinates at isocenter
-        plot3(rayPos(:,1),rayPos(:,2),rayPos(:,3),'y.');
+        plot3(rayPos(:,1),rayPos(:,2),rayPos(:,3),'k.');
         
         % Plot matrix border of matrix at isocenter
         for j = 1:stf(i).numOfRays
@@ -354,7 +356,7 @@ for i = 1:length(pln.gantryAngles)
         zlabel 'Z [mm]'
         title 'lps coordinate system'
         axis([-300 300 -300 300 -300 300]);
-        pause(1);
+        %pause(1);
     end
     
     % Show progress
