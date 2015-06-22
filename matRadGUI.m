@@ -1501,9 +1501,15 @@ data = get(handles.uiTable, 'data');
 Index = get(handles.uiTable,'UserData');
 mask = (1:size(data,1))';
 mask(Index(:,1))=[];
+
+if size(data,1)==1
+    handles.State=1;
+end
+
 data=data(mask,:);
 set(handles.uiTable,'data',data);
-handles.State=1;
+
+
 guidata(hObject,handles);
 UpdateState(handles);
 
@@ -1538,10 +1544,19 @@ if isempty(eventdata)
     if ~isempty(Index) && size(Index,1)==1
         % if this callback was invoked by calculate dij, eventdata is empty
         % and needs to be set manually
-        eventdata.Indices(1) = Index(:,1);
-        eventdata.Indices(2) = Index(:,2);
-        eventdata.PreviousData = 1;
-        eventdata.NewData = data{Index(1),Index(2)};
+        try 
+            % if row gots deleted then index is pointing to non existing
+            % data
+            if size(data,1)<Index(1,1)
+                Index(1,1)=1;
+                Index(1,2)=1;
+            end
+            eventdata.Indices(1) = Index(:,1);
+            eventdata.Indices(2) = Index(:,2);
+            eventdata.PreviousData = 1;
+            eventdata.NewData = data{Index(1),Index(2)};
+        catch
+        end
     else
         return
     end
@@ -1553,8 +1568,21 @@ end
 if ~strcmp(eventdata.NewData,eventdata.PreviousData)
     if eventdata.Indices(2) == 1 || eventdata.Indices(2) == 2 ...
             || eventdata.Indices(2) == 3
-        handles.State=1;
+        
         handles.TableChanged = true;
+        %% if overlap changed
+         if eventdata.Indices(2) == 3
+              handles.State=1;
+         end
+        
+        cst=evalin('base','cst');
+         if sum(strcmp(cst(:,2),eventdata.NewData))==0 && ~strcmp('Select VOI Type',eventdata.PreviousData) 
+              handles.State=1;
+         end
+        
+
+
+        
     else
         if handles.State ==3 && handles.TableChanged == false
             handles.State=2;
@@ -1635,14 +1663,6 @@ end
 
 if isnan(eventdata.NewData)
     data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
-end
-
-%% check if current obj function is a second obj function
-if eventdata.Indices(2) == 1
-    cst=evalin('base','cst');
-    if sum(strcmp(data(:,1),eventdata.NewData))>1 && sum(strcmp(cst(:,2),eventdata.NewData))>0
-          handles.State=2;
-    end
 end
 
 set(handles.txtInfo,'String','plan changed');
