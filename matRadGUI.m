@@ -164,13 +164,11 @@ if handles.State > 0
     % set slice slider
     if exist('pln','var')
         set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-            'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
+            'Value',ceil(size(ct.cube,handles.plane)/2),...
             'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+        
     else
-        set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-            'Value',round(size(ct,handles.plane)/2),...
-            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
-            disp(' !! inconsistent state - pln data should be part of state 1 !!')
+            error(' !! inconsistent state - pln struct should be part of state 1 !!')
     end        
 end
 
@@ -196,9 +194,9 @@ function varargout = matRadGUI_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 
-% --- Executes on button press in btnLoad.
-function btnLoad_Callback(hObject, eventdata, handles)
-% hObject    handle to btnLoad (see GCBO)
+% --- Executes on button press in btnLoadMat.
+function btnLoadMat_Callback(hObject, eventdata, handles)
+% hObject    handle to btnLoadMat (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
@@ -285,21 +283,28 @@ UpdatePlot(handles);
 UpdateState(handles);
 
 
-
+% --- Executes on button press in btnLoadDicom.
+function btnLoadDicom_Callback(hObject, eventdata, handles)
+% hObject    handle to btnLoadDicom (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+ addpath([pwd filesep 'dicomImport']);
+ matRad_importDicomGUI
 
 
 function editSAD_Callback(hObject, eventdata, handles)
 % hObject    handle to editSAD (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of editSAD as text
-%        str2double(get(hObject,'String')) returns contents of editSAD as a double
+getPln(handles);
 if handles.State>0
     handles.State=1;
     UpdateState(handles);
     guidata(hObject,handles);
 end
+
+
+
 % --- Executes during object creation, after setting all properties.
 function editSAD_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to editSAD (see GCBO)
@@ -322,6 +327,7 @@ function editBixelWidth_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of editBixelWidth as text
 %        str2double(get(hObject,'String')) returns contents of editBixelWidth as a double
+getPln(handles);
 if handles.State>0
     handles.State=1;
     UpdateState(handles);
@@ -349,6 +355,7 @@ function editGantryAngle_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of editGantryAngle as text
 %        str2double(get(hObject,'String')) returns contents of editGantryAngle as a double
+getPln(handles);
 if handles.State>0
     handles.State=1;
     UpdateState(handles);
@@ -376,6 +383,7 @@ function editCouchAngle_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of editCouchAngle as text
 %        str2double(get(hObject,'String')) returns contents of editCouchAngle as a double
+getPln(handles);
 if handles.State>0
     handles.State=1;
     UpdateState(handles);
@@ -400,7 +408,7 @@ function popupRadMode_Callback(hObject, eventdata, handles)
 % hObject    handle to popupRadMode (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+getPln(handles);
 contents = cellstr(get(hObject,'String')); 
 if sum(strcmp({'photons','protons'},contents{get(hObject,'Value')}))>0
     set(handles.radbtnBioOpt,'Value',0);
@@ -440,6 +448,7 @@ function editFraction_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of editFraction as text
 %        str2double(get(hObject,'String')) returns contents of editFraction as a double
+getPln(handles);
 if handles.State>0
     handles.State=1;
     UpdateState(handles);
@@ -466,7 +475,7 @@ function radbtnBioOpt_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of radbtnBioOpt
-
+getPln(handles);
 if get(hObject,'Value')
     set(handles.btnTypBioOpt,'Enable','on');
 else
@@ -972,7 +981,8 @@ jDesktop = com.mathworks.mde.desk.MLDesktop.getInstance;
 jCmdWin = jDesktop.getClient('Command Window');
 jTextArea = jCmdWin.getComponent(0).getViewport.getView;
 cwText = char(jTextArea.getText);
-set(handles.listBoxCmd,'String',cwText);
+C = strsplit(cwText,'\n');
+set(handles.listBoxCmd,'String',C);
 numLines = size(get(handles.listBoxCmd,'String'),1);
 if numLines>7
     set(handles.listBoxCmd, 'ListBoxTop', numLines-7);
@@ -1289,7 +1299,7 @@ end
 function setCstTable(handles,cst)
 
 
-columnname = {'VOI','VOI Type','Overlap','Obj Func','Penalty','Parameters'};
+columnname = {'VOI','VOI Type','Priority','Obj Func','Penalty','Parameter'};
 columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
        {'square underdosing','square overdosing','square deviation', 'mean', 'EUD'},...
        'numeric','numeric'};
@@ -1477,7 +1487,7 @@ data{sEnd+1,3} = 2;
 data{sEnd+1,4} = 'Select obj func';
 set(handles.uiTable,'data',data);
 
-handles.State=1;
+%handles.State=1;
 guidata(hObject,handles);
 UpdateState(handles);
 
@@ -1540,16 +1550,17 @@ else
 end
 
 %% if VOI, VOI Type or Overlap was changed --> change state
-if eventdata.Indices(2) == 1 || eventdata.Indices(2) == 2 ...
-        || eventdata.Indices(2) == 3
-    handles.State=1;
-    handles.TableChanged = true;
-else
-    if handles.State ==3 && handles.TableChanged == false
-        handles.State=2;
+if ~strcmp(eventdata.NewData,eventdata.PreviousData)
+    if eventdata.Indices(2) == 1 || eventdata.Indices(2) == 2 ...
+            || eventdata.Indices(2) == 3
+        handles.State=1;
+        handles.TableChanged = true;
+    else
+        if handles.State ==3 && handles.TableChanged == false
+            handles.State=2;
+        end
     end
 end
-
 %% if VOI Type was changed -> check if objective function still makes sense
 if eventdata.Indices(2) == 2
    
@@ -1626,8 +1637,16 @@ if isnan(eventdata.NewData)
     data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
 end
 
+%% check if current obj function is a second obj function
+if eventdata.Indices(2) == 1
+    cst=evalin('base','cst');
+    if sum(strcmp(data(:,1),eventdata.NewData))>1 && sum(strcmp(cst(:,2),eventdata.NewData))>0
+          handles.State=2;
+    end
+end
+
 set(handles.txtInfo,'String','plan changed');
-set(handles.uiTable,'data',data)
+set(handles.uiTable,'data',data);
 guidata(hObject, handles);
 UpdateState(handles);
 
@@ -1961,7 +1980,7 @@ function btnTypBioOpt_Callback(hObject, eventdata, handles)
 % hObject    handle to btnTypBioOpt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+getPln();
 if strcmp(get(hObject,'String'),'effect')
     set(hObject,'String','RBExD');
 else
@@ -1974,14 +1993,20 @@ function btnSequencing_Callback(hObject, eventdata, handles)
 % hObject    handle to btnSequencing (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-  StratificationLevel = parseStringAsNum(get(handles.editSequencingLevel,'String'));
+StratificationLevel = parseStringAsNum(get(handles.editSequencingLevel,'String'));
 
-  resultGUI=evalin('base','resultGUI');
+resultGUI=evalin('base','resultGUI');
   
-  Sequencing = matRad_engelLeafSequencing(resultGUI.w,evalin('base','stf'),StratificationLevel,1);
-  %Sequencing = matRad_xiaLeafSequencing(resultGUI.w,evalin('base','stf'),StratificationLevel,1);
-    
-  assignin('base','Sequencing',Sequencing);
+
+Sequencing = matRad_engelLeafSequencing(resultGUI.w,evalin('base','stf'),StratificationLevel,1);
+%Sequencing = matRad_xiaLeafSequencing(resultGUI.w,evalin('base','stf'),StratificationLevel,1);
+doseCube = matRad_mxCalcDose(evalin('base','dij'),Sequencing.w,evalin('base','cst'));  
+resultGUI.(['Sequencing' num2str(StratificationLevel)])=doseCube.physicalDose;
+assignin('base','Sequencing',Sequencing);
+assignin('base','resultGUI',resultGUI);
+guidata(hObject,handles);
+UpdatePlot(handles);
+UpdateState(handles);
 
   
 
