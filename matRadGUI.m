@@ -2000,7 +2000,7 @@ function btnTypBioOpt_Callback(hObject, eventdata, handles)
 % hObject    handle to btnTypBioOpt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-getPln();
+getPln(handles);
 if strcmp(get(hObject,'String'),'effect')
     set(hObject,'String','RBExD');
 else
