@@ -1497,22 +1497,24 @@ function btnuiTableDel_Callback(hObject, eventdata, handles)
 % hObject    handle to btnuiTableDel (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-data = get(handles.uiTable, 'data');
-Index = get(handles.uiTable,'UserData');
-mask = (1:size(data,1))';
-mask(Index(:,1))=[];
+try
+    data = get(handles.uiTable, 'data');
+    Index = get(handles.uiTable,'UserData');
+    mask = (1:size(data,1))';
+    mask(Index(:,1))=[];
 
-if size(data,1)==1
-    handles.State=1;
+    if size(data,1)==1
+        handles.State=1;
+    end
+
+    data=data(mask,:);
+    set(handles.uiTable,'data',data);
+
+
+    guidata(hObject,handles);
+    UpdateState(handles);
+catch
 end
-
-data=data(mask,:);
-set(handles.uiTable,'data',data);
-
-
-guidata(hObject,handles);
-UpdateState(handles);
-
 % --- Executes when selected cell(s) is changed in uiTable.
 function uiTable_CellSelectionCallback(hObject, eventdata, handles)
 % hObject    handle to uiTable (see GCBO)
