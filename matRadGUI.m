@@ -275,7 +275,7 @@ end
 handles.plane = get(handles.popupPlane,'value');
 if handles.State >0
      set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-            'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
+            'Value',round(size(ct.cube,handles.plane)/2),...
             'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
 end
 guidata(hObject,handles);
@@ -505,9 +505,19 @@ pause(0.3);
 if ~getCstTable(handles);
     return
 end
-%% read plan from gui and save it to workspace
+% read plan from gui and save it to workspace
 getPln(handles);
-%% generate steering file
+
+% get default iso center as center of gravity of all targets if not
+% already defined
+pln = evalin('base','pln');
+if ~isfield(pln,'isoCenter')
+    warning('no iso center set - using center of gravity of all targets');
+    pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
+    assignin('base','pln',pln);
+end
+
+% generate steering file
 stf = matRad_generateStf(evalin('base','ct'),...
                                  evalin('base','cst'),...
                                  evalin('base','pln'));
@@ -1015,15 +1025,9 @@ handles.plane = get(handles.popupPlane,'value');
 try
     ct = evalin('base', 'ct');
 
-    if exist('pln','var')
-        set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-            'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
+    set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
+            'Value',round(size(ct.cube,handles.plane)/2),...
             'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
-    else
-        set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-            'Value',round(size(ct,handles.plane)/2),...
-            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
-    end    
     
 catch
 end
@@ -1784,7 +1788,6 @@ end
     
 pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'));
 pln.voxelDimensions = size(ct.cube);
-pln.isoCenter       = matRad_getIsoCenter(evalin('base','cst'),ct,0);
 handles.pln = pln;
 assignin('base','pln',pln);
 
