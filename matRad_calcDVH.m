@@ -63,7 +63,7 @@ colorMx    = colorMx(1:floor(64/numOfVois):64,:);
 lineStyles = {'-',':','--','-.'};
 
 n = 1000;
-if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0
+if sum(strcmp(fieldnames(result),'RBEWeightedDose')) > 0
     dvhPoints = linspace(0,max(result.RBEWeightedDose(:))*1.05,n);
 else
     dvhPoints = linspace(0,max(result.physicalDose(:))*1.05,n);
@@ -74,7 +74,7 @@ for i = 1:numOfVois
 
     indices     = cst{i,4};
     numOfVoxels = numel(indices);
-    if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0
+    if sum(strcmp(fieldnames(result),'RBEWeightedDose')) > 0
         doseInVoi   = result.RBEWeightedDose(indices);   
     else
         doseInVoi   = result.physicalDose(indices);
@@ -107,7 +107,7 @@ set(gca,'LineWidth',1.5,'FontSize',fontSizeValue);
 set(gcf,'Color','w');
 ylabel('Volume [%]','FontSize',fontSizeValue)
 
-if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0
+if sum(strcmp(fieldnames(result),'RBEWeightedDose')) > 0
     xlabel('RBE x Dose [GyE]','FontSize',fontSizeValue)
 else
     xlabel('Dose [Gy]','FontSize',fontSizeValue)
