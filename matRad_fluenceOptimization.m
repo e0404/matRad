@@ -58,6 +58,7 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
     dij.ax  = zeros(dij.numOfVoxels,1);
     dij.bx  = zeros(dij.numOfVoxels,1);
     dij.Smax=zeros(dij.numOfVoxels,1);
+    
     for i = 1:size(cst,1)
         for j = 1:size(cst{i,6},2)
             % check if only allowed objectives were defined
@@ -106,6 +107,14 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
     end
   
 else
+   %% adjust internally for fractionation 
+    for i = 1:size(cst,1)
+        for j = 1:size(cst{i,6},2)
+            if ~strcmp(cst{i,6}(j).type,'mean') && ~strcmp(cst{i,6}(j).type,'EUD')
+              cst{i,6}(j).parameter(2) = cst{i,6}(j).parameter(2)/pln.numOfFractions;
+            end
+        end
+    end
     % set objective function
     objFunc =  @(x) matRad_objFunc(x,dij,cst);
     
