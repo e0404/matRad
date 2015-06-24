@@ -159,6 +159,7 @@ end
 %per default the first beam is selected for the profile plot
 handles.SelectedBeam=1;
 handles.plane = get(handles.popupPlane,'Value');
+handles.DijCalcWarning = false;
 
 if handles.State > 0
     % set slice slider
@@ -237,9 +238,12 @@ catch
 end
 
 % read new data
+try 
 [FileName, FilePath] = uigetfile;
 load([FilePath FileName]);
-
+catch
+    return
+end
 setCstTable(handles,cst);
 
 handles.TableChanged = false;
@@ -275,7 +279,7 @@ end
 handles.plane = get(handles.popupPlane,'value');
 if handles.State >0
      set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-            'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
+            'Value',round(size(ct.cube,handles.plane)/2),...
             'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
 end
 guidata(hObject,handles);
@@ -408,7 +412,7 @@ function popupRadMode_Callback(hObject, eventdata, handles)
 % hObject    handle to popupRadMode (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-getPln(handles);
+
 contents = cellstr(get(hObject,'String')); 
 if sum(strcmp({'photons','protons'},contents{get(hObject,'Value')}))>0
     set(handles.radbtnBioOpt,'Value',0);
@@ -426,6 +430,7 @@ if handles.State>0 && ~strcmp(contents(get(hObject,'Value')),pln.radiationMode)
     UpdateState(handles);
     guidata(hObject,handles);
 end
+getPln(handles);
 
 % --- Executes during object creation, after setting all properties.
 function popupRadMode_CreateFcn(hObject, eventdata, handles)
@@ -450,7 +455,6 @@ function editFraction_Callback(hObject, eventdata, handles)
 %        str2double(get(hObject,'String')) returns contents of editFraction as a double
 getPln(handles);
 if handles.State>0
-    handles.State=1;
     UpdateState(handles);
     guidata(hObject,handles);
 end
@@ -501,13 +505,24 @@ function btnCalcDose_Callback(hObject, eventdata, handles)
 pause(0.1);
 uiTable_CellEditCallback(hObject,[],handles);
 pause(0.3);
+
 %% get cst from table
 if ~getCstTable(handles);
     return
 end
-%% read plan from gui and save it to workspace
+% read plan from gui and save it to workspace
 getPln(handles);
-%% generate steering file
+
+% get default iso center as center of gravity of all targets if not
+% already defined
+pln = evalin('base','pln');
+if ~isfield(pln,'isoCenter')
+    warning('no iso center set - using center of gravity of all targets');
+    pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
+    assignin('base','pln',pln);
+end
+
+% generate steering file
 stf = matRad_generateStf(evalin('base','ct'),...
                                  evalin('base','cst'),...
                                  evalin('base','pln'));
@@ -1015,15 +1030,9 @@ handles.plane = get(handles.popupPlane,'value');
 try
     ct = evalin('base', 'ct');
 
-    if exist('pln','var')
-        set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-            'Value',round(pln.isoCenter(handles.plane)/ct.resolution(handles.plane)),...
+    set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
+            'Value',round(size(ct.cube,handles.plane)/2),...
             'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
-    else
-        set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-            'Value',round(size(ct,handles.plane)/2),...
-            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
-    end    
     
 catch
 end
@@ -1102,6 +1111,25 @@ function btnOptimize_Callback(hObject, eventdata, handles)
 pause(0.1);
 uiTable_CellEditCallback(hObject,[],handles);
 pause(0.3);
+
+
+if handles.DijCalcWarning == true
+    
+    choice = questdlg('Overlap priorites of OAR constraints have been edited, a new OAR VOI was added or a critical row constraint was deleted. A new Dij calculation might be necessary.', ...
+	'Title','Cancel','Calculate Dij then Optimize','Optimze directly','Optimze directly');
+    
+    switch choice
+        case 'Cancel'
+            return
+        case 'Calculate Dij then Optimize'
+            handles.DijCalcWarning =false;
+            btnCalcDose_Callback(hObject, eventdata, handles)      
+        case 'Optimze directly'
+            handles.DijCalcWarning =false;       
+    end
+end
+
+
 % get optimization parameters from GUI
 Param.numOfIter = str2num(get(handles.editNumIter,'String'));
 Param.prec = str2num(get(handles.txtPrecisionOutput,'String'));
@@ -1497,24 +1525,30 @@ function btnuiTableDel_Callback(hObject, eventdata, handles)
 % hObject    handle to btnuiTableDel (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-try
-    data = get(handles.uiTable, 'data');
-    Index = get(handles.uiTable,'UserData');
-    mask = (1:size(data,1))';
-    mask(Index(:,1))=[];
-
-    if size(data,1)==1
-        handles.State=1;
-    end
-
-    data=data(mask,:);
-    set(handles.uiTable,'data',data);
-
-
-    guidata(hObject,handles);
-    UpdateState(handles);
-catch
+data = get(handles.uiTable, 'data');
+Index = get(handles.uiTable,'UserData');
+mask = (1:size(data,1))';
+mask(Index(:,1))=[];
+cst = evalin('base','cst');
+% if all rows have been deleted or a target voi was removed
+if size(data,1)==1 || strcmp(data(Index(1),2),'TARGET')
+    handles.State=1;
 end
+
+try
+    Idx = find(strcmp(cst(:,2),data(Index(1),1)));
+    % if OAR was removed then show a warning 
+    if strcmp(data(Index(1),2),'OAR') && length(cst{Idx,6})<=1
+      handles.DijCalcWarning =true;
+    end
+catch 
+end
+data=data(mask,:);
+set(handles.uiTable,'data',data);
+guidata(hObject,handles);
+UpdateState(handles);
+btnTableSave_Callback(hObject, eventdata, handles);
+
 % --- Executes when selected cell(s) is changed in uiTable.
 function uiTable_CellSelectionCallback(hObject, eventdata, handles)
 % hObject    handle to uiTable (see GCBO)
@@ -1538,13 +1572,14 @@ function uiTable_CellEditCallback(hObject, eventdata, handles)
 %	Error: error string when failed to convert EditData to appropriate value for Data
 % handles    structure with handles and user data (see GUIDATA)
 
+
 % get table data and current index of cell
 if isempty(eventdata)
     data =get(handles.uiTable,'Data');
     Index = get(handles.uiTable,'UserData');
 
     if ~isempty(Index) && size(Index,1)==1
-        % if this callback was invoked by calculate dij, eventdata is empty
+        % if this callback was invoked by calculate dij button, eventdata is empty
         % and needs to be set manually
         try 
             % if row gots deleted then index is pointing to non existing
@@ -1566,24 +1601,35 @@ else
     data = get(hObject,'Data');
 end
 
-%% if VOI, VOI Type or Overlap was changed --> change state
+%% if VOI, VOI Type or Overlap was changed
 if ~strcmp(eventdata.NewData,eventdata.PreviousData)
     if eventdata.Indices(2) == 1 || eventdata.Indices(2) == 2 ...
             || eventdata.Indices(2) == 3
         
         handles.TableChanged = true;
-        %% if overlap changed
-         if eventdata.Indices(2) == 3
+          %% if a new target is defined set state to one
+         if eventdata.Indices(2) == 2 && strcmp('TARGET',eventdata.NewData)
               handles.State=1;
          end
         
-        cst=evalin('base','cst');
-         if sum(strcmp(cst(:,2),eventdata.NewData))==0 && ~strcmp('Select VOI Type',eventdata.PreviousData) 
+        %% if overlap priority of target changed
+         if eventdata.Indices(2) == 3 && strcmp('TARGET',data(eventdata.Indices(1),2))
               handles.State=1;
          end
+         
+        %% if overlap priority of OAR changed
+         if eventdata.Indices(2) == 3 && strcmp('OAR',data(eventdata.Indices(1),2))
+              handles.DijCalcWarning = true;
+         end
+         
+         %% check if new OAR was added
+         cst=evalin('base','cst');
+         Idx = ~cellfun('isempty',cst(:,6));
+         
+         if sum(strcmp(cst(Idx,2),eventdata.NewData))==0 
+             handles.DijCalcWarning = true;
+         end
         
-
-
         
     else
         if handles.State ==3 && handles.TableChanged == false
@@ -1629,7 +1675,8 @@ end
 
 %% check if input is a valid
 %check if overlap,penalty and and parameters are numbers
-if eventdata.Indices(2) == 3  || eventdata.Indices(2) == 5 || eventdata.Indices(2) == 6
+if eventdata.Indices(2) == 3  || eventdata.Indices(2) == 5 || eventdata.Indices(2) == 6 ...
+        && ~isempty(eventdata.NewData)
     if CheckValidity(eventdata.NewData) == false
             data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
     end
@@ -1764,8 +1811,8 @@ function getPln(handles)
 
 pln.SAD             = parseStringAsNum(get(handles.editSAD,'String')); %[mm]
 pln.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String')); % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String')); % [°]
-pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String')); % [°]
+pln.gantryAngles    = parseAnglesAsNum(get(handles.editGantryAngle,'String')); % [°]
+pln.couchAngles     = parseAnglesAsNum(get(handles.editCouchAngle,'String')); % [°]
 
 if length(pln.gantryAngles) ~= length(pln.couchAngles) 
   warndlg('number of gantryAngles != number of couchAngles'); 
@@ -1786,25 +1833,34 @@ end
     
 pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'));
 pln.voxelDimensions = size(ct.cube);
-pln.isoCenter       = matRad_getIsoCenter(evalin('base','cst'),ct,0);
+
+cst= evalin('base','cst');
+if sum(strcmp('TARGET',cst(:,3)))>0
+   pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
+end
+
 handles.pln = pln;
 assignin('base','pln',pln);
 
-
 function Number = parseStringAsNum(string)
+ Number = str2num(string);
+ if isempty(Number)
+     warndlg('could not parse all plan parameters'); 
+ end
+
+function Angles = parseAnglesAsNum(string)
 try
-    CellGantryAngles    = strsplit(string);
+    CellAngles = strsplit(string);
     Cnt = 1;
     
-    for i = 1:length(CellGantryAngles)
-        
-        if ~strcmp(CellGantryAngles{1,i},'')
-            Number{Cnt} = str2num(CellGantryAngles{1,i});
+    for i = 1:length(CellAngles)
+        if ~strcmp(CellAngles{1,i},'')
+            Angles{Cnt} = str2num(CellAngles{1,i});
             Cnt = Cnt +1;
         end
     end
     
-    Number = cell2mat(Number); 
+    Angles = cell2mat(Angles); 
 
 catch
       warndlg('could not parse all plan parameters'); 

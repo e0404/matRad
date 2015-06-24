@@ -46,7 +46,7 @@ function dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,baseData)
 % interpolate sigma
 sigma = interp1(baseData.depths,baseData.sigma,radDepths);
 
-% interpolate sigma
+% interpolate depth dose
 Z = interp1(baseData.depths,baseData.Z,radDepths);
 
 % calculate dose
