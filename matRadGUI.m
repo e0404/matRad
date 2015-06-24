@@ -88,6 +88,15 @@ axes(handles.axesDKFZ)
 [im, ~, alpha] = imread(['dicomImport' filesep 'DKFZ_logo.png']);
 f = imshow(im);
 set(f, 'AlphaData', alpha);
+
+vChar = get(handles.editGantryAngle,'String');
+if strcmp(vChar(1,1),'0') && length(vChar)==6
+    set(handles.editGantryAngle,'String','0');
+end
+vChar = get(handles.editCouchAngle,'String');
+if strcmp(vChar(1,1),'0') && length(vChar)==3
+    set(handles.editCouchAngle,'String','0')
+end
 %% 
 % handles.State=0   no data available
 % handles.State=1   ct cst and pln available; ready for dose calculation
@@ -513,9 +522,16 @@ end
 % read plan from gui and save it to workspace
 getPln(handles);
 
+
+
 % get default iso center as center of gravity of all targets if not
 % already defined
 pln = evalin('base','pln');
+
+if length(pln.gantryAngles) ~= length(pln.couchAngles) 
+  warndlg('number of gantryAngles != number of couchAngles'); 
+end
+
 if ~isfield(pln,'isoCenter')
     warning('no iso center set - using center of gravity of all targets');
     pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
@@ -1811,17 +1827,15 @@ function getPln(handles)
 
 pln.SAD             = parseStringAsNum(get(handles.editSAD,'String')); %[mm]
 pln.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String')); % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = parseAnglesAsNum(get(handles.editGantryAngle,'String')); % [°]
-pln.couchAngles     = parseAnglesAsNum(get(handles.editCouchAngle,'String')); % [°]
-
-if length(pln.gantryAngles) ~= length(pln.couchAngles) 
-  warndlg('number of gantryAngles != number of couchAngles'); 
-end
-
+pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String')); % [°]
+pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String')); % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
-ct=evalin('base','ct');
-pln.numOfVoxels     = numel(ct.cube);
-pln.voxelDimensions = size(ct.cube);
+try
+    ct=evalin('base','ct');
+    pln.numOfVoxels     = numel(ct.cube);
+    pln.voxelDimensions = size(ct.cube);
+catch
+end
 contents                    = get(handles.popupRadMode,'String'); 
 pln.radiationMode   =  contents{get(handles.popupRadMode,'Value')}; % either photons / protons / carbon
 
@@ -1832,39 +1846,22 @@ else
 end
     
 pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'));
-pln.voxelDimensions = size(ct.cube);
 
-cst= evalin('base','cst');
-if sum(strcmp('TARGET',cst(:,3)))>0
-   pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
+try
+    cst= evalin('base','cst');
+    if sum(strcmp('TARGET',cst(:,3)))>0
+       pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
+    end
+    catch
 end
-
 handles.pln = pln;
 assignin('base','pln',pln);
 
-function Number = parseStringAsNum(string)
- Number = str2num(string);
+function Number = parseStringAsNum(stringIn)
+ Number = str2num(stringIn);
  if isempty(Number)
      warndlg('could not parse all plan parameters'); 
  end
-
-function Angles = parseAnglesAsNum(string)
-try
-    CellAngles = strsplit(string);
-    Cnt = 1;
-    
-    for i = 1:length(CellAngles)
-        if ~strcmp(CellAngles{1,i},'')
-            Angles{Cnt} = str2num(CellAngles{1,i});
-            Cnt = Cnt +1;
-        end
-    end
-    
-    Angles = cell2mat(Angles); 
-
-catch
-      warndlg('could not parse all plan parameters'); 
-end
 
 % --- Executes on button press in btnTableSave.
 function btnTableSave_Callback(hObject, eventdata, handles)
@@ -1873,7 +1870,6 @@ function btnTableSave_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 getCstTable(handles);
 getPln(handles);
-
 
 
 % --- Executes on button press in btnDVH.
