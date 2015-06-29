@@ -48,6 +48,10 @@ if nargin < 3
     visBool = 0;
 end
 
+%check if one target is defined
+if sum(strcmp(cst(:,3),'TARGET'))== 0
+    error('matRad_getIsoCenter: no VOIs is marked as TARGET')
+end
 % Initializes V variable.
 V = [];
 

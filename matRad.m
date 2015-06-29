@@ -49,7 +49,7 @@ pln.numOfVoxels     = numel(ct.cube);
 pln.voxelDimensions = size(ct.cube);
 pln.radiationMode   = 'photons'; % either photons / protons / carbon
 pln.bioOptimization = 'none'; % none: physical optimization; effect: effect-based optimization; RBExD: optimization of RBE-weighted dose
-pln.numOfFractions  = 30;
+pln.numOfFractions  = 1;
 
 %% initial visualization and change objective function settings if desired
 matRadGUI
