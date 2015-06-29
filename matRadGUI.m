@@ -1023,15 +1023,6 @@ end
 
 
 
-
-
-
-
-
-
-
-
-
 % --- Executes on selection change in popupPlane.
 function popupPlane_Callback(hObject, eventdata, handles)
 % hObject    handle to popupPlane (see GCBO)
@@ -1045,15 +1036,17 @@ function popupPlane_Callback(hObject, eventdata, handles)
 handles.plane = get(handles.popupPlane,'value');
 try
     ct = evalin('base', 'ct');
-
-    set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-            'Value',round(size(ct.cube,handles.plane)/2),...
-            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
-    
+    if handles.State<3
+        set(handles.sliderSlice,'Value',round(size(ct.cube,handles.plane)/2));
+    else
+        pln = evalin('base','pln');
+        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution(1,handles.plane)));
+    end
 catch
 end
         
-UpdatePlot(handles)
+UpdatePlot(handles);
+guidata(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
 function popupPlane_CreateFcn(hObject, eventdata, handles)
@@ -1151,8 +1144,13 @@ Param.numOfIter = str2num(get(handles.editNumIter,'String'));
 Param.prec = str2num(get(handles.txtPrecisionOutput,'String'));
 OptType = get(handles.btnTypBioOpt,'String');
 % optimize
-resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'),Param,OptType);
+pln = evalin('base','pln');
+ct = evalin('base','ct');
+resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln,1,Param,OptType);
 assignin('base','resultGUI',resultGUI);
+
+set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution(1,handles.plane)));
+
 %set some values
 handles.State=3;
 handles.SelectedDisplayOptionIdx=1;
@@ -1160,8 +1158,8 @@ handles.SelectedDisplayOption='Dose';
 handles.SelectedBeam=1;
 UpdatePlot(handles);
 UpdateState(handles);
-
 guidata(hObject,handles);
+
 
 
 % the function CheckValidityPln checks if the provided plan is valid so

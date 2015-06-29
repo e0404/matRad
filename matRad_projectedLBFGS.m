@@ -1,4 +1,4 @@
-function optResult = matRad_projectedLBFGS(objFunc,wInit,varargin)
+function optResult = matRad_projectedLBFGS(objFunc,wInit,visBool,varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % projected L-BFGS optimizer including a positivity constraints on the
 % optimization variable
@@ -9,6 +9,8 @@ function optResult = matRad_projectedLBFGS(objFunc,wInit,varargin)
 % input
 %   objFunc:    objective function to be optimized
 %   wInit:      start solution for optimizer
+%   visBool:    plots the objective function value in dependence of the
+%               number of iterations
 %   varargin:   optional: number of iterations and precision
 %
 % output
@@ -55,7 +57,12 @@ else
 end
 
 numOfParameters = numel(wInit);
-
+% plot objective function output
+if visBool
+    figOpt=figure('Name','Progress of Optimization','NumberTitle','off');
+    hold on, grid on, grid minor, xlabel('# iterations','Fontsize',14),ylabel('objective value','Fontsize',14)
+    title('Progress of Optimization','LineWidth',14)
+end
 % initialize LBFGS optimizer
 historyCounter = 0;
 mem            = 10;        % number of past gradients and function values used for inverse hessian contruction
@@ -171,12 +178,18 @@ while continueOpt == 1
     end
     
     fprintf(1,'Iteration %d: alpha = %f, Obj func = %f\n',iter,alpha,objFuncValue(1));
-    
+
     continueOpt = (iter < numOfIter && abs((objFuncValue(2)-objFuncValue(1))/objFuncValue(1))>prec) || historyCounter < 2;
     if  objFuncValue(2)== 0 && objFuncValue(1) == 0 
         continueOpt = 0;
         disp('!!! please review your constraints !!!')
     end
+    
+    if visBool
+        objFuncValues{iter}=objFuncValue(1);
+        plot(1:1:iter,cell2mat(objFuncValues),'b','Linewidth',3); drawnow
+    end
+    
 end
 
 fprintf(['\n' num2str(iter) ' iteration(s) performed to converge\n'])

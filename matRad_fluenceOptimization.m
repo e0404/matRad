@@ -1,4 +1,4 @@
-function optResult = matRad_fluenceOptimization(dij,cst,pln,varargin)
+function optResult = matRad_fluenceOptimization(dij,cst,pln,visBool,varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
@@ -9,6 +9,8 @@ function optResult = matRad_fluenceOptimization(dij,cst,pln,varargin)
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
+%   visBool:    plots the objective function value in dependence of the
+%               number of iterations
 %   varargin:   optinal: convergence criteria for optimization and biological
 %               optimization mode
 %
@@ -123,7 +125,7 @@ end
 %matRad_verifyGradient(objFunc,dij.totalNumOfBixels);
 
 % minimize objetive function
-optResult = matRad_projectedLBFGS(objFunc,wInit,varargin);
+optResult = matRad_projectedLBFGS(objFunc,wInit,visBool,varargin);
 
 % calc dose and reshape from 1D vector to 2D array
 optResult.physicalDose = reshape(dij.physicalDose*optResult.w,dij.dimensions);
