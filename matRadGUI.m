@@ -1825,10 +1825,10 @@ end
 % get pln file form gui     
 function getPln(handles)
 
-pln.SAD             = parseStringAsNum(get(handles.editSAD,'String')); %[mm]
-pln.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String')); % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String')); % [°]
-pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String')); % [°]
+pln.SAD             = parseStringAsNum(get(handles.editSAD,'String'),false); %[mm]
+pln.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
+pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [°]
+pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 try
     ct=evalin('base','ct');
@@ -1845,7 +1845,7 @@ else
      pln.bioOptimization = 'none';
 end
     
-pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'));
+pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'),false);
 
 try
     cst= evalin('base','cst');
@@ -1857,11 +1857,11 @@ end
 handles.pln = pln;
 assignin('base','pln',pln);
 
-function Number = parseStringAsNum(stringIn)
+function Number = parseStringAsNum(stringIn,isVector)
  Number = str2num(stringIn);
- if isempty(Number)
+ if isempty(Number) || length(Number)>1 && ~isVector
      warndlg('could not parse all plan parameters'); 
- end
+end
 
 % --- Executes on button press in btnTableSave.
 function btnTableSave_Callback(hObject, eventdata, handles)
