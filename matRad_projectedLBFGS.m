@@ -61,7 +61,8 @@ numOfParameters = numel(wInit);
 if visBool
     figOpt=figure('Name','Progress of Optimization','NumberTitle','off');
     hold on, grid on, grid minor, xlabel('# iterations','Fontsize',14),ylabel('objective value','Fontsize',14)
-    title('Progress of Optimization','LineWidth',14)
+    set(gca,'YScale','log');
+    title('Progress of Optimization','LineWidth',14),
 end
 % initialize LBFGS optimizer
 historyCounter = 0;
