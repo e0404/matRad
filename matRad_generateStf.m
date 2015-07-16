@@ -67,13 +67,20 @@ end
 % Remove double voxels
 V = unique(V);
 
+% generate voi cube
+voi    = zeros(size(ct.cube));
+voi(V) = 1;
+    
 % add margin
 addmarginBool = 1;
 if addmarginBool
-    voi    = zeros(size(ct.cube));
-    voi(V) = 1;
-    voi    = matRad_addMargin(voi,ct.resolution,ct.resolution,true);
-    V      = find(voi>0);
+    voi = matRad_addMargin(voi,ct.resolution,ct.resolution,true);
+    V   = find(voi>0);
+end
+
+% throw error message if no target is found
+if isempty(V)
+    error('Could not find target');
 end
 
 % prepare structures necessary for particles

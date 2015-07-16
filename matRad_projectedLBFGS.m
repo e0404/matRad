@@ -80,11 +80,13 @@ a_k            = ones(1,mem-1);
 
 % 1st calculation of objective function and gradient
 [objFuncValue(1),dx(:,1)] = objFunc(wInit);
-objFuncValue(2) = 2*objFuncValue(1);
+objFuncValue(2:end) = 2*objFuncValue(1);
 
 % convergence if change in objective function smaller than prec or maximum
 % number of iteration reached. no convergence if lbfgs has just been rest
-continueOpt = 1;
+continueOpt    = 1;
+convergenceLag = 1;
+
 while continueOpt == 1
     % implementation of L-BFGS according to
     % http://en.wikipedia.org/wiki/L-BFGS
@@ -180,10 +182,11 @@ while continueOpt == 1
     
     fprintf(1,'Iteration %d: alpha = %f, Obj func = %f\n',iter,alpha,objFuncValue(1));
 
-    continueOpt = (iter < numOfIter && abs((objFuncValue(2)-objFuncValue(1))/objFuncValue(1))>prec) || historyCounter < 2;
+    continueOpt = (iter < numOfIter && abs((objFuncValue(1+convergenceLag)-objFuncValue(1))/objFuncValue(1))>prec) || historyCounter < 2 ;
+    
     if  objFuncValue(2)== 0 && objFuncValue(1) == 0 
         continueOpt = 0;
-        disp('!!! please review your constraints !!!')
+        disp('objective function reached theoretical minimum f = 0 - this is fishy. please double check your optimization objectives.')
     end
     
     if visBool

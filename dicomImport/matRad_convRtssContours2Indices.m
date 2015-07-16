@@ -58,7 +58,7 @@ for i = 1:size(structure.item,2)
         dicomCtSlicePos = unique(structure.item(i).points(:,3));
     
         round2 = @(a,b) round(a*10^b)/10^b;
-        dicomCtSliceThickness = ct.dicomInfo.SliceThickness(round2(ct.dicomInfo.SlicePositions,2)==dicomCtSlicePos);
+        dicomCtSliceThickness = ct.dicomInfo.SliceThickness(round2(ct.dicomInfo.SlicePositions,3)==round2(dicomCtSlicePos,3));
 
         binIn = inpolygon(X,Y,structure.item(i).points(:,1),structure.item(i).points(:,2));
 

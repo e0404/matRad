@@ -124,7 +124,7 @@ end
 
 %% creation of ct-cube
 fprintf('reading slices...')
-origCt = zeros(info(1).Width, info(1).Height, numOfSlices);
+origCt = zeros(info(1).Height, info(1).Width, numOfSlices);
 for i = 1:numOfSlices
     currentFilename = ctList{i};
     [currentImage, map] = dicomread(currentFilename);
