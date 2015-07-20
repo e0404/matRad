@@ -68,14 +68,17 @@ if visBool
         if ~isempty(IdxHandle) &&  length(IdxHandle) > 1
             figOpt = figHandles(IdxHandle);
             AxesInfigOpt = findall(figOpt,'type','axes');
-            cla(AxesInfigOpt,'reset');
+            set(AxesInfigOpt,'NextPlot', 'replacechildren')
+            delete(AxesInfigOpt.Children);
             hold on, grid on, grid minor,
         else
             figOpt=figure('Name','Progress of Optimization','NumberTitle','off');
             hold on, grid on, grid minor,
             AxesInfigOpt = findall(figOpt,'type','axes');
         end 
-       
+        set(AxesInfigOpt,'YScale','log');
+        title(AxesInfigOpt,'Progress of Optimization','LineWidth',14),
+        xlabel(AxesInfigOpt,'# iterations','Fontsize',14),ylabel(AxesInfigOpt,'objective value','Fontsize',14)
     catch 
         warning('couldnt initialize figure to plot the objective value')
     end
@@ -210,9 +213,6 @@ while continueOpt == 1
         objFuncValues{iter}=objFuncValue(1);
         axes(AxesInfigOpt)
         plot(AxesInfigOpt,1:1:iter,cell2mat(objFuncValues),'b','Linewidth',3);
-        set(AxesInfigOpt,'YScale','log');
-        title(AxesInfigOpt,'Progress of Optimization','LineWidth',14),
-        hold on, grid on, grid minor, xlabel('# iterations','Fontsize',14),ylabel('objective value','Fontsize',14)
         drawnow
     end
     
