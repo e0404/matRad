@@ -59,10 +59,27 @@ end
 numOfParameters = numel(wInit);
 % plot objective function output
 if visBool
-    figOpt=figure('Name','Progress of Optimization','NumberTitle','off');
-    hold on, grid on, grid minor, xlabel('# iterations','Fontsize',14),ylabel('objective value','Fontsize',14)
-    set(gca,'YScale','log');
-    title('Progress of Optimization','LineWidth',14),
+    try
+        figHandles = get(0,'Children');
+        IdxHandle = [];
+        if ~isempty(figHandles)
+            IdxHandle = strcmp({figHandles(:).Name},'Progress of Optimization');
+        end
+        if ~isempty(IdxHandle) &&  length(IdxHandle) > 1
+            figOpt = figHandles(IdxHandle);
+            AxesInfigOpt = findall(figOpt,'type','axes');
+            cla(AxesInfigOpt,'reset');
+            hold on, grid on, grid minor,
+        else
+            figOpt=figure('Name','Progress of Optimization','NumberTitle','off');
+            hold on, grid on, grid minor,
+            AxesInfigOpt = findall(figOpt,'type','axes');
+        end 
+       
+    catch 
+        warning('couldnt initialize figure to plot the objective value')
+    end
+
 end
 % initialize LBFGS optimizer
 historyCounter = 0;
@@ -191,7 +208,12 @@ while continueOpt == 1
     
     if visBool
         objFuncValues{iter}=objFuncValue(1);
-        plot(1:1:iter,cell2mat(objFuncValues),'b','Linewidth',3); drawnow
+        axes(AxesInfigOpt)
+        plot(AxesInfigOpt,1:1:iter,cell2mat(objFuncValues),'b','Linewidth',3);
+        set(AxesInfigOpt,'YScale','log');
+        title(AxesInfigOpt,'Progress of Optimization','LineWidth',14),
+        hold on, grid on, grid minor, xlabel('# iterations','Fontsize',14),ylabel('objective value','Fontsize',14)
+        drawnow
     end
     
 end
