@@ -208,7 +208,7 @@ ct.dicomInfo.RescaleIntercept        = info(1).RescaleIntercept;
 
 % convert to water equivalent electron densities
 fprintf('\nconversion of ct-Cube to waterEqD...');
-ct.cube = matRad_calcWaterEqD(ct.cube,ct.dicomInfo.RescaleSlope,ct.dicomInfo.RescaleIntercept);
+ct = matRad_calcWaterEqD(ct);
 fprintf('finished!\n');
 
 end

@@ -1,4 +1,4 @@
-function ctEqD = matRad_calcWaterEqD(ct, slope, intercept)
+function ct = matRad_calcWaterEqD(ct)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to calculate the equivalent densities from a 
 % dicom ct that originally uses intensity values
@@ -67,23 +67,23 @@ function ctEqD = matRad_calcWaterEqD(ct, slope, intercept)
 
 % reshaping the cube produces real values, but for the conversion using the
 % LUT integer values are needed
-ctHU = int32(ct * slope + intercept);
+ctHU = int32(ct.cube * ct.dicomInfo.RescaleSlope + ct.dicomInfo.RescaleIntercept);
 
 %% conversion from HU to water equivalent density
-load('HU2waterEqD.mat'); % load LUT
+load hlutDefault.mat; % load LUT
 
 % Manual adjustments if ct data is corrupt. If some values are out of range
 % of the LUT, then these values are adjusted.
-ctHU(ctHU<-1024) = -1024;
-ctHU(ctHU>3071) = 3071;
+if sum(ctHU > max(hlut(:,1)) | ctHU < min(hlut(:,1)))>0
+    warning('projecting out of range HU values');
+    ctHU(ctHU<min(hlut(:,1))) = min(hlut(:,1));
+    ctHU(ctHU>max(hlut(:,1))) = max(hlut(:,1));
+end
 
-% execute conversion to waterEqT: 
-% LUT:| waterEqT  |   HU    |
-%     |   0       |  -1024  |
-%     |   0       |  -1023  |
-%     |  ...      |   ...   |
+% interpolate HU to relative electron density based on lookup table
+ct.cube = interp1(hlut(:,1),hlut(:,2),double(ctHU));
 
-% the first row corresponds to a HU-value of -1024 -> index = ctHU+1025
-ctEqD = reshape(HU2waterEqD(ctHU+1025,1),size(ctHU));
+% save hlut
+ct.hlut = hlut;
 
 end

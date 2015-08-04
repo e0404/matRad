@@ -98,6 +98,10 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     
     clear baseData;
     
+elseif strcmp(pln.radiationMode,'photons')
+    
+    load photonPencilBeamKernels_6MV;
+
 end
 
 % Convert linear indices to 3D voxel coordinates
@@ -229,7 +233,7 @@ for i = 1:length(pln.gantryAngles)
     elseif strcmp(stf(i).radiationMode,'photons')
         % set dummy values for photons
         for j = 1:stf(i).numOfRays
-            stf(i).ray(j).energy = NaN;
+            stf(i).ray(j).energy = energy;
             stf(i).numOfBixelsPerRay(j) = 1;
         end
     else

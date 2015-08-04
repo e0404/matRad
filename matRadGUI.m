@@ -81,12 +81,14 @@ handles.output = hObject;
 %show matrad logo
 axes(handles.axesLogo)
 [im, ~, alpha] = imread(['dicomImport' filesep 'matrad_logo.png']);
-f = imshow(im);
+f = image(im);
+axis equal off
 set(f, 'AlphaData', alpha);
 % show dkfz logo
 axes(handles.axesDKFZ)
 [im, ~, alpha] = imread(['dicomImport' filesep 'DKFZ_logo.png']);
-f = imshow(im);
+f = image(im);
+axis equal off;
 set(f, 'AlphaData', alpha);
 
 vChar = get(handles.editGantryAngle,'String');
