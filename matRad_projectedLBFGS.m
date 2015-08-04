@@ -63,13 +63,24 @@ if visBool
         figHandles = get(0,'Children');
         IdxHandle = [];
         if ~isempty(figHandles)
-            IdxHandle = strcmp({figHandles(:).Name},'Progress of Optimization');
+            v=version;
+            if str2num(v(1:3))>=8.5
+                IdxHandle = strcmp({figHandles(:).Name},'Progress of Optimization');
+            else
+                IdxHandle = strcmp(get(figHandles,'Name'),'Progress of Optimization');
+            end
         end
         if ~isempty(IdxHandle) &&  length(IdxHandle) > 1
             figOpt = figHandles(IdxHandle);
             AxesInfigOpt = findall(figOpt,'type','axes');
             set(AxesInfigOpt,'NextPlot', 'replacechildren')
-            delete(AxesInfigOpt.Children);
+            v=version;
+            if str2num(v(1:3))>=8.5
+                delete(AxesInfigOpt.Children);
+            else
+                children = get(AxesInfigOpt,'children');
+                delete(children);
+            end
             hold on, grid on, grid minor,
         else
             figOpt=figure('Name','Progress of Optimization','NumberTitle','off');
