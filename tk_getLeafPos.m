@@ -9,7 +9,7 @@ for k=1:size(shapeMap,1)
     % get one line at a time
     tempLine = shapeMap(k,:);
     
-    %% search for the coordinates of the right (Ix_r) and left (Ix_l) leaf
+    % search for the coordinates of the right (Ix_r) and left (Ix_l) leaf
         bixelSum = sum(tempLine(:));
     
         % 1. check if any bixel is open
@@ -44,11 +44,16 @@ for k=1:size(shapeMap,1)
             for l=2:dimX-1
                 if tempLine(l) == 1
                     Ix_l(k) = l-1;
-                    Ix_r(k) = l-1 + dimX;
-                    continue
-                end           
+                    Ix_r(k) = l-1 + bixelSum;
+                    break
+                end
             end               
     
 end
+
+% transform positions to positions around a center point
+% middleX = dimX/2;
+% Ix_l = Ix_l - middleX;
+% Ix_r = Ix_r - middleX;
 
 end

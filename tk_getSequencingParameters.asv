@@ -31,8 +31,8 @@ for i=1:pln.numOfBeams
         
         %visualize shape
         figure
-        titleString = ['BeamNr: ' int2str(i) ' ShapeNr: ' int2str(j)];
-        tk_visSingleShape(tempShape,Ix_l,Ix_r,titleString)
+        title(sprintf(['BeamNr: ' int2str(i) ' ShapeNr: ' int2str(j)]
+        tk_visSingleShape(tempShape,Ix_l,Ix_r)
         title(sprintf(['BeamNr: ' int2str(i) ' ShapeNr: ' int2str(j)],'Fontsize',14))
         close all
         x_l = [x_l; Ix_l];
