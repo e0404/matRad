@@ -79,10 +79,10 @@ V = unique([cell2mat(cst(:,4))]);
 % Convert CT subscripts to linear indices.
 [yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct.cube),V);
 
-xCoordsV = (xCoordsV(:)-0.5)*ct.resolution(1)-pln.isoCenter(1);
-yCoordsV = (yCoordsV(:)-0.5)*ct.resolution(2)-pln.isoCenter(2);
-zCoordsV = (zCoordsV(:)-0.5)*ct.resolution(3)-pln.isoCenter(3);
-coords_inside = [xCoordsV yCoordsV zCoordsV];
+xCoordsV = xCoordsV(:)*ct.resolution(1)-pln.isoCenter(1);
+yCoordsV = yCoordsV(:)*ct.resolution(2)-pln.isoCenter(2);
+zCoordsV = zCoordsV(:)*ct.resolution(3)-pln.isoCenter(3);
+coordsV = [xCoordsV yCoordsV zCoordsV];
 
 % set lateral cutoff value
 lateralCutoff = 20; % [mm]
@@ -130,15 +130,6 @@ if ~exist('primaryFluence','var') % pre-compute konvolution matrices if uniform 
 
 end
 
-% generate meshgrid with CT position [mm]
-[X_geo,Y_geo,Z_geo] = meshgrid(ct.resolution(1)*(1:size(ct.cube,2)),...
-    ct.resolution(2)*(1:size(ct.cube,1)),ct.resolution(3)*(1:size(ct.cube,3)));
-
-% take only voxels inside patient
-X_geo = X_geo(V);
-Y_geo = Y_geo(V);
-Z_geo = Z_geo(V);
-
 % define source position for beam eye view.
 sourcePoint_bev = [0 -pln.SAD 0];
 
@@ -165,7 +156,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
     
     % rotate target coordinates around Y axis and then around Z axis
     % i.e. 1st couch, 2nd gantry; matrix multiplication not cummutative
-    rot_coords = coords_inside*rotMx_XZ*rotMx_XY;
+    rot_coordsV = coordsV*rotMx_XZ*rotMx_XY;
     
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
         
@@ -205,9 +196,9 @@ for i = 1:dij.numOfBeams; % loop over all beams
         
         % Ray tracing for beam i and bixel j
         [ix,radDepths,geoDists,latDistsX,latDistsZ] = matRad_calcRadGeoDists(ct.cube,V,...
-            pln.isoCenter,rot_coords,ct.resolution,stf(i).sourcePoint,...
+            pln.isoCenter,rot_coordsV,ct.resolution,stf(i).sourcePoint,...
             stf(i).ray(j).targetPoint,sourcePoint_bev,...
-            stf(i).ray(j).targetPoint_bev,X_geo,Y_geo,Z_geo,lateralCutoff,visBool);
+            stf(i).ray(j).targetPoint_bev,coordsV,lateralCutoff,visBool);
         
         % calculate photon dose for beam i and bixel j
         bixelDose = matRad_calcPhotonDoseBixel(pln.SAD,m,betas, ...

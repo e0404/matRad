@@ -1,7 +1,7 @@
 function [ix,radDepths,geoDists,x_latDists,z_latDists] = ...
           matRad_calcRadGeoDists(ct,V,isocenter,rot_coords,...
                                  resolution,sourcePoint,targetPoint,sourcePoint_bev,...
-                                 targetPoint_bev,X,Y,Z,lateralCutOff,visBool)
+                                 targetPoint_bev,coords,lateralCutOff,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad calculation of radiological and geometrical distances used for
 % dose calcultion
@@ -18,15 +18,14 @@ function [ix,radDepths,geoDists,x_latDists,z_latDists] = ...
 %                       potentially interesting voxels
 %   isocenter:          isocenter
 %   rot_coords:         coordinates of the voxels with index V rotated 
-%                       according to the couch and gantry angle        
+%                       into bev according to the couch and gantry angle        
 %   resolution:         resolution of the ct cube [mm]
 %   sourcePoint:        source point in voxel coordinates
 %   targetPoint:        target point in voxel coordinates
 %   sourcePoint_bev:    source point in voxel coordinates in beam's eye view
 %   targetPoint_bev:    target point in voxel coordinated in beam's eye view
-%   X:                  x coordinates of the voxels with index V
-%   Y:                  y coordinates of the voxels with index V
-%   Z:                  z coordinates of the voxels with index V
+%   coords:             coordinates of the voxels with index V in standard
+%                       coordinate system
 %   lateralCutOff:      lateral cutoff specifying the neighbourhood for
 %                       which dose calculations will actually be performed
 %   visBool:            toogle on/off visualization
@@ -75,12 +74,6 @@ function [ix,radDepths,geoDists,x_latDists,z_latDists] = ...
 [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter,resolution, ...
                                                 sourcePoint,targetPoint, ...
                                                 {ct},visBool);
-                                           
-% Add isocenter to source and target point. Because the algorithm does not
-% works with negatives values. This puts (0,0,0) in the center of first
-% voxel
-sourcePoint = sourcePoint + isocenter;
-targetPoint = targetPoint + isocenter;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ROTATE A SINGLE BEAMLET AND ALIGN WITH BEAMLET WHO PASSES THROUGH
@@ -132,9 +125,9 @@ x_latDists = x_latDists(ix);
 z_latDists = z_latDists(ix);
 
 % calculate geometrical distances 
-geoDists = ( (X(ix)-sourcePoint(1))*(targetPoint(1) - sourcePoint(1)) + ...
-             (Y(ix)-sourcePoint(2))*(targetPoint(2) - sourcePoint(2)) + ...
-             (Z(ix)-sourcePoint(3))*(targetPoint(3) - sourcePoint(3)) ) ...
+geoDists = ( (coords(ix,1)-sourcePoint(1))*(targetPoint(1) - sourcePoint(1)) + ...
+             (coords(ix,2)-sourcePoint(2))*(targetPoint(2) - sourcePoint(2)) + ...
+             (coords(ix,3)-sourcePoint(3))*(targetPoint(3) - sourcePoint(3)) ) ...
               / norm(targetPoint-sourcePoint);
 
 % eq 14
