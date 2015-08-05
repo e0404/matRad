@@ -41,7 +41,7 @@
     end
 
     %% inverse planning for imrt
-    resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+    resultGUI = matRad_fluenceOptimization(dij,cst,pln,1);
 
     %% sequencing
     if strcmp(pln.radiationMode,'photons')

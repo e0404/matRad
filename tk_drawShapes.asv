@@ -15,7 +15,7 @@ for m=1:pln.numOfBeams
 
     for l=1:shapeInfo.numOfShapes(m)
 
-        numOfLines = numel(shapeInfo.shapeIx(shapeInfo.shapeIx == l+shapeOffset));
+        numOfLines = numel(shapeInfo.shapeIx(shapeInfo.shapeIx == l));
 
         subplot(floor(shapeInfo.numOfShapes(m)/2),... 
             ceil(shapeInfo.numOfShapes(m)/2),l)
@@ -58,7 +58,7 @@ for m=1:pln.numOfBeams
         offset = offset + numOfLines;   
     end
 
-    shapeOffset = shapeOffset + shapeInfo.numOfShapes(m);
+    shapeOffset = shapeOffset + max(shapeInfo.numOfShapes);
 end
 
 end
