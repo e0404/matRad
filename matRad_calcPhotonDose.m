@@ -91,12 +91,10 @@ lateralCutoff = 20; % [mm]
 % load polynomial fits for kernels ppKernel1, ppKernel2, ppKernel3
 load photonPencilBeamKernels_6MV.mat;
 
-% Display console message.
-fprintf('matRad: Kernel convolution... \n');
-
 % Make a 2D grid extending +/-100mm with 0.1 mm resolution
 convLimits = 100; % [mm]
-[X,Z] = meshgrid(linspace(-convLimits,convLimits,2*convLimits/.1 + 1));
+convResolution = .5; % [mm]
+[X,Z] = meshgrid(linspace(-convLimits,convLimits,2*convLimits/convResolution + 1));
 
 % Evaluate piecewise polynomial kernels
 kernel1Mx = ppval(ppKernel1,sqrt(X.^2+Z.^2));
@@ -109,24 +107,27 @@ F = zeros(size(X));
 % set bixel opening to one
 F(abs(X)<=pln.bixelWidth/2 & abs(Z)<=pln.bixelWidth/2) = 1;
 
-if exist('primaryFluence','var') % use non uniform primary fluence if specifried
-    F = F .* interp1(primaryFluence(:,1),primaryFluence(:,2),sqrt(X.^2+Z.^2));
-end
+if ~exist('primaryFluence','var') % pre-compute konvolution matrices if uniform primary fluence
+    
+    % Display console message.
+    fprintf('matRad: Uniform primary photon fluence -> pre-compute kernel convolution... \n');    
 
-% 2D convolution of Fluence and Kernels in fourier domain
-convMx1 = real(fftshift(ifft2(fft2(F).*fft2(kernel1Mx))));
-convMx2 = real(fftshift(ifft2(fft2(F).*fft2(kernel2Mx))));
-convMx3 = real(fftshift(ifft2(fft2(F).*fft2(kernel3Mx))));
+    % 2D convolution of Fluence and Kernels in fourier domain
+    convMx1 = real(fftshift(ifft2(fft2(F).*fft2(kernel1Mx))));
+    convMx2 = real(fftshift(ifft2(fft2(F).*fft2(kernel2Mx))));
+    convMx3 = real(fftshift(ifft2(fft2(F).*fft2(kernel3Mx))));
 
-% Creates an interpolant for kernes from vectors position X and Z
-if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
-    Interp_kernel1 = griddedInterpolant(X',Z',convMx1','linear');
-    Interp_kernel2 = griddedInterpolant(X',Z',convMx2','linear');
-    Interp_kernel3 = griddedInterpolant(X',Z',convMx3','linear');
-else
-    Interp_kernel1 = @(x,y)interp2(X(1,:),Z(:,1),convMx1,x,y,'linear');
-    Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear');
-    Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear');
+    % Creates an interpolant for kernes from vectors position X and Z
+    if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
+        Interp_kernel1 = griddedInterpolant(X',Z',convMx1','linear');
+        Interp_kernel2 = griddedInterpolant(X',Z',convMx2','linear');
+        Interp_kernel3 = griddedInterpolant(X',Z',convMx3','linear');
+    else
+        Interp_kernel1 = @(x,y)interp2(X(1,:),Z(:,1),convMx1,x,y,'linear');
+        Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear');
+        Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear');
+    end
+
 end
 
 % generate meshgrid with CT position [mm]
@@ -169,6 +170,30 @@ for i = 1:dij.numOfBeams; % loop over all beams
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
         
         counter = counter + 1;
+        
+        if exist('primaryFluence','var') % use non uniform primary fluence if specifried
+            
+            r     = sqrt( (X-stf(i).ray(j).rayPos(1)).^2 + (Z-stf(i).ray(j).rayPos(3)).^2 );
+            Psi   = interp1(primaryFluence(:,1),primaryFluence(:,2),r);
+            FxPsi = F .* Psi;
+        
+            % 2D convolution of Fluence and Kernels in fourier domain
+            convMx1 = real(fftshift(ifft2(fft2(FxPsi).*fft2(kernel1Mx))));
+            convMx2 = real(fftshift(ifft2(fft2(FxPsi).*fft2(kernel2Mx))));
+            convMx3 = real(fftshift(ifft2(fft2(FxPsi).*fft2(kernel3Mx))));
+
+            % Creates an interpolant for kernes from vectors position X and Z
+            if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
+                Interp_kernel1 = griddedInterpolant(X',Z',convMx1','linear');
+                Interp_kernel2 = griddedInterpolant(X',Z',convMx2','linear');
+                Interp_kernel3 = griddedInterpolant(X',Z',convMx3','linear');
+            else
+                Interp_kernel1 = @(x,y)interp2(X(1,:),Z(:,1),convMx1,x,y,'linear');
+                Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear');
+                Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear');
+            end
+
+        end
 
         % Display progress
         matRad_progress(counter,dij.totalNumOfBixels);
