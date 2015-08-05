@@ -81,12 +81,14 @@ handles.output = hObject;
 %show matrad logo
 axes(handles.axesLogo)
 [im, ~, alpha] = imread(['dicomImport' filesep 'matrad_logo.png']);
-f = imshow(im);
+f = image(im);
+axis equal off
 set(f, 'AlphaData', alpha);
 % show dkfz logo
 axes(handles.axesDKFZ)
 [im, ~, alpha] = imread(['dicomImport' filesep 'DKFZ_logo.png']);
-f = imshow(im);
+f = image(im);
+axis equal off;
 set(f, 'AlphaData', alpha);
 
 vChar = get(handles.editGantryAngle,'String');
@@ -137,7 +139,7 @@ end
 
 % parse dij structure
 try
-    if ~isempty(evalin('base','doseVis'))
+    if ~isempty(evalin('base','dij'))
         handles.State = 2;
 
     end
@@ -267,7 +269,9 @@ catch
 end
 % assess plan variable from GUI
 getPln(handles);
+setPln(handles);
 pln=evalin('base','pln');
+
 if isempty(pln)
  handles.State = 0;
 else
@@ -520,9 +524,8 @@ if ~getCstTable(handles);
     return
 end
 % read plan from gui and save it to workspace
+% gets also IsoCenter from GUI if checkbox is unchecked
 getPln(handles);
-
-
 
 % get default iso center as center of gravity of all targets if not
 % already defined
@@ -532,10 +535,13 @@ if length(pln.gantryAngles) ~= length(pln.couchAngles)
   warndlg('number of gantryAngles != number of couchAngles'); 
 end
 
+%% security check if isocenter is not existing so far
 if ~isfield(pln,'isoCenter')
     warning('no iso center set - using center of gravity of all targets');
     pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
     assignin('base','pln',pln);
+elseif ~get(handles.checkIsoCenter,'Value') 
+    pln.isoCenter = str2num(get(handles.editIsoCenter,'String'));
 end
 
 % generate steering file
@@ -575,9 +581,7 @@ elseif handles.State > 0
      pln=evalin('base','pln');
 end
 
-if handles.State == 2
-      Result = evalin('base','doseVis');
-elseif handles.State == 3
+if handles.State == 3
       Result = evalin('base','resultGUI');
 end
 
@@ -657,7 +661,7 @@ CutOffLevel = 0.03;
 end
 
 %% plot dose cube
-if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1
+if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
 
         mVolume = getfield(Result,handles.SelectedDisplayOption);
         % make sure to exploit full color range
@@ -812,7 +816,7 @@ if  plane == 3% Axial plane
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(2));   
         xlabel('x [mm]','FontSize',8)
         ylabel('y [mm]','FontSize',8)
-        title('axial plane','FontSize',8)
+        title(['axial plane z = ' num2str(ct.resolution(3)*slice) ' [mm]'],'FontSize',8)
     else
         xlabel('x [voxels]','FontSize',8)
         ylabel('y [voxels]','FontSize',8)
@@ -826,7 +830,7 @@ elseif plane == 2 % Sagittal plane
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(2))
         xlabel('z [mm]','FontSize',8);
         ylabel('y [mm]','FontSize',8);
-        title('sagittal plane','FontSize',8);
+        title(['sagittal plane x = ' num2str(ct.resolution(2)*slice) ' [mm]'],'FontSize',8)
     else
         xlabel('z [voxels]','FontSize',8)
         ylabel('y [voxels]','FontSize',8)
@@ -840,7 +844,7 @@ elseif plane == 1 % Coronal plane
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(1))
         xlabel('z [mm]','FontSize',8)
         ylabel('x [mm]','FontSize',8)
-        title('coronal plane','FontSize',8)
+        title(['coronal plane y = ' num2str(ct.resolution(1)*slice) ' [mm]'],'FontSize',8)
     else
         xlabel('z [voxels]','FontSize',8)
         ylabel('x [voxels]','FontSize',8)
@@ -1007,28 +1011,6 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
    
 end
 
-%% display command window output to textbox
-jDesktop = com.mathworks.mde.desk.MLDesktop.getInstance;
-jCmdWin = jDesktop.getClient('Command Window');
-jTextArea = jCmdWin.getComponent(0).getViewport.getView;
-cwText = char(jTextArea.getText);
-C = strsplit(cwText,'\n');
-set(handles.listBoxCmd,'String',C);
-numLines = size(get(handles.listBoxCmd,'String'),1);
-if numLines>7
-    set(handles.listBoxCmd, 'ListBoxTop', numLines-7);
-end
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1045,15 +1027,17 @@ function popupPlane_Callback(hObject, eventdata, handles)
 handles.plane = get(handles.popupPlane,'value');
 try
     ct = evalin('base', 'ct');
-
-    set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-            'Value',round(size(ct.cube,handles.plane)/2),...
-            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
-    
+    if handles.State<3
+        set(handles.sliderSlice,'Value',round(size(ct.cube,handles.plane)/2));
+    else
+        pln = evalin('base','pln');
+        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution(1,handles.plane)));
+    end
 catch
 end
         
-UpdatePlot(handles)
+UpdatePlot(handles);
+guidata(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
 function popupPlane_CreateFcn(hObject, eventdata, handles)
@@ -1151,8 +1135,13 @@ Param.numOfIter = str2num(get(handles.editNumIter,'String'));
 Param.prec = str2num(get(handles.txtPrecisionOutput,'String'));
 OptType = get(handles.btnTypBioOpt,'String');
 % optimize
-resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'),Param,OptType);
+pln = evalin('base','pln');
+ct = evalin('base','ct');
+resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln,1,Param,OptType);
 assignin('base','resultGUI',resultGUI);
+
+set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution(1,handles.plane)));
+
 %set some values
 handles.State=3;
 handles.SelectedDisplayOptionIdx=1;
@@ -1160,8 +1149,8 @@ handles.SelectedDisplayOption='Dose';
 handles.SelectedBeam=1;
 UpdatePlot(handles);
 UpdateState(handles);
-
 guidata(hObject,handles);
+
 
 
 % the function CheckValidityPln checks if the provided plan is valid so
@@ -1615,6 +1604,8 @@ if isempty(eventdata)
     end
 else
     data = get(hObject,'Data');
+    
+    
 end
 
 %% if VOI, VOI Type or Overlap was changed
@@ -1730,6 +1721,7 @@ if isnan(eventdata.NewData)
     data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
 end
 
+
 set(handles.txtInfo,'String','plan changed');
 set(handles.uiTable,'data',data);
 guidata(hObject, handles);
@@ -1808,6 +1800,10 @@ pln=evalin('base','pln');
 set(handles.editBixelWidth,'String',num2str(pln.bixelWidth));
 set(handles.editSAD,'String',num2str(pln.SAD));
 set(handles.editFraction,'String',num2str(pln.numOfFractions));
+
+if isfield(pln,'isoCenter')
+    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
+end
 set(handles.editGantryAngle,'String',num2str((pln.gantryAngles)));
 set(handles.editCouchAngle,'String',num2str((pln.couchAngles)));
 set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),pln.radiationMode)));
@@ -1849,11 +1845,15 @@ pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'),false)
 
 try
     cst= evalin('base','cst');
-    if sum(strcmp('TARGET',cst(:,3)))>0
+    if sum(strcmp('TARGET',cst(:,3)))>0 && get(handles.checkIsoCenter,'Value')
        pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
+    else
+       pln.isoCenter = str2num(get(handles.editIsoCenter,'String'));
     end
-    catch
+catch
+    warning('couldnt set isocenter in getPln function')
 end
+
 handles.pln = pln;
 assignin('base','pln',pln);
 
@@ -1868,6 +1868,12 @@ function btnTableSave_Callback(hObject, eventdata, handles)
 % hObject    handle to btnTableSave (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+if get(handles.checkIsoCenter,'Value')
+    pln = evalin('base','pln'); 
+    pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
+    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
+    assignin('base','pln',pln);
+end
 getCstTable(handles);
 getPln(handles);
 
@@ -1952,7 +1958,7 @@ function btnRefresh_Callback(hObject, eventdata, handles)
 % hObject    handle to btnRefresh (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-setPln(handles)
+setPln(handles);
 setCstTable(handles,evalin('base','cst'));
 % set state
 
@@ -2105,4 +2111,54 @@ function editSequencingLevel_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
+
+
+
+function editIsoCenter_Callback(hObject, eventdata, handles)
+% hObject    handle to editIsoCenter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editIsoCenter as text
+%        str2double(get(hObject,'String')) returns contents of editIsoCenter as a double
+pln=evalin('base','pln');
+if ~get(handles.checkIsoCenter,'Value')
+   TmpIsoCenter = str2num(get(hObject,'String'));
+   if length(TmpIsoCenter) == 3
+       pln.isoCenter =  TmpIsoCenter;
+   end
+end
+assignin('base','pln',pln);
+handles.State = 1;
+UpdateState(handles);
+
+% --- Executes during object creation, after setting all properties.
+function editIsoCenter_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editIsoCenter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in checkIsoCenter.
+function checkIsoCenter_Callback(hObject, eventdata, handles)
+% hObject    handle to checkIsoCenter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkIsoCenter
+try
+    if get(hObject,'Value')
+        pln = evalin('base','pln'); 
+        pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
+        set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
+        assignin('base','pln',pln);
+    end
+catch
 end

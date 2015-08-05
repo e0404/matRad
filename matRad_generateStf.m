@@ -67,13 +67,20 @@ end
 % Remove double voxels
 V = unique(V);
 
+% generate voi cube
+voi    = zeros(size(ct.cube));
+voi(V) = 1;
+    
 % add margin
 addmarginBool = 1;
 if addmarginBool
-    voi    = zeros(size(ct.cube));
-    voi(V) = 1;
-    voi    = matRad_addMargin(voi,ct.resolution,ct.resolution,true);
-    V      = find(voi>0);
+    voi = matRad_addMargin(voi,ct.resolution,ct.resolution,true);
+    V   = find(voi>0);
+end
+
+% throw error message if no target is found
+if isempty(V)
+    error('Could not find target');
 end
 
 % prepare structures necessary for particles
@@ -91,6 +98,10 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     
     clear baseData;
     
+elseif strcmp(pln.radiationMode,'photons')
+    
+    load photonPencilBeamKernels_6MV;
+
 end
 
 % Convert linear indices to 3D voxel coordinates
@@ -142,6 +153,20 @@ for i = 1:length(pln.gantryAngles)
     rayPos = unique(pln.bixelWidth*round([            coordsAtIsoCenterPlane(:,1) ... 
                                           zeros(size(coordsAtIsoCenterPlane,1),1) ...
                                                       coordsAtIsoCenterPlane(:,2)]/pln.bixelWidth),'rows');
+                                                  
+	if pln.bixelWidth<min(ct.resolution) % pad ray position array if resolution of target voxel grid not sufficient
+        origRayPos = rayPos;
+        for j = -floor(min(ct.resolution)/pln.bixelWidth):floor(min(ct.resolution)/pln.bixelWidth)
+            for k = -floor(min(ct.resolution)/pln.bixelWidth):floor(min(ct.resolution)/pln.bixelWidth)
+                if abs(j)+abs(k)==0
+                    continue;
+                end
+                
+                rayPos = [rayPos; origRayPos(:,1)+j*pln.bixelWidth origRayPos(:,2) origRayPos(:,3)+k*pln.bixelWidth];
+                                
+            end
+        end
+	end
     
     % Save the number of rays
     stf(i).numOfRays = size(rayPos,1);
@@ -222,7 +247,7 @@ for i = 1:length(pln.gantryAngles)
     elseif strcmp(stf(i).radiationMode,'photons')
         % set dummy values for photons
         for j = 1:stf(i).numOfRays
-            stf(i).ray(j).energy = NaN;
+            stf(i).ray(j).energy = energy;
             stf(i).numOfBixelsPerRay(j) = 1;
         end
     else

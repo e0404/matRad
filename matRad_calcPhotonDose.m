@@ -95,7 +95,8 @@ load photonPencilBeamKernels_6MV.mat;
 fprintf('matRad: Kernel convolution... \n');
 
 % Make a 2D grid extending +/-100mm with 0.1 mm resolution
-[X,Z] = meshgrid(-100:0.1:100);
+convLimits = 100; % [mm]
+[X,Z] = meshgrid(linspace(-convLimits,convLimits,2*convLimits/.1 + 1));
 
 % Evaluate piecewise polynomial kernels
 kernel1Mx = ppval(ppKernel1,sqrt(X.^2+Z.^2));
@@ -106,8 +107,11 @@ kernel3Mx = ppval(ppKernel3,sqrt(X.^2+Z.^2));
 F = zeros(size(X));
 
 % set bixel opening to one
-F(1001-pln.bixelWidth/2/0.1:1001+pln.bixelWidth/2/0.1,...
-  1001-pln.bixelWidth/2/0.1:1001+pln.bixelWidth/2/0.1) = 1;
+F(abs(X)<=pln.bixelWidth/2 & abs(Z)<=pln.bixelWidth/2) = 1;
+
+if exist('primaryFluence','var') % use non uniform primary fluence if specifried
+    F = F .* interp1(primaryFluence(:,1),primaryFluence(:,2),sqrt(X.^2+Z.^2));
+end
 
 % 2D convolution of Fluence and Kernels in fourier domain
 convMx1 = real(fftshift(ifft2(fft2(F).*fft2(kernel1Mx))));
@@ -120,9 +124,9 @@ if exist('griddedInterpolant','class') % use griddedInterpoland class when avail
     Interp_kernel2 = griddedInterpolant(X',Z',convMx2','linear');
     Interp_kernel3 = griddedInterpolant(X',Z',convMx3','linear');
 else
-    Interp_kernel1 = @(x,y)interp2(X,Z,convMx1,x,y,'linear');
-    Interp_kernel2 = @(x,y)interp2(X,Z,convMx2,x,y,'linear');
-    Interp_kernel3 = @(x,y)interp2(X,Z,convMx3,x,y,'linear');
+    Interp_kernel1 = @(x,y)interp2(X(1,:),Z(:,1),convMx1,x,y,'linear');
+    Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear');
+    Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear');
 end
 
 % generate meshgrid with CT position [mm]

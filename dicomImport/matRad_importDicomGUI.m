@@ -81,12 +81,14 @@ handles.output = hObject;
 
 axes(handles.axesMatRadLogo)
 [im, ~, alpha] = imread('matrad_logo.png');
-q = imshow(im);
+q = image(im);
+axis equal off
 set(q, 'AlphaData', alpha);
 % show dkfz logo
 axes(handles.axesDKFZLogo)
 [im, ~, alpha] = imread('DKFZ_logo.png');
-p = imshow(im);
+p = image(im);
+axis equal off
 set(p, 'AlphaData', alpha);
 % Update handles structure
 guidata(hObject, handles);
