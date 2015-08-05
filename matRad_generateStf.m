@@ -153,6 +153,20 @@ for i = 1:length(pln.gantryAngles)
     rayPos = unique(pln.bixelWidth*round([            coordsAtIsoCenterPlane(:,1) ... 
                                           zeros(size(coordsAtIsoCenterPlane,1),1) ...
                                                       coordsAtIsoCenterPlane(:,2)]/pln.bixelWidth),'rows');
+                                                  
+	if pln.bixelWidth<min(ct.resolution) % pad ray position array if resolution of target voxel grid not sufficient
+        origRayPos = rayPos;
+        for j = -floor(min(ct.resolution)/pln.bixelWidth):floor(min(ct.resolution)/pln.bixelWidth)
+            for k = -floor(min(ct.resolution)/pln.bixelWidth):floor(min(ct.resolution)/pln.bixelWidth)
+                if abs(j)+abs(k)==0
+                    continue;
+                end
+                
+                rayPos = [rayPos; origRayPos(:,1)+j*pln.bixelWidth origRayPos(:,2) origRayPos(:,3)+k*pln.bixelWidth];
+                                
+            end
+        end
+	end
     
     % Save the number of rays
     stf(i).numOfRays = size(rayPos,1);

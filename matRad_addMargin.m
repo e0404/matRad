@@ -80,7 +80,7 @@ for Cnt = 1:max(voxelMargins)
         for j = -1:1
             for k = -1:1
 
-                if (i+j+k == 0) || (~bDiaElem && i+j+k > 1) % skip if diagonal elements not wanted or zero offset
+                if (abs(i)+abs(j)+abs(k) == 0) || (~bDiaElem && i+j+k > 1) % skip if diagonal elements not wanted or zero offset
                     continue;
                 end
 
