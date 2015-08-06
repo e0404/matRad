@@ -1,8 +1,10 @@
-function [Ix_l, Ix_r] = tk_getLeafPos(shapeMap)
+function [Ix_l, Ix_r, minIx, maxIx] = tk_getLeafPos(shapeMap)
 
 [dimZ, dimX] = size(shapeMap);
 Ix_l = NaN * ones(dimZ,1);
 Ix_r = NaN * ones(dimZ,1);
+minIx = 0 * ones(dimZ,1);
+maxIx = dimX * ones(dimZ,1);
 
 % loop over all lines of the Map
 for k=1:size(shapeMap,1)
