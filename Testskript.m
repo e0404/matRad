@@ -17,8 +17,8 @@
     pln.SAD             = 1000; %[mm]
     pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
     pln.bixelWidth      = 15; % [mm] / also corresponds to lateral spot spacing for particles
-    pln.gantryAngles    = [0:45:359]; % [°]
-    pln.couchAngles     = [0 0 0 0 0 0 0 0]; % [°]
+    pln.gantryAngles    = [0 90]; % [°]
+    pln.couchAngles     = [0 0 ]; % [°]
     pln.numOfBeams      = numel(pln.gantryAngles);
     pln.numOfVoxels     = numel(ct.cube);
     pln.voxelDimensions = size(ct.cube);

@@ -1,6 +1,6 @@
 function shapeInfo = tk_getSequencingParameters(seqResult,pln,stf,visBool)
 
-mode = 'index'; %'index' 'physical'
+mode = 'physical'; %'index' 'physical'
 % physical: 81 leafes, 0mm = middle of leaf 41
 bixelWidth = pln.bixelWidth;
 
@@ -121,7 +121,7 @@ if strcmp(mode,'index')
     shapeInfo.IxMaps = IxMaps;
 end
 
-if strcmp(mode,'physical')
+if strcmp(mode,'physical') % NOCH NICHT GEMACHT!!!!NUR KOPIE!!!
     % loop over all beams
     for i=1:pln.numOfBeams
         % get number of shapes for each beam
@@ -140,18 +140,60 @@ if strcmp(mode,'physical')
         leafNum = Z/bixelWidth + 41;
         leafNum = unique(leafNum);% only keep each leaf once
         
+                % create ray-map
+                maxX = max(X);
+                minX = min(X);
+
+                maxZ = max(Z);
+                minZ = min(Z);    
+
+                dimOfRayMxX = (maxX-minX)/stf(i).bixelWidth + 1;
+                dimOfRayMxZ = (maxZ-minZ)/stf(i).bixelWidth + 1;
+
+                rayMx = zeros(dimOfRayMxZ,dimOfRayMxX);
+
+                % get indices for x and z positions
+                xPos = (X-minX)/stf(i).bixelWidth +1;
+                zPos = (Z-minZ)/stf(i).bixelWidth +1;
+
+                % get indices in the ray map
+                IxInRayMX = zPos + (xPos-1)*dimOfRayMxZ;
+
+                % fill ray-map
+                rayMx(IxInRayMX) = 1;
+
+                % fill map of bixel indices
+                IxMaps(i).bixelIndices = NaN * ones(dimOfRayMxZ,dimOfRayMxX);
+                counter = 1;
+
+                for n=1:numel(IxMaps(i).bixelIndices)
+                    if ismember(n,IxInRayMX)
+                        IxMaps(i).bixelIndices(n) = counter;
+                        counter = counter + 1;
+                    end
+                end
+                IxMaps(i).bixelIndices = IxMaps(i).bixelIndices + IxOffset;
+                IxOffset = IxOffset + numel(X);
+        
         for j=1:seqResult.beam(i).numOfShapes
             shapeCounter = shapeCounter +1; % get index of current shape
 
-%             if j==1
-%                 % get the limits for the leaf pairs
-%                 [shapeLim_l, shapeLim_r] = tk_getLeafPos(rayMx);
-%             end
+            if j==1
+                % get the limits for the leaf pairs
+                [shapeLim_l, shapeLim_r] = tk_getLeafPos(rayMx);
+            end
 
 
             tempShape = seqResult.beam(i).shapes(:,:,j);
             [Ix_l, Ix_r, minIx, maxIx] = tk_getLeafPos(tempShape);
 
+            lineIx = [];
+            for o=1:numel(Ix_l)
+                lineIx = [lineIx; o];
+            end
+
+bixelIx = IxMaps(i).bixelIndices(lineIx,Ix_l+1);
+            
             %visualize shape
             if visBool
                 figure
@@ -161,6 +203,11 @@ if strcmp(mode,'physical')
                 close all
             end
 
+            
+            % calculate physical leaf positions
+                % 1. get bixel indices from leaf index
+                
+            
             % add leaf positions to position vectors
             x_l = [x_l; Ix_l];
             x_r = [x_r; Ix_r];
