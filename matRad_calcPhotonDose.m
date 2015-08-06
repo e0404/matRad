@@ -113,9 +113,9 @@ if ~exist('primaryFluence','var') % pre-compute konvolution matrices if uniform 
     fprintf('matRad: Uniform primary photon fluence -> pre-compute kernel convolution... \n');    
 
     % 2D convolution of Fluence and Kernels in fourier domain
-    convMx1 = real(fftshift(ifft2(fft2(F).*fft2(kernel1Mx))));
-    convMx2 = real(fftshift(ifft2(fft2(F).*fft2(kernel2Mx))));
-    convMx3 = real(fftshift(ifft2(fft2(F).*fft2(kernel3Mx))));
+    convMx1 = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(kernel1Mx) ) )));
+    convMx2 = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(kernel2Mx) ) )));
+    convMx3 = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(kernel3Mx) ) )));
 
     % Creates an interpolant for kernes from vectors position X and Z
     if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
@@ -169,9 +169,9 @@ for i = 1:dij.numOfBeams; % loop over all beams
             FxPsi = F .* Psi;
         
             % 2D convolution of Fluence and Kernels in fourier domain
-            convMx1 = real(fftshift(ifft2(fft2(FxPsi).*fft2(kernel1Mx))));
-            convMx2 = real(fftshift(ifft2(fft2(FxPsi).*fft2(kernel2Mx))));
-            convMx3 = real(fftshift(ifft2(fft2(FxPsi).*fft2(kernel3Mx))));
+            convMx1 = real(fftshift(ifft2(fft2( ifftshift(FxPsi) ).*fft2( ifftshift(kernel1Mx) ) )));
+            convMx2 = real(fftshift(ifft2(fft2( ifftshift(FxPsi) ).*fft2( ifftshift(kernel2Mx) ) )));
+            convMx3 = real(fftshift(ifft2(fft2( ifftshift(FxPsi) ).*fft2( ifftshift(kernel3Mx) ) )));
 
             % Creates an interpolant for kernes from vectors position X and Z
             if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
@@ -189,16 +189,25 @@ for i = 1:dij.numOfBeams; % loop over all beams
         % Display progress
         matRad_progress(counter,dij.totalNumOfBixels);
         waitbar(counter/dij.totalNumOfBixels);
+        
         % remember beam and bixel number
         dij.beamNum(counter)  = i;
         dij.rayNum(counter)   = j;
         dij.bixelNum(counter) = j;
         
         % Ray tracing for beam i and bixel j
-        [ix,radDepths,geoDists,latDistsX,latDistsZ] = matRad_calcRadGeoDists(ct.cube,V,...
-            pln.isoCenter,rot_coordsV,ct.resolution,stf(i).sourcePoint,...
-            stf(i).ray(j).targetPoint,sourcePoint_bev,...
-            stf(i).ray(j).targetPoint_bev,coordsV,lateralCutoff,visBool);
+        [ix,radDepths,geoDists,latDistsX,latDistsZ] = matRad_calcRadGeoDists(ct.cube, ...
+                                                        V, ...
+                                                        pln.isoCenter, ...
+                                                        rot_coordsV, ...
+                                                        ct.resolution, ...
+                                                        stf(i).sourcePoint, ...
+                                                        stf(i).ray(j).targetPoint, ...
+                                                        sourcePoint_bev, ...
+                                                        stf(i).ray(j).targetPoint_bev, ...
+                                                        coordsV, ...
+                                                        lateralCutoff, ...
+                                                        visBool);
         
         % calculate photon dose for beam i and bixel j
         bixelDose = matRad_calcPhotonDoseBixel(pln.SAD,m,betas, ...

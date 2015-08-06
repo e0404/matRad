@@ -154,10 +154,11 @@ for i = 1:length(pln.gantryAngles)
                                           zeros(size(coordsAtIsoCenterPlane,1),1) ...
                                                       coordsAtIsoCenterPlane(:,2)]/pln.bixelWidth),'rows');
                                                   
-	if pln.bixelWidth<min(ct.resolution) % pad ray position array if resolution of target voxel grid not sufficient
+	 % pad ray position array if resolution of target voxel grid not sufficient
+     if pln.bixelWidth<max(ct.resolution)
         origRayPos = rayPos;
-        for j = -floor(min(ct.resolution)/pln.bixelWidth):floor(min(ct.resolution)/pln.bixelWidth)
-            for k = -floor(min(ct.resolution)/pln.bixelWidth):floor(min(ct.resolution)/pln.bixelWidth)
+        for j = -floor(max(ct.resolution)/pln.bixelWidth):floor(max(ct.resolution)/pln.bixelWidth)
+            for k = -floor(max(ct.resolution)/pln.bixelWidth):floor(max(ct.resolution)/pln.bixelWidth)
                 if abs(j)+abs(k)==0
                     continue;
                 end
@@ -166,7 +167,10 @@ for i = 1:length(pln.gantryAngles)
                                 
             end
         end
-	end
+     end
+    
+    % remove double rays
+    rayPos = unique(rayPos,'rows');
     
     % Save the number of rays
     stf(i).numOfRays = size(rayPos,1);
@@ -211,7 +215,11 @@ for i = 1:length(pln.gantryAngles)
         for j = stf(i).numOfRays:-1:1
             
             % ray tracing necessary to determine depth of the target
-            [~,l,rho,~] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,stf(i).sourcePoint,stf(i).ray(j).targetPoint,{ct.cube,voi});
+            [~,l,rho,~] = matRad_siddonRayTracer(pln.isoCenter, ...
+                            ct.resolution, ...
+                            stf(i).sourcePoint, ...
+                            stf(i).ray(j).targetPoint, ...
+                            {ct.cube,voi});
             
             if sum(rho{2}) > 0 % target hit
                 
