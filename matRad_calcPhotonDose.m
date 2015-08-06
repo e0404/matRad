@@ -79,10 +79,10 @@ V = unique([cell2mat(cst(:,4))]);
 % Convert CT subscripts to linear indices.
 [yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct.cube),V);
 
-xCoordsV = (xCoordsV(:)-0.5)*ct.resolution(1)-pln.isoCenter(1);
-yCoordsV = (yCoordsV(:)-0.5)*ct.resolution(2)-pln.isoCenter(2);
-zCoordsV = (zCoordsV(:)-0.5)*ct.resolution(3)-pln.isoCenter(3);
-coords_inside = [xCoordsV yCoordsV zCoordsV];
+xCoordsV = xCoordsV(:)*ct.resolution(1)-pln.isoCenter(1);
+yCoordsV = yCoordsV(:)*ct.resolution(2)-pln.isoCenter(2);
+zCoordsV = zCoordsV(:)*ct.resolution(3)-pln.isoCenter(3);
+coordsV = [xCoordsV yCoordsV zCoordsV];
 
 % set lateral cutoff value
 lateralCutoff = 20; % [mm]
@@ -91,12 +91,10 @@ lateralCutoff = 20; % [mm]
 % load polynomial fits for kernels ppKernel1, ppKernel2, ppKernel3
 load photonPencilBeamKernels_6MV.mat;
 
-% Display console message.
-fprintf('matRad: Kernel convolution... \n');
-
 % Make a 2D grid extending +/-100mm with 0.1 mm resolution
 convLimits = 100; % [mm]
-[X,Z] = meshgrid(linspace(-convLimits,convLimits,2*convLimits/.1 + 1));
+convResolution = .5; % [mm]
+[X,Z] = meshgrid(linspace(-convLimits,convLimits,2*convLimits/convResolution + 1));
 
 % Evaluate piecewise polynomial kernels
 kernel1Mx = ppval(ppKernel1,sqrt(X.^2+Z.^2));
@@ -109,34 +107,28 @@ F = zeros(size(X));
 % set bixel opening to one
 F(abs(X)<=pln.bixelWidth/2 & abs(Z)<=pln.bixelWidth/2) = 1;
 
-if exist('primaryFluence','var') % use non uniform primary fluence if specifried
-    F = F .* interp1(primaryFluence(:,1),primaryFluence(:,2),sqrt(X.^2+Z.^2));
+if ~exist('primaryFluence','var') % pre-compute konvolution matrices if uniform primary fluence
+    
+    % Display console message.
+    fprintf('matRad: Uniform primary photon fluence -> pre-compute kernel convolution... \n');    
+
+    % 2D convolution of Fluence and Kernels in fourier domain
+    convMx1 = real(fftshift(ifft2(fft2(F).*fft2(kernel1Mx))));
+    convMx2 = real(fftshift(ifft2(fft2(F).*fft2(kernel2Mx))));
+    convMx3 = real(fftshift(ifft2(fft2(F).*fft2(kernel3Mx))));
+
+    % Creates an interpolant for kernes from vectors position X and Z
+    if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
+        Interp_kernel1 = griddedInterpolant(X',Z',convMx1','linear');
+        Interp_kernel2 = griddedInterpolant(X',Z',convMx2','linear');
+        Interp_kernel3 = griddedInterpolant(X',Z',convMx3','linear');
+    else
+        Interp_kernel1 = @(x,y)interp2(X(1,:),Z(:,1),convMx1,x,y,'linear');
+        Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear');
+        Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear');
+    end
+
 end
-
-% 2D convolution of Fluence and Kernels in fourier domain
-convMx1 = real(fftshift(ifft2(fft2(F).*fft2(kernel1Mx))));
-convMx2 = real(fftshift(ifft2(fft2(F).*fft2(kernel2Mx))));
-convMx3 = real(fftshift(ifft2(fft2(F).*fft2(kernel3Mx))));
-
-% Creates an interpolant for kernes from vectors position X and Z
-if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
-    Interp_kernel1 = griddedInterpolant(X',Z',convMx1','linear');
-    Interp_kernel2 = griddedInterpolant(X',Z',convMx2','linear');
-    Interp_kernel3 = griddedInterpolant(X',Z',convMx3','linear');
-else
-    Interp_kernel1 = @(x,y)interp2(X(1,:),Z(:,1),convMx1,x,y,'linear');
-    Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear');
-    Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear');
-end
-
-% generate meshgrid with CT position [mm]
-[X_geo,Y_geo,Z_geo] = meshgrid(ct.resolution(1)*(1:size(ct.cube,2)),...
-    ct.resolution(2)*(1:size(ct.cube,1)),ct.resolution(3)*(1:size(ct.cube,3)));
-
-% take only voxels inside patient
-X_geo = X_geo(V);
-Y_geo = Y_geo(V);
-Z_geo = Z_geo(V);
 
 % define source position for beam eye view.
 sourcePoint_bev = [0 -pln.SAD 0];
@@ -164,11 +156,35 @@ for i = 1:dij.numOfBeams; % loop over all beams
     
     % rotate target coordinates around Y axis and then around Z axis
     % i.e. 1st couch, 2nd gantry; matrix multiplication not cummutative
-    rot_coords = coords_inside*rotMx_XZ*rotMx_XY;
+    rot_coordsV = coordsV*rotMx_XZ*rotMx_XY;
     
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
         
         counter = counter + 1;
+        
+        if exist('primaryFluence','var') % use non uniform primary fluence if specifried
+            
+            r     = sqrt( (X-stf(i).ray(j).rayPos(1)).^2 + (Z-stf(i).ray(j).rayPos(3)).^2 );
+            Psi   = interp1(primaryFluence(:,1),primaryFluence(:,2),r);
+            FxPsi = F .* Psi;
+        
+            % 2D convolution of Fluence and Kernels in fourier domain
+            convMx1 = real(fftshift(ifft2(fft2(FxPsi).*fft2(kernel1Mx))));
+            convMx2 = real(fftshift(ifft2(fft2(FxPsi).*fft2(kernel2Mx))));
+            convMx3 = real(fftshift(ifft2(fft2(FxPsi).*fft2(kernel3Mx))));
+
+            % Creates an interpolant for kernes from vectors position X and Z
+            if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
+                Interp_kernel1 = griddedInterpolant(X',Z',convMx1','linear');
+                Interp_kernel2 = griddedInterpolant(X',Z',convMx2','linear');
+                Interp_kernel3 = griddedInterpolant(X',Z',convMx3','linear');
+            else
+                Interp_kernel1 = @(x,y)interp2(X(1,:),Z(:,1),convMx1,x,y,'linear');
+                Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear');
+                Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear');
+            end
+
+        end
 
         % Display progress
         matRad_progress(counter,dij.totalNumOfBixels);
@@ -180,9 +196,9 @@ for i = 1:dij.numOfBeams; % loop over all beams
         
         % Ray tracing for beam i and bixel j
         [ix,radDepths,geoDists,latDistsX,latDistsZ] = matRad_calcRadGeoDists(ct.cube,V,...
-            pln.isoCenter,rot_coords,ct.resolution,stf(i).sourcePoint,...
+            pln.isoCenter,rot_coordsV,ct.resolution,stf(i).sourcePoint,...
             stf(i).ray(j).targetPoint,sourcePoint_bev,...
-            stf(i).ray(j).targetPoint_bev,X_geo,Y_geo,Z_geo,lateralCutoff,visBool);
+            stf(i).ray(j).targetPoint_bev,coordsV,lateralCutoff,visBool);
         
         % calculate photon dose for beam i and bixel j
         bixelDose = matRad_calcPhotonDoseBixel(pln.SAD,m,betas, ...

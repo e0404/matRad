@@ -208,7 +208,7 @@ for i = 1:length(pln.gantryAngles)
     % find appropriate energies for particles
     if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
         
-        for j = 1:stf(i).numOfRays
+        for j = stf(i).numOfRays:-1:1
             
             % ray tracing necessary to determine depth of the target
             [~,l,rho,~] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,stf(i).sourcePoint,stf(i).ray(j).targetPoint,{ct.cube,voi});
@@ -235,15 +235,19 @@ for i = 1:length(pln.gantryAngles)
                     stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
                 end
                 
+                
             else % target not hit
-                stf(i).ray(j).energy = [];
+                stf(i).ray(j)               = [];
             end
-            
-            % count bixels per ray
-            stf(i).numOfBixelsPerRay(j) = numel(stf(i).ray(j).energy);
-            
+                        
         end
-        
+
+        % book keeping
+        stf(i).numOfRays = size(stf(i).ray,2);
+        for j = 1:stf(i).numOfRays
+            stf(i).numOfBixelsPerRay(j) = numel(stf(i).ray(j).energy);
+        end
+
     elseif strcmp(stf(i).radiationMode,'photons')
         % set dummy values for photons
         for j = 1:stf(i).numOfRays
