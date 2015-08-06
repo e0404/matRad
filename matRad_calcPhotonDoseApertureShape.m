@@ -295,13 +295,15 @@ for i = 1:length(pln.gantryAngles)
     % Make a 2D grid extending +/-100mm with 0.1 mm resolution
     convLimits = 100; % [mm]
     convResolution = .5; % [mm]
-    [X,Z] = meshgrid(linspace(-convLimits,convLimits,2*convLimits/convResolution + 1));
+    [X,Z] = meshgrid([-fliplr(convResolution/2:convResolution:convLimits) ...
+                              convResolution/2:convResolution:convLimits]);
 
     % Create zero matrix for the Fluence
     F = zeros(size(X));
 
     % set shape
-    F(abs(X)<=50/2 & abs(Z)<=50/2) = 1;
+    fieldSize = 37.5;
+    F(abs(X)<=fieldSize & abs(Z)<=fieldSize) = 1;
     
     % gaussian convolution of field to model penumbra
     sigmaGauss = 2.1/convResolution; % [mm] / see diploma thesis siggel 4.1.2

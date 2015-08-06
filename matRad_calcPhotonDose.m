@@ -94,7 +94,8 @@ load photonPencilBeamKernels_6MV.mat;
 % Make a 2D grid extending +/-100mm with 0.1 mm resolution
 convLimits = 100; % [mm]
 convResolution = .5; % [mm]
-[X,Z] = meshgrid(linspace(-convLimits,convLimits,2*convLimits/convResolution + 1));
+[X,Z] = meshgrid([-fliplr(convResolution/2:convResolution:convLimits) ...
+                          convResolution/2:convResolution:convLimits]);
 
 % Evaluate piecewise polynomial kernels
 kernel1Mx = ppval(ppKernel1,sqrt(X.^2+Z.^2));
@@ -106,6 +107,11 @@ F = zeros(size(X));
 
 % set bixel opening to one
 F(abs(X)<=pln.bixelWidth/2 & abs(Z)<=pln.bixelWidth/2) = 1;
+
+% gaussian convolution of field to model penumbra
+sigmaGauss = 2.1/convResolution; % [mm] / see diploma thesis siggel 4.1.2
+gaussFilter =  convResolution^2/(2*pi*sigmaGauss^2) * exp( -(X.^2+Z.^2)/(2*sigmaGauss^2) );
+F = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(gaussFilter) ))));
 
 if ~exist('primaryFluence','var') % pre-compute konvolution matrices if uniform primary fluence
     
