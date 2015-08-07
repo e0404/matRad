@@ -373,9 +373,9 @@ for i = 1:numOfBeams
     
     resultSequencing.beam(i).numOfShapes  = k; %Anzahl der Segmente pro beam 
     resultSequencing.beam(i).shapes       = shapes(:,:,1:k); %Segmente pro beam
-    resultSequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac; % MU mit Rückführung auf kontinuierliche Werte
+    resultSequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac; % MU mit RÃ¼ckfÃ¼hrung auf kontinuierliche Werte
     resultSequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset; %Speichung der Bixelindizes
-    resultSequencing.beam(i).fluence      = D_0; %Speicherung der ursprünglichen Fluenzmatrix
+    resultSequencing.beam(i).fluence      = D_0; %Speicherung der ursprÃ¼nglichen Fluenzmatrix
     
     resultSequencing.w(1+offset:numOfRaysPerBeam+offset) = D_0(indInFluenceMx)/numOfLevels*calFac; %Fluenzvektor
 

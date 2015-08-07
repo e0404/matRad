@@ -81,7 +81,6 @@ if visBool
                 children = get(AxesInfigOpt,'children');
                 delete(children);
             end
-            hold on, grid on, grid minor,
         else
             figOpt=figure('Name','Progress of Optimization','NumberTitle','off');
             hold on, grid on, grid minor,

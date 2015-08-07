@@ -1,10 +1,19 @@
-function [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter,resolution,sourcePoint,targetPoint,cubes,visBool)
+function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter, ...
+                                    resolution, ...
+                                    sourcePoint, ...
+                                    targetPoint, ...
+                                    cubes)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % siddon ray tracing through three dimensional cube to calculate the
 % radiological depth according to Siddon 1985 Medical Physics
 % 
 % call
-%   [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter,resolution,sourcePoint,targetPoint,cubes,visBool)
+%   [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter, ...
+%                               resolution, ...
+%                               sourcePoint, ...
+%                               targetPoint, ...
+%                               cubes, ...
+%                               visBool)
 %
 % input
 %   isocenter:      isocenter within cube [voxels]
@@ -13,7 +22,6 @@ function [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter,resolution,so
 %   targetPoint:    target point of ray tracing
 %   cubes:          cell array of cubes for ray tracing (it is possible to pass
 %                   multiple cubes for ray tracing to save computation time)
-%   visBool:        toggle on/off visualization (optional)
 %
 % output (see Siddon 1985 Medical Physics for a detailed description of the
 % variales)
@@ -22,7 +30,7 @@ function [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter,resolution,so
 %   l               lengths of intersestions with cubes
 %   rho             densities extracted from cubes
 %   d12             distance between start and endpoint of ray tracing
-%   vis             struct for later visualization purposes
+%   ix              indices of hit voxels
 %
 % References
 %   [1] http://www.ncbi.nlm.nih.gov/pubmed/4000088
@@ -52,10 +60,6 @@ function [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter,resolution,so
 % <http://www.gnu.org/licenses/>.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-if nargin < 6
-    visBool = 0;
-end
 
 % Add isocenter to source and target point. Because the algorithm does not
 % works with negatives values. This put (0,0,0) in the center of first
@@ -115,15 +119,6 @@ end
 % given by equation 4.
 alpha_min = max([0 min(aX_1,aX_end) min(aY_1,aY_end) min(aZ_1,aZ_end)]);
 alpha_max = min([1 max(aX_1,aX_end) max(aY_1,aY_end) max(aZ_1,aZ_end)]);
-
-% eq 2
-% Calculate X,Y,Z min and max using parametrically equations.
-x_min = sourcePoint(1) + alpha_min * (targetPoint(1) - sourcePoint(1));
-y_min = sourcePoint(2) + alpha_min * (targetPoint(2) - sourcePoint(2));
-z_min = sourcePoint(3) + alpha_min * (targetPoint(3) - sourcePoint(3));
-x_max = sourcePoint(1) + alpha_max * (targetPoint(1) - sourcePoint(1));
-y_max = sourcePoint(2) + alpha_max * (targetPoint(2) - sourcePoint(2));
-z_max = sourcePoint(3) + alpha_max * (targetPoint(3) - sourcePoint(3));
 
 % eq 6
 % Calculate the range of indeces who gives parametric values for
@@ -232,21 +227,7 @@ k(k>zNumPlanes-1) = zNumPlanes-1;
 ix = sub2ind(size(cubes{1}),j,i,k);
 
 % obtains the values from cubes
+rho = cell(numel(cubes));
 for i = 1:numel(cubes)
     rho{i} = cubes{i}(ix);
-end
-
-if visBool
-   vis.alpha_x = alpha_x;
-   vis.alpha_y = alpha_y;
-   vis.alpha_z = alpha_z;
-   vis.x_min   = x_min;
-   vis.x_max   = x_max;
-   vis.y_min   = y_min;
-   vis.y_max   = y_max;
-   vis.z_min   = z_min;
-   vis.z_max   = z_max;
-   vis.ix      = ix;
-else
-   vis = [];
 end
