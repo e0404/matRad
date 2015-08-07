@@ -197,7 +197,7 @@ if ~isempty(get(hObject,'String'))
     end
     set(handles.resx_edit,'String',res_x);
     set(handles.resy_edit,'String',res_y);
-    if numel(res_z) > 0
+    if numel(res_z) > 1
         set(handles.resz_edit,'String','not equi');
     else
         set(handles.resz_edit,'String',res_z);
