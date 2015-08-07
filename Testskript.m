@@ -7,18 +7,18 @@
 
     % load patient data, i.e. ct, voi, cst
 
-    %load HEAD_AND_NECK
+    load HEAD_AND_NECK
     %load TG119.mat
     %load PROSTATE.mat
-    load LIVER.mat
+%     load LIVER.mat
     %load BOXPHANTOM.mat
 
     % meta information for treatment plan
     pln.SAD             = 1000; %[mm]
     pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
     pln.bixelWidth      = 15; % [mm] / also corresponds to lateral spot spacing for particles
-    pln.gantryAngles    = [0 90]; % [°]
-    pln.couchAngles     = [0 0 ]; % [°]
+    pln.gantryAngles    = [0:90:359]; % [°]
+    pln.couchAngles     = [0:90:359]; % [°]
     pln.numOfBeams      = numel(pln.gantryAngles);
     pln.numOfVoxels     = numel(ct.cube);
     pln.voxelDimensions = size(ct.cube);
@@ -45,13 +45,16 @@
 
     %% sequencing
     if strcmp(pln.radiationMode,'photons')
-        %Sequencing = matRad_xiaLeafSequencing(resultGUI.w,stf,7,1);
-        Sequencing = matRad_engelLeafSequencing(resultGUI.w,stf,7);
+        Sequencing = matRad_xiaLeafSequencing(resultGUI.w,stf,7,1);
+%         Sequencing = matRad_engelLeafSequencing(resultGUI.w,stf,7,1);
         resultGUI = matRad_mxCalcDose(dij,Sequencing.w,cst);
     end
     
 %% get information from sequencing and visualize
 
-shapeInfo = tk_getSequencingParameters(Sequencing,pln,stf,0);
-tk_drawShapes(shapeInfo,pln);
+shapeInfo = tk_getParameters(Sequencing,stf,pln,1);
+tk_visualizeMLC(shapeInfo,pln)
+
+% shapeInfo = tk_getSequencingParameters(Sequencing,pln,stf,1);
+% tk_drawShapes(shapeInfo,pln);
 

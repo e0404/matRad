@@ -124,7 +124,7 @@ for i = 1:numOfBeams
         
         seqSubPlots(1) = subplot(2,2,1,'parent',seqFig);
         imagesc(D_k,'parent',seqSubPlots(1));
-        set(seqSubPlots(1),'CLim',[0 numOfLevels]);
+        set(seqSubPlots(1),'CLim',[0 numOfLevels],'YDir','normal');
         title(seqSubPlots(1),['Beam # ' num2str(i) ': max(D_0) = ' num2str(max(D_0(:))) ' - ' num2str(numel(unique(D_0))) ' intensity levels']);
         xlabel(seqSubPlots(1),'x - direction parallel to leaf motion ')
         ylabel(seqSubPlots(1),'z - direction perpendicular to leaf motion ')
@@ -152,7 +152,7 @@ for i = 1:numOfBeams
         if visBool
             seqSubPlots(2) = subplot(2,2,2,'parent',seqFig);
             imagesc(D_k,'parent',seqSubPlots(2));
-            set(seqSubPlots(2),'CLim',[0 numOfLevels]);
+            set(seqSubPlots(2),'CLim',[0 numOfLevels],'YDir','normal');
             title(seqSubPlots(2),['k = ' num2str(k)]);
             colorbar
             drawnow
@@ -321,6 +321,7 @@ for i = 1:numOfBeams
             seqSubPlots(4) = subplot(2,2,3.5,'parent',seqFig);
             imagesc(shape_k,'parent',seqSubPlots(4));
             hold(seqSubPlots(4),'on');
+            set(seqSubPlots(4),'YDir','normal')
             xlabel(seqSubPlots(4),'x - direction parallel to leaf motion ')
             ylabel(seqSubPlots(4),'z - direction perpendicular to leaf motion ')
             title(seqSubPlots(4),['beam # ' num2str(i) ' shape # ' num2str(k) ' d_k = ' num2str(d_k)]);

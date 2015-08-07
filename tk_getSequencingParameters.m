@@ -1,6 +1,6 @@
 function shapeInfo = tk_getSequencingParameters(seqResult,pln,stf,visBool)
 
-mode = 'physical'; %'index' 'physical'
+mode = 'index'; %'index' 'physical'
 % physical: 81 leafes, 0mm = middle of leaf 41
 bixelWidth = pln.bixelWidth;
 
@@ -93,6 +93,8 @@ if strcmp(mode,'index')
                 titleString = ['BeamNr: ' int2str(i) ' ShapeNr: ' int2str(j)];
                 tk_visSingleShape(tempShape,Ix_l,Ix_r,titleString)
                 title(sprintf(['BeamNr: ' int2str(i) ' ShapeNr: ' int2str(j)],'Fontsize',14))
+                
+                pause(0.5)
                 close all
             end
 
