@@ -45,14 +45,14 @@
 
     %% sequencing
     if strcmp(pln.radiationMode,'photons')
-        Sequencing = matRad_xiaLeafSequencing(resultGUI.w,stf,7,1);
-%         Sequencing = matRad_engelLeafSequencing(resultGUI.w,stf,7,1);
+%         Sequencing = matRad_xiaLeafSequencing(resultGUI.w,stf,7,1);
+        Sequencing = matRad_engelLeafSequencing(resultGUI.w,stf,7);
         resultGUI = matRad_mxCalcDose(dij,Sequencing.w,cst);
     end
     
 %% get information from sequencing and visualize
 
-shapeInfo = tk_getParameters(Sequencing,stf,pln,1);
+shapeInfo = tk_getParameters(Sequencing,stf,pln,0);
 tk_visualizeMLC(shapeInfo,pln)
 
 % shapeInfo = tk_getSequencingParameters(Sequencing,pln,stf,1);

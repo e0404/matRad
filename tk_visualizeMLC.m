@@ -1,7 +1,7 @@
 function tk_visualizeMLC(shapeInfo,pln)
 
 % define what to draw
-mode = 'leafNum'; % options: 'physical','leafNum'
+mode = 'physical'; % options: 'physical','leafNum'
 
 % global parameters
 numOfBeams = pln.numOfBeams;
@@ -50,8 +50,8 @@ if strcmp(mode,'physical')
                     shapeInfo.beam(i).leafPairPos(k)+ bixelWidth/2],'b')                
             end
             axis tight
-            xlabel('horiz. leaf pos. [mm]')
-            ylabel('vert. leaf pos. [mm]')
+            xlabel('horiz. pos. [mm]')
+            ylabel('vert. pos. [mm]')
         end
         
     end
@@ -74,18 +74,19 @@ if strcmp(mode,'leafNum')
 %       the leaf positions (1st row of leafPos is lowest row in physical
 %       coordinates
         activeLeafInd = flipud(activeLeafInd); % flip to fit to the 
+
+%       creating subplots
+        subplotColumns = ceil(shapeInfo.beam(i).numOfShapes/2);
+        remainingPlots = shapeInfo.beam(i).numOfShapes - subplotColumns;
+        if remainingPlots == 0
+            subplotLines = 1;
+        else
+            subplotLines = 2;
+        end        
         
 %       loop over all shapes of the beam 
         for j=1:shapeInfo.beam(i).numOfShapes
             
-%           creating subplots
-            subplotColumns = ceil(shapeInfo.beam(i).numOfShapes/2);
-            remainingPlots = shapeInfo.beam(i).numOfShapes - subplotColumns;
-            if remainingPlots == 0
-                subplotLines = 1;
-            else
-                subplotLines = 2;
-            end
             subplot(subplotLines,subplotColumns,j)
 
             title(['Beam: ' num2str(i) ' Shape: ' num2str(j)],...
@@ -109,8 +110,8 @@ if strcmp(mode,'leafNum')
             end
             axis tight
             axis ij
-            xlabel('horiz. leaf pos. [mm]')
-            ylabel('vert. leaf pos. [mm]')
+            xlabel('horiz. pos. [mm]')
+            ylabel('leaf pair # [mm]')
         end
         
     end

@@ -61,6 +61,8 @@ for i=1:pln.numOfBeams
         end
         bixelIndMap = bixelIndMap + bixelIndOffset;
         bixelIndOffset = bixelIndOffset + numel(X);
+    % store physical position of first entry in bixelIndMap
+        posOfCornerBixel = [minX 0 minZ];
     
     %% 2. Get leaf limits
     % leaf limits can be extracted from the leaf map
@@ -103,6 +105,7 @@ for i=1:pln.numOfBeams
             % save data for each shape of this beam
             shapeInfo.beam(i).shape(m).leftLeafPos = leftLeafPos;
             shapeInfo.beam(i).shape(m).rightLeafPos = rightLeafPos;
+            shapeInfo.beam(i).shape(m).weight = Sequencing.beam(i).shapesWeight(m);
             
             %visualize result
             if visBool
@@ -143,7 +146,6 @@ for i=1:pln.numOfBeams
     
     %% save data for each beam
     shapeInfo.beam(i).numOfShapes = Sequencing.beam(i).numOfShapes;
-    shapeInfo.beam(i).shapeWeights = Sequencing.beam(i).shapesWeight;
     shapeInfo.beam(i).numOfActiveLeafPairs = dimZ;
     shapeInfo.beam(i).leafPairPos = leafPairPos;
     shapeInfo.beam(i).isActiveLeafPair = isActiveLeafPair;
@@ -151,6 +153,7 @@ for i=1:pln.numOfBeams
     shapeInfo.beam(i).lim_l = lim_l;
     shapeInfo.beam(i).lim_r = lim_r;
     shapeInfo.beam(i).bixelIndMap = bixelIndMap;
+    shapeInfo.beam(i).posOfCornerBixel = posOfCornerBixel;
     shapeInfo.beam(i).MLCWindow = MLCWindow;
 end
 
