@@ -6,6 +6,10 @@ mode = 'physical'; % options: 'physical','leafNum'
 % global parameters
 numOfBeams = pln.numOfBeams;
 bixelWidth = pln.bixelWidth;
+color = [0.2:0.01:0.8; 0.2:0.01:0.8; 0.2:0.01:0.8]';
+color = flipud(color);
+color(:,3)=0;
+color(:,2)=0;
 
 if strcmp(mode,'physical')
 %   loop over all beams
@@ -30,8 +34,11 @@ if strcmp(mode,'physical')
             end
             subplot(subplotLines,subplotColumns,j)
 
-            title(['Beam: ' num2str(i) ' Shape: ' num2str(j)],...
-                        'Fontsize',10)
+            title(['Beam: ' num2str(i) ' Shape: ' num2str(j) ' w=' ...
+                    num2str(shapeInfo.beam(i).shape(j).weight,2)],...
+                        'Fontsize',8)
+            colorInd = round(shapeInfo.beam(i).shape(j).weight*61);
+            set(gca,'Color',color(colorInd,:));
             hold on
 %           loop over all active leaf pairs
             for k=1:shapeInfo.beam(i).numOfActiveLeafPairs
@@ -89,8 +96,9 @@ if strcmp(mode,'leafNum')
             
             subplot(subplotLines,subplotColumns,j)
 
-            title(['Beam: ' num2str(i) ' Shape: ' num2str(j)],...
-                        'Fontsize',10)
+            title(['Beam: ' num2str(i) ' Shape: ' num2str(j) ' w=' ...
+                    num2str(shapeInfo.beam(i).shape(j).weight,2)],...
+                        'Fontsize',8)
             hold on
 %           loop over all active leaf pairs
             for k=1:shapeInfo.beam(i).numOfActiveLeafPairs

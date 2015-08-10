@@ -17,8 +17,8 @@
     pln.SAD             = 1000; %[mm]
     pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
     pln.bixelWidth      = 15; % [mm] / also corresponds to lateral spot spacing for particles
-    pln.gantryAngles    = [0:90:359]; % [°]
-    pln.couchAngles     = [0:90:359]; % [°]
+    pln.gantryAngles    = [0]; % [°]
+    pln.couchAngles     = [0]; % [°]
     pln.numOfBeams      = numel(pln.gantryAngles);
     pln.numOfVoxels     = numel(ct.cube);
     pln.voxelDimensions = size(ct.cube);
@@ -54,6 +54,8 @@
 
 shapeInfo = tk_getParameters(Sequencing,stf,pln,0);
 tk_visualizeMLC(shapeInfo,pln)
+
+[w, objFuncVal, gradient] = tk_getObjFuncValFromShapeInfo(shapeInfo,stf,dij,cst);
 
 % shapeInfo = tk_getSequencingParameters(Sequencing,pln,stf,1);
 % tk_drawShapes(shapeInfo,pln);

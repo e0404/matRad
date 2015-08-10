@@ -10,6 +10,8 @@ centralLeafPair = floor(median(1:numOfMLCLeafPairs));
 
 % initializing variables
 bixelIndOffset = 0; % used for creation of bixel index maps
+totalNumOfBixels = sum([stf(:).totalNumOfBixels]);
+vectorIndex = totalNumOfBixels + 1; % used for bookkeeping in the vector for optimization
 
 
 
@@ -106,6 +108,11 @@ for i=1:pln.numOfBeams
             shapeInfo.beam(i).shape(m).leftLeafPos = leftLeafPos;
             shapeInfo.beam(i).shape(m).rightLeafPos = rightLeafPos;
             shapeInfo.beam(i).shape(m).weight = Sequencing.beam(i).shapesWeight(m);
+            shapeInfo.beam(i).shape(m).shapeMap = shapeMap;
+            shapeInfo.beam(i).shape(m).index = vectorIndex;
+            
+            %update index for bookkeeping
+            vectorIndex = vectorIndex + dimZ;
             
             %visualize result
             if visBool
