@@ -1,4 +1,4 @@
-function [DAOvect, addInfoVect] = tk_shapeInfo2Vect(shapeInfo,stf,dij)
+function [DAOvect, addInfoVect] = tk_shapeInfo2Vect(shapeInfo,dij)
 
 % function to create a single vector for the direct aperature optimization
 % first: bixel weights
@@ -8,8 +8,7 @@ function [DAOvect, addInfoVect] = tk_shapeInfo2Vect(shapeInfo,stf,dij)
 %% 1. bixel weights
 
     % initializing variables
-    numOfBixels = [stf(:).totalNumOfBixels];
-    totalNumOfBixels = sum(numOfBixels);
+    totalNumOfBixels = shapeInfo.totalNumOfBixels;
     beamNumVect = dij.beamNum;
     w = zeros(totalNumOfBixels,1);
     

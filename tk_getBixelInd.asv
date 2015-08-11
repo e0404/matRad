@@ -38,10 +38,8 @@ elseif xPos == info.lim_r(zPosInd) %if leaf at max_right
     xPosInd = find(~isnan(info.bixelIndMap(zPosInd,:)),1,'last');
 else % leaf is not at min/max
     % for the left leaf: if positioned on edge between bixel n and n+1, the
-    % corresponding bixel is n. (use floor)
-    % for the right leaf: if positioned on edge between bixel n and n+1, the
-    % corresponding bixel is n+1. (use round)
-    if isLeftBool  % current leaf is left leaf
+    % corresponding bixel is n.
+    if isLeftBool  
         % check if leaf is on a bixel edge
         decimalPos = (xPos-info.posOfCornerBixel(1))/shapeInfo.bixelWidth -...
         floor((xPos-info.posOfCornerBixel(1))/shapeInfo.bixelWidth);
@@ -50,9 +48,20 @@ else % leaf is not at min/max
         else
             xPosInd = round((xPos-info.posOfCornerBixel(1))/shapeInfo.bixelWidth)+1;
         end
-    else % current leaf is right leaf
+    else
         xPosInd = round((xPos-info.posOfCornerBixel(1))/shapeInfo.bixelWidth)+1;
     end
+        
+    
+    
+% %     xPosDecimal = (xPos-info.posOfCornerBixel(1))/shapeInfo.bixelWidth -...
+% %         floor((xPos-info.posOfCornerBixel(1))/shapeInfo.bixelWidth);
+% %     if isLeftBool
+% %         if xPosDecimal > 0.5 && 
+        
+        
+        
+        xPosInd = round((xPos-info.posOfCornerBixel(1))/shapeInfo.bixelWidth)+1;
 end
 
 % correct if the leaf is completely on the left

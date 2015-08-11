@@ -1,8 +1,7 @@
-function [w, objFuncVal, gradient] = tk_getObjFuncValFromShapeInfo(shapeInfo,stf,dij,cst)
+function [w, objFuncVal, gradient] = tk_getObjFuncValFromShapeInfo(shapeInfo,dij,cst)
 
 % initializing variables
-numOfBixels = [stf(:).totalNumOfBixels];
-totalNumOfBixels = sum(numOfBixels);
+totalNumOfBixels = shapeInfo.totalNumOfBixels;
 beamNumVect = dij.beamNum;
 w = zeros(totalNumOfBixels,1);
 

@@ -55,10 +55,21 @@
 shapeInfo = tk_getParameters(Sequencing,stf,pln,0);
 tk_visualizeMLC(shapeInfo,pln)
 
-[w, objFuncVal, gradient] = tk_getObjFuncValFromShapeInfo(shapeInfo,stf,dij,cst);
-
-[shapeInfoVect, addInfoVect] = tk_shapeInfo2Vect(shapeInfo,stf,dij);
-
 % shapeInfo = tk_getSequencingParameters(Sequencing,pln,stf,1);
 % tk_drawShapes(shapeInfo,pln);
+
+%% get objective function value and gradients
+[w, objFuncVal, bixelGrad] = tk_getObjFuncValFromShapeInfo(shapeInfo,stf,dij,cst);
+
+[shapeInfoVect, addInfoVect] = tk_shapeInfo2Vect(shapeInfo,dij);
+
+indVect = tk_createIndVect(shapeInfoVect,addInfoVect,shapeInfo);
+
+[gradVect, apGrad] = tk_getGradients(bixelGrad,shapeInfoVect,addInfoVect, indVect,shapeInfo);
+
+[shapeInfo] = tk_updateShapeInfo(shapeInfo,shapeInfoVect);
+
+
+
+
 

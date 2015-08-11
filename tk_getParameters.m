@@ -1,21 +1,21 @@
 function shapeInfo = tk_getParameters(Sequencing,stf,pln,visBool)
 
+% function to gather the necessary information for the DAO from the
+% Sequencing struct and store it in a shapeInfo struct
+
+
 % MLC parameters:
 bixelWidth = pln.bixelWidth; % [mm]
 numOfMLCLeafPairs = 80;
 %     define central leaf pair (here we want the 0mm position to be in the
 %     center of a leaf pair (e.g. leaf 41 stretches from -2.5mm to 2.5mm
-%     for a bixel/leafWidth of 5mm)
+%     for a bixel/leafWidth of 5mm and 81 leaf pairs)
 centralLeafPair = floor(median(1:numOfMLCLeafPairs));
 
 % initializing variables
 bixelIndOffset = 0; % used for creation of bixel index maps
 totalNumOfBixels = sum([stf(:).totalNumOfBixels]);
 vectorIndex = totalNumOfBixels + 1; % used for bookkeeping in the vector for optimization
-
-
-
-
 
 % loop over all beams
 for i=1:pln.numOfBeams
@@ -146,9 +146,7 @@ for i=1:pln.numOfBeams
 %       getting the dimensions of the MLC in order to be able to plot the
 %       shapes using physical coordinates
         MLCWindow = [minX-bixelWidth/2 maxX+bixelWidth/2 ...
-                    minZ-bixelWidth/2 maxZ+bixelWidth/2];
-           
-    
+                    minZ-bixelWidth/2 maxZ+bixelWidth/2];   
     
     
     %% save data for each beam
@@ -164,12 +162,10 @@ for i=1:pln.numOfBeams
     shapeInfo.beam(i).MLCWindow = MLCWindow;
 end
 
-
-
-
 %% save global data
 shapeInfo.bixelWidth = bixelWidth;
 shapeInfo.numOfMLCLeafPairs = numOfMLCLeafPairs;
+shapeInfo.totalNumOfBixels = totalNumOfBixels;
 
 
 
