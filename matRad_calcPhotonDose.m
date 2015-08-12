@@ -87,6 +87,10 @@ coordsV = [xCoordsV yCoordsV zCoordsV];
 % set lateral cutoff value
 lateralCutoff = 20; % [mm]
 
+% toggle custom primary fluence on/off. if 0 we assume a homogeneous
+% primary fluence, if 1 we use measured radially symmetric data
+useCustomPrimFluenceBool = 0;
+
 %% kernel convolution
 % load polynomial fits for kernels ppKernel1, ppKernel2, ppKernel3
 load photonPencilBeamKernels_6MV.mat;
@@ -94,9 +98,8 @@ load photonPencilBeamKernels_6MV.mat;
 % Make a 2D grid extending +/-100mm with 0.1 mm resolution
 convLimits = 100; % [mm]
 convResolution = .5; % [mm]
-[X,Z] = meshgrid([-fliplr(convResolution/2:convResolution:convLimits) ...
-                          convResolution/2:convResolution:convLimits]);
-
+[X,Z] = meshgrid(-convLimits:convResolution:convLimits);
+                          
 % Evaluate piecewise polynomial kernels
 kernel1Mx = ppval(ppKernel1,sqrt(X.^2+Z.^2));
 kernel2Mx = ppval(ppKernel2,sqrt(X.^2+Z.^2));
@@ -113,7 +116,7 @@ sigmaGauss = 2.1/convResolution; % [mm] / see diploma thesis siggel 4.1.2
 gaussFilter =  convResolution^2/(2*pi*sigmaGauss^2) * exp( -(X.^2+Z.^2)/(2*sigmaGauss^2) );
 F = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(gaussFilter) ))));
 
-if ~exist('primaryFluence','var') % pre-compute konvolution matrices if uniform primary fluence
+if ~useCustomPrimFluenceBool % pre-compute konvolution matrices for idealized homogeneous primary fluence
     
     % Display console message.
     fprintf('matRad: Uniform primary photon fluence -> pre-compute kernel convolution... \n');    
@@ -168,7 +171,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
         
         counter = counter + 1;
         
-        if exist('primaryFluence','var') % use non uniform primary fluence if specifried
+        if useCustomPrimFluenceBool % use custom primary fluence if specifried
             
             r     = sqrt( (X-stf(i).ray(j).rayPos(1)).^2 + (Z-stf(i).ray(j).rayPos(3)).^2 );
             Psi   = interp1(primaryFluence(:,1),primaryFluence(:,2),r);

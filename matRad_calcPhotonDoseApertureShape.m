@@ -44,7 +44,7 @@ if nargin < 4
     visMode = 0;
 end
 
-lateralCutOff = 50; % [mm] / calculate dose within a corridor arround the target
+lateralCutOff = 100; % [mm] / calculate dose within a corridor arround the target
 rayMxSpacing  = min(ct.resolution);
 cornerPoints  = [                     1                      1                      1;
                                       1                      1 pln.voxelDimensions(3);
@@ -69,7 +69,7 @@ end
 % find all target voxels from cst cell array
 targetVoxels = [];
 for i=1:size(cst,1)
-    if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
+    if isequal(cst{i,3},'TARGET')%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% attention hack think if this should really be neglected at later point && ~isempty(cst{i,6})
         targetVoxels = [targetVoxels;cst{i,4}];
     end
 end
@@ -295,14 +295,13 @@ for i = 1:length(pln.gantryAngles)
     % Make a 2D grid extending +/-100mm with 0.1 mm resolution
     convLimits = 100; % [mm]
     convResolution = .5; % [mm]
-    [X,Z] = meshgrid([-fliplr(convResolution/2:convResolution:convLimits) ...
-                              convResolution/2:convResolution:convLimits]);
+    [X,Z] = meshgrid(-convLimits:convResolution:convLimits);
 
     % Create zero matrix for the Fluence
     F = zeros(size(X));
 
     % set shape
-    fieldSize = 37.5;
+    fieldSize = 50;
     F(abs(X)<=fieldSize & abs(Z)<=fieldSize) = 1;
     
     % gaussian convolution of field to model penumbra
