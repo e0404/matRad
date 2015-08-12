@@ -67,6 +67,10 @@ indVect = tk_createIndVect(shapeInfoVect,addInfoVect,shapeInfo);
 
 gradVect = tk_getGradients(bixelGrad,shapeInfoVect,addInfoVect, indVect,shapeInfo);
 
+% % There still has to be implemented a test for the validity of the leaf
+% positions, (e.g. no overlap!!!, otherwise there will be negative opening
+% fractions and negative weights!)
+
 [shapeInfo] = tk_updateShapeInfo(shapeInfo,shapeInfoVect);
 
 
