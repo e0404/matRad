@@ -12,7 +12,7 @@ totalNumOfShapes = sum([shapeInfo.beam(:).numOfShapes]);
 
 
 aperatureGrad = zeros(totalNumOfShapes,1);
-gradVect = NaN * ones(numel(addInfoVect),1);
+gradVect = NaN * ones(size(addInfoVect,1),1);
 
 %% 1. calculate aperatureGrad
 % the gradient of the aperature weight can be calculated from the sum of
@@ -47,7 +47,7 @@ gradVect = NaN * ones(numel(addInfoVect),1);
 %% 2. find the corresponding bixel to the leaf Positions and calculate the gradient
 
     %loop over all leaf positions
-    for i=shapeInfo.totalNumOfBixels+1:numel(addInfoVect)
+    for i=totalNumOfShapes+1:size(addInfoVect,1)
         % get the beam and shape number for this leaf to find out the
         % aperature weight
         currBeam = addInfoVect(i,1);
@@ -64,17 +64,17 @@ gradVect = NaN * ones(numel(addInfoVect),1);
         % g_x = +/- bixelGrad * (aperatureWeight/bixelWidth) the minus sign
         % is used for the left leaf, as a movement in positive x-direction
         % closes the bixel
-        gradVect(i) = currBixGrad * (apWeight/bixelWidth);        
+        gradVect(i) = (currBixGrad * apWeight/bixelWidth);        
         
     end
 
     % correct the sign for the left leaf positions
-    gradVect((numel(wGrad)+1):(numel(wGrad)+1)+totalNumOfLeafPairs-1) = ...
-        -gradVect((numel(wGrad)+1):(numel(wGrad)+1)+totalNumOfLeafPairs-1);
+    gradVect(totalNumOfShapes+1:totalNumOfShapes+totalNumOfLeafPairs) = ...
+        -gradVect(totalNumOfShapes+1:totalNumOfShapes+totalNumOfLeafPairs);
 
 %% 3. form single vector
 
-gradVect(isnan(gradVect)) =[];
-gradVect = [aperatureGrad; gradVect];
+gradVect(1:length(aperatureGrad)) = aperatureGrad;
+
 
 end

@@ -1,5 +1,7 @@
 function [w, objFuncVal, gradient] = tk_getObjFuncValFromShapeInfo(shapeInfo,dij,cst)
 
+objFunc =  @(x) matRad_objFunc(x,dij,cst);
+
 % initializing variables
 totalNumOfBixels = shapeInfo.totalNumOfBixels;
 beamNumVect = dij.beamNum;
@@ -21,12 +23,13 @@ for i = 1:totalNumOfBixels
         for j=1:shapeInfo.beam(beamNum).numOfShapes
             w(i) = w(i) + shapeInfo.beam(beamNum).shape(j).weight * ...
                     shapeInfo.beam(beamNum).shape(j).shapeMap(MLCPosInd);
-        end
-        
+        end    
 end
 
 %% 2. Get objective function value and gradient
 
-[objFuncVal, gradient] = matRad_objFunc(w,dij,cst);
+[objFuncVal, gradient] = objFunc(w);
+
+%matRad_verifyGradient(objFunc,length(w));
 
 end

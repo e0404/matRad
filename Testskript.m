@@ -49,29 +49,31 @@
         Sequencing = matRad_engelLeafSequencing(resultGUI.w,stf,7);
         resultGUI = matRad_mxCalcDose(dij,Sequencing.w,cst);
     end
+    %% DAOopt
+    testRes = matRad_DAOoptimization(dij,stf,cst,pln,Sequencing,1);
+    
     
 %% get information from sequencing and visualize
-
-shapeInfo = tk_getParameters(Sequencing,stf,pln,0);
-tk_visualizeMLC(shapeInfo,pln)
-
-% shapeInfo = tk_getSequencingParameters(Sequencing,pln,stf,1);
-% tk_drawShapes(shapeInfo,pln);
-
-%% get objective function value and gradients
-[w, objFuncVal, bixelGrad] = tk_getObjFuncValFromShapeInfo(shapeInfo,dij,cst);
-
-[shapeInfoVect, addInfoVect] = tk_shapeInfo2Vect(shapeInfo,dij);
-
-indVect = tk_createIndVect(shapeInfoVect,addInfoVect,shapeInfo);
-
-gradVect = tk_getGradients(bixelGrad,shapeInfoVect,addInfoVect, indVect,shapeInfo);
-
-% % There still has to be implemented a test for the validity of the leaf
-% positions, (e.g. no overlap!!!, otherwise there will be negative opening
-% fractions and negative weights!)
-
-[shapeInfo] = tk_updateShapeInfo(shapeInfo,shapeInfoVect);
+% % % % shapeInfo = tk_getParameters(Sequencing,stf,pln,0);
+% % % % tk_visualizeMLC(shapeInfo,pln)
+% % % % 
+% % % % % shapeInfo = tk_getSequencingParameters(Sequencing,pln,stf,1);
+% % % % % tk_drawShapes(shapeInfo,pln);
+% % % % 
+% % % % %% get objective function value and gradients
+% % % % [w, objFuncVal, bixelGrad] = tk_getObjFuncValFromShapeInfo(shapeInfo,dij,cst);
+% % % % 
+% % % % [shapeInfoVect, addInfoVect] = tk_shapeInfo2Vect(shapeInfo);
+% % % % 
+% % % % indVect = tk_createIndVect(shapeInfoVect,addInfoVect,shapeInfo);
+% % % % 
+% % % % gradVect = tk_getGradients(bixelGrad,addInfoVect,indVect,shapeInfo);
+% % % % 
+% % % % % % There still has to be implemented a test for the validity of the leaf
+% % % % % positions, (e.g. no overlap!!!, otherwise there will be negative opening
+% % % % % fractions and negative weights!)
+% % % % 
+% % % % [shapeInfo] = tk_updateShapeInfo(shapeInfo,shapeInfoVect);
 
 
 

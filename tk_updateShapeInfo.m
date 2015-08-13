@@ -7,6 +7,7 @@ function [updatedInfo] = tk_updateShapeInfo(shapeInfo,shapeInfoVect)
 updatedInfo = shapeInfo;
 totalNumOfLeafPairs = [shapeInfo.beam(:).numOfShapes]*...
                             [shapeInfo.beam(:).numOfActiveLeafPairs]';
+shapeInd = 1;
 
 %% update the shapeMaps
 % here the new colimator positions are used to create new shapeMaps that
@@ -49,13 +50,18 @@ for i=1:numel(updatedInfo.beam)
                 tempMap(k,l) = openingFrac;                
             end
             
-            updatedInfo.beam(i).shape(j).updatedLeft(k) = leftLeafPos;
-            updatedInfo.beam(i).shape(j).updatedRight(k) = rightLeafPos;
+%             updatedInfo.beam(i).shape(j).updatedLeft(k) = leftLeafPos;
+%             updatedInfo.beam(i).shape(j).updatedRight(k) = rightLeafPos;
+            updatedInfo.beam(i).shape(j).leftLeafPos(k) = leftLeafPos;
+            updatedInfo.beam(i).shape(j).rightLeafPos(k) = rightLeafPos;
         end
         
         % save the tempMap
-        updatedInfo.beam(i).shape(j).updatedMap = tempMap;
-         
+        updatedInfo.beam(i).shape(j).shapeMap = tempMap;
+        
+        %update the shape weight
+        updatedInfo.beam(i).shape(j).weight = shapeInfoVect(shapeInd);
+        shapeInd = shapeInd +1;
     end
     
 end

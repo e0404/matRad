@@ -15,7 +15,8 @@ centralLeafPair = floor(median(1:numOfMLCLeafPairs));
 % initializing variables
 bixelIndOffset = 0; % used for creation of bixel index maps
 totalNumOfBixels = sum([stf(:).totalNumOfBixels]);
-vectorIndex = totalNumOfBixels + 1; % used for bookkeeping in the vector for optimization
+totalNumOfShapes = sum([Sequencing.beam.numOfShapes]);
+vectorIndex = totalNumOfShapes + 1; % used for bookkeeping in the vector for optimization
 
 % loop over all beams
 for i=1:pln.numOfBeams
