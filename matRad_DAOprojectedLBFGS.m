@@ -1,4 +1,4 @@
-function optResult = matRad_DAOprojectedLBFGS(objFunc,wInit,limVect,visBool,varargin)
+function optResult = matRad_DAOprojectedLBFGS(objFunc,projFunc,wInit,visBool,varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % projected L-BFGS optimizer including a positivity constraints on the
 % optimization variable
@@ -153,7 +153,7 @@ while continueOpt == 1
         candidateX = x(:,1) + alpha*dir;
 
         % project candidate to feasible set
-        [candidateX, isConstrActive] = tk_projectToFeasVect(candidateX,limVect,1);
+        [candidateX, isConstrActive] = projFunc(candidateX);
         
         
         

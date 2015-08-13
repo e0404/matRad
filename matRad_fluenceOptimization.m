@@ -125,7 +125,10 @@ end
 %matRad_verifyGradient(objFunc,dij.totalNumOfBixels);
 
 % minimize objetive function
-optResult = matRad_projectedLBFGS(objFunc,wInit,visBool,varargin);
+% optResult = matRad_projectedLBFGS(objFunc,wInit,visBool,varargin);
+% use only positivity constraint for weights
+projFunc = @(x) matRad_projectToFeasVect(x);
+optResult = matRad_DAOprojectedLBFGS(objFunc,projFunc,wInit,visBool,varargin);
 
 % calc dose and reshape from 1D vector to 2D array
 optResult.physicalDose = reshape(dij.physicalDose*optResult.w,dij.dimensions);

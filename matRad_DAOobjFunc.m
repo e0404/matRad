@@ -1,26 +1,11 @@
-function [f, g] = matRad_DAOobjFunc(shapeInfoVect,shapeInfo,addInfoVect,dij,cst)
+function [f, g] = matRad_DAOobjFunc(shapeInfoVect,shapeInfo,dij,cst)
 
 % update shapeInfoVect und indVect
-[shapeInfo] = tk_updateShapeInfo(shapeInfo,shapeInfoVect);
-indVect = tk_createIndVect(shapeInfoVect,addInfoVect,shapeInfo);
+[shapeInfo] = matRad_updateShapeInfo(shapeInfo,shapeInfoVect);
+indVect = matRad_createIndVect(shapeInfoVect,shapeInfo.addInfoVect,shapeInfo);
 
 % calculate w (bixel weight vector)
-totalNumOfBixels = shapeInfo.totalNumOfBixels;
-beamNumVect = dij.beamNum;
-w = zeros(totalNumOfBixels,1);
-for i = 1:totalNumOfBixels    
-    % find the bixelposition corresponding to the bixel i    
-        % 1. find the corresponding beam
-        beamNum = beamNumVect(i);        
-        % 2. find index in the MLC map
-        MLCPosInd = shapeInfo.beam(beamNum).bixelIndMap == i;    
-    % add up the fluence from every shape of this beam        
-        for j=1:shapeInfo.beam(beamNum).numOfShapes
-            w(i) = w(i) + shapeInfo.beam(beamNum).shape(j).weight * ...
-                    shapeInfo.beam(beamNum).shape(j).shapeMap(MLCPosInd);
-        end    
-end     
-
+w = matRad_calcBixelWeights(shapeInfo,dij);
 
 % Calculate dose
 d = dij.physicalDose*w;
@@ -154,7 +139,7 @@ if nargout > 1
     % Calculate gradient of bixel weights
     bixelGrad = (( 2*(delta_underdose + delta_overdose + delta_deviation) + delta_mean + delta_EUD )' * dij.physicalDose)';
 
-    g = tk_getGradients(bixelGrad,addInfoVect,indVect,shapeInfo);
+    g = matRad_getGradients(bixelGrad,shapeInfo.addInfoVect,indVect,shapeInfo);
 end
 
 end

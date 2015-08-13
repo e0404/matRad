@@ -17,14 +17,15 @@
     pln.SAD             = 1000; %[mm]
     pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
     pln.bixelWidth      = 15; % [mm] / also corresponds to lateral spot spacing for particles
-    pln.gantryAngles    = [0 90]; % [°]
-    pln.couchAngles     = [0 0]; % [°]
+    pln.gantryAngles    = [45]; % [°]
+    pln.couchAngles     = [0]; % [°]
     pln.numOfBeams      = numel(pln.gantryAngles);
     pln.numOfVoxels     = numel(ct.cube);
     pln.voxelDimensions = size(ct.cube);
     pln.radiationMode   = 'photons'; % either photons / protons / carbon
     pln.bioOptimization = 'none'; % none: physical optimization; effect: effect-based optimization; RBExD: optimization of RBE-weighted dose
     pln.numOfFractions  = 1;
+    pln.executeDAO      = 1; % 1: execute DAO, 0: don't use DAO
 
     %% initial visualization and change objective function settings if desired
 % skip the GUI
