@@ -32,10 +32,10 @@
 
 % load patient data, i.e. ct, voi, cst
 
-%load HEAD_AND_NECK
+load HEAD_AND_NECK
 %load TG119.mat
 %load PROSTATE.mat
-load LIVER.mat
+%load LIVER.mat
 %load BOXPHANTOM.mat
 
 % meta information for treatment plan
@@ -50,7 +50,8 @@ pln.voxelDimensions = size(ct.cube);
 pln.radiationMode   = 'photons'; % either photons / protons / carbon
 pln.bioOptimization = 'none'; % none: physical optimization; effect: effect-based optimization; RBExD: optimization of RBE-weighted dose
 pln.numOfFractions  = 1;
-pln.executeDAO      = true; % 1/true: execute DAO, 0/false: don't use DAO
+pln.runSequencing   = true; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
+pln.runDAO          = true; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 
 %% initial visualization and change objective function settings if desired
 matRadGUI
@@ -69,16 +70,18 @@ end
 resultGUI = matRad_fluenceOptimization(dij,cst,pln,0);
 
 %% sequencing
-if strcmp(pln.radiationMode,'photons')
-    %Sequencing = matRad_xiaLeafSequencing(resultGUI.w,stf,7,1);
-    Sequencing = matRad_engelLeafSequencing(resultGUI.w,stf,7);
-    resultGUI = matRad_mxCalcDose(dij,Sequencing.w,cst);
+if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
+    resultGUI = matRad_xiaLeafSequencing(resultGUI.w,stf,dij,5);
+    %resultGUI = matRad_engelLeafSequencing(resultGUI.w,stf,dij,1);
 end
 
 %% DAO
-if pln.executeDAO
-   resultGUI = matRad_DAOoptimization(dij,stf,cst,pln,Sequencing,1); 
+profile on
+if strcmp(pln.radiationMode,'photons') && pln.runDAO
+   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.shapeInfo,1); 
 end
+profile off
+profile viewer
 
 %% start gui for visualization of result
 matRadGUI

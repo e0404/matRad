@@ -1,4 +1,4 @@
-function optResult = matRad_projectedLBFGS(objFunc,wInit,visBool,varargin)
+function wOpt = matRad_projectedLBFGS(objFunc,projFunc,wInit,visBool,varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % projected L-BFGS optimizer including a positivity constraints on the
 % optimization variable
@@ -14,7 +14,7 @@ function optResult = matRad_projectedLBFGS(objFunc,wInit,visBool,varargin)
 %   varargin:   optional: number of iterations and precision
 %
 % output
-%   optResult:  struct containing the optimized fluence vector
+%   wOpt:       optimized vector
 %
 % References
 %   [1] Kelley: Iterative methods for optimization 1999
@@ -49,7 +49,7 @@ function optResult = matRad_projectedLBFGS(objFunc,wInit,visBool,varargin)
 iter      = 0;
 if isempty(varargin{1,1})
     numOfIter = 1000;
-    prec      = 1e-3;
+    prec      = 1e-5;
 else
     optParam = varargin{1,1};
     numOfIter = optParam{1,1}.numOfIter;
@@ -153,7 +153,7 @@ while continueOpt == 1
         candidateX = x(:,1) + alpha*dir;
 
         % project candidate to feasible set
-        candidateX(candidateX<0) = 0;
+        [candidateX, isConstrActive] = projFunc(candidateX);
         
         lineSearchObjFuncValue = objFunc(candidateX);
         
@@ -188,8 +188,8 @@ while continueOpt == 1
     s_k = -diff(x,[],2);
     y_k = -diff(dx,[],2);
 
-    s_k(x(:,1)<=0,1) = 0;
-    y_k(x(:,1)<=0,1) = 0;
+    s_k(isConstrActive,1) = 0;
+    y_k(isConstrActive,1) = 0;
     
     r_k = 1./diag(y_k'*s_k);
         
@@ -230,4 +230,4 @@ end
 
 fprintf(['\n' num2str(iter) ' iteration(s) performed to converge\n'])
 
-optResult.w = x(:,1);
+wOpt = x(:,1);

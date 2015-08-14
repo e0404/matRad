@@ -1,4 +1,4 @@
-function resultSequencing = matRad_xiaLeafSequencing(w,stf,numOfLevels,visBool)
+function resultGUI = matRad_xiaLeafSequencing(w,stf,dij,numOfLevels,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated 
 % beams with multiple static segments according to Xia et al. (1998)
@@ -14,7 +14,7 @@ function resultSequencing = matRad_xiaLeafSequencing(w,stf,numOfLevels,visBool)
 %   visBool:            toggle on/off visualization (optional)
 %
 % output
-%   resultSequencing:   matRad sequencing result struct   
+%   XXXXXXXXXXXXXXXXXXXXXXXXXXX:   matRad sequencing result struct   
 %
 % References
 %   [1] http://online.medphys.org/resource/1/mphya6/v25/i8/p1424_s1
@@ -46,7 +46,7 @@ function resultSequencing = matRad_xiaLeafSequencing(w,stf,numOfLevels,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % if visBool not set toogle off visualization
-if nargin < 4
+if nargin < 6
     visBool = 0;
 end
 
@@ -254,18 +254,25 @@ for i = 1:numOfBeams
         
     end
     
-    resultSequencing.beam(i).numOfShapes  = k;
-    resultSequencing.beam(i).shapes       = shapes(:,:,1:k);
-    resultSequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
-    resultSequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
-    resultSequencing.beam(i).fluence      = D_0;
+    sequencing.beam(i).numOfShapes  = k;
+    sequencing.beam(i).shapes       = shapes(:,:,1:k);
+    sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
+    sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
+    sequencing.beam(i).fluence      = D_0;
     
-    resultSequencing.w(1+offset:numOfRaysPerBeam+offset) = D_0(indInFluenceMx)/numOfLevels*calFac;
+    sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = D_0(indInFluenceMx)/numOfLevels*calFac;
 
     offset = offset + numOfRaysPerBeam;
 
+end
+
+resultGUI = matRad_mxCalcDose(dij,sequencing.w);
+
+resultGUI.sequencing   = sequencing;
+resultGUI.unsequencedW = w;
+
+resultGUI.shapeInfo = matRad_sequencing2ShapeInfo(sequencing,stf);
 
 end
 
-end
 

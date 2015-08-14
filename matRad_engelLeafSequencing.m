@@ -1,4 +1,4 @@
-function resultSequencing = matRad_engelLeafSequencing(w,stf,numOfLevels,visBool)
+function resultGUI = matRad_engelLeafSequencing(w,stf,dij,numOfLevels,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated 
 % beams with multiple static segments accroding to Engel et al. 2005
@@ -14,7 +14,7 @@ function resultSequencing = matRad_engelLeafSequencing(w,stf,numOfLevels,visBool
 %   visBool:            toggle on/off visualization (optional)
 %
 % output
-%   resultSequencing:   matRad sequencing result struct   
+%   resultGUI xxxx
 %
 % References
 %   [1] http://www.sciencedirect.com/science/article/pii/S0166218X05001411
@@ -46,7 +46,7 @@ function resultSequencing = matRad_engelLeafSequencing(w,stf,numOfLevels,visBool
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % if visBool not set toogle off visualization
-if nargin < 4
+if nargin < 5
     visBool = 0;
 end
 
@@ -366,23 +366,27 @@ for i = 1:numOfBeams
         clear u;
         clear leftIntLimit;
         clear rightIntLimit;
-        
-        
-
+       
     end
     
-    resultSequencing.beam(i).numOfShapes  = k; %Anzahl der Segmente pro beam 
-    resultSequencing.beam(i).shapes       = shapes(:,:,1:k); %Segmente pro beam
-    resultSequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac; % MU mit Rückführung auf kontinuierliche Werte
-    resultSequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset; %Speichung der Bixelindizes
-    resultSequencing.beam(i).fluence      = D_0; %Speicherung der ursprünglichen Fluenzmatrix
+    sequencing.beam(i).numOfShapes  = k;
+    sequencing.beam(i).shapes       = shapes(:,:,1:k);
+    sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
+    sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
+    sequencing.beam(i).fluence      = D_0;
     
-    resultSequencing.w(1+offset:numOfRaysPerBeam+offset) = D_0(indInFluenceMx)/numOfLevels*calFac; %Fluenzvektor
+    sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = D_0(indInFluenceMx)/numOfLevels*calFac;
 
     offset = offset + numOfRaysPerBeam;
 
-    
 end
+
+resultGUI = matRad_mxCalcDose(dij,sequencing.w);
+
+resultGUI.sequencing   = sequencing;
+resultGUI.unsequencedW = w;
+
+resultGUI.shapeInfo = matRad_sequencing2ShapeInfo(sequencing,stf);
 
 end
 

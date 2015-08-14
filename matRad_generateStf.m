@@ -170,7 +170,7 @@ for i = 1:length(pln.gantryAngles)
      end
      
      % remove spaces within rows of bixels for DAO
-     if pln.executeDAO
+     if pln.runDAO
          % create single x,y,z vectors
          x = rayPos(:,1);
          y = rayPos(:,2);
@@ -178,11 +178,11 @@ for i = 1:length(pln.gantryAngles)
          uniZ = unique(z);
          for j = 1:numel(uniZ)
              x_loc = x(z == uniZ(j));
-             x_min = min(x);
-             x_max = max(x);
+             x_min = min(x_loc);
+             x_max = max(x_loc);
              x = [x; [x_min:pln.bixelWidth:x_max]'];
-             y = [y; zeros(length(x_min:pln.bixelWidth:x_max),1)];
-             z = [z; uniZ(j)*ones(length(x_min:pln.bixelWidth:x_max),1)];             
+             y = [y; zeros((x_max-x_min)/pln.bixelWidth+1,1)];
+             z = [z; uniZ(j)*ones((x_max-x_min)/pln.bixelWidth+1,1)];             
          end
          
          rayPos = [x,y,z];
