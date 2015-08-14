@@ -52,7 +52,7 @@
     end
     %% DAOopt
     testRes = matRad_DAOoptimization(dij,stf,cst,pln,Sequencing,1);
-    
+% % %     UMBENENN VON DAOLBFGS UM ALLGEMEINE FUNKTION ZU HABEN!!!!
     
 %% get information from sequencing and visualize
 % % % % shapeInfo = tk_getParameters(Sequencing,stf,pln,0);
