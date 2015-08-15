@@ -271,7 +271,7 @@ resultGUI = matRad_mxCalcDose(dij,sequencing.w);
 resultGUI.sequencing   = sequencing;
 resultGUI.unsequencedW = w;
 
-resultGUI.shapeInfo = matRad_sequencing2ShapeInfo(sequencing,stf);
+resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
 
 end
 

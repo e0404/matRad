@@ -1,8 +1,46 @@
-function shapeInfo = matRad_sequencing2ShapeInfo(Sequencing,stf)
+function apertureInfo = matRad_sequencing2ApertureInfo(Sequencing,stf)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad function to generate a shape info struct based on the result of
+% multileaf collimator sequencing
+%
+% call
+%   apertureInfo = matRad_sequencing2ApertureInfo(Sequencing,stf)
+%
+% input
+%   Sequencing: matRad sequencing result struct
+%   stf:        matRad steering information struct
+%
+% output
+%   apertureInfo: matRad aperture weight and shape info struct
+%
+% References
+%   
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% function to gather the necessary information for the DAO from the
-% Sequencing struct and store it in a shapeInfo struct
-
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+%
+% m.bangert@dkfz.de
+%
+% This file is part of matRad.
+%
+% matrad is free software: you can redistribute it and/or modify it under
+% the terms of the GNU General Public License as published by the Free
+% Software Foundation, either version 3 of the License, or (at your option)
+% any later version.
+%
+% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
+% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+% details.
+%
+% You should have received a copy of the GNU General Public License in the
+% file license.txt along with matRad. If not, see
+% <http://www.gnu.org/licenses/>.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % MLC parameters:
 bixelWidth = stf(1).bixelWidth; % [mm]
@@ -96,11 +134,11 @@ for i=1:size(stf,2)
         end
         
         % save data for each shape of this beam
-        shapeInfo.beam(i).shape(m).leftLeafPos = leftLeafPos;
-        shapeInfo.beam(i).shape(m).rightLeafPos = rightLeafPos;
-        shapeInfo.beam(i).shape(m).weight = Sequencing.beam(i).shapesWeight(m);
-        shapeInfo.beam(i).shape(m).shapeMap = shapeMap;
-        shapeInfo.beam(i).shape(m).vectorOffset = vectorOffset;
+        apertureInfo.beam(i).shape(m).leftLeafPos = leftLeafPos;
+        apertureInfo.beam(i).shape(m).rightLeafPos = rightLeafPos;
+        apertureInfo.beam(i).shape(m).weight = Sequencing.beam(i).shapesWeight(m);
+        apertureInfo.beam(i).shape(m).shapeMap = shapeMap;
+        apertureInfo.beam(i).shape(m).vectorOffset = vectorOffset;
         
         % update index for bookkeeping
         vectorOffset = vectorOffset + dimZ;
@@ -129,27 +167,27 @@ for i=1:size(stf,2)
                     minZ-bixelWidth/2 maxZ+bixelWidth/2];
     
     % save data for each beam
-    shapeInfo.beam(i).numOfShapes = Sequencing.beam(i).numOfShapes;
-    shapeInfo.beam(i).numOfActiveLeafPairs = dimZ;
-    shapeInfo.beam(i).leafPairPos = leafPairPos;
-    shapeInfo.beam(i).isActiveLeafPair = isActiveLeafPair;
-    shapeInfo.beam(i).centralLeafPair = centralLeafPair;
-    shapeInfo.beam(i).lim_l = lim_l;
-    shapeInfo.beam(i).lim_r = lim_r;
-    shapeInfo.beam(i).bixelIndMap = bixelIndMap;
-    shapeInfo.beam(i).posOfCornerBixel = posOfCornerBixel;
-    shapeInfo.beam(i).MLCWindow = MLCWindow;
+    apertureInfo.beam(i).numOfShapes = Sequencing.beam(i).numOfShapes;
+    apertureInfo.beam(i).numOfActiveLeafPairs = dimZ;
+    apertureInfo.beam(i).leafPairPos = leafPairPos;
+    apertureInfo.beam(i).isActiveLeafPair = isActiveLeafPair;
+    apertureInfo.beam(i).centralLeafPair = centralLeafPair;
+    apertureInfo.beam(i).lim_l = lim_l;
+    apertureInfo.beam(i).lim_r = lim_r;
+    apertureInfo.beam(i).bixelIndMap = bixelIndMap;
+    apertureInfo.beam(i).posOfCornerBixel = posOfCornerBixel;
+    apertureInfo.beam(i).MLCWindow = MLCWindow;
     
 end
 
 % save global data
-shapeInfo.bixelWidth = bixelWidth;
-shapeInfo.numOfMLCLeafPairs = numOfMLCLeafPairs;
-shapeInfo.totalNumOfBixels = totalNumOfBixels;
-shapeInfo.totalNumOfShapes = sum([shapeInfo.beam.numOfShapes]);
-shapeInfo.totalNumOfLeafPairs = sum([shapeInfo.beam.numOfShapes]*[shapeInfo.beam.numOfActiveLeafPairs]');
+apertureInfo.bixelWidth = bixelWidth;
+apertureInfo.numOfMLCLeafPairs = numOfMLCLeafPairs;
+apertureInfo.totalNumOfBixels = totalNumOfBixels;
+apertureInfo.totalNumOfShapes = sum([apertureInfo.beam.numOfShapes]);
+apertureInfo.totalNumOfLeafPairs = sum([apertureInfo.beam.numOfShapes]*[apertureInfo.beam.numOfActiveLeafPairs]');
 
 % create vectors for optimization
-[shapeInfo.vector, shapeInfo.mappingMx, shapeInfo.limMx] = matRad_shapeInfo2Vec(shapeInfo);
+[apertureInfo.apertureVector, apertureInfo.mappingMx, apertureInfo.limMx] = matRad_daoApertureInfo2Vec(apertureInfo);
 
 end

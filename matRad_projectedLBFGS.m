@@ -88,7 +88,7 @@ if visBool
         end 
         set(AxesInfigOpt,'YScale','log');
         title(AxesInfigOpt,'Progress of Optimization','LineWidth',14),
-        xlabel(AxesInfigOpt,'# iterations','Fontsize',14),ylabel(AxesInfigOpt,'objective value','Fontsize',14)
+        xlabel(AxesInfigOpt,'# iterations','Fontsize',14),ylabel(AxesInfigOpt,'objective function value','Fontsize',14)
     catch 
         warning('couldnt initialize figure to plot the objective value')
     end
@@ -155,8 +155,10 @@ while continueOpt == 1
         % project candidate to feasible set
         [candidateX, isConstrActive] = projFunc(candidateX);
         
-        lineSearchObjFuncValue = objFunc(candidateX);
+        % evaluate objective function and gradient
+        [lineSearchObjFuncValue,lineSearchDx] = objFunc(candidateX);
         
+        % check if armijo criterion fulfilled
         continueLineSearch = lineSearchObjFuncValue > objFuncValue(1) + c_1*alpha*expectedDescend;
     
         if alpha < 1e-10;
@@ -183,7 +185,8 @@ while continueOpt == 1
 
     objFuncValue(2) = objFuncValue(1);
     
-    [objFuncValue(1),dx(:,1)] = objFunc(x(:,1));
+    objFuncValue(1) = lineSearchObjFuncValue;
+    dx(:,1)         = lineSearchDx;
         
     s_k = -diff(x,[],2);
     y_k = -diff(dx,[],2);
