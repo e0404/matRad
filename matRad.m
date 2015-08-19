@@ -71,17 +71,15 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln,0);
 
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
-    resultGUI = matRad_xiaLeafSequencing(resultGUI.w,stf,dij,5);
-    %resultGUI = matRad_engelLeafSequencing(resultGUI.w,stf,dij,1);
+    %resultGUI = matRad_xiaLeafSequencing(resultGUI.w,stf,dij,5);
+    resultGUI = matRad_engelLeafSequencing(resultGUI.w,stf,dij,5);
 end
 
 %% DAO
-profile on
 if strcmp(pln.radiationMode,'photons') && pln.runDAO
-   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.shapeInfo,1); 
+   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,1);
+   matRad_visApertureInfo(resultGUI.apertureInfo);
 end
-profile off
-profile viewer
 
 %% start gui for visualization of result
 matRadGUI
