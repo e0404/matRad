@@ -427,15 +427,34 @@ function popupRadMode_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 contents = cellstr(get(hObject,'String')); 
-if sum(strcmp({'photons','protons'},contents{get(hObject,'Value')}))>0
-    set(handles.radbtnBioOpt,'Value',0);
-    set(handles.radbtnBioOpt,'Enable','off');
-    set(handles.btnTypBioOpt,'Enable','off');
-else
-    set(handles.radbtnBioOpt,'Value',1);
-    set(handles.radbtnBioOpt,'Enable','on');
-    set(handles.btnTypBioOpt,'Enable','on');
+RadIdentifier = contents{get(hObject,'Value')};
+
+switch RadIdentifier
+    case 'photons'
+        set(handles.radbtnBioOpt,'Value',0);
+        set(handles.radbtnBioOpt,'Enable','off');
+        set(handles.btnTypBioOpt,'Enable','off');
+        
+        set(handles.btnRunSequencing,'Enable','on');
+        set(handles.btnRunDAO,'Enable','on');
+        
+    case 'protons'
+        set(handles.radbtnBioOpt,'Value',0);
+        set(handles.radbtnBioOpt,'Enable','off');
+        set(handles.btnTypBioOpt,'Enable','off');
+        
+        set(handles.btnRunSequencing,'Enable','off');
+        set(handles.btnRunDAO,'Enable','off');
+        
+    case 'carbon'
+        set(handles.radbtnBioOpt,'Value',1);
+        set(handles.radbtnBioOpt,'Enable','on');
+        set(handles.btnTypBioOpt,'Enable','on');
+        
+        set(handles.btnRunSequencing,'Enable','off');
+        set(handles.btnRunDAO,'Enable','off');
 end
+
 
 pln = evalin('base','pln');
 if handles.State>0 && ~strcmp(contents(get(hObject,'Value')),pln.radiationMode)
@@ -590,10 +609,12 @@ if exist('Result')
         if isfield(Result,'w')
             Result = rmfield(Result,'w');
         end
+        
         if isfield(Result,'physicalDose')
             Result.Dose = Result.physicalDose;
             Result=rmfield(Result,'physicalDose');
         end
+        
         if isfield(Result,'RBE')
             Result.RBETruncated10Perc = Result.RBE;
             Result.RBETruncated10Perc(Result.Dose<0.1*...
@@ -602,33 +623,40 @@ if exist('Result')
 
         fName =fieldnames(Result);
         for i=1:size(fName,1)
-            %second dimension indicates if it should be plotted later on
-            if strcmp(fName{i,1},'RBETruncated10Perc') || strcmp(fName{i,1},'w')
-                fName{i,2}=0;
+            
+            if (isstruct(Result.(fName{i,1})) || isvector(Result.(fName{i,1})))...
+                  
+                 Result = rmfield(Result,fName{i,1});
             else
-                fName{i,2}=1;
-            end
-            % determine units
-            if strcmp(fName{i,1},'Dose')
-                fName{i,3} = '[Gy]';
-            elseif strcmp(fName{i,1},'alpha')
-                fName{i,3} = '[Gy^{-1}]';
-            elseif strcmp(fName{i,1},'beta')
-                fName{i,3} = '[Gy^{-2}]';
-            elseif strcmp(fName{i,1},'RBEWeightedDose')
-                fName{i,3} = '[Gy(RBE)]';
-            else
-                fName{i,3} = '[a.u.]';
-            end
-            % Reshape dose to cube in voxel dimensions
-            CurrentCube = getfield(Result,fName{i,1});
-            if ~isempty(CurrentCube) && isequal(size(CurrentCube),size(ct.cube))
-                Result = setfield(Result,fName{i,1},reshape(CurrentCube,size(ct.cube)));
-            %try to reshape using voxelDimensions from pln struct    
-            elseif ~isempty(Result) && isequal(size(CurrentCube),size(ct.cube))
-                Result = setfield(Result,fName{i,1},reshape(CurrentCube,pln.voxelDimensions));
-            elseif ~isempty(Result) && ~strcmp(fName{i,1},'w')
-                error('Cannot reshape dose');   
+            
+                %second dimension indicates if it should be plotted later on
+                if strcmp(fName{i,1},'RBETruncated10Perc') || strcmp(fName{i,1},'w')
+                    fName{i,2}=0;
+                else
+                    fName{i,2}=1;
+                end
+                % determine units
+                if strcmp(fName{i,1},'Dose')
+                    fName{i,3} = '[Gy]';
+                elseif strcmp(fName{i,1},'alpha')
+                    fName{i,3} = '[Gy^{-1}]';
+                elseif strcmp(fName{i,1},'beta')
+                    fName{i,3} = '[Gy^{-2}]';
+                elseif strcmp(fName{i,1},'RBEWeightedDose')
+                    fName{i,3} = '[Gy(RBE)]';
+                else
+                    fName{i,3} = '[a.u.]';
+                end
+                % Reshape dose to cube in voxel dimensions
+                CurrentCube = getfield(Result,fName{i,1});
+                if ~isempty(CurrentCube) && isequal(size(CurrentCube),size(ct.cube))
+                    Result = setfield(Result,fName{i,1},reshape(CurrentCube,size(ct.cube)));
+                %try to reshape using voxelDimensions from pln struct    
+                elseif ~isempty(Result) && isequal(size(CurrentCube),size(ct.cube))
+                    Result = setfield(Result,fName{i,1},reshape(CurrentCube,pln.voxelDimensions));
+                elseif ~isempty(Result) && ~strcmp(fName{i,1},'w')
+                    error('Cannot reshape dose');   
+                end
             end
         end
 
@@ -1807,15 +1835,39 @@ end
 set(handles.editGantryAngle,'String',num2str((pln.gantryAngles)));
 set(handles.editCouchAngle,'String',num2str((pln.couchAngles)));
 set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),pln.radiationMode)));
+
 if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                             && strcmp(pln.radiationMode,'carbon')  
     set(handles.radbtnBioOpt,'Value',1);
+    set(handles.radbtnBioOpt,'Enable','on');
     set(handles.btnTypBioOpt,'Enable','on');
     set(handles.btnTypBioOpt,'String',pln.bioOptimization);
 else
     set(handles.radbtnBioOpt,'Value',0);
+    set(handles.radbtnBioOpt,'Enable','off');
     set(handles.btnTypBioOpt,'Enable','off');
 end
+%% enable sequencing and DAO button if radiation mode is set to photons
+if strcmp(pln.radiationMode,'photons') && pln.runSequencing
+    set(handles.btnRunSequencing,'Enable','on');
+    set(handles.btnRunSequencing,'Value',1);
+elseif strcmp(pln.radiationMode,'photons') && ~pln.runSequencing
+    set(handles.btnRunSequencing,'Enable','on');
+    set(handles.btnRunSequencing,'Value',0);
+else
+    set(handles.btnRunSequencing,'Enable','off');
+end
+%% enable DAO button if radiation mode is set to photons
+if strcmp(pln.radiationMode,'photons') && pln.runDAO
+    set(handles.btnRunDAO,'Enable','on');
+    set(handles.btnRunDAO,'Value',1);
+elseif strcmp(pln.radiationMode,'photons') && ~pln.runDAO
+    set(handles.btnRunDAO,'Enable','on');
+    set(handles.btnRunDAO,'Value',0);
+else
+    set(handles.btnRunDAO,'Enable','off');
+end
+
 
  
 % get pln file form gui     
@@ -1832,6 +1884,7 @@ try
     pln.voxelDimensions = size(ct.cube);
 catch
 end
+pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'),false);
 contents                    = get(handles.popupRadMode,'String'); 
 pln.radiationMode   =  contents{get(handles.popupRadMode,'Value')}; % either photons / protons / carbon
 
@@ -1840,8 +1893,9 @@ if (logical(get(handles.radbtnBioOpt,'Value')) && strcmp(pln.radiationMode,'carb
 else
      pln.bioOptimization = 'none';
 end
-    
-pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'),false);
+
+pln.runSequencing = logical(get(handles.btnRunSequencing,'Value'));
+pln.runDAO = logical(get(handles.btnRunDAO,'Value'));
 
 try
     cst= evalin('base','cst');
@@ -2162,3 +2216,21 @@ try
     end
 catch
 end
+
+
+% --- Executes on button press in btnRunSequencing.
+function btnRunSequencing_Callback(hObject, eventdata, handles)
+% hObject    handle to btnRunSequencing (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of btnRunSequencing
+
+
+% --- Executes on button press in btnRunDAO.
+function btnRunDAO_Callback(hObject, eventdata, handles)
+% hObject    handle to btnRunDAO (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of btnRunDAO
