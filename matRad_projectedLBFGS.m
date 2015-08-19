@@ -100,6 +100,8 @@ mem            = 10;        % number of past gradients and function values used 
 x              = NaN*ones(numOfParameters,mem);
 x(:,1)         = wInit;
 
+[~,isConstrActive] = projFunc(x(:,1));
+
 objFuncValue   = NaN*ones(1,mem);
 dx             = NaN*ones(numOfParameters,mem);
 
@@ -143,7 +145,7 @@ while continueOpt == 1
 
     continueLineSearch = true;
     
-    expectedDescend = ((x(:,1)>0).*dir)'*dx(:,1);
+    expectedDescend = (~isConstrActive.*dir)'*dx(:,1);
     
     fprintf('Starting line search ')
     while continueLineSearch
