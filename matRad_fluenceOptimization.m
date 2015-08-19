@@ -124,8 +124,13 @@ end
 %% verify gradients
 %matRad_verifyGradient(objFunc,dij.totalNumOfBixels);
 
-% minimize objetive function
-optResult = matRad_projectedLBFGS(objFunc,wInit,visBool,varargin);
+% set function for projection to feasible set during LBFGS optimization
+projFunc = @(x) deal(x.* double(x>0) ,x<=0);
+
+% minimize objective function
+wOpt = matRad_projectedLBFGS(objFunc,projFunc,wInit,visBool,varargin);
+
+optResult.w = wOpt;
 
 % calc dose and reshape from 1D vector to 2D array
 optResult.physicalDose = reshape(dij.physicalDose*optResult.w,dij.dimensions);
