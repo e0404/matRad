@@ -64,8 +64,10 @@ for i=1:numOfBeams
 
     % get the MLC dimensions for this beam
     minX = apertureInfo.beam(i).MLCWindow(1);
-    maxX = apertureInfo.beam(i).MLCWindow(2);        
-
+    maxX = apertureInfo.beam(i).MLCWindow(2);    
+    
+    %get maximum weight
+    wMax = max([apertureInfo.beam(i).shape(:).weight]);
     if strcmp(mode,'leafNum')
 
         % get the active leaf Pairs
@@ -87,7 +89,7 @@ for i=1:numOfBeams
         title(['Beam: ' num2str(i) ' Shape: ' num2str(j) ' w=' ...
                 num2str(apertureInfo.beam(i).shape(j).weight,2)],...
                     'Fontsize',8)
-        colorInd = ceil(apertureInfo.beam(i).shape(j).weight*61+eps);
+        colorInd = ceil((apertureInfo.beam(i).shape(j).weight/wMax)*61+eps);
         set(gca,'Color',color(colorInd,:));
         
         hold on

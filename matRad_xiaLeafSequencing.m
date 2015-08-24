@@ -1,4 +1,4 @@
-function resultGUI = matRad_xiaLeafSequencing(w,stf,dij,numOfLevels,visBool)
+function resultGUI = matRad_xiaLeafSequencing(w,stf,dij,numOfLevels,resultGUI,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated 
 % beams with multiple static segments according to Xia et al. (1998)
@@ -11,10 +11,13 @@ function resultGUI = matRad_xiaLeafSequencing(w,stf,dij,numOfLevels,visBool)
 %   w:                  bixel weight vector
 %   stf:                matRad steering information struct
 %   numOfLevels:        number of stratification levels
+%   resultGUI:          resultGUI struct to which the output data will be added, if
+%                       this field is empty resultGUI struct will be created
 %   visBool:            toggle on/off visualization (optional)
 %
 % output
-%   XXXXXXXXXXXXXXXXXXXXXXXXXXX:   matRad sequencing result struct   
+%   resultGUI:          matRad result struct containing the new dose cube as well as 
+%                       the corresponding weights
 %
 % References
 %   [1] http://online.medphys.org/resource/1/mphya6/v25/i8/p1424_s1
@@ -266,12 +269,20 @@ for i = 1:numOfBeams
 
 end
 
-resultGUI = matRad_mxCalcDose(dij,sequencing.w);
+resultGUI.w          = sequencing.w;
+resultGUI.wSequenced = sequencing.w;
 
 resultGUI.sequencing   = sequencing;
-resultGUI.unsequencedW = w;
-
 resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
+
+Tmp = matRad_mxCalcDose(dij,sequencing.w);
+resultGUI.physicalDose = Tmp.physicalDose;
+
+% if weights exists from an former DAO remove it
+if isfield(resultGUI,'wDao')
+    resultGUI = rmfield(resultGUI,'wDao');
+end
+
 
 end
 

@@ -57,17 +57,6 @@ ScaledEffect = (e./dij.bx)+(dij.gamma.^2);
 ScaledEffect(idx)=sqrt(ScaledEffect(idx));
 RBExD = ScaledEffect-dij.gamma;
 
-
-%Scut marks the transition from linear quadratic to purely linear shape at
-%high doses
-CutIdx = e>dij.Scut;
-if sum(CutIdx>0)
-   % correct RBExdose for voxels having a higher biological effect than Dcut
-   RBExD(CutIdx)= ((e(CutIdx) + dij.Scut(CutIdx))./dij.Smax(CutIdx)) ...
-       + dij.Dcut;
-end
-
-
 % Initializes f
 f = 0;
 

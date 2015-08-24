@@ -1,4 +1,4 @@
-function optResult = matRad_directApertureOptimization(dij,cst,apertureInfo,visBool,varargin)
+function optResult = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,visBool,varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to run direct aperture optimization
 %
@@ -10,6 +10,9 @@ function optResult = matRad_directApertureOptimization(dij,cst,apertureInfo,visB
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct
 %   shaoInfo:   aperture shape info struct
+%   optResult:  resultGUI struct to which the output data will be added, if
+%               this field is empty optResult struct will be created
+%               (optional)
 %   visBool:    plots the objective function value in dependence of the
 %               number of iterations
 %   varargin:   optinal: convergence criteria for optimization and biological
@@ -70,7 +73,7 @@ optApertureInfoVec = matRad_projectedLBFGS(objFunc,projFunc,initApertureInfoVec,
 optResult.apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,optApertureInfoVec);
 
 % override also bixel weight vector in optResult struct
-optResult.w = optResult.apertureInfo.bixelWeights;
-
-% calc dose and reshape from 1D vector to 2D array
+optResult.w    = optResult.apertureInfo.bixelWeights;
+optResult.wDao = optResult.apertureInfo.bixelWeights;
+% calc dose and reshape from 1D vector to 3D array
 optResult.physicalDose = reshape(dij.physicalDose*optResult.w,dij.dimensions);

@@ -164,7 +164,7 @@ dCum = cumsum(d);
 dCumIx = min([find(dCum==0,1,'last') numel(dCum)-1]);
 
 % Calculate the radiological path
-radDepths = interp1(alphas(dCumIx:end)*d12,dCum(dCumIx:end),geoDists,'linear',0);
+radDepths = interp1(alphas(dCumIx:end),dCum(dCumIx:end),geoDists/d12,'linear',0);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
