@@ -48,8 +48,10 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,visBool)
 if nargin < 5
     visBool = 0;
 end
+
 % initialize waitbar
-figureWait=waitbar(0,'calculate particle-ij matrice(s)...');
+figureWait = waitbar(0,'calculate particle-ij matrice(s)...');
+
 % meta information for dij
 dij.numOfBeams         = pln.numOfBeams;
 dij.numOfVoxels        = pln.numOfVoxels;
@@ -67,6 +69,9 @@ dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 % Allocate space for dij.physicalDose sparse matrix
 dij.physicalDose = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
 
+% helper function for energy selection
+round2 = @(a,b)round(a*10^b)/10^b;
+
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 doseTmpContainer = cell(numOfBixelsContainer,1);
@@ -76,6 +81,7 @@ if pln.bioOptimization == true
     dij.mAlphaDose        = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
     dij.mSqrtBetaDose     = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
 end
+
 % Only take voxels inside patient.
 V = unique([cell2mat(cst(:,4))]);
 
@@ -159,7 +165,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
         
             % find index of maximum used energy (round to keV for numerical
             % reasons
-            energyIx = max(round(stf(i).ray(j).energy,4)) == round([baseData.energy],4);
+            energyIx = max(round2(stf(i).ray(j).energy,4)) == round2([baseData.energy],4);
             
             % set lateral cutoff for calculation of geometric distances
             lateralCutoff = 3*baseData(energyIx).sigma(end);
@@ -198,7 +204,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 dij.bixelNum(counter) = k;
 
                 % find energy index in base data
-                energyIx = find(round(stf(i).ray(j).energy(k),4) == round([baseData.energy],4));
+                energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([baseData.energy],4));
 
                 % find indices
                 currIx = radDepths <= baseData(energyIx).depths(end) & ...
