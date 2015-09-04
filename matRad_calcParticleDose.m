@@ -157,8 +157,12 @@ for i = 1:dij.numOfBeams; % loop over all beams
         
         if ~isempty(stf(i).ray(j).energy)
         
+            % find index of maximum used energy (round to keV for numerical
+            % reasons
+            energyIx = max(round(stf(i).ray(j).energy,4)) == round([baseData.energy],4);
+            
             % set lateral cutoff for calculation of geometric distances
-            lateralCutoff = 3*baseData(max(stf(i).ray(j).energy) == [baseData.energy]).sigma(end);
+            lateralCutoff = 3*baseData(energyIx).sigma(end);
 
             % Ray tracing for beam i and ray j
             [ix,radDepths,~,latDistsX,latDistsZ] = matRad_calcRadGeoDists(ct.cube, ...
@@ -194,7 +198,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 dij.bixelNum(counter) = k;
 
                 % find energy index in base data
-                energyIx = find(stf(i).ray(j).energy(k) == [baseData.energy]);
+                energyIx = find(round(stf(i).ray(j).energy(k),4) == round([baseData.energy],4));
 
                 % find indices
                 currIx = radDepths <= baseData(energyIx).depths(end) & ...
