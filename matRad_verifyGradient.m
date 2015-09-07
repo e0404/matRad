@@ -1,4 +1,4 @@
-function  matRad_verifyGradient(func,NumBixel)
+function  matRad_verifyGradient(func,wInit)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % function to check analytically calculated gradients against finite
 % differences
@@ -7,8 +7,8 @@ function  matRad_verifyGradient(func,NumBixel)
 %   matRad_verifyGradient(func,NumBixel)
 %
 % input
-%   func:     objective function handle
-%   NumBixel: number of degrees of freedom
+%   func:  objective function handle
+%   wInit: objective function parameters
 %
 % output
 %   The function will print the relative differences to the command line
@@ -43,20 +43,20 @@ function  matRad_verifyGradient(func,NumBixel)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-wInit = rand(NumBixel,1);
+numBixel = numel(wInit);
 
 [f, g] = func(wInit);
 epsilon = 1e-05;
-NumRealizations = 100;
+numRealizations = 100;
 
-for i = 1:NumRealizations
-    RandomComp = ceil(NumBixel*rand);
+for i = 1:numRealizations
+    randomComp = ceil(numBixel*rand);
     wDelta = wInit;
-    wDelta(RandomComp) = wDelta(RandomComp) + epsilon;
+    wDelta(randomComp) = wDelta(randomComp) + epsilon;
     [fDelta, ~] = func(wDelta);
     numGrad = (fDelta-f)/epsilon;
-    diff = ((g(RandomComp)/(numGrad))-1)*100;
-    fprintf(['Component # ' num2str(RandomComp) ' - percent diff in numerical and analytical gradient = '...
+    diff = ((g(randomComp)/(numGrad))-1)*100;
+    fprintf(['Component # ' num2str(randomComp) ' - percent diff in numerical and analytical gradient = '...
         num2str(diff) '\n']);
 end
 

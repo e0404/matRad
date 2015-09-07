@@ -82,10 +82,10 @@ V = unique([cell2mat(cst(:,4))]);
 % Convert CT subscripts to linear indices.
 [yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct.cube),V);
 
-xCoordsV = (xCoordsV(:)-0.5)*ct.resolution(1)-pln.isoCenter(1);
-yCoordsV = (yCoordsV(:)-0.5)*ct.resolution(2)-pln.isoCenter(2);
-zCoordsV = (zCoordsV(:)-0.5)*ct.resolution(3)-pln.isoCenter(3);
-coords_inside = [xCoordsV yCoordsV zCoordsV];
+xCoordsV = xCoordsV(:)*ct.resolution(1)-pln.isoCenter(1);
+yCoordsV = yCoordsV(:)*ct.resolution(2)-pln.isoCenter(2);
+zCoordsV = zCoordsV(:)*ct.resolution(3)-pln.isoCenter(3);
+coordsV  = [xCoordsV yCoordsV zCoordsV];
 
 % load protonBaseData
 if strcmp(pln.radiationMode,'protons')
@@ -119,16 +119,6 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
     fprintf('...done \n');
 end
 
-% It make a meshgrid with CT position in millimeter for calculate
-% geometrical distances
-[X_geo,Y_geo,Z_geo] = meshgrid(ct.resolution(1)*(1:size(ct.cube,2)),...
-    ct.resolution(2)*(1:size(ct.cube,1)),ct.resolution(3)*(0.5:1:size(ct.cube,3)));
-
-% take only voxels inside patient
-X_geo = X_geo(V);
-Y_geo = Y_geo(V);
-Z_geo = Z_geo(V);
-
 % source position in beam's eye view.
 sourcePoint_bev = [0 -pln.SAD 0];
 
@@ -160,7 +150,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
     % Rotate coordinates around Y axis (1st couch movement) and then Z axis
     % (2nd gantry movement)
     
-    [rot_coords] = coords_inside*rotMx_XZ*rotMx_XY;
+    rot_coordsV = coordsV*rotMx_XZ*rotMx_XY;
     
     
     for j = 1:stf(i).numOfRays % loop over all rays
@@ -171,10 +161,18 @@ for i = 1:dij.numOfBeams; % loop over all beams
             lateralCutoff = 3*baseData(max(stf(i).ray(j).energy) == [baseData.energy]).sigma(end);
 
             % Ray tracing for beam i and ray j
-            [ix,radDepths,~,latDistsX,latDistsZ] = matRad_calcRadGeoDists(ct.cube,V,...
-                    pln.isoCenter,rot_coords,ct.resolution,stf(i).sourcePoint,...
-                    stf(i).ray(j).targetPoint,sourcePoint_bev,...
-                    stf(i).ray(j).targetPoint_bev,X_geo,Y_geo,Z_geo,lateralCutoff,visBool);
+            [ix,radDepths,~,latDistsX,latDistsZ] = matRad_calcRadGeoDists(ct.cube, ...
+                                                        V,...
+                                                        pln.isoCenter, ...
+                                                        rot_coordsV, ...
+                                                        ct.resolution, ...
+                                                        stf(i).sourcePoint, ...
+                                                        stf(i).ray(j).targetPoint, ...
+                                                        sourcePoint_bev,...
+                                                        stf(i).ray(j).targetPoint_bev, ...
+                                                        coordsV, ...
+                                                        lateralCutoff, ...
+                                                        visBool);
             
             radialDist_sq = latDistsX.^2 + latDistsZ.^2;    
             

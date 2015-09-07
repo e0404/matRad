@@ -81,12 +81,14 @@ handles.output = hObject;
 %show matrad logo
 axes(handles.axesLogo)
 [im, ~, alpha] = imread(['dicomImport' filesep 'matrad_logo.png']);
-f = imshow(im);
+f = image(im);
+axis equal off
 set(f, 'AlphaData', alpha);
 % show dkfz logo
 axes(handles.axesDKFZ)
 [im, ~, alpha] = imread(['dicomImport' filesep 'DKFZ_logo.png']);
-f = imshow(im);
+f = image(im);
+axis equal off;
 set(f, 'AlphaData', alpha);
 
 vChar = get(handles.editGantryAngle,'String');
@@ -137,7 +139,7 @@ end
 
 % parse dij structure
 try
-    if ~isempty(evalin('base','doseVis'))
+    if ~isempty(evalin('base','dij'))
         handles.State = 2;
 
     end
@@ -154,9 +156,9 @@ end
 
 
 % set some default values
-if handles.State ==2 || handles.State ==3
-    set(handles.popupDisplayOption,'String','Dose');
-    handles.SelectedDisplayOption ='Dose';
+if handles.State == 2 || handles.State == 3
+    set(handles.popupDisplayOption,'String','physicalDose');
+    handles.SelectedDisplayOption ='physicalDose';
     handles.SelectedDisplayOptionIdx=1;
 else
     handles.resultGUI = [];
@@ -166,7 +168,7 @@ else
 end
 
 %per default the first beam is selected for the profile plot
-handles.SelectedBeam=1;
+handles.SelectedBeam = 1;
 handles.plane = get(handles.popupPlane,'Value');
 handles.DijCalcWarning = false;
 
@@ -267,7 +269,9 @@ catch
 end
 % assess plan variable from GUI
 getPln(handles);
+setPln(handles);
 pln=evalin('base','pln');
+
 if isempty(pln)
  handles.State = 0;
 else
@@ -423,15 +427,34 @@ function popupRadMode_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 contents = cellstr(get(hObject,'String')); 
-if sum(strcmp({'photons','protons'},contents{get(hObject,'Value')}))>0
-    set(handles.radbtnBioOpt,'Value',0);
-    set(handles.radbtnBioOpt,'Enable','off');
-    set(handles.btnTypBioOpt,'Enable','off');
-else
-    set(handles.radbtnBioOpt,'Value',1);
-    set(handles.radbtnBioOpt,'Enable','on');
-    set(handles.btnTypBioOpt,'Enable','on');
+RadIdentifier = contents{get(hObject,'Value')};
+
+switch RadIdentifier
+    case 'photons'
+        set(handles.radbtnBioOpt,'Value',0);
+        set(handles.radbtnBioOpt,'Enable','off');
+        set(handles.btnTypBioOpt,'Enable','off');
+        
+        set(handles.btnRunSequencing,'Enable','on');
+        set(handles.btnRunDAO,'Enable','on');
+        
+    case 'protons'
+        set(handles.radbtnBioOpt,'Value',0);
+        set(handles.radbtnBioOpt,'Enable','off');
+        set(handles.btnTypBioOpt,'Enable','off');
+        
+        set(handles.btnRunSequencing,'Enable','off');
+        set(handles.btnRunDAO,'Enable','off');
+        
+    case 'carbon'
+        set(handles.radbtnBioOpt,'Value',1);
+        set(handles.radbtnBioOpt,'Enable','on');
+        set(handles.btnTypBioOpt,'Enable','on');
+        
+        set(handles.btnRunSequencing,'Enable','off');
+        set(handles.btnRunDAO,'Enable','off');
 end
+
 
 pln = evalin('base','pln');
 if handles.State>0 && ~strcmp(contents(get(hObject,'Value')),pln.radiationMode)
@@ -520,9 +543,8 @@ if ~getCstTable(handles);
     return
 end
 % read plan from gui and save it to workspace
+% gets also IsoCenter from GUI if checkbox is unchecked
 getPln(handles);
-
-
 
 % get default iso center as center of gravity of all targets if not
 % already defined
@@ -532,10 +554,13 @@ if length(pln.gantryAngles) ~= length(pln.couchAngles)
   warndlg('number of gantryAngles != number of couchAngles'); 
 end
 
+%% security check if isocenter is not existing so far
 if ~isfield(pln,'isoCenter')
     warning('no iso center set - using center of gravity of all targets');
     pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
     assignin('base','pln',pln);
+elseif ~get(handles.checkIsoCenter,'Value') 
+    pln.isoCenter = str2num(get(handles.editIsoCenter,'String'));
 end
 
 % generate steering file
@@ -549,22 +574,24 @@ elseif strcmp(evalin('base','pln.radiationMode'),'protons') || strcmp(evalin('ba
     dij = matRad_calcParticleDose(evalin('base','ct'),stf,evalin('base','pln'),evalin('base','cst'),0);
 end
 
-doseVis = matRad_mxCalcDose(dij,zeros(dij.totalNumOfBixels,1),evalin('base','cst'));
+resultGUI = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),evalin('base','cst'));
 % assign results to base worksapce
 assignin('base','dij',dij);
-assignin('base','doseVis',doseVis);
+assignin('base','resultGUI',resultGUI);
 handles.State = 2;
 handles.SelectedDisplayOptionIdx=1;
-handles.SelectedDisplayOption='Dose';
+handles.SelectedDisplayOption='physicalDose';
 handles.SelectedBeam=1;
 handles.TableChanged = false;
-guidata(hObject,handles);
 UpdatePlot(handles);
 UpdateState(handles);
+guidata(hObject,handles);
 
 
 function UpdatePlot(handles)
 %%
+defaultFontSize = 8;
+
 cla(handles.axesFig,'reset');
 
 if handles.State ==0
@@ -574,65 +601,56 @@ elseif handles.State > 0
      cst=evalin('base','cst');
      pln=evalin('base','pln');
 end
-
-if handles.State == 2
-      Result = evalin('base','doseVis');
-elseif handles.State == 3
+%% state 3 indicates that a optimization was already performed
+if handles.State == 3
+      %copies resultGUI to Result
       Result = evalin('base','resultGUI');
 end
 
-if exist('Result')
+if exist('Result','var')
     if ~isempty(Result) && ~isempty(ct.cube)
-        if isfield(Result,'w')
-            Result = rmfield(Result,'w');
-        end
-        if isfield(Result,'physicalDose')
-            Result.Dose = Result.physicalDose;
-            Result=rmfield(Result,'physicalDose');
-        end
+       
         if isfield(Result,'RBE')
             Result.RBETruncated10Perc = Result.RBE;
-            Result.RBETruncated10Perc(Result.Dose<0.1*...
-                max(Result.Dose(:))) = 0;
+            Result.RBETruncated10Perc(Result.physicalDose<0.1*...
+                max(Result.physicalDose(:))) = 0;
         end
 
-        fName =fieldnames(Result);
-        for i=1:size(fName,1)
-            %second dimension indicates if it should be plotted later on
-            if strcmp(fName{i,1},'RBETruncated10Perc') || strcmp(fName{i,1},'w')
-                fName{i,2}=0;
+        DispInfo =fieldnames(Result);
+        for i=1:size(DispInfo,1)
+            
+            if isstruct(Result.(DispInfo{i,1})) || isvector(Result.(DispInfo{i,1})) ...
+                 Result = rmfield(Result,DispInfo{i,1});
+                 DispInfo{i,2}=false;
             else
-                fName{i,2}=1;
-            end
-            % determine units
-            if strcmp(fName{i,1},'Dose')
-                fName{i,3} = '[Gy]';
-            elseif strcmp(fName{i,1},'alpha')
-                fName{i,3} = '[Gy^{-1}]';
-            elseif strcmp(fName{i,1},'beta')
-                fName{i,3} = '[Gy^{-2}]';
-            elseif strcmp(fName{i,1},'RBEWeightedDose')
-                fName{i,3} = '[Gy(RBE)]';
-            else
-                fName{i,3} = '[a.u.]';
-            end
-            % Reshape dose to cube in voxel dimensions
-            CurrentCube = getfield(Result,fName{i,1});
-            if ~isempty(CurrentCube) && isequal(size(CurrentCube),size(ct.cube))
-                Result = setfield(Result,fName{i,1},reshape(CurrentCube,size(ct.cube)));
-            %try to reshape using voxelDimensions from pln struct    
-            elseif ~isempty(Result) && isequal(size(CurrentCube),size(ct.cube))
-                Result = setfield(Result,fName{i,1},reshape(CurrentCube,pln.voxelDimensions));
-            elseif ~isempty(Result) && ~strcmp(fName{i,1},'w')
-                error('Cannot reshape dose');   
+                %second dimension indicates if it should be plotted later on
+                DispInfo{i,2}=true;
+                DisablePlot = {'RBETruncated10Perc'};
+                if strcmp(DispInfo{i,1},DisablePlot)
+                    DispInfo{i,2}=false;
+                end
+                
+                % determine units
+                switch DispInfo{i,1}
+                    case 'physicalDose'
+                        DispInfo{i,3}  = '[Gy]';
+                    case 'alpha'
+                        DispInfo{i,3}  = '[Gy^{-1}]';
+                    case 'beta'
+                        DispInfo{i,3}  = '[Gy^{-2}]';
+                    case 'RBExD'
+                        DispInfo       = '[Gy(RBE)]';
+                    otherwise
+                        DispInfo{i,3}  = '[a.u.]';
+                end
+                
             end
         end
 
-    set(handles.popupDisplayOption,'String',fName(:,1));
-    set(handles.popupDisplayOption,'Value',find(strcmp(handles.SelectedDisplayOption,fName(:,1))));
+    set(handles.popupDisplayOption,'String',fieldnames(Result));
+    set(handles.popupDisplayOption,'Value',find(strcmp(handles.SelectedDisplayOption,fieldnames(Result))));
 
     end
-
 end
 
 %% set and get required variables
@@ -657,11 +675,12 @@ CutOffLevel = 0.03;
 end
 
 %% plot dose cube
-if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1
+if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
 
         mVolume = getfield(Result,handles.SelectedDisplayOption);
         % make sure to exploit full color range
-        mVolume(Result.Dose<CutOffLevel*max(Result.Dose(:)))=0;
+        mVolume(Result.physicalDose<...
+            CutOffLevel*max(Result.physicalDose(:)))=0;
 
     %     %% dose colorwash
         if ~isempty(mVolume)&& ~isvector(mVolume)
@@ -685,26 +704,27 @@ if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1
             if ~isempty(ct.cube)
                 if plane == 1  % Coronal plane
                     if get(handles.radiobtnDose,'Value') 
-                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(slice,:,:))>CutOffLevel*max(Result.Dose(:))  )  ) ;
-                    else
-                        
+                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.(handles.SelectedDisplayOption)(slice,:,:))...
+                            >CutOffLevel*max(Result.(handles.SelectedDisplayOption)(:)))) ;
                     end   
                     
                 elseif plane == 2 % sagittal plane
                     if get(handles.radiobtnDose,'Value')
-                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,slice,:))>CutOffLevel*max(Result.Dose(:))  )  ) ;
-                    else
-                        
+                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,slice,:))>...
+                        CutOffLevel*max(Result.(handles.SelectedDisplayOption)(:)))) ;
                     end
                 elseif plane == 3 % Axial plane
                     if get(handles.radiobtnDose,'Value')
                         if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
-                            set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,:,slice))>0.1*max(Result.Dose(:))  )  ) ;
+                            set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.(handles.SelectedDisplayOption)(:,:,slice))...
+                                >0.1*max(Result.handles.SelectedDisplayOption(:)))) ;
                         else
-                            set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,:,slice))>CutOffLevel*max(Result.Dose(:))  )  ) ;
+                            set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.(handles.SelectedDisplayOption)(:,:,slice))...
+                                >CutOffLevel*max(Result.(handles.SelectedDisplayOption)(:)))) ;
                         end
                     else
-                        set(doseImageHandle,'AlphaData',  0*double(squeeze(Result.Dose(:,:,slice))>CutOffLevel*max(Result.Dose(:)))) ;
+                        set(doseImageHandle,'AlphaData',  0*double(squeeze(Result.Dose(:,:,slice))>...
+                            CutOffLevel*max(Result.(handles.SelectedDisplayOption)(:)))) ;
                     end
                 end
 
@@ -713,12 +733,12 @@ if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1
             % plot colorbar
             v=version;
             if str2num(v(1:3))>=8.5
-                cBarHandel = colorbar(handles.axesFig,'colormap',jet,'FontSize',8,'yAxisLocation','right');
+                cBarHandel = colorbar(handles.axesFig,'colormap',jet,'FontSize',defaultFontSize,'yAxisLocation','right');
             else
-                cBarHandel = colorbar('peer',handles.axesFig,'FontSize',8,'yAxisLocation','right');
+                cBarHandel = colorbar('peer',handles.axesFig,'FontSize',defaultFontSize,'yAxisLocation','right');
             end
-            Idx = find(strcmp(handles.SelectedDisplayOption,fName(:,1)));
-            set(get(cBarHandel,'ylabel'),'String', [fName{Idx,1} ' ' fName{Idx,3} ],'fontsize',8);
+            Idx = find(strcmp(handles.SelectedDisplayOption,DispInfo(:,1)));
+            set(get(cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
 
             if isempty(strfind(handles.SelectedDisplayOption,'RBE'))
                 set(cBarHandel,'YLim',[0 max(eps,max(mVolume(:)))]);
@@ -737,22 +757,22 @@ if handles.State >1 &&  get(handles.popupTypeOfPlot,'Value')== 1
         %% plot iso dose lines
         if get(handles.radiobtnIsoDoseLines,'Value')
                 colormap(jet)
-                vLevels = round(linspace(0,ceil(max(mVolume(:))),6).*100)/100;
+                vLevels = round(linspace(0,ceil(max(mVolume(:))),8).*100)/100;
                 if plane == 1  % Coronal plane
                     Slice=squeeze(mVolume(slice,:,:));
                     if sum(Slice(:))>1
-                        [~,myContour] = contour(Slice);
+                        [~,myContour] = contour(Slice,vLevels);
                     end
                 elseif plane == 2 % Sagittal plane
                     Slice=squeeze(mVolume(:,slice,:));
                     if sum(Slice(:))>1
-                        [~,myContour] = contour(Slice);
+                        [~,myContour] = contour(Slice,vLevels);
                     end
                 elseif plane == 3 % Axial plane
                     Slice=squeeze(mVolume(:,:,slice));
                     if sum(Slice(:))>1
                         hold on
-                     [~,myContour] = contour(Slice);
+                     [~,myContour] = contour(Slice,vLevels);
                     end
                 end
 
@@ -796,7 +816,7 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
     end
     warning('off','MATLAB:legend:PlotEmpty')
     myLegend = legend('show','location','NorthEast');
-    set(myLegend,'FontSize',8);
+    set(myLegend,'FontSize',defaultFontSize);
     set(myLegend,'color','none');
     set(myLegend,'TextColor', [1 1 1]);
     legend boxoff
@@ -810,13 +830,13 @@ if  plane == 3% Axial plane
         set(handles.axesFig,'YTick',0:50/ct.resolution(2):1000);
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(1));
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(2));   
-        xlabel('x [mm]','FontSize',8)
-        ylabel('y [mm]','FontSize',8)
-        title('axial plane','FontSize',8)
+        xlabel('x [mm]','FontSize',defaultFontSize)
+        ylabel('y [mm]','FontSize',defaultFontSize)
+        title(['axial plane z = ' num2str(ct.resolution(3)*slice) ' [mm]'],'FontSize',defaultFontSize)
     else
-        xlabel('x [voxels]','FontSize',8)
-        ylabel('y [voxels]','FontSize',8)
-        title('axial plane','FontSize',8)
+        xlabel('x [voxels]','FontSize',defaultFontSize)
+        ylabel('y [voxels]','FontSize',defaultFontSize)
+        title('axial plane','FontSize',defaultFontSize)
     end
 elseif plane == 2 % Sagittal plane
     if ~isempty(pln)
@@ -824,13 +844,13 @@ elseif plane == 2 % Sagittal plane
         set(handles.axesFig,'YTick',0:50/ct.resolution(2):1000)
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(3))
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(2))
-        xlabel('z [mm]','FontSize',8);
-        ylabel('y [mm]','FontSize',8);
-        title('sagittal plane','FontSize',8);
+        xlabel('z [mm]','FontSize',defaultFontSize);
+        ylabel('y [mm]','FontSize',defaultFontSize);
+        title(['sagittal plane x = ' num2str(ct.resolution(2)*slice) ' [mm]'],'FontSize',defaultFontSize)
     else
-        xlabel('z [voxels]','FontSize',8)
-        ylabel('y [voxels]','FontSize',8)
-        title('sagittal plane','FontSize',8);
+        xlabel('z [voxels]','FontSize',defaultFontSize)
+        ylabel('y [voxels]','FontSize',defaultFontSize)
+        title('sagittal plane','FontSize',defaultFontSize);
     end
 elseif plane == 1 % Coronal plane
     if ~isempty(pln)
@@ -838,13 +858,13 @@ elseif plane == 1 % Coronal plane
         set(handles.axesFig,'YTick',0:50/ct.resolution(1):1000)
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(3))
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(1))
-        xlabel('z [mm]','FontSize',8)
-        ylabel('x [mm]','FontSize',8)
-        title('coronal plane','FontSize',8)
+        xlabel('z [mm]','FontSize',defaultFontSize)
+        ylabel('x [mm]','FontSize',defaultFontSize)
+        title(['coronal plane y = ' num2str(ct.resolution(1)*slice) ' [mm]'],'FontSize',defaultFontSize)
     else
-        xlabel('z [voxels]','FontSize',8)
-        ylabel('x [voxels]','FontSize',8)
-        title('coronal plane','FontSize',8)
+        xlabel('z [voxels]','FontSize',defaultFontSize)
+        ylabel('x [voxels]','FontSize',defaultFontSize)
+        title('coronal plane','FontSize',defaultFontSize)
     end
 end
 
@@ -879,17 +899,16 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     end
     rotSourcePointBEV = sourcePointBEV*rotMx_XY*rotMx_XZ;
     rotTargetPointBEV = targetPointBEV*rotMx_XY*rotMx_XZ;
-    [~,~,~,~,vis] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube},true);
-    ix = vis.ix;
-    mPhysDose=getfield(Result,'Dose'); 
-    vPhysDose = mPhysDose(ix);
+    [~,~,~,~,ix] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube});
+    
+    mPhysDose=getfield(Result,'physicalDose'); 
     % plot physical dose
-    vX=linspace(1,ct.resolution(1)*numel(vPhysDose),numel(vPhysDose));
-    PlotHandles{1} = plot(handles.axesFig,vX,vPhysDose,'color',cColor{1,1},'LineWidth',3);grid on, hold on; 
-    PlotHandles{1,2}='Dose';
-    set(gca,'FontSize',8);
-    % assess x - limits
-    xLim  = find(vPhysDose);
+    vX=linspace(1,ct.resolution(1)*numel(mPhysDose(ix)),numel(mPhysDose(ix)));
+    PlotHandles{1} = plot(handles.axesFig,vX,mPhysDose(ix),'color',cColor{1,1},'LineWidth',3);grid on, hold on; 
+    PlotHandles{1,2}='physicalDose';
+    set(gca,'FontSize',defaultFontSize);
+    % assess x - limits for profile plot
+    xLim  = find(mPhysDose(ix));
     if ~isempty(xLim)
         xmin= xLim(1)*ct.resolution(1)-sMargin;
         xmax= xLim(end)*ct.resolution(1)+sMargin;
@@ -905,45 +924,38 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     if isfield(Result,'RBE')
         
         %disbale specific plots
-        %data.fName{6,2}=0;
-        %data.fName{5,2}=0;
-        %data.fName{2,2}=0;
+        %DispInfo{6,2}=0;
+        %DispInfo{5,2}=0;
+        %DispInfo{2,2}=0;
         
         % generate two lines for ylabel
         StringYLabel1 = '\fontsize{8}{\color{red}RBE x dose [Gy(RBE)] \color{black}dose [Gy] ';
         StringYLabel2 = '';
-        for i=1:1:size(fName,1)
-            mCurrentCube = getfield(Result,fName{i,1});
-            if ~isvector(mCurrentCube) && ~strcmp(fName{i,1},'RBEWeightedDose') ...
-                    && ~strcmp(fName{i,1},'RBE') && ~strcmp(fName{i,1},'Dose')...
-                    && fName{i,2}
-                vProfile = mCurrentCube(ix);
-                PlotHandles{Cnt,1} = plot(vX,vProfile,'color',cColor{1,Cnt},'LineWidth',3);hold on; 
-                PlotHandles{Cnt,2} =fName{i,1};
-                if strcmp(fName{i,1},'effect')
-                    unit = 'a.u.';
-                elseif strcmp(fName{i,1},'alpha')
-                    unit = 'Gy^{-1}';
-                elseif strcmp(fName{i,1},'beta')
-                    unit = 'Gy^{-2}';
-                end
-              
-                StringYLabel2 = [StringYLabel2  ' \color{'  cColor{1,Cnt} '}' fName{i,1} ' [' unit ']'];
-                
-                Cnt = Cnt+1;
-            end           
+        for i=1:1:size(DispInfo,1)
+            if DispInfo{i,2} 
+                %physicalDose is already plotted
+                if ~strcmp(DispInfo{i,1},'RBExD') &&...
+                   ~strcmp(DispInfo{i,1},'RBE') && ...
+                   ~strcmp(DispInfo{i,1},'physicalDose')
+               
+                        mCube = getfield(Result,DispInfo{i,1});
+                        PlotHandles{Cnt,1} = plot(vX,mCube(ix),'color',cColor{1,Cnt},'LineWidth',3);hold on; 
+                        PlotHandles{Cnt,2} = DispInfo{i,1};
+                        StringYLabel2 = [StringYLabel2  ' \color{'  cColor{1,Cnt} '}' DispInfo{i,1} ' ['  DispInfo{i,3} ']'];
+                        Cnt = Cnt+1;
+                end    
+            end
         end
         StringYLabel2 = [StringYLabel2 '}'];
-        % plot always RBEWeightedDose against RBE
-        mRBEWeightedDose=getfield(Result,'RBEWeightedDose');
-        vBED =mRBEWeightedDose(ix);
-  
+        % plot always RBExD against RBE
+        mRBExDose=getfield(Result,'RBExDose');
+        vBED =mRBExDose(ix);
         mRBE=getfield(Result,'RBE');
         vRBE =mRBE(ix);
         
         % plot biological dose against RBE
         [ax, PlotHandles{Cnt,1}, PlotHandles{Cnt+1,1}]=plotyy(vX,vBED,vX,vRBE,'plot');hold on;
-        PlotHandles{Cnt,2}='RBEWeightedDose';
+        PlotHandles{Cnt,2}='RBExDose';
         PlotHandles{Cnt+1,2}='RBE';
          
         % set plotyy properties
@@ -955,10 +967,8 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
         set(ax(2),'ycolor','b')
         set(ax,'FontSize',8);
         Cnt=Cnt+2;
-       
     end
        
-    
     % asses target coordinates 
     tmpPrior = intmax;
     tmpSize = 0;
@@ -973,7 +983,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     
     str = sprintf('profile plot of zentral axis of %d beam gantry angle %d° couch angle %d°',...
         handles.SelectedBeam ,pln.gantryAngles(handles.SelectedBeam),pln.couchAngles(handles.SelectedBeam));
-    title(str,'FontSize',8),grid on
+    title(str,'FontSize',defaultFontSize),grid on
     
     
     % plot target boundaries
@@ -994,7 +1004,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
    Lines = PlotHandles(~cellfun(@isempty,PlotHandles(:,1)),1);
    Labels = PlotHandles(~cellfun(@isempty,PlotHandles(:,1)),2);
    h=legend([Lines{:}],Labels{:});
-    set(h,'FontSize',8);
+    set(h,'FontSize',defaultFontSize);
     % set axis limits
     if strcmp(pln.bioOptimization,'none') || ~isfield(Result,'RBE')
         xlim([xmin xmax]);
@@ -1006,28 +1016,6 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     xlabel('depth [cm]','FontSize',8);
    
 end
-
-%% display command window output to textbox
-jDesktop = com.mathworks.mde.desk.MLDesktop.getInstance;
-jCmdWin = jDesktop.getClient('Command Window');
-jTextArea = jCmdWin.getComponent(0).getViewport.getView;
-cwText = char(jTextArea.getText);
-C = strsplit(cwText,'\n');
-set(handles.listBoxCmd,'String',C);
-numLines = size(get(handles.listBoxCmd,'String'),1);
-if numLines>7
-    set(handles.listBoxCmd, 'ListBoxTop', numLines-7);
-end
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1045,15 +1033,17 @@ function popupPlane_Callback(hObject, eventdata, handles)
 handles.plane = get(handles.popupPlane,'value');
 try
     ct = evalin('base', 'ct');
-
-    set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-            'Value',round(size(ct.cube,handles.plane)/2),...
-            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
-    
+    if handles.State<3
+        set(handles.sliderSlice,'Value',round(size(ct.cube,handles.plane)/2));
+    else
+        pln = evalin('base','pln');
+        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution(1,handles.plane)));
+    end
 catch
 end
         
-UpdatePlot(handles)
+UpdatePlot(handles);
+guidata(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
 function popupPlane_CreateFcn(hObject, eventdata, handles)
@@ -1151,17 +1141,41 @@ Param.numOfIter = str2num(get(handles.editNumIter,'String'));
 Param.prec = str2num(get(handles.txtPrecisionOutput,'String'));
 OptType = get(handles.btnTypBioOpt,'String');
 % optimize
-resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),evalin('base','pln'),Param,OptType);
+pln = evalin('base','pln');
+ct = evalin('base','ct');
+resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln,1,Param,OptType);
 assignin('base','resultGUI',resultGUI);
+
+set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution(1,handles.plane)));
+
 %set some values
 handles.State=3;
 handles.SelectedDisplayOptionIdx=1;
-handles.SelectedDisplayOption='Dose';
+handles.SelectedDisplayOption='physicalDose';
 handles.SelectedBeam=1;
 UpdatePlot(handles);
 UpdateState(handles);
 
+% perform sequencing and dao
+%% sequencing
+if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
+%   resultGUI = matRad_xiaLeafSequencing(resultGUI.w,evalin('base','stf'),evalin('base','dij')...
+%       ,get(handles.editSequencingLevel,'Value'),resultGUI);
+    resultGUI = matRad_engelLeafSequencing(resultGUI.w,evalin('base','stf'),evalin('base','dij')...
+        ,get(handles.editSequencingLevel,'String'),resultGUI);
+    assignin('base','resultGUI',resultGUI);
+end
+
+%% DAO
+if strcmp(pln.radiationMode,'photons') && pln.runDAO
+   resultGUI = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst')...
+       ,resultGUI.apertureInfo,resultGUI,1);
+   matRad_visApertureInfo(resultGUI.apertureInfo);
+   assignin('base','resultGUI',resultGUI);
+end
+
 guidata(hObject,handles);
+
 
 
 % the function CheckValidityPln checks if the provided plan is valid so
@@ -1615,6 +1629,8 @@ if isempty(eventdata)
     end
 else
     data = get(hObject,'Data');
+    
+    
 end
 
 %% if VOI, VOI Type or Overlap was changed
@@ -1730,6 +1746,7 @@ if isnan(eventdata.NewData)
     data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
 end
 
+
 set(handles.txtInfo,'String','plan changed');
 set(handles.uiTable,'data',data);
 guidata(hObject, handles);
@@ -1758,7 +1775,7 @@ end
 % end
       
 function UpdateState(handles)
- 
+
  switch handles.State
      
      case 0
@@ -1771,22 +1788,28 @@ function UpdateState(handles)
       set(handles.editSequencingLevel,'Enable','off');
       
      case 1
+      pln = evalin('base','pln');   
       set(handles.txtInfo,'String','ready for dose calculation');
       set(handles.btnCalcDose,'Enable','on');
       set(handles.btnOptimize ,'Enable','off');  
       set(handles.btnDVH,'Enable','off');
-      set(handles.btnSequencing,'Enable','off');
-      set(handles.editSequencingLevel,'Enable','off');
-         
+      if strcmp(pln.radiationMode,'photons')
+          set(handles.btnSequencing,'Enable','off');
+          set(handles.editSequencingLevel,'Enable','on');
+      end
      case 2
+      pln = evalin('base','pln');
       set(handles.txtInfo,'String','ready for optimization');   
       set(handles.btnCalcDose,'Enable','on');
       set(handles.btnOptimize ,'Enable','on');
       set(handles.btnDVH,'Enable','off');
-      set(handles.btnSequencing,'Enable','off');
-      set(handles.editSequencingLevel,'Enable','off');
+      if strcmp(pln.radiationMode,'photons')
+          set(handles.btnSequencing,'Enable','off');
+          set(handles.editSequencingLevel,'Enable','on');
+      end
      
      case 3
+      pln = evalin('base','pln');
       set(handles.txtInfo,'String','plan is optimized');   
       set(handles.btnCalcDose,'Enable','on');
       set(handles.btnOptimize ,'Enable','on');
@@ -1808,18 +1831,46 @@ pln=evalin('base','pln');
 set(handles.editBixelWidth,'String',num2str(pln.bixelWidth));
 set(handles.editSAD,'String',num2str(pln.SAD));
 set(handles.editFraction,'String',num2str(pln.numOfFractions));
+
+if isfield(pln,'isoCenter')
+    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
+end
 set(handles.editGantryAngle,'String',num2str((pln.gantryAngles)));
 set(handles.editCouchAngle,'String',num2str((pln.couchAngles)));
 set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),pln.radiationMode)));
+
 if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                             && strcmp(pln.radiationMode,'carbon')  
     set(handles.radbtnBioOpt,'Value',1);
+    set(handles.radbtnBioOpt,'Enable','on');
     set(handles.btnTypBioOpt,'Enable','on');
     set(handles.btnTypBioOpt,'String',pln.bioOptimization);
 else
     set(handles.radbtnBioOpt,'Value',0);
+    set(handles.radbtnBioOpt,'Enable','off');
     set(handles.btnTypBioOpt,'Enable','off');
 end
+%% enable sequencing and DAO button if radiation mode is set to photons
+if strcmp(pln.radiationMode,'photons') && pln.runSequencing
+    set(handles.btnRunSequencing,'Enable','on');
+    set(handles.btnRunSequencing,'Value',1);
+elseif strcmp(pln.radiationMode,'photons') && ~pln.runSequencing
+    set(handles.btnRunSequencing,'Enable','on');
+    set(handles.btnRunSequencing,'Value',0);
+else
+    set(handles.btnRunSequencing,'Enable','off');
+end
+%% enable DAO button if radiation mode is set to photons
+if strcmp(pln.radiationMode,'photons') && pln.runDAO
+    set(handles.btnRunDAO,'Enable','on');
+    set(handles.btnRunDAO,'Value',1);
+elseif strcmp(pln.radiationMode,'photons') && ~pln.runDAO
+    set(handles.btnRunDAO,'Enable','on');
+    set(handles.btnRunDAO,'Value',0);
+else
+    set(handles.btnRunDAO,'Enable','off');
+end
+
 
  
 % get pln file form gui     
@@ -1836,6 +1887,7 @@ try
     pln.voxelDimensions = size(ct.cube);
 catch
 end
+pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'),false);
 contents                    = get(handles.popupRadMode,'String'); 
 pln.radiationMode   =  contents{get(handles.popupRadMode,'Value')}; % either photons / protons / carbon
 
@@ -1844,16 +1896,21 @@ if (logical(get(handles.radbtnBioOpt,'Value')) && strcmp(pln.radiationMode,'carb
 else
      pln.bioOptimization = 'none';
 end
-    
-pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'),false);
+
+pln.runSequencing = logical(get(handles.btnRunSequencing,'Value'));
+pln.runDAO = logical(get(handles.btnRunDAO,'Value'));
 
 try
     cst= evalin('base','cst');
-    if sum(strcmp('TARGET',cst(:,3)))>0
+    if sum(strcmp('TARGET',cst(:,3)))>0 && get(handles.checkIsoCenter,'Value')
        pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
+    else
+       pln.isoCenter = str2num(get(handles.editIsoCenter,'String'));
     end
-    catch
+catch
+    warning('couldnt set isocenter in getPln function')
 end
+
 handles.pln = pln;
 assignin('base','pln',pln);
 
@@ -1868,6 +1925,12 @@ function btnTableSave_Callback(hObject, eventdata, handles)
 % hObject    handle to btnTableSave (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+if get(handles.checkIsoCenter,'Value')
+    pln = evalin('base','pln'); 
+    pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
+    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
+    assignin('base','pln',pln);
+end
 getCstTable(handles);
 getPln(handles);
 
@@ -1952,7 +2015,7 @@ function btnRefresh_Callback(hObject, eventdata, handles)
 % hObject    handle to btnRefresh (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-setPln(handles)
+setPln(handles);
 setCstTable(handles,evalin('base','cst'));
 % set state
 
@@ -2068,16 +2131,27 @@ function btnSequencing_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 StratificationLevel = parseStringAsNum(get(handles.editSequencingLevel,'String'));
-
 resultGUI=evalin('base','resultGUI');
-  
+pln = evalin('base','pln');
+resultGUI.w = resultGUI.wUnsequenced;
+% perform sequencing and dao
+%% sequencing
+if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
+%   resultGUI = matRad_xiaLeafSequencing(resultGUI.w,evalin('base','stf'),evalin('base','dij')...
+%       ,StratificationLevel,resultGUI);
+    resultGUI = matRad_engelLeafSequencing(resultGUI.w,evalin('base','stf'),evalin('base','dij')...
+        ,StratificationLevel,resultGUI);
+    assignin('base','resultGUI',resultGUI);
+end
 
-Sequencing = matRad_engelLeafSequencing(resultGUI.w,evalin('base','stf'),StratificationLevel,1);
-%Sequencing = matRad_xiaLeafSequencing(resultGUI.w,evalin('base','stf'),StratificationLevel,1);
-doseCube = matRad_mxCalcDose(evalin('base','dij'),Sequencing.w,evalin('base','cst'));  
-resultGUI.(['Sequencing' num2str(StratificationLevel)])=doseCube.physicalDose;
-assignin('base','Sequencing',Sequencing);
-assignin('base','resultGUI',resultGUI);
+%% DAO
+if strcmp(pln.radiationMode,'photons') && pln.runDAO
+   resultGUI = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst')...
+       ,resultGUI.apertureInfo,resultGUI,1);
+   matRad_visApertureInfo(resultGUI.apertureInfo);
+   assignin('base','resultGUI',resultGUI);
+end
+
 guidata(hObject,handles);
 UpdatePlot(handles);
 UpdateState(handles);
@@ -2106,3 +2180,68 @@ function editSequencingLevel_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+
+function editIsoCenter_Callback(hObject, eventdata, handles)
+% hObject    handle to editIsoCenter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editIsoCenter as text
+%        str2double(get(hObject,'String')) returns contents of editIsoCenter as a double
+pln=evalin('base','pln');
+if ~get(handles.checkIsoCenter,'Value')
+   TmpIsoCenter = str2num(get(hObject,'String'));
+   if length(TmpIsoCenter) == 3
+       pln.isoCenter =  TmpIsoCenter;
+   end
+end
+assignin('base','pln',pln);
+handles.State = 1;
+UpdateState(handles);
+
+% --- Executes during object creation, after setting all properties.
+function editIsoCenter_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editIsoCenter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in checkIsoCenter.
+function checkIsoCenter_Callback(hObject, eventdata, handles)
+% hObject    handle to checkIsoCenter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkIsoCenter
+try
+    if get(hObject,'Value')
+        pln = evalin('base','pln'); 
+        pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
+        set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
+        assignin('base','pln',pln);
+    end
+catch
+end
+
+
+% --- Executes on button press in btnRunSequencing.
+function btnRunSequencing_Callback(hObject, eventdata, handles)
+% hObject    handle to btnRunSequencing (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+getPln(handles);
+
+% --- Executes on button press in btnRunDAO.
+function btnRunDAO_Callback(hObject, eventdata, handles)
+% hObject    handle to btnRunDAO (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+getPln(handles);

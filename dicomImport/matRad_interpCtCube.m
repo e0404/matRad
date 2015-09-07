@@ -48,8 +48,8 @@ function interpCt = matRad_interpCtCube(origCt, origCtInfo, resolution)
 coordsOfFirstPixel = [origCtInfo.ImagePositionPatient];
 
 % set up grid vectors
-x = coordsOfFirstPixel(1,1) + origCtInfo(1).PixelSpacing(1)*double([0:origCtInfo(1).Rows-1]);
-y = coordsOfFirstPixel(2,1) + origCtInfo(1).PixelSpacing(2)*double([0:origCtInfo(1).Columns-1]');
+x = coordsOfFirstPixel(1,1) + origCtInfo(1).PixelSpacing(1)*double([0:origCtInfo(1).Columns-1]);
+y = coordsOfFirstPixel(2,1) + origCtInfo(1).PixelSpacing(2)*double([0:origCtInfo(1).Rows-1]');
 z = coordsOfFirstPixel(3,:);
 
 xi = coordsOfFirstPixel(1,1):resolution(1):(coordsOfFirstPixel(1,1)+origCtInfo(1).PixelSpacing(1)*double(origCtInfo(1).Rows-1));

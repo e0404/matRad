@@ -1,4 +1,4 @@
-function resultSequencing = matRad_xiaLeafSequencing(w,stf,numOfLevels,visBool)
+function resultGUI = matRad_xiaLeafSequencing(w,stf,dij,numOfLevels,resultGUI,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated 
 % beams with multiple static segments according to Xia et al. (1998)
@@ -11,10 +11,13 @@ function resultSequencing = matRad_xiaLeafSequencing(w,stf,numOfLevels,visBool)
 %   w:                  bixel weight vector
 %   stf:                matRad steering information struct
 %   numOfLevels:        number of stratification levels
+%   resultGUI:          resultGUI struct to which the output data will be added, if
+%                       this field is empty resultGUI struct will be created
 %   visBool:            toggle on/off visualization (optional)
 %
 % output
-%   resultSequencing:   matRad sequencing result struct   
+%   resultGUI:          matRad result struct containing the new dose cube as well as 
+%                       the corresponding weights
 %
 % References
 %   [1] http://online.medphys.org/resource/1/mphya6/v25/i8/p1424_s1
@@ -46,7 +49,7 @@ function resultSequencing = matRad_xiaLeafSequencing(w,stf,numOfLevels,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % if visBool not set toogle off visualization
-if nargin < 4
+if nargin < 6
     visBool = 0;
 end
 
@@ -132,7 +135,7 @@ for i = 1:numOfBeams
         
         seqSubPlots(1) = subplot(2,2,1,'parent',seqFig);
         imagesc(D_k,'parent',seqSubPlots(1));
-        set(seqSubPlots(1),'CLim',[0 L_0]);
+        set(seqSubPlots(1),'CLim',[0 L_0],'YDir','normal');
         title(seqSubPlots(1),['Beam # ' num2str(i) ': L_0 = ' num2str(L_0) ' - ' num2str(numel(unique(D_0))) ' intensity levels'])
         xlabel(seqSubPlots(1),'x - direction parallel to leaf motion ')
         ylabel(seqSubPlots(1),'z - direction perpendicular to leaf motion ')
@@ -149,7 +152,7 @@ for i = 1:numOfBeams
         if visBool
             seqSubPlots(2) = subplot(2,2,2,'parent',seqFig);
             imagesc(D_k,'parent',seqSubPlots(2));
-            set(seqSubPlots(2),'CLim',[0 L_0]);
+            set(seqSubPlots(2),'CLim',[0 L_0],'YDir','normal');
             title(seqSubPlots(2),['k = ' num2str(k) ' - ' num2str(numel(unique(D_k))) ' intensity levels remaining...']);
             xlabel(seqSubPlots(2),'x - direction parallel to leaf motion ');
             ylabel(seqSubPlots(2),'z - direction perpendicular to leaf motion ');
@@ -175,6 +178,7 @@ for i = 1:numOfBeams
         if visBool
             seqSubPlots(3) = subplot(2,2,3,'parent',seqFig);
             imagesc(openingMx,'parent',seqSubPlots(3));
+            set(seqSubPlots(3),'YDir','normal')
             xlabel(seqSubPlots(3),'x - direction parallel to leaf motion ')
             ylabel(seqSubPlots(3),'z - direction perpendicular to leaf motion ')
             title(seqSubPlots(3),'Opening matrix');
@@ -215,6 +219,7 @@ for i = 1:numOfBeams
                 if visBool
                     seqSubPlots(4) = subplot(2,2,4,'parent',seqFig);
                     imagesc(shape_k,'parent',seqSubPlots(4));
+                    set(seqSubPlots(4),'YDir','normal')
                     hold(seqSubPlots(4),'on');
                     xlabel(seqSubPlots(4),'x - direction parallel to leaf motion ')
                     ylabel(seqSubPlots(4),'z - direction perpendicular to leaf motion ')
@@ -252,18 +257,33 @@ for i = 1:numOfBeams
         
     end
     
-    resultSequencing.beam(i).numOfShapes  = k;
-    resultSequencing.beam(i).shapes       = shapes(:,:,1:k);
-    resultSequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
-    resultSequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
-    resultSequencing.beam(i).fluence      = D_0;
+    sequencing.beam(i).numOfShapes  = k;
+    sequencing.beam(i).shapes       = shapes(:,:,1:k);
+    sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
+    sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
+    sequencing.beam(i).fluence      = D_0;
     
-    resultSequencing.w(1+offset:numOfRaysPerBeam+offset) = D_0(indInFluenceMx)/numOfLevels*calFac;
+    sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = D_0(indInFluenceMx)/numOfLevels*calFac;
 
     offset = offset + numOfRaysPerBeam;
 
+end
+
+resultGUI.w          = sequencing.w;
+resultGUI.wSequenced = sequencing.w;
+
+resultGUI.sequencing   = sequencing;
+resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
+
+Tmp = matRad_mxCalcDose(dij,sequencing.w);
+resultGUI.physicalDose = Tmp.physicalDose;
+
+% if weights exists from an former DAO remove it
+if isfield(resultGUI,'wDao')
+    resultGUI = rmfield(resultGUI,'wDao');
+end
+
 
 end
 
-end
 

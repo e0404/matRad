@@ -1,4 +1,4 @@
-function optResult = matRad_fluenceOptimization(dij,cst,pln,varargin)
+function optResult = matRad_fluenceOptimization(dij,cst,pln,visBool,varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
@@ -9,6 +9,8 @@ function optResult = matRad_fluenceOptimization(dij,cst,pln,varargin)
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
+%   visBool:    plots the objective function value in dependence of the
+%               number of iterations
 %   varargin:   optinal: convergence criteria for optimization and biological
 %               optimization mode
 %
@@ -96,16 +98,10 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
         IdentifierBioOpt = pln.bioOptimization;
     end
     
-    %calculate maximum slope
-    dij.Dcut = 30; %[Gy]
-    dij.Smax = dij.ax + (2*dij.bx*dij.Dcut);
-    
     switch IdentifierBioOpt
         case 'effect'
             objFunc = @(x) matRad_bioObjFunc(x,dij,cst);
         case 'RBExD'
-            dij.Scut = dij.ax.*dij.Dcut + dij.bx.*dij.Dcut^2;
-            
             dij.gamma = zeros(dij.numOfVoxels,1);
             idx = dij.bx~=0;  % find indices
             dij.gamma(idx)=dij.ax(idx)./(2*dij.bx(idx)); 
@@ -122,8 +118,14 @@ end
 %% verify gradients
 %matRad_verifyGradient(objFunc,dij.totalNumOfBixels);
 
-% minimize objetive function
-optResult = matRad_projectedLBFGS(objFunc,wInit,varargin);
+% set function for projection to feasible set during LBFGS optimization
+projFunc = @(x) deal(x.* double(x>0) ,x<=0);
+
+% minimize objective function
+wOpt = matRad_projectedLBFGS(objFunc,projFunc,wInit,visBool,varargin);
+
+optResult.w = wOpt;
+optResult.wUnsequenced = wOpt;
 
 % calc dose and reshape from 1D vector to 2D array
 optResult.physicalDose = reshape(dij.physicalDose*optResult.w,dij.dimensions);
@@ -146,9 +148,9 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
     optResult.effect = (dij.mAlphaDose*optResult.w+(dij.mSqrtBetaDose*optResult.w).^2);
     optResult.effect = reshape(optResult.effect,dij.dimensions);
     
-    optResult.RBEWeightedDose = ((sqrt(a_x.^2 + 4 .* b_x .* optResult.effect) - a_x)./(2.*b_x));
+    optResult.RBExDose = ((sqrt(a_x.^2 + 4 .* b_x .* optResult.effect) - a_x)./(2.*b_x));
     
-    optResult.RBE = optResult.RBEWeightedDose./optResult.physicalDose;
+    optResult.RBE = optResult.RBExDose./optResult.physicalDose;
     
     % a different way to calculate RBE is as follows - leads to the same
     %optResult.RBE = ((sqrt(a_x.^2 + 4 .* b_x .* optResult.effect) - a_x)./(2.*b_x.*optResult.physicalDose));

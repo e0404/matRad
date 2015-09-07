@@ -1,7 +1,7 @@
 function isoCenter = matRad_getIsoCenter(cst,ct,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% computes the isocenter as the joint center of gravity of all volumes of
-% interest that are labeled as target within the cst struct
+% computes the isocenter [mm] as the joint center of gravity of all volumes
+% of interest that are labeled as target within the cst struct
 % 
 % call
 %   isoCenter = matRad_getIsoCenter(cst,ct,pln,visBool)
@@ -48,10 +48,6 @@ if nargin < 3
     visBool = 0;
 end
 
-%check if one target is defined
-if sum(strcmp(cst(:,3),'TARGET'))== 0
-    error('matRad_getIsoCenter: no VOIs is marked as TARGET')
-end
 % Initializes V variable.
 V = [];
 
@@ -65,6 +61,11 @@ end
 % Delete repeated indices, one voxel can belong to two VOIs, because
 % VOIs can be overlapping.
 V = unique(V);
+
+% throw error message if no target is found
+if isempty(V)
+    error('Could not find target');
+end
 
 % Transform subcripts from linear indices 
 [yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct.cube),V);

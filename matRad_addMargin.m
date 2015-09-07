@@ -46,78 +46,49 @@ function mVOIEnlarged = matRad_addMargin(mVOI,vResolution,vMargin,bDiaElem)
 
 if nargin == 3
     bDiaElem = false;
-elseif nargin <3
+elseif nargin < 3
     error('not enough input parameters specified for matRad_addMargin');
 end
 
 % get number of voxels which should be added in each dimension
-VoxelMargins =round(vMargin./vResolution);
-mVOIEnlarged=mVOI;
+voxelMargins = round(vMargin./vResolution);
+mVOIEnlarged = mVOI;
 NewIdx = [];
 
 [xUpperLim,yUpperLim,zUpperLim]=size(mVOI);
 
+for Cnt = 1:max(voxelMargins)
 
-    for Cnt = 1:max(VoxelMargins)
-        
-        % for multiple loops just consider just added margin
-        NewIdx = setdiff(find(mVOIEnlarged),NewIdx);
-        [xCoord, yCoord, zCoord] = ind2sub(size(mVOIEnlarged),NewIdx);
+    % for multiple loops consider just added margin
+    NewIdx = setdiff(find(mVOIEnlarged),NewIdx);
+    [xCoord, yCoord, zCoord] = ind2sub(size(mVOIEnlarged),NewIdx);
 
-		
-        if VoxelMargins(1)>=Cnt
-            dx=1;
-        else
-            dx=0;
-        end
+    % find indices on border and take out
+    borderIx = xCoord==1 | xCoord==xUpperLim | ...
+               yCoord==1 | yCoord==yUpperLim | ...
+               zCoord==1 | zCoord==zUpperLim;
 
-        if VoxelMargins(2)>=Cnt
-            dy=1;
-        else
-            dy=0;
-        end
+    xCoord(borderIx) = [];
+    yCoord(borderIx) = [];
+    zCoord(borderIx) = [];
 
-        if VoxelMargins(3)>=Cnt
-            dz=1;
-        else
-            dz=0;
-        end
-			
-        for i=1:numel(xCoord)
+    dx = voxelMargins(1)>=Cnt;
+    dy = voxelMargins(2)>=Cnt;
+    dz = voxelMargins(3)>=Cnt;
 
-            for j= -1:1:1
-                
-                    if zCoord(i)+dz*j > 1  && zCoord(i)+dz*j < zUpperLim
-                        
-                        mVOIEnlarged(xCoord(i)   ,yCoord(i)   ,zCoord(i)+dz*j)=1;
-                    end
-                    
-                    if xCoord(i)+dx < xUpperLim && xCoord(i)-dx >=1 ...
-                            && zCoord(i)+dz*j > 1  && zCoord(i)+dz*j < zUpperLim
-                        
-                        mVOIEnlarged(xCoord(i)+dx,yCoord(i)   ,zCoord(i)+dz*j)=1;
-                        mVOIEnlarged(xCoord(i)-dx,yCoord(i)   ,zCoord(i)+dz*j)=1;
-                    end
-                    
-                    if yCoord(i)+dy < yUpperLim && yCoord(i)-dy >=1 ...
-                            && zCoord(i)+dz*j > 1  && zCoord(i)+dz*j < zUpperLim
-                        
-                        mVOIEnlarged(xCoord(i)   ,yCoord(i)+dy,zCoord(i)+dz*j)=1;
-                        mVOIEnlarged(xCoord(i)   ,yCoord(i)-dy,zCoord(i)+dz*j)=1;
-                    end
-                    
-                if bDiaElem &&  xCoord(i)+dx < xUpperLim && xCoord(i)-dx >=1 ...
-                           &&  yCoord(i)+dy < yUpperLim && yCoord(i)-dy >=1 ...
-                           && zCoord(i)+dz*j > 1  && zCoord(i)+dz*j < zUpperLim
-                       
-                    mVOIEnlarged(xCoord(i)+dx,yCoord(i)+dy,zCoord(i)+dz*j)=1;
-                    mVOIEnlarged(xCoord(i)+dx,yCoord(i)-dy,zCoord(i)+dz*j)=1;
-                    mVOIEnlarged(xCoord(i)-dx,yCoord(i)+dy,zCoord(i)+dz*j)=1;
-                    mVOIEnlarged(xCoord(i)-dx,yCoord(i)-dy,zCoord(i)+dz*j)=1;
+    for i = -1:1
+        for j = -1:1
+            for k = -1:1
+
+                if (abs(i)+abs(j)+abs(k) == 0) || (~bDiaElem && i+j+k > 1) % skip if diagonal elements not wanted or zero offset
+                    continue;
                 end
-            end
-            
 
+                newIx = sub2ind(size(mVOIEnlarged),xCoord+i*dx,yCoord+j*dy,zCoord+k*dz);
+                
+                mVOIEnlarged(newIx) = 1;
+
+            end
         end
     end
 

@@ -124,7 +124,7 @@ end
 
 %% creation of ct-cube
 fprintf('reading slices...')
-origCt = zeros(info(1).Width, info(1).Height, numOfSlices);
+origCt = zeros(info(1).Height, info(1).Width, numOfSlices);
 for i = 1:numOfSlices
     currentFilename = ctList{i};
     [currentImage, map] = dicomread(currentFilename);
@@ -208,7 +208,7 @@ ct.dicomInfo.RescaleIntercept        = info(1).RescaleIntercept;
 
 % convert to water equivalent electron densities
 fprintf('\nconversion of ct-Cube to waterEqD...');
-ct.cube = matRad_calcWaterEqD(ct.cube,ct.dicomInfo.RescaleSlope,ct.dicomInfo.RescaleIntercept);
+ct = matRad_calcWaterEqD(ct);
 fprintf('finished!\n');
 
 end

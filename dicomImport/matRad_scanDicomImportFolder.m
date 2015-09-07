@@ -45,6 +45,11 @@ function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )
 
 %% get all files in search directory
 
+% dicom import needs image processing toolbox -> check if available
+if ~license('checkout','image_toolbox')
+    error('image processing toolbox and/or corresponding licence not available');
+end
+
 % get information about main directory
 mainDirInfo = dir(patDir);
 % get index of subfolders
