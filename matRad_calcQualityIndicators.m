@@ -1,4 +1,4 @@
-function QI = matRad_calcQualityIndicators(d,cst,refGy,refVol)
+function QI = matRad_calcQualityIndicators(result,cst,refGy,refVol)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad QI calculation
 % 
@@ -6,7 +6,7 @@ function QI = matRad_calcQualityIndicators(d,cst,refGy,refVol)
 %   matRad_calcQualityIndicators(d,cst,refGy,refVol)
 %
 % input
-%   d:                  dose cube
+%   result:             result struct from fluence optimization/sequencing
 %   cst:                matRad cst struct
 %   refGy: (optional)   array of dose values used for V_XGy calculation
 %                       default is [40 50 60]
@@ -50,50 +50,75 @@ function QI = matRad_calcQualityIndicators(d,cst,refGy,refVol)
 
 if(nargin < 3)
     refGy = [40 50 60];
-    refVol = [2 5 95 98];
+    refVol = [2 5 98 95];
 end
 
 numOfVois = size(cst,1);
 
-%% calculate QIs per VOI
-for i = 1:numOfVois  
-    indices     = cst{i,4};
+% calculate QIs per VOI
+for runVoi = 1:numOfVois  
+    indices     = cst{runVoi,4};
     numOfVoxels = numel(indices);
     
-    %% get Dose, dose is sorted to simplify calculations
-    if sum(strcmp(fieldnames(d),'RBEWeightedDose')) > 0
-        relevantDose = d.RBEWeightedDose;
-        doseInVoi   = sort(d.RBEWeightedDose(indices));
+    voiPrint = sprintf('%3d %20s',cst{runVoi,1},cst{runVoi,2}); %String that will print quality indicators
+    % get Dose, dose is sorted to simplify calculations
+    if sum(strcmp(fieldnames(result),'RBEWeightedDose')) > 0
+        relevantDose = result.RBEWeightedDose;
+        doseInVoi   = sort(result.RBEWeightedDose(indices));
     else
-        relevantDose = d.physicalDose;
-        doseInVoi   = sort(d.physicalDose(indices));
+        relevantDose = result.physicalDose;
+        doseInVoi   = sort(result.physicalDose(indices));
     end
         
-    %"easy ones"
-    QI(i).mean = mean(doseInVoi);
-    QI(i).std = std(doseInVoi);
-    QI(i).max = doseInVoi(end);
-    QI(i).min = doseInVoi(1);
+    % easy stats
+    QI(runVoi).mean = mean(doseInVoi);
+    QI(runVoi).std = std(doseInVoi);
+    QI(runVoi).max = doseInVoi(end);
+    QI(runVoi).min = doseInVoi(1);
     
-    DX = @(x) doseInVoi(round((100-x)*0.01*numOfVoxels));
+    voiPrint = sprintf('%s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy), ', ...
+                       voiPrint,QI(runVoi).mean,QI(runVoi).std,QI(runVoi).max,QI(runVoi).min);
+    
+    DX = @(x) doseInVoi(ceil((100-x)*0.01*numOfVoxels));
     VX = @(x) numel(doseInVoi(doseInVoi >= x)) / numOfVoxels;
-    
-    %create runtime structure fields.. can this be written more elegant?
-    for(runDX = 1:numel(refVol))
-        QI(i).(strcat('D',num2str(refVol(runDX)))) = DX(refVol(runDX));
+    %voiPrint = sprintf('%s%27s',voiPrint,' '); %Just to create visual offset
+    %create VX and DX struct fieldnames at runtime and fill
+    for runDX = 1:numel(refVol)
+        QI(runVoi).(strcat('D',num2str(refVol(runDX)))) = DX(refVol(runDX));
+        voiPrint = sprintf('%sD%d%% = %5.2f Gy, ',voiPrint,refVol(runDX),DX(refVol(runDX)));
     end
-    for(runVX = 1:numel(refGy))
-        QI(i).(strcat('V',num2str(refGy(runVX)))) = VX(refGy(runVX));
-    end
-    
-    
-    if strcmp(cst{i,3},'TARGET') > 0       
-        %% Conformity Index
-        VTarget95 = numel(doseInVoi(doseInVoi >= 0.95*cst{i,6}.parameter(2)));   %number of target voxels recieving dose >= 0.95 dPres
-        VTreated95 = numel(relevantDose(relevantDose >= 0.95*cst{i,6}.parameter(2)));  %number of all voxels recieving dose >= 0.95 dPres ("treated volume")
-        QI(i).CI = VTarget95^2/(numOfVoxels * VTreated95);
+    for runVX = 1:numel(refGy)
+        QI(runVoi).(strcat('V',num2str(refGy(runVX)))) = VX(refGy(runVX));
+        voiPrint = sprintf('%sV%dGy = %6.2f%%, ',voiPrint,refGy(runVX),VX(refGy(runVX))*100);
+    end 
+    if strcmp(cst{runVoi,3},'TARGET') > 0      
         
-        %% Homogeneity Index (one out of many)        
-        QI(i).HI = (DX(5) - DX(95))/cst{i,6}.parameter(2) * 100;
+        %loop over target objectives and get the lowest dose objective 
+        referenceDose = inf;
+        for runObjective = 1:numel(cst{runVoi,6})
+           %Check if this is an objective that penalizes underdosing 
+           if strcmp(cst{runVoi,6}(runObjective).type,'square deviation') > 0 || strcmp(cst{runVoi,6}(runObjective).type,'square underdosing') > 0
+               referenceDose = min(cst{runVoi,6}(runObjective).parameter(2),referenceDose);
+           end            
+        end
+        
+        if referenceDose == inf 
+            voiPrint = sprintf('%s%s',voiPrint,'Warning, Target has no objective that penalizes underdosage, ');
+        else
+            % Conformity Index, fieldname contains reference dose
+            VTarget95 = numel(doseInVoi(doseInVoi >= 0.95*referenceDose)); % number of target voxels recieving dose >= 0.95 dPres
+            VTreated95 = numel(relevantDose(relevantDose >= 0.95*referenceDose));  %number of all voxels recieving dose >= 0.95 dPres ("treated volume")
+            QI(runVoi).(strcat('CI',num2str(referenceDose))) = VTarget95^2/(numOfVoxels * VTreated95); 
+        
+            % Homogeneity Index (one out of many), fieldname contains reference dose        
+            QI(runVoi).(strcat('HI',num2str(referenceDose))) = (DX(5) - DX(95))/referenceDose * 100;
+            
+            voiPrint = sprintf('%sCI = %6.4f, HI = %5.2f for reference dose of %3.1f Gy, ',voiPrint,...
+                               QI(runVoi).(strcat('CI',num2str(referenceDose))),QI(runVoi).(strcat('HI',num2str(referenceDose))),referenceDose);
+        end 
     end
+    fprintf('%s\n',voiPrint);    
 end
+ 
+end    
+
