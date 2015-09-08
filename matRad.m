@@ -87,5 +87,5 @@ matRadGUI
 %% dvh
 matRad_calcDVH(resultGUI,cst)
 
-%% QI
-resultGUI.QI = matRad_calcQualityIndicators(resultGUI,cst);
+%% quality indicators
+resultGUI = matRad_calcQualityIndicators(resultGUI,cst);
