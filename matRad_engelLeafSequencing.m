@@ -1,4 +1,4 @@
-function resultGUI = matRad_engelLeafSequencing(w,stf,dij,numOfLevels,resultGUI,visBool)
+function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated 
 % beams with multiple static segments accroding to Engel et al. 2005
@@ -8,12 +8,11 @@ function resultGUI = matRad_engelLeafSequencing(w,stf,dij,numOfLevels,resultGUI,
 %   resultSequencing = matRad_engelSequencing(w,stf,pln,numOfLevels,visBool)
 %
 % input
-%   w:                  bixel weight vector
+%   resultGUI:          resultGUI struct to which the output data will be added, if
+%                       this field is empty resultGUI struct will be created
 %   stf:                matRad steering information struct
 %   dij:                matRad's dij matrix
 %   numOfLevels:        number of stratification levels
-%   resultGUI:          resultGUI struct to which the output data will be added, if
-%                       this field is empty resultGUI struct will be created
 %   visBool:            toggle on/off visualization (optional)
 %
 % output
@@ -53,8 +52,6 @@ if nargin < 6
     visBool = 0;
 end
 
-
-
 numOfBeams = numel(stf);
 
 if visBool
@@ -73,7 +70,7 @@ for i = 1:numOfBeams
     numOfRaysPerBeam = stf(i).numOfRays; 
     
     % get relevant weights for current beam
-    wOfCurrBeams = w(1+offset:numOfRaysPerBeam+offset);
+    wOfCurrBeams = resultGUI.w(1+offset:numOfRaysPerBeam+offset);
     
     X = ones(numOfRaysPerBeam,1)*NaN;
     Z = ones(numOfRaysPerBeam,1)*NaN;

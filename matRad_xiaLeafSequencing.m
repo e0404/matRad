@@ -1,4 +1,4 @@
-function resultGUI = matRad_xiaLeafSequencing(w,stf,dij,numOfLevels,resultGUI,visBool)
+function resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated 
 % beams with multiple static segments according to Xia et al. (1998)
@@ -8,11 +8,10 @@ function resultGUI = matRad_xiaLeafSequencing(w,stf,dij,numOfLevels,resultGUI,vi
 %   resultSequencing = matRad_xiaLeafSequencing(w,stf,pln,numOfLevels,visBool)
 %
 % input
-%   w:                  bixel weight vector
-%   stf:                matRad steering information struct
-%   numOfLevels:        number of stratification levels
 %   resultGUI:          resultGUI struct to which the output data will be added, if
 %                       this field is empty resultGUI struct will be created
+%   stf:                matRad steering information struct
+%   numOfLevels:        number of stratification levels
 %   visBool:            toggle on/off visualization (optional)
 %
 % output
@@ -55,8 +54,6 @@ end
 
 mode = 'rl'; % sliding window (sw) or reducing level (rl)
 
-resultSequencing.w = NaN*w;
-
 numOfBeams = numel(stf);
 
 if visBool
@@ -75,7 +72,7 @@ for i = 1:numOfBeams
     numOfRaysPerBeam = stf(i).numOfRays;
     
     % get relevant weights for current beam
-    wOfCurrBeams = w(1+offset:numOfRaysPerBeam+offset);%REVIEW OFFSET
+    wOfCurrBeams = resultGUI.w(1+offset:numOfRaysPerBeam+offset);%REVIEW OFFSET
     
     X = ones(numOfRaysPerBeam,1)*NaN;
     Z = ones(numOfRaysPerBeam,1)*NaN;
