@@ -52,10 +52,9 @@ numOfTissueClass = size(baseData(1).alpha,2);
 
 % range shift
 depths = baseData.depths + baseData.offset;
-Idx = depths > 0;
 
 for i = 1:numOfTissueClass
-    vAlpha(mTissueClass==i) = interp1(depths(Idx),baseData.alpha(Idx,i),vRadDepths(mTissueClass==i),'linear');
-    vBeta(mTissueClass==i)  = interp1(depths(Idx),baseData.beta(Idx,i), vRadDepths(mTissueClass==i),'linear');
+    vAlpha(mTissueClass==i) = interp1(depths,baseData.alpha(:,i),vRadDepths(mTissueClass==i),'linear');
+    vBeta(mTissueClass==i)  = interp1(depths,baseData.beta(:,i), vRadDepths(mTissueClass==i),'linear');
 end
 
