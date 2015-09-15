@@ -99,8 +99,12 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     end
     
     availableEnergies = [baseData.energy];
-    availablePeakPos  = [baseData.peakPos];
+    availablePeakPos  = [baseData.peakPos] + [baseData.offset];
     
+    if sum(availablePeakPos<0)>0
+       error('at least one available peak position is negative - inconsistent basedata') 
+    end
+
     clear baseData;
     
 elseif strcmp(pln.radiationMode,'photons')

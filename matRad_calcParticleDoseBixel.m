@@ -43,11 +43,20 @@ function dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,baseData)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+
+% range shift
+depths = baseData.depths + baseData.offset;
+Idx = depths >= 0;
+
 % interpolate sigma
-sigma = interp1(baseData.depths,baseData.sigma,radDepths);
+sigma = interp1(depths(Idx),baseData.sigma(Idx),radDepths);
 
 % interpolate depth dose
-Z = interp1(baseData.depths,baseData.Z,radDepths);
+Z = interp1(depths(Idx),baseData.Z(Idx),radDepths);
 
 % calculate dose
 dose = exp( -radialDist_sq ./ (2*sigma.^2)) .* Z ./(2*pi*sigma.^2);
+ 
+
+

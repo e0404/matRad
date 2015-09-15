@@ -207,7 +207,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([baseData.energy],4));
 
                 % find indices
-                currIx = radDepths <= baseData(energyIx).depths(end) & ...
+                currIx = radDepths <= baseData(energyIx).depths(end) + baseData(energyIx).offset & ...
                          radialDist_sq <= 9*baseData(energyIx).sigma(end)^2;
 
                 % calculate particle dose for bixel k on ray j of beam i
