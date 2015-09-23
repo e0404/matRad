@@ -60,13 +60,14 @@ try
     
     %% sequencing
     if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
-        %resultGUI = matRad_xiaLeafSequencing(resultGUI.w,stf,dij,5);
-        resultGUI = matRad_engelLeafSequencing(resultGUI.w,stf,dij,pln.StratificationLevel,resultGUI);
+        %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
+        resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
     end
 
     %% DAO
     if strcmp(pln.radiationMode,'photons') && pln.runDAO
-       resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,0);
+       resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,1);
+       matRad_visApertureInfo(resultGUI.apertureInfo);
     end
     %% extract dij from iso center slice according to the sample spacing
     resultGUI.dijIsoCenter = matRad_unitTestGetIsoCenterSlice(pln,dij,pln.dijSpacing);
@@ -137,29 +138,29 @@ function StatsOverall = matRad_unitTestGetOverallStats(StatsOverall,Stats)
 
 fNames = fieldnames(Stats);
 
-for i = 1:numel(fNames)
-    for j=1:length(Stats)
-        if sum(strcmp((fNames{i,1}),{'min','max','std','mean'}))>0
+    for i = 1:numel(fNames)
+        for j=1:length(Stats)
+            if sum(strcmp((fNames{i,1}),{'min','max','std','mean'}))>0
 
-            if StatsOverall.min < Stats.min
-                StatsOverall.min = Stats.min;
-            end
-            if StatsOverall.max < Stats.max
-                StatsOverall.max = Stats.max;
-            end
-            if StatsOverall.std < Stats.std
-                StatsOverall.std = Stats.std;
-            end
-            if StatsOverall.mean < Stats.mean
-                StatsOverall.mean = Stats.mean;
-            end
-            break;
-        else
+                if StatsOverall.min < Stats.min
+                    StatsOverall.min = Stats.min;
+                end
+                if StatsOverall.max < Stats.max
+                    StatsOverall.max = Stats.max;
+                end
+                if StatsOverall.std < Stats.std
+                    StatsOverall.std = Stats.std;
+                end
+                if StatsOverall.mean < Stats.mean
+                    StatsOverall.mean = Stats.mean;
+                end
+                break;
+            else
 
-             StatsOverall = matRad_unitTestGetOverallStats(StatsOverall,Stats(j).(fNames{i,1}));
+                 StatsOverall = matRad_unitTestGetOverallStats(StatsOverall,Stats(j).(fNames{i,1}));
 
+            end
         end
     end
-end
 
 end

@@ -51,8 +51,10 @@ depths = baseData.depths + baseData.offset;
 % interpolate sigma
 sigma = interp1(depths,baseData.sigma,radDepths);
 
-% interpolate depth dose
-Z = interp1(depths,baseData.Z,radDepths);
+% interpolate depth dose and convert units from MeV cm^2/g per primary to
+% Gy mm^2 per 1e6 primaries
+ConversionFactor = 1.6021766208e-02;
+Z = interp1(depths,baseData.Z,radDepths) .* ConversionFactor;
 
 % calculate dose
 dose = exp( -radialDist_sq ./ (2*sigma.^2)) .* Z ./(2*pi*sigma.^2);

@@ -115,15 +115,16 @@ resultGUI = matRad_fluenceOptimization(dij,cst,plnNew,0);
 
 %% sequencing
 if strcmp(plnNew.radiationMode,'photons') && (plnNew.runSequencing || plnNew.runDAO)
-    %resultGUI = matRad_xiaLeafSequencing(resultGUI.w,stf,dij,5);
-    plnNew.StratificationLevel = 5;
-    resultGUI = matRad_engelLeafSequencing(resultGUI.w,stf,dij,plnNew.StratificationLevel,resultGUI);
+    %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
+    resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
 end
 
 %% DAO
 if strcmp(plnNew.radiationMode,'photons') && plnNew.runDAO
-   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,0);
+   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,1);
+   matRad_visApertureInfo(resultGUI.apertureInfo);
 end
+
 %% extract dij from iso center slice according to the sample spacing
 plnNew.dijSpacing = 2;
 resultGUI.dijIsoCenter = matRad_unitTestGetIsoCenterSlice(plnNew,dij,plnNew.dijSpacing);
