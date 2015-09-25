@@ -167,6 +167,10 @@ for i = 1:dij.numOfBeams; % loop over all beams
     % i.e. 1st couch, 2nd gantry; matrix multiplication not cummutative
     rot_coordsV = coordsV*rotMx_XZ*rotMx_XY;
     
+    rot_coordsV(:,1) = rot_coordsV(:,1)-sourcePoint_bev(1);
+    rot_coordsV(:,2) = rot_coordsV(:,2)-sourcePoint_bev(2);
+    rot_coordsV(:,3) = rot_coordsV(:,3)-sourcePoint_bev(3);
+    
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
         
         counter = counter + 1;
@@ -197,7 +201,10 @@ for i = 1:dij.numOfBeams; % loop over all beams
 
         % Display progress
         matRad_progress(counter,dij.totalNumOfBixels);
-        waitbar(counter/dij.totalNumOfBixels);
+        % update waitbar only 100 times
+        if mod(counter,round(dij.totalNumOfBixels/100)) == 0
+            waitbar(counter/dij.totalNumOfBixels);
+        end
         
         % remember beam and bixel number
         dij.beamNum(counter)  = i;

@@ -71,8 +71,8 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln,0);
 
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
-    %resultGUI = matRad_xiaLeafSequencing(resultGUI.w,stf,dij,5);
-    resultGUI = matRad_engelLeafSequencing(resultGUI.w,stf,dij,5,resultGUI);
+    %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
+    resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
 end
 
 %% DAO
@@ -86,3 +86,6 @@ matRadGUI
 
 %% dvh
 matRad_calcDVH(resultGUI,cst)
+
+%% quality indicators
+resultGUI = matRad_calcQualityIndicators(resultGUI,cst);

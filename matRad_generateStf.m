@@ -49,6 +49,11 @@ if nargin < 4
     visMode = 0;
 end
 
+if numel(pln.gantryAngles) ~= numel(pln.couchAngles)
+    error('Inconsistent number of gantry and couch angles.');
+end
+              
+
 %
 if ~strcmp(pln.radiationMode,'carbon') && sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0
     fprintf('\n ********************************************************************************************************* \n');
@@ -80,7 +85,7 @@ end
 
 % throw error message if no target is found
 if isempty(V)
-    error('Could not find target');
+    error('Could not find target.');
 end
 
 % prepare structures necessary for particles
@@ -94,8 +99,12 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     end
     
     availableEnergies = [baseData.energy];
-    availablePeakPos  = [baseData.peakPos];
+    availablePeakPos  = [baseData.peakPos] + [baseData.offset];
     
+    if sum(availablePeakPos<0)>0
+       error('at least one available peak position is negative - inconsistent basedata') 
+    end
+
     clear baseData;
     
 elseif strcmp(pln.radiationMode,'photons')
@@ -252,7 +261,7 @@ for i = 1:length(pln.gantryAngles)
                 targetExit  = radDepths(diff_voi == -1);
                 
                 if numel(targetEntry) ~= numel(targetExit)
-                    error('Inconsistency during ray tracing\n\n');
+                    error('Inconsistency during ray tracing.');
                 end
                 
                 stf(i).ray(j).energy = [];
@@ -282,7 +291,7 @@ for i = 1:length(pln.gantryAngles)
             stf(i).numOfBixelsPerRay(j) = 1;
         end
     else
-        error('Error generating stf struct: invalid radiation modality\n\n');
+        error('Error generating stf struct: invalid radiation modality.');
     end
     %%
     

@@ -79,8 +79,9 @@ for i = 1:numOfVois
     else
         doseInVoi   = result.physicalDose(indices);
     end
-    fprintf('%3d %20s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy)\n', ...
-        cst{i,1},cst{i,2},mean(doseInVoi),std(doseInVoi),max(doseInVoi),min(doseInVoi))
+    
+    % fprintf('%3d %20s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy)\n', ...
+    %     cst{i,1},cst{i,2},mean(doseInVoi),std(doseInVoi),max(doseInVoi),min(doseInVoi))
 
     for j = 1:n
         dvh(j) = sum(doseInVoi > dvhPoints(j));

@@ -48,8 +48,10 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,visBool)
 if nargin < 5
     visBool = 0;
 end
+
 % initialize waitbar
-figureWait=waitbar(0,'calculate particle-ij matrice(s)...');
+figureWait = waitbar(0,'calculate particle-ij matrice(s)...');
+
 % meta information for dij
 dij.numOfBeams         = pln.numOfBeams;
 dij.numOfVoxels        = pln.numOfVoxels;
@@ -67,6 +69,9 @@ dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 % Allocate space for dij.physicalDose sparse matrix
 dij.physicalDose = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
 
+% helper function for energy selection
+round2 = @(a,b)round(a*10^b)/10^b;
+
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 doseTmpContainer = cell(numOfBixelsContainer,1);
@@ -76,6 +81,7 @@ if pln.bioOptimization == true
     dij.mAlphaDose        = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
     dij.mSqrtBetaDose     = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
 end
+
 % Only take voxels inside patient.
 V = unique([cell2mat(cst(:,4))]);
 
@@ -152,13 +158,20 @@ for i = 1:dij.numOfBeams; % loop over all beams
     
     rot_coordsV = coordsV*rotMx_XZ*rotMx_XY;
     
+    rot_coordsV(:,1) = rot_coordsV(:,1)-sourcePoint_bev(1);
+    rot_coordsV(:,2) = rot_coordsV(:,2)-sourcePoint_bev(2);
+    rot_coordsV(:,3) = rot_coordsV(:,3)-sourcePoint_bev(3);
     
     for j = 1:stf(i).numOfRays % loop over all rays
         
         if ~isempty(stf(i).ray(j).energy)
         
+            % find index of maximum used energy (round to keV for numerical
+            % reasons
+            energyIx = max(round2(stf(i).ray(j).energy,4)) == round2([baseData.energy],4);
+            
             % set lateral cutoff for calculation of geometric distances
-            lateralCutoff = 3*baseData(max(stf(i).ray(j).energy) == [baseData.energy]).sigma(end);
+            lateralCutoff = 3*baseData(energyIx).sigma(end);
 
             % Ray tracing for beam i and ray j
             [ix,radDepths,~,latDistsX,latDistsZ] = matRad_calcRadGeoDists(ct.cube, ...
@@ -187,17 +200,20 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 counter = counter + 1;
                 % Display progress
                 matRad_progress(counter,dij.totalNumOfBixels);
-                waitbar(counter/dij.totalNumOfBixels);
+                % update waitbar only 100 times
+                if mod(counter,round(dij.totalNumOfBixels/100)) == 0
+                    waitbar(counter/dij.totalNumOfBixels);
+                end
                 % remember beam and  bixel number
                 dij.beamNum(counter)  = i;
                 dij.rayNum(counter)   = j;
                 dij.bixelNum(counter) = k;
 
                 % find energy index in base data
-                energyIx = find(stf(i).ray(j).energy(k) == [baseData.energy]);
+                energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([baseData.energy],4));
 
                 % find indices
-                currIx = radDepths <= baseData(energyIx).depths(end) & ...
+                currIx = radDepths <= baseData(energyIx).depths(end) + baseData(energyIx).offset & ...
                          radialDist_sq <= 9*baseData(energyIx).sigma(end)^2;
 
                 % calculate particle dose for bixel k on ray j of beam i
