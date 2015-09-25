@@ -223,6 +223,11 @@ for i = 1:length(pln.gantryAngles)
     % now rotate all patient voxels in bev to determine corresponding rays
     rot_coords_patientVoxels = coords_patientVoxels*rotMx_XZ*rotMx_XY;
     
+    rot_coords_patientVoxels(:,1) = rot_coords_patientVoxels(:,1)-sourcePoint_bev(1);
+    rot_coords_patientVoxels(:,2) = rot_coords_patientVoxels(:,2)-sourcePoint_bev(2);
+    rot_coords_patientVoxels(:,3) = rot_coords_patientVoxels(:,3)-sourcePoint_bev(3);
+    
+    
     % calculate lateral distances and geometric distances for central ray
     [ix,~,geoDists,x_latDists,z_latDists] = matRad_calcRadGeoDists(ct.cube, ...
                                                 patientVoxels, ...
