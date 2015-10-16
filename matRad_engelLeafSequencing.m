@@ -48,7 +48,7 @@ function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,vi
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % if visBool not set toogle off visualization
-if nargin < 6
+if nargin < 5
     visBool = 0;
 end
 

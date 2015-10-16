@@ -47,6 +47,10 @@ function resultGUI = matRad_fluenceOptimization(dij,cst,pln,visBool,varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if nargin < 4
+    visBool = 0;
+end
+
 % intial fluence profile = uniform bixel intensities
 wInit = ones(dij.totalNumOfBixels,1);
 
