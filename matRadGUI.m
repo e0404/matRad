@@ -826,13 +826,13 @@ end
 %% Set axis labels
 if  plane == 3% Axial plane
     if ~isempty(pln)
-        set(handles.axesFig,'XTick',0:50/ct.resolution(1):1000);
-        set(handles.axesFig,'YTick',0:50/ct.resolution(2):1000);
-        set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(1));
-        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(2));   
+        set(handles.axesFig,'XTick',0:50/ct.resolution.x:1000);
+        set(handles.axesFig,'YTick',0:50/ct.resolution.y:1000);
+        set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.x);
+        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution.y);   
         xlabel('x [mm]','FontSize',defaultFontSize)
         ylabel('y [mm]','FontSize',defaultFontSize)
-        title(['axial plane z = ' num2str(ct.resolution(3)*slice) ' [mm]'],'FontSize',defaultFontSize)
+        title(['axial plane z = ' num2str(ct.resolution.z*slice) ' [mm]'],'FontSize',defaultFontSize)
     else
         xlabel('x [voxels]','FontSize',defaultFontSize)
         ylabel('y [voxels]','FontSize',defaultFontSize)
@@ -840,13 +840,13 @@ if  plane == 3% Axial plane
     end
 elseif plane == 2 % Sagittal plane
     if ~isempty(pln)
-        set(handles.axesFig,'XTick',0:50/ct.resolution(3):1000)
-        set(handles.axesFig,'YTick',0:50/ct.resolution(2):1000)
-        set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(3))
-        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(2))
+        set(handles.axesFig,'XTick',0:50/ct.resolution.z:1000)
+        set(handles.axesFig,'YTick',0:50/ct.resolution.y:1000)
+        set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.z)
+        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution.y)
         xlabel('z [mm]','FontSize',defaultFontSize);
         ylabel('y [mm]','FontSize',defaultFontSize);
-        title(['sagittal plane x = ' num2str(ct.resolution(2)*slice) ' [mm]'],'FontSize',defaultFontSize)
+        title(['sagittal plane x = ' num2str(ct.resolution.y*slice) ' [mm]'],'FontSize',defaultFontSize)
     else
         xlabel('z [voxels]','FontSize',defaultFontSize)
         ylabel('y [voxels]','FontSize',defaultFontSize)
@@ -854,13 +854,13 @@ elseif plane == 2 % Sagittal plane
     end
 elseif plane == 1 % Coronal plane
     if ~isempty(pln)
-        set(handles.axesFig,'XTick',0:50/ct.resolution(3):1000)
-        set(handles.axesFig,'YTick',0:50/ct.resolution(1):1000)
-        set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(3))
-        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(1))
+        set(handles.axesFig,'XTick',0:50/ct.resolution.z:1000)
+        set(handles.axesFig,'YTick',0:50/ct.resolution.x:1000)
+        set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.z)
+        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution.x)
         xlabel('z [mm]','FontSize',defaultFontSize)
         ylabel('x [mm]','FontSize',defaultFontSize)
-        title(['coronal plane y = ' num2str(ct.resolution(1)*slice) ' [mm]'],'FontSize',defaultFontSize)
+        title(['coronal plane y = ' num2str(ct.resolution.x*slice) ' [mm]'],'FontSize',defaultFontSize)
     else
         xlabel('z [voxels]','FontSize',defaultFontSize)
         ylabel('x [voxels]','FontSize',defaultFontSize)
@@ -903,15 +903,15 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     
     mPhysDose=getfield(Result,'physicalDose'); 
     % plot physical dose
-    vX=linspace(1,ct.resolution(1)*numel(mPhysDose(ix)),numel(mPhysDose(ix)));
+    vX=linspace(1,ct.resolution.x*numel(mPhysDose(ix)),numel(mPhysDose(ix)));
     PlotHandles{1} = plot(handles.axesFig,vX,mPhysDose(ix),'color',cColor{1,1},'LineWidth',3);grid on, hold on; 
     PlotHandles{1,2}='physicalDose';
     set(gca,'FontSize',defaultFontSize);
     % assess x - limits for profile plot
     xLim  = find(mPhysDose(ix));
     if ~isempty(xLim)
-        xmin= xLim(1)*ct.resolution(1)-sMargin;
-        xmax= xLim(end)*ct.resolution(1)+sMargin;
+        xmin= xLim(1)*ct.resolution.x-sMargin;
+        xmax= xLim(end)*ct.resolution.x+sMargin;
     else
         vLim = axis;
         xmin = vLim(1);
@@ -990,7 +990,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     mTargetStack = zeros(size(ct.cube));
     mTargetStack(mTarget)=1;
     vProfile =mTargetStack(ix);
-    vRay = find(vProfile)*ct.resolution(2);
+    vRay = find(vProfile)*ct.resolution.y;
     
     PlotHandles{Cnt,2} =[VOI ' boundary'];
     vLim = axis;
@@ -1037,7 +1037,13 @@ try
         set(handles.sliderSlice,'Value',round(size(ct.cube,handles.plane)/2));
     else
         pln = evalin('base','pln');
-        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution(1,handles.plane)));
+        if handles.plane == 1
+            set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.x));
+        elseif handles.plane == 2
+            set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.y));
+        elseif handles.plane == 3
+            set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.z));
+        end
     end
 catch
 end
@@ -1146,7 +1152,14 @@ ct = evalin('base','ct');
 resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln,1,Param,OptType);
 assignin('base','resultGUI',resultGUI);
 
-set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution(1,handles.plane)));
+
+if handles.plane == 1
+    set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.x));
+elseif handles.plane == 2
+    set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.y));
+elseif handles.plane == 3
+    set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.z));
+end
 
 %set some values
 handles.State=3;
@@ -1159,10 +1172,10 @@ UpdateState(handles);
 % perform sequencing and dao
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
-%   resultGUI = matRad_xiaLeafSequencing(resultGUI.w,evalin('base','stf'),evalin('base','dij')...
-%       ,get(handles.editSequencingLevel,'Value'),resultGUI);
-    resultGUI = matRad_engelLeafSequencing(resultGUI.w,evalin('base','stf'),evalin('base','dij')...
-        ,get(handles.editSequencingLevel,'String'),resultGUI);
+%   resultGUI = matRad_xiaLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
+%       ,get(handles.editSequencingLevel,'Value'));
+    resultGUI = matRad_engelLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
+        ,get(handles.editSequencingLevel,'String'));
     assignin('base','resultGUI',resultGUI);
 end
 
@@ -1239,9 +1252,9 @@ elseif get(hObject,'Value') ==2 % profile plot
 
         ct = evalin('base','ct');
         if strcmp(get(handles.btnProfileType,'String'),'lateral')
-            SliderStep = vRange/ct.resolution(1);       
+            SliderStep = vRange/ct.resolution.x;       
         else
-            SliderStep = vRange/ct.resolution(2);  
+            SliderStep = vRange/ct.resolution.y;  
         end
         
         set(handles.sliderOffset,'Min',vMinMax(1),'Max',vMinMax(2),...
@@ -1925,13 +1938,13 @@ function btnTableSave_Callback(hObject, eventdata, handles)
 % hObject    handle to btnTableSave (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+getCstTable(handles);
 if get(handles.checkIsoCenter,'Value')
     pln = evalin('base','pln'); 
     pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
     set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
     assignin('base','pln',pln);
 end
-getCstTable(handles);
 getPln(handles);
 
 

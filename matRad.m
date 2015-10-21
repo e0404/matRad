@@ -26,9 +26,9 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
- clear
- close all
- clc
+clear
+close all
+clc
 
 % load patient data, i.e. ct, voi, cst
 

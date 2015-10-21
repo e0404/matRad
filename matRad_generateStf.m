@@ -118,9 +118,9 @@ end
 
 % Correct for iso center position. Whit this correction Isocenter is
 % (0,0,0) [mm]
-coordsX = coordsX_vox*ct.resolution(1) - pln.isoCenter(1);
-coordsY = coordsY_vox*ct.resolution(2) - pln.isoCenter(2);
-coordsZ = coordsZ_vox*ct.resolution(3) - pln.isoCenter(3);
+coordsX = coordsX_vox*ct.resolution.x - pln.isoCenter(1);
+coordsY = coordsY_vox*ct.resolution.y - pln.isoCenter(2);
+coordsZ = coordsZ_vox*ct.resolution.z - pln.isoCenter(3);
 
 % Define steering file like struct. Prellocating for speed.
 stf = struct;
@@ -164,7 +164,7 @@ for i = 1:length(pln.gantryAngles)
                                                       coordsAtIsoCenterPlane(:,2)]/pln.bixelWidth),'rows');
                                                   
 	 % pad ray position array if resolution of target voxel grid not sufficient
-     if pln.bixelWidth<max(ct.resolution)
+     if pln.bixelWidth<max([ct.resolution.x ct.resolution.y ct.resolution.z])
         origRayPos = rayPos;
         for j = -floor(max(ct.resolution)/pln.bixelWidth):floor(max(ct.resolution)/pln.bixelWidth)
             for k = -floor(max(ct.resolution)/pln.bixelWidth):floor(max(ct.resolution)/pln.bixelWidth)
@@ -314,9 +314,9 @@ for i = 1:length(pln.gantryAngles)
             
             % generate a 3D rectangular grid centered at isocenter in
             % voxel coordinates
-            [X,Y,Z] = meshgrid((1:size(ct.cube,2))-pln.isoCenter(1)/ct.resolution(1), ...
-                               (1:size(ct.cube,1))-pln.isoCenter(2)/ct.resolution(2), ...
-                               (1:size(ct.cube,3))-pln.isoCenter(3)/ct.resolution(3));
+            [X,Y,Z] = meshgrid((1:size(ct.cube,2))-pln.isoCenter(1)/ct.resolution.x, ...
+                               (1:size(ct.cube,1))-pln.isoCenter(2)/ct.resolution.y, ...
+                               (1:size(ct.cube,3))-pln.isoCenter(3)/ct.resolution.z);
             
             % computes surface
             patSurfCube = 0*ct.cube;
@@ -324,9 +324,9 @@ for i = 1:length(pln.gantryAngles)
             [f,v] = isosurface(X,Y,Z,patSurfCube,.5);
             
             % convert isosurface from voxel to [mm]
-            v(:,1) = v(:,1)*ct.resolution(1);
-            v(:,2) = v(:,2)*ct.resolution(2);
-            v(:,3) = v(:,3)*ct.resolution(3);
+            v(:,1) = v(:,1)*ct.resolution.x;
+            v(:,2) = v(:,2)*ct.resolution.y;
+            v(:,3) = v(:,3)*ct.resolution.z;
             
             % rotate surface
             rotated_surface = v*rotMx_XZ*rotMx_XY;
