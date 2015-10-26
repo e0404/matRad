@@ -93,16 +93,9 @@ set(f, 'AlphaData', alpha);
 
 
 %initialize maximum dose for visualization to Zero
-handles.maxDoseVal = 0;
-% set slider step size for iso dose line spacing
-set(handles.sliderIsoDoseLines,'Min',1,'Max',10,...
-            'Value',5,...
-            'SliderStep',[1/9 1/9]);
- set(handles.sliderIsoDoseLineLower,'Min',1,'Max',20,...
-            'Value',10,...
-            'SliderStep',[1/19 1/19]);       
-        
-        
+handles.maxDoseVal     = 0;
+handles.IsoDose.RefVal = 0;
+handles.IsoDose.Levels = 0;
 
 vChar = get(handles.editGantryAngle,'String');
 if strcmp(vChar(1,1),'0') && length(vChar)==6
@@ -771,12 +764,19 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
         %% plot iso dose lines
         if get(handles.radiobtnIsoDoseLines,'Value')
                 colormap(jet)
-                SpacingLower = (get(handles.sliderIsoDoseLineLower,'Value'))/100;
-                SpacingUpper = (get(handles.sliderIsoDoseLines,'Value'))/100;
-                vLow  = 0.1:SpacingLower:0.69;
-                vHigh = 0.7:SpacingUpper:1.2;
-                MaxVal = max(mVolume(:)); %handles.maxDoseVal
-                vLevels = (round(([vLow vHigh].*MaxVal)*100))/100;
+                SpacingLower = 0.1;
+                SpacingUpper = 0.05;
+                vLow  = 0.1:SpacingLower:0.9;
+                vHigh = 0.95:SpacingUpper:1.2;
+                vLevels = [vLow vHigh];
+               
+                if handles.IsoDose.RefVal == 0
+                   MaxVal = max(mVolume(:)); 
+                   vLevels = (round((vLevels.*MaxVal)*100))/100;
+                else
+                   MaxVal = handles.IsoDose.RefVal; 
+                   vLevels = round(((handles.IsoDose.Levels)/100).*MaxVal*100)/100;
+                end
                 
                 if plane == 1  % Coronal plane
                     Slice=squeeze(mVolume(slice,:,:));
@@ -792,13 +792,13 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
                     Slice=squeeze(mVolume(:,:,slice));
                     if sum(Slice(:))>1
                         hold on
-                     [C,myContour] = contour(Slice,vLevels);
+                     [C,myContour] = contour(Slice,vLevels,'LevelListMode','manual','LineWidth',1.5);
                     end
                 end
 
                  if sum(Slice(:))>1
                     caxis(handles.axesFig,[0, handles.maxDoseVal]);
-                    clabel(C,myContour,vLevels(1:3:end),'LabelSpacing',150)
+                    clabel(C,myContour,vLevels,'LabelSpacing',150)
                     % turn off legend for this data set
                     hAnnotation = get(myContour,'Annotation');
                     hLegendEntry = get(hAnnotation','LegendInformation');
@@ -2305,48 +2305,30 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on slider movement.
-function sliderIsoDoseLines_Callback(hObject, eventdata, handles)
-% hObject    handle to sliderIsoDoseLines (see GCBO)
+
+% --- Executes on button press in btnSetIsoDoseLevels.
+function btnSetIsoDoseLevels_Callback(hObject, eventdata, handles)
+% hObject    handle to btnSetIsoDoseLevels (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'Value') returns position of slider
-%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-UpdatePlot(handles);
-guidata(hObject,handles);
-
-% --- Executes during object creation, after setting all properties.
-function sliderIsoDoseLines_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to sliderIsoDoseLines (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: slider controls usually have a light gray background.
-if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
+prompt = {'Enter a reference dose. 100% correspond to a dose of [Gy]. Enter 0 to show original levels:','Provide percental iso dose levles (e.g. 95 105). Please enter space-separated numbers:'};
+def = {'60','20 40 60 80 90 95 100 105 110'};
+Input = inputdlg(prompt,'Set iso dose levels ', [1 50],def);
+try
+if ~isempty(Input)
+     handles.IsoDose.RefVal = str2num(Input{1,:});
+     handles.IsoDose.Levels = sort(str2num(Input{2,:})); 
+     if length(handles.IsoDose.Levels) == 1
+         handles.IsoDose.Levels = [handles.IsoDose.Levels handles.IsoDose.Levels];
+     end
+else
+     handles.IsoDose.RefVal = 0;
 end
-
-
-% --- Executes on slider movement.
-function sliderIsoDoseLineLower_Callback(hObject, eventdata, handles)
-% hObject    handle to sliderIsoDoseLineLower (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'Value') returns position of slider
-%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+catch
+    handles.IsoDose.RefVal = 0;
+end
 UpdatePlot(handles);
 guidata(hObject,handles);
 
 
-% --- Executes during object creation, after setting all properties.
-function sliderIsoDoseLineLower_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to sliderIsoDoseLineLower (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: slider controls usually have a light gray background.
-if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
-end
