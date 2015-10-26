@@ -159,11 +159,11 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
     % a different way to calculate RBE is as follows - leads to the same
     %resultGUI.RBE = ((sqrt(a_x.^2 + 4 .* b_x .* resultGUI.effect) - a_x)./(2.*b_x.*resultGUI.physicalDose));
     %resultGUI.RBE= reshape(resultGUI.RBE,dij.dimensions);
-      
-    resultGUI.alpha = (dij.mAlphaDose.*spfun(@(x)1./x,dij.physicalDose)) * resultGUI.w;
-    resultGUI.alpha = reshape(resultGUI.alpha,dij.dimensions);
-    resultGUI.beta = ( (dij.mSqrtBetaDose.*spfun(@(x)1./x,dij.physicalDose)) * resultGUI.w ).^2;
-    resultGUI.beta = reshape(resultGUI.beta,dij.dimensions);
+
+    AlphaDoseCube    = dij.mAlphaDose * resultGUI.w;
+    resultGUI.alpha  = (reshape(AlphaDoseCube,dij.dimensions))./resultGUI.physicalDose;
+    SqrtBetaDoseCube = dij.mSqrtBetaDose * resultGUI.w;
+    resultGUI.beta   = ((reshape(SqrtBetaDoseCube,dij.dimensions))./resultGUI.physicalDose).^2;
     
     fprintf(' done!\n');
     

@@ -82,7 +82,7 @@ V = unique([cell2mat(cst(:,4))]);
 xCoordsV = xCoordsV(:)*ct.resolution.x-pln.isoCenter(1);
 yCoordsV = yCoordsV(:)*ct.resolution.y-pln.isoCenter(2);
 zCoordsV = zCoordsV(:)*ct.resolution.z-pln.isoCenter(3);
-coordsV = [xCoordsV yCoordsV zCoordsV];
+coordsV  = [xCoordsV yCoordsV zCoordsV];
 
 % set lateral cutoff value
 lateralCutoff = 20; % [mm]

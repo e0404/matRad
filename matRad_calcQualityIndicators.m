@@ -63,9 +63,9 @@ for runVoi = 1:numOfVois
     
     voiPrint = sprintf('%3d %20s',cst{runVoi,1},cst{runVoi,2}); %String that will print quality indicators
     % get Dose, dose is sorted to simplify calculations
-    if sum(strcmp(fieldnames(result),'RBEWeightedDose')) > 0
-        relevantDose = result.RBEWeightedDose;
-        doseInVoi   = sort(result.RBEWeightedDose(indices));
+    if sum(strcmp(fieldnames(result),'RBExDose')) > 0
+        relevantDose = result.RBExDose;
+        doseInVoi   = sort(result.RBExDose(indices));
     else
         relevantDose = result.physicalDose;
         doseInVoi   = sort(result.physicalDose(indices));

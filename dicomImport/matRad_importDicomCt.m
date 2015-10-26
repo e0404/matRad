@@ -60,7 +60,7 @@ fprintf('\ncreating info...')
 for i = 1:numOfSlices
     tmpDicomInfo = dicominfo(ctList{i,1});
     
-    % rmember relevant dicom info - do not record everything as some tags
+    % remember relevant dicom info - do not record everything as some tags
     % might not been defined for individual files
     info(i).PixelSpacing            = tmpDicomInfo.PixelSpacing;
     info(i).ImagePositionPatient    = tmpDicomInfo.ImagePositionPatient;

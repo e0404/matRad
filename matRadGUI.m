@@ -91,6 +91,19 @@ f = image(im);
 axis equal off;
 set(f, 'AlphaData', alpha);
 
+
+%initialize maximum dose for visualization to Zero
+handles.maxDoseVal = 0;
+% set slider step size for iso dose line spacing
+set(handles.sliderIsoDoseLines,'Min',1,'Max',10,...
+            'Value',5,...
+            'SliderStep',[1/9 1/9]);
+ set(handles.sliderIsoDoseLineLower,'Min',1,'Max',20,...
+            'Value',10,...
+            'SliderStep',[1/19 1/19]);       
+        
+        
+
 vChar = get(handles.editGantryAngle,'String');
 if strcmp(vChar(1,1),'0') && length(vChar)==6
     set(handles.editGantryAngle,'String','0');
@@ -678,24 +691,25 @@ end
 if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
 
         mVolume = getfield(Result,handles.SelectedDisplayOption);
-        % make sure to exploit full color range
+        % make sure to exploit full color range 
         mVolume(Result.physicalDose<...
             CutOffLevel*max(Result.physicalDose(:)))=0;
 
     %     %% dose colorwash
         if ~isempty(mVolume)&& ~isvector(mVolume)
 
-            dose_rgb = mVolume./max(mVolume(:));
-
+            if handles.maxDoseVal == 0
+                handles.maxDoseVal = max(mVolume(:));
+                set(handles.txtMaxDoseVal,'String',num2str(handles.maxDoseVal))
+            end
+            dose_rgb = mVolume./handles.maxDoseVal;
+            dose_rgb(dose_rgb>1) = 1;
             % Save RGB indices for dose in zslice´s voxels.
             if plane == 1  % Coronal plane
-                 mSlice = squeeze(mVolume(slice,:,:));
                 dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(slice,:,:))),jet);
             elseif plane == 2 % sagittal plane
-                 mSlice = squeeze(mVolume(:,slice,:));
                 dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(:,slice,:))),jet);
             elseif plane == 3 % Axial plane
-                 mSlice = squeeze(mVolume(:,:,slice));
                 dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(:,:,slice))),jet);
             end
             % plot dose distribution    
@@ -705,22 +719,22 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
                 if plane == 1  % Coronal plane
                     if get(handles.radiobtnDose,'Value') 
                         set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.(handles.SelectedDisplayOption)(slice,:,:))...
-                            >CutOffLevel*max(Result.(handles.SelectedDisplayOption)(:)))) ;
+                            >CutOffLevel*handles.maxDoseVal)) ;
                     end   
                     
                 elseif plane == 2 % sagittal plane
                     if get(handles.radiobtnDose,'Value')
-                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,slice,:))>...
-                        CutOffLevel*max(Result.(handles.SelectedDisplayOption)(:)))) ;
+                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.(handles.SelectedDisplayOption)(:,slice,:))>...
+                        CutOffLevel*handles.maxDoseVal));
                     end
                 elseif plane == 3 % Axial plane
                     if get(handles.radiobtnDose,'Value')
                         if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
                             set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.(handles.SelectedDisplayOption)(:,:,slice))...
-                                >0.1*max(Result.handles.SelectedDisplayOption(:)))) ;
+                                >0.1*handles.maxDoseVal)) ;
                         else
                             set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.(handles.SelectedDisplayOption)(:,:,slice))...
-                                >CutOffLevel*max(Result.(handles.SelectedDisplayOption)(:)))) ;
+                                >CutOffLevel*handles.maxDoseVal));
                         end
                     else
                         set(doseImageHandle,'AlphaData',  0*double(squeeze(Result.Dose(:,:,slice))>...
@@ -739,13 +753,13 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
             end
             Idx = find(strcmp(handles.SelectedDisplayOption,DispInfo(:,1)));
             set(get(cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
-
+            
             if isempty(strfind(handles.SelectedDisplayOption,'RBE'))
-                set(cBarHandel,'YLim',[0 max(eps,max(mVolume(:)))]);
-                caxis(handles.axesFig,[0, max(eps,max(mVolume(:)))])
+                set(cBarHandel,'YLim',[0 handles.maxDoseVal]);
+                caxis(handles.axesFig,[0,handles.maxDoseVal])
             else
-                set(cBarHandel,'YLim',[0 max(eps,max(mSlice(:)))]);
-                caxis(handles.axesFig,[0, max(eps,max(mSlice(:)))])
+                set(cBarHandel,'YLim',[0 handles.maxDoseVal]);
+                caxis(handles.axesFig,[0,handles.maxDoseVal])
             end
 
 
@@ -757,36 +771,40 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
         %% plot iso dose lines
         if get(handles.radiobtnIsoDoseLines,'Value')
                 colormap(jet)
-                vLevels = round(linspace(0,ceil(max(mVolume(:))),8).*100)/100;
+                SpacingLower = (get(handles.sliderIsoDoseLineLower,'Value'))/100;
+                SpacingUpper = (get(handles.sliderIsoDoseLines,'Value'))/100;
+                vLow  = 0.1:SpacingLower:0.69;
+                vHigh = 0.7:SpacingUpper:1.2;
+                MaxVal = max(mVolume(:)); %handles.maxDoseVal
+                vLevels = (round(([vLow vHigh].*MaxVal)*100))/100;
+                
                 if plane == 1  % Coronal plane
                     Slice=squeeze(mVolume(slice,:,:));
                     if sum(Slice(:))>1
-                        [~,myContour] = contour(Slice,vLevels);
+                        [C,myContour] = contour(Slice,vLevels);
                     end
                 elseif plane == 2 % Sagittal plane
                     Slice=squeeze(mVolume(:,slice,:));
                     if sum(Slice(:))>1
-                        [~,myContour] = contour(Slice,vLevels);
+                        [C,myContour] = contour(Slice,vLevels);
                     end
                 elseif plane == 3 % Axial plane
                     Slice=squeeze(mVolume(:,:,slice));
                     if sum(Slice(:))>1
                         hold on
-                     [~,myContour] = contour(Slice,vLevels);
+                     [C,myContour] = contour(Slice,vLevels);
                     end
                 end
 
                  if sum(Slice(:))>1
-                    caxis(handles.axesFig,[0, max(mVolume(:))]);
+                    caxis(handles.axesFig,[0, handles.maxDoseVal]);
+                    clabel(C,myContour,vLevels(1:3:end),'LabelSpacing',150)
                     % turn off legend for this data set
                     hAnnotation = get(myContour,'Annotation');
                     hLegendEntry = get(hAnnotation','LegendInformation');
-                    set(hLegendEntry,'IconDisplayStyle','off');
-                    set(myContour,'LabelSpacing',100);
+                    set(hLegendEntry,'IconDisplayStyle','off');     
                     if get(handles.radiobtnIsoDoseLinesLabels,'Value') == 0
                         set(myContour,'ShowText','off')
-                    else
-                        set(myContour,'ShowText','on')
                     end
                  end
         end
@@ -933,8 +951,9 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
         StringYLabel2 = '';
         for i=1:1:size(DispInfo,1)
             if DispInfo{i,2} 
-                %physicalDose is already plotted
-                if ~strcmp(DispInfo{i,1},'RBExD') &&...
+                %physicalDose is already plotted and RBExD vs RBE are later
+                %plotted with plotyy
+                if ~strcmp(DispInfo{i,1},'RBExDose') &&...
                    ~strcmp(DispInfo{i,1},'RBE') && ...
                    ~strcmp(DispInfo{i,1},'physicalDose')
                
@@ -1309,6 +1328,7 @@ function popupDisplayOption_Callback(hObject, eventdata, handles)
 content = get(hObject,'String');
 handles.SelectedDisplayOption = content{get(hObject,'Value'),1};
 handles.SelectedDisplayOptionIdx = get(hObject,'Value');
+handles.maxDoseVal = 0;
 guidata(hObject, handles);
 UpdatePlot(handles);
 
@@ -2258,3 +2278,75 @@ function btnRunDAO_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 getPln(handles);
+
+
+
+function txtMaxDoseVal_Callback(hObject, eventdata, handles)
+% hObject    handle to txtMaxDoseVal (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of txtMaxDoseVal as text
+%        str2double(get(hObject,'String')) returns contents of txtMaxDoseVal as a double
+handles.maxDoseVal =  str2double(get(hObject,'String'));
+guidata(hObject,handles);
+UpdatePlot(handles);
+
+% --- Executes during object creation, after setting all properties.
+function txtMaxDoseVal_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to txtMaxDoseVal (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on slider movement.
+function sliderIsoDoseLines_Callback(hObject, eventdata, handles)
+% hObject    handle to sliderIsoDoseLines (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+UpdatePlot(handles);
+guidata(hObject,handles);
+
+% --- Executes during object creation, after setting all properties.
+function sliderIsoDoseLines_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to sliderIsoDoseLines (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+% --- Executes on slider movement.
+function sliderIsoDoseLineLower_Callback(hObject, eventdata, handles)
+% hObject    handle to sliderIsoDoseLineLower (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+UpdatePlot(handles);
+guidata(hObject,handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function sliderIsoDoseLineLower_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to sliderIsoDoseLineLower (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
