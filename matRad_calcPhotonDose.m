@@ -79,10 +79,10 @@ V = unique([cell2mat(cst(:,4))]);
 % Convert CT subscripts to linear indices.
 [yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct.cube),V);
 
-xCoordsV = xCoordsV(:)*ct.resolution(1)-pln.isoCenter(1);
-yCoordsV = yCoordsV(:)*ct.resolution(2)-pln.isoCenter(2);
-zCoordsV = zCoordsV(:)*ct.resolution(3)-pln.isoCenter(3);
-coordsV = [xCoordsV yCoordsV zCoordsV];
+xCoordsV = xCoordsV(:)*ct.resolution.x-pln.isoCenter(1);
+yCoordsV = yCoordsV(:)*ct.resolution.y-pln.isoCenter(2);
+zCoordsV = zCoordsV(:)*ct.resolution.z-pln.isoCenter(3);
+coordsV  = [xCoordsV yCoordsV zCoordsV];
 
 % set lateral cutoff value
 lateralCutoff = 20; % [mm]

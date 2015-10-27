@@ -49,7 +49,9 @@ steps = 2;
 
 %% import ct-cube
 waitbar(1 / steps)
-resolution = [files.resx, files.resy, files.resz]; % [mm] / lps coordinate system
+resolution.x = files.resx;
+resolution.y = files.resy;
+resolution.z = files.resz; % [mm] / lps coordinate system
 ct = matRad_importDicomCt(files.ct, resolution); 
     
 %% import structure data

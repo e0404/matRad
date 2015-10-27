@@ -88,9 +88,9 @@ V = unique([cell2mat(cst(:,4))]);
 % Convert CT subscripts to linear indices.
 [yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct.cube),V);
 
-xCoordsV = xCoordsV(:)*ct.resolution(1)-pln.isoCenter(1);
-yCoordsV = yCoordsV(:)*ct.resolution(2)-pln.isoCenter(2);
-zCoordsV = zCoordsV(:)*ct.resolution(3)-pln.isoCenter(3);
+xCoordsV = xCoordsV(:)*ct.resolution.x-pln.isoCenter(1);
+yCoordsV = yCoordsV(:)*ct.resolution.y-pln.isoCenter(2);
+zCoordsV = zCoordsV(:)*ct.resolution.z-pln.isoCenter(3);
 coordsV  = [xCoordsV yCoordsV zCoordsV];
 
 % load protonBaseData
@@ -227,8 +227,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                             
                 if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                     && strcmp(pln.radiationMode,'carbon')
-                    % calculate alpha and beta values for bixel k on ray j of
-                    % beam i - call duration 0.0020s                    
+                    % calculate alpha and beta values for bixel k on ray j of                  
                     [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
                         radDepths(currIx),...
                         mTissueClass_j(currIx,:),...

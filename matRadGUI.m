@@ -91,6 +91,12 @@ f = image(im);
 axis equal off;
 set(f, 'AlphaData', alpha);
 
+
+%initialize maximum dose for visualization to Zero
+handles.maxDoseVal     = 0;
+handles.IsoDose.RefVal = 0;
+handles.IsoDose.Levels = 0;
+
 vChar = get(handles.editGantryAngle,'String');
 if strcmp(vChar(1,1),'0') && length(vChar)==6
     set(handles.editGantryAngle,'String','0');
@@ -678,24 +684,25 @@ end
 if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
 
         mVolume = getfield(Result,handles.SelectedDisplayOption);
-        % make sure to exploit full color range
+        % make sure to exploit full color range 
         mVolume(Result.physicalDose<...
             CutOffLevel*max(Result.physicalDose(:)))=0;
 
     %     %% dose colorwash
         if ~isempty(mVolume)&& ~isvector(mVolume)
 
-            dose_rgb = mVolume./max(mVolume(:));
-
+            if handles.maxDoseVal == 0
+                handles.maxDoseVal = max(mVolume(:));
+                set(handles.txtMaxDoseVal,'String',num2str(handles.maxDoseVal))
+            end
+            dose_rgb = mVolume./handles.maxDoseVal;
+            dose_rgb(dose_rgb>1) = 1;
             % Save RGB indices for dose in zslice´s voxels.
             if plane == 1  % Coronal plane
-                 mSlice = squeeze(mVolume(slice,:,:));
                 dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(slice,:,:))),jet);
             elseif plane == 2 % sagittal plane
-                 mSlice = squeeze(mVolume(:,slice,:));
                 dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(:,slice,:))),jet);
             elseif plane == 3 % Axial plane
-                 mSlice = squeeze(mVolume(:,:,slice));
                 dose_rgb = ind2rgb(uint8(63*squeeze(dose_rgb(:,:,slice))),jet);
             end
             % plot dose distribution    
@@ -705,22 +712,22 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
                 if plane == 1  % Coronal plane
                     if get(handles.radiobtnDose,'Value') 
                         set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.(handles.SelectedDisplayOption)(slice,:,:))...
-                            >CutOffLevel*max(Result.(handles.SelectedDisplayOption)(:)))) ;
+                            >CutOffLevel*handles.maxDoseVal)) ;
                     end   
                     
                 elseif plane == 2 % sagittal plane
                     if get(handles.radiobtnDose,'Value')
-                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.Dose(:,slice,:))>...
-                        CutOffLevel*max(Result.(handles.SelectedDisplayOption)(:)))) ;
+                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.(handles.SelectedDisplayOption)(:,slice,:))>...
+                        CutOffLevel*handles.maxDoseVal));
                     end
                 elseif plane == 3 % Axial plane
                     if get(handles.radiobtnDose,'Value')
                         if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
                             set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.(handles.SelectedDisplayOption)(:,:,slice))...
-                                >0.1*max(Result.handles.SelectedDisplayOption(:)))) ;
+                                >0.1*handles.maxDoseVal)) ;
                         else
                             set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.(handles.SelectedDisplayOption)(:,:,slice))...
-                                >CutOffLevel*max(Result.(handles.SelectedDisplayOption)(:)))) ;
+                                >CutOffLevel*handles.maxDoseVal));
                         end
                     else
                         set(doseImageHandle,'AlphaData',  0*double(squeeze(Result.Dose(:,:,slice))>...
@@ -739,13 +746,13 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
             end
             Idx = find(strcmp(handles.SelectedDisplayOption,DispInfo(:,1)));
             set(get(cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
-
+            
             if isempty(strfind(handles.SelectedDisplayOption,'RBE'))
-                set(cBarHandel,'YLim',[0 max(eps,max(mVolume(:)))]);
-                caxis(handles.axesFig,[0, max(eps,max(mVolume(:)))])
+                set(cBarHandel,'YLim',[0 handles.maxDoseVal]);
+                caxis(handles.axesFig,[0,handles.maxDoseVal])
             else
-                set(cBarHandel,'YLim',[0 max(eps,max(mSlice(:)))]);
-                caxis(handles.axesFig,[0, max(eps,max(mSlice(:)))])
+                set(cBarHandel,'YLim',[0 handles.maxDoseVal]);
+                caxis(handles.axesFig,[0,handles.maxDoseVal])
             end
 
 
@@ -757,36 +764,47 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
         %% plot iso dose lines
         if get(handles.radiobtnIsoDoseLines,'Value')
                 colormap(jet)
-                vLevels = round(linspace(0,ceil(max(mVolume(:))),8).*100)/100;
+                SpacingLower = 0.1;
+                SpacingUpper = 0.05;
+                vLow  = 0.1:SpacingLower:0.9;
+                vHigh = 0.95:SpacingUpper:1.2;
+                vLevels = [vLow vHigh];
+               
+                if handles.IsoDose.RefVal == 0
+                   MaxVal = max(mVolume(:)); 
+                   vLevels = (round((vLevels.*MaxVal)*100))/100;
+                else
+                   MaxVal = handles.IsoDose.RefVal; 
+                   vLevels = round(((handles.IsoDose.Levels)/100).*MaxVal*100)/100;
+                end
+                
                 if plane == 1  % Coronal plane
                     Slice=squeeze(mVolume(slice,:,:));
                     if sum(Slice(:))>1
-                        [~,myContour] = contour(Slice,vLevels);
+                        [C,myContour] = contour(Slice,vLevels);
                     end
                 elseif plane == 2 % Sagittal plane
                     Slice=squeeze(mVolume(:,slice,:));
                     if sum(Slice(:))>1
-                        [~,myContour] = contour(Slice,vLevels);
+                        [C,myContour] = contour(Slice,vLevels);
                     end
                 elseif plane == 3 % Axial plane
                     Slice=squeeze(mVolume(:,:,slice));
                     if sum(Slice(:))>1
                         hold on
-                     [~,myContour] = contour(Slice,vLevels);
+                     [C,myContour] = contour(Slice,vLevels,'LevelListMode','manual','LineWidth',1.5);
                     end
                 end
 
                  if sum(Slice(:))>1
-                    caxis(handles.axesFig,[0, max(mVolume(:))]);
+                    caxis(handles.axesFig,[0, handles.maxDoseVal]);
+                    clabel(C,myContour,vLevels,'LabelSpacing',150)
                     % turn off legend for this data set
                     hAnnotation = get(myContour,'Annotation');
                     hLegendEntry = get(hAnnotation','LegendInformation');
-                    set(hLegendEntry,'IconDisplayStyle','off');
-                    set(myContour,'LabelSpacing',100);
+                    set(hLegendEntry,'IconDisplayStyle','off');     
                     if get(handles.radiobtnIsoDoseLinesLabels,'Value') == 0
                         set(myContour,'ShowText','off')
-                    else
-                        set(myContour,'ShowText','on')
                     end
                  end
         end
@@ -826,13 +844,13 @@ end
 %% Set axis labels
 if  plane == 3% Axial plane
     if ~isempty(pln)
-        set(handles.axesFig,'XTick',0:50/ct.resolution(1):1000);
-        set(handles.axesFig,'YTick',0:50/ct.resolution(2):1000);
-        set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(1));
-        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(2));   
+        set(handles.axesFig,'XTick',0:50/ct.resolution.x:1000);
+        set(handles.axesFig,'YTick',0:50/ct.resolution.y:1000);
+        set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.x);
+        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution.y);   
         xlabel('x [mm]','FontSize',defaultFontSize)
         ylabel('y [mm]','FontSize',defaultFontSize)
-        title(['axial plane z = ' num2str(ct.resolution(3)*slice) ' [mm]'],'FontSize',defaultFontSize)
+        title(['axial plane z = ' num2str(ct.resolution.z*slice) ' [mm]'],'FontSize',defaultFontSize)
     else
         xlabel('x [voxels]','FontSize',defaultFontSize)
         ylabel('y [voxels]','FontSize',defaultFontSize)
@@ -840,13 +858,13 @@ if  plane == 3% Axial plane
     end
 elseif plane == 2 % Sagittal plane
     if ~isempty(pln)
-        set(handles.axesFig,'XTick',0:50/ct.resolution(3):1000)
-        set(handles.axesFig,'YTick',0:50/ct.resolution(2):1000)
-        set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(3))
-        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(2))
+        set(handles.axesFig,'XTick',0:50/ct.resolution.z:1000)
+        set(handles.axesFig,'YTick',0:50/ct.resolution.y:1000)
+        set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.z)
+        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution.y)
         xlabel('z [mm]','FontSize',defaultFontSize);
         ylabel('y [mm]','FontSize',defaultFontSize);
-        title(['sagittal plane x = ' num2str(ct.resolution(2)*slice) ' [mm]'],'FontSize',defaultFontSize)
+        title(['sagittal plane x = ' num2str(ct.resolution.y*slice) ' [mm]'],'FontSize',defaultFontSize)
     else
         xlabel('z [voxels]','FontSize',defaultFontSize)
         ylabel('y [voxels]','FontSize',defaultFontSize)
@@ -854,13 +872,13 @@ elseif plane == 2 % Sagittal plane
     end
 elseif plane == 1 % Coronal plane
     if ~isempty(pln)
-        set(handles.axesFig,'XTick',0:50/ct.resolution(3):1000)
-        set(handles.axesFig,'YTick',0:50/ct.resolution(1):1000)
-        set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution(3))
-        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution(1))
+        set(handles.axesFig,'XTick',0:50/ct.resolution.z:1000)
+        set(handles.axesFig,'YTick',0:50/ct.resolution.x:1000)
+        set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.z)
+        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution.x)
         xlabel('z [mm]','FontSize',defaultFontSize)
         ylabel('x [mm]','FontSize',defaultFontSize)
-        title(['coronal plane y = ' num2str(ct.resolution(1)*slice) ' [mm]'],'FontSize',defaultFontSize)
+        title(['coronal plane y = ' num2str(ct.resolution.x*slice) ' [mm]'],'FontSize',defaultFontSize)
     else
         xlabel('z [voxels]','FontSize',defaultFontSize)
         ylabel('x [voxels]','FontSize',defaultFontSize)
@@ -903,15 +921,15 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     
     mPhysDose=getfield(Result,'physicalDose'); 
     % plot physical dose
-    vX=linspace(1,ct.resolution(1)*numel(mPhysDose(ix)),numel(mPhysDose(ix)));
+    vX=linspace(1,ct.resolution.x*numel(mPhysDose(ix)),numel(mPhysDose(ix)));
     PlotHandles{1} = plot(handles.axesFig,vX,mPhysDose(ix),'color',cColor{1,1},'LineWidth',3);grid on, hold on; 
     PlotHandles{1,2}='physicalDose';
     set(gca,'FontSize',defaultFontSize);
     % assess x - limits for profile plot
     xLim  = find(mPhysDose(ix));
     if ~isempty(xLim)
-        xmin= xLim(1)*ct.resolution(1)-sMargin;
-        xmax= xLim(end)*ct.resolution(1)+sMargin;
+        xmin= xLim(1)*ct.resolution.x-sMargin;
+        xmax= xLim(end)*ct.resolution.x+sMargin;
     else
         vLim = axis;
         xmin = vLim(1);
@@ -933,8 +951,9 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
         StringYLabel2 = '';
         for i=1:1:size(DispInfo,1)
             if DispInfo{i,2} 
-                %physicalDose is already plotted
-                if ~strcmp(DispInfo{i,1},'RBExD') &&...
+                %physicalDose is already plotted and RBExD vs RBE are later
+                %plotted with plotyy
+                if ~strcmp(DispInfo{i,1},'RBExDose') &&...
                    ~strcmp(DispInfo{i,1},'RBE') && ...
                    ~strcmp(DispInfo{i,1},'physicalDose')
                
@@ -990,7 +1009,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     mTargetStack = zeros(size(ct.cube));
     mTargetStack(mTarget)=1;
     vProfile =mTargetStack(ix);
-    vRay = find(vProfile)*ct.resolution(2);
+    vRay = find(vProfile)*ct.resolution.y;
     
     PlotHandles{Cnt,2} =[VOI ' boundary'];
     vLim = axis;
@@ -1037,7 +1056,13 @@ try
         set(handles.sliderSlice,'Value',round(size(ct.cube,handles.plane)/2));
     else
         pln = evalin('base','pln');
-        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution(1,handles.plane)));
+        if handles.plane == 1
+            set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.x));
+        elseif handles.plane == 2
+            set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.y));
+        elseif handles.plane == 3
+            set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.z));
+        end
     end
 catch
 end
@@ -1146,7 +1171,14 @@ ct = evalin('base','ct');
 resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln,1,Param,OptType);
 assignin('base','resultGUI',resultGUI);
 
-set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution(1,handles.plane)));
+
+if handles.plane == 1
+    set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.x));
+elseif handles.plane == 2
+    set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.y));
+elseif handles.plane == 3
+    set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.z));
+end
 
 %set some values
 handles.State=3;
@@ -1159,10 +1191,10 @@ UpdateState(handles);
 % perform sequencing and dao
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
-%   resultGUI = matRad_xiaLeafSequencing(resultGUI.w,evalin('base','stf'),evalin('base','dij')...
-%       ,get(handles.editSequencingLevel,'Value'),resultGUI);
-    resultGUI = matRad_engelLeafSequencing(resultGUI.w,evalin('base','stf'),evalin('base','dij')...
-        ,get(handles.editSequencingLevel,'String'),resultGUI);
+%   resultGUI = matRad_xiaLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
+%       ,get(handles.editSequencingLevel,'Value'));
+    resultGUI = matRad_engelLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
+        ,get(handles.editSequencingLevel,'String'));
     assignin('base','resultGUI',resultGUI);
 end
 
@@ -1239,9 +1271,9 @@ elseif get(hObject,'Value') ==2 % profile plot
 
         ct = evalin('base','ct');
         if strcmp(get(handles.btnProfileType,'String'),'lateral')
-            SliderStep = vRange/ct.resolution(1);       
+            SliderStep = vRange/ct.resolution.x;       
         else
-            SliderStep = vRange/ct.resolution(2);  
+            SliderStep = vRange/ct.resolution.y;  
         end
         
         set(handles.sliderOffset,'Min',vMinMax(1),'Max',vMinMax(2),...
@@ -1296,6 +1328,7 @@ function popupDisplayOption_Callback(hObject, eventdata, handles)
 content = get(hObject,'String');
 handles.SelectedDisplayOption = content{get(hObject,'Value'),1};
 handles.SelectedDisplayOptionIdx = get(hObject,'Value');
+handles.maxDoseVal = 0;
 guidata(hObject, handles);
 UpdatePlot(handles);
 
@@ -1925,13 +1958,13 @@ function btnTableSave_Callback(hObject, eventdata, handles)
 % hObject    handle to btnTableSave (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+getCstTable(handles);
 if get(handles.checkIsoCenter,'Value')
     pln = evalin('base','pln'); 
     pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
     set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
     assignin('base','pln',pln);
 end
-getCstTable(handles);
 getPln(handles);
 
 
@@ -2245,3 +2278,57 @@ function btnRunDAO_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 getPln(handles);
+
+
+
+function txtMaxDoseVal_Callback(hObject, eventdata, handles)
+% hObject    handle to txtMaxDoseVal (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of txtMaxDoseVal as text
+%        str2double(get(hObject,'String')) returns contents of txtMaxDoseVal as a double
+handles.maxDoseVal =  str2double(get(hObject,'String'));
+guidata(hObject,handles);
+UpdatePlot(handles);
+
+% --- Executes during object creation, after setting all properties.
+function txtMaxDoseVal_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to txtMaxDoseVal (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+% --- Executes on button press in btnSetIsoDoseLevels.
+function btnSetIsoDoseLevels_Callback(hObject, eventdata, handles)
+% hObject    handle to btnSetIsoDoseLevels (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+prompt = {'Enter a reference dose. 100% correspond to a dose of [Gy]. Enter 0 to show original levels:','Provide percental iso dose levles (e.g. 95 105). Please enter space-separated numbers:'};
+def = {'60','20 40 60 80 90 95 100 105 110'};
+Input = inputdlg(prompt,'Set iso dose levels ', [1 50],def);
+try
+if ~isempty(Input)
+     handles.IsoDose.RefVal = str2num(Input{1,:});
+     handles.IsoDose.Levels = sort(str2num(Input{2,:})); 
+     if length(handles.IsoDose.Levels) == 1
+         handles.IsoDose.Levels = [handles.IsoDose.Levels handles.IsoDose.Levels];
+     end
+else
+     handles.IsoDose.RefVal = 0;
+end
+catch
+    handles.IsoDose.RefVal = 0;
+end
+UpdatePlot(handles);
+guidata(hObject,handles);
+
+

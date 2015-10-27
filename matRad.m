@@ -26,9 +26,9 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
- clear
- close all
- clc
+clear
+close all
+clc
 
 % load patient data, i.e. ct, voi, cst
 
@@ -61,13 +61,13 @@ stf = matRad_generateStf(ct,cst,pln);
 
 %% dose calculation
 if strcmp(pln.radiationMode,'photons')
-    dij = matRad_calcPhotonDose(ct,stf,pln,cst,0);
+    dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-    dij = matRad_calcParticleDose(ct,stf,pln,cst,0);
+    dij = matRad_calcParticleDose(ct,stf,pln,cst);
 end
 
 %% inverse planning for imrt
-resultGUI = matRad_fluenceOptimization(dij,cst,pln,0);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
@@ -77,7 +77,7 @@ end
 
 %% DAO
 if strcmp(pln.radiationMode,'photons') && pln.runDAO
-   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,1);
+   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI);
    matRad_visApertureInfo(resultGUI.apertureInfo);
 end
 

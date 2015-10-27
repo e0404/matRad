@@ -63,8 +63,8 @@ colorMx    = colorMx(1:floor(64/numOfVois):64,:);
 lineStyles = {'-',':','--','-.'};
 
 n = 1000;
-if sum(strcmp(fieldnames(result),'RBEWeightedDose')) > 0
-    dvhPoints = linspace(0,max(result.RBEWeightedDose(:))*1.05,n);
+if sum(strcmp(fieldnames(result),'RBExDose')) > 0
+    dvhPoints = linspace(0,max(result.RBExDose(:))*1.05,n);
 else
     dvhPoints = linspace(0,max(result.physicalDose(:))*1.05,n);
 end

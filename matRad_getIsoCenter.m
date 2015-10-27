@@ -71,9 +71,9 @@ end
 [yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct.cube),V);
 
 % Transform to [mm]
-xCoordsV = xCoordsV * ct.resolution(1);
-yCoordsV = yCoordsV * ct.resolution(2);
-zCoordsV = zCoordsV * ct.resolution(3);
+xCoordsV = xCoordsV * ct.resolution.x;
+yCoordsV = yCoordsV * ct.resolution.y;
+zCoordsV = zCoordsV * ct.resolution.z;
 
 % Calculated isocenter.
 isoCenter = mean([xCoordsV yCoordsV zCoordsV]);

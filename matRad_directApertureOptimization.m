@@ -51,6 +51,10 @@ function optResult = matRad_directApertureOptimization(dij,cst,apertureInfo,optR
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if nargin < 5
+    visBool = 0;
+end
+
 % adjust overlap priorities
 cst = matRad_setOverlapPriorities(cst);
 

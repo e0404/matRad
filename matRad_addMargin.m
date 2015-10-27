@@ -51,7 +51,7 @@ elseif nargin < 3
 end
 
 % get number of voxels which should be added in each dimension
-voxelMargins = round(vMargin./vResolution);
+voxelMargins = round([vMargin.x vMargin.y vMargin.z]./[vResolution.x vResolution.y vResolution.z]);
 mVOIEnlarged = mVOI;
 NewIdx = [];
 
