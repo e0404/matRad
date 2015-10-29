@@ -2172,8 +2172,8 @@ resultGUI.w = resultGUI.wUnsequenced;
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
 %   resultGUI = matRad_xiaLeafSequencing(resultGUI.w,evalin('base','stf'),evalin('base','dij')...
 %       ,StratificationLevel,resultGUI);
-    resultGUI = matRad_engelLeafSequencing(resultGUI.w,evalin('base','stf'),evalin('base','dij')...
-        ,StratificationLevel,resultGUI);
+    resultGUI = matRad_engelLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
+        ,StratificationLevel,1);
     assignin('base','resultGUI',resultGUI);
 end
 
