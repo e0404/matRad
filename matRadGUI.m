@@ -1052,6 +1052,8 @@ function popupPlane_Callback(hObject, eventdata, handles)
 handles.plane = get(handles.popupPlane,'value');
 try
     ct = evalin('base', 'ct');
+    set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
+            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
     if handles.State<3
         set(handles.sliderSlice,'Value',round(size(ct.cube,handles.plane)/2));
     else
@@ -1353,7 +1355,8 @@ function sliderBeamSelection_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-handles.SelectedBeam = get(hObject,'Value');
+handles.SelectedBeam = round(get(hObject,'Value'));
+set(hObject, 'Value', handles.SelectedBeam);
 UpdatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
