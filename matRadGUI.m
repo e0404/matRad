@@ -1202,7 +1202,7 @@ if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
 %   resultGUI = matRad_xiaLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
 %       ,get(handles.editSequencingLevel,'Value'));
     resultGUI = matRad_engelLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
-        ,get(handles.editSequencingLevel,'String'));
+        ,str2num(get(handles.editSequencingLevel,'String')));
     assignin('base','resultGUI',resultGUI);
 end
 
@@ -2175,7 +2175,7 @@ function btnSequencing_Callback(hObject, eventdata, handles)
 % hObject    handle to btnSequencing (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-StratificationLevel = parseStringAsNum(get(handles.editSequencingLevel,'String'));
+StratificationLevel = str2num(get(handles.editSequencingLevel,'String'));
 resultGUI=evalin('base','resultGUI');
 pln = evalin('base','pln');
 resultGUI.w = resultGUI.wUnsequenced;
