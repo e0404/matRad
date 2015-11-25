@@ -70,7 +70,7 @@ if visBool
                 IdxHandle = strcmp(get(figHandles,'Name'),'Progress of Optimization');
             end
         end
-        if ~isempty(IdxHandle) &&  length(IdxHandle) > 1
+        if  any(IdxHandle)
             figOpt = figHandles(IdxHandle);
             AxesInfigOpt = findall(figOpt,'type','axes');
             set(AxesInfigOpt,'NextPlot', 'replacechildren')
