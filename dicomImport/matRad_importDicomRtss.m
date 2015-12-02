@@ -73,10 +73,22 @@ for i = 1:numOfContStructs % loop over every structure
     structures(i).structNumber = structInfo.ROIContourSequence.(...
                                  listOfContStructs{i}).ReferencedROINumber;
     structures(i).structColor  = structInfo.ROIContourSequence.(...
-                                 listOfContStructs{i}).ROIDisplayColor;                         
-
-    listOfSlices = fieldnames(structInfo.ROIContourSequence.(...
-                                   listOfContStructs{i}).ContourSequence);
+                                 listOfContStructs{i}).ROIDisplayColor;  
+                             
+    if isfield(structInfo.ROIContourSequence.(...
+                    listOfContStructs{i}), 'ContourSequence');
+                if ~isempty(structInfo.ROIContourSequence.(...
+                                listOfContStructs{i}).ContourSequence);
+                    listOfSlices = fieldnames(structInfo.ROIContourSequence.(...
+                                                listOfContStructs{i}).ContourSequence);
+                else
+                    warning(['Contour ' structures(i).structName ' is empty'])
+                    continue;
+                end
+    else
+        warning(['Contour ' structures(i).structName ' is empty'])
+        continue;
+    end
     
     for j = 1:numel(listOfSlices)
         structSlice = structInfo.ROIContourSequence.(...
