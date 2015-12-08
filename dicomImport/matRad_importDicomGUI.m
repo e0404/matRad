@@ -116,7 +116,7 @@ function patDir = browse_button_Callback(hObject, eventdata, handles)
 %uiwait(warndlg('Choose the input directory'));
 patDir = uigetdir('', 'Choose the input directory...');
 if patDir ~= 0
-    patDir = [patDir '\'];
+    %patDir = [patDir '\'];
     %handles.dir_path_field.String = patDir;
     set(handles.dir_path_field,'String',patDir);
     % Update handles structure
