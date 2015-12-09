@@ -139,21 +139,22 @@ for i = 1:length(pln.gantryAngles)
     % gantry and couch roation matrices according to IEC 61217 standard
     % instead of moving the beam around the patient, we perform an inverse
     % rotation of the patient, i.e. we consider a beam's eye view
-    % coordinate system
+    % coordinate system; use transpose rotation matrices because we are
+    % working with row vectors
     
-    % Rotation around Z axis (gantry)
-    rotMx_XY = [cosd(pln.gantryAngles(i)) -sind(pln.gantryAngles(i)) 0;
-                sind(pln.gantryAngles(i))  cosd(pln.gantryAngles(i)) 0;
-                                        0                          0 1];
+    % rotation around Z axis (gantry)
+    inv_rotMx_XY_T = [ cosd(-pln.gantryAngles(i)) sind(-pln.gantryAngles(i)) 0;
+                      -sind(-pln.gantryAngles(i)) cosd(-pln.gantryAngles(i)) 0;
+                                                0                          0 1];
     
-    % Rotation around Y axis (Couch movement)
-    rotMx_XZ = [ cosd(pln.couchAngles(i)) 0 sind(pln.couchAngles(i));
-                                        0 1                         0;
-                -sind(pln.couchAngles(i)) 0  cosd(pln.couchAngles(i))];
-    
+    % rotation around Y axis (couch)
+    inv_rotMx_XZ_T = [cosd(-pln.couchAngles(i)) 0 -sind(-pln.couchAngles(i));
+                                              0 1                         0;
+                      sind(-pln.couchAngles(i)) 0  cosd(-pln.couchAngles(i))];
+                  
     % rotate target coordinates around Y axis and then around Z axis
     % i.e. 1st couch, 2nd gantry; matrix multiplication not cummutative
-    rot_coords_targetVoxels = coords_targetVoxels*rotMx_XZ*rotMx_XY;
+    rot_coords_targetVoxels = coords_targetVoxels*inv_rotMx_XZ_T*inv_rotMx_XY_T;
     
     % project x and z coordinates to isocenter
     coordsAtIsoCenterPlane_targetVoxels(:,1) = (rot_coords_targetVoxels(:,1)*pln.SAD)./(pln.SAD + rot_coords_targetVoxels(:,2));
@@ -198,26 +199,26 @@ for i = 1:length(pln.gantryAngles)
     sourcePoint_bev = [0 -pln.SAD 0];
     
     % compute coordinates in lps coordinate system, i.e. rotate beam
-    % geometry around fixed patient
+    % geometry around fixed patient; use transpose matrix because we are
+    % wotking with row vectors
     
     % Rotation around Z axis (gantry)
-    rotMx_XY_rotated = [ cosd(pln.gantryAngles(i)) sind(pln.gantryAngles(i)) 0;
+    rotMx_XY_T = [ cosd(pln.gantryAngles(i)) sind(pln.gantryAngles(i)) 0;
                         -sind(pln.gantryAngles(i)) cosd(pln.gantryAngles(i)) 0;
                                                  0                         0 1];
     
     % Rotation around Y axis (couch)
-    rotMx_XZ_rotated = [ cosd(pln.couchAngles(i)) 0 -sind(pln.couchAngles(i));
+    rotMx_XZ_T = [ cosd(pln.couchAngles(i)) 0 -sind(pln.couchAngles(i));
                                                 0 1                        0;
                          sind(pln.couchAngles(i)) 0 cosd(pln.couchAngles(i))];
     
-    % Rotated Source point, first needs to be rotated around gantry, and then
-    % couch.
-    stf(i).sourcePoint = sourcePoint_bev*rotMx_XY_rotated*rotMx_XZ_rotated;
+    % Rotated Source point, first rotate around gantry, then couch.
+    stf(i).sourcePoint = sourcePoint_bev*rotMx_XY_T*rotMx_XZ_T;
     
     % Save ray and target position in lps system.
     for j = 1:stf(i).numOfRays
-        stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_rotated*rotMx_XZ_rotated;
-        stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_rotated*rotMx_XZ_rotated;
+        stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
+        stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
     end
     
     % now rotate all patient voxels in bev to determine corresponding rays

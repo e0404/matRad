@@ -148,24 +148,21 @@ fprintf('matRad: Photon dose calculation... ');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams; % loop over all beams
     
-    % gantry and couch roation matrices according to IEC 61217 standard
-    % instead of moving the beam around the patient, we perform an inverse
-    % rotation of the patient, i.e. we consider a beam's eye view
-    % coordinate system
+    % Set gantry and couch rotation matrices according to IEC 61217
+    % Use transpose matrices because we are working with row vectros
     
     % rotation around Z axis (gantry)
-    rotMx_XY = [cosd(pln.gantryAngles(i)) -sind(pln.gantryAngles(i)) 0;
-                sind(pln.gantryAngles(i))  cosd(pln.gantryAngles(i)) 0;
-                                        0                          0 1];
+    inv_rotMx_XY_T = [ cosd(-pln.gantryAngles(i)) sind(-pln.gantryAngles(i)) 0;
+                      -sind(-pln.gantryAngles(i)) cosd(-pln.gantryAngles(i)) 0;
+                                                0                          0 1];
     
     % rotation around Y axis (couch)
-    rotMx_XZ = [ cosd(pln.couchAngles(i)) 0 sind(pln.couchAngles(i));
-                                        0 1                         0;
-                -sind(pln.couchAngles(i)) 0 cosd(pln.couchAngles(i))];
+    inv_rotMx_XZ_T = [cosd(-pln.couchAngles(i)) 0 -sind(-pln.couchAngles(i));
+                                              0 1                         0;
+                      sind(-pln.couchAngles(i)) 0  cosd(-pln.couchAngles(i))];
     
-    % rotate target coordinates around Y axis and then around Z axis
-    % i.e. 1st couch, 2nd gantry; matrix multiplication not cummutative
-    rot_coordsV = coordsV*rotMx_XZ*rotMx_XY;
+    % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
+    rot_coordsV = coordsV*inv_rotMx_XZ_T*inv_rotMx_XY_T;
     
     rot_coordsV(:,1) = rot_coordsV(:,1)-sourcePoint_bev(1);
     rot_coordsV(:,2) = rot_coordsV(:,2)-sourcePoint_bev(2);

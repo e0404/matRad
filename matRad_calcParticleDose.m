@@ -135,28 +135,21 @@ fprintf('matRad: Particle dose calculation... ');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams; % loop over all beams
     
-    %SET GANTRY AND COUCH ROTATION MATRICES ACCORDING IEC 61217 STANDARD FOR LINACS
-    % Note: Signs for the following 2 matrices works for a fixed beam and
-    % rotary CT.
+    % Set gantry and couch rotation matrices according to IEC 61217
+    % Use transpose matrices because we are working with row vectros
     
-    % Rotation around Z axis (gantry movement)
-    rotMx_XY = [cosd(pln.gantryAngles(i)) -sind(pln.gantryAngles(i)) 0;
-                sind(pln.gantryAngles(i))  cosd(pln.gantryAngles(i)) 0;
-                                        0                          0 1];
+    % rotation around Z axis (gantry)
+    inv_rotMx_XY_T = [ cosd(-pln.gantryAngles(i)) sind(-pln.gantryAngles(i)) 0;
+                      -sind(-pln.gantryAngles(i)) cosd(-pln.gantryAngles(i)) 0;
+                                                0                          0 1];
     
-    % Rotation around Y axis (Couch movement)
-    rotMx_XZ = [ cosd(pln.couchAngles(i)) 0 sind(pln.couchAngles(i));
-                                        0 1                        0;
-                -sind(pln.couchAngles(i)) 0 cosd(pln.couchAngles(i))];
-    
-    % ROTATE VOI'S CT COORDINATES. First applies couch rotation and then
-    % gantry. It is important to note matrix multiplication is not "commutative",
-    % you cannot switch the order of the factors and expect to end up with the same result.
-    
-    % Rotate coordinates around Y axis (1st couch movement) and then Z axis
-    % (2nd gantry movement)
-    
-    rot_coordsV = coordsV*rotMx_XZ*rotMx_XY;
+    % rotation around Y axis (couch)
+    inv_rotMx_XZ_T = [cosd(-pln.couchAngles(i)) 0 -sind(-pln.couchAngles(i));
+                                              0 1                         0;
+                      sind(-pln.couchAngles(i)) 0  cosd(-pln.couchAngles(i))];
+                  
+    % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
+    rot_coordsV = coordsV*inv_rotMx_XZ_T*inv_rotMx_XY_T;
     
     rot_coordsV(:,1) = rot_coordsV(:,1)-sourcePoint_bev(1);
     rot_coordsV(:,2) = rot_coordsV(:,2)-sourcePoint_bev(2);
