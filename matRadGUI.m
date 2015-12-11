@@ -904,43 +904,51 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     cColor={'black','green','magenta','cyan','yellow','red','blue'};
     
     % Rotation around Z axis (table movement)
-    rotMx_XY = [ cosd(pln.gantryAngles(handles.SelectedBeam)) sind(pln.gantryAngles(handles.SelectedBeam)) 0;
-                 -sind(pln.gantryAngles(handles.SelectedBeam)) cosd(pln.gantryAngles(handles.SelectedBeam)) 0;
-                      0                                         0                                              1];
+    inv_rotMx_XY_T = [ cosd(pln.gantryAngles(handles.SelectedBeam)) sind(pln.gantryAngles(handles.SelectedBeam)) 0;
+                      -sind(pln.gantryAngles(handles.SelectedBeam)) cosd(pln.gantryAngles(handles.SelectedBeam)) 0;
+                                                                  0 0 1];
     % Rotation around Y axis (Couch movement)
-     rotMx_XZ = [cosd(pln.couchAngles(handles.SelectedBeam)) 0 sind(pln.couchAngles(handles.SelectedBeam));
-                 0                                             1 0;
-                 -sind(pln.couchAngles(handles.SelectedBeam)) 0 cosd(pln.couchAngles(handles.SelectedBeam))];
+    inv_rotMx_XZ_T = [cosd(pln.couchAngles(handles.SelectedBeam)) 0 -sind(pln.couchAngles(handles.SelectedBeam));
+                                                                0 1 0;
+                      sind(pln.couchAngles(handles.SelectedBeam)) 0 cosd(pln.couchAngles(handles.SelectedBeam))];
     
     if strcmp(handles.ProfileType,'longitudinal')
         sourcePointBEV = [handles.profileOffset -pln.SAD   0];
-        targetPointBEV = [handles.profileOffset pln.SAD   0];
-        sMargin = -1;
+        targetPointBEV = [handles.profileOffset  pln.SAD   0];
     elseif strcmp(handles.ProfileType,'lateral')
         sourcePointBEV = [-pln.SAD handles.profileOffset   0];
-        targetPointBEV = [pln.SAD handles.profileOffset   0];
-        sMargin = 30;
+        targetPointBEV = [ pln.SAD handles.profileOffset   0];
     end
-    rotSourcePointBEV = sourcePointBEV*rotMx_XY*rotMx_XZ;
-    rotTargetPointBEV = targetPointBEV*rotMx_XY*rotMx_XZ;
-    [~,~,~,~,ix] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube});
     
-    mPhysDose=getfield(Result,'physicalDose'); 
-    % plot physical dose
-    vX=linspace(1,ct.resolution.x*numel(mPhysDose(ix)),numel(mPhysDose(ix)));
-    PlotHandles{1} = plot(handles.axesFig,vX,mPhysDose(ix),'color',cColor{1,1},'LineWidth',3);grid on, hold on; 
-    PlotHandles{1,2}='physicalDose';
-    set(gca,'FontSize',defaultFontSize);
-    % assess x - limits for profile plot
-    xLim  = find(mPhysDose(ix));
-    if ~isempty(xLim)
-        xmin= xLim(1)*ct.resolution.x-sMargin;
-        xmax= xLim(end)*ct.resolution.x+sMargin;
-    else
-        vLim = axis;
-        xmin = vLim(1);
-        xmax = vLim(2);
+    rotSourcePointBEV = sourcePointBEV * inv_rotMx_XZ_T * inv_rotMx_XY_T;
+    rotTargetPointBEV = targetPointBEV * inv_rotMx_XZ_T * inv_rotMx_XY_T;
+    
+    % perform raytracing on the central axis of the selected beam
+    [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube});
+    d = [0 l .* rho{1}];
+    % Calculate accumulated d sum.
+    vX = cumsum(d(1:end-1));
+    
+    % this step is necessary if visualization is set to profile plot
+    % and another optimization is carried out - set focus on GUI
+    figHandles = get(0,'Children');
+    idxHandle = [];
+    if ~isempty(figHandles)
+        v=version;
+        if str2num(v(1:3))>= 8.5
+            idxHandle = strcmp({figHandles(:).Name},'matRadGUI');
+        else
+            idxHandle = strcmp(get(figHandles,'Name'),'matRadGUI');
+        end
     end
+    figure(figHandles(idxHandle));
+    
+    % plot physical dose
+    mPhysDose = getfield(Result,'physicalDose'); 
+    PlotHandles{1} = plot(handles.axesFig,vX,mPhysDose(ix),'color',cColor{1,1},'LineWidth',3); hold on; 
+    PlotHandles{1,2} ='physicalDose';
+    ylabel(handles.axesFig,'dose in [Gy]');
+    set(handles.axesFig,'FontSize',defaultFontSize);
     
     % plot counter
     Cnt=2;
@@ -957,14 +965,13 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
         StringYLabel2 = '';
         for i=1:1:size(DispInfo,1)
             if DispInfo{i,2} 
-                %physicalDose is already plotted and RBExD vs RBE are later
-                %plotted with plotyy
+                %physicalDose is already plotted and RBExD vs RBE is plotted later with plotyy
                 if ~strcmp(DispInfo{i,1},'RBExDose') &&...
                    ~strcmp(DispInfo{i,1},'RBE') && ...
                    ~strcmp(DispInfo{i,1},'physicalDose')
                
                         mCube = getfield(Result,DispInfo{i,1});
-                        PlotHandles{Cnt,1} = plot(vX,mCube(ix),'color',cColor{1,Cnt},'LineWidth',3);hold on; 
+                        PlotHandles{Cnt,1} = plot(handles.axesFig,vX,mCube(ix),'color',cColor{1,Cnt},'LineWidth',3);hold on; 
                         PlotHandles{Cnt,2} = DispInfo{i,1};
                         StringYLabel2 = [StringYLabel2  ' \color{'  cColor{1,Cnt} '}' DispInfo{i,1} ' ['  DispInfo{i,3} ']'];
                         Cnt = Cnt+1;
@@ -972,14 +979,14 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
             end
         end
         StringYLabel2 = [StringYLabel2 '}'];
-        % plot always RBExD against RBE
-        mRBExDose=getfield(Result,'RBExDose');
-        vBED =mRBExDose(ix);
-        mRBE=getfield(Result,'RBE');
-        vRBE =mRBE(ix);
+        % always plot RBExD against RBE
+        mRBExDose = getfield(Result,'RBExDose');
+        vBED = mRBExDose(ix);
+        mRBE = getfield(Result,'RBE');
+        vRBE = mRBE(ix);
         
         % plot biological dose against RBE
-        [ax, PlotHandles{Cnt,1}, PlotHandles{Cnt+1,1}]=plotyy(vX,vBED,vX,vRBE,'plot');hold on;
+        [ax, PlotHandles{Cnt,1}, PlotHandles{Cnt+1,1}]=plotyy(handles.axesFig,vX,vBED,vX,vRBE,'plot');hold on;
         PlotHandles{Cnt,2}='RBExDose';
         PlotHandles{Cnt+1,2}='RBE';
          
@@ -998,47 +1005,46 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     tmpPrior = intmax;
     tmpSize = 0;
     for i=1:size(cst,1)
-        if strcmp(cst{i,3},'TARGET') && tmpPrior>=cst{i,5}.Priority && tmpSize<numel(cst{i,4})
-           mTarget = unique(cst{i,4});
+        if strcmp(cst{i,3},'TARGET') && tmpPrior >= cst{i,5}.Priority && tmpSize<numel(cst{i,4})
+           linIdxTarget = unique(cst{i,4});
            tmpPrior=cst{i,5}.Priority;
            tmpSize=numel(cst{i,4});
            VOI = cst{i,2};
         end
     end
     
-    str = sprintf('profile plot of zentral axis of %d beam gantry angle %d° couch angle %d°',...
+    str = sprintf('profile plot - central axis of %d beam gantry angle %d° couch angle %d°',...
         handles.SelectedBeam ,pln.gantryAngles(handles.SelectedBeam),pln.couchAngles(handles.SelectedBeam));
-    title(str,'FontSize',defaultFontSize),grid on
-    
+    h_title = title(handles.axesFig,str,'FontSize',defaultFontSize);
+    pos = get(h_title,'Position');
+    set(h_title,'Position',[pos(1)-40 pos(2) pos(3)])
     
     % plot target boundaries
-    mTargetStack = zeros(size(ct.cube));
-    mTargetStack(mTarget)=1;
-    vProfile =mTargetStack(ix);
-    vRay = find(vProfile)*ct.resolution.y;
-    
+    mTargetCube = zeros(size(ct.cube));
+    mTargetCube(linIdxTarget) = 1;
+    vProfile = mTargetCube(ix);
+    WEPL_Target_Entry = vX(find(vProfile,1,'first'));
+    WEPL_Target_Exit  = vX(find(vProfile,1,'last'));
     PlotHandles{Cnt,2} =[VOI ' boundary'];
-    vLim = axis;
-    if ~isempty(vRay)
-        PlotHandles{Cnt,1}=plot([vRay(1) vRay(1)],[0 vLim(4)],'--','Linewidth',3,'color','k');hold on
-        plot([vRay(end) vRay(end)], [0 vLim(4)],'--','Linewidth',3,'color','k');hold on
+    
+    
+
+    if ~isempty(WEPL_Target_Entry) && ~isempty(WEPL_Target_Exit)
+        hold on
+        PlotHandles{Cnt,1} = ...
+        plot([WEPL_Target_Entry WEPL_Target_Entry],handles.axesFig.YLim,'--','Linewidth',3,'color','k');hold on
+        plot([WEPL_Target_Exit WEPL_Target_Exit], handles.axesFig.YLim,'--','Linewidth',3,'color','k');hold on
+      
     else
         PlotHandles{Cnt,1} =[];
     end
     
-   Lines = PlotHandles(~cellfun(@isempty,PlotHandles(:,1)),1);
+   Lines  = PlotHandles(~cellfun(@isempty,PlotHandles(:,1)),1);
    Labels = PlotHandles(~cellfun(@isempty,PlotHandles(:,1)),2);
-   h=legend([Lines{:}],Labels{:});
-    set(h,'FontSize',defaultFontSize);
-    % set axis limits
-    if strcmp(pln.bioOptimization,'none') || ~isfield(Result,'RBE')
-        xlim([xmin xmax]);
-     
-    else
-        xlim(ax(1),[xmin xmax]);
-        xlim(ax(2),[xmin xmax]);
-    end
-    xlabel('depth [cm]','FontSize',8);
+   h=legend(handles.axesFig,[Lines{:}],Labels{:});
+   set(h,'FontSize',defaultFontSize);
+   xlabel('radiological depth [mm]','FontSize',8);  
+   grid on, grid minor
    
 end
 
