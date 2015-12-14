@@ -69,7 +69,9 @@ end
 % End initialization code - DO NOT EDIT
 
 % --- Executes just before matRadGUI is made visible.
-function matRadGUI_OpeningFcn(hObject, eventdata, handles, varargin)
+function matRadGUI_OpeningFcn(hObject, ~, handles, varargin) 
+%#ok<*DEFNU> 
+%#ok<*AGROW>
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -96,6 +98,27 @@ set(f, 'AlphaData', alpha);
 handles.maxDoseVal     = 0;
 handles.IsoDose.RefVal = 0;
 handles.IsoDose.Levels = 0;
+%seach for availabes machines
+handles.Modalities = {'photons','protons','carbon'};
+for i = 1:length(handles.Modalities)
+    pattern = [handles.Modalities{1,i} '_*'];
+    Files = dir(pattern);
+    for j = 1:length(Files)
+        if ~isempty(Files)
+            MachineName = Files(j).name(numel(handles.Modalities{1,i})+2:end-4);
+            if isfield(handles,'Machines')
+                if sum(strcmp(handles.Machines,MachineName)) == 0
+                  handles.Machines{size(handles.Machines,1)+1} = MachineName;
+                end
+            else
+                handles.Machines = cell(1);
+                handles.Machines{1} = MachineName;
+            end
+        end
+    end
+end
+set(handles.popUpMachine,'String',handles.Machines);
+
 
 vChar = get(handles.editGantryAngle,'String');
 if strcmp(vChar(1,1),'0') && length(vChar)==6
@@ -110,56 +133,55 @@ end
 % handles.State=1   ct cst and pln available; ready for dose calculation
 % handles.State=2   ct cst and pln available and dij matric(s) are calculated;
 %                   ready for optimization
-% handles.Sate=3    plan is optimized
+% handles.State=3   plan is optimized
 
 
 % if plan is changed go back to state 1
 % if table VOI Type or Priorities changed go to state 1
 % if objective parameters changed go back to state 2
+
 handles.TableChanged = false;
 handles.State = 0;
 
 %% parse variables from base workspace
+AllVarNames = evalin('base','who');
+
 try
-    if ~isempty(evalin('base','ct')) && ~isempty(evalin('base','cst'))
-        ct = evalin('base','ct');
-        setCstTable(handles,evalin('base','cst'));
+    if  ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
+        ct  = evalin('base','ct');
+        cst = evalin('base','cst');
+        setCstTable(handles,cst);
         handles.State = 1;
-    else
-        error('ct or cst variable is not existing in base workspace')
+    elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
+         handles = showError(handles,'GUI OpeningFunc: could not find cst file');
+    elseif ~ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
+         handles = showError(handles,'GUI OpeningFunc: could not find ct file');
     end
-   
-catch
-    
+catch  
+   handles = showError(handles,'GUI OpeningFunc: Could not load ct and cst file');
 end
-%set plan
+
+%set plan if available - if not create one
 try 
-     if ~isempty(evalin('base','pln'))
-          pln=evalin('base','pln');
+     if ismember('pln',AllVarNames) && handles.State > 0 
           setPln(handles); 
-     else
-          handles.State = 0;
-    end
+     elseif handles.State > 0 
+          getPln(handles);
+     end
 catch
+       handles.State = 0;
+       handles = showError(handles,'GUI OpeningFunc: Could not set or get pln');
 end
 
-% parse dij structure
-try
-    if ~isempty(evalin('base','dij'))
-        handles.State = 2;
-
-    end
-catch 
+% check for dij structure
+if ismember('dij',AllVarNames)
+    handles.State = 2;
 end
 
-% parse optimized results
-try
-    if ~isempty(evalin('base','resultGUI'))
-        handles.State = 3;
-    end
-catch
+% check for optimized results
+if ismember('resultGUI',AllVarNames)
+    handles.State = 3;
 end
-
 
 % set some default values
 if handles.State == 2 || handles.State == 3
@@ -178,31 +200,24 @@ handles.SelectedBeam = 1;
 handles.plane = get(handles.popupPlane,'Value');
 handles.DijCalcWarning = false;
 
-if handles.State > 0
     % set slice slider
-    if exist('pln','var')
+if handles.State > 0
         set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
             'Value',ceil(size(ct.cube,handles.plane)/2),...
-            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
-        
-    else
-            error(' !! inconsistent state - pln struct should be part of state 1 !!')
-    end        
+            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);      
 end
 
-handles.profileOffset = 0;
-
 % Update handles structure
+handles.profileOffset = 0;
 guidata(hObject, handles);
 UpdateState(handles)
 UpdatePlot(handles)
 
-% UIWAIT makes matRadGUI wait for user response (see UIRESUME)
-% uiwait(handles.figure1);
+
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = matRadGUI_OutputFcn(hObject, eventdata, handles) 
+function varargout = matRadGUI_OutputFcn(~, ~, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -211,88 +226,78 @@ function varargout = matRadGUI_OutputFcn(hObject, eventdata, handles)
 % Get default command line output from handles structure
 varargout{1} = handles.output;
 
+% set focus on error dialog
+if isfield(handles,'ErrorDlg')
+    figure(handles.ErrorDlg)
+end
 
 % --- Executes on button press in btnLoadMat.
-function btnLoadMat_Callback(hObject, eventdata, handles)
+function btnLoadMat_Callback(hObject, ~, handles)
 % hObject    handle to btnLoadMat (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% delete existing workspace
-try
-    evalin('base',['clear ', 'resultGUI'])
-catch 
-end
-
-try
-    evalin('base',['clear ', 'doseVis'])
-catch 
-end
-
-try
-     evalin('base',['clear ', 'dij'])
-catch 
-end
-
-try
-   evalin('base',['clear ', 'cst'])
-catch 
-end
-
-try
-   evalin('base',['clear ', 'ct'])
-catch 
-end
-
-try
-    evalin('base',['clear ', 'pln'])
-catch 
-end
-
-try
-    evalin('base',['clear ', 'stf'])
-catch 
+% delete existing workspace - parse variables from base workspace
+AllVarNames = evalin('base','who');
+RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
+for i = 1:length(RefVarNames)  
+    if sum(ismember(AllVarNames,RefVarNames{i}))>0
+        evalin('base',['clear ', RefVarNames{i}]);
+    end
 end
 
 % read new data
+handles.State = 0;
 try 
-[FileName, FilePath] = uigetfile;
-load([FilePath FileName]);
+    [FileName, FilePath] = uigetfile;
+    load([FilePath FileName]);
 catch
+    handles = showWarning(handles,'LoadMatFileFnc: Could not load *.mat file');
+    guidata(hObject,handles);
+    UpdatePlot(handles);
+    UpdateState(handles);
     return
 end
-setCstTable(handles,cst);
-
-handles.TableChanged = false;
-handles.State = 1;
-set(handles.popupTypeOfPlot,'Value',1);
 
 try
-assignin('base','ct',ct);
-assignin('base','cst',cst);
-catch
-    error('Could not load selected data');
-end
-% assess plan variable from GUI
-getPln(handles);
-setPln(handles);
-pln=evalin('base','pln');
+    setCstTable(handles,cst);
+    handles.TableChanged = false;
+    set(handles.popupTypeOfPlot,'Value',1);
 
-if isempty(pln)
- handles.State = 0;
-else
- handles.State = 1;
+    assignin('base','ct',ct);
+    assignin('base','cst',cst);
+catch
+    handles = showError(handles,'LoadMatFileFnc: Could not load selected data');
 end
+
+try
+    if exist('pln','var')
+        % assess plan from loaded *.mat file
+        assignin('base','pln',pln);
+        setPln(handles);
+    else
+        % assess plan variable from GUI
+        getPln(handles);
+        setPln(handles);
+    end
+    handles.State = 1;
+catch
+    handles.State = 0;
+end
+
 
 % check if a optimized plan was loaded
-if exist('stf','var') && exist('resultGUI','var') && exist('dij','var')
+if exist('stf','var')  && exist('dij','var')
     assignin('base','stf',stf);
-    assignin('base','resultGUI',resultGUI);
     assignin('base','dij',dij);
-    handles.State = 3;
-    handles.SelectedDisplayOption ='Dose';
+    handles.State = 2;
 end
 
+if exist('resultGUI','var')
+    assignin('base','resultGUI',resultGUI);
+    handles.State = 3;
+    handles.SelectedDisplayOption ='physicalDose';
+end
 
 % set slice slider
 handles.plane = get(handles.popupPlane,'value');
@@ -301,35 +306,50 @@ if handles.State >0
             'Value',round(size(ct.cube,handles.plane)/2),...
             'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
 end
+
 guidata(hObject,handles);
 UpdatePlot(handles);
 UpdateState(handles);
 
 
 % --- Executes on button press in btnLoadDicom.
-function btnLoadDicom_Callback(hObject, eventdata, handles)
+function btnLoadDicom_Callback(hObject, ~, handles)
 % hObject    handle to btnLoadDicom (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
- addpath([pwd filesep 'dicomImport']);
- matRad_importDicomGUI
+try
+    % delete existing workspace - parse variables from base workspace
+    AllVarNames = evalin('base','who');
+    RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
+    for i = 1:length(RefVarNames)  
+        if sum(ismember(AllVarNames,RefVarNames{i}))>0
+            evalin('base',['clear ', RefVarNames{i}]);
+        end
+    end
+    handles.State = 0;
+    addpath([pwd filesep 'dicomImport']);
+    matRad_importDicomGUI;
+ 
+catch
+   handles = showError(handles,'DicomImport: Could not import data'); 
+end
+UpdateState(handles);
+guidata(hObject,handles);
 
-
-function editSAD_Callback(hObject, eventdata, handles)
+function editSAD_Callback(hObject, ~, handles)
 % hObject    handle to editSAD (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 getPln(handles);
-if handles.State>0
-    handles.State=1;
+if handles.State > 0
+    handles.State = 1;
     UpdateState(handles);
     guidata(hObject,handles);
 end
 
 
-
 % --- Executes during object creation, after setting all properties.
-function editSAD_CreateFcn(hObject, eventdata, handles)
+function editSAD_CreateFcn(hObject, ~, ~)
 % hObject    handle to editSAD (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -343,7 +363,7 @@ end
 
 
 
-function editBixelWidth_Callback(hObject, eventdata, handles)
+function editBixelWidth_Callback(hObject, ~, handles)
 % hObject    handle to editBixelWidth (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -351,14 +371,14 @@ function editBixelWidth_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of editBixelWidth as text
 %        str2double(get(hObject,'String')) returns contents of editBixelWidth as a double
 getPln(handles);
-if handles.State>0
-    handles.State=1;
+if handles.State > 0
+    handles.State = 1;
     UpdateState(handles);
     guidata(hObject,handles);
 end
 
 % --- Executes during object creation, after setting all properties.
-function editBixelWidth_CreateFcn(hObject, eventdata, handles)
+function editBixelWidth_CreateFcn(hObject, ~, ~)
 % hObject    handle to editBixelWidth (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -371,7 +391,7 @@ end
 
 
 
-function editGantryAngle_Callback(hObject, eventdata, handles)
+function editGantryAngle_Callback(hObject, ~, handles)
 % hObject    handle to editGantryAngle (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -379,14 +399,14 @@ function editGantryAngle_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of editGantryAngle as text
 %        str2double(get(hObject,'String')) returns contents of editGantryAngle as a double
 getPln(handles);
-if handles.State>0
-    handles.State=1;
+if handles.State > 0
+    handles.State = 1;
     UpdateState(handles);
     guidata(hObject,handles);
 end
 
 % --- Executes during object creation, after setting all properties.
-function editGantryAngle_CreateFcn(hObject, eventdata, handles)
+function editGantryAngle_CreateFcn(hObject, ~, ~)
 % hObject    handle to editGantryAngle (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -399,7 +419,7 @@ end
 
 
 
-function editCouchAngle_Callback(hObject, eventdata, handles)
+function editCouchAngle_Callback(hObject, ~, handles)
 % hObject    handle to editCouchAngle (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -407,14 +427,14 @@ function editCouchAngle_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of editCouchAngle as text
 %        str2double(get(hObject,'String')) returns contents of editCouchAngle as a double
 getPln(handles);
-if handles.State>0
-    handles.State=1;
+if handles.State > 0
+    handles.State = 1;
     UpdateState(handles);
     guidata(hObject,handles);
 end
 
 % --- Executes during object creation, after setting all properties.
-function editCouchAngle_CreateFcn(hObject, eventdata, handles)
+function editCouchAngle_CreateFcn(hObject, ~, ~)
 % hObject    handle to editCouchAngle (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -427,11 +447,11 @@ end
 
 
 % --- Executes on selection change in popupRadMode.
-function popupRadMode_Callback(hObject, eventdata, handles)
+function popupRadMode_Callback(hObject, ~, handles)
 % hObject    handle to popupRadMode (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+checkRadiationComposition(handles);
 contents = cellstr(get(hObject,'String')); 
 RadIdentifier = contents{get(hObject,'Value')};
 
@@ -467,17 +487,20 @@ switch RadIdentifier
         set(handles.editSequencingLevel,'Enable','off');
 end
 
-
-pln = evalin('base','pln');
-if handles.State>0 && ~strcmp(contents(get(hObject,'Value')),pln.radiationMode)
-    handles.State=1;
-    UpdateState(handles);
-    guidata(hObject,handles);
+if handles.State > 0
+    pln = evalin('base','pln');
+    if handles.State > 0 && ~strcmp(contents(get(hObject,'Value')),pln.radiationMode)
+        handles.State = 1;
+        UpdateState(handles);
+        guidata(hObject,handles);
+    end
+   getPln(handles);
 end
-getPln(handles);
+
+
 
 % --- Executes during object creation, after setting all properties.
-function popupRadMode_CreateFcn(hObject, eventdata, handles)
+function popupRadMode_CreateFcn(hObject, ~, ~)
 % hObject    handle to popupRadMode (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -490,7 +513,7 @@ end
 
 
 
-function editFraction_Callback(hObject, eventdata, handles)
+function editFraction_Callback(hObject, ~, handles)
 % hObject    handle to editFraction (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -498,13 +521,14 @@ function editFraction_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of editFraction as text
 %        str2double(get(hObject,'String')) returns contents of editFraction as a double
 getPln(handles);
-if handles.State>0
+if handles.State > 0
+    handles.State = 1;
     UpdateState(handles);
     guidata(hObject,handles);
 end
 
 % --- Executes during object creation, after setting all properties.
-function editFraction_CreateFcn(hObject, eventdata, handles)
+function editFraction_CreateFcn(hObject, ~, ~) 
 % hObject    handle to editFraction (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -517,7 +541,7 @@ end
 
 
 % --- Executes on button press in radbtnBioOpt.
-function radbtnBioOpt_Callback(hObject, eventdata, handles)
+function radbtnBioOpt_Callback(hObject, ~, handles)
 % hObject    handle to radbtnBioOpt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -530,15 +554,14 @@ else
     set(handles.btnTypBioOpt,'Enable','off');
 end
 
-
-if handles.State>0
-    handles.State=1;
+if handles.State > 0
+    handles.State = 1;
     UpdateState(handles);
     guidata(hObject,handles);
 end
 
 % --- Executes on button press in btnCalcDose.
-function btnCalcDose_Callback(hObject, eventdata, handles)
+function btnCalcDose_Callback(hObject, ~, handles)
 % hObject    handle to btnCalcDose (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -546,76 +569,99 @@ function btnCalcDose_Callback(hObject, eventdata, handles)
 % http://stackoverflow.com/questions/24703962/trigger-celleditcallback-before-button-callback
 % http://www.mathworks.com/matlabcentral/newsreader/view_thread/332613
 % wait some time until the CallEditCallback is finished 
-pause(0.1);
-uiTable_CellEditCallback(hObject,[],handles);
-pause(0.3);
+% Callback triggers the cst saving mechanism from GUI
+try
+    pause(0.1);
+    uiTable_CellEditCallback(hObject,[],handles);
+    pause(0.3);
 
-%% get cst from table
-if ~getCstTable(handles);
-    return
-end
-% read plan from gui and save it to workspace
-% gets also IsoCenter from GUI if checkbox is unchecked
-getPln(handles);
+    %% get cst from table
+    if ~getCstTable(handles);
+        return
+    end
+    % read plan from gui and save it to workspace
+    % gets also IsoCenter from GUI if checkbox is not checked
+    getPln(handles);
 
-% get default iso center as center of gravity of all targets if not
-% already defined
-pln = evalin('base','pln');
+    % get default iso center as center of gravity of all targets if not
+    % already defined
+    pln = evalin('base','pln');
 
-if length(pln.gantryAngles) ~= length(pln.couchAngles) 
-  warndlg('number of gantryAngles != number of couchAngles'); 
-end
+    if length(pln.gantryAngles) ~= length(pln.couchAngles) 
+        handles = showWarning(handles,warndlg('number of gantryAngles != number of couchAngles')); 
+    end
+    %%
+    if ~checkRadiationComposition(handles);
+        fileName = [pln.radiationMode '_' pln.machine];
+        handles = showError(handles,errordlg(['Could not find the following machine file: ' fileName ]));
+        guidata(hObject,handles);
+        return;
+    end
 
-%% security check if isocenter is not existing so far
-if ~isfield(pln,'isoCenter')
-    warning('no iso center set - using center of gravity of all targets');
-    pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
-    assignin('base','pln',pln);
-elseif ~get(handles.checkIsoCenter,'Value') 
-    pln.isoCenter = str2num(get(handles.editIsoCenter,'String'));
+    %% check if isocenter is already set
+    if ~isfield(pln,'isoCenter')
+        handles = showWarning(handles,warning('no iso center set - using center of gravity based on structures defined as TARGET'));
+        pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
+        assignin('base','pln',pln);
+    elseif ~get(handles.checkIsoCenter,'Value') 
+        pln.isoCenter = str2num(get(handles.editIsoCenter,'String'));
+    end
+
+catch
+   handles = showError(handles,'CalcDoseCallback: Error in preprocessing step.'); 
+   guidata(hObject,handles);
+   return;
 end
 
 % generate steering file
-stf = matRad_generateStf(evalin('base','ct'),...
-                                 evalin('base','cst'),...
-                                 evalin('base','pln'));
-assignin('base','stf',stf);
-if strcmp(evalin('base','pln.radiationMode'),'photons')
-    dij = matRad_calcPhotonDose(evalin('base','ct'),stf,evalin('base','pln'),evalin('base','cst'),0);
-elseif strcmp(evalin('base','pln.radiationMode'),'protons') || strcmp(evalin('base','pln.radiationMode'),'carbon')
-    dij = matRad_calcParticleDose(evalin('base','ct'),stf,evalin('base','pln'),evalin('base','cst'),0);
+try 
+    stf = matRad_generateStf(evalin('base','ct'),...
+                                     evalin('base','cst'),...
+                                     evalin('base','pln'));
+    assignin('base','stf',stf);
+catch
+   handles = showError(handles,'CalcDoseCallback: Error in steering file generation'); 
+   guidata(hObject,handles);
+   return;
 end
 
-resultGUI = matRad_mxCalcDose(dij,ones(dij.totalNumOfBixels,1),evalin('base','cst'));
-% assign results to base worksapce
-assignin('base','dij',dij);
-assignin('base','resultGUI',resultGUI);
-handles.State = 2;
-handles.SelectedDisplayOptionIdx=1;
-handles.SelectedDisplayOption='physicalDose';
-handles.SelectedBeam=1;
-handles.TableChanged = false;
-UpdatePlot(handles);
-UpdateState(handles);
-guidata(hObject,handles);
+% carry out dose calculation
+try
+    if strcmp(pln.radiationMode,'photons')
+        dij = matRad_calcPhotonDose(evalin('base','ct'),stf,pln,evalin('base','cst'),0);
+    elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
+        dij = matRad_calcParticleDose(evalin('base','ct'),stf,pln,evalin('base','cst'),0);
+    end
 
+    % assign results to base worksapce
+    assignin('base','dij',dij);
+    handles.State = 2;
+    handles.TableChanged = false;
+    UpdatePlot(handles);
+    UpdateState(handles);
+    guidata(hObject,handles);
+catch
+    handles = showError(handles,'CalcDoseCallback: Error in dose calculation'); 
+    guidata(hObject,handles);
+    return;
+end
 
+%% plots ct and distributions
 function UpdatePlot(handles)
-%%
-defaultFontSize = 8;
 
+defaultFontSize = 8;
 cla(handles.axesFig,'reset');
 
-if handles.State ==0
+if handles.State == 0
     return
 elseif handles.State > 0
-     ct=evalin('base','ct');
-     cst=evalin('base','cst');
-     pln=evalin('base','pln');
+     ct  = evalin('base','ct');
+     cst = evalin('base','cst');
+     pln = evalin('base','pln');
 end
-%% state 3 indicates that a optimization was already performed
-if handles.State == 3
-      %copies resultGUI to Result
+
+%% state 3 indicates that a optimization has been performed
+if handles.State > 2
       Result = evalin('base','resultGUI');
 end
 
@@ -631,7 +677,7 @@ if exist('Result','var')
         DispInfo =fieldnames(Result);
         for i=1:size(DispInfo,1)
             
-            if isstruct(Result.(DispInfo{i,1})) || isvector(Result.(DispInfo{i,1})) ...
+            if isstruct(Result.(DispInfo{i,1})) || isvector(Result.(DispInfo{i,1}))
                  Result = rmfield(Result,DispInfo{i,1});
                  DispInfo{i,2}=false;
             else
@@ -672,7 +718,7 @@ slice = round(get(handles.sliderSlice,'Value'));
 CutOffLevel = 0.03;
 
 %% plot ct
- if ~isempty(evalin('base','ct')) && get(handles.popupTypeOfPlot,'Value')==1
+ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     cla(handles.axesFig);
     if plane == 1 % Coronal plane
         ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube(slice,:,:))/max(ct.cube(:))),bone);
@@ -745,7 +791,7 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
 
             % plot colorbar
             v=version;
-            if str2num(v(1:3))>=8.5
+            if str2double(v(1:3))>=8.5
                 cBarHandel = colorbar(handles.axesFig,'colormap',jet,'FontSize',defaultFontSize,'yAxisLocation','right');
             else
                 cBarHandel = colorbar('peer',handles.axesFig,'FontSize',defaultFontSize,'yAxisLocation','right');
@@ -895,7 +941,7 @@ end
 
 
 %% profile plot
-if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
+if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
      
     % clear view and initialize some values
     cla(handles.axesFig,'reset')
@@ -924,7 +970,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     rotTargetPointBEV = targetPointBEV * inv_rotMx_XZ_T * inv_rotMx_XY_T;
     
     % perform raytracing on the central axis of the selected beam
-    [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube});
+    [~,l,rho,~,ix] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube});
     d = [0 l .* rho{1}];
     % Calculate accumulated d sum.
     vX = cumsum(d(1:end-1));
@@ -935,7 +981,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     idxHandle = [];
     if ~isempty(figHandles)
         v=version;
-        if str2num(v(1:3))>= 8.5
+        if str2double(v(1:3))>= 8.5
             idxHandle = strcmp({figHandles(:).Name},'matRadGUI');
         else
             idxHandle = strcmp(get(figHandles,'Name'),'matRadGUI');
@@ -944,7 +990,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
     figure(figHandles(idxHandle));
     
     % plot physical dose
-    mPhysDose = getfield(Result,'physicalDose'); 
+    mPhysDose = Result.('physicalDose'); 
     PlotHandles{1} = plot(handles.axesFig,vX,mPhysDose(ix),'color',cColor{1,1},'LineWidth',3); hold on; 
     PlotHandles{1,2} ='physicalDose';
     ylabel(handles.axesFig,'dose in [Gy]');
@@ -970,7 +1016,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
                    ~strcmp(DispInfo{i,1},'RBE') && ...
                    ~strcmp(DispInfo{i,1},'physicalDose')
                
-                        mCube = getfield(Result,DispInfo{i,1});
+                        mCube = Result.(DispInfo{i,1});
                         PlotHandles{Cnt,1} = plot(handles.axesFig,vX,mCube(ix),'color',cColor{1,Cnt},'LineWidth',3);hold on; 
                         PlotHandles{Cnt,2} = DispInfo{i,1};
                         StringYLabel2 = [StringYLabel2  ' \color{'  cColor{1,Cnt} '}' DispInfo{i,1} ' ['  DispInfo{i,3} ']'];
@@ -980,9 +1026,9 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result')
         end
         StringYLabel2 = [StringYLabel2 '}'];
         % always plot RBExD against RBE
-        mRBExDose = getfield(Result,'RBExDose');
+        mRBExDose = Result.('RBExDose');
         vBED = mRBExDose(ix);
-        mRBE = getfield(Result,'RBE');
+        mRBE = Result.('RBE');
         vRBE = mRBE(ix);
         
         % plot biological dose against RBE
@@ -1052,7 +1098,7 @@ end
 
 
 % --- Executes on selection change in popupPlane.
-function popupPlane_Callback(hObject, eventdata, handles)
+function popupPlane_Callback(hObject, ~, handles)
 % hObject    handle to popupPlane (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -1063,19 +1109,23 @@ function popupPlane_Callback(hObject, eventdata, handles)
 % set slice slider
 handles.plane = get(handles.popupPlane,'value');
 try
-    ct = evalin('base', 'ct');
-    set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
-    if handles.State<3
-        set(handles.sliderSlice,'Value',round(size(ct.cube,handles.plane)/2));
-    else
-        pln = evalin('base','pln');
-        if handles.plane == 1
-            set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.x));
-        elseif handles.plane == 2
-            set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.y));
-        elseif handles.plane == 3
-            set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.z));
+    if handles.State > 0
+        ct = evalin('base', 'ct');
+        set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
+                'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+        if handles.State < 3
+            set(handles.sliderSlice,'Value',round(size(ct.cube,handles.plane)/2));
+        else
+            pln = evalin('base','pln');
+            
+            if handles.plane == 1
+                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.x));
+            elseif handles.plane == 2
+                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.y));
+            elseif handles.plane == 3
+                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.z));
+            end
+            
         end
     end
 catch
@@ -1085,7 +1135,7 @@ UpdatePlot(handles);
 guidata(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
-function popupPlane_CreateFcn(hObject, eventdata, handles)
+function popupPlane_CreateFcn(hObject, ~, ~)
 % hObject    handle to popupPlane (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -1098,7 +1148,7 @@ end
 
 
 % --- Executes on slider movement.
-function sliderSlice_Callback(hObject, eventdata, handles)
+function sliderSlice_Callback(~, ~, handles)
 % hObject    handle to sliderSlice (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -1108,7 +1158,7 @@ function sliderSlice_Callback(hObject, eventdata, handles)
 UpdatePlot(handles)
 
 % --- Executes during object creation, after setting all properties.
-function sliderSlice_CreateFcn(hObject, eventdata, handles)
+function sliderSlice_CreateFcn(hObject, ~, ~)
 % hObject    handle to sliderSlice (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -1120,7 +1170,7 @@ end
 
 
 % --- Executes on button press in radiobtnContour.
-function radiobtnContour_Callback(hObject, eventdata, handles)
+function radiobtnContour_Callback(~, ~, handles)
 % hObject    handle to radiobtnContour (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -1129,7 +1179,7 @@ function radiobtnContour_Callback(hObject, eventdata, handles)
 UpdatePlot(handles)
 
 % --- Executes on button press in radiobtnDose.
-function radiobtnDose_Callback(hObject, eventdata, handles)
+function radiobtnDose_Callback(~, ~, handles)
 % hObject    handle to radiobtnDose (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -1138,7 +1188,7 @@ function radiobtnDose_Callback(hObject, eventdata, handles)
 UpdatePlot(handles)
 
 % --- Executes on button press in radiobtnIsoDoseLines.
-function radiobtnIsoDoseLines_Callback(hObject, eventdata, handles)
+function radiobtnIsoDoseLines_Callback(~, ~, handles)
 % hObject    handle to radiobtnIsoDoseLines (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -1152,72 +1202,92 @@ function btnOptimize_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% wait until the table is updated
-pause(0.1);
-uiTable_CellEditCallback(hObject,[],handles);
-pause(0.3);
+try
+    % wait until the table is updated
+    pause(0.1);
+    uiTable_CellEditCallback(hObject,[],handles);
+    pause(0.3);
 
+    % if a critical change to the cst has been made which affects the dij matrix
+    if handles.DijCalcWarning == true
 
-if handles.DijCalcWarning == true
-    
-    choice = questdlg('Overlap priorites of OAR constraints have been edited, a new OAR VOI was added or a critical row constraint was deleted. A new Dij calculation might be necessary.', ...
-	'Title','Cancel','Calculate Dij then Optimize','Optimze directly','Optimze directly');
-    
-    switch choice
-        case 'Cancel'
-            return
-        case 'Calculate Dij then Optimize'
-            handles.DijCalcWarning =false;
-            btnCalcDose_Callback(hObject, eventdata, handles)      
-        case 'Optimze directly'
-            handles.DijCalcWarning =false;       
+        choice = questdlg('Overlap priorites of OAR constraints have been edited, a new OAR VOI was added or a critical row constraint was deleted. A new Dij calculation might be necessary.', ...
+        'Title','Cancel','Calculate Dij then Optimize','Optimze directly','Optimze directly');
+
+        switch choice
+            case 'Cancel'
+                return
+            case 'Calculate dij again and optimize'
+                handles.DijCalcWarning = false;
+                btnCalcDose_Callback(hObject, eventdata, handles)      
+            case 'Optimze directly'
+                handles.DijCalcWarning = false;       
+        end
     end
-end
 
-
-% get optimization parameters from GUI
-Param.numOfIter = str2num(get(handles.editNumIter,'String'));
-Param.prec = str2num(get(handles.txtPrecisionOutput,'String'));
-OptType = get(handles.btnTypBioOpt,'String');
-% optimize
-pln = evalin('base','pln');
-ct = evalin('base','ct');
-resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln,1,Param,OptType);
-assignin('base','resultGUI',resultGUI);
-
-
-if handles.plane == 1
-    set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.x));
-elseif handles.plane == 2
-    set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.y));
-elseif handles.plane == 3
-    set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.z));
-end
-
-%set some values
-handles.State=3;
-handles.SelectedDisplayOptionIdx=1;
-handles.SelectedDisplayOption='physicalDose';
-handles.SelectedBeam=1;
-UpdatePlot(handles);
-UpdateState(handles);
-
-% perform sequencing and dao
-%% sequencing
-if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
-%   resultGUI = matRad_xiaLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
-%       ,get(handles.editSequencingLevel,'Value'));
-    resultGUI = matRad_engelLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
-        ,str2num(get(handles.editSequencingLevel,'String')));
+    % get optimization parameters from GUI
+    Param.numOfIter = str2double(get(handles.editNumIter,'String'));
+    Param.prec      = str2double(get(handles.txtPrecisionOutput,'String'));
+    BioOptType      = get(handles.btnTypBioOpt,'String');
+    
+    pln = evalin('base','pln');
+    ct  = evalin('base','ct');
+    % optimize
+    resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln,1,Param,BioOptType);
     assignin('base','resultGUI',resultGUI);
+
+    %set some values
+    if handles.plane == 1
+        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.x));
+    elseif handles.plane == 2
+        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.y));
+    elseif handles.plane == 3
+        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.z));
+    end
+
+    handles.State = 3;
+    handles.SelectedDisplayOptionIdx = 1;
+    handles.SelectedDisplayOption='physicalDose';
+    handles.SelectedBeam = 1;
+    UpdatePlot(handles);
+    UpdateState(handles);
+
+catch 
+    handles = showError(handles,'OptimizeCallback: Could not optimize'); 
+    guidata(hObject,handles);
+    return;
 end
 
-%% DAO
-if strcmp(pln.radiationMode,'photons') && pln.runDAO
-   resultGUI = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst')...
-       ,resultGUI.apertureInfo,resultGUI,1);
-   matRad_visApertureInfo(resultGUI.apertureInfo);
-   assignin('base','resultGUI',resultGUI);
+
+% perform sequencing and DAO
+try
+    
+    %% sequencing
+    if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
+    %   resultGUI = matRad_xiaLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
+    %       ,get(handles.editSequencingLevel,'Value'));
+        resultGUI = matRad_engelLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
+            ,str2double(get(handles.editSequencingLevel,'String')));
+        assignin('base','resultGUI',resultGUI);
+    end
+catch
+   handles = showError(handles,'OptimizeCallback: Could not perform sequencing'); 
+   guidata(hObject,handles);
+   return;
+end
+
+try
+    %% DAO
+    if strcmp(pln.radiationMode,'photons') && pln.runDAO
+       resultGUI = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst')...
+           ,resultGUI.apertureInfo,resultGUI,1);
+       matRad_visApertureInfo(resultGUI.apertureInfo);
+       assignin('base','resultGUI',resultGUI);
+    end
+catch
+   handles = showError(handles,'OptimizeCallback: Could not perform direct aperture optimization'); 
+   guidata(hObject,handles);
+   return;
 end
 
 guidata(hObject,handles);
@@ -1225,12 +1295,12 @@ guidata(hObject,handles);
 
 
 % the function CheckValidityPln checks if the provided plan is valid so
-% that it can be used subsequently for optimization
+% that it can be used further on for optimization
 function FlagValid = CheckValidityPln(cst)
 
 FlagValid = true;
 %check if mean constraint is always used in combination
-for i=1:size(cst,1)
+for i = 1:size(cst,1)
    if ~isempty(cst{i,6})
         if ~isempty(strfind([cst{i,6}.type],'mean')) && isempty(strfind([cst{i,6}.type],'square'))
              FlagValid = false;
@@ -1241,15 +1311,15 @@ for i=1:size(cst,1)
 end
 
 
-% --- Executes on selection change in popupTypeOfPlot.
-function popupTypeOfPlot_Callback(hObject, eventdata, handles)
+% --- Executes on selection change in popupTypeOfPlot
+function popupTypeOfPlot_Callback(hObject, ~, handles)
 % hObject    handle to popupTypeOfPlot (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns popupTypeOfPlot contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popupTypeOfPlot
-if get(hObject,'Value') ==1   % intensity plot
+ % intensity plot
+if get(hObject,'Value') == 1  
+    
     set(handles.sliderBeamSelection,'Enable','off')
     set(handles.sliderOffset,'Enable','off')
     set(handles.popupDisplayOption,'Enable','on')
@@ -1261,24 +1331,25 @@ if get(hObject,'Value') ==1   % intensity plot
     set(handles.radiobtnIsoDoseLinesLabels,'Enable','on');
     set(handles.sliderSlice,'Enable','on');
     
-elseif get(hObject,'Value') ==2 % profile plot
+% profile plot
+elseif get(hObject,'Value') == 2
     
-    if handles.State >0
-        if length(str2double(strsplit(get(handles.editGantryAngle,'String'),' ')))>1
+    if handles.State > 0
+        if length(str2double(strsplit(get(handles.editGantryAngle,'String'),' '))) > 1
+            
             set(handles.sliderBeamSelection,'Enable','on');
             handles.SelectedBeam = 1;
-
-                pln = evalin('base','pln');
-                set(handles.sliderBeamSelection,'Min',handles.SelectedBeam,'Max',pln.numOfBeams,...
-                    'Value',handles.SelectedBeam,...
-                    'SliderStep',[1/(pln.numOfBeams-1) 1/(pln.numOfBeams-1)],...
-                    'Enable','on');
+            pln = evalin('base','pln');
+            set(handles.sliderBeamSelection,'Min',handles.SelectedBeam,'Max',pln.numOfBeams,...
+                'Value',handles.SelectedBeam,...
+                'SliderStep',[1/(pln.numOfBeams-1) 1/(pln.numOfBeams-1)],...
+                'Enable','on');
 
         else
-            handles.SelectedBeam=1;
+            handles.SelectedBeam = 1;
         end
     
-        handles.profileOffset=get(handles.sliderOffset,'Value');
+        handles.profileOffset = get(handles.sliderOffset,'Value');
 
         vMinMax = [-100 100];
         vRange = sum(abs(vMinMax));
@@ -1308,6 +1379,7 @@ elseif get(hObject,'Value') ==2 % profile plot
     
     
     set(handles.btnProfileType,'Enable','on')
+    
     if strcmp(get(handles.btnProfileType,'String'),'lateral')
         handles.ProfileType = 'longitudinal';
     else
@@ -1319,7 +1391,7 @@ guidata(hObject, handles);
 UpdatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
-function popupTypeOfPlot_CreateFcn(hObject, eventdata, handles)
+function popupTypeOfPlot_CreateFcn(hObject, ~, ~)
 % hObject    handle to popupTypeOfPlot (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -1332,7 +1404,7 @@ end
 
 
 % --- Executes on selection change in popupDisplayOption.
-function popupDisplayOption_Callback(hObject, eventdata, handles)
+function popupDisplayOption_Callback(hObject, ~, handles)
 % hObject    handle to popupDisplayOption (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -1347,7 +1419,7 @@ guidata(hObject, handles);
 UpdatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
-function popupDisplayOption_CreateFcn(hObject, eventdata, handles)
+function popupDisplayOption_CreateFcn(hObject, ~, ~)
 % hObject    handle to popupDisplayOption (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -1360,7 +1432,7 @@ end
 
 
 % --- Executes on slider movement.
-function sliderBeamSelection_Callback(hObject, eventdata, handles)
+function sliderBeamSelection_Callback(hObject, ~, handles)
 % hObject    handle to sliderBeamSelection (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -1372,7 +1444,7 @@ set(hObject, 'Value', handles.SelectedBeam);
 UpdatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
-function sliderBeamSelection_CreateFcn(hObject, eventdata, handles)
+function sliderBeamSelection_CreateFcn(hObject, ~, ~)
 % hObject    handle to sliderBeamSelection (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -1384,7 +1456,7 @@ end
 
 
 % --- Executes on button press in btnProfileType.
-function btnProfileType_Callback(hObject, eventdata, handles)
+function btnProfileType_Callback(hObject, ~, handles)
 % hObject    handle to btnProfileType (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -1401,7 +1473,7 @@ if strcmp(get(hObject,'Enable') ,'on')
  
 end
 
-
+% displays the cst in the GUI
 function setCstTable(handles,cst)
 
 
@@ -1474,13 +1546,13 @@ for i = 1:size(OldCst,1)
             
             if CntObjF == 1
                 %VOI
-                if isempty(data{j,1}) || ~isempty(findstr(data{j,1}, 'Select'))
+                if isempty(data{j,1}) || ~isempty(strfind(data{j,1}, 'Select'))
                     FlagValidParameters=false;
                 else
-                    NewCst{Cnt,1}=data{j,1};
+                    NewCst{Cnt,1}=data{j,1}; 
                 end
                 %VOI Type
-                if isempty(data{j,2})|| ~isempty(findstr(data{j,2}, 'Select'))
+                if isempty(data{j,2})|| ~isempty(strfind(data{j,2}, 'Select'))
                     FlagValidParameters=false;
                 else
                     NewCst{Cnt,2}=data{j,2};
@@ -1494,7 +1566,7 @@ for i = 1:size(OldCst,1)
             end
             
             %Obj Func
-            if isempty(data{j,4}) ||~isempty(findstr(data{j,4}, 'Select'))
+            if isempty(data{j,4}) ||~isempty(strfind(data{j,4}, 'Select'))
                FlagValidParameters=false;
             else
                  NewCst{Cnt,4}(CntObjF,1).type = data{j,4};
@@ -1527,7 +1599,7 @@ for i = 1:size(OldCst,1)
                               NewCst{Cnt,4}(CntObjF,1).parameter(1,2)=1;
                           end
                           if ischar(data{j,6})
-                              NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = str2num(data{j,6});
+                              NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = str2double(data{j,6});
                           else
                               NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = double(data{j,6});
                           end
@@ -1578,10 +1650,10 @@ else
   warndlg('not all values are set - cannot start dose calculation'); 
   Flag = false;
 end
-%% replace old cst by new cst values and check for deleted objectives
+
 
 % --- Executes on button press in btnuiTableAdd.
-function btnuiTableAdd_Callback(hObject, eventdata, handles)
+function btnuiTableAdd_Callback(hObject, ~, handles)
 % hObject    handle to btnuiTableAdd (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -1628,7 +1700,7 @@ UpdateState(handles);
 btnTableSave_Callback(hObject, eventdata, handles);
 
 % --- Executes when selected cell(s) is changed in uiTable.
-function uiTable_CellSelectionCallback(hObject, eventdata, handles)
+function uiTable_CellSelectionCallback(hObject, eventdata, ~)
 % hObject    handle to uiTable (see GCBO)
 % eventdata  structure with the following fields (see MATLAB.UI.CONTROL.TABLE)
 %	Indices: row and column indices of the cell(s) currently selecteds
@@ -1816,12 +1888,7 @@ if Val < 0
   FlagValidity = false;  
 end
 
-% if FlagValidity ==false
-%       set(hObj,'BackgroundColor','r');
-% else
-%       set(hObj,'BackgroundColor',[0.94 0.94 0.94]);
-% end
-      
+% enables/ disables buttons according to the current state      
 function UpdateState(handles)
 
  switch handles.State
@@ -1854,7 +1921,7 @@ function UpdateState(handles)
       end
      
      case 3
-      pln = evalin('base','pln');
+
       set(handles.txtInfo,'String','plan is optimized');   
       set(handles.btnCalcDose,'Enable','on');
       set(handles.btnOptimize ,'Enable','on');
@@ -1869,7 +1936,7 @@ function UpdateState(handles)
 
  
  
-% fill gui elements with plan 
+% fill GUI elements with plan information
 function setPln(handles)
 pln=evalin('base','pln');
 set(handles.editBixelWidth,'String',num2str(pln.bixelWidth));
@@ -1882,6 +1949,7 @@ end
 set(handles.editGantryAngle,'String',num2str((pln.gantryAngles)));
 set(handles.editCouchAngle,'String',num2str((pln.couchAngles)));
 set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),pln.radiationMode)));
+set(handles.popUpMachine,'Value',find(strcmp(get(handles.popUpMachine,'String'),pln.machine)));
 
 if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                             && strcmp(pln.radiationMode,'carbon')  
@@ -1924,7 +1992,7 @@ else
 end
 
  
-% get pln file form gui     
+% get pln file form GUI     
 function getPln(handles)
 
 pln.SAD             = parseStringAsNum(get(handles.editSAD,'String'),false); %[mm]
@@ -1939,8 +2007,10 @@ try
 catch
 end
 pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'),false);
-contents                    = get(handles.popupRadMode,'String'); 
-pln.radiationMode   =  contents{get(handles.popupRadMode,'Value')}; % either photons / protons / carbon
+contents            = get(handles.popupRadMode,'String'); 
+pln.radiationMode   = contents{get(handles.popupRadMode,'Value')}; % either photons / protons / carbon
+contents            = get(handles.popUpMachine,'String'); 
+pln.machine         = contents{get(handles.popUpMachine,'Value')}; 
 
 if (logical(get(handles.radbtnBioOpt,'Value')) && strcmp(pln.radiationMode,'carbon'))
     pln.bioOptimization =get(handles.btnTypBioOpt,'String');
@@ -1956,7 +2026,7 @@ try
     if sum(strcmp('TARGET',cst(:,3)))>0 && get(handles.checkIsoCenter,'Value')
        pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
     else
-       pln.isoCenter = str2num(get(handles.editIsoCenter,'String'));
+       pln.isoCenter = str2double(get(handles.editIsoCenter,'String'));
     end
 catch
     warning('couldnt set isocenter in getPln function')
@@ -1972,7 +2042,7 @@ function Number = parseStringAsNum(stringIn,isVector)
 end
 
 % --- Executes on button press in btnTableSave.
-function btnTableSave_Callback(hObject, eventdata, handles)
+function btnTableSave_Callback(~, ~, handles)
 % hObject    handle to btnTableSave (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -1987,7 +2057,7 @@ getPln(handles);
 
 
 % --- Executes on button press in btnDVH.
-function btnDVH_Callback(hObject, eventdata, handles)
+function btnDVH_Callback(~, ~, ~)
 % hObject    handle to btnDVH (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -1995,7 +2065,7 @@ matRad_calcDVH(evalin('base','resultGUI'),evalin('base','cst'))
 
 
 % --- Executes on selection change in listBoxCmd.
-function listBoxCmd_Callback(hObject, eventdata, handles)
+function listBoxCmd_Callback(hObject, ~, ~)
 % hObject    handle to listBoxCmd (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -2006,7 +2076,7 @@ numLines = size(get(hObject,'String'),1);
 set(hObject, 'ListboxTop', numLines);
 
 % --- Executes during object creation, after setting all properties.
-function listBoxCmd_CreateFcn(hObject, eventdata, handles)
+function listBoxCmd_CreateFcn(hObject, ~, ~)
 % hObject    handle to listBoxCmd (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -2019,7 +2089,7 @@ end
 
 
 % --- Executes on button press in radiobtnIsoDoseLinesLabels.
-function radiobtnIsoDoseLinesLabels_Callback(hObject, eventdata, handles)
+function radiobtnIsoDoseLinesLabels_Callback(~, ~, handles)
 % hObject    handle to radiobtnIsoDoseLinesLabels (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -2029,7 +2099,7 @@ UpdatePlot(handles);
 
 
 % --- Executes on slider movement.
-function sliderOffset_Callback(hObject, eventdata, handles)
+function sliderOffset_Callback(hObject, ~, handles)
 % hObject    handle to sliderOffset (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -2040,7 +2110,7 @@ handles.profileOffset = get(hObject,'Value');
 UpdatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
-function sliderOffset_CreateFcn(hObject, eventdata, handles)
+function sliderOffset_CreateFcn(hObject, ~, ~)
 % hObject    handle to sliderOffset (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -2052,41 +2122,80 @@ end
 
 
 % --------------------------------------------------------------------
-function About_Callback(hObject, eventdata, handles)
+function About_Callback(~, ~, ~)
 % hObject    handle to About (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-h=msgbox({'https://github.com/e0404/matRad/' 'matrad@dkfz.de'},'About','custom',myicon);
+msgbox({'https://github.com/e0404/matRad/' 'matrad@dkfz.de'},'About','custom',myicon);
 
 
 
 
 % --- Executes on button press in btnRefresh.
-function btnRefresh_Callback(hObject, eventdata, handles)
+function btnRefresh_Callback(hObject, ~, handles)
 % hObject    handle to btnRefresh (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-setPln(handles);
-setCstTable(handles,evalin('base','cst'));
-% set state
 
-VarNames = evalin('base','who');
-Flag = (ismember({'ct','cst','pln','stf','dij','resultGUI'},VarNames));
 
-if sum(Flag(:))== 0
-    handles.State = 0;
-end
-if sum(Flag(1:4))==4
-    handles.State = 1;
-end
-if sum(Flag(1:5))==5
-    handles.State = 2;
-end
-if sum(Flag(1:6))==6
-    handles.State = 3;  
+%parse variables from base workspace
+AllVarNames = evalin('base','who');
+handles.State = 0;
+
+if ~isempty(AllVarNames)
+    try
+         if  sum(ismember(AllVarNames,'ct')) > 0
+            % do nothing
+        else
+             handles = showError(handles,'BtnRefreshCallback: cst struct is missing');
+         end
+
+        if  sum(ismember(AllVarNames,'cst')) > 0
+            setCstTable(handles,evalin('base','cst'));
+        else
+             handles = showError(handles,'BtnRefreshCallback: cst struct is missing');
+        end
+
+        if sum(ismember(AllVarNames,'pln')) > 0
+             setPln(handles);
+        else
+            getPln(handles);
+        end
+       handles.State = 1;
+
+    catch
+        handles = showError(handles,'BtnRefreshCallback: Could not load ct/cst/pln');
+        guidata(hObject,handles);
+        return;
+    end
+
+    % check if a optimized plan was loaded
+    if sum(ismember(AllVarNames,'stf')) > 0  && sum(ismember(AllVarNames,'dij')) > 0
+        handles.State = 2;
+    end
+
+    if sum(ismember(AllVarNames,'resultGUI')) > 0
+        handles.State = 3;
+        handles.State = 3;
+        handles.SelectedDisplayOptionIdx = 1;
+        handles.SelectedDisplayOption='physicalDose';
+        handles.SelectedBeam = 1;
+    end
+
+    if handles.State > 0
+        ct = evalin('base','ct');
+        set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
+                'Value',ceil(size(ct.cube,handles.plane)/2),...
+                'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);      
+    end
+
 end
 guidata(hObject,handles);
 UpdatePlot(handles);
+UpdateState(handles);
+
+
+
 
 
 % --------------------------------------------------------------------
@@ -2094,29 +2203,44 @@ function toolbarSave_ClickedCallback(hObject, eventdata, handles)
 % hObject    handle to toolbarSave (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
 % save Plan and Table to workspace
 btnTableSave_Callback(hObject, eventdata, handles);
 
-VarNames = evalin('base','who');
-Flag = sum(ismember({'ct','cst','pln','resultGUI','stf','dij'},VarNames));
+try
 
-%save cst,ct,resultGUI,pln,stf to disk
-if Flag == 6
-    ct = evalin('base','ct');
-    cst = evalin('base','cst');
-    pln = evalin('base','pln');
-    resultGUI = evalin('base','resultGUI');
-    stf = evalin('base','stf');
-    dij = evalin('base','dij');
-    uisave({'cst','ct','pln','resultGUI','stf','dij'});
-else
-    %% warning dialog - only optimized plans can be saved
-     warndlg('for consistency reasons it is just possible to save optimized plans'); 
+    if handles.State > 0
+        ct  = evalin('base','ct');
+        cst = evalin('base','cst');
+        pln = evalin('base','pln');
+    end
+
+    if handles.State > 1
+       stf = evalin('base','stf');
+       dij = evalin('base','dij');
+    end
+
+    if handles.State > 2
+       resultGUI = evalin('base','resultGUI');
+    end
+
+    switch handles.State
+        case 1
+            uisave({'cst','ct','pln'});
+        case 2
+            uisave({'cst','ct','pln','stf','dij'});
+        case 3
+            uisave({'cst','ct','pln','stf','dij','resultGUI'});
+    end
+
+catch
+     handles = showWarning(handles,'Could not save files'); 
 end
+guidata(hObject,handles);
 
 
 
-function editNumIter_Callback(hObject, eventdata, handles)
+function editNumIter_Callback(hObject, ~, ~)
 % hObject    handle to editNumIter (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -2127,7 +2251,7 @@ val=round(str2double(get(hObject,'String')));
 set(hObject,'String',num2str(val));
 
 % --- Executes during object creation, after setting all properties.
-function editNumIter_CreateFcn(hObject, eventdata, handles)
+function editNumIter_CreateFcn(hObject, ~, ~)
 % hObject    handle to editNumIter (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -2140,7 +2264,7 @@ end
 
 
 % --- Executes on slider movement.
-function slicerPrecision_Callback(hObject, eventdata, handles)
+function slicerPrecision_Callback(hObject, ~, handles)
 % hObject    handle to slicerPrecision (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -2152,7 +2276,7 @@ set(hObject,'Value',round(val))
 set(handles.txtPrecisionOutput,'String',['1e-' num2str(round(val))]);
 
 % --- Executes during object creation, after setting all properties.
-function slicerPrecision_CreateFcn(hObject, eventdata, handles)
+function slicerPrecision_CreateFcn(hObject, ~, ~)
 % hObject    handle to slicerPrecision (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -2164,7 +2288,7 @@ end
 
 
 % --- Executes on button press in btnTypBioOpt.
-function btnTypBioOpt_Callback(hObject, eventdata, handles)
+function btnTypBioOpt_Callback(hObject, ~, handles)
 % hObject    handle to btnTypBioOpt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -2177,15 +2301,17 @@ end
 
 
 % --- Executes on button press in btnSequencing.
-function btnSequencing_Callback(hObject, eventdata, handles)
+function btnSequencing_Callback(hObject, ~, handles)
 % hObject    handle to btnSequencing (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-StratificationLevel = str2num(get(handles.editSequencingLevel,'String'));
-resultGUI=evalin('base','resultGUI');
-pln = evalin('base','pln');
+StratificationLevel = str2double(get(handles.editSequencingLevel,'String'));
+resultGUI   = evalin('base','resultGUI');
+pln         = evalin('base','pln');
 resultGUI.w = resultGUI.wUnsequenced;
-% perform sequencing and dao
+
+% perform sequencing 
+try
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
 %   resultGUI = matRad_xiaLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
@@ -2194,13 +2320,22 @@ if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
         ,StratificationLevel,1);
     assignin('base','resultGUI',resultGUI);
 end
+catch
+   handles = showError(handles,'BtnSequencingCallback: Could not perform sequencing');
+   guidata(hObject,handles);
+end
 
 %% DAO
+try
 if strcmp(pln.radiationMode,'photons') && pln.runDAO
    resultGUI = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst')...
        ,resultGUI.apertureInfo,resultGUI,1);
    matRad_visApertureInfo(resultGUI.apertureInfo);
    assignin('base','resultGUI',resultGUI);
+end
+catch 
+   handles = showError(handles,'BtnSequencingCallback: Could not perform direct aperture optimization');
+   guidata(hObject,handles);
 end
 
 guidata(hObject,handles);
@@ -2211,7 +2346,7 @@ UpdateState(handles);
 
 
 
-function editSequencingLevel_Callback(hObject, eventdata, handles)
+function editSequencingLevel_Callback(~, ~, ~)
 % hObject    handle to editSequencingLevel (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -2221,7 +2356,7 @@ function editSequencingLevel_Callback(hObject, eventdata, handles)
 
 
 % --- Executes during object creation, after setting all properties.
-function editSequencingLevel_CreateFcn(hObject, eventdata, handles)
+function editSequencingLevel_CreateFcn(hObject, ~, ~)
 % hObject    handle to editSequencingLevel (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -2234,26 +2369,31 @@ end
 
 
 
-function editIsoCenter_Callback(hObject, eventdata, handles)
+function editIsoCenter_Callback(hObject, ~, handles)
 % hObject    handle to editIsoCenter (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of editIsoCenter as text
-%        str2double(get(hObject,'String')) returns contents of editIsoCenter as a double
-pln=evalin('base','pln');
-if ~get(handles.checkIsoCenter,'Value')
-   TmpIsoCenter = str2num(get(hObject,'String'));
-   if length(TmpIsoCenter) == 3
-       pln.isoCenter =  TmpIsoCenter;
-   end
+try
+    if handles.State > 0
+        pln=evalin('base','pln');
+        if ~get(handles.checkIsoCenter,'Value')
+           TmpIsoCenter = str2double(get(hObject,'String'));
+           if length(TmpIsoCenter) == 3
+               pln.isoCenter =  TmpIsoCenter;
+           end
+        end
+    end
+    assignin('base','pln',pln);
+    handles.State = 1;
+    UpdateState(handles);
+catch 
+    handles = showError(handles,'EditIsoCenterCallback: Could not set iso center');
+    guidata(hObject,handles);
 end
-assignin('base','pln',pln);
-handles.State = 1;
-UpdateState(handles);
+guidata(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
-function editIsoCenter_CreateFcn(hObject, eventdata, handles)
+function editIsoCenter_CreateFcn(hObject, ~, ~)
 % hObject    handle to editIsoCenter (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -2266,7 +2406,7 @@ end
 
 
 % --- Executes on button press in checkIsoCenter.
-function checkIsoCenter_Callback(hObject, eventdata, handles)
+function checkIsoCenter_Callback(hObject, ~, handles)
 % hObject    handle to checkIsoCenter (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -2284,14 +2424,14 @@ end
 
 
 % --- Executes on button press in btnRunSequencing.
-function btnRunSequencing_Callback(hObject, eventdata, handles)
+function btnRunSequencing_Callback(~, ~, handles)
 % hObject    handle to btnRunSequencing (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 getPln(handles);
 
 % --- Executes on button press in btnRunDAO.
-function btnRunDAO_Callback(hObject, eventdata, handles)
+function btnRunDAO_Callback(~, ~, handles)
 % hObject    handle to btnRunDAO (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -2299,7 +2439,7 @@ getPln(handles);
 
 
 
-function txtMaxDoseVal_Callback(hObject, eventdata, handles)
+function txtMaxDoseVal_Callback(hObject, ~, handles)
 % hObject    handle to txtMaxDoseVal (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -2311,7 +2451,7 @@ guidata(hObject,handles);
 UpdatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
-function txtMaxDoseVal_CreateFcn(hObject, eventdata, handles)
+function txtMaxDoseVal_CreateFcn(hObject, ~, ~)
 % hObject    handle to txtMaxDoseVal (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -2325,7 +2465,7 @@ end
 
 
 % --- Executes on button press in btnSetIsoDoseLevels.
-function btnSetIsoDoseLevels_Callback(hObject, eventdata, handles)
+function btnSetIsoDoseLevels_Callback(hObject, ~, handles)
 % hObject    handle to btnSetIsoDoseLevels (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -2335,8 +2475,8 @@ def = {'60','20 40 60 80 90 95 100 105 110'};
 Input = inputdlg(prompt,'Set iso dose levels ', [1 50],def);
 try
 if ~isempty(Input)
-     handles.IsoDose.RefVal = str2num(Input{1,:});
-     handles.IsoDose.Levels = sort(str2num(Input{2,:})); 
+     handles.IsoDose.RefVal = str2double(Input{1,:});
+     handles.IsoDose.Levels = sort(str2double(Input{2,:})); 
      if length(handles.IsoDose.Levels) == 1
          handles.IsoDose.Levels = [handles.IsoDose.Levels handles.IsoDose.Levels];
      end
@@ -2348,5 +2488,77 @@ catch
 end
 UpdatePlot(handles);
 guidata(hObject,handles);
+
+
+
+% --- Executes on selection change in popUpMachine.
+function popUpMachine_Callback(hObject, ~, handles)
+% hObject    handle to popUpMachine (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popUpMachine contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popUpMachine
+contents = cellstr(get(hObject,'String'));
+checkRadiationComposition(handles);
+if handles.State>0
+    pln = evalin('base','pln');
+    if handles.State>0 && ~strcmp(contents(get(hObject,'Value')),pln.machine)
+        handles.State=1;
+        UpdateState(handles);
+        guidata(hObject,handles);
+    end
+   getPln(handles);
+end
+
+
+function Valid = checkRadiationComposition(handles)
+Valid = true;
+contents = cellstr(get(handles.popUpMachine,'String'));
+Machine = contents{get(handles.popUpMachine,'Value')};
+contents = cellstr(get(handles.popupRadMode,'String'));
+radMod = contents{get(handles.popupRadMode,'Value')};
+
+FoundFile = dir([radMod '_' Machine '.mat']);
+
+if isempty(FoundFile)
+    warndlg(['No base available for machine: ' Machine]);
+    Valid = false;
+end
+
+% --- Executes during object creation, after setting all properties.
+function popUpMachine_CreateFcn(hObject, ~, ~)
+% hObject    handle to popUpMachine (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function handles = showError(handles,Message)
+
+if isfield(handles,'ErrorDlg')
+    close(handles.ErrorDlg);
+end
+ handles.ErrorDlg = errordlg(Message);
+
+ function handles = showWarning(handles,Message)
+
+if isfield(handles,'WarnDlg')
+    close(handles.WarnDlg);
+end
+ handles.WarnDlg = warndlg(Message);
+
+
+% --------------------------------------------------------------------
+function toolbarLoad_ClickedCallback(hObject, eventdata, handles)
+% hObject    handle to toolbarLoad (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+btnLoadMat_Callback(hObject, eventdata, handles);
 
 

@@ -93,7 +93,12 @@ useCustomPrimFluenceBool = 0;
 
 %% kernel convolution
 % load polynomial fits for kernels ppKernel1, ppKernel2, ppKernel3
-load photonPencilBeamKernels_6MV.mat;
+fileName = [pln.radiationMode '_' pln.machine];
+try
+   load(fileName);
+catch
+   error(['Could not find the following machine file: ' fileName ]); 
+end
 
 % Make a 2D grid extending +/-100mm with 0.1 mm resolution
 convLimits = 100; % [mm]
@@ -101,9 +106,9 @@ convResolution = .5; % [mm]
 [X,Z] = meshgrid(-convLimits:convResolution:convLimits);
                           
 % Evaluate piecewise polynomial kernels
-kernel1Mx = ppval(ppKernel1,sqrt(X.^2+Z.^2));
-kernel2Mx = ppval(ppKernel2,sqrt(X.^2+Z.^2));
-kernel3Mx = ppval(ppKernel3,sqrt(X.^2+Z.^2));
+kernel1Mx = ppval(machine.data.ppKernel1,sqrt(X.^2+Z.^2));
+kernel2Mx = ppval(machine.data.ppKernel2,sqrt(X.^2+Z.^2));
+kernel3Mx = ppval(machine.data.ppKernel3,sqrt(X.^2+Z.^2));
 
 % Create zero matrix for the Fluence
 F = zeros(size(X));
@@ -223,7 +228,8 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                         visBool);
         
         % calculate photon dose for beam i and bixel j
-        bixelDose = matRad_calcPhotonDoseBixel(pln.SAD,m,betas, ...
+        bixelDose = matRad_calcPhotonDoseBixel(pln.SAD,machine.data.m,...
+                                               machine.data.betas, ...
                                                Interp_kernel1,...
                                                Interp_kernel2,...
                                                Interp_kernel3,...

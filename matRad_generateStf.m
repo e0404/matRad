@@ -90,27 +90,23 @@ if isempty(V)
 end
 
 % prepare structures necessary for particles
+fileName = [pln.radiationMode '_' pln.machine];
+try
+   load(fileName);
+catch
+   error(['Could not find the following machine file: ' fileName ]); 
+end
+
 if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-    
-    % load base data    
-    if strcmp(pln.radiationMode,'protons')
-        load protonBaseData;
-    elseif  strcmp(pln.radiationMode,'carbon')
-        load carbonBaseData;
-    end
-    
-    availableEnergies = [baseData.energy];
-    availablePeakPos  = [baseData.peakPos] + [baseData.offset];
+      
+    availableEnergies = [machine.data.energy];
+    availablePeakPos  = [machine.data.peakPos] + [machine.data.offset];
     
     if sum(availablePeakPos<0)>0
-       error('at least one available peak position is negative - inconsistent basedata') 
+       error('at least one available peak position is negative - inconsistent machine file') 
     end
 
-    clear baseData;
-    
-elseif strcmp(pln.radiationMode,'photons')
-    
-    load photonPencilBeamKernels_6MV;
+    clear machine;
 
 end
 
@@ -272,11 +268,31 @@ for i = 1:length(pln.gantryAngles)
                 % Save energies in stf struct
                 for k = 1:numel(targetEntry)
                     stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
+                    % adjust spot spacing according to pln.bixelWidth when using HIT basedata
+                    %DefaultLongitudialSpotSpacing = pln.bixelWidth;  % in [mm]
+                    DefaultLongitudialSpotSpacing = 3;
+                    if strcmp(pln.machine,'HIT') && length(stf(i).ray(j).energy)>2
+                        Tolerance = 0.5;
+                        hasNext = true;
+                        CntEnergy =2;
+                        while hasNext
+                            if abs(stf(i).ray(j).energy(CntEnergy)-stf(i).ray(j).energy(CntEnergy-1))<...
+                                    DefaultLongitudialSpotSpacing-Tolerance
+                                stf(i).ray(j).energy(CntEnergy)=[];
+                            else
+                                CntEnergy = CntEnergy+1;
+                            end
+                            if CntEnergy == length(stf(i).ray(j).energy)
+                                hasNext = false;
+                            end
+                        end
+                    end
+                    
                 end
                 
                 
             else % target not hit
-                stf(i).ray(j)               = [];
+                stf(i).ray(j) = [];
             end
                         
         end
@@ -290,7 +306,7 @@ for i = 1:length(pln.gantryAngles)
     elseif strcmp(stf(i).radiationMode,'photons')
         % set dummy values for photons
         for j = 1:stf(i).numOfRays
-            stf(i).ray(j).energy = energy;
+            stf(i).ray(j).energy = machine.data.energy;
             stf(i).numOfBixelsPerRay(j) = 1;
         end
     else
@@ -300,6 +316,11 @@ for i = 1:length(pln.gantryAngles)
     
     % save total number of bixels
     stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
+    
+%     figure,
+%     for jj = 1:length(stf.ray)
+%        plot(stf.ray(jj).rayPos_bev(1),stf.ray(jj).rayPos_bev(3),'rx'),hold on 
+%     end
     
     %% visualization
     if visMode > 0

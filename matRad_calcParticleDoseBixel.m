@@ -10,6 +10,7 @@ function dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,baseData)
 %   radDepths:      radiological depths
 %   radialDist_sq:  squared radial distance in BEV from central ray
 %   baseData:       base data required for particle dose calculation
+%   pln:            matRad's pln struct
 %
 % output
 %   dose:   particle dose at specified locations as linear vector
@@ -43,21 +44,31 @@ function dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,baseData)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-
 % range shift
 depths = baseData.depths + baseData.offset;
 
-% interpolate sigma
-sigma = interp1(depths,baseData.sigma,radDepths);
+% convert from MeV cm^2/g per primary to Gy mm^2 per 1e6 primaries
+conversionFactor = 1.6021766208e-02;
 
-% interpolate depth dose and convert units from MeV cm^2/g per primary to
-% Gy mm^2 per 1e6 primaries
-ConversionFactor = 1.6021766208e-02;
-Z = interp1(depths,baseData.Z,radDepths) .* ConversionFactor;
+if ~isfield(baseData,'sigma')
+    
+    % interpolate depth dose, sigmas, and weights    
+    X = interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths,'linear');
+    
+    % calculate lateral profile
+    L_Narr =  exp( -radialDist_sq ./ (2*X(:,2).^2))./(2*pi*X(:,2).^2);
+    L_Bro  =  exp( -radialDist_sq ./ (2*X(:,4).^2))./(2*pi*X(:,4).^2);
+    L = baseData.LatCutOff.CompFac * ((1-(X(:,3))).*L_Narr) + (X(:,3).*L_Bro);
 
-% calculate dose
-dose = exp( -radialDist_sq ./ (2*sigma.^2)) .* Z ./(2*pi*sigma.^2);
+    dose = X(:,1).*L;
+else
+    
+    % interpolate depth dose and sigma
+    X = interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths,'linear');
+
+    % calculate dose
+    dose = baseData.LatCutOff.CompFac * exp( -radialDist_sq ./ (2*X(:,2).^2)) .* X(:,1) ./(2*pi*X(:,2).^2);
+    
+ end
  
-
-
+ 
