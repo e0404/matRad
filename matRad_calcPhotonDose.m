@@ -52,6 +52,10 @@ end
 
 % initialize waitbar
 figureWait=waitbar(0,'photon dij-calculation..');
+% prevent closure of waitbar and show busy state
+set(figureWait,'CloseRequestFcn','');
+set(figureWait,'pointer','watch');
+
 % meta information for dij
 dij.numOfBeams         = pln.numOfBeams;
 dij.numOfVoxels        = pln.numOfVoxels;
@@ -250,4 +254,5 @@ for i = 1:dij.numOfBeams; % loop over all beams
     end
 end
 
-close(figureWait);
+delete(figureWait);
+

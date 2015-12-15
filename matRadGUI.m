@@ -327,7 +327,9 @@ try
         end
     end
     handles.State = 0;
-    addpath([pwd filesep 'dicomImport']);
+    if ~isdeployed
+        addpath([pwd filesep 'dicomImport']);
+    end
     matRad_importDicomGUI;
  
 catch
@@ -571,6 +573,15 @@ function btnCalcDose_Callback(hObject, ~, handles)
 % wait some time until the CallEditCallback is finished 
 % Callback triggers the cst saving mechanism from GUI
 try
+    % indicate that matRad is busy
+    % change mouse pointer to hour glass 
+    Figures = findobj('type','figure');
+    set(Figures, 'pointer', 'watch'); 
+    drawnow;
+    % disable all active objects
+    InterfaceObj = findobj(Figures,'Enable','on');
+    set(InterfaceObj,'Enable','off');
+    
     pause(0.1);
     uiTable_CellEditCallback(hObject,[],handles);
     pause(0.3);
@@ -645,6 +656,14 @@ catch
     guidata(hObject,handles);
     return;
 end
+
+% change state from busy to normal
+set(Figures, 'pointer', 'arrow');
+set(InterfaceObj,'Enable','on');
+
+guidata(hObject,handles);  
+
+
 
 %% plots ct and distributions
 function UpdatePlot(handles)
@@ -1203,6 +1222,14 @@ function btnOptimize_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 try
+    % indicate that matRad is busy
+    % change mouse pointer to hour glass 
+    Figures = findobj('type','figure');
+    set(Figures, 'pointer', 'watch'); 
+    drawnow;
+    % disable all active objects
+    InterfaceObj = findobj(Figures,'Enable','on');
+    set(InterfaceObj,'Enable','off');
     % wait until the table is updated
     pause(0.1);
     uiTable_CellEditCallback(hObject,[],handles);
@@ -1281,15 +1308,23 @@ try
     if strcmp(pln.radiationMode,'photons') && pln.runDAO
        resultGUI = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst')...
            ,resultGUI.apertureInfo,resultGUI,1);
-       matRad_visApertureInfo(resultGUI.apertureInfo);
        assignin('base','resultGUI',resultGUI);
     end
+    
+    if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
+        matRad_visApertureInfo(resultGUI.apertureInfo);
+    end
+
 catch
    handles = showError(handles,'OptimizeCallback: Could not perform direct aperture optimization'); 
    guidata(hObject,handles);
    return;
 end
 
+% change state from busy to normal
+set(Figures, 'pointer', 'arrow');
+set(InterfaceObj,'Enable','on');
+    
 guidata(hObject,handles);
 
 
@@ -2305,6 +2340,16 @@ function btnSequencing_Callback(hObject, ~, handles)
 % hObject    handle to btnSequencing (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+% indicate that matRad is busy
+% change mouse pointer to hour glass 
+Figures = findobj('type','figure');
+set(Figures, 'pointer', 'watch'); 
+drawnow;
+% disable all active objects
+InterfaceObj = findobj(Figures,'Enable','on');
+set(InterfaceObj,'Enable','off');
+
 StratificationLevel = str2double(get(handles.editSequencingLevel,'String'));
 resultGUI   = evalin('base','resultGUI');
 pln         = evalin('base','pln');
@@ -2337,6 +2382,10 @@ catch
    handles = showError(handles,'BtnSequencingCallback: Could not perform direct aperture optimization');
    guidata(hObject,handles);
 end
+
+% change state from busy to normal
+set(Figures, 'pointer', 'arrow');
+set(InterfaceObj,'Enable','on');
 
 guidata(hObject,handles);
 UpdatePlot(handles);
@@ -2562,3 +2611,19 @@ function toolbarLoad_ClickedCallback(hObject, eventdata, handles)
 btnLoadMat_Callback(hObject, eventdata, handles);
 
 
+% --- Executes when user attempts to close figure1.
+function figure1_CloseRequestFcn(hObject, ~, ~)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: delete(hObject) closes the figure
+selection = questdlg('Do you really want to close matRad?',...
+                     'Close matRad',...
+                     'Yes','No','Yes');
+ switch selection,
+   case 'Yes',
+     delete(hObject);
+   case 'No'
+     return
+end
