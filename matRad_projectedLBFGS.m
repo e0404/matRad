@@ -85,7 +85,11 @@ if visBool
             figOpt=figure('Name','Progress of Optimization','NumberTitle','off');
             hold on, grid on, grid minor,
             AxesInfigOpt = findall(figOpt,'type','axes');
-        end 
+        end
+        % prevent closure of window and show busy state
+        set(figOpt,'CloseRequestFcn','');
+        set(figOpt,'pointer','watch');
+        
         set(AxesInfigOpt,'YScale','log');
         title(AxesInfigOpt,'Progress of Optimization','LineWidth',14),
         xlabel(AxesInfigOpt,'# iterations','Fontsize',14),ylabel(AxesInfigOpt,'objective function value','Fontsize',14)
@@ -231,6 +235,12 @@ while continueOpt == 1
         drawnow
     end
     
+end
+
+% revert busy state and enable close button
+if visBool
+    set(figOpt,'CloseRequestFcn',get(0,'DefaultFigureCloseRequestFcn'));
+    set(figOpt,'pointer','arrow');
 end
 
 fprintf(['\n' num2str(iter) ' iteration(s) performed to converge\n'])
