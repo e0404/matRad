@@ -161,22 +161,20 @@ for i = 1:length(pln.gantryAngles)
                                           zeros(size(coordsAtIsoCenterPlane,1),1) ...
                                                       coordsAtIsoCenterPlane(:,2)]/pln.bixelWidth),'rows');
                                                   
-% pad ray position array if resolution of target voxel grid not sufficient
-     if pln.bixelWidth<max([ct.resolution.x ct.resolution.y ct.resolution.z])
+    % pad ray position array if resolution of target voxel grid not sufficient
+    maxCtResolution = max([ct.resolution.x ct.resolution.y ct.resolution.z]);
+    if pln.bixelWidth < maxCtResolution
         origRayPos = rayPos;
-        maxRes = max(structfun(@(x)max(x(:)),ct.resolution));
-        for j = -floor(maxRes/pln.bixelWidth):floor(maxRes/pln.bixelWidth)
-            for k = -floor(maxRes/pln.bixelWidth):floor(maxRes/pln.bixelWidth)
+        for j = -floor(maxCtResolution/pln.bixelWidth):floor(maxCtResolution/pln.bixelWidth)
+            for k = -floor(maxCtResolution/pln.bixelWidth):floor(maxCtResolution/pln.bixelWidth)
                 if abs(j)+abs(k)==0
                     continue;
-                end
-                
+                end                
                 rayPos = [rayPos; origRayPos(:,1)+j*pln.bixelWidth origRayPos(:,2) origRayPos(:,3)+k*pln.bixelWidth];
-                                
             end
         end
      end
-     
+
      % remove spaces within rows of bixels for DAO
      if pln.runDAO
          % create single x,y,z vectors
