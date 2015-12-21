@@ -129,9 +129,6 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
     fprintf('...done \n');
 end
 
-% source position in beam's eye view.
-sourcePoint_bev = [0 -pln.SAD 0];
-
 % determine lateral cutoff
 fprintf('matRad: calculate lateral cutoff... ');
 cutOffLevel = 0.99;
@@ -160,9 +157,9 @@ for i = 1:dij.numOfBeams; % loop over all beams
     % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
     rot_coordsV = coordsV*inv_rotMx_XZ_T*inv_rotMx_XY_T;
     
-    rot_coordsV(:,1) = rot_coordsV(:,1)-sourcePoint_bev(1);
-    rot_coordsV(:,2) = rot_coordsV(:,2)-sourcePoint_bev(2);
-    rot_coordsV(:,3) = rot_coordsV(:,3)-sourcePoint_bev(3);
+    rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
+    rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
+    rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
     
     for j = 1:stf(i).numOfRays % loop over all rays
         
@@ -184,7 +181,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                         ct.resolution, ...
                                                         stf(i).sourcePoint, ...
                                                         stf(i).ray(j).targetPoint, ...
-                                                        sourcePoint_bev,...
+                                                        stf(i).sourcePoint_bev,...
                                                         stf(i).ray(j).targetPoint_bev, ...
                                                         coordsV, ...
                                                         maxLateralCutoff, ...

@@ -209,7 +209,7 @@ for i = 1:length(pln.gantryAngles)
     end
     
     % source position in bev
-    sourcePoint_bev = [0 -pln.SAD 0];
+    stf(i).sourcePoint_bev = [0 -pln.SAD 0];
     
     % compute coordinates in lps coordinate system, i.e. rotate beam
     % geometry around fixed patient; use transpose matrices because we are
@@ -226,7 +226,7 @@ for i = 1:length(pln.gantryAngles)
                   sind(pln.couchAngles(i)) 0  cosd(pln.couchAngles(i))];
     
     % Rotated Source point (1st gantry, 2nd couch)
-    stf(i).sourcePoint = sourcePoint_bev*rotMx_XY_T*rotMx_XZ_T;
+    stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMx_XY_T*rotMx_XZ_T;
     
     % Save ray and target position in lps system.
     for j = 1:stf(i).numOfRays
@@ -384,10 +384,10 @@ for i = 1:length(pln.gantryAngles)
             targetPoint_vox_Z_4 = stf(i).ray(j).targetPoint_bev(:,3) + pln.bixelWidth;
             
             % plot
-            plot3([sourcePoint_bev(1) targetPoint_vox_X_1],[sourcePoint_bev(2) targetPoint_vox_Y_1],[sourcePoint_bev(3) targetPoint_vox_Z_1],'g')
-            plot3([sourcePoint_bev(1) targetPoint_vox_X_2],[sourcePoint_bev(2) targetPoint_vox_Y_2],[sourcePoint_bev(3) targetPoint_vox_Z_2],'g')
-            plot3([sourcePoint_bev(1) targetPoint_vox_X_3],[sourcePoint_bev(2) targetPoint_vox_Y_3],[sourcePoint_bev(3) targetPoint_vox_Z_3],'g')
-            plot3([sourcePoint_bev(1) targetPoint_vox_X_4],[sourcePoint_bev(2) targetPoint_vox_Y_4],[sourcePoint_bev(3) targetPoint_vox_Z_4],'g')
+            plot3([stf(i).sourcePoint_bev(1) targetPoint_vox_X_1],[stf(i).sourcePoint_bev(2) targetPoint_vox_Y_1],[stf(i).sourcePoint_bev(3) targetPoint_vox_Z_1],'g')
+            plot3([stf(i).sourcePoint_bev(1) targetPoint_vox_X_2],[stf(i).sourcePoint_bev(2) targetPoint_vox_Y_2],[stf(i).sourcePoint_bev(3) targetPoint_vox_Z_2],'g')
+            plot3([stf(i).sourcePoint_bev(1) targetPoint_vox_X_3],[stf(i).sourcePoint_bev(2) targetPoint_vox_Y_3],[stf(i).sourcePoint_bev(3) targetPoint_vox_Z_3],'g')
+            plot3([stf(i).sourcePoint_bev(1) targetPoint_vox_X_4],[stf(i).sourcePoint_bev(2) targetPoint_vox_Y_4],[stf(i).sourcePoint_bev(3) targetPoint_vox_Z_4],'g')
             
         end
         
