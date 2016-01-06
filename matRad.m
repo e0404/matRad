@@ -39,7 +39,6 @@ load HEAD_AND_NECK
 %load BOXPHANTOM.mat
 
 % meta information for treatment plan
-pln.SAD             = 1000; %[mm]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = [0:72:359]; % [°]
