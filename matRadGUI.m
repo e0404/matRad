@@ -103,6 +103,9 @@ handles.Modalities = {'photons','protons','carbon'};
 for i = 1:length(handles.Modalities)
     pattern = [handles.Modalities{1,i} '_*'];
     Files = dir(pattern);
+    if isdeployed
+        Files = [Files, dir([ctfroot filesep 'matRad' filesep pattern])];
+    end
     for j = 1:length(Files)
         if ~isempty(Files)
             MachineName = Files(j).name(numel(handles.Modalities{1,i})+2:end-4);
@@ -2569,9 +2572,11 @@ contents = cellstr(get(handles.popupRadMode,'String'));
 radMod = contents{get(handles.popupRadMode,'Value')};
 
 FoundFile = dir([radMod '_' Machine '.mat']);
-
+if isdeployed
+   FoundFile = [FoundFile, dir([ctfroot filesep 'matRad' filesep radMod '_' Machine '.mat'])];
+end
 if isempty(FoundFile)
-    warndlg(['No base available for machine: ' Machine]);
+    warndlg(['No base data available for machine: ' Machine]);
     Valid = false;
 end
 
