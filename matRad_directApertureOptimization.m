@@ -1,4 +1,4 @@
-function optResult = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,visBool,varargin)
+function optResult = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln,visBool,varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to run direct aperture optimization
 %
@@ -13,6 +13,7 @@ function optResult = matRad_directApertureOptimization(dij,cst,apertureInfo,optR
 %   optResult:  resultGUI struct to which the output data will be added, if
 %               this field is empty optResult struct will be created
 %               (optional)
+%   pln:        matRad pln struct
 %   visBool:    plots the objective function value in dependence of the
 %               number of iterations
 %   varargin:   optinal: convergence criteria for optimization and biological
@@ -51,12 +52,21 @@ function optResult = matRad_directApertureOptimization(dij,cst,apertureInfo,optR
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 5
+if nargin < 6
     visBool = 0;
 end
 
 % adjust overlap priorities
 cst = matRad_setOverlapPriorities(cst);
+
+% adjust internally for fractionation 
+for i = 1:size(cst,1)
+    for j = 1:size(cst{i,6},2)
+        if ~strcmp(cst{i,6}(j).type,'mean') && ~strcmp(cst{i,6}(j).type,'EUD')
+          cst{i,6}(j).parameter(2) = cst{i,6}(j).parameter(2)/pln.numOfFractions;
+        end
+    end
+end
 
 % get initial vector for optimization
 initApertureInfoVec = apertureInfo.apertureVector;
@@ -79,5 +89,6 @@ optResult.apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,optApertureInfo
 % override also bixel weight vector in optResult struct
 optResult.w    = optResult.apertureInfo.bixelWeights;
 optResult.wDao = optResult.apertureInfo.bixelWeights;
+
 % calc dose and reshape from 1D vector to 3D array
 optResult.physicalDose = reshape(dij.physicalDose*optResult.w,dij.dimensions);
