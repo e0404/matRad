@@ -104,7 +104,7 @@ for i = 1:length(handles.Modalities)
     pattern = [handles.Modalities{1,i} '_*'];
     Files = dir(pattern);
     if isdeployed
-        Files = [Files, dir([ctfroot '\matRad\' pattern])];
+        Files = [Files, dir([ctfroot filesep 'matRad' filesep pattern])];
     end
     for j = 1:length(Files)
         if ~isempty(Files)
@@ -2573,7 +2573,7 @@ radMod = contents{get(handles.popupRadMode,'Value')};
 
 FoundFile = dir([radMod '_' Machine '.mat']);
 if isdeployed
-   FoundFile = [FoundFile, dir([ctfroot '\matRad\' radMod '_' Machine '.mat'])];
+   FoundFile = [FoundFile, dir([ctfroot filesep 'matRad' filesep radMod '_' Machine '.mat'])];
 end
 if isempty(FoundFile)
     warndlg(['No base data available for machine: ' Machine]);
