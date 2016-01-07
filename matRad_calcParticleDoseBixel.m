@@ -10,7 +10,6 @@ function dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,baseData)
 %   radDepths:      radiological depths
 %   radialDist_sq:  squared radial distance in BEV from central ray
 %   baseData:       base data required for particle dose calculation
-%   pln:            matRad's pln struct
 %
 % output
 %   dose:   particle dose at specified locations as linear vector
