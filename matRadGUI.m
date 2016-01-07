@@ -341,33 +341,6 @@ end
 UpdateState(handles);
 guidata(hObject,handles);
 
-function editSAD_Callback(hObject, ~, handles)
-% hObject    handle to editSAD (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-getPln(handles);
-if handles.State > 0
-    handles.State = 1;
-    UpdateState(handles);
-    guidata(hObject,handles);
-end
-
-
-% --- Executes during object creation, after setting all properties.
-function editSAD_CreateFcn(hObject, ~, ~)
-% hObject    handle to editSAD (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-
 function editBixelWidth_Callback(hObject, ~, handles)
 % hObject    handle to editBixelWidth (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -961,9 +934,16 @@ elseif plane == 1 % Coronal plane
 end
 
 
-
 %% profile plot
 if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
+    % set SAD
+    fileName = [pln.radiationMode '_' pln.machine];
+    try
+        load(fileName);
+        SAD = machine.meta.SAD;
+    catch
+        error(['Could not find the following machine file: ' fileName ]); 
+    end
      
     % clear view and initialize some values
     cla(handles.axesFig,'reset')
@@ -981,11 +961,11 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
                       sind(pln.couchAngles(handles.SelectedBeam)) 0 cosd(pln.couchAngles(handles.SelectedBeam))];
     
     if strcmp(handles.ProfileType,'longitudinal')
-        sourcePointBEV = [handles.profileOffset -pln.SAD   0];
-        targetPointBEV = [handles.profileOffset  pln.SAD   0];
+        sourcePointBEV = [handles.profileOffset -SAD   0];
+        targetPointBEV = [handles.profileOffset  SAD   0];
     elseif strcmp(handles.ProfileType,'lateral')
-        sourcePointBEV = [-pln.SAD handles.profileOffset   0];
-        targetPointBEV = [ pln.SAD handles.profileOffset   0];
+        sourcePointBEV = [-SAD handles.profileOffset   0];
+        targetPointBEV = [ SAD handles.profileOffset   0];
     end
     
     rotSourcePointBEV = sourcePointBEV * inv_rotMx_XZ_T * inv_rotMx_XY_T;
@@ -1978,7 +1958,6 @@ function UpdateState(handles)
 function setPln(handles)
 pln=evalin('base','pln');
 set(handles.editBixelWidth,'String',num2str(pln.bixelWidth));
-set(handles.editSAD,'String',num2str(pln.SAD));
 set(handles.editFraction,'String',num2str(pln.numOfFractions));
 
 if isfield(pln,'isoCenter')
@@ -2033,7 +2012,6 @@ end
 % get pln file form GUI     
 function getPln(handles)
 
-pln.SAD             = parseStringAsNum(get(handles.editSAD,'String'),false); %[mm]
 pln.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [°]
 pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [°]

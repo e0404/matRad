@@ -93,6 +93,7 @@ end
 fileName = [pln.radiationMode '_' pln.machine];
 try
    load(fileName);
+   SAD = machine.meta.SAD;
 catch
    error(['Could not find the following machine file: ' fileName ]); 
 end
@@ -152,8 +153,8 @@ for i = 1:length(pln.gantryAngles)
     rot_coords = [coordsX coordsY coordsZ]*inv_rotMx_XZ_T*inv_rotMx_XY_T;
     
     % project x and z coordinates to isocenter
-    coordsAtIsoCenterPlane(:,1) = (rot_coords(:,1)*pln.SAD)./(pln.SAD + rot_coords(:,2));
-    coordsAtIsoCenterPlane(:,2) = (rot_coords(:,3)*pln.SAD)./(pln.SAD + rot_coords(:,2));
+    coordsAtIsoCenterPlane(:,1) = (rot_coords(:,1)*SAD)./(SAD + rot_coords(:,2));
+    coordsAtIsoCenterPlane(:,2) = (rot_coords(:,3)*SAD)./(SAD + rot_coords(:,2));
     
     % Take unique rows values for beamlets positions. Calculate position of
     % central ray for every bixel    
@@ -204,12 +205,12 @@ for i = 1:length(pln.gantryAngles)
     for j = 1:stf(i).numOfRays
         stf(i).ray(j).rayPos_bev = rayPos(j,:);
         stf(i).ray(j).targetPoint_bev = [2*stf(i).ray(j).rayPos_bev(1) ...
-                                                               pln.SAD ...
+                                                               SAD ...
                                          2*stf(i).ray(j).rayPos_bev(3)];
     end
     
     % source position in bev
-    stf(i).sourcePoint_bev = [0 -pln.SAD 0];
+    stf(i).sourcePoint_bev = [0 -SAD 0];
     
     % compute coordinates in lps coordinate system, i.e. rotate beam
     % geometry around fixed patient; use transpose matrices because we are

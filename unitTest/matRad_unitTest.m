@@ -29,7 +29,6 @@ clc, clear, close all
 
 %% meta information for treatment plan - new test scenarios can be created here
 
-pln.SAD             = 1000; %[mm]
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = [0]; % [°]
 pln.couchAngles     = [0]; % [°]
