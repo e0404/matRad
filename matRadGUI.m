@@ -1307,7 +1307,7 @@ try
     %% DAO
     if strcmp(pln.radiationMode,'photons') && pln.runDAO
        resultGUI = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst')...
-           ,resultGUI.apertureInfo,resultGUI,1);
+           ,resultGUI.apertureInfo,resultGUI,pln,1);
        assignin('base','resultGUI',resultGUI);
     end
     
@@ -2161,7 +2161,7 @@ function About_Callback(~, ~, ~)
 % hObject    handle to About (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-msgbox({'https://github.com/e0404/matRad/' 'matrad@dkfz.de'},'About','custom',myicon);
+msgbox({'https://github.com/e0404/matRad/' 'email: matrad@dkfz.de'},'About');
 
 
 
