@@ -43,6 +43,7 @@ function stf = matRad_generateStf(ct,cst,pln,visMode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 fprintf('matRad: Generating stf struct... ');
 
 if nargin < 4
@@ -89,27 +90,24 @@ if isempty(V)
 end
 
 % prepare structures necessary for particles
+fileName = [pln.radiationMode '_' pln.machine];
+try
+   load(fileName);
+   SAD = machine.meta.SAD;
+catch
+   error(['Could not find the following machine file: ' fileName ]); 
+end
+
 if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-    
-    % load base data    
-    if strcmp(pln.radiationMode,'protons')
-        load protonBaseData;
-    elseif  strcmp(pln.radiationMode,'carbon')
-        load carbonBaseData;
-    end
-    
-    availableEnergies = [baseData.energy];
-    availablePeakPos  = [baseData.peakPos] + [baseData.offset];
+      
+    availableEnergies = [machine.data.energy];
+    availablePeakPos  = [machine.data.peakPos] + [machine.data.offset];
     
     if sum(availablePeakPos<0)>0
-       error('at least one available peak position is negative - inconsistent basedata') 
+       error('at least one available peak position is negative - inconsistent machine file') 
     end
 
-    clear baseData;
-    
-elseif strcmp(pln.radiationMode,'photons')
-    
-    load photonPencilBeamKernels_6MV;
+    clear machine;
 
 end
 
@@ -137,25 +135,26 @@ for i = 1:length(pln.gantryAngles)
     % gantry and couch roation matrices according to IEC 61217 standard
     % instead of moving the beam around the patient, we perform an inverse
     % rotation of the patient, i.e. we consider a beam's eye view
-    % coordinate system
+    % coordinate system; use transpose matrices because we are working with
+    % row vectors
     
     % Rotation around Z axis (gantry)
-    rotMx_XY = [cosd(pln.gantryAngles(i)) -sind(pln.gantryAngles(i)) 0;
-                sind(pln.gantryAngles(i))  cosd(pln.gantryAngles(i)) 0;
-                                        0                          0 1];
+    inv_rotMx_XY_T = [ cosd(-pln.gantryAngles(i)) sind(-pln.gantryAngles(i)) 0;
+                      -sind(-pln.gantryAngles(i)) cosd(-pln.gantryAngles(i)) 0;
+                                                0                          0 1];
     
     % Rotation around Y axis (Couch movement)
-    rotMx_XZ = [ cosd(pln.couchAngles(i)) 0 sind(pln.couchAngles(i));
-                                        0 1                         0;
-                -sind(pln.couchAngles(i)) 0  cosd(pln.couchAngles(i))];
+    inv_rotMx_XZ_T = [cosd(-pln.couchAngles(i)) 0 -sind(-pln.couchAngles(i));
+                                              0 1                          0;
+                      sind(-pln.couchAngles(i)) 0  cosd(-pln.couchAngles(i))];
     
-    % rotate target coordinates around Y axis and then around Z axis
-    % i.e. 1st couch, 2nd gantry; matrix multiplication not cummutative
-    rot_coords = [coordsX coordsY coordsZ]*rotMx_XZ*rotMx_XY;
+    % rotate target coordinates (1st couch around Y axis, 2nd gantry around
+    % z axis); matrix multiplication not cummutative
+    rot_coords = [coordsX coordsY coordsZ]*inv_rotMx_XZ_T*inv_rotMx_XY_T;
     
     % project x and z coordinates to isocenter
-    coordsAtIsoCenterPlane(:,1) = (rot_coords(:,1)*pln.SAD)./(pln.SAD + rot_coords(:,2));
-    coordsAtIsoCenterPlane(:,2) = (rot_coords(:,3)*pln.SAD)./(pln.SAD + rot_coords(:,2));
+    coordsAtIsoCenterPlane(:,1) = (rot_coords(:,1)*SAD)./(SAD + rot_coords(:,2));
+    coordsAtIsoCenterPlane(:,2) = (rot_coords(:,3)*SAD)./(SAD + rot_coords(:,2));
     
     % Take unique rows values for beamlets positions. Calculate position of
     % central ray for every bixel    
@@ -163,21 +162,20 @@ for i = 1:length(pln.gantryAngles)
                                           zeros(size(coordsAtIsoCenterPlane,1),1) ...
                                                       coordsAtIsoCenterPlane(:,2)]/pln.bixelWidth),'rows');
                                                   
-	 % pad ray position array if resolution of target voxel grid not sufficient
-     if pln.bixelWidth<max([ct.resolution.x ct.resolution.y ct.resolution.z])
+    % pad ray position array if resolution of target voxel grid not sufficient
+    maxCtResolution = max([ct.resolution.x ct.resolution.y ct.resolution.z]);
+    if pln.bixelWidth < maxCtResolution
         origRayPos = rayPos;
-        for j = -floor(max(ct.resolution)/pln.bixelWidth):floor(max(ct.resolution)/pln.bixelWidth)
-            for k = -floor(max(ct.resolution)/pln.bixelWidth):floor(max(ct.resolution)/pln.bixelWidth)
+        for j = -floor(maxCtResolution/pln.bixelWidth):floor(maxCtResolution/pln.bixelWidth)
+            for k = -floor(maxCtResolution/pln.bixelWidth):floor(maxCtResolution/pln.bixelWidth)
                 if abs(j)+abs(k)==0
                     continue;
-                end
-                
+                end                
                 rayPos = [rayPos; origRayPos(:,1)+j*pln.bixelWidth origRayPos(:,2) origRayPos(:,3)+k*pln.bixelWidth];
-                                
             end
         end
      end
-     
+
      % remove spaces within rows of bixels for DAO
      if pln.runDAO
          % create single x,y,z vectors
@@ -207,34 +205,34 @@ for i = 1:length(pln.gantryAngles)
     for j = 1:stf(i).numOfRays
         stf(i).ray(j).rayPos_bev = rayPos(j,:);
         stf(i).ray(j).targetPoint_bev = [2*stf(i).ray(j).rayPos_bev(1) ...
-                                                               pln.SAD ...
+                                                               SAD ...
                                          2*stf(i).ray(j).rayPos_bev(3)];
     end
     
     % source position in bev
-    sourcePoint_bev = [0 -pln.SAD 0];
+    stf(i).sourcePoint_bev = [0 -SAD 0];
     
     % compute coordinates in lps coordinate system, i.e. rotate beam
-    % geometry around fixed patient
+    % geometry around fixed patient; use transpose matrices because we are
+    % working with row vectors
     
     % Rotation around Z axis (gantry)
-    rotMx_XY_rotated = [ cosd(pln.gantryAngles(i)) sind(pln.gantryAngles(i)) 0;
-                        -sind(pln.gantryAngles(i)) cosd(pln.gantryAngles(i)) 0;
-                                                 0                         0 1];
+    rotMx_XY_T = [ cosd(pln.gantryAngles(i)) sind(pln.gantryAngles(i)) 0;
+                  -sind(pln.gantryAngles(i)) cosd(pln.gantryAngles(i)) 0;
+                                           0                         0 1];
     
     % Rotation around Y axis (couch)
-    rotMx_XZ_rotated = [ cosd(pln.couchAngles(i)) 0 -sind(pln.couchAngles(i));
-                                                0 1                        0;
-                         sind(pln.couchAngles(i)) 0 cosd(pln.couchAngles(i))];
+    rotMx_XZ_T = [cosd(pln.couchAngles(i)) 0 -sind(pln.couchAngles(i));
+                                         0 1                        0;
+                  sind(pln.couchAngles(i)) 0  cosd(pln.couchAngles(i))];
     
-    % Rotated Source point, first needs to be rotated around gantry, and then
-    % couch.
-    stf(i).sourcePoint = sourcePoint_bev*rotMx_XY_rotated*rotMx_XZ_rotated;
+    % Rotated Source point (1st gantry, 2nd couch)
+    stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMx_XY_T*rotMx_XZ_T;
     
     % Save ray and target position in lps system.
     for j = 1:stf(i).numOfRays
-        stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_rotated*rotMx_XZ_rotated;
-        stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_rotated*rotMx_XZ_rotated;
+        stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
+        stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
     end
     
     % find appropriate energies for particles
@@ -269,11 +267,31 @@ for i = 1:length(pln.gantryAngles)
                 % Save energies in stf struct
                 for k = 1:numel(targetEntry)
                     stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
+                    % adjust spot spacing according to pln.bixelWidth when using HIT basedata
+                    %DefaultLongitudialSpotSpacing = pln.bixelWidth;  % in [mm]
+                    DefaultLongitudialSpotSpacing = 3;
+                    if strcmp(pln.machine,'HIT') && length(stf(i).ray(j).energy)>2
+                        Tolerance = 0.5;
+                        hasNext = true;
+                        CntEnergy =2;
+                        while hasNext
+                            if abs(stf(i).ray(j).energy(CntEnergy)-stf(i).ray(j).energy(CntEnergy-1))<...
+                                    DefaultLongitudialSpotSpacing-Tolerance
+                                stf(i).ray(j).energy(CntEnergy)=[];
+                            else
+                                CntEnergy = CntEnergy+1;
+                            end
+                            if CntEnergy == length(stf(i).ray(j).energy)
+                                hasNext = false;
+                            end
+                        end
+                    end
+                    
                 end
                 
                 
             else % target not hit
-                stf(i).ray(j)               = [];
+                stf(i).ray(j) = [];
             end
                         
         end
@@ -287,7 +305,7 @@ for i = 1:length(pln.gantryAngles)
     elseif strcmp(stf(i).radiationMode,'photons')
         % set dummy values for photons
         for j = 1:stf(i).numOfRays
-            stf(i).ray(j).energy = energy;
+            stf(i).ray(j).energy = machine.data.energy;
             stf(i).numOfBixelsPerRay(j) = 1;
         end
     else
@@ -297,6 +315,11 @@ for i = 1:length(pln.gantryAngles)
     
     % save total number of bixels
     stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
+    
+%     figure,
+%     for jj = 1:length(stf.ray)
+%        plot(stf.ray(jj).rayPos_bev(1),stf.ray(jj).rayPos_bev(3),'rx'),hold on 
+%     end
     
     %% visualization
     if visMode > 0
@@ -329,7 +352,7 @@ for i = 1:length(pln.gantryAngles)
             v(:,3) = v(:,3)*ct.resolution.z;
             
             % rotate surface
-            rotated_surface = v*rotMx_XZ*rotMx_XY;
+            rotated_surface = v*inv_rotMx_XZ_T*inv_rotMx_XY_T;
             
             % surface rendering
             surface = patch('Faces',f,'Vertices',rotated_surface);
@@ -362,10 +385,10 @@ for i = 1:length(pln.gantryAngles)
             targetPoint_vox_Z_4 = stf(i).ray(j).targetPoint_bev(:,3) + pln.bixelWidth;
             
             % plot
-            plot3([sourcePoint_bev(1) targetPoint_vox_X_1],[sourcePoint_bev(2) targetPoint_vox_Y_1],[sourcePoint_bev(3) targetPoint_vox_Z_1],'g')
-            plot3([sourcePoint_bev(1) targetPoint_vox_X_2],[sourcePoint_bev(2) targetPoint_vox_Y_2],[sourcePoint_bev(3) targetPoint_vox_Z_2],'g')
-            plot3([sourcePoint_bev(1) targetPoint_vox_X_3],[sourcePoint_bev(2) targetPoint_vox_Y_3],[sourcePoint_bev(3) targetPoint_vox_Z_3],'g')
-            plot3([sourcePoint_bev(1) targetPoint_vox_X_4],[sourcePoint_bev(2) targetPoint_vox_Y_4],[sourcePoint_bev(3) targetPoint_vox_Z_4],'g')
+            plot3([stf(i).sourcePoint_bev(1) targetPoint_vox_X_1],[stf(i).sourcePoint_bev(2) targetPoint_vox_Y_1],[stf(i).sourcePoint_bev(3) targetPoint_vox_Z_1],'g')
+            plot3([stf(i).sourcePoint_bev(1) targetPoint_vox_X_2],[stf(i).sourcePoint_bev(2) targetPoint_vox_Y_2],[stf(i).sourcePoint_bev(3) targetPoint_vox_Z_2],'g')
+            plot3([stf(i).sourcePoint_bev(1) targetPoint_vox_X_3],[stf(i).sourcePoint_bev(2) targetPoint_vox_Y_3],[stf(i).sourcePoint_bev(3) targetPoint_vox_Z_3],'g')
+            plot3([stf(i).sourcePoint_bev(1) targetPoint_vox_X_4],[stf(i).sourcePoint_bev(2) targetPoint_vox_Y_4],[stf(i).sourcePoint_bev(3) targetPoint_vox_Z_4],'g')
             
         end
         
@@ -386,7 +409,7 @@ for i = 1:length(pln.gantryAngles)
         hold on;
         
         % Rotated projection matrix at isocenter
-        isocenter_plane_coor = rayPos*rotMx_XY_rotated*rotMx_XZ_rotated;
+        isocenter_plane_coor = rayPos*rotMx_XY_T*rotMx_XZ_T;
         
         % Plot isocenter plane
         plot3(isocenter_plane_coor(:,1),isocenter_plane_coor(:,2),isocenter_plane_coor(:,3),'y.');
@@ -394,10 +417,10 @@ for i = 1:length(pln.gantryAngles)
         % Plot rotated bixels border.
         for j = 1:stf(i).numOfRays
             % Generate rotated projection target points.
-            targetPoint_vox_1_rotated = [stf(i).ray(j).targetPoint_bev(:,1) + pln.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) + pln.bixelWidth]*rotMx_XY_rotated*rotMx_XZ_rotated;
-            targetPoint_vox_2_rotated = [stf(i).ray(j).targetPoint_bev(:,1) + pln.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) - pln.bixelWidth]*rotMx_XY_rotated*rotMx_XZ_rotated;
-            targetPoint_vox_3_rotated = [stf(i).ray(j).targetPoint_bev(:,1) - pln.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) - pln.bixelWidth]*rotMx_XY_rotated*rotMx_XZ_rotated;
-            targetPoint_vox_4_rotated = [stf(i).ray(j).targetPoint_bev(:,1) - pln.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) + pln.bixelWidth]*rotMx_XY_rotated*rotMx_XZ_rotated;
+            targetPoint_vox_1_rotated = [stf(i).ray(j).targetPoint_bev(:,1) + pln.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) + pln.bixelWidth]*rotMx_XY_T*rotMx_XZ_T;
+            targetPoint_vox_2_rotated = [stf(i).ray(j).targetPoint_bev(:,1) + pln.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) - pln.bixelWidth]*rotMx_XY_T*rotMx_XZ_T;
+            targetPoint_vox_3_rotated = [stf(i).ray(j).targetPoint_bev(:,1) - pln.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) - pln.bixelWidth]*rotMx_XY_T*rotMx_XZ_T;
+            targetPoint_vox_4_rotated = [stf(i).ray(j).targetPoint_bev(:,1) - pln.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) + pln.bixelWidth]*rotMx_XY_T*rotMx_XZ_T;
             
             % Plot rotated target points.
             plot3([stf(i).sourcePoint(1) targetPoint_vox_1_rotated(:,1)],[stf(i).sourcePoint(2) targetPoint_vox_1_rotated(:,2)],[stf(i).sourcePoint(3) targetPoint_vox_1_rotated(:,3)],'g')

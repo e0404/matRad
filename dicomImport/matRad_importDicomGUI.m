@@ -116,7 +116,7 @@ function patDir = browse_button_Callback(hObject, eventdata, handles)
 %uiwait(warndlg('Choose the input directory'));
 patDir = uigetdir('', 'Choose the input directory...');
 if patDir ~= 0
-    patDir = [patDir '\'];
+    patDir = [patDir filesep];
     %handles.dir_path_field.String = patDir;
     set(handles.dir_path_field,'String',patDir);
     % Update handles structure
@@ -340,8 +340,8 @@ function dir_path_field_Callback(hObject, eventdata, handles)
 %        str2double(get(hObject,'String')) returns contents of dir_path_field as a double
 
 patDir = get(handles.dir_path_field,'String');
-if patDir(end) ~= '\';
-    patDir = [patDir '\'];
+if patDir(end) ~= filesep;
+    patDir = [patDir filesep];
     set(handles.dir_path_field,'String',patDir);
     guidata(hObject, handles);
 end

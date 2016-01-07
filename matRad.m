@@ -39,7 +39,6 @@ load HEAD_AND_NECK
 %load BOXPHANTOM.mat
 
 % meta information for treatment plan
-pln.SAD             = 1000; %[mm]
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = [0:72:359]; % [°]
@@ -52,6 +51,7 @@ pln.bioOptimization = 'none'; % none: physical optimization; effect: effect-base
 pln.numOfFractions  = 1;
 pln.runSequencing   = true; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO          = true; % 1/true: run DAO, 0/false: don't / will be ignored for particles
+pln.machine         = 'Generic';
 
 %% initial visualization and change objective function settings if desired
 matRadGUI
@@ -77,7 +77,7 @@ end
 
 %% DAO
 if strcmp(pln.radiationMode,'photons') && pln.runDAO
-   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI);
+   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
    matRad_visApertureInfo(resultGUI.apertureInfo);
 end
 

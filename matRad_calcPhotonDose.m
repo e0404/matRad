@@ -52,6 +52,10 @@ end
 
 % initialize waitbar
 figureWait=waitbar(0,'photon dij-calculation..');
+% prevent closure of waitbar and show busy state
+set(figureWait,'CloseRequestFcn','');
+set(figureWait,'pointer','watch');
+
 % meta information for dij
 dij.numOfBeams         = pln.numOfBeams;
 dij.numOfVoxels        = pln.numOfVoxels;
@@ -93,7 +97,12 @@ useCustomPrimFluenceBool = 0;
 
 %% kernel convolution
 % load polynomial fits for kernels ppKernel1, ppKernel2, ppKernel3
-load photonPencilBeamKernels_6MV.mat;
+fileName = [pln.radiationMode '_' pln.machine];
+try
+   load(fileName);
+catch
+   error(['Could not find the following machine file: ' fileName ]); 
+end
 
 % Make a 2D grid extending +/-100mm with 0.1 mm resolution
 convLimits = 100; % [mm]
@@ -101,9 +110,9 @@ convResolution = .5; % [mm]
 [X,Z] = meshgrid(-convLimits:convResolution:convLimits);
                           
 % Evaluate piecewise polynomial kernels
-kernel1Mx = ppval(ppKernel1,sqrt(X.^2+Z.^2));
-kernel2Mx = ppval(ppKernel2,sqrt(X.^2+Z.^2));
-kernel3Mx = ppval(ppKernel3,sqrt(X.^2+Z.^2));
+kernel1Mx = ppval(machine.data.ppKernel1,sqrt(X.^2+Z.^2));
+kernel2Mx = ppval(machine.data.ppKernel2,sqrt(X.^2+Z.^2));
+kernel3Mx = ppval(machine.data.ppKernel3,sqrt(X.^2+Z.^2));
 
 % Create zero matrix for the Fluence
 F = zeros(size(X));
@@ -139,37 +148,31 @@ if ~useCustomPrimFluenceBool % pre-compute konvolution matrices for idealized ho
 
 end
 
-% define source position for beam eye view.
-sourcePoint_bev = [0 -pln.SAD 0];
-
 counter = 0;
 
 fprintf('matRad: Photon dose calculation... ');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams; % loop over all beams
     
-    % gantry and couch roation matrices according to IEC 61217 standard
-    % instead of moving the beam around the patient, we perform an inverse
-    % rotation of the patient, i.e. we consider a beam's eye view
-    % coordinate system
+    % Set gantry and couch rotation matrices according to IEC 61217
+    % Use transpose matrices because we are working with row vectros
     
     % rotation around Z axis (gantry)
-    rotMx_XY = [cosd(pln.gantryAngles(i)) -sind(pln.gantryAngles(i)) 0;
-                sind(pln.gantryAngles(i))  cosd(pln.gantryAngles(i)) 0;
-                                        0                          0 1];
+    inv_rotMx_XY_T = [ cosd(-pln.gantryAngles(i)) sind(-pln.gantryAngles(i)) 0;
+                      -sind(-pln.gantryAngles(i)) cosd(-pln.gantryAngles(i)) 0;
+                                                0                          0 1];
     
     % rotation around Y axis (couch)
-    rotMx_XZ = [ cosd(pln.couchAngles(i)) 0 sind(pln.couchAngles(i));
-                                        0 1                         0;
-                -sind(pln.couchAngles(i)) 0 cosd(pln.couchAngles(i))];
+    inv_rotMx_XZ_T = [cosd(-pln.couchAngles(i)) 0 -sind(-pln.couchAngles(i));
+                                              0 1                         0;
+                      sind(-pln.couchAngles(i)) 0  cosd(-pln.couchAngles(i))];
     
-    % rotate target coordinates around Y axis and then around Z axis
-    % i.e. 1st couch, 2nd gantry; matrix multiplication not cummutative
-    rot_coordsV = coordsV*rotMx_XZ*rotMx_XY;
+    % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
+    rot_coordsV = coordsV*inv_rotMx_XZ_T*inv_rotMx_XY_T;
     
-    rot_coordsV(:,1) = rot_coordsV(:,1)-sourcePoint_bev(1);
-    rot_coordsV(:,2) = rot_coordsV(:,2)-sourcePoint_bev(2);
-    rot_coordsV(:,3) = rot_coordsV(:,3)-sourcePoint_bev(3);
+    rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
+    rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
+    rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
     
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
         
@@ -219,14 +222,15 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                         ct.resolution, ...
                                                         stf(i).sourcePoint, ...
                                                         stf(i).ray(j).targetPoint, ...
-                                                        sourcePoint_bev, ...
+                                                        stf(i).sourcePoint_bev, ...
                                                         stf(i).ray(j).targetPoint_bev, ...
                                                         coordsV, ...
                                                         lateralCutoff, ...
                                                         visBool);
         
         % calculate photon dose for beam i and bixel j
-        bixelDose = matRad_calcPhotonDoseBixel(pln.SAD,m,betas, ...
+        bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
+                                               machine.data.betas, ...
                                                Interp_kernel1,...
                                                Interp_kernel2,...
                                                Interp_kernel3,...
@@ -247,4 +251,5 @@ for i = 1:dij.numOfBeams; % loop over all beams
     end
 end
 
-close(figureWait);
+delete(figureWait);
+

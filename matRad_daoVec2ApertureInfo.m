@@ -59,6 +59,10 @@ shapeInd = 1;
 
 indVect = NaN*ones(apertureInfo.totalNumOfShapes + apertureInfo.totalNumOfLeafPairs,1);
 
+% helper function to cope with numerical instabilities through rounding
+round2 = @(a,b) round(a*10^b)/10^b;
+
+
 %% update the shapeMaps
 % here the new colimator positions are used to create new shapeMaps that
 % now include decimal values instead of binary
@@ -92,19 +96,23 @@ for i = 1:numel(updatedInfo.beam)
         updatedInfo.beam(i).shape(j).leftLeafPos  = leftLeafPos;
         updatedInfo.beam(i).shape(j).rightLeafPos = rightLeafPos;
         
+        % rounding for numerical stability
+        leftLeafPos  = round2(leftLeafPos,10);
+        rightLeafPos = round2(rightLeafPos,10);
         
+        %
         xPosIndLeftLeaf  = round((leftLeafPos - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth + 1);
         xPosIndRightLeaf = round((rightLeafPos - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth + 1);
         
         % check limits because of rounding off issues at maximum, i.e., 
-        % enfore round(X.5) -> X
+        % enforce round(X.5) -> X
         xPosIndLeftLeaf(leftLeafPos == apertureInfo.beam(i).lim_r) = ...
             .5 + (leftLeafPos(leftLeafPos == apertureInfo.beam(i).lim_r) ...
             - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth;
         xPosIndRightLeaf(rightLeafPos == apertureInfo.beam(i).lim_r) = ...
             .5 + (rightLeafPos(rightLeafPos == apertureInfo.beam(i).lim_r) ...
             - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth;
-
+        
         % find the bixel index that the leaves currently touch
         bixelIndLeftLeaf  = apertureInfo.beam(i).bixelIndMap((xPosIndLeftLeaf-1)*n+[1:n]');
         bixelIndRightLeaf = apertureInfo.beam(i).bixelIndMap((xPosIndRightLeaf-1)*n+[1:n]');
