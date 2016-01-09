@@ -73,15 +73,19 @@ end
 % Remove double voxels
 V = unique(V);
 
-% generate voi cube
-voi    = zeros(size(ct.cube));
-voi(V) = 1;
+% generate voi cube for targets
+voiTarget    = zeros(size(ct.cube));
+voiTarget(V) = 1;
+
+% generate voi cube for surface for ssd calculation
+voiSSD = zeros(size(ct.cube));
+voiSSD(unique([cell2mat(cst(:,4))])) = 1;
     
 % add margin
 addmarginBool = 1;
 if addmarginBool
-    voi = matRad_addMargin(voi,ct.resolution,ct.resolution,true);
-    V   = find(voi>0);
+    voiTarget = matRad_addMargin(voiTarget,ct.resolution,ct.resolution,true);
+    V   = find(voiTarget>0);
 end
 
 % throw error message if no target is found
@@ -131,6 +135,7 @@ for i = 1:length(pln.gantryAngles)
     stf(i).couchAngle    = pln.couchAngles(i);
     stf(i).bixelWidth    = pln.bixelWidth;
     stf(i).radiationMode = pln.radiationMode;
+    stf(i).SAD           = SAD;
     
     % gantry and couch roation matrices according to IEC 61217 standard
     % instead of moving the beam around the patient, we perform an inverse
@@ -242,12 +247,28 @@ for i = 1:length(pln.gantryAngles)
             
             % ray tracing necessary to determine depth of the target
             [~,l,rho,~] = matRad_siddonRayTracer(pln.isoCenter, ...
-                            ct.resolution, ...
-                            stf(i).sourcePoint, ...
-                            stf(i).ray(j).targetPoint, ...
-                            {ct.cube,voi});
+                                 ct.resolution, ...
+                                 stf(i).sourcePoint, ...
+                                 stf(i).ray(j).targetPoint, ...
+                                 {ct.cube,voiTarget});
             
             if sum(rho{2}) > 0 % target hit
+                
+                % calculate SSD
+
+                % ray tracing necessary to determine SSD
+                [alphasSSD,~,rhoSSD,~] = matRad_siddonRayTracer(pln.isoCenter, ...
+                                            ct.resolution, ...
+                                            stf(i).sourcePoint, ...
+                                            stf(i).ray(j).targetPoint, ...
+                                            {voiSSD});
+
+                ixSSD = find(rhoSSD{1} > 0,1,'first');
+                if ixSSD == 1
+                    warning('Surface for SSD calculation starts directly in first voxel of CT\n');
+                end
+                stf(i).SSD(j) = stf(i).SAD * alphasSSD(ixSSD);
+
                 
                 % compute radiological depths
                 % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
@@ -300,13 +321,32 @@ for i = 1:length(pln.gantryAngles)
         stf(i).numOfRays = size(stf(i).ray,2);
         for j = 1:stf(i).numOfRays
             stf(i).numOfBixelsPerRay(j) = numel(stf(i).ray(j).energy);
+            for k = 1:stf(i).numOfBixelsPerRay(j)
+                stf(i).ray(j).focusIx(k) = 
+            end
         end
 
     elseif strcmp(stf(i).radiationMode,'photons')
         % set dummy values for photons
         for j = 1:stf(i).numOfRays
+            
+            % ray tracing necessary to determine SSD
+            [alphasSSD,~,rhoSSD,~] = matRad_siddonRayTracer(pln.isoCenter, ...
+                                        ct.resolution, ...
+                                        stf(i).sourcePoint, ...
+                                        stf(i).ray(j).targetPoint, ...
+                                        {voiSSD});
+
+            ixSSD = find(rhoSSD{1} > 0,1,'first');
+            if ixSSD == 1
+                warning('Surface for SSD calculation starts directly in first voxel of CT\n');
+            end
+            stf(i).SSD(j) = stf(i).SAD * alphasSSD(ixSSD);
+            
+            % book keeping
             stf(i).ray(j).energy = machine.data.energy;
             stf(i).numOfBixelsPerRay(j) = 1;
+            
         end
     else
         error('Error generating stf struct: invalid radiation modality.');
