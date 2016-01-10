@@ -85,6 +85,7 @@ voiSSD(unique([cell2mat(cst(:,4))])) = 1;
 addmarginBool = 1;
 if addmarginBool
     voiTarget = matRad_addMargin(voiTarget,ct.resolution,ct.resolution,true);
+    voiSSD(voiSSD | voiTarget) = 1;
     V   = find(voiTarget>0);
 end
 
