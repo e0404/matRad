@@ -62,6 +62,9 @@ if ~strcmp(pln.radiationMode,'carbon') && sum(strcmp(pln.bioOptimization,{'effec
     fprintf('\n ********************************************************************************************************* \n');
 end
 
+% helper function for energy selection
+round2 = @(a,b)round(a*10^b)/10^b;
+
 % find all target voxels from cst cell array
 V = [];
 for i=1:size(cst,1)
@@ -84,8 +87,7 @@ voiSSD(unique([cell2mat(cst(:,4))])) = 1;
 % add margin
 addmarginBool = 1;
 if addmarginBool
-    voiTarget = matRad_addMargin(voiTarget,ct.resolution,ct.resolution,true);
-    voiSSD(voiSSD | voiTarget) = 1;
+    voiTarget = matRad_addMargin(voiTarget,cst,ct.resolution,ct.resolution,true);
     V   = find(voiTarget>0);
 end
 
@@ -112,8 +114,12 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
        error('at least one available peak position is negative - inconsistent machine file') 
     end
 
-    clear machine;
-
+    %clear machine;
+    
+    % define default foki indices
+    LowerFokiIdx  = 1; %[index]
+    UpperFokiIdx  = 2; %[index]
+    ThresholdFoki = 6; %[mm]
 end
 
 % Convert linear indices to 3D voxel coordinates
@@ -244,6 +250,9 @@ for i = 1:length(pln.gantryAngles)
     % find appropriate energies for particles
     if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
         
+         % initializing SSD vector
+         stf(i).SSD = zeros(stf(i).numOfRays,1);
+          
         for j = stf(i).numOfRays:-1:1
             
             % ray tracing necessary to determine depth of the target
@@ -314,6 +323,7 @@ for i = 1:length(pln.gantryAngles)
                 
             else % target not hit
                 stf(i).ray(j) = [];
+                stf(i).SSD(j) = [];
             end
                         
         end
@@ -322,8 +332,16 @@ for i = 1:length(pln.gantryAngles)
         stf(i).numOfRays = size(stf(i).ray,2);
         for j = 1:stf(i).numOfRays
             stf(i).numOfBixelsPerRay(j) = numel(stf(i).ray(j).energy);
+            % get for each spot the focus index
             for k = 1:stf(i).numOfBixelsPerRay(j)
-                stf(i).ray(j).focusIx(k) = 
+                 energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
+                 BeamWidth = interp1(machine.data(energyIx).initFocus(LowerFokiIdx).dist,machine.data(energyIx).initFocus(LowerFokiIdx).sigma,...
+                     stf(i).SSD(j));
+                 if BeamWidth <= ThresholdFoki
+                    stf(i).ray(j).focusIx(k) = LowerFokiIdx;
+                 else
+                    stf(i).ray(j).focusIx(k) = UpperFokiIdx;
+                 end
             end
         end
 
