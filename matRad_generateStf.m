@@ -117,9 +117,9 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     %clear machine;
     
     % define default foki indices
-    LowerFokiIdx  = 1; %[index]
-    UpperFokiIdx  = 2; %[index]
-    ThresholdFoki = 6; %[mm]
+    LowerFociIdx  = 1; %[index]
+    UpperFociIdx  = 2; %[index]
+    ThresholdFoci = 20; %[mm]
 end
 
 % Convert linear indices to 3D voxel coordinates
@@ -334,13 +334,13 @@ for i = 1:length(pln.gantryAngles)
             stf(i).numOfBixelsPerRay(j) = numel(stf(i).ray(j).energy);
             % get for each spot the focus index
             for k = 1:stf(i).numOfBixelsPerRay(j)
-                 energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
-                 BeamWidth = interp1(machine.data(energyIx).initFocus(LowerFokiIdx).dist,machine.data(energyIx).initFocus(LowerFokiIdx).sigma,...
+                 energyIx = find([machine.data.energy] == stf(i).ray(j).energy(k));
+                 BeamWidth = interp1(machine.data(energyIx).initFocus(LowerFociIdx).dist,machine.data(energyIx).initFocus(LowerFociIdx).sigma,...
                      stf(i).SSD(j));
-                 if BeamWidth <= ThresholdFoki
-                    stf(i).ray(j).focusIx(k) = LowerFokiIdx;
+                 if BeamWidth <= ThresholdFoci
+                    stf(i).ray(j).focusIx(k) = LowerFociIdx;
                  else
-                    stf(i).ray(j).focusIx(k) = UpperFokiIdx;
+                    stf(i).ray(j).focusIx(k) = UpperFociIdx;
                  end
             end
         end

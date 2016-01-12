@@ -51,10 +51,10 @@ depths = baseData.depths + baseData.offset;
 % convert from MeV cm^2/g per primary to Gy mm^2 per 1e6 primaries
 conversionFactor = 1.6021766208e-02;
 
+ % calculate initial focus sigma
+initFocus = interp1(baseData.initFocus(focusIx).dist,baseData.initFocus(focusIx).sigma,SSD);
+
 if ~isfield(baseData,'sigma')
-    
-    % calculate initial focus sigma
-    initFocus = interp1(baseData.initFocus(focusIx).dist,baseData.initFocus(focusIx).sigma,SSD);
     
     % interpolate depth dose, sigmas, and weights    
     X = interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths,'linear');
@@ -74,8 +74,11 @@ else
     % interpolate depth dose and sigma
     X = interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths,'linear');
 
+    %compute lateral sigma
+    sigmaSq = X(:,2).^2 + initFocus^2;
+    
     % calculate dose
-    dose = baseData.LatCutOff.CompFac * exp( -radialDist_sq ./ (2*X(:,2).^2)) .* X(:,1) ./(2*pi*X(:,2).^2);
+    dose = baseData.LatCutOff.CompFac * exp( -radialDist_sq ./ (2*sigmaSq)) .* X(:,1) ./(2*pi*sigmaSq);
     
  end
  
