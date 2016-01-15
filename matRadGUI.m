@@ -49,6 +49,16 @@ function varargout = matRadGUI(varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Begin initialization code - DO NOT EDIT
+% set platform specific look and feel
+if ispc
+    lf = 'com.sun.java.swing.plaf.windows.WindowsLookAndFeel';
+elseif isunix
+    lf = 'com.jgoodies.looks.plastic.Plastic3DLookAndFeel';
+elseif ismac
+    lf = 'com.apple.laf.AquaLookAndFeel';
+end
+javax.swing.UIManager.setLookAndFeel(lf);
+
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
