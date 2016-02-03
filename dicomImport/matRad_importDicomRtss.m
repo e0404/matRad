@@ -21,29 +21,23 @@ function structures = matRad_importDicomRtss(filename,dicomInfo,visBool)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+% Copyright 2016, Mark Bangert, on behalf of the matRad development team
 %
 % m.bangert@dkfz.de
 %
 % This file is part of matRad.
 %
 % matrad is free software: you can redistribute it and/or modify it under 
-% the terms of the GNU General Public License as published by the Free 
-% Software Foundation, either version 3 of the License, or (at your option)
-% any later version.
+% the terms of the Eclipse Public License 1.0 (EPL-1.0).
 %
 % matRad is distributed in the hope that it will be useful, but WITHOUT ANY
 % WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-% details.
+% FOR A PARTICULAR PURPOSE.
 %
-% You should have received a copy of the GNU General Public License in the
-% file license.txt along with matRad. If not, see
-% <http://www.gnu.org/licenses/>.
+% You should have received a copy of the EPL-1.0 in the file license.txt
+% along with matRad. If not, see <http://opensource.org/licenses/EPL-1.0>.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
