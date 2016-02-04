@@ -1,4 +1,4 @@
-function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,visBool)
+function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to calculate a depth dependend lateral cutoff for each 
 % pristine particle beam
@@ -44,7 +44,6 @@ if (cutOffLevel < 0 || cutOffLevel > 0.9999) && (cutOffLevel ~= 1)
    warning('lateral cutoff is out of range - using default cut off of 0.99') 
    cutOffLevel = 0.99;
 end
-
 % define some variables needed for the cutoff calculation
 vX     = [0 logspace(-1,4,1000)]; % [mm]
 %vX     = linspace(0,1000,1000); % [mm]
@@ -57,10 +56,29 @@ NumDepthVal = 30;
 % define function handles for single and double gauss
 SG =  @(vR,Sigma)((1/(2*pi*Sigma^2)).*exp(-(vR.^2)./(2*Sigma^2)));
 DG =  @(vR,Z,w,Sigma1,Sigma2) Z*(((1-w)*SG(vR,Sigma1)) + (w*SG(vR,Sigma2)));
-                         
-% loop over all entries in the machine.data struct
-for energyIx = 1:length(machine.data)
 
+% find for each energy the biggest foci index
+FociEnergyLUT  = unique([[stf.ray(:).focusIx] ; [stf.ray(:).energy]]','rows');
+UniqueEnergies = unique(FociEnergyLUT(:,2));
+N=histc(FociEnergyLUT(:,2),UniqueEnergies);
+FociEnergyLUT(N>1,:) = [];
+[FociEnergyLUT(:,2), sortIx] = sort(FociEnergyLUT(:,2));
+FociEnergyLUT(:,1) = FociEnergyLUT(sortIx,1);
+
+vEnergiesIx = find(ismember([machine.data(:).energy],FociEnergyLUT(:,2)));
+
+% take from each energy the largest SSD
+vBixelRay = ones(1,length([stf.ray(:).energy]));
+Cnt = 1;
+for k  = 1:length(stf.ray)
+    vBixelRay(Cnt:Cnt+numel(stf.ray(k).energy)) = k;
+    Cnt = Cnt + numel(stf.ray(k).energy);
+end
+   
+Cnt = 1;    
+% loop over all entries in the machine.data struct
+for energyIx = vEnergiesIx
+   
     % set default depth cut off - finite value will be set during first
     % iteration
     depthDoseCutOff = inf;
@@ -69,6 +87,11 @@ for energyIx = 1:length(machine.data)
     [~,peakIdx] = max(machine.data(energyIx).Z);
     Idx = round(linspace(1,length(machine.data(energyIx).depths),NumDepthVal-1));
     Idx = unique(sort([Idx peakIdx]));
+    % find maximum SSD for the current energy
+    maxSSD = max(stf.SSD(vBixelRay([stf.ray(:).energy]' == machine.data(energyIx).energy)));
+    SigmaIni = interp1(machine.data(energyIx).initFocus(FociEnergyLUT(Cnt,1)).dist,...
+                       machine.data(energyIx).initFocus(FociEnergyLUT(Cnt,1)).sigma,...
+                       maxSSD);
 
     for j = 1:length(Idx)
         
@@ -76,22 +99,17 @@ for energyIx = 1:length(machine.data)
         machine.data(energyIx).LatCutOff.depths(j) = machine.data(energyIx).depths(Idx(j));
         % relative contribution
         relContrib = machine.data(energyIx).Z(Idx(j))/max(machine.data(energyIx).Z);
-         
+                      
         if strcmp(machine.meta.dataType,'singleGauss')
                     
-                    Sigma1 = sqrt(machine.data(energyIx).sigma(Idx(j))^2 + machine.data(energyIx).initFocus.sigma(1)^2);
+                    Sigma1 = sqrt(machine.data(energyIx).sigma(Idx(j))^2 + SigmaIni^2);
                     y_r = SG(r_mid,Sigma1);
                  
         elseif strcmp(machine.meta.dataType,'doubleGauss')
                     
-                    % use biggest focus in stf struct ?
-                    focusIdx = 2;
-                    SigmaInI = interp1(machine.data(energyIx).initFocus(focusIdx).dist,...
-                                       machine.data(energyIx).initFocus(focusIdx).sigma,...
-                                       machine.meta.SAD);
                     w      = machine.data(energyIx).weight(Idx(j));
-                    Sigma1 = sqrt(machine.data(energyIx).sigma1(Idx(j)).^2 + SigmaInI^2);
-                    Sigma2 = sqrt(machine.data(energyIx).sigma2(Idx(j)).^2 + SigmaInI^2);
+                    Sigma1 = sqrt(machine.data(energyIx).sigma1(Idx(j)).^2 + SigmaIni^2);
+                    Sigma2 = sqrt(machine.data(energyIx).sigma2(Idx(j)).^2 + SigmaIni^2);
                     y_r    = DG(r_mid,1,w,Sigma1,Sigma2);
         else
             error('unknown dataType');
@@ -119,15 +137,17 @@ for energyIx = 1:length(machine.data)
             end
             
             [cumAreaUnique,IdxUnique] = unique(cumArea);
-            try
-                if currCutOffLevel == 0
-                    r_cut = 0;
-                else
+            
+            if currCutOffLevel == 0
+                r_cut = 0;
+            else
+                try
                     r_cut = interp1(cumAreaUnique,r_mid(IdxUnique),currCutOffLevel);
+                catch
+                    error('error in matRadcalcLateralParticleCutOff - cannot determine cut off');
                 end
-            catch
-                error('error in matRadcalcLateralParticleCutOff - cannot determine cut off');
             end
+           
             
 %             endIx = find(cumArea == 1,1,'first');
 %             if isempty(endIx)
@@ -153,7 +173,9 @@ for energyIx = 1:length(machine.data)
             machine.data(energyIx).LatCutOff.CompFac = 1/cutOffLevel;
             
         end
-   end
+    end
+    
+   Cnt = Cnt +1 ;
     
 end    
 
@@ -164,8 +186,6 @@ end
 
 if visBool
     
-    % get random energy index
-    energyIx = round((length(machine.data)-1).*rand(1,1) + 1);
     % set depth position - 1 means plotting the entry profile
     j = Idx(1);
     CutOff = machine.data(energyIx).LatCutOff.CutOff(j);
@@ -325,11 +345,11 @@ if visBool
     
     % plot cutoff of different energies
     figure,set(gcf,'Color',[1 1 1]);
-    NumPlots = 20;
-    ix = round(linspace(1,length(machine.data),NumPlots));
-    for i = 1:20
-        plot(machine.data(ix(i)).LatCutOff.depths,machine.data(ix(i)).LatCutOff.CutOff,'LineWidth',1.5),hold on
-        cellLegend{i} = [num2str(machine.data(ix(i)).energy) ' MeV'];
+    Cnt = 1;
+    for i = vEnergiesIx
+        plot(machine.data(i).LatCutOff.depths,machine.data(i).LatCutOff.CutOff,'LineWidth',1.5),hold on
+        cellLegend{Cnt} = [num2str(machine.data(i).energy) ' MeV'];
+        Cnt = Cnt + 1;
     end
     grid on, grid minor,xlabel('depth in [mm]'),ylabel('lateral cutoff in [mm]')
     title(['cutoff level = ' num2str(cutOffLevel)])

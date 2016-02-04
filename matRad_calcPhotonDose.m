@@ -1,4 +1,4 @@
-function dij = matRad_calcPhotonDose(ct,stf,pln,cst,visBool)
+function dij = matRad_calcPhotonDose(ct,stf,pln,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad photon dose calculation wrapper
 % 
@@ -10,7 +10,6 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,visBool)
 %   stf:        matRad steering information struct
 %   pln:        matRad plan meta information struct
 %   cst:        matRad cst struct
-%   visBool:    toggle on/off visualization (optional)
 %
 % output
 %   dij:        matRad dij struct
@@ -45,15 +44,9 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,visBool)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% if visBool not set toogle off visualization
-if nargin < 5
-    visBool = 0;
-end
-
 % initialize waitbar
-figureWait=waitbar(0,'photon dij-calculation..');
-% prevent closure of waitbar and show busy state
-set(figureWait,'CloseRequestFcn','');
+figureWait = waitbar(0,'photon dij-calculation..');
+% show busy state
 set(figureWait,'pointer','watch');
 
 % meta information for dij
@@ -81,12 +74,7 @@ doseTmpContainer = cell(numOfBixelsContainer,1);
 V = unique([cell2mat(cst(:,4))]);
 
 % Convert CT subscripts to linear indices.
-[yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct.cube),V);
-
-xCoordsV = xCoordsV(:)*ct.resolution.x-pln.isoCenter(1);
-yCoordsV = yCoordsV(:)*ct.resolution.y-pln.isoCenter(2);
-zCoordsV = zCoordsV(:)*ct.resolution.z-pln.isoCenter(3);
-coordsV  = [xCoordsV yCoordsV zCoordsV];
+[yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(size(ct.cube),V);
 
 % set lateral cutoff value
 lateralCutoff = 20; % [mm]
@@ -154,6 +142,12 @@ fprintf('matRad: Photon dose calculation... ');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams; % loop over all beams
     
+    % convert voxel indices to real coordinates using iso center of beam i
+    xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
+    yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
+    zCoordsV = zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
+    coordsV  = [xCoordsV yCoordsV zCoordsV];
+    
     % Set gantry and couch rotation matrices according to IEC 61217
     % Use transpose matrices because we are working with row vectros
     
@@ -174,6 +168,9 @@ for i = 1:dij.numOfBeams; % loop over all beams
     rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
     rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
     
+    % ray tracing
+    [radDepthCube,geoDistCube] = matRad_rayTracing(stf(i),ct,V,lateralCutoff);
+        
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
         
         counter = counter + 1;
@@ -215,18 +212,10 @@ for i = 1:dij.numOfBeams; % loop over all beams
         dij.bixelNum(counter) = j;
         
         % Ray tracing for beam i and bixel j
-        [ix,radDepths,geoDists,latDistsX,latDistsZ] = matRad_calcRadGeoDists(ct.cube, ...
-                                                        V, ...
-                                                        pln.isoCenter, ...
-                                                        rot_coordsV, ...
-                                                        ct.resolution, ...
-                                                        stf(i).sourcePoint, ...
-                                                        stf(i).ray(j).targetPoint, ...
-                                                        stf(i).sourcePoint_bev, ...
-                                                        stf(i).ray(j).targetPoint_bev, ...
-                                                        coordsV, ...
-                                                        lateralCutoff, ...
-                                                        visBool);
+        [ix,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
+                                                       stf(i).sourcePoint_bev, ...
+                                                       stf(i).ray(j).targetPoint_bev, ...
+                                                       lateralCutoff);
         
         % calculate photon dose for beam i and bixel j
         bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
@@ -234,8 +223,8 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                Interp_kernel1,...
                                                Interp_kernel2,...
                                                Interp_kernel3,...
-                                               radDepths,...
-                                               geoDists,...
+                                               radDepthCube(V(ix)),...
+                                               geoDistCube(V(ix)),...
                                                latDistsX,...
                                                latDistsZ);
        

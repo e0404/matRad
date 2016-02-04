@@ -81,8 +81,8 @@ voiTarget    = zeros(size(ct.cube));
 voiTarget(V) = 1;
 
 % generate voi cube for surface for ssd calculation
-voiSSD = zeros(size(ct.cube));
-voiSSD(unique([cell2mat(cst(:,4))])) = 1;
+% voiSSD = zeros(size(ct.cube));
+% voiSSD(unique([cell2mat(cst(:,4))])) = 1;
     
 % add margin
 addmarginBool = 1;
@@ -113,13 +113,7 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     if sum(availablePeakPos<0)>0
        error('at least one available peak position is negative - inconsistent machine file') 
     end
-
     %clear machine;
-    
-    % define default foki indices
-    LowerFociIdx  = 1; %[index]
-    UpperFociIdx  = 2; %[index]
-    ThresholdFoci = 20; %[mm]
 end
 
 % Convert linear indices to 3D voxel coordinates
@@ -143,6 +137,7 @@ for i = 1:length(pln.gantryAngles)
     stf(i).bixelWidth    = pln.bixelWidth;
     stf(i).radiationMode = pln.radiationMode;
     stf(i).SAD           = SAD;
+    stf(i).isoCenter     = pln.isoCenter;
     
     % gantry and couch roation matrices according to IEC 61217 standard
     % instead of moving the beam around the patient, we perform an inverse
@@ -245,41 +240,33 @@ for i = 1:length(pln.gantryAngles)
     for j = 1:stf(i).numOfRays
         stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
         stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
+        stf(i).ray(j).ixSSD       = NaN;
     end
     
     % find appropriate energies for particles
     if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
         
-         % initializing SSD vector
-         stf(i).SSD = zeros(stf(i).numOfRays,1);
-          
+         stf(i).BAMStoIsoDist = machine.meta.BAMStoIsoDist; 
+              
         for j = stf(i).numOfRays:-1:1
             
             % ray tracing necessary to determine depth of the target
-            [~,l,rho,~] = matRad_siddonRayTracer(pln.isoCenter, ...
+            [~,l,rho,~,ix] = matRad_siddonRayTracer(stf(i).isoCenter, ...
                                  ct.resolution, ...
                                  stf(i).sourcePoint, ...
                                  stf(i).ray(j).targetPoint, ...
                                  {ct.cube,voiTarget});
             
-            if sum(rho{2}) > 0 % target hit
-                
-                % calculate SSD
-
-                % ray tracing necessary to determine SSD
-                [alphasSSD,~,rhoSSD,~] = matRad_siddonRayTracer(pln.isoCenter, ...
-                                            ct.resolution, ...
-                                            stf(i).sourcePoint, ...
-                                            stf(i).ray(j).targetPoint, ...
-                                            {voiSSD});
-
-                ixSSD = find(rhoSSD{1} > 0,1,'first');
-                if ixSSD == 1
+ 
+                DensityThreshold = 0.05;
+                ixSSD = find(rho{1} > DensityThreshold,1,'first');
+                if isempty(ixSSD)== 1
                     warning('Surface for SSD calculation starts directly in first voxel of CT\n');
                 end
-                stf(i).SSD(j) = stf(i).SAD * alphasSSD(ixSSD);
-
+                stf(i).ray(j).ixSSD = ix(ixSSD);
                 
+           if sum(rho{2}) > 0 % target hit
+               
                 % compute radiological depths
                 % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
                 radDepths = cumsum(l .* rho{1}); 
@@ -322,45 +309,56 @@ for i = 1:length(pln.gantryAngles)
                 
                 
             else % target not hit
-                stf(i).ray(j) = [];
-                stf(i).SSD(j) = [];
-            end
-                        
+                stf(i).ray(j)       = [];
+           end
+                 
         end
 
         % book keeping
         stf(i).numOfRays = size(stf(i).ray,2);
         for j = 1:stf(i).numOfRays
+            
             stf(i).numOfBixelsPerRay(j) = numel(stf(i).ray(j).energy);
+            focusIx  =  machine.meta.defaultFociIndex * ones(stf(i).numOfBixelsPerRay(j),1);
+            [~, energyIx] = min(abs(bsxfun(@minus,[machine.data.energy]',...
+                            repmat(stf(i).ray(j).energy,length([machine.data]),1))));
+                   
             % get for each spot the focus index
-            for k = 1:stf(i).numOfBixelsPerRay(j)
-                 energyIx = find([machine.data.energy] == stf(i).ray(j).energy(k));
-                 BeamWidth = interp1(machine.data(energyIx).initFocus(LowerFociIdx).dist,machine.data(energyIx).initFocus(LowerFociIdx).sigma,...
-                     stf(i).SSD(j));
-                 if BeamWidth <= ThresholdFoci
-                    stf(i).ray(j).focusIx(k) = LowerFociIdx;
-                 else
-                    stf(i).ray(j).focusIx(k) = UpperFociIdx;
-                 end
+            Cnt = 1; 
+            for k = energyIx
+                for currFoci =  machine.meta.defaultFociIndex:1:size(machine.data(k).initFocus,2)
+            
+                      SigmaIniAtIsoCenter = interp1(machine.data(k).initFocus(currFoci).dist,...
+                                                    machine.data(k).initFocus(currFoci).sigma,...
+                                                    machine.meta.BAMStoIsoDist);
+                           
+                     if SigmaIniAtIsoCenter > machine.meta.minIniBeamSigma 
+                            focusIx(Cnt)= currFoci;
+                        break;
+                     end
+                end
+                 Cnt = Cnt + 1;
             end
+            
+            stf(i).ray(j).focusIx = focusIx';
+            
         end
 
     elseif strcmp(stf(i).radiationMode,'photons')
         % set dummy values for photons
         for j = 1:stf(i).numOfRays
             
-            % ray tracing necessary to determine SSD
-            [alphasSSD,~,rhoSSD,~] = matRad_siddonRayTracer(pln.isoCenter, ...
-                                        ct.resolution, ...
-                                        stf(i).sourcePoint, ...
-                                        stf(i).ray(j).targetPoint, ...
-                                        {voiSSD});
-
-            ixSSD = find(rhoSSD{1} > 0,1,'first');
-            if ixSSD == 1
-                warning('Surface for SSD calculation starts directly in first voxel of CT\n');
-            end
-            stf(i).SSD(j) = stf(i).SAD * alphasSSD(ixSSD);
+             % ray tracing necessary to determine depth of the target
+            [~,~,rho,~,ix] = matRad_siddonRayTracer(stf(i).isoCenter, ...
+                                 ct.resolution, ...
+                                 stf(i).sourcePoint, ...
+                                 stf(i).ray(j).targetPoint, ...
+                                 {ct.cube,voiTarget});
+            
+ 
+            DensityThreshold = 0.05;
+            ixSSD = find(rho{1} > DensityThreshold,1,'first');
+            stf(i).ixSSD(j) = ix(ixSSD);
             
             % book keeping
             stf(i).ray(j).energy = machine.data.energy;
@@ -396,9 +394,9 @@ for i = 1:length(pln.gantryAngles)
             
             % generate a 3D rectangular grid centered at isocenter in
             % voxel coordinates
-            [X,Y,Z] = meshgrid((1:size(ct.cube,2))-pln.isoCenter(1)/ct.resolution.x, ...
-                               (1:size(ct.cube,1))-pln.isoCenter(2)/ct.resolution.y, ...
-                               (1:size(ct.cube,3))-pln.isoCenter(3)/ct.resolution.z);
+            [X,Y,Z] = meshgrid((1:size(ct.cube,2))-stf(i).isoCenter(1)/ct.resolution.x, ...
+                               (1:size(ct.cube,1))-stf(i).isoCenter(2)/ct.resolution.y, ...
+                               (1:size(ct.cube,3))-stf(i).isoCenter(3)/ct.resolution.z);
             
             % computes surface
             patSurfCube = 0*ct.cube;

@@ -52,7 +52,7 @@ depths = baseData.depths + baseData.offset;
 conversionFactor = 1.6021766208e-02;
 
  % calculate initial focus sigma
-initFocus = interp1(baseData.initFocus(focusIx).dist,baseData.initFocus(focusIx).sigma,SSD);
+SigmaIni = interp1(baseData.initFocus(focusIx).dist,baseData.initFocus(focusIx).sigma,SSD);
 
 if ~isfield(baseData,'sigma')
     
@@ -60,8 +60,8 @@ if ~isfield(baseData,'sigma')
     X = interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths,'linear');
     
     % compute lateral sigmas
-    sigmaSq_Narr = X(:,2).^2 + initFocus^2;
-    sigmaSq_Bro  = X(:,4).^2 + initFocus^2;
+    sigmaSq_Narr = X(:,2).^2 + SigmaIni^2;
+    sigmaSq_Bro  = X(:,4).^2 + SigmaIni^2;
     
     % calculate lateral profile
     L_Narr =  exp( -radialDist_sq ./ (2*sigmaSq_Narr))./(2*pi*sigmaSq_Narr);
@@ -75,7 +75,7 @@ else
     X = interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths,'linear');
 
     %compute lateral sigma
-    sigmaSq = X(:,2).^2 + initFocus^2;
+    sigmaSq = X(:,2).^2 + SigmaIni^2;
     
     % calculate dose
     dose = baseData.LatCutOff.CompFac * exp( -radialDist_sq ./ (2*sigmaSq)) .* X(:,1) ./(2*pi*sigmaSq);

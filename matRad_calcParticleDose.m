@@ -129,14 +129,7 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
     fprintf('...done \n');
 end
 
-% determine lateral cutoff
-fprintf('matRad: calculate lateral cutoff... ');
-cutOffLevel = 0.99;
-visBoolLateralCutOff = 0;
-machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,visBoolLateralCutOff);
-fprintf('...done \n');
-
-fprintf('matRad: Particle dose calculation... ');
+fprintf('matRad: Particle dose calculation... \n');
 counter = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams; % loop over all beams
@@ -161,6 +154,22 @@ for i = 1:dij.numOfBeams; % loop over all beams
     rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
     rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
     
+    % Calcualte radiological depth cube
+    lateralCutoff = 50;
+    fprintf(['matRad: Calculating radiological depth cube for beam ' num2str(i) ' ...']);
+    [radDepthCube,geoDistCube] = matRad_rayTracing(stf(i),ct,V,lateralCutoff);
+    geoDistBAMSCube = stf(i).BAMStoIsoDist - (stf.SAD - reshape(geoDistCube,size(ct.cube)));
+    stf(i).SSD = geoDistBAMSCube([stf(i).ray.ixSSD]);
+    fprintf('...done \n');
+    
+    % Determine lateral cutoff
+    fprintf('matRad: calculate lateral cutoff... ');
+    cutOffLevel = 0.90;
+    visBoolLateralCutOff = 1;
+    machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
+    fprintf('...done \n');
+    
+    
     for j = 1:stf(i).numOfRays % loop over all rays
         
         if ~isempty(stf(i).ray(j).energy)
@@ -169,24 +178,14 @@ for i = 1:dij.numOfBeams; % loop over all beams
             % reasons
             energyIx = max(round2(stf(i).ray(j).energy,4)) == round2([machine.data.energy],4);
             
-            
             maxLateralCutoff = max(machine.data(energyIx).LatCutOff.CutOff);
             
-            
-            % Ray tracing for beam i and ray j
-            [ix,radDepths,~,latDistsX,latDistsZ] = matRad_calcRadGeoDists(ct.cube, ...
-                                                        V,...
-                                                        pln.isoCenter, ...
-                                                        rot_coordsV, ...
-                                                        ct.resolution, ...
-                                                        stf(i).sourcePoint, ...
-                                                        stf(i).ray(j).targetPoint, ...
-                                                        stf(i).sourcePoint_bev,...
-                                                        stf(i).ray(j).targetPoint_bev, ...
-                                                        coordsV, ...
-                                                        maxLateralCutoff, ...
-                                                        visBool);
-            
+            % Ray tracing for beam i and ray j                          
+            [ix,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
+                                                       stf(i).sourcePoint_bev, ...
+                                                       stf(i).ray(j).targetPoint_bev, ...
+                                                       maxLateralCutoff);
+            radDepths = radDepthCube(V(ix));
             radialDist_sq = latDistsX.^2 + latDistsZ.^2;    
             
             % just use tissue classes of voxels found by ray tracer
