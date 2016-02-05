@@ -76,8 +76,9 @@ zCoords = zCoords-stf.sourcePoint(3);
 coords  = [xCoords yCoords zCoords];
     
 % calculate geometric distances
-geoDistCube = sqrt(sum(coords.^2,2));
-
+if nargout > 1
+    geoDistCube = sqrt(sum(coords.^2,2));
+end
 % set up ray matrix
 rayMxSpacing = min([ct.resolution.x ct.resolution.y ct.resolution.z]);
 

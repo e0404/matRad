@@ -57,9 +57,6 @@ if ~strcmp(pln.radiationMode,'carbon') && sum(strcmp(pln.bioOptimization,{'effec
     fprintf('\n ********************************************************************************************************* \n');
 end
 
-% helper function for energy selection
-round2 = @(a,b)round(a*10^b)/10^b;
-
 % find all target voxels from cst cell array
 V = [];
 for i=1:size(cst,1)
@@ -71,13 +68,12 @@ end
 % Remove double voxels
 V = unique(V);
 
+% density threshold used for SSD calculation
+DensityThresholdSSD = 0.05;
+
 % generate voi cube for targets
 voiTarget    = zeros(size(ct.cube));
 voiTarget(V) = 1;
-
-% generate voi cube for surface for ssd calculation
-% voiSSD = zeros(size(ct.cube));
-% voiSSD(unique([cell2mat(cst(:,4))])) = 1;
     
 % add margin
 addmarginBool = 1;
@@ -235,48 +231,48 @@ for i = 1:length(pln.gantryAngles)
     for j = 1:stf(i).numOfRays
         stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
         stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
-        stf(i).ray(j).ixSSD       = NaN;
+        stf(i).ray(j).SSD         = NaN;
     end
     
-    % find appropriate energies for particles
-    if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
-        
-         stf(i).BAMStoIsoDist = machine.meta.BAMStoIsoDist; 
-              
-        for j = stf(i).numOfRays:-1:1
-            
-            % ray tracing necessary to determine depth of the target
-            [~,l,rho,~,ix] = matRad_siddonRayTracer(stf(i).isoCenter, ...
-                                 ct.resolution, ...
-                                 stf(i).sourcePoint, ...
-                                 stf(i).ray(j).targetPoint, ...
-                                 {ct.cube,voiTarget});
-            
- 
-                DensityThreshold = 0.05;
-                ixSSD = find(rho{1} > DensityThreshold,1,'first');
-                if isempty(ixSSD)== 1
-                    warning('Surface for SSD calculation starts directly in first voxel of CT\n');
-                end
-                stf(i).ray(j).ixSSD = ix(ixSSD);
                 
-           if sum(rho{2}) > 0 % target hit
-               
+    for j = stf(i).numOfRays:-1:1
+
+        % ray tracing necessary to determine depth of the target
+        [alpha,l,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
+                             ct.resolution, ...
+                             stf(i).sourcePoint, ...
+                             stf(i).ray(j).targetPoint, ...
+                             {ct.cube,voiTarget});
+
+            ixSSD = find(rho{1} > DensityThresholdSSD,1,'first');
+
+            if isempty(ixSSD)== 1
+                warning('Surface for SSD calculation starts directly in first voxel of CT\n');
+            end
+
+            stf(i).ray(j).SSD = 2 * stf(i).SAD * alpha(ixSSD);
+            
+        % find appropriate energies for particles
+       if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
+
+           % target hit
+           if sum(rho{2}) > 0 
+
                 % compute radiological depths
                 % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
                 radDepths = cumsum(l .* rho{1}); 
-                
+
                 % find target entry & exit
                 diff_voi    = diff([rho{2}]);
                 targetEntry = radDepths(diff_voi == 1);
                 targetExit  = radDepths(diff_voi == -1);
-                
+
                 if numel(targetEntry) ~= numel(targetExit)
                     error('Inconsistency during ray tracing.');
                 end
-                
+
                 stf(i).ray(j).energy = [];
-                
+
                 % Save energies in stf struct
                 for k = 1:numel(targetEntry)
                     stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
@@ -299,80 +295,68 @@ for i = 1:length(pln.gantryAngles)
                             end
                         end
                     end
-                    
+
                 end
-                
-                
+
             else % target not hit
                 stf(i).ray(j)       = [];
            end
-                 
-        end
+           
+       elseif strcmp(stf(i).radiationMode,'photons')
+           
+         % book keeping for photons
+         stf(i).ray(j).energy = machine.data.energy;
+         stf(i).numOfBixelsPerRay(j) = 1;
+         
+       else
+          error('Error generating stf struct: invalid radiation modality.');
+       end
+       
+    end
+    
+    % store total number of rays for beam-i
+    stf(i).numOfRays = size(stf(i).ray,2);
+     
+    % book keeping for particles
+    if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
 
-        % book keeping
-        stf(i).numOfRays = size(stf(i).ray,2);
         for j = 1:stf(i).numOfRays
-            
-            stf(i).numOfBixelsPerRay(j) = numel(stf(i).ray(j).energy);
+            stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);
             focusIx  =  machine.meta.defaultFociIndex * ones(stf(i).numOfBixelsPerRay(j),1);
-            [~, energyIx] = min(abs(bsxfun(@minus,[machine.data.energy]',...
+            [~, vEnergyIx] = min(abs(bsxfun(@minus,[machine.data.energy]',...
                             repmat(stf(i).ray(j).energy,length([machine.data]),1))));
-                   
+
             % get for each spot the focus index
-            Cnt = 1; 
-            for k = energyIx
-                for currFoci =  machine.meta.defaultFociIndex:1:size(machine.data(k).initFocus,2)
-            
-                      SigmaIniAtIsoCenter = interp1(machine.data(k).initFocus(currFoci).dist,...
-                                                    machine.data(k).initFocus(currFoci).sigma,...
-                                                    machine.meta.BAMStoIsoDist);
-                           
+            for k = 1:stf(i).numOfBixelsPerRay(j) 
+                for currFoci =  machine.meta.defaultFociIndex:1:size(machine.data(vEnergyIx(k)).initFocus,2)
+
+                      SigmaIniAtIsoCenter = interp1(machine.data(vEnergyIx(k)).initFocus(currFoci).dist,...
+                                                    machine.data(vEnergyIx(k)).initFocus(currFoci).sigma,...
+                                                    machine.meta.SAD);
+
                      if SigmaIniAtIsoCenter > machine.meta.minIniBeamSigma 
-                            focusIx(Cnt)= currFoci;
+                            focusIx(k)= currFoci;
                         break;
                      end
                 end
-                 Cnt = Cnt + 1;
             end
-            
+
             stf(i).ray(j).focusIx = focusIx';
-            
+
         end
 
-    elseif strcmp(stf(i).radiationMode,'photons')
-        % set dummy values for photons
-        for j = 1:stf(i).numOfRays
-            
-             % ray tracing necessary to determine depth of the target
-            [~,~,rho,~,ix] = matRad_siddonRayTracer(stf(i).isoCenter, ...
-                                 ct.resolution, ...
-                                 stf(i).sourcePoint, ...
-                                 stf(i).ray(j).targetPoint, ...
-                                 {ct.cube,voiTarget});
-            
- 
-            DensityThreshold = 0.05;
-            ixSSD = find(rho{1} > DensityThreshold,1,'first');
-            stf(i).ixSSD(j) = ix(ixSSD);
-            
-            % book keeping
-            stf(i).ray(j).energy = machine.data.energy;
-            stf(i).numOfBixelsPerRay(j) = 1;
-            
-        end
-    else
-        error('Error generating stf struct: invalid radiation modality.');
     end
-    %%
-    
+
     % save total number of bixels
     stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
+    %     figure,
+    %     for jj = 1:length(stf.ray)
+    %        plot(stf.ray(jj).rayPos_bev(1),stf.ray(jj).rayPos_bev(3),'rx'),hold on 
+    %     end
     
-%     figure,
-%     for jj = 1:length(stf.ray)
-%        plot(stf.ray(jj).rayPos_bev(1),stf.ray(jj).rayPos_bev(3),'rx'),hold on 
-%     end
-    
+end    
+
+
     %% visualization
     if visMode > 0
         

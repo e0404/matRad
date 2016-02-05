@@ -86,7 +86,8 @@ for energyIx = vEnergiesIx
     Idx = round(linspace(1,length(machine.data(energyIx).depths),NumDepthVal-1));
     Idx = unique(sort([Idx peakIdx]));
     % find maximum SSD for the current energy
-    maxSSD = max(stf.SSD(vBixelRay([stf.ray(:).energy]' == machine.data(energyIx).energy)));
+    SSD = [stf.ray.SSD];
+    maxSSD = max(SSD(vBixelRay([stf.ray(:).energy]' == machine.data(energyIx).energy)));
     SigmaIni = interp1(machine.data(energyIx).initFocus(FociEnergyLUT(Cnt,1)).dist,...
                        machine.data(energyIx).initFocus(FociEnergyLUT(Cnt,1)).sigma,...
                        maxSSD);

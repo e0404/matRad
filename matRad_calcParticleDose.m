@@ -85,12 +85,7 @@ end
 V = unique([cell2mat(cst(:,4))]);
 
 % Convert CT subscripts to linear indices.
-[yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct.cube),V);
-
-xCoordsV = xCoordsV(:)*ct.resolution.x-pln.isoCenter(1);
-yCoordsV = yCoordsV(:)*ct.resolution.y-pln.isoCenter(2);
-zCoordsV = zCoordsV(:)*ct.resolution.z-pln.isoCenter(3);
-coordsV  = [xCoordsV yCoordsV zCoordsV];
+[yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(size(ct.cube),V);
 
 % load machine file
 fileName = [pln.radiationMode '_' pln.machine];
@@ -130,6 +125,12 @@ counter = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams; % loop over all beams
     
+    % convert voxel indices to real coordinates using iso center of beam i
+    xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
+    yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
+    zCoordsV = zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
+    coordsV  = [xCoordsV yCoordsV zCoordsV];
+
     % Set gantry and couch rotation matrices according to IEC 61217
     % Use transpose matrices because we are working with row vectros
     
@@ -152,10 +153,8 @@ for i = 1:dij.numOfBeams; % loop over all beams
     
     % Calcualte radiological depth cube
     lateralCutoff = 50;
-    fprintf(['matRad: Calculating radiological depth cube for beam ' num2str(i) ' ...']);
-    [radDepthCube,geoDistCube] = matRad_rayTracing(stf(i),ct,V,lateralCutoff);
-    geoDistBAMSCube = stf(i).BAMStoIsoDist - (stf.SAD - reshape(geoDistCube,size(ct.cube)));
-    stf(i).SSD = geoDistBAMSCube([stf(i).ray.ixSSD]);
+    fprintf(['matRad: Calculating radiological depth cube for beam ' num2str(i) '/' num2str(dij.numOfBeams) '...']);
+    [radDepthCube,~] = matRad_rayTracing(stf(i),ct,V,lateralCutoff);
     fprintf('...done \n');
     
     % Determine lateral cutoff
@@ -190,11 +189,12 @@ for i = 1:dij.numOfBeams; % loop over all beams
                     mTissueClass_j= mTissueClass(ix,:);
             end
             
+            % display progress - update ray-wise
+            matRad_progress(j,stf(i).numOfRays);
+                
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
 
                 counter = counter + 1;
-                % Display progress
-                matRad_progress(counter,dij.totalNumOfBixels);
                 % update waitbar only 100 times
                 if mod(counter,round(dij.totalNumOfBixels/100)) == 0
                     waitbar(counter/dij.totalNumOfBixels);
@@ -228,7 +228,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 bixelDose = matRad_calcParticleDoseBixel(...
                     radDepths(currIx), ...
                     radialDist_sq(currIx), ...
-                    stf(i).SSD(j), ...
+                    stf(i).ray(j).SSD, ...
                     stf(i).ray(j).focusIx(k), ...
                     machine.data(energyIx)); 
                 
