@@ -1,4 +1,4 @@
-function matRad_progress(currentIndex, totalNumberOfEvaluations)
+function matRad_progress(currentIndex, totalNumberOfEvaluations, cntBeam)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad progress bar
 % 
@@ -39,11 +39,15 @@ function matRad_progress(currentIndex, totalNumberOfEvaluations)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  
 % If it's not the first step, erase the stuff printed before
-if (currentIndex == 1 || nargin > 2)
-    fprintf('Progress: ');
+if (currentIndex == 1 || nargin > 3)
+    if nargin == 3
+        fprintf(['Progress beam ' num2str(cntBeam) ': ']);
+    else
+        fprintf(['Progress : ']);
+    end
 end;
  
-if (currentIndex > 1 && nargin < 3)
+if (currentIndex > 1 && nargin < 4)
   Length = numel(sprintf('%3.2f %%',(currentIndex-1)/totalNumberOfEvaluations*100));
   fprintf(repmat('\b',1,Length));
 end

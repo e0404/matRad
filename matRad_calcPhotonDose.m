@@ -133,9 +133,11 @@ end
 
 counter = 0;
 
-fprintf('matRad: Photon dose calculation... ');
+fprintf('matRad: Photon dose calculation...\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams; % loop over all beams
+    
+    counterBeam = 0;
     
     % convert voxel indices to real coordinates using iso center of beam i
     xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
@@ -169,7 +171,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
         
         counter = counter + 1;
-        
+        counterBeam = counterBeam + 1;
         if useCustomPrimFluenceBool % use custom primary fluence if specifried
             
             r     = sqrt( (X-stf(i).ray(j).rayPos(1)).^2 + (Z-stf(i).ray(j).rayPos(3)).^2 );
@@ -195,7 +197,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
         end
 
         % Display progress
-        matRad_progress(counter,dij.totalNumOfBixels);
+        matRad_progress(counterBeam,stf(i).totalNumOfBixels,i);
         % update waitbar only 100 times
         if mod(counter,round(dij.totalNumOfBixels/100)) == 0
             waitbar(counter/dij.totalNumOfBixels);

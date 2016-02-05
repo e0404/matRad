@@ -55,23 +55,42 @@ NumDepthVal = 30;
 SG =  @(vR,Sigma)((1/(2*pi*Sigma^2)).*exp(-(vR.^2)./(2*Sigma^2)));
 DG =  @(vR,Z,w,Sigma1,Sigma2) Z*(((1-w)*SG(vR,Sigma1)) + (w*SG(vR,Sigma2)));
 
-% find for each energy the biggest foci index
-FociEnergyLUT  = unique([[stf.ray(:).focusIx] ; [stf.ray(:).energy]]','rows');
-UniqueEnergies = unique(FociEnergyLUT(:,2));
-N=histc(FociEnergyLUT(:,2),UniqueEnergies);
-FociEnergyLUT(N>1,:) = [];
-[FociEnergyLUT(:,2), sortIx] = sort(FociEnergyLUT(:,2));
-FociEnergyLUT(:,1) = FociEnergyLUT(sortIx,1);
 
-vEnergiesIx = find(ismember([machine.data(:).energy],FociEnergyLUT(:,2)));
-
-% take from each energy the largest SSD
-vBixelRay = ones(1,length([stf.ray(:).energy]));
+% extract for each voxel its SSD
+vSSDBixel = ones(1,length([stf.ray(:).energy]));
 Cnt = 1;
 for k  = 1:length(stf.ray)
-    vBixelRay(Cnt:Cnt+numel(stf.ray(k).energy)) = k;
+    vSSDBixel(Cnt:Cnt+numel([stf.ray(k).energy])-1) = stf.ray(k).SSD;
     Cnt = Cnt + numel(stf.ray(k).energy);
 end
+
+% setup energy sigma look up table
+EnergySigmaLUT  = unique([[stf.ray(:).energy]; [stf.ray(:).focusIx] ; vSSDBixel]','rows');
+
+% calculate for each energy its inital beam width
+for l = 1:size(EnergySigmaLUT,1)
+    energyIx = find(ismember([machine.data(:).energy],EnergySigmaLUT(l,1)));
+    EnergySigmaLUT(l,4) = interp1(machine.data(energyIx).initFocus(EnergySigmaLUT(l,2)).dist,...
+                                 machine.data(energyIx).initFocus(EnergySigmaLUT(l,2)).sigma,...
+                                 EnergySigmaLUT(l,3));
+end
+
+% find for each energy the broadest inital beam width
+UniqueEnergies  = unique(EnergySigmaLUT(:,1));
+EnergyIncidence = histc(EnergySigmaLUT(:,1),UniqueEnergies);
+
+for k = size(UniqueEnergies,1):-1:1
+    if EnergyIncidence(k) > 1        
+      ind = find(ismember(EnergySigmaLUT(:,1),UniqueEnergies(k)));
+      [~,ix] = max(EnergySigmaLUT(ind,4));
+      ind(ix) = [];
+      EnergySigmaLUT(ind,:) = [];  
+    end
+end
+
+% get energy indices for looping
+vEnergiesIx = find(ismember([machine.data(:).energy],EnergySigmaLUT(:,1)));
+
    
 Cnt = 1;    
 % loop over all entries in the machine.data struct
@@ -85,12 +104,9 @@ for energyIx = vEnergiesIx
     [~,peakIdx] = max(machine.data(energyIx).Z);
     Idx = round(linspace(1,length(machine.data(energyIx).depths),NumDepthVal-1));
     Idx = unique(sort([Idx peakIdx]));
-    % find maximum SSD for the current energy
-    SSD = [stf.ray.SSD];
-    maxSSD = max(SSD(vBixelRay([stf.ray(:).energy]' == machine.data(energyIx).energy)));
-    SigmaIni = interp1(machine.data(energyIx).initFocus(FociEnergyLUT(Cnt,1)).dist,...
-                       machine.data(energyIx).initFocus(FociEnergyLUT(Cnt,1)).sigma,...
-                       maxSSD);
+    
+    % get inital beam width
+    SigmaIni = EnergySigmaLUT(Cnt,4);
 
     for j = 1:length(Idx)
         

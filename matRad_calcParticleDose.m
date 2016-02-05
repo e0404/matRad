@@ -125,6 +125,8 @@ counter = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams; % loop over all beams
     
+    counterBeam = 0;
+    
     % convert voxel indices to real coordinates using iso center of beam i
     xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
     yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
@@ -152,14 +154,14 @@ for i = 1:dij.numOfBeams; % loop over all beams
     rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
     
     % Calcualte radiological depth cube
-    lateralCutoff = 50;
+    lateralCutoffRayTracing = 50;
     fprintf(['matRad: Calculating radiological depth cube for beam ' num2str(i) '/' num2str(dij.numOfBeams) '...']);
-    [radDepthCube,~] = matRad_rayTracing(stf(i),ct,V,lateralCutoff);
+    [radDepthCube,~] = matRad_rayTracing(stf(i),ct,V,lateralCutoffRayTracing);
     fprintf('...done \n');
     
     % Determine lateral cutoff
     fprintf('matRad: calculate lateral cutoff... ');
-    cutOffLevel = 0.99;
+    cutOffLevel = 1;
     visBoolLateralCutOff = 0;
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
     fprintf('...done \n');
@@ -173,13 +175,13 @@ for i = 1:dij.numOfBeams; % loop over all beams
             % reasons
             energyIx = max(round2(stf(i).ray(j).energy,4)) == round2([machine.data.energy],4);
             
-            maxLateralCutoff = max(machine.data(energyIx).LatCutOff.CutOff);
+            maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
             
             % Ray tracing for beam i and ray j                          
             [ix,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
                                                        stf(i).sourcePoint_bev, ...
                                                        stf(i).ray(j).targetPoint_bev, ...
-                                                       maxLateralCutoff);
+                                                       maxLateralCutoffDoseCalc);
             radDepths = radDepthCube(V(ix));
             radialDist_sq = latDistsX.^2 + latDistsZ.^2;    
             
@@ -188,13 +190,12 @@ for i = 1:dij.numOfBeams; % loop over all beams
                  && strcmp(pln.radiationMode,'carbon')
                     mTissueClass_j= mTissueClass(ix,:);
             end
-            
-            % display progress - update ray-wise
-            matRad_progress(j,stf(i).numOfRays);
-                
+              
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
-
+                
                 counter = counter + 1;
+                counterBeam = counterBeam + 1;
+                matRad_progress(counterBeam,stf(i).totalNumOfBixels,i);
                 % update waitbar only 100 times
                 if mod(counter,round(dij.totalNumOfBixels/100)) == 0
                     waitbar(counter/dij.totalNumOfBixels);
