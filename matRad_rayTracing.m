@@ -97,6 +97,11 @@ for j = 1:stf.numOfRays
 
 end
 
+%     figure,
+%     for jj = 1:length(rayMx_bev)
+%        plot(rayMx_bev(jj,1),rayMx_bev(jj,3),'rx'),hold on 
+%     end
+    
 % Rotation around Z axis (gantry)
 rotMx_XY_T = [ cosd(stf.gantryAngle) sind(stf.gantryAngle) 0;
               -sind(stf.gantryAngle) cosd(stf.gantryAngle) 0;
@@ -149,8 +154,15 @@ for j = 1:size(rayMx_world,1)
         dCumIx = min([find(dCum==0,1,'last') numel(dCum)-1]);
 
         % Calculate the radiological path
-        radDepthCube(ixHitVoxel(ixRememberFromCurrTracing)) = ...
-            interp1(alphas(dCumIx:end),dCum(dCumIx:end),dotProdHitVoxels(ixRememberFromCurrTracing)/d12,'linear',0);
+        vRadDepth = interp1(alphas(dCumIx:end),dCum(dCumIx:end),dotProdHitVoxels(ixRememberFromCurrTracing)/d12,'linear',0);
+        
+        if all(diff(vRadDepth)>=0)
+            % radiological depths are monotonic increasing
+            radDepthCube(ixHitVoxel(ixRememberFromCurrTracing)) = vRadDepth;
+        else
+            warning(['radiological depths for ray ' num2str(j) ' are not monotonic increasing' ])
+            radDepthCube(ixHitVoxel(ixRememberFromCurrTracing)) = vRadDepth;
+        end
     end
     
 end
