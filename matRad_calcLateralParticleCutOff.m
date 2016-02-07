@@ -56,7 +56,7 @@ SG =  @(vR,Sigma)((1/(2*pi*Sigma^2)).*exp(-(vR.^2)./(2*Sigma^2)));
 DG =  @(vR,Z,w,Sigma1,Sigma2) Z*(((1-w)*SG(vR,Sigma1)) + (w*SG(vR,Sigma2)));
 
 
-% extract for each voxel its SSD
+% extract SSD for each bixel
 vSSDBixel = ones(1,length([stf.ray(:).energy]));
 Cnt = 1;
 for k  = 1:length(stf.ray)
@@ -67,12 +67,12 @@ end
 % setup energy sigma look up table
 EnergySigmaLUT  = unique([[stf.ray(:).energy]; [stf.ray(:).focusIx] ; vSSDBixel]','rows');
 
-% calculate for each energy its inital beam width
+% calculate for each energy its inital beam width considering foci and SSD
 for l = 1:size(EnergySigmaLUT,1)
     energyIx = find(ismember([machine.data(:).energy],EnergySigmaLUT(l,1)));
     EnergySigmaLUT(l,4) = interp1(machine.data(energyIx).initFocus(EnergySigmaLUT(l,2)).dist,...
-                                 machine.data(energyIx).initFocus(EnergySigmaLUT(l,2)).sigma,...
-                                 EnergySigmaLUT(l,3));
+                                  machine.data(energyIx).initFocus(EnergySigmaLUT(l,2)).sigma,...
+                                  EnergySigmaLUT(l,3));
 end
 
 % find for each energy the broadest inital beam width

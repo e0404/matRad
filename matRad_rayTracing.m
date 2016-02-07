@@ -67,7 +67,7 @@ inv_rotMx_XZ_T = [cosd(-stf.couchAngle) 0 -sind(-stf.couchAngle);
 coords_bev = [xCoords yCoords zCoords]*inv_rotMx_XZ_T*inv_rotMx_XY_T;             
               
 % set up ray matrix direct behind last voxel
-rayMx_bev_z = max(coords_bev(V,2));
+rayMx_bev_z = max(coords_bev(V,2)) + 1;
 
 
 xCoords = xCoords-stf.sourcePoint(1);
@@ -156,13 +156,11 @@ for j = 1:size(rayMx_world,1)
         % Calculate the radiological path
         vRadDepth = interp1(alphas(dCumIx:end),dCum(dCumIx:end),dotProdHitVoxels(ixRememberFromCurrTracing)/d12,'linear',0);
         
-        if all(diff(vRadDepth)>=0)
-            % radiological depths are monotonic increasing
-            radDepthCube(ixHitVoxel(ixRememberFromCurrTracing)) = vRadDepth;
-        else
-            warning(['radiological depths for ray ' num2str(j) ' are not monotonic increasing' ])
-            radDepthCube(ixHitVoxel(ixRememberFromCurrTracing)) = vRadDepth;
+        % sanity check if radiological depths are monotonic increasing
+        if ~all(diff(vRadDepth)>=0)
+           warning(['radiological depths for ray ' num2str(j) ' are not monotonic increasing' ])
         end
+        radDepthCube(ixHitVoxel(ixRememberFromCurrTracing)) = vRadDepth;
     end
     
 end
