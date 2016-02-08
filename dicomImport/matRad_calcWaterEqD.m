@@ -21,7 +21,7 @@ function ct = matRad_calcWaterEqD(ct)
 %                       your scanner you need to replace this lookup table
 %
 % output
-%   ctEqD:              ct cube with relative _electron_ densities 
+%   ct:                 ct struct with cube with relative _electron_ densities 
 %
 % References
 %   -
@@ -49,29 +49,21 @@ function ct = matRad_calcWaterEqD(ct)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 
-% 
-% 
-% using a look up table (LUT) for HU to waterEqThickness, a new cube is 
-% generated
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 %% conversion from IV to HU
-
-% reshaping the cube produces real values, but for the conversion using the
-% LUT integer values are needed
-ctHU = int32(ct.cube * ct.dicomInfo.RescaleSlope + ct.dicomInfo.RescaleIntercept);
+ctHU = double(ct.cube) * double(ct.dicomInfo.RescaleSlope) + double(ct.dicomInfo.RescaleIntercept);
 
 %% conversion from HU to water equivalent density
 load hlutDefault.mat; % load LUT
 
 % Manual adjustments if ct data is corrupt. If some values are out of range
 % of the LUT, then these values are adjusted.
-if sum(ctHU > max(hlut(:,1)) | ctHU < min(hlut(:,1)))>0
+if max(ctHU(:)) > max(hlut(:,1))
+    warning('projecting out of range HU values');
+    ctHU(ctHU>max(hlut(:,1))) = max(hlut(:,1));
+end
+if min(ctHU(:)) < min(hlut(:,1))
     warning('projecting out of range HU values');
     ctHU(ctHU<min(hlut(:,1))) = min(hlut(:,1));
-    ctHU(ctHU>max(hlut(:,1))) = max(hlut(:,1));
 end
 
 % interpolate HU to relative electron density based on lookup table
