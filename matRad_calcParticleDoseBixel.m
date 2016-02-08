@@ -4,7 +4,7 @@ function dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,SSD,focusIx
 % segmentation
 % 
 % call
-%   dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,baseData)
+%   dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,SSD,focusIx,baseData)
 %
 % input
 %   radDepths:      radiological depths

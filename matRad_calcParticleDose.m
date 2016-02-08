@@ -48,7 +48,6 @@ end
 % initialize waitbar
 figureWait = waitbar(0,'calculate particle-ij matrice(s)...');
 % prevent closure of waitbar and show busy state
-set(figureWait,'CloseRequestFcn','');
 set(figureWait,'pointer','watch');
 
 % meta information for dij
@@ -125,8 +124,8 @@ counter = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams; % loop over all beams
     
-    counterBeam = 0;
-    
+    bixelsPerBeam = 0;
+    fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
     % convert voxel indices to real coordinates using iso center of beam i
     xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
     yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
@@ -155,12 +154,12 @@ for i = 1:dij.numOfBeams; % loop over all beams
     
     % Calcualte radiological depth cube
     lateralCutoffRayTracing = 50;
-    fprintf(['matRad: Calculating radiological depth cube for beam ' num2str(i) '/' num2str(dij.numOfBeams) '...']);
+    fprintf(['matRad: calculate radiological depth cube...']);
     [radDepthCube,~] = matRad_rayTracing(stf(i),ct,V,lateralCutoffRayTracing);
     fprintf('...done \n');
     
     % Determine lateral cutoff
-    fprintf('matRad: calculate lateral cutoff... ');
+    fprintf('matRad: calculate lateral cutoff...');
     cutOffLevel = 0.99;
     visBoolLateralCutOff = 0;
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
@@ -194,11 +193,11 @@ for i = 1:dij.numOfBeams; % loop over all beams
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
                 
                 counter = counter + 1;
-                counterBeam = counterBeam + 1;
-                matRad_progress(counterBeam,stf(i).totalNumOfBixels,i);
-                % update waitbar only 100 times
-                if mod(counter,round(dij.totalNumOfBixels/100)) == 0
-                    waitbar(counter/dij.totalNumOfBixels);
+                bixelsPerBeam = bixelsPerBeam + 1;
+                matRad_progress(bixelsPerBeam,stf(i).totalNumOfBixels);
+                % update waitbar only 100 times if it is not closed
+                if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && figureWait.isvalid
+                    waitbar(counter/dij.totalNumOfBixels,figureWait);
                 end
                 % remember beam and  bixel number
                 dij.beamNum(counter)  = i;
@@ -266,4 +265,9 @@ for i = 1:dij.numOfBeams; % loop over all beams
         
     end
 end
-delete(figureWait);
+
+try
+  allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar'); 
+  delete(allWaitBarFigures);
+catch
+end
