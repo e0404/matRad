@@ -209,7 +209,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
         dij.bixelNum(counter) = j;
         
         % Ray tracing for beam i and bixel j
-        [ix,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
+        [ix,~,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
                                                        stf(i).sourcePoint_bev, ...
                                                        stf(i).ray(j).targetPoint_bev, ...
                                                        lateralCutoff);
@@ -240,6 +240,8 @@ end
 try
   allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar'); 
   delete(allWaitBarFigures);
+  pause(0.1);
 catch
 end
+
 

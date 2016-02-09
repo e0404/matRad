@@ -177,12 +177,11 @@ for i = 1:dij.numOfBeams; % loop over all beams
             maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
             
             % Ray tracing for beam i and ray j                          
-            [ix,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
+            [ix,radialDist_sq,~,~] = matRad_calcGeoDists(rot_coordsV, ...
                                                        stf(i).sourcePoint_bev, ...
                                                        stf(i).ray(j).targetPoint_bev, ...
                                                        maxLateralCutoffDoseCalc);
-            radDepths = radDepthCube(V(ix));
-            radialDist_sq = latDistsX.^2 + latDistsZ.^2;    
+            radDepths = radDepthCube(V(ix));   
             
             % just use tissue classes of voxels found by ray tracer
             if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
@@ -269,5 +268,6 @@ end
 try
   allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar'); 
   delete(allWaitBarFigures);
+  pause(0.1);
 catch
 end

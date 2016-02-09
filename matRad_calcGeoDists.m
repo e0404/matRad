@@ -1,4 +1,4 @@
-function [ix,x_latDists,z_latDists] = ...
+function [ix,rad_distancesSq,x_latDists,z_latDists] = ...
           matRad_calcGeoDists(rot_coords_bev, ...
                               sourcePoint_bev, ...
                               targetPoint_bev, ...
@@ -28,6 +28,8 @@ function [ix,x_latDists,z_latDists] = ...
 %   x_latDists:         lateral x-distance to the central ray (where the
 %                       actual computation of the radiological depth takes place)
 %   z_latDists:         lateral z-distance to the central ray (where the
+%                       actual computation of the radiological depth takes place)
+%   radialDist_sq:      squared radial distance to the central ray (where the
 %                       actual computation of the radiological depth takes place)
 %
 % References
@@ -99,5 +101,13 @@ z_latDists = rot_coords_temp(:,3) + sourcePoint_bev(3);
 rad_distancesSq = x_latDists.^2 + z_latDists.^2;
 ix = find(rad_distancesSq <= lateralCutOff^2);
 
-x_latDists = x_latDists(ix);
-z_latDists = z_latDists(ix);
+if nargout > 1
+    rad_distancesSq = rad_distancesSq(ix);
+end
+
+if nargout > 2
+   x_latDists = x_latDists(ix);
+   z_latDists = z_latDists(ix); 
+end
+
+
