@@ -1,4 +1,4 @@
-function mVOIEnlarged = matRad_addMargin(mVOI,vResolution,vMargin,bDiaElem)
+function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad add margin function
 % 
@@ -8,6 +8,7 @@ function mVOIEnlarged = matRad_addMargin(mVOI,vResolution,vMargin,bDiaElem)
 % input
 %   mVOI:           image stack in dimensions of X x Y x Z holding ones for
 %                   object and zeros otherwise 
+%   cst:            matRad cst struct
 %   vResolution     ct resolution
 %   vMargin:        margin in mm 
 %   bDiaElem        if true 26-connectivity is used otherwise 6-connectivity
@@ -22,25 +23,21 @@ function mVOIEnlarged = matRad_addMargin(mVOI,vResolution,vMargin,bDiaElem)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+% Copyright 2016, Mark Bangert, on behalf of the matRad development team
 %
 % m.bangert@dkfz.de
 %
 % This file is part of matRad.
 %
 % matrad is free software: you can redistribute it and/or modify it under 
-% the terms of the GNU General Public License as published by the Free 
-% Software Foundation, either version 3 of the License, or (at your option)
-% any later version.
+% the terms of the Eclipse Public License 1.0 (EPL-1.0).
 %
 % matRad is distributed in the hope that it will be useful, but WITHOUT ANY
 % WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-% details.
+% FOR A PARTICULAR PURPOSE.
 %
-% You should have received a copy of the GNU General Public License in the
-% file license.txt along with matRad. If not, see
-% <http://www.gnu.org/licenses/>.
+% You should have received a copy of the EPL-1.0 in the file license.txt
+% along with matRad. If not, see <http://opensource.org/licenses/EPL-1.0>.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -49,6 +46,11 @@ if nargin == 3
 elseif nargin < 3
     error('not enough input parameters specified for matRad_addMargin');
 end
+
+% generate voi cube for patient surface/patient skin
+voiSurface = zeros(size(mVOI));
+voiSurface(unique([cell2mat(cst(:,4))])) = 1;
+voiSurfaceIdx = find(voiSurface);
 
 % get number of voxels which should be added in each dimension
 voxelMargins = round([vMargin.x vMargin.y vMargin.z]./[vResolution.x vResolution.y vResolution.z]);
@@ -86,7 +88,10 @@ for Cnt = 1:max(voxelMargins)
 
                 newIx = sub2ind(size(mVOIEnlarged),xCoord+i*dx,yCoord+j*dy,zCoord+k*dz);
                 
-                mVOIEnlarged(newIx) = 1;
+                % check if new indices are part of voiSurfaceIdx
+                bWithinPatient = ismember(newIx,voiSurfaceIdx);
+                
+                mVOIEnlarged(newIx(bWithinPatient)) = 1;
 
             end
         end

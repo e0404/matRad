@@ -4,7 +4,7 @@ function dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,SSD,focusIx
 % segmentation
 % 
 % call
-%   dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,baseData)
+%   dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,SSD,focusIx,baseData)
 %
 % input
 %   radDepths:      radiological depths
@@ -23,25 +23,21 @@ function dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,SSD,focusIx
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+% Copyright 2016, Mark Bangert, on behalf of the matRad development team
 %
 % m.bangert@dkfz.de
 %
 % This file is part of matRad.
 %
-% matrad is free software: you can redistribute it and/or modify it under
-% the terms of the GNU General Public License as published by the Free
-% Software Foundation, either version 3 of the License, or (at your option)
-% any later version.
+% matrad is free software: you can redistribute it and/or modify it under 
+% the terms of the Eclipse Public License 1.0 (EPL-1.0).
 %
 % matRad is distributed in the hope that it will be useful, but WITHOUT ANY
 % WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-% details.
+% FOR A PARTICULAR PURPOSE.
 %
-% You should have received a copy of the GNU General Public License in the
-% file license.txt along with matRad. If not, see
-% <http://www.gnu.org/licenses/>.
+% You should have received a copy of the EPL-1.0 in the file license.txt
+% along with matRad. If not, see <http://opensource.org/licenses/EPL-1.0>.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -51,17 +47,17 @@ depths = baseData.depths + baseData.offset;
 % convert from MeV cm^2/g per primary to Gy mm^2 per 1e6 primaries
 conversionFactor = 1.6021766208e-02;
 
+ % calculate initial focus sigma
+SigmaIni = interp1(baseData.initFocus(focusIx).dist,baseData.initFocus(focusIx).sigma,SSD);
+
 if ~isfield(baseData,'sigma')
-    
-    % calculate initial focus sigma
-    initFocus = interp1(baseData.initFocus(focusIx).dist,baseData.initFocus(focusIx).sigma,SSD);
     
     % interpolate depth dose, sigmas, and weights    
     X = interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths,'linear');
     
     % compute lateral sigmas
-    sigmaSq_Narr = X(:,2).^2 + initFocus^2;
-    sigmaSq_Bro  = X(:,4).^2 + initFocus^2;
+    sigmaSq_Narr = X(:,2).^2 + SigmaIni^2;
+    sigmaSq_Bro  = X(:,4).^2 + SigmaIni^2;
     
     % calculate lateral profile
     L_Narr =  exp( -radialDist_sq ./ (2*sigmaSq_Narr))./(2*pi*sigmaSq_Narr);
@@ -74,9 +70,15 @@ else
     % interpolate depth dose and sigma
     X = interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths,'linear');
 
+    %compute lateral sigma
+    sigmaSq = X(:,2).^2 + SigmaIni^2;
+    
     % calculate dose
-    dose = baseData.LatCutOff.CompFac * exp( -radialDist_sq ./ (2*X(:,2).^2)) .* X(:,1) ./(2*pi*X(:,2).^2);
+    dose = baseData.LatCutOff.CompFac * exp( -radialDist_sq ./ (2*sigmaSq)) .* X(:,1) ./(2*pi*sigmaSq);
     
  end
  
- 
+% check if we have valid dose values
+if sum(isnan(dose))>0 || ~all(dose>=0)
+   error('Error in photon dose calc\n\n');
+end 
