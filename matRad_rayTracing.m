@@ -151,13 +151,8 @@ for j = 1:size(rayMx_world,1)
         dCum = cumsum(d);
 
         % Calculate the radiological path
-        vRadDepth = interp1(alphas,dCum,dotProdHitVoxels(ixRememberFromCurrTracing)/d12,'linear');
-        
-        % sanity check if radiological depths are monotonic increasing
-        if all(isnan(vRadDepth))
-           warning(['NaN value(s) in radiological depths for ray ' num2str(j) ' \n'])
-        end
-        
+        vRadDepth = interp1(alphas,dCum,dotProdHitVoxels(ixRememberFromCurrTracing)/d12,'linear',0);
+             
         radDepthCube(ixHitVoxel(ixRememberFromCurrTracing)) = vRadDepth;
     end
     

@@ -70,6 +70,6 @@ dose = lat1 .* func_Di(betas(1),radDepths) + ...
 dose = dose .* (SAD./geoDists(:)).^2;
 
 % check if we have valid dose values
-if sum(isnan(dose)) ||  sum(dose<0)>0
+if sum(isnan(dose))>0 || ~all(dose>=0)
    error('Error in photon dose calc\n\n');
 end
