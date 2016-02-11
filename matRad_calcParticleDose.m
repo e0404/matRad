@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDose(ct,stf,pln,cst,visBool)
+function dij = matRad_calcParticleDose(ct,stf,pln,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad particle dose calculation wrapper
 % 
@@ -10,7 +10,6 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,visBool)
 %   stf:        matRad steering information struct
 %   pln:        matRad plan meta information struct
 %   cst:        matRad cst struct
-%   visBool:    toggle on/off visualization (optional)
 %
 % output
 %   dij:        matRad dij struct
@@ -39,11 +38,6 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,visBool)
 % along with matRad. If not, see <http://opensource.org/licenses/EPL-1.0>.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% if visBool not set toogle off visualization
-if nargin < 5
-    visBool = 0;
-end
 
 % initialize waitbar
 figureWait = waitbar(0,'calculate particle-ij matrice(s)...');
@@ -110,22 +104,24 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
         end
         
         % check consitency of biological baseData and cst settings
-        baseDataAlphaBetaRatios =  reshape([machine.data(:).alphaBetaRatio],numel(machine.data(1).alphaBetaRatio),size(machine.data,2));
+        baseDataAlphaBetaRatios = reshape([machine.data(:).alphaBetaRatio],numel(machine.data(1).alphaBetaRatio),size(machine.data,2));
         if norm(baseDataAlphaBetaRatios(cst{i,5}.TissueClass,:) - cst{i,5}.alphaX/cst{i,5}.betaX)>0
             error('biological base data and cst inconsistent\n');
         end
         
     end
-    fprintf('...done \n');
+    fprintf('done.\n');
 end
 
-fprintf('matRad: Particle dose calculation... \n');
+fprintf('matRad: Particle dose calculation...\n');
 counter = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams; % loop over all beams
     
-    bixelsPerBeam = 0;
     fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
+
+    bixelsPerBeam = 0;
+    
     % convert voxel indices to real coordinates using iso center of beam i
     xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
     yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
@@ -156,15 +152,14 @@ for i = 1:dij.numOfBeams; % loop over all beams
     lateralCutoffRayTracing = 50;
     fprintf(['matRad: calculate radiological depth cube...']);
     [radDepthCube,~] = matRad_rayTracing(stf(i),ct,V,lateralCutoffRayTracing);
-    fprintf('...done \n');
+    fprintf('done.\n');
     
     % Determine lateral cutoff
     fprintf('matRad: calculate lateral cutoff...');
-    cutOffLevel = 0.99;
+    cutOffLevel = .99;
     visBoolLateralCutOff = 0;
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
-    fprintf('...done \n');
-    
+    fprintf('done.\n');    
     
     for j = 1:stf(i).numOfRays % loop over all rays
         
@@ -186,18 +181,20 @@ for i = 1:dij.numOfBeams; % loop over all beams
             % just use tissue classes of voxels found by ray tracer
             if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                  && strcmp(pln.radiationMode,'carbon')
-                    mTissueClass_j= mTissueClass(ix,:);
+                    mTissueClass_j = mTissueClass(ix,:);
             end
               
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
                 
                 counter = counter + 1;
                 bixelsPerBeam = bixelsPerBeam + 1;
+                
                 matRad_progress(bixelsPerBeam,stf(i).totalNumOfBixels);
                 % update waitbar only 100 times if it is not closed
                 if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && figureWait.isvalid
                     waitbar(counter/dij.totalNumOfBixels,figureWait);
                 end
+                
                 % remember beam and  bixel number
                 dij.beamNum(counter)  = i;
                 dij.rayNum(counter)   = j;

@@ -44,10 +44,11 @@ if (cutOffLevel < 0 || cutOffLevel > 0.9999) && (cutOffLevel ~= 1)
 end
 % define some variables needed for the cutoff calculation
 vX     = [0 logspace(-1,4,1000)]; % [mm]
-%vX     = linspace(0,1000,1000); % [mm]
+
 % integration steps
 r_mid   = 0.5*(vX(1:end-1) +  vX(2:end)); % [mm]
 dr      = vX(2:end) - vX(1:end-1);
+
 % number of depth points for which a lateral cutoff is determined
 NumDepthVal = 30; 
 
@@ -55,44 +56,38 @@ NumDepthVal = 30;
 SG =  @(vR,Sigma)((1/(2*pi*Sigma^2)).*exp(-(vR.^2)./(2*Sigma^2)));
 DG =  @(vR,Z,w,Sigma1,Sigma2) Z*(((1-w)*SG(vR,Sigma1)) + (w*SG(vR,Sigma2)));
 
-
 % extract SSD for each bixel
 vSSDBixel = ones(1,length([stf.ray(:).energy]));
-Cnt = 1;
-for k  = 1:length(stf.ray)
-    vSSDBixel(Cnt:Cnt+numel([stf.ray(k).energy])-1) = stf.ray(k).SSD;
-    Cnt = Cnt + numel(stf.ray(k).energy);
+cnt = 1;
+for i  = 1:length(stf.ray)
+    vSSDBixel(cnt:cnt+numel([stf.ray(i).energy])-1) = stf.ray(i).SSD;
+    cnt = cnt + numel(stf.ray(i).energy);
 end
 
 % setup energy sigma look up table
-EnergySigmaLUT  = unique([[stf.ray(:).energy]; [stf.ray(:).focusIx] ; vSSDBixel]','rows');
+energySigmaLUT  = unique([[stf.ray(:).energy]; [stf.ray(:).focusIx] ; vSSDBixel]','rows');
 
 % calculate for each energy its inital beam width considering foci and SSD
-for l = 1:size(EnergySigmaLUT,1)
-    energyIx = find(ismember([machine.data(:).energy],EnergySigmaLUT(l,1)));
-    EnergySigmaLUT(l,4) = interp1(machine.data(energyIx).initFocus(EnergySigmaLUT(l,2)).dist,...
-                                  machine.data(energyIx).initFocus(EnergySigmaLUT(l,2)).sigma,...
-                                  EnergySigmaLUT(l,3));
+for i = 1:size(energySigmaLUT,1)
+    energyIx = find(ismember([machine.data(:).energy],energySigmaLUT(i,1)));
+    energySigmaLUT(i,4) = interp1(machine.data(energyIx).initFocus(energySigmaLUT(i,2)).dist,...
+                                  machine.data(energyIx).initFocus(energySigmaLUT(i,2)).sigma,...
+                                  energySigmaLUT(i,3));
 end
 
 % find for each energy the broadest inital beam width
-UniqueEnergies  = unique(EnergySigmaLUT(:,1));
-EnergyIncidence = histc(EnergySigmaLUT(:,1),UniqueEnergies);
+uniqueEnergies = unique(energySigmaLUT(:,1));
+largestFocus4uniqueEnergies = NaN * ones(numel(uniqueEnergies),1);
 
-for k = size(UniqueEnergies,1):-1:1
-    if EnergyIncidence(k) > 1        
-      ind = find(ismember(EnergySigmaLUT(:,1),UniqueEnergies(k)));
-      [~,ix] = max(EnergySigmaLUT(ind,4));
-      ind(ix) = [];
-      EnergySigmaLUT(ind,:) = [];  
-    end
+for i = 1:numel(uniqueEnergies)
+    largestFocus4uniqueEnergies(i) = max(energySigmaLUT(uniqueEnergies(i) == energySigmaLUT(:,1),4));
 end
 
 % get energy indices for looping
-vEnergiesIx = find(ismember([machine.data(:).energy],EnergySigmaLUT(:,1)));
+vEnergiesIx = find(ismember([machine.data(:).energy],uniqueEnergies(:,1)));
 
-   
-Cnt = 1;    
+cnt = 0;    
+
 % loop over all entries in the machine.data struct
 for energyIx = vEnergiesIx
    
@@ -106,14 +101,15 @@ for energyIx = vEnergiesIx
     Idx = unique(sort([Idx peakIdx]));
     
     % get inital beam width
-    SigmaIni = EnergySigmaLUT(Cnt,4);
+    cnt = cnt +1 ;
+    SigmaIni = largestFocus4uniqueEnergies(cnt);
 
     for j = 1:length(Idx)
         
         % save depth value
         machine.data(energyIx).LatCutOff.depths(j) = machine.data(energyIx).depths(Idx(j));
         % relative contribution
-        relContrib = machine.data(energyIx).Z(Idx(j))/max(machine.data(energyIx).Z);
+        relContrib = machine.data(energyIx).Z(Idx(j))/machine.data(energyIx).Z(peakIdx);
                       
         if strcmp(machine.meta.dataType,'singleGauss')
                     
@@ -162,13 +158,6 @@ for energyIx = vEnergiesIx
                     error('error in matRadcalcLateralParticleCutOff - cannot determine cut off');
                 end
             end
-           
-            
-%             endIx = find(cumArea == 1,1,'first');
-%             if isempty(endIx)
-%                 endIx = numel(cumArea);
-%             end
-%             r_cut = interp1(cumArea(1:endIx),r_mid(1:endIx),currCutOffLevel);
             
             machine.data(energyIx).LatCutOff.CutOff(j) = r_cut;
             
@@ -184,14 +173,11 @@ for energyIx = vEnergiesIx
                   machine.data(energyIx).LatCutOff.CutOff(j) =  machine.data(energyIx).LatCutOff.CutOff(j-1);
             end
 
-            % Compenstaion factor to rescale the dose within the cut off in order not to lose integral dose
+            % Compensation factor to rescale the dose within the cut off in order not to lose integral dose
             machine.data(energyIx).LatCutOff.CompFac = 1/cutOffLevel;
             
         end
-    end
-    
-   Cnt = Cnt +1 ;
-    
+    end    
 end    
 
 
@@ -360,11 +346,11 @@ if visBool
     
     % plot cutoff of different energies
     figure,set(gcf,'Color',[1 1 1]);
-    Cnt = 1;
+    cnt = 1;
     for i = vEnergiesIx
         plot(machine.data(i).LatCutOff.depths,machine.data(i).LatCutOff.CutOff,'LineWidth',1.5),hold on
-        cellLegend{Cnt} = [num2str(machine.data(i).energy) ' MeV'];
-        Cnt = Cnt + 1;
+        cellLegend{cnt} = [num2str(machine.data(i).energy) ' MeV'];
+        cnt = cnt + 1;
     end
     grid on, grid minor,xlabel('depth in [mm]'),ylabel('lateral cutoff in [mm]')
     title(['cutoff level = ' num2str(cutOffLevel)])

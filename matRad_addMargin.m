@@ -3,7 +3,7 @@ function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)
 % matRad add margin function
 % 
 % call
-%   mVOIEnlarged = matRad_addMargin(mVOI,vResolution,vMargin,bDiaElem)
+%   mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)
 %
 % input
 %   mVOI:           image stack in dimensions of X x Y x Z holding ones for

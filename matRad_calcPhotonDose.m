@@ -137,8 +137,10 @@ fprintf('matRad: Photon dose calculation...\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams; % loop over all beams
     
-    bixelsPerBeam = 0;
     fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
+
+    bixelsPerBeam = 0;
+
     % convert voxel indices to real coordinates using iso center of beam i
     xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
     yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
@@ -166,12 +168,15 @@ for i = 1:dij.numOfBeams; % loop over all beams
     rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
     
     % ray tracing
+    fprintf(['matRad: calculate radiological depth cube...']);
     [radDepthCube,geoDistCube] = matRad_rayTracing(stf(i),ct,V,lateralCutoff);
-        
+    fprintf('done \n');
+
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
         
         counter = counter + 1;
         bixelsPerBeam = bixelsPerBeam + 1;
+        
         if useCustomPrimFluenceBool % use custom primary fluence if specifried
             
             r     = sqrt( (X-stf(i).ray(j).rayPos(1)).^2 + (Z-stf(i).ray(j).rayPos(3)).^2 );

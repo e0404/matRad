@@ -79,6 +79,6 @@ else
  end
  
 % check if we have valid dose values
-if sum(isnan(dose))>0 || ~all(dose>=0)
-   error('Error in photon dose calc\n\n');
+if any(isnan(dose)) || any(dose<0)
+   error('Error in particle dose calculation.');
 end 

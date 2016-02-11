@@ -79,20 +79,16 @@ b = (targetPoint_bev - sourcePoint_bev)';
 b = b/norm(b);
 
 % Define function for obtain rotation matrix.
-if sum(a==b)==3 % rotation matrix corresponds to eye matrix if the vectors are the same
-    RU = @(a,b) eye(3);
+if all(a==b) % rotation matrix corresponds to eye matrix if the vectors are the same
+    rot_coords_temp = rot_coords_bev;
 else
-    % Define fuction to obtain skew symmetric cross-product matrix of vector v
+    % Define rotation matrix
     ssc = @(v) [0 -v(3) v(2); v(3) 0 -v(1); -v(2) v(1) 0];
-    RU = @(a,b) eye(3) + ssc(cross(a,b)) + ssc(cross(a,b))^2*(1-dot(a,b))/(norm(cross(a,b))^2);
+    R   = eye(3) + ssc(cross(a,b)) + ssc(cross(a,b))^2*(1-dot(a,b))/(norm(cross(a,b))^2);
+    
+    % Rotate every CT voxel 
+    rot_coords_temp = rot_coords_bev*R;
 end
-
-% Calculate rotation matrix for rotate a single beamlet to be aligned to
-% beamlet who passes through isocenter.
-R = RU(a,b);
-
-% Rotate every CT voxel 
-rot_coords_temp = rot_coords_bev*R;
 
 % Put [0 0 0] position CT in center of the beamlet.
 x_latDists = rot_coords_temp(:,1) + sourcePoint_bev(1);

@@ -350,8 +350,8 @@ for i = 1:length(pln.gantryAngles)
     %        plot(stf.ray(jj).rayPos_bev(1),stf.ray(jj).rayPos_bev(3),'rx'),hold on 
     %     end
     
-end    
-
+    % Show progress
+    matRad_progress(i,length(pln.gantryAngles));
 
     %% visualization
     if visMode > 0
@@ -478,8 +478,7 @@ end
         axis([-300 300 -300 300 -300 300]);
         %pause(1);
     end
-    
-    % Show progress
-    matRad_progress(i,length(pln.gantryAngles));
-    
+        
+end    
+
 end
