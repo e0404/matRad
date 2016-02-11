@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDose(ct,stf,pln,cst,visBool)
+function dij = matRad_calcParticleDose(ct,stf,pln,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad particle dose calculation wrapper
 % 
@@ -10,7 +10,6 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,visBool)
 %   stf:        matRad steering information struct
 %   pln:        matRad plan meta information struct
 %   cst:        matRad cst struct
-%   visBool:    toggle on/off visualization (optional)
 %
 % output
 %   dij:        matRad dij struct
@@ -44,15 +43,9 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,visBool)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% if visBool not set toogle off visualization
-if nargin < 5
-    visBool = 0;
-end
-
 % initialize waitbar
 figureWait = waitbar(0,'calculate particle-ij matrice(s)...');
 % prevent closure of waitbar and show busy state
-set(figureWait,'CloseRequestFcn','');
 set(figureWait,'pointer','watch');
 
 % meta information for dij
@@ -89,12 +82,7 @@ end
 V = unique([cell2mat(cst(:,4))]);
 
 % Convert CT subscripts to linear indices.
-[yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct.cube),V);
-
-xCoordsV = xCoordsV(:)*ct.resolution.x-pln.isoCenter(1);
-yCoordsV = yCoordsV(:)*ct.resolution.y-pln.isoCenter(2);
-zCoordsV = zCoordsV(:)*ct.resolution.z-pln.isoCenter(3);
-coordsV  = [xCoordsV yCoordsV zCoordsV];
+[yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(size(ct.cube),V);
 
 % load machine file
 fileName = [pln.radiationMode '_' pln.machine];
@@ -120,27 +108,30 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
         end
         
         % check consitency of biological baseData and cst settings
-        baseDataAlphaBetaRatios =  reshape([machine.data(:).alphaBetaRatio],numel(machine.data(1).alphaBetaRatio),size(machine.data,2));
+        baseDataAlphaBetaRatios = reshape([machine.data(:).alphaBetaRatio],numel(machine.data(1).alphaBetaRatio),size(machine.data,2));
         if norm(baseDataAlphaBetaRatios(cst{i,5}.TissueClass,:) - cst{i,5}.alphaX/cst{i,5}.betaX)>0
             error('biological base data and cst inconsistent\n');
         end
         
     end
-    fprintf('...done \n');
+    fprintf('done.\n');
 end
 
-% determine lateral cutoff
-fprintf('matRad: calculate lateral cutoff... ');
-cutOffLevel = 0.99;
-visBoolLateralCutOff = 0;
-machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,visBoolLateralCutOff);
-fprintf('...done \n');
-
-fprintf('matRad: Particle dose calculation... ');
+fprintf('matRad: Particle dose calculation...\n');
 counter = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams; % loop over all beams
     
+    fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
+
+    bixelsPerBeam = 0;
+    
+    % convert voxel indices to real coordinates using iso center of beam i
+    xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
+    yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
+    zCoordsV = zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
+    coordsV  = [xCoordsV yCoordsV zCoordsV];
+
     % Set gantry and couch rotation matrices according to IEC 61217
     % Use transpose matrices because we are working with row vectros
     
@@ -161,6 +152,19 @@ for i = 1:dij.numOfBeams; % loop over all beams
     rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
     rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
     
+    % Calcualte radiological depth cube
+    lateralCutoffRayTracing = 50;
+    fprintf(['matRad: calculate radiological depth cube...']);
+    [radDepthCube,~] = matRad_rayTracing(stf(i),ct,V,lateralCutoffRayTracing);
+    fprintf('done.\n');
+    
+    % Determine lateral cutoff
+    fprintf('matRad: calculate lateral cutoff...');
+    cutOffLevel = .99;
+    visBoolLateralCutOff = 0;
+    machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
+    fprintf('done.\n');    
+    
     for j = 1:stf(i).numOfRays % loop over all rays
         
         if ~isempty(stf(i).ray(j).energy)
@@ -169,41 +173,32 @@ for i = 1:dij.numOfBeams; % loop over all beams
             % reasons
             energyIx = max(round2(stf(i).ray(j).energy,4)) == round2([machine.data.energy],4);
             
+            maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
             
-            maxLateralCutoff = max(machine.data(energyIx).LatCutOff.CutOff);
-            
-            
-            % Ray tracing for beam i and ray j
-            [ix,radDepths,~,latDistsX,latDistsZ] = matRad_calcRadGeoDists(ct.cube, ...
-                                                        V,...
-                                                        pln.isoCenter, ...
-                                                        rot_coordsV, ...
-                                                        ct.resolution, ...
-                                                        stf(i).sourcePoint, ...
-                                                        stf(i).ray(j).targetPoint, ...
-                                                        stf(i).sourcePoint_bev,...
-                                                        stf(i).ray(j).targetPoint_bev, ...
-                                                        coordsV, ...
-                                                        maxLateralCutoff, ...
-                                                        visBool);
-            
-            radialDist_sq = latDistsX.^2 + latDistsZ.^2;    
+            % Ray tracing for beam i and ray j                          
+            [ix,radialDist_sq,~,~] = matRad_calcGeoDists(rot_coordsV, ...
+                                                       stf(i).sourcePoint_bev, ...
+                                                       stf(i).ray(j).targetPoint_bev, ...
+                                                       maxLateralCutoffDoseCalc);
+            radDepths = radDepthCube(V(ix));   
             
             % just use tissue classes of voxels found by ray tracer
             if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                  && strcmp(pln.radiationMode,'carbon')
-                    mTissueClass_j= mTissueClass(ix,:);
+                    mTissueClass_j = mTissueClass(ix,:);
             end
-            
+              
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
-
+                
                 counter = counter + 1;
-                % Display progress
-                matRad_progress(counter,dij.totalNumOfBixels);
-                % update waitbar only 100 times
-                if mod(counter,round(dij.totalNumOfBixels/100)) == 0
-                    waitbar(counter/dij.totalNumOfBixels);
+                bixelsPerBeam = bixelsPerBeam + 1;
+                
+                matRad_progress(bixelsPerBeam,stf(i).totalNumOfBixels);
+                % update waitbar only 100 times if it is not closed
+                if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && figureWait.isvalid
+                    waitbar(counter/dij.totalNumOfBixels,figureWait);
                 end
+                
                 % remember beam and  bixel number
                 dij.beamNum(counter)  = i;
                 dij.rayNum(counter)   = j;
@@ -231,8 +226,10 @@ for i = 1:dij.numOfBeams; % loop over all beams
                  
                 % calculate particle dose for bixel k on ray j of beam i
                 bixelDose = matRad_calcParticleDoseBixel(...
-                    radDepths(currIx),...
-                    radialDist_sq(currIx),...
+                    radDepths(currIx), ...
+                    radialDist_sq(currIx), ...
+                    stf(i).ray(j).SSD, ...
+                    stf(i).ray(j).focusIx(k), ...
                     machine.data(energyIx)); 
                 
                 % Save dose for every bixel in cell array
@@ -268,4 +265,11 @@ for i = 1:dij.numOfBeams; % loop over all beams
         
     end
 end
-delete(figureWait);
+
+try
+  % wait 0.1s for closing all waitbars
+  allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar'); 
+  delete(allWaitBarFigures);
+  pause(0.1); 
+catch
+end

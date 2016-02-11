@@ -43,11 +43,11 @@ function matRad_progress(currentIndex, totalNumberOfEvaluations)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  
 % If it's not the first step, erase the stuff printed before
-if (currentIndex == 1 || nargin > 2)
+if (currentIndex == 1)
     fprintf('Progress: ');
 end;
  
-if (currentIndex > 1 && nargin < 3)
+if (currentIndex > 1)
   Length = numel(sprintf('%3.2f %%',(currentIndex-1)/totalNumberOfEvaluations*100));
   fprintf(repmat('\b',1,Length));
 end

@@ -1,4 +1,4 @@
-function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,visBool)
+function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to calculate a depth dependend lateral cutoff for each 
 % pristine particle beam
@@ -44,23 +44,55 @@ if (cutOffLevel < 0 || cutOffLevel > 0.9999) && (cutOffLevel ~= 1)
    warning('lateral cutoff is out of range - using default cut off of 0.99') 
    cutOffLevel = 0.99;
 end
-
 % define some variables needed for the cutoff calculation
 vX     = [0 logspace(-1,4,1000)]; % [mm]
-%vX     = linspace(0,1000,1000); % [mm]
+
 % integration steps
 r_mid   = 0.5*(vX(1:end-1) +  vX(2:end)); % [mm]
 dr      = vX(2:end) - vX(1:end-1);
+
 % number of depth points for which a lateral cutoff is determined
 NumDepthVal = 30; 
 
 % define function handles for single and double gauss
 SG =  @(vR,Sigma)((1/(2*pi*Sigma^2)).*exp(-(vR.^2)./(2*Sigma^2)));
 DG =  @(vR,Z,w,Sigma1,Sigma2) Z*(((1-w)*SG(vR,Sigma1)) + (w*SG(vR,Sigma2)));
-                         
-% loop over all entries in the machine.data struct
-for energyIx = 1:length(machine.data)
 
+% extract SSD for each bixel
+vSSDBixel = ones(1,length([stf.ray(:).energy]));
+cnt = 1;
+for i  = 1:length(stf.ray)
+    vSSDBixel(cnt:cnt+numel([stf.ray(i).energy])-1) = stf.ray(i).SSD;
+    cnt = cnt + numel(stf.ray(i).energy);
+end
+
+% setup energy sigma look up table
+energySigmaLUT  = unique([[stf.ray(:).energy]; [stf.ray(:).focusIx] ; vSSDBixel]','rows');
+
+% calculate for each energy its inital beam width considering foci and SSD
+for i = 1:size(energySigmaLUT,1)
+    energyIx = find(ismember([machine.data(:).energy],energySigmaLUT(i,1)));
+    energySigmaLUT(i,4) = interp1(machine.data(energyIx).initFocus(energySigmaLUT(i,2)).dist,...
+                                  machine.data(energyIx).initFocus(energySigmaLUT(i,2)).sigma,...
+                                  energySigmaLUT(i,3));
+end
+
+% find for each energy the broadest inital beam width
+uniqueEnergies = unique(energySigmaLUT(:,1));
+largestFocus4uniqueEnergies = NaN * ones(numel(uniqueEnergies),1);
+
+for i = 1:numel(uniqueEnergies)
+    largestFocus4uniqueEnergies(i) = max(energySigmaLUT(uniqueEnergies(i) == energySigmaLUT(:,1),4));
+end
+
+% get energy indices for looping
+vEnergiesIx = find(ismember([machine.data(:).energy],uniqueEnergies(:,1)));
+
+cnt = 0;    
+
+% loop over all entries in the machine.data struct
+for energyIx = vEnergiesIx
+   
     % set default depth cut off - finite value will be set during first
     % iteration
     depthDoseCutOff = inf;
@@ -69,24 +101,28 @@ for energyIx = 1:length(machine.data)
     [~,peakIdx] = max(machine.data(energyIx).Z);
     Idx = round(linspace(1,length(machine.data(energyIx).depths),NumDepthVal-1));
     Idx = unique(sort([Idx peakIdx]));
+    
+    % get inital beam width
+    cnt = cnt +1 ;
+    SigmaIni = largestFocus4uniqueEnergies(cnt);
 
     for j = 1:length(Idx)
         
         % save depth value
         machine.data(energyIx).LatCutOff.depths(j) = machine.data(energyIx).depths(Idx(j));
         % relative contribution
-        relContrib = machine.data(energyIx).Z(Idx(j))/max(machine.data(energyIx).Z);
-         
+        relContrib = machine.data(energyIx).Z(Idx(j))/machine.data(energyIx).Z(peakIdx);
+                      
         if strcmp(machine.meta.dataType,'singleGauss')
                     
-                    Sigma1 = machine.data(energyIx).sigma(Idx(j));
+                    Sigma1 = sqrt(machine.data(energyIx).sigma(Idx(j))^2 + SigmaIni^2);
                     y_r = SG(r_mid,Sigma1);
                  
         elseif strcmp(machine.meta.dataType,'doubleGauss')
-            
+                    
                     w      = machine.data(energyIx).weight(Idx(j));
-                    Sigma1 = machine.data(energyIx).sigma1(Idx(j));
-                    Sigma2 = machine.data(energyIx).sigma2(Idx(j));
+                    Sigma1 = sqrt(machine.data(energyIx).sigma1(Idx(j)).^2 + SigmaIni^2);
+                    Sigma2 = sqrt(machine.data(energyIx).sigma2(Idx(j)).^2 + SigmaIni^2);
                     y_r    = DG(r_mid,1,w,Sigma1,Sigma2);
         else
             error('unknown dataType');
@@ -114,21 +150,16 @@ for energyIx = 1:length(machine.data)
             end
             
             [cumAreaUnique,IdxUnique] = unique(cumArea);
-            try
-                if currCutOffLevel == 0
-                    r_cut = 0;
-                else
-                    r_cut = interp1(cumAreaUnique,r_mid(IdxUnique),currCutOffLevel);
-                end
-            catch
-                error('code goes here');
-            end
             
-%             endIx = find(cumArea == 1,1,'first');
-%             if isempty(endIx)
-%                 endIx = numel(cumArea);
-%             end
-%             r_cut = interp1(cumArea(1:endIx),r_mid(1:endIx),currCutOffLevel);
+            if currCutOffLevel == 0
+                r_cut = 0;
+            else
+                try
+                    r_cut = interp1(cumAreaUnique,r_mid(IdxUnique),currCutOffLevel);
+                catch
+                    error('error in matRadcalcLateralParticleCutOff - cannot determine cut off');
+                end
+            end
             
             machine.data(energyIx).LatCutOff.CutOff(j) = r_cut;
             
@@ -144,12 +175,11 @@ for energyIx = 1:length(machine.data)
                   machine.data(energyIx).LatCutOff.CutOff(j) =  machine.data(energyIx).LatCutOff.CutOff(j-1);
             end
 
-            % Compenstaion factor to rescale the dose within the cut off in order not to lose integral dose
+            % Compensation factor to rescale the dose within the cut off in order not to lose integral dose
             machine.data(energyIx).LatCutOff.CompFac = 1/cutOffLevel;
             
         end
-   end
-    
+    end    
 end    
 
 
@@ -159,8 +189,6 @@ end
 
 if visBool
     
-    % get random energy index
-    energyIx = round((length(machine.data)-1).*rand(1,1) + 1);
     % set depth position - 1 means plotting the entry profile
     j = Idx(1);
     CutOff = machine.data(energyIx).LatCutOff.CutOff(j);
@@ -173,15 +201,18 @@ if visBool
     midPos = round(length(vLatX)/2);
     [X,Y] = meshgrid(vLatX,vLatX);
     vRadDist = sqrt(X.^2 + Y.^2);
+    focusIdx = 1;
+    SigmaInI = interp1(machine.data(energyIx).initFocus(focusIdx).dist,...
+                       machine.data(energyIx).initFocus(focusIdx).sigma,...
+                       machine.meta.SAD);
     
-   
     if strcmp(machine.meta.dataType,'singleGauss')
-            vDose = SG(vRadDist,machine.data(energyIx).sigma(j));    
+            vDose = SG(vRadDist,sqrt(machine.data(energyIx).sigma(j)^2 + SigmaInI^2));    
     elseif strcmp(machine.meta.dataType,'doubleGauss')
             vDose = DG(vRadDist,1,...
              machine.data(energyIx).weight(j),...
-             machine.data(energyIx).sigma1(j),...
-             machine.data(energyIx).sigma2(j));
+             sqrt(machine.data(energyIx).sigma1(j)^2 + SigmaInI^2),...
+             sqrt(machine.data(energyIx).sigma2(j)^2 + SigmaInI^2));
     end
          
     [~,LevelIdx] = min(abs(X(1,:)-CutOff));
@@ -197,10 +228,10 @@ if visBool
     contour3(X,Y,vDose,[(DoseLevel+0.001*DoseLevel) DoseLevel],'LineWidth',3,'color','r'),hold on; title(['intensity profile; cutoff = ' num2str(cutOffLevel)]),view(0,90)
     
     if strcmp(machine.meta.dataType,'singleGauss')
-         vDoseLat =  machine.data(energyIx).Z(j)*SG(vLatX,machine.data(energyIx).sigma(j));
+         vDoseLat =  machine.data(energyIx).Z(j)*SG(vLatX,sqrt(machine.data(energyIx).sigma(j)^2 + SigmaInI^2));
     elseif strcmp(machine.meta.dataType,'doubleGauss')
          vDoseLat =  DG(vLatX,machine.data(energyIx).Z(j),machine.data(energyIx).weight(j),...
-         machine.data(energyIx).sigma1(j),machine.data(energyIx).sigma2(j));
+         sqrt(machine.data(energyIx).sigma1(j)^2 + SigmaInI^2),sqrt(machine.data(energyIx).sigma2(j)^2 + SigmaInI^2));
     end
     
     subplot(223),plot(vLatX,vDoseLat,'LineWidth',3),grid on, grid minor, hold on
@@ -257,10 +288,10 @@ if visBool
     [~,refIdx] = min(abs(machine.data(energyIx).depths - machine.data(energyIx).LatCutOff.depths(idx(1))));
     title('intensity profile')
     if strcmp(machine.meta.dataType,'singleGauss')
-       vDose = SG(vRadDist,machine.data(energyIx).sigma(refIdx));
+       vDose = SG(vRadDist,sqrt(machine.data(energyIx).sigma(refIdx)^2 + SigmaInI^2));
     elseif strcmp(machine.meta.dataType,'doubleGauss')
        vDose = DG(vRadDist,1,machine.data(energyIx).weight(refIdx),...
-       machine.data(energyIx).sigma1(refIdx),machine.data(energyIx).sigma2(refIdx));
+       sqrt(machine.data(energyIx).sigma1(refIdx)^2 + SigmaInI^2),sqrt(machine.data(energyIx).sigma2(refIdx)^2 + SigmaInI^2));
     end
     plot(vLatX,vDose(midPos,:),'LineWidth',3),grid on, grid minor, hold on
     cutOff = machine.data(energyIx).LatCutOff.CutOff(idx(1));
@@ -272,10 +303,10 @@ if visBool
     subplot(324),
     [~,refIdx] = min(abs(machine.data(energyIx).depths - machine.data(energyIx).LatCutOff.depths(idx(2))));
     if strcmp(machine.meta.dataType,'singleGauss')
-          vDose = SG(vRadDist,machine.data(energyIx).sigma(refIdx));
+          vDose = SG(vRadDist,sqrt(machine.data(energyIx).sigma(refIdx)^2 + SigmaInI^2));
     elseif strcmp(machine.meta.dataType,'doubleGauss')
         vDose = DG(vRadDist,1,machine.data(energyIx).weight(refIdx),...
-         machine.data(energyIx).sigma1(refIdx),machine.data(energyIx).sigma2(refIdx));
+        sqrt(machine.data(energyIx).sigma1(refIdx)^2 + SigmaInI^2),sqrt(machine.data(energyIx).sigma2(refIdx)^2 + SigmaInI^2));
     end
     plot(vLatX,vDose(midPos,:),'LineWidth',3),grid on, grid minor, hold on
     cutOff = machine.data(energyIx).LatCutOff.CutOff(idx(2));
@@ -287,10 +318,10 @@ if visBool
     subplot(325),
     [~,refIdx] = min(abs(machine.data(energyIx).depths - machine.data(energyIx).LatCutOff.depths(idx(3))));
     if strcmp(machine.meta.dataType,'singleGauss')
-         vDose = SG(vRadDist,machine.data(energyIx).sigma(refIdx));
+         vDose = SG(vRadDist,sqrt(machine.data(energyIx).sigma(refIdx)^2 + SigmaInI^2));
      elseif strcmp(machine.meta.dataType,'doubleGauss')
          vDose =  DG(vRadDist,1,machine.data(energyIx).weight(refIdx),...
-           machine.data(energyIx).sigma1(refIdx),machine.data(energyIx).sigma2(refIdx));
+         sqrt(machine.data(energyIx).sigma1(refIdx)^2 + SigmaInI^2),sqrt(machine.data(energyIx).sigma2(refIdx)^2 + SigmaInI^2));
     end
     plot(vLatX,vDose(midPos,:),'LineWidth',3),grid on, grid minor, hold on
     cutOff = machine.data(energyIx).LatCutOff.CutOff(idx(3));
@@ -303,10 +334,10 @@ if visBool
     subplot(326),
     [~,refIdx] = min(abs(machine.data(energyIx).depths - machine.data(energyIx).LatCutOff.depths(idx(4))));
     if strcmp(machine.meta.dataType,'singleGauss')
-         vDose = SG(vRadDist,machine.data(energyIx).sigma(refIdx));
+         vDose = SG(vRadDist,sqrt(machine.data(energyIx).sigma(refIdx)^2 + SigmaInI^2));
     elseif strcmp(machine.meta.dataType,'doubleGauss')
          vDose =  DG(vRadDist,1,machine.data(energyIx).weight(refIdx),...
-             machine.data(energyIx).sigma1(refIdx),machine.data(energyIx).sigma2(refIdx));
+         sqrt(machine.data(energyIx).sigma1(refIdx)^2 + SigmaInI^2),sqrt(machine.data(energyIx).sigma2(refIdx)^2 + SigmaInI^2));
     end
     plot(vLatX,vDose(midPos,:),'LineWidth',3),grid on, grid minor, hold on
     cutOff = machine.data(energyIx).LatCutOff.CutOff(idx(4));
@@ -317,11 +348,11 @@ if visBool
     
     % plot cutoff of different energies
     figure,set(gcf,'Color',[1 1 1]);
-    NumPlots = 20;
-    ix = round(linspace(1,length(machine.data),NumPlots));
-    for i = 1:20
-        plot(machine.data(ix(i)).LatCutOff.depths,machine.data(ix(i)).LatCutOff.CutOff,'LineWidth',1.5),hold on
-        cellLegend{i} = [num2str(machine.data(ix(i)).energy) ' MeV'];
+    cnt = 1;
+    for i = vEnergiesIx
+        plot(machine.data(i).LatCutOff.depths,machine.data(i).LatCutOff.CutOff,'LineWidth',1.5),hold on
+        cellLegend{cnt} = [num2str(machine.data(i).energy) ' MeV'];
+        cnt = cnt + 1;
     end
     grid on, grid minor,xlabel('depth in [mm]'),ylabel('lateral cutoff in [mm]')
     title(['cutoff level = ' num2str(cutOffLevel)])

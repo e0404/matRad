@@ -74,8 +74,8 @@ for i = 1:numOfVois
 
     indices     = cst{i,4};
     numOfVoxels = numel(indices);
-    if sum(strcmp(fieldnames(result),'RBEWeightedDose')) > 0
-        doseInVoi   = result.RBEWeightedDose(indices);   
+    if sum(strcmp(fieldnames(result),'RBExDose')) > 0
+        doseInVoi   = result.RBExDose(indices);   
     else
         doseInVoi   = result.physicalDose(indices);
     end
@@ -108,7 +108,7 @@ set(gca,'LineWidth',1.5,'FontSize',fontSizeValue);
 set(gcf,'Color','w');
 ylabel('Volume [%]','FontSize',fontSizeValue)
 
-if sum(strcmp(fieldnames(result),'RBEWeightedDose')) > 0
+if sum(strcmp(fieldnames(result),'RBExDose')) > 0
     xlabel('RBE x Dose [GyE]','FontSize',fontSizeValue)
 else
     xlabel('Dose [Gy]','FontSize',fontSizeValue)

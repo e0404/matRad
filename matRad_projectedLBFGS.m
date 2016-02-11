@@ -49,7 +49,7 @@ function wOpt = matRad_projectedLBFGS(objFunc,projFunc,wInit,visBool,varargin)
 iter      = 0;
 if isempty(varargin{1,1})
     numOfIter = 1000;
-    prec      = 1e-3;
+    prec      = 1e-4;
 else
     optParam = varargin{1,1};
     numOfIter = optParam{1,1}.numOfIter;

@@ -86,12 +86,11 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
                 error([cst{i,6}(j).type ' objective not supported ' ...
                     'during biological optimization for carbon ions']);
             end
-            if strcmp(cst{i,6}(j).type,'square underdosing') || ...
-               strcmp(cst{i,6}(j).type,'square deviation')
-                if cst{i,6}(j).parameter(2) > 30
-                    warning('Prescribed fraction dose > 30Gy. Biological optimization outside the valid domain of the base data.');
-                end
+            
+            if cst{i,6}(j).parameter(2) > 20
+                warning('Prescribed fraction dose > 20 [Gy(RBE)]. Biological optimization outside the valid domain of the base data.');
             end
+            
         end
         
          if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
