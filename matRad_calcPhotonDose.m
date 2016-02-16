@@ -3,7 +3,7 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst)
 % matRad photon dose calculation wrapper
 % 
 % call
-%   dij = matRad_calcPhotonDose(ct,stf,pln,cst,visBool)
+%   dij = matRad_calcPhotonDose(ct,stf,pln,cst)
 %
 % input
 %   ct:         ct cube
