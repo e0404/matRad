@@ -86,7 +86,7 @@ axis equal off
 set(q, 'AlphaData', alpha);
 % show dkfz logo
 axes(handles.axesDKFZLogo)
-[im, ~, alpha] = imread('DKFZ_logo.png');
+[im, ~, alpha] = imread('DKFZ_Logo.png');
 p = image(im);
 axis equal off
 set(p, 'AlphaData', alpha);
