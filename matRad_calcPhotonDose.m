@@ -209,7 +209,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
         % Display progress
         matRad_progress(bixelsPerBeam,stf(i).totalNumOfBixels);
         % update waitbar only 100 times
-        if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && figureWait.isvalid
+        if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
             waitbar(counter/dij.totalNumOfBixels);
         end
         
