@@ -1090,8 +1090,8 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
     if ~isempty(WEPL_Target_Entry) && ~isempty(WEPL_Target_Exit)
         hold on
         PlotHandles{Cnt,1} = ...
-        plot([WEPL_Target_Entry WEPL_Target_Entry],handles.axesFig.YLim,'--','Linewidth',3,'color','k');hold on
-        plot([WEPL_Target_Exit WEPL_Target_Exit], handles.axesFig.YLim,'--','Linewidth',3,'color','k');hold on
+        plot([WEPL_Target_Entry WEPL_Target_Entry],get(handles.axesFig,'YLim'),'--','Linewidth',3,'color','k');hold on
+        plot([WEPL_Target_Exit WEPL_Target_Exit],get(handles.axesFig,'YLim'),'--','Linewidth',3,'color','k');hold on
       
     else
         PlotHandles{Cnt,1} =[];
