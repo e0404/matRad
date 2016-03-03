@@ -70,60 +70,64 @@ for runVoi = 1:numOfVois
         relevantDose = result.physicalDose;
         doseInVoi   = sort(result.physicalDose(indices));
     end
+    
+    if ~isempty(doseInVoi)
         
-    % easy stats
-    QI(runVoi).mean = mean(doseInVoi);
-    QI(runVoi).std = std(doseInVoi);
-    QI(runVoi).max = doseInVoi(end);
-    QI(runVoi).min = doseInVoi(1);
-    
-    voiPrint = sprintf('%s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy)\n%27s', ...
-                       voiPrint,QI(runVoi).mean,QI(runVoi).std,QI(runVoi).max,QI(runVoi).min,' ');
-    
-    DX = @(x) doseInVoi(ceil((100-x)*0.01*numOfVoxels));
-    VX = @(x) numel(doseInVoi(doseInVoi >= x)) / numOfVoxels;
-    
-    % create VX and DX struct fieldnames at runtime and fill
-    for runDX = 1:numel(refVol)
-        QI(runVoi).(strcat('D',num2str(refVol(runDX)))) = DX(refVol(runDX));
-        voiPrint = sprintf('%sD%d%% = %5.2f Gy, ',voiPrint,refVol(runDX),DX(refVol(runDX)));
-    end
-    voiPrint = sprintf('%s\n%27s',voiPrint,' ');
-    for runVX = 1:numel(refGy)
-        QI(runVoi).(strcat('V',num2str(refGy(runVX)))) = VX(refGy(runVX));
-        voiPrint = sprintf('%sV%dGy = %6.2f%%, ',voiPrint,refGy(runVX),VX(refGy(runVX))*100);
-    end
-    voiPrint = sprintf('%s\n%27s',voiPrint,' ');
-    
-    % if current voi is a target -> calculate homogeneity and conformity
-    if strcmp(cst{runVoi,3},'TARGET') > 0      
-        
-        % loop over target objectives and get the lowest dose objective 
-        referenceDose = inf;
-        for runObjective = 1:numel(cst{runVoi,6})
-           % check if this is an objective that penalizes underdosing 
-           if strcmp(cst{runVoi,6}(runObjective).type,'square deviation') > 0 || strcmp(cst{runVoi,6}(runObjective).type,'square underdosing') > 0
-               referenceDose = min(cst{runVoi,6}(runObjective).parameter(2),referenceDose);
-           end            
+        % easy stats
+        QI(runVoi).mean = mean(doseInVoi);
+        QI(runVoi).std = std(doseInVoi);
+        QI(runVoi).max = doseInVoi(end);
+        QI(runVoi).min = doseInVoi(1);
+
+        voiPrint = sprintf('%s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy)\n%27s', ...
+                           voiPrint,QI(runVoi).mean,QI(runVoi).std,QI(runVoi).max,QI(runVoi).min,' ');
+
+        DX = @(x) doseInVoi(ceil((100-x)*0.01*numOfVoxels));
+        VX = @(x) numel(doseInVoi(doseInVoi >= x)) / numOfVoxels;
+
+        % create VX and DX struct fieldnames at runtime and fill
+        for runDX = 1:numel(refVol)
+            QI(runVoi).(strcat('D',num2str(refVol(runDX)))) = DX(refVol(runDX));
+            voiPrint = sprintf('%sD%d%% = %5.2f Gy, ',voiPrint,refVol(runDX),DX(refVol(runDX)));
         end
-        
-        if referenceDose == inf 
-            voiPrint = sprintf('%s%s',voiPrint,'Warning: target has no objective that penalizes underdosage, ');
-        else
-            % Conformity Index, fieldname contains reference dose
-            VTarget95 = sum(doseInVoi >= 0.95*referenceDose); % number of target voxels recieving dose >= 0.95 dPres
-            VTreated95 = sum(relevantDose(:) >= 0.95*referenceDose);  %number of all voxels recieving dose >= 0.95 dPres ("treated volume")
-            QI(runVoi).(strcat('CI',num2str(referenceDose))) = VTarget95^2/(numOfVoxels * VTreated95); 
-        
-            % Homogeneity Index (one out of many), fieldname contains reference dose        
-            QI(runVoi).(strcat('HI',num2str(referenceDose))) = (DX(5) - DX(95))/referenceDose * 100;
-            
-            voiPrint = sprintf('%sCI = %6.4f, HI = %5.2f for reference dose of %3.1f Gy\n',voiPrint,...
-                               QI(runVoi).(strcat('CI',num2str(referenceDose))),QI(runVoi).(strcat('HI',num2str(referenceDose))),referenceDose);
-        end 
+        voiPrint = sprintf('%s\n%27s',voiPrint,' ');
+        for runVX = 1:numel(refGy)
+            QI(runVoi).(strcat('V',num2str(refGy(runVX)))) = VX(refGy(runVX));
+            voiPrint = sprintf('%sV%dGy = %6.2f%%, ',voiPrint,refGy(runVX),VX(refGy(runVX))*100);
+        end
+        voiPrint = sprintf('%s\n%27s',voiPrint,' ');
+
+        % if current voi is a target -> calculate homogeneity and conformity
+        if strcmp(cst{runVoi,3},'TARGET') > 0      
+
+            % loop over target objectives and get the lowest dose objective 
+            referenceDose = inf;
+            for runObjective = 1:numel(cst{runVoi,6})
+               % check if this is an objective that penalizes underdosing 
+               if strcmp(cst{runVoi,6}(runObjective).type,'square deviation') > 0 || strcmp(cst{runVoi,6}(runObjective).type,'square underdosing') > 0
+                   referenceDose = min(cst{runVoi,6}(runObjective).parameter(2),referenceDose);
+               end            
+            end
+
+            if referenceDose == inf 
+                voiPrint = sprintf('%s%s',voiPrint,'Warning: target has no objective that penalizes underdosage, ');
+            else
+                % Conformity Index, fieldname contains reference dose
+                VTarget95 = sum(doseInVoi >= 0.95*referenceDose); % number of target voxels recieving dose >= 0.95 dPres
+                VTreated95 = sum(relevantDose(:) >= 0.95*referenceDose);  %number of all voxels recieving dose >= 0.95 dPres ("treated volume")
+                QI(runVoi).(strcat('CI',num2str(referenceDose))) = VTarget95^2/(numOfVoxels * VTreated95); 
+
+                % Homogeneity Index (one out of many), fieldname contains reference dose        
+                QI(runVoi).(strcat('HI',num2str(referenceDose))) = (DX(5) - DX(95))/referenceDose * 100;
+
+                voiPrint = sprintf('%sCI = %6.4f, HI = %5.2f for reference dose of %3.1f Gy\n',voiPrint,...
+                                   QI(runVoi).(strcat('CI',num2str(referenceDose))),QI(runVoi).(strcat('HI',num2str(referenceDose))),referenceDose);
+            end
+        end
+        fprintf('%s\n',voiPrint);
+    else    
+    fprintf('%3d %20s - No dose information.\n',cst{runVoi,1},cst{runVoi,2});
     end
-    
-    fprintf('%s\n',voiPrint);    
     
 end
  
