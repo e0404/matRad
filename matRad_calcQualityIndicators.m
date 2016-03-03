@@ -122,11 +122,13 @@ for runVoi = 1:numOfVois
 
                 voiPrint = sprintf('%sCI = %6.4f, HI = %5.2f for reference dose of %3.1f Gy\n',voiPrint,...
                                    QI(runVoi).(strcat('CI',num2str(referenceDose))),QI(runVoi).(strcat('HI',num2str(referenceDose))),referenceDose);
-            end 
+            end
+
+        fprintf('%s\n',voiPrint);  
+
         end
-
-        fprintf('%s\n',voiPrint);    
-
+    else
+        fprintf('There is no dose-information for %3d %2s.\n',cst{runVoi,1},cst{runVoi,2});         
     end
     
 end
