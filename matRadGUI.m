@@ -262,7 +262,7 @@ end
 % read new data
 handles.State = 0;
 try 
-    [FileName, FilePath] = uigetfile;
+    [FileName, FilePath] = uigetfile('*.mat');
     load([FilePath FileName]);
 catch
     handles = showWarning(handles,'LoadMatFileFnc: Could not load *.mat file');

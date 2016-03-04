@@ -293,7 +293,11 @@ else
 end
 
 allRtss = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,2),'RTSTRUCT'),:);
-files.rtss = allRtss(get(handles.rtseries_listbox,'Value'),:);
+if ~isempty(allRtss)
+    files.rtss = allRtss(get(handles.rtseries_listbox,'Value'),:);
+else
+    files.rtss = [];
+end
 
 files.resx = str2double(get(handles.resx_edit,'String'));
 files.resy = str2double(get(handles.resy_edit,'String'));
