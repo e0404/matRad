@@ -350,7 +350,8 @@ try
     end
     handles.State = 0;
     if ~isdeployed
-        addpath([pwd filesep 'dicomImport']);
+        matRadRootDir = fileparts(mfilename('fullpath'));
+        addpath(fullfile(matRadRootDir,'dicomImport'))
     end
     matRad_importDicomGUI;
  

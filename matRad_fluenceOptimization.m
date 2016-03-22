@@ -35,7 +35,8 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-addpath([pwd filesep 'optimization']);
+matRadRootDir = fileparts(mfilename('fullpath'));
+addpath(fullfile(matRadRootDir,'optimization'))
 
 % initialize global variables for optimizer
 global matRad_global_x;

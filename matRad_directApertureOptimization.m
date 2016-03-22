@@ -41,6 +41,8 @@ function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureIn
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRadRootDir = fileparts(mfilename('fullpath'));
+addpath(fullfile(matRadRootDir,'optimization'))
 
 % initialize global variables for optimizer
 global matRad_global_x;
