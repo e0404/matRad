@@ -46,10 +46,12 @@ function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureIn
 global matRad_global_x;
 global matRad_global_d;
 global matRad_STRG_C_Pressed;
+global matRad_objective_function_value;
 
-matRad_global_x = NaN * ones(dij.totalNumOfBixels,1); % works with bixel weights even though we do dao!
-matRad_global_d = NaN * ones(dij.numOfVoxels,1);
-matRad_STRG_C_Pressed   = false;
+matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1); % works with bixel weights even though we do dao!
+matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
+matRad_STRG_C_Pressed           = false;
+matRad_objective_function_value = [];
 
 if nargin < 6
     visBool = 0;

@@ -41,10 +41,12 @@ addpath([pwd filesep 'optimization']);
 global matRad_global_x;
 global matRad_global_d;
 global matRad_STRG_C_Pressed;
+global matRad_objective_function_value;
 
-matRad_global_x         = NaN * ones(dij.totalNumOfBixels,1);
-matRad_global_d         = NaN * ones(dij.numOfVoxels,1);
-matRad_STRG_C_Pressed   = false;
+matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
+matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
+matRad_STRG_C_Pressed           = false;
+matRad_objective_function_value = [];
 
 % get handle to Matlab command window
 mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
