@@ -80,7 +80,7 @@ for  i = 1:size(cst,1)
                    isequal(cst{i,6}(j).type, 'min DVH constraint')
                 
                 % reference dose/effect/RBExDose
-                if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) && isequal(type,'effect')
+                if isequal(type,'effect')
                     d_ref = dij.ax(cst{i,4}).*cst{i,6}(j).dose + dij.bx(cst{i,4})*cst{i,6}(j).dose^2;
                 else
                     d_ref = cst{i,6}(j).dose;
