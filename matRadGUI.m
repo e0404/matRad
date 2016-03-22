@@ -1311,8 +1311,8 @@ end
 try
     %% DAO
     if strcmp(pln.radiationMode,'photons') && pln.runDAO
-       [resultGUI,ipoptInfo] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst')...
-           ,resultGUI.apertureInfo,resultGUI,pln,1);
+       [resultGUI,ipoptInfo] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst'),...
+           resultGUI.apertureInfo,resultGUI,pln,1);
        assignin('base','resultGUI',resultGUI);
        % check IPOPT status and return message for GUI user
        CheckIpoptStatus(ipoptInfo,'DAO')      
@@ -2499,8 +2499,8 @@ end
 %% DAO
 try
 if strcmp(pln.radiationMode,'photons') && pln.runDAO
-   [resultGUI,ipoptInfo] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst')...
-       ,resultGUI.apertureInfo,resultGUI,1);
+   [resultGUI,ipoptInfo] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst'),...
+       resultGUI.apertureInfo,resultGUI,1);
    matRad_visApertureInfo(resultGUI.apertureInfo);
    assignin('base','resultGUI',resultGUI);
    % check IPOPT status and return message for GUI user

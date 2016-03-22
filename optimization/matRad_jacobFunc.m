@@ -236,16 +236,23 @@ end
 
 % Calculate jacobian with dij projections
 if isequal(type,'none')
-
-    jacob = physicalDoseProjection' * dij.physicalDose;
+    
+    if isempty(physicalDoseProjection)
+        jacob = [];
+    else   
+        jacob = physicalDoseProjection' * dij.physicalDose; 
+    end
 
 elseif isequal(type,'effect') || isequal(type,'RBExD')
     
+    if isempty(mSqrtBetaDoseProjection) || isempty(mAlphaDoseProjection)
+        jacob = [];
+    else
     mSqrtBetaDoseProjection = mSqrtBetaDoseProjection' * dij.mSqrtBetaDose * w;
     mSqrtBetaDoseProjection = sparse(VoxelID,ConstraintID(2:end),mSqrtBetaDoseProjection,...
                                      size(mAlphaDoseProjection,1),size(mAlphaDoseProjection,2));
     jacob                   = mAlphaDoseProjection' * dij.mAlphaDose + mSqrtBetaDoseProjection' * dij.mSqrtBetaDose;
-    
+    end
 end
 
 end
