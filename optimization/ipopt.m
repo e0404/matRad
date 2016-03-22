@@ -242,3 +242,6 @@
 %           Dept. of Computer Science
 %           University of British Columbia
 %           September 19, 2008
+%
+%   Downloaded binaries from http://www.coin-or.org/download/binary/Ipopt/I
+%   popt-3.11.8-linux64mac64win32win64-matlabmexfiles.zip on 3/22/2016
