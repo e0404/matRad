@@ -2,6 +2,9 @@ function [ix,rad_distancesSq,x_latDists,z_latDists] = ...
           matRad_calcGeoDists(rot_coords_bev, ...
                               sourcePoint_bev, ...
                               targetPoint_bev, ...
+                              geoDists, ...
+                              SAD, ...
+                              radDepthMask, ...
                               lateralCutOff)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad calculation of lateral distances from central ray used for
@@ -19,6 +22,11 @@ function [ix,rad_distancesSq,x_latDists,z_latDists] = ...
 %                       into bev according to the couch and gantry angle        
 %   sourcePoint_bev:    source point in voxel coordinates in beam's eye view
 %   targetPoint_bev:    target point in voxel coordinated in beam's eye view
+%   geoDists:            geometrical distance of all considered voxels from
+%                       virtual radiation source
+%   SAD:                source-to-axis distance
+%   radDepthIx:         sub set of voxels for which radiological depth
+%                       calculations are available
 %   lateralCutOff:      lateral cutoff specifying the neighbourhood for
 %                       which dose calculations will actually be performed
 %
@@ -61,13 +69,16 @@ function [ix,rad_distancesSq,x_latDists,z_latDists] = ...
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% convert binary mask to linear index array
+radDepthIx = find(radDepthMask);
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ROTATE A SINGLE BEAMLET AND ALIGN WITH BEAMLET WHO PASSES THROUGH
 % ISOCENTER
 
 % Put [0 0 0] position in the source point for beamlet who passes through
 % isocenter
-a = (-sourcePoint_bev - sourcePoint_bev)';
+a = -sourcePoint_bev';
 
 % Normalize the vector
 a = a/norm(a);
@@ -91,19 +102,25 @@ else
 end
 
 % Put [0 0 0] position CT in center of the beamlet.
-x_latDists = rot_coords_temp(:,1) + sourcePoint_bev(1);
-z_latDists = rot_coords_temp(:,3) + sourcePoint_bev(3);
+x_latDists = rot_coords_temp(radDepthMask,1) + sourcePoint_bev(1);
+z_latDists = rot_coords_temp(radDepthMask,3) + sourcePoint_bev(3);
 
+% check of radial distance exceeds lateral cutoff (projected to iso center)
 rad_distancesSq = x_latDists.^2 + z_latDists.^2;
-ix = find(rad_distancesSq <= lateralCutOff^2);
+subsetMask = rad_distancesSq ./ geoDists(radDepthMask).^2 <= lateralCutOff^2 /SAD^2;
 
+% return index list within considered voxels
+ix = radDepthIx(subsetMask);
+
+% return radial distances squared
 if nargout > 1
-    rad_distancesSq = rad_distancesSq(ix);
+    rad_distancesSq = rad_distancesSq(subsetMask);
 end
 
+% return x & z distance
 if nargout > 2
-   x_latDists = x_latDists(ix);
-   z_latDists = z_latDists(ix); 
+   x_latDists = x_latDists(subsetMask);
+   z_latDists = z_latDists(subsetMask); 
 end
 
 

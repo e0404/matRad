@@ -154,9 +154,12 @@ for i = 1:dij.numOfBeams; % loop over all beams
     
     % Calcualte radiological depth cube
     lateralCutoffRayTracing = 50;
-    fprintf(['matRad: calculate radiological depth cube...']);
-    [radDepthCube,~] = matRad_rayTracing(stf(i),ct,V,lateralCutoffRayTracing);
+    fprintf('matRad: calculate radiological depth cube...');
+    [radDepthCube,geoDistCube] = matRad_rayTracing(stf(i),ct,V,lateralCutoffRayTracing);
     fprintf('done.\n');
+    
+    % construct binary mask where ray tracing results are available
+    radDepthIx = ~isnan(radDepthCube);
     
     % Determine lateral cutoff
     fprintf('matRad: calculate lateral cutoff...');
@@ -179,6 +182,9 @@ for i = 1:dij.numOfBeams; % loop over all beams
             [ix,radialDist_sq,~,~] = matRad_calcGeoDists(rot_coordsV, ...
                                                        stf(i).sourcePoint_bev, ...
                                                        stf(i).ray(j).targetPoint_bev, ...
+                                                       geoDistCube(V), ...
+                                                       machine.meta.SAD, ...
+                                                       radDepthIx(V), ...
                                                        maxLateralCutoffDoseCalc);
             radDepths = radDepthCube(V(ix));   
             

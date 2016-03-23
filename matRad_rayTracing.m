@@ -44,10 +44,10 @@ function [radDepthCube,geoDistCube] = matRad_rayTracing(stf,ct,V,lateralCutoff)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set up rad depth cube for results
-radDepthCube = inf*ones(size(ct.cube));
+radDepthCube = NaN*ones(size(ct.cube));
 
 % set up coordinates of all voxels in cube
-[yCoords_vox, xCoords_vox, zCoords_vox] = ind2sub(size(ct.cube),1:numel(ct.cube));
+[xCoords_vox, yCoords_vox, zCoords_vox] = meshgrid(1:size(ct.cube,1),1:size(ct.cube,2),1:size(ct.cube,3));
 
 xCoords = xCoords_vox(:)*ct.resolution.x-stf.isoCenter(1);
 yCoords = yCoords_vox(:)*ct.resolution.y-stf.isoCenter(2);
@@ -67,7 +67,7 @@ inv_rotMx_XZ_T = [cosd(-stf.couchAngle) 0 -sind(-stf.couchAngle);
 coords_bev = [xCoords yCoords zCoords]*inv_rotMx_XZ_T*inv_rotMx_XY_T;             
               
 % set up ray matrix direct behind last voxel
-rayMx_bev_z = max(coords_bev(V,2)) + 1;
+rayMx_bev_y = max(coords_bev(V,2)) + max([ct.resolution.x ct.resolution.y ct.resolution.z]);
 
 
 xCoords = xCoords-stf.sourcePoint(1);
@@ -77,25 +77,34 @@ coords  = [xCoords yCoords zCoords];
     
 % calculate geometric distances
 if nargout > 1
-    geoDistCube = sqrt(sum(coords.^2,2));
+    geoDistCube = reshape(sqrt(sum(coords.^2,2)),size(ct.cube));
 end
-% set up ray matrix
+
+% calculate spacing of rays on ray matrix
 rayMxSpacing = min([ct.resolution.x ct.resolution.y ct.resolution.z]);
 
-rayMx_bev    = [];
-numOfRayTracingRays    = ceil((stf.sourcePoint_bev(2)-rayMx_bev_z)/stf.sourcePoint_bev(2) * lateralCutoff / rayMxSpacing);
+% define candidate ray matrix covering 1000x1000mm^2
+numOfCandidateRays = 2 * ceil(500/rayMxSpacing) + 1;
+candidateRayMx     = zeros(numOfCandidateRays);
 
-for j = 1:stf.numOfRays
+% define coordinates
+[candidateRaysCoords_X,candidateRaysCoords_Z] = meshgrid(rayMxSpacing*[floor(-500/rayMxSpacing):ceil(500/rayMxSpacing)]);
 
-    tmp_rayMx_bev_x = repmat(round(stf.ray(j).rayPos_bev(1) / rayMxSpacing) + [-numOfRayTracingRays:numOfRayTracingRays],2*numOfRayTracingRays+1,1);
-    tmp_rayMx_bev_y = rayMx_bev_z * ones(2*numOfRayTracingRays+1);
-    tmp_rayMx_bev_z = repmat(round(stf.ray(j).rayPos_bev(3) / rayMxSpacing) + [-numOfRayTracingRays:numOfRayTracingRays]',1,2*numOfRayTracingRays+1);
-
-    rayMx_bev = [rayMx_bev; [rayMxSpacing * tmp_rayMx_bev_x(:) tmp_rayMx_bev_y(:) rayMxSpacing * tmp_rayMx_bev_z(:)]];
-
-    rayMx_bev = unique(rayMx_bev,'rows');
-
+% check which rays should be used
+for i = 1:stf.numOfRays
+   
+    ix = (candidateRaysCoords_X(:)-stf.ray(i).rayPos_bev(1)).^2 + ...
+         (candidateRaysCoords_Z(:)-stf.ray(i).rayPos_bev(3)).^2 ...
+           <= lateralCutoff^2;
+    
+    candidateRayMx(ix) = 1;
+    
 end
+
+% set up ray matrix
+rayMx_bev = [candidateRaysCoords_X(logical(candidateRayMx(:))) ...
+              rayMx_bev_y*ones(sum(candidateRayMx(:)),1) ...  
+              candidateRaysCoords_Z(logical(candidateRayMx(:)))];
 
 %     figure,
 %     for jj = 1:length(rayMx_bev)
@@ -116,7 +125,7 @@ rotMx_XZ_T = [cosd(stf.couchAngle) 0 -sind(stf.couchAngle);
 rayMx_world = rayMx_bev * rotMx_XY_T * rotMx_XZ_T;
 
 % set up distance cube to decide which rad depths should be stored
-rayTracingDotProdCube = -inf*ones(size(ct.cube));
+metricHitVoxelsCube = -inf*ones(size(ct.cube));
 
 % perform ray tracing over all rays
 for j = 1:size(rayMx_world,1)
@@ -133,12 +142,13 @@ for j = 1:size(rayMx_world,1)
     normRayVector = rayMx_world(j,:) - stf.sourcePoint;
     normRayVector = normRayVector/norm(normRayVector);
 
-    dotProdHitVoxels = coords(ixHitVoxel,:)*normRayVector'; % this also corresponds to the geometrical distance!!!
+    dotProdHitVoxels = coords(ixHitVoxel,:)*normRayVector';
+    
+    ixRememberFromCurrTracing = dotProdHitVoxels > metricHitVoxelsCube(ixHitVoxel)';
 
-    ixRememberFromCurrTracing = dotProdHitVoxels > rayTracingDotProdCube(ixHitVoxel)';
-
-    if sum(ixRememberFromCurrTracing) > 0
-        rayTracingDotProdCube(ixHitVoxel(ixRememberFromCurrTracing)) = dotProdHitVoxels(ixRememberFromCurrTracing);
+    if any(ixRememberFromCurrTracing) > 0
+        
+        metricHitVoxelsCube(ixHitVoxel(ixRememberFromCurrTracing)) = dotProdHitVoxels(ixRememberFromCurrTracing);
 
         % calc radioloical depths
 
@@ -157,4 +167,5 @@ for j = 1:size(rayMx_world,1)
     end
     
 end
+
 

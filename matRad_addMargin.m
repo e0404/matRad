@@ -90,8 +90,9 @@ for Cnt = 1:max(voxelMargins)
                     continue;
                 end
 
-                newIx = sub2ind(size(mVOIEnlarged),xCoord+i*dx,yCoord+j*dy,zCoord+k*dz);
-                
+                newIx = (xCoord+i*dx) + (yCoord+j*dy-1)*size(mVOIEnlarged,1) + ...
+                        (zCoord+k*dz-1)*size(mVOIEnlarged,1)*size(mVOIEnlarged,2);
+                    
                 % check if new indices are part of voiSurfaceIdx
                 bWithinPatient = ismember(newIx,voiSurfaceIdx);
                 

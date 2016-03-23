@@ -205,7 +205,7 @@ l = d12*diff(alphas);
 
 % eq 13
 % Calculate \alpha_{middle}
-alphas_mid = mean([alphas(1:end-1);alphas(2:end)]);
+alphas_mid = .5*(alphas(1:end-1)+alphas(2:end));
 
 % eq 12
 % Calculate the voxel indices: first convert to physical coords
@@ -224,7 +224,7 @@ j(j>yNumPlanes-1) = yNumPlanes-1;
 k(k>zNumPlanes-1) = zNumPlanes-1;
 
 % Convert to linear indices
-ix = sub2ind(size(cubes{1}),j,i,k);
+ix = j + (i-1)*size(cubes{1},1) + (k-1)*size(cubes{1},1)*size(cubes{1},2); 
 
 % obtains the values from cubes
 rho = cell(numel(cubes));

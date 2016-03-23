@@ -77,7 +77,7 @@ V = unique([cell2mat(cst(:,4))]);
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(size(ct.cube),V);
 
 % set lateral cutoff value
-lateralCutoff = 20; % [mm]
+lateralCutoff = 30; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
@@ -176,6 +176,9 @@ for i = 1:dij.numOfBeams; % loop over all beams
     fprintf(['matRad: calculate radiological depth cube...']);
     [radDepthCube,geoDistCube] = matRad_rayTracing(stf(i),ct,V,lateralCutoff);
     fprintf('done \n');
+    
+    % construct binary mask where ray tracing results are available
+    radDepthIx = ~isnan(radDepthCube);
 
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
         
@@ -222,6 +225,9 @@ for i = 1:dij.numOfBeams; % loop over all beams
         [ix,~,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
                                                        stf(i).sourcePoint_bev, ...
                                                        stf(i).ray(j).targetPoint_bev, ...
+                                                       geoDistCube(V), ...
+                                                       machine.meta.SAD, ...
+                                                       radDepthIx(V), ...
                                                        lateralCutoff);
         
         % calculate photon dose for beam i and bixel j
