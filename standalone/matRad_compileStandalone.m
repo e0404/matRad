@@ -11,25 +11,14 @@
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015, Mark Bangert, on behalf of the matRad development team
-%
-% m.bangert@dkfz.de
-%
-% This file is part of matRad.
-%
-% matrad is free software: you can redistribute it and/or modify it under 
-% the terms of the GNU General Public License as published by the Free 
-% Software Foundation, either version 3 of the License, or (at your option)
-% any later version.
-%
-% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
-% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-% details.
-%
-% You should have received a copy of the GNU General Public License in the
-% file license.txt along with matRad. If not, see
-% <http://www.gnu.org/licenses/>.
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -43,6 +32,7 @@ if exist(dirOut)~= 7
 end
 
 addpath('dicomImport');         % include the DICOM Import files in the dependency analysis
+addpath('optimization');         % include the DICOM Import files in the dependency analysis
 
 mcc('-C','-o','matRad','-W','WinMain:matRad','-T','link:exe','-d',dirOut,...      
     '-R','-logfile,consoleOutput.log','-v',[dirMatRad 'matRadGUI.m'],...
@@ -52,3 +42,5 @@ mcc('-C','-o','matRad','-W','WinMain:matRad','-T','link:exe','-d',dirOut,...
     '-a',[dirMatRad 'photons_Generic.mat'],...
     '-a',[dirMatRad 'protons_Generic.mat'],...
     '-a',[dirMatRad 'carbon_Generic.mat'])
+
+
