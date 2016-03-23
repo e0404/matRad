@@ -115,7 +115,6 @@ end
 
 %initialize maximum dose for visualization to Zero
 handles.maxDoseVal     = 0;
-handles.IsoDose.RefVal = 0;
 handles.IsoDose.Levels = 0;
 %seach for availabes machines
 handles.Modalities = {'photons','protons','carbon'};
@@ -188,7 +187,7 @@ try
      if ismember('pln',AllVarNames) && handles.State > 0 
           setPln(handles); 
      elseif handles.State > 0 
-          getPln(handles);
+          getPlnFromGUI(handles);
      end
 catch
        handles.State = 0;
@@ -299,7 +298,7 @@ try
         setPln(handles);
     else
         % assess plan variable from GUI
-        getPln(handles);
+        getPlnFromGUI(handles);
         setPln(handles);
     end
     handles.State = 1;
@@ -368,26 +367,12 @@ function editBixelWidth_Callback(hObject, ~, handles)
 
 % Hints: get(hObject,'String') returns contents of editBixelWidth as text
 %        str2double(get(hObject,'String')) returns contents of editBixelWidth as a double
-getPln(handles);
+getPlnFromGUI(handles);
 if handles.State > 0
     handles.State = 1;
     UpdateState(handles);
     guidata(hObject,handles);
 end
-
-% --- Executes during object creation, after setting all properties.
-function editBixelWidth_CreateFcn(hObject, ~, ~)
-% hObject    handle to editBixelWidth (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
 
 function editGantryAngle_Callback(hObject, ~, handles)
 % hObject    handle to editGantryAngle (see GCBO)
@@ -396,26 +381,12 @@ function editGantryAngle_Callback(hObject, ~, handles)
 
 % Hints: get(hObject,'String') returns contents of editGantryAngle as text
 %        str2double(get(hObject,'String')) returns contents of editGantryAngle as a double
-getPln(handles);
+getPlnFromGUI(handles);
 if handles.State > 0
     handles.State = 1;
     UpdateState(handles);
     guidata(hObject,handles);
 end
-
-% --- Executes during object creation, after setting all properties.
-function editGantryAngle_CreateFcn(hObject, ~, ~)
-% hObject    handle to editGantryAngle (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
 
 function editCouchAngle_Callback(hObject, ~, handles)
 % hObject    handle to editCouchAngle (see GCBO)
@@ -424,25 +395,12 @@ function editCouchAngle_Callback(hObject, ~, handles)
 
 % Hints: get(hObject,'String') returns contents of editCouchAngle as text
 %        str2double(get(hObject,'String')) returns contents of editCouchAngle as a double
-getPln(handles);
+getPlnFromGUI(handles);
 if handles.State > 0
     handles.State = 1;
     UpdateState(handles);
     guidata(hObject,handles);
 end
-
-% --- Executes during object creation, after setting all properties.
-function editCouchAngle_CreateFcn(hObject, ~, ~)
-% hObject    handle to editCouchAngle (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
 
 % --- Executes on selection change in popupRadMode.
 function popupRadMode_Callback(hObject, ~, handles)
@@ -492,51 +450,8 @@ if handles.State > 0
         UpdateState(handles);
         guidata(hObject,handles);
     end
-   getPln(handles);
+   getPlnFromGUI(handles);
 end
-
-
-
-% --- Executes during object creation, after setting all properties.
-function popupRadMode_CreateFcn(hObject, ~, ~)
-% hObject    handle to popupRadMode (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-function editFraction_Callback(hObject, ~, handles)
-% hObject    handle to editFraction (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of editFraction as text
-%        str2double(get(hObject,'String')) returns contents of editFraction as a double
-getPln(handles);
-if handles.State > 0
-    handles.State = 1;
-    UpdateState(handles);
-    guidata(hObject,handles);
-end
-
-% --- Executes during object creation, after setting all properties.
-function editFraction_CreateFcn(hObject, ~, ~) 
-% hObject    handle to editFraction (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
 
 % --- Executes on button press in radbtnBioOpt.
 function radbtnBioOpt_Callback(hObject, ~, handles)
@@ -545,7 +460,7 @@ function radbtnBioOpt_Callback(hObject, ~, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of radbtnBioOpt
-getPln(handles);
+getPlnFromGUI(handles);
 if get(hObject,'Value')
     set(handles.btnTypBioOpt,'Enable','on');
 else
@@ -588,7 +503,7 @@ try
     end
     % read plan from gui and save it to workspace
     % gets also IsoCenter from GUI if checkbox is not checked
-    getPln(handles);
+    getPlnFromGUI(handles);
 
     % get default iso center as center of gravity of all targets if not
     % already defined
@@ -837,12 +752,11 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
                 vHigh = 0.95:SpacingUpper:1.2;
                 vLevels = [vLow vHigh];
                
-                if handles.IsoDose.RefVal == 0
-                   MaxVal = max(mVolume(:)); 
+                if handles.IsoDose.Levels == 0
+                   MaxVal  = max(mVolume(:)); 
                    vLevels = (round((vLevels.*MaxVal)*100))/100;
                 else
-                   MaxVal = handles.IsoDose.RefVal; 
-                   vLevels = round(((handles.IsoDose.Levels)/100).*MaxVal*100)/100;
+                   vLevels = handles.IsoDose.Levels;
                 end
                 
                 if plane == 1  % Coronal plane
@@ -1156,19 +1070,6 @@ end
 UpdatePlot(handles);
 guidata(hObject,handles);
 
-% --- Executes during object creation, after setting all properties.
-function popupPlane_CreateFcn(hObject, ~, ~)
-% hObject    handle to popupPlane (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
 % --- Executes on slider movement.
 function sliderSlice_Callback(~, ~, handles)
 % hObject    handle to sliderSlice (see GCBO)
@@ -1178,18 +1079,6 @@ function sliderSlice_Callback(~, ~, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 UpdatePlot(handles)
-
-% --- Executes during object creation, after setting all properties.
-function sliderSlice_CreateFcn(hObject, ~, ~)
-% hObject    handle to sliderSlice (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: slider controls usually have a light gray background.
-if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
-end
-
 
 % --- Executes on button press in radiobtnContour.
 function radiobtnContour_Callback(~, ~, handles)
@@ -1277,9 +1166,11 @@ try
     UpdatePlot(handles);
     UpdateState(handles);
     
-    % check IPOPT status and return message for GUI user
-    CheckIpoptStatus(ipoptInfo,'Fluence')
-
+    % check IPOPT status and return message for GUI user if no DAO
+    if ~pln.runDAO
+        CheckIpoptStatus(ipoptInfo,'Fluence')
+    end
+    
 catch 
     handles = showError(handles,'OptimizeCallback: Could not optimize'); 
     guidata(hObject,handles);
@@ -1311,7 +1202,7 @@ try
            resultGUI.apertureInfo,resultGUI,pln);
        assignin('base','resultGUI',resultGUI);
        % check IPOPT status and return message for GUI user
-       CheckIpoptStatus(ipoptInfo,'DAO')      
+       CheckIpoptStatus(ipoptInfo,'DAO');      
     end
     
     if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
@@ -1329,64 +1220,6 @@ set(Figures, 'pointer', 'arrow');
 set(InterfaceObj,'Enable','on');
     
 guidata(hObject,handles);
-
-
-% function that checks IPOPT status an return status message
-function CheckIpoptStatus(info,OptCase) 
-      
-if info.status == 0
-    statusmsg = 'solved';  
-elseif info.status == 1
-    statusmsg = 'solved to acceptable level';          
-elseif info.status == 2
-    statusmsg = 'infeasible problem detected';           
-elseif info.status == 3    
-    statusmsg = 'search direction becomes too small';             
-elseif info.status == 4 
-    statusmsg = 'diverging iterates';     
-elseif info.status == 5
-    statusmsg = 'user requested stop';     
-elseif info.status == -1        
-    statusmsg = 'maximum number of iterations exceeded';     
-elseif info.status == -2    
-    statusmsg = 'restoration phase failed';     
-elseif info.status == -3         
-    statusmsg = 'error in step computation';     
-elseif info.status == -4
-    statusmsg = 'maximum CPU time exceeded';     
-elseif info.status == -10        
-    statusmsg = 'not enough degrees of freedom';     
-elseif info.status == -11    
-    statusmsg = 'invalid problem definition';     
-elseif info.status == -12   
-    statusmsg = 'invalid option';     
-elseif info.status == -13        
-    statusmsg = 'invalid number detected';     
-elseif info.status == -100
-    statusmsg = 'unrecoverable exception';     
-elseif info.status == -101        
-    statusmsg = 'non-IPOPT exception thrown';     
-elseif info.status == -102    
-    statusmsg = 'insufficient memory';     
-elseif info.status == -199
-    statusmsg = 'internal error';     
-else
-    statusmsg = 'IPOPT returned no status';
-end
-    
-if info.status == 0 | info.status == 1
-    status = 'Succes';
-else
-    status = 'Warning';
-end
-
-msgbox([OptCase,' optimization status: ',statusmsg],status)
-
-
-
-
-
-
 
 
 % the function CheckValidityPln checks if the provided plan is valid so
@@ -1485,19 +1318,6 @@ end
 guidata(hObject, handles);
 UpdatePlot(handles);
 
-% --- Executes during object creation, after setting all properties.
-function popupTypeOfPlot_CreateFcn(hObject, ~, ~)
-% hObject    handle to popupTypeOfPlot (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
 % --- Executes on selection change in popupDisplayOption.
 function popupDisplayOption_Callback(hObject, ~, handles)
 % hObject    handle to popupDisplayOption (see GCBO)
@@ -1513,19 +1333,6 @@ handles.maxDoseVal = 0;
 guidata(hObject, handles);
 UpdatePlot(handles);
 
-% --- Executes during object creation, after setting all properties.
-function popupDisplayOption_CreateFcn(hObject, ~, ~)
-% hObject    handle to popupDisplayOption (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
 % --- Executes on slider movement.
 function sliderBeamSelection_Callback(hObject, ~, handles)
 % hObject    handle to sliderBeamSelection (see GCBO)
@@ -1537,18 +1344,6 @@ function sliderBeamSelection_Callback(hObject, ~, handles)
 handles.SelectedBeam = round(get(hObject,'Value'));
 set(hObject, 'Value', handles.SelectedBeam);
 UpdatePlot(handles);
-
-% --- Executes during object creation, after setting all properties.
-function sliderBeamSelection_CreateFcn(hObject, ~, ~)
-% hObject    handle to sliderBeamSelection (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: slider controls usually have a light gray background.
-if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
-end
-
 
 % --- Executes on button press in btnProfileType.
 function btnProfileType_Callback(hObject, ~, handles)
@@ -2027,36 +1822,6 @@ set(handles.uiTable,'data',data);
 guidata(hObject, handles);
 UpdateState(handles);
 
-
-
-function FlagValidity = CheckValidity(Val) 
-      
-FlagValidity = true;
-
-if ischar(Val)
-    Val = str2num(Val);
-end 
-
-if length(Val) == 2
-   if Val(1) > Val(2)
-      warndlg('provide min max dose values !');  
-   end
-end
-
-if length(Val) > 2
-    warndlg('invalid input!');
-end
-
-if  isempty(Val)
-   warndlg('Input not a number !');
-   FlagValidity = false;        
-end
-
-if Val < 0 
-  warndlg('Input not a positive number !');
-  FlagValidity = false;  
-end
-
 % enables/ disables buttons according to the current state      
 function UpdateState(handles)
 
@@ -2107,7 +1872,7 @@ function UpdateState(handles)
  
 % fill GUI elements with plan information
 function setPln(handles)
-pln=evalin('base','pln');
+pln = evalin('base','pln');
 set(handles.editBixelWidth,'String',num2str(pln.bixelWidth));
 set(handles.editFraction,'String',num2str(pln.numOfFractions));
 
@@ -2159,9 +1924,128 @@ else
     set(handles.editSequencingLevel,'Enable','off');
 end
 
+% --- Executes on button press in btnTableSave.
+function btnTableSave_Callback(~, ~, handles)
+% hObject    handle to btnTableSave (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+getCstTable(handles);
+if get(handles.checkIsoCenter,'Value')
+    pln = evalin('base','pln'); 
+    pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
+    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
+    assignin('base','pln',pln);
+end
+getPlnFromGUI(handles);
+
+% --- Executes on selection change in listBoxCmd.
+function listBoxCmd_Callback(hObject, ~, ~)
+% hObject    handle to listBoxCmd (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns listBoxCmd contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from listBoxCmd
+numLines = size(get(hObject,'String'),1);
+set(hObject, 'ListboxTop', numLines);
+
+% --- Executes on slider movement.
+function sliderOffset_Callback(hObject, ~, handles)
+% hObject    handle to sliderOffset (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+handles.profileOffset = get(hObject,'Value');
+UpdatePlot(handles);
+
  
+%% HELPER FUNCTIONS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% check validity of input for cst
+function flagValidity = CheckValidity(Val) 
+      
+flagValidity = true;
+
+if ischar(Val)
+    Val = str2num(Val);
+end 
+
+if length(Val) == 2
+   if Val(1) > Val(2)
+      warndlg('provide min max dose values!');  
+   end
+end
+
+if length(Val) > 2
+    warndlg('invalid input!');
+end
+
+if isempty(Val)
+   warndlg('Input not a number!');
+   flagValidity = false;        
+end
+
+if any(Val < 0) 
+   warndlg('Input not a positive number!');
+   flagValidity = false;  
+end
+
+% return IPOPT status as message box
+function CheckIpoptStatus(info,OptCase) 
+      
+if info.status == 0
+    statusmsg = 'solved';  
+elseif info.status == 1
+    statusmsg = 'solved to acceptable level';          
+elseif info.status == 2
+    statusmsg = 'infeasible problem detected';           
+elseif info.status == 3    
+    statusmsg = 'search direction too small';             
+elseif info.status == 4 
+    statusmsg = 'diverging iterates';     
+elseif info.status == 5
+    statusmsg = 'user requested stop';     
+elseif info.status == -1        
+    statusmsg = 'maximum number of iterations';     
+elseif info.status == -2    
+    statusmsg = 'restoration phase failed';     
+elseif info.status == -3         
+    statusmsg = 'error in step computation';     
+elseif info.status == -4
+    statusmsg = 'maximum CPU time exceeded';     
+elseif info.status == -10        
+    statusmsg = 'not enough degrees of freedom';     
+elseif info.status == -11    
+    statusmsg = 'invalid problem definition';     
+elseif info.status == -12   
+    statusmsg = 'invalid option';     
+elseif info.status == -13        
+    statusmsg = 'invalid number detected';     
+elseif info.status == -100
+    statusmsg = 'unrecoverable exception';     
+elseif info.status == -101        
+    statusmsg = 'non-IPOPT exception thrown';     
+elseif info.status == -102    
+    statusmsg = 'insufficient memory';     
+elseif info.status == -199
+    statusmsg = 'IPOPT internal error';     
+else
+    statusmsg = 'IPOPT returned no status';
+end
+    
+if info.status == 0 || info.status == 1
+    status = 'none';
+else
+    status = 'warn';
+end
+
+msgbox(['IPOPT finished with status ' num2str(info.status) ' (' statusmsg ')'],'IPOPT',status);
+
 % get pln file form GUI     
-function getPln(handles)
+function getPlnFromGUI(handles)
 
 pln.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [°]
@@ -2190,10 +2074,10 @@ pln.runDAO = logical(get(handles.btnRunDAO,'Value'));
 
 try
     cst = evalin('base','cst');
-    if sum(strcmp('TARGET',cst(:,3)))>0 && get(handles.checkIsoCenter,'Value')
-       pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
+    if sum(strcmp('TARGET',cst(:,3))) > 0 && get(handles.checkIsoCenter,'Value')
+       pln.isoCenter = matRad_getIsoCenter(cst,ct); 
     else
-       pln.isoCenter = str2double(get(handles.editIsoCenter,'String'));
+       pln.isoCenter = str2num(get(handles.editIsoCenter,'String'));
     end
 catch
     warning('couldnt set isocenter in getPln function')
@@ -2202,123 +2086,85 @@ end
 handles.pln = pln;
 assignin('base','pln',pln);
 
-function Number = parseStringAsNum(stringIn,isVector)
- Number = str2num(stringIn);
- if isempty(Number) || length(Number)>1 && ~isVector
-     warndlg('could not parse all plan parameters'); 
+% parsing a string as number array
+function number = parseStringAsNum(stringIn,isVector)
+number = str2num(stringIn);
+if isempty(number) || length(number) > 1 && ~isVector
+    warndlg('could not parse all plan parameters'); 
 end
 
-% --- Executes on button press in btnTableSave.
-function btnTableSave_Callback(~, ~, handles)
-% hObject    handle to btnTableSave (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-getCstTable(handles);
-if get(handles.checkIsoCenter,'Value')
-    pln = evalin('base','pln'); 
-    pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
-    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
-    assignin('base','pln',pln);
+% show error
+function handles = showError(handles,Message)
+
+if isfield(handles,'ErrorDlg')
+    close(handles.ErrorDlg);
 end
-getPln(handles);
+handles.ErrorDlg = errordlg(Message);
 
+% show warning
+function handles = showWarning(handles,Message)
 
-% --- Executes on button press in btnDVH.
+if isfield(handles,'WarnDlg')
+    close(handles.WarnDlg);
+end
+handles.WarnDlg = warndlg(Message);
+
+% check for valid machine data input file
+function flag = checkRadiationComposition(handles)
+flag = true;
+contents = cellstr(get(handles.popUpMachine,'String'));
+Machine = contents{get(handles.popUpMachine,'Value')};
+contents = cellstr(get(handles.popupRadMode,'String'));
+radMod = contents{get(handles.popupRadMode,'Value')};
+
+FoundFile = dir([radMod '_' Machine '.mat']);
+if isdeployed
+   FoundFile = [FoundFile, dir([ctfroot filesep 'matRad' filesep radMod '_' Machine '.mat'])];
+end
+if isempty(FoundFile)
+    warndlg(['No base data available for machine: ' Machine]);
+    flag = false;
+end
+
+%% CALLBACKS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% button: show DVH
 function btnDVH_Callback(~, ~, ~)
-% hObject    handle to btnDVH (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 matRad_calcDVH(evalin('base','resultGUI'),evalin('base','cst'))
 
-
-% --- Executes on selection change in listBoxCmd.
-function listBoxCmd_Callback(hObject, ~, ~)
-% hObject    handle to listBoxCmd (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns listBoxCmd contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from listBoxCmd
-numLines = size(get(hObject,'String'),1);
-set(hObject, 'ListboxTop', numLines);
-
-% --- Executes during object creation, after setting all properties.
-function listBoxCmd_CreateFcn(hObject, ~, ~)
-% hObject    handle to listBoxCmd (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: listbox controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on button press in radiobtnIsoDoseLinesLabels.
+% radio button: plot isolines labels
 function radiobtnIsoDoseLinesLabels_Callback(~, ~, handles)
-% hObject    handle to radiobtnIsoDoseLinesLabels (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of radiobtnIsoDoseLinesLabels
 UpdatePlot(handles);
 
-
-% --- Executes on slider movement.
-function sliderOffset_Callback(hObject, ~, handles)
-% hObject    handle to sliderOffset (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'Value') returns position of slider
-%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-handles.profileOffset = get(hObject,'Value');
-UpdatePlot(handles);
-
-% --- Executes during object creation, after setting all properties.
-function sliderOffset_CreateFcn(hObject, ~, ~)
-% hObject    handle to sliderOffset (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: slider controls usually have a light gray background.
-if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
-end
-
-
-% --- Executes on button press in btnRefresh.
+% button: refresh
 function btnRefresh_Callback(hObject, ~, handles)
-% hObject    handle to btnRefresh (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
-
-%parse variables from base workspace
+% parse variables from base workspace
 AllVarNames = evalin('base','who');
 handles.State = 0;
 
 if ~isempty(AllVarNames)
     try
-         if  sum(ismember(AllVarNames,'ct')) > 0
+        if  sum(ismember(AllVarNames,'ct')) > 0
             % do nothing
         else
-             handles = showError(handles,'BtnRefreshCallback: cst struct is missing');
-         end
+            handles = showError(handles,'BtnRefreshCallback: ct struct is missing');
+        end
 
         if  sum(ismember(AllVarNames,'cst')) > 0
             setCstTable(handles,evalin('base','cst'));
         else
-             handles = showError(handles,'BtnRefreshCallback: cst struct is missing');
+            handles = showError(handles,'BtnRefreshCallback: cst struct is missing');
         end
 
         if sum(ismember(AllVarNames,'pln')) > 0
-             setPln(handles);
+            setPln(handles);
         else
-            getPln(handles);
+            getPlnFromGUI(handles);
         end
-       handles.State = 1;
+        
+        handles.State = 1;
 
     catch
         handles = showError(handles,'BtnRefreshCallback: Could not load ct/cst/pln');
@@ -2333,9 +2179,8 @@ if ~isempty(AllVarNames)
 
     if sum(ismember(AllVarNames,'resultGUI')) > 0
         handles.State = 3;
-        handles.State = 3;
         handles.SelectedDisplayOptionIdx = 1;
-        handles.SelectedDisplayOption='physicalDose';
+        handles.SelectedDisplayOption = 'physicalDose';
         handles.SelectedBeam = 1;
     end
 
@@ -2351,17 +2196,113 @@ guidata(hObject,handles);
 UpdatePlot(handles);
 UpdateState(handles);
 
+% button: toggle effect based optimization and RBExD optimization
+function btnTypBioOpt_Callback(hObject, ~, handles)
+if strcmp(get(hObject,'String'),'effect')
+    set(hObject,'String','RBExD');
+else
+    set(hObject,'String','effect');
+end
+getPlnFromGUI(handles);
 
+% text box: # fractions
+function editFraction_Callback(hObject, ~, handles)
+getPlnFromGUI(handles);
+guidata(hObject,handles);
 
+% text box: stratification levels
+function editSequencingLevel_Callback(~, ~, ~)
 
+% text box: isoCenter in [mm]
+function editIsoCenter_Callback(hObject, ~, handles)
 
-% --------------------------------------------------------------------
+pln = evalin('base','pln');
+tmpIsoCenter = str2num(get(hObject,'String'));
+
+if length(tmpIsoCenter) == 3
+    if any(pln.isoCenter~=tmpIsoCenter)
+        pln.isoCenter = tmpIsoCenter;
+        handles.State = 1;
+        UpdateState(handles);
+    end
+else
+    handles = showError(handles,'EditIsoCenterCallback: Could not set iso center');
+end
+
+assignin('base','pln',pln);
+guidata(hObject,handles);
+
+% check box: iso center auto
+function checkIsoCenter_Callback(hObject, ~, handles)
+
+if get(hObject,'Value')
+    pln = evalin('base','pln');
+    if ~isfield(pln,'isoCenter')
+        pln.isoCenter = NaN;
+    end
+    tmpIsoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
+    if ~isequal(tmpIsoCenter,pln.isoCenter)
+        pln.isoCenter = tmpIsoCenter;
+        handles.State = 1;
+        UpdateState(handles);
+    end
+    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
+    set(handles.editIsoCenter,'Enable','off')
+    assignin('base','pln',pln);
+else
+    set(handles.editIsoCenter,'Enable','on')
+end
+
+% radio button: run sequencing
+function btnRunSequencing_Callback(~, ~, handles)
+getPlnFromGUI(handles);
+
+% radio button: run direct aperture optimization
+function btnRunDAO_Callback(~, ~, handles)
+getPlnFromGUI(handles);
+
+% button: set iso dose levels
+function btnSetIsoDoseLevels_Callback(hObject, ~, handles)
+prompt = {['Enter absolute reference dose levels in [Gy]. Please enter space-separated numbers, e.g. 10 30 34.7 60']};
+def = {'20 40 60 80'};
+Input = inputdlg(prompt,'Set iso dose levels ', [1 50],def);
+if ~isempty(Input)
+     handles.IsoDose.Levels = sort(str2num(Input{1})); 
+     if length(handles.IsoDose.Levels) == 1
+         handles.IsoDose.Levels = [handles.IsoDose.Levels handles.IsoDose.Levels];
+     end
+end
+UpdatePlot(handles);
+guidata(hObject,handles);
+
+% text box: max value
+function txtMaxDoseVal_Callback(hObject, ~, handles)
+
+handles.maxDoseVal =  str2double(get(hObject,'String'));
+guidata(hObject,handles);
+UpdatePlot(handles);
+
+% popup menu: machine
+function popUpMachine_Callback(hObject, ~, handles)
+contents = cellstr(get(hObject,'String'));
+checkRadiationComposition(handles);
+if handles.State > 0
+    pln = evalin('base','pln');
+    if handles.State > 0 && ~strcmp(contents(get(hObject,'Value')),pln.machine)
+        handles.State = 1;
+        UpdateState(handles);
+        guidata(hObject,handles);
+    end
+   getPlnFromGUI(handles);
+end
+
+% toolbar load button
+function toolbarLoad_ClickedCallback(hObject, eventdata, handles)
+btnLoadMat_Callback(hObject, eventdata, handles);
+
+% toolbar save button
 function toolbarSave_ClickedCallback(hObject, eventdata, handles)
-% hObject    handle to toolbarSave (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
-% save Plan and Table to workspace
 btnTableSave_Callback(hObject, eventdata, handles);
 
 try
@@ -2393,371 +2334,117 @@ try
 catch
      handles = showWarning(handles,'Could not save files'); 
 end
-guidata(hObject,handles);
+guidata(hObject,handles); 
 
+% button: about
+function btnAbout_Callback(hObject, eventdata, handles)
 
+msgbox({'https://github.com/e0404/matRad/' 'email: matrad@dkfz.de'},'About');
 
-function editNumIter_Callback(hObject, ~, ~)
-% hObject    handle to editNumIter (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of editNumIter as text
-%        str2double(get(hObject,'String')) returns contents of editNumIter as a double
-val=round(str2double(get(hObject,'String')));
-set(hObject,'String',num2str(val));
-
-% --- Executes during object creation, after setting all properties.
-function editNumIter_CreateFcn(hObject, ~, ~)
-% hObject    handle to editNumIter (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on slider movement.
-function slicerPrecision_Callback(hObject, ~, handles)
-% hObject    handle to slicerPrecision (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'Value') returns position of slider
-%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-val = get(hObject,'Value');
-set(hObject,'Value',round(val))
-set(handles.txtPrecisionOutput,'String',['1e-' num2str(round(val))]);
-
-% --- Executes during object creation, after setting all properties.
-function slicerPrecision_CreateFcn(hObject, ~, ~)
-% hObject    handle to slicerPrecision (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: slider controls usually have a light gray background.
-if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
-end
-
-
-% --- Executes on button press in btnTypBioOpt.
-function btnTypBioOpt_Callback(hObject, ~, handles)
-% hObject    handle to btnTypBioOpt (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-if strcmp(get(hObject,'String'),'effect')
-    set(hObject,'String','RBExD');
-else
-    set(hObject,'String','effect');
-end
-getPln(handles);
-
-
-% --- Executes on button press in btnSequencing.
-function btnSequencing_Callback(hObject, ~, handles)
-% hObject    handle to btnSequencing (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% indicate that matRad is busy
-% change mouse pointer to hour glass 
-Figures = findobj('type','figure');
-set(Figures, 'pointer', 'watch'); 
-drawnow;
-% disable all active objects
-InterfaceObj = findobj(Figures,'Enable','on');
-set(InterfaceObj,'Enable','off');
-
-StratificationLevel = str2double(get(handles.editSequencingLevel,'String'));
-resultGUI   = evalin('base','resultGUI');
-pln         = evalin('base','pln');
-resultGUI.w = resultGUI.wUnsequenced;
-
-% perform sequencing 
-try
-%% sequencing
-if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
-%   resultGUI = matRad_xiaLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
-%       ,StratificationLevel,1);
-    resultGUI = matRad_engelLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
-        ,StratificationLevel,1);
-    assignin('base','resultGUI',resultGUI);
-end
-catch
-   handles = showError(handles,'BtnSequencingCallback: Could not perform sequencing');
-   guidata(hObject,handles);
-end
-
-%% DAO
-try
-if strcmp(pln.radiationMode,'photons') && pln.runDAO
-   [resultGUI,ipoptInfo] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst'),...
-       resultGUI.apertureInfo,resultGUI,pln);
-   matRad_visApertureInfo(resultGUI.apertureInfo);
-   assignin('base','resultGUI',resultGUI);
-   % check IPOPT status and return message for GUI user
-   CheckIpoptStatus(ipoptInfo,'DAO')
-end
-catch 
-   handles = showError(handles,'BtnSequencingCallback: Could not perform direct aperture optimization');
-   guidata(hObject,handles);
-end
-
-% change state from busy to normal
-set(Figures, 'pointer', 'arrow');
-set(InterfaceObj,'Enable','on');
-
-guidata(hObject,handles);
-UpdatePlot(handles);
-UpdateState(handles);
-
-  
-
-
-
-function editSequencingLevel_Callback(~, ~, ~)
-% hObject    handle to editSequencingLevel (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of editSequencingLevel as text
-%        str2double(get(hObject,'String')) returns contents of editSequencingLevel as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function editSequencingLevel_CreateFcn(hObject, ~, ~)
-% hObject    handle to editSequencingLevel (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-function editIsoCenter_Callback(hObject, ~, handles)
-% hObject    handle to editIsoCenter (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-try
-    if handles.State > 0
-        pln=evalin('base','pln');
-        if ~get(handles.checkIsoCenter,'Value')
-           TmpIsoCenter = str2double(get(hObject,'String'));
-           if length(TmpIsoCenter) == 3
-               pln.isoCenter =  TmpIsoCenter;
-           end
-        end
-    end
-    assignin('base','pln',pln);
-    handles.State = 1;
-    UpdateState(handles);
-catch 
-    handles = showError(handles,'EditIsoCenterCallback: Could not set iso center');
-    guidata(hObject,handles);
-end
-guidata(hObject,handles);
-
-% --- Executes during object creation, after setting all properties.
-function editIsoCenter_CreateFcn(hObject, ~, ~)
-% hObject    handle to editIsoCenter (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on button press in checkIsoCenter.
-function checkIsoCenter_Callback(hObject, ~, handles)
-% hObject    handle to checkIsoCenter (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of checkIsoCenter
-try
-    if get(hObject,'Value')
-        pln = evalin('base','pln'); 
-        pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
-        set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
-        assignin('base','pln',pln);
-    end
-catch
-end
-
-
-% --- Executes on button press in btnRunSequencing.
-function btnRunSequencing_Callback(~, ~, handles)
-% hObject    handle to btnRunSequencing (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-getPln(handles);
-
-% --- Executes on button press in btnRunDAO.
-function btnRunDAO_Callback(~, ~, handles)
-% hObject    handle to btnRunDAO (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-getPln(handles);
-
-
-
-function txtMaxDoseVal_Callback(hObject, ~, handles)
-% hObject    handle to txtMaxDoseVal (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of txtMaxDoseVal as text
-%        str2double(get(hObject,'String')) returns contents of txtMaxDoseVal as a double
-handles.maxDoseVal =  str2double(get(hObject,'String'));
-guidata(hObject,handles);
-UpdatePlot(handles);
-
-% --- Executes during object creation, after setting all properties.
-function txtMaxDoseVal_CreateFcn(hObject, ~, ~)
-% hObject    handle to txtMaxDoseVal (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-% --- Executes on button press in btnSetIsoDoseLevels.
-function btnSetIsoDoseLevels_Callback(hObject, ~, handles)
-% hObject    handle to btnSetIsoDoseLevels (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-prompt = {'Enter a reference dose. 100% correspond to a dose of [Gy]. Enter 0 to show original levels:','Provide percental iso dose levles (e.g. 95 105). Please enter space-separated numbers:'};
-def = {'60','20 40 60 80 90 95 100 105 110'};
-Input = inputdlg(prompt,'Set iso dose levels ', [1 50],def);
-try
-if ~isempty(Input)
-     handles.IsoDose.RefVal = str2double(Input{1,:});
-     handles.IsoDose.Levels = sort(str2double(Input{2,:})); 
-     if length(handles.IsoDose.Levels) == 1
-         handles.IsoDose.Levels = [handles.IsoDose.Levels handles.IsoDose.Levels];
-     end
-else
-     handles.IsoDose.RefVal = 0;
-end
-catch
-    handles.IsoDose.RefVal = 0;
-end
-UpdatePlot(handles);
-guidata(hObject,handles);
-
-
-
-% --- Executes on selection change in popUpMachine.
-function popUpMachine_Callback(hObject, ~, handles)
-% hObject    handle to popUpMachine (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns popUpMachine contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popUpMachine
-contents = cellstr(get(hObject,'String'));
-checkRadiationComposition(handles);
-if handles.State>0
-    pln = evalin('base','pln');
-    if handles.State>0 && ~strcmp(contents(get(hObject,'Value')),pln.machine)
-        handles.State=1;
-        UpdateState(handles);
-        guidata(hObject,handles);
-    end
-   getPln(handles);
-end
-
-
-function Valid = checkRadiationComposition(handles)
-Valid = true;
-contents = cellstr(get(handles.popUpMachine,'String'));
-Machine = contents{get(handles.popUpMachine,'Value')};
-contents = cellstr(get(handles.popupRadMode,'String'));
-radMod = contents{get(handles.popupRadMode,'Value')};
-
-FoundFile = dir([radMod '_' Machine '.mat']);
-if isdeployed
-   FoundFile = [FoundFile, dir([ctfroot filesep 'matRad' filesep radMod '_' Machine '.mat'])];
-end
-if isempty(FoundFile)
-    warndlg(['No base data available for machine: ' Machine]);
-    Valid = false;
-end
-
-% --- Executes during object creation, after setting all properties.
-function popUpMachine_CreateFcn(hObject, ~, ~)
-% hObject    handle to popUpMachine (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-function handles = showError(handles,Message)
-
-if isfield(handles,'ErrorDlg')
-    close(handles.ErrorDlg);
-end
- handles.ErrorDlg = errordlg(Message);
-
- function handles = showWarning(handles,Message)
-
-if isfield(handles,'WarnDlg')
-    close(handles.WarnDlg);
-end
- handles.WarnDlg = warndlg(Message);
-
-
-% --------------------------------------------------------------------
-function toolbarLoad_ClickedCallback(hObject, eventdata, handles)
-% hObject    handle to toolbarLoad (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-btnLoadMat_Callback(hObject, eventdata, handles);
-
-
-% --- Executes when user attempts to close figure1.
+% button: close
 function figure1_CloseRequestFcn(hObject, ~, ~)
-% hObject    handle to figure1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: delete(hObject) closes the figure
  
 selection = questdlg('Do you really want to close matRad?',...
                      'Close matRad',...
                      'Yes','No','Yes');
               
- switch selection,
+ switch selection
    case 'Yes',
      delete(hObject);
    case 'No'
      return
+ end
+
+%% CREATE FUNCTIONS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% popup menu: machine
+function popUpMachine_CreateFcn(hObject, ~, ~)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
 end
 
+% text box: max value
+function txtMaxDoseVal_CreateFcn(hObject, ~, ~)
 
-% --- Executes on button press in btnAbout.
-function btnAbout_Callback(hObject, eventdata, handles)
-% hObject    handle to btnAbout (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-msgbox({'https://github.com/e0404/matRad/' 'email: matrad@dkfz.de'},'About');
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% text box: edit iso center
+function editIsoCenter_CreateFcn(hObject, ~, ~)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% text box: stratification levels
+function editSequencingLevel_CreateFcn(hObject, ~, ~)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function slicerPrecision_CreateFcn(hObject, ~, ~)
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+function editBixelWidth_CreateFcn(hObject, ~, ~)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function editGantryAngle_CreateFcn(hObject, ~, ~)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function editCouchAngle_CreateFcn(hObject, ~, ~)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function popupRadMode_CreateFcn(hObject, ~, ~)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function editFraction_CreateFcn(hObject, ~, ~) 
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function popupPlane_CreateFcn(hObject, ~, ~)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function sliderSlice_CreateFcn(hObject, ~, ~)
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+function popupTypeOfPlot_CreateFcn(hObject, ~, ~)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function popupDisplayOption_CreateFcn(hObject, ~, ~)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function sliderBeamSelection_CreateFcn(hObject, ~, ~)
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+function listBoxCmd_CreateFcn(hObject, ~, ~)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function sliderOffset_CreateFcn(hObject, ~, ~)
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+

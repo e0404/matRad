@@ -85,6 +85,11 @@ wOnes          = ones(dij.totalNumOfBixels,1);
 % set the IPOPT options.
 matRad_ipoptOptions;
 
+% modified settings for photon dao
+if pln.runDAO && strcmp(pln.radiationMode,'photons')
+    options.ipopt.max_iter = 30;
+end
+
 % set bounds on optimization variables
 options.lb              = zeros(1,dij.totalNumOfBixels);        % Lower bound on the variables.
 options.ub              = inf * ones(1,dij.totalNumOfBixels);   % Upper bound on the variables.
