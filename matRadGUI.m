@@ -26,25 +26,14 @@ function varargout = matRadGUI(varargin)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015, Mark Bangert, on behalf of the matRad development team
-%
-% m.bangert@dkfz.de
-%
-% This file is part of matRad.
-%
-% matrad is free software: you can redistribute it and/or modify it under 
-% the terms of the GNU General Public License as published by the Free 
-% Software Foundation, either version 3 of the License, or (at your option)
-% any later version.
-%
-% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
-% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-% details.
-%
-% You should have received a copy of the GNU General Public License in the
-% file license.txt along with matRad. If not, see
-% <http://www.gnu.org/licenses/>.
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -102,6 +91,26 @@ axes(handles.axesDKFZ)
 f = image(im);
 axis equal off;
 set(f, 'AlphaData', alpha);
+
+% change color of toobar
+hToolbar = findall(hObject,'tag','uitoolbar1');
+jToolbar = get(get(hToolbar,'JavaContainer'),'ComponentPeer');
+jToolbar.setBorderPainted(false);
+color = java.awt.Color.gray;
+% Remove the toolbar border, to blend into figure contents
+jToolbar.setBackground(color);
+% Remove the separator line between toolbar and contents
+warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+jFrame = get(handle(hObject),'JavaFrame');
+jFrame.showTopSeparator(false);
+jtbc = jToolbar.getComponents;
+for idx=1:length(jtbc)
+    jtbc(idx).setOpaque(false);
+    jtbc(idx).setBackground(color);
+    for childIdx = 1 : length(jtbc(idx).getComponents)
+        jtbc(idx).getComponent(childIdx-1).setBackground(color);
+    end
+end
 
 
 %initialize maximum dose for visualization to Zero
@@ -341,7 +350,8 @@ try
     end
     handles.State = 0;
     if ~isdeployed
-        addpath([pwd filesep 'dicomImport']);
+        matRadRootDir = fileparts(mfilename('fullpath'));
+        addpath(fullfile(matRadRootDir,'dicomImport'))
     end
     matRad_importDicomGUI;
  
@@ -1253,7 +1263,7 @@ try
     pln = evalin('base','pln');
     ct  = evalin('base','ct');
     % optimize
-    resultGUI = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln,1,Param,BioOptType);
+    [resultGUI,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln,1,Param,BioOptType);
     assignin('base','resultGUI',resultGUI);
 
     %set some values
@@ -1271,6 +1281,9 @@ try
     handles.SelectedBeam = 1;
     UpdatePlot(handles);
     UpdateState(handles);
+    
+    % check IPOPT status and return message for GUI user
+    CheckIpoptStatus(ipoptInfo,'Fluence')
 
 catch 
     handles = showError(handles,'OptimizeCallback: Could not optimize'); 
@@ -1299,9 +1312,11 @@ end
 try
     %% DAO
     if strcmp(pln.radiationMode,'photons') && pln.runDAO
-       resultGUI = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst')...
-           ,resultGUI.apertureInfo,resultGUI,pln,1);
+       [resultGUI,ipoptInfo] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst'),...
+           resultGUI.apertureInfo,resultGUI,pln,1);
        assignin('base','resultGUI',resultGUI);
+       % check IPOPT status and return message for GUI user
+       CheckIpoptStatus(ipoptInfo,'DAO')      
     end
     
     if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
@@ -1319,6 +1334,63 @@ set(Figures, 'pointer', 'arrow');
 set(InterfaceObj,'Enable','on');
     
 guidata(hObject,handles);
+
+
+% function that checks IPOPT status an return status message
+function CheckIpoptStatus(info,OptCase) 
+      
+if info.status == 0
+    statusmsg = 'solved';  
+elseif info.status == 1
+    statusmsg = 'solved to acceptable level';          
+elseif info.status == 2
+    statusmsg = 'infeasible problem detected';           
+elseif info.status == 3    
+    statusmsg = 'search direction becomes too small';             
+elseif info.status == 4 
+    statusmsg = 'diverging iterates';     
+elseif info.status == 5
+    statusmsg = 'user requested stop';     
+elseif info.status == -1        
+    statusmsg = 'maximum number of iterations exceeded';     
+elseif info.status == -2    
+    statusmsg = 'restoration phase failed';     
+elseif info.status == -3         
+    statusmsg = 'error in step computation';     
+elseif info.status == -4
+    statusmsg = 'maximum CPU time exceeded';     
+elseif info.status == -10        
+    statusmsg = 'not enough degrees of freedom';     
+elseif info.status == -11    
+    statusmsg = 'invalid problem definition';     
+elseif info.status == -12   
+    statusmsg = 'invalid option';     
+elseif info.status == -13        
+    statusmsg = 'invalid number detected';     
+elseif info.status == -100
+    statusmsg = 'unrecoverable exception';     
+elseif info.status == -101        
+    statusmsg = 'non-IPOPT exception thrown';     
+elseif info.status == -102    
+    statusmsg = 'insufficient memory';     
+elseif info.status == -199
+    statusmsg = 'internal error';     
+else
+    statusmsg = 'IPOPT returned no status';
+end
+    
+if info.status == 0 | info.status == 1
+    status = 'Succes';
+else
+    status = 'Warning';
+end
+
+msgbox([OptCase,' optimization status: ',statusmsg],status)
+
+
+
+
+
 
 
 
@@ -1504,11 +1576,19 @@ end
 % displays the cst in the GUI
 function setCstTable(handles,cst)
 
+columnname = {'VOI','VOI Type','Priority','Obj Func','penalty','dose', 'EUD','volume'};
 
-columnname = {'VOI','VOI Type','Priority','Obj Func','Penalty','Parameter'};
+AllObjectiveFunction = {'square underdosing','square overdosing','square deviation', 'mean', 'EUD',...
+       'min dose constraint','max dose constraint','min max dose constraint',...
+       'min mean dose constraint','max mean dose constraint','min max mean dose constraint',...
+       'min EUD constraint','max EUD constraint','min max EUD constraint',...
+       'exact DVH constraint','max DVH constraint','min DVH constraint',...
+       'max DVH objective','min DVH objective'};
+
+PlaceHolder = NaN;
 columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
-       {'square underdosing','square overdosing','square deviation', 'mean', 'EUD'},...
-       'numeric','numeric'};
+       AllObjectiveFunction,...
+       'numeric','char','numeric','numeric'};
    
 numOfObjectives = 0;
 for i = 1:size(cst,1)
@@ -1519,6 +1599,7 @@ end
 
 dimArr = [numOfObjectives size(columnname,2)];
 data = cell(dimArr);
+data(:,6) = {''};
 Counter = 1;
 for i = 1:size(cst,1)
    
@@ -1533,17 +1614,12 @@ for i = 1:size(cst,1)
        %Objective Function
        objFunc = cst{i,6}(j).type;
        data{Counter,4}=objFunc;
-       %penalty
-       data{Counter,5}=cst{i,6}(j).parameter(1);
-       switch objFunc
-           case 'mean'
-               data{Counter,6}='';
        
-           case {'square underdosing','square overdosing','square deviation','EUD'}
-               %Dose
-               data{Counter,6}=cst{i,6}(j).parameter(1,2); 
-       end
-   
+       data{Counter,5} = cst{i,6}(j).penalty;
+       data{Counter,6} = num2str(cst{i,6}(j).dose);
+       data{Counter,7} = cst{i,6}(j).EUD;
+       data{Counter,8} = cst{i,6}(j).volume;
+       
        Counter = Counter +1;
        end
    end
@@ -1552,7 +1628,7 @@ end
 
 set(handles.uiTable,'ColumnName',columnname);
 set(handles.uiTable,'ColumnFormat',columnformat);
-set(handles.uiTable,'ColumnEditable',[true true true true true true true]);
+set(handles.uiTable,'ColumnEditable',[true true true true true true true true]);
 set(handles.uiTable,'Data',data);
 
 
@@ -1593,47 +1669,30 @@ for i = 1:size(OldCst,1)
                 end
             end
             
-            %Obj Func
+            % Obj Func / constraint
             if isempty(data{j,4}) ||~isempty(strfind(data{j,4}, 'Select'))
                FlagValidParameters=false;
             else
                  NewCst{Cnt,4}(CntObjF,1).type = data{j,4};
             end
-             %Penalty
-            if isempty(data{j,5})
-               FlagValidParameters=false;
-            else
-                 NewCst{Cnt,4}(CntObjF,1).parameter(1,1) = data{j,5};
-            end
-             
-            %get exponent
+         
+            % get further parameter
             if FlagValidParameters
-            
-                if strcmp(NewCst{Cnt,4}(CntObjF,1).type,'EUD')
-                    if isempty(data{j,6})
-                       FlagValidParameters=false;
-                    else
-                        NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = (data{j,6});
-                    end
-                end
-
-                %get dose
-                if sum(strcmp(NewCst{Cnt,4}(CntObjF,1).type,{'EUD','mean'})) == 0
-                    % read dose
-                    if isempty(data{j,6})
-                       FlagValidParameters=false;
-                    else
-                          if length(NewCst{Cnt,4}(CntObjF,1).parameter)==1
-                              NewCst{Cnt,4}(CntObjF,1).parameter(1,2)=1;
-                          end
-                          if ischar(data{j,6})
-                              NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = str2double(data{j,6});
-                          else
-                              NewCst{Cnt,4}(CntObjF,1).parameter(1,2) = double(data{j,6});
-                          end
-                    end
-                end
+                
+              NewCst{Cnt,4}(CntObjF,1).penalty     = data{j,5};
+              
+        
+              %vDose = str2double(strsplit(data{j,6},' '));
+              %if length(vDose)>1
+              %  vDose(~isnan(vDose));
+              %end
+              NewCst{Cnt,4}(CntObjF,1).penalty     = data{j,5};
+              NewCst{Cnt,4}(CntObjF,1).dose        = str2num(data{j,6});
+              NewCst{Cnt,4}(CntObjF,1).EUD         = data{j,7};
+              NewCst{Cnt,4}(CntObjF,1).volume      = data{j,8};
+             
             end
+            
             CntObjF = CntObjF+1; 
             
         end
@@ -1690,7 +1749,7 @@ sEnd = size(data,1);
 data{sEnd+1,1} = 'Select VOI';
 data{sEnd+1,2} = 'Select VOI Type';
 data{sEnd+1,3} = 2;
-data{sEnd+1,4} = 'Select obj func';
+data{sEnd+1,4} = 'Select obj func/constraint';
 set(handles.uiTable,'data',data);
 
 %handles.State=1;
@@ -1750,6 +1809,8 @@ function uiTable_CellEditCallback(hObject, eventdata, handles)
 %	Error: error string when failed to convert EditData to appropriate value for Data
 % handles    structure with handles and user data (see GUIDATA)
 
+Placeholder = NaN;
+PlaceholderDose = 'NaN';
 
 % get table data and current index of cell
 if isempty(eventdata)
@@ -1776,9 +1837,7 @@ if isempty(eventdata)
         return
     end
 else
-    data = get(hObject,'Data');
-    
-    
+    data = get(hObject,'Data'); 
 end
 
 %% if VOI, VOI Type or Overlap was changed
@@ -1812,6 +1871,7 @@ if ~strcmp(eventdata.NewData,eventdata.PreviousData)
         
         
     else
+        % if table changed after a optimization was performed
         if handles.State ==3 && handles.TableChanged == false
             handles.State=2;
         end
@@ -1836,14 +1896,18 @@ if eventdata.Indices(2) == 2
 end
 %% if objective function was changed -> check if VOI Type still makes sense
 if eventdata.Indices(2) == 4
-   
-    if strcmp(eventdata.NewData,'square deviation') || strcmp(eventdata.NewData,'square underdosing') 
-        
+    if strcmp(eventdata.NewData,'square deviation') ||...
+        strcmp(eventdata.NewData,'square underdosing') ||...
+        strcmp(eventdata.NewData, 'min dose constraint') || ...
+        strcmp(eventdata.NewData, 'min mean dose constraint') || ...
+        strcmp(eventdata.NewData, 'min DVH constraint') ||...
+        strcmp(eventdata.NewData, 'min DVH objective')
+    
         if strcmp('OAR',data{eventdata.Indices(1),2})
             data{eventdata.Indices(1),4} = 'square overdosing';
         end
         
-    elseif strcmp(eventdata.NewData,'EUD') || strcmp(eventdata.NewData,'mean')
+    elseif strcmp(eventdata.NewData,'mean')
         
         if strcmp('TARGET',data{eventdata.Indices(1),2})
             data{eventdata.Indices(1),4} = 'square deviation';
@@ -1852,21 +1916,89 @@ if eventdata.Indices(2) == 4
     end
 end
 
+%% set fields to NaN according to objective function
+if eventdata.Indices(2) == 4
+    ObjFunction = eventdata.NewData;
+else
+    ObjFunction = data{eventdata.Indices(1),4};
+end
 
+if sum(strcmp(ObjFunction, {'square underdosing','square overdosing','square deviation'})) > 0
+    
+    for k = [5 6]
+        if isnan(data{eventdata.Indices(1),k})
+             data{eventdata.Indices(1),k} = 1;
+        end
+    end 
+    data{eventdata.Indices(1),7} = Placeholder;
+    data{eventdata.Indices(1),8} = Placeholder;
+   
+elseif strcmp(ObjFunction,'mean')
+    
+        if isnan(data{eventdata.Indices(1),5})
+                 data{eventdata.Indices(1),5} = 1;
+        end
+        data{eventdata.Indices(1),6} = PlaceholderDose;    
+        data{eventdata.Indices(1),7} = Placeholder;   
+        data{eventdata.Indices(1),8} = Placeholder;    
+
+elseif strcmp(ObjFunction,'EUD')
+    
+        for k = [5 7]
+            if isnan(data{eventdata.Indices(1),k})
+                 data{eventdata.Indices(1),k} = 1;
+            end
+        end 
+       data{eventdata.Indices(1),6} = PlaceholderDose; 
+       data{eventdata.Indices(1),8} = Placeholder; 
+       
+elseif sum(strcmp(ObjFunction,{'min dose constraint','max dose constraint','min max dose constraint',...
+                                     'min mean dose constraint','max mean dose constraint','min max mean dose constraint'}))> 0
+         
+         if isnan(data{eventdata.Indices(1),6})
+                 data{eventdata.Indices(1),6} = 1;
+         end
+         data{eventdata.Indices(1),5} = Placeholder;
+         data{eventdata.Indices(1),7} = Placeholder;
+         data{eventdata.Indices(1),8} = Placeholder;
+         
+elseif sum(strcmp(ObjFunction,{'min EUD constraint','max EUD constraint','min max EUD constraint'}) ) > 0
+        
+        for k = [6 7]
+            if isnan(data{eventdata.Indices(1),k})
+                 data{eventdata.Indices(1),k} = 1;
+            end
+        end 
+        data{eventdata.Indices(1),5} = Placeholder;
+        data{eventdata.Indices(1),8} = Placeholder;
+        
+elseif sum(strcmp(ObjFunction,{'exact DVH constraint','min DVH constraint','max DVH constraint'}) ) > 0
+        
+        for k = [6 8]
+            if isnan(data{eventdata.Indices(1),k})
+                 data{eventdata.Indices(1),k} = 1;
+            end
+        end    
+        data{eventdata.Indices(1),5} = Placeholder;
+        data{eventdata.Indices(1),7} = Placeholder;
+
+elseif sum(strcmp(ObjFunction,{'min DVH objective','max DVH objective'}) ) > 0
+        
+    for k = [5 6 8]
+        if isnan(data{eventdata.Indices(1),k})
+             data{eventdata.Indices(1),k} = 1;
+        end
+    end
+    data{eventdata.Indices(1),7} = Placeholder;
+end
+    
 %% check if input is a valid
-%check if overlap,penalty and and parameters are numbers
-if eventdata.Indices(2) == 3  || eventdata.Indices(2) == 5 || eventdata.Indices(2) == 6 ...
+%check if overlap, penalty and and parameters are numbers
+if (eventdata.Indices(2) == 3  || eventdata.Indices(2) == 5 || eventdata.Indices(2) == 6 || eventdata.Indices(2) == 7 || eventdata.Indices(2) == 8) ...
         && ~isempty(eventdata.NewData)
     if CheckValidity(eventdata.NewData) == false
             data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
     end
-end
-
-%% if objective function is set to mean --> set dose cell to empty
-if eventdata.Indices(2)==4 && strcmp(eventdata.NewData,'mean')
-     data{eventdata.Indices(1),6}='';
-elseif strcmp(data{eventdata.Indices(1),4},'mean') && eventdata.Indices(2) == 6
-     data{eventdata.Indices(1),6}='';
 end
 
 
@@ -1906,9 +2038,23 @@ function FlagValidity = CheckValidity(Val)
       
 FlagValidity = true;
 
+if ischar(Val)
+    Val = str2num(Val);
+end 
+
+if length(Val) == 2
+   if Val(1) > Val(2)
+      warndlg('provide min max dose values !');  
+   end
+end
+
+if length(Val) > 2
+    warndlg('invalid input!');
+end
+
 if  isempty(Val)
-       warndlg('Input not a number !');
-       FlagValidity = false;        
+   warndlg('Input not a number !');
+   FlagValidity = false;        
 end
 
 if Val < 0 
@@ -2147,16 +2293,6 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
 end
 
 
-% --------------------------------------------------------------------
-function About_Callback(~, ~, ~)
-% hObject    handle to About (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-msgbox({'https://github.com/e0404/matRad/' 'email: matrad@dkfz.de'},'About');
-
-
-
-
 % --- Executes on button press in btnRefresh.
 function btnRefresh_Callback(hObject, ~, handles)
 % hObject    handle to btnRefresh (see GCBO)
@@ -2318,12 +2454,12 @@ function btnTypBioOpt_Callback(hObject, ~, handles)
 % hObject    handle to btnTypBioOpt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-getPln(handles);
 if strcmp(get(hObject,'String'),'effect')
     set(hObject,'String','RBExD');
 else
     set(hObject,'String','effect');
 end
+getPln(handles);
 
 
 % --- Executes on button press in btnSequencing.
@@ -2364,10 +2500,12 @@ end
 %% DAO
 try
 if strcmp(pln.radiationMode,'photons') && pln.runDAO
-   resultGUI = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst')...
-       ,resultGUI.apertureInfo,resultGUI,1);
+   [resultGUI,ipoptInfo] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst'),...
+       resultGUI.apertureInfo,resultGUI,1);
    matRad_visApertureInfo(resultGUI.apertureInfo);
    assignin('base','resultGUI',resultGUI);
+   % check IPOPT status and return message for GUI user
+   CheckIpoptStatus(ipoptInfo,'DAO')
 end
 catch 
    handles = showError(handles,'BtnSequencingCallback: Could not perform direct aperture optimization');
@@ -2611,12 +2749,22 @@ function figure1_CloseRequestFcn(hObject, ~, ~)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: delete(hObject) closes the figure
+ 
 selection = questdlg('Do you really want to close matRad?',...
                      'Close matRad',...
                      'Yes','No','Yes');
+              
  switch selection,
    case 'Yes',
      delete(hObject);
    case 'No'
      return
 end
+
+
+% --- Executes on button press in btnAbout.
+function btnAbout_Callback(hObject, eventdata, handles)
+% hObject    handle to btnAbout (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+msgbox({'https://github.com/e0404/matRad/' 'email: matrad@dkfz.de'},'About');
