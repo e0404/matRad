@@ -1254,19 +1254,14 @@ try
                 handles.DijCalcWarning = false;       
         end
     end
-
-    % get optimization parameters from GUI
-    Param.numOfIter = str2double(get(handles.editNumIter,'String'));
-    Param.prec      = str2double(get(handles.txtPrecisionOutput,'String'));
-    BioOptType      = get(handles.btnTypBioOpt,'String');
     
     pln = evalin('base','pln');
     ct  = evalin('base','ct');
     % optimize
-    [resultGUI,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln,1,Param,BioOptType);
+    [resultGUI,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
     assignin('base','resultGUI',resultGUI);
 
-    %set some values
+    % set some values
     if handles.plane == 1
         set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.x));
     elseif handles.plane == 2
@@ -1277,7 +1272,7 @@ try
 
     handles.State = 3;
     handles.SelectedDisplayOptionIdx = 1;
-    handles.SelectedDisplayOption='physicalDose';
+    handles.SelectedDisplayOption = 'physicalDose';
     handles.SelectedBeam = 1;
     UpdatePlot(handles);
     UpdateState(handles);
@@ -1313,7 +1308,7 @@ try
     %% DAO
     if strcmp(pln.radiationMode,'photons') && pln.runDAO
        [resultGUI,ipoptInfo] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst'),...
-           resultGUI.apertureInfo,resultGUI,pln,1);
+           resultGUI.apertureInfo,resultGUI,pln);
        assignin('base','resultGUI',resultGUI);
        % check IPOPT status and return message for GUI user
        CheckIpoptStatus(ipoptInfo,'DAO')      
@@ -2173,7 +2168,7 @@ pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),tru
 pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 try
-    ct=evalin('base','ct');
+    ct = evalin('base','ct');
     pln.numOfVoxels     = numel(ct.cube);
     pln.voxelDimensions = size(ct.cube);
 catch
@@ -2185,7 +2180,7 @@ contents            = get(handles.popUpMachine,'String');
 pln.machine         = contents{get(handles.popUpMachine,'Value')}; 
 
 if (logical(get(handles.radbtnBioOpt,'Value')) && strcmp(pln.radiationMode,'carbon'))
-    pln.bioOptimization =get(handles.btnTypBioOpt,'String');
+    pln.bioOptimization = get(handles.btnTypBioOpt,'String');
 else
      pln.bioOptimization = 'none';
 end
@@ -2194,7 +2189,7 @@ pln.runSequencing = logical(get(handles.btnRunSequencing,'Value'));
 pln.runDAO = logical(get(handles.btnRunDAO,'Value'));
 
 try
-    cst= evalin('base','cst');
+    cst = evalin('base','cst');
     if sum(strcmp('TARGET',cst(:,3)))>0 && get(handles.checkIsoCenter,'Value')
        pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
     else
@@ -2501,7 +2496,7 @@ end
 try
 if strcmp(pln.radiationMode,'photons') && pln.runDAO
    [resultGUI,ipoptInfo] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst'),...
-       resultGUI.apertureInfo,resultGUI,1);
+       resultGUI.apertureInfo,resultGUI,pln);
    matRad_visApertureInfo(resultGUI.apertureInfo);
    assignin('base','resultGUI',resultGUI);
    % check IPOPT status and return message for GUI user
@@ -2544,8 +2539,6 @@ function editSequencingLevel_CreateFcn(hObject, ~, ~)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
-
 
 function editIsoCenter_Callback(hObject, ~, handles)
 % hObject    handle to editIsoCenter (see GCBO)

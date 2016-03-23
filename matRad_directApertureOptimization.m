@@ -1,9 +1,9 @@
-function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln,visBool,varargin)
+function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to run direct aperture optimization
 %
 % call
-%   o[optResult,info] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln,visBool,varargin)
+%   o[optResult,info] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln,visBool)
 %
 % input
 %   dij:            matRad dij struct
@@ -15,8 +15,6 @@ function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureIn
 %   pln:            matRad pln struct
 %   visBool:        plots the objective function value in dependence of the
 %                   number of iterations
-%   varargin:       optinal: convergence criteria for optimization and biological
-%                   optimization mode
 %
 % output
 %   optResult:  struct containing optimized fluence vector, dose, and
@@ -55,10 +53,6 @@ matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
 matRad_STRG_C_Pressed           = false;
 matRad_objective_function_value = [];
 
-if nargin < 6
-    visBool = 0;
-end
-
 % get handle to Matlab command window
 mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
 cw          = mde.getClient('Command Window');
@@ -67,11 +61,6 @@ h_cw        = handle(xCmdWndView,'CallbackProperties');
 
 % set Key Pressed Callback of Matlab command window
 set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
-
-% initialize waitbar
-figureWait = waitbar(0,'Optimizing beam intensities (iter = 0)','CreateCancelBtn','setappdata(gcbf,''canceling'',1)');
-setappdata(figureWait,'canceling',0)
-set(figureWait,'pointer','watch');
 
 % adjust overlap priorities
 cst = matRad_setOverlapPriorities(cst);
@@ -100,17 +89,10 @@ funcs.constraints       = @(x) matRad_daoConstFunc(x,apertureInfo,dij,cst,pln.bi
 funcs.gradient          = @(x) matRad_daoGradFunc(x,apertureInfo,dij,cst,pln.bioOptimization);
 funcs.jacobian          = @(x) matRad_daoJacobFunc(x,apertureInfo,dij,cst,pln.bioOptimization);
 funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct(apertureInfo,dij,cst);
-funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter,figureWait);
+funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
 
 % Run IPOPT.
 [optApertureInfoVec, info] = ipopt(apertureInfo.apertureVector,funcs,options);
-
-% close waitbar
-try
-    allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
-    delete(allWaitBarFigures); 
-catch
-end
 
 % unset Key Pressed Callback of Matlab command window and delete waitbar
 set(h_cw, 'KeyPressedCallback',' ');

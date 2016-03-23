@@ -1,16 +1,14 @@
-function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,varargin)
+function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
 % call
-%   [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,varargin)
+%   [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 %
 % input
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
-%   varargin:   optinal: convergence criteria for optimization and biological
-%               optimization mode
 %
 % output
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
@@ -57,11 +55,6 @@ h_cw        = handle(xCmdWndView,'CallbackProperties');
 
 % set Key Pressed Callback of Matlab command window
 set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
-
-% initialize waitbar
-figureWait = waitbar(0,'Optimizing beam intensities (iter = 0)','CreateCancelBtn','setappdata(gcbf,''canceling'',1)');
-setappdata(figureWait,'canceling',0)
-set(figureWait,'pointer','watch');
    
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
@@ -95,7 +88,7 @@ matRad_ipoptOptions;
 % set bounds on optimization variables
 options.lb              = zeros(1,dij.totalNumOfBixels);        % Lower bound on the variables.
 options.ub              = inf * ones(1,dij.totalNumOfBixels);   % Upper bound on the variables.
-funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter,figureWait);
+funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
     
 % calculate initial beam intensities wInit
 if strcmp(pln.bioOptimization,'none')
@@ -191,13 +184,6 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
     
     fprintf(' done!\n');
  
-end
-
-% close waitbar
-try
-    allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
-    delete(allWaitBarFigures); 
-catch
 end
 
 % unset Key Pressed Callback of Matlab command window and delete waitbar
