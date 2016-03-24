@@ -1171,8 +1171,11 @@ try
         CheckIpoptStatus(ipoptInfo,'Fluence')
     end
     
-catch 
-    handles = showError(handles,'OptimizeCallback: Could not optimize'); 
+catch ME
+    handles = showError(handles,{'OptimizeCallback: Could not optimize!',ME.message}); 
+    % change state from busy to normal
+    set(Figures, 'pointer', 'arrow');
+    set(InterfaceObj,'Enable','on');
     guidata(hObject,handles);
     return;
 end
@@ -1189,10 +1192,13 @@ try
             ,str2double(get(handles.editSequencingLevel,'String')));
         assignin('base','resultGUI',resultGUI);
     end
-catch
-   handles = showError(handles,'OptimizeCallback: Could not perform sequencing'); 
-   guidata(hObject,handles);
-   return;
+catch ME
+    handles = showError(handles,{'OptimizeCallback: Could not perform sequencing',ME.message}); 
+    % change state from busy to normal
+    set(Figures, 'pointer', 'arrow');
+    set(InterfaceObj,'Enable','on');
+    guidata(hObject,handles);
+    return;
 end
 
 try
@@ -1209,10 +1215,13 @@ try
         matRad_visApertureInfo(resultGUI.apertureInfo);
     end
 
-catch
-   handles = showError(handles,'OptimizeCallback: Could not perform direct aperture optimization'); 
-   guidata(hObject,handles);
-   return;
+catch ME
+    handles = showError(handles,{'OptimizeCallback: Could not perform direct aperture optimization',ME.message}); 
+    % change state from busy to normal
+    set(Figures, 'pointer', 'arrow');
+    set(InterfaceObj,'Enable','on');
+    guidata(hObject,handles);
+    return;
 end
 
 % change state from busy to normal
@@ -2086,7 +2095,9 @@ end
 function handles = showError(handles,Message)
 
 if isfield(handles,'ErrorDlg')
-    close(handles.ErrorDlg);
+    if ishandle(handles.ErrorDlg)
+        close(handles.ErrorDlg);
+    end
 end
 handles.ErrorDlg = errordlg(Message);
 
@@ -2094,7 +2105,9 @@ handles.ErrorDlg = errordlg(Message);
 function handles = showWarning(handles,Message)
 
 if isfield(handles,'WarnDlg')
-    close(handles.WarnDlg);
+    if ishandle(handles.WarnDlg)
+        close(handles.WarnDlg);
+    end
 end
 handles.WarnDlg = warndlg(Message);
 
