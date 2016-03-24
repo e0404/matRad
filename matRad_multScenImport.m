@@ -1,13 +1,11 @@
 function [ct,cst] = matRad_multScenImport(InputFolder,numOfScen,VOIs)
-InputFolder = 'E:\Mescher\13_BIOM_model\01_BioMechModel\Input';
-numOfScen = 3;
-VOIs = {'blase','darm','haut','prostata','rektum','restblase','rueckenmark',...
-        'CTV','PTV','GTV'};
 
 % add readData3d to search path
 addpath('E:\Mescher\12_4DCT\ReadData3d');
 
 %% get input data info
+display('start multiple scenario import:')
+
 InputData = dir(InputFolder);
 InputData = InputData(~(strcmp('.', {InputData.name}) | strcmp('..', {InputData.name})));
 InputData = InputData(1:(min(length(InputData),numOfScen)));
@@ -17,16 +15,23 @@ for i = 1:length(InputData)
     InputData(i).CTs = InputData(i).CTs(~cellfun('isempty',strfind({InputData(i).CTs.name},'_CT_'))); 
     InputData(i).CTs = InputData(i).CTs.name;
     
-    InputData(i).Segmentations = dir(fullfile(InputFolder,InputData(i).name,'*.vtk'));
-    InputData(i).Segmentations = InputData(i).Segmentations(~cellfun('isempty',strfind({InputData(i).Segmentations.name},'rtss'))); 
-    InputData(i).Segmentations = {InputData(i).Segmentations.name};
+    InputData(i).SegmentationsFile = dir(fullfile(InputFolder,InputData(i).name,'*.vtk'));
+    InputData(i).SegmentationsFile = InputData(i).SegmentationsFile(~cellfun('isempty',strfind({InputData(i).SegmentationsFile.name},'rtss'))); 
+    InputData(i).SegmentationsFile = {InputData(i).SegmentationsFile.name};
+    for j = 1:length(InputData(i).SegmentationsFile)
+        idx = regexp(InputData(i).SegmentationsFile{j},'_');
+        InputData(i).SegmentationsName{j} = InputData(i).SegmentationsFile{j}(idx(3)+1:idx(end-2)-2);
+    end
 end
 
+clear i idx j 
+
 %% read CTs
-ct.nPhases = length(InputData);
-for i = 1:ct.nPhases
+display('start CT import:')
+ct.nScen = length(InputData);
+for i = 1:ct.nScen
     [ct.cube(:,:,:,i), CTcubeReadData3Dinfo(i)] = ReadData3D(fullfile(InputFolder,InputData(i).name,InputData(i).CTs),false);
-    display(['import CT ',num2str(i),'/',num2str(ct.nPhases)])
+    display(['import CT ',num2str(i),'/',num2str(ct.nScen)])
 end
 
 % HU eDEns conversion
@@ -43,7 +48,26 @@ else
     error('found CTs with different resolutions');
 end
 
+clear CTcubeReadData3Dinfo dim i 
+
 %% read segmentations
+display('start segmentation import:')
+
+% check if all VOIs are segmented in all Scenarios
+logVOI = true(1,length(VOIs));
+for i = 1:ct.nScen
+    [logVOItmp,~] = ismember(VOIs,InputData(i).SegmentationsName);
+    if sum(logVOItmp) < length(VOIs)
+        logVOI = logical(logVOI.*logVOItmp);
+        warning(['found no segmentation of ',strjoin({VOIs{~logVOItmp}},' and '),' in Scenario ',InputData(i).name])    
+    end
+end
+if sum(~logVOI) > 0
+warning(['do not import segmentation of ',strjoin({VOIs{~logVOI}},' and ')])
+end
+VOIs = VOIs(logVOI);   
+
+% create cst file
 cst = cell(length(VOIs),6);
 for i = 1:length(VOIs)
     
@@ -61,27 +85,18 @@ for i = 1:length(VOIs)
     end
     
     % Voxel indices
-    for j = 1:ct.nPhases
-        if ~isempty(strfind(InputData(j).Segmentations,VOIs{i}))
-            [tmp,~] = ReadData3D(fullfile(InputFolder,InputData(j).name,InputData.Segmentations),false);
-            cst{i,4} = [cst{i,4},find(tmp>0)+i*prod(ct.dimensions)]
-        else
-            error(['found no segmentation of "',VOIs{i},'" in Scenario ',InputData(j).name])
-        end
+    for j = 1:ct.nScen
+            idx = find(strcmp(InputData(j).SegmentationsName,VOIs{i}));
+            [tmp,~] = ReadData3D(fullfile(InputFolder,InputData(j).name,InputData(j).SegmentationsFile{idx}),false);
+            cst{i,4} = [cst{i,4};find(tmp>0)+i*size(ct.cube,1)*size(ct.cube,2)*size(ct.cube,3)];
+            display(['import segmentation of VOI ',num2str(i),'/',num2str(length(VOIs)),' in Scenario ',num2str(j),'/',num2str(ct.nScen)])
     end
     
-    % Tissue parameters and Dose Obkectives
+    % Tissue parameters and Dose Objectives
     cst{i,5} = []; 
     cst{i,6} = [];
     
-
-%     for j = 1:length(segmentations)
-%         cst(j,:,i) = {j-1,segmentations(j).name(16:(end-10)),'',[],[],[]};
-%         [tmp,~] = ReadData3D(fullfile(patientFolder,'biomech_samples',num2str(i+1),segmentations(j).name), false);
-%         cst{j,4,i} = find(tmp>0);
-%     end
-%     display(['import ',num2str(i),'/',num2str(ndefPhases)])
 end
 
-
+display('import finished')
 end
