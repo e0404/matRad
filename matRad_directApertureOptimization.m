@@ -39,8 +39,22 @@ function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureIn
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-matRadRootDir = fileparts(mfilename('fullpath'));
-addpath(fullfile(matRadRootDir,'optimization'))
+if ~isdeployed % only if _not_ running as standalone
+    
+    % add path for optimization functions    
+    matRadRootDir = fileparts(mfilename('fullpath'));
+    addpath(fullfile(matRadRootDir,'optimization'))
+    
+    % get handle to Matlab command window
+    mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
+    cw          = mde.getClient('Command Window');
+    xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+    h_cw        = handle(xCmdWndView,'CallbackProperties');
+
+    % set Key Pressed Callback of Matlab command window
+    set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
+
+end
 
 % initialize global variables for optimizer
 global matRad_global_x;
@@ -52,15 +66,6 @@ matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1); % works wi
 matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
 matRad_STRG_C_Pressed           = false;
 matRad_objective_function_value = [];
-
-% get handle to Matlab command window
-mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-cw          = mde.getClient('Command Window');
-xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-h_cw        = handle(xCmdWndView,'CallbackProperties');
-
-% set Key Pressed Callback of Matlab command window
-set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
 
 % adjust overlap priorities
 cst = matRad_setOverlapPriorities(cst);
@@ -95,7 +100,9 @@ funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,o
 [optApertureInfoVec, info] = ipopt(apertureInfo.apertureVector,funcs,options);
 
 % unset Key Pressed Callback of Matlab command window and delete waitbar
-set(h_cw, 'KeyPressedCallback',' ');
+if ~isdeployed
+    set(h_cw, 'KeyPressedCallback',' ');
+end
 
 % clear global variables after optimization
 clearvars -global matRad_global_x matRad_global_d;

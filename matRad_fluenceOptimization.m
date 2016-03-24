@@ -33,8 +33,22 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-matRadRootDir = fileparts(mfilename('fullpath'));
-addpath(fullfile(matRadRootDir,'optimization'))
+if ~isdeployed % only if _not_ running as standalone
+    
+    % add path for optimization functions
+    matRadRootDir = fileparts(mfilename('fullpath'));
+    addpath(fullfile(matRadRootDir,'optimization'))
+    
+    % get handle to Matlab command window
+    mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
+    cw          = mde.getClient('Command Window');
+    xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+    h_cw        = handle(xCmdWndView,'CallbackProperties');
+
+    % set Key Pressed Callback of Matlab command window
+    set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
+
+end
 
 % initialize global variables for optimizer
 global matRad_global_x;
@@ -46,16 +60,7 @@ matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
 matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
 matRad_STRG_C_Pressed           = false;
 matRad_objective_function_value = [];
-
-% get handle to Matlab command window
-mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-cw          = mde.getClient('Command Window');
-xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-h_cw        = handle(xCmdWndView,'CallbackProperties');
-
-% set Key Pressed Callback of Matlab command window
-set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
-   
+  
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
 
@@ -191,8 +196,10 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
  
 end
 
-% unset Key Pressed Callback of Matlab command window and delete waitbar
-set(h_cw, 'KeyPressedCallback',' ');
+% unset Key Pressed Callback of Matlab command window
+if ~isdeployed
+    set(h_cw, 'KeyPressedCallback',' ');
+end
 
 clearvars -global matRad_global_x matRad_global_d matRad_ALT_C_Pressed;
 
