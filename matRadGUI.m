@@ -1832,27 +1832,19 @@ function UpdateState(handles)
       set(handles.txtInfo,'String','no data loaded');
       set(handles.btnCalcDose,'Enable','off');
       set(handles.btnOptimize ,'Enable','off');
-      set(handles.btnDVH,'Enable','off');
-      set(handles.btnSequencing,'Enable','off');
-      
+      set(handles.btnDVH,'Enable','off');      
      case 1
       pln = evalin('base','pln');   
       set(handles.txtInfo,'String','ready for dose calculation');
       set(handles.btnCalcDose,'Enable','on');
       set(handles.btnOptimize ,'Enable','off');  
       set(handles.btnDVH,'Enable','off');
-      if strcmp(pln.radiationMode,'photons')
-          set(handles.btnSequencing,'Enable','off');
-      end
      case 2
       pln = evalin('base','pln');
       set(handles.txtInfo,'String','ready for optimization');   
       set(handles.btnCalcDose,'Enable','on');
       set(handles.btnOptimize ,'Enable','on');
       set(handles.btnDVH,'Enable','off');
-      if strcmp(pln.radiationMode,'photons')
-          set(handles.btnSequencing,'Enable','off');
-      end
      
      case 3
 
@@ -1863,9 +1855,6 @@ function UpdateState(handles)
       
       pln = evalin('base','pln');
       
-      if strcmp(pln.radiationMode,'photons')
-          set(handles.btnSequencing,'Enable','on');
-      end
  end
 
  
