@@ -1166,8 +1166,9 @@ try
     UpdatePlot(handles);
     UpdateState(handles);
     
-    % check IPOPT status and return message for GUI user if no DAO
-    if ~pln.runDAO
+    % check IPOPT status and return message for GUI user if no DAO or
+    % particles
+    if ~pln.runDAO || ~strcmp(pln.radiationMode,'photons')
         CheckIpoptStatus(ipoptInfo,'Fluence')
     end
     
