@@ -1288,7 +1288,7 @@ if get(hObject,'Value') == 1
 elseif get(hObject,'Value') == 2
     
     if handles.State > 0
-        if length(str2double(strsplit(get(handles.editGantryAngle,'String'),' '))) > 1
+        if length(parseStringAsNum(get(handles.editGantryAngle,'String'),true)) > 1
             
             set(handles.sliderBeamSelection,'Enable','on');
             handles.SelectedBeam = 1;
@@ -1495,12 +1495,6 @@ for i = 1:size(OldCst,1)
             if FlagValidParameters
                 
               NewCst{Cnt,4}(CntObjF,1).penalty     = data{j,5};
-              
-        
-              %vDose = str2double(strsplit(data{j,6},' '));
-              %if length(vDose)>1
-              %  vDose(~isnan(vDose));
-              %end
               NewCst{Cnt,4}(CntObjF,1).penalty     = data{j,5};
               NewCst{Cnt,4}(CntObjF,1).dose        = str2num(data{j,6});
               NewCst{Cnt,4}(CntObjF,1).EUD         = data{j,7};
