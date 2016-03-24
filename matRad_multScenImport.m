@@ -48,7 +48,17 @@ else
     error('found CTs with different resolutions');
 end
 
-clear CTcubeReadData3Dinfo dim i 
+% set CT cube dimension
+cubeDim = reshape([CTcubeReadData3Dinfo.Dimensions],3,size(ct.cube,4))';
+if length(unique(cubeDim(:,1))) == 1 && length(unique(cubeDim(:,2))) == 1 && length(unique(cubeDim(:,3))) == 1
+    ct.cubeDim(1) = unique(cubeDim(:,1));
+    ct.cubeDim(2) = unique(cubeDim(:,2));
+    ct.cubeDim(3) = unique(cubeDim(:,3));
+else
+    error('found CTs with different resolutions');
+end
+
+clear CTcubeReadData3Dinfo dim i cubeDim
 
 %% read segmentations
 display('start segmentation import:')

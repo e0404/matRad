@@ -54,8 +54,8 @@ end
 % find all target voxels from cst cell array
 V = [];
 for i=1:size(cst,1)
-    if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
-        V = [V;cst{i,4}];
+    if isequal(cst{i,3},'TARGET') % INCLUDE THIS PART LATER AGAIN!: && ~isempty(cst{i,6})
+        V = [V;mod(cst{i,4},prod(ct.cubeDim))];
     end
 end
 
