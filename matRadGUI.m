@@ -692,15 +692,30 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
  
             if ~isempty(ct.cube)
                 if plane == 1  % Coronal plane
-                    if get(handles.radiobtnDose,'Value') 
-                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.(handles.SelectedDisplayOption)(slice,:,:))...
-                            >CutOffLevel*handles.maxDoseVal)) ;
-                    end   
-                    
+                    if get(handles.radiobtnDose,'Value')
+                        if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
+                            set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.(handles.SelectedDisplayOption)(slice,:,:))...
+                                >0.1*handles.maxDoseVal)) ;
+                        else
+                            set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.(handles.SelectedDisplayOption)(slice,:,:))...
+                                >CutOffLevel*handles.maxDoseVal));
+                        end
+                    else
+                        set(doseImageHandle,'AlphaData',  0*double(squeeze(Result.(handles.SelectedDisplayOption)(slice,:,:))>...
+                            CutOffLevel*max(Result.(handles.SelectedDisplayOption)(:)))) ;
+                    end
                 elseif plane == 2 % sagittal plane
                     if get(handles.radiobtnDose,'Value')
-                        set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.(handles.SelectedDisplayOption)(:,slice,:))>...
-                        CutOffLevel*handles.maxDoseVal));
+                        if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
+                            set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.(handles.SelectedDisplayOption)(:,slice,:))...
+                                >0.1*handles.maxDoseVal)) ;
+                        else
+                            set(doseImageHandle,'AlphaData',  .6*double(squeeze(Result.(handles.SelectedDisplayOption)(:,slice,:))...
+                                >CutOffLevel*handles.maxDoseVal));
+                        end
+                    else
+                        set(doseImageHandle,'AlphaData',  0*double(squeeze(Result.(handles.SelectedDisplayOption)(:,slice,:))>...
+                            CutOffLevel*max(Result.(handles.SelectedDisplayOption)(:)))) ;
                     end
                 elseif plane == 3 % Axial plane
                     if get(handles.radiobtnDose,'Value')
