@@ -712,7 +712,7 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
                                 >CutOffLevel*handles.maxDoseVal));
                         end
                     else
-                        set(doseImageHandle,'AlphaData',  0*double(squeeze(Result.Dose(:,:,slice))>...
+                        set(doseImageHandle,'AlphaData',  0*double(squeeze(Result.(handles.SelectedDisplayOption)(:,:,slice))>...
                             CutOffLevel*max(Result.(handles.SelectedDisplayOption)(:)))) ;
                     end
                 end
