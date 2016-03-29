@@ -33,10 +33,10 @@ function [radDepthCube,geoDistCube] = matRad_rayTracing(stf,ct,V,lateralCutoff)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set up rad depth cube for results
-radDepthCube = NaN*ones(size(ct.cube));
+radDepthCube = repmat({NaN*ones(ct.cubeDim)},1,ct.nScen);
 
 % set up coordinates of all voxels in cube
-[xCoords_vox, yCoords_vox, zCoords_vox] = meshgrid(1:size(ct.cube,1),1:size(ct.cube,2),1:size(ct.cube,3));
+[xCoords_vox, yCoords_vox, zCoords_vox] = meshgrid(1:ct.cubeDim(1),1:ct.cubeDim(2),1:ct.cubeDim(3));
 
 xCoords = xCoords_vox(:)*ct.resolution.x-stf.isoCenter(1);
 yCoords = yCoords_vox(:)*ct.resolution.y-stf.isoCenter(2);
@@ -66,7 +66,7 @@ coords  = [xCoords yCoords zCoords];
     
 % calculate geometric distances
 if nargout > 1
-    geoDistCube = reshape(sqrt(sum(coords.^2,2)),size(ct.cube));
+    geoDistCube = reshape(sqrt(sum(coords.^2,2)),ct.cubeDim);
 end
 
 % calculate spacing of rays on ray matrix
@@ -114,7 +114,7 @@ rotMx_XZ_T = [cosd(stf.couchAngle) 0 -sind(stf.couchAngle);
 rayMx_world = rayMx_bev * rotMx_XY_T * rotMx_XZ_T;
 
 % set up distance cube to decide which rad depths should be stored
-metricHitVoxelsCube = -inf*ones(size(ct.cube));
+metricHitVoxelsCube = -inf*ones(ct.cubeDim);
 
 % perform ray tracing over all rays
 for j = 1:size(rayMx_world,1)
@@ -122,9 +122,10 @@ for j = 1:size(rayMx_world,1)
     % run siddon ray tracing algorithm
     [alphas,l,rho,d12,ixHitVoxel] = matRad_siddonRayTracer(stf.isoCenter, ...
                                 ct.resolution, ...
+                                ct.cubeDim,...
                                 stf.sourcePoint, ...
                                 rayMx_world(j,:), ...
-                                {ct.cube});
+                                ct.cube);
                                                         
     % find voxels for which we should remember this tracing because this is
     % the closest ray
@@ -139,20 +140,22 @@ for j = 1:size(rayMx_world,1)
         
         metricHitVoxelsCube(ixHitVoxel(ixRememberFromCurrTracing)) = dotProdHitVoxels(ixRememberFromCurrTracing);
 
-        % calc radioloical depths
+        for i = 1:ct.nScen
+            % calc radioloical depths
 
-        % eq 14
-        % It multiply voxel intersections with \rho values.
-        % The zero it is neccessary for stability purpose.
-        d = [0 l .* rho{1}]; %Note. It is not a number "one"; it is the letter "l"
+            % eq 14
+            % It multiply voxel intersections with \rho values.
+            % The zero it is neccessary for stability purpose.
+            d = [0 l .* rho{i}]; %Note. It is not a number "one"; it is the letter "l"
 
-        % Calculate accumulated d sum.
-        dCum = cumsum(d);
+            % Calculate accumulated d sum.
+            dCum = cumsum(d);
 
-        % Calculate the radiological path
-        vRadDepth = interp1(alphas,dCum,dotProdHitVoxels(ixRememberFromCurrTracing)/d12,'linear',0);
-             
-        radDepthCube(ixHitVoxel(ixRememberFromCurrTracing)) = vRadDepth;
+            % Calculate the radiological path
+            vRadDepth = interp1(alphas,dCum,dotProdHitVoxels(ixRememberFromCurrTracing)/d12,'linear',0);
+
+            radDepthCube{i}(ixHitVoxel(ixRememberFromCurrTracing)) = vRadDepth;
+        end
     end
     
 end
