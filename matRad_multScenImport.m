@@ -30,16 +30,18 @@ clear i idx j
 display('start CT import:')
 ct.nScen = length(InputData);
 for i = 1:ct.nScen
-    [ct.cube(:,:,:,i), CTcubeReadData3Dinfo(i)] = ReadData3D(fullfile(InputFolder,InputData(i).name,InputData(i).CTs),false);
+    % read files
+    [ct.cube{i}, CTcubeReadData3Dinfo(i)] = ReadData3D(fullfile(InputFolder,InputData(i).name,InputData(i).CTs),false);
+    
+    % HU eDEns conversion
+    ct.cube{i} = double(ct.cube{i});
+    ct.cube{i} = matRad_convHU2eDens(ct.cube{i});
+    
     display(['import CT ',num2str(i),'/',num2str(ct.nScen)])
 end
 
-% HU eDEns conversion
-ct.cube = double(ct.cube);
-ct.cube = matRad_convHU2eDens(ct.cube);
-
 % set CT resolution
-dim = reshape([CTcubeReadData3Dinfo.PixelDimensions],3,size(ct.cube,4))';
+dim = reshape([CTcubeReadData3Dinfo.PixelDimensions],3,ct.nScen)';
 if length(unique(dim(:,1))) == 1 && length(unique(dim(:,2))) == 1 && length(unique(dim(:,3))) == 1
     ct.resolution.x = unique(dim(:,1));
     ct.resolution.y = unique(dim(:,2));
@@ -49,7 +51,7 @@ else
 end
 
 % set CT cube dimension
-cubeDim = reshape([CTcubeReadData3Dinfo.Dimensions],3,size(ct.cube,4))';
+cubeDim = reshape([CTcubeReadData3Dinfo.Dimensions],3,ct.nScen)';
 if length(unique(cubeDim(:,1))) == 1 && length(unique(cubeDim(:,2))) == 1 && length(unique(cubeDim(:,3))) == 1
     ct.cubeDim(1) = unique(cubeDim(:,1));
     ct.cubeDim(2) = unique(cubeDim(:,2));

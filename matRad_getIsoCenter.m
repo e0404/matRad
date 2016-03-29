@@ -57,7 +57,7 @@ if isempty(V)
 end
 
 % Transform subcripts from linear indices 
-[yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct.cube),V);
+[yCoordsV, xCoordsV, zCoordsV] = ind2sub(ct.cubeDim,V);
 
 % Transform to [mm]
 xCoordsV = xCoordsV * ct.resolution.x;

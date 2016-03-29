@@ -66,7 +66,7 @@ V = unique(V);
 DensityThresholdSSD = 0.05;
 
 % generate voi cube for targets
-voiTarget    = zeros(size(ct.cube));
+voiTarget    = zeros(ct.cubeDim);
 voiTarget(V) = 1;
     
 % add margin
@@ -102,7 +102,7 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
 end
 
 % Convert linear indices to 3D voxel coordinates
-[coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(size(ct.cube),V);
+[coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
 
 % Correct for iso center position. Whit this correction Isocenter is
 % (0,0,0) [mm]
@@ -236,9 +236,10 @@ for i = 1:length(pln.gantryAngles)
         % ray tracing necessary to determine depth of the target
         [alpha,l,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
                              ct.resolution, ...
+                             ct.cubeDim,...
                              stf(i).sourcePoint, ...
                              stf(i).ray(j).targetPoint, ...
-                             {ct.cube,voiTarget});
+                             {ct.cube{:},voiTarget});
 
             ixSSD = find(rho{1} > DensityThresholdSSD,1,'first');
 
@@ -253,14 +254,14 @@ for i = 1:length(pln.gantryAngles)
        if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
 
            % target hit
-           if sum(rho{2}) > 0 
+           if sum(rho{end}) > 0 
 
                 % compute radiological depths
                 % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
                 radDepths = cumsum(l .* rho{1}); 
 
                 % find target entry & exit
-                diff_voi    = diff([rho{2}]);
+                diff_voi    = diff([rho{end}]);
                 targetEntry = radDepths(diff_voi == 1);
                 targetExit  = radDepths(diff_voi == -1);
 
@@ -363,12 +364,12 @@ for i = 1:length(pln.gantryAngles)
             
             % generate a 3D rectangular grid centered at isocenter in
             % voxel coordinates
-            [X,Y,Z] = meshgrid((1:size(ct.cube,2))-stf(i).isoCenter(1)/ct.resolution.x, ...
-                               (1:size(ct.cube,1))-stf(i).isoCenter(2)/ct.resolution.y, ...
-                               (1:size(ct.cube,3))-stf(i).isoCenter(3)/ct.resolution.z);
+            [X,Y,Z] = meshgrid((1:ct.cubeDim(2))-stf(i).isoCenter(1)/ct.resolution.x, ...
+                               (1:ct.cubeDim(1))-stf(i).isoCenter(2)/ct.resolution.y, ...
+                               (1:ct.cubeDim(3))-stf(i).isoCenter(3)/ct.resolution.z);
             
             % computes surface
-            patSurfCube = 0*ct.cube;
+            patSurfCube = 0*ct.cube{1};
             patSurfCube(unique(mod(cell2mat(cst(:,4)),prod(ct.cubeDim)))) = 1;
             [f,v] = isosurface(X,Y,Z,patSurfCube,.5);
             
