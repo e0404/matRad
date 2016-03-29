@@ -104,13 +104,12 @@ for i = 1:length(VOIs)
             display(['import segmentation of VOI ',num2str(i),'/',num2str(length(VOIs)),' in Scenario ',num2str(j),'/',num2str(ct.nScen)])
     end
     
-    % Tissue parameters
-    cst{i,5}.TissueClass = 1;
-    cst{i,5}.alphaX      = 0.1; 
-    cst{i,5}.betaX       = 0.05;
-    cst{i,5}.Priority    = NaN; 
+    % Tissue parameters and Dose Objectives
+    cst{i,5}.TissueClass = [];
+    cst{i,5}.alphaX = []; 
+    cst{i,5}.bet = [];
+    cst{i,5}.TissueClass = []; 
     
-    % Dose Objectives
     cst{i,6} = [];
     
 end
