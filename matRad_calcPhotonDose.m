@@ -53,14 +53,16 @@ dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
 dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 
 % Allocate space for dij.physicalDose sparse matrix
-dij.physicalDose = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
+for i = 1:ct.nScen
+    dij.physicalDose{i} = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
+end
 
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
-doseTmpContainer = cell(numOfBixelsContainer,1);
+doseTmpContainer = cell(numOfBixelsContainer,ct.nScen);
 
 % take only voxels inside patient
-V = unique([cell2mat(cst(:,4))]);
+V = unique(mod(cell2mat(cst(:,4)),prod(ctCubeDim)));
 
 % Convert CT subscripts to linear indices.
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(size(ct.cube),V);
