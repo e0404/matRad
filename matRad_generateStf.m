@@ -369,7 +369,7 @@ for i = 1:length(pln.gantryAngles)
             
             % computes surface
             patSurfCube = 0*ct.cube;
-            patSurfCube(unique(cell2mat(cst(:,4)))) = 1;
+            patSurfCube(unique(mod(cell2mat(cst(:,4)),prod(ct.cubeDim)))) = 1;
             [f,v] = isosurface(X,Y,Z,patSurfCube,.5);
             
             % convert isosurface from voxel to [mm]
