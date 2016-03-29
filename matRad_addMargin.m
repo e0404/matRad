@@ -1,9 +1,9 @@
-function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)
+function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,ctCubeDim,bDiaElem)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad add margin function
 % 
 % call
-%   mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)
+%   mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,ctCubeDim,bDiaElem)
 %
 % input
 %   mVOI:           image stack in dimensions of X x Y x Z holding ones for
@@ -11,6 +11,7 @@ function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)
 %   cst:            matRad cst struct
 %   vResolution     ct resolution
 %   vMargin:        margin in mm 
+%   ctCubeDim:      ct cube dimensions
 %   bDiaElem        if true 26-connectivity is used otherwise 6-connectivity
 %
 % output
@@ -42,7 +43,7 @@ end
 
 % generate voi cube for patient surface/patient skin
 voiSurface = zeros(size(mVOI));
-voiSurface(unique(mod(cell2mat(cst(:,4)),prod(ct.cubeDim)))) = 1;
+voiSurface(unique(mod(cell2mat(cst(:,4)),prod(ctCubeDim)))) = 1;
 voiSurfaceIdx = find(voiSurface);
 
 % get number of voxels which should be added in each dimension
