@@ -100,7 +100,7 @@ for i = 1:length(VOIs)
     for j = 1:ct.nScen
             idx = find(strcmp(InputData(j).SegmentationsName,VOIs{i}));
             [tmp,~] = ReadData3D(fullfile(InputFolder,InputData(j).name,InputData(j).SegmentationsFile{idx}),false);
-            cst{i,4} = [cst{i,4};find(tmp>0)+i*size(ct.cube,1)*size(ct.cube,2)*size(ct.cube,3)];
+            cst{i,4} = [cst{i,4};find(tmp>0)+(j-1)*ct.cubeDim(1)*ct.cubeDim(2)*ct.cubeDim(3)];
             display(['import segmentation of VOI ',num2str(i),'/',num2str(length(VOIs)),' in Scenario ',num2str(j),'/',num2str(ct.nScen)])
     end
     
