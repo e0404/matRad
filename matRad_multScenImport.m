@@ -37,6 +37,9 @@ for i = 1:ct.nScen
     ct.cube{i} = double(ct.cube{i});
     ct.cube{i} = matRad_convHU2eDens(ct.cube{i});
     
+    % swap x and y (matRad standard)
+    ct.cube{i} = permute(ct.cube{i},[2,1,3]);
+    
     display(['import CT ',num2str(i),'/',num2str(ct.nScen)])
 end
 
@@ -53,8 +56,8 @@ end
 % set CT cube dimension
 cubeDim = reshape([CTcubeReadData3Dinfo.Dimensions],3,ct.nScen)';
 if length(unique(cubeDim(:,1))) == 1 && length(unique(cubeDim(:,2))) == 1 && length(unique(cubeDim(:,3))) == 1
-    ct.cubeDim(1) = unique(cubeDim(:,1));
-    ct.cubeDim(2) = unique(cubeDim(:,2));
+    ct.cubeDim(1) = unique(cubeDim(:,2)); % swap also here x and y
+    ct.cubeDim(2) = unique(cubeDim(:,1)); % swap also here x and y
     ct.cubeDim(3) = unique(cubeDim(:,3));
 else
     error('found CTs with different resolutions');
@@ -98,8 +101,12 @@ for i = 1:length(VOIs)
     
     % Voxel indices
     for j = 1:ct.nScen
-            idx = find(strcmp(InputData(j).SegmentationsName,VOIs{i}));
+            idx     = find(strcmp(InputData(j).SegmentationsName,VOIs{i}));
             [tmp,~] = ReadData3D(fullfile(InputFolder,InputData(j).name,InputData(j).SegmentationsFile{idx}),false);
+            
+            % swap x and y (matRad standard)
+            tmp = permute(tmp,[2,1,3]);
+            
             cst{i,4} = [cst{i,4};find(tmp>0)+(j-1)*ct.cubeDim(1)*ct.cubeDim(2)*ct.cubeDim(3)];
             display(['import segmentation of VOI ',num2str(i),'/',num2str(length(VOIs)),' in Scenario ',num2str(j),'/',num2str(ct.nScen)])
     end
