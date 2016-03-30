@@ -27,8 +27,10 @@ clc
 %load LIVER.mat
 %load BOXPHANTOM.mat
 
-%addpath('E:\Mescher\13_BIOM_model\')
-%call_multScenImport
+% InputFolder = 'E:\Mescher\13_BIOM_model\01_BioMechModel\Input';
+% numOfScen   = 3;
+% VOIs        = {'Blase','Haut','prostata_','Rektum','GTVPrimarius'};
+% [ct,cst]    = matRad_multScenImport(InputFolder,numOfScen,VOIs); 
 load T6H.mat
 
 % meta information for treatment plan
@@ -45,6 +47,17 @@ pln.numOfFractions  = 1;
 pln.runSequencing   = true; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO          = true; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.machine         = 'Generic';
+
+%% multiple Scenarios
+ms.numOfCtScen    = ct.nScen;     % umber of imported ct scenarios
+ms.numOfShiftScen = [2 2 2];      % number of shifts in x y and z direction       
+ms.maxShift       = [3 4 5];      % maximum shift in x y and z direction in mm
+ms.numOfRangeScen = 4;            % number of over and undershoots
+ms.maxRange       = 10;           % maximum over and undershoot in mm or %
+ms.RangeType      = 'absolute';   % absolute: absolute range shift, relative: relative range shift
+ms.ScenCombType   = 'individual'; % individual: no combination of scenarios, allcombined: combine all scenarios
+ms = matRad_setMultScen(ms);
+
 
 %% initial visualization and change objective function settings if desired
 matRadGUI
