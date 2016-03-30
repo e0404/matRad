@@ -170,11 +170,12 @@ for i = 1:dij.numOfBeams; % loop over all beams
     fprintf('done \n');
     
     % construct binary mask where ray tracing results are available
-    radDepthIx = true(ct.cubeDim);
-    for k = 1:ct.nScen
-        radDepthIx = radDepthIx .* isnan(radDepthCube{k});
-    end
-    radDepthIx = ~radDepthIx;
+    %radDepthIx = ~isnan(radDepthCube);
+    radDepthIx = true(ct.cubeDim);                         % für ctScen überflüssig
+    for k = 1:ct.nScen                                     % für ctScen überflüssig
+        radDepthIx = radDepthIx .* isnan(radDepthCube{k}); % für ctScen überflüssig
+    end                                                    % für ctScen überflüssig
+    radDepthIx = ~radDepthIx;                              % für ctScen überflüssig
 
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
         

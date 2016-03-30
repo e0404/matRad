@@ -56,7 +56,7 @@ ms.numOfRangeScen = 4;            % number of over and undershoots
 ms.maxRange       = 10;           % maximum over and undershoot in mm or %
 ms.RangeType      = 'absolute';   % absolute: absolute range shift, relative: relative range shift
 ms.ScenCombType   = 'individual'; % individual: no combination of scenarios, allcombined: combine all scenarios
-ms = matRad_setMultScen(ms);
+ms                = matRad_setMultScen(ms);
 
 
 %% initial visualization and change objective function settings if desired
@@ -69,7 +69,7 @@ stf = matRad_generateStf(ct,cst,pln);
 if strcmp(pln.radiationMode,'photons')
     dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-    dij = matRad_calcParticleDose(ct,stf,pln,cst);
+    dij = matRad_calcParticleDose(ct,stf,pln,cst,ms);
 end
 
 %% inverse planning for imrt

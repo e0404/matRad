@@ -225,7 +225,10 @@ for i = 1:length(pln.gantryAngles)
     for j = 1:stf(i).numOfRays
         stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
         stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
-        stf(i).ray(j).SSD         = NaN;
+        
+        for k = 1:ct.nScen
+            stf(i).ray(j).SSD{k} = NaN;
+        end
     end
     
     % loop over all rays to determine meta information for each ray    
@@ -240,15 +243,17 @@ for i = 1:length(pln.gantryAngles)
                              stf(i).sourcePoint, ...
                              stf(i).ray(j).targetPoint, ...
                              [ct.cube {voiTarget}]);
+                         
+            for k = 1:ct.nScen
+                ixSSD = find(rho{k} > DensityThresholdSSD,1,'first');
 
-            ixSSD = find(rho{1} > DensityThresholdSSD,1,'first');
+                if isempty(ixSSD)== 1
+                    warning('Surface for SSD calculation starts directly in first voxel of CT\n');
+                end
 
-            if isempty(ixSSD)== 1
-                warning('Surface for SSD calculation starts directly in first voxel of CT\n');
+                % calculate SSD
+                stf(i).ray(j).SSD{k} = 2 * stf(i).SAD * alpha(ixSSD);
             end
-            
-            % calculate SSD
-            stf(i).ray(j).SSD = 2 * stf(i).SAD * alpha(ixSSD);
             
         % find appropriate energies for particles
        if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')

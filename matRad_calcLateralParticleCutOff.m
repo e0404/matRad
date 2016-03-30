@@ -1,4 +1,4 @@
-function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,visBool)
+function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,visBool,ms)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to calculate a depth dependend lateral cutoff for each 
 % pristine particle beam
@@ -49,134 +49,136 @@ NumDepthVal = 30;
 SG =  @(vR,Sigma)((1/(2*pi*Sigma^2)).*exp(-(vR.^2)./(2*Sigma^2)));
 DG =  @(vR,Z,w,Sigma1,Sigma2) Z*(((1-w)*SG(vR,Sigma1)) + (w*SG(vR,Sigma2)));
 
-% extract SSD for each bixel
-vSSDBixel = ones(1,length([stf.ray(:).energy]));
-cnt = 1;
-for i  = 1:length(stf.ray)
-    vSSDBixel(cnt:cnt+numel([stf.ray(i).energy])-1) = stf.ray(i).SSD;
-    cnt = cnt + numel(stf.ray(i).energy);
-end
 
-% setup energy sigma look up table
-energySigmaLUT  = unique([[stf.ray(:).energy]; [stf.ray(:).focusIx] ; vSSDBixel]','rows');
+for k = 1:ms.numOfCtScen
+    % extract SSD for each bixel
+    vSSDBixel = ones(1,length([stf.ray(:).energy]));
+    cnt = 1;
+    for i  = 1:length(stf.ray)
+        vSSDBixel(cnt:cnt+numel([stf.ray(i).energy])-1) = stf.ray(i).SSD{k};
+        cnt = cnt + numel(stf.ray(i).energy);
+    end
 
-% calculate for each energy its inital beam width considering foci and SSD
-for i = 1:size(energySigmaLUT,1)
-    energyIx = find(ismember([machine.data(:).energy],energySigmaLUT(i,1)));
-    energySigmaLUT(i,4) = interp1(machine.data(energyIx).initFocus(energySigmaLUT(i,2)).dist,...
-                                  machine.data(energyIx).initFocus(energySigmaLUT(i,2)).sigma,...
-                                  energySigmaLUT(i,3));
-end
+    % setup energy sigma look up table
+    energySigmaLUT  = unique([[stf.ray(:).energy]; [stf.ray(:).focusIx] ; vSSDBixel]','rows');
 
-% find for each energy the broadest inital beam width
-uniqueEnergies = unique(energySigmaLUT(:,1));
-largestFocus4uniqueEnergies = NaN * ones(numel(uniqueEnergies),1);
+    % calculate for each energy its inital beam width considering foci and SSD
+    for i = 1:size(energySigmaLUT,1)
+        energyIx = find(ismember([machine.data(:).energy],energySigmaLUT(i,1)));
+        energySigmaLUT(i,4) = interp1(machine.data(energyIx).initFocus(energySigmaLUT(i,2)).dist,...
+                                      machine.data(energyIx).initFocus(energySigmaLUT(i,2)).sigma,...
+                                      energySigmaLUT(i,3));
+    end
 
-for i = 1:numel(uniqueEnergies)
-    largestFocus4uniqueEnergies(i) = max(energySigmaLUT(uniqueEnergies(i) == energySigmaLUT(:,1),4));
-end
+    % find for each energy the broadest inital beam width
+    uniqueEnergies = unique(energySigmaLUT(:,1));
+    largestFocus4uniqueEnergies = NaN * ones(numel(uniqueEnergies),1);
 
-% get energy indices for looping
-vEnergiesIx = find(ismember([machine.data(:).energy],uniqueEnergies(:,1)));
+    for i = 1:numel(uniqueEnergies)
+        largestFocus4uniqueEnergies(i) = max(energySigmaLUT(uniqueEnergies(i) == energySigmaLUT(:,1),4));
+    end
 
-cnt = 0;    
+    % get energy indices for looping
+    vEnergiesIx = find(ismember([machine.data(:).energy],uniqueEnergies(:,1)));
 
-% loop over all entries in the machine.data struct
-for energyIx = vEnergiesIx
-   
-    % set default depth cut off - finite value will be set during first
-    % iteration
-    depthDoseCutOff = inf;
+    cnt = 0;    
 
-    % get indices for which a lateral cutoff should be calculated - always include peak position 
-    [~,peakIdx] = max(machine.data(energyIx).Z);
-    Idx = round(linspace(1,length(machine.data(energyIx).depths),NumDepthVal-1));
-    Idx = unique(sort([Idx peakIdx]));
-    
-    % get inital beam width
-    cnt = cnt +1 ;
-    SigmaIni = largestFocus4uniqueEnergies(cnt);
+    % loop over all entries in the machine.data struct
+    for energyIx = vEnergiesIx
 
-    for j = 1:length(Idx)
-        
-        % save depth value
-        machine.data(energyIx).LatCutOff.depths(j) = machine.data(energyIx).depths(Idx(j));
-        % relative contribution
-        relContrib = machine.data(energyIx).Z(Idx(j))/machine.data(energyIx).Z(peakIdx);
-                      
-        if strcmp(machine.meta.dataType,'singleGauss')
-                    
-                    Sigma1 = sqrt(machine.data(energyIx).sigma(Idx(j))^2 + SigmaIni^2);
-                    y_r = SG(r_mid,Sigma1);
-                 
-        elseif strcmp(machine.meta.dataType,'doubleGauss')
-                    
-                    w      = machine.data(energyIx).weight(Idx(j));
-                    Sigma1 = sqrt(machine.data(energyIx).sigma1(Idx(j)).^2 + SigmaIni^2);
-                    Sigma2 = sqrt(machine.data(energyIx).sigma2(Idx(j)).^2 + SigmaIni^2);
-                    y_r    = DG(r_mid,1,w,Sigma1,Sigma2);
-        else
-            error('unknown dataType');
-        end
-        
-        if cutOffLevel == 1
-            machine.data(energyIx).LatCutOff.CompFac = 1;
-            machine.data(energyIx).LatCutOff.CutOff  = Inf;
-        else
-            % shell integration
-            cumArea = cumsum(2*pi.*r_mid.*y_r.*dr);
-            
-            % check if  -relative contribution in slice is smaller than cut off level
-            %           -current depth is behind the peak
-            if relContrib < depthDoseCutOff && ...
-               machine.data(energyIx).LatCutOff.depths(j) > machine.data(energyIx).peakPos
-                  currCutOffLevel = 0;
+        % set default depth cut off - finite value will be set during first
+        % iteration
+        depthDoseCutOff = inf;
+
+        % get indices for which a lateral cutoff should be calculated - always include peak position 
+        [~,peakIdx] = max(machine.data(energyIx).Z);
+        Idx = round(linspace(1,length(machine.data(energyIx).depths),NumDepthVal-1));
+        Idx = unique(sort([Idx peakIdx]));
+
+        % get inital beam width
+        cnt = cnt +1 ;
+        SigmaIni = largestFocus4uniqueEnergies(cnt);
+
+        for j = 1:length(Idx)
+
+            % save depth value
+            machine.data(energyIx).LatCutOff{k}.depths(j) = machine.data(energyIx).depths(Idx(j));
+            % relative contribution
+            relContrib = machine.data(energyIx).Z(Idx(j))/machine.data(energyIx).Z(peakIdx);
+
+            if strcmp(machine.meta.dataType,'singleGauss')
+
+                        Sigma1 = sqrt(machine.data(energyIx).sigma(Idx(j))^2 + SigmaIni^2);
+                        y_r = SG(r_mid,Sigma1);
+
+            elseif strcmp(machine.meta.dataType,'doubleGauss')
+
+                        w      = machine.data(energyIx).weight(Idx(j));
+                        Sigma1 = sqrt(machine.data(energyIx).sigma1(Idx(j)).^2 + SigmaIni^2);
+                        Sigma2 = sqrt(machine.data(energyIx).sigma2(Idx(j)).^2 + SigmaIni^2);
+                        y_r    = DG(r_mid,1,w,Sigma1,Sigma2);
             else
-                  currCutOffLevel = cutOffLevel;
+                error('unknown dataType');
             end
-            
-            % interpolate cut off
-            if cumArea(end) < currCutOffLevel
-                error('interpolation impossible. desired cutoff to large for considered area\n');
-            end
-            
-            [cumAreaUnique,IdxUnique] = unique(cumArea);
-            
-            if currCutOffLevel == 0
-                r_cut = 0;
+
+            if cutOffLevel == 1
+                machine.data(energyIx).LatCutOff{k}.CompFac = 1;
+                machine.data(energyIx).LatCutOff{k}.CutOff  = Inf;
             else
-                try
-                    r_cut = interp1(cumAreaUnique,r_mid(IdxUnique),currCutOffLevel);
-                catch
-                    error('error in matRadcalcLateralParticleCutOff - cannot determine cut off');
+                % shell integration
+                cumArea = cumsum(2*pi.*r_mid.*y_r.*dr);
+
+                % check if  -relative contribution in slice is smaller than cut off level
+                %           -current depth is behind the peak
+                if relContrib < depthDoseCutOff && ...
+                   machine.data(energyIx).LatCutOff{k}.depths(j) > machine.data(energyIx).peakPos
+                      currCutOffLevel = 0;
+                else
+                      currCutOffLevel = cutOffLevel;
                 end
-            end
-            
-            machine.data(energyIx).LatCutOff.CutOff(j) = r_cut;
-            
-            % set DepthDoseCutOff according to cutoff at entrance dose;
-            if j == 1 && strcmp(machine.meta.dataType,'singleGauss')
-                depthDoseCutOff = SG(r_cut,Sigma1); 
-            elseif j == 1 && strcmp(machine.meta.dataType,'doubleGauss')
-                depthDoseCutOff = DG(r_cut,1,w,Sigma1,Sigma2); 
-            end
-            
-            % ensure a monotone increasing lateral cutoff before the bragg peak
-            if j > 1 &&  r_cut <  machine.data(energyIx).LatCutOff.CutOff(j-1)
-                  machine.data(energyIx).LatCutOff.CutOff(j) =  machine.data(energyIx).LatCutOff.CutOff(j-1);
-            end
 
-            % Compensation factor to rescale the dose within the cut off in order not to lose integral dose
-            machine.data(energyIx).LatCutOff.CompFac = 1/cutOffLevel;
-            
-        end
+                % interpolate cut off
+                if cumArea(end) < currCutOffLevel
+                    error('interpolation impossible. desired cutoff to large for considered area\n');
+                end
+
+                [cumAreaUnique,IdxUnique] = unique(cumArea);
+
+                if currCutOffLevel == 0
+                    r_cut = 0;
+                else
+                    try
+                        r_cut = interp1(cumAreaUnique,r_mid(IdxUnique),currCutOffLevel);
+                    catch
+                        error('error in matRadcalcLateralParticleCutOff - cannot determine cut off');
+                    end
+                end
+
+                machine.data(energyIx).LatCutOff{k}.CutOff(j) = r_cut;
+
+                % set DepthDoseCutOff according to cutoff at entrance dose;
+                if j == 1 && strcmp(machine.meta.dataType,'singleGauss')
+                    depthDoseCutOff = SG(r_cut,Sigma1); 
+                elseif j == 1 && strcmp(machine.meta.dataType,'doubleGauss')
+                    depthDoseCutOff = DG(r_cut,1,w,Sigma1,Sigma2); 
+                end
+
+                % ensure a monotone increasing lateral cutoff before the bragg peak
+                if j > 1 &&  r_cut <  machine.data(energyIx).LatCutOff{k}.CutOff(j-1)
+                      machine.data(energyIx).LatCutOff{k}.CutOff(j) =  machine.data(energyIx).LatCutOff{k}.CutOff(j-1);
+                end
+
+                % Compensation factor to rescale the dose within the cut off in order not to lose integral dose
+                machine.data(energyIx).LatCutOff{k}.CompFac = 1/cutOffLevel;
+
+            end
+        end    
     end    
-end    
-
+end
 
 
             
-%% visualization
+%% visualization (no adapted to multiple scenarios)
 
 if visBool
     
