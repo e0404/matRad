@@ -1,4 +1,4 @@
-function stf = matRad_generateStf(ct,cst,pln,visMode)
+function stf = matRad_generateStf(ct,cst,pln,multScen,visMode)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad steering information generation
 % 
@@ -9,6 +9,7 @@ function stf = matRad_generateStf(ct,cst,pln,visMode)
 %   ct:         ct cube
 %   cst:        matRad cst struct
 %   pln:        matRad plan meta information struct
+%   multScen:   matRad multiple scnerio struct
 %   visMode:    toggle on/off different visualizations by setting this value to 1,2,3 (optional)
 %
 % output
@@ -35,7 +36,7 @@ function stf = matRad_generateStf(ct,cst,pln,visMode)
 
 fprintf('matRad: Generating stf struct... ');
 
-if nargin < 4
+if nargin < 5
     visMode = 0;
 end
 
@@ -226,8 +227,8 @@ for i = 1:length(pln.gantryAngles)
         stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
         stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
         
-        for k = 1:ct.numOfCtScen
-            stf(i).ray(j).SSD{k} = NaN;
+        for CtScen = 1:multScen.numOfCtScen
+            stf(i).ray(j).SSD{CtScen} = NaN;
         end
     end
     
@@ -244,15 +245,15 @@ for i = 1:length(pln.gantryAngles)
                              stf(i).ray(j).targetPoint, ...
                              [ct.cube {voiTarget}]);
                          
-            for k = 1:ct.numOfCtScen
-                ixSSD = find(rho{k} > DensityThresholdSSD,1,'first');
+            for CtScen = 1:multScen.numOfCtScen
+                ixSSD = find(rho{CtScen} > DensityThresholdSSD,1,'first');
 
                 if isempty(ixSSD)== 1
                     warning('Surface for SSD calculation starts directly in first voxel of CT\n');
                 end
 
                 % calculate SSD
-                stf(i).ray(j).SSD{k} = 2 * stf(i).SAD * alpha(ixSSD);
+                stf(i).ray(j).SSD{CtScen} = 2 * stf(i).SAD * alpha(ixSSD);
             end
             
         % find appropriate energies for particles
@@ -261,15 +262,15 @@ for i = 1:length(pln.gantryAngles)
            % target hit
            if sum(rho{end}) > 0 
 
-               for k = 1:ct.numOfCtScen
+               for CtScen = 1:multScen.numOfCtScen
                     % compute radiological depths
                     % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
-                    radDepths = cumsum(l .* rho{k}); 
+                    radDepths = cumsum(l .* rho{CtScen}); 
 
                     % find target entry & exit
                     diff_voi         = diff([rho{end}]);
-                    targetEntry(k,:) = radDepths(diff_voi == 1);
-                    targetExit(k,:)  = radDepths(diff_voi == -1);
+                    targetEntry(CtScen,:) = radDepths(diff_voi == 1);
+                    targetExit(CtScen,:)  = radDepths(diff_voi == -1);
                end
                
                targetEntry = min(targetEntry);

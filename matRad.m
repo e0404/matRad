@@ -62,7 +62,7 @@ multScen                     = matRad_setMultScen(multScen);
 matRadGUI
 
 %% generate steering file
-stf = matRad_generateStf(ct,cst,pln);
+stf = matRad_generateStf(ct,cst,pln,multScen);
 
 %% dose calculation
 if strcmp(pln.radiationMode,'photons')

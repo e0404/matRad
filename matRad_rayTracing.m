@@ -33,7 +33,15 @@ function [radDepthCube,geoDistCube] = matRad_rayTracing(stf,ct,V,lateralCutoff,m
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set up rad depth cube for results
-radDepthCube = repmat({NaN*ones(ct.cubeDim)},1,multScen.numOfCtScen);
+for CtScen = 1:multScen.numOfCtScen
+    for ShiftScen = 1:multScen.numOfShiftScen
+        
+        if multScen.ScenCombMask(CtScen,ShiftScen,1)
+            radDepthCube = repmat({NaN*ones(ct.cubeDim)},multScen.numOfCtScen,multScen.numOfShiftScen);
+        end
+        
+    end
+end
 
 % set up coordinates of all voxels in cube
 [xCoords_vox, yCoords_vox, zCoords_vox] = meshgrid(1:ct.cubeDim(1),1:ct.cubeDim(2),1:ct.cubeDim(3));
@@ -118,43 +126,45 @@ metricHitVoxelsCube = -inf*ones(ct.cubeDim);
 
 % perform ray tracing over all rays
 for j = 1:size(rayMx_world,1)
-
-    % run siddon ray tracing algorithm
-    [alphas,l,rho,d12,ixHitVoxel] = matRad_siddonRayTracer(stf.isoCenter, ...
-                                ct.resolution, ...
-                                ct.cubeDim,...
-                                stf.sourcePoint, ...
-                                rayMx_world(j,:), ...
-                                ct.cube);
-                                                        
-    % find voxels for which we should remember this tracing because this is
-    % the closest ray
-    normRayVector = rayMx_world(j,:) - stf.sourcePoint;
-    normRayVector = normRayVector/norm(normRayVector);
-
-    dotProdHitVoxels = coords(ixHitVoxel,:)*normRayVector';
-    
-    ixRememberFromCurrTracing = dotProdHitVoxels > metricHitVoxelsCube(ixHitVoxel)';
-
-    if any(ixRememberFromCurrTracing) > 0
+    for ShiftScen = 1:multScen.numOfShiftScen
         
-        metricHitVoxelsCube(ixHitVoxel(ixRememberFromCurrTracing)) = dotProdHitVoxels(ixRememberFromCurrTracing);
+        % run siddon ray tracing algorithm
+        [alphas,l,rho,d12,ixHitVoxel] = matRad_siddonRayTracer(stf.isoCenter, ...
+                                    ct.resolution, ...
+                                    ct.cubeDim,...
+                                    stf.sourcePoint + multScen.shifts(:,ShiftScen)', ...
+                                    rayMx_world(j,:) + multScen.shifts(:,ShiftScen)', ...
+                                    ct.cube);
 
-        for CtScen = 1:multScen.numOfCtScen
-            % calc radioloical depths
+        % find voxels for which we should remember this tracing because this is
+        % the closest ray
+        normRayVector = rayMx_world(j,:) - stf.sourcePoint;
+        normRayVector = normRayVector/norm(normRayVector);
 
-            % eq 14
-            % It multiply voxel intersections with \rho values.
-            % The zero it is neccessary for stability purpose.
-            d = [0 l .* rho{CtScen}]; %Note. It is not a number "one"; it is the letter "l"
+        dotProdHitVoxels = coords(ixHitVoxel,:)*normRayVector';
 
-            % Calculate accumulated d sum.
-            dCum = cumsum(d);
+        ixRememberFromCurrTracing = dotProdHitVoxels > metricHitVoxelsCube(ixHitVoxel)';
 
-            % Calculate the radiological path
-            vRadDepth = interp1(alphas,dCum,dotProdHitVoxels(ixRememberFromCurrTracing)/d12,'linear',0);
+        if any(ixRememberFromCurrTracing) > 0
 
-            radDepthCube{CtScen}(ixHitVoxel(ixRememberFromCurrTracing)) = vRadDepth;
+            metricHitVoxelsCube(ixHitVoxel(ixRememberFromCurrTracing)) = dotProdHitVoxels(ixRememberFromCurrTracing);
+
+            for CtScen = 1:multScen.numOfCtScen
+                % calc radioloical depths
+
+                % eq 14
+                % It multiply voxel intersections with \rho values.
+                % The zero it is neccessary for stability purpose.
+                d = [0 l .* rho{CtScen}]; %Note. It is not a number "one"; it is the letter "l"
+
+                % Calculate accumulated d sum.
+                dCum = cumsum(d);
+
+                % Calculate the radiological path
+                vRadDepth = interp1(alphas,dCum,dotProdHitVoxels(ixRememberFromCurrTracing)/d12,'linear',0);
+
+                radDepthCube{CtScen,ShiftScen}(ixHitVoxel(ixRememberFromCurrTracing)) = vRadDepth;
+            end
         end
     end
     
