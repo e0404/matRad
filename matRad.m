@@ -49,14 +49,14 @@ pln.runDAO          = true; % 1/true: run DAO, 0/false: don't / will be ignored 
 pln.machine         = 'Generic';
 
 %% multiple Scenarios
-multScen.numOfCtScen    = ct.numOfCtScen; % number of imported ct scenarios
-multScen.numOfShiftScen = [2 2 2];        % number of shifts in x y and z direction       
-multScen.maxShift       = [3 4 5];        % maximum shift in x y and z direction in mm
-multScen.numOfRangeScen = 4;              % number of over and undershoots
-multScen.maxRange       = 10;             % maximum over and undershoot in mm or %
-multScen.RangeType      = 'absolute';     % absolute: absolute range shift, relative: relative range shift
-multScen.ScenCombType   = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
-multScen                = matRad_setMultScen(multScen);
+multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
+multScen.numOfShiftScen      = [2 2 2];        % number of shifts in x y and z direction       
+multScen.maxShift            = [3 4 5];        % maximum shift in x y and z direction in mm
+multScen.numOfRangeShiftScen = 4;              % number of absolute and/or relative range scnearios
+multScen.maxAbsRangeShift    = 10;             % maximum absolute over and undershoot in mm
+multScen.maxRelRangeShift    = 5;              % maximum relative over and undershoot in %
+multScen.ScenCombType        = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
+multScen                     = matRad_setMultScen(multScen);
 
 %% initial visualization and change objective function settings if desired
 matRadGUI

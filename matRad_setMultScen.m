@@ -1,37 +1,42 @@
-function ms = matRad_setMultScen(ms)
+function multScen = matRad_setMultScen(multScen)
 
 % set shift scenarios
-deltaShift = ms.maxShift./(ms.numOfShiftScen./2);
-ms.shifts  = [];
+deltaShift = multScen.maxShift./(multScen.numOfShiftScen./2);
+multScen.shifts  = [];
 
 for i = 1:3
-    shifts      = zeros(3,ms.numOfShiftScen(i));
-    shiftstmp   = -ms.maxShift(i):deltaShift(i):ms.maxShift(i);
+    shifts      = zeros(3,multScen.numOfShiftScen(i));
+    shiftstmp   = -multScen.maxShift(i):deltaShift(i):multScen.maxShift(i);
     shiftstmp   = shiftstmp(shiftstmp ~= 0);
     shifts(i,:) = shiftstmp;
     
-    ms.shifts   = [ms.shifts, shifts];
+    multScen.shifts   = [multScen.shifts, shifts];
 end
-ms.shifts = [zeros(3,1), ms.shifts];
+multScen.shifts = [zeros(3,1), multScen.shifts];
 
 % set range scenarios
-deltaRange = ms.maxRange/(ms.numOfRangeScen/2);
-ms.range   = -ms.maxRange:deltaRange:ms.maxRange;
-ms.range   = ms.range(ms.range ~= 0);
-ms.range   = [0, ms.range];
+deltaAbsRangeShift      = multScen.maxAbsRangeShift/(multScen.numOfRangeShiftScen/2);
+multScen.absRangeShifts = -multScen.maxAbsRangeShift:deltaAbsRangeShift:multScen.maxAbsRangeShift;
+multScen.absRangeShifts = multScen.absRangeShifts(multScen.absRangeShifts ~= 0);
+multScen.absRangeShifts = [0, multScen.absRangeShifts];
+
+deltaRelRangeShift      = multScen.maxRelRangeShift/(multScen.numOfRangeShiftScen/2);
+multScen.relRangeShifts = -multScen.maxRelRangeShift:deltaRelRangeShift:multScen.maxRelRangeShift;
+multScen.relRangeShifts = multScen.relRangeShifts(multScen.relRangeShifts ~= 0);
+multScen.relRangeShifts = [0, multScen.relRangeShifts];
 
 % set scenario combination mask
-if isequal(ms.ScenCombType,'individual')
+if isequal(multScen.ScenCombType,'individual')
     
-    ms.ScenCombMask = false(ms.numOfCtScen, sum(ms.numOfShiftScen)+1, ms.numOfRangeScen+1);
+    multScen.ScenCombMask = false(multScen.numOfCtScen, sum(multScen.numOfShiftScen)+1, multScen.numOfRangeShiftScen+1);
     
-    ms.ScenCombMask(:,1,1) = true; % individual ct scenarios
-    ms.ScenCombMask(1,:,1) = true; % individual shift scenarios on ct scenario 1
-    ms.ScenCombMask(1,1,:) = true; % individual range scenarios on ct scenario 1
+    multScen.ScenCombMask(:,1,1) = true; % individual ct scenarios
+    multScen.ScenCombMask(1,:,1) = true; % individual shift scenarios on ct scenario 1
+    multScen.ScenCombMask(1,1,:) = true; % individual range scenarios on ct scenario 1
     
-elseif isequal(ms.ScenCombType,'allcombined')
+elseif isequal(multScen.ScenCombType,'allcombined')
     
-    ms.ScenCombMask = true(ms.numOfCtScen, sum(ms.numOfShiftScen)+1, ms.numOfRangeScen+1);
+    multScen.ScenCombMask = true(multScen.numOfCtScen, sum(multScen.numOfShiftScen)+1, multScen.numOfRangeShiftScen+1);
     
 end
 
