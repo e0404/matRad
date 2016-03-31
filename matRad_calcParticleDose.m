@@ -1,7 +1,7 @@
 function dij = matRad_calcParticleDose(ct,stf,pln,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad particle dose calculation wrapper
-% 
+% cst
 % call
 %   dij = matRad_calcParticleDose(ct,stf,pln,cst,visBool)
 %
@@ -45,7 +45,6 @@ dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.dimensions         = pln.voxelDimensions;
-dij.nScen              = ct.nScen;
 
 % set up arrays for book keeping
 dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
@@ -53,7 +52,7 @@ dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
 dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 
 % Allocate space for dij.physicalDose sparse matrix
-for i = 1:ct.nScen
+for i = 1:ct.numOfCtScen
     dij.physicalDose{i} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
 end
 
@@ -66,14 +65,15 @@ doseTmpContainer = cell(numOfBixelsContainer,1);
 if pln.bioOptimization == true 
     alphaDoseTmpContainer = cell(numOfBixelsContainer,1);
     betaDoseTmpContainer  = cell(numOfBixelsContainer,1);
-    for i = 1:ct.nScen
+    for i = 1:ct.numOfCtScen
         dij.mAlphaDose{i}        = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
         dij.mSqrtBetaDose{i}     = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
     end
 end
 
 % Only take voxels inside patient.
-V = unique(mod(cell2mat(cst(:,4)),prod(ct.cubeDim)));
+V = [cst{:,4}];
+V = unique(vertcat(V{:}));
 
 % Convert CT subscripts to linear indices.
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
@@ -93,7 +93,7 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
     mTissueClass = zeros(size(V,1),1);
     for i = 1:size(cst,1)
         % find indices of structures related to V
-        [~, row] = ismember(mod(cst{i,4},prod(ct.cubeDim)),V,'rows');  
+        [~, row] = ismember(vertcat(cst{i,4}{:}),V,'rows');  
         if ~isempty(cst{i,5}) && isfield(cst{i,5},'TissueClass')
             mTissueClass(row) = cst{i,5}.TissueClass;
         else
@@ -155,7 +155,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
     % construct binary mask where ray tracing results are available
     %radDepthIx = ~isnan(radDepthCube);
     radDepthIx = true(ct.cubeDim);                         % für ctScen überflüssig
-    for k = 1:ct.nScen                                     % für ctScen überflüssig
+    for k = 1:ct.numOfCtScen                                     % für ctScen überflüssig
         radDepthIx = radDepthIx .* isnan(radDepthCube{k}); % für ctScen überflüssig
     end                                                    % für ctScen überflüssig
     radDepthIx = ~radDepthIx;                              % für ctScen überflüssig
@@ -211,7 +211,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 % find energy index in base data
                 energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
                 
-                for m = 1:ct.nScen
+                for m = 1:ct.numOfCtScen
                     
                     radDepths = radDepthCube{m}(V(ix));
                     
@@ -259,13 +259,13 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 % save computation time and memory by sequentially filling the
                 % sparse matrix dose.dij from the cell array
                 if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
-                    for m = 1:ct.nScen
+                    for m = 1:ct.numOfCtScen
                         dij.physicalDose{m}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,m}];
                     end
                     
                     if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                             && strcmp(pln.radiationMode,'carbon')
-                        for m = 1:ct.nScen
+                        for m = 1:ct.numOfCtScen
                             dij.mAlphaDose{m}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,m}];
                             dij.mSqrtBetaDose{m}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,m}];
                         end

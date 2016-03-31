@@ -55,7 +55,7 @@ end
 V = [];
 for i=1:size(cst,1)
     if isequal(cst{i,3},'TARGET') % INCLUDE THIS PART LATER AGAIN!: && ~isempty(cst{i,6})
-        V = [V;mod(cst{i,4},prod(ct.cubeDim))];
+        V = [V;vertcat(cst{i,4}{:})];
     end
 end
 
@@ -226,7 +226,7 @@ for i = 1:length(pln.gantryAngles)
         stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
         stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
         
-        for k = 1:ct.nScen
+        for k = 1:ct.numOfCtScen
             stf(i).ray(j).SSD{k} = NaN;
         end
     end
@@ -244,7 +244,7 @@ for i = 1:length(pln.gantryAngles)
                              stf(i).ray(j).targetPoint, ...
                              [ct.cube {voiTarget}]);
                          
-            for k = 1:ct.nScen
+            for k = 1:ct.numOfCtScen
                 ixSSD = find(rho{k} > DensityThresholdSSD,1,'first');
 
                 if isempty(ixSSD)== 1
@@ -261,7 +261,7 @@ for i = 1:length(pln.gantryAngles)
            % target hit
            if sum(rho{end}) > 0 
 
-               for k = 1:ct.nScen
+               for k = 1:ct.numOfCtScen
                     % compute radiological depths
                     % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
                     radDepths = cumsum(l .* rho{k}); 
@@ -379,8 +379,11 @@ for i = 1:length(pln.gantryAngles)
                                (1:ct.cubeDim(3))-stf(i).isoCenter(3)/ct.resolution.z);
             
             % computes surface
-            patSurfCube = 0*ct.cube{1};
-            patSurfCube(unique(mod(cell2mat(cst(:,4)),prod(ct.cubeDim)))) = 1;
+            patSurfCube      = 0*ct.cube{1};
+            idx              = [cst{:,4}];
+            idx              = unique(vertcat(idx{:}));
+            patSurfCube(idx) = 1;
+            
             [f,v] = isosurface(X,Y,Z,patSurfCube,.5);
             
             % convert isosurface from voxel to [mm]

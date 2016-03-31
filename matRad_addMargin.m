@@ -42,9 +42,11 @@ elseif nargin < 3
 end
 
 % generate voi cube for patient surface/patient skin
-voiSurface = zeros(size(mVOI));
-voiSurface(unique(mod(cell2mat(cst(:,4)),prod(ctCubeDim)))) = 1;
-voiSurfaceIdx = find(voiSurface);
+voiSurface      = zeros(size(mVOI));
+idx             = [cst{:,4}];
+idx             = unique(vertcat(idx{:}));
+voiSurface(idx) = 1;
+voiSurfaceIdx   = find(voiSurface);
 
 % get number of voxels which should be added in each dimension
 voxelMargins = round([vMargin.x vMargin.y vMargin.z]./[vResolution.x vResolution.y vResolution.z]);

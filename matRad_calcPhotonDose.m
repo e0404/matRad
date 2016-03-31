@@ -46,7 +46,6 @@ dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.dimensions         = pln.voxelDimensions;
-dij.nScen              = ct.nScen;
 
 % set up arrays for book keeping
 dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
@@ -54,16 +53,17 @@ dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
 dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 
 % Allocate space for dij.physicalDose sparse matrix
-for i = 1:ct.nScen
+for i = 1:ct.numOfCtScen
     dij.physicalDose{i} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
 end
 
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
-doseTmpContainer = cell(numOfBixelsContainer,ct.nScen);
+doseTmpContainer = cell(numOfBixelsContainer,ct.numOfCtScen);
 
 % take only voxels inside patient
-V = unique(mod(cell2mat(cst(:,4)),prod(ct.cubeDim)));
+V = [cst{:,4}];
+V = unique(vertcat(V{:}));
 
 % Convert CT subscripts to linear indices.
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
@@ -172,7 +172,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
     % construct binary mask where ray tracing results are available
     %radDepthIx = ~isnan(radDepthCube);
     radDepthIx = true(ct.cubeDim);                         % für ctScen überflüssig
-    for k = 1:ct.nScen                                     % für ctScen überflüssig
+    for k = 1:ct.numOfCtScen                                     % für ctScen überflüssig
         radDepthIx = radDepthIx .* isnan(radDepthCube{k}); % für ctScen überflüssig
     end                                                    % für ctScen überflüssig
     radDepthIx = ~radDepthIx;                              % für ctScen überflüssig
@@ -228,7 +228,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                        radDepthIx(V), ...
                                                        lateralCutoff);
                                                        
-        for k = 1:ct.nScen
+        for k = 1:ct.numOfCtScen
             % calculate photon dose for beam i and bixel j
             bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
                                                    machine.data.betas, ...
@@ -247,7 +247,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
         % save computation time and memory by sequentially filling the 
         % sparse matrix dose.dij from the cell array
         if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
-            for k = 1:ct.nScen 
+            for k = 1:ct.numOfCtScen 
                 dij.physicalDose{k}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,k}];
             end
         end

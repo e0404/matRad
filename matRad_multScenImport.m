@@ -28,8 +28,8 @@ clear i idx j
 
 %% read CTs
 display('start CT import:')
-ct.nScen = length(InputData);
-for i = 1:ct.nScen
+ct.numOfCtScen = length(InputData);
+for i = 1:ct.numOfCtScen
     % read files
     [ct.cube{i}, CTcubeReadData3Dinfo(i)] = ReadData3D(fullfile(InputFolder,InputData(i).name,InputData(i).CTs),false);
     
@@ -40,11 +40,11 @@ for i = 1:ct.nScen
     % swap x and y (matRad standard)
     ct.cube{i} = permute(ct.cube{i},[2,1,3]);
     
-    display(['import CT ',num2str(i),'/',num2str(ct.nScen)])
+    display(['import CT ',num2str(i),'/',num2str(ct.numOfCtScen)])
 end
 
 % set CT resolution
-dim = reshape([CTcubeReadData3Dinfo.PixelDimensions],3,ct.nScen)';
+dim = reshape([CTcubeReadData3Dinfo.PixelDimensions],3,ct.numOfCtScen)';
 if length(unique(dim(:,1))) == 1 && length(unique(dim(:,2))) == 1 && length(unique(dim(:,3))) == 1
     ct.resolution.x = unique(dim(:,1));
     ct.resolution.y = unique(dim(:,2));
@@ -54,7 +54,7 @@ else
 end
 
 % set CT cube dimension
-cubeDim = reshape([CTcubeReadData3Dinfo.Dimensions],3,ct.nScen)';
+cubeDim = reshape([CTcubeReadData3Dinfo.Dimensions],3,ct.numOfCtScen)';
 if length(unique(cubeDim(:,1))) == 1 && length(unique(cubeDim(:,2))) == 1 && length(unique(cubeDim(:,3))) == 1
     ct.cubeDim(1) = unique(cubeDim(:,2)); % swap also here x and y
     ct.cubeDim(2) = unique(cubeDim(:,1)); % swap also here x and y
@@ -70,7 +70,7 @@ display('start segmentation import:')
 
 % check if all VOIs are segmented in all Scenarios
 logVOI = true(1,length(VOIs));
-for i = 1:ct.nScen
+for i = 1:ct.numOfCtScen
     [logVOItmp,~] = ismember(VOIs,InputData(i).SegmentationsName);
     if sum(logVOItmp) < length(VOIs)
         logVOI = logical(logVOI.*logVOItmp);
@@ -100,15 +100,17 @@ for i = 1:length(VOIs)
     end
     
     % Voxel indices
-    for j = 1:ct.nScen
+    for j = 1:ct.numOfCtScen
             idx     = find(strcmp(InputData(j).SegmentationsName,VOIs{i}));
             [tmp,~] = ReadData3D(fullfile(InputFolder,InputData(j).name,InputData(j).SegmentationsFile{idx}),false);
             
             % swap x and y (matRad standard)
             tmp = permute(tmp,[2,1,3]);
             
-            cst{i,4} = [cst{i,4};find(tmp>0)+(j-1)*ct.cubeDim(1)*ct.cubeDim(2)*ct.cubeDim(3)];
-            display(['import segmentation of VOI ',num2str(i),'/',num2str(length(VOIs)),' in Scenario ',num2str(j),'/',num2str(ct.nScen)])
+            %cst{i,4} = [cst{i,4};find(tmp>0)+(j-1)*ct.cubeDim(1)*ct.cubeDim(2)*ct.cubeDim(3)];
+            cst{i,4}{j} = find(tmp>0);
+            
+            display(['import segmentation of VOI ',num2str(i),'/',num2str(length(VOIs)),' in Scenario ',num2str(j),'/',num2str(ct.numOfCtScen)])
     end
     
     % Tissue parameters

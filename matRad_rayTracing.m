@@ -33,7 +33,7 @@ function [radDepthCube,geoDistCube] = matRad_rayTracing(stf,ct,V,lateralCutoff)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set up rad depth cube for results
-radDepthCube = repmat({NaN*ones(ct.cubeDim)},1,ct.nScen);
+radDepthCube = repmat({NaN*ones(ct.cubeDim)},1,ct.numOfCtScen);
 
 % set up coordinates of all voxels in cube
 [xCoords_vox, yCoords_vox, zCoords_vox] = meshgrid(1:ct.cubeDim(1),1:ct.cubeDim(2),1:ct.cubeDim(3));
@@ -140,7 +140,7 @@ for j = 1:size(rayMx_world,1)
         
         metricHitVoxelsCube(ixHitVoxel(ixRememberFromCurrTracing)) = dotProdHitVoxels(ixRememberFromCurrTracing);
 
-        for i = 1:ct.nScen
+        for i = 1:ct.numOfCtScen
             % calc radioloical depths
 
             % eq 14
