@@ -261,14 +261,19 @@ for i = 1:length(pln.gantryAngles)
            % target hit
            if sum(rho{end}) > 0 
 
-                % compute radiological depths
-                % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
-                radDepths = cumsum(l .* rho{1}); 
+               for k = 1:ct.nScen
+                    % compute radiological depths
+                    % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
+                    radDepths = cumsum(l .* rho{k}); 
 
-                % find target entry & exit
-                diff_voi    = diff([rho{end}]);
-                targetEntry = radDepths(diff_voi == 1);
-                targetExit  = radDepths(diff_voi == -1);
+                    % find target entry & exit
+                    diff_voi         = diff([rho{end}]);
+                    targetEntry(k,:) = radDepths(diff_voi == 1);
+                    targetExit(k,:)  = radDepths(diff_voi == -1);
+               end
+               
+               targetEntry = min(targetEntry);
+               targetExit  = max(targetExit);
 
                 if numel(targetEntry) ~= numel(targetExit)
                     error('Inconsistency during ray tracing.');

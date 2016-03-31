@@ -49,7 +49,7 @@ pln.runDAO          = true; % 1/true: run DAO, 0/false: don't / will be ignored 
 pln.machine         = 'Generic';
 
 %% multiple Scenarios
-ms.numOfCtScen    = ct.nScen;     % umber of imported ct scenarios
+ms.numOfCtScen    = ct.nScen;     % number of imported ct scenarios
 ms.numOfShiftScen = [2 2 2];      % number of shifts in x y and z direction       
 ms.maxShift       = [3 4 5];      % maximum shift in x y and z direction in mm
 ms.numOfRangeScen = 4;            % number of over and undershoots
