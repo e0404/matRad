@@ -39,36 +39,47 @@ if isequal(w,matRad_global_x)
     d = matRad_global_d;
     
 else
+    
     matRad_global_x = w;
+    
+    % pre allocation
+    d = cell(numel(dij.physicalDose),1);
     
     % Calculate dose vector
     if isequal(type,'none')
         
-        d = dij.physicalDose * w;
+        for i = 1:numel(dij.physicalDose)
+            d{i} = dij.physicalDose{i} * w;
+        end
         
     elseif isequal(type,'effect') || isequal(type,'RBExD') 
         
-        % calculate effect
-        linTerm  = dij.mAlphaDose * w;
-        quadTerm = dij.mSqrtBetaDose * w;
-        e        = linTerm + quadTerm.^2;   
+        for i = 1:numel(dij.physicalDose)
+            
+            % calculate effect
+            linTerm  = dij.mAlphaDose{i} * w;
+            quadTerm = dij.mSqrtBetaDose{i} * w;
+            e        = linTerm + quadTerm.^2;   
 
-       if ~isequal(type,'RBExD')
-           d = e;
-       else
+            if ~isequal(type,'RBExD')
+                d{i} = e;
+            else
            
-           % calculate RBX x dose
-           ScaledEffect = (e./dij.bx)+(dij.gamma.^2);
-           
-           % compute sqrt(ScaledEffect) only for numeric values (not nan) to save time
-           [idx,~]           = find(~isnan(ScaledEffect));
-           ScaledEffect(idx) = sqrt(ScaledEffect(idx));
-           d                 = ScaledEffect-dij.gamma;
-           
+                % calculate RBX x dose
+                ScaledEffect = (e./dij.bx)+(dij.gamma.^2);
+    
+               % compute sqrt(ScaledEffect) only for numeric values (not nan) to save time
+               [idx,~]           = find(~isnan(ScaledEffect));
+               ScaledEffect(idx) = sqrt(ScaledEffect(idx));
+               d{i}              = ScaledEffect-dij.gamma;
+            end
+            
        end       
        
     end   
+    
     matRad_global_d = d;
+    
 end
 
 end

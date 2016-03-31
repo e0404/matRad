@@ -103,7 +103,7 @@ funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,o
 % calculate initial beam intensities wInit
 if strcmp(pln.bioOptimization,'none')
     
-    bixelWeight =  (doseTarget)/(mean(dij.physicalDose(V,:)*wOnes)); 
+    bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
 
 else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBExD')) ... 
@@ -150,9 +150,9 @@ end
 
 % set callback functions.
 [options.cl,options.cu] = matRad_getConstBounds(cst,pln.bioOptimization);   
-funcs.objective         = @(x) matRad_objFunc(x,dij,cst,pln.bioOptimization);
+funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.constraints       = @(x) matRad_constFunc(x,dij,cst,pln.bioOptimization);
-funcs.gradient          = @(x) matRad_gradFunc(x,dij,cst,pln.bioOptimization);
+funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.jacobian          = @(x) matRad_jacobFunc(x,dij,cst,pln.bioOptimization);
 funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 
@@ -162,7 +162,7 @@ resultGUI.w            = wOpt;
 resultGUI.wUnsequenced = wOpt;
 
 % calc dose and reshape from 1D vector to 2D array
-resultGUI.physicalDose = reshape(dij.physicalDose*resultGUI.w,dij.dimensions);
+resultGUI.physicalDose = reshape(dij.physicalDose{1}*resultGUI.w,dij.dimensions);
 
 if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                             && strcmp(pln.radiationMode,'carbon')
