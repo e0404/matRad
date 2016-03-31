@@ -36,8 +36,8 @@ load T6H.mat
 % meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0:72:359]; % [°]
-pln.couchAngles     = [0 0 0 0 0]; % [°]
+pln.gantryAngles    = [0 90]; % [°]
+pln.couchAngles     = [0 0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
@@ -50,9 +50,9 @@ pln.machine         = 'Generic';
 
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
-multScen.numOfShiftScen      = [2 2 2];        % number of shifts in x y and z direction       
+multScen.numOfShiftScen      = [0 0 0];        % number of shifts in x y and z direction       
 multScen.maxShift            = [3 4 5];        % maximum shift in x y and z direction in mm
-multScen.numOfRangeShiftScen = 4;              % number of absolute and/or relative range scnearios
+multScen.numOfRangeShiftScen = 2;              % number of absolute and/or relative range scnearios
 multScen.maxAbsRangeShift    = 10;             % maximum absolute over and undershoot in mm
 multScen.maxRelRangeShift    = 5;              % maximum relative over and undershoot in %
 multScen.ScenCombType        = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
@@ -66,9 +66,9 @@ stf = matRad_generateStf(ct,cst,pln);
 
 %% dose calculation
 if strcmp(pln.radiationMode,'photons')
-    dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+    dij = matRad_calcPhotonDose(ct,stf,pln,cst,multScen);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-    dij = matRad_calcParticleDose(ct,stf,pln,cst);
+    dij = matRad_calcParticleDose(ct,stf,pln,cst,multScen);
 end
 
 %% inverse planning for imrt

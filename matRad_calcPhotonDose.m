@@ -1,4 +1,4 @@
-function dij = matRad_calcPhotonDose(ct,stf,pln,cst)
+function dij = matRad_calcPhotonDose(ct,stf,pln,cst,multScen)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad photon dose calculation wrapper
 % 
@@ -10,6 +10,7 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst)
 %   stf:        matRad steering information struct
 %   pln:        matRad plan meta information struct
 %   cst:        matRad cst struct
+%   multScen:   matRad multiple scnerio struct
 %
 % output
 %   dij:        matRad dij struct
@@ -53,13 +54,21 @@ dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
 dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 
 % Allocate space for dij.physicalDose sparse matrix
-for i = 1:ct.numOfCtScen
-    dij.physicalDose{i} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
+for CtScen = 1:multScen.numOfCtScen
+    for ShiftScen = 1:multScen.numOfShiftScen
+        for RangeShiftScen = 1:multScen.numOfRangeShiftScen  
+            
+            if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
+                dij.physicalDose{CtScen,ShiftScen,RangeShiftScen} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
+            end
+            
+        end
+    end
 end
 
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
-doseTmpContainer = cell(numOfBixelsContainer,ct.numOfCtScen);
+doseTmpContainer = cell(numOfBixelsContainer,multScen.numOfCtScen);
 
 % take only voxels inside patient
 V = [cst{:,4}];
@@ -166,16 +175,16 @@ for i = 1:dij.numOfBeams; % loop over all beams
     
     % ray tracing
     fprintf(['matRad: calculate radiological depth cube...']);
-    [radDepthCube,geoDistCube] = matRad_rayTracing(stf(i),ct,V,lateralCutoff);
+    [radDepthCube,geoDistCube] = matRad_rayTracing(stf(i),ct,V,lateralCutoff,multScen);
     fprintf('done \n');
     
     % construct binary mask where ray tracing results are available
-    %radDepthIx = ~isnan(radDepthCube);
-    radDepthIx = true(ct.cubeDim);                         % für ctScen überflüssig
-    for k = 1:ct.numOfCtScen                                     % für ctScen überflüssig
-        radDepthIx = radDepthIx .* isnan(radDepthCube{k}); % für ctScen überflüssig
-    end                                                    % für ctScen überflüssig
-    radDepthIx = ~radDepthIx;                              % für ctScen überflüssig
+    radDepthIx = ~isnan(radDepthCube{1});
+    %radDepthIx = true(ct.cubeDim);                              % für ctScen überflüssig
+    %for CtScen = 1:multScen.numOfCtScen                         % für ctScen überflüssig
+    %    radDepthIx = radDepthIx .* isnan(radDepthCube{CtScen}); % für ctScen überflüssig
+    %end                                                         % für ctScen überflüssig
+    %radDepthIx = ~radDepthIx;                                   % für ctScen überflüssig
 
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
         
@@ -228,27 +237,50 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                        radDepthIx(V), ...
                                                        lateralCutoff);
                                                        
-        for k = 1:ct.numOfCtScen
-            % calculate photon dose for beam i and bixel j
-            bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
-                                                   machine.data.betas, ...
-                                                   Interp_kernel1,...
-                                                   Interp_kernel2,...
-                                                   Interp_kernel3,...
-                                                   radDepthCube{k}(V(ix())),...
-                                                   geoDistCube(V(ix())),...
-                                                   latDistsX(),...
-                                                   latDistsZ());
+        for CtScen = 1:multScen.numOfCtScen
+            for ShiftScen = 1:multScen.numOfShiftScen
+                for RangeShiftScen = 1:multScen.numOfRangeShiftScen  
+            
+                    if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
+                        
+                        % manipulate radDepthCube for range scenarios
+                        manipulatedRadDepthCube = radDepthCube{CtScen}(V(ix)) +...                                            % original cube
+                                                  radDepthCube{CtScen}(V(ix))*multScen.relRangeShifts(RangeShiftScen) +...    % rel range shift
+                                                  multScen.absRangeShifts(RangeShiftScen);                                    % absolute range shift
+                        manipulatedRadDepthCube(manipulatedRadDepthCube < 0) = 0;                      
+                                              
+                        % calculate photon dose for beam i and bixel j
+                        bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
+                                                               machine.data.betas, ...
+                                                               Interp_kernel1,...
+                                                               Interp_kernel2,...
+                                                               Interp_kernel3,...
+                                                               manipulatedRadDepthCube,...
+                                                               geoDistCube(V(ix)),...
+                                                               latDistsX,...
+                                                               latDistsZ);
 
-            % Save dose for every bixel in cell array
-            doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,k} = sparse(V(ix),1,bixelDose,prod(ct.cubeDim),1);
+                        % Save dose for every bixel in cell array
+                        doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix),1,bixelDose,prod(ct.cubeDim),1);
+                    end
+                    
+                end
+            end
         end
                 
         % save computation time and memory by sequentially filling the 
         % sparse matrix dose.dij from the cell array
         if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
-            for k = 1:ct.numOfCtScen 
-                dij.physicalDose{k}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,k}];
+            for CtScen = 1:multScen.numOfCtScen
+                for ShiftScen = 1:multScen.numOfShiftScen
+                    for RangeShiftScen = 1:multScen.numOfRangeShiftScen
+                        
+                        if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
+                            dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}];
+                        end
+                        
+                    end
+                end
             end
         end
         

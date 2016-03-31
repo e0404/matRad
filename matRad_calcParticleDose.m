@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDose(ct,stf,pln,cst)
+function dij = matRad_calcParticleDose(ct,stf,pln,cst,multScen)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad particle dose calculation wrapper
 % cst
@@ -10,6 +10,7 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst)
 %   stf:        matRad steering information struct
 %   pln:        matRad plan meta information struct
 %   cst:        matRad cst struct
+%   multScen:   matRad multiple scnerio struct
 %
 % output
 %   dij:        matRad dij struct

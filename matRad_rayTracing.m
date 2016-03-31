@@ -1,4 +1,4 @@
-function [radDepthCube,geoDistCube] = matRad_rayTracing(stf,ct,V,lateralCutoff)
+function [radDepthCube,geoDistCube] = matRad_rayTracing(stf,ct,V,lateralCutoff,multScen)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
@@ -11,7 +11,7 @@ function [radDepthCube,geoDistCube] = matRad_rayTracing(stf,ct,V,lateralCutoff)
 %   ct:            ct cube
 %   V:             linear voxel indices e.g. of voxels inside patient.
 %   lateralCutoff: lateral cut off used for ray tracing
-
+%   multScen:      matRad multiple scnerio struct
 %
 % output
 %   radDepthCube:  radiological depth cube in the ct.cube dimensions
@@ -33,7 +33,7 @@ function [radDepthCube,geoDistCube] = matRad_rayTracing(stf,ct,V,lateralCutoff)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set up rad depth cube for results
-radDepthCube = repmat({NaN*ones(ct.cubeDim)},1,ct.numOfCtScen);
+radDepthCube = repmat({NaN*ones(ct.cubeDim)},1,multScen.numOfCtScen);
 
 % set up coordinates of all voxels in cube
 [xCoords_vox, yCoords_vox, zCoords_vox] = meshgrid(1:ct.cubeDim(1),1:ct.cubeDim(2),1:ct.cubeDim(3));
@@ -140,13 +140,13 @@ for j = 1:size(rayMx_world,1)
         
         metricHitVoxelsCube(ixHitVoxel(ixRememberFromCurrTracing)) = dotProdHitVoxels(ixRememberFromCurrTracing);
 
-        for i = 1:ct.numOfCtScen
+        for CtScen = 1:multScen.numOfCtScen
             % calc radioloical depths
 
             % eq 14
             % It multiply voxel intersections with \rho values.
             % The zero it is neccessary for stability purpose.
-            d = [0 l .* rho{i}]; %Note. It is not a number "one"; it is the letter "l"
+            d = [0 l .* rho{CtScen}]; %Note. It is not a number "one"; it is the letter "l"
 
             % Calculate accumulated d sum.
             dCum = cumsum(d);
@@ -154,7 +154,7 @@ for j = 1:size(rayMx_world,1)
             % Calculate the radiological path
             vRadDepth = interp1(alphas,dCum,dotProdHitVoxels(ixRememberFromCurrTracing)/d12,'linear',0);
 
-            radDepthCube{i}(ixHitVoxel(ixRememberFromCurrTracing)) = vRadDepth;
+            radDepthCube{CtScen}(ixHitVoxel(ixRememberFromCurrTracing)) = vRadDepth;
         end
     end
     

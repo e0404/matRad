@@ -23,12 +23,16 @@ multScen.absRangeShifts = [0, multScen.absRangeShifts];
 deltaRelRangeShift      = multScen.maxRelRangeShift/(multScen.numOfRangeShiftScen/2);
 multScen.relRangeShifts = -multScen.maxRelRangeShift:deltaRelRangeShift:multScen.maxRelRangeShift;
 multScen.relRangeShifts = multScen.relRangeShifts(multScen.relRangeShifts ~= 0);
-multScen.relRangeShifts = [0, multScen.relRangeShifts];
+multScen.relRangeShifts = [0, multScen.relRangeShifts/100];
+
+% set correct number of scenarios
+multScen.numOfShiftScen      = sum(multScen.numOfShiftScen)+1;
+multScen.numOfRangeShiftScen = multScen.numOfRangeShiftScen+1;
 
 % set scenario combination mask
 if isequal(multScen.ScenCombType,'individual')
     
-    multScen.ScenCombMask = false(multScen.numOfCtScen, sum(multScen.numOfShiftScen)+1, multScen.numOfRangeShiftScen+1);
+    multScen.ScenCombMask = false(multScen.numOfCtScen, multScen.numOfShiftScen, multScen.numOfRangeShiftScen);
     
     multScen.ScenCombMask(:,1,1) = true; % individual ct scenarios
     multScen.ScenCombMask(1,:,1) = true; % individual shift scenarios on ct scenario 1
@@ -36,7 +40,7 @@ if isequal(multScen.ScenCombType,'individual')
     
 elseif isequal(multScen.ScenCombType,'allcombined')
     
-    multScen.ScenCombMask = true(multScen.numOfCtScen, sum(multScen.numOfShiftScen)+1, multScen.numOfRangeShiftScen+1);
+    multScen.ScenCombMask = true(multScen.numOfCtScen, multScen.numOfShiftScen, multScen.numOfRangeShiftScen);
     
 end
 
