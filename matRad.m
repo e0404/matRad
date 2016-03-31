@@ -69,7 +69,7 @@ stf = matRad_generateStf(ct,cst,pln);
 if strcmp(pln.radiationMode,'photons')
     dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-    dij = matRad_calcParticleDose(ct,stf,pln,cst,ms);
+    dij = matRad_calcParticleDose(ct,stf,pln,cst);
 end
 
 %% inverse planning for imrt
