@@ -1,4 +1,4 @@
-function dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,SSD,focusIx,baseData,m)
+function dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,SSD,focusIx,baseData)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
@@ -12,7 +12,6 @@ function dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,SSD,focusIx
 %   SSD:            source to surface distance
 %   focusIx:        index of focus to be used
 %   baseData:       base data required for particle dose calculation
-%   m:              ct scenario index
 %
 % output
 %   dose:   particle dose at specified locations as linear vector
@@ -56,7 +55,7 @@ if ~isfield(baseData,'sigma')
     % calculate lateral profile
     L_Narr =  exp( -radialDist_sq ./ (2*sigmaSq_Narr))./(2*pi*sigmaSq_Narr);
     L_Bro  =  exp( -radialDist_sq ./ (2*sigmaSq_Bro ))./(2*pi*sigmaSq_Bro );
-    L = baseData.LatCutOff{m}.CompFac * ((1-(X(:,3))).*L_Narr) + (X(:,3).*L_Bro);
+    L = baseData.LatCutOff.CompFac * ((1-(X(:,3))).*L_Narr) + (X(:,3).*L_Bro);
 
     dose = X(:,1).*L;
 else
@@ -68,7 +67,7 @@ else
     sigmaSq = X(:,2).^2 + SigmaIni^2;
     
     % calculate dose
-    dose = baseData.LatCutOff{m}.CompFac * exp( -radialDist_sq ./ (2*sigmaSq)) .* X(:,1) ./(2*pi*sigmaSq);
+    dose = baseData.LatCutOff.CompFac * exp( -radialDist_sq ./ (2*sigmaSq)) .* X(:,1) ./(2*pi*sigmaSq);
     
  end
  

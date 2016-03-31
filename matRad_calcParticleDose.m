@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDose(ct,stf,pln,cst,ms)
+function dij = matRad_calcParticleDose(ct,stf,pln,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad particle dose calculation wrapper
 % 
@@ -164,7 +164,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
     fprintf('matRad: calculate lateral cutoff...');
     cutOffLevel = .99;
     visBoolLateralCutOff = 0;
-    machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff,ms);
+    machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
     fprintf('done.\n');    
     
     for j = 1:stf(i).numOfRays % loop over all rays
@@ -175,23 +175,21 @@ for i = 1:dij.numOfBeams; % loop over all beams
             % reasons
             energyIx = max(round2(stf(i).ray(j).energy,4)) == round2([machine.data.energy],4);
             
-            for m = 1:ct.nScen
-                maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff{m}.CutOff);
-
-                % Ray tracing for beam i and ray j                          
-                [ix{m},radialDist_sq{m},~,~] = matRad_calcGeoDists(rot_coordsV, ...
-                                                           stf(i).sourcePoint_bev, ...
-                                                           stf(i).ray(j).targetPoint_bev, ...
-                                                           geoDistCube(V), ...
-                                                           machine.meta.SAD, ...
-                                                           radDepthIx(V), ...
-                                                           maxLateralCutoffDoseCalc);   
-
-                % just use tissue classes of voxels found by ray tracer
-                if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
-                     && strcmp(pln.radiationMode,'carbon')
-                        mTissueClass_j{m} = mTissueClass(ix{m},:);
-                end
+            maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
+            
+            % Ray tracing for beam i and ray j                          
+            [ix,radialDist_sq,~,~] = matRad_calcGeoDists(rot_coordsV, ...
+                                                       stf(i).sourcePoint_bev, ...
+                                                       stf(i).ray(j).targetPoint_bev, ...
+                                                       geoDistCube(V), ...
+                                                       machine.meta.SAD, ...
+                                                       radDepthIx(V), ...
+                                                       maxLateralCutoffDoseCalc);   
+            
+            % just use tissue classes of voxels found by ray tracer
+            if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
+                 && strcmp(pln.radiationMode,'carbon')
+                    mTissueClass_j = mTissueClass(ix,:);
             end
               
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
@@ -215,7 +213,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 
                 for m = 1:ct.nScen
                     
-                    radDepths = radDepthCube{m}(V(ix{m}));
+                    radDepths = radDepthCube{m}(V(ix));
                     
                     % find depth depended lateral cut off
                     if cutOffLevel >= 1
@@ -223,12 +221,12 @@ for i = 1:dij.numOfBeams; % loop over all beams
                     elseif cutOffLevel < 1 && cutOffLevel > 0
                         % perform rough 2D clipping
                         currIx = radDepths <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset & ...
-                             radialDist_sq{m} <= max(machine.data(energyIx).LatCutOff{m}.CutOff.^2);
+                             radialDist_sq <= max(machine.data(energyIx).LatCutOff.CutOff.^2);
 
                         % peform fine 2D clipping  
-                        if length(machine.data(energyIx).LatCutOff{m}.CutOff) > 1
-                            currIx(currIx) = interp1(machine.data(energyIx).LatCutOff{m}.depths + machine.data(energyIx).offset,...
-                                machine.data(energyIx).LatCutOff{m}.CutOff.^2, radDepths(currIx)) >= radialDist_sq{m}(currIx);
+                        if length(machine.data(energyIx).LatCutOff.CutOff) > 1
+                            currIx(currIx) = interp1(machine.data(energyIx).LatCutOff.depths + machine.data(energyIx).offset,...
+                                machine.data(energyIx).LatCutOff.CutOff.^2, radDepths(currIx)) >= radialDist_sq(currIx);
                         end
                     else
                         error('cutoff must be a value between 0 and 1')
@@ -237,24 +235,24 @@ for i = 1:dij.numOfBeams; % loop over all beams
                     % calculate particle dose for bixel k on ray j of beam i
                     bixelDose = matRad_calcParticleDoseBixel(...
                         radDepths(currIx), ...
-                        radialDist_sq{m}(currIx), ...
+                        radialDist_sq(currIx), ...
                         stf(i).ray(j).SSD{m}, ...
                         stf(i).ray(j).focusIx(k), ...
-                        machine.data(energyIx),m); 
+                        machine.data(energyIx)); 
 
                     % Save dose for every bixel in cell array
-                    doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,m} = sparse(V(ix{m}(currIx)),1,bixelDose,prod(ct.cubeDim),1); 
+                    doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,m} = sparse(V(ix(currIx)),1,bixelDose,prod(ct.cubeDim),1); 
                     
                     if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                         && strcmp(pln.radiationMode,'carbon')
                         % calculate alpha and beta values for bixel k on ray j of                  
                         [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
                             radDepths(currIx),...
-                            mTissueClass_j{m}(currIx,:),...
+                            mTissueClass_j(currIx,:),...
                             machine.data(energyIx));
 
-                        alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,m} = sparse(V(ix{m}(currIx)),1,bixelAlpha.*bixelDose,prod(ct.cubeDim),1);
-                        betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,m} = sparse(V(ix{m}(currIx)),1,sqrt(bixelBeta).*bixelDose,prod(ct.cubeDim),1);
+                        alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,m} = sparse(V(ix(currIx)),1,bixelAlpha.*bixelDose,prod(ct.cubeDim),1);
+                        betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,m} = sparse(V(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,prod(ct.cubeDim),1);
                     end
                 end
                 
