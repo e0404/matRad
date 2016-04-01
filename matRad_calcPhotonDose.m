@@ -148,10 +148,12 @@ for i = 1:dij.numOfBeams; % loop over all beams
     bixelsPerBeam = 0;
 
     % convert voxel indices to real coordinates using iso center of beam i
-    xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
-    yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
-    zCoordsV = zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
-    coordsV  = [xCoordsV yCoordsV zCoordsV];
+    for ShiftScen = 1:multScen.numOfShiftScen
+        xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1) + multScen.shifts(1,ShiftScen);
+        yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2) + multScen.shifts(2,ShiftScen);
+        zCoordsV = zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3) + multScen.shifts(3,ShiftScen);
+        coordsV{ShiftScen}  = [xCoordsV yCoordsV zCoordsV];
+    end
     
     % Set gantry and couch rotation matrices according to IEC 61217
     % Use transpose matrices because we are working with row vectros
@@ -167,11 +169,13 @@ for i = 1:dij.numOfBeams; % loop over all beams
                       sind(-pln.couchAngles(i)) 0  cosd(-pln.couchAngles(i))];
     
     % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
-    rot_coordsV = coordsV*inv_rotMx_XZ_T*inv_rotMx_XY_T;
+    for ShiftScen = 1:multScen.numOfShiftScen
+        rot_coordsV{ShiftScen} = coordsV{ShiftScen}*inv_rotMx_XZ_T*inv_rotMx_XY_T;
     
-    rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
-    rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
-    rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
+        rot_coordsV{ShiftScen}(:,1) = rot_coordsV{ShiftScen}(:,1)-stf(i).sourcePoint_bev(1);
+        rot_coordsV{ShiftScen}(:,2) = rot_coordsV{ShiftScen}(:,2)-stf(i).sourcePoint_bev(2);
+        rot_coordsV{ShiftScen}(:,3) = rot_coordsV{ShiftScen}(:,3)-stf(i).sourcePoint_bev(3);
+    end
     
     % ray tracing
     fprintf(['matRad: calculate radiological depth cube...']);
@@ -232,10 +236,10 @@ for i = 1:dij.numOfBeams; % loop over all beams
         
         % Ray tracing for beam i and bixel j
         for ShiftScen = 1:multScen.numOfShiftScen
-            [ix{ShiftScen},~,latDistsX{ShiftScen},latDistsZ{ShiftScen}] = matRad_calcGeoDists(rot_coordsV, ...
+            [ix{ShiftScen},~,latDistsX{ShiftScen},latDistsZ{ShiftScen}] = matRad_calcGeoDists(rot_coordsV{ShiftScen}, ...
                                                                           stf(i).sourcePoint_bev, ...
                                                                           stf(i).ray(j).targetPoint_bev, ...
-                                                                          geoDistCube(V), ...
+                                                                          geoDistCube{ShiftScen}(V), ...
                                                                           machine.meta.SAD, ...
                                                                           radDepthMask{ShiftScen}(V), ...
                                                                           lateralCutoff);
@@ -260,7 +264,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                                Interp_kernel2,...
                                                                Interp_kernel3,...
                                                                manipulatedRadDepthCube,...
-                                                               geoDistCube(V(ix{ShiftScen})),...
+                                                               geoDistCube{ShiftScen}(V(ix{ShiftScen})),...
                                                                latDistsX{ShiftScen},...
                                                                latDistsZ{ShiftScen});
 

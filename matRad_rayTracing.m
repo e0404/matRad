@@ -46,10 +46,6 @@ end
 % set up coordinates of all voxels in cube
 [xCoords_vox, yCoords_vox, zCoords_vox] = meshgrid(1:ct.cubeDim(1),1:ct.cubeDim(2),1:ct.cubeDim(3));
 
-xCoords = xCoords_vox(:)*ct.resolution.x-stf.isoCenter(1);
-yCoords = yCoords_vox(:)*ct.resolution.y-stf.isoCenter(2);
-zCoords = zCoords_vox(:)*ct.resolution.z-stf.isoCenter(3);
-
 % Rotation around Z axis (gantry)
 inv_rotMx_XY_T = [ cosd(-stf.gantryAngle) sind(-stf.gantryAngle) 0;
                   -sind(-stf.gantryAngle) cosd(-stf.gantryAngle) 0;
@@ -59,22 +55,28 @@ inv_rotMx_XY_T = [ cosd(-stf.gantryAngle) sind(-stf.gantryAngle) 0;
 inv_rotMx_XZ_T = [cosd(-stf.couchAngle) 0 -sind(-stf.couchAngle);
                                       0 1                      0;
                   sind(-stf.couchAngle) 0  cosd(-stf.couchAngle)];
- 
 
-coords_bev = [xCoords yCoords zCoords]*inv_rotMx_XZ_T*inv_rotMx_XY_T;             
-              
-% set up ray matrix direct behind last voxel
-rayMx_bev_y = max(coords_bev(V,2)) + max([ct.resolution.x ct.resolution.y ct.resolution.z]);
+for ShiftScen = 1:multScen.numOfShiftScen
+    xCoords = xCoords_vox(:)*ct.resolution.x-stf.isoCenter(1) + multScen.shifts(1,ShiftScen);
+    yCoords = yCoords_vox(:)*ct.resolution.y-stf.isoCenter(2) + multScen.shifts(2,ShiftScen);
+    zCoords = zCoords_vox(:)*ct.resolution.z-stf.isoCenter(3) + multScen.shifts(3,ShiftScen); 
+
+    coords_bev = [xCoords yCoords zCoords]*inv_rotMx_XZ_T*inv_rotMx_XY_T;             
+
+    % set up ray matrix direct behind last voxel
+    rayMx_bev_y{ShiftScen} = max(coords_bev(V,2)) + max([ct.resolution.x ct.resolution.y ct.resolution.z]);
 
 
-xCoords = xCoords-stf.sourcePoint(1);
-yCoords = yCoords-stf.sourcePoint(2);
-zCoords = zCoords-stf.sourcePoint(3);
-coords  = [xCoords yCoords zCoords];
-    
-% calculate geometric distances
-if nargout > 1
-    geoDistCube = reshape(sqrt(sum(coords.^2,2)),ct.cubeDim);
+    xCoords = xCoords-stf.sourcePoint(1);
+    yCoords = yCoords-stf.sourcePoint(2);
+    zCoords = zCoords-stf.sourcePoint(3);
+    coords{ShiftScen}  = [xCoords yCoords zCoords];
+
+
+    % calculate geometric distances
+    if nargout > 1
+        geoDistCube{ShiftScen} = reshape(sqrt(sum(coords{ShiftScen}.^2,2)),ct.cubeDim);
+    end
 end
 
 % calculate spacing of rays on ray matrix
@@ -98,16 +100,6 @@ for i = 1:stf.numOfRays
     
 end
 
-% set up ray matrix
-rayMx_bev = [candidateRaysCoords_X(logical(candidateRayMx(:))) ...
-              rayMx_bev_y*ones(sum(candidateRayMx(:)),1) ...  
-              candidateRaysCoords_Z(logical(candidateRayMx(:)))];
-
-%     figure,
-%     for jj = 1:length(rayMx_bev)
-%        plot(rayMx_bev(jj,1),rayMx_bev(jj,3),'rx'),hold on 
-%     end
-    
 % Rotation around Z axis (gantry)
 rotMx_XY_T = [ cosd(stf.gantryAngle) sind(stf.gantryAngle) 0;
               -sind(stf.gantryAngle) cosd(stf.gantryAngle) 0;
@@ -118,30 +110,42 @@ rotMx_XZ_T = [cosd(stf.couchAngle) 0 -sind(stf.couchAngle);
                                  0 1                     0;
               sind(stf.couchAngle) 0  cosd(stf.couchAngle)];
 
-% rotate ray matrix from bev to world coordinates
-rayMx_world = rayMx_bev * rotMx_XY_T * rotMx_XZ_T;
+for ShiftScen = 1:multScen.numOfShiftScen
+    % set up ray matrix
+    rayMx_bev = [candidateRaysCoords_X(logical(candidateRayMx(:))) ...
+                 rayMx_bev_y{ShiftScen}*ones(sum(candidateRayMx(:)),1) ...  
+                 candidateRaysCoords_Z(logical(candidateRayMx(:)))];
+
+    %     figure,
+    %     for jj = 1:length(rayMx_bev)
+    %        plot(rayMx_bev(jj,1),rayMx_bev(jj,3),'rx'),hold on 
+    %     end
+
+    % rotate ray matrix from bev to world coordinates
+    rayMx_world{ShiftScen} = rayMx_bev * rotMx_XY_T * rotMx_XZ_T;
+end
 
 % set up distance cube to decide which rad depths should be stored
 metricHitVoxelsCube = -inf*ones(ct.cubeDim);
 
 % perform ray tracing over all rays
-for j = 1:size(rayMx_world,1)
-    for ShiftScen = 1:multScen.numOfShiftScen
+for ShiftScen = 1:multScen.numOfShiftScen
+    for j = 1:size(rayMx_world{ShiftScen},1)
         
         % run siddon ray tracing algorithm
-        [alphas,l,rho,d12,ixHitVoxel] = matRad_siddonRayTracer(stf.isoCenter, ...
+        [alphas,l,rho,d12,ixHitVoxel] = matRad_siddonRayTracer(stf.isoCenter + multScen.shifts(:,ShiftScen)', ...
                                     ct.resolution, ...
                                     ct.cubeDim,...
-                                    stf.sourcePoint + multScen.shifts(:,ShiftScen)', ...
-                                    rayMx_world(j,:) + multScen.shifts(:,ShiftScen)', ...
+                                    stf.sourcePoint, ...
+                                    rayMx_world{ShiftScen}(j,:), ...
                                     ct.cube);
 
         % find voxels for which we should remember this tracing because this is
         % the closest ray
-        normRayVector = rayMx_world(j,:) - stf.sourcePoint;
+        normRayVector = rayMx_world{ShiftScen}(j,:) - stf.sourcePoint;
         normRayVector = normRayVector/norm(normRayVector);
 
-        dotProdHitVoxels = coords(ixHitVoxel,:)*normRayVector';
+        dotProdHitVoxels = coords{ShiftScen}(ixHitVoxel,:)*normRayVector';
 
         ixRememberFromCurrTracing = dotProdHitVoxels > metricHitVoxelsCube(ixHitVoxel)';
 
