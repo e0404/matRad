@@ -43,18 +43,18 @@ else
     matRad_global_x = w;
     
     % pre-allocation
-    d = cell(numel(dij.physicalDose),1);
+    d = cell(dij.numOfScenarios,1);
     
     % Calculate dose vector
     if isequal(type,'none')
         
-        for i = 1:numel(dij.physicalDose)
+        for i = 1:dij.numOfScenarios
             d{i} = dij.physicalDose{i} * w;
         end
         
     elseif isequal(type,'effect') || isequal(type,'RBExD') 
         
-        for i = 1:numel(dij.physicalDose)
+        for i = 1:dij.numOfScenarios
             
             % calculate effect
             linTerm  = dij.mAlphaDose{i} * w;
@@ -66,12 +66,12 @@ else
             else
                 
                 % calculate RBX x dose
-                ScaledEffect = (e./dij.bx)+(dij.gamma.^2);
+                scaledEffect = (e./dij.bx)+(dij.gamma.^2);
     
-                % compute sqrt(ScaledEffect) only for numeric values (not nan) to save time
-                [idx,~]           = find(~isnan(ScaledEffect));
-                ScaledEffect(idx) = sqrt(ScaledEffect(idx));
-                d{i}              = ScaledEffect-dij.gamma;
+                % compute sqrt(scaledEffect) only for numeric values (not nan) to save time
+                [idx,~]           = find(~isnan(scaledEffect));
+                scaledEffect(idx) = sqrt(scaledEffect(idx));
+                d{i}              = scaledEffect - dij.gamma;
                 
             end
             
