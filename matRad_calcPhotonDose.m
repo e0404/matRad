@@ -68,7 +68,7 @@ end
 
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
-doseTmpContainer = cell(numOfBixelsContainer,multScen.numOfCtScen);
+doseTmpContainer = cell(numOfBixelsContainer,multScen.numOfCtScen,multScen.numOfShiftScen,multScen.numOfRangeShiftScen);
 
 % take only voxels inside patient
 V = [cst{:,4}];
@@ -252,9 +252,9 @@ for i = 1:dij.numOfBeams; % loop over all beams
                     if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
                         
                         % manipulate radDepthCube for range scenarios
-                        manipulatedRadDepthCube = radDepthCube{CtScen,ShiftScen}(V(ix{ShiftScen})) +...                                            % original cube
-                                                  radDepthCube{CtScen,ShiftScen}(V(ix{ShiftScen}))*multScen.relRangeShifts(RangeShiftScen) +...    % rel range shift
-                                                  multScen.absRangeShifts(RangeShiftScen);                                    % absolute range shift
+                        manipulatedRadDepthCube = radDepthCube{CtScen,ShiftScen}(V(ix{ShiftScen})) +...                                         % original cube
+                                                  radDepthCube{CtScen,ShiftScen}(V(ix{ShiftScen}))*multScen.relRangeShifts(RangeShiftScen) +... % rel range shift
+                                                  multScen.absRangeShifts(RangeShiftScen);                                                      % absolute range shift
                         manipulatedRadDepthCube(manipulatedRadDepthCube < 0) = 0;                      
                                               
                         % calculate photon dose for beam i and bixel j
