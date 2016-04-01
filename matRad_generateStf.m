@@ -228,7 +228,9 @@ for i = 1:length(pln.gantryAngles)
         stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
         
         for CtScen = 1:multScen.numOfCtScen
-            stf(i).ray(j).SSD{CtScen} = NaN;
+            for ShiftScen = 1:multScen.numOfShiftScen
+                stf(i).ray(j).SSD{CtScen,ShiftScen} = NaN;
+            end
         end
     end
     
@@ -237,13 +239,14 @@ for i = 1:length(pln.gantryAngles)
     
     for j = stf(i).numOfRays:-1:1
 
-        % ray tracing necessary to determine depth of the target
-        [alpha,l,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
-                             ct.resolution, ...
-                             ct.cubeDim,...
-                             stf(i).sourcePoint, ...
-                             stf(i).ray(j).targetPoint, ...
-                             [ct.cube {voiTarget}]);
+        for ShiftScen = 1:multScen.numOfShiftScen
+            % ray tracing necessary to determine depth of the target
+            [alpha,l,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter + multScen.shifts(:,ShiftScen)', ...
+                                 ct.resolution, ...
+                                 ct.cubeDim,...
+                                 stf(i).sourcePoint, ...
+                                 stf(i).ray(j).targetPoint, ...
+                                 [ct.cube {voiTarget}]);
                          
             for CtScen = 1:multScen.numOfCtScen
                 ixSSD = find(rho{CtScen} > DensityThresholdSSD,1,'first');
@@ -253,8 +256,9 @@ for i = 1:length(pln.gantryAngles)
                 end
 
                 % calculate SSD
-                stf(i).ray(j).SSD{CtScen} = 2 * stf(i).SAD * alpha(ixSSD);
+                stf(i).ray(j).SSD{CtScen,ShiftScen} = 2 * stf(i).SAD * alpha(ixSSD);
             end
+        end
             
         % find appropriate energies for particles
        if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
