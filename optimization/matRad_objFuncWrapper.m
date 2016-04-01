@@ -3,7 +3,7 @@ function f = matRad_objFuncWrapper(w,dij,cst,type)
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,type);
 
-% Initializes f
+% Initialize f
 f = 0;
 
 % compute objective function for every VOI.
@@ -29,22 +29,44 @@ for  i = 1:size(cst,1)
                 d_ref = [];
             end
        
+            % if conventional opt: just sum objectives of nominal dose
             if strcmp(cst{i,6}(j).robustness,'none')
                 
                 d_i = d{1}(cst{i,4});
                 
                 f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
                 
+            % if prob opt: sum up expectation value of objectives
             elseif strcmp(cst{i,6}(j).robustness,'probabilistic')
-            elseif strcmp(cst{i,6}(j).robustness,'objective-wise worst case')
+                
+                for k = 1:dij.numOfScenarios
+                    
+                    d_i = d{k}(cst{i,4});
+                
+                    f = f + dij.probOfScenarios(k) * matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                    
+                end
+                
+            % if voxel-wise worst case: sum up objective of min/max dose
             elseif strcmp(cst{i,6}(j).robustness,'voxel-wise worst case')
-                [d_max,maxDoseIx] = max([d{:}],[],2);
-                [d_min,minDoseIx] = min([d{:}],[],2);
+                
+                % prepare min/max dose vector we have chosen voxel-wise worst case
+                if ~exist('d_max','var')
+                    d_max = max([d{:}],[],2);
+                    d_min = min([d{:}],[],2);
+                end
+   
+                if isequal(cst{i,3},'OAR')
+                    d_i = d_max(cst{i,4});
+                elseif isequal(cst{i,3},'TARGET')
+                    d_i = d_min(cst{i,4});
+                end
+                
+                f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                
             end
         end
             
     end
     
 end
-
-        
