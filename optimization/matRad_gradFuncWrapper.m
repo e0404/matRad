@@ -48,12 +48,13 @@ for  i = 1:size(cst,1)
     % Only take OAR or target VOI.
     if ~isempty(cst{i,4}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
 
-        % loop over the number of constraints for the current VOI
+        % loop over the number of constraints and objectives for the current VOI
         for j = 1:numel(cst{i,6})
         
-            % reference dose/effect/RBExDose
+            % only perform gradient computations for objectives
             if isempty(strfind(cst{i,6}(j).type,'constraint'))
 
+                % compute reference
                 if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) &&...
                     isequal(type,'effect') 
 
@@ -61,104 +62,92 @@ for  i = 1:size(cst,1)
                 else
                     d_ref = cst{i,6}(j).dose;
                 end
-            else
-                d_ref = [];
-            end
-       
-            if strcmp(cst{i,6}(j).robustness,'none')
                 
-                d_i = d{1}(cst{i,4});
+                % different gradient construction depending on robust
+                % optimization
+                if strcmp(cst{i,6}(j).robustness,'none')
                 
-                delta{1}(cst{i,4}) = delta{1}(cst{i,4}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
-                
-            elseif strcmp(cst{i,6}(j).robustness,'probabilistic')
-                
-                for k = 1:dij.numOfScenarios
-                    
-                    d_i = d{k}(cst{i,4});
-                    
-                    delta{k}(cst{i,4}) = delta{k}(cst{i,4}) + dij.probOfScenarios(k)*matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
-                        
-                end
-                
-            elseif strcmp(cst{i,6}(j).robustness,'voxel-wise worst case')
-                
-                % prepare min/max dose vector we have chosen voxel-wise worst case
-                if ~exist('d_max','var')
-                    [d_max,max_ix] = max([d{:}],[],2);
-                    [d_min,min_ix] = min([d{:}],[],2);
-                end
-                
-                if isequal(cst{i,3},'OAR')
-                    d_i = d_max(cst{i,4});
-                elseif isequal(cst{i,3},'TARGET')
-                    d_i = d_min(cst{i,4});
-                end
-                
-                deltaTmp = matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
-                
-                for k = 1:dij.numOfScenarios
-                    
-                    if isequal(cst{i,3},'OAR')
-                        currWcIx = max_ix(cst{i,4}) == k;
-                        
-                    elseif isequal(cst{i,3},'TARGET')
-                        currWcIx = min_ix(cst{i,4}) == k;
+                    d_i = d{1}(cst{i,4});
+
+                    delta{1}(cst{i,4}) = delta{1}(cst{i,4}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+
+                elseif strcmp(cst{i,6}(j).robustness,'probabilistic')
+
+                    for k = 1:dij.numOfScenarios
+
+                        d_i = d{k}(cst{i,4});
+
+                        delta{k}(cst{i,4}) = delta{k}(cst{i,4}) + dij.probOfScenarios(k)*matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+
                     end
 
-                    delta{k}(cst{i,4}) = delta{k}(cst{i,4}) + deltaTmp.*currWcIx;
-                    
+                elseif strcmp(cst{i,6}(j).robustness,'voxel-wise worst case')
+
+                    % prepare min/max dose vector we have chosen voxel-wise worst case
+                    if ~exist('d_max','var')
+                        [d_max,max_ix] = max([d{:}],[],2);
+                        [d_min,min_ix] = min([d{:}],[],2);
+                    end
+
+                    if isequal(cst{i,3},'OAR')
+                        d_i = d_max(cst{i,4});
+                    elseif isequal(cst{i,3},'TARGET')
+                        d_i = d_min(cst{i,4});
+                    end
+
+                    deltaTmp = matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+
+                    for k = 1:dij.numOfScenarios
+
+                        if isequal(cst{i,3},'OAR')
+                            currWcIx = max_ix(cst{i,4}) == k;
+
+                        elseif isequal(cst{i,3},'TARGET')
+                            currWcIx = min_ix(cst{i,4}) == k;
+                        end
+
+                        delta{k}(cst{i,4}) = delta{k}(cst{i,4}) + deltaTmp.*currWcIx;
+
+                    end
+
                 end
                 
             end
+       
         end
             
     end
     
 end
 
-% delta =  2*(delta_underdose + delta_overdose + delta_deviation + delta_DVH) + delta_mean + delta_EUD
   
+% Calculate gradient
 g = zeros(dij.totalNumOfBixels,1);
 
-% Calculate gradient
-if isequal(type,'none')
-    
-    for i = 1:dij.numOfScenarios
-        if any(delta{i} > 0) % exercise only if contributions from scenario i
-    
-            g = g + (delta{i}' * dij.physicalDose{i})';
-        
-        end
-    end
+for i = 1:dij.numOfScenarios
+    if any(delta{i} > 0) % exercise only if contributions from scenario i
 
-elseif isequal(type,'effect')
-    
-    for i = 1:dij.numOfScenarios
-        if any(delta{i} > 0) % exercise only if contributions from scenario i
-    
+        if isequal(type,'none')
+
+            g = g + (delta{i}' * dij.physicalDose{i})';
+
+        elseif isequal(type,'effect')
+
             vBias    = (delta{i}' * dij.mAlphaDose{i})';
             quadTerm = dij.mSqrtBetaDose{i} * w;
             mPsi     = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{i})';
             g        =  g + vBias + mPsi ; 
-       
-        end
-    end
-    
-elseif isequal(type,'RBExD')
-    
-    for i = 1:dij.numOfScenarios
-        if any(delta{i} > 0) % exercise only if contributions from scenario i
-    
+
+        elseif isequal(type,'RBExD')
+
             scaledEffect = d{i} + dij.gamma;
             deltaTmp     = delta{i}./(2*dij.bx.*scaledEffect);
             vBias        = (deltaTmp' * dij.mAlphaDose{i})';
             quadTerm     = dij.mSqrtBetaDose{i} * w;
             mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{i})';
             g            = g + vBias + mPsi ;
-            
-        end
-    end
-    
-end
 
+        end
+
+    end
+end

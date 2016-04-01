@@ -149,7 +149,7 @@ else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBEx
 end
 
 % set callback functions.
-[options.cl,options.cu] = matRad_getConstBounds(cst,pln.bioOptimization);   
+[options.cl,options.cu] = matRad_getConstBounds(cst,dij.numOfScenarios,pln.bioOptimization);   
 funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.constraints       = @(x) matRad_constFunc(x,dij,cst,pln.bioOptimization);
 funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,pln.bioOptimization);
