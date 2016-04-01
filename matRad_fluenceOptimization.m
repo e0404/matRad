@@ -144,7 +144,7 @@ else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBEx
            dij.gamma(idx) = dij.ax(idx)./(2*dij.bx(idx)); 
             
            roughRBE = 3;
-           wInit    =  (doseTarget)/(roughRBE*mean(dij.physicalDose(V,:)*wOnes)) * wOnes; 
+           wInit    =  (doseTarget)/(roughRBE*mean(dij.physicalDose{1}(V,:)*wOnes)) * wOnes; 
     end
 end
 
@@ -179,7 +179,7 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
         end
     end
     
-    resultGUI.effect = (dij.mAlphaDose*resultGUI.w+(dij.mSqrtBetaDose*resultGUI.w).^2);
+    resultGUI.effect = (dij.mAlphaDose{1}*resultGUI.w+(dij.mSqrtBetaDose{1}*resultGUI.w).^2);
     resultGUI.effect = reshape(resultGUI.effect,dij.dimensions);
     
     resultGUI.RBExDose     = zeros(size(resultGUI.effect));
@@ -187,9 +187,9 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
     resultGUI.RBExDose(ix) = ((sqrt(a_x(ix).^2 + 4 .* b_x(ix) .* resultGUI.effect(ix)) - a_x(ix))./(2.*b_x(ix)));
     resultGUI.RBE          = resultGUI.RBExDose./resultGUI.physicalDose;
    
-    AlphaDoseCube    = dij.mAlphaDose * resultGUI.w;
+    AlphaDoseCube    = dij.mAlphaDose{1} * resultGUI.w;
     resultGUI.alpha  = (reshape(AlphaDoseCube,dij.dimensions))./resultGUI.physicalDose;
-    SqrtBetaDoseCube = dij.mSqrtBetaDose * resultGUI.w;
+    SqrtBetaDoseCube = dij.mSqrtBetaDose{1} * resultGUI.w;
     resultGUI.beta   = ((reshape(SqrtBetaDoseCube,dij.dimensions))./resultGUI.physicalDose).^2;
     
     fprintf(' done!\n');
@@ -201,5 +201,5 @@ if ~isdeployed
     set(h_cw, 'KeyPressedCallback',' ');
 end
 
-clearvars -global matRad_global_x matRad_global_d matRad_ALT_C_Pressed;
+clearvars -global matRad_global_x matRad_global_d matRad_STRG_C_Pressed matRad_objective_function_value;
 

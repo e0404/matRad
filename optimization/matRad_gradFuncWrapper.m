@@ -92,19 +92,19 @@ if isequal(type,'none')
 
 elseif isequal(type,'effect')
     
-    vBias = (delta' * dij.mAlphaDose)';
-    quadTerm = dij.mSqrtBetaDose * w;
-    mPsi = (2*(delta.*quadTerm)'*dij.mSqrtBetaDose)';
+    vBias = (delta' * dij.mAlphaDose{1})';
+    quadTerm = dij.mSqrtBetaDose{1} * w;
+    mPsi = (2*(delta.*quadTerm)'*dij.mSqrtBetaDose{1})';
     g    =  vBias+mPsi ; 
     
 elseif isequal(type,'RBExD')
     
-    ScaledEffect = d + dij.gamma;
+    ScaledEffect = d{1} + dij.gamma;
         
     delta = delta./(2*dij.bx.*ScaledEffect);
-    vBias = (delta' * dij.mAlphaDose)';
-    quadTerm = dij.mSqrtBetaDose * w;
-    mPsi = (2*(delta.*quadTerm)'*dij.mSqrtBetaDose)';
+    vBias = (delta' * dij.mAlphaDose{1})';
+    quadTerm = dij.mSqrtBetaDose{1} * w;
+    mPsi = (2*(delta.*quadTerm)'*dij.mSqrtBetaDose{1})';
     g    =  vBias+mPsi ;
     
 end
