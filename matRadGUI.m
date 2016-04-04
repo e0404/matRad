@@ -2367,6 +2367,55 @@ selection = questdlg('Do you really want to close matRad?',...
      return
  end
 
+% --- Executes on button press in pushbutton_recalc.
+function pushbutton_recalc_Callback(hObject, eventdata, handles)
+
+% recalculation only makes sense if ...
+if evalin('base','exist(''pln'',''var'')') && ...
+   evalin('base','exist(''stf'',''var'')') && ...
+   evalin('base','exist(''ct'',''var'')') && ...
+   evalin('base','exist(''cst'',''var'')') && ...
+   evalin('base','exist(''resultGUI'',''var'')')
+
+    % get all data from workspace
+    pln       = evalin('base','pln');
+    stf       = evalin('base','stf');
+    ct        = evalin('base','ct');
+    cst       = evalin('base','cst');
+    resultGUI = evalin('base','resultGUI');
+    
+    % adjust overlap internally
+    cst = matRad_setOverlapPriorities(cst);
+    
+    % change isocenter if that was changed and do _not_ recreate steering
+    % information
+    for i = 1:numel(pln.gantryAngles)
+        stf(i).isoCenter = pln.isoCenter;
+    end
+
+    % recalculate influence matrix
+    if strcmp(pln.radiationMode,'photons')
+        dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+    elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
+        dij = matRad_calcParticleDose(ct,stf,pln,cst);
+    end
+
+    % recalculate cubes in resultGUI
+    resultGUI = matRad_calcCubes(resultGUI.w,dij,cst);
+    
+    % assign results to base worksapce
+    assignin('base','dij',dij);
+    assignin('base','resultGUI',resultGUI);
+    
+    handles.State = 3;
+    
+    guidata(hObject,handles);
+    UpdatePlot(handles);
+    UpdateState(handles);
+
+end
+
+
 %% CREATE FUNCTIONS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -2459,4 +2508,6 @@ function sliderOffset_CreateFcn(hObject, ~, ~)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+
+
 
