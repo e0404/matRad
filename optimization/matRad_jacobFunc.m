@@ -74,7 +74,7 @@ for  i = 1:size(cst,1)
                    mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
                                               sparse(cst{i,4},1:numel(cst{i,4}),2,dij.numOfVoxels,numel(cst{i,4}))]; 
                    VoxelID                 = [VoxelID ;cst{i,4}];
-                   ConstraintID            = [ConstraintID, 1:numel(cst{i,4}) + ConstraintID(end)];
+                   ConstraintID            = [ConstraintID, [1:numel(cst{i,4})] + ConstraintID(end)];
                       
                elseif isequal(type,'RBExD')
 
@@ -83,7 +83,7 @@ for  i = 1:size(cst,1)
                    mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,sparse(cst{i,4},1:numel(cst{i,4}),2./(2*dij.bx(cst{i,4}).*ScaledEffect(cst{i,4})),...
                                                                              dij.numOfVoxels,numel(cst{i,4}))]; 
                    VoxelID                 = [VoxelID ;cst{i,4}];
-                   ConstraintID            = [ConstraintID, 1:numel(cst{i,4}) + ConstraintID(end)];
+                   ConstraintID            = [ConstraintID, [1:numel(cst{i,4})] + ConstraintID(end)];
       
                end
 
