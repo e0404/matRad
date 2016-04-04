@@ -17,6 +17,9 @@ function [radDepthCube,geoDistCube] = matRad_rayTracing(stf,ct,V,lateralCutoff)
 %   radDepthCube:  radiological depth cube in the ct.cube dimensions
 %   geoDistCube:   geometrical distance cube in the ct.cube dimensions
 %
+% References
+%   [1] http://www.sciencedirect.com/science/article/pii/S1120179711001359
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
