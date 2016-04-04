@@ -241,15 +241,15 @@ for i = 1:length(pln.gantryAngles)
 
         for ShiftScen = 1:multScen.numOfShiftScen
             % ray tracing necessary to determine depth of the target
-            [alpha,l,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter + multScen.shifts(:,ShiftScen)', ...
-                                 ct.resolution, ...
-                                 ct.cubeDim,...
-                                 stf(i).sourcePoint, ...
-                                 stf(i).ray(j).targetPoint, ...
-                                 [ct.cube {voiTarget}]);
+            [alpha,l{ShiftScen},rho{ShiftScen},~,~] = matRad_siddonRayTracer(stf(i).isoCenter + multScen.shifts(:,ShiftScen)', ...
+                                                                             ct.resolution, ...
+                                                                             ct.cubeDim,...
+                                                                             stf(i).sourcePoint, ...
+                                                                             stf(i).ray(j).targetPoint, ...
+                                                                             [ct.cube {voiTarget}]);
                          
             for CtScen = 1:multScen.numOfCtScen
-                ixSSD = find(rho{CtScen} > DensityThresholdSSD,1,'first');
+                ixSSD = find(rho{ShiftScen}{CtScen} > DensityThresholdSSD,1,'first');
 
                 if isempty(ixSSD)== 1
                     warning('Surface for SSD calculation starts directly in first voxel of CT\n');
@@ -263,19 +263,34 @@ for i = 1:length(pln.gantryAngles)
         % find appropriate energies for particles
        if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
 
-           % target hit
-           if sum(rho{end}) > 0 
-
+           % target hit (in any shift scenario)
+           rhoVoiTarget = [];
+           for ShiftScen = 1:multScen.numOfShiftScen
+                rhoVoiTarget = [rhoVoiTarget,rho{ShiftScen}{end}];
+           end
+           
+           if sum(rhoVoiTarget) > 0 
+    
+               Counter = 0;
+               
                for CtScen = 1:multScen.numOfCtScen
-                    % compute radiological depths
-                    % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
-                    radDepths = cumsum(l .* rho{CtScen}); 
+                   for ShiftScen = 1:multScen.numOfShiftScen
+                       
+                        Counter = Counter + 1;
+                       
+                        % compute radiological depths
+                        % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
+                        radDepths = cumsum(l{ShiftScen} .* rho{ShiftScen}{CtScen}); 
 
-                    % find target entry & exit
-                    diff_voi         = diff([rho{end}]);
-                    targetEntry(CtScen,:) = radDepths(diff_voi == 1);
-                    targetExit(CtScen,:)  = radDepths(diff_voi == -1);
+                        % find target entry & exit
+                        diff_voi         = diff([rho{ShiftScen}{end}]);
+                        targetEntry(Counter,1:length(radDepths(diff_voi == 1))) = radDepths(diff_voi == 1);
+                        targetExit(Counter,1:length(radDepths(diff_voi == -1)))  = radDepths(diff_voi == -1);
+                   end
                end
+               
+               targetEntry(targetEntry == 0) = NaN;
+               targetExit(targetExit == 0)   = NaN;
                
                targetEntry = min(targetEntry);
                targetExit  = max(targetExit);
