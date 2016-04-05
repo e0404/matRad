@@ -110,18 +110,13 @@ for  i = 1:size(cst,1)
             
             if isequal(cst{i,6}(j).type, 'max dose constraint') 
              
-                cl = [cl;-inf*ones(numel(cst{i,4}),1)];
-                cu = [cu;Param*ones(numel(cst{i,4}),1)];
+                cl = [cl;-inf];
+                cu = [cu;Param];
                 
             elseif isequal(cst{i,6}(j).type, 'min dose constraint') 
                
-                cl = [cl;Param*ones(numel(cst{i,4}),1)];
-                cu = [cu;inf*ones(numel(cst{i,4}),1)];
-                
-            elseif isequal(cst{i,6}(j).type, 'min max dose constraint') 
-               
-                cl = [cl;Param(1)*ones(numel(cst{i,4}),1)];
-                cu = [cu;Param(2)*ones(numel(cst{i,4}),1)];
+                cl = [cl;Param];
+                cu = [cu;inf];
                 
             elseif isequal(cst{i,6}(j).type, 'min mean dose constraint') 
     
