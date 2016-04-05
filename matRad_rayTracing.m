@@ -57,9 +57,9 @@ inv_rotMx_XZ_T = [cosd(-stf.couchAngle) 0 -sind(-stf.couchAngle);
                   sind(-stf.couchAngle) 0  cosd(-stf.couchAngle)];
 
 for ShiftScen = 1:multScen.numOfShiftScen
-    xCoords = xCoords_vox(:)*ct.resolution.x-stf.isoCenter(1) + multScen.shifts(1,ShiftScen);
-    yCoords = yCoords_vox(:)*ct.resolution.y-stf.isoCenter(2) + multScen.shifts(2,ShiftScen);
-    zCoords = zCoords_vox(:)*ct.resolution.z-stf.isoCenter(3) + multScen.shifts(3,ShiftScen); 
+    xCoords = xCoords_vox(:)*ct.resolution.x - (stf.isoCenter(1) + multScen.shifts(1,ShiftScen));
+    yCoords = yCoords_vox(:)*ct.resolution.y - (stf.isoCenter(2) + multScen.shifts(2,ShiftScen));
+    zCoords = zCoords_vox(:)*ct.resolution.z - (stf.isoCenter(3) + multScen.shifts(3,ShiftScen)); 
 
     coords_bev = [xCoords yCoords zCoords]*inv_rotMx_XZ_T*inv_rotMx_XY_T;             
 
@@ -125,11 +125,12 @@ for ShiftScen = 1:multScen.numOfShiftScen
     rayMx_world{ShiftScen} = rayMx_bev * rotMx_XY_T * rotMx_XZ_T;
 end
 
-% set up distance cube to decide which rad depths should be stored
-metricHitVoxelsCube = -inf*ones(ct.cubeDim);
-
 % perform ray tracing over all rays
 for ShiftScen = 1:multScen.numOfShiftScen
+    
+    % set up distance cube to decide which rad depths should be stored
+    metricHitVoxelsCube = -inf*ones(ct.cubeDim);
+    
     for j = 1:size(rayMx_world{ShiftScen},1)
         
         % run siddon ray tracing algorithm

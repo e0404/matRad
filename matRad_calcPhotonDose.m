@@ -149,9 +149,9 @@ for i = 1:dij.numOfBeams; % loop over all beams
 
     % convert voxel indices to real coordinates using iso center of beam i
     for ShiftScen = 1:multScen.numOfShiftScen
-        xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1) + multScen.shifts(1,ShiftScen);
-        yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2) + multScen.shifts(2,ShiftScen);
-        zCoordsV = zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3) + multScen.shifts(3,ShiftScen);
+        xCoordsV = xCoordsV_vox(:)*ct.resolution.x - (stf(i).isoCenter(1) + multScen.shifts(1,ShiftScen));
+        yCoordsV = yCoordsV_vox(:)*ct.resolution.y - (stf(i).isoCenter(2) + multScen.shifts(2,ShiftScen));
+        zCoordsV = zCoordsV_vox(:)*ct.resolution.z - (stf(i).isoCenter(3) + multScen.shifts(3,ShiftScen));
         coordsV{ShiftScen}  = [xCoordsV yCoordsV zCoordsV];
     end
     
