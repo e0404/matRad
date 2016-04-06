@@ -1,8 +1,7 @@
-function [ix,rad_distancesSq,x_latDists,z_latDists] = ...
+function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
           matRad_calcGeoDists(rot_coords_bev, ...
                               sourcePoint_bev, ...
                               targetPoint_bev, ...
-                              geoDists, ...
                               SAD, ...
                               radDepthMask, ...
                               lateralCutOff)
@@ -22,8 +21,6 @@ function [ix,rad_distancesSq,x_latDists,z_latDists] = ...
 %                       into bev according to the couch and gantry angle        
 %   sourcePoint_bev:    source point in voxel coordinates in beam's eye view
 %   targetPoint_bev:    target point in voxel coordinated in beam's eye view
-%   geoDists:            geometrical distance of all considered voxels from
-%                       virtual radiation source
 %   SAD:                source-to-axis distance
 %   radDepthIx:         sub set of voxels for which radiological depth
 %                       calculations are available
@@ -33,10 +30,10 @@ function [ix,rad_distancesSq,x_latDists,z_latDists] = ...
 % output
 %   ix:                 indices of voxels where we want to compute dose
 %                       influence data
-%   x_latDists:         lateral x-distance to the central ray (where the
-%                       actual computation of the radiological depth takes place)
-%   z_latDists:         lateral z-distance to the central ray (where the
-%                       actual computation of the radiological depth takes place)
+%   isoLatDistsX:       lateral x-distance to the central ray projected to
+%                       iso center plane
+%   isoLatDistsZ:       lateral z-distance to the central ray projected to
+%                       iso center plane
 %   radialDist_sq:      squared radial distance to the central ray (where the
 %                       actual computation of the radiological depth takes place)
 %
@@ -91,12 +88,12 @@ else
 end
 
 % Put [0 0 0] position CT in center of the beamlet.
-x_latDists = rot_coords_temp(radDepthMask,1) + sourcePoint_bev(1);
-z_latDists = rot_coords_temp(radDepthMask,3) + sourcePoint_bev(3);
+latDistsX = rot_coords_temp(radDepthMask,1) + sourcePoint_bev(1);
+latDistsZ = rot_coords_temp(radDepthMask,3) + sourcePoint_bev(3);
 
 % check of radial distance exceeds lateral cutoff (projected to iso center)
-rad_distancesSq = x_latDists.^2 + z_latDists.^2;
-subsetMask = rad_distancesSq ./ geoDists(radDepthMask).^2 <= lateralCutOff^2 /SAD^2;
+rad_distancesSq = latDistsX.^2 + latDistsZ.^2;
+subsetMask = rad_distancesSq ./ rot_coords_temp(radDepthMask,2).^2 <= lateralCutOff^2 /SAD^2;
 
 % return index list within considered voxels
 ix = radDepthIx(subsetMask);
@@ -108,8 +105,8 @@ end
 
 % return x & z distance
 if nargout > 2
-   x_latDists = x_latDists(subsetMask);
-   z_latDists = z_latDists(subsetMask); 
+   isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(ix,2)*SAD;
+   isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(ix,2)*SAD; 
 end
 
 
