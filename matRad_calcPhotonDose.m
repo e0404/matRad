@@ -46,6 +46,7 @@ dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.dimensions         = pln.voxelDimensions;
+dij.numOfScenarios     = 1;
 
 % set up arrays for book keeping
 dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
@@ -53,7 +54,8 @@ dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
 dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 
 % Allocate space for dij.physicalDose sparse matrix
-dij.physicalDose = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
+dij.physicalDose = cell(dij.numOfScenarios,1);
+[dij.physicalDose{:}] = deal(spalloc(numel(ct.cube),dij.totalNumOfBixels,1));
 
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
@@ -66,7 +68,7 @@ V = unique([cell2mat(cst(:,4))]);
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(size(ct.cube),V);
 
 % set lateral cutoff value
-lateralCutoff = 30; % [mm]
+lateralCutoff = 20; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
@@ -236,7 +238,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
         % save computation time and memory by sequentially filling the 
         % sparse matrix dose.dij from the cell array
         if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
-            dij.physicalDose(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+            dij.physicalDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
         end
         
     end

@@ -45,6 +45,7 @@ dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.dimensions         = pln.voxelDimensions;
+dij.numOfScenarios     = 1;
 
 % set up arrays for book keeping
 dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
@@ -52,7 +53,8 @@ dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
 dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 
 % Allocate space for dij.physicalDose sparse matrix
-dij.physicalDose = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
+dij.physicalDose = cell(dij.numOfScenarios,1);
+[dij.physicalDose{:}] = deal(spalloc(numel(ct.cube),dij.totalNumOfBixels,1));
 
 % helper function for energy selection
 round2 = @(a,b)round(a*10^b)/10^b;
@@ -61,10 +63,12 @@ round2 = @(a,b)round(a*10^b)/10^b;
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 doseTmpContainer = cell(numOfBixelsContainer,1);
 if pln.bioOptimization == true 
-    alphaDoseTmpContainer = cell(numOfBixelsContainer,1);
-    betaDoseTmpContainer  = cell(numOfBixelsContainer,1);
-    dij.mAlphaDose        = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
-    dij.mSqrtBetaDose     = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
+    alphaDoseTmpContainer  = cell(numOfBixelsContainer,1);
+    betaDoseTmpContainer   = cell(numOfBixelsContainer,1);
+    dij.mAlphaDose         = cell(dij.numOfScenarios,1);
+    [dij.mAlphaDose{:}]    = deal(spalloc(numel(ct.cube),dij.totalNumOfBixels,1));
+    dij.mSqrtBetaDose      = cell(dij.numOfScenarios,1);
+    [dij.mSqrtBetaDose{:}] = deal(spalloc(numel(ct.cube),dij.totalNumOfBixels,1));
 end
 
 % Only take voxels inside patient.
@@ -245,12 +249,12 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 % save computation time and memory by sequentially filling the
                 % sparse matrix dose.dij from the cell array
                 if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
-                    dij.physicalDose(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                    dij.physicalDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
                     
                     if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                             && strcmp(pln.radiationMode,'carbon')
-                        dij.mAlphaDose(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
-                        dij.mSqrtBetaDose(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                        dij.mAlphaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                        dij.mSqrtBetaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
                     end
                 end
 
