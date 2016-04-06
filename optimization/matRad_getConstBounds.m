@@ -57,24 +57,19 @@ for i = 1:numOfScenarios
                     elseif isequal(type,'effect')
                         param = cst{j,5}.alphaX .* cst{j,6}(k).dose + cst{j,5}.betaX .* cst{j,6}(k).dose.^2;
                     end
-
+                    
                     if isequal(cst{j,6}(k).type, 'max dose constraint') 
-
-                        cl = [cl;-inf*ones(numel(cst{j,4}),1)];
-                        cu = [cu;param*ones(numel(cst{j,4}),1)];
+             
+                        cl = [cl;-inf];
+                        cu = [cu;param];
 
                     elseif isequal(cst{j,6}(k).type, 'min dose constraint') 
 
-                        cl = [cl;param*ones(numel(cst{j,4}),1)];
-                        cu = [cu;inf*ones(numel(cst{j,4}),1)];
-
-                    elseif isequal(cst{j,6}(k).type, 'min max dose constraint') 
-
-                        cl = [cl;param(1)*ones(numel(cst{j,4}),1)];
-                        cu = [cu;param(2)*ones(numel(cst{j,4}),1)];
+                        cl = [cl;param];
+                        cu = [cu;inf];
 
                     elseif isequal(cst{j,6}(k).type, 'min mean dose constraint') 
-
+                    
                         cl = [cl;param];
                         cu = [cu;inf];
 

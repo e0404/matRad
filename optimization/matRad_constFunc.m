@@ -63,11 +63,19 @@ for i = 1:dij.numOfScenarios
                              strcmp(cst{j,6}(k).robustness,'voxel-wise worst case')
 
 
-                    if isequal(cst{j,6}(k).type, 'max dose constraint') || ...
-                       isequal(cst{j,6}(k).type, 'min dose constraint') || ...
-                       isequal(cst{j,6}(k).type, 'min max dose constraint') 
+                    if isequal(cst{i,6}(j).type, 'max dose constraint')
 
-                        c = [c;d_i];
+                        epsilon = 1e-3;
+                        d_i_max = max(d_i);
+                
+                        c = [c;d_i_max + epsilon * log( sum(exp((d_i - d_i_max)/epsilon)) )];
+            
+                    elseif isequal(cst{i,6}(j).type, 'min dose constraint')
+
+                        epsilon = 1e-3;
+                        d_i_min = min(d_i);
+
+                        c = [c;d_i_min - epsilon * log( sum(exp((d_i_min - d_i)/epsilon)) )];
 
                     elseif isequal(cst{j,6}(k).type, 'min mean dose constraint') || ...
                            isequal(cst{j,6}(k).type, 'max mean dose constraint') || ...

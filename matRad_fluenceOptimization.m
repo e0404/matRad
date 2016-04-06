@@ -201,5 +201,8 @@ if ~isdeployed
     set(h_cw, 'KeyPressedCallback',' ');
 end
 
-clearvars -global matRad_global_x matRad_global_d matRad_STRG_C_Pressed matRad_objective_function_value;
+% clear global variables
+clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;
 
+% unblock mex files
+clear mex
