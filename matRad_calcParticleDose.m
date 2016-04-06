@@ -60,7 +60,7 @@ round2 = @(a,b)round(a*10^b)/10^b;
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 doseTmpContainer = cell(numOfBixelsContainer,1);
-if pln.bioOptimization == true 
+if ~strcmp(pln.bioOptimization,'none') 
     alphaDoseTmpContainer = cell(numOfBixelsContainer,1);
     betaDoseTmpContainer  = cell(numOfBixelsContainer,1);
     dij.mAlphaDose        = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
