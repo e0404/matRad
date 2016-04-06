@@ -71,7 +71,7 @@ round2 = @(a,b)round(a*10^b)/10^b;
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 doseTmpContainer = cell(numOfBixelsContainer,multScen.numOfCtScen,multScen.numOfShiftScen,multScen.numOfRangeShiftScen);
-if pln.bioOptimization == true 
+if isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBExD')
     alphaDoseTmpContainer = cell(numOfBixelsContainer,multScen.numOfCtScen,multScen.numOfShiftScen,multScen.numOfRangeShiftScen);
     betaDoseTmpContainer  = cell(numOfBixelsContainer,multScen.numOfCtScen,multScen.numOfShiftScen,multScen.numOfRangeShiftScen);
     for CtScen = 1:multScen.numOfCtScen
@@ -244,10 +244,14 @@ for i = 1:dij.numOfBeams; % loop over all beams
                             if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
                                 
                                 % manipulate radDepthCube for range scenarios
-                                radDepths = radDepthCube{CtScen,ShiftScen}(V(ix{ShiftScen})) +...                                         % original cube
-                                            radDepthCube{CtScen,ShiftScen}(V(ix{ShiftScen}))*multScen.relRangeShifts(RangeShiftScen) +... % rel range shift
-                                            multScen.absRangeShifts(RangeShiftScen);                                                      % absolute range shift
-                                radDepths(radDepths < 0) = 0;       
+                                radDepths = radDepthCube{CtScen,ShiftScen}(V(ix{ShiftScen}));                                         
+                                            
+                                if multScen.relRangeShifts(RangeShiftScen) ~= 0 || multScen.absRangeShifts(RangeShiftScen) ~= 0
+                                    radDepths = radDepths +...                                                                                % original cube
+                                                radDepthCube{CtScen,ShiftScen}(V(ix{ShiftScen}))*multScen.relRangeShifts(RangeShiftScen) +... % rel range shift
+                                                multScen.absRangeShifts(RangeShiftScen);                                                      % absolute range shift
+                                    radDepths(radDepths < 0) = 0;  
+                                end
 
                                 % find depth depended lateral cut off
                                 if cutOffLevel >= 1

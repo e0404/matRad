@@ -252,10 +252,14 @@ for i = 1:dij.numOfBeams; % loop over all beams
                     if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
                         
                         % manipulate radDepthCube for range scenarios
-                        manipulatedRadDepthCube = radDepthCube{CtScen,ShiftScen}(V(ix{ShiftScen})) +...                                         % original cube
-                                                  radDepthCube{CtScen,ShiftScen}(V(ix{ShiftScen}))*multScen.relRangeShifts(RangeShiftScen) +... % rel range shift
-                                                  multScen.absRangeShifts(RangeShiftScen);                                                      % absolute range shift
-                        manipulatedRadDepthCube(manipulatedRadDepthCube < 0) = 0;                      
+                        radDepths = radDepthCube{CtScen,ShiftScen}(V(ix{ShiftScen}));                                         
+
+                        if multScen.relRangeShifts(RangeShiftScen) ~= 0 || multScen.absRangeShifts(RangeShiftScen) ~= 0
+                            radDepths = radDepths +...                                                                                % original cube
+                                        radDepthCube{CtScen,ShiftScen}(V(ix{ShiftScen}))*multScen.relRangeShifts(RangeShiftScen) +... % rel range shift
+                                        multScen.absRangeShifts(RangeShiftScen);                                                      % absolute range shift
+                            radDepths(radDepths < 0) = 0;  
+                        end                    
                                               
                         % calculate photon dose for beam i and bixel j
                         bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
