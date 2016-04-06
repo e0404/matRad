@@ -66,7 +66,7 @@ V = unique([cell2mat(cst(:,4))]);
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(size(ct.cube),V);
 
 % set lateral cutoff value
-lateralCutoff = 30; % [mm]
+lateralCutoff = 20; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
