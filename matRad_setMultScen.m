@@ -1,18 +1,32 @@
 function multScen = matRad_setMultScen(multScen)
 
 % set shift scenarios
-deltaShift = multScen.maxShift./(multScen.numOfShiftScen./2);
-multScen.shifts  = [];
+if isequal(multScen.shiftGenType,'equidistant')
+    deltaShift = multScen.shiftSize./(multScen.numOfShiftScen./2);
+    multScen.shifts  = [];
 
-for i = 1:3
-    shifts      = zeros(3,multScen.numOfShiftScen(i));
-    shiftstmp   = -multScen.maxShift(i):deltaShift(i):multScen.maxShift(i);
-    shiftstmp   = shiftstmp(shiftstmp ~= 0);
-    shifts(i,:) = shiftstmp;
+    for i = 1:3
+        shifts      = zeros(3,multScen.numOfShiftScen(i));
+        shiftstmp   = -multScen.shiftSize(i):deltaShift(i):multScen.shiftSize(i);
+        shiftstmp   = shiftstmp(shiftstmp ~= 0);
+        shifts(i,:) = shiftstmp;
+
+        multScen.shifts   = [multScen.shifts, shifts];
+    end
+    multScen.shifts = [zeros(3,1), multScen.shifts];
     
-    multScen.shifts   = [multScen.shifts, shifts];
+elseif isequal(multScen.shiftGenType,'sampling')
+    multScen.shifts  = [];
+    
+    for i = 1:3
+        shifts      = zeros(3,multScen.numOfShiftScen(i));
+        shifts(i,:) = normrnd(0,multScen.shiftSize(i),1,multScen.numOfShiftScen(i));
+
+        multScen.shifts   = [multScen.shifts, shifts];
+    end
+    multScen.shifts = [zeros(3,1), multScen.shifts];
+    
 end
-multScen.shifts = [zeros(3,1), multScen.shifts];
 
 % set range scenarios
 if multScen.numOfRangeShiftScen > 0
