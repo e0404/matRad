@@ -1196,7 +1196,6 @@ catch ME
     return;
 end
 
-
 % perform sequencing and DAO
 try
     
@@ -1391,7 +1390,7 @@ end
 % displays the cst in the GUI
 function setCstTable(handles,cst)
 
-columnname = {'VOI','VOI Type','Priority','Obj Func','penalty','dose', 'EUD','volume'};
+columnname = {'VOI','VOI Type','Priority','Obj Func','penalty','dose', 'EUD','volume','robustness'};
 
 AllObjectiveFunction = {'square underdosing','square overdosing','square deviation', 'mean', 'EUD',...
        'min dose constraint','max dose constraint','min max dose constraint',...
@@ -1403,7 +1402,7 @@ AllObjectiveFunction = {'square underdosing','square overdosing','square deviati
 PlaceHolder = NaN;
 columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
        AllObjectiveFunction,...
-       'numeric','char','numeric','numeric'};
+       'numeric','char','numeric','numeric',{'none','WC','prob'}};
    
 numOfObjectives = 0;
 for i = 1:size(cst,1)
@@ -1434,6 +1433,7 @@ for i = 1:size(cst,1)
        data{Counter,6} = num2str(cst{i,6}(j).dose);
        data{Counter,7} = cst{i,6}(j).EUD;
        data{Counter,8} = cst{i,6}(j).volume;
+       data{Counter,9} = cst{i,6}(j).robustness;
        
        Counter = Counter +1;
        end
@@ -1443,7 +1443,7 @@ end
 
 set(handles.uiTable,'ColumnName',columnname);
 set(handles.uiTable,'ColumnFormat',columnformat);
-set(handles.uiTable,'ColumnEditable',[true true true true true true true true]);
+set(handles.uiTable,'ColumnEditable',[true true true true true true true true false]);
 set(handles.uiTable,'Data',data);
 
 
@@ -1494,11 +1494,11 @@ for i = 1:size(OldCst,1)
             % get further parameter
             if FlagValidParameters
                 
-              NewCst{Cnt,4}(CntObjF,1).penalty     = data{j,5};
-              NewCst{Cnt,4}(CntObjF,1).penalty     = data{j,5};
               NewCst{Cnt,4}(CntObjF,1).dose        = str2num(data{j,6});
-              NewCst{Cnt,4}(CntObjF,1).EUD         = data{j,7};
-              NewCst{Cnt,4}(CntObjF,1).volume      = data{j,8};
+              NewCst{Cnt,4}(CntObjF,1).penalty    = data{j,5};
+              NewCst{Cnt,4}(CntObjF,1).EUD        = data{j,7};
+              NewCst{Cnt,4}(CntObjF,1).volume     = data{j,8};
+              NewCst{Cnt,4}(CntObjF,1).robustness = data{j,9};
              
             end
             
@@ -1559,6 +1559,7 @@ data{sEnd+1,1} = 'Select VOI';
 data{sEnd+1,2} = 'Select VOI Type';
 data{sEnd+1,3} = 2;
 data{sEnd+1,4} = 'Select obj func/constraint';
+data{sEnd+1,9} = 'none';
 set(handles.uiTable,'data',data);
 
 %handles.State=1;
