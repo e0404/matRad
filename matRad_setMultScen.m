@@ -16,15 +16,24 @@ multScen.shifts = [zeros(3,1), multScen.shifts];
 
 % set range scenarios
 if multScen.numOfRangeShiftScen > 0
-    deltaAbsRangeShift      = multScen.maxAbsRangeShift/(multScen.numOfRangeShiftScen/2);
-    multScen.absRangeShifts = -multScen.maxAbsRangeShift:deltaAbsRangeShift:multScen.maxAbsRangeShift;
-    multScen.absRangeShifts = multScen.absRangeShifts(multScen.absRangeShifts ~= 0);
-    multScen.absRangeShifts = [0, multScen.absRangeShifts];
+    if multScen.maxAbsRangeShift == 0
+        multScen.absRangeShifts = zeros(1,multScen.numOfRangeShiftScen+1);
+    else
+        deltaAbsRangeShift      = multScen.maxAbsRangeShift/(multScen.numOfRangeShiftScen/2);
+        multScen.absRangeShifts = -multScen.maxAbsRangeShift:deltaAbsRangeShift:multScen.maxAbsRangeShift;
+        multScen.absRangeShifts = multScen.absRangeShifts(multScen.absRangeShifts ~= 0);
+        multScen.absRangeShifts = [0, multScen.absRangeShifts];
+    end
 
-    deltaRelRangeShift      = multScen.maxRelRangeShift/(multScen.numOfRangeShiftScen/2);
-    multScen.relRangeShifts = -multScen.maxRelRangeShift:deltaRelRangeShift:multScen.maxRelRangeShift;
-    multScen.relRangeShifts = multScen.relRangeShifts(multScen.relRangeShifts ~= 0);
-    multScen.relRangeShifts = [0, multScen.relRangeShifts/100];
+    if multScen.maxRelRangeShift == 0
+        multScen.relRangeShifts = zeros(1,multScen.numOfRangeShiftScen+1);
+    else
+        deltaRelRangeShift      = multScen.maxRelRangeShift/(multScen.numOfRangeShiftScen/2);
+        multScen.relRangeShifts = -multScen.maxRelRangeShift:deltaRelRangeShift:multScen.maxRelRangeShift;
+        multScen.relRangeShifts = multScen.relRangeShifts(multScen.relRangeShifts ~= 0);
+        multScen.relRangeShifts = [0, multScen.relRangeShifts/100];
+    end
+    
 elseif multScen.numOfRangeShiftScen == 0
     multScen.absRangeShifts = 0;
     multScen.relRangeShifts = 0;
