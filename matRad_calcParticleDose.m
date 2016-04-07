@@ -62,7 +62,7 @@ round2 = @(a,b)round(a*10^b)/10^b;
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 doseTmpContainer = cell(numOfBixelsContainer,1);
-if pln.bioOptimization == true 
+if ~strcmp(pln.bioOptimization,'none') 
     alphaDoseTmpContainer  = cell(numOfBixelsContainer,1);
     betaDoseTmpContainer   = cell(numOfBixelsContainer,1);
     dij.mAlphaDose         = cell(dij.numOfScenarios,1);
@@ -148,11 +148,11 @@ for i = 1:dij.numOfBeams; % loop over all beams
     % Calcualte radiological depth cube
     lateralCutoffRayTracing = 50;
     fprintf('matRad: calculate radiological depth cube...');
-    [radDepthCube,geoDistCube] = matRad_rayTracing(stf(i),ct,V,lateralCutoffRayTracing);
+    radDepthCube = matRad_rayTracing(stf(i),ct,V,lateralCutoffRayTracing);
     fprintf('done.\n');
     
     % construct binary mask where ray tracing results are available
-    radDepthIx = ~isnan(radDepthCube);
+    radDepthMask = ~isnan(radDepthCube);
     
     % Determine lateral cutoff
     fprintf('matRad: calculate lateral cutoff...');
@@ -172,13 +172,12 @@ for i = 1:dij.numOfBeams; % loop over all beams
             maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
             
             % Ray tracing for beam i and ray j                          
-            [ix,radialDist_sq,~,~] = matRad_calcGeoDists(rot_coordsV, ...
-                                                       stf(i).sourcePoint_bev, ...
-                                                       stf(i).ray(j).targetPoint_bev, ...
-                                                       geoDistCube(V), ...
-                                                       machine.meta.SAD, ...
-                                                       radDepthIx(V), ...
-                                                       maxLateralCutoffDoseCalc);
+            [ix,radialDist_sq] = matRad_calcGeoDists(rot_coordsV, ...
+                                                     stf(i).sourcePoint_bev, ...
+                                                     stf(i).ray(j).targetPoint_bev, ...
+                                                     machine.meta.SAD, ...
+                                                     radDepthMask(V), ...
+                                                     maxLateralCutoffDoseCalc);
             radDepths = radDepthCube(V(ix));   
             
             % just use tissue classes of voxels found by ray tracer
