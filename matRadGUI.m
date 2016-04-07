@@ -223,9 +223,9 @@ handles.DijCalcWarning = false;
 
     % set slice slider
 if handles.State > 0
-        set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-            'Value',ceil(size(ct.cube,handles.plane)/2),...
-            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);      
+        set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
+            'Value',ceil(ct.cubeDim(handles.plane)/2),...
+            'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);      
 end
 
 % Update handles structure
@@ -323,9 +323,9 @@ end
 % set slice slider
 handles.plane = get(handles.popupPlane,'value');
 if handles.State >0
-     set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-            'Value',round(size(ct.cube,handles.plane)/2),...
-            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+     set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
+            'Value',round(ct.cubeDim(handles.plane)/2),...
+            'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);
 end
 
 guidata(hObject,handles);
@@ -651,11 +651,11 @@ CutOffLevel = 0.03;
  if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     cla(handles.axesFig);
     if plane == 1 % Coronal plane
-        ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube(slice,:,:))/max(ct.cube(:))),bone);
+        ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube{1}(slice,:,:))/max(ct.cube{1}(:))),bone);
     elseif plane == 2 % sagittal plane
-        ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube(:,slice,:))/max(ct.cube(:))),bone);
+        ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube{1}(:,slice,:))/max(ct.cube{1}(:))),bone);
     elseif plane == 3 % Axial plane
-        ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube(:,:,slice))/max(ct.cube(:))),bone);
+        ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube{1}(:,:,slice))/max(ct.cube{1}(:))),bone);
     end
     
     axes(handles.axesFig)
@@ -814,11 +814,11 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
     colors = colorcube;
     hold on,
     colors = colors(round(linspace(1,63,size(cst,1))),:);
-    mask = zeros(size(ct.cube)); % create zero cube with same dimeonsions like dose cube
+    mask = zeros(ct.cubeDim); % create zero cube with same dimeonsions like dose cube
     for s = 1:size(cst,1)
         if ~strcmp(cst{s,3},'IGNORED') %&& ~strcmp(data.cst{s,2},'DoseFalloff')
             mask(:) = 0;
-            mask(cst{s,4}) = 1;
+            mask(cst{s,4}{1}) = 1;
             if plane == 1 && sum(sum(mask(slice,:,:))) > 0
                 contour(handles.axesFig,squeeze(mask(slice,:,:)),.5*[1 1],'Color',colors(s,:),'LineWidth',2,'DisplayName',cst{s,2});
             elseif plane == 2 && sum(sum(mask(:,slice,:))) > 0
@@ -921,7 +921,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
     rotTargetPointBEV = targetPointBEV * inv_rotMx_XZ_T * inv_rotMx_XY_T;
     
     % perform raytracing on the central axis of the selected beam
-    [~,l,rho,~,ix] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube});
+    [~,l,rho,~,ix] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube{1}});
     d = [0 l .* rho{1}];
     % Calculate accumulated d sum.
     vX = cumsum(d(1:end-1));
@@ -1002,10 +1002,10 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
     tmpPrior = intmax;
     tmpSize = 0;
     for i=1:size(cst,1)
-        if strcmp(cst{i,3},'TARGET') && tmpPrior >= cst{i,5}.Priority && tmpSize<numel(cst{i,4})
-           linIdxTarget = unique(cst{i,4});
+        if strcmp(cst{i,3},'TARGET') && tmpPrior >= cst{i,5}.Priority && tmpSize<numel(cst{i,4}{1})
+           linIdxTarget = unique(cst{i,4}{1});
            tmpPrior=cst{i,5}.Priority;
-           tmpSize=numel(cst{i,4});
+           tmpSize=numel(cst{i,4}{1});
            VOI = cst{i,2};
         end
     end
@@ -1017,7 +1017,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
     set(h_title,'Position',[pos(1)-40 pos(2) pos(3)])
     
     % plot target boundaries
-    mTargetCube = zeros(size(ct.cube));
+    mTargetCube = zeros(ct.cubeDim);
     mTargetCube(linIdxTarget) = 1;
     vProfile = mTargetCube(ix);
     WEPL_Target_Entry = vX(find(vProfile,1,'first'));
@@ -1062,10 +1062,10 @@ handles.plane = get(handles.popupPlane,'value');
 try
     if handles.State > 0
         ct = evalin('base', 'ct');
-        set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-                'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+        set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
+                'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);
         if handles.State < 3
-            set(handles.sliderSlice,'Value',round(size(ct.cube,handles.plane)/2));
+            set(handles.sliderSlice,'Value',round(ct.cubeDim(handles.plane)/2));
         else
             pln = evalin('base','pln');
             
@@ -1494,7 +1494,7 @@ for i = 1:size(OldCst,1)
             % get further parameter
             if FlagValidParameters
                 
-              NewCst{Cnt,4}(CntObjF,1).dose        = str2num(data{j,6});
+              NewCst{Cnt,4}(CntObjF,1).dose       = str2num(data{j,6});
               NewCst{Cnt,4}(CntObjF,1).penalty    = data{j,5};
               NewCst{Cnt,4}(CntObjF,1).EUD        = data{j,7};
               NewCst{Cnt,4}(CntObjF,1).volume     = data{j,8};
@@ -1559,6 +1559,7 @@ data{sEnd+1,1} = 'Select VOI';
 data{sEnd+1,2} = 'Select VOI Type';
 data{sEnd+1,3} = 2;
 data{sEnd+1,4} = 'Select obj func/constraint';
+data{sEnd+1,6} = '';
 data{sEnd+1,9} = 'none';
 set(handles.uiTable,'data',data);
 
@@ -2062,8 +2063,8 @@ pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true
 pln.numOfBeams      = numel(pln.gantryAngles);
 try
     ct = evalin('base','ct');
-    pln.numOfVoxels     = numel(ct.cube);
-    pln.voxelDimensions = size(ct.cube);
+    pln.numOfVoxels     = prod(ct.cubeDim);
+    pln.voxelDimensions = ct.cubeDim;
 catch
 end
 pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'),false);
@@ -2199,9 +2200,9 @@ if ~isempty(AllVarNames)
 
     if handles.State > 0
         ct = evalin('base','ct');
-        set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-                'Value',ceil(size(ct.cube,handles.plane)/2),...
-                'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);      
+        set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
+                'Value',ceil(ct.cubeDim(handles.plane)/2),...
+                'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);      
     end
 
 end
