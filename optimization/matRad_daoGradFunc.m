@@ -39,7 +39,7 @@ if ~isequal(apertureInfoVec,apertureInfo.apertureVector)
 end
 
 % bixel based gradient calculation
-bixelG = matRad_gradFunc(apertureInfo.bixelWeights,dij,cst,type);
+bixelG = matRad_gradFuncWrapper(apertureInfo.bixelWeights,dij,cst,type);
     
 % allocate gradient vector for aperture weights and leaf positions
 g = NaN * ones(size(apertureInfoVec,1),1);

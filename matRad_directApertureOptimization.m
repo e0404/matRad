@@ -86,7 +86,7 @@ matRad_ipoptOptions;
 % set bounds on optimization variables
 options.lb              = apertureInfo.limMx(:,1);                                          % Lower bound on the variables.
 options.ub              = apertureInfo.limMx(:,2);                                          % Upper bound on the variables.
-[options.cl,options.cu] = matRad_daoGetConstBounds(cst,apertureInfo,pln.bioOptimization);   % Lower and upper bounds on the constraint functions.
+[options.cl,options.cu] = matRad_daoGetConstBounds(cst,apertureInfo,dij.numOfScenarios,pln.bioOptimization);   % Lower and upper bounds on the constraint functions.
 
 % set callback functions.
 funcs.objective         = @(x) matRad_daoObjFunc(x,apertureInfo,dij,cst,pln.bioOptimization);
@@ -115,4 +115,4 @@ optResult.w    = optResult.apertureInfo.bixelWeights;
 optResult.wDao = optResult.apertureInfo.bixelWeights;
 
 % calc dose and reshape from 1D vector to 3D array
-optResult.physicalDose = reshape(dij.physicalDose*optResult.w,dij.dimensions);
+optResult.physicalDose = reshape(dij.physicalDose{1}*optResult.w,dij.dimensions);
