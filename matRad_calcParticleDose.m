@@ -181,12 +181,6 @@ for ShiftScen = 1:multScen.numOfShiftScen
 
         % construct binary mask where ray tracing results are available
         radDepthMask = ~isnan(radDepthCube{1});
-        %radDepthIx = ~isnan(radDepthCube);
-        %radDepthIx = true(ct.cubeDim);                         % für ctScen überflüssig
-        %for k = 1:ct.numOfCtScen                               % für ctScen überflüssig
-        %    radDepthIx = radDepthIx .* isnan(radDepthCube{k}); % für ctScen überflüssig
-        %end                                                    % für ctScen überflüssig
-        %radDepthIx = ~radDepthIx;                              % für ctScen überflüssig
 
         % Determine lateral cutoff
         fprintf('matRad: calculate lateral cutoff...');

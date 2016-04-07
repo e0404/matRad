@@ -190,11 +190,6 @@ for ShiftScen = 1:multScen.numOfShiftScen
 
         % construct binary mask where ray tracing results are available
         radDepthMask = ~isnan(radDepthCube{1});
-        %radDepthIx = true(ct.cubeDim);                              % für ctScen überflüssig
-        %for CtScen = 1:multScen.numOfCtScen                         % für ctScen überflüssig
-        %    radDepthIx = radDepthIx .* isnan(radDepthCube{CtScen}); % für ctScen überflüssig
-        %end                                                         % für ctScen überflüssig
-        %radDepthIx = ~radDepthIx;                                   % für ctScen überflüssig
 
         for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
 
