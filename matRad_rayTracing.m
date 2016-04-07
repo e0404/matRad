@@ -17,6 +17,9 @@ function [radDepthCube,geoDistCube] = matRad_rayTracing(stf,ct,V,lateralCutoff,m
 %   radDepthCube:  radiological depth cube in the ct.cube dimensions
 %   geoDistCube:   geometrical distance cube in the ct.cube dimensions
 %
+% References
+%   [1] http://www.sciencedirect.com/science/article/pii/S1120179711001359
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -118,49 +121,49 @@ rayMx_bev = [candidateRaysCoords_X(logical(candidateRayMx(:))) ...
 
 % rotate ray matrix from bev to world coordinates
 rayMx_world = rayMx_bev * rotMx_XY_T * rotMx_XZ_T;
-    
-% set up distance cube to decide which rad depths should be stored
-metricHitVoxelsCube = -inf*ones(ct.cubeDim);
+
+% criterium for ray selection
+raySelection = rayMxSpacing/2;
 
 % perform ray tracing over all rays
 for j = 1:size(rayMx_world,1)
 
     % run siddon ray tracing algorithm
-    [alphas,l,rho,d12,ixHitVoxel] = matRad_siddonRayTracer(stf.isoCenter, ...
+    [~,l,rho,~,ixHitVoxel] = matRad_siddonRayTracer(stf.isoCenter, ...
                                 ct.resolution, ...
                                 ct.cubeDim,...
                                 stf.sourcePoint, ...
                                 rayMx_world(j,:), ...
                                 ct.cube);
 
-    % find voxels for which we should remember this tracing because this is
-    % the closest ray
-    normRayVector = rayMx_world(j,:) - stf.sourcePoint;
-    normRayVector = normRayVector/norm(normRayVector);
+    % find voxels for which we should remember this tracing because this is    
+    % the closest ray by projecting the voxel coordinates to the
+    % intersection points with the ray matrix and checking if the distance 
+    % in x and z direction is smaller than the resolution of the ray matrix
+    scale_factor = (rayMx_bev_y + stf.SAD) ./ ...
+                   (coords_bev(ixHitVoxel,2) + stf.SAD);
 
-    dotProdHitVoxels = coords(ixHitVoxel,:)*normRayVector';
+    x_dist = coords_bev(ixHitVoxel,1).*scale_factor - rayMx_bev(j,1);
+    z_dist = coords_bev(ixHitVoxel,3).*scale_factor - rayMx_bev(j,3);
 
-    ixRememberFromCurrTracing = dotProdHitVoxels > metricHitVoxelsCube(ixHitVoxel)';
+    ixRememberFromCurrTracing = x_dist > -raySelection & x_dist <= raySelection ...
+                              & z_dist > -raySelection & z_dist <= raySelection;
 
     if any(ixRememberFromCurrTracing) > 0
 
-        metricHitVoxelsCube(ixHitVoxel(ixRememberFromCurrTracing)) = dotProdHitVoxels(ixRememberFromCurrTracing);
-
         for CtScen = 1:multScen.numOfCtScen
-            % calc radioloical depths
+            % calc radiological depths
 
             % eq 14
             % It multiply voxel intersections with \rho values.
-            % The zero it is neccessary for stability purpose.
-            d = [0 l .* rho{CtScen}]; %Note. It is not a number "one"; it is the letter "l"
+            d =l .* rho{CtScen}; %Note. It is not a number "one"; it is the letter "l"
 
             % Calculate accumulated d sum.
-            dCum = cumsum(d);
+            dCum = cumsum(d)-d/2;
 
-            % Calculate the radiological path
-            vRadDepth = interp1(alphas,dCum,dotProdHitVoxels(ixRememberFromCurrTracing)/d12,'linear',0);
-
-            radDepthCube{CtScen}(ixHitVoxel(ixRememberFromCurrTracing)) = vRadDepth;
+            % write radiological depth for voxel which we want to remember
+            radDepthCube{CtScen}(ixHitVoxel(ixRememberFromCurrTracing))= dCum(ixRememberFromCurrTracing);
         end
-    end
+    end  
+    
 end

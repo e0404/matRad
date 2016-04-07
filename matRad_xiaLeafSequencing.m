@@ -261,7 +261,7 @@ resultGUI.wSequenced = sequencing.w;
 resultGUI.sequencing   = sequencing;
 resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
 
-resultGUI.physicalDose = reshape(dij.physicalDose * sequencing.w,dij.dimensions);
+resultGUI.physicalDose = reshape(dij.physicalDose{1} * sequencing.w,dij.dimensions);
 
 % if weights exists from an former DAO remove it
 if isfield(resultGUI,'wDao')

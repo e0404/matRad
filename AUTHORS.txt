@@ -1,0 +1,10 @@
+List of all matRad developers that contributed code (alphabetical)
+
+* Mark Bangert
+* Eduadro Cisternas
+* Henning Mescher
+* Hubert Gabrys
+* Thomas Klinge
+* Alexander Stadler
+* Niklas Wahl
+* Hans-Peter Wieser

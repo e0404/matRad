@@ -25,7 +25,7 @@ clc
 %load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-%load BOXPHANTOM.mat
+load BOXPHANTOM.mat
 
 % InputFolder = 'E:\Mescher\13_BIOM_model\01_BioMechModel\Input';
 % numOfScen   = 3;
@@ -36,8 +36,8 @@ load T6H.mat
 % meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0 90]; % [°]
-pln.couchAngles     = [0 0]; % [°]
+pln.gantryAngles    = [0]; % [°]
+pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;

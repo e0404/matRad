@@ -33,8 +33,22 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-matRadRootDir = fileparts(mfilename('fullpath'));
-addpath(fullfile(matRadRootDir,'optimization'))
+if ~isdeployed % only if _not_ running as standalone
+    
+    % add path for optimization functions
+    matRadRootDir = fileparts(mfilename('fullpath'));
+    addpath(fullfile(matRadRootDir,'optimization'))
+    
+    % get handle to Matlab command window
+    mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
+    cw          = mde.getClient('Command Window');
+    xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+    h_cw        = handle(xCmdWndView,'CallbackProperties');
+
+    % set Key Pressed Callback of Matlab command window
+    set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
+
+end
 
 % initialize global variables for optimizer
 global matRad_global_x;
@@ -46,16 +60,7 @@ matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
 matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
 matRad_STRG_C_Pressed           = false;
 matRad_objective_function_value = [];
-
-% get handle to Matlab command window
-mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-cw          = mde.getClient('Command Window');
-xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-h_cw        = handle(xCmdWndView,'CallbackProperties');
-
-% set Key Pressed Callback of Matlab command window
-set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
-   
+  
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
 
@@ -98,7 +103,7 @@ funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,o
 % calculate initial beam intensities wInit
 if strcmp(pln.bioOptimization,'none')
     
-    bixelWeight =  (doseTarget)/(mean(dij.physicalDose(V,:)*wOnes)); 
+    bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
 
 else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBExD')) ... 
@@ -139,15 +144,15 @@ else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBEx
            dij.gamma(idx) = dij.ax(idx)./(2*dij.bx(idx)); 
             
            roughRBE = 3;
-           wInit    =  (doseTarget)/(roughRBE*mean(dij.physicalDose(V,:)*wOnes)) * wOnes; 
+           wInit    =  (doseTarget)/(roughRBE*mean(dij.physicalDose{1}(V,:)*wOnes)) * wOnes; 
     end
 end
 
 % set callback functions.
-[options.cl,options.cu] = matRad_getConstBounds(cst,pln.bioOptimization);   
-funcs.objective         = @(x) matRad_objFunc(x,dij,cst,pln.bioOptimization);
+[options.cl,options.cu] = matRad_getConstBounds(cst,dij.numOfScenarios,pln.bioOptimization);   
+funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.constraints       = @(x) matRad_constFunc(x,dij,cst,pln.bioOptimization);
-funcs.gradient          = @(x) matRad_gradFunc(x,dij,cst,pln.bioOptimization);
+funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.jacobian          = @(x) matRad_jacobFunc(x,dij,cst,pln.bioOptimization);
 funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 
@@ -157,7 +162,7 @@ resultGUI.w            = wOpt;
 resultGUI.wUnsequenced = wOpt;
 
 % calc dose and reshape from 1D vector to 2D array
-resultGUI.physicalDose = reshape(dij.physicalDose*resultGUI.w,dij.dimensions);
+resultGUI.physicalDose = reshape(dij.physicalDose{1}*resultGUI.w,dij.dimensions);
 
 if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                             && strcmp(pln.radiationMode,'carbon')
@@ -174,7 +179,7 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
         end
     end
     
-    resultGUI.effect = (dij.mAlphaDose*resultGUI.w+(dij.mSqrtBetaDose*resultGUI.w).^2);
+    resultGUI.effect = (dij.mAlphaDose{1}*resultGUI.w+(dij.mSqrtBetaDose{1}*resultGUI.w).^2);
     resultGUI.effect = reshape(resultGUI.effect,dij.dimensions);
     
     resultGUI.RBExDose     = zeros(size(resultGUI.effect));
@@ -182,17 +187,22 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
     resultGUI.RBExDose(ix) = ((sqrt(a_x(ix).^2 + 4 .* b_x(ix) .* resultGUI.effect(ix)) - a_x(ix))./(2.*b_x(ix)));
     resultGUI.RBE          = resultGUI.RBExDose./resultGUI.physicalDose;
    
-    AlphaDoseCube    = dij.mAlphaDose * resultGUI.w;
+    AlphaDoseCube    = dij.mAlphaDose{1} * resultGUI.w;
     resultGUI.alpha  = (reshape(AlphaDoseCube,dij.dimensions))./resultGUI.physicalDose;
-    SqrtBetaDoseCube = dij.mSqrtBetaDose * resultGUI.w;
+    SqrtBetaDoseCube = dij.mSqrtBetaDose{1} * resultGUI.w;
     resultGUI.beta   = ((reshape(SqrtBetaDoseCube,dij.dimensions))./resultGUI.physicalDose).^2;
     
     fprintf(' done!\n');
  
 end
 
-% unset Key Pressed Callback of Matlab command window and delete waitbar
-set(h_cw, 'KeyPressedCallback',' ');
+% unset Key Pressed Callback of Matlab command window
+if ~isdeployed
+    set(h_cw, 'KeyPressedCallback',' ');
+end
 
-clearvars -global matRad_global_x matRad_global_d matRad_ALT_C_Pressed;
+% clear global variables
+clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;
 
+% unblock mex files
+clear mex
