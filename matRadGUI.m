@@ -1494,7 +1494,7 @@ for i = 1:size(OldCst,1)
             % get further parameter
             if FlagValidParameters
                 
-              NewCst{Cnt,4}(CntObjF,1).dose        = str2num(data{j,6});
+              NewCst{Cnt,4}(CntObjF,1).dose       = str2num(data{j,6});
               NewCst{Cnt,4}(CntObjF,1).penalty    = data{j,5};
               NewCst{Cnt,4}(CntObjF,1).EUD        = data{j,7};
               NewCst{Cnt,4}(CntObjF,1).volume     = data{j,8};
@@ -1559,6 +1559,7 @@ data{sEnd+1,1} = 'Select VOI';
 data{sEnd+1,2} = 'Select VOI Type';
 data{sEnd+1,3} = 2;
 data{sEnd+1,4} = 'Select obj func/constraint';
+data{sEnd+1,6} = '';
 data{sEnd+1,9} = 'none';
 set(handles.uiTable,'data',data);
 
