@@ -15,7 +15,7 @@ if isequal(multScen.shiftGenType,'equidistant')
     end
     multScen.shifts = [zeros(3,1), multScen.shifts];
     
-elseif isequal(multScen.shiftGenType,'sampling')
+elseif isequal(multScen.shiftGenType,'sampled')
     multScen.shifts  = [];
     
     for i = 1:3
