@@ -1,4 +1,4 @@
-function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,ctCubeDim,bDiaElem)
+function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad add margin function
 % 
@@ -11,7 +11,6 @@ function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,ctCubeDim,
 %   cst:            matRad cst struct
 %   vResolution     ct resolution
 %   vMargin:        margin in mm 
-%   ctCubeDim:      ct cube dimensions
 %   bDiaElem        if true 26-connectivity is used otherwise 6-connectivity
 %
 % output
