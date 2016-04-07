@@ -61,14 +61,15 @@ if any(IdxHandle)
     children = get(AxesInfigOpt,'children');
     delete(children);
 else
-    figOpt = figure('Name','Progress of Optimization','NumberTitle','off');
+    figOpt = figure('Name','Progress of Optimization','NumberTitle','off','Color',[.5 .5 .5]);
     hold on, grid on, grid minor,
     AxesInfigOpt = findall(figOpt,'type','axes');
 end
 
+defaultFontSize = 14;
 set(AxesInfigOpt,'YScale','log');
-title(AxesInfigOpt,'Progress of Optimization','LineWidth',14),
-xlabel(AxesInfigOpt,'# iterations','Fontsize',14),ylabel(AxesInfigOpt,'objective function value','Fontsize',14)
+title(AxesInfigOpt,'Progress of Optimization','LineWidth',defaultFontSize),
+xlabel(AxesInfigOpt,'# iterations','Fontsize',defaultFontSize),ylabel(AxesInfigOpt,'objective function value','Fontsize',defaultFontSize)
 
 % draw updated axes
 plot(AxesInfigOpt,0:1:iter,matRad_objective_function_value,'xb','LineWidth',1.5);

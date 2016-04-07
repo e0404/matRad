@@ -46,9 +46,13 @@ for i = 1:size(structures,2)
        ~isempty(regexpi(cst{i,2},'tumor'))
         cst{i,3} = 'TARGET';
         % default objectives for targets
-        cst{i,6}(1).parameter = [800 60]; %  
-        cst{i,6}(1).type = 'square deviation';
-        cst{i,5}.Priority = 1;
+        cst{i,6}(1).type    = 'square deviation';
+        cst{i,6}(1).penalty = 800;
+        cst{i,6}(1).dose    = 60;
+        cst{i,6}(1).EUD     = NaN;
+        cst{i,6}(1).volume  = NaN;
+        % define default priority for target structures
+        cst{i,5}.Priority   = 1;
     else
         cst{i,3} = 'OAR';
         cst{i,6} = []; % define no OAR dummy objcetives   
@@ -57,7 +61,6 @@ for i = 1:size(structures,2)
     
     cst{i,4} = structures(i).indices;
     % set default parameter for biological planning
-    cst{i,5}.TissueClass = 1; 
     cst{i,5}.alphaX = 0.1;
     cst{i,5}.betaX = 0.05;
 

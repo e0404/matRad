@@ -85,22 +85,35 @@ end
 if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
         && strcmp(pln.radiationMode,'carbon')
     fprintf('matRad: loading biological base data... ');
-    mTissueClass = zeros(size(V,1),1);
+    vTissueIndex = zeros(size(V,1),1);
+    
+    %set overlap priorities
+    cst  = matRad_setOverlapPriorities(cst);
+    
     for i = 1:size(cst,1)
         % find indices of structures related to V
         [~, row] = ismember(cst{i,4},V,'rows');  
-        if ~isempty(cst{i,5}) && isfield(cst{i,5},'TissueClass')
-            mTissueClass(row) = cst{i,5}.TissueClass;
+        if ~isempty(cst{i,5}) && isfield(cst{i,5},'alphaX') && isfield(cst{i,5},'betaX')
+            
+            IdxTissue = find(ismember(machine.data(1).alphaX,cst{i,5}.alphaX) & ...
+                                     ismember(machine.data(1).betaX,cst{i,5}.betaX));
+                                 
+            % check consitency of biological baseData and cst settings
+            if ~isempty(IdxTissue)
+                vTissueIndex(row) = IdxTissue;
+            else
+                error('biological base data and cst inconsistent\n');
+            end
         else
-            mTissueClass(row) = 1;
+            vTissueIndex(row) = 1;
             fprintf(['matRad: tissue type of ' cst{i,2} ' was set to 1 \n']);
         end
         
-        % check consitency of biological baseData and cst settings
-        baseDataAlphaBetaRatios = reshape([machine.data(:).alphaBetaRatio],numel(machine.data(1).alphaBetaRatio),size(machine.data,2));
-        if norm(baseDataAlphaBetaRatios(cst{i,5}.TissueClass,:) - cst{i,5}.alphaX/cst{i,5}.betaX)>0
-            error('biological base data and cst inconsistent\n');
-        end
+%         % check consitency of biological baseData and cst settings
+%         baseDataAlphaBetaRatios = reshape([machine.data(:).alphaBetaRatio],numel(machine.data(1).alphaBetaRatio),size(machine.data,2));
+%         if norm(baseDataAlphaBetaRatios(cst{i,5}.TissueClass,:) - cst{i,5}.alphaX/cst{i,5}.betaX)>0
+%             error('biological base data and cst inconsistent\n');
+%         end
         
     end
     fprintf('done.\n');
@@ -180,7 +193,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
             % just use tissue classes of voxels found by ray tracer
             if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                  && strcmp(pln.radiationMode,'carbon')
-                    mTissueClass_j = mTissueClass(ix,:);
+                    vTissueIndex_j = vTissueIndex(ix,:);
             end
               
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
@@ -235,7 +248,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                     % calculate alpha and beta values for bixel k on ray j of                  
                     [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
                         radDepths(currIx),...
-                        mTissueClass_j(currIx,:),...
+                        vTissueIndex_j(currIx,:),...
                         machine.data(energyIx));
                 
                     alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelAlpha.*bixelDose,numel(ct.cube),1);
