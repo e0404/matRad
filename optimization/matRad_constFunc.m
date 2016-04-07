@@ -63,14 +63,14 @@ for i = 1:dij.numOfScenarios
                              strcmp(cst{j,6}(k).robustness,'voxel-wise worst case')
 
 
-                    if isequal(cst{i,6}(j).type, 'max dose constraint')
+                    if isequal(cst{j,6}(k).type, 'max dose constraint')
 
                         epsilon = 1e-3;
                         d_i_max = max(d_i);
                 
                         c = [c;d_i_max + epsilon * log( sum(exp((d_i - d_i_max)/epsilon)) )];
             
-                    elseif isequal(cst{i,6}(j).type, 'min dose constraint')
+                    elseif isequal(cst{j,6}(k).type, 'min dose constraint')
 
                         epsilon = 1e-3;
                         d_i_min = min(d_i);
@@ -106,7 +106,7 @@ for i = 1:dij.numOfScenarios
 
                         % alternative constraint calculation 3/4 %
                         % % get reference Volume
-                        % refVol = cst{i,6}(j).volume/100;
+                        % refVol = cst{j,6}(k).volume/100;
                         % 
                         % % calc deviation
                         % deviation = d_i - d_ref;
@@ -115,15 +115,15 @@ for i = 1:dij.numOfScenarios
                         % d_ref2 = matRad_calcInversDVH(refVol,d_i);
                         % 
                         % % apply lower and upper dose limits
-                        % if isequal(cst{i,6}(j).type, 'max DVH constraint')
+                        % if isequal(cst{j,6}(k).type, 'max DVH constraint')
                         %    deviation(d_i < d_ref | d_i > d_ref2) = 0;
-                        % elseif isequal(cst{i,6}(j).type, 'min DVH constraint')
+                        % elseif isequal(cst{j,6}(k).type, 'min DVH constraint')
                         %    deviation(d_i > d_ref | d_i < d_ref2) = 0;
                         % end
                         % 
                         % %c = [c;sum(deviation)];                              % linear deviation
                         % %c = [c;deviation'*deviation];                        % square devioation
-                        % c = [c;(1/size(cst{i,4},1))*(deviation'*deviation)]; % square deviation with normalization
+                        % c = [c;(1/size(cst{j,4},1))*(deviation'*deviation)]; % square deviation with normalization
                         % %c = [c;(deviation).^2'*(deviation).^2];               % squared square devioation
                         % alternative constraint calculation 3/4 %
                     
