@@ -137,22 +137,25 @@ if ~useCustomPrimFluenceBool % pre-compute konvolution matrices for idealized ho
 
 end
 
-counter = 0;
+for ShiftScen = 1:multScen.numOfShiftScen
 
-fprintf('matRad: Photon dose calculation...\n');
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for i = 1:dij.numOfBeams; % loop over all beams
-    
-    fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
+    % manipulate isocenter
+    pln.isoCenter = pln.isoCenter + multScen.shifts(:,ShiftScen)';
+    for k = 1:length(stf)
+        stf(k).isoCenter = stf(k).isoCenter + multScen.shifts(:,ShiftScen)';
+    end
 
-    bixelsPerBeam = 0;
+    counter = 0;
 
-    for ShiftScen = 1:multScen.numOfShiftScen
-        
-        % manipulate isocenter
-        pln.isoCenter    = pln.isoCenter + multScen.shifts(:,ShiftScen)';
-        stf(i).isoCenter = stf(i).isoCenter + multScen.shifts(:,ShiftScen)';
-    
+    fprintf(['shift scenario ' num2str(ShiftScen) ' of ' num2str(multScen.numOfShiftScen) ': \n']);
+    fprintf('matRad: Photon dose calculation...\n');
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    for i = 1:dij.numOfBeams; % loop over all beams
+
+        fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
+
+        bixelsPerBeam = 0;
+
         % convert voxel indices to real coordinates using iso center of beam i
         xCoordsV = xCoordsV_vox(:)*ct.resolution.x - stf(i).isoCenter(1);
         yCoordsV = yCoordsV_vox(:)*ct.resolution.y - stf(i).isoCenter(2);
@@ -291,13 +294,16 @@ for i = 1:dij.numOfBeams; % loop over all beams
             end
 
         end
-        
-        % manipulate isocenter
-        pln.isoCenter    = pln.isoCenter - multScen.shifts(:,ShiftScen)';
-        stf(i).isoCenter = stf(i).isoCenter - multScen.shifts(:,ShiftScen)';
-        
-    end
+    end 
+    
+    % manipulate isocenter
+    pln.isoCenter = pln.isoCenter - multScen.shifts(:,ShiftScen)';
+    for k = 1:length(stf)
+        stf(k).isoCenter = stf(k).isoCenter - multScen.shifts(:,ShiftScen)';
+    end    
+
 end
+
 
 try
   % wait 0.1s for closing all waitbars
