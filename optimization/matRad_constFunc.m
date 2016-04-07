@@ -50,10 +50,10 @@ for i = 1:dij.numOfScenarios
     for  j = 1:size(cst,1)
 
         % Only take OAR or target VOI.
-        if ~isempty(cst{j,4}) && ( isequal(cst{j,3},'OAR') || isequal(cst{j,3},'TARGET') )
+        if ~isempty(cst{j,4}{1}) && ( isequal(cst{j,3},'OAR') || isequal(cst{j,3},'TARGET') )
 
             % get dose vector in current VOI
-            d_i = d{i}(cst{j,4});
+            d_i = d{i}(cst{j,4}{1});
 
             % loop over the number of constraints for the current VOI
             for k = 1:numel(cst{j,6})
@@ -97,12 +97,12 @@ for i = 1:dij.numOfScenarios
 
                         % reference dose/effect/RBExDose
                         if isequal(type,'effect')
-                            d_ref = dij.ax(cst{j,4}).*cst{j,6}(k).dose + dij.bx(cst{j,4})*cst{j,6}(k).dose^2;
+                            d_ref = dij.ax(cst{j,4}{1}).*cst{j,6}(k).dose + dij.bx(cst{j,4}{1})*cst{j,6}(k).dose^2;
                         else
                             d_ref = cst{j,6}(k).dose;
                         end
 
-                        c = [c;sum(d_i >= d_ref)/size(cst{j,4},1)];
+                        c = [c;sum(d_i >= d_ref)/size(cst{j,4}{1},1)];
 
                         % alternative constraint calculation 3/4 %
                         % % get reference Volume

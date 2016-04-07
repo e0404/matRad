@@ -46,7 +46,7 @@ delta      = cell(dij.numOfScenarios,1);
 for  i = 1:size(cst,1)
     
     % Only take OAR or target VOI.
-    if ~isempty(cst{i,4}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
+    if ~isempty(cst{i,4}{1}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
 
         % loop over the number of constraints and objectives for the current VOI
         for j = 1:numel(cst{i,6})
@@ -58,7 +58,7 @@ for  i = 1:size(cst,1)
                 if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) &&...
                     isequal(type,'effect') 
 
-                    d_ref = dij.ax(cst{i,4}).*cst{i,6}(j).dose + dij.bx(cst{i,4})*cst{i,6}(j).dose^2;
+                    d_ref = dij.ax(cst{i,4}{1}).*cst{i,6}(j).dose + dij.bx(cst{i,4}{1})*cst{i,6}(j).dose^2;
                 else
                     d_ref = cst{i,6}(j).dose;
                 end
@@ -67,17 +67,17 @@ for  i = 1:size(cst,1)
                 % optimization
                 if strcmp(cst{i,6}(j).robustness,'none')
                 
-                    d_i = d{1}(cst{i,4});
+                    d_i = d{1}(cst{i,4}{1});
 
-                    delta{1}(cst{i,4}) = delta{1}(cst{i,4}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+                    delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
 
                 elseif strcmp(cst{i,6}(j).robustness,'probabilistic')
 
                     for k = 1:dij.numOfScenarios
 
-                        d_i = d{k}(cst{i,4});
+                        d_i = d{k}(cst{i,4}{1});
 
-                        delta{k}(cst{i,4}) = delta{k}(cst{i,4}) + dij.probOfScenarios(k)*matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+                        delta{k}(cst{i,4}{1}) = delta{k}(cst{i,4}{1}) + dij.probOfScenarios(k)*matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
 
                     end
 
@@ -90,9 +90,9 @@ for  i = 1:size(cst,1)
                     end
 
                     if isequal(cst{i,3},'OAR')
-                        d_i = d_max(cst{i,4});
+                        d_i = d_max(cst{i,4}{1});
                     elseif isequal(cst{i,3},'TARGET')
-                        d_i = d_min(cst{i,4});
+                        d_i = d_min(cst{i,4}{1});
                     end
 
                     deltaTmp = matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
@@ -100,13 +100,13 @@ for  i = 1:size(cst,1)
                     for k = 1:dij.numOfScenarios
 
                         if isequal(cst{i,3},'OAR')
-                            currWcIx = max_ix(cst{i,4}) == k;
+                            currWcIx = max_ix(cst{i,4}{1}) == k;
 
                         elseif isequal(cst{i,3},'TARGET')
-                            currWcIx = min_ix(cst{i,4}) == k;
+                            currWcIx = min_ix(cst{i,4}{1}) == k;
                         end
 
-                        delta{k}(cst{i,4}) = delta{k}(cst{i,4}) + deltaTmp.*currWcIx;
+                        delta{k}(cst{i,4}{1}) = delta{k}(cst{i,4}{1}) + deltaTmp.*currWcIx;
 
                     end
 

@@ -1,4 +1,4 @@
-function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
+function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,multScen)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
@@ -9,6 +9,7 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
+%   multScen:   matRad multiple scnerio struct
 %
 % output
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
@@ -62,7 +63,7 @@ matRad_STRG_C_Pressed           = false;
 matRad_objective_function_value = [];
   
 % consider VOI priorities
-cst  = matRad_setOverlapPriorities(cst);
+cst  = matRad_setOverlapPriorities(cst,multScen);
 
 % adjust objectives and constraints internally for fractionation 
 for i = 1:size(cst,1)
@@ -78,7 +79,7 @@ doseTarget = [];
 ixTarget   = [];
 for i=1:size(cst,1)
     if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
-        V = [V;cst{i,4}];
+        V = [V;cst{i,4}{1}];
         doseTarget = [doseTarget cst{i,6}.dose];
         ixTarget   = [ixTarget i*ones(1,length([cst{i,6}.dose]))];
     end
@@ -174,8 +175,8 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
     for  i = 1:size(cst,1)
         % Only take OAR or target VOI.
         if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') 
-            a_x(cst{i,4}) = cst{i,5}.alphaX;
-            b_x(cst{i,4}) = cst{i,5}.betaX;
+            a_x(cst{i,4}{1}) = cst{i,5}.alphaX;
+            b_x(cst{i,4}{1}) = cst{i,5}.betaX;
         end
     end
     

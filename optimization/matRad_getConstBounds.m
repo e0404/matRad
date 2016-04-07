@@ -43,7 +43,7 @@ for i = 1:numOfScenarios
     for  j = 1:size(cst,1)
 
         % Only take OAR or target VOI.
-        if ~isempty(cst{j,4}) && ( isequal(cst{j,3},'OAR') || isequal(cst{j,3},'TARGET') )
+        if ~isempty(cst{j,4}{1}) && ( isequal(cst{j,3},'OAR') || isequal(cst{j,3},'TARGET') )
 
             % loop over the number of constraints for the current VOI
             for k = 1:numel(cst{j,6})
