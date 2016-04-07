@@ -16,6 +16,8 @@ if isequal(multScen.shiftGenType,'equidistant')
     multScen.shifts = [zeros(3,1), multScen.shifts];
     
 elseif isequal(multScen.shiftGenType,'sampled')
+    rng(0);
+    
     multScen.shifts  = [];
     
     for i = 1:3
@@ -71,6 +73,9 @@ elseif isequal(multScen.ScenCombType,'allcombined')
     multScen.ScenCombMask = true(multScen.numOfCtScen, multScen.numOfShiftScen, multScen.numOfRangeShiftScen);
     
 end
+
+% set totalNumOfScen
+multScen.totalNumOfScen = sum(multScen.ScenCombMask);
 
 end
 
