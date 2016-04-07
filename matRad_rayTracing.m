@@ -47,6 +47,10 @@ end
 % set up coordinates of all voxels in cube
 [xCoords_vox, yCoords_vox, zCoords_vox] = meshgrid(1:ct.cubeDim(1),1:ct.cubeDim(2),1:ct.cubeDim(3));
 
+xCoords = xCoords_vox(:)*ct.resolution.x - stf.isoCenter(1);
+yCoords = yCoords_vox(:)*ct.resolution.y - stf.isoCenter(2);
+zCoords = zCoords_vox(:)*ct.resolution.z - stf.isoCenter(3); 
+
 % Rotation around Z axis (gantry)
 inv_rotMx_XY_T = [ cosd(-stf.gantryAngle) sind(-stf.gantryAngle) 0;
                   -sind(-stf.gantryAngle) cosd(-stf.gantryAngle) 0;
@@ -56,10 +60,7 @@ inv_rotMx_XY_T = [ cosd(-stf.gantryAngle) sind(-stf.gantryAngle) 0;
 inv_rotMx_XZ_T = [cosd(-stf.couchAngle) 0 -sind(-stf.couchAngle);
                                       0 1                      0;
                   sind(-stf.couchAngle) 0  cosd(-stf.couchAngle)];
-
-xCoords = xCoords_vox(:)*ct.resolution.x - stf.isoCenter(1);
-yCoords = yCoords_vox(:)*ct.resolution.y - stf.isoCenter(2);
-zCoords = zCoords_vox(:)*ct.resolution.z - stf.isoCenter(3); 
+              
 
 coords_bev = [xCoords yCoords zCoords]*inv_rotMx_XZ_T*inv_rotMx_XY_T;             
 
@@ -99,16 +100,6 @@ for i = 1:stf.numOfRays
     
 end
 
-% Rotation around Z axis (gantry)
-rotMx_XY_T = [ cosd(stf.gantryAngle) sind(stf.gantryAngle) 0;
-              -sind(stf.gantryAngle) cosd(stf.gantryAngle) 0;
-                                   0                     0 1];
-    
-% Rotation around Y axis (couch)
-rotMx_XZ_T = [cosd(stf.couchAngle) 0 -sind(stf.couchAngle);
-                                 0 1                     0;
-              sind(stf.couchAngle) 0  cosd(stf.couchAngle)];
-
 % set up ray matrix
 rayMx_bev = [candidateRaysCoords_X(logical(candidateRayMx(:))) ...
              rayMx_bev_y*ones(sum(candidateRayMx(:)),1) ...  
@@ -118,6 +109,16 @@ rayMx_bev = [candidateRaysCoords_X(logical(candidateRayMx(:))) ...
 %     for jj = 1:length(rayMx_bev)
 %        plot(rayMx_bev(jj,1),rayMx_bev(jj,3),'rx'),hold on 
 %     end
+
+% Rotation around Z axis (gantry)
+rotMx_XY_T = [ cosd(stf.gantryAngle) sind(stf.gantryAngle) 0;
+              -sind(stf.gantryAngle) cosd(stf.gantryAngle) 0;
+                                   0                     0 1];
+    
+% Rotation around Y axis (couch)
+rotMx_XZ_T = [cosd(stf.couchAngle) 0 -sind(stf.couchAngle);
+                                 0 1                     0;
+              sind(stf.couchAngle) 0  cosd(stf.couchAngle)];
 
 % rotate ray matrix from bev to world coordinates
 rayMx_world = rayMx_bev * rotMx_XY_T * rotMx_XZ_T;
