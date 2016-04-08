@@ -61,6 +61,22 @@ for  i = 1:size(cst,1)
                     end
 
                     f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                    
+                % if coveraged based opt: calculate inverse DCH    
+                elseif strcmp(cst{i,6}(j).robustness,'coverage')
+                    
+                    d_i = [];
+                    
+                    for k = 1:dij.numOfScenarios
+                        d_i{k} = d{k}(cst{i,4}{1});
+                    end
+                    
+                    % calc invers DCH
+                    refQ   = cst{i,6}(j).coverage;
+                    refVol = cst{i,6}(j).volume;
+                    d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
+
+                    f = f + matRad_objFunc(d_i{1},cst{i,6}(j),d_ref,d_ref2);
 
                 end
             

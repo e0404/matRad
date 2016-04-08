@@ -1,7 +1,7 @@
-function D = matRad_calcInversDCH(volume,Q,doseVec,multScen)
+function D = matRad_calcInversDCH(volume,Q,doseVec,numOfScenarios)
 
 % calculate dose that corresponds to volume
-for Scen = 1:multScen.totalNumOfScen
+for Scen = 1:numOfScenarios
     dosePoints(Scen) = matRad_calcInversDVH(volume,doseVec{Scen});
 end
 

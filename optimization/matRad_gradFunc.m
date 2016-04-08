@@ -1,4 +1,4 @@
-function delta = matRad_gradFunc(d_i,objective,d_ref)
+function delta = matRad_gradFunc(d_i,objective,d_ref,d_ref2)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: gradient function for inverse planning supporting mean dose
 % objectives, EUD objectives, squared overdosage, squared underdosage,
@@ -104,6 +104,22 @@ elseif isequal(objective.type, 'max DVH objective') ||...
     if isequal(objective.type, 'max DVH objective')
          deviation(d_i < d_ref | d_i > d_ref2) = 0;
     elseif isequal(objective.type, 'min DVH objective')
+         deviation(d_i > d_ref | d_i < d_ref2) = 0;
+    end
+
+    % calculate delta
+    delta = 2 * (objective.penalty/numOfVoxels)*deviation;
+    
+elseif isequal(objective.type, 'max DCH objective') ||...
+       isequal(objective.type, 'min DCH objective')
+   
+    % calc deviation
+    deviation = d_i - d_ref;
+
+    % apply lower and upper dose limits
+    if isequal(objective.type, 'max DCH objective')
+         deviation(d_i < d_ref | d_i > d_ref2) = 0;
+    elseif isequal(objective.type, 'min DCH objective')
          deviation(d_i > d_ref | d_i < d_ref2) = 0;
     end
 

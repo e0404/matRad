@@ -109,6 +109,22 @@ for  i = 1:size(cst,1)
                         delta{k}(cst{i,4}{1}) = delta{k}(cst{i,4}{1}) + deltaTmp.*currWcIx;
 
                     end
+                    
+                elseif strcmp(cst{i,6}(j).robustness,'coverage')
+                    
+                    d_i = [];
+                    
+                    for k = 1:dij.numOfScenarios
+                        d_i{k} = d{k}(cst{i,4}{1});
+                    end
+                      
+                    % calc invers DCH
+                    refQ   = cst{i,6}(j).coverage;
+                    refVol = cst{i,6}(j).volume;
+                    d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
+
+                    delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i{1},cst{i,6}(j),d_ref,d_ref2);
+                
 
                 end
                 
