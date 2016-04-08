@@ -1,4 +1,4 @@
-function VOISurfaceVoxel = matRad_getVOISurfaceVoxel(cst,VOIName)
+function VOISurfaceVoxel = matRad_getVOISurfaceVoxel(cst,ct,VOIName)
 
 % get cst index
 cstidx = find(~cellfun('isempty',strfind(cst(:,2),VOIName)));
