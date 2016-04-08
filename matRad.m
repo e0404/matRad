@@ -50,7 +50,7 @@ pln.machine         = 'Generic';
 
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
-multScen.numOfShiftScen      = [3 3 3];        % number of shifts in x y and z direction       
+multScen.numOfShiftScen      = [10 10 0];        % number of shifts in x y and z direction       
 multScen.shiftSize           = [3 3 3];        % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
 multScen.shiftGenType        = 'sampled';      % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
 multScen.numOfRangeShiftScen = 0;              % number of absolute and/or relative range scnearios
