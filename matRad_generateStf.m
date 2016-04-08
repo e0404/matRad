@@ -43,14 +43,6 @@ if numel(pln.gantryAngles) ~= numel(pln.couchAngles)
     error('Inconsistent number of gantry and couch angles.');
 end
               
-
-%
-if ~strcmp(pln.radiationMode,'carbon') && sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0
-    fprintf('\n ********************************************************************************************************* \n');
-    fprintf('\n effect based optimization not possible with current setup - physical optimization is carried out instead \n');
-    fprintf('\n ********************************************************************************************************* \n');
-end
-
 % find all target voxels from cst cell array
 V = [];
 for i=1:size(cst,1)
