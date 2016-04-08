@@ -508,13 +508,32 @@ end
 if handles.State > 0
     pln = evalin('base','pln');
     if handles.State > 0 && ~strcmp(contents(get(hObject,'Value')),pln.radiationMode)
-
-        getPlnFromGUI(handles);
         
+        % switched from carbon to photons or protons -> in case of bio. opt
+        % some cubes have to be deleted from the resultGUI struct
+        if strcmp(pln.radiationMode,'carbon') && ~strcmp(contents(get(hObject,'Value')),'carbon')
+            try
+               AllVarNames = evalin('base','who');
+               if  ismember('resultGUI',AllVarNames)
+                    resultGUI = evalin('base','resultGUI');
+                    resultGUI = rmfield(resultGUI,'effect');
+                    resultGUI = rmfield(resultGUI,'alpha');
+                    resultGUI = rmfield(resultGUI,'beta');
+                    resultGUI = rmfield(resultGUI,'RBE');
+                    resultGUI = rmfield(resultGUI,'RBExDose');
+                    assignin('base','resultGUI',resultGUI)
+               end
+            catch
+                assignin('base','resultGUI',resultGUI)
+            end
+            UpdatePlot(handles);
+        end
+        
+        getPlnFromGUI(handles);
         handles.State = 1;
         UpdateState(handles);
-      
         guidata(hObject,handles);
+        
     end
          
    
@@ -705,6 +724,9 @@ if exist('Result','var')
         end
 
     set(handles.popupDisplayOption,'String',fieldnames(Result));
+    if sum(strcmp(handles.SelectedDisplayOption,fieldnames(Result))) == 0
+        handles.SelectedDisplayOption = 'physicalDose';
+    end
     set(handles.popupDisplayOption,'Value',find(strcmp(handles.SelectedDisplayOption,fieldnames(Result))));
 
     end
@@ -734,6 +756,9 @@ end
 %% plot dose cube
 if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
 
+        if ~isfield(Result,handles.SelectedDisplayOption)
+            handles.SelectedDisplayOption = 'physicalDose';
+        end
         mVolume = getfield(Result,handles.SelectedDisplayOption);
         % make sure to exploit full color range 
         mVolume(Result.physicalDose<...
@@ -1445,12 +1470,6 @@ UpdatePlot(handles);
 
 % --- Executes on selection change in popupDisplayOption.
 function popupDisplayOption_Callback(hObject, ~, handles)
-% hObject    handle to popupDisplayOption (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns popupDisplayOption contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popupDisplayOption
 content = get(hObject,'String');
 handles.SelectedDisplayOption = content{get(hObject,'Value'),1};
 handles.SelectedDisplayOptionIdx = get(hObject,'Value');
@@ -2660,13 +2679,14 @@ cNames = {'VOI','alphaX betaX','alpha beta ratio'};
 columnformat = {'char',CellType,'numeric'};
 
 tissueTable = uitable('Parent', figTissue,'Data', data,'ColumnEditable',[false true false],...
-                      'ColumnName',cNames, 'ColumnFormat',columnformat);%,'Position',[50 150 10 10]);
+                      'ColumnName',cNames, 'ColumnFormat',columnformat,'Position',[50 150 10 10]);
 set(tissueTable,'CellEditCallback',@tissueTable_CellEditCallback);
 % set width and height
-%currTablePos = get(tissueTable,'Position');
-
-%set(tissueTable,'Position' = tissueTable.Extent(3);
-%tissueTable.Position(4) = tissueTable.Extent(4);
+currTablePos = get(tissueTable,'Position');
+currTableExt = get(tissueTable,'Extent');
+currTablePos(3) = currTableExt(3);
+currTablePos(4) = currTableExt(4);
+set(tissueTable,'Position',currTablePos);
 
 % define two buttons with callbacks
 uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Save&Close',...
@@ -2683,10 +2703,15 @@ UpdateState(handles);
     
 function SaveTissueParameters(~, ~, handles) 
 cst = evalin('base','cst');    
+% get handle to uiTable
 figHandles = get(0,'Children');
-IdxHandle  = strcmp(get(figHandles,'Name'),'Set Tissue Parameters');
-IdxTable   = find(strcmp({figHandles(IdxHandle).Children.Type},'uitable'));
-uiTable    = figHandles(IdxHandle).Children(IdxTable);
+IdxHandle  = find(strcmp(get(figHandles,'Name'),'Set Tissue Parameters'));
+% find table in window
+
+figHandleChildren = get(figHandles(IdxHandle),'Children');
+IdxTable   = find(strcmp(get(figHandleChildren,'Type'),'uitable'));
+uiTable    = figHandleChildren(IdxTable);
+% retrieve data from uitable
 data       = get(uiTable,'data');
 
 for i = 1:size(cst,1)
