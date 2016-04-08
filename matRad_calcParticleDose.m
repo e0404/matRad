@@ -147,9 +147,11 @@ for i = 1:dij.numOfBeams; % loop over all beams
     radDepthV = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoffRayTracing);
     fprintf('done.\n');
     
-    % construct binary mask where ray tracing results are available
-    radDepthMask = ~isnan(radDepthV);
-    radDepthIx = find(radDepthMask);
+    % get indices of voxels where ray tracing results are available
+    radDepthIx = find(~isnan(radDepthV));
+    
+    % limit rotated coordinates to positions where ray tracing is availabe
+    rot_coordsV = rot_coordsV(radDepthIx,:);
     
     % Determine lateral cutoff
     fprintf('matRad: calculate lateral cutoff...');

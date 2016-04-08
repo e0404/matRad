@@ -166,10 +166,12 @@ for i = 1:dij.numOfBeams; % loop over all beams
     [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoff);
     fprintf('done \n');
     
-    % construct binary mask where ray tracing results are available
-    radDepthMask = ~isnan(radDepthV);
-    radDepthIx = find(radDepthMask);
-
+    % get indices of voxels where ray tracing results are available
+    radDepthIx = find(~isnan(radDepthV));
+    
+    % limit rotated coordinates to positions where ray tracing is availabe
+    rot_coordsV = rot_coordsV(radDepthIx,:);
+    
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
         
         counter = counter + 1;

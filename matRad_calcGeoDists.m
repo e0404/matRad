@@ -17,8 +17,8 @@ function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
 %                                  lateralCutOff)
 %
 % input
-%   rot_coords_bev:     coordinates of the voxels with index V rotated 
-%                       into bev according to the couch and gantry angle        
+%   rot_coords_bev:     coordinates in bev of the voxels with index V,
+%                       where also ray tracing results are availabe 
 %   sourcePoint_bev:    source point in voxel coordinates in beam's eye view
 %   targetPoint_bev:    target point in voxel coordinated in beam's eye view
 %   SAD:                source-to-axis distance
@@ -83,9 +83,6 @@ else
     % Rotate every CT voxel 
     rot_coords_temp = rot_coords_bev*R;
 end
-
-% only take coords for which a radiological depth is calculated
-rot_coords_temp = rot_coords_temp(radDepthIx,:);
 
 % Put [0 0 0] position CT in center of the beamlet.
 latDistsX = rot_coords_temp(:,1) + sourcePoint_bev(1);

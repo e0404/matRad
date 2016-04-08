@@ -141,6 +141,3 @@ end
 
 % only take voxel inside the patient
 radDepthV = radDepthCube(V);
-        
-
-
