@@ -574,7 +574,7 @@ function btnCalcDose_Callback(hObject, ~, handles)
 try
     % indicate that matRad is busy
     % change mouse pointer to hour glass 
-    Figures = findobj('type','figure');
+    Figures = gcf;%findobj('type','figure');
     set(Figures, 'pointer', 'watch'); 
     drawnow;
     % disable all active objects
@@ -741,12 +741,13 @@ CutOffLevel = 0.03;
 %% plot ct
  if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     cla(handles.axesFig);
+    axes(handles.axesFig);
     if plane == 1 % Coronal plane
-        ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube(slice,:,:))/max(ct.cube(:))),bone);
+        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube(slice,:,:)/max(ct.cube(:))))),bone);
     elseif plane == 2 % sagittal plane
-        ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube(:,slice,:))/max(ct.cube(:))),bone);
+        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube(:,slice,:)/max(ct.cube(:))))),bone);
     elseif plane == 3 % Axial plane
-        ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube(:,:,slice))/max(ct.cube(:))),bone);
+        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube(:,:,slice)/max(ct.cube(:))))),bone);
     end
     
     axes(handles.axesFig)
@@ -1245,7 +1246,7 @@ function btnOptimize_Callback(hObject, eventdata, handles)
 try
     % indicate that matRad is busy
     % change mouse pointer to hour glass 
-    Figures = findobj('type','figure');
+    Figures = gcf;%findobj('type','figure');
     set(Figures, 'pointer', 'watch'); 
     drawnow;
     % disable all active objects
@@ -1305,8 +1306,6 @@ try
     handles.SelectedDisplayOptionIdx = 1;
     handles.SelectedDisplayOption = 'physicalDose';
     handles.SelectedBeam = 1;
-    UpdatePlot(handles);
-    UpdateState(handles);
     
     % check IPOPT status and return message for GUI user if no DAO or
     % particles
@@ -1335,6 +1334,7 @@ try
             ,str2double(get(handles.editSequencingLevel,'String')));
         assignin('base','resultGUI',resultGUI);
     end
+        
 catch ME
     handles = showError(handles,{'OptimizeCallback: Could not perform sequencing',ME.message}); 
     % change state from busy to normal
@@ -1358,7 +1358,7 @@ try
     if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
         matRad_visApertureInfo(resultGUI.apertureInfo);
     end
-
+   
 catch ME
     handles = showError(handles,{'OptimizeCallback: Could not perform direct aperture optimization',ME.message}); 
     % change state from busy to normal
@@ -1371,6 +1371,9 @@ end
 % change state from busy to normal
 set(Figures, 'pointer', 'arrow');
 set(InterfaceObj,'Enable','on');
+
+UpdatePlot(handles);
+UpdateState(handles);
     
 guidata(hObject,handles);
 
@@ -2201,7 +2204,7 @@ else
     status = 'warn';
 end
 
-msgbox(['IPOPT finished with status ' num2str(info.status) ' (' statusmsg ')'],'IPOPT',status);
+msgbox(['IPOPT finished with status ' num2str(info.status) ' (' statusmsg ')'],'IPOPT',status,'modal');
 
 % get pln file form GUI     
 function getPlnFromGUI(handles)
@@ -2562,6 +2565,15 @@ if evalin('base','exist(''pln'',''var'')') && ...
    evalin('base','exist(''cst'',''var'')') && ...
    evalin('base','exist(''resultGUI'',''var'')')
 
+    % indicate that matRad is busy
+    % change mouse pointer to hour glass 
+    Figures = gcf;%findobj('type','figure');
+    set(Figures, 'pointer', 'watch'); 
+    drawnow;
+    % disable all active objects
+    InterfaceObj = findobj(Figures,'Enable','on');
+    set(InterfaceObj,'Enable','off');
+    
     % get all data from workspace
     pln       = evalin('base','pln');
     stf       = evalin('base','stf');
@@ -2609,13 +2621,15 @@ if evalin('base','exist(''pln'',''var'')') && ...
         resultGUI.(sNames{j}) = resultGUIreCalc.(sNames{j});
     end
 
-    
-    
     % assign results to base worksapce
     assignin('base','dij',dij);
     assignin('base','resultGUI',resultGUI);
     
     handles.State = 3;
+    
+    % change state from busy to normal
+    set(Figures, 'pointer', 'arrow');
+    set(InterfaceObj,'Enable','on');
     
     guidata(hObject,handles);
     UpdatePlot(handles);
