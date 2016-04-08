@@ -85,6 +85,7 @@ if ~isempty(jacob_dos)
     % 2. find corresponding bixel to the leaf Positions and aperture 
     % weights to calculate the jacobian
     jacob_dos(:,apertureInfo.totalNumOfShapes+1:end) = ...
+        xxx
             ( ones(size(jacob_dos,1),1) * apertureInfoVec(apertureInfo.mappingMx(apertureInfo.totalNumOfShapes+1:end,2))' ) ...
          .* jacob_dos_bixel(:,apertureInfo.bixelIndices(apertureInfo.totalNumOfShapes+1:end)) / apertureInfo.bixelWidth;
 

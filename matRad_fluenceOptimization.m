@@ -92,7 +92,9 @@ matRad_ipoptOptions;
 
 % modified settings for photon dao
 if pln.runDAO && strcmp(pln.radiationMode,'photons')
-    options.ipopt.max_iter = 30;
+%    options.ipopt.max_iter = 50;
+%    options.ipopt.acceptable_obj_change_tol     = 7e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
+
 end
 
 % set bounds on optimization variables
