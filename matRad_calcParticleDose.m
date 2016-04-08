@@ -144,11 +144,12 @@ for i = 1:dij.numOfBeams; % loop over all beams
     % Calcualte radiological depth cube
     lateralCutoffRayTracing = 50;
     fprintf('matRad: calculate radiological depth cube...');
-    radDepthCube = matRad_rayTracing(stf(i),ct,V,lateralCutoffRayTracing);
+    radDepthV = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoffRayTracing);
     fprintf('done.\n');
     
     % construct binary mask where ray tracing results are available
-    radDepthMask = ~isnan(radDepthCube);
+    radDepthMask = ~isnan(radDepthV);
+    radDepthIx = find(radDepthMask);
     
     % Determine lateral cutoff
     fprintf('matRad: calculate lateral cutoff...');
@@ -172,9 +173,9 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                      stf(i).sourcePoint_bev, ...
                                                      stf(i).ray(j).targetPoint_bev, ...
                                                      machine.meta.SAD, ...
-                                                     radDepthMask(V), ...
+                                                     radDepthIx, ...
                                                      maxLateralCutoffDoseCalc);
-            radDepths = radDepthCube(V(ix));   
+            radDepths = radDepthV(ix);   
             
             % just use tissue classes of voxels found by ray tracer
             if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
@@ -187,7 +188,11 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 counter = counter + 1;
                 bixelsPerBeam = bixelsPerBeam + 1;
                 
-                matRad_progress(bixelsPerBeam,stf(i).totalNumOfBixels);
+                % Display progress and update text only 200 times
+                if mod(bixelsPerBeam,round(stf(i).totalNumOfBixels/200)) == 0 && ishandle(figureWait)
+                        matRad_progress(bixelsPerBeam/round(stf(i).totalNumOfBixels/200),...
+                                        floor(stf(i).totalNumOfBixels/round(stf(i).totalNumOfBixels/200)));
+                end
                 % update waitbar only 100 times if it is not closed
                 if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
                     waitbar(counter/dij.totalNumOfBixels,figureWait);

@@ -163,11 +163,12 @@ for i = 1:dij.numOfBeams; % loop over all beams
     
     % ray tracing
     fprintf(['matRad: calculate radiological depth cube...']);
-    [radDepthCube,geoDistCube] = matRad_rayTracing(stf(i),ct,V,lateralCutoff);
+    [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoff);
     fprintf('done \n');
     
     % construct binary mask where ray tracing results are available
-    radDepthMask = ~isnan(radDepthCube);
+    radDepthMask = ~isnan(radDepthV);
+    radDepthIx = find(radDepthMask);
 
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
         
@@ -198,8 +199,11 @@ for i = 1:dij.numOfBeams; % loop over all beams
 
         end
 
-        % Display progress
-        matRad_progress(bixelsPerBeam,stf(i).totalNumOfBixels);
+        % Display progress and update text only 200 times
+        if mod(bixelsPerBeam,round(stf(i).totalNumOfBixels/200)) == 0 && ishandle(figureWait)
+            matRad_progress(bixelsPerBeam/round(stf(i).totalNumOfBixels/200),...
+                            floor(stf(i).totalNumOfBixels/round(stf(i).totalNumOfBixels/200)));
+        end
         % update waitbar only 100 times
         if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
             waitbar(counter/dij.totalNumOfBixels);
@@ -215,7 +219,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                                stf(i).sourcePoint_bev, ...
                                                                stf(i).ray(j).targetPoint_bev, ...
                                                                machine.meta.SAD, ...
-                                                               radDepthMask(V), ...
+                                                               radDepthIx, ...
                                                                lateralCutoff);
 
         % calculate photon dose for beam i and bixel j
@@ -224,8 +228,8 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                Interp_kernel1,...
                                                Interp_kernel2,...
                                                Interp_kernel3,...
-                                               radDepthCube(V(ix)),...
-                                               geoDistCube(V(ix)),...
+                                               radDepthV(ix),...
+                                               geoDistV(ix),...
                                                isoLatDistsX,...
                                                isoLatDistsZ);
        

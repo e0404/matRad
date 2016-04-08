@@ -3,7 +3,7 @@ function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
                               sourcePoint_bev, ...
                               targetPoint_bev, ...
                               SAD, ...
-                              radDepthMask, ...
+                              radDepthIx, ...
                               lateralCutOff)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad calculation of lateral distances from central ray used for
@@ -55,9 +55,6 @@ function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% convert binary mask to linear index array
-radDepthIx = find(radDepthMask);
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ROTATE A SINGLE BEAMLET AND ALIGN WITH BEAMLET WHO PASSES THROUGH
 % ISOCENTER
@@ -87,13 +84,16 @@ else
     rot_coords_temp = rot_coords_bev*R;
 end
 
+% only take coords for which a radiological depth is calculated
+rot_coords_temp = rot_coords_temp(radDepthIx,:);
+
 % Put [0 0 0] position CT in center of the beamlet.
-latDistsX = rot_coords_temp(radDepthMask,1) + sourcePoint_bev(1);
-latDistsZ = rot_coords_temp(radDepthMask,3) + sourcePoint_bev(3);
+latDistsX = rot_coords_temp(:,1) + sourcePoint_bev(1);
+latDistsZ = rot_coords_temp(:,3) + sourcePoint_bev(3);
 
 % check of radial distance exceeds lateral cutoff (projected to iso center)
 rad_distancesSq = latDistsX.^2 + latDistsZ.^2;
-subsetMask = rad_distancesSq ./ rot_coords_temp(radDepthMask,2).^2 <= lateralCutOff^2 /SAD^2;
+subsetMask = rad_distancesSq ./ rot_coords_temp(:,2).^2 <= lateralCutOff^2 /SAD^2;
 
 % return index list within considered voxels
 ix = radDepthIx(subsetMask);
@@ -105,8 +105,8 @@ end
 
 % return x & z distance
 if nargout > 2
-   isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(ix,2)*SAD;
-   isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(ix,2)*SAD; 
+   isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
+   isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD; 
 end
 
 
