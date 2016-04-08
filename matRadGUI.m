@@ -223,9 +223,21 @@ handles.DijCalcWarning = false;
 
     % set slice slider
 if handles.State > 0
-        set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
+    set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
             'Value',ceil(size(ct.cube,handles.plane)/2),...
             'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);      
+    
+    % define context menu for structures
+    contMenuStruct = uicontextmenu;
+    handles.axesFig.UIContextMenu = contMenuStruct;
+    for i = 1:size(cst,1)
+        if cst{i,5}.Visible
+            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','on');
+        else
+            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','off');
+        end
+    end
+    set(handles.figure1,'UIContextMenu',contMenuStruct)
 end
 
 % Update handles structure
@@ -235,6 +247,20 @@ UpdateState(handles)
 UpdatePlot(handles)
 
 
+
+
+
+function Callback_StructVisibilty(source,callbackdata)
+
+handles = guidata(findobj('Name','matRadGUI'));
+Idx = find(strcmp({handles.figure1.UIContextMenu.Children.Label},source.Label));
+if strcmp(callbackdata.Source.Checked,'on')
+    set(handles.figure1.UIContextMenu.Children(Idx),'Checked','off');
+else
+    set(handles.figure1.UIContextMenu.Children(Idx),'Checked','on');
+end
+%guidata(findobj('Name','matRadGUI'), handles);
+UpdatePlot(handles);
 
 
 % --- Outputs from this function are returned to the command line.
@@ -328,9 +354,24 @@ if handles.State >0
             'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
 end
 
+if handles.State > 0
+     % define context menu for structures
+    contMenuStruct = uicontextmenu;
+    handles.axesFig.UIContextMenu = contMenuStruct;
+    for i = 1:size(cst,1)
+        if cst{i,5}.Visible
+            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','on');
+        else
+            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','off');
+        end
+    end
+    set(handles.figure1,'UIContextMenu',contMenuStruct)
+end
+
 guidata(hObject,handles);
-UpdatePlot(handles);
 UpdateState(handles);
+UpdatePlot(handles);
+
 
 
 % --- Executes on button press in btnLoadDicom.
@@ -359,6 +400,21 @@ catch
 end
 UpdateState(handles);
 guidata(hObject,handles);
+
+if handles.State > 0
+    % define context menu for structures
+    cst =  evalin('base','cst');
+    contMenuStruct = uicontextmenu;
+    handles.axesFig.UIContextMenu = contMenuStruct;
+    for i = 1:size(cst,1)
+        if cst{i,5}.Visible
+            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','on');
+        else
+            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','off');
+        end
+    end
+    set(handles.figure1,'UIContextMenu',contMenuStruct)
+end
 
 function editBixelWidth_Callback(hObject, ~, handles)
 % hObject    handle to editBixelWidth (see GCBO)
@@ -403,7 +459,7 @@ if handles.State > 0
 end
 
 % --- Executes on selection change in popupRadMode.
-function popupRadMode_Callback(hObject, ~, handles)
+function popupRadMode_Callback(hObject, eventdata, handles)
 % hObject    handle to popupRadMode (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -447,13 +503,15 @@ switch RadIdentifier
 end
 
 if handles.State > 0
-    getPlnFromGUI(handles);
     pln = evalin('base','pln');
     if handles.State > 0 && ~strcmp(contents(get(hObject,'Value')),pln.radiationMode)
         handles.State = 1;
         UpdateState(handles);
+      
         guidata(hObject,handles);
     end
+    getPlnFromGUI(handles);
+         
    
 end
 
@@ -815,14 +873,24 @@ end
 
 
 %% plot VOIs
-
+ contMenuStruct = get(handles.figure1,'UIContextMenu');
+ vBoolPlotVOI   = zeros(size(cst,1),1);
+ for i = 1:size(contMenuStruct.Children,1)
+     boolean = false;
+     if strcmp(get(contMenuStruct.Children(i),'Checked'),'on')
+        boolean = true;
+     end
+     IdxInCst = find(strcmp(cst(:,2),contMenuStruct.Children(i).Label));
+     vBoolPlotVOI(IdxInCst) = boolean;
+ end
+ 
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
     colors = colorcube;
     hold on,
     colors = colors(round(linspace(1,63,size(cst,1))),:);
     mask = zeros(size(ct.cube)); % create zero cube with same dimeonsions like dose cube
     for s = 1:size(cst,1)
-        if ~strcmp(cst{s,3},'IGNORED') %&& ~strcmp(data.cst{s,2},'DoseFalloff')
+        if ~strcmp(cst{s,3},'IGNORED') && vBoolPlotVOI(s)
             mask(:) = 0;
             mask(cst{s,4}) = 1;
             if plane == 1 && sum(sum(mask(slice,:,:))) > 0
@@ -952,8 +1020,8 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
     if sum(strcmp(SelectedCube,{'physicalDose','effect','RBExDose','alpha','beta','RBE'})) > 0
          Suffix = '';
     else
-        Suffix = strsplit(SelectedCube,'_');
-        Suffix = ['_' Suffix{2}];
+        Idx    = find(SelectedCube == '_');
+        Suffix = SelectedCube(Idx:end);
     end
     
     mPhysDose = Result.(['physicalDose' Suffix]); 
@@ -2215,14 +2283,28 @@ if ~strcmp(pln.bioOptimization,'none') && strcmp(pln.radiationMode,'carbon') == 
         resultGUI_SelectedCube.physicalDose = resultGUI.physicalDose;
         resultGUI_SelectedCube.RBExDose     = resultGUI.RBExDose;
     else
-        SelectedSuffix = strsplit(SelectedCube,'_');
-        SelectedSuffix = ['_' SelectedSuffix{2}];
+        Idx    = find(SelectedCube == '_');
+        SelectedSuffix = SelectedCube(Idx:end);
         resultGUI_SelectedCube.physicalDose = resultGUI.(['physicalDose' SelectedSuffix]);
         resultGUI_SelectedCube.RBExDose     = resultGUI.(['RBExDose' SelectedSuffix]);
     end
 end
 
-matRad_calcDVH(resultGUI_SelectedCube,evalin('base','cst'),evalin('base','pln'));
+%adapt visibilty
+cst = evalin('base','cst');
+
+contMenuStruct = get(handles.figure1,'UIContextMenu');
+tic
+for i = 1:size(contMenuStruct.Children,1)
+     boolean = false;
+     if strcmp(get(contMenuStruct.Children(i),'Checked'),'on')
+        boolean = true;
+     end
+     IdxInCst = find(strcmp(cst(:,2),contMenuStruct.Children(i).Label));
+     cst{IdxInCst,5}.Visible = boolean;
+end
+ toc
+matRad_calcDVH(resultGUI_SelectedCube,cst,evalin('base','pln'));
 
 % radio button: plot isolines labels
 function radiobtnIsoDoseLinesLabels_Callback(~, ~, handles)
@@ -2792,6 +2874,4 @@ function sliderOffset_CreateFcn(hObject, ~, ~)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
-
-
 

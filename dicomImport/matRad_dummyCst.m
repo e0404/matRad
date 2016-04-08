@@ -41,5 +41,6 @@ cst{1,5}.Priority = 1;
 % set default parameter for biological planning
 cst{1,5}.alphaX = 0.1;
 cst{1,5}.betaX  = 0.05;
+cst{i,5}.Visible = 1;
 cst{1,6} = []; % define no objcetives   
 

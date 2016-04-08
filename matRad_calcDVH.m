@@ -36,7 +36,8 @@ function matRad_calcDVH(result,cst,pln,lineStyleIndicator)
 % create new figure and set default line style indicator if not explictly
 % specified
 if nargin < 4
-    f = figure('Name','DVH','Color',[0.5 0.5 0.5]);
+    
+    f = figure('Name','DVH','Color',[0.5 0.5 0.5],'Position',([300 300 800 600]));
     hold on
     lineStyleIndicator = 1;
 else
@@ -68,27 +69,27 @@ end
 dvh       = NaN * ones(1,n);
 
 for i = 1:numOfVois
+    if cst{i,5}.Visible
+        indices     = cst{i,4};
+        numOfVoxels = numel(indices);
+        if sum(strcmp(fieldnames(result),'RBExDose')) > 0
+            doseInVoi   = result.RBExDose(indices);   
+        else
+            doseInVoi   = result.physicalDose(indices);
+        end
 
-    indices     = cst{i,4};
-    numOfVoxels = numel(indices);
-    if sum(strcmp(fieldnames(result),'RBExDose')) > 0
-        doseInVoi   = result.RBExDose(indices);   
-    else
-        doseInVoi   = result.physicalDose(indices);
+        % fprintf('%3d %20s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy)\n', ...
+        %     cst{i,1},cst{i,2},mean(doseInVoi),std(doseInVoi),max(doseInVoi),min(doseInVoi))
+
+        for j = 1:n
+            dvh(j) = sum(doseInVoi > dvhPoints(j));
+        end
+
+        dvh = dvh ./ numOfVoxels * 100;
+
+        subplot(211),plot(dvhPoints,dvh,'LineWidth',4,'Color',colorMx(i,:), ...
+            'LineStyle',lineStyles{lineStyleIndicator},'DisplayName',cst{i,2});hold on
     end
-    
-    % fprintf('%3d %20s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy)\n', ...
-    %     cst{i,1},cst{i,2},mean(doseInVoi),std(doseInVoi),max(doseInVoi),min(doseInVoi))
-
-    for j = 1:n
-        dvh(j) = sum(doseInVoi > dvhPoints(j));
-    end
-    
-    dvh = dvh ./ numOfVoxels * 100;
-
-    subplot(211),plot(dvhPoints,dvh,'LineWidth',4,'Color',colorMx(i,:), ...
-        'LineStyle',lineStyles{lineStyleIndicator},'DisplayName',cst{i,2});hold on
-
 end
 
 fontSizeValue = 14;

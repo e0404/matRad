@@ -82,7 +82,7 @@ for runVoi = 1:size(cst,1)
         end
         voiPrint = sprintf('%s\n%27s',voiPrint,' ');
         for runVX = 1:numel(refGy)
-            QI(runVoi).(strcat('V',num2str(refGy(runVX)))) = VX(refGy(runVX));
+            QI(runVoi).(['V' num2str(refGy(runVX)) 'Gy']) = VX(refGy(runVX));
             voiPrint = sprintf('%sV%dGy = %6.2f%%, ',voiPrint,refGy(runVX),VX(refGy(runVX))*100);
         end
         voiPrint = sprintf('%s\n%27s',voiPrint,' ');
@@ -102,16 +102,18 @@ for runVoi = 1:size(cst,1)
             if referenceDose == inf 
                 voiPrint = sprintf('%s%s',voiPrint,'Warning: target has no objective that penalizes underdosage, ');
             else
+ 
+                StringReferenceDose = regexprep(num2str(round(referenceDose*100)/100),'\D','_');
                 % Conformity Index, fieldname contains reference dose
                 VTarget95 = sum(doseInVoi >= 0.95*referenceDose); % number of target voxels recieving dose >= 0.95 dPres
                 VTreated95 = sum(relevantDose(:) >= 0.95*referenceDose);  %number of all voxels recieving dose >= 0.95 dPres ("treated volume")
-                QI(runVoi).('CI') = VTarget95^2/(numOfVoxels * VTreated95); 
+                QI(runVoi).(['CI_' StringReferenceDose 'Gy']) = VTarget95^2/(numOfVoxels * VTreated95); 
 
                 % Homogeneity Index (one out of many), fieldname contains reference dose        
-                QI(runVoi).('HI') = (DX(5) - DX(95))/referenceDose * 100;
+                QI(runVoi).(['HI_' StringReferenceDose 'Gy']) = (DX(5) - DX(95))/referenceDose * 100;
 
                 voiPrint = sprintf('%sCI = %6.4f, HI = %5.2f for reference dose of %3.1f Gy\n',voiPrint,...
-                                   QI(runVoi).('CI'),QI(runVoi).('HI'),referenceDose);
+                                   QI(runVoi).(['CI_' StringReferenceDose 'Gy']),QI(runVoi).(['HI_' StringReferenceDose 'Gy']),referenceDose);
             end
         end
         fprintf('%s\n',voiPrint);

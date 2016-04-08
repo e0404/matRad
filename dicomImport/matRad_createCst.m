@@ -48,7 +48,7 @@ for i = 1:size(structures,2)
         cst{i,3} = 'TARGET';
         
         cst{i,5}.Priority = 1;
-        
+     
         % default objectives for targets
         cst{i,6}(1).type       = 'square deviation';
         cst{i,6}(1).penalty    = 800;
@@ -72,5 +72,5 @@ for i = 1:size(structures,2)
     % set default parameter for biological planning
     cst{i,5}.alphaX = 0.1;
     cst{i,5}.betaX = 0.05;
-
+    cst{i,5}.Visible = 1;
 end
