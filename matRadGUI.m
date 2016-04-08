@@ -229,7 +229,7 @@ if handles.State > 0
     
     % define context menu for structures
     contMenuStruct = uicontextmenu;
-    handles.axesFig.UIContextMenu = contMenuStruct;
+    set(handles.axesFig,'UIContextMenu',contMenuStruct);
     for i = 1:size(cst,1)
         if cst{i,5}.Visible
             uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','on');
@@ -253,11 +253,14 @@ UpdatePlot(handles)
 function Callback_StructVisibilty(source,callbackdata)
 
 handles = guidata(findobj('Name','matRadGUI'));
-Idx = find(strcmp({handles.figure1.UIContextMenu.Children.Label},source.Label));
-if strcmp(callbackdata.Source.Checked,'on')
-    set(handles.figure1.UIContextMenu.Children(Idx),'Checked','off');
+
+contextUiChildren = get(get(handles.figure1,'UIContextMenu'),'Children');
+
+Idx = find(strcmp(get(contextUiChildren,'Label'),get(source,'Label')));
+if strcmp(get(source,'Checked'),'on')
+    set(contextUiChildren(Idx),'Checked','off');
 else
-    set(handles.figure1.UIContextMenu.Children(Idx),'Checked','on');
+    set(contextUiChildren(Idx),'Checked','on');
 end
 %guidata(findobj('Name','matRadGUI'), handles);
 UpdatePlot(handles);
@@ -357,7 +360,7 @@ end
 if handles.State > 0
      % define context menu for structures
     contMenuStruct = uicontextmenu;
-    handles.axesFig.UIContextMenu = contMenuStruct;
+    set(handles.axesFig,'UIContextMenu',contMenuStruct);
     for i = 1:size(cst,1)
         if cst{i,5}.Visible
             uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','on');
@@ -405,7 +408,7 @@ if handles.State > 0
     % define context menu for structures
     cst =  evalin('base','cst');
     contMenuStruct = uicontextmenu;
-    handles.axesFig.UIContextMenu = contMenuStruct;
+    set(handles.axesFig,'UIContextMenu',contMenuStruct);
     for i = 1:size(cst,1)
         if cst{i,5}.Visible
             uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','on');
@@ -505,12 +508,14 @@ end
 if handles.State > 0
     pln = evalin('base','pln');
     if handles.State > 0 && ~strcmp(contents(get(hObject,'Value')),pln.radiationMode)
+
+        getPlnFromGUI(handles);
+        
         handles.State = 1;
         UpdateState(handles);
       
         guidata(hObject,handles);
     end
-    getPlnFromGUI(handles);
          
    
 end
@@ -874,13 +879,14 @@ end
 
 %% plot VOIs
  contMenuStruct = get(handles.figure1,'UIContextMenu');
+ contMenuStructChildren = get(contMenuStruct,'Children');
  vBoolPlotVOI   = zeros(size(cst,1),1);
- for i = 1:size(contMenuStruct.Children,1)
+ for i = 1:size(contMenuStructChildren,1)
      boolean = false;
-     if strcmp(get(contMenuStruct.Children(i),'Checked'),'on')
+     if strcmp(get(contMenuStructChildren(i),'Checked'),'on')
         boolean = true;
      end
-     IdxInCst = find(strcmp(cst(:,2),contMenuStruct.Children(i).Label));
+     IdxInCst = find(strcmp(cst(:,2),get(contMenuStructChildren(i),'Label')));
      vBoolPlotVOI(IdxInCst) = boolean;
  end
  
@@ -2294,17 +2300,15 @@ end
 %adapt visibilty
 cst = evalin('base','cst');
 
-contMenuStruct = get(handles.figure1,'UIContextMenu');
-tic
-for i = 1:size(contMenuStruct.Children,1)
+contMenuStructChildren = get(get(handles.figure1,'UIContextMenu'),'Children');
+for i = 1:size(contMenuStructChildren,1)
      boolean = false;
-     if strcmp(get(contMenuStruct.Children(i),'Checked'),'on')
+     if strcmp(get(contMenuStructChildren(i),'Checked'),'on')
         boolean = true;
      end
-     IdxInCst = find(strcmp(cst(:,2),contMenuStruct.Children(i).Label));
+     IdxInCst = find(strcmp(cst(:,2),get(contMenuStructChildren(i),'Label')));
      cst{IdxInCst,5}.Visible = boolean;
 end
- toc
 matRad_calcDVH(resultGUI_SelectedCube,cst,evalin('base','pln'));
 
 % radio button: plot isolines labels
@@ -2656,11 +2660,13 @@ cNames = {'VOI','alphaX betaX','alpha beta ratio'};
 columnformat = {'char',CellType,'numeric'};
 
 tissueTable = uitable('Parent', figTissue,'Data', data,'ColumnEditable',[false true false],...
-                      'ColumnName',cNames, 'ColumnFormat',columnformat,'Position',[50 150 0 0]);
-tissueTable.CellEditCallback = @tissueTable_CellEditCallback;
+                      'ColumnName',cNames, 'ColumnFormat',columnformat);%,'Position',[50 150 10 10]);
+set(tissueTable,'CellEditCallback',@tissueTable_CellEditCallback);
 % set width and height
-tissueTable.Position(3) = tissueTable.Extent(3);
-tissueTable.Position(4) = tissueTable.Extent(4);
+%currTablePos = get(tissueTable,'Position');
+
+%set(tissueTable,'Position' = tissueTable.Extent(3);
+%tissueTable.Position(4) = tissueTable.Extent(4);
 
 % define two buttons with callbacks
 uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Save&Close',...
@@ -2702,7 +2708,9 @@ UpdateState(handles);
 function tissueTable_CellEditCallback(hObject, eventdata, ~) 
 if eventdata.Indices(2) == 2
    alphaXBetaX = str2num(eventdata.NewData);
-   hObject.Data{eventdata.Indices(1),3} = alphaXBetaX(1)/alphaXBetaX(2);
+   data = get(hObject,'Data');
+   data{eventdata.Indices(1),3} = alphaXBetaX(1)/alphaXBetaX(2);
+   set(hObject,'Data',data);
 end
 
 % --- Executes on button press in btnSaveToGUI.
@@ -2731,14 +2739,14 @@ else
     uicontrol('Parent',figDialog,...
               'Style','text',...
               'Position',[20 Height - (0.35*Height) 350 60],...
-              'String','Please provide a decriptive name for your optimization result:','FontSize',14,'BackgroundColor',[0.5 0.5 0.5]);
+              'String','Please provide a decriptive name for your optimization result:','FontSize',10,'BackgroundColor',[0.5 0.5 0.5]);
     
     uicontrol('Parent',figDialog,...
               'Style','edit',...
               'Position',[30 60 350 60],... 
-              'String','Please enter name here...','FontSize',14,'BackgroundColor',[0.55 0.55 0.55]);
+              'String','Please enter name here...','FontSize',10,'BackgroundColor',[0.55 0.55 0.55]);
          
-    uicontrol('Parent', figDialog,'Style', 'pushbutton', 'String', 'Save','FontSize',14,...
+    uicontrol('Parent', figDialog,'Style', 'pushbutton', 'String', 'Save','FontSize',10,...
               'Position', [0.42*Width 0.1 * Height 70 30],...
               'Callback', @(hpb,eventdata)SaveResultToGUI(hpb,eventdata,guidata(hpb)));        
 end
@@ -2752,15 +2760,15 @@ UpdatePlot(handles)
 function SaveResultToGUI(~, ~, ~)
 AllFigHandles = get(0,'Children');    
 ixHandle      = strcmp(get(AllFigHandles,'Name'),'Provide result name');
-uiEdit        = AllFigHandles(ixHandle).Children(2);
+uiEdit        = get(AllFigHandles(ixHandle),'Children');
 
-if strcmp(get(uiEdit,'String'),'Please enter name here...')
+if strcmp(get(uiEdit(2),'String'),'Please enter name here...')
   
     formatOut = 'mmddyyHHMM';
     Suffix = ['_' datestr(now,formatOut)];
 else
     % delete special characters
-    Suffix = get(uiEdit,'String');
+    Suffix = get(uiEdit(2),'String');
     logIx = isstrprop(Suffix,'alphanum');
     Suffix = ['_' Suffix(logIx)];
 end
