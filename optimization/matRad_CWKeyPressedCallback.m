@@ -28,9 +28,12 @@ function matRad_CWKeyPressedCallback(~,KeyEvent)
 
 global matRad_STRG_C_Pressed
 
-% check if user pressed STRG_C
-if isequal(get(KeyEvent,'keyCode'), 67) && get(KeyEvent,'modifiers') == 2
+% check if user pressed STRG_C or q
+if (get(KeyEvent,'keyCode') == 67 && get(KeyEvent,'modifiers') == 2) || ...
+    get(KeyEvent,'keyCode') == 81
+
     matRad_STRG_C_Pressed = true;
+
 end
 
 end
