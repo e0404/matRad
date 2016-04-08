@@ -1220,6 +1220,7 @@ end
 try
     %% DAO
     if strcmp(pln.radiationMode,'photons') && pln.runDAO
+        handles = showWarning(handles,{'Observe: You are running direct aperture optimization','This is experimental code that has not been thoroughly debugged - especially in combination with constrained optimization.'});
        [resultGUI,ipoptInfo] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst'),...
            resultGUI.apertureInfo,resultGUI,pln);
        assignin('base','resultGUI',resultGUI);
@@ -1559,6 +1560,7 @@ data{sEnd+1,1} = 'Select VOI';
 data{sEnd+1,2} = 'Select VOI Type';
 data{sEnd+1,3} = 2;
 data{sEnd+1,4} = 'Select obj func/constraint';
+data{sEnd+1,6} = '';
 set(handles.uiTable,'data',data);
 
 %handles.State=1;

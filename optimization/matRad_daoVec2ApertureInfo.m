@@ -106,6 +106,10 @@ for i = 1:numel(updatedInfo.beam)
         bixelIndLeftLeaf  = apertureInfo.beam(i).bixelIndMap((xPosIndLeftLeaf-1)*n+[1:n]');
         bixelIndRightLeaf = apertureInfo.beam(i).bixelIndMap((xPosIndRightLeaf-1)*n+[1:n]');
         
+        if any(isnan(bixelIndLeftLeaf)) || any(isnan(bixelIndRightLeaf))
+            error('cannot map leaf position to bixel index');
+        end
+        
         % store information in index vector for gradient calculation
         indVect(apertureInfo.beam(i).shape(j).vectorOffset+[1:n]-1) = bixelIndLeftLeaf;
         indVect(apertureInfo.beam(i).shape(j).vectorOffset+[1:n]-1+apertureInfo.totalNumOfLeafPairs) = bixelIndRightLeaf;
