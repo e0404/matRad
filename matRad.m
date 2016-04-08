@@ -44,13 +44,13 @@ pln.voxelDimensions = ct.cubeDim;
 pln.radiationMode   = 'photons'; % either photons / protons / carbon
 pln.bioOptimization = 'none'; % none: physical optimization; effect: effect-based optimization; RBExD: optimization of RBE-weighted dose
 pln.numOfFractions  = 1;
-pln.runSequencing   = true; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
-pln.runDAO          = true; % 1/true: run DAO, 0/false: don't / will be ignored for particles
+pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
+pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.machine         = 'Generic';
 
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
-multScen.numOfShiftScen      = [10 10 0];        % number of shifts in x y and z direction       
+multScen.numOfShiftScen      = [3 3 3];        % number of shifts in x y and z direction       
 multScen.shiftSize           = [3 3 3];        % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
 multScen.shiftGenType        = 'sampled';      % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
 multScen.numOfRangeShiftScen = 0;              % number of absolute and/or relative range scnearios
@@ -58,6 +58,8 @@ multScen.maxAbsRangeShift    = 0;              % maximum absolute over and under
 multScen.maxRelRangeShift    = 0;              % maximum relative over and undershoot in %
 multScen.ScenCombType        = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
 multScen                     = matRad_setMultScen(multScen);
+
+cst = matRad_addTargetRing(cst,ct,14);
 
 %% initial visualization and change objective function settings if desired
 matRadGUI
