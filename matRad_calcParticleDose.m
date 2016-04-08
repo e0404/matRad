@@ -82,7 +82,7 @@ catch
 end
 
 % generates tissue class matrix for biological optimization
-if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
+if (strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD')) ... 
         && strcmp(pln.radiationMode,'carbon')
     fprintf('matRad: loading biological base data... ');
     vTissueIndex = zeros(size(V,1),1);
@@ -117,6 +117,11 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
         
     end
     fprintf('done.\n');
+
+% issue warning if biological optimization not possible
+elseif sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0 && strcmp(pln.radiationMode,'protons')
+    warndlg('Effect based and RBE optimization not possible with protons - physical optimization is carried out instead.');
+    pln.bioOptimization = 'none';
 end
 
 fprintf('matRad: Particle dose calculation...\n');
