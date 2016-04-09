@@ -75,8 +75,15 @@ for  i = 1:size(cst,1)
                     refQ   = cst{i,6}(j).coverage;
                     refVol = cst{i,6}(j).volume;
                     d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
+                    
+                    % calc voxel dependent weighting
+                    weighting = [];
+                    for k = 1:length(d_i{1})
+                        weighting(k) = min(cst{i,6}(j).minDistToTarget(d_i{1}(k) == d_i{1}));
+                    end
+                    weighting = 1 + 4 * (weighting./cst{i,6}(j).minDistToTarget);
 
-                    f = f + matRad_objFunc(d_i{1},cst{i,6}(j),d_ref,d_ref2);
+                    f = f + matRad_objFunc(d_i{1},cst{i,6}(j),d_ref,d_ref2,weighting);
 
                 end
             
