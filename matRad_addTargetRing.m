@@ -23,7 +23,7 @@ VwithMargin = find(voiTarget>0);
 
 % add TARGET RING structure to cst
 cstNewLine = size(cst,1) + 1 ;
-targetLine = 2;
+targetLine = find(~cellfun('isempty',strfind(cst(:,2),'OuterTarget')));;
 
 cst{cstNewLine,1} = cst{cstNewLine - 1,1} + 1;
 cst{cstNewLine,2} = 'TargetRing';
@@ -38,6 +38,7 @@ cst{cstNewLine,6}.dose = 57.5;
 cst{cstNewLine,6}.EUD = NaN;
 cst{cstNewLine,6}.volume = 0.9;
 cst{cstNewLine,6}.coverage = 0.9;
+cst{cstNewLine,6}.minDistToTarget = matRad_calcMinDist(cst,ct,'TargetRing','OuterTarget');
 cst{cstNewLine,6}.robustness = 'coverage';
 
 end
