@@ -1253,9 +1253,8 @@ try
     InterfaceObj = findobj(Figures,'Enable','on');
     set(InterfaceObj,'Enable','off');
     % wait until the table is updated
-    pause(0.1);
-    uiTable_CellEditCallback(hObject,[],handles);
-    pause(0.3);
+    btnTableSave_Callback([],[],handles);
+
 
     % if a critical change to the cst has been made which affects the dij matrix
     if handles.DijCalcWarning == true
@@ -1746,7 +1745,7 @@ PlaceholderDose = 'NaN';
 
 % get table data and current index of cell
 if isempty(eventdata)
-    data =get(handles.uiTable,'Data');
+    data = get(handles.uiTable,'Data');
     Index = get(handles.uiTable,'UserData');
 
     if ~isempty(Index) && size(Index,1)==1
@@ -2596,9 +2595,6 @@ if evalin('base','exist(''pln'',''var'')') && ...
         return
     end
     
-    % adjust overlap internally
-    cst = matRad_setOverlapPriorities(cst);
-    
     % change isocenter if that was changed and do _not_ recreate steering
     % information
     for i = 1:numel(pln.gantryAngles)
@@ -2620,12 +2616,24 @@ if evalin('base','exist(''pln'',''var'')') && ...
     for j = 1:length(sNames)
         resultGUI.(sNames{j}) = resultGUIreCalc.(sNames{j});
     end
+    
+    % delete old variables to avoid confusion
+    if isfield(resultGUI,'effect')
+        resultGUI = rmfield(resultGUI,'effect');
+        resultGUI = rmfield(resultGUI,'RBExDose'); 
+        resultGUI = rmfield(resultGUI,'RBE'); 
+        resultGUI = rmfield(resultGUI,'alpha'); 
+        resultGUI = rmfield(resultGUI,'beta');
+    end
 
     % assign results to base worksapce
     assignin('base','dij',dij);
     assignin('base','resultGUI',resultGUI);
     
     handles.State = 3;
+    
+    % show newly computed state
+    set(handles.popupDisplayOption,'Value',find(strcmp('physicalDose',Content)));
     
     % change state from busy to normal
     set(Figures, 'pointer', 'arrow');
