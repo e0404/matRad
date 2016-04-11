@@ -2591,7 +2591,7 @@ if evalin('base','exist(''pln'',''var'')') && ...
         Suffix = '';
     end
     
-    if stf.totalNumOfBixels ~= length(resultGUI.(['w' Suffix]))
+    if sum([stf.totalNumOfBixels]) ~= length(resultGUI.(['w' Suffix]))
         warndlg('weight vector does not corresponding to current steering file');
         return
     end
@@ -2816,14 +2816,14 @@ pln       = evalin('base','pln');
 resultGUI = evalin('base','resultGUI');
 
 resultGUI.(['physicalDose' Suffix])  = resultGUI.physicalDose; 
-
+resultGUI.(['w' Suffix])             = resultGUI.w;
+    
 if ~strcmp(pln.bioOptimization,'none') && strcmp(pln.radiationMode,'carbon') == 1 
     resultGUI.(['effect' Suffix])             = resultGUI.effect; 
     resultGUI.(['RBExDose' Suffix])           = resultGUI.RBExDose; 
     resultGUI.(['RBE' Suffix])                = resultGUI.RBE; 
     resultGUI.(['alpha' Suffix])              = resultGUI.alpha; 
     resultGUI.(['beta' Suffix])               = resultGUI.beta; 
-    resultGUI.(['w' Suffix])                  = resultGUI.w;
 end
 
 close(AllFigHandles(ixHandle));
