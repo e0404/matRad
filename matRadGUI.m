@@ -693,7 +693,7 @@ if exist('Result','var')
         end
 
         DispInfo =fieldnames(Result);
-        for i=1:size(DispInfo,1)
+        for i = 1:size(DispInfo,1)
             
             if isstruct(Result.(DispInfo{i,1})) || isvector(Result.(DispInfo{i,1}))
                  Result = rmfield(Result,DispInfo{i,1});
@@ -707,27 +707,26 @@ if exist('Result','var')
                 end
                 
                 % determine units
-                switch DispInfo{i,1}
-                    case 'physicalDose'
-                        DispInfo{i,3}  = '[Gy]';
-                    case 'alpha'
-                        DispInfo{i,3}  = '[Gy^{-1}]';
-                    case 'beta'
-                        DispInfo{i,3}  = '[Gy^{-2}]';
-                    case 'RBExD'
-                        DispInfo       = '[Gy(RBE)]';
-                    otherwise
-                        DispInfo{i,3}  = '[a.u.]';
+                if strfind(DispInfo{i,1},'physicalDose');
+                    DispInfo{i,3}  = '[Gy]';
+                elseif strfind(DispInfo{i,1},'alpha')
+                    DispInfo{i,3}  = '[Gy^{-1}]';
+                elseif strfind(DispInfo{i,1},'beta')
+                    DispInfo{i,3}  = '[Gy^{-2}]';
+                elseif strfind(DispInfo{i,1},'RBExD')
+                    DispInfo       = '[Gy(RBE)]';
+                else
+                    DispInfo{i,3}  = '[a.u.]';
                 end
                 
             end
         end
 
-    set(handles.popupDisplayOption,'String',fieldnames(Result));
-    if sum(strcmp(handles.SelectedDisplayOption,fieldnames(Result))) == 0
-        handles.SelectedDisplayOption = 'physicalDose';
-    end
-    set(handles.popupDisplayOption,'Value',find(strcmp(handles.SelectedDisplayOption,fieldnames(Result))));
+        set(handles.popupDisplayOption,'String',fieldnames(Result));
+        if sum(strcmp(handles.SelectedDisplayOption,fieldnames(Result))) == 0
+            handles.SelectedDisplayOption = 'physicalDose';
+        end
+        set(handles.popupDisplayOption,'Value',find(strcmp(handles.SelectedDisplayOption,fieldnames(Result))));
 
     end
 end
@@ -762,8 +761,7 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
         end
         mVolume = getfield(Result,handles.SelectedDisplayOption);
         % make sure to exploit full color range 
-        mVolume(Result.physicalDose<...
-            CutOffLevel*max(Result.physicalDose(:)))=0;
+        mVolume(mVolume<CutOffLevel*max(mVolume(:))) = 0;
 
     %     %% dose colorwash
         if ~isempty(mVolume)&& ~isvector(mVolume)
@@ -2632,7 +2630,8 @@ if evalin('base','exist(''pln'',''var'')') && ...
     
     handles.State = 3;
     
-    % show newly computed state
+    % show physicalDose of newly computed state
+    handles.SelectedDisplayOption = 'physicalDose';
     set(handles.popupDisplayOption,'Value',find(strcmp('physicalDose',Content)));
     
     % change state from busy to normal

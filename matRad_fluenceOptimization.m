@@ -168,7 +168,7 @@ funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 [wOpt, info]           = ipopt(wInit,funcs,options);
 
 % calc dose and reshape from 1D vector to 2D array
-fprintf('Calculating final cubes...');
+fprintf('Calculating final cubes...\n');
 resultGUI = matRad_calcCubes(wOpt,dij,cst);
 resultGUI.wUnsequenced = wOpt;
 
