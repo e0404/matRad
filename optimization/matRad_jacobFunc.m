@@ -8,9 +8,6 @@ if isequal(constraint.type, 'max dose constraint')
 
     epsilon = 1e-3;
 
-    % get dose in VOI
-    d_i = d{i}(cst{i,4});
-
     jacobVec = exp( (d_i-max(d_i))/epsilon );
     jacobVec = jacobVec/sum(jacobVec);
 
@@ -19,9 +16,6 @@ elseif isequal(constraint.type, 'min dose constraint')
     % http://scitation.aip.org/content/aapm/journal/medphys/41/8/10.1118/1.4883837
 
     epsilon = 1e-3;
-
-    % get dose in VOI
-    d_i = d{i}(cst{i,4});
 
     jacobVec = exp( (min(d_i)-d_i)/epsilon );
     jacobVec = jacobVec/sum(jacobVec);
@@ -39,9 +33,6 @@ elseif isequal(constraint.type, 'max EUD constraint') || ...
     % exponenent for EUD constraint
     exponent = constraint.EUD;
 
-    % get dose in VOI
-    d_i = d{i}(cst{i,4});
-
     jacobVec = nthroot(1/numOfVoxels,exponent) * sum(d_i.^exponent)^((1-exponent)/exponent) * ...
                   (d_i.^(exponent-1));
 
@@ -49,8 +40,6 @@ elseif isequal(constraint.type, 'exact DVH constraint') || ...
        isequal(constraint.type, 'max DVH constraint') || ...
        isequal(constraint.type, 'min DVH constraint')
 
-    % get dose in VOI
-    d_i = d{i}(cst{i,4});
     d_i_sort = sort(d_i);
 
     % calculate scaling

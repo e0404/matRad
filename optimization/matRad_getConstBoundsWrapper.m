@@ -44,27 +44,36 @@ for  i = 1:size(cst,1)
 
         % loop over the number of constraints for the current VOI
         for j = 1:numel(cst{i,6})
-
-            if isequal(type,'none') || isequal(type,'RBExD') 
-                param = cst{i,6}(j).dose;
-            elseif isequal(type,'effect')
-                param = cst{i,5}.alphaX .* cst{i,6}(j).dose + cst{i,5}.betaX .* cst{i,6}(j).dose.^2;
-            end
             
-            if strcmp(cst{i,6}(j).robustness,'none')
-                
-                [cl,cu] = [cl,cu ; matRad_getConstBounds(cst{i,6}(j),param)];
-                
-            elseif strcmp(cst{i,6}(j).robustness,'probabilistic') || strcmp(cst{i,6}(j).robustness,'voxel-wise worst case')
-                
-                for k = 1:numOfScenarios
-                    
-                    [cl,cu] = [cl,cu ; matRad_getConstBounds(cst{i,6}(j),param)];
-                    
-                end
-                
-            end
+            % only perform computations for constraints
+            if ~isempty(strfind(cst{i,6}(j).type,'constraint'))
 
+                if isequal(type,'none') || isequal(type,'RBExD') 
+                    param = cst{i,6}(j).dose;
+                elseif isequal(type,'effect')
+                    param = cst{i,5}.alphaX .* cst{i,6}(j).dose + cst{i,5}.betaX .* cst{i,6}(j).dose.^2;
+                end
+
+                if strcmp(cst{i,6}(j).robustness,'none')
+
+                    [clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param);
+                    
+                    cl = [cl;clTmp];
+                    cu = [cu;cuTmp];
+                    
+                elseif strcmp(cst{i,6}(j).robustness,'probabilistic') || strcmp(cst{i,6}(j).robustness,'voxel-wise worst case')
+
+                    for k = 1:numOfScenarios
+
+                        [clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param);
+                    
+                        cl = [cl;clTmp];
+                        cu = [cu;cuTmp];
+
+                    end
+
+                end
+            end
 
         end % over all objectives of structure
 

@@ -148,19 +148,21 @@ for i = 1:size(cst,1)
 end
 
 % Calculate jacobian with dij projections
-if isequal(type,'none')
+for i = 1:dij.numOfScenarios
+    if isequal(type,'none')
 
-    if ~isempty(physicalDoseProjection)
-        jacob = [jacob;physicalDoseProjection' * dij.physicalDose{i}]; 
-    end
+        if ~isempty(physicalDoseProjection)
+            jacob = [jacob;physicalDoseProjection' * dij.physicalDose{i}]; 
+        end
 
-elseif isequal(type,'effect') || isequal(type,'RBExD')
+    elseif isequal(type,'effect') || isequal(type,'RBExD')
 
-    if ~isempty(mSqrtBetaDoseProjection) && ~isempty(mAlphaDoseProjection)
-        mSqrtBetaDoseProjection = mSqrtBetaDoseProjection' * dij.mSqrtBetaDose{i} * w;
-        mSqrtBetaDoseProjection = sparse(voxelID,constraintID(2:end),mSqrtBetaDoseProjection,...
-                                     size(mAlphaDoseProjection,1),size(mAlphaDoseProjection,2));
-        jacob                   = [jacob;mAlphaDoseProjection' * dij.mAlphaDose{i} + mSqrtBetaDoseProjection' * dij.mSqrtBetaDose{i}];
+        if ~isempty(mSqrtBetaDoseProjection) && ~isempty(mAlphaDoseProjection)
+            mSqrtBetaDoseProjection = mSqrtBetaDoseProjection' * dij.mSqrtBetaDose{i} * w;
+            mSqrtBetaDoseProjection = sparse(voxelID,constraintID(2:end),mSqrtBetaDoseProjection,...
+                                         size(mAlphaDoseProjection,1),size(mAlphaDoseProjection,2));
+            jacob                   = [jacob;mAlphaDoseProjection' * dij.mAlphaDose{i} + mSqrtBetaDoseProjection' * dij.mSqrtBetaDose{i}];
+        end
     end
 end
 
