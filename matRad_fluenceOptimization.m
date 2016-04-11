@@ -153,7 +153,7 @@ end
 funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,pln.bioOptimization);
-funcs.jacobian          = @(x) matRad_jacobFunc(x,dij,cst,pln.bioOptimization);
+funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 
 % Run IPOPT.

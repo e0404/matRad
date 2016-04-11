@@ -33,7 +33,7 @@ for  i = 1:size(cst,1)
 
                     d_i = d{1}(cst{i,4});
 
-                    c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref)]
+                    c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref)];
 
                 % if prob opt or voxel-wise worst case: add constraints of all dose scenarios
                 elseif strcmp(cst{i,6}(j).robustness,'probabilistic') || strcmp(cst{i,6}(j).robustness,'voxel-wise worst case')
@@ -42,7 +42,7 @@ for  i = 1:size(cst,1)
                         
                         d_i = d{k}(cst{i,4});
                         
-                        c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref)]
+                        c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref)];
                         
                     end
 
