@@ -33,7 +33,7 @@ cst{cstNewLine,4}{1} = VwithMargin(~ismember(VwithMargin,V));
 
 cst{cstNewLine,5} = cst{targetLine,5};    
 cst{cstNewLine,6}.type = 'min DCH objective';
-cst{cstNewLine,6}.penalty = 100;
+cst{cstNewLine,6}.penalty = 800;
 cst{cstNewLine,6}.dose = 57.5;
 cst{cstNewLine,6}.EUD = NaN;
 cst{cstNewLine,6}.volume = 0.9;

@@ -114,21 +114,36 @@ for  i = 1:size(cst,1)
                     
                     d_i = [];
                     
+                    % get cst index of Outer Target
+                    cstidx = find(~cellfun('isempty',strfind(cst(:,2),'OuterTarget')));
+                    
+                    % get dose of Outer Target
                     for k = 1:dij.numOfScenarios
-                        d_i{k} = d{k}(cst{i,4}{1});
+                        d_i{k} = d{k}(cst{cstidx,4}{1});
                     end
                       
-                    % calc invers DCH
+                    % calc invers DCH of Outer Target
                     refQ   = cst{i,6}(j).coverage;
                     refVol = cst{i,6}(j).volume;
                     d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
                     
+                    % get dose of Target Ring
+                    for k = 1:dij.numOfScenarios
+                        d_i{k} = d{k}(cst{i,4}{1});
+                    end
+                    
                     % calc voxel dependent weighting
                     weighting = [];
-                    for k = 1:length(d_i{1})
-                        weighting(k) = min(cst{i,6}(j).minDistToTarget(d_i{1}(k) == d_i{1}));
+                    if isequal(cst{i,6}(j).type,'min DCH objective') && d_ref < d_ref2 ||...
+                       isequal(cst{i,6}(j).type,'max DCH objective') && d_ref > d_ref2
+                   
+                        weighting = 1;
+                    else
+                        for k = 1:length(d_i{1})
+                            weighting(k) = min(cst{i,6}(j).minDistToTarget(d_i{1}(k) == d_i{1}));
+                        end
+                        weighting = 1 + 4 * (weighting./cst{i,6}(j).minDistToTarget);
                     end
-                    weighting = 1 + 4 * (weighting./cst{i,6}(j).minDistToTarget);
 
                     delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i{1},cst{i,6}(j),d_ref,d_ref2,weighting);
                 
