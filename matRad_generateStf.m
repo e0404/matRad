@@ -73,10 +73,7 @@ voiTarget(V) = 1;
 % add margin
 addmarginBool = 1;
 if addmarginBool
-    myMargin.x = 5;
-    myMargin.y = 5;
-    myMargin.z = 5;
-    voiTarget = matRad_addMargin(voiTarget,cst,ct.resolution,myMargin,true);
+    voiTarget = matRad_addMargin(voiTarget,cst,ct.resolution,ct.resolution,true);
     V   = find(voiTarget>0);
 end
 
