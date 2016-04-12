@@ -47,6 +47,8 @@ mAlphaDoseProjection    = sparse([]);
 mSqrtBetaDoseProjection = sparse([]);
 voxelID                 = [];
 constraintID            = 0;
+scenID                  = [];
+scenID2                 = [];
 
 % compute objective function for every VOI.
 for i = 1:size(cst,1)
@@ -61,9 +63,11 @@ for i = 1:size(cst,1)
             if ~isempty(strfind(cst{i,6}(j).type,'constraint'))
                 
                 % compute reference
-                if isequal(cst{i,6}(j).type, 'exact DVH constraint') && isequal(type,'effect') || ...
-                   isequal(cst{i,6}(j).type, 'max DVH constraint') && isequal(type,'effect') || ...
-                   isequal(cst{i,6}(j).type, 'min DVH constraint') && isequal(type,'effect')
+                if (~isequal(cst{i,6}(j).type, 'max dose constraint') && ~isequal(cst{i,6}(j).type, 'min dose constraint') &&...
+                    ~isequal(cst{i,6}(j).type, 'min mean dose constraint') && ~isequal(cst{i,6}(j).type, 'max mean dose constraint') &&...
+                    ~isequal(cst{i,6}(j).type, 'min max mean dose constraint') && ~isequal(cst{i,6}(j).type, 'min EUD constraint') &&...
+                    ~isequal(cst{i,6}(j).type, 'max EUD constraint') && ~isequal(cst{i,6}(j).type, 'min max EUD constraint')) &&...
+                    isequal(type,'effect')
                      
                     d_ref = dij.ax(cst{i,4}).*cst{i,6}(j).dose + dij.bx(cst{i,4})*cst{i,6}(j).dose^2;
                 else
@@ -77,6 +81,9 @@ for i = 1:size(cst,1)
 
                     jacobVec =  matRad_jacobFunc(d_i,cst{i,6}(j),d_ref);
                     
+                    scenID  = [scenID;1];
+                    scenID2 = [scenID2;ones(numel(cst{i,4}),1)];
+                    
                     if isequal(type,'none') && ~isempty(jacobVec)
 
                        physicalDoseProjection = [physicalDoseProjection,sparse(cst{i,4},1,jacobVec,dij.numOfVoxels,1)];
@@ -86,8 +93,8 @@ for i = 1:size(cst,1)
                        mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4},1,jacobVec,dij.numOfVoxels,1)];
                        mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
                                                   sparse(cst{i,4},1:numel(cst{i,4}),2*jacobVec,dij.numOfVoxels,numel(cst{i,4}))];
-                       VoxelID                 = [VoxelID ;cst{i,4}];
-                       ConstraintID            = [ConstraintID, repmat(1 + ConstraintID(end),1,numel(cst{i,4}))];
+                       voxelID                 = [voxelID ;cst{i,4}];
+                       constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}))];
 
                     elseif isequal(type,'RBExD') && ~isempty(jacobVec)
 
@@ -96,8 +103,8 @@ for i = 1:size(cst,1)
                        mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4},1,delta,dij.numOfVoxels,1)];
                        mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
                                                   sparse(cst{i,4},1:numel(cst{i,4}),2*delta,dij.numOfVoxels,numel(cst{i,4}))];
-                       VoxelID                 = [VoxelID ;cst{i,4}];
-                       ConstraintID            = [ConstraintID, repmat(1 + ConstraintID(end),1,numel(cst{i,4}))];
+                       voxelID                 = [voxelID ;cst{i,4}];
+                       constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}))];
 
                     end
 
@@ -110,6 +117,8 @@ for i = 1:size(cst,1)
                         
                         jacobVec =  matRad_jacobFunc(d_i,cst{i,6}(j),d_ref);
                         
+                        scenID  = [scenID;k];
+                        scenID2 = [scenID2;repmat(k,numel(cst{i,4}),1)];
                         
                         if isequal(type,'none') && ~isempty(jacobVec)
 
@@ -120,8 +129,8 @@ for i = 1:size(cst,1)
                            mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4},1,jacobVec,dij.numOfVoxels,1)];
                            mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
                                                       sparse(cst{i,4},1:numel(cst{i,4}),2*jacobVec,dij.numOfVoxels,numel(cst{i,4}))];
-                           VoxelID                 = [VoxelID ;cst{i,4}];
-                           ConstraintID            = [ConstraintID, repmat(1 + ConstraintID(end),1,numel(cst{i,4}))];
+                           voxelID                 = [voxelID ;cst{i,4}];
+                           constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}))];
 
                         elseif isequal(type,'RBExD') && ~isempty(jacobVec)
 
@@ -130,8 +139,8 @@ for i = 1:size(cst,1)
                            mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4},1,delta,dij.numOfVoxels,1)];
                            mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
                                                       sparse(cst{i,4},1:numel(cst{i,4}),2*delta,dij.numOfVoxels,numel(cst{i,4}))];
-                           VoxelID                 = [VoxelID ;cst{i,4}];
-                           ConstraintID            = [ConstraintID, repmat(1 + ConstraintID(end),1,numel(cst{i,4}))];
+                           voxelID                 = [voxelID ;cst{i,4}];
+                           constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}))];
 
                         end
                                               
@@ -147,21 +156,34 @@ for i = 1:size(cst,1)
 
 end
 
+if isequal(type,'effect') || isequal(type,'RBExD')
+    constraintID = constraintID(2:end);
+end
+
 % Calculate jacobian with dij projections
 for i = 1:dij.numOfScenarios
     if isequal(type,'none')
 
         if ~isempty(physicalDoseProjection)
-            jacob = [jacob;physicalDoseProjection' * dij.physicalDose{i}]; 
+            
+            jacobLogical          = (scenID == i);
+            jacob(jacobLogical,:) = physicalDoseProjection(:,jacobLogical)' * dij.physicalDose{i};
+            
         end
 
     elseif isequal(type,'effect') || isequal(type,'RBExD')
 
         if ~isempty(mSqrtBetaDoseProjection) && ~isempty(mAlphaDoseProjection)
-            mSqrtBetaDoseProjection = mSqrtBetaDoseProjection' * dij.mSqrtBetaDose{i} * w;
-            mSqrtBetaDoseProjection = sparse(voxelID,constraintID(2:end),mSqrtBetaDoseProjection,...
-                                         size(mAlphaDoseProjection,1),size(mAlphaDoseProjection,2));
-            jacob                   = [jacob;mAlphaDoseProjection' * dij.mAlphaDose{i} + mSqrtBetaDoseProjection' * dij.mSqrtBetaDose{i}];
+            
+            jacobLogical            = (scenID == i);
+            jacobLogical2           = (scenID2 == i);
+            mSqrtBetaDoseProjection = mSqrtBetaDoseProjection(:,jacobLogical2)' * dij.mSqrtBetaDose{i} * w;
+            mSqrtBetaDoseProjection = sparse(voxelID(jacobLogical2),constraintID(jacobLogical2),mSqrtBetaDoseProjection,...
+                                         size(mAlphaDoseProjection(:,jacobLogical),1),size(mAlphaDoseProjection(:,jacobLogical),2));
+                                     
+            jacob(jacobLogical,:)   = mAlphaDoseProjection(:,jacobLogical)' * dij.mAlphaDose{i} +... 
+                                      mSqrtBetaDoseProjection' * dij.mSqrtBetaDose{i};
+            
         end
     end
 end

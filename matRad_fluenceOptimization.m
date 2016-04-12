@@ -132,8 +132,8 @@ else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBEx
     if isequal(pln.bioOptimization,'effect')
         
            effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
-           p            = (sum(dij.mAlphaDose(V,:)*wOnes)) / (sum((dij.mSqrtBetaDose(V,:) * wOnes).^2));
-           q            = -(effectTarget * length(V)) / (sum((dij.mSqrtBetaDose(V,:) * wOnes).^2));
+           p            = (sum(dij.mAlphaDose{1}(V,:)*wOnes)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
+           q            = -(effectTarget * length(V)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
 
     elseif isequal(pln.bioOptimization,'RBExD')
