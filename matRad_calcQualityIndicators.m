@@ -1,4 +1,4 @@
-function result = matRad_calcQualityIndicators(result,cst,refGy,refVol)
+function result = matRad_calcQualityIndicators(result,cst,pln,refGy,refVol)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad QI calculation
 % 
@@ -37,15 +37,13 @@ function result = matRad_calcQualityIndicators(result,cst,refGy,refVol)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if(nargin < 3)
-    refGy = [40 50 60];
+if(nargin < 4)
     refVol = [2 5 98 95];
+    refGy  = [40 50 60];
 end
 
-numOfVois = size(cst,1);
-
 % calculate QIs per VOI
-for runVoi = 1:numOfVois
+for runVoi = 1:size(cst,1)
     
     indices     = cst{runVoi,4};
     numOfVoxels = numel(indices);
@@ -54,11 +52,14 @@ for runVoi = 1:numOfVois
     % get Dose, dose is sorted to simplify calculations
     if sum(strcmp(fieldnames(result),'RBExDose')) > 0
         relevantDose = result.RBExDose;
-        doseInVoi   = sort(result.RBExDose(indices));
+        doseInVoi    = sort(result.RBExDose(indices));
     else
         relevantDose = result.physicalDose;
-        doseInVoi   = sort(result.physicalDose(indices));
+        doseInVoi    = sort(result.physicalDose(indices));
     end
+    
+    %refGy = round([0.4 0.6 0.8] * max(relevantDose(:)) * 10)/10;
+    refGy = round(linspace(1,round(max(relevantDose(:))),3));
     
     if ~isempty(doseInVoi)
         
@@ -81,7 +82,7 @@ for runVoi = 1:numOfVois
         end
         voiPrint = sprintf('%s\n%27s',voiPrint,' ');
         for runVX = 1:numel(refGy)
-            QI(runVoi).(strcat('V',num2str(refGy(runVX)))) = VX(refGy(runVX));
+            QI(runVoi).(['V' num2str(refGy(runVX)) 'Gy']) = VX(refGy(runVX));
             voiPrint = sprintf('%sV%dGy = %6.2f%%, ',voiPrint,refGy(runVX),VX(refGy(runVX))*100);
         end
         voiPrint = sprintf('%s\n%27s',voiPrint,' ');
@@ -94,23 +95,25 @@ for runVoi = 1:numOfVois
             for runObjective = 1:numel(cst{runVoi,6})
                % check if this is an objective that penalizes underdosing 
                if strcmp(cst{runVoi,6}(runObjective).type,'square deviation') > 0 || strcmp(cst{runVoi,6}(runObjective).type,'square underdosing') > 0
-                   referenceDose = min(cst{runVoi,6}(runObjective).parameter(2),referenceDose);
+                   referenceDose = (min(cst{runVoi,6}(runObjective).dose,referenceDose))/pln.numOfFractions;
                end            
             end
 
             if referenceDose == inf 
                 voiPrint = sprintf('%s%s',voiPrint,'Warning: target has no objective that penalizes underdosage, ');
             else
+ 
+                StringReferenceDose = regexprep(num2str(round(referenceDose*100)/100),'\D','_');
                 % Conformity Index, fieldname contains reference dose
                 VTarget95 = sum(doseInVoi >= 0.95*referenceDose); % number of target voxels recieving dose >= 0.95 dPres
                 VTreated95 = sum(relevantDose(:) >= 0.95*referenceDose);  %number of all voxels recieving dose >= 0.95 dPres ("treated volume")
-                QI(runVoi).(strcat('CI',num2str(referenceDose))) = VTarget95^2/(numOfVoxels * VTreated95); 
+                QI(runVoi).(['CI_' StringReferenceDose 'Gy']) = VTarget95^2/(numOfVoxels * VTreated95); 
 
                 % Homogeneity Index (one out of many), fieldname contains reference dose        
-                QI(runVoi).(strcat('HI',num2str(referenceDose))) = (DX(5) - DX(95))/referenceDose * 100;
+                QI(runVoi).(['HI_' StringReferenceDose 'Gy']) = (DX(5) - DX(95))/referenceDose * 100;
 
                 voiPrint = sprintf('%sCI = %6.4f, HI = %5.2f for reference dose of %3.1f Gy\n',voiPrint,...
-                                   QI(runVoi).(strcat('CI',num2str(referenceDose))),QI(runVoi).(strcat('HI',num2str(referenceDose))),referenceDose);
+                                   QI(runVoi).(['CI_' StringReferenceDose 'Gy']),QI(runVoi).(['HI_' StringReferenceDose 'Gy']),referenceDose);
             end
         end
         fprintf('%s\n',voiPrint);

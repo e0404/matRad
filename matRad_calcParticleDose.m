@@ -105,28 +105,46 @@ catch
 end
 
 % generates tissue class matrix for biological optimization
-if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
+if (strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD')) ... 
         && strcmp(pln.radiationMode,'carbon')
     fprintf('matRad: loading biological base data... ');
-    mTissueClass = zeros(size(V,1),1);
+    vTissueIndex = zeros(size(V,1),1);
+    
+    %set overlap priorities
+    cst  = matRad_setOverlapPriorities(cst);
+    
     for i = 1:size(cst,1)
         % find indices of structures related to V
-        [~, row] = ismember(vertcat(cst{i,4}{:}),V,'rows');  
-        if ~isempty(cst{i,5}) && isfield(cst{i,5},'TissueClass')
-            mTissueClass(row) = cst{i,5}.TissueClass;
+        [~, row] = ismember(vertcat(cst{i,4}{:}),V,'rows'); 
+        % check if base data contains alphaX and betaX
+        if   isfield(machine.data,'alphaX') && isfield(machine.data,'betaX')
+            % check if cst is compatiable 
+            if ~isempty(cst{i,5}) && isfield(cst{i,5},'alphaX') && isfield(cst{i,5},'betaX') 
+
+                IdxTissue = find(ismember(machine.data(1).alphaX,cst{i,5}.alphaX) & ...
+                                 ismember(machine.data(1).betaX,cst{i,5}.betaX));
+
+                % check consitency of biological baseData and cst settings
+                if ~isempty(IdxTissue)
+                    vTissueIndex(row) = IdxTissue;
+                else
+                    error('biological base data and cst inconsistent\n');
+                end
+            else
+                vTissueIndex(row) = 1;
+                fprintf(['matRad: tissue type of ' cst{i,2} ' was set to 1 \n']);
+            end
         else
-            mTissueClass(row) = 1;
-            fprintf(['matRad: tissue type of ' cst{i,2} ' was set to 1 \n']);
-        end
-        
-        % check consitency of biological baseData and cst settings
-        baseDataAlphaBetaRatios = reshape([machine.data(:).alphaBetaRatio],numel(machine.data(1).alphaBetaRatio),size(machine.data,2));
-        if norm(baseDataAlphaBetaRatios(cst{i,5}.TissueClass,:) - cst{i,5}.alphaX/cst{i,5}.betaX)>0
-            error('biological base data and cst inconsistent\n');
+            error('base data is incomplement - alphaX and/or betaX is missing');
         end
         
     end
     fprintf('done.\n');
+
+% issue warning if biological optimization not possible
+elseif sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0 && strcmp(pln.radiationMode,'protons')
+    warndlg('Effect based and RBE optimization not possible with protons - physical optimization is carried out instead.');
+    pln.bioOptimization = 'none';
 end
 
 for ShiftScen = 1:multScen.numOfShiftScen
@@ -148,9 +166,9 @@ for i = 1:dij.numOfBeams; % loop over all beams
     bixelsPerBeam = 0;
 
     % convert voxel indices to real coordinates using iso center of beam i
-    xCoordsV = xCoordsV_vox(:)*ct.resolution.x - stf(i).isoCenter(1);
-    yCoordsV = yCoordsV_vox(:)*ct.resolution.y - stf(i).isoCenter(2);
-    zCoordsV = zCoordsV_vox(:)*ct.resolution.z - stf(i).isoCenter(3);
+    xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
+    yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
+    zCoordsV = zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
     coordsV  = [xCoordsV yCoordsV zCoordsV];
 
     % Set gantry and couch rotation matrices according to IEC 61217
@@ -176,7 +194,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
     % Calcualte radiological depth cube
     lateralCutoffRayTracing = 50;
     fprintf('matRad: calculate radiological depth cube...');
-    [radDepthCube,geoDistCube] = matRad_rayTracing(stf(i),ct,V,lateralCutoffRayTracing,multScen);
+    radDepthCube = matRad_rayTracing(stf(i),ct,V,lateralCutoffRayTracing,multScen);
     fprintf('done.\n');
 
     % construct binary mask where ray tracing results are available
@@ -200,18 +218,17 @@ for i = 1:dij.numOfBeams; % loop over all beams
             maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
 
             % Ray tracing for beam i and ray j
-            [ix,radialDist_sq,~,~] = matRad_calcGeoDists(rot_coordsV, ...
-                                                         stf(i).sourcePoint_bev, ...
-                                                         stf(i).ray(j).targetPoint_bev, ...
-                                                         geoDistCube(V), ...
-                                                         machine.meta.SAD, ...
-                                                         radDepthMask(V), ...
-                                                         maxLateralCutoffDoseCalc); 
+            [ix,radialDist_sq] = matRad_calcGeoDists(rot_coordsV, ...
+                                                     stf(i).sourcePoint_bev, ...
+                                                     stf(i).ray(j).targetPoint_bev, ...
+                                                     machine.meta.SAD, ...
+                                                     radDepthMask(V), ...
+                                                     maxLateralCutoffDoseCalc); 
 
             % just use tissue classes of voxels found by ray tracer
             if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                  && strcmp(pln.radiationMode,'carbon')
-                    mTissueClass_j = mTissueClass(ix,:);
+                    vTissueIndex_j = vTissueIndex(ix,:);
             end
 
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
@@ -281,7 +298,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                 % calculate alpha and beta values for bixel k on ray j of                  
                                 [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
                                     radDepths(currIx),...
-                                    mTissueClass_j(currIx,:),...
+                                    vTissueIndex_j(currIx,:),...
                                     machine.data(energyIx));
 
                                 alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix(currIx)),1,bixelAlpha.*bixelDose,prod(ct.cubeDim),1);

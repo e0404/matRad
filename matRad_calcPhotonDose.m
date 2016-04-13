@@ -34,6 +34,12 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,multScen)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% issue warning if biological optimization not possible
+if sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0
+    warndlg('Effect based and RBE optimization not available for photons - physical optimization is carried out instead.');
+    pln.bioOptimization = 'none';
+end
+
 % initialize waitbar
 figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 % show busy state
@@ -158,9 +164,9 @@ for i = 1:dij.numOfBeams; % loop over all beams
     bixelsPerBeam = 0;
 
     % convert voxel indices to real coordinates using iso center of beam i
-    xCoordsV = xCoordsV_vox(:)*ct.resolution.x - stf(i).isoCenter(1);
-    yCoordsV = yCoordsV_vox(:)*ct.resolution.y - stf(i).isoCenter(2);
-    zCoordsV = zCoordsV_vox(:)*ct.resolution.z - stf(i).isoCenter(3);
+    xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
+    yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
+    zCoordsV = zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
     coordsV  = [xCoordsV yCoordsV zCoordsV];
 
     % Set gantry and couch rotation matrices according to IEC 61217
@@ -234,13 +240,12 @@ for i = 1:dij.numOfBeams; % loop over all beams
 
 
         % Ray tracing for beam i and bixel j
-        [ix,~,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
-                                                         stf(i).sourcePoint_bev, ...
-                                                         stf(i).ray(j).targetPoint_bev, ...
-                                                         geoDistCube(V), ...
-                                                         machine.meta.SAD, ...
-                                                         radDepthMask(V), ...
-                                                         lateralCutoff);
+        [ix,~,isoLatDistsX,isoLatDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
+                                                               stf(i).sourcePoint_bev, ...
+                                                               stf(i).ray(j).targetPoint_bev, ...
+                                                               machine.meta.SAD, ...
+                                                               radDepthMask(V), ...
+                                                               lateralCutoff);
 
         for CtScen = 1:multScen.numOfCtScen
             for RangeShiftScen = 1:multScen.numOfRangeShiftScen  
@@ -265,8 +270,8 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                            Interp_kernel3,...
                                                            manipulatedRadDepthCube,...
                                                            geoDistCube(V(ix)),...
-                                                           latDistsX,...
-                                                           latDistsZ);
+                                                           isoLatDistsX,...
+                                                           isoLatDistsZ);
 
                     % Save dose for every bixel in cell array
                     doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix),1,bixelDose,prod(ct.cubeDim),1);

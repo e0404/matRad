@@ -93,7 +93,5 @@ end
 matRadGUI
 
 %% dvh
-matRad_calcDVH(resultGUI,cst)
+matRad_calcDVH(resultGUI,cst,pln)
 
-%% quality indicators
-resultGUI = matRad_calcQualityIndicators(resultGUI,cst);

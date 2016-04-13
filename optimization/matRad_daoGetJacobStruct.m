@@ -71,11 +71,13 @@ if ~isempty(jacobStruct_dos)
     end
 
     % second leaves
+    counter = 0;
     for i = 1:size(apertureInfo.beam,2)
         for j = 1:apertureInfo.beam(i).numOfShapes
             for k = 1:apertureInfo.beam(i).numOfActiveLeafPairs
+                counter = counter + 1;
                 bixelIxInCurrRow = ~isnan(apertureInfo.beam(i).bixelIndMap(k,:));
-                jacobStruct_dos(:,i+[0 apertureInfo.totalNumOfLeafPairs]) = ...     
+                jacobStruct_dos(:,counter+[0 apertureInfo.totalNumOfLeafPairs]) = ...     
                     repmat(spones(sum(jacobStruct_dos_bixel(:,bixelIxInCurrRow),2)),1,2);
             end
         end    

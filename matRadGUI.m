@@ -223,9 +223,21 @@ handles.DijCalcWarning = false;
 
     % set slice slider
 if handles.State > 0
-        set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
+    set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
             'Value',ceil(ct.cubeDim(handles.plane)/2),...
             'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);      
+    
+    % define context menu for structures
+    contMenuStruct = uicontextmenu;
+    set(handles.axesFig,'UIContextMenu',contMenuStruct);
+    for i = 1:size(cst,1)
+        if cst{i,5}.Visible
+            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','on');
+        else
+            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','off');
+        end
+    end
+    set(handles.figure1,'UIContextMenu',contMenuStruct)
 end
 
 % Update handles structure
@@ -235,6 +247,23 @@ UpdateState(handles)
 UpdatePlot(handles)
 
 
+
+
+
+function Callback_StructVisibilty(source,callbackdata)
+
+handles = guidata(findobj('Name','matRadGUI'));
+
+contextUiChildren = get(get(handles.figure1,'UIContextMenu'),'Children');
+
+Idx = find(strcmp(get(contextUiChildren,'Label'),get(source,'Label')));
+if strcmp(get(source,'Checked'),'on')
+    set(contextUiChildren(Idx),'Checked','off');
+else
+    set(contextUiChildren(Idx),'Checked','on');
+end
+%guidata(findobj('Name','matRadGUI'), handles);
+UpdatePlot(handles);
 
 
 % --- Outputs from this function are returned to the command line.
@@ -328,9 +357,24 @@ if handles.State >0
             'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);
 end
 
+if handles.State > 0
+     % define context menu for structures
+    contMenuStruct = uicontextmenu;
+    set(handles.axesFig,'UIContextMenu',contMenuStruct);
+    for i = 1:size(cst,1)
+        if cst{i,5}.Visible
+            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','on');
+        else
+            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','off');
+        end
+    end
+    set(handles.figure1,'UIContextMenu',contMenuStruct)
+end
+
 guidata(hObject,handles);
-UpdatePlot(handles);
 UpdateState(handles);
+UpdatePlot(handles);
+
 
 
 % --- Executes on button press in btnLoadDicom.
@@ -359,6 +403,21 @@ catch
 end
 UpdateState(handles);
 guidata(hObject,handles);
+
+if handles.State > 0
+    % define context menu for structures
+    cst =  evalin('base','cst');
+    contMenuStruct = uicontextmenu;
+    set(handles.axesFig,'UIContextMenu',contMenuStruct);
+    for i = 1:size(cst,1)
+        if cst{i,5}.Visible
+            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','on');
+        else
+            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','off');
+        end
+    end
+    set(handles.figure1,'UIContextMenu',contMenuStruct)
+end
 
 function editBixelWidth_Callback(hObject, ~, handles)
 % hObject    handle to editBixelWidth (see GCBO)
@@ -403,7 +462,7 @@ if handles.State > 0
 end
 
 % --- Executes on selection change in popupRadMode.
-function popupRadMode_Callback(hObject, ~, handles)
+function popupRadMode_Callback(hObject, eventdata, handles)
 % hObject    handle to popupRadMode (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -416,6 +475,7 @@ switch RadIdentifier
         set(handles.radbtnBioOpt,'Value',0);
         set(handles.radbtnBioOpt,'Enable','off');
         set(handles.btnTypBioOpt,'Enable','off');
+        set(handles.btnSetTissue,'Enable','off');
         
         set(handles.btnRunSequencing,'Enable','on');
         set(handles.btnRunDAO,'Enable','on');
@@ -426,6 +486,7 @@ switch RadIdentifier
         set(handles.radbtnBioOpt,'Value',0);
         set(handles.radbtnBioOpt,'Enable','off');
         set(handles.btnTypBioOpt,'Enable','off');
+        set(handles.btnSetTissue,'Enable','off');
         
         set(handles.btnRunSequencing,'Enable','off');
         set(handles.btnRunDAO,'Enable','off');
@@ -436,6 +497,7 @@ switch RadIdentifier
         set(handles.radbtnBioOpt,'Value',1);
         set(handles.radbtnBioOpt,'Enable','on');
         set(handles.btnTypBioOpt,'Enable','on');
+        set(handles.btnSetTissue,'Enable','on');
         
         set(handles.btnRunSequencing,'Enable','off');
         set(handles.btnRunDAO,'Enable','off');
@@ -446,11 +508,35 @@ end
 if handles.State > 0
     pln = evalin('base','pln');
     if handles.State > 0 && ~strcmp(contents(get(hObject,'Value')),pln.radiationMode)
+        
+        % switched from carbon to photons or protons -> in case of bio. opt
+        % some cubes have to be deleted from the resultGUI struct
+        if strcmp(pln.radiationMode,'carbon') && ~strcmp(contents(get(hObject,'Value')),'carbon')
+            try
+               AllVarNames = evalin('base','who');
+               if  ismember('resultGUI',AllVarNames)
+                    resultGUI = evalin('base','resultGUI');
+                    resultGUI = rmfield(resultGUI,'effect');
+                    resultGUI = rmfield(resultGUI,'alpha');
+                    resultGUI = rmfield(resultGUI,'beta');
+                    resultGUI = rmfield(resultGUI,'RBE');
+                    resultGUI = rmfield(resultGUI,'RBExDose');
+                    assignin('base','resultGUI',resultGUI)
+               end
+            catch
+                assignin('base','resultGUI',resultGUI)
+            end
+            UpdatePlot(handles);
+        end
+        
+        getPlnFromGUI(handles);
         handles.State = 1;
         UpdateState(handles);
         guidata(hObject,handles);
+        
     end
-   getPlnFromGUI(handles);
+         
+   
 end
 
 % --- Executes on button press in radbtnBioOpt.
@@ -463,8 +549,10 @@ function radbtnBioOpt_Callback(hObject, ~, handles)
 getPlnFromGUI(handles);
 if get(hObject,'Value')
     set(handles.btnTypBioOpt,'Enable','on');
+    set(handles.btnSetTissue,'Enable','on');
 else
     set(handles.btnTypBioOpt,'Enable','off');
+    set(handles.btnSetTissue,'Enable','off');
 end
 
 if handles.State > 0
@@ -486,7 +574,7 @@ function btnCalcDose_Callback(hObject, ~, handles)
 try
     % indicate that matRad is busy
     % change mouse pointer to hour glass 
-    Figures = findobj('type','figure');
+    Figures = gcf;%findobj('type','figure');
     set(Figures, 'pointer', 'watch'); 
     drawnow;
     % disable all active objects
@@ -605,7 +693,7 @@ if exist('Result','var')
         end
 
         DispInfo =fieldnames(Result);
-        for i=1:size(DispInfo,1)
+        for i = 1:size(DispInfo,1)
             
             if isstruct(Result.(DispInfo{i,1})) || isvector(Result.(DispInfo{i,1}))
                  Result = rmfield(Result,DispInfo{i,1});
@@ -619,24 +707,26 @@ if exist('Result','var')
                 end
                 
                 % determine units
-                switch DispInfo{i,1}
-                    case 'physicalDose'
-                        DispInfo{i,3}  = '[Gy]';
-                    case 'alpha'
-                        DispInfo{i,3}  = '[Gy^{-1}]';
-                    case 'beta'
-                        DispInfo{i,3}  = '[Gy^{-2}]';
-                    case 'RBExD'
-                        DispInfo       = '[Gy(RBE)]';
-                    otherwise
-                        DispInfo{i,3}  = '[a.u.]';
+                if strfind(DispInfo{i,1},'physicalDose');
+                    DispInfo{i,3}  = '[Gy]';
+                elseif strfind(DispInfo{i,1},'alpha')
+                    DispInfo{i,3}  = '[Gy^{-1}]';
+                elseif strfind(DispInfo{i,1},'beta')
+                    DispInfo{i,3}  = '[Gy^{-2}]';
+                elseif strfind(DispInfo{i,1},'RBExD')
+                    DispInfo       = '[Gy(RBE)]';
+                else
+                    DispInfo{i,3}  = '[a.u.]';
                 end
                 
             end
         end
 
-    set(handles.popupDisplayOption,'String',fieldnames(Result));
-    set(handles.popupDisplayOption,'Value',find(strcmp(handles.SelectedDisplayOption,fieldnames(Result))));
+        set(handles.popupDisplayOption,'String',fieldnames(Result));
+        if sum(strcmp(handles.SelectedDisplayOption,fieldnames(Result))) == 0
+            handles.SelectedDisplayOption = 'physicalDose';
+        end
+        set(handles.popupDisplayOption,'Value',find(strcmp(handles.SelectedDisplayOption,fieldnames(Result))));
 
     end
 end
@@ -650,12 +740,13 @@ CutOffLevel = 0.03;
 %% plot ct
  if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     cla(handles.axesFig);
+    axes(handles.axesFig);
     if plane == 1 % Coronal plane
-        ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube{1}(slice,:,:))/max(ct.cube{1}(:))),bone);
+        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube{1}(slice,:,:)/max(ct.cube{1}(:))))),bone);
     elseif plane == 2 % sagittal plane
-        ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube{1}(:,slice,:))/max(ct.cube{1}(:))),bone);
+        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube{1}(:,slice,:)/max(ct.cube{1}(:))))),bone);
     elseif plane == 3 % Axial plane
-        ct_rgb = ind2rgb(uint8(63*squeeze(ct.cube{1}(:,:,slice))/max(ct.cube{1}(:))),bone);
+        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube{1}(:,:,slice)/max(ct.cube{1}(:))))),bone);
     end
     
     axes(handles.axesFig)
@@ -665,10 +756,12 @@ end
 %% plot dose cube
 if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
 
+        if ~isfield(Result,handles.SelectedDisplayOption)
+            handles.SelectedDisplayOption = 'physicalDose';
+        end
         mVolume = getfield(Result,handles.SelectedDisplayOption);
         % make sure to exploit full color range 
-        mVolume(Result.physicalDose<...
-            CutOffLevel*max(Result.physicalDose(:)))=0;
+        mVolume(mVolume<CutOffLevel*max(mVolume(:))) = 0;
 
     %     %% dose colorwash
         if ~isempty(mVolume)&& ~isvector(mVolume)
@@ -809,14 +902,25 @@ end
 
 
 %% plot VOIs
-
+ contMenuStruct = get(handles.figure1,'UIContextMenu');
+ contMenuStructChildren = get(contMenuStruct,'Children');
+ vBoolPlotVOI   = zeros(size(cst,1),1);
+ for i = 1:size(contMenuStructChildren,1)
+     boolean = false;
+     if strcmp(get(contMenuStructChildren(i),'Checked'),'on')
+        boolean = true;
+     end
+     IdxInCst = find(strcmp(cst(:,2),get(contMenuStructChildren(i),'Label')));
+     vBoolPlotVOI(IdxInCst) = boolean;
+ end
+ 
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
     colors = colorcube;
     hold on,
     colors = colors(round(linspace(1,63,size(cst,1))),:);
     mask = zeros(ct.cubeDim); % create zero cube with same dimeonsions like dose cube
     for s = 1:size(cst,1)
-        if ~strcmp(cst{s,3},'IGNORED') %&& ~strcmp(data.cst{s,2},'DoseFalloff')
+        if ~strcmp(cst{s,3},'IGNORED') && vBoolPlotVOI(s)
             mask(:) = 0;
             mask(cst{s,4}{1}) = 1;
             if plane == 1 && sum(sum(mask(slice,:,:))) > 0
@@ -941,7 +1045,16 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
     figure(figHandles(idxHandle));
     
     % plot physical dose
-    mPhysDose = Result.('physicalDose'); 
+    Content = get(handles.popupDisplayOption,'String');
+    SelectedCube = Content{get(handles.popupDisplayOption,'Value')};
+    if sum(strcmp(SelectedCube,{'physicalDose','effect','RBExDose','alpha','beta','RBE'})) > 0
+         Suffix = '';
+    else
+        Idx    = find(SelectedCube == '_');
+        Suffix = SelectedCube(Idx:end);
+    end
+    
+    mPhysDose = Result.(['physicalDose' Suffix]); 
     PlotHandles{1} = plot(handles.axesFig,vX,mPhysDose(ix),'color',cColor{1,1},'LineWidth',3); hold on; 
     PlotHandles{1,2} ='physicalDose';
     ylabel(handles.axesFig,'dose in [Gy]');
@@ -950,7 +1063,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
     % plot counter
     Cnt=2;
     
-    if isfield(Result,'RBE')
+    if isfield(Result,['RBE' Suffix])
         
         %disbale specific plots
         %DispInfo{6,2}=0;
@@ -961,13 +1074,13 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
         StringYLabel1 = '\fontsize{8}{\color{red}RBE x dose [Gy(RBE)] \color{black}dose [Gy] ';
         StringYLabel2 = '';
         for i=1:1:size(DispInfo,1)
-            if DispInfo{i,2} 
+            if DispInfo{i,2} && sum(strcmp(DispInfo{i,1},{['effect' Suffix],['alpha' Suffix],['beta' Suffix]})) > 0
                 %physicalDose is already plotted and RBExD vs RBE is plotted later with plotyy
-                if ~strcmp(DispInfo{i,1},'RBExDose') &&...
-                   ~strcmp(DispInfo{i,1},'RBE') && ...
-                   ~strcmp(DispInfo{i,1},'physicalDose')
+                if ~strcmp(DispInfo{i,1},['RBExDose' Suffix]) &&...
+                   ~strcmp(DispInfo{i,1},['RBE' Suffix]) && ...
+                   ~strcmp(DispInfo{i,1},['physicalDose' Suffix])
                
-                        mCube = Result.(DispInfo{i,1});
+                        mCube = Result.([DispInfo{i,1}]);
                         PlotHandles{Cnt,1} = plot(handles.axesFig,vX,mCube(ix),'color',cColor{1,Cnt},'LineWidth',3);hold on; 
                         PlotHandles{Cnt,2} = DispInfo{i,1};
                         StringYLabel2 = [StringYLabel2  ' \color{'  cColor{1,Cnt} '}' DispInfo{i,1} ' ['  DispInfo{i,3} ']'];
@@ -977,9 +1090,9 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
         end
         StringYLabel2 = [StringYLabel2 '}'];
         % always plot RBExD against RBE
-        mRBExDose = Result.('RBExDose');
+        mRBExDose = Result.(['RBExDose' Suffix]);
         vBED = mRBExDose(ix);
-        mRBE = Result.('RBE');
+        mRBE = Result.(['RBE' Suffix]);
         vRBE = mRBE(ix);
         
         % plot biological dose against RBE
@@ -1131,16 +1244,15 @@ function btnOptimize_Callback(hObject, eventdata, handles)
 try
     % indicate that matRad is busy
     % change mouse pointer to hour glass 
-    Figures = findobj('type','figure');
+    Figures = gcf;%findobj('type','figure');
     set(Figures, 'pointer', 'watch'); 
     drawnow;
     % disable all active objects
     InterfaceObj = findobj(Figures,'Enable','on');
     set(InterfaceObj,'Enable','off');
     % wait until the table is updated
-    pause(0.1);
-    uiTable_CellEditCallback(hObject,[],handles);
-    pause(0.3);
+    btnTableSave_Callback([],[],handles);
+
 
     % if a critical change to the cst has been made which affects the dij matrix
     if handles.DijCalcWarning == true
@@ -1161,8 +1273,21 @@ try
     
     pln = evalin('base','pln');
     ct  = evalin('base','ct');
+    
     % optimize
-    [resultGUI,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
+    [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
+    
+    %if resultGUI already exists then overwrite the "standard" fields
+    AllVarNames = evalin('base','who');
+    if  ismember('resultGUI',AllVarNames)
+        resultGUI = evalin('base','resultGUI');
+        sNames = fieldnames(resultGUIcurrentRun);
+        for j = 1:length(sNames)
+            resultGUI.(sNames{j}) = resultGUIcurrentRun.(sNames{j});
+        end
+    else
+        resultGUI = resultGUIcurrentRun;
+    end
     assignin('base','resultGUI',resultGUI);
 
     % set some values
@@ -1178,8 +1303,6 @@ try
     handles.SelectedDisplayOptionIdx = 1;
     handles.SelectedDisplayOption = 'physicalDose';
     handles.SelectedBeam = 1;
-    UpdatePlot(handles);
-    UpdateState(handles);
     
     % check IPOPT status and return message for GUI user if no DAO or
     % particles
@@ -1207,6 +1330,7 @@ try
             ,str2double(get(handles.editSequencingLevel,'String')));
         assignin('base','resultGUI',resultGUI);
     end
+        
 catch ME
     handles = showError(handles,{'OptimizeCallback: Could not perform sequencing',ME.message}); 
     % change state from busy to normal
@@ -1219,6 +1343,7 @@ end
 try
     %% DAO
     if strcmp(pln.radiationMode,'photons') && pln.runDAO
+        handles = showWarning(handles,{'Observe: You are running direct aperture optimization','This is experimental code that has not been thoroughly debugged - especially in combination with constrained optimization.'});
        [resultGUI,ipoptInfo] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst'),...
            resultGUI.apertureInfo,resultGUI,pln);
        assignin('base','resultGUI',resultGUI);
@@ -1229,7 +1354,7 @@ try
     if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
         matRad_visApertureInfo(resultGUI.apertureInfo);
     end
-
+   
 catch ME
     handles = showError(handles,{'OptimizeCallback: Could not perform direct aperture optimization',ME.message}); 
     % change state from busy to normal
@@ -1242,6 +1367,9 @@ end
 % change state from busy to normal
 set(Figures, 'pointer', 'arrow');
 set(InterfaceObj,'Enable','on');
+
+UpdatePlot(handles);
+UpdateState(handles);
     
 guidata(hObject,handles);
 
@@ -1265,9 +1393,6 @@ end
 
 % --- Executes on selection change in popupTypeOfPlot
 function popupTypeOfPlot_Callback(hObject, ~, handles)
-% hObject    handle to popupTypeOfPlot (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
  % intensity plot
 if get(hObject,'Value') == 1  
@@ -1320,7 +1445,7 @@ elseif get(hObject,'Value') == 2
     end
     
     
-    set(handles.popupDisplayOption,'Enable','off');
+    set(handles.popupDisplayOption,'Enable','on');
     set(handles.btnProfileType,'Enable','on');
     set(handles.popupPlane,'Enable','off');
     set(handles.radiobtnContour,'Enable','off');
@@ -1344,12 +1469,6 @@ UpdatePlot(handles);
 
 % --- Executes on selection change in popupDisplayOption.
 function popupDisplayOption_Callback(hObject, ~, handles)
-% hObject    handle to popupDisplayOption (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns popupDisplayOption contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popupDisplayOption
 content = get(hObject,'String');
 handles.SelectedDisplayOption = content{get(hObject,'Value'),1};
 handles.SelectedDisplayOptionIdx = get(hObject,'Value');
@@ -1561,6 +1680,7 @@ data{sEnd+1,3} = 2;
 data{sEnd+1,4} = 'Select obj func/constraint';
 data{sEnd+1,6} = '';
 data{sEnd+1,9} = 'none';
+
 set(handles.uiTable,'data',data);
 
 %handles.State=1;
@@ -1625,7 +1745,7 @@ PlaceholderDose = 'NaN';
 
 % get table data and current index of cell
 if isempty(eventdata)
-    data =get(handles.uiTable,'Data');
+    data = get(handles.uiTable,'Data');
     Index = get(handles.uiTable,'UserData');
 
     if ~isempty(Index) && size(Index,1)==1
@@ -1766,7 +1886,7 @@ elseif strcmp(ObjFunction,'EUD')
 elseif sum(strcmp(ObjFunction,{'min dose constraint','max dose constraint','min max dose constraint',...
                                      'min mean dose constraint','max mean dose constraint','min max mean dose constraint'}))> 0
          
-         if isnan(data{eventdata.Indices(1),6})
+         if isnan(str2num(data{eventdata.Indices(1),6}))
                  data{eventdata.Indices(1),6} = 1;
          end
          data{eventdata.Indices(1),5} = Placeholder;
@@ -1846,6 +1966,20 @@ UpdateState(handles);
 % enables/ disables buttons according to the current state      
 function UpdateState(handles)
 
+if handles.State > 0
+    pln = evalin('base','pln');
+
+    if strcmp(pln.radiationMode,'carbon')
+        set(handles.radbtnBioOpt,'Enable','on');
+        set(handles.btnTypBioOpt,'Enable','on');
+        set(handles.btnSetTissue,'Enable','on');
+    else
+        set(handles.radbtnBioOpt,'Enable','off');
+         set(handles.btnTypBioOpt,'Enable','off');
+         set(handles.btnSetTissue,'Enable','off');
+    end
+end 
+
  switch handles.State
      
      case 0
@@ -1853,29 +1987,56 @@ function UpdateState(handles)
       set(handles.txtInfo,'String','no data loaded');
       set(handles.btnCalcDose,'Enable','off');
       set(handles.btnOptimize ,'Enable','off');
-      set(handles.btnDVH,'Enable','off');      
+      set(handles.pushbutton_recalc,'Enable','off');
+      set(handles.btnSaveToGUI,'Enable','off');
+      set(handles.btnDVH,'Enable','off'); 
+      
      case 1
-      pln = evalin('base','pln');   
+     
       set(handles.txtInfo,'String','ready for dose calculation');
       set(handles.btnCalcDose,'Enable','on');
-      set(handles.btnOptimize ,'Enable','off');  
+      set(handles.btnOptimize ,'Enable','off');
+      set(handles.pushbutton_recalc,'Enable','off');
+      set(handles.btnSaveToGUI,'Enable','off');
       set(handles.btnDVH,'Enable','off');
+      
+      AllVarNames = evalin('base','who');
+      if ~isempty(AllVarNames)
+            if  sum(ismember(AllVarNames,'resultGUI')) > 0
+              set(handles.pushbutton_recalc,'Enable','on');
+              set(handles.btnSaveToGUI,'Enable','on');
+              set(handles.btnDVH,'Enable','on');
+            end
+      end
+     
      case 2
-      pln = evalin('base','pln');
+    
       set(handles.txtInfo,'String','ready for optimization');   
       set(handles.btnCalcDose,'Enable','on');
       set(handles.btnOptimize ,'Enable','on');
+      set(handles.pushbutton_recalc,'Enable','off');
+      set(handles.btnSaveToGUI,'Enable','off');
       set(handles.btnDVH,'Enable','off');
+      
+      AllVarNames = evalin('base','who');
+      if ~isempty(AllVarNames)
+            if  sum(ismember(AllVarNames,'resultGUI')) > 0
+              set(handles.pushbutton_recalc,'Enable','on');
+              set(handles.btnSaveToGUI,'Enable','on');
+              set(handles.btnDVH,'Enable','on');
+            end
+      end
      
+      
      case 3
 
       set(handles.txtInfo,'String','plan is optimized');   
       set(handles.btnCalcDose,'Enable','on');
       set(handles.btnOptimize ,'Enable','on');
+      set(handles.pushbutton_recalc,'Enable','on');
+      set(handles.btnSaveToGUI,'Enable','on');
       set(handles.btnDVH,'Enable','on');
-      
-      pln = evalin('base','pln');
-      
+   
  end
 
  
@@ -1900,10 +2061,12 @@ if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') .
     set(handles.radbtnBioOpt,'Enable','on');
     set(handles.btnTypBioOpt,'Enable','on');
     set(handles.btnTypBioOpt,'String',pln.bioOptimization);
+    set(handles.btnSetTissue,'Enable','on');
 else
     set(handles.radbtnBioOpt,'Value',0);
     set(handles.radbtnBioOpt,'Enable','off');
     set(handles.btnTypBioOpt,'Enable','off');
+    set(handles.btnSetTissue,'Enable','off');
 end
 %% enable sequencing and DAO button if radiation mode is set to photons
 if strcmp(pln.radiationMode,'photons') && pln.runSequencing
@@ -1950,23 +2113,11 @@ getPlnFromGUI(handles);
 
 % --- Executes on selection change in listBoxCmd.
 function listBoxCmd_Callback(hObject, ~, ~)
-% hObject    handle to listBoxCmd (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns listBoxCmd contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from listBoxCmd
 numLines = size(get(hObject,'String'),1);
 set(hObject, 'ListboxTop', numLines);
 
 % --- Executes on slider movement.
 function sliderOffset_Callback(hObject, ~, handles)
-% hObject    handle to sliderOffset (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'Value') returns position of slider
-%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 handles.profileOffset = get(hObject,'Value');
 UpdatePlot(handles);
 
@@ -2052,7 +2203,7 @@ else
     status = 'warn';
 end
 
-msgbox(['IPOPT finished with status ' num2str(info.status) ' (' statusmsg ')'],'IPOPT',status);
+msgbox(['IPOPT finished with status ' num2str(info.status) ' (' statusmsg ')'],'IPOPT',status,'modal');
 
 % get pln file form GUI     
 function getPlnFromGUI(handles)
@@ -2076,7 +2227,7 @@ pln.machine         = contents{get(handles.popUpMachine,'Value')};
 if (logical(get(handles.radbtnBioOpt,'Value')) && strcmp(pln.radiationMode,'carbon'))
     pln.bioOptimization = get(handles.btnTypBioOpt,'String');
 else
-     pln.bioOptimization = 'none';
+    pln.bioOptimization = 'none';
 end
 
 pln.runSequencing = logical(get(handles.btnRunSequencing,'Value'));
@@ -2144,8 +2295,42 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % button: show DVH
-function btnDVH_Callback(~, ~, ~)
-matRad_calcDVH(evalin('base','resultGUI'),evalin('base','cst'))
+function btnDVH_Callback(~, ~, handles)
+
+resultGUI = evalin('base','resultGUI');
+Content = get(handles.popupDisplayOption,'String');
+SelectedCube = Content{get(handles.popupDisplayOption,'Value')};
+
+pln = evalin('base','pln');
+resultGUI_SelectedCube.physicalDose = resultGUI.(SelectedCube);
+
+if ~strcmp(pln.bioOptimization,'none') && strcmp(pln.radiationMode,'carbon') == 1 
+
+    %check if one of the default fields is selected
+    if sum(strcmp(SelectedCube,{'physicalDose','effect','RBE,','RBExDose','alpha','beta'})) > 0
+        resultGUI_SelectedCube.physicalDose = resultGUI.physicalDose;
+        resultGUI_SelectedCube.RBExDose     = resultGUI.RBExDose;
+    else
+        Idx    = find(SelectedCube == '_');
+        SelectedSuffix = SelectedCube(Idx:end);
+        resultGUI_SelectedCube.physicalDose = resultGUI.(['physicalDose' SelectedSuffix]);
+        resultGUI_SelectedCube.RBExDose     = resultGUI.(['RBExDose' SelectedSuffix]);
+    end
+end
+
+%adapt visibilty
+cst = evalin('base','cst');
+
+contMenuStructChildren = get(get(handles.figure1,'UIContextMenu'),'Children');
+for i = 1:size(contMenuStructChildren,1)
+     boolean = false;
+     if strcmp(get(contMenuStructChildren(i),'Checked'),'on')
+        boolean = true;
+     end
+     IdxInCst = find(strcmp(cst(:,2),get(contMenuStructChildren(i),'Label')));
+     cst{IdxInCst,5}.Visible = boolean;
+end
+matRad_calcDVH(resultGUI_SelectedCube,cst,evalin('base','pln'));
 
 % radio button: plot isolines labels
 function radiobtnIsoDoseLinesLabels_Callback(~, ~, handles)
@@ -2368,6 +2553,291 @@ selection = questdlg('Do you really want to close matRad?',...
    case 'No'
      return
  end
+
+% --- Executes on button press in pushbutton_recalc.
+function pushbutton_recalc_Callback(hObject, ~, handles)
+
+% recalculation only makes sense if ...
+if evalin('base','exist(''pln'',''var'')') && ...
+   evalin('base','exist(''stf'',''var'')') && ...
+   evalin('base','exist(''ct'',''var'')') && ...
+   evalin('base','exist(''cst'',''var'')') && ...
+   evalin('base','exist(''resultGUI'',''var'')')
+
+    % indicate that matRad is busy
+    % change mouse pointer to hour glass 
+    Figures = gcf;%findobj('type','figure');
+    set(Figures, 'pointer', 'watch'); 
+    drawnow;
+    % disable all active objects
+    InterfaceObj = findobj(Figures,'Enable','on');
+    set(InterfaceObj,'Enable','off');
+    
+    % get all data from workspace
+    pln       = evalin('base','pln');
+    stf       = evalin('base','stf');
+    ct        = evalin('base','ct');
+    cst       = evalin('base','cst');
+    resultGUI = evalin('base','resultGUI');
+    
+    % get weights of the selected cube
+    Content = get(handles.popupDisplayOption,'String');
+    SelectedCube = Content{get(handles.popupDisplayOption,'Value')};
+    Suffix = strsplit(SelectedCube,'_');
+    if length(Suffix)>1
+        Suffix = ['_' Suffix{2}];
+    else
+        Suffix = '';
+    end
+    
+    if sum([stf.totalNumOfBixels]) ~= length(resultGUI.(['w' Suffix]))
+        warndlg('weight vector does not corresponding to current steering file');
+        return
+    end
+    
+    % change isocenter if that was changed and do _not_ recreate steering
+    % information
+    for i = 1:numel(pln.gantryAngles)
+        stf(i).isoCenter = pln.isoCenter;
+    end
+
+    % recalculate influence matrix
+    if strcmp(pln.radiationMode,'photons')
+        dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+    elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
+        dij = matRad_calcParticleDose(ct,stf,pln,cst);
+    end
+
+    % recalculate cubes in resultGUI
+    resultGUIreCalc = matRad_calcCubes(resultGUI.(['w' Suffix]),dij,cst);
+    
+    % overwrite the "standard" fields
+    sNames = fieldnames(resultGUIreCalc);
+    for j = 1:length(sNames)
+        resultGUI.(sNames{j}) = resultGUIreCalc.(sNames{j});
+    end
+    
+    % delete old variables to avoid confusion
+    if isfield(resultGUI,'effect')
+        resultGUI = rmfield(resultGUI,'effect');
+        resultGUI = rmfield(resultGUI,'RBExDose'); 
+        resultGUI = rmfield(resultGUI,'RBE'); 
+        resultGUI = rmfield(resultGUI,'alpha'); 
+        resultGUI = rmfield(resultGUI,'beta');
+    end
+
+    % assign results to base worksapce
+    assignin('base','dij',dij);
+    assignin('base','resultGUI',resultGUI);
+    
+    handles.State = 3;
+    
+    % show physicalDose of newly computed state
+    handles.SelectedDisplayOption = 'physicalDose';
+    set(handles.popupDisplayOption,'Value',find(strcmp('physicalDose',Content)));
+    
+    % change state from busy to normal
+    set(Figures, 'pointer', 'arrow');
+    set(InterfaceObj,'Enable','on');
+    
+    guidata(hObject,handles);
+    UpdatePlot(handles);
+    UpdateState(handles);
+
+end
+
+
+% --- Executes on button press in btnSetTissue.
+function btnSetTissue_Callback(hObject, ~, handles)
+
+%check if patient is loaded
+if handles.State == 0
+    return
+end
+
+%parse variables from base-workspace
+cst = evalin('base','cst');
+pln = evalin('base','pln');
+
+fileName = [pln.radiationMode '_' pln.machine];
+load(fileName);
+
+% check for available cell types characterized by alphaX and betaX 
+for i = 1:size(machine.data(1).alphaX,2)
+    CellType{i} = [num2str(machine.data(1).alphaX(i)) ' ' num2str(machine.data(1).betaX(i))];
+end
+
+%fill table data array
+for i = 1:size(cst,1)
+    data{i,1} = cst{i,2};
+    data{i,2} = [num2str(cst{i,5}.alphaX) ' ' num2str(cst{i,5}.betaX)];
+    data{i,3} = (cst{i,5}.alphaX / cst{i,5}.betaX );
+end
+
+Width  = 400;
+Height = 200 + 20*size(data,1);
+ScreenSize = get(0,'ScreenSize');
+% show "set tissue parameter" window
+figHandles = get(0,'Children');
+if ~isempty(figHandles)
+    IdxHandle = strcmp(get(figHandles,'Name'),'Set Tissue Parameters');
+else
+    IdxHandle = [];
+end
+
+%check if window is already exists 
+if any(IdxHandle)
+    IdxTable = find(strcmp({figHandles(IdxHandle).Children.Type},'uitable'));
+    set(figHandles(IdxHandle).Children(IdxTable), 'Data', []);
+    figTissue = figHandles(IdxHandle);
+    %set focus
+    figure(figTissue);
+else
+    figTissue = figure('Name','Set Tissue Parameters','Color',[.5 .5 .5],'NumberTitle','off','Position',...
+        [ceil(ScreenSize(3)/2) ceil(ScreenSize(4)/2) Width Height]);
+end
+
+% define the tissue parameter table
+cNames = {'VOI','alphaX betaX','alpha beta ratio'};
+columnformat = {'char',CellType,'numeric'};
+
+tissueTable = uitable('Parent', figTissue,'Data', data,'ColumnEditable',[false true false],...
+                      'ColumnName',cNames, 'ColumnFormat',columnformat,'Position',[50 150 10 10]);
+set(tissueTable,'CellEditCallback',@tissueTable_CellEditCallback);
+% set width and height
+currTablePos = get(tissueTable,'Position');
+currTableExt = get(tissueTable,'Extent');
+currTablePos(3) = currTableExt(3);
+currTablePos(4) = currTableExt(4);
+set(tissueTable,'Position',currTablePos);
+
+% define two buttons with callbacks
+uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Save&Close',...
+        'Position', [Width-(0.25*Width) 0.1 * Height 70 30],...
+        'Callback', @(hpb,eventdata)SaveTissueParameters(hpb,eventdata,handles));
+    
+uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Cancel&Close',...
+        'Position', [Width-(0.5*Width) 0.1 * Height 80 30],...
+        'Callback', 'close');    
+    
+guidata(hObject,handles); 
+UpdateState(handles);
+    
+    
+function SaveTissueParameters(~, ~, handles) 
+cst = evalin('base','cst');    
+% get handle to uiTable
+figHandles = get(0,'Children');
+IdxHandle  = find(strcmp(get(figHandles,'Name'),'Set Tissue Parameters'));
+% find table in window
+
+figHandleChildren = get(figHandles(IdxHandle),'Children');
+IdxTable   = find(strcmp(get(figHandleChildren,'Type'),'uitable'));
+uiTable    = figHandleChildren(IdxTable);
+% retrieve data from uitable
+data       = get(uiTable,'data');
+
+for i = 1:size(cst,1)
+   for j = 1:size(data,1)
+       if strcmp(cst{i,2},data{j,1})
+         alphaXBetaX = str2num(data{j,2});
+         cst{i,5}.alphaX = alphaXBetaX(1);
+         cst{i,5}.betaX  = alphaXBetaX(2);
+       end
+   end
+end
+assignin('base','cst',cst);
+close
+handles.State = 2;
+UpdateState(handles);
+ 
+
+        
+function tissueTable_CellEditCallback(hObject, eventdata, ~) 
+if eventdata.Indices(2) == 2
+   alphaXBetaX = str2num(eventdata.NewData);
+   data = get(hObject,'Data');
+   data{eventdata.Indices(1),3} = alphaXBetaX(1)/alphaXBetaX(2);
+   set(hObject,'Data',data);
+end
+
+% --- Executes on button press in btnSaveToGUI.
+function btnSaveToGUI_Callback(hObject, ~, handles)
+
+Width  = 400;
+Height = 200;
+ScreenSize = get(0,'ScreenSize');
+
+% show "Provide result name" window
+figHandles = get(0,'Children');
+if ~isempty(figHandles)
+    IdxHandle = strcmp(get(figHandles,'Name'),'Provide result name');
+else
+    IdxHandle = [];
+end
+
+%check if window is already exists 
+if any(IdxHandle)
+    figDialog = figHandles(IdxHandle);
+    %set focus
+    figure(figDialog);
+else
+    figDialog = dialog('Position',[ceil(ScreenSize(3)/2) ceil(ScreenSize(4)/2) Width Height],'Name','Provide result name','Color',[0.5 0.5 0.5]);
+    
+    uicontrol('Parent',figDialog,...
+              'Style','text',...
+              'Position',[20 Height - (0.35*Height) 350 60],...
+              'String','Please provide a decriptive name for your optimization result:','FontSize',10,'BackgroundColor',[0.5 0.5 0.5]);
+    
+    uicontrol('Parent',figDialog,...
+              'Style','edit',...
+              'Position',[30 60 350 60],... 
+              'String','Please enter name here...','FontSize',10,'BackgroundColor',[0.55 0.55 0.55]);
+         
+    uicontrol('Parent', figDialog,'Style', 'pushbutton', 'String', 'Save','FontSize',10,...
+              'Position', [0.42*Width 0.1 * Height 70 30],...
+              'Callback', @(hpb,eventdata)SaveResultToGUI(hpb,eventdata,guidata(hpb)));        
+end
+
+uiwait(figDialog);
+guidata(hObject, handles);
+UpdateState(handles)
+UpdatePlot(handles)
+
+
+function SaveResultToGUI(~, ~, ~)
+AllFigHandles = get(0,'Children');    
+ixHandle      = strcmp(get(AllFigHandles,'Name'),'Provide result name');
+uiEdit        = get(AllFigHandles(ixHandle),'Children');
+
+if strcmp(get(uiEdit(2),'String'),'Please enter name here...')
+  
+    formatOut = 'mmddyyHHMM';
+    Suffix = ['_' datestr(now,formatOut)];
+else
+    % delete special characters
+    Suffix = get(uiEdit(2),'String');
+    logIx = isstrprop(Suffix,'alphanum');
+    Suffix = ['_' Suffix(logIx)];
+end
+
+pln       = evalin('base','pln');
+resultGUI = evalin('base','resultGUI');
+
+resultGUI.(['physicalDose' Suffix])  = resultGUI.physicalDose; 
+resultGUI.(['w' Suffix])             = resultGUI.w;
+    
+if ~strcmp(pln.bioOptimization,'none') && strcmp(pln.radiationMode,'carbon') == 1 
+    resultGUI.(['effect' Suffix])             = resultGUI.effect; 
+    resultGUI.(['RBExDose' Suffix])           = resultGUI.RBExDose; 
+    resultGUI.(['RBE' Suffix])                = resultGUI.RBE; 
+    resultGUI.(['alpha' Suffix])              = resultGUI.alpha; 
+    resultGUI.(['beta' Suffix])               = resultGUI.beta; 
+end
+
+close(AllFigHandles(ixHandle));
+assignin('base','resultGUI',resultGUI);
+
 
 %% CREATE FUNCTIONS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
