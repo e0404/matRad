@@ -36,8 +36,8 @@ cst{cstNewLine,6}.type = 'min DCH objective';
 cst{cstNewLine,6}.penalty = 800;
 cst{cstNewLine,6}.dose = 57.5;
 cst{cstNewLine,6}.EUD = NaN;
-cst{cstNewLine,6}.volume = 0.9;
-cst{cstNewLine,6}.coverage = 0.9;
+cst{cstNewLine,6}.volume = 90;
+cst{cstNewLine,6}.coverage = 90;
 cst{cstNewLine,6}.minDistToTarget = matRad_calcMinDist(cst,ct,'TargetRing','OuterTarget');
 cst{cstNewLine,6}.robustness = 'coverage';
 

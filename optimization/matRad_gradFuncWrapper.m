@@ -123,8 +123,8 @@ for  i = 1:size(cst,1)
                     end
                       
                     % calc invers DCH of Outer Target
-                    refQ   = cst{i,6}(j).coverage;
-                    refVol = cst{i,6}(j).volume;
+                    refQ   = cst{i,6}(j).coverage/100;
+                    refVol = cst{i,6}(j).volume/100;
                     d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
                     
                     % get dose of Target Ring
