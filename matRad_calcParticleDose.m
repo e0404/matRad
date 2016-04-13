@@ -131,194 +131,192 @@ end
 
 for ShiftScen = 1:multScen.numOfShiftScen
 
-    % manipulate isocenter
-    pln.isoCenter    = pln.isoCenter + multScen.shifts(:,ShiftScen)';
-    for k = 1:length(stf)
-        stf(k).isoCenter = stf(k).isoCenter + multScen.shifts(:,ShiftScen)';
-    end
+% manipulate isocenter
+pln.isoCenter    = pln.isoCenter + multScen.shifts(:,ShiftScen)';
+for k = 1:length(stf)
+    stf(k).isoCenter = stf(k).isoCenter + multScen.shifts(:,ShiftScen)';
+end
 
-    fprintf(['shift scenario ' num2str(ShiftScen) ' of ' num2str(multScen.numOfShiftScen) ': \n']);
-    fprintf('matRad: Particle dose calculation...\n');
-    counter = 0;
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    for i = 1:dij.numOfBeams; % loop over all beams
+fprintf(['shift scenario ' num2str(ShiftScen) ' of ' num2str(multScen.numOfShiftScen) ': \n']);
+fprintf('matRad: Particle dose calculation...\n');
+counter = 0;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+for i = 1:dij.numOfBeams; % loop over all beams
 
-        fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
+    fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
 
-        bixelsPerBeam = 0;
+    bixelsPerBeam = 0;
 
-        % convert voxel indices to real coordinates using iso center of beam i
-        xCoordsV = xCoordsV_vox(:)*ct.resolution.x - stf(i).isoCenter(1);
-        yCoordsV = yCoordsV_vox(:)*ct.resolution.y - stf(i).isoCenter(2);
-        zCoordsV = zCoordsV_vox(:)*ct.resolution.z - stf(i).isoCenter(3);
-        coordsV  = [xCoordsV yCoordsV zCoordsV];
+    % convert voxel indices to real coordinates using iso center of beam i
+    xCoordsV = xCoordsV_vox(:)*ct.resolution.x - stf(i).isoCenter(1);
+    yCoordsV = yCoordsV_vox(:)*ct.resolution.y - stf(i).isoCenter(2);
+    zCoordsV = zCoordsV_vox(:)*ct.resolution.z - stf(i).isoCenter(3);
+    coordsV  = [xCoordsV yCoordsV zCoordsV];
 
-        % Set gantry and couch rotation matrices according to IEC 61217
-        % Use transpose matrices because we are working with row vectros
+    % Set gantry and couch rotation matrices according to IEC 61217
+    % Use transpose matrices because we are working with row vectros
 
-        % rotation around Z axis (gantry)
-        inv_rotMx_XY_T = [ cosd(-pln.gantryAngles(i)) sind(-pln.gantryAngles(i)) 0;
-                          -sind(-pln.gantryAngles(i)) cosd(-pln.gantryAngles(i)) 0;
-                                                    0                          0 1];
+    % rotation around Z axis (gantry)
+    inv_rotMx_XY_T = [ cosd(-pln.gantryAngles(i)) sind(-pln.gantryAngles(i)) 0;
+                      -sind(-pln.gantryAngles(i)) cosd(-pln.gantryAngles(i)) 0;
+                                                0                          0 1];
 
-        % rotation around Y axis (couch)
-        inv_rotMx_XZ_T = [cosd(-pln.couchAngles(i)) 0 -sind(-pln.couchAngles(i));
-                                                  0 1                         0;
-                          sind(-pln.couchAngles(i)) 0  cosd(-pln.couchAngles(i))];
+    % rotation around Y axis (couch)
+    inv_rotMx_XZ_T = [cosd(-pln.couchAngles(i)) 0 -sind(-pln.couchAngles(i));
+                                              0 1                         0;
+                      sind(-pln.couchAngles(i)) 0  cosd(-pln.couchAngles(i))];
 
-        % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
-        rot_coordsV = coordsV*inv_rotMx_XZ_T*inv_rotMx_XY_T;
+    % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
+    rot_coordsV = coordsV*inv_rotMx_XZ_T*inv_rotMx_XY_T;
 
-        rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
-        rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
-        rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
+    rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
+    rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
+    rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
 
-        % Calcualte radiological depth cube
-        lateralCutoffRayTracing = 50;
-        fprintf('matRad: calculate radiological depth cube...');
-        [radDepthCube,geoDistCube] = matRad_rayTracing(stf(i),ct,V,lateralCutoffRayTracing,multScen);
-        fprintf('done.\n');
+    % Calcualte radiological depth cube
+    lateralCutoffRayTracing = 50;
+    fprintf('matRad: calculate radiological depth cube...');
+    [radDepthCube,geoDistCube] = matRad_rayTracing(stf(i),ct,V,lateralCutoffRayTracing,multScen);
+    fprintf('done.\n');
 
-        % construct binary mask where ray tracing results are available
-        radDepthMask = ~isnan(radDepthCube{1});
+    % construct binary mask where ray tracing results are available
+    radDepthMask = ~isnan(radDepthCube{1});
 
-        % Determine lateral cutoff
-        fprintf('matRad: calculate lateral cutoff...');
-        cutOffLevel = .99;
-        visBoolLateralCutOff = 0;
-        machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
-        fprintf('done.\n');    
+    % Determine lateral cutoff
+    fprintf('matRad: calculate lateral cutoff...');
+    cutOffLevel = .99;
+    visBoolLateralCutOff = 0;
+    machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
+    fprintf('done.\n');    
 
-        for j = 1:stf(i).numOfRays % loop over all rays
+    for j = 1:stf(i).numOfRays % loop over all rays
 
-            if ~isempty(stf(i).ray(j).energy)
+        if ~isempty(stf(i).ray(j).energy)
 
-                % find index of maximum used energy (round to keV for numerical
-                % reasons
-                energyIx = max(round2(stf(i).ray(j).energy,4)) == round2([machine.data.energy],4);
+            % find index of maximum used energy (round to keV for numerical
+            % reasons
+            energyIx = max(round2(stf(i).ray(j).energy,4)) == round2([machine.data.energy],4);
 
-                maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
+            maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
 
-                % Ray tracing for beam i and ray j
-                [ix,radialDist_sq,~,~] = matRad_calcGeoDists(rot_coordsV, ...
-                                                             stf(i).sourcePoint_bev, ...
-                                                             stf(i).ray(j).targetPoint_bev, ...
-                                                             geoDistCube(V), ...
-                                                             machine.meta.SAD, ...
-                                                             radDepthMask(V), ...
-                                                             maxLateralCutoffDoseCalc); 
+            % Ray tracing for beam i and ray j
+            [ix,radialDist_sq,~,~] = matRad_calcGeoDists(rot_coordsV, ...
+                                                         stf(i).sourcePoint_bev, ...
+                                                         stf(i).ray(j).targetPoint_bev, ...
+                                                         geoDistCube(V), ...
+                                                         machine.meta.SAD, ...
+                                                         radDepthMask(V), ...
+                                                         maxLateralCutoffDoseCalc); 
 
-                % just use tissue classes of voxels found by ray tracer
-                if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
-                     && strcmp(pln.radiationMode,'carbon')
-                        mTissueClass_j = mTissueClass(ix,:);
+            % just use tissue classes of voxels found by ray tracer
+            if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
+                 && strcmp(pln.radiationMode,'carbon')
+                    mTissueClass_j = mTissueClass(ix,:);
+            end
+
+            for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
+
+                counter = counter + 1;
+                bixelsPerBeam = bixelsPerBeam + 1;
+
+                matRad_progress(bixelsPerBeam,stf(i).totalNumOfBixels);
+                % update waitbar only 100 times if it is not closed
+                if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
+                    waitbar(counter/dij.totalNumOfBixels,figureWait);
                 end
 
-                for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
+                % remember beam and  bixel number
+                dij.beamNum(counter)  = i;
+                dij.rayNum(counter)   = j;
+                dij.bixelNum(counter) = k;
 
-                    counter = counter + 1;
-                    bixelsPerBeam = bixelsPerBeam + 1;
+                % find energy index in base data
+                energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
 
-                    matRad_progress(bixelsPerBeam,stf(i).totalNumOfBixels);
-                    % update waitbar only 100 times if it is not closed
-                    if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
-                        waitbar(counter/dij.totalNumOfBixels,figureWait);
+                for CtScen = 1:multScen.numOfCtScen
+                    for RangeShiftScen = 1:multScen.numOfRangeShiftScen  
+
+                        if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
+
+                            % manipulate radDepthCube for range scenarios
+                            radDepths = radDepthCube{CtScen}(V(ix));                                         
+
+                            if multScen.relRangeShifts(RangeShiftScen) ~= 0 || multScen.absRangeShifts(RangeShiftScen) ~= 0
+                                radDepths = radDepths +...                                                                                % original cube
+                                            radDepthCube{CtScen}(V(ix))*multScen.relRangeShifts(RangeShiftScen) +... % rel range shift
+                                            multScen.absRangeShifts(RangeShiftScen);                                                      % absolute range shift
+                                radDepths(radDepths < 0) = 0;  
+                            end
+
+                            % find depth depended lateral cut off
+                            if cutOffLevel >= 1
+                                currIx = radDepths <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset;
+                            elseif cutOffLevel < 1 && cutOffLevel > 0
+                                % perform rough 2D clipping
+                                currIx = radDepths <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset & ...
+                                     radialDist_sq <= max(machine.data(energyIx).LatCutOff.CutOff.^2);
+
+                                % peform fine 2D clipping  
+                                if length(machine.data(energyIx).LatCutOff.CutOff) > 1
+                                    currIx(currIx) = interp1(machine.data(energyIx).LatCutOff.depths + machine.data(energyIx).offset,...
+                                        machine.data(energyIx).LatCutOff.CutOff.^2, radDepths(currIx)) >= radialDist_sq(currIx);
+                                end
+                            else
+                                error('cutoff must be a value between 0 and 1')
+                            end
+
+                            % calculate particle dose for bixel k on ray j of beam i
+                            bixelDose = matRad_calcParticleDoseBixel(...
+                                radDepths(currIx), ...
+                                radialDist_sq(currIx), ...
+                                stf(i).ray(j).SSD{CtScen}, ...
+                                stf(i).ray(j).focusIx(k), ...
+                                machine.data(energyIx)); 
+
+                            % Save dose for every bixel in cell array
+                            doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix(currIx)),1,bixelDose,prod(ct.cubeDim),1); 
+
+                            if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
+                                && strcmp(pln.radiationMode,'carbon')
+                                % calculate alpha and beta values for bixel k on ray j of                  
+                                [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
+                                    radDepths(currIx),...
+                                    mTissueClass_j(currIx,:),...
+                                    machine.data(energyIx));
+
+                                alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix(currIx)),1,bixelAlpha.*bixelDose,prod(ct.cubeDim),1);
+                                betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,prod(ct.cubeDim),1);
+                            end
+                        end
+
                     end
+                end
 
-                    % remember beam and  bixel number
-                    dij.beamNum(counter)  = i;
-                    dij.rayNum(counter)   = j;
-                    dij.bixelNum(counter) = k;
-
-                    % find energy index in base data
-                    energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
-
+                % save computation time and memory by sequentially filling the
+                % sparse matrix dose.dij from the cell array
+                if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
                     for CtScen = 1:multScen.numOfCtScen
-                        for RangeShiftScen = 1:multScen.numOfRangeShiftScen  
+                        for RangeShiftScen = 1:multScen.numOfRangeShiftScen
 
                             if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
-
-                                % manipulate radDepthCube for range scenarios
-                                radDepths = radDepthCube{CtScen}(V(ix));                                         
-
-                                if multScen.relRangeShifts(RangeShiftScen) ~= 0 || multScen.absRangeShifts(RangeShiftScen) ~= 0
-                                    radDepths = radDepths +...                                                                                % original cube
-                                                radDepthCube{CtScen}(V(ix))*multScen.relRangeShifts(RangeShiftScen) +... % rel range shift
-                                                multScen.absRangeShifts(RangeShiftScen);                                                      % absolute range shift
-                                    radDepths(radDepths < 0) = 0;  
-                                end
-
-                                % find depth depended lateral cut off
-                                if cutOffLevel >= 1
-                                    currIx = radDepths <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset;
-                                elseif cutOffLevel < 1 && cutOffLevel > 0
-                                    % perform rough 2D clipping
-                                    currIx = radDepths <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset & ...
-                                         radialDist_sq <= max(machine.data(energyIx).LatCutOff.CutOff.^2);
-
-                                    % peform fine 2D clipping  
-                                    if length(machine.data(energyIx).LatCutOff.CutOff) > 1
-                                        currIx(currIx) = interp1(machine.data(energyIx).LatCutOff.depths + machine.data(energyIx).offset,...
-                                            machine.data(energyIx).LatCutOff.CutOff.^2, radDepths(currIx)) >= radialDist_sq(currIx);
-                                    end
-                                else
-                                    error('cutoff must be a value between 0 and 1')
-                                end
-
-                                % calculate particle dose for bixel k on ray j of beam i
-                                bixelDose = matRad_calcParticleDoseBixel(...
-                                    radDepths(currIx), ...
-                                    radialDist_sq(currIx), ...
-                                    stf(i).ray(j).SSD{CtScen}, ...
-                                    stf(i).ray(j).focusIx(k), ...
-                                    machine.data(energyIx)); 
-
-                                % Save dose for every bixel in cell array
-                                doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix(currIx)),1,bixelDose,prod(ct.cubeDim),1); 
-
-                                if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
-                                    && strcmp(pln.radiationMode,'carbon')
-                                    % calculate alpha and beta values for bixel k on ray j of                  
-                                    [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
-                                        radDepths(currIx),...
-                                        mTissueClass_j(currIx,:),...
-                                        machine.data(energyIx));
-
-                                    alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix(currIx)),1,bixelAlpha.*bixelDose,prod(ct.cubeDim),1);
-                                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,prod(ct.cubeDim),1);
-                                end
+                                dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}];
                             end
 
                         end
                     end
 
-                    % save computation time and memory by sequentially filling the
-                    % sparse matrix dose.dij from the cell array
-                    if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
+                    if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
+                            && strcmp(pln.radiationMode,'carbon')
                         for CtScen = 1:multScen.numOfCtScen
                             for RangeShiftScen = 1:multScen.numOfRangeShiftScen
 
                                 if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
-                                    dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}];
+                                    dij.mAlphaDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}];
+                                    dij.mSqrtBetaDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}];
                                 end
 
                             end
                         end
-
-                        if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
-                                && strcmp(pln.radiationMode,'carbon')
-                            for CtScen = 1:multScen.numOfCtScen
-                                for RangeShiftScen = 1:multScen.numOfRangeShiftScen
-
-                                    if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
-                                        dij.mAlphaDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}];
-                                        dij.mSqrtBetaDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}];
-                                    end
-
-                                end
-                            end
-                        end
-                        
                     end
 
                 end
@@ -326,13 +324,15 @@ for ShiftScen = 1:multScen.numOfShiftScen
             end
 
         end
-    end
 
-    % manipulate isocenter
-    pln.isoCenter    = pln.isoCenter - multScen.shifts(:,ShiftScen)';
-    for k = 1:length(stf)
-        stf(k).isoCenter = stf(k).isoCenter - multScen.shifts(:,ShiftScen)';
-    end 
+    end
+end
+
+% manipulate isocenter
+pln.isoCenter    = pln.isoCenter - multScen.shifts(:,ShiftScen)';
+for k = 1:length(stf)
+    stf(k).isoCenter = stf(k).isoCenter - multScen.shifts(:,ShiftScen)';
+end 
 
 end
 
