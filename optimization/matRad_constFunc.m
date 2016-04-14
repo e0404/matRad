@@ -1,4 +1,4 @@
-function c = matRad_constFunc(d_i,constraint,d_ref)
+function c = matRad_constFunc(d_i,constraint,d_ref,d_pi)
 
 
 numOfVoxels = numel(d_i);
@@ -59,7 +59,16 @@ elseif isequal(constraint.type, 'exact DVH constraint') || ...
     % c = (1/size(cst{j,4},1))*(deviation'*deviation); % square deviation with normalization
     % %c = (deviation).^2'*(deviation).^2;               % squared square devioation
     % alternative constraint calculation 3/4 %
-
+    
+elseif isequal(constraint.type, 'max DCH constraint') || ...
+       isequal(constraint.type, 'min DCH constraint')
+    
+    % compare dose to reference dose
+    QScen = (d_pi >= d_ref);
+    
+    % calculate coverage
+    c = sum(QScen)/numel(d_pi);
+    
 end 
 
 

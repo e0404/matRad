@@ -65,5 +65,15 @@ elseif isequal(constraint.type, 'min DVH constraint')
     % cl = [cl;-inf];
     % cu = [cu;0];
     % alternative constraint calculation 2/4 %
+    
+elseif isequal(constraint.type, 'max DCH constraint')
+    
+    cl = -inf;
+    cu = constraint.coverage/100;
+    
+elseif isequal(constraint.type, 'min DCH constraint')    
+    
+    cl = constraint.coverage/100;
+    cu = inf;
 
 end % constraint switch

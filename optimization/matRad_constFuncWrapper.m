@@ -10,7 +10,7 @@ c = [];
 for  i = 1:size(cst,1)
 
     % Only take OAR or target VOI.
-    if ~isempty(cst{i,4}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
+    if ~isempty(cst{i,4}{1}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
 
         % loop over the number of constraints for the current VOI
         for j = 1:numel(cst{i,6})
@@ -25,7 +25,7 @@ for  i = 1:size(cst,1)
                     ~isequal(cst{i,6}(j).type, 'max EUD constraint') && ~isequal(cst{i,6}(j).type, 'min max EUD constraint')) &&...
                     isequal(type,'effect')
                      
-                    d_ref = dij.ax(cst{i,4}).*cst{i,6}(j).dose + dij.bx(cst{i,4})*cst{i,6}(j).dose^2;
+                    d_ref = dij.ax(cst{i,4}{1}).*cst{i,6}(j).dose + dij.bx(cst{i,4}{1})*cst{i,6}(j).dose^2;
                 else
                     d_ref = cst{i,6}(j).dose;
                 end
@@ -33,7 +33,7 @@ for  i = 1:size(cst,1)
                 % if conventional opt: just add constraints of nominal dose
                 if strcmp(cst{i,6}(j).robustness,'none')
 
-                    d_i = d{1}(cst{i,4});
+                    d_i = d{1}(cst{i,4}{1});
 
                     c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref)];
 
@@ -42,11 +42,29 @@ for  i = 1:size(cst,1)
                     
                     for k = 1:dij.numOfScenarios
                         
-                        d_i = d{k}(cst{i,4});
+                        d_i = d{k}(cst{i,4}{1});
                         
                         c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref)];
                         
                     end
+                    
+                % if coveraged based opt   
+                elseif strcmp(cst{i,6}(j).robustness,'coverage')
+                    
+                    % get cst index of Outer Target
+                    cstidx = find(~cellfun('isempty',strfind(cst(:,2),'OuterTarget')));
+                    
+                    for k = 1:dij.numOfScenarios
+                        
+                        % get current dose
+                        d_i = d{k}(cst{cstidx,4}{1});
+                        
+                        % inverse DVH calculation
+                        d_pi(k) = matRad_calcInversDVH(cst{i,6}(j).volume/100,d_i);
+                        
+                    end
+                    
+                    c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref,d_pi)];
 
                 end % if we are in the nominal sceario or rob opt
             

@@ -54,7 +54,7 @@ for  i = 1:size(cst,1)
                     param = cst{i,5}.alphaX .* cst{i,6}(j).dose + cst{i,5}.betaX .* cst{i,6}(j).dose.^2;
                 end
 
-                if strcmp(cst{i,6}(j).robustness,'none')
+                if strcmp(cst{i,6}(j).robustness,'none') || strcmp(cst{i,6}(j).robustness,'coverage')
 
                     [clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param);
                     
