@@ -1,4 +1,4 @@
-function cst = matRad_addTargetRing(cst,ct,ringsize)
+function cst = matRad_addTargetRing(cst,ct,ringsizeX,ringsizeY,ringsizeZ)
 
 % find all target voxels from cst cell array
 V = [];
@@ -15,15 +15,15 @@ V = unique(V);
 voiTarget    = zeros(ct.cubeDim);
 voiTarget(V) = 1;
 
-myMargin.x = ringsize;
-myMargin.y = ringsize;
-myMargin.z = ringsize;
+myMargin.x = ringsizeX;
+myMargin.y = ringsizeY;
+myMargin.z = ringsizeZ;
 voiTarget  = matRad_addMargin(voiTarget,cst,ct.resolution,myMargin,true);
 VwithMargin = find(voiTarget>0);
 
 % add TARGET RING structure to cst
 cstNewLine = size(cst,1) + 1 ;
-targetLine = find(~cellfun('isempty',strfind(cst(:,2),'OuterTarget')));;
+targetLine = find(~cellfun('isempty',strfind(cst(:,2),'OuterTarget')));
 
 cst{cstNewLine,1} = cst{cstNewLine - 1,1} + 1;
 cst{cstNewLine,2} = 'TargetRing';

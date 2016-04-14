@@ -80,10 +80,8 @@ for  i = 1:size(cst,1)
                     refVol = cst{i,6}(j).volume/100;
                     d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
                     
-                   % get dose of Target Ring
-                    for k = 1:dij.numOfScenarios
-                        d_i{k} = d{k}(cst{i,4}{1});
-                    end
+                    % get dose of Target Ring
+                    d_i = d{1}(cst{i,4}{1});
                     
                     % calc voxel dependent weighting
                     weighting = [];
@@ -92,13 +90,13 @@ for  i = 1:size(cst,1)
                    
                         weighting = 1;
                     else
-                        for k = 1:length(d_i{1})
-                            weighting(k) = min(cst{i,6}(j).minDistToTarget(d_i{1}(k) == d_i{1}));
+                        for k = 1:length(d_i)
+                            weighting(k) = min(cst{i,6}(j).minDistToTarget(d_i(k) == d_i));
                         end
                         weighting = 1 + 4 * (weighting./cst{i,6}(j).minDistToTarget);
                     end
 
-                    f = f + matRad_objFunc(d_i{1},cst{i,6}(j),d_ref,d_ref2,weighting);
+                    f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref,d_ref2,weighting);
 
                 end
             
