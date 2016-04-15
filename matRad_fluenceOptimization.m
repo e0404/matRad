@@ -68,6 +68,12 @@ matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
 matRad_STRG_C_Pressed           = false;
 matRad_objective_function_value = [];
   
+% add VOI Ring(s) in case of coverage based objective(s)/constraints(s)
+ringSize.x = 14;
+ringSize.y = 14;
+ringSize.z = 14;
+cst = matRad_addVOIRing(cst,ct,ringSize,true);
+
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst,multScen);
 

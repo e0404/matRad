@@ -62,25 +62,25 @@ for  i = 1:size(cst,1)
 
                     f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
                     
-                % if coveraged based opt: calculate inverse DCH    
+                % if coveraged based opt    
                 elseif strcmp(cst{i,6}(j).robustness,'coverage')
                     
                     d_i = [];
                     
-                    % get cst index of Outer Target
-                    cstidx = find(~cellfun('isempty',strfind(cst(:,2),'OuterTarget')));
+                    % get cst index of VOI that corresponds to VOI ring
+                    cstidx = find(~cellfun('isempty',strfind(cst(:,2),cst{i,2}(1:end-4))));
                     
-                    % get dose of Outer Target
+                    % get dose of VOI that corresponds to VOI ring
                     for k = 1:dij.numOfScenarios
                         d_i{k} = d{k}(cst{cstidx,4}{1});
                     end
                     
-                    % calc invers DCH of Outer Target
+                    % calc invers DCH of VOI
                     refQ   = cst{i,6}(j).coverage/100;
                     refVol = cst{i,6}(j).volume/100;
                     d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
                     
-                    % get dose of Target Ring
+                    % get dose of VOI ring
                     d_i = d{1}(cst{i,4}{1});
                     
                     % calc voxel dependent weighting

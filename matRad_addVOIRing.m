@@ -1,44 +1,40 @@
-function cst = matRad_addVOIRing(VOIName,cst,ct,ringsizeX,ringsizeY,ringsizeZ)
+function cst = matRad_addVOIRing(cst,ct,myMargin,calcDistFlag)
+ 
+Counter = 0;
 
-% find all target voxels from cst cell array
-V = [];
-for i=1:size(cst,1)
-    if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
-        V = [V;vertcat(cst{i,4}{:})];
-    end
+for  i = 1:size(cst,1)
+    if sum(strcmp({cst{i,6}(:).robustness},'coverage')) > 0
+        
+        Counter = Counter + 1;  
+
+        % generate VOI cube
+        V          = cst{i,4}{1};
+        VOICube    = zeros(ct.cubeDim);
+        VOICube(V) = 1;
+
+        % add VOI ring
+        VOICubeWithRing = matRad_addMargin(VOICube,cst,ct.resolution,myMargin,true);
+        VwithRing       = find(VOICubeWithRing>0);
+
+        % create cst with ring structure
+        cstRing{Counter,1}    = size(cst,1) - 1 + Counter;
+        cstRing{Counter,2}    = [cst{i,2},'Ring'];
+        cstRing{Counter,3}    = cst{i,3};
+        cstRing{Counter,4}{1} = setdiff(VwithRing,V);
+        cstRing{Counter,5}    = cst{i,5};
+
+        % calc min distance to VOI for every VOI ring voxel
+        if calcDistFlag
+            cstRing{Counter,5}.minDistToTarget = matRad_calcMinDist(cst,ct,cstRing{Counter,2},cst{i,2});
+        end
+
+        % pass coverage based objective/constraint specification to VOI ring structure
+        logidx             = strcmp({cst{i,6}(:).robustness},'coverage');
+        cstRing{Counter,6} = cst{i,6}(logidx);
+        cst{i,6}           = cst{i,6}(~logidx);
+    end  
 end
 
-% Remove double voxels
-V = unique(V);
-
-% generate voi cube for targets
-voiTarget    = zeros(ct.cubeDim);
-voiTarget(V) = 1;
-
-myMargin.x = ringsizeX;
-myMargin.y = ringsizeY;
-myMargin.z = ringsizeZ;
-voiTarget  = matRad_addMargin(voiTarget,cst,ct.resolution,myMargin,true);
-VwithMargin = find(voiTarget>0);
-
-% add TARGET RING structure to cst
-cstNewLine = size(cst,1) + 1 ;
-targetLine = find(~cellfun('isempty',strfind(cst(:,2),VOIName)));
-
-cst{cstNewLine,1} = cst{cstNewLine - 1,1} + 1;
-cst{cstNewLine,2} = 'TargetRing';
-cst{cstNewLine,3} = 'TARGET';
-
-cst{cstNewLine,4}{1} = VwithMargin(~ismember(VwithMargin,V));
-
-cst{cstNewLine,5} = cst{targetLine,5};    
-cst{cstNewLine,6}.type = 'min DCH objective';
-cst{cstNewLine,6}.penalty = 800;
-cst{cstNewLine,6}.dose = 57.5;
-cst{cstNewLine,6}.EUD = NaN;
-cst{cstNewLine,6}.volume = 90;
-cst{cstNewLine,6}.coverage = 90;
-cst{cstNewLine,6}.minDistToTarget = matRad_calcMinDist(cst,ct,'TargetRing',VOIName);
-cst{cstNewLine,6}.robustness = 'coverage';
+cst = [cst;cstRing];
 
 end

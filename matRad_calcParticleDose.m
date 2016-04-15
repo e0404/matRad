@@ -38,6 +38,12 @@ figureWait = waitbar(0,'calculate dose influence matrix for particles...');
 % prevent closure of waitbar and show busy state
 set(figureWait,'pointer','watch');
 
+% add VOI Ring(s) in case of coverage based objective(s)/constraints(s)
+ringSize.x = 14;
+ringSize.y = 14;
+ringSize.z = 14;
+cst = matRad_addVOIRing(cst,ct,ringSize,false);
+
 % meta information for dij
 dij.numOfBeams         = pln.numOfBeams;
 dij.numOfVoxels        = pln.numOfVoxels;

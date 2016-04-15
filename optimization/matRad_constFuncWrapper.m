@@ -51,8 +51,8 @@ for  i = 1:size(cst,1)
                 % if coveraged based opt   
                 elseif strcmp(cst{i,6}(j).robustness,'coverage')
                     
-                    % get cst index of Outer Target
-                    cstidx = find(~cellfun('isempty',strfind(cst(:,2),'OuterTarget')));
+                    % get cst index of VOI that corresponds to VOI ring
+                    cstidx = find(~cellfun('isempty',strfind(cst(:,2),cst{i,2}(1:end-4))));
                     
                     for k = 1:dij.numOfScenarios
                         

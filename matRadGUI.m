@@ -1509,7 +1509,7 @@ end
 % displays the cst in the GUI
 function setCstTable(handles,cst)
 
-columnname = {'VOI','VOI Type','Priority','Obj Func','penalty','dose', 'EUD','volume','robustness'};
+columnname = {'VOI','VOI Type','Priority','Obj Func','penalty','dose', 'EUD','volume','coverage','robustness'};
 
 AllObjectiveFunction = {'square underdosing','square overdosing','square deviation', 'mean', 'EUD',...
        'min dose constraint','max dose constraint','min max dose constraint',...
@@ -1521,7 +1521,7 @@ AllObjectiveFunction = {'square underdosing','square overdosing','square deviati
 PlaceHolder = NaN;
 columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
        AllObjectiveFunction,...
-       'numeric','char','numeric','numeric',{'none','WC','prob'}};
+       'numeric','char','numeric','numeric','numeric',{'none','WC','prob'}};
    
 numOfObjectives = 0;
 for i = 1:size(cst,1)
@@ -1548,11 +1548,12 @@ for i = 1:size(cst,1)
        objFunc = cst{i,6}(j).type;
        data{Counter,4}=objFunc;
        
-       data{Counter,5} = cst{i,6}(j).penalty;
-       data{Counter,6} = num2str(cst{i,6}(j).dose);
-       data{Counter,7} = cst{i,6}(j).EUD;
-       data{Counter,8} = cst{i,6}(j).volume;
-       data{Counter,9} = cst{i,6}(j).robustness;
+       data{Counter,5}  = cst{i,6}(j).penalty;
+       data{Counter,6}  = num2str(cst{i,6}(j).dose);
+       data{Counter,7}  = cst{i,6}(j).EUD;
+       data{Counter,8}  = cst{i,6}(j).volume;
+       data{Counter,9}  = cst{i,6}(j).coverage;
+       data{Counter,10} = cst{i,6}(j).robustness;
        
        Counter = Counter +1;
        end
@@ -1562,7 +1563,7 @@ end
 
 set(handles.uiTable,'ColumnName',columnname);
 set(handles.uiTable,'ColumnFormat',columnformat);
-set(handles.uiTable,'ColumnEditable',[true true true true true true true true false]);
+set(handles.uiTable,'ColumnEditable',[true true true true true true true true true false]);
 set(handles.uiTable,'Data',data);
 
 
@@ -1617,7 +1618,8 @@ for i = 1:size(OldCst,1)
               NewCst{Cnt,4}(CntObjF,1).penalty    = data{j,5};
               NewCst{Cnt,4}(CntObjF,1).EUD        = data{j,7};
               NewCst{Cnt,4}(CntObjF,1).volume     = data{j,8};
-              NewCst{Cnt,4}(CntObjF,1).robustness = data{j,9};
+              NewCst{Cnt,4}(CntObjF,1).coverage   = data{j,9};
+              NewCst{Cnt,4}(CntObjF,1).robustness = data{j,10};
              
             end
             
