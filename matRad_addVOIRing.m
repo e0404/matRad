@@ -25,7 +25,7 @@ for  i = 1:size(cst,1)
 
         % calc min distance to VOI for every VOI ring voxel
         if calcDistFlag
-            cstRing{Counter,5}.minDistToTarget = matRad_calcMinDist(cst,ct,cstRing{Counter,2},cst{i,2});
+            cstRing{Counter,5}.minDistToTarget = matRad_calcMinDist(ct,cstRing{Counter,4}{1},cst{i,4}{1});
         end
 
         % pass coverage based objective/constraint specification to VOI ring structure

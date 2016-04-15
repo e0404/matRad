@@ -115,7 +115,7 @@ for  i = 1:size(cst,1)
                     d_i = [];
                     
                     % get cst index of VOI that corresponds to VOI ring
-                    cstidx = find(~cellfun('isempty',strfind(cst(:,2),cst{i,2}(1:end-4))));
+                    cstidx = find(strcmp(cst(:,2),cst{i,2}(1:end-4)));
                     
                     % get dose of VOI that corresponds to VOI ring
                     for k = 1:dij.numOfScenarios
@@ -138,9 +138,9 @@ for  i = 1:size(cst,1)
                         weighting = 1;
                     else
                         for k = 1:length(d_i)
-                            weighting(k) = min(cst{i,6}(j).minDistToTarget(d_i(k) == d_i));
+                            weighting(k) = min(cst{i,5}.minDistToTarget(d_i(k) == d_i));
                         end
-                        weighting = 1 + 4 * (weighting./cst{i,6}(j).minDistToTarget);
+                        weighting = 1 + 4 * (weighting./cst{i,5}.minDistToTarget);
                     end
 
                     delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref,d_ref2,weighting);

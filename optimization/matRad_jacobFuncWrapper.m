@@ -151,11 +151,14 @@ for i = 1:size(cst,1)
                     
                 elseif strcmp(cst{i,6}(j).robustness,'coverage')
                     
+                    % get cst index of VOI that corresponds to VOI ring
+                    cstidx = find(strcmp(cst(:,2),cst{i,2}(1:end-4)));
+                    
                     % calculate scaling
                     for k = 1:dij.numOfScenarios
                         
                         % get current dose
-                        d_i = d{k}(cst{i,4}{1});
+                        d_i = d{k}(cst{cstidx,4}{1});
                         
                         % inverse DVH calculation
                         d_pi(k) = matRad_calcInversDVH(cst{i,6}(j).volume/100,d_i);

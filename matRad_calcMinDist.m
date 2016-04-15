@@ -1,8 +1,4 @@
-function minDist = matRad_calcMinDist(cst,ct,VOIName1,VOIName2)
-
-    % get cst index
-    cstidxVOI1 = find(~cellfun('isempty',strfind(cst(:,2),VOIName1)));
-    cstidxVOI2 = find(~cellfun('isempty',strfind(cst(:,2),VOIName2)));
+function minDist = matRad_calcMinDist(ct,VOI1VocelIDs,VOI2VoxelIDs)
 
     % get cube coordinates
     [xCoords_vox, yCoords_vox, zCoords_vox] = meshgrid(1:ct.cubeDim(1),1:ct.cubeDim(2),1:ct.cubeDim(3));
@@ -12,10 +8,10 @@ function minDist = matRad_calcMinDist(cst,ct,VOIName1,VOIName2)
     zCoords = zCoords_vox(:)*ct.resolution.z;
 
     % get surface voxel of VOI2
-    VOI2SurfaceVoxel = matRad_getVOISurfaceVoxel(cst,ct,VOIName2);
+    VOI2SurfaceVoxel = matRad_getVOISurfaceVoxel(ct,VOI2VoxelIDs);
 
     % get VOI coordinates (consider only surface voxels for VOI2)
-    VOI1coords = [xCoords(cst{cstidxVOI1,4}{1}) yCoords(cst{cstidxVOI1,4}{1}) zCoords(cst{cstidxVOI1,4}{1})];
+    VOI1coords = [xCoords(VOI1VocelIDs) yCoords(VOI1VocelIDs) zCoords(VOI1VocelIDs)];
     VOI2coords = [xCoords(VOI2SurfaceVoxel) yCoords(VOI2SurfaceVoxel) zCoords(VOI2SurfaceVoxel)];
 
     % calculate min distance of VOI1 voxels to VOI2 voxels

@@ -1,7 +1,4 @@
-function VOISurfaceVoxel = matRad_getVOISurfaceVoxel(cst,ct,VOIName)
-
-    % get cst index
-    cstidx = find(~cellfun('isempty',strfind(cst(:,2),VOIName)));
+function VOISurfaceVoxel = matRad_getVOISurfaceVoxel(ct,VOIVoxelIDs)
 
     % get cube coordinates
     [xCoords_vox, yCoords_vox, zCoords_vox] = meshgrid(1:ct.cubeDim(1),1:ct.cubeDim(2),1:ct.cubeDim(3));
@@ -11,9 +8,9 @@ function VOISurfaceVoxel = matRad_getVOISurfaceVoxel(cst,ct,VOIName)
     zCoords = zCoords_vox(:);
 
     % get VOI coordinates
-    xCoordsVOI = xCoords(cst{cstidx ,4}{1});
-    yCoordsVOI = yCoords(cst{cstidx ,4}{1});
-    zCoordsVOI = zCoords(cst{cstidx ,4}{1});
+    xCoordsVOI = xCoords(VOIVoxelIDs);
+    yCoordsVOI = yCoords(VOIVoxelIDs);
+    zCoordsVOI = zCoords(VOIVoxelIDs);
 
     xCoordsVOIUnique = unique(xCoordsVOI); 
     yCoordsVOIUnique = unique(yCoordsVOI); 
@@ -34,7 +31,7 @@ function VOISurfaceVoxel = matRad_getVOISurfaceVoxel(cst,ct,VOIName)
             idx = find(idx);  
         end
 
-        VOISurfaceX = [VOISurfaceX;cst{cstidx,4}{1}(idx)];   
+        VOISurfaceX = [VOISurfaceX;VOIVoxelIDs(idx)];   
     end
 
     % y
@@ -52,7 +49,7 @@ function VOISurfaceVoxel = matRad_getVOISurfaceVoxel(cst,ct,VOIName)
             idx = find(idx);  
         end
 
-        VOISurfaceY = [VOISurfaceY;cst{cstidx,4}{1}(idx)];   
+        VOISurfaceY = [VOISurfaceY;VOIVoxelIDs(idx)];   
     end
 
     % z
@@ -70,7 +67,7 @@ function VOISurfaceVoxel = matRad_getVOISurfaceVoxel(cst,ct,VOIName)
             idx = find(idx);  
         end
 
-        VOISurfaceZ = [VOISurfaceZ;cst{cstidx,4}{1}(idx)];   
+        VOISurfaceZ = [VOISurfaceZ;VOIVoxelIDs(idx)];   
     end
 
     VOISurfaceVoxel = union(VOISurfaceX,VOISurfaceY);
