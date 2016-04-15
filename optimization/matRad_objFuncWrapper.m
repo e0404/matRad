@@ -1,5 +1,7 @@
 function f = matRad_objFuncWrapper(w,dij,cst,type)
 
+global matRad_iteration;
+
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,type);
 
@@ -86,7 +88,8 @@ for  i = 1:size(cst,1)
                     % calc voxel dependent weighting
                     weighting = [];
                     if isequal(cst{i,6}(j).type,'min DCH objective') && d_ref < d_ref2 ||...
-                       isequal(cst{i,6}(j).type,'max DCH objective') && d_ref > d_ref2
+                       isequal(cst{i,6}(j).type,'max DCH objective') && d_ref > d_ref2 ||...
+                       matRad_iteration < 5
                    
                         weighting = 1;
                     else

@@ -35,9 +35,13 @@ function flag = matRad_IpoptIterFunc(iter,objective,~,~)
 
 global matRad_STRG_C_Pressed
 global matRad_objective_function_value;
+global matRad_iteration;
 
 % update global objective function value
 matRad_objective_function_value(iter+1) = objective;
+
+% update global iteration
+matRad_iteration = iter + 1;
 
 % check if user pressed ctrl-c
 if matRad_STRG_C_Pressed
