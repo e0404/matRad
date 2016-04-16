@@ -37,6 +37,12 @@ function varargout = matRadGUI(varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% abort for octave
+if exist('OCTAVE_VERSION','builtin');
+    fprintf('matRad GUI not available for Octave.\n');
+    return;
+end
+    
 % Begin initialization code - DO NOT EDIT
 % set platform specific look and feel
 if ispc
@@ -91,6 +97,9 @@ axes(handles.axesDKFZ)
 f = image(im);
 axis equal off;
 set(f, 'AlphaData', alpha);
+
+% set callback for scroll wheel function
+set(gcf,'WindowScrollWheelFcn',@matRadScrollWheelFcn);
 
 % change color of toobar
 hToolbar = findall(hObject,'tag','uitoolbar1');
@@ -240,14 +249,15 @@ if handles.State > 0
     set(handles.figure1,'UIContextMenu',contMenuStruct)
 end
 
+
 % Update handles structure
 handles.profileOffset = 0;
-guidata(hObject, handles);
 UpdateState(handles)
+
+handles.rememberCurrAxes = false;
 UpdatePlot(handles)
 
-
-
+guidata(hObject, handles);
 
 
 function Callback_StructVisibilty(source,callbackdata)
@@ -668,6 +678,8 @@ guidata(hObject,handles);
 function UpdatePlot(handles)
 
 defaultFontSize = 8;
+currAxes = axis;
+
 cla(handles.axesFig,'reset');
 
 if handles.State == 0
@@ -1158,8 +1170,11 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
    
 end
 
+zoom reset;
 
-
+if handles.rememberCurrAxes
+    axis(currAxes);
+end
 
 % --- Executes on selection change in popupPlane.
 function popupPlane_Callback(hObject, ~, handles)
@@ -1194,8 +1209,13 @@ try
     end
 catch
 end
-        
+
+handles.rememberCurrAxes = false;
+
 UpdatePlot(handles);
+
+handles.rememberCurrAxes = true;
+
 guidata(hObject,handles);
 
 % --- Executes on slider movement.
@@ -1465,8 +1485,12 @@ elseif get(hObject,'Value') == 2
     end
     
 end
-guidata(hObject, handles);
+
+handles.rememberCurrAxes = false;
 UpdatePlot(handles);
+handles.rememberCurrAxes = true;
+
+guidata(hObject, handles);
 
 % --- Executes on selection change in popupDisplayOption.
 function popupDisplayOption_Callback(hObject, ~, handles)
@@ -1485,9 +1509,14 @@ function sliderBeamSelection_Callback(hObject, ~, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+
 handles.SelectedBeam = round(get(hObject,'Value'));
 set(hObject, 'Value', handles.SelectedBeam);
+handles.rememberCurrAxes = false;
 UpdatePlot(handles);
+handles.rememberCurrAxes = true;
+guidata(hObject,handles);
 
 % --- Executes on button press in btnProfileType.
 function btnProfileType_Callback(hObject, ~, handles)
@@ -1502,8 +1531,12 @@ if strcmp(get(hObject,'Enable') ,'on')
             handles.ProfileType = 'lateral';
             set(hObject,'String','longitudinal');
     end
- guidata(hObject, handles);
- UpdatePlot(handles);
+    
+    handles.rememberCurrAxes = false;
+    UpdatePlot(handles);
+    handles.rememberCurrAxes = true;
+
+    guidata(hObject, handles);
  
 end
 
@@ -2289,6 +2322,29 @@ if isempty(FoundFile)
     flag = false;
 end
 
+function matRadScrollWheelFcn(src,event)
+
+% get handles
+handles = guidata(src);
+
+% compute new slice
+currSlice = round(get(handles.sliderSlice,'Value'));
+newSlice  = currSlice - event.VerticalScrollCount;
+
+% project to allowed set
+newSlice = min(newSlice,get(handles.sliderSlice,'Max'));
+newSlice = max(newSlice,get(handles.sliderSlice,'Min'));
+
+% update slider
+set(handles.sliderSlice,'Value',newSlice);
+
+% update plot
+UpdatePlot(handles);
+
+% update handles object
+guidata(src,handles);
+
+
 %% CALLBACKS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -2929,4 +2985,3 @@ function sliderOffset_CreateFcn(hObject, ~, ~)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
-
