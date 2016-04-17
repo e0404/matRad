@@ -1,21 +1,22 @@
-function [radDepthCube,geoDistCube] = matRad_rayTracing(stf,ct,V,lateralCutoff)
+function [radDepthV,geoDistV] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
 % 
 % call
-%   [radDepthCube,geoDistCube] = matRad_rayTracing(stf,ct,V,lateralCutoff)
+%   [radDepthV,geoDistV] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)
 %
 % input
 %   stf:           matRad steering information struct of one beam
 %   ct:            ct cube
 %   V:             linear voxel indices e.g. of voxels inside patient.
+%   rot_coordsV    coordinates in beams eye view inside the patient
 %   lateralCutoff: lateral cut off used for ray tracing
 
 %
 % output
-%   radDepthCube:  radiological depth cube in the ct.cube dimensions
-%   geoDistCube:   optional: geometrical distance cube in the ct.cube dimensions
+%   radDepthV:  radiological depth inside the patient
+%   geoDistV:   optional: geometrical distance inside the patient
 %
 % References
 %   [1] http://www.sciencedirect.com/science/article/pii/S1120179711001359
@@ -37,40 +38,19 @@ function [radDepthCube,geoDistCube] = matRad_rayTracing(stf,ct,V,lateralCutoff)
 
 % set up rad depth cube for results
 radDepthCube = NaN*ones(size(ct.cube));
-
-% set up coordinates of all voxels in cube
-[xCoords_vox, yCoords_vox, zCoords_vox] = meshgrid(1:size(ct.cube,1),1:size(ct.cube,2),1:size(ct.cube,3));
-
-xCoords = xCoords_vox(:)*ct.resolution.x-stf.isoCenter(1);
-yCoords = yCoords_vox(:)*ct.resolution.y-stf.isoCenter(2);
-zCoords = zCoords_vox(:)*ct.resolution.z-stf.isoCenter(3);
-
-% Rotation around Z axis (gantry)
-inv_rotMx_XY_T = [ cosd(-stf.gantryAngle) sind(-stf.gantryAngle) 0;
-                  -sind(-stf.gantryAngle) cosd(-stf.gantryAngle) 0;
-                                        0                      0 1];
-
-% Rotation around Y axis (Couch movement)
-inv_rotMx_XZ_T = [cosd(-stf.couchAngle) 0 -sind(-stf.couchAngle);
-                                      0 1                      0;
-                  sind(-stf.couchAngle) 0  cosd(-stf.couchAngle)];
- 
-
-coords_bev = [xCoords yCoords zCoords]*inv_rotMx_XZ_T*inv_rotMx_XY_T;             
               
 % set up ray matrix direct behind last voxel
-rayMx_bev_y = max(coords_bev(V,2)) + max([ct.resolution.x ct.resolution.y ct.resolution.z]);
+rayMx_bev_y = max(rot_coordsV(:,2)) + max([ct.resolution.x ct.resolution.y ct.resolution.z]);
+rayMx_bev_y = rayMx_bev_y + stf.sourcePoint_bev(2);
 
-
-xCoords = xCoords-stf.sourcePoint(1);
-yCoords = yCoords-stf.sourcePoint(2);
-zCoords = zCoords-stf.sourcePoint(3);
-coords  = [xCoords yCoords zCoords];
-    
 % calculate geometric distances
 if nargout > 1
-    geoDistCube = reshape(sqrt(sum(coords.^2,2)),size(ct.cube));
+    geoDistV = sqrt(sum(rot_coordsV.^2,2));
 end
+
+% set up list with bev coordinates for calculation of radiological depth
+coords = zeros(numel(ct.cube),3);
+coords(V,:) = rot_coordsV;
 
 % calculate spacing of rays on ray matrix
 rayMxSpacing = min([ct.resolution.x ct.resolution.y ct.resolution.z]);
@@ -133,11 +113,11 @@ for j = 1:size(rayMx_world,1)
     % the closest ray by projecting the voxel coordinates to the
     % intersection points with the ray matrix and checking if the distance 
     % in x and z direction is smaller than the resolution of the ray matrix
-    scale_factor = (rayMx_bev_y + stf.SAD) ./ ...
-                   (coords_bev(ixHitVoxel,2) + stf.SAD);
+    scale_factor = (rayMx_bev_y - stf.sourcePoint_bev(2)) ./ ...
+                   coords(ixHitVoxel,2);
 
-    x_dist = coords_bev(ixHitVoxel,1).*scale_factor - rayMx_bev(j,1);
-    z_dist = coords_bev(ixHitVoxel,3).*scale_factor - rayMx_bev(j,3);
+    x_dist = coords(ixHitVoxel,1).*scale_factor - rayMx_bev(j,1);
+    z_dist = coords(ixHitVoxel,3).*scale_factor - rayMx_bev(j,3);
 
     ixRememberFromCurrTracing = x_dist > -raySelection & x_dist <= raySelection ...
                               & z_dist > -raySelection & z_dist <= raySelection;
@@ -159,4 +139,5 @@ for j = 1:size(rayMx_world,1)
     
 end
 
-
+% only take voxel inside the patient
+radDepthV = radDepthCube(V);

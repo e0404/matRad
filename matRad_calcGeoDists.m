@@ -3,7 +3,7 @@ function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
                               sourcePoint_bev, ...
                               targetPoint_bev, ...
                               SAD, ...
-                              radDepthMask, ...
+                              radDepthIx, ...
                               lateralCutOff)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad calculation of lateral distances from central ray used for
@@ -12,13 +12,15 @@ function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
 % call
 %   [ix,x_latDists,z_latDists] = ...
 %           matRad_calcGeoDists(rot_coords_bev, ...
-%                                  sourcePoint_bev, ...
-%                                  targetPoint_bev, ...
-%                                  lateralCutOff)
+%                               sourcePoint_bev, ...
+%                               targetPoint_bev, ...
+%                               SAD, ...
+%                               radDepthIx, ...
+%                               lateralCutOff)
 %
 % input
-%   rot_coords_bev:     coordinates of the voxels with index V rotated 
-%                       into bev according to the couch and gantry angle        
+%   rot_coords_bev:     coordinates in bev of the voxels with index V,
+%                       where also ray tracing results are availabe 
 %   sourcePoint_bev:    source point in voxel coordinates in beam's eye view
 %   targetPoint_bev:    target point in voxel coordinated in beam's eye view
 %   SAD:                source-to-axis distance
@@ -55,9 +57,6 @@ function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% convert binary mask to linear index array
-radDepthIx = find(radDepthMask);
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ROTATE A SINGLE BEAMLET AND ALIGN WITH BEAMLET WHO PASSES THROUGH
 % ISOCENTER
@@ -88,12 +87,12 @@ else
 end
 
 % Put [0 0 0] position CT in center of the beamlet.
-latDistsX = rot_coords_temp(radDepthMask,1) + sourcePoint_bev(1);
-latDistsZ = rot_coords_temp(radDepthMask,3) + sourcePoint_bev(3);
+latDistsX = rot_coords_temp(:,1) + sourcePoint_bev(1);
+latDistsZ = rot_coords_temp(:,3) + sourcePoint_bev(3);
 
 % check of radial distance exceeds lateral cutoff (projected to iso center)
 rad_distancesSq = latDistsX.^2 + latDistsZ.^2;
-subsetMask = rad_distancesSq ./ rot_coords_temp(radDepthMask,2).^2 <= lateralCutOff^2 /SAD^2;
+subsetMask = rad_distancesSq ./ rot_coords_temp(:,2).^2 <= lateralCutOff^2 /SAD^2;
 
 % return index list within considered voxels
 ix = radDepthIx(subsetMask);
@@ -105,8 +104,8 @@ end
 
 % return x & z distance
 if nargout > 2
-   isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(ix,2)*SAD;
-   isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(ix,2)*SAD; 
+   isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
+   isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD; 
 end
 
 
