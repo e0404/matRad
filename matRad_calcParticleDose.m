@@ -191,7 +191,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 bixelsPerBeam = bixelsPerBeam + 1;
                 
                 % Display progress and update text only 200 times
-                if mod(bixelsPerBeam,round(stf(i).totalNumOfBixels/200)) == 0 && ishandle(figureWait)
+                if mod(bixelsPerBeam,round(stf(i).totalNumOfBixels/200)) == 0
                         matRad_progress(bixelsPerBeam/round(stf(i).totalNumOfBixels/200),...
                                         floor(stf(i).totalNumOfBixels/round(stf(i).totalNumOfBixels/200)));
                 end
