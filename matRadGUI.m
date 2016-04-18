@@ -382,9 +382,11 @@ if handles.State > 0
     set(handles.figure1,'UIContextMenu',contMenuStruct)
 end
 
-guidata(hObject,handles);
 UpdateState(handles);
+handles.rememberCurrAxes = false;
 UpdatePlot(handles);
+handles.rememberCurrAxes = true;
+guidata(hObject,handles);
 
 
 
