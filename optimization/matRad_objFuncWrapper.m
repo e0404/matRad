@@ -93,10 +93,19 @@ for  i = 1:size(cst,1)
                    
                         weighting = 1;
                     else
-                        for k = 1:length(d_i)
-                            weighting(k) = min(cst{i,5}.minDistToTarget(d_i(k) == d_i));
+%                         for k = 1:length(d_i)
+%                             weighting(k) = min(cst{i,5}.minDistToVOI(d_i(k) == d_i));
+%                         end
+                        %logicalidx = bsxfun(@eq,d_i',d_i);
+                        
+                        weighting       = zeros(1,numel(d_i));
+                        [~,uniqueidx,~] = unique(d_i);
+                        
+                        for k = 1:length(uniqueidx)
+                            weighting(d_i(uniqueidx(k)) == d_i) = min(cst{i,5}.minDistToVOI(d_i(uniqueidx(k)) == d_i));
                         end
-                        weighting = 1 + 4 * (weighting./cst{i,5}.minDistToTarget);
+                        
+                        weighting = 1 + 4 * (weighting./cst{i,5}.minDistToVOI);
                     end
 
                     f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref,d_ref2,weighting);

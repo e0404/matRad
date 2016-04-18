@@ -1,10 +1,12 @@
 function cst = matRad_addVOIRing(cst,ct,myMargin,calcDistFlag)
  
+covFlag = 0;
 Counter = 0;
 
 for  i = 1:size(cst,1)
     if sum(strcmp({cst{i,6}(:).robustness},'coverage')) > 0
         
+        covFlag = 1;
         Counter = Counter + 1;  
 
         % generate VOI cube
@@ -25,7 +27,7 @@ for  i = 1:size(cst,1)
 
         % calc min distance to VOI for every VOI ring voxel
         if calcDistFlag
-            cstRing{Counter,5}.minDistToTarget = matRad_calcMinDist(ct,cstRing{Counter,4}{1},cst{i,4}{1});
+            cstRing{Counter,5}.minDistToVOI = matRad_calcMinDist(ct,cstRing{Counter,4}{1},cst{i,4}{1});
         end
 
         % pass coverage based objective/constraint specification to VOI ring structure
@@ -35,6 +37,8 @@ for  i = 1:size(cst,1)
     end  
 end
 
-cst = [cst;cstRing];
+if covFlag
+    cst = [cst;cstRing];
+end
 
 end
