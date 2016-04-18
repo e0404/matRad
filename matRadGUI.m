@@ -723,15 +723,15 @@ if exist('Result','var')
                 
                 % determine units
                 if strfind(DispInfo{i,1},'physicalDose');
-                    DispInfo{i,3}  = '[Gy]';
+                    DispInfo{i,3} = '[Gy]';
                 elseif strfind(DispInfo{i,1},'alpha')
-                    DispInfo{i,3}  = '[Gy^{-1}]';
+                    DispInfo{i,3} = '[Gy^{-1}]';
                 elseif strfind(DispInfo{i,1},'beta')
-                    DispInfo{i,3}  = '[Gy^{-2}]';
+                    DispInfo{i,3} = '[Gy^{-2}]';
                 elseif strfind(DispInfo{i,1},'RBExD')
-                    DispInfo       = '[Gy(RBE)]';
+                    DispInfo{i,3} = '[Gy(RBE)]';
                 else
-                    DispInfo{i,3}  = '[a.u.]';
+                    DispInfo{i,3} = '[a.u.]';
                 end
                 
             end
