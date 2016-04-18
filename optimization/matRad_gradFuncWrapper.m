@@ -143,15 +143,18 @@ for  i = 1:size(cst,1)
 %                         for k = 1:length(d_i)
 %                             weighting(k) = min(cst{i,5}.minDistToVOI(d_i(k) == d_i));
 %                         end
+                        % create logical dose mask (combine all dose entries)
+                        logicalDoseMask = bsxfun(@eq,sparse(d_i'),d_i);
 
-                        weighting       = zeros(1,numel(d_i));
-                        [~,uniqueidx,~] = unique(d_i);
+                        % apply mask on distances
+                        diagDist   = spdiags(cst{i,5}.minDistToVOI',0,numel(cst{i,5}.minDistToVOI),numel(cst{i,5}.minDistToVOI));
+                        eqDoseDist = diagDist*logicalDoseMask;
+
+                        % find min distances for every dose
+                        [~,jj] = find(eqDoseDist);
+                        weighting = accumarray(jj,nonzeros(eqDoseDist),[],@min);
                         
-                        for k = 1:length(uniqueidx)
-                            weighting(d_i(uniqueidx(k)) == d_i) = min(cst{i,5}.minDistToVOI(d_i(uniqueidx(k)) == d_i));
-                        end
-                        
-                        weighting = 1 + 4 * (weighting./cst{i,5}.minDistToVOI);
+                        weighting = 1 + 4 * (weighting'./cst{i,5}.minDistToVOI);
                     end
 
                     delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref,d_ref2,weighting);
