@@ -261,7 +261,7 @@ handles.rememberCurrAxes = true;
 guidata(hObject, handles);
 
 
-function Callback_StructVisibilty(source,callbackdata)
+function Callback_StructVisibilty(source,~)
 
 handles = guidata(findobj('Name','matRadGUI'));
 
@@ -2448,9 +2448,19 @@ if ~isempty(AllVarNames)
     end
 
 end
+
+%% delete context menu if workspace was deleted manually and refresh button was clicked
+if handles.State == 0
+    objHandle = guidata(findobj('Name','matRadGUI'));  
+    contextUi = (get(objHandle.figure1,'UIContextMenu'));
+    delete(contextUi)
+end
+
 guidata(hObject,handles);
 UpdatePlot(handles);
 UpdateState(handles);
+
+
 
 % button: toggle effect based optimization and RBExD optimization
 function btnTypBioOpt_Callback(hObject, ~, handles)
