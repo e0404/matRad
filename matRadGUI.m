@@ -2678,12 +2678,6 @@ if evalin('base','exist(''pln'',''var'')') && ...
     % recalculate cubes in resultGUI
     resultGUIreCalc = matRad_calcCubes(resultGUI.(['w' Suffix]),dij,cst);
     
-    % overwrite the "standard" fields
-    sNames = fieldnames(resultGUIreCalc);
-    for j = 1:length(sNames)
-        resultGUI.(sNames{j}) = resultGUIreCalc.(sNames{j});
-    end
-    
     % delete old variables to avoid confusion
     if isfield(resultGUI,'effect')
         resultGUI = rmfield(resultGUI,'effect');
@@ -2692,7 +2686,13 @@ if evalin('base','exist(''pln'',''var'')') && ...
         resultGUI = rmfield(resultGUI,'alpha'); 
         resultGUI = rmfield(resultGUI,'beta');
     end
-
+    
+    % overwrite the "standard" fields
+    sNames = fieldnames(resultGUIreCalc);
+    for j = 1:length(sNames)
+        resultGUI.(sNames{j}) = resultGUIreCalc.(sNames{j});
+    end
+    
     % assign results to base worksapce
     assignin('base','dij',dij);
     assignin('base','resultGUI',resultGUI);
