@@ -22,7 +22,8 @@ elseif isequal(multScen.shiftGenType,'sampled')
     
     for i = 1:3
         shifts      = zeros(3,multScen.numOfShiftScen(i));
-        shifts(i,:) = normrnd(0,multScen.shiftSize(i),1,multScen.numOfShiftScen(i));
+        %shifts(i,:) = normrnd(0,multScen.shiftSize(i),1,multScen.numOfShiftScen(i));
+        shifts(i,:) = multScen.shiftSize(i).*randn(1,multScen.numOfShiftScen(i));
 
         multScen.shifts   = [multScen.shifts, shifts];
     end
