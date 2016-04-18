@@ -256,6 +256,7 @@ UpdateState(handles)
 
 handles.rememberCurrAxes = false;
 UpdatePlot(handles)
+handles.rememberCurrAxes = true;
 
 guidata(hObject, handles);
 
@@ -1211,11 +1212,8 @@ catch
 end
 
 handles.rememberCurrAxes = false;
-
 UpdatePlot(handles);
-
 handles.rememberCurrAxes = true;
-
 guidata(hObject,handles);
 
 % --- Executes on slider movement.
