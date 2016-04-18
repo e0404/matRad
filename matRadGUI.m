@@ -1389,7 +1389,10 @@ end
 set(Figures, 'pointer', 'arrow');
 set(InterfaceObj,'Enable','on');
 
+handles.rememberCurrAxes = false;
 UpdatePlot(handles);
+handles.rememberCurrAxes = true;
+
 UpdateState(handles);
     
 guidata(hObject,handles);
@@ -2694,10 +2697,13 @@ if evalin('base','exist(''pln'',''var'')') && ...
     set(Figures, 'pointer', 'arrow');
     set(InterfaceObj,'Enable','on');
     
-    guidata(hObject,handles);
+    handles.rememberCurrAxes = false;
     UpdatePlot(handles);
+    handles.rememberCurrAxes = true;
     UpdateState(handles);
 
+    guidata(hObject,handles);
+    
 end
 
 
