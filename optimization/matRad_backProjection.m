@@ -32,11 +32,14 @@ function d = matRad_backProjection(w,dij,type)
 
 global matRad_global_x;
 global matRad_global_d;
+global matRad_backprojectionFlag;
 
 if isequal(w,matRad_global_x)
     
     % get dose from global variable
     d = matRad_global_d;
+    
+    matRad_backprojectionFlag = false;
     
 else
     
@@ -80,6 +83,7 @@ else
     end   
     
     matRad_global_d = d;
+    matRad_backprojectionFlag = true;
     
 end
 

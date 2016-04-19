@@ -35,7 +35,10 @@ function g = matRad_gradFuncWrapper(w,dij,cst,type)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_iteration;
+global matRad_voxelWeighting;
+
+% initialize voxel calc Flag
+[matRad_voxelWeighting{:,2}] = deal(true);
 
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,type);
@@ -133,33 +136,10 @@ for  i = 1:size(cst,1)
                     d_i = d{1}(cst{i,4}{1});
                     
                     % calc voxel dependent weighting
-                    weighting = [];
-                    if isequal(cst{i,6}(j).type,'min DCH objective') && d_ref < d_ref2 ||...
-                       isequal(cst{i,6}(j).type,'max DCH objective') && d_ref > d_ref2 ||...
-                       matRad_iteration < 5
-                   
-                        weighting = 1;
-                    else
-%                         for k = 1:length(d_i)
-%                             weighting(k) = min(cst{i,5}.minDistToVOI(d_i(k) == d_i));
-%                         end
-                        % create logical dose mask (combine all dose entries)
-                        logicalDoseMask = bsxfun(@eq,sparse(d_i'),d_i);
+                    matRad_calcVoxelWeighting(i,j,cst,d_i,d_ref,d_ref2)
 
-                        % apply mask on distances
-                        diagDist   = spdiags(cst{i,5}.minDistToVOI',0,numel(cst{i,5}.minDistToVOI),numel(cst{i,5}.minDistToVOI));
-                        eqDoseDist = diagDist*logicalDoseMask;
-
-                        % find min distances for every dose
-                        [~,jj] = find(eqDoseDist);
-                        weighting = accumarray(jj,nonzeros(eqDoseDist),[],@min);
-                        
-                        weighting = 1 + 4 * (weighting'./cst{i,5}.minDistToVOI);
-                    end
-
-                    delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref,d_ref2,weighting);
+                    delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref,d_ref2,matRad_voxelWeighting{i,1});
                 
-
                 end
                 
             end

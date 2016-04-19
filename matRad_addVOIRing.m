@@ -1,4 +1,6 @@
 function cst = matRad_addVOIRing(cst,ct,myMargin,calcDistFlag)
+
+global matRad_voxelWeighting;
  
 covFlag = 0;
 Counter = 0;
@@ -28,6 +30,8 @@ for  i = 1:size(cst,1)
         % calc min distance to VOI for every VOI ring voxel
         if calcDistFlag
             cstRing{Counter,5}.minDistToVOI = matRad_calcMinDist(ct,cstRing{Counter,4}{1},cst{i,4}{1});
+            matRad_voxelWeighting{Counter + size(cst,1),1}  = 1;
+            matRad_voxelWeighting{Counter + size(cst,1),2}  = true;
         end
 
         % pass coverage based objective/constraint specification to VOI ring structure

@@ -64,12 +64,16 @@ global matRad_global_d;
 global matRad_STRG_C_Pressed;
 global matRad_objective_function_value;
 global matRad_iteration;
+global matRad_voxelWeighting;
+global matRad_backprojectionFlag;
 
 matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
 matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
 matRad_STRG_C_Pressed           = false;
 matRad_objective_function_value = [];
 matRad_iteration                = 0;
+matRad_voxelWeighting           = [];
+matRad_backprojectionFlag       = false;
   
 % add VOI Ring(s) in case of coverage based objective(s)/constraints(s)
 ringSize.x = 14;
