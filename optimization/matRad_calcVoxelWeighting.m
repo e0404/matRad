@@ -27,7 +27,12 @@ if matRad_backprojectionFlag
         weighting = accumarray(jj,nonzeros(eqDoseDist),[],@min);
 
         matRad_voxelWeighting{i} = 1 + 4 * (weighting'./cst{i,5}.minDistToVOI);
-        
+
+%         for k = 1:length(d_i)
+%             weighting(k) = min(cst{i,5}.minDistToVOI(d_i(k) == d_i));
+%         end
+%         weighting = 1 + 4 * (weighting'./cst{i,5}.minDistToVOI);
+            
         end
         
     end
