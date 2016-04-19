@@ -6,39 +6,41 @@ covFlag = 0;
 Counter = 0;
 
 for  i = 1:size(cst,1)
-    if sum(strcmp({cst{i,6}(:).robustness},'coverage')) > 0
-        
-        covFlag = 1;
-        Counter = Counter + 1;  
+    if ~isempty(cst{i,6})
+        if sum(strcmp({cst{i,6}(:).robustness},'coverage')) > 0
 
-        % generate VOI cube
-        V          = cst{i,4}{1};
-        VOICube    = zeros(ct.cubeDim);
-        VOICube(V) = 1;
+            covFlag = 1;
+            Counter = Counter + 1;  
 
-        % add VOI ring
-        VOICubeWithRing = matRad_addMargin(VOICube,cst,ct.resolution,myMargin,true);
-        VwithRing       = find(VOICubeWithRing>0);
+            % generate VOI cube
+            V          = cst{i,4}{1};
+            VOICube    = zeros(ct.cubeDim);
+            VOICube(V) = 1;
 
-        % create cst with ring structure
-        cstRing{Counter,1}    = size(cst,1) - 1 + Counter;
-        cstRing{Counter,2}    = [cst{i,2},'Ring'];
-        cstRing{Counter,3}    = cst{i,3};
-        cstRing{Counter,4}{1} = setdiff(VwithRing,V);
-        cstRing{Counter,5}    = cst{i,5};
+            % add VOI ring
+            VOICubeWithRing = matRad_addMargin(VOICube,cst,ct.resolution,myMargin,true);
+            VwithRing       = find(VOICubeWithRing>0);
 
-        % calc min distance to VOI for every VOI ring voxel
-        if calcDistFlag
-            cstRing{Counter,5}.minDistToVOI = matRad_calcMinDist(ct,cstRing{Counter,4}{1},cst{i,4}{1});
-            matRad_voxelWeighting{Counter + size(cst,1),1}  = 1;
-            matRad_voxelWeighting{Counter + size(cst,1),2}  = true;
-        end
+            % create cst with ring structure
+            cstRing{Counter,1}    = size(cst,1) - 1 + Counter;
+            cstRing{Counter,2}    = [cst{i,2},'Ring'];
+            cstRing{Counter,3}    = cst{i,3};
+            cstRing{Counter,4}{1} = setdiff(VwithRing,V);
+            cstRing{Counter,5}    = cst{i,5};
 
-        % pass coverage based objective/constraint specification to VOI ring structure
-        logidx             = strcmp({cst{i,6}(:).robustness},'coverage');
-        cstRing{Counter,6} = cst{i,6}(logidx);
-        cst{i,6}           = cst{i,6}(~logidx);
-    end  
+            % calc min distance to VOI for every VOI ring voxel
+            if calcDistFlag
+                cstRing{Counter,5}.minDistToVOI = matRad_calcMinDist(ct,cstRing{Counter,4}{1},cst{i,4}{1});
+                matRad_voxelWeighting{Counter + size(cst,1),1}  = 1;
+                matRad_voxelWeighting{Counter + size(cst,1),2}  = true;
+            end
+
+            % pass coverage based objective/constraint specification to VOI ring structure
+            logidx             = strcmp({cst{i,6}(:).robustness},'coverage');
+            cstRing{Counter,6} = cst{i,6}(logidx);
+            cst{i,6}           = cst{i,6}(~logidx);
+        end 
+    end
 end
 
 if covFlag
