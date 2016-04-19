@@ -143,12 +143,17 @@ for i = 1:size(cst,1)
                     if isequal(cst{i,6}(j).type, 'max DCH constraint') || ... 
                        isequal(cst{i,6}(j).type, 'min DCH constraint')
                         
-                        physicalDoseCum = dij.physicalDose{1}(cst{i,4}{1},:);
+                        physicalDoseCum = sparse(mean(dij.physicalDose{1}(cst{i,4}{1},:)));
                         for k = 2:dij.numOfScenarios
-                            physicalDoseCum = physicalDoseCum + dij.physicalDose{k}(cst{i,4}{1},:);
+                            physicalDoseCum = physicalDoseCum + sparse(mean(dij.physicalDose{k}(cst{i,4}{1},:)));
                         end
 
-                       jacobStruct = [jacobStruct; spones(mean(physicalDoseCum))];
+                       jacobStruct = [jacobStruct; spones(physicalDoseCum)];
+                       
+                    elseif isequal(cst{i,6}(j).type, 'max DCH constraint2') || ...
+                           isequal(cst{i,6}(j).type, 'min DCH constraint2')    
+                       
+                       jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{i,4}{1},:)))];
 
                     end
                     

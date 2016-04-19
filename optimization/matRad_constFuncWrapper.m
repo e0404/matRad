@@ -54,17 +54,45 @@ for  i = 1:size(cst,1)
                     % get cst index of VOI that corresponds to VOI ring
                     cstidx = find(strcmp(cst(:,2),cst{i,2}(1:end-4)));
                     
-                    for k = 1:dij.numOfScenarios
-                        
-                        % get current dose
-                        d_i = d{k}(cst{cstidx,4}{1});
-                        
-                        % inverse DVH calculation
-                        d_pi(k) = matRad_calcInversDVH(cst{i,6}(j).volume/100,d_i);
-                        
-                    end
+                    if isequal(cst{i,6}(j).type, 'max DCH constraint') || ...
+                       isequal(cst{i,6}(j).type, 'min DCH constraint')
                     
-                    c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref,d_pi)];
+                        for k = 1:dij.numOfScenarios
+
+                            % get current dose
+                            d_i = d{k}(cst{cstidx,4}{1});
+
+                            % inverse DVH calculation
+                            d_pi(k) = matRad_calcInversDVH(cst{i,6}(j).volume/100,d_i);
+
+                        end
+
+                        c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref,d_pi)];
+                    
+                    elseif isequal(cst{i,6}(j).type, 'max DCH constraint2') || ...
+                           isequal(cst{i,6}(j).type, 'min DCH constraint2')
+                        
+                        d_i = [];
+                       
+                        % get dose of VOI that corresponds to VOI ring
+                        for k = 1:dij.numOfScenarios
+                            d_i{k} = d{k}(cst{cstidx,4}{1});
+                        end
+
+                        % calc invers DCH of VOI
+                        refQ   = cst{i,6}(j).coverage/100;
+                        refVol = cst{i,6}(j).volume/100;
+                        d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
+
+                        % get dose of VOI ring
+                        d_i = d{1}(cst{i,4}{1});
+
+                        % calc voxel dependent weighting
+                        %matRad_calcVoxelWeighting(i,j,cst,d_i,d_ref,d_ref2)
+
+                        c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref,1,d_ref2)];
+                   
+                    end
 
                 end % if we are in the nominal sceario or rob opt
             

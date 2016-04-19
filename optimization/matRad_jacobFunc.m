@@ -1,4 +1,4 @@
-function jacobVec = matRad_jacobFunc(d_i,constraint,d_ref,d_pi,scaling)
+function jacobVec = matRad_jacobFunc(d_i,constraint,d_ref,d_pi,scaling,d_ref2)
 
 numOfVoxels = numel(d_i);
 
@@ -97,6 +97,25 @@ elseif isequal(constraint.type, 'max DCH constraint') || ...
     
     % DVH part
     jacobVec = jacobVec.*2*scaling*exp(2*scaling*(d_pi-d_ref))./(exp(2*scaling*(d_pi-d_ref))+1).^2;
+    
+elseif isequal(constraint.type, 'max DCH constraint2') || ...
+       isequal(constraint.type, 'min DCH constraint2')
+   
+    % calc deviation
+    deviation = d_i - d_ref;
+
+    % apply lower and upper dose limits
+    if isequal(constraint.type, 'max DCH constraint2')
+     deviation(d_i < d_ref | d_i > d_ref2) = 0;
+    elseif isequal(constraint.type, 'min DCH constraint2')
+     deviation(d_i > d_ref | d_i < d_ref2) = 0;
+    end
+
+    % apply weighting
+    %deviation = deviation.*(weighting).^2';
+
+    % calculate delta
+    jacobVec = 2 * (1/numOfVoxels)*deviation;
 
 else
 

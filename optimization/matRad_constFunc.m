@@ -1,4 +1,4 @@
-function c = matRad_constFunc(d_i,constraint,d_ref,d_pi)
+function c = matRad_constFunc(d_i,constraint,d_ref,d_pi,d_ref2)
 
 
 numOfVoxels = numel(d_i);
@@ -68,6 +68,25 @@ elseif isequal(constraint.type, 'max DCH constraint') || ...
     
     % calculate coverage
     c = sum(QScen)/numel(d_pi);
+    
+elseif isequal(constraint.type, 'max DCH constraint2') || ...
+       isequal(constraint.type, 'min DCH constraint2')
+   
+    % calc deviation
+    deviation = d_i - d_ref;
+    
+    % apply lower and upper dose limits
+    if isequal(constraint.type, 'max DCH constraint2')
+         deviation(d_i < d_ref | d_i > d_ref2) = 0;
+    elseif isequal(constraint.type, 'min DCH constraint2')
+         deviation(d_i > d_ref | d_i < d_ref2) = 0;
+    end
+    
+    % apply weighting
+    %deviation = deviation.*weighting';
+   
+    % claculate objective function
+    c = (1/numOfVoxels)*(deviation'*deviation);
     
 end 
 
