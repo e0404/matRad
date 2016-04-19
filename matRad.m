@@ -23,9 +23,9 @@ clc
 
 %load HEAD_AND_NECK
 %load TG119.mat
-%load PROSTATE.mat
+load PROSTATE.mat
 %load LIVER.mat
-load BOXPHANTOM.mat
+%load BOXPHANTOM.mat
 
 % InputFolder = 'E:\Mescher\13_BIOM_model\01_BioMechModel\Input';
 % numOfScen   = 3;
@@ -35,7 +35,7 @@ load BOXPHANTOM.mat
 
 % meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
-pln.bixelWidth      = 10; % [mm] / also corresponds to lateral spot spacing for particles
+pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = [0:72:359]; % [°]
 pln.couchAngles     = [0 0 0 0 0]; % [Â°]
 pln.numOfBeams      = numel(pln.gantryAngles);
@@ -50,7 +50,7 @@ pln.machine         = 'Generic';
 
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
-multScen.numOfShiftScen      = [6 6 7];        % number of shifts in x y and z direction       
+multScen.numOfShiftScen      = [3 3 3];        % number of shifts in x y and z direction       
 multScen.shiftSize           = [3 3 3];        % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
 multScen.shiftGenType        = 'sampled';      % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
 multScen.numOfRangeShiftScen = 0;              % number of absolute and/or relative range scnearios
