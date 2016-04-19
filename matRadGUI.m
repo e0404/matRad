@@ -1685,12 +1685,12 @@ if FlagValidParameters
                    OldCst(m,6)=NewCst(n,4);
                    OldCst(m,3)=NewCst(n,2);
                    OldCst{m,5}.Priority = NewCst{n,3};
+                   break;
                end 
            end
 
            if ~boolChanged
                OldCst{m,6}=[];
-               OldCst{m,5}.Priority=nan;
            end
 
        end
