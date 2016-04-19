@@ -36,8 +36,8 @@ load BOXPHANTOM.mat
 % meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 10; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0 90 180 270]; % [°]
-pln.couchAngles     = [0 0 0 0]; % [°]
+pln.gantryAngles    = [0:72:359]; % [�]
+pln.couchAngles     = [0 0 0 0 0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
@@ -50,7 +50,7 @@ pln.machine         = 'Generic';
 
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
-multScen.numOfShiftScen      = [3 3 3];        % number of shifts in x y and z direction       
+multScen.numOfShiftScen      = [6 6 7];        % number of shifts in x y and z direction       
 multScen.shiftSize           = [3 3 3];        % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
 multScen.shiftGenType        = 'sampled';      % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
 multScen.numOfRangeShiftScen = 0;              % number of absolute and/or relative range scnearios

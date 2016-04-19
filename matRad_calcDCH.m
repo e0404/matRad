@@ -1,4 +1,5 @@
-function [Q,D] = matRad_calcDCH(volume,doseVec,cst,multScen)
+function matRad_calcDCH(volume,doseVec,cst,multScen)
+%[Q,D] = matRad_calcDCH(volume,doseVec,cst,multScen)
 
 numOfVois = size(cst,1);
 
