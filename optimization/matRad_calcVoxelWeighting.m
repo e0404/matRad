@@ -14,7 +14,10 @@ if matRad_backprojectionFlag
         matRad_voxelWeighting{i} = 1;
 
         else
-
+        
+        % round dose values
+        d_i = round(d_i*10)/10;     
+            
         % create logical dose mask (combine all dose entries)
         logicalDoseMask = bsxfun(@eq,sparse(d_i'),d_i);
 
@@ -31,7 +34,7 @@ if matRad_backprojectionFlag
 %         for k = 1:length(d_i)
 %             weighting(k) = min(cst{i,5}.minDistToVOI(d_i(k) == d_i));
 %         end
-%         weighting = 1 + 4 * (weighting'./cst{i,5}.minDistToVOI);
+%         matRad_voxelWeighting{i} = 1 + 4 * (weighting./cst{i,5}.minDistToVOI);
             
         end
         
