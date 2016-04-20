@@ -11,30 +11,44 @@ if matRad_backprojectionFlag
            isequal(cst{i,6}(j).type,'max DCH objective') && d_ref > d_ref2 ||...
            matRad_iteration < 5
 
-        matRad_voxelWeighting{i} = 1;
+        matRad_voxelWeighting{i,1} = 1;
 
         else
+            
+        % decimal place for dose comparison
+        doseDecimalPlace = 1;        
+       
+        matRad_voxelWeighting{i,1} = zeros(1,numel(d_i));
+            
+        % apply lower and upper dose limits
+        if isequal(cst{i,6}(j).type, 'max DCH objective')
+            d_lower = d_ref;
+            d_upper = d_ref2;
+        elseif isequal(cst{i,6}(j).type, 'min DCH objective')
+            d_lower = d_ref2;
+            d_upper = d_ref;
+        end
         
+        logicalDoseLimits = (d_i >= round(d_lower*10^doseDecimalPlace)/(10^doseDecimalPlace) - 0.5*10^(-doseDecimalPlace) &...
+                             d_i <= round(d_upper*10^doseDecimalPlace)/(10^doseDecimalPlace) + 0.4*10^(-doseDecimalPlace) );
+        d_i               = d_i(logicalDoseLimits);
+        minDistToVOI      = cst{i,5}.minDistToVOI(logicalDoseLimits);  
+
         % round dose values
-        d_i = round(d_i*10)/10;     
+        d_i = round(d_i*10^doseDecimalPlace)/(10^doseDecimalPlace);     
             
         % create logical dose mask (combine all dose entries)
         logicalDoseMask = bsxfun(@eq,sparse(d_i'),d_i);
 
         % apply mask on distances
-        diagDist   = spdiags(cst{i,5}.minDistToVOI',0,numel(cst{i,5}.minDistToVOI),numel(cst{i,5}.minDistToVOI));
+        diagDist   = spdiags(minDistToVOI',0,numel(minDistToVOI),numel(minDistToVOI));
         eqDoseDist = diagDist*logicalDoseMask;
 
         % find min distances for every dose
         [~,jj] = find(eqDoseDist);
         weighting = accumarray(jj,nonzeros(eqDoseDist),[],@min);
 
-        matRad_voxelWeighting{i} = 1 + 4 * (weighting'./cst{i,5}.minDistToVOI);
-
-%         for k = 1:length(d_i)
-%             weighting(k) = min(cst{i,5}.minDistToVOI(d_i(k) == d_i));
-%         end
-%         matRad_voxelWeighting{i} = 1 + 4 * (weighting./cst{i,5}.minDistToVOI);
+        matRad_voxelWeighting{i,1}(logicalDoseLimits) = 1 + 4 * (weighting'./minDistToVOI);
             
         end
         
