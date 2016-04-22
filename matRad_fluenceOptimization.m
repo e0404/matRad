@@ -79,7 +79,7 @@ matRad_backprojectionFlag       = false;
 ringSize.x = 14;
 ringSize.y = 14;
 ringSize.z = 14;
-cst = matRad_addVOIRing(cst,ct,ringSize,true);
+cst = matRad_addVOIRing(cst,ct,ringSize,true,'probWeighting',multScen); % probWeighting: weight voxels with prob, heurWeighting: heuristic voxel weighting
 
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst,multScen);

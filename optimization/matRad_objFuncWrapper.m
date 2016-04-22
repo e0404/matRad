@@ -88,10 +88,15 @@ for  i = 1:size(cst,1)
                     % get dose of VOI ring
                     d_i = d{1}(cst{i,4}{1});
                     
-                    % calc voxel dependent weighting
-                    matRad_calcVoxelWeighting(i,j,cst,d_i,d_ref,d_ref2)
+                    % get voxel dependetn weigthing
+                    if ~isfield(cst{i,5},'voxelWeighting')
+                        matRad_calcVoxelWeighting(i,j,cst,d_i,d_ref,d_ref2)
+                        voxelWeighting = matRad_voxelWeighting{i,1};
+                    else
+                        voxelWeighting = cst{i,5}.voxelWeighting;    
+                    end
     
-                    f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref,d_ref2,matRad_voxelWeighting{i,1});
+                    f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);
 
                 end
             
