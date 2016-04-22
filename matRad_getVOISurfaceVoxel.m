@@ -1,76 +1,75 @@
-function VOISurfaceVoxel = matRad_getVOISurfaceVoxel(ct,VOIVoxelIDs)
+function VOI2SurfaceVoxelIDs = matRad_getVOISurfaceVoxel(ct,VOIVoxelIDs)
 
-    % get cube coordinates
-    [xCoords_vox, yCoords_vox, zCoords_vox] = meshgrid(1:ct.cubeDim(1),1:ct.cubeDim(2),1:ct.cubeDim(3));
+VOIMask              = zeros(ct.cubeDim);
+VOISurfaceMask       = zeros(ct.cubeDim);
+VOIMask(VOIVoxelIDs) = 1;
 
-    xCoords = xCoords_vox(:);
-    yCoords = yCoords_vox(:);
-    zCoords = zCoords_vox(:);
+% along x
+for i = 1:ct.cubeDim(2)
+    
+    C = contourc(squeeze(VOIMask(:,i,:)),[1 1]); 
+    
+    if ~isempty(C)
 
-    % get VOI coordinates
-    xCoordsVOI = xCoords(VOIVoxelIDs);
-    yCoordsVOI = yCoords(VOIVoxelIDs);
-    zCoordsVOI = zCoords(VOIVoxelIDs);
-
-    xCoordsVOIUnique = unique(xCoordsVOI); 
-    yCoordsVOIUnique = unique(yCoordsVOI); 
-    zCoordsVOIUnique = unique(zCoordsVOI); 
-
-    % x
-    VOISurfaceX = [];
-    for i = 1:length(xCoordsVOIUnique)
-
-        idx = find(xCoordsVOI == xCoordsVOIUnique(i));
-
-        if i ~= 1 && i ~= length(xCoordsVOIUnique)
-            idx = xCoordsVOI == xCoordsVOIUnique(i) & yCoordsVOI == min(yCoordsVOI(idx)) |...
-                  xCoordsVOI == xCoordsVOIUnique(i) & yCoordsVOI == max(yCoordsVOI(idx)) |...
-                  xCoordsVOI == xCoordsVOIUnique(i) & zCoordsVOI == min(zCoordsVOI(idx)) |...
-                  xCoordsVOI == xCoordsVOIUnique(i) & zCoordsVOI == max(zCoordsVOI(idx));
-
-            idx = find(idx);  
+        % extract coordinates
+        logicalIdx = [false,true(1,C(2,1))];
+        while length(logicalIdx) < size(C,2)
+            logicalIdx = [logicalIdx,false,true(1,C(2,length(logicalIdx) + 1))];
         end
-
-        VOISurfaceX = [VOISurfaceX;VOIVoxelIDs(idx)];   
-    end
-
-    % y
-    VOISurfaceY = [];
-    for i = 1:length(yCoordsVOIUnique)
-
-        idx = find(yCoordsVOI == yCoordsVOIUnique(i));
-
-        if i ~= 1 && i ~= length(yCoordsVOIUnique)
-            idx = yCoordsVOI == yCoordsVOIUnique(i) & xCoordsVOI == min(xCoordsVOI(idx)) |...
-                  yCoordsVOI == yCoordsVOIUnique(i) & xCoordsVOI == max(xCoordsVOI(idx)) |...
-                  yCoordsVOI == yCoordsVOIUnique(i) & zCoordsVOI == min(zCoordsVOI(idx)) |...
-                  yCoordsVOI == yCoordsVOIUnique(i) & zCoordsVOI == max(zCoordsVOI(idx));
-
-            idx = find(idx);  
+        
+        C = C(:,logicalIdx);
+        
+        % set VOI surface voxels to 1
+        for j = 1:size(C,2)
+            VOISurfaceMask(C(2,j),i,C(1,j)) = 1;
         end
+    end    
+end
 
-        VOISurfaceY = [VOISurfaceY;VOIVoxelIDs(idx)];   
-    end
+% along y
+for i = 1:ct.cubeDim(1)
+    
+    C = contourc(squeeze(VOIMask(i,:,:)),[1 1]); 
+    
+    if ~isempty(C)
 
-    % z
-    VOISurfaceZ = [];
-    for i = 1:length(zCoordsVOIUnique)
-
-        idx = find(zCoordsVOI == zCoordsVOIUnique(i));
-
-        if i ~= 1 && i ~= length(zCoordsVOIUnique)
-            idx = zCoordsVOI == zCoordsVOIUnique(i) & yCoordsVOI == min(yCoordsVOI(idx)) |...
-                  zCoordsVOI == zCoordsVOIUnique(i) & yCoordsVOI == max(yCoordsVOI(idx)) |...
-                  zCoordsVOI == zCoordsVOIUnique(i) & xCoordsVOI == min(xCoordsVOI(idx)) |...
-                  zCoordsVOI == zCoordsVOIUnique(i) & xCoordsVOI == max(xCoordsVOI(idx));
-
-            idx = find(idx);  
+        % extract coordinates
+        logicalIdx = [false,true(1,C(2,1))];
+        while length(logicalIdx) < size(C,2)
+            logicalIdx = [logicalIdx,false,true(1,C(2,length(logicalIdx) + 1))];
         end
+        
+        C = C(:,logicalIdx);
+        
+        % set VOI surface voxels to 1
+        for j = 1:size(C,2)
+            VOISurfaceMask(i,C(2,j),C(1,j)) = 1;
+        end
+    end    
+end
 
-        VOISurfaceZ = [VOISurfaceZ;VOIVoxelIDs(idx)];   
-    end
+% along z
+for i = 1:ct.cubeDim(3)
+    
+    C = contourc(squeeze(VOIMask(:,:,i)),[1 1]); 
+    
+    if ~isempty(C)
 
-    VOISurfaceVoxel = union(VOISurfaceX,VOISurfaceY);
-    VOISurfaceVoxel = union(VOISurfaceVoxel,VOISurfaceZ); 
+        % extract coordinates
+        logicalIdx = [false,true(1,C(2,1))];
+        while length(logicalIdx) < size(C,2)
+            logicalIdx = [logicalIdx,false,true(1,C(2,length(logicalIdx) + 1))];
+        end
+        
+        C = C(:,logicalIdx);
+        
+        % set VOI surface voxels to 1
+        for j = 1:size(C,2)
+            VOISurfaceMask(C(2,j),C(1,j),i) = 1;
+        end
+    end    
+end
+
+VOI2SurfaceVoxelIDs = find(VOISurfaceMask);
 
 end
