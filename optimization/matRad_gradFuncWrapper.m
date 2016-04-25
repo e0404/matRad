@@ -136,10 +136,11 @@ for  i = 1:size(cst,1)
                     d_i = d{1}(cst{i,4}{1});
                     
                     % get voxel dependetn weigthing
-                    if ~isfield(cst{i,5},'voxelWeighting')
+                    if isequal(cst{i,5}.voxelWeightingType,'heurWeighting')
                         matRad_calcVoxelWeighting(i,j,cst,d_i,d_ref,d_ref2)
                         voxelWeighting = matRad_voxelWeighting{i,1};
-                    else
+                        
+                    elseif isequal(cst{i,5}.voxelWeightingType,'probWeighting')
                         voxelWeighting = cst{i,5}.voxelWeighting;    
                     end
 
