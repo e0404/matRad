@@ -50,9 +50,10 @@ pln.machine         = 'Generic';
 
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
-multScen.numOfShiftScen      = [3 3 3];        % number of shifts in x y and z direction       
-multScen.shiftSize           = [3 3 3];        % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
-multScen.shiftGenType        = 'sampled';      % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
+multScen.numOfShiftScen      = [0 9 0];        % number of shifts in x y and z direction       
+multScen.shiftSize           = [0 9 0];        % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
+multScen.shiftGenType        = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
+multScen.shiftGen1DIsotropy  = '+';            % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
 multScen.numOfRangeShiftScen = 0;              % number of absolute and/or relative range scnearios
 multScen.maxAbsRangeShift    = 0;              % maximum absolute over and undershoot in mm
 multScen.maxRelRangeShift    = 0;              % maximum relative over and undershoot in %
@@ -61,6 +62,12 @@ multScen                     = matRad_setMultScen(multScen);
 
 %% initial visualization and change objective function settings if desired
 matRadGUI
+
+%% add ring structures for coverage based objectives/constraints
+ringSize.x = 14;
+ringSize.y = 14;
+ringSize.z = 14;
+cst = matRad_addVOIRing(cst,ct,ringSize,true,'probWeighting',multScen); % probWeighting: weight voxels with prob, heurWeighting: heuristic voxel weighting
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln,multScen);

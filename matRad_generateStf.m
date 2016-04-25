@@ -44,12 +44,6 @@ if numel(pln.gantryAngles) ~= numel(pln.couchAngles)
     error('Inconsistent number of gantry and couch angles.');
 end
 
-% add VOI Ring(s) in case of coverage based objective(s)/constraints(s)
-ringSize.x = 14;
-ringSize.y = 14;
-ringSize.z = 14;
-cst = matRad_addVOIRing(cst,ct,ringSize,false);  
-
 % find all target voxels from cst cell array
 V = [];
 for i=1:size(cst,1)

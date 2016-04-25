@@ -74,12 +74,6 @@ matRad_objective_function_value = [];
 matRad_iteration                = 0;
 matRad_voxelWeighting           = [];
 matRad_backprojectionFlag       = false;
-  
-% add VOI Ring(s) in case of coverage based objective(s)/constraints(s)
-ringSize.x = 14;
-ringSize.y = 14;
-ringSize.z = 14;
-cst = matRad_addVOIRing(cst,ct,ringSize,true,'probWeighting',multScen); % probWeighting: weight voxels with prob, heurWeighting: heuristic voxel weighting
 
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst,multScen);
