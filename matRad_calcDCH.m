@@ -1,10 +1,10 @@
-function matRad_calcDCH(volume,doseVec,cst,multScen)
+function matRad_calcDCH(volume,doseVec,cst,numOfScenarios)
 %[Q,D] = matRad_calcDCH(volume,doseVec,cst,multScen)
 
 numOfVois = size(cst,1);
 
 % set dose points D
-D = linspace(0,max(vertcat(doseVec{:}))*1.05,1000);
+D = linspace(0,max(vertcat(doseVec{:}))*1.05,10000);
 
 figure
 for i = 1:numOfVois
@@ -12,7 +12,7 @@ for i = 1:numOfVois
         indices   = cst{i,4}{1};
 
         % calculate dose that corresponds to volume and deviation from D
-        for Scen = 1:multScen.totalNumOfScen
+        for Scen = 1:numOfScenarios
             dose = matRad_calcInversDVH(volume(i),doseVec{Scen}(indices));
             dev(Scen,:) = dose - D;
         end
@@ -21,7 +21,7 @@ for i = 1:numOfVois
         devlog = dev >= 0;
 
         % calculate coverage Q
-        Q(i,:) = (1/multScen.totalNumOfScen)*sum(devlog);
+        Q(i,:) = (1/numOfScenarios)*sum(devlog);
 
         % plot coverage over dose
         plot(D,Q(i,:))
