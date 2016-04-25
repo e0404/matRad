@@ -1,6 +1,4 @@
 function cst = matRad_addVOIRing(cst,ct,myMargin,calcWeightingFlag,voxelWeightingType,multScen)
-
-global matRad_voxelWeighting;
  
 covFlag = 0;
 Counter = 0;
@@ -33,8 +31,6 @@ for  i = 1:size(cst,1)
                 if isequal(voxelWeightingType,'heurWeighting')
                     
                     [cstRing{Counter,5}.minDistToVOI,~] = matRad_calcMinDist(ct,cstRing{Counter,4}{1},cst{i,4}{1});
-                    matRad_voxelWeighting{Counter + size(cst,1),1}  = 1;
-                    matRad_voxelWeighting{Counter + size(cst,1),2}  = true;
                     
                 elseif isequal(voxelWeightingType,'probWeighting')
                     

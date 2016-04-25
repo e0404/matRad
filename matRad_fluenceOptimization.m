@@ -72,7 +72,9 @@ matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
 matRad_STRG_C_Pressed           = false;
 matRad_objective_function_value = [];
 matRad_iteration                = 0;
-matRad_voxelWeighting           = [];
+matRad_voxelWeighting           = cell(size(cst,1),2);
+[matRad_voxelWeighting{:,1}]    = deal(1);
+[matRad_voxelWeighting{:,2}]    = deal(true);
 matRad_backprojectionFlag       = false;
 
 % consider VOI priorities
