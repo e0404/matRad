@@ -1,10 +1,10 @@
-function voxelWeightingCube = matRad_sampleVoxelWeighting(cst,ct,sigma,VOIName,ncase)
+function voxelProbCube = matRad_sampleVoxelProb(cst,ct,sigma,VOIName,ncase)
 
 % get cst index if VOI
 cstidx = find(strcmp([cst(:,2)],VOIName));
 
 % create empty Cube
-voxelWeightingCube = zeros(ct.cubeDim);
+voxelProbCube = zeros(ct.cubeDim);
 
 % create samples
 xShift_vox = round(sigma(1).*randn(1,ncase)./ct.resolution.x);
@@ -21,7 +21,7 @@ for i = 1:ncase
                                         zCoordsVOI_vox + zShift_vox(i));
                                      
                                      
-    voxelWeightingCube(shiftedVOIidx) = voxelWeightingCube(shiftedVOIidx) + 1/ncase;
+    voxelProbCube(shiftedVOIidx) = voxelProbCube(shiftedVOIidx) + 1/ncase;
     
 end
 

@@ -141,7 +141,7 @@ for  i = 1:size(cst,1)
                         voxelWeighting = matRad_voxelWeighting{i,1};
                         
                     elseif isequal(cst{i,5}.voxelWeightingType,'probWeighting')
-                        voxelWeighting = cst{i,5}.voxelWeighting;    
+                        voxelWeighting = 5*cst{i,5}.voxelProb;    
                     end
 
                     delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);

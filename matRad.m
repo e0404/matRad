@@ -64,8 +64,7 @@ multScen                     = matRad_setMultScen(multScen);
 matRadGUI
 
 %% coverage based cst manipulation
-[ringSize.x,ringSize.y,ringSize.z] = deal(14,14,14);
-cst = matRad_coverageBasedCstManipulation(cst,ct,ringSize,multScen,'probWeighting');
+cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,'probWeighting');
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln,multScen);
