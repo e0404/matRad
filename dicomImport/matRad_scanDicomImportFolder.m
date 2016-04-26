@@ -18,28 +18,16 @@ function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015, Mark Bangert, on behalf of the matRad development team
-%
-% m.bangert@dkfz.de
-%
-% This file is part of matRad.
-%
-% matrad is free software: you can redistribute it and/or modify it under 
-% the terms of the GNU General Public License as published by the Free 
-% Software Foundation, either version 3 of the License, or (at your option)
-% any later version.
-%
-% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
-% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-% details.
-%
-% You should have received a copy of the GNU General Public License in the
-% file license.txt along with matRad. If not, see
-% <http://www.gnu.org/licenses/>.
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -146,14 +134,14 @@ if ~isempty(fileList)
     
     if ~isempty(fileList)
         patientList = unique(fileList(:,3));
-        % check if there is at least one RT struct and one ct file
-        % available per patient
-        for i = numel(patientList):-1:1
-            if sum(strcmp('CT',fileList(:,2)) & strcmp(patientList{i},fileList(:,3))) < 1 || ...
-               sum(strcmp('RTSTRUCT',fileList(:,2)) & strcmp(patientList{i},fileList(:,3))) < 1
-                patientList(i) = [];
-            end
-        end
+%         % check if there is at least one RT struct and one ct file
+%         % available per patient
+%         for i = numel(patientList):-1:1
+%             if sum(strcmp('CT',fileList(:,2)) & strcmp(patientList{i},fileList(:,3))) < 1 || ...
+%                sum(strcmp('RTSTRUCT',fileList(:,2)) & strcmp(patientList{i},fileList(:,3))) < 1
+%                 patientList(i) = [];
+%             end
+%         end
         
         if isempty(patientList)
             msgbox('No patient found with DICOM CT _and_ RT structure set in patient directory!', 'Error','error');

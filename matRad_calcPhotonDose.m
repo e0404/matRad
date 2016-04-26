@@ -22,30 +22,25 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015, Mark Bangert, on behalf of the matRad development team
-%
-% m.bangert@dkfz.de
-%
-% This file is part of matRad.
-%
-% matrad is free software: you can redistribute it and/or modify it under
-% the terms of the GNU General Public License as published by the Free
-% Software Foundation, either version 3 of the License, or (at your option)
-% any later version.
-%
-% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
-% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-% details.
-%
-% You should have received a copy of the GNU General Public License in the
-% file license.txt along with matRad. If not, see
-% <http://www.gnu.org/licenses/>.
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% issue warning if biological optimization not possible
+if sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0
+    warndlg('Effect based and RBE optimization not available for photons - physical optimization is carried out instead.');
+    pln.bioOptimization = 'none';
+end
+
 % initialize waitbar
-figureWait = waitbar(0,'photon dij-calculation..');
+figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 % show busy state
 set(figureWait,'pointer','watch');
 
@@ -174,9 +169,15 @@ for i = 1:dij.numOfBeams; % loop over all beams
     
     % ray tracing
     fprintf(['matRad: calculate radiological depth cube...']);
-    [radDepthCube,geoDistCube] = matRad_rayTracing(stf(i),ct,V,lateralCutoff);
+    [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoff);
     fprintf('done \n');
-
+    
+    % get indices of voxels where ray tracing results are available
+    radDepthIx = find(~isnan(radDepthV));
+    
+    % limit rotated coordinates to positions where ray tracing is availabe
+    rot_coordsV = rot_coordsV(radDepthIx,:);
+    
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
         
         counter = counter + 1;
@@ -206,10 +207,13 @@ for i = 1:dij.numOfBeams; % loop over all beams
 
         end
 
-        % Display progress
-        matRad_progress(bixelsPerBeam,stf(i).totalNumOfBixels);
+        % Display progress and update text only 200 times
+        if mod(bixelsPerBeam,round(stf(i).totalNumOfBixels/200)) == 0
+            matRad_progress(bixelsPerBeam/round(stf(i).totalNumOfBixels/200),...
+                            floor(stf(i).totalNumOfBixels/round(stf(i).totalNumOfBixels/200)));
+        end
         % update waitbar only 100 times
-        if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && figureWait.isvalid
+        if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
             waitbar(counter/dij.totalNumOfBixels);
         end
         
@@ -219,21 +223,23 @@ for i = 1:dij.numOfBeams; % loop over all beams
         dij.bixelNum(counter) = j;
         
         % Ray tracing for beam i and bixel j
-        [ix,~,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
-                                                       stf(i).sourcePoint_bev, ...
-                                                       stf(i).ray(j).targetPoint_bev, ...
-                                                       lateralCutoff);
-        
+        [ix,~,isoLatDistsX,isoLatDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
+                                                               stf(i).sourcePoint_bev, ...
+                                                               stf(i).ray(j).targetPoint_bev, ...
+                                                               machine.meta.SAD, ...
+                                                               radDepthIx, ...
+                                                               lateralCutoff);
+
         % calculate photon dose for beam i and bixel j
         bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
                                                machine.data.betas, ...
                                                Interp_kernel1,...
                                                Interp_kernel2,...
                                                Interp_kernel3,...
-                                               radDepthCube(V(ix)),...
-                                               geoDistCube(V(ix)),...
-                                               latDistsX,...
-                                               latDistsZ);
+                                               radDepthV(ix),...
+                                               geoDistV(ix),...
+                                               isoLatDistsX,...
+                                               isoLatDistsZ);
        
         % Save dose for every bixel in cell array
         doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix),1,bixelDose,numel(ct.cube),1);

@@ -20,35 +20,23 @@ function indices = matRad_convRtssContours2Indices(structure,ct)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015, Mark Bangert, on behalf of the matRad development team
-%
-% m.bangert@dkfz.de
-%
-% This file is part of matRad.
-%
-% matrad is free software: you can redistribute it and/or modify it under 
-% the terms of the GNU General Public License as published by the Free 
-% Software Foundation, either version 3 of the License, or (at your option)
-% any later version.
-%
-% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
-% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-% details.
-%
-% You should have received a copy of the GNU General Public License in the
-% file license.txt along with matRad. If not, see
-% <http://www.gnu.org/licenses/>.
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 voiCube = zeros(size(ct.cube));
 
-[X,Y] = meshgrid(ct.x,ct.y);
+dim1 = size(ct.cube,1);
+dim2 = size(ct.cube,2);
 
 % loop over all closed contour items
 for i = 1:size(structure.item,2)
@@ -63,9 +51,12 @@ for i = 1:size(structure.item,2)
     
         round2 = @(a,b) round(a*10^b)/10^b;
         dicomCtSliceThickness = ct.dicomInfo.SliceThickness(round2(ct.dicomInfo.SlicePositions,2)==round2(dicomCtSlicePos,2));
-
-        binIn = inpolygon(X,Y,structure.item(i).points(:,1),structure.item(i).points(:,2));
-
+        
+        coords1 = interp1(ct.x,1:dim1,structure.item(i).points(:,1));
+        coords2 = interp1(ct.y,1:dim2,structure.item(i).points(:,2));
+        
+        binIn = poly2mask(coords1,coords2,dim1,dim2);
+        
         slicesInMatradCt = find(dicomCtSlicePos+dicomCtSliceThickness/2 > ct.z & dicomCtSlicePos-dicomCtSliceThickness/2 <= ct.z);
 
         % loop over all slices in matRad ct
@@ -77,4 +68,4 @@ for i = 1:size(structure.item,2)
     
 end
 
-indices = find(voiCube>0);
+indices = find(voiCube(:));

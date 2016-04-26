@@ -1,6 +1,6 @@
 function dose = matRad_calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,...
                   Interp_kernel2,Interp_kernel3,radDepths,geoDists,...
-                  latDistsX,latDistsZ)
+                  isoLatDistsX,isoLatDistsZ)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad photon dose calculation for an individual bixel
 % 
@@ -18,8 +18,10 @@ function dose = matRad_calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,...
 %   Interp_kernel1/2/3: kernels for dose calculation
 %   radDepths:          radiological depths
 %   geoDists:           geometrical distance from virtual photon source
-%   latDistsX:          lateral distance in X direction in BEV from central ray
-%   latDistsZ:          lateral distance in Z direction in BEV from central ray
+%   isoLatDistsX:       lateral distance in X direction in BEV from central
+%                       ray at iso center plane
+%   isoLatDistsZ:       lateral distance in Z direction in BEV from central
+%                       ray at iso center plane
 %
 % output
 %   dose:   photon dose at specified locations as linear vector
@@ -31,39 +33,24 @@ function dose = matRad_calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,...
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015, Mark Bangert, on behalf of the matRad development team
-%
-% m.bangert@dkfz.de
-%
-% This file is part of matRad.
-%
-% matrad is free software: you can redistribute it and/or modify it under 
-% the terms of the GNU General Public License as published by the Free 
-% Software Foundation, either version 3 of the License, or (at your option)
-% any later version.
-%
-% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
-% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-% details.
-%
-% You should have received a copy of the GNU General Public License in the
-% file license.txt along with matRad. If not, see
-% <http://www.gnu.org/licenses/>.
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Define function_Di
 func_Di = @(beta,x) beta/(beta-m) * (exp(-m*x) - exp(-beta*x)); 
 
-% scale lateral distances to iso center plane
-latDistsX = (latDistsX) ./ geoDists .* SAD;
-latDistsZ = (latDistsZ) ./ geoDists .* SAD;
-       
 % Calulate lateral distances using grid interpolation.
-lat1 = Interp_kernel1(latDistsX,latDistsZ);
-lat2 = Interp_kernel2(latDistsX,latDistsZ);
-lat3 = Interp_kernel3(latDistsX,latDistsZ);
+lat1 = Interp_kernel1(isoLatDistsX,isoLatDistsZ);
+lat2 = Interp_kernel2(isoLatDistsX,isoLatDistsZ);
+lat3 = Interp_kernel3(isoLatDistsX,isoLatDistsZ);
 
 % now add everything together (eq 19 w/o inv sq corr -> see below)
 dose = lat1 .* func_Di(betas(1),radDepths) + ...

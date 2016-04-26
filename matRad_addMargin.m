@@ -23,25 +23,14 @@ function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015, Mark Bangert, on behalf of the matRad development team
-%
-% m.bangert@dkfz.de
-%
-% This file is part of matRad.
-%
-% matrad is free software: you can redistribute it and/or modify it under 
-% the terms of the GNU General Public License as published by the Free 
-% Software Foundation, either version 3 of the License, or (at your option)
-% any later version.
-%
-% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
-% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-% details.
-%
-% You should have received a copy of the GNU General Public License in the
-% file license.txt along with matRad. If not, see
-% <http://www.gnu.org/licenses/>.
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -90,8 +79,9 @@ for Cnt = 1:max(voxelMargins)
                     continue;
                 end
 
-                newIx = sub2ind(size(mVOIEnlarged),xCoord+i*dx,yCoord+j*dy,zCoord+k*dz);
-                
+                newIx = (xCoord+i*dx) + (yCoord+j*dy-1)*size(mVOIEnlarged,1) + ...
+                        (zCoord+k*dz-1)*size(mVOIEnlarged,1)*size(mVOIEnlarged,2);
+                    
                 % check if new indices are part of voiSurfaceIdx
                 bWithinPatient = ismember(newIx,voiSurfaceIdx);
                 

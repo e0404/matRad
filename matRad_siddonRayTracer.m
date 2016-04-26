@@ -39,25 +39,14 @@ function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter, ...
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015, Mark Bangert, on behalf of the matRad development team
-%
-% m.bangert@dkfz.de
-%
-% This file is part of matRad.
-%
-% matrad is free software: you can redistribute it and/or modify it under 
-% the terms of the GNU General Public License as published by the Free 
-% Software Foundation, either version 3 of the License, or (at your option)
-% any later version.
-%
-% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
-% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-% details.
-%
-% You should have received a copy of the GNU General Public License in the
-% file license.txt along with matRad. If not, see
-% <http://www.gnu.org/licenses/>.
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -205,7 +194,7 @@ l = d12*diff(alphas);
 
 % eq 13
 % Calculate \alpha_{middle}
-alphas_mid = mean([alphas(1:end-1);alphas(2:end)]);
+alphas_mid = .5*(alphas(1:end-1)+alphas(2:end));
 
 % eq 12
 % Calculate the voxel indices: first convert to physical coords
@@ -224,7 +213,7 @@ j(j>yNumPlanes-1) = yNumPlanes-1;
 k(k>zNumPlanes-1) = zNumPlanes-1;
 
 % Convert to linear indices
-ix = sub2ind(size(cubes{1}),j,i,k);
+ix = j + (i-1)*size(cubes{1},1) + (k-1)*size(cubes{1},1)*size(cubes{1},2); 
 
 % obtains the values from cubes
 rho = cell(numel(cubes));

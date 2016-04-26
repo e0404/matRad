@@ -21,30 +21,19 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015, Mark Bangert, on behalf of the matRad development team
-%
-% m.bangert@dkfz.de
-%
-% This file is part of matRad.
-%
-% matrad is free software: you can redistribute it and/or modify it under
-% the terms of the GNU General Public License as published by the Free
-% Software Foundation, either version 3 of the License, or (at your option)
-% any later version.
-%
-% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
-% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-% details.
-%
-% You should have received a copy of the GNU General Public License in the
-% file license.txt along with matRad. If not, see
-% <http://www.gnu.org/licenses/>.
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % initialize waitbar
-figureWait = waitbar(0,'calculate particle-ij matrice(s)...');
+figureWait = waitbar(0,'calculate dose influence matrix for particles...');
 % prevent closure of waitbar and show busy state
 set(figureWait,'pointer','watch');
 
@@ -71,7 +60,7 @@ round2 = @(a,b)round(a*10^b)/10^b;
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 doseTmpContainer = cell(numOfBixelsContainer,1);
-if pln.bioOptimization == true 
+if ~strcmp(pln.bioOptimization,'none') 
     alphaDoseTmpContainer = cell(numOfBixelsContainer,1);
     betaDoseTmpContainer  = cell(numOfBixelsContainer,1);
     dij.mAlphaDose        = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
@@ -93,28 +82,46 @@ catch
 end
 
 % generates tissue class matrix for biological optimization
-if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
+if (strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD')) ... 
         && strcmp(pln.radiationMode,'carbon')
     fprintf('matRad: loading biological base data... ');
-    mTissueClass = zeros(size(V,1),1);
+    vTissueIndex = zeros(size(V,1),1);
+    
+    %set overlap priorities
+    cst  = matRad_setOverlapPriorities(cst);
+    
     for i = 1:size(cst,1)
         % find indices of structures related to V
         [~, row] = ismember(cst{i,4},V,'rows');  
-        if ~isempty(cst{i,5}) && isfield(cst{i,5},'TissueClass')
-            mTissueClass(row) = cst{i,5}.TissueClass;
+        % check if base data contains alphaX and betaX
+        if   isfield(machine.data,'alphaX') && isfield(machine.data,'betaX')
+            % check if cst is compatiable 
+            if ~isempty(cst{i,5}) && isfield(cst{i,5},'alphaX') && isfield(cst{i,5},'betaX') 
+
+                IdxTissue = find(ismember(machine.data(1).alphaX,cst{i,5}.alphaX) & ...
+                                 ismember(machine.data(1).betaX,cst{i,5}.betaX));
+
+                % check consitency of biological baseData and cst settings
+                if ~isempty(IdxTissue)
+                    vTissueIndex(row) = IdxTissue;
+                else
+                    error('biological base data and cst inconsistent\n');
+                end
+            else
+                vTissueIndex(row) = 1;
+                fprintf(['matRad: tissue type of ' cst{i,2} ' was set to 1 \n']);
+            end
         else
-            mTissueClass(row) = 1;
-            fprintf(['matRad: tissue type of ' cst{i,2} ' was set to 1 \n']);
-        end
-        
-        % check consitency of biological baseData and cst settings
-        baseDataAlphaBetaRatios = reshape([machine.data(:).alphaBetaRatio],numel(machine.data(1).alphaBetaRatio),size(machine.data,2));
-        if norm(baseDataAlphaBetaRatios(cst{i,5}.TissueClass,:) - cst{i,5}.alphaX/cst{i,5}.betaX)>0
-            error('biological base data and cst inconsistent\n');
+            error('base data is incomplement - alphaX and/or betaX is missing');
         end
         
     end
     fprintf('done.\n');
+
+% issue warning if biological optimization not possible
+elseif sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0 && strcmp(pln.radiationMode,'protons')
+    warndlg('Effect based and RBE optimization not possible with protons - physical optimization is carried out instead.');
+    pln.bioOptimization = 'none';
 end
 
 fprintf('matRad: Particle dose calculation...\n');
@@ -154,9 +161,15 @@ for i = 1:dij.numOfBeams; % loop over all beams
     
     % Calcualte radiological depth cube
     lateralCutoffRayTracing = 50;
-    fprintf(['matRad: calculate radiological depth cube...']);
-    [radDepthCube,~] = matRad_rayTracing(stf(i),ct,V,lateralCutoffRayTracing);
+    fprintf('matRad: calculate radiological depth cube...');
+    radDepthV = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoffRayTracing);
     fprintf('done.\n');
+    
+    % get indices of voxels where ray tracing results are available
+    radDepthIx = find(~isnan(radDepthV));
+    
+    % limit rotated coordinates to positions where ray tracing is availabe
+    rot_coordsV = rot_coordsV(radDepthIx,:);
     
     % Determine lateral cutoff
     fprintf('matRad: calculate lateral cutoff...');
@@ -176,16 +189,18 @@ for i = 1:dij.numOfBeams; % loop over all beams
             maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
             
             % Ray tracing for beam i and ray j                          
-            [ix,radialDist_sq,~,~] = matRad_calcGeoDists(rot_coordsV, ...
-                                                       stf(i).sourcePoint_bev, ...
-                                                       stf(i).ray(j).targetPoint_bev, ...
-                                                       maxLateralCutoffDoseCalc);
-            radDepths = radDepthCube(V(ix));   
+            [ix,radialDist_sq] = matRad_calcGeoDists(rot_coordsV, ...
+                                                     stf(i).sourcePoint_bev, ...
+                                                     stf(i).ray(j).targetPoint_bev, ...
+                                                     machine.meta.SAD, ...
+                                                     radDepthIx, ...
+                                                     maxLateralCutoffDoseCalc);
+            radDepths = radDepthV(ix);   
             
             % just use tissue classes of voxels found by ray tracer
             if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                  && strcmp(pln.radiationMode,'carbon')
-                    mTissueClass_j = mTissueClass(ix,:);
+                    vTissueIndex_j = vTissueIndex(ix,:);
             end
               
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
@@ -193,9 +208,13 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 counter = counter + 1;
                 bixelsPerBeam = bixelsPerBeam + 1;
                 
-                matRad_progress(bixelsPerBeam,stf(i).totalNumOfBixels);
+                % Display progress and update text only 200 times
+                if mod(bixelsPerBeam,round(stf(i).totalNumOfBixels/200)) == 0
+                        matRad_progress(bixelsPerBeam/round(stf(i).totalNumOfBixels/200),...
+                                        floor(stf(i).totalNumOfBixels/round(stf(i).totalNumOfBixels/200)));
+                end
                 % update waitbar only 100 times if it is not closed
-                if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && figureWait.isvalid
+                if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
                     waitbar(counter/dij.totalNumOfBixels,figureWait);
                 end
                 
@@ -240,7 +259,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                     % calculate alpha and beta values for bixel k on ray j of                  
                     [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
                         radDepths(currIx),...
-                        mTissueClass_j(currIx,:),...
+                        vTissueIndex_j(currIx,:),...
                         machine.data(energyIx));
                 
                     alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelAlpha.*bixelDose,numel(ct.cube),1);

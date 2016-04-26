@@ -18,29 +18,16 @@ function cst = matRad_createCst(structures)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015, Mark Bangert, on behalf of the matRad development team
-%
-% m.bangert@dkfz.de
-%
-% This file is part of matRad.
-%
-% matrad is free software: you can redistribute it and/or modify it under 
-% the terms of the GNU General Public License as published by the Free 
-% Software Foundation, either version 3 of the License, or (at your option)
-% any later version.
-%
-% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
-% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-% details.
-%
-% You should have received a copy of the GNU General Public License in the
-% file license.txt along with matRad. If not, see
-% <http://www.gnu.org/licenses/>.
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -57,21 +44,33 @@ for i = 1:size(structures,2)
        ~isempty(regexpi(cst{i,2},'ptv')) || ...
        ~isempty(regexpi(cst{i,2},'boost')) || ...
        ~isempty(regexpi(cst{i,2},'tumor'))
+        
         cst{i,3} = 'TARGET';
-        % default objectives for targets
-        cst{i,6}(1).parameter = [800 60]; %  
-        cst{i,6}(1).type = 'square deviation';
+        
         cst{i,5}.Priority = 1;
+     
+        % default objectives for targets
+        cst{i,6}(1).type       = 'square deviation';
+        cst{i,6}(1).penalty    = 800;
+        cst{i,6}(1).dose       = 30;
+        cst{i,6}(1).EUD        = NaN;
+        cst{i,6}(1).volume     = NaN;
+        cst{i,6}(1).robustness = 'none';
+        
     else
+        
         cst{i,3} = 'OAR';
-        cst{i,6} = []; % define no OAR dummy objcetives   
+        
         cst{i,5}.Priority = 2;
+        
+        cst{i,6} = []; % define no OAR dummy objcetives   
+    
     end
     
     cst{i,4} = structures(i).indices;
+    
     % set default parameter for biological planning
-    cst{i,5}.TissueClass = 1; 
     cst{i,5}.alphaX = 0.1;
     cst{i,5}.betaX = 0.05;
-
+    cst{i,5}.Visible = 1;
 end
