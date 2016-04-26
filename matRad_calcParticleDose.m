@@ -3,7 +3,7 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst)
 % matRad particle dose calculation wrapper
 % 
 % call
-%   dij = matRad_calcParticleDose(ct,stf,pln,cst,visBool)
+%   dij = matRad_calcParticleDose(ct,stf,pln,cst)
 %
 % input
 %   ct:         ct cube
