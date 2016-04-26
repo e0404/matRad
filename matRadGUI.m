@@ -851,6 +851,8 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
             end
             Idx = find(strcmp(handles.SelectedDisplayOption,DispInfo(:,1)));
             set(get(cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
+            % do not interprete as tex syntax
+            set(get(cBarHandel,'ylabel'),'interpreter','none');
             
             if isempty(strfind(handles.SelectedDisplayOption,'RBE'))
                 set(cBarHandel,'YLim',[0 handles.maxDoseVal]);
