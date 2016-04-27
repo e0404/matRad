@@ -3,7 +3,7 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,multScen)
 % matRad particle dose calculation wrapper
 % cst
 % call
-%   dij = matRad_calcParticleDose(ct,stf,pln,cst,visBool)
+%   dij = matRad_calcParticleDose(ct,stf,pln,cst)
 %
 % input
 %   ct:         ct cube
@@ -194,12 +194,15 @@ for i = 1:dij.numOfBeams; % loop over all beams
     % Calcualte radiological depth cube
     lateralCutoffRayTracing = 50;
     fprintf('matRad: calculate radiological depth cube...');
-    radDepthCube = matRad_rayTracing(stf(i),ct,V,lateralCutoffRayTracing,multScen);
+    radDepthV = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoffRayTracing,multScen);
     fprintf('done.\n');
-
-    % construct binary mask where ray tracing results are available
-    radDepthMask = ~isnan(radDepthCube{1});
-
+    
+    % get indices of voxels where ray tracing results are available
+    radDepthIx = find(~isnan(radDepthV{1}));
+    
+    % limit rotated coordinates to positions where ray tracing is availabe
+    rot_coordsV = rot_coordsV(radDepthIx,:);
+    
     % Determine lateral cutoff
     fprintf('matRad: calculate lateral cutoff...');
     cutOffLevel = .99;
@@ -222,9 +225,9 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                      stf(i).sourcePoint_bev, ...
                                                      stf(i).ray(j).targetPoint_bev, ...
                                                      machine.meta.SAD, ...
-                                                     radDepthMask(V), ...
-                                                     maxLateralCutoffDoseCalc); 
-
+                                                     radDepthIx, ...
+                                                     maxLateralCutoffDoseCalc);
+            
             % just use tissue classes of voxels found by ray tracer
             if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                  && strcmp(pln.radiationMode,'carbon')
@@ -235,8 +238,13 @@ for i = 1:dij.numOfBeams; % loop over all beams
 
                 counter = counter + 1;
                 bixelsPerBeam = bixelsPerBeam + 1;
-
-                matRad_progress(bixelsPerBeam,stf(i).totalNumOfBixels);
+                
+                % Display progress and update text only 200 times
+                if mod(bixelsPerBeam,round(stf(i).totalNumOfBixels/200)) == 0
+                        matRad_progress(bixelsPerBeam/round(stf(i).totalNumOfBixels/200),...
+                                        floor(stf(i).totalNumOfBixels/round(stf(i).totalNumOfBixels/200)));
+                end
+                
                 % update waitbar only 100 times if it is not closed
                 if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
                     waitbar(counter/dij.totalNumOfBixels,figureWait);
@@ -256,11 +264,11 @@ for i = 1:dij.numOfBeams; % loop over all beams
                         if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
 
                             % manipulate radDepthCube for range scenarios
-                            radDepths = radDepthCube{CtScen}(V(ix));                                         
+                            radDepths = radDepthV{CtScen}(ix);                                          
 
                             if multScen.relRangeShifts(RangeShiftScen) ~= 0 || multScen.absRangeShifts(RangeShiftScen) ~= 0
                                 radDepths = radDepths +...                                                                                % original cube
-                                            radDepthCube{CtScen}(V(ix))*multScen.relRangeShifts(RangeShiftScen) +... % rel range shift
+                                            radDepthV{CtScen}(ix)*multScen.relRangeShifts(RangeShiftScen) +... % rel range shift
                                             multScen.absRangeShifts(RangeShiftScen);                                                      % absolute range shift
                                 radDepths(radDepths < 0) = 0;  
                             end

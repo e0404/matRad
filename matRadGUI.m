@@ -37,6 +37,12 @@ function varargout = matRadGUI(varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% abort for octave
+if exist('OCTAVE_VERSION','builtin');
+    fprintf('matRad GUI not available for Octave.\n');
+    return;
+end
+    
 % Begin initialization code - DO NOT EDIT
 % set platform specific look and feel
 if ispc
@@ -91,6 +97,9 @@ axes(handles.axesDKFZ)
 f = image(im);
 axis equal off;
 set(f, 'AlphaData', alpha);
+
+% set callback for scroll wheel function
+set(gcf,'WindowScrollWheelFcn',@matRadScrollWheelFcn);
 
 % change color of toobar
 hToolbar = findall(hObject,'tag','uitoolbar1');
@@ -240,17 +249,19 @@ if handles.State > 0
     set(handles.figure1,'UIContextMenu',contMenuStruct)
 end
 
+
 % Update handles structure
 handles.profileOffset = 0;
-guidata(hObject, handles);
 UpdateState(handles)
+
+handles.rememberCurrAxes = false;
 UpdatePlot(handles)
+handles.rememberCurrAxes = true;
+
+guidata(hObject, handles);
 
 
-
-
-
-function Callback_StructVisibilty(source,callbackdata)
+function Callback_StructVisibilty(source,~)
 
 handles = guidata(findobj('Name','matRadGUI'));
 
@@ -371,9 +382,11 @@ if handles.State > 0
     set(handles.figure1,'UIContextMenu',contMenuStruct)
 end
 
-guidata(hObject,handles);
 UpdateState(handles);
+handles.rememberCurrAxes = false;
 UpdatePlot(handles);
+handles.rememberCurrAxes = true;
+guidata(hObject,handles);
 
 
 
@@ -668,6 +681,8 @@ guidata(hObject,handles);
 function UpdatePlot(handles)
 
 defaultFontSize = 8;
+currAxes = axis;
+
 cla(handles.axesFig,'reset');
 
 if handles.State == 0
@@ -708,15 +723,15 @@ if exist('Result','var')
                 
                 % determine units
                 if strfind(DispInfo{i,1},'physicalDose');
-                    DispInfo{i,3}  = '[Gy]';
+                    DispInfo{i,3} = '[Gy]';
                 elseif strfind(DispInfo{i,1},'alpha')
-                    DispInfo{i,3}  = '[Gy^{-1}]';
+                    DispInfo{i,3} = '[Gy^{-1}]';
                 elseif strfind(DispInfo{i,1},'beta')
-                    DispInfo{i,3}  = '[Gy^{-2}]';
+                    DispInfo{i,3} = '[Gy^{-2}]';
                 elseif strfind(DispInfo{i,1},'RBExD')
-                    DispInfo       = '[Gy(RBE)]';
+                    DispInfo{i,3} = '[Gy(RBE)]';
                 else
-                    DispInfo{i,3}  = '[a.u.]';
+                    DispInfo{i,3} = '[a.u.]';
                 end
                 
             end
@@ -836,6 +851,8 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
             end
             Idx = find(strcmp(handles.SelectedDisplayOption,DispInfo(:,1)));
             set(get(cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
+            % do not interprete as tex syntax
+            set(get(cBarHandel,'ylabel'),'interpreter','none');
             
             if isempty(strfind(handles.SelectedDisplayOption,'RBE'))
                 set(cBarHandel,'YLim',[0 handles.maxDoseVal]);
@@ -854,17 +871,17 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
         %% plot iso dose lines
         if get(handles.radiobtnIsoDoseLines,'Value')
                 colormap(jet)
-                SpacingLower = 0.1;
-                SpacingUpper = 0.05;
-                vLow  = 0.1:SpacingLower:0.9;
-                vHigh = 0.95:SpacingUpper:1.2;
-                vLevels = [vLow vHigh];
-               
-                if handles.IsoDose.Levels == 0
-                   MaxVal  = max(mVolume(:)); 
+                MaxVal  = max(mVolume(:)); 
+                if length(handles.IsoDose.Levels) == 1 && handles.IsoDose.Levels(1)==0
+                   SpacingLower = 0.1;
+                   SpacingUpper = 0.05;
+                   vLow  = 0.1:SpacingLower:0.9;
+                   vHigh = 0.95:SpacingUpper:1.2;
+                   vLevels = [vLow vHigh];
+
                    vLevels = (round((vLevels.*MaxVal)*100))/100;
                 else
-                   vLevels = handles.IsoDose.Levels;
+                   vLevels = handles.IsoDose.Levels.*MaxVal;
                 end
                 
                 if plane == 1  % Coronal plane
@@ -1158,8 +1175,11 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
    
 end
 
+zoom reset;
 
-
+if handles.rememberCurrAxes
+    axis(currAxes);
+end
 
 % --- Executes on selection change in popupPlane.
 function popupPlane_Callback(hObject, ~, handles)
@@ -1194,8 +1214,10 @@ try
     end
 catch
 end
-        
+
+handles.rememberCurrAxes = false;
 UpdatePlot(handles);
+handles.rememberCurrAxes = true;
 guidata(hObject,handles);
 
 % --- Executes on slider movement.
@@ -1368,7 +1390,10 @@ end
 set(Figures, 'pointer', 'arrow');
 set(InterfaceObj,'Enable','on');
 
+handles.rememberCurrAxes = false;
 UpdatePlot(handles);
+handles.rememberCurrAxes = true;
+
 UpdateState(handles);
     
 guidata(hObject,handles);
@@ -1464,8 +1489,12 @@ elseif get(hObject,'Value') == 2
     end
     
 end
-guidata(hObject, handles);
+
+handles.rememberCurrAxes = false;
 UpdatePlot(handles);
+handles.rememberCurrAxes = true;
+
+guidata(hObject, handles);
 
 % --- Executes on selection change in popupDisplayOption.
 function popupDisplayOption_Callback(hObject, ~, handles)
@@ -1484,9 +1513,14 @@ function sliderBeamSelection_Callback(hObject, ~, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+
 handles.SelectedBeam = round(get(hObject,'Value'));
 set(hObject, 'Value', handles.SelectedBeam);
+handles.rememberCurrAxes = false;
 UpdatePlot(handles);
+handles.rememberCurrAxes = true;
+guidata(hObject,handles);
 
 % --- Executes on button press in btnProfileType.
 function btnProfileType_Callback(hObject, ~, handles)
@@ -1501,8 +1535,12 @@ if strcmp(get(hObject,'Enable') ,'on')
             handles.ProfileType = 'lateral';
             set(hObject,'String','longitudinal');
     end
- guidata(hObject, handles);
- UpdatePlot(handles);
+    
+    handles.rememberCurrAxes = false;
+    UpdatePlot(handles);
+    handles.rememberCurrAxes = true;
+
+    guidata(hObject, handles);
  
 end
 
@@ -1654,12 +1692,12 @@ if FlagValidParameters
                    OldCst(m,6)=NewCst(n,4);
                    OldCst(m,3)=NewCst(n,2);
                    OldCst{m,5}.Priority = NewCst{n,3};
+                   break;
                end 
            end
 
            if ~boolChanged
                OldCst{m,6}=[];
-               OldCst{m,5}.Priority=nan;
            end
 
        end
@@ -2325,6 +2363,29 @@ if isempty(FoundFile)
     flag = false;
 end
 
+function matRadScrollWheelFcn(src,event)
+
+% get handles
+handles = guidata(src);
+
+% compute new slice
+currSlice = round(get(handles.sliderSlice,'Value'));
+newSlice  = currSlice - event.VerticalScrollCount;
+
+% project to allowed set
+newSlice = min(newSlice,get(handles.sliderSlice,'Max'));
+newSlice = max(newSlice,get(handles.sliderSlice,'Min'));
+
+% update slider
+set(handles.sliderSlice,'Value',newSlice);
+
+% update plot
+UpdatePlot(handles);
+
+% update handles object
+guidata(src,handles);
+
+
 %% CALLBACKS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -2425,9 +2486,19 @@ if ~isempty(AllVarNames)
     end
 
 end
+
+%% delete context menu if workspace was deleted manually and refresh button was clicked
+if handles.State == 0
+    objHandle = guidata(findobj('Name','matRadGUI'));  
+    contextUi = (get(objHandle.figure1,'UIContextMenu'));
+    delete(contextUi)
+end
+
 guidata(hObject,handles);
 UpdatePlot(handles);
 UpdateState(handles);
+
+
 
 % button: toggle effect based optimization and RBExD optimization
 function btnTypBioOpt_Callback(hObject, ~, handles)
@@ -2496,14 +2567,19 @@ getPlnFromGUI(handles);
 
 % button: set iso dose levels
 function btnSetIsoDoseLevels_Callback(hObject, ~, handles)
-prompt = {['Enter absolute reference dose levels in [Gy]. Please enter space-separated numbers, e.g. 10 30 34.7 60']};
-def = {'20 40 60 80'};
+prompt = {['Enter iso dose levels in % according to the max dose value. Enter space-separated numbers, e.g. 10 35 95 105. Enter 0 to use default values']};
+def = {'20 40 60 80 90 95 110'};
+try
 Input = inputdlg(prompt,'Set iso dose levels ', [1 50],def);
 if ~isempty(Input)
-     handles.IsoDose.Levels = sort(str2num(Input{1})); 
-     if length(handles.IsoDose.Levels) == 1
-         handles.IsoDose.Levels = [handles.IsoDose.Levels handles.IsoDose.Levels];
+     handles.IsoDose.Levels = (sort(str2num(Input{1}))/100); 
+     if length(handles.IsoDose.Levels) == 1 && handles.IsoDose.Levels(1) == 0     
+            handles.IsoDose.Levels = 0;
      end
+end
+catch
+    warning('Couldnt parse iso dose levels - using default values');
+    handles.IsoDose.Levels = 0;
 end
 UpdatePlot(handles);
 guidata(hObject,handles);
@@ -2645,12 +2721,6 @@ if evalin('base','exist(''pln'',''var'')') && ...
     % recalculate cubes in resultGUI
     resultGUIreCalc = matRad_calcCubes(resultGUI.(['w' Suffix]),dij,cst);
     
-    % overwrite the "standard" fields
-    sNames = fieldnames(resultGUIreCalc);
-    for j = 1:length(sNames)
-        resultGUI.(sNames{j}) = resultGUIreCalc.(sNames{j});
-    end
-    
     % delete old variables to avoid confusion
     if isfield(resultGUI,'effect')
         resultGUI = rmfield(resultGUI,'effect');
@@ -2659,7 +2729,13 @@ if evalin('base','exist(''pln'',''var'')') && ...
         resultGUI = rmfield(resultGUI,'alpha'); 
         resultGUI = rmfield(resultGUI,'beta');
     end
-
+    
+    % overwrite the "standard" fields
+    sNames = fieldnames(resultGUIreCalc);
+    for j = 1:length(sNames)
+        resultGUI.(sNames{j}) = resultGUIreCalc.(sNames{j});
+    end
+    
     % assign results to base worksapce
     assignin('base','dij',dij);
     assignin('base','resultGUI',resultGUI);
@@ -2674,10 +2750,13 @@ if evalin('base','exist(''pln'',''var'')') && ...
     set(Figures, 'pointer', 'arrow');
     set(InterfaceObj,'Enable','on');
     
-    guidata(hObject,handles);
+    handles.rememberCurrAxes = false;
     UpdatePlot(handles);
+    handles.rememberCurrAxes = true;
     UpdateState(handles);
 
+    guidata(hObject,handles);
+    
 end
 
 
@@ -2965,4 +3044,3 @@ function sliderOffset_CreateFcn(hObject, ~, ~)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
-

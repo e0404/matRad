@@ -29,6 +29,9 @@ function resultGUI = matRad_calcCubes(w,dij,cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% consider VOI priorities
+cst  = matRad_setOverlapPriorities(cst);
+
 resultGUI.w = w;
 
 % calc dose and reshape from 1D vector to 2D array
