@@ -52,8 +52,8 @@ for i = 1:size(structure.item,2)
         round2 = @(a,b) round(a*10^b)/10^b;
         dicomCtSliceThickness = ct.dicomInfo.SliceThickness(round2(ct.dicomInfo.SlicePositions,2)==round2(dicomCtSlicePos,2));
         
-        coords1 = interp1(ct.x,1:dim1,structure.item(i).points(:,1));
-        coords2 = interp1(ct.y,1:dim2,structure.item(i).points(:,2));
+        coords1 = interp1(ct.x,1:dim1,structure.item(i).points(:,1),'linear','extrap');
+        coords2 = interp1(ct.y,1:dim2,structure.item(i).points(:,2),'linear','extrap');
         
         binIn = poly2mask(coords1,coords2,dim1,dim2);
         
