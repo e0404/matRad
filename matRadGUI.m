@@ -298,20 +298,27 @@ function btnLoadMat_Callback(hObject, ~, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% delete existing workspace - parse variables from base workspace
-AllVarNames = evalin('base','who');
-RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
-for i = 1:length(RefVarNames)  
-    if sum(ismember(AllVarNames,RefVarNames{i}))>0
-        evalin('base',['clear ', RefVarNames{i}]);
-    end
-end
-
-% read new data
-handles.State = 0;
 try 
     [FileName, FilePath] = uigetfile('*.mat');
+    
+    if FileName == 0 % user pressed cancel --> do nothing.
+        return;
+    end
+    
+    % delete existing workspace - parse variables from base workspace
+    AllVarNames = evalin('base','who');
+    RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
+    
+    for i = 1:length(RefVarNames)  
+        if sum(ismember(AllVarNames,RefVarNames{i}))>0
+            evalin('base',['clear ', RefVarNames{i}]);
+        end
+    end
+
+    % clear state and read new data
+    handles.State = 0;
     load([FilePath FileName]);
+    
 catch
     handles = showWarning(handles,'LoadMatFileFnc: Could not load *.mat file');
     guidata(hObject,handles);
