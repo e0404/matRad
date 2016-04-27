@@ -881,7 +881,7 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
 
                    vLevels = (round((vLevels.*MaxVal)*100))/100;
                 else
-                   vLevels = handles.IsoDose.Levels.*MaxVal;
+                   vLevels = handles.IsoDose.Levels;
                 end
                 
                 if plane == 1  % Coronal plane
@@ -2531,12 +2531,12 @@ getPlnFromGUI(handles);
 
 % button: set iso dose levels
 function btnSetIsoDoseLevels_Callback(hObject, ~, handles)
-prompt = {['Enter iso dose levels in % according to the max dose value. Enter space-separated numbers, e.g. 10 35 95 105. Enter 0 to use default values']};
-def = {'20 40 60 80 90 95 110'};
+prompt = {['Enter iso dose levels in [Gy]. Enter space-separated numbers, e.g. 1.5 2 3 4.98. Enter 0 to use default values']};
+def = {'1 2 3 4 5 10 20'};
 try
 Input = inputdlg(prompt,'Set iso dose levels ', [1 50],def);
 if ~isempty(Input)
-     handles.IsoDose.Levels = (sort(str2num(Input{1}))/100); 
+     handles.IsoDose.Levels = (sort(str2num(Input{1}))); 
      if length(handles.IsoDose.Levels) == 1 && handles.IsoDose.Levels(1) == 0     
             handles.IsoDose.Levels = 0;
      end
