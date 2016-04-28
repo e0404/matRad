@@ -33,7 +33,26 @@ load PROSTATE.mat
 % [ct,cst]    = matRad_multScenImport(InputFolder,numOfScen,VOIs); 
 % load T6H.mat
 
-% meta information for treatment plan
+%% multiple Scenarios
+multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
+multScen.numOfShiftScen      = [9 9 9];        % number of shifts in x y and z direction       
+multScen.shiftSize           = [9 9 9];        % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
+multScen.shiftGenType        = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
+multScen.shiftGen1DIsotropy  = '+';            % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
+multScen.shiftCombType       = 'combined';     % for equidistant shifts: combined, individual
+multScen.numOfRangeShiftScen = 0;              % number of absolute and/or relative range scnearios
+multScen.maxAbsRangeShift    = 0;              % maximum absolute over and undershoot in mm
+multScen.maxRelRangeShift    = 0;              % maximum relative over and undershoot in %
+multScen.ScenCombType        = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
+multScen                     = matRad_setMultScen(multScen);
+
+%% coverage based cst manipulation
+%load('E:\Mescher\15_DCH_objectiv_tests\01_PROSTATE_InisotropicShifts\02_PROSTATE_5photonBeams_10XYZshifts_ProbRing_5mmBixel\standard_prob_CST')
+load('E:\Mescher\15_DCH_objectiv_tests\01_PROSTATE_InisotropicShifts\02_PROSTATE_5photonBeams_10XYZshifts_ProbRing_5mmBixel\standard_nonprob_CST')
+
+cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,'probWeighting');
+
+%% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = [0:72:359]; % [°]
@@ -48,27 +67,8 @@ pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be 
 pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.machine         = 'Generic';
 
-%% multiple Scenarios
-multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
-multScen.numOfShiftScen      = [9 9 9];        % number of shifts in x y and z direction       
-multScen.shiftSize           = [9 9 9];        % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
-multScen.shiftGenType        = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
-multScen.shiftGen1DIsotropy  = '+';            % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
-multScen.shiftCombType       = 'combined';     % for equidistant shifts: combined, individual
-multScen.numOfRangeShiftScen = 0;              % number of absolute and/or relative range scnearios
-multScen.maxAbsRangeShift    = 0;              % maximum absolute over and undershoot in mm
-multScen.maxRelRangeShift    = 0;              % maximum relative over and undershoot in %
-multScen.ScenCombType        = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
-multScen                     = matRad_setMultScen(multScen);
-
 %% initial visualization and change objective function settings if desired
 matRadGUI
-
-%% coverage based cst manipulation
-%load('E:\Mescher\15_DCH_objectiv_tests\01_PROSTATE_InisotropicShifts\02_PROSTATE_5photonBeams_10XYZshifts_ProbRing_5mmBixel\standard_prob_CST')
-%load('E:\Mescher\15_DCH_objectiv_tests\01_PROSTATE_InisotropicShifts\02_PROSTATE_5photonBeams_10XYZshifts_ProbRing_5mmBixel\standard_nonprob_CST')
-
-cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,'probWeighting');
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln,multScen);
