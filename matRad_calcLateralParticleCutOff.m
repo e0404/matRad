@@ -63,8 +63,8 @@ energySigmaLUT  = unique([[stf.ray(:).energy]; [stf.ray(:).focusIx] ; vSSDBixel]
 % calculate for each energy its inital beam width considering foci and SSD
 for i = 1:size(energySigmaLUT,1)
     energyIx = find(ismember([machine.data(:).energy],energySigmaLUT(i,1)));
-    energySigmaLUT(i,4) = interp1(machine.data(energyIx).initFocus(energySigmaLUT(i,2)).dist,...
-                                  machine.data(energyIx).initFocus(energySigmaLUT(i,2)).sigma,...
+    energySigmaLUT(i,4) = interp1(machine.data(energyIx).initFocus.dist(energySigmaLUT(i,2),:),...
+                                  machine.data(energyIx).initFocus.sigma(energySigmaLUT(i,2),:),...
                                   energySigmaLUT(i,3));
 end
 
@@ -153,6 +153,12 @@ for energyIx = vEnergiesIx
             end
             
             machine.data(energyIx).LatCutOff.CutOff(j) = r_cut;
+            
+            if j > 1
+                if 1-relContrib > cutOffLevel
+                    machine.data(energyIx).LatCutOff.CutOff(j) = machine.data(energyIx).LatCutOff.CutOff(j-1);
+                end
+            end
             
             % set DepthDoseCutOff according to cutoff at entrance dose;
             if j == 1 && strcmp(machine.meta.dataType,'singleGauss')

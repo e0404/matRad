@@ -49,14 +49,21 @@ listOfDefStructs = fieldnames(structInfo.StructureSetROISequence);
 listOfContStructs = fieldnames(structInfo.ROIContourSequence);
 
 %% process structure data
-% numOfDefStructs = numel(listOfDefStructs);
+numOfDefStructs  = numel(listOfDefStructs);
 numOfContStructs = numel(listOfContStructs);
 
 for i = 1:numOfContStructs % loop over every structure   
 
-% Is This enough?
+    % find the correct name
+    for j = 1:numOfDefStructs
+        if structInfo.ROIContourSequence.(listOfContStructs{i}).ReferencedROINumber ...
+                == structInfo.StructureSetROISequence.(listOfDefStructs{j}).ROINumber
+            break;
+        end
+    end    
     structures(i).structName   = structInfo.StructureSetROISequence.(...
-                                 listOfDefStructs{i}).ROIName;                               
+                                 listOfDefStructs{j}).ROIName;
+                             
     structures(i).structNumber = structInfo.ROIContourSequence.(...
                                  listOfContStructs{i}).ReferencedROINumber;
     structures(i).structColor  = structInfo.ROIContourSequence.(...

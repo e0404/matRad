@@ -320,23 +320,16 @@ for i = 1:length(pln.gantryAngles)
   
                 % book keeping & calculate focus index
                 stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);
-                focusIx  =  machine.meta.defaultFociIndex * ones(stf(i).numOfBixelsPerRay(j),1);
+                currentMinimumFWHM = interp1(machine.meta.LUT_bxWidthminFWHM(1,:),...
+                                             machine.meta.LUT_bxWidthminFWHM(2,:),...
+                                             pln.bixelWidth);
+                focusIx  =  ones(stf(i).numOfBixelsPerRay(j),1);
                 [~, vEnergyIx] = min(abs(bsxfun(@minus,[machine.data.energy]',...
                                 repmat(stf(i).ray(j).energy,length([machine.data]),1))));
 
                 % get for each spot the focus index
-                for k = 1:stf(i).numOfBixelsPerRay(j) 
-                    for currFoci =  machine.meta.defaultFociIndex:1:size(machine.data(vEnergyIx(k)).initFocus,2)
-
-                          SigmaIniAtIsoCenter = interp1(machine.data(vEnergyIx(k)).initFocus(currFoci).dist,...
-                                                        machine.data(vEnergyIx(k)).initFocus(currFoci).sigma,...
-                                                        machine.meta.SAD);
-
-                         if SigmaIniAtIsoCenter > machine.meta.minIniBeamSigma 
-                                focusIx(k)= currFoci;
-                            break;
-                         end
-                    end
+                for k = 1:stf(i).numOfBixelsPerRay(j)                    
+                    focusIx(k) = find(machine.data(vEnergyIx(k)).initFocus.SisFWHMAtIso > currentMinimumFWHM,1,'first');
                 end
 
                 stf(i).ray(j).focusIx = focusIx';
