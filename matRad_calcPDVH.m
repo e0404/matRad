@@ -1,4 +1,4 @@
-function matRad_calcPDVH(Coverage,doseVec,cst,numOfScenarios)
+function [dvhPoints,V] = matRad_calcPDVH(Coverage,doseVec,cst,numOfScenarios)
 
 n         = 10000;
 numOfVois = size(cst,1);
@@ -6,7 +6,7 @@ numOfVois = size(cst,1);
 % set DVH points
 dvhPoints = linspace(0,max(vertcat(doseVec{:}))*1.05,n);
 
-figure
+%figure
 for i = 1:numOfVois
     dvh = repmat(NaN * ones(1,n),numOfScenarios,1);
     for Scen = 1:numOfScenarios
@@ -26,20 +26,20 @@ for i = 1:numOfVois
     for j = 1:n
         VolumePointsSorted = sort(dvh(:,j),'descend');
         ix = max([1 ceil(Coverage/100*numel(VolumePointsSorted))]);
-        V(j) = VolumePointsSorted(ix);
+        V(i,j) = VolumePointsSorted(ix);
     end
     
-    plot(dvhPoints,V)
+    %plot(dvhPoints,V(i,:))
     
     % store legend info
-    legendinfo{i} = [cst{i,2},' PDVH_{',num2str(Coverage(i)),'}'];
+    %legendinfo{i} = [cst{i,2},' PDVH_{',num2str(Coverage(i)),'}'];
 
 end
 
 % set legend
-legend(legendinfo)
-grid on
-xlabel('Dose [Gy]')
-ylabel('Volume [%]')
+%legend(legendinfo)
+%grid on
+%xlabel('Dose [Gy]')
+%ylabel('Volume [%]')
 
 end

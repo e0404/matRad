@@ -1,4 +1,4 @@
-function matRad_calcDCH(volume,doseVec,cst,numOfScenarios)
+function [dchPoints,Q] = matRad_calcDCH(volume,doseVec,cst,numOfScenarios)
 
 n         = 10000;
 numOfVois = size(cst,1);
@@ -6,7 +6,7 @@ numOfVois = size(cst,1);
 % set DCH points
 dchPoints = linspace(0,max(vertcat(doseVec{:}))*1.05,n);
 
-figure
+%figure
 for i = 1:numOfVois
     indices   = cst{i,4}{1};
 
@@ -23,17 +23,17 @@ for i = 1:numOfVois
     Q(i,:) = (1/numOfScenarios)*sum(devlog)*100;
 
     % plot coverage over dose
-    plot(dchPoints,Q(i,:))
-    hold on
+    %plot(dchPoints,Q(i,:))
+    %hold on
 
     % store legend info
-    legendinfo{i} = [cst{i,2},' D_{',num2str(volume(i)),'} DCH'];
+    %legendinfo{i} = [cst{i,2},' D_{',num2str(volume(i)),'} DCH'];
 end
 
 % set legend
-legend(legendinfo)
-grid on
-xlabel('Dose [Gy]')
-ylabel('Coverage Probability [%]')
+%legend(legendinfo)
+%grid on
+%xlabel('Dose [Gy]')
+%ylabel('Coverage Probability [%]')
 
 end

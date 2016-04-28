@@ -188,7 +188,9 @@ if ~isdeployed
 end
 
 % clear global variables
-clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;
+%clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;
+clearvars -global matRad_global_x matRad_STRG_C_Pressed;
+
 
 % unblock mex files
 clear mex
