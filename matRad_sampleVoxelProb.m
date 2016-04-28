@@ -1,5 +1,7 @@
 function voxelProbCube = matRad_sampleVoxelProb(cst,ct,sigma,VOIName,ncase)
 
+rng(0);
+
 % get cst index if VOI
 cstidx = find(strcmp([cst(:,2)],VOIName));
 
