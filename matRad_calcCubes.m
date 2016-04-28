@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcCubes(w,dij,cst)
+function resultGUI = matRad_calcCubes(w,dij,cst,multScen)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad computation of all cubes for the resultGUI struct which is used
 % as result container and for visualization in matRad's GUI
@@ -10,6 +10,7 @@ function resultGUI = matRad_calcCubes(w,dij,cst)
 %   w:   bixel weight vector
 %   dij: dose influence matrix
 %   cst: matRad cst struct
+%   multScen:   matRad multiple scnerio struct
 %
 % output
 %   resultGUI: matRad result struct
@@ -30,7 +31,7 @@ function resultGUI = matRad_calcCubes(w,dij,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % consider VOI priorities
-cst  = matRad_setOverlapPriorities(cst);
+cst  = matRad_setOverlapPriorities(cst,multScen);
 
 resultGUI.w = w;
 
