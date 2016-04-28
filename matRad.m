@@ -54,7 +54,7 @@ multScen.numOfShiftScen      = [9 9 9];        % number of shifts in x y and z d
 multScen.shiftSize           = [9 9 9];        % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
 multScen.shiftGenType        = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
 multScen.shiftGen1DIsotropy  = '+';            % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
-multScen.shiftCombType       = 'combined'      % for equidistant shifts: combined, individual
+multScen.shiftCombType       = 'combined';     % for equidistant shifts: combined, individual
 multScen.numOfRangeShiftScen = 0;              % number of absolute and/or relative range scnearios
 multScen.maxAbsRangeShift    = 0;              % maximum absolute over and undershoot in mm
 multScen.maxRelRangeShift    = 0;              % maximum relative over and undershoot in %
@@ -65,6 +65,9 @@ multScen                     = matRad_setMultScen(multScen);
 matRadGUI
 
 %% coverage based cst manipulation
+%load('E:\Mescher\15_DCH_objectiv_tests\01_PROSTATE_InisotropicShifts\02_PROSTATE_5photonBeams_10XYZshifts_ProbRing_5mmBixel\standard_prob_CST')
+%load('E:\Mescher\15_DCH_objectiv_tests\01_PROSTATE_InisotropicShifts\02_PROSTATE_5photonBeams_10XYZshifts_ProbRing_5mmBixel\standard_nonprob_CST')
+
 cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,'probWeighting');
 
 %% generate steering file

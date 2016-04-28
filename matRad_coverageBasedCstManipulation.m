@@ -16,10 +16,11 @@ for  i = 1:size(cst,1)
                     voxelProbCube = matRad_sampleVoxelProb(cst,ct,multScen.shiftSize,cst{i,2},100000);
 
                     % create cst with ring structure
+                    probTreshold = 1e-4;
                     cstRing{Counter,1}           = size(cst,1) - 1 + Counter;
                     cstRing{Counter,2}           = [cst{i,2},'Ring'];
                     cstRing{Counter,3}           = cst{i,3};
-                    cstRing{Counter,4}{1}        = setdiff(find(voxelProbCube > 0),cst{i,4}{1});
+                    cstRing{Counter,4}{1}        = setdiff(find(voxelProbCube > probTreshold*max(voxelProbCube(:))),cst{i,4}{1});
                     cstRing{Counter,5}           = cst{i,5};
                     cstRing{Counter,5}.voxelProb = voxelProbCube(cstRing{Counter,4}{1})';
                     
