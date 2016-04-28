@@ -13,7 +13,7 @@ for  i = 1:size(cst,1)
 
                 % create ring structure around VOI
                     % sample voxel probabilities
-                    voxelProbCube = matRad_sampleVoxelProb(cst,ct,multScen.shiftSize,cst{i,2},10000);
+                    voxelProbCube = matRad_sampleVoxelProb(cst,ct,multScen.shiftSize,cst{i,2},100000);
 
                     % create cst with ring structure
                     cstRing{Counter,1}           = size(cst,1) - 1 + Counter;
