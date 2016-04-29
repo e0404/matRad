@@ -1,4 +1,4 @@
-function ct = matRad_calcWaterEqD(ct)
+function ct = matRad_calcWaterEqD(ct,imagingMachine,protocol)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to calculate the equivalent densities from a 
 % dicom ct that originally uses intensity values
@@ -9,8 +9,11 @@ function ct = matRad_calcWaterEqD(ct)
 % input
 %   ct:                 unprocessed dicom ct data which are stored as
 %                       intensity values (IV)
-%   solpe:              parameter for linear conversion into HU
-%   intercept:          parameter for linear conversion into HU
+%   imagingMachine      (optional) select imagingMachine
+%   protocol            (optional) select used protocol
+%                       Note that this data has to be prepared in
+%                       hlutLibrary -> hlutLibrary.imagingMachine
+%                                   --> hlutLibrary.imagingMachine.protocol
 %
 %                      HU = IV * slope + intercept
 %
@@ -46,10 +49,32 @@ function ct = matRad_calcWaterEqD(ct)
 ctHU = double(ct.cube) * double(ct.dicomInfo.RescaleSlope) + double(ct.dicomInfo.RescaleIntercept);
 
 %% conversion from HU to water equivalent density
-load hlutDefault.mat; % load LUT
+%  load hlut
+%  file standard
+%  out of dicom tags
+manufacturer = ct.dicomInfo_org.Manufacturer;
+model = ct.dicomInfo_org.ManufacturerModelName;
+convKernel = ct.dicomInfo_org.ConvolutionKernel;
 
-% Manual adjustments if ct data is corrupt. If some values are out of range
-% of the LUT, then these values are adjusted.
+clear hlutFileName hlutFile hlut
+hlutFileName = strcat(manufacturer, '-', model, '-ConvolutionKernel-',...
+    convKernel, '.hlut');
+try
+    hlutFile = fopen(hlutFileName,'r');
+    hlut = cell2mat(textscan(hlutFile,'%f %f','CollectOutput',1,'commentStyle','#'));
+    fclose(hlutFile);
+catch
+    warnText={'No proper HLUT corresponding to the DICOM tags loaded';...
+        'Please provide .hlut file in hlutLibrary folder'};
+    warndlg(warnText,'Could not load HLUT');
+    % load default HLUT
+    hlutFileName = 'matRad_default.hlut';
+    hlutFile = fopen(hlutFileName,'r');
+    hlut = cell2mat(textscan(hlutFile,'%f %f','CollectOutput',1,'commentStyle','#'));
+    fclose(hlutFile);
+    warning('matRad default HLUT loaded');
+end
+
 if max(ctHU(:)) > max(hlut(:,1))
     warning('projecting out of range HU values');
     ctHU(ctHU>max(hlut(:,1))) = max(hlut(:,1));

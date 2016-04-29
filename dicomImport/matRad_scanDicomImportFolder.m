@@ -30,7 +30,9 @@ function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%% print current status of the import script
+fprintf('The following things are not implemented:\n');
+fprintf('not implemented - \n use automatically the right dose file (at the moment just list all)\n');
 %% get all files in search directory
 
 % dicom import needs image processing toolbox -> check if available
@@ -46,11 +48,35 @@ dirIndex = [mainDirInfo.isdir];
 fileList = {mainDirInfo(~dirIndex).name}';
 patientList = 0;
 
+% add files of subfolders
+% for i = 1:3
+subFolderList = {mainDirInfo(dirIndex).name}';
+subFolderList(ismember(subFolderList,{'.','..'})) = [];
+subFolderList = cellfun(@(x) fullfile(patDir,x),...
+        subFolderList, 'UniformOutput', false);
+subFolderFileList = [];
+for i = 1 : numel(subFolderList)
+    % loop subfolders
+    subDir = subFolderList{i};
+    % get information about main directory
+    subDirInfo = dir(subDir);
+    % get index of subfolders
+    dirIndex = [subDirInfo.isdir];
+    % list of filenames in main directory
+    subFileList = {subDirInfo(~dirIndex).name}';
+    if ~isempty(subFileList)
+        subFileList = cellfun(@(x) fullfile(subFolderList{i},x),...
+            subFileList, 'UniformOutput', false);
+    end
+    subFolderFileList = [subFolderFileList; subFileList];
+end
+
 % create full path for all files in main directory
 if ~isempty(fileList)
     fileList = cellfun(@(x) fullfile(patDir,x),...
         fileList, 'UniformOutput', false);
-    
+    % attach subfolderfiles to fileList
+    fileList = [fileList; subFolderFileList];
     %% check for dicom files and differentiate patients, types, and series
     numOfFiles = numel(fileList(:,1));
     h = waitbar(0,'Please wait...');
@@ -74,10 +100,31 @@ if ~isempty(fileList)
         catch
             fileList{i,3} = NaN;
         end
-        try
-            fileList{i,4} = info.SeriesInstanceUID;
-        catch
-            fileList{i,4} = NaN;
+        switch fileList{i,2}
+            case 'CT'
+                try
+                    fileList{i,4} = info.SeriesInstanceUID;
+                catch
+                    fileList{i,4} = NaN;
+                end
+            case 'RTPLAN'
+                try
+                    fileList{i,4} = info.SOPInstanceUID;
+                catch
+                    fileList{i,4} = NaN;
+                end
+            case 'RTDOSE'
+                try
+                    fileList{i,4} = info.SOPInstanceUID;
+                catch
+                    fileList{i,4} = NaN;
+                end
+            otherwise
+                try
+                    fileList{i,4} = info.SeriesInstanceUID;
+                catch
+                    fileList{i,4} = NaN;
+                end
         end
         try
             fileList{i,5} = num2str(info.SeriesNumber);
@@ -126,7 +173,36 @@ if ~isempty(fileList)
         catch
             fileList{i,11} = NaN;
         end
-        
+%       Lucas Additions
+        try
+            if strcmp(info.Modality,'RTDOSE')
+                dosetext_helper = strcat('Instance','_', num2str(info.InstanceNumber),'_', ...
+                    info.DoseSummationType, '_', info.DoseType);
+%                 dosetext_helper = cellstr(dosetext_helper);
+                fileList{i,12} = dosetext_helper;
+            else
+                fileList{i,12} = NaN;
+            end
+        catch
+            fileList{i,12} = NaN;
+        end
+        % writing corresponding dose dist.
+        try
+            if strcmp(fileList{i,2},'RTPLAN')
+                corrDose = [];
+                numDose = length(fieldnames(info.ReferencedDoseSequence));
+                for j = 1:numDose
+                    fieldName = strcat('Item_',num2str(j));
+                    corrDose{j} = info.ReferencedDoseSequence.(fieldName).ReferencedSOPInstanceUID;
+                end
+                fileList{i,13} = corrDose;
+            else
+                fileList{i,13} = NaN;
+            end
+
+        catch
+            fileList{i,13} = NaN;
+        end
         matRad_progress(numOfFiles+1-i, numOfFiles);
         
     end

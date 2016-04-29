@@ -1,10 +1,10 @@
-function [ct, cst] = matRad_importDicom( files )
+function [ct, cst, pln, resultGUI] = matRad_importDicom( files )
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad wrapper function to import a predefined set of dicom files into
 % matRad's native data formats
 % 
 % call
-%   [ct, cst] = matRad_importDicom( files )
+%   [ct, cst, pln, dose] = matRad_importDicom( files )
 %
 % input
 %   files:  list of files to be imported (will contain cts and rt structure set)
@@ -12,6 +12,8 @@ function [ct, cst] = matRad_importDicom( files )
 % output
 %   ct:     matRad ct struct
 %   cst:    matRad cst struct
+%   pln:    matRad plan struct
+%   dose    matRad dose cubes
 %
 % References
 %   -
@@ -66,14 +68,55 @@ if ~isempty(files.rtss)
     cst = matRad_createCst(structures);
 
 else
-    
     cst = matRad_dummyCst(ct);
-    
 end
-%% save ct and cst
+
+%% determine pln parameters
+if size(files.rtplan,1)
+    if ~(cellfun(@isempty,files.rtplan(1,:)))
+        pln = matRad_importDicomRTPlan(ct, files.rtplan);
+    end
+end
+
+%% import stf
+if size(files.rtplan,1)
+    if ~(cellfun(@isempty,files.rtplan(1,:)))
+        if (strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon'))
+            %% import steering file
+            % pln output because bixelWidth is determined via the stf
+            [stf, pln] = matRad_importDicomSteering(ct, pln, files.rtplan);
+        end
+    end
+end
+
+%% import dose cube
+if size(files.rtdose,1)
+    if ~(cellfun(@isempty,files.rtdose(1,:)))
+        fprintf('loading Dose files \n', structures(i).structName);
+        resultGUI  = matRad_importDicomRTDose(ct, files.rtdose);
+        if size(resultGUI) == 0
+           clear resultGUI;
+        end
+    end
+end
+
+
+%% put weight also into resultGUI
+if exist('stf')
+    if (strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon'))
+        resultGUI.w = [];
+        for i = 1:size(stf,2)
+            resultGUI.w = [resultGUI.w; [stf(i).ray.weight]'];
+        end
+    end
+end
+
+%% save ct, cst, pln, dose
 matRadFileName = [files.ct{1,3} '.mat']; % use default from dicom
 [FileName,PathName] = uiputfile('*','Save as...',matRadFileName);
 if ischar(FileName)
-    save([PathName, FileName],'ct','cst');
-end
+    % delete unnecessary variables
+    clearvars -except ct cst pln stf resultGUI dij FileName PathName
+    % save all except FileName and PathName
+    save([PathName, FileName], '-regexp', '^(?!(FileName|PathName)$).','-v7.3');
 end

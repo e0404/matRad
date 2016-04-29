@@ -22,7 +22,7 @@ function varargout = matRad_importDicomGUI(varargin)
 
 % Edit the above text to modify the response to help matRad_importDicomGUI
 
-% Last Modified by GUIDE v2.5 12-Jun-2015 16:30:13
+% Last Modified by GUIDE v2.5 26-Feb-2016 13:11:23
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -49,11 +49,11 @@ if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
 
-if nargout
+% if nargout
     [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
-else
-    gui_mainfcn(gui_State, varargin{:});
-end
+% else
+%     gui_mainfcn(gui_State, varargin{:});
+% end
 % End initialization code - DO NOT EDIT
 
 
@@ -151,6 +151,7 @@ if ~isempty(get(hObject,'String'))
     %   9. res_x
     %   10. res_y
     %   11. res_z
+    %   12. detailed dose description
     %selected_patient = handles.patient_listbox.String(handles.patient_listbox.Value);
     patient_listbox = get(handles.patient_listbox,'String');
     selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
@@ -161,6 +162,14 @@ if ~isempty(get(hObject,'String'))
         % this gets a list of rtss series for this patient
         set(handles.rtseries_listbox,'Value',1); % set dummy value to one
         set(handles.rtseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),4));
+        % this gets a list of rt plan series for this patient
+        set(handles.rtplan_listbox,'Value',1); % set dummy value to one
+        set(handles.rtplan_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTPLAN') & strcmp(handles.fileList(:,3), selected_patient),4));
+        % this gets a list of dose series for this patient
+        set(handles.doseseries_listbox,'Value',1); % set dummy value to one
+        set(handles.doseseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTDOSE') & strcmp(handles.fileList(:,3), selected_patient),4));
+        % selectedDose
+        selectedDoseSeriesString = get(handles.doseseries_listbox,'String');
         % this gets a resolution for this patient
         selectedCtSeriesString = get(handles.ctseries_listbox,'String');
         if ~isempty(selectedCtSeriesString)
@@ -175,6 +184,10 @@ if ~isempty(get(hObject,'String'))
         set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),5)));
         set(handles.rtseries_listbox,'Value',1); % set dummy value to one
         set(handles.rtseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),5));
+        set(handles.rtplan_listbox,'Value',1); % set dummy value to one
+        set(handles.rtplan_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTPLAN') & strcmp(handles.fileList(:,3), selected_patient),5));
+        set(handles.doseseries_listbox,'Value',1); % set dummy value to one
+        set(handles.doseseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTDOSE') & strcmp(handles.fileList(:,3), selected_patient),12));
         selectedCtSeriesString = get(handles.ctseries_listbox,'String');
         if ~isempty(selectedCtSeriesString)
             res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),9));
@@ -262,9 +275,13 @@ function import_button_Callback(hObject, eventdata, handles)
 
 patient_listbox = get(handles.patient_listbox,'String');
 ctseries_listbox = get(handles.ctseries_listbox,'String');
+rtplan_listbox = get(handles.rtplan_listbox,'String');
+doseseries_listbox = get(handles.rtplan_listbox,'String');
 %rtseries_listbox = get(handles.rtseries_listbox,'String');
 selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
 selected_ctseries = ctseries_listbox(get(handles.ctseries_listbox,'Value'));
+selected_rtplan = rtplan_listbox(get(handles.rtplan_listbox,'Value'));
+% selected_doseseries = doseseries_listbox(get(handles.doseseries_listbox,'Value'));
 %selected_rtseries = rtseries_listbox(get(handles.rtseries_listbox,'Value'));
 
 if get(handles.SeriesUID_radiobutton,'Value') == 1
@@ -274,8 +291,8 @@ if get(handles.SeriesUID_radiobutton,'Value') == 1
     %files.rtss = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
     %    strcmp(handles.fileList(:,4), selected_rtseries),:);
 else
-    files.ct = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
-        strcmp(handles.fileList(:,5), selected_ctseries),:);
+      files.ct = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
+        strcmp(handles.fileList(:,5), selected_ctseries) & strcmp(handles.fileList(:,2),'CT'),:);    
     
     %files.rtss = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
     %    strcmp(handles.fileList(:,5), selected_rtseries),:);
@@ -297,6 +314,13 @@ if strcmp(get(handles.resz_edit,'String'),'not equi')
 else
     files.resz = str2double(get(handles.resz_edit,'String'));
 end
+% selected RT Plan
+rtplan = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,2),'RTPLAN'),:);
+files.rtplan = rtplan(get(handles.rtplan_listbox,'Value'),:);
+
+% selected RT Dose
+rtdose = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,2),'RTDOSE'),:);
+files.rtdose = rtdose(get(handles.doseseries_listbox,'Value'),:);
 
 matRad_importDicom(files);
 
@@ -353,10 +377,16 @@ else
     set(hObject,'Value',1);
     set(handles.SeriesNumber_radiobutton,'Value',0);
 end
-patient_listbox = get(handles.patient_listbox,'String');
-selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
-set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),4)));
-set(handles.rtseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),4)));
+if isfield(handles, 'fileList')
+    patient_listbox = get(handles.patient_listbox,'String');
+    selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
+    set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),4)));
+    set(handles.rtseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),4)));
+    set(handles.doseseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTDOSE') & strcmp(handles.fileList(:,3), selected_patient),4));
+    set(handles.rtplan_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTPLAN') & strcmp(handles.fileList(:,3), selected_patient),4)));
+else
+    fprintf('No patient loaded, so just switching default display option to SeriesUID. \n');
+end
 guidata(hObject, handles);
 
 % --- Executes on button press in SeriesNumber_radiobutton.
@@ -370,10 +400,17 @@ else
     set(hObject,'Value',1);
     set(handles.SeriesUID_radiobutton,'Value',0);
 end
-patient_listbox = get(handles.patient_listbox,'String');
-selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
-set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),5)));
-set(handles.rtseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),5)));
+if isfield(handles, 'fileList')
+    patient_listbox = get(handles.patient_listbox,'String');
+    selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
+    set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),5)));
+    set(handles.rtseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),5)));
+    set(handles.rtplan_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTPLAN') & strcmp(handles.fileList(:,3), selected_patient),5)));
+    % Problem: All Dose Series have equal ID. Maybe use another ID
+    set(handles.doseseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTDOSE') & strcmp(handles.fileList(:,3), selected_patient),12));
+else
+    fprintf('No patient loaded, so just switching default display option to SeriesNumber. \n');
+end
 guidata(hObject, handles);
 
 
@@ -490,3 +527,72 @@ end
 % if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
 %     set(hObject,'BackgroundColor','white');
 % end
+
+
+% --- Executes on selection change in doseseries_listbox.
+function doseseries_listbox_Callback(hObject, eventdata, handles)
+% hObject    handle to doseseries_listbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns doseseries_listbox contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from doseseries_listbox
+
+
+% --- Executes during object creation, after setting all properties.
+function doseseries_listbox_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to doseseries_listbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in rtplan_listbox.
+function rtplan_listbox_Callback(hObject, eventdata, handles)
+% hObject    handle to rtplan_listbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+contents = cellstr(get(hObject,'String'));
+selectedPlan = contents{get(hObject,'Value')};
+% point at plan in listbox
+if get(handles.SeriesUID_radiobutton,'Value') == 1
+    selectedPlanLoc = strcmp(handles.fileList(:,4),selectedPlan);
+else
+    warning('Not yet supported');
+end
+% show only the doses corresponding to the plan
+corrDoses = handles.fileList{selectedPlanLoc,13};
+numOfDoses = size(corrDoses,2);
+corrDosesLoc = zeros(size(handles.fileList(:,1),1),1);
+for j = 1:numOfDoses
+    corrDosesLoc = corrDosesLoc | strcmp(handles.fileList(:,4),corrDoses(j));
+end
+if get(handles.SeriesUID_radiobutton,'Value') == 1
+        set(handles.doseseries_listbox,'Value',1); % set dummy value to one
+        set(handles.doseseries_listbox,'String',handles.fileList(corrDosesLoc,4));
+end
+
+
+
+
+% Hints: contents = cellstr(get(hObject,'String')) returns rtplan_listbox contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from rtplan_listbox
+
+
+% --- Executes during object creation, after setting all properties.
+function rtplan_listbox_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to rtplan_listbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
