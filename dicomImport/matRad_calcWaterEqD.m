@@ -52,14 +52,25 @@ model = ct.dicomInfo_org.ManufacturerModelName;
 convKernel = ct.dicomInfo_org.ConvolutionKernel;
 
 clear hlutFileName hlutFile hlut
+% convention of fileName
 hlutFileName = strcat(manufacturer, '-', model, '-ConvolutionKernel-',...
     convKernel, '.hlut');
-try
-    hlutFile = fopen(hlutFileName,'r');
-    hlut = cell2mat(textscan(hlutFile,'%f %f','CollectOutput',1,'commentStyle','#'));
-    fclose(hlutFile);
-catch
-    warnText={'No proper HLUT corresponding to the DICOM tags loaded';...
+
+% check whether fileNames used '-' or '_' instead of blanks
+hlutFileCell{1} = hlutFileName;
+hlutFileCell{2} = regexprep(hlutFileName,' ','-');
+hlutFileCell{3} = regexprep(hlutFileName,' ','_');
+
+for i = 1:3
+    if exist(hlutFileCell{i}, 'file') == 2
+        existIx(i) = 1;
+    else
+        existIx(i) = 0;
+    end
+end
+
+if sum(existIx) ~= 1
+    warnText={'No or more than one proper HLUT corresponding to the DICOM tags loaded';...
         'Please provide .hlut file in hlutLibrary folder'};
     warndlg(warnText,'Could not load HLUT');
     % load default HLUT
@@ -68,6 +79,11 @@ catch
     hlut = cell2mat(textscan(hlutFile,'%f %f','CollectOutput',1,'commentStyle','#'));
     fclose(hlutFile);
     warning('matRad default HLUT loaded');
+else
+    hlutFileName = hlutFileCell{find(existIx)};
+    hlutFile = fopen(hlutFileName,'r');
+    hlut = cell2mat(textscan(hlutFile,'%f %f','CollectOutput',1,'commentStyle','#'));
+    fclose(hlutFile);
 end
 
 if max(ctHU(:)) > max(hlut(:,1))
