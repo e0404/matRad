@@ -37,4 +37,4 @@ function f = matRad_daoObjFunc(apertureInfoVect,apertureInfo,dij,cst,type)
 apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect);
 
 % bixel based objective function calculation
-f = matRad_objFunc(apertureInfo.bixelWeights,dij,cst,type);
+f = matRad_objFuncWrapper(apertureInfo.bixelWeights,dij,cst,type);

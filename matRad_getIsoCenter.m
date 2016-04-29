@@ -41,9 +41,9 @@ end
 V = [];
 
 % Save target indices in V variable.
-for i=1:size(cst,1)
+for i = 1:size(cst,1)
     if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
-        V = [V;cst{i,4}];
+        V = [V;vertcat(cst{i,4}{:})];
     end
 end
 
@@ -57,7 +57,7 @@ if isempty(V)
 end
 
 % Transform subcripts from linear indices 
-[yCoordsV, xCoordsV, zCoordsV] = ind2sub(size(ct.cube),V);
+[yCoordsV, xCoordsV, zCoordsV] = ind2sub(ct.cubeDim,V);
 
 % Transform to [mm]
 xCoordsV = xCoordsV * ct.resolution.x;

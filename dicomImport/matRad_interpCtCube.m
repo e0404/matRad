@@ -45,11 +45,13 @@ yi = [coordsOfFirstPixel(2,1):resolution.y:(coordsOfFirstPixel(2,1)+origCtInfo(1
 zi = coordsOfFirstPixel(3,1):resolution.z: coordsOfFirstPixel(3,end);
 
 % interpolate
-interpCt.cube = interp3(x,y,z,origCt,xi,yi,zi);
+interpCt.cube{1} = interp3(x,y,z,origCt,xi,yi,zi);
 
 % some meta information
 interpCt.resolution = resolution;
-
 interpCt.x = xi;
 interpCt.y = yi';
 interpCt.z = zi;
+
+interpCt.cubeDim     = [numel(xi) numel(yi) numel(zi)];
+interpCt.numOfCtScen = 1;

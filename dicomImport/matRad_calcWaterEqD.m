@@ -43,7 +43,7 @@ function ct = matRad_calcWaterEqD(ct)
 
 
 %% conversion from IV to HU
-ctHU = double(ct.cube) * double(ct.dicomInfo.RescaleSlope) + double(ct.dicomInfo.RescaleIntercept);
+ctHU = double(ct.cube{1}) * double(ct.dicomInfo.RescaleSlope) + double(ct.dicomInfo.RescaleIntercept);
 
 %% conversion from HU to water equivalent density
 load hlutDefault.mat; % load LUT
@@ -60,7 +60,7 @@ if min(ctHU(:)) < min(hlut(:,1))
 end
 
 % interpolate HU to relative electron density based on lookup table
-ct.cube = interp1(hlut(:,1),hlut(:,2),double(ctHU));
+ct.cube{1} = interp1(hlut(:,1),hlut(:,2),double(ctHU));
 
 % save hlut
 ct.hlut = hlut;

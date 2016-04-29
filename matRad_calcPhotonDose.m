@@ -52,6 +52,7 @@ dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.dimensions         = pln.voxelDimensions;
+dij.numOfScenarios     = 1;
 
 % set up arrays for book keeping
 dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
@@ -59,17 +60,20 @@ dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
 dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 
 % Allocate space for dij.physicalDose sparse matrix
-dij.physicalDose = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
+for i = 1:dij.numOfScenarios
+    dij.physicalDose{i} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
+end
 
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
-doseTmpContainer = cell(numOfBixelsContainer,1);
+doseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
 
 % take only voxels inside patient
-V = unique([cell2mat(cst(:,4))]);
+V = [cst{:,4}];
+V = unique(vertcat(V{:}));
 
 % Convert CT subscripts to linear indices.
-[yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(size(ct.cube),V);
+[yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
 
 % set lateral cutoff value
 lateralCutoff = 20; % [mm]
@@ -146,49 +150,49 @@ for i = 1:dij.numOfBeams; % loop over all beams
     yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
     zCoordsV = zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
     coordsV  = [xCoordsV yCoordsV zCoordsV];
-    
+
     % Set gantry and couch rotation matrices according to IEC 61217
     % Use transpose matrices because we are working with row vectros
-    
+
     % rotation around Z axis (gantry)
     inv_rotMx_XY_T = [ cosd(-pln.gantryAngles(i)) sind(-pln.gantryAngles(i)) 0;
                       -sind(-pln.gantryAngles(i)) cosd(-pln.gantryAngles(i)) 0;
                                                 0                          0 1];
-    
+
     % rotation around Y axis (couch)
     inv_rotMx_XZ_T = [cosd(-pln.couchAngles(i)) 0 -sind(-pln.couchAngles(i));
                                               0 1                         0;
                       sind(-pln.couchAngles(i)) 0  cosd(-pln.couchAngles(i))];
-    
+
     % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
     rot_coordsV = coordsV*inv_rotMx_XZ_T*inv_rotMx_XY_T;
-    
+
     rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
     rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
     rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
-    
+
     % ray tracing
     fprintf(['matRad: calculate radiological depth cube...']);
     [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoff);
     fprintf('done \n');
     
     % get indices of voxels where ray tracing results are available
-    radDepthIx = find(~isnan(radDepthV));
+    radDepthIx = find(~isnan(radDepthV{1}));
     
     % limit rotated coordinates to positions where ray tracing is availabe
     rot_coordsV = rot_coordsV(radDepthIx,:);
     
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
-        
+
         counter = counter + 1;
         bixelsPerBeam = bixelsPerBeam + 1;
-        
+
         if useCustomPrimFluenceBool % use custom primary fluence if specifried
-            
+
             r     = sqrt( (X-stf(i).ray(j).rayPos(1)).^2 + (Z-stf(i).ray(j).rayPos(3)).^2 );
             Psi   = interp1(primaryFluence(:,1),primaryFluence(:,2),r);
             FxPsi = F .* Psi;
-        
+
             % 2D convolution of Fluence and Kernels in fourier domain
             convMx1 = real(fftshift(ifft2(fft2( ifftshift(FxPsi) ).*fft2( ifftshift(kernel1Mx) ) )));
             convMx2 = real(fftshift(ifft2(fft2( ifftshift(FxPsi) ).*fft2( ifftshift(kernel2Mx) ) )));
@@ -236,18 +240,18 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                Interp_kernel1,...
                                                Interp_kernel2,...
                                                Interp_kernel3,...
-                                               radDepthV(ix),...
+                                               radDepthV{1}(ix),...
                                                geoDistV(ix),...
                                                isoLatDistsX,...
                                                isoLatDistsZ);
        
         % Save dose for every bixel in cell array
-        doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix),1,bixelDose,numel(ct.cube),1);
+        doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix),1,bixelDose,dij.numOfVoxels,1);
                 
         % save computation time and memory by sequentially filling the 
         % sparse matrix dose.dij from the cell array
         if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
-            dij.physicalDose(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+            dij.physicalDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
         end
         
     end

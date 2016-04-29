@@ -1,4 +1,4 @@
-function jacob = matRad_jacobFunc(w,dij,cst,type)
+function jacobVec = matRad_jacobFunc(d_i,constraint,d_ref)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian function for inverse planning supporting max dose
 % constraint, min dose constraint, min max dose constraint, min mean, max
@@ -7,16 +7,17 @@ function jacob = matRad_jacobFunc(w,dij,cst,type)
 % min DVH constraint 
 % 
 % call
-%   jacob = matRad_jacobFunc(w,dij,cst,type)
+%   jacobVec = matRad_jacobFunc(d_i,constraint,d_ref)
 %
 % input
-%   w:    bixel weight vector
-%   dij:  dose influence matrix
-%   cst:  matRad cst struct
-%   type: type of optimizaiton; either 'none','effect' or 'RBExD'
+%   d_i:        dose vector
+%   constraint: matRad constraint struct
+%   d_ref:      reference dose
 %
 % output
-%   jacob: jacobian of constraint function
+%   jacobVec:  jacobian vector of constraint for differentation with
+%              respect to dose. need subsequent differentation for jacobian
+%              in beamlet weights (see jacobFunWrapper)
 %
 % References
 %
@@ -35,179 +36,84 @@ function jacob = matRad_jacobFunc(w,dij,cst,type)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,type);
+numOfVoxels = numel(d_i);
 
-% Initializes constraints
-jacob                   = sparse([]);
-physicalDoseProjection  = sparse([]);
-mAlphaDoseProjection    = sparse([]);
-mSqrtBetaDoseProjection = sparse([]);
-VoxelID                 = [];
-ConstraintID            = 0;
+if isequal(constraint.type, 'max dose constraint')
+    % use log sum exp approximation, see appendix A in
+    % http://scitation.aip.org/content/aapm/journal/medphys/41/8/10.1118/1.4883837
 
-% calulate Scaled effect
-if isequal(type,'RBExD')
-    ScaledEffect = d + dij.gamma;
-end
+    epsilon = 1e-3;
 
-% compute objective function for every VOI.
-for  i = 1:size(cst,1)
-    
-    % Only take OAR or target VOI.
-    if ~isempty(cst{i,4}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
-                    
-        % loop over all objectives and constraints for the current VOI
-        for j = 1:numel(cst{i,6})
-            
-            if isequal(cst{i,6}(j).type, 'max dose constraint')
-                % use log sum exp approximation, see appendix A in
-                % http://scitation.aip.org/content/aapm/journal/medphys/41/8/10.1118/1.4883837
-                
-                epsilon = 1e-3;
-                   
-                % get dose in VOI
-                d_i = d(cst{i,4});
-                
-                jacobVec = exp( (d_i-max(d_i))/epsilon );
-                jacobVec = jacobVec/sum(jacobVec);
-                
-            elseif isequal(cst{i,6}(j).type, 'min dose constraint')
-                % use log sum exp approximation, see appendix A in
-                % http://scitation.aip.org/content/aapm/journal/medphys/41/8/10.1118/1.4883837
-                
-                epsilon = 1e-3;
-                   
-                % get dose in VOI
-                d_i = d(cst{i,4});
-                
-                jacobVec = exp( (min(d_i)-d_i)/epsilon );
-                jacobVec = jacobVec/sum(jacobVec);
-                
-            elseif isequal(cst{i,6}(j).type, 'max mean dose constraint') || ...
-                   isequal(cst{i,6}(j).type, 'min mean dose constraint') || ...
-                   isequal(cst{i,6}(j).type, 'min max mean dose constraint') 
-               
-                    jacobVec = ones(numel(cst{i,4}),1)./numel(cst{i,4});
-                               
-            elseif isequal(cst{i,6}(j).type, 'max EUD constraint') || ...
-                   isequal(cst{i,6}(j).type, 'min EUD constraint') || ...
-                   isequal(cst{i,6}(j).type, 'min max EUD constraint') 
-                
-                % exponenent for EUD constraint
-                exponent = cst{i,6}(j).EUD;
+    jacobVec = exp( (d_i-max(d_i))/epsilon );
+    jacobVec = jacobVec/sum(jacobVec);
 
-                % get dose in VOI
-                d_i = d(cst{i,4});
-                
-                jacobVec = nthroot(1/size(cst{i,4},1),exponent) * sum(d_i.^exponent)^((1-exponent)/exponent) * ...
-                              (d_i.^(exponent-1));
-                                
-            elseif isequal(cst{i,6}(j).type, 'exact DVH constraint') || ...
-                   isequal(cst{i,6}(j).type, 'max DVH constraint') || ...
-                   isequal(cst{i,6}(j).type, 'min DVH constraint')
+elseif isequal(constraint.type, 'min dose constraint')
+    % use log sum exp approximation, see appendix A in
+    % http://scitation.aip.org/content/aapm/journal/medphys/41/8/10.1118/1.4883837
 
-                % get dose in VOI
-                d_i = d(cst{i,4});
-                d_i_sort = sort(d_i);
-                
-                % reference dose/effect/dosexRBE
-                if isequal(type,'effect')
-                    d_ref = dij.ax(cst{i,4}).*cst{i,6}(j).dose + dij.bx(cst{i,4})*cst{i,6}(j).dose^2;
-                else
-                    d_ref = cst{i,6}(j).dose;
-                end
-                
-                % calculate scaling
-                VoxelRatio   = 1;
-                NoVoxels     = max(VoxelRatio*numel(d_i),10);
-                absDiffsort  = sort(abs(d_ref - d_i_sort));
-                deltaDoseMax = absDiffsort(ceil(NoVoxels/2));
+    epsilon = 1e-3;
 
-                % calclulate DVHC scaling
-                ReferenceVal            = 0.01;
-                DVHCScaling             = min((log(1/ReferenceVal-1))/(2*deltaDoseMax),250);
-                
-                jacobVec = (2/size(cst{i,4},1))*DVHCScaling*exp(2*DVHCScaling*(d_i-d_ref))./(exp(2*DVHCScaling*(d_i-d_ref))+1).^2;
-                
-                % alternative constraint calculation 4/4 %               
-                % % get reference Volume
-                % refVol = cst{i,6}(j).volume/100;
-                %  
-                % % calc deviation
-                % deviation = d_i - d_ref;
-                % 
-                % % calc d_ref2: V(d_ref2) = refVol
-                % d_ref2 = matRad_calcInversDVH(refVol,d_i);
-                % 
-                % % apply lower and upper dose limits
-                % if isequal(cst{i,6}(j).type, 'max DVH constraint')
-                %      deviation(d_i < d_ref | d_i > d_ref2) = 0;
-                % elseif isequal(cst{i,6}(j).type, 'min DVH constraint')
-                %      deviation(d_i > d_ref | d_i < d_ref2) = 0;
-                % end
-                %   
-                % %jacobVec = ones(size(cst{i,4}));             % linear deviation
-                % %jacobVec = 2*deviation;                      % square deviation
-                % jacobVec = (1/size(cst{i,4},1))*2*deviation; % square deviation with normalization
-                % %jacobVec = 4*(deviation).^3;                  % squared square devioation
-                % alternative constraint calculation 4/4 %
-            
-            else
-            
-                jacobVec = [];
-                
-            end
-                                          
-           if isequal(type,'none') && ~isempty(jacobVec)
+    jacobVec = exp( (min(d_i)-d_i)/epsilon );
+    jacobVec = jacobVec/sum(jacobVec);
 
-               physicalDoseProjection = [physicalDoseProjection,sparse(cst{i,4},1,jacobVec,dij.numOfVoxels,1)];
+elseif isequal(constraint.type, 'max mean dose constraint') || ...
+       isequal(constraint.type, 'min mean dose constraint') || ...
+       isequal(constraint.type, 'min max mean dose constraint') 
 
-           elseif isequal(type,'effect') && ~isempty(jacobVec)
+    jacobVec = ones(numOfVoxels,1)./numOfVoxels;
 
-               mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4},1,jacobVec,dij.numOfVoxels,1)];
-               mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
-                                          sparse(cst{i,4},1:numel(cst{i,4}),2*jacobVec,dij.numOfVoxels,numel(cst{i,4}))];
-               VoxelID                 = [VoxelID ;cst{i,4}];
-               ConstraintID            = [ConstraintID, repmat(1 + ConstraintID(end),1,numel(cst{i,4}))];
+elseif isequal(constraint.type, 'max EUD constraint') || ...
+       isequal(constraint.type, 'min EUD constraint') || ...
+       isequal(constraint.type, 'min max EUD constraint') 
 
-           elseif isequal(type,'RBExD') && ~isempty(jacobVec)
+    % exponenent for EUD constraint
+    exponent = constraint.EUD;
 
-               delta = jacobVec./(2*dij.bx(cst{i,4}).*ScaledEffect(cst{i,4}));
+    jacobVec = nthroot(1/numOfVoxels,exponent) * sum(d_i.^exponent)^((1-exponent)/exponent) * ...
+                  (d_i.^(exponent-1));
 
-               mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4},1,delta,dij.numOfVoxels,1)];
-               mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
-                                          sparse(cst{i,4},1:numel(cst{i,4}),2*delta,dij.numOfVoxels,numel(cst{i,4}))];
-               VoxelID                 = [VoxelID ;cst{i,4}];
-               ConstraintID            = [ConstraintID, repmat(1 + ConstraintID(end),1,numel(cst{i,4}))];
+elseif isequal(constraint.type, 'max DVH constraint') || ...
+       isequal(constraint.type, 'min DVH constraint')
 
-           end
+    d_i_sort = sort(d_i);
 
-        end
-        
-    end
-    
-end
+    % calculate scaling
+    VoxelRatio   = 1;
+    NoVoxels     = max(VoxelRatio*numel(d_i),10);
+    absDiffsort  = sort(abs(d_ref - d_i_sort));
+    deltaDoseMax = absDiffsort(ceil(NoVoxels/2));
 
-% Calculate jacobian with dij projections
-if isequal(type,'none')
-    
-    if isempty(physicalDoseProjection)
-        jacob = [];
-    else   
-        jacob = physicalDoseProjection' * dij.physicalDose; 
-    end
+    % calclulate DVHC scaling
+    ReferenceVal            = 0.01;
+    DVHCScaling             = min((log(1/ReferenceVal-1))/(2*deltaDoseMax),250);
 
-elseif isequal(type,'effect') || isequal(type,'RBExD')
-    
-    if isempty(mSqrtBetaDoseProjection) || isempty(mAlphaDoseProjection)
-        jacob = [];
-    else
-    mSqrtBetaDoseProjection = mSqrtBetaDoseProjection' * dij.mSqrtBetaDose * w;
-    mSqrtBetaDoseProjection = sparse(VoxelID,ConstraintID(2:end),mSqrtBetaDoseProjection,...
-                                     size(mAlphaDoseProjection,1),size(mAlphaDoseProjection,2));
-    jacob                   = mAlphaDoseProjection' * dij.mAlphaDose + mSqrtBetaDoseProjection' * dij.mSqrtBetaDose;
-    end
-end
+    jacobVec = (2/numOfVoxels)*DVHCScaling*exp(2*DVHCScaling*(d_i-d_ref))./(exp(2*DVHCScaling*(d_i-d_ref))+1).^2;
+
+    % alternative constraint calculation 4/4 %               
+    % % get reference Volume
+    % refVol = cst{j,6}(k).volume/100;
+    %  
+    % % calc deviation
+    % deviation = d_i - d_ref;
+    % 
+    % % calc d_ref2: V(d_ref2) = refVol
+    % d_ref2 = matRad_calcInversDVH(refVol,d_i);
+    % 
+    % % apply lower and upper dose limits
+    % if isequal(cst{j,6}(k).type, 'max DVH constraint')
+    %      deviation(d_i < d_ref | d_i > d_ref2) = 0;
+    % elseif isequal(cst{j,6}(k).type, 'min DVH constraint')
+    %      deviation(d_i > d_ref | d_i < d_ref2) = 0;
+    % end
+    %   
+    % %jacobVec = ones(size(cst{j,4}));             % linear deviation
+    % %jacobVec = 2*deviation;                      % square deviation
+    % jacobVec = (1/size(cst{j,4},1))*2*deviation; % square deviation with normalization
+    % %jacobVec = 4*(deviation).^3;                  % squared square devioation
+    % alternative constraint calculation 4/4 %
+
+else
+
+    jacobVec = [];
 
 end
