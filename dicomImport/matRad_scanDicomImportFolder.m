@@ -30,6 +30,9 @@ function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% print current status of the import script
+fprintf('Obs: All dose files for the selected patient will be imported.\n');
+fprintf('Matching of plan and dose has to be preformed manually in the matlab command prompt or via the matRad GUI.\n');
 
 %% get all files in search directory
 
@@ -46,11 +49,35 @@ dirIndex = [mainDirInfo.isdir];
 fileList = {mainDirInfo(~dirIndex).name}';
 patientList = 0;
 
+% add files of subfolders
+% for i = 1:3
+subFolderList = {mainDirInfo(dirIndex).name}';
+subFolderList(ismember(subFolderList,{'.','..'})) = [];
+subFolderList = cellfun(@(x) fullfile(patDir,x),...
+        subFolderList, 'UniformOutput', false);
+subFolderFileList = [];
+for i = 1 : numel(subFolderList)
+    % loop subfolders
+    subDir = subFolderList{i};
+    % get information about main directory
+    subDirInfo = dir(subDir);
+    % get index of subfolders
+    dirIndex = [subDirInfo.isdir];
+    % list of filenames in main directory
+    subFileList = {subDirInfo(~dirIndex).name}';
+    if ~isempty(subFileList)
+        subFileList = cellfun(@(x) fullfile(subFolderList{i},x),...
+            subFileList, 'UniformOutput', false);
+    end
+    subFolderFileList = [subFolderFileList; subFileList];
+end
+
 % create full path for all files in main directory
 if ~isempty(fileList)
     fileList = cellfun(@(x) fullfile(patDir,x),...
         fileList, 'UniformOutput', false);
-    
+    % attach subfolderfiles to fileList
+    fileList = [fileList; subFolderFileList];
     %% check for dicom files and differentiate patients, types, and series
     numOfFiles = numel(fileList(:,1));
     h = waitbar(0,'Please wait...');
@@ -74,10 +101,31 @@ if ~isempty(fileList)
         catch
             fileList{i,3} = NaN;
         end
-        try
-            fileList{i,4} = info.SeriesInstanceUID;
-        catch
-            fileList{i,4} = NaN;
+        switch fileList{i,2}
+            case 'CT'
+                try
+                    fileList{i,4} = info.SeriesInstanceUID;
+                catch
+                    fileList{i,4} = NaN;
+                end
+            case 'RTPLAN'
+                try
+                    fileList{i,4} = info.SOPInstanceUID;
+                catch
+                    fileList{i,4} = NaN;
+                end
+            case 'RTDOSE'
+                try
+                    fileList{i,4} = info.SOPInstanceUID;
+                catch
+                    fileList{i,4} = NaN;
+                end
+            otherwise
+                try
+                    fileList{i,4} = info.SeriesInstanceUID;
+                catch
+                    fileList{i,4} = NaN;
+                end
         end
         try
             fileList{i,5} = num2str(info.SeriesNumber);
@@ -126,7 +174,34 @@ if ~isempty(fileList)
         catch
             fileList{i,11} = NaN;
         end
-        
+        try
+            if strcmp(info.Modality,'RTDOSE')
+                dosetext_helper = strcat('Instance','_', num2str(info.InstanceNumber),'_', ...
+                    info.DoseSummationType, '_', info.DoseType);
+                fileList{i,12} = dosetext_helper;
+            else
+                fileList{i,12} = NaN;
+            end
+        catch
+            fileList{i,12} = NaN;
+        end
+        % writing corresponding dose dist.
+        try
+            if strcmp(fileList{i,2},'RTPLAN')
+                corrDose = [];
+                numDose = length(fieldnames(info.ReferencedDoseSequence));
+                for j = 1:numDose
+                    fieldName = strcat('Item_',num2str(j));
+                    corrDose{j} = info.ReferencedDoseSequence.(fieldName).ReferencedSOPInstanceUID;
+                end
+                fileList{i,13} = corrDose;
+            else
+                fileList{i,13} = NaN;
+            end
+
+        catch
+            fileList{i,13} = NaN;
+        end
         matRad_progress(numOfFiles+1-i, numOfFiles);
         
     end
@@ -134,14 +209,6 @@ if ~isempty(fileList)
     
     if ~isempty(fileList)
         patientList = unique(fileList(:,3));
-%         % check if there is at least one RT struct and one ct file
-%         % available per patient
-%         for i = numel(patientList):-1:1
-%             if sum(strcmp('CT',fileList(:,2)) & strcmp(patientList{i},fileList(:,3))) < 1 || ...
-%                sum(strcmp('RTSTRUCT',fileList(:,2)) & strcmp(patientList{i},fileList(:,3))) < 1
-%                 patientList(i) = [];
-%             end
-%         end
         
         if isempty(patientList)
             msgbox('No patient found with DICOM CT _and_ RT structure set in patient directory!', 'Error','error');
@@ -152,9 +219,7 @@ if ~isempty(fileList)
         %error('No DICOM files found in patient directory');
     end
 else
-    h = msgbox('Search folder empty!', 'Error','error');
-    %h.WindowStyle = 'Modal';
-    %error('Search folder empty')
+    msgbox('Search folder empty!', 'Error','error');
     
 end
 
