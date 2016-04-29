@@ -1,4 +1,4 @@
-function ct = matRad_calcWaterEqD(ct,imagingMachine,protocol)
+function ct = matRad_calcWaterEqD(ct)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to calculate the equivalent densities from a 
 % dicom ct that originally uses intensity values
@@ -9,11 +9,6 @@ function ct = matRad_calcWaterEqD(ct,imagingMachine,protocol)
 % input
 %   ct:                 unprocessed dicom ct data which are stored as
 %                       intensity values (IV)
-%   imagingMachine      (optional) select imagingMachine
-%   protocol            (optional) select used protocol
-%                       Note that this data has to be prepared in
-%                       hlutLibrary -> hlutLibrary.imagingMachine
-%                                   --> hlutLibrary.imagingMachine.protocol
 %
 %                      HU = IV * slope + intercept
 %
