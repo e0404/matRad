@@ -34,9 +34,9 @@ function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin == 3
+if nargin == 4
     bDiaElem = false;
-elseif nargin < 3
+elseif nargin < 4
     error('not enough input parameters specified for matRad_addMargin');
 end
 
