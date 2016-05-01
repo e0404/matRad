@@ -182,7 +182,7 @@ end
 
 %% interpolate cube
 fprintf('\nInterpolating CT cube...');
-ct = matRad_interpCtCube(origCt, ctInfo, resolution);
+ct = matRad_interpDicomCtCube(origCt, ctInfo, resolution);
 fprintf('finished!\n');
 
 %% remember some parameters of original dicom

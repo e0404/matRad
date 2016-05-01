@@ -1,14 +1,32 @@
-function [ dose ] = matRad_interpDoseCube( ct, currDose )
-
+function [ dose ] = matRad_interpDicomDoseCube( ct, currDose )
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad function to interpolate a given Dicom Dose Cube dicom RTDOSE data
+%
+% call
+%   [ dose ] = matRad_interpDicomDoseCube( ct, currDose )
+%
+% input
+%   ct:             ct imported by the matRad_importDicomCt function
+%   currDose:   	  one (of several) dose cubes which should be interpolated
+%
+% output
+%   dose:           struct with different actual current dose cube and several
+%                   meta data
+%
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -73,10 +91,9 @@ if ~(isequal(dose.x,ct.x) && isequal(dose.y,ct.y) && isequal(dose.z,ct.z))
 end
 
 % write Dicom-Tags
-dose.dicomInfo.PixelSpacing            = [target_resolution.x; ... 
+dose.dicomInfo.PixelSpacing            = [target_resolution.x; ...
                                                 target_resolution.y];
 dose.dicomInfo.ImagePositionPatient    = [min(dose.x); min(dose.y); min(dose.z)];
-% only if z is evenly spaced!
 dose.dicomInfo.SliceThickness          = target_resolution.z;
 dose.dicomInfo.ImageOrientationPatient = info.ImageOrientationPatient;
 dose.dicomInfo.DoseType                = info.DoseType;
@@ -87,4 +104,3 @@ dose.dicomInfo.SOPInstanceUID          = info.SOPInstanceUID;
 dose.dicomInfo.ReferencedRTPlanSequence = info.ReferencedRTPlanSequence;
 
 end
-

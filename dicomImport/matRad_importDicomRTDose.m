@@ -40,7 +40,7 @@ numDoseFiles = size(rtDoseFiles,1);
 for i = 1 : numDoseFiles
     currDose = rtDoseFiles(i,:);
     itemName = strcat('Item_',num2str(i));
-    dose.(itemName) = matRad_interpDoseCube( ct, currDose);
+    dose.(itemName) = matRad_interpDicomDoseCube( ct, currDose);
 end
 
 %% put dose information and dose meta information to resultGUI

@@ -115,22 +115,21 @@ for i = 1:length(BeamSeqNames)
     % there might be several SAD's, e.g. compensator?
     stf(i).SAD           = machine.meta.SAD;
     stf(i).isoCenter     = pln.isoCenter;
-%     stf(currBeam).isoCenter     = ControlPointSeq.Item_1.IsocenterPosition.';
     stf(i).sourcePoint_bev = [0 -stf(i).SAD 0];
     % compute coordinates in lps coordinate system, i.e. rotate beam
     % geometry around fixed patient; use transpose matrices because we are
     % working with row vectors
-    
+
     % Rotation around Z axis (gantry)
     rotMx_XY_T = [ cosd(pln.gantryAngles(i)) sind(pln.gantryAngles(i)) 0;
                   -sind(pln.gantryAngles(i)) cosd(pln.gantryAngles(i)) 0;
                                            0                         0 1];
-    
+
     % Rotation around Y axis (couch)
     rotMx_XZ_T = [cosd(pln.couchAngles(i)) 0 -sind(pln.couchAngles(i));
                                          0 1                        0;
                   sind(pln.couchAngles(i)) 0  cosd(pln.couchAngles(i))];
-    
+
     % Rotated Source point (1st gantry, 2nd couch)
     stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMx_XY_T*rotMx_XZ_T;
 
