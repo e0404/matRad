@@ -31,8 +31,8 @@ function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% print current status of the import script
-fprintf('Obs: All dose files for the selected patient will be imported.\n');
-fprintf('Matching of plan and dose has to be preformed manually in the matlab command prompt or via the matRad GUI.\n');
+fprintf('Obs: Dose series matched to the different plans has been displayed and selected.\n');
+fprintf('Rechecking of correct matching procedure is recommended.\n');
 
 %% get all files in search directory
 
