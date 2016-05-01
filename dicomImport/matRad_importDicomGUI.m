@@ -151,8 +151,7 @@ if ~isempty(get(hObject,'String'))
     %   9. res_x
     %   10. res_y
     %   11. res_z
-    %   12. detailed dose description
-    %selected_patient = handles.patient_listbox.String(handles.patient_listbox.Value);
+    %   12. detailed dose description - currently not in use for GUI user
     patient_listbox = get(handles.patient_listbox,'String');
     selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
     if get(handles.SeriesUID_radiobutton,'Value') == 1
@@ -277,12 +276,10 @@ patient_listbox = get(handles.patient_listbox,'String');
 ctseries_listbox = get(handles.ctseries_listbox,'String');
 rtplan_listbox = get(handles.rtplan_listbox,'String');
 doseseries_listbox = get(handles.rtplan_listbox,'String');
-%rtseries_listbox = get(handles.rtseries_listbox,'String');
 selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
 selected_ctseries = ctseries_listbox(get(handles.ctseries_listbox,'Value'));
 selected_rtplan = rtplan_listbox(get(handles.rtplan_listbox,'Value'));
-% selected_doseseries = doseseries_listbox(get(handles.doseseries_listbox,'Value'));
-%selected_rtseries = rtseries_listbox(get(handles.rtseries_listbox,'Value'));
+
 
 if get(handles.SeriesUID_radiobutton,'Value') == 1
     files.ct = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
@@ -406,7 +403,6 @@ if isfield(handles, 'fileList')
     set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),5)));
     set(handles.rtseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),5)));
     set(handles.rtplan_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTPLAN') & strcmp(handles.fileList(:,3), selected_patient),5)));
-    % Problem: All Dose Series have equal ID. Maybe use another ID
     set(handles.doseseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTDOSE') & strcmp(handles.fileList(:,3), selected_patient),12));
 else
     fprintf('No patient loaded, so just switching default display option to SeriesNumber. \n');
