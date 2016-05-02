@@ -42,7 +42,7 @@ if nargin < 3
     visBool = 0;
 end
 
-% creation of info list
+% creation of ctInfo list
 numOfSlices = size(ctList,1);
 fprintf('\ncreating info...')
 for i = 1:numOfSlices
@@ -50,42 +50,46 @@ for i = 1:numOfSlices
     
     % remember relevant dicom info - do not record everything as some tags
     % might not been defined for individual files
-    info(i).PixelSpacing            = tmpDicomInfo.PixelSpacing;
-    info(i).ImagePositionPatient    = tmpDicomInfo.ImagePositionPatient;
-    info(i).SliceThickness          = tmpDicomInfo.SliceThickness;
-    info(i).ImageOrientationPatient = tmpDicomInfo.ImageOrientationPatient;
-    info(i).PatientPosition         = tmpDicomInfo.PatientPosition;
-    info(i).Rows                    = tmpDicomInfo.Rows;
-    info(i).Columns                 = tmpDicomInfo.Columns;
-    info(i).Width                   = tmpDicomInfo.Width;
-    info(i).Height                  = tmpDicomInfo.Height;
-    info(i).RescaleSlope            = tmpDicomInfo.RescaleSlope;
-    info(i).RescaleIntercept        = tmpDicomInfo.RescaleIntercept;
+    ctInfo(i).PixelSpacing            = tmpDicomInfo.PixelSpacing;
+    ctInfo(i).ImagePositionPatient    = tmpDicomInfo.ImagePositionPatient;
+    ctInfo(i).SliceThickness          = tmpDicomInfo.SliceThickness;
+    ctInfo(i).ImageOrientationPatient = tmpDicomInfo.ImageOrientationPatient;
+    ctInfo(i).PatientPosition         = tmpDicomInfo.PatientPosition;
+    ctInfo(i).Rows                    = tmpDicomInfo.Rows;
+    ctInfo(i).Columns                 = tmpDicomInfo.Columns;
+    ctInfo(i).Width                   = tmpDicomInfo.Width;
+    ctInfo(i).Height                  = tmpDicomInfo.Height;
+    ctInfo(i).RescaleSlope            = tmpDicomInfo.RescaleSlope;
+    ctInfo(i).RescaleIntercept        = tmpDicomInfo.RescaleIntercept;
+    
+    if i == 1
+        completeDicom = tmpDicomInfo;
+    end
     
     matRad_progress(i,numOfSlices);
 end
 
 % adjusting sequence of slices (filenames may not be ordered propperly....
-% e.g. CT1.dcm, CT10.dcm, CT100zCoordList = [info.ImagePositionPatient(1,3)]';.dcm, CT101.dcm,...
-CoordList = [info.ImagePositionPatient]';
+% e.g. CT1.dcm, CT10.dcm, CT100zCoordList = [ctInfo.ImagePositionPatient(1,3)]';.dcm, CT101.dcm,...
+CoordList = [ctInfo.ImagePositionPatient]';
 [~, indexing] = sort(CoordList(:,3)); % get sortation from z-coordinates
 
 ctList = ctList(indexing);
-info = info(indexing);
+ctInfo = ctInfo(indexing);
 
 %% check data set for consistency
-if size(unique([info.PixelSpacing]','rows'),1) > 1
+if size(unique([ctInfo.PixelSpacing]','rows'),1) > 1
     error('Different pixel size in different CT slices');
 end
 
-coordsOfFirstPixel = [info.ImagePositionPatient];
+coordsOfFirstPixel = [ctInfo.ImagePositionPatient];
 if numel(unique(coordsOfFirstPixel(1,:))) > 1 || numel(unique(coordsOfFirstPixel(2,:))) > 1
     error('Ct slices are not aligned');
 end
 if sum(diff(coordsOfFirstPixel(3,:))<=0) > 0
     error('Ct slices not monotonically increasing');
 end
-if numel(unique([info.Rows])) > 1 || numel(unique([info.Columns])) > 1
+if numel(unique([ctInfo.Rows])) > 1 || numel(unique([ctInfo.Columns])) > 1
     error('Ct slice sizes inconsistent');
 end
 
@@ -104,7 +108,7 @@ end
 % FFP     Feet First-Prone                  (not supported)
 % FFS     Feet First-Supine                 (supported)
 
-if isempty(regexp(info(1).PatientPosition,'S', 'once'))
+if isempty(regexp(ctInfo(1).PatientPosition,'S', 'once'))
     error(['This Patient Position is not supported by matRad.'...
         ' As of now only ''HFS'' (Head First-Supine) and ''FFS'''...
         ' (Feet First-Supine) can be processed.'])    
@@ -112,7 +116,7 @@ end
 
 %% creation of ct-cube
 fprintf('reading slices...')
-origCt = zeros(info(1).Height, info(1).Width, numOfSlices);
+origCt = zeros(ctInfo(1).Height, ctInfo(1).Width, numOfSlices);
 for i = 1:numOfSlices
     currentFilename = ctList{i};
     [currentImage, map] = dicomread(currentFilename);
@@ -145,8 +149,8 @@ fprintf('\nz-coordinates taken from ImagePositionPatient\n')
 
 % The x- & y-direction in lps-coordinates are specified in:
 % ImageOrientationPatient
-xDir = info(1).ImageOrientationPatient(1:3); % lps: [1;0;0]
-yDir = info(1).ImageOrientationPatient(4:6); % lps: [0;1;0]
+xDir = ctInfo(1).ImageOrientationPatient(1:3); % lps: [1;0;0]
+yDir = ctInfo(1).ImageOrientationPatient(4:6); % lps: [0;1;0]
 nonStandardDirection = false;
 
 % correct x- & y-direction
@@ -178,21 +182,27 @@ end
 
 %% interpolate cube
 fprintf('\nInterpolating CT cube...');
-ct = matRad_interpCtCube(origCt, info, resolution);
+ct = matRad_interpDicomCtCube(origCt, ctInfo, resolution);
 fprintf('finished!\n');
 
 %% remember some parameters of original dicom
-ct.dicomInfo.PixelSpacing            = info(1).PixelSpacing;
-                                       tmp = [info.ImagePositionPatient];
+ct.dicomInfo.PixelSpacing            = ctInfo(1).PixelSpacing;
+                                       tmp = [ctInfo.ImagePositionPatient];
 ct.dicomInfo.SlicePositions          = tmp(3,:);
-ct.dicomInfo.SliceThickness          = [info.SliceThickness];
-ct.dicomInfo.ImagePositionPatient    = info(1).ImagePositionPatient;
-ct.dicomInfo.ImageOrientationPatient = info(1).ImageOrientationPatient;
-ct.dicomInfo.PatientPosition         = info(1).PatientPosition;
-ct.dicomInfo.Width                   = info(1).Width;
-ct.dicomInfo.Height                  = info(1).Height;
-ct.dicomInfo.RescaleSlope            = info(1).RescaleSlope;
-ct.dicomInfo.RescaleIntercept        = info(1).RescaleIntercept;
+ct.dicomInfo.SliceThickness          = [ctInfo.SliceThickness];
+ct.dicomInfo.ImagePositionPatient    = ctInfo(1).ImagePositionPatient;
+ct.dicomInfo.ImageOrientationPatient = ctInfo(1).ImageOrientationPatient;
+ct.dicomInfo.PatientPosition         = ctInfo(1).PatientPosition;
+ct.dicomInfo.Width                   = ctInfo(1).Width;
+ct.dicomInfo.Height                  = ctInfo(1).Height;
+ct.dicomInfo.RescaleSlope            = ctInfo(1).RescaleSlope;
+ct.dicomInfo.RescaleIntercept        = ctInfo(1).RescaleIntercept;
+if isfield(completeDicom,'PatientName')
+    ct.dicomInfo.PatientName         = completeDicom.PatientName;
+end
+
+ct.dicomInfo_org = completeDicom;
+ct.timeStamp = datestr(clock);
 
 % convert to water equivalent electron densities
 fprintf('\nconversion of ct-Cube to waterEqD...');
