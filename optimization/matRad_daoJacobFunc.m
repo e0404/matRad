@@ -56,7 +56,7 @@ jacob_dao = sparse(i,j,s, ...
 % compute jacobian of dosimetric constrainst
 
 % dosimetric jacobian in bixel space
-jacob_dos_bixel = matRad_jacobFunc(apertureInfo.bixelWeights,dij,cst,type);
+jacob_dos_bixel = matRad_jacobFuncWrapper(apertureInfo.bixelWeights,dij,cst,type);
 
 % allocate sparse matrix for dosimetric jacobian
 jacob_dos = sparse(size(jacob_dos_bixel,1),numel(apertureInfoVec));

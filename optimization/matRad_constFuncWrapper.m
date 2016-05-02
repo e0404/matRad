@@ -36,6 +36,10 @@ for  i = 1:size(cst,1)
                     d_i = d{1}(cst{i,4}{1});
 
                     c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref)];
+                    
+                else
+                    
+                    error('Invalid robustness setting.');
 
                 end % if we are in the nominal sceario or rob opt
             

@@ -40,7 +40,7 @@ rightLeafPos = apertureInfoVec(1+apertureInfo.totalNumOfLeafPairs+apertureInfo.t
 c_dao        = rightLeafPos - leftLeafPos;
 
 % bixel based objective function calculation
-c_dos = matRad_constFunc(apertureInfo.bixelWeights,dij,cst,type);
+c_dos = matRad_constFuncWrapper(apertureInfo.bixelWeights,dij,cst,type);
 
 % concatenate
 c = [c_dao; c_dos];
