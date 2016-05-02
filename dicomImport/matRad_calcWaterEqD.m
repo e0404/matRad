@@ -4,7 +4,7 @@ function ct = matRad_calcWaterEqD(ct)
 % dicom ct that originally uses intensity values
 %
 % call
-%   ct = matRad_calcWaterEqD(ct, slope, intercept)
+%   ct = matRad_calcWaterEqD(ct)
 %
 % input
 %   ct: unprocessed dicom ct data which are stored as intensity values (IV)
