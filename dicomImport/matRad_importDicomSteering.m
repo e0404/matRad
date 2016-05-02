@@ -18,7 +18,8 @@ function [stf, pln] = matRad_importDicomSteering(ct, pln, rtPlanFile)
 %
 % References
 %   -
-%
+% Note
+% not implemented - compensator. Fixed SAD.
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -34,11 +35,10 @@ function [stf, pln] = matRad_importDicomSteering(ct, pln, rtPlanFile)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% print current status of the import script
-fprintf('not implemented - compensator. Fixed SAD.,\n');
-
 %% load plan file
 % load machine data
+
+pln.machine = 'HIT';
 fileName = [pln.radiationMode '_' pln.machine];
 try
    load(fileName);
@@ -137,19 +137,20 @@ for i = 1:length(BeamSeqNames)
     ControlPointSeqNames = fieldnames(ControlPointSeq);
     numOfContrPointSeq = length(ControlPointSeqNames);
     % create empty helper matrix
-    StfTmp = zeros(0,4);
+    StfTmp = zeros(0,5);
     for currContr = 1:numOfContrPointSeq
-
         currContrSeq = ControlPointSeq.(ControlPointSeqNames{currContr});
         % get energy, equal for all coming elements in the next loop
         currEnergy = currContrSeq.NominalBeamEnergy;
+        % get focusValue
+        currFocus = unique(currContrSeq.ScanningSpotSize);
         % get the Spotpositions
         numOfScanSpots = currContrSeq.NumberOfScanSpotPositions;
         % x is 1, 3, 5 ...; y 2, 4, 6,
         c1_help = currContrSeq.ScanSpotPositionMap(1:2:(2 * numOfScanSpots));
         c2_help = currContrSeq.ScanSpotPositionMap(2:2:(2 * numOfScanSpots));
         weight_help = currContrSeq.ScanSpotMetersetWeights;
-        StfTmp = [StfTmp; c1_help c2_help (currEnergy * ones(numOfScanSpots,1)) weight_help];
+        StfTmp = [StfTmp; c1_help c2_help (currEnergy * ones(numOfScanSpots,1)) weight_help (currFocus * ones(numOfScanSpots,1))];
     end
     
     % finds all unique rays and saves them in to the stf
@@ -157,6 +158,8 @@ for i = 1:length(BeamSeqNames)
     for j = 1:size(RayPosTmp,1)
         stf(i).ray(j).rayPos_bev = double([RayPosTmp(j,1) 0 RayPosTmp(j,2)]);
         stf(i).ray(j).energy = [];
+        stf(i).ray(j).focusSigma = [];
+        stf(i).ray(j).focusIx = [];
         stf(i).ray(j).weight = [];
     end
     
@@ -164,8 +167,10 @@ for i = 1:length(BeamSeqNames)
     for j = 1:size(StfTmp,1)
         k = ic(j);
         stf(i).ray(k).energy = [stf(i).ray(k).energy double(StfTmp(j,3))];
+        stf(i).ray(k).focusSigma = [stf(i).ray(k).focusSigma double(StfTmp(j,5))];
         stf(i).ray(k).weight = [stf(i).ray(k).weight double(StfTmp(j,4))/1e6*pln.numOfFractions];
     end
+    
     
     % getting some information of the rays
     % clean up energies, so they appear only one time per energy
@@ -188,7 +193,7 @@ for i = 1:length(BeamSeqNames)
     
     stf(i).totalNumOfBixels = numOfBixels;
     
-    % get bixelwidth looks way too long to get the 2nd max element
+    % get bixelwidth
     bixelWidth_help = zeros(size(stf(i).ray,2),2);
     for j = 1:stf(i).numOfRays
         bixelWidth_help(j,1) = stf(i).ray(j).rayPos_bev(1);
@@ -197,7 +202,7 @@ for i = 1:length(BeamSeqNames)
     bixelWidth_help1 = unique(bixelWidth_help(:,1),'sorted');
     bixelWidth_help2 = unique(bixelWidth_help(:,2),'sorted');
     
-    bixelWidth = unique([diff(bixelWidth_help1) diff(bixelWidth_help2)];
+    bixelWidth = unique([unique(diff(bixelWidth_help1)) unique(diff(bixelWidth_help2))]);
     
     if numel(bixelWidth) == 1
         stf(i).bixelWidth = bixelWidth;
@@ -248,17 +253,6 @@ for i = 1:length(BeamSeqNames)
             stf(i).ray(j).SSD = double(2 * stf(i).SAD * alpha(ixSSD));
             % book keeping & calculate focus index
             stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);
-            currentMinimumFWHM = interp1(machine.meta.LUT_bxWidthminFWHM(1,:),machine.meta.LUT_bxWidthminFWHM(2,:),stf(i).bixelWidth);
-            focusIx  =  ones(stf(i).numOfBixelsPerRay(j),1);
-            [~, vEnergyIx] = min(abs(bsxfun(@minus,[machine.data.energy]',...
-                            repmat(stf(i).ray(j).energy,length([machine.data]),1))));
-
-            % get for each spot the focus index
-            for k = 1:stf(i).numOfBixelsPerRay(j)                    
-                focusIx(k) = find(machine.data(vEnergyIx(k)).initFocus.SisFWHMAtIso > currentMinimumFWHM,1);
-            end
-
-        stf(i).ray(j).focusIx = double(focusIx');
     end
     
     % use the original machine energies
@@ -272,6 +266,20 @@ for i = 1:length(BeamSeqNames)
             else
                 error('No match between imported and machine data. Maybe wrong machine loaded.');
             end
+        end
+    end
+    
+    % get focusIx instead of focusSigma
+    for j = 1:stf(i).numOfRays
+        % loop over all energies
+        numOfEnergy = length(stf(i).ray(j).energy);
+        for k = 1:numOfEnergy
+            energyTemp = stf(i).ray(j).energy(k);
+            focusSigma = stf(i).ray(j).focusSigma(k);
+            energyIxTemp = find([machine.data.energy] == energyTemp);
+            focusIxTemp = find(abs([machine.data(energyIxTemp).initFocus.SisFWHMAtIso] - focusSigma )< 10^-3);
+            stf(i).ray(j).focusIx(k) = focusIxTemp;
+            stf(i).ray(j).focusSigma(k) = machine.data(energyIxTemp).initFocus.SisFWHMAtIso(stf(i).ray(j).focusIx(k));
         end
     end
     
