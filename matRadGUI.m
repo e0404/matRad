@@ -1600,8 +1600,7 @@ for i = 1:size(cst,1)
        data{Counter,6}  = num2str(cst{i,6}(j).dose);
        data{Counter,7}  = cst{i,6}(j).EUD;
        data{Counter,8}  = cst{i,6}(j).volume;
-       data{Counter,9}  = cst{i,6}(j).coverage;
-       data{Counter,10} = cst{i,6}(j).robustness;
+       data{Counter,9}  = cst{i,6}(j).robustness;
        
        Counter = Counter +1;
        end
@@ -1666,8 +1665,7 @@ for i = 1:size(OldCst,1)
               NewCst{Cnt,4}(CntObjF,1).penalty    = data{j,5};
               NewCst{Cnt,4}(CntObjF,1).EUD        = data{j,7};
               NewCst{Cnt,4}(CntObjF,1).volume     = data{j,8};
-              NewCst{Cnt,4}(CntObjF,1).coverage   = data{j,9};
-              NewCst{Cnt,4}(CntObjF,1).robustness = data{j,10};
+              NewCst{Cnt,4}(CntObjF,1).robustness = data{j,9};
              
             end
             
