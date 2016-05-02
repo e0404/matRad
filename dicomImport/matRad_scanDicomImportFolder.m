@@ -73,11 +73,12 @@ for i = 1 : numel(subFolderList)
 end
 
 % create full path for all files in main directory
+fileList = cellfun(@(x) fullfile(patDir,x),...
+    fileList, 'UniformOutput', false);
+% attach subfolderfiles to fileList
+fileList = [fileList; subFolderFileList];
+
 if ~isempty(fileList)
-    fileList = cellfun(@(x) fullfile(patDir,x),...
-        fileList, 'UniformOutput', false);
-    % attach subfolderfiles to fileList
-    fileList = [fileList; subFolderFileList];
     %% check for dicom files and differentiate patients, types, and series
     numOfFiles = numel(fileList(:,1));
     h = waitbar(0,'Please wait...');
