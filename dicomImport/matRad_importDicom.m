@@ -87,6 +87,8 @@ if size(files.rtplan,1)
             %% import steering file
             % pln output because bixelWidth is determined via the stf
             [stf, pln] = matRad_importDicomSteering(ct, pln, files.rtplan);
+        else
+            warning('No support for DICOM import of steering information for photons.');
         end
     end
 end
@@ -118,7 +120,7 @@ matRadFileName = [files.ct{1,3} '.mat']; % use default from dicom
 [FileName,PathName] = uiputfile('*','Save as...',matRadFileName);
 if ischar(FileName)
     % delete unnecessary variables
-    clearvars -except ct cst pln stf resultGUI dij FileName PathName
+    clearvars -except ct cst pln stf resultGUI FileName PathName
     % save all except FileName and PathName
     save([PathName, FileName], '-regexp', '^(?!(FileName|PathName)$).','-v7.3');
 end
