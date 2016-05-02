@@ -74,14 +74,14 @@ else
 end
 
 %% determine pln parameters
-if size(files.rtplan,1)
+if isfield(files,'rtplan')
     if ~(cellfun(@isempty,files.rtplan(1,:)))
         pln = matRad_importDicomRTPlan(ct, files.rtplan);
     end
 end
 
 %% import stf
-if size(files.rtplan,1)
+if isfield(files,'rtplan')
     if ~(cellfun(@isempty,files.rtplan(1,:)))
         if (strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon'))
             %% import steering file
@@ -94,7 +94,7 @@ if size(files.rtplan,1)
 end
 
 %% import dose cube
-if size(files.rtdose,1)
+if isfield(files,'rtdose')
     if ~(cellfun(@isempty,files.rtdose(1,:)))
         fprintf('loading Dose files \n', structures(i).structName);
         resultGUI = matRad_importDicomRTDose(ct, files.rtdose);

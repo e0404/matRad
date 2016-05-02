@@ -36,35 +36,49 @@ function ct = matRad_calcWaterEqD(ct)
 ctHU = double(ct.cube{1}) * double(ct.dicomInfo.RescaleSlope) + double(ct.dicomInfo.RescaleIntercept);
 
 %% conversion from HU to water equivalent density
-%  load hlut
-%  file standard
-%  out of dicom tags
-manufacturer = ct.dicomInfo_org.Manufacturer;
-model = ct.dicomInfo_org.ManufacturerModelName;
-convKernel = ct.dicomInfo_org.ConvolutionKernel;
 
-% convention of fileName
-hlutFileName = strcat(manufacturer, '-', model, '-ConvolutionKernel-',...
-    convKernel, '.hlut');
+% load hlut
 
-% check whether fileNames used '-' or '_' instead of blanks
-hlutFileCell{1} = hlutFileName;
-hlutFileCell{2} = regexprep(hlutFileName,' ','-');
-hlutFileCell{3} = regexprep(hlutFileName,' ','_');
+% directory with look up table files
+hlutDir = strcat(fileparts(mfilename('fullpath')),'\hlutLibrary\');
 
-for i = 1:3
-    existIx(i) = exist(hlutFileCell{i}, 'file') == 2;
-end
+% if possible -> file standard out of dicom tags
+try
+    manufacturer = ct.dicomInfo_org.Manufacturer;
+    model = ct.dicomInfo_org.ManufacturerModelName;
+    convKernel = ct.dicomInfo_org.ConvolutionKernel;
 
-if sum(existIx) == 0
-    warnText = {['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
+    hlutFileName = strcat(hlutDir,manufacturer, '-', model, '-ConvolutionKernel-',...
+        convKernel, '.hlut');
+
+    % check whether fileNames used '-' or '_' instead of blanks
+    hlutFileCell{1} = hlutFileName;
+    hlutFileCell{2} = regexprep(hlutFileName,' ','-');
+    hlutFileCell{3} = regexprep(hlutFileName,' ','_');
+
+    for i = 1:3
+        existIx(i) = exist(hlutFileCell{i}, 'file') == 2;
+    end
+
+    if sum(existIx) == 0
+        warnText = {['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
+            ' matRad default HLUT loaded']};
+        warndlg(warnText,'Could not load HLUT');
+        warning('matRad default HLUT loaded');
+        % load default HLUT
+        hlutFileName = strcat(hlutDir,'matRad_default.hlut');
+    else
+        hlutFileName = hlutFileCell{existIx};
+    end
+
+catch
+    warnText = {['Could not construct hlut file name from DICOM tags.' ...
         ' matRad default HLUT loaded']};
     warndlg(warnText,'Could not load HLUT');
     warning('matRad default HLUT loaded');
-    % load default HLUT
-    hlutFileName = 'matRad_default.hlut';
-else
-    hlutFileName = hlutFileCell{existIx};
+       
+    hlutFileName = strcat(hlutDir,'matRad_default.hlut');
+
 end
 
 hlutFile = fopen(hlutFileName,'r');

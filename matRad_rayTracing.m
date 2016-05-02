@@ -53,7 +53,7 @@ coords = zeros(numel(ct.cube),3);
 coords(V,:) = rot_coordsV;
 
 % calculate spacing of rays on ray matrix
-rayMxSpacing = min([ct.resolution.x ct.resolution.y ct.resolution.z]);
+rayMxSpacing = 1/sqrt(2) * min([ct.resolution.x ct.resolution.y ct.resolution.z]);
 
 % define candidate ray matrix covering 1000x1000mm^2
 numOfCandidateRays = 2 * ceil(500/rayMxSpacing) + 1;

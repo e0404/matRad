@@ -958,7 +958,7 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
     end
     warning('off','MATLAB:legend:PlotEmpty')
     myLegend = legend('show','location','NorthEast');
-    set(myLegend,'FontSize',defaultFontSize);
+    set(myLegend,'FontSize',defaultFontSize,'Interpreter','none');
     set(myLegend,'color','none');
     set(myLegend,'TextColor', [1 1 1]);
     legend boxoff

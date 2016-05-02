@@ -33,10 +33,7 @@ function indices = matRad_convRtssContours2Indices(structure,ct)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-voiCube = zeros(size(ct.cube));
-
-dim1 = size(ct.cube,1);
-dim2 = size(ct.cube,2);
+voiCube = zeros(ct.cubeDim);
 
 % loop over all closed contour items
 for i = 1:size(structure.item,2)
@@ -52,10 +49,10 @@ for i = 1:size(structure.item,2)
         round2 = @(a,b) round(a*10^b)/10^b;
         dicomCtSliceThickness = ct.dicomInfo.SliceThickness(round2(ct.dicomInfo.SlicePositions,2)==round2(dicomCtSlicePos,2));
         
-        coords1 = interp1(ct.x,1:dim1,structure.item(i).points(:,1),'linear','extrap');
-        coords2 = interp1(ct.y,1:dim2,structure.item(i).points(:,2),'linear','extrap');
+        coords1 = interp1(ct.x,1:ct.cubeDim(2),structure.item(i).points(:,1),'linear','extrap');
+        coords2 = interp1(ct.y,1:ct.cubeDim(1),structure.item(i).points(:,2),'linear','extrap');
         
-        binIn = poly2mask(coords1,coords2,dim1,dim2);
+        binIn = poly2mask(coords1,coords2,ct.cubeDim(1),ct.cubeDim(2));
         
         slicesInMatradCt = find(dicomCtSlicePos+dicomCtSliceThickness/2 > ct.z & dicomCtSlicePos-dicomCtSliceThickness/2 <= ct.z);
 
