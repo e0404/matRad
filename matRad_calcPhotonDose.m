@@ -186,7 +186,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
         if useCustomPrimFluenceBool % use custom primary fluence if specifried
             
             r     = sqrt( (X-stf(i).ray(j).rayPos(1)).^2 + (Z-stf(i).ray(j).rayPos(3)).^2 );
-            Psi   = interp1(primaryFluence(:,1),primaryFluence(:,2),r);
+            Psi   = matRad_interp1(primaryFluence(:,1),primaryFluence(:,2),r);
             FxPsi = F .* Psi;
         
             % 2D convolution of Fluence and Kernels in fourier domain

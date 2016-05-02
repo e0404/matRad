@@ -63,7 +63,7 @@ energySigmaLUT  = unique([[stf.ray(:).energy]; [stf.ray(:).focusIx] ; vSSDBixel]
 % calculate for each energy its inital beam width considering foci and SSD
 for i = 1:size(energySigmaLUT,1)
     energyIx = find(ismember([machine.data(:).energy],energySigmaLUT(i,1)));
-    energySigmaLUT(i,4) = interp1(machine.data(energyIx).initFocus.dist(energySigmaLUT(i,2),:),...
+    energySigmaLUT(i,4) = matRad_interp1(machine.data(energyIx).initFocus.dist(energySigmaLUT(i,2),:),...
                                   machine.data(energyIx).initFocus.sigma(energySigmaLUT(i,2),:),...
                                   energySigmaLUT(i,3));
 end
@@ -146,7 +146,7 @@ for energyIx = vEnergiesIx
                 r_cut = 0;
             else
                 try
-                    r_cut = interp1(cumAreaUnique,r_mid(IdxUnique),currCutOffLevel);
+                    r_cut = matRad_interp1(cumAreaUnique,r_mid(IdxUnique),currCutOffLevel);
                 catch
                     error('error in matRadcalcLateralParticleCutOff - cannot determine cut off');
                 end
@@ -199,7 +199,7 @@ if visBool
     [X,Y] = meshgrid(vLatX,vLatX);
     vRadDist = sqrt(X.^2 + Y.^2);
     focusIdx = 1;
-    SigmaInI = interp1(machine.data(energyIx).initFocus(focusIdx).dist,...
+    SigmaInI = matRad_interp1(machine.data(energyIx).initFocus(focusIdx).dist,...
                        machine.data(energyIx).initFocus(focusIdx).sigma,...
                        machine.meta.SAD);
     

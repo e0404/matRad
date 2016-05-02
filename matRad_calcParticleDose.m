@@ -236,8 +236,8 @@ for i = 1:dij.numOfBeams; % loop over all beams
 
                     % peform fine 2D clipping  
                     if length(machine.data(energyIx).LatCutOff.CutOff) > 1
-                        currIx(currIx) = interp1(machine.data(energyIx).LatCutOff.depths + machine.data(energyIx).offset,...
-                            machine.data(energyIx).LatCutOff.CutOff.^2, radDepths(currIx)) >= radialDist_sq(currIx);
+                        currIx(currIx) = matRad_interp1((machine.data(energyIx).LatCutOff.depths + machine.data(energyIx).offset)',...
+                            (machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= radialDist_sq(currIx);
                     end
                 else
                     error('cutoff must be a value between 0 and 1')
