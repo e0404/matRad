@@ -57,8 +57,8 @@ dose.cube = squeeze(dosedata(:,:,1,:));
 % ct resolution is target resolution, now convert to new cube;
 
 % generating grid vectors
-x = info.ImagePositionPatient(1) + info.PixelSpacing(1) * double([0:info.Columns - 1]);
-y = info.ImagePositionPatient(2) + info.PixelSpacing(2) * double([0:info.Rows - 1]');
+x = info.ImagePositionPatient(1) + info.PixelSpacing(1) * double([0:info.Columns - 1]');
+y = info.ImagePositionPatient(2) + info.PixelSpacing(2) * double([0:info.Rows - 1]);
 z = [info.ImagePositionPatient(3) + info.GridFrameOffsetVector]';
 
 % new vectors
@@ -77,12 +77,12 @@ doseScale = (2 ^ bitDepth - 1) * gridScale;
 dose.cube = doseScale * dose.cube;
 
 % interpolation to ct grid
-dose.cube = interp3(x,y,z,dose.cube,xq,yq,zq,'linear',0);
+dose.cube = interp3(y,x,z,dose.cube,yq,xq,zq,'linear',0);
 
 % write new parameters
 dose.resolution = ct.resolution;
-dose.x = xq';
-dose.y = yq';
+dose.x = xq;
+dose.y = yq;
 dose.z = zq;
 
 % check whether grid position are the same as the CT grid positions are

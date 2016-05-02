@@ -137,7 +137,8 @@ pln.runDAO          = NaN; % 1/true: run DAO, 0/false: don't / will be ignored f
 pln.machine         = 'unknown';
 
 % timestamp
-pln.timeStamp = datetime;
+pln.timeStamp = datestr(clock);
+
 try
    pln.SOPClassUID = planInfo.SOPClassUID;
    pln.SOPInstanceUID = planInfo.SOPInstanceUID;

@@ -68,5 +68,5 @@ for i = 1 : numDoseFiles
     
 end
 % save timeStamp
-resultGUI.doseMetaInfo.timeStamp = datetime;
+resultGUI.doseMetaInfo.timeStamp = datestr(clock);
 end

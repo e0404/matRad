@@ -202,7 +202,7 @@ if isfield(completeDicom,'PatientName')
 end
 
 ct.dicomInfo_org = completeDicom;
-ct.timeStamp = datetime;
+ct.timeStamp = datestr(clock);
 
 % convert to water equivalent electron densities
 fprintf('\nconversion of ct-Cube to waterEqD...');

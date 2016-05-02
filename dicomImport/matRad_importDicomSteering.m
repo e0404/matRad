@@ -158,7 +158,7 @@ for i = 1:length(BeamSeqNames)
     for j = 1:size(RayPosTmp,1)
         stf(i).ray(j).rayPos_bev = double([RayPosTmp(j,1) 0 RayPosTmp(j,2)]);
         stf(i).ray(j).energy = [];
-        stf(i).ray(j).focusSigma = [];
+        stf(i).ray(j).focusFWHM = [];
         stf(i).ray(j).focusIx = [];
         stf(i).ray(j).weight = [];
     end
@@ -167,7 +167,7 @@ for i = 1:length(BeamSeqNames)
     for j = 1:size(StfTmp,1)
         k = ic(j);
         stf(i).ray(k).energy = [stf(i).ray(k).energy double(StfTmp(j,3))];
-        stf(i).ray(k).focusSigma = [stf(i).ray(k).focusSigma double(StfTmp(j,5))];
+        stf(i).ray(k).focusFWHM = [stf(i).ray(k).focusFWHM double(StfTmp(j,5))];
         stf(i).ray(k).weight = [stf(i).ray(k).weight double(StfTmp(j,4))/1e6*pln.numOfFractions];
     end
     
@@ -269,21 +269,21 @@ for i = 1:length(BeamSeqNames)
         end
     end
     
-    % get focusIx instead of focusSigma
+    % get focusIx instead of focusFWHM
     for j = 1:stf(i).numOfRays
         % loop over all energies
         numOfEnergy = length(stf(i).ray(j).energy);
         for k = 1:numOfEnergy
             energyTemp = stf(i).ray(j).energy(k);
-            focusSigma = stf(i).ray(j).focusSigma(k);
+            focusFWHM = stf(i).ray(j).focusFWHM(k);
             energyIxTemp = find([machine.data.energy] == energyTemp);
-            focusIxTemp = find(abs([machine.data(energyIxTemp).initFocus.SisFWHMAtIso] - focusSigma )< 10^-3);
+            focusIxTemp = find(abs([machine.data(energyIxTemp).initFocus.SisFWHMAtIso] - focusFWHM )< 10^-3);
             stf(i).ray(j).focusIx(k) = focusIxTemp;
-            stf(i).ray(j).focusSigma(k) = machine.data(energyIxTemp).initFocus.SisFWHMAtIso(stf(i).ray(j).focusIx(k));
+            stf(i).ray(j).focusFWHM(k) = machine.data(energyIxTemp).initFocus.SisFWHMAtIso(stf(i).ray(j).focusIx(k));
         end
     end
     
-    stf(i).timeStamp = datetime;
+    stf(i).timeStamp = datestr(clock);
     
 end
 
