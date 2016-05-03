@@ -216,7 +216,7 @@ k(k>zNumPlanes-1) = zNumPlanes-1;
 ix = j + (i-1)*size(cubes{1},1) + (k-1)*size(cubes{1},1)*size(cubes{1},2); 
 
 % obtains the values from cubes
-rho = cell(numel(cubes));
+rho = cell(numel(cubes),1);
 for i = 1:numel(cubes)
     rho{i} = cubes{i}(ix);
 end

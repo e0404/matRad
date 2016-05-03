@@ -276,10 +276,15 @@ patient_listbox = get(handles.patient_listbox,'String');
 ctseries_listbox = get(handles.ctseries_listbox,'String');
 rtplan_listbox = get(handles.rtplan_listbox,'String');
 doseseries_listbox = get(handles.rtplan_listbox,'String');
-selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
-selected_ctseries = ctseries_listbox(get(handles.ctseries_listbox,'Value'));
-selected_rtplan = rtplan_listbox(get(handles.rtplan_listbox,'Value'));
-
+if ~isempty(patient_listbox)
+    selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
+end
+if ~isempty(ctseries_listbox)
+    selected_ctseries = ctseries_listbox(get(handles.ctseries_listbox,'Value'));
+end
+if ~isempty(rtplan_listbox)
+    selected_rtplan = rtplan_listbox(get(handles.rtplan_listbox,'Value'));
+end
 
 if get(handles.SeriesUID_radiobutton,'Value') == 1
     files.ct = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
@@ -312,22 +317,17 @@ else
     files.resz = str2double(get(handles.resz_edit,'String'));
 end
 % selected RT Plan
-rtplan = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) ...
-    & strcmp(handles.fileList(:,2),'RTPLAN'),:);
+rtplan = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,2),'RTPLAN'),:);
 if ~isempty(rtplan)
     files.rtplan = rtplan(get(handles.rtplan_listbox,'Value'),:);
-else
-    files.rtplan = cell(0,13);
 end
 
 % selected RT Dose
-rtdose = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) ...
-    & strcmp(handles.fileList(:,2),'RTDOSE'),:);
+rtdose = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,2),'RTDOSE'),:);
 if ~isempty(rtdose)
     files.rtdose = rtdose(get(handles.doseseries_listbox,'Value'),:);
-else
-    files.rtdose = cell(0,13);
 end
+
 matRad_importDicom(files);
 
 

@@ -232,9 +232,9 @@ handles.DijCalcWarning = false;
 
     % set slice slider
 if handles.State > 0
-    set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-            'Value',ceil(size(ct.cube,handles.plane)/2),...
-            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);      
+    set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
+            'Value',ceil(ct.cubeDim(handles.plane)/2),...
+            'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);      
     
     % define context menu for structures
     contMenuStruct = uicontextmenu;
@@ -370,9 +370,9 @@ end
 % set slice slider
 handles.plane = get(handles.popupPlane,'value');
 if handles.State >0
-     set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-            'Value',round(size(ct.cube,handles.plane)/2),...
-            'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+     set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
+            'Value',round(ct.cubeDim(handles.plane)/2),...
+            'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);
 end
 
 if handles.State > 0
@@ -764,11 +764,11 @@ CutOffLevel = 0.03;
     cla(handles.axesFig);
     axes(handles.axesFig);
     if plane == 1 % Coronal plane
-        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube(slice,:,:)/max(ct.cube(:))))),bone);
+        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube{1}(slice,:,:)/max(ct.cube{1}(:))))),bone);
     elseif plane == 2 % sagittal plane
-        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube(:,slice,:)/max(ct.cube(:))))),bone);
+        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube{1}(:,slice,:)/max(ct.cube{1}(:))))),bone);
     elseif plane == 3 % Axial plane
-        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube(:,:,slice)/max(ct.cube(:))))),bone);
+        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube{1}(:,:,slice)/max(ct.cube{1}(:))))),bone);
     end
     
     axes(handles.axesFig)
@@ -942,11 +942,11 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
     colors = colorcube;
     hold on,
     colors = colors(round(linspace(1,63,size(cst,1))),:);
-    mask = zeros(size(ct.cube)); % create zero cube with same dimeonsions like dose cube
+    mask = zeros(ct.cubeDim); % create zero cube with same dimeonsions like dose cube
     for s = 1:size(cst,1)
         if ~strcmp(cst{s,3},'IGNORED') && vBoolPlotVOI(s)
             mask(:) = 0;
-            mask(cst{s,4}) = 1;
+            mask(cst{s,4}{1}) = 1;
             if plane == 1 && sum(sum(mask(slice,:,:))) > 0
                 contour(handles.axesFig,squeeze(mask(slice,:,:)),.5*[1 1],'Color',colors(s,:),'LineWidth',2,'DisplayName',cst{s,2});
             elseif plane == 2 && sum(sum(mask(:,slice,:))) > 0
@@ -958,7 +958,7 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
     end
     warning('off','MATLAB:legend:PlotEmpty')
     myLegend = legend('show','location','NorthEast');
-    set(myLegend,'FontSize',defaultFontSize);
+    set(myLegend,'FontSize',defaultFontSize,'Interpreter','none');
     set(myLegend,'color','none');
     set(myLegend,'TextColor', [1 1 1]);
     legend boxoff
@@ -1049,7 +1049,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
     rotTargetPointBEV = targetPointBEV * inv_rotMx_XZ_T * inv_rotMx_XY_T;
     
     % perform raytracing on the central axis of the selected beam
-    [~,l,rho,~,ix] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube});
+    [~,l,rho,~,ix] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube{1}});
     d = [0 l .* rho{1}];
     % Calculate accumulated d sum.
     vX = cumsum(d(1:end-1));
@@ -1139,10 +1139,10 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
     tmpPrior = intmax;
     tmpSize = 0;
     for i=1:size(cst,1)
-        if strcmp(cst{i,3},'TARGET') && tmpPrior >= cst{i,5}.Priority && tmpSize<numel(cst{i,4})
-           linIdxTarget = unique(cst{i,4});
+        if strcmp(cst{i,3},'TARGET') && tmpPrior >= cst{i,5}.Priority && tmpSize<numel(cst{i,4}{1})
+           linIdxTarget = unique(cst{i,4}{1});
            tmpPrior=cst{i,5}.Priority;
-           tmpSize=numel(cst{i,4});
+           tmpSize=numel(cst{i,4}{1});
            VOI = cst{i,2};
         end
     end
@@ -1154,7 +1154,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
     set(h_title,'Position',[pos(1)-40 pos(2) pos(3)])
     
     % plot target boundaries
-    mTargetCube = zeros(size(ct.cube));
+    mTargetCube = zeros(ct.cubeDim);
     mTargetCube(linIdxTarget) = 1;
     vProfile = mTargetCube(ix);
     WEPL_Target_Entry = vX(find(vProfile,1,'first'));
@@ -1202,10 +1202,10 @@ handles.plane = get(handles.popupPlane,'value');
 try
     if handles.State > 0
         ct = evalin('base', 'ct');
-        set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-                'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);
+        set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
+                'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);
         if handles.State < 3
-            set(handles.sliderSlice,'Value',round(size(ct.cube,handles.plane)/2));
+            set(handles.sliderSlice,'Value',round(ct.cubeDim(handles.plane)/2));
         else
             pln = evalin('base','pln');
             
@@ -1347,7 +1347,6 @@ catch ME
     guidata(hObject,handles);
     return;
 end
-
 
 % perform sequencing and DAO
 try
@@ -1555,19 +1554,19 @@ end
 % displays the cst in the GUI
 function setCstTable(handles,cst)
 
-columnname = {'VOI','VOI Type','Priority','Obj Func','penalty','dose', 'EUD','volume'};
+columnname = {'VOI','VOI Type','Priority','Obj Func','penalty','dose', 'EUD','volume','robustness'};
 
 AllObjectiveFunction = {'square underdosing','square overdosing','square deviation', 'mean', 'EUD',...
-       'min dose constraint','max dose constraint','min max dose constraint',...
+       'min dose constraint','max dose constraint',...
        'min mean dose constraint','max mean dose constraint','min max mean dose constraint',...
        'min EUD constraint','max EUD constraint','min max EUD constraint',...
-       'exact DVH constraint','max DVH constraint','min DVH constraint',...
+       'max DVH constraint','min DVH constraint',...
        'max DVH objective','min DVH objective'};
 
 PlaceHolder = NaN;
 columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
        AllObjectiveFunction,...
-       'numeric','char','numeric','numeric'};
+       'numeric','char','numeric','numeric',{'none','WC','prob'}};
    
 numOfObjectives = 0;
 for i = 1:size(cst,1)
@@ -1594,10 +1593,11 @@ for i = 1:size(cst,1)
        objFunc = cst{i,6}(j).type;
        data{Counter,4}=objFunc;
        
-       data{Counter,5} = cst{i,6}(j).penalty;
-       data{Counter,6} = num2str(cst{i,6}(j).dose);
-       data{Counter,7} = cst{i,6}(j).EUD;
-       data{Counter,8} = cst{i,6}(j).volume;
+       data{Counter,5}  = cst{i,6}(j).penalty;
+       data{Counter,6}  = num2str(cst{i,6}(j).dose);
+       data{Counter,7}  = cst{i,6}(j).EUD;
+       data{Counter,8}  = cst{i,6}(j).volume;
+       data{Counter,9}  = cst{i,6}(j).robustness;
        
        Counter = Counter +1;
        end
@@ -1607,7 +1607,7 @@ end
 
 set(handles.uiTable,'ColumnName',columnname);
 set(handles.uiTable,'ColumnFormat',columnformat);
-set(handles.uiTable,'ColumnEditable',[true true true true true true true true]);
+set(handles.uiTable,'ColumnEditable',[true true true true true true true true true true]);
 set(handles.uiTable,'Data',data);
 
 
@@ -1658,11 +1658,11 @@ for i = 1:size(OldCst,1)
             % get further parameter
             if FlagValidParameters
                 
-              NewCst{Cnt,4}(CntObjF,1).penalty     = data{j,5};
-              NewCst{Cnt,4}(CntObjF,1).penalty     = data{j,5};
-              NewCst{Cnt,4}(CntObjF,1).dose        = str2num(data{j,6});
-              NewCst{Cnt,4}(CntObjF,1).EUD         = data{j,7};
-              NewCst{Cnt,4}(CntObjF,1).volume      = data{j,8};
+              NewCst{Cnt,4}(CntObjF,1).dose       = str2num(data{j,6});
+              NewCst{Cnt,4}(CntObjF,1).penalty    = data{j,5};
+              NewCst{Cnt,4}(CntObjF,1).EUD        = data{j,7};
+              NewCst{Cnt,4}(CntObjF,1).volume     = data{j,8};
+              NewCst{Cnt,4}(CntObjF,1).robustness = data{j,9};
              
             end
             
@@ -1691,8 +1691,8 @@ if FlagValidParameters
                if strcmp(VOIexist,VOIGUI)
                   % overite existing objectives
                    boolChanged = true;
-                   OldCst(m,6)=NewCst(n,4);
-                   OldCst(m,3)=NewCst(n,2);
+                   OldCst(m,6) = NewCst(n,4);
+                   OldCst(m,3) = NewCst(n,2);
                    OldCst{m,5}.Priority = NewCst{n,3};
                    break;
                end 
@@ -1724,6 +1724,8 @@ data{sEnd+1,2} = 'Select VOI Type';
 data{sEnd+1,3} = 2;
 data{sEnd+1,4} = 'Select obj func/constraint';
 data{sEnd+1,6} = '';
+data{sEnd+1,9} = 'none';
+
 set(handles.uiTable,'data',data);
 
 %handles.State=1;
@@ -1785,6 +1787,7 @@ function uiTable_CellEditCallback(hObject, eventdata, handles)
 
 Placeholder = NaN;
 PlaceholderDose = 'NaN';
+PlaceholderRob  = 'none';
 
 % get table data and current index of cell
 if isempty(eventdata)
@@ -1906,6 +1909,7 @@ if sum(strcmp(ObjFunction, {'square underdosing','square overdosing','square dev
     end 
     data{eventdata.Indices(1),7} = Placeholder;
     data{eventdata.Indices(1),8} = Placeholder;
+    data{eventdata.Indices(1),9} = PlaceholderRob;
    
 elseif strcmp(ObjFunction,'mean')
     
@@ -1914,7 +1918,8 @@ elseif strcmp(ObjFunction,'mean')
         end
         data{eventdata.Indices(1),6} = PlaceholderDose;    
         data{eventdata.Indices(1),7} = Placeholder;   
-        data{eventdata.Indices(1),8} = Placeholder;    
+        data{eventdata.Indices(1),8} = Placeholder;
+        data{eventdata.Indices(1),9} = PlaceholderRob;
 
 elseif strcmp(ObjFunction,'EUD')
     
@@ -1924,9 +1929,10 @@ elseif strcmp(ObjFunction,'EUD')
             end
         end 
        data{eventdata.Indices(1),6} = PlaceholderDose; 
-       data{eventdata.Indices(1),8} = Placeholder; 
+       data{eventdata.Indices(1),8} = Placeholder;
+       data{eventdata.Indices(1),9} = PlaceholderRob;
        
-elseif sum(strcmp(ObjFunction,{'min dose constraint','max dose constraint','min max dose constraint',...
+elseif sum(strcmp(ObjFunction,{'min dose constraint','max dose constraint'...
                                      'min mean dose constraint','max mean dose constraint','min max mean dose constraint'}))> 0
          
          if isnan(str2num(data{eventdata.Indices(1),6}))
@@ -1935,6 +1941,7 @@ elseif sum(strcmp(ObjFunction,{'min dose constraint','max dose constraint','min 
          data{eventdata.Indices(1),5} = Placeholder;
          data{eventdata.Indices(1),7} = Placeholder;
          data{eventdata.Indices(1),8} = Placeholder;
+         data{eventdata.Indices(1),9} = PlaceholderRob;
          
 elseif sum(strcmp(ObjFunction,{'min EUD constraint','max EUD constraint','min max EUD constraint'}) ) > 0
         
@@ -1945,8 +1952,9 @@ elseif sum(strcmp(ObjFunction,{'min EUD constraint','max EUD constraint','min ma
         end 
         data{eventdata.Indices(1),5} = Placeholder;
         data{eventdata.Indices(1),8} = Placeholder;
+        data{eventdata.Indices(1),9} = PlaceholderRob;
         
-elseif sum(strcmp(ObjFunction,{'exact DVH constraint','min DVH constraint','max DVH constraint'}) ) > 0
+elseif sum(strcmp(ObjFunction,{'min DVH constraint','max DVH constraint'}) ) > 0
         
         for k = [6 8]
             if isnan(data{eventdata.Indices(1),k})
@@ -1955,6 +1963,7 @@ elseif sum(strcmp(ObjFunction,{'exact DVH constraint','min DVH constraint','max 
         end    
         data{eventdata.Indices(1),5} = Placeholder;
         data{eventdata.Indices(1),7} = Placeholder;
+        data{eventdata.Indices(1),9} = PlaceholderRob;
 
 elseif sum(strcmp(ObjFunction,{'min DVH objective','max DVH objective'}) ) > 0
         
@@ -1964,6 +1973,8 @@ elseif sum(strcmp(ObjFunction,{'min DVH objective','max DVH objective'}) ) > 0
         end
     end
     data{eventdata.Indices(1),7} = Placeholder;
+    data{eventdata.Indices(1),9} = PlaceholderRob;
+    
 end
     
 %% check if input is a valid
@@ -2257,8 +2268,8 @@ pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true
 pln.numOfBeams      = numel(pln.gantryAngles);
 try
     ct = evalin('base','ct');
-    pln.numOfVoxels     = numel(ct.cube);
-    pln.voxelDimensions = size(ct.cube);
+    pln.numOfVoxels     = prod(ct.cubeDim);
+    pln.voxelDimensions = ct.cubeDim;
 catch
 end
 pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'),false);
@@ -2451,9 +2462,9 @@ if ~isempty(AllVarNames)
 
     if handles.State > 0
         ct = evalin('base','ct');
-        set(handles.sliderSlice,'Min',1,'Max',size(ct.cube,handles.plane),...
-                'Value',ceil(size(ct.cube,handles.plane)/2),...
-                'SliderStep',[1/(size(ct.cube,handles.plane)-1) 1/(size(ct.cube,handles.plane)-1)]);      
+        set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
+                'Value',ceil(ct.cubeDim(handles.plane)/2),...
+                'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);      
     end
 
 end

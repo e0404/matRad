@@ -45,6 +45,7 @@ dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.dimensions         = pln.voxelDimensions;
+dij.numOfScenarios     = 1;
 
 % set up arrays for book keeping
 dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
@@ -52,26 +53,31 @@ dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
 dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 
 % Allocate space for dij.physicalDose sparse matrix
-dij.physicalDose = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
+for i = 1:dij.numOfScenarios
+    dij.physicalDose{i} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
+end
 
 % helper function for energy selection
 round2 = @(a,b)round(a*10^b)/10^b;
 
 % Allocate memory for dose_temp cell array
 numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
-doseTmpContainer = cell(numOfBixelsContainer,1);
-if ~strcmp(pln.bioOptimization,'none') 
-    alphaDoseTmpContainer = cell(numOfBixelsContainer,1);
-    betaDoseTmpContainer  = cell(numOfBixelsContainer,1);
-    dij.mAlphaDose        = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
-    dij.mSqrtBetaDose     = spalloc(numel(ct.cube),dij.totalNumOfBixels,1);
+doseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
+if isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBExD')
+    alphaDoseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
+    betaDoseTmpContainer  = cell(numOfBixelsContainer,dij.numOfScenarios);
+    for i = 1:dij.numOfScenarios
+        dij.mAlphaDose{i}    = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
+        dij.mSqrtBetaDose{i} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
+    end
 end
 
 % Only take voxels inside patient.
-V = unique([cell2mat(cst(:,4))]);
+V = [cst{:,4}];
+V = unique(vertcat(V{:}));
 
 % Convert CT subscripts to linear indices.
-[yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(size(ct.cube),V);
+[yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
 
 % load machine file
 fileName = [pln.radiationMode '_' pln.machine];
@@ -92,7 +98,7 @@ if (strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD'))
     
     for i = 1:size(cst,1)
         % find indices of structures related to V
-        [~, row] = ismember(cst{i,4},V,'rows');  
+        [~, row] = ismember(vertcat(cst{i,4}{:}),V,'rows'); 
         % check if base data contains alphaX and betaX
         if   isfield(machine.data,'alphaX') && isfield(machine.data,'betaX')
             % check if cst is compatiable 
@@ -141,24 +147,24 @@ for i = 1:dij.numOfBeams; % loop over all beams
 
     % Set gantry and couch rotation matrices according to IEC 61217
     % Use transpose matrices because we are working with row vectros
-    
+
     % rotation around Z axis (gantry)
     inv_rotMx_XY_T = [ cosd(-pln.gantryAngles(i)) sind(-pln.gantryAngles(i)) 0;
                       -sind(-pln.gantryAngles(i)) cosd(-pln.gantryAngles(i)) 0;
                                                 0                          0 1];
-    
+
     % rotation around Y axis (couch)
     inv_rotMx_XZ_T = [cosd(-pln.couchAngles(i)) 0 -sind(-pln.couchAngles(i));
                                               0 1                         0;
                       sind(-pln.couchAngles(i)) 0  cosd(-pln.couchAngles(i))];
-                  
+
     % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
     rot_coordsV = coordsV*inv_rotMx_XZ_T*inv_rotMx_XY_T;
-    
+
     rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
     rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
     rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
-    
+
     % Calcualte radiological depth cube
     lateralCutoffRayTracing = 50;
     fprintf('matRad: calculate radiological depth cube...');
@@ -166,7 +172,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
     fprintf('done.\n');
     
     % get indices of voxels where ray tracing results are available
-    radDepthIx = find(~isnan(radDepthV));
+    radDepthIx = find(~isnan(radDepthV{1}));
     
     % limit rotated coordinates to positions where ray tracing is availabe
     rot_coordsV = rot_coordsV(radDepthIx,:);
@@ -177,34 +183,34 @@ for i = 1:dij.numOfBeams; % loop over all beams
     visBoolLateralCutOff = 0;
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
     fprintf('done.\n');    
-    
+
     for j = 1:stf(i).numOfRays % loop over all rays
-        
+
         if ~isempty(stf(i).ray(j).energy)
-        
+
             % find index of maximum used energy (round to keV for numerical
             % reasons
             energyIx = max(round2(stf(i).ray(j).energy,4)) == round2([machine.data.energy],4);
-            
+
             maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
-            
-            % Ray tracing for beam i and ray j                          
+
+            % Ray tracing for beam i and ray j
             [ix,radialDist_sq] = matRad_calcGeoDists(rot_coordsV, ...
                                                      stf(i).sourcePoint_bev, ...
                                                      stf(i).ray(j).targetPoint_bev, ...
                                                      machine.meta.SAD, ...
                                                      radDepthIx, ...
                                                      maxLateralCutoffDoseCalc);
-            radDepths = radDepthV(ix);   
+            radDepths = radDepthV{1}(ix);   
             
             % just use tissue classes of voxels found by ray tracer
             if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                  && strcmp(pln.radiationMode,'carbon')
                     vTissueIndex_j = vTissueIndex(ix,:);
             end
-              
+
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
-                
+
                 counter = counter + 1;
                 bixelsPerBeam = bixelsPerBeam + 1;
                 
@@ -213,11 +219,12 @@ for i = 1:dij.numOfBeams; % loop over all beams
                         matRad_progress(bixelsPerBeam/round(stf(i).totalNumOfBixels/200),...
                                         floor(stf(i).totalNumOfBixels/round(stf(i).totalNumOfBixels/200)));
                 end
+                
                 % update waitbar only 100 times if it is not closed
                 if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
                     waitbar(counter/dij.totalNumOfBixels,figureWait);
                 end
-                
+
                 % remember beam and  bixel number
                 dij.beamNum(counter)  = i;
                 dij.rayNum(counter)   = j;
@@ -252,7 +259,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                     machine.data(energyIx)); 
                 
                 % Save dose for every bixel in cell array
-                doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelDose,numel(ct.cube),1);
+                doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelDose,dij.numOfVoxels,1);
                             
                 if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                     && strcmp(pln.radiationMode,'carbon')
@@ -262,19 +269,19 @@ for i = 1:dij.numOfBeams; % loop over all beams
                         vTissueIndex_j(currIx,:),...
                         machine.data(energyIx));
                 
-                    alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelAlpha.*bixelDose,numel(ct.cube),1);
-                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,numel(ct.cube),1);
+                    alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelAlpha.*bixelDose,dij.numOfVoxels,1);
+                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.numOfVoxels,1);
                 end
                 
                 % save computation time and memory by sequentially filling the
                 % sparse matrix dose.dij from the cell array
                 if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
-                    dij.physicalDose(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                    dij.physicalDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
                     
                     if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                             && strcmp(pln.radiationMode,'carbon')
-                        dij.mAlphaDose(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
-                        dij.mSqrtBetaDose(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                        dij.mAlphaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                        dij.mSqrtBetaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
                     end
                 end
 

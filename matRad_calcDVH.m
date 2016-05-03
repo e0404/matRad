@@ -70,7 +70,7 @@ dvh       = NaN * ones(1,n);
 
 for i = 1:numOfVois
     if cst{i,5}.Visible
-        indices     = cst{i,4};
+        indices     = cst{i,4}{1};
         numOfVoxels = numel(indices);
         if sum(strcmp(fieldnames(result),'RBExDose')) > 0
             doseInVoi   = result.RBExDose(indices);   

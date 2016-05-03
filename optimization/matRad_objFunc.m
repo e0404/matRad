@@ -1,17 +1,16 @@
-function f = matRad_objFunc(w,dij,cst,type)
+function f = matRad_objFunc(d_i,objective,d_ref)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: objective function for inverse planning supporting mean dose
 % objectives, EUD objectives, squared overdosage, squared underdosage,
 % squared deviation and DVH objectives
 % 
 % call
-%    f = matRad_objFunc(w,dij,cst,type)
+%    f = matRad_objFunc(d_i,objective,d_ref)
 %
 % input
-%   w:    bixel weight vector
-%   dij:  dose influence matrix
-%   cst:  matRad cst struct
-%   type: type of optimizaiton; either 'none','effect' or 'RBExD'
+%    d_i:       dose vector in VOI
+%    objective: matRad objective struct
+%    d_ref:     reference dose /effect value to evaluate objective
 %
 % output
 %   f: objective function value
@@ -34,130 +33,78 @@ function f = matRad_objFunc(w,dij,cst,type)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,type);
-
-% Initializes f
-f = 0;
-
-% compute objective function for every VOI.
-for  i = 1:size(cst,1)
-    
-    % Only take OAR or target VOI.
-    if ~isempty(cst{i,4}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
-    
-        % get dose vector in current VOI
-        d_i = d(cst{i,4});
                 
-        % loop over the number of constraints for the current VOI
-        for j = 1:numel(cst{i,6})
+numOfVoxels = numel(d_i);
             
-            % reference dose/effect/RBExDose
-             if isempty(strfind(cst{i,6}(j).type,'constraint'))
-                if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) &&...
-                        isequal(type,'effect') 
+if isequal(objective.type, 'square underdosing') 
 
-                    d_ref = dij.ax(cst{i,4}).*cst{i,6}(j).dose + dij.bx(cst{i,4})*cst{i,6}(j).dose^2;
-                else
-                    d_ref = cst{i,6}(j).dose;
-                end
-             end
-            
-            if isequal(cst{i,6}(j).type, 'square underdosing') 
-               
-                if ~isequal(cst{i,3},'OAR')
-                    % underdose : dose minus prefered dose
-                    underdose = d_i - d_ref;
+    % underdose : dose minus prefered dose
+    underdose = d_i - d_ref;
 
-                    % apply positive operator
-                    underdose(underdose>0) = 0;
+    % apply positive operator
+    underdose(underdose>0) = 0;
 
-                    % calculate objective function
-                    f = f + (cst{i,6}(j).penalty/size(cst{i,4},1))*(underdose'*underdose);
+    % calculate objective function
+    f = (objective.penalty/numOfVoxels)*(underdose'*underdose);
 
-                else
-                    disp(['square underdosing constraint for ' cst{i,2} ' will be skipped'])
-                end
-                
-            elseif isequal(cst{i,6}(j).type, 'square overdosing')
-                
-                    % overdose : dose minus prefered dose
-                    overdose = d_i - d_ref;
+elseif isequal(objective.type, 'square overdosing')
 
-                    % apply positive operator
-                    overdose(overdose<0) = 0;
+    % overdose : dose minus prefered dose
+    overdose = d_i - d_ref;
 
-                    % calculate objective function
-                    f = f + (cst{i,6}(j).penalty/size(cst{i,4},1))*(overdose'*overdose);
-                
-           elseif isequal(cst{i,6}(j).type, 'square deviation')
-               
-               if ~isequal(cst{i,3},'OAR')
-                    % deviation : dose minus prefered dose
-                    deviation = d_i - d_ref;
+    % apply positive operator
+    overdose(overdose<0) = 0;
 
-                    % claculate objective function
-                    f = f + (cst{i,6}(j).penalty/size(cst{i,4},1))*(deviation'*deviation);
+    % calculate objective function
+    f = (objective.penalty/numOfVoxels)*(overdose'*overdose);
 
-                else
-                    disp(['square deviation constraint for ' cst{i,2} ' will be skipped'])
-                end
-                
-            elseif isequal(cst{i,6}(j).type, 'mean')              
-                
-                if ~isequal(cst{i,3},'TARGET')
-                    % calculate objective function
-                    f = f + (cst{i,6}(j).penalty/size(cst{i,4},1))*sum(d_i);
+elseif isequal(objective.type, 'square deviation')
 
-                else
-                    disp(['mean constraint for ' cst{i,2} ' will be skipped'])
-                end
-                
-            elseif isequal(cst{i,6}(j).type, 'EUD') 
-               
-               if ~isequal(cst{i,3},'TARGET')
-                    % get exponent for EUD
-                    exponent = cst{i,6}(j).EUD;
+   % deviation : dose minus prefered dose
+   deviation = d_i - d_ref;
 
-                    % calculate objective function and delta
-                    if sum(d_i.^exponent)>0
+   % claculate objective function
+   f = (objective.penalty/numOfVoxels)*(deviation'*deviation);
 
-                        f = f + cst{i,6}(j).penalty * nthroot((1/size(cst{i,4},1)) * sum(d_i.^exponent),exponent);
+elseif isequal(objective.type, 'mean')              
 
-                    end
+    % calculate objective function
+    f = (objective.penalty/numOfVoxels)*sum(d_i);
 
-               else
-                    disp(['EUD constraint for ' cst{i,2} ' will be skipped'])
-               end
-                
-            elseif isequal(cst{i,6}(j).type, 'max DVH objective') ||...
-                   isequal(cst{i,6}(j).type, 'min DVH objective')
-                
-                % get reference Volume
-                refVol = cst{i,6}(j).volume/100;
-                
-                % calc deviation
-                deviation = d_i - d_ref;
-                
-                % calc d_ref2: V(d_ref2) = refVol
-                d_ref2 = matRad_calcInversDVH(refVol,d_i);
-                
-                % apply lower and upper dose limits
-                if isequal(cst{i,6}(j).type, 'max DVH objective')
-                     deviation(d_i < d_ref | d_i > d_ref2) = 0;
-                elseif isequal(cst{i,6}(j).type, 'min DVH objective')
-                     deviation(d_i > d_ref | d_i < d_ref2) = 0;
-                end
+elseif isequal(objective.type, 'EUD') 
 
-                % claculate objective function
-                f = f + (cst{i,6}(j).penalty/size(cst{i,4},1))*(deviation'*deviation);
-                
-            end
-      
-        end
-        
+    % get exponent for EUD
+    exponent = objective.EUD;
+
+    % calculate objective function and delta
+    if sum(d_i.^exponent)>0
+        f = objective.penalty * nthroot((1/numOfVoxels) * sum(d_i.^exponent),exponent);
     end
+
+elseif isequal(objective.type, 'max DVH objective') ||...
+       isequal(objective.type, 'min DVH objective')
+
+    % get reference Volume
+    refVol = objective.volume/100;
+
+    % calc deviation
+    deviation = d_i - d_ref;
+
+    % calc d_ref2: V(d_ref2) = refVol
+    d_ref2 = matRad_calcInversDVH(refVol,d_i);
+
+    % apply lower and upper dose limits
+    if isequal(objective.type, 'max DVH objective')
+         deviation(d_i < d_ref | d_i > d_ref2) = 0;
+    elseif isequal(objective.type, 'min DVH objective')
+         deviation(d_i > d_ref | d_i < d_ref2) = 0;
+    end
+
+    % claculate objective function
+    f = (objective.penalty/numOfVoxels)*(deviation'*deviation);
+    
 end
+      
+        
+
    
-end

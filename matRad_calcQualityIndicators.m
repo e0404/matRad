@@ -45,7 +45,7 @@ end
 % calculate QIs per VOI
 for runVoi = 1:size(cst,1)
     
-    indices     = cst{runVoi,4};
+    indices     = cst{runVoi,4}{1};
     numOfVoxels = numel(indices);
     
     voiPrint = sprintf('%3d %20s',cst{runVoi,1},cst{runVoi,2}); %String that will print quality indicators

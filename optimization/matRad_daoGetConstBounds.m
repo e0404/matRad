@@ -1,4 +1,4 @@
-function [cl,cu] = matRad_daoGetConstBounds(cst,apertureInfo,type)
+function [cl,cu] = matRad_daoGetConstBounds(cst,apertureInfo,numOfScenarios,type)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT get constraint bounds function for direct aperture optimization
 % 
@@ -8,6 +8,7 @@ function [cl,cu] = matRad_daoGetConstBounds(cst,apertureInfo,type)
 % input
 %   cst:            matRad cst struct
 %   apertureInfo:   aperture info struct
+%   numOfScenarios: number of scenarios considered
 %   type:           type of optimizaiton; either 'none','effect' or 'RBExD'
 %
 % output
@@ -37,7 +38,7 @@ cl_dao = zeros(apertureInfo.totalNumOfLeafPairs,1);
 cu_dao = inf*ones(apertureInfo.totalNumOfLeafPairs,1);
 
 % get dosimetric bounds from cst (just like for conv opt)
-[cl_dos,cu_dos] = matRad_getConstBounds(cst,type);
+[cl_dos,cu_dos] = matRad_getConstBoundsWrapper(cst,type,numOfScenarios);
 
 % concatenate
 cl = [cl_dao; cl_dos];

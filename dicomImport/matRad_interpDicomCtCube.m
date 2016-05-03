@@ -36,16 +36,16 @@ function interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution)
 coordsOfFirstPixel = [origCtInfo.ImagePositionPatient];
 
 % set up grid vectors
-x = coordsOfFirstPixel(1,1) + origCtInfo(1).PixelSpacing(1)*double([0:origCtInfo(1).Columns-1]');
-y = coordsOfFirstPixel(2,1) + origCtInfo(1).PixelSpacing(2)*double([0:origCtInfo(1).Rows-1]);
+x = coordsOfFirstPixel(1,1) + origCtInfo(1).PixelSpacing(1)*double([0:origCtInfo(1).Columns-1]);
+y = coordsOfFirstPixel(2,1) + origCtInfo(1).PixelSpacing(2)*double([0:origCtInfo(1).Rows-1]');
 z = coordsOfFirstPixel(3,:);
 
-xi = [coordsOfFirstPixel(1,1):resolution.x:(coordsOfFirstPixel(1,1)+origCtInfo(1).PixelSpacing(1)*double(origCtInfo(1).Rows-1))]';
-yi = coordsOfFirstPixel(2,1):resolution.y:(coordsOfFirstPixel(2,1)+origCtInfo(1).PixelSpacing(2)*double(origCtInfo(1).Columns-1));
+xi = coordsOfFirstPixel(1,1):resolution.x:(coordsOfFirstPixel(1,1)+origCtInfo(1).PixelSpacing(1)*double(origCtInfo(1).Rows-1));
+yi = [coordsOfFirstPixel(2,1):resolution.y:(coordsOfFirstPixel(2,1)+origCtInfo(1).PixelSpacing(2)*double(origCtInfo(1).Columns-1))]';
 zi = coordsOfFirstPixel(3,1):resolution.z: coordsOfFirstPixel(3,end);
 
 % interpolate
-interpCt.cube = interp3(y,x,z,origCt,yi,xi,zi);
+interpCt.cube{1} = interp3(x,y,z,origCt,xi,yi,zi);
 
 % some meta information
 interpCt.resolution = resolution;
@@ -53,3 +53,6 @@ interpCt.resolution = resolution;
 interpCt.x = xi;
 interpCt.y = yi';
 interpCt.z = zi;
+
+interpCt.cubeDim     = [numel(yi) numel(xi) numel(zi)];
+interpCt.numOfCtScen = 1;

@@ -42,12 +42,12 @@ end
 if numel(pln.gantryAngles) ~= numel(pln.couchAngles)
     error('Inconsistent number of gantry and couch angles.');
 end
-              
+
 % find all target voxels from cst cell array
 V = [];
 for i=1:size(cst,1)
     if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
-        V = [V;cst{i,4}];
+        V = [V;vertcat(cst{i,4}{:})];
     end
 end
 
@@ -58,7 +58,7 @@ V = unique(V);
 DensityThresholdSSD = 0.05;
 
 % generate voi cube for targets
-voiTarget    = zeros(size(ct.cube));
+voiTarget    = zeros(ct.cubeDim);
 voiTarget(V) = 1;
     
 % add margin
@@ -94,7 +94,7 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
 end
 
 % Convert linear indices to 3D voxel coordinates
-[coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(size(ct.cube),V);
+[coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
 
 % Correct for iso center position. Whit this correction Isocenter is
 % (0,0,0) [mm]
@@ -230,7 +230,7 @@ for i = 1:length(pln.gantryAngles)
                              ct.resolution, ...
                              stf(i).sourcePoint, ...
                              stf(i).ray(j).targetPoint, ...
-                             {ct.cube,voiTarget});
+                             [ct.cube {voiTarget}]);
 
             ixSSD = find(rho{1} > DensityThresholdSSD,1,'first');
 
@@ -348,13 +348,16 @@ for i = 1:length(pln.gantryAngles)
             
             % generate a 3D rectangular grid centered at isocenter in
             % voxel coordinates
-            [X,Y,Z] = meshgrid((1:size(ct.cube,2))-stf(i).isoCenter(1)/ct.resolution.x, ...
-                               (1:size(ct.cube,1))-stf(i).isoCenter(2)/ct.resolution.y, ...
-                               (1:size(ct.cube,3))-stf(i).isoCenter(3)/ct.resolution.z);
+            [X,Y,Z] = meshgrid((1:ct.cubeDim(2))-stf(i).isoCenter(1)/ct.resolution.x, ...
+                               (1:ct.cubeDim(1))-stf(i).isoCenter(2)/ct.resolution.y, ...
+                               (1:ct.cubeDim(3))-stf(i).isoCenter(3)/ct.resolution.z);
             
             % computes surface
-            patSurfCube = 0*ct.cube;
-            patSurfCube(unique(cell2mat(cst(:,4)))) = 1;
+            patSurfCube      = 0*ct.cube{1};
+            idx              = [cst{:,4}];
+            idx              = unique(vertcat(idx{:}));
+            patSurfCube(idx) = 1;
+            
             [f,v] = isosurface(X,Y,Z,patSurfCube,.5);
             
             % convert isosurface from voxel to [mm]

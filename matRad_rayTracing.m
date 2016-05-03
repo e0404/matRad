@@ -37,8 +37,8 @@ function [radDepthV,geoDistV] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCu
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set up rad depth cube for results
-radDepthCube = NaN*ones(size(ct.cube));
-              
+radDepthCube = repmat({NaN*ones(ct.cubeDim)},ct.numOfCtScen);
+
 % set up ray matrix direct behind last voxel
 rayMx_bev_y = max(rot_coordsV(:,2)) + max([ct.resolution.x ct.resolution.y ct.resolution.z]);
 rayMx_bev_y = rayMx_bev_y + stf.sourcePoint_bev(2);
@@ -53,7 +53,7 @@ coords = zeros(numel(ct.cube),3);
 coords(V,:) = rot_coordsV;
 
 % calculate spacing of rays on ray matrix
-rayMxSpacing = min([ct.resolution.x ct.resolution.y ct.resolution.z]);
+rayMxSpacing = 1/sqrt(2) * min([ct.resolution.x ct.resolution.y ct.resolution.z]);
 
 % define candidate ray matrix covering 1000x1000mm^2
 numOfCandidateRays = 2 * ceil(500/rayMxSpacing) + 1;
@@ -75,14 +75,14 @@ end
 
 % set up ray matrix
 rayMx_bev = [candidateRaysCoords_X(logical(candidateRayMx(:))) ...
-              rayMx_bev_y*ones(sum(candidateRayMx(:)),1) ...  
-              candidateRaysCoords_Z(logical(candidateRayMx(:)))];
+             rayMx_bev_y*ones(sum(candidateRayMx(:)),1) ...  
+             candidateRaysCoords_Z(logical(candidateRayMx(:)))];
 
 %     figure,
 %     for jj = 1:length(rayMx_bev)
 %        plot(rayMx_bev(jj,1),rayMx_bev(jj,3),'rx'),hold on 
 %     end
-    
+
 % Rotation around Z axis (gantry)
 rotMx_XY_T = [ cosd(stf.gantryAngle) sind(stf.gantryAngle) 0;
               -sind(stf.gantryAngle) cosd(stf.gantryAngle) 0;
@@ -100,15 +100,15 @@ rayMx_world = rayMx_bev * rotMx_XY_T * rotMx_XZ_T;
 raySelection = rayMxSpacing/2;
 
 % perform ray tracing over all rays
-for j = 1:size(rayMx_world,1)
+for i = 1:size(rayMx_world,1)
 
     % run siddon ray tracing algorithm
     [~,l,rho,~,ixHitVoxel] = matRad_siddonRayTracer(stf.isoCenter, ...
                                 ct.resolution, ...
                                 stf.sourcePoint, ...
-                                rayMx_world(j,:), ...
-                                {ct.cube});
-                                                        
+                                rayMx_world(i,:), ...
+                                ct.cube);
+
     % find voxels for which we should remember this tracing because this is    
     % the closest ray by projecting the voxel coordinates to the
     % intersection points with the ray matrix and checking if the distance 
@@ -116,28 +116,33 @@ for j = 1:size(rayMx_world,1)
     scale_factor = (rayMx_bev_y - stf.sourcePoint_bev(2)) ./ ...
                    coords(ixHitVoxel,2);
 
-    x_dist = coords(ixHitVoxel,1).*scale_factor - rayMx_bev(j,1);
-    z_dist = coords(ixHitVoxel,3).*scale_factor - rayMx_bev(j,3);
+    x_dist = coords(ixHitVoxel,1).*scale_factor - rayMx_bev(i,1);
+    z_dist = coords(ixHitVoxel,3).*scale_factor - rayMx_bev(i,3);
 
     ixRememberFromCurrTracing = x_dist > -raySelection & x_dist <= raySelection ...
                               & z_dist > -raySelection & z_dist <= raySelection;
 
     if any(ixRememberFromCurrTracing) > 0
-        % calc radiological depths
 
-        % eq 14
-        % It multiply voxel intersections with \rho values.
-        d =l .* rho{1}; %Note. It is not a number "one"; it is the letter "l"
+        for j = 1:ct.numOfCtScen
+            % calc radiological depths
 
-        % Calculate accumulated d sum.
-        dCum = cumsum(d)-d/2;
-       
-        % write radiological depth for voxel which we want to remember
-        radDepthCube(ixHitVoxel(ixRememberFromCurrTracing))= dCum(ixRememberFromCurrTracing);
-        
-    end
+            % eq 14
+            % It multiply voxel intersections with \rho values.
+            d = l .* rho{j}; %Note. It is not a number "one"; it is the letter "l"
+
+            % Calculate accumulated d sum.
+            dCum = cumsum(d)-d/2;
+
+            % write radiological depth for voxel which we want to remember
+            radDepthCube{j}(ixHitVoxel(ixRememberFromCurrTracing)) = dCum(ixRememberFromCurrTracing);
+        end
+    end  
     
 end
 
 % only take voxel inside the patient
-radDepthV = radDepthCube(V);
+for i = 1:ct.numOfCtScen
+    radDepthV{i} = radDepthCube{i}(V);
+end
+
