@@ -312,13 +312,22 @@ else
     files.resz = str2double(get(handles.resz_edit,'String'));
 end
 % selected RT Plan
-rtplan = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,2),'RTPLAN'),:);
-files.rtplan = rtplan(get(handles.rtplan_listbox,'Value'),:);
+rtplan = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) ...
+    & strcmp(handles.fileList(:,2),'RTPLAN'),:);
+if ~isempty(rtplan)
+    files.rtplan = rtplan(get(handles.rtplan_listbox,'Value'),:);
+else
+    files.rtplan = cell(0,13);
+end
 
 % selected RT Dose
-rtdose = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,2),'RTDOSE'),:);
-files.rtdose = rtdose(get(handles.doseseries_listbox,'Value'),:);
-
+rtdose = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) ...
+    & strcmp(handles.fileList(:,2),'RTDOSE'),:);
+if ~isempty(rtdose)
+    files.rtdose = rtdose(get(handles.doseseries_listbox,'Value'),:);
+else
+    files.rtdose = cell(0,13);
+end
 matRad_importDicom(files);
 
 
