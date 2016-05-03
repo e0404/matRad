@@ -33,7 +33,7 @@ function [ dose ] = matRad_interpDicomDoseCube( ct, currDose )
 
 % read information out of the RT file
 dosefile = currDose{1};
-info = dicominfo(dosefile);
+doseInfo = dicominfo(dosefile);
 
 % read the dosefile itself
 dosedata = dicomread(dosefile);
@@ -44,9 +44,9 @@ dosedata = im2double(dosedata);
 dose.internalName = currDose{12};
 
 % read out the resolution
-dose.resolution.x = info.PixelSpacing(1);
-dose.resolution.y = info.PixelSpacing(2);
-dose.resolution.z = info.SliceThickness;
+dose.resolution.x = doseInfo.PixelSpacing(1);
+dose.resolution.y = doseInfo.PixelSpacing(2);
+dose.resolution.z = doseInfo.SliceThickness;
 
 % target resolution is ct.resolution
 target_resolution = ct.resolution;
@@ -57,31 +57,31 @@ dose.cube = squeeze(dosedata(:,:,1,:));
 % ct resolution is target resolution, now convert to new cube;
 
 % generating grid vectors
-x = info.ImagePositionPatient(1) + info.PixelSpacing(1) * double([0:info.Columns - 1]');
-y = info.ImagePositionPatient(2) + info.PixelSpacing(2) * double([0:info.Rows - 1]);
-z = [info.ImagePositionPatient(3) + info.GridFrameOffsetVector]';
+x = doseInfo.ImagePositionPatient(1) + doseInfo.PixelSpacing(1) * double([0:doseInfo.Columns - 1]);
+y = doseInfo.ImagePositionPatient(2) + doseInfo.PixelSpacing(2) * double([0:doseInfo.Rows - 1])';
+z = [doseInfo.ImagePositionPatient(3) + doseInfo.GridFrameOffsetVector]';
 
 % new vectors
-xq = [min(ct.x) : target_resolution.x : max(ct.x)]';
+xq = [min(ct.x) : target_resolution.x : max(ct.x)];
 yq = [min(ct.y) : target_resolution.y : max(ct.y)]';
 zq =  min(ct.z) : target_resolution.z : max(ct.z);
 
 % scale cube from relative (normalized) to absolute values
 % need BitDepth
-bitDepth = double(info.BitDepth);
+bitDepth = double(doseInfo.BitDepth);
 % get GridScalingFactor
-gridScale = double(info.DoseGridScaling);
+gridScale = double(doseInfo.DoseGridScaling);
 % CAUTION: Only valid if data is converted via im2double
 doseScale = (2 ^ bitDepth - 1) * gridScale;
 % rescale dose.cube
 dose.cube = doseScale * dose.cube;
 
 % interpolation to ct grid
-dose.cube = interp3(y,x,z,dose.cube,yq,xq,zq,'linear',0);
+dose.cube = interp3(x,y,z,dose.cube,xq,yq,zq,'linear',0);
 
 % write new parameters
 dose.resolution = ct.resolution;
-dose.x = xq';
+dose.x = xq;
 dose.y = yq';
 dose.z = zq;
 
@@ -95,12 +95,12 @@ dose.dicomInfo.PixelSpacing            = [target_resolution.x; ...
                                                 target_resolution.y];
 dose.dicomInfo.ImagePositionPatient    = [min(dose.x); min(dose.y); min(dose.z)];
 dose.dicomInfo.SliceThickness          = target_resolution.z;
-dose.dicomInfo.ImageOrientationPatient = info.ImageOrientationPatient;
-dose.dicomInfo.DoseType                = info.DoseType;
-dose.dicomInfo.DoseSummationType       = info.DoseSummationType;
-dose.dicomInfo.InstanceNumber          = info.InstanceNumber;
-dose.dicomInfo.SOPClassUID             = info.SOPClassUID;
-dose.dicomInfo.SOPInstanceUID          = info.SOPInstanceUID;
-dose.dicomInfo.ReferencedRTPlanSequence = info.ReferencedRTPlanSequence;
+dose.dicomInfo.ImageOrientationPatient = doseInfo.ImageOrientationPatient;
+dose.dicomInfo.DoseType                = doseInfo.DoseType;
+dose.dicomInfo.DoseSummationType       = doseInfo.DoseSummationType;
+dose.dicomInfo.InstanceNumber          = doseInfo.InstanceNumber;
+dose.dicomInfo.SOPClassUID             = doseInfo.SOPClassUID;
+dose.dicomInfo.SOPInstanceUID          = doseInfo.SOPInstanceUID;
+dose.dicomInfo.ReferencedRTPlanSequence = doseInfo.ReferencedRTPlanSequence;
 
 end
