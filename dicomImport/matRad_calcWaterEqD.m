@@ -40,7 +40,7 @@ ctHU = double(ct.cube{1}) * double(ct.dicomInfo.RescaleSlope) + double(ct.dicomI
 % load hlut
 
 % directory with look up table files
-hlutDir = strcat(fileparts(mfilename('fullpath')),'\hlutLibrary\');
+hlutDir = fullfile(fileparts(mfilename('fullpath')),'hlutLibrary',filesep);
 
 % if possible -> file standard out of dicom tags
 try
