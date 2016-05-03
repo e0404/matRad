@@ -777,9 +777,11 @@ end
 
 %% plot dose cube
 if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
-
+        % if the selected display option doesn't exist then simply display
+        % the first cube of the Result struct
         if ~isfield(Result,handles.SelectedDisplayOption)
-            handles.SelectedDisplayOption = 'physicalDose';
+            CubeNames = fieldnames(Result);
+            handles.SelectedDisplayOption = CubeNames{1,1};
         end
         mVolume = getfield(Result,handles.SelectedDisplayOption);
         % make sure to exploit full color range 
