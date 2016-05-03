@@ -120,7 +120,7 @@ for i = 1:length(VOIs)
     cst{i,5}.Priority    = NaN; 
     
     % Dose Objectives
-    cst{i,6}.robustness = 'none';
+    %cst{i,6}.robustness = 'none';
     
 end
 
