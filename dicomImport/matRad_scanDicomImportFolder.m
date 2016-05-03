@@ -41,42 +41,7 @@ if ~license('checkout','image_toolbox')
     error('image processing toolbox and/or corresponding licence not available');
 end
 
-% get information about main directory
-mainDirInfo = dir(patDir);
-% get index of subfolders
-dirIndex = [mainDirInfo.isdir];
-% list of filenames in main directory
-fileList = {mainDirInfo(~dirIndex).name}';
-patientList = 0;
-
-% add files of subfolders
-% for i = 1:3
-subFolderList = {mainDirInfo(dirIndex).name}';
-subFolderList(ismember(subFolderList,{'.','..'})) = [];
-subFolderList = cellfun(@(x) fullfile(patDir,x),...
-        subFolderList, 'UniformOutput', false);
-subFolderFileList = [];
-for i = 1 : numel(subFolderList)
-    % loop subfolders
-    subDir = subFolderList{i};
-    % get information about main directory
-    subDirInfo = dir(subDir);
-    % get index of subfolders
-    dirIndex = [subDirInfo.isdir];
-    % list of filenames in main directory
-    subFileList = {subDirInfo(~dirIndex).name}';
-    if ~isempty(subFileList)
-        subFileList = cellfun(@(x) fullfile(subFolderList{i},x),...
-            subFileList, 'UniformOutput', false);
-    end
-    subFolderFileList = [subFolderFileList; subFileList];
-end
-
-% create full path for all files in main directory
-fileList = cellfun(@(x) fullfile(patDir,x),...
-    fileList, 'UniformOutput', false);
-% attach subfolderfiles to fileList
-fileList = [fileList; subFolderFileList];
+fileList = matRad_listAllFiles(patDir);
 
 if ~isempty(fileList)
     %% check for dicom files and differentiate patients, types, and series

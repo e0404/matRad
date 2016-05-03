@@ -81,8 +81,8 @@ dose.cube = interp3(y,x,z,dose.cube,yq,xq,zq,'linear',0);
 
 % write new parameters
 dose.resolution = ct.resolution;
-dose.x = xq;
-dose.y = yq;
+dose.x = xq';
+dose.y = yq';
 dose.z = zq;
 
 % check whether grid position are the same as the CT grid positions are
