@@ -47,14 +47,17 @@ try
     manufacturer = ct.dicomInfo_org.Manufacturer;
     model = ct.dicomInfo_org.ManufacturerModelName;
     convKernel = ct.dicomInfo_org.ConvolutionKernel;
-
-    hlutFileName = strcat(hlutDir,manufacturer, '-', model, '-ConvolutionKernel-',...
+    
+    hlutFileName = strcat(manufacturer, '-', model, '-ConvolutionKernel-',...
         convKernel, '.hlut');
-
+    
     % check whether fileNames used '-' or '_' instead of blanks
     hlutFileCell{1} = hlutFileName;
     hlutFileCell{2} = regexprep(hlutFileName,' ','-');
     hlutFileCell{3} = regexprep(hlutFileName,' ','_');
+    
+    % add pathname
+    hlutFileCell = strcat(hlutDir,hlutFileCell);
 
     for i = 1:3
         existIx(i) = exist(hlutFileCell{i}, 'file') == 2;
