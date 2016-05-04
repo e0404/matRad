@@ -7,9 +7,9 @@ function y = matRad_interp1(xi,yi,x)
 %   y = matRad_interp1(xi,yi,x)
 %
 % input
-%   xi:	sample points 
-%	yi:	corresponding data to sample points
-%	x: 	query points for interpolation
+%   xi: sample points 
+%   yi: corresponding data to sample points
+%   x:  query points for interpolation
 %	
 % output
 %   y: interpolated data   
