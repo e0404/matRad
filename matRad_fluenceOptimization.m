@@ -78,7 +78,7 @@ matRad_voxelWeighting           = cell(size(cst,1),2);
 matRad_backprojectionFlag       = false;
 
 % consider VOI priorities
-cst  = matRad_setOverlapPriorities(cst,multScen);
+cst  = matRad_setOverlapPriorities(cst);
 
 % adjust objectives and constraints internally for fractionation 
 for i = 1:size(cst,1)
