@@ -49,7 +49,7 @@ if nargout > 1
 end
 
 % set up list with bev coordinates for calculation of radiological depth
-coords = zeros(numel(ct.cube),3);
+coords = zeros(prod(ct.cubeDim),3);
 coords(V,:) = rot_coordsV;
 
 % calculate spacing of rays on ray matrix
