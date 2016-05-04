@@ -48,7 +48,7 @@ voiSurface(idx) = 1;
 voiSurfaceIdx   = find(voiSurface);
 
 % get number of voxels which should be added in each dimension
-voxelMargins = round([vMargin.x vMargin.y vMargin.z]./[vResolution.x vResolution.y vResolution.z]);
+voxelMargins = round([vMargin.y vMargin.x vMargin.z]./[vResolution.y vResolution.x vResolution.z]);
 mVOIEnlarged = mVOI;
 NewIdx = [];
 
