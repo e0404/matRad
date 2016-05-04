@@ -1,4 +1,4 @@
-function [radDepthV,geoDistV] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff,multScen)
+function [radDepthV,geoDistV] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
@@ -12,7 +12,6 @@ function [radDepthV,geoDistV] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCu
 %   V:             linear voxel indices e.g. of voxels inside patient.
 %   rot_coordsV    coordinates in beams eye view inside the patient
 %   lateralCutoff: lateral cut off used for ray tracing
-%   multScen:      matRad multiple scnerio struct
 %
 % output
 %   radDepthV:  radiological depth inside the patient
@@ -37,13 +36,7 @@ function [radDepthV,geoDistV] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCu
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set up rad depth cube for results
-for CtScen = 1:multScen.numOfCtScen
-        
-    if multScen.ScenCombMask(CtScen,1,1)
-        radDepthCube = repmat({NaN*ones(ct.cubeDim)},multScen.numOfCtScen);
-    end
-
-end              
+radDepthCube = repmat({NaN*ones(ct.cubeDim)},ct.numOfCtScen);
 
 % set up ray matrix direct behind last voxel
 rayMx_bev_y = max(rot_coordsV(:,2)) + max([ct.resolution.x ct.resolution.y ct.resolution.z]);
@@ -59,7 +52,7 @@ coords = zeros(numel(ct.cube),3);
 coords(V,:) = rot_coordsV;
 
 % calculate spacing of rays on ray matrix
-rayMxSpacing = min([ct.resolution.x ct.resolution.y ct.resolution.z]);
+rayMxSpacing = 1/sqrt(2) * min([ct.resolution.x ct.resolution.y ct.resolution.z]);
 
 % define candidate ray matrix covering 1000x1000mm^2
 numOfCandidateRays = 2 * ceil(500/rayMxSpacing) + 1;
@@ -106,14 +99,14 @@ rayMx_world = rayMx_bev * rotMx_XY_T * rotMx_XZ_T;
 raySelection = rayMxSpacing/2;
 
 % perform ray tracing over all rays
-for j = 1:size(rayMx_world,1)
+for i = 1:size(rayMx_world,1)
 
     % run siddon ray tracing algorithm
     [~,l,rho,~,ixHitVoxel] = matRad_siddonRayTracer(stf.isoCenter, ...
                                 ct.resolution, ...
                                 ct.cubeDim,...
                                 stf.sourcePoint, ...
-                                rayMx_world(j,:), ...
+                                rayMx_world(i,:), ...
                                 ct.cube);
 
     % find voxels for which we should remember this tracing because this is    
@@ -123,33 +116,33 @@ for j = 1:size(rayMx_world,1)
     scale_factor = (rayMx_bev_y - stf.sourcePoint_bev(2)) ./ ...
                    coords(ixHitVoxel,2);
 
-    x_dist = coords(ixHitVoxel,1).*scale_factor - rayMx_bev(j,1);
-    z_dist = coords(ixHitVoxel,3).*scale_factor - rayMx_bev(j,3);
+    x_dist = coords(ixHitVoxel,1).*scale_factor - rayMx_bev(i,1);
+    z_dist = coords(ixHitVoxel,3).*scale_factor - rayMx_bev(i,3);
 
     ixRememberFromCurrTracing = x_dist > -raySelection & x_dist <= raySelection ...
                               & z_dist > -raySelection & z_dist <= raySelection;
 
     if any(ixRememberFromCurrTracing) > 0
 
-        for CtScen = 1:multScen.numOfCtScen
+        for j = 1:ct.numOfCtScen
             % calc radiological depths
 
             % eq 14
             % It multiply voxel intersections with \rho values.
-            d =l .* rho{CtScen}; %Note. It is not a number "one"; it is the letter "l"
+            d = l .* rho{j}; %Note. It is not a number "one"; it is the letter "l"
 
             % Calculate accumulated d sum.
             dCum = cumsum(d)-d/2;
 
             % write radiological depth for voxel which we want to remember
-            radDepthCube{CtScen}(ixHitVoxel(ixRememberFromCurrTracing))= dCum(ixRememberFromCurrTracing);
+            radDepthCube{j}(ixHitVoxel(ixRememberFromCurrTracing)) = dCum(ixRememberFromCurrTracing);
         end
     end  
     
 end
 
 % only take voxel inside the patient
-for CtScen = 1:multScen.numOfCtScen
-    radDepthV{CtScen} = radDepthCube{CtScen}(V);
+for i = 1:ct.numOfCtScen
+    radDepthV{i} = radDepthCube{i}(V);
 end
 

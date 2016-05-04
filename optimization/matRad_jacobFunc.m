@@ -1,4 +1,40 @@
 function jacobVec = matRad_jacobFunc(d_i,constraint,d_ref,d_pi,scaling,d_ref2)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad IPOPT callback: jacobian function for inverse planning supporting max dose
+% constraint, min dose constraint, min max dose constraint, min mean, max
+% min, min max mean constraint, min EUD constraint, max EUDconstraint, 
+% min max EUD constraint, exact DVH constraint, max DVH constraint, 
+% min DVH constraint 
+% 
+% call
+%   jacobVec = matRad_jacobFunc(d_i,constraint,d_ref)
+%
+% input
+%   d_i:        dose vector
+%   constraint: matRad constraint struct
+%   d_ref:      reference dose
+%
+% output
+%   jacobVec:  jacobian vector of constraint for differentation with
+%              respect to dose. need subsequent differentation for jacobian
+%              in beamlet weights (see jacobFunWrapper)
+%
+% References
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 numOfVoxels = numel(d_i);
 
@@ -36,8 +72,7 @@ elseif isequal(constraint.type, 'max EUD constraint') || ...
     jacobVec = nthroot(1/numOfVoxels,exponent) * sum(d_i.^exponent)^((1-exponent)/exponent) * ...
                   (d_i.^(exponent-1));
 
-elseif isequal(constraint.type, 'exact DVH constraint') || ...
-       isequal(constraint.type, 'max DVH constraint') || ...
+elseif isequal(constraint.type, 'max DVH constraint') || ...
        isequal(constraint.type, 'min DVH constraint')
 
     d_i_sort = sort(d_i);

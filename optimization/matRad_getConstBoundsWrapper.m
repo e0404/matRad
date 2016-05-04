@@ -1,14 +1,14 @@
-function [cl,cu] = matRad_getConstBoundsWrapper(cst,numOfScenarios,type)
+function [cl,cu] = matRad_getConstBoundsWrapper(cst,type,numOfScenarios)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad IPOPT get constraint bounds function
+% matRad IPOPT get constraint bounds wrapper function
 % 
 % call
-%   [cl,cu] = matRad_getConstBounds(cst,type)
+%   [cl,cu] = matRad_getConstBounds(cst,numOfScenarios,type)
 %
 % input
-%   cst:  matRad cst struct
-%   numOfScenarios: number of scenarios considered during optimization
-%   type: type of optimizaiton; either 'none','effect' or 'RBExD'
+%   cst:            matRad cst struct
+%   type:           type of optimizaiton; either 'none','effect' or 'RBExD'
+%   numOfScenarios: (optional) number of scenarios considered during optimization
 %
 % output
 %   cl: lower bounds on constraints
@@ -31,6 +31,7 @@ function [cl,cu] = matRad_getConstBoundsWrapper(cst,numOfScenarios,type)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 % Initialize bounds
 cl = [];

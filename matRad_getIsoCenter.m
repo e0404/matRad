@@ -41,7 +41,7 @@ end
 V = [];
 
 % Save target indices in V variable.
-for i=1:size(cst,1)
+for i = 1:size(cst,1)
     if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
         V = [V;vertcat(cst{i,4}{:})];
     end

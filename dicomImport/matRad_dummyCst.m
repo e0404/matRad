@@ -31,16 +31,21 @@ function cst = matRad_dummyCst(ct)
 
 warning('Did not find RTSS. Creating dummy segmentation for matRad.');
 
+% allocate
 cst = cell(1,6);
 
-cst{1,1} = 0; % first organ has number 0
-cst{1,2} = 'dummyContour';
-cst{1,3} = 'OAR';
-cst{1,4} = find(ct.cube>0.1);        
+% fill
+cst{1,1}          = 0; % first organ has number 0
+cst{1,2}          = 'dummyContour';
+cst{1,3}          = 'OAR';
+cst{1,4}{1}       = find(ct.cube>0.1);        
 cst{1,5}.Priority = 1;       
+
 % set default parameter for biological planning
-cst{1,5}.alphaX = 0.1;
-cst{1,5}.betaX  = 0.05;
-cst{1,5}.Visible = 1;
-cst{1,6} = []; % define no objcetives   
+cst{1,5}.alphaX   = 0.1;
+cst{1,5}.betaX    = 0.05;
+cst{1,5}.Visible  = 1;
+
+% define no objcetives   
+cst{1,6}          = [];
 

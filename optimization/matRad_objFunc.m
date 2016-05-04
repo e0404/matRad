@@ -5,9 +5,12 @@ function f = matRad_objFunc(d_i,objective,d_ref,d_ref2,weighting)
 % squared deviation and DVH objectives
 % 
 % call
-%    f = matRad_objFunc(xxx)
+%    f = matRad_objFunc(d_i,objective,d_ref)
 %
 % input
+%    d_i:       dose vector in VOI
+%    objective: matRad objective struct
+%    d_ref:     reference dose /effect value to evaluate objective
 %
 % output
 %   f: objective function value

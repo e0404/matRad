@@ -67,7 +67,7 @@ for i = 1:size(structures,2)
     
     end
     
-    cst{i,4} = structures(i).indices;
+    cst{i,4}{1} = structures(i).indices;
     
     % set default parameter for biological planning
     cst{i,5}.alphaX = 0.1;

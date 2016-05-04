@@ -5,12 +5,17 @@ function delta = matRad_gradFunc(d_i,objective,d_ref,d_ref2,weighting)
 % squared deviation and DVH objectives
 % 
 % call
-%   g = matRad_gradFunc(ccc)
+%   delta = matRad_gradFunc(d_i,objective,d_ref)
 %
 % input
+%   d_i:       dose vector
+%   objective: matRad objective struct
+%   d_ref:     reference dose
 %
 % output
-%   g: gradient of objective function
+%   delta: gradient of objective function with respect to dose! needs
+%   subsequent differentation for gradient in beamlet weights (see
+%   gradFuncWrapper!)
 %
 % References
 %   [1] http://www.sciencedirect.com/science/article/pii/S0958394701000577

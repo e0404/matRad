@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcCubes(w,dij,cst,multScen)
+function resultGUI = matRad_calcCubes(w,dij,cst,scenNum)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad computation of all cubes for the resultGUI struct which is used
 % as result container and for visualization in matRad's GUI
@@ -7,10 +7,10 @@ function resultGUI = matRad_calcCubes(w,dij,cst,multScen)
 %   resultGUI = matRad_calcCubes(w,dij,cst)
 %
 % input
-%   w:   bixel weight vector
-%   dij: dose influence matrix
-%   cst: matRad cst struct
-%   multScen:   matRad multiple scnerio struct
+%   w:       bixel weight vector
+%   dij:     dose influence matrix
+%   cst:     matRad cst struct
+%   scenNum: optional: number of scenario to calculated (default 1)
 %
 % output
 %   resultGUI: matRad result struct
@@ -30,28 +30,32 @@ function resultGUI = matRad_calcCubes(w,dij,cst,multScen)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if nargin < 4
+    scenNum = 1;
+end
+
 % consider VOI priorities
-cst  = matRad_setOverlapPriorities(cst,multScen);
+cst  = matRad_setOverlapPriorities(cst);
 
 resultGUI.w = w;
 
 % calc dose and reshape from 1D vector to 2D array
-resultGUI.physicalDose = reshape(dij.physicalDose{1}*resultGUI.w,dij.dimensions);
+resultGUI.physicalDose = reshape(dij.physicalDose{scenNum}*resultGUI.w,dij.dimensions);
 
 if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
 
     a_x = zeros(size(resultGUI.physicalDose));
     b_x = zeros(size(resultGUI.physicalDose));
 
-    for  i = 1:size(cst,1)
+    for i = 1:size(cst,1)
         % Only take OAR or target VOI.
         if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') 
-            a_x(cst{i,4}{1}) = cst{i,5}.alphaX;
-            b_x(cst{i,4}{1}) = cst{i,5}.betaX;
+            a_x(cst{i,4}{scenNum}) = cst{i,5}.alphaX;
+            b_x(cst{i,4}{scenNum}) = cst{i,5}.betaX;
         end
     end
     
-    resultGUI.effect = (dij.mAlphaDose{1}*resultGUI.w+(dij.mSqrtBetaDose{1}*resultGUI.w).^2);
+    resultGUI.effect = (dij.mAlphaDose{scenNum}*resultGUI.w+(dij.mSqrtBetaDose{scenNum}*resultGUI.w).^2);
     resultGUI.effect = reshape(resultGUI.effect,dij.dimensions);
     
     resultGUI.RBExDose     = zeros(size(resultGUI.effect));
@@ -59,9 +63,9 @@ if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
     resultGUI.RBExDose(ix) = ((sqrt(a_x(ix).^2 + 4 .* b_x(ix) .* resultGUI.effect(ix)) - a_x(ix))./(2.*b_x(ix)));
     resultGUI.RBE          = resultGUI.RBExDose./resultGUI.physicalDose;
    
-    AlphaDoseCube    = dij.mAlphaDose{1} * resultGUI.w;
+    AlphaDoseCube    = dij.mAlphaDose{scenNum} * resultGUI.w;
     resultGUI.alpha  = (reshape(AlphaDoseCube,dij.dimensions))./resultGUI.physicalDose;
-    SqrtBetaDoseCube = dij.mSqrtBetaDose{1} * resultGUI.w;
+    SqrtBetaDoseCube = dij.mSqrtBetaDose{scenNum} * resultGUI.w;
     resultGUI.beta   = ((reshape(SqrtBetaDoseCube,dij.dimensions))./resultGUI.physicalDose).^2;
     
 end

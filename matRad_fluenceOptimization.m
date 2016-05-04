@@ -1,4 +1,4 @@
-function [resultGUI,info] = matRad_fluenceOptimization(dij,ct,cst,pln,multScen)
+function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,multScen)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
@@ -134,8 +134,8 @@ else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBEx
     for i = 1:size(cst,1)
         
         if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
-             dij.ax(cst{i,4}) = cst{i,5}.alphaX;
-             dij.bx(cst{i,4}) = cst{i,5}.betaX;
+             dij.ax(cst{i,4}{1}) = cst{i,5}.alphaX;
+             dij.bx(cst{i,4}{1}) = cst{i,5}.betaX;
         end
         
         for j = 1:size(cst{i,6},2)
@@ -167,7 +167,7 @@ else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBEx
 end
 
 % set callback functions.
-[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,dij.numOfScenarios,pln.bioOptimization);   
+[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios);   
 funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,pln.bioOptimization);

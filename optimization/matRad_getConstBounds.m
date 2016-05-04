@@ -1,4 +1,35 @@
 function [cl,cu] = matRad_getConstBounds(constraint,param)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad IPOPT get constraint bounds function
+% 
+% call
+%   [cl,cu] = matRad_getConstBounds(constraint,param)
+%
+% input
+%   constraint: matRad constraint struct
+%   param:      reference parameter
+%
+% output
+%   cl: lower bounds on constraints
+%   cu: lower bounds on constraints
+%
+% References
+%
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 if isequal(constraint.type, 'max dose constraint') 
@@ -40,11 +71,6 @@ elseif isequal(constraint.type, 'min max EUD constraint')
 
     cl = param(1);
     cu = param(2);
-
-elseif isequal(constraint.type, 'exact DVH constraint')
-
-    cl = constraint.volume/100;
-    cu = constraint.volume/100;
 
 elseif isequal(constraint.type, 'max DVH constraint') 
 
