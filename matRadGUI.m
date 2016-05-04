@@ -637,10 +637,13 @@ try
         pln.isoCenter = str2num(get(handles.editIsoCenter,'String'));
     end
 
-catch
-   handles = showError(handles,'CalcDoseCallback: Error in preprocessing step.'); 
-   guidata(hObject,handles);
-   return;
+catch ME
+    handles = showError(handles,{'CalcDoseCallback: Error in preprocessing!',ME.message}); 
+    % change state from busy to normal
+    set(Figures, 'pointer', 'arrow');
+    set(InterfaceObj,'Enable','on');
+    guidata(hObject,handles);
+    return;
 end
 
 % generate steering file
@@ -649,10 +652,13 @@ try
                                      evalin('base','cst'),...
                                      evalin('base','pln'));
     assignin('base','stf',stf);
-catch
-   handles = showError(handles,'CalcDoseCallback: Error in steering file generation'); 
-   guidata(hObject,handles);
-   return;
+catch ME
+    handles = showError(handles,{'CalcDoseCallback: Error in steering file generation!',ME.message}); 
+    % change state from busy to normal
+    set(Figures, 'pointer', 'arrow');
+    set(InterfaceObj,'Enable','on');
+    guidata(hObject,handles);
+    return;
 end
 
 % carry out dose calculation
@@ -670,8 +676,11 @@ try
     UpdatePlot(handles);
     UpdateState(handles);
     guidata(hObject,handles);
-catch
-    handles = showError(handles,'CalcDoseCallback: Error in dose calculation'); 
+catch ME
+    handles = showError(handles,{'CalcDoseCallback: Error in dose calculatio!',ME.message}); 
+    % change state from busy to normal
+    set(Figures, 'pointer', 'arrow');
+    set(InterfaceObj,'Enable','on');
     guidata(hObject,handles);
     return;
 end
