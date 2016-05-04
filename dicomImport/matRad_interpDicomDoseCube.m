@@ -58,13 +58,19 @@ dose.cube = squeeze(dosedata(:,:,1,:));
 
 % generating grid vectors
 x = doseInfo.ImagePositionPatient(1) + doseInfo.PixelSpacing(1) * double([0:doseInfo.Columns - 1]);
-y = doseInfo.ImagePositionPatient(2) + doseInfo.PixelSpacing(2) * double([0:doseInfo.Rows - 1])';
-z = [doseInfo.ImagePositionPatient(3) + doseInfo.GridFrameOffsetVector]';
+y = doseInfo.ImagePositionPatient(2) + doseInfo.PixelSpacing(2) * double([0:doseInfo.Rows - 1]);
+z = [doseInfo.ImagePositionPatient(3) + doseInfo.GridFrameOffsetVector];
 
 % new vectors
 xq = [min(ct.x) : target_resolution.x : max(ct.x)];
-yq = [min(ct.y) : target_resolution.y : max(ct.y)]';
+yq = [min(ct.y) : target_resolution.y : max(ct.y)];
 zq =  min(ct.z) : target_resolution.z : max(ct.z);
+
+% set up grid matrices - implicit dimension permuation (X Y Z-> Y X Z)
+% Matlab represents internally in the first matrix dimension the
+% ordinate axis and in the second matrix dimension the abscissas axis
+[ Y,  X,  Z] = meshgrid(x,y,z);
+[Yq, Xq, Zq] = meshgrid(xq,yq,zq);
 
 % scale cube from relative (normalized) to absolute values
 % need BitDepth
@@ -76,13 +82,13 @@ doseScale = (2 ^ bitDepth - 1) * gridScale;
 % rescale dose.cube
 dose.cube = doseScale * dose.cube;
 
-% interpolation to ct grid
-dose.cube = interp3(x,y,z,dose.cube,xq,yq,zq,'linear',0);
+% interpolation to ct grid - cube is now stored in Y X Z
+dose.cube = interp3(Y,X,Z,dose.cube,Yq,Xq,Zq,'linear',0);
 
 % write new parameters
 dose.resolution = ct.resolution;
 dose.x = xq;
-dose.y = yq';
+dose.y = yq;
 dose.z = zq;
 
 % check whether grid position are the same as the CT grid positions are

@@ -37,22 +37,28 @@ coordsOfFirstPixel = [origCtInfo.ImagePositionPatient];
 
 % set up grid vectors
 x = coordsOfFirstPixel(1,1) + origCtInfo(1).PixelSpacing(1)*double([0:origCtInfo(1).Columns-1]);
-y = coordsOfFirstPixel(2,1) + origCtInfo(1).PixelSpacing(2)*double([0:origCtInfo(1).Rows-1]');
+y = coordsOfFirstPixel(2,1) + origCtInfo(1).PixelSpacing(2)*double([0:origCtInfo(1).Rows-1]);
 z = coordsOfFirstPixel(3,:);
 
-xi = coordsOfFirstPixel(1,1):resolution.x:(coordsOfFirstPixel(1,1)+origCtInfo(1).PixelSpacing(1)*double(origCtInfo(1).Rows-1));
-yi = [coordsOfFirstPixel(2,1):resolution.y:(coordsOfFirstPixel(2,1)+origCtInfo(1).PixelSpacing(2)*double(origCtInfo(1).Columns-1))]';
-zi = coordsOfFirstPixel(3,1):resolution.z: coordsOfFirstPixel(3,end);
+xq = coordsOfFirstPixel(1,1):resolution.x:(coordsOfFirstPixel(1,1)+origCtInfo(1).PixelSpacing(1)*double(origCtInfo(1).Columns-1));
+yq = [coordsOfFirstPixel(2,1):resolution.y:(coordsOfFirstPixel(2,1)+origCtInfo(1).PixelSpacing(2)*double(origCtInfo(1).Rows-1))];
+zq = coordsOfFirstPixel(3,1):resolution.z: coordsOfFirstPixel(3,end);
 
-% interpolate
-interpCt.cube{1} = interp3(x,y,z,origCt,xi,yi,zi);
+% set up grid matrices - implicit dimension permuation (X Y Z-> Y X Z)
+% Matlab represents internally in the first matrix dimension the
+% ordinate axis and in the second matrix dimension the abscissas axis
+[ Y,  X,  Z] = meshgrid(x,y,z);
+[Yq, Xq, Zq] = meshgrid(xq,yq,zq);
+
+% interpolate cube - cube is now stored in Y X Z 
+interpCt.cube{1} = interp3(Y,X,Z,origCt,Yq,Xq,Zq);
 
 % some meta information
 interpCt.resolution = resolution;
 
-interpCt.x = xi;
-interpCt.y = yi';
-interpCt.z = zi;
+interpCt.x = xq;
+interpCt.y = yq;
+interpCt.z = zq;
 
-interpCt.cubeDim     = [numel(yi) numel(xi) numel(zi)];
+interpCt.cubeDim     = [numel(yq) numel(xq) numel(zq)];
 interpCt.numOfCtScen = 1;
