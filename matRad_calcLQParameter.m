@@ -41,7 +41,7 @@ numOfTissueClass = size(baseData(1).alpha,2);
 depths = baseData.depths + baseData.offset;
 
 for i = 1:numOfTissueClass
-    vAlpha(mTissueClass==i) = interp1(depths,baseData.alpha(:,i),vRadDepths(mTissueClass==i),'linear');
-    vBeta(mTissueClass==i)  = interp1(depths,baseData.beta(:,i), vRadDepths(mTissueClass==i),'linear');
+    vAlpha(mTissueClass==i) = matRad_interp1(depths,baseData.alpha(:,i),vRadDepths(mTissueClass==i));
+    vBeta(mTissueClass==i)  = matRad_interp1(depths,baseData.beta(:,i), vRadDepths(mTissueClass==i));
 end
 

@@ -41,12 +41,12 @@ depths = baseData.depths + baseData.offset;
 conversionFactor = 1.6021766208e-02;
 
  % calculate initial focus sigma
-SigmaIni = interp1(baseData.initFocus.dist(focusIx,:),baseData.initFocus.sigma(focusIx,:),SSD);
+SigmaIni = matRad_interp1(baseData.initFocus.dist(focusIx,:),baseData.initFocus.sigma(focusIx,:),SSD);
 
 if ~isfield(baseData,'sigma')
     
     % interpolate depth dose, sigmas, and weights    
-    X = interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths,'linear');
+    X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
     
     % compute lateral sigmas
     sigmaSq_Narr = X(:,2).^2 + SigmaIni^2;
@@ -61,7 +61,7 @@ if ~isfield(baseData,'sigma')
 else
     
     % interpolate depth dose and sigma
-    X = interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths,'linear');
+    X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths);
 
     %compute lateral sigma
     sigmaSq = X(:,2).^2 + SigmaIni^2;
