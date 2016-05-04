@@ -94,7 +94,7 @@ end
 
 fontSizeValue = 14;
 myLegend = legend('show','location','NorthEast');
-set(myLegend,'FontSize',10);
+set(myLegend,'FontSize',10,'Interpreter','none');
 legend boxoff
 
 
