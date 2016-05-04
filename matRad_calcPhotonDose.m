@@ -191,7 +191,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
 
     % ray tracing
     fprintf(['matRad: calculate radiological depth cube...']);
-    [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoff,multScen);
+    [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoff);
     fprintf('done \n');
     
     % get indices of voxels where ray tracing results are available

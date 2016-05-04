@@ -1,6 +1,5 @@
 function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter, ...
                                     resolution, ...
-                                    ctCubeDim,...
                                     sourcePoint, ...
                                     targetPoint, ...
                                     cubes)
@@ -11,7 +10,6 @@ function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter, ...
 % call
 %   [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter, ...
 %                               resolution, ...
-%                               ctCubeDim,...
 %                               sourcePoint, ...
 %                               targetPoint, ...
 %                               cubes, ...
@@ -20,7 +18,6 @@ function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter, ...
 % input
 %   isocenter:      isocenter within cube [voxels]
 %   resolution:     resolution of the cubes [mm/voxel]
-%   ctCubeDim:      ct cube dimension
 %   sourcePoint:    source point of ray tracing
 %   targetPoint:    target point of ray tracing
 %   cubes:          cell array of cubes for ray tracing (it is possible to pass
@@ -60,9 +57,10 @@ sourcePoint = sourcePoint + isocenter;
 targetPoint = targetPoint + isocenter;
 
 % Save the numbers of planes.
-xNumPlanes = ctCubeDim(2) + 1;
-yNumPlanes = ctCubeDim(1) + 1;
-zNumPlanes = ctCubeDim(3) + 1;
+[yNumPlanes, xNumPlanes, zNumPlanes] = size(cubes{1});
+xNumPlanes = xNumPlanes + 1;
+yNumPlanes = yNumPlanes + 1;
+zNumPlanes = zNumPlanes + 1;
 
 % eq 11
 % Calculate the distance from source to target point.
@@ -215,7 +213,7 @@ j(j>yNumPlanes-1) = yNumPlanes-1;
 k(k>zNumPlanes-1) = zNumPlanes-1;
 
 % Convert to linear indices
-ix = j + (i-1)*ctCubeDim(1) + (k-1)*ctCubeDim(1)*ctCubeDim(2); 
+ix = j + (i-1)*size(cubes{1},1) + (k-1)*size(cubes{1},1)*size(cubes{1},2); 
 
 % obtains the values from cubes
 rho = cell(numel(cubes),1);
