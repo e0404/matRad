@@ -95,7 +95,9 @@ end
 
 %% import dose cube
 if isfield(files,'rtdose')
-    if ~(cellfun(@isempty,files.rtdose(1,:)))
+    % check if files.rtdose contains a path and is labeld as RTDose
+    % only the first two elements are relevant for loading the rt dose
+    if ~(cellfun(@isempty,files.rtdose(1,1:2))) 
         fprintf('loading Dose files \n', structures(i).structName);
         resultGUI = matRad_importDicomRTDose(ct, files.rtdose);
         if size(resultGUI) == 0
