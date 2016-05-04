@@ -48,8 +48,6 @@ if isequal(multScen.shiftGenType,'equidistant')
 
         end
         
-        multScen.numOfShiftScen      = sum(multScen.numOfShiftScen)+1;
-        
     elseif isequal(multScen.shiftCombType,'combined')
         if isequal(multScen.shiftGen1DIsotropy,'+-')
 
