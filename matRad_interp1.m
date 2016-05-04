@@ -1,4 +1,37 @@
 function y = matRad_interp1(xi,yi,x)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% interpolates 1-D data (table lookup) and utilizes griddedInterpolant if
+% availabe in the used MATLAB version
+%
+% call
+%   y = matRad_interp1(xi,yi,x)
+%
+% input
+%   xi:	sample points 
+%	yi:	corresponding data to sample points
+%	x: 	query points for interpolation
+%	
+% output
+%   y: interpolated data   
+%
+% Note that all input data has to be given as column vectors for a correct
+% interpolation. yi can be a matrix consisting out of several 1-D datasets 
+% in each column, which will all be interpolated for the given query points.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 persistent isGriddedInterpolantAvailable;
 
@@ -6,6 +39,7 @@ if isempty(isGriddedInterpolantAvailable)
     isGriddedInterpolantAvailable = exist('griddedInterpolant','class');
 end
 
+% manual interpolation for only one query point to save time
 if numel(x) == 1
     
     ix1 = find((x >= xi), 1, 'last');
@@ -22,15 +56,18 @@ if numel(x) == 1
 elseif isGriddedInterpolantAvailable
     
     if size(yi,2) > 1
-        samplePoints = {xi,1:size(yi,2)};
-        F = griddedInterpolant(samplePoints,yi);
-    
-        queryPoints = {x,1:size(yi,2)};
-        y = F(queryPoints);
+		% interpolation for multiple 1-D datasets
+        samplePoints = {xi, 1:size(yi,2)};
+        queryPoints  = {x,  1:size(yi,2)};
     else
-        F = griddedInterpolant(xi,yi);
-        y = F(x);
+		% interpolation for a single 1-D dataset
+        samplePoints = {xi};
+        queryPoints  = {x};
     end
+    
+    F = griddedInterpolant(samplePoints,yi);
+
+    y = F(queryPoints);
 else
     
     % for older matlab versions use this code
