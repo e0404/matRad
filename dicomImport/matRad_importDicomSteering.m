@@ -199,8 +199,8 @@ for i = 1:length(BeamSeqNames)
         bixelWidth_help(j,1) = stf(i).ray(j).rayPos_bev(1);
         bixelWidth_help(j,2) = stf(i).ray(j).rayPos_bev(3);        
     end
-    bixelWidth_help1 = unique(bixelWidth_help(:,1),'sorted');
-    bixelWidth_help2 = unique(bixelWidth_help(:,2),'sorted');
+    bixelWidth_help1 = unique(round(1e3*bixelWidth_help(:,1))/1e3,'sorted');
+    bixelWidth_help2 = unique(round(1e3*bixelWidth_help(:,2))/1e3,'sorted');
     
     bixelWidth = unique([unique(diff(bixelWidth_help1)) unique(diff(bixelWidth_help2))]);
     
@@ -287,7 +287,7 @@ for i = 1:length(BeamSeqNames)
     
 end
 
-if any(isnan(stf(:).bixelWidth)) || numel(unique(stf(:).bixelWidth)) > 1
+if any(isnan([stf(:).bixelWidth])) || numel(unique([stf(:).bixelWidth])) > 1
     pln.bixelWidth = NaN;
 else
     pln.bixelWidth = stf(1).bixelWidth;

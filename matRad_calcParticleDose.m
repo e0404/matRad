@@ -270,7 +270,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                         machine.data(energyIx));
                 
                     alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelAlpha.*bixelDose,dij.numOfVoxels,1);
-                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.numOfVoxels,1);
+                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1}  = sparse(V(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.numOfVoxels,1);
                 end
                 
                 % save computation time and memory by sequentially filling the
