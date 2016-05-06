@@ -66,11 +66,11 @@ else
             else
                 
                 % calculate RBX x dose
-                scaledEffect = (e./dij.bx)+(dij.gamma.^2);
-    
+                scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
+                scaledEffect   = zeros(length(scaledEffect,1));
                 % compute sqrt(scaledEffect) only for numeric values (not nan) to save time
-                [idx,~]           = find(~isnan(scaledEffect));
-                scaledEffect(idx) = sqrt(scaledEffect(idx));
+                [idx,~]           = find(~isnan(scaledEffectSq));
+                scaledEffect(idx) = sqrt(scaledEffectSq(idx));
                 d{i}              = scaledEffect - dij.gamma;
                 
             end

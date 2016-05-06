@@ -98,7 +98,7 @@ for i = 1:size(cst,1)
 
                     elseif isequal(type,'RBExD') && ~isempty(jacobVec)
                                         
-                       scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i).^2;
+                       scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i);
 
                        delta = jacobVec./(2*dij.bx(cst{i,4}{1}).*scaledEffect);
 
