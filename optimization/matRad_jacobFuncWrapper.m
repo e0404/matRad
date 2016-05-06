@@ -99,8 +99,10 @@ for i = 1:size(cst,1)
                        constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
 
                     elseif isequal(type,'RBExD') && ~isempty(jacobVec)
+                                        
+                       scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i).^2;
 
-                       delta = jacobVec./(2*dij.bx(cst{i,4}{1}).*ScaledEffect(cst{i,4}{1}));
+                       delta = jacobVec./(2*dij.bx(cst{i,4}{1}).*scaledEffect);
 
                        mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,delta,dij.numOfVoxels,1)];
                        mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
