@@ -92,12 +92,14 @@ elseif isequal(constraint.type, 'min DVH constraint')
     % cu = [cu;0];
     % alternative constraint calculation 2/4 %
     
-elseif isequal(constraint.type, 'max DCH constraint')
+elseif isequal(constraint.type, 'max DCH constraint') || ...
+       isequal(constraint.type, 'max DCH constraint3') 
     
     cl = -inf;
     cu = constraint.coverage/100;
     
-elseif isequal(constraint.type, 'min DCH constraint')    
+elseif isequal(constraint.type, 'min DCH constraint') || ...
+       isequal(constraint.type, 'min DCH constraint3') 
     
     cl = constraint.coverage/100;
     cu = inf;

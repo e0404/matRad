@@ -136,7 +136,9 @@ for i = 1:size(cst,1)
                 elseif strcmp(cst{i,6}(j).robustness,'coverage')
                     
                     if isequal(cst{i,6}(j).type, 'max DCH constraint') || ... 
-                       isequal(cst{i,6}(j).type, 'min DCH constraint')
+                       isequal(cst{i,6}(j).type, 'min DCH constraint') || ... 
+                       isequal(cst{i,6}(j).type, 'max DCH constraint3') || ... 
+                       isequal(cst{i,6}(j).type, 'min DCH constraint3')
                         
                         physicalDoseCum = sparse(mean(dij.physicalDose{1}(cst{i,4}{1},:)));
                         for k = 2:dij.numOfScenarios

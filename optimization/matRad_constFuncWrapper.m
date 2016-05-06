@@ -91,6 +91,23 @@ for  i = 1:size(cst,1)
                         %matRad_calcVoxelWeighting(i,j,cst,d_i,d_ref,d_ref2)
 
                         c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref,1,d_ref2)];
+                        
+                    elseif isequal(cst{i,6}(j).type, 'max DCH constraint3') || ...
+                           isequal(cst{i,6}(j).type, 'min DCH constraint3')
+                       
+                        for k = 1:dij.numOfScenarios
+                             
+                            % get current dose
+                            d_i = d{k}(cst{i,4}{1});
+                            
+                            % calculate volume of scenario k
+                            volume(k) = matRad_constFunc(d_i,cst{i,6}(j),d_ref);
+                            
+                        end
+                        
+                        % calculate coverage probabilty
+                        scenProb = 1/dij.numOfScenarios;  % assume scenarios with equal probabilities
+                        c        = [c; sum(scenProb*(volume >= cst{i,6}(j).volume/100))];
                    
                     end
 
