@@ -151,8 +151,14 @@ else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBEx
            idx            = dij.bx~=0; 
            dij.gamma(idx) = dij.ax(idx)./(2*dij.bx(idx)); 
             
-           roughRBE = 3;
-           wInit    =  (doseTarget)/(roughRBE*mean(dij.physicalDose{1}(V,:)*wOnes)) * wOnes; 
+           % calculate current in target
+           CurrEffectTarget = (dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2);
+           % ensure a underestimated biological effective dose 
+           TolEstBio        = 1.2;
+           % calculate maximal RBE in target
+           maxCurrRBE = max(-cst{ixTarget,5}.alphaX + sqrt(cst{ixTarget,5}.alphaX^2 + ...
+                        4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*(dij.physicalDose{1}(V,:)*wOnes)));
+           wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
     end
 end
 
