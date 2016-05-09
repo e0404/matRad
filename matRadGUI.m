@@ -1928,19 +1928,21 @@ if sum(strcmp(ObjFunction, {'square underdosing','square overdosing','square dev
              data{eventdata.Indices(1),k} = 1;
         end
     end 
-    data{eventdata.Indices(1),7} = Placeholder;
-    data{eventdata.Indices(1),8} = Placeholder;
-    data{eventdata.Indices(1),9} = PlaceholderRob;
+    data{eventdata.Indices(1),7}  = Placeholder;
+    data{eventdata.Indices(1),8}  = Placeholder;
+    data{eventdata.Indices(1),9}  = Placeholder;
+    data{eventdata.Indices(1),10} = PlaceholderRob;
    
 elseif strcmp(ObjFunction,'mean')
     
         if isnan(data{eventdata.Indices(1),5})
                  data{eventdata.Indices(1),5} = 1;
         end
-        data{eventdata.Indices(1),6} = PlaceholderDose;    
-        data{eventdata.Indices(1),7} = Placeholder;   
-        data{eventdata.Indices(1),8} = Placeholder;
-        data{eventdata.Indices(1),9} = PlaceholderRob;
+        data{eventdata.Indices(1),6}  = PlaceholderDose;    
+        data{eventdata.Indices(1),7}  = Placeholder;   
+        data{eventdata.Indices(1),8}  = Placeholder;
+        data{eventdata.Indices(1),9}  = Placeholder;
+        data{eventdata.Indices(1),10} = PlaceholderRob;
 
 elseif strcmp(ObjFunction,'EUD')
     
@@ -1949,9 +1951,10 @@ elseif strcmp(ObjFunction,'EUD')
                  data{eventdata.Indices(1),k} = 1;
             end
         end 
-       data{eventdata.Indices(1),6} = PlaceholderDose; 
-       data{eventdata.Indices(1),8} = Placeholder;
-       data{eventdata.Indices(1),9} = PlaceholderRob;
+       data{eventdata.Indices(1),6}  = PlaceholderDose; 
+       data{eventdata.Indices(1),8}  = Placeholder;
+       data{eventdata.Indices(1),9}  = Placeholder;
+       data{eventdata.Indices(1),10} = PlaceholderRob;
        
 elseif sum(strcmp(ObjFunction,{'min dose constraint','max dose constraint'...
                                      'min mean dose constraint','max mean dose constraint','min max mean dose constraint'}))> 0
@@ -1959,10 +1962,11 @@ elseif sum(strcmp(ObjFunction,{'min dose constraint','max dose constraint'...
          if isnan(str2num(data{eventdata.Indices(1),6}))
                  data{eventdata.Indices(1),6} = 1;
          end
-         data{eventdata.Indices(1),5} = Placeholder;
-         data{eventdata.Indices(1),7} = Placeholder;
-         data{eventdata.Indices(1),8} = Placeholder;
-         data{eventdata.Indices(1),9} = PlaceholderRob;
+         data{eventdata.Indices(1),5}  = Placeholder;
+         data{eventdata.Indices(1),7}  = Placeholder;
+         data{eventdata.Indices(1),8}  = Placeholder;
+         data{eventdata.Indices(1),9}  = Placeholder;
+         data{eventdata.Indices(1),10} = PlaceholderRob;
          
 elseif sum(strcmp(ObjFunction,{'min EUD constraint','max EUD constraint','min max EUD constraint'}) ) > 0
         
@@ -1971,9 +1975,10 @@ elseif sum(strcmp(ObjFunction,{'min EUD constraint','max EUD constraint','min ma
                  data{eventdata.Indices(1),k} = 1;
             end
         end 
-        data{eventdata.Indices(1),5} = Placeholder;
-        data{eventdata.Indices(1),8} = Placeholder;
-        data{eventdata.Indices(1),9} = PlaceholderRob;
+        data{eventdata.Indices(1),5}  = Placeholder;
+        data{eventdata.Indices(1),8}  = Placeholder;
+        data{eventdata.Indices(1),9}  = Placeholder;
+        data{eventdata.Indices(1),10} = PlaceholderRob;
         
 elseif sum(strcmp(ObjFunction,{'min DVH constraint','max DVH constraint'}) ) > 0
         
@@ -1982,9 +1987,10 @@ elseif sum(strcmp(ObjFunction,{'min DVH constraint','max DVH constraint'}) ) > 0
                  data{eventdata.Indices(1),k} = 1;
             end
         end    
-        data{eventdata.Indices(1),5} = Placeholder;
-        data{eventdata.Indices(1),7} = Placeholder;
-        data{eventdata.Indices(1),9} = PlaceholderRob;
+        data{eventdata.Indices(1),5}  = Placeholder;
+        data{eventdata.Indices(1),7}  = Placeholder;
+        data{eventdata.Indices(1),9}  = Placeholder;
+        data{eventdata.Indices(1),10} = PlaceholderRob;
 
 elseif sum(strcmp(ObjFunction,{'min DVH objective','max DVH objective'}) ) > 0
         
@@ -1993,8 +1999,9 @@ elseif sum(strcmp(ObjFunction,{'min DVH objective','max DVH objective'}) ) > 0
              data{eventdata.Indices(1),k} = 1;
         end
     end
-    data{eventdata.Indices(1),7} = Placeholder;
-    data{eventdata.Indices(1),9} = PlaceholderRob;
+    data{eventdata.Indices(1),7}  = Placeholder;
+    data{eventdata.Indices(1),9}  = Placeholder;
+    data{eventdata.Indices(1),10} = PlaceholderRob;
     
 elseif sum(strcmp(ObjFunction,{'min DCH objective','max DCH objective'}) ) > 0
     
@@ -2004,7 +2011,8 @@ elseif sum(strcmp(ObjFunction,{'min DCH objective','max DCH objective'}) ) > 0
         end
     end
     
-    data{eventdata.Indices(1),7} = Placeholder;
+    data{eventdata.Indices(1),7}  = Placeholder;
+    data{eventdata.Indices(1),10} = 'coverage';
     
 elseif sum(strcmp(ObjFunction,{'min DCH constraint','max DCH constraint','min DCH constraint2','max DCH constraint2','min DCH constraint3','max DCH constraint3'}) ) > 0 
     
@@ -2014,8 +2022,9 @@ elseif sum(strcmp(ObjFunction,{'min DCH constraint','max DCH constraint','min DC
         end
     end
     
-    data{eventdata.Indices(1),5} = Placeholder;
-    data{eventdata.Indices(1),7} = Placeholder;    
+    data{eventdata.Indices(1),5}  = Placeholder;
+    data{eventdata.Indices(1),7}  = Placeholder;  
+    data{eventdata.Indices(1),10} = 'coverage';
     
 end
     

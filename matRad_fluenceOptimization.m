@@ -1,4 +1,4 @@
-function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,multScen)
+function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
@@ -10,7 +10,6 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,multScen)
 %   ct:         ct cube
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
-%   multScen:   matRad multiple scnerio struct
 %
 % output
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
