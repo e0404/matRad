@@ -49,67 +49,109 @@ if isequal(multScen.shiftGenType,'equidistant')
         end
         
     elseif isequal(multScen.shiftCombType,'combined')
-        if isequal(multScen.shiftGen1DIsotropy,'+-')
+        if multScen.numOfShiftScen(1) == multScen.numOfShiftScen(2) &&...
+           multScen.numOfShiftScen(2) == multScen.numOfShiftScen(3)
+       
+            if isequal(multScen.shiftGen1DIsotropy,'+-')
 
-            deltaShift = multScen.shiftSize./(multScen.numOfShiftScen./2);
-            multScen.shifts  = [];
+                deltaShift = multScen.shiftSize./(multScen.numOfShiftScen./2);
+                multScen.shifts  = [];
 
-            shiftsx = -multScen.shiftSize(1):deltaShift(1):multScen.shiftSize(1);
-            shiftsx = shiftsx(shiftsx ~= 0);
-            shiftsy = -multScen.shiftSize(2):deltaShift(2):multScen.shiftSize(2);
-            shiftsy = shiftsy(shiftsy ~= 0);
-            shiftsz = -multScen.shiftSize(3):deltaShift(3):multScen.shiftSize(3);
-            shiftsz = shiftsz(shiftsz ~= 0);
+                shiftsx = -multScen.shiftSize(1):deltaShift(1):multScen.shiftSize(1);
+                shiftsx = shiftsx(shiftsx ~= 0);
+                shiftsy = -multScen.shiftSize(2):deltaShift(2):multScen.shiftSize(2);
+                shiftsy = shiftsy(shiftsy ~= 0);
+                shiftsz = -multScen.shiftSize(3):deltaShift(3):multScen.shiftSize(3);
+                shiftsz = shiftsz(shiftsz ~= 0);
+
+                multScen.shifts = [shiftsx; shiftsy; shiftsz];
+                multScen.shifts = [zeros(3,1), multScen.shifts];
+
+            elseif isequal(multScen.shiftGen1DIsotropy,'+')
+
+                deltaShift = multScen.shiftSize./(multScen.numOfShiftScen);
+                multScen.shifts  = [];
+
+                shiftsx = deltaShift(1):deltaShift(1):multScen.shiftSize(1);
+                shiftsy = deltaShift(2):deltaShift(2):multScen.shiftSize(2);
+                shiftsz = deltaShift(3):deltaShift(3):multScen.shiftSize(3);
+
+                multScen.shifts = [shiftsx; shiftsy; shiftsz];
+                multScen.shifts = [zeros(3,1), multScen.shifts];
+
+            elseif isequal(multScen.shiftGen1DIsotropy,'-')
+
+                deltaShift = multScen.shiftSize./(multScen.numOfShiftScen);
+                multScen.shifts  = [];
+
+                shiftsx = -multScen.shiftSize(1):deltaShift(1):-deltaShift(1);
+                shiftsy = -multScen.shiftSize(2):deltaShift(2):-deltaShift(2);
+                shiftsz = -multScen.shiftSize(3):deltaShift(3):-deltaShift(3);
+
+                multScen.shifts = [shiftsx; shiftsy; shiftsz];
+                multScen.shifts = [zeros(3,1), multScen.shifts];
+
+            end
             
-            multScen.shifts = [shiftsx; shiftsy; shiftsz];
-            multScen.shifts = [zeros(3,1), multScen.shifts];
-
-        elseif isequal(multScen.shiftGen1DIsotropy,'+')
-
-            deltaShift = multScen.shiftSize./(multScen.numOfShiftScen);
-            multScen.shifts  = [];
-
-            shiftsx = deltaShift(1):deltaShift(1):multScen.shiftSize(1);
-            shiftsy = deltaShift(2):deltaShift(2):multScen.shiftSize(2);
-            shiftsz = deltaShift(3):deltaShift(3):multScen.shiftSize(3);
+        else
             
-            multScen.shifts = [shiftsx; shiftsy; shiftsz];
-            multScen.shifts = [zeros(3,1), multScen.shifts];
-
-        elseif isequal(multScen.shiftGen1DIsotropy,'-')
-
-            deltaShift = multScen.shiftSize./(multScen.numOfShiftScen);
-            multScen.shifts  = [];
+            error('chose same number of shifts in x,y and z if shift comb type equals "combined"')
             
-            shiftsx = -multScen.shiftSize(1):deltaShift(1):-deltaShift(1);
-            shiftsy = -multScen.shiftSize(2):deltaShift(2):-deltaShift(2);
-            shiftsz = -multScen.shiftSize(3):deltaShift(3):-deltaShift(3);
-
-            multScen.shifts = [shiftsx; shiftsy; shiftsz];
-            multScen.shifts = [zeros(3,1), multScen.shifts];
-
-        end        
+        end            
     end
-    
-    multScen.numOfShiftScen      = max(multScen.numOfShiftScen) + 1;
     
 elseif isequal(multScen.shiftGenType,'sampled')
-    rng(0);
     
+    rng(0);
     multScen.shifts  = [];
     
-    for i = 1:3
-        shifts      = zeros(3,multScen.numOfShiftScen(i));
-        %shifts(i,:) = normrnd(0,multScen.shiftSize(i),1,multScen.numOfShiftScen(i));
-        shifts(i,:) = multScen.shiftSize(i).*randn(1,multScen.numOfShiftScen(i));
+    if isequal(multScen.shiftCombType,'individual')
+        if isequal(multScen.shiftGen1DIsotropy,'+-')
 
-        multScen.shifts   = [multScen.shifts, shifts];
+            for i = 1:3
+                shifts      = zeros(3,multScen.numOfShiftScen(i));
+                shifts(i,:) = multScen.shiftSize(i).*randn(1,multScen.numOfShiftScen(i));
+
+                multScen.shifts   = [multScen.shifts, shifts];
+            end
+            multScen.shifts = [zeros(3,1), multScen.shifts];
+            
+        elseif isequal(multScen.shiftGen1DIsotropy,'+') ||...
+               isequal(multScen.shiftGen1DIsotropy,'-')
+           
+           error('"+" or "-" 1D isotropy not supported in case of sampled shifts')
+           
+        end
+    elseif isequal(multScen.shiftCombType,'combined')
+        if multScen.numOfShiftScen(1) == multScen.numOfShiftScen(2) &&...
+           multScen.numOfShiftScen(2) == multScen.numOfShiftScen(3)
+                
+            if isequal(multScen.shiftGen1DIsotropy,'+-')
+                
+                shiftsx = multScen.shiftSize(1).*randn(1,multScen.numOfShiftScen(1));
+                shiftsy = multScen.shiftSize(2).*randn(1,multScen.numOfShiftScen(2));
+                shiftsz = multScen.shiftSize(3).*randn(1,multScen.numOfShiftScen(3));
+                
+                multScen.shifts = [shiftsx; shiftsy; shiftsz];
+                multScen.shifts = [zeros(3,1), multScen.shifts];
+
+            elseif isequal(multScen.shiftGen1DIsotropy,'+') ||...
+                   isequal(multScen.shiftGen1DIsotropy,'-')
+
+               error('"+" or "-" 1D isotropy not supported in case of sampled shifts')
+
+            end
+        else
+            
+            error('chose same number of shifts in x,y and z if shift comb type equals "combined"')
+            
+        end
+        
     end
-    multScen.shifts = [zeros(3,1), multScen.shifts];
-    
-    multScen.numOfShiftScen      = sum(multScen.numOfShiftScen)+1;
-    
+   
 end
+
+multScen.numOfShiftScen = size(multScen.shifts,2);
 
 % set range scenarios
 if multScen.numOfRangeShiftScen > 0
@@ -136,8 +178,7 @@ elseif multScen.numOfRangeShiftScen == 0
     multScen.relRangeShifts = 0;
 end
 
-% set correct number of scenarios
-multScen.numOfRangeShiftScen = multScen.numOfRangeShiftScen+1;
+multScen.numOfRangeShiftScen = numel(multScen.relRangeShifts);
 
 % set scenario combination mask
 if isequal(multScen.ScenCombType,'individual')
@@ -155,7 +196,7 @@ elseif isequal(multScen.ScenCombType,'allcombined')
 end
 
 % set totalNumOfScen
-multScen.totalNumOfScen = sum(multScen.ScenCombMask);
+multScen.totalNumOfScen = sum(multScen.ScenCombMask(:));
 
 end
 
