@@ -103,6 +103,8 @@ elseif isequal(constraint.type, 'min DCH constraint') || ...
     
     cl = constraint.coverage/100;
     cu = inf;
+%     cl = [1 -inf -inf -inf -inf -inf -inf -inf -inf -inf]';
+%     cu = inf(10,1);
 
 elseif isequal(constraint.type, 'max DCH constraint2') || ...
        isequal(constraint.type, 'min DCH constraint2') 

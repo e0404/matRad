@@ -146,6 +146,12 @@ for i = 1:size(cst,1)
                         end
 
                        jacobStruct = [jacobStruct; spones(physicalDoseCum)];
+
+%                         for k = 1:dij.numOfScenarios
+%                             
+%                             jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{k}(cst{i,4}{1},:)))];
+%                             
+%                         end
                        
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint2') || ...
                            isequal(cst{i,6}(j).type, 'min DCH constraint2')    

@@ -108,6 +108,12 @@ for  i = 1:size(cst,1)
                         % calculate coverage probabilty
                         scenProb = 1/dij.numOfScenarios;  % assume scenarios with equal probabilities
                         c        = [c; sum(scenProb*(volume >= cst{i,6}(j).volume/100))];
+
+%                          for k = 1:dij.numOfScenarios
+%                              d_i = d{k}(cst{i,4}{1});
+%                              c = [c;matRad_constFunc(d_i,cst{i,6}(j),d_ref)];
+%                              
+%                          end
                    
                     end
 
