@@ -1,4 +1,4 @@
-function jacobVec = matRad_jacobFunc(d_i,constraint,d_ref,d_pi,scaling,d_ref2)
+function jacobVec = matRad_jacobFunc(d_i,constraint,d_ref,d_pi,scaling,d_ref2,weighting)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian function for inverse planning supporting max dose
 % constraint, min dose constraint, min max dose constraint, min mean, max
@@ -147,7 +147,7 @@ elseif isequal(constraint.type, 'max DCH constraint2') || ...
     end
 
     % apply weighting
-    %deviation = deviation.*(weighting).^2';
+    deviation = deviation.*(weighting).^2';
 
     % calculate delta
     jacobVec = 2 * (1/numOfVoxels)*deviation;

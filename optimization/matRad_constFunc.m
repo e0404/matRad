@@ -1,4 +1,4 @@
-function c = matRad_constFunc(d_i,constraint,d_ref,d_pi,d_ref2)
+function c = matRad_constFunc(d_i,constraint,d_ref,d_pi,d_ref2,weighting)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: constraint function for inverse planning supporting max dose
 % constraint, min dose constraint, max dose constraint, min mean, 
@@ -116,7 +116,7 @@ elseif isequal(constraint.type, 'max DCH constraint2') || ...
     end
     
     % apply weighting
-    %deviation = deviation.*weighting';
+    deviation = deviation.*weighting';
    
     % claculate objective function
     c = (1/numOfVoxels)*(deviation'*deviation);
