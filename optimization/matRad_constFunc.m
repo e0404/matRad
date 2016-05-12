@@ -66,9 +66,7 @@ elseif isequal(constraint.type, 'min EUD constraint') || ...
     c = mean(d_i.^exponent)^(1/exponent);
 
 elseif isequal(constraint.type, 'max DVH constraint') || ... 
-       isequal(constraint.type, 'min DVH constraint') || ...
-       isequal(constraint.type, 'min DCH constraint3') || ...
-       isequal(constraint.type, 'max DCH constraint3')
+       isequal(constraint.type, 'min DVH constraint')
 
     c = sum(d_i >= d_ref)/numOfVoxels ;
 
@@ -122,6 +120,11 @@ elseif isequal(constraint.type, 'max DCH constraint2') || ...
    
     % claculate objective function
     c = (1/numOfVoxels)*(deviation'*deviation);
+    
+elseif isequal(constraint.type, 'min DCH constraint3') || ...
+       isequal(constraint.type, 'max DCH constraint3')
+
+    c = sum(d_i >= d_ref)/numOfVoxels ;    
     
 end 
 

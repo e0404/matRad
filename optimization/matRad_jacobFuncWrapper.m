@@ -152,10 +152,7 @@ for i = 1:size(cst,1)
                     end
                     
                 elseif strcmp(cst{i,6}(j).robustness,'coverage')
-                    
-                    % get cst index of VOI that corresponds to VOI ring
-                    cstidx = find(strcmp(cst(:,2),cst{i,2}(1:end-4)));
-                    
+  
                     if isequal(cst{i,6}(j).type, 'max DCH constraint') || ...
                        isequal(cst{i,6}(j).type, 'min DCH constraint')
                     
@@ -163,7 +160,7 @@ for i = 1:size(cst,1)
                         for k = 1:dij.numOfScenarios
 
                             % get current dose
-                            d_i = d{k}(cst{cstidx,4}{1});
+                            d_i = d{k}(cst{i,4}{1});
 
                             % inverse DVH calculation
                             d_pi(k) = matRad_calcInversDVH(cst{i,6}(j).volume/100,d_i);
@@ -183,8 +180,7 @@ for i = 1:size(cst,1)
                         scaling      = min((log(1/referenceVal-1))/(2*deltaDoseMax),250);  
 
                         covConstraintID = [covConstraintID;repmat(1 + covConstraintID(end),dij.numOfScenarios,1)];
-                        
-                    
+                                      
                         for k = 1:dij.numOfScenarios
 
                             d_i = d{k}(cst{i,4}{1});
@@ -220,13 +216,13 @@ for i = 1:size(cst,1)
 
                         end
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint2') || ...
-                           isequal(cst{i,6}(j).type, 'min DCH constraint2')
-                       
+                           isequal(cst{i,6}(j).type, 'min DCH constraint2')         
+                        
                         d_i = [];
                        
-                        % get dose of VOI that corresponds to VOI ring
+                        % get dose of VOI
                         for k = 1:dij.numOfScenarios
-                            d_i{k} = d{k}(cst{cstidx,4}{1});
+                            d_i{k} = d{k}(cst{i,4}{1});
                         end
 
                         % calc invers DCH of VOI
@@ -235,7 +231,8 @@ for i = 1:size(cst,1)
                         d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
 
                         % get dose of Target Ring
-                        d_i = d{1}(cst{i,4}{1});
+                        cstidx = find(strcmp(cst(:,2),[cst{i,2},'Ring']));   
+                        d_i    = d{1}(cst{cstidx,4}{1});
 
                         % calc voxel dependent weighting
                         %matRad_calcVoxelWeighting(i,j,cst,d_i,d_ref,d_ref2)
@@ -287,8 +284,8 @@ for i = 1:size(cst,1)
                         volumes_pi_sort = sort(volume_pi);
 
                         % calculate scaling
-                        voxelRatio   = 1;
-                        NoVoxels     = max(voxelRatio*numel(volume_pi),10);
+                        voxelRatio   = cst{i,6}(j).coverage/100;
+                        NoVoxels     = voxelRatio*numel(volume_pi);
                         absDiffsort  = sort(abs(cst{i,6}(j).volume/100 - volumes_pi_sort));
                         deltaDoseMax = absDiffsort(ceil(NoVoxels/2));
 
