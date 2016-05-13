@@ -33,6 +33,8 @@ for  i = 1:size(cst,1)
                             % create empty Cube
                             voxelProbCube = zeros(ct.cubeDim);
                             
+                            VOIRingidx = cst{i,4}{1};
+                            
                             for k = 1:multScen.numOfShiftScen
                                 
                                 % round shifts to voxel dimensions
@@ -48,7 +50,7 @@ for  i = 1:size(cst,1)
                                 voxelProbCube(shiftedVOIidx) = voxelProbCube(shiftedVOIidx) + 1/multScen.numOfShiftScen;                                   
                                  
                                 % build ring structure
-                                VOIRingidx = union(cst{i,4}{1},shiftedVOIidx);
+                                VOIRingidx = union(VOIRingidx,shiftedVOIidx);
 
                             end
                             
