@@ -57,7 +57,7 @@ for  i = 1:size(cst,1)
 
                 if strcmp(cst{i,6}(j).robustness,'none') || strcmp(cst{i,6}(j).robustness,'coverage')
 
-                    [clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param);
+                    [clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param,numOfScenarios);
                     
                     cl = [cl;clTmp];
                     cu = [cu;cuTmp];

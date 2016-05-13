@@ -1579,7 +1579,8 @@ AllObjectiveFunction = {'square underdosing','square overdosing','square deviati
        'max DCH objective','min DCH objective',...
        'max DCH constraint','min DCH constraint',...
        'max DCH constraint2','min DCH constraint2',...
-       'max DCH constraint3','min DCH constraint3'};
+       'max DCH constraint3','min DCH constraint3',...
+       'max DCH constraint4','min DCH constraint4'};
 
 PlaceHolder = NaN;
 columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
@@ -2014,7 +2015,7 @@ elseif sum(strcmp(ObjFunction,{'min DCH objective','max DCH objective'}) ) > 0
     data{eventdata.Indices(1),7}  = Placeholder;
     data{eventdata.Indices(1),10} = 'coverage';
     
-elseif sum(strcmp(ObjFunction,{'min DCH constraint','max DCH constraint','min DCH constraint2','max DCH constraint2','min DCH constraint3','max DCH constraint3'}) ) > 0 
+elseif sum(strcmp(ObjFunction,{'min DCH constraint','max DCH constraint','min DCH constraint2','max DCH constraint2','min DCH constraint3','max DCH constraint3','min DCH constraint4','max DCH constraint4'}) ) > 0 
     
     for k = [6 8 9]
         if isnan(data{eventdata.Indices(1),k})

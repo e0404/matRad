@@ -1,5 +1,7 @@
 function c = matRad_constFuncWrapper(w,dij,cst,type)
 
+global matRad_DCH_ScenarioFlag;
+
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,type);
 
@@ -114,6 +116,36 @@ for  i = 1:size(cst,1)
 %                              c = [c;matRad_constFunc(d_i,cst{i,6}(j),d_ref)];
 %                              
 %                          end
+
+                    elseif isequal(cst{i,6}(j).type, 'max DCH constraint4') || ...
+                           isequal(cst{i,6}(j).type, 'min DCH constraint4')
+                       
+                       % update scenario flag
+                       for k = 1:dij.numOfScenarios
+                             
+                            % get current dose
+                            d_i = d{k}(cst{i,4}{1});
+                            
+                            % calculate volume of scenario k
+                            volume(k) = matRad_constFunc(d_i,cst{i,6}(j),d_ref);
+                            
+                       end
+                       
+                       volume_sorted = sort(volume(2:end),'descend'); 
+                       idx           = ceil((cst{i,6}(j).coverage/100 - 1/dij.numOfScenarios)*numel(volume));
+                       volumeTmp     = volume(volume >= volume_sorted(idx));
+                       
+                       matRad_DCH_ScenarioFlag = [true, ismember(volume(2:end),volumeTmp)];
+                       
+                       for k = 1:dij.numOfScenarios
+                           if matRad_DCH_ScenarioFlag(k)
+                                d_i = d{k}(cst{i,4}{1});
+                                c   = [c;matRad_constFunc(d_i,cst{i,6}(j),d_ref)];
+                           else
+                                c = [c;cst{i,6}(j).volume/100];
+                           end
+                            
+                       end
                    
                     end
 
