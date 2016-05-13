@@ -42,6 +42,12 @@ resultGUI.w = w;
 % calc dose and reshape from 1D vector to 2D array
 resultGUI.physicalDose = reshape(dij.physicalDose{scenNum}*resultGUI.w,dij.dimensions);
 
+%Calculate Overlap Cube
+resultGUI.overlapCube = zeros(size(resultGUI.physicalDose));
+for i = 1:size(cst,1)
+   resultGUI.overlapCube(cst{i,4}{1}) = cst{i,5}.Priority;
+end 
+
 if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
 
     a_x = zeros(size(resultGUI.physicalDose));
