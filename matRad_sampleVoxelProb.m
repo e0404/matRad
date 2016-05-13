@@ -13,10 +13,11 @@ xShift_vox = round(sigma(1).*randn(1,ncase)./ct.resolution.x);
 yShift_vox = round(sigma(2).*randn(1,ncase)./ct.resolution.y);
 zShift_vox = round(sigma(3).*randn(1,ncase)./ct.resolution.z);
 
+% get voxel cooridinates
+[yCoordsVOI_vox, xCoordsVOI_vox, zCoordsVOI_vox] = ind2sub(ct.cubeDim,cst{cstidx,4}{1});
+
 % loop over all samples
 for i = 1:ncase
-    
-    [yCoordsVOI_vox, xCoordsVOI_vox, zCoordsVOI_vox] = ind2sub(ct.cubeDim,cst{cstidx,4}{1});
             
     shiftedVOIidx = sub2ind(ct.cubeDim, yCoordsVOI_vox + yShift_vox(i),...
                                         xCoordsVOI_vox + xShift_vox(i),...

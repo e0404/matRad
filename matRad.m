@@ -47,10 +47,10 @@ multScen.ScenCombType        = 'individual';   % individual: no combination of s
 multScen                     = matRad_setMultScen(multScen);
 
 %% coverage based cst manipulation
-%load('E:\Mescher\15_DCH_objectiv_tests\01_PROSTATE_InisotropicShifts\02_PROSTATE_5photonBeams_10XYZshifts_ProbRing_5mmBixel\standard_prob_CST')
-load('E:\Mescher\15_DCH_objectiv_tests\01_PROSTATE_InisotropicShifts\02_PROSTATE_5photonBeams_10XYZshifts_ProbRing_5mmBixel\standard_nonprob_CST')
+load('E:\Mescher\15_DCH_objectiv_tests\01_PROSTATE_InisotropicShifts\02_PROSTATE_5photonBeams_10XYZshifts_ProbRing_5mmBixel\standard_prob_CST')
+%load('E:\Mescher\15_DCH_objectiv_tests\01_PROSTATE_InisotropicShifts\02_PROSTATE_5photonBeams_10XYZshifts_ProbRing_5mmBixel\standard_nonprob_CST')
 
-cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,'probWeighting');
+cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,'probWeighting','exact');
 
 %% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);

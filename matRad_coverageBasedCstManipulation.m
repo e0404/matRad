@@ -1,4 +1,4 @@
-function cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,voxelWeightingType)
+function cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,voxelWeightingType,ringCreationType)
 
 covFlag = 0;
 Counter = 0;
@@ -12,17 +12,57 @@ for  i = 1:size(cst,1)
                 Counter = Counter + 1;  
 
                 % create ring structure around VOI
-                    % sample voxel probabilities
-                    voxelProbCube = matRad_sampleVoxelProb(cst,ct,multScen.shiftSize,cst{i,2},100000);
+                    if isequal(ringCreationType, 'sampling')
+                        % sample voxel probabilities
+                        voxelProbCube = matRad_sampleVoxelProb(cst,ct,multScen.shiftSize,cst{i,2},100000);
 
-                    % create cst with ring structure
-                    probTreshold = 1e-4;
-                    cstRing{Counter,1}           = size(cst,1) - 1 + Counter;
-                    cstRing{Counter,2}           = [cst{i,2},'Ring'];
-                    cstRing{Counter,3}           = cst{i,3};
-                    cstRing{Counter,4}{1}        = setdiff(find(voxelProbCube > probTreshold*max(voxelProbCube(:))),cst{i,4}{1});
-                    cstRing{Counter,5}           = cst{i,5};
-                    cstRing{Counter,5}.voxelProb = voxelProbCube(cstRing{Counter,4}{1})';
+                        % create cst with ring structure
+                        probTreshold = 1e-4;
+                        cstRing{Counter,1}           = size(cst,1) - 1 + Counter;
+                        cstRing{Counter,2}           = [cst{i,2},'Ring'];
+                        cstRing{Counter,3}           = cst{i,3};
+                        cstRing{Counter,4}{1}        = setdiff(find(voxelProbCube > probTreshold*max(voxelProbCube(:))),cst{i,4}{1});
+                        cstRing{Counter,5}           = cst{i,5};
+                        cstRing{Counter,5}.voxelProb = voxelProbCube(cstRing{Counter,4}{1})';
+                    elseif isequal(ringCreationType, 'exact')
+                        if multScen.numOfShiftScen > 1
+                            
+                            % get VOI voxel coordinates
+                            [yCoordsVOI_vox, xCoordsVOI_vox, zCoordsVOI_vox] = ind2sub(ct.cubeDim,cst{i,4}{1});
+                            
+                            % create empty Cube
+                            voxelProbCube = zeros(ct.cubeDim);
+                            
+                            for k = 1:multScen.numOfShiftScen
+                                
+                                % round shifts to voxel dimensions
+                                xShift_vox = round(multScen.shifts(1,k)/ct.resolution.x);
+                                yShift_vox = round(multScen.shifts(2,k)/ct.resolution.y);
+                                zShift_vox = round(multScen.shifts(3,k)/ct.resolution.z);
+            
+                                shiftedVOIidx = sub2ind(ct.cubeDim, yCoordsVOI_vox - yShift_vox,...
+                                                                       xCoordsVOI_vox - xShift_vox,...
+                                                                       zCoordsVOI_vox - zShift_vox);
+                                 
+                                % fill prob cube                                   
+                                voxelProbCube(shiftedVOIidx) = voxelProbCube(shiftedVOIidx) + 1/multScen.numOfShiftScen;                                   
+                                 
+                                % build ring structure
+                                VOIRingidx = union(cst{i,4}{1},shiftedVOIidx);
+
+                            end
+                            
+                            % create cst with ring structure
+                            cstRing{Counter,1}           = size(cst,1) - 1 + Counter;
+                            cstRing{Counter,2}           = [cst{i,2},'Ring'];
+                            cstRing{Counter,3}           = cst{i,3};
+                            cstRing{Counter,4}{1}        = setdiff(VOIRingidx,cst{i,4}{1});
+                            cstRing{Counter,5}           = cst{i,5};
+                            cstRing{Counter,5}.voxelProb = voxelProbCube(cstRing{Counter,4}{1})';
+                                                  
+                        end
+                        
+                    end
                     
                     if isequal(voxelWeightingType,'heurWeighting')
                         cstRing{Counter,5}.voxelWeightingType = 'heurWeighting';
