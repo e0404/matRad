@@ -99,13 +99,19 @@ if isfield(files,'rtdose')
     % only the first two elements are relevant for loading the rt dose
     if ~(cellfun(@isempty,files.rtdose(1,1:2))) 
         fprintf('loading Dose files \n', structures(i).structName);
-        resultGUI = matRad_importDicomRTDose(ct, files.rtdose);
+        % parse plan in order to scale dose cubes to a fraction based dose
+        if exist('pln','var')
+            if isfield(pln,'numOfFractions')
+                resultGUI = matRad_importDicomRTDose(ct, files.rtdose, pln);
+            end
+        else
+            resultGUI = matRad_importDicomRTDose(ct, files.rtdose);
+        end
         if size(resultGUI) == 0
            clear resultGUI;
         end
     end
 end
-
 
 %% put weight also into resultGUI
 if exist('stf','var') && exist('resultGUI','var')
