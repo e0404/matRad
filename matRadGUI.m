@@ -1568,7 +1568,7 @@ end
 % displays the cst in the GUI
 function setCstTable(handles,cst)
 
-columnname = {'VOI','VOI Type','Priority','Obj Func','penalty','dose', 'EUD','volume','robustness'};
+columnname = {'VOI name','VOI type','priority','obj. / const.','penalty','dose', 'EUD','volume','robustness'};
 
 AllObjectiveFunction = {'square underdosing','square overdosing','square deviation', 'mean', 'EUD',...
        'min dose constraint','max dose constraint',...
