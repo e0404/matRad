@@ -36,7 +36,7 @@ load PROSTATE.mat
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
 multScen.numOfShiftScen      = [9 9 9];        % number of shifts in x y and z direction       
-multScen.shiftSize           = [9 9 9];        % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
+multScen.shiftSize           = [27 27 27];        % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
 multScen.shiftGenType        = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
 multScen.shiftCombType       = 'combined';     % individual: no combination of shift scenarios, combined: combine shift scenarios
 multScen.shiftGen1DIsotropy  = '+';            % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
