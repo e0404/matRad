@@ -131,7 +131,7 @@ for i = 1:length(handles.Modalities)
     pattern = [handles.Modalities{1,i} '_*'];
     Files = dir(pattern);
     if isdeployed
-        Files = [Files, dir([ctfroot filesep 'matRad' filesep pattern])];
+        Files = vertcat(Files,dir([ctfroot filesep 'matRad' filesep pattern]));
     end
     for j = 1:length(Files)
         if ~isempty(Files)
