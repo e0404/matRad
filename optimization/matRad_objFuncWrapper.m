@@ -33,6 +33,7 @@ function f = matRad_objFuncWrapper(w,dij,cst,type)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 global matRad_voxelWeighting;
+global matRad_iteration;
 
 % initialize voxel calc Flag
 [matRad_voxelWeighting{:,2}] = deal(true);
@@ -121,12 +122,18 @@ for  i = 1:size(cst,1)
                     d_i = d{1}(cst{i,4}{1});
                     
                     % get voxel dependetn weigthing
-                    if isequal(cst{i,5}.voxelWeightingType,'heurWeighting')
-                        matRad_calcVoxelWeighting(i,j,cst,d_i,d_ref,d_ref2)
-                        voxelWeighting = matRad_voxelWeighting{i,1};
+                    if matRad_iteration < 5
+                        voxelWeighting = 1;
                         
-                    elseif isequal(cst{i,5}.voxelWeightingType,'probWeighting')
-                        voxelWeighting = 5*cst{i,5}.voxelProb;    
+                    else    
+                        if isequal(cst{i,5}.voxelWeightingType,'heurWeighting')
+                            matRad_calcVoxelWeighting(i,j,cst,d_i,d_ref,d_ref2)
+                            voxelWeighting = matRad_voxelWeighting{i,1};
+
+                        elseif isequal(cst{i,5}.voxelWeightingType,'probWeighting')
+                            voxelWeighting = 5*cst{i,5}.voxelProb;    
+                        end
+                        
                     end
     
                     f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);

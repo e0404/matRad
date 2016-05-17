@@ -1,15 +1,13 @@
 function matRad_calcVoxelWeighting(i,j,cst,d_i,d_ref,d_ref2)
 
 global matRad_backprojectionFlag;
-global matRad_iteration;
 global matRad_voxelWeighting;
 
 if matRad_backprojectionFlag 
     if matRad_voxelWeighting{i,2}
         
         if isequal(cst{i,6}(j).type,'min DCH objective') && d_ref < d_ref2 ||...
-           isequal(cst{i,6}(j).type,'max DCH objective') && d_ref > d_ref2 ||...
-           matRad_iteration < 5
+           isequal(cst{i,6}(j).type,'max DCH objective') && d_ref > d_ref2
 
         matRad_voxelWeighting{i,1} = 1;
 
