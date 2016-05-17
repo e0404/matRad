@@ -132,10 +132,18 @@ for  i = 1:size(cst,1)
                        end
                        
                        volume_sorted = sort(volume(2:end),'descend'); 
-                       idx           = ceil((cst{i,6}(j).coverage/100 - 1/dij.numOfScenarios)*numel(volume));
-                       volumeTmp     = volume(volume >= volume_sorted(idx));
+                       idx           = ceil(round((cst{i,6}(j).coverage/100 - 1/dij.numOfScenarios)*numel(volume)*10)/10);
                        
-                       matRad_DCH_ScenarioFlag = [true, ismember(volume(2:end),volumeTmp)];
+                       if idx == 0
+                           
+                            matRad_DCH_ScenarioFlag = [true, false(1,dij.numOfScenarios-1)];
+                           
+                       else
+                           
+                            volumeTmp               = volume(volume >= volume_sorted(idx));            
+                            matRad_DCH_ScenarioFlag = [true, ismember(volume(2:end),volumeTmp)];
+                       
+                       end
                        
                        for k = 1:dij.numOfScenarios
                            if matRad_DCH_ScenarioFlag(k)
