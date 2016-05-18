@@ -126,13 +126,18 @@ for  i = 1:size(cst,1)
                             % get current dose
                             d_i = d{k}(cst{i,4}{1});
                             
-                            % calculate volume of scenario k
-                            volume(k) = matRad_constFunc(d_i,cst{i,6}(j),d_ref);
+                            % calculate volume and dose of scenario k that
+                            % correspomd to ref values
+                            %volume(k) = matRad_constFunc(d_i,cst{i,6}(j),d_ref);
+                            dose(k)   = matRad_calcInversDVH(cst{i,6}(j).volume/100,d_i);
                             
                        end
                        
-                       volume_sorted = sort(volume(2:end),'descend'); 
-                       idx           = ceil(round((cst{i,6}(j).coverage/100 - 1/dij.numOfScenarios)*numel(volume)*10)/10);
+%                        volume_sorted = sort(volume(2:end),'descend'); 
+%                        idx           = ceil(round((cst{i,6}(j).coverage/100 - 1/dij.numOfScenarios)*numel(volume)*10)/10);
+                       
+                       dose_sorted = sort(dose(2:end),'descend'); 
+                       idx         = ceil(round((cst{i,6}(j).coverage/100 - 1/dij.numOfScenarios)*numel(dose)*10)/10);
                        
                        if idx == 0
                            
@@ -140,8 +145,10 @@ for  i = 1:size(cst,1)
                            
                        else
                            
-                            volumeTmp               = volume(volume >= volume_sorted(idx));            
-                            matRad_DCH_ScenarioFlag = [true, ismember(volume(2:end),volumeTmp)];
+%                             volumeTmp               = [volume(1),volume_sorted(1:idx)];            
+%                             matRad_DCH_ScenarioFlag = ismember(volume,volumeTmp);
+                            doseTmp                 = [dose(1),dose_sorted(1:idx)];            
+                            matRad_DCH_ScenarioFlag = ismember(dose,doseTmp);
                        
                        end
                        
