@@ -23,9 +23,9 @@ clc
 
 %load HEAD_AND_NECK
 %load TG119.mat
-load PROSTATE.mat
+%load PROSTATE.mat
 %load LIVER.mat
-%load BOXPHANTOM.mat
+load BOXPHANTOM.mat
 
 % InputFolder = 'E:\Mescher\13_BIOM_model\01_BioMechModel\Input';
 % numOfScen   = 3;
@@ -47,11 +47,12 @@ multScen.ScenCombType        = 'individual';   % individual: no combination of s
 multScen                     = matRad_setMultScen(multScen);
 
 %% coverage based cst manipulation
-load('E:\Mescher\15_DCH_objectiv_tests\01_PROSTATE_InisotropicShifts\02_PROSTATE_5photonBeams_10XYZshifts_ProbRing_5mmBixel\standard_prob_CST')
-%load('E:\Mescher\15_DCH_objectiv_tests\01_PROSTATE_InisotropicShifts\02_PROSTATE_5photonBeams_10XYZshifts_ProbRing_5mmBixel\standard_nonprob_CST')
+[filename,dir] = uigetfile('E:\Mescher\');
+load([dir,filename])
 
 cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,'probWeighting','exact');
 
+clear filename dir
 %% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
