@@ -137,7 +137,7 @@ for  i = 1:size(cst,1)
                     d_i = d{1}(cst{i,4}{1});
                     
                     % get voxel dependetn weigthing
-                    if matRad_iteration < 5
+                    if matRad_iteration < 0
                         voxelWeighting = 1;
                         
                     else
