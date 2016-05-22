@@ -110,13 +110,6 @@ if patDir ~= 0
     set(handles.dir_path_field,'String',patDir);
     % Update handles structure
     guidata(hObject, handles);
-    %     [fileList, patient_listbox] = matRad_scanDicomImportFolder_h(handles.dir_path_field.String);
-    %     if iscell(patient_listbox)
-    %         handles.fileList =  fileList;
-    %         handles.patient_listbox.String = patient_listbox;
-    %         % Update handles structure
-    %         guidata(hObject, handles);
-    %     end
     scan(hObject, eventdata, handles)
 end
 
@@ -162,10 +155,10 @@ if ~isempty(get(hObject,'String'))
         set(handles.rtseries_listbox,'Value',1); % set dummy value to one
         set(handles.rtseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),4));
         % this gets a list of rt plan series for this patient
-        set(handles.rtplan_listbox,'Value',1); % set dummy value to one
+        set(handles.rtplan_listbox,'Value',[]); % set dummy value to none
         set(handles.rtplan_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTPLAN') & strcmp(handles.fileList(:,3), selected_patient),4));
         % this gets a list of dose series for this patient
-        set(handles.doseseries_listbox,'Value',1); % set dummy value to one
+        set(handles.doseseries_listbox,'Value',[]); % set dummy value to none
         set(handles.doseseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTDOSE') & strcmp(handles.fileList(:,3), selected_patient),4));
         % selectedDose
         selectedDoseSeriesString = get(handles.doseseries_listbox,'String');
@@ -185,8 +178,7 @@ if ~isempty(get(hObject,'String'))
         set(handles.rtseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),5));
         set(handles.rtplan_listbox,'Value',1); % set dummy value to one
         set(handles.rtplan_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTPLAN') & strcmp(handles.fileList(:,3), selected_patient),5));
-        set(handles.doseseries_listbox,'Value',1); % set dummy value to one
-        set(handles.doseseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTDOSE') & strcmp(handles.fileList(:,3), selected_patient),12));
+        set(handles.doseseries_listbox,'Value',[]); % set dummy value to none
         selectedCtSeriesString = get(handles.ctseries_listbox,'String');
         if ~isempty(selectedCtSeriesString)
             res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),9));
@@ -318,13 +310,13 @@ else
 end
 % selected RT Plan
 rtplan = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,2),'RTPLAN'),:);
-if ~isempty(rtplan)
+if ~isempty(rtplan) && ~isempty(get(handles.rtplan_listbox,'Value'))
     files.rtplan = rtplan(get(handles.rtplan_listbox,'Value'),:);
 end
 
 % selected RT Dose
 rtdose = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,2),'RTDOSE'),:);
-if ~isempty(rtdose)
+if ~isempty(rtdose) && ~isempty(get(handles.doseseries_listbox,'Value'))
     files.rtdose = rtdose(get(handles.doseseries_listbox,'Value'),:);
 end
 
@@ -564,23 +556,30 @@ function rtplan_listbox_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 contents = cellstr(get(hObject,'String'));
-selectedPlan = contents{get(hObject,'Value')};
-% point at plan in listbox
-if get(handles.SeriesUID_radiobutton,'Value') == 1
-    selectedPlanLoc = strcmp(handles.fileList(:,4),selectedPlan);
+if ~isempty(get(hObject,'Value')) && numel(get(hObject,'Value')) == 1
+    selectedPlan = contents{get(hObject,'Value')};
+    % point at plan in listbox
+    if get(handles.SeriesUID_radiobutton,'Value') == 1
+        selectedPlanLoc = strcmp(handles.fileList(:,4),selectedPlan);
+    else
+        warning('Not yet supported');
+    end
+    % show only the doses corresponding to the plan
+    corrDoses = handles.fileList{selectedPlanLoc,13};
+    numOfDoses = size(corrDoses,2);
+    corrDosesLoc = zeros(size(handles.fileList(:,1),1),1);
+    for j = 1:numOfDoses
+        corrDosesLoc = corrDosesLoc | strcmp(handles.fileList(:,4),corrDoses(j));
+    end
+    if get(handles.SeriesUID_radiobutton,'Value') == 1
+            set(handles.doseseries_listbox,'Value',[]); % set dummy value to one
+            set(handles.doseseries_listbox,'String',handles.fileList(corrDosesLoc,4));
+    end
+elseif numel(get(hObject,'Value')) >=2
+    warning('More than one RTPLAN selected. Unsetting selection ...');
+    patient_listbox_Callback(hObject, eventdata, handles)
 else
-    warning('Not yet supported');
-end
-% show only the doses corresponding to the plan
-corrDoses = handles.fileList{selectedPlanLoc,13};
-numOfDoses = size(corrDoses,2);
-corrDosesLoc = zeros(size(handles.fileList(:,1),1),1);
-for j = 1:numOfDoses
-    corrDosesLoc = corrDosesLoc | strcmp(handles.fileList(:,4),corrDoses(j));
-end
-if get(handles.SeriesUID_radiobutton,'Value') == 1
-        set(handles.doseseries_listbox,'Value',1); % set dummy value to one
-        set(handles.doseseries_listbox,'String',handles.fileList(corrDosesLoc,4));
+    patient_listbox_Callback(hObject, eventdata, handles)    
 end
 
 
