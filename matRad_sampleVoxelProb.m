@@ -1,4 +1,4 @@
-function voxelProbCube = matRad_sampleVoxelProb(cst,ct,sigma,VOIName,ncase)
+function [voxelProbCube,shift_vox] = matRad_sampleVoxelProb(cst,ct,sigma,VOIName,ncase)
 
 rng(0);
 
@@ -12,6 +12,7 @@ voxelProbCube = zeros(ct.cubeDim);
 xShift_vox = round(sigma(1).*randn(1,ncase)./ct.resolution.x);
 yShift_vox = round(sigma(2).*randn(1,ncase)./ct.resolution.y);
 zShift_vox = round(sigma(3).*randn(1,ncase)./ct.resolution.z);
+shift_vox  = [xShift_vox;yShift_vox;zShift_vox];
 
 % get voxel cooridinates
 [yCoordsVOI_vox, xCoordsVOI_vox, zCoordsVOI_vox] = ind2sub(ct.cubeDim,cst{cstidx,4}{1});

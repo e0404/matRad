@@ -123,15 +123,34 @@ for  i = 1:size(cst,1)
                     % get cst index of VOI that corresponds to VOI ring
                     cstidx = find(strcmp(cst(:,2),cst{i,2}(1:end-4)));
                     
-                    % get dose of VOI that corresponds to VOI ring
-                    for k = 1:dij.numOfScenarios
-                        d_i{k} = d{k}(cst{cstidx,4}{1});
+                    if dij.numOfScenarios > 1
+                        % get dose of VOI that corresponds to VOI ring
+                        for k = 1:dij.numOfScenarios
+                            d_i{k} = d{k}(cst{cstidx,4}{1});
+                        end
+                        
+                        % calc invers DCH of VOI
+                        refQ   = cst{i,6}(j).coverage/100;
+                        refVol = cst{i,6}(j).volume/100;
+                        d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
+                    
+                    else
+                        idxNom = 1:dij.numOfVoxels;
+                        for k = 1:100%size(cst{i,5}.shift_vox,2)
+                            idxShift      = cst{i,5}.shift_vox(2,k) + cst{i,5}.shift_vox(1,k)*dij.dimensions(1) + cst{i,5}.shift_vox(3,k)*dij.dimensions(2)*dij.dimensions(1);
+                            idx           = idxNom - idxShift;
+                            %idx           = mod(idxNom - idxShift,dij.numOfVoxels + 1);
+                            %idx(idx == 0) = 1;
+                            idx           = idx(cst{cstidx,4}{1});
+                            d_i{k}        = d{1}(idx);
+                        end
+                        
+                        % calc invers DCH of VOI
+                        refQ   = cst{i,6}(j).coverage/100;
+                        refVol = cst{i,6}(j).volume/100;
+                        d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,100);
+                        
                     end
-                      
-                    % calc invers DCH of VOI
-                    refQ   = cst{i,6}(j).coverage/100;
-                    refVol = cst{i,6}(j).volume/100;
-                    d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
                     
                     % get dose of Target Ring
                     d_i = d{1}(cst{i,4}{1});
