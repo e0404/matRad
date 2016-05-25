@@ -25,6 +25,7 @@ for  i = 1:size(cst,1)
                         cstRing{Counter,5}           = cst{i,5};
                         cstRing{Counter,5}.voxelProb = voxelProbCube(cstRing{Counter,4}{1})';
                         cstRing{Counter,5}.shift_vox = shift_vox;
+                        cst{i,5}.shift_vox           = shift_vox;
                     elseif isequal(ringCreationType, 'exact')
                         if multScen.numOfShiftScen > 1
                             

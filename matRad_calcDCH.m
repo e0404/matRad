@@ -1,39 +1,30 @@
-function [dchPoints,Q] = matRad_calcDCH(volume,doseVec,cst,numOfScenarios)
+function [dchPoints,coverageProbabilities] = matRad_calcDCH(volume,doseVec,cst,numOfScenarios,dij)
 
+% set dose points in DCH 
 n         = 10000;
-numOfVois = size(cst,1);
-
-% set DCH points
 dchPoints = linspace(0,max(vertcat(doseVec{:}))*1.05,n);
 
-%figure
-for i = 1:numOfVois
-    indices   = cst{i,4}{1};
-
-    % calculate dose that corresponds to volume and deviation from D
+% calculate inverse DVH in every scenario and the deviation from dchPoints
+if size(doseVec) > 1
+    % use dij scenarios
     for Scen = 1:numOfScenarios
-        dose = matRad_calcInversDVH(volume(i)/100,doseVec{Scen}(indices));
-        dev(Scen,:) = dose - dchPoints;
+        doseInverseDVH = matRad_calcInversDVH(volume/100,doseVec{Scen}(cst{1,4}{1}));
+        dev(Scen,:)    = doseInverseDVH - dchPoints;
     end
-
-    % calculate logical mask
-    devlog = dev >= 0;
-
-    % calculate coverage Q
-    Q(i,:) = (1/numOfScenarios)*sum(devlog)*100;
-
-    % plot coverage over dose
-    %plot(dchPoints,Q(i,:))
-    %hold on
-
-    % store legend info
-    %legendinfo{i} = [cst{i,2},' D_{',num2str(volume(i)),'} DCH'];
+elseif size(doseVec) == 1
+    % create scenarios with shifts
+    idxNom = 1:numel(doseVec{1});
+    for Scen = 1:numOfScenarios
+        idxShift       = cst{1,5}.shift_vox(2,Scen) + cst{1,5}.shift_vox(1,Scen)*dij.dimensions(1) + cst{1,5}.shift_vox(3,Scen)*dij.dimensions(2)*dij.dimensions(1);
+        idx            = idxNom - idxShift;
+        idx            = idx(cst{1,4}{1});
+        doseInverseDVH = matRad_calcInversDVH(volume/100,doseVec{1}(idx));
+        dev(Scen,:)    = doseInverseDVH - dchPoints;
+    end
 end
 
-% set legend
-%legend(legendinfo)
-%grid on
-%xlabel('Dose [Gy]')
-%ylabel('Coverage Probability [%]')
+% calculate coverage probability in every dchPoint by counting number of 
+% scenarios with doseInverseDVH >= dchPoint <-> dev >= 0
+coverageProbabilities = (1/numOfScenarios)*sum(dev >= 0)*100;
 
 end
