@@ -1580,7 +1580,7 @@ AllObjectiveFunction = {'square underdosing','square overdosing','square deviati
 PlaceHolder = NaN;
 columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
        AllObjectiveFunction,...
-       'numeric','char','numeric','numeric',{'none','WC','prob'}};
+       'numeric','numeric','numeric','numeric',{'none','WC','prob'}};
    
 numOfObjectives = 0;
 for i = 1:size(cst,1)
@@ -1608,7 +1608,7 @@ for i = 1:size(cst,1)
        data{Counter,4}=objFunc;
        
        data{Counter,5}  = cst{i,6}(j).penalty;
-       data{Counter,6}  = num2str(cst{i,6}(j).dose);
+       data{Counter,6}  = cst{i,6}(j).dose;
        data{Counter,7}  = cst{i,6}(j).EUD;
        data{Counter,8}  = cst{i,6}(j).volume;
        data{Counter,9}  = cst{i,6}(j).robustness;
@@ -1672,7 +1672,7 @@ for i = 1:size(OldCst,1)
             % get further parameter
             if FlagValidParameters
                 
-              NewCst{Cnt,4}(CntObjF,1).dose       = str2num(data{j,6});
+              NewCst{Cnt,4}(CntObjF,1).dose       = data{j,6};
               NewCst{Cnt,4}(CntObjF,1).penalty    = data{j,5};
               NewCst{Cnt,4}(CntObjF,1).EUD        = data{j,7};
               NewCst{Cnt,4}(CntObjF,1).volume     = data{j,8};
