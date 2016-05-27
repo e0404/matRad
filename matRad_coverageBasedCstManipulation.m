@@ -14,19 +14,23 @@ for  i = 1:size(cst,1)
                 % create ring structure around VOI
                     if isequal(ringCreationType, 'sampling')
                         % sample voxel probabilities
-                        [voxelProbCube,shift_vox] = matRad_sampleVoxelProb(cst,ct,multScen.shiftSize,cst{i,2},1000);
+                        [voxelProbCube,voxelShift] = matRad_sampleVoxelProb(cst,ct,multScen.shiftSize,cst{i,2},1000);
 
                         % create cst with ring structure
                         probTreshold = 1e-4;
-                        cstRing{Counter,1}           = size(cst,1) - 1 + Counter;
-                        cstRing{Counter,2}           = [cst{i,2},'Ring'];
-                        cstRing{Counter,3}           = cst{i,3};
-                        cstRing{Counter,4}{1}        = setdiff(find(voxelProbCube > probTreshold*max(voxelProbCube(:))),cst{i,4}{1});
-                        cstRing{Counter,5}           = cst{i,5};
-                        cstRing{Counter,5}.voxelProb = voxelProbCube(cstRing{Counter,4}{1})';
-                        cstRing{Counter,5}.shift_vox = shift_vox;
-                        cst{i,5}.shift_vox           = shift_vox;
-                    elseif isequal(ringCreationType, 'exact')
+                        cstRing{Counter,1}            = size(cst,1) - 1 + Counter;
+                        cstRing{Counter,2}            = [cst{i,2},'Ring'];
+                        cstRing{Counter,3}            = cst{i,3};
+                        cstRing{Counter,4}{1}         = setdiff(find(voxelProbCube > probTreshold*max(voxelProbCube(:))),cst{i,4}{1});
+                        cstRing{Counter,5}            = cst{i,5};
+                        cstRing{Counter,5}.voxelProb  = voxelProbCube(cstRing{Counter,4}{1})';
+                        cstRing{Counter,5}.voxelShift = voxelShift;
+                        
+                        for k  = 1:size(cst,1)
+                            cst{k,5}.voxelShift = voxelShift;
+                        end
+                        
+                    elseif isequal(ringCreationType, 'scenPos')
                         if multScen.numOfShiftScen > 1
                             
                             % get VOI voxel coordinates
@@ -66,7 +70,8 @@ for  i = 1:size(cst,1)
                             cstRing{Counter,5}.voxelProb = voxelProbCube(cstRing{Counter,4}{1})';
                                                   
                         end
-                        
+                    else
+                        error('no valid ringCreationType')
                     end
                     
                     if isequal(voxelWeightingType,'heurWeighting')

@@ -35,10 +35,10 @@ load PROSTATE.mat
 
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
-multScen.numOfShiftScen      = [9 0 0];        % number of shifts in x y and z direction       
-multScen.shiftSize           = [54 0 0];     % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
+multScen.numOfShiftScen      = [0 0 0];        % number of shifts in x y and z direction       
+multScen.shiftSize           = [15 15 15];     % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
 multScen.shiftGenType        = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
-multScen.shiftCombType       = 'individual';     % individual: no combination of shift scenarios, combined: combine shift scenarios
+multScen.shiftCombType       = 'combined';     % individual: no combination of shift scenarios, combined: combine shift scenarios
 multScen.shiftGen1DIsotropy  = '+';            % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
 multScen.numOfRangeShiftScen = 0;              % number of absolute and/or relative range scnearios
 multScen.maxAbsRangeShift    = 0;              % maximum absolute over and undershoot in mm
@@ -50,14 +50,14 @@ multScen                     = matRad_setMultScen(multScen);
 [filename,dir] = uigetfile('E:\Mescher\');
 load([dir,filename])
 
-cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,'probWeighting','exact');
+cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,'probWeighting','sampling');
 
 clear filename dir
 %% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0 180]; % [°]
-pln.couchAngles     = [0 0]; % [Â°]
+pln.gantryAngles    = [0:72:359]; % [°]
+pln.couchAngles     = [0 0 0 0 0]; % [Â°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
