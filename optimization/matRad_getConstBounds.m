@@ -130,4 +130,14 @@ elseif isequal(constraint.type, 'min DCH constraint4')
     cl = repmat(constraint.volume/100,numOfScenarios,1);
     cu = inf(numOfScenarios,1);
     
+elseif isequal(constraint.type, 'max DCH constraint5')
+    
+    cl = -inf(100,1);
+    cu = repmat(constraint.volume/100,100,1);
+    
+elseif isequal(constraint.type, 'min DCH constraint5')  
+    
+    cl = repmat(constraint.volume/100,100,1);
+    cu = inf(100,1);    
+    
 end % constraint switch

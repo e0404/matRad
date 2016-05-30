@@ -129,6 +129,11 @@ elseif isequal(constraint.type, 'min DCH constraint3') || ...
 elseif isequal(constraint.type, 'min DCH constraint4') || ...
        isequal(constraint.type, 'max DCH constraint4')
 
+    c = sum(d_i >= d_ref)/numOfVoxels ;   
+    
+elseif isequal(constraint.type, 'min DCH constraint5') || ...
+       isequal(constraint.type, 'max DCH constraint5')
+
     c = sum(d_i >= d_ref)/numOfVoxels ;       
     
 end 

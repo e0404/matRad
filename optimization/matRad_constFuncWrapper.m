@@ -161,7 +161,49 @@ for  i = 1:size(cst,1)
                            end
                             
                        end
-                   
+                       
+                    elseif isequal(cst{i,6}(j).type, 'max DCH constraint5') || ...
+                           isequal(cst{i,6}(j).type, 'min DCH constraint5')
+                       
+                       % update scenario flag
+                       for k = 1:size(cst{i,5}.voxelShift,2)
+                           
+                            volume(k)     = matRad_constFunc(d{1}(cst{i,4}{1}-cst{i,5}.idxShift(k)),cst{i,6}(j),d_ref);
+                            dose(k)       = matRad_calcInversDVH(cst{i,6}(j).volume/100,d{1}(cst{i,4}{1}-cst{i,5}.idxShift(k)));
+                            DVHdevArea(k) = (abs((volume(k)*100-cst{i,6}(j).volume)/cst{i,6}(j).volume)) * (abs((dose(k)-d_ref)/d_ref));
+                       end
+                       
+%                        dose_sorted = sort(dose(2:end),'descend'); 
+%                        idx         = ceil(round((cst{i,6}(j).coverage/100 - 1/size(cst{i,5}.voxelShift,2))*numel(dose)*10)/10);
+                        [DVHdevAreaSorted,DVHdevAreaSortedidx] = sort(DVHdevArea(2:end),'ascend');
+                        idx                                    = ceil(round((cst{i,6}(j).coverage/100 - 1/size(cst{i,5}.voxelShift,2))*numel(DVHdevArea)*10)/10);
+                        
+                       if idx == 0
+                           
+                            matRad_DCH_ScenarioFlag = [true, false(1,size(cst{i,5}.voxelShift,2)-1)];
+                           
+                       else
+               
+%                             doseTmp                 = [dose(1),dose_sorted(1:idx)];            
+%                             matRad_DCH_ScenarioFlag = ismember(dose,doseTmp);
+                            DVHdevAreaTmp           = [DVHdevArea(1),DVHdevAreaSorted(1:idx)];
+                            matRad_DCH_ScenarioFlag = ismember(DVHdevArea,DVHdevAreaTmp);
+%                             matRad_DCH_ScenarioFlag = [true false(1,size(cst{1,5}.voxelShift,2)-1)];
+%                             matRad_DCH_ScenarioFlag(DVHdevAreaSortedidx(1:idx)+1) = true;
+                            
+                            
+                       
+                       end
+                       
+                       for k = 1:size(cst{i,5}.voxelShift,2)
+                           if matRad_DCH_ScenarioFlag(k)                               
+                                c          = [c;matRad_constFunc(d{1}(cst{i,4}{1}-cst{i,5}.idxShift(k)),cst{i,6}(j),d_ref)];
+                           else
+                                c = [c;cst{i,6}(j).volume/100];
+                           end
+                            
+                       end
+                       
                     end
 
                 end % if we are in the nominal sceario or rob opt

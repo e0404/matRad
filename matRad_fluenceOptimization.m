@@ -76,7 +76,9 @@ matRad_voxelWeighting           = cell(size(cst,1),2);
 [matRad_voxelWeighting{:,1}]    = deal(1);
 [matRad_voxelWeighting{:,2}]    = deal(true);
 matRad_backprojectionFlag       = false;
-matRad_DCH_ScenarioFlag         = [true false(1,dij.numOfScenarios-1)];
+%matRad_DCH_ScenarioFlag         = [true false(1,dij.numOfScenarios-1)];
+matRad_DCH_ScenarioFlag         = [true false(1,size(cst{1,5}.voxelShift,2)-1)];
+
 
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);

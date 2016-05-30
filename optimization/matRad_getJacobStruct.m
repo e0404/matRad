@@ -174,7 +174,17 @@ for i = 1:size(cst,1)
                             jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{k}(cst{i,4}{1},:)))];
                             
                         end    
-
+                        
+                    elseif isequal(cst{i,6}(j).type, 'max DCH constraint5') || ... 
+                           isequal(cst{i,6}(j).type, 'min DCH constraint5')
+                        
+%                         for k = 1:size(cst{i,5}.voxelShift,2)
+%                             
+%                             jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{i,4}{1}-cst{i,5}.idxShift(k),:)))];
+%                             
+%                         end 
+                        jacobStruct = [jacobStruct; cst{i,5}.jacobStruct];
+                        
                     end
                     
                 end
