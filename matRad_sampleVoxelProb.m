@@ -9,9 +9,9 @@ cstidx = find(strcmp([cst(:,2)],VOIName));
 voxelProbCube = zeros(ct.cubeDim);
 
 % create samples
-voxelXShift = round(sigma(1).*randn(1,ncase)./ct.resolution.x);
-voxelYShift = round(sigma(2).*randn(1,ncase)./ct.resolution.y);
-voxelZShift = round(sigma(3).*randn(1,ncase)./ct.resolution.z);
+voxelXShift = [0,round(sigma(1).*randn(1,ncase-1)./ct.resolution.x)];
+voxelYShift = [0,round(sigma(2).*randn(1,ncase-1)./ct.resolution.y)];
+voxelZShift = [0,round(sigma(3).*randn(1,ncase-1)./ct.resolution.z)];
 voxelShift  = [voxelXShift;voxelYShift;voxelZShift];
 
 % convert voxel shifts to index shifts
