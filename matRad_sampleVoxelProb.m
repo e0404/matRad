@@ -1,4 +1,4 @@
-function [voxelProbCube,voxelShift] = matRad_sampleVoxelProb(cst,ct,sigma,VOIName,ncase)
+function [voxelProbCube,voxelShift,idxShift] = matRad_sampleVoxelProb(cst,ct,sigma,VOIName,ncase)
 
 rng(0);
 

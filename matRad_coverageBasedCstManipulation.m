@@ -14,7 +14,7 @@ for  i = 1:size(cst,1)
                 % create ring structure around VOI
                     if isequal(ringCreationType, 'sampling')
                         % sample voxel probabilities
-                        [voxelProbCube,voxelShift] = matRad_sampleVoxelProb(cst,ct,multScen.shiftSize,cst{i,2},1000);
+                        [voxelProbCube,voxelShift,idxShift] = matRad_sampleVoxelProb(cst,ct,multScen.shiftSize,cst{i,2},1000);
 
                         % create cst with ring structure
                         probTreshold = 1e-4;
@@ -26,9 +26,11 @@ for  i = 1:size(cst,1)
                         cstRing{Counter,5}.Priority   = cst{i,5}.Priority + 1;
                         cstRing{Counter,5}.voxelProb  = voxelProbCube(cstRing{Counter,4}{1})';
                         cstRing{Counter,5}.voxelShift = voxelShift;
+                        cstRing{Counter,5}.idxShift   = idxShift;
                         
                         for k  = 1:size(cst,1)
                             cst{k,5}.voxelShift = voxelShift;
+                            cst{k,5}.idxShift   = idxShift;
                         end
                         
                     elseif isequal(ringCreationType, 'scenPos')
