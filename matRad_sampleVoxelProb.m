@@ -14,16 +14,13 @@ voxelYShift = round(sigma(2).*randn(1,ncase)./ct.resolution.y);
 voxelZShift = round(sigma(3).*randn(1,ncase)./ct.resolution.z);
 voxelShift  = [voxelXShift;voxelYShift;voxelZShift];
 
-% get voxel cooridinates
-[yCoordsVOI_vox, xCoordsVOI_vox, zCoordsVOI_vox] = ind2sub(ct.cubeDim,cst{cstidx,4}{1});
+% convert voxel shifts to index shifts
+idxShift    = voxelShift(2,:) + voxelShift(1,:).*ct.cubeDim(1) + voxelShift(3,:).*ct.cubeDim(2).*ct.cubeDim(1);
 
 % loop over all samples
 for i = 1:ncase
-            
-    shiftedVOIidx = sub2ind(ct.cubeDim, yCoordsVOI_vox + voxelYShift(i),...
-                                        xCoordsVOI_vox + voxelXShift(i),...
-                                        zCoordsVOI_vox + voxelZShift(i));
-                                                                       
+    
+    shiftedVOIidx                = cst{cstidx,4}{1} + idxShift(i);
     voxelProbCube(shiftedVOIidx) = voxelProbCube(shiftedVOIidx) + 1/ncase;
     
 end

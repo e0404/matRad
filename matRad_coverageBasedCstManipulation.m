@@ -23,6 +23,7 @@ for  i = 1:size(cst,1)
                         cstRing{Counter,3}            = cst{i,3};
                         cstRing{Counter,4}{1}         = setdiff(find(voxelProbCube > probTreshold*max(voxelProbCube(:))),cst{i,4}{1});
                         cstRing{Counter,5}            = cst{i,5};
+                        cstRing{Counter,5}.Priority   = cst{i,5}.Priority + 1;
                         cstRing{Counter,5}.voxelProb  = voxelProbCube(cstRing{Counter,4}{1})';
                         cstRing{Counter,5}.voxelShift = voxelShift;
                         
