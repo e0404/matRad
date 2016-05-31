@@ -9,8 +9,7 @@ if length(doseVec) > 1
 elseif length(doseVec) == 1
     % create scenarios with shifts
     for Scen = 1:numOfScenarios
-        idxShift         = cst{1,5}.voxelShift(2,Scen) + cst{1,5}.voxelShift(1,Scen)*dij.dimensions(1) + cst{1,5}.voxelShift(3,Scen)*dij.dimensions(2)*dij.dimensions(1);
-        dosePoints(Scen) = matRad_calcInversDVH(volume,doseVec{1}(cst{1,4}{1}-idxShift));
+        dosePoints(Scen) = matRad_calcInversDVH(volume,doseVec{1}(cst{1,4}{1}-cst{1,5}.idxShift(Scen)));
     end    
 end
 

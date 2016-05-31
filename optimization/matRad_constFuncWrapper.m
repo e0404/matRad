@@ -166,7 +166,7 @@ for  i = 1:size(cst,1)
                            isequal(cst{i,6}(j).type, 'min DCH constraint5')
                        
                        % update scenario flag
-                       for k = 1:size(cst{i,5}.voxelShift,2)
+                       for k = 1:length(cst{i,5}.idxShift)
                            
                             volume(k)     = matRad_constFunc(d{1}(cst{i,4}{1}-cst{i,5}.idxShift(k)),cst{i,6}(j),d_ref);
                             dose(k)       = matRad_calcInversDVH(cst{i,6}(j).volume/100,d{1}(cst{i,4}{1}-cst{i,5}.idxShift(k)));
@@ -176,11 +176,11 @@ for  i = 1:size(cst,1)
 %                        dose_sorted = sort(dose(2:end),'descend'); 
 %                        idx         = ceil(round((cst{i,6}(j).coverage/100 - 1/size(cst{i,5}.voxelShift,2))*numel(dose)*10)/10);
                         [DVHdevAreaSorted,DVHdevAreaSortedidx] = sort(DVHdevArea(2:end),'ascend');
-                        idx                                    = ceil(round((cst{i,6}(j).coverage/100 - 1/size(cst{i,5}.voxelShift,2))*numel(DVHdevArea)*10)/10);
+                        idx                                    = ceil(round((cst{i,6}(j).coverage/100 - 1/length(cst{i,5}.idxShift))*numel(DVHdevArea)*10)/10);
                         
                        if idx == 0
                            
-                            matRad_DCH_ScenarioFlag = [true, false(1,size(cst{i,5}.voxelShift,2)-1)];
+                            matRad_DCH_ScenarioFlag = [true, false(1,length(cst{i,5}.idxShift)-1)];
                            
                        else
                
@@ -195,7 +195,7 @@ for  i = 1:size(cst,1)
                        
                        end
                        
-                       for k = 1:size(cst{i,5}.voxelShift,2)
+                       for k = 1:length(cst{i,5}.idxShift)
                            if matRad_DCH_ScenarioFlag(k)                               
                                 c          = [c;matRad_constFunc(d{1}(cst{i,4}{1}-cst{i,5}.idxShift(k)),cst{i,6}(j),d_ref)];
                            else

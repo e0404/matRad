@@ -391,7 +391,7 @@ for i = 1:size(cst,1)
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint5') || ...
                            isequal(cst{i,6}(j).type, 'min DCH constraint5')
                                               
-                        for k = 1:size(cst{i,5}.voxelShift,2)
+                        for k = 1:length(cst{i,5}.idxShift)
                             
                             if matRad_DCH_ScenarioFlag(k)
                                 jacobVec = matRad_jacobFunc(d{1}(cst{i,4}{1}-cst{i,5}.idxShift(k)),cst{i,6}(j),d_ref);
