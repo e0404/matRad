@@ -48,7 +48,7 @@ for i = 1:size(cst,1)
         % options 'none', 'probabilistic', 'voxel-wise worst case', 'objective-wise
         % worst case'
         
-        cst{i,6}(j).robustness = 'voxel-wise worst case';
+        cst{i,6}(j).robustness = 'WC';
         %cst{i,6}(j).robustness = 'none';
         %cst{i,6}(j).robustness = 'probabilistic';
         

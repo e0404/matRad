@@ -84,7 +84,7 @@ for  i = 1:size(cst,1)
                     end
 
                 % if voxel-wise worst case: sum up objective of min/max dose
-                elseif strcmp(cst{i,6}(j).robustness,'voxel-wise worst case')
+                elseif strcmp(cst{i,6}(j).robustness,'WC')
 
                     % prepare min/max dose vector we have chosen voxel-wise worst case
                     if ~exist('d_max','var')

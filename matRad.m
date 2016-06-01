@@ -35,11 +35,11 @@ load PROSTATE.mat
 
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
-multScen.numOfShiftScen      = [0 0 0];        % number of shifts in x y and z direction       
-multScen.shiftSize           = [15 15 15];     % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
+multScen.numOfShiftScen      = [2 2 0];        % number of shifts in x y and z direction       
+multScen.shiftSize           = [3 3 15];     % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
 multScen.shiftGenType        = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
-multScen.shiftCombType       = 'combined';     % individual: no combination of shift scenarios, combined: combine shift scenarios
-multScen.shiftGen1DIsotropy  = '+';            % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
+multScen.shiftCombType       = 'individual';     % individual: no combination of shift scenarios, combined: combine shift scenarios
+multScen.shiftGen1DIsotropy  = '+-';            % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
 multScen.numOfRangeShiftScen = 0;              % number of absolute and/or relative range scnearios
 multScen.maxAbsRangeShift    = 0;              % maximum absolute over and undershoot in mm
 multScen.maxRelRangeShift    = 0;              % maximum relative over and undershoot in %
@@ -56,12 +56,12 @@ clear filename dir
 %% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0:72:359]; % [°]
-pln.couchAngles     = [0 0 0 0 0]; % [Â°]
+pln.gantryAngles    = [0 90]; % [°]
+pln.couchAngles     = [0 0]; % [Â°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
-pln.radiationMode   = 'photons'; % either photons / protons / carbon
+pln.radiationMode   = 'protons'; % either photons / protons / carbon
 pln.bioOptimization = 'none'; % none: physical optimization; effect: effect-based optimization; RBExD: optimization of RBE-weighted dose
 pln.numOfFractions  = 1;
 pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
