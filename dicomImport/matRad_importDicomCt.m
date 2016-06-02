@@ -1,4 +1,4 @@
-function ct = matRad_importDicomCt(ctList, resolution, visBool)
+function ct = matRad_importDicomCt(ctList, resolution, dicomBool, visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to import dicom ct data
 % 
@@ -9,6 +9,7 @@ function ct = matRad_importDicomCt(ctList, resolution, visBool)
 %   ctList:         list of dicom ct files
 %   resolution:   	resolution of the imported ct cube, i.e. this function
 %                   will interpolate to a different resolution if desired
+%   dicomBool:      store complete dicom information if true
 %   visBool:        optional: turn on/off visualization
 %
 % output
@@ -38,8 +39,8 @@ function ct = matRad_importDicomCt(ctList, resolution, visBool)
 fprintf('\nimporting ct-cube...');
 
 %% processing input variables
-if nargin < 3
-    visBool = 0;
+if ~exist('visBool','var')
+  visBool = 0;
 end
 
 % creation of ctInfo list
@@ -197,16 +198,24 @@ ct.dicomInfo.Width                   = ctInfo(1).Width;
 ct.dicomInfo.Height                  = ctInfo(1).Height;
 ct.dicomInfo.RescaleSlope            = ctInfo(1).RescaleSlope;
 ct.dicomInfo.RescaleIntercept        = ctInfo(1).RescaleIntercept;
-if isfield(completeDicom,'PatientName')
+if isfield(completeDicom,'PatientName') && dicomBool == true
     ct.dicomInfo.PatientName         = completeDicom.PatientName;
 end
 
+% do not remove the complete dicom information here because ...
+% calcWaterEqD needs some information
 ct.dicomInfo_org = completeDicom;
+
 ct.timeStamp = datestr(clock);
 
 % convert to water equivalent electron densities
 fprintf('\nconversion of ct-Cube to waterEqD...');
 ct = matRad_calcWaterEqD(ct);
+% remove the complete dicomInfo from the ct. Some useful anonymous info
+% still saved
+if dicomBool == false
+    ct = rmfield(ct, 'dicomInfo_org');
+end
 fprintf('finished!\n');
 
 end

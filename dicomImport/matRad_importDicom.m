@@ -1,13 +1,16 @@
-function [ct, cst, pln, resultGUI] = matRad_importDicom( files )
+function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomBool )
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad wrapper function to import a predefined set of dicom files into
 % matRad's native data formats
 % 
 % call
-%   [ct, cst, pln, resultGUI] = matRad_importDicom( files )
+%   [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomBool )
 %
 % input
-%   files:  list of files to be imported (will contain cts and rt structure set)
+%   files:      list of files to be imported (will contain cts and rt
+%               structure set)
+%   dicomBool:  (boolean, optional) import complete dicomInfo and
+%               patientName
 %
 % output
 %   ct:        matRad ct struct
@@ -33,6 +36,12 @@ function [ct, cst, pln, resultGUI] = matRad_importDicom( files )
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%
+if ~exist('dicomBool','var')
+  dicomBool = true;
+end
+
+%%
 h = waitbar(0,'Please wait...');
 %h.WindowStyle = 'Modal';
 steps = 2;
@@ -42,7 +51,7 @@ waitbar(1 / steps)
 resolution.x = files.resx;
 resolution.y = files.resy;
 resolution.z = files.resz; % [mm] / lps coordinate system
-ct = matRad_importDicomCt(files.ct, resolution); 
+ct = matRad_importDicomCt(files.ct, resolution, dicomBool); 
     
 if ~isempty(files.rtss)
     
@@ -76,7 +85,7 @@ end
 %% determine pln parameters
 if isfield(files,'rtplan')
     if ~(cellfun(@isempty,files.rtplan(1,:)))
-        pln = matRad_importDicomRTPlan(ct, files.rtplan);
+        pln = matRad_importDicomRTPlan(ct, files.rtplan, dicomBool);
     end
 end
 
