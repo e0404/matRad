@@ -44,9 +44,9 @@ hlutDir = fullfile(fileparts(mfilename('fullpath')),'hlutLibrary',filesep);
 
 % if possible -> file standard out of dicom tags
 try
-    manufacturer = ct.dicomInfo_org.Manufacturer;
-    model = ct.dicomInfo_org.ManufacturerModelName;
-    convKernel = ct.dicomInfo_org.ConvolutionKernel;
+    manufacturer = ct.dicomInfo.Manufacturer;
+    model = ct.dicomInfo.ManufacturerModelName;
+    convKernel = ct.dicomInfo.ConvolutionKernel;
     
     hlutFileName = strcat(manufacturer, '-', model, '-ConvolutionKernel-',...
         convKernel, '.hlut');
