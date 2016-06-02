@@ -320,9 +320,9 @@ if ~isempty(rtdose) && ~isempty(get(handles.doseseries_listbox,'Value'))
     files.rtdose = rtdose(get(handles.doseseries_listbox,'Value'),:);
 end
 
-% dicomBool: store complete DICOM information and patientName or not
-dicomBool = logical(handles.checkPatientName.Value);
-matRad_importDicom(files, dicomBool);
+% dicomMetaBool: store complete DICOM information and patientName or not
+dicomMetaBool = logical(handles.checkPatientName.Value);
+matRad_importDicom(files, dicomMetaBool);
 
 
 % --- Executes on button press in cancel_button.
