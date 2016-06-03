@@ -1,4 +1,4 @@
-function cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,ringCreationType,voxelWeightingType)
+function cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,ringCreationType,voxelWeightingType,normalTissueRingFlag)
 
 covFlag = 0;
 Counter = 0;
@@ -137,6 +137,34 @@ end
 
 if covFlag
     cst = [cst;cstRing];
+end
+
+if normalTissueRingFlag
+    cstidx = find(strcmp([cst(:,2)],'BODY'));
+    
+    cstTmp{1,1} = cst{cstidx,1};
+    cstTmp{1,2} = 'nomral tissue Ring';
+    cstTmp{1,3} = cst{cstidx,3};
+    cstTmp{1,5} = cst{cstidx,5};
+    cstTmp{1,6} = cst{cstidx,6};
+    cst{cstidx,6} = [];
+    
+    voiCube                                                    = zeros(ct.cubeDim);
+    voiCube(cst{find(strcmp([cst(:,2)],'prostate bed')),4}{1}) = 1;
+    
+    % inner margin
+    [margin.x margin.y margin.z] = deal(20);
+    voiCubeInner = matRad_addMargin(voiCube,cst,ct.resolution,margin,true);
+    VInner    = find(voiCubeInner>0);
+
+    % outer margin
+    [margin.x margin.y margin.z] = deal(40);
+    voiCubeOuter = matRad_addMargin(voiCube,cst,ct.resolution,margin,true);
+    VOuter    = find(voiCubeOuter>0);
+    
+    cstTmp{1,4}{1} = setdiff(VOuter,VInner);
+    
+    cst = [cst;cstTmp];
 end
 
 end
