@@ -3,7 +3,7 @@ function ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, visBool)
 % matRad function to import dicom ct data
 % 
 % call
-%   ct = matRad_importDicomCt(ctList, resolution, visBool)
+%   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, visBool)
 %
 % input
 %   ctList:         list of dicom ct files
@@ -198,9 +198,15 @@ ct.dicomInfo.Width                   = ctInfo(1).Width;
 ct.dicomInfo.Height                  = ctInfo(1).Height;
 ct.dicomInfo.RescaleSlope            = ctInfo(1).RescaleSlope;
 ct.dicomInfo.RescaleIntercept        = ctInfo(1).RescaleIntercept;
+if isfield(completeDicom, 'Manufacturer')
 ct.dicomInfo.Manufacturer            = completeDicom.Manufacturer;
+end
+if isfield(completeDicom, 'ManufacturerModelName')
 ct.dicomInfo.ManufacturerModelName   = completeDicom.ManufacturerModelName;
+end
+if isfield(completeDicom, 'ConvolutionKernel')
 ct.dicomInfo.ConvolutionKernel       = completeDicom.ConvolutionKernel;
+end
 
 % store patientName only if user wants to
 if isfield(completeDicom,'PatientName') && dicomMetaBool == true
