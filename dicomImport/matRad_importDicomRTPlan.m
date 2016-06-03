@@ -3,7 +3,7 @@ function pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)
 % matRad function to import dicom RTPLAN data
 % 
 % call
-%   pln = matRad_importDicomRTPlan(ct, rtPlanFiles)
+%   pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)
 %
 % input
 %   ct:             ct imported by the matRad_importDicomCt function
