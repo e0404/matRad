@@ -74,7 +74,7 @@ for  i = 1:size(cst,1)
                         d_i = [];
                         
                         % get cst index of VOI that corresponds to VOI ring
-                        cstidx = find(strcmp(cst(:,2),cst{i,2}(1:end-4)));
+                        cstidx = find(strcmp(cst(:,2),cst{i,2}(1:end-5)));
                        
                         % get dose of VOI that corresponds to VOI ring
                         for k = 1:dij.numOfScenarios
