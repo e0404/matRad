@@ -1,8 +1,9 @@
-List of all matRad developers that contributed code (alphabetical)
+﻿List of all matRad developers that contributed code (alphabetical)
 
 * Mark Bangert
 * Eduadro Cisternas
 * Hubert Gabrys
+* Cindy Hermann
 * Thomas Klinge
 * Henning Mescher
 * Lucas-Raphael Müller
