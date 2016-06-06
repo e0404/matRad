@@ -22,7 +22,7 @@ function varargout = matRad_importDicomGUI(varargin)
 
 % Edit the above text to modify the response to help matRad_importDicomGUI
 
-% Last Modified by GUIDE v2.5 26-Feb-2016 13:11:23
+% Last Modified by GUIDE v2.5 02-Jun-2016 14:32:20
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -320,7 +320,9 @@ if ~isempty(rtdose) && ~isempty(get(handles.doseseries_listbox,'Value'))
     files.rtdose = rtdose(get(handles.doseseries_listbox,'Value'),:);
 end
 
-matRad_importDicom(files);
+% dicomMetaBool: store complete DICOM information and patientName or not
+dicomMetaBool = logical(handles.checkPatientName.Value);
+matRad_importDicom(files, dicomMetaBool);
 
 
 % --- Executes on button press in cancel_button.
@@ -600,3 +602,14 @@ function rtplan_listbox_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in checkPatientName.
+function checkPatientName_Callback(hObject, eventdata, handles)
+% hObject    handle to checkPatientName (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+%A = get(hObject,'Value');
+
+% Hint: get(hObject,'Value') returns toggle state of checkPatientName
+%guidata(hObject, handles);

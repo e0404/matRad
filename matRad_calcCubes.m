@@ -34,13 +34,13 @@ if nargin < 4
     scenNum = 1;
 end
 
-% consider VOI priorities
-cst  = matRad_setOverlapPriorities(cst);
-
 resultGUI.w = w;
 
 % calc dose and reshape from 1D vector to 2D array
 resultGUI.physicalDose = reshape(dij.physicalDose{scenNum}*resultGUI.w,dij.dimensions);
+
+% consider VOI priorities
+[cst,resultGUI.overlapCube]  = matRad_setOverlapPriorities(cst,dij.dimensions);
 
 if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
 
