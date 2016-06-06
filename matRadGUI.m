@@ -83,17 +83,19 @@ function matRadGUI_OpeningFcn(hObject, ~, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to matRadGUI (see VARARGIN)
 
+currFolder = fileparts(mfilename('fullpath'));
+
 % Choose default command line output for matRadGUI
 handles.output = hObject;
 %show matrad logo
 axes(handles.axesLogo)
-[im, ~, alpha] = imread(['dicomImport' filesep 'matrad_logo.png']);
+[im, ~, alpha] = imread([currFolder filesep 'dicomImport' filesep 'matrad_logo.png']);
 f = image(im);
 axis equal off
 set(f, 'AlphaData', alpha);
 % show dkfz logo
 axes(handles.axesDKFZ)
-[im, ~, alpha] = imread(['dicomImport' filesep 'DKFZ_Logo.png']);
+[im, ~, alpha] = imread([currFolder filesep 'dicomImport' filesep 'DKFZ_Logo.png']);
 f = image(im);
 axis equal off;
 set(f, 'AlphaData', alpha);
@@ -129,7 +131,7 @@ handles.IsoDose.Levels = 0;
 handles.Modalities = {'photons','protons','carbon'};
 for i = 1:length(handles.Modalities)
     pattern = [handles.Modalities{1,i} '_*'];
-    Files = dir(pattern);
+    Files = dir([fileparts(mfilename('fullpath')) filesep pattern]);
     if isdeployed
         Files = vertcat(Files,dir([ctfroot filesep 'matRad' filesep pattern]));
     end
@@ -2350,9 +2352,10 @@ Machine = contents{get(handles.popUpMachine,'Value')};
 contents = cellstr(get(handles.popupRadMode,'String'));
 radMod = contents{get(handles.popupRadMode,'Value')};
 
-FoundFile = dir([radMod '_' Machine '.mat']);
 if isdeployed
-   FoundFile = [FoundFile, dir([ctfroot filesep 'matRad' filesep radMod '_' Machine '.mat'])];
+    FoundFile = [FoundFile, dir([ctfroot filesep 'matRad' filesep radMod '_' Machine '.mat'])];
+else
+    FoundFile = dir([fileparts(mfilename('fullpath')) filesep radMod '_' Machine '.mat']);    
 end
 if isempty(FoundFile)
     warndlg(['No base data available for machine: ' Machine]);

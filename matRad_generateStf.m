@@ -76,7 +76,7 @@ end
 % prepare structures necessary for particles
 fileName = [pln.radiationMode '_' pln.machine];
 try
-   load(fileName);
+   load([fileparts(mfilename('fullpath')) filesep fileName]);
    SAD = machine.meta.SAD;
 catch
    error(['Could not find the following machine file: ' fileName ]); 

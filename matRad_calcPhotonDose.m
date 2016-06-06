@@ -86,7 +86,7 @@ useCustomPrimFluenceBool = 0;
 % load polynomial fits for kernels ppKernel1, ppKernel2, ppKernel3
 fileName = [pln.radiationMode '_' pln.machine];
 try
-   load(fileName);
+   load([fileparts(mfilename('fullpath')) filesep fileName]);
 catch
    error(['Could not find the following machine file: ' fileName ]); 
 end

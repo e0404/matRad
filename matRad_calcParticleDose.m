@@ -82,7 +82,7 @@ V = unique(vertcat(V{:}));
 % load machine file
 fileName = [pln.radiationMode '_' pln.machine];
 try
-   load(fileName);
+   load([fileparts(mfilename('fullpath')) filesep fileName]);
 catch
    error(['Could not find the following machine file: ' fileName ]); 
 end
