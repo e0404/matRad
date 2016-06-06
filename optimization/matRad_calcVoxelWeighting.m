@@ -29,24 +29,27 @@ if matRad_backprojectionFlag
         
         logicalDoseLimits = (d_i >= round(d_lower*10^doseDecimalPlace)/(10^doseDecimalPlace) - 0.5*10^(-doseDecimalPlace) &...
                              d_i <= round(d_upper*10^doseDecimalPlace)/(10^doseDecimalPlace) + 0.4*10^(-doseDecimalPlace) );
-        d_i               = d_i(logicalDoseLimits);
-        minDistToVOI      = cst{i,5}.minDistToVOI(logicalDoseLimits);  
+                         
+        if sum(logicalDoseLimits) > 0                 
+            d_i               = d_i(logicalDoseLimits);
+            minDistToVOI      = cst{i,5}.minDistToVOI(logicalDoseLimits);  
 
-        % round dose values
-        d_i = round(d_i*10^doseDecimalPlace)/(10^doseDecimalPlace);     
-            
-        % create logical dose mask (combine all dose entries)
-        logicalDoseMask = bsxfun(@eq,sparse(d_i'),d_i);
+            % round dose values
+            d_i = round(d_i*10^doseDecimalPlace)/(10^doseDecimalPlace);     
 
-        % apply mask on distances
-        diagDist   = spdiags(minDistToVOI',0,numel(minDistToVOI),numel(minDistToVOI));
-        eqDoseDist = diagDist*logicalDoseMask;
+            % create logical dose mask (combine all dose entries)
+            logicalDoseMask = bsxfun(@eq,sparse(d_i'),d_i);
 
-        % find min distances for every dose
-        [~,jj] = find(eqDoseDist);
-        weighting = accumarray(jj,nonzeros(eqDoseDist),[],@min);
+            % apply mask on distances
+            diagDist   = spdiags(minDistToVOI',0,numel(minDistToVOI),numel(minDistToVOI));
+            eqDoseDist = diagDist*logicalDoseMask;
 
-        matRad_voxelWeighting{i,1}(logicalDoseLimits) = 1 + 4 * (weighting'./minDistToVOI);
+            % find min distances for every dose
+            [~,jj] = find(eqDoseDist);
+            weighting = accumarray(jj,nonzeros(eqDoseDist),[],@min);
+
+            matRad_voxelWeighting{i,1}(logicalDoseLimits) = 1 + 4 * (weighting'./minDistToVOI);
+        end
             
         end
         
