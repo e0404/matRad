@@ -78,7 +78,7 @@ for  i = 1:size(cst,1)
                     voiCube(cst{i,4}{1})         = 1;
                     [margin.x,margin.y,margin.z] = deal(14); 
                     voiCube                      = matRad_addMargin(voiCube,cst,ct.resolution,margin,true);
-                    cstRing{Counter,4}{1}        = find(voiCube>0);
+                    cstRing{Counter,4}{1}        = setdiff(find(voiCube>0),cst{i,4}{1});
                     
                     % create shifts
                     [~,voxelShift,idxShift]       = matRad_sampleVoxelProb(cst,ct,multScen.shiftSize,cst{i,2},1000);
