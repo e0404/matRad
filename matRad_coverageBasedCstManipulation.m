@@ -57,18 +57,12 @@ for  i = 1:size(cst,1)
                     elseif multScen.numOfShiftScen == 1
                         % create scnearios with shifts
                         
-                        % sample voxel probabilities
-                        [voxelProbCube,voxelShift,idxShift] = matRad_sampleVoxelProb(cst,ct,multScen.shiftSize,cst{i,2},1000);
-
-                        % create cst with ring structure
-                        cstRing{Counter,4}{1}         = setdiff(find(voxelProbCube > 0),cst{i,4}{1});
-                        cstRing{Counter,5}.voxelProb  = voxelProbCube(cstRing{Counter,4}{1})';
-                        cstRing{Counter,5}.voxelShift = voxelShift;
-                        cstRing{Counter,5}.idxShift   = idxShift;
+                        % sample VOI shifts
+                        cstRing{Counter,5}.VOIShift = matRad_sampleVOIShift(cst,ct,multScen.shiftSize,cst{i,2},1000);
+                        cstRing{Counter,4}{1}       = setdiff(find(cstRing{Counter,5}.VOIShift.voxelProbCube > 0),cst{i,4}{1});
 
                         for k  = 1:size(cst,1)
-                            cst{k,5}.voxelShift = voxelShift;
-                            cst{k,5}.idxShift   = idxShift;
+                            cst{k,5}.VOIShift = cstRing{Counter,5}.VOIShift;
                         end                        
                     end                    
 
@@ -80,14 +74,11 @@ for  i = 1:size(cst,1)
                     voiCube                      = matRad_addMargin(voiCube,cst,ct.resolution,margin,true);
                     cstRing{Counter,4}{1}        = setdiff(find(voiCube>0),cst{i,4}{1});
                     
-                    % create shifts
-                    [~,voxelShift,idxShift]       = matRad_sampleVoxelProb(cst,ct,multScen.shiftSize,cst{i,2},1000);
-                    cstRing{Counter,5}.voxelShift = voxelShift;
-                    cstRing{Counter,5}.idxShift   = idxShift;
-
+                    % sample VOI shifts
+                    cstRing{Counter,5}.VOIShift = matRad_sampleVOIShift(cst,ct,multScen.shiftSize,cst{i,2},1000);
+                    
                     for k  = 1:size(cst,1)
-                        cst{k,5}.voxelShift = voxelShift;
-                        cst{k,5}.idxShift   = idxShift;
+                        cst{k,5}.VOIShift = cstRing{Counter,5}.VOIShift;
                     end 
                     
                 else

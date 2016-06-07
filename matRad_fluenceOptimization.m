@@ -79,7 +79,7 @@ matRad_backprojectionFlag       = false;
 if dij.numOfScenarios > 1
 	matRad_DCH_ScenarioFlag = [true false(1,dij.numOfScenarios-1)];
 else
-    matRad_DCH_ScenarioFlag = [true false(1,length(cst{1,5}.idxShift)-1)];
+    matRad_DCH_ScenarioFlag = [true false(1,cst{1,5}.VOIShift.ncase-1)];
 end
 
 
