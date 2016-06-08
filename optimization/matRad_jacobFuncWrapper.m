@@ -391,10 +391,33 @@ for i = 1:size(cst,1)
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint5') || ...
                            isequal(cst{i,6}(j).type, 'min DCH constraint5')
                                               
-                        for k = 1:length(cst{i,5}.idxShift)
+                        for k = 1:cst{i,5}.VOIShift.ncase
                             
                             if matRad_DCH_ScenarioFlag(k)
-                                jacobVec = matRad_jacobFunc(d{1}(cst{i,4}{1}-cst{i,5}.idxShift(k)),cst{i,6}(j),d_ref);
+                                if isequal(cst{i,5}.VOIShift.shiftType,'rounded')
+                                   doseVec = d{1}(cst{i,4}{1}-cst{i,5}.VOIShift.roundedShift.idxShift(k));
+
+                                elseif isequal(cst{i,5}.VOIShift.shiftType,'linInterp')
+                                    % lin interpolation in x
+                                    c00 = d{1}(cst{i,4}{1}-cst{i,5}.VOIShift.linInterpShift.idxShift.X0Y0Z0(k)).*(1-cst{i,5}.VOIShift.linInterpShift.idxShift.x(k)) +...
+                                          d{1}(cst{i,4}{1}-cst{i,5}.VOIShift.linInterpShift.idxShift.X1Y0Z0(k)).*cst{i,5}.VOIShift.linInterpShift.idxShift.x(k);
+                                    c01 = d{1}(cst{i,4}{1}-cst{i,5}.VOIShift.linInterpShift.idxShift.X0Y0Z1(k)).*(1-cst{i,5}.VOIShift.linInterpShift.idxShift.x(k)) +...
+                                          d{1}(cst{i,4}{1}-cst{i,5}.VOIShift.linInterpShift.idxShift.X1Y0Z1(k)).*cst{i,5}.VOIShift.linInterpShift.idxShift.x(k);
+                                    c10 = d{1}(cst{i,4}{1}-cst{i,5}.VOIShift.linInterpShift.idxShift.X0Y1Z0(k)).*(1-cst{i,5}.VOIShift.linInterpShift.idxShift.x(k)) +...
+                                          d{1}(cst{i,4}{1}-cst{i,5}.VOIShift.linInterpShift.idxShift.X1Y1Z0(k)).*cst{i,5}.VOIShift.linInterpShift.idxShift.x(k);
+                                    c11 = d{1}(cst{i,4}{1}-cst{i,5}.VOIShift.linInterpShift.idxShift.X0Y1Z1(k)).*(1-cst{i,5}.VOIShift.linInterpShift.idxShift.x(k)) +...
+                                          d{1}(cst{i,4}{1}-cst{i,5}.VOIShift.linInterpShift.idxShift.X1Y1Z1(k)).*cst{i,5}.VOIShift.linInterpShift.idxShift.x(k);
+
+                                    % lin interpolation in y  
+                                    c0  = c00.*(1-cst{i,5}.VOIShift.linInterpShift.idxShift.y(k))+c10.*cst{i,5}.VOIShift.linInterpShift.idxShift.y(k);
+                                    c1  = c01.*(1-cst{i,5}.VOIShift.linInterpShift.idxShift.y(k))+c11.*cst{i,5}.VOIShift.linInterpShift.idxShift.y(k);
+
+                                    % lin interpolation in z
+                                    doseVec = c0.*(1-cst{i,5}.VOIShift.linInterpShift.idxShift.z(k))+c1.*cst{i,5}.VOIShift.linInterpShift.idxShift.z(k);
+
+                                end
+                                
+                                jacobVec = matRad_jacobFunc(doseVec,cst{i,6}(j),d_ref);
                             else
                                 jacobVec = 0;
                             end
@@ -406,7 +429,7 @@ for i = 1:size(cst,1)
 
                             if isequal(type,'none') && ~isempty(jacobVec)
 
-                               physicalDoseProjection = [physicalDoseProjection,sparse(cst{i,4}{1}-cst{i,5}.idxShift(k),1,jacobVec,dij.numOfVoxels,1)];
+                               physicalDoseProjection = [physicalDoseProjection,sparse(cst{i,4}{1}-cst{i,5}.VOIShift.roundedShift.idxShift(k),1,jacobVec,dij.numOfVoxels,1)];
 
                             elseif isequal(type,'effect') && ~isempty(jacobVec)
 
