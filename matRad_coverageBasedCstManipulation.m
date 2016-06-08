@@ -60,10 +60,13 @@ for  i = 1:size(cst,1)
                         % sample VOI shifts
                         cstRing{Counter,5}.VOIShift = matRad_sampleVOIShift(cst,ct,multScen.shiftSize,cst{i,2},1000);
                         cstRing{Counter,4}{1}       = setdiff(find(cstRing{Counter,5}.VOIShift.voxelProbCube > 0),cst{i,4}{1});
-
+                        
                         for k  = 1:size(cst,1)
                             cst{k,5}.VOIShift = cstRing{Counter,5}.VOIShift;
-                        end                        
+                        end  
+                        
+                        cstRing{Counter,5}.VOIShift.voxelProb = cstRing{Counter,5}.VOIShift.voxelProbCube(cstRing{Counter,4}{1});
+                        
                     end                    
 
                 elseif isequal(ringCreationType, 'predefinedMargin') % only for heuristic weighting

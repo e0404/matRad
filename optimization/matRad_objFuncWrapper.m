@@ -141,7 +141,7 @@ for  i = 1:size(cst,1)
                             voxelWeighting = matRad_voxelWeighting{i,1};
 
                         elseif isequal(cst{i,5}.voxelWeightingType,'probWeighting')
-                            voxelWeighting = 5*cst{i,5}.voxelProb;    
+                            voxelWeighting = 5*cst{i,5}.VOIShift.voxelProb;    
                         end
                         
                     end
