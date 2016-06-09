@@ -117,7 +117,7 @@ elseif isequal(objective.type, 'max DCH objective') ||...
     end
     
     % apply weighting
-    deviation = deviation.*weighting';
+    deviation = deviation.*weighting;
    
     % claculate objective function
     f = (objective.penalty/numOfVoxels)*(deviation'*deviation);

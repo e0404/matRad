@@ -36,7 +36,7 @@ load PROSTATE.mat
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
 multScen.numOfShiftScen      = [0 0 0];        % number of shifts in x y and z direction       
-multScen.shiftSize           = [15 15 15];     % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
+multScen.shiftSize           = [3 3 3];     % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
 multScen.shiftGenType        = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
 multScen.shiftCombType       = 'combined';     % individual: no combination of shift scenarios, combined: combine shift scenarios
 multScen.shiftGen1DIsotropy  = '+';            % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
@@ -50,7 +50,7 @@ multScen                     = matRad_setMultScen(multScen);
 [filename,dir] = uigetfile('E:\Mescher\');
 load([dir,filename])
 
-cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,'probWeighting','sampling');
+cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,'prostate bed',20,40);
 
 clear filename dir
 %% meta information for treatment plan

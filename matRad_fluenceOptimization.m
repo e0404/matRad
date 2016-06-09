@@ -63,8 +63,6 @@ global matRad_global_d;
 global matRad_STRG_C_Pressed;
 global matRad_objective_function_value;
 global matRad_iteration;
-global matRad_voxelWeighting;
-global matRad_backprojectionFlag;
 global matRad_DCH_ScenarioFlag;
 
 matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
@@ -72,10 +70,6 @@ matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
 matRad_STRG_C_Pressed           = false;
 matRad_objective_function_value = [];
 matRad_iteration                = 0;
-matRad_voxelWeighting           = cell(size(cst,1),2);
-[matRad_voxelWeighting{:,1}]    = deal(1);
-[matRad_voxelWeighting{:,2}]    = deal(true);
-matRad_backprojectionFlag       = false;
 if dij.numOfScenarios > 1
 	matRad_DCH_ScenarioFlag = [true false(1,dij.numOfScenarios-1)];
 else
@@ -198,8 +192,6 @@ resultGUI.optInfo.globalVar.matRad_global_d                 = matRad_global_d;
 resultGUI.optInfo.globalVar.matRad_STRG_C_Pressed           = matRad_STRG_C_Pressed;
 resultGUI.optInfo.globalVar.matRad_objective_function_value = matRad_objective_function_value;
 resultGUI.optInfo.globalVar.matRad_iteration                = matRad_iteration;
-resultGUI.optInfo.globalVar.matRad_voxelWeighting           = matRad_voxelWeighting;
-resultGUI.optInfo.globalVar.matRad_backprojectionFlag       = matRad_backprojectionFlag;
 resultGUI.optInfo.globalVar.matRad_DCH_ScenarioFlag         = matRad_DCH_ScenarioFlag;
 
 % unset Key Pressed Callback of Matlab command window
@@ -208,7 +200,7 @@ if ~isdeployed
 end
 
 % clear global variables
-clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed matRad_iteration matRad_voxelWeighting matRad_backprojectionFlag matRad_DCH_ScenarioFlag;
+clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed matRad_iteration matRad_DCH_ScenarioFlag;
 
 % unblock mex files
 clear mex

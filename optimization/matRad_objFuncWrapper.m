@@ -32,11 +32,7 @@ function f = matRad_objFuncWrapper(w,dij,cst,type)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_voxelWeighting;
 global matRad_iteration;
-
-% initialize voxel calc Flag
-[matRad_voxelWeighting{:,2}] = deal(true);
 
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,type);
@@ -105,11 +101,11 @@ for  i = 1:size(cst,1)
                     
                     d_i = [];
                     
-                    % get cst index of VOI that corresponds to VOI ring
-                    cstidx = find(strcmp(cst(:,2),cst{i,2}(1:end-5)));
+                    % get cst index of VOI that corresponds to VOI ScenUnion
+                    cstidx = find(strcmp(cst(:,2),cst{i,2}(1:end-10)));
          
                     if dij.numOfScenarios > 1
-                        % get dose of VOI that corresponds to VOI ring
+                        % get dose of VOI that corresponds to VOI ScenUnion
                         for k = 1:dij.numOfScenarios
                             d_i{k} = d{k}(cst{cstidx,4}{1});
                         end
@@ -128,21 +124,15 @@ for  i = 1:size(cst,1)
                         
                     end
                     
-                    % get dose of VOI ring
+                    % get dose of VOI ScenUnion
                     d_i = d{1}(cst{i,4}{1});
                     
-                    % get voxel dependetn weigthing
+                    % get voxel dependent weigthing
                     if matRad_iteration < 0
                         voxelWeighting = 1;
                         
                     else    
-                        if isequal(cst{i,5}.voxelWeightingType,'heurWeighting')
-                            matRad_calcVoxelWeighting(i,j,cst,d_i,d_ref,d_ref2)
-                            voxelWeighting = matRad_voxelWeighting{i,1};
-
-                        elseif isequal(cst{i,5}.voxelWeightingType,'probWeighting')
-                            voxelWeighting = 5*cst{i,5}.VOIShift.voxelProb;    
-                        end
+                        voxelWeighting = 5*cst{i,5}.VOIShift.voxelProb;    
                         
                     end
     
