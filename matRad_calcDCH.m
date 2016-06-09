@@ -1,16 +1,16 @@
-function [dchPoints,coverageProbabilities] = matRad_calcDCH(volume,doseVec,cst,numOfScenarios)
+function [dchPoints,coverageProbabilities] = matRad_calcDCH(volume,doseVec,cst,numOfScenarios,varargin)
 
 % calculate inverse DVH in every scenario
 if length(doseVec) > 1
     % use dij scenarios
     for Scen = 1:numOfScenarios
-        doseInverseDVH(Scen) = matRad_calcInversDVH(volume/100,doseVec{Scen}(cst{1,4}{1}));
+        doseInverseDVH(Scen) = matRad_calcInversDVH(volume,doseVec{Scen}(cst{1,4}{1}));
     end
 elseif length(doseVec) == 1    
     % create scenarios with shifts
     for Scen = 1:numOfScenarios
         if isequal(cst{1,5}.VOIShift.shiftType,'rounded')
-            doseInverseDVH(Scen) = matRad_calcInversDVH(volume/100,doseVec{1}(cst{1,4}{1}-cst{1,5}.VOIShift.roundedShift.idxShift(Scen)));
+            doseInverseDVH(Scen) = matRad_calcInversDVH(volume,doseVec{1}(cst{1,4}{1}-cst{1,5}.VOIShift.roundedShift.idxShift(Scen)));
 
         elseif isequal(cst{1,5}.VOIShift.shiftType,'linInterp')
             % lin interpolation in x
@@ -30,14 +30,18 @@ elseif length(doseVec) == 1
             % lin interpolation in z
             doseVecInterp = c0.*(1-cst{1,5}.VOIShift.linInterpShift.idxShift.z(Scen))+c1.*cst{1,5}.VOIShift.linInterpShift.idxShift.z(Scen);
         
-            doseInverseDVH(Scen) = matRad_calcInversDVH(volume/100,doseVecInterp);
+            doseInverseDVH(Scen) = matRad_calcInversDVH(volume,doseVecInterp);
         end
     end
 end
 
 % set dose points in dch
 % dchPoints = [0,sort(doseInverseDVH),max(vertcat(doseVec{:}))*1.05];
-dchPoints = linspace(0,max(vertcat(doseVec{:}))*1.05,10000);
+if ~isempty(varargin)
+    dchPoints = varargin{1};
+else
+    dchPoints = linspace(0,max(vertcat(doseVec{:}))*1.05,10000);
+end
 
 % calculate coverage probability in every dchPoint by counting number of 
 % scenarios with doseInverseDVH >= dchPoint
