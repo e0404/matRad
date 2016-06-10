@@ -1,7 +1,11 @@
-function [dvhPoints,volume] = matRad_calcPDVH(coverage,doseVec,cst,numOfScenarios)
+function [dvhPoints,volume] = matRad_calcPDVH(coverage,doseVec,cst,numOfScenarios,varargin)
 
 % set dose points in dvh
-dvhPoints = linspace(0,max(vertcat(doseVec{:}))*1.05,10000);
+if ~isempty(varargin)
+    dvhPoints = varargin{1};
+else
+    dvhPoints = linspace(0,max(vertcat(doseVec{:}))*1.05,10000);
+end
 
 % calculate DVH in every scenario
 if length(doseVec) > 1
