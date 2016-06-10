@@ -321,7 +321,7 @@ if ~isempty(rtdose) && ~isempty(get(handles.doseseries_listbox,'Value'))
 end
 
 % dicomMetaBool: store complete DICOM information and patientName or not
-dicomMetaBool = logical(handles.checkPatientName.Value);
+dicomMetaBool = logical(get(handles.checkPatientName,'Value'));
 matRad_importDicom(files, dicomMetaBool);
 
 

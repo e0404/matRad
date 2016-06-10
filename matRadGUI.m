@@ -357,9 +357,13 @@ end
 
 
 % check if a optimized plan was loaded
-if exist('stf','var')  && exist('dij','var')
+if exist('stf','var')
     assignin('base','stf',stf);
+end
+if exist('dij','var')
     assignin('base','dij',dij);
+end
+if exist('stf','var') && exist('dij','var')
     handles.State = 2;
 end
 
@@ -2417,9 +2421,9 @@ cst = evalin('base','cst');
 
 contMenuStructChildren = get(get(handles.figure1,'UIContextMenu'),'Children');
 for i = 1:size(contMenuStructChildren,1)
-     boolean = false;
+     boolean = 0;
      if strcmp(get(contMenuStructChildren(i),'Checked'),'on')
-        boolean = true;
+        boolean = 1;
      end
      IdxInCst = find(strcmp(cst(:,2),get(contMenuStructChildren(i),'Label')));
      cst{IdxInCst,5}.Visible = boolean;
