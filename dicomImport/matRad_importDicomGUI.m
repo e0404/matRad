@@ -317,7 +317,12 @@ end
 % selected RT Dose
 rtdose = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,2),'RTDOSE'),:);
 if ~isempty(rtdose) && ~isempty(get(handles.doseseries_listbox,'Value'))
-    files.rtdose = rtdose(get(handles.doseseries_listbox,'Value'),:);
+    selectedRtDose   = get(handles.doseseries_listbox,'String');
+    selectedRtDoseIx = NaN*ones(1,numel(selectedRtDose));
+    for i = 1:numel(selectedRtDose)
+        selectedRtDoseIx(i) = find(strcmp(rtdose(:,4),selectedRtDose{i}));
+    end
+    files.rtdose = rtdose(selectedRtDoseIx,:);
 end
 
 % dicomMetaBool: store complete DICOM information and patientName or not
