@@ -83,7 +83,11 @@ function matRadGUI_OpeningFcn(hObject, ~, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to matRadGUI (see VARARGIN)
 
-currFolder = fileparts(mfilename('fullpath'));
+if ~isdeployed
+    currFolder = fileparts(mfilename('fullpath'));
+else
+    currFolder = [];
+end
 
 % Choose default command line output for matRadGUI
 handles.output = hObject;
@@ -131,9 +135,10 @@ handles.IsoDose.Levels = 0;
 handles.Modalities = {'photons','protons','carbon'};
 for i = 1:length(handles.Modalities)
     pattern = [handles.Modalities{1,i} '_*'];
-    Files = dir([fileparts(mfilename('fullpath')) filesep pattern]);
     if isdeployed
-        Files = vertcat(Files,dir([ctfroot filesep 'matRad' filesep pattern]));
+        Files = dir([ctfroot filesep 'matRad' filesep pattern]);
+    else
+        Files = dir([fileparts(mfilename('fullpath')) filesep pattern]);        
     end
     for j = 1:length(Files)
         if ~isempty(Files)
@@ -2357,7 +2362,7 @@ contents = cellstr(get(handles.popupRadMode,'String'));
 radMod = contents{get(handles.popupRadMode,'Value')};
 
 if isdeployed
-    FoundFile = [FoundFile, dir([ctfroot filesep 'matRad' filesep radMod '_' Machine '.mat'])];
+    FoundFile = dir([ctfroot filesep 'matRad' filesep radMod '_' Machine '.mat']);
 else
     FoundFile = dir([fileparts(mfilename('fullpath')) filesep radMod '_' Machine '.mat']);    
 end
