@@ -1,4 +1,4 @@
-function [cl,cu] = matRad_getConstBounds(constraint,param,numOfScenarios)
+function [cl,cu] = matRad_getConstBounds(constraint,param,numOfScenarios,numOfVOIShiftScenarios)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT get constraint bounds function
 % 
@@ -132,12 +132,12 @@ elseif isequal(constraint.type, 'min DCH constraint4')
     
 elseif isequal(constraint.type, 'max DCH constraint5')
     
-    cl = -inf(100,1);
-    cu = repmat(constraint.volume/100,100,1);
+    cl = -inf(numOfVOIShiftScenarios,1);
+    cu = repmat(constraint.volume/100,numOfVOIShiftScenarios,1);
     
 elseif isequal(constraint.type, 'min DCH constraint5')  
     
-    cl = repmat(constraint.volume/100,100,1);
-    cu = inf(100,1);    
-    
+    cl = repmat(constraint.volume/100,numOfVOIShiftScenarios,1);
+    cu = inf(numOfVOIShiftScenarios,1);      
+
 end % constraint switch
