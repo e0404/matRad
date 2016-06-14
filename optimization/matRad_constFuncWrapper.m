@@ -97,25 +97,36 @@ for  i = 1:size(cst,1)
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint3') || ...
                            isequal(cst{i,6}(j).type, 'min DCH constraint3')
                        
-                        for k = 1:dij.numOfScenarios
-                             
-                            % get current dose
-                            d_i = d{k}(cst{i,4}{1});
-                            
-                            % calculate volume of scenario k
-                            volume(k) = matRad_constFunc(d_i,cst{i,6}(j),d_ref);
-                            
-                        end
-                        
-                        % calculate coverage probabilty
-                        scenProb = 1/dij.numOfScenarios;  % assume scenarios with equal probabilities
-                        c        = [c; sum(scenProb*(volume >= cst{i,6}(j).volume/100))];
+                        if dij.numOfScenarios > 1
+                            for k = 1:dij.numOfScenarios
 
-%                          for k = 1:dij.numOfScenarios
-%                              d_i = d{k}(cst{i,4}{1});
-%                              c = [c;matRad_constFunc(d_i,cst{i,6}(j),d_ref)];
-%                              
-%                          end
+                                % get current dose
+                                d_i = d{k}(cst{i,4}{1});
+
+                                % calculate volume of scenario k
+                                volume(k) = matRad_constFunc(d_i,cst{i,6}(j),d_ref);
+
+                            end
+
+                            % calculate coverage probabilty
+                            scenProb = 1/dij.numOfScenarios;  % assume scenarios with equal probabilities
+                        else
+                            for k = 1:cst{i,5}.VOIShift.ncase
+
+                                % get current dose
+                                d_i = d{1}(cst{i,4}{1}-cst{1,5}.VOIShift.roundedShift.idxShift(k));
+
+                                % calculate volume of scenario k
+                                volume(k) = matRad_constFunc(d_i,cst{i,6}(j),d_ref);
+
+                            end
+
+                            % calculate coverage probabilty
+                            scenProb = 1/cst{i,5}.VOIShift.ncase;  % assume scenarios with equal probabilities                           
+                           
+                        end
+                       
+                        c = [c; sum(scenProb*(volume >= cst{i,6}(j).volume/100))];
 
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint4') || ...
                            isequal(cst{i,6}(j).type, 'min DCH constraint4')

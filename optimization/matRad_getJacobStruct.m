@@ -152,13 +152,21 @@ for i = 1:size(cst,1)
                        
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint3') || ... 
                            isequal(cst{i,6}(j).type, 'min DCH constraint3')
-                        
-                        physicalDoseCum = sparse(mean(dij.physicalDose{1}(cst{i,4}{1},:)));
-                        for k = 2:dij.numOfScenarios
-                            physicalDoseCum = physicalDoseCum + sparse(mean(dij.physicalDose{k}(cst{i,4}{1},:)));
+                        if dij.numOfScenarios > 1
+                            physicalDoseCum = sparse(mean(dij.physicalDose{1}(cst{i,4}{1},:)));
+                            for k = 2:dij.numOfScenarios
+                                physicalDoseCum = physicalDoseCum + sparse(mean(dij.physicalDose{k}(cst{i,4}{1},:)));
+                            end
+                            jacobStruct = [jacobStruct; spones(physicalDoseCum)];
+                        else
+%                             physicalDoseCum = sparse(mean(dij.physicalDose{1}(cst{i,4}{1}-cst{i,5}.VOIShift.roundedShift.idxShift(1),:)));
+%                             for k = 2:cst{i,5}.VOIShift.ncase
+%                                 physicalDoseCum = physicalDoseCum + sparse(mean(dij.physicalDose{1}(cst{i,4}{1}-cst{i,5}.VOIShift.roundedShift.idxShift(k),:)));
+%                             end 
+                        cstidx = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion']));
+                        jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{cstidx,4}{1},:)))];
                         end
-
-                       jacobStruct = [jacobStruct; spones(physicalDoseCum)];
+                        
 
 %                         for k = 1:dij.numOfScenarios
 %                             
@@ -181,7 +189,7 @@ for i = 1:size(cst,1)
                         for k = 1:cst{i,5}.VOIShift.ncase
                             
                             jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{i,4}{1}-cst{i,5}.VOIShift.roundedShift.idxShift(k),:)))];
-                                          [jacobStruct; spones(mean(dij.physicalDose{1}(cst{i,4}{1},:)))];
+                            
                         end 
                         % cstidx      = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion']));
                         % jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{cstidx,4}{1},:)))];
