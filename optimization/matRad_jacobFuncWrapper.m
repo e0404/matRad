@@ -320,7 +320,7 @@ for i = 1:size(cst,1)
                                 
                                 jacobVec =  jacobVec*matRad_jacobFunc(d_i,cst{i,6}(j),d_ref);
 
-                                scenID  = [scenID;1];
+                                scenID  = [scenID;k];
                                 scenID2 = [scenID2;repmat(k,numel(cst{i,4}{1}),1)];
 
                                 if isequal(type,'none') && ~isempty(jacobVec)
@@ -360,7 +360,7 @@ for i = 1:size(cst,1)
                                 jacobVec = scenProb*2*scaling*exp(2*scaling*(volume_pi(k)-cst{i,6}(j).volume/100))./(exp(2*scaling*(volume_pi(k)-cst{i,6}(j).volume/100))+1).^2;
                                 jacobVec = jacobVec*matRad_jacobFunc(d_i,cst{i,6}(j),d_ref);
 
-                                scenID  = [scenID;k];
+                                scenID  = [scenID;1];
                                 scenID2 = [scenID2;ones(numel(cst{i,4}{1}),1)];
 
                                 if isequal(type,'none') && ~isempty(jacobVec)
