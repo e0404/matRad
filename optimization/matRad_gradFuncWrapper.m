@@ -35,8 +35,6 @@ function g = matRad_gradFuncWrapper(w,dij,cst,type)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_iteration;
-
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,type);
 
@@ -143,13 +141,7 @@ for  i = 1:size(cst,1)
                     d_i = d{1}(cst{i,4}{1});
                     
                     % get voxel dependent weigthing
-                    if matRad_iteration < 0
-                        voxelWeighting = 1;
-                        
-                    else
-                        voxelWeighting = 5*cst{i,5}.VOIShift.voxelProb;    
-
-                    end
+                    voxelWeighting = 5*cst{i,5}.VOIShift.voxelProb;    
 
                     delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);
                 
