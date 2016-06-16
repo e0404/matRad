@@ -50,7 +50,7 @@ multScen                     = matRad_setMultScen(multScen);
 [filename,dir] = uigetfile('E:\Mescher\');
 load([dir,filename])
 
-cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,'prostate bed',20,40);
+cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,100,0);
 
 clear filename dir
 %% meta information for treatment plan

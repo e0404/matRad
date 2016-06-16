@@ -41,6 +41,10 @@ options.ipopt.acceptable_obj_change_tol     = 1e-3; % (Acc6), Solved To Acceptab
 options.ipopt.max_iter                      = 500;
 options.ipopt.max_cpu_time                  = 3000;
 
+% NLP Scaling (C.3)
+%options.ipopt.nlp_scaling_method = 'none';
+%options.ipopt.nlp_scaling_max_gradient = 10;
+
 % Barrier Parameter (C.6)
 options.ipopt.mu_strategy = 'adaptive';
 
@@ -60,3 +64,6 @@ options.ipopt.limited_memory_initialization = 'scalar2';
 % Derivative Test (C.14)
 %options.ipopt.derivative_test               = 'first-order';
 %options.ipopt.derivative_test_tol           = 1e-3;
+
+% MA57 Linear Solver (C.16)
+% options.ipopt.ma57_automatic_scaling = 'yes';
