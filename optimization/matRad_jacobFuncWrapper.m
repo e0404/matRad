@@ -284,6 +284,10 @@ for i = 1:size(cst,1)
                                 % calculate volume
                                 volume_pi(k) = sum(d_i >= d_ref)/numel(d_i);
                             end
+                            
+                            % calculate coverage probabilty
+                            scenProb = 1/dij.numOfScenarios;  % assume scenarios with equal probabilities
+                            
                         else
                             for k = 1:cst{i,5}.VOIShift.ncase
 
@@ -293,6 +297,9 @@ for i = 1:size(cst,1)
                                 % calculate volume
                                 volume_pi(k) = sum(d_i >= d_ref)/numel(d_i);
                             end
+                            
+                            % calculate coverage probabilty
+                            scenProb = 1/cst{i,5}.VOIShift.ncase;  % assume scenarios with equal probabilities 
                             
                         end
                         
@@ -307,8 +314,7 @@ for i = 1:size(cst,1)
 
                         % calclulate DVHC scaling
                         referenceVal = 0.01;
-                        scaling      = min((log(1/referenceVal-1))/(2*deltaDoseMax),500);
-                        scenProb     = 1/dij.numOfScenarios;     % assume scenarios with equal probabilities                        
+                        scaling      = min((log(1/referenceVal-1))/(2*deltaDoseMax),500);                        
                         
                         if dij.numOfScenarios > 1
                             covConstraintID = [covConstraintID;repmat(1 + covConstraintID(end),dij.numOfScenarios,1)];
@@ -316,7 +322,7 @@ for i = 1:size(cst,1)
 
                                 d_i = d{k}(cst{i,4}{1});
 
-                                jacobVec = scenProb*2*scaling*exp(2*scaling*(volume_pi(k)-cst{i,6}(j).volume/100))./(exp(2*scaling*(volume_pi(k)-cst{i,6}(j).volume/100))+1).^2;
+                                jacobVec = scenProb*2*scaling*exp(2*scaling*(volume_pi(k)-cst{i,6}(j).volume/100))/(exp(2*scaling*(volume_pi(k)-cst{i,6}(j).volume/100))+1)^2;
                                 
                                 jacobVec =  jacobVec*matRad_jacobFunc(d_i,cst{i,6}(j),d_ref);
 
@@ -357,7 +363,7 @@ for i = 1:size(cst,1)
                                 
                                 d_i = d{1}(cst{i,4}{1}-cst{1,5}.VOIShift.roundedShift.idxShift(k));
 
-                                jacobVec = scenProb*2*scaling*exp(2*scaling*(volume_pi(k)-cst{i,6}(j).volume/100))./(exp(2*scaling*(volume_pi(k)-cst{i,6}(j).volume/100))+1).^2;
+                                jacobVec = scenProb*2*scaling*exp(2*scaling*(volume_pi(k)-cst{i,6}(j).volume/100))/(exp(2*scaling*(volume_pi(k)-cst{i,6}(j).volume/100))+1)^2;
                                 jacobVec = jacobVec*matRad_jacobFunc(d_i,cst{i,6}(j),d_ref);
 
                                 scenID  = [scenID;1];
