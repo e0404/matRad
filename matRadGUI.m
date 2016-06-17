@@ -2945,15 +2945,29 @@ end
 pln       = evalin('base','pln');
 resultGUI = evalin('base','resultGUI');
 
-resultGUI.(['physicalDose' Suffix])  = resultGUI.physicalDose; 
-resultGUI.(['w' Suffix])             = resultGUI.w;
-    
+if isfield(resultGUI,'physicalDose')
+    resultGUI.(['physicalDose' Suffix])  = resultGUI.physicalDose; 
+end
+if isfield(resultGUI,'w')
+    resultGUI.(['w' Suffix])             = resultGUI.w;
+end
+
 if ~strcmp(pln.bioOptimization,'none') && strcmp(pln.radiationMode,'carbon') == 1 
-    resultGUI.(['effect' Suffix])             = resultGUI.effect; 
-    resultGUI.(['RBExDose' Suffix])           = resultGUI.RBExDose; 
-    resultGUI.(['RBE' Suffix])                = resultGUI.RBE; 
-    resultGUI.(['alpha' Suffix])              = resultGUI.alpha; 
-    resultGUI.(['beta' Suffix])               = resultGUI.beta; 
+    if isfield(resultGUI,'effect')
+        resultGUI.(['effect' Suffix])= resultGUI.effect; 
+    end
+    if isfield(resultGUI,'RBExDose')
+        resultGUI.(['RBExDose' Suffix]) = resultGUI.RBExDose; 
+    end
+    if isfield(resultGUI,'RBE')
+        resultGUI.(['RBE' Suffix]) = resultGUI.RBE;
+    end
+    if isfield(resultGUI,'alpha')
+        resultGUI.(['alpha' Suffix]) = resultGUI.alpha;
+    end
+    if isfield(resultGUI,'beta')
+        resultGUI.(['beta' Suffix]) = resultGUI.beta;
+    end
 end
 
 close(AllFigHandles(ixHandle));
