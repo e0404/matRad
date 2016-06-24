@@ -65,7 +65,7 @@ global matRad_objective_function_value;
 global matRad_iteration;
 global matRad_voxelWeighting;
 global matRad_backprojectionFlag;
-global matRad_DCH_ScenarioFlag;
+%global matRad_DCH_ScenarioFlag;
 
 matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
 matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
@@ -77,7 +77,7 @@ matRad_voxelWeighting           = cell(size(cst,1),2);
 [matRad_voxelWeighting{:,2}]    = deal(true);
 matRad_backprojectionFlag       = false;
 %matRad_DCH_ScenarioFlag         = [true false(1,dij.numOfScenarios-1)];
-matRad_DCH_ScenarioFlag         = [true false(1,size(cst{1,5}.voxelShift,2)-1)];
+%matRad_DCH_ScenarioFlag         = [true false(1,size(cst{1,5}.voxelShift,2)-1)];
 
 
 % consider VOI priorities

@@ -22,8 +22,8 @@ clc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-%load TG119.mat
-load PROSTATE.mat
+load TG119.mat
+%load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
 
@@ -35,8 +35,8 @@ load PROSTATE.mat
 
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
-multScen.numOfShiftScen      = [2 2 0];        % number of shifts in x y and z direction       
-multScen.shiftSize           = [3 3 15];     % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
+multScen.numOfShiftScen      = [2 2 2];        % number of shifts in x y and z direction       
+multScen.shiftSize           = [3 3 3];     % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
 multScen.shiftGenType        = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
 multScen.shiftCombType       = 'individual';     % individual: no combination of shift scenarios, combined: combine shift scenarios
 multScen.shiftGen1DIsotropy  = '+-';            % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
