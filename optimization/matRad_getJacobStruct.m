@@ -163,7 +163,7 @@ for i = 1:size(cst,1)
 %                             for k = 2:cst{i,5}.VOIShift.ncase
 %                                 physicalDoseCum = physicalDoseCum + sparse(mean(dij.physicalDose{1}(cst{i,4}{1}-cst{i,5}.VOIShift.roundedShift.idxShift(k),:)));
 %                             end 
-                        cstidx = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion']));
+                        cstidx      = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion']));
                         jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{cstidx,4}{1},:)))];
                         end
                         

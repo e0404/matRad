@@ -97,36 +97,53 @@ for  i = 1:size(cst,1)
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint3') || ...
                            isequal(cst{i,6}(j).type, 'min DCH constraint3')
                        
+                        % calculate scenario approximation scaling
                         if dij.numOfScenarios > 1
                             for k = 1:dij.numOfScenarios
 
                                 % get current dose
                                 d_i = d{k}(cst{i,4}{1});
 
-                                % calculate volume of scenario k
-                                volume(k) = matRad_constFunc(d_i,cst{i,6}(j),d_ref);
-
+                                % calculate volume
+                                volume_pi(k) = sum(d_i >= d_ref)/numel(d_i);
                             end
-
+                            
                             % calculate coverage probabilty
                             scenProb = 1/dij.numOfScenarios;  % assume scenarios with equal probabilities
+                            
                         else
                             for k = 1:cst{i,5}.VOIShift.ncase
 
                                 % get current dose
-                                d_i = d{1}(cst{i,4}{1}-cst{1,5}.VOIShift.roundedShift.idxShift(k));
-
-                                % calculate volume of scenario k
-                                volume(k) = matRad_constFunc(d_i,cst{i,6}(j),d_ref);
-
+                                d_i = d{1}(cst{i,4}{1}-cst{i,5}.VOIShift.roundedShift.idxShift(k));
+                                
+                                % A %                                
+                                % calculate logistic function scaling and volumes
+                                DVHScaling   = matRad_calcLogisticFuncScaling(d_i,d_ref,1,0.01,0,250);
+                                volume_pi(k) = sum(1./(1+exp(-2*DVHScaling*(d_i-d_ref))))/numel(d_i);
+                                % A %
+                                    
+                                  % B %
+%                                 % calculate volumes
+%                                 volume_pi(k) = sum(d_i >= d_ref)/numel(d_i);
+                                  % B %  
                             end
-
+                            
                             % calculate coverage probabilty
-                            scenProb = 1/cst{i,5}.VOIShift.ncase;  % assume scenarios with equal probabilities                           
-                           
+                            scenProb = 1/cst{i,5}.VOIShift.ncase;  % assume scenarios with equal probabilities 
+                            
                         end
-                       
-                        c = [c; sum(scenProb*(volume >= cst{i,6}(j).volume/100))];
+                        
+                        % A % 
+                        % calculate logistic function scaling and coverage probability
+                        DCHScaling = matRad_calcLogisticFuncScaling(volume_pi,cst{i,6}(j).volume/100,1,0.01,0,250);
+                        c          = [c; sum(scenProb*(1./(1+exp(-2*DCHScaling*(volume_pi - cst{i,6}(j).volume/100)))))];
+                        % A % 
+                        
+                          % B %
+                          % calculate coverage probability
+%                         c = [c; sum(scenProb*(volume_pi >= cst{i,6}(j).volume/100))];
+                          % B %
 
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint4') || ...
                            isequal(cst{i,6}(j).type, 'min DCH constraint4')

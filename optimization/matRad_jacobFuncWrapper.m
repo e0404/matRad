@@ -293,44 +293,20 @@ for i = 1:size(cst,1)
 
                                 % get current dose
                                 d_i = d{1}(cst{i,4}{1}-cst{1,5}.VOIShift.roundedShift.idxShift(k));
-                                
-                                % sort dose
-                                d_i_sort = sort(d_i);
+                             
+                                % calculate logistic function scaling and volumes
+                                DVHScaling   = matRad_calcLogisticFuncScaling(d_i,d_ref,1,0.01,0,250);
+                                volume_pi(k) = sum(1./(1+exp(-2*DVHScaling*(d_i-d_ref))))/numel(d_i);
 
-                                % calculate scaling
-                                VoxelRatio   = 1;
-                                NoVoxels     = max(VoxelRatio*numel(d_i),10);
-                                absDiffsort  = sort(abs(d_ref - d_i_sort));
-                                deltaDoseMax = absDiffsort(ceil(NoVoxels/2));
-
-                                % calclulate DVHC scaling
-                                ReferenceVal            = 0.01;
-                                DVHCScaling             = min((log(1/ReferenceVal-1))/(2*deltaDoseMax),250);
-                                
-                                % calculate volume
-                                volume_pi(k) = sum(1./(1+exp(-2*DVHCScaling*(d_i-d_ref))))/numel(d_i);
-
-%                                 % calculate volume
-%                                 volume_pi(k) = sum(d_i >= d_ref)/numel(d_i);
                             end
                             
                             % calculate coverage probabilty
                             scenProb = 1/cst{i,5}.VOIShift.ncase;  % assume scenarios with equal probabilities 
                             
                         end
-                        
-                        % sort volumes
-                        volumes_pi_sort = sort(volume_pi);
 
-                        % calculate scaling
-                        voxelRatio   = 1;
-                        NoVoxels     = voxelRatio*numel(volume_pi);
-                        absDiffsort  = sort(abs(cst{i,6}(j).volume/100 - volumes_pi_sort));
-                        deltaDoseMax = absDiffsort(ceil(NoVoxels/2));
-
-                        % calclulate DVHC scaling
-                        referenceVal = 0.01;
-                        scaling      = min((log(1/referenceVal-1))/(2*deltaDoseMax),500);
+                        % calculate logistic function scaling
+                        DCHScaling = matRad_calcLogisticFuncScaling(volume_pi,cst{i,6}(j).volume/100,1,0.01,0,250);
                         
                         if dij.numOfScenarios > 1
                             covConstraintID = [covConstraintID;repmat(1 + covConstraintID(end),dij.numOfScenarios,1)];
@@ -338,7 +314,7 @@ for i = 1:size(cst,1)
 
                                 d_i = d{k}(cst{i,4}{1});
 
-                                jacobVec = scenProb*2*scaling*exp(2*scaling*(volume_pi(k)-cst{i,6}(j).volume/100))/(exp(2*scaling*(volume_pi(k)-cst{i,6}(j).volume/100))+1)^2;
+                                jacobVec = scenProb*2*DCHScaling*exp(2*DCHScaling*(volume_pi(k)-cst{i,6}(j).volume/100))/(exp(2*DCHScaling*(volume_pi(k)-cst{i,6}(j).volume/100))+1)^2;
                                 
                                 jacobVec =  jacobVec*matRad_jacobFunc(d_i,cst{i,6}(j),d_ref);
 

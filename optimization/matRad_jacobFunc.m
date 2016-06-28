@@ -154,20 +154,10 @@ elseif isequal(constraint.type, 'max DCH constraint2') || ...
     
 elseif isequal(constraint.type, 'max DCH constraint3') || ...
        isequal(constraint.type, 'min DCH constraint3')
-
-    d_i_sort = sort(d_i);
-
-    % calculate scaling
-    VoxelRatio   = 1;
-    NoVoxels     = max(VoxelRatio*numel(d_i),10);
-    absDiffsort  = sort(abs(d_ref - d_i_sort));
-    deltaDoseMax = absDiffsort(ceil(NoVoxels/2));
-
-    % calclulate DVHC scaling
-    ReferenceVal            = 0.01;
-    DVHCScaling             = min((log(1/ReferenceVal-1))/(2*deltaDoseMax),250);
-
-    jacobVec = (2/numOfVoxels)*DVHCScaling*exp(2*DVHCScaling*(d_i-d_ref))./(exp(2*DVHCScaling*(d_i-d_ref))+1).^2; 
+   
+    % calculate logistic function scaling and jacobian
+    DVHScaling = matRad_calcLogisticFuncScaling(d_i,d_ref,1,0.01,0,250);    
+    jacobVec   = (2/numOfVoxels)*DVHScaling*exp(2*DVHScaling*(d_i-d_ref))./(exp(2*DVHScaling*(d_i-d_ref))+1).^2; 
     
 elseif isequal(constraint.type, 'max DCH constraint4') || ...
        isequal(constraint.type, 'min DCH constraint4')
