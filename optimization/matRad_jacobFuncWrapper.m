@@ -355,7 +355,7 @@ for i = 1:size(cst,1)
 
                                 d_i = d{1}(cst{i,4}{1}-cst{i,5}.VOIShift.roundedShift.idxShift(k));
 
-                                jacobVec = scenProb*2*scaling*exp(2*scaling*(volume_pi(k)-cst{i,6}(j).volume/100))/(exp(2*scaling*(volume_pi(k)-cst{i,6}(j).volume/100))+1)^2;
+                                jacobVec = scenProb*2*DCHScaling*exp(2*DCHScaling*(volume_pi(k)-cst{i,6}(j).volume/100))/(exp(2*DCHScaling*(volume_pi(k)-cst{i,6}(j).volume/100))+1)^2;
                                 jacobVec = jacobVec*matRad_jacobFunc(d_i,cst{i,6}(j),d_ref);
 
                                 scenID  = [scenID;1];
