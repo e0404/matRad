@@ -38,7 +38,7 @@ xSorted = sort(x);
 absDiffSorted = sort(abs(xRef-xSorted));
 
 % determine x interval [xRef - xDelta,xRef + xDelta] such that xRatio*numel(x) lies in this interval
-xDelta = absDiffSorted(xRatio*numel(x));
+xDelta = absDiffSorted(round(xRatio*numel(x)));
 
 % calculate scaling parameter k such that min(f(x)) = refVal or max(f(x)) = 1 - refVal
 k = log(1/refVal-1)/(2*xDelta);
