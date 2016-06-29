@@ -156,7 +156,7 @@ elseif isequal(constraint.type, 'max DCH constraint3') || ...
        isequal(constraint.type, 'min DCH constraint3')
    
     % calculate logistic function scaling and jacobian
-    DVHScaling = matRad_calcLogisticFuncScaling(d_i,d_ref,1,0.01,0,250);    
+    DVHScaling = matRad_calcLogisticFuncScaling(d_i,d_ref,0.5,0.01,0,250);    
     jacobVec   = (2/numOfVoxels)*DVHScaling*exp(2*DVHScaling*(d_i-d_ref))./(exp(2*DVHScaling*(d_i-d_ref))+1).^2; 
     
 elseif isequal(constraint.type, 'max DCH constraint4') || ...

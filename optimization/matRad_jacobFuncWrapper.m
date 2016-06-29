@@ -292,10 +292,14 @@ for i = 1:size(cst,1)
                             for k = 1:cst{i,5}.VOIShift.ncase
 
                                 % get current dose
-                                d_i = d{1}(cst{i,4}{1}-cst{1,5}.VOIShift.roundedShift.idxShift(k));
+                                if isequal(cst{1,5}.VOIShift.shiftType,'rounded')
+                                    d_i = d{1}(cst{i,4}{1}-cst{1,5}.VOIShift.roundedShift.idxShift(k));
+                                elseif isequal(cst{1,5}.VOIShift.shiftType,'linInterp')
+                                    error('linInterp for constraints not implemented yet')
+                                end
                              
                                 % calculate logistic function scaling and volumes
-                                DVHScaling   = matRad_calcLogisticFuncScaling(d_i,d_ref,1,0.01,0,250);
+                                DVHScaling   = matRad_calcLogisticFuncScaling(d_i,d_ref,0.5,0.01,0,250);
                                 volume_pi(k) = sum(1./(1+exp(-2*DVHScaling*(d_i-d_ref))))/numel(d_i);
 
                             end
@@ -306,7 +310,7 @@ for i = 1:size(cst,1)
                         end
 
                         % calculate logistic function scaling
-                        DCHScaling = matRad_calcLogisticFuncScaling(volume_pi,cst{i,6}(j).volume/100,1,0.01,0,250);
+                        DCHScaling = matRad_calcLogisticFuncScaling(volume_pi,cst{i,6}(j).volume/100,0.5,0.01,0,250);
                         
                         if dij.numOfScenarios > 1
                             covConstraintID = [covConstraintID;repmat(1 + covConstraintID(end),dij.numOfScenarios,1)];
