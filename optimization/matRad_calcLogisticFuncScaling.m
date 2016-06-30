@@ -31,11 +31,8 @@ function k = matRad_calcLogisticFuncScaling(x,xRef,xRatio,refVal,kMin,kMax)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% sort x values
-xSorted = sort(x);
-
 % calculate absolute differences from xRef, sort absolute differences
-absDiffSorted = sort(abs(xRef-xSorted));
+absDiffSorted = sort(abs(xRef-x));
 
 % determine x interval [xRef - xDelta,xRef + xDelta] such that xRatio*numel(x) lies in this interval
 xDelta = absDiffSorted(round(xRatio*numel(x)));
