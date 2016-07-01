@@ -36,6 +36,7 @@ function jacob = matRad_jacobFuncWrapper(w,dij,cst,type)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 global matRad_DCH_ScenarioFlag;
+global matRad_DVH_Scaling;
 
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,type);
@@ -289,6 +290,12 @@ for i = 1:size(cst,1)
                             scenProb = 1/dij.numOfScenarios;  % assume scenarios with equal probabilities
                             
                         else
+                            
+                            % calculate logistic function scaling and volumes
+                            cstidx       = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion']));
+                            DVHScaling   = matRad_calcLogisticFuncScaling(d{1}(cst{cstidx,4}{1}),d_ref,0.5,0.01,0,250);                            
+                            matRad_DVH_Scaling = DVHScaling;
+                            
                             for k = 1:cst{i,5}.VOIShift.ncase
 
                                 % get current dose
@@ -297,9 +304,7 @@ for i = 1:size(cst,1)
                                 elseif isequal(cst{1,5}.VOIShift.shiftType,'linInterp')
                                     error('linInterp for constraints not implemented yet')
                                 end
-                             
-                                % calculate logistic function scaling and volumes
-                                DVHScaling   = matRad_calcLogisticFuncScaling(d_i,d_ref,0.5,0.01,0,250);
+                                
                                 volume_pi(k) = sum(1./(1+exp(-2*DVHScaling*(d_i-d_ref))))/numel(d_i);
 
                             end
@@ -310,7 +315,7 @@ for i = 1:size(cst,1)
                         end
 
                         % calculate logistic function scaling
-                        DCHScaling = matRad_calcLogisticFuncScaling(volume_pi,cst{i,6}(j).volume/100,0.5,0.01,0,250);
+                        DCHScaling = matRad_calcLogisticFuncScaling(volume_pi,cst{i,6}(j).volume/100,0.5,0.01,0,50);
                         
                         if dij.numOfScenarios > 1
                             covConstraintID = [covConstraintID;repmat(1 + covConstraintID(end),dij.numOfScenarios,1)];

@@ -36,6 +36,8 @@ function jacobVec = matRad_jacobFunc(d_i,constraint,d_ref,d_pi,scaling,d_ref2,we
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_DVH_Scaling;
+
 numOfVoxels = numel(d_i);
 
 if isequal(constraint.type, 'max dose constraint')
@@ -156,7 +158,7 @@ elseif isequal(constraint.type, 'max DCH constraint3') || ...
        isequal(constraint.type, 'min DCH constraint3')
    
     % calculate logistic function scaling and jacobian
-    DVHScaling = matRad_calcLogisticFuncScaling(d_i,d_ref,0.5,0.01,0,250);    
+    DVHScaling = matRad_DVH_Scaling;    
     jacobVec   = (2/numOfVoxels)*DVHScaling*exp(2*DVHScaling*(d_i-d_ref))./(exp(2*DVHScaling*(d_i-d_ref))+1).^2; 
     
 elseif isequal(constraint.type, 'max DCH constraint4') || ...

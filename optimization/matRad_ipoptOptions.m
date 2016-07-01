@@ -45,8 +45,13 @@ options.ipopt.max_cpu_time                  = 3000;
 %options.ipopt.nlp_scaling_method = 'none';
 %options.ipopt.nlp_scaling_max_gradient = 10;
 
+% NLP (C.4)
+% options.ipopt.bound_relax_factor = 0;
+% options.ipopt.honor_original_bounds = 'no';
+
 % Barrier Parameter (C.6)
 options.ipopt.mu_strategy = 'adaptive';
+%options.ipopt.mu_oracle = 'loqo';
 
 % Line Sarch (C.8)
 %options.ipopt.accept_every_trial_step = 'yes';

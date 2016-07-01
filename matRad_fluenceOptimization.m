@@ -64,6 +64,7 @@ global matRad_STRG_C_Pressed;
 global matRad_objective_function_value;
 global matRad_iteration;
 global matRad_DCH_ScenarioFlag;
+global matRad_DVH_Scaling;
 
 matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
 matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
@@ -75,6 +76,7 @@ if dij.numOfScenarios > 1
 else
     matRad_DCH_ScenarioFlag = [true false(1,cst{1,5}.VOIShift.ncase-1)];
 end
+matRad_DVH_Scaling = 1;
 
 
 % consider VOI priorities
