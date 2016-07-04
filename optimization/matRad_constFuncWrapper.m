@@ -224,31 +224,38 @@ for  i = 1:size(cst,1)
                            
                             volume(k)     = matRad_constFunc(doseVec,cst{i,6}(j),d_ref);
                             dose(k)       = matRad_calcInversDVH(cst{i,6}(j).volume/100,doseVec);
-                            DVHdevArea(k) = (abs((volume(k)*100-cst{i,6}(j).volume)/cst{i,6}(j).volume)) * (abs((dose(k)-d_ref)/d_ref));
+%                             DVHdevArea(k) = (abs((volume(k)*100-cst{i,6}(j).volume)/cst{i,6}(j).volume)) * (abs((dose(k)-d_ref)/d_ref));
+                            DVHdevArea(k) = volume(k) - volume(1);
+%                             DVHdevArea(k) = dose(k) - dose(1);
                        end
                        
-%                        dose_sorted = sort(dose(2:end),'descend'); 
-%                        idx         = ceil(round((cst{i,6}(j).coverage/100 - 1/size(cst{i,5}.voxelShift,2))*numel(dose)*10)/10);
-                        [DVHdevAreaSorted,DVHdevAreaSortedidx] = sort(DVHdevArea(2:end),'ascend');
-                        idx                                    = ceil(round((cst{i,6}(j).coverage/100 - 1/cst{i,5}.VOIShift.ncase)*numel(DVHdevArea)*10)/10);
+                       if isequal(cst{i,6}(j).type, 'max DCH constraint5')
+                           [DVHdevAreaSorted,DVHdevAreaSortedidx] = sort(DVHdevArea(2:end),'descend');
+                       elseif isequal(cst{i,6}(j).type, 'min DCH constraint5')
+                           [DVHdevAreaSorted,DVHdevAreaSortedidx] = sort(DVHdevArea(2:end),'asc');
+                       end
+                        
+                        idx                                    = ceil((cst{i,6}(j).coverage/100 - 1/cst{i,5}.VOIShift.ncase)*numel(DVHdevArea));
                         
                        if idx == 0
                            
                             matRad_DCH_ScenarioFlag = [true, false(1,cst{i,5}.VOIShift.ncase-1)];
                            
                        else
-               
+                            matRad_DCH_ScenarioFlag = [true, false(1,cst{i,5}.VOIShift.ncase-1)];
 %                             doseTmp                 = [dose(1),dose_sorted(1:idx)];            
 %                             matRad_DCH_ScenarioFlag = ismember(dose,doseTmp);
-                            DVHdevAreaTmp           = [DVHdevArea(1),DVHdevAreaSorted(1:idx)];
-                            matRad_DCH_ScenarioFlag = ismember(DVHdevArea,DVHdevAreaTmp);
+%                             DVHdevAreaTmp           = [DVHdevArea(1),DVHdevAreaSorted(1:idx)];
+%                             for m = 1:length(DVHdevAreaTmp)
+%                                 idx = find(ismember(DVHdevArea,DVHdevAreaTmp(m)));
+%                                 matRad_DCH_ScenarioFlag(idx(1)) = true;
+%                             end
+%                             matRad_DCH_ScenarioFlag = ismember(DVHdevArea,DVHdevAreaTmp);
 %                             matRad_DCH_ScenarioFlag = [true false(1,size(cst{1,5}.voxelShift,2)-1)];
-%                             matRad_DCH_ScenarioFlag(DVHdevAreaSortedidx(1:idx)+1) = true;
+                            matRad_DCH_ScenarioFlag(DVHdevAreaSortedidx(1:idx)+1) = true;
                             
-                            
-                       
-                       end
-                       
+                       end                       
+
                        for k = 1:cst{i,5}.VOIShift.ncase
                            if matRad_DCH_ScenarioFlag(k)
                                 if isequal(cst{i,5}.VOIShift.shiftType,'rounded')
