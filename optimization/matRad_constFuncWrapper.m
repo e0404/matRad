@@ -1,6 +1,9 @@
 function c = matRad_constFuncWrapper(w,dij,cst,type)
 
 global matRad_DCH_ScenarioFlag;
+% A1 % 
+global matRad_DVH_Scaling;
+% A1 % 
 
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,type);
@@ -112,6 +115,15 @@ for  i = 1:size(cst,1)
                             scenProb = 1/dij.numOfScenarios;  % assume scenarios with equal probabilities
                             
                         else
+                            
+                            % A2 % 
+                            % calculate logistic function scaling and volumes
+                            cstidx       = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion']));
+                            DVHScaling   = matRad_calcLogisticFuncScaling(d{1}(cst{cstidx,4}{1}),d_ref,0.5,0.01,0,250);  
+                            DVHScaling   = 0.001;
+                            matRad_DVH_Scaling = DVHScaling;
+                            % A2 %
+                            
                             for k = 1:cst{i,5}.VOIShift.ncase
                                 
                                 % get current dose
@@ -121,16 +133,14 @@ for  i = 1:size(cst,1)
                                     error('linInterp for constraints not implemented yet')
                                 end
                                 
-%                                 % A %                                
-%                                 % calculate logistic function scaling and volumes
-%                                 DVHScaling   = matRad_calcLogisticFuncScaling(d_i,d_ref,1,0.01,0,250);
-%                                 volume_pi(k) = sum(1./(1+exp(-2*DVHScaling*(d_i-d_ref))))/numel(d_i);
-%                                 % A %
+                                % A3 %                                
+                                volume_pi(k) = sum(1./(1+exp(-2*DVHScaling*(d_i-d_ref))))/numel(d_i);
+                                % A3 %
                                     
-                                  % B %
-                                % calculate volumes
-                                volume_pi(k) = sum(d_i >= d_ref)/numel(d_i);
-                                  % B %  
+%                                 % B1 %
+%                                 % calculate volumes
+%                                 volume_pi(k) = sum(d_i >= d_ref)/numel(d_i);
+%                                 % B1 %  
                             end
                             
                             % calculate coverage probabilty
@@ -138,16 +148,17 @@ for  i = 1:size(cst,1)
                             
                         end
                         
-%                         % A % 
-%                         % calculate logistic function scaling and coverage probability
-%                         DCHScaling = matRad_calcLogisticFuncScaling(volume_pi,cst{i,6}(j).volume/100,1,0.01,0,250);
-%                         c          = [c; sum(scenProb*(1./(1+exp(-2*DCHScaling*(volume_pi - cst{i,6}(j).volume/100)))))];
-%                         % A % 
+                        % A4 % 
+                        % calculate logistic function scaling and coverage probability
+                        DCHScaling = matRad_calcLogisticFuncScaling(volume_pi,cst{i,6}(j).volume/100,0.5,0.01,0,50);
+                        DCHScaling = 0.001;
+                        c          = [c; sum(scenProb*(1./(1+exp(-2*DCHScaling*(volume_pi - cst{i,6}(j).volume/100)))))];
+                        % A4 % 
                         
-                          % B %
-                          % calculate coverage probability
-                        c = [c; sum(scenProb*(volume_pi >= cst{i,6}(j).volume/100))];
-                          % B %
+%                         % B2 %
+%                         % calculate coverage probability
+%                         c = [c; sum(scenProb*(volume_pi >= cst{i,6}(j).volume/100))];
+%                         % B2 %
 
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint4') || ...
                            isequal(cst{i,6}(j).type, 'min DCH constraint4')

@@ -44,6 +44,7 @@ options.ipopt.max_cpu_time                  = 3000;
 % NLP Scaling (C.3)
 %options.ipopt.nlp_scaling_method = 'none';
 %options.ipopt.nlp_scaling_max_gradient = 10;
+%options.ipopt.obj_scaling_factor        = 1e-3;  
 
 % NLP (C.4)
 % options.ipopt.bound_relax_factor = 0;
@@ -53,9 +54,16 @@ options.ipopt.max_cpu_time                  = 3000;
 options.ipopt.mu_strategy = 'adaptive';
 %options.ipopt.mu_oracle = 'loqo';
 
+% INitialization (C.5)
+%options.ipopt.bound_frac = 0.01;
+%options.ipopt.bound_push = 0.01;
+
 % Line Sarch (C.8)
 %options.ipopt.accept_every_trial_step = 'yes';
 %options.ipopt.line_search_method = 'cg-penalty';
+
+% Warm Start (C.9)
+%options.ipopt.warm_start_init_point = 'yes';
 
 % Restoration Phase (C.10)
 %options.ipopt.soft_resto_pderror_reduction_factor = 100;
@@ -67,8 +75,10 @@ options.ipopt.limited_memory_max_history    = 6;
 options.ipopt.limited_memory_initialization = 'scalar2';
 
 % Derivative Test (C.14)
-%options.ipopt.derivative_test               = 'first-order';
-%options.ipopt.derivative_test_tol           = 1e-3;
+% options.ipopt.derivative_test               = 'first-order';
+% options.ipopt.derivative_test_perturbation  = 1e-4;
+% options.ipopt.derivative_test_tol           = 1e-3;
+% options.ipopt.derivative_test_print_all     = 'yes';
 
 % MA57 Linear Solver (C.16)
 % options.ipopt.ma57_automatic_scaling = 'yes';
