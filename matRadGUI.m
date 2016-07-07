@@ -1748,7 +1748,6 @@ data{sEnd+1,1} = 'Select VOI';
 data{sEnd+1,2} = 'Select VOI Type';
 data{sEnd+1,3} = 2;
 data{sEnd+1,4} = 'Select obj func/constraint';
-data{sEnd+1,6} = '';
 data{sEnd+1,9} = 'none';
 
 set(handles.uiTable,'data',data);
