@@ -1,13 +1,14 @@
-function pln = matRad_importDicomRTPlan(ct, rtPlanFiles)
+function pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to import dicom RTPLAN data
 % 
 % call
-%   pln = matRad_importDicomRTPlan(ct, rtPlanFiles)
+%   pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)
 %
 % input
 %   ct:             ct imported by the matRad_importDicomCt function
 %   rtDoseFiles:   	list of RTDOSE Dicom files
+%   dicomMetaBool:  import whole dicom information
 %
 % output
 %   pln:            matRad pln struct with meta information. Note that
@@ -147,5 +148,7 @@ catch
 end
 
 % safe entire dicomInfo
-pln.dicomInformation = planInfo;
+if dicomMetaBool == true
+    pln.dicomMeta = planInfo;
+end
 end

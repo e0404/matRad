@@ -43,6 +43,10 @@ if numel(pln.gantryAngles) ~= numel(pln.couchAngles)
     error('Inconsistent number of gantry and couch angles.');
 end
 
+if pln.bixelWidth < 0 || ~isfinite(pln.bixelWidth)
+   error('bixel width (spot distance) needs to be a real number [mm] larger than zero.');
+end
+
 % find all target voxels from cst cell array
 V = [];
 for i=1:size(cst,1)
@@ -76,7 +80,7 @@ end
 % prepare structures necessary for particles
 fileName = [pln.radiationMode '_' pln.machine];
 try
-   load(fileName);
+   load([fileparts(mfilename('fullpath')) filesep fileName]);
    SAD = machine.meta.SAD;
 catch
    error(['Could not find the following machine file: ' fileName ]); 

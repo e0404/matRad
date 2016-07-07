@@ -97,6 +97,10 @@ for i = 1:numOfContStructs % loop over every structure
         structY = structSlice.ContourData([2:3:end 2]);
         structZ = structSlice.ContourData([3:3:end 3]);
         
+        % rounding to solve numerical problems with contour points not
+        % being defined exactly in the same slice
+        structZ = 1e-10*round(1e10*structZ);
+        
         % sanity check 1
         if numel(unique(structZ)) > 1
             error('Detected contour points outside of single slice\n');
