@@ -34,23 +34,28 @@ load PROSTATE.mat
 % load T6H.mat
 
 %% multiple Scenarios
-multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
-multScen.numOfShiftScen      = [0 0 0];        % number of shifts in x y and z direction       
-multScen.shiftSize           = [3 3 3];     % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
-multScen.shiftGenType        = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
-multScen.shiftCombType       = 'combined';     % individual: no combination of shift scenarios, combined: combine shift scenarios
-multScen.shiftGen1DIsotropy  = '+';            % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
-multScen.numOfRangeShiftScen = 0;              % number of absolute and/or relative range scnearios
-multScen.maxAbsRangeShift    = 0;              % maximum absolute over and undershoot in mm
-multScen.maxRelRangeShift    = 0;              % maximum relative over and undershoot in %
-multScen.ScenCombType        = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
-multScen                     = matRad_setMultScen(multScen);
+multScen.numOfCtScen          = ct.numOfCtScen; % number of imported ct scenarios
+
+multScen.numOfIntSegShiftScen = 100;            % number of internal segmentation shift scnearios     
+
+multScen.numOfShiftScen       = [0 0 0];        % number of shifts in x y and z direction       
+multScen.shiftSize            = [3 3 3];        % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
+multScen.shiftGenType         = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
+multScen.shiftCombType        = 'combined';     % individual: no combination of shift scenarios, combined: combine shift scenarios
+multScen.shiftGen1DIsotropy   = '+';            % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
+
+multScen.numOfRangeShiftScen  = 0;              % number of absolute and/or relative range scnearios
+multScen.maxAbsRangeShift     = 0;              % maximum absolute over and undershoot in mm
+
+multScen.maxRelRangeShift     = 0;              % maximum relative over and undershoot in %
+multScen.ScenCombType         = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
+multScen                      = matRad_setMultScen(multScen);
 
 %% coverage based cst manipulation
 [filename,dir] = uigetfile('E:\Mescher\');
 load([dir,filename])
 
-cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,100,0);
+cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,0);
 
 clear filename dir
 %% meta information for treatment plan

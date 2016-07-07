@@ -1,4 +1,4 @@
-function cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,nSamplesVOIShift,normalTissueRingVOIName,varargin)
+function cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,normalTissueRingVOIName,varargin)
 
 covFlag = 0;
 Counter = 0;
@@ -53,12 +53,10 @@ for  i = 1:size(cst,1)
                     % create scnearios with shifts
 
                     % sample VOI shifts
-                    cstVOIScenUnion{Counter,5}.VOIShift = matRad_sampleVOIShift(cst,ct,multScen.shiftSize,cst{i,2},nSamplesVOIShift);
+                    cstVOIScenUnion{Counter,5}.VOIShift = matRad_sampleVOIShift(cst,ct,multScen.shiftSize,cst{i,2},multScen.numOfIntSegShiftScen);
                     cstVOIScenUnion{Counter,4}{1}       = find(cstVOIScenUnion{Counter,5}.VOIShift.voxelProbCube > 0);
 
-                    for k  = 1:size(cst,1)
-                        cst{k,5}.VOIShift = cstVOIScenUnion{Counter,5}.VOIShift;
-                    end  
+                    cst{i,5}.VOIShift = cstVOIScenUnion{Counter,5}.VOIShift; 
 
                     cstVOIScenUnion{Counter,5}.VOIShift.voxelProb = cstVOIScenUnion{Counter,5}.VOIShift.voxelProbCube(cstVOIScenUnion{Counter,4}{1});
 
