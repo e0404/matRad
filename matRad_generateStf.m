@@ -82,6 +82,7 @@ fileName = [pln.radiationMode '_' pln.machine];
 try
    load([fileparts(mfilename('fullpath')) filesep fileName]);
    SAD = machine.meta.SAD;
+   SCD = machine.meta.SCD;
 catch
    error(['Could not find the following machine file: ' fileName ]); 
 end
@@ -222,6 +223,10 @@ for i = 1:length(pln.gantryAngles)
         stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
         stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
         stf(i).ray(j).SSD         = NaN;
+        stf(i).ray(j).rayCorners_SCD = (repmat([0, SCD - SAD, 0],4,1)+ (SCD/SAD)*[rayPos(j,:) + [+stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
+                                                                                                  rayPos(j,:) + [-stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
+                                                                                                  rayPos(j,:) + [-stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2];...
+                                                                                                  rayPos(j,:) + [+stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2]])*rotMx_XY_T*rotMx_XZ_T;
     end
     
     % loop over all rays to determine meta information for each ray    
