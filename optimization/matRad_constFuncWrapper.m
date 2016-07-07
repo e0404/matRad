@@ -3,6 +3,7 @@ function c = matRad_constFuncWrapper(w,dij,cst,type)
 global matRad_DCH_ScenarioFlag;
 % A1 % 
 global matRad_DVH_Scaling;
+global matRad_DCH_Scaling;
 % A1 % 
 
 % get current dose / effect / RBExDose vector
@@ -118,10 +119,7 @@ for  i = 1:size(cst,1)
                             
                             % A2 % 
                             % calculate logistic function scaling and volumes
-                            cstidx       = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion']));
-                            DVHScaling   = matRad_calcLogisticFuncScaling(d{1}(cst{cstidx,4}{1}),d_ref,0.5,0.01,0,250);  
-                            DVHScaling   = 0.001;
-                            matRad_DVH_Scaling = DVHScaling;
+                            DVHScaling = matRad_DVH_Scaling;
                             % A2 %
                             
                             for k = 1:cst{i,5}.VOIShift.ncase
@@ -150,8 +148,7 @@ for  i = 1:size(cst,1)
                         
                         % A4 % 
                         % calculate logistic function scaling and coverage probability
-                        DCHScaling = matRad_calcLogisticFuncScaling(volume_pi,cst{i,6}(j).volume/100,0.5,0.01,0,50);
-                        DCHScaling = 0.001;
+                        DCHScaling = matRad_DCH_Scaling;
                         c          = [c; sum(scenProb*(1./(1+exp(-2*DCHScaling*(volume_pi - cst{i,6}(j).volume/100)))))];
                         % A4 % 
                         

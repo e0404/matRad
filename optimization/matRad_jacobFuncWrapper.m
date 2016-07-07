@@ -37,6 +37,7 @@ function jacob = matRad_jacobFuncWrapper(w,dij,cst,type)
 
 global matRad_DCH_ScenarioFlag;
 global matRad_DVH_Scaling;
+global matRad_DCH_Scaling;
 
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,type);
@@ -316,6 +317,7 @@ for i = 1:size(cst,1)
 
                         % calculate logistic function scaling
                         DCHScaling = matRad_calcLogisticFuncScaling(volume_pi,cst{i,6}(j).volume/100,0.5,0.01,0,50);
+                        matRad_DCH_Scaling = DCHScaling;
                         
                         if dij.numOfScenarios > 1
                             covConstraintID = [covConstraintID;repmat(1 + covConstraintID(end),dij.numOfScenarios,1)];
