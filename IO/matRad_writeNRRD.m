@@ -1,19 +1,38 @@
-function matRad_writeNRRD(filename,cube,datatype,additionalFields,additionalKeyValuePairs)
-%MATRAD_WRITENRRD Summary of this function goes here
-%   Detailed explanation goes here
+function matRad_writeNRRD(filename,cube,datatype,metadata)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad NRRD writer
+% 
+% call
+%   matRad_writeNRRD(filename,cube,datatype,...
+%                    additionalFields,additionalKeyValuePairs)
+%
+% input
+%   filename:   full output path, including the nrrd extension
+%   cube:       cube that is to be written
+%   metadata:   struct of metadata. For metadata not defined in the NRRD 
+%               standard, the key-value mechanism is used [1].
+%
+% References
+%   [1] http://teem.sourceforge.net/nrrd/format.html5
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 2
-    error('Filename and cube must be specified');
-end
-
-if nargin < 3
-    datatype = 'double'; %default datatype
-    fprintf('No datatype specified, using %s\n',datatype);
-end
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
 %% Setup Header
 %The NRRD header description line
-version = 3;
+version = 5;
 nrrdVersionStringPrefix = 'NRRD000';
 nrrdVersionString = [nrrdVersionStringPrefix num2str(version)];
 
@@ -24,52 +43,143 @@ header = header_addComment(header,'Created With matRad - An open source multi-mo
 
 %Add Datatype field
 header = header_addField(header,'type',datatype);
-header = header_addField(header,'encoding','raw');
-if or(strcmp(datatype,'float'),strcmp(datatype,'double'))
-    header = header_addField(header,'endian','little');
+%NRRD wants to know how the bytes are aligned for datatypes > 1 byte
+%(little endian vs big endian)
+try
+    z = zeros(1,datatype);
+    varInfo = whos('z');
+    if varInfo.bytes > 1
+        [str,maxsize,endian] = computer;
+        switch endian
+            case 'L'
+                header = header_addField(header,'endian','little');
+            case 'B'
+                header = header_addField(header,'endian','big');
+            otherwise
+                error('Unknown endian!');
+        end
+    end
+catch
+    error(['Unknown datatype: ' datatype']);
 end
+
+
+%Check if compression was defined
+if ~isfield(metadata,'compress')
+    metadata.compress = false;
+end  
+%If we use compression, try to compress, otherwise use raw data 
+if metadata.compress
+    try
+        %We write a temporary file to gzip with matlab
+        %It might be also possible to do this with java directly as stream
+        tmpRawFile = [tempname() '.bin'];
+        fTmp = fopen(tmpRawFile, 'wb');
+        
+        fwrite(fTmp,cube,datatype);
+        fclose(fTmp);
+        
+        %Now zip the file
+        fNameZip = gzip(tmpRawFile);
+        fNameZip = fNameZip{1};
+        
+        %We need this to determine the file size
+        fDir = dir(fNameZip);
+        
+        %Read the zipped data
+        fTmp = fopen(fNameZip, 'rb');
+        fileData = fread(fTmp,fDir.bytes,'uint8');
+        fclose(fTmp);
+        %Delete temporary files
+        delete(tmpRawFile,fNameZip);
+        
+        %Set the datatype to binary for writing the zipped data
+        datatype = 'uint8';
+        header = header_addField(header,'encoding','gzip');
+    catch
+        warn('Could not open temporary file, writing without compression!');
+        header = header_addField(header,'encoding','raw');
+        fileData = cube;
+    end
+else
+    header = header_addField(header,'encoding','raw');
+    fileData = cube;
+end
+
+
 %Dimensionality
 cubeDim = size(cube);
 header = header_addField(header,'dimension',num2str(numel(cubeDim)));
-cubeDimString = mat2str(cubeDim);
-cubeDimString = cubeDimString(2:end-1); %Remove Brackets
-header = header_addField(header,'sizes',cubeDimString);
+strCubeDim = vec2str(cubeDim);
+header = header_addField(header,'sizes',strCubeDim);
 
-%Additional fields if present
-if nargin >= 3
-    fields = fieldnames(additionalFields);
+%Resolution - optional
+if isfield(metadata,'resolution')
+    strSpacings = vec2str(metadata.resolution);
+    header = header_addField(header,'spacings',strSpacings);
+end
+
+%Coordinate system - optional
+if isfield(metadata,'coordinateSystem')
+    header = header_addField(header,'space',metadata.coordinateSystem);
+end
+
+%Reference Point - optional
+if isfield(metadata,'imageOrigin')
+    vecOrigin = matVec2nrrdVec(metadata.imageOrigin);
+    header = header_addField(header,'origin',vecOrigin);
+end
+
+%Axis permutation
+if isfield(metadata,'axisPermutation')
+    strDirection = '';
+    for dim = 1:numel(cubeDim)
+        dimVec = zeros(1,numel(cubeDim));
+        dimVec(dim) = 1;
+        dimVec = dimVec(metadata.axisPermutation);
+        strDirection = [strDirection matVec2nrrdVec(dimVec) ' '];
+    end
+    header = header_addField(header,'space direction',strDirection);
+end
+
+%Additional key-value-pairs if present
+%{
+if nargin > 3
+    keys = fieldnames(additionalKeyValuePairs);
     for f = 1:numel(fields)
-        field = fields{f};
-        description = additionalFields.(fields{f});
+        key = keys{f};
+        value = additionalKeyValuePairs.(keys{f});
         
         %Format the description to fit
         if isvector(description)
-            description = mat2str(description);
-            description = description(2:end-1);
+            value = mat2str(description);
+            value = description(2:end-1);
         elseif isnumeric(description)
-            description = num2str(description);
+            value = num2str(description);
         else 
-            
+     
         end
         
-        header = header_addField(header,field,description);
+        if and(~ischar(value),~iscellstr(value))
+            warning(['Cannot convert value for key ' key ' to string, key-value-pair will be ignored!']);
+            continue;
+        end
+        
+        header = header_addKeyValuePair(header,key,value);
     end;
-end    
-
-%% Prepare Data
-%Permute Dimensions since matRad swaps the x and y dims
-cube = permute(cube,[2 1 3]);
+end
+%}
 
 %% Write File
 try
     %Write Header to file with the separating blank line
     fileHandle = fopen(filename,'w');
     fprintf(fileHandle,'%s\n',header);
-
-    %Write data to file
-    fwrite(fileHandle,cube,datatype);
-
+    
+    %Write raw or compressed data to file
+    fwrite(fileHandle,fileData,datatype);
     fclose(fileHandle);
+    
 catch MExc
     fclose('all');
     error(sprintf('File %s could not be written!\n%s',filename,getReport(MExc)));
@@ -78,15 +188,34 @@ fprintf('File written to %s...\n',filename);
 
 end
 
+%Used to add comments to the header
 function newHeader = header_addComment(header,comment)
     newHeader = sprintf('%s# %s\n',header,comment);
 end
 
+%Used to add fields to the header
 function newHeader = header_addField(header,fieldName,fieldDescription)
     newHeader = sprintf('%s%s: %s\n',header,fieldName,fieldDescription);
 end
 
+%Used to add key-value pairs to the header
 function newHeader = header_addKeyValuePair(header,key,value)
+    value = strrep(value,':=','');
     newHeader = sprintf('%s%s:=%s\n',header,key,value);
 end
 
+%Used to format dimenional info according to nrrd specification
+function strOutput = vec2str(V)
+    strOutput = mat2str(V);
+    strOutput = strOutput(2:end-1);
+end
+
+%Used to format a matlab vector to nrrd vector with brackets
+function strOutput = matVec2nrrdVec(V)
+    strOutput = '(';
+    for v = 1:numel(V)
+        strOutput = [strOutput num2str(V(v)) ','];
+    end
+    strOutput = [strOutput(1:end-1) ')'];
+end
+        
