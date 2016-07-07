@@ -1,10 +1,10 @@
 function c = matRad_constFuncWrapper(w,dij,cst,type)
 
 global matRad_DCH_ScenarioFlag;
-% A1 % 
-global matRad_DVH_Scaling;
-global matRad_DCH_Scaling;
-% A1 % 
+% % A1 % 
+% global matRad_DVH_Scaling;
+% global matRad_DCH_Scaling;
+% % A1 % 
 
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,type);
@@ -117,10 +117,10 @@ for  i = 1:size(cst,1)
                             
                         else
                             
-                            % A2 % 
-                            % calculate logistic function scaling and volumes
-                            DVHScaling = matRad_DVH_Scaling;
-                            % A2 %
+%                             % A2 % 
+%                             % calculate logistic function scaling and volumes
+%                             DVHScaling = matRad_DVH_Scaling(j);
+%                             % A2 %
                             
                             for k = 1:cst{i,5}.VOIShift.ncase
                                 
@@ -131,14 +131,14 @@ for  i = 1:size(cst,1)
                                     error('linInterp for constraints not implemented yet')
                                 end
                                 
-                                % A3 %                                
-                                volume_pi(k) = sum(1./(1+exp(-2*DVHScaling*(d_i-d_ref))))/numel(d_i);
-                                % A3 %
+%                                 % A3 %                                
+%                                 volume_pi(k) = sum(1./(1+exp(-2*DVHScaling*(d_i-d_ref))))/numel(d_i);
+%                                 % A3 %
                                     
-%                                 % B1 %
-%                                 % calculate volumes
-%                                 volume_pi(k) = sum(d_i >= d_ref)/numel(d_i);
-%                                 % B1 %  
+                                % B1 %
+                                % calculate volumes
+                                volume_pi(k) = sum(d_i >= d_ref)/numel(d_i);
+                                % B1 %  
                             end
                             
                             % calculate coverage probabilty
@@ -146,16 +146,16 @@ for  i = 1:size(cst,1)
                             
                         end
                         
-                        % A4 % 
-                        % calculate logistic function scaling and coverage probability
-                        DCHScaling = matRad_DCH_Scaling;
-                        c          = [c; sum(scenProb*(1./(1+exp(-2*DCHScaling*(volume_pi - cst{i,6}(j).volume/100)))))];
-                        % A4 % 
+%                         % A4 % 
+%                         % calculate logistic function scaling and coverage probability
+%                         DCHScaling = matRad_DCH_Scaling(j);
+%                         c          = [c; sum(scenProb*(1./(1+exp(-2*DCHScaling*(volume_pi - cst{i,6}(j).volume/100)))))];
+%                         % A4 % 
                         
-%                         % B2 %
-%                         % calculate coverage probability
-%                         c = [c; sum(scenProb*(volume_pi >= cst{i,6}(j).volume/100))];
-%                         % B2 %
+                        % B2 %
+                        % calculate coverage probability
+                        c = [c; sum(scenProb*(volume_pi >= cst{i,6}(j).volume/100))];
+                        % B2 %
 
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint4') || ...
                            isequal(cst{i,6}(j).type, 'min DCH constraint4')

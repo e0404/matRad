@@ -203,6 +203,7 @@ end
 
 % clear global variables
 clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed matRad_iteration matRad_DCH_ScenarioFlag;
+clearvars -global kDVH kDCH
 
 % unblock mex files
 clear mex

@@ -38,6 +38,9 @@ function jacob = matRad_jacobFuncWrapper(w,dij,cst,type)
 global matRad_DCH_ScenarioFlag;
 global matRad_DVH_Scaling;
 global matRad_DCH_Scaling;
+global kDVH;
+global kDCH;
+global matRad_iteration;
 
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,type);
@@ -295,7 +298,8 @@ for i = 1:size(cst,1)
                             % calculate logistic function scaling and volumes
                             cstidx       = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion']));
                             DVHScaling   = matRad_calcLogisticFuncScaling(d{1}(cst{cstidx,4}{1}),d_ref,0.5,0.01,0,250);                            
-                            matRad_DVH_Scaling = DVHScaling;
+                            matRad_DVH_Scaling(j) = DVHScaling;
+                            kDVH(j,matRad_iteration+1)= DVHScaling;
                             
                             for k = 1:cst{i,5}.VOIShift.ncase
 
@@ -316,8 +320,9 @@ for i = 1:size(cst,1)
                         end
 
                         % calculate logistic function scaling
-                        DCHScaling = matRad_calcLogisticFuncScaling(volume_pi,cst{i,6}(j).volume/100,0.5,0.01,0,50);
-                        matRad_DCH_Scaling = DCHScaling;
+                        DCHScaling = matRad_calcLogisticFuncScaling(volume_pi,cst{i,6}(j).volume/100,1,0.01,0,500);
+                        matRad_DCH_Scaling(j) = DCHScaling;
+                        kDCH(j,matRad_iteration+1)= DCHScaling;
                         
                         if dij.numOfScenarios > 1
                             covConstraintID = [covConstraintID;repmat(1 + covConstraintID(end),dij.numOfScenarios,1)];
@@ -367,7 +372,7 @@ for i = 1:size(cst,1)
                                 d_i = d{1}(cst{i,4}{1}-cst{i,5}.VOIShift.roundedShift.idxShift(k));
 
                                 jacobVec = scenProb*2*DCHScaling*exp(2*DCHScaling*(volume_pi(k)-cst{i,6}(j).volume/100))/(exp(2*DCHScaling*(volume_pi(k)-cst{i,6}(j).volume/100))+1)^2;
-                                jacobVec = jacobVec*matRad_jacobFunc(d_i,cst{i,6}(j),d_ref);
+                                jacobVec = jacobVec*matRad_jacobFunc(d_i,cst{i,6}(j),d_ref,0,0,0,DVHScaling);
 
                                 scenID  = [scenID;1];
                                 scenID2 = [scenID2;ones(numel(cst{i,4}{1}),1)];
