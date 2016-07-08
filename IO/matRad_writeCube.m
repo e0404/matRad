@@ -9,12 +9,15 @@ function matRad_writeCube(filepath,cube,datatype,metadata)
 %   filepath:                   full output path. needs the right extension
 %                               to choose the appropriate writer
 %   cube:                       cube that is to be written
-%   meta:                       meta-information in struct. Fieldnames are
-%                               - datatype
-%                               - resolution [x y z]
-%                               - coordinates [x y z] cube center
-%                               - orientation (default ..)
-%
+%   meta:                       meta-information in struct. 
+%                               Necessary fieldnames are:
+%                               - resolution: [x y z]
+%                               Optional:
+%                               - axisPermutation (matRad default [2 1 3])
+%                               - coordinateSystem (matRad default 'LPS')
+%                               - imageOrigin (as used in DICOM)
+%                               - compress (true/false)
+%                                 (default chosen by writer)
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -38,18 +41,23 @@ if ~exist(filedir,'dir')
     error(['Directory ' filedir ' does not exist!']);
 end
 
-%% x-y permutation from matRad coordinate system
-%cube = permute(cube,[2 1 3]);
-
 %% Prepare Metadata
+%if the field is not set, we assume standard matRad x-y swap
 if ~isfield(metadata,'axisPermutation')
     metadata.axisPermutation = [2 1 3]; %Default Matlab axis permutation
 end
+%use the matrad coordinate system
 if ~isfield(metadata,'coordinateSystem')
     metadata.coordinateSystem = 'LPS';  %Matlab coordinate system
 end
-
+%If there is no image origin set, center the image
+if ~isfield(metadata,'imageOrigin')
+    imageExtent = metadata.resolution .* size(cube);
+    metadata.imageOrigin = zeros(1,numel(imageExtent)) - (imageExtent/2);
+end
+    
 %% Choose writer
+%So far we only have an nrrd writer
 switch ext
     case '.nrrd'
         matRad_writeNRRD(filepath,cube,datatype,metadata);

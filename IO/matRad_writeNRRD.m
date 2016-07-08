@@ -9,8 +9,8 @@ function matRad_writeNRRD(filename,cube,datatype,metadata)
 % input
 %   filename:   full output path, including the nrrd extension
 %   cube:       cube that is to be written
-%   metadata:   struct of metadata. For metadata not defined in the NRRD 
-%               standard, the key-value mechanism is used [1].
+%   metadata:   struct of metadata. Writer will wrap the existing metadata 
+%               to nrrd standard-specific fields [1].
 %
 % References
 %   [1] http://teem.sourceforge.net/nrrd/format.html5
@@ -113,12 +113,6 @@ header = header_addField(header,'dimension',num2str(numel(cubeDim)));
 strCubeDim = vec2str(cubeDim);
 header = header_addField(header,'sizes',strCubeDim);
 
-%Resolution - optional
-if isfield(metadata,'resolution')
-    strSpacings = vec2str(metadata.resolution);
-    header = header_addField(header,'spacings',strSpacings);
-end
-
 %Coordinate system - optional
 if isfield(metadata,'coordinateSystem')
     header = header_addField(header,'space',metadata.coordinateSystem);
@@ -127,22 +121,31 @@ end
 %Reference Point - optional
 if isfield(metadata,'imageOrigin')
     vecOrigin = matVec2nrrdVec(metadata.imageOrigin);
-    header = header_addField(header,'origin',vecOrigin);
+    header = header_addField(header,'space origin',vecOrigin);
 end
 
-%Axis permutation
-if isfield(metadata,'axisPermutation')
-    strDirection = '';
-    for dim = 1:numel(cubeDim)
-        dimVec = zeros(1,numel(cubeDim));
-        dimVec(dim) = 1;
-        dimVec = dimVec(metadata.axisPermutation);
-        strDirection = [strDirection matVec2nrrdVec(dimVec) ' '];
+%Axis permutation 
+if isfield(metadata,'resolution')
+    %If we have more space information, write the space axis
+    if isfield(metadata,'axisPermutation')
+        strDirection = '';
+        for dim = 1:numel(cubeDim)
+            dimVec = zeros(1,numel(cubeDim));
+            dimVec(dim) = 1;
+            dimVec = dimVec(metadata.axisPermutation);
+            dimVec = dimVec .* metadata.resolution;
+            strDirection = [strDirection matVec2nrrdVec(dimVec) ' '];
+        end
+        header = header_addField(header,'space directions',strDirection);
+    %Otherwise only write resolution
+    else
+        strSpacings = vec2str(metadata.resolution);
+        header = header_addField(header,'spacings',strSpacings);
     end
-    header = header_addField(header,'space direction',strDirection);
-end
+end       
 
 %Additional key-value-pairs if present
+%Will be added in a later release
 %{
 if nargin > 3
     keys = fieldnames(additionalKeyValuePairs);

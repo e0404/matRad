@@ -317,14 +317,19 @@ function btn_export_Callback(hObject, eventdata, handles)
 
 %Get the export dir
 exportDir = get(handles.edit_dir_export,'String');
-if exportDir(end) ~= filesep;
-    exportDir = [exportDir filesep];
-end
 
 %Sanity check
-if ~exist(exportDir,'dir')
-    warndlg(['Folder ' exportDir ' does not exist!']);
+if numel(exportDir) == 0
+    errordlg('No Export folder selected!');
     return;
+elseif ~exist(exportDir,'dir')
+    errordlg(['Folder ' exportDir ' does not exist!']);
+    return;
+else
+    %Add file separator if necessary
+    if exportDir(end) ~= filesep;
+        exportDir = [exportDir filesep];
+    end 
 end
 
 %Get the file extension
@@ -371,44 +376,69 @@ if isfield(ct,'dicomInfo')
     end    
 end
 
-%CT and Mask export
+%This is only for the waitbar to get the number of cubes you wanna save
 if (saveCT)
-    %Export the CT
+    numExportCubes = 1;
+    voiNames = get(handles.uitable_vois,'Data');
+    voiIndices = find([voiNames{:,1}] == true);
+    numExportCubes = numExportCubes + numel(voiIndices);
+else
+    numExportCubes = 0;
+end
+if saveResults
+   cubeNames = get(handles.uitable_doseCubes,'data');
+   cubeIndices = find([cubeNames{:,1}] == true);
+   numExportCubes = numExportCubes + numel(cubeIndices);
+end
+
+%Give an error if nothing was selected
+if numExportCubes == 0
+    errordlg('No data was selected for export!');
+    return;
+end       
+
+currentCube = 0;
+
+hWaitbar = waitbar(0,'Exporting...','WindowStyle', 'modal');
+cleanUp = onCleanup(@() close(hWaitbar));
+
+%CT and Mask export
+if saveCT   
+    %Export the CT (ED suffix to clarify it is not in HU)
+    currentCube = currentCube + 1;
+    waitbar(currentCube/numExportCubes,hWaitbar,['Exporting CT (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
     matRad_writeCube(fullfile(exportDir,['CT_ED' extension]),ct.cube{1},'double',metadata);
     
-    %Export the VOI masks
-    voiNames = get(handles.uitable_vois,'Data');
-    
+    %Export VOI masks
     cst = evalin('base','cst');
     
-    for f = 1:size(voiNames,1)
-        %Check if the VOI was selected
-        if voiNames{f,1}
-            %Get the index list
-            voiRow = find(not(cellfun('isempty', strfind(cst(:,2),voiNames{f,2}))));
-            voiIndexList = cst{voiRow,4}{1};
-            %Set up the full mask
-            voiMask = zeros(ct.cubeDim);
-            voiMask(voiIndexList) = 1;
-            %Export...
-            matRad_writeCube(fullfile(voiDir,[voiNames{f,2} extension]),voiMask,'uint8',metadata);
-        end
+    for voiIx = voiIndices
+        %Waitbar
+        currentCube = currentCube + 1;
+        waitbar(currentCube/numExportCubes,hWaitbar,['Exporting Segmentation Mask (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
+        
+        %Get the index list
+        voiRow = find(strcmp(voiNames{voiIx,2},cst(:,2)));
+        voiIndexList = cst{voiRow,4}{1};
+        %Set up the full mask
+        voiMask = zeros(ct.cubeDim);
+        voiMask(voiIndexList) = 1;
+        %Export...
+        matRad_writeCube(fullfile(voiDir,[voiNames{voiIx,2} extension]),voiMask,'uint8',metadata);
     end
     
 end
 
 %Results Export
 if saveResults
-    results = evalin('base','resultGUI');
-    
+    results = evalin('base','resultGUI');    
     cubeNames = get(handles.uitable_doseCubes,'data');
-    
-    for f = 1:size(cubeNames,1)
-        %Check if the cubes were selected
-        if cubeNames{f,1}
-            %Export
-            matRad_writeCube(fullfile(resultDir,[cubeNames{f,2} extension]),results.(cubeNames{f,2}),'double',metadata);
-        end
+       
+    for cubeIx = cubeIndices
+        %Export
+        currentCube = currentCube + 1;
+        waitbar(currentCube/numExportCubes,hWaitbar,['Exporting Results (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
+        matRad_writeCube(fullfile(resultDir,[cubeNames{cubeIx,2} extension]),results.(cubeNames{cubeIx,2}),'double',metadata);
     end
 end
 
