@@ -304,9 +304,9 @@ for i = 1:size(cst,1)
                             for k = 1:cst{i,5}.VOIShift.ncase
 
                                 % get current dose
-                                if isequal(cst{1,5}.VOIShift.shiftType,'rounded')
-                                    d_i = d{1}(cst{i,4}{1}-cst{1,5}.VOIShift.roundedShift.idxShift(k));
-                                elseif isequal(cst{1,5}.VOIShift.shiftType,'linInterp')
+                                if isequal(cst{i,5}.VOIShift.shiftType,'rounded')
+                                    d_i = d{1}(cst{i,4}{1}-cst{i,5}.VOIShift.roundedShift.idxShift(k));
+                                elseif isequal(cst{i,5}.VOIShift.shiftType,'linInterp')
                                     error('linInterp for constraints not implemented yet')
                                 end
                                 

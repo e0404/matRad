@@ -76,7 +76,10 @@ matRad_iteration                = 0;
 if dij.numOfScenarios > 1
 	matRad_DCH_ScenarioFlag = [true false(1,dij.numOfScenarios-1)];
 else
-    matRad_DCH_ScenarioFlag = [true false(1,cst{1,5}.VOIShift.ncase-1)];
+    if sum(cellfun(@(x) isfield('VOIShift',x),{cst{:,5}})) > 0 
+        cstidx = find(cellfun(@(x) isfield('VOIShift',x),{cst{:,5}}));
+        matRad_DCH_ScenarioFlag = [true false(1,cst{1,5}.VOIShift.ncase-1)];
+    end
 end
 matRad_DVH_Scaling = 1;
 
