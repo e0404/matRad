@@ -182,7 +182,7 @@ funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 
 % calc dose and reshape from 1D vector to 2D array
 fprintf('Calculating final cubes...\n');
-resultGUI = matRad_calcCubes(wOpt,dij,cst,1);
+resultGUI = matRad_calcCubes(wOpt,dij,cst,pln.bioOptimization,1);
 resultGUI.wUnsequenced = wOpt;
 
 % unset Key Pressed Callback of Matlab command window

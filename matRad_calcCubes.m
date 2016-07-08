@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcCubes(w,dij,cst,scenNum)
+function resultGUI = matRad_calcCubes(w,dij,cst,type,scenNum)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad computation of all cubes for the resultGUI struct which is used
 % as result container and for visualization in matRad's GUI
@@ -41,6 +41,39 @@ resultGUI.w = w;
 
 % calc dose and reshape from 1D vector to 2D array
 resultGUI.physicalDose = reshape(dij.physicalDose{scenNum}*resultGUI.w,dij.dimensions);
+   
+
+%write worst case dose distribution
+writeWCCube = 0;
+i=1;
+while(writeWCCube == 0 &&  i <= size(cst,1))
+       if(strcmp(cst{i,6}(:).robustness,'WC'))
+            writeWCCube = 1;
+       end
+    i = i+1;
+end
+    
+if(writeWCCube == 1)
+     d = matRad_backProjection(w,dij,type);
+  
+     [d_max,max_ix] = max([d{:}],[],2);  
+     [d_min,min_ix] = min([d{:}],[],2);
+             
+    %resultGUI.maxDose = reshape(d_max,dij.dimensions);
+    %resultGUI.minDose = reshape(d_min,dij.dimensions);
+    
+    d_wc = d_max;
+    for  i = 1:size(cst,1)
+        for j = 1:numel(cst{i,6})
+  
+            if isequal(cst{i,3},'TARGET')
+                d_wc(cst{i,4}{1}) = d_min(cst{i,4}{1});
+            end
+        end
+    end
+    resultGUI.wcDose = reshape(d_wc,dij.dimensions);
+end
+
 
 if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
 

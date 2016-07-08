@@ -91,7 +91,7 @@ for  i = 1:size(cst,1)
 
                     % prepare min/max dose vector we have chosen voxel-wise worst case
                     if ~exist('d_max','var')
-                        [d_max,max_ix] = max([d{:}],[],2);
+                        [d_max,max_ix] = max([d{:}],[],2);   %Dosismaximum aus allen Szenarien und Szenarienindex
                         [d_min,min_ix] = min([d{:}],[],2);
                     end
 
@@ -106,7 +106,7 @@ for  i = 1:size(cst,1)
                     for k = 1:dij.numOfScenarios
 
                         if isequal(cst{i,3},'OAR')
-                            currWcIx = max_ix(cst{i,4}{1}) == k;
+                            currWcIx = max_ix(cst{i,4}{1}) == k;   %
 
                         elseif isequal(cst{i,3},'TARGET')
                             currWcIx = min_ix(cst{i,4}{1}) == k;
