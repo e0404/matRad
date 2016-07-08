@@ -65,6 +65,8 @@ global matRad_objective_function_value;
 global matRad_iteration;
 global matRad_DCH_ScenarioFlag;
 global matRad_DVH_Scaling;
+global kDVH;
+global kDCH;
 
 matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
 matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
@@ -195,6 +197,8 @@ resultGUI.optInfo.globalVar.matRad_STRG_C_Pressed           = matRad_STRG_C_Pres
 resultGUI.optInfo.globalVar.matRad_objective_function_value = matRad_objective_function_value;
 resultGUI.optInfo.globalVar.matRad_iteration                = matRad_iteration;
 resultGUI.optInfo.globalVar.matRad_DCH_ScenarioFlag         = matRad_DCH_ScenarioFlag;
+resultGUI.optInfo.globalVar.kDVH                            = kDVH;
+resultGUI.optInfo.globalVar.kDCH                            = kDCH;
 
 % unset Key Pressed Callback of Matlab command window
 if ~isdeployed
