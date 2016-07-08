@@ -57,7 +57,7 @@ VOIShift.voxelProbCube  = voxelProbCube;
 VOIShift.linInterpShift = linInterpShift;
 VOIShift.roundedShift   = roundedShift;
 VOIShift.ncase          = ncase;
-VOIShift.shiftType      = 'linInterp'; % default option for optimization
+VOIShift.shiftType      = 'rounded'; % default option for optimization
 
 end
 
