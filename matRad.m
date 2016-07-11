@@ -102,3 +102,5 @@ matRadGUI
 %% dvh
 matRad_calcDVH(resultGUI,cst,pln)
 
+%% export Plan
+matRad_export_HITXMLPlan('test', 0)

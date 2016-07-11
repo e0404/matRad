@@ -56,8 +56,8 @@ end
 if(writeWCCube == 1)
      d = matRad_backProjection(w,dij,type);
   
-     [d_max,max_ix] = max([d{:}],[],2);  
-     [d_min,min_ix] = min([d{:}],[],2);
+     [d_max,~] = max([d{:}],[],2);  
+     [d_min,~] = min([d{:}],[],2);
              
     %resultGUI.maxDose = reshape(d_max,dij.dimensions);
     %resultGUI.minDose = reshape(d_min,dij.dimensions);
