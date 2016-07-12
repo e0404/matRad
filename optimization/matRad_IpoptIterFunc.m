@@ -63,9 +63,19 @@ if any(IdxHandle)
     AxesInfigOpt = findall(figOpt,'type','axes');
     set(AxesInfigOpt,'NextPlot', 'replacechildren')
     children = get(AxesInfigOpt,'children');
-    delete(children);
+    
+    if length(children) > 1
+        for i = 1:length(children)
+            delete(children{i});
+        end
+        AxesInfigOpt = AxesInfigOpt(end);
+    else
+        delete(children);
+    end
+
 else
     figOpt = figure('Name','Progress of Optimization','NumberTitle','off','Color',[.5 .5 .5]);
+    subplot(1,3,1)
     hold on, grid on, grid minor,
     AxesInfigOpt = findall(figOpt,'type','axes');
 end
@@ -78,5 +88,32 @@ xlabel(AxesInfigOpt,'# iterations','Fontsize',defaultFontSize),ylabel(AxesInfigO
 % draw updated axes
 plot(AxesInfigOpt,0:1:iter,matRad_objective_function_value,'xb','LineWidth',1.5);
 drawnow
+
+global kDVH
+global kDCH
+if ~isempty(kDVH) & ~isempty(kDCH)
+    colors = {'b','r','k'};
+    for i = 1:size(kDCH,1)
+        h1 = subplot(1,3,2);
+        hold on, grid on, grid minor
+        plot(0:1:iter,kDVH(i,:),'x','Color',colors{i},'LineWidth',1.5)
+        set(h1,'YScale','log');
+        title('kDVH')
+        drawnow
+
+        h2 = subplot(1,3,3);
+        hold on, grid on, grid minor
+        plot(0:1:iter,kDCH(i,:),'x','Color',colors{i},'LineWidth',1.5)
+        set(h2,'YScale','log');
+        title('kDCH')
+        drawnow
+
+    end
+    subplot(1,3,2)
+    legend(strsplit(num2str(1:size(kDCH,1))))
+    subplot(1,3,3)
+    legend(strsplit(num2str(1:size(kDCH,1))))
+    drawnow
+end
 
 end
