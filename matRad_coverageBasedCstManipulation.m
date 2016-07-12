@@ -1,4 +1,4 @@
-function cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,normalTissueRingVOIName,varargin)
+function cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,targetExpansion,normalTissueRingVOIName,varargin)
 
 covFlag = 0;
 Counter = 0;
@@ -78,6 +78,39 @@ end
 
 if covFlag
     cst = [cst;cstVOIScenUnion];
+end
+
+if targetExpansion > 0
+    for  i = 1:size(cst,1)
+        if ~isempty(cst{i,6})
+            if sum(strcmp({cst{i,6}(:).robustness},'coverage')) & isequal(cst{i,3},'TARGET')
+                
+                cstidx = find(strcmp([cst(:,2)],cst{i,2}));
+                
+                cstTmp{1,1} = cst{end,1} + 1;
+                cstTmp{1,2} = [cst{cstidx,2},' initial expansion'];
+                cstTmp{1,3} = cst{cstidx,3};
+                cstTmp{1,5} = cst{cstidx,5};
+                cstTmp{1,6} = cst{cstidx,6};
+                
+                % set penalties to zero (only need for initialization)
+                [cstTmp{1,6}(:).penalty]    = deal(0);
+                [cstTmp{1,6}(:).type]       = deal('square deviation');
+                [cstTmp{1,6}(:).robustness] = deal('none');
+                
+                voiCube                   = zeros(ct.cubeDim);
+                voiCube(cst{cstidx,4}{1}) = 1;
+                
+                % expand VOI
+                [margin.x, margin.y, margin.z] = deal(targetExpansion);
+                VOIExpansion   = matRad_addMargin(voiCube,cst,ct.resolution,margin,true);
+                cstTmp{1,4}{1} = find(VOIExpansion>0); 
+                
+                cst = [cst;cstTmp];
+                
+            end
+        end
+    end
 end
 
 if ischar(normalTissueRingVOIName)  
