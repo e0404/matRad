@@ -286,10 +286,25 @@ for i = 1:length(pln.gantryAngles)
                targetEntry = min(targetEntry);
                targetExit  = max(targetExit);
 
+               %check that each energy appears only once in stf
+               if(numel(targetEntry)>1)                 
+                   m = numel(targetEntry);
+                   while(m>1)
+                       if(targetEntry(m) < targetExit(m-1))
+                           targetExit(m-1) = max(targetExit(m), targetExit(m-1));
+                           targetExit(m)=[];
+                           targetEntry(m-1) = min(targetEntry(m), targetEntry(m-1));
+                           targetEntry(m)=[];
+                       end
+                       m=m-1;
+                   end
+               end
+               
                 if numel(targetEntry) ~= numel(targetExit)
                     error('Inconsistency during ray tracing.');
                 end
-
+                
+                
                 stf(i).ray(j).energy = [];
 
                 % Save energies in stf struct
@@ -317,6 +332,7 @@ for i = 1:length(pln.gantryAngles)
 
                 end
   
+                
                 % book keeping & calculate focus index
                 stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);
                 currentMinimumFWHM = matRad_interp1(machine.meta.LUT_bxWidthminFWHM(1,:),...
