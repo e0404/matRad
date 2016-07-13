@@ -35,7 +35,7 @@ load TG119.mat
 
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
-multScen.numOfShiftScen      = [2 2 2];        % number of shifts in x y and z direction       
+multScen.numOfShiftScen      = [0 0 0];        % number of shifts in x y and z direction       
 multScen.shiftSize           = [3 3 3];     % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
 multScen.shiftGenType        = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
 multScen.shiftCombType       = 'individual';     % individual: no combination of shift scenarios, combined: combine shift scenarios
@@ -66,7 +66,7 @@ pln.bioOptimization = 'none'; % none: physical optimization; effect: effect-base
 pln.numOfFractions  = 1;
 pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
-pln.machine         = 'Generic';
+pln.machine         = 'HIT';
 
 %% initial visualization and change objective function settings if desired
 matRadGUI
@@ -103,4 +103,4 @@ matRadGUI
 matRad_calcDVH(resultGUI,cst,pln)
 
 %% export Plan
-matRad_export_HITXMLPlan('test', 0)
+matRad_export_HITXMLPlan('test', 500000)  %500000 minNbParticles HIT Minimum für Patienten

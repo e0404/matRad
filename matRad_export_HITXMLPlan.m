@@ -109,9 +109,10 @@ end
   docNode.appendChild(docNode.createComment('TREATMENT PLAN CREATED WITH MATRAD'));
 
   PTTxPlanMd5 = docNode.getDocumentElement;
-  PTTxPlanMd5.setAttribute('md5','noMD5');
+  %PTTxPlanMd5.setAttribute('md5','noMD5');
   PTTxPlanMd5.setAttribute('xmlns:xsi','http://www.w3.org/2001/XMLSchema-instance');
   PTTxPlanMd5.setAttribute('xsi:noNamespaceSchemaLocation','RTT-PT-Plan.xsd');
+  PTTxPlanMd5.setAttribute('md5','noMD5');
 
   PTTxPlan = docNode.createElement('PTTxPlan');
   PTTxPlanMd5.appendChild(PTTxPlan);
@@ -138,7 +139,7 @@ end
 
   TxRoom = docNode.createElement('TxRoom');
 %  TxRoom.setAttribute('name','Room1Fixed90');
-  TxRoom.setAttribute('name','Room3Gantry');
+  TxRoom.setAttribute('name','Room3');
   if strcmp(pln.radiationMode,'protons')
     TxRoom.setAttribute('projectile','PROTON');
     TxRoom.setAttribute('charge','');
@@ -221,7 +222,7 @@ end
             iesFocusIx = rayIESfocusIx;
             iesFocus = machine.data(energyIx).initFocus.SisFWHMAtIso(rayIESfocusIx);
 
-            iesNb = iesNb+1;
+            %iesNb = iesNb+1;   %silke
             IES = docNode.createElement('IES');
             aValue = sprintf('%d',iesNb);
             IES.setAttribute('number',aValue); 
@@ -232,6 +233,7 @@ end
             IES.setAttribute('focus',aValue);
 
             Beam.appendChild(IES);
+            iesNb = iesNb+1;   %silke
             newIES=false;
           else % check whether the focus from the new bixel is the same as the current focus
             iesFocusIxNewBixel = rayIESfocusIx;
