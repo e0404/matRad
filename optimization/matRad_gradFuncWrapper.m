@@ -186,3 +186,8 @@ for i = 1:dij.numOfScenarios
 
     end
 end
+
+global matRad_iteration
+global GRADIENT
+GRADIENT(1,1,matRad_iteration+1)= max(abs(g));
+GRADIENT(1,2,matRad_iteration+1)= min(abs(g));

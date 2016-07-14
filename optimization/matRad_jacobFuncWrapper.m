@@ -41,6 +41,7 @@ global matRad_DCH_Scaling;
 global kDVH;
 global kDCH;
 global matRad_iteration;
+global JACOBIAN;
 
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,type);
@@ -310,7 +311,8 @@ for i = 1:size(cst,1)
                                     error('linInterp for constraints not implemented yet')
                                 end
                                 
-                                volume_pi(k) = sum(1./(1+exp(-2*DVHScaling*(d_i-d_ref))))/numel(d_i);
+                                %volume_pi(k) = sum(1./(1+exp(-2*DVHScaling*(d_i-d_ref))))/numel(d_i);
+                                volume_pi(k) = sum(d_i >= d_ref)/numel(d_i);
 
                             end
                             
@@ -598,5 +600,8 @@ if numel(unique(covConstraintID)) < numel(covConstraintID)
    
 end
 
+
+JACOBIAN(:,1,matRad_iteration+1)= max(jacob,[],2);
+JACOBIAN(:,2,matRad_iteration+1)= min(jacob,[],2);
 
 end

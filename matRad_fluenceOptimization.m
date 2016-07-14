@@ -65,6 +65,7 @@ global matRad_objective_function_value;
 global matRad_iteration;
 global matRad_DCH_ScenarioFlag;
 global matRad_DVH_Scaling;
+global matRad_DCH_Scaling;
 global kDVH;
 global kDCH;
 
@@ -82,7 +83,7 @@ else
     end
 end
 matRad_DVH_Scaling = 1;
-
+matRad_DCH_Scaling = 1;
 
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
@@ -128,7 +129,7 @@ funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,o
 % calculate initial beam intensities wInit
 if strcmp(pln.bioOptimization,'none')
     
-    bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
+    bixelWeight =  (doseTarget*1.2)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
 
 else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBExD')) ... 
@@ -210,7 +211,7 @@ end
 
 % clear global variables
 clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed matRad_iteration matRad_DCH_ScenarioFlag;
-clearvars -global kDVH kDCH
+clearvars -global kDVH kDCH GRADIENT JACOBIAN
 
 % unblock mex files
 clear mex

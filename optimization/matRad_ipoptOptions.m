@@ -24,6 +24,7 @@
 options.ipopt.print_level                   = 5;
 options.ipopt.print_user_options            = 'no';
 options.ipopt.print_options_documentation   = 'no';
+options.ipopt.print_info_string             = 'yes';
 
 % Termination (C.2)
 options.ipopt.tol                           = 1e-8; % (Opt1)
@@ -36,7 +37,7 @@ options.ipopt.acceptable_tol                = 1e10; % (Acc2)
 options.ipopt.acceptable_constr_viol_tol    = 1e10; % (Acc3)
 options.ipopt.acceptable_dual_inf_tol       = 1e10; % (Acc4)
 options.ipopt.acceptable_compl_inf_tol      = 1e10; % (Acc5)
-options.ipopt.acceptable_obj_change_tol     = 1e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
+options.ipopt.acceptable_obj_change_tol     = 1e-2; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
 
 options.ipopt.max_iter                      = 500;
 options.ipopt.max_cpu_time                  = 3000;
@@ -53,6 +54,10 @@ options.ipopt.max_cpu_time                  = 3000;
 % Barrier Parameter (C.6)
 options.ipopt.mu_strategy = 'adaptive';
 %options.ipopt.mu_oracle = 'loqo';
+%options.ipopt.mu_allow_fast_monotone_decrease = 'no';
+% options.ipopt.sigma_max = 1.2;
+% options.ipopt.sigma_min = 0.8;
+% options.ipopt.alpha_for_y = 'full'; 
 
 % INitialization (C.5)
 %options.ipopt.bound_frac = 0.01;

@@ -75,7 +75,7 @@ if any(IdxHandle)
 
 else
     figOpt = figure('Name','Progress of Optimization','NumberTitle','off','Color',[.5 .5 .5]);
-    subplot(1,3,1)
+    subplot(2,3,1)
     hold on, grid on, grid minor,
     AxesInfigOpt = findall(figOpt,'type','axes');
 end
@@ -87,33 +87,74 @@ xlabel(AxesInfigOpt,'# iterations','Fontsize',defaultFontSize),ylabel(AxesInfigO
 
 % draw updated axes
 plot(AxesInfigOpt,0:1:iter,matRad_objective_function_value,'xb','LineWidth',1.5);
-drawnow
+%drawnow
 
 global kDVH
 global kDCH
 if ~isempty(kDVH) & ~isempty(kDCH)
     colors = {'b','r','k'};
     for i = 1:size(kDCH,1)
-        h1 = subplot(1,3,2);
+        h1 = subplot(2,3,2);
         hold on, grid on, grid minor
         plot(0:1:iter,kDVH(i,:),'x','Color',colors{i},'LineWidth',1.5)
         set(h1,'YScale','log');
         title('kDVH')
         drawnow
 
-        h2 = subplot(1,3,3);
+        h2 = subplot(2,3,3);
         hold on, grid on, grid minor
         plot(0:1:iter,kDCH(i,:),'x','Color',colors{i},'LineWidth',1.5)
         set(h2,'YScale','log');
         title('kDCH')
-        drawnow
+        %drawnow
 
     end
-    subplot(1,3,2)
+    subplot(2,3,2)
     legend(strsplit(num2str(1:size(kDCH,1))))
-    subplot(1,3,3)
+    subplot(2,3,3)
     legend(strsplit(num2str(1:size(kDCH,1))))
-    drawnow
+    %drawnow
+end
+
+
+global JACOBIAN
+if size(JACOBIAN,3) == matRad_iteration
+    colors = {'b','r','k'};
+    for i = 1:size(JACOBIAN,1)
+        h1 = subplot(2,2,3);
+        hold on, grid on, grid minor
+        %plot(1:size(JACOBIAN,2),abs(JACOBIAN(i,:,matRad_iteration)),'Color',colors{i},'LineWidth',1.5)
+        plot(0:1:iter,squeeze(JACOBIAN(i,1,:)),'x','Color',colors{i},'LineWidth',1.5)
+        plot(0:1:iter,squeeze(JACOBIAN(i,2,:)),'x','Color',colors{i},'LineWidth',1.5)
+        set(h1,'YScale','log');
+        title('minmax(abs(jacobian))')
+        ylim([1e-8 1e8])
+        %drawnow
+        
+    end
+end
+
+global GRADIENT
+if size(GRADIENT,3) == matRad_iteration
+    
+        h2 = subplot(2,2,4);
+        hold on, grid on, grid minor
+        %plot(1:size(GRADIENT,2),abs(GRADIENT(:,:,matRad_iteration)),'Color',colors{i},'LineWidth',1.5)
+        plot(0:1:iter,squeeze(GRADIENT(1,1,:)),'x','Color',colors{i},'LineWidth',1.5)
+        plot(0:1:iter,squeeze(GRADIENT(1,2,:)),'x','Color',colors{i},'LineWidth',1.5)
+        set(h2,'YScale','log');
+        title('minmax(abs(gradient))')
+        ylim([1e-8 1e8])
+        drawnow
+
+    subplot(2,2,4)
+    legend(strsplit(num2str(1:size(JACOBIAN,1))))
+    %drawnow
+end
+drawnow
+if matRad_iteration >= 100
+    test = 5;
+    
 end
 
 end
