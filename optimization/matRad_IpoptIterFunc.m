@@ -116,10 +116,10 @@ if ~isempty(kDVH) & ~isempty(kDCH)
     %drawnow
 end
 
-
+colors = {'b','r','k'};
 global JACOBIAN
-if size(JACOBIAN,3) == matRad_iteration
-    colors = {'b','r','k'};
+if size(JACOBIAN,3) == matRad_iteration & ~isempty(JACOBIAN)
+    
     for i = 1:size(JACOBIAN,1)
         h1 = subplot(2,2,3);
         hold on, grid on, grid minor
@@ -132,29 +132,26 @@ if size(JACOBIAN,3) == matRad_iteration
         %drawnow
         
     end
+    
+    subplot(2,2,3)
+    legend(strsplit(num2str(1:size(JACOBIAN,1))))
+    %drawnow
 end
 
 global GRADIENT
-if size(GRADIENT,3) == matRad_iteration
+if size(GRADIENT,3) == matRad_iteration & ~isempty(GRADIENT)
     
         h2 = subplot(2,2,4);
         hold on, grid on, grid minor
         %plot(1:size(GRADIENT,2),abs(GRADIENT(:,:,matRad_iteration)),'Color',colors{i},'LineWidth',1.5)
-        plot(0:1:iter,squeeze(GRADIENT(1,1,:)),'x','Color',colors{i},'LineWidth',1.5)
-        plot(0:1:iter,squeeze(GRADIENT(1,2,:)),'x','Color',colors{i},'LineWidth',1.5)
+        plot(0:1:iter,squeeze(GRADIENT(1,1,:)),'x','Color',colors{1},'LineWidth',1.5)
+        plot(0:1:iter,squeeze(GRADIENT(1,2,:)),'x','Color',colors{1},'LineWidth',1.5)
         set(h2,'YScale','log');
         title('minmax(abs(gradient))')
         ylim([1e-8 1e8])
         drawnow
-
-    subplot(2,2,4)
-    legend(strsplit(num2str(1:size(JACOBIAN,1))))
-    %drawnow
 end
 drawnow
-if matRad_iteration >= 100
-    test = 5;
-    
-end
+
 
 end

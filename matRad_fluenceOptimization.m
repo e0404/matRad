@@ -68,6 +68,8 @@ global matRad_DVH_Scaling;
 global matRad_DCH_Scaling;
 global kDVH;
 global kDCH;
+global JACOBIAN
+global GRADIENT
 
 matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
 matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
@@ -203,6 +205,8 @@ resultGUI.optInfo.globalVar.matRad_iteration                = matRad_iteration;
 resultGUI.optInfo.globalVar.matRad_DCH_ScenarioFlag         = matRad_DCH_ScenarioFlag;
 resultGUI.optInfo.globalVar.kDVH                            = kDVH;
 resultGUI.optInfo.globalVar.kDCH                            = kDCH;
+resultGUI.optInfo.globalVar.JACOBIAN                        = JACOBIAN;
+resultGUI.optInfo.globalVar.GRADIENT                        = GRADIENT;
 
 % unset Key Pressed Callback of Matlab command window
 if ~isdeployed
