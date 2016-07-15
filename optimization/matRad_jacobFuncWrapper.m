@@ -311,8 +311,8 @@ for i = 1:size(cst,1)
                                     error('linInterp for constraints not implemented yet')
                                 end
                                 
-                                %volume_pi(k) = sum(1./(1+exp(-2*DVHScaling*(d_i-d_ref))))/numel(d_i);
-                                volume_pi(k) = sum(d_i >= d_ref)/numel(d_i);
+                                volume_pi(k) = sum(1./(1+exp(-2*DVHScaling*(d_i-d_ref))))/numel(d_i);
+                                %volume_pi(k) = sum(d_i >= d_ref)/numel(d_i);
 
                             end
                             
