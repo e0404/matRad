@@ -120,7 +120,7 @@ colors = {'b','r','k'};
 global JACOBIAN
 if size(JACOBIAN,3) == matRad_iteration & ~isempty(JACOBIAN)
     
-    for i = 1:size(JACOBIAN,1)
+    for i = 1:min(size(JACOBIAN,1),2)
         h1 = subplot(2,2,3);
         hold on, grid on, grid minor
         %plot(1:size(JACOBIAN,2),abs(JACOBIAN(i,:,matRad_iteration)),'Color',colors{i},'LineWidth',1.5)
@@ -134,7 +134,7 @@ if size(JACOBIAN,3) == matRad_iteration & ~isempty(JACOBIAN)
     end
     
     subplot(2,2,3)
-    legend(strsplit(num2str(1:size(JACOBIAN,1))))
+    legend(strsplit(num2str(1:min(size(JACOBIAN,1),2))))
     %drawnow
 end
 

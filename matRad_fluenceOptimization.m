@@ -79,9 +79,9 @@ matRad_iteration                = 0;
 if dij.numOfScenarios > 1
 	matRad_DCH_ScenarioFlag = [true false(1,dij.numOfScenarios-1)];
 else
-    if sum(cellfun(@(x) isfield('VOIShift',x),{cst{:,5}})) > 0 
-        cstidx = find(cellfun(@(x) isfield('VOIShift',x),{cst{:,5}}));
-        matRad_DCH_ScenarioFlag = [true false(1,cst{1,5}.VOIShift.ncase-1)];
+    if sum(cellfun(@(x) isfield(x,'VOIShift'),{cst{:,5}})) > 0 
+        cstidx = find(cellfun(@(x) isfield(x,'VOIShift'),{cst{:,5}}));
+        matRad_DCH_ScenarioFlag = [true false(1,cst{cstidx(1),5}.VOIShift.ncase-1)];
     end
 end
 matRad_DVH_Scaling = 1;
@@ -131,7 +131,7 @@ funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,o
 % calculate initial beam intensities wInit
 if strcmp(pln.bioOptimization,'none')
     
-    bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
+    bixelWeight =  (doseTarget*1.2)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
 
 else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBExD')) ... 

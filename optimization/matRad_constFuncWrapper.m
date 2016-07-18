@@ -240,7 +240,7 @@ for  i = 1:size(cst,1)
                        if isequal(cst{i,6}(j).type, 'max DCH constraint5')
                            [DVHdevAreaSorted,DVHdevAreaSortedidx] = sort(DVHdevArea(2:end),'descend');
                        elseif isequal(cst{i,6}(j).type, 'min DCH constraint5')
-                           [DVHdevAreaSorted,DVHdevAreaSortedidx] = sort(DVHdevArea(2:end),'asc');
+                           [DVHdevAreaSorted,DVHdevAreaSortedidx] = sort(DVHdevArea(2:end),'ascend');
                        end
                         
                         idx                                    = ceil((cst{i,6}(j).coverage/100 - 1/cst{i,5}.VOIShift.ncase)*numel(DVHdevArea));
