@@ -35,14 +35,14 @@ load TG119.mat
 
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
-multScen.numOfShiftScen      = [2 2 2];        % number of shifts in x y and z direction       
+multScen.numOfShiftScen      = [0 0 0];        % number of shifts in x y and z direction       
 multScen.shiftSize           = [3 3 3];     % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
 multScen.shiftGenType        = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
 multScen.shiftCombType       = 'individual';     % individual: no combination of shift scenarios, combined: combine shift scenarios
 multScen.shiftGen1DIsotropy  = '+-';            % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
 multScen.numOfRangeShiftScen = 0;              % number of absolute and/or relative range scnearios
-multScen.maxAbsRangeShift    = 0;              % maximum absolute over and undershoot in mm
-multScen.maxRelRangeShift    = 0;              % maximum relative over and undershoot in %
+%multScen.maxAbsRangeShift    = 0;              % maximum absolute over and undershoot in mm
+%multScen.maxRelRangeShift    = 0;              % maximum relative over and undershoot in %
 multScen.ScenCombType        = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
 multScen                     = matRad_setMultScen(multScen);
 
@@ -67,7 +67,7 @@ pln.numOfFractions  = 1;
 pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.machine         = 'HIT';
-
+pln.minNrParticles  = 500000;
 %% initial visualization and change objective function settings if desired
 matRadGUI
 
@@ -101,6 +101,9 @@ matRadGUI
 
 %% dvh
 matRad_calcDVH(resultGUI,cst,pln)
+
+%% post processing
+resultGUI = matRad_postprocessing(resultGUI, dij, pln);
 
 %% export Plan
 matRad_export_HITXMLPlan('test', 500000)  %500000 minNbParticles HIT Minimum für Patienten

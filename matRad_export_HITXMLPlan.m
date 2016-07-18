@@ -233,7 +233,7 @@ end
             IES.setAttribute('focus',aValue);
 
             Beam.appendChild(IES);
-            iesNb = iesNb+1;   %silke
+            iesNb = iesNb+1;   %silke: IES numbers starting from 0
             newIES=false;
           else % check whether the focus from the new bixel is the same as the current focus
             iesFocusIxNewBixel = rayIESfocusIx;
