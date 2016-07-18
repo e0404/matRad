@@ -139,3 +139,5 @@ for  i = 1:size(cst,1)
     end
     
 end
+global fScaling
+f = fScaling*f;

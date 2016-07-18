@@ -322,7 +322,7 @@ for i = 1:size(cst,1)
                         end
 
                         % calculate logistic function scaling
-                        DCHScaling = matRad_calcLogisticFuncScaling(volume_pi,cst{i,6}(j).volume/100,1,0.01,0,500);
+                        DCHScaling = matRad_calcLogisticFuncScaling(volume_pi,cst{i,6}(j).volume/100,1,0.01,0,1000);
                         matRad_DCH_Scaling(j) = DCHScaling;
                         kDCH(j,matRad_iteration+1)= DCHScaling;
                         
@@ -600,6 +600,8 @@ if numel(unique(covConstraintID)) < numel(covConstraintID)
    
 end
 
+global cScaling
+jacob = bsxfun(@times,cScaling,jacob);
 
 JACOBIAN(:,1,matRad_iteration+1)= max(jacob,[],2);
 JACOBIAN(:,2,matRad_iteration+1)= min(jacob,[],2);

@@ -70,6 +70,8 @@ global kDVH;
 global kDCH;
 global JACOBIAN
 global GRADIENT
+global fScaling
+global cScaling
 
 matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
 matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
@@ -86,6 +88,8 @@ else
 end
 matRad_DVH_Scaling = 1;
 matRad_DCH_Scaling = 1;
+fScaling           = 1;
+cScaling           = 1;
 
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
@@ -131,7 +135,8 @@ funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,o
 % calculate initial beam intensities wInit
 if strcmp(pln.bioOptimization,'none')
     
-    bixelWeight =  (doseTarget*1.2)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
+    %bixelWeight =  doseTarget*1/(mean(dij.physicalDose{1}(V,:)*wOnes));
+    bixelWeight =  doseTarget/(min(dij.physicalDose{1}(V,:)*wOnes));
     wInit       = wOnes * bixelWeight;
 
 else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBExD')) ... 
@@ -177,12 +182,21 @@ else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBEx
 end
 
 % set callback functions.
-[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios);   
+%[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios);   
 funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
+
+% scale objective and constraint function
+gInit    = matRad_gradFuncWrapper(wInit,dij,cst,pln.bioOptimization);
+fScaling = 1/max(gInit(:));
+jInit    = matRad_jacobFuncWrapper(wInit,dij,cst,pln.bioOptimization)
+cScaling = 0.01*1./max(jInit,[],2);
+
+% set constraint bounds
+[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios);
 
 % Run IPOPT.
 [wOpt, info]           = ipopt(wInit,funcs,options);

@@ -39,11 +39,11 @@ options.ipopt.acceptable_dual_inf_tol       = 1e10; % (Acc4)
 options.ipopt.acceptable_compl_inf_tol      = 1e10; % (Acc5)
 options.ipopt.acceptable_obj_change_tol     = 1e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
 
-options.ipopt.max_iter                      = 500;
+options.ipopt.max_iter                      = 1000;
 options.ipopt.max_cpu_time                  = 3000;
 
 % NLP Scaling (C.3)
-%options.ipopt.nlp_scaling_method = 'none';
+options.ipopt.nlp_scaling_method = 'none';
 %options.ipopt.nlp_scaling_max_gradient = 10;
 %options.ipopt.obj_scaling_factor        = 1e-3;  
 
@@ -86,4 +86,6 @@ options.ipopt.limited_memory_initialization = 'scalar2';
 % options.ipopt.derivative_test_print_all     = 'yes';
 
 % MA57 Linear Solver (C.16)
-% options.ipopt.ma57_automatic_scaling = 'yes';
+%options.ipopt.ma57_automatic_scaling = 'yes';
+%options.ipopt.ma57_pivtol = 1e-2;
+%options.ipopt.ma57_pivtolmax = 1e-1;

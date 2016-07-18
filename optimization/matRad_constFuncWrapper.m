@@ -306,3 +306,6 @@ for  i = 1:size(cst,1)
     end % if structure not empty and oar or target
 
 end % over all structures
+
+global cScaling
+ c = cScaling.*c;

@@ -186,6 +186,8 @@ for i = 1:dij.numOfScenarios
 
     end
 end
+global fScaling
+g = fScaling.*g;
 
 global matRad_iteration
 global GRADIENT

@@ -82,4 +82,6 @@ for  i = 1:size(cst,1)
 
 end % over all structures
    
-
+global cScaling
+cl = cScaling.*cl;
+cu = cScaling.*cu;
