@@ -45,14 +45,14 @@ resultGUI.physicalDose = reshape(dij.physicalDose{scenNum}*resultGUI.w,dij.dimen
 
 %write worst case dose distribution
 writeWCCube = 0;
-i=1;
-while(writeWCCube == 0 &&  i <= size(cst,1))
-       if(strcmp(cst{i,6}(:).robustness,'WC'))
+for i = 1:size(cst,1)
+   if ~isempty(cst{i,6})
+        if(strcmp(cst{i,6}(:).robustness,'WC'))
             writeWCCube = 1;
-       end
-    i = i+1;
+        end
+   end
 end
-    
+                
 if(writeWCCube == 1)
      d = matRad_backProjection(w,dij,type);
   
