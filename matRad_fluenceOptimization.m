@@ -192,7 +192,7 @@ funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 % scale objective and constraint function
 gInit    = matRad_gradFuncWrapper(wInit,dij,cst,pln.bioOptimization);
 fScaling = 1/max(gInit(:));
-jInit    = matRad_jacobFuncWrapper(wInit,dij,cst,pln.bioOptimization)
+jInit    = matRad_jacobFuncWrapper(wInit,dij,cst,pln.bioOptimization);
 cScaling = 0.01*1./max(jInit,[],2);
 
 % set constraint bounds

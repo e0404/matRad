@@ -603,7 +603,9 @@ end
 global cScaling
 jacob = bsxfun(@times,cScaling,jacob);
 
-JACOBIAN(:,1,matRad_iteration+1)= max(jacob,[],2);
-JACOBIAN(:,2,matRad_iteration+1)= min(jacob,[],2);
+if ~isempty(jacob)
+    JACOBIAN(:,1,matRad_iteration+1)= max(jacob,[],2);
+    JACOBIAN(:,2,matRad_iteration+1)= min(jacob,[],2);
+end
 
 end
