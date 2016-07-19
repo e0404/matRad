@@ -136,7 +136,7 @@ funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,o
 if strcmp(pln.bioOptimization,'none')
     
     %bixelWeight =  doseTarget*1/(mean(dij.physicalDose{1}(V,:)*wOnes));
-    bixelWeight =  doseTarget*1.1/(min(dij.physicalDose{1}(V,:)*wOnes));
+    bixelWeight =  doseTarget/(min(dij.physicalDose{1}(V,:)*wOnes));
     wInit       = wOnes * bixelWeight;
 
 else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBExD')) ... 
