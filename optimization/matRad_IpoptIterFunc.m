@@ -87,7 +87,6 @@ xlabel(AxesInfigOpt,'# iterations','Fontsize',defaultFontSize),ylabel(AxesInfigO
 
 % draw updated axes
 plot(AxesInfigOpt,0:1:iter,matRad_objective_function_value,'xb','LineWidth',1.5);
-%drawnow
 
 global kDVH
 global kDCH
@@ -99,21 +98,18 @@ if ~isempty(kDVH) & ~isempty(kDCH)
         plot(0:1:iter,kDVH(i,:),'x','Color',colors{i},'LineWidth',1.5)
         set(h1,'YScale','log');
         title('kDVH')
-        drawnow
 
         h2 = subplot(2,3,3);
         hold on, grid on, grid minor
         plot(0:1:iter,kDCH(i,:),'x','Color',colors{i},'LineWidth',1.5)
         set(h2,'YScale','log');
         title('kDCH')
-        %drawnow
 
     end
-    subplot(2,3,2)
-    legend(strsplit(num2str(1:size(kDCH,1))))
-    subplot(2,3,3)
-    legend(strsplit(num2str(1:size(kDCH,1))))
-    %drawnow
+    %subplot(2,3,2)
+    %legend(strsplit(num2str(1:size(kDCH,1))))
+    %subplot(2,3,3)
+    %legend(strsplit(num2str(1:size(kDCH,1))))
 end
 
 colors = {'b','r','k'};
@@ -129,13 +125,11 @@ if size(JACOBIAN,3) == matRad_iteration & ~isempty(JACOBIAN)
         set(h1,'YScale','log');
         title('minmax(abs(jacobian))')
         ylim([1e-8 1e8])
-        %drawnow
         
     end
     
     subplot(2,2,3)
-    legend(strsplit(num2str(1:min(size(JACOBIAN,1),2))))
-    %drawnow
+    %legend(strsplit(num2str(1:min(size(JACOBIAN,1),2))))
 end
 
 global GRADIENT
@@ -149,7 +143,6 @@ if size(GRADIENT,3) == matRad_iteration & ~isempty(GRADIENT)
         set(h2,'YScale','log');
         title('minmax(abs(gradient))')
         ylim([1e-8 1e8])
-        drawnow
 end
 drawnow
 
