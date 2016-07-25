@@ -63,7 +63,7 @@ pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
 pln.radiationMode   = 'protons'; % either photons / protons / carbon
 pln.bioOptimization = 'none'; % none: physical optimization; effect: effect-based optimization; RBExD: optimization of RBE-weighted dose
-pln.numOfFractions  = 1;
+pln.numOfFractions  = 25;
 pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.machine         = 'HIT';
@@ -106,4 +106,4 @@ matRad_calcDVH(resultGUI,cst,pln)
 resultGUI = matRad_postprocessing(resultGUI, dij, pln);
 
 %% export Plan
-matRad_export_HITXMLPlan('test', 500000)  %500000 minNbParticles HIT Minimum für Patienten
+matRad_export_HITXMLPlan_modified('test', 500000, 'backforth')  %500000 minNbParticles HIT Minimum für Patienten

@@ -225,12 +225,38 @@ for i = 1:length(pln.gantryAngles)
             end
         end
     end
+   
+    
     
     % loop over all rays to determine meta information for each ray    
     stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
     
-    for j = stf(i).numOfRays:-1:1
-
+     % Save energies in stf struct
+     %für HIT Maschine wird Anzahl der Energien reduziert
+     %war vorher individuell für jeden beam spot, demnach viele
+     %Energien in Planfile, Unsinn
+     % Jetzt Energiewahl unabhängig von Target, evtl. noch
+     % verbessern -> zunächst minimal benötigte Energie
+     % bestimmen o.ä.
+     DefaultLongitudialSpotSpacing = 3;
+     Tolerance = 0.5;
+     hasNext = true;
+     CntEnergy =2;
+     while hasNext
+         if abs(availableEnergies(CntEnergy)-availableEnergies(CntEnergy-1))<...
+                 DefaultLongitudialSpotSpacing-Tolerance
+             availableEnergies(CntEnergy)=[];
+             availablePeakPos(CntEnergy)=[];
+         else
+             CntEnergy = CntEnergy+1;
+         end
+         if CntEnergy == length(availableEnergies)
+             hasNext = false;
+         end
+     end           
+        
+     
+     for j = stf(i).numOfRays:-1:1
         for ShiftScen = 1:multScen.numOfShiftScen
             % ray tracing necessary to determine depth of the target
             [alpha,l{ShiftScen},rho{ShiftScen},~,~] = matRad_siddonRayTracer(stf(i).isoCenter + multScen.shifts(:,ShiftScen)', ...
@@ -251,6 +277,7 @@ for i = 1:length(pln.gantryAngles)
             end
         end
             
+    
         % find appropriate energies for particles
        if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
 
@@ -302,34 +329,31 @@ for i = 1:length(pln.gantryAngles)
                
                 if numel(targetEntry) ~= numel(targetExit)
                     error('Inconsistency during ray tracing.');
-                end
-                
+                end                
                 
                 stf(i).ray(j).energy = [];
-
-                % Save energies in stf struct
+                                                                      
                 for k = 1:numel(targetEntry)
                     stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
                     % adjust spot spacing according to pln.bixelWidth when using HIT basedata
                     %DefaultLongitudialSpotSpacing = pln.bixelWidth;  % in [mm]
-                    DefaultLongitudialSpotSpacing = 3;
-                    if strcmp(pln.machine,'HIT') && length(stf(i).ray(j).energy)>2
-                        Tolerance = 0.5;
-                        hasNext = true;
-                        CntEnergy =2;
-                        while hasNext
-                            if abs(stf(i).ray(j).energy(CntEnergy)-stf(i).ray(j).energy(CntEnergy-1))<...
-                                    DefaultLongitudialSpotSpacing-Tolerance
-                                stf(i).ray(j).energy(CntEnergy)=[];
-                            else
-                                CntEnergy = CntEnergy+1;
-                            end
-                            if CntEnergy == length(stf(i).ray(j).energy)
-                                hasNext = false;
-                            end
-                        end
-                    end
-
+                   % DefaultLongitudialSpotSpacing = 3;
+                   % if strcmp(pln.machine,'HIT') && length(stf(i).ray(j).energy)>2
+                   %     Tolerance = 0.5;
+                   %     hasNext = true;
+                   %     CntEnergy =2;
+                   %     while hasNext
+                   %         if abs(stf(i).ray(j).energy(CntEnergy)-stf(i).ray(j).energy(CntEnergy-1))<...
+                   %                 DefaultLongitudialSpotSpacing-Tolerance
+                   %             stf(i).ray(j).energy(CntEnergy)=[];
+                   %         else
+                   %             CntEnergy = CntEnergy+1;
+                   %         end
+                   %         if CntEnergy == length(stf(i).ray(j).energy)
+                   %             hasNext = false;
+                   %         end
+                    %    end
+                    %end
                 end
   
                 
