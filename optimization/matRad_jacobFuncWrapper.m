@@ -297,8 +297,11 @@ for i = 1:size(cst,1)
                         else
                             
                             % calculate logistic function scaling and volumes
-                            cstidx       = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion']));
-                            DVHScaling   = matRad_calcLogisticFuncScaling(d{1}(cst{cstidx,4}{1}),d_ref,0.5,0.01,0,250);                            
+                            scenUnionVoxelIDs = [];
+                            for k = 1:cst{i,5}.VOIShift.ncase
+                                scenUnionVoxelIDs = union(scenUnionVoxelIDs,cst{i,4}{1} - cst{i,5}.VOIShift.roundedShift.idxShift(k));
+                            end
+                            DVHScaling   = matRad_calcLogisticFuncScaling(d{1}(scenUnionVoxelIDs),d_ref,0.5,0.01,0,250);                            
                             matRad_DVH_Scaling(j) = DVHScaling;
                             kDVH(j,matRad_iteration+1)= DVHScaling;
                             

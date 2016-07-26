@@ -48,7 +48,7 @@ roundedShift.idxShift   = voxelYShiftRound + voxelXShiftRound.*ct.cubeDim(1) + v
 % use rounded shifts to calculate probability cube
 for i = 1:ncase
     
-    shiftedVOIidx                = cst{cstidx,4}{1} + roundedShift.idxShift(i);
+    shiftedVOIidx                = cst{cstidx,4}{1} - roundedShift.idxShift(i);
     voxelProbCube(shiftedVOIidx) = voxelProbCube(shiftedVOIidx) + 1/ncase;
     
 end

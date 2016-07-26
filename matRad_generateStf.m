@@ -63,9 +63,9 @@ voiTarget    = zeros(ct.cubeDim);
 voiTarget(V) = 1;
     
 % add margin
-margin.x = ct.resolution.x*3;
-margin.y = ct.resolution.y*3;
-margin.z = ct.resolution.z*3;
+margin.x = ct.resolution.x*1;
+margin.y = ct.resolution.y*1;
+margin.z = ct.resolution.z*1;
 addmarginBool = 1;
 if addmarginBool
     voiTarget = matRad_addMargin(voiTarget,cst,ct.resolution,margin,true);
