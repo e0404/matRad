@@ -73,31 +73,58 @@ for  i = 1:size(cst,1)
                         c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref,d_pi)];
                     
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint2') || ...
-                           isequal(cst{i,6}(j).type, 'min DCH constraint2')                       
-                        
-                        d_i = [];
-                        
-                        % get cst index of VOI that corresponds to VOI ring
-                        cstidx = find(strcmp(cst(:,2),cst{i,2}(1:end-5)));
+                           isequal(cst{i,6}(j).type, 'min DCH constraint2')
                        
-                        % get dose of VOI that corresponds to VOI ring
+                    d_i = [];
+         
+                    if dij.numOfScenarios > 1
+                        % get dose
                         for k = 1:dij.numOfScenarios
-                            d_i{k} = d{k}(cst{cstidx,4}{1});
+                            d_i{k} = d{k}(cst{i,4}{1});
                         end
-
+                        
                         % calc invers DCH of VOI
                         refQ   = cst{i,6}(j).coverage/100;
                         refVol = cst{i,6}(j).volume/100;
                         d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
-
-                        % get dose of VOI ring
-                        d_i    = d{1}(cst{i,4}{1});
-
-                        % calc voxel dependent weighting
-                        voxelWeighting = 5*cst{i,5}.voxelProb;
-
-                        c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref,1,d_ref2,voxelWeighting)];
                         
+                        error('multiple dij scenarios not yet implemented')
+                        
+                    else
+                        
+                        % calc invers DCH of VOI
+                        refQ   = cst{i,6}(j).coverage/100;
+                        refVol = cst{i,6}(j).volume/100;
+                        d_ref2 = matRad_calcInversDCH(refVol,refQ,d,cst{i,5}.VOIShift.ncase,cst(i,:));
+                        
+                        % get dose of VOI ScenUnion
+                        scenUnionVoxelIDs = [];
+                        for k = 1:cst{i,5}.VOIShift.ncase
+                            scenUnionVoxelIDs = union(scenUnionVoxelIDs,cst{i,4}{1} - cst{i,5}.VOIShift.roundedShift.idxShift(k));
+                        end
+                        d_i = d{1}(scenUnionVoxelIDs);
+                        
+                    end
+                   
+                    % get voxel dependent weigthing
+                    voxelWeighting = 5*cst{i,5}.VOIShift.voxelProbCube(scenUnionVoxelIDs); 
+
+                    % calc deviation
+                    deviation = d_i - d_ref;
+
+                    % apply lower and upper dose limits
+                    if isequal(cst{i,6}(j).type, 'max DCH constraint2')
+                         deviation(d_i < d_ref | d_i > d_ref2) = 0;
+                    elseif isequal(cst{i,6}(j).type, 'min DCH constraint2')
+                         deviation(d_i > d_ref | d_i < d_ref2) = 0;
+                    end
+
+                    % apply weighting
+                    deviation = deviation.*voxelWeighting;
+
+                    % claculate objective function
+                    c = [c; (1/numel(d_i))*(deviation'*deviation)];
+
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint3') || ...
                            isequal(cst{i,6}(j).type, 'min DCH constraint3')
                        

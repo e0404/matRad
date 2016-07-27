@@ -224,38 +224,91 @@ for i = 1:size(cst,1)
 
                         end
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint2') || ...
-                           isequal(cst{i,6}(j).type, 'min DCH constraint2')         
-                        
-                        d_i = [];
-                        
-                        % get cst index of VOI that corresponds to VOI ring
-                        cstidx = find(strcmp(cst(:,2),cst{i,2}(1:end-5)));
+                           isequal(cst{i,6}(j).type, 'min DCH constraint2')        
                        
-                        % get dose of VOI that corresponds to VOI ring
-                        for k = 1:dij.numOfScenarios
-                            d_i{k} = d{k}(cst{cstidx,4}{1});
+                        d_i = [];
+
+                        if dij.numOfScenarios > 1
+                            % get dose
+                            for k = 1:dij.numOfScenarios
+                                d_i{k} = d{k}(cst{i,4}{1});
+                            end
+
+                            % calc invers DCH of VOI
+                            refQ   = cst{i,6}(j).coverage/100;
+                            refVol = cst{i,6}(j).volume/100;
+                            d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
+                            
+                            error('multiple dij scenarios not yet implemented')
+
+                        else
+
+                            % calc invers DCH of VOI
+                            refQ   = cst{i,6}(j).coverage/100;
+                            refVol = cst{i,6}(j).volume/100;
+                            d_ref2 = matRad_calcInversDCH(refVol,refQ,d,cst{i,5}.VOIShift.ncase,cst(i,:));
+                            
+                            % get dose of VOI ScenUnion
+                            scenUnionVoxelIDs = [];
+                            for k = 1:cst{i,5}.VOIShift.ncase
+                                scenUnionVoxelIDs = union(scenUnionVoxelIDs,cst{i,4}{1} - cst{i,5}.VOIShift.roundedShift.idxShift(k));
+                            end
+                            d_i = d{1}(scenUnionVoxelIDs);                            
+
                         end
 
-                        % calc invers DCH of VOI
-                        refQ   = cst{i,6}(j).coverage/100;
-                        refVol = cst{i,6}(j).volume/100;
-                        d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
+                        % get voxel dependent weigthing
+                        voxelWeighting = 5*cst{i,5}.VOIShift.voxelProbCube(scenUnionVoxelIDs);  
+                        
+                        % calc deviation
+                        deviation = d_i - d_ref;
 
-                        % get dose of Target Ring
-                        d_i = d{1}(cst{i,4}{1});
+                        % apply lower and upper dose limits
+                        if isequal(cst{i,6}(j).type, 'max DCH constraint2')
+                             deviation(d_i < d_ref | d_i > d_ref2) = 0;
+                        elseif isequal(cst{i,6}(j).type, 'min DCH constraint2')
+                             deviation(d_i > d_ref | d_i < d_ref2) = 0;
+                        end
 
-                        % calc voxel dependent weighting
-                        voxelWeighting = 5*cst{i,5}.voxelProb;
+                        % apply weighting
+                        deviation = deviation.*(voxelWeighting).^2;
 
-                        jacobVec =  matRad_jacobFunc(d_i,cst{i,6}(j),d_ref,1,1,d_ref2,voxelWeighting);
-
+                        % calculate delta
+                        jacobVec = 2 * (1/numel(d_i))*deviation;                        
+                        
+                       
+%                         %
+%                         d_i = [];
+%                         
+%                         % get cst index of VOI that corresponds to VOI ring
+%                         cstidx = find(strcmp(cst(:,2),cst{i,2}(1:end-5)));
+%                        
+%                         % get dose of VOI that corresponds to VOI ring
+%                         for k = 1:dij.numOfScenarios
+%                             d_i{k} = d{k}(cst{cstidx,4}{1});
+%                         end
+%             
+%                         % calc invers DCH of VOI
+%                         refQ   = cst{i,6}(j).coverage/100;
+%                         refVol = cst{i,6}(j).volume/100;
+%                         d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
+% 
+%                         % get dose of Target Ring
+%                         d_i = d{1}(cst{i,4}{1});
+% 
+%                         % calc voxel dependent weighting
+%                         voxelWeighting = 5*cst{i,5}.voxelProb;
+% 
+%                         jacobVec =  matRad_jacobFunc(d_i,cst{i,6}(j),d_ref,1,1,d_ref2,voxelWeighting);
+%                         %
+                        
                         scenID          = [scenID;1];
                         scenID2         = [scenID2;ones(numel(cst{i,4}{1}),1)];
                         covConstraintID = [covConstraintID;covConstraintID(end) + 1];
 
                         if isequal(type,'none') && ~isempty(jacobVec)
 
-                           physicalDoseProjection = [physicalDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
+                           physicalDoseProjection = [physicalDoseProjection,sparse(scenUnionVoxelIDs,1,jacobVec,dij.numOfVoxels,1)];
 
                         elseif isequal(type,'effect') && ~isempty(jacobVec)
 
@@ -607,8 +660,19 @@ global cScaling
 jacob = bsxfun(@times,cScaling,jacob);
 
 if ~isempty(jacob)
-    JACOBIAN(:,1,matRad_iteration+1)= max(jacob,[],2);
-    JACOBIAN(:,2,matRad_iteration+1)= min(jacob,[],2);
+    for k = 1:size(jacob,1)
+        jacob_ = jacob(k,:);
+        if isempty(max(abs(jacob(jacob_ ~= 0))))
+            JACOBIAN(k,1,matRad_iteration+1)= 0;
+        else
+            JACOBIAN(k,1,matRad_iteration+1)= max(abs(jacob(jacob_ ~= 0)));
+        end
+        if isempty(min(abs(jacob(jacob_ ~= 0))))
+            JACOBIAN(k,2,matRad_iteration+1)= 0;
+        else
+            JACOBIAN(k,2,matRad_iteration+1)= min(abs(jacob(jacob_ ~= 0)));
+        end
+    end
 end
 
 end

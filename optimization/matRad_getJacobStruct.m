@@ -146,9 +146,18 @@ for i = 1:size(cst,1)
                        jacobStruct = [jacobStruct; spones(physicalDoseCum)];
                        
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint2') || ...
-                           isequal(cst{i,6}(j).type, 'min DCH constraint2')    
+                           isequal(cst{i,6}(j).type, 'min DCH constraint2')   
+                       if dij.numOfScenarios > 1
+                           error('multiple dij scenarios not yet implemented')
+                       else
+                            scenUnionVoxelIDs = [];
+                            for k = 1:cst{i,5}.VOIShift.ncase
+                                scenUnionVoxelIDs = union(scenUnionVoxelIDs,cst{i,4}{1} - cst{i,5}.VOIShift.roundedShift.idxShift(k));
+                            end 
+                            jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(scenUnionVoxelIDs,:)))];
+                       end
                        
-                       jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{i,4}{1},:)))];
+                       %jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{i,4}{1},:)))];
                        
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint3') || ... 
                            isequal(cst{i,6}(j).type, 'min DCH constraint3')
