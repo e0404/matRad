@@ -960,15 +960,15 @@ end
 %% plot VOIs
  contMenuStruct = get(handles.figure1,'UIContextMenu');
  contMenuStructChildren = get(contMenuStruct,'Children');
- vBoolPlotVOI   = zeros(size(cst,1),1);
- for i = 1:size(contMenuStructChildren,1)
-     boolean = false;
-     if strcmp(get(contMenuStructChildren(i),'Checked'),'on')
-        boolean = true;
-     end
-     IdxInCst = find(strcmp(cst(:,2),get(contMenuStructChildren(i),'Label')));
-     vBoolPlotVOI(IdxInCst) = boolean;
- end
+%  vBoolPlotVOI   = zeros(size(cst,1),1);
+%  for i = 1:size(contMenuStructChildren,1)
+%      boolean = false;
+%      if strcmp(get(contMenuStructChildren(i),'Checked'),'on')
+%         boolean = true;
+%      end
+%      IdxInCst = find(strcmp(cst(:,2),get(contMenuStructChildren(i),'Label')));
+%      vBoolPlotVOI(IdxInCst) = boolean;
+%  end
  
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
     colors = colorcube;
@@ -976,7 +976,7 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
     colors = colors(round(linspace(1,63,size(cst,1))),:);
     mask = zeros(ct.cubeDim); % create zero cube with same dimeonsions like dose cube
     for s = 1:size(cst,1)
-        if ~strcmp(cst{s,3},'IGNORED') && vBoolPlotVOI(s)
+        if ~strcmp(cst{s,3},'IGNORED') && handles.legendTable.Data{s,1}
             mask(:) = 0;
             mask(cst{s,4}{1}) = 1;
             if plane == 1 && sum(sum(mask(slice,:,:))) > 0
@@ -988,13 +988,13 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
             end
         end
     end
-    warning('off','MATLAB:legend:PlotEmpty')
-    myLegend = legend('show','location','NorthEast');
-    set(myLegend,'FontSize',defaultFontSize,'Interpreter','none');
-    set(myLegend,'color','none');
-    set(myLegend,'TextColor', [1 1 1]);
-    legend boxoff
-    warning('on','MATLAB:legend:PlotEmpty')
+%     warning('off','MATLAB:legend:PlotEmpty')
+%     myLegend = legend('show','location','NorthEast');
+%     set(myLegend,'FontSize',defaultFontSize,'Interpreter','none');
+%     set(myLegend,'color','none');
+%     set(myLegend,'TextColor', [1 1 1]);
+%     legend boxoff
+%     warning('on','MATLAB:legend:PlotEmpty')
 end
 
 %% Set axis labels
@@ -1588,6 +1588,19 @@ end
 
 % displays the cst in the GUI
 function setCstTable(handles,cst)
+
+% create legend according to cst file
+colors = colorcube;
+colors = colors(round(linspace(1,63,size(cst,1))),:);
+
+handles.legendTable.Data      = cell(size(cst,1),3);
+handles.legendTable.Data(:,1) = {true};
+handles.legendTable.Data(:,3) = {cst{:,2}};
+for s = 1:size(cst,1)
+    clr = dec2hex(round(colors(s,:)*255),2)';
+    clr = ['#';clr(:)]';
+    handles.legendTable.Data(s,2) = {['<html><table border=0 width=40 bgcolor=',clr,'><TR><TD>','','</TD></TR> </table></html>']};
+end
 
 columnname = {'VOI name','VOI type','priority','obj. / const.','penalty','dose', 'EUD','volume','robustness'};
 
@@ -3087,3 +3100,17 @@ function vmcFlag_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of vmcFlag
+
+
+
+% --- Executes when entered data in editable cell(s) in legendTable.
+function legendTable_CellEditCallback(hObject, eventdata, handles)
+% hObject    handle to legendTable (see GCBO)
+% eventdata  structure with the following fields (see MATLAB.UI.CONTROL.TABLE)
+%	Indices: row and column indices of the cell(s) edited
+%	PreviousData: previous data for the cell(s) edited
+%	EditData: string(s) entered by the user
+%	NewData: EditData or its converted form set on the Data property. Empty if Data was not changed
+%	Error: error string when failed to convert EditData to appropriate value for Data
+% handles    structure with handles and user data (see GUIDATA)
+UpdatePlot(handles);
