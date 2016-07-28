@@ -145,7 +145,7 @@ for i = 1:length(handles.Modalities)
             MachineName = Files(j).name(numel(handles.Modalities{1,i})+2:end-4);
             if isfield(handles,'Machines')
                 if sum(strcmp(handles.Machines,MachineName)) == 0
-                  handles.Machines{size(handles.Machines,1)+1} = MachineName;
+                  handles.Machines{size(handles.Machines,2)+1} = MachineName;
                 end
             else
                 handles.Machines = cell(1);
