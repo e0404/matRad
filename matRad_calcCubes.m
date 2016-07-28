@@ -42,6 +42,11 @@ resultGUI.physicalDose = reshape(full(dij.physicalDose{scenNum}*resultGUI.w),dij
 % consider VOI priorities
 [cst,resultGUI.overlapCube]  = matRad_setOverlapPriorities(cst,dij.dimensions);
 
+if isfield(dij,'mLETDose')
+    LETDoseCube    = full(dij.mLETDose{scenNum} * resultGUI.w);
+    resultGUI.LET  = (reshape(LETDoseCube,dij.dimensions))./resultGUI.physicalDose;
+end
+
 if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
 
     a_x = zeros(size(resultGUI.physicalDose));
