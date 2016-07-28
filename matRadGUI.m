@@ -757,6 +757,8 @@ if exist('Result','var')
                     DispInfo{i,3} = '[Gy^{-2}]';
                 elseif strfind(DispInfo{i,1},'RBExD')
                     DispInfo{i,3} = '[Gy(RBE)]';
+                elseif strfind(DispInfo{i,1},'LET')
+                    DispInfo{i,3} = '[keV/um]';
                 else
                     DispInfo{i,3} = '[a.u.]';
                 end
