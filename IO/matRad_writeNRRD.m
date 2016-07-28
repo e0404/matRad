@@ -49,7 +49,7 @@ try
     z = zeros(1,datatype);
     varInfo = whos('z');
     if varInfo.bytes > 1
-        [str,maxsize,endian] = computer;
+        [~,~,endian] = computer;
         switch endian
             case 'L'
                 header = header_addField(header,'endian','little');
