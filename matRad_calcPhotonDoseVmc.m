@@ -25,6 +25,12 @@ function dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,nCasePerBixel,numOfParall
 % 2 = open in terminal(s)
 verbose = 0;
 
+if ~isdeployed % only if _not_ running as standalone    
+    % add path for optimization functions
+    matRadRootDir = fileparts(mfilename('fullpath'));
+    addpath(fullfile(matRadRootDir,'vmc++'))
+end
+
 % meta information for dij
 dij.numOfBeams         = pln.numOfBeams;
 dij.numOfVoxels        = pln.numOfVoxels;
@@ -36,9 +42,9 @@ dij.dimensions         = pln.voxelDimensions;
 dij.numOfScenarios     = 1;
 
 % set environment variables for vmc++
-if exist('vmc++','dir') ~= 7
+if exist('vmc++\bin','dir') ~= 7
     error(['Could not locate vmc++ directory. ' ...
-           'Please download vmc++ from http://www.cerr.info/download.php and put it in your matRad root folder']);
+           'Please provide the binaries at matRadroot/vmc++ (CERR hosts compatible binaries at http://www.cerr.info/download.php).']);
 else
     VMCPath     = fullfile(pwd , 'vmc++');
     runsPath    = fullfile(VMCPath, 'runs');
