@@ -52,9 +52,21 @@ end
 % set consistent random seed (enables reproducibility)
 rng(0);
 
-% set number of parallel MC simulations if not specified by user
-if nargin < 6
+% set number of photons simulated per bixel and number of parallel MC simulations if not specified by user
+if nargin < 5
+    nCasePerBixel              = 5000;
     numOfParallelMCSimulations = 1;
+    
+    warning(['Number of photons simulated per bixel (nCasePerBixel) and number of parallel MC simulations (numOfParallelMCSimulations) not specified by user. ',...
+             'Use default settings with nCasePerBixel = ',num2str(nCasePerBixel),...
+             ' and numOfParallelMCSimulations = ',num2str(numOfParallelMCSimulations),...
+             ' in vmc++ calculations.'])
+elseif nargin < 6
+    numOfParallelMCSimulations = 1;
+    
+    warning(['Number of parallel MC simulations (numOfParallelMCSimulations) not specified by user. ',...
+             'Use default settings with numOfParallelMCSimulations = ',num2str(numOfParallelMCSimulations),...
+             ' in vmc++ calculations.'])    
 end
     
 % set relative dose cutoff for storage in dose influence matrix
