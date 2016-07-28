@@ -258,16 +258,13 @@ if handles.State > 0
             'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);      
     
     % define context menu for structures
-    contMenuStruct = uicontextmenu;
-    set(handles.axesFig,'UIContextMenu',contMenuStruct);
     for i = 1:size(cst,1)
         if cst{i,5}.Visible
-            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','on');
+            handles.VOIPlotFlag(i) = true;
         else
-            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','off');
+            handles.VOIPlotFlag(i) = false;
         end
     end
-    set(handles.figure1,'UIContextMenu',contMenuStruct)
 end
 
 
@@ -404,16 +401,13 @@ end
 
 if handles.State > 0
      % define context menu for structures
-    contMenuStruct = uicontextmenu;
-    set(handles.axesFig,'UIContextMenu',contMenuStruct);
     for i = 1:size(cst,1)
         if cst{i,5}.Visible
-            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','on');
+            handles.VOIPlotFlag(i) = true;
         else
-            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','off');
+            handles.VOIPlotFlag(i) = false;
         end
     end
-    set(handles.figure1,'UIContextMenu',contMenuStruct)
 end
 
 UpdateState(handles);
@@ -454,17 +448,15 @@ guidata(hObject,handles);
 if handles.State > 0
     % define context menu for structures
     cst =  evalin('base','cst');
-    contMenuStruct = uicontextmenu;
-    set(handles.axesFig,'UIContextMenu',contMenuStruct);
     for i = 1:size(cst,1)
         if cst{i,5}.Visible
-            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','on');
+            handles.VOIPlotFlag(i) = true;
         else
-            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','off');
+            handles.VOIPlotFlag(i) = false;
         end
     end
-    set(handles.figure1,'UIContextMenu',contMenuStruct)
 end
+guidata(hObject,handles);
 
 function editBixelWidth_Callback(hObject, ~, handles)
 % hObject    handle to editBixelWidth (see GCBO)
@@ -962,24 +954,12 @@ end
 
 
 %% plot VOIs
- contMenuStruct = get(handles.figure1,'UIContextMenu');
- contMenuStructChildren = get(contMenuStruct,'Children');
- vBoolPlotVOI   = zeros(size(cst,1),1);
- for i = 1:size(contMenuStructChildren,1)
-     boolean = false;
-     if strcmp(get(contMenuStructChildren(i),'Checked'),'on')
-        boolean = true;
-     end
-     IdxInCst = find(strcmp(cst(:,2),get(contMenuStructChildren(i),'Label')));
-     vBoolPlotVOI(IdxInCst) = boolean;
- end
- 
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
     colors = colorcube;
     hold on,
     colors = colors(round(linspace(1,63,size(cst,1))),:);
     for s = 1:size(cst,1)
-        if ~strcmp(cst{s,3},'IGNORED') && vBoolPlotVOI(s)
+        if ~strcmp(cst{s,3},'IGNORED') &&  handles.VOIPlotFlag(s)
             if any(cst{s,7}{slice,plane}(:))
                 lower = 1;
                 while lower-1 ~= numel(cst{s,7}{slice,plane})/2;
@@ -1588,6 +1568,21 @@ end
 
 % displays the cst in the GUI
 function setCstTable(handles,cst)
+
+% create legend according to cst file
+colors = colorcube;
+colors = colors(round(linspace(1,63,size(cst,1))),:);
+
+for s = 1:size(cst,1)
+    handles.VOIPlotFlag(s) = cst{s,5}.Visible;
+    clr = dec2hex(round(colors(s,:)*255),2)';
+    clr = ['#';clr(:)]';
+    if handles.VOIPlotFlag(s)
+        handles.legendTable.String{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
+    else
+        handles.legendTable.String{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
+    end
+end
 
 columnname = {'VOI name','VOI type','priority','obj. / const.','penalty','dose', 'EUD','volume','robustness'};
 
@@ -2396,10 +2391,8 @@ newSlice = max(newSlice,get(handles.sliderSlice,'Min'));
 set(handles.sliderSlice,'Value',newSlice);
 
 % update plot
-profile on;
 UpdatePlot(handles);
-profile off;
-profile viewer;
+
 
 % update handles object
 guidata(src,handles);
@@ -2435,13 +2428,12 @@ end
 %adapt visibilty
 cst = evalin('base','cst');
 
-contMenuStructChildren = get(get(handles.figure1,'UIContextMenu'),'Children');
-for i = 1:size(contMenuStructChildren,1)
+for i = 1:size(handles.legendTable.Data,1)
      boolean = 0;
-     if strcmp(get(contMenuStructChildren(i),'Checked'),'on')
+     if handles.legendTable.Data{i,1}
         boolean = 1;
      end
-     IdxInCst = find(strcmp(cst(:,2),get(contMenuStructChildren(i),'Label')));
+     IdxInCst = find(strcmp(cst(:,2),handles.legendTable.Data{i,3}));
      cst{IdxInCst,5}.Visible = boolean;
 end
 matRad_calcDVH(resultGUI_SelectedCube,cst,evalin('base','pln'));
@@ -3162,3 +3154,45 @@ function vmcFlag_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of vmcFlag
+
+
+% --- Executes on selection change in legendTable.
+function legendTable_Callback(hObject, eventdata, handles)
+% hObject    handle to legendTable (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns legendTable contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from legendTable
+cst = evalin('base','cst');
+
+colors = colorcube;
+colors = colors(round(linspace(1,63,size(cst,1))),:);
+idx    = get(hObject,'Value');
+clr    = dec2hex(round(colors(idx,:)*255),2)';
+clr    = ['#';clr(:)]';
+if handles.VOIPlotFlag(idx)
+    handles.VOIPlotFlag(idx) = false;
+    handles.legendTable.String{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
+elseif ~handles.VOIPlotFlag(idx)
+    handles.VOIPlotFlag(idx) = true;
+    handles.legendTable.String{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
+end
+
+
+guidata(hObject, handles);
+UpdatePlot(handles)
+
+
+
+% --- Executes during object creation, after setting all properties.
+function legendTable_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to legendTable (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
