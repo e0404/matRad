@@ -26,7 +26,7 @@ function [cube, metadata] = matRad_readCube(filename)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if ~exist(filename,'file')
-    error(['File ' file ' does not exist!']);
+    error(['File ' filename ' does not exist!']);
 end
 
 [~,~,ext] = fileparts(filename);
