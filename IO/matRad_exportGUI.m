@@ -300,6 +300,8 @@ function popupmenu_extension_CreateFcn(hObject, eventdata, handles)
 
 %These sets up the available extensions
 extensions{1} = '*.nrrd';
+extensions{2} = '*.vtk';
+extensions{3} = '*.mha';
 set(hObject,'String',extensions);
 
 % Hint: popupmenu controls usually have a white background on Windows.
@@ -407,6 +409,7 @@ if saveCT
     %Export the CT (ED suffix to clarify it is not in HU)
     currentCube = currentCube + 1;
     waitbar(currentCube/numExportCubes,hWaitbar,['Exporting CT (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
+    
     matRad_writeCube(fullfile(exportDir,['CT_ED' extension]),ct.cube{1},'double',metadata);
     
     %Export VOI masks

@@ -50,8 +50,8 @@ if nrrdVersion > 5
 end
 
 %% Read header
-nrrdMetaData.fields = struct();
-nrrdMetaData.keys = struct();
+nrrdMetaData.fields = cell(0,2);
+nrrdMetaData.keys = cell(0,2);
 nrrdMetaData.comments = cell(0);
 
 currentLine = fgetl(hFile);
@@ -65,11 +65,11 @@ while ~isempty(currentLine) && ischar(currentLine) %NRRD separates data from hea
         if isempty(lineContent)
             warn(['Could not parse line: "' lineContent '"']);
         elseif isequal(lineContent{1}{2},' ') %space after colon refers to "field"
-            fieldname = regexprep(lineContent{1}{1},'[-/\s]','_');
-            nrrdMetaData.fields.(fieldname) = lineContent{1}{3};
+            nrrdMetaData.fields{end+1,1} = lineContent{1}{1}; %Fieldname
+            nrrdMetaData.fields{end,2} = lineContent{1}{3}; %Information
         elseif isequal(lineContent{1}{2},'=') %= after colon refers to key-value pair
-            key = regexprep(lineContent{1}{1},'[-/\s]','_');
-            nrrdMetaData.keys.(key) = lineContent{1}{3};
+            nrrdMetaData.keys{end+1,1} = lineContent{1}{1}; %Key
+            nrrdMetaData.keys{end,2} = lineContent{1}{3}; %Value
         else
             warn(['Could not parse line: "' lineContent '"']);
         end        
@@ -80,12 +80,14 @@ end
 %% Interpret Headers
 %check for the always required data type (and endian if required)
 doSwapBytes = false; %If endian differs
-if isfield(nrrdMetaData.fields,'type')
-    datatype = getMATLABdataType(nrrdMetaData.fields.type);
+typeFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'type'));
+if ~isempty(typeFieldIx)
+    datatype = getMATLABdataType(nrrdMetaData.fields{typeFieldIx,2});
     %if size of the datatype is > 1 byte, we need endian information
     if ~isequal(datatype(end),'8')
-        if isfield(nrrdMetaData.fields,'endian')
-            if ~isequal(nrrdMetaData.fields.endian,'little') && ~isequal(nrrdMetaData.fields.endian,'big')
+        endianFieldIx = find(ismember(nrrdMetaData.fields(:,1),'endian'));
+        if ~isempty(endianFieldIx)
+            if ~isequal(nrrdMetaData.fields{endianFieldIx,2},'little') && ~isequal(nrrdMetaData.fields{endianFieldIx,2},'big')
                 error(['Datatype is ' datatype ', thus endian information is required but could not be interpreted!']);
             end;
             %Now we compare the file endian to the system endian
@@ -98,7 +100,7 @@ if isfield(nrrdMetaData.fields,'type')
                 endian = 'little';
             end;
             %now compare to file endian and set flag if appropriate
-            if ~isequal(endian,nrrdMetaData.fields.endian)
+            if ~isequal(endian,nrrdMetaData.fields{endianFieldIx,2})
                 doSwapBytes = true;
             end
         else
@@ -112,8 +114,9 @@ else
 end
 
 %Check for the always required image dimension
-if isfield(nrrdMetaData.fields,'dimension')
-    [metadata.dimension,success] = str2num(nrrdMetaData.fields.dimension);
+dimFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'dimension')); 
+if ~isempty(dimFieldIx)
+    [metadata.dimension,success] = str2num(nrrdMetaData.fields{dimFieldIx,2});
     if ~success
         error('Could not read required dimension field');
     end
@@ -122,8 +125,9 @@ else
 end
 
 %Check for size / dim length
-if isfield(nrrdMetaData.fields,'sizes')
-    sizes = textscan(nrrdMetaData.fields.sizes,'%d');
+sizeFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'sizes')); 
+if ~isempty(sizeFieldIx)
+    sizes = textscan(nrrdMetaData.fields{sizeFieldIx,2},'%d');
     if numel(sizes{1}) ~= metadata.dimension || ~all(sizes{1} > 0) 
         error('Incorrect size definition!');
     end
@@ -134,8 +138,10 @@ end
 
 %Check for resolution
 %Here we need either spacings ore space directions
-if isfield(nrrdMetaData.fields,'spacings')
-    resolutions = textscan(nrrdMetaData.fields.spacings,'%f');
+spacingFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'spacings'));
+spaceDirFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'space directions'));
+if ~isempty(spacingFieldIx)
+    resolutions = textscan(nrrdMetaData.fields{spacingFieldIx,2},'%f');
     if numel(resolutions{1}) ~= metadata.dimension
         error('Incorrect spacings definition');
     end
@@ -145,7 +151,7 @@ if isfield(nrrdMetaData.fields,'spacings')
     %default order 2 1 3)
     metadata.axisPermutation = [1 2 3];
     
-elseif isfield(nrrdMetaData.fields,'space_directions')
+elseif ~isempty(spaceDirFieldIx)
     %space directions are written in vector format
     %first create the scanning string
     vectorstring = '(';
@@ -154,7 +160,7 @@ elseif isfield(nrrdMetaData.fields,'space_directions')
     end
     vectorstring(end) = ')';
     %Get the vectors
-    vectors = textscan(nrrdMetaData.fields.space_directions,vectorstring);
+    vectors = textscan(nrrdMetaData.fields{spaceDirFieldIx,2},vectorstring);
     
     %At the moment we only support cartesian basis vectors
     %this gives us the permutation to align with the MATLAB default
@@ -174,25 +180,30 @@ else
     warn('No Resolution Information available');
 end
 
-if isfield(nrrdMetaData.fields,'space_origin')
+%find the origin if we have one
+originFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'space origin'));
+if ~isempty(originFieldIx)
     %first create the scanning string
     vectorstring = '(';
     for c=1:metadata.dimension
         vectorstring = [vectorstring '%f,'];
     end
-    originVector = textscan(nrrdMetaData.fields.space_origin,vectorstring);
+    originVector = textscan(nrrdMetaData.fields{originFieldIx,2},vectorstring);
     for c=1:metadata.dimension
         metadata.imageOrigin(c) = originVector{c};
     end
 end
 
 %Coordinate system - optional
-if isfield(nrrdMetaData.fields,'space')
-    metadata.coordinateSystem = nrrdMetaData.fields.space;
+originFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'space'));
+if ~isempty(originFieldIx)
+    metadata.coordinateSystem = nrrdMetaData.fields{originFieldIx,2};
 end
     
 %Check for separate file
-if isfield(nrrdMetaData.fields,'data file') || isfield(nrrdMetaData.fields,'datafile')
+data_fileFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'data file'));
+datafileFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'datafile'));
+if ~isempty(data_fileFieldIx) || ~isempty(datafileFieldIx)
     error('Sorry! We currently do not support detached data files!');
     %Proposed workflow:
     %check for data file    
@@ -204,10 +215,11 @@ end
 
 %% Read Data
 %Check for encoding
-if ~isfield(nrrdMetaData.fields,'encoding')
+encodingFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'encoding'));
+if isempty(encodingFieldIx)
     error('Could not find required "encoding" field!');
 end
-switch nrrdMetaData.fields.encoding
+switch nrrdMetaData.fields{encodingFieldIx,2}
     case 'raw'
         cube = fread(hFile,prod(metadata.cubeDim), metadata.datatype);
     case {'txt','text','ascii'}
@@ -291,25 +303,21 @@ function datatype = getMATLABdataType(typestring)
 %The typedefinitions are taken directly from Section 5 of the NRRD
 %definition
 switch typestring
-    case {'signed char', 'int8', 'int8_t'}
+    case {'signed char','int8','int8_t'}
         datatype = 'int8';     
-    case {'uchar', 'unsigned char', 'uint8', 'uint8_t'}
+    case {'uchar','unsigned char','uint8','uint8_t'}
         datatype = 'uint8';        
-    case {'short', 'short int', 'signed short', 'signed short int', ...
-            'int16', 'int16_t'}
+    case {'short','short int','signed short','signed short int','int16','int16_t'}
         datatype = 'int16';        
-    case {'ushort', 'unsigned short', 'unsigned short int', 'uint16', ...
-            'uint16_t'}
+    case {'ushort','unsigned short','unsigned short int','uint16','uint16_t'}
         datatype = 'uint16';        
-    case {'int', 'signed int', 'int32', 'int32_t'}
+    case {'int','signed int','int32','int32_t'}
         datatype = 'int32';        
-    case {'uint', 'unsigned int', 'uint32', 'uint32_t'}
+    case {'uint','unsigned int','uint32','uint32_t'}
         datatype = 'uint32';        
-    case {'longlong', 'long long', 'long long int', 'signed long long', ...
-            'signed long long int', 'int64', 'int64_t'}
+    case {'longlong','long long','long long int','signed long long','signed long long int','int64','int64_t'}
         datatype = 'int64';        
-    case {'ulonglong', 'unsigned long long', 'unsigned long long int', ...
-            'uint64', 'uint64_t'}
+    case {'ulonglong', 'unsigned long long', 'unsigned long long int','uint64','uint64_t'}
         datatype = 'uint64';        
     case 'float'
         datatype = 'single';        

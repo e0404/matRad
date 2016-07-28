@@ -1,4 +1,4 @@
-function matRad_writeNRRD(filename,cube,datatype,metadata)
+function matRad_writeNRRD(filename,cube,metadata)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad NRRD writer
 % 
@@ -42,11 +42,11 @@ header = sprintf('%s\n',nrrdVersionString);
 header = header_addComment(header,'Created With matRad - An open source multi-modality radiation treatment planning sytem');
 
 %Add Datatype field
-header = header_addField(header,'type',datatype);
+header = header_addField(header,'type',matlabTypeToNRRD(metadata.datatype));
 %NRRD wants to know how the bytes are aligned for datatypes > 1 byte
 %(little endian vs big endian)
 try
-    z = zeros(1,datatype);
+    z = zeros(1,metadata.datatype);
     varInfo = whos('z');
     if varInfo.bytes > 1
         [~,~,endian] = computer;
@@ -60,7 +60,7 @@ try
         end
     end
 catch
-    error(['Unknown datatype: ' datatype']);
+    error(['Unknown datatype: ' metadata.datatype']);
 end
 
 
@@ -76,7 +76,7 @@ if metadata.compress
         tmpRawFile = [tempname() '.bin'];
         fTmp = fopen(tmpRawFile, 'wb');
         
-        fwrite(fTmp,cube,datatype);
+        fwrite(fTmp,cube,metadata.datatype);
         fclose(fTmp);
         
         %Now zip the file
@@ -94,7 +94,7 @@ if metadata.compress
         delete(tmpRawFile,fNameZip);
         
         %Set the datatype to binary for writing the zipped data
-        datatype = 'uint8';
+        metadata.datatype = 'uint8';
         header = header_addField(header,'encoding','gzip');
     catch
         warn('Could not open temporary file, writing without compression!');
@@ -180,14 +180,13 @@ try
     fprintf(fileHandle,'%s\n',header);
     
     %Write raw or compressed data to file
-    fwrite(fileHandle,fileData,datatype);
+    fwrite(fileHandle,fileData,metadata.datatype);
     fclose(fileHandle);
     
 catch MExc
     fclose('all');
     error(sprintf('File %s could not be written!\n%s',filename,getReport(MExc)));
 end
-fprintf('File written to %s...\n',filename);
 
 end
 
@@ -220,5 +219,16 @@ function strOutput = matVec2nrrdVec(V)
         strOutput = [strOutput num2str(V(v)) ','];
     end
     strOutput = [strOutput(1:end-1) ')'];
+end
+
+%Used to map matlab definitions of datatypes to the NRRD specs
+%seems to be only single has to be converted to float
+function newType = matlabTypeToNRRD(datatype)
+switch datatype
+    case 'single'
+        newType = 'float';
+    otherwise
+        newType = datatype;
+end
 end
         

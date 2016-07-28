@@ -9,13 +9,17 @@ function matRad_writeCube(filepath,cube,datatype,metadata)
 %   filepath:                   full output path. needs the right extension
 %                               to choose the appropriate writer
 %   cube:                       cube that is to be written
+%   datatype:                   MATLAB numeric datatype
 %   meta:                       meta-information in struct. 
 %                               Necessary fieldnames are:
 %                               - resolution: [x y z]
+%                               - datatype: numeric MATLAB-Datatype
 %                               Optional:
 %                               - axisPermutation (matRad default [2 1 3])
 %                               - coordinateSystem (matRad default 'LPS')
 %                               - imageOrigin (as used in DICOM)
+%                               - dataUnit (i.e. Gy..)
+%                               - dataName (i.e. dose, ED, ...)
 %                               - compress (true/false)
 %                                 (default chosen by writer)
 %
@@ -55,15 +59,28 @@ if ~isfield(metadata,'imageOrigin')
     imageExtent = metadata.resolution .* size(cube);
     metadata.imageOrigin = zeros(1,numel(imageExtent)) - (imageExtent/2);
 end
+%we can also store the center
+if ~isfield(metadata,'imageCenter')
+    metadata.imageCenter = metadata.imageOrigin + (imageExtent/2);
+end
+
+
+metadata.datatype = datatype;
     
 %% Choose writer
 %So far we only have an nrrd writer
 switch ext
     case '.nrrd'
-        matRad_writeNRRD(filepath,cube,datatype,metadata);
+        matRad_writeNRRD(filepath,cube,metadata);
+    case '.vtk'
+        matRad_writeVTK(filepath,cube,metadata);
+    case '.mha'
+        matRad_writeMHA(filepath,cube,metadata);
     otherwise
         errordlg(['No writer found for extension "' ext '"']);
 end
+
+fprintf('File written to %s...\n',filepath);
 
 
 end
