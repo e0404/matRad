@@ -450,6 +450,24 @@ if handles.State > 0
     set(handles.figure1,'UIContextMenu',contMenuStruct)
 end
 
+% --- Executes on button press in btn_export.
+function btn_export_Callback(hObject, eventdata, handles)
+% hObject    handle to btn_export (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+try
+    if ~isdeployed
+        matRadRootDir = fileparts(mfilename('fullpath'));
+        addpath(fullfile(matRadRootDir,'IO'))
+    end
+    matRad_exportGUI;
+catch
+    handles = showError(handles,'Could not export data'); 
+end
+UpdateState(handles);
+guidata(hObject,handles);
+
 function editBixelWidth_Callback(hObject, ~, handles)
 % hObject    handle to editBixelWidth (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
