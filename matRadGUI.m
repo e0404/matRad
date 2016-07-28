@@ -503,6 +503,8 @@ RadIdentifier = contents{get(hObject,'Value')};
 
 switch RadIdentifier
     case 'photons'
+        set(handles.vmcFlag,'Value',0);
+        set(handles.vmcFlag,'Enable','on')
         set(handles.radbtnBioOpt,'Value',0);
         set(handles.radbtnBioOpt,'Enable','off');
         set(handles.btnTypBioOpt,'Enable','off');
@@ -514,6 +516,8 @@ switch RadIdentifier
         set(handles.editSequencingLevel,'Enable','on');
         
     case 'protons'
+        set(handles.vmcFlag,'Value',0);
+        set(handles.vmcFlag,'Enable','off')
         set(handles.radbtnBioOpt,'Value',0);
         set(handles.radbtnBioOpt,'Enable','off');
         set(handles.btnTypBioOpt,'Enable','off');
@@ -525,6 +529,8 @@ switch RadIdentifier
         set(handles.editSequencingLevel,'Enable','off');
         
     case 'carbon'
+        set(handles.vmcFlag,'Value',0);
+        set(handles.vmcFlag,'Enable','off')        
         set(handles.radbtnBioOpt,'Value',1);
         set(handles.radbtnBioOpt,'Enable','on');
         set(handles.btnTypBioOpt,'Enable','on');
@@ -675,7 +681,11 @@ end
 % carry out dose calculation
 try
     if strcmp(pln.radiationMode,'photons')
-        dij = matRad_calcPhotonDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
+        if handles.vmcFlag.Value == 0
+            dij = matRad_calcPhotonDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
+        elseif handles.vmcFlag.Value == 1
+            dij = matRad_calcPhotonDoseVmc(evalin('base','ct'),stf,pln,evalin('base','cst'));
+        end
     elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
         dij = matRad_calcParticleDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
     end
@@ -2052,8 +2062,8 @@ if handles.State > 0
         set(handles.btnSetTissue,'Enable','on');
     else
         set(handles.radbtnBioOpt,'Enable','off');
-         set(handles.btnTypBioOpt,'Enable','off');
-         set(handles.btnSetTissue,'Enable','off');
+        set(handles.btnTypBioOpt,'Enable','off');
+        set(handles.btnSetTissue,'Enable','off');
     end
 end 
 
@@ -2719,7 +2729,11 @@ if evalin('base','exist(''pln'',''var'')') && ...
 
     % recalculate influence matrix
     if strcmp(pln.radiationMode,'photons')
-        dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+        if handles.vmcFlag.Value == 0
+            dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+        elseif handles.vmcFlag.Value == 1
+            dij = matRad_calcPhotonDoseVmc(evalin('base','ct'),stf,pln,evalin('base','cst'));
+        end
     elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
         dij = matRad_calcParticleDose(ct,stf,pln,cst);
     end
@@ -3064,3 +3078,12 @@ function sliderOffset_CreateFcn(hObject, ~, ~)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+
+
+% --- Executes on button press in vmcFlag.
+function vmcFlag_Callback(hObject, eventdata, handles)
+% hObject    handle to vmcFlag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of vmcFlag
