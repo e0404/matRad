@@ -51,8 +51,20 @@ waitbar(1 / steps)
 resolution.x = files.resx;
 resolution.y = files.resy;
 resolution.z = files.resz; % [mm] / lps coordinate system
-ct = matRad_importDicomCt(files.ct, resolution, dicomMetaBool); 
-    
+if files.useDoseGrid && isfield(files,'rtdose')
+    % get grid from dose cube
+    doseInfo = dicominfo(files.rtdose{1,1});
+    doseGrid{1} = doseInfo.ImagePositionPatient(1) + doseInfo.PixelSpacing(1) * double(0:doseInfo.Columns - 1);
+    doseGrid{2} = doseInfo.ImagePositionPatient(2) + doseInfo.PixelSpacing(2) * double(0:doseInfo.Rows - 1);
+    doseGrid{3} = doseInfo.ImagePositionPatient(3) + doseInfo.GridFrameOffsetVector(:)';
+
+    % get ct on grid
+    ct = matRad_importDicomCt(files.ct, resolution, dicomMetaBool,doseGrid); 
+
+else
+    ct = matRad_importDicomCt(files.ct, resolution, dicomMetaBool); 
+end
+
 if ~isempty(files.rtss)
     
     %% import structure data

@@ -1,4 +1,4 @@
-function ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, visBool)
+function ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to import dicom ct data
 % 
@@ -10,6 +10,7 @@ function ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, visBool)
 %   resolution:   	resolution of the imported ct cube, i.e. this function
 %                   will interpolate to a different resolution if desired
 %   dicomMetaBool:  store complete dicom information if true
+%   grid:           optional: a priori grid specified for interpolation
 %   visBool:        optional: turn on/off visualization
 %
 % output
@@ -183,7 +184,11 @@ end
 
 %% interpolate cube
 fprintf('\nInterpolating CT cube...');
-ct = matRad_interpDicomCtCube(origCt, ctInfo, resolution);
+if exist('grid','var')
+    ct = matRad_interpDicomCtCube(origCt, ctInfo, resolution, grid);
+else
+    ct = matRad_interpDicomCtCube(origCt, ctInfo, resolution);
+end
 fprintf('finished!\n');
 
 %% remember some parameters of original dicom
