@@ -246,9 +246,9 @@ if handles.State > 0
     % define context menu for structures
     for i = 1:size(cst,1)
         if cst{i,5}.Visible
-            handles.legendTable.Data(i,1) = {true};
+            handles.VOIPlotFlag(i) = true;
         else
-            handles.legendTable.Data(i,1) = {false};
+            handles.VOIPlotFlag(i) = false;
         end
     end
 end
@@ -387,9 +387,9 @@ if handles.State > 0
      % define context menu for structures
     for i = 1:size(cst,1)
         if cst{i,5}.Visible
-            handles.legendTable.Data(i,1) = {true};
+            handles.VOIPlotFlag(i) = true;
         else
-            handles.legendTable.Data(i,1) = {false};
+            handles.VOIPlotFlag(i) = false;
         end
     end
 end
@@ -434,9 +434,9 @@ if handles.State > 0
     cst =  evalin('base','cst');
     for i = 1:size(cst,1)
         if cst{i,5}.Visible
-            handles.legendTable.Data(i,1) = {true};
+            handles.VOIPlotFlag(i) = true;
         else
-            handles.legendTable.Data(i,1) = {false};
+            handles.VOIPlotFlag(i) = false;
         end
     end
 end
@@ -956,7 +956,7 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
     colors = colors(round(linspace(1,63,size(cst,1))),:);
     mask = zeros(ct.cubeDim); % create zero cube with same dimeonsions like dose cube
     for s = 1:size(cst,1)
-        if ~strcmp(cst{s,3},'IGNORED') && handles.legendTable.Data{s,1}
+        if ~strcmp(cst{s,3},'IGNORED') && handles.VOIPlotFlag(s)
             mask(:) = 0;
             mask(cst{s,4}{1}) = 1;
             if plane == 1 && sum(sum(mask(slice,:,:))) > 0
@@ -1566,12 +1566,15 @@ function setCstTable(handles,cst)
 colors = colorcube;
 colors = colors(round(linspace(1,63,size(cst,1))),:);
 
-handles.legendTable.Data      = cell(size(cst,1),3);
-handles.legendTable.Data(:,3) = {cst{:,2}};
 for s = 1:size(cst,1)
+    handles.VOIPlotFlag(s) = cst{s,5}.Visible;
     clr = dec2hex(round(colors(s,:)*255),2)';
     clr = ['#';clr(:)]';
-    handles.legendTable.Data(s,2) = {['<html><table border=0 width=40 bgcolor=',clr,'><TR><TD>','','</TD></TR> </table></html>']};
+    if handles.VOIPlotFlag(s)
+        handles.legendTable.String{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
+    else
+        handles.legendTable.String{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
+    end
 end
 
 columnname = {'VOI name','VOI type','priority','obj. / const.','penalty','dose', 'EUD','volume','robustness'};
@@ -3073,15 +3076,43 @@ function vmcFlag_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of vmcFlag
 
 
-
-% --- Executes when entered data in editable cell(s) in legendTable.
-function legendTable_CellEditCallback(hObject, eventdata, handles)
+% --- Executes on selection change in legendTable.
+function legendTable_Callback(hObject, eventdata, handles)
 % hObject    handle to legendTable (see GCBO)
-% eventdata  structure with the following fields (see MATLAB.UI.CONTROL.TABLE)
-%	Indices: row and column indices of the cell(s) edited
-%	PreviousData: previous data for the cell(s) edited
-%	EditData: string(s) entered by the user
-%	NewData: EditData or its converted form set on the Data property. Empty if Data was not changed
-%	Error: error string when failed to convert EditData to appropriate value for Data
+% eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-UpdatePlot(handles);
+
+% Hints: contents = cellstr(get(hObject,'String')) returns legendTable contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from legendTable
+cst = evalin('base','cst');
+
+colors = colorcube;
+colors = colors(round(linspace(1,63,size(cst,1))),:);
+idx    = get(hObject,'Value');
+clr    = dec2hex(round(colors(idx,:)*255),2)';
+clr    = ['#';clr(:)]';
+if handles.VOIPlotFlag(idx)
+    handles.VOIPlotFlag(idx) = false;
+    handles.legendTable.String{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
+elseif ~handles.VOIPlotFlag(idx)
+    handles.VOIPlotFlag(idx) = true;
+    handles.legendTable.String{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
+end
+
+
+guidata(hObject, handles);
+UpdatePlot(handles)
+
+
+
+% --- Executes during object creation, after setting all properties.
+function legendTable_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to legendTable (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
