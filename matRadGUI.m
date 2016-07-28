@@ -1976,7 +1976,7 @@ elseif strcmp(ObjFunction,'EUD')
 elseif sum(strcmp(ObjFunction,{'min dose constraint','max dose constraint'...
                                      'min mean dose constraint','max mean dose constraint','min max mean dose constraint'}))> 0
          
-         if isnan(str2num(data{eventdata.Indices(1),6}))
+         if isnan(data{eventdata.Indices(1),6})
                  data{eventdata.Indices(1),6} = 1;
          end
          data{eventdata.Indices(1),5} = Placeholder;
