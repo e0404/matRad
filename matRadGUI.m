@@ -189,6 +189,12 @@ try
         cst = evalin('base','cst');
         setCstTable(handles,cst);
         handles.State = 1;
+        % check if contours are precomputed
+        if size(cst,2) < 7
+            cst = precomputeContours(ct,cst);
+            assignin('base','cst',cst);
+        end
+        
     elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
          handles = showError(handles,'GUI OpeningFunc: could not find cst file');
     elseif ~ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
@@ -230,6 +236,14 @@ else
     set(handles.popupDisplayOption,'String','no option available');
     handles.SelectedDisplayOption='';
     handles.SelectedDisplayOptionIdx=1;
+end
+
+% precompute iso dose lines
+if handles.State == 3
+    resultGUI = evalin('base','resultGUI');
+    if ~isfield(resultGUI,'isoDoseContours')
+        handles = precomputeIsoDoseLevels(handles);
+    end
 end
 
 %per default the first beam is selected for the profile plot
@@ -338,7 +352,9 @@ try
     setCstTable(handles,cst);
     handles.TableChanged = false;
     set(handles.popupTypeOfPlot,'Value',1);
-
+    % precompute contours 
+    cst = precomputeContours(ct,cst);
+    
     assignin('base','ct',ct);
     assignin('base','cst',cst);
 catch
@@ -909,51 +925,37 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
 
         %% plot iso dose lines
         if get(handles.radiobtnIsoDoseLines,'Value')
-                colormap(jet)
-                MaxVal  = max(mVolume(:)); 
-                if length(handles.IsoDose.Levels) == 1 && handles.IsoDose.Levels(1)==0
-                   SpacingLower = 0.1;
-                   SpacingUpper = 0.05;
-                   vLow  = 0.1:SpacingLower:0.9;
-                   vHigh = 0.95:SpacingUpper:1.2;
-                   vLevels = [vLow vHigh];
+            resultGUI = evalin('base','resultGUI');
+            % get current isoDoseLevels
+            if length(handles.IsoDose.Levels) == 1 && handles.IsoDose.Levels(1)==0
+                SpacingLower = 0.1;
+                SpacingUpper = 0.05;
+                vLow  = 0.1:SpacingLower:0.9;
+                vHigh = 0.95:SpacingUpper:1.2;
+                vLevels = [vLow vHigh];
 
-                   vLevels = (round((vLevels.*MaxVal)*100))/100;
-                else
-                   vLevels = handles.IsoDose.Levels;
+                vLevels = (round((vLevels.*handles.maxDoseVal)*100))/100;
+            else
+                vLevels = handles.IsoDose.Levels;
+            end
+            if any(resultGUI.isoDoseContours{slice,plane}(:))
+                colors = jet;
+                colors = colors(round(63*vLevels(vLevels <= handles.maxDoseVal)./handles.maxDoseVal),:);
+                lower = 1;
+                while lower-1 ~= numel(resultGUI.isoDoseContours{slice,plane})/2;
+                    steps = resultGUI.isoDoseContours{slice,plane}(2,lower);
+                    line(resultGUI.isoDoseContours{slice,plane}(1,lower+1:lower+steps),...
+                        resultGUI.isoDoseContours{slice,plane}(2,lower+1:lower+steps),...
+                        'Color',colors(vLevels(:) == resultGUI.isoDoseContours{slice,plane}(1,lower),:),'LineWidth',1.5);
+                    if get(handles.radiobtnIsoDoseLinesLabels,'Value') == 1
+                        text(resultGUI.isoDoseContours{slice,plane}(1,lower+1),...
+                            resultGUI.isoDoseContours{slice,plane}(2,lower+1),...
+                            num2str(resultGUI.isoDoseContours{slice,plane}(1,lower)))
+                    end
+                    lower = lower+steps+1;
                 end
-                
-                if plane == 1  % Coronal plane
-                    Slice=squeeze(mVolume(slice,:,:));
-                    if sum(Slice(:))>1
-                        [C,myContour] = contour(Slice,vLevels);
-                    end
-                elseif plane == 2 % Sagittal plane
-                    Slice=squeeze(mVolume(:,slice,:));
-                    if sum(Slice(:))>1
-                        [C,myContour] = contour(Slice,vLevels);
-                    end
-                elseif plane == 3 % Axial plane
-                    Slice=squeeze(mVolume(:,:,slice));
-                    if sum(Slice(:))>1
-                        hold on
-                     [C,myContour] = contour(Slice,vLevels,'LevelListMode','manual','LineWidth',1.5);
-                    end
-                end
-
-                 if sum(Slice(:))>1
-                    caxis(handles.axesFig,[0, handles.maxDoseVal]);
-                    clabel(C,myContour,vLevels,'LabelSpacing',150)
-                    % turn off legend for this data set
-                    hAnnotation = get(myContour,'Annotation');
-                    hLegendEntry = get(hAnnotation','LegendInformation');
-                    set(hLegendEntry,'IconDisplayStyle','off');     
-                    if get(handles.radiobtnIsoDoseLinesLabels,'Value') == 0
-                        set(myContour,'ShowText','off')
-                    end
-                 end
+            end
         end
-
 end
 
 
@@ -974,27 +976,19 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
     colors = colorcube;
     hold on,
     colors = colors(round(linspace(1,63,size(cst,1))),:);
-    mask = zeros(ct.cubeDim); % create zero cube with same dimeonsions like dose cube
     for s = 1:size(cst,1)
         if ~strcmp(cst{s,3},'IGNORED') && vBoolPlotVOI(s)
-            mask(:) = 0;
-            mask(cst{s,4}{1}) = 1;
-            if plane == 1 && sum(sum(mask(slice,:,:))) > 0
-                contour(handles.axesFig,squeeze(mask(slice,:,:)),.5*[1 1],'Color',colors(s,:),'LineWidth',2,'DisplayName',cst{s,2});
-            elseif plane == 2 && sum(sum(mask(:,slice,:))) > 0
-                contour(handles.axesFig,squeeze(mask(:,slice,:)),.5*[1 1],'Color',colors(s,:),'LineWidth',2,'DisplayName',cst{s,2});
-            elseif plane == 3 && sum(sum(mask(:,:,slice))) > 0
-                contour(handles.axesFig,squeeze(mask(:,:,slice)),.5*[1 1],'Color',colors(s,:),'LineWidth',2,'DisplayName',cst{s,2});
+            if any(cst{s,7}{slice,plane}(:))
+                lower = 1;
+                while lower-1 ~= numel(cst{s,7}{slice,plane})/2;
+                    steps = cst{s,7}{slice,plane}(2,lower);
+                    line(cst{s,7}{slice,plane}(1,lower+1:lower+steps),...
+                        cst{s,7}{slice,plane}(2,lower+1:lower+steps),'Color',colors(s,:),'LineWidth',2);
+                    lower = lower+steps+1;
+                end
             end
         end
     end
-    warning('off','MATLAB:legend:PlotEmpty')
-    myLegend = legend('show','location','NorthEast');
-    set(myLegend,'FontSize',defaultFontSize,'Interpreter','none');
-    set(myLegend,'color','none');
-    set(myLegend,'TextColor', [1 1 1]);
-    legend boxoff
-    warning('on','MATLAB:legend:PlotEmpty')
 end
 
 %% Set axis labels
@@ -1433,6 +1427,8 @@ set(Figures, 'pointer', 'arrow');
 set(InterfaceObj,'Enable','on');
 
 handles.rememberCurrAxes = false;
+handles.IsoDose.Levels = 0;
+handles = precomputeIsoDoseLevels(handles);
 UpdatePlot(handles);
 handles.rememberCurrAxes = true;
 
@@ -1544,6 +1540,8 @@ content = get(hObject,'String');
 handles.SelectedDisplayOption = content{get(hObject,'Value'),1};
 handles.SelectedDisplayOptionIdx = get(hObject,'Value');
 handles.maxDoseVal = 0;
+handles.IsoDose.Levels = 0;
+handles = precomputeIsoDoseLevels(handles);
 guidata(hObject, handles);
 UpdatePlot(handles);
 
@@ -2396,7 +2394,10 @@ newSlice = max(newSlice,get(handles.sliderSlice,'Min'));
 set(handles.sliderSlice,'Value',newSlice);
 
 % update plot
+profile on;
 UpdatePlot(handles);
+profile off;
+profile viewer;
 
 % update handles object
 guidata(src,handles);
@@ -2985,7 +2986,79 @@ end
 close(AllFigHandles(ixHandle));
 assignin('base','resultGUI',resultGUI);
 
+% precompute contours of VOIs
+function cst = precomputeContours(ct,cst)
+mask = zeros(ct.cubeDim); % create zero cube with same dimeonsions like dose cube
+for s = 1:size(cst,1)
+    cst{s,7} = cell(max(ct.cubeDim(:)),3);
+    mask(:) = 0;
+    mask(cst{s,4}{1}) = 1;    
+    for slice = 1:ct.cubeDim(1)
+        if sum(sum(mask(slice,:,:))) > 0
+             cst{s,7}{slice,1} = contourc(squeeze(mask(slice,:,:)),.5*[1 1]);
+        end
+    end
+    for slice = 1:ct.cubeDim(2)
+        if sum(sum(mask(:,slice,:))) > 0
+             cst{s,7}{slice,2} = contourc(squeeze(mask(:,slice,:)),.5*[1 1]);
+        end
+    end
+    for slice = 1:ct.cubeDim(3)
+        if sum(sum(mask(:,:,slice))) > 0
+             cst{s,7}{slice,3} = contourc(squeeze(mask(:,:,slice)),.5*[1 1]);
+        end
+    end
+end
 
+% precompute isodose levels
+function handles = precomputeIsoDoseLevels(handles)
+    resultGUI = evalin('base','resultGUI');
+    % select first cube if selected option does not exist
+    if ~isfield(resultGUI,handles.SelectedDisplayOption)
+        CubeNames = fieldnames(resultGUI);
+        handles.SelectedDisplayOption = CubeNames{1,1};
+    end
+    mVolume = getfield(resultGUI,handles.SelectedDisplayOption);
+    CutOffLevel = 0.03;
+    
+    handles.maxDoseVal = max(mVolume(:));
+
+    % make sure to exploit full color range 
+    mVolume(mVolume<CutOffLevel*handles.maxDoseVal) = 0;
+    
+    if length(handles.IsoDose.Levels) == 1 && handles.IsoDose.Levels(1)==0
+        SpacingLower = 0.1;
+        SpacingUpper = 0.05;
+        vLow  = 0.1:SpacingLower:0.9;
+        vHigh = 0.95:SpacingUpper:1.2;
+        vLevels = [vLow vHigh];
+
+        vLevels = (round((vLevels.*handles.maxDoseVal)*100))/100;
+    else
+        vLevels = handles.IsoDose.Levels;
+    end
+    dim = size(resultGUI.physicalDose);
+    resultGUI.isoDoseContours = cell(max(dim(:)),3);
+    for slice = 1:dim(1)
+        if sum(sum(mVolume(slice,:,:))) > 0
+             resultGUI.isoDoseContours{slice,1} = contourc(squeeze(mVolume(slice,:,:)),vLevels);
+        end
+    end
+    for slice = 1:dim(2)
+        if sum(sum(mVolume(:,slice,:))) > 0
+             resultGUI.isoDoseContours{slice,2} = contourc(squeeze(mVolume(:,slice,:)),vLevels);
+        end
+    end
+    for slice = 1:dim(3)
+        if sum(sum(mVolume(:,:,slice))) > 0
+             resultGUI.isoDoseContours{slice,3} = contourc(squeeze(mVolume(:,:,slice)),vLevels);
+        end
+    end         
+    handles.IsoDose.Levels = vLevels;
+    assignin('base','resultGUI',resultGUI);
+    
+
+   
 %% CREATE FUNCTIONS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
