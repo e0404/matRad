@@ -131,6 +131,7 @@ end
 %initialize maximum dose for visualization to Zero
 handles.maxDoseVal     = 0;
 handles.IsoDose.Levels = 0;
+handles.plotColorbar = 1;
 %seach for availabes machines
 handles.Modalities = {'photons','protons','carbon'};
 for i = 1:length(handles.Modalities)
@@ -728,8 +729,6 @@ function UpdatePlot(handles)
 defaultFontSize = 8;
 currAxes = axis;
 
-cla(handles.axesFig,'reset');
-
 if handles.State == 0
     return
 elseif handles.State > 0
@@ -892,34 +891,32 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
             end
 
             % plot colorbar
-            v=version;
-            if str2double(v(1:3))>=8.5
-                cBarHandel = colorbar(handles.axesFig,'colormap',jet,'FontSize',defaultFontSize,'yAxisLocation','right');
-            else
-                cBarHandel = colorbar('peer',handles.axesFig,'FontSize',defaultFontSize,'yAxisLocation','right');
+            if handles.plotColorbar == 1;
+                v=version;
+                if str2double(v(1:3))>=8.5
+                    cBarHandel = colorbar(handles.axesFig,'colormap',jet,'FontSize',defaultFontSize,'yAxisLocation','right');
+                else
+                    cBarHandel = colorbar('peer',handles.axesFig,'FontSize',defaultFontSize,'yAxisLocation','right');
+                end
+                Idx = find(strcmp(handles.SelectedDisplayOption,DispInfo(:,1)));
+                set(get(cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
+                % do not interprete as tex syntax
+                set(get(cBarHandel,'ylabel'),'interpreter','none');
+
+                if isempty(strfind(handles.SelectedDisplayOption,'RBE'))
+                    set(cBarHandel,'YLim',[0 handles.maxDoseVal]);
+                    caxis(handles.axesFig,[0,handles.maxDoseVal])
+                else
+                    set(cBarHandel,'YLim',[0 handles.maxDoseVal]);
+                    caxis(handles.axesFig,[0,handles.maxDoseVal])
+                end
             end
-            Idx = find(strcmp(handles.SelectedDisplayOption,DispInfo(:,1)));
-            set(get(cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
-            % do not interprete as tex syntax
-            set(get(cBarHandel,'ylabel'),'interpreter','none');
-            
-            if isempty(strfind(handles.SelectedDisplayOption,'RBE'))
-                set(cBarHandel,'YLim',[0 handles.maxDoseVal]);
-                caxis(handles.axesFig,[0,handles.maxDoseVal])
-            else
-                set(cBarHandel,'YLim',[0 handles.maxDoseVal]);
-                caxis(handles.axesFig,[0,handles.maxDoseVal])
-            end
-
-
-
         end
         
     axes(handles.axesFig),hold on 
 
         %% plot iso dose lines
         if get(handles.radiobtnIsoDoseLines,'Value')
-            resultGUI = evalin('base','resultGUI');
             % get current isoDoseLevels
             if length(handles.IsoDose.Levels) == 1 && handles.IsoDose.Levels(1)==0
                 SpacingLower = 0.1;
@@ -932,19 +929,19 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
             else
                 vLevels = handles.IsoDose.Levels;
             end
-            if any(resultGUI.isoDoseContours{slice,plane}(:))
+            if any(handles.isoDoseContours{slice,plane}(:))
                 colors = jet;
                 colors = colors(round(63*vLevels(vLevels <= handles.maxDoseVal)./handles.maxDoseVal),:);
                 lower = 1;
-                while lower-1 ~= numel(resultGUI.isoDoseContours{slice,plane})/2;
-                    steps = resultGUI.isoDoseContours{slice,plane}(2,lower);
-                    line(resultGUI.isoDoseContours{slice,plane}(1,lower+1:lower+steps),...
-                        resultGUI.isoDoseContours{slice,plane}(2,lower+1:lower+steps),...
-                        'Color',colors(vLevels(:) == resultGUI.isoDoseContours{slice,plane}(1,lower),:),'LineWidth',1.5);
+                while lower-1 ~= numel(handles.isoDoseContours{slice,plane})/2;
+                    steps = handles.isoDoseContours{slice,plane}(2,lower);
+                    line(handles.isoDoseContours{slice,plane}(1,lower+1:lower+steps),...
+                        handles.isoDoseContours{slice,plane}(2,lower+1:lower+steps),...
+                        'Color',colors(vLevels(:) == handles.isoDoseContours{slice,plane}(1,lower),:),'LineWidth',1.5);
                     if get(handles.radiobtnIsoDoseLinesLabels,'Value') == 1
-                        text(resultGUI.isoDoseContours{slice,plane}(1,lower+1),...
-                            resultGUI.isoDoseContours{slice,plane}(2,lower+1),...
-                            num2str(resultGUI.isoDoseContours{slice,plane}(1,lower)))
+                        text(handles.isoDoseContours{slice,plane}(1,lower+1),...
+                            handles.isoDoseContours{slice,plane}(2,lower+1),...
+                            num2str(handles.isoDoseContours{slice,plane}(1,lower)))
                     end
                     lower = lower+steps+1;
                 end
@@ -1410,8 +1407,10 @@ set(InterfaceObj,'Enable','on');
 
 handles.rememberCurrAxes = false;
 handles.IsoDose.Levels = 0;
+handles.plotColorbar = 1;
 handles = precomputeIsoDoseLevels(handles);
 UpdatePlot(handles);
+handles.plotColorbar = 0;
 handles.rememberCurrAxes = true;
 
 UpdateState(handles);
@@ -1513,7 +1512,6 @@ end
 handles.rememberCurrAxes = false;
 UpdatePlot(handles);
 handles.rememberCurrAxes = true;
-
 guidata(hObject, handles);
 
 % --- Executes on selection change in popupDisplayOption.
@@ -1523,9 +1521,11 @@ handles.SelectedDisplayOption = content{get(hObject,'Value'),1};
 handles.SelectedDisplayOptionIdx = get(hObject,'Value');
 handles.maxDoseVal = 0;
 handles.IsoDose.Levels = 0;
+handles.plotColorbar = 1;
 handles = precomputeIsoDoseLevels(handles);
-guidata(hObject, handles);
 UpdatePlot(handles);
+handles.plotColorbar = 0;
+guidata(hObject, handles);
 
 % --- Executes on slider movement.
 function sliderBeamSelection_Callback(hObject, ~, handles)
@@ -3032,24 +3032,23 @@ function handles = precomputeIsoDoseLevels(handles)
         vLevels = handles.IsoDose.Levels;
     end
     dim = size(resultGUI.physicalDose);
-    resultGUI.isoDoseContours = cell(max(dim(:)),3);
+    handles.isoDoseContours = cell(max(dim(:)),3);
     for slice = 1:dim(1)
         if sum(sum(mVolume(slice,:,:))) > 0
-             resultGUI.isoDoseContours{slice,1} = contourc(squeeze(mVolume(slice,:,:)),vLevels);
+             handles.isoDoseContours{slice,1} = contourc(squeeze(mVolume(slice,:,:)),vLevels);
         end
     end
     for slice = 1:dim(2)
         if sum(sum(mVolume(:,slice,:))) > 0
-             resultGUI.isoDoseContours{slice,2} = contourc(squeeze(mVolume(:,slice,:)),vLevels);
+             handles.isoDoseContours{slice,2} = contourc(squeeze(mVolume(:,slice,:)),vLevels);
         end
     end
     for slice = 1:dim(3)
         if sum(sum(mVolume(:,:,slice))) > 0
-             resultGUI.isoDoseContours{slice,3} = contourc(squeeze(mVolume(:,:,slice)),vLevels);
+             handles.isoDoseContours{slice,3} = contourc(squeeze(mVolume(:,:,slice)),vLevels);
         end
     end         
     handles.IsoDose.Levels = vLevels;
-    assignin('base','resultGUI',resultGUI);
     
 
    
