@@ -698,7 +698,7 @@ try
     UpdateState(handles);
     guidata(hObject,handles);
 catch ME
-    handles = showError(handles,{'CalcDoseCallback: Error in dose calculatio!',ME.message}); 
+    handles = showError(handles,{'CalcDoseCallback: Error in dose calculation!',ME.message}); 
     % change state from busy to normal
     set(Figures, 'pointer', 'arrow');
     set(InterfaceObj,'Enable','on');
