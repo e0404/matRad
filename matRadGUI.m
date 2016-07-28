@@ -244,16 +244,13 @@ if handles.State > 0
             'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);      
     
     % define context menu for structures
-    contMenuStruct = uicontextmenu;
-    set(handles.axesFig,'UIContextMenu',contMenuStruct);
     for i = 1:size(cst,1)
         if cst{i,5}.Visible
-            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','on');
+            handles.legendTable.Data(i,1) = {true};
         else
-            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','off');
+            handles.legendTable.Data(i,1) = {false};
         end
     end
-    set(handles.figure1,'UIContextMenu',contMenuStruct)
 end
 
 
@@ -388,16 +385,13 @@ end
 
 if handles.State > 0
      % define context menu for structures
-    contMenuStruct = uicontextmenu;
-    set(handles.axesFig,'UIContextMenu',contMenuStruct);
     for i = 1:size(cst,1)
         if cst{i,5}.Visible
-            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','on');
+            handles.legendTable.Data(i,1) = {true};
         else
-            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','off');
+            handles.legendTable.Data(i,1) = {false};
         end
     end
-    set(handles.figure1,'UIContextMenu',contMenuStruct)
 end
 
 UpdateState(handles);
@@ -438,17 +432,15 @@ guidata(hObject,handles);
 if handles.State > 0
     % define context menu for structures
     cst =  evalin('base','cst');
-    contMenuStruct = uicontextmenu;
-    set(handles.axesFig,'UIContextMenu',contMenuStruct);
     for i = 1:size(cst,1)
         if cst{i,5}.Visible
-            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','on');
+            handles.legendTable.Data(i,1) = {true};
         else
-            uimenu(contMenuStruct,'Label',cst{i,2},'Callback',@Callback_StructVisibilty,'Checked','off');
+            handles.legendTable.Data(i,1) = {false};
         end
     end
-    set(handles.figure1,'UIContextMenu',contMenuStruct)
 end
+guidata(hObject,handles);
 
 function editBixelWidth_Callback(hObject, ~, handles)
 % hObject    handle to editBixelWidth (see GCBO)
@@ -958,18 +950,6 @@ end
 
 
 %% plot VOIs
- contMenuStruct = get(handles.figure1,'UIContextMenu');
- contMenuStructChildren = get(contMenuStruct,'Children');
-%  vBoolPlotVOI   = zeros(size(cst,1),1);
-%  for i = 1:size(contMenuStructChildren,1)
-%      boolean = false;
-%      if strcmp(get(contMenuStructChildren(i),'Checked'),'on')
-%         boolean = true;
-%      end
-%      IdxInCst = find(strcmp(cst(:,2),get(contMenuStructChildren(i),'Label')));
-%      vBoolPlotVOI(IdxInCst) = boolean;
-%  end
- 
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
     colors = colorcube;
     hold on,
@@ -988,13 +968,6 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
             end
         end
     end
-%     warning('off','MATLAB:legend:PlotEmpty')
-%     myLegend = legend('show','location','NorthEast');
-%     set(myLegend,'FontSize',defaultFontSize,'Interpreter','none');
-%     set(myLegend,'color','none');
-%     set(myLegend,'TextColor', [1 1 1]);
-%     legend boxoff
-%     warning('on','MATLAB:legend:PlotEmpty')
 end
 
 %% Set axis labels
@@ -1594,7 +1567,6 @@ colors = colorcube;
 colors = colors(round(linspace(1,63,size(cst,1))),:);
 
 handles.legendTable.Data      = cell(size(cst,1),3);
-handles.legendTable.Data(:,1) = {true};
 handles.legendTable.Data(:,3) = {cst{:,2}};
 for s = 1:size(cst,1)
     clr = dec2hex(round(colors(s,:)*255),2)';
@@ -2445,13 +2417,12 @@ end
 %adapt visibilty
 cst = evalin('base','cst');
 
-contMenuStructChildren = get(get(handles.figure1,'UIContextMenu'),'Children');
-for i = 1:size(contMenuStructChildren,1)
+for i = 1:size(handles.legendTable.Data,1)
      boolean = 0;
-     if strcmp(get(contMenuStructChildren(i),'Checked'),'on')
+     if handles.legendTable.Data{i,1}
         boolean = 1;
      end
-     IdxInCst = find(strcmp(cst(:,2),get(contMenuStructChildren(i),'Label')));
+     IdxInCst = find(strcmp(cst(:,2),handles.legendTable.Data{i,3}));
      cst{IdxInCst,5}.Visible = boolean;
 end
 matRad_calcDVH(resultGUI_SelectedCube,cst,evalin('base','pln'));
