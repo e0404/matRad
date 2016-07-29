@@ -145,7 +145,7 @@ for i = 1:length(handles.Modalities)
             MachineName = Files(j).name(numel(handles.Modalities{1,i})+2:end-4);
             if isfield(handles,'Machines')
                 if sum(strcmp(handles.Machines,MachineName)) == 0
-                  handles.Machines{size(handles.Machines,1)+1} = MachineName;
+                  handles.Machines{size(handles.Machines,2)+1} = MachineName;
                 end
             else
                 handles.Machines = cell(1);
@@ -767,6 +767,8 @@ if exist('Result','var')
                     DispInfo{i,3} = '[Gy^{-2}]';
                 elseif strfind(DispInfo{i,1},'RBExD')
                     DispInfo{i,3} = '[Gy(RBE)]';
+                elseif strfind(DispInfo{i,1},'LET')
+                    DispInfo{i,3} = '[keV/um]';
                 else
                     DispInfo{i,3} = '[a.u.]';
                 end

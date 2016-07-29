@@ -1,4 +1,4 @@
-function dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,nCasePerBixel,numOfParallelMCSimulations)
+function dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,nCasePerBixel,numOfParallelMCSimulations,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad vmc++ photon dose calculation wrapper
 % 
@@ -12,16 +12,23 @@ function dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,nCasePerBixel,numOfParall
 %   cst:                        matRad cst struct
 %   nCasePerBixel:              number of photons simulated per bixel
 %   numOfParallelMCSimulations: number of simultaneously performed simulations (optional) 
-%
+%   calcDoseDirect:             boolian switch to bypass dose influence matrix
+%                               computation and directly calculate dose; only makes
+%                               sense in combination with matRad_calcDoseDirect.m%
 % output
-%   dij:        matRad dij struct
+%   dij:                        matRad dij struct
 %
 % References
 %   
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% set output level. 0 = no vmc specific output. 1 = print to matlab cmd. 
+% default: dose influence matrix computation
+if ~exist('calcDoseDirect','var')
+    calcDoseDirect = false;
+end
+
+% set output level. 0 = no vmc specific output. 1 = print to matlab cmd.
 % 2 = open in terminal(s)
 verbose = 0;
 
@@ -131,7 +138,11 @@ for i = 1:dij.numOfScenarios
 end
 
 % Allocate memory for dose_temp cell array
-numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+if calcDoseDirect
+    numOfBixelsContainer = 1;
+else
+    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+end
 doseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
 
 % take only voxels inside patient
@@ -143,12 +154,12 @@ readCounter                   = 0;
 maxNumOfParallelMcSimulations = 0;
 
 % initialize waitbar
-figureWait = waitbar(0,'VMC++ photon dij-calculation..');
+figureWait = waitbar(0,'VMC++ photon dose influence matrix calculation..');
 
 fprintf('matRad: VMC++ photon dose calculation... ');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams; % loop over all beams
-       
+           
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
         
         writeCounter = writeCounter + 1;
@@ -216,7 +227,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 
                 % Display progress
                 if verbose == 0
-                    matRad_progress(readCounter,dij.totalNumOfBixels);
+                   % matRad_progress(readCounter,dij.totalNumOfBixels);
                 end
                 
                 % update waitbar
@@ -240,8 +251,21 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 % save computation time and memory by sequentially filling the 
                 % sparse matrix dose.dij from the cell array
                 if mod(readCounter,numOfBixelsContainer) == 0 || readCounter == dij.totalNumOfBixels
-                    dij.physicalDose{1}(:,(ceil(readCounter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:readCounter) = ...
-                        [doseTmpContainer{1:mod(readCounter-1,numOfBixelsContainer)+1,1}];
+                    if calcDoseDirect
+                        if isfield(stf(i).ray(j),'weight')
+                            % score physical dose
+                            readCounter
+                            stf(dij.beamNum(readCounter)).ray(dij.rayNum(readCounter)).weight
+                            
+                            dij.physicalDose{1}(:,1) = dij.physicalDose{1}(:,1) + stf(dij.beamNum(readCounter)).ray(dij.rayNum(readCounter)).weight * doseTmpContainer{1,1};
+                        else
+                            error(['No weight available for beam ' num2str(i) ', ray ' num2str(j)]);
+                        end
+                    else
+                        % fill entire dose influence matrix
+                        dij.physicalDose{1}(:,(ceil(readCounter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:readCounter) = ...
+                            [doseTmpContainer{1:mod(readCounter-1,numOfBixelsContainer)+1,1}];
+                    end
                 end
             end
             
@@ -259,4 +283,10 @@ for j = 1:maxNumOfParallelMcSimulations
                                     VmcOptions.scoringOptions.doseOptions.scoreInGeometries,'.dos']));    % vmc outputfile
 end
 
-close(figureWait);
+try
+  % wait 0.1s for closing all waitbars
+  allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar'); 
+  delete(allWaitBarFigures);
+  pause(0.1); 
+catch
+end
