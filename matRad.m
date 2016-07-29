@@ -68,6 +68,7 @@ pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be 
 pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.machine         = 'HIT';
 pln.minNrParticles  = 500000;
+pln.LongitudialSpotSpacing = 3; %only relevant for HIT machine, not for generic
 %% initial visualization and change objective function settings if desired
 matRadGUI
 
@@ -106,4 +107,4 @@ matRad_calcDVH(resultGUI,cst,pln)
 resultGUI = matRad_postprocessing(resultGUI, dij, pln);
 
 %% export Plan
-matRad_export_HITXMLPlan_modified('test', 500000, 'backforth')  %500000 minNbParticles HIT Minimum für Patienten
+matRad_export_HITXMLPlan_modified('test', 500000, 'TSP')  %500000 minNbParticles HIT Minimum für Patienten

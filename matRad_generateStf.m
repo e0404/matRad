@@ -232,12 +232,11 @@ for i = 1:length(pln.gantryAngles)
     stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
     
      % Reduce number of available energies in HIT base data according to LongitudialSpotSpacing
-     DefaultLongitudialSpotSpacing = 3;
      Tolerance = 0.3;
      CntEnergy =2;
      while CntEnergy < length(availableEnergies)
          if abs(availablePeakPos(CntEnergy)-availablePeakPos(CntEnergy-1))<...
-                 DefaultLongitudialSpotSpacing-Tolerance
+                 pln.LongitudialSpotSpacing-Tolerance
              availableEnergies(CntEnergy)=[];
              availablePeakPos(CntEnergy)=[];
          else
