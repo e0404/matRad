@@ -107,7 +107,7 @@ for  i = 1:size(cst,1)
                     end
                    
                     % get voxel dependent weigthing
-                    voxelWeighting = 5*cst{i,5}.VOIShift.voxelProbCube(scenUnionVoxelIDs); 
+                    voxelWeighting = 1; 
 
                     % calc deviation
                     deviation = d_i - d_ref;
@@ -123,7 +123,7 @@ for  i = 1:size(cst,1)
                     deviation = deviation.*voxelWeighting;
 
                     % claculate objective function
-                    c = [c; (1/numel(d_i))*(deviation'*deviation)];
+                    c = [c; (1/1)*(deviation'*deviation)];
 
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint3') || ...
                            isequal(cst{i,6}(j).type, 'min DCH constraint3')

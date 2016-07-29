@@ -258,7 +258,7 @@ for i = 1:size(cst,1)
                         end
 
                         % get voxel dependent weigthing
-                        voxelWeighting = 5*cst{i,5}.VOIShift.voxelProbCube(scenUnionVoxelIDs);  
+                        voxelWeighting = 1;  
                         
                         % calc deviation
                         deviation = d_i - d_ref;
@@ -274,7 +274,7 @@ for i = 1:size(cst,1)
                         deviation = deviation.*(voxelWeighting).^2;
 
                         % calculate delta
-                        jacobVec = 2 * (1/numel(d_i))*deviation;                        
+                        jacobVec = 2 * (1/1)*deviation;                        
                         
                        
 %                         %

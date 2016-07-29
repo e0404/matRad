@@ -194,10 +194,12 @@ gInit    = abs(matRad_gradFuncWrapper(wInit,dij,cst,pln.bioOptimization));
 fScaling = 1/mean(gInit);
 if ~isempty(matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios))
     jInit    = abs(matRad_jacobFuncWrapper(wInit,dij,cst,pln.bioOptimization));
+    wInitTmp = wInit;
     while sum(jInit) == 0
-        jInit = abs(matRad_jacobFuncWrapper(wInit*rand,dij,cst,pln.bioOptimization));
+        wInitTmp = 0.99*wInitTmp;
+        jInit = abs(matRad_jacobFuncWrapper(wInitTmp,dij,cst,pln.bioOptimization));
     end
-    cScaling = 0.01*1/mean(jInit);
+    cScaling = 0.001*1/mean(jInit);
 end
 
 
