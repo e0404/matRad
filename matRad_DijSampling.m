@@ -36,7 +36,7 @@ function [ix,bixelDose] =  matRad_DijSampling(ix,bixelDose,relDoseLimits,Samplin
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if ~exist('SamplingRate','var')
-    SamplingRate       = 0.2;
+    SamplingRate       = 0.1;
 end
 
 maxDose            = max(bixelDose);
@@ -44,10 +44,10 @@ linIxSample        = find(bixelDose < maxDose * relDoseLimits(1) & bixelDose > m
 NumSamples         = fix(numel(linIxSample)*SamplingRate);
 bixelSampDose      = bixelDose(linIxSample);
 Prob               = bixelSampDose/max(bixelSampDose);
-ProbNorm           = Prob./(sum(Prob));
-[CDF,mask]         = unique(cumsum(ProbNorm));
+ProbNorm           = sort(Prob,'descend')./(sum(Prob));
+CDF                = cumsum(ProbNorm);
 randomValues       = (CDF(end)-CDF(1)).* rand(NumSamples,1) + CDF(1);
-ixSamp             = interp1(CDF,linIxSample(mask),randomValues,'nearest');
+ixSamp             = interp1(CDF,linIxSample,randomValues,'nearest');
 ixNew              = (bixelDose > maxDose * relDoseLimits(1)) ;
 ixNew(ixSamp)      = 1;
 bixelDose(ixSamp)  = maxDose * relDoseLimits(1);
