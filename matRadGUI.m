@@ -2085,6 +2085,7 @@ end
       set(handles.pushbutton_recalc,'Enable','off');
       set(handles.btnSaveToGUI,'Enable','off');
       set(handles.btnDVH,'Enable','off'); 
+      set(handles.importDoseButton,'Enable','off');
       
      case 1
      
@@ -2094,6 +2095,7 @@ end
       set(handles.pushbutton_recalc,'Enable','off');
       set(handles.btnSaveToGUI,'Enable','off');
       set(handles.btnDVH,'Enable','off');
+      set(handles.importDoseButton,'Enable','off');
       
       AllVarNames = evalin('base','who');
       if ~isempty(AllVarNames)
@@ -2112,6 +2114,7 @@ end
       set(handles.pushbutton_recalc,'Enable','off');
       set(handles.btnSaveToGUI,'Enable','off');
       set(handles.btnDVH,'Enable','off');
+      set(handles.importDoseButton,'Enable','off');
       
       AllVarNames = evalin('base','who');
       if ~isempty(AllVarNames)
@@ -2124,13 +2127,13 @@ end
      
       
      case 3
-
       set(handles.txtInfo,'String','plan is optimized');   
       set(handles.btnCalcDose,'Enable','on');
       set(handles.btnOptimize ,'Enable','on');
       set(handles.pushbutton_recalc,'Enable','on');
       set(handles.btnSaveToGUI,'Enable','on');
       set(handles.btnDVH,'Enable','on');
+      set(handles.importDoseButton,'Enable','on');
    
  end
 
@@ -3082,3 +3085,31 @@ function sliderOffset_CreateFcn(hObject, ~, ~)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+
+
+% --- Executes on button press in importDoseButton.
+function importDoseButton_Callback(hObject,eventdata, handles)
+% hObject    handle to importDoseButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+extensions{1} = '*.nrrd';
+[filename,filepath,~] = uigetfile(extensions);
+[~,name,~] = fileparts(filename);
+matRadRootDir = fileparts(mfilename('fullpath'));
+addpath(fullfile(matRadRootDir,'IO'))
+[cube,metadata] = matRad_readCube(fullfile(filepath,filename));
+
+ct = evalin('base','ct');
+
+if ~isequal(size(ct.cubeDim), size(cube))
+    errordlg('Dimensions of the imported cube do not match with ct','Import failed!','modal');
+    return;
+end
+
+resultGUI = evalin('base','resultGUI');
+
+fieldname = ['import_' name];
+resultGUI.(fieldname) = cube;
+
+assignin('base','resultGUI',resultGUI);
+btnRefresh_Callback(hObject, eventdata, handles)
