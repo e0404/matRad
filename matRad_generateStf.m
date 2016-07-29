@@ -231,27 +231,17 @@ for i = 1:length(pln.gantryAngles)
     % loop over all rays to determine meta information for each ray    
     stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
     
-     % Save energies in stf struct
-     %für HIT Maschine wird Anzahl der Energien reduziert
-     %war vorher individuell für jeden beam spot, demnach viele
-     %Energien in Planfile, Unsinn
-     % Jetzt Energiewahl unabhängig von Target, evtl. noch
-     % verbessern -> zunächst minimal benötigte Energie
-     % bestimmen o.ä.
+     % Reduce number of available energies in HIT base data according to LongitudialSpotSpacing
      DefaultLongitudialSpotSpacing = 3;
-     Tolerance = 0.5;
-     hasNext = true;
+     Tolerance = 0.3;
      CntEnergy =2;
-     while hasNext
-         if abs(availableEnergies(CntEnergy)-availableEnergies(CntEnergy-1))<...
+     while CntEnergy < length(availableEnergies)
+         if abs(availablePeakPos(CntEnergy)-availablePeakPos(CntEnergy-1))<...
                  DefaultLongitudialSpotSpacing-Tolerance
              availableEnergies(CntEnergy)=[];
              availablePeakPos(CntEnergy)=[];
          else
              CntEnergy = CntEnergy+1;
-         end
-         if CntEnergy == length(availableEnergies)
-             hasNext = false;
          end
      end           
         
@@ -318,9 +308,9 @@ for i = 1:length(pln.gantryAngles)
                    m = numel(targetEntry);
                    while(m>1)
                        if(targetEntry(m) < targetExit(m-1))
-                           targetExit(m-1) = max(targetExit(m), targetExit(m-1));
+                           targetExit(m-1) = max(targetExit(m-1:m));
                            targetExit(m)=[];
-                           targetEntry(m-1) = min(targetEntry(m), targetEntry(m-1));
+                           targetEntry(m-1) = min(targetEntry(m-1:m));
                            targetEntry(m)=[];
                        end
                        m=m-1;
@@ -335,25 +325,6 @@ for i = 1:length(pln.gantryAngles)
                                                                       
                 for k = 1:numel(targetEntry)
                     stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
-                    % adjust spot spacing according to pln.bixelWidth when using HIT basedata
-                    %DefaultLongitudialSpotSpacing = pln.bixelWidth;  % in [mm]
-                   % DefaultLongitudialSpotSpacing = 3;
-                   % if strcmp(pln.machine,'HIT') && length(stf(i).ray(j).energy)>2
-                   %     Tolerance = 0.5;
-                   %     hasNext = true;
-                   %     CntEnergy =2;
-                   %     while hasNext
-                   %         if abs(stf(i).ray(j).energy(CntEnergy)-stf(i).ray(j).energy(CntEnergy-1))<...
-                   %                 DefaultLongitudialSpotSpacing-Tolerance
-                   %             stf(i).ray(j).energy(CntEnergy)=[];
-                   %         else
-                   %             CntEnergy = CntEnergy+1;
-                   %         end
-                   %         if CntEnergy == length(stf(i).ray(j).energy)
-                   %             hasNext = false;
-                   %         end
-                    %    end
-                    %end
                 end
   
                 
