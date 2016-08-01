@@ -112,37 +112,44 @@ if ~isempty(kDVH) & ~isempty(kDCH)
     %legend(strsplit(num2str(1:size(kDCH,1))))
 end
 
+global CONSTRAINT
+h3 = subplot(2,3,4);
+hold on, grid on, grid minor
+plot(0:1:iter,CONSTRAINT,'xb','LineWidth',1.5)
+set(h3,'YScale','lin');
+title('unscaled constraint')
+
 colors = {'b','r','k'};
 global JACOBIAN
 if size(JACOBIAN,3) == matRad_iteration & ~isempty(JACOBIAN)
     
     for i = 1:min(size(JACOBIAN,1),2)
-        h1 = subplot(2,2,3);
+        h1 = subplot(2,3,5);
         hold on, grid on, grid minor
         %plot(1:size(JACOBIAN,2),abs(JACOBIAN(i,:,matRad_iteration)),'Color',colors{i},'LineWidth',1.5)
         plot(0:1:iter,squeeze(JACOBIAN(i,1,:)),'x','Color',colors{i},'LineWidth',1.5)
         plot(0:1:iter,squeeze(JACOBIAN(i,2,:)),'x','Color',colors{i},'LineWidth',1.5)
         set(h1,'YScale','log');
         title('minmax(abs(jacobian))')
-        ylim([1e-8 1e8])
+        ylim([1e-10 1e10])
         
     end
     
-    subplot(2,2,3)
+    %subplot(2,2,3)
     %legend(strsplit(num2str(1:min(size(JACOBIAN,1),2))))
 end
 
 global GRADIENT
 if size(GRADIENT,3) == matRad_iteration & ~isempty(GRADIENT)
     
-        h2 = subplot(2,2,4);
+        h2 = subplot(2,3,6);
         hold on, grid on, grid minor
         %plot(1:size(GRADIENT,2),abs(GRADIENT(:,:,matRad_iteration)),'Color',colors{i},'LineWidth',1.5)
         plot(0:1:iter,squeeze(GRADIENT(1,1,:)),'x','Color',colors{1},'LineWidth',1.5)
         plot(0:1:iter,squeeze(GRADIENT(1,2,:)),'x','Color',colors{1},'LineWidth',1.5)
         set(h2,'YScale','log');
         title('minmax(abs(gradient))')
-        ylim([1e-8 1e8])
+        ylim([1e-10 1e10])
 end
 drawnow
 

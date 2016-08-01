@@ -191,7 +191,7 @@ funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 
 % scale objective and constraint function
 gInit    = abs(matRad_gradFuncWrapper(wInit,dij,cst,pln.bioOptimization));
-fScaling = 1/mean(gInit);
+fScaling = 1e2/max(gInit);
 if ~isempty(matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios))
     jInit    = abs(matRad_jacobFuncWrapper(wInit,dij,cst,pln.bioOptimization));
     wInitTmp = wInit;
@@ -199,7 +199,7 @@ if ~isempty(matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenar
         wInitTmp = 0.99*wInitTmp;
         jInit = abs(matRad_jacobFuncWrapper(wInitTmp,dij,cst,pln.bioOptimization));
     end
-    cScaling = 0.001*1/mean(jInit);
+    cScaling = 1e-3/max(jInit,[],2);
 end
 
 
@@ -237,7 +237,7 @@ end
 
 % clear global variables
 clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed matRad_iteration matRad_DCH_ScenarioFlag;
-clearvars -global kDVH kDCH GRADIENT JACOBIAN
+clearvars -global kDVH kDCH GRADIENT JACOBIAN CONSTRAINT
 
 % unblock mex files
 clear mex
