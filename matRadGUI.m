@@ -789,7 +789,7 @@ end
 
 plane = get(handles.popupPlane,'Value');
 slice = round(get(handles.sliderSlice,'Value'));
-CutOffLevel = 0.03;
+CutOffLevel = 0.01;
 
 %% plot ct
  if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
