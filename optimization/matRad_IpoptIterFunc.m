@@ -88,6 +88,8 @@ xlabel(AxesInfigOpt,'# iterations','Fontsize',defaultFontSize),ylabel(AxesInfigO
 % draw updated axes
 plot(AxesInfigOpt,0:1:iter,matRad_objective_function_value,'xb','LineWidth',1.5);
 
+% draw additional variables
+
 global kDVH
 global kDCH
 if ~isempty(kDVH) & ~isempty(kDCH)
@@ -106,20 +108,22 @@ if ~isempty(kDVH) & ~isempty(kDCH)
         title('kDCH')
 
     end
-    %subplot(2,3,2)
-    %legend(strsplit(num2str(1:size(kDCH,1))))
-    %subplot(2,3,3)
-    %legend(strsplit(num2str(1:size(kDCH,1))))
 end
 
 global CONSTRAINT
-h3 = subplot(2,3,4);
-hold on, grid on, grid minor
-plot(0:1:iter,CONSTRAINT,'xb','LineWidth',1.5)
+if ~isempty(CONSTRAINT)
+    colors = {'b','r','k'};
+    for i = 1:size(CONSTRAINT,1)
+        h3 = subplot(2,3,4);
+        hold on, grid on, grid minor
+        plot(0:1:iter,CONSTRAINT(i,:),'x','Color',colors{i},'LineWidth',1.5)
+    end
 set(h3,'YScale','lin');
 title('unscaled constraint')
+end
 
 colors = {'b','r','k'};
+marker = {'v','^','x'};
 global JACOBIAN
 if size(JACOBIAN,3) == matRad_iteration & ~isempty(JACOBIAN)
     
@@ -127,8 +131,8 @@ if size(JACOBIAN,3) == matRad_iteration & ~isempty(JACOBIAN)
         h1 = subplot(2,3,5);
         hold on, grid on, grid minor
         %plot(1:size(JACOBIAN,2),abs(JACOBIAN(i,:,matRad_iteration)),'Color',colors{i},'LineWidth',1.5)
-        plot(0:1:iter,squeeze(JACOBIAN(i,1,:)),'x','Color',colors{i},'LineWidth',1.5)
-        plot(0:1:iter,squeeze(JACOBIAN(i,2,:)),'x','Color',colors{i},'LineWidth',1.5)
+        plot(0:1:iter,squeeze(JACOBIAN(i,1,:)),marker{i},'Color',colors{i},'LineWidth',1.5)
+        plot(0:1:iter,squeeze(JACOBIAN(i,2,:)),marker{i},'Color',colors{i},'LineWidth',1.5)
         set(h1,'YScale','log');
         title('minmax(abs(jacobian))')
         ylim([1e-10 1e10])

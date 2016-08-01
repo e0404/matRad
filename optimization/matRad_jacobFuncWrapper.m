@@ -662,15 +662,15 @@ jacob = bsxfun(@times,cScaling,jacob);
 if ~isempty(jacob)
     for k = 1:size(jacob,1)
         jacob_ = jacob(k,:);
-        if isempty(max(abs(jacob(jacob_ ~= 0))))
+        if isempty(max(abs(jacob_(jacob_ ~= 0))))
             JACOBIAN(k,1,matRad_iteration+1)= 0;
         else
-            JACOBIAN(k,1,matRad_iteration+1)= max(abs(jacob(jacob_ ~= 0)));
+            JACOBIAN(k,1,matRad_iteration+1)= max(abs(jacob_(jacob_ ~= 0)));
         end
-        if isempty(min(abs(jacob(jacob_ ~= 0))))
+        if isempty(min(abs(jacob_(jacob_ ~= 0))))
             JACOBIAN(k,2,matRad_iteration+1)= 0;
         else
-            JACOBIAN(k,2,matRad_iteration+1)= min(abs(jacob(jacob_ ~= 0)));
+            JACOBIAN(k,2,matRad_iteration+1)= min(abs(jacob_(jacob_ ~= 0)));
         end
     end
 end
