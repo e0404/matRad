@@ -193,13 +193,16 @@ funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 gInit    = abs(matRad_gradFuncWrapper(wInit,dij,cst,pln.bioOptimization));
 fScaling = 1e2/max(gInit);
 if ~isempty(matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios))
-    jInit    = abs(matRad_jacobFuncWrapper(wInit,dij,cst,pln.bioOptimization));
-    wInitTmp = wInit;
-    while sum(jInit) == 0
-        wInitTmp = 0.99*wInitTmp;
-        jInit = abs(matRad_jacobFuncWrapper(wInitTmp,dij,cst,pln.bioOptimization));
+    for i = 1:length(matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios))  
+        jInit    = abs(matRad_jacobFuncWrapper(wInit,dij,cst,pln.bioOptimization));
+        wInitTmp = wInit;
+        while sum(jInit(i,:)) == 0
+            wInitTmp = 0.99*wInitTmp;
+            jInit = abs(matRad_jacobFuncWrapper(wInitTmp,dij,cst,pln.bioOptimization));
+        end
+        cScalingTmp(i,1) = 1e-3/max(jInit(i,:));
     end
-    cScaling = 1e-3/max(jInit,[],2);
+    cScaling = cScalingTmp;
 end
 
 
