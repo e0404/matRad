@@ -46,13 +46,6 @@ multScen.numOfRangeShiftScen = 0;              % number of absolute and/or relat
 multScen.ScenCombType        = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
 multScen                     = matRad_setMultScen(multScen);
 
-%% coverage based cst manipulation
-[filename,dir] = uigetfile('E:\Mescher\');
-load([dir,filename])
-
-cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,'probWeighting','sampling');
-
-clear filename dir
 %% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
@@ -107,4 +100,7 @@ matRad_calcDVH(resultGUI,cst,pln)
 resultGUI = matRad_postprocessing(resultGUI, dij, pln);
 
 %% export Plan
-matRad_export_HITXMLPlan_modified('test', 500000, 'TSP')  %500000 minNbParticles HIT Minimum für Patienten
+matRad_export_HITXMLPlan_modified('test', 500000, 'stfMode')  %500000 minNbParticles HIT Minimum für Patienten, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
+
+%% calc 4D dose
+[resultGUI, delivery] = matRad_calc4dDose('TG119_stfMode');  

@@ -210,7 +210,7 @@ end
 
         bixelIndex = find([tmp.beamNum==beamNb & tmp.rayNum==rayNb & tmp.bixelNum==bixelNb]==1);
 
-        voxel_nbParticles = resultGUI.w(bixelIndex);
+        voxel_nbParticles = resultGUI.finalw(bixelIndex); % if minNrParticlesSpot is same for postprocessing and export_Plan resultGUI.w would give same result
         voxel_nbParticles = round(1e6*voxel_nbParticles);
 
         % check whether there are (enough) particles for beam delivery
@@ -234,16 +234,7 @@ end
               warndlg('ATTENTION: bixels in same IES with different foci!');
               warndlg('ATTENTION: only one focus is kept for consistence with the Syngo TPS at HIT!');
             end
-                  
-          %Voxel = docNode.createElement('Voxel');
-          %aValue = sprintf('%f',voxel_x);
-          %Voxel.setAttribute('x',aValue);
-          %aValue = sprintf('%f',voxel_y);
-          %Voxel.setAttribute('y',aValue);
-          %aValue = sprintf('%d',voxel_nbParticles);
-          %Voxel.setAttribute('particles',aValue);
-          %IES.appendChild(Voxel);
-
+                
            tmpIES.voxel_x(counter) = voxel_x;
            tmpIES.voxel_y(counter) = voxel_y;
            tmpIES.voxel_nbParticles(counter) = voxel_nbParticles;
@@ -319,12 +310,131 @@ end
                      voxel_y = tmpIES.voxel_y(c);
                  end
              end
-         else
+         elseif(strcmp(scanPath,'TSP'))
+             numOfCities = counter-1;      
+             cities = [tmpIES.voxel_x(:), tmpIES.voxel_y(:)].';
+             
+             %genetic algorith for traveling salesman problem: 
+             %cities = x,y positionen der spots in IES
+             distances = zeros(numOfCities,numOfCities);
+             for i = 1:numOfCities
+                 for j = i+1:numOfCities
+                     distances(i,j) = sum((cities(:,i)-cities(:,j)).^2)^.5;
+                     distances(j,i) = distances(i,j);
+                 end
+             end
+             clf
+             hold on
+             plot(cities(1,:),cities(2,:),'r.','MarkerSize',30)
+             trajectoryVisHandle = [];
+             
+             numOfVisPoints = 2;
+             visPoints = NaN*ones(numOfVisPoints,2,numOfCities,numOfCities);
+             for i = 1:numOfCities
+                 for j = i+1:numOfCities
+                     visPoints(1,:,i,j) = cities(:,i);
+                     visPoints(numOfVisPoints,:,i,j) = cities(:,j);
+                     visPoints(:,:,j,i) = visPoints(:,:,i,j);
+                 end
+             end
+             trajectory = NaN*ones(numOfVisPoints*(numOfCities-1),2);
+    
+             % set up evolutionary process
+             numOfGenerations = 10000;
+             objFunc          = NaN*ones(numOfGenerations,1);
+             lag              = 100; % for convergence measure
+             breakBool        = 0;
+             numOfChromosomes = 1000;
+             slideProb        = 1;
+             swapProb         = 1;
+             flipProb         = 1;
+             cumSlideProb     = slideProb/sum([slideProb swapProb flipProb]);
+             cumSwapProb      = (slideProb+swapProb)/sum([slideProb swapProb flipProb]);
+             survivalRate     = .05;
+             numOfSurvivors   = ceil(survivalRate*numOfChromosomes);
+
+             population    = NaN*ones(numOfChromosomes,numOfCities);
+             for i = 1:numOfChromosomes
+                 population(i,:) = randperm(numOfCities);
+             end
+
+             generation = 0;
+             while (~breakBool) && generation < numOfGenerations
+                 generation = generation + 1;
+                 
+                 % assess fitness of all chromosomes
+                 fitness = sum(distances((population(:,1:end-1)-1)*numOfCities + population(:,2:end)),2);
+
+                 objFunc(generation) = min(fitness);
+                 if generation > lag
+                     breakBool = numel(unique(objFunc(generation-100:generation))) == 1; 
+                 end
+    
+                 % sort population and fitness
+                 [tmpTSP,ranking]   = sort(fitness);
+                 population = population(ranking,:);
+
+                 % genetic operators
+                 randTriggers = rand(numOfChromosomes-numOfSurvivors,1);
+                 randLoci     = ceil(numOfCities*rand(numOfChromosomes-numOfSurvivors,2));
+                 for i = numOfSurvivors+1:numOfChromosomes
+                     ix     = mod(i,numOfSurvivors)+1;
+                     parent = population(ix,:);
+                     prob   = randTriggers(i-numOfSurvivors);
+                     if prob < cumSlideProb % slide
+                         population(i,:) = parent([randLoci(i-numOfSurvivors,1):end 1:randLoci(i-numOfSurvivors,1)-1]);
+                     elseif prob < cumSwapProb % swap
+                         population(i,:) = parent;
+                         population(i,randLoci(i-numOfSurvivors,1)) = parent(randLoci(i-numOfSurvivors,2));
+                         population(i,randLoci(i-numOfSurvivors,2)) = parent(randLoci(i-numOfSurvivors,1));
+                     else % flip
+                         population(i,:) = parent;
+                         if randLoci(i-numOfSurvivors,1) < randLoci(i-numOfSurvivors,2)
+                         population(i,randLoci(i-numOfSurvivors,1):randLoci(i-numOfSurvivors,2)) = population(i,randLoci(i-numOfSurvivors,2):-1:randLoci(i-numOfSurvivors,1));
+                         else
+                         population(i,randLoci(i-numOfSurvivors,2):randLoci(i-numOfSurvivors,1)) = population(i,randLoci(i-numOfSurvivors,1):-1:randLoci(i-numOfSurvivors,2));                
+                         end
+                    end
+                 end
+    
+                 % plot fittest individual    
+                 delete(trajectoryVisHandle)
+                 trajectoryVisHandle = ones(numOfCities-1,1);
+                 for i = 1:numOfCities-1
+                     start = population(1,i);
+                     stop  = population(1,i+1);
+
+                     trajectoryVisHandle(i) = plot(visPoints(:,1,start,stop),visPoints(:,2,start,stop),'g','LineWidth',2);
+        
+                 end
+                 title(['Generation # ' num2str(generation)])
+                 drawnow;
+             end
+
+             trajectory = cities(:,population(1,:));
+        
+             %write best trajectory in XML Plan file
+             c = 1;
+             while(c<counter)
+                 Voxel = docNode.createElement('Voxel');
+                 aValue = sprintf('%f',trajectory(1,c));
+                 Voxel.setAttribute('x',aValue);
+                 aValue = sprintf('%f',trajectory(2,c));
+                 Voxel.setAttribute('y',aValue);
+                 h = find(tmpIES.voxel_x == trajectory(1,c) & tmpIES.voxel_y == trajectory(2,c));
+                 aValue = sprintf('%d',tmpIES.voxel_nbParticles(h));
+                 Voxel.setAttribute('particles',aValue);
+                 IES.appendChild(Voxel);
+                 c=c+1;
+             end
+             
+         else                             
              error('No available Scan Path Mode selected');             
          end
-    end                            
+    end   
+    
   end % find focus and "Voxel (x,y,nbParticles)" for each IES
-
+  
   xmlwrite(filename,docNode);
 end % loop over beams
 

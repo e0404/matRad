@@ -64,7 +64,7 @@ Imin = pln.minNrParticles/1e6;
 lw = length(w);
 for i = 1:lw
     if(w(i) < Imin/2)
-        w(i) = 0; 
+        w(i) = 0;
     elseif(w(i) > Imin/2 && w(i) < Imin)
         w(i) = Imin;        
     end
@@ -74,6 +74,7 @@ end
 d = matRad_backProjection(w,dij,'none');
 
 resultGUI.finalDose = reshape(d{1},dij.dimensions);
+resultGUI.finalw = w;
 
 %%calc difference to optimized dose (not necessary, can be deleted)
 relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.finalDose(:)))*100;
