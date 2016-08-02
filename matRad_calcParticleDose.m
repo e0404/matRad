@@ -52,6 +52,7 @@ dij.numOfScenarios     = multScen.totalNumOfScen;
 dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
 dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
 dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
+%dij.energy  = NaN*ones(dij.totalNumOfRays,1);
 
 % Allocate space for dij.physicalDose sparse matrix
 for CtScen = 1:multScen.numOfCtScen
@@ -254,10 +255,13 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 dij.beamNum(counter)  = i;
                 dij.rayNum(counter)   = j;
                 dij.bixelNum(counter) = k;
-
+                %dij.energy(counter) = stf(i).ray(j).energy(k);
+                
                 % find energy index in base data
                 energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
-
+                
+               
+                
                 for CtScen = 1:multScen.numOfCtScen
                     for RangeShiftScen = 1:multScen.numOfRangeShiftScen  
 
