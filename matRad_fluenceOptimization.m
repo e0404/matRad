@@ -171,7 +171,7 @@ end
 
 %check if backprojection is needed for all scenarios or only nominell
 %scenario
-if(multScen.totalNumOfScen > 1)
+if(dij.numOfScenarios > 1)
     ivoi=1;
     while  ivoi <=size(cst,1)
         inr=1;
