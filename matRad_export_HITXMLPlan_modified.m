@@ -23,10 +23,11 @@
 %  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-function matRad_export_HITXMLPlan_modified(planFilename,minNbParticlesSpot, scanPath)
+function matRad_export_HITXMLPlan_modified(planFilename,minNbParticlesSpot, minNrParticlesIES, scanPath)
 
 if (nargin < 2)
   minNbParticlesSpot=0;
+  minNrParticlesIES = 0;
 end
 
 disp('HITXML exporter: Exporting plan in the HITXML format')
@@ -248,6 +249,11 @@ end
       end % one IES found
     end % loop over rays
     if newIES % new IES
+        %check if enough particles in IES
+        if(sum(tmpIES.voxel_nbParticles(:)) < minNrParticlesIES)
+            fprintf(['Not enough particles in IES' num2str(rayIESenergy) 'deleted']);
+        else    
+        
         iesFocus = machine.data(energyIx).initFocus.SisFWHMAtIso(rayIESfocusIx);
 
         IES = docNode.createElement('IES');
@@ -431,6 +437,7 @@ end
          else                             
              error('No available Scan Path Mode selected');             
          end
+        end
     end   
     
   end % find focus and "Voxel (x,y,nbParticles)" for each IES
