@@ -50,8 +50,8 @@ else
     
     % Calculate dose vector
     if isequal(type,'none')
-        
-        for i = 1:dij.numOfScenarios
+
+        for i = 1:dij.numOfBackprojections  %numOfScenarios
             d{i} = dij.physicalDose{i} * w;
         end
         

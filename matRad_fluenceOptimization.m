@@ -169,6 +169,26 @@ else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBEx
     end
 end
 
+%check if backprojection is needed for all scenarios or only nominell
+%scenario
+if(multScen.totalNumOfScen > 1)
+    ivoi=1;
+    while  ivoi <=size(cst,1)
+        inr=1;
+        while inr <= numel(cst{ivoi,6})
+            if strcmp(cst{ivoi,6}(inr).robustness,'none')
+                inr = inr+1;
+            else
+                ivoi=size(cst,1);
+                inr = numel(cst{ivoi,6});
+                dij.numOfBackprojections = dij.numOfScenarios;
+            end
+        end
+            ivoi = ivoi+1;
+    end
+end
+            
+
 % set callback functions.
 [options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios);   
 funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,pln.bioOptimization);

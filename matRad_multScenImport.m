@@ -1,7 +1,7 @@
 function [ct,cst] = matRad_multScenImport(InputFolder,numOfScen,VOIs)
 
 % add readData3d to search path
-addpath('E:\Mescher\12_4DCT\ReadData3d');
+addpath('C:\Matrad\data\4DCT\T6H_fuer_MB\biomech_samples');
 
 %% get input data info
 display('start multiple scenario import:')
@@ -118,9 +118,16 @@ for i = 1:length(VOIs)
     cst{i,5}.alphaX      = 0.1; 
     cst{i,5}.betaX       = 0.05;
     cst{i,5}.Priority    = NaN; 
+    cst{i,5}.Visible    = 1; 
     
     % Dose Objectives
+    %cst{i,6}.type = 'square overdosing';
+    %cst{i,6}.penalty = '1';
+    %cst{i,6}.dose = '1';
+    %cst{i,6}.EUD = NaN;
+    %cst{i,6}.volume = NaN;
     %cst{i,6}.robustness = 'none';
+    %cst{i,6}.coverage = NaN;
     
 end
 

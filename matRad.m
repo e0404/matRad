@@ -22,16 +22,16 @@ clc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-load TG119.mat
+%load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
 
-% InputFolder = 'E:\Mescher\13_BIOM_model\01_BioMechModel\Input';
-% numOfScen   = 3;
-% VOIs        = {'Blase','Haut','prostata_','Rektum','GTVPrimarius'};
-% [ct,cst]    = matRad_multScenImport(InputFolder,numOfScen,VOIs); 
-% load T6H.mat
+ %InputFolder = 'C:\MAtrad\data\4DCT\T6H_fuer_MB\biomech_samples';
+ %numOfScen   = 9;
+ %VOIs        = {'Blase','Haut','prostata_','Rektum','GTVPrimarius'};
+ %[ct,cst]    = matRad_multScenImport(InputFolder,numOfScen,VOIs); 
+ load T6H.mat
 
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
