@@ -7,7 +7,6 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 %
 % input
 %   dij:        matRad dij struct
-%   ct:         ct cube
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
 %
