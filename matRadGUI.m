@@ -913,7 +913,9 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
             end
         end
         
-    axes(handles.axesFig),hold on 
+    axes(handles.axesFig)
+    hold on
+    text(0,0,'','units','norm') % fix for line width ...
 
         %% plot iso dose lines
         if get(handles.radiobtnIsoDoseLines,'Value')
@@ -932,9 +934,9 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
             if any(handles.isoDoseContours{slice,plane}(:))
                 colors = jet;
                 colors = colors(round(63*vLevels(vLevels <= handles.maxDoseVal)./handles.maxDoseVal),:);
-                lower = 1;
-                while lower-1 ~= numel(handles.isoDoseContours{slice,plane})/2;
-                    steps = handles.isoDoseContours{slice,plane}(2,lower);
+                lower = 1; % lower marks the beginning of a section
+                while lower-1 ~= size(handles.isoDoseContours{slice,plane},2);
+                    steps = handles.isoDoseContours{slice,plane}(2,lower); % number of elements of current line section
                     line(handles.isoDoseContours{slice,plane}(1,lower+1:lower+steps),...
                         handles.isoDoseContours{slice,plane}(2,lower+1:lower+steps),...
                         'Color',colors(vLevels(:) == handles.isoDoseContours{slice,plane}(1,lower),:),'LineWidth',1.5);
@@ -953,16 +955,16 @@ end
 %% plot VOIs
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
     colors = colorcube;
-    hold on,
     colors = colors(round(linspace(1,63,size(cst,1))),:);
     for s = 1:size(cst,1)
         if ~strcmp(cst{s,3},'IGNORED') &&  handles.VOIPlotFlag(s)
             if any(cst{s,7}{slice,plane}(:))
                 lower = 1;
-                while lower-1 ~= numel(cst{s,7}{slice,plane})/2;
+                while lower-1 ~= size(cst{s,7}{slice,plane},2);
                     steps = cst{s,7}{slice,plane}(2,lower);
                     line(cst{s,7}{slice,plane}(1,lower+1:lower+steps),...
-                        cst{s,7}{slice,plane}(2,lower+1:lower+steps),'Color',colors(s,:),'LineWidth',2);
+                        cst{s,7}{slice,plane}(2,lower+1:lower+steps),...
+                        'Color',colors(s,:),'LineWidth',2);
                     lower = lower+steps+1;
                 end
             end
@@ -1510,7 +1512,10 @@ elseif get(hObject,'Value') == 2
 end
 
 handles.rememberCurrAxes = false;
+handles.plotColorbar = 1;
+cla(handles.axesFig,'reset');
 UpdatePlot(handles);
+handles.plotColorbar = 0;
 handles.rememberCurrAxes = true;
 guidata(hObject, handles);
 
@@ -2427,14 +2432,8 @@ end
 
 %adapt visibilty
 cst = evalin('base','cst');
-
-for i = 1:size(handles.legendTable.Data,1)
-     boolean = 0;
-     if handles.legendTable.Data{i,1}
-        boolean = 1;
-     end
-     IdxInCst = find(strcmp(cst(:,2),handles.legendTable.Data{i,3}));
-     cst{IdxInCst,5}.Visible = boolean;
+for i = 1:size(cst,1)
+    cst{i,5}.Visible = handles.VOIPlotFlag(i);
 end
 matRad_calcDVH(resultGUI_SelectedCube,cst,evalin('base','pln'));
 
@@ -2592,6 +2591,7 @@ catch
     warning('Couldnt parse iso dose levels - using default values');
     handles.IsoDose.Levels = 0;
 end
+handles = precomputeIsoDoseLevels(handles);
 UpdatePlot(handles);
 guidata(hObject,handles);
 
