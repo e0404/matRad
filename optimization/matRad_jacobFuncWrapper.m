@@ -304,8 +304,14 @@ for i = 1:size(cst,1)
                                               
                         % calculate scenario approximation scaling
                         if dij.numOfScenarios > 1
-                            cstidx = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion']));
-                            DVHScaling   = matRad_calcLogisticFuncScaling(d{1}(cst{cstidx,5}.voxelID),d_ref,0.5,0.01,0,250);                            
+                            dUnion = [];
+                            for k = 1:dij.numOfScenarios
+
+                                % get current dose
+                                dUnion = union(dUnion,d{k}(cst{i,4}{1}));
+                            end
+                            
+                            DVHScaling   = matRad_calcLogisticFuncScaling(dUnion,d_ref,0.5,0.01,0,250);                            
                             matRad_DVH_Scaling(j) = DVHScaling;
                             kDVH(j,matRad_iteration+1)= DVHScaling;
                             
@@ -320,7 +326,7 @@ for i = 1:size(cst,1)
                             end
                             
                             % calculate coverage probabilty
-                            scenProb = 1/dij.numOfScenarios;  % assume scenarios with equal probabilities
+                            scenProb = dij.ScenProb;  % assume scenarios with equal probabilities
                             
                         else
                             
@@ -363,7 +369,7 @@ for i = 1:size(cst,1)
 
                                 d_i = d{k}(cst{i,4}{1});
 
-                                jacobVec = scenProb*2*DCHScaling*exp(2*DCHScaling*(volume_pi(k)-cst{i,6}(j).volume/100))/(exp(2*DCHScaling*(volume_pi(k)-cst{i,6}(j).volume/100))+1)^2;
+                                jacobVec = scenProb(k)*2*DCHScaling*exp(2*DCHScaling*(volume_pi(k)-cst{i,6}(j).volume/100))/(exp(2*DCHScaling*(volume_pi(k)-cst{i,6}(j).volume/100))+1)^2;
                                 
                                 jacobVec =  jacobVec*matRad_jacobFunc(d_i,cst{i,6}(j),d_ref,0,0,0,DVHScaling);
 

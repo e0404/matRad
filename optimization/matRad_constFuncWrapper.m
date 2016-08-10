@@ -135,7 +135,7 @@ for  i = 1:size(cst,1)
                             end
                             
                             % calculate coverage probabilty
-                            scenProb = 1/dij.numOfScenarios;  % assume scenarios with equal probabilities
+                            scenProb = dij.ScenProb;  % assume scenarios with equal probabilities
                             
                         else
                             
@@ -176,7 +176,7 @@ for  i = 1:size(cst,1)
                         
                         % B2 %
                         % calculate coverage probability
-                        c = [c; sum(scenProb*(volume_pi >= cst{i,6}(j).volume/100))];
+                        c = [c; sum(scenProb.*(volume_pi >= cst{i,6}(j).volume/100))];
                         % B2 %
 
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint4') || ...
