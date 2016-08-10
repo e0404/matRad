@@ -47,6 +47,7 @@ for  i = 1:size(cst,1)
                     end
 
                     cstVOIScenUnion{Counter,4}{1}        = VOIScenUnionidx;
+                    cstVOIScenUnion{Counter,5}.voxelID   = VOIScenUnionidx;
                     cstVOIScenUnion{Counter,5}.voxelProb = voxelProbCube(cstVOIScenUnion{Counter,4}{1})';
 
                 elseif multScen.numOfShiftScen == 1
@@ -55,11 +56,14 @@ for  i = 1:size(cst,1)
                     % sample VOI shifts
                     cstVOIScenUnion{Counter,5}.VOIShift = matRad_sampleVOIShift(cst,ct,multScen.shiftSize,cst{i,2},multScen.numOfIntSegShiftScen);
                     cstVOIScenUnion{Counter,4}{1}       = find(cstVOIScenUnion{Counter,5}.VOIShift.voxelProbCube > 0);
-
-                    cst{i,5}.VOIShift = cstVOIScenUnion{Counter,5}.VOIShift; 
-
+                    cstVOIScenUnion{Counter,5}.voxelID  = cstVOIScenUnion{Counter,4}{1};
+                    % calculate voxel probabilities
                     cstVOIScenUnion{Counter,5}.VOIShift.voxelProb = cstVOIScenUnion{Counter,5}.VOIShift.voxelProbCube(cstVOIScenUnion{Counter,4}{1});
 
+                    % pass VOI shift struct to original VOI
+                    cst{i,5}.VOIShift = cstVOIScenUnion{Counter,5}.VOIShift; 
+
+                    
                 end                                    
 
                 % pass coverage based objective specification to VOI scenario union structure

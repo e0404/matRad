@@ -86,9 +86,7 @@ for  i = 1:size(cst,1)
                         % calc invers DCH of VOI
                         refQ   = cst{i,6}(j).coverage/100;
                         refVol = cst{i,6}(j).volume/100;
-                        d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
-                        
-                        error('multiple dij scenarios not yet implemented')
+                        d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios,~,dij.ScenProb);
                         
                     else
                         
@@ -97,14 +95,11 @@ for  i = 1:size(cst,1)
                         refVol = cst{i,6}(j).volume/100;
                         d_ref2 = matRad_calcInversDCH(refVol,refQ,d,cst{i,5}.VOIShift.ncase,cst(i,:));
                         
-                        % get dose of VOI ScenUnion
-                        scenUnionVoxelIDs = [];
-                        for k = 1:cst{i,5}.VOIShift.ncase
-                            scenUnionVoxelIDs = union(scenUnionVoxelIDs,cst{i,4}{1} - cst{i,5}.VOIShift.roundedShift.idxShift(k));
-                        end
-                        d_i = d{1}(scenUnionVoxelIDs);
-                        
                     end
+                    
+                    % get dose of VOI ScenUnion
+                    cstidx = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion']));
+                    d_i    = d{1}(cst{cstidx,5}.voxelID);
                    
                     % get voxel dependent weigthing
                     voxelWeighting = 1; 

@@ -56,8 +56,12 @@ for  i = 1:size(cst,1)
                 end
 
                 if strcmp(cst{i,6}(j).robustness,'none') || strcmp(cst{i,6}(j).robustness,'coverage')
-
-                    [clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param,numOfScenarios,cst{i,5}.VOIShift.ncase);
+                    
+                    if isfield(cst{i,5},'VOIShift')
+                        [clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param,cst{i,5}.VOIShift.ncase);
+                    else
+                        [clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param,numOfScenarios);
+                    end
                     
                     cl = [cl;clTmp];
                     cu = [cu;cuTmp];

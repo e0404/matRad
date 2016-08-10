@@ -1,4 +1,4 @@
-function D = matRad_calcInversDCH(volume,Q,doseVec,numOfScenarios,cst)
+function D = matRad_calcInversDCH(volume,Q,doseVec,numOfScenarios,cst,varargin)
 
 % calculate dose that corresponds to volume
 if length(doseVec) > 1
@@ -35,10 +35,18 @@ elseif length(doseVec) == 1
     end    
 end
 
-% sort dose
-dosePoints = sort(dosePoints, 'descend');
-
-ix = max([1 ceil(Q*numel(dosePoints))]);
+if ~isempty(varargin)
+    % sort dose
+    [dosePoints,idx] = sort(dosePoints, 'descend');
+    probSorted       = varargin{1}(idx);
+    cumProb          = cumsum(probSorted);
+    ix               = find(cumProb >= Q);
+    ix               = ix(1);
+else
+    % sort dose
+    dosePoints = sort(dosePoints, 'descend');
+    ix         = max([1 ceil(Q*numel(dosePoints))]);
+end
 
 D = dosePoints(ix);
 

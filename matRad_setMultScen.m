@@ -151,6 +151,10 @@ elseif isequal(multScen.shiftGenType,'sampled')
    
 end
 
+% calculate probabilities of single shift scenarios
+multScen.shiftScenProb = matRad_calcScenProb([0 0 0],multScen.shiftSize./(multScen.numOfShiftScen./2),multScen.shifts,'probBins','normDist');
+
+% set total number of shift scnarios
 multScen.numOfShiftScen = size(multScen.shifts,2);
 
 % set range scenarios

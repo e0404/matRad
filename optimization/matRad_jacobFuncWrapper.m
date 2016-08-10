@@ -237,25 +237,20 @@ for i = 1:size(cst,1)
                             % calc invers DCH of VOI
                             refQ   = cst{i,6}(j).coverage/100;
                             refVol = cst{i,6}(j).volume/100;
-                            d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
-                            
-                            error('multiple dij scenarios not yet implemented')
+                            d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios,~,dij.ScenProb);                           
 
                         else
 
                             % calc invers DCH of VOI
                             refQ   = cst{i,6}(j).coverage/100;
                             refVol = cst{i,6}(j).volume/100;
-                            d_ref2 = matRad_calcInversDCH(refVol,refQ,d,cst{i,5}.VOIShift.ncase,cst(i,:));
-                            
-                            % get dose of VOI ScenUnion
-                            scenUnionVoxelIDs = [];
-                            for k = 1:cst{i,5}.VOIShift.ncase
-                                scenUnionVoxelIDs = union(scenUnionVoxelIDs,cst{i,4}{1} - cst{i,5}.VOIShift.roundedShift.idxShift(k));
-                            end
-                            d_i = d{1}(scenUnionVoxelIDs);                            
+                            d_ref2 = matRad_calcInversDCH(refVol,refQ,d,cst{i,5}.VOIShift.ncase,cst(i,:));                                                     
 
                         end
+                        
+                        % get dose of VOI ScenUnion
+                        cstidx = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion']));
+                        d_i    = d{1}(cst{cstidx,5}.voxelID);
 
                         % get voxel dependent weigthing
                         voxelWeighting = 1;  
@@ -276,39 +271,13 @@ for i = 1:size(cst,1)
                         % calculate delta
                         jacobVec = 2 * (1/1)*deviation;                        
                         
-                       
-%                         %
-%                         d_i = [];
-%                         
-%                         % get cst index of VOI that corresponds to VOI ring
-%                         cstidx = find(strcmp(cst(:,2),cst{i,2}(1:end-5)));
-%                        
-%                         % get dose of VOI that corresponds to VOI ring
-%                         for k = 1:dij.numOfScenarios
-%                             d_i{k} = d{k}(cst{cstidx,4}{1});
-%                         end
-%             
-%                         % calc invers DCH of VOI
-%                         refQ   = cst{i,6}(j).coverage/100;
-%                         refVol = cst{i,6}(j).volume/100;
-%                         d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
-% 
-%                         % get dose of Target Ring
-%                         d_i = d{1}(cst{i,4}{1});
-% 
-%                         % calc voxel dependent weighting
-%                         voxelWeighting = 5*cst{i,5}.voxelProb;
-% 
-%                         jacobVec =  matRad_jacobFunc(d_i,cst{i,6}(j),d_ref,1,1,d_ref2,voxelWeighting);
-%                         %
-                        
                         scenID          = [scenID;1];
                         scenID2         = [scenID2;ones(numel(cst{i,4}{1}),1)];
                         covConstraintID = [covConstraintID;covConstraintID(end) + 1];
 
                         if isequal(type,'none') && ~isempty(jacobVec)
 
-                           physicalDoseProjection = [physicalDoseProjection,sparse(scenUnionVoxelIDs,1,jacobVec,dij.numOfVoxels,1)];
+                           physicalDoseProjection = [physicalDoseProjection,sparse(cst{cstidx,5}.voxelID,1,jacobVec,dij.numOfVoxels,1)];
 
                         elseif isequal(type,'effect') && ~isempty(jacobVec)
 
@@ -335,13 +304,19 @@ for i = 1:size(cst,1)
                                               
                         % calculate scenario approximation scaling
                         if dij.numOfScenarios > 1
+                            cstidx = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion']));
+                            DVHScaling   = matRad_calcLogisticFuncScaling(d{1}(cst{cstidx,5}.voxelID),d_ref,0.5,0.01,0,250);                            
+                            matRad_DVH_Scaling(j) = DVHScaling;
+                            kDVH(j,matRad_iteration+1)= DVHScaling;
+                            
                             for k = 1:dij.numOfScenarios
 
                                 % get current dose
                                 d_i = d{k}(cst{i,4}{1});
 
                                 % calculate volume
-                                volume_pi(k) = sum(d_i >= d_ref)/numel(d_i);
+                                volume_pi(k) = sum(1./(1+exp(-2*DVHScaling*(d_i-d_ref))))/numel(d_i);
+                                %volume_pi(k) = sum(d_i >= d_ref)/numel(d_i);
                             end
                             
                             % calculate coverage probabilty
@@ -390,7 +365,7 @@ for i = 1:size(cst,1)
 
                                 jacobVec = scenProb*2*DCHScaling*exp(2*DCHScaling*(volume_pi(k)-cst{i,6}(j).volume/100))/(exp(2*DCHScaling*(volume_pi(k)-cst{i,6}(j).volume/100))+1)^2;
                                 
-                                jacobVec =  jacobVec*matRad_jacobFunc(d_i,cst{i,6}(j),d_ref);
+                                jacobVec =  jacobVec*matRad_jacobFunc(d_i,cst{i,6}(j),d_ref,0,0,0,DVHScaling);
 
                                 scenID  = [scenID;k];
                                 scenID2 = [scenID2;repmat(k,numel(cst{i,4}{1}),1)];
