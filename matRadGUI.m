@@ -446,18 +446,6 @@ end
 UpdateState(handles);
 guidata(hObject,handles);
 
-if handles.State > 0
-    % define context menu for structures
-    cst =  evalin('base','cst');
-    for i = 1:size(cst,1)
-        if cst{i,5}.Visible
-            handles.VOIPlotFlag(i) = true;
-        else
-            handles.VOIPlotFlag(i) = false;
-        end
-    end
-end
-guidata(hObject,handles);
 
 function editBixelWidth_Callback(hObject, ~, handles)
 % hObject    handle to editBixelWidth (see GCBO)
@@ -932,6 +920,7 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
                 vLevels = handles.IsoDose.Levels;
             end
             if any(handles.isoDoseContours{slice,plane}(:))
+                % plot precalculated contourc data
                 colors = jet;
                 colors = colors(round(63*vLevels(vLevels <= handles.maxDoseVal)./handles.maxDoseVal),:);
                 lower = 1; % lower marks the beginning of a section
@@ -958,10 +947,11 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
     colors = colors(round(linspace(1,63,size(cst,1))),:);
     for s = 1:size(cst,1)
         if ~strcmp(cst{s,3},'IGNORED') &&  handles.VOIPlotFlag(s)
+            % plot precalculated contourc data
             if any(cst{s,7}{slice,plane}(:))
-                lower = 1;
+                lower = 1; % lower marks the beginning of a section
                 while lower-1 ~= size(cst{s,7}{slice,plane},2);
-                    steps = cst{s,7}{slice,plane}(2,lower);
+                    steps = cst{s,7}{slice,plane}(2,lower); % number of elements of current line section
                     line(cst{s,7}{slice,plane}(1,lower+1:lower+steps),...
                         cst{s,7}{slice,plane}(2,lower+1:lower+steps),...
                         'Color',colors(s,:),'LineWidth',2);
@@ -2397,7 +2387,6 @@ set(handles.sliderSlice,'Value',newSlice);
 
 % update plot
 UpdatePlot(handles);
-
 
 % update handles object
 guidata(src,handles);
