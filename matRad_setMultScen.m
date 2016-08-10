@@ -116,10 +116,15 @@ if isequal(multScen.shiftGenType,'equidistant')
         for i = 1:length(shiftsx)
             for j = 1:length(shiftsy)
                 for k = 1:length(shiftsz)
-                    multScen.shifts = [multScen.shifts,[shiftsx(i);shiftsy(j);shiftsz(k)]];
+                    if shiftsx(i) == 0 & shiftsy(j) == 0 & shiftsz(k) == 0
+                        multScen.shifts = multScen.shifts;
+                    else
+                        multScen.shifts = [multScen.shifts,[shiftsx(i);shiftsy(j);shiftsz(k)]];
+                    end
                 end
             end
         end
+        multScen.shifts = [zeros(3,1),multScen.shifts];
         
     end
     
@@ -176,7 +181,7 @@ end
 
 % calculate probabilities of single shift scenarios
 if size(multScen.shifts,2) > 1
-    multScen.shiftScenProb = matRad_calcScenProb([0 0 0],multScen.shiftSD./(multScen.numOfShiftScen./2),multScen.shifts,'probBins','normDist');
+    multScen.shiftScenProb = matRad_calcScenProb([0 0 0],multScen.shiftSD,multScen.shifts,'probBins','normDist');
 else
     multScen.shiftScenProb = 1;
 end
