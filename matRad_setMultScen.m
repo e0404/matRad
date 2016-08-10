@@ -175,7 +175,11 @@ elseif isequal(multScen.shiftGenType,'sampled')
 end
 
 % calculate probabilities of single shift scenarios
-multScen.shiftScenProb = matRad_calcScenProb([0 0 0],multScen.shiftSD./(multScen.numOfShiftScen./2),multScen.shifts,'probBins','normDist');
+if size(multScen.shifts,2) > 1
+    multScen.shiftScenProb = matRad_calcScenProb([0 0 0],multScen.shiftSD./(multScen.numOfShiftScen./2),multScen.shifts,'probBins','normDist');
+else
+    multScen.shiftScenProb = 1;
+end
 
 % set total number of shift scnarios
 multScen.numOfShiftScen = size(multScen.shifts,2);

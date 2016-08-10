@@ -42,7 +42,7 @@ dchPoints = linspace(0,max(vertcat(doseVec{:}))*1.05,10000);
 % scenarios with doseInverseDVH >= dchPoint
 logicalDoseMask       = bsxfun(@ge,doseInverseDVH',dchPoints);
 
-if ~isempty(varargin)
+if length(varargin{1}) == length(doseInverseDVH)
     coverageProbabilities = sum(bsxfun(@times,varargin{1}',logicalDoseMask))*100;
 else
     % assume equal probabilities for all scenarios

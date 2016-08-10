@@ -54,7 +54,7 @@ for  i = 1:size(cst,1)
                     % create scnearios with shifts
 
                     % sample VOI shifts
-                    cstVOIScenUnion{Counter,5}.VOIShift = matRad_sampleVOIShift(cst,ct,multScen.shiftSize,cst{i,2},multScen.numOfIntSegShiftScen);
+                    cstVOIScenUnion{Counter,5}.VOIShift = matRad_sampleVOIShift(cst,ct,multScen.shiftSD,cst{i,2},multScen.numOfIntSegShiftScen);
                     cstVOIScenUnion{Counter,4}{1}       = find(cstVOIScenUnion{Counter,5}.VOIShift.voxelProbCube > 0);
                     cstVOIScenUnion{Counter,5}.voxelID  = cstVOIScenUnion{Counter,4}{1};
                     
