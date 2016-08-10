@@ -690,9 +690,9 @@ end
 % carry out dose calculation
 try
     if strcmp(pln.radiationMode,'photons')
-        if handles.vmcFlag.Value == 0
+        if get(handles.vmcFlag,'Value') == 0
             dij = matRad_calcPhotonDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
-        elseif handles.vmcFlag.Value == 1
+        elseif get(handles.vmcFlag,'Value') == 1
             dij = matRad_calcPhotonDoseVmc(evalin('base','ct'),stf,pln,evalin('base','cst'));
         end
     elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
@@ -796,7 +796,7 @@ end
 
 plane = get(handles.popupPlane,'Value');
 slice = round(get(handles.sliderSlice,'Value'));
-CutOffLevel = 0.03;
+CutOffLevel = 0.01;
 
 %% plot ct
  if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
@@ -2724,9 +2724,9 @@ if evalin('base','exist(''pln'',''var'')') && ...
 
     % recalculate influence matrix
     if strcmp(pln.radiationMode,'photons')
-        if handles.vmcFlag.Value == 0
+        if get(handles.vmcFlag,'Value') == 0
             dij = matRad_calcPhotonDose(ct,stf,pln,cst);
-        elseif handles.vmcFlag.Value == 1
+        elseif get(handles.vmcFlag,'Value') == 1
             dij = matRad_calcPhotonDoseVmc(evalin('base','ct'),stf,pln,evalin('base','cst'));
         end
     elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')

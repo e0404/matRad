@@ -254,9 +254,6 @@ for i = 1:dij.numOfBeams; % loop over all beams
                     if calcDoseDirect
                         if isfield(stf(i).ray(j),'weight')
                             % score physical dose
-                            readCounter
-                            stf(dij.beamNum(readCounter)).ray(dij.rayNum(readCounter)).weight
-                            
                             dij.physicalDose{1}(:,1) = dij.physicalDose{1}(:,1) + stf(dij.beamNum(readCounter)).ray(dij.rayNum(readCounter)).weight * doseTmpContainer{1,1};
                         else
                             error(['No weight available for beam ' num2str(i) ', ray ' num2str(j)]);
