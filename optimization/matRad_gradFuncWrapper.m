@@ -141,7 +141,7 @@ for  i = 1:size(cst,1)
                     d_i = d{1}(cst{i,4}{1});
                     
                     % get voxel dependent weigthing
-                    voxelWeighting = 5*cst{i,5}.VOIShift.voxelProb;    
+                    voxelWeighting = 5*cst{i,5}.voxelProb';    
 
                     delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);
                 

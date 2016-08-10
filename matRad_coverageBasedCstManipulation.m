@@ -57,9 +57,10 @@ for  i = 1:size(cst,1)
                     cstVOIScenUnion{Counter,5}.VOIShift = matRad_sampleVOIShift(cst,ct,multScen.shiftSize,cst{i,2},multScen.numOfIntSegShiftScen);
                     cstVOIScenUnion{Counter,4}{1}       = find(cstVOIScenUnion{Counter,5}.VOIShift.voxelProbCube > 0);
                     cstVOIScenUnion{Counter,5}.voxelID  = cstVOIScenUnion{Counter,4}{1};
+                    
                     % calculate voxel probabilities
-                    cstVOIScenUnion{Counter,5}.VOIShift.voxelProb = cstVOIScenUnion{Counter,5}.VOIShift.voxelProbCube(cstVOIScenUnion{Counter,4}{1});
-
+                    cstVOIScenUnion{Counter,5}.voxelProb = cstVOIScenUnion{Counter,5}.VOIShift.voxelProbCube(cstVOIScenUnion{Counter,4}{1});
+                    
                     % pass VOI shift struct to original VOI
                     cst{i,5}.VOIShift = cstVOIScenUnion{Counter,5}.VOIShift; 
 
