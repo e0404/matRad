@@ -127,7 +127,7 @@ for idx=1:length(jtbc)
     end
 end
 
-
+handles.legendTable.String{1} = 'not data loaded';
 %initialize maximum dose for visualization to Zero
 handles.maxDoseVal     = 0;
 handles.IsoDose.Levels = 0;
@@ -792,14 +792,25 @@ CutOffLevel = 0.01;
     axes(handles.axesFig);
     if plane == 1 % Coronal plane
         ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube{1}(slice,:,:)/max(ct.cube{1}(:))))),bone);
+       
     elseif plane == 2 % sagittal plane
         ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube{1}(:,slice,:)/max(ct.cube{1}(:))))),bone);
+       
     elseif plane == 3 % Axial plane
         ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube{1}(:,:,slice)/max(ct.cube{1}(:))))),bone);
+       
     end
-    
     axes(handles.axesFig)
     ctImageHandle = image(ct_rgb);
+    
+    % set axis ratio directly after plotting the ct image
+     if plane == 1 
+          daspect([1/ct.resolution.z 1/ct.resolution.x 1])
+     elseif plane == 2 % sagittal plane
+          daspect([1/ct.resolution.x 1/ct.resolution.y 1])
+     elseif  plane == 3 % Axial plane
+          daspect([1/ct.resolution.x 1/ct.resolution.y 1])
+     end
 end
 
 %% plot dose cube
@@ -942,6 +953,7 @@ end
 
 
 %% plot VOIs
+ axes(handles.axesFig)
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
     colors = colorcube;
     colors = colors(round(linspace(1,63,size(cst,1))),:);
@@ -972,7 +984,6 @@ if  plane == 3% Axial plane
         xlabel('x [mm]','FontSize',defaultFontSize)
         ylabel('y [mm]','FontSize',defaultFontSize)
         title(['axial plane z = ' num2str(ct.resolution.z*slice) ' [mm]'],'FontSize',defaultFontSize)
-        daspect([1/ct.resolution.x 1/ct.resolution.y 1])
     else
         xlabel('x [voxels]','FontSize',defaultFontSize)
         ylabel('y [voxels]','FontSize',defaultFontSize)
@@ -987,7 +998,6 @@ elseif plane == 2 % Sagittal plane
         xlabel('z [mm]','FontSize',defaultFontSize);
         ylabel('y [mm]','FontSize',defaultFontSize);
         title(['sagittal plane x = ' num2str(ct.resolution.y*slice) ' [mm]'],'FontSize',defaultFontSize)
-        daspect([1/ct.resolution.z 1/ct.resolution.y 1])
     else
         xlabel('z [voxels]','FontSize',defaultFontSize)
         ylabel('y [voxels]','FontSize',defaultFontSize)
@@ -1002,7 +1012,6 @@ elseif plane == 1 % Coronal plane
         xlabel('z [mm]','FontSize',defaultFontSize)
         ylabel('x [mm]','FontSize',defaultFontSize)
         title(['coronal plane y = ' num2str(ct.resolution.x*slice) ' [mm]'],'FontSize',defaultFontSize)
-        daspect([1/ct.resolution.z 1/ct.resolution.x 1])
     else
         xlabel('z [voxels]','FontSize',defaultFontSize)
         ylabel('x [voxels]','FontSize',defaultFontSize)
@@ -2652,11 +2661,12 @@ msgbox({'https://github.com/e0404/matRad/' 'email: matrad@dkfz.de'},'About');
 
 % button: close
 function figure1_CloseRequestFcn(hObject, ~, ~)
- 
+set(0,'DefaultUicontrolBackgroundColor',[0.5 0.5 0.5]);     
 selection = questdlg('Do you really want to close matRad?',...
                      'Close matRad',...
                      'Yes','No','Yes');
-              
+
+%BackgroundColor',[0.5 0.5 0.5]
  switch selection
    case 'Yes',
      delete(hObject);
