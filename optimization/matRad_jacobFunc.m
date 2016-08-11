@@ -1,4 +1,4 @@
-function jacobVec = matRad_jacobFunc(d_i,constraint,d_ref,d_pi,scaling,d_ref2,weighting)
+function jacobVec = matRad_jacobFunc(d_i,constraint,d_ref,d_ref2,voxelWeighting,DVHScaling,DCHScaling,volume_pi)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian function for inverse planning supporting max dose
 % constraint, min dose constraint, min max dose constraint, min mean, max
@@ -112,87 +112,35 @@ elseif isequal(constraint.type, 'max DVH constraint') || ...
     % %jacobVec = 4*(deviation).^3;                  % squared square devioation
     % alternative constraint calculation 4/4 %
     
-elseif isequal(constraint.type, 'max DCH constraint') || ...
-       isequal(constraint.type, 'min DCH constraint')
-   
-    % sort dose values
-    d_i_tmp = sort(d_i,'descend');
-
-    ix = max([1 ceil(constraint.volume/100*numel(d_i_tmp))]);
-    
-    d_i_tmp = d_i_tmp(ix);
-
-    d_i(d_i > d_i_tmp) = 0;
-   
-    % max part
-    epsilon = 1e-3;
-
-    jacobVec = exp( (min(d_i)-d_i)/epsilon );
-    jacobVec = jacobVec/sum(jacobVec);
-    
-    % DVH part
-    jacobVec = jacobVec.*2*scaling*exp(2*scaling*(d_pi-d_ref))./(exp(2*scaling*(d_pi-d_ref))+1).^2;
-    
-elseif isequal(constraint.type, 'max DCH constraint2') || ...
-       isequal(constraint.type, 'min DCH constraint2')
-   
+elseif isequal(constraint.type, 'max DCH Area constraint') || ...
+       isequal(constraint.type, 'min DCH Area constraint')
+      
     % calc deviation
     deviation = d_i - d_ref;
 
     % apply lower and upper dose limits
-    if isequal(constraint.type, 'max DCH constraint2')
-     deviation(d_i < d_ref | d_i > d_ref2) = 0;
-    elseif isequal(constraint.type, 'min DCH constraint2')
-     deviation(d_i > d_ref | d_i < d_ref2) = 0;
+    if isequal(constraint.type, 'max DCH Area constraint')
+         deviation(d_i < d_ref | d_i > d_ref2) = 0;
+    elseif isequal(constraint.type, 'min DCH Area constraint')
+         deviation(d_i > d_ref | d_i < d_ref2) = 0;
     end
 
     % apply weighting
-    deviation = deviation.*(weighting).^2';
+    deviation = deviation.*(voxelWeighting).^2; 
 
     % calculate delta
-    jacobVec = 2 * (1/numOfVoxels)*deviation;
-    
-elseif isequal(constraint.type, 'max DCH constraint3') || ...
-       isequal(constraint.type, 'min DCH constraint3')
+    jacobVec = 2 * (1/1) * deviation;          
    
-    % calculate logistic function scaling and jacobian
-    DVHScaling = weighting;    
-    jacobVec   = (2/numOfVoxels)*DVHScaling*exp(2*DVHScaling*(d_i-d_ref))./(exp(2*DVHScaling*(d_i-d_ref))+1).^2; 
     
-elseif isequal(constraint.type, 'max DCH constraint4') || ...
-       isequal(constraint.type, 'min DCH constraint4')
-
-    d_i_sort = sort(d_i);
-
-    % calculate scaling
-    VoxelRatio   = 1;
-    NoVoxels     = max(VoxelRatio*numel(d_i),10);
-    absDiffsort  = sort(abs(d_ref - d_i_sort));
-    deltaDoseMax = absDiffsort(ceil(NoVoxels/2));
-
-    % calclulate DVHC scaling
-    ReferenceVal            = 0.01;
-    DVHCScaling             = min((log(1/ReferenceVal-1))/(2*deltaDoseMax),250);
-
-    jacobVec = (2/numOfVoxels)*DVHCScaling*exp(2*DVHCScaling*(d_i-d_ref))./(exp(2*DVHCScaling*(d_i-d_ref))+1).^2; 
+elseif isequal(constraint.type, 'max DCH Theta constraint') || ...
+       isequal(constraint.type, 'min DCH Theta constraint')
     
-elseif isequal(constraint.type, 'max DCH constraint5') || ...
-       isequal(constraint.type, 'min DCH constraint5')
-
-    d_i_sort = sort(d_i);
-
-    % calculate scaling
-    VoxelRatio   = 1;
-    NoVoxels     = max(VoxelRatio*numel(d_i),10);
-    absDiffsort  = sort(abs(d_ref - d_i_sort));
-    deltaDoseMax = absDiffsort(ceil(NoVoxels/2));
-
-    % calclulate DVHC scaling
-    ReferenceVal            = 0.01;
-    DVHCScaling             = min((log(1/ReferenceVal-1))/(2*deltaDoseMax),250);
-
-    jacobVec = (2/numOfVoxels)*DVHCScaling*exp(2*DVHCScaling*(d_i-d_ref))./(exp(2*DVHCScaling*(d_i-d_ref))+1).^2;      
-
+    % volume space
+    jacobVec = 2*DCHScaling*exp(2*DCHScaling*(volume_pi-constraint.volume/100))/(exp(2*DCHScaling*(volume_pi-constraint.volume/100))+1)^2;
+    
+    % dose space
+    jacobVec = jacobVec*(2/numOfVoxels)*DVHScaling*exp(2*DVHScaling*(d_i-d_ref))./(exp(2*DVHScaling*(d_i-d_ref))+1).^2;    
+    
 else
 
     jacobVec = [];

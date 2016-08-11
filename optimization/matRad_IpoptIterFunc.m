@@ -89,7 +89,7 @@ xlabel(AxesInfigOpt,'# iterations','Fontsize',defaultFontSize),ylabel(AxesInfigO
 plot(AxesInfigOpt,0:1:iter,matRad_objective_function_value,'xb','LineWidth',1.5);
 
 % draw additional variables
-
+% DVH and DCH scaling parameter
 global kDVH
 global kDCH
 if ~isempty(kDVH) & ~isempty(kDCH)
@@ -110,6 +110,7 @@ if ~isempty(kDVH) & ~isempty(kDCH)
     end
 end
 
+% unscaled constraint value
 global CONSTRAINT
 if ~isempty(CONSTRAINT)
     colors = {'b','r','k'};
@@ -122,6 +123,7 @@ set(h3,'YScale','lin');
 title('unscaled constraint')
 end
 
+% min/max jacobian
 colors = {'b','r','k'};
 marker = {'v','^','x'};
 global JACOBIAN
@@ -138,11 +140,9 @@ if size(JACOBIAN,3) == matRad_iteration & ~isempty(JACOBIAN)
         ylim([1e-10 1e10])
         
     end
-    
-    %subplot(2,2,3)
-    %legend(strsplit(num2str(1:min(size(JACOBIAN,1),2))))
 end
 
+% min/max gradient
 global GRADIENT
 if size(GRADIENT,3) == matRad_iteration & ~isempty(GRADIENT)
     

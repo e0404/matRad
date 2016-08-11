@@ -133,79 +133,27 @@ for i = 1:size(cst,1)
                         
                     end
                     
-                elseif strcmp(cst{i,6}(j).robustness,'coverage')
-                    
-                    if isequal(cst{i,6}(j).type, 'max DCH constraint') || ... 
-                       isequal(cst{i,6}(j).type, 'min DCH constraint')
-                        
-                        physicalDoseCum = sparse(mean(dij.physicalDose{1}(cst{i,4}{1},:)));
-                        for k = 2:dij.numOfScenarios
-                            physicalDoseCum = physicalDoseCum + sparse(mean(dij.physicalDose{k}(cst{i,4}{1},:)));
-                        end
-
-                       jacobStruct = [jacobStruct; spones(physicalDoseCum)];
+                elseif strcmp(cst{i,6}(j).robustness,'coverage')                    
                        
-                    elseif isequal(cst{i,6}(j).type, 'max DCH constraint2') || ...
-                           isequal(cst{i,6}(j).type, 'min DCH constraint2') 
+                    if isequal(cst{i,6}(j).type, 'max DCH Area constraint') || ...
+                       isequal(cst{i,6}(j).type, 'min DCH Area constraint') || ...
+                       isequal(cst{i,6}(j).type, 'max DCH Theta constraint') || ... 
+                       isequal(cst{i,6}(j).type, 'min DCH Theta constraint')
+                   
                         if dij.numOfScenarios > 1
                             
-                            physicalDoseCum = sparse(mean(dij.physicalDose{1}(cst{i,4}{1},:)));
-                            for k = 2:dij.numOfScenarios
-                                physicalDoseCum = physicalDoseCum + sparse(mean(dij.physicalDose{k}(cst{i,4}{1},:)));
-                            end
-                            jacobStruct = [jacobStruct; spones(physicalDoseCum)];                            
-                        else
-                       
-                            cstidx = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion'])); 
-                            jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{cstidx,5}.voxelID,:)))];
-                        end
-                       
-                    elseif isequal(cst{i,6}(j).type, 'max DCH constraint3') || ... 
-                           isequal(cst{i,6}(j).type, 'min DCH constraint3')
-                        if dij.numOfScenarios > 1
                             physicalDoseCum = sparse(mean(dij.physicalDose{1}(cst{i,4}{1},:)));
                             for k = 2:dij.numOfScenarios
                                 physicalDoseCum = physicalDoseCum + sparse(mean(dij.physicalDose{k}(cst{i,4}{1},:)));
                             end
                             jacobStruct = [jacobStruct; spones(physicalDoseCum)];
+                            
                         else
-%                             physicalDoseCum = sparse(mean(dij.physicalDose{1}(cst{i,4}{1}-cst{i,5}.VOIShift.roundedShift.idxShift(1),:)));
-%                             for k = 2:cst{i,5}.VOIShift.ncase
-%                                 physicalDoseCum = physicalDoseCum + sparse(mean(dij.physicalDose{1}(cst{i,4}{1}-cst{i,5}.VOIShift.roundedShift.idxShift(k),:)));
-%                             end 
-                        scenUnionVoxelIDs = [];
-                        for k = 1:cst{i,5}.VOIShift.ncase
-                            scenUnionVoxelIDs = union(scenUnionVoxelIDs,cst{i,4}{1} - cst{i,5}.VOIShift.roundedShift.idxShift(k));
-                        end 
-                        jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(scenUnionVoxelIDs,:)))];
-                        end
-                        
+                            cstLogical  = strcmp(cst(:,2),[cst{i,2},' ScenUnion']);
+                            jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{cstLogical,5}.voxelID,:)))];
+                            
+                        end                     
 
-%                         for k = 1:dij.numOfScenarios
-%                             
-%                             jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{k}(cst{i,4}{1},:)))];
-%                             
-%                         end      
-
-                    elseif isequal(cst{i,6}(j).type, 'max DCH constraint4') || ... 
-                           isequal(cst{i,6}(j).type, 'min DCH constraint4')
-                        
-                        for k = 1:dij.numOfScenarios
-                            
-                            jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{k}(cst{i,4}{1},:)))];
-                            
-                        end    
-                        
-                    elseif isequal(cst{i,6}(j).type, 'max DCH constraint5') || ... 
-                           isequal(cst{i,6}(j).type, 'min DCH constraint5')
-                        
-                        for k = 1:cst{i,5}.VOIShift.ncase
-                            
-                            jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{i,4}{1}-cst{i,5}.VOIShift.roundedShift.idxShift(k),:)))];
-                            
-                        end 
-                        % cstidx      = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion']));
-                        % jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{cstidx,4}{1},:)))];
                     end
                     
                 end

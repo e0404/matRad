@@ -35,6 +35,8 @@ function g = matRad_gradFuncWrapper(w,dij,cst,type)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global fScaling
+
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,type);
 
@@ -127,6 +129,8 @@ for  i = 1:size(cst,1)
                         refQ   = cst{i,6}(j).coverage/100;
                         refVol = cst{i,6}(j).volume/100;
                         d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
+                        
+                        error('DCH objective implementation for dij scenarios not finished yet')
                     
                     else
                         
@@ -186,9 +190,11 @@ for i = 1:dij.numOfScenarios
 
     end
 end
-global fScaling
+
+% apply objective scaling
 g = fScaling.*g;
 
+% save min/max gradient
 global matRad_iteration
 global GRADIENT
 GRADIENT(1,1,matRad_iteration+1)= max(abs(g));

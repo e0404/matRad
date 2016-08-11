@@ -32,6 +32,8 @@ function f = matRad_objFuncWrapper(w,dij,cst,type)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global fScaling
+
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,type);
 
@@ -113,6 +115,8 @@ for  i = 1:size(cst,1)
                         refVol = cst{i,6}(j).volume/100;
                         d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
                         
+                        error('DCH objective implementation for dij scenarios not finished yet')
+                        
                     else
                         
                         % calc invers DCH of VOI
@@ -139,5 +143,6 @@ for  i = 1:size(cst,1)
     end
     
 end
-global fScaling
+
+% apply objective scaling
 f = fScaling*f;

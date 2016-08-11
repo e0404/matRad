@@ -62,33 +62,26 @@ global matRad_global_d;
 global matRad_STRG_C_Pressed;
 global matRad_objective_function_value;
 global matRad_iteration;
-global matRad_DCH_ScenarioFlag;
-global matRad_DVH_Scaling;
-global matRad_DCH_Scaling;
 global kDVH;
 global kDCH;
-global JACOBIAN
-global GRADIENT
-global fScaling
-global cScaling
+global JACOBIAN;
+global GRADIENT;
+global CONSTRAINT
+global fScaling;
+global cScaling;
 
 matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
 matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
 matRad_STRG_C_Pressed           = false;
 matRad_objective_function_value = [];
 matRad_iteration                = 0;
-if dij.numOfScenarios > 1
-	matRad_DCH_ScenarioFlag = [true false(1,dij.numOfScenarios-1)];
-else
-    if sum(cellfun(@(x) isfield(x,'VOIShift'),{cst{:,5}})) > 0 
-        cstidx = find(cellfun(@(x) isfield(x,'VOIShift'),{cst{:,5}}));
-        matRad_DCH_ScenarioFlag = [true false(1,cst{cstidx(1),5}.VOIShift.ncase-1)];
-    end
-end
-matRad_DVH_Scaling = 1;
-matRad_DCH_Scaling = 1;
-fScaling           = 1;
-cScaling           = 1;
+kDVH                            = [];
+kDCH                            = [];
+JACOBIAN                        = [];
+GRADIENT                        = [];
+CONSTRAINT                      = [];
+fScaling                        = 1;
+cScaling                        = 1;
 
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
@@ -226,11 +219,13 @@ resultGUI.optInfo.globalVar.matRad_global_d                 = matRad_global_d;
 resultGUI.optInfo.globalVar.matRad_STRG_C_Pressed           = matRad_STRG_C_Pressed;
 resultGUI.optInfo.globalVar.matRad_objective_function_value = matRad_objective_function_value;
 resultGUI.optInfo.globalVar.matRad_iteration                = matRad_iteration;
-resultGUI.optInfo.globalVar.matRad_DCH_ScenarioFlag         = matRad_DCH_ScenarioFlag;
 resultGUI.optInfo.globalVar.kDVH                            = kDVH;
 resultGUI.optInfo.globalVar.kDCH                            = kDCH;
 resultGUI.optInfo.globalVar.JACOBIAN                        = JACOBIAN;
 resultGUI.optInfo.globalVar.GRADIENT                        = GRADIENT;
+resultGUI.optInfo.globalVar.CONSTRAINT                      = CONSTRAINT;
+resultGUI.optInfo.globalVar.fScaling                        = fScaling;
+resultGUI.optInfo.globalVar.cScaling                        = cScaling;
 
 % unset Key Pressed Callback of Matlab command window
 if ~isdeployed
@@ -238,8 +233,8 @@ if ~isdeployed
 end
 
 % clear global variables
-clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed matRad_iteration matRad_DCH_ScenarioFlag;
-clearvars -global kDVH kDCH GRADIENT JACOBIAN CONSTRAINT
+clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed matRad_iteration;
+clearvars -global kDVH kDCH GRADIENT JACOBIAN fScaling cScaling CONSTRAINT
 
 % unblock mex files
 clear mex

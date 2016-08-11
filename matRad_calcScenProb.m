@@ -14,8 +14,8 @@ if isequal(probDist,'normDist')
             scenProb        = scenProb.*0.5.*(erf((upperBinLevel-mu(i))/(sqrt(2)*sigma(i)))-erf((lowerBinLevel-mu(i))/(sqrt(2)*sigma(i))));
         end
         
-        % normalize probabilities since we we use only a small subset of
-        % the 3D grid
+        % normalize probabilities since we use only a subset of
+        % the 3D grid 
         scenProb = scenProb./sum(scenProb);
         
     else

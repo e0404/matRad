@@ -1,16 +1,16 @@
-function D = matRad_calcInversDCH(volume,Q,doseVec,numOfScenarios,cst,varargin)
+function D = matRad_calcInversDCH(V_ref,Q_ref,doseVec,dij,cst)
 
 % calculate dose that corresponds to volume
 if length(doseVec) > 1
     % use dij scenarios
-    for Scen = 1:numOfScenarios
-        dosePoints(Scen) = matRad_calcInversDVH(volume,doseVec{Scen}(cst{1,4}{1}));
+    for Scen = 1:dij.numOfScenarios
+        dosePoints(Scen) = matRad_calcInversDVH(V_ref,doseVec{Scen}(cst{1,4}{1}));
     end
 elseif length(doseVec) == 1
-    % create scenarios with shifts
-    for Scen = 1:numOfScenarios
+    % create scenarios
+    for Scen = 1:cst{1,5}.VOIShift.ncase
         if isequal(cst{1,5}.VOIShift.shiftType,'rounded')
-            dosePoints(Scen) = matRad_calcInversDVH(volume,doseVec{1}(cst{1,4}{1}-cst{1,5}.VOIShift.roundedShift.idxShift(Scen)));
+            dosePoints(Scen) = matRad_calcInversDVH(V_ref,doseVec{1}(cst{1,4}{1}-cst{1,5}.VOIShift.roundedShift.idxShift(Scen)));
             
         elseif isequal(cst{1,5}.VOIShift.shiftType,'linInterp')
             % lin interpolation in x
@@ -30,23 +30,26 @@ elseif length(doseVec) == 1
             % lin interpolation in z
             doseVecInterp = c0.*(1-cst{1,5}.VOIShift.linInterpShift.idxShift.z(Scen))+c1.*cst{1,5}.VOIShift.linInterpShift.idxShift.z(Scen);
             
-            dosePoints(Scen) = matRad_calcInversDVH(volume,doseVecInterp);
+            dosePoints(Scen) = matRad_calcInversDVH(V_ref,doseVecInterp);
         end
     end    
 end
 
-if ~isempty(varargin)
-    % sort dose
-    [dosePoints,idx] = sort(dosePoints, 'descend');
-    probSorted       = varargin{1}(idx);
-    cumProb          = cumsum(probSorted);
-    ix               = find(cumProb >= Q);
+% sort dose points
+[dosePoints,idx] = sort(dosePoints, 'descend');
+
+if length(doseVec) > 1 & length(dij.ScenProb) == length(dosePoints)
+    % use calculated scenario probabilties    
+    scenProbSorted   = dij.ScenProb(idx);
+    cumProb          = cumsum(scenProbSorted);
+    ix               = find(cumProb >= Q_ref);
     ix               = ix(1);
+    
 else
-    % sort dose
-    dosePoints = sort(dosePoints, 'descend');
-    ix         = max([1 ceil(Q*numel(dosePoints))]);
+    % assume equiprobable scenarios
+    ix         = max([1 ceil(Q_ref*numel(dosePoints))]);
 end
+
 
 D = dosePoints(ix);
 

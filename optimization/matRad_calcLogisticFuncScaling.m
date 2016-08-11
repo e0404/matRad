@@ -1,4 +1,4 @@
-function k = matRad_calcLogisticFuncScaling(x,xRef,xRatio,refVal,kMin,kMax,kPrevIter,iter)
+function k = matRad_calcLogisticFuncScaling(x,xRef,xRatio,refVal,kMin,kMax)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad calculation of parameter k in logistic function f(x) = 1/(1+exp(-2k[x-xRef]))
 % 
@@ -43,15 +43,5 @@ k = log(1/refVal-1)/(2*xDelta);
 % apply minimum and maximum limits for k
 k = max(k,kMin);
 k = min(k,kMax);
-
-% %apply heuristic using previous k values
-% if iter > 20 
-%     if exist('kPrevIter')
-%         %k = max(k,kPrevIter*0.99);
-%         k = min(k,kPrevIter + kPrevIter*1.1^iter);
-%     end
-% end
-
-
 
 end

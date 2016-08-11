@@ -32,6 +32,7 @@ function [cl,cu] = matRad_getConstBoundsWrapper(cst,type,numOfScenarios)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global cScaling
 
 % Initialize bounds
 cl = [];
@@ -57,11 +58,7 @@ for  i = 1:size(cst,1)
 
                 if strcmp(cst{i,6}(j).robustness,'none') || strcmp(cst{i,6}(j).robustness,'coverage')
                     
-                    if isfield(cst{i,5},'VOIShift')
-                        [clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param,cst{i,5}.VOIShift.ncase);
-                    else
-                        [clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param,numOfScenarios);
-                    end
+                    [clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param);
                     
                     cl = [cl;clTmp];
                     cu = [cu;cuTmp];
@@ -86,6 +83,6 @@ for  i = 1:size(cst,1)
 
 end % over all structures
    
-global cScaling
+% apply constraint scaling
 cl = cScaling.*cl;
 cu = cScaling.*cu;
