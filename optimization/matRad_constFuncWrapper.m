@@ -74,15 +74,41 @@ for  i = 1:size(cst,1)
                     
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint2') || ...
                            isequal(cst{i,6}(j).type, 'min DCH constraint2')
-                       
-                    d_i = [];
          
                     if dij.numOfScenarios > 1
                         
                         % calc invers DCH of VOI
                         refQ   = cst{i,6}(j).coverage/100;
                         refVol = cst{i,6}(j).volume/100;
-                        d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios,cst(i,:),dij.ScenProb);
+                        d_ref2 = matRad_calcInversDCH(refVol,refQ,d,dij.numOfScenarios,cst(i,:),dij.ScenProb);
+                        
+                        for k = 1:dij.numOfScenarios
+                            
+                            % get current dose
+                            d_i = d{k}(cst{i,4}{1});
+                            
+                            % get voxel dependent weigthing
+                            voxelWeighting = 1; 
+
+                            % calc deviation
+                            deviation = d_i - d_ref;
+
+                            % apply lower and upper dose limits
+                            if isequal(cst{i,6}(j).type, 'max DCH constraint2')
+                                 deviation(d_i < d_ref | d_i > d_ref2) = 0;
+                            elseif isequal(cst{i,6}(j).type, 'min DCH constraint2')
+                                 deviation(d_i > d_ref | d_i < d_ref2) = 0;
+                            end
+
+                            % apply weighting
+                            deviation = deviation.*voxelWeighting;  
+                            
+                            cTmp(k) = (1/1)*(deviation'*deviation);
+                            
+                        end
+                        
+                        % claculate objective function
+                        c = [c; sum(dij.ScenProb.*cTmp)];
                         
                     else
                         
@@ -90,31 +116,30 @@ for  i = 1:size(cst,1)
                         refQ   = cst{i,6}(j).coverage/100;
                         refVol = cst{i,6}(j).volume/100;
                         d_ref2 = matRad_calcInversDCH(refVol,refQ,d,cst{i,5}.VOIShift.ncase,cst(i,:));
-                        
+                                                               
+                        % get dose of VOI ScenUnion
+                        cstidx = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion']));
+                        d_i    = d{1}(cst{cstidx,5}.voxelID);
+
+                        % get voxel dependent weigthing
+                        voxelWeighting = 1; 
+
+                        % calc deviation
+                        deviation = d_i - d_ref;
+
+                        % apply lower and upper dose limits
+                        if isequal(cst{i,6}(j).type, 'max DCH constraint2')
+                             deviation(d_i < d_ref | d_i > d_ref2) = 0;
+                        elseif isequal(cst{i,6}(j).type, 'min DCH constraint2')
+                             deviation(d_i > d_ref | d_i < d_ref2) = 0;
+                        end
+
+                        % apply weighting
+                        deviation = deviation.*voxelWeighting;
+
+                        % claculate objective function
+                        c = [c; (1/1)*(deviation'*deviation)];
                     end
-                    
-                    % get dose of VOI ScenUnion
-                    cstidx = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion']));
-                    d_i    = d{1}(cst{cstidx,5}.voxelID);
-                   
-                    % get voxel dependent weigthing
-                    voxelWeighting = 1; 
-
-                    % calc deviation
-                    deviation = d_i - d_ref;
-
-                    % apply lower and upper dose limits
-                    if isequal(cst{i,6}(j).type, 'max DCH constraint2')
-                         deviation(d_i < d_ref | d_i > d_ref2) = 0;
-                    elseif isequal(cst{i,6}(j).type, 'min DCH constraint2')
-                         deviation(d_i > d_ref | d_i < d_ref2) = 0;
-                    end
-
-                    % apply weighting
-                    deviation = deviation.*voxelWeighting;
-
-                    % claculate objective function
-                    c = [c; (1/1)*(deviation'*deviation)];
 
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint3') || ...
                            isequal(cst{i,6}(j).type, 'min DCH constraint3')

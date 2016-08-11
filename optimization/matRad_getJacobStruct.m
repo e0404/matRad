@@ -147,9 +147,18 @@ for i = 1:size(cst,1)
                        
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint2') || ...
                            isequal(cst{i,6}(j).type, 'min DCH constraint2') 
+                        if dij.numOfScenarios > 1
+                            
+                            physicalDoseCum = sparse(mean(dij.physicalDose{1}(cst{i,4}{1},:)));
+                            for k = 2:dij.numOfScenarios
+                                physicalDoseCum = physicalDoseCum + sparse(mean(dij.physicalDose{k}(cst{i,4}{1},:)));
+                            end
+                            jacobStruct = [jacobStruct; spones(physicalDoseCum)];                            
+                        else
                        
                             cstidx = find(strcmp(cst(:,2),[cst{i,2},' ScenUnion'])); 
                             jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{cstidx,5}.voxelID,:)))];
+                        end
                        
                     elseif isequal(cst{i,6}(j).type, 'max DCH constraint3') || ... 
                            isequal(cst{i,6}(j).type, 'min DCH constraint3')
