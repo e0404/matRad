@@ -78,15 +78,11 @@ for  i = 1:size(cst,1)
                     d_i = [];
          
                     if dij.numOfScenarios > 1
-                        % get dose
-                        for k = 1:dij.numOfScenarios
-                            d_i{k} = d{k}(cst{i,4}{1});
-                        end
                         
                         % calc invers DCH of VOI
                         refQ   = cst{i,6}(j).coverage/100;
                         refVol = cst{i,6}(j).volume/100;
-                        d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios,cst,dij.ScenProb);
+                        d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios,cst(i,:),dij.ScenProb);
                         
                     else
                         

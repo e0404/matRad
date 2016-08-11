@@ -4,7 +4,7 @@ function D = matRad_calcInversDCH(volume,Q,doseVec,numOfScenarios,cst,varargin)
 if length(doseVec) > 1
     % use dij scenarios
     for Scen = 1:numOfScenarios
-        dosePoints(Scen) = matRad_calcInversDVH(volume,doseVec{Scen});
+        dosePoints(Scen) = matRad_calcInversDVH(volume,doseVec{Scen}(cst{1,4}{1}));
     end
 elseif length(doseVec) == 1
     % create scenarios with shifts
