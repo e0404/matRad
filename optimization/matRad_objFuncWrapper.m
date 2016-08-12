@@ -99,41 +99,43 @@ for  i = 1:size(cst,1)
                 % if coveraged based opt    
                 elseif strcmp(cst{i,6}(j).robustness,'coverage')
                     
-                    d_i = [];
+                    % calc invers DCH
+                    Q_ref  = cst{i,6}(j).coverage/100;
+                    V_ref  = cst{i,6}(j).volume/100;
+                    d_ref2 = matRad_calcInversDCH(V_ref,Q_ref,d,dij,cst(i,:)); 
                     
-                    % get cst index of VOI that corresponds to VOI ScenUnion
-                    cstidx = find(strcmp(cst(:,2),cst{i,2}(1:end-10)));
-         
                     if dij.numOfScenarios > 1
-                        % get dose of VOI that corresponds to VOI ScenUnion
+                        
                         for k = 1:dij.numOfScenarios
-                            d_i{k} = d{k}(cst{cstidx,4}{1});
+                            
+                            % get VOI dose in current scenario
+                            d_i = d{k}(cst{i,4}{1});
+
+                            % get voxel dependent weigthing
+                            voxelWeighting = 1; 
+                            
+                            % calculate dose deviations from d_ref
+                            fTmp(k) = matRad_objFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);
+                            
                         end
                         
-                        % calc invers DCH of VOI
-                        refQ   = cst{i,6}(j).coverage/100;
-                        refVol = cst{i,6}(j).volume/100;
-                        d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
-                        
-                        error('DCH objective implementation for dij scenarios not finished yet')
+                        % claculate objective function
+                        f = f + sum(dij.ScenProb.*fTmp);
                         
                     else
                         
-                        % calc invers DCH of VOI
-                        refQ   = cst{i,6}(j).coverage/100;
-                        refVol = cst{i,6}(j).volume/100;
-                        d_ref2 = matRad_calcInversDCH(refVol,refQ,d,cst{i,5}.VOIShift.ncase,cst(cstidx,:));
+                        % get VOI ScenUnion dose of nominal scneario
+                        cstLogical = strcmp(cst(:,2),[cst{i,2},' ScenUnion']);
+                        d_i        = d{1}(cst{cstLogical,5}.voxelID);
+                        
+                        % get voxel dependent weigthing
+                        voxelWeighting = 5*cst{cstLogical,5}.voxelProb;
+                        
+                        % calculate objective function
+                        f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);
                         
                     end
                     
-                    % get dose of VOI ScenUnion
-                    d_i = d{1}(cst{i,4}{1});
-                    
-                    % get voxel dependent weigthing
-                    voxelWeighting = 5*cst{i,5}.voxelProb';    
-
-                    f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);
-
                 end
             
             end

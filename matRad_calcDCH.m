@@ -51,7 +51,7 @@ if length(doseVec) > 1 & isfield(dij,'ScenProb') & length(dij.ScenProb) == lengt
     coverageProbabilities = sum(bsxfun(@times,dij.ScenProb',logicalDoseMask))*100;
 else
     % assume equiprobable scenarios
-    coverageProbabilities = (1/numOfScenarios)*sum(logicalDoseMask)*100;
+    coverageProbabilities = (1/length(doseInverseDVH))*sum(logicalDoseMask)*100;
 end
 
 
