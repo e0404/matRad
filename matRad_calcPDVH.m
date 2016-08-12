@@ -1,4 +1,4 @@
-function [dvhPoints,volume] = matRad_calcPDVH(coverage,doseVec,cst,numOfScenarios,varargin)
+function [dvhPoints,volume] = matRad_calcPDVH(Q_ref,doseVec,dij,cst,varargin)
 
 % set dose points in dvh
 if ~isempty(varargin)
@@ -10,13 +10,13 @@ end
 % calculate DVH in every scenario
 if length(doseVec) > 1
     % use dij scenarios
-    for Scen = 1:numOfScenarios
+    for Scen = 1:dij.numOfScenarios
     doseInVoi   = doseVec{Scen}(cst{1,4}{1});
     dvh(Scen,:) = sum(bsxfun(@ge,doseInVoi,dvhPoints))/numel(cst{1,4}{1})*100;    
     end
 elseif length(doseVec) == 1
     % create scenarios with shifts
-    for Scen = 1:numOfScenarios
+    for Scen = 1:cst{1,5}.VOIShift.ncase
         if isequal(cst{1,5}.VOIShift.shiftType,'rounded')
             dvh(Scen,:) = sum(bsxfun(@ge,doseVec{1}(cst{1,4}{1}-cst{1,5}.VOIShift.roundedShift.idxShift(Scen)),dvhPoints))/numel(cst{1,4}{1})*100;
             
@@ -45,12 +45,15 @@ elseif length(doseVec) == 1
 end
 
 % calculate PDVH
-for j = 1:length(dvhPoints)
-    VolumePointsSorted = sort(dvh(:,j),'descend');
-    ix                 = max([1 ceil(coverage*numel(VolumePointsSorted))]);
-    volume(1,j)        = VolumePointsSorted(ix);
+if length(doseVec) > 1 & isfield(dij,'ScenProb') & length(dij.ScenProb) == length(dvh(:,1))
+    error('PDVH calculation for different scenario probabilities not implemented yet')
+else
+    % assume equiprobable scenarios
+    for j = 1:length(dvhPoints)
+        VolumePointsSorted = sort(dvh(:,j),'descend');
+        ix                 = max([1 ceil(Q_ref*numel(VolumePointsSorted))]);
+        volume(1,j)        = VolumePointsSorted(ix);
+    end
 end
-
-
 
 end

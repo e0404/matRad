@@ -1,16 +1,16 @@
-function [dchPoints,coverageProbabilities] = matRad_calcDCH(volume,doseVec,cst,numOfScenarios,varargin)
+function [dchPoints,coverageProbabilities] = matRad_calcDCH(V_ref,doseVec,dij,cst,varargin)
 
 % calculate inverse DVH in every scenario
 if length(doseVec) > 1
     % use dij scenarios
-    for Scen = 1:numOfScenarios
-        doseInverseDVH(Scen) = matRad_calcInversDVH(volume,doseVec{Scen}(cst{1,4}{1}));
+    for Scen = 1:dij.numOfScenarios
+        doseInverseDVH(Scen) = matRad_calcInversDVH(V_ref,doseVec{Scen}(cst{1,4}{1}));
     end
 elseif length(doseVec) == 1    
     % create scenarios with shifts
-    for Scen = 1:numOfScenarios
+    for Scen = 1:cst{1,5}.VOIShift.ncase
         if isequal(cst{1,5}.VOIShift.shiftType,'rounded')
-            doseInverseDVH(Scen) = matRad_calcInversDVH(volume,doseVec{1}(cst{1,4}{1}-cst{1,5}.VOIShift.roundedShift.idxShift(Scen)));
+            doseInverseDVH(Scen) = matRad_calcInversDVH(V_ref,doseVec{1}(cst{1,4}{1}-cst{1,5}.VOIShift.roundedShift.idxShift(Scen)));
 
         elseif isequal(cst{1,5}.VOIShift.shiftType,'linInterp')
             % lin interpolation in x
@@ -30,13 +30,13 @@ elseif length(doseVec) == 1
             % lin interpolation in z
             doseVecInterp = c0.*(1-cst{1,5}.VOIShift.linInterpShift.idxShift.z(Scen))+c1.*cst{1,5}.VOIShift.linInterpShift.idxShift.z(Scen);
         
-            doseInverseDVH(Scen) = matRad_calcInversDVH(volume,doseVecInterp);
+            doseInverseDVH(Scen) = matRad_calcInversDVH(V_ref,doseVecInterp);
         end
     end
 end
 
-% set dose points in dch
-if ~isempty(varargin{1})
+% set dose points in dch, optinal: single dose point
+if ~isempty(varargin)
     dchPoints = varargin{1};
 else
     dchPoints = linspace(0,max(vertcat(doseVec{:}))*1.05,10000);
@@ -46,10 +46,11 @@ end
 % scenarios with doseInverseDVH >= dchPoint
 logicalDoseMask       = bsxfun(@ge,doseInverseDVH',dchPoints);
 
-if length(varargin{2}) == length(doseInverseDVH)
-    coverageProbabilities = sum(bsxfun(@times,varargin{2}',logicalDoseMask))*100;
+if length(doseVec) > 1 & isfield(dij,'ScenProb') & length(dij.ScenProb) == length(doseInverseDVH)
+    % use calculated scenario probabilties
+    coverageProbabilities = sum(bsxfun(@times,dij.ScenProb',logicalDoseMask))*100;
 else
-    % assume equal probabilities for all scenarios
+    % assume equiprobable scenarios
     coverageProbabilities = (1/numOfScenarios)*sum(logicalDoseMask)*100;
 end
 

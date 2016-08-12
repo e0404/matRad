@@ -38,7 +38,7 @@ end
 % sort dose points
 [dosePoints,idx] = sort(dosePoints, 'descend');
 
-if length(doseVec) > 1 & length(dij.ScenProb) == length(dosePoints)
+if length(doseVec) > 1 & isfield(dij,'ScenProb') & length(dij.ScenProb) == length(dosePoints)
     % use calculated scenario probabilties    
     scenProbSorted   = dij.ScenProb(idx);
     cumProb          = cumsum(scenProbSorted);
