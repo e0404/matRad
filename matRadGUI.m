@@ -177,6 +177,7 @@ end
 % if plan is changed go back to state 1
 % if table VOI Type or Priorities changed go to state 1
 % if objective parameters changed go back to state 2
+handles.CutOffLevel            = 0.005;
 handles.IsoDose.NewIsoDoseFlag = false;
 handles.TableChanged           = false;
 handles.State                  = 0;
@@ -785,7 +786,6 @@ end
 
 plane = get(handles.popupPlane,'Value');
 slice = round(get(handles.sliderSlice,'Value'));
-CutOffLevel = 0.005;
 
 %% plot ct
  if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
@@ -815,7 +815,7 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
         end
         mVolume = getfield(Result,handles.SelectedDisplayOption);
         % make sure to exploit full color range 
-        mVolume(mVolume<CutOffLevel*max(mVolume(:))) = 0;
+        mVolume(mVolume<handles.CutOffLevel*max(mVolume(:))) = 0;
 
     %     %% dose colorwash
         if ~isempty(mVolume)&& ~isvector(mVolume)
@@ -842,9 +842,9 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
             
             if get(handles.radiobtnDose,'Value')
                         if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
-                             set(hDose,'AlphaData',  .6*double(dose_slice)>0.1);
+                             set(hDose,'AlphaData',  .6*(double(dose_slice)>0.1));
                         else
-                            set(hDose,'AlphaData',  .6*double(dose_slice)>CutOffLevel);
+                            set(hDose,'AlphaData',  .6*(double(dose_slice)>handles.CutOffLevel));
                         end
             else
                 set(hDose,'AlphaData', 0) ;
@@ -1312,7 +1312,11 @@ try
 
     handles.State = 3;
     handles.SelectedDisplayOptionIdx = 1;
-    handles.SelectedDisplayOption = 'physicalDose';
+    if strcmp(pln.radiationMode,'carbon')
+        handles.SelectedDisplayOption = 'RBExDose';
+    else
+        handles.SelectedDisplayOption = 'physicalDose';
+    end
     handles.SelectedBeam = 1;
     
     % check IPOPT status and return message for GUI user if no DAO or
@@ -1378,9 +1382,9 @@ end
 % change state from busy to normal
 set(Figures, 'pointer', 'arrow');
 set(InterfaceObj,'Enable','on');
-
+handles.maxDoseVal = 0;      % if 0 new dose max is determined based on dose cube
 handles.rememberCurrAxes = false;
-handles.IsoDose.Levels = 0;
+handles.IsoDose.Levels = 0;  % ensure to use default iso dose line spacing
 handles.plotColorbar = 1;
 handles = precomputeIsoDoseLevels(handles);
 UpdatePlot(handles);
@@ -2988,16 +2992,15 @@ function handles = precomputeIsoDoseLevels(handles)
         handles.SelectedDisplayOption = CubeNames{1,1};
     end
     mVolume = getfield(resultGUI,handles.SelectedDisplayOption);
-    CutOffLevel = 0.005;
+    CutOffLevel = 0.01;
     
     if handles.maxDoseVal == 0
         handles.maxDoseVal = max(mVolume(:));
         set(handles.txtMaxDoseVal,'String',num2str(handles.maxDoseVal))
     end
-   
-            
+         
     % make sure to exploit full color range 
-    mVolume(mVolume<CutOffLevel*handles.maxDoseVal) = 0;
+    mVolume(mVolume<handles.CutOffLevel*handles.maxDoseVal) = 0;
     if handles.IsoDose.NewIsoDoseFlag == true
         handles.IsoDose.NewIsoDoseFlag = false;
     else
