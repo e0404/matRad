@@ -4,79 +4,64 @@ covFlag = 0;
 Counter = 0;
 
 for  i = 1:size(cst,1)
+    
     if ~isempty(cst{i,6})
-        if sum(strcmp({cst{i,6}(:).robustness},'coverage')) > 0 & sum(strcmp({cst{i,6}(:).type},'min DCH objective')) > 0 |...
-           sum(strcmp({cst{i,6}(:).robustness},'coverage')) > 0 & sum(strcmp({cst{i,6}(:).type},'max DCH objective')) > 0
-       
-           if isempty(strfind(cst{i,2},'Union'))
+        
+        if sum(strcmp({cst{i,6}(:).robustness},'coverage'))
                 
-                covFlag = 1;
-                Counter = Counter + 1;  
+            covFlag = 1;
+            Counter = Counter + 1;  
 
-                % create VOI scenario union structure
-                cstVOIScenUnion{Counter,1} = size(cst,1) - 1 + Counter;
-                cstVOIScenUnion{Counter,2} = [cst{i,2},' ScenUnion'];
-                cstVOIScenUnion{Counter,3} = cst{i,3};
-                cstVOIScenUnion{Counter,5} = cst{i,5};
-                
-                
-                if multScen.numOfShiftScen > 1
-                    % use dij scenarios
+            % create VOI scenario union structure
+            cstVOIScenUnion{Counter,1}          = size(cst,1) - 1 + Counter;
+            cstVOIScenUnion{Counter,2}          = [cst{i,2},' ScenUnion'];
+            cstVOIScenUnion{Counter,3}          = cst{i,3};
+            cstVOIScenUnion{Counter,5}          = cst{i,5};
+            cstVOIScenUnion{Counter,5}.Priority = NaN;
+            cstVOIScenUnion{Counter,6}          = [];
 
-                    [yCoordsVOI_vox, xCoordsVOI_vox, zCoordsVOI_vox] = ind2sub(ct.cubeDim,cst{i,4}{1});
-                    voxelProbCube                                    = zeros(ct.cubeDim);
-                    VOIScenUnionidx                                  = cst{i,4}{1};
 
-                    for k = 1:multScen.numOfShiftScen
+            if multScen.numOfShiftScen > 1
+                % create Scenario Union via dij shift scenarios
 
-                        % round shifts to voxel dimensions
-                        xShift_vox = round(multScen.shifts(1,k)/ct.resolution.x);
-                        yShift_vox = round(multScen.shifts(2,k)/ct.resolution.y);
-                        zShift_vox = round(multScen.shifts(3,k)/ct.resolution.z);
+                % shift VOI according to dij shifts
+                [yCoordsVOI_vox, xCoordsVOI_vox, zCoordsVOI_vox] = ind2sub(ct.cubeDim,cst{i,4}{1});
+                voxelProbCube                                    = zeros(ct.cubeDim);
 
-                        shiftedVOIidx = sub2ind(ct.cubeDim, yCoordsVOI_vox - yShift_vox,...
-                                                            xCoordsVOI_vox - xShift_vox,...
-                                                            zCoordsVOI_vox - zShift_vox);
+                for k = 1:multScen.numOfShiftScen
 
-                        % fill prob cube                                   
-                        voxelProbCube(shiftedVOIidx) = voxelProbCube(shiftedVOIidx) + 1/multScen.numOfShiftScen;                                   
+                    % round shifts to voxel dimensions
+                    xShift_vox = round(multScen.shifts(1,k)/ct.resolution.x);
+                    yShift_vox = round(multScen.shifts(2,k)/ct.resolution.y);
+                    zShift_vox = round(multScen.shifts(3,k)/ct.resolution.z);
 
-                        % build scenario union structure
-                        VOIScenUnionidx = union(VOIScenUnionidx,shiftedVOIidx);
+                    shiftedVOIidx = sub2ind(ct.cubeDim, yCoordsVOI_vox - yShift_vox,...
+                                                        xCoordsVOI_vox - xShift_vox,...
+                                                        zCoordsVOI_vox - zShift_vox);
 
-                    end
+                    % fill prob cube                                   
+                    voxelProbCube(shiftedVOIidx) = voxelProbCube(shiftedVOIidx) + 1/multScen.numOfShiftScen;                                   
 
-                    cstVOIScenUnion{Counter,4}{1}        = VOIScenUnionidx;
-                    cstVOIScenUnion{Counter,5}.voxelID   = VOIScenUnionidx;
-                    cstVOIScenUnion{Counter,5}.voxelProb = voxelProbCube(cstVOIScenUnion{Counter,4}{1})';
-
-                elseif multScen.numOfShiftScen == 1
-                    % create scnearios with shifts
-
-                    % sample VOI shifts
-                    cstVOIScenUnion{Counter,5}.VOIShift = matRad_sampleVOIShift(cst,ct,multScen.shiftSD,cst{i,2},multScen.numOfIntSegShiftScen);
-                    cstVOIScenUnion{Counter,4}{1}       = find(cstVOIScenUnion{Counter,5}.VOIShift.voxelProbCube > 0);
-                    cstVOIScenUnion{Counter,5}.voxelID  = cstVOIScenUnion{Counter,4}{1};
-                    
-                    % calculate voxel probabilities
-                    cstVOIScenUnion{Counter,5}.voxelProb = cstVOIScenUnion{Counter,5}.VOIShift.voxelProbCube(cstVOIScenUnion{Counter,4}{1});
-                    
-                    % pass VOI shift struct to original VOI
-                    cst{i,5}.VOIShift = cstVOIScenUnion{Counter,5}.VOIShift; 
-
-                    
-                end                                    
-
-                % pass coverage based objective specification to VOI scenario union structure
-                logidx                     = strcmp({cst{i,6}(:).robustness},'coverage');
-                cstVOIScenUnion{Counter,6} = cst{i,6}(logidx);
-                if sum(~logidx) == 0
-                    cst{i,6} = []; 
-                else
-                    cst{i,6} = cst{i,6}(~logidx);    
                 end
-               
-           end
+
+                % save voxelIDs and voxel probabilities
+                cstVOIScenUnion{Counter,4}{1}        = find(voxelProbCube > 0);
+                cstVOIScenUnion{Counter,5}.voxelID   = cstVOIScenUnion{Counter,4}{1};
+                cstVOIScenUnion{Counter,5}.voxelProb = voxelProbCube(cstVOIScenUnion{Counter,4}{1})';
+
+            elseif multScen.numOfShiftScen == 1
+                % create Scenario Union via VOI shift scenarios
+
+                % sample VOI shifts
+                cstVOIScenUnion{Counter,5}.VOIShift = matRad_sampleVOIShift(cst,ct,multScen.shiftSD,cst{i,2},multScen.numOfIntSegShiftScen);
+                cst{i,5}.VOIShift                   = cstVOIScenUnion{Counter,5}.VOIShift; 
+
+                % save voxelIDs and voxel probabilities
+                cstVOIScenUnion{Counter,4}{1}        = find(cstVOIScenUnion{Counter,5}.VOIShift.voxelProbCube > 0);
+                cstVOIScenUnion{Counter,5}.voxelID   = cstVOIScenUnion{Counter,4}{1};
+                cstVOIScenUnion{Counter,5}.voxelProb = cstVOIScenUnion{Counter,5}.VOIShift.voxelProbCube(cstVOIScenUnion{Counter,4}{1});
+
+            end                                                   
         end 
     end
 end
