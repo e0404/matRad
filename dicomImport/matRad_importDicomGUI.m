@@ -22,7 +22,7 @@ function varargout = matRad_importDicomGUI(varargin)
 
 % Edit the above text to modify the response to help matRad_importDicomGUI
 
-% Last Modified by GUIDE v2.5 02-Jun-2016 14:32:20
+% Last Modified by GUIDE v2.5 28-Jul-2016 13:18:46
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -325,6 +325,9 @@ if ~isempty(rtdose) && ~isempty(get(handles.doseseries_listbox,'Value'))
     files.rtdose = rtdose(selectedRtDoseIx,:);
 end
 
+% check if we should use the dose grid resolution
+files.useDoseGrid = get(handles.checkbox3,'Value');
+
 % dicomMetaBool: store complete DICOM information and patientName or not
 dicomMetaBool = logical(get(handles.checkPatientName,'Value'));
 matRad_importDicom(files, dicomMetaBool);
@@ -542,6 +545,41 @@ function doseseries_listbox_Callback(hObject, eventdata, handles)
 % Hints: contents = cellstr(get(hObject,'String')) returns doseseries_listbox contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from doseseries_listbox
 
+if ~isempty(get(hObject,'Value'))
+    set(handles.checkbox3,'Enable','on');
+else
+    set(handles.checkbox3,'Value',0);
+    set(handles.checkbox3,'Enable','off');
+    % retrieve and display resolution for DICOM ct cube
+    patient_listbox = get(handles.patient_listbox,'String');
+    selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
+    selectedCtSeriesString = get(handles.ctseries_listbox,'String');
+    if get(handles.SeriesUID_radiobutton,'Value') == 1
+        if ~isempty(selectedCtSeriesString)
+            res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),9));
+            res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),10));
+            res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),11));
+        else
+            res_x = NaN; res_y = NaN; res_z = NaN;
+        end
+    else
+        if ~isempty(selectedCtSeriesString)
+            res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),9));
+            res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),10));
+            res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),11));
+        else
+            res_x = NaN; res_y = NaN; res_z = NaN;
+        end
+    end
+    set(handles.resx_edit,'String',res_x);
+    set(handles.resy_edit,'String',res_y);
+    if numel(res_z) > 1
+        set(handles.resz_edit,'String','not equi');
+    else
+        set(handles.resz_edit,'String',res_z);
+    end
+    
+end
 
 % --- Executes during object creation, after setting all properties.
 function doseseries_listbox_CreateFcn(hObject, eventdata, handles)
@@ -590,12 +628,6 @@ else
 end
 
 
-
-
-% Hints: contents = cellstr(get(hObject,'String')) returns rtplan_listbox contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from rtplan_listbox
-
-
 % --- Executes during object creation, after setting all properties.
 function rtplan_listbox_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to rtplan_listbox (see GCBO)
@@ -618,3 +650,66 @@ function checkPatientName_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of checkPatientName
 %guidata(hObject, handles);
+
+
+% --- Executes on button press in checkbox3.
+function checkbox3_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox3
+
+if get(hObject,'Value')
+    % retrieve and display resolution for DICOM dose cube
+    doseFilesInList = get(handles.doseseries_listbox,'String');
+    selectedDoseFiles = get(handles.doseseries_listbox,'Value');
+    for i = 1:numel(selectedDoseFiles)
+        selectedDoseFile = doseFilesInList{selectedDoseFiles(i)};
+        dicomDoseInfo = dicominfo(handles.fileList{find(strcmp(handles.fileList(:,4),selectedDoseFile)),1});
+        res_x{i} = dicomDoseInfo.PixelSpacing(1);
+        res_y{i} = dicomDoseInfo.PixelSpacing(2);
+        res_z{i} = dicomDoseInfo.SliceThickness;
+    end
+
+    if numel(unique(cell2mat(res_x)))*numel(unique(cell2mat(res_y)))*numel(unique(cell2mat(res_z))) ~= 1
+        set(handles.checkbox3,'Value',0);
+        warndlg('Different resolutions in dose file(s)');
+    else
+        set(handles.resx_edit,'String',num2str(res_x{1}));
+        set(handles.resy_edit,'String',num2str(res_y{1}));
+        set(handles.resz_edit,'String',num2str(res_z{1}));
+    end
+    
+else
+    % retrieve and display resolution for DICOM ct cube
+    patient_listbox = get(handles.patient_listbox,'String');
+    selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
+    selectedCtSeriesString = get(handles.ctseries_listbox,'String');
+    if get(handles.SeriesUID_radiobutton,'Value') == 1
+        if ~isempty(selectedCtSeriesString)
+            res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),9));
+            res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),10));
+            res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),11));
+        else
+            res_x = NaN; res_y = NaN; res_z = NaN;
+        end
+    else
+        if ~isempty(selectedCtSeriesString)
+            res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),9));
+            res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),10));
+            res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),11));
+        else
+            res_x = NaN; res_y = NaN; res_z = NaN;
+        end
+    end
+    set(handles.resx_edit,'String',res_x);
+    set(handles.resy_edit,'String',res_y);
+    if numel(res_z) > 1
+        set(handles.resz_edit,'String','not equi');
+    else
+        set(handles.resz_edit,'String',res_z);
+    end
+    
+end
+

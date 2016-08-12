@@ -42,6 +42,14 @@ resultGUI.physicalDose = reshape(full(dij.physicalDose{scenNum}*resultGUI.w),dij
 % consider VOI priorities
 [cst,resultGUI.overlapCube]  = matRad_setOverlapPriorities(cst,dij.dimensions);
 
+if isfield(dij,'mLETDose')
+    LETDoseCube       = dij.mLETDose{scenNum} * resultGUI.w;
+    resultGUI.LET     = zeros(dij.dimensions);
+    ix                = resultGUI.physicalDose>0;
+    resultGUI.LET(ix) = LETDoseCube(ix)./resultGUI.physicalDose(ix);
+
+end
+
 if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
 
     a_x = zeros(size(resultGUI.physicalDose));
@@ -63,9 +71,11 @@ if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
     resultGUI.RBExDose(ix) = ((sqrt(a_x(ix).^2 + 4 .* b_x(ix) .* resultGUI.effect(ix)) - a_x(ix))./(2.*b_x(ix)));
     resultGUI.RBE          = resultGUI.RBExDose./resultGUI.physicalDose;
    
-    AlphaDoseCube    = full(dij.mAlphaDose{scenNum} * resultGUI.w);
-    resultGUI.alpha  = (reshape(AlphaDoseCube,dij.dimensions))./resultGUI.physicalDose;
-    SqrtBetaDoseCube = full(dij.mSqrtBetaDose{scenNum} * resultGUI.w);
-    resultGUI.beta   = ((reshape(SqrtBetaDoseCube,dij.dimensions))./resultGUI.physicalDose).^2;
+    resultGUI.alpha     = zeros(size(resultGUI.effect));
+    resultGUI.beta      = zeros(size(resultGUI.effect));
+    AlphaDoseCube       = full(dij.mAlphaDose{scenNum} * resultGUI.w);
+    resultGUI.alpha(ix) = AlphaDoseCube(ix)./resultGUI.physicalDose(ix);
+    SqrtBetaDoseCube    = full(dij.mSqrtBetaDose{scenNum} * resultGUI.w);
+    resultGUI.beta(ix)  = (SqrtBetaDoseCube(ix)./resultGUI.physicalDose(ix)).^2;
     
 end

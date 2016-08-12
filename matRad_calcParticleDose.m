@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDose(ct,stf,pln,cst)
+function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad particle dose calculation wrapper
 % 
@@ -6,13 +6,16 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst)
 %   dij = matRad_calcParticleDose(ct,stf,pln,cst)
 %
 % input
-%   ct:         ct cube
-%   stf:        matRad steering information struct
-%   pln:        matRad plan meta information struct
-%   cst:        matRad cst struct
+%   ct:             ct cube
+%   stf:            matRad steering information struct
+%   pln:            matRad plan meta information struct
+%   cst:            matRad cst struct
+%   calcDoseDirect: boolian switch to bypass dose influence matrix
+%                   computation and directly calculate dose; only makes
+%                   sense in combination with matRad_calcDoseDirect.m
 %
 % output
-%   dij:        matRad dij struct
+%   dij:            matRad dij struct
 %
 % References
 %   [1] http://iopscience.iop.org/0031-9155/41/8/005
@@ -31,6 +34,11 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% default: dose influence matrix computation
+if ~exist('calcDoseDirect','var')
+    calcDoseDirect = false;
+end
 
 % initialize waitbar
 figureWait = waitbar(0,'calculate dose influence matrix for particles...');
@@ -61,7 +69,11 @@ end
 round2 = @(a,b)round(a*10^b)/10^b;
 
 % Allocate memory for dose_temp cell array
-numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+if calcDoseDirect
+    numOfBixelsContainer = 1;
+else
+    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+end
 doseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
 if isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBExD')
     alphaDoseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
@@ -85,6 +97,18 @@ try
    load([fileparts(mfilename('fullpath')) filesep fileName]);
 catch
    error(['Could not find the following machine file: ' fileName ]); 
+end
+
+if isfield(pln,'calcLET') && pln.calcLET
+  if isfield(machine.data,'LET')
+    letDoseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
+    % Allocate space for dij.dosexLET sparse matrix
+    for i = 1:dij.numOfScenarios
+        dij.mLETDose{i} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
+    end
+  else
+    warndlg('LET not available in the machine data. LET will not be calculated.');
+  end
 end
 
 % generates tissue class matrix for biological optimization
@@ -260,7 +284,16 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 
                 % Save dose for every bixel in cell array
                 doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelDose,dij.numOfVoxels,1);
-                            
+
+                if isfield(dij,'mLETDose')
+                  % calculate particle LET for bixel k on ray j of beam i
+                  depths = machine.data(energyIx).depths + machine.data(energyIx).offset; 
+                  bixelLET = matRad_interp1(depths,machine.data(energyIx).LET,radDepths(currIx)); 
+
+                  % Save LET for every bixel in cell array
+                  letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelLET.*bixelDose,dij.numOfVoxels,1);
+                end
+                             
                 if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
                     && strcmp(pln.radiationMode,'carbon')
                     % calculate alpha and beta values for bixel k on ray j of                  
@@ -276,12 +309,44 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 % save computation time and memory by sequentially filling the
                 % sparse matrix dose.dij from the cell array
                 if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
-                    dij.physicalDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
                     
-                    if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
-                            && strcmp(pln.radiationMode,'carbon')
-                        dij.mAlphaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
-                        dij.mSqrtBetaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                    if calcDoseDirect
+                        if isfield(stf(1).ray(1),'weight') && numel(stf(i).ray(j).weight) >= k
+                            
+                            % score physical dose
+                            dij.physicalDose{1}(:,1) = dij.physicalDose{1}(:,1) + stf(i).ray(j).weight(k) * doseTmpContainer{1,1};
+                            
+                            if isfield(dij,'mLETDose')
+                                dij.mLETDose{1}(:,1) = dij.mLETDose{1}(:,1) + stf(i).ray(j).weight(k) * letDoseTmpContainer{1,1};
+                            end
+                            
+                            if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ...
+                                && strcmp(pln.radiationMode,'carbon')
+                                
+                                % score alpha and beta matrices
+                                dij.mAlphaDose{1}(:,1) = dij.mAlphaDose{1}(:,1) + stf(i).ray(j).weight(k) * alphaDoseTmpContainer{1,1};
+                                dij.mSqrtBetaDose{1}(:,1) = dij.mSqrtBetaDose{1}(:,1) + stf(i).ray(j).weight(k) * betaDoseTmpContainer{1,1};
+                                
+                            end
+                        else
+                            
+                            error(['No weight available for beam ' num2str(i) ', ray ' num2str(j) ', bixel ' num2str(k)]);
+                            
+                        end
+                    else
+                        
+                        dij.physicalDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                        
+                        if isfield(dij,'mLETDose')
+                            dij.mLETDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [letDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                        end
+                        
+                        if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
+                                && strcmp(pln.radiationMode,'carbon')
+                            dij.mAlphaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                            dij.mSqrtBetaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                        end
+                    
                     end
                 end
 
