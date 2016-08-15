@@ -31,7 +31,7 @@ function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% print current status of the import script
-fprintf('Obs: Dose series matched to the different plans has been displayed and selected.\n');
+fprintf('Dose series matched to the different plans are displayed and could be selected.\n');
 fprintf('Rechecking of correct matching procedure is recommended.\n');
 
 %% get all files in search directory
@@ -55,6 +55,7 @@ if ~isempty(fileList)
             info = dicominfo(fileList{i});
         catch
             fileList(i,:) = [];
+            matRad_progress(numOfFiles+1-i, numOfFiles);
             continue;
         end
         try

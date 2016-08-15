@@ -44,6 +44,10 @@ if numel(pln.gantryAngles) ~= numel(pln.couchAngles)
     error('Inconsistent number of gantry and couch angles.');
 end
 
+if pln.bixelWidth < 0 || ~isfinite(pln.bixelWidth)
+   error('bixel width (spot distance) needs to be a real number [mm] larger than zero.');
+end
+
 % find all target voxels from cst cell array
 V = [];
 for i=1:size(cst,1)
@@ -80,7 +84,7 @@ end
 % prepare structures necessary for particles
 fileName = [pln.radiationMode '_' pln.machine];
 try
-   load(fileName);
+   load([fileparts(mfilename('fullpath')) filesep fileName]);
    SAD = machine.meta.SAD;
 catch
    error(['Could not find the following machine file: ' fileName ]); 
@@ -220,12 +224,18 @@ for i = 1:length(pln.gantryAngles)
     % Save ray and target position in lps system.
     for j = 1:stf(i).numOfRays
         stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
-        stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
-        
+        stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;        
         for CtScen = 1:multScen.numOfCtScen
             for ShiftScen = 1:multScen.numOfShiftScen
                 stf(i).ray(j).SSD{CtScen,ShiftScen} = NaN;
             end
+        end
+        if strcmp(pln.radiationMode,'photons') 
+            stf(i).ray(j).rayCorners_SCD = (repmat([0, machine.meta.SCD - SAD, 0],4,1)+ (machine.meta.SCD/SAD) * ...
+                                                             [rayPos(j,:) + [+stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
+                                                              rayPos(j,:) + [-stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
+                                                              rayPos(j,:) + [-stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2];...
+                                                              rayPos(j,:) + [+stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2]])*rotMx_XY_T*rotMx_XZ_T;
         end
     end
     

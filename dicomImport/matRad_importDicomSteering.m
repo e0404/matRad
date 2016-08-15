@@ -168,7 +168,7 @@ for i = 1:length(BeamSeqNames)
         k = ic(j);
         stf(i).ray(k).energy = [stf(i).ray(k).energy double(StfTmp(j,3))];
         stf(i).ray(k).focusFWHM = [stf(i).ray(k).focusFWHM double(StfTmp(j,5))];
-        stf(i).ray(k).weight = [stf(i).ray(k).weight double(StfTmp(j,4))/1e6*pln.numOfFractions];
+        stf(i).ray(k).weight = [stf(i).ray(k).weight double(StfTmp(j,4)) / 1e6];
     end
     
     

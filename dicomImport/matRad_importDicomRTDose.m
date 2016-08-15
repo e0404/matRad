@@ -1,4 +1,4 @@
-function [ resultGUI ] = matRad_importDicomRTDose(ct, rtDoseFiles)
+function [ resultGUI ] = matRad_importDicomRTDose(ct, rtDoseFiles, pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to import dicom RTDOSE data
 % 
@@ -61,6 +61,11 @@ for i = 1 : numDoseFiles
         resultName = 'physicalDose';
     elseif strncmpi(resultName,'RBExDose_PLAN',10)
         resultName = 'RBExDose';
+    end
+    
+    % scale to fraction based dose
+    if exist('pln','var')
+        dose.(itemName).cube = dose.(itemName).cube / pln.numOfFractions;
     end
     
     resultGUI.(resultName) = dose.(itemName).cube;

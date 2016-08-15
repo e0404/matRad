@@ -1,4 +1,4 @@
-function dij = matRad_calcPhotonDose(ct,stf,pln,cst,multScen)
+function dij = matRad_calcPhotonDose(ct,stf,pln,cst,multScen,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad photon dose calculation wrapper
 % 
@@ -6,14 +6,17 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,multScen)
 %   dij = matRad_calcPhotonDose(ct,stf,pln,cst)
 %
 % input
-%   ct:         ct cube
-%   stf:        matRad steering information struct
-%   pln:        matRad plan meta information struct
-%   cst:        matRad cst struct
-%   multScen:   matRad multiple scnerio struct
+%   ct:             ct cube
+%   stf:            matRad steering information struct
+%   pln:            matRad plan meta information struct
+%   cst:            matRad cst struct
+%   multScen:       matRad multiple scnerio struct
+%   calcDoseDirect: boolian switch to bypass dose influence matrix
+%                   computation and directly calculate dose; only makes
+%                   sense in combination with matRad_calcDoseDirect.m
 %
 % output
-%   dij:        matRad dij struct
+%   dij:            matRad dij struct
 %
 % References
 %   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215
@@ -33,6 +36,11 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,multScen)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% default: dose influence matrix computation
+if ~exist('calcDoseDirect','var')
+    calcDoseDirect = false;
+end
 
 % issue warning if biological optimization not possible
 if sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0
@@ -75,7 +83,11 @@ for CtScen = 1:multScen.numOfCtScen
 end
 
 % Allocate memory for dose_temp cell array
-numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+if calcDoseDirect
+    numOfBixelsContainer = 1;
+else
+    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+end
 doseTmpContainer = cell(numOfBixelsContainer,multScen.numOfCtScen,multScen.numOfShiftScen,multScen.numOfRangeShiftScen);
 
 % take only voxels inside patient
@@ -86,7 +98,7 @@ V = unique(vertcat(V{:}));
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
 
 % set lateral cutoff value
-lateralCutoff = 20; % [mm]
+lateralCutoff = 65; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
@@ -96,7 +108,7 @@ useCustomPrimFluenceBool = 0;
 % load polynomial fits for kernels ppKernel1, ppKernel2, ppKernel3
 fileName = [pln.radiationMode '_' pln.machine];
 try
-   load(fileName);
+   load([fileparts(mfilename('fullpath')) filesep fileName]);
 catch
    error(['Could not find the following machine file: ' fileName ]); 
 end
@@ -279,9 +291,14 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                            geoDistV(ix),...
                                                            isoLatDistsX,...
                                                            isoLatDistsZ);
+                                                       
+                    % Sample dij elements between 1% and 0.1% of the dose                              
+                    tolDoseLimits  = [0.01 0.001];
+                    SamplingRate   = 0.1;   % sample x% of the voxels within the previously specified range
+                    [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,tolDoseLimits,SamplingRate);                                                       
 
                     % Save dose for every bixel in cell array
-                    doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix),1,bixelDose,prod(ct.cubeDim),1);
+                    doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix),1,bixelDose,dij.numOfVoxels,1);
                 end
 
             end
@@ -294,7 +311,17 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 for RangeShiftScen = 1:multScen.numOfRangeShiftScen
 
                     if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
-                        dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}];
+                        if calcDoseDirect
+                            if isfield(stf(1).ray(1),'weight')
+                                % score physical dose
+                                dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,1) = dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,1) + stf(i).ray(j).weight * doseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen};
+                            else
+                                error(['No weight available for beam ' num2str(i) ', ray ' num2str(j)]);
+                            end
+                        else
+                            % fill entire dose influence matrix
+                            dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}];
+                        end
                     end
 
                 end

@@ -1,13 +1,14 @@
-function pln = matRad_importDicomRTPlan(ct, rtPlanFiles)
+function pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to import dicom RTPLAN data
 % 
 % call
-%   pln = matRad_importDicomRTPlan(ct, rtPlanFiles)
+%   pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)
 %
 % input
 %   ct:             ct imported by the matRad_importDicomCt function
 %   rtDoseFiles:   	list of RTDOSE Dicom files
+%   dicomMetaBool:  import whole dicom information
 %
 % output
 %   pln:            matRad pln struct with meta information. Note that
@@ -128,7 +129,7 @@ pln.bixelWidth      = NaN; % [mm] / also corresponds to lateral spot spacing for
 pln.gantryAngles    = [gantryAngles{1:length(BeamSeqNames)}];
 pln.couchAngles     = [PatientSupportAngle{1:length(BeamSeqNames)}]; % [°]
 pln.numOfBeams      = length(BeamSeqNames);
-pln.numOfVoxels     = numel(ct.cube);
+pln.numOfVoxels     = numel(ct.cube{1});
 pln.voxelDimensions = ct.cubeDim;
 pln.bioOptimization = NaN; % none: physical optimization; effect: effect-based optimization; RBExD: optimization of RBE-weighted dose
 pln.numOfFractions  = planInfo.FractionGroupSequence.Item_1.NumberOfFractionsPlanned;
@@ -147,5 +148,7 @@ catch
 end
 
 % safe entire dicomInfo
-pln.dicomInformation = planInfo;
+if dicomMetaBool == true
+    pln.dicomMeta = planInfo;
+end
 end
