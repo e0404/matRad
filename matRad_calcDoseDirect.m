@@ -1,9 +1,9 @@
-function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)
+function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,multScen)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dose calculation wrapper bypassing dij calculation
 % 
 % call
-%   dij = matRad_calcDoseDirect(ct,stf,pln,cst)
+%   dij = matRad_calcDoseDirect(ct,stf,pln,cst,w,multScen)
 %
 % input
 %   ct:         ct cube
@@ -12,6 +12,7 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)
 %   cst:        matRad cst struct
 %   w:          optional (if no weights available in stf): bixel weight
 %               vector
+%   multScen:   matRad multiple scnerio struct
 %
 % output
 %   resultGUI:  matRad result struct
@@ -50,10 +51,10 @@ end
 
 % dose calculation
 if strcmp(pln.radiationMode,'photons')
-    dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect);
+    dij = matRad_calcPhotonDose(ct,stf,pln,cst,multScen,calcDoseDirect);
     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-    dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect);
+    dij = matRad_calcParticleDose(ct,stf,pln,cst,multScen,calcDoseDirect);
 end
 
 % remember bixel weight
