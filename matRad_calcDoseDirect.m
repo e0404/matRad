@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,multScen)
+function [resultGUI,dij] = matRad_calcDoseDirect(ct,stf,pln,cst,w,multScen)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dose calculation wrapper bypassing dij calculation
 % 
