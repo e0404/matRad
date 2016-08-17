@@ -39,10 +39,10 @@ multScen.numOfCtScen          = ct.numOfCtScen; % number of imported ct scenario
 multScen.numOfIntSegShiftScen = 1;              % number of internal segmentation shift scnearios     
 
 multScen.numOfShiftScen       = [2 2 2];        % number of shifts in x y and z direction       
-multScen.shiftSize            = [6 6 6];        % maximum shift [mm]
+multScen.shiftSize            = [9 9 9];        % maximum shift [mm]
 multScen.shiftSD              = [3 3 3];        % SD of normal distribution [mm]
 multScen.shiftGenType         = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
-multScen.shiftCombType        = 'allcombined';   % individual: no combination of shift scenarios, combined: combine shift scenarios, allcombined: create every possible shift combination
+multScen.shiftCombType        = 'individual';   % individual: no combination of shift scenarios, combined: combine shift scenarios, allcombined: create every possible shift combination
 multScen.shiftGen1DIsotropy   = '+-';           % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
 
 multScen.numOfRangeShiftScen  = 0;              % number of absolute and/or relative range scnearios
