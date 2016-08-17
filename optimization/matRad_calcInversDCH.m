@@ -42,8 +42,12 @@ if length(doseVec) > 1 & isfield(dij,'ScenProb') & length(dij.ScenProb) == lengt
     % use calculated scenario probabilties    
     scenProbSorted   = dij.ScenProb(idx);
     cumProb          = cumsum(scenProbSorted);
-    ix               = find(cumProb >= Q_ref);
-    ix               = ix(1);
+    if Q_ref ==1
+        ix               = find(cumProb - Q_ref >= -1e-5);
+    else
+        ix               = find(cumProb >= Q_ref);
+        ix               = ix(1);
+    end
     
 else
     % assume equiprobable scenarios
