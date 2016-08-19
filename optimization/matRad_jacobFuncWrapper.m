@@ -196,11 +196,11 @@ for i = 1:size(cst,1)
 
                                 elseif isequal(type,'effect') && ~isempty(jacobVec)
 
-                                    error('effect optimization in Theta constraint not implemented yet')
+                                    error('effect optimization in Area constraint not implemented yet')
 
                                 elseif isequal(type,'RBExD') && ~isempty(jacobVec)
 
-                                    error('RBExD optimization in Theta constraint not implemented yet')
+                                    error('RBExD optimization in Area constraint not implemented yet')
 
                                 end                                
 
@@ -229,11 +229,11 @@ for i = 1:size(cst,1)
 
                             elseif isequal(type,'effect') && ~isempty(jacobVec)
 
-                                error('effect optimization in Theta constraint not implemented yet')
+                                error('effect optimization in Area constraint not implemented yet')
 
                             elseif isequal(type,'RBExD') && ~isempty(jacobVec)
 
-                                error('RBExD optimization in Theta constraint not implemented yet')
+                                error('RBExD optimization in Area constraint not implemented yet')
 
                             end
 
