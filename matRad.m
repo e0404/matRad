@@ -27,11 +27,13 @@ clc
 %load LIVER.mat
 %load BOXPHANTOM.mat
 
- %InputFolder = 'C:\MAtrad\data\4DCT\T6H_fuer_MB\biomech_samples';
- %numOfScen   = 9;
- %VOIs        = {'Blase','Haut','prostata_','Rektum','GTVPrimarius'};
- %[ct,cst]    = matRad_multScenImport(InputFolder,numOfScen,VOIs); 
- load T6H.mat
+%  InputFolder = 'C:\MAtrad\data\4DCT\T6H_fuer_MB\biomech_samples';
+%  numOfScen   = 2;
+%  VOIs        = {'Blase','Haut','prostata_','Rektum','GTVPrimarius'};
+%  [ct,cst]    = matRad_multScenImport(InputFolder,numOfScen,VOIs); 
+ 
+load T6H_dose.mat
+%load TKUH005_BPL.mat
 
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
@@ -100,7 +102,7 @@ matRad_calcDVH(resultGUI,cst,pln)
 resultGUI = matRad_postprocessing(resultGUI, dij, pln, 25000000);
 
 %% export Plan
-matRad_export_HITXMLPlan_modified('T6H_stf', 500000, 25000000, 'stfMode')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
+matRad_export_HITXMLPlan_modified('T6H_stf_sv', 500000, 25000000, 'stfMode')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
 
 %% calc 4D dose
-[resultGUI, delivery] = matRad_calc4dDose('T6H_stf');  
+[resultGUI, delivery] = matRad_calc4dDose('T6H_stf_sv');  

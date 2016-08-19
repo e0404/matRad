@@ -244,7 +244,7 @@ for i = 1:length(pln.gantryAngles)
          end
      end           
         
-     
+       
      for j = stf(i).numOfRays:-1:1
         for ShiftScen = 1:multScen.numOfShiftScen
             % ray tracing necessary to determine depth of the target
@@ -326,6 +326,8 @@ for i = 1:length(pln.gantryAngles)
                     stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
                 end
   
+                targetEntry = [];
+                targetExit = [];
                 
                 % book keeping & calculate focus index
                 stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);

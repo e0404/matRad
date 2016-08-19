@@ -13,11 +13,14 @@ function delivery = matRad_readLmdout(FileName)
 %   NumberOfBeams:      
 %  
 % output
+%   delivery 
 
 % comment:
+% dij and stf are needed in workspace
 % At the moment a lot of variables are written in delivery struct, some of
 % them might be deleted 
 %   necessary: time ,xpos, ypos, energy, j
+
 
 % References
 %

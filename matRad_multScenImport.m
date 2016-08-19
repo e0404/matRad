@@ -1,7 +1,7 @@
 function [ct,cst] = matRad_multScenImport(InputFolder,numOfScen,VOIs)
 
 % add readData3d to search path
-addpath('C:\Matrad\data\4DCT\T6H_fuer_MB\biomech_samples');
+addpath('C:\Matrad\data\4DCT\TKUH005\ReadData3d');
 
 %% get input data info
 display('start multiple scenario import:')
@@ -130,6 +130,29 @@ for i = 1:length(VOIs)
     %cst{i,6}.coverage = NaN;
     
 end
+
+
+%% read vector fields
+% welche richtig???? InRef oder InDef???
+
+display('start VF import:')
+
+InputData = dir(InputFolder);
+InputData = InputData(~(strcmp('.', {InputData.name}) | strcmp('..', {InputData.name})));
+InputData = InputData(1:(min(length(InputData),numOfScen)));
+
+for i = 1:length(InputData)
+    InputData(i).VFs = dir(fullfile(InputFolder,InputData(i).name));
+    InputData(i).VFs = InputData(i).VFs(~cellfun('isempty',strfind({InputData(i).VFs.name},'InRef_'))); 
+    InputData(i).VFs = InputData(i).VFs.name;
+end
+
+
+for i = 1:ct.numOfCtScen
+     [ct.dvf{i}, ct.dvfReadData3Dinfo(i)] = ReadData3D(fullfile(InputFolder,InputData(i).name,InputData(i).VFs),false);
+end
+    
+
 
 display('import finished')
 end
