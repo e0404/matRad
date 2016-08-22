@@ -67,7 +67,7 @@ for  i = 1:size(cst,1)
 end
 
 if covFlag
-    cst = [cst;cstVOIScenUnion];
+    cst = [cst(:,1:6);cstVOIScenUnion];
 end
 
 if targetExpansion > 0
