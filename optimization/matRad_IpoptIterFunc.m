@@ -93,7 +93,7 @@ plot(AxesInfigOpt,0:1:iter,matRad_objective_function_value,'xb','LineWidth',1.5)
 global kDVH
 global kDCH
 if ~isempty(kDVH) & ~isempty(kDCH)
-    colors = {'b','r','k'};
+    colors = {'b','r','k','g'};
     for i = 1:size(kDCH,1)
         h1 = subplot(2,3,2);
         hold on, grid on, grid minor
@@ -113,7 +113,7 @@ end
 % unscaled constraint value
 global CONSTRAINT
 if ~isempty(CONSTRAINT)
-    colors = {'b','r','k'};
+    colors = {'b','r','k','g'};
     for i = 1:size(CONSTRAINT,1)
         h3 = subplot(2,3,4);
         hold on, grid on, grid minor
@@ -124,8 +124,8 @@ title('unscaled constraint')
 end
 
 % min/max jacobian
-colors = {'b','r','k'};
-marker = {'v','^','x'};
+colors = {'b','r','k','g'};
+marker = {'v','^','x','*'};
 global JACOBIAN
 if size(JACOBIAN,3) == matRad_iteration & ~isempty(JACOBIAN)
     
