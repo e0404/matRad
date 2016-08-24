@@ -1,4 +1,4 @@
-function dij = matRad_calcPhotonDose(ct,stf,pln,cst)
+function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad photon dose calculation wrapper
 % 
@@ -6,13 +6,16 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst)
 %   dij = matRad_calcPhotonDose(ct,stf,pln,cst)
 %
 % input
-%   ct:         ct cube
-%   stf:        matRad steering information struct
-%   pln:        matRad plan meta information struct
-%   cst:        matRad cst struct
+%   ct:             ct cube
+%   stf:            matRad steering information struct
+%   pln:            matRad plan meta information struct
+%   cst:            matRad cst struct
+%   calcDoseDirect: boolian switch to bypass dose influence matrix
+%                   computation and directly calculate dose; only makes
+%                   sense in combination with matRad_calcDoseDirect.m
 %
 % output
-%   dij:        matRad dij struct
+%   dij:            matRad dij struct
 %
 % References
 %   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215
@@ -32,6 +35,11 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% default: dose influence matrix computation
+if ~exist('calcDoseDirect','var')
+    calcDoseDirect = false;
+end
 
 % issue warning if biological optimization not possible
 if sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0
@@ -65,7 +73,11 @@ for i = 1:dij.numOfScenarios
 end
 
 % Allocate memory for dose_temp cell array
-numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+if calcDoseDirect
+    numOfBixelsContainer = 1;
+else
+    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+end
 doseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
 
 % take only voxels inside patient
@@ -76,7 +88,7 @@ V = unique(vertcat(V{:}));
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
 
 % set lateral cutoff value
-lateralCutoff = 20; % [mm]
+lateralCutoff = 65; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
@@ -236,22 +248,39 @@ for i = 1:dij.numOfBeams; % loop over all beams
 
         % calculate photon dose for beam i and bixel j
         bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
-                                               machine.data.betas, ...
-                                               Interp_kernel1,...
-                                               Interp_kernel2,...
-                                               Interp_kernel3,...
-                                               radDepthV{1}(ix),...
-                                               geoDistV(ix),...
-                                               isoLatDistsX,...
-                                               isoLatDistsZ);
-       
+                                                   machine.data.betas, ...
+                                                   Interp_kernel1,...
+                                                   Interp_kernel2,...
+                                                   Interp_kernel3,...
+                                                   radDepthV{1}(ix),...
+                                                   geoDistV(ix),...
+                                                   isoLatDistsX,...
+                                                   isoLatDistsZ);
+
+
+        
+        % Sample dij elements between 1% and 0.1% of the dose                              
+        tolDoseLimits  = [0.01 0.001];
+        SamplingRate   = 0.1;   % sample x% of the voxels within the previously specified range
+        [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,tolDoseLimits,SamplingRate);
+           
         % Save dose for every bixel in cell array
         doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix),1,bixelDose,dij.numOfVoxels,1);
                 
         % save computation time and memory by sequentially filling the 
         % sparse matrix dose.dij from the cell array
         if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
-            dij.physicalDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+            if calcDoseDirect
+                if isfield(stf(1).ray(1),'weight')
+                    % score physical dose
+                    dij.physicalDose{1}(:,1) = dij.physicalDose{1}(:,1) + stf(i).ray(j).weight * doseTmpContainer{1,1};
+                else
+                    error(['No weight available for beam ' num2str(i) ', ray ' num2str(j)]);
+                end
+            else
+                % fill entire dose influence matrix
+                dij.physicalDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+            end
         end
         
     end
