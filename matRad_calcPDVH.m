@@ -4,7 +4,7 @@ function [dvhPoints,volume] = matRad_calcPDVH(Q_ref,doseVec,dij,cst,varargin)
 if ~isempty(varargin)
     dvhPoints = varargin{1};
 else
-    dvhPoints = linspace(0,max(vertcat(doseVec{:}))*1.05,10000);
+    dvhPoints = linspace(0,max(vertcat(doseVec{:}))*1.05,1000);
 end
 
 % calculate DVH in every scenario
