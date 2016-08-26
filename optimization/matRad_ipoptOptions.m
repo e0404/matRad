@@ -34,7 +34,7 @@ options.ipopt.compl_inf_tol                 = 1e-4; % (Opt4), Optimal Solution F
 
 options.ipopt.acceptable_iter               = 3;    % (Acc1)
 options.ipopt.acceptable_tol                = 1e10; % (Acc2)
-options.ipopt.acceptable_constr_viol_tol    = 1e-6; % (Acc3)
+options.ipopt.acceptable_constr_viol_tol    = 1e-2; % (Acc3)
 options.ipopt.acceptable_dual_inf_tol       = 1e10; % (Acc4)
 options.ipopt.acceptable_compl_inf_tol      = 1e10; % (Acc5)
 options.ipopt.acceptable_obj_change_tol     = 1e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled

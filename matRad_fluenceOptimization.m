@@ -198,7 +198,7 @@ if ~isempty(matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenar
             wInitTmp = wInitTmp - 0.1*wInit;
             jInit = abs(matRad_jacobFuncWrapper(wInitTmp,dij,cst,pln.bioOptimization));
         end
-        cScalingTmp(i,1) = 1e-3/max(jInit(i,:));
+        cScalingTmp(i,1) = 1e2/max(jInit(i,:));
     end
     cScaling = cScalingTmp;
 end
