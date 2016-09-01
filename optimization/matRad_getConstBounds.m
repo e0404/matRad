@@ -52,11 +52,6 @@ elseif isequal(constraint.type, 'max mean dose constraint')
     cl = -inf;
     cu = param;
 
-elseif isequal(constraint.type, 'min max mean dose constraint') 
-
-    cl = param(1);
-    cu = param(2);
-
 elseif isequal(constraint.type, 'min EUD constraint') 
 
     cl = param;
@@ -66,11 +61,6 @@ elseif isequal(constraint.type, 'max EUD constraint')
 
     cl = -inf;
     cu = param;
-
-elseif isequal(constraint.type, 'min max EUD constraint') 
-
-    cl = param(1);
-    cu = param(2);
 
 elseif isequal(constraint.type, 'max DVH constraint') 
 

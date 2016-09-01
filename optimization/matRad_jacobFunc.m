@@ -57,14 +57,12 @@ elseif isequal(constraint.type, 'min dose constraint')
     jacobVec = jacobVec/sum(jacobVec);
 
 elseif isequal(constraint.type, 'max mean dose constraint') || ...
-       isequal(constraint.type, 'min mean dose constraint') || ...
-       isequal(constraint.type, 'min max mean dose constraint') 
+       isequal(constraint.type, 'min mean dose constraint') 
 
     jacobVec = ones(numOfVoxels,1)./numOfVoxels;
 
 elseif isequal(constraint.type, 'max EUD constraint') || ...
-       isequal(constraint.type, 'min EUD constraint') || ...
-       isequal(constraint.type, 'min max EUD constraint') 
+       isequal(constraint.type, 'min EUD constraint') 
 
     % exponenent for EUD constraint
     exponent = constraint.EUD;
