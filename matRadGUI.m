@@ -2242,12 +2242,6 @@ if ischar(Val)
     Val = str2num(Val);
 end 
 
-if length(Val) == 2
-   if Val(1) > Val(2)
-      warndlg('provide min max dose values!');  
-   end
-end
-
 if length(Val) > 2
     warndlg('invalid input!');
 end

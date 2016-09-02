@@ -1,10 +1,8 @@
 function jacob = matRad_jacobFuncWrapper(w,dij,cst,type)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian function for inverse planning supporting max dose
-% constraint, min dose constraint, min max dose constraint, min mean, max
-% min, min max mean constraint, min EUD constraint, max EUDconstraint, 
-% min max EUD constraint, exact DVH constraint, max DVH constraint, 
-% min DVH constraint 
+% constraint, min dose constraint, min mean dose constraint, max mean dose constraint,
+% min EUD constraint, max EUD constraint, max DVH constraint, min DVH constraint 
 % 
 % call
 %   jacob = matRad_jacobFunc(w,dij,cst,type)
@@ -64,7 +62,7 @@ for i = 1:size(cst,1)
                 
                 % compute reference
                 if (~isequal(cst{i,6}(j).type, 'max dose constraint')      && ~isequal(cst{i,6}(j).type, 'min dose constraint')          &&...
-                    ~isequal(cst{i,6}(j).type, 'max mean dose constraint') && ~isequal(cst{i,6}(j).type, 'min max mean dose constraint') && ...
+                    ~isequal(cst{i,6}(j).type, 'max mean dose constraint') && ~isequal(cst{i,6}(j).type, 'min mean dose constraint') && ...
                     ~isequal(cst{i,6}(j).type, 'min EUD constraint')       && ~isequal(cst{i,6}(j).type, 'max EUD constraint'))           && ...
                     isequal(type,'effect')
                      
