@@ -32,7 +32,7 @@ clc
 %  VOIs        = {'Blase','Haut','prostata_','Rektum','GTVPrimarius'};
 %  [ct,cst]    = matRad_multScenImport(InputFolder,numOfScen,VOIs); 
  
-load T6H_dose.mat
+load T6H_dvf.mat
 %load TKUH005_BPL.mat
 
 %% multiple Scenarios

@@ -22,29 +22,31 @@ multScen       = evalin('base','multScen');
 resultGUI      = evalin('base','resultGUI');
 dij            = evalin('base','dij');
 
+add = 0;
 for i=1:length(delivery)
     delivery(i).phase = zeros(length(delivery(i).es), 1); 
     delivery(i).w = zeros(length(delivery(i).es), 1); 
-    delivery(i).index_j = zeros(length(delivery(i).es), 1); 
+   %delivery(i).index_j = zeros(length(delivery(i).es), 1); 
     
-    %für richtige index der Bixel in Fluenzvektor
-    add = 0;
-    if(i>1)        
-        for k=2:i
-            add = length(delivery(k-1).w);       
-        end
+    % ordne jeden spot sein weight zu
+    % [j, index_j] = sort(delivery(i).j);
+    % delivery(i).index_j = index_j;
+    for l=1:length(delivery(i).j)
+        if(isnan(delivery(i).j(l)))
+        delivery(i).w(l) = NaN;
+    else
+        delivery(i).w(l) = resultGUI.finalw(delivery(i).j(l));  %habe in delivery schon particles -> sollte gleich sein!!!
     end
-    
-    [j, index_j] = sort(delivery(i).j);
-    delivery(i).w = resultGUI.finalw(index_j + add);
-    delivery(i).index_j = index_j + add;
+    end
+    %add = max(j);
 
-  
+
+   
 
     %Motion assumption
     NumOfPhases = multScen.numOfCtScen;
     %Annahme 5s und linear  ÄNDERN
-    phaseTime = 5/NumOfPhases;
+    phaseTime = 3/NumOfPhases;
     j=1;
     p = 1;
     Time = 0;
@@ -66,8 +68,9 @@ disp('calc dose in each CT phase')
 for p=1:NumOfPhases
     w=zeros(dij.totalNumOfBixels, 1); 
     for i=1:length(delivery)
-        t =  find(delivery(i).phase == p);
-        w(delivery(i).index_j(t)) = delivery(i).w(t);
+        t =  find(delivery(i).phase == p  & ~isnan(delivery(i).w));
+             
+        w(delivery(i).j(t)) = delivery(i).w(t);
         Fluenzw{p} = w;
     end
  

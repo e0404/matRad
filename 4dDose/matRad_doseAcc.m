@@ -1,4 +1,4 @@
-function dAcc = matRad_doseAcc(d,ct,accMethod)
+function dAcc = matRad_doseAcc(resultGUI,accMethod)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dose accumulation function
 % 
@@ -29,9 +29,11 @@ function dAcc = matRad_doseAcc(d,ct,accMethod)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
- 
-nPhases = size(d.physicalDose,4);
-dimensions = [size(d.physicalDose,1) size(d.physicalDose,2) size(d.physicalDose,3)];
+% get data from workspace
+ct            = evalin('base','ct');
+
+nPhases = size(resultGUI.phaseDose, 2); %size(d.physicalDose,4);
+dimensions = [size(resultGUI.phaseDose{1},1) size(resultGUI.phaseDose{1},2) size(resultGUI.phaseDose{1},3)];
 
 xGridVec = 1:dimensions(1);
 yGridVec = 1:dimensions(2);
@@ -39,55 +41,67 @@ zGridVec = 1:dimensions(3);
 
 dAcc = zeros(dimensions);
 
+
+
+
 % DDM:  direct dose mapping
 % DDMM: divergent dose mapping
 % EMT:  energy mass transfer algorithm
-if nargin < 3 % set default accumulation method
+if nargin < 2 % set default accumulation method
     accMethod = 'DDM';
 end
 
     
 if strcmp(accMethod,'DDM')
     
-    if ~strcmp(ct.dvfType,'pull');
-        error('dose accumulation via direct dose mapping (DDM) requires pull dvfs');
-    end
+    %if ~strcmp(ct.dvfType,'pull');
+    %    error('dose accumulation via direct dose mapping (DDM) requires pull dvfs');
+    %end
     
     [Y,X,Z] = meshgrid(xGridVec,yGridVec,zGridVec);
 
     for i = 1:nPhases
         
-        dvf_x_i = squeeze(ct.dvf(1,:,:,:,i));
-        dvf_y_i = squeeze(ct.dvf(2,:,:,:,i));
-        dvf_z_i = squeeze(ct.dvf(3,:,:,:,i));
+        dvf_x_i = squeeze(ct.dvf{1,i}(1,:,:,:)); %squeeze(ct.dvf(1,:,:,:,i));
+        dvf_y_i = squeeze(ct.dvf{1,i}(2,:,:,:));
+        dvf_z_i = squeeze(ct.dvf{1,i}(3,:,:,:));
         
-        ix  = d.physicalDose(:,:,:,i) > 0;
-                
-        d_ref = interp3(yGridVec,xGridVec',zGridVec,d.physicalDose(:,:,:,i), ...
-                        Y(ix) + dvf_y_i(ix)/ct.resolution.y, ...
-                        X(ix) + dvf_x_i(ix)/ct.resolution.x, ...
-                        Z(ix) + dvf_z_i(ix)/ct.resolution.z, ...
-                        'linear',0);
-                    
+        ix  = resultGUI.phaseDose{1,i}(:,:,:)>0;       %d.physicalDose(:,:,:,i) > 0;
+        
+%         d_ref = interp3(yGridVec,xGridVec',zGridVec,resultGUI.phaseDose{1,i}(:,:,:), ...  %d.physicalDose(:,:,:,i), ...
+%                         Y(ix) + dvf_y_i(ix)/ct.resolution.y, ...
+%                         X(ix) + dvf_x_i(ix)/ct.resolution.x, ...
+%                         Z(ix) + dvf_z_i(ix)/ct.resolution.z, ...
+%                         'linear',0);
+% für Marks Methode müssen VF und CT gleiche Auflösung haben??? Vorher
+% interpolation der Dosis in VF Grid??? 
+        %mappe Dosis von Phase n in Referenzphase
+        d_ref = interp3(yGridVec,xGridVec',zGridVec,resultGUI.phaseDose{1,i}(:,:,:), ...  %d.physicalDose(:,:,:,i), ...
+                         Y(ix) + dvf_y_i(ix)/ct.resolution.y, ...
+                         X(ix) + dvf_x_i(ix)/ct.resolution.x, ...
+                         Z(ix) + dvf_z_i(ix)/ct.resolution.z, ...
+                         'linear',0);
+
+
         dAcc(ix) = dAcc(ix) + d_ref;
         
     end
     
 elseif strcmp(accMethod,'EMT')
    
-    if ~strcmp(ct.dvfType,'push');
-        error('dose accumulation via interpolation requires push dvfs');
-    end
+    %if ~strcmp(ct.dvfType,'push');
+    %    error('dose accumulation via interpolation requires push dvfs');
+    %end
 
     [X,Y,Z] = ndgrid(xGridVec,yGridVec,zGridVec);
 
     for i = 1:nPhases
         
-        m_i     = ct.cube(:,:,:,i);
-        e_i     = d.physicalDose(:,:,:,i).*m_i;
-        dvf_x_i = squeeze(ct.dvf(1,:,:,:,i))/ct.resolution.x;
-        dvf_y_i = squeeze(ct.dvf(2,:,:,:,i))/ct.resolution.y;
-        dvf_z_i = squeeze(ct.dvf(3,:,:,:,i))/ct.resolution.z;
+        m_i     = ct.cube{1,i}; %ct.cube(:,:,:,i);
+        e_i     = resultGUI.phaseDose{1,i}.*m_i; %d.physicalDose(:,:,:,i).*m_i;
+        dvf_x_i = squeeze(ct.dvf{1,i}(1,:,:,:))/ct.resolution.x;
+        dvf_y_i = squeeze(ct.dvf{1,i}(2,:,:,:))/ct.resolution.y; %squeeze(ct.dvf(2,:,:,:,i))/ct.resolution.y;
+        dvf_z_i = squeeze(ct.dvf{1,i}(3,:,:,:))/ct.resolution.z;
         
         ix = e_i>0;
         
