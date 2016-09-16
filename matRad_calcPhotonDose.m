@@ -101,7 +101,7 @@ V = unique(vertcat(V{:}));
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
 
 % set lateral cutoff value
-lateralCutoff = 65; % [mm]
+lateralCutoff = 20; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
@@ -296,9 +296,9 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                            isoLatDistsZ);
                                                        
                     % Sample dij elements between 1% and 0.1% of the dose                              
-                    tolDoseLimits  = [0.01 0.001];
-                    SamplingRate   = 0.1;   % sample x% of the voxels within the previously specified range
-                    [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,tolDoseLimits,SamplingRate);                                                       
+%                     tolDoseLimits  = [0.01 0.001];
+%                     SamplingRate   = 0.1;   % sample x% of the voxels within the previously specified range
+%                     [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,tolDoseLimits,SamplingRate);                                                       
 
                     % Save dose for every bixel in cell array
                     doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix),1,bixelDose,dij.numOfVoxels,1);
