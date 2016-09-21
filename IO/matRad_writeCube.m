@@ -48,7 +48,8 @@ end
 %% Prepare Metadata
 %if the field is not set, we assume standard matRad x-y swap
 if ~isfield(metadata,'axisPermutation')
-    metadata.axisPermutation = [2 1 3]; %Default Matlab axis permutation
+    cube = permute(cube,[2 1 3]);
+    metadata.axisPermutation = [1 2 3]; %Default Matlab axis permutation
 end
 %use the matrad coordinate system
 if ~isfield(metadata,'coordinateSystem')
