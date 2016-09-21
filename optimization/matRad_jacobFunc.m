@@ -1,10 +1,8 @@
 function jacobVec = matRad_jacobFunc(d_i,constraint,d_ref)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian function for inverse planning supporting max dose
-% constraint, min dose constraint, min max dose constraint, min mean, max
-% min, min max mean constraint, min EUD constraint, max EUDconstraint, 
-% min max EUD constraint, exact DVH constraint, max DVH constraint, 
-% min DVH constraint 
+% constraint, min dose constraint, min mean dose constraint, max mean dose constraint, 
+% min EUD constraint, max EUD constraint, max DVH constraint, min DVH constraint 
 % 
 % call
 %   jacobVec = matRad_jacobFunc(d_i,constraint,d_ref)
@@ -25,7 +23,7 @@ function jacobVec = matRad_jacobFunc(d_i,constraint,d_ref)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2016 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -57,14 +55,12 @@ elseif isequal(constraint.type, 'min dose constraint')
     jacobVec = jacobVec/sum(jacobVec);
 
 elseif isequal(constraint.type, 'max mean dose constraint') || ...
-       isequal(constraint.type, 'min mean dose constraint') || ...
-       isequal(constraint.type, 'min max mean dose constraint') 
+       isequal(constraint.type, 'min mean dose constraint') 
 
     jacobVec = ones(numOfVoxels,1)./numOfVoxels;
 
 elseif isequal(constraint.type, 'max EUD constraint') || ...
-       isequal(constraint.type, 'min EUD constraint') || ...
-       isequal(constraint.type, 'min max EUD constraint') 
+       isequal(constraint.type, 'min EUD constraint') 
 
     % exponenent for EUD constraint
     exponent = constraint.EUD;

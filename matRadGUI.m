@@ -83,6 +83,14 @@ function matRadGUI_OpeningFcn(hObject, ~, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to matRadGUI (see VARARGIN)
 
+% enable opengl software rendering to visualize linewidths properly
+if ispc || isunix
+    opengl software
+elseif ismac
+    % opengl is not supported
+end
+
+
 if ~isdeployed
     currFolder = fileparts(mfilename('fullpath'));
 else
@@ -269,7 +277,6 @@ if handles.State > 0
     end
 end
 
-
 % Update handles structure
 handles.profileOffset = 0;
 UpdateState(handles)
@@ -448,6 +455,24 @@ end
 UpdateState(handles);
 guidata(hObject,handles);
 
+
+% --- Executes on button press in btn_export.
+function btn_export_Callback(hObject, eventdata, handles)
+% hObject    handle to btn_export (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+try
+    if ~isdeployed
+        matRadRootDir = fileparts(mfilename('fullpath'));
+        addpath(fullfile(matRadRootDir,'IO'))
+    end
+    matRad_exportGUI;
+catch
+    handles = showError(handles,'Could not export data'); 
+end
+UpdateState(handles);
+guidata(hObject,handles);
 
 function editBixelWidth_Callback(hObject, ~, handles)
 % hObject    handle to editBixelWidth (see GCBO)
@@ -717,7 +742,10 @@ guidata(hObject,handles);
 function UpdatePlot(handles)
 
 defaultFontSize = 8;
-currAxes = axis;
+currAxes            = axis;
+AxesHandlesCT_Dose  = gobjects(0);
+AxesHandlesVOI      = gobjects(0);
+AxesHandlesIsoDose  = gobjects(0);
 
 if handles.State == 0
     return
@@ -802,7 +830,7 @@ slice = round(get(handles.sliderSlice,'Value'));
        
     end
     axes(handles.axesFig)
-    image(ct_rgb);
+    AxesHandlesCT_Dose(end+1) = imagesc(ct_rgb);
 end
 
 %% plot dose cube
@@ -839,13 +867,13 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
             
             % plot dose distribution    
             hDose = imagesc('CData',dose_rgb,'Parent',handles.axesFig);
-            
+            AxesHandlesCT_Dose(end+1) = hDose;
             if get(handles.radiobtnDose,'Value')
-                        if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
-                             set(hDose,'AlphaData',  .6*(double(dose_slice)>0.1));
-                        else
-                            set(hDose,'AlphaData',  .6*(double(dose_slice)>handles.CutOffLevel));
-                        end
+                if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
+                    set(hDose,'AlphaData',  .6*(double(dose_slice)>0.1));
+                else
+                    set(hDose,'AlphaData',  .6*(double(dose_slice)>handles.CutOffLevel));
+                end
             else
                 set(hDose,'AlphaData', 0) ;
             end
@@ -874,8 +902,8 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
         end
         
     axes(handles.axesFig)
-    hold on
     text(0,0,'','units','norm') % fix for line width ...
+
 
         %% plot iso dose lines
         if get(handles.radiobtnIsoDoseLines,'Value')
@@ -891,16 +919,16 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
                 lower = 1; % lower marks the beginning of a section
                 while lower-1 ~= size(handles.isoDoseContours{slice,plane},2);
                     steps = handles.isoDoseContours{slice,plane}(2,lower); % number of elements of current line section
-                    hLine = line(handles.isoDoseContours{slice,plane}(1,lower+1:lower+steps),...
-                                 handles.isoDoseContours{slice,plane}(2,lower+1:lower+steps),...
-                                 'Color',colors(vLevels(:) == handles.isoDoseContours{slice,plane}(1,lower),:));
-                    set(hLine,'LineWidth',1.5);
+                    AxesHandlesIsoDose(end+1) = line(handles.isoDoseContours{slice,plane}(1,lower+1:lower+steps),...
+                                   handles.isoDoseContours{slice,plane}(2,lower+1:lower+steps),...
+                                   'Color',colors(vLevels(:) == handles.isoDoseContours{slice,plane}(1,lower),:),'LineWidth',1.5,'Parent',handles.axesFig);
                     if get(handles.radiobtnIsoDoseLinesLabels,'Value') == 1
                         text(handles.isoDoseContours{slice,plane}(1,lower+1),...
                             handles.isoDoseContours{slice,plane}(2,lower+1),...
-                            num2str(handles.isoDoseContours{slice,plane}(1,lower)))
+                            num2str(handles.isoDoseContours{slice,plane}(1,lower)),'Parent',handles.axesFig)
                     end
                     lower = lower+steps+1;
+                    
                 end
             end
         end
@@ -908,7 +936,7 @@ end
 
 
 %% plot VOIs
- axes(handles.axesFig)
+ axes(handles.axesFig)  
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
     colors = colorcube;
     colors = colors(round(linspace(1,63,size(cst,1))),:);
@@ -918,15 +946,11 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
             if any(cst{s,7}{slice,plane}(:))
                 lower = 1; % lower marks the beginning of a section
                 while lower-1 ~= size(cst{s,7}{slice,plane},2);
+                    hold on
                     steps = cst{s,7}{slice,plane}(2,lower); % number of elements of current line section
-                    % plot lines twice - 
-                     line(cst{s,7}{slice,plane}(1,lower+1:lower+steps),...
-                        cst{s,7}{slice,plane}(2,lower+1:lower+steps),...
-                        'Color',colors(s,:));
-
-                     line(cst{s,7}{slice,plane}(1,lower+1:lower+steps),...
-                        cst{s,7}{slice,plane}(2,lower+1:lower+steps),...
-                        'Color',colors(s,:),'LineWidth',2);
+                    AxesHandlesVOI(end+1) = line(cst{s,7}{slice,plane}(1,lower+1:lower+steps),...
+                         cst{s,7}{slice,plane}(2,lower+1:lower+steps),...
+                         'Color',colors(s,:),'LineWidth',2.0,'Parent',handles.axesFig);
                     
                     lower = lower+steps+1;
                 end
@@ -935,9 +959,17 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
     end
 end
 
-%% Set axis labels
+
+
+%% Set axis labels and plot iso center
+FlagIsoCenterVisible = false;
+vIsoCenter           = round(pln.isoCenter./[ct.resolution.x ct.resolution.y ct.resolution.z]);
 if  plane == 3% Axial plane
     if ~isempty(pln)
+        vIsoCenterPlot  = [vIsoCenter(1) vIsoCenter(2)];
+        if vIsoCenter(3) == slice
+            FlagIsoCenterVisible = true;
+        end
         set(handles.axesFig,'XTick',0:50/ct.resolution.x:1000);
         set(handles.axesFig,'YTick',0:50/ct.resolution.y:1000);
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.x);
@@ -952,6 +984,10 @@ if  plane == 3% Axial plane
     end
 elseif plane == 2 % Sagittal plane
     if ~isempty(pln)
+        vIsoCenterPlot  = [vIsoCenter(3) vIsoCenter(2)];
+        if vIsoCenter(2) == slice
+            FlagIsoCenterVisible = true;
+        end
         set(handles.axesFig,'XTick',0:50/ct.resolution.z:1000)
         set(handles.axesFig,'YTick',0:50/ct.resolution.y:1000)
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.z)
@@ -966,6 +1002,10 @@ elseif plane == 2 % Sagittal plane
     end
 elseif plane == 1 % Coronal plane
     if ~isempty(pln)
+        vIsoCenterPlot  = [vIsoCenter(3) vIsoCenter(1)];
+        if vIsoCenter(1) == slice
+            FlagIsoCenterVisible = true;
+        end
         set(handles.axesFig,'XTick',0:50/ct.resolution.z:1000)
         set(handles.axesFig,'YTick',0:50/ct.resolution.x:1000)
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.z)
@@ -980,6 +1020,19 @@ elseif plane == 1 % Coronal plane
     end
 end
 
+hold on
+
+if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1
+    IsoCenterCrossColor = [0.27 0.27 0.27];
+    if FlagIsoCenterVisible
+        IsoCenterCrossColor = [0 0 0];
+    end
+    hIsoCenterCross = plot(handles.axesFig,vIsoCenterPlot(1),vIsoCenterPlot(2),'x','MarkerSize',13,'LineWidth',4,'Color',IsoCenterCrossColor); 
+end
+
+% the following line ensures the plotting order (optional)
+% set(gca,'Children',[AxesHandlesCT_Dose hIsoCenterCross AxesHandlesIsoDose  AxesHandlesVOI ]);    
+  
 %set axis ratio
 ratios = [1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
 set(handles.axesFig,'PlotBoxAspectRatioMode','manual');
@@ -996,7 +1049,7 @@ end
 
 
 %% profile plot
-if get(handles.popupTypeOfPlot,'Value')==2 && exist('Result','var')
+if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     % set SAD
     fileName = [pln.radiationMode '_' pln.machine];
     try
@@ -1568,13 +1621,12 @@ end
 columnname = {'VOI name','VOI type','priority','obj. / const.','penalty','dose', 'EUD','volume','robustness'};
 
 AllObjectiveFunction = {'square underdosing','square overdosing','square deviation', 'mean', 'EUD',...
-       'min dose constraint','max dose constraint',...
-       'min mean dose constraint','max mean dose constraint','min max mean dose constraint',...
-       'min EUD constraint','max EUD constraint','min max EUD constraint',...
-       'max DVH constraint','min DVH constraint',...
-       'max DVH objective','min DVH objective'};
+                        'min dose constraint','max dose constraint',...
+                        'min mean dose constraint','max mean dose constraint',...
+                        'min EUD constraint','max EUD constraint',...
+                        'max DVH constraint','min DVH constraint',...
+                        'max DVH objective' ,'min DVH objective'};
 
-PlaceHolder = NaN;
 columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
        AllObjectiveFunction,...
        'numeric','numeric','numeric','numeric',{'none','WC','prob'}};
@@ -1595,15 +1647,15 @@ for i = 1:size(cst,1)
    if strcmp(cst(i,3),'IGNORED')~=1
        for j=1:size(cst{i,6},1)
        %VOI
-       data{Counter,1}=cst{i,2};
+       data{Counter,1}  = cst{i,2};
        %VOI Type
-       data{Counter,2}=cst{i,3};
+       data{Counter,2}  = cst{i,3};
        %Priority
-       data{Counter,3}=cst{i,5}.Priority;
+       data{Counter,3}  = cst{i,5}.Priority;
        %Objective Function
-       objFunc = cst{i,6}(j).type;
-       data{Counter,4}=objFunc;
-       
+       objFunc          = cst{i,6}(j).type;
+       data{Counter,4}  = objFunc;
+       % set Penalty
        data{Counter,5}  = cst{i,6}(j).penalty;
        data{Counter,6}  = cst{i,6}(j).dose;
        data{Counter,7}  = cst{i,6}(j).EUD;
@@ -1622,13 +1674,14 @@ set(handles.uiTable,'ColumnEditable',[true true true true true true true true tr
 set(handles.uiTable,'Data',data);
 
 
-function Flag=getCstTable (handles)
+function Flag = getCstTable (handles)
 
 data = get(handles.uiTable,'Data');
 OldCst = evalin('base','cst');
 NewCst=[];
 Cnt=1;
 FlagValidParameters = true;
+
 %% generate new cst from GUI
 for i = 1:size(OldCst,1)
     CntObjF = 1;
@@ -1795,7 +1848,6 @@ function uiTable_CellEditCallback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 Placeholder = NaN;
-PlaceholderDose = 'NaN';
 PlaceholderRob  = 'none';
 
 % get table data and current index of cell
@@ -1826,6 +1878,7 @@ else
     data = get(hObject,'Data'); 
 end
 
+
 %% if VOI, VOI Type or Overlap was changed
 if ~strcmp(eventdata.NewData,eventdata.PreviousData)
     if eventdata.Indices(2) == 1 || eventdata.Indices(2) == 2 ...
@@ -1848,7 +1901,7 @@ if ~strcmp(eventdata.NewData,eventdata.PreviousData)
          end
          
          %% check if new OAR was added
-         cst=evalin('base','cst');
+         cst = evalin('base','cst');
          Idx = ~cellfun('isempty',cst(:,6));
          
          if sum(strcmp(cst(Idx,2),eventdata.NewData))==0 
@@ -1882,17 +1935,29 @@ if eventdata.Indices(2) == 2
 end
 %% if objective function was changed -> check if VOI Type still makes sense
 if eventdata.Indices(2) == 4
-    if strcmp(eventdata.NewData,'square deviation') ||...
-        strcmp(eventdata.NewData,'square underdosing') ||...
-        strcmp(eventdata.NewData, 'min dose constraint') || ...
-        strcmp(eventdata.NewData, 'min mean dose constraint') || ...
-        strcmp(eventdata.NewData, 'min DVH constraint') ||...
-        strcmp(eventdata.NewData, 'min DVH objective')
+    ObjFunction = eventdata.NewData;
+else
+    ObjFunction = data{eventdata.Indices(1),4};
+end
+
+
+if eventdata.Indices(2) == 4
+    if  sum(strcmp(eventdata.NewData,{'square deviation','square underdosing','min dose constraint',...
+                                      'min mean dose constraint','min DVH constraint','min DVH objective'})) > 0 
     
         if strcmp('OAR',data{eventdata.Indices(1),2})
             data{eventdata.Indices(1),4} = 'square overdosing';
+            ObjFunction                  = 'square overdosing';
+            if isnan(data{eventdata.Indices(1),5})
+                data{eventdata.Indices(1),5} = 1;
+            end
         end
         
+        tmpDose = parseStringAsNum(data{eventdata.Indices(1),6},true);
+        if numel(tmpDose) == 2
+            data{eventdata.Indices(1),6} = num2str(tmpDose(1));
+        end
+    
     elseif strcmp(eventdata.NewData,'mean')
         
         if strcmp('TARGET',data{eventdata.Indices(1),2})
@@ -1903,11 +1968,6 @@ if eventdata.Indices(2) == 4
 end
 
 %% set fields to NaN according to objective function
-if eventdata.Indices(2) == 4
-    ObjFunction = eventdata.NewData;
-else
-    ObjFunction = data{eventdata.Indices(1),4};
-end
 
 if sum(strcmp(ObjFunction, {'square underdosing','square overdosing','square deviation'})) > 0
     
@@ -1925,7 +1985,7 @@ elseif strcmp(ObjFunction,'mean')
         if isnan(data{eventdata.Indices(1),5})
                  data{eventdata.Indices(1),5} = 1;
         end
-        data{eventdata.Indices(1),6} = PlaceholderDose;    
+        data{eventdata.Indices(1),6} = Placeholder;    
         data{eventdata.Indices(1),7} = Placeholder;   
         data{eventdata.Indices(1),8} = Placeholder;
         data{eventdata.Indices(1),9} = PlaceholderRob;
@@ -1937,12 +1997,12 @@ elseif strcmp(ObjFunction,'EUD')
                  data{eventdata.Indices(1),k} = 1;
             end
         end 
-       data{eventdata.Indices(1),6} = PlaceholderDose; 
+       data{eventdata.Indices(1),6} = Placeholder; 
        data{eventdata.Indices(1),8} = Placeholder;
        data{eventdata.Indices(1),9} = PlaceholderRob;
        
 elseif sum(strcmp(ObjFunction,{'min dose constraint','max dose constraint'...
-                                     'min mean dose constraint','max mean dose constraint','min max mean dose constraint'}))> 0
+                               'min mean dose constraint','max mean dose constraint'}))> 0
          
          if isnan(data{eventdata.Indices(1),6})
                  data{eventdata.Indices(1),6} = 1;
@@ -1952,14 +2012,13 @@ elseif sum(strcmp(ObjFunction,{'min dose constraint','max dose constraint'...
          data{eventdata.Indices(1),8} = Placeholder;
          data{eventdata.Indices(1),9} = PlaceholderRob;
          
-elseif sum(strcmp(ObjFunction,{'min EUD constraint','max EUD constraint','min max EUD constraint'}) ) > 0
+elseif sum(strcmp(ObjFunction,{'min EUD constraint','max EUD constraint'}) ) > 0
         
-        for k = [6 7]
-            if isnan(data{eventdata.Indices(1),k})
-                 data{eventdata.Indices(1),k} = 1;
-            end
-        end 
+        if isnan(data{eventdata.Indices(1),7})
+             data{eventdata.Indices(1),7} = 1;
+        end
         data{eventdata.Indices(1),5} = Placeholder;
+        data{eventdata.Indices(1),6} = Placeholder;
         data{eventdata.Indices(1),8} = Placeholder;
         data{eventdata.Indices(1),9} = PlaceholderRob;
         
@@ -2053,7 +2112,8 @@ end
       set(handles.pushbutton_recalc,'Enable','off');
       set(handles.btnSaveToGUI,'Enable','off');
       set(handles.btnDVH,'Enable','off'); 
-      
+      set(handles.importDoseButton,'Enable','off');
+      set(handles.btn_export,'Enable','off');
      case 1
      
       set(handles.txtInfo,'String','ready for dose calculation');
@@ -2062,6 +2122,8 @@ end
       set(handles.pushbutton_recalc,'Enable','off');
       set(handles.btnSaveToGUI,'Enable','off');
       set(handles.btnDVH,'Enable','off');
+      set(handles.importDoseButton,'Enable','off');
+      set(handles.btn_export,'Enable','on');
       
       AllVarNames = evalin('base','who');
       if ~isempty(AllVarNames)
@@ -2080,7 +2142,8 @@ end
       set(handles.pushbutton_recalc,'Enable','off');
       set(handles.btnSaveToGUI,'Enable','off');
       set(handles.btnDVH,'Enable','off');
-      
+      set(handles.importDoseButton,'Enable','off');
+      set(handles.btn_export,'Enable','on');
       AllVarNames = evalin('base','who');
       if ~isempty(AllVarNames)
             if  sum(ismember(AllVarNames,'resultGUI')) > 0
@@ -2092,13 +2155,16 @@ end
      
       
      case 3
-
       set(handles.txtInfo,'String','plan is optimized');   
       set(handles.btnCalcDose,'Enable','on');
       set(handles.btnOptimize ,'Enable','on');
       set(handles.pushbutton_recalc,'Enable','on');
       set(handles.btnSaveToGUI,'Enable','on');
       set(handles.btnDVH,'Enable','on');
+      set(handles.btn_export,'Enable','on');
+      % resultGUI struct needs to be available to import dose
+      % otherwise inconsistent states can be achieved
+      set(handles.importDoseButton,'Enable','on');
    
  end
 
@@ -2196,12 +2262,6 @@ flagValidity = true;
 if ischar(Val)
     Val = str2num(Val);
 end 
-
-if length(Val) == 2
-   if Val(1) > Val(2)
-      warndlg('provide min max dose values!');  
-   end
-end
 
 if length(Val) > 2
     warndlg('invalid input!');
@@ -2312,10 +2372,18 @@ assignin('base','pln',pln);
 
 % parsing a string as number array
 function number = parseStringAsNum(stringIn,isVector)
-number = str2num(stringIn);
-if isempty(number) || length(number) > 1 && ~isVector
-    warndlg('could not parse all plan parameters'); 
+if isnumeric(stringIn)
+    number = stringIn;
+else
+    number = str2num(stringIn);
+    if isempty(number) || length(number) > 1 && ~isVector
+        warndlg(['could not parse all parameters (pln, optimization parameter)']); 
+        number = NaN;
+    elseif isVector && iscolumn(number)
+        number = number';
+    end
 end
+
 
 % show error
 function handles = showError(handles,Message)
@@ -3131,7 +3199,6 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
 
-
 % --- Executes on button press in vmcFlag.
 function vmcFlag_Callback(hObject, eventdata, handles)
 % hObject    handle to vmcFlag (see GCBO)
@@ -3168,8 +3235,6 @@ end
 guidata(hObject, handles);
 UpdatePlot(handles)
 
-
-
 % --- Executes during object creation, after setting all properties.
 function legendTable_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to legendTable (see GCBO)
@@ -3181,3 +3246,40 @@ function legendTable_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in importDoseButton.
+function importDoseButton_Callback(hObject,eventdata, handles)
+% hObject    handle to importDoseButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+extensions{1} = '*.nrrd';
+[filename,filepath,~] = uigetfile(extensions);
+[~,name,~] = fileparts(filename);
+matRadRootDir = fileparts(mfilename('fullpath'));
+addpath(fullfile(matRadRootDir,'IO'))
+[cube,metadata] = matRad_readCube(fullfile(filepath,filename));
+
+ct = evalin('base','ct');
+
+if ~isequal(ct.cubeDim, size(cube))
+    errordlg('Dimensions of the imported cube do not match with ct','Import failed!','modal');
+    return;
+end
+
+resultGUI = evalin('base','resultGUI');
+
+fieldname = ['import_' name];
+resultGUI.(fieldname) = cube;
+
+assignin('base','resultGUI',resultGUI);
+btnRefresh_Callback(hObject, eventdata, handles)
+
+
+% --- Executes on button press in radioBtnIsoCenter.
+function radioBtnIsoCenter_Callback(hObject, eventdata, handles)
+% hObject    handle to radioBtnIsoCenter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+UpdatePlot(handles)
+% Hint: get(hObject,'Value') returns toggle state of radioBtnIsoCenter
