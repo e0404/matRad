@@ -113,7 +113,7 @@ elseif isequal(constraint.type, 'max DCH Area constraint') || ...
     deviation = deviation.*voxelWeighting;  
 
     % calculate constraint function
-    c = (1/1)*(deviation'*deviation);   
+    c = (1/numOfVoxels)*(deviation'*deviation);   
     
 elseif isequal(constraint.type, 'max DCH Theta constraint') || ...
        isequal(constraint.type, 'min DCH Theta constraint')
