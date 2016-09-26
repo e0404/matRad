@@ -32,8 +32,8 @@ clc
 %  VOIs        = {'Blase','Haut','prostata_','Rektum','GTVPrimarius'};
 %  [ct,cst]    = matRad_multScenImport(InputFolder,numOfScen,VOIs); 
  
-load T6H_dvf.mat
-%load TKUH005_BPL.mat
+%load T6H_dvf.mat
+load TKUH005_26_outline.mat
 
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
@@ -51,8 +51,8 @@ multScen                     = matRad_setMultScen(multScen);
 %% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0 90]; % [°]
-pln.couchAngles     = [0 0]; % [Â°]
+pln.gantryAngles    = [260]; % [°]
+pln.couchAngles     = [0]; % [Â°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
@@ -102,7 +102,7 @@ matRad_calcDVH(resultGUI,cst,pln)
 resultGUI = matRad_postprocessing(resultGUI, dij, pln, 25000000);
 
 %% export Plan
-matRad_export_HITXMLPlan_modified('T6H_stf_sv', 500000, 25000000, 'stfMode')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
+matRad_export_HITXMLPlan_modified('TKUH005_26_outline', 500000, 25000000, 'stfMode')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
 
 %% calc 4D dose
-[resultGUI, delivery] = matRad_calc4dDose('T6H_stf_sv');  
+[resultGUI, delivery, ct] = matRad_calc4dDose(ct, 'TKUH005_26_outline');  

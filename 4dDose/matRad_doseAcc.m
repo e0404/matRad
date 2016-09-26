@@ -1,4 +1,4 @@
-function dAcc = matRad_doseAcc(resultGUI,accMethod)
+function [dAcc, ct] = matRad_doseAcc(ct, resultGUI,accMethod)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dose accumulation function
 % 
@@ -29,8 +29,28 @@ function dAcc = matRad_doseAcc(resultGUI,accMethod)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% get data from workspace
-ct            = evalin('base','ct');
+
+if ~isfield(ct, 'dvf')
+    warning('no dvf available. check if correct ones are imported!')
+  
+    addpath('D:\Matrad\data\4DCT\TKUH005\ReadData3d')
+    
+    dvffiles(1).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F02_M06_vf.mha'; 
+    dvffiles(2).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M06_vf.mha'; 
+    
+    for i = 1:ct.numOfCtScen
+        [ct.dvf{i},ct.dvfReadData3Dinfo(i)] = ReadData3D(dvffiles(i).name,false);
+    
+     % swap x and y (matRad standard)
+     %???????????????????????????????????????????
+    %ct.dvf{i} = permute(ct.dvf{i},[2,1,3]);
+    
+    display(['import VF ',num2str(i),'/',num2str(ct.numOfCtScen)])
+    end
+end
+
+
+
 
 nPhases = size(resultGUI.phaseDose, 2); %size(d.physicalDose,4);
 dimensions = [size(resultGUI.phaseDose{1},1) size(resultGUI.phaseDose{1},2) size(resultGUI.phaseDose{1},3)];
@@ -87,7 +107,7 @@ if strcmp(accMethod,'DDM')
         
     end
     
-elseif strcmp(accMethod,'EMT')
+elseif strcmp(accMethod,'EMT')   % funktioniert nicht wenn Dosis in einer Phase = 0 ist...
    
     %if ~strcmp(ct.dvfType,'push');
     %    error('dose accumulation via interpolation requires push dvfs');

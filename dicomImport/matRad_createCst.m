@@ -56,6 +56,7 @@ for i = 1:size(structures,2)
         cst{i,6}(1).EUD        = NaN;
         cst{i,6}(1).volume     = NaN;
         cst{i,6}(1).robustness = 'none';
+        cst{i,6}(1).coverage     = NaN;
         
     else
         
@@ -70,7 +71,9 @@ for i = 1:size(structures,2)
     cst{i,4}{1} = structures(i).indices;
     
     % set default parameter for biological planning
+    cst{i,5}.TissueClass = 1;
     cst{i,5}.alphaX = 0.1;
     cst{i,5}.betaX = 0.05;
     cst{i,5}.Visible = 1;
+ 
 end

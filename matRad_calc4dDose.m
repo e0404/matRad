@@ -1,4 +1,4 @@
-function [resultGUI, delivery] = matRad_calc4dDose(FileName)
+function [resultGUI, delivery, ct] = matRad_calc4dDose(ct, FileName)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad 4D dose calculation
 % 
@@ -46,10 +46,11 @@ delivery = matRad_readLmdout(FileName);
 [resultGUI, delivery] = matRad_calcPhaseDose(delivery);
 
 %dose accumulation
-%dAcc = matRad_doseAcc(resultGUI,'DDM');  %acc Methods: 'EMT' 'DDM'
+[dAcc, ct] = matRad_doseAcc(ct, resultGUI,'DDM');  %acc Methods: 'EMT' 'DDM'
+resultGUI.accDose = dAcc;
 
 %visualisation
-matRad_plotPhaseDose(resultGUI, 50);
+matRad_plotPhaseDose(resultGUI, 110); %TKUH005 slice 110 % T6H slice 50
 
 
 

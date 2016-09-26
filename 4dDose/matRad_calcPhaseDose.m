@@ -63,6 +63,17 @@ for i=1:length(delivery)
     end    
 end %beams
 
+
+%TestTestTestTestTest
+for i=1:length(delivery)
+    for j = 1: length(delivery(i).time)
+        delivery(i).phase(j) = 1;
+    end
+end
+%TestTestTestTestTest
+
+
+
 %berechne Dosis für jede Phase  
 disp('calc dose in each CT phase')
 for p=1:NumOfPhases
