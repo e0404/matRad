@@ -103,6 +103,7 @@ for i=1:NumberOfBeams
                 delivery(i).ypos(j) = str2num(xPln(i).PTTxPlanMd5.PTTxPlan.Beam.IES{1,IES}.Voxel.Attributes.y);
                 delivery(i).particles(j) = str2num(xPln(i).PTTxPlanMd5.PTTxPlan.Beam.IES{1,IES}.Voxel.Attributes.particles);
                 j = j+1;
+                v=v+1;
             else
                 while(j < length(delivery(i).es) && delivery(i).np(j)+1 == delivery(i).np(j+1))
                     delivery(i).energy(j) = str2num(xPln(i).PTTxPlanMd5.PTTxPlan.Beam.IES{1,IES}.Attributes.energy);
