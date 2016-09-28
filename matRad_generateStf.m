@@ -232,17 +232,21 @@ for i = 1:length(pln.gantryAngles)
     stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
     
      % Reduce number of available energies in HIT base data according to LongitudialSpotSpacing
-     Tolerance = 0.3;
-     CntEnergy =2;
-     while CntEnergy < length(availableEnergies)
-         if abs(availablePeakPos(CntEnergy)-availablePeakPos(CntEnergy-1))<...
-                 pln.LongitudialSpotSpacing-Tolerance
-             availableEnergies(CntEnergy)=[];
-             availablePeakPos(CntEnergy)=[];
-         else
-             CntEnergy = CntEnergy+1;
-         end
-     end           
+      if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
+          if strcmp(pln.machine, 'HIT')
+              Tolerance = 0.3;
+              CntEnergy =2;
+              while CntEnergy < length(availableEnergies)
+                  if abs(availablePeakPos(CntEnergy)-availablePeakPos(CntEnergy-1))<...
+                     pln.LongitudialSpotSpacing-Tolerance
+                 availableEnergies(CntEnergy)=[];
+                 availablePeakPos(CntEnergy)=[];
+             else
+                 CntEnergy = CntEnergy+1;
+             end
+              end  
+          end
+      end
         
        
      for j = stf(i).numOfRays:-1:1

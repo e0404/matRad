@@ -22,7 +22,7 @@ clc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-%load TG119.mat
+load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
@@ -33,7 +33,7 @@ clc
 %  [ct,cst]    = matRad_multScenImport(InputFolder,numOfScen,VOIs); 
  
 %load T6H_dvf.mat
-load TKUH005_26_outline.mat
+%load TKUH005_610_outline.mat
 
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
@@ -51,19 +51,22 @@ multScen                     = matRad_setMultScen(multScen);
 %% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [260]; % [°]
-pln.couchAngles     = [0]; % [Â°]
+pln.gantryAngles    = [0 72 144 216 288]; % [°]  0°, 72°, 144°, 216°, and 288
+pln.couchAngles     = [0 0 0 0 0]; % [Â°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
-pln.radiationMode   = 'protons'; % either photons / protons / carbon
+pln.radiationMode   = 'photons'; % either photons / protons / carbon
 pln.bioOptimization = 'none'; % none: physical optimization; effect: effect-based optimization; RBExD: optimization of RBE-weighted dose
 pln.numOfFractions  = 25;
 pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
-pln.machine         = 'HIT';
+pln.machine         = 'generic' ; %'HIT';
 pln.minNrParticles  = 500000;
 pln.LongitudialSpotSpacing = 3; %only relevant for HIT machine, not for generic
+%pln.CtPhase4Opt = 1; %on which CT phase should plan be optimized
+
+
 %% initial visualization and change objective function settings if desired
 matRadGUI
 
@@ -102,7 +105,7 @@ matRad_calcDVH(resultGUI,cst,pln)
 resultGUI = matRad_postprocessing(resultGUI, dij, pln, 25000000);
 
 %% export Plan
-matRad_export_HITXMLPlan_modified('TKUH005_26_outline', 500000, 25000000, 'stfMode')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
+matRad_export_HITXMLPlan_modified('TKUH005_test', 500000, 25000000, 'stfMode')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
 
 %% calc 4D dose
-[resultGUI, delivery, ct] = matRad_calc4dDose(ct, 'TKUH005_26_outline');  
+[resultGUI, delivery, ct] = matRad_calc4dDose(ct, 'TKUH005_test');  
