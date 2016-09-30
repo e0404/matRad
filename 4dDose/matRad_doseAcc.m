@@ -35,15 +35,16 @@ if ~isfield(ct, 'dvf')
   
     addpath('D:\Matrad\data\4DCT\TKUH005\ReadData3d')
     
-    dvffiles(1).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F02_M06_vf.mha'; 
-    dvffiles(2).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M06_vf.mha'; 
+    dvffiles(1).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M06_vf.mha'; 
+    dvffiles(2).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M10_vf.mha'; 
     
     for i = 1:ct.numOfCtScen
         [ct.dvf{i},ct.dvfReadData3Dinfo(i)] = ReadData3D(dvffiles(i).name,false);
     
-     % swap x and y (matRad standard)
-     %???????????????????????????????????????????
-    %ct.dvf{i} = permute(ct.dvf{i},[2,1,3]);
+     % swap x and y (matRad standard)  ????????????
+     help = ct.dvf{1,i}(1,:,:,:);
+     ct.dvf{1,i}(1,:,:,:) = ct.dvf{1,i}(2,:,:,:);
+     ct.dvf{1,i}(2,:,:,:) = help;
     
     display(['import VF ',num2str(i),'/',num2str(ct.numOfCtScen)])
     end
@@ -180,8 +181,12 @@ elseif strcmp(accMethod,'EMT')   % funktioniert nicht wenn Dosis in einer Phase 
         m_ref(ix_i) = m_ref(ix_i) + overlap .* m_i(ix);
         e_ref(ix_i) = e_ref(ix_i) + overlap .* e_i(ix);
         
-        dAcc = dAcc + e_ref./m_ref;
-                
+        % if m_ref != 0
+        k = find(m_ref);
+        dAcc(k) = dAcc(k) + e_ref(k)./m_ref(k);
+        
+        %dAcc = dAcc + e_ref./m_ref;
+          
     end
     
 elseif strcmp(accMethod,'DDMM')
