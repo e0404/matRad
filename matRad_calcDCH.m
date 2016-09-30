@@ -37,7 +37,12 @@ end
 
 % set dose points in dch, optinal: single dose point
 if ~isempty(varargin)
-    dchPoints = varargin{1};
+    if isnumeric(varargin{1})
+        dchPoints = varargin{1};
+    elseif isequal(varargin{1},'exactDosePoints')
+        dchPoints = unique(sort(doseInverseDVH));
+    end
+    
 else
     dchPoints = linspace(0,max(vertcat(doseVec{:}))*1.05,10000);
 end
