@@ -3254,23 +3254,30 @@ function importDoseButton_Callback(hObject,eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 extensions{1} = '*.nrrd';
-[filename,filepath,~] = uigetfile(extensions);
-[~,name,~] = fileparts(filename);
-matRadRootDir = fileparts(mfilename('fullpath'));
-addpath(fullfile(matRadRootDir,'IO'))
-[cube,metadata] = matRad_readCube(fullfile(filepath,filename));
+[filenames,filepath,~] = uigetfile(extensions,'MultiSelect','on');
 
-ct = evalin('base','ct');
-
-if ~isequal(ct.cubeDim, size(cube))
-    errordlg('Dimensions of the imported cube do not match with ct','Import failed!','modal');
-    return;
+if ~iscell(filenames)
+    tmp = filenames;
+    filenames = cell(1);
+    filenames{1} = tmp;
 end
 
+ct = evalin('base','ct');
 resultGUI = evalin('base','resultGUI');
 
-fieldname = ['import_' name];
-resultGUI.(fieldname) = cube;
+for filename = filenames
+    [~,name,~] = fileparts(filename{1});
+    matRadRootDir = fileparts(mfilename('fullpath'));
+    addpath(fullfile(matRadRootDir,'IO'))
+    [cube,~] = matRad_readCube(fullfile(filepath,filename{1}));
+    if ~isequal(ct.cubeDim, size(cube))
+        errordlg('Dimensions of the imported cube do not match with ct','Import failed!','modal');
+        continue;
+    end
+    
+    fieldname = ['import_' matlab.lang.makeValidName(name, 'ReplacementStyle','delete')];
+    resultGUI.(fieldname) = cube;
+end
 
 assignin('base','resultGUI',resultGUI);
 btnRefresh_Callback(hObject, eventdata, handles)
