@@ -3291,7 +3291,7 @@ function uipushtool_screenshot_ClickedCallback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
  
-tmpFig = figure('position',[100 100 700 600],'Visible','off'); 
+tmpFig = figure('position',[100 100 700 600],'Visible','off','name','Current View'); 
 cBarHandle = findobj(handles.figure1,'Type','colorbar');
 if ~isempty(cBarHandle)
     new_handle = copyobj([handles.axesFig cBarHandle],tmpFig);
@@ -3302,7 +3302,7 @@ end
 oldPos = get(handles.axesFig,'Position');
 set(new_handle(1),'units','normalized', 'Position',oldPos);
 
-[filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'},'./screenshot.png');
+[filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'},'Save current view','./screenshot.png');
 
 if ~isequal(filename,0) && ~isequal(pathname,0)
     set(gcf, 'pointer', 'watch');
