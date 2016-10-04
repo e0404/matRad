@@ -1,9 +1,9 @@
 function [ct,cst] = matRad_importPatient(ctFile,maskFiles,HLUT)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad patient data set import from data files
+% matRad patient import from binary files (CT and masks)
 % 
 % call
-%   matRad_importPatient(cubeFile,maskFiles)
+%   [ct,cst] = matRad_importPatient(cubeFile,maskFiles)
 %
 % input
 %   ctFile:     path to CT file. If HLUT is not set, values are interpreted
@@ -13,6 +13,9 @@ function [ct,cst] = matRad_importPatient(ctFile,maskFiles,HLUT)
 %               recognized data files are treated as masks
 %   HLUT:       optional HLUT, (n,2) array. if set to 'default', we will
 %               use a default HLUT
+% output
+%   ct          ct struct for use with matlab
+%   cst         cst struct for use with matlab
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -60,7 +63,7 @@ ct.resolution.z = metadata.resolution(3);
 ct.numOfCtScen = 1;
 
 maskId = 1;
-for maskFile=maskFiles
+for maskFile=maskFiles(:)'
     if exist(maskFile{1},'dir')
         contents = dir(maskFile{1});
         for s=1:numel(contents)
