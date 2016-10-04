@@ -3290,3 +3290,57 @@ function radioBtnIsoCenter_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 UpdatePlot(handles)
 % Hint: get(hObject,'Value') returns toggle state of radioBtnIsoCenter
+
+
+% --- Executes on button press in pushbutton_importFromBinary.
+function pushbutton_importFromBinary_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_importFromBinary (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+try
+    % delete existing workspace - parse variables from base workspace
+    AllVarNames = evalin('base','who');
+    RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
+    for i = 1:length(RefVarNames)  
+        if sum(ismember(AllVarNames,RefVarNames{i}))>0
+            evalin('base',['clear ', RefVarNames{i}]);
+        end
+    end
+    handles.State = 0;
+    if ~isdeployed
+        matRadRootDir = fileparts(mfilename('fullpath'));
+        addpath(fullfile(matRadRootDir,'IO'))
+    end
+    
+    %call the gui
+    uiwait(matRad_importGUI);
+    
+    %Check if we have the variables in the workspace
+    if evalin('base','exist(''cst'',''var'')') == 1 && evalin('base','exist(''ct'',''var'')') == 1
+        cst = evalin('base','cst');
+        ct = evalin('base','ct');
+        setCstTable(handles,cst);
+        handles.TableChanged = false;
+        set(handles.popupTypeOfPlot,'Value',1);
+        % precompute contours 
+        cst = precomputeContours(ct,cst);
+    
+        assignin('base','ct',ct);
+        assignin('base','cst',cst);
+        
+        if evalin('base','exist(''pln'',''var'')')
+            assignin('base','pln',pln);
+            setPln(handles);
+        else
+            getPlnFromGUI(handles);
+            setPln(handles);
+        end
+        handles.State = 1;
+    end
+catch
+   handles = showError(handles,'Binary Patient Import: Could not import data'); 
+end
+    
+UpdateState(handles);
+guidata(hObject,handles);
