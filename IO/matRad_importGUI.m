@@ -172,6 +172,8 @@ end
 
 [ct,cst] = matRad_importPatient(ctFile,maskFiles,'default');
 
+cst = showCheckDialog(cst);
+
 assignin('base', 'ct', ct);
 assignin('base', 'cst', cst);
 
@@ -221,3 +223,27 @@ if isequal(eventdata.Key,'delete') || isequal(eventdata.Key,'backspace')
     end
     set(hObject,'String',entries,'value',selectIndex);
 end
+
+% --- Creates a Dialog for the final adaptations to VOIs and CT conversion
+function cst = showCheckDialog(cst)
+
+handle = dialog('Position', [100 100 400 250],'WindowStyle','modal','Name','Confirm Segmentations');
+
+%Create Table
+hTable = uitable('Parent',handle,'Units','normal','Position',[0.1 0.2 0.8 0.8]);
+hTable.Data = cst(:,2:3);
+hTable.ColumnName = {'Name','Type'};
+hTable.ColumnWidth = {150,'auto'};
+hTable.RowName = [];
+hTable.ColumnEditable = [true true];
+hTable.ColumnFormat = {'char',{'TARGET', 'OAR', 'IGNORED'}};
+
+%Create Button
+hButton = uicontrol(handle,'Style','pushbutton','String','Confirm','Units','normal','Position',[0.7 0.05 0.2 0.1],'Callback','uiresume(gcbf)');%{@pushbutton_confirm_vois_callback});
+try
+    uiwait(handle);
+    cst(:,2:3) = hTable.Data(:,:);
+catch
+    warning('Closed checkdialog without confirmation! Using default cst information!');
+end
+delete(handle);

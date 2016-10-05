@@ -3338,9 +3338,35 @@ try
         end
         handles.State = 1;
     end
-catch
-   handles = showError(handles,'Binary Patient Import: Could not import data'); 
-end
     
-UpdateState(handles);
+    % set slice slider
+    handles.plane = get(handles.popupPlane,'value');
+    if handles.State >0
+        set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
+            'Value',round(ct.cubeDim(handles.plane)/2),...
+            'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);
+    end
+
+    if handles.State > 0
+        % define context menu for structures
+        for i = 1:size(cst,1)
+            if cst{i,5}.Visible
+                handles.VOIPlotFlag(i) = true;
+            else
+                handles.VOIPlotFlag(i) = false;
+            end
+        end
+    end
+
+    UpdateState(handles);
+    handles.rememberCurrAxes = false;
+    UpdatePlot(handles);
+    handles.rememberCurrAxes = true;
+catch
+   handles = showError(handles,'Binary Patient Import: Could not import data');
+   UpdateState(handles);
+end
+
 guidata(hObject,handles);
+    
+

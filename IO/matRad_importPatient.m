@@ -63,19 +63,27 @@ ct.resolution.z = metadata.resolution(3);
 ct.numOfCtScen = 1;
 
 maskId = 1;
-for maskFile=maskFiles(:)'
-    if exist(maskFile{1},'dir')
-        contents = dir(maskFile{1});
+hGlobalWaitbar = waitbar(0,'Importing Segmentations');
+set(findall(hGlobalWaitbar,'type','text'),'Interpreter','none');
+for f=1:numel(maskFiles)
+    maskFile = maskFiles{f};
+    waitbar(f/numel(maskFiles),hGlobalWaitbar,['Importing Segmentations: ' maskFiles{f}]);
+    if exist(maskFile,'dir')
+        contents = dir(maskFile);
+        hFolderWaitbar = waitbar(0,'Importing Folder');
+        set(findall(hFolderWaitbar,'type','text'),'Interpreter','none');
         for s=1:numel(contents)
+            waitbar(s/numel(contents),hFolderWaitbar,['Importing Folder: ' contents(s).name]);            
             if(~contents(s).isdir)
-                [mask, maskMeta] = matRad_readCube(fullfile(maskFile{1},contents(s).name));
+                [mask, maskMeta] = matRad_readCube(fullfile(maskFile,contents(s).name));
                 cstLine = importMaskToCstLine(maskId,mask,maskMeta);
                 cst = [cst; cstLine]; 
                 maskId = maskId + 1;
-            end
+            end            
         end
-    elseif exist(maskFile{1},'file')
-        [mask,maskMeta] = matRad_readCube(maskFile{1});  
+        delete(hFolderWaitbar);
+    elseif exist(maskFile,'file')
+        [mask,maskMeta] = matRad_readCube(maskFile);  
         cstLine = importMaskToCstLine(maskId,mask,maskMeta);
         cst = [cst; cstLine];           
         maskId = maskId + 1;
@@ -83,6 +91,8 @@ for maskFile=maskFiles(:)'
         disp(['Ignored file/dir ' maskFile '!']);
     end
 end
+
+delete(hGlobalWaitbar);
 
 end
 
