@@ -63,7 +63,7 @@ while ~isempty(currentLine) && ischar(currentLine) %NRRD separates data from hea
         %Parse the line
         lineContent = regexp(currentLine, '(.+):(=|\s)(.+)', 'tokens');
         if isempty(lineContent)
-            warn(['Could not parse line: "' lineContent '"']);
+            warning(['Could not parse line: "' lineContent '"']);
         elseif isequal(lineContent{1}{2},' ') %space after colon refers to "field"
             nrrdMetaData.fields{end+1,1} = lineContent{1}{1}; %Fieldname
             nrrdMetaData.fields{end,2} = lineContent{1}{3}; %Information
@@ -71,7 +71,7 @@ while ~isempty(currentLine) && ischar(currentLine) %NRRD separates data from hea
             nrrdMetaData.keys{end+1,1} = lineContent{1}{1}; %Key
             nrrdMetaData.keys{end,2} = lineContent{1}{3}; %Value
         else
-            warn(['Could not parse line: "' lineContent '"']);
+            warning(['Could not parse line: "' lineContent '"']);
         end        
     end
     currentLine = fgetl(hFile);
@@ -177,7 +177,7 @@ elseif ~isempty(spaceDirFieldIx)
     end
    
 else
-    warn('No Resolution Information available');
+    warning('No Resolution Information available');
 end
 
 %find the origin if we have one
@@ -244,7 +244,7 @@ switch nrrdMetaData.fields{encodingFieldIx,2}
                 javaByteOutputStream.close();
                 javaUnpackSuccessful = true;
             catch
-                warn('Java unpacking failed... using temporary files!');
+                warning('Java unpacking failed... using temporary files!');
             end
         end
         if ~javaUnpackSuccessful

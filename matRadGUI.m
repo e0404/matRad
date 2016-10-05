@@ -3254,23 +3254,30 @@ function importDoseButton_Callback(hObject,eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 extensions{1} = '*.nrrd';
-[filename,filepath,~] = uigetfile(extensions);
-[~,name,~] = fileparts(filename);
-matRadRootDir = fileparts(mfilename('fullpath'));
-addpath(fullfile(matRadRootDir,'IO'))
-[cube,metadata] = matRad_readCube(fullfile(filepath,filename));
+[filenames,filepath,~] = uigetfile(extensions,'MultiSelect','on');
 
-ct = evalin('base','ct');
-
-if ~isequal(ct.cubeDim, size(cube))
-    errordlg('Dimensions of the imported cube do not match with ct','Import failed!','modal');
-    return;
+if ~iscell(filenames)
+    tmp = filenames;
+    filenames = cell(1);
+    filenames{1} = tmp;
 end
 
+ct = evalin('base','ct');
 resultGUI = evalin('base','resultGUI');
 
-fieldname = ['import_' name];
-resultGUI.(fieldname) = cube;
+for filename = filenames
+    [~,name,~] = fileparts(filename{1});
+    matRadRootDir = fileparts(mfilename('fullpath'));
+    addpath(fullfile(matRadRootDir,'IO'))
+    [cube,~] = matRad_readCube(fullfile(filepath,filename{1}));
+    if ~isequal(ct.cubeDim, size(cube))
+        errordlg('Dimensions of the imported cube do not match with ct','Import failed!','modal');
+        continue;
+    end
+    
+    fieldname = ['import_' matlab.lang.makeValidName(name, 'ReplacementStyle','delete')];
+    resultGUI.(fieldname) = cube;
+end
 
 assignin('base','resultGUI',resultGUI);
 btnRefresh_Callback(hObject, eventdata, handles)
@@ -3283,3 +3290,114 @@ function radioBtnIsoCenter_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 UpdatePlot(handles)
 % Hint: get(hObject,'Value') returns toggle state of radioBtnIsoCenter
+
+% --------------------------------------------------------------------
+function uipushtool_screenshot_ClickedCallback(hObject, eventdata, handles)
+% hObject    handle to uipushtool_screenshot (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+ 
+tmpFig = figure('position',[100 100 700 600],'Visible','off','name','Current View'); 
+cBarHandle = findobj(handles.figure1,'Type','colorbar');
+if ~isempty(cBarHandle)
+    new_handle = copyobj([handles.axesFig cBarHandle],tmpFig);
+else
+    new_handle = copyobj(handles.axesFig,tmpFig);
+end
+
+oldPos = get(handles.axesFig,'Position');
+set(new_handle(1),'units','normalized', 'Position',oldPos);
+
+[filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'},'Save current view','./screenshot.png');
+
+if ~isequal(filename,0) && ~isequal(pathname,0)
+    set(gcf, 'pointer', 'watch');
+    saveas(tmpFig,fullfile(pathname,filename));
+    set(gcf, 'pointer', 'arrow');
+    close(tmpFig);
+    uiwait(msgbox('Current view has been succesfully saved!'));
+else
+    uiwait(msgbox('Aborted saving, showing figure instead!'));
+    set(tmpFig,'Visible','on');
+end
+
+
+% --- Executes on button press in pushbutton_importFromBinary.
+function pushbutton_importFromBinary_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_importFromBinary (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+try
+    % delete existing workspace - parse variables from base workspace
+    AllVarNames = evalin('base','who');
+    RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
+    for i = 1:length(RefVarNames)  
+        if sum(ismember(AllVarNames,RefVarNames{i}))>0
+            evalin('base',['clear ', RefVarNames{i}]);
+        end
+    end
+    handles.State = 0;
+    if ~isdeployed
+        matRadRootDir = fileparts(mfilename('fullpath'));
+        addpath(fullfile(matRadRootDir,'IO'))
+    end
+    
+    %call the gui
+    uiwait(matRad_importGUI);
+    
+    %Check if we have the variables in the workspace
+    if evalin('base','exist(''cst'',''var'')') == 1 && evalin('base','exist(''ct'',''var'')') == 1
+        cst = evalin('base','cst');
+        ct = evalin('base','ct');
+        setCstTable(handles,cst);
+        handles.TableChanged = false;
+        set(handles.popupTypeOfPlot,'Value',1);
+        % precompute contours 
+        cst = precomputeContours(ct,cst);
+    
+        assignin('base','ct',ct);
+        assignin('base','cst',cst);
+        
+        if evalin('base','exist(''pln'',''var'')')
+            assignin('base','pln',pln);
+            setPln(handles);
+        else
+            getPlnFromGUI(handles);
+            setPln(handles);
+        end
+        handles.State = 1;
+    end
+    
+    % set slice slider
+    handles.plane = get(handles.popupPlane,'value');
+    if handles.State >0
+        set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
+            'Value',round(ct.cubeDim(handles.plane)/2),...
+            'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);
+    end
+
+    if handles.State > 0
+        % define context menu for structures
+        for i = 1:size(cst,1)
+            if cst{i,5}.Visible
+                handles.VOIPlotFlag(i) = true;
+            else
+                handles.VOIPlotFlag(i) = false;
+            end
+        end
+    end
+
+    UpdateState(handles);
+    handles.rememberCurrAxes = false;
+    UpdatePlot(handles);
+    handles.rememberCurrAxes = true;
+catch
+   handles = showError(handles,'Binary Patient Import: Could not import data');
+   UpdateState(handles);
+end
+
+guidata(hObject,handles);
+    
+
