@@ -49,9 +49,10 @@ dij.dimensions         = pln.voxelDimensions;
 dij.numOfScenarios     = 1;
 
 % set environment variables for vmc++
-if exist('vmc++\bin','dir') ~= 7
-    error(['Could not locate vmc++ directory. ' ...
-           'Please provide the binaries at matRadroot/vmc++ (CERR hosts compatible binaries at http://www.cerr.info/download.php).']);
+if exist(['vmc++' filesep 'bin'],'dir') ~= 7
+    error(['Could not locate vmc++ environment. ' ...
+          'Please provide the files in the correct folder structure at matRadroot' filesep 'vmc++' ...
+          '(CERR hosts compatible files at http://www.cerr.info/download.php).']);
 else
     VMCPath     = fullfile(pwd , 'vmc++');
     runsPath    = fullfile(VMCPath, 'runs');
@@ -60,6 +61,11 @@ else
     setenv('vmc_home',VMCPath);
     setenv('vmc_dir',runsPath);
     setenv('xvmc_dir',VMCPath);
+    
+    if isunix
+        system(['chmod a+x ' VMCPath filesep 'bin' filesep 'vmc_Linux.exe']);
+    end
+    
 end
 
 % set consistent random seed (enables reproducibility)
@@ -68,18 +74,33 @@ rng(0);
 % set number of photons simulated per bixel and number of parallel MC simulations if not specified by user
 if nargin < 5
     nCasePerBixel              = 5000;
-    numOfParallelMCSimulations = 4;
+    if ispc
+        numOfParallelMCSimulations = 4;
+    elseif isunix
+        numOfParallelMCSimulations = 1;
+    end
     
     warning(['Number of photons simulated per bixel (nCasePerBixel) and number of parallel MC simulations (numOfParallelMCSimulations) not specified by user. ',...
              'Use default settings with nCasePerBixel = ',num2str(nCasePerBixel),...
              ' and numOfParallelMCSimulations = ',num2str(numOfParallelMCSimulations),...
              ' in vmc++ calculations.'])
 elseif nargin < 6
-    numOfParallelMCSimulations = 4;
+    if ispc
+        numOfParallelMCSimulations = 4;
+    elseif isunix
+        numOfParallelMCSimulations = 1;
+    end
     
     warning(['Number of parallel MC simulations (numOfParallelMCSimulations) not specified by user. ',...
              'Use default settings with numOfParallelMCSimulations = ',num2str(numOfParallelMCSimulations),...
              ' in vmc++ calculations.'])    
+elseif isunix
+    if numOfParallelMCSimulations > 1
+        numOfParallelMCSimulations = 1;
+    end
+    warning(['Running Unix environment: Number of parallel MC simulations (numOfParallelMCSimulations) set to default settings with numOfParallelMCSimulations = ',num2str(numOfParallelMCSimulations),...
+             ' in vmc++ calculations.'])    
+    
 end
     
 % set relative dose cutoff for storage in dose influence matrix
@@ -98,7 +119,7 @@ absCalibrationFactorVmc = 99.818252282632300;
 % 1 source
 VmcOptions.beamletSource.myName       = 'source 1';                        % name of source
 VmcOptions.beamletSource.monitorUnits = 1;                                 
-VmcOptions.beamletSource.spectrum     = ['./spectra/var_6MV.spectrum'];    % energy spectrum source (only used if no mono-Energy given)
+VmcOptions.beamletSource.spectrum     = ['.' filesep 'spectra' filesep 'var_6MV.spectrum'];    % energy spectrum source (only used if no mono-Energy given)
 VmcOptions.beamletSource.charge       = 0;                                 % charge (-1,0,1)
 % 2 transport parameter
 VmcOptions.McParameter.automatic_parameter = 'yes';                        % if yes, automatic transport parameters are used
@@ -116,7 +137,7 @@ VmcOptions.quasi.skip      = 1;
 % 6 geometry
 VmcOptions.geometry.XyzGeometry.methodOfInput = 'CT-PHANTOM';              % input method ('CT-PHANTOM', 'individual', 'groups') 
 VmcOptions.geometry.XyzGeometry.Ct            = 'CT';                      % name of geometry
-VmcOptions.geometry.XyzGeometry.CtFile        = './phantoms/matRad_CT.ct'; % path of density matrix (only needed if input method is 'CT-PHANTOM')
+VmcOptions.geometry.XyzGeometry.CtFile        = ['.' filesep 'phantoms' filesep 'matRad_CT.ct']; % path of density matrix (only needed if input method is 'CT-PHANTOM')
 % 7 scoring manager
 VmcOptions.scoringOptions.startInGeometry               = 'CT';            % geometry in which partciles start their transport
 VmcOptions.scoringOptions.doseOptions.scoreInGeometries = 'CT';            % geometry in which dose is recorded
