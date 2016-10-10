@@ -65,11 +65,11 @@ end %beams
 
 
 %TestTestTestTestTest
-for i=1:length(delivery)
-    for j = 1: length(delivery(i).time)
-        delivery(i).phase(j) = 1;
-    end
-end
+% for i=1:length(delivery)
+%     for j = 1: length(delivery(i).time)
+%         delivery(i).phase(j) = 2;
+%     end
+% end
 %TestTestTestTestTest
 
 

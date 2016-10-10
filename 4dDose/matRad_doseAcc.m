@@ -35,8 +35,8 @@ if ~isfield(ct, 'dvf')
   
     addpath('D:\Matrad\data\4DCT\TKUH005\ReadData3d')
     
-    dvffiles(1).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M06_vf.mha'; 
-    dvffiles(2).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M10_vf.mha'; 
+    dvffiles(1).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M06_vf.mha';  %'D:\Matrad\data\4DCT\testphan\DVF_1_1.mha';   %
+    dvffiles(2).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\DVF_6_10.mha';   %'D:\Matrad\data\4DCT\testphan\DVF_2_1.mha'   %
     
     for i = 1:ct.numOfCtScen
         [ct.dvf{i},ct.dvfReadData3Dinfo(i)] = ReadData3D(dvffiles(i).name,false);
@@ -98,11 +98,10 @@ if strcmp(accMethod,'DDM')
 % interpolation der Dosis in VF Grid??? 
         %mappe Dosis von Phase n in Referenzphase
         d_ref = interp3(yGridVec,xGridVec',zGridVec,resultGUI.phaseDose{1,i}(:,:,:), ...  %d.physicalDose(:,:,:,i), ...
-                         Y(ix) + dvf_y_i(ix)/ct.resolution.y, ...
-                         X(ix) + dvf_x_i(ix)/ct.resolution.x, ...
+                         Y(ix) + dvf_y_i(ix)/ct.resolution.y, ...     
+                         X(ix) + dvf_x_i(ix)/ct.resolution.x, ...  % wieso XY verdreht???   interp3 
                          Z(ix) + dvf_z_i(ix)/ct.resolution.z, ...
-                         'linear',0);
-
+                         'linear',0);    
 
         dAcc(ix) = dAcc(ix) + d_ref;
         
