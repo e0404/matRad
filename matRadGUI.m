@@ -708,7 +708,11 @@ try
         if get(handles.vmcFlag,'Value') == 0
             dij = matRad_calcPhotonDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
         elseif get(handles.vmcFlag,'Value') == 1
-            dij = matRad_calcPhotonDoseVmc(evalin('base','ct'),stf,pln,evalin('base','cst'));
+            if ~isdeployed
+                dij = matRad_calcPhotonDoseVmc(evalin('base','ct'),stf,pln,evalin('base','cst'));
+            else
+                error('VMC++ not available in matRad standalone application');
+            end
         end
     elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
         dij = matRad_calcParticleDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
