@@ -135,7 +135,7 @@ for idx=1:length(jtbc)
     end
 end
 
-handles.legendTable.String{1} = 'not data loaded';
+set(handles.legendTable,'String',{'no data loaded'});
 %initialize maximum dose for visualization to Zero
 handles.maxDoseVal     = 0;
 handles.IsoDose.Levels = 0;
@@ -345,7 +345,7 @@ try
     % clear state and read new data
     handles.State = 0;
     load([FilePath FileName]);
-    handles.legendTable.String = {'no data loaded'};
+    set(handles.legendTable,'String',{'no data loaded'});
     
 catch
     handles = showWarning(handles,'LoadMatFileFnc: Could not load *.mat file');
@@ -1616,11 +1616,12 @@ for s = 1:size(cst,1)
     clr = dec2hex(round(colors(s,:)*255),2)';
     clr = ['#';clr(:)]';
     if handles.VOIPlotFlag(s)
-        handles.legendTable.String{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
+        tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
     else
-        handles.legendTable.String{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
+        tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
     end
 end
+set(handles.legendTable,'String',tmpString);
 
 columnname = {'VOI name','VOI type','priority','obj. / const.','penalty','dose', 'EUD','volume','robustness'};
 
@@ -3229,12 +3230,12 @@ clr    = dec2hex(round(colors(idx,:)*255),2)';
 clr    = ['#';clr(:)]';
 if handles.VOIPlotFlag(idx)
     handles.VOIPlotFlag(idx) = false;
-    handles.legendTable.String{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
+    tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
 elseif ~handles.VOIPlotFlag(idx)
     handles.VOIPlotFlag(idx) = true;
-    handles.legendTable.String{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
+    tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
 end
-
+set(handles.legendTable,'String',tmpString);
 
 guidata(hObject, handles);
 UpdatePlot(handles)
