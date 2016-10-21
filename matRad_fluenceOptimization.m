@@ -180,7 +180,7 @@ if(dij.numOfScenarios > 1)
                 inr = inr+1;
             else
                 ivoi=size(cst,1);
-                inr = numel(cst{ivoi,6});
+                inr = numel(cst{ivoi,6})+1;
                 dij.numOfBackprojections = dij.numOfScenarios;
             end
         end
