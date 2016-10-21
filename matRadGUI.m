@@ -1586,7 +1586,7 @@ AllObjectiveFunction = {'square underdosing','square overdosing','square deviati
 PlaceHolder = NaN;
 columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
        AllObjectiveFunction,...
-       'numeric','char','numeric','numeric','numeric',{'none','WC','prob','coverage'}};
+       'numeric','char','numeric','numeric','numeric',{'none','WC','probabilistic','coverage'}};
    
 numOfObjectives = 0;
 for i = 1:size(cst,1)
