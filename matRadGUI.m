@@ -97,6 +97,8 @@ else
     currFolder = [];
 end
 
+addpath(fullfile(currFolder,'plotting'));
+
 % Choose default command line output for matRadGUI
 handles.output = hObject;
 %show matrad logo
@@ -822,19 +824,7 @@ slice = round(get(handles.sliderSlice,'Value'));
 %% plot ct
  if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     cla(handles.axesFig);
-    axes(handles.axesFig);
-    if plane == 1 % Coronal plane
-        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube{1}(slice,:,:)/max(ct.cube{1}(:))))),bone);
-       
-    elseif plane == 2 % sagittal plane
-        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube{1}(:,slice,:)/max(ct.cube{1}(:))))),bone);
-       
-    elseif plane == 3 % Axial plane
-        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube{1}(:,:,slice)/max(ct.cube{1}(:))))),bone);
-       
-    end
-    axes(handles.axesFig)
-    AxesHandlesCT_Dose(end+1) = imagesc(ct_rgb);
+    AxesHandlesCT_Dose(end+1) = matRad_plotCtSlice(handles.axesFig,ct.cube{1},plane,slice,bone);
 end
 
 %% plot dose cube
@@ -851,13 +841,15 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
 
     %     %% dose colorwash
         if ~isempty(mVolume)&& ~isvector(mVolume)
-
+            
             if handles.maxDoseVal == 0
                 handles.maxDoseVal = max(mVolume(:));
                 set(handles.txtMaxDoseVal,'String',num2str(handles.maxDoseVal))
             end
             dose = mVolume./handles.maxDoseVal;
             dose(dose>1) = 1;
+            
+            %{
             % Save RGB indices for dose in zslice´s voxels.
             if plane == 1  % Coronal plane
                 dose_slice = squeeze(dose(slice,:,:));
@@ -881,6 +873,19 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
             else
                 set(hDose,'AlphaData', 0) ;
             end
+            %}
+            if get(handles.radiobtnDose,'Value')
+                if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
+                    doseAlpha = 0.6;
+                    doseThresh = 0.1;
+                else
+                    doseAlpha = 0.6;
+                    doseThresh = handles.CutOffLevel;
+                end
+            else
+                set(hDose,'AlphaData', 0) ;
+            end
+            AxesHandlesCT_Dose(end+1) = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,doseThresh,doseAlpha,jet);
             
             % plot colorbar
             if handles.plotColorbar == 1;
