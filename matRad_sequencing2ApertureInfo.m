@@ -1,4 +1,4 @@
-function apertureInfo = matRad_sequencing2ApertureInfo(Sequencing,stf)
+function apertureInfo = matRad_sequencing2ApertureInfo(Sequencing,stf,doVMAT)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to generate a shape info struct based on the result of
 % multileaf collimator sequencing
@@ -31,6 +31,13 @@ function apertureInfo = matRad_sequencing2ApertureInfo(Sequencing,stf)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if nargin < 3
+    doVMAT = 0;
+end
+if doVMAT
+    border = -1; %indicates that first arc sector has R-L (reverse) leaf travel
+end
+
 % MLC parameters:
 bixelWidth = stf(1).bixelWidth; % [mm]
 numOfMLCLeafPairs = 80;
@@ -44,6 +51,8 @@ bixelIndOffset = 0; % used for creation of bixel index maps
 totalNumOfBixels = sum([stf(:).totalNumOfBixels]);
 totalNumOfShapes = sum([Sequencing.beam.numOfShapes]);
 vectorOffset = totalNumOfShapes + 1; % used for bookkeeping in the vector for optimization
+lastOptAngle = 0;
+lastOptInd = 1;
 
 % loop over all beams
 for i=1:size(stf,2)
@@ -166,6 +175,41 @@ for i=1:size(stf,2)
     apertureInfo.beam(i).bixelIndMap = bixelIndMap;
     apertureInfo.beam(i).posOfCornerBixel = posOfCornerBixel;
     apertureInfo.beam(i).MLCWindow = MLCWindow;
+    apertureInfo.beam(i).gantryAngle = stf(i).gantryAngle;
+    if doVMAT
+        apertureInfo.beam(i).optimizeBeam = stf(i).optimizeBeam;
+        if apertureInfo.beam(i).optimizeBeam
+            apertureInfo.beam(i).gantryRot = Sequencing.beam(i).gantryRot;
+            apertureInfo.beam(i).MURate = Sequencing.beam(i).MURate;
+            apertureInfo.beam(i).nextAngleDiff = stf(i).nextAngleDiff;
+            apertureInfo.beam(i).nextOptAngleDiff = stf(i).nextOptAngleDiff;
+        elseif ~apertureInfo.beam(i).optimizeBeam
+            apertureInfo.beam(i).nextOptAngle = stf(i).nextOptAngle;
+            apertureInfo.beam(i).nextOptInd = stf(i).nextOptInd;
+            apertureInfo.beam(i).lastOptAngle = stf(i).lastOptAngle;
+            apertureInfo.beam(i).lastOptInd = stf(i).lastOptInd;
+        end
+        
+        if ~isempty(stf(i).borderAngles)
+            if i == 1
+                apertureInfo.beam(i).lastBorderAngle = stf(i).lastBorderAngle;
+                apertureInfo.beam(i).lastBorderAngle_border = border;
+                % 1 (-1) is forward (reverse) leaf travel
+                border = -1*border;
+            elseif i == size(stf,2)
+                apertureInfo.beam(i).nextBorderAngle = stf(i).nextBorderAngle;
+                apertureInfo.beam(i).nextBorderAngle_border = border;
+                % 1 (-1) is forward (reverse) leaf travel
+                border = -1*border;
+            end
+            apertureInfo.beam(stf(i).borderAnglesIndex(1)).border = border; %Gives direction of leaf travel for current arc sector
+            % 1 (-1) is forward (reverse) leaf travel
+            border = -1*border;
+        end
+    end
+    
+    
+
     
 end
 
@@ -175,6 +219,10 @@ apertureInfo.numOfMLCLeafPairs = numOfMLCLeafPairs;
 apertureInfo.totalNumOfBixels = totalNumOfBixels;
 apertureInfo.totalNumOfShapes = sum([apertureInfo.beam.numOfShapes]);
 apertureInfo.totalNumOfLeafPairs = sum([apertureInfo.beam.numOfShapes]*[apertureInfo.beam.numOfActiveLeafPairs]');
+if isfield(Sequencing,'weightToMU')
+    apertureInfo.weightToMU = Sequencing.weightToMU;
+    apertureInfo.gantryRotCst = stf.gantryRotCst;
+end
 
 % create vectors for optimization
 [apertureInfo.apertureVector, apertureInfo.mappingMx, apertureInfo.limMx] = matRad_daoApertureInfo2Vec(apertureInfo);
