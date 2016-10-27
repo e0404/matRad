@@ -34,6 +34,8 @@ function f = matRad_daoObjFunc(apertureInfoVect,apertureInfo,dij,cst,type)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % update apertureInfo, bixel weight vector an mapping of leafes to bixels
+
+%modified to include interpolated gantry angles (for VMAT)
 apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect);
 
 % bixel based objective function calculation

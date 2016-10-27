@@ -65,10 +65,15 @@ end
 
 % 2. find corresponding bixel to the leaf Positions and aperture 
 % weights to calculate the gradient
-g(apertureInfo.totalNumOfShapes+1:end) = ...
-        apertureInfoVec(apertureInfo.mappingMx(apertureInfo.totalNumOfShapes+1:end,2)) ...
-     .* bixelG(apertureInfo.bixelIndices(apertureInfo.totalNumOfShapes+1:end)) / apertureInfo.bixelWidth;
+g(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2) = ...
+        apertureInfoVec(apertureInfo.mappingMx(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,2)) ...
+     .* bixelG(apertureInfo.bixelIndices(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2)) / apertureInfo.bixelWidth;
 
 % correct the sign for the left leaf positions
 g(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs) = ...
     -g(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs);
+
+% 3. set to 0 gradient wrt the times, for now.  Later on we may want to add
+% in a dependence of obj function on total time
+g((apertureInfo.totalNumOfShapes+2*apertureInfo.totalNumOfLeafPairs+1):(2*apertureInfo.totalNumOfShapes+2*apertureInfo.totalNumOfLeafPairs-1)) = 0;
+
