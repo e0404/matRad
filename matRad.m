@@ -40,7 +40,42 @@ pln.bioOptimization = 'none'; % none: physical optimization; effect: effect-base
 pln.numOfFractions  = 30;
 pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
+pln.VMAT            = false; % 1/true: run VMAT, 0/false: don't
 pln.machine         = 'Generic';
+
+
+%% For VMAT
+pln.runSequencing   = true;
+pln.runDAO          = true;
+pln.VMAT            = true;
+
+pln.numApertures = 7;
+pln.minGantryAngleRes = 4;
+pln.maxApertureAngleSpread = 20;
+pln.numInitGantryAngles = max([360/pln.maxApertureAngleSpread 360/(pln.numApertures*pln.minGantryAngleRes)]);
+
+pln.initGantryAngleSpacing = 360/pln.numInitGantryAngles;
+pln.initGantryAngles = 0:pln.initGantryAngleSpacing:360;
+
+pln.optGantryAngleSpacing = pln.initGantryAngleSpacing/pln.numApertures;
+pln.optGantryAngles = 0:pln.optGantryAngleSpacing:360;
+
+if pln.optGantryAngleSpacing > 4
+    pln.optToGantryAngleSpacingFactor = ceil(pln.optGantryAngleSpacing/4);
+else
+    pln.optToGantryAngleSpacingFactor = 1;
+end
+pln.gantryAngleSpacing = pln.optGantryAngleSpacing/pln.optToGantryAngleSpacingFactor; %ideally should be spaced every 2 or 4 degrees; gantry spacing that dij is performed
+pln.gantryAngles    = 0:pln.gantryAngleSpacing:360; 
+pln.couchAngles     = 0*pln.gantryAngles;
+
+pln.numOfBeams      = numel(pln.gantryAngles);
+
+pln.defaultGantryRot = 6; %degrees per second
+pln.gantryRotCst = [0 6]; %degrees per second
+pln.leafSpeedCst = [0 6]; %cm per second
+pln.doseRateCst = [75 600]; %MU per second
+
 
 %% initial visualization and change objective function settings if desired
 matRadGUI
@@ -51,10 +86,11 @@ stf = matRad_generateStf(ct,cst,pln);
 %% dose calculation
 if strcmp(pln.radiationMode,'photons')
     dij = matRad_calcPhotonDose(ct,stf,pln,cst);
-    %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
 end
+dij.weightToMU = 1;
+%100 cm SAD, 5 cm depth, 10x10cm2
 
 %% inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
@@ -62,7 +98,8 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
     %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
-    resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
+    %resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
+    resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,7,0,pln.VMAT );
 end
 
 %% DAO
