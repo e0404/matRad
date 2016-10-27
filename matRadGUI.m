@@ -305,7 +305,7 @@ end
 %guidata(findobj('Name','matRadGUI'), handles);
 UpdatePlot(handles);
 
-
+Update
 % --- Outputs from this function are returned to the command line.
 function varargout = matRadGUI_OutputFcn(~, ~, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
@@ -945,26 +945,10 @@ end
 
 
 %% plot VOIs
- axes(handles.axesFig)  
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
-    colors = colorcube;
-    colors = colors(round(linspace(1,63,size(cst,1))),:);
-    for s = 1:size(cst,1)
-        if ~strcmp(cst{s,3},'IGNORED') &&  handles.VOIPlotFlag(s)
-            % plot precalculated contourc data
-            if any(cst{s,7}{slice,plane}(:))
-                lower = 1; % lower marks the beginning of a section
-                while lower-1 ~= size(cst{s,7}{slice,plane},2);
-                    hold on
-                    steps = cst{s,7}{slice,plane}(2,lower); % number of elements of current line section
-                    AxesHandlesVOI(end+1) = line(cst{s,7}{slice,plane}(1,lower+1:lower+steps),...
-                         cst{s,7}{slice,plane}(2,lower+1:lower+steps),...
-                         'Color',colors(s,:),'LineWidth',2.0,'Parent',handles.axesFig);
-                    
-                    lower = lower+steps+1;
-                end
-            end
-        end
+    handles_tmp = matRad_plotVoiContourSlice(handles.axesFig,cst,handles.VOIPlotFlag,plane,slice,colorcube);
+    if numel(handles_tmp) > 0
+        AxesHandlesVOI(end+numel(handles_tmp)) = handles_tmp;
     end
 end
 
