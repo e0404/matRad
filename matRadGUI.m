@@ -835,45 +835,18 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
             CubeNames = fieldnames(Result);
             handles.SelectedDisplayOption = CubeNames{1,1};
         end
-        mVolume = getfield(Result,handles.SelectedDisplayOption);
+        dose = getfield(Result,handles.SelectedDisplayOption);
         % make sure to exploit full color range 
-        mVolume(mVolume<handles.CutOffLevel*max(mVolume(:))) = 0;
+        %dose(dose<handles.CutOffLevel*max(dose(:))) = 0;
 
-    %     %% dose colorwash
-        if ~isempty(mVolume)&& ~isvector(mVolume)
+        % dose colorwash
+        if ~isempty(dose) && ~isvector(dose)
             
             if handles.maxDoseVal == 0
-                handles.maxDoseVal = max(mVolume(:));
+                handles.maxDoseVal = max(dose(:));
                 set(handles.txtMaxDoseVal,'String',num2str(handles.maxDoseVal))
             end
-            dose = mVolume./handles.maxDoseVal;
-            dose(dose>1) = 1;
-            
-            %{
-            % Save RGB indices for dose in zslice´s voxels.
-            if plane == 1  % Coronal plane
-                dose_slice = squeeze(dose(slice,:,:));
-            elseif plane == 2 % sagittal plane
-                dose_slice = squeeze(dose(:,slice,:));
-            elseif plane == 3 % Axial plane
-                dose_slice = squeeze(dose(:,:,slice));  
-            end
-            axes(handles.axesFig)
-            dose_rgb = ind2rgb(uint8(63*dose_slice),jet);
-            
-            % plot dose distribution    
-            hDose = imagesc('CData',dose_rgb,'Parent',handles.axesFig);
-            AxesHandlesCT_Dose(end+1) = hDose;
-            if get(handles.radiobtnDose,'Value')
-                if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
-                    set(hDose,'AlphaData',  .6*(double(dose_slice)>0.1));
-                else
-                    set(hDose,'AlphaData',  .6*(double(dose_slice)>handles.CutOffLevel));
-                end
-            else
-                set(hDose,'AlphaData', 0) ;
-            end
-            %}
+
             if get(handles.radiobtnDose,'Value')
                 if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
                     doseAlpha = 0.6;
@@ -882,31 +855,19 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
                     doseAlpha = 0.6;
                     doseThresh = handles.CutOffLevel;
                 end
-            else
-                set(hDose,'AlphaData', 0) ;
-            end
-            AxesHandlesCT_Dose(end+1) = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,doseThresh,doseAlpha,jet);
+                [doseHandle,doseColorMap,doseWindow] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,doseThresh,doseAlpha,jet,[0 handles.maxDoseVal]);
+                AxesHandlesCT_Dose(end+1) = doseHandle;
+            end            
             
             % plot colorbar
             if handles.plotColorbar == 1;
-                v=version;
-                if str2double(v(1:3))>=8.5
-                    cBarHandel = colorbar(handles.axesFig,'colormap',jet,'FontSize',defaultFontSize,'yAxisLocation','right');
-                else
-                    cBarHandel = colorbar('peer',handles.axesFig,'FontSize',defaultFontSize,'yAxisLocation','right');
-                end
+                %Plot the colorbar
+                cBarHandel = matRad_plotColorbar(handles.axesFig,doseColorMap,doseWindow,'fontsize',defaultFontSize);
+                %adjust lables
                 Idx = find(strcmp(handles.SelectedDisplayOption,DispInfo(:,1)));
                 set(get(cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
                 % do not interprete as tex syntax
                 set(get(cBarHandel,'ylabel'),'interpreter','none');
-
-                if isempty(strfind(handles.SelectedDisplayOption,'RBE'))
-                    set(cBarHandel,'YLim',[0 handles.maxDoseVal]);
-                    caxis(handles.axesFig,[0,handles.maxDoseVal])
-                else
-                    set(cBarHandel,'YLim',[0 handles.maxDoseVal]);
-                    caxis(handles.axesFig,[0,handles.maxDoseVal])
-                end
             end
         end
         
@@ -946,10 +907,7 @@ end
 
 %% plot VOIs
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
-    handles_tmp = matRad_plotVoiContourSlice(handles.axesFig,cst,handles.VOIPlotFlag,plane,slice,colorcube);
-    if numel(handles_tmp) > 0
-        AxesHandlesVOI(end+numel(handles_tmp)) = handles_tmp;
-    end
+    AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,handles.VOIPlotFlag,plane,slice,colorcube)];
 end
 
 
@@ -2640,7 +2598,9 @@ handles.maxDoseVal =  str2double(get(hObject,'String'));
 % compute new iso dose lines
 handles = precomputeIsoDoseLevels(handles);
 guidata(hObject,handles);
+handles.plotColorbar = 1;
 UpdatePlot(handles);
+handles.plotColorbar = 0;
 
 % popup menu: machine
 function popUpMachine_Callback(hObject, ~, handles)

@@ -50,10 +50,10 @@ colors = cMap(round(linspace(1,cMapScale,size(cst,1))),:);
 
 axes(axesHandle)
 
-voiContourHandles = [];
+voiContourHandles = gobjects(0);
 
 for s = 1:size(cst,1)
-    if ~strcmp(cst{s,3},'IGNORED') &&  selection(s)
+    if ~strcmp(cst{s,3},'IGNORED') && selection(s)
         if size(cst,2) >= 7 && ~isempty(cst{s,7})
             % plot precalculated contourc data
             if any(cst{s,7}{slice,plane}(:))

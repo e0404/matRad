@@ -1,4 +1,4 @@
-function ctHandle = matRad_plotCtSlice(axesHandle,ctCube,plane,slice,cMap)
+function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,plane,slice,cMap,window)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that generates the plot for the CT in the GUI. The
 % function can also be used in personal matlab figures by passing the
@@ -13,9 +13,15 @@ function ctHandle = matRad_plotCtSlice(axesHandle,ctCube,plane,slice,cMap)
 %   plane       plane view (coronal=1,sagittal=2,axial=3)
 %   slice       slice in the selected plane of the 3D cube
 %   cMap        optional argument defining the colormap, default is bone
+%               if you want to use the default map with the window argument
+%               you can use an empty array []
+%   window      optional argument defining the displayed range. default is
+%               [min(ctCube(:)) max(ctCube(:))]
 %
 % output
-%   ctHandle:   handle of the plotted CT axes
+%   ctHandle    handle of the plotted CT axes
+%   cMap        used colormap (same as input if set)
+%   window      used window (same as input if set)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -37,20 +43,23 @@ if nargin < 5 || isempty(cMap)
     cMap = bone(64);
 end
 
+if nargin < 6 || isempty(window)
+    window = [min(ctCube(:)) max(ctCube(:))];    
+end
+
 cMapScale = size(cMap,1) - 1;
 
-maxCT = max(ctCube(:));
 if plane == 1 % Coronal plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze(ctCube(slice,:,:)/maxCT))),cMap);
+    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube(slice,:,:)-window(1))/(window(2) - window(1))))),cMap);
       
 elseif plane == 2 % sagittal plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze(ctCube(:,slice,:)/maxCT))),cMap);
+    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube(:,slice,:)-window(1))/(window(2) - window(1))))),cMap);
        
 elseif plane == 3 % Axial plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze(ctCube(:,:,slice)/maxCT))),cMap);
+    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube(:,:,slice)-window(1))/(window(2) - window(1))))),cMap);
 end
 axes(axesHandle)
-ctHandle = imagesc(ct_rgb);
+ctHandle = image(ct_rgb);
 
 end
 

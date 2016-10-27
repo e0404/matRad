@@ -1,4 +1,4 @@
-function doseHandle = matRad_plotDoseSlice(axesHandle,doseCube,plane,slice,threshold,alpha,cMap)
+function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,plane,slice,threshold,alpha,cMap,window)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that generates the plot for the CT in the GUI. The
 % function can also be used in personal matlab figures by passing the
@@ -17,9 +17,13 @@ function doseHandle = matRad_plotDoseSlice(axesHandle,doseCube,plane,slice,thres
 %               To use the default when providing a custom culormap, put in
 %               an empty array by [].
 %   cMap        optional argument defining the colormap, default is jet
+%               if you want to use the default map with the window argument
+%               you can use an empty array []
+%   window      optional argument defining the displayed range. default is
+%               [min(doseCube(:)) max(doseCube(:))]
 %
 % output
-%   doseHandle:   handle of the plotted dose axes
+%   doseHandle: handle of the plotted dose axes
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -43,6 +47,9 @@ end
 if nargin < 6 || isempty(alpha)
     alpha = 0.6;
 end
+if nargin < 8 || isempty(window)
+    window = [min(doseCube(:)) max(doseCube(:))];
+end
 
 if plane == 1  % Coronal plane
     dose_slice = squeeze(doseCube(slice,:,:));
@@ -54,10 +61,10 @@ end
 axes(axesHandle)
 
 cMapScale = size(cMap,1) - 1;
-dose_rgb = ind2rgb(uint8(cMapScale*dose_slice),cMap);
+dose_rgb = ind2rgb(uint8(cMapScale*(dose_slice - window(1))/(window(2)-window(1))),cMap);
 
 % plot dose distribution
-doseHandle = imagesc('CData',dose_rgb,'Parent',axesHandle);
+doseHandle = image('CData',dose_rgb,'Parent',axesHandle);
 set(doseHandle,'AlphaData', alpha*(double(dose_slice)>threshold));
 
 end
