@@ -142,6 +142,11 @@ set(handles.legendTable,'String',{'no data loaded'});
 handles.maxDoseVal     = 0;
 handles.IsoDose.Levels = 0;
 handles.plotColorbar = 1;
+%Initialize colormaps and windows
+handles.doseColorMap = jet;
+handles.ctColorMap = bone;
+handles.doseWindow = [];
+handles.ctWindow = [];
 %seach for availabes machines
 handles.Modalities = {'photons','protons','carbon'};
 for i = 1:length(handles.Modalities)
@@ -822,9 +827,9 @@ plane = get(handles.popupPlane,'Value');
 slice = round(get(handles.sliderSlice,'Value'));
 
 %% plot ct
- if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
+if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     cla(handles.axesFig);
-    AxesHandlesCT_Dose(end+1) = matRad_plotCtSlice(handles.axesFig,ct.cube{1},plane,slice,bone);
+    AxesHandlesCT_Dose(end+1) = matRad_plotCtSlice(handles.axesFig,ct.cube{1},plane,slice,handles.ctColorMap,handles.ctWindow);
 end
 
 %% plot dose cube
@@ -855,7 +860,8 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
                     doseAlpha = 0.6;
                     doseThresh = handles.CutOffLevel;
                 end
-                [doseHandle,doseColorMap,doseWindow] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,doseThresh,doseAlpha,jet,[0 handles.maxDoseVal]);
+                
+                [doseHandle,doseColorMap,doseWindow] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,doseThresh,doseAlpha,handles.doseColorMap,handles.doseWindow);
                 AxesHandlesCT_Dose(end+1) = doseHandle;
             end            
             
@@ -1505,6 +1511,7 @@ content = get(hObject,'String');
 handles.SelectedDisplayOption = content{get(hObject,'Value'),1};
 handles.SelectedDisplayOptionIdx = get(hObject,'Value');
 handles.maxDoseVal = 0;
+handles.doseWindow = [];
 handles.IsoDose.Levels = 0;
 handles.plotColorbar = 1;
 handles = precomputeIsoDoseLevels(handles);
@@ -2597,6 +2604,7 @@ function txtMaxDoseVal_Callback(hObject, ~, handles)
 handles.maxDoseVal =  str2double(get(hObject,'String'));
 % compute new iso dose lines
 handles = precomputeIsoDoseLevels(handles);
+handles.doseWindow = [0 handles.maxDoseVal];
 guidata(hObject,handles);
 handles.plotColorbar = 1;
 UpdatePlot(handles);

@@ -54,6 +54,7 @@ voiContourHandles = gobjects(0);
 
 for s = 1:size(cst,1)
     if ~strcmp(cst{s,3},'IGNORED') && selection(s)
+        %Check for precalculated contours
         if size(cst,2) >= 7 && ~isempty(cst{s,7})
             % plot precalculated contourc data
             if any(cst{s,7}{slice,plane}(:))
@@ -68,8 +69,20 @@ for s = 1:size(cst,1)
                     lower = lower+steps+1;
                 end
             end
+        %{    
         else
-            %TODO: use standard contour function
+            %If we do not have precomputed contours available, do it the
+            %slow way with the contour function
+            mask = zeros(size(ctCube));
+            mask(cst{s,4}{1}) = 1;
+            if plane == 1 && any(any(mask(slice,:,:) > 0))
+                voiContourHandles(end+1) = contour(axesHandle,squeeze(mask(slice,:,:)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
+            elseif plane == 2 && any(any(mask(:,slice,:) > 0))
+                voiContourHandles(end+1) = contour(axesHandle,squeeze(mask(:,slice,:)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
+            elseif plane == 3 && any(any(mask(:,:,slice) > 0))
+                voiContourHandles(end+1) = contour(axesHandle,squeeze(mask(:,:,slice)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
+            end
+        %}
         end
     end
 end
