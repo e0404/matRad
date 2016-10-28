@@ -829,7 +829,7 @@ slice = round(get(handles.sliderSlice,'Value'));
 %% plot ct
 if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     cla(handles.axesFig);
-    AxesHandlesCT_Dose(end+1) = matRad_plotCtSlice(handles.axesFig,ct.cube{1},plane,slice,handles.ctColorMap,handles.ctWindow);
+    AxesHandlesCT_Dose(end+1) = matRad_plotCtSlice(handles.axesFig,ct,1,plane,slice,handles.ctColorMap,handles.ctWindow);
 end
 
 %% plot dose cube
@@ -913,20 +913,14 @@ end
 
 %% plot VOIs
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
-    AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,handles.VOIPlotFlag,plane,slice,colorcube)];
+    AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,ct,1,handles.VOIPlotFlag,plane,slice,colorcube)];
 end
 
 
 
 %% Set axis labels and plot iso center
-FlagIsoCenterVisible = false;
-vIsoCenter           = round(pln.isoCenter./[ct.resolution.x ct.resolution.y ct.resolution.z]);
 if  plane == 3% Axial plane
     if ~isempty(pln)
-        vIsoCenterPlot  = [vIsoCenter(1) vIsoCenter(2)];
-        if vIsoCenter(3) == slice
-            FlagIsoCenterVisible = true;
-        end
         set(handles.axesFig,'XTick',0:50/ct.resolution.x:1000);
         set(handles.axesFig,'YTick',0:50/ct.resolution.y:1000);
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.x);
@@ -941,10 +935,6 @@ if  plane == 3% Axial plane
     end
 elseif plane == 2 % Sagittal plane
     if ~isempty(pln)
-        vIsoCenterPlot  = [vIsoCenter(3) vIsoCenter(2)];
-        if vIsoCenter(2) == slice
-            FlagIsoCenterVisible = true;
-        end
         set(handles.axesFig,'XTick',0:50/ct.resolution.z:1000)
         set(handles.axesFig,'YTick',0:50/ct.resolution.y:1000)
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.z)
@@ -959,10 +949,6 @@ elseif plane == 2 % Sagittal plane
     end
 elseif plane == 1 % Coronal plane
     if ~isempty(pln)
-        vIsoCenterPlot  = [vIsoCenter(3) vIsoCenter(1)];
-        if vIsoCenter(1) == slice
-            FlagIsoCenterVisible = true;
-        end
         set(handles.axesFig,'XTick',0:50/ct.resolution.z:1000)
         set(handles.axesFig,'YTick',0:50/ct.resolution.x:1000)
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.z)
@@ -979,12 +965,8 @@ end
 
 hold on
 
-if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1
-    IsoCenterCrossColor = [0.27 0.27 0.27];
-    if FlagIsoCenterVisible
-        IsoCenterCrossColor = [0 0 0];
-    end
-    hIsoCenterCross = plot(handles.axesFig,vIsoCenterPlot(1),vIsoCenterPlot(2),'x','MarkerSize',13,'LineWidth',4,'Color',IsoCenterCrossColor); 
+if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln)
+    hIsoCenterCross = matRad_plotIsoCenterMarker(handles.axesFig,pln,ct,plane,slice);
 end
 
 % the following line ensures the plotting order (optional)
@@ -992,16 +974,16 @@ end
   
 %set axis ratio
 ratios = [1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
-set(handles.axesFig,'PlotBoxAspectRatioMode','manual');
+set(handles.axesFig,'DataAspectRatioMode','manual');
 if plane == 1 
-      res = [ratios(3) ratios(1)]./max([ratios(3) ratios(1)]);  
+      res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);  
       set(handles.axesFig,'DataAspectRatio',[res 1])
 elseif plane == 2 % sagittal plane
-      res = [ratios(1) ratios(2)]./max([ratios(1) ratios(2)]);  
+      res = [ratios(3) ratios(1)]./max([ratios(3) ratios(1)]);  
       set(handles.axesFig,'DataAspectRatio',[res 1]) 
 elseif  plane == 3 % Axial plane
-      res = [ratios(1) ratios(2)]./max([ratios(1) ratios(2)]);  
-      set(handles.axesFig,'PlotBoxAspectRatio',[res 1])
+      res = [ratios(2) ratios(1)]./max([ratios(2) ratios(1)]);  
+      set(handles.axesFig,'DataAspectRatio',[res 1])
 end
 
 

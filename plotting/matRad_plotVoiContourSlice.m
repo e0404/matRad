@@ -1,4 +1,4 @@
-function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,selection,plane,slice,cMap)
+function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice,cMap)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that plots the contours of the segmentations given in cst
 %
@@ -7,7 +7,9 @@ function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,selection
 %
 % input
 %   axesHandle          handle to axes the slice should be displayed in
-%   cst                 cst structure
+%   cst                 matRad cst cell array
+%   ct                  matRad ct structure
+%   ctIndex             index of the ct cube
 %   selection           logicals defining the current selection of contours
 %                       that should be plotted. Can be set to [] to plot
 %                       all non-ignored contours.
@@ -35,7 +37,7 @@ function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,selection
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Use default colormap?
-if nargin < 6 || isempty(cMap)
+if nargin < 8 || isempty(cMap)
     cMap = colorcube(size(cst,1));
 end
 
@@ -68,21 +70,19 @@ for s = 1:size(cst,1)
                     
                     lower = lower+steps+1;
                 end
-            end
-        %{    
+            end     
         else
             %If we do not have precomputed contours available, do it the
             %slow way with the contour function
-            mask = zeros(size(ctCube));
-            mask(cst{s,4}{1}) = 1;
+            mask = zeros(size(ct.cube{ctIndex}));
+            mask(cst{s,4}{ctIndex}) = 1;
             if plane == 1 && any(any(mask(slice,:,:) > 0))
                 voiContourHandles(end+1) = contour(axesHandle,squeeze(mask(slice,:,:)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
             elseif plane == 2 && any(any(mask(:,slice,:) > 0))
                 voiContourHandles(end+1) = contour(axesHandle,squeeze(mask(:,slice,:)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
             elseif plane == 3 && any(any(mask(:,:,slice) > 0))
                 voiContourHandles(end+1) = contour(axesHandle,squeeze(mask(:,:,slice)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
-            end
-        %}
+            end        
         end
     end
 end
