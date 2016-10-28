@@ -2552,7 +2552,7 @@ catch
     warning('Couldnt parse iso dose levels - using default values');
     handles.IsoDose.Levels = 0;
 end
-handles = updateIsodoseLineCache(handles);
+handles = updateIsoDoseLineCache(handles);
 UpdatePlot(handles);
 guidata(hObject,handles);
 
