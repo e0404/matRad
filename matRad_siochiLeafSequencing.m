@@ -71,13 +71,13 @@ end
 offset = 0;
 
 for i = 1:numOfBeams
+    numOfRaysPerBeam = stf(i).numOfRays;
     if isfield(stf(i),'initializeBeam') && ~stf(i).initializeBeam
+        sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = 0;
         offset = offset + numOfRaysPerBeam;
         sequencing.beam(i).numOfShapes = 0;
         continue %if this is not a beam to be initialized, continue to next iteration without generating segments
     end
-    
-    numOfRaysPerBeam = stf(i).numOfRays;
     
     % get relevant weights for current beam
     wOfCurrBeams = resultGUI.wUnsequenced(1+offset:numOfRaysPerBeam+offset);%REVIEW OFFSET

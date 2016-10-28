@@ -50,29 +50,28 @@ pln.runDAO          = true;
 pln.VMAT            = true;
 
 pln.numApertures = 7;
+pln.numLevels = 3;
+
 pln.minGantryAngleRes = 4;
 pln.maxApertureAngleSpread = 20;
 pln.numInitGantryAngles = max([360/pln.maxApertureAngleSpread 360/(pln.numApertures*pln.minGantryAngleRes)]);
 
 pln.initGantryAngleSpacing = 360/pln.numInitGantryAngles;
-pln.initGantryAngles = 0:pln.initGantryAngleSpacing:360;
+pln.initGantryAngles = pln.initGantryAngleSpacing/2+pln.initGantryAngleSpacing*(0:(pln.numInitGantryAngles-1)); %pln.optGantryAngleSpacing*(pln.numApertures-1)/2+pln.initGantryAngleSpacing*(0:(pln.numInitGantryAngles-1));
 
 pln.optGantryAngleSpacing = pln.initGantryAngleSpacing/pln.numApertures;
-pln.optGantryAngles = 0:pln.optGantryAngleSpacing:360;
+pln.optGantryAngles = pln.optGantryAngleSpacing/2+pln.optGantryAngleSpacing*(0:(pln.numInitGantryAngles*pln.numApertures-1)); %0:pln.optGantryAngleSpacing:360;
 
-if pln.optGantryAngleSpacing > 4
-    pln.optToGantryAngleSpacingFactor = ceil(pln.optGantryAngleSpacing/4);
-else
-    pln.optToGantryAngleSpacingFactor = 1;
-end
+pln.optToGantryAngleSpacingFactor = ceil(pln.optGantryAngleSpacing/4);
+
 pln.gantryAngleSpacing = pln.optGantryAngleSpacing/pln.optToGantryAngleSpacingFactor; %ideally should be spaced every 2 or 4 degrees; gantry spacing that dij is performed
-pln.gantryAngles    = 0:pln.gantryAngleSpacing:360; 
+pln.gantryAngles    = pln.gantryAngleSpacing/2+pln.gantryAngleSpacing*(0:(pln.numInitGantryAngles*pln.numApertures*pln.optToGantryAngleSpacingFactor-1)); %0:pln.gantryAngleSpacing:360;
 pln.couchAngles     = 0*pln.gantryAngles;
 
 pln.numOfBeams      = numel(pln.gantryAngles);
 
-pln.defaultGantryRot = 6; %degrees per second
 pln.gantryRotCst = [0 6]; %degrees per second
+pln.defaultGantryRot = mean(pln.gantryRotCst); %degrees per second
 pln.leafSpeedCst = [0 6]; %cm per second
 pln.doseRateCst = [75 600]; %MU per second
 
@@ -99,7 +98,7 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
     %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
     %resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
-    resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,7,0,pln.VMAT );
+    resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln.numLevels,0,pln.VMAT);
 end
 
 %% DAO

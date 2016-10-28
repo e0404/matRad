@@ -377,11 +377,11 @@ for i = 1:length(pln.gantryAngles)
             initIndex = find(pln.initGantryAngles == pln.gantryAngles(i));
             
             currInitGantryAngle = pln.initGantryAngles(initIndex);
-            if initIndex == 1
+            if currInitGantryAngle == 0
                 nextInitGantryAngle = pln.initGantryAngles(mod0(initIndex+1,numInitGantryAngles));
-                prevInitGantryAngle = currInitGantryAngle-0.01;
-            elseif initIndex == numInitGantryAngles
-                nextInitGantryAngle = currInitGantryAngle+0.01;
+                prevInitGantryAngle = -0.01;
+            elseif currInitGantryAngle == 360
+                nextInitGantryAngle = 360.01;
                 prevInitGantryAngle = pln.initGantryAngles(mod0(initIndex-1,numInitGantryAngles));
             else
                 nextInitGantryAngle = pln.initGantryAngles(mod0(initIndex+1,numInitGantryAngles));
@@ -456,6 +456,7 @@ for i = 1:length(pln.gantryAngles)
                 elseif itera ~= iterb && (currDiff >= nextDiff || currDiff >= prevDiff)
                     %Once we have exhausted close beam angles in both
                     %directions, finish search.
+                    %{
                     if any(pln.optGantryAngles == pln.gantryAngles(j))
                         stf(i).numOfBeamChildren = stf(i).numOfBeamChildren+1;
                         stf(i).beamChildrenIndex(stf(i).numOfBeamChildren) = j;
@@ -465,7 +466,7 @@ for i = 1:length(pln.gantryAngles)
                         stf(i).beamSubChildrenIndex(stf(i).numOfBeamSubChildren) = j;
                         stf(i).beamSubChildrenGantryAngles(stf(i).numOfBeamSubChildren) = testGantryAngle;
                     end
-                    
+                    %}
                     closerToCurrGantryAngle = 0;
                     border2 = testGantryAngle;
                     borderInd2 = j;
@@ -511,20 +512,25 @@ for i = 1:length(pln.gantryAngles)
                 end
                 stf(stf(i).beamSubChildrenIndex(j)).nextOptInd = find(pln.gantryAngles == stf(stf(i).beamSubChildrenIndex(j)).nextOptAngle);
             end
+           
+            %Don't think commented part is necessary anymore since I
+            %changed the first angle from 0->nonzero
             
-            if stf(i).gantryAngle == pln.optGantryAngles(1)
-                stf(i).borderAngles(1) = 2*stf(i).gantryAngle-stf(i).borderAngles(2);
-                stf(i).borderAnglesIndex(1) = find(pln.gantryAngles == mod(stf(i).borderAngles(1),360));
-                stf(i).lastBorderAngle = stf(i).borderAngles(1);
-            elseif stf(i).gantryAngle == pln.optGantryAngles(end)
-                stf(i).borderAngles(2) = 2*stf(i).gantryAngle-stf(i).borderAngles(1);
-                stf(i).borderAnglesIndex(2) = find(pln.gantryAngles == mod0(stf(i).borderAngles(2),360));
+            if stf(i).gantryAngle == pln.initGantryAngles(1)
+%                stf(i).borderAngles(1) = 2*stf(i).gantryAngle-stf(i).borderAngles(2);
+%                stf(i).borderAnglesIndex(1) = find(pln.gantryAngles == mod(stf(i).borderAngles(1),360));
+                stf(i).lastBorderAngle = -stf(i).borderAngles(1);
+            elseif stf(i).gantryAngle == pln.initGantryAngles(end)
+%                stf(i).borderAngles(2) = 2*stf(i).gantryAngle-stf(i).borderAngles(1);
+%                stf(i).borderAnglesIndex(2) = find(pln.gantryAngles == mod0(stf(i).borderAngles(2),360));
                 stf(lastInitInd).nextBorderAngle = stf(i).borderAngles(1);
                 stf(i).lastBorderAngle = lastBorderAngle;
-                stf(i).nextBorderAngle = stf(i).borderAngles(2);
-            else
-                stf(lastInitInd).nextBorderAngle = stf(i).borderAngles(1);
-                stf(i).lastBorderAngle = lastBorderAngle;
+                stf(i).nextBorderAngle = 360+stf(i).borderAngles(2);
+           else
+                if exist('lastInitInd','var')
+                    stf(lastInitInd).nextBorderAngle = stf(i).borderAngles(1);
+                    stf(i).lastBorderAngle = lastBorderAngle;
+                end
             end
             lastInitInd = i;
             lastBorderAngle = stf(i).borderAngles(2);
