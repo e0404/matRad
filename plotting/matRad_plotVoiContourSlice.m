@@ -50,9 +50,11 @@ cMapScale = size(cMap,1)-1;
 %determine colors
 colors = cMap(round(linspace(1,cMapScale,size(cst,1))),:);
 
-axes(axesHandle)
 
 voiContourHandles = gobjects(0);
+
+axes(axesHandle)
+hold on;
 
 for s = 1:size(cst,1)
     if ~strcmp(cst{s,3},'IGNORED') && selection(s)
@@ -77,14 +79,17 @@ for s = 1:size(cst,1)
             mask = zeros(size(ct.cube{ctIndex}));
             mask(cst{s,4}{ctIndex}) = 1;
             if plane == 1 && any(any(mask(slice,:,:) > 0))
-                voiContourHandles(end+1) = contour(axesHandle,squeeze(mask(slice,:,:)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
+                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(slice,:,:)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
             elseif plane == 2 && any(any(mask(:,slice,:) > 0))
-                voiContourHandles(end+1) = contour(axesHandle,squeeze(mask(:,slice,:)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
+                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,slice,:)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
             elseif plane == 3 && any(any(mask(:,:,slice) > 0))
-                voiContourHandles(end+1) = contour(axesHandle,squeeze(mask(:,:,slice)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
-            end        
+                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,:,slice)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
+            end     
+
         end
     end
 end
+
+hold off;
 
 end
