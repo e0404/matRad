@@ -3167,6 +3167,10 @@ colors = colors(round(linspace(1,63,size(cst,1))),:);
 idx    = get(hObject,'Value');
 clr    = dec2hex(round(colors(idx,:)*255),2)';
 clr    = ['#';clr(:)]';
+
+%Get the string entries
+tmpString = get(handles.legendTable,'String');
+
 if handles.VOIPlotFlag(idx)
     handles.VOIPlotFlag(idx) = false;
     tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
