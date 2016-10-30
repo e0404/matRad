@@ -1,11 +1,11 @@
 function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad function that generates the plot for the CT in the GUI. The
-% function can also be used in personal matlab figures by passing the
-% corresponding axes handle
+% matRad function that plots isolines, by precomputed contourc data 
+% computed by matRad_computeIsoDoseContours or manually by calling contourc
+% itself
 %
 % call
-%   doseHandle = matRad_plotDoseSlice(axesHandle,ctCube,plane,slice,cMap)
+%   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window)
 %
 % input
 %   axesHandle  handle to axes the slice should be displayed in

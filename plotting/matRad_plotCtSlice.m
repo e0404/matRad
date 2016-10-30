@@ -5,7 +5,7 @@ function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ct,cubeIdx,plane
 % corresponding axes handle
 %
 % call
-%   ctHandle = matRad_plotCtSlice(axesHandle,ctCube,plane,slice,cMap)
+%   [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ct,cubeIdx,plane,slice,cMap,window)
 %
 % input
 %   axesHandle  handle to axes the slice should be displayed in
