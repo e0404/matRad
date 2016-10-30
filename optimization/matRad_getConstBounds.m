@@ -95,7 +95,7 @@ elseif isequal(constraint.type, 'min DVH constraint')
 elseif isequal(constraint.type, 'max DCH Area constraint') || ...
        isequal(constraint.type, 'min DCH Area constraint') 
    
-    cl = -inf;
+    cl = 0;
     cu = 0;
     
 elseif isequal(constraint.type, 'max DCH Theta constraint')

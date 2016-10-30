@@ -190,7 +190,7 @@ funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 
 % scale objective and constraint function
 gInit    = abs(matRad_gradFuncWrapper(wInit,dij,cst,pln.bioOptimization));
-fScaling = 1e1/max(gInit);
+fScaling = 1e0/max(gInit);
 if ~isempty(matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios))
     for i = 1:length(matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios))  
         jInit    = abs(matRad_jacobFuncWrapper(wInit,dij,cst,pln.bioOptimization));
@@ -199,7 +199,7 @@ if ~isempty(matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenar
             wInitTmp = wInitTmp - 0.1*wInit;
             jInit = abs(matRad_jacobFuncWrapper(wInitTmp,dij,cst,pln.bioOptimization));
         end
-        cScalingTmp(i,1) = 1e1/max(jInit(i,:));
+        cScalingTmp(i,1) = 1e0/max(jInit(i,:));
     end
     cScaling = cScalingTmp;
 end
