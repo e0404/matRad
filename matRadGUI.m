@@ -858,14 +858,14 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
                     doseThresh = handles.CutOffLevel;
                 end
                 
-                [doseHandle,doseColorMap,doseWindow] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,doseThresh,doseAlpha,handles.doseColorMap,handles.doseWindow);
+                [doseHandle,handles.doseColorMap,handles.doseWindow] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,doseThresh,doseAlpha,handles.doseColorMap,handles.doseWindow);
                 AxesHandlesCT_Dose(end+1) = doseHandle;
             end            
             
             % plot colorbar
             if handles.plotColorbar == 1;
                 %Plot the colorbar
-                cBarHandel = matRad_plotColorbar(handles.axesFig,doseColorMap,doseWindow,'fontsize',defaultFontSize);
+                cBarHandel = matRad_plotColorbar(handles.axesFig,handles.doseColorMap,handles.doseWindow,'fontsize',defaultFontSize);
                 %adjust lables
                 Idx = find(strcmp(handles.SelectedDisplayOption,DispInfo(:,1)));
                 set(get(cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
@@ -881,7 +881,7 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
         %% plot iso dose lines
         if get(handles.radiobtnIsoDoseLines,'Value')           
             plotLabels = get(handles.radiobtnIsoDoseLinesLabels,'Value') == 1;
-            AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plotLabels,plane,slice,doseColorMap,doseWindow);
+            AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plotLabels,plane,slice,handles.doseColorMap,handles.doseWindow);
         end
 end
 
