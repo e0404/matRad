@@ -71,7 +71,8 @@ for i = 1:lw
     if(w(i) < Imin/2)
         w(i) = 0;
     elseif(w(i) > Imin/2 && w(i) < Imin)
-        w(i) = Imin;        
+        %w(i) = Imin;    WIEDER ÄNDERN; SO KONSISTENT MIT LMDOUT
+         w(i) = 0;
     end
 end
 
