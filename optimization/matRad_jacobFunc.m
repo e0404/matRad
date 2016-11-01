@@ -129,8 +129,7 @@ elseif isequal(constraint.type, 'max DCH Area constraint') || ...
     deviation = deviation.*(voxelWeighting).^2; 
 
     % calculate delta
-    %jacobVec = 2 * (1/numOfVoxels) * deviation;    
-    jacobVec = 2 * (1/1) * deviation;          
+    jacobVec = 2 * (1/numOfVoxels) * deviation;          
    
     
 elseif isequal(constraint.type, 'max DCH Theta constraint') || ...
