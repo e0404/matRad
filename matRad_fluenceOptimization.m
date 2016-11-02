@@ -101,9 +101,8 @@ ixTarget   = [];
 for i=1:size(cst,1)
     if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
         V = [V;cst{i,4}{1}];
-        maxDCHid   = ~cellfun('isempty',strfind({cst{i,6}.type},'max DCH'));
-        doseTarget = [doseTarget cst{i,6}(~maxDCHid).dose];
-        ixTarget   = [ixTarget i*ones(1,length([cst{i,6}(~maxDCHid).dose]))];
+        doseTarget = [doseTarget cst{i,6}.dose];
+        ixTarget   = [ixTarget i*ones(1,length([cst{i,6}.dose]))];
     end
 end
 [doseTarget,i] = max(doseTarget);

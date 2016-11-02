@@ -40,10 +40,10 @@ options.ipopt.acceptable_compl_inf_tol      = 1e10; % (Acc5)
 options.ipopt.acceptable_obj_change_tol     = 1e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
 
 options.ipopt.max_iter                      = 1000;
-options.ipopt.max_cpu_time                  = 6000;
+options.ipopt.max_cpu_time                  = 3000;
 
 % NLP Scaling (C.3)
-options.ipopt.nlp_scaling_method = 'gradient-based';
+options.ipopt.nlp_scaling_method = 'none';
 %options.ipopt.nlp_scaling_max_gradient = 10;
 %options.ipopt.obj_scaling_factor        = 1e-3;  
 
