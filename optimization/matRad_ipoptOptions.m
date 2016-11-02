@@ -37,7 +37,7 @@ options.ipopt.acceptable_tol                = 1e10; % (Acc2)
 options.ipopt.acceptable_constr_viol_tol    = 1e-2; % (Acc3)
 options.ipopt.acceptable_dual_inf_tol       = 1e10; % (Acc4)
 options.ipopt.acceptable_compl_inf_tol      = 1e10; % (Acc5)
-options.ipopt.acceptable_obj_change_tol     = 1e-2; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
+options.ipopt.acceptable_obj_change_tol     = 1e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
 
 options.ipopt.max_iter                      = 1000;
 options.ipopt.max_cpu_time                  = 6000;
