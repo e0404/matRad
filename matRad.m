@@ -53,7 +53,8 @@ pln.numApertures = 7;
 pln.numLevels = 3;
 
 pln.minGantryAngleRes = 4;
-pln.maxApertureAngleSpread = 20;
+pln.maxApertureAngleSpread = 20; %should be 1/2
+%Why should this be smaller than 10\deg?
 pln.numInitGantryAngles = max([360/pln.maxApertureAngleSpread 360/(pln.numApertures*pln.minGantryAngleRes)]);
 
 pln.initGantryAngleSpacing = 360/pln.numInitGantryAngles;
@@ -72,8 +73,8 @@ pln.numOfBeams      = numel(pln.gantryAngles);
 
 pln.gantryRotCst = [0 6]; %degrees per second
 pln.defaultGantryRot = mean(pln.gantryRotCst); %degrees per second
-pln.leafSpeedCst = [0 6]; %cm per second
-pln.doseRateCst = [75 600]; %MU per second
+pln.leafSpeedCst = [-inf inf]; %cm per second
+pln.doseRateCst = [0 inf]; %MU per second
 
 
 %% initial visualization and change objective function settings if desired
@@ -98,7 +99,8 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
     %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
     %resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
-    resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln.numLevels,0,pln.VMAT);
+    resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln.numLevels,0,pln.VMAT,pln.numApertures);
+    %resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,7,0,0,0);
 end
 
 %% DAO

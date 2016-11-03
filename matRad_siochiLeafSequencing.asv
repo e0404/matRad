@@ -165,11 +165,8 @@ for i = 1:numOfBeams
             [shapes,shapesWeight,k]=matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases);
         end
         
-        %are there enough apertures?
         if numToKeep ~= 0 && k <= numToKeep
             numOfLevels = numOfLevels+1;
-        else
-            notFinished = 0;
         end
     end
     

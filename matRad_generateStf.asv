@@ -494,7 +494,7 @@ for i = 1:length(pln.gantryAngles)
             borderInd1 = min([min(stf(i).beamSubChildrenIndex) min(stf(i).beamChildrenIndex)]);
             borderInd2 = max([max(stf(i).beamSubChildrenIndex) max(stf(i).beamChildrenIndex)]);
             %stf(i).borderAngles = [border1 border2];
-            stf(i).borderAnglesIndex = [borderInd1 borderInd2];
+            %stf(i).borderAnglesIndex = [borderInd1 borderInd2];
             
             %[stf(i).borderAngles,ind] = sortangles([border1 border2]);
             %borderInds = [borderInd1 borderInd2];
@@ -519,7 +519,7 @@ for i = 1:length(pln.gantryAngles)
             if stf(i).gantryAngle == pln.initGantryAngles(1)
                 %                stf(i).borderAngles(1) = 2*stf(i).gantryAngle-stf(i).borderAngles(2);
                 %                stf(i).borderAnglesIndex(1) = find(pln.gantryAngles == mod(stf(i).borderAngles(1),360));
-                stf(i).borderAngles = [0 mean([currInitGantryAngle nextInitGantryAngle])];
+                stf(i).borderAngles = [0 mean([pln.initGantryAngles(1) pln.initGantryAngles(2)])];
                 stf(i).lastBorderAngle = 0;
             elseif stf(i).gantryAngle == pln.initGantryAngles(end)
                 %                stf(i).borderAngles(2) = 2*stf(i).gantryAngle-stf(i).borderAngles(1);
@@ -527,12 +527,12 @@ for i = 1:length(pln.gantryAngles)
                 %stf(lastInitInd).nextBorderAngle = stf(i).borderAngles(1);
                 %stf(i).lastBorderAngle = lastBorderAngle;
                 %stf(i).nextBorderAngle = 360+stf(i).borderAngles(2);
-                stf(i).borderAngles = [mean([prevInitGantryAngle currInitGantryAngle]) 360];
+                stf(i).borderAngles = [mean([pln.initGantryAngles(end-1) pln.initGantryAngles(end)]) 360];
                 stf(i).lastBorderAngle = lastBorderAngle;
                 stf(i).nextBorderAngle = 360;
             else
                 if exist('lastInitInd','var')
-                    stf(i).borderAngles = [mean([prevInitGantryAngle currInitGantryAngle]) mean([currInitGantryAngle nextInitGantryAngle])];
+                    stf(i).borderAngles = [mean([pln.initGantryAngles(lastInitInd) pln.initGantryAngles(lastInitInd+1)]
                     stf(lastInitInd).nextBorderAngle = stf(i).borderAngles(1);
                     stf(i).lastBorderAngle = lastBorderAngle;
                 end

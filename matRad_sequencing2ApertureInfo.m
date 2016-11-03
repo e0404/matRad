@@ -35,7 +35,7 @@ if nargin < 3
     doVMAT = 0;
 end
 if doVMAT
-    border = -1; %indicates that first arc sector has R-L (reverse) leaf travel
+    leafDir = -1; %indicates that first arc sector has R-L (reverse) leaf travel
 end
 
 % MLC parameters:
@@ -193,18 +193,19 @@ for i=1:size(stf,2)
         if ~isempty(stf(i).borderAngles)
             if i == 1
                 apertureInfo.beam(i).lastBorderAngle = stf(i).lastBorderAngle;
-                apertureInfo.beam(i).lastBorderAngle_border = border;
+                apertureInfo.beam(i).lastBorderAngle_leafDir = leafDir;
                 % 1 (-1) is forward (reverse) leaf travel
-                border = -1*border;
+                leafDir = -1*leafDir;
             elseif i == size(stf,2)
                 apertureInfo.beam(i).nextBorderAngle = stf(i).nextBorderAngle;
-                apertureInfo.beam(i).nextBorderAngle_border = border;
+                apertureInfo.beam(i).nextBorderAngle_leafDir = leafDir;
                 % 1 (-1) is forward (reverse) leaf travel
-                border = -1*border;
+                leafDir = -1*leafDir;
             end
-            apertureInfo.beam(stf(i).borderAnglesIndex(1)).border = border; %Gives direction of leaf travel for current arc sector
+            apertureInfo.beam(i).leafDir = leafDir; %Gives direction of leaf travel for current arc sector
             % 1 (-1) is forward (reverse) leaf travel
-            border = -1*border;
+            leafDir = -1*leafDir;
+            apertureInfo.beam(i).borderAngles = stf(i).borderAngles;
         end
     end
     
