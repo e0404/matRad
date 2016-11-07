@@ -84,7 +84,7 @@ function matRadGUI_OpeningFcn(hObject, ~, handles, varargin)
 % varargin   command line arguments to matRadGUI (see VARARGIN)
 
 % enable opengl software rendering to visualize linewidths properly
-if ispc || isunix
+if ispc
     opengl software
 elseif ismac
     % opengl is not supported
@@ -96,6 +96,8 @@ if ~isdeployed
 else
     currFolder = [];
 end
+
+addpath(fullfile(currFolder,'plotting'));
 
 % Choose default command line output for matRadGUI
 handles.output = hObject;
@@ -140,6 +142,11 @@ set(handles.legendTable,'String',{'no data loaded'});
 handles.maxDoseVal     = 0;
 handles.IsoDose.Levels = 0;
 handles.plotColorbar = 1;
+%Initialize colormaps and windows
+handles.doseColorMap = jet;
+handles.ctColorMap = bone;
+handles.doseWindow = [];
+handles.ctWindow = [];
 %seach for availabes machines
 handles.Modalities = {'photons','protons','carbon'};
 for i = 1:length(handles.Modalities)
@@ -201,7 +208,7 @@ try
         handles.State = 1;
         % check if contours are precomputed
         if size(cst,2) < 7
-            cst = precomputeContours(ct,cst);
+            cst = matRad_computeVoiContours(ct,cst);
             assignin('base','cst',cst);
         end
         
@@ -250,10 +257,7 @@ end
 
 % precompute iso dose lines
 if handles.State == 3
-    resultGUI = evalin('base','resultGUI');
-    if ~isfield(resultGUI,'isoDoseContours')
-        handles = precomputeIsoDoseLevels(handles);
-    end
+    handles = updateIsoDoseLineCache(handles);
 end
 
 %per default the first beam is selected for the profile plot
@@ -303,7 +307,7 @@ end
 %guidata(findobj('Name','matRadGUI'), handles);
 UpdatePlot(handles);
 
-
+Update
 % --- Outputs from this function are returned to the command line.
 function varargout = matRadGUI_OutputFcn(~, ~, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
@@ -360,7 +364,7 @@ try
     handles.TableChanged = false;
     set(handles.popupTypeOfPlot,'Value',1);
     % precompute contours 
-    cst = precomputeContours(ct,cst);
+    cst = matRad_computeVoiContours(ct,cst);
     
     assignin('base','ct',ct);
     assignin('base','cst',cst);
@@ -819,22 +823,10 @@ end
 plane = get(handles.popupPlane,'Value');
 slice = round(get(handles.sliderSlice,'Value'));
 
-%% plot ct
- if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
+%% plot ct - if a ct cube is available and type of plot is set to 1 and not 2; 1 indicate cube plotting and 2 profile plotting
+if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     cla(handles.axesFig);
-    axes(handles.axesFig);
-    if plane == 1 % Coronal plane
-        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube{1}(slice,:,:)/max(ct.cube{1}(:))))),bone);
-       
-    elseif plane == 2 % sagittal plane
-        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube{1}(:,slice,:)/max(ct.cube{1}(:))))),bone);
-       
-    elseif plane == 3 % Axial plane
-        ct_rgb = ind2rgb(uint8(63*(squeeze(ct.cube{1}(:,:,slice)/max(ct.cube{1}(:))))),bone);
-       
-    end
-    axes(handles.axesFig)
-    AxesHandlesCT_Dose(end+1) = imagesc(ct_rgb);
+    AxesHandlesCT_Dose(end+1) = matRad_plotCtSlice(handles.axesFig,ct,1,plane,slice,handles.ctColorMap,handles.ctWindow);
 end
 
 %% plot dose cube
@@ -845,63 +837,38 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
             CubeNames = fieldnames(Result);
             handles.SelectedDisplayOption = CubeNames{1,1};
         end
-        mVolume = getfield(Result,handles.SelectedDisplayOption);
-        % make sure to exploit full color range 
-        mVolume(mVolume<handles.CutOffLevel*max(mVolume(:))) = 0;
+        dose = Result.(handles.SelectedDisplayOption);
 
-    %     %% dose colorwash
-        if ~isempty(mVolume)&& ~isvector(mVolume)
-
+        % dose colorwash
+        if ~isempty(dose) && ~isvector(dose)
+            
             if handles.maxDoseVal == 0
-                handles.maxDoseVal = max(mVolume(:));
+                handles.maxDoseVal = max(dose(:));
                 set(handles.txtMaxDoseVal,'String',num2str(handles.maxDoseVal))
             end
-            dose = mVolume./handles.maxDoseVal;
-            dose(dose>1) = 1;
-            % Save RGB indices for dose in zsliceÂ´s voxels.
-            if plane == 1  % Coronal plane
-                dose_slice = squeeze(dose(slice,:,:));
-            elseif plane == 2 % sagittal plane
-                dose_slice = squeeze(dose(:,slice,:));
-            elseif plane == 3 % Axial plane
-                dose_slice = squeeze(dose(:,:,slice));  
-            end
-            axes(handles.axesFig)
-            dose_rgb = ind2rgb(uint8(63*dose_slice),jet);
-            
-            % plot dose distribution    
-            hDose = imagesc('CData',dose_rgb,'Parent',handles.axesFig);
-            AxesHandlesCT_Dose(end+1) = hDose;
+
             if get(handles.radiobtnDose,'Value')
                 if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
-                    set(hDose,'AlphaData',  .6*(double(dose_slice)>0.1));
+                    doseAlpha = 0.6;
+                    doseThresh = 0.1;
                 else
-                    set(hDose,'AlphaData',  .6*(double(dose_slice)>handles.CutOffLevel));
+                    doseAlpha = 0.6;
+                    doseThresh = handles.CutOffLevel;
                 end
-            else
-                set(hDose,'AlphaData', 0) ;
-            end
+                
+                [doseHandle,handles.doseColorMap,handles.doseWindow] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,doseThresh,doseAlpha,handles.doseColorMap,handles.doseWindow);
+                AxesHandlesCT_Dose(end+1) = doseHandle;
+            end            
             
             % plot colorbar
-            if handles.plotColorbar == 1;
-                v=version;
-                if str2double(v(1:3))>=8.5
-                    cBarHandel = colorbar(handles.axesFig,'colormap',jet,'FontSize',defaultFontSize,'yAxisLocation','right');
-                else
-                    cBarHandel = colorbar('peer',handles.axesFig,'FontSize',defaultFontSize,'yAxisLocation','right');
-                end
+            if handles.plotColorbar == 1
+                %Plot the colorbar
+                cBarHandel = matRad_plotColorbar(handles.axesFig,handles.doseColorMap,handles.doseWindow,'fontsize',defaultFontSize);
+                %adjust lables
                 Idx = find(strcmp(handles.SelectedDisplayOption,DispInfo(:,1)));
                 set(get(cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
                 % do not interprete as tex syntax
                 set(get(cBarHandel,'ylabel'),'interpreter','none');
-
-                if isempty(strfind(handles.SelectedDisplayOption,'RBE'))
-                    set(cBarHandel,'YLim',[0 handles.maxDoseVal]);
-                    caxis(handles.axesFig,[0,handles.maxDoseVal])
-                else
-                    set(cBarHandel,'YLim',[0 handles.maxDoseVal]);
-                    caxis(handles.axesFig,[0,handles.maxDoseVal])
-                end
             end
         end
         
@@ -910,70 +877,23 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
 
 
         %% plot iso dose lines
-        if get(handles.radiobtnIsoDoseLines,'Value')
-            % get current isoDoseLevels
-            vLevels = handles.IsoDose.Levels;
-         
-            if any(handles.isoDoseContours{slice,plane}(:))
-                 
-                % plot precalculated contourc data
-                colors = jet;
-                colors = colors(round(63*vLevels(vLevels <= handles.maxDoseVal)./handles.maxDoseVal),:);
-                %colors = colors(round(63*vLevels./max(vLevels)),:);
-                lower = 1; % lower marks the beginning of a section
-                while lower-1 ~= size(handles.isoDoseContours{slice,plane},2);
-                    steps = handles.isoDoseContours{slice,plane}(2,lower); % number of elements of current line section
-                    AxesHandlesIsoDose(end+1) = line(handles.isoDoseContours{slice,plane}(1,lower+1:lower+steps),...
-                                   handles.isoDoseContours{slice,plane}(2,lower+1:lower+steps),...
-                                   'Color',colors(vLevels(:) == handles.isoDoseContours{slice,plane}(1,lower),:),'LineWidth',1.5,'Parent',handles.axesFig);
-                    if get(handles.radiobtnIsoDoseLinesLabels,'Value') == 1
-                        text(handles.isoDoseContours{slice,plane}(1,lower+1),...
-                            handles.isoDoseContours{slice,plane}(2,lower+1),...
-                            num2str(handles.isoDoseContours{slice,plane}(1,lower)),'Parent',handles.axesFig)
-                    end
-                    lower = lower+steps+1;
-                    
-                end
-            end
+        if get(handles.radiobtnIsoDoseLines,'Value')           
+            plotLabels = get(handles.radiobtnIsoDoseLinesLabels,'Value') == 1;
+            AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plotLabels,plane,slice,handles.doseColorMap,handles.doseWindow);
         end
 end
 
 
 %% plot VOIs
- axes(handles.axesFig)  
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
-    colors = colorcube;
-    colors = colors(round(linspace(1,63,size(cst,1))),:);
-    for s = 1:size(cst,1)
-        if ~strcmp(cst{s,3},'IGNORED') &&  handles.VOIPlotFlag(s)
-            % plot precalculated contourc data
-            if any(cst{s,7}{slice,plane}(:))
-                lower = 1; % lower marks the beginning of a section
-                while lower-1 ~= size(cst{s,7}{slice,plane},2);
-                    hold on
-                    steps = cst{s,7}{slice,plane}(2,lower); % number of elements of current line section
-                    AxesHandlesVOI(end+1) = line(cst{s,7}{slice,plane}(1,lower+1:lower+steps),...
-                         cst{s,7}{slice,plane}(2,lower+1:lower+steps),...
-                         'Color',colors(s,:),'LineWidth',2.0,'Parent',handles.axesFig);
-                    
-                    lower = lower+steps+1;
-                end
-            end
-        end
-    end
+    AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,ct,1,handles.VOIPlotFlag,plane,slice,colorcube)];
 end
 
 
 
 %% Set axis labels and plot iso center
-FlagIsoCenterVisible = false;
-vIsoCenter           = round(pln.isoCenter./[ct.resolution.x ct.resolution.y ct.resolution.z]);
 if  plane == 3% Axial plane
     if ~isempty(pln)
-        vIsoCenterPlot  = [vIsoCenter(1) vIsoCenter(2)];
-        if vIsoCenter(3) == slice
-            FlagIsoCenterVisible = true;
-        end
         set(handles.axesFig,'XTick',0:50/ct.resolution.x:1000);
         set(handles.axesFig,'YTick',0:50/ct.resolution.y:1000);
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.x);
@@ -988,10 +908,6 @@ if  plane == 3% Axial plane
     end
 elseif plane == 2 % Sagittal plane
     if ~isempty(pln)
-        vIsoCenterPlot  = [vIsoCenter(3) vIsoCenter(2)];
-        if vIsoCenter(2) == slice
-            FlagIsoCenterVisible = true;
-        end
         set(handles.axesFig,'XTick',0:50/ct.resolution.z:1000)
         set(handles.axesFig,'YTick',0:50/ct.resolution.y:1000)
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.z)
@@ -1006,10 +922,6 @@ elseif plane == 2 % Sagittal plane
     end
 elseif plane == 1 % Coronal plane
     if ~isempty(pln)
-        vIsoCenterPlot  = [vIsoCenter(3) vIsoCenter(1)];
-        if vIsoCenter(1) == slice
-            FlagIsoCenterVisible = true;
-        end
         set(handles.axesFig,'XTick',0:50/ct.resolution.z:1000)
         set(handles.axesFig,'YTick',0:50/ct.resolution.x:1000)
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.z)
@@ -1026,12 +938,8 @@ end
 
 hold on
 
-if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1
-    IsoCenterCrossColor = [0.27 0.27 0.27];
-    if FlagIsoCenterVisible
-        IsoCenterCrossColor = [0 0 0];
-    end
-    hIsoCenterCross = plot(handles.axesFig,vIsoCenterPlot(1),vIsoCenterPlot(2),'x','MarkerSize',13,'LineWidth',4,'Color',IsoCenterCrossColor); 
+if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln)
+    hIsoCenterCross = matRad_plotIsoCenterMarker(handles.axesFig,pln,ct,plane,slice);
 end
 
 % the following line ensures the plotting order (optional)
@@ -1039,16 +947,16 @@ end
   
 %set axis ratio
 ratios = [1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
-set(handles.axesFig,'PlotBoxAspectRatioMode','manual');
+set(handles.axesFig,'DataAspectRatioMode','manual');
 if plane == 1 
-      res = [ratios(3) ratios(1)]./max([ratios(3) ratios(1)]);  
+      res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);  
       set(handles.axesFig,'DataAspectRatio',[res 1])
 elseif plane == 2 % sagittal plane
-      res = [ratios(1) ratios(2)]./max([ratios(1) ratios(2)]);  
+      res = [ratios(3) ratios(1)]./max([ratios(3) ratios(1)]);  
       set(handles.axesFig,'DataAspectRatio',[res 1]) 
 elseif  plane == 3 % Axial plane
-      res = [ratios(1) ratios(2)]./max([ratios(1) ratios(2)]);  
-      set(handles.axesFig,'PlotBoxAspectRatio',[res 1])
+      res = [ratios(2) ratios(1)]./max([ratios(2) ratios(1)]);  
+      set(handles.axesFig,'DataAspectRatio',[res 1])
 end
 
 
@@ -1188,7 +1096,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
         end
     end
     
-    str = sprintf('profile plot - central axis of %d beam gantry angle %d° couch angle %d°',...
+    str = sprintf('profile plot - central axis of %d beam gantry angle %d? couch angle %d?',...
         handles.SelectedBeam ,pln.gantryAngles(handles.SelectedBeam),pln.couchAngles(handles.SelectedBeam));
     h_title = title(handles.axesFig,str,'FontSize',defaultFontSize);
     pos = get(h_title,'Position');
@@ -1226,6 +1134,8 @@ axis tight
 if handles.rememberCurrAxes
     axis(currAxes);
 end
+
+guidata(gcf,handles);
 
 % --- Executes on selection change in popupPlane.
 function popupPlane_Callback(hObject, ~, handles)
@@ -1443,7 +1353,7 @@ handles.maxDoseVal = 0;      % if 0 new dose max is determined based on dose cub
 handles.rememberCurrAxes = false;
 handles.IsoDose.Levels = 0;  % ensure to use default iso dose line spacing
 handles.plotColorbar = 1;
-handles = precomputeIsoDoseLevels(handles);
+handles = updateIsoDoseLineCache(handles);
 UpdatePlot(handles);
 handles.plotColorbar = 0;
 handles.rememberCurrAxes = true;
@@ -1558,9 +1468,9 @@ content = get(hObject,'String');
 handles.SelectedDisplayOption = content{get(hObject,'Value'),1};
 handles.SelectedDisplayOptionIdx = get(hObject,'Value');
 handles.maxDoseVal = 0;
-handles.IsoDose.Levels = 0;
+handles.doseWindow = [];
+handles = updateIsoDoseLineCache(handles);
 handles.plotColorbar = 1;
-handles = precomputeIsoDoseLevels(handles);
 UpdatePlot(handles);
 handles.plotColorbar = 0;
 guidata(hObject, handles);
@@ -2337,8 +2247,8 @@ msgbox(['IPOPT finished with status ' num2str(info.status) ' (' statusmsg ')'],'
 function getPlnFromGUI(handles)
 
 pln.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [°]
-pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [°]
+pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [âˆž]
+pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [âˆž]
 pln.numOfBeams      = numel(pln.gantryAngles);
 try
     ct = evalin('base','ct');
@@ -2640,7 +2550,7 @@ catch
     warning('Couldnt parse iso dose levels - using default values');
     handles.IsoDose.Levels = 0;
 end
-handles = precomputeIsoDoseLevels(handles);
+handles = updateIsoDoseLineCache(handles);
 UpdatePlot(handles);
 guidata(hObject,handles);
 
@@ -2649,9 +2559,12 @@ function txtMaxDoseVal_Callback(hObject, ~, handles)
 
 handles.maxDoseVal =  str2double(get(hObject,'String'));
 % compute new iso dose lines
-handles = precomputeIsoDoseLevels(handles);
+handles = updateIsoDoseLineCache(handles);
+handles.doseWindow = [0 handles.maxDoseVal];
 guidata(hObject,handles);
+handles.plotColorbar = 1;
 UpdatePlot(handles);
+handles.plotColorbar = 0;
 
 % popup menu: machine
 function popUpMachine_Callback(hObject, ~, handles)
@@ -3056,50 +2969,30 @@ for s = 1:size(cst,1)
     end
 end
 
-% precompute isodose levels
-function handles = precomputeIsoDoseLevels(handles)
-    resultGUI = evalin('base','resultGUI');
-    % select first cube if selected option does not exist
-    if ~isfield(resultGUI,handles.SelectedDisplayOption)
-        CubeNames = fieldnames(resultGUI);
-        handles.SelectedDisplayOption = CubeNames{1,1};
-    end
-    mVolume = getfield(resultGUI,handles.SelectedDisplayOption);
-    CutOffLevel = 0.01;
-    
-    if handles.maxDoseVal == 0
-        handles.maxDoseVal = max(mVolume(:));
-        set(handles.txtMaxDoseVal,'String',num2str(handles.maxDoseVal))
-    end
-         
-    % make sure to exploit full color range 
-    mVolume(mVolume<handles.CutOffLevel*handles.maxDoseVal) = 0;
-    if handles.IsoDose.NewIsoDoseFlag == true
-        handles.IsoDose.NewIsoDoseFlag = false;
-    else
-        handles = getIsoDoseLevels(handles);  
-    end
-    vLevels = handles.IsoDose.Levels; 
+%Update IsodoseLines
+function handles = updateIsoDoseLineCache(handles)
+resultGUI = evalin('base','resultGUI');
+% select first cube if selected option does not exist
+if ~isfield(resultGUI,handles.SelectedDisplayOption) && ~strcmp(handles.SelectedDisplayOption,'RBETruncated10Perc')
+    CubeNames = fieldnames(resultGUI);
+    dose = resultGUI.(CubeNames{1,1});
+elseif strcmp(handles.SelectedDisplayOption,'RBETruncated10Perc')
+    currentCubeName = 'RBE';
+    dose = resultGUI.(currentCubeName);
+    dose(resultGUI.physicalDose<0.1*max(resultGUI.physicalDose(:))) = 0;
+else
+    dose = resultGUI.(handles.SelectedDisplayOption);
+end
 
-    dim = size(resultGUI.physicalDose);
-    handles.isoDoseContours = cell(max(dim(:)),3);
-    for slice = 1:dim(1)
-        if sum(sum(mVolume(slice,:,:))) > 0
-             handles.isoDoseContours{slice,1} = contourc(squeeze(mVolume(slice,:,:)),vLevels);
-        end
-    end
-    for slice = 1:dim(2)
-        if sum(sum(mVolume(:,slice,:))) > 0
-             handles.isoDoseContours{slice,2} = contourc(squeeze(mVolume(:,slice,:)),vLevels);
-        end
-    end
-    for slice = 1:dim(3)
-        if sum(sum(mVolume(:,:,slice))) > 0
-             handles.isoDoseContours{slice,3} = contourc(squeeze(mVolume(:,:,slice)),vLevels);
-        end
-    end         
-    handles.IsoDose.Levels = vLevels;
-    
+
+
+
+handles.maxDoseVal = max(dose(:));
+handles            = getIsoDoseLevels(handles);
+set(handles.txtMaxDoseVal,'String',num2str(handles.maxDoseVal))
+ 
+
+handles.IsoDose.Contours = matRad_computeIsoDoseContours(dose,handles.IsoDose.Levels);
 
 function handles =  getIsoDoseLevels(handles)
     SpacingLower = 0.1;
@@ -3107,7 +3000,8 @@ function handles =  getIsoDoseLevels(handles)
     vLow  = 0.1:SpacingLower:0.9;
     vHigh = 0.95:SpacingUpper:1.2;
     vLevels = [vLow vHigh];  
-    handles.IsoDose.Levels = (round((vLevels.*((handles.maxDoseVal*100)/120))*100))/100; 
+    handles.IsoDose.Levels = (round((vLevels.*((handles.maxDoseVal*100)/120))*1000))/1000;   % 
+
     
     
    
