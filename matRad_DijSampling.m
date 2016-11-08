@@ -35,7 +35,7 @@ function [ixNew,bixelDoseNew] =  matRad_DijSampling(ix,bixelDose,radDepthV,rad_d
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 boolFineClustering  = false;                                     % flag to switch between fine and coarse radiological depth resolution
-deltaRadDepth       = 4;                                         % step size of radiological depth
+deltaRadDepth       = 5;                                         % step size of radiological depth
 LatCutOffsq         = r0^2;
 
 %% remember dose values inside the inner core
@@ -54,10 +54,10 @@ radDepthTail        = (radDepthV(linIxSample));                  % get radiologi
 % cluster radiological dephts to reduce computations
 B_r                 = int32(ceil(radDepthTail));                 % cluster radiological depths; hist(B,NumOfClusters) could also be used
 if boolFineClustering 
-    [C,~,~]   = unique(B_r);                                                         % get unique radiological depht values == fine clustering
+    [C,~,~]      = unique(B_r);                                                         % get unique radiological depht values == fine clustering
 else 
      maxRadDepth = double(max(B_r));
-     C           = int32(linspace(0,maxRadDepth,round(maxRadDepth)/deltaRadDepth));        % coarse clustering of rad depths    
+     C           = int32(linspace(0,maxRadDepth,round(maxRadDepth)/deltaRadDepth));     % coarse clustering of rad depths    
 end
 
 ixNew               = zeros(numTail,1);                          % inizialize new index vector
@@ -68,31 +68,20 @@ linIx               = int32(1:1:numTail)';
 % loop over clustered radiological depths
 for i = 1:numel(C)-1
 
-    ixTmp              = linIx(B_r >= C(i) & B_r < C(i+1));                        % extracting sub indices
+    ixTmp              = linIx(B_r >= C(i) & B_r < C(i+1));      % extracting sub indices
     if isempty(ixTmp)
         continue
-    end
-    subDose            = bixelDoseTail(ixTmp);
-    subIx              = ixSampTail(ixTmp);
+    end 
+    subDose            = bixelDoseTail(ixTmp);                   % get tail dose in current cluster
+    subIx              = ixSampTail(ixTmp);                      % get indices in current cluster
     
-    thresholdDose      = max(subDose);
-    NumSamples         = round(sum(subDose)/thresholdDose);   
-    [Prob,ixSort]      = sort(subDose/thresholdDose,'descend');                    % get probability 
-    ProbNorm           = (Prob)./(sum(Prob));                                      % get normalized probability  
-    subIx              = subIx(ixSort);
-    CDF                = cumsum(ProbNorm);                                         % calculate cummlative probability density 
-    
-    if numel(CDF) ~= 1
-        % take random samples from an arbritrary pdf
-        randomValues       = (CDF(end)-CDF(1)).* rand(NumSamples,1) + CDF(1);      % sample random positions
-        ixSamp  = interp1(CDF,1:numel(Prob),randomValues,'nearest');               % convert random samples to linear indices 
-        %ixSamp  = sum(bsxfun(@le,CDF,randomValues'))';      
-    else
-        ixSamp  = 1;
-    end
+    thresholdDose      = max(subDose); 
+    r                  = rand(numel(subDose),1);                 % get random samples
+    ixSamp             = r<=(subDose/thresholdDose);
+    NumSamples         = sum(ixSamp);
 
-    ixNew(IxCnt:IxCnt+NumSamples-1,1)        = subIx(ixSamp);
-    bixelDoseNew(IxCnt:IxCnt+NumSamples-1,1) = thresholdDose;
+    ixNew(IxCnt:IxCnt+NumSamples-1,1)        = subIx(ixSamp);    % save new indices
+    bixelDoseNew(IxCnt:IxCnt+NumSamples-1,1) = thresholdDose;    % set the dose
     
     IxCnt = IxCnt + NumSamples;
 end
