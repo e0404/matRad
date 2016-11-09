@@ -42,8 +42,8 @@ function [ixNew,bixelDoseNew] =  matRad_DijSampling(ix,bixelDose,radDepthV,rad_d
 %% define default parameters as a fallback 
 defaultType                = 'radius';
 deltaRadDepth              = 5;                       % step size of radiological depth
-defaultLatCutOff           = 25;
-defaultrelDoseThreshold    = 0.01;                    % equals to 1%
+defaultLatCutOff           = 25;                      % default lateral cut off
+defaultrelDoseThreshold    = 0.01;                    % default relative dose threshold
 
 relDoseThreshold           = defaultrelDoseThreshold;
 LatCutOff                  = defaultLatCutOff;

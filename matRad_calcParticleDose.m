@@ -203,7 +203,7 @@ for i = 1:dij.numOfBeams % loop over all beams
     
     % Determine lateral cutoff
     fprintf('matRad: calculate lateral cutoff...');
-    cutOffLevel = .9975;
+    cutOffLevel = .99;
     visBoolLateralCutOff = 0;
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
     fprintf('done.\n');    
@@ -283,9 +283,10 @@ for i = 1:dij.numOfBeams % loop over all beams
                     machine.data(energyIx)); 
                 
   
-                relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose
-                Type               = 'dose';
-                [currIx,bixelDose] = matRad_DijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
+                % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
+                %relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose
+                %Type               = 'dose';
+                %[currIx,bixelDose] = matRad_DijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
 
                 
                 % Save dose for every bixel in cell array
