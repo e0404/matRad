@@ -1,4 +1,4 @@
-function [dAcc, ct] = matRad_doseAcc(ct, resultGUI,accMethod)
+function [dAcc, ct, resultGUI] = matRad_doseAcc(ct, resultGUI,accMethod)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dose accumulation function
 % 
@@ -33,24 +33,39 @@ function [dAcc, ct] = matRad_doseAcc(ct, resultGUI,accMethod)
 if ~isfield(ct, 'dvf')
     warning('no dvf available. check if correct ones are imported!')
   
-    addpath('D:\Matrad\data\4DCT\TKUH005\ReadData3d')
+    addpath('D:\Matrad\data\4DCT\ReadData3d')
     
-    dvffiles(1).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M06_vf.mha';  %'D:\Matrad\data\4DCT\testphan\DVF_1_1.mha';   %
-    dvffiles(2).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\DVF_6_10.mha';   %'D:\Matrad\data\4DCT\testphan\DVF_2_1.mha'   %
+    dvffiles(1).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M06_vf.mha';  %'D:\Matrad\data\4DCT\Boxphantom\DVF\DVF_1_1.mha';   %   %'D:\Matrad\data\4DCT\testphan\DVF_1_1.mha';   %
+    dvffiles(2).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M08_vf.mha';   %'D:\Matrad\data\4DCT\testphan\DVF_2_1.mha'   %
+    dvffiles(3).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M10_vf.mha';
+    dvffiles(4).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M02_vf.mha';
+    dvffiles(5).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M04_vf.mha';
+    
+%     dvffiles(1).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M06_vf.mha'; 
+%     dvffiles(2).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F08_M06_vf.mha'; 
+%     dvffiles(3).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F10_M06_vf.mha';
+%     dvffiles(4).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F02_M06_vf.mha';
+%     dvffiles(5).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F04_M06_vf.mha';
     
     for i = 1:ct.numOfCtScen
         [ct.dvf{i},ct.dvfReadData3Dinfo(i)] = ReadData3D(dvffiles(i).name,false);
     
      % swap x and y (matRad standard)  ????????????
-     help = ct.dvf{1,i}(1,:,:,:);
-     ct.dvf{1,i}(1,:,:,:) = ct.dvf{1,i}(2,:,:,:);
-     ct.dvf{1,i}(2,:,:,:) = help;
+    ct.dvf{i} = permute(ct.dvf{i}, [1,3,2,4]);
     
+    help = ct.dvf{i}(1,:,:,:);
+   ct.dvf{i}(1,:,:,:) = ct.dvf{i}(2,:,:,:);
+    ct.dvf{i}(2,:,:,:) = help;
+
     display(['import VF ',num2str(i),'/',num2str(ct.numOfCtScen)])
     end
 end
-
-
+% 
+% for i = 1:ct.numOfCtScen
+%       help = ct.dvf{1,i}(2,:,:,:);
+%      ct.dvf{1,i}(2,:,:,:) = ct.dvf{1,i}(1,:,:,:);
+%      ct.dvf{1,i}(1,:,:,:) = help;
+%      end
 
 
 nPhases = size(resultGUI.phaseDose, 2); %size(d.physicalDose,4);
@@ -64,7 +79,6 @@ dAcc = zeros(dimensions);
 
 
 
-
 % DDM:  direct dose mapping
 % DDMM: divergent dose mapping
 % EMT:  energy mass transfer algorithm
@@ -72,21 +86,24 @@ if nargin < 2 % set default accumulation method
     accMethod = 'DDM';
 end
 
-    
+
+
+        
 if strcmp(accMethod,'DDM')
     
     %if ~strcmp(ct.dvfType,'pull');
     %    error('dose accumulation via direct dose mapping (DDM) requires pull dvfs');
     %end
     
+         
     [Y,X,Z] = meshgrid(xGridVec,yGridVec,zGridVec);
 
     for i = 1:nPhases
-        
-        dvf_x_i = squeeze(ct.dvf{1,i}(1,:,:,:)); %squeeze(ct.dvf(1,:,:,:,i));
-        dvf_y_i = squeeze(ct.dvf{1,i}(2,:,:,:));
-        dvf_z_i = squeeze(ct.dvf{1,i}(3,:,:,:));
-        
+          
+        dvf_x_i = squeeze(ct.dvf{1,i}(1,:,:,:))/ct.resolution.x;  %???????x??????y?????????
+        dvf_y_i = squeeze(ct.dvf{1,i}(2,:,:,:))/ct.resolution.y; %squeeze(ct.dvf(2,:,:,:,i))/ct.resolution.y;
+        dvf_z_i = squeeze(ct.dvf{1,i}(3,:,:,:))/ct.resolution.z;
+
         ix  = resultGUI.phaseDose{1,i}(:,:,:)>0;       %d.physicalDose(:,:,:,i) > 0;
         
 %         d_ref = interp3(yGridVec,xGridVec',zGridVec,resultGUI.phaseDose{1,i}(:,:,:), ...  %d.physicalDose(:,:,:,i), ...
@@ -98,11 +115,11 @@ if strcmp(accMethod,'DDM')
 % interpolation der Dosis in VF Grid??? 
         %mappe Dosis von Phase n in Referenzphase
         d_ref = interp3(yGridVec,xGridVec',zGridVec,resultGUI.phaseDose{1,i}(:,:,:), ...  %d.physicalDose(:,:,:,i), ...
-                         Y(ix) + dvf_y_i(ix)/ct.resolution.y, ...     
-                         X(ix) + dvf_x_i(ix)/ct.resolution.x, ...  % wieso XY verdreht???   interp3 
-                         Z(ix) + dvf_z_i(ix)/ct.resolution.z, ...
-                         'linear',0);    
-
+                         Y(ix) + dvf_y_i(ix), ...     
+                         X(ix) + dvf_x_i(ix), ...  % wieso XY verdreht???   interp3 
+                         Z(ix) + dvf_z_i(ix), ...
+                         'linear',0);  
+        
         dAcc(ix) = dAcc(ix) + d_ref;
         
     end
@@ -117,11 +134,12 @@ elseif strcmp(accMethod,'EMT')   % funktioniert nicht wenn Dosis in einer Phase 
 
     for i = 1:nPhases
         
-        m_i     = ct.cube{1,i}; %ct.cube(:,:,:,i);
-        e_i     = resultGUI.phaseDose{1,i}.*m_i; %d.physicalDose(:,:,:,i).*m_i;
-        dvf_x_i = squeeze(ct.dvf{1,i}(1,:,:,:))/ct.resolution.x;
+        dvf_x_i = squeeze(ct.dvf{1,i}(1,:,:,:))/ct.resolution.x;  %???????x??????y?????????
         dvf_y_i = squeeze(ct.dvf{1,i}(2,:,:,:))/ct.resolution.y; %squeeze(ct.dvf(2,:,:,:,i))/ct.resolution.y;
         dvf_z_i = squeeze(ct.dvf{1,i}(3,:,:,:))/ct.resolution.z;
+
+        m_i     = ct.cube{1,i}; %ct.cube(:,:,:,i);
+        e_i     = resultGUI.phaseDose{1,i}.*m_i; %d.physicalDose(:,:,:,i).*m_i;
         
         ix = e_i>0;
         

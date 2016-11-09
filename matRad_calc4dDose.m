@@ -51,7 +51,7 @@ delivery = matRad_readLmdout(FileName);
 resultGUI.accDose = dAcc;
 
 %visualisation
-matRad_plotPhaseDose(resultGUI, 80); %TKUH005 slice 110 % T6H slice 50  %testphan slice 50 % Boxphan_3phases
+matRad_plotPhaseDose(resultGUI, 110); %TKUH005 slice 110 % T6H slice 50  %testphan slice 50 % Boxphan_3phases
 
 
 

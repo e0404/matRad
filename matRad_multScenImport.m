@@ -1,7 +1,7 @@
 function [ct,cst] = matRad_multScenImport(InputFolder,numOfScen,VOIs)
 
 % add readData3d to search path
-addpath('C:\Matrad\data\4DCT\TKUH005\ReadData3d');
+addpath('D:\Matrad\data\4DCT\TKUH005\ReadData3d');
 
 %% get input data info
 display('start multiple scenario import:')
@@ -11,7 +11,7 @@ InputData = InputData(~(strcmp('.', {InputData.name}) | strcmp('..', {InputData.
 InputData = InputData(1:(min(length(InputData),numOfScen)));
 
 for i = 1:length(InputData)
-    InputData(i).CTs = dir(fullfile(InputFolder,InputData(i).name));
+    InputData(i).CTs = dir(fullfile(InputFolder,InputData(i).name,'*.vtk'));
     InputData(i).CTs = InputData(i).CTs(~cellfun('isempty',strfind({InputData(i).CTs.name},'_CT_'))); 
     InputData(i).CTs = InputData(i).CTs.name;
     
@@ -20,7 +20,8 @@ for i = 1:length(InputData)
     InputData(i).SegmentationsFile = {InputData(i).SegmentationsFile.name};
     for j = 1:length(InputData(i).SegmentationsFile)
         idx = regexp(InputData(i).SegmentationsFile{j},'_');
-        InputData(i).SegmentationsName{j} = InputData(i).SegmentationsFile{j}(idx(3)+1:idx(end-2)-2);
+        %InputData(i).SegmentationsName{j} = InputData(i).SegmentationsFile{j}(idx(3)+1:idx(end-2)-2);
+        InputData(i).SegmentationsName{j} = InputData(i).SegmentationsFile{j}(idx(4)+1:idx(end-2)-2); %neue Daten
     end
 end
 
@@ -135,26 +136,26 @@ end
 %% read vector fields
 % welche richtig???? InRef oder InDef???
 
-display('start VF import:')
-
-InputData = dir(InputFolder);
-InputData = InputData(~(strcmp('.', {InputData.name}) | strcmp('..', {InputData.name})));
-InputData = InputData(1:(min(length(InputData),numOfScen)));
-
-for i = 1:length(InputData)
-    InputData(i).VFs = dir(fullfile(InputFolder,InputData(i).name));
-    InputData(i).VFs = InputData(i).VFs(~cellfun('isempty',strfind({InputData(i).VFs.name},'InRef_'))); 
-    InputData(i).VFs = InputData(i).VFs.name;
-end
-
-
-for i = 1:ct.numOfCtScen
-     [ct.dvf{i}, ct.dvfReadData3Dinfo(i)] = ReadData3D(fullfile(InputFolder,InputData(i).name,InputData(i).VFs),false);
-end
-    
-    swap x and y (matRad standard)
-    %???????????????????????????????????????????
-    ct.dvf{i} = permute(ct.dvf{i},[1,3,2,4]);
+% display('start VF import:')
+% 
+% InputData = dir(InputFolder);
+% InputData = InputData(~(strcmp('.', {InputData.name}) | strcmp('..', {InputData.name})));
+% InputData = InputData(1:(min(length(InputData),numOfScen)));
+% 
+% for i = 1:length(InputData)
+%     InputData(i).VFs = dir(fullfile(InputFolder,InputData(i).name));
+%     InputData(i).VFs = InputData(i).VFs(~cellfun('isempty',strfind({InputData(i).VFs.name},'InRef_'))); 
+%     InputData(i).VFs = InputData(i).VFs.name;
+% end
+% 
+% 
+% for i = 1:ct.numOfCtScen
+%      [ct.dvf{i}, ct.dvfReadData3Dinfo(i)] = ReadData3D(fullfile(InputFolder,InputData(i).name,InputData(i).VFs),false);
+% end
+%     
+%     swap x and y (matRad standard)
+%     %???????????????????????????????????????????
+%     ct.dvf{i} = permute(ct.dvf{i},[1,3,2,4]);
 
 
 display('import finished')

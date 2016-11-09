@@ -21,25 +21,26 @@ clc
 
 % load patient data, i.e. ct, voi, cst
 
-load HEAD_AND_NECK
-%Äload TG119.mat
+%load HEAD_AND_NECK
+% load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
 
-%  InputFolder = 'C:\MAtrad\data\4DCT\T6H_fuer_MB\biomech_samples';
-%  numOfScen   = 2;
-%  VOIs        = {'Blase','Haut','prostata_','Rektum','GTVPrimarius'};
+%  InputFolder = '\\radfsromeo\MRgRT\MRgRT_shared\Pelvis\StollPatientModels\T6H_fuer_MB\line_18_5_150KPA_final_newYM_OK_high';
+%  numOfScen   = 16;
+%  VOIs        = {'Blase','Contour','Prostata','Rektum','PTVGP','GTVPrimarius','PTVBoost', 'Hueftgelenk_li', 'Hueftgelenk_re'};
 %  [ct,cst]    = matRad_multScenImport(InputFolder,numOfScen,VOIs); 
  
-%load T6H_dvf.mat
-%load TKUH005_610_test.mat
-%load testphan.mat
+%load T6H_16.mat
+load TKUH_681024_all.mat
+%load Pankreas_ad_all.mat
+%load Boxphantom_all.mat
 
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
 multScen.numOfShiftScen      = [0 0 0];        % number of shifts in x y and z direction       
-multScen.shiftSize           = [3 3 3];     % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
+multScen.shiftSize           = [5 5 5];     % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
 multScen.shiftGenType        = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
 multScen.shiftCombType       = 'individual';     % individual: no combination of shift scenarios, combined: combine shift scenarios
 multScen.shiftGen1DIsotropy  = '+-';            % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
@@ -52,8 +53,8 @@ multScen                     = matRad_setMultScen(multScen);
 %% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0 ]; % [°]  0°, 72°, 144°, 216°, and 288
-pln.couchAngles     = [0 ]; % [Â°]
+pln.gantryAngles    = [0]; % [°]  0°, 72°, 144°, 216°, and 288
+pln.couchAngles     = [0]; % [Â°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
@@ -110,7 +111,7 @@ matRad_calcDVH(resultGUI,cst,pln)
 resultGUI = matRad_postprocessing(resultGUI, dij, pln, 25000000);
 
 %% export Plan
-matRad_export_HITXMLPlan_modified('Boxphan_3phase', 500000, 25000000, 'stfMode')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
+matRad_export_HITXMLPlan_modified('TKUH_681024_stf', 500000, 25000000, 'stfMode')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
 
 %% calc 4D dose
-[resultGUI, delivery, ct] = matRad_calc4dDose(ct, 'Boxphan_3phase'); %TKUH005_test');  
+[resultGUI, delivery, ct] = matRad_calc4dDose(ct, 'TKUH_681024_stf'); %TKUH005_test');  

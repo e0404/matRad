@@ -46,7 +46,7 @@ for i=1:length(delivery)
     %Motion assumption
     NumOfPhases = multScen.numOfCtScen;
     %Annahme 5s und linear  ÄNDERN
-    phaseTime = 3/NumOfPhases;
+    phaseTime = 5/NumOfPhases;
     j=1;
     p = 1;
     Time = 0;
@@ -67,7 +67,7 @@ end %beams
 %TestTestTestTestTest
 % for i=1:length(delivery)
 %     for j = 1: length(delivery(i).time)
-%         delivery(i).phase(j) = 2;
+%         delivery(i).phase(j) = 1;
 %     end
 % end
 %TestTestTestTestTest
