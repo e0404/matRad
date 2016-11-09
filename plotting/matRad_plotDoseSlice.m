@@ -1,11 +1,11 @@
 function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,plane,slice,threshold,alpha,cMap,window)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad function that generates the plot for the CT in the GUI. The
+% matRad function that generates a dose plot of a selected slice. The
 % function can also be used in personal matlab figures by passing the
 % corresponding axes handle
 %
 % call
-%   doseHandle = matRad_plotDoseSlice(axesHandle,ctCube,plane,slice,cMap)
+%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,ctCube,plane,slice,threshold,alpha,cMap,window)
 %
 % input
 %   axesHandle  handle to axes the slice should be displayed in
@@ -27,6 +27,8 @@ function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,pla
 %
 % output
 %   doseHandle: handle of the plotted dose axes
+%   cMap        used colormap (same as input if set)
+%   window      used window (same as input if set)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

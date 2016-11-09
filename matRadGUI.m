@@ -84,7 +84,7 @@ function matRadGUI_OpeningFcn(hObject, ~, handles, varargin)
 % varargin   command line arguments to matRadGUI (see VARARGIN)
 
 % enable opengl software rendering to visualize linewidths properly
-if ispc || isunix
+if ispc
     opengl software
 elseif ismac
     % opengl is not supported
@@ -823,7 +823,7 @@ end
 plane = get(handles.popupPlane,'Value');
 slice = round(get(handles.sliderSlice,'Value'));
 
-%% plot ct
+%% plot ct - if a ct cube is available and type of plot is set to 1 and not 2; 1 indicate cube plotting and 2 profile plotting
 if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     cla(handles.axesFig);
     AxesHandlesCT_Dose(end+1) = matRad_plotCtSlice(handles.axesFig,ct,1,plane,slice,handles.ctColorMap,handles.ctWindow);
@@ -837,9 +837,7 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
             CubeNames = fieldnames(Result);
             handles.SelectedDisplayOption = CubeNames{1,1};
         end
-        dose = getfield(Result,handles.SelectedDisplayOption);
-        % make sure to exploit full color range 
-        %dose(dose<handles.CutOffLevel*max(dose(:))) = 0;
+        dose = Result.(handles.SelectedDisplayOption);
 
         % dose colorwash
         if ~isempty(dose) && ~isvector(dose)
@@ -858,14 +856,14 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
                     doseThresh = handles.CutOffLevel;
                 end
                 
-                [doseHandle,doseColorMap,doseWindow] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,doseThresh,doseAlpha,handles.doseColorMap,handles.doseWindow);
+                [doseHandle,handles.doseColorMap,handles.doseWindow] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,doseThresh,doseAlpha,handles.doseColorMap,handles.doseWindow);
                 AxesHandlesCT_Dose(end+1) = doseHandle;
             end            
             
             % plot colorbar
-            if handles.plotColorbar == 1;
+            if handles.plotColorbar == 1
                 %Plot the colorbar
-                cBarHandel = matRad_plotColorbar(handles.axesFig,doseColorMap,doseWindow,'fontsize',defaultFontSize);
+                cBarHandel = matRad_plotColorbar(handles.axesFig,handles.doseColorMap,handles.doseWindow,'fontsize',defaultFontSize);
                 %adjust lables
                 Idx = find(strcmp(handles.SelectedDisplayOption,DispInfo(:,1)));
                 set(get(cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
@@ -881,7 +879,7 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
         %% plot iso dose lines
         if get(handles.radiobtnIsoDoseLines,'Value')           
             plotLabels = get(handles.radiobtnIsoDoseLinesLabels,'Value') == 1;
-            AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plotLabels,plane,slice,doseColorMap,doseWindow);
+            AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plotLabels,plane,slice,handles.doseColorMap,handles.doseWindow);
         end
 end
 
@@ -1098,7 +1096,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
         end
     end
     
-    str = sprintf('profile plot - central axis of %d beam gantry angle %d° couch angle %d°',...
+    str = sprintf('profile plot - central axis of %d beam gantry angle %d? couch angle %d?',...
         handles.SelectedBeam ,pln.gantryAngles(handles.SelectedBeam),pln.couchAngles(handles.SelectedBeam));
     h_title = title(handles.axesFig,str,'FontSize',defaultFontSize);
     pos = get(h_title,'Position');
@@ -2249,8 +2247,8 @@ msgbox(['IPOPT finished with status ' num2str(info.status) ' (' statusmsg ')'],'
 function getPlnFromGUI(handles)
 
 pln.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [°]
-pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [°]
+pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [âˆž]
+pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [âˆž]
 pln.numOfBeams      = numel(pln.gantryAngles);
 try
     ct = evalin('base','ct');
@@ -2975,19 +2973,24 @@ end
 function handles = updateIsoDoseLineCache(handles)
 resultGUI = evalin('base','resultGUI');
 % select first cube if selected option does not exist
-if ~isfield(resultGUI,handles.SelectedDisplayOption)
+if ~isfield(resultGUI,handles.SelectedDisplayOption) && ~strcmp(handles.SelectedDisplayOption,'RBETruncated10Perc')
     CubeNames = fieldnames(resultGUI);
-    handles.SelectedDisplayOption = CubeNames{1,1};
+    dose = resultGUI.(CubeNames{1,1});
+elseif strcmp(handles.SelectedDisplayOption,'RBETruncated10Perc')
+    currentCubeName = 'RBE';
+    dose = resultGUI.(currentCubeName);
+    dose(resultGUI.physicalDose<0.1*max(resultGUI.physicalDose(:))) = 0;
+else
+    dose = resultGUI.(handles.SelectedDisplayOption);
 end
-dose = getfield(resultGUI,handles.SelectedDisplayOption);
 
-if isequal(handles.IsoDose.Levels,0)
-    if handles.maxDoseVal == 0
-        handles.maxDoseVal = max(dose(:));
-    end
-    
-    handles = getIsoDoseLevels(handles);
-end
+
+
+
+handles.maxDoseVal = max(dose(:));
+handles            = getIsoDoseLevels(handles);
+set(handles.txtMaxDoseVal,'String',num2str(handles.maxDoseVal))
+ 
 
 handles.IsoDose.Contours = matRad_computeIsoDoseContours(dose,handles.IsoDose.Levels);
 
@@ -2997,7 +3000,8 @@ function handles =  getIsoDoseLevels(handles)
     vLow  = 0.1:SpacingLower:0.9;
     vHigh = 0.95:SpacingUpper:1.2;
     vLevels = [vLow vHigh];  
-    handles.IsoDose.Levels = (round((vLevels.*((handles.maxDoseVal*100)/120))*100))/100; 
+    handles.IsoDose.Levels = (round((vLevels.*((handles.maxDoseVal*100)/120))*1000))/1000;   % 
+
     
     
    
