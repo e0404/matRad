@@ -263,7 +263,8 @@ for i = 1:dij.numOfBeams; % loop over all beams
 
         
         r0   = 25;   % [mm] sample beyond the inner core
-        [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,r0);
+        Type = 'radius';
+        [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
            
         % Save dose for every bixel in cell array
         doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix),1,bixelDose,dij.numOfVoxels,1);

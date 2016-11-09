@@ -157,7 +157,7 @@ end
 fprintf('matRad: Particle dose calculation...\n');
 counter = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for i = 1:dij.numOfBeams; % loop over all beams
+for i = 1:dij.numOfBeams % loop over all beams
     
     fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
 
@@ -203,7 +203,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
     
     % Determine lateral cutoff
     fprintf('matRad: calculate lateral cutoff...');
-    cutOffLevel = .99;
+    cutOffLevel = .9975;
     visBoolLateralCutOff = 0;
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
     fprintf('done.\n');    
@@ -281,6 +281,12 @@ for i = 1:dij.numOfBeams; % loop over all beams
                     stf(i).ray(j).SSD, ...
                     stf(i).ray(j).focusIx(k), ...
                     machine.data(energyIx)); 
+                
+  
+                relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose
+                Type               = 'dose';
+                [currIx,bixelDose] = matRad_DijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
+
                 
                 % Save dose for every bixel in cell array
                 doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelDose,dij.numOfVoxels,1);

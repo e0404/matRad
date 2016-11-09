@@ -1,9 +1,9 @@
-function [ixNew,bixelDoseNew] =  matRad_DijSampling(ix,bixelDose,radDepthV,rad_distancesSq,r0)
+function [ixNew,bixelDoseNew] =  matRad_DijSampling(ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dij sampling function. This function samples 
 % 
 % call
-%   [ixNew,bixelDoseNew] =  matRad_DijSampling(ix,bixelDose,radDepthV,rad_distancesSq,25)
+%   [ixNew,bixelDoseNew] =  matRad_DijSampling(ix,bixelDose,radDepthV,rad_distancesSq,r0)
 %
 % input
 %   ix:               indices of voxels where we want to compute dose influence data
@@ -34,47 +34,74 @@ function [ixNew,bixelDoseNew] =  matRad_DijSampling(ix,bixelDose,radDepthV,rad_d
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-boolFineClustering  = false;                                     % flag to switch between fine and coarse radiological depth resolution
-deltaRadDepth       = 5;                                         % step size of radiological depth
-LatCutOffsq         = r0^2;
+%% define default parameters as a fallback 
+defaultType                = 'radius';
+deltaRadDepth              = 5;                       % step size of radiological depth
+defaultLatCutOff           = 25;
+defaultrelDoseThreshold    = 0.01;                    % equals to 1%
+
+relDoseThreshold           = defaultrelDoseThreshold;
+LatCutOff                  = defaultLatCutOff;
+Type                       = sType;
+
+% if the input index vector is of type logical convert it to linear indices
+if islogical(ix)
+   ix = find(ix); 
+end
+
+%% parse inputs
+if sum(strcmp(sType,{'radius','dose'})) == 0
+   Type = defaultType;
+end
+
+% if an parameter is provided then use it
+if nargin>5   
+    if exist('Param','var')
+         if strcmp(sType,'radius')
+           LatCutOff = Param;
+        elseif strcmp(sType,'dose')
+           relDoseThreshold = Param;
+        end
+    end
+end
 
 %% remember dose values inside the inner core
-ixCore              = rad_distancesSq < LatCutOffsq;             % get voxels indices having a smaller radial distance than r0
+switch  Type
+    case {'radius'}
+    ixCore      = rad_distancesSq < LatCutOff^2;                 % get voxels indices having a smaller radial distance than r0
+    case {'dose'}
+    ixCore      = bixelDose > relDoseThreshold * max(bixelDose); % get voxels indices having a greater dose than the thresholdDose
+end
+
 bixelDoseCore       = bixelDose(ixCore);                         % save dose values that are not affected by sampling
 
-ixTail              = ~ixCore;                                   % get voxels indices beyond r0
-linIxSample         = find(ixTail);                              % convert logical index to linear index
-numTail             = numel(linIxSample);
-bixelDoseTail       = bixelDose(linIxSample);                    % dose values that are going to be reduced by sampling
-ixSampTail          = ix(linIxSample);                           % indices that are going to be reduced by sampling
+logIxTail           = ~ixCore;                                   % get voxels indices beyond r0
+linIxTail           = find(logIxTail);                           % convert logical index to linear index
+numTail             = numel(linIxTail);
+bixelDoseTail       = bixelDose(linIxTail);                      % dose values that are going to be reduced by sampling
+ixTail              = ix(linIxTail);                             % indices that are going to be reduced by sampling
 
 %% sample for each radiological depth the lateral halo dose  
-radDepthTail        = (radDepthV(linIxSample));                  % get radiological depth in the tail
+radDepthTail        = (radDepthV(linIxTail));                    % get radiological depth in the tail
 
 % cluster radiological dephts to reduce computations
-B_r                 = int32(ceil(radDepthTail));                 % cluster radiological depths; hist(B,NumOfClusters) could also be used
-if boolFineClustering 
-    [C,~,~]      = unique(B_r);                                                         % get unique radiological depht values == fine clustering
-else 
-     maxRadDepth = double(max(B_r));
-     C           = int32(linspace(0,maxRadDepth,round(maxRadDepth)/deltaRadDepth));     % coarse clustering of rad depths    
-end
+B_r                 = int32(ceil(radDepthTail));                 % cluster radiological depths;
+maxRadDepth         = double(max(B_r));
+C                   = int32(linspace(0,maxRadDepth,round(maxRadDepth)/deltaRadDepth));     % coarse clustering of rad depths    
 
 ixNew               = zeros(numTail,1);                          % inizialize new index vector
 bixelDoseNew        = zeros(numTail,1);                          % inizialize new dose vector
-IxCnt               = 1;
 linIx               = int32(1:1:numTail)';
+IxCnt               = 1;
 
-% loop over clustered radiological depths
+%% loop over clustered radiological depths
 for i = 1:numel(C)-1
-
     ixTmp              = linIx(B_r >= C(i) & B_r < C(i+1));      % extracting sub indices
     if isempty(ixTmp)
         continue
     end 
     subDose            = bixelDoseTail(ixTmp);                   % get tail dose in current cluster
-    subIx              = ixSampTail(ixTmp);                      % get indices in current cluster
-    
+    subIx              = ixTail(ixTmp);                          % get indices in current cluster
     thresholdDose      = max(subDose); 
     r                  = rand(numel(subDose),1);                 % get random samples
     ixSamp             = r<=(subDose/thresholdDose);
@@ -82,15 +109,14 @@ for i = 1:numel(C)-1
 
     ixNew(IxCnt:IxCnt+NumSamples-1,1)        = subIx(ixSamp);    % save new indices
     bixelDoseNew(IxCnt:IxCnt+NumSamples-1,1) = thresholdDose;    % set the dose
-    
-    IxCnt = IxCnt + NumSamples;
+    IxCnt = IxCnt + NumSamples;    
 end
 
-% cut the vectors
-ixNew        = ixNew(1:IxCnt-1);
-bixelDoseNew = bixelDoseNew(1:IxCnt-1);
-% add inner core values  
-ixNew        = [ix(ixCore); ixNew];
-bixelDoseNew = [bixelDoseCore; bixelDoseNew];
+
+% cut new vectors and add inner core values  
+ixNew        = [ix(ixCore);    ixNew(1:IxCnt-1)];
+bixelDoseNew = [bixelDoseCore; bixelDoseNew(1:IxCnt-1)];
 
 end
+
+
