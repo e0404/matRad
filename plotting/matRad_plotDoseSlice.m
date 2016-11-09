@@ -12,7 +12,10 @@ function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,pla
 %   doseCube    3D array of the dose to select the slice from
 %   plane       plane view (coronal=1,sagittal=2,axial=3)
 %   slice       slice in the selected plane of the 3D cube
-%   threshold   threshold above which dose shall be displayed
+%   threshold   threshold above which the dose shall be displayed
+%               for negative values (i.e. difference maps), also the values
+%               smaller than the negative threshold will be displayed
+%               if empty, no threshold will be applied
 %   alpha       optional argument defining the alpha value, default is 0.6.
 %               To use the default when providing a custom culormap, put in
 %               an empty array by [].
@@ -65,7 +68,11 @@ dose_rgb = ind2rgb(uint8(cMapScale*(dose_slice - window(1))/(window(2)-window(1)
 
 % plot dose distribution
 doseHandle = image('CData',dose_rgb,'Parent',axesHandle);
-set(doseHandle,'AlphaData', alpha*(double(dose_slice)>threshold));
+if ~isempty(threshold)
+    set(doseHandle,'AlphaData', alpha*(abs(dose_slice)>threshold));
+else
+    set(doseHandle,'AlphaData', alpha*ones(size(dose_slice)));
+end
 
 end
 
