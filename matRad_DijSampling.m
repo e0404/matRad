@@ -10,7 +10,12 @@ function [ixNew,bixelDoseNew] =  matRad_DijSampling(ix,bixelDose,radDepthV,rad_d
 %   bixelDose:        dose at specified locations as linear vector
 %   radDepthV:        radiological depth vector
 %   rad_distancesSq:  squared radial distance to the central ray
-%   r0:               dose values having a radial distance below r0 are keept anyway. sampling is only done beyond r0. 
+%   sType:            can either be set to 'radius' or 'dose'. These are two different ways 
+%                     to determine dose values that are keept as they are and dose values used for sampling
+%   Param:            In the case of radius based sampling, dose values having a radial 
+%                     distance below r0 [mm] are keept anyway and sampling is only done beyond r0. 
+%                     In the case of dose based sampling, dose values having a relative dose greater 
+%                     the threshold [0...1] are keept and sampling is done for dose values below the relative threshold  
 %
 % output
 %   ixNew:            reduced indices of voxels where we want to compute dose influence data
