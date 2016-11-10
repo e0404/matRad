@@ -141,12 +141,6 @@ set(handles.legendTable,'String',{'no data loaded'});
 %initialize maximum dose for visualization to Zero
 handles.maxDoseVal     = 0;
 handles.IsoDose.Levels = 0;
-handles.plotColorbar = 1;
-%Initialize colormaps and windows
-handles.doseColorMap = jet;
-handles.ctColorMap = bone;
-handles.doseWindow = [];
-handles.ctWindow = [];
 %seach for availabes machines
 handles.Modalities = {'photons','protons','carbon'};
 for i = 1:length(handles.Modalities)
@@ -265,7 +259,7 @@ handles.SelectedBeam = 1;
 handles.plane = get(handles.popupPlane,'Value');
 handles.DijCalcWarning = false;
 
-    % set slice slider
+% set slice slider
 if handles.State > 0
     set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
             'Value',ceil(ct.cubeDim(handles.plane)/2),...
@@ -280,6 +274,31 @@ if handles.State > 0
         end
     end
 end
+
+colorDataString{1} = 'None';
+colorDataSelection = 1;
+
+
+handles.plotColorbar = 1;
+%Initialize colormaps and windows
+handles.doseColorMap = jet;
+handles.ctColorMap = bone;
+handles.doseWindow = [];
+handles.ctWindow = [];
+
+if handles.State >= 1
+   colorDataString{end+1} = 'CT (ED)';
+   handles.plotColorbar = 1;
+   colorDataSelection = 2;
+end
+
+if handles.State >= 3
+    colorDataString{end+1} = 'Result (i.e. dose)';
+    handles.plotColorbar = 2;
+    colorDataSelection = 3;
+end
+
+set(handles.popupmenu_chooseColorData,'String',colorDataString,'Value',colorDataSelection);
 
 % Update handles structure
 handles.profileOffset = 0;
@@ -819,14 +838,28 @@ if exist('Result','var')
 end
 
 %% set and get required variables
-
 plane = get(handles.popupPlane,'Value');
 slice = round(get(handles.sliderSlice,'Value'));
+
+%% Remove colorbar?
+if handles.plotColorbar == 0 && isfield(handles,'cBarHandel')
+    delete(handles.cBarHandel);
+end
 
 %% plot ct - if a ct cube is available and type of plot is set to 1 and not 2; 1 indicate cube plotting and 2 profile plotting
 if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     cla(handles.axesFig);
-    AxesHandlesCT_Dose(end+1) = matRad_plotCtSlice(handles.axesFig,ct,1,plane,slice,handles.ctColorMap,handles.ctWindow);
+    [AxesHandlesCT_Dose(end+1),handles.ctColorMap,handles.ctWindow] = matRad_plotCtSlice(handles.axesFig,ct,1,plane,slice,handles.ctColorMap,handles.ctWindow);
+    
+    % plot colorbar? If 1 the user asked for the CT
+    if handles.plotColorbar == 1
+        %Plot the colorbar
+        handles.cBarHandel = matRad_plotColorbar(handles.axesFig,handles.ctColorMap,handles.ctWindow,'fontsize',defaultFontSize);
+        %adjust lables
+        set(get(handles.cBarHandel,'ylabel'),'String', 'Electron Density','fontsize',defaultFontSize);
+        % do not interprete as tex syntax
+        set(get(handles.cBarHandel,'ylabel'),'interpreter','none');
+    end
 end
 
 %% plot dose cube
@@ -860,15 +893,15 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
                 AxesHandlesCT_Dose(end+1) = doseHandle;
             end            
             
-            % plot colorbar
-            if handles.plotColorbar == 1
+            % plot colorbar?
+            if handles.plotColorbar > 1
                 %Plot the colorbar
-                cBarHandel = matRad_plotColorbar(handles.axesFig,handles.doseColorMap,handles.doseWindow,'fontsize',defaultFontSize);
+                handels.cBarHandel = matRad_plotColorbar(handles.axesFig,handles.doseColorMap,handles.doseWindow,'fontsize',defaultFontSize);
                 %adjust lables
                 Idx = find(strcmp(handles.SelectedDisplayOption,DispInfo(:,1)));
-                set(get(cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
+                set(get(handels.cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
                 % do not interprete as tex syntax
-                set(get(cBarHandel,'ylabel'),'interpreter','none');
+                set(get(handels.cBarHandel,'ylabel'),'interpreter','none');
             end
         end
         
@@ -888,8 +921,6 @@ end
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
     AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,ct,1,handles.VOIPlotFlag,plane,slice,colorcube)];
 end
-
-
 
 %% Set axis labels and plot iso center
 if  plane == 3% Axial plane
@@ -1136,6 +1167,10 @@ if handles.rememberCurrAxes
 end
 
 guidata(gcf,handles);
+
+if get(handles.popupTypeOfPlot,'Value')==1 
+    UpdateColormapOptions(handles);
+end
 
 % --- Executes on selection change in popupPlane.
 function popupPlane_Callback(hObject, ~, handles)
@@ -2015,6 +2050,12 @@ if handles.State > 0
         set(handles.btnTypBioOpt,'Enable','off');
         set(handles.btnSetTissue,'Enable','off');
     end
+    
+    set(handles.popupmenu_chooseColorData,'Enable','on');
+    set(handles.slider_windowCenter,'Enable','on');
+    set(handles.slider_windowWidth,'Enable','on');
+    set(handles.edit_windowRange,'Enable','on');
+    set(handles.popupmenu_chooseColormap,'Enable','on');
 end 
 
  switch handles.State
@@ -2029,6 +2070,12 @@ end
       set(handles.btnDVH,'Enable','off'); 
       set(handles.importDoseButton,'Enable','off');
       set(handles.btn_export,'Enable','off');
+      set(handles.popupmenu_chooseColorData,'Enable','off');
+      set(handles.slider_windowCenter,'Enable','off');
+      set(handles.slider_windowWidth,'Enable','off');
+      set(handles.edit_windowRange,'Enable','off');
+      set(handles.popupmenu_chooseColormap,'Enable','off');
+      
      case 1
      
       set(handles.txtInfo,'String','ready for dose calculation');
@@ -3217,3 +3264,157 @@ else
     uiwait(msgbox('Aborted saving, showing figure instead!'));
     set(tmpFig,'Visible','on');
 end
+
+function UpdateColormapOptions(handles)
+selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
+
+switch selectionIndex 
+    case 2
+        window = handles.ctWindow;
+    case 3
+        window = handles.doseWindow;
+    otherwise
+        window = [0 1];
+end
+
+    
+set(handles.edit_windowRange,'String',num2str(window));
+set(handles.slider_windowCenter,'Value',mean(window)/(window(2) - window(1)));
+
+% --- Executes on selection change in popupmenu_chooseColorData.
+function popupmenu_chooseColorData_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenu_chooseColorData (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu_chooseColorData contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenu_chooseColorData
+
+index = get(hObject,'Value') - 1;
+if index ~= handles.plotColorbar
+    handles.plotColorbar = index;
+    guidata(hObject,handles);
+    UpdatePlot(handles);
+end
+
+% --- Executes during object creation, after setting all properties.
+function popupmenu_chooseColorData_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenu_chooseColorData (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on slider movement.
+function slider_windowCenter_Callback(hObject, eventdata, handles)
+% hObject    handle to slider_windowCenter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+%disp(['Window Center: ' num2str(get(hObject,'Value'))]);
+
+
+% --- Executes during object creation, after setting all properties.
+function slider_windowCenter_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider_windowCenter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+set(hObject,'Value',0.5);
+
+% --- Executes on slider movement.
+function slider_windowWidth_Callback(hObject, eventdata, handles)
+% hObject    handle to slider_windowWidth (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+
+% --- Executes during object creation, after setting all properties.
+function slider_windowWidth_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider_windowWidth (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+set(hObject,'Value',1.0);
+
+
+% --- Executes on selection change in popupmenu_chooseColormap.
+function popupmenu_chooseColormap_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenu_chooseColormap (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu_chooseColormap contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenu_chooseColormap
+
+index = get(hObject,'Value');
+
+
+% --- Executes during object creation, after setting all properties.
+function popupmenu_chooseColormap_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenu_chooseColormap (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function edit_windowRange_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_windowRange (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_windowRange as text
+%        str2double(get(hObject,'String')) returns contents of edit_windowRange as a double
+
+selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
+
+switch selectionIndex 
+    case 2
+        handles.ctWindow = str2num(get(hObject,'String'));
+    case 3
+        handles.doseWindow = str2num(get(hObject,'String'));
+    otherwise
+end
+
+guidata(hObject,handles);
+UpdatePlot(handles);
+
+% --- Executes during object creation, after setting all properties.
+function edit_windowRange_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_windowRange (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+set(hObject,'String','[0 1]');
