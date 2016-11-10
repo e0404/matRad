@@ -3,7 +3,7 @@ function [stf, pln] = matRad_importDicomSteeringPhotons(pln)
 % matRad function to import a matRad stf struct from dicom RTPLAN data
 % 
 % call
-%   stf = matRad_importDicomSteering(ct, pln, rtPlanFile)
+%   [stf, pln] = matRad_importDicomSteeringPhotons(pln)
 %
 % input
 %   pln:            matRad pln struct with meta information (collimation
@@ -11,6 +11,7 @@ function [stf, pln] = matRad_importDicomSteeringPhotons(pln)
 %
 % output
 %   stf             matRad stf struct
+%   pln             matRad pln struct
 %
 % References
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
