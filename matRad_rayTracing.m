@@ -1,4 +1,4 @@
-function [radDepthV,geoDistV] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)
+function [radDepthV,geoDistV] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff,skinThreshold)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
@@ -126,16 +126,29 @@ for i = 1:size(rayMx_world,1)
 
         for j = 1:ct.numOfCtScen
             % calc radiological depths
+            
+            % calculate radiological depth only inside the patient in an
+            % area with boundaries above the skin threshold
+            aboveThreshold = find(rho{j} > skinThreshold);
+            if numel(aboveThreshold) > 0
+                start = aboveThreshold(1);
+                stop = aboveThreshold(end);
+                
+                rho{j} = rho{j}(start:stop);
+                l = l(start:stop);
+                ixHitVoxel = ixHitVoxel(start:stop);
+                ixRememberFromCurrTracing = ixRememberFromCurrTracing(start:stop);
 
-            % eq 14
-            % It multiply voxel intersections with \rho values.
-            d = l .* rho{j}; %Note. It is not a number "one"; it is the letter "l"
-
-            % Calculate accumulated d sum.
-            dCum = cumsum(d)-d/2;
-
-            % write radiological depth for voxel which we want to remember
-            radDepthCube{j}(ixHitVoxel(ixRememberFromCurrTracing)) = dCum(ixRememberFromCurrTracing);
+                % eq 14
+                % It multiply voxel intersections with \rho values.
+                d = l .* rho{j}; %Note. It is not a number "one"; it is the letter "l"
+                
+                % Calculate accumulated d sum.
+                dCum = cumsum(d)-d/2;
+             
+                % write radiological depth for voxel which we want to remember
+                radDepthCube{j}(ixHitVoxel(ixRememberFromCurrTracing)) = dCum(ixRememberFromCurrTracing);
+            end
         end
     end  
     
