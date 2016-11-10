@@ -303,13 +303,13 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                    geoDistV(ix),...
                                                    isoLatDistsX,...
                                                    isoLatDistsZ);
-
-
-        
-        r0   = 25;   % [mm] sample beyond the inner core
-        Type = 'radius';
-        [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
-           
+                                               
+        % sample dose only for bixel based dose calculation
+        if strcmp(num2str(pln.bixelWidth),'field')
+            r0   = 25;   % [mm] sample beyond the inner core
+            Type = 'radius';
+            [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
+        end   
         % Save dose for every bixel in cell array
         doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix),1,bixelDose,dij.numOfVoxels,1);
                 
