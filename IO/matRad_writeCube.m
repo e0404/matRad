@@ -56,8 +56,8 @@ if ~isfield(metadata,'coordinateSystem')
     metadata.coordinateSystem = 'LPS';  %Matlab coordinate system
 end
 %If there is no image origin set, center the image
+imageExtent = metadata.resolution .* size(cube);
 if ~isfield(metadata,'imageOrigin')
-    imageExtent = metadata.resolution .* size(cube);
     metadata.imageOrigin = zeros(1,numel(imageExtent)) - (imageExtent/2);
 end
 %we can also store the center

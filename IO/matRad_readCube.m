@@ -29,7 +29,7 @@ if ~exist(filename,'file')
     error(['File ' filename ' does not exist!']);
 end
 
-[~,~,ext] = fileparts(filename);
+[pathstr,name,ext] = fileparts(filename);
 
 switch ext
     case {'.nrrd','.NRRD'}
@@ -39,6 +39,8 @@ switch ext
     otherwise
         error(['Extension ' ext ' not (yet) supported!']);
 end
+metadata.name = name;
+metadata.path = pathstr;
 
 end
 

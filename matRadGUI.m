@@ -2051,11 +2051,10 @@ if handles.State > 0
         set(handles.btnSetTissue,'Enable','off');
     end
     
-    set(handles.popupmenu_chooseColorData,'Enable','on');
-    set(handles.slider_windowCenter,'Enable','on');
-    set(handles.slider_windowWidth,'Enable','on');
-    set(handles.edit_windowRange,'Enable','on');
-    set(handles.popupmenu_chooseColormap,'Enable','on');
+    cMapControls = allchild(handles.uipanel_colormapOptions);
+    for runHandles = cMapControls
+        set(runHandles,'Enable','on');
+    end
 end 
 
  switch handles.State
@@ -2070,11 +2069,11 @@ end
       set(handles.btnDVH,'Enable','off'); 
       set(handles.importDoseButton,'Enable','off');
       set(handles.btn_export,'Enable','off');
-      set(handles.popupmenu_chooseColorData,'Enable','off');
-      set(handles.slider_windowCenter,'Enable','off');
-      set(handles.slider_windowWidth,'Enable','off');
-      set(handles.edit_windowRange,'Enable','off');
-      set(handles.popupmenu_chooseColormap,'Enable','off');
+      
+      cMapControls = allchild(handles.uipanel_colormapOptions);
+      for runHandles = cMapControls
+          set(runHandles,'Enable','off');
+      end
       
      case 1
      
@@ -3204,23 +3203,30 @@ function importDoseButton_Callback(hObject,eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 extensions{1} = '*.nrrd';
-[filename,filepath,~] = uigetfile(extensions);
-[~,name,~] = fileparts(filename);
-matRadRootDir = fileparts(mfilename('fullpath'));
-addpath(fullfile(matRadRootDir,'IO'))
-[cube,metadata] = matRad_readCube(fullfile(filepath,filename));
+[filenames,filepath,~] = uigetfile(extensions,'MultiSelect','on');
 
-ct = evalin('base','ct');
-
-if ~isequal(ct.cubeDim, size(cube))
-    errordlg('Dimensions of the imported cube do not match with ct','Import failed!','modal');
-    return;
+if ~iscell(filenames)
+    tmp = filenames;
+    filenames = cell(1);
+    filenames{1} = tmp;
 end
 
+ct = evalin('base','ct');
 resultGUI = evalin('base','resultGUI');
 
-fieldname = ['import_' name];
-resultGUI.(fieldname) = cube;
+for filename = filenames
+    [~,name,~] = fileparts(filename{1});
+    matRadRootDir = fileparts(mfilename('fullpath'));
+    addpath(fullfile(matRadRootDir,'IO'))
+    [cube,~] = matRad_readCube(fullfile(filepath,filename{1}));
+    if ~isequal(ct.cubeDim, size(cube))
+        errordlg('Dimensions of the imported cube do not match with ct','Import failed!','modal');
+        continue;
+    end
+    
+    fieldname = ['import_' matlab.lang.makeValidName(name, 'ReplacementStyle','delete')];
+    resultGUI.(fieldname) = cube;
+end
 
 assignin('base','resultGUI',resultGUI);
 btnRefresh_Callback(hObject, eventdata, handles)
@@ -3252,7 +3258,7 @@ end
 oldPos = get(handles.axesFig,'Position');
 set(new_handle(1),'units','normalized', 'Position',oldPos);
 
-[filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'},'Save current view','./screenshot.png');
+[filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view','./screenshot.png');
 
 if ~isequal(filename,0) && ~isequal(pathname,0)
     set(gcf, 'pointer', 'watch');
@@ -3264,6 +3270,7 @@ else
     uiwait(msgbox('Aborted saving, showing figure instead!'));
     set(tmpFig,'Visible','on');
 end
+
 
 function UpdateColormapOptions(handles)
 selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
@@ -3277,9 +3284,15 @@ switch selectionIndex
         window = [0 1];
 end
 
-    
-set(handles.edit_windowRange,'String',num2str(window));
-set(handles.slider_windowCenter,'Value',mean(window)/(window(2) - window(1)));
+windowWidth = window(2) - window(1);
+windowCenter = mean(window);
+
+sliderCenterMinMax = [window(1) - windowWidth window(2) + windowWidth];
+
+set(handles.edit_windowCenter,'String',num2str(windowCenter,2));    
+set(handles.edit_windowWidth,'String',num2str(windowWidth,2));
+set(handles.edit_windowRange,'String',num2str(window,4));
+set(handles.slider_windowCenter,'Min',sliderCenterMinMax(1),'Max',sliderCenterMinMax(2),'Value',windowCenter);
 
 % --- Executes on selection change in popupmenu_chooseColorData.
 function popupmenu_chooseColorData_Callback(hObject, eventdata, handles)
@@ -3418,3 +3431,126 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 set(hObject,'String','[0 1]');
+
+% --- Executes on button press in pushbutton_importFromBinary.
+function pushbutton_importFromBinary_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_importFromBinary (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+try
+    % delete existing workspace - parse variables from base workspace
+    AllVarNames = evalin('base','who');
+    RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
+    for i = 1:length(RefVarNames)  
+        if sum(ismember(AllVarNames,RefVarNames{i}))>0
+            evalin('base',['clear ', RefVarNames{i}]);
+        end
+    end
+    handles.State = 0;
+    if ~isdeployed
+        matRadRootDir = fileparts(mfilename('fullpath'));
+        addpath(fullfile(matRadRootDir,'IO'))
+    end
+    
+    %call the gui
+    uiwait(matRad_importGUI);
+    
+    %Check if we have the variables in the workspace
+    if evalin('base','exist(''cst'',''var'')') == 1 && evalin('base','exist(''ct'',''var'')') == 1
+        cst = evalin('base','cst');
+        ct = evalin('base','ct');
+        setCstTable(handles,cst);
+        handles.TableChanged = false;
+        set(handles.popupTypeOfPlot,'Value',1);
+        % precompute contours 
+        cst = precomputeContours(ct,cst);
+    
+        assignin('base','ct',ct);
+        assignin('base','cst',cst);
+        
+        if evalin('base','exist(''pln'',''var'')')
+            assignin('base','pln',pln);
+            setPln(handles);
+        else
+            getPlnFromGUI(handles);
+            setPln(handles);
+        end
+        handles.State = 1;
+    end
+    
+    % set slice slider
+    handles.plane = get(handles.popupPlane,'value');
+    if handles.State >0
+        set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
+            'Value',round(ct.cubeDim(handles.plane)/2),...
+            'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);
+    end
+
+    if handles.State > 0
+        % define context menu for structures
+        for i = 1:size(cst,1)
+            if cst{i,5}.Visible
+                handles.VOIPlotFlag(i) = true;
+            else
+                handles.VOIPlotFlag(i) = false;
+            end
+        end
+    end
+
+    UpdateState(handles);
+    handles.rememberCurrAxes = false;
+    UpdatePlot(handles);
+    handles.rememberCurrAxes = true;
+catch
+   handles = showError(handles,'Binary Patient Import: Could not import data');
+   UpdateState(handles);
+end
+
+guidata(hObject,handles);
+
+
+
+function edit_windowCenter_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_windowCenter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_windowCenter as text
+%        str2double(get(hObject,'String')) returns contents of edit_windowCenter as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_windowCenter_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_windowCenter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit_windowWidth_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_windowWidth (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_windowWidth as text
+%        str2double(get(hObject,'String')) returns contents of edit_windowWidth as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_windowWidth_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_windowWidth (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
