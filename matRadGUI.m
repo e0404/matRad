@@ -3273,26 +3273,40 @@ end
 
 
 function UpdateColormapOptions(handles)
+
 selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
 
-switch selectionIndex 
-    case 2
+try 
+    if selectionIndex == 2
+        ct = evalin('base','ct');
         window = handles.ctWindow;
-    case 3
+        minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
+    elseif selectionIndex == 3
+        result = evalin('base','resultGUI');        
+        dose = result.(handles.SelectedDisplayOption);
+        minMax = [min(dose(:)) max(dose(:))];
         window = handles.doseWindow;
-    otherwise
+    else
         window = [0 1];
+    end
+catch
+    
 end
+
+valueRange = minMax(2) - minMax(1);
 
 windowWidth = window(2) - window(1);
 windowCenter = mean(window);
 
-sliderCenterMinMax = [window(1) - windowWidth window(2) + windowWidth];
+%This are some arbritrary settings to configure the sliders
+sliderCenterMinMax = [minMax(1)-valueRange/2 minMax(2)+valueRange/2];
+sliderWidthMinMax = [0 valueRange*2];
 
 set(handles.edit_windowCenter,'String',num2str(windowCenter,2));    
 set(handles.edit_windowWidth,'String',num2str(windowWidth,2));
 set(handles.edit_windowRange,'String',num2str(window,4));
 set(handles.slider_windowCenter,'Min',sliderCenterMinMax(1),'Max',sliderCenterMinMax(2),'Value',windowCenter);
+set(handles.slider_windowWidth,'Min',sliderWidthMinMax(1),'Max',sliderWidthMinMax(2),'Value',windowWidth);
 
 % --- Executes on selection change in popupmenu_chooseColorData.
 function popupmenu_chooseColorData_Callback(hObject, eventdata, handles)
