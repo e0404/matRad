@@ -136,8 +136,8 @@ for i = 1:size(rayMx_world,1)
                 
                 rho{j} = rho{j}(start:stop);
                 l = l(start:stop);
-                ixHitVoxel = ixHitVoxel(start:stop);
-                ixRememberFromCurrTracing = ixRememberFromCurrTracing(start:stop);
+                ixHitVoxelTr = ixHitVoxel(start:stop);
+                ixRememberFromCurrTracingTr = ixRememberFromCurrTracing(start:stop);
 
                 % eq 14
                 % It multiply voxel intersections with \rho values.
@@ -147,7 +147,7 @@ for i = 1:size(rayMx_world,1)
                 dCum = cumsum(d)-d/2;
              
                 % write radiological depth for voxel which we want to remember
-                radDepthCube{j}(ixHitVoxel(ixRememberFromCurrTracing)) = dCum(ixRememberFromCurrTracing);
+                radDepthCube{j}(ixHitVoxelTr(ixRememberFromCurrTracingTr)) = dCum(ixRememberFromCurrTracingTr);
             end
         end
     end  
