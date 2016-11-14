@@ -279,26 +279,32 @@ colorDataString{1} = 'None';
 colorDataSelection = 1;
 
 
-handles.plotColorbar = 1;
+handles.plotColorbar = 0;
 %Initialize colormaps and windows
-handles.doseColorMap = jet;
-handles.ctColorMap = bone;
+handles.doseColorMap = 'jet';
+handles.ctColorMap = 'bone';
+handles.cMapSize = 64;
 handles.doseWindow = [];
 handles.ctWindow = [];
 
+%Set up the colormap selection box
+availableColormaps = matRad_getColormap();
+set(handles.popupmenu_chooseColormap,'String',availableColormaps);
+
+currentCtMapIndex = find(strcmp(availableColormaps,handles.ctColorMap));
+currentDoseMapIndex = find(strcmp(availableColormaps,handles.doseColorMap));
+
 if handles.State >= 1
-   colorDataString{end+1} = 'CT (ED)';
    handles.plotColorbar = 1;
    colorDataSelection = 2;
+   set(handles.popupmenu_chooseColormap,'Value',currentCtMapIndex);
 end
 
 if handles.State >= 3
-    colorDataString{end+1} = 'Result (i.e. dose)';
     handles.plotColorbar = 2;
     colorDataSelection = 3;
+    set(handles.popupmenu_chooseColormap,'Value',currentDoseMapIndex);
 end
-
-set(handles.popupmenu_chooseColorData,'String',colorDataString,'Value',colorDataSelection);
 
 % Update handles structure
 handles.profileOffset = 0;
@@ -849,12 +855,14 @@ end
 %% plot ct - if a ct cube is available and type of plot is set to 1 and not 2; 1 indicate cube plotting and 2 profile plotting
 if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     cla(handles.axesFig);
-    [AxesHandlesCT_Dose(end+1),handles.ctColorMap,handles.ctWindow] = matRad_plotCtSlice(handles.axesFig,ct,1,plane,slice,handles.ctColorMap,handles.ctWindow);
+    
+    ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);   
+    [AxesHandlesCT_Dose(end+1),~,handles.ctWindow] = matRad_plotCtSlice(handles.axesFig,ct,1,plane,slice,ctMap,handles.ctWindow);
     
     % plot colorbar? If 1 the user asked for the CT
     if handles.plotColorbar == 1
         %Plot the colorbar
-        handles.cBarHandel = matRad_plotColorbar(handles.axesFig,handles.ctColorMap,handles.ctWindow,'fontsize',defaultFontSize);
+        handles.cBarHandel = matRad_plotColorbar(handles.axesFig,ctMap,handles.ctWindow,'fontsize',defaultFontSize);
         %adjust lables
         set(get(handles.cBarHandel,'ylabel'),'String', 'Electron Density','fontsize',defaultFontSize);
         % do not interprete as tex syntax
@@ -864,6 +872,8 @@ end
 
 %% plot dose cube
 if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
+        doseMap = matRad_getColormap(handles.doseColorMap,handles.cMapSize);
+    
         % if the selected display option doesn't exist then simply display
         % the first cube of the Result struct
         if ~isfield(Result,handles.SelectedDisplayOption)
@@ -889,14 +899,14 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
                     doseThresh = handles.CutOffLevel;
                 end
                 
-                [doseHandle,handles.doseColorMap,handles.doseWindow] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,doseThresh,doseAlpha,handles.doseColorMap,handles.doseWindow);
+                [doseHandle,~,handles.doseWindow] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,doseThresh,doseAlpha,doseMap,handles.doseWindow);
                 AxesHandlesCT_Dose(end+1) = doseHandle;
             end            
             
             % plot colorbar?
             if handles.plotColorbar > 1
                 %Plot the colorbar
-                handels.cBarHandel = matRad_plotColorbar(handles.axesFig,handles.doseColorMap,handles.doseWindow,'fontsize',defaultFontSize);
+                handels.cBarHandel = matRad_plotColorbar(handles.axesFig,doseMap,handles.doseWindow,'fontsize',defaultFontSize);
                 %adjust lables
                 Idx = find(strcmp(handles.SelectedDisplayOption,DispInfo(:,1)));
                 set(get(handels.cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
@@ -912,7 +922,7 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
         %% plot iso dose lines
         if get(handles.radiobtnIsoDoseLines,'Value')           
             plotLabels = get(handles.radiobtnIsoDoseLinesLabels,'Value') == 1;
-            AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plotLabels,plane,slice,handles.doseColorMap,handles.doseWindow);
+            AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plotLabels,plane,slice,doseMap,handles.doseWindow);
         end
 end
 
@@ -1387,7 +1397,7 @@ set(InterfaceObj,'Enable','on');
 handles.maxDoseVal = 0;      % if 0 new dose max is determined based on dose cube
 handles.rememberCurrAxes = false;
 handles.IsoDose.Levels = 0;  % ensure to use default iso dose line spacing
-handles.plotColorbar = 1;
+handles.plotColorbar = 2;
 handles = updateIsoDoseLineCache(handles);
 UpdatePlot(handles);
 handles.plotColorbar = 0;
@@ -1490,7 +1500,7 @@ elseif get(hObject,'Value') == 2
 end
 
 handles.rememberCurrAxes = false;
-handles.plotColorbar = 1;
+handles.plotColorbar = 2;
 cla(handles.axesFig,'reset');
 UpdatePlot(handles);
 handles.plotColorbar = 0;
@@ -1505,7 +1515,7 @@ handles.SelectedDisplayOptionIdx = get(hObject,'Value');
 handles.maxDoseVal = 0;
 handles.doseWindow = [];
 handles = updateIsoDoseLineCache(handles);
-handles.plotColorbar = 1;
+handles.plotColorbar = 2;
 UpdatePlot(handles);
 handles.plotColorbar = 0;
 guidata(hObject, handles);
@@ -2057,6 +2067,8 @@ if handles.State > 0
     end
 end 
 
+cMapOptionsSelectList = {'None','CT (ED)','Result (i.e. dose)'};
+
  switch handles.State
      
      case 0
@@ -2074,6 +2086,9 @@ end
       for runHandles = cMapControls
           set(runHandles,'Enable','off');
       end
+      
+      set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList{1})
+      set(handles.popupmenu_chooseColorData,'Value',1);
       
      case 1
      
@@ -2094,6 +2109,9 @@ end
               set(handles.btnDVH,'Enable','on');
             end
       end
+      
+      set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:2))
+      set(handles.popupmenu_chooseColorData,'Value',2);
      
      case 2
     
@@ -2113,7 +2131,8 @@ end
               set(handles.btnDVH,'Enable','on');
             end
       end
-     
+      set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:2))
+      set(handles.popupmenu_chooseColorData,'Value',2);
       
      case 3
       set(handles.txtInfo,'String','plan is optimized');   
@@ -2126,7 +2145,8 @@ end
       % resultGUI struct needs to be available to import dose
       % otherwise inconsistent states can be achieved
       set(handles.importDoseButton,'Enable','on');
-   
+      set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:3))
+      set(handles.popupmenu_chooseColorData,'Value',3);
  end
 
  
@@ -2608,7 +2628,7 @@ handles.maxDoseVal =  str2double(get(hObject,'String'));
 handles = updateIsoDoseLineCache(handles);
 handles.doseWindow = [0 handles.maxDoseVal];
 guidata(hObject,handles);
-handles.plotColorbar = 1;
+handles.plotColorbar = 2;
 UpdatePlot(handles);
 handles.plotColorbar = 0;
 
@@ -3231,221 +3251,6 @@ end
 assignin('base','resultGUI',resultGUI);
 btnRefresh_Callback(hObject, eventdata, handles)
 
-
-% --- Executes on button press in radioBtnIsoCenter.
-function radioBtnIsoCenter_Callback(hObject, eventdata, handles)
-% hObject    handle to radioBtnIsoCenter (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-UpdatePlot(handles)
-% Hint: get(hObject,'Value') returns toggle state of radioBtnIsoCenter
-
-% --------------------------------------------------------------------
-function uipushtool_screenshot_ClickedCallback(hObject, eventdata, handles)
-% hObject    handle to uipushtool_screenshot (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
- 
-tmpFig = figure('position',[100 100 700 600],'Visible','off','name','Current View'); 
-cBarHandle = findobj(handles.figure1,'Type','colorbar');
-if ~isempty(cBarHandle)
-    new_handle = copyobj([handles.axesFig cBarHandle],tmpFig);
-else
-    new_handle = copyobj(handles.axesFig,tmpFig);
-end
-
-oldPos = get(handles.axesFig,'Position');
-set(new_handle(1),'units','normalized', 'Position',oldPos);
-
-[filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view','./screenshot.png');
-
-if ~isequal(filename,0) && ~isequal(pathname,0)
-    set(gcf, 'pointer', 'watch');
-    saveas(tmpFig,fullfile(pathname,filename));
-    set(gcf, 'pointer', 'arrow');
-    close(tmpFig);
-    uiwait(msgbox('Current view has been succesfully saved!'));
-else
-    uiwait(msgbox('Aborted saving, showing figure instead!'));
-    set(tmpFig,'Visible','on');
-end
-
-
-function UpdateColormapOptions(handles)
-
-selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
-
-try 
-    if selectionIndex == 2
-        ct = evalin('base','ct');
-        window = handles.ctWindow;
-        minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
-    elseif selectionIndex == 3
-        result = evalin('base','resultGUI');        
-        dose = result.(handles.SelectedDisplayOption);
-        minMax = [min(dose(:)) max(dose(:))];
-        window = handles.doseWindow;
-    else
-        window = [0 1];
-    end
-catch
-    
-end
-
-valueRange = minMax(2) - minMax(1);
-
-windowWidth = window(2) - window(1);
-windowCenter = mean(window);
-
-%This are some arbritrary settings to configure the sliders
-sliderCenterMinMax = [minMax(1)-valueRange/2 minMax(2)+valueRange/2];
-sliderWidthMinMax = [0 valueRange*2];
-
-set(handles.edit_windowCenter,'String',num2str(windowCenter,2));    
-set(handles.edit_windowWidth,'String',num2str(windowWidth,2));
-set(handles.edit_windowRange,'String',num2str(window,4));
-set(handles.slider_windowCenter,'Min',sliderCenterMinMax(1),'Max',sliderCenterMinMax(2),'Value',windowCenter);
-set(handles.slider_windowWidth,'Min',sliderWidthMinMax(1),'Max',sliderWidthMinMax(2),'Value',windowWidth);
-
-% --- Executes on selection change in popupmenu_chooseColorData.
-function popupmenu_chooseColorData_Callback(hObject, eventdata, handles)
-% hObject    handle to popupmenu_chooseColorData (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu_chooseColorData contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popupmenu_chooseColorData
-
-index = get(hObject,'Value') - 1;
-if index ~= handles.plotColorbar
-    handles.plotColorbar = index;
-    guidata(hObject,handles);
-    UpdatePlot(handles);
-end
-
-% --- Executes during object creation, after setting all properties.
-function popupmenu_chooseColorData_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to popupmenu_chooseColorData (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on slider movement.
-function slider_windowCenter_Callback(hObject, eventdata, handles)
-% hObject    handle to slider_windowCenter (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'Value') returns position of slider
-%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-
-%disp(['Window Center: ' num2str(get(hObject,'Value'))]);
-
-
-% --- Executes during object creation, after setting all properties.
-function slider_windowCenter_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider_windowCenter (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: slider controls usually have a light gray background.
-if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
-end
-
-set(hObject,'Value',0.5);
-
-% --- Executes on slider movement.
-function slider_windowWidth_Callback(hObject, eventdata, handles)
-% hObject    handle to slider_windowWidth (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'Value') returns position of slider
-%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-
-
-% --- Executes during object creation, after setting all properties.
-function slider_windowWidth_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider_windowWidth (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: slider controls usually have a light gray background.
-if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
-end
-
-set(hObject,'Value',1.0);
-
-
-% --- Executes on selection change in popupmenu_chooseColormap.
-function popupmenu_chooseColormap_Callback(hObject, eventdata, handles)
-% hObject    handle to popupmenu_chooseColormap (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu_chooseColormap contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popupmenu_chooseColormap
-
-index = get(hObject,'Value');
-
-
-% --- Executes during object creation, after setting all properties.
-function popupmenu_chooseColormap_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to popupmenu_chooseColormap (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-function edit_windowRange_Callback(hObject, eventdata, handles)
-% hObject    handle to edit_windowRange (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of edit_windowRange as text
-%        str2double(get(hObject,'String')) returns contents of edit_windowRange as a double
-
-selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
-
-switch selectionIndex 
-    case 2
-        handles.ctWindow = str2num(get(hObject,'String'));
-    case 3
-        handles.doseWindow = str2num(get(hObject,'String'));
-    otherwise
-end
-
-guidata(hObject,handles);
-UpdatePlot(handles);
-
-% --- Executes during object creation, after setting all properties.
-function edit_windowRange_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit_windowRange (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-set(hObject,'String','[0 1]');
-
 % --- Executes on button press in pushbutton_importFromBinary.
 function pushbutton_importFromBinary_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_importFromBinary (see GCBO)
@@ -3523,6 +3328,288 @@ end
 
 guidata(hObject,handles);
 
+% --- Executes on button press in radioBtnIsoCenter.
+function radioBtnIsoCenter_Callback(hObject, eventdata, handles)
+% hObject    handle to radioBtnIsoCenter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+UpdatePlot(handles)
+% Hint: get(hObject,'Value') returns toggle state of radioBtnIsoCenter
+
+% --------------------------------------------------------------------
+function uipushtool_screenshot_ClickedCallback(hObject, eventdata, handles)
+% hObject    handle to uipushtool_screenshot (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+ 
+tmpFig = figure('position',[100 100 700 600],'Visible','off','name','Current View'); 
+cBarHandle = findobj(handles.figure1,'Type','colorbar');
+if ~isempty(cBarHandle)
+    new_handle = copyobj([handles.axesFig cBarHandle],tmpFig);
+else
+    new_handle = copyobj(handles.axesFig,tmpFig);
+end
+
+oldPos = get(handles.axesFig,'Position');
+set(new_handle(1),'units','normalized', 'Position',oldPos);
+
+[filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view','./screenshot.png');
+
+if ~isequal(filename,0) && ~isequal(pathname,0)
+    set(gcf, 'pointer', 'watch');
+    saveas(tmpFig,fullfile(pathname,filename));
+    set(gcf, 'pointer', 'arrow');
+    close(tmpFig);
+    uiwait(msgbox('Current view has been succesfully saved!'));
+else
+    uiwait(msgbox('Aborted saving, showing figure instead!'));
+    set(tmpFig,'Visible','on');
+end
+
+%% Callbacks & Functions for color setting
+function UpdateColormapOptions(handles)
+
+selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
+
+cMapSelectionIndex = get(handles.popupmenu_chooseColormap,'Value');
+cMapStrings = get(handles.popupmenu_chooseColormap,'String');
+
+try 
+    if selectionIndex == 2
+        ct = evalin('base','ct');
+        currentMap = handles.ctColorMap;
+        window = handles.ctWindow;
+        minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
+    elseif selectionIndex == 3
+        result = evalin('base','resultGUI');        
+        dose = result.(handles.SelectedDisplayOption);
+        currentMap = handles.doseColorMap;
+        minMax = [min(dose(:)) max(dose(:))];
+        window = handles.doseWindow;
+    else
+        window = [0 1];
+        minMax = window;
+        currentMap = 'bone';
+    end
+catch
+    window = [0 1];
+    minMax = window;
+    currentMap = 'bone';
+end
+
+valueRange = minMax(2) - minMax(1);
+
+windowWidth = window(2) - window(1);
+windowCenter = mean(window);
+
+%This are some arbritrary settings to configure the sliders
+sliderCenterMinMax = [minMax(1)-valueRange/2 minMax(2)+valueRange/2];
+sliderWidthMinMax = [0 valueRange*2];
+
+%if we have selected a value outside this range, we adapt the slider
+%windows
+if windowCenter < sliderCenterMinMax(1)
+    sliderCenterMinMax(1) = windowCenter;
+end
+if windowCenter > sliderCenterMinMax(2)
+    sliderCenterMinMax(2) = windowCenter;
+end
+if windowWidth < sliderWidthMinMax(1)
+    sliderWidthMinMax(1) = windowWidth;
+end
+if windowCenter > sliderCenterMinMax(2)
+    sliderWidthMinMax(2) = windowWidth;
+end
+
+
+set(handles.edit_windowCenter,'String',num2str(windowCenter,3));    
+set(handles.edit_windowWidth,'String',num2str(windowWidth,3));
+set(handles.edit_windowRange,'String',num2str(window,4));
+set(handles.slider_windowCenter,'Min',sliderCenterMinMax(1),'Max',sliderCenterMinMax(2),'Value',windowCenter);
+set(handles.slider_windowWidth,'Min',sliderWidthMinMax(1),'Max',sliderWidthMinMax(2),'Value',windowWidth);
+
+cMapPopupIndex = find(strcmp(currentMap,cMapStrings));
+set(handles.popupmenu_chooseColormap,'Value',cMapPopupIndex);
+
+% --- Executes on selection change in popupmenu_chooseColorData.
+function popupmenu_chooseColorData_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenu_chooseColorData (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu_chooseColorData contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenu_chooseColorData
+
+index = get(hObject,'Value') - 1;
+if index ~= handles.plotColorbar
+    handles.plotColorbar = index;
+    guidata(hObject,handles);
+    UpdatePlot(handles);
+end
+
+% --- Executes during object creation, after setting all properties.
+function popupmenu_chooseColorData_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenu_chooseColorData (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on slider movement.
+function slider_windowCenter_Callback(hObject, eventdata, handles)
+% hObject    handle to slider_windowCenter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+newCenter = get(hObject,'Value');
+range = get(handles.slider_windowWidth,'Value');
+
+selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
+
+switch selectionIndex 
+    case 2
+        handles.ctWindow = [newCenter-range/2 newCenter+range/2];
+    case 3
+        handles.doseWindow = [newCenter-range/2 newCenter+range/2];
+    otherwise
+end
+
+guidata(hObject,handles);
+UpdatePlot(handles);
+
+% --- Executes during object creation, after setting all properties.
+function slider_windowCenter_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider_windowCenter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+set(hObject,'Value',0.5);
+
+% --- Executes on slider movement.
+function slider_windowWidth_Callback(hObject, eventdata, handles)
+% hObject    handle to slider_windowWidth (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+newWidth = get(hObject,'Value');
+center = get(handles.slider_windowCenter,'Value');
+
+selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
+
+switch selectionIndex 
+    case 2
+        handles.ctWindow = [center-newWidth/2 center+newWidth/2];
+    case 3
+        handles.doseWindow = [center-newWidth/2 center+newWidth/2];
+    otherwise
+end
+
+guidata(hObject,handles);
+UpdatePlot(handles);
+
+% --- Executes during object creation, after setting all properties.
+function slider_windowWidth_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider_windowWidth (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+set(hObject,'Value',1.0);
+
+
+% --- Executes on selection change in popupmenu_chooseColormap.
+function popupmenu_chooseColormap_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenu_chooseColormap (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu_chooseColormap contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenu_chooseColormap
+
+index = get(hObject,'Value');
+strings = get(hObject,'String');
+
+selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
+
+switch selectionIndex 
+    case 2
+        handles.ctColorMap = strings{index};
+    case 3
+        handles.doseColorMap = strings{index};
+    otherwise
+end
+
+guidata(hObject,handles);
+UpdatePlot(handles);
+
+% --- Executes during object creation, after setting all properties.
+function popupmenu_chooseColormap_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenu_chooseColormap (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function edit_windowRange_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_windowRange (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_windowRange as text
+%        str2double(get(hObject,'String')) returns contents of edit_windowRange as a double
+
+selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
+
+switch selectionIndex 
+    case 2
+        handles.ctWindow = str2num(get(hObject,'String'));
+    case 3
+        handles.doseWindow = str2num(get(hObject,'String'));
+    otherwise
+end
+
+guidata(hObject,handles);
+UpdatePlot(handles);
+
+% --- Executes during object creation, after setting all properties.
+function edit_windowRange_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_windowRange (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+set(hObject,'String','0 1');
 
 
 function edit_windowCenter_Callback(hObject, eventdata, handles)
@@ -3533,6 +3620,21 @@ function edit_windowCenter_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of edit_windowCenter as text
 %        str2double(get(hObject,'String')) returns contents of edit_windowCenter as a double
 
+newCenter = str2double(get(hObject,'String'));
+width = get(handles.slider_windowWidth,'Value');
+
+selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
+
+switch selectionIndex 
+    case 2
+        handles.ctWindow = [newCenter-width/2 newCenter+width/2];
+    case 3
+        handles.doseWindow = [newCenter-width/2 newCenter+width/2];
+    otherwise
+end
+
+guidata(hObject,handles);
+UpdatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
 function edit_windowCenter_CreateFcn(hObject, eventdata, handles)
@@ -3555,6 +3657,22 @@ function edit_windowWidth_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit_windowWidth as text
 %        str2double(get(hObject,'String')) returns contents of edit_windowWidth as a double
+
+newWidth = str2double(get(hObject,'String'));
+center = get(handles.slider_windowCenter,'Value');
+
+selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
+
+switch selectionIndex 
+    case 2
+        handles.ctWindow = [center-newWidth/2 center+newWidth/2];
+    case 3
+        handles.doseWindow = [center-newWidth/2 center+newWidth/2];
+    otherwise
+end
+
+guidata(hObject,handles);
+UpdatePlot(handles);
 
 
 % --- Executes during object creation, after setting all properties.
