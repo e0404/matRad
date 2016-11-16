@@ -63,7 +63,6 @@ elseif plane == 2 % sagittal plane
 elseif plane == 3 % Axial plane
     dose_slice = squeeze(doseCube(:,:,slice));
 end
-axes(axesHandle)
 
 cMapScale = size(cMap,1) - 1;
 dose_rgb = ind2rgb(uint8(cMapScale*(dose_slice - window(1))/(window(2)-window(1))),cMap);

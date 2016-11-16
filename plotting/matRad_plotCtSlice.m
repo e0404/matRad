@@ -59,8 +59,7 @@ elseif plane == 2 % sagittal plane
 elseif plane == 3 % Axial plane
     ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cube{cubeIdx}(:,:,slice)-window(1))/(window(2) - window(1))))),cMap);
 end
-axes(axesHandle)
-ctHandle = image(ct_rgb);
+ctHandle = image('CData',ct_rgb,'Parent',axesHandle);
 
 end
 

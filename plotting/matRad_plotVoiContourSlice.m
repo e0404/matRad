@@ -53,9 +53,6 @@ colors = cMap(round(linspace(1,cMapScale,size(cst,1))),:);
 
 voiContourHandles = gobjects(0);
 
-axes(axesHandle)
-hold on;
-
 for s = 1:size(cst,1)
     if ~strcmp(cst{s,3},'IGNORED') && selection(s)
         %Check for precalculated contours
@@ -89,7 +86,5 @@ for s = 1:size(cst,1)
         end
     end
 end
-
-hold off;
 
 end
