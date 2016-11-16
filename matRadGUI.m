@@ -768,6 +768,8 @@ guidata(hObject,handles);
 %% plots ct and distributions
 function UpdatePlot(handles)
 
+axes(handles.axesFig);
+
 defaultFontSize = 8;
 currAxes            = axis;
 AxesHandlesCT_Dose  = gobjects(0);
