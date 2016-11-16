@@ -275,15 +275,11 @@ if handles.State > 0
     end
 end
 
-colorDataString{1} = 'None';
-colorDataSelection = 1;
-
-
-handles.plotColorbar = 0;
 %Initialize colormaps and windows
 handles.doseColorMap = 'jet';
 handles.ctColorMap = 'bone';
 handles.cMapSize = 64;
+handles.cBarChanged = true;
 handles.doseWindow = [];
 handles.ctWindow = [];
 
@@ -294,21 +290,19 @@ set(handles.popupmenu_chooseColormap,'String',availableColormaps);
 currentCtMapIndex = find(strcmp(availableColormaps,handles.ctColorMap));
 currentDoseMapIndex = find(strcmp(availableColormaps,handles.doseColorMap));
 
-if handles.State >= 1
-   handles.plotColorbar = 1;
-   colorDataSelection = 2;
+if handles.State >= 1    
    set(handles.popupmenu_chooseColormap,'Value',currentCtMapIndex);
 end
 
 if handles.State >= 3
-    handles.plotColorbar = 2;
-    colorDataSelection = 3;
     set(handles.popupmenu_chooseColormap,'Value',currentDoseMapIndex);
 end
 
 % Update handles structure
 handles.profileOffset = 0;
 UpdateState(handles)
+
+axes(handles.axesFig)
 
 handles.rememberCurrAxes = false;
 UpdatePlot(handles)
@@ -379,8 +373,8 @@ try
 catch
     handles = showWarning(handles,'LoadMatFileFnc: Could not load *.mat file');
     guidata(hObject,handles);
-    UpdatePlot(handles);
     UpdateState(handles);
+    UpdatePlot(handles);
     return
 end
 
@@ -751,8 +745,8 @@ try
     assignin('base','dij',dij);
     handles.State = 2;
     handles.TableChanged = false;
-    UpdatePlot(handles);
     UpdateState(handles);
+    UpdatePlot(handles);
     guidata(hObject,handles);
 catch ME
     handles = showError(handles,{'CalcDoseCallback: Error in dose calculation!',ME.message}); 
@@ -846,10 +840,24 @@ end
 %% set and get required variables
 plane = get(handles.popupPlane,'Value');
 slice = round(get(handles.sliderSlice,'Value'));
+hold(handles.axesFig,'on');
+if get(handles.popupTypeOfPlot,'Value')==1
+    set(handles.axesFig,'YDir','Reverse');
+end
 
 %% Remove colorbar?
-if handles.plotColorbar == 0 && isfield(handles,'cBarHandel')
-    delete(handles.cBarHandel);
+plotColorbarSelection = get(handles.popupmenu_chooseColorData,'Value');
+
+if get(handles.popupTypeOfPlot,'Value')==2 || plotColorbarSelection == 1
+    if isfield(handles,'cBarHandel')
+        delete(handles.cBarHandel);
+    end
+    %The following seems to be necessary as MATLAB messes up some stuff 
+    %with the handle storage
+    ch = findall(gcf,'tag','Colorbar');
+    if ~isempty(ch)
+        delete(ch);
+    end
 end
 
 %% plot ct - if a ct cube is available and type of plot is set to 1 and not 2; 1 indicate cube plotting and 2 profile plotting
@@ -860,7 +868,7 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     [AxesHandlesCT_Dose(end+1),~,handles.ctWindow] = matRad_plotCtSlice(handles.axesFig,ct,1,plane,slice,ctMap,handles.ctWindow);
     
     % plot colorbar? If 1 the user asked for the CT
-    if handles.plotColorbar == 1
+    if plotColorbarSelection == 2 && handles.cBarChanged
         %Plot the colorbar
         handles.cBarHandel = matRad_plotColorbar(handles.axesFig,ctMap,handles.ctWindow,'fontsize',defaultFontSize);
         %adjust lables
@@ -904,19 +912,19 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
             end            
             
             % plot colorbar?
-            if handles.plotColorbar > 1
+            if plotColorbarSelection > 2 && handles.cBarChanged;
                 %Plot the colorbar
-                handels.cBarHandel = matRad_plotColorbar(handles.axesFig,doseMap,handles.doseWindow,'fontsize',defaultFontSize);
+                handles.cBarHandel = matRad_plotColorbar(handles.axesFig,doseMap,handles.doseWindow,'fontsize',defaultFontSize);
                 %adjust lables
                 Idx = find(strcmp(handles.SelectedDisplayOption,DispInfo(:,1)));
-                set(get(handels.cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
+                set(get(handles.cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
                 % do not interprete as tex syntax
-                set(get(handels.cBarHandel,'ylabel'),'interpreter','none');
+                set(get(handles.cBarHandel,'ylabel'),'interpreter','none');
             end
         end
         
-    axes(handles.axesFig)
-    text(0,0,'','units','norm') % fix for line width ...
+    %axes(handles.axesFig)
+    %text(0,0,'','units','norm') % fix for line width ...
 
 
         %% plot iso dose lines
@@ -976,8 +984,6 @@ elseif plane == 1 % Coronal plane
         title('coronal plane','FontSize',defaultFontSize)
     end
 end
-
-hold on
 
 if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln)
     hIsoCenterCross = matRad_plotIsoCenterMarker(handles.axesFig,pln,ct,plane,slice);
@@ -1176,7 +1182,10 @@ if handles.rememberCurrAxes
     axis(currAxes);
 end
 
-guidata(gcf,handles);
+hold(handles.axesFig,'off');
+
+handles.cBarChanged = false;
+guidata(handles.axesFig,handles);
 
 if get(handles.popupTypeOfPlot,'Value')==1 
     UpdateColormapOptions(handles);
@@ -1397,13 +1406,13 @@ set(InterfaceObj,'Enable','on');
 handles.maxDoseVal = 0;      % if 0 new dose max is determined based on dose cube
 handles.rememberCurrAxes = false;
 handles.IsoDose.Levels = 0;  % ensure to use default iso dose line spacing
-handles.plotColorbar = 2;
 handles = updateIsoDoseLineCache(handles);
-UpdatePlot(handles);
-handles.plotColorbar = 0;
-handles.rememberCurrAxes = true;
+
+handles.cBarChanged = true;
 
 UpdateState(handles);
+UpdatePlot(handles);
+handles.rememberCurrAxes = true;
     
 guidata(hObject,handles);
 
@@ -1499,11 +1508,11 @@ elseif get(hObject,'Value') == 2
     
 end
 
+handles.cBarChanged = true;
+
 handles.rememberCurrAxes = false;
-handles.plotColorbar = 2;
 cla(handles.axesFig,'reset');
 UpdatePlot(handles);
-handles.plotColorbar = 0;
 handles.rememberCurrAxes = true;
 guidata(hObject, handles);
 
@@ -1515,9 +1524,8 @@ handles.SelectedDisplayOptionIdx = get(hObject,'Value');
 handles.maxDoseVal = 0;
 handles.doseWindow = [];
 handles = updateIsoDoseLineCache(handles);
-handles.plotColorbar = 2;
+handles.cBarChanged = true;
 UpdatePlot(handles);
-handles.plotColorbar = 0;
 guidata(hObject, handles);
 
 % --- Executes on slider movement.
@@ -2068,6 +2076,7 @@ if handles.State > 0
 end 
 
 cMapOptionsSelectList = {'None','CT (ED)','Result (i.e. dose)'};
+handles.cBarChanged = true;
 
  switch handles.State
      
@@ -2149,7 +2158,7 @@ cMapOptionsSelectList = {'None','CT (ED)','Result (i.e. dose)'};
       set(handles.popupmenu_chooseColorData,'Value',3);
  end
 
- 
+guidata(handles.figure1,handles); 
  
 % fill GUI elements with plan information
 function setPln(handles)
@@ -2420,11 +2429,13 @@ newSlice = max(newSlice,get(handles.sliderSlice,'Min'));
 % update slider
 set(handles.sliderSlice,'Value',newSlice);
 
+% update handles object
+guidata(src,handles);
+
 % update plot
 UpdatePlot(handles);
 
-% update handles object
-guidata(src,handles);
+
 
 
 %% CALLBACKS
@@ -2528,9 +2539,12 @@ if handles.State == 0
     delete(contextUi)
 end
 
+handles.cBarChanged;
+
 guidata(hObject,handles);
-UpdatePlot(handles);
 UpdateState(handles);
+UpdatePlot(handles);
+
 
 
 
@@ -2627,10 +2641,9 @@ handles.maxDoseVal =  str2double(get(hObject,'String'));
 % compute new iso dose lines
 handles = updateIsoDoseLineCache(handles);
 handles.doseWindow = [0 handles.maxDoseVal];
+handles.cBarChanged = true;
 guidata(hObject,handles);
-handles.plotColorbar = 2;
 UpdatePlot(handles);
-handles.plotColorbar = 0;
 
 % popup menu: machine
 function popUpMachine_Callback(hObject, ~, handles)
@@ -2796,10 +2809,13 @@ if evalin('base','exist(''pln'',''var'')') && ...
     set(Figures, 'pointer', 'arrow');
     set(InterfaceObj,'Enable','on');
     
+    handles.cBarChanged = true;
+    
+    UpdateState(handles);
+    
     handles.rememberCurrAxes = false;
     UpdatePlot(handles);
-    handles.rememberCurrAxes = true;
-    UpdateState(handles);
+    handles.rememberCurrAxes = true;   
 
     guidata(hObject,handles);
     
@@ -3316,7 +3332,9 @@ try
             end
         end
     end
-
+    
+    handles.cBarChanged = true;
+    
     UpdateState(handles);
     handles.rememberCurrAxes = false;
     UpdatePlot(handles);
@@ -3374,6 +3392,12 @@ selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
 
 cMapSelectionIndex = get(handles.popupmenu_chooseColormap,'Value');
 cMapStrings = get(handles.popupmenu_chooseColormap,'String');
+
+if selectionIndex > 1 
+    set(handles.uitoggletool8,'State','on');
+else
+    set(handles.uitoggletool8,'State','off');
+end
 
 try 
     if selectionIndex == 2
@@ -3441,12 +3465,13 @@ function popupmenu_chooseColorData_Callback(hObject, eventdata, handles)
 % Hints: contents = cellstr(get(hObject,'String')) returns popupmenu_chooseColorData contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from popupmenu_chooseColorData
 
-index = get(hObject,'Value') - 1;
-if index ~= handles.plotColorbar
-    handles.plotColorbar = index;
-    guidata(hObject,handles);
-    UpdatePlot(handles);
-end
+%index = get(hObject,'Value') - 1;
+
+handles.cBarChanged = true;
+
+guidata(hObject,handles);
+UpdatePlot(handles);
+
 
 % --- Executes during object creation, after setting all properties.
 function popupmenu_chooseColorData_CreateFcn(hObject, eventdata, handles)
@@ -3482,6 +3507,8 @@ switch selectionIndex
         handles.doseWindow = [newCenter-range/2 newCenter+range/2];
     otherwise
 end
+
+handles.cBarChanged = true;
 
 guidata(hObject,handles);
 UpdatePlot(handles);
@@ -3520,6 +3547,8 @@ switch selectionIndex
         handles.doseWindow = [center-newWidth/2 center+newWidth/2];
     otherwise
 end
+
+handles.cBarChanged = true;
 
 guidata(hObject,handles);
 UpdatePlot(handles);
@@ -3560,6 +3589,8 @@ switch selectionIndex
     otherwise
 end
 
+handles.cBarChanged = true;
+
 guidata(hObject,handles);
 UpdatePlot(handles);
 
@@ -3593,6 +3624,8 @@ switch selectionIndex
         handles.doseWindow = str2num(get(hObject,'String'));
     otherwise
 end
+
+handles.cBarChanged = true;
 
 guidata(hObject,handles);
 UpdatePlot(handles);
@@ -3633,6 +3666,8 @@ switch selectionIndex
     otherwise
 end
 
+handles.cBarChanged = true;
+
 guidata(hObject,handles);
 UpdatePlot(handles);
 
@@ -3671,6 +3706,8 @@ switch selectionIndex
     otherwise
 end
 
+handles.cBarChanged = true;
+
 guidata(hObject,handles);
 UpdatePlot(handles);
 
@@ -3686,3 +3723,28 @@ function edit_windowWidth_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --------------------------------------------------------------------
+function uitoggletool8_ClickedCallback(hObject, eventdata, handles)
+% hObject    handle to uitoggletool8 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%Check if on or off
+val = strcmp(get(hObject,'State'),'on');
+
+%Now we have to apply the new selection to our colormap options panel
+if ~val
+    newSelection = 1;
+else
+    %Chooses the selection from the highest state
+    selections = get(handles.popupmenu_chooseColorData,'String');
+    newSelection = numel(selections);
+end    
+set(handles.popupmenu_chooseColorData,'Value',newSelection);
+
+handles.cBarChanged = true;
+guidata(hObject,handles);
+UpdatePlot(handles);
+    
