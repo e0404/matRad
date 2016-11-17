@@ -33,37 +33,37 @@ function output = matRad_getColormap(name,size)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-
 if nargin < 2
     size = 64; %Default number of colors
 end
 
-%String cell array of supported colormaps
-cMaps{1}     = 'bone';
-cMaps{end+1} = 'gray';
-cMaps{end+1} = 'jet';
-cMaps{end+1} = 'parula';
-cMaps{end+1} = 'hot';
-
 %If no argument is given, the functinon returns all available colormaps
 if nargin == 0
+    %String cell array of supported colormaps
+    cMaps{1}     = 'bone';
+    cMaps{end+1} = 'gray';
+    cMaps{end+1} = 'jet';
+    cMaps{end+1} = 'parula';
+    cMaps{end+1} = 'cool';
+    
+    % check for additional colormaps
+    [folder, ~, ~] = fileparts(mfilename('fullpath'));
+    listing = dir([folder filesep 'colormaps']);
+    for i = 1:numel(listing)
+        if listing(i).bytes > 0 && ~listing(i).isdir && strcmp(listing(i).name(end),'m')
+            colormapFile = listing(i).name;
+            cMaps{end+1} = colormapFile(1:end-2);
+        end
+    end
     output = cMaps;
 end
 
 if nargin > 0
-    switch name
-        case 'bone'
-            output = bone(size);
-        case 'gray'
-            output = gray(size);
-        case 'jet'
-            output = jet(size);
-        case 'parula'
-            output = parula(size);
-        case 'hot'
-            output = hot(size);
-        otherwise
-            error(['Colormap "' name '" not supported by matRad']);
+    try
+        sFuntion = [name '(' num2str(size,'%d') ')'];
+        output = evalin('caller',sFuntion);
+    catch
+        warning(['Colormap "' name '" not supported by matRad']);
+       output = jet(size);  
     end
 end

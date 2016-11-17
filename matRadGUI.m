@@ -98,6 +98,7 @@ else
 end
 
 addpath(fullfile(currFolder,'plotting'));
+addpath(fullfile(currFolder,['plotting' filesep 'colormaps']));
 
 % Choose default command line output for matRadGUI
 handles.output = hObject;
@@ -141,6 +142,7 @@ set(handles.legendTable,'String',{'no data loaded'});
 %initialize maximum dose for visualization to Zero
 handles.maxDoseVal     = 0;
 handles.IsoDose.Levels = 0;
+
 %seach for availabes machines
 handles.Modalities = {'photons','protons','carbon'};
 for i = 1:length(handles.Modalities)
@@ -190,6 +192,7 @@ handles.CutOffLevel            = 0.005;
 handles.IsoDose.NewIsoDoseFlag = false;
 handles.TableChanged           = false;
 handles.State                  = 0;
+handles.doseOpacity            = 0.6;
 
 %% parse variables from base workspace
 AllVarNames = evalin('base','who');
@@ -902,17 +905,15 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
 
             if get(handles.radiobtnDose,'Value')
                 if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
-                    doseAlpha = 0.6;
                     doseThresh = 0.1;
                 else
-                    doseAlpha = 0.6;
                     doseThresh = handles.CutOffLevel;
                 end
-                
+                doseAlpha                         = handles.doseOpacity;
                 [doseHandle,~,handles.doseWindow] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,doseThresh,doseAlpha,doseMap,handles.doseWindow);
-                AxesHandlesCT_Dose(end+1) = doseHandle;
+                AxesHandlesCT_Dose(end+1)         = doseHandle;
             end            
-            
+                 
             % plot colorbar?
             if plotColorbarSelection > 2 && handles.cBarChanged;
                 %Plot the colorbar
@@ -2324,8 +2325,8 @@ msgbox(['IPOPT finished with status ' num2str(info.status) ' (' statusmsg ')'],'
 function getPlnFromGUI(handles)
 
 pln.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [∞]
-pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [∞]
+pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [???]
+pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [???]
 pln.numOfBeams      = numel(pln.gantryAngles);
 try
     ct = evalin('base','ct');
@@ -3750,3 +3751,24 @@ handles.cBarChanged = true;
 guidata(hObject,handles);
 UpdatePlot(handles);
     
+
+
+% --- Executes on slider movement.
+function sliderOpacity_Callback(hObject, eventdata, handles)
+% hObject    handle to sliderOpacity (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.doseOpacity = get(hObject,'Value');
+guidata(hObject,handles);
+UpdatePlot(handles);
+
+% --- Executes during object creation, after setting all properties.
+function sliderOpacity_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to sliderOpacity (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end

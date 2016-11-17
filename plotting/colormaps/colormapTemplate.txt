@@ -1,0 +1,22 @@
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% template for colormaps
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+function [ColorMap]=colormapTemplate(m)
+
+cm = [[  0,   0,   0],...
+       [  0.5,   0.5,   0.5],...
+       [  1,   1,   1],...
+      ];
+if nargin < 1
+    ColorMap = cm;
+else
+    hsv                        = rgb2hsv(cm);
+    hsv(144:end,1)             = hsv(144:end,1)+1;
+    ColorMap                   = interp1(linspace(0,1,size(cm,1)),hsv,linspace(0,1,m));
+    ColorMap(cm_data(:,1)>1,1) = ColorMap(cm_data(:,1)>1,1)-1;
+    ColorMap                   = hsv2rgb(cm_data);
+
+end
+end
