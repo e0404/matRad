@@ -446,6 +446,8 @@ if handles.State > 0
     end
 end
 
+handles.cBarChanged = true;
+
 UpdateState(handles);
 handles.rememberCurrAxes = false;
 UpdatePlot(handles);
