@@ -446,6 +446,9 @@ if handles.State > 0
     end
 end
 
+%Reset colorbar
+handles.ctWindow = [];
+handles.doseWindow = [];
 handles.cBarChanged = true;
 
 UpdateState(handles);
@@ -3338,6 +3341,8 @@ try
         end
     end
     
+    handles.ctWindow = [];
+    handles.doseWindow = [];
     handles.cBarChanged = true;
     
     UpdateState(handles);
