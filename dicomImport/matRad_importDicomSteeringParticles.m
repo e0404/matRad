@@ -1,9 +1,9 @@
-function [stf, pln] = matRad_importDicomSteering(ct, pln, rtPlanFile)
+function [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to import a matRad stf struct from dicom RTPLAN data
 % 
 % call
-%   [stf, pln] = matRad_importDicomSteering(ct, pln, rtPlanFile)
+%   [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
 %
 % input
 %   ct:             ct imported by the matRad_importDicomCt function
