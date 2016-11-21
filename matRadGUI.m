@@ -119,7 +119,7 @@ set(f, 'AlphaData', alpha);
 % callbacks
 handles.dcm_obj = datacursormode(handles.figure1);
 set(handles.dcm_obj,'DisplayStyle','window');
-if strcmpi(handles.dcm_obj.Enable,'on')
+if strcmpi(get(handles.dcm_obj,'Enable'),'on')
     set(handles.dcm_obj,'Enable','off');
 end
 %Add the callback for the datacursor display
@@ -3824,8 +3824,10 @@ function cursorText = dataCursorUpdateFunction(obj,event_obj)
 % event_obj    Handle to event object
 % output_txt   Data cursor text string (string or cell array of strings).
 
+target = get(event_obj,'Target');
+
 %Get GUI data (maybe there is another way?)
-handles = guidata(event_obj.Target);
+handles = guidata(target);
 
 % position of the data point to label
 pos = get(event_obj,'Position');
@@ -3868,7 +3870,7 @@ if get(handles.popupTypeOfPlot,'Value')==1 %Image view
             result = evalin('base','resultGUI');
             
             %Get all result names from popup
-            resultNames = handles.popupDisplayOption.String;
+            resultNames = get(handles.popupDisplayOption,'String');
             
             %Display all values of fields found in the resultGUI struct
             for runResult = 1:numel(resultNames)               
@@ -3886,7 +3888,7 @@ if get(handles.popupTypeOfPlot,'Value')==1 %Image view
 else %Profile view
     cursorText = cell(2,1);
     cursorText{1} = ['Radiological Depth: ' num2str(pos(1),3) ' mm'];
-    cursorText{2} = [event_obj.Target.DisplayName ': ' num2str(pos(2),3)];
+    cursorText{2} = [get(target,'DisplayName') ': ' num2str(pos(2),3)];
 end
 
 
