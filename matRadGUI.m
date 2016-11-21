@@ -3078,7 +3078,9 @@ end
 
 
 handles.maxDoseVal = max(dose(:));
-handles            = getIsoDoseLevels(handles);
+if handles.IsoDose.Levels == 0
+    handles            = getIsoDoseLevels(handles);
+end
 set(handles.txtMaxDoseVal,'String',num2str(handles.maxDoseVal))
  
 
