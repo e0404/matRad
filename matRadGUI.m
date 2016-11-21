@@ -115,6 +115,16 @@ f = image(im);
 axis equal off;
 set(f, 'AlphaData', alpha);
 
+% turn off the datacursormode (since it does not allow to set scrolling
+% callbacks
+handles.dcm_obj = datacursormode(handles.figure1);
+set(handles.dcm_obj,'DisplayStyle','window');
+if strcmpi(get(handles.dcm_obj,'Enable'),'on')
+    set(handles.dcm_obj,'Enable','off');
+end
+%Add the callback for the datacursor display
+set(handles.dcm_obj,'UpdateFcn',@dataCursorUpdateFunction);
+
 % set callback for scroll wheel function
 set(gcf,'WindowScrollWheelFcn',@matRadScrollWheelFcn);
 
@@ -137,6 +147,8 @@ for idx=1:length(jtbc)
         jtbc(idx).getComponent(childIdx-1).setBackground(color);
     end
 end
+
+
 
 set(handles.legendTable,'String',{'no data loaded'});
 %initialize maximum dose for visualization to Zero
@@ -3784,8 +3796,6 @@ set(handles.popupmenu_chooseColorData,'Value',newSelection);
 handles.cBarChanged = true;
 guidata(hObject,handles);
 UpdatePlot(handles);
-    
-
 
 % --- Executes on slider movement.
 function sliderOpacity_Callback(hObject, eventdata, handles)
@@ -3806,3 +3816,79 @@ function sliderOpacity_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+
+%% Data Cursors
+function cursorText = dataCursorUpdateFunction(obj,event_obj)
+% Display the position of the data cursor
+% obj          Currently not used (empty)
+% event_obj    Handle to event object
+% output_txt   Data cursor text string (string or cell array of strings).
+
+target = get(event_obj,'Target');
+
+%Get GUI data (maybe there is another way?)
+handles = guidata(target);
+
+% position of the data point to label
+pos = get(event_obj,'Position');
+
+%Different behavior for image and profile plot
+if get(handles.popupTypeOfPlot,'Value')==1 %Image view
+    cursorText = cell(0,1);
+    try   
+        if handles.State >= 1
+            plane = get(handles.popupPlane,'Value');
+            slice = round(get(handles.sliderSlice,'Value'));
+            
+            %Get the CT values
+            ct  = evalin('base','ct');
+            
+            %We differentiate between pos and ix, since the user may put
+            %the datatip on an isoline which returns a continous position
+            cubePos = zeros(1,3);
+            cubePos(plane) = slice;
+            cubePos(1:end ~= plane) = fliplr(pos);            
+            cubeIx = round(cubePos);
+            
+            %Here comes the index permutation stuff
+            %Cube Index
+            cursorText{end+1,1} = ['Cube Index: ' mat2str(cubeIx)];
+            %Space Coordinates
+            coords = zeros(1,3);
+            coords(1) = cubePos(2)*ct.resolution.y;
+            coords(2) = cubePos(1)*ct.resolution.x;
+            coords(3) = cubePos(3)*ct.resolution.z;            
+            cursorText{end+1,1} = ['Space Coordinates: ' mat2str(coords,5) ' mm'];
+            
+            ctVal = ct.cube{1}(cubeIx(1),cubeIx(2),cubeIx(3));
+            cursorText{end+1,1} = ['CT Value: ' num2str(ctVal,3)];
+        end
+        
+        %Add dose information if available
+        if handles.State == 3
+            %get result structure
+            result = evalin('base','resultGUI');
+            
+            %Get all result names from popup
+            resultNames = get(handles.popupDisplayOption,'String');
+            
+            %Display all values of fields found in the resultGUI struct
+            for runResult = 1:numel(resultNames)               
+                name = resultNames{runResult};
+                if isfield(result,name)
+                    field = result.(name);
+                    val = field(cubeIx(1),cubeIx(2),cubeIx(3));
+                    cursorText{end+1,1} = [name ': ' num2str(val,3)];
+                end
+            end      
+        end
+    catch
+        cursorText{end+1,1} = 'Error while retreiving Data!';
+    end    
+else %Profile view
+    cursorText = cell(2,1);
+    cursorText{1} = ['Radiological Depth: ' num2str(pos(1),3) ' mm'];
+    cursorText{2} = [get(target,'DisplayName') ': ' num2str(pos(2),3)];
+end
+
+
