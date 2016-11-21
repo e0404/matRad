@@ -2624,16 +2624,25 @@ getPlnFromGUI(handles);
 % button: set iso dose levels
 function btnSetIsoDoseLevels_Callback(hObject, ~, handles)
 prompt = {['Enter iso dose levels in [Gy]. Enter space-separated numbers, e.g. 1.5 2 3 4.98. Enter 0 to use default values']};
-def = {'1 2 3 4 5 10 20'};
-try
-Input = inputdlg(prompt,'Set iso dose levels ', [1 50],def);
-if ~isempty(Input)
-     handles.IsoDose.Levels = (sort(str2num(Input{1}))); 
-     handles.IsoDose.NewIsoDoseFlag = true;
-     if length(handles.IsoDose.Levels) == 1 && handles.IsoDose.Levels(1) == 0     
-            handles = getIsoDoseLevels(handles);
-     end
+if isequal(handles.IsoDose.Levels,0) || ~isvector(handles.IsoDose.Levels) || any(~isnumeric(handles.IsoDose.Levels)) || any(isnan(handles.IsoDose.Levels))
+    def = {'1 2 3 4 5 10 20'};
+else
+    if isrow(handles.IsoDose.Levels)
+        def = cellstr(num2str(handles.IsoDose.Levels,'%.2g '));
+    else 
+        def = cellstr(num2str(handles.IsoDose.Levels','%.2g '));
+    end
 end
+
+try
+    Input = inputdlg(prompt,'Set iso dose levels ', [1 70],def);
+    if ~isempty(Input)
+        handles.IsoDose.Levels = (sort(str2num(Input{1})));
+        handles.IsoDose.NewIsoDoseFlag = true;
+        if length(handles.IsoDose.Levels) == 1 && handles.IsoDose.Levels(1) == 0
+            handles = getIsoDoseLevels(handles);
+        end
+    end
 catch
     warning('Couldnt parse iso dose levels - using default values');
     handles.IsoDose.Levels = 0;
