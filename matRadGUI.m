@@ -938,6 +938,22 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
         %% plot iso dose lines
         if get(handles.radiobtnIsoDoseLines,'Value')           
             plotLabels = get(handles.radiobtnIsoDoseLinesLabels,'Value') == 1;
+            
+            %Sanity Check for Contours, which actually should have been 
+            %computed before calling UpdatePlot
+            if ~isfield(handles.IsoDose,'Contours')
+                try
+                    handles.IsoDose.Contours = matRad_computeIsoDoseContours(dose,handles.IsoDose.Levels); 
+                catch
+                    %If the computation didn't work, we set the field to
+                    %empty, which will force matRad_plotIsoDoseLines to use
+                    %matlabs contour function instead of repeating the
+                    %failing computation every time
+                    handles.IsoDose.Contours = [];
+                    warning('Could not compute isodose lines! Will try slower contour function!');
+                end
+            end
+            
             AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plotLabels,plane,slice,doseMap,handles.doseWindow);
         end
 end
@@ -2624,16 +2640,25 @@ getPlnFromGUI(handles);
 % button: set iso dose levels
 function btnSetIsoDoseLevels_Callback(hObject, ~, handles)
 prompt = {['Enter iso dose levels in [Gy]. Enter space-separated numbers, e.g. 1.5 2 3 4.98. Enter 0 to use default values']};
-def = {'1 2 3 4 5 10 20'};
-try
-Input = inputdlg(prompt,'Set iso dose levels ', [1 50],def);
-if ~isempty(Input)
-     handles.IsoDose.Levels = (sort(str2num(Input{1}))); 
-     handles.IsoDose.NewIsoDoseFlag = true;
-     if length(handles.IsoDose.Levels) == 1 && handles.IsoDose.Levels(1) == 0     
-            handles = getIsoDoseLevels(handles);
-     end
+if isequal(handles.IsoDose.Levels,0) || ~isvector(handles.IsoDose.Levels) || any(~isnumeric(handles.IsoDose.Levels)) || any(isnan(handles.IsoDose.Levels))
+    def = {'1 2 3 4 5 10 20'};
+else
+    if isrow(handles.IsoDose.Levels)
+        def = cellstr(num2str(handles.IsoDose.Levels,'%.2g '));
+    else 
+        def = cellstr(num2str(handles.IsoDose.Levels','%.2g '));
+    end
 end
+
+try
+    Input = inputdlg(prompt,'Set iso dose levels ', [1 70],def);
+    if ~isempty(Input)
+        handles.IsoDose.Levels = (sort(str2num(Input{1})));
+        handles.IsoDose.NewIsoDoseFlag = true;
+        if length(handles.IsoDose.Levels) == 1 && handles.IsoDose.Levels(1) == 0
+            handles = getIsoDoseLevels(handles);
+        end
+    end
 catch
     warning('Couldnt parse iso dose levels - using default values');
     handles.IsoDose.Levels = 0;
@@ -3078,7 +3103,9 @@ end
 
 
 handles.maxDoseVal = max(dose(:));
-handles            = getIsoDoseLevels(handles);
+if handles.IsoDose.Levels == 0
+    handles            = getIsoDoseLevels(handles);
+end
 set(handles.txtMaxDoseVal,'String',num2str(handles.maxDoseVal))
  
 
