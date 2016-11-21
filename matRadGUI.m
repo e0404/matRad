@@ -938,6 +938,22 @@ if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
         %% plot iso dose lines
         if get(handles.radiobtnIsoDoseLines,'Value')           
             plotLabels = get(handles.radiobtnIsoDoseLinesLabels,'Value') == 1;
+            
+            %Sanity Check for Contours, which actually should have been 
+            %computed before calling UpdatePlot
+            if ~isfield(handles.IsoDose,'Contours')
+                try
+                    handles.IsoDose.Contours = matRad_computeIsoDoseContours(dose,handles.IsoDose.Levels); 
+                catch
+                    %If the computation didn't work, we set the field to
+                    %empty, which will force matRad_plotIsoDoseLines to use
+                    %matlabs contour function instead of repeating the
+                    %failing computation every time
+                    handles.IsoDose.Contours = [];
+                    warning('Could not compute isodose lines! Will try slower contour function!');
+                end
+            end
+            
             AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plotLabels,plane,slice,doseMap,handles.doseWindow);
         end
 end
