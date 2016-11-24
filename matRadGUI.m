@@ -790,6 +790,10 @@ function UpdatePlot(handles)
 
 axes(handles.axesFig);
 
+% this is necessary to prevent multiple callbacks of update plot drawing on
+% top of each other in matlab <2014
+drawnow;
+
 defaultFontSize = 8;
 currAxes            = axis;
 AxesHandlesCT_Dose  = gobjects(0);
