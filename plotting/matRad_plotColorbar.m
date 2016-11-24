@@ -40,7 +40,7 @@ caxis(window);
 if str2double(v(1:3))>=8.5
     cBarHandle = colorbar(gca,varargin{:});
 else
-    cBarHandle = colorbar('peer',handles.axesFig,varargin{:});
+    cBarHandle = colorbar('peer',axesHandle,varargin{:});
 end
 
 
