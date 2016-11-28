@@ -42,8 +42,7 @@ resultGUI.physicalDose = reshape(full(dij.physicalDose{scenNum}*resultGUI.w),dij
 % consider RBE for protons
 if isfield(dij,'RBE')
    fprintf(['matRad: applying a constant RBE of ' num2str(dij.RBE) ' \n']); 
-   resultGUI.RBExDose     = resultGUI.physicalDose;
-   resultGUI.physicalDose = resultGUI.physicalDose/dij.RBE;
+   resultGUI.RBExDose     = resultGUI.physicalDose * dij.RBE;
 end
 
 % consider VOI priorities
