@@ -50,6 +50,13 @@ if isfield(dij,'mLETDose')
 
 end
 
+if isfiel(dij,'RBE')
+   fprintf(['matRad: applying a constant RBE of ' num2str(dij.RBE) ' \n']); 
+   resultGUI.RBExDose     = resultGUI.physicalDose;
+   resultGUI.physicalDose = resultGUI.physicalDose/dij.RBE;
+end
+
+% consider biological optimization for carbon ions
 if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
 
     a_x = zeros(size(resultGUI.physicalDose));
