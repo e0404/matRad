@@ -3122,6 +3122,8 @@ end
 
 maxDoseValOld      = handles.maxDoseVal;
 handles.maxDoseVal = max(dose(:));
+% calculate new iso dose lines if handles.IsoDose.Levels is set 0 or the dose maximum is
+% different than the old dose maximum (indicates changing to a different dose cube)
 if (length(handles.IsoDose.Levels) == 1 && handles.IsoDose.Levels(1) == 0) || maxDoseValOld ~= handles.maxDoseVal
     handles            = getIsoDoseLevels(handles);    
 end
