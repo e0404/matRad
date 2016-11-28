@@ -109,13 +109,21 @@ options.ub              = inf * ones(1,dij.totalNumOfBixels);   % Upper bound on
 funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
     
 % calculate initial beam intensities wInit
-if strcmp(pln.bioOptimization,'none')
-    
+if strcmp(pln.bioOptimization,'none')   
     bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
 
-else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBExD')) ... 
-        && isequal(pln.radiationMode,'carbon');
+elseif  ((strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD')) ... 
+                                && strcmp(pln.radiationMode,'protons'))
+    % check if a constant RBE is defined - if not use 1.1
+    if ~isfield(dij,'RBE')
+        dij.RBE = 1.1;
+    end
+    bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
+    wInit       = wOnes * bixelWeight;
+        
+elseif (strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD')) ... 
+                                && strcmp(pln.radiationMode,'carbon')
 
     % check if you are running a supported rad
     dij.ax   = zeros(dij.numOfVoxels,1);
@@ -163,11 +171,12 @@ else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBEx
 end
 
 % set callback functions.
-[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios);   
-funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,pln.bioOptimization);
-funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,pln.bioOptimization);
-funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,pln.bioOptimization);
-funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,pln.bioOptimization);
+Identifier              = [pln.radiationMode '_' pln.bioOptimization];
+[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,Identifier,dij.numOfScenarios);   
+funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,Identifier);
+funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,Identifier);
+funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,Identifier);
+funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,Identifier);
 funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 
 % Run IPOPT.

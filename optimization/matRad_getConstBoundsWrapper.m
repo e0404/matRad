@@ -36,7 +36,12 @@ function [cl,cu] = matRad_getConstBoundsWrapper(cst,type,numOfScenarios)
 % Initialize bounds
 cl = [];
 cu = [];
-    
+ 
+% retrieve type of optimization
+cOptType        = strsplit(type,'_');
+radiationMode   = cOptType{1};
+bioOptimization = cOptType{2};
+
 % compute objective function for every VOI.
 for  i = 1:size(cst,1)
 
@@ -49,9 +54,9 @@ for  i = 1:size(cst,1)
             % only perform computations for constraints
             if ~isempty(strfind(cst{i,6}(j).type,'constraint'))
 
-                if isequal(type,'none') || isequal(type,'RBExD') 
+                if isequal(bioOptimization,'none') || isequal(radiationMode,'protons') 
                     param = cst{i,6}(j).dose;
-                elseif isequal(type,'effect')
+                elseif isequal(type,'carbon_effect')
                     param = cst{i,5}.alphaX .* cst{i,6}(j).dose + cst{i,5}.betaX .* cst{i,6}(j).dose.^2;
                 end
 

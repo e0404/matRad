@@ -38,6 +38,11 @@ function g = matRad_gradFuncWrapper(w,dij,cst,type)
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,type);
 
+% retrieve type of optimization
+cOptType        = strsplit(type,'_');
+radiationMode   = cOptType{1};
+bioOptimization = cOptType{2};
+
 % Initializes delta
 delta      = cell(dij.numOfScenarios,1);
 [delta{:}] = deal(zeros(dij.numOfVoxels,1));
@@ -56,7 +61,7 @@ for  i = 1:size(cst,1)
 
                 % compute reference
                 if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) &&...
-                    isequal(type,'effect') 
+                    isequal(type,'carbon_effect') 
 
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
                 else
@@ -87,18 +92,22 @@ g = zeros(dij.totalNumOfBixels,1);
 for i = 1:dij.numOfScenarios
     if any(delta{i} > 0) % exercise only if contributions from scenario i
 
-        if isequal(type,'none')
+        if isequal(bioOptimization,'none')
 
-            g = g + (delta{i}' * dij.physicalDose{i})';
+            g            = g + (delta{i}' * dij.physicalDose{i})';
 
-        elseif isequal(type,'effect')
+        elseif isequal(type,'protons_effect') || isequal(type,'protons_RBExD')
+            
+            g            = g + (delta{i}' * dij.physicalDose{i} * dij.RBE)';
+            
+        elseif isequal(type,'carbon_effect')
 
-            vBias    = (delta{i}' * dij.mAlphaDose{i})';
-            quadTerm = dij.mSqrtBetaDose{i} * w;
-            mPsi     = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{i})';
-            g        =  g + vBias + mPsi ; 
+            vBias        = (delta{i}' * dij.mAlphaDose{i})';
+            quadTerm     = dij.mSqrtBetaDose{i} * w;
+            mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{i})';
+            g            =  g + vBias + mPsi ; 
 
-        elseif isequal(type,'RBExD')
+        elseif isequal(bioOptimization,'carbon_RBExD')
 
             scaledEffect = d{i} + dij.gamma;
             deltaTmp     = delta{i}./(2*dij.bx.*scaledEffect);

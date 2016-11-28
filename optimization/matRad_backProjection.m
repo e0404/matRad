@@ -33,6 +33,11 @@ function d = matRad_backProjection(w,dij,type)
 global matRad_global_x;
 global matRad_global_d;
 
+% retrieve type of optimization
+cOptType        = strsplit(type,'_');
+radiationMode   = cOptType{1};
+bioOptimization = cOptType{2};
+
 if isequal(w,matRad_global_x)
     
     % get dose from global variable
@@ -46,35 +51,39 @@ else
     d = cell(dij.numOfScenarios,1);
     
     % Calculate dose vector
-    if isequal(type,'none')
+    if isequal(bioOptimization,'none')
         
         for i = 1:dij.numOfScenarios
             d{i} = dij.physicalDose{i} * w;
         end
         
-    elseif isequal(type,'effect') || isequal(type,'RBExD') 
+    elseif isequal(bioOptimization,'effect') || isequal(bioOptimization,'RBExD') 
         
         for i = 1:dij.numOfScenarios
             
-            % calculate effect
-            linTerm  = dij.mAlphaDose{i} * w;
-            quadTerm = dij.mSqrtBetaDose{i} * w;
-            e        = linTerm + quadTerm.^2;   
-
-            if ~isequal(type,'RBExD')
-                d{i} = e;
+            if isequal(radiationMode,'protons')
+                   d{i} = dij.RBE * (dij.physicalDose{i} * w);
             else
                 
-                % calculate RBX x dose
-                scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
-                scaledEffect   = zeros(length(scaledEffectSq),1);
-                % compute sqrt(scaledEffect) only for numeric values (not nan) to save time
-                [idx,~]           = find(~isnan(scaledEffectSq));
-                scaledEffect(idx) = sqrt(scaledEffectSq(idx));
-                d{i}              = scaledEffect - dij.gamma;
-                
+                % calculate effect
+                linTerm  = dij.mAlphaDose{i} * w;
+                quadTerm = dij.mSqrtBetaDose{i} * w;
+                e        = linTerm + quadTerm.^2;   
+
+                if ~isequal(type,'RBExD')
+                    d{i} = e;
+                else
+
+                    % calculate RBX x dose
+                    scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
+                    scaledEffect   = zeros(length(scaledEffectSq),1);
+                    % compute sqrt(scaledEffect) only for numeric values (not nan) to save time
+                    [idx,~]           = find(~isnan(scaledEffectSq));
+                    scaledEffect(idx) = sqrt(scaledEffectSq(idx));
+                    d{i}              = scaledEffect - dij.gamma;
+
+                end
             end
-            
        end       
        
     end   

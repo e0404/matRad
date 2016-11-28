@@ -36,11 +36,16 @@ function jacob = matRad_jacobFuncWrapper(w,dij,cst,type)
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,type);
 
+% retrieve type of optimization
+cOptType        = strsplit(type,'_');
+radiationMode   = cOptType{1};
+bioOptimization = cOptType{2};
+
 % initialize jacobian
 jacob = sparse([]);
 
 % initialize projection matrices and id containers
-physicalDoseProjection  = sparse([]);
+DoseProjection          = sparse([]);
 mAlphaDoseProjection    = sparse([]);
 mSqrtBetaDoseProjection = sparse([]);
 voxelID                 = [];
@@ -64,7 +69,7 @@ for i = 1:size(cst,1)
                 if (~isequal(cst{i,6}(j).type, 'max dose constraint')      && ~isequal(cst{i,6}(j).type, 'min dose constraint')          &&...
                     ~isequal(cst{i,6}(j).type, 'max mean dose constraint') && ~isequal(cst{i,6}(j).type, 'min mean dose constraint') && ...
                     ~isequal(cst{i,6}(j).type, 'min EUD constraint')       && ~isequal(cst{i,6}(j).type, 'max EUD constraint'))           && ...
-                    isequal(type,'effect')
+                    isequal(type,'carbon_effect')
                      
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
                 else
@@ -81,11 +86,11 @@ for i = 1:size(cst,1)
                     scenID  = [scenID;1];
                     scenID2 = [scenID2;ones(numel(cst{i,4}{1}),1)];
                     
-                    if isequal(type,'none') && ~isempty(jacobVec)
+                    if isequal(bioOptimization,'none') && ~isempty(jacobVec) || isequal(radiationMode,'protons')
 
-                       physicalDoseProjection = [physicalDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
+                       DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
 
-                    elseif isequal(type,'effect') && ~isempty(jacobVec)
+                    elseif isequal(type,'carbon_effect') && ~isempty(jacobVec)
 
                        mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
                        mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
@@ -93,7 +98,7 @@ for i = 1:size(cst,1)
                        voxelID                 = [voxelID ;cst{i,4}{1}];
                        constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
 
-                    elseif isequal(type,'RBExD') && ~isempty(jacobVec)
+                    elseif isequal(type,'carbon_RBExD') && ~isempty(jacobVec)
                                         
                        scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i);
 
@@ -117,22 +122,23 @@ for i = 1:size(cst,1)
 
 end
 
-if isequal(type,'effect') || isequal(type,'RBExD')
+if isequal(type,'carbon_effect') || isequal(type,'carbon_RBExD')
     constraintID = constraintID(2:end);
 end
 
 % Calculate jacobian with dij projections
 for i = 1:dij.numOfScenarios
-    if isequal(type,'none')
+   % enter if statement also for protons using a constant RBE
+   if isequal(bioOptimization,'none') || isequal(radiationMode,'protons')
 
-        if ~isempty(physicalDoseProjection)
+        if ~isempty(DoseProjection)
             
             jacobLogical          = (scenID == i);
-            jacob(jacobLogical,:) = physicalDoseProjection(:,jacobLogical)' * dij.physicalDose{i};
+            jacob(jacobLogical,:) = DoseProjection(:,jacobLogical)' * dij.physicalDose{i};
             
         end
 
-    elseif isequal(type,'effect') || isequal(type,'RBExD')
+    elseif isequal(type,'carbon_effect') || isequal(type,'carbon_RBExD')
 
         if ~isempty(mSqrtBetaDoseProjection) && ~isempty(mAlphaDoseProjection)
             

@@ -1561,7 +1561,6 @@ function popupDisplayOption_Callback(hObject, ~, handles)
 content = get(hObject,'String');
 handles.SelectedDisplayOption = content{get(hObject,'Value'),1};
 handles.SelectedDisplayOptionIdx = get(hObject,'Value');
-handles.maxDoseVal = 0;
 handles.doseWindow = [];
 handles = updateIsoDoseLineCache(handles);
 handles.cBarChanged = true;
@@ -2103,10 +2102,14 @@ if handles.State > 0
         set(handles.radbtnBioOpt,'Enable','on');
         set(handles.btnTypBioOpt,'Enable','on');
         set(handles.btnSetTissue,'Enable','on');
+    elseif strcmp(pln.radiationMode,'protons')
+        set(handles.radbtnBioOpt,'Enable','on');
+        set(handles.btnTypBioOpt,'Enable','on');
+        set(handles.btnSetTissue,'Enable','off');
     else
         set(handles.radbtnBioOpt,'Enable','off');
         set(handles.btnTypBioOpt,'Enable','off');
-        set(handles.btnSetTissue,'Enable','off');
+        set(handles.btnSetTissue,'Enable','off'); 
     end
     
     cMapControls = allchild(handles.uipanel_colormapOptions);
@@ -2377,7 +2380,7 @@ pln.radiationMode   = contents{get(handles.popupRadMode,'Value')}; % either phot
 contents            = get(handles.popUpMachine,'String'); 
 pln.machine         = contents{get(handles.popUpMachine,'Value')}; 
 
-if (logical(get(handles.radbtnBioOpt,'Value')) && strcmp(pln.radiationMode,'carbon'))
+if logical(get(handles.radbtnBioOpt,'Value')) && (~strcmp(pln.radiationMode,'photons'))
     pln.bioOptimization = get(handles.btnTypBioOpt,'String');
 else
     pln.bioOptimization = 'none';
@@ -3117,10 +3120,10 @@ end
 
 
 
-
+maxDoseValOld      = handles.maxDoseVal;
 handles.maxDoseVal = max(dose(:));
-if handles.IsoDose.Levels == 0
-    handles            = getIsoDoseLevels(handles);
+if (length(handles.IsoDose.Levels) == 1 && handles.IsoDose.Levels(1) == 0) || maxDoseValOld ~= handles.maxDoseVal
+    handles            = getIsoDoseLevels(handles);    
 end
 set(handles.txtMaxDoseVal,'String',num2str(handles.maxDoseVal))
  

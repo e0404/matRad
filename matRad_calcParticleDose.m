@@ -85,7 +85,7 @@ if isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBExD')
         end
     elseif strcmp(pln.radiationMode,'protons')
             dij.RBE = 1.1;
-            fprintf(['matRad: using a constant RBE of 1.1 \n']);
+            fprintf(['matRad: Using a constant RBE of 1.1 \n']);
     end
 end
 
@@ -233,7 +233,7 @@ for i = 1:dij.numOfBeams % loop over all beams
             radDepths = radDepthV{1}(ix);   
             
             % just use tissue classes of voxels found by ray tracer
-            if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
+            if (strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD')) ... 
                  && strcmp(pln.radiationMode,'carbon')
                     vTissueIndex_j = vTissueIndex(ix,:);
             end
@@ -306,7 +306,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                   letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelLET.*bixelDose,dij.numOfVoxels,1);
                 end
                              
-                if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
+                if (strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD')) ... 
                     && strcmp(pln.radiationMode,'carbon')
                     % calculate alpha and beta values for bixel k on ray j of                  
                     [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
@@ -353,7 +353,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                             dij.mLETDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [letDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
                         end
                         
-                        if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
+                        if (strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD')) ... 
                                 && strcmp(pln.radiationMode,'carbon')
                             dij.mAlphaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
                             dij.mSqrtBetaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
