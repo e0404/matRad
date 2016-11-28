@@ -118,7 +118,7 @@ end
 
 % generates tissue class matrix for biological optimization
 if (strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD')) ... 
-        && strcmp(pln.radiationMode,'carbon') && strcmp(pln.radiationMode,'carbon')
+        && strcmp(pln.radiationMode,'carbon')
     fprintf('matRad: loading biological base data... ');
     vTissueIndex = zeros(size(V,1),1);
     
