@@ -33,11 +33,6 @@ function d = matRad_backProjection(w,dij,type)
 global matRad_global_x;
 global matRad_global_d;
 
-% retrieve type of optimization
-cOptType        = strsplit(type,'_');
-radiationMode   = cOptType{1};
-bioOptimization = cOptType{2};
-
 if isequal(w,matRad_global_x)
     
     % get dose from global variable
@@ -51,29 +46,31 @@ else
     d = cell(dij.numOfScenarios,1);
     
     % Calculate dose vector
-    if isequal(bioOptimization,'none')
+    if isequal(type.bioOpt,'none')
         
         for i = 1:dij.numOfScenarios
             d{i} = dij.physicalDose{i} * w;
         end
         
-    elseif isequal(bioOptimization,'effect') || isequal(bioOptimization,'RBExD') 
+    elseif  isequal(type.radMod,'protons') && isequal(type.bioOpt,'const_RBExD')
+        
+        for i = 1:dij.numOfScenarios
+             d{i} = dij.RBE * (dij.physicalDose{i} * w);
+        end
+        
+    elseif (isequal(type.bioOpt,'LEMIV_effect') || isequal(type.bioOpt,'LEMIV_RBExD')) && ...
+            isequal(type.radMod,'carbon')
         
         for i = 1:dij.numOfScenarios
             
-            if isequal(radiationMode,'protons')
-                   d{i} = dij.RBE * (dij.physicalDose{i} * w);
-            else
-                
                 % calculate effect
                 linTerm  = dij.mAlphaDose{i} * w;
                 quadTerm = dij.mSqrtBetaDose{i} * w;
                 e        = linTerm + quadTerm.^2;   
 
-                if ~isequal(type,'RBExD')
+                if isequal(type.bioOpt,'LEMIV_effect')
                     d{i} = e;
                 else
-
                     % calculate RBX x dose
                     scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
                     scaledEffect   = zeros(length(scaledEffectSq),1);
@@ -83,7 +80,7 @@ else
                     d{i}              = scaledEffect - dij.gamma;
 
                 end
-            end
+            
        end       
        
     end   

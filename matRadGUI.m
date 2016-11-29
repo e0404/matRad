@@ -292,11 +292,11 @@ end
 
 %Initialize colormaps and windows
 handles.doseColorMap = 'jet';
-handles.ctColorMap = 'bone';
-handles.cMapSize = 64;
-handles.cBarChanged = true;
-handles.doseWindow = [];
-handles.ctWindow = [];
+handles.ctColorMap   = 'bone';
+handles.cMapSize     = 64;
+handles.cBarChanged  = true;
+handles.doseWindow   = [];
+handles.ctWindow     = [];
 
 %Set up the colormap selection box
 availableColormaps = matRad_getColormap();
@@ -565,16 +565,19 @@ function popupRadMode_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 checkRadiationComposition(handles);
-contents = cellstr(get(hObject,'String')); 
+contents      = cellstr(get(hObject,'String')); 
 RadIdentifier = contents{get(hObject,'Value')};
-
+contentPopUp  = get(handles.popMenuBioOpt,'String');
 switch RadIdentifier
     case 'photons'
         set(handles.vmcFlag,'Value',0);
         set(handles.vmcFlag,'Enable','on')
         set(handles.radbtnBioOpt,'Value',0);
         set(handles.radbtnBioOpt,'Enable','off');
-        set(handles.btnTypBioOpt,'Enable','off');
+
+        set(handles.popMenuBioOpt,'Enable','off');
+        ix = find(strcmp(contentPopUp,'none'));
+        set(handles.popMenuBioOpt,'Value',ix);
         set(handles.btnSetTissue,'Enable','off');
         
         set(handles.btnRunSequencing,'Enable','on');
@@ -586,10 +589,15 @@ switch RadIdentifier
         set(handles.vmcFlag,'Value',0);
         set(handles.vmcFlag,'Enable','off')
         set(handles.radbtnBioOpt,'Value',0);
-        set(handles.radbtnBioOpt,'Enable','off');
-        set(handles.btnTypBioOpt,'Enable','off');
-        set(handles.btnSetTissue,'Enable','off');
+        set(handles.radbtnBioOpt,'Value',1);
+        set(handles.radbtnBioOpt,'Enable','on');
         
+        set(handles.popMenuBioOpt,'Enable','on');
+        ix = find(strcmp(contentPopUp,'const_RBExD'));
+        set(handles.popMenuBioOpt,'Value',ix);
+        set(handles.btnSetTissue,'Enable','on');
+        
+        set(handles.btnSetTissue,'Enable','off');
         set(handles.btnRunSequencing,'Enable','off');
         set(handles.btnRunDAO,'Enable','off');
         set(handles.txtSequencing,'Enable','off');
@@ -600,7 +608,9 @@ switch RadIdentifier
         set(handles.vmcFlag,'Enable','off')        
         set(handles.radbtnBioOpt,'Value',1);
         set(handles.radbtnBioOpt,'Enable','on');
-        set(handles.btnTypBioOpt,'Enable','on');
+        set(handles.popMenuBioOpt,'Enable','on');
+        ix = find(strcmp(contentPopUp,'LEMIV_RBExD'));
+        set(handles.popMenuBioOpt,'Value',ix);
         set(handles.btnSetTissue,'Enable','on');
         
         set(handles.btnRunSequencing,'Enable','off');
@@ -613,34 +623,48 @@ if handles.State > 0
     pln = evalin('base','pln');
     if handles.State > 0 && ~strcmp(contents(get(hObject,'Value')),pln.radiationMode)
         
-        % switched from carbon to photons or protons -> in case of bio. opt
-        % some cubes have to be deleted from the resultGUI struct
-        if strcmp(pln.radiationMode,'carbon') && ~strcmp(contents(get(hObject,'Value')),'carbon')
-            try
-               AllVarNames = evalin('base','who');
+        % new radiation modality is photons -> just keep physicalDose
+        if strcmp(contents(get(hObject,'Value')),'photons')
+            try  
+            AllVarNames = evalin('base','who');
                if  ismember('resultGUI',AllVarNames)
-                    resultGUI = evalin('base','resultGUI');
-                    resultGUI = rmfield(resultGUI,'effect');
-                    resultGUI = rmfield(resultGUI,'alpha');
-                    resultGUI = rmfield(resultGUI,'beta');
-                    resultGUI = rmfield(resultGUI,'RBE');
-                    resultGUI = rmfield(resultGUI,'RBExDose');
-                    assignin('base','resultGUI',resultGUI)
+                   resultGUI = evalin('base','resultGUI');
+                   TmpResultGUI.physicalDose = resultGUI.physicalDose;
+                   resultGUI = TmpResultGUI;
+                   assignin('base','resultGUI',resultGUI)
                end
+             
             catch
-                assignin('base','resultGUI',resultGUI)
             end
-            UpdatePlot(handles);
+        elseif strcmp(contents(get(hObject,'Value')),'protons')
+            try  
+            AllVarNames = evalin('base','who');
+               if  ismember('resultGUI',AllVarNames)
+                   resultGUI = evalin('base','resultGUI');
+                   TmpResultGUI.physicalDose = resultGUI.physicalDose;
+                   if isfield(resultGUI,'RBExDose')
+                       TmpResultGUI.RBExDose = resultGUI.RBExDose;
+                   end
+                   resultGUI = TmpResultGUI;
+                   assignin('base','resultGUI',resultGUI)
+               end
+              
+            catch
+            end
         end
-        
+      
+        guidata(hObject,handles);
+        handles = updateIsoDoseLineCache(handles);
+        UpdatePlot(handles);
+       
         getPlnFromGUI(handles);
         handles.State = 1;
         UpdateState(handles);
-        guidata(hObject,handles);
-        
+
     end
          
-   
+guidata(hObject,handles);
+           
 end
 
 % --- Executes on button press in radbtnBioOpt.
@@ -652,10 +676,10 @@ function radbtnBioOpt_Callback(hObject, ~, handles)
 % Hint: get(hObject,'Value') returns toggle state of radbtnBioOpt
 getPlnFromGUI(handles);
 if get(hObject,'Value')
-    set(handles.btnTypBioOpt,'Enable','on');
+    set(handles.popMenuBioOpt,'Enable','on');
     set(handles.btnSetTissue,'Enable','on');
 else
-    set(handles.btnTypBioOpt,'Enable','off');
+    set(handles.popMenuBioOpt,'Enable','off');
     set(handles.btnSetTissue,'Enable','off');
 end
 
@@ -2100,15 +2124,15 @@ if handles.State > 0
 
     if strcmp(pln.radiationMode,'carbon')
         set(handles.radbtnBioOpt,'Enable','on');
-        set(handles.btnTypBioOpt,'Enable','on');
+        set(handles.popMenuBioOpt,'Enable','on');
         set(handles.btnSetTissue,'Enable','on');
     elseif strcmp(pln.radiationMode,'protons')
         set(handles.radbtnBioOpt,'Enable','on');
-        set(handles.btnTypBioOpt,'Enable','on');
+        set(handles.popMenuBioOpt,'Enable','on');
         set(handles.btnSetTissue,'Enable','off');
     else
         set(handles.radbtnBioOpt,'Enable','off');
-        set(handles.btnTypBioOpt,'Enable','off');
+        set(handles.popMenuBioOpt,'Enable','off');
         set(handles.btnSetTissue,'Enable','off'); 
     end
     
@@ -2217,17 +2241,18 @@ set(handles.editCouchAngle,'String',num2str((pln.couchAngles)));
 set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),pln.radiationMode)));
 set(handles.popUpMachine,'Value',find(strcmp(get(handles.popUpMachine,'String'),pln.machine)));
 
-if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
-                            && strcmp(pln.radiationMode,'carbon')  
+if ~strcmp(pln.bioOptimization,'none')  
     set(handles.radbtnBioOpt,'Value',1);
     set(handles.radbtnBioOpt,'Enable','on');
-    set(handles.btnTypBioOpt,'Enable','on');
-    set(handles.btnTypBioOpt,'String',pln.bioOptimization);
+    set(handles.popMenuBioOpt,'Enable','on');
+    contentPopUp = get(handles.popMenuBioOpt,'String');
+    ix = find(strcmp(pln.bioOptimization,contentPopUp));
+    set(handles.popMenuBioOpt,'Value',ix);
     set(handles.btnSetTissue,'Enable','on');
 else
     set(handles.radbtnBioOpt,'Value',0);
     set(handles.radbtnBioOpt,'Enable','off');
-    set(handles.btnTypBioOpt,'Enable','off');
+    set(handles.popMenuBioOpt,'Enable','off');
     set(handles.btnSetTissue,'Enable','off');
 end
 %% enable sequencing and DAO button if radiation mode is set to photons
@@ -2381,7 +2406,8 @@ contents            = get(handles.popUpMachine,'String');
 pln.machine         = contents{get(handles.popUpMachine,'Value')}; 
 
 if logical(get(handles.radbtnBioOpt,'Value')) && (~strcmp(pln.radiationMode,'photons'))
-    pln.bioOptimization = get(handles.btnTypBioOpt,'String');
+    contentBioOpt = get(handles.popMenuBioOpt,'String');
+    pln.bioOptimization = contentBioOpt{get(handles.popMenuBioOpt,'Value'),:};
 else
     pln.bioOptimization = 'none';
 end
@@ -2494,7 +2520,7 @@ SelectedCube = Content{get(handles.popupDisplayOption,'Value')};
 pln = evalin('base','pln');
 resultGUI_SelectedCube.physicalDose = resultGUI.(SelectedCube);
 
-if ~strcmp(pln.bioOptimization,'none') && strcmp(pln.radiationMode,'carbon') == 1 
+if ~strcmp(pln.bioOptimization,'none')
 
     %check if one of the default fields is selected
     if sum(strcmp(SelectedCube,{'physicalDose','effect','RBE,','RBExDose','alpha','beta'})) > 0
@@ -2591,14 +2617,6 @@ UpdatePlot(handles);
 
 
 
-% button: toggle effect based optimization and RBExD optimization
-function btnTypBioOpt_Callback(hObject, ~, handles)
-if strcmp(get(hObject,'String'),'effect')
-    set(hObject,'String','RBExD');
-else
-    set(hObject,'String','effect');
-end
-getPlnFromGUI(handles);
 
 % text box: # fractions
 function editFraction_Callback(hObject, ~, handles)
@@ -3058,21 +3076,27 @@ if isfield(resultGUI,'w')
     resultGUI.(['w' Suffix])             = resultGUI.w;
 end
 
-if ~strcmp(pln.bioOptimization,'none') && strcmp(pln.radiationMode,'carbon') == 1 
-    if isfield(resultGUI,'effect')
-        resultGUI.(['effect' Suffix])= resultGUI.effect; 
-    end
+
+if ~strcmp(pln.bioOptimization,'none')
+    
     if isfield(resultGUI,'RBExDose')
-        resultGUI.(['RBExDose' Suffix]) = resultGUI.RBExDose; 
+         resultGUI.(['RBExDose' Suffix]) = resultGUI.RBExDose; 
     end
-    if isfield(resultGUI,'RBE')
-        resultGUI.(['RBE' Suffix]) = resultGUI.RBE;
-    end
-    if isfield(resultGUI,'alpha')
-        resultGUI.(['alpha' Suffix]) = resultGUI.alpha;
-    end
-    if isfield(resultGUI,'beta')
-        resultGUI.(['beta' Suffix]) = resultGUI.beta;
+    
+    if strcmp(pln.radiationMode,'carbon') == 1 
+        if isfield(resultGUI,'effect')
+            resultGUI.(['effect' Suffix])= resultGUI.effect; 
+        end
+
+        if isfield(resultGUI,'RBE')
+            resultGUI.(['RBE' Suffix]) = resultGUI.RBE;
+        end
+        if isfield(resultGUI,'alpha')
+            resultGUI.(['alpha' Suffix]) = resultGUI.alpha;
+        end
+        if isfield(resultGUI,'beta')
+            resultGUI.(['beta' Suffix]) = resultGUI.beta;
+        end
     end
 end
 
@@ -3901,3 +3925,31 @@ else %Profile view
 end
 
 
+
+% --- Executes on selection change in popMenuBioOpt.
+function popMenuBioOpt_Callback(hObject, ~, handles)
+pln = evalin('base','pln');
+contentBioOpt = get(handles.popMenuBioOpt,'String');
+NewBioOptimization = contentBioOpt(get(handles.popMenuBioOpt,'Value'),:);
+
+if handles.State > 0
+    if (strcmp(pln.bioOptimization,'LEMIV_effect') && strcmp(NewBioOptimization,'LEMIV_RBExD')) ||...
+       (strcmp(pln.bioOptimization,'LEMIV_RBExD') && strcmp(NewBioOptimization,'LEMIV_effect')) 
+       % do nothing - re-optimization is still possible
+    elseif ((strcmp(pln.bioOptimization,'const_RBE') && strcmp(NewBioOptimization,'none')) ||...
+           (strcmp(pln.bioOptimization,'none') && strcmp(NewBioOptimization,'const_RBE'))) && isequal(pln.radiationMode,'protons')
+       % do nothing - re-optimization is still possible
+    else
+        handles.State = 1;
+    end
+end
+getPlnFromGUI(handles);
+
+UpdateState(handles);
+guidata(hObject,handles);
+
+% --- Executes during object creation, after setting all properties.
+function popMenuBioOpt_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

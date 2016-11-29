@@ -34,7 +34,7 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % issue warning if biological optimization impossible
-if sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose')) && strcmp(pln.radiationMode,'carbon')
+if sum(strcmp(pln.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose')) && strcmp(pln.radiationMode,'carbon')
     warndlg('Alpha and beta matrices for effect based and RBE optimization not available - physical optimization is carried out instead.');
     pln.bioOptimization = 'none';
 end
@@ -109,12 +109,7 @@ options.ub              = inf * ones(1,dij.totalNumOfBixels);   % Upper bound on
 funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
     
 % calculate initial beam intensities wInit
-if strcmp(pln.bioOptimization,'none')   
-    bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
-    wInit       = wOnes * bixelWeight;
-
-elseif  ((strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD')) ... 
-                                && strcmp(pln.radiationMode,'protons'))
+if  strcmp(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
     % check if a constant RBE is defined - if not use 1.1
     if ~isfield(dij,'RBE')
         dij.RBE = 1.1;
@@ -122,7 +117,7 @@ elseif  ((strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RB
     bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
         
-elseif (strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD')) ... 
+elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization,'LEMIV_RBExD')) ... 
                                 && strcmp(pln.radiationMode,'carbon')
 
     % check if you are running a supported rad
@@ -145,14 +140,14 @@ elseif (strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBEx
         end
     end
      
-    if isequal(pln.bioOptimization,'effect')
+    if isequal(pln.bioOptimization,'LEMIV_effect')
         
            effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
            p            = (sum(dij.mAlphaDose{1}(V,:)*wOnes)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            q            = -(effectTarget * length(V)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
 
-    elseif isequal(pln.bioOptimization,'RBExD')
+    elseif isequal(pln.bioOptimization,'LEMIV_RBExD')
         
            %pre-calculations
            dij.gamma      = zeros(dij.numOfVoxels,1);
@@ -168,10 +163,18 @@ elseif (strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBEx
                         4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*(dij.physicalDose{1}(V,:)*wOnes)));
            wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
     end
+    
+else 
+    bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
+    wInit       = wOnes * bixelWeight;
+    pln.bioOptimization = 'none';
 end
 
+% set callback functions
+Identifier.radMod       = pln.radiationMode;
+Identifier.bioOpt       = pln.bioOptimization;
+Identifier.ID           = [pln.radiationMode '_' pln.bioOptimization];
 % set callback functions.
-Identifier              = [pln.radiationMode '_' pln.bioOptimization];
 [options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,Identifier,dij.numOfScenarios);   
 funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,Identifier);
 funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,Identifier);
