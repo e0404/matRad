@@ -64,7 +64,7 @@ for i = 1:size(cst,1)
                 if (~isequal(cst{i,6}(j).type, 'max dose constraint')      && ~isequal(cst{i,6}(j).type, 'min dose constraint')          &&...
                     ~isequal(cst{i,6}(j).type, 'max mean dose constraint') && ~isequal(cst{i,6}(j).type, 'min mean dose constraint') && ...
                     ~isequal(cst{i,6}(j).type, 'min EUD constraint')       && ~isequal(cst{i,6}(j).type, 'max EUD constraint'))           && ...
-                    isequal(type.ID,'carbon_LEMIV_effect')
+                    isequal(type.bioOpt,'LEMIV_effect')
                      
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
                 else
@@ -85,7 +85,7 @@ for i = 1:size(cst,1)
 
                        DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
 
-                    elseif isequal(type.ID,'carbon_LEMIV_effect') && ~isempty(jacobVec)
+                    elseif isequal(type.bioOpt,'LEMIV_effect') && ~isempty(jacobVec)
 
                        mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
                        mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
@@ -93,7 +93,7 @@ for i = 1:size(cst,1)
                        voxelID                 = [voxelID ;cst{i,4}{1}];
                        constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
 
-                    elseif isequal(type.ID,'carbon_LEMIV_RBExD') && ~isempty(jacobVec)
+                    elseif isequal(type.bioOpt,'LEMIV_RBExD') && ~isempty(jacobVec)
                                         
                        scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i);
 
@@ -117,7 +117,7 @@ for i = 1:size(cst,1)
 
 end
 
-if isequal(type.ID,'carbon_LEMIV_effect') || isequal(type.ID,'carbon_LEMIV_RBExD')
+if isequal(type.bioOpt,'LEMIV_effect') || isequal(type.bioOpt,'LEMIV_RBExD')
     constraintID = constraintID(2:end);
 end
 
@@ -133,7 +133,7 @@ for i = 1:dij.numOfScenarios
             
         end
 
-    elseif isequal(type.ID,'carbon_LEMIV_effect') || isequal(type.ID,'carbon_LEMIV_RBExD')
+    elseif isequal(type.bioOpt,'LEMIV_effect') || isequal(type.bioOpt,'LEMIV_RBExD')
 
         if ~isempty(mSqrtBetaDoseProjection) && ~isempty(mAlphaDoseProjection)
             

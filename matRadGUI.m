@@ -629,11 +629,12 @@ if handles.State > 0
             AllVarNames = evalin('base','who');
                if  ismember('resultGUI',AllVarNames)
                    resultGUI = evalin('base','resultGUI');
-                   TmpResultGUI.physicalDose = resultGUI.physicalDose;
-                   resultGUI = TmpResultGUI;
+                   if isfield(resultGUI,'alpha');    resultGUI = rmfield(resultGUI,'alpha');   end
+                   if isfield(resultGUI,'beta');     resultGUI = rmfield(resultGUI,'beta');    end
+                   if isfield(resultGUI,'RBExDose'); resultGUI = rmfield(resultGUI,'RBExDose');end
+                   if isfield(resultGUI,'RBE');      resultGUI = rmfield(resultGUI,'RBE');     end
                    assignin('base','resultGUI',resultGUI)
-               end
-             
+               end   
             catch
             end
         elseif strcmp(contents(get(hObject,'Value')),'protons')
@@ -641,14 +642,11 @@ if handles.State > 0
             AllVarNames = evalin('base','who');
                if  ismember('resultGUI',AllVarNames)
                    resultGUI = evalin('base','resultGUI');
-                   TmpResultGUI.physicalDose = resultGUI.physicalDose;
-                   if isfield(resultGUI,'RBExDose')
-                       TmpResultGUI.RBExDose = resultGUI.RBExDose;
-                   end
-                   resultGUI = TmpResultGUI;
+                   if isfield(resultGUI,'alpha'); resultGUI = rmfield(resultGUI,'alpha');end
+                   if isfield(resultGUI,'beta');  resultGUI = rmfield(resultGUI,'beta'); end
+                   if isfield(resultGUI,'RBE');   resultGUI = rmfield(resultGUI,'RBE');  end
                    assignin('base','resultGUI',resultGUI)
                end
-              
             catch
             end
         end
@@ -833,8 +831,9 @@ elseif handles.State > 0
 end
 
 %% state 3 indicates that a optimization has been performed
-if handles.State > 2
-      Result = evalin('base','resultGUI');
+ AllVarNames = evalin('base','who');
+if  ismember('resultGUI',AllVarNames)
+    Result = evalin('base','resultGUI');
 end
 
 if exist('Result','var')
@@ -929,7 +928,7 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
 end
 
 %% plot dose cube
-if handles.State >2 &&  get(handles.popupTypeOfPlot,'Value')== 1
+if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1
         doseMap = matRad_getColormap(handles.doseColorMap,handles.cMapSize);
     
         % if the selected display option doesn't exist then simply display
@@ -1397,7 +1396,7 @@ try
 
     handles.State = 3;
     handles.SelectedDisplayOptionIdx = 1;
-    if strcmp(pln.radiationMode,'carbon')
+    if strcmp(pln.radiationMode,'carbon') || (strcmp(pln.radiationMode,'protons') && strcmp(pln.bioOptimization,'const_RBExDose'))
         handles.SelectedDisplayOption = 'RBExDose';
     else
         handles.SelectedDisplayOption = 'physicalDose';
@@ -2177,18 +2176,19 @@ handles.cBarChanged = true;
       set(handles.importDoseButton,'Enable','off');
       set(handles.btn_export,'Enable','on');
       
+      set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:2))
+      set(handles.popupmenu_chooseColorData,'Value',2);
       AllVarNames = evalin('base','who');
       if ~isempty(AllVarNames)
-            if  sum(ismember(AllVarNames,'resultGUI')) > 0
+            if  ismember('resultGUI',AllVarNames)
               set(handles.pushbutton_recalc,'Enable','on');
               set(handles.btnSaveToGUI,'Enable','on');
               set(handles.btnDVH,'Enable','on');
+              set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:3))
+              set(handles.popupmenu_chooseColorData,'Value',3);
             end
       end
-      
-      set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:2))
-      set(handles.popupmenu_chooseColorData,'Value',2);
-     
+
      case 2
     
       set(handles.txtInfo,'String','ready for optimization');   
@@ -2199,16 +2199,19 @@ handles.cBarChanged = true;
       set(handles.btnDVH,'Enable','off');
       set(handles.importDoseButton,'Enable','off');
       set(handles.btn_export,'Enable','on');
+      set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:2))
+      set(handles.popupmenu_chooseColorData,'Value',2);
       AllVarNames = evalin('base','who');
+      
       if ~isempty(AllVarNames)
-            if  sum(ismember(AllVarNames,'resultGUI')) > 0
+            if  ismember('resultGUI',AllVarNames)
               set(handles.pushbutton_recalc,'Enable','on');
               set(handles.btnSaveToGUI,'Enable','on');
               set(handles.btnDVH,'Enable','on');
+              set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:3))
+              set(handles.popupmenu_chooseColorData,'Value',3);
             end
       end
-      set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:2))
-      set(handles.popupmenu_chooseColorData,'Value',2);
       
      case 3
       set(handles.txtInfo,'String','plan is optimized');   
