@@ -52,7 +52,7 @@ else
             d{i} = dij.physicalDose{i} * w;
         end
         
-    elseif  isequal(type.radMod,'protons') && isequal(type.bioOpt,'const_RBExD')
+    elseif  isequal(type.ID,'protons_const_RBExD')
         
         for i = 1:dij.numOfScenarios
              d{i} = dij.RBE * (dij.physicalDose{i} * w);

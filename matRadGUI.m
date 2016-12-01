@@ -384,6 +384,7 @@ try
     handles.State = 0;
     load([FilePath FileName]);
     set(handles.legendTable,'String',{'no data loaded'});
+    set(handles.popupDisplayOption,'String','no option available');
     
 catch
     handles = showWarning(handles,'LoadMatFileFnc: Could not load *.mat file');
@@ -478,6 +479,7 @@ function btnLoadDicom_Callback(hObject, ~, handles)
 % handles    structure with handles and user data (see GUIDATA)
 try
     % delete existing workspace - parse variables from base workspace
+    set(handles.popupDisplayOption,'String','no option available');
     AllVarNames = evalin('base','who');
     RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
     for i = 1:length(RefVarNames)  
@@ -633,7 +635,8 @@ if handles.State > 0
                    if isfield(resultGUI,'beta');     resultGUI = rmfield(resultGUI,'beta');    end
                    if isfield(resultGUI,'RBExDose'); resultGUI = rmfield(resultGUI,'RBExDose');end
                    if isfield(resultGUI,'RBE');      resultGUI = rmfield(resultGUI,'RBE');     end
-                   assignin('base','resultGUI',resultGUI)
+                   assignin('base','resultGUI',resultGUI);
+                   handles = updateIsoDoseLineCache(handles);
                end   
             catch
             end
@@ -645,14 +648,14 @@ if handles.State > 0
                    if isfield(resultGUI,'alpha'); resultGUI = rmfield(resultGUI,'alpha');end
                    if isfield(resultGUI,'beta');  resultGUI = rmfield(resultGUI,'beta'); end
                    if isfield(resultGUI,'RBE');   resultGUI = rmfield(resultGUI,'RBE');  end
-                   assignin('base','resultGUI',resultGUI)
+                   assignin('base','resultGUI',resultGUI);
+                   handles = updateIsoDoseLineCache(handles);
                end
             catch
             end
         end
       
         guidata(hObject,handles);
-        handles = updateIsoDoseLineCache(handles);
         UpdatePlot(handles);
        
         getPlnFromGUI(handles);
@@ -928,7 +931,7 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
 end
 
 %% plot dose cube
-if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1
+if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Result','var')
         doseMap = matRad_getColormap(handles.doseColorMap,handles.cMapSize);
     
         % if the selected display option doesn't exist then simply display
@@ -1402,7 +1405,7 @@ try
         handles.SelectedDisplayOption = 'physicalDose';
     end
     handles.SelectedBeam = 1;
-    
+    handles = updateIsoDoseLineCache(handles);
     % check IPOPT status and return message for GUI user if no DAO or
     % particles
     if ~pln.runDAO || ~strcmp(pln.radiationMode,'photons')
@@ -3358,6 +3361,7 @@ function pushbutton_importFromBinary_Callback(hObject, eventdata, handles)
 
 try
     % delete existing workspace - parse variables from base workspace
+    set(handles.popupDisplayOption,'String','no option available');
     AllVarNames = evalin('base','who');
     RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
     for i = 1:length(RefVarNames)  

@@ -65,7 +65,8 @@ else
     hold on, grid on, grid minor,
     AxesInfigOpt = findall(figOpt,'type','axes');
 end
-
+% ensure to bring optimization window to front also for a re-optimization 
+figure(figOpt);
 defaultFontSize = 14;
 set(AxesInfigOpt,'YScale','log');
 title(AxesInfigOpt,'Progress of Optimization','LineWidth',defaultFontSize),
