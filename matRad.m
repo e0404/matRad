@@ -22,8 +22,8 @@ clc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-%load TG119.mat
-load PROSTATE.mat
+load TG119.mat
+%load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
 
@@ -52,13 +52,12 @@ multScen.maxRelRangeShift     = 0;              % maximum relative over and unde
 multScen.ScenCombType         = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
 multScen                      = matRad_setMultScen(multScen);
 
-%% coverage based cst manipulation
-[filename,dir] = uigetfile('E:\Mescher\');
-load([dir,filename])
+%% initial visualization and change objective function settings if desired
+matRadGUI
 
+%% coverage based cst manipulation
 cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,0,0);
 
-clear filename dir
 %% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
