@@ -202,7 +202,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
     [~,center] = min(sum(reshape([stf(i).ray.rayPos_bev],3,[]).^2));
     
     % get correct kernel for given SSD at central ray (nearest neighbor approximation)
-    [~,currSSD] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD));
+    [~,currSSD] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD{1}));
     
     kernelPos = machine.data.kernelPos;
     kernel1 = machine.data.kernel(currSSD).kernel1;
