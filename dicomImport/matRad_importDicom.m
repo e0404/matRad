@@ -107,9 +107,12 @@ if isfield(files,'rtplan')
         if (strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon'))
             %% import steering file
             % pln output because bixelWidth is determined via the stf
-            [stf, pln] = matRad_importDicomSteering(ct, pln, files.rtplan);
+            [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, files.rtplan);
+        elseif strcmp(pln.radiationMode, 'photons') && isfield(pln,'Collimation')
+            % return correct angles in pln 
+            [stf, pln] = matRad_importDicomSteeringPhotons(pln);
         else
-            warning('No support for DICOM import of steering information for photons.');
+            warning('No support for DICOM import of steering information for this modality.');
         end
     end
 end

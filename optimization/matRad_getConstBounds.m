@@ -20,7 +20,7 @@ function [cl,cu] = matRad_getConstBounds(constraint,param)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2016 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -52,11 +52,6 @@ elseif isequal(constraint.type, 'max mean dose constraint')
     cl = -inf;
     cu = param;
 
-elseif isequal(constraint.type, 'min max mean dose constraint') 
-
-    cl = param(1);
-    cu = param(2);
-
 elseif isequal(constraint.type, 'min EUD constraint') 
 
     cl = param;
@@ -66,11 +61,6 @@ elseif isequal(constraint.type, 'max EUD constraint')
 
     cl = -inf;
     cu = param;
-
-elseif isequal(constraint.type, 'min max EUD constraint') 
-
-    cl = param(1);
-    cu = param(2);
 
 elseif isequal(constraint.type, 'max DVH constraint') 
 

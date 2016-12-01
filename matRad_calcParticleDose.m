@@ -184,8 +184,8 @@ fprintf(['shift scenario ' num2str(ShiftScen) ' of ' num2str(multScen.numOfShift
 fprintf('matRad: Particle dose calculation...\n');
 counter = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for i = 1:dij.numOfBeams; % loop over all beams
-
+for i = 1:dij.numOfBeams % loop over all beams
+    
     fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
 
     bixelsPerBeam = 0;
@@ -308,8 +308,8 @@ for i = 1:dij.numOfBeams; % loop over all beams
 
                                 % peform fine 2D clipping  
                                 if length(machine.data(energyIx).LatCutOff.CutOff) > 1
-                                    currIx(currIx) = interp1(machine.data(energyIx).LatCutOff.depths + machine.data(energyIx).offset,...
-                                        machine.data(energyIx).LatCutOff.CutOff.^2, radDepths(currIx)) >= radialDist_sq(currIx);
+                                    currIx(currIx) = matRad_interp1((machine.data(energyIx).LatCutOff.depths + machine.data(energyIx).offset)',...
+                                        (machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= radialDist_sq(currIx);
                                 end
                             else
                                 error('cutoff must be a value between 0 and 1')
@@ -322,6 +322,13 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                 stf(i).ray(j).SSD{CtScen}, ...
                                 stf(i).ray(j).focusIx(k), ...
                                 machine.data(energyIx)); 
+                            
+                            
+                            % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
+                            %relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose
+                            %Type               = 'dose';
+                            %[currIx,bixelDose] = matRad_DijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
+
 
                             % Save dose for every bixel in cell array
                             doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix(currIx)),1,bixelDose,dij.numOfVoxels,1); 

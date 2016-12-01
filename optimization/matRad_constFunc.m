@@ -2,8 +2,7 @@ function c = matRad_constFunc(d_i,constraint,d_ref,d_ref2,voxelWeighting)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: constraint function for inverse planning supporting max dose
 % constraint, min dose constraint, max dose constraint, min mean, 
-% min max mean constraint, min EUD constraint, max EUDconstraint, 
-% min max EUD constraint, max DVH constraint, min DVH constraint 
+% min EUD constraint, max EUDconstraint, max DVH constraint, min DVH constraint 
 % 
 % call
 %   c = matRad_constFunc(d_i,constraint,d_ref)
@@ -26,7 +25,7 @@ function c = matRad_constFunc(d_i,constraint,d_ref,d_ref2,voxelWeighting)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2016 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -55,14 +54,12 @@ elseif isequal(constraint.type, 'min dose constraint')
     c = d_i_min - epsilon * log( sum(exp((d_i_min - d_i)/epsilon)) );
 
 elseif isequal(constraint.type, 'min mean dose constraint') || ...
-       isequal(constraint.type, 'max mean dose constraint') || ...
-       isequal(constraint.type, 'min max mean dose constraint')
+       isequal(constraint.type, 'max mean dose constraint') 
 
     c = mean(d_i);
 
 elseif isequal(constraint.type, 'min EUD constraint') || ...
-       isequal(constraint.type, 'max EUD constraint') || ...
-       isequal(constraint.type, 'min max EUD constraint')
+       isequal(constraint.type, 'max EUD constraint') 
 
     exponent = constraint.EUD;
 
