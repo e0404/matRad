@@ -157,9 +157,9 @@ if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'
 
 % issue warning if biological optimization not possible
 elseif sum(strcmp(pln.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && ~strcmp(pln.radiationMode,'carbon') ||...
-       strcmp(pln.radiationMode,'carbon') && strcmp(pln.bioOptimization,'const_RBExD')
+       ~strcmp(pln.radiationMode,'protons') && strcmp(pln.bioOptimization,'const_RBExD')
     warndlg([pln.bioOptimization ' optimization not possible with ' pln.radiationMode '- physical optimization is carried out instead.']);
-    pln.bioOptimization = 'none';  
+    pln.bioOptimization = 'none';      
 end
 
 fprintf('matRad: Particle dose calculation...\n');

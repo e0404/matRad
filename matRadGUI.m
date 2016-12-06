@@ -574,8 +574,6 @@ switch RadIdentifier
     case 'photons'
         set(handles.vmcFlag,'Value',0);
         set(handles.vmcFlag,'Enable','on')
-        set(handles.radbtnBioOpt,'Value',0);
-        set(handles.radbtnBioOpt,'Enable','off');
 
         set(handles.popMenuBioOpt,'Enable','off');
         ix = find(strcmp(contentPopUp,'none'));
@@ -590,9 +588,6 @@ switch RadIdentifier
     case 'protons'
         set(handles.vmcFlag,'Value',0);
         set(handles.vmcFlag,'Enable','off')
-        set(handles.radbtnBioOpt,'Value',0);
-        set(handles.radbtnBioOpt,'Value',1);
-        set(handles.radbtnBioOpt,'Enable','on');
         
         set(handles.popMenuBioOpt,'Enable','on');
         ix = find(strcmp(contentPopUp,'const_RBExD'));
@@ -608,8 +603,6 @@ switch RadIdentifier
     case 'carbon'
         set(handles.vmcFlag,'Value',0);
         set(handles.vmcFlag,'Enable','off')        
-        set(handles.radbtnBioOpt,'Value',1);
-        set(handles.radbtnBioOpt,'Enable','on');
         set(handles.popMenuBioOpt,'Enable','on');
         ix = find(strcmp(contentPopUp,'LEMIV_RBExD'));
         set(handles.popMenuBioOpt,'Value',ix);
@@ -668,27 +661,6 @@ guidata(hObject,handles);
            
 end
 
-% --- Executes on button press in radbtnBioOpt.
-function radbtnBioOpt_Callback(hObject, ~, handles)
-% hObject    handle to radbtnBioOpt (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of radbtnBioOpt
-getPlnFromGUI(handles);
-if get(hObject,'Value')
-    set(handles.popMenuBioOpt,'Enable','on');
-    set(handles.btnSetTissue,'Enable','on');
-else
-    set(handles.popMenuBioOpt,'Enable','off');
-    set(handles.btnSetTissue,'Enable','off');
-end
-
-if handles.State > 0
-    handles.State = 1;
-    UpdateState(handles);
-    guidata(hObject,handles);
-end
 
 % --- Executes on button press in btnCalcDose.
 function btnCalcDose_Callback(hObject, ~, handles)
@@ -2125,15 +2097,12 @@ if handles.State > 0
     pln = evalin('base','pln');
 
     if strcmp(pln.radiationMode,'carbon')
-        set(handles.radbtnBioOpt,'Enable','on');
         set(handles.popMenuBioOpt,'Enable','on');
         set(handles.btnSetTissue,'Enable','on');
     elseif strcmp(pln.radiationMode,'protons')
-        set(handles.radbtnBioOpt,'Enable','on');
         set(handles.popMenuBioOpt,'Enable','on');
         set(handles.btnSetTissue,'Enable','off');
     else
-        set(handles.radbtnBioOpt,'Enable','off');
         set(handles.popMenuBioOpt,'Enable','off');
         set(handles.btnSetTissue,'Enable','off'); 
     end
@@ -2248,16 +2217,12 @@ set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),
 set(handles.popUpMachine,'Value',find(strcmp(get(handles.popUpMachine,'String'),pln.machine)));
 
 if ~strcmp(pln.bioOptimization,'none')  
-    set(handles.radbtnBioOpt,'Value',1);
-    set(handles.radbtnBioOpt,'Enable','on');
     set(handles.popMenuBioOpt,'Enable','on');
     contentPopUp = get(handles.popMenuBioOpt,'String');
     ix = find(strcmp(pln.bioOptimization,contentPopUp));
     set(handles.popMenuBioOpt,'Value',ix);
     set(handles.btnSetTissue,'Enable','on');
 else
-    set(handles.radbtnBioOpt,'Value',0);
-    set(handles.radbtnBioOpt,'Enable','off');
     set(handles.popMenuBioOpt,'Enable','off');
     set(handles.btnSetTissue,'Enable','off');
 end
@@ -2411,7 +2376,7 @@ pln.radiationMode   = contents{get(handles.popupRadMode,'Value')}; % either phot
 contents            = get(handles.popUpMachine,'String'); 
 pln.machine         = contents{get(handles.popUpMachine,'Value')}; 
 
-if logical(get(handles.radbtnBioOpt,'Value')) && (~strcmp(pln.radiationMode,'photons'))
+if (~strcmp(pln.radiationMode,'photons'))
     contentBioOpt = get(handles.popMenuBioOpt,'String');
     pln.bioOptimization = contentBioOpt{get(handles.popMenuBioOpt,'Value'),:};
 else

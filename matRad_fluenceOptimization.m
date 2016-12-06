@@ -22,7 +22,7 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2016 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -170,20 +170,22 @@ else
     pln.bioOptimization = 'none';
 end
 
-% set callback functions
-Identifier.radMod       = pln.radiationMode;
-Identifier.bioOpt       = pln.bioOptimization;
-Identifier.ID           = [pln.radiationMode '_' pln.bioOptimization];
+% set optimization options
+options.radMod          = pln.radiationMode;
+options.bioOpt          = pln.bioOptimization;
+options.ID              = [pln.radiationMode '_' pln.bioOptimization];
+options.numOfScenarios  = dij.numOfScenarios;
+
 % set callback functions.
-[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,Identifier,dij.numOfScenarios);   
-funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,Identifier);
-funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,Identifier);
-funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,Identifier);
-funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,Identifier);
+[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,options);   
+funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,options);
+funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,options);
+funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,options);
+funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,options);
 funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 
 % Run IPOPT.
-[wOpt, info]           = ipopt(wInit,funcs,options);
+[wOpt, info]            = ipopt(wInit,funcs,options);
 
 % calc dose and reshape from 1D vector to 2D array
 fprintf('Calculating final cubes...\n');

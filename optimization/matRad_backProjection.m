@@ -1,25 +1,24 @@
-function d = matRad_backProjection(w,dij,type)
+function d = matRad_backProjection(w,dij,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad back projection function to calculate the current dose-,effect- or
 % RBExDose- vector based on the dij struct.
 % 
 % call
-%   d = matRad_backProjection(w,dij,type)
+%   d = matRad_backProjection(w,dij,options)
 %
 % input
-%   w:    bixel weight vector
-%   dij:  dose influence matrix
-%   type: string determing the type of optimization either 'none','effect'
-%         or 'RBExD'
+%   w:       bixel weight vector
+%   dij:     dose influence matrix
+%   options: option struct defining the type of optimization
 %
 % output
-%   d:    dose vector,effect vector or RBExDose vector 
+%   d:       dose vector, effect vector or RBExDose vector 
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2016 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -43,45 +42,44 @@ else
     matRad_global_x = w;
     
     % pre-allocation
-    d = cell(dij.numOfScenarios,1);
+    d = cell(options.numOfScenarios,1);
     
     % Calculate dose vector
-    if isequal(type.bioOpt,'none')
+    if isequal(options.bioOpt,'none')
         
-        for i = 1:dij.numOfScenarios
+        for i = 1:options.numOfScenarios
             d{i} = dij.physicalDose{i} * w;
         end
         
-    elseif  isequal(type.ID,'protons_const_RBExD')
+    elseif  isequal(options.ID,'protons_const_RBExD')
         
-        for i = 1:dij.numOfScenarios
-             d{i} = dij.RBE * (dij.physicalDose{i} * w);
+        for i = 1:options.numOfScenarios
+             d{i} =  dij.physicalDose{i} * (w * dij.RBE );
         end
         
-    elseif (isequal(type.bioOpt,'LEMIV_effect') || isequal(type.bioOpt,'LEMIV_RBExD')) && ...
-            isequal(type.radMod,'carbon')
+    elseif (isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LEMIV_RBExD'))
         
-        for i = 1:dij.numOfScenarios
+        for i = 1:options.numOfScenarios
             
-                % calculate effect
-                linTerm  = dij.mAlphaDose{i} * w;
-                quadTerm = dij.mSqrtBetaDose{i} * w;
-                e        = linTerm + quadTerm.^2;   
+            % calculate effect
+            linTerm  = dij.mAlphaDose{i} * w;
+            quadTerm = dij.mSqrtBetaDose{i} * w;
+            e        = linTerm + quadTerm.^2;   
 
-                if isequal(type.bioOpt,'LEMIV_effect')
-                    d{i} = e;
-                else
-                    % calculate RBX x dose
-                    scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
-                    scaledEffect   = zeros(length(scaledEffectSq),1);
-                    % compute sqrt(scaledEffect) only for numeric values (not nan) to save time
-                    [idx,~]           = find(~isnan(scaledEffectSq));
-                    scaledEffect(idx) = sqrt(scaledEffectSq(idx));
-                    d{i}              = scaledEffect - dij.gamma;
+            if isequal(options.bioOpt,'LEMIV_effect')
+                d{i} = e;
+            else
+                % calculate RBX x dose
+                scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
+                scaledEffect   = zeros(length(scaledEffectSq),1);
+                % compute sqrt(scaledEffect) only for numeric values (not nan) to save time
+                [idx,~]           = find(~isnan(scaledEffectSq));
+                scaledEffect(idx) = sqrt(scaledEffectSq(idx));
+                d{i}              = scaledEffect - dij.gamma;
 
-                end
+            end
             
-       end       
+        end       
        
     end   
     
