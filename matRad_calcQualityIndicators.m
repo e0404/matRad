@@ -26,7 +26,7 @@ function result = matRad_calcQualityIndicators(result,cst,pln,refGy,refVol)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2016 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -37,34 +37,33 @@ function result = matRad_calcQualityIndicators(result,cst,pln,refGy,refVol)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+sQuantity = 'physicalDose';
+if sum(strcmp(fieldnames(result),'RBExDose')) > 0 && ~strcmp(pln.bioOptimization,'none')
+    sQuantity = 'RBExDose';
+end
+    
 if(nargin < 4)
     refVol = [2 5 98 95];
-    refGy  = [5:5:100];
+    refGy = linspace(0,max(result.(sQuantity)(:)),6);
 end
 
 % calculate QIs per VOI
 for runVoi = 1:size(cst,1)
     
     indices     = cst{runVoi,4}{1};
-    numOfVoxels = numel(indices);
-    
+    numOfVoxels = numel(indices); 
     voiPrint = sprintf('%3d %20s',cst{runVoi,1},cst{runVoi,2}); %String that will print quality indicators
+    
     % get Dose, dose is sorted to simplify calculations
-    if sum(strcmp(fieldnames(result),'RBExDose')) > 0
-        relevantDose = result.RBExDose;
-        doseInVoi    = sort(result.RBExDose(indices));
-    else
-        relevantDose = result.physicalDose;
-        doseInVoi    = sort(result.physicalDose(indices));
-    end
+    doseInVoi    = sort(result.(sQuantity)(indices));
         
     if ~isempty(doseInVoi)
         
         % easy stats
         QI(runVoi).mean = mean(doseInVoi);
-        QI(runVoi).std = std(doseInVoi);
-        QI(runVoi).max = doseInVoi(end);
-        QI(runVoi).min = doseInVoi(1);
+        QI(runVoi).std  = std(doseInVoi);
+        QI(runVoi).max  = doseInVoi(end);
+        QI(runVoi).min  = doseInVoi(1);
 
         voiPrint = sprintf('%s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy)\n%27s', ...
                            voiPrint,QI(runVoi).mean,QI(runVoi).std,QI(runVoi).max,QI(runVoi).min,' ');
@@ -79,8 +78,9 @@ for runVoi = 1:size(cst,1)
         end
         voiPrint = sprintf('%s\n%27s',voiPrint,' ');
         for runVX = 1:numel(refGy)
-            QI(runVoi).(['V' num2str(refGy(runVX)) 'Gy']) = VX(refGy(runVX));
-            voiPrint = sprintf('%sV%dGy = %6.2f%%, ',voiPrint,refGy(runVX),VX(refGy(runVX))*100);
+            sRefGy = num2str(refGy(runVX),3);
+            QI(runVoi).(['V' strrep(sRefGy,'.','_') 'Gy']) = VX(refGy(runVX));
+            voiPrint = sprintf(['%sV' sRefGy 'Gy = %6.2f%%, '],voiPrint,VX(refGy(runVX))*100);
         end
         voiPrint = sprintf('%s\n%27s',voiPrint,' ');
 
@@ -103,7 +103,7 @@ for runVoi = 1:size(cst,1)
                 StringReferenceDose = regexprep(num2str(round(referenceDose*100)/100),'\D','_');
                 % Conformity Index, fieldname contains reference dose
                 VTarget95 = sum(doseInVoi >= 0.95*referenceDose); % number of target voxels recieving dose >= 0.95 dPres
-                VTreated95 = sum(relevantDose(:) >= 0.95*referenceDose);  %number of all voxels recieving dose >= 0.95 dPres ("treated volume")
+                VTreated95 = sum(result.(sQuantity)(:) >= 0.95*referenceDose);  %number of all voxels recieving dose >= 0.95 dPres ("treated volume")
                 QI(runVoi).(['CI_' StringReferenceDose 'Gy']) = VTarget95^2/(numOfVoxels * VTreated95); 
 
                 % Homogeneity Index (one out of many), fieldname contains reference dose        

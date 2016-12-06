@@ -1,17 +1,17 @@
-function c = matRad_constFuncWrapper(w,dij,cst,type)
+function c = matRad_constFuncWrapper(w,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: constraint function for inverse planning supporting max dose
 % constraint, min dose constraint, min mean dose constraint, max mean dose constraint,
 % min EUD constraint, max EUD constraint, max DVH constraint, min DVH constraint 
 % 
 % call
-%   jacob = matRad_jacobFunc(w,dij,cst,type)
+%   jacob = matRad_jacobFunc(w,dij,cst,options)
 %
 % input
-%   w:    bixel weight vector
-%   dij:  dose influence matrix
-%   cst:  matRad cst struct
-%   type: type of optimizaiton; either 'none','effect' or 'RBExD'
+%   w:       bixel weight vector
+%   dij:     dose influence matrix
+%   cst:     matRad cst struct
+%   options: option struct defining the type of optimization
 %
 % output
 %   c: value of constraints
@@ -35,7 +35,7 @@ function c = matRad_constFuncWrapper(w,dij,cst,type)
 
 
 % get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,type);
+d = matRad_backProjection(w,dij,options);
 
 % Initializes constraints
 c = [];
@@ -53,10 +53,10 @@ for  i = 1:size(cst,1)
             if ~isempty(strfind(cst{i,6}(j).type,'constraint'))
                 
                 % compute reference
-                if (~isequal(cst{i,6}(j).type, 'max dose constraint')      && ~isequal(cst{i,6}(j).type, 'min dose constraint')          &&...
+                if (~isequal(cst{i,6}(j).type, 'max dose constraint')      && ~isequal(cst{i,6}(j).type, 'min dose constraint')      &&...
                     ~isequal(cst{i,6}(j).type, 'max mean dose constraint') && ~isequal(cst{i,6}(j).type, 'min mean dose constraint') && ...
-                    ~isequal(cst{i,6}(j).type, 'min EUD constraint')       && ~isequal(cst{i,6}(j).type, 'max EUD constraint'))           && ...
-                    isequal(type,'effect')
+                    ~isequal(cst{i,6}(j).type, 'min EUD constraint')       && ~isequal(cst{i,6}(j).type, 'max EUD constraint'))      && ...
+                    isequal(options.bioOpt,'LEMIV_effect')
                      
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
                 else
