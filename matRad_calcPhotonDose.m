@@ -64,6 +64,14 @@ dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.dimensions         = pln.voxelDimensions;
 dij.numOfScenarios     = 1;
+if isfield(pln,'VMAT') && pln.VMAT
+    dij.initializeBeam     = zeros(1,pln.numOfBeams);
+    for i = 1:pln.numOfBeams
+        if stf(i).initializeBeam
+            dij.initializeBeam(i) = 1;
+        end
+    end
+end
 
 % set up arrays for book keeping
 dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);

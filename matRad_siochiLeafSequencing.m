@@ -6,7 +6,8 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,v
 % originally implemented in PLUNC (https://sites.google.com/site/planunc/)
 %
 % 
-%
+% Eric Christiansen, Emily Heath, and Tong Xu
+% 
 % call
 %   resultSequencing =
 %   matRad_siochiLeafSequencing(w,stf,pln,numOfLevels,visBool)
@@ -19,6 +20,10 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,v
 %   stf:                matRad steering information struct
 %   numOfLevels:        number of stratification levels
 %   visBool:            toggle on/off visualization (optional)
+%   doVMAT:             Boolean: spreads out apertures for VMAT (in
+%   development)
+%   numToKeep:          number of apertures to keep and spread out in VMAT
+%
 %
 % output
 %   resultGUI:          matRad result struct containing the new dose cube
@@ -308,8 +313,6 @@ for i = 1:numOfBeams
 
             end
         end
-                %figure
-                %hist(DAP_vec);
         
         offset = offset + numOfRaysPerBeam;
         
@@ -388,7 +391,6 @@ resultGUI.wSequenced = sequencing.w;
 
 resultGUI.sequencing   = sequencing;
 
-%EXAMINE
 resultGUI.physicalDose = reshape(dij.physicalDose{1} * sequencing.w,dij.dimensions);
 
 % if weights exists from an former DAO remove it
@@ -412,7 +414,7 @@ bases = zeros(dimZ, dimX);
 
 for i = minX:maxX
     maxTop = -1;
-    TnG = 0; %FOR NOW
+    TnG = 1; %FOR NOW
     for j = minZ:maxZ
         if i == minX
             bases(j,i) = 1;

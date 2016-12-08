@@ -46,6 +46,12 @@ color(:,3) = 0;
 color(:,2) = 0;
 
 % loop over all beams
+wMax = 0;
+for i=1:numOfBeams
+    if wMax <= apertureInfo.beam(i).shape(1).weight
+        wMax = apertureInfo.beam(i).shape(1).weight;
+    end
+end
 for i=1:numOfBeams
 
     % open new figure for every beam
@@ -56,7 +62,7 @@ for i=1:numOfBeams
     maxX = apertureInfo.beam(i).MLCWindow(2);    
     
     %get maximum weight
-    wMax = max([apertureInfo.beam(i).shape(:).weight]);
+    %wMax = max([apertureInfo.beam(i).shape(:).weight]);
     if strcmp(mode,'leafNum')
 
         % get the active leaf Pairs
@@ -128,6 +134,16 @@ for i=1:numOfBeams
             ylabel('leaf pair #')
         end
     
+    end
+    
+    frame = getframe;
+    im = frame2im(frame);
+    [A,map] = rgb2ind(im,256);
+    fname = 'DAO_Apertures.gif';
+    if i == 1
+        imwrite(A,map,fname,'gif','LoopCount',Inf,'DelayTime',1);
+    else
+        imwrite(A,map,fname,'gif','WriteMode','append','DelayTime',1);
     end
 
 end

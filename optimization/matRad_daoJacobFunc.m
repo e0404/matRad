@@ -122,14 +122,25 @@ else
     % jacobian of the leafspeed constraint
     i = repmat(constraintInd,1,3);
     j = [currentLeftLeafInd currentRightLeafInd nextLeftLeafInd nextRightLeafInd leftTimeInd rightTimeInd];
+    
     % first do jacob wrt current leaf position (left, right), then next leaf
     % position (left, right), then time (left, right)
-    j_lfspd_t = -reshape([diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2) ...
-        diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)]./ ... 
+    j_lfspd_cur = -reshape([sign(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)) ...
+        sign(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2))]./ ...
+        repmat(c_rottime',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(c_rottime),1);
+    
+    j_lfspd_nxt = reshape([sign(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)) ...
+        sign(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2))]./ ...
+        repmat(c_rottime',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(c_rottime),1);
+    
+    j_lfspd_t = -reshape([abs(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)) ...
+        abs(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2))]./ ...
         repmat((c_rottime.^2)',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(c_rottime),1);
     
-    s = [repelem(-1./c_rottime,apertureInfo.beam(1).numOfActiveLeafPairs); repelem(-1./c_rottime,apertureInfo.beam(1).numOfActiveLeafPairs); ... 
-        repelem(1./c_rottime,apertureInfo.beam(1).numOfActiveLeafPairs); repelem(1./c_rottime,apertureInfo.beam(1).numOfActiveLeafPairs); j_lfspd_t];
+    %s = [repelem(-1./c_rottime,apertureInfo.beam(1).numOfActiveLeafPairs); repelem(-1./c_rottime,apertureInfo.beam(1).numOfActiveLeafPairs); ...
+    %    repelem(1./c_rottime,apertureInfo.beam(1).numOfActiveLeafPairs); repelem(1./c_rottime,apertureInfo.beam(1).numOfActiveLeafPairs); j_lfspd_t];
+    
+    s = [j_lfspd_cur; j_lfspd_nxt; j_lfspd_t];
     
     jacob_lfspd = sparse(i,j,s,2*apertureInfo.beam(1).numOfActiveLeafPairs*(apertureInfo.totalNumOfShapes-1),numel(apertureInfoVec),6*apertureInfo.beam(1).numOfActiveLeafPairs*numel(c_rottime));
     
@@ -148,6 +159,8 @@ else
     % first do jacob wrt weights, then wrt times
     
     s = [apertureInfo.weightToMU.*(nextOptAngleDiff./c_rottime)./nextAngleDiff; -apertureInfo.weightToMU.*weights.*(nextOptAngleDiff./(c_rottime.^2))./nextAngleDiff];
+    %%%IOAN%IARNAISDNUASIDUN LOOK AT THIS SQUARED TERM
+    
     
     jacob_dosrt = sparse(i,j,s,apertureInfo.totalNumOfShapes-1,numel(apertureInfoVec),2*(apertureInfo.totalNumOfShapes-1));
     
