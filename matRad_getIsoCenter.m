@@ -40,9 +40,14 @@ end
 % Initializes V variable.
 V = [];
 
+%Check if any constraints/Objectives have been defined yet
+noObjOrConst = all(cellfun(@isempty,cst(:,6)));
+
 % Save target indices in V variable.
 for i = 1:size(cst,1)
-    if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
+    %We only let a target contribute if it has an objective/constraint or
+    %if we do not have specified objectives/constraints at all so far
+    if isequal(cst{i,3},'TARGET') && (~isempty(cst{i,6}) || noObjOrConst)
         V = [V;vertcat(cst{i,4}{:})];
     end
 end

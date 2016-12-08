@@ -1,0 +1,51 @@
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% template for colormaps
+% 1) copy the contents of this file to "yourMapName.m" and store it in 
+% the same directory
+% 2) replace the colorMapData array with your colormap and colorMapName 
+% with "yourMapName.m".
+% 3) when you start matRadGUI your colormap should appear in the colormap 
+% selection list
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function colorMap=colorMapName(cMapSize)
+
+colorMapData  = [[  0,   0,   0],...
+       [  0.5,   0.5,   0.5],...
+       [  1,   1,   1],...
+      ];
+
+if nargin < 1
+    colorMap = colorMapData;
+elseif size(colorMapData,1) == cMapSize
+    colorMap = colorMapData;
+else
+    %We have to interpolate the colormap
+    newX = linspace(1,64,cMapSize);
+    oldX = 1:64;
+    colorMap = interp1(oldX,colorMapData,newX);
+    %{
+    %resample via HSV.. more color-true than above, but doesn't work with
+    %every colormap
+    hsv                        = rgb2hsv(cm);
+    hsv(144:end,1)             = hsv(144:end,1)+1;
+    ColorMap                   = interp1(linspace(0,1,size(cm,1)),hsv,linspace(0,1,cMapSize));
+    ColorMap(cm(:,1)>1,1) = ColorMap(cm(:,1)>1,1)-1;
+    ColorMap                   = hsv2rgb(cm);
+    %}
+end
+
+end

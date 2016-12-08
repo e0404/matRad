@@ -1,14 +1,13 @@
-function [cl,cu] = matRad_getConstBoundsWrapper(cst,type,numOfScenarios)
+function [cl,cu] = matRad_getConstBoundsWrapper(cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT get constraint bounds wrapper function
 % 
 % call
-%   [cl,cu] = matRad_getConstBounds(cst,numOfScenarios,type)
+%   [cl,cu] = matRad_getConstBounds(cst,options)
 %
 % input
 %   cst:            matRad cst struct
-%   type:           type of optimizaiton; either 'none','effect' or 'RBExD'
-%   numOfScenarios: (optional) number of scenarios considered during optimization
+%   options:        option struct defining the type of optimization
 %
 % output
 %   cl: lower bounds on constraints
@@ -21,7 +20,7 @@ function [cl,cu] = matRad_getConstBoundsWrapper(cst,type,numOfScenarios)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2016 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -36,7 +35,7 @@ function [cl,cu] = matRad_getConstBoundsWrapper(cst,type,numOfScenarios)
 % Initialize bounds
 cl = [];
 cu = [];
-    
+
 % compute objective function for every VOI.
 for  i = 1:size(cst,1)
 
@@ -49,9 +48,9 @@ for  i = 1:size(cst,1)
             % only perform computations for constraints
             if ~isempty(strfind(cst{i,6}(j).type,'constraint'))
 
-                if isequal(type,'none') || isequal(type,'RBExD') 
+                if isequal(options.bioOpt,'none') || isequal(options.ID,'protons_const_RBExD') ||  isequal(options.bioOpt,'LEMIV_RBExD')
                     param = cst{i,6}(j).dose;
-                elseif isequal(type,'effect')
+                elseif isequal(options.bioOpt,'LEMIV_effect')
                     param = cst{i,5}.alphaX .* cst{i,6}(j).dose + cst{i,5}.betaX .* cst{i,6}(j).dose.^2;
                 end
 

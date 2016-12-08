@@ -1,17 +1,17 @@
-function g = matRad_gradFuncWrapper(w,dij,cst,type)
+function g = matRad_gradFuncWrapper(w,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: gradient function for inverse planning supporting mean dose
 % objectives, EUD objectives, squared overdosage, squared underdosage,
 % squared deviation and DVH objectives
 % 
 % call
-%   g = matRad_gradFuncWrapper(w,dij,cst,type)
+%   g = matRad_gradFuncWrapper(w,dij,cst,options)
 %
 % input
-%   w:    bixel weight vector
-%   dij:  dose influence matrix
-%   cst:  matRad cst struct
-%   type: type of optimizaiton; either 'none','effect' or 'RBExD'
+%   w:       bixel weight vector
+%   dij:     dose influence matrix
+%   cst:     matRad cst struct
+%   options: option struct defining the type of optimization
 %
 % output
 %   g: gradient of objective function
@@ -24,7 +24,7 @@ function g = matRad_gradFuncWrapper(w,dij,cst,type)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2016 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -36,10 +36,10 @@ function g = matRad_gradFuncWrapper(w,dij,cst,type)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,type);
+d = matRad_backProjection(w,dij,options);
 
 % Initializes delta
-delta      = cell(dij.numOfScenarios,1);
+delta      = cell(options.numOfScenarios,1);
 [delta{:}] = deal(zeros(dij.numOfVoxels,1));
 
 % compute objective function for every VOI.
@@ -56,7 +56,7 @@ for  i = 1:size(cst,1)
 
                 % compute reference
                 if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) &&...
-                    isequal(type,'effect') 
+                    isequal(options.bioOpt,'LEMIV_effect') 
 
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
                 else
@@ -84,21 +84,25 @@ end
 % Calculate gradient
 g = zeros(dij.totalNumOfBixels,1);
 
-for i = 1:dij.numOfScenarios
+for i = 1:options.numOfScenarios
     if any(delta{i} > 0) % exercise only if contributions from scenario i
 
-        if isequal(type,'none')
+        if isequal(options.bioOpt,'none')
 
-            g = g + (delta{i}' * dij.physicalDose{i})';
+            g            = g + (delta{i}' * dij.physicalDose{i})';
 
-        elseif isequal(type,'effect')
+        elseif isequal(options.ID,'protons_const_RBExD')
+            
+            g            = g + (delta{i}' * dij.physicalDose{i} * dij.RBE)';
+            
+        elseif isequal(options.bioOpt,'LEMIV_effect')
 
-            vBias    = (delta{i}' * dij.mAlphaDose{i})';
-            quadTerm = dij.mSqrtBetaDose{i} * w;
-            mPsi     = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{i})';
-            g        =  g + vBias + mPsi ; 
+            vBias        = (delta{i}' * dij.mAlphaDose{i})';
+            quadTerm     = dij.mSqrtBetaDose{i} * w;
+            mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{i})';
+            g            =  g + vBias + mPsi ; 
 
-        elseif isequal(type,'RBExD')
+        elseif isequal(options.bioOpt,'LEMIV_RBExD')
 
             scaledEffect = d{i} + dij.gamma;
             deltaTmp     = delta{i}./(2*dij.bx.*scaledEffect);

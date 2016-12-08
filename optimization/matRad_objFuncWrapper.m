@@ -1,4 +1,4 @@
-function f = matRad_objFuncWrapper(w,dij,cst,type)
+function f = matRad_objFuncWrapper(w,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT objective function wrapper
 % 
@@ -6,10 +6,10 @@ function f = matRad_objFuncWrapper(w,dij,cst,type)
 %   f = matRad_objFuncWrapper(w,dij,cst,type)
 %
 % input
-%   w:    beamlet/ pencil beam weight vector
-%   dij:  matRad dose influence struct
-%   cst:  matRad cst struct
-%   type: switch to indicate biological optimization
+%   w:       beamlet/ pencil beam weight vector
+%   dij:     matRad dose influence struct
+%   cst:     matRad cst struct
+%   options: option struct defining the type of optimization
 %
 % output
 %   f: objective function value
@@ -21,7 +21,7 @@ function f = matRad_objFuncWrapper(w,dij,cst,type)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2016 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -33,7 +33,7 @@ function f = matRad_objFuncWrapper(w,dij,cst,type)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,type);
+d = matRad_backProjection(w,dij,options);
 
 % Initialize f
 f = 0;
@@ -52,7 +52,7 @@ for  i = 1:size(cst,1)
 
                 % compute reference
                 if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) &&...
-                    isequal(type,'effect') 
+                    isequal(options.bioOpt,'LEMIV_effect') 
 
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
                 else
