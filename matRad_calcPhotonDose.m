@@ -235,10 +235,19 @@ for i = 1:dij.numOfBeams; % loop over all beams
             
             % apply the primary fluence to the field
             if useCustomPrimFluenceBool
+                
+                % Create zero matrix for the Fluence
+                F = zeros(size(X));
+
+                % set bixel opening to one
+                F(X >= -pln.bixelWidth/2 & X < pln.bixelWidth/2 & ...
+                  Z >= -pln.bixelWidth/2 & Z < pln.bixelWidth/2) = 1;
+      
                 primaryFluence = machine.data.primaryFluence;
                 r     = sqrt( (X-stf(i).ray(j).rayPos(1)).^2 + (Z-stf(i).ray(j).rayPos(3)).^2 );
                 Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r);
                 F = F .* Psi;
+                
             end
             
             % convolute with the gaussian
