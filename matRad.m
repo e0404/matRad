@@ -74,7 +74,7 @@ pln.numOfBeams      = numel(pln.gantryAngles);
 
 pln.gantryRotCst = [0 6]; %degrees per second
 pln.defaultGantryRot = mean(pln.gantryRotCst); %degrees per second
-pln.leafSpeedCst = [0 6]; %cm per second
+pln.leafSpeedCst = [-inf inf]; %cm per second
 pln.doseRateCst = [0 inf]; %MU per second
 
 

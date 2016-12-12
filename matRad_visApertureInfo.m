@@ -52,6 +52,7 @@ for i=1:numOfBeams
         wMax = apertureInfo.beam(i).shape(1).weight;
     end
 end
+
 for i=1:numOfBeams
 
     % open new figure for every beam
@@ -135,6 +136,7 @@ for i=1:numOfBeams
         end
     
     end
+
     
     frame = getframe;
     im = frame2im(frame);
@@ -145,6 +147,7 @@ for i=1:numOfBeams
     else
         imwrite(A,map,fname,'gif','WriteMode','append','DelayTime',1);
     end
+
 
 end
 
