@@ -50,7 +50,7 @@ pln.runSequencing   = true;
 pln.runDAO          = true;
 pln.VMAT            = true;
 
-pln.numApertures = 5;
+pln.numApertures = 7;
 pln.numLevels = 3;
 
 pln.minGantryAngleRes = 4;

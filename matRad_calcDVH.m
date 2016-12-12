@@ -94,11 +94,8 @@ set(myLegend,'FontSize',10,'Interpreter','none');
 legend boxoff
 
 
-% get quality indicators and fill table
-res = matRad_calcQualityIndicators(result,cst,pln);
-
 ylim([0 110]);
-xlim([0 1.5*max([res.QI(:).D98])]);
+xlim([0 1.2*max(dvhPoints)]);
 set(gca,'YTick',0:20:120)
 
 grid on,grid minor
@@ -121,6 +118,8 @@ set(subplot(2,1,2),'xTick',[])
 set(table,'units','normalized')
 set(table,'position',pos)
 
+% get quality indicators and fill table
+res = matRad_calcQualityIndicators(result,cst,pln);
 
 set(table,'ColumnName',fieldnames(res.QI));
 set(table,'Data',(squeeze(struct2cell(res.QI)))');

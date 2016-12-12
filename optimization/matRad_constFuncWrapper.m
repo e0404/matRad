@@ -1,7 +1,7 @@
-function c = matRad_constFuncWrapper(w,dij,cst,options)
+function c = matRad_constFuncWrapper(w,dij,cst,type)
 
 % get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,options);
+d = matRad_backProjection(w,dij,type);
 
 % Initializes constraints
 c = [];
@@ -23,7 +23,7 @@ for  i = 1:size(cst,1)
                     ~isequal(cst{i,6}(j).type, 'min mean dose constraint') && ~isequal(cst{i,6}(j).type, 'max mean dose constraint') &&...
                     ~isequal(cst{i,6}(j).type, 'min max mean dose constraint') && ~isequal(cst{i,6}(j).type, 'min EUD constraint') &&...
                     ~isequal(cst{i,6}(j).type, 'max EUD constraint') && ~isequal(cst{i,6}(j).type, 'min max EUD constraint')) &&...
-                    isequal(options.bioOpt,'effect')
+                    isequal(type,'effect')
                      
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
                 else
