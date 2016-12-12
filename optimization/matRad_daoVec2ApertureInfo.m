@@ -521,21 +521,7 @@ for i = 1:numel(updatedInfo.beam)
         updatedInfo.beam(i).shape(1).shapeMap = (tempMap  + abs(tempMap))  / 2;
         
     end
-    
-    if isfield(apertureInfo.beam(1),'time')
-        %only occurs for VMAT
-        if apertureInfo.beam(i).numOfShapes %only optimized beams have their time optimized and put in the vector
-            apertureInfo.beam(i).time = apertureInfoVec(offset);
-            %Update all beam times for non-optimized beams; these are
-            %simply scaled from the optimized ones
-            if lastOpt ~= i-1
-                [apertureInfo.beam((lastOpt+1):(i-1)).time] = apertureInfo.beam(lastOpt).time/count; %assume constant gantry rotation speed throughout sector
-            end
-            
-            offset = offset+1;
-            lastOpt = i;
-        end
-    end
+
     
 end
 

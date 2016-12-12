@@ -1,4 +1,4 @@
-function jacob = matRad_jacobFuncWrapper(w,dij,cst,type)
+function jacob = matRad_jacobFuncWrapper(w,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian function for inverse planning supporting max dose
 % constraint, min dose constraint, min max dose constraint, min mean, max
@@ -13,7 +13,7 @@ function jacob = matRad_jacobFuncWrapper(w,dij,cst,type)
 %   w:    bixel weight vector
 %   dij:  dose influence matrix
 %   cst:  matRad cst struct
-%   type: type of optimizaiton; either 'none','effect' or 'RBExD'
+%   options: option struct defining the type of optimization
 %
 % output
 %   jacob: jacobian of constraint function
@@ -35,8 +35,10 @@ function jacob = matRad_jacobFuncWrapper(w,dij,cst,type)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+type = options.bioOpt;
+
 % get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,type);
+d = matRad_backProjection(w,dij,options);
 
 % initialize jacobian
 jacob = sparse([]);

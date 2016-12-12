@@ -39,7 +39,7 @@ cl_dao = zeros(apertureInfo.totalNumOfLeafPairs,1);
 cu_dao = inf*ones(apertureInfo.totalNumOfLeafPairs,1);
 
 % get dosimetric bounds from cst (just like for conv opt)
-[cl_dos,cu_dos] = matRad_getConstBoundsWrapper(cst,type,numOfScenarios);
+[cl_dos,cu_dos] = matRad_getConstBoundsWrapper(cst,type);
 
 if nargin < 5
     % concatenate

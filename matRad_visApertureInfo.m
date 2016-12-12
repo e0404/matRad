@@ -139,7 +139,7 @@ for i=1:numOfBeams
     frame = getframe;
     im = frame2im(frame);
     [A,map] = rgb2ind(im,256);
-    fname = 'DAO_Apertures.gif';
+    fname = 'Apertures_DAO.gif';
     if i == 1
         imwrite(A,map,fname,'gif','LoopCount',Inf,'DelayTime',1);
     else
