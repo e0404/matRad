@@ -81,8 +81,7 @@ if isfield(dij,'mLETDose')
 end
                       
 % compute biological cubes
-if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
-    && strcmp(pln.radiationMode,'carbon')
+if strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization,'LEMIV_RBExD')
 
     ix = resultGUI.physicalDose>0;
 
