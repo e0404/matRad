@@ -81,7 +81,11 @@ if isfield(dij,'mLETDose')
 end
                       
 % compute biological cubes
-if strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization,'LEMIV_RBExD')
+if strcmp(pln.bioOptimization,'const_RBExD')
+
+    resultGUI.RBExDose = resultGUI.physicalDose * dij.RBE;
+    
+elseif strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization,'LEMIV_RBExD')
 
     ix = resultGUI.physicalDose>0;
 
