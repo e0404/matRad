@@ -57,20 +57,17 @@ dose.cube = squeeze(dose.cube(:,:,1,:));
 % ct resolution is target resolution, now convert to new cube;
 
 % generating grid vectors
-x = doseInfo.ImagePositionPatient(1) + doseInfo.PixelSpacing(1) * double([0:doseInfo.Columns - 1]);
-y = doseInfo.ImagePositionPatient(2) + doseInfo.PixelSpacing(2) * double([0:doseInfo.Rows - 1]);
+x = doseInfo.ImagePositionPatient(1) + doseInfo.ImageOrientationPatient(1) * ...
+                                       doseInfo.PixelSpacing(1) * double([0:doseInfo.Columns - 1]);
+y = doseInfo.ImagePositionPatient(2) + doseInfo.ImageOrientationPatient(5) * ...
+                                       doseInfo.PixelSpacing(2) * double([0:doseInfo.Rows - 1]);
 z = [doseInfo.ImagePositionPatient(3) + doseInfo.GridFrameOffsetVector];
-
-% new vectors
-xq = [min(ct.x) : target_resolution.x : max(ct.x)];
-yq = [min(ct.y) : target_resolution.y : max(ct.y)];
-zq =  min(ct.z) : target_resolution.z : max(ct.z);
 
 % set up grid matrices - implicit dimension permuation (X Y Z-> Y X Z)
 % Matlab represents internally in the first matrix dimension the
 % ordinate axis and in the second matrix dimension the abscissas axis
 [ Y,  X,  Z] = meshgrid(x,y,z);
-[Yq, Xq, Zq] = meshgrid(xq,yq,zq);
+[Yq, Xq, Zq] = meshgrid(ct.x,ct.y,ct.z);
 
 % get GridScalingFactor
 gridScale = double(doseInfo.DoseGridScaling);
@@ -82,14 +79,9 @@ dose.cube = interp3(Y,X,Z,dose.cube,Yq,Xq,Zq,'linear',0);
 
 % write new parameters
 dose.resolution = ct.resolution;
-dose.x = xq;
-dose.y = yq;
-dose.z = zq;
-
-% check whether grid position are the same as the CT grid positions are
-if ~(isequal(dose.x,ct.x) && isequal(dose.y,ct.y) && isequal(dose.z,ct.z))
-    errordlg('CT-Grid and Dose-Grid are still not the same');
-end
+dose.x = ct.x;
+dose.y = ct.y;
+dose.z = ct.z;
 
 % write Dicom-Tags
 dose.dicomInfo.PixelSpacing            = [target_resolution.x; ...
