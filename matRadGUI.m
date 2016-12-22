@@ -1216,6 +1216,48 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
    
 end
 
+if get(handles.popupTypeOfPlot,'Value') == 1
+    xCoord = ct.resolution.x * (1:ct.cubeDim(1));
+    yCoord = ct.resolution.y * (1:ct.cubeDim(2));
+    zCoord = ct.resolution.z * (1:ct.cubeDim(3));
+    
+    [xMesh,yMesh,zMesh] = meshgrid(xCoord,yCoord,zCoord);
+    
+    contour = zeros(ct.cubeDim);
+    contour(cst{7,4}{1}) = 1;
+    
+    spinal = zeros(ct.cubeDim);
+    spinal(cst{20,4}{1}) = 1;
+    
+    target = zeros(ct.cubeDim);
+    target(cst{19,4}{1}) = 1;
+    
+    set(handles.axesFig,'Color',1*[1 1 1]);
+    hold(handles.axesFig,'on');
+    matRad_plotVoi3D(handles.axesFig,xMesh,yMesh,zMesh,contour,'blue',0.3);
+    matRad_plotVoi3D(handles.axesFig,xMesh,yMesh,zMesh,spinal,'green',0.5);
+    matRad_plotVoi3D(handles.axesFig,xMesh,yMesh,zMesh,target,'red',0.7);
+    
+    matRad_plotIsoDose3D(handles.axesFig,xMesh,yMesh,zMesh,resultGUI.physicalDose);
+    
+    view(3)
+    xlabel('x');
+    ylabel('y');
+    zlabel('z');
+    camlight left;
+    lighting gouraud
+    
+    %{
+    limitX = get(hAx3D,'xlim');
+    limitY = get(hAx3D,'ylim');
+    limitZ = get(hAx3D,'zlim');
+    matRad_plotPlan3D(hAx3D,stf);
+    set(hAx3D,'xlim',limitX);
+    set(hAx3D,'ylim',limitY);
+    set(hAx3D,'zlim',limitZ);
+    %}
+end
+
 zoom reset;
 axis tight
 if handles.rememberCurrAxes
