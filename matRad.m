@@ -63,7 +63,8 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
     %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
-    resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
+    %resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
+    resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
 end
 
 %% DAO
