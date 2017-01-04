@@ -1,4 +1,4 @@
-function jacob = matRad_jacobFuncWrapper(w,dij,cst,type)
+function jacob = matRad_jacobFuncWrapper(w,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian function for inverse planning supporting max dose
 % constraint, min dose constraint, min max dose constraint, min mean, max
@@ -7,13 +7,13 @@ function jacob = matRad_jacobFuncWrapper(w,dij,cst,type)
 % min DVH constraint 
 % 
 % call
-%   jacob = matRad_jacobFunc(w,dij,cst,type)
+%   jacob = matRad_jacobFunc(w,dij,cst,options)
 %
 % input
 %   w:    bixel weight vector
 %   dij:  dose influence matrix
 %   cst:  matRad cst struct
-%   type: type of optimizaiton; either 'none','effect' or 'RBExD'
+%   options: option struct defining the type of optimization
 %
 % output
 %   jacob: jacobian of constraint function
@@ -36,7 +36,7 @@ function jacob = matRad_jacobFuncWrapper(w,dij,cst,type)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,type);
+d = matRad_backProjection(w,dij,options);
 
 % initialize jacobian
 jacob = sparse([]);
@@ -67,7 +67,7 @@ for i = 1:size(cst,1)
                     ~isequal(cst{i,6}(j).type, 'min mean dose constraint') && ~isequal(cst{i,6}(j).type, 'max mean dose constraint') &&...
                     ~isequal(cst{i,6}(j).type, 'min max mean dose constraint') && ~isequal(cst{i,6}(j).type, 'min EUD constraint') &&...
                     ~isequal(cst{i,6}(j).type, 'max EUD constraint') && ~isequal(cst{i,6}(j).type, 'min max EUD constraint')) &&...
-                    isequal(type,'effect')
+                    isequal(options.bioOpt,'effect')
                      
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
                 else
@@ -84,11 +84,11 @@ for i = 1:size(cst,1)
                     scenID  = [scenID;1];
                     scenID2 = [scenID2;ones(numel(cst{i,4}{1}),1)];
                     
-                    if isequal(type,'none') && ~isempty(jacobVec)
+                    if isequal(options.bioOpt,'none') && ~isempty(jacobVec)
 
                        physicalDoseProjection = [physicalDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
 
-                    elseif isequal(type,'effect') && ~isempty(jacobVec)
+                    elseif isequal(options.bioOpt,'effect') && ~isempty(jacobVec)
 
                        mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
                        mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
@@ -96,7 +96,7 @@ for i = 1:size(cst,1)
                        voxelID                 = [voxelID ;cst{i,4}{1}];
                        constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
 
-                    elseif isequal(type,'RBExD') && ~isempty(jacobVec)
+                    elseif isequal(options.bioOpt,'RBExD') && ~isempty(jacobVec)
                                         
                        scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i);
 
@@ -120,13 +120,13 @@ for i = 1:size(cst,1)
 
 end
 
-if isequal(type,'effect') || isequal(type,'RBExD')
+if isequal(options.bioOpt,'effect') || isequal(options.bioOpt,'RBExD')
     constraintID = constraintID(2:end);
 end
 
 % Calculate jacobian with dij projections
 for i = 1:dij.numOfScenarios
-    if isequal(type,'none')
+    if isequal(options.bioOpt,'none')
 
         if ~isempty(physicalDoseProjection)
             
@@ -135,7 +135,7 @@ for i = 1:dij.numOfScenarios
             
         end
 
-    elseif isequal(type,'effect') || isequal(type,'RBExD')
+    elseif isequal(options.bioOpt,'effect') || isequal(options.bioOpt,'RBExD')
 
         if ~isempty(mSqrtBetaDoseProjection) && ~isempty(mAlphaDoseProjection)
             

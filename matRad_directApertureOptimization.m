@@ -92,13 +92,18 @@ else
     [options.cl,options.cu] = matRad_daoGetConstBounds(cst,apertureInfo,dij.numOfScenarios,pln.bioOptimization);   % Lower and upper bounds on the constraint functions.
 end
 
+% set optimization options
+options.radMod          = pln.radiationMode;
+options.bioOpt          = pln.bioOptimization;
+options.ID              = [pln.radiationMode '_' pln.bioOptimization];
+options.numOfScenarios  = dij.numOfScenarios;
 
 % set callback functions.
-funcs.objective         = @(x) matRad_daoObjFunc(x,apertureInfo,dij,cst,pln.bioOptimization);
-funcs.gradient          = @(x) matRad_daoGradFunc(x,apertureInfo,dij,cst,pln.bioOptimization);
+funcs.objective         = @(x) matRad_daoObjFunc(x,apertureInfo,dij,cst,options);
+funcs.gradient          = @(x) matRad_daoGradFunc(x,apertureInfo,dij,cst,options);
 funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
-funcs.constraints       = @(x) matRad_daoConstFunc(x,apertureInfo,dij,cst,pln.bioOptimization);
-funcs.jacobian          = @(x) matRad_daoJacobFunc(x,apertureInfo,dij,cst,pln.bioOptimization);
+funcs.constraints       = @(x) matRad_daoConstFunc(x,apertureInfo,dij,cst,options);
+funcs.jacobian          = @(x) matRad_daoJacobFunc(x,apertureInfo,dij,cst,options);
 funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct(apertureInfo,dij,cst);
 
 % Run IPOPT.

@@ -10,7 +10,7 @@ function jacob = matRad_daoJacobFunc(apertureInfoVec,apertureInfo,dij,cst,type)
 %   apertureInfo:    aperture info struct
 %   dij:             dose influence matrix
 %   cst:             matRad cst struct
-%   type:   type of optimizaiton; either 'none','effect' or 'RBExD'
+%   options: option struct defining the type of optimization
 %
 % output
 %   jacob:           jacobian of constraint function
