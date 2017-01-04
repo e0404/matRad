@@ -90,7 +90,7 @@ if strcmp(pln.radiationMode,'photons')
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
 end
-dij.weightToMU = 1;
+dij.weightToMU = 100;
 %100 cm SAD, 5 cm depth, 10x10cm2
 
 %% inverse planning for imrt
