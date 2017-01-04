@@ -256,15 +256,35 @@ for i = 1:numel(updatedInfo.beam)
             xPosIndLeftLeaf  = round((leftLeafPos - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth + 1);
             xPosIndRightLeaf = round((rightLeafPos - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth + 1);
             
+            %
+            xPosIndLeftLeaf_lim  = floor((apertureInfo.beam(i).lim_l - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth+1);
+            xPosIndRightLeaf_lim = ceil((apertureInfo.beam(i).lim_r - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth + 1);
+            
+            xPosIndLeftLeaf(xPosIndLeftLeaf <= xPosIndLeftLeaf_lim) = xPosIndLeftLeaf_lim(xPosIndLeftLeaf <= xPosIndLeftLeaf_lim)+1;
+            xPosIndRightLeaf(xPosIndRightLeaf >= xPosIndRightLeaf_lim) = xPosIndRightLeaf_lim(xPosIndRightLeaf >= xPosIndRightLeaf_lim)-1;
+            
+            
             % check limits because of rounding off issues at maximum, i.e.,
             % enforce round(X.5) -> X
+            % LeafPos can occasionally go slightly beyond lim_r, so changed
+            % == check to >=
+            xPosIndLeftLeaf(leftLeafPos >= apertureInfo.beam(i).lim_r) = ...
+                .5 + (leftLeafPos(leftLeafPos >= apertureInfo.beam(i).lim_r) ...
+                - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth;
+            
+            xPosIndRightLeaf(rightLeafPos >= apertureInfo.beam(i).lim_r) = ...
+                .5 + (rightLeafPos(rightLeafPos >= apertureInfo.beam(i).lim_r) ...
+                - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth;
+            %{
             xPosIndLeftLeaf(leftLeafPos == apertureInfo.beam(i).lim_r) = ...
                 .5 + (leftLeafPos(leftLeafPos == apertureInfo.beam(i).lim_r) ...
                 - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth;
             xPosIndRightLeaf(rightLeafPos == apertureInfo.beam(i).lim_r) = ...
                 .5 + (rightLeafPos(rightLeafPos == apertureInfo.beam(i).lim_r) ...
                 - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth;
-            
+            %}
+                
+                
             % find the bixel index that the leaves currently touch
             bixelIndLeftLeaf  = apertureInfo.beam(i).bixelIndMap((xPosIndLeftLeaf-1)*n+[1:n]');
             bixelIndRightLeaf = apertureInfo.beam(i).bixelIndMap((xPosIndRightLeaf-1)*n+[1:n]');
@@ -528,5 +548,6 @@ end
 
 updatedInfo.bixelWeights = w;
 updatedInfo.bixelIndices = indVect;
+updatedInfo.apertureVector = apertureInfoVect;
 
 end

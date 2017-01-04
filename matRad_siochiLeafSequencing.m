@@ -5,7 +5,7 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,v
 % International Journal of Radiation Oncology * Biology * Physics,
 % originally implemented in PLUNC (https://sites.google.com/site/planunc/)
 %
-% 
+% Implented in matRad by Eric Christiansen, Emily Heath, and Tong Xu
 %
 % call
 %   resultSequencing =
