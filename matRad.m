@@ -79,8 +79,6 @@ pln.doseRateCst = [75 600]/60; %MU per second
 
 
 
-
-
 %% initial visualization and change objective function settings if desired
 matRadGUI
 
