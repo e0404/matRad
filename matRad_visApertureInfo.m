@@ -46,13 +46,13 @@ color(:,3) = 0;
 color(:,2) = 0;
 
 % loop over all beams
-
 wMax = 0;
 for i=1:numOfBeams
     if wMax <= apertureInfo.beam(i).shape(1).weight
         wMax = apertureInfo.beam(i).shape(1).weight;
     end
 end
+
 
 for i=1:numOfBeams
 
@@ -148,6 +148,7 @@ for i=1:numOfBeams
     else
         imwrite(A,map,fname,'gif','WriteMode','append','DelayTime',1);
     end
+
 
 end
 
