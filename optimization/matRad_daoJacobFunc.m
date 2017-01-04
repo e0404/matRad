@@ -10,7 +10,7 @@ function jacob = matRad_daoJacobFunc(apertureInfoVec,apertureInfo,dij,cst,type)
 %   apertureInfo:    aperture info struct
 %   dij:             dose influence matrix
 %   cst:             matRad cst struct
-%   type:   type of optimizaiton; either 'none','effect' or 'RBExD'
+%   options: option struct defining the type of optimization
 %
 % output
 %   jacob:           jacobian of constraint function
@@ -50,7 +50,7 @@ s = [-1*ones(1,apertureInfo.totalNumOfLeafPairs) ones(1,apertureInfo.totalNumOfL
 
 jacob_dao = sparse(i,j,s, ...
     apertureInfo.totalNumOfLeafPairs, ...
-    apertureInfo.totalNumOfShapes+2*apertureInfo.totalNumOfLeafPairs, ...
+    numel(apertureInfoVec), ...
     2*apertureInfo.totalNumOfLeafPairs);
 
 % compute jacobian of dosimetric constrainst
@@ -94,5 +94,73 @@ if ~isempty(jacob_dos)
 
 end
 
-% concatenate
-jacob = [jacob_dao;jacob_dos];
+if ~isfield(apertureInfo.beam(1),'optimizeBeam')
+    % concatenate
+    jacob = [jacob_dao; jacob_dos];
+else
+    % get index values for the jacobian
+    % variable index
+    timeInd = (1+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2-1);
+    % value of constraints for leaves
+    leftLeafPos  = apertureInfoVec([1:apertureInfo.totalNumOfLeafPairs]+apertureInfo.totalNumOfShapes);
+    rightLeafPos = apertureInfoVec(1+apertureInfo.totalNumOfLeafPairs+apertureInfo.totalNumOfShapes:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2);
+    % values of time differences of optimized gantry angles, used for
+    % leafspeed and doserate constraint jacobians
+    c_rottime = apertureInfoVec(timeInd);
+    
+    currentLeftLeafInd = (apertureInfo.totalNumOfShapes+1):(apertureInfo.totalNumOfShapes+apertureInfo.beam(1).numOfActiveLeafPairs*numel(c_rottime));
+    currentRightLeafInd = (apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+1):(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+apertureInfo.beam(1).numOfActiveLeafPairs*numel(c_rottime));
+    nextLeftLeafInd = (apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+1):(apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.beam(1).numOfActiveLeafPairs*numel(c_rottime));
+    nextRightLeafInd = (apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+1):(apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+apertureInfo.beam(1).numOfActiveLeafPairs*numel(c_rottime));
+    leftTimeInd = repelem((apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2+1):(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2-1),apertureInfo.beam(1).numOfActiveLeafPairs);
+    rightTimeInd = repelem((apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2+1):(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2-1),apertureInfo.beam(1).numOfActiveLeafPairs);
+    % constraint index
+    constraintInd = 1:2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(c_rottime);
+    
+
+    
+    % jacobian of the leafspeed constraint
+    i = repmat(constraintInd,1,3);
+    j = [currentLeftLeafInd currentRightLeafInd nextLeftLeafInd nextRightLeafInd leftTimeInd rightTimeInd];
+    % first do jacob wrt current leaf position (left, right), then next leaf
+    % position (left, right), then time (left, right)
+    j_lfspd_cur = -reshape([sign(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)) ...
+        sign(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2))]./ ...
+        repmat(c_rottime',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(c_rottime),1);
+    
+    j_lfspd_nxt = reshape([sign(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)) ...
+        sign(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2))]./ ...
+        repmat(c_rottime',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(c_rottime),1);
+    
+    j_lfspd_t = -reshape([abs(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)) ...
+        abs(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2))]./ ...
+        repmat((c_rottime.^2)',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(c_rottime),1);
+        
+    s = [j_lfspd_cur; j_lfspd_nxt; j_lfspd_t];
+    
+    jacob_lfspd = sparse(i,j,s,2*apertureInfo.beam(1).numOfActiveLeafPairs*(apertureInfo.totalNumOfShapes-1),numel(apertureInfoVec),6*apertureInfo.beam(1).numOfActiveLeafPairs*numel(c_rottime));
+    
+    
+    % jacobian of the doserate constraint
+    % values of doserate (MU/sec) between optimized gantry angles
+    weights = apertureInfoVec(1:apertureInfo.totalNumOfShapes);
+    weights(end) = [];
+    optInd = find([apertureInfo.beam.optimizeBeam]);
+    optInd(end) = [];
+    nextOptAngleDiff = [apertureInfo.beam(optInd).nextOptAngleDiff]';
+    nextAngleDiff = [apertureInfo.beam(optInd).nextAngleDiff]';
+    
+    i = repmat(1:(apertureInfo.totalNumOfShapes-1),1,2);
+    j = [1:(apertureInfo.totalNumOfShapes-1) (apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2+1):(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2-1)];
+    % first do jacob wrt weights, then wrt times
+    
+    s = [apertureInfo.weightToMU.*(nextOptAngleDiff./c_rottime)./nextAngleDiff; -apertureInfo.weightToMU.*weights.*(nextOptAngleDiff./(c_rottime.^2))./nextAngleDiff];
+    
+    jacob_dosrt = sparse(i,j,s,apertureInfo.totalNumOfShapes-1,numel(apertureInfoVec),2*(apertureInfo.totalNumOfShapes-1));
+    %%%LOOK AT SQUARED TERM
+    
+    % concatenate
+    jacob = [jacob_dao; jacob_lfspd; jacob_dosrt; jacob_dos];
+end
+
+

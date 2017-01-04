@@ -41,14 +41,18 @@ function [apertureInfoVec, mappingMx, limMx] = matRad_daoApertureInfo2Vec(apertu
 
 % initializing variables
 
-apertureInfoVec = NaN * ones(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,1);
+if isfield(apertureInfo.beam(1),'optimizeBeam') %only for VMAT
+    apertureInfoVec = NaN * ones(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2-1,1); %Extra set of (apertureInfo.totalNumOfShapes-1 number of) elements, allowing arc sector times to be optimized
+else
+    apertureInfoVec = NaN * ones(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,1);
+end
 
 offset = 0;
 
 %% 1. aperture weights
 for i = 1:size(apertureInfo.beam,2)
     for j = 1:apertureInfo.beam(i).numOfShapes
-        apertureInfoVec(offset+j) = apertureInfo.beam(i).shape(j).weight;            
+        apertureInfoVec(offset+j) = apertureInfo.beam(i).shape(j).weight;   %In VMAT, this weight is "spread" over unoptimized beams (assume constant dose rate over sector)         
     end
     offset = offset + apertureInfo.beam(i).numOfShapes;
 end
@@ -62,19 +66,44 @@ for i = 1:size(apertureInfo.beam,2)
         offset = offset + apertureInfo.beam(i).numOfActiveLeafPairs;
     end
 end
-    
 
-%% 3. create additional information for later use
-if nargout > 1
+%% 3. time of arc sector/beam
+if isfield(apertureInfo.beam(1),'optimizeBeam')
+    offset = offset+apertureInfo.totalNumOfLeafPairs;
     
-    mappingMx =  NaN * ones(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,4);
-    limMx     =  NaN * ones(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,2);
+    optInd = [apertureInfo.beam.optimizeBeam];
+    angles = [apertureInfo.beam.gantryAngle];
+    optAngles = angles(optInd);
+    optAngleDiffs = diff(optAngles);
+    optGantryRot = [apertureInfo.beam.gantryRot];
+    optGantryRot(end) = [];
+    apertureInfoVec((offset+1):end) = optAngleDiffs./optGantryRot; %entries are the times until the next opt gantry angle is reached
+end
+
+%% 4. create additional information for later use
+if nargout > 1
+    %FIX MAPPINGMX AND LIMMX
+    if isfield(apertureInfo.beam(1),'optimizeBeam')
+        mappingMx =  NaN * ones(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2-1,4);
+        limMx     =  NaN * ones(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2-1,2);
+    else
+        mappingMx =  NaN * ones(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,4);
+        limMx     =  NaN * ones(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,2);
+    end
+    
     limMx(1:apertureInfo.totalNumOfShapes,:) = ones(apertureInfo.totalNumOfShapes,1)*[0 inf];
     
     counter = 1;
     for i = 1:numel(apertureInfo.beam)
         for j = 1:apertureInfo.beam(i).numOfShapes
             mappingMx(counter,1) = i;
+            if isfield(apertureInfo,'gantryRotCst') && counter < apertureInfo.totalNumOfShapes %ensures that all but last optimized beam is counted
+                timeLimL = (apertureInfo.beam(i+1).gantryAngle-apertureInfo.beam(i).gantryAngle)/apertureInfo.gantryRotCst(2); %Minimum time interval between two optimized beams/gantry angles
+                timeLimU = (apertureInfo.beam(i+1).gantryAngle-apertureInfo.beam(i).gantryAngle)/apertureInfo.gantryRotCst(1); %Maximum time interval between two optimized beams/gantry angles
+                
+                mappingMx(counter+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,1) = i;
+                limMx(counter+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,:) = [timeLimL timeLimU];
+            end
             counter = counter + 1;
         end
     end
@@ -96,7 +125,7 @@ if nargout > 1
         shapeOffset = shapeOffset + apertureInfo.beam(i).numOfShapes;
     end
     
-    mappingMx(counter:end,:) = mappingMx(apertureInfo.totalNumOfShapes+1:counter-1,:);
-    limMx(counter:end,:)     = limMx(apertureInfo.totalNumOfShapes+1:counter-1,:);
-
+    mappingMx(counter:(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2),:) = mappingMx(apertureInfo.totalNumOfShapes+1:counter-1,:);
+    limMx(counter:(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2),:)     = limMx(apertureInfo.totalNumOfShapes+1:counter-1,:);
+    
 end

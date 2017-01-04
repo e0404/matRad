@@ -56,6 +56,35 @@ if ~isdeployed % only if _not_ running as standalone
 
 end
 
+
+if isfield(pln,'VMAT') && pln.VMAT
+    %Check if plan is VMAT.  If it is, remove any elements of the dij
+    %matrix belonging to non-initialized beams.  Put zeros back in the
+    %wUnsequenced array later
+    
+    offsetNEW = dij.totalNumOfRays;
+    for i = dij.numOfBeams:-1:1
+        %Go backwards so we can delete columns in the dij.physicalDose
+        %matrix without worrying about indexing
+        if ~dij.initializeBeam(i)
+            dij.physicalDose{1}(:,(offsetNEW-dij.numOfRaysPerBeam(i)+1):offsetNEW) = [];
+            dij.bixelNum((offsetNEW-dij.numOfRaysPerBeam(i)+1):offsetNEW,:) = [];
+            dij.rayNum((offsetNEW-dij.numOfRaysPerBeam(i)+1):offsetNEW,:) = [];
+            dij.beamNum((offsetNEW-dij.numOfRaysPerBeam(i)+1):offsetNEW,:) = [];
+        end
+        offsetNEW = offsetNEW-dij.numOfRaysPerBeam(i);
+    end
+    
+    realNumOfBeams = dij.numOfBeams;
+    dij.numOfBeams = sum(dij.initializeBeam);
+    realNumOfRaysPerBeam = dij.numOfRaysPerBeam;
+    dij.numOfRaysPerBeam(~dij.initializeBeam) = [];
+    dij.totalNumOfRays = sum(dij.numOfRaysPerBeam);
+    realTotalNumOfBixels = dij.totalNumOfBixels;
+    dij.totalNumOfBixels = sum(dij.numOfRaysPerBeam);
+end
+
+
 % initialize global variables for optimizer
 global matRad_global_x;
 global matRad_global_d;
@@ -106,6 +135,7 @@ end
 % set bounds on optimization variables
 options.lb              = zeros(1,dij.totalNumOfBixels);        % Lower bound on the variables.
 options.ub              = inf * ones(1,dij.totalNumOfBixels);   % Upper bound on the variables.
+
 funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
     
 % calculate initial beam intensities wInit
@@ -189,7 +219,28 @@ funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 
 % calc dose and reshape from 1D vector to 2D array
 fprintf('Calculating final cubes...\n');
+%have to use the old wOpt in here for VMAT, since dij only contains init
+%beams
 resultGUI = matRad_calcCubes(wOpt,dij,cst);
+
+if isfield(pln,'VMAT') && pln.VMAT
+    %Check if plan is VMAT.  If it is, put zeros back in the
+    %wOpt array
+    
+    offsetNEW = 0;
+    offset = 0;
+    wOptNEW = zeros(realTotalNumOfBixels,1);
+    for i = 1:realNumOfBeams
+        if dij.initializeBeam(i)
+            wOptNEW((offsetNEW+1):(offsetNEW+realNumOfRaysPerBeam(i))) = wOpt((offset+1):(offset+realNumOfRaysPerBeam(i)));
+            offset = offset+realNumOfRaysPerBeam(i);
+        end
+        offsetNEW = offsetNEW+realNumOfRaysPerBeam(i);
+    end
+    wOpt = wOptNEW;
+    clear wOptNEW
+end
+
 resultGUI.wUnsequenced = wOpt;
 
 % unset Key Pressed Callback of Matlab command window

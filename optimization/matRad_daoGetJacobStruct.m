@@ -85,5 +85,48 @@ if ~isempty(jacobStruct_dos)
 
 end
 
-% concatenate
-jacobStruct = [jacobStruct_dao; jacobStruct_dos];
+
+
+if ~isfield(apertureInfo.beam(1),'optimizeBeam')
+    % concatenate
+    jacobStruct = [jacobStruct_dao; jacobStruct_dos];
+else
+    % get index values for the jacobian
+    % variable index
+    timeInd = (1+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2-1);
+    currentLeftLeafInd = (apertureInfo.totalNumOfShapes+1):(apertureInfo.totalNumOfShapes+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeInd));
+    currentRightLeafInd = (apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+1):(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeInd));
+    nextLeftLeafInd = (apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+1):(apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeInd));
+    nextRightLeafInd = (apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+1):(apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeInd));
+    leftTimeInd = repelem((apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2+1):(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2-1),apertureInfo.beam(1).numOfActiveLeafPairs);
+    rightTimeInd = repelem((apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2+1):(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2-1),apertureInfo.beam(1).numOfActiveLeafPairs);
+    % constraint index
+    constraintInd = 1:2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeInd);
+    
+    % jacobian of the leafspeed constraint
+    i = repmat(constraintInd,1,3);
+    j = [currentLeftLeafInd currentRightLeafInd nextLeftLeafInd nextRightLeafInd leftTimeInd rightTimeInd];
+    % first do jacob wrt current leaf position (left, right), then next leaf
+    % position (left, right), then time (left, right)
+    
+    s = ones(1,6*apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeInd));
+    
+    jacobStruct_lfspd = sparse(i,j,s,2*apertureInfo.beam(1).numOfActiveLeafPairs*(apertureInfo.totalNumOfShapes-1),numel(apertureInfo.apertureVector),6*apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeInd));
+    
+    
+    % jacobian of the doserate constraint
+    i = repmat(1:(apertureInfo.totalNumOfShapes-1),1,2);
+    j = [1:(apertureInfo.totalNumOfShapes-1) (apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2+1):(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2-1)];
+    % first do jacob wrt weights, then wrt times
+    
+    s = ones(1,2*(apertureInfo.totalNumOfShapes-1));
+    
+    jacobStruct_dosrt = sparse(i,j,s,apertureInfo.totalNumOfShapes-1,numel(apertureInfo.apertureVector),2*(apertureInfo.totalNumOfShapes-1));
+    
+    jacobStruct_dao = padarray(jacobStruct_dao,[0 apertureInfo.totalNumOfShapes-1],0,'post');
+    jacobStruct_dos = padarray(jacobStruct_dos,[0 apertureInfo.totalNumOfShapes-1],0,'post');
+    % concatenate
+    jacobStruct = [jacobStruct_dao; jacobStruct_lfspd; jacobStruct_dosrt; jacobStruct_dos];
+end
+
+
