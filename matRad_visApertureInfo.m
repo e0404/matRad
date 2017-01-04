@@ -53,6 +53,7 @@ for i=1:numOfBeams
     end
 end
 
+
 for i=1:numOfBeams
 
     % open new figure for every beam

@@ -107,8 +107,6 @@ funcs.jacobian          = @(x) matRad_daoJacobFunc(x,apertureInfo,dij,cst,option
 funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct(apertureInfo,dij,cst);
 
 % Run IPOPT.
-
-
 [optApertureInfoVec, info] = ipopt(apertureInfo.apertureVector,funcs,options);
 
 % unset Key Pressed Callback of Matlab command window and delete waitbar
