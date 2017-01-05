@@ -87,9 +87,9 @@ matRad_ipoptOptions;
 options.lb              = apertureInfo.limMx(:,1);                                          % Lower bound on the variables.
 options.ub              = apertureInfo.limMx(:,2);                                          % Upper bound on the variables.
 if isfield(pln,'VMAT') && pln.VMAT
-    [options.cl,options.cu] = matRad_daoGetConstBounds(cst,apertureInfo,dij.numOfScenarios,pln.bioOptimization,pln.leafSpeedCst,pln.doseRateCst);   % Lower and upper bounds on the constraint functions.
+    [options.cl,options.cu] = matRad_daoGetConstBounds(cst,apertureInfo,options,pln.leafSpeedCst,pln.doseRateCst);   % Lower and upper bounds on the constraint functions.
 else
-    [options.cl,options.cu] = matRad_daoGetConstBounds(cst,apertureInfo,dij.numOfScenarios,pln.bioOptimization);   % Lower and upper bounds on the constraint functions.
+    [options.cl,options.cu] = matRad_daoGetConstBounds(cst,apertureInfo,options);   % Lower and upper bounds on the constraint functions.
 end
 
 % set optimization options

@@ -101,7 +101,8 @@ V = unique(vertcat(V{:}));
 
 % set lateral cutoff value
 if ~(strcmp(num2str(pln.bixelWidth),'field'))
-    lateralCutoff = 82; % [mm]
+    %lateralCutoff = 82; % [mm]
+    lateralCutoff = 25; % [mm]
 else
     lateralCutoff = 140; % [mm] due to the large field size
 end
