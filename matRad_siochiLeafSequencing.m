@@ -13,16 +13,16 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,v
 %
 % input
 %   resultGUI:          resultGUI struct to which the output data will be
-%   added, if
-%                       this field is empty resultGUI struct will be
-%                       created
+%                       added, if this field is empty resultGUI struct will
+%                       be created
 %   stf:                matRad steering information struct
+%   dij:                matRad's dij matrix
 %   numOfLevels:        number of stratification levels
 %   visBool:            toggle on/off visualization (optional)
 %
 % output
 %   resultGUI:          matRad result struct containing the new dose cube
-%   as well as the corresponding weights
+%                       as well as the corresponding weights
 %
 % References
 %   [1] https://www.ncbi.nlm.nih.gov/pubmed/10078655
@@ -45,7 +45,6 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,v
 if nargin < 5
     visBool = 0;
 end
-    
 
 numOfBeams = numel(stf);
 
@@ -70,9 +69,9 @@ for i = 1:numOfBeams
     X = ones(numOfRaysPerBeam,1)*NaN;
     Z = ones(numOfRaysPerBeam,1)*NaN;
     
-    for segment=1:stf(i).numOfRays
-        X(segment) = stf(i).ray(segment).rayPos_bev(:,1);
-        Z(segment) = stf(i).ray(segment).rayPos_bev(:,3);
+    for j = 1:stf(i).numOfRays
+        X(j) = stf(i).ray(j).rayPos_bev(:,1);
+        Z(j) = stf(i).ray(j).rayPos_bev(:,3);
     end
     
     % sort bixels into matrix
@@ -98,6 +97,7 @@ for i = 1:numOfBeams
     %Save weights in fluence matrix.
     fluenceMx(indInFluenceMx) = wOfCurrBeams;
     
+    % Stratification
     calFac = max(fluenceMx(:));
     D_k = round(fluenceMx/calFac*numOfLevels);
     
@@ -147,38 +147,27 @@ for i = 1:numOfBeams
     sequencing.beam(i).fluence      = D_0;
     sequencing.beam(i).sum          = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
     
-
-
-    for segment = 1:k
-        sequencing.beam(i).sum = sequencing.beam(i).sum+sequencing.beam(i).shapes(:,:,segment)*sequencing.beam(i).shapesWeight(segment);
+    for j = 1:k
+        sequencing.beam(i).sum = sequencing.beam(i).sum+sequencing.beam(i).shapes(:,:,j)*sequencing.beam(i).shapesWeight(j);
     end
     sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = sequencing.beam(i).sum(indInFluenceMx);
     
     offset = offset + numOfRaysPerBeam;
 
-
 end
-
-
-resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
-
 
 resultGUI.w          = sequencing.w;
 resultGUI.wSequenced = sequencing.w;
 
 resultGUI.sequencing   = sequencing;
+resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
 
-%EXAMINE
 resultGUI.physicalDose = reshape(dij.physicalDose{1} * sequencing.w,dij.dimensions);
 
 % if weights exists from an former DAO remove it
 if isfield(resultGUI,'wDao')
     resultGUI = rmfield(resultGUI,'wDao');
 end
-
-
-
-
 
 end
 
