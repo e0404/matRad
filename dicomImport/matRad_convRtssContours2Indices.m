@@ -47,7 +47,7 @@ for i = 1:size(structure.item,2)
         end
     
         round2 = @(a,b) round(a*10^b)/10^b;
-        dicomCtSliceThickness = ct.dicomInfo.SliceThickness(round2(ct.dicomInfo.SlicePositions,2)==round2(dicomCtSlicePos,2));
+        dicomCtSliceThickness = ct.dicomInfo.SliceThickness(round2(ct.dicomInfo.SlicePositions,0)==round2(dicomCtSlicePos,0));
         
         coords1 = interp1(ct.x,1:ct.cubeDim(2),structure.item(i).points(:,1),'linear','extrap');
         coords2 = interp1(ct.y,1:ct.cubeDim(1),structure.item(i).points(:,2),'linear','extrap');
