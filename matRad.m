@@ -23,38 +23,42 @@ clc
 
 %load HEAD_AND_NECK
 % load TG119.mat
-%load PROSTATE.mat
+% load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
 
-%  InputFolder = '\\radfsromeo\MRgRT\MRgRT_shared\Pelvis\StollPatientModels\T6H_fuer_MB\line_18_5_150KPA_final_newYM_OK_high';
-%  numOfScen   = 16;
-%  VOIs        = {'Blase','Contour','Prostata','Rektum','PTVGP','GTVPrimarius','PTVBoost', 'Hueftgelenk_li', 'Hueftgelenk_re'};
+ %InputFolder = '\\radfsromeo\MRgRT\MRgRT_shared\Pelvis\StollPatientModels\T6H_fuer_MB\line_18_5_150KPA_final_newYM_OK_high';
+%  InputFolder = 'D:\Matrad\data\4DCT\Liver007\4DSet01_10Ph';
+%  numOfScen   = 10;
+%  VOIs        = {}; %{'Blase','Contour','Prostata','Rektum','PTVGP','GTVPrimarius','PTVBoost', 'Hueftgelenk_li', 'Hueftgelenk_re'};
 %  [ct,cst]    = matRad_multScenImport(InputFolder,numOfScen,VOIs); 
  
 %load T6H_16.mat
-load TKUH_681024_all.mat
+%load TKUH_681024_all.mat
+%load TKUH005.mat
 %load Pankreas_ad_all.mat
 %load Boxphantom_all.mat
+%load Liver_refphase.mat
+load Liver_DS221.mat
 
 %% multiple Scenarios
 multScen.numOfCtScen         = ct.numOfCtScen; % number of imported ct scenarios
-multScen.numOfShiftScen      = [0 0 0];        % number of shifts in x y and z direction       
+multScen.numOfShiftScen      = [2 2 0];        % number of shifts in x y and z direction       
 multScen.shiftSize           = [5 5 5];     % equidistant: maximum shift [mm] / sampled: SD of normal distribution [mm]
 multScen.shiftGenType        = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
 multScen.shiftCombType       = 'individual';     % individual: no combination of shift scenarios, combined: combine shift scenarios
 multScen.shiftGen1DIsotropy  = '+-';            % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
-multScen.numOfRangeShiftScen = 0;              % number of absolute and/or relative range scnearios
-%multScen.maxAbsRangeShift    = 0;              % maximum absolute over and undershoot in mm
-%multScen.maxRelRangeShift    = 0;              % maximum relative over and undershoot in %
+multScen.numOfRangeShiftScen = 2;              % number of absolute and/or relative range scnearios
+multScen.maxAbsRangeShift    = 5;              % maximum absolute over and undershoot in mm
+multScen.maxRelRangeShift    = 0;              % maximum relative over and undershoot in %
 multScen.ScenCombType        = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
 multScen                     = matRad_setMultScen(multScen);
 
 %% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
-pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0]; % [°]  0°, 72°, 144°, 216°, and 288
-pln.couchAngles     = [0]; % [Â°]
+pln.bixelWidth      = 3; % [mm] / also corresponds to lateral spot spacing for particles
+pln.gantryAngles    = [15 330]; % [°]  0°, 72°, 144°, 216°, and 288
+pln.couchAngles     = [0 0]; % [Â°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
@@ -81,7 +85,6 @@ if strcmp(pln.radiationMode,'photons')
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst,multScen);
 end
-
 %% inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
@@ -111,7 +114,7 @@ matRad_calcDVH(resultGUI,cst,pln)
 resultGUI = matRad_postprocessing(resultGUI, dij, pln, 25000000);
 
 %% export Plan
-matRad_export_HITXMLPlan_modified('TKUH_681024_stf', 500000, 25000000, 'stfMode')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
+matRad_export_HITXMLPlan_modified('LiverDS221_1b_TSP', 500000, 25000000, 'TSP')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
 
 %% calc 4D dose
-[resultGUI, delivery, ct] = matRad_calc4dDose(ct, 'TKUH_681024_stf'); %TKUH005_test');  
+[resultGUI, delivery, ct] = matRad_calc4dDose(ct, 'LiverDS221_2b_stf'); %TKUH005_test');  

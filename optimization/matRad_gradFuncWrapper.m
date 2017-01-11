@@ -181,7 +181,8 @@ for i = 1:dij.numOfScenarios
 
         if isequal(type,'none')
 
-            g = g + (delta{i}' * dij.physicalDose{i})';
+%            g = g + (delta{i}' * dij.physicalDose{i})';
+                g = g + (delta{i}' * dij.physicalDose{dij.indexforOpt(i)})';
 
         elseif isequal(type,'effect')
 

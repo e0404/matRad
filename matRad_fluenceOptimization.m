@@ -169,10 +169,12 @@ else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBEx
     end
 end
 
-%check if backprojection is needed for all scenarios or only nominell
-%scenario
+%check which scenarios should be considered during optimization
+ % at the moment: if robust optimization -> all scnearios in opt, else only
+ % nominell
 if(dij.numOfScenarios > 1)
-    ivoi=1;
+     ivoi=1;
+     robOpt = 0;
     while  ivoi <=size(cst,1)
         inr=1;
         while inr <= numel(cst{ivoi,6})
@@ -181,14 +183,19 @@ if(dij.numOfScenarios > 1)
             else
                 ivoi=size(cst,1);
                 inr = numel(cst{ivoi,6})+1;
-                dij.numOfBackprojections = dij.numOfScenarios;
+                robOpt = 1;
             end
         end
             ivoi = ivoi+1;
     end
+    if(robOpt == 0)
+        dij.indexforOpt = [1];
+    else
+        dij.indexforOpt = find(~cellfun(@isempty,dij.physicalDose))'
+    end
 end
-            
-
+    
+    
 % set callback functions.
 [options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios);   
 funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,pln.bioOptimization);

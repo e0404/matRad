@@ -51,9 +51,16 @@ else
     % Calculate dose vector
     if isequal(type,'none')
 
-        for i = 1:dij.numOfBackprojections  %numOfScenarios
-            d{i} = dij.physicalDose{i} * w;
+        for i = 1: length(dij.indexforOpt)
+            d{i} = dij.physicalDose{dij.indexforOpt(i)} * w;
         end
+%         if dij.numOfBackprojections > 1
+%             for i = find(~cellfun(@isempty,dij.physicalDose))'
+%                 d{i} = dij.physicalDose{i} * w;
+%             end
+%         else
+%             d{1} = dij.physicalDose{1} * w;
+%         end
         
     elseif isequal(type,'effect') || isequal(type,'RBExD') 
         
