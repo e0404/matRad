@@ -37,8 +37,10 @@ function interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, gri
 coordsOfFirstPixel = [origCtInfo.ImagePositionPatient];
 
 % set up grid vectors
-x = coordsOfFirstPixel(1,1) + origCtInfo(1).PixelSpacing(1)*double([0:origCtInfo(1).Columns-1]);
-y = coordsOfFirstPixel(2,1) + origCtInfo(1).PixelSpacing(2)*double([0:origCtInfo(1).Rows-1]);
+x = coordsOfFirstPixel(1,1) + origCtInfo(1).ImageOrientationPatient(1) * ...
+                              origCtInfo(1).PixelSpacing(1)*double([0:origCtInfo(1).Columns-1]);
+y = coordsOfFirstPixel(2,1) + origCtInfo(1).ImageOrientationPatient(5) * ...
+                              origCtInfo(1).PixelSpacing(2)*double([0:origCtInfo(1).Rows-1]);
 z = coordsOfFirstPixel(3,:);
 
 if exist('grid','var')
@@ -46,8 +48,10 @@ if exist('grid','var')
     yq = grid{2};
     zq = grid{3};
 else
-    xq = coordsOfFirstPixel(1,1):resolution.x:(coordsOfFirstPixel(1,1)+origCtInfo(1).PixelSpacing(1)*double(origCtInfo(1).Columns-1));
-    yq = [coordsOfFirstPixel(2,1):resolution.y:(coordsOfFirstPixel(2,1)+origCtInfo(1).PixelSpacing(2)*double(origCtInfo(1).Rows-1))];
+    xq = coordsOfFirstPixel(1,1):origCtInfo(1).ImageOrientationPatient(1)*resolution.x: ...
+        (coordsOfFirstPixel(1,1)+origCtInfo(1).ImageOrientationPatient(1)*origCtInfo(1).PixelSpacing(1)*double(origCtInfo(1).Columns-1));
+    yq = [coordsOfFirstPixel(2,1):origCtInfo(1).ImageOrientationPatient(5)*resolution.y: ...
+        (coordsOfFirstPixel(2,1)+origCtInfo(1).ImageOrientationPatient(5)*origCtInfo(1).PixelSpacing(2)*double(origCtInfo(1).Rows-1))];
     zq = coordsOfFirstPixel(3,1):resolution.z: coordsOfFirstPixel(3,end);
 end
 
