@@ -193,6 +193,8 @@ if(dij.numOfScenarios > 1)
     else
         dij.indexforOpt = find(~cellfun(@isempty,dij.physicalDose))'
     end
+else
+    dij.indexforOpt = [1];
 end
     
     
