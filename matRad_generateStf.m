@@ -315,6 +315,7 @@ for i = 1:length(pln.gantryAngles)
                            targetExit(m)=[];
                            targetEntry(m-1) = min(targetEntry(m-1:m));
                            targetEntry(m)=[];
+                           m = numel(targetEntry)+1; %alles muss nochmal überprüft werden
                        end
                        m=m-1;
                    end
