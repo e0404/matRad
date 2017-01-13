@@ -354,6 +354,7 @@ for ShiftScen = 1:multScen.numOfShiftScen
 
 end %ShiftScen
 
+dij.indexforOpt = [1];
 
 try
   % wait 0.1s for closing all waitbars

@@ -303,6 +303,8 @@ for i = 1:dij.numOfBeams; % loop over all beams
     end
 end 
 
+dij.indexforOpt = [1];
+
 % manipulate isocenter
 pln.isoCenter = pln.isoCenter - multScen.shifts(:,ShiftScen)';
 for k = 1:length(stf)
