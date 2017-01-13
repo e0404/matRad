@@ -200,6 +200,7 @@ end
     iesEnergy = iesArray(iesArrayIx);
     iesFocus = 0;
     counter = 1;
+    tmpIES = [];
     
     for rayNb=1:stf(beamNb).numOfRays % loop over rays
 
