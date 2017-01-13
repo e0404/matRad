@@ -46,12 +46,11 @@ delivery = matRad_readLmdout(FileName);
 [resultGUI, delivery] = matRad_calcPhaseDose(delivery);
 
 %dose accumulation
-
-[dAcc, ct] = matRad_doseAcc(ct, resultGUI,'DDM');  %acc Methods: 'EMT' 'DDM'
+[dAcc, ct, resultGUI] = matRad_doseAcc(ct, resultGUI,'DDM');  %acc Methods: 'EMT' 'DDM'
 resultGUI.accDose = dAcc;
 
 %visualisation
-matRad_plotPhaseDose(resultGUI, 110); %TKUH005 slice 110 % T6H slice 50  %testphan slice 50 % Boxphan_3phases
+matRad_plotPhaseDose_2(resultGUI); %optional kann slice angegeben werden  TKUH005 slice 110 % T6H slice 50  %testphan slice 50 % Boxphan_3phases
 
 
 
