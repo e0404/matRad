@@ -110,10 +110,12 @@ end
 % FFP     Feet First-Prone                  (not supported)
 % FFS     Feet First-Supine                 (supported)
 
-if isempty(regexp(ctInfo(1).PatientPosition,'S', 'once'))
+if isempty(regexp(ctInfo(1).PatientPosition,{'S','P'}, 'once'))
     error(['This Patient Position is not supported by matRad.'...
-        ' As of now only ''HFS'' (Head First-Supine) and ''FFS'''...
-        ' (Feet First-Supine) can be processed.'])    
+        ' As of now only ''HFS'' (Head First-Supine), ''FFS'''...
+        ' (Feet First-Supine), '...    
+        '''HFP'' (Head First-Prone), and ''FFP'''...
+        ' (Feet First-Prone) can be processed.'])    
 end
 
 %% creation of ct-cube
@@ -156,26 +158,26 @@ yDir = ctInfo(1).ImageOrientationPatient(4:6); % lps: [0;1;0]
 nonStandardDirection = false;
 
 % correct x- & y-direction
-
-if xDir(1) == 1 && xDir(2) == 0 && xDir(3) == 0
-    fprintf('x-direction OK\n')
-elseif xDir(1) == -1 && xDir(2) == 0 && xDir(3) == 0
-    fprintf('\nMirroring x-direction...')
-    origCt = flip(origCt,1);
-    fprintf('finished!\n')
-else
-    nonStandardDirection = true;
-end
-    
-if yDir(1) == 0 && yDir(2) == 1 && yDir(3) == 0
-    fprintf('y-direction OK\n')
-elseif yDir(1) == 0 && yDir(2) == -1 && yDir(3) == 0
-    fprintf('\nMirroring y-direction...')
-    origCt = flip(origCt,2);
-    fprintf('finished!\n')
-else
-    nonStandardDirection = true;
-end
+% 
+% if xDir(1) == 1 && xDir(2) == 0 && xDir(3) == 0
+%     fprintf('x-direction OK\n')
+% elseif xDir(1) == -1 && xDir(2) == 0 && xDir(3) == 0
+%     fprintf('\nMirroring x-direction...')
+%     origCt = flip(origCt,1);
+%     fprintf('finished!\n')
+% else
+%     nonStandardDirection = true;
+% end
+%     
+% if yDir(1) == 0 && yDir(2) == 1 && yDir(3) == 0
+%     fprintf('y-direction OK\n')
+% elseif yDir(1) == 0 && yDir(2) == -1 && yDir(3) == 0
+%     fprintf('\nMirroring y-direction...')
+%     origCt = flip(origCt,2);
+%     fprintf('finished!\n')
+% else
+%     nonStandardDirection = true;
+% end
 
 if nonStandardDirection
     fprintf(['Non-standard patient orientation.\n'...

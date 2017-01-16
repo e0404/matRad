@@ -38,14 +38,14 @@ multScen.numOfCtScen          = ct.numOfCtScen; % number of imported ct scenario
 
 multScen.numOfIntSegShiftScen = 0; %1000;              % number of internal segmentation shift scnearios     
 
-multScen.numOfShiftScen       = [1 0 0];        % number of shifts in x y and z direction       
+multScen.numOfShiftScen       = [0 0 0];        % number of shifts in x y and z direction       
 multScen.shiftSize            = [5 0 0];        % maximum shift [mm]
 multScen.shiftSD              = [3 3 3];        % SD of normal distribution [mm]
 multScen.shiftGenType         = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
 multScen.shiftCombType        = 'individual';   % individual: no combination of shift scenarios, combined: combine shift scenarios, allcombined: create every possible shift combination
 multScen.shiftGen1DIsotropy   = '+-';           % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
 
-multScen.numOfRangeShiftScen  = 2;              % number of absolute and/or relative range scnearios
+multScen.numOfRangeShiftScen  = 0;              % number of absolute and/or relative range scnearios
 multScen.maxAbsRangeShift     = 5;              % maximum absolute over and undershoot in mm
 
 multScen.maxRelRangeShift     = 0;              % maximum relative over and undershoot in %
@@ -66,9 +66,10 @@ pln.couchAngles     = [0 0 ]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
-pln.radiationMode   = 'photons'; % either photons / protons / carbon
-pln.bioOptimization = 'none'; % none: physical optimization; effect: effect-based optimization; RBExD: optimization of RBE-weighted dose
-pln.numOfFractions  = 1;
+pln.radiationMode   = 'photons';     % either photons / protons / carbon
+pln.bioOptimization = 'none';        % none: physical optimization;             const_RBExD; constant RBE of 1.1;
+                                     % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
+pln.numOfFractions  = 30;
 pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.machine         = 'Generic';
@@ -94,7 +95,8 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
     %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
-    resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
+    %resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
+    resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
 end
 
 %% DAO

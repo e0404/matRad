@@ -84,6 +84,7 @@ if calcDoseDirect
 else
     numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 end
+
 doseTmpContainer = cell(numOfBixelsContainer,multScen.numOfCtScen,multScen.numOfShiftScen,multScen.numOfRangeShiftScen);
 if isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBExD')
     alphaDoseTmpContainer = cell(numOfBixelsContainer,multScen.numOfCtScen,multScen.numOfShiftScen,multScen.numOfRangeShiftScen);
@@ -100,6 +101,9 @@ if isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBExD')
             end
         end
     end
+elseif isequal(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
+    dij.RBE = 1.1;
+    fprintf(['matRad: Using a constant RBE of 1.1 \n']);   
 end
 
 % Only take voxels inside patient.
@@ -130,8 +134,9 @@ if isfield(pln,'calcLET') && pln.calcLET
 end
 
 % generates tissue class matrix for biological optimization
-if (strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD')) ... 
+if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ... 
         && strcmp(pln.radiationMode,'carbon')
+    
     fprintf('matRad: loading biological base data... ');
     vTissueIndex = zeros(size(V,1),1);
     
@@ -167,9 +172,10 @@ if (strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD'))
     fprintf('done.\n');
 
 % issue warning if biological optimization not possible
-elseif sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0 && strcmp(pln.radiationMode,'protons')
-    warndlg('Effect based and RBE optimization not possible with protons - physical optimization is carried out instead.');
-    pln.bioOptimization = 'none';
+elseif sum(strcmp(pln.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && ~strcmp(pln.radiationMode,'carbon') ||...
+       ~strcmp(pln.radiationMode,'protons') && strcmp(pln.bioOptimization,'const_RBExD')
+    warndlg([pln.bioOptimization ' optimization not possible with ' pln.radiationMode '- physical optimization is carried out instead.']);
+    pln.bioOptimization = 'none';      
 end
 
 for ShiftScen = 1:multScen.numOfShiftScen
@@ -179,7 +185,7 @@ for ShiftScen = 1:multScen.numOfShiftScen
     for k = 1:length(stf)
         stf(k).isoCenter = stf(k).isoCenter + multScen.shifts(:,ShiftScen)';
     end
-
+    
     fprintf(['shift scenario ' num2str(ShiftScen) ' of ' num2str(multScen.numOfShiftScen) ': \n']);
     fprintf('matRad: Particle dose calculation...\n');
     counter = 0;
@@ -203,7 +209,6 @@ for ShiftScen = 1:multScen.numOfShiftScen
         inv_rotMx_XY_T = [ cosd(-pln.gantryAngles(i)) sind(-pln.gantryAngles(i)) 0;
                           -sind(-pln.gantryAngles(i)) cosd(-pln.gantryAngles(i)) 0;
                                                     0                          0 1];
-
         % rotation around Y axis (couch)
         inv_rotMx_XZ_T = [cosd(-pln.couchAngles(i)) 0 -sind(-pln.couchAngles(i));
                                                   0 1                         0;
@@ -211,7 +216,7 @@ for ShiftScen = 1:multScen.numOfShiftScen
 
         % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
         rot_coordsV = coordsV*inv_rotMx_XZ_T*inv_rotMx_XY_T;
-
+        
         rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
         rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
         rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
@@ -242,9 +247,9 @@ for ShiftScen = 1:multScen.numOfShiftScen
                 % find index of maximum used energy (round to keV for numerical
                 % reasons
                 energyIx = max(round2(stf(i).ray(j).energy,4)) == round2([machine.data.energy],4);
-
+    
                 maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
-
+        
                 % Ray tracing for beam i and ray j
                 [ix,radialDist_sq] = matRad_calcGeoDists(rot_coordsV, ...
                                                          stf(i).sourcePoint_bev, ...
@@ -254,8 +259,8 @@ for ShiftScen = 1:multScen.numOfShiftScen
                                                          maxLateralCutoffDoseCalc);
 
                 % just use tissue classes of voxels found by ray tracer
-                if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
-                     && strcmp(pln.radiationMode,'carbon')
+                if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ... 
+                    && strcmp(pln.radiationMode,'carbon')
                         vTissueIndex_j = vTissueIndex(ix,:);
                 end
 
@@ -342,7 +347,7 @@ for ShiftScen = 1:multScen.numOfShiftScen
                                   letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix(currIx)),1,bixelLET.*bixelDose,dij.numOfVoxels,1);
                                 end                            
 
-                                if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
+                                if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ... 
                                     && strcmp(pln.radiationMode,'carbon')
                                     % calculate alpha and beta values for bixel k on ray j of                  
                                     [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
@@ -353,6 +358,7 @@ for ShiftScen = 1:multScen.numOfShiftScen
                                     alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix(currIx)),1,bixelAlpha.*bixelDose,dij.numOfVoxels,1);
                                     betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}  = sparse(V(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.numOfVoxels,1);
                                 end
+                                
                             end
 
                         end
@@ -390,8 +396,8 @@ for ShiftScen = 1:multScen.numOfShiftScen
                             end
                         end
 
-                        if strcmp(pln.bioOptimization,'effect') || strcmp(pln.bioOptimization,'RBExD') ... 
-                                && strcmp(pln.radiationMode,'carbon')
+                        if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ... 
+                            && strcmp(pln.radiationMode,'carbon')
                             for CtScen = 1:multScen.numOfCtScen
                                 for RangeShiftScen = 1:multScen.numOfRangeShiftScen
 

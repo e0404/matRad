@@ -22,7 +22,7 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2016 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -34,7 +34,7 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % issue warning if biological optimization impossible
-if sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose'))
+if sum(strcmp(pln.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose')) && strcmp(pln.radiationMode,'carbon')
     warndlg('Alpha and beta matrices for effect based and RBE optimization not available - physical optimization is carried out instead.');
     pln.bioOptimization = 'none';
 end
@@ -125,14 +125,16 @@ options.ub              = inf * ones(1,dij.totalNumOfBixels);   % Upper bound on
 funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
     
 % calculate initial beam intensities wInit
-if strcmp(pln.bioOptimization,'none')
-    
-    %bixelWeight =  doseTarget*1/(mean(dij.physicalDose{1}(V,:)*wOnes));
-    bixelWeight =  doseTarget/(min(dij.physicalDose{1}(V,:)*wOnes));
+if  strcmp(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
+    % check if a constant RBE is defined - if not use 1.1
+    if ~isfield(dij,'RBE')
+        dij.RBE = 1.1;
+    end
+    bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
-
-else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBExD')) ... 
-        && isequal(pln.radiationMode,'carbon');
+        
+elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization,'LEMIV_RBExD')) ... 
+                                && strcmp(pln.radiationMode,'carbon')
 
     % check if you are running a supported rad
     dij.ax   = zeros(dij.numOfVoxels,1);
@@ -154,14 +156,14 @@ else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBEx
         end
     end
      
-    if isequal(pln.bioOptimization,'effect')
+    if isequal(pln.bioOptimization,'LEMIV_effect')
         
            effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
            p            = (sum(dij.mAlphaDose{1}(V,:)*wOnes)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            q            = -(effectTarget * length(V)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
 
-    elseif isequal(pln.bioOptimization,'RBExD')
+    elseif isequal(pln.bioOptimization,'LEMIV_RBExD')
         
            %pre-calculations
            dij.gamma      = zeros(dij.numOfVoxels,1);
@@ -177,26 +179,43 @@ else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBEx
                         4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*(dij.physicalDose{1}(V,:)*wOnes)));
            wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
     end
+    
+else 
+    bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
+    wInit       = wOnes * bixelWeight;
+    pln.bioOptimization = 'none';
 end
 
+% set optimization options
+options.radMod          = pln.radiationMode;
+options.bioOpt          = pln.bioOptimization;
+options.ID              = [pln.radiationMode '_' pln.bioOptimization];
+options.numOfScenarios  = dij.numOfScenarios;
+
 % set callback functions.
-%[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios);   
-funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,pln.bioOptimization);
-funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,pln.bioOptimization);
-funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,pln.bioOptimization);
-funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,pln.bioOptimization);
+
+ 
+funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,options);
+funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,options);
+funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,options);
+funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,options);
 funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 
 % scale objective and constraint function
-gInit    = abs(matRad_gradFuncWrapper(wInit,dij,cst,pln.bioOptimization));
+gInit    = abs(matRad_gradFuncWrapper(wInit,dij,cst,options));
 fScaling = 1e2/max(gInit);
-if ~isempty(matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios))
-    for i = 1:length(matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios))  
-        jInit    = abs(matRad_jacobFuncWrapper(wInit,dij,cst,pln.bioOptimization));
+
+
+if ~isempty(matRad_getConstBoundsWrapper(cst,options))
+
+    jInit    = abs(matRad_jacobFuncWrapper(wInit,dij,cst,options));
+        
+    for i = 1:length(matRad_getConstBoundsWrapper(cst,options))  
+        
         wInitTmp = wInit;
         while sum(jInit(i,:)) == 0
             wInitTmp = wInitTmp - 0.1*wInit;
-            jInit = abs(matRad_jacobFuncWrapper(wInitTmp,dij,cst,pln.bioOptimization));
+            jInit = abs(matRad_jacobFuncWrapper(wInitTmp,dij,cst,options));
         end
         cScalingTmp(i,1) = 1e-3/max(jInit(i,:));
     end
@@ -204,9 +223,7 @@ if ~isempty(matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenar
 end
 
 options.ipopt.acceptable_constr_viol_tol = max(cScaling)*options.ipopt.acceptable_constr_viol_tol;
-
-% set constraint bounds
-[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios);
+[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,options);  
 
 %check which scenarios should be considered during optimization
 %at the moment: if robust optimization -> all scenarios in opt, else only
@@ -236,7 +253,7 @@ end
             
 
 % Run IPOPT.
-[wOpt, info]           = ipopt(wInit,funcs,options);
+[wOpt, info]            = ipopt(wInit,funcs,options);
 
 % calc dose and reshape from 1D vector to 2D array
 fprintf('Calculating final cubes...\n');
