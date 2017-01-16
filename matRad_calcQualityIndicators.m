@@ -39,7 +39,7 @@ function result = matRad_calcQualityIndicators(result,cst,pln,refGy,refVol)
 
 if(nargin < 4)
     refVol = [2 5 98 95];
-    refGy  = [40 50 60];
+    refGy  = [5:5:100];
 end
 
 % calculate QIs per VOI
@@ -57,10 +57,7 @@ for runVoi = 1:size(cst,1)
         relevantDose = result.physicalDose;
         doseInVoi    = sort(result.physicalDose(indices));
     end
-    
-    %refGy = round([0.4 0.6 0.8] * max(relevantDose(:)) * 10)/10;
-    refGy = round(linspace(1,round(max(relevantDose(:))),3));
-    
+        
     if ~isempty(doseInVoi)
         
         % easy stats

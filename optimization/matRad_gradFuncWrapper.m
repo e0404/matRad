@@ -35,11 +35,7 @@ function g = matRad_gradFuncWrapper(w,dij,cst,type)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_voxelWeighting;
-global matRad_iteration;
-
-% initialize voxel calc Flag
-[matRad_voxelWeighting{:,2}] = deal(true);
+global fScaling
 
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,type);
@@ -118,50 +114,40 @@ for  i = 1:size(cst,1)
                     
                 elseif strcmp(cst{i,6}(j).robustness,'coverage')
                     
-                    d_i = [];
-                    
-                    % get cst index of VOI that corresponds to VOI ring
-                    cstidx = find(strcmp(cst(:,2),cst{i,2}(1:end-4)));
+                    % calc invers DCH
+                    Q_ref  = cst{i,6}(j).coverage/100;
+                    V_ref  = cst{i,6}(j).volume/100;
+                    d_ref2 = matRad_calcInversDCH(V_ref,Q_ref,d,dij,cst(i,:)); 
                     
                     if dij.numOfScenarios > 1
-                        % get dose of VOI that corresponds to VOI ring
+                        
                         for k = 1:dij.numOfScenarios
-                            d_i{k} = d{k}(cst{cstidx,4}{1});
+                            
+                            % get VOI dose in current scenario
+                            d_i = d{k}(cst{i,4}{1});
+
+                            % get voxel dependent weigthing
+                            voxelWeighting = 1; 
+                            
+                            % calculate dose deviations from d_ref
+                            delta{k}(cst{i,4}{1}) = delta{k}(cst{i,4}{1}) + dij.ScenProb(k)*matRad_gradFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);    
+                                                                 
                         end
                         
-                        % calc invers DCH of VOI
-                        refQ   = cst{i,6}(j).coverage/100;
-                        refVol = cst{i,6}(j).volume/100;
-                        d_ref2 = matRad_calcInversDCH(refVol,refQ,d_i,dij.numOfScenarios);
-                    
                     else
                         
-                        % calc invers DCH of VOI
-                        refQ   = cst{i,6}(j).coverage/100;
-                        refVol = cst{i,6}(j).volume/100;
-                        d_ref2 = matRad_calcInversDCH(refVol,refQ,d,length(cst{cstidx,5}.idxShift),cst(cstidx,:),dij);
+                        % get VOI ScenUnion dose of nominal scneario
+                        cstLogical = strcmp(cst(:,2),[cst{i,2},' ScenUnion']);
+                        d_i        = d{1}(cst{cstLogical,5}.voxelID);
+                        
+                        % get voxel dependent weigthing
+                        voxelWeighting = 5*cst{cstLogical,5}.voxelProb;  
+                        
+                        % calculate delta
+                        delta{1}(cst{cstLogical,4}{1}) = delta{1}(cst{cstLogical,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);
                         
                     end
                     
-                    % get dose of Target Ring
-                    d_i = d{1}(cst{i,4}{1});
-                    
-                    % get voxel dependetn weigthing
-                    if matRad_iteration < 0
-                        voxelWeighting = 1;
-                        
-                    else
-                        if isequal(cst{i,5}.voxelWeightingType,'heurWeighting')
-                            matRad_calcVoxelWeighting(i,j,cst,d_i,d_ref,d_ref2)
-                            voxelWeighting = matRad_voxelWeighting{i,1};
-
-                        elseif isequal(cst{i,5}.voxelWeightingType,'probWeighting')
-                            voxelWeighting = 5*cst{i,5}.voxelProb;    
-                        end
-                    end
-
-                    delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);
-                
                 end
                 
             end
@@ -204,3 +190,12 @@ for i = 1:dij.numOfScenarios
 
     end
 end
+
+% apply objective scaling
+g = fScaling.*g;
+
+% save min/max gradient
+global matRad_iteration
+global GRADIENT
+GRADIENT(1,1,matRad_iteration+1)= max(abs(g));
+GRADIENT(1,2,matRad_iteration+1)= min(abs(g));

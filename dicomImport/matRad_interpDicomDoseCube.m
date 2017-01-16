@@ -37,8 +37,8 @@ doseInfo = dicominfo(dosefile);
 
 % read the dosefile itself
 dosedata = dicomread(dosefile);
-% convert 16-bit integer to double precision, therefore to 1 normalized
-dosedata = im2double(dosedata);
+dose.cube = double(dosedata);
+% dose.cube = single(dosedata);
 
 % give it an internal name
 dose.internalName = currDose{12};
@@ -52,7 +52,7 @@ dose.resolution.z = doseInfo.SliceThickness;
 target_resolution = ct.resolution;
 
 % convert dosedata to 3-D cube
-dose.cube = squeeze(dosedata(:,:,1,:));
+dose.cube = squeeze(dose.cube(:,:,1,:));
 
 % ct resolution is target resolution, now convert to new cube;
 
@@ -72,15 +72,10 @@ zq =  min(ct.z) : target_resolution.z : max(ct.z);
 [ Y,  X,  Z] = meshgrid(x,y,z);
 [Yq, Xq, Zq] = meshgrid(xq,yq,zq);
 
-% scale cube from relative (normalized) to absolute values
-% need BitDepth
-bitDepth = double(doseInfo.BitDepth);
 % get GridScalingFactor
 gridScale = double(doseInfo.DoseGridScaling);
-% CAUTION: Only valid if data is converted via im2double
-doseScale = (2 ^ bitDepth - 1) * gridScale;
 % rescale dose.cube
-dose.cube = doseScale * dose.cube;
+dose.cube = gridScale * dose.cube;
 
 % interpolation to ct grid - cube is now stored in Y X Z
 dose.cube = interp3(Y,X,Z,dose.cube,Yq,Xq,Zq,'linear',0);

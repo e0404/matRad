@@ -32,6 +32,7 @@ function [cl,cu] = matRad_getConstBoundsWrapper(cst,type,numOfScenarios)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global cScaling
 
 % Initialize bounds
 cl = [];
@@ -56,8 +57,8 @@ for  i = 1:size(cst,1)
                 end
 
                 if strcmp(cst{i,6}(j).robustness,'none') || strcmp(cst{i,6}(j).robustness,'coverage')
-
-                    [clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param,numOfScenarios);
+                    
+                    [clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param);
                     
                     cl = [cl;clTmp];
                     cu = [cu;cuTmp];
@@ -82,4 +83,6 @@ for  i = 1:size(cst,1)
 
 end % over all structures
    
-
+% apply constraint scaling
+cl = cScaling.*cl;
+cu = cScaling.*cu;

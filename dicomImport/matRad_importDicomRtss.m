@@ -66,9 +66,11 @@ for i = 1:numOfContStructs % loop over every structure
                              
     structures(i).structNumber = structInfo.ROIContourSequence.(...
                                  listOfContStructs{i}).ReferencedROINumber;
-    structures(i).structColor  = structInfo.ROIContourSequence.(...
-                                 listOfContStructs{i}).ROIDisplayColor;  
-                             
+    if isfield(structInfo.ROIContourSequence.(listOfContStructs{i}),'ROIDisplayColor')
+        structures(i).structColor  = structInfo.ROIContourSequence.(...
+                                     listOfContStructs{i}).ROIDisplayColor;  
+    end
+
     if isfield(structInfo.ROIContourSequence.(...
                     listOfContStructs{i}), 'ContourSequence');
                 if ~isempty(structInfo.ROIContourSequence.(...
@@ -96,6 +98,10 @@ for i = 1:numOfContStructs % loop over every structure
         structX = structSlice.ContourData([1:3:end 1]);
         structY = structSlice.ContourData([2:3:end 2]);
         structZ = structSlice.ContourData([3:3:end 3]);
+        
+        % rounding to solve numerical problems with contour points not
+        % being defined exactly in the same slice
+        structZ = 1e-10*round(1e10*structZ);
         
         % sanity check 1
         if numel(unique(structZ)) > 1

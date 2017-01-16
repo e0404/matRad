@@ -1,10 +1,8 @@
 function jacobStruct = matRad_getJacobStruct(dij,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian structure function for inverse planning supporting max dose
-% constraint, min dose constraint, min max dose constraint, min mean, max
-% min, min max mean constraint, min EUD constraint, max EUDconstraint, 
-% min max EUD constraint, max DVH constraint, 
-% min DVH constraint 
+% constraint, min dose constraint, min mean dose constraint, max mean dose constraint, 
+% min EUD constraint, max EUD constraint, max DVH constraint, min DVH constraint 
 % 
 % call
 %   jacobStruct = matRad_getJacobStruct(dij,cst)
@@ -22,7 +20,7 @@ function jacobStruct = matRad_getJacobStruct(dij,cst)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2016 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -37,27 +35,23 @@ function jacobStruct = matRad_getJacobStruct(dij,cst)
 for i = 1:size(cst,1)    
     for j = 1:numel(cst{i,6})
         if isequal(cst{i,6}(j).type, 'max mean dose constraint') || ...
-           isequal(cst{i,6}(j).type, 'min mean dose constraint') || ...
-           isequal(cst{i,6}(j).type, 'min max mean dose constraint')
+           isequal(cst{i,6}(j).type, 'min mean dose constraint')
 
-                % -> no other max, min or min max mean dose constraint
+                % -> no other max, min mean dose constraint
                 for k = j+1:numel(cst{i,6})
                     if isequal(cst{i,6}(k).type, 'max mean dose constraint') || ...
-                       isequal(cst{i,6}(k).type, 'min mean dose constraint') || ...
-                       isequal(cst{i,6}(k).type, 'min max mean dose constraint')
-                            error('Simultatenous definition of min, max and or min max mean dose constraint\n');
+                       isequal(cst{i,6}(k).type, 'min mean dose constraint') 
+                            error('Simultatenous definition of min mean and max mean dose constraint\n');
                     end
                 end
         elseif isequal(cst{i,6}(j).type, 'max EUD constraint') || ...
-               isequal(cst{i,6}(j).type, 'min EUD constraint') || ...
-               isequal(cst{i,6}(j).type, 'min max EUD constraint')
+               isequal(cst{i,6}(j).type, 'min EUD constraint') 
 
-                % -> no other max, min or min max mean dose constraint
+                % -> no other max, min mean dose constraint
                 for k = j+1:numel(cst{i,6})
                     if isequal(cst{i,6}(k).type, 'max EUD constraint') || ...
-                       isequal(cst{i,6}(k).type, 'min EUD constraint') || ...
-                       isequal(cst{i,6}(k).type, 'min max EUD constraint')
-                            error('Simultatenous definition of min, max and or min max EUD constraint\n');
+                       isequal(cst{i,6}(k).type, 'min EUD constraint')
+                            error('Simultatenous definition of min EUD and max EUD constraint\n');
                     end
                 end
 
@@ -66,10 +60,10 @@ for i = 1:size(cst,1)
 
             % -> no other DVH constraint
             for k = j+1:numel(cst{i,6})
-                if (isequal(cst{i,6}(k).type, 'max DVH constraint') && isequal(cst{i,6}(i).dose,cst{i,6}(j).dose)) || ...
-                   (isequal(cst{i,6}(k).type, 'max DVH constraint') && isequal(cst{i,6}(i).volume,cst{i,6}(j).volume)) || ... 
-                   (isequal(cst{i,6}(k).type, 'min DVH constraint') && isequal(cst{i,6}(i).dose,cst{i,6}(j).dose)) || ...
-                   (isequal(cst{i,6}(k).type, 'min DVH constraint') && isequal(cst{i,6}(i).volume,cst{i,6}(j).volume))
+                if (isequal(cst{i,6}(k).type, 'max DVH constraint') && isequal(cst{i,6}(k).dose,cst{i,6}(j).dose)) || ...
+                   (isequal(cst{i,6}(k).type, 'max DVH constraint') && isequal(cst{i,6}(k).volume,cst{i,6}(j).volume)) || ... 
+                   (isequal(cst{i,6}(k).type, 'min DVH constraint') && isequal(cst{i,6}(k).dose,cst{i,6}(j).dose)) || ...
+                   (isequal(cst{i,6}(k).type, 'min DVH constraint') && isequal(cst{i,6}(k).volume,cst{i,6}(j).volume))
 
                         error('Simultatenous definition of DVH constraint\n');
                 end
@@ -100,10 +94,8 @@ for i = 1:size(cst,1)
                        isequal(cst{i,6}(j).type, 'min dose constraint') || ...
                        isequal(cst{i,6}(j).type, 'max mean dose constraint') || ...
                        isequal(cst{i,6}(j).type, 'min mean dose constraint') || ...
-                       isequal(cst{i,6}(j).type, 'min max mean dose constraint') || ...
                        isequal(cst{i,6}(j).type, 'max EUD constraint') || ...
                        isequal(cst{i,6}(j).type, 'min EUD constraint') || ...
-                       isequal(cst{i,6}(j).type, 'min max EUD constraint') || ...
                        isequal(cst{i,6}(j).type, 'max DVH constraint') || ... 
                        isequal(cst{i,6}(j).type, 'min DVH constraint')
 
@@ -133,58 +125,27 @@ for i = 1:size(cst,1)
                         
                     end
                     
-                elseif strcmp(cst{i,6}(j).robustness,'coverage')
-                    
-                    if isequal(cst{i,6}(j).type, 'max DCH constraint') || ... 
-                       isequal(cst{i,6}(j).type, 'min DCH constraint')
-                        
-                        physicalDoseCum = sparse(mean(dij.physicalDose{1}(cst{i,4}{1},:)));
-                        for k = 2:dij.numOfScenarios
-                            physicalDoseCum = physicalDoseCum + sparse(mean(dij.physicalDose{k}(cst{i,4}{1},:)));
-                        end
-
-                       jacobStruct = [jacobStruct; spones(physicalDoseCum)];
+                elseif strcmp(cst{i,6}(j).robustness,'coverage')                    
                        
-                    elseif isequal(cst{i,6}(j).type, 'max DCH constraint2') || ...
-                           isequal(cst{i,6}(j).type, 'min DCH constraint2')    
-                       
-                       jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{i,4}{1},:)))];
-                       
-                    elseif isequal(cst{i,6}(j).type, 'max DCH constraint3') || ... 
-                           isequal(cst{i,6}(j).type, 'min DCH constraint3')
-                        
-                        physicalDoseCum = sparse(mean(dij.physicalDose{1}(cst{i,4}{1},:)));
-                        for k = 2:dij.numOfScenarios
-                            physicalDoseCum = physicalDoseCum + sparse(mean(dij.physicalDose{k}(cst{i,4}{1},:)));
-                        end
-
-                       jacobStruct = [jacobStruct; spones(physicalDoseCum)];
-
-%                         for k = 1:dij.numOfScenarios
-%                             
-%                             jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{k}(cst{i,4}{1},:)))];
-%                             
-%                         end      
-
-                    elseif isequal(cst{i,6}(j).type, 'max DCH constraint4') || ... 
-                           isequal(cst{i,6}(j).type, 'min DCH constraint4')
-                        
-                        for k = 1:dij.numOfScenarios
+                    if isequal(cst{i,6}(j).type, 'max DCH Area constraint') || ...
+                       isequal(cst{i,6}(j).type, 'min DCH Area constraint') || ...
+                       isequal(cst{i,6}(j).type, 'max DCH Theta constraint') || ... 
+                       isequal(cst{i,6}(j).type, 'min DCH Theta constraint')
+                   
+                        if dij.numOfScenarios > 1
                             
-                            jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{k}(cst{i,4}{1},:)))];
+                            physicalDoseCum = sparse(mean(dij.physicalDose{1}(cst{i,4}{1},:)));
+                            for k = 2:dij.numOfScenarios
+                                physicalDoseCum = physicalDoseCum + sparse(mean(dij.physicalDose{k}(cst{i,4}{1},:)));
+                            end
+                            jacobStruct = [jacobStruct; spones(physicalDoseCum)];
                             
-                        end    
-                        
-                    elseif isequal(cst{i,6}(j).type, 'max DCH constraint5') || ... 
-                           isequal(cst{i,6}(j).type, 'min DCH constraint5')
-                        
-%                         for k = 1:length(cst{i,5}.idxShift)
-%                             
-%                             jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{i,4}{1}-cst{i,5}.idxShift(k),:)))];
-%                             
-%                         end 
-                        jacobStruct = [jacobStruct; cst{i,5}.jacobStruct];
-                        
+                        else
+                            cstLogical  = strcmp(cst(:,2),[cst{i,2},' ScenUnion']);
+                            jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{cstLogical,5}.voxelID,:)))];
+                            
+                        end                     
+
                     end
                     
                 end

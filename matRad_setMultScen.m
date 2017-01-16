@@ -97,7 +97,35 @@ if isequal(multScen.shiftGenType,'equidistant')
             
             error('chose same number of shifts in x,y and z if shift comb type equals "combined"')
             
-        end            
+        end  
+        
+    elseif isequal(multScen.shiftCombType,'allcombined')
+
+        deltaShift = multScen.shiftSize./(multScen.numOfShiftScen./2);
+        multScen.shifts  = [];
+
+        shiftsx = -multScen.shiftSize(1):deltaShift(1):multScen.shiftSize(1);
+        %shiftsx = shiftsx(shiftsx ~= 0);
+        shiftsy = -multScen.shiftSize(2):deltaShift(2):multScen.shiftSize(2);
+        %shiftsy = shiftsy(shiftsy ~= 0);
+        shiftsz = -multScen.shiftSize(3):deltaShift(3):multScen.shiftSize(3);
+        %shiftsz = shiftsz(shiftsz ~= 0);
+
+        multScen.shifts = [];
+        
+        for i = 1:length(shiftsx)
+            for j = 1:length(shiftsy)
+                for k = 1:length(shiftsz)
+                    if shiftsx(i) == 0 & shiftsy(j) == 0 & shiftsz(k) == 0
+                        multScen.shifts = multScen.shifts;
+                    else
+                        multScen.shifts = [multScen.shifts,[shiftsx(i);shiftsy(j);shiftsz(k)]];
+                    end
+                end
+            end
+        end
+        multScen.shifts = [zeros(3,1),multScen.shifts];
+        
     end
     
 elseif isequal(multScen.shiftGenType,'sampled')
@@ -110,7 +138,7 @@ elseif isequal(multScen.shiftGenType,'sampled')
 
             for i = 1:3
                 shifts      = zeros(3,multScen.numOfShiftScen(i));
-                shifts(i,:) = multScen.shiftSize(i).*randn(1,multScen.numOfShiftScen(i));
+                shifts(i,:) = multScen.shiftSD(i).*randn(1,multScen.numOfShiftScen(i));
 
                 multScen.shifts   = [multScen.shifts, shifts];
             end
@@ -128,9 +156,9 @@ elseif isequal(multScen.shiftGenType,'sampled')
                 
             if isequal(multScen.shiftGen1DIsotropy,'+-')
                 
-                shiftsx = multScen.shiftSize(1).*randn(1,multScen.numOfShiftScen(1));
-                shiftsy = multScen.shiftSize(2).*randn(1,multScen.numOfShiftScen(2));
-                shiftsz = multScen.shiftSize(3).*randn(1,multScen.numOfShiftScen(3));
+                shiftsx = multScen.shiftSD(1).*randn(1,multScen.numOfShiftScen(1));
+                shiftsy = multScen.shiftSD(2).*randn(1,multScen.numOfShiftScen(2));
+                shiftsz = multScen.shiftSD(3).*randn(1,multScen.numOfShiftScen(3));
                 
                 multScen.shifts = [shiftsx; shiftsy; shiftsz];
                 multScen.shifts = [zeros(3,1), multScen.shifts];
@@ -151,7 +179,19 @@ elseif isequal(multScen.shiftGenType,'sampled')
    
 end
 
+% set total number of shift scnarios
 multScen.numOfShiftScen = size(multScen.shifts,2);
+
+% calculate probabilities of single shift scenarios
+if isequal(multScen.shiftGenType,'sampled')
+    multScen.shiftScenProb = repmat(1/multScen.numOfShiftScen,1,multScen.numOfShiftScen);
+elseif isequal(multScen.shiftGenType,'equidistant')
+    if size(multScen.shifts,2) > 1
+        multScen.shiftScenProb = matRad_calcScenProb([0 0 0],multScen.shiftSD,multScen.shifts,'probBins','normDist');
+    else
+        multScen.shiftScenProb = 1;
+    end
+end
 
 % set range scenarios
 if multScen.numOfRangeShiftScen > 0

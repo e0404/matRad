@@ -1,9 +1,9 @@
-function [stf, pln] = matRad_importDicomSteering(ct, pln, rtPlanFile)
+function [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to import a matRad stf struct from dicom RTPLAN data
 % 
 % call
-%   [stf, pln] = matRad_importDicomSteering(ct, pln, rtPlanFile)
+%   [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
 %
 % input
 %   ct:             ct imported by the matRad_importDicomCt function
@@ -168,7 +168,7 @@ for i = 1:length(BeamSeqNames)
         k = ic(j);
         stf(i).ray(k).energy = [stf(i).ray(k).energy double(StfTmp(j,3))];
         stf(i).ray(k).focusFWHM = [stf(i).ray(k).focusFWHM double(StfTmp(j,5))];
-        stf(i).ray(k).weight = [stf(i).ray(k).weight double(StfTmp(j,4))/1e6*pln.numOfFractions];
+        stf(i).ray(k).weight = [stf(i).ray(k).weight double(StfTmp(j,4)) / 1e6];
     end
     
     

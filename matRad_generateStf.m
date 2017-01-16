@@ -35,6 +35,11 @@ function stf = matRad_generateStf(ct,cst,pln,multScen,visMode)
 
 
 fprintf('matRad: Generating stf struct... ');
+if nargin < 4
+      multScen.numOfShiftScen = 1;
+      multScen.shifts         = [0 0 0];
+      multScen.numOfCtScen    = 1;
+end
 
 if nargin < 5
     visMode = 0;
@@ -44,10 +49,14 @@ if numel(pln.gantryAngles) ~= numel(pln.couchAngles)
     error('Inconsistent number of gantry and couch angles.');
 end
 
+if pln.bixelWidth < 0 || ~isfinite(pln.bixelWidth)
+   error('bixel width (spot distance) needs to be a real number [mm] larger than zero.');
+end
+
 % find all target voxels from cst cell array
 V = [];
 for i=1:size(cst,1)
-    if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
+    if isequal(cst{i,3},'TARGET') && ( ~isempty(cst{i,6}) || ~isempty(findstr(cst{i,2},'ScenUnion')) )
         V = [V;vertcat(cst{i,4}{:})];
     end
 end
@@ -63,9 +72,12 @@ voiTarget    = zeros(ct.cubeDim);
 voiTarget(V) = 1;
     
 % add margin
+margin.x = ct.resolution.x*1;
+margin.y = ct.resolution.y*1;
+margin.z = ct.resolution.z*1;
 addmarginBool = 1;
 if addmarginBool
-    voiTarget = matRad_addMargin(voiTarget,cst,ct.resolution,ct.resolution,true);
+    voiTarget = matRad_addMargin(voiTarget,cst,ct.resolution,margin,true);
     V   = find(voiTarget>0);
 end
 
@@ -77,7 +89,7 @@ end
 % prepare structures necessary for particles
 fileName = [pln.radiationMode '_' pln.machine];
 try
-   load(fileName);
+   load([fileparts(mfilename('fullpath')) filesep fileName]);
    SAD = machine.meta.SAD;
 catch
    error(['Could not find the following machine file: ' fileName ]); 
@@ -217,12 +229,18 @@ for i = 1:length(pln.gantryAngles)
     % Save ray and target position in lps system.
     for j = 1:stf(i).numOfRays
         stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
-        stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
-        
+        stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;        
         for CtScen = 1:multScen.numOfCtScen
             for ShiftScen = 1:multScen.numOfShiftScen
                 stf(i).ray(j).SSD{CtScen,ShiftScen} = NaN;
             end
+        end
+        if strcmp(pln.radiationMode,'photons') 
+            stf(i).ray(j).rayCorners_SCD = (repmat([0, machine.meta.SCD - SAD, 0],4,1)+ (machine.meta.SCD/SAD) * ...
+                                                             [rayPos(j,:) + [+stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
+                                                              rayPos(j,:) + [-stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
+                                                              rayPos(j,:) + [-stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2];...
+                                                              rayPos(j,:) + [+stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2]])*rotMx_XY_T*rotMx_XZ_T;
         end
     end
    

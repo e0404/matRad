@@ -32,14 +32,11 @@ function d = matRad_backProjection(w,dij,type)
 
 global matRad_global_x;
 global matRad_global_d;
-global matRad_backprojectionFlag;
 
 if isequal(w,matRad_global_x)
     
     % get dose from global variable
     d = matRad_global_d;
-    
-    matRad_backprojectionFlag = false;
     
 else
     
@@ -76,11 +73,11 @@ else
             else
                 
                 % calculate RBX x dose
-                scaledEffect = (e./dij.bx)+(dij.gamma.^2);
-    
+                scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
+                scaledEffect   = zeros(length(scaledEffectSq),1);
                 % compute sqrt(scaledEffect) only for numeric values (not nan) to save time
-                [idx,~]           = find(~isnan(scaledEffect));
-                scaledEffect(idx) = sqrt(scaledEffect(idx));
+                [idx,~]           = find(~isnan(scaledEffectSq));
+                scaledEffect(idx) = sqrt(scaledEffectSq(idx));
                 d{i}              = scaledEffect - dij.gamma;
                 
             end
@@ -90,7 +87,6 @@ else
     end   
     
     matRad_global_d = d;
-    matRad_backprojectionFlag = true;
     
 end
 

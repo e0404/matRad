@@ -7,7 +7,6 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 %
 % input
 %   dij:        matRad dij struct
-%   ct:         ct cube
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
 %
@@ -63,22 +62,26 @@ global matRad_global_d;
 global matRad_STRG_C_Pressed;
 global matRad_objective_function_value;
 global matRad_iteration;
-global matRad_voxelWeighting;
-global matRad_backprojectionFlag;
-%global matRad_DCH_ScenarioFlag;
+global kDVH;
+global kDCH;
+global JACOBIAN;
+global GRADIENT;
+global CONSTRAINT
+global fScaling;
+global cScaling;
 
 matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
 matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
 matRad_STRG_C_Pressed           = false;
 matRad_objective_function_value = [];
 matRad_iteration                = 0;
-matRad_voxelWeighting           = cell(size(cst,1),2);
-[matRad_voxelWeighting{:,1}]    = deal(1);
-[matRad_voxelWeighting{:,2}]    = deal(true);
-matRad_backprojectionFlag       = false;
-%matRad_DCH_ScenarioFlag         = [true false(1,dij.numOfScenarios-1)];
-%matRad_DCH_ScenarioFlag         = [true false(1,size(cst{1,5}.voxelShift,2)-1)];
-
+kDVH                            = [];
+kDCH                            = [];
+JACOBIAN                        = [];
+GRADIENT                        = [];
+CONSTRAINT                      = [];
+fScaling                        = 1;
+cScaling                        = 1;
 
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
@@ -124,7 +127,8 @@ funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,o
 % calculate initial beam intensities wInit
 if strcmp(pln.bioOptimization,'none')
     
-    bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
+    %bixelWeight =  doseTarget*1/(mean(dij.physicalDose{1}(V,:)*wOnes));
+    bixelWeight =  doseTarget/(min(dij.physicalDose{1}(V,:)*wOnes));
     wInit       = wOnes * bixelWeight;
 
 else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBExD')) ... 
@@ -164,53 +168,99 @@ else (isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBEx
            idx            = dij.bx~=0; 
            dij.gamma(idx) = dij.ax(idx)./(2*dij.bx(idx)); 
             
-           roughRBE = 3;
-           wInit    =  (doseTarget)/(roughRBE*mean(dij.physicalDose{1}(V,:)*wOnes)) * wOnes; 
+           % calculate current in target
+           CurrEffectTarget = (dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2);
+           % ensure a underestimated biological effective dose 
+           TolEstBio        = 1.2;
+           % calculate maximal RBE in target
+           maxCurrRBE = max(-cst{ixTarget,5}.alphaX + sqrt(cst{ixTarget,5}.alphaX^2 + ...
+                        4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*(dij.physicalDose{1}(V,:)*wOnes)));
+           wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
     end
 end
 
-%check which scenarios should be considered during optimization
- % at the moment: if robust optimization -> all scnearios in opt, else only
- % nominell
-if(dij.numOfScenarios > 1)
-     ivoi=1;
-     robOpt = 0;
-    while  ivoi <=size(cst,1)
-        inr=1;
-        while inr <= numel(cst{ivoi,6})
-            if strcmp(cst{ivoi,6}(inr).robustness,'none')
-                inr = inr+1;
-            else
-                ivoi=size(cst,1);
-                inr = numel(cst{ivoi,6})+1;
-                robOpt = 1;
-            end
-        end
-            ivoi = ivoi+1;
-    end
-    if(robOpt == 0)
-        dij.indexforOpt = [1];
-    else
-        dij.indexforOpt = find(~cellfun(@isempty,dij.physicalDose))'
-    end
-end
-    
-    
 % set callback functions.
-[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios);   
+%[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios);   
 funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,pln.bioOptimization);
 funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 
+% scale objective and constraint function
+gInit    = abs(matRad_gradFuncWrapper(wInit,dij,cst,pln.bioOptimization));
+fScaling = 1e2/max(gInit);
+if ~isempty(matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios))
+    for i = 1:length(matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios))  
+        jInit    = abs(matRad_jacobFuncWrapper(wInit,dij,cst,pln.bioOptimization));
+        wInitTmp = wInit;
+        while sum(jInit(i,:)) == 0
+            wInitTmp = wInitTmp - 0.1*wInit;
+            jInit = abs(matRad_jacobFuncWrapper(wInitTmp,dij,cst,pln.bioOptimization));
+        end
+        cScalingTmp(i,1) = 1e-3/max(jInit(i,:));
+    end
+    cScaling = cScalingTmp;
+end
+
+options.ipopt.acceptable_constr_viol_tol = max(cScaling)*options.ipopt.acceptable_constr_viol_tol;
+
+% set constraint bounds
+[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,pln.bioOptimization,dij.numOfScenarios);
+
+%check which scenarios should be considered during optimization
+%at the moment: if robust optimization -> all scenarios in opt, else only
+%nominell
+if(dij.numOfScenarios >1)
+    ivoi = 1;
+    robOpt = 0;
+    while ivoi <= size(cst, 1)
+        inr = 1;
+        while inr <=numel(cst{ivoi,6})
+            if strcmp(cst{ivoi,6}.robustness, 'none')
+                inr = inr+1;
+            else
+                ivoi = size(cst,1);
+                inr = numel(cst{ivoi,6})+1;
+                robOpt = 1;
+            end
+        end
+        ivoi = ivoi +1;
+    end
+    if(robOpt == 0)
+        dij.indexforOpt = [1];
+    else
+        dij.indexforOpt = find(~cellfun(@isempty, dij.physicalDose))'
+    end
+end
+            
+
 % Run IPOPT.
 [wOpt, info]           = ipopt(wInit,funcs,options);
 
 % calc dose and reshape from 1D vector to 2D array
 fprintf('Calculating final cubes...\n');
-resultGUI = matRad_calcCubes(wOpt,dij,cst,pln.bioOptimization,1);
+
+resultGUI = matRad_calcCubes(wOpt,dij,cst,1);
 resultGUI.wUnsequenced = wOpt;
+
+% save optimization info in resultGUI
+resultGUI.optInfo.IPOPTinfo                                 = info;
+resultGUI.optInfo.IPOPToptions                              = options;
+resultGUI.optInfo.wInit                                     = wInit;
+resultGUI.optInfo.wOpt                                      = wOpt;
+resultGUI.optInfo.globalVar.matRad_global_x                 = matRad_global_x;
+resultGUI.optInfo.globalVar.matRad_global_d                 = matRad_global_d;
+resultGUI.optInfo.globalVar.matRad_STRG_C_Pressed           = matRad_STRG_C_Pressed;
+resultGUI.optInfo.globalVar.matRad_objective_function_value = matRad_objective_function_value;
+resultGUI.optInfo.globalVar.matRad_iteration                = matRad_iteration;
+resultGUI.optInfo.globalVar.kDVH                            = kDVH;
+resultGUI.optInfo.globalVar.kDCH                            = kDCH;
+resultGUI.optInfo.globalVar.JACOBIAN                        = JACOBIAN;
+resultGUI.optInfo.globalVar.GRADIENT                        = GRADIENT;
+resultGUI.optInfo.globalVar.CONSTRAINT                      = CONSTRAINT;
+resultGUI.optInfo.globalVar.fScaling                        = fScaling;
+resultGUI.optInfo.globalVar.cScaling                        = cScaling;
 
 % unset Key Pressed Callback of Matlab command window
 if ~isdeployed
@@ -218,9 +268,8 @@ if ~isdeployed
 end
 
 % clear global variables
-%clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;
-clearvars -global matRad_global_x matRad_STRG_C_Pressed;
-
+clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed matRad_iteration;
+clearvars -global kDVH kDCH GRADIENT JACOBIAN fScaling cScaling CONSTRAINT
 
 % unblock mex files
 clear mex

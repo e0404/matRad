@@ -129,7 +129,7 @@ elseif isequal(objective.type, 'max DCH objective') ||...
     end
 
     % apply weighting
-    deviation = deviation.*(weighting).^2';
+    deviation = deviation.*(weighting).^2;
     
     % calculate delta
     delta = 2 * (objective.penalty/numOfVoxels)*deviation;

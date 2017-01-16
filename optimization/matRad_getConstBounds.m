@@ -1,4 +1,4 @@
-function [cl,cu] = matRad_getConstBounds(constraint,param,numOfScenarios)
+function [cl,cu] = matRad_getConstBounds(constraint,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT get constraint bounds function
 % 
@@ -20,7 +20,7 @@ function [cl,cu] = matRad_getConstBounds(constraint,param,numOfScenarios)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2016 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -52,11 +52,6 @@ elseif isequal(constraint.type, 'max mean dose constraint')
     cl = -inf;
     cu = param;
 
-elseif isequal(constraint.type, 'min max mean dose constraint') 
-
-    cl = param(1);
-    cu = param(2);
-
 elseif isequal(constraint.type, 'min EUD constraint') 
 
     cl = param;
@@ -66,11 +61,6 @@ elseif isequal(constraint.type, 'max EUD constraint')
 
     cl = -inf;
     cu = param;
-
-elseif isequal(constraint.type, 'min max EUD constraint') 
-
-    cl = param(1);
-    cu = param(2);
 
 elseif isequal(constraint.type, 'max DVH constraint') 
 
@@ -91,53 +81,21 @@ elseif isequal(constraint.type, 'min DVH constraint')
     % cl = [cl;-inf];
     % cu = [cu;0];
     % alternative constraint calculation 2/4 %
-    
-elseif isequal(constraint.type, 'max DCH constraint')
-    
-    cl = -inf;
-    cu = constraint.coverage/100;
-    
-elseif isequal(constraint.type, 'min DCH constraint')
-    
-    cl = constraint.coverage/100;
-    cu = inf;
 
-elseif isequal(constraint.type, 'max DCH constraint2') || ...
-       isequal(constraint.type, 'min DCH constraint2') 
+elseif isequal(constraint.type, 'max DCH Area constraint') || ...
+       isequal(constraint.type, 'min DCH Area constraint') 
    
     cl = -inf;
     cu = 0;
     
-elseif isequal(constraint.type, 'max DCH constraint3')
+elseif isequal(constraint.type, 'max DCH Theta constraint')
     
     cl = -inf;
     cu = constraint.coverage/100;
     
-elseif isequal(constraint.type, 'min DCH constraint3')  
+elseif isequal(constraint.type, 'min DCH Theta constraint')  
     
     cl = constraint.coverage/100;
-    cu = inf;
-%     cl = [1 -inf -inf -inf -inf -inf -inf -inf -inf -inf]';
-%     cu = inf(10,1);
+    cu = inf;    
 
-elseif isequal(constraint.type, 'max DCH constraint4')
-    
-    cl = -inf(numOfScenarios,1);
-    cu = repmat(constraint.volume/100,numOfScenarios,1);
-    
-elseif isequal(constraint.type, 'min DCH constraint4')  
-    
-    cl = repmat(constraint.volume/100,numOfScenarios,1);
-    cu = inf(numOfScenarios,1);
-    
-elseif isequal(constraint.type, 'max DCH constraint5')
-    
-    cl = -inf(100,1);
-    cu = repmat(constraint.volume/100,100,1);
-    
-elseif isequal(constraint.type, 'min DCH constraint5')  
-    
-    cl = repmat(constraint.volume/100,100,1);
-    cu = inf(100,1);    
-    
 end % constraint switch

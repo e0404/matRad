@@ -1,4 +1,4 @@
-function cst = matRad_setOverlapPriorities(cst)
+function [cst,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % function to handle overlap priorities during fluence optimizaiton and
 % dose calculation. If you have overlapping volumes of interest you need to
@@ -6,12 +6,15 @@ function cst = matRad_setOverlapPriorities(cst)
 % 
 % call
 %   cst = matRad_considerOverlap(cst)
+%   [cst, overlapPriorityCube] = matRad_setOverlapPriorities(cst,cubeDim)
 %
 % input
 %   cst:        cst file
+%   ctDim:      dimension of the ct for overlap cube claculation (optional)
 %
 % output
-%   cst:    updated cst file considering overlap priorities
+%   cst:                updated cst file considering overlap priorities
+%   overlapPriorityCube cube visualizing the overlap priority (optional)
 %
 % References
 %   -
@@ -35,7 +38,7 @@ numOfCtScenarios = unique(cellfun(@(x)numel(x),cst(:,4)));
 
 if numel(numOfCtScenarios) > 1
     error('Inconsistent number of segmentations in cst struct.');
-end
+end  
 
 for i = 1:numOfCtScenarios
     
@@ -61,6 +64,15 @@ for i = 1:numOfCtScenarios
          
     end
 end
+
+%Calculate the overlap cube if requested
+if nargout == 2 && nargin == 2
+   overlapPriorityCube = zeros(ctDim);
+    for i = 1:size(cst,1)
+        overlapPriorityCube(cst{i,4}{1}) = cst{i,5}.Priority;
+    end
+end
+    
 
 end
 
