@@ -1239,14 +1239,6 @@ if get(handles.popupTypeOfPlot,'Value')==1
     UpdateColormapOptions(handles);
 end
 
-
-% if non axial plane in a prone position is selected, permute axes for proper appearence
-% if isequal(ct.dicomInfo.ImageOrientationPatient, [-1 0 0 0 -1 0]') && (plane == 1 || plane == 2)
-%     view(handles.axesFig,-90,90);
-% else
-%     view(handles.axesFig,0,90);
-% end
-
 % --- Executes on selection change in popupPlane.
 function popupPlane_Callback(hObject, ~, handles)
 % hObject    handle to popupPlane (see GCBO)
