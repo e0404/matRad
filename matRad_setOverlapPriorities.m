@@ -48,8 +48,9 @@ for i = 1:numOfCtScenarios
         idx = cst{j,4}{i};          
         
         for k = 1:size(cst,1)
-            if cst{k,5}.Priority < cst{j,5}.Priority && ~(j==k)
+            if cst{k,5}.Priority < cst{j,5}.Priority && ~(j==k) && ~isempty(cst{k,6})
                 % remove indices from VOI with higher priority from current VOI
+                % if an objective has been defined
                 idx = setdiff(idx,cst{k,4}{i});
             end
         end
