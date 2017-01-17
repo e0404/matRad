@@ -404,7 +404,7 @@ catch
     return
 end
 
-% try
+try
     setCstTable(handles,cst);
     handles.TableChanged = false;
     set(handles.popupTypeOfPlot,'Value',1);
@@ -413,9 +413,9 @@ end
 
     assignin('base','ct',ct);
     assignin('base','cst',cst);
-% catch
-%     handles = showError(handles,'LoadMatFileFnc: Could not load selected data');
-% end
+catch
+    handles = showError(handles,'LoadMatFileFnc: Could not load selected data');
+end
 
 try
     if exist('pln','var')
