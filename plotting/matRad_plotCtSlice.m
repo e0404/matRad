@@ -45,19 +45,19 @@ if nargin < 6 || isempty(cMap)
 end
 
 if nargin < 7 || isempty(window)
-    window = [min(ct.cube{cubeIdx}(:)) max(ct.cube{cubeIdx}(:))];    
+    window = [min(ct.cubeHU{cubeIdx}(:)) max(ct.cubeHU{cubeIdx}(:))];    
 end
 
 cMapScale = size(cMap,1) - 1;
 
 if plane == 1 % Coronal plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cube{cubeIdx}(slice,:,:)-window(1))/(window(2) - window(1))))),cMap);
+    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cubeHU{cubeIdx}(slice,:,:)-window(1))/(window(2) - window(1))))),cMap);
       
 elseif plane == 2 % sagittal plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cube{cubeIdx}(:,slice,:)-window(1))/(window(2) - window(1))))),cMap);
+    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cubeHU{cubeIdx}(:,slice,:)-window(1))/(window(2) - window(1))))),cMap);
        
 elseif plane == 3 % Axial plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cube{cubeIdx}(:,:,slice)-window(1))/(window(2) - window(1))))),cMap);
+    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cubeHU{cubeIdx}(:,:,slice)-window(1))/(window(2) - window(1))))),cMap);
 end
 ctHandle = image('CData',ct_rgb,'Parent',axesHandle);
 
