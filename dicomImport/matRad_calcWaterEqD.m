@@ -102,6 +102,9 @@ end
 % interpolate HU to relative electron density based on lookup table
 ct.cube{1} = interp1(hlut(:,1),hlut(:,2),double(ctHU));
 
+% save ct cube in HU
+ct.cubeHU{1} = ctHU;
+
 % save hlut
 ct.hlut = hlut;
 

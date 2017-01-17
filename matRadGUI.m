@@ -26,13 +26,13 @@ function varargout = matRadGUI(varargin)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% Copyright 2015 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -42,7 +42,7 @@ if exist('OCTAVE_VERSION','builtin');
     fprintf('matRad GUI not available for Octave.\n');
     return;
 end
-    
+
 % Begin initialization code - DO NOT EDIT
 % set platform specific look and feel
 if ispc
@@ -74,8 +74,8 @@ end
 % End initialization code - DO NOT EDIT
 
 % --- Executes just before matRadGUI is made visible.
-function matRadGUI_OpeningFcn(hObject, ~, handles, varargin) 
-%#ok<*DEFNU> 
+function matRadGUI_OpeningFcn(hObject, ~, handles, varargin)
+%#ok<*DEFNU>
 %#ok<*AGROW>
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
@@ -162,7 +162,7 @@ for i = 1:length(handles.Modalities)
     if isdeployed
         Files = dir([ctfroot filesep 'matRad' filesep pattern]);
     else
-        Files = dir([fileparts(mfilename('fullpath')) filesep pattern]);        
+        Files = dir([fileparts(mfilename('fullpath')) filesep pattern]);
     end
     for j = 1:length(Files)
         if ~isempty(Files)
@@ -189,7 +189,7 @@ vChar = get(handles.editCouchAngle,'String');
 if strcmp(vChar(1,1),'0') && length(vChar)==3
     set(handles.editCouchAngle,'String','0')
 end
-%% 
+%%
 % handles.State=0   no data available
 % handles.State=1   ct cst and pln available; ready for dose calculation
 % handles.State=2   ct cst and pln available and dij matric(s) are calculated;
@@ -220,21 +220,26 @@ try
             cst = matRad_computeVoiContours(ct,cst);
             assignin('base','cst',cst);
         end
+        % check for ct in HU values, if not present compute them
+        if ~isfield(ct, 'cubeHU')
+            ct = matRad_electronDensitiesToHU(ct);
+            assignin('base','ct',ct);
+        end
         
     elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
          handles = showError(handles,'GUI OpeningFunc: could not find cst file');
     elseif ~ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
          handles = showError(handles,'GUI OpeningFunc: could not find ct file');
     end
-catch  
+catch
    handles = showError(handles,'GUI OpeningFunc: Could not load ct and cst file');
-end
+end  
 
 %set plan if available - if not create one
-try 
-     if ismember('pln',AllVarNames) && handles.State > 0 
-          setPln(handles); 
-     elseif handles.State > 0 
+try
+     if ismember('pln',AllVarNames) && handles.State > 0
+          setPln(handles);
+     elseif handles.State > 0
           getPlnFromGUI(handles);
      end
 catch
@@ -278,8 +283,8 @@ handles.DijCalcWarning = false;
 if handles.State > 0
     set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
             'Value',ceil(ct.cubeDim(handles.plane)/2),...
-            'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);      
-    
+            'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);
+
     % define context menu for structures
     for i = 1:size(cst,1)
         if cst{i,5}.Visible
@@ -305,7 +310,7 @@ set(handles.popupmenu_chooseColormap,'String',availableColormaps);
 currentCtMapIndex = find(strcmp(availableColormaps,handles.ctColorMap));
 currentDoseMapIndex = find(strcmp(availableColormaps,handles.doseColorMap));
 
-if handles.State >= 1    
+if handles.State >= 1
    set(handles.popupmenu_chooseColormap,'Value',currentCtMapIndex);
 end
 
@@ -343,7 +348,7 @@ UpdatePlot(handles);
 
 Update
 % --- Outputs from this function are returned to the command line.
-function varargout = matRadGUI_OutputFcn(~, ~, handles) 
+function varargout = matRadGUI_OutputFcn(~, ~, handles)
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -363,29 +368,34 @@ function btnLoadMat_Callback(hObject, ~, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-try 
+try
     [FileName, FilePath] = uigetfile('*.mat');
-    
+
     if FileName == 0 % user pressed cancel --> do nothing.
         return;
     end
-    
+
     % delete existing workspace - parse variables from base workspace
     AllVarNames = evalin('base','who');
     RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
-    
-    for i = 1:length(RefVarNames)  
+
+    for i = 1:length(RefVarNames)
         if sum(ismember(AllVarNames,RefVarNames{i}))>0
             evalin('base',['clear ', RefVarNames{i}]);
         end
     end
-
+    
     % clear state and read new data
     handles.State = 0;
     load([FilePath FileName]);
     set(handles.legendTable,'String',{'no data loaded'});
     set(handles.popupDisplayOption,'String','no option available');
     
+    % compute HU values if not present
+    if ~isfield(ct, 'cubeHU')
+        ct = matRad_electronDensitiesToHU(ct);
+    end
+
 catch
     handles = showWarning(handles,'LoadMatFileFnc: Could not load *.mat file');
     guidata(hObject,handles);
@@ -398,9 +408,9 @@ try
     setCstTable(handles,cst);
     handles.TableChanged = false;
     set(handles.popupTypeOfPlot,'Value',1);
-    % precompute contours 
+    % precompute contours
     cst = matRad_computeVoiContours(ct,cst);
-    
+
     assignin('base','ct',ct);
     assignin('base','cst',cst);
 catch
@@ -482,7 +492,7 @@ try
     set(handles.popupDisplayOption,'String','no option available');
     AllVarNames = evalin('base','who');
     RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
-    for i = 1:length(RefVarNames)  
+    for i = 1:length(RefVarNames)
         if sum(ismember(AllVarNames,RefVarNames{i}))>0
             evalin('base',['clear ', RefVarNames{i}]);
         end
@@ -493,9 +503,9 @@ try
         addpath(fullfile(matRadRootDir,'dicomImport'))
     end
     matRad_importDicomGUI;
- 
+
 catch
-   handles = showError(handles,'DicomImport: Could not import data'); 
+   handles = showError(handles,'DicomImport: Could not import data');
 end
 UpdateState(handles);
 guidata(hObject,handles);
@@ -514,7 +524,7 @@ try
     end
     matRad_exportGUI;
 catch
-    handles = showError(handles,'Could not export data'); 
+    handles = showError(handles,'Could not export data');
 end
 UpdateState(handles);
 guidata(hObject,handles);
@@ -567,7 +577,7 @@ function popupRadMode_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 checkRadiationComposition(handles);
-contents      = cellstr(get(hObject,'String')); 
+contents      = cellstr(get(hObject,'String'));
 RadIdentifier = contents{get(hObject,'Value')};
 contentPopUp  = get(handles.popMenuBioOpt,'String');
 switch RadIdentifier
@@ -579,35 +589,35 @@ switch RadIdentifier
         ix = find(strcmp(contentPopUp,'none'));
         set(handles.popMenuBioOpt,'Value',ix);
         set(handles.btnSetTissue,'Enable','off');
-        
+
         set(handles.btnRunSequencing,'Enable','on');
         set(handles.btnRunDAO,'Enable','on');
         set(handles.txtSequencing,'Enable','on');
         set(handles.editSequencingLevel,'Enable','on');
-        
+
     case 'protons'
         set(handles.vmcFlag,'Value',0);
         set(handles.vmcFlag,'Enable','off')
-        
+
         set(handles.popMenuBioOpt,'Enable','on');
         ix = find(strcmp(contentPopUp,'const_RBExD'));
         set(handles.popMenuBioOpt,'Value',ix);
         set(handles.btnSetTissue,'Enable','on');
-        
+
         set(handles.btnSetTissue,'Enable','off');
         set(handles.btnRunSequencing,'Enable','off');
         set(handles.btnRunDAO,'Enable','off');
         set(handles.txtSequencing,'Enable','off');
         set(handles.editSequencingLevel,'Enable','off');
-        
+
     case 'carbon'
         set(handles.vmcFlag,'Value',0);
-        set(handles.vmcFlag,'Enable','off')        
+        set(handles.vmcFlag,'Enable','off')
         set(handles.popMenuBioOpt,'Enable','on');
         ix = find(strcmp(contentPopUp,'LEMIV_RBExD'));
         set(handles.popMenuBioOpt,'Value',ix);
         set(handles.btnSetTissue,'Enable','on');
-        
+
         set(handles.btnRunSequencing,'Enable','off');
         set(handles.btnRunDAO,'Enable','off');
         set(handles.txtSequencing,'Enable','off');
@@ -617,10 +627,10 @@ end
 if handles.State > 0
     pln = evalin('base','pln');
     if handles.State > 0 && ~strcmp(contents(get(hObject,'Value')),pln.radiationMode)
-        
+
         % new radiation modality is photons -> just keep physicalDose
         if strcmp(contents(get(hObject,'Value')),'photons')
-            try  
+            try
             AllVarNames = evalin('base','who');
                if  ismember('resultGUI',AllVarNames)
                    resultGUI = evalin('base','resultGUI');
@@ -630,11 +640,11 @@ if handles.State > 0
                    if isfield(resultGUI,'RBE');      resultGUI = rmfield(resultGUI,'RBE');     end
                    assignin('base','resultGUI',resultGUI);
                    handles = updateIsoDoseLineCache(handles);
-               end   
+               end
             catch
             end
         elseif strcmp(contents(get(hObject,'Value')),'protons')
-            try  
+            try
             AllVarNames = evalin('base','who');
                if  ismember('resultGUI',AllVarNames)
                    resultGUI = evalin('base','resultGUI');
@@ -647,18 +657,18 @@ if handles.State > 0
             catch
             end
         end
-      
+
         guidata(hObject,handles);
         UpdatePlot(handles);
-       
+
         getPlnFromGUI(handles);
         handles.State = 1;
         UpdateState(handles);
 
     end
-         
+
 guidata(hObject,handles);
-           
+
 end
 
 
@@ -670,18 +680,18 @@ function btnCalcDose_Callback(hObject, ~, handles)
 
 % http://stackoverflow.com/questions/24703962/trigger-celleditcallback-before-button-callback
 % http://www.mathworks.com/matlabcentral/newsreader/view_thread/332613
-% wait some time until the CallEditCallback is finished 
+% wait some time until the CallEditCallback is finished
 % Callback triggers the cst saving mechanism from GUI
 try
     % indicate that matRad is busy
-    % change mouse pointer to hour glass 
+    % change mouse pointer to hour glass
     Figures = gcf;%findobj('type','figure');
-    set(Figures, 'pointer', 'watch'); 
+    set(Figures, 'pointer', 'watch');
     drawnow;
     % disable all active objects
     InterfaceObj = findobj(Figures,'Enable','on');
     set(InterfaceObj,'Enable','off');
-    
+
     pause(0.1);
     uiTable_CellEditCallback(hObject,[],handles);
     pause(0.3);
@@ -698,8 +708,8 @@ try
     % already defined
     pln = evalin('base','pln');
 
-    if length(pln.gantryAngles) ~= length(pln.couchAngles) 
-        handles = showWarning(handles,warndlg('number of gantryAngles != number of couchAngles')); 
+    if length(pln.gantryAngles) ~= length(pln.couchAngles)
+        handles = showWarning(handles,warndlg('number of gantryAngles != number of couchAngles'));
     end
     %%
     if ~checkRadiationComposition(handles);
@@ -714,12 +724,12 @@ try
         handles = showWarning(handles,warning('no iso center set - using center of gravity based on structures defined as TARGET'));
         pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
         assignin('base','pln',pln);
-    elseif ~get(handles.checkIsoCenter,'Value') 
+    elseif ~get(handles.checkIsoCenter,'Value')
         pln.isoCenter = str2num(get(handles.editIsoCenter,'String'));
     end
 
 catch ME
-    handles = showError(handles,{'CalcDoseCallback: Error in preprocessing!',ME.message}); 
+    handles = showError(handles,{'CalcDoseCallback: Error in preprocessing!',ME.message});
     % change state from busy to normal
     set(Figures, 'pointer', 'arrow');
     set(InterfaceObj,'Enable','on');
@@ -728,13 +738,13 @@ catch ME
 end
 
 % generate steering file
-try 
+try
     stf = matRad_generateStf(evalin('base','ct'),...
                                      evalin('base','cst'),...
                                      evalin('base','pln'));
     assignin('base','stf',stf);
 catch ME
-    handles = showError(handles,{'CalcDoseCallback: Error in steering file generation!',ME.message}); 
+    handles = showError(handles,{'CalcDoseCallback: Error in steering file generation!',ME.message});
     % change state from busy to normal
     set(Figures, 'pointer', 'arrow');
     set(InterfaceObj,'Enable','on');
@@ -766,7 +776,7 @@ try
     UpdatePlot(handles);
     guidata(hObject,handles);
 catch ME
-    handles = showError(handles,{'CalcDoseCallback: Error in dose calculation!',ME.message}); 
+    handles = showError(handles,{'CalcDoseCallback: Error in dose calculation!',ME.message});
     % change state from busy to normal
     set(Figures, 'pointer', 'arrow');
     set(InterfaceObj,'Enable','on');
@@ -778,7 +788,7 @@ end
 set(Figures, 'pointer', 'arrow');
 set(InterfaceObj,'Enable','on');
 
-guidata(hObject,handles);  
+guidata(hObject,handles);
 
 
 
@@ -813,7 +823,7 @@ end
 
 if exist('Result','var')
     if ~isempty(Result) && ~isempty(ct.cube)
-       
+
         if isfield(Result,'RBE')
             Result.RBETruncated10Perc = Result.RBE;
             Result.RBETruncated10Perc(Result.physicalDose<0.1*...
@@ -822,7 +832,7 @@ if exist('Result','var')
 
         DispInfo =fieldnames(Result);
         for i = 1:size(DispInfo,1)
-            
+
             if isstruct(Result.(DispInfo{i,1})) || isvector(Result.(DispInfo{i,1}))
                  Result = rmfield(Result,DispInfo{i,1});
                  DispInfo{i,2}=false;
@@ -833,7 +843,7 @@ if exist('Result','var')
                 if strcmp(DispInfo{i,1},DisablePlot)
                     DispInfo{i,2}=false;
                 end
-                
+
                 % determine units
                 if strfind(DispInfo{i,1},'physicalDose');
                     DispInfo{i,3} = '[Gy]';
@@ -848,7 +858,7 @@ if exist('Result','var')
                 else
                     DispInfo{i,3} = '[a.u.]';
                 end
-                
+
             end
         end
 
@@ -876,7 +886,7 @@ if get(handles.popupTypeOfPlot,'Value')==2 || plotColorbarSelection == 1
     if isfield(handles,'cBarHandel')
         delete(handles.cBarHandel);
     end
-    %The following seems to be necessary as MATLAB messes up some stuff 
+    %The following seems to be necessary as MATLAB messes up some stuff
     %with the handle storage
     ch = findall(gcf,'tag','Colorbar');
     if ~isempty(ch)
@@ -887,10 +897,10 @@ end
 %% plot ct - if a ct cube is available and type of plot is set to 1 and not 2; 1 indicate cube plotting and 2 profile plotting
 if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     cla(handles.axesFig);
-    
-    ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);   
+
+    ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
     [AxesHandlesCT_Dose(end+1),~,handles.ctWindow] = matRad_plotCtSlice(handles.axesFig,ct,1,plane,slice,ctMap,handles.ctWindow);
-    
+
     % plot colorbar? If 1 the user asked for the CT
     if plotColorbarSelection == 2 && handles.cBarChanged
         %Plot the colorbar
@@ -905,7 +915,7 @@ end
 %% plot dose cube
 if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Result','var')
         doseMap = matRad_getColormap(handles.doseColorMap,handles.cMapSize);
-    
+
         % if the selected display option doesn't exist then simply display
         % the first cube of the Result struct
         if ~isfield(Result,handles.SelectedDisplayOption)
@@ -916,7 +926,7 @@ if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Re
 
         % dose colorwash
         if ~isempty(dose) && ~isvector(dose)
-            
+
             if handles.maxDoseVal == 0
                 handles.maxDoseVal = max(dose(:));
                 set(handles.txtMaxDoseVal,'String',num2str(handles.maxDoseVal))
@@ -931,8 +941,8 @@ if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Re
                 doseAlpha                         = handles.doseOpacity;
                 [doseHandle,~,handles.doseWindow] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,doseThresh,doseAlpha,doseMap,handles.doseWindow);
                 AxesHandlesCT_Dose(end+1)         = doseHandle;
-            end            
-                 
+            end
+
             % plot colorbar?
             if plotColorbarSelection > 2 && handles.cBarChanged;
                 %Plot the colorbar
@@ -944,20 +954,20 @@ if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Re
                 set(get(handles.cBarHandel,'ylabel'),'interpreter','none');
             end
         end
-        
+
     %axes(handles.axesFig)
     %text(0,0,'','units','norm') % fix for line width ...
 
 
         %% plot iso dose lines
-        if get(handles.radiobtnIsoDoseLines,'Value')           
+        if get(handles.radiobtnIsoDoseLines,'Value')
             plotLabels = get(handles.radiobtnIsoDoseLinesLabels,'Value') == 1;
-            
-            %Sanity Check for Contours, which actually should have been 
+
+            %Sanity Check for Contours, which actually should have been
             %computed before calling UpdatePlot
             if ~isfield(handles.IsoDose,'Contours')
                 try
-                    handles.IsoDose.Contours = matRad_computeIsoDoseContours(dose,handles.IsoDose.Levels); 
+                    handles.IsoDose.Contours = matRad_computeIsoDoseContours(dose,handles.IsoDose.Levels);
                 catch
                     %If the computation didn't work, we set the field to
                     %empty, which will force matRad_plotIsoDoseLines to use
@@ -967,7 +977,7 @@ if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Re
                     warning('Could not compute isodose lines! Will try slower contour function!');
                 end
             end
-            
+
             AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plotLabels,plane,slice,doseMap,handles.doseWindow);
         end
 end
@@ -984,7 +994,7 @@ if  plane == 3% Axial plane
         set(handles.axesFig,'XTick',0:50/ct.resolution.x:1000);
         set(handles.axesFig,'YTick',0:50/ct.resolution.y:1000);
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.x);
-        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution.y);   
+        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution.y);
         xlabel('x [mm]','FontSize',defaultFontSize)
         ylabel('y [mm]','FontSize',defaultFontSize)
         title(['axial plane z = ' num2str(ct.resolution.z*slice) ' [mm]'],'FontSize',defaultFontSize)
@@ -1028,19 +1038,19 @@ if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'V
 end
 
 % the following line ensures the plotting order (optional)
-% set(gca,'Children',[AxesHandlesCT_Dose hIsoCenterCross AxesHandlesIsoDose  AxesHandlesVOI ]);    
-  
+% set(gca,'Children',[AxesHandlesCT_Dose hIsoCenterCross AxesHandlesIsoDose  AxesHandlesVOI ]);
+
 %set axis ratio
 ratios = [1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
 set(handles.axesFig,'DataAspectRatioMode','manual');
-if plane == 1 
-      res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);  
+if plane == 1
+      res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);
       set(handles.axesFig,'DataAspectRatio',[res 1])
 elseif plane == 2 % sagittal plane
-      res = [ratios(3) ratios(1)]./max([ratios(3) ratios(1)]);  
-      set(handles.axesFig,'DataAspectRatio',[res 1]) 
+      res = [ratios(3) ratios(1)]./max([ratios(3) ratios(1)]);
+      set(handles.axesFig,'DataAspectRatio',[res 1])
 elseif  plane == 3 % Axial plane
-      res = [ratios(2) ratios(1)]./max([ratios(2) ratios(1)]);  
+      res = [ratios(2) ratios(1)]./max([ratios(2) ratios(1)]);
       set(handles.axesFig,'DataAspectRatio',[res 1])
 end
 
@@ -1053,15 +1063,15 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
         load(fileName);
         SAD = machine.meta.SAD;
     catch
-        error(['Could not find the following machine file: ' fileName ]); 
+        error(['Could not find the following machine file: ' fileName ]);
     end
-     
+
     % clear view and initialize some values
     cla(handles.axesFig,'reset')
     set(gca,'YDir','normal');
     ylabel('{\color{black}dose [Gy]}')
     cColor={'black','green','magenta','cyan','yellow','red','blue'};
-    
+
     % Rotation around Z axis (table movement)
     inv_rotMx_XY_T = [ cosd(pln.gantryAngles(handles.SelectedBeam)) sind(pln.gantryAngles(handles.SelectedBeam)) 0;
                       -sind(pln.gantryAngles(handles.SelectedBeam)) cosd(pln.gantryAngles(handles.SelectedBeam)) 0;
@@ -1070,7 +1080,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     inv_rotMx_XZ_T = [cosd(pln.couchAngles(handles.SelectedBeam)) 0 -sind(pln.couchAngles(handles.SelectedBeam));
                                                                 0 1 0;
                       sind(pln.couchAngles(handles.SelectedBeam)) 0 cosd(pln.couchAngles(handles.SelectedBeam))];
-    
+
     if strcmp(handles.ProfileType,'longitudinal')
         sourcePointBEV = [handles.profileOffset -SAD   0];
         targetPointBEV = [handles.profileOffset  SAD   0];
@@ -1078,16 +1088,16 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
         sourcePointBEV = [-SAD handles.profileOffset   0];
         targetPointBEV = [ SAD handles.profileOffset   0];
     end
-    
+
     rotSourcePointBEV = sourcePointBEV * inv_rotMx_XZ_T * inv_rotMx_XY_T;
     rotTargetPointBEV = targetPointBEV * inv_rotMx_XZ_T * inv_rotMx_XY_T;
-    
+
     % perform raytracing on the central axis of the selected beam
     [~,l,rho,~,ix] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube{1}});
     d = [0 l .* rho{1}];
     % Calculate accumulated d sum.
     vX = cumsum(d(1:end-1));
-    
+
     % this step is necessary if visualization is set to profile plot
     % and another optimization is carried out - set focus on GUI
     figHandles = get(0,'Children');
@@ -1101,7 +1111,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
         end
     end
     figure(figHandles(idxHandle));
-    
+
     % plot physical dose
     Content = get(handles.popupDisplayOption,'String');
     SelectedCube = Content{get(handles.popupDisplayOption,'Value')};
@@ -1111,23 +1121,23 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
         Idx    = find(SelectedCube == '_');
         Suffix = SelectedCube(Idx:end);
     end
-    
-    mPhysDose = Result.(['physicalDose' Suffix]); 
-    PlotHandles{1} = plot(handles.axesFig,vX,mPhysDose(ix),'color',cColor{1,1},'LineWidth',3); hold on; 
+
+    mPhysDose = Result.(['physicalDose' Suffix]);
+    PlotHandles{1} = plot(handles.axesFig,vX,mPhysDose(ix),'color',cColor{1,1},'LineWidth',3); hold on;
     PlotHandles{1,2} ='physicalDose';
     ylabel(handles.axesFig,'dose in [Gy]');
     set(handles.axesFig,'FontSize',defaultFontSize);
-    
+
     % plot counter
     Cnt=2;
-    
+
     if isfield(Result,['RBE' Suffix])
-        
+
         %disbale specific plots
         %DispInfo{6,2}=0;
         %DispInfo{5,2}=0;
         %DispInfo{2,2}=0;
-        
+
         % generate two lines for ylabel
         StringYLabel1 = '\fontsize{8}{\color{red}RBE x dose [Gy(RBE)] \color{black}dose [Gy] ';
         StringYLabel2 = '';
@@ -1137,13 +1147,13 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
                 if ~strcmp(DispInfo{i,1},['RBExDose' Suffix]) &&...
                    ~strcmp(DispInfo{i,1},['RBE' Suffix]) && ...
                    ~strcmp(DispInfo{i,1},['physicalDose' Suffix])
-               
+
                         mCube = Result.([DispInfo{i,1}]);
-                        PlotHandles{Cnt,1} = plot(handles.axesFig,vX,mCube(ix),'color',cColor{1,Cnt},'LineWidth',3);hold on; 
+                        PlotHandles{Cnt,1} = plot(handles.axesFig,vX,mCube(ix),'color',cColor{1,Cnt},'LineWidth',3);hold on;
                         PlotHandles{Cnt,2} = DispInfo{i,1};
                         StringYLabel2 = [StringYLabel2  ' \color{'  cColor{1,Cnt} '}' DispInfo{i,1} ' ['  DispInfo{i,3} ']'];
                         Cnt = Cnt+1;
-                end    
+                end
             end
         end
         StringYLabel2 = [StringYLabel2 '}'];
@@ -1152,14 +1162,14 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
         vBED = mRBExDose(ix);
         mRBE = Result.(['RBE' Suffix]);
         vRBE = mRBE(ix);
-        
+
         % plot biological dose against RBE
         [ax, PlotHandles{Cnt,1}, PlotHandles{Cnt+1,1}]=plotyy(handles.axesFig,vX,vBED,vX,vRBE,'plot');hold on;
         PlotHandles{Cnt,2}='RBExDose';
         PlotHandles{Cnt+1,2}='RBE';
-         
+
         % set plotyy properties
-        set(get(ax(2),'Ylabel'),'String','RBE [a.u.]','FontSize',8);       
+        set(get(ax(2),'Ylabel'),'String','RBE [a.u.]','FontSize',8);
         ylabel({StringYLabel1;StringYLabel2})
         set(PlotHandles{Cnt,1},'Linewidth',4,'color','r');
         set(PlotHandles{Cnt+1,1},'Linewidth',3,'color','b');
@@ -1168,8 +1178,8 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
         set(ax,'FontSize',8);
         Cnt=Cnt+2;
     end
-       
-    % asses target coordinates 
+
+    % asses target coordinates
     tmpPrior = intmax;
     tmpSize = 0;
     for i=1:size(cst,1)
@@ -1180,13 +1190,13 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
            VOI = cst{i,2};
         end
     end
-    
+
     str = sprintf('profile plot - central axis of %d beam gantry angle %d? couch angle %d?',...
         handles.SelectedBeam ,pln.gantryAngles(handles.SelectedBeam),pln.couchAngles(handles.SelectedBeam));
     h_title = title(handles.axesFig,str,'FontSize',defaultFontSize);
     pos = get(h_title,'Position');
     set(h_title,'Position',[pos(1)-40 pos(2) pos(3)])
-    
+
     % plot target boundaries
     mTargetCube = zeros(ct.cubeDim);
     mTargetCube(linIdxTarget) = 1;
@@ -1194,24 +1204,24 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     WEPL_Target_Entry = vX(find(vProfile,1,'first'));
     WEPL_Target_Exit  = vX(find(vProfile,1,'last'));
     PlotHandles{Cnt,2} =[VOI ' boundary'];
-    
+
     if ~isempty(WEPL_Target_Entry) && ~isempty(WEPL_Target_Exit)
         hold on
         PlotHandles{Cnt,1} = ...
         plot([WEPL_Target_Entry WEPL_Target_Entry],get(handles.axesFig,'YLim'),'--','Linewidth',3,'color','k');hold on
         plot([WEPL_Target_Exit WEPL_Target_Exit],get(handles.axesFig,'YLim'),'--','Linewidth',3,'color','k');hold on
-      
+
     else
         PlotHandles{Cnt,1} =[];
     end
-    
+
    Lines  = PlotHandles(~cellfun(@isempty,PlotHandles(:,1)),1);
    Labels = PlotHandles(~cellfun(@isempty,PlotHandles(:,1)),2);
    h=legend(handles.axesFig,[Lines{:}],Labels{:});
    set(h,'FontSize',defaultFontSize);
-   xlabel('radiological depth [mm]','FontSize',8);  
+   xlabel('radiological depth [mm]','FontSize',8);
    grid on, grid minor
-   
+
 end
 
 zoom reset;
@@ -1225,7 +1235,7 @@ hold(handles.axesFig,'off');
 handles.cBarChanged = false;
 guidata(handles.axesFig,handles);
 
-if get(handles.popupTypeOfPlot,'Value')==1 
+if get(handles.popupTypeOfPlot,'Value')==1
     UpdateColormapOptions(handles);
 end
 
@@ -1249,7 +1259,7 @@ try
             set(handles.sliderSlice,'Value',round(ct.cubeDim(handles.plane)/2));
         else
             pln = evalin('base','pln');
-            
+
             if handles.plane == 1
                 set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.x));
             elseif handles.plane == 2
@@ -1257,7 +1267,7 @@ try
             elseif handles.plane == 3
                 set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.z));
             end
-            
+
         end
     end
 catch
@@ -1313,9 +1323,9 @@ function btnOptimize_Callback(hObject, eventdata, handles)
 
 try
     % indicate that matRad is busy
-    % change mouse pointer to hour glass 
+    % change mouse pointer to hour glass
     Figures = gcf;%findobj('type','figure');
-    set(Figures, 'pointer', 'watch'); 
+    set(Figures, 'pointer', 'watch');
     drawnow;
     % disable all active objects
     InterfaceObj = findobj(Figures,'Enable','on');
@@ -1335,18 +1345,18 @@ try
                 return
             case 'Calculate dij again and optimize'
                 handles.DijCalcWarning = false;
-                btnCalcDose_Callback(hObject, eventdata, handles)      
+                btnCalcDose_Callback(hObject, eventdata, handles)
             case 'Optimze directly'
-                handles.DijCalcWarning = false;       
+                handles.DijCalcWarning = false;
         end
     end
-    
+
     pln = evalin('base','pln');
     ct  = evalin('base','ct');
-    
+
     % optimize
     [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
-    
+
     %if resultGUI already exists then overwrite the "standard" fields
     AllVarNames = evalin('base','who');
     if  ismember('resultGUI',AllVarNames)
@@ -1383,9 +1393,9 @@ try
     if ~pln.runDAO || ~strcmp(pln.radiationMode,'photons')
         CheckIpoptStatus(ipoptInfo,'Fluence')
     end
-    
+
 catch ME
-    handles = showError(handles,{'OptimizeCallback: Could not optimize!',ME.message}); 
+    handles = showError(handles,{'OptimizeCallback: Could not optimize!',ME.message});
     % change state from busy to normal
     set(Figures, 'pointer', 'arrow');
     set(InterfaceObj,'Enable','on');
@@ -1395,7 +1405,7 @@ end
 
 % perform sequencing and DAO
 try
-    
+
     %% sequencing
     if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
     %   resultGUI = matRad_xiaLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
@@ -1404,9 +1414,9 @@ try
             ,str2double(get(handles.editSequencingLevel,'String')));
         assignin('base','resultGUI',resultGUI);
     end
-        
+
 catch ME
-    handles = showError(handles,{'OptimizeCallback: Could not perform sequencing',ME.message}); 
+    handles = showError(handles,{'OptimizeCallback: Could not perform sequencing',ME.message});
     % change state from busy to normal
     set(Figures, 'pointer', 'arrow');
     set(InterfaceObj,'Enable','on');
@@ -1422,15 +1432,15 @@ try
            resultGUI.apertureInfo,resultGUI,pln);
        assignin('base','resultGUI',resultGUI);
        % check IPOPT status and return message for GUI user
-       CheckIpoptStatus(ipoptInfo,'DAO');      
+       CheckIpoptStatus(ipoptInfo,'DAO');
     end
-    
+
     if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
         matRad_visApertureInfo(resultGUI.apertureInfo);
     end
-   
+
 catch ME
-    handles = showError(handles,{'OptimizeCallback: Could not perform direct aperture optimization',ME.message}); 
+    handles = showError(handles,{'OptimizeCallback: Could not perform direct aperture optimization',ME.message});
     % change state from busy to normal
     set(Figures, 'pointer', 'arrow');
     set(InterfaceObj,'Enable','on');
@@ -1451,7 +1461,7 @@ handles.cBarChanged = true;
 UpdateState(handles);
 UpdatePlot(handles);
 handles.rememberCurrAxes = true;
-    
+
 guidata(hObject,handles);
 
 
@@ -1466,7 +1476,7 @@ for i = 1:size(cst,1)
         if ~isempty(strfind([cst{i,6}.type],'mean')) && isempty(strfind([cst{i,6}.type],'square'))
              FlagValid = false;
              warndlg('mean constraint needs to be defined in addition to a second constraint (e.g. squared deviation)');
-             break      
+             break
         end
    end
 end
@@ -1476,8 +1486,8 @@ end
 function popupTypeOfPlot_Callback(hObject, ~, handles)
 
  % intensity plot
-if get(hObject,'Value') == 1  
-    
+if get(hObject,'Value') == 1
+
     set(handles.sliderBeamSelection,'Enable','off')
     set(handles.sliderOffset,'Enable','off')
     set(handles.popupDisplayOption,'Enable','on')
@@ -1488,13 +1498,13 @@ if get(hObject,'Value') == 1
     set(handles.radiobtnIsoDoseLines,'Enable','on');
     set(handles.radiobtnIsoDoseLinesLabels,'Enable','on');
     set(handles.sliderSlice,'Enable','on');
-    
+
 % profile plot
 elseif get(hObject,'Value') == 2
-    
+
     if handles.State > 0
         if length(parseStringAsNum(get(handles.editGantryAngle,'String'),true)) > 1
-            
+
             set(handles.sliderBeamSelection,'Enable','on');
             handles.SelectedBeam = 1;
             pln = evalin('base','pln');
@@ -1506,7 +1516,7 @@ elseif get(hObject,'Value') == 2
         else
             handles.SelectedBeam = 1;
         end
-    
+
         handles.profileOffset = get(handles.sliderOffset,'Value');
 
         vMinMax = [-100 100];
@@ -1514,18 +1524,18 @@ elseif get(hObject,'Value') == 2
 
         ct = evalin('base','ct');
         if strcmp(get(handles.btnProfileType,'String'),'lateral')
-            SliderStep = vRange/ct.resolution.x;       
+            SliderStep = vRange/ct.resolution.x;
         else
-            SliderStep = vRange/ct.resolution.y;  
+            SliderStep = vRange/ct.resolution.y;
         end
-        
+
         set(handles.sliderOffset,'Min',vMinMax(1),'Max',vMinMax(2),...
                     'Value',handles.profileOffset,...
                     'SliderStep',[1/SliderStep 1/SliderStep],...
                     'Enable','on');
     end
-    
-    
+
+
     set(handles.popupDisplayOption,'Enable','on');
     set(handles.btnProfileType,'Enable','on');
     set(handles.popupPlane,'Enable','off');
@@ -1534,16 +1544,16 @@ elseif get(hObject,'Value') == 2
     set(handles.radiobtnIsoDoseLines,'Enable','off');
     set(handles.sliderSlice,'Enable','off');
     set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
-    
-    
+
+
     set(handles.btnProfileType,'Enable','on')
-    
+
     if strcmp(get(handles.btnProfileType,'String'),'lateral')
         handles.ProfileType = 'longitudinal';
     else
         handles.ProfileType = 'lateral';
     end
-    
+
 end
 
 handles.cBarChanged = true;
@@ -1595,13 +1605,13 @@ if strcmp(get(hObject,'Enable') ,'on')
             handles.ProfileType = 'lateral';
             set(hObject,'String','longitudinal');
     end
-    
+
     handles.rememberCurrAxes = false;
     UpdatePlot(handles);
     handles.rememberCurrAxes = true;
 
     guidata(hObject, handles);
- 
+
 end
 
 % displays the cst in the GUI
@@ -1635,7 +1645,7 @@ AllObjectiveFunction = {'square underdosing','square overdosing','square deviati
 columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
        AllObjectiveFunction,...
        'numeric','numeric','numeric','numeric',{'none','WC','prob'}};
-   
+
 numOfObjectives = 0;
 for i = 1:size(cst,1)
     if ~isempty(cst{i,6})
@@ -1648,7 +1658,7 @@ data = cell(dimArr);
 data(:,6) = {''};
 Counter = 1;
 for i = 1:size(cst,1)
-   
+
    if strcmp(cst(i,3),'IGNORED')~=1
        for j=1:size(cst{i,6},1)
        %VOI
@@ -1666,11 +1676,11 @@ for i = 1:size(cst,1)
        data{Counter,7}  = cst{i,6}(j).EUD;
        data{Counter,8}  = cst{i,6}(j).volume;
        data{Counter,9}  = cst{i,6}(j).robustness;
-       
+
        Counter = Counter +1;
        end
    end
-   
+
 end
 
 set(handles.uiTable,'ColumnName',columnname);
@@ -1692,16 +1702,16 @@ for i = 1:size(OldCst,1)
     CntObjF = 1;
     FlagFound = false;
     for j = 1:size(data,1)
-        
+
         if strcmp(OldCst{i,2},data{j,1})
             FlagFound = true;
-            
+
             if CntObjF == 1
                 %VOI
                 if isempty(data{j,1}) || ~isempty(strfind(data{j,1}, 'Select'))
                     FlagValidParameters=false;
                 else
-                    NewCst{Cnt,1}=data{j,1}; 
+                    NewCst{Cnt,1}=data{j,1};
                 end
                 %VOI Type
                 if isempty(data{j,2})|| ~isempty(strfind(data{j,2}, 'Select'))
@@ -1716,39 +1726,39 @@ for i = 1:size(OldCst,1)
                     NewCst{Cnt,3}=data{j,3};
                 end
             end
-            
+
             % Obj Func / constraint
             if isempty(data{j,4}) ||~isempty(strfind(data{j,4}, 'Select'))
                FlagValidParameters=false;
             else
                  NewCst{Cnt,4}(CntObjF,1).type = data{j,4};
             end
-         
+
             % get further parameter
             if FlagValidParameters
-                
+
               NewCst{Cnt,4}(CntObjF,1).dose       = data{j,6};
               NewCst{Cnt,4}(CntObjF,1).penalty    = data{j,5};
               NewCst{Cnt,4}(CntObjF,1).EUD        = data{j,7};
               NewCst{Cnt,4}(CntObjF,1).volume     = data{j,8};
               NewCst{Cnt,4}(CntObjF,1).robustness = data{j,9};
-             
+
             end
-            
-            CntObjF = CntObjF+1; 
-            
+
+            CntObjF = CntObjF+1;
+
         end
 
     end
-    
+
     if FlagFound == true
        Cnt = Cnt +1;
     end
-            
+
 end
 
 if FlagValidParameters
-    
+
        for m=1:size(OldCst,1)
            VOIexist   = OldCst(m,2);
            boolChanged = false;
@@ -1764,7 +1774,7 @@ if FlagValidParameters
                    OldCst(m,3) = NewCst(n,2);
                    OldCst{m,5}.Priority = NewCst{n,3};
                    break;
-               end 
+               end
            end
 
            if ~boolChanged
@@ -1774,9 +1784,9 @@ if FlagValidParameters
        end
        assignin('base','cst',OldCst);
        Flag = true;
-       
-else       
-  warndlg('not all values are set - cannot start dose calculation'); 
+
+else
+  warndlg('not all values are set - cannot start dose calculation');
   Flag = false;
 end
 
@@ -1817,11 +1827,11 @@ end
 
 try
     Idx = find(strcmp(cst(:,2),data(Index(1),1)));
-    % if OAR was removed then show a warning 
+    % if OAR was removed then show a warning
     if strcmp(data(Index(1),2),'OAR') && length(cst{Idx,6})<=1
       handles.DijCalcWarning =true;
     end
-catch 
+catch
 end
 data=data(mask,:);
 set(handles.uiTable,'data',data);
@@ -1837,9 +1847,9 @@ function uiTable_CellSelectionCallback(hObject, eventdata, ~)
 % handles    structure with handles and user data (see GUIDATA)
 index = eventdata.Indices;
     if any(index)             %loop necessary to surpress unimportant errors.
-        set(hObject,'UserData',index);      
+        set(hObject,'UserData',index);
     end
-    
+
 
 % --- Executes when entered data in editable cell(s) in uiTable.
 function uiTable_CellEditCallback(hObject, eventdata, handles)
@@ -1863,7 +1873,7 @@ if isempty(eventdata)
     if ~isempty(Index) && size(Index,1)==1
         % if this callback was invoked by calculate dij button, eventdata is empty
         % and needs to be set manually
-        try 
+        try
             % if row gots deleted then index is pointing to non existing
             % data
             if size(data,1)<Index(1,1)
@@ -1880,7 +1890,7 @@ if isempty(eventdata)
         return
     end
 else
-    data = get(hObject,'Data'); 
+    data = get(hObject,'Data');
 end
 
 
@@ -1888,32 +1898,32 @@ end
 if ~strcmp(eventdata.NewData,eventdata.PreviousData)
     if eventdata.Indices(2) == 1 || eventdata.Indices(2) == 2 ...
             || eventdata.Indices(2) == 3
-        
+
         handles.TableChanged = true;
           %% if a new target is defined set state to one
          if eventdata.Indices(2) == 2 && strcmp('TARGET',eventdata.NewData)
               handles.State=1;
          end
-        
+
         %% if overlap priority of target changed
          if eventdata.Indices(2) == 3 && strcmp('TARGET',data(eventdata.Indices(1),2))
               handles.State=1;
          end
-         
+
         %% if overlap priority of OAR changed
          if eventdata.Indices(2) == 3 && strcmp('OAR',data(eventdata.Indices(1),2))
               handles.DijCalcWarning = true;
          end
-         
+
          %% check if new OAR was added
          cst = evalin('base','cst');
          Idx = ~cellfun('isempty',cst(:,6));
-         
-         if sum(strcmp(cst(Idx,2),eventdata.NewData))==0 
+
+         if sum(strcmp(cst(Idx,2),eventdata.NewData))==0
              handles.DijCalcWarning = true;
          end
-        
-        
+
+
     else
         % if table changed after a optimization was performed
         if handles.State ==3 && handles.TableChanged == false
@@ -1923,19 +1933,19 @@ if ~strcmp(eventdata.NewData,eventdata.PreviousData)
 end
 %% if VOI Type was changed -> check if objective function still makes sense
 if eventdata.Indices(2) == 2
-   
+
     if strcmp(eventdata.NewData,'OAR')
-        
+
         if sum(strcmp({'square deviation','square underdosing'},data{eventdata.Indices(1),4}))>0
             data{eventdata.Indices(1),4} = 'square overdosing';
         end
-        
+
     else
-        
+
         if sum(strcmp({'EUD','mean'},data{eventdata.Indices(1),4}))>0
             data{eventdata.Indices(1),4} = 'square deviation';
         end
-        
+
     end
 end
 %% if objective function was changed -> check if VOI Type still makes sense
@@ -1948,8 +1958,8 @@ end
 
 if eventdata.Indices(2) == 4
     if  sum(strcmp(eventdata.NewData,{'square deviation','square underdosing','min dose constraint',...
-                                      'min mean dose constraint','min DVH constraint','min DVH objective'})) > 0 
-    
+                                      'min mean dose constraint','min DVH constraint','min DVH objective'})) > 0
+
         if strcmp('OAR',data{eventdata.Indices(1),2})
             data{eventdata.Indices(1),4} = 'square overdosing';
             ObjFunction                  = 'square overdosing';
@@ -1957,58 +1967,58 @@ if eventdata.Indices(2) == 4
                 data{eventdata.Indices(1),5} = 1;
             end
         end
-        
+
         tmpDose = parseStringAsNum(data{eventdata.Indices(1),6},true);
         if numel(tmpDose) == 2
             data{eventdata.Indices(1),6} = num2str(tmpDose(1));
         end
-    
+
     elseif strcmp(eventdata.NewData,'mean')
-        
+
         if strcmp('TARGET',data{eventdata.Indices(1),2})
             data{eventdata.Indices(1),4} = 'square deviation';
         end
-        
+
     end
 end
 
 %% set fields to NaN according to objective function
 
 if sum(strcmp(ObjFunction, {'square underdosing','square overdosing','square deviation'})) > 0
-    
+
     for k = [5 6]
         if isnan(data{eventdata.Indices(1),k})
              data{eventdata.Indices(1),k} = 1;
         end
-    end 
+    end
     data{eventdata.Indices(1),7} = Placeholder;
     data{eventdata.Indices(1),8} = Placeholder;
     data{eventdata.Indices(1),9} = PlaceholderRob;
-   
+
 elseif strcmp(ObjFunction,'mean')
-    
+
         if isnan(data{eventdata.Indices(1),5})
                  data{eventdata.Indices(1),5} = 1;
         end
-        data{eventdata.Indices(1),6} = Placeholder;    
-        data{eventdata.Indices(1),7} = Placeholder;   
+        data{eventdata.Indices(1),6} = Placeholder;
+        data{eventdata.Indices(1),7} = Placeholder;
         data{eventdata.Indices(1),8} = Placeholder;
         data{eventdata.Indices(1),9} = PlaceholderRob;
 
 elseif strcmp(ObjFunction,'EUD')
-    
+
         for k = [5 7]
             if isnan(data{eventdata.Indices(1),k})
                  data{eventdata.Indices(1),k} = 1;
             end
-        end 
-       data{eventdata.Indices(1),6} = Placeholder; 
+        end
+       data{eventdata.Indices(1),6} = Placeholder;
        data{eventdata.Indices(1),8} = Placeholder;
        data{eventdata.Indices(1),9} = PlaceholderRob;
-       
+
 elseif sum(strcmp(ObjFunction,{'min dose constraint','max dose constraint'...
                                'min mean dose constraint','max mean dose constraint'}))> 0
-         
+
          if isnan(data{eventdata.Indices(1),6})
                  data{eventdata.Indices(1),6} = 1;
          end
@@ -2016,9 +2026,9 @@ elseif sum(strcmp(ObjFunction,{'min dose constraint','max dose constraint'...
          data{eventdata.Indices(1),7} = Placeholder;
          data{eventdata.Indices(1),8} = Placeholder;
          data{eventdata.Indices(1),9} = PlaceholderRob;
-         
+
 elseif sum(strcmp(ObjFunction,{'min EUD constraint','max EUD constraint'}) ) > 0
-        
+
         if isnan(data{eventdata.Indices(1),7})
              data{eventdata.Indices(1),7} = 1;
         end
@@ -2026,20 +2036,20 @@ elseif sum(strcmp(ObjFunction,{'min EUD constraint','max EUD constraint'}) ) > 0
         data{eventdata.Indices(1),6} = Placeholder;
         data{eventdata.Indices(1),8} = Placeholder;
         data{eventdata.Indices(1),9} = PlaceholderRob;
-        
+
 elseif sum(strcmp(ObjFunction,{'min DVH constraint','max DVH constraint'}) ) > 0
-        
+
         for k = [6 8]
             if isnan(data{eventdata.Indices(1),k})
                  data{eventdata.Indices(1),k} = 1;
             end
-        end    
+        end
         data{eventdata.Indices(1),5} = Placeholder;
         data{eventdata.Indices(1),7} = Placeholder;
         data{eventdata.Indices(1),9} = PlaceholderRob;
 
 elseif sum(strcmp(ObjFunction,{'min DVH objective','max DVH objective'}) ) > 0
-        
+
     for k = [5 6 8]
         if isnan(data{eventdata.Indices(1),k})
              data{eventdata.Indices(1),k} = 1;
@@ -2047,9 +2057,9 @@ elseif sum(strcmp(ObjFunction,{'min DVH objective','max DVH objective'}) ) > 0
     end
     data{eventdata.Indices(1),7} = Placeholder;
     data{eventdata.Indices(1),9} = PlaceholderRob;
-    
+
 end
-    
+
 %% check if input is a valid
 %check if overlap, penalty and and parameters are numbers
 if (eventdata.Indices(2) == 3  || eventdata.Indices(2) == 5 || eventdata.Indices(2) == 6 || eventdata.Indices(2) == 7 || eventdata.Indices(2) == 8) ...
@@ -2068,7 +2078,7 @@ if eventdata.Indices(2) == 1 && eventdata.Indices(1) == size(data,1)
            data{eventdata.Indices(1),3}=data{i,3};
         end
     end
-    
+
 end
 
 %% set VOI type and priority according to existing definitions
@@ -2090,7 +2100,7 @@ set(handles.uiTable,'data',data);
 guidata(hObject, handles);
 UpdateState(handles);
 
-% enables/ disables buttons according to the current state      
+% enables/ disables buttons according to the current state
 function UpdateState(handles)
 
 if handles.State > 0
@@ -2104,41 +2114,41 @@ if handles.State > 0
         set(handles.btnSetTissue,'Enable','off');
     else
         set(handles.popMenuBioOpt,'Enable','off');
-        set(handles.btnSetTissue,'Enable','off'); 
+        set(handles.btnSetTissue,'Enable','off');
     end
-    
+
     cMapControls = allchild(handles.uipanel_colormapOptions);
     for runHandles = cMapControls
         set(runHandles,'Enable','on');
     end
-end 
+end
 
 cMapOptionsSelectList = {'None','CT (ED)','Result (i.e. dose)'};
 handles.cBarChanged = true;
 
  switch handles.State
-     
+
      case 0
-      
+
       set(handles.txtInfo,'String','no data loaded');
       set(handles.btnCalcDose,'Enable','off');
       set(handles.btnOptimize ,'Enable','off');
       set(handles.pushbutton_recalc,'Enable','off');
       set(handles.btnSaveToGUI,'Enable','off');
-      set(handles.btnDVH,'Enable','off'); 
+      set(handles.btnDVH,'Enable','off');
       set(handles.importDoseButton,'Enable','off');
       set(handles.btn_export,'Enable','off');
-      
+
       cMapControls = allchild(handles.uipanel_colormapOptions);
       for runHandles = cMapControls
           set(runHandles,'Enable','off');
       end
-      
+
       set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList{1})
       set(handles.popupmenu_chooseColorData,'Value',1);
-      
+
      case 1
-     
+
       set(handles.txtInfo,'String','ready for dose calculation');
       set(handles.btnCalcDose,'Enable','on');
       set(handles.btnOptimize ,'Enable','off');
@@ -2147,7 +2157,7 @@ handles.cBarChanged = true;
       set(handles.btnDVH,'Enable','off');
       set(handles.importDoseButton,'Enable','off');
       set(handles.btn_export,'Enable','on');
-      
+
       set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:2))
       set(handles.popupmenu_chooseColorData,'Value',2);
       AllVarNames = evalin('base','who');
@@ -2162,8 +2172,8 @@ handles.cBarChanged = true;
       end
 
      case 2
-    
-      set(handles.txtInfo,'String','ready for optimization');   
+
+      set(handles.txtInfo,'String','ready for optimization');
       set(handles.btnCalcDose,'Enable','on');
       set(handles.btnOptimize ,'Enable','on');
       set(handles.pushbutton_recalc,'Enable','off');
@@ -2174,7 +2184,7 @@ handles.cBarChanged = true;
       set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:2))
       set(handles.popupmenu_chooseColorData,'Value',2);
       AllVarNames = evalin('base','who');
-      
+
       if ~isempty(AllVarNames)
             if  ismember('resultGUI',AllVarNames)
               set(handles.pushbutton_recalc,'Enable','on');
@@ -2184,9 +2194,9 @@ handles.cBarChanged = true;
               set(handles.popupmenu_chooseColorData,'Value',3);
             end
       end
-      
+
      case 3
-      set(handles.txtInfo,'String','plan is optimized');   
+      set(handles.txtInfo,'String','plan is optimized');
       set(handles.btnCalcDose,'Enable','on');
       set(handles.btnOptimize ,'Enable','on');
       set(handles.pushbutton_recalc,'Enable','on');
@@ -2200,8 +2210,8 @@ handles.cBarChanged = true;
       set(handles.popupmenu_chooseColorData,'Value',3);
  end
 
-guidata(handles.figure1,handles); 
- 
+guidata(handles.figure1,handles);
+
 % fill GUI elements with plan information
 function setPln(handles)
 pln = evalin('base','pln');
@@ -2216,7 +2226,7 @@ set(handles.editCouchAngle,'String',num2str((pln.couchAngles)));
 set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),pln.radiationMode)));
 set(handles.popUpMachine,'Value',find(strcmp(get(handles.popUpMachine,'String'),pln.machine)));
 
-if ~strcmp(pln.bioOptimization,'none')  
+if ~strcmp(pln.bioOptimization,'none')
     set(handles.popMenuBioOpt,'Enable','on');
     contentPopUp = get(handles.popMenuBioOpt,'String');
     ix = find(strcmp(pln.bioOptimization,contentPopUp));
@@ -2262,8 +2272,8 @@ function btnTableSave_Callback(~, ~, handles)
 % handles    structure with handles and user data (see GUIDATA)
 getCstTable(handles);
 if get(handles.checkIsoCenter,'Value')
-    pln = evalin('base','pln'); 
-    pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
+    pln = evalin('base','pln');
+    pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
     set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
     assignin('base','pln',pln);
 end
@@ -2279,18 +2289,18 @@ function sliderOffset_Callback(hObject, ~, handles)
 handles.profileOffset = get(hObject,'Value');
 UpdatePlot(handles);
 
- 
+
 %% HELPER FUNCTIONS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % check validity of input for cst
-function flagValidity = CheckValidity(Val) 
-      
+function flagValidity = CheckValidity(Val)
+
 flagValidity = true;
 
 if ischar(Val)
     Val = str2num(Val);
-end 
+end
 
 if length(Val) > 2
     warndlg('invalid input!');
@@ -2298,57 +2308,57 @@ end
 
 if isempty(Val)
    warndlg('Input not a number!');
-   flagValidity = false;        
+   flagValidity = false;
 end
 
-if any(Val < 0) 
+if any(Val < 0)
    warndlg('Input not a positive number!');
-   flagValidity = false;  
+   flagValidity = false;
 end
 
 % return IPOPT status as message box
-function CheckIpoptStatus(info,OptCase) 
-      
+function CheckIpoptStatus(info,OptCase)
+
 if info.status == 0
-    statusmsg = 'solved';  
+    statusmsg = 'solved';
 elseif info.status == 1
-    statusmsg = 'solved to acceptable level';          
+    statusmsg = 'solved to acceptable level';
 elseif info.status == 2
-    statusmsg = 'infeasible problem detected';           
-elseif info.status == 3    
-    statusmsg = 'search direction too small';             
-elseif info.status == 4 
-    statusmsg = 'diverging iterates';     
+    statusmsg = 'infeasible problem detected';
+elseif info.status == 3
+    statusmsg = 'search direction too small';
+elseif info.status == 4
+    statusmsg = 'diverging iterates';
 elseif info.status == 5
-    statusmsg = 'user requested stop';     
-elseif info.status == -1        
-    statusmsg = 'maximum number of iterations';     
-elseif info.status == -2    
-    statusmsg = 'restoration phase failed';     
-elseif info.status == -3         
-    statusmsg = 'error in step computation';     
+    statusmsg = 'user requested stop';
+elseif info.status == -1
+    statusmsg = 'maximum number of iterations';
+elseif info.status == -2
+    statusmsg = 'restoration phase failed';
+elseif info.status == -3
+    statusmsg = 'error in step computation';
 elseif info.status == -4
-    statusmsg = 'maximum CPU time exceeded';     
-elseif info.status == -10        
-    statusmsg = 'not enough degrees of freedom';     
-elseif info.status == -11    
-    statusmsg = 'invalid problem definition';     
-elseif info.status == -12   
-    statusmsg = 'invalid option';     
-elseif info.status == -13        
-    statusmsg = 'invalid number detected';     
+    statusmsg = 'maximum CPU time exceeded';
+elseif info.status == -10
+    statusmsg = 'not enough degrees of freedom';
+elseif info.status == -11
+    statusmsg = 'invalid problem definition';
+elseif info.status == -12
+    statusmsg = 'invalid option';
+elseif info.status == -13
+    statusmsg = 'invalid number detected';
 elseif info.status == -100
-    statusmsg = 'unrecoverable exception';     
-elseif info.status == -101        
-    statusmsg = 'non-IPOPT exception thrown';     
-elseif info.status == -102    
-    statusmsg = 'insufficient memory';     
+    statusmsg = 'unrecoverable exception';
+elseif info.status == -101
+    statusmsg = 'non-IPOPT exception thrown';
+elseif info.status == -102
+    statusmsg = 'insufficient memory';
 elseif info.status == -199
-    statusmsg = 'IPOPT internal error';     
+    statusmsg = 'IPOPT internal error';
 else
     statusmsg = 'IPOPT returned no status';
 end
-    
+
 if info.status == 0 || info.status == 1
     status = 'none';
 else
@@ -2357,7 +2367,7 @@ end
 
 msgbox(['IPOPT finished with status ' num2str(info.status) ' (' statusmsg ')'],'IPOPT',status,'modal');
 
-% get pln file form GUI     
+% get pln file form GUI
 function getPlnFromGUI(handles)
 
 pln.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
@@ -2371,10 +2381,10 @@ try
 catch
 end
 pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'),false);
-contents            = get(handles.popupRadMode,'String'); 
+contents            = get(handles.popupRadMode,'String');
 pln.radiationMode   = contents{get(handles.popupRadMode,'Value')}; % either photons / protons / carbon
-contents            = get(handles.popUpMachine,'String'); 
-pln.machine         = contents{get(handles.popUpMachine,'Value')}; 
+contents            = get(handles.popUpMachine,'String');
+pln.machine         = contents{get(handles.popUpMachine,'Value')};
 
 if (~strcmp(pln.radiationMode,'photons'))
     contentBioOpt = get(handles.popMenuBioOpt,'String');
@@ -2389,7 +2399,7 @@ pln.runDAO = logical(get(handles.btnRunDAO,'Value'));
 try
     cst = evalin('base','cst');
     if sum(strcmp('TARGET',cst(:,3))) > 0 && get(handles.checkIsoCenter,'Value')
-       pln.isoCenter = matRad_getIsoCenter(cst,ct); 
+       pln.isoCenter = matRad_getIsoCenter(cst,ct);
     else
        pln.isoCenter = str2num(get(handles.editIsoCenter,'String'));
     end
@@ -2407,7 +2417,7 @@ if isnumeric(stringIn)
 else
     number = str2num(stringIn);
     if isempty(number) || length(number) > 1 && ~isVector
-        warndlg(['could not parse all parameters (pln, optimization parameter)']); 
+        warndlg(['could not parse all parameters (pln, optimization parameter)']);
         number = NaN;
     elseif isVector && iscolumn(number)
         number = number';
@@ -2446,7 +2456,7 @@ radMod = contents{get(handles.popupRadMode,'Value')};
 if isdeployed
     FoundFile = dir([ctfroot filesep 'matRad' filesep radMod '_' Machine '.mat']);
 else
-    FoundFile = dir([fileparts(mfilename('fullpath')) filesep radMod '_' Machine '.mat']);    
+    FoundFile = dir([fileparts(mfilename('fullpath')) filesep radMod '_' Machine '.mat']);
 end
 if isempty(FoundFile)
     warndlg(['No base data available for machine: ' Machine]);
@@ -2542,7 +2552,7 @@ if ~isempty(AllVarNames)
         else
             getPlnFromGUI(handles);
         end
-        
+
         handles.State = 1;
 
     catch
@@ -2567,14 +2577,14 @@ if ~isempty(AllVarNames)
         ct = evalin('base','ct');
         set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
                 'Value',ceil(ct.cubeDim(handles.plane)/2),...
-                'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);      
+                'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);
     end
 
 end
 
 %% delete context menu if workspace was deleted manually and refresh button was clicked
 if handles.State == 0
-    objHandle = guidata(findobj('Name','matRadGUI'));  
+    objHandle = guidata(findobj('Name','matRadGUI'));
     contextUi = (get(objHandle.figure1,'UIContextMenu'));
     delete(contextUi)
 end
@@ -2653,7 +2663,7 @@ if isequal(handles.IsoDose.Levels,0) || ~isvector(handles.IsoDose.Levels) || any
 else
     if isrow(handles.IsoDose.Levels)
         def = cellstr(num2str(handles.IsoDose.Levels,'%.2g '));
-    else 
+    else
         def = cellstr(num2str(handles.IsoDose.Levels','%.2g '));
     end
 end
@@ -2736,9 +2746,9 @@ try
     end
 
 catch
-     handles = showWarning(handles,'Could not save files'); 
+     handles = showWarning(handles,'Could not save files');
 end
-guidata(hObject,handles); 
+guidata(hObject,handles);
 
 % button: about
 function btnAbout_Callback(hObject, eventdata, handles)
@@ -2747,7 +2757,7 @@ msgbox({'https://github.com/e0404/matRad/' 'email: matrad@dkfz.de'},'About');
 
 % button: close
 function figure1_CloseRequestFcn(hObject, ~, ~)
-set(0,'DefaultUicontrolBackgroundColor',[0.5 0.5 0.5]);     
+set(0,'DefaultUicontrolBackgroundColor',[0.5 0.5 0.5]);
 selection = questdlg('Do you really want to close matRad?',...
                      'Close matRad',...
                      'Yes','No','Yes');
@@ -2771,21 +2781,21 @@ if evalin('base','exist(''pln'',''var'')') && ...
    evalin('base','exist(''resultGUI'',''var'')')
 
     % indicate that matRad is busy
-    % change mouse pointer to hour glass 
+    % change mouse pointer to hour glass
     Figures = gcf;%findobj('type','figure');
-    set(Figures, 'pointer', 'watch'); 
+    set(Figures, 'pointer', 'watch');
     drawnow;
     % disable all active objects
     InterfaceObj = findobj(Figures,'Enable','on');
     set(InterfaceObj,'Enable','off');
-    
+
     % get all data from workspace
     pln       = evalin('base','pln');
     stf       = evalin('base','stf');
     ct        = evalin('base','ct');
     cst       = evalin('base','cst');
     resultGUI = evalin('base','resultGUI');
-    
+
     % get weights of the selected cube
     Content = get(handles.popupDisplayOption,'String');
     SelectedCube = Content{get(handles.popupDisplayOption,'Value')};
@@ -2795,12 +2805,12 @@ if evalin('base','exist(''pln'',''var'')') && ...
     else
         Suffix = '';
     end
-    
+
     if sum([stf.totalNumOfBixels]) ~= length(resultGUI.(['w' Suffix]))
         warndlg('weight vector does not corresponding to current steering file');
         return
     end
-    
+
     % change isocenter if that was changed and do _not_ recreate steering
     % information
     for i = 1:numel(pln.gantryAngles)
@@ -2820,46 +2830,46 @@ if evalin('base','exist(''pln'',''var'')') && ...
 
     % recalculate cubes in resultGUI
     resultGUIreCalc = matRad_calcCubes(resultGUI.(['w' Suffix]),dij,cst);
-    
+
     % delete old variables to avoid confusion
     if isfield(resultGUI,'effect')
         resultGUI = rmfield(resultGUI,'effect');
-        resultGUI = rmfield(resultGUI,'RBExDose'); 
-        resultGUI = rmfield(resultGUI,'RBE'); 
-        resultGUI = rmfield(resultGUI,'alpha'); 
+        resultGUI = rmfield(resultGUI,'RBExDose');
+        resultGUI = rmfield(resultGUI,'RBE');
+        resultGUI = rmfield(resultGUI,'alpha');
         resultGUI = rmfield(resultGUI,'beta');
     end
-    
+
     % overwrite the "standard" fields
     sNames = fieldnames(resultGUIreCalc);
     for j = 1:length(sNames)
         resultGUI.(sNames{j}) = resultGUIreCalc.(sNames{j});
     end
-    
+
     % assign results to base worksapce
     assignin('base','dij',dij);
     assignin('base','resultGUI',resultGUI);
-    
+
     handles.State = 3;
-    
+
     % show physicalDose of newly computed state
     handles.SelectedDisplayOption = 'physicalDose';
     set(handles.popupDisplayOption,'Value',find(strcmp('physicalDose',Content)));
-    
+
     % change state from busy to normal
     set(Figures, 'pointer', 'arrow');
     set(InterfaceObj,'Enable','on');
-    
+
     handles.cBarChanged = true;
-    
+
     UpdateState(handles);
-    
+
     handles.rememberCurrAxes = false;
     UpdatePlot(handles);
-    handles.rememberCurrAxes = true;   
+    handles.rememberCurrAxes = true;
 
     guidata(hObject,handles);
-    
+
 end
 
 
@@ -2878,7 +2888,7 @@ pln = evalin('base','pln');
 fileName = [pln.radiationMode '_' pln.machine];
 load(fileName);
 
-% check for available cell types characterized by alphaX and betaX 
+% check for available cell types characterized by alphaX and betaX
 for i = 1:size(machine.data(1).alphaX,2)
     CellType{i} = [num2str(machine.data(1).alphaX(i)) ' ' num2str(machine.data(1).betaX(i))];
 end
@@ -2901,7 +2911,7 @@ else
     IdxHandle = [];
 end
 
-%check if window is already exists 
+%check if window is already exists
 if any(IdxHandle)
     IdxTable = find(strcmp({figHandles(IdxHandle).Children.Type},'uitable'));
     set(figHandles(IdxHandle).Children(IdxTable), 'Data', []);
@@ -2931,17 +2941,17 @@ set(tissueTable,'Position',currTablePos);
 uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Save&Close',...
         'Position', [Width-(0.25*Width) 0.1 * Height 70 30],...
         'Callback', @(hpb,eventdata)SaveTissueParameters(hpb,eventdata,handles));
-    
+
 uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Cancel&Close',...
         'Position', [Width-(0.5*Width) 0.1 * Height 80 30],...
-        'Callback', 'close');    
-    
-guidata(hObject,handles); 
+        'Callback', 'close');
+
+guidata(hObject,handles);
 UpdateState(handles);
-    
-    
-function SaveTissueParameters(~, ~, handles) 
-cst = evalin('base','cst');    
+
+
+function SaveTissueParameters(~, ~, handles)
+cst = evalin('base','cst');
 % get handle to uiTable
 figHandles = get(0,'Children');
 IdxHandle  = find(strcmp(get(figHandles,'Name'),'Set Tissue Parameters'));
@@ -2966,10 +2976,10 @@ assignin('base','cst',cst);
 close
 handles.State = 2;
 UpdateState(handles);
- 
 
-        
-function tissueTable_CellEditCallback(hObject, eventdata, ~) 
+
+
+function tissueTable_CellEditCallback(hObject, eventdata, ~)
 if eventdata.Indices(2) == 2
    alphaXBetaX = str2num(eventdata.NewData);
    data = get(hObject,'Data');
@@ -2992,27 +3002,27 @@ else
     IdxHandle = [];
 end
 
-%check if window is already exists 
+%check if window is already exists
 if any(IdxHandle)
     figDialog = figHandles(IdxHandle);
     %set focus
     figure(figDialog);
 else
     figDialog = dialog('Position',[ceil(ScreenSize(3)/2) ceil(ScreenSize(4)/2) Width Height],'Name','Provide result name','Color',[0.5 0.5 0.5]);
-    
+
     uicontrol('Parent',figDialog,...
               'Style','text',...
               'Position',[20 Height - (0.35*Height) 350 60],...
               'String','Please provide a decriptive name for your optimization result:','FontSize',10,'BackgroundColor',[0.5 0.5 0.5]);
-    
+
     uicontrol('Parent',figDialog,...
               'Style','edit',...
-              'Position',[30 60 350 60],... 
+              'Position',[30 60 350 60],...
               'String','Please enter name here...','FontSize',10,'BackgroundColor',[0.55 0.55 0.55]);
-         
+
     uicontrol('Parent', figDialog,'Style', 'pushbutton', 'String', 'Save','FontSize',10,...
               'Position', [0.42*Width 0.1 * Height 70 30],...
-              'Callback', @(hpb,eventdata)SaveResultToGUI(hpb,eventdata,guidata(hpb)));        
+              'Callback', @(hpb,eventdata)SaveResultToGUI(hpb,eventdata,guidata(hpb)));
 end
 
 uiwait(figDialog);
@@ -3022,12 +3032,12 @@ UpdatePlot(handles)
 
 
 function SaveResultToGUI(~, ~, ~)
-AllFigHandles = get(0,'Children');    
+AllFigHandles = get(0,'Children');
 ixHandle      = strcmp(get(AllFigHandles,'Name'),'Provide result name');
 uiEdit        = get(AllFigHandles(ixHandle),'Children');
 
 if strcmp(get(uiEdit(2),'String'),'Please enter name here...')
-  
+
     formatOut = 'mmddyyHHMM';
     Suffix = ['_' datestr(now,formatOut)];
 else
@@ -3041,7 +3051,7 @@ pln       = evalin('base','pln');
 resultGUI = evalin('base','resultGUI');
 
 if isfield(resultGUI,'physicalDose')
-    resultGUI.(['physicalDose' Suffix])  = resultGUI.physicalDose; 
+    resultGUI.(['physicalDose' Suffix])  = resultGUI.physicalDose;
 end
 if isfield(resultGUI,'w')
     resultGUI.(['w' Suffix])             = resultGUI.w;
@@ -3049,14 +3059,14 @@ end
 
 
 if ~strcmp(pln.bioOptimization,'none')
-    
+
     if isfield(resultGUI,'RBExDose')
-         resultGUI.(['RBExDose' Suffix]) = resultGUI.RBExDose; 
+         resultGUI.(['RBExDose' Suffix]) = resultGUI.RBExDose;
     end
-    
-    if strcmp(pln.radiationMode,'carbon') == 1 
+
+    if strcmp(pln.radiationMode,'carbon') == 1
         if isfield(resultGUI,'effect')
-            resultGUI.(['effect' Suffix])= resultGUI.effect; 
+            resultGUI.(['effect' Suffix])= resultGUI.effect;
         end
 
         if isfield(resultGUI,'RBE')
@@ -3080,7 +3090,7 @@ mask = zeros(ct.cubeDim); % create zero cube with same dimeonsions like dose cub
 for s = 1:size(cst,1)
     cst{s,7} = cell(max(ct.cubeDim(:)),3);
     mask(:) = 0;
-    mask(cst{s,4}{1}) = 1;    
+    mask(cst{s,4}{1}) = 1;
     for slice = 1:ct.cubeDim(1)
         if sum(sum(mask(slice,:,:))) > 0
              cst{s,7}{slice,1} = contourc(squeeze(mask(slice,:,:)),.5*[1 1]);
@@ -3120,10 +3130,10 @@ handles.maxDoseVal = max(dose(:));
 % calculate new iso dose lines if handles.IsoDose.Levels is set 0 or the dose maximum is
 % different than the old dose maximum (indicates changing to a different dose cube)
 if (length(handles.IsoDose.Levels) == 1 && handles.IsoDose.Levels(1) == 0) || maxDoseValOld ~= handles.maxDoseVal
-    handles            = getIsoDoseLevels(handles);    
+    handles            = getIsoDoseLevels(handles);
 end
 set(handles.txtMaxDoseVal,'String',num2str(handles.maxDoseVal))
- 
+
 
 handles.IsoDose.Contours = matRad_computeIsoDoseContours(dose,handles.IsoDose.Levels);
 
@@ -3132,12 +3142,12 @@ function handles =  getIsoDoseLevels(handles)
     SpacingUpper = 0.05;
     vLow  = 0.1:SpacingLower:0.9;
     vHigh = 0.95:SpacingUpper:1.2;
-    vLevels = [vLow vHigh];  
-    handles.IsoDose.Levels = (round((vLevels.*((handles.maxDoseVal*100)/120))*1000))/1000;   % 
+    vLevels = [vLow vHigh];
+    handles.IsoDose.Levels = (round((vLevels.*((handles.maxDoseVal*100)/120))*1000))/1000;   %
 
-    
-    
-   
+
+
+
 %% CREATE FUNCTIONS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -3191,7 +3201,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-function editFraction_CreateFcn(hObject, ~, ~) 
+function editFraction_CreateFcn(hObject, ~, ~)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -3310,7 +3320,7 @@ for filename = filenames
         errordlg('Dimensions of the imported cube do not match with ct','Import failed!','modal');
         continue;
     end
-    
+
     fieldname = ['import_' matlab.lang.makeValidName(name, 'ReplacementStyle','delete')];
     resultGUI.(fieldname) = cube;
 end
@@ -3329,7 +3339,7 @@ try
     set(handles.popupDisplayOption,'String','no option available');
     AllVarNames = evalin('base','who');
     RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
-    for i = 1:length(RefVarNames)  
+    for i = 1:length(RefVarNames)
         if sum(ismember(AllVarNames,RefVarNames{i}))>0
             evalin('base',['clear ', RefVarNames{i}]);
         end
@@ -3339,10 +3349,10 @@ try
         matRadRootDir = fileparts(mfilename('fullpath'));
         addpath(fullfile(matRadRootDir,'IO'))
     end
-    
+
     %call the gui
     uiwait(matRad_importGUI);
-    
+
     %Check if we have the variables in the workspace
     if evalin('base','exist(''cst'',''var'')') == 1 && evalin('base','exist(''ct'',''var'')') == 1
         cst = evalin('base','cst');
@@ -3350,12 +3360,16 @@ try
         setCstTable(handles,cst);
         handles.TableChanged = false;
         set(handles.popupTypeOfPlot,'Value',1);
-        % precompute contours 
+        % compute HU values
+        if ~isfield(ct, 'cubeHU')
+            ct = matRad_electronDensitiesToHU(ct);
+        end
+        % precompute contours
         cst = precomputeContours(ct,cst);
-    
+
         assignin('base','ct',ct);
         assignin('base','cst',cst);
-        
+
         if evalin('base','exist(''pln'',''var'')')
             assignin('base','pln',pln);
             setPln(handles);
@@ -3365,7 +3379,7 @@ try
         end
         handles.State = 1;
     end
-    
+
     % set slice slider
     handles.plane = get(handles.popupPlane,'value');
     if handles.State >0
@@ -3384,11 +3398,11 @@ try
             end
         end
     end
-    
+
     handles.ctWindow = [];
     handles.doseWindow = [];
     handles.cBarChanged = true;
-    
+
     UpdateState(handles);
     handles.rememberCurrAxes = false;
     UpdatePlot(handles);
@@ -3414,8 +3428,8 @@ function uipushtool_screenshot_ClickedCallback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
- 
-tmpFig = figure('position',[100 100 700 600],'Visible','off','name','Current View'); 
+
+tmpFig = figure('position',[100 100 700 600],'Visible','off','name','Current View');
 cBarHandle = findobj(handles.figure1,'Type','colorbar');
 if ~isempty(cBarHandle)
     new_handle = copyobj([handles.axesFig cBarHandle],tmpFig);
@@ -3447,20 +3461,20 @@ selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
 cMapSelectionIndex = get(handles.popupmenu_chooseColormap,'Value');
 cMapStrings = get(handles.popupmenu_chooseColormap,'String');
 
-if selectionIndex > 1 
+if selectionIndex > 1
     set(handles.uitoggletool8,'State','on');
 else
     set(handles.uitoggletool8,'State','off');
 end
 
-try 
+try
     if selectionIndex == 2
         ct = evalin('base','ct');
         currentMap = handles.ctColorMap;
         window = handles.ctWindow;
-        minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
+        minMax = [min(ct.cubeHU{1}(:)) max(ct.cubeHU{1}(:))];
     elseif selectionIndex == 3
-        result = evalin('base','resultGUI');        
+        result = evalin('base','resultGUI');
         dose = result.(handles.SelectedDisplayOption);
         currentMap = handles.doseColorMap;
         minMax = [min(dose(:)) max(dose(:))];
@@ -3501,7 +3515,7 @@ if windowCenter > sliderCenterMinMax(2)
 end
 
 
-set(handles.edit_windowCenter,'String',num2str(windowCenter,3));    
+set(handles.edit_windowCenter,'String',num2str(windowCenter,3));
 set(handles.edit_windowWidth,'String',num2str(windowWidth,3));
 set(handles.edit_windowRange,'String',num2str(window,4));
 set(handles.slider_windowCenter,'Min',sliderCenterMinMax(1),'Max',sliderCenterMinMax(2),'Value',windowCenter);
@@ -3554,7 +3568,7 @@ range = get(handles.slider_windowWidth,'Value');
 
 selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
 
-switch selectionIndex 
+switch selectionIndex
     case 2
         handles.ctWindow = [newCenter-range/2 newCenter+range/2];
     case 3
@@ -3594,7 +3608,7 @@ center = get(handles.slider_windowCenter,'Value');
 
 selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
 
-switch selectionIndex 
+switch selectionIndex
     case 2
         handles.ctWindow = [center-newWidth/2 center+newWidth/2];
     case 3
@@ -3635,7 +3649,7 @@ strings = get(hObject,'String');
 
 selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
 
-switch selectionIndex 
+switch selectionIndex
     case 2
         handles.ctColorMap = strings{index};
     case 3
@@ -3671,7 +3685,7 @@ function edit_windowRange_Callback(hObject, eventdata, handles)
 
 selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
 
-switch selectionIndex 
+switch selectionIndex
     case 2
         handles.ctWindow = str2num(get(hObject,'String'));
     case 3
@@ -3712,7 +3726,7 @@ width = get(handles.slider_windowWidth,'Value');
 
 selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
 
-switch selectionIndex 
+switch selectionIndex
     case 2
         handles.ctWindow = [newCenter-width/2 newCenter+width/2];
     case 3
@@ -3752,7 +3766,7 @@ center = get(handles.slider_windowCenter,'Value');
 
 selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
 
-switch selectionIndex 
+switch selectionIndex
     case 2
         handles.ctWindow = [center-newWidth/2 center+newWidth/2];
     case 3
@@ -3795,7 +3809,7 @@ else
     %Chooses the selection from the highest state
     selections = get(handles.popupmenu_chooseColorData,'String');
     newSelection = numel(selections);
-end    
+end
 set(handles.popupmenu_chooseColorData,'Value',newSelection);
 
 handles.cBarChanged = true;
@@ -3840,21 +3854,21 @@ pos = get(event_obj,'Position');
 %Different behavior for image and profile plot
 if get(handles.popupTypeOfPlot,'Value')==1 %Image view
     cursorText = cell(0,1);
-    try   
+    try
         if handles.State >= 1
             plane = get(handles.popupPlane,'Value');
             slice = round(get(handles.sliderSlice,'Value'));
-            
+
             %Get the CT values
             ct  = evalin('base','ct');
-            
+
             %We differentiate between pos and ix, since the user may put
             %the datatip on an isoline which returns a continous position
             cubePos = zeros(1,3);
             cubePos(plane) = slice;
-            cubePos(1:end ~= plane) = fliplr(pos);            
+            cubePos(1:end ~= plane) = fliplr(pos);
             cubeIx = round(cubePos);
-            
+
             %Here comes the index permutation stuff
             %Cube Index
             cursorText{end+1,1} = ['Cube Index: ' mat2str(cubeIx)];
@@ -3862,34 +3876,34 @@ if get(handles.popupTypeOfPlot,'Value')==1 %Image view
             coords = zeros(1,3);
             coords(1) = cubePos(2)*ct.resolution.y;
             coords(2) = cubePos(1)*ct.resolution.x;
-            coords(3) = cubePos(3)*ct.resolution.z;            
+            coords(3) = cubePos(3)*ct.resolution.z;
             cursorText{end+1,1} = ['Space Coordinates: ' mat2str(coords,5) ' mm'];
-            
+
             ctVal = ct.cube{1}(cubeIx(1),cubeIx(2),cubeIx(3));
             cursorText{end+1,1} = ['CT Value: ' num2str(ctVal,3)];
         end
-        
+
         %Add dose information if available
         if handles.State == 3
             %get result structure
             result = evalin('base','resultGUI');
-            
+
             %Get all result names from popup
             resultNames = get(handles.popupDisplayOption,'String');
-            
+
             %Display all values of fields found in the resultGUI struct
-            for runResult = 1:numel(resultNames)               
+            for runResult = 1:numel(resultNames)
                 name = resultNames{runResult};
                 if isfield(result,name)
                     field = result.(name);
                     val = field(cubeIx(1),cubeIx(2),cubeIx(3));
                     cursorText{end+1,1} = [name ': ' num2str(val,3)];
                 end
-            end      
+            end
         end
     catch
         cursorText{end+1,1} = 'Error while retreiving Data!';
-    end    
+    end
 else %Profile view
     cursorText = cell(2,1);
     cursorText{1} = ['Radiological Depth: ' num2str(pos(1),3) ' mm'];
@@ -3906,7 +3920,7 @@ NewBioOptimization = contentBioOpt(get(handles.popMenuBioOpt,'Value'),:);
 
 if handles.State > 0
     if (strcmp(pln.bioOptimization,'LEMIV_effect') && strcmp(NewBioOptimization,'LEMIV_RBExD')) ||...
-       (strcmp(pln.bioOptimization,'LEMIV_RBExD') && strcmp(NewBioOptimization,'LEMIV_effect')) 
+       (strcmp(pln.bioOptimization,'LEMIV_RBExD') && strcmp(NewBioOptimization,'LEMIV_effect'))
        % do nothing - re-optimization is still possible
     elseif ((strcmp(pln.bioOptimization,'const_RBE') && strcmp(NewBioOptimization,'none')) ||...
            (strcmp(pln.bioOptimization,'none') && strcmp(NewBioOptimization,'const_RBE'))) && isequal(pln.radiationMode,'protons')
