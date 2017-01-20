@@ -105,3 +105,12 @@ matRadGUI
 
 %% dvh
 matRad_calcDVH(resultGUI,cst,pln)
+
+%% post processing
+resultGUI = matRad_postprocessing(resultGUI, dij, pln, 25000000);
+
+%% export Plan
+matRad_export_HITXMLPlan_modified('test', 500000, 25000000, 'stfMode')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
+
+%% calc 4D dose
+[resultGUI, delivery, ct] = matRad_calc4dDose(ct, 'LiverDS221_2b_stf'); %TKUH005_test');  
