@@ -1,4 +1,4 @@
-function delivery = matRad_readLmdout(FileName)
+function delivery = matRad_readLmdout(FileName, FileName_lmdout)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % reads in xml Plan file and lmdout file
 % one file per beam
@@ -30,6 +30,10 @@ function delivery = matRad_readLmdout(FileName)
 
 disp('read in delivery information')
 
+if(nargin <2)
+    FileName_lmdout = FileName;
+end
+
 delivery = struct;
 
 % get data from workspace
@@ -42,7 +46,7 @@ NumberOfBeams = length(stf);
 for i=1:NumberOfBeams
     n = num2str(i-1);
     PlnFile = ['PBP_0' n '_' FileName '.xml'];
-    LmdoutFile = ['D_0' n '_' FileName '.lmdout'];
+    LmdoutFile = ['D_0' n '_' FileName_lmdout '.lmdout'];
     
     %Read in XML Plan file  (energy, spot position)
     if exist(PlnFile, 'file') == 2
@@ -69,7 +73,7 @@ for i=1:NumberOfBeams
     delimiter = {' '};
     startRow = 11;
     endRow = inf;
-    formatSpec = '%d%d%d%d%d%d%d%d%d%*s%*s%[^\n\r]';
+    formatSpec = '%f%d%d%d%d%d%d%d%d%*s%*s%[^\n\r]';
 
     dataArray = textscan(fid, formatSpec, endRow(1)-startRow(1)+1, 'Delimiter', delimiter, 'EmptyValue' ,NaN,'HeaderLines', startRow(1)-1, 'ReturnOnError', false);
     

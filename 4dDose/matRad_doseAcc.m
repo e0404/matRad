@@ -33,6 +33,7 @@ function [dAcc, ct, resultGUI] = matRad_doseAcc(ct, resultGUI,accMethod)
 if ~isfield(ct, 'dvf')
     warning('no dvf available. check if correct ones are imported!')
   
+    
     addpath('D:\Matrad\data\4DCT\ReadData3d')
     
     dvffiles(1).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M06_vf.mha';  %'D:\Matrad\data\4DCT\Boxphantom\DVF\DVF_1_1.mha';   %   %'D:\Matrad\data\4DCT\testphan\DVF_1_1.mha';   %
@@ -47,8 +48,15 @@ if ~isfield(ct, 'dvf')
 %     dvffiles(4).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F02_M06_vf.mha';
 %     dvffiles(5).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F04_M06_vf.mha';
     
+dvfInputFolder = 'D:\Matrad\data\4DCT\Liver007\4DSet01_10Ph\REG\MHA_DS221_fromXF\';
+dvfFormat = 'mha';
+referencephase = 'F06';  %M06 for EMT, F06 for DDM
+dvffiles = dir([dvfInputFolder, '*.', dvfFormat]);
+dvffiles = dvffiles(~cellfun('isempty', strfind({dvffiles.name}, 'vf')));
+dvffiles = dvffiles(~cellfun('isempty', strfind({dvffiles.name}, referencephase)));
+
     for i = 1:ct.numOfCtScen
-        [ct.dvf{i},ct.dvfReadData3Dinfo(i)] = ReadData3D(dvffiles(i).name,false);
+        [ct.dvf{i},ct.dvfReadData3Dinfo(i)] = ReadData3D([dvfInputFolder,dvffiles(i).name],false);
     
      % swap x and y (matRad standard)  ????????????
     ct.dvf{i} = permute(ct.dvf{i}, [1,3,2,4]);

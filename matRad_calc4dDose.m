@@ -43,6 +43,8 @@ end
 delivery = matRad_readLmdout(FileName);
 
 %dose in each CT phase is calculated
+delivery(1).offset = 0;
+delivery(1).motionperiod = 5;
 [resultGUI, delivery] = matRad_calcPhaseDose(delivery);
 
 %dose accumulation
