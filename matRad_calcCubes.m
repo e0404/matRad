@@ -100,7 +100,9 @@ for i = 1:size(cst,1)
 end
 
 if(writeWCCube == 1)
-     d = matRad_backProjection(w,dij,type);
+     for i = 1: length(dij.indexforOpt)
+          d{i} = dij.physicalDose{dij.indexforOpt(i)} * w;
+     end
   
      [d_max,~] = max([d{:}],[],2);  
      [d_min,~] = min([d{:}],[],2);
