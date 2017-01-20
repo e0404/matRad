@@ -76,10 +76,12 @@ for i = 1:lw
     end
 end
 
-%%calc dose
-d = matRad_backProjection(w,dij,'none');
+%%calc dose (nicht backprojection da options nicht zur Verfügung steht,
+%%nicht calc cubes da sonst resultGUI.physicalDose überschrieben wird
+resultGUI.finalDose = reshape(dij.physicalDose{1}*w,dij.dimensions);
+%d = matRad_backProjection(w,dij,'none');
 
-resultGUI.finalDose = reshape(d{1},dij.dimensions);
+%resultGUI.finalDose = reshape(d{1},dij.dimensions);
 resultGUI.finalw = w;
 
 %%calc difference to optimized dose (not necessary, can be deleted)
@@ -140,9 +142,9 @@ if(minNrParticlesIES ~= 0)
    
     
 %%calc dose
-d = matRad_backProjection(w,dij,'none');
-
-resultGUI.finalDose = reshape(d{1},dij.dimensions);
+%d = matRad_backProjection(w,dij,'none');
+resultGUI.finalDose = reshape(dij.physicalDose{1}*w,dij.dimensions);
+%resultGUI.finalDose = reshape(d{1},dij.dimensions);
 resultGUI.finalw = w;
 
 %%calc difference to optimized dose (not necessary, can be deleted)
