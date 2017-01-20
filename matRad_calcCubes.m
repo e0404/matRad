@@ -90,6 +90,7 @@ end
 
 
 % write worst case dose distribution if WC opt used for one objective
+% only implemented for physical dose
 writeWCCube = 0;
 for i = 1:size(cst,1)
    if ~isempty(cst{i,6})
@@ -100,7 +101,9 @@ for i = 1:size(cst,1)
 end
 
 if(writeWCCube == 1)
-     d = matRad_backProjection(w,dij,type);
+     for i = 1: length(dij.indexforOpt)
+          d{i} = dij.physicalDose{dij.indexforOpt(i)} * w;
+     end
   
      [d_max,~] = max([d{:}],[],2);  
      [d_min,~] = min([d{:}],[],2);
