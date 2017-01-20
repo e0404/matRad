@@ -6,7 +6,11 @@ if isequal(probDist,'normDist')
     if isequal(calcType,'probBins')
         
         for i = 1:length(mu)
+ 
             samplePosSorted = sort(unique(samplePos(i,:)));
+            if numel(samplePosSorted) == 1
+                continue;
+            end
             binWidth        = (samplePosSorted(2) - samplePosSorted(1));
             lowerBinLevel   = samplePos(i,:) - 0.5*binWidth;
             upperBinLevel   = samplePos(i,:) + 0.5*binWidth;
