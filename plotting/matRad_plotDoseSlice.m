@@ -70,7 +70,7 @@ dose_rgb = ind2rgb(uint8(cMapScale*(dose_slice - window(1))/(window(2)-window(1)
 % plot dose distribution
 doseHandle = image('CData',dose_rgb,'Parent',axesHandle);
 if ~isempty(threshold)
-    set(doseHandle,'AlphaData', alpha*(abs(dose_slice)>threshold));
+    set(doseHandle,'AlphaData', alpha*(dose_slice>max(threshold*window(2),window(1))));
 else
     set(doseHandle,'AlphaData', alpha*ones(size(dose_slice)));
 end

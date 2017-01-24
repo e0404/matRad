@@ -200,7 +200,7 @@ end
 % if plan is changed go back to state 1
 % if table VOI Type or Priorities changed go to state 1
 % if objective parameters changed go back to state 2
-handles.CutOffLevel            = 0.005;
+handles.CutOffLevel            = 0.01; % relative cut off level for dose vis
 handles.IsoDose.NewIsoDoseFlag = false;
 handles.TableChanged           = false;
 handles.State                  = 0;
