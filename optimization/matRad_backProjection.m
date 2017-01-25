@@ -57,7 +57,7 @@ else
              d{i} =  dij.physicalDose{i} * (w * dij.RBE );
         end
         
-    elseif (isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LEMIV_RBExD'))
+    elseif isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LEMIV_RBExD') || isequal(options.bioOpt,'LSM_effect') || isequal(options.bioOpt,'LSM_RBExD')
         
         for i = 1:options.numOfScenarios
             
@@ -66,7 +66,7 @@ else
             quadTerm = dij.mSqrtBetaDose{i} * w;
             e        = linTerm + quadTerm.^2;   
 
-            if isequal(options.bioOpt,'LEMIV_effect')
+            if isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LSM_effect')
                 d{i} = e;
             else
                 % calculate RBX x dose

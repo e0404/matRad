@@ -34,7 +34,7 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % issue warning if biological optimization impossible
-if sum(strcmp(pln.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose')) && strcmp(pln.radiationMode,'carbon')
+if sum(strcmp(pln.bioOptimization,{'LEMIV_effect','LEMIV_RBExD','LSM_effect','LSM_RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose')) && strcmp(pln.radiationMode,'carbon')
     warndlg('Alpha and beta matrices for effect based and RBE optimization not available - physical optimization is carried out instead.');
     pln.bioOptimization = 'none';
 end
@@ -117,8 +117,8 @@ if  strcmp(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'proto
     bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
         
-elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization,'LEMIV_RBExD')) ... 
-                                && strcmp(pln.radiationMode,'carbon')
+elseif ((strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization,'LEMIV_RBExD')) && strcmp(pln.radiationMode,'carbon')) || ...
+       ((isequal(pln.bioOptimization,'LSM_effect')  || isequal(pln.bioOptimization,'LSM_RBExD'))  && strcmp(pln.radiationMode,'protons'))
 
     % check if you are running a supported rad
     dij.ax   = zeros(dij.numOfVoxels,1);
@@ -140,14 +140,14 @@ elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization
         end
     end
      
-    if isequal(pln.bioOptimization,'LEMIV_effect')
+    if isequal(pln.bioOptimization,'LSM_effect') || isequal(pln.bioOptimization,'LEMIV_effect')
         
            effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
            p            = (sum(dij.mAlphaDose{1}(V,:)*wOnes)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            q            = -(effectTarget * length(V)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
 
-    elseif isequal(pln.bioOptimization,'LEMIV_RBExD')
+    elseif sequal(pln.bioOptimization,'LSM_RBExD') ||isequal(pln.bioOptimization,'LEMIV_RBExD')
         
            %pre-calculations
            dij.gamma      = zeros(dij.numOfVoxels,1);
