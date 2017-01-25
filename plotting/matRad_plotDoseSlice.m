@@ -67,10 +67,17 @@ end
 cMapScale = size(cMap,1) - 1;
 dose_rgb = ind2rgb(uint8(cMapScale*(dose_slice - window(1))/(window(2)-window(1))),cMap);
 
+maxDose = max(doseCube(:));
 % plot dose distribution
 doseHandle = image('CData',dose_rgb,'Parent',axesHandle);
-if ~isempty(threshold)
-    set(doseHandle,'AlphaData', alpha*(dose_slice>max(threshold*window(2),window(1))));
+if ~isempty(threshold) && threshold <= 1 && threshold > 0
+    %if the lower dose bound is zero than ignore low dose region for dose colorwash
+    if window(1) == 0 && window(2) > 0
+        set(doseHandle,'AlphaData', alpha*(dose_slice>maxDose*threshold));
+    %if dose window is provided -> use it
+    elseif window(1) > 0 && window(2) > 0
+        set(doseHandle,'AlphaData', alpha*(dose_slice < window(2) & dose_slice > window(1) ));
+    end
 else
     set(doseHandle,'AlphaData', alpha*ones(size(dose_slice)));
 end
