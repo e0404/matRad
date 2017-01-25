@@ -1214,34 +1214,25 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
    
 end
 
-if get(handles.popupTypeOfPlot,'Value') == 1
-    xCoord = ct.resolution.x * (1:ct.cubeDim(1));
-    yCoord = ct.resolution.y * (1:ct.cubeDim(2));
-    zCoord = ct.resolution.z * (1:ct.cubeDim(3));
+if get(handles.popupTypeOfPlot,'Value') == 3
+    cla(handles.axesFig);
     
-    [xMesh,yMesh,zMesh] = meshgrid(xCoord,yCoord,zCoord);
-    
-    contour = zeros(ct.cubeDim);
-    contour(cst{7,4}{1}) = 1;
-    
-    spinal = zeros(ct.cubeDim);
-    spinal(cst{20,4}{1}) = 1;
-    
-    target = zeros(ct.cubeDim);
-    target(cst{19,4}{1}) = 1;
+    %Check if we need to precompute the surface data
+    if size(cst,2) < 8
+        cst = matRad_computeAllVoiSurfaces(ct,cst);
+        assignin('base','cst',cst);
+    end
     
     set(handles.axesFig,'Color',1*[1 1 1]);
     hold(handles.axesFig,'on');
-    matRad_plotVoi3D(handles.axesFig,xMesh,yMesh,zMesh,contour,'blue',0.3);
-    matRad_plotVoi3D(handles.axesFig,xMesh,yMesh,zMesh,spinal,'green',0.5);
-    matRad_plotVoi3D(handles.axesFig,xMesh,yMesh,zMesh,target,'red',0.7);
+    p = matRad_plotVois3D(handles.axesFig,ct,cst,handles.VOIPlotFlag,colorcube);
     
-    matRad_plotIsoDose3D(handles.axesFig,xMesh,yMesh,zMesh,resultGUI.physicalDose);
+    %matRad_plotIsoDose3D(handles.axesFig,xMesh,yMesh,zMesh,resultGUI.physicalDose);
     
-    view(3)
-    xlabel('x');
-    ylabel('y');
-    zlabel('z');
+    view(handles.axesFig,3)
+    xlabel(handles.axesFig,'x');
+    ylabel(handles.axesFig,'y');
+    zlabel(handles.axesFig,'z');
     camlight left;
     lighting gouraud
     
