@@ -183,12 +183,14 @@ for i = 1:dij.numOfBeams; % loop over all beams
     [~,center] = min(sum(reshape([stf(i).ray.rayPos_bev],3,[]).^2));
     
     % get correct kernel for given SSD at central ray (nearest neighbor approximation)
-    [~,currSSD] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD));
+    [~,currSSDIx] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD));
+    
+    fprintf(['                   SSD = ' num2str(machine.data.kernel(currSSDIx).SSD) 'mm                 \n']);
     
     kernelPos = machine.data.kernelPos;
-    kernel1 = machine.data.kernel(currSSD).kernel1;
-    kernel2 = machine.data.kernel(currSSD).kernel2;
-    kernel3 = machine.data.kernel(currSSD).kernel3;
+    kernel1 = machine.data.kernel(currSSDIx).kernel1;
+    kernel2 = machine.data.kernel(currSSDIx).kernel2;
+    kernel3 = machine.data.kernel(currSSDIx).kernel3;
 
     % Evaluate kernels for all distances, interpolate between values
     kernel1Mx = interp1(kernelPos,kernel1,sqrt(X.^2+Z.^2));
@@ -200,7 +202,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
         
         % Display console message.
         fprintf(['matRad: Uniform primary photon fluence -> pre-compute kernel convolution for SSD = ' ... 
-                num2str(machine.data.kernel(currSSD).SSD) ' mm ...\n']);    
+                num2str(machine.data.kernel(currSSDIx).SSD) ' mm ...\n']);    
 
         % 2D convolution of Fluence and Kernels in fourier domain
         convMx1 = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(kernel1Mx) ) )));
@@ -230,24 +232,25 @@ for i = 1:dij.numOfBeams; % loop over all beams
             
             % get the field if field based dose calculation
             if strcmp(num2str(pln.bixelWidth),'field')
-                F = stf(i).ray(j).shape;
-            end
+                Fx = stf(i).ray(j).shape;
             
             % apply the primary fluence to the field
-            if useCustomPrimFluenceBool
+            elseif useCustomPrimFluenceBool
+                
                 primaryFluence = machine.data.primaryFluence;
                 r     = sqrt( (X-stf(i).ray(j).rayPos(1)).^2 + (Z-stf(i).ray(j).rayPos(3)).^2 );
                 Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r);
-                F = F .* Psi;
+                Fx = F .* Psi;
+                
             end
             
             % convolute with the gaussian
-            F = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(gaussFilter) ))));
+            Fx = real(fftshift(ifft2(fft2( ifftshift(Fx) ).*fft2( ifftshift(gaussFilter) ))));
 
             % 2D convolution of Fluence and Kernels in fourier domain
-            convMx1 = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(kernel1Mx) ) )));
-            convMx2 = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(kernel2Mx) ) )));
-            convMx3 = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(kernel3Mx) ) )));
+            convMx1 = real(fftshift(ifft2(fft2( ifftshift(Fx) ).*fft2( ifftshift(kernel1Mx) ) )));
+            convMx2 = real(fftshift(ifft2(fft2( ifftshift(Fx) ).*fft2( ifftshift(kernel2Mx) ) )));
+            convMx3 = real(fftshift(ifft2(fft2( ifftshift(Fx) ).*fft2( ifftshift(kernel3Mx) ) )));
 
             % Creates an interpolant for kernes from vectors position X and Z
             if exist('griddedInterpolant','class') % use griddedInterpoland class when available 

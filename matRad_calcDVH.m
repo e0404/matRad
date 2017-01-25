@@ -35,8 +35,7 @@ function matRad_calcDVH(result,cst,pln,lineStyleIndicator)
 
 % create new figure and set default line style indicator if not explictly
 % specified
-if nargin < 4
-    
+if nargin < 4 
     f = figure('Name','DVH','Color',[0.5 0.5 0.5],'Position',([300 300 800 600]));
     hold on
     lineStyleIndicator = 1;
@@ -61,22 +60,19 @@ colorMx    = colorMx(1:floor(64/numOfVois):64,:);
 lineStyles = {'-',':','--','-.'};
 
 n = 1000;
-if sum(strcmp(fieldnames(result),'RBExDose')) > 0
-    dvhPoints = linspace(0,max(result.RBExDose(:))*1.05,n);
-else
-    dvhPoints = linspace(0,max(result.physicalDose(:))*1.05,n);
+sQuantity = 'physicalDose';
+if sum(strcmp(fieldnames(result),'RBExDose')) > 0 && ~strcmp(pln.bioOptimization,'none')
+    sQuantity = 'RBExDose';
 end
+
+dvhPoints = linspace(0,max(result.(sQuantity)(:))*1.05,n);
 dvh       = NaN * ones(1,n);
 
 for i = 1:numOfVois
     if cst{i,5}.Visible
         indices     = cst{i,4}{1};
         numOfVoxels = numel(indices);
-        if sum(strcmp(fieldnames(result),'RBExDose')) > 0
-            doseInVoi   = result.RBExDose(indices);   
-        else
-            doseInVoi   = result.physicalDose(indices);
-        end
+        doseInVoi   = result.(sQuantity)(indices);   
 
         % fprintf('%3d %20s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy)\n', ...
         %     cst{i,1},cst{i,2},mean(doseInVoi),std(doseInVoi),max(doseInVoi),min(doseInVoi))
@@ -102,15 +98,15 @@ ylim([0 110]);
 xlim([0 1.2*max(dvhPoints)]);
 set(gca,'YTick',0:20:120)
 
-grid on
+grid on,grid minor
 box(gca,'on');
 set(gca,'LineWidth',1.5,'FontSize',fontSizeValue);
 ylabel('Volume [%]','FontSize',fontSizeValue)
 
-if sum(strcmp(fieldnames(result),'RBExDose')) > 0
-    xlabel('RBE x Dose [GyE]','FontSize',fontSizeValue)
+if strcmp(sQuantity,'physicalDose');
+     xlabel('Dose [Gy]','FontSize',fontSizeValue);
 else
-    xlabel('Dose [Gy]','FontSize',fontSizeValue)
+     xlabel('RBE x Dose [Gy(RBE)]','FontSize',fontSizeValue);
 end
 
 pos = get(subplot(2,1,2),'position');

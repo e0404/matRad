@@ -11,6 +11,7 @@ function resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels,visB
 %   resultGUI:          resultGUI struct to which the output data will be added, if
 %                       this field is empty resultGUI struct will be created
 %   stf:                matRad steering information struct
+%   dij:                matRad's dij matrix
 %   numOfLevels:        number of stratification levels
 %   visBool:            toggle on/off visualization (optional)
 %
@@ -94,10 +95,8 @@ for i = 1:numOfBeams
     %Save weights in fluence matrix.
     fluenceMx(indInFluenceMx) = wOfCurrBeams;
     
-    % prepare sequencer
+    % Stratification
     calFac = max(fluenceMx(:));
-
-    %Stratification
     D_k = round(fluenceMx/calFac*numOfLevels); 
     
     % Save the stratification in the initial intensity matrix D_0.
