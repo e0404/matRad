@@ -134,7 +134,7 @@ for i = 1:length(collimation.Fields)
     counter = counter + 1;
     shape = ones(2*convLimits/convResolution); 
     beamIndex = collimation.FieldOfBeam(i).BeamIndex;
-    for j = 1:length(currDeviceSeqNames)
+    for j = 1:length(collimation.Devices{beamIndex})
         % check for ASYM and SYM jaws == type 1
         if strncmpi(collimation.Devices{beamIndex}(j).DeviceType,'ASYM',4)
             type = 1;
