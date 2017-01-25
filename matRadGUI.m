@@ -2681,16 +2681,6 @@ handles = updateIsoDoseLineCache(handles);
 UpdatePlot(handles);
 guidata(hObject,handles);
 
-% text box: max value
-function txtMaxDoseVal_Callback(hObject, ~, handles)
-
-% handles.txtMaxDoseVal2 =  str2double(get(hObject,'String'));
-% % compute new iso dose lines
-% handles = updateIsoDoseLineCache(handles);
-% handles.doseWindow  = [0 handles.txtMaxDoseVal2];
-% handles.cBarChanged = true;
-guidata(hObject,handles);
-UpdatePlot(handles);
 
 % popup menu: machine
 function popUpMachine_Callback(hObject, ~, handles)
