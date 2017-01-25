@@ -102,9 +102,15 @@ for i = 1:length(BeamSeqNames)
        end
        
        % get field meta information
-       newCumWeight = currBeamSeq.ControlPointSequence.(currControlPointSeqNames{j}).CumulativeMetersetWeight;
-       collimation.Fields(counter).Weight = newCumWeight - cumWeight;
-       cumWeight = newCumWeight;
+       if isfield(currControlPointElement, 'CumulativeMetersetWeight')      
+           newCumWeight = currControlPointElement.CumulativeMetersetWeight;
+           collimation.Fields(counter).Weight = newCumWeight - cumWeight;
+           cumWeight = newCumWeight;
+       else
+           warning(['No CumulativeMetersetWeight found in control point sequence ' currControlPointSeqNames{j} ...
+                    ' on beam ' BeamSeqNames{i} '. No field shape import performed!']);
+           return;
+       end
        collimation.Fields(counter).FinalCumWeight = currBeamSeq.FinalCumulativeMetersetWeight;
        collimation.Fields(counter).SAD = currBeamSeq.SourceAxisDistance;
         
