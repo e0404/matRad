@@ -42,7 +42,7 @@ pln.bioOptimization = 'LSM_effect';  % none: physical optimization;             
 pln.numOfFractions  = 30;
 pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
-pln.machine         = 'GenericLET';%'GenericLET';Generic
+pln.machine         = 'Generic_LET';%'Generic_LET';Generic
 
 %% initial visualization and change objective function settings if desired
 %matRadGUI
