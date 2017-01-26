@@ -29,12 +29,12 @@ function [stf, pln] = matRad_importDicomSteeringPhotons(pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 stf = struct;
-% get fields possessing a field weight vector greater than 0
-if isfield(pln.Collimation,'Fields')
-    Fields = pln.Collimation.Fields([pln.Collimation.Fields(:).Weight] > 0);
-else 
+if ~isfield(pln.Collimation,'Fields')
     return
 end
+
+% get fields possessing a field weight vector greater than 0
+Fields = pln.Collimation.Fields([pln.Collimation.Fields(:).Weight] > 0);
 
 [UniqueComb,ia,ib] = unique( vertcat([Fields(:).GantryAngle], [Fields(:).CouchAngle])','rows');
 

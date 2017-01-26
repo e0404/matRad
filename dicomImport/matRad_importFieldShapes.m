@@ -60,7 +60,7 @@ for i = 1:length(BeamSeqNames)
     end
     collimation.Devices{i} = device;
     
-     currControlPointSeqNames = fieldnames(currBeamSeq.ControlPointSequence);
+    currControlPointSeqNames = fieldnames(currBeamSeq.ControlPointSequence);
     % all meta informations must be defined in the first control point sequence
     % see DICOM Doc Sec. C.8.8.14.5
     % http://dicom.nema.org/MEDICAL/Dicom/2015c/output/chtml/part03/sect_C.8.8.14.5.html
@@ -93,7 +93,7 @@ for i = 1:length(BeamSeqNames)
                             device(k).DeviceType '. No field shape import performed!']);
                    return;
                end
-               collimation.Fields(counter).LeafPos{k} = NaN*ones(device(k).NumOfLeafs,2);
+               % set left and right leaf positions
                collimation.Fields(counter).LeafPos{k}(:,1) = currLeafPos(1:device(k).NumOfLeafs);
                collimation.Fields(counter).LeafPos{k}(:,2) = currLeafPos(device(k).NumOfLeafs+1:end); 
            end
