@@ -123,10 +123,18 @@ end
 
 if isfield(pln,'calcLET') && pln.calcLET
   if isfield(machine.data,'LET')
-    letDoseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
+    letDoseTmpContainer = cell(numOfBixelsContainer,multScen.numOfCtScen,multScen.numOfShiftScen,multScen.numOfRangeShiftScen);;
     % Allocate space for dij.dosexLET sparse matrix
-    for i = 1:dij.numOfScenarios
-        dij.mLETDose{i} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
+     for CtScen = 1:multScen.numOfCtScen
+        for ShiftScen = 1:multScen.numOfShiftScen
+            for RangeShiftScen = 1:multScen.numOfRangeShiftScen  
+            
+                if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
+                     dij.mLETDose{CtScen,ShiftScen,RangeShiftScen} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
+                end
+                
+            end
+        end
     end
   else
     warndlg('LET not available in the machine data. LET will not be calculated.');
@@ -439,7 +447,7 @@ for ShiftScen = 1:multScen.numOfShiftScen
 
 end
 
-  dij.indexforOpt = [1];
+dij.indexforOpt = [1];
   
 try
   % wait 0.1s for closing all waitbars

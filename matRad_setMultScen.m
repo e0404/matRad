@@ -5,10 +5,15 @@ if isequal(multScen.shiftGenType,'equidistant')
     if isequal(multScen.shiftCombType,'individual')
         if isequal(multScen.shiftGen1DIsotropy,'+-')
 
+            if sum(mod(multScen.numOfShiftScen,2)) > 0
+                warning('number of shift scenarios must be a even numer due to symmetricity - affected dimension will be decreased by 1 scenario');
+                multScen.numOfShiftScen = multScen.numOfShiftScen - mod(multScen.numOfShiftScen,2);
+            end
+            
             deltaShift = multScen.shiftSize./(multScen.numOfShiftScen./2);
             multScen.shifts  = [];
 
-            for i = 1:3
+            for i = 1:3 % loop over x,y,z dimension 
                 shifts      = zeros(3,multScen.numOfShiftScen(i));
                 shiftstmp   = -multScen.shiftSize(i):deltaShift(i):multScen.shiftSize(i);
                 shiftstmp   = shiftstmp(shiftstmp ~= 0);
@@ -16,7 +21,7 @@ if isequal(multScen.shiftGenType,'equidistant')
 
                 multScen.shifts   = [multScen.shifts, shifts];
             end
-            multScen.shifts = [zeros(3,1), multScen.shifts];
+            multScen.shifts = [zeros(3,1), multScen.shifts]; % add nominal scenario
 
         elseif isequal(multScen.shiftGen1DIsotropy,'+')
 
@@ -52,6 +57,11 @@ if isequal(multScen.shiftGenType,'equidistant')
         if multScen.numOfShiftScen(1) == multScen.numOfShiftScen(2) &&...
            multScen.numOfShiftScen(2) == multScen.numOfShiftScen(3)
        
+            if sum(mod(multScen.numOfShiftScen,2)) > 0
+                warning('number of shift scenarios must be a even numer due to symmetricity - affected dimension will be decreased by 1 scenario');
+                multScen.numOfShiftScen = multScen.numOfShiftScen - mod(multScen.numOfShiftScen,2);
+            end
+            
             if isequal(multScen.shiftGen1DIsotropy,'+-')
 
                 deltaShift = multScen.shiftSize./(multScen.numOfShiftScen./2);
@@ -116,7 +126,7 @@ if isequal(multScen.shiftGenType,'equidistant')
         for i = 1:length(shiftsx)
             for j = 1:length(shiftsy)
                 for k = 1:length(shiftsz)
-                    if shiftsx(i) == 0 & shiftsy(j) == 0 & shiftsz(k) == 0
+                    if shiftsx(i) == 0 && shiftsy(j) == 0 && shiftsz(k) == 0
                         multScen.shifts = multScen.shifts;
                     else
                         multScen.shifts = [multScen.shifts,[shiftsx(i);shiftsy(j);shiftsz(k)]];
@@ -124,7 +134,8 @@ if isequal(multScen.shiftGenType,'equidistant')
                 end
             end
         end
-        multScen.shifts = [zeros(3,1),multScen.shifts];
+        
+        multScen.shifts = [zeros(3,1), multScen.shifts];
         
     end
     
@@ -142,6 +153,7 @@ elseif isequal(multScen.shiftGenType,'sampled')
 
                 multScen.shifts   = [multScen.shifts, shifts];
             end
+            
             multScen.shifts = [zeros(3,1), multScen.shifts];
             
         elseif isequal(multScen.shiftGen1DIsotropy,'+') ||...
@@ -186,8 +198,9 @@ multScen.numOfShiftScen = size(multScen.shifts,2);
 if isequal(multScen.shiftGenType,'sampled')
     multScen.shiftScenProb = repmat(1/multScen.numOfShiftScen,1,multScen.numOfShiftScen);
 elseif isequal(multScen.shiftGenType,'equidistant')
-    if size(multScen.shifts,2) > 1
-        multScen.shiftScenProb = matRad_calcScenProb([0 0 0],multScen.shiftSD,multScen.shifts,'probBins','normDist');
+    if multScen.numOfShiftScen > 1
+        vMu = [0 0 0];
+        multScen.shiftScenProb = matRad_calcScenProb(vMu,multScen.shiftSD,multScen.shifts,'probBins','normDist');
     else
         multScen.shiftScenProb = 1;
     end
@@ -218,7 +231,7 @@ elseif multScen.numOfRangeShiftScen == 0
     multScen.relRangeShifts = 0;
 end
 
-multScen.numOfRangeShiftScen = numel(multScen.relRangeShifts);
+multScen.numOfRangeShiftScen = numel(multScen.absRangeShifts);
 
 % set scenario combination mask
 if isequal(multScen.ScenCombType,'individual')
