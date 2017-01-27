@@ -42,6 +42,8 @@ function cst = matRad_computeAllVoiSurfaces(ct,cst)
     allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar'); 
     delete(allWaitBarFigures);
     pause(0.1); 
-catch
+    catch
+        
+    end
 end
 

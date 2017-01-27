@@ -1227,14 +1227,14 @@ if get(handles.popupTypeOfPlot,'Value') == 3
     hold(handles.axesFig,'on');
     p = matRad_plotVois3D(handles.axesFig,ct,cst,handles.VOIPlotFlag,colorcube);
     
-    %matRad_plotIsoDose3D(handles.axesFig,xMesh,yMesh,zMesh,resultGUI.physicalDose);
-    
+    s = matRad_plotCtSlice3D(handles.axesFig,ct,1,plane,slice);
+        
     view(handles.axesFig,3)
     xlabel(handles.axesFig,'x');
     ylabel(handles.axesFig,'y');
     zlabel(handles.axesFig,'z');
     camlight left;
-    lighting gouraud
+    lighting gouraud;
     
     %{
     limitX = get(hAx3D,'xlim');
@@ -1245,10 +1245,52 @@ if get(handles.popupTypeOfPlot,'Value') == 3
     set(hAx3D,'ylim',limitY);
     set(hAx3D,'zlim',limitZ);
     %}
+    
+    
+    if ~isempty(pln)
+        set(handles.axesFig,'XTick',0:50:1000);
+        set(handles.axesFig,'YTick',0:50:1000);
+        set(handles.axesFig,'ZTick',0:50:1000);
+        set(handles.axesFig,'XTickLabel',0:50:1000);
+        set(handles.axesFig,'YTickLabel',0:50:1000);
+        set(handles.axesFig,'ZTickLabel',0:50:1000);
+        xlabel('x [mm]','FontSize',defaultFontSize)
+        ylabel('y [mm]','FontSize',defaultFontSize)
+        zlabel('z [mm]','FontSize',defaultFontSize)
+        %title(['axial plane z = ' num2str(ct.resolution.z*slice) ' [mm]'],'FontSize',defaultFontSize)
+        title('3D view');
+    else
+        xlabel('x [voxels]','FontSize',defaultFontSize)
+        ylabel('y [voxels]','FontSize',defaultFontSize)
+        zlabel('z [voxels]','FontSize',defaultFontSize)
+        %title('axial plane','FontSize',defaultFontSize)
+        title('3D view');
+    end
+    
+    %if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln)
+    %    hIsoCenterCross = matRad_plotIsoCenterMarker(handles.axesFig,pln,ct,plane,slice);
+    %end
+    
+    % the following line ensures the plotting order (optional)
+    % set(gca,'Children',[AxesHandlesCT_Dose hIsoCenterCross AxesHandlesIsoDose  AxesHandlesVOI ]);
+    
+    %set axis ratio
+    %ratios = [1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
+    %ratios = ratios([2 1 3]);
+    %set(handles.axesFig,'DataAspectRatioMode','manual');
+    %set(handles.axesFig,'DataAspectRatio',ratios./max(ratios));
+    
+    set(handles.axesFig,'Ydir','reverse');
 end
 
 zoom reset;
-axis tight
+
+if get(handles.popupTypeOfPlot,'Value') == 3
+    upperLimits = ct.cubeDim.*[ct.resolution.y ct.resolution.x ct.resolution.z];
+    axis(handles.axesFig,[1 upperLimits(1) 1 upperLimits(2) 1 upperLimits(3)]);
+else
+    axis(handles.axesFig,'tight');
+end
 if handles.rememberCurrAxes
     axis(currAxes);
 end
