@@ -58,7 +58,7 @@ for  i = 1:size(cst,1)
 
                 % compute reference
                 if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) &&...
-                    isequal(options.bioOpt,'LEMIV_effect') 
+                    (isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LSM_effect'))
 
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
                 else
@@ -174,14 +174,14 @@ for i = 1:options.numOfScenarios
             
             g            = g + (delta{i}' * dij.physicalDose{i} * dij.RBE)';
             
-        elseif isequal(options.bioOpt,'LEMIV_effect')
+        elseif isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LSM_effect')
 
             vBias        = (delta{i}' * dij.mAlphaDose{i})';
             quadTerm     = dij.mSqrtBetaDose{i} * w;
             mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{i})';
             g            =  g + vBias + mPsi ; 
 
-        elseif isequal(options.bioOpt,'LEMIV_RBExD')
+        elseif isequal(options.bioOpt,'LEMIV_RBExD') || isequal(options.bioOpt,'LSM_RBExD')
 
             scaledEffect = d{i} + dij.gamma;
             deltaTmp     = delta{i}./(2*dij.bx.*scaledEffect);

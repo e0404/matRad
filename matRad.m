@@ -22,18 +22,18 @@ clc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-%load TG119.mat
+load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
-%load BOXPHANTOM_TINY.mat
+load BOXPHANTOM_TINY.mat
 
 
 %%
 
-addpath([pwd filesep 'IO' filesep 'MDACC'])
-dirMDACCpatient1 = '/Volumes/WS_exFat/patient1';
-[dij]            = matRad_importMDACCdata(dirMDACCpatient1);
+% addpath([pwd filesep 'IO' filesep 'MDACC'])
+% dirMDACCpatient1 = '/Volumes/WS_exFat/patient1';
+% [dij]            = matRad_importMDACCdata(dirMDACCpatient1);
 
 
 %% multiple Scenarios
@@ -50,7 +50,7 @@ multScen.shiftGen1DIsotropy   = '+-';           % for equidistant shifts: '+-': 
 
 multScen.numOfRangeShiftScen  = 2;              % number of absolute and/or relative range scnearios. if absolute and relative range scenarios are defined then relative and absolute errors are combined
 multScen.maxAbsRangeShift     = 5;              % maximum absolute over and undershoot in mm
-multScen.maxRelRangeShift     = 3;              % maximum relative over and undershoot in %
+multScen.maxRelRangeShift     = 0;              % maximum relative over and undershoot in %
 
 multScen.ScenCombType         = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
 multScen                      = matRad_setMultScen(multScen);
@@ -61,23 +61,31 @@ multScen                      = matRad_setMultScen(multScen);
 %% coverage based cst manipulation
 cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,0,0);
 
+for i = 1:size(cst,1)
+   for j = 1:numel(cst{i,6})
+       cst{i,6}(j).robustness = 'WC';
+   end
+end
+
 %% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0 90]; %[0:72:359]; % [°]
-pln.couchAngles     = [0 0 ]; % [Â°]
+pln.gantryAngles    = [0 45 315]; %[0:72:359]; % [°]
+pln.couchAngles     = [0 0 0]; % [Â°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.bioOptimization = 'none';        % none: physical optimization;             const_RBExD; constant RBE of 1.1;
-                                     % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
-pln.numOfFractions  = 30;
-pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
-pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
-pln.machine         = 'HIT';
-pln.minNrParticles  = 500000;
+pln.bioOptimization = 'LSM_effect';  % none: physical optimization;                                   const_RBExD; constant RBE of 1.1;  
+                                     % LSM_effect;  variable RBE Linear Scaling Model (effect based); LSM_RBExD;  variable RBE Linear Scaling Model (RBExD based)
+                                     % LEMIV_effect: effect-based optimization;                       LEMIV_RBExD: optimization of RBE-weighted dose
+pln.numOfFractions         = 30;
+pln.runSequencing          = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
+pln.runDAO                 = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
+pln.machine                = 'Generic_LET';
+pln.minNrParticles         = 500000;
 pln.LongitudialSpotSpacing = 3; %only relevant for HIT machine, not generic
+
 %% initial visualization and change objective function settings if desired
 %matRadGUI
 
@@ -91,6 +99,7 @@ if strcmp(pln.radiationMode,'photons')
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst,multScen,false);
 end
+
 
 %% inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);

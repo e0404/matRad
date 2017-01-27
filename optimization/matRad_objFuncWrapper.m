@@ -53,8 +53,8 @@ for  i = 1:size(cst,1)
             if isempty(strfind(cst{i,6}(j).type,'constraint'))
 
                 % compute reference
-                if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) &&...
-                    isequal(options.bioOpt,'LEMIV_effect') 
+                if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) && ...
+                    ( isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LSM_effect'))
 
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
                 else
