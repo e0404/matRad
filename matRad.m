@@ -24,14 +24,22 @@ clc
 %load HEAD_AND_NECK
 %load TG119.mat
 %load PROSTATE.mat
-load LIVER.mat
+%load LIVER.mat
 %load BOXPHANTOM.mat
+%load BOXPHANTOM_TINY.mat
+
+
+%%
+
+addpath([pwd filesep 'IO' filesep 'MDACC'])
+dirMDACCpatient1 = '/Volumes/WS_exFat/patient1';
+[dij]            = matRad_importMDACCdata(dirMDACCpatient1);
 
 
 %% multiple Scenarios
 multScen.numOfCtScen          = ct.numOfCtScen; % number of imported ct scenarios
 
-multScen.numOfIntSegShiftScen = 0; %1000;              % number of internal segmentation shift scnearios     
+multScen.numOfIntSegShiftScen = 0; %1000;       % number of internal segmentation shift scnearios     
 
 multScen.numOfShiftScen       = [2 2 0];        % number of shifts in x y and z direction       
 multScen.shiftSize            = [5 5 5];        % maximum shift [mm]
@@ -40,14 +48,15 @@ multScen.shiftGenType         = 'equidistant';  % equidistant: equidistant shift
 multScen.shiftCombType        = 'individual';   % individual: no combination of shift scenarios, combined: combine shift scenarios, allcombined: create every possible shift combination
 multScen.shiftGen1DIsotropy   = '+-';           % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
 
-multScen.numOfRangeShiftScen  = 2;              % number of absolute and/or relative range scnearios
+multScen.numOfRangeShiftScen  = 2;              % number of absolute and/or relative range scnearios. if absolute and relative range scenarios are defined then relative and absolute errors are combined
 multScen.maxAbsRangeShift     = 5;              % maximum absolute over and undershoot in mm
-multScen.maxRelRangeShift     = 0;              % maximum relative over and undershoot in %
+multScen.maxRelRangeShift     = 3;              % maximum relative over and undershoot in %
+
 multScen.ScenCombType         = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
 multScen                      = matRad_setMultScen(multScen);
 
 %% initial visualization and change objective function settings if desired
-matRadGUI
+%matRadGUI
 
 %% coverage based cst manipulation
 cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,0,0);
@@ -70,7 +79,7 @@ pln.machine         = 'HIT';
 pln.minNrParticles  = 500000;
 pln.LongitudialSpotSpacing = 3; %only relevant for HIT machine, not generic
 %% initial visualization and change objective function settings if desired
-matRadGUI
+%matRadGUI
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln,multScen);
