@@ -149,13 +149,7 @@ for idx=1:length(jtbc)
 end
 
 
-
 set(handles.legendTable,'String',{'no data loaded'});
-%initialize maximum dose for visualization to Zero
-handles.maxDoseVal     = 0;
-handles.minDoseVal     = 0;
-handles.vRangeDose     = [];
-handles.IsoDose.Levels = 0;
 
 %seach for availabes machines
 handles.Modalities = {'photons','protons','carbon'};
@@ -207,6 +201,8 @@ handles.IsoDose.NewIsoDoseFlag = false;
 handles.TableChanged           = false;
 handles.State                  = 0;
 handles.doseOpacity            = 0.6;
+handles.IsoDose.Levels         = 0;
+handles.dispWindow             = cell(3,2); % first dimension refers to the selected
 
 %% parse variables from base workspace
 AllVarNames = evalin('base','who');
@@ -297,14 +293,12 @@ handles.doseColorMap = 'jet';
 handles.ctColorMap   = 'bone';
 handles.cMapSize     = 64;
 handles.cBarChanged  = true;
-handles.doseWindow   = [];
-handles.ctWindow     = [];
 
 %Set up the colormap selection box
 availableColormaps = matRad_getColormap();
 set(handles.popupmenu_chooseColormap,'String',availableColormaps);
 
-currentCtMapIndex = find(strcmp(availableColormaps,handles.ctColorMap));
+currentCtMapIndex   = find(strcmp(availableColormaps,handles.ctColorMap));
 currentDoseMapIndex = find(strcmp(availableColormaps,handles.doseColorMap));
 
 if handles.State >= 1    
@@ -462,8 +456,7 @@ if handles.State > 0
 end
 
 %Reset colorbar
-handles.ctWindow = [];
-handles.doseWindow = [];
+handles.dispWindow  = cell(3,2);
 handles.cBarChanged = true;
 
 UpdateState(handles);
@@ -814,30 +807,21 @@ if  ismember('resultGUI',AllVarNames)
 end
 
 if exist('Result','var')
-    if ~isempty(Result) && ~isempty(ct.cube)
-       
-        if isfield(Result,'RBE')
-            Result.RBETruncated10Perc = Result.RBE;
-            Result.RBETruncated10Perc(Result.physicalDose<0.1*...
-                max(Result.physicalDose(:))) = 0;
-        end
-
-        DispInfo =fieldnames(Result);
+    if ~isempty(Result) && ~isempty(ct.cube) && ~isfield(handles,'DispInfo')
+        
+        DispInfo = fieldnames(Result);
+        
         for i = 1:size(DispInfo,1)
             
+            % delete weight vectors in Result struct for plotting
             if isstruct(Result.(DispInfo{i,1})) || isvector(Result.(DispInfo{i,1}))
                  Result = rmfield(Result,DispInfo{i,1});
                  DispInfo{i,2}=false;
             else
-                %second dimension indicates if it should be plotted later on
-                DispInfo{i,2}=true;
-                DisablePlot = {'RBETruncated10Perc'};
-                if strcmp(DispInfo{i,1},DisablePlot)
-                    DispInfo{i,2}=false;
-                end
-                
+                %second dimension indicates if it should be plotted 
+                DispInfo{i,2} = true;
                 % determine units
-                if strfind(DispInfo{i,1},'physicalDose');
+                if strfind(DispInfo{i,1},'physicalDose')
                     DispInfo{i,3} = '[Gy]';
                 elseif strfind(DispInfo{i,1},'alpha')
                     DispInfo{i,3} = '[Gy^{-1}]';
@@ -850,7 +834,8 @@ if exist('Result','var')
                 else
                     DispInfo{i,3} = '[a.u.]';
                 end
-                
+                DispInfo{i,4} = [];    % optional for the future: color range for plotting
+                DispInfo{i,5} = [];    % optional for the future: min max values
             end
         end
 
@@ -886,17 +871,29 @@ if get(handles.popupTypeOfPlot,'Value')==2 || plotColorbarSelection == 1
     end
 end
 
+selectIx = get(handles.popupmenu_chooseColorData,'Value');  
+
 %% plot ct - if a ct cube is available and type of plot is set to 1 and not 2; 1 indicate cube plotting and 2 profile plotting
 if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
-    cla(handles.axesFig);
+    cla(handles.axesFig); 
     
-    ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);   
-    [AxesHandlesCT_Dose(end+1),~,handles.ctWindow] = matRad_plotCtSlice(handles.axesFig,ct,1,plane,slice,ctMap,handles.ctWindow);
+    if selectIx == 3
+        ctIx = 2;
+    else
+        ctIx = selectIx;
+    end
+    
+    ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
+    
+    if isempty(handles.dispWindow{ctIx,2})
+        handles.dispWindow{ctIx,2} = [min(ct.cube{:}(:)) max(ct.cube{:}(:))];
+    end
+    [AxesHandlesCT_Dose(end+1),~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,ct,1,plane,slice,ctMap,handles.dispWindow{ctIx,1});
     
     % plot colorbar? If 1 the user asked for the CT
     if plotColorbarSelection == 2 && handles.cBarChanged
         %Plot the colorbar
-        handles.cBarHandel = matRad_plotColorbar(handles.axesFig,ctMap,handles.ctWindow,'fontsize',defaultFontSize);
+        handles.cBarHandel = matRad_plotColorbar(handles.axesFig,ctMap,handles.dispWindow{ctIx,1},'fontsize',defaultFontSize);
         %adjust lables
         set(get(handles.cBarHandel,'ylabel'),'String', 'Electron Density','fontsize',defaultFontSize);
         % do not interprete as tex syntax
@@ -907,7 +904,7 @@ end
 %% plot dose cube
 if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Result','var')
         doseMap = matRad_getColormap(handles.doseColorMap,handles.cMapSize);
-    
+        doseIx  = 3;
         % if the selected display option doesn't exist then simply display
         % the first cube of the Result struct
         if ~isfield(Result,handles.SelectedDisplayOption)
@@ -917,31 +914,22 @@ if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Re
         
         dose = Result.(handles.SelectedDisplayOption);
         
-
-        
         % dose colorwash
         if ~isempty(dose) && ~isvector(dose)
            
-            handles.maxDoseVal = max(dose(:));
-            handles.minDoseVal = min(dose(:));
-            set(handles.txtMinDoseVal2,'String',num2str(handles.minDoseVal));
-            set(handles.txtMaxDoseVal2,'String',num2str(handles.maxDoseVal));
-
+            if isempty(handles.dispWindow{doseIx,2})
+                handles.dispWindow{doseIx,2} = [min(dose(:)) max(dose(:))];   % set min and max dose values
+            end
+            
             if get(handles.radiobtnDose,'Value')
-                if strcmp(get(handles.popupDisplayOption,'String'),'RBETruncated10Perc')
-                    doseThresh = 0.1;
-                else
-                    doseThresh = handles.CutOffLevel;
-                end
-                doseAlpha                         = handles.doseOpacity;
-                [doseHandle,~,handles.doseWindow] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,doseThresh,doseAlpha,doseMap,handles.doseWindow);
+                [doseHandle,~,handles.dispWindow{doseIx,1}] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,handles.CutOffLevel,handles.doseOpacity,doseMap,handles.dispWindow{doseIx,1});
                 AxesHandlesCT_Dose(end+1)         = doseHandle;
             end            
-                 
+                    
             % plot colorbar?
             if plotColorbarSelection > 2 && handles.cBarChanged
                 %Plot the colorbar
-                handles.cBarHandel = matRad_plotColorbar(handles.axesFig,doseMap,handles.doseWindow,'fontsize',defaultFontSize);
+                handles.cBarHandel = matRad_plotColorbar(handles.axesFig,doseMap,handles.dispWindow{selectIx,1},'fontsize',defaultFontSize);
                 %adjust lables
                 Idx = find(strcmp(handles.SelectedDisplayOption,DispInfo(:,1)));
                 set(get(handles.cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
@@ -950,9 +938,6 @@ if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Re
             end
         end
         
-    %axes(handles.axesFig)
-    %text(0,0,'','units','norm') % fix for line width ...
-
 
         %% plot iso dose lines
         if get(handles.radiobtnIsoDoseLines,'Value')           
@@ -972,11 +957,13 @@ if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Re
                     warning('Could not compute isodose lines! Will try slower contour function!');
                 end
             end
-            
-            AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plotLabels,plane,slice,doseMap,handles.doseWindow);
+            AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plotLabels,plane,slice,doseMap,handles.dispWindow{doseIx,1});
         end
 end
 
+selectIx = get(handles.popupmenu_chooseColorData,'Value');
+set(handles.txtMinVal,'String',num2str(handles.dispWindow{selectIx,2}(1,1)));
+set(handles.txtMaxVal,'String',num2str(handles.dispWindow{selectIx,2}(1,2)));
 
 %% plot VOIs
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
@@ -1229,7 +1216,7 @@ hold(handles.axesFig,'off');
 
 handles.cBarChanged = false;
 guidata(handles.axesFig,handles);
-
+guidata(gcf,handles);  
 if get(handles.popupTypeOfPlot,'Value')==1 
     UpdateColormapOptions(handles);
 end
@@ -1376,13 +1363,12 @@ try
 
     handles.State = 3;
     handles.SelectedDisplayOptionIdx = 1;
-    if strcmp(pln.radiationMode,'carbon') || (strcmp(pln.radiationMode,'protons') && strcmp(pln.bioOptimization,'const_RBExDose'))
+    if strcmp(pln.radiationMode,'carbon') || (strcmp(pln.radiationMode,'protons') && strcmp(pln.bioOptimization,'const_RBExD'))
         handles.SelectedDisplayOption = 'RBExDose';
     else
         handles.SelectedDisplayOption = 'physicalDose';
     end
     handles.SelectedBeam = 1;
-    handles = updateIsoDoseLineCache(handles);
     % check IPOPT status and return message for GUI user if no DAO or
     % particles
     if ~pln.runDAO || ~strcmp(pln.radiationMode,'photons')
@@ -1446,9 +1432,8 @@ end
 % change state from busy to normal
 set(Figures, 'pointer', 'arrow');
 set(InterfaceObj,'Enable','on');
-handles.vRangeDose       = []; handles.doseWindow = [];
-handles.IsoDose.Levels   = 0;
-handles.maxDoseVal       = 0; handles.minDoseVal = 0;        % if 0 new dose max is determined based on dose cube
+handles.dispWindow{3,1}  = [];   % reset dose ranges
+handles.dispWindow{3,2}  = [];   % reset min max dose values
 handles.rememberCurrAxes = false;
 handles.IsoDose.Levels   = 0;  % ensure to use default iso dose line spacing
 handles.cBarChanged      = true;
@@ -1565,9 +1550,10 @@ function popupDisplayOption_Callback(hObject, ~, handles)
 content = get(hObject,'String');
 handles.SelectedDisplayOption = content{get(hObject,'Value'),1};
 handles.SelectedDisplayOptionIdx = get(hObject,'Value');
-handles.doseWindow = [];
+handles.dispWindow{3,1} = []; handles.dispWindow{3,2} = [];
 handles = updateIsoDoseLineCache(handles);
 handles.cBarChanged = true;
+guidata(hObject, handles);
 UpdatePlot(handles);
 guidata(hObject, handles);
 
@@ -2655,29 +2641,30 @@ getPlnFromGUI(handles);
 function btnSetIsoDoseLevels_Callback(hObject, ~, handles)
 prompt = {['Enter iso dose levels in [Gy]. Enter space-separated numbers, e.g. 1.5 2 3 4.98. Enter 0 to use default values']};
 if isequal(handles.IsoDose.Levels,0) || ~isvector(handles.IsoDose.Levels) || any(~isnumeric(handles.IsoDose.Levels)) || any(isnan(handles.IsoDose.Levels))
-    def = {'1 2 3 4 5 10 20'};
+    defaultLine = {'1 2 3 '};
 else
     if isrow(handles.IsoDose.Levels)
-        def = cellstr(num2str(handles.IsoDose.Levels,'%.2g '));
+        defaultLine = cellstr(num2str(handles.IsoDose.Levels,'%.2g '));
     else 
-        def = cellstr(num2str(handles.IsoDose.Levels','%.2g '));
+        defaultLine = cellstr(num2str(handles.IsoDose.Levels','%.2g '));
     end
 end
 
 try
-    Input = inputdlg(prompt,'Set iso dose levels ', [1 70],def);
+    Input = inputdlg(prompt,'Set iso dose levels ', [1 70],defaultLine);
     if ~isempty(Input)
         handles.IsoDose.Levels = (sort(str2num(Input{1})));
-        handles.IsoDose.NewIsoDoseFlag = true;
-        if length(handles.IsoDose.Levels) == 1 && handles.IsoDose.Levels(1) == 0
-            handles = getIsoDoseLevels(handles);
+        if length(handles.IsoDose.Levels) == 1 && (handles.IsoDose.Levels(1) ~= 0)
+            handles.IsoDose.Levels = [handles.IsoDose.Levels handles.IsoDose.Levels];
         end
+        handles.IsoDose.NewIsoDoseFlag = true;
     end
 catch
     warning('Couldnt parse iso dose levels - using default values');
     handles.IsoDose.Levels = 0;
 end
 handles = updateIsoDoseLineCache(handles);
+handles.IsoDose.NewIsoDoseFlag = false;
 UpdatePlot(handles);
 guidata(hObject,handles);
 
@@ -3098,67 +3085,33 @@ end
 function handles = updateIsoDoseLineCache(handles)
 resultGUI = evalin('base','resultGUI');
 % select first cube if selected option does not exist
-if ~isfield(resultGUI,handles.SelectedDisplayOption) && ~strcmp(handles.SelectedDisplayOption,'RBETruncated10Perc')
+if ~isfield(resultGUI,handles.SelectedDisplayOption)
     CubeNames = fieldnames(resultGUI);
     dose = resultGUI.(CubeNames{1,1});
-elseif strcmp(handles.SelectedDisplayOption,'RBETruncated10Perc')
-    currentCubeName = 'RBE';
-    dose = resultGUI.(currentCubeName);
-    dose(resultGUI.physicalDose<0.1*max(resultGUI.physicalDose(:))) = 0;
 else
     dose = resultGUI.(handles.SelectedDisplayOption);
 end
 
-minDoseValOld      = handles.minDoseVal;
-maxDoseValOld      = handles.maxDoseVal;
-if ~isempty(handles.vRangeDose)
-    handles.minDoseVal = handles.vRangeDose(1);
-    handles.maxDoseVal = handles.vRangeDose(2);
+%if function is called for the first time then set display parameters    
+if isempty(handles.dispWindow{3,2})
+    handles.dispWindow{3,1} = [min(dose(:)) max(dose(:))]; % set default dose range
+    handles.dispWindow{3,2} = [min(dose(:)) max(dose(:))]; % set min max values  
 end
 
-% if upper colorrange is set to a specific value then use this value as upper threshold - otherwise 120% iso dose 
-% line will be plotted
+minMaxRange = handles.dispWindow{3,1};
+% if upper colorrange is defined then use it otherwise 120% iso dose 
  upperMargin = 1;
-if abs((max(dose(:)) - handles.maxDoseVal)) < 0.01  * max(dose(:))
+if abs((max(dose(:)) - handles.dispWindow{3,1}(1,2))) < 0.01  * max(dose(:))
     upperMargin = 1.2;
 end
 
-% if GUI is started then the following statement is executed
-if minDoseValOld == 0 && maxDoseValOld == 0
-    handles.minDoseVal = min(dose(:));
-    handles.maxDoseVal = max(dose(:));
-    set(handles.txtMinDoseVal2,'String',num2str(handles.minDoseVal));
-    set(handles.txtMaxDoseVal2,'String',num2str(handles.maxDoseVal));
-    handles.vRangeDose(1)  = handles.minDoseVal;
-    handles.vRangeDose(2)  = handles.maxDoseVal;
-    handles                = getIsoDoseLevels(handles,upperMargin);    
-     
-% calculate new iso dose lines if handles.IsoDose.Levels is set 0 or the dose maximum is
-% different than the old dose maximum (indicates changing to a different dose cube)
-elseif (length(handles.IsoDose.Levels) == 1 && handles.IsoDose.Levels(1) == 0) || maxDoseValOld ~= handles.maxDoseVal || minDoseValOld ~= handles.minDoseVal
-    handles            = getIsoDoseLevels(handles,upperMargin);    
+if (length(handles.IsoDose.Levels) == 1 && handles.IsoDose.Levels(1,1) == 0) || ~handles.IsoDose.NewIsoDoseFlag
+    vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];  
+    referenceDose            = (minMaxRange(1,2))/(upperMargin);
+    handles.IsoDose.Levels   = minMaxRange(1,1) + (referenceDose-minMaxRange(1,1)) * vLevels;
 end
-
-
-
-
 handles.IsoDose.Contours = matRad_computeIsoDoseContours(dose,handles.IsoDose.Levels);
 
-function handles =  getIsoDoseLevels(handles,upperMargin)
-    defaultUpperIsoDoseLineMarging = 1.2;
-    if ~isempty(handles.vRangeDose)
-        defaultUpperIsoDoseLineMarging = upperMargin;
-    end
-    SpacingLower           = 0.1;
-    SpacingUpper           = 0.05;
-    vLow                   = 0.1:SpacingLower:0.9;
-    vHigh                  = 0.95:SpacingUpper:defaultUpperIsoDoseLineMarging;
-    vLevels                = [vLow vHigh];  
-    referenceDose          = (handles.maxDoseVal)/(defaultUpperIsoDoseLineMarging);
-    handles.IsoDose.Levels = handles.minDoseVal + (referenceDose-handles.minDoseVal) * vLevels;
-    %handles.IsoDose.Levels = (round((vLevels.*((handles.maxDoseVal*100)/120))*1000))/1000;   % 
-
-    
     
    
 %% CREATE FUNCTIONS
@@ -3171,7 +3124,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 % text box: max value
-function txtMaxDoseVal2_CreateFcn(hObject, ~, ~)
+function txtMaxVal_CreateFcn(hObject, ~, ~)
 
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
@@ -3408,8 +3361,7 @@ try
         end
     end
     
-    handles.ctWindow = [];
-    handles.doseWindow = [];
+    handles.dispWindow = cell(3,2);
     handles.cBarChanged = true;
     
     UpdateState(handles);
@@ -3480,14 +3432,14 @@ try
     if selectionIndex == 2
         ct = evalin('base','ct');
         currentMap = handles.ctColorMap;
-        window = handles.ctWindow;
+        window = handles.dispWindow{selectionIndex,1};
         minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
     elseif selectionIndex == 3
         result = evalin('base','resultGUI');        
         dose = result.(handles.SelectedDisplayOption);
         currentMap = handles.doseColorMap;
         minMax = [min(dose(:)) max(dose(:))];
-        window = handles.doseWindow;
+        window = handles.dispWindow{selectionIndex,1};
     else
         window = [0 1];
         minMax = window;
@@ -3572,19 +3524,11 @@ function slider_windowCenter_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
-newCenter = get(hObject,'Value');
-range = get(handles.slider_windowWidth,'Value');
-
+newCenter      = get(hObject,'Value');
+range          = get(handles.slider_windowWidth,'Value');
 selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
 
-switch selectionIndex 
-    case 2
-        handles.ctWindow = [newCenter-range/2 newCenter+range/2];
-    case 3
-        handles.doseWindow = [newCenter-range/2 newCenter+range/2];
-    otherwise
-end
-
+handles.dispWindow{selectionIndex,1}  = [newCenter-range/2 newCenter+range/2];
 handles.cBarChanged = true;
 
 guidata(hObject,handles);
@@ -3613,18 +3557,9 @@ function slider_windowWidth_Callback(hObject, eventdata, handles)
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
 newWidth = get(hObject,'Value');
-center = get(handles.slider_windowCenter,'Value');
-
-selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
-
-switch selectionIndex 
-    case 2
-        handles.ctWindow = [center-newWidth/2 center+newWidth/2];
-    case 3
-        handles.doseWindow = [center-newWidth/2 center+newWidth/2];
-    otherwise
-end
-
+center   = get(handles.slider_windowCenter,'Value');
+selectionIndex                        = get(handles.popupmenu_chooseColorData,'Value');
+handles.dispWindow{selectionIndex,1}  = [center-newWidth/2 center+newWidth/2];
 handles.cBarChanged = true;
 
 guidata(hObject,handles);
@@ -3693,32 +3628,24 @@ function edit_windowRange_Callback(hObject, eventdata, handles)
 %        str2double(get(hObject,'String')) returns contents of edit_windowRange as a double
 
 selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
-vRange = str2num(get(hObject,'String'));
+vRange         = str2num(get(hObject,'String'));
 % matlab adds a zero in the beginning when text field is changed
 if numel(vRange) == 3
     vRange = vRange(vRange~=0);
 end
 
-switch selectionIndex 
-    case 2
-        handles.ctWindow   = vRange;
-    case 3
-        handles.doseWindow = vRange;
-    otherwise
-end
+handles.dispWindow{selectionIndex,1} = sort(vRange);
 
 handles.cBarChanged = true;
 
-if vRange(1) < vRange(2)    
-    handles.vRangeDose =  vRange;
-    guidata(hObject,handles);
     % compute new iso dose lines
-    handles = updateIsoDoseLineCache(handles);
+if selectionIndex > 2 
     guidata(hObject,handles);
-    UpdatePlot(handles);
-else
-    set(hObject,'String',[0 num2str(handles.maxDoseVal)]);
+    handles = updateIsoDoseLineCache(handles);
 end
+
+guidata(hObject,handles);
+UpdatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
 function edit_windowRange_CreateFcn(hObject, eventdata, handles)
@@ -3743,21 +3670,11 @@ function edit_windowCenter_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of edit_windowCenter as text
 %        str2double(get(hObject,'String')) returns contents of edit_windowCenter as a double
 
-newCenter = str2double(get(hObject,'String'));
-width = get(handles.slider_windowWidth,'Value');
-
-selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
-
-switch selectionIndex 
-    case 2
-        handles.ctWindow = [newCenter-width/2 newCenter+width/2];
-    case 3
-        handles.doseWindow = [newCenter-width/2 newCenter+width/2];
-    otherwise
-end
-
+newCenter           = str2double(get(hObject,'String'));
+width               = get(handles.slider_windowWidth,'Value');
+selectionIndex      = get(handles.popupmenu_chooseColorData,'Value');
+handles.dispWindow{selectionIndex,1}  = [newCenter-width/2 newCenter+width/2];
 handles.cBarChanged = true;
-
 guidata(hObject,handles);
 UpdatePlot(handles);
 
@@ -3783,21 +3700,11 @@ function edit_windowWidth_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of edit_windowWidth as text
 %        str2double(get(hObject,'String')) returns contents of edit_windowWidth as a double
 
-newWidth = str2double(get(hObject,'String'));
-center = get(handles.slider_windowCenter,'Value');
-
-selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
-
-switch selectionIndex 
-    case 2
-        handles.ctWindow = [center-newWidth/2 center+newWidth/2];
-    case 3
-        handles.doseWindow = [center-newWidth/2 center+newWidth/2];
-    otherwise
-end
-
+newWidth            = str2double(get(hObject,'String'));
+center              = get(handles.slider_windowCenter,'Value');
+selectionIndex      = get(handles.popupmenu_chooseColorData,'Value');
+handles.dispWindow{selectionIndex,1}  = [center-newWidth/2 center+newWidth/2];
 handles.cBarChanged = true;
-
 guidata(hObject,handles);
 UpdatePlot(handles);
 
