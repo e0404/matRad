@@ -22,7 +22,7 @@ clc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-load TG119.mat
+%load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
@@ -58,33 +58,31 @@ multScen                      = matRad_setMultScen(multScen);
 %% initial visualization and change objective function settings if desired
 %matRadGUI
 
-%% coverage based cst manipulation
-cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,0,0);
-
-for i = 1:size(cst,1)
-   for j = 1:numel(cst{i,6})
-       cst{i,6}(j).robustness = 'WC';
-   end
-end
 
 %% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0 45 315]; %[0:72:359]; % [°]
-pln.couchAngles     = [0 0 0]; % [Â°]
+pln.gantryAngles    = [0]; %[0:72:359]; % [°]
+pln.couchAngles     = [0]; % [Â°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.bioOptimization = 'LSM_effect';  % none: physical optimization;                                   const_RBExD; constant RBE of 1.1;  
+pln.bioOptimization = 'LSM_effect'; % none: physical optimization;                                   const_RBExD; constant RBE of 1.1;  
                                      % LSM_effect;  variable RBE Linear Scaling Model (effect based); LSM_RBExD;  variable RBE Linear Scaling Model (RBExD based)
                                      % LEMIV_effect: effect-based optimization;                       LEMIV_RBExD: optimization of RBE-weighted dose
+pln.robOpt          = 'WC';        % none: optimize nominal scenario;     WC: voxel wise worst case optimization, 'probabilistic';  probabilistic optimization   
+                                     % coverage: coverage based optimization  
+                                     % right now it doesnt allow different optimization techniques for different structures
 pln.numOfFractions         = 30;
 pln.runSequencing          = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO                 = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.machine                = 'Generic_LET';
 pln.minNrParticles         = 500000;
 pln.LongitudialSpotSpacing = 3; %only relevant for HIT machine, not generic
+
+%% coverage based cst manipulation
+cst = matRad_robOptCstManipulation(ct,cst,pln,multScen,0,0);
 
 %% initial visualization and change objective function settings if desired
 %matRadGUI
@@ -99,7 +97,6 @@ if strcmp(pln.radiationMode,'photons')
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst,multScen,false);
 end
-
 
 %% inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);

@@ -1,13 +1,25 @@
-function cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,targetExpansion,normalTissueRingVOIName,varargin)
+function cst = matRad_robOptCstManipulation(ct,cst,pln,multScen,targetExpansion,normalTissueRingVOIName,varargin)
 
 covFlag = 0;
 Counter = 0;
+
+
+% determine scenarios used for optimization
+for i = 1:size(cst,1)
+    for j = 1:numel(cst{i,6})
+       cst{i,6}(j).robustness = pln.robOpt;
+       if ~isfield(cst{i,6}(j),'coverage')
+           cst{i,6}(j).coverage = 0;    % ensure backwards compability
+       end
+    end
+end
+
 
 for  i = 1:size(cst,1)
     
     if ~isempty(cst{i,6})
         
-        if sum(strcmp({cst{i,6}(:).robustness},'coverage'))
+        if strcmp(pln.robOpt,'coverage') % sum(strcmp({cst{i,6}(:).robustness},'coverage'))
                 
             covFlag = 1;
             Counter = Counter + 1;  
@@ -73,7 +85,7 @@ end
 if targetExpansion > 0
     for  i = 1:size(cst,1)
         if ~isempty(cst{i,6})
-            if sum(strcmp({cst{i,6}(:).robustness},'coverage')) & isequal(cst{i,3},'TARGET')
+            if strcmp(pln.robOpt,'coverage') && isequal(cst{i,3},'TARGET')
                 
                 cstidx = find(strcmp([cst(:,2)],cst{i,2}));
                 

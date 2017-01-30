@@ -64,7 +64,7 @@ else
             linTerm  = dij.mAlphaDose{dij.indexforOpt(i)} * w;
             quadTerm = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
             e        = linTerm + quadTerm.^2;   
-
+            
             if isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LSM_effect')
                 d{i} = e;
             else
@@ -82,6 +82,11 @@ else
        
     end   
     
+    for i = 1:length(dij.indexforOpt)
+         if sum(isnan(d{i})) > 0
+            warning('nan values in gradFuncWrapper');
+         end
+    end
     matRad_global_d = d;
     
 end

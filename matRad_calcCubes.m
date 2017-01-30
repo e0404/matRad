@@ -53,7 +53,6 @@ if isfield(dij,'mLETDose')
     resultGUI.LET     = zeros(dij.dimensions);
     ix                = resultGUI.physicalDose>0;
     resultGUI.LET(ix) = LETDoseCube(ix)./resultGUI.physicalDose(ix);
-
 end
 
 % consider biological optimization for carbon ions
@@ -91,26 +90,41 @@ end
 
 % write worst case dose distribution if WC opt used for one objective
 % only implemented for physical dose
-writeWCCube = 0;
+saveWCCube = 0;
 for i = 1:size(cst,1)
    if ~isempty(cst{i,6})
-        if(strcmp(cst{i,6}(:).robustness,'WC'))
-            writeWCCube = 1;
+        for j = 1:numel(cst{i,6})
+            if(strcmp(cst{i,6}(:).robustness,'WC'))
+                saveWCCube = 1;
+            end
         end
    end
 end
 
-if(writeWCCube == 1)
-     for i = 1: length(dij.indexforOpt)
-          d{i} = dij.physicalDose{dij.indexforOpt(i)} * w;
-     end
-  
-     [d_max,~] = max([d{:}],[],2);  
-     [d_min,~] = min([d{:}],[],2);
-             
-    %resultGUI.maxDose = reshape(d_max,dij.dimensions);
-    %resultGUI.minDose = reshape(d_min,dij.dimensions);
+if(saveWCCube == 1)
+    quantity = 'physicalDose';
+    if isfield(dij,'RBE')
+        quantity = 'RBExD';
+        for i = 1: length(dij.indexforOpt)
+           d{i} = (dij.physicalDose{dij.indexforOpt(i)} * w ) * dij.RBE;
+        end
+    elseif isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
+        quantity = 'RBExD';
+        for i = 1: length(dij.indexforOpt)
+           effect   = full(dij.mAlphaDose{dij.indexforOpt(i)}*resultGUI.w+(dij.mSqrtBetaDose{dij.indexforOpt(i)}*resultGUI.w).^2);
+           d{i}     = zeros(size(effect));
+           ix       = effect>0;
+           d{i}(ix) = ((sqrt(a_x(ix).^2 + 4 .* b_x(ix) .* effect(ix)) - a_x(ix))./(2.*b_x(ix)));
+        end
+    else
+        for i = 1: length(dij.indexforOpt)
+           d{i} = dij.physicalDose{dij.indexforOpt(i)} * w;
+        end
+    end
     
+    [d_max,~] = max([d{:}],[],2);  
+    [d_min,~] = min([d{:}],[],2);
+             
     d_wc = d_max;
     for  i = 1:size(cst,1)
         for j = 1:numel(cst{i,6})
@@ -120,5 +134,5 @@ if(writeWCCube == 1)
             end
         end
     end
-    resultGUI.wcDose = reshape(d_wc,dij.dimensions);
+    resultGUI.(['WC_' quantity]) = reshape(d_wc,dij.dimensions);
 end

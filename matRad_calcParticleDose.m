@@ -162,8 +162,8 @@ end
 if (isequal(pln.bioOptimization,'LSM_effect')   || isequal(pln.bioOptimization,'LSM_RBExD')) && strcmp(pln.radiationMode,'protons')
 
     fprintf('matRad: precumputations for biological treatment planning... ');
-    a_x = zeros(size(V,1),1);
-    b_x = zeros(size(V,1),1);
+    alphaX = zeros(size(V,1),1);
+    betaX  = zeros(size(V,1),1);
     %set overlap priorities
     cst  = matRad_setOverlapPriorities(cst);
     
@@ -411,7 +411,7 @@ for ShiftScen = 1:multScen.numOfShiftScen
 
                                      elseif ((isequal(pln.bioOptimization,'LSM_effect')   || isequal(pln.bioOptimization,'LSM_RBExD'))   && strcmp(pln.radiationMode,'protons'))
 
-                                        alpha_0            = a_x(ix(currIx)) - (dij.lamda_1_1 * dij.corrFacEntranceRBE);  
+                                        alpha_0            = alphaX(ix(currIx)) - (dij.lamda_1_1 * dij.corrFacEntranceRBE);  
                                         bixelAlpha         = zeros(size(bixelDose)); bixelBeta = zeros(size(bixelDose));
                                         ixLSM              = dij.lowerLETThreshold < bixelLET < dij.upperLETThreshold;
 
@@ -422,7 +422,7 @@ for ShiftScen = 1:multScen.numOfShiftScen
                                             bixelAlpha(bixelLET < dij.lowerLETThreshold) =  alpha_0(bixelLET < dij.lowerLETThreshold) + dij.lamda_1_1 * dij.lowerLETThreshold;
                                         end
                                         
-                                        bixelBeta(:)         = (b_x(ix(currIx)));
+                                        bixelBeta(:)         = betaX(ix(currIx));
 
                                      end
 
@@ -504,7 +504,8 @@ for ShiftScen = 1:multScen.numOfShiftScen
 
 end
 
-dij.indexforOpt = find(multScen.ScenCombMask);
+% set dummy value
+dij.indexforOpt = 1;
 
 try
   % wait 0.1s for closing all waitbars

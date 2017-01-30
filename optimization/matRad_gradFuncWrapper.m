@@ -75,19 +75,19 @@ for  i = 1:size(cst,1)
 
                 elseif strcmp(cst{i,6}(j).robustness,'probabilistic')
 
-                    for k = 1:dij.numOfScenarios
+                    for ixScen = 1:dij.numOfScenarios
 
-                        d_i = d{k}(cst{i,4}{1});
+                        d_i = d{ixScen}(cst{i,4}{1});
 
-                        delta{k}(cst{i,4}{1}) = delta{k}(cst{i,4}{1}) + dij.probOfScenarios(k)*matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+                        delta{kixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) + dij.probOfScenarios(ixScen) * matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
 
                     end
 
                 elseif strcmp(cst{i,6}(j).robustness,'WC')
 
-                    % prepare min/max dose vector we have chosen voxel-wise worst case
+                    % prepare min/max dose vector for voxel-wise worst case
                     if ~exist('d_max','var')
-                        [d_max,max_ix] = max([d{:}],[],2);   %Dosismaximum aus allen Szenarien und Szenarienindex
+                        [d_max,max_ix] = max([d{:}],[],2);   
                         [d_min,min_ix] = min([d{:}],[],2);
                     end
 
@@ -97,18 +97,22 @@ for  i = 1:size(cst,1)
                         d_i = d_min(cst{i,4}{1});
                     end
 
+                    if sum(isnan(d_min)) > 0
+                        warning('nan values in gradFuncWrapper');
+                    end
+                    
                     deltaTmp = matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
 
-                    for k = 1:dij.numOfScenarios
+                    for ixScen = 1:dij.numOfScenarios
 
                         if isequal(cst{i,3},'OAR')
-                            currWcIx = max_ix(cst{i,4}{1}) == k;   %
+                            currWcIx = max_ix(cst{i,4}{1}) == ixScen;   %
 
                         elseif isequal(cst{i,3},'TARGET')
-                            currWcIx = min_ix(cst{i,4}{1}) == k;
+                            currWcIx = min_ix(cst{i,4}{1}) == ixScen;
                         end
 
-                        delta{k}(cst{i,4}{1}) = delta{k}(cst{i,4}{1}) + deltaTmp.*currWcIx;
+                        delta{ixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) + deltaTmp.*currWcIx;
 
                     end
                     
@@ -167,27 +171,27 @@ for i = 1:options.numOfScenarios
 
         if isequal(options.bioOpt,'none')
 
-                g = g + (delta{i}' * dij.physicalDose{dij.indexforOpt(i)})';
+            g = g + (delta{i}' * dij.physicalDose{dij.indexforOpt(i)})';
 
 
         elseif isequal(options.ID,'protons_const_RBExD')
             
-            g            = g + (delta{i}' * dij.physicalDose{i} * dij.RBE)';
+            g            = g + (delta{i}' * dij.physicalDose{dij.indexforOpt(i)} * dij.RBE)';
             
         elseif isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LSM_effect')
 
-            vBias        = (delta{i}' * dij.mAlphaDose{i})';
-            quadTerm     = dij.mSqrtBetaDose{i} * w;
-            mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{i})';
+            vBias        = (delta{i}' * dij.mAlphaDose{dij.indexforOpt(i)})';
+            quadTerm     = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
+            mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{dij.indexforOpt(i)})';
             g            =  g + vBias + mPsi ; 
 
         elseif isequal(options.bioOpt,'LEMIV_RBExD') || isequal(options.bioOpt,'LSM_RBExD')
 
             scaledEffect = d{i} + dij.gamma;
             deltaTmp     = delta{i}./(2*dij.bx.*scaledEffect);
-            vBias        = (deltaTmp' * dij.mAlphaDose{i})';
-            quadTerm     = dij.mSqrtBetaDose{i} * w;
-            mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{i})';
+            vBias        = (deltaTmp' * dij.mAlphaDose{dij.indexforOpt(i)})';
+            quadTerm     = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
+            mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{dij.indexforOpt(i)})';
             g            = g + vBias + mPsi ;
 
         end

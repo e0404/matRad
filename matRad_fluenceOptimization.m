@@ -177,24 +177,30 @@ elseif ((strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimizatio
            % calculate maximal RBE in target
            maxCurrRBE = max(-cst{ixTarget,5}.alphaX + sqrt(cst{ixTarget,5}.alphaX^2 + ...
                         4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*(dij.physicalDose{1}(V,:)*wOnes)));
-           wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
+           wInit      =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
     end
     
 else 
-    bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
-    wInit       = wOnes * bixelWeight;
+    bixelWeight         =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
+    wInit               = wOnes * bixelWeight;
     pln.bioOptimization = 'none';
 end
 
 % set optimization options
 options.radMod          = pln.radiationMode;
 options.bioOpt          = pln.bioOptimization;
+options.robOpt          = pln.robOpt;
 options.ID              = [pln.radiationMode '_' pln.bioOptimization];
 options.numOfScenarios  = dij.numOfScenarios;
 
-% set callback functions.
+% check if deterministic / stoachastic optimization is turned on
+if strcmp(pln.robOpt,'none')
+    dij.indexforOpt = 1;
+else
+    dij.indexforOpt = find(~cellfun(@isempty, dij.physicalDose))';  
+end
 
- 
+% set callback functions.
 funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,options);
 funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,options);
 funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,options);
@@ -225,35 +231,8 @@ end
 options.ipopt.acceptable_constr_viol_tol = max(cScaling)*options.ipopt.acceptable_constr_viol_tol;
 [options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,options);  
 
-%check which scenarios should be considered during optimization
-%at the moment: if robust optimization -> all scenarios in opt, else only
-%nominell
-if(dij.numOfScenarios >1)
-    ivoi = 1;
-    robOpt = 0;
-    while ivoi <= size(cst, 1)
-        inr = 1;
-        while inr <=numel(cst{ivoi,6})
-            if strcmp(cst{ivoi,6}.robustness, 'none')
-                inr = inr+1;
-            else
-                ivoi = size(cst,1);
-                inr = numel(cst{ivoi,6})+1;
-                robOpt = 1;
-            end
-        end
-        ivoi = ivoi +1;
-    end
-    if(robOpt == 0)
-        dij.indexforOpt = [1];
-    else
-        dij.indexforOpt = find(~cellfun(@isempty, dij.physicalDose))'
-    end
-end
-            
-
 % Run IPOPT.
-[wOpt, info]            = ipopt(wInit,funcs,options);
+[wOpt, info] = ipopt(wInit,funcs,options);
 
 % calc dose and reshape from 1D vector to 2D array
 fprintf('Calculating final cubes...\n');
