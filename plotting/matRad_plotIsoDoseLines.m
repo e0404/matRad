@@ -83,10 +83,10 @@ if any(isoContours{slice,plane}(:))
     lower = 1; % lower marks the beginning of a section
     while lower-1 ~= size(isoContours{slice,plane},2);
         steps = isoContours{slice,plane}(2,lower); % number of elements of current line section
-        if numel(isoLevels) > 1
+        if numel(unique(isoLevels)) > 1
             color = colors(isoLevels(:) == isoContours{slice,plane}(1,lower),:);
         else
-            color = colors';
+            color = unique(colors,'rows'); 
         end
         isoLineHandles(end+1) = line(isoContours{slice,plane}(1,lower+1:lower+steps),...
             isoContours{slice,plane}(2,lower+1:lower+steps),...
