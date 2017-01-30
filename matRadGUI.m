@@ -1215,7 +1215,12 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
 end
 
 if get(handles.popupTypeOfPlot,'Value') == 3
+    %profile on;
     cla(handles.axesFig);
+    
+    %fig3D = figure('Name','3D Axes');
+    %axesFig3D = axes('Parent',fig3D);
+    axesFig3D = handles.axesFig;
     
     %Check if we need to precompute the surface data
     if size(cst,2) < 8
@@ -1225,14 +1230,16 @@ if get(handles.popupTypeOfPlot,'Value') == 3
     
     set(handles.axesFig,'Color',1*[1 1 1]);
     hold(handles.axesFig,'on');
-    p = matRad_plotVois3D(handles.axesFig,ct,cst,handles.VOIPlotFlag,colorcube);
-    
-    s = matRad_plotCtSlice3D(handles.axesFig,ct,1,plane,slice);
+    if get(handles.radiobtnContour,'Value') && handles.State>0
+        p = matRad_plotVois3D(axesFig3D,ct,cst,handles.VOIPlotFlag,colorcube);
+    end 
         
-    view(handles.axesFig,3)
-    xlabel(handles.axesFig,'x');
-    ylabel(handles.axesFig,'y');
-    zlabel(handles.axesFig,'z');
+    s = matRad_plotCtSlice3D(axesFig3D,ct,1,plane,slice);
+        
+    view(axesFig3D,3)
+    xlabel(axesFig3D,'x');
+    ylabel(axesFig3D,'y');
+    zlabel(axesFig3D,'z');
     camlight left;
     lighting gouraud;
     
@@ -1275,12 +1282,14 @@ if get(handles.popupTypeOfPlot,'Value') == 3
     % set(gca,'Children',[AxesHandlesCT_Dose hIsoCenterCross AxesHandlesIsoDose  AxesHandlesVOI ]);
     
     %set axis ratio
-    %ratios = [1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
-    %ratios = ratios([2 1 3]);
-    %set(handles.axesFig,'DataAspectRatioMode','manual');
-    %set(handles.axesFig,'DataAspectRatio',ratios./max(ratios));
+    ratios = [1 1 1]; %[1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
+    ratios = ratios([2 1 3]);
+    set(handles.axesFig,'DataAspectRatioMode','manual');
+    set(handles.axesFig,'DataAspectRatio',ratios./max(ratios));
     
     set(handles.axesFig,'Ydir','reverse');
+    
+    %profile viewer;
 end
 
 zoom reset;

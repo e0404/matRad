@@ -1,4 +1,4 @@
-function [ctHandle,cMap,window] = matRad_plotCtSlice3D(axesHandle,ct,cubeIdx,plane,slice,cMap,window)
+function [ctHandle,cMap,window] = matRad_plotCtSlice3D(axesHandle,ct,cubeIdx,plane,ctSlice,cMap,window)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that generates the plot for the CT in the GUI 3D view. 
 % The function can also be used in personal matlab figures by passing the
@@ -50,29 +50,45 @@ end
 
 cMapScale = size(cMap,1) - 1;
 
-%Create the meshgrid for the surface plot
-xCoord = ct.resolution.y * (1:ct.cubeDim(1));
-yCoord = ct.resolution.x * (1:ct.cubeDim(2));
-zCoord = ct.resolution.z * (1:ct.cubeDim(3));
-    
+
+%Create the coordinates
+coords{1} = ct.resolution.y * (1:ct.cubeDim(1));
+coords{2} = ct.resolution.x * (1:ct.cubeDim(2));
+coords{3} = ct.resolution.z * (1:ct.cubeDim(3));
+
+ 
+% slice plot with surface(...), colormapping is more straightforward
 if plane == 1 % Coronal plane
-    [xMesh,zMesh] = meshgrid(xCoord,zCoord);
-    yMesh = slice*ct.resolution.x*ones(ct.cubeDim(3),ct.cubeDim(1));
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cube{cubeIdx}(slice,:,:)-window(1))/(window(2) - window(1))))),cMap);
+    [xMesh,zMesh] = meshgrid(coords{1},coords{3});
+    yMesh = ctSlice*ct.resolution.x*ones(ct.cubeDim(3),ct.cubeDim(1));
+    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cube{cubeIdx}(ctSlice,:,:)-window(1))/(window(2) - window(1))))),cMap);
     ct_rgb = permute(ct_rgb,[2 1 3]);
 elseif plane == 2 % sagittal plane
-    [yMesh,zMesh] = meshgrid(yCoord,zCoord);
-    xMesh = slice*ct.resolution.y*ones(ct.cubeDim(3),ct.cubeDim(2));
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cube{cubeIdx}(:,slice,:)-window(1))/(window(2) - window(1))))),cMap);
+    [yMesh,zMesh] = meshgrid(coords{2},coords{3});
+    xMesh = ctSlice*ct.resolution.y*ones(ct.cubeDim(3),ct.cubeDim(2));
+    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cube{cubeIdx}(:,ctSlice,:)-window(1))/(window(2) - window(1))))),cMap);
     ct_rgb = permute(ct_rgb,[2 1 3]);
 elseif plane == 3 % Axial plane
-    [xMesh,yMesh] = meshgrid(xCoord,yCoord);
-    zMesh = slice*ct.resolution.z*ones(ct.cubeDim(2),ct.cubeDim(1));    
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cube{cubeIdx}(:,:,slice)-window(1))/(window(2) - window(1))))),cMap);
+    [xMesh,yMesh] = meshgrid(coords{1},coords{2});
+    zMesh = ctSlice*ct.resolution.z*ones(ct.cubeDim(2),ct.cubeDim(1));    
+    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cube{cubeIdx}(:,:,ctSlice)-window(1))/(window(2) - window(1))))),cMap);
 end
 ctHandle = surface(axesHandle,'XData',xMesh, 'YData',yMesh, 'ZData',zMesh, ...
         'CData',ct_rgb, 'CDataMapping','direct', ...
         'EdgeColor','none', 'FaceColor','texturemap');
+%{
+% slice plot with slice(...), more intuitive, but colormapping not clear
+[xMesh,yMesh,zMesh] = meshgrid(coords{:});
+slicePlane{1} = [];
+slicePlane{2} = [];
+slicePlane{3} = [];
+
+slicePlane{plane} = coords{plane}(ctSlice);
+
+ctHandle = slice(axesHandle,xMesh,yMesh,zMesh,ct.cube{cubeIdx},slicePlane{:});
+set(ctHandle,'EdgeColor','none');
+%}
+
 
 
 end
