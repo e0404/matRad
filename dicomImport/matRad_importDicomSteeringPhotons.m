@@ -28,6 +28,10 @@ function [stf, pln] = matRad_importDicomSteeringPhotons(pln)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+stf = struct;
+if ~isfield(pln.Collimation,'Fields')
+    return
+end
 
 % get fields possessing a field weight vector greater than 0
 Fields = pln.Collimation.Fields([pln.Collimation.Fields(:).Weight] > 0);
