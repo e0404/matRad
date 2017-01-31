@@ -785,6 +785,8 @@ guidata(hObject,handles);
 %% plots ct and distributions
 function UpdatePlot(handles)
 
+profile on;
+
 axes(handles.axesFig);
 
 % this is necessary to prevent multiple callbacks of update plot drawing on
@@ -1218,8 +1220,11 @@ if get(handles.popupTypeOfPlot,'Value') == 3
     %profile on;
     cla(handles.axesFig);
     
-    %fig3D = figure('Name','3D Axes');
-    %axesFig3D = axes('Parent',fig3D);
+    %if ~isfield(handles,'fig3D')
+    %    handles.fig3D = figure('Name','3D View');
+    %    handles.axesFig3D = axes('Parent',handles.fig3D);
+    %end
+    %axesFig3D = handles.axesFig3D;
     axesFig3D = handles.axesFig;
     
     %Check if we need to precompute the surface data
@@ -1240,8 +1245,10 @@ if get(handles.popupTypeOfPlot,'Value') == 3
     xlabel(axesFig3D,'x');
     ylabel(axesFig3D,'y');
     zlabel(axesFig3D,'z');
-    camlight left;
-    lighting gouraud;
+    
+    hLight = light('Parent',axesFig3D);
+    camlight(hLight,'left');
+    %lighting( gouraud;
     
     %{
     limitX = get(hAx3D,'xlim');
@@ -1255,23 +1262,23 @@ if get(handles.popupTypeOfPlot,'Value') == 3
     
     
     if ~isempty(pln)
-        set(handles.axesFig,'XTick',0:50:1000);
-        set(handles.axesFig,'YTick',0:50:1000);
-        set(handles.axesFig,'ZTick',0:50:1000);
-        set(handles.axesFig,'XTickLabel',0:50:1000);
-        set(handles.axesFig,'YTickLabel',0:50:1000);
-        set(handles.axesFig,'ZTickLabel',0:50:1000);
-        xlabel('x [mm]','FontSize',defaultFontSize)
-        ylabel('y [mm]','FontSize',defaultFontSize)
-        zlabel('z [mm]','FontSize',defaultFontSize)
+        set(axesFig3D,'XTick',0:50:1000);
+        set(axesFig3D,'YTick',0:50:1000);
+        set(axesFig3D,'ZTick',0:50:1000);
+        set(axesFig3D,'XTickLabel',0:50:1000);
+        set(axesFig3D,'YTickLabel',0:50:1000);
+        set(axesFig3D,'ZTickLabel',0:50:1000);
+        xlabel(axesFig3D,'x [mm]','FontSize',defaultFontSize)
+        ylabel(axesFig3D,'y [mm]','FontSize',defaultFontSize)
+        zlabel(axesFig3D,'z [mm]','FontSize',defaultFontSize)
         %title(['axial plane z = ' num2str(ct.resolution.z*slice) ' [mm]'],'FontSize',defaultFontSize)
-        title('3D view');
+        title(axesFig3D,'3D view');
     else
-        xlabel('x [voxels]','FontSize',defaultFontSize)
-        ylabel('y [voxels]','FontSize',defaultFontSize)
-        zlabel('z [voxels]','FontSize',defaultFontSize)
+        xlabel(axesFig3D,'x [voxels]','FontSize',defaultFontSize)
+        ylabel(axesFig3D,'y [voxels]','FontSize',defaultFontSize)
+        zlabel(axesFig3D,'z [voxels]','FontSize',defaultFontSize)
         %title('axial plane','FontSize',defaultFontSize)
-        title('3D view');
+        title(axesFig3D,'3D view');
     end
     
     %if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln)
@@ -1284,22 +1291,23 @@ if get(handles.popupTypeOfPlot,'Value') == 3
     %set axis ratio
     ratios = [1 1 1]; %[1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
     ratios = ratios([2 1 3]);
-    set(handles.axesFig,'DataAspectRatioMode','manual');
-    set(handles.axesFig,'DataAspectRatio',ratios./max(ratios));
+    set(axesFig3D,'DataAspectRatioMode','manual');
+    set(axesFig3D,'DataAspectRatio',ratios./max(ratios));
     
-    set(handles.axesFig,'Ydir','reverse');
+    set(axesFig3D,'Ydir','reverse');   
+
+    upperLimits = ct.cubeDim.*[ct.resolution.y ct.resolution.x ct.resolution.z];
+    axis(axesFig3D,[1 upperLimits(1) 1 upperLimits(2) 1 upperLimits(3)]);
     
-    %profile viewer;
+    %rotate3d(axesFig3D,'on');
+    
 end
+
 
 zoom reset;
 
-if get(handles.popupTypeOfPlot,'Value') == 3
-    upperLimits = ct.cubeDim.*[ct.resolution.y ct.resolution.x ct.resolution.z];
-    axis(handles.axesFig,[1 upperLimits(1) 1 upperLimits(2) 1 upperLimits(3)]);
-else
-    axis(handles.axesFig,'tight');
-end
+axis(handles.axesFig,'tight');
+
 if handles.rememberCurrAxes
     axis(currAxes);
 end
@@ -1312,6 +1320,9 @@ guidata(handles.axesFig,handles);
 if get(handles.popupTypeOfPlot,'Value')==1 
     UpdateColormapOptions(handles);
 end
+
+%profile off;
+%profile viewer;
 
 % --- Executes on selection change in popupPlane.
 function popupPlane_Callback(hObject, ~, handles)
