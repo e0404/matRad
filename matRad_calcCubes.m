@@ -87,14 +87,55 @@ if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
 end
 
 
+% if linear scaling model was used - check if the used lambda makes sense
+if isfield(dij,'lamda_1_1')
+   
+   % find all target voxels from cst cell array
+   targetAlphaX = [];
+   targetBetaX  = [];
+   numVoxel     = [];
+   V = [];
+   for i=1:size(cst,1)
+       if isequal(cst{i,3},'TARGET') && ( ~isempty(cst{i,6}) || ~isempty(findstr(cst{i,2},'ScenUnion')) )
+          targetAlphaX = [targetAlphaX cst{i,5}.alphaX]; targetBetaX  = [targetBetaX cst{i,5}.betaX];
+          numVoxel     = [numVoxel numel(cst{i,4}{:})];
+          V = [V;vertcat(cst{i,4}{:})];
+       end
+   end
 
-% write worst case dose distribution if WC opt used for one objective
+   % normalize alphaX in case of different target tissues
+   targetAlphaX = (targetAlphaX .* numVoxel)./(sum(numVoxel));
+   targetBetaX  = (targetBetaX .* numVoxel)./(sum(numVoxel));
+   % Remove double voxels
+   V = unique(V);
+
+   refConstRBE = 1.1;
+   meanLET  = mean(resultGUI.LET(V)); 
+   meanDose = mean(resultGUI.physicalDose(V));
+   meanRBE  = mean(resultGUI.RBE(V));
+   
+   disp(['mean RBE in target is: ' num2str(meanRBE)]);
+   
+   meanLambda_1_1 = ( targetAlphaX*(refConstRBE-1) + targetBetaX .* meanDose .*(refConstRBE^2-1) ) ./ (meanLET - dij.corrFacEntranceRBE);
+   
+   relDiff =  (((meanLambda_1_1/dij.lamda_1_1) -1 ) * 100);
+   if abs(relDiff) > 10
+      warning(['relatve deviation of lamda_1_1: ' num2str(relDiff) '%']);
+      warning(['used lamda_1_1: ' num2str(dij.lamda_1_1) '  lamda_1_1 of ' num2str(meanLambda_1_1) ' would ensure a mean RBE of 1.1 in the target']);
+   end 
+      
+      %%ToDO: asign non specific normal tissue a RBE of 1.1
+end
+
+%% ToDo: calculate the worst case dose for COWC
+
+% write worst case dose distribution if VWWC opt used for one objective
 % only implemented for physical dose
 saveWCCube = 0;
 for i = 1:size(cst,1)
    if ~isempty(cst{i,6})
         for j = 1:numel(cst{i,6})
-            if(strcmp(cst{i,6}(:).robustness,'WC'))
+            if(strcmp(cst{i,6}(:).robustness,'VWWC'))
                 saveWCCube = 1;
             end
         end
@@ -134,5 +175,5 @@ if(saveWCCube == 1)
             end
         end
     end
-    resultGUI.(['WC_' quantity]) = reshape(d_wc,dij.dimensions);
+    resultGUI.(['VWWC_' quantity]) = reshape(d_wc,dij.dimensions);
 end

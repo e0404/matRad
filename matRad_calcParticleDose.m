@@ -107,11 +107,11 @@ if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'
     
     % define additional parameter for the LSM model
     if (isequal(pln.bioOptimization,'LSM_effect')   || isequal(pln.bioOptimization,'LSM_RBExD'))   && strcmp(pln.radiationMode,'protons')
-           pln.calcLET            = true;
-           dij.lamda_1_1          = 0.008; % according to Malte Frese https://www.ncbi.nlm.nih.gov/pubmed/20382482 (fitted for head and neck patients)
-           dij.corrFacEntranceRBE = 0.5;   %[kev/mum]
-           dij.upperLETThreshold  = 30;    %[kev/mum]
-           dij.lowerLETThreshold  = 0.3;    %[kev/mum]
+        pln.calcLET            = true;
+        dij.lamda_1_1          = 0.008; %0.008; % according to Malte Frese https://www.ncbi.nlm.nih.gov/pubmed/20382482 (fitted for head and neck patients)
+        dij.corrFacEntranceRBE = 0.5;   %[kev/mum]
+        dij.upperLETThreshold  = 30;    %[kev/mum]
+        dij.lowerLETThreshold  = 0.3;   %[kev/mum]
     end
 
 elseif isequal(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')

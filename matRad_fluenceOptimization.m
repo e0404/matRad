@@ -163,7 +163,7 @@ elseif ((strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimizatio
            q            = -(effectTarget * length(V)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
 
-    elseif sequal(pln.bioOptimization,'LSM_RBExD') ||isequal(pln.bioOptimization,'LEMIV_RBExD')
+    elseif isequal(pln.bioOptimization,'LSM_RBExD') ||isequal(pln.bioOptimization,'LEMIV_RBExD')
         
            %pre-calculations
            dij.gamma      = zeros(dij.numOfVoxels,1);
@@ -186,19 +186,28 @@ else
     pln.bioOptimization = 'none';
 end
 
+%% ToDo: incorporate changes of robOpt in GUI
+
+% check if deterministic / stoachastic optimization is turned on
+if isfield(pln,'robOpt')
+   if strcmp(pln.robOpt,'none')
+       dij.indexforOpt    = 1;
+       dij.numOfScenarios = 1;
+   else
+       dij.indexforOpt = find(~cellfun(@isempty, dij.physicalDose))';  
+   end
+else
+      pln.robOpt = 'none';
+      dij.indexforOpt    = 1;
+      dij.numOfScenarios = 1;
+end
+
 % set optimization options
 options.radMod          = pln.radiationMode;
 options.bioOpt          = pln.bioOptimization;
 options.robOpt          = pln.robOpt;
 options.ID              = [pln.radiationMode '_' pln.bioOptimization];
 options.numOfScenarios  = dij.numOfScenarios;
-
-% check if deterministic / stoachastic optimization is turned on
-if strcmp(pln.robOpt,'none')
-    dij.indexforOpt = 1;
-else
-    dij.indexforOpt = find(~cellfun(@isempty, dij.physicalDose))';  
-end
 
 % set callback functions.
 funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,options);

@@ -40,6 +40,10 @@ d = matRad_backProjection(w,dij,options);
 % Initialize f
 f = 0;
 
+if strcmp(options.robOpt,'COWC')
+   f = zeros(options.numOfScenarios,1);
+end
+
 % compute objective function for every VOI.
 for  i = 1:size(cst,1)
     
@@ -71,16 +75,16 @@ for  i = 1:size(cst,1)
                 % if prob opt: sum up expectation value of objectives
                 elseif strcmp(cst{i,6}(j).robustness,'probabilistic')
 
-                    for k = 1:dij.numOfScenarios
+                    for ixScen = 1:dij.numOfScenarios
 
-                        d_i = d{k}(cst{i,4}{1});
+                        d_i = d{ixScen}(cst{i,4}{1});
 
-                        f = f + dij.probOfScenarios(k) * matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                        f = f + dij.probOfScenarios(ixScen) * matRad_objFunc(d_i,cst{i,6}(j),d_ref);
 
                     end
 
                 % if voxel-wise worst case: sum up objective of min/max dose
-                elseif strcmp(cst{i,6}(j).robustness,'WC')
+                elseif strcmp(cst{i,6}(j).robustness,'VWWC')
 
                     % prepare min/max dose vector we have chosen voxel-wise worst case
                     if ~exist('d_max','var')
@@ -96,6 +100,16 @@ for  i = 1:size(cst,1)
 
                     f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
                     
+                elseif strcmp(cst{i,6}(j).robustness,'COWC')
+                   
+                     for ixScen = 1:dij.numOfScenarios
+
+                        d_i = d{ixScen}(cst{i,4}{1});
+         
+                        f(ixScen) = f(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                        
+                     end
+                    
                 % if coveraged based opt    
                 elseif strcmp(cst{i,6}(j).robustness,'coverage')
                     
@@ -106,16 +120,16 @@ for  i = 1:size(cst,1)
                     
                     if dij.numOfScenarios > 1
                         
-                        for k = 1:dij.numOfScenarios
+                        for ixScen = 1:dij.numOfScenarios
                             
                             % get VOI dose in current scenario
-                            d_i = d{k}(cst{i,4}{1});
+                            d_i = d{ixScen}(cst{i,4}{1});
 
                             % get voxel dependent weigthing
                             voxelWeighting = 1; 
                             
                             % calculate dose deviations from d_ref
-                            fTmp(k) = matRad_objFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);
+                            fTmp(ixScen) = matRad_objFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);
                             
                         end
                         
@@ -144,6 +158,11 @@ for  i = 1:size(cst,1)
             
     end
     
+end
+
+% extract the objective function value of the current worst case scenario
+if strcmp(options.robOpt,'COWC')
+   f = max(f);
 end
 
 % apply objective scaling

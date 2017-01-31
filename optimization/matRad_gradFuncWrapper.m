@@ -83,7 +83,7 @@ for  i = 1:size(cst,1)
 
                     end
 
-                elseif strcmp(cst{i,6}(j).robustness,'WC')
+                elseif strcmp(cst{i,6}(j).robustness,'VWWC')
 
                     % prepare min/max dose vector for voxel-wise worst case
                     if ~exist('d_max','var')
@@ -115,7 +115,20 @@ for  i = 1:size(cst,1)
                         delta{ixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) + deltaTmp.*currWcIx;
 
                     end
+                 
+                elseif strcmp(cst{i,6}(j).robustness,'COWC')
+                   
+                    f = zeros(options.numOfScenarios,1);
                     
+                    for ixScen = 1:dij.numOfScenarios
+
+                        d_i = d{ixScen}(cst{i,4}{1});
+
+                        f(ixScen)                  = f(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                        delta{ixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) +  matRad_gradFunc(d_i,cst{i,6}(j),d_ref)/dij.numOfScenarios;
+                    end
+                     
+
                 elseif strcmp(cst{i,6}(j).robustness,'coverage')
                     
                     % calc invers DCH
@@ -125,16 +138,16 @@ for  i = 1:size(cst,1)
                     
                     if dij.numOfScenarios > 1
                         
-                        for k = 1:dij.numOfScenarios
+                        for ixScen = 1:dij.numOfScenarios
                             
                             % get VOI dose in current scenario
-                            d_i = d{k}(cst{i,4}{1});
+                            d_i = d{ixScen}(cst{i,4}{1});
 
                             % get voxel dependent weigthing
                             voxelWeighting = 1; 
                             
                             % calculate dose deviations from d_ref
-                            delta{k}(cst{i,4}{1}) = delta{k}(cst{i,4}{1}) + dij.ScenProb(k)*matRad_gradFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);    
+                            delta{ixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) + dij.ScenProb(ixScen)*matRad_gradFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);    
                                                                  
                         end
                         
@@ -162,16 +175,25 @@ for  i = 1:size(cst,1)
     
 end
 
-  
+% extract current worst case scenario
+if strcmp(options.robOpt,'COWC')
+   [~,ixCurrWC] = max(f);
+   for i = 1:options.numOfScenarios
+      if  i ~= ixCurrWC
+         delta{i} = 0; 
+      end
+   end
+end
+
 % Calculate gradient
 g = zeros(dij.totalNumOfBixels,1);
 
 for i = 1:options.numOfScenarios
-    if any(delta{i} > 0) % exercise only if contributions from scenario i
+    if any(delta{i}) % exercise only if contributions from scenario i
 
         if isequal(options.bioOpt,'none')
 
-            g = g + (delta{i}' * dij.physicalDose{dij.indexforOpt(i)})';
+            g            = g + (delta{i}' * dij.physicalDose{dij.indexforOpt(i)})';
 
 
         elseif isequal(options.ID,'protons_const_RBExD')

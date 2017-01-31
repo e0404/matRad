@@ -25,9 +25,10 @@ clc
 %load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-%load BOXPHANTOM.mat
+load BOXPHANTOM.mat
 load BOXPHANTOM_TINY.mat
 
+%load(['/Volumes/WS_exFat/patient1/patient1_222mm.mat']);
 
 %%
 
@@ -68,16 +69,16 @@ pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.bioOptimization = 'LSM_effect'; % none: physical optimization;                                   const_RBExD; constant RBE of 1.1;  
+pln.bioOptimization = 'LSM_RBExD';   % none: physical optimization;                                   const_RBExD; constant RBE of 1.1;  
                                      % LSM_effect;  variable RBE Linear Scaling Model (effect based); LSM_RBExD;  variable RBE Linear Scaling Model (RBExD based)
                                      % LEMIV_effect: effect-based optimization;                       LEMIV_RBExD: optimization of RBE-weighted dose
-pln.robOpt          = 'WC';        % none: optimize nominal scenario;     WC: voxel wise worst case optimization, 'probabilistic';  probabilistic optimization   
-                                     % coverage: coverage based optimization  
+pln.robOpt          = 'COWC';        % none: optimize nominal scenario;     VWWC: voxel wise worst case optimization, 'probabilistic';  probabilistic optimization   
+                                     % COWC: composite worst case;   coverage: coverage based optimization  
                                      % right now it doesnt allow different optimization techniques for different structures
 pln.numOfFractions         = 30;
 pln.runSequencing          = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO                 = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
-pln.machine                = 'Generic_LET';
+pln.machine                = 'GenericLET';
 pln.minNrParticles         = 500000;
 pln.LongitudialSpotSpacing = 3; %only relevant for HIT machine, not generic
 

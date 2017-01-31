@@ -565,6 +565,7 @@ checkRadiationComposition(handles);
 contents      = cellstr(get(hObject,'String')); 
 RadIdentifier = contents{get(hObject,'Value')};
 contentPopUp  = get(handles.popMenuBioOpt,'String');
+ixContent     = get(handles.popMenuBioOpt,'Value');
 switch RadIdentifier
     case 'photons'
         set(handles.vmcFlag,'Value',0);
@@ -587,9 +588,13 @@ switch RadIdentifier
         set(handles.popMenuBioOpt,'Enable','on');
         ix = find(strcmp(contentPopUp,'const_RBExD'));
         set(handles.popMenuBioOpt,'Value',ix);
-        set(handles.btnSetTissue,'Enable','on');
         
-        set(handles.btnSetTissue,'Enable','off');
+        if sum(strcmp(contentPopUp(ixContent,1),{'LSM_effect','LSM_RBExD'})) > 0
+           set(handles.btnSetTissue,'Enable','on');
+        else
+           set(handles.btnSetTissue,'Enable','off');
+        end
+        
         set(handles.btnRunSequencing,'Enable','off');
         set(handles.btnRunDAO,'Enable','off');
         set(handles.txtSequencing,'Enable','off');
@@ -2128,7 +2133,14 @@ if handles.State > 0
         set(handles.btnSetTissue,'Enable','on');
     elseif strcmp(pln.radiationMode,'protons')
         set(handles.popMenuBioOpt,'Enable','on');
-        set(handles.btnSetTissue,'Enable','off');
+        ix      = get(handles.popMenuBioOpt,'Value');
+        content = get(handles.popMenuBioOpt,'String');
+        if sum(strcmp(content{ix,1},{'LSM_effect','LSM_RBExD'})) > 0 && strcmp(pln.radiationMode,'protons')
+           set(handles.btnSetTissue,'Enable','on');
+        else
+           set(handles.btnSetTissue,'Enable','off');
+        end
+        
     else
         set(handles.popMenuBioOpt,'Enable','off');
         set(handles.btnSetTissue,'Enable','off'); 
@@ -2893,13 +2905,36 @@ end
 cst = evalin('base','cst');
 pln = evalin('base','pln');
 
-fileName = [pln.radiationMode '_' pln.machine];
-load(fileName);
 
-% check for available cell types characterized by alphaX and betaX 
-for i = 1:size(machine.data(1).alphaX,2)
-    CellType{i} = [num2str(machine.data(1).alphaX(i)) ' ' num2str(machine.data(1).betaX(i))];
+if strcmp(pln.radiationMode,'carbon')
+   fileName = [pln.radiationMode '_' pln.machine];
+   load(fileName);
+   % check for available cell types characterized by alphaX and betaX 
+   for i = 1:size(machine.data(1).alphaX,2)
+       CellType{i} = [num2str(machine.data(1).alphaX(i)) ' ' num2str(machine.data(1).betaX(i))];
+   end
+elseif strcmp(pln.radiationMode,'protons')
+   CellType{1}  = ['0.1 0.05'];
+   CellType{2}  = ['0.112   0.0112'];
+   CellType{3}  = ['0.0854  0.0085'];
+   CellType{4}  = ['0.0554  0.0055'];
+   CellType{5}  = ['0.0532  0.0266'];
+   CellType{6}  = ['0.0407  0.0203'];
+   CellType{7}  = ['0.0577  0.0663'];
+   CellType{8}  = ['0.0511  0.0256'];
+   CellType{9}  = ['0.0407  0.0203'];
+   CellType{10} = ['0.0620  0.0310'];
+   CellType{11} = ['0.0675  0.0225'];
+   CellType{12} = ['0.1300  0.0433'];  
+   CellType{13} = ['0.0413  0.0138'];
+   CellType{14} = ['0.0265  0.0088'];    
+   CellType{15} = ['0.0915  0.0305'];    
+   CellType{16} = ['0.0918  0.0306'];    
+   CellType{17} = ['0.0281  0.0094']; 
+   CellType{18} = ['0.0708  0.0236'];   
 end
+
+
 
 %fill table data array
 for i = 1:size(cst,1)
@@ -3878,20 +3913,26 @@ end
 
 % --- Executes on selection change in popMenuBioOpt.
 function popMenuBioOpt_Callback(hObject, ~, handles)
-pln = evalin('base','pln');
-contentBioOpt = get(handles.popMenuBioOpt,'String');
+pln                = evalin('base','pln');
+contentBioOpt      = get(handles.popMenuBioOpt,'String');
 NewBioOptimization = contentBioOpt(get(handles.popMenuBioOpt,'Value'),:);
 
+oldOpt = strsplit(pln.bioOptimization,'_');
+newOpt = strsplit(NewBioOptimization{1},'_');
+
 if handles.State > 0
-    if (strcmp(pln.bioOptimization,'LEMIV_effect') && strcmp(NewBioOptimization,'LEMIV_RBExD')) ||...
-       (strcmp(pln.bioOptimization,'LEMIV_RBExD') && strcmp(NewBioOptimization,'LEMIV_effect')) 
-       % do nothing - re-optimization is still possible
-    elseif ((strcmp(pln.bioOptimization,'const_RBE') && strcmp(NewBioOptimization,'none')) ||...
-           (strcmp(pln.bioOptimization,'none') && strcmp(NewBioOptimization,'const_RBE'))) && isequal(pln.radiationMode,'protons')
-       % do nothing - re-optimization is still possible
-    else
+   
+    if    (strcmp(pln.bioOptimization,'none') ||  strcmp(pln.bioOptimization,'const_RBE')) && ... 
+          ( strcmp(NewBioOptimization,'LEMIV_effectxD') ||...
+            strcmp(NewBioOptimization,'LEMIV_RBExD')    || ...
+            strcmp(pln.bioOptimization,'LSM_effect')    || ...  
+            strcmp(pln.bioOptimization,'LSM_RBExD')) ...
+            ||  ...
+            ( strcmp(oldOpt{1,1},'LEMIV') && strcmp(newOpt{1,1},'LSM')) || ...
+            ( strcmp(oldOpt{1,1},'LSM') && strcmp(newOpt{1,1},'LEMIV')) 
         handles.State = 1;
     end
+    
 end
 getPlnFromGUI(handles);
 
