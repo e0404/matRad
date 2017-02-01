@@ -33,7 +33,7 @@ load TG119.mat
 %% initial visualization and change objective function settings if desired
 %matRadGUI
 
-
+pln.exportInfluenceDataToASCII = true;
 %% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles

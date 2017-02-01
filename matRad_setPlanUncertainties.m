@@ -6,7 +6,7 @@ if ~strcmp(pln.robOpt,'none')
 
    multScen.numOfIntSegShiftScen = 0; %1000;       % number of internal segmentation shift scnearios     
 
-   multScen.numOfShiftScen       = [0 0 0];        % number of shifts in x y and z direction       
+   multScen.numOfShiftScen       = [2 2 0];        % number of shifts in x y and z direction       
    multScen.shiftSize            = [4 4 4];        % maximum shift [mm]
    multScen.shiftSD              = [3 3 3];        % SD of normal distribution [mm]
    multScen.shiftGenType         = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
