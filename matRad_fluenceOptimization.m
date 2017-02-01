@@ -194,7 +194,8 @@ if isfield(pln,'robOpt')
        dij.indexforOpt    = 1;
        dij.numOfScenarios = 1;
    else
-       dij.indexforOpt = find(~cellfun(@isempty, dij.physicalDose))';  
+       dij.indexforOpt    = find(~cellfun(@isempty, dij.physicalDose))'; 
+       dij.numOfScenarios = numel(dij.indexforOpt);
    end
 else
       pln.robOpt = 'none';

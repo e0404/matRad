@@ -687,7 +687,7 @@ try
     pause(0.3);
 
     %% get cst from table
-    if ~getCstTable(handles);
+    if ~getCstTable(handles)
         return
     end
     % read plan from gui and save it to workspace
@@ -697,12 +697,12 @@ try
     % get default iso center as center of gravity of all targets if not
     % already defined
     pln = evalin('base','pln');
-
+    
     if length(pln.gantryAngles) ~= length(pln.couchAngles) 
         handles = showWarning(handles,warndlg('number of gantryAngles != number of couchAngles')); 
     end
     %%
-    if ~checkRadiationComposition(handles);
+    if ~checkRadiationComposition(handles)
         fileName = [pln.radiationMode '_' pln.machine];
         handles = showError(handles,errordlg(['Could not find the following machine file: ' fileName ]));
         guidata(hObject,handles);
@@ -729,9 +729,13 @@ end
 
 % generate steering file
 try 
+   
+    [cst,pln] = matRad_setPlanUncertainties(ct,evalin('base','cst'),pln);
+
     stf = matRad_generateStf(evalin('base','ct'),...
-                                     evalin('base','cst'),...
+                                     cst,...
                                      evalin('base','pln'));
+    assignin('base','cst',cst);
     assignin('base','stf',stf);
 catch ME
     handles = showError(handles,{'CalcDoseCallback: Error in steering file generation!',ME.message}); 
@@ -1634,7 +1638,7 @@ AllObjectiveFunction = {'square underdosing','square overdosing','square deviati
 
 columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
        AllObjectiveFunction,...
-       'numeric','numeric','numeric','numeric','numeric',{'none','WC','probabilistic','coverage'}};
+       'numeric','numeric','numeric','numeric','numeric',{'none','VWWC','COWC','probabilistic','coverage'}};
    
 numOfObjectives = 0;
 for i = 1:size(cst,1)
@@ -2133,9 +2137,7 @@ if handles.State > 0
         set(handles.btnSetTissue,'Enable','on');
     elseif strcmp(pln.radiationMode,'protons')
         set(handles.popMenuBioOpt,'Enable','on');
-        ix      = get(handles.popMenuBioOpt,'Value');
-        content = get(handles.popMenuBioOpt,'String');
-        if sum(strcmp(content{ix,1},{'LSM_effect','LSM_RBExD'})) > 0 && strcmp(pln.radiationMode,'protons')
+        if sum(strcmp(pln.bioOptimization,{'LSM_effect','LSM_RBExD'})) > 0 && strcmp(pln.radiationMode,'protons')
            set(handles.btnSetTissue,'Enable','on');
         else
            set(handles.btnSetTissue,'Enable','off');
@@ -2915,6 +2917,7 @@ if strcmp(pln.radiationMode,'carbon')
    end
 elseif strcmp(pln.radiationMode,'protons')
    CellType{1}  = ['0.1 0.05'];
+   CellType{2}  = ['0.1   0.01'];
    CellType{2}  = ['0.112   0.0112'];
    CellType{3}  = ['0.0854  0.0085'];
    CellType{4}  = ['0.0554  0.0055'];
