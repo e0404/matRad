@@ -207,6 +207,9 @@ handles.dispWindow             = cell(3,2); % first dimension refers to the sele
 %% parse variables from base workspace
 AllVarNames = evalin('base','who');
 
+% suppose no ct cube in HU is available (because no ct could be available)
+handles.cubeHUavailable = false;
+
 try
     if  ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
         ct  = evalin('base','ct');
@@ -217,6 +220,17 @@ try
         if size(cst,2) < 7
             cst = matRad_computeVoiContours(ct,cst);
             assignin('base','cst',cst);
+        end
+    
+        % compute HU values
+        if ~isfield(ct, 'cubeHU')
+            ct = matRad_electronDensitiesToHU(ct);
+            assignin('base','ct',ct);
+        end
+        if ~isfield(ct, 'cubeHU')
+            handles.cubeHUavailable = false;
+        else
+            handles.cubeHUavailable = true;
         end
         
     elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
@@ -381,6 +395,17 @@ try
     load([FilePath FileName]);
     set(handles.legendTable,'String',{'no data loaded'});
     set(handles.popupDisplayOption,'String','no option available');
+    
+    % compute HU values
+    if ~isfield(ct, 'cubeHU')
+        ct = matRad_electronDensitiesToHU(ct);
+        assignin('base','ct',ct);
+    end
+    if ~isfield(ct, 'cubeHU')
+        handles.cubeHUavailable = false;
+    else
+        handles.cubeHUavailable = true;
+    end
     
 catch
     handles = showWarning(handles,'LoadMatFileFnc: Could not load *.mat file');
@@ -2111,7 +2136,15 @@ if handles.State > 0
     end
 end 
 
-cMapOptionsSelectList = {'None','CT (ED)','Result (i.e. dose)'};
+if handles.cubeHUavailable
+    cMapOptionsSelectList = {'None','CT (HU)','Result (i.e. dose)'};
+    set(handles.popupmenu_windowPreset,'Visible','on');
+    set(handles.text_windowPreset,'String','Window Preset');
+else
+    cMapOptionsSelectList = {'None','CT (ED)','Result (i.e. dose)'};
+    set(handles.popupmenu_windowPreset,'Visible','off');
+    set(handles.text_windowPreset,'String','Window Presets are not available');
+end
 handles.cBarChanged = true;
 
  switch handles.State
@@ -2148,6 +2181,7 @@ handles.cBarChanged = true;
       
       set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:2))
       set(handles.popupmenu_chooseColorData,'Value',2);
+      set(handles.popupmenu_windowPresets,'Visible','on');
       AllVarNames = evalin('base','who');
       if ~isempty(AllVarNames)
             if  ismember('resultGUI',AllVarNames)
@@ -3332,6 +3366,18 @@ try
         setCstTable(handles,cst);
         handles.TableChanged = false;
         set(handles.popupTypeOfPlot,'Value',1);
+        
+        % compute HU values
+        if ~isfield(ct, 'cubeHU')
+            ct = matRad_electronDensitiesToHU(ct);
+            assignin('base','ct',ct);
+        end
+        if ~isfield(ct, 'cubeHU')
+            handles.cubeHUavailable = false;
+        else
+            handles.cubeHUavailable = true;
+        end
+        
         % precompute contours 
         cst = precomputeContours(ct,cst);
     
@@ -3439,7 +3485,17 @@ try
         ct = evalin('base','ct');
         currentMap = handles.ctColorMap;
         window = handles.dispWindow{selectionIndex,1};
-        minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
+        if isfield(ct, 'cubeHU')
+            minMax = [min(ct.cubeHU{1}(:)) max(ct.cubeHU{1}(:))];
+        else
+            minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
+        end
+        % adjust value for custom window to current
+        handles.windowPresets(1).width = max(window) - min(window);
+        handles.windowPresets(1).center = mean(window);
+        % update full window information
+        handles.windowPresets(2).width = minMax(2) - minMax(1);
+        handles.windowPresets(2).center = mean(minMax);
     elseif selectionIndex == 3
         result = evalin('base','resultGUI');        
         dose = result.(handles.SelectedDisplayOption);
@@ -3490,6 +3546,8 @@ set(handles.slider_windowWidth,'Min',sliderWidthMinMax(1),'Max',sliderWidthMinMa
 
 cMapPopupIndex = find(strcmp(currentMap,cMapStrings));
 set(handles.popupmenu_chooseColormap,'Value',cMapPopupIndex);
+
+guidata(gcf,handles);
 
 % --- Executes on selection change in popupmenu_chooseColorData.
 function popupmenu_chooseColorData_Callback(hObject, eventdata, handles)
@@ -3874,3 +3932,54 @@ function popMenuBioOpt_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on selection change in popupmenu_windowPreset.
+function popupmenu_windowPreset_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenu_windowPreset (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu_windowPreset contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenu_windowPreset
+
+selectionIndexCube      = 2; % working on ct only
+selectionIndexWindow    = get(handles.popupmenu_windowPreset,'Value');
+newCenter               = handles.windowPresets(selectionIndexWindow).center;
+newWidth                = handles.windowPresets(selectionIndexWindow).width;
+
+handles.dispWindow{selectionIndexCube,1}  = [newCenter - newWidth/2 newCenter + newWidth/2];
+handles.cBarChanged = true;
+guidata(hObject,handles);
+UpdatePlot(handles);
+UpdateColormapOptions(handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function popupmenu_windowPreset_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenu_windowPreset (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% setup ct window list
+% data and values from CERR https://github.com/adityaapte/CERR
+windowNames = {'Custom','Full','Abd/Med', 'Head', 'Liver', 'Lung', 'Spine', 'Vrt/Bone'};
+windowCenter = {NaN, NaN, -10, 45, 80, -500, 30, 400};
+windowWidth = {NaN, NaN, 330, 125, 305, 1500, 300, 1500};
+windowPresets = cell2struct([windowNames', windowCenter', windowWidth'], {'name', 'center', 'width'},2);
+
+
+handles.windowPresets = windowPresets;
+
+selectionList = {windowPresets(:).name};
+set(hObject,'String',selectionList(:));
+set(hObject,'Value',1);
+
+
+guidata(hObject,handles);
