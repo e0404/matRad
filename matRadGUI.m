@@ -883,12 +883,18 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
         ctIx = selectIx;
     end
     
+    if isfield(ct, 'cubeHU')
+        plotCtCube = ct.cubeHU;
+    else
+        plotCtCube = ct.cube;
+    end
+    
     ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
     
     if isempty(handles.dispWindow{ctIx,2})
         handles.dispWindow{ctIx,2} = [min(ct.cube{:}(:)) max(ct.cube{:}(:))];
     end
-    [AxesHandlesCT_Dose(end+1),~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,ct,1,plane,slice,ctMap,handles.dispWindow{ctIx,1});
+    [AxesHandlesCT_Dose(end+1),~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,plotCtCube,1,plane,slice,ctMap,handles.dispWindow{ctIx,1});
     
     % plot colorbar? If 1 the user asked for the CT
     if plotColorbarSelection == 2 && handles.cBarChanged
