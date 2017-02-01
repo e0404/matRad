@@ -513,3 +513,8 @@ try
   pause(0.1); 
 catch
 end
+
+if pln.exportInfluenceDataToASCII
+   addpath([pwd filesep 'IO' filesep 'MDACC']);
+   [ flagSuccess ] = matRad_exportInfluenceDataToASCII(cst,stf,pln,dij);
+end
