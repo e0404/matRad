@@ -32,11 +32,6 @@ function ct = matRad_calcWaterEqD(ct)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% set conversion to HU to EqD if conversionMode is not provided
-% if (~exist('conversionMode', 'var'))
-%     conversionMode = HU2EqD;
-% end
-
 %% conversion from IV to HU
 ctHU = double(ct.cube{1}) * double(ct.dicomInfo.RescaleSlope) + double(ct.dicomInfo.RescaleIntercept);
 
