@@ -1,4 +1,4 @@
-function scenProb = matRad_calcScenProb(mu,sigma,samplePos,calcType,probDist)
+function scenProb = matRad_calcScenProb(mu,sigma,samplePos,calcType,probDist,vRange)
 
 if isequal(probDist,'normDist')
     scenProb = 1;
@@ -25,7 +25,7 @@ if isequal(probDist,'normDist')
     
     % normalize probabilities since we use only a subset of
     % the 3D grid 
-    scenProb = scenProb./sum(scenProb);
+    %scenProb = scenProb./sum(scenProb);
     
 else
     error('Until now, only normally distributed scenarios implemented')

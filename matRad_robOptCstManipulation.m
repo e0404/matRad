@@ -7,7 +7,6 @@ Counter = 0;
 % determine scenarios used for optimization
 for i = 1:size(cst,1)
     for j = 1:numel(cst{i,6})
-       cst{i,6}(j).robustness = pln.robOpt;
        if ~isfield(cst{i,6}(j),'coverage')
            cst{i,6}(j).coverage = 0;    % ensure backwards compability
        end

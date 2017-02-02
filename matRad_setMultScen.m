@@ -233,6 +233,26 @@ end
 
 multScen.numOfRangeShiftScen = numel(multScen.absRangeShifts);
 
+
+
+% calculate probabilities of range shift scenarios
+if isequal(multScen.shiftGenType,'sampled')
+    multScen.shiftScenProb = repmat(1/multScen.numOfShiftScen,1,multScen.numOfShiftScen);
+elseif isequal(multScen.shiftGenType,'equidistant')
+    if multScen.numOfShiftScen > 1
+        Mu  = [0];
+        SD  = [multScen.rangeRelSD]/100;
+        multScen.rangeScenProb = matRad_calcScenProb(Mu,SD,multScen.relRangeShifts,'probBins','normDist',[-multScen.maxRelRangeShift +multScen.maxRelRangeShift]);
+    else
+        multScen.rangeScenProb = 1;
+    end
+end
+
+
+% combine propabilites 
+ScenProb          = [multScen.shiftScenProb  multScen.rangeScenProb(2:end)];
+multScen.ScenProb = ScenProb/sum(ScenProb);
+
 % set scenario combination mask
 if isequal(multScen.ScenCombType,'individual')
     

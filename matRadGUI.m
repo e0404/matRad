@@ -252,9 +252,25 @@ end
 
 % set some default values
 if handles.State == 2 || handles.State == 3
-    set(handles.popupDisplayOption,'String','physicalDose');
-    handles.SelectedDisplayOption ='physicalDose';
+    resultGUI  = evalin('base','resultGUI');
+    if isfield(resultGUI,'physicalDose')
+        set(handles.popupDisplayOption,'String','physicalDose');
+        handles.SelectedDisplayOption ='physicalDose';     
+    else
+        fNames =fieldnames(resultGUI);
+        idx = [];
+        %find cube's
+        for i = 1:size(fNames,1)
+           if numel(size(resultGUI.(fNames{i,1}))) == 3
+              idx = [idx i];
+           end
+        end
+         set(handles.popupDisplayOption,'Value',1);
+         set(handles.popupDisplayOption,'String',fNames(idx,1));
+         handles.SelectedDisplayOption = fNames{idx(1),1};
+    end
     handles.SelectedDisplayOptionIdx=1;
+
 else
     handles.resultGUI = [];
     set(handles.popupDisplayOption,'String','no option available');
@@ -730,13 +746,12 @@ end
 % generate steering file
 try 
    
-    [cst,pln] = matRad_setPlanUncertainties(ct,evalin('base','cst'),pln);
+    [cst,pln] = matRad_setPlanUncertainties(evalin('base','ct'),evalin('base','cst'),pln);
 
     stf = matRad_generateStf(evalin('base','ct'),...
                                      cst,...
                                      evalin('base','pln'));
-    assignin('base','cst',cst);
-    assignin('base','stf',stf);
+
 catch ME
     handles = showError(handles,{'CalcDoseCallback: Error in steering file generation!',ME.message}); 
     % change state from busy to normal
@@ -746,23 +761,28 @@ catch ME
     return;
 end
 
+
+    
 % carry out dose calculation
 try
     if strcmp(pln.radiationMode,'photons')
         if get(handles.vmcFlag,'Value') == 0
-            dij = matRad_calcPhotonDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
+            dij = matRad_calcPhotonDose(evalin('base','ct'),stf,pln,cst);
         elseif get(handles.vmcFlag,'Value') == 1
             if ~isdeployed
-                dij = matRad_calcPhotonDoseVmc(evalin('base','ct'),stf,pln,evalin('base','cst'));
+                dij = matRad_calcPhotonDoseVmc(evalin('base','ct'),stf,pln,cst);
             else
                 error('VMC++ not available in matRad standalone application');
             end
         end
     elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-        dij = matRad_calcParticleDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
+        dij = matRad_calcParticleDose(evalin('base','ct'),stf,pln,cst); 
     end
 
     % assign results to base worksapce
+    assignin('base','cst',cst);
+    assignin('base','stf',stf);
+    assignin('base','pln',pln);
     assignin('base','dij',dij);
     handles.State = 2;
     handles.TableChanged = false;
@@ -2400,7 +2420,7 @@ msgbox(['IPOPT finished with status ' num2str(info.status) ' (' statusmsg ')'],'
 
 % get pln file form GUI     
 function getPlnFromGUI(handles)
-
+pln = evalin('base','pln');
 pln.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [???]
 pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [???]
@@ -2434,6 +2454,8 @@ try
     else
        pln.isoCenter = str2num(get(handles.editIsoCenter,'String'));
     end
+    
+    
 catch
     warning('couldnt set isocenter in getPln function')
 end
@@ -2918,23 +2940,23 @@ if strcmp(pln.radiationMode,'carbon')
 elseif strcmp(pln.radiationMode,'protons')
    CellType{1}  = ['0.1 0.05'];
    CellType{2}  = ['0.1   0.01'];
-   CellType{2}  = ['0.112   0.0112'];
-   CellType{3}  = ['0.0854  0.0085'];
-   CellType{4}  = ['0.0554  0.0055'];
-   CellType{5}  = ['0.0532  0.0266'];
-   CellType{6}  = ['0.0407  0.0203'];
-   CellType{7}  = ['0.0577  0.0663'];
-   CellType{8}  = ['0.0511  0.0256'];
-   CellType{9}  = ['0.0407  0.0203'];
-   CellType{10} = ['0.0620  0.0310'];
-   CellType{11} = ['0.0675  0.0225'];
-   CellType{12} = ['0.1300  0.0433'];  
-   CellType{13} = ['0.0413  0.0138'];
-   CellType{14} = ['0.0265  0.0088'];    
-   CellType{15} = ['0.0915  0.0305'];    
-   CellType{16} = ['0.0918  0.0306'];    
-   CellType{17} = ['0.0281  0.0094']; 
-   CellType{18} = ['0.0708  0.0236'];   
+   CellType{3}  = ['0.112   0.0112'];
+   CellType{4}  = ['0.0854  0.0085'];
+   CellType{5}  = ['0.0554  0.0055'];
+   CellType{6}  = ['0.0532  0.0266'];
+   CellType{7}  = ['0.0407  0.0203'];
+   CellType{8}  = ['0.0577  0.0663'];
+   CellType{9}  = ['0.0511  0.0256'];
+   CellType{10}  = ['0.0407  0.0203'];
+   CellType{11} = ['0.0620  0.0310'];
+   CellType{12} = ['0.0675  0.0225'];
+   CellType{13} = ['0.1300  0.0433'];  
+   CellType{14} = ['0.0413  0.0138'];
+   CellType{15} = ['0.0265  0.0088'];    
+   CellType{16} = ['0.0915  0.0305'];    
+   CellType{17} = ['0.0918  0.0306'];    
+   CellType{18} = ['0.0281  0.0094']; 
+   CellType{19} = ['0.0708  0.0236'];   
 end
 
 

@@ -22,13 +22,17 @@ clc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-load TG119.mat
+%load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
 %load BOXPHANTOM_TINY.mat
 %load(['/Volumes/WS_exFat/patient1/patient1_222mm.mat']);
 
+%cst{3,5}.alphaX = 0.1; cst{3,5}.betaX = 0.01;
+
+cst{3,6}(2,1) = cst{3,6}(1);
+cst{3,6}(2,1).robustness = 'VWWC';
 
 %% initial visualization and change objective function settings if desired
 %matRadGUI
@@ -46,9 +50,6 @@ pln.radiationMode   = 'protons';     % either photons / protons / carbon
 pln.bioOptimization = 'LSM_RBExD';   % none: physical optimization;                                   const_RBExD; constant RBE of 1.1;  
                                      % LSM_effect;  variable RBE Linear Scaling Model (effect based); LSM_RBExD;  variable RBE Linear Scaling Model (RBExD based)
                                      % LEMIV_effect: effect-based optimization;                       LEMIV_RBExD: optimization of RBE-weighted dose
-pln.robOpt          = 'none';        % none: optimize nominal scenario;     VWWC: voxel wise worst case optimization, 'probabilistic';  probabilistic optimization   
-                                     % COWC: composite worst case;   coverage: coverage based optimization  
-                                     % right now it doesnt allow different optimization techniques for different structures
 pln.numOfFractions         = 25;
 pln.runSequencing          = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO                 = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
@@ -73,6 +74,12 @@ if strcmp(pln.radiationMode,'photons')
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst,false);
 end
+
+if pln.exportInfluenceDataToASCII
+   addpath([pwd filesep 'IO' filesep 'MDACC']);
+   [ flagSuccess ] = matRad_exportInfluenceDataToASCII(cst,stf,pln,dij,['/Volumes/WS_exFat/patient1']);
+end
+
 
 %% inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);

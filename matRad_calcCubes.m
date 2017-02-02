@@ -135,7 +135,7 @@ saveWCCube = 0;
 for i = 1:size(cst,1)
    if ~isempty(cst{i,6})
         for j = 1:numel(cst{i,6})
-            if(strcmp(cst{i,6}(:).robustness,'VWWC'))
+            if(strcmp(cst{i,6}(j).robustness,'VWWC'))
                 saveWCCube = 1;
             end
         end

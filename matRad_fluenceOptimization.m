@@ -189,18 +189,13 @@ end
 %% ToDo: incorporate changes of robOpt in GUI
 
 % check if deterministic / stoachastic optimization is turned on
-if isfield(pln,'robOpt')
-   if strcmp(pln.robOpt,'none')
-       dij.indexforOpt    = 1;
-       dij.numOfScenarios = 1;
-   else
-       dij.indexforOpt    = find(~cellfun(@isempty, dij.physicalDose))'; 
-       dij.numOfScenarios = numel(dij.indexforOpt);
-   end
+if pln.robOpt
+    dij.indexforOpt     = find(~cellfun(@isempty, dij.physicalDose))'; 
+    dij.numOfScenarios  = numel(dij.indexforOpt);
+    dij.probOfScenarios = pln.multScen.ScenProb;
 else
-      pln.robOpt = 'none';
-      dij.indexforOpt    = 1;
-      dij.numOfScenarios = 1;
+    dij.indexforOpt    = 1;
+    dij.numOfScenarios = 1;
 end
 
 % set optimization options
