@@ -18,17 +18,17 @@ if pln.robOpt
    multScen.numOfIntSegShiftScen = 0; %1000;       % number of internal segmentation shift scnearios     
 
    multScen.numOfShiftScen       = [2 2 2];        % number of shifts in x y and z direction       
-   multScen.shiftSize            = [4 4 4];        % maximum shift [mm]  % prostate cases 5mm otherwise 3mm
+   multScen.shiftSize            = [3 3 3];        % maximum shift [mm]  % prostate cases 5mm otherwise 3mm
    multScen.shiftSD              = [3 3 3];        % SD of normal distribution [mm]
    multScen.shiftGenType         = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
    multScen.shiftCombType        = 'individual';   % individual: no combination of shift scenarios, combined: combine shift scenarios, allcombined: create every possible shift combination
    multScen.shiftGen1DIsotropy   = '+-';           % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
 
    multScen.numOfRangeShiftScen  = 2;              % number of absolute and/or relative range scnearios. if absolute and relative range scenarios are defined then relative and absolute errors are combined
-   multScen.maxAbsRangeShift     = 0;              % maximum absolute over and undershoot in mm
-   multScen.rangeAbsSD           = 1;
-   multScen.maxRelRangeShift     = 3.5;          % maximum relative over and undershoot in %
-   multScen.rangeRelSD           = 3.5;
+   multScen.absRangeShift        = 0;              % maximum absolute over and undershoot in mm
+   multScen.rangeAbsSD           = 1;              % SD of normal distribution
+   multScen.relRangeShift        = 3.5;              % maximum relative over and undershoot in %
+   multScen.rangeRelSD           = 3.5;              % SD of normal distribution
    multScen.ScenCombType         = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
 
 else

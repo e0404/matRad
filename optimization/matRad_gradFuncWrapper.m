@@ -47,7 +47,9 @@ delta      = cell(options.numOfScenarios,1);
 for i = 1:size(cst,1)
   for j = 1:numel(cst{i,6})
       if strcmp(cst{i,6}(j).robustness,'COWC')
-         f_COWC = zeros(options.numOfScenarios,1);break;
+         f_COWC = zeros(options.numOfScenarios,1);
+         delta_COWC      = cell(options.numOfScenarios,1);
+        [delta_COWC{:}]  = deal(zeros(dij.numOfVoxels,1));
       end
   end
 end
@@ -130,8 +132,8 @@ for  i = 1:size(cst,1)
 
                         d_i = d{ixScen}(cst{i,4}{1});
 
-                        f_COWC(ixScen)             = f_COWC(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
-                        delta{ixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) +  matRad_gradFunc(d_i,cst{i,6}(j),d_ref)/dij.numOfScenarios;
+                        f_COWC(ixScen) = f_COWC(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                        delta_COWC{ixScen}(cst{i,4}{1}) = delta_COWC{ixScen}(cst{i,4}{1}) +  matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
                     end
                      
 
@@ -184,12 +186,8 @@ end
 
 % extract current worst case scenario
 if exist('f_COWC','var')
-   [~,ixCurrWC] = max(f(:));
-   for i = 1:options.numOfScenarios
-      if  i ~= ixCurrWC
-         delta{i} = 0; 
-      end
-   end
+   [~,ixCurrWC]    = max(f_COWC(:));
+   delta{ixCurrWC} = delta_COWC{ixCurrWC};
 end
 
 % Calculate gradient

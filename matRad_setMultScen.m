@@ -191,37 +191,24 @@ elseif isequal(multScen.shiftGenType,'sampled')
    
 end
 
-% set total number of shift scnarios
-multScen.numOfShiftScen = size(multScen.shifts,2);
 
-% calculate probabilities of single shift scenarios
-if isequal(multScen.shiftGenType,'sampled')
-    multScen.shiftScenProb = repmat(1/multScen.numOfShiftScen,1,multScen.numOfShiftScen);
-elseif isequal(multScen.shiftGenType,'equidistant')
-    if multScen.numOfShiftScen > 1
-        vMu = [0 0 0];
-        multScen.shiftScenProb = matRad_calcScenProb(vMu,multScen.shiftSD,multScen.shifts,'probBins','normDist');
-    else
-        multScen.shiftScenProb = 1;
-    end
-end
 
 % set range scenarios
 if multScen.numOfRangeShiftScen > 0
-    if multScen.maxAbsRangeShift == 0
+    if multScen.absRangeShift == 0
         multScen.absRangeShifts = zeros(1,multScen.numOfRangeShiftScen+1);
     else
-        deltaAbsRangeShift      = multScen.maxAbsRangeShift/(multScen.numOfRangeShiftScen/2);
-        multScen.absRangeShifts = -multScen.maxAbsRangeShift:deltaAbsRangeShift:multScen.maxAbsRangeShift;
+        deltaAbsRangeShift      = multScen.absRangeShift/(multScen.numOfRangeShiftScen/2);
+        multScen.absRangeShifts = -multScen.absRangeShift:deltaAbsRangeShift:multScen.absRangeShift;
         multScen.absRangeShifts = multScen.absRangeShifts(multScen.absRangeShifts ~= 0);
         multScen.absRangeShifts = [0, multScen.absRangeShifts];
     end
 
-    if multScen.maxRelRangeShift == 0
+    if multScen.relRangeShift == 0
         multScen.relRangeShifts = zeros(1,multScen.numOfRangeShiftScen+1);
     else
-        deltaRelRangeShift      = multScen.maxRelRangeShift/(multScen.numOfRangeShiftScen/2);
-        multScen.relRangeShifts = -multScen.maxRelRangeShift:deltaRelRangeShift:multScen.maxRelRangeShift;
+        deltaRelRangeShift      = multScen.relRangeShift/(multScen.numOfRangeShiftScen/2);
+        multScen.relRangeShifts = -multScen.relRangeShift:deltaRelRangeShift:multScen.relRangeShift;
         multScen.relRangeShifts = multScen.relRangeShifts(multScen.relRangeShifts ~= 0);
         multScen.relRangeShifts = [0, multScen.relRangeShifts/100];
     end
@@ -231,27 +218,60 @@ elseif multScen.numOfRangeShiftScen == 0
     multScen.relRangeShifts = 0;
 end
 
+% set total number of shift scnarios
+multScen.numOfShiftScen      = size(multScen.shifts,2);
 multScen.numOfRangeShiftScen = numel(multScen.absRangeShifts);
+multScen.numOfScen           = multScen.numOfShiftScen + multScen.numOfRangeShiftScen -1; %substract nominal scenario of range errors
 
+vMun= 0; vSD = 0; mShifts = 0;
 
-
-% calculate probabilities of range shift scenarios
+% calculate probabilities of scenarios
 if isequal(multScen.shiftGenType,'sampled')
-    multScen.shiftScenProb = repmat(1/multScen.numOfShiftScen,1,multScen.numOfShiftScen);
+    multScen.shiftScenProb = repmat(1/multScen.numOfScen,1,multScen.numOfScen);
 elseif isequal(multScen.shiftGenType,'equidistant')
-    if multScen.numOfShiftScen > 1
-        Mu  = [0];
-        SD  = [multScen.rangeRelSD]/100;
-        multScen.rangeScenProb = matRad_calcScenProb(Mu,SD,multScen.relRangeShifts,'probBins','normDist',[-multScen.maxRelRangeShift +multScen.maxRelRangeShift]);
+   
+   if multScen.numOfShiftScen > 1
+        vMu = [0 0 0];
+        vSD = multScen.shiftSD;
+        mShifts = multScen.shifts;   
     else
-        multScen.rangeScenProb = 1;
+        mShifts = [0 0 0];
     end
+    
+    if multScen.numOfRangeShiftScen > 1
+       rangeScen = multScen.numOfRangeShiftScen-1;
+       mShifts(:,end+1:end+rangeScen) = 0;
+       
+       if sum(multScen.absRangeShifts ~= 0) > 1
+           vMu = [vMu 0]; vSD = [vSD multScen.rangeAbsSD];
+           absRangeShifts = multScen.absRangeShifts(multScen.absRangeShifts~= 0);
+           for i = 1:2:numel(absRangeShifts)
+              mShifts(end+1,end-rangeScen + i) = absRangeShifts(i);
+              mShifts(end,end-rangeScen + i + 1)   = absRangeShifts(i+1);
+           end
+       end
+       
+       if sum(multScen.relRangeShifts ~= 0) > 1
+           vMu = [vMu 0];  vSD = [vSD multScen.rangeRelSD/100];
+           relRangeShifts = multScen.relRangeShifts(multScen.relRangeShifts~= 0);
+           for i = 1:2:numel(relRangeShifts)
+              mShifts(end+1,end-rangeScen + i) = relRangeShifts(i);
+              mShifts(end,end-rangeScen + i + 1)   = relRangeShifts(i+1);
+           end
+       end
+       
+    else
+       multScen.rangeScenProb = 1;
+    end
+    
+    
+    multScen.ScenProb  = matRad_calcScenProb(vMu,vSD,mShifts,'probBins','normDist');
+       
+else
+   error(['multScen.shiftGenType :' multScen.shiftGenType ' is not implemented!']);
 end
 
 
-% combine propabilites 
-ScenProb          = [multScen.shiftScenProb  multScen.rangeScenProb(2:end)];
-multScen.ScenProb = ScenProb/sum(ScenProb);
 
 % set scenario combination mask
 if isequal(multScen.ScenCombType,'individual')

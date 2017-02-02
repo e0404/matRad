@@ -158,7 +158,7 @@ plot(AxesInfigOpt,0:1:iter,matRad_objective_function_value,'xb','LineWidth',1.5)
 %         title('minmax(abs(gradient))')
 %         ylim([1e-10 1e10])
 % end
-% drawnow
+ drawnow
 
 
 end
