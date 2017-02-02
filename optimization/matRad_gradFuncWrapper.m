@@ -44,6 +44,14 @@ d = matRad_backProjection(w,dij,options);
 delta      = cell(options.numOfScenarios,1);
 [delta{:}] = deal(zeros(dij.numOfVoxels,1));
 
+for i = 1:size(cst,1)
+  for j = 1:numel(cst{i,6})
+      if strcmp(cst{i,6}(j).robustness,'COWC')
+         f_COWC = zeros(options.numOfScenarios,1);break;
+      end
+  end
+end
+
 % compute objective function for every VOI.
 for  i = 1:size(cst,1)
     
@@ -79,7 +87,7 @@ for  i = 1:size(cst,1)
 
                         d_i = d{ixScen}(cst{i,4}{1});
 
-                        delta{kixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) + dij.probOfScenarios(ixScen) * matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+                        delta{ixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) + dij.probOfScenarios(ixScen) * matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
 
                     end
 
@@ -118,13 +126,11 @@ for  i = 1:size(cst,1)
                  
                 elseif strcmp(cst{i,6}(j).robustness,'COWC')
                    
-                    f = zeros(options.numOfScenarios,1);
-                    
                     for ixScen = 1:dij.numOfScenarios
 
                         d_i = d{ixScen}(cst{i,4}{1});
 
-                        f(ixScen)                  = f(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                        f_COWC(ixScen)             = f_COWC(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
                         delta{ixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) +  matRad_gradFunc(d_i,cst{i,6}(j),d_ref)/dij.numOfScenarios;
                     end
                      
@@ -175,9 +181,10 @@ for  i = 1:size(cst,1)
     
 end
 
+
 % extract current worst case scenario
-if strcmp(options.robOpt,'COWC')
-   [~,ixCurrWC] = max(f);
+if exist('f_COWC','var')
+   [~,ixCurrWC] = max(f(:));
    for i = 1:options.numOfScenarios
       if  i ~= ixCurrWC
          delta{i} = 0; 

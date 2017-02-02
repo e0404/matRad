@@ -40,8 +40,12 @@ d = matRad_backProjection(w,dij,options);
 % Initialize f
 f = 0;
 
-if strcmp(options.robOpt,'COWC')
-   f = zeros(options.numOfScenarios,1);
+for i = 1:size(cst,1)
+  for j = 1:numel(cst{i,6})
+      if strcmp(cst{i,6}(j).robustness,'COWC')
+         f_COWC = zeros(options.numOfScenarios,1);break;
+      end
+  end
 end
 
 % compute objective function for every VOI.
@@ -80,7 +84,6 @@ for  i = 1:size(cst,1)
                         d_i = d{ixScen}(cst{i,4}{1});
 
                         f = f + dij.probOfScenarios(ixScen) * matRad_objFunc(d_i,cst{i,6}(j),d_ref);
-
                     end
 
                 % if voxel-wise worst case: sum up objective of min/max dose
@@ -106,7 +109,7 @@ for  i = 1:size(cst,1)
 
                         d_i = d{ixScen}(cst{i,4}{1});
          
-                        f(ixScen) = f(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                        f_COWC(ixScen) = f_COWC(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
                         
                      end
                     
@@ -130,7 +133,6 @@ for  i = 1:size(cst,1)
                             
                             % calculate dose deviations from d_ref
                             fTmp(ixScen) = matRad_objFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);
-                            
                         end
                         
                         % claculate objective function
@@ -161,8 +163,8 @@ for  i = 1:size(cst,1)
 end
 
 % extract the objective function value of the current worst case scenario
-if strcmp(options.robOpt,'COWC')
-   f = max(f);
+if exist('f_COWC','var')
+   f = f + max(f_COWC);
 end
 
 % apply objective scaling

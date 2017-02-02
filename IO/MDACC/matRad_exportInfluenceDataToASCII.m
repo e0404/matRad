@@ -1,8 +1,9 @@
-function [ flagSuccess ] = matRad_exportInfluenceDataToASCII(cst,stf,pln,dij )
+function [ flagSuccess ] = matRad_exportInfluenceDataToASCII(cst,stf,pln,dij,ExportPath)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
-
-ExportPath       = '/Users/Hans-PeterWieser/Documents/Heidelberg/MDAnderson2016';
+if isempty(ExportPath)
+   ExportPath       = pwd;
+end
 formatSpecIJ     = '%d.%d.%d.%d.%d %.8f\n';  % format in files is:   119.93.207.0.1000 4.064967e-01
 formatSpecStruct = '%d,%d,%d\n';
 ixExport   = find(~cellfun(@isempty, dij.physicalDose))'; 
@@ -36,6 +37,7 @@ for i = 1:numel(ixExport)
    [x,y,z]                  = ind2sub(dij.dimensions,linIx);
    if isfield(dij,'mLETDose')
       [~,~,LETdose]         = find(dij.mLETDose{ixExport(i)});
+      formatSpecIJ     = '%d.%d.%d.%d.%d %.8f %.8f\n';
    end
    
    for beamIx = 1:pln.numOfBeams
@@ -45,20 +47,20 @@ for i = 1:numel(ixExport)
       vBeamIx    = ones(ixUpp-ixLow+1,1) * beamIx-1;
      
       
-      data = [x(ixLow:ixUpp) y(ixLow:ixUpp) z(ixLow:ixUpp) vBeamIx [beamletIx(ixLow:ixUpp)-1] dose(ixLow:ixUpp)]';
+      data = [x(ixLow:ixUpp) y(ixLow:ixUpp) z(ixLow:ixUpp) vBeamIx [beamletIx(ixLow:ixUpp)-1] dose(ixLow:ixUpp) LETdose(ixLow:ixUpp)./dose(ixLow:ixUpp)]';
       
-      fileID     = fopen([fullPath filesep 'Dij_' num2str(beamIx,'%d') '.ASCII'],'w');
+      fileID     = fopen([fullPath filesep 'DoseLETij_' num2str(beamIx,'%d') '.ASCII'],'w');
       fprintf(fileID,formatSpecIJ,data);
       fclose(fileID);
       
-      
-      if isfield(dij,'mLETDose')
-         data = [x(ixLow:ixUpp) y(ixLow:ixUpp) z(ixLow:ixUpp) vBeamIx beamletIx(ixLow:ixUpp)-1 LETdose(ixLow:ixUpp)./dose(ixLow:ixUpp)]';
-         
-         fileID = fopen([fullPath filesep 'LETij_' num2str(beamIx,'%d') '.ASCII'],'w');
-         fprintf(fileID,formatSpecIJ,data);
-         fclose(fileID);
-      end
+%       
+%       if isfield(dij,'mLETDose')
+%          data = [x(ixLow:ixUpp) y(ixLow:ixUpp) z(ixLow:ixUpp) vBeamIx beamletIx(ixLow:ixUpp)-1 LETdose(ixLow:ixUpp)./dose(ixLow:ixUpp)]';
+%          
+%          fileID = fopen([fullPath filesep 'LETij_' num2str(beamIx,'%d') '.ASCII'],'w');
+%          fprintf(fileID,formatSpecIJ,data);
+%          fclose(fileID);
+%       end
       
       CntBeamlet = CntBeamlet + stf(beamIx).totalNumOfBixels;
       ixLow = ixLow + (ixUpp-ixLow+1);
