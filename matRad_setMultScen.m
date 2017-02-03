@@ -223,7 +223,7 @@ multScen.numOfShiftScen      = size(multScen.shifts,2);
 multScen.numOfRangeShiftScen = numel(multScen.absRangeShifts);
 multScen.numOfScen           = multScen.numOfShiftScen + multScen.numOfRangeShiftScen -1; %substract nominal scenario of range errors
 
-vMun= 0; vSD = 0; mShifts = 0;
+vMu = 0; vSD = 0; mShifts = 0;
 
 % calculate probabilities of scenarios
 if isequal(multScen.shiftGenType,'sampled')

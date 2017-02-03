@@ -53,8 +53,6 @@ dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.dimensions         = pln.voxelDimensions;
-dij.numOfScenarios     = pln.multScen.totalNumOfScen;
-dij.ScenProb           = pln.multScen.shiftScenProb;
 
 % set up arrays for book keeping
 dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
@@ -85,9 +83,9 @@ else
 end
 
 doseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
-if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) && strcmp(pln.radiationMode,'carbon') || ...
-   (isequal(pln.bioOptimization,'LSM_effect')   || isequal(pln.bioOptimization,'LSM_RBExD'))   && strcmp(pln.radiationMode,'protons')
 
+if pln.bioParam.bioOpt
+   
     alphaDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
     betaDoseTmpContainer  = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
     
@@ -105,7 +103,7 @@ if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'
     end
     
     % define additional parameter for the LSM model
-    if (isequal(pln.bioOptimization,'LSM_effect')   || isequal(pln.bioOptimization,'LSM_RBExD'))   && strcmp(pln.radiationMode,'protons')
+    if pln.bioParam.bioOpt  && strcmp(pln.radiationMode,'protons')
         pln.calcLET            = true;
         dij.lamda_1_1          = 0.008; %0.008; % according to Malte Frese https://www.ncbi.nlm.nih.gov/pubmed/20382482 (fitted for head and neck patients)
         dij.corrFacEntranceRBE = 0.5;   %[kev/mum]
@@ -114,8 +112,8 @@ if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'
     end
 
 elseif isequal(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
-    dij.RBE = 1.1;
-    fprintf(['matRad: Using a constant RBE of 1.1 \n']);   
+    dij.RBE = dij.bioParam.constRBE;
+    fprintf(['matRad: Using a constant RBE of: ' num2str(dij.RBE)]);   
 end
 
 % Only take voxels inside patient.
@@ -134,7 +132,7 @@ catch
 end
 
  % allocate space for dij.dosexLET sparse matrix
-if (isfield(pln,'calcLET') && pln.calcLET) || (isequal(pln.bioOptimization,'LSM_effect') || isequal(pln.bioOptimization,'LSM_RBExD')) && strcmp(pln.radiationMode,'protons')
+if (isfield(pln,'calcLET') && pln.calcLET) || pln.bioParam.bioOpt && strcmp(pln.radiationMode,'protons')
   if isfield(machine.data,'LET')
       
     letDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
@@ -158,7 +156,7 @@ end
 
     
 % generate two vectors depicting reference radiosensitivity parameter of photons
-if (isequal(pln.bioOptimization,'LSM_effect')   || isequal(pln.bioOptimization,'LSM_RBExD')) && strcmp(pln.radiationMode,'protons')
+if pln.bioParam.bioOpt && strcmp(pln.radiationMode,'protons')
 
     fprintf('matRad: precumputations for biological treatment planning... ');
     alphaX = zeros(size(V,1),1);
@@ -181,11 +179,11 @@ if (isequal(pln.bioOptimization,'LSM_effect')   || isequal(pln.bioOptimization,'
         end
   
     end
+    ab_ratio_x = alphaX./betaX;
     fprintf('done.\n');
         
 % generates tissue class matrix for biological optimization
-elseif (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ... 
-        && strcmp(pln.radiationMode,'carbon')
+elseif pln.bioParam.bioOpt && strcmp(pln.radiationMode,'carbon')
     
     fprintf('matRad: loading biological base data... ');
     vTissueIndex = zeros(size(V,1),1);
@@ -397,10 +395,9 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                                   letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix(currIx)),1,bixelLET.*bixelDose,dij.numOfVoxels,1);
                                 end                            
 
-                                if ((isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) && strcmp(pln.radiationMode,'carbon')) ||...
-                                   ((isequal(pln.bioOptimization,'LSM_effect')   || isequal(pln.bioOptimization,'LSM_RBExD'))   && strcmp(pln.radiationMode,'protons'))
+                                if pln.bioParam.bioOpt
 
-                                     if ((isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD'))  && strcmp(pln.radiationMode,'carbon'))
+                                     if strcmp(pln.radiationMode,'carbon')
 
                                          % calculate alpha and beta values for bixel k on ray j of                  
                                         [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
@@ -408,21 +405,28 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                                             vTissueIndex_j(currIx,:),...
                                             machine.data(energyIx));
 
-                                     elseif ((isequal(pln.bioOptimization,'LSM_effect')   || isequal(pln.bioOptimization,'LSM_RBExD'))   && strcmp(pln.radiationMode,'protons'))
+                                     elseif strcmp(pln.bioParam.model,'LSM')  && strcmp(pln.radiationMode,'protons')
 
-                                        alpha_0            = alphaX(ix(currIx)) - (dij.lamda_1_1 * dij.corrFacEntranceRBE);  
+                                        alpha_0            = alphaX(ix(currIx)) - (pln.bioParam.lamda_1_1 * pln.bioParam.corrFacEntranceRBE);  
                                         bixelAlpha         = zeros(size(bixelDose)); bixelBeta = zeros(size(bixelDose));
-                                        ixLSM              = dij.lowerLETThreshold < bixelLET < dij.upperLETThreshold;
+                                        ixLSM              = pln.bioParam.lowerLETThreshold < bixelLET < pln.bioParam.upperLETThreshold;
 
-                                        bixelAlpha(ixLSM)  = alpha_0(ixLSM) + dij.lamda_1_1 * bixelLET;
+                                        bixelAlpha(ixLSM)  = alpha_0(ixLSM) + pln.bioParam.lamda_1_1 * bixelLET;
                                         
                                         if sum(ixLSM) < length(bixelLET)
-                                            bixelAlpha(~ixLSM)                           = (alpha_0(~ixLSM) + dij.lamda_1_1 * dij.upperLetThreshold)./(dij.upperLetThreshold/bixelLET);
-                                            bixelAlpha(bixelLET < dij.lowerLETThreshold) =  alpha_0(bixelLET < dij.lowerLETThreshold) + dij.lamda_1_1 * dij.lowerLETThreshold;
+                                            bixelAlpha(~ixLSM)                                    = (alpha_0(~ixLSM) + pln.bioParam.lamda_1_1 * pln.bioParam.upperLetThreshold)./(pln.bioParam.upperLetThreshold/bixelLET);
+                                            bixelAlpha(bixelLET < pln.bioParam.lowerLETThreshold) =  alpha_0(bixelLET < pln.bioParam.lowerLETThreshold) + pln.bioParam.lamda_1_1 * pln.bioParam.lowerLETThreshold;
                                         end
                                         
                                         bixelBeta(:)         = betaX(ix(currIx));
-
+                                        
+                                     elseif strcmp(pln.bioParam.model,'MGH')  && strcmp(pln.radiationMode,'protons')
+                                        
+                                        RBEmax     = pln.bioParam.p0 + ((pln.bioParam.p1 .* bixelLET )./ ab_ratio_x(ix(currIx)));
+                                        RBEmin     = pln.bioParam.p2 + (pln.bioParam.p3  .* (ab_ratio_x(ix(currIx))) .* bixelLET);
+                                        bixelAlpha = RBEmax    .* alphaX(ix(currIx));
+                                        bixelBeta  = RBEmin.^2 .*  betaX(ix(currIx));
+                                        
                                      end
 
                                     alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix(currIx)),1,bixelAlpha.*bixelDose,dij.numOfVoxels,1);
@@ -450,9 +454,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                                                 % score LETxDose matrices
                                                 dij.mLETDose{CtScen,ShiftScen,RangeShiftScen}(:,1) = dij.mLETDose{CtScen,ShiftScen,RangeShiftScen}(:,1) + stf(i).ray(j).weight(k) * letDoseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen}; 
                                             end
-                                            if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) && strcmp(pln.radiationMode,'carbon') || ...
-                                               ((isequal(pln.bioOptimization,'LSM_effect')  || isequal(pln.bioOptimization,'LSM_RBExD'))   && strcmp(pln.radiationMode,'protons'))
-
+                                            if pln.bioParam.bioOpt
                                                 % score alphaxDose and sqrt(beta)xDose matrices
                                                 dij.mAlphaDose{CtScen,ShiftScen,RangeShiftScen}(:,1)    = dij.mAlphaDose{CtScen,ShiftScen,RangeShiftScen}(:,1)    + stf(i).ray(j).weight(k) * alphaDoseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen};
                                                 dij.mSqrtBetaDose{CtScen,ShiftScen,RangeShiftScen}(:,1) = dij.mSqrtBetaDose{CtScen,ShiftScen,RangeShiftScen}(:,1) + stf(i).ray(j).weight(k) * betaDoseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen};
@@ -470,8 +472,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                                             dij.mLETDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [letDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}]; 
                                         end
                                         
-                                        if ((isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) && strcmp(pln.radiationMode,'carbon')) || ...
-                                           ((isequal(pln.bioOptimization,'LSM_effect')   || isequal(pln.bioOptimization,'LSM_RBExD'))   && strcmp(pln.radiationMode,'protons'))
+                                        if pln.bioParam.bioOpt
                                             % fill entire alphaxDose influence and sqrt(beta)xDose influence matrices
                                             dij.mAlphaDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter)    = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}];
                                             dij.mSqrtBetaDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}];

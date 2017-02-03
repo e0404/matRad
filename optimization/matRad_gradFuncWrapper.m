@@ -67,8 +67,7 @@ for  i = 1:size(cst,1)
             if isempty(strfind(cst{i,6}(j).type,'constraint'))
 
                 % compute reference
-                if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) &&...
-                    (isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LSM_effect'))
+                if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) && isequal(options.quantity,'effect')
 
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
                 else
@@ -196,23 +195,22 @@ g = zeros(dij.totalNumOfBixels,1);
 for i = 1:options.numOfScenarios
     if any(delta{i}) % exercise only if contributions from scenario i
 
-        if isequal(options.bioOpt,'none')
+        if isequal(options.quantity,'physicalDose')
 
             g            = g + (delta{i}' * dij.physicalDose{dij.indexforOpt(i)})';
 
-
-        elseif isequal(options.ID,'protons_const_RBExD')
+        elseif isequal(options.type,'const_RBExD')
             
             g            = g + (delta{i}' * dij.physicalDose{dij.indexforOpt(i)} * dij.RBE)';
             
-        elseif isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LSM_effect')
+        elseif isequal(options.quantity,'effect') 
 
             vBias        = (delta{i}' * dij.mAlphaDose{dij.indexforOpt(i)})';
             quadTerm     = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
             mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{dij.indexforOpt(i)})';
             g            =  g + vBias + mPsi ; 
 
-        elseif isequal(options.bioOpt,'LEMIV_RBExD') || isequal(options.bioOpt,'LSM_RBExD')
+        elseif isequal(options.quantity,'RBExD') 
 
             scaledEffect = d{i} + dij.gamma;
             deltaTmp     = delta{i}./(2*dij.bx.*scaledEffect);

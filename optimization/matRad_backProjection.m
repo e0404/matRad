@@ -45,18 +45,18 @@ else
     d = cell(options.numOfScenarios,1);
     
     % Calculate dose vector
-    if isequal(options.bioOpt,'none')
+    if isequal(options.quantity,'physicalDose')
         for i = 1: length(dij.indexforOpt)
             d{i} = dij.physicalDose{dij.indexforOpt(i)} * w;
         end
         
-    elseif  isequal(options.ID,'protons_const_RBExD')
+    elseif  isequal(options.type,'const_RBExD')
         
         for i = 1:length(dij.indexforOpt)
              d{i} =  dij.physicalDose{dij.indexforOpt(i)} * (w * dij.RBE );
         end
         
-    elseif isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LEMIV_RBExD') || isequal(options.bioOpt,'LSM_effect') || isequal(options.bioOpt,'LSM_RBExD')
+    elseif options.bioOpt
         
         for i = 1:length(dij.indexforOpt)
             
@@ -65,9 +65,9 @@ else
             quadTerm = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
             e        = linTerm + quadTerm.^2;   
             
-            if isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LSM_effect')
+            if isequal(options.quantity,'effect') 
                 d{i} = e;
-            else
+            elseif isequal(options.quantity,'RBExD') 
                 % calculate RBX x dose
                 scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
                 scaledEffect   = zeros(length(scaledEffectSq),1);
@@ -75,6 +75,9 @@ else
                 [idx,~]           = find(~isnan(scaledEffectSq));
                 scaledEffect(idx) = sqrt(scaledEffectSq(idx));
                 d{i}              = scaledEffect - dij.gamma;
+            else
+               
+               error('not implemented')
 
             end
             
@@ -82,11 +85,6 @@ else
        
     end   
     
-    for i = 1:length(dij.indexforOpt)
-         if sum(isnan(d{i})) > 0
-            warning('nan values in gradFuncWrapper');
-         end
-    end
     matRad_global_d = d;
     
 end

@@ -133,8 +133,7 @@ if  strcmp(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'proto
     bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
         
-elseif ((strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization,'LEMIV_RBExD')) && strcmp(pln.radiationMode,'carbon')) || ...
-       ((isequal(pln.bioOptimization,'LSM_effect')  || isequal(pln.bioOptimization,'LSM_RBExD'))  && strcmp(pln.radiationMode,'protons'))
+elseif pln.bioParam.bioOpt
 
     % check if you are running a supported rad
     dij.ax   = zeros(dij.numOfVoxels,1);
@@ -156,14 +155,14 @@ elseif ((strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimizatio
         end
     end
      
-    if isequal(pln.bioOptimization,'LSM_effect') || isequal(pln.bioOptimization,'LEMIV_effect')
+    if isequal(pln.bioParam.quantity,'effect')
         
            effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
            p            = (sum(dij.mAlphaDose{1}(V,:)*wOnes)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            q            = -(effectTarget * length(V)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
 
-    elseif isequal(pln.bioOptimization,'LSM_RBExD') ||isequal(pln.bioOptimization,'LEMIV_RBExD')
+    elseif isequal(pln.bioParam.quantity,'RBExD')
         
            %pre-calculations
            dij.gamma      = zeros(dij.numOfVoxels,1);
@@ -199,11 +198,19 @@ else
 end
 
 % set optimization options
-options.radMod          = pln.radiationMode;
-options.bioOpt          = pln.bioOptimization;
+for fields = fieldnames(pln.bioParam)'
+   options.(fields{1}) = pln.bioParam.(fields{1});
+end
+%options                 = pln.bioParam;
 options.robOpt          = pln.robOpt;
-options.ID              = [pln.radiationMode '_' pln.bioOptimization];
 options.numOfScenarios  = dij.numOfScenarios;
+options.radMod          = pln.radiationMode;
+
+% options.quantitiy       = pln.bioParam.quantitiyl;
+% options.bioOpt          = pln.bioOptimization;
+% options.robOpt          = pln.robOpt;
+% options.ID              = [pln.radiationMode '_' pln.bioOptimization];
+% options.numOfScenarios  = dij.numOfScenarios;
 
 % set callback functions.
 funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,options);
