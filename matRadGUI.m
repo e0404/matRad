@@ -400,6 +400,8 @@ try
     
     % compute HU values
     if ~isfield(ct, 'cubeHU')
+        matRadRootDir = fileparts(mfilename('fullpath'));
+        addpath(fullfile(matRadRootDir,'dicomImport'));            
         ct = matRad_electronDensitiesToHU(ct);
         assignin('base','ct',ct);
     end
@@ -2183,7 +2185,6 @@ handles.cBarChanged = true;
       
       set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:2))
       set(handles.popupmenu_chooseColorData,'Value',2);
-      set(handles.popupmenu_windowPresets,'Visible','on');
       AllVarNames = evalin('base','who');
       if ~isempty(AllVarNames)
             if  ismember('resultGUI',AllVarNames)
