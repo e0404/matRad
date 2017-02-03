@@ -224,6 +224,8 @@ try
     
         % compute HU values
         if ~isfield(ct, 'cubeHU')
+            matRadRootDir = fileparts(mfilename('fullpath'));
+            addpath(fullfile(matRadRootDir,'dicomImport'));
             ct = matRad_electronDensitiesToHU(ct);
             assignin('base','ct',ct);
         end

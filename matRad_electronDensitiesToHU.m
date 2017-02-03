@@ -33,8 +33,14 @@ function ct = matRad_electronDensitiesToHU(ct)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+
 % load hlut
-hlut = matRad_loadHLUT(ct);
+if isfield(ct,'hlut') % if hlut stored upon import use this one!
+    hlut = ct.hlut;
+else
+    hlut = matRad_loadHLUT(ct);
+end
 
 % interpolate rel. electron dens. to HU based on lookup table
 if isequal(hlut(:,2),unique(hlut(:,2))) && isequal(hlut(:,1),unique(hlut(:,1)))
