@@ -930,7 +930,11 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
         %Plot the colorbar
         handles.cBarHandel = matRad_plotColorbar(handles.axesFig,ctMap,handles.dispWindow{ctIx,1},'fontsize',defaultFontSize);
         %adjust lables
-        set(get(handles.cBarHandel,'ylabel'),'String', 'Electron Density','fontsize',defaultFontSize);
+        if isfield(ct,'cubeHU')
+            set(get(handles.cBarHandel,'ylabel'),'String', 'Hounsfield Units','fontsize',defaultFontSize);
+        else
+            set(get(handles.cBarHandel,'ylabel'),'String', 'Electron Density','fontsize',defaultFontSize);
+        end
         % do not interprete as tex syntax
         set(get(handles.cBarHandel,'ylabel'),'interpreter','none');
     end
