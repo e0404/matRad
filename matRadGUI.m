@@ -1639,8 +1639,7 @@ end
 function setCstTable(handles,cst)
 
 % create legend according to cst file
-colors = colorcube;
-colors = colors(round(linspace(1,63,size(cst,1))),:);
+colors = colorcube(size(cst,1));
 
 for s = 1:size(cst,1)
     handles.VOIPlotFlag(s) = cst{s,5}.Visible;
