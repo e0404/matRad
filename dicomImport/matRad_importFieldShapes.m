@@ -105,7 +105,7 @@ for i = 1:length(BeamSeqNames)
                    end
                    
                    % set left and right leaf positions
-                   tmpCollimation.Fields(counter).LeafPos{deviceIx} = currLeafPos(1:device(deviceIx).NumOfLeafs);
+                   tmpCollimation.Fields(counter).LeafPos{deviceIx}(:,1) = currLeafPos(1:device(deviceIx).NumOfLeafs);
                    tmpCollimation.Fields(counter).LeafPos{deviceIx}(:,2) = currLeafPos(device(deviceIx).NumOfLeafs+1:end);
                end
            end
