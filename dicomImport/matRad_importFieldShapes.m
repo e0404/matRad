@@ -88,8 +88,7 @@ for i = 1:length(BeamSeqNames)
                % the first control point and has to be defined on following
                % points only if it changes -> default initilation if counter > 1
                if counter > 1
-                   tmpCollimation.Fields(counter).LeafPos{k}(:,1) = tmpCollimation.Fields(counter-1).LeafPos{k}(:,1);
-                   tmpCollimation.Fields(counter).LeafPos{k}(:,2) = tmpCollimation.Fields(counter-1).LeafPos{k}(:,2);
+                   tmpCollimation.Fields(counter).LeafPos{k} = tmpCollimation.Fields(counter-1).LeafPos{k};
                end
 
                if isfield(currControlPointElement.BeamLimitingDevicePositionSequence,currDeviceSeqNames{k})
@@ -99,13 +98,14 @@ for i = 1:length(BeamSeqNames)
                        currControlPointElement.BeamLimitingDevicePositionSequence.(currDeviceSeqNames{k}).RTBeamLimitingDeviceType));
 
                    if (length(currLeafPos) ~= 2 * device(deviceIx).NumOfLeafs)
-                       error(['Number of leafs/jaws does not match given number of leaf/jaw positions in control point sequence ' ...
+                       warning(['Number of leafs/jaws does not match given number of leaf/jaw positions in control point sequence ' ...
                                 currControlPointSeqNames{j} ' on beam sequence ' BeamSeqNames{i} ' for device ' ...
                                 device(deviceIx).DeviceType '. No field shape import performed!']);
+                       return;
                    end
                    
                    % set left and right leaf positions
-                   tmpCollimation.Fields(counter).LeafPos{deviceIx}(:,1) = currLeafPos(1:device(deviceIx).NumOfLeafs);
+                   tmpCollimation.Fields(counter).LeafPos{deviceIx} = currLeafPos(1:device(deviceIx).NumOfLeafs);
                    tmpCollimation.Fields(counter).LeafPos{deviceIx}(:,2) = currLeafPos(device(deviceIx).NumOfLeafs+1:end);
                end
            end
