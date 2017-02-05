@@ -281,3 +281,17 @@ clearvars -global kDVH kDCH GRADIENT JACOBIAN fScaling cScaling CONSTRAINT
 
 % unblock mex files
 clear mex
+
+
+if strcmp(pln.bioParam.model,'MGH')  && strcmp(pln.radiationMode,'protons')
+   
+   abRatio = dij.ax./dij.bx;
+   abRatio(isnan(abRatio)) = 0;
+   RBEref = (1./(2.*resultGUI.physicalDose(:))) .* (sqrt(abRatio.^2 + 4.*resultGUI.physicalDose(:).*abRatio.*(0.999064 + ((0.35605.*resultGUI.LET(:))./abRatio)) +...
+             4.*resultGUI.physicalDose(:).^2 .* (1.1012-0.0038703.*sqrt(abRatio) .* resultGUI.LET(:)).^2) - abRatio);
+   
+   RBEref(isnan(RBEref)) = 0;
+   resultGUI.RBEref      = reshape(RBEref,dij.dimensions);
+   resultGUI.RBExDoseRef = resultGUI.physicalDose .* resultGUI.RBEref;
+   
+end 
