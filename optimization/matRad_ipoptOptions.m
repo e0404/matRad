@@ -27,19 +27,19 @@ options.ipopt.print_options_documentation   = 'no';
 options.ipopt.print_info_string             = 'yes';
 
 % Termination (C.2)
-options.ipopt.tol                           = 1e-8; % (Opt1)
+options.ipopt.tol                           = 1e-11; % (Opt1)
 options.ipopt.dual_inf_tol                  = 1;    % (Opt2)
-options.ipopt.constr_viol_tol               = 1e-4; % (Opt3)
-options.ipopt.compl_inf_tol                 = 1e-4; % (Opt4), Optimal Solution Found if (Opt1),...,(Opt4) fullfiled
+options.ipopt.constr_viol_tol               = 1e-7; % (Opt3)
+options.ipopt.compl_inf_tol                 = 1e-7; % (Opt4), Optimal Solution Found if (Opt1),...,(Opt4) fullfiled
 
 options.ipopt.acceptable_iter               = 3;    % (Acc1)
 options.ipopt.acceptable_tol                = 1e10; % (Acc2)
-options.ipopt.acceptable_constr_viol_tol    = 1e-2; % (Acc3)
-options.ipopt.acceptable_dual_inf_tol       = 1e10; % (Acc4)
-options.ipopt.acceptable_compl_inf_tol      = 1e10; % (Acc5)
-options.ipopt.acceptable_obj_change_tol     = 1e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
+options.ipopt.acceptable_constr_viol_tol    = 1e-4; % (Acc3)
+options.ipopt.acceptable_dual_inf_tol       = 1e13; % (Acc4)
+options.ipopt.acceptable_compl_inf_tol      = 1e13; % (Acc5)
+options.ipopt.acceptable_obj_change_tol     = 1e-6; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
 
-options.ipopt.max_iter                      = 1000;
+options.ipopt.max_iter                      = 300;
 options.ipopt.max_cpu_time                  = 3000;
 
 % NLP Scaling (C.3)

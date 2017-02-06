@@ -27,14 +27,15 @@ clc
 %load LIVER.mat
 %load BOXPHANTOM.mat
 %load BOXPHANTOM_TINY.mat
-load(['/Volumes/WS_exFat/TG119/VWWC/TG119_VWWC.mat']);
+%load(['/Volumes/WS_exFat/TG119/VWWC/TG119_VWWC.mat']);
 
+load('/Volumes/WS_exFat/TG119/verification/TG119.mat')
 %cst{2,5}.alphaX = 0.1; cst{2,5}.betaX = 0.01;
 % 
 % cst{2,6}(2,1)            = cst{2,6}(1);
 % cst{2,6}(2,1).robustness = 'VWWC';
 
-pln.exportInfluenceDataToASCII = true;
+pln.exportInfluenceDataToASCII = false;
 
 %% initial visualization and change objective function settings if desired
 %matRadGUI
@@ -48,7 +49,7 @@ pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.bioOptimization = 'LSM_RBExD';   % none: physical optimization;                                   const_RBExD; constant RBE of 1.1;  
+pln.bioOptimization = 'MGH_RBExD';   % none: physical optimization;                                   const_RBExD; constant RBE of 1.1;  
                                      % LSM_effect;  variable RBE Linear Scaling Model (effect based); LSM_RBExD;  variable RBE Linear Scaling Model (RBExD based)
                                      % LEMIV_effect: effect-based optimization;                       LEMIV_RBExD: optimization of RBE-weighted dose
 pln.numOfFractions         = 1;
@@ -85,7 +86,9 @@ end
 
 
 %% inverse planning for imrt
+diary('OptimizationOutput')
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+diary off
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
     %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
@@ -100,11 +103,27 @@ if strcmp(pln.radiationMode,'photons') && pln.runDAO
 end
 
 %% start gui for visualization of result
-resultGUI = matRad_getBeamContributions(resultGUI,cst,stf,dij,'RBExDose');
+% addpath([pwd filesep 'internal' filesep 'utilities']);
+% resultGUI = matRad_getBeamContributions(resultGUI,cst,stf,dij,'RBExDose');
 
-matRadGUI
+%matRadGUI
 
 %% dvh
 matRad_calcDVH(resultGUI,cst,pln)
+
+
+%%
+
+
+load('/Volumes/WS_exFat/TG119/verification/MGH_RBExD/resultGUI.mat')
+data{1} = resultGUI;
+Name{1}= 'var_RBE';
+
+load('/Volumes/WS_exFat/TG119/verification/constRBE/resultGUI.mat')
+data{2} = resultGUI;
+Name{2}= 'const_RBE';
+
+matRad_calcMultipleDVH(data,cst,pln,Name)
+
 
 

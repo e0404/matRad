@@ -103,7 +103,7 @@ if pln.bioParam.bioOpt
     end
     
 elseif isequal(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
-    dij.RBE = dij.bioParam.constRBE;
+    dij.RBE = pln.bioParam.constRBE;
     fprintf(['matRad: Using a constant RBE of: ' num2str(dij.RBE)]);   
 end
 
