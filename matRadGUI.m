@@ -780,7 +780,7 @@ guidata(hObject,handles);
 %% plots ct and distributions
 function UpdatePlot(handles)
 
-profile on;
+%profile on;
 
 axes(handles.axesFig);
 
@@ -1233,8 +1233,7 @@ function Update3DView(handles)
 
 if isfield(handles,'axesFig3D') && isfield(handles,'fig3D') && isvalid(handles.axesFig3D) && isvalid(handles.fig3D)
     axesFig3D = handles.axesFig3D;
-    fig3D = handles.fig3D;
-    view(axesFig3D,3);
+    fig3D = handles.fig3D;    
 else
     return
 end
@@ -1242,6 +1241,11 @@ end
 if handles.State == 0
     return
 elseif handles.State > 0
+     AllVarNames = evalin('base','who');
+    if  ismember('resultGUI',AllVarNames)
+        Result = evalin('base','resultGUI');
+    end
+
     ct  = evalin('base','ct');
     cst = evalin('base','cst');
     pln = evalin('base','pln');
@@ -1264,24 +1268,51 @@ if size(cst,2) < 8
     assignin('base','cst',cst);
 end
 
-set(axesFig3D,'Color',1*[1 1 1]);
+set(fig3D,'Color',0.5*[1 1 1]);
+set(axesFig3D,'Color',1*[0 0 0]);
 hold(axesFig3D,'on');
 if get(handles.radiobtnContour,'Value') && handles.State>0
-    p = matRad_plotVois3D(axesFig3D,ct,cst,handles.VOIPlotFlag,colorcube);
+    voiPatches = matRad_plotVois3D(axesFig3D,ct,cst,handles.VOIPlotFlag,colorcube);
 end
 
 %CT slice plotting
 window = handles.dispWindow{2,1}; %(2 for ct)
 ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
-s = matRad_plotCtSlice3D(axesFig3D,ct,1,plane,slice,ctMap,window);
+ctHandle = matRad_plotCtSlice3D(axesFig3D,ct,1,plane,slice,ctMap,window);
 
-if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Result','var')
+
+
+if handles.State >= 1 && exist('Result','var')
+    doseMap = matRad_getColormap(handles.doseColorMap,handles.cMapSize);
+    doseIx  = 3;
+    % if the selected display option doesn't exist then simply display
+    % the first cube of the Result struct
+    if ~isfield(Result,handles.SelectedDisplayOption)
+        CubeNames = fieldnames(Result);
+        handles.SelectedDisplayOption = CubeNames{1,1};
+    end
     
+    dose = Result.(handles.SelectedDisplayOption);
+    
+    % dose colorwash
+    if ~isempty(dose) && ~isvector(dose)
+        
+        if isempty(handles.dispWindow{doseIx,2})
+            handles.dispWindow{doseIx,2} = [min(dose(:)) max(dose(:))];   % set min and max dose values
+        end
+        
+        if get(handles.radiobtnDose,'Value')
+            [doseHandle,~,handles.dispWindow{doseIx,1}] = matRad_plotDoseSlice3D(axesFig3D,ct,dose,plane,slice,handles.CutOffLevel,handles.doseOpacity,doseMap,handles.dispWindow{doseIx,1});
+        end
+        if get(handles.radiobtnIsoDoseLines,'Value')
+            matRad_plotIsoDoseLines3D(axesFig3D,ct,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,false,plane,slice,doseMap,handles.dispWindow{doseIx,1});
+        end
+    end
 end
 
-hLight = light('Parent',axesFig3D);
-camlight(hLight,'left');
-lighting('gouraud');
+%hLight = light('Parent',axesFig3D);
+%camlight(hLight,'left');
+%lighting('gouraud');
 
 if ~isempty(pln)
     set(axesFig3D,'XTick',0:50:1000);
@@ -1300,7 +1331,7 @@ else
     ylabel(axesFig3D,'y [voxels]','FontSize',defaultFontSize)
     zlabel(axesFig3D,'z [voxels]','FontSize',defaultFontSize)
     %title('axial plane','FontSize',defaultFontSize)
-    title(axesFig3D,'3D view');
+    title(axesFig3D,'matRad 3D view');
 end
 
 %if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln)
@@ -3979,12 +4010,14 @@ function btn3Dview_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 if ~isfield(handles,'axesFig3D') || ~isfield(handles,'axesFig3D') || ~isvalid(handles.axesFig3D)
-    handles.fig3D = figure('Name','3D View');
+    handles.fig3D = figure('Name','matRad 3D View');
     handles.axesFig3D = axes('Parent',handles.fig3D);
+    view(handles.axesFig3D,3);
 end
 %end
 
-Update3DView(handles);
+%Update3DView(handles);
+UpdatePlot(handles);
 
 %rotate3d(axesFig3D,'on');
 

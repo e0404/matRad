@@ -31,7 +31,7 @@ patches = cell(0);
 
 for voiIx = 1:numVois
     if selection(voiIx) && ~strcmp(cst{voiIx,3},'IGNORED')
-        patches{voiIx} = patch(cst{voiIx,8}{1},'VertexNormals',cst{voiIx,8}{2},'FaceColor',voiColors(voiIx,:),'EdgeColor','none','FaceAlpha',0.3,'Parent',axesHandle);
+        patches{voiIx} = patch(cst{voiIx,8}{1},'VertexNormals',cst{voiIx,8}{2},'FaceColor',voiColors(voiIx,:),'EdgeColor','none','FaceAlpha',0.4,'Parent',axesHandle);
     end
 end
 
