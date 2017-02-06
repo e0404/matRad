@@ -18,7 +18,7 @@ for fieldIx = 1:numel(stf)
         rayTarget = ray.targetPoint + stf(fieldIx).isoCenter;
         rayVector = rayTarget - beamSource;
         
-        line(axesHandle,[beamSource(1) rayTarget(1)],[beamSource(2) rayTarget(2)],[beamSource(3) rayTarget(3)],'LineStyle',':','Color',0.5*[1 1 1])
+        line([beamSource(1) rayTarget(1)],[beamSource(2) rayTarget(2)],[beamSource(3) rayTarget(3)],'Parent',axesHandle,'LineStyle','-','Color',0.5*[1 1 1])
     end        
 end
 

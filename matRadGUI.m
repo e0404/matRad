@@ -789,7 +789,7 @@ axes(handles.axesFig);
 drawnow;
 
 defaultFontSize = 8;
-currAxes            = axis;
+currAxes            = axis(handles.axesFig);
 AxesHandlesCT_Dose  = gobjects(0);
 AxesHandlesVOI      = gobjects(0);
 AxesHandlesIsoDose  = gobjects(0);
@@ -979,13 +979,13 @@ if  plane == 3% Axial plane
         set(handles.axesFig,'YTick',0:50/ct.resolution.y:1000);
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.x);
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution.y);   
-        xlabel('x [mm]','FontSize',defaultFontSize)
-        ylabel('y [mm]','FontSize',defaultFontSize)
-        title(['axial plane z = ' num2str(ct.resolution.z*slice) ' [mm]'],'FontSize',defaultFontSize)
+        xlabel(handles.axesFig,'x [mm]','FontSize',defaultFontSize)
+        ylabel(handles.axesFig,'y [mm]','FontSize',defaultFontSize)
+        title(handles.axesFig,['axial plane z = ' num2str(ct.resolution.z*slice) ' [mm]'],'FontSize',defaultFontSize)
     else
-        xlabel('x [voxels]','FontSize',defaultFontSize)
-        ylabel('y [voxels]','FontSize',defaultFontSize)
-        title('axial plane','FontSize',defaultFontSize)
+        xlabel(handles.axesFig,'x [voxels]','FontSize',defaultFontSize)
+        ylabel(handles.axesFig,'y [voxels]','FontSize',defaultFontSize)
+        title(handles.axesFig,'axial plane','FontSize',defaultFontSize)
     end
 elseif plane == 2 % Sagittal plane
     if ~isempty(pln)
@@ -993,13 +993,13 @@ elseif plane == 2 % Sagittal plane
         set(handles.axesFig,'YTick',0:50/ct.resolution.y:1000)
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.z)
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution.y)
-        xlabel('z [mm]','FontSize',defaultFontSize);
-        ylabel('y [mm]','FontSize',defaultFontSize);
-        title(['sagittal plane x = ' num2str(ct.resolution.y*slice) ' [mm]'],'FontSize',defaultFontSize)
+        xlabel(handles.axesFig,'z [mm]','FontSize',defaultFontSize);
+        ylabel(handles.axesFig,'y [mm]','FontSize',defaultFontSize);
+        title(handles.axesFig,['sagittal plane x = ' num2str(ct.resolution.y*slice) ' [mm]'],'FontSize',defaultFontSize)
     else
-        xlabel('z [voxels]','FontSize',defaultFontSize)
-        ylabel('y [voxels]','FontSize',defaultFontSize)
-        title('sagittal plane','FontSize',defaultFontSize);
+        xlabel(handles.axesFig,'z [voxels]','FontSize',defaultFontSize)
+        ylabel(handles.axesFig,'y [voxels]','FontSize',defaultFontSize)
+        title(handles.axesFig,'sagittal plane','FontSize',defaultFontSize);
     end
 elseif plane == 1 % Coronal plane
     if ~isempty(pln)
@@ -1007,13 +1007,13 @@ elseif plane == 1 % Coronal plane
         set(handles.axesFig,'YTick',0:50/ct.resolution.x:1000)
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.z)
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution.x)
-        xlabel('z [mm]','FontSize',defaultFontSize)
-        ylabel('x [mm]','FontSize',defaultFontSize)
-        title(['coronal plane y = ' num2str(ct.resolution.x*slice) ' [mm]'],'FontSize',defaultFontSize)
+        xlabel(handles.axesFig,'z [mm]','FontSize',defaultFontSize)
+        ylabel(handles.axesFig,'x [mm]','FontSize',defaultFontSize)
+        title(handles.axesFig,['coronal plane y = ' num2str(ct.resolution.x*slice) ' [mm]'],'FontSize',defaultFontSize)
     else
-        xlabel('z [voxels]','FontSize',defaultFontSize)
-        ylabel('x [voxels]','FontSize',defaultFontSize)
-        title('coronal plane','FontSize',defaultFontSize)
+        xlabel(handles.axesFig,'z [voxels]','FontSize',defaultFontSize)
+        ylabel(handles.axesFig,'x [voxels]','FontSize',defaultFontSize)
+        title(handles.axesFig,'coronal plane','FontSize',defaultFontSize)
     end
 end
 
@@ -1219,7 +1219,7 @@ hold(handles.axesFig,'off');
 
 handles.cBarChanged = false;
 guidata(handles.axesFig,handles);
-guidata(gcf,handles);  
+%guidata(gcf,handles);  
 if get(handles.popupTypeOfPlot,'Value')==1 
     UpdateColormapOptions(handles);
 end
@@ -1248,6 +1248,7 @@ elseif handles.State > 0
 
     ct  = evalin('base','ct');
     cst = evalin('base','cst');
+    stf = evalin('base','stf');
     pln = evalin('base','pln');
 end
 
@@ -1310,6 +1311,8 @@ if handles.State >= 1 && exist('Result','var')
     end
 end
 
+matRad_plotPlan3D(axesFig3D,stf);
+
 %hLight = light('Parent',axesFig3D);
 %camlight(hLight,'left');
 %lighting('gouraud');
@@ -1353,6 +1356,7 @@ upperLimits = ct.cubeDim.*[ct.resolution.y ct.resolution.x ct.resolution.z];
 set(axesFig3D,'xlim',[1 upperLimits(1)],'ylim',[1 upperLimits(2)],'zlim',[1 upperLimits(3)]);
 
 set(axesFig3D,'view',oldView);
+
 
 % --- Executes on selection change in popupPlane.
 function popupPlane_Callback(hObject, ~, handles)

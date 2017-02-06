@@ -92,9 +92,9 @@ ct_rgb = ind2rgb(uint8(cMapScale*((ct.cube{cubeIdx}-window(1))/(window(2) - wind
 
 ctHandle = slice(axesHandle,xMesh,yMesh,zMesh,ct.cube{cubeIdx},slicePlane{:});
 
-
-%}
 set(ctHandle,'EdgeColor','none');
+%}
+
 
 
 end

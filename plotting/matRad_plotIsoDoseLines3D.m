@@ -51,25 +51,6 @@ if nargin < 9 || isempty(window)
     window = [min(doseCube(:)) max(doseCube(:))];
 end
 
-%Check if precomputed contours where passed, if not, calculate it on the
-%fly
-
-slices = {[],[],[]};
-
-coords{1} = ct.resolution.y * (1:ct.cubeDim(1));
-coords{2} = ct.resolution.x * (1:ct.cubeDim(2));
-coords{3} = ct.resolution.z * (1:ct.cubeDim(3));
-
-slices{plane} = coords{plane}([1:5:slice slice+5:5:ct.cubeDim(plane)]);
-
-[xMesh,yMesh,zMesh] = meshgrid(coords{:});
-
-%if isempty(isoContours)
-h = contourslice(axesHandle,xMesh,yMesh,zMesh,doseCube,slices{[2 1 3]},isoLevels);
-%end
-
-%% Plotting
-%{
 cMapScale = size(cMap,1) - 1;
 isoColorLevel = (isoLevels - window(1))./(window(2)-window(1));
 isoColorLevel(isoColorLevel < 0) = 0;
@@ -78,34 +59,80 @@ colors = squeeze(ind2rgb(uint8(cMapScale*isoColorLevel),cMap));
 
 isoLineHandles = gobjects(0);
 
-axes(axesHandle);
-hold on;
+slices = {[],[],[]};
 
-%Check if there is a contour in the plane
-if any(isoContours{slice,plane}(:))
-    % plot precalculated contourc data
+coords{1} = ct.resolution.y * (1:ct.cubeDim(1));
+coords{2} = ct.resolution.x * (1:ct.cubeDim(2));
+coords{3} = ct.resolution.z * (1:ct.cubeDim(3));
+
+%slice spacing
+spacing = 5;
+sliceIndices = [1:spacing:ct.cubeDim(plane)];
+if isempty(sliceIndices(sliceIndices==slice))
+    sliceIndices(end+1) = slice;
+    sort(sliceIndices);
+end
+slices{plane} = coords{plane}(sliceIndices);
+
+%% Plotting
+%Check if precomputed contours where passed, if not, calculate it on the
+%fly
+if isempty(isoContours)
     
-    lower = 1; % lower marks the beginning of a section
-    while lower-1 ~= size(isoContours{slice,plane},2);
-        steps = isoContours{slice,plane}(2,lower); % number of elements of current line section
-        if numel(unique(isoLevels)) > 1
-            color = colors(isoLevels(:) == isoContours{slice,plane}(1,lower),:);
-        else
-            color = unique(colors,'rows'); 
+    [xMesh,yMesh,zMesh] = meshgrid(coords{:});
+    isoLineHandles = contourslice(axesHandle,xMesh,yMesh,zMesh,doseCube,slices{[2 1 3]},isoLevels);
+else  
+    axes(axesHandle);
+    hold on;
+    
+    for s = 1:numel(sliceIndices)
+        currSlice = sliceIndices(s);
+        currSlicePlaneCoords = slices{plane}(s);
+        %Check if there is a contour in the plane
+        if any(isoContours{currSlice,plane}(:))
+            % plot precalculated contourc data            
+            lower = 1; % lower marks the beginning of a section
+            while lower-1 ~= size(isoContours{currSlice,plane},2);
+                steps = isoContours{currSlice,plane}(2,lower); % number of elements of current line section
+                if numel(unique(isoLevels)) > 1
+                    color = colors(isoLevels(:) == isoContours{currSlice,plane}(1,lower),:);
+                else
+                    color = unique(colors,'rows');
+                end              
+                
+                % Align 2D Contours in3D
+                isoLine2Dx = isoContours{currSlice,plane}(1,lower+1:lower+steps);
+                isoLine2Dy = isoContours{currSlice,plane}(2,lower+1:lower+steps);
+                if plane == 2
+                    isoLine3Dx = currSlicePlaneCoords*ones(1,numel(isoLine2Dx));
+                    isoLine3Dz = interp1(1:ct.cubeDim(3),coords{3},isoLine2Dx);
+                    isoLine3Dy = interp1(1:ct.cubeDim(2),coords{2},isoLine2Dy);
+                elseif plane == 1
+                    isoLine3Dy = currSlicePlaneCoords*ones(1,numel(isoLine2Dx));
+                    isoLine3Dx = interp1(1:ct.cubeDim(1),coords{1},isoLine2Dy);
+                    isoLine3Dz = interp1(1:ct.cubeDim(3),coords{3},isoLine2Dx);
+                elseif plane == 3
+                    isoLine3Dz = currSlicePlaneCoords*ones(1,numel(isoLine2Dx));
+                    isoLine3Dx = interp1(1:ct.cubeDim(1),coords{1},isoLine2Dx);
+                    isoLine3Dy = interp1(1:ct.cubeDim(2),coords{2},isoLine2Dy);
+                else 
+                    continue;
+                end
+               
+
+                isoLineHandles(end+1) = line(isoLine3Dx,isoLine3Dy,isoLine3Dz,'Color',color,'LineWidth',1.5,'Parent',axesHandle);
+                %if plotLabels
+                %    text(isoContours{slice,plane}(1,lower+1),...
+                %        isoContours{slice,plane}(2,lower+1),...
+                %        num2str(isoContours{slice,plane}(1,lower)),'Parent',axesHandle)
+                %end
+                lower = lower+steps+1;
+                
+            end
         end
-        isoLineHandles(end+1) = line(isoContours{slice,plane}(1,lower+1:lower+steps),...
-            isoContours{slice,plane}(2,lower+1:lower+steps),...
-            'Color',color,'LineWidth',1.5,'Parent',axesHandle);
-        if plotLabels
-            text(isoContours{slice,plane}(1,lower+1),...
-                isoContours{slice,plane}(2,lower+1),...
-                num2str(isoContours{slice,plane}(1,lower)),'Parent',axesHandle)
-        end
-        lower = lower+steps+1;
-        
     end
+    
+    hold off;
 end
 
-hold off;
-%}
 end
