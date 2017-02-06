@@ -57,7 +57,8 @@ coords{2} = ct.resolution.x * (1:ct.cubeDim(2));
 coords{3} = ct.resolution.z * (1:ct.cubeDim(3));
 
  
-% slice plot with surface(...), colormapping is more straightforward
+% slice plot with surface(...), colormapping can be done by texture
+% mapping, this is why we use surface instead of slice
 if plane == 1 % Coronal plane
     [xMesh,zMesh] = meshgrid(coords{1},coords{3});
     yMesh = ctSlice*ct.resolution.x*ones(ct.cubeDim(3),ct.cubeDim(1));
@@ -75,9 +76,11 @@ elseif plane == 3 % Axial plane
 end
 ctHandle = surface(axesHandle,'XData',xMesh, 'YData',yMesh, 'ZData',zMesh, ...
         'CData',ct_rgb, 'CDataMapping','direct', ...
-        'EdgeColor','none', 'FaceColor','texturemap');
+        'EdgeColor','none', 'FaceColor','texturemap', 'BackFaceLighting','unlit','FaceLighting','flat');
+
 %{
-% slice plot with slice(...), more intuitive, but colormapping not clear
+% slice plot with slice(...)
+% seems technically more reasonable, however manual colormapping not straightforward        
 [xMesh,yMesh,zMesh] = meshgrid(coords{:});
 slicePlane{1} = [];
 slicePlane{2} = [];
@@ -85,10 +88,13 @@ slicePlane{3} = [];
 
 slicePlane{plane} = coords{plane}(ctSlice);
 
-ctHandle = slice(axesHandle,xMesh,yMesh,zMesh,ct.cube{cubeIdx},slicePlane{:});
-set(ctHandle,'EdgeColor','none');
-%}
+ct_rgb = ind2rgb(uint8(cMapScale*((ct.cube{cubeIdx}-window(1))/(window(2) - window(1)))),cMap);
 
+ctHandle = slice(axesHandle,xMesh,yMesh,zMesh,ct.cube{cubeIdx},slicePlane{:});
+
+
+%}
+set(ctHandle,'EdgeColor','none');
 
 
 end

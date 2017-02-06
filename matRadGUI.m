@@ -1208,96 +1208,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
    
 end
 
-if get(handles.popupTypeOfPlot,'Value') == 3
-    %profile on;
-    cla(handles.axesFig);
-    
-    %if ~isfield(handles,'fig3D')
-    %    handles.fig3D = figure('Name','3D View');
-    %    handles.axesFig3D = axes('Parent',handles.fig3D);
-    %end
-    %axesFig3D = handles.axesFig3D;
-    axesFig3D = handles.axesFig;
-    
-    %Check if we need to precompute the surface data
-    if size(cst,2) < 8
-        cst = matRad_computeAllVoiSurfaces(ct,cst);
-        assignin('base','cst',cst);
-    end
-    
-    set(handles.axesFig,'Color',1*[1 1 1]);
-    hold(handles.axesFig,'on');
-    if get(handles.radiobtnContour,'Value') && handles.State>0
-        p = matRad_plotVois3D(axesFig3D,ct,cst,handles.VOIPlotFlag,colorcube);
-    end 
-        
-    s = matRad_plotCtSlice3D(axesFig3D,ct,1,plane,slice);
-        
-    view(axesFig3D,3)
-    xlabel(axesFig3D,'x');
-    ylabel(axesFig3D,'y');
-    zlabel(axesFig3D,'z');
-    
-    hLight = light('Parent',axesFig3D);
-    camlight(hLight,'left');
-    %lighting( gouraud;
-    
-    %{
-    limitX = get(hAx3D,'xlim');
-    limitY = get(hAx3D,'ylim');
-    limitZ = get(hAx3D,'zlim');
-    matRad_plotPlan3D(hAx3D,stf);
-    set(hAx3D,'xlim',limitX);
-    set(hAx3D,'ylim',limitY);
-    set(hAx3D,'zlim',limitZ);
-    %}
-    
-    
-    if ~isempty(pln)
-        set(axesFig3D,'XTick',0:50:1000);
-        set(axesFig3D,'YTick',0:50:1000);
-        set(axesFig3D,'ZTick',0:50:1000);
-        set(axesFig3D,'XTickLabel',0:50:1000);
-        set(axesFig3D,'YTickLabel',0:50:1000);
-        set(axesFig3D,'ZTickLabel',0:50:1000);
-        xlabel(axesFig3D,'x [mm]','FontSize',defaultFontSize)
-        ylabel(axesFig3D,'y [mm]','FontSize',defaultFontSize)
-        zlabel(axesFig3D,'z [mm]','FontSize',defaultFontSize)
-        %title(['axial plane z = ' num2str(ct.resolution.z*slice) ' [mm]'],'FontSize',defaultFontSize)
-        title(axesFig3D,'3D view');
-    else
-        xlabel(axesFig3D,'x [voxels]','FontSize',defaultFontSize)
-        ylabel(axesFig3D,'y [voxels]','FontSize',defaultFontSize)
-        zlabel(axesFig3D,'z [voxels]','FontSize',defaultFontSize)
-        %title('axial plane','FontSize',defaultFontSize)
-        title(axesFig3D,'3D view');
-    end
-    
-    %if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln)
-    %    hIsoCenterCross = matRad_plotIsoCenterMarker(handles.axesFig,pln,ct,plane,slice);
-    %end
-    
-    % the following line ensures the plotting order (optional)
-    % set(gca,'Children',[AxesHandlesCT_Dose hIsoCenterCross AxesHandlesIsoDose  AxesHandlesVOI ]);
-    
-    %set axis ratio
-    ratios = [1 1 1]; %[1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
-    ratios = ratios([2 1 3]);
-    set(axesFig3D,'DataAspectRatioMode','manual');
-    set(axesFig3D,'DataAspectRatio',ratios./max(ratios));
-    
-    set(axesFig3D,'Ydir','reverse');   
-
-    upperLimits = ct.cubeDim.*[ct.resolution.y ct.resolution.x ct.resolution.z];
-    axis(axesFig3D,[1 upperLimits(1) 1 upperLimits(2) 1 upperLimits(3)]);
-    
-    %rotate3d(axesFig3D,'on');
-    
-end
-
-
 zoom reset;
-
 axis(handles.axesFig,'tight');
 
 if handles.rememberCurrAxes
@@ -1313,8 +1224,104 @@ if get(handles.popupTypeOfPlot,'Value')==1
     UpdateColormapOptions(handles);
 end
 
+Update3DView(handles);
+
 %profile off;
 %profile viewer;
+
+function Update3DView(handles)
+
+if isfield(handles,'axesFig3D') && isfield(handles,'fig3D') && isvalid(handles.axesFig3D) && isvalid(handles.fig3D)
+    axesFig3D = handles.axesFig3D;
+    fig3D = handles.fig3D;
+    view(axesFig3D,3);
+else
+    return
+end
+
+if handles.State == 0
+    return
+elseif handles.State > 0
+    ct  = evalin('base','ct');
+    cst = evalin('base','cst');
+    pln = evalin('base','pln');
+end
+
+oldView = get(axesFig3D,'View');
+
+cla(axesFig3D);
+%delete(allchild(axesFig3D));
+
+test = allchild(axesFig3D);
+
+plane = get(handles.popupPlane,'Value');
+slice = round(get(handles.sliderSlice,'Value'));
+defaultFontSize = 8;
+
+%Check if we need to precompute the surface data
+if size(cst,2) < 8
+    cst = matRad_computeAllVoiSurfaces(ct,cst);
+    assignin('base','cst',cst);
+end
+
+set(axesFig3D,'Color',1*[1 1 1]);
+hold(axesFig3D,'on');
+if get(handles.radiobtnContour,'Value') && handles.State>0
+    p = matRad_plotVois3D(axesFig3D,ct,cst,handles.VOIPlotFlag,colorcube);
+end
+
+%CT slice plotting
+window = handles.dispWindow{2,1}; %(2 for ct)
+ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
+s = matRad_plotCtSlice3D(axesFig3D,ct,1,plane,slice,ctMap,window);
+
+if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Result','var')
+    
+end
+
+hLight = light('Parent',axesFig3D);
+camlight(hLight,'left');
+lighting('gouraud');
+
+if ~isempty(pln)
+    set(axesFig3D,'XTick',0:50:1000);
+    set(axesFig3D,'YTick',0:50:1000);
+    set(axesFig3D,'ZTick',0:50:1000);
+    set(axesFig3D,'XTickLabel',0:50:1000);
+    set(axesFig3D,'YTickLabel',0:50:1000);
+    set(axesFig3D,'ZTickLabel',0:50:1000);
+    xlabel(axesFig3D,'x [mm]','FontSize',defaultFontSize)
+    ylabel(axesFig3D,'y [mm]','FontSize',defaultFontSize)
+    zlabel(axesFig3D,'z [mm]','FontSize',defaultFontSize)
+    %title(['axial plane z = ' num2str(ct.resolution.z*slice) ' [mm]'],'FontSize',defaultFontSize)
+    title(axesFig3D,'3D view');
+else
+    xlabel(axesFig3D,'x [voxels]','FontSize',defaultFontSize)
+    ylabel(axesFig3D,'y [voxels]','FontSize',defaultFontSize)
+    zlabel(axesFig3D,'z [voxels]','FontSize',defaultFontSize)
+    %title('axial plane','FontSize',defaultFontSize)
+    title(axesFig3D,'3D view');
+end
+
+%if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln)
+%    hIsoCenterCross = matRad_plotIsoCenterMarker(handles.axesFig,pln,ct,plane,slice);
+%end
+
+% the following line ensures the plotting order (optional)
+% set(gca,'Children',[AxesHandlesCT_Dose hIsoCenterCross AxesHandlesIsoDose  AxesHandlesVOI ]);
+
+%set axis ratio
+ratios = [1 1 1]; %[1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
+ratios = ratios([2 1 3]);
+set(axesFig3D,'DataAspectRatioMode','manual');
+set(axesFig3D,'DataAspectRatio',ratios./max(ratios));
+
+set(axesFig3D,'Ydir','reverse');
+
+upperLimits = ct.cubeDim.*[ct.resolution.y ct.resolution.x ct.resolution.z];
+set(axesFig3D,'xlim',[1 upperLimits(1)],'ylim',[1 upperLimits(2)],'zlim',[1 upperLimits(3)]);
+
+set(axesFig3D,'view',oldView);
 
 % --- Executes on selection change in popupPlane.
 function popupPlane_Callback(hObject, ~, handles)
@@ -3963,3 +3970,25 @@ function popMenuBioOpt_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in btn3Dview.
+function btn3Dview_Callback(hObject, eventdata, handles)
+% hObject    handle to btn3Dview (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+if ~isfield(handles,'axesFig3D') || ~isfield(handles,'axesFig3D') || ~isvalid(handles.axesFig3D)
+    handles.fig3D = figure('Name','3D View');
+    handles.axesFig3D = axes('Parent',handles.fig3D);
+end
+%end
+
+Update3DView(handles);
+
+%rotate3d(axesFig3D,'on');
+
+guidata(hObject,handles);
+
+
+
