@@ -99,7 +99,11 @@ end
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
-useCustomPrimFluenceBool = 0;
+if strcmp(num2str(pln.bixelWidth),'field')
+    useCustomPrimFluenceBool = 1;
+else
+    useCustomPrimFluenceBool = 0;
+end
 
 %% kernel convolution
 % prepare data for convolution to reduce calculation time
@@ -220,7 +224,6 @@ for i = 1:dij.numOfBeams; % loop over all beams
             Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear');
         end
     end
-
     
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
 
@@ -228,21 +231,20 @@ for i = 1:dij.numOfBeams; % loop over all beams
         bixelsPerBeam = bixelsPerBeam + 1;
     
         % convolution here if custom primary fluence OR field based dose calc
-        if useCustomPrimFluenceBool || strcmp(num2str(pln.bixelWidth),'field')
+        if useCustomPrimFluenceBool
             
-            % get the field if field based dose calculation
+            % overwrite field opening if necessary
             if strcmp(num2str(pln.bixelWidth),'field')
-                Fx = stf(i).ray(j).shape;
-            
-            % apply the primary fluence to the field
-            elseif useCustomPrimFluenceBool
-                
-                primaryFluence = machine.data.primaryFluence;
-                r     = sqrt( (X-stf(i).ray(j).rayPos(1)).^2 + (Z-stf(i).ray(j).rayPos(3)).^2 );
-                Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r);
-                Fx = F .* Psi;
-                
+                F = stf(i).ray(j).shape;
             end
+            
+            % prepare primary fluence array
+            primaryFluence = machine.data.primaryFluence;
+            r     = sqrt( (X-stf(i).ray(j).rayPos(1)).^2 + (Z-stf(i).ray(j).rayPos(3)).^2 );
+            Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r);
+                
+            % apply the primary fluence to the field
+            Fx = F .* Psi;
             
             % convolute with the gaussian
             Fx = real(fftshift(ifft2(fft2( ifftshift(Fx) ).*fft2( ifftshift(gaussFilter) ))));
