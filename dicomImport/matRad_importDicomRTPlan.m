@@ -125,7 +125,16 @@ end
 
 % extract field shapes
 if strcmp(radiationMode, 'photons')
-    pln.Collimation = matRad_importFieldShapes(BeamSequence, BeamSeqNames);
+    
+    % get cummulative MU per beam
+    MUfields = fields(planInfo.FractionGroupSequence.Item_1.ReferencedBeamSequence);
+    MUs = NaN * ones(numel(MUfields),1);
+    for i = 1:numel(MUfields)
+        MUs(i) = planInfo.FractionGroupSequence.Item_1.ReferencedBeamSequence.(MUfields{i}).BeamMeterset;
+    end
+        
+    pln.Collimation = matRad_importFieldShapes(BeamSequence, BeamSeqNames,MUs);
+    
 end
 
 %% write parameters found to pln variable

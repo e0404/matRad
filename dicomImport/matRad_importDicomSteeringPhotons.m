@@ -87,7 +87,7 @@ for i = 1:size(UniqueComb,1)
     stf(i).ray.targetPoint     = stf(i).ray.targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
     
     % set weight for output field
-    stf(i).ray.weight = Fields(ia(i)).FinalCumWeight;
+    stf(i).ray.weight = Fields(ia(i)).Weight;
     stf(i).ray.SSD    = Fields(ia(i)).SSD;
     stf(i).ray.energy = Fields(ia(i)).Energy;  
     

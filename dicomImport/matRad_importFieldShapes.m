@@ -1,4 +1,4 @@
-function collimation = matRad_importFieldShapes(BeamSequence, BeamSeqNames)
+function collimation = matRad_importFieldShapes(BeamSequence, BeamSeqNames,MUs)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % function to import collimator shapes from a DICOM RT plan
 % 
@@ -8,6 +8,7 @@ function collimation = matRad_importFieldShapes(BeamSequence, BeamSeqNames)
 % input
 %   BeamSequence: struct containing the BeamSequence elements from the RT    
 %   BeamSeqNames: cell containing the names of the elements in BeamSequence
+%   MUs:          array containing the total MU applied per beam
 %
 % output
 %   Collimation: struct with all meta information about the collimators and
@@ -116,7 +117,7 @@ for i = 1:length(BeamSeqNames)
        % get field meta information
        if isfield(currControlPointElement, 'CumulativeMetersetWeight')      
            newCumWeight = currControlPointElement.CumulativeMetersetWeight;
-           tmpCollimation.Fields(counter).Weight = newCumWeight - cumWeight;
+           tmpCollimation.Fields(counter).Weight = (newCumWeight - cumWeight)*MUs(i)/100;
            cumWeight = newCumWeight;
        else
            warning(['No CumulativeMetersetWeight found in control point sequence ' currControlPointSeqNames{j} ...
