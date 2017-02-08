@@ -140,6 +140,9 @@ elseif strcmp(accMethod,'EMT')   % funktioniert nicht wenn Dosis in einer Phase 
 
     [X,Y,Z] = ndgrid(xGridVec,yGridVec,zGridVec);
 
+%              m_ref = zeros(dimensions);
+%         e_ref = zeros(dimensions);
+        
     for i = 1:nPhases
         
         dvf_x_i = squeeze(ct.dvf{1,i}(1,:,:,:))/ct.resolution.x;  %???????x??????y?????????
@@ -151,8 +154,8 @@ elseif strcmp(accMethod,'EMT')   % funktioniert nicht wenn Dosis in einer Phase 
         
         ix = e_i>0;
         
-        m_ref = zeros(dimensions);
-        e_ref = zeros(dimensions);
+       m_ref = zeros(dimensions);
+       e_ref = zeros(dimensions);
 
         X_i = X(ix) + dvf_x_i(ix);
         Y_i = Y(ix) + dvf_y_i(ix);
@@ -207,13 +210,15 @@ elseif strcmp(accMethod,'EMT')   % funktioniert nicht wenn Dosis in einer Phase 
         e_ref(ix_i) = e_ref(ix_i) + overlap .* e_i(ix);
         
         % if m_ref != 0
-        k = find(m_ref);
-        dAcc(k) = dAcc(k) + e_ref(k)./m_ref(k);
+         k = find(m_ref);
+         dAcc(k) = dAcc(k) + e_ref(k)./m_ref(k);
         
-        %dAcc = dAcc + e_ref./m_ref;
-          
+        %dAcc = dAcc + e_ref./m_ref;         
     end
     
+%             k = find(m_ref);
+%         dAcc(k) = e_ref(k)./m_ref(k);
+        
 elseif strcmp(accMethod,'DDMM')
     
     % this implementation is experimental

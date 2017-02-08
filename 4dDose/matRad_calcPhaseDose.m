@@ -213,17 +213,17 @@ for p=1:NumOfPhases
  
     %Test    
     %resultGUI.phaseDose{p} = reshape(dij.physicalDose{1,1} * w, dij.dimensions);
-    resultGUI.phaseDose{p} = reshape(dij.physicalDose{p,1} * w, dij.dimensions);
+    resultGUI.phaseDose{p} = reshape(dij.physicalDose{p} * w, dij.dimensions);
    
 end
 
 %just for testing: dose summation
-resultGUI.sumDose = resultGUI.phaseDose{1}(:);
-for p=2:NumOfPhases
-    resultGUI.sumDose = resultGUI.sumDose + resultGUI.phaseDose{p}(:);
-end
-
-resultGUI.sumDose = reshape(resultGUI.sumDose, dij.dimensions);
+% resultGUI.sumDose = resultGUI.phaseDose{1}(:);
+% for p=2:NumOfPhases
+%     resultGUI.sumDose = resultGUI.sumDose + resultGUI.phaseDose{p}(:);
+% end
+% 
+% resultGUI.sumDose = reshape(resultGUI.sumDose, dij.dimensions);
     
 
 
