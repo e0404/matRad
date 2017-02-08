@@ -102,6 +102,8 @@ end
 if strcmp(num2str(pln.bixelWidth),'field')
     useCustomPrimFluenceBool = 1;
 else
+    % manually change this value to 1/true if you want to use a custom
+    % primary fluence together with bixel based dose calculation
     useCustomPrimFluenceBool = 0;
 end
 
@@ -140,7 +142,7 @@ counter = 0;
 
 fprintf('matRad: Photon dose calculation...\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for i = 1:dij.numOfBeams; % loop over all beams
+for i = 1:dij.numOfBeams % loop over all beams
     
     fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
 
