@@ -93,9 +93,14 @@ end
 writeWCCube = 0;
 for i = 1:size(cst,1)
    if ~isempty(cst{i,6})
-        if(strcmp(cst{i,6}(:).robustness,'WC'))
-            writeWCCube = 1;
-        end
+       j = size(cst{i,6});
+       j = j(1);
+       while j>0
+           if(strcmp(cst{i,6}(j).robustness,'WC'))
+               writeWCCube = 1;
+           end
+        j = j-1;
+       end
    end
 end
 
