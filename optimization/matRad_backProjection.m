@@ -75,6 +75,16 @@ else
                 [idx,~]           = find(~isnan(scaledEffectSq));
                 scaledEffect(idx) = sqrt(scaledEffectSq(idx));
                 d{i}              = scaledEffect - dij.gamma;
+                
+%                 ab = dij.ax./dij.bx;
+%                 dp = dij.physicalDose{dij.indexforOpt(i)} * w;
+%                 let = (dij.mLETDose{dij.indexforOpt(i)} * w)./dp;
+%                 RBEmax = 0.999064 + ((0.35605 ./ab).*let);
+%                 RBEmin = 1.1012-0.0038703 * sqrt(ab).*let;
+%                 
+%                 d{i}  = 1./(2) .* (sqrt(ab.^2 + (4*dp.*ab.*RBEmax) + (4*dp.^2 .* RBEmin.^2)) - ab);
+%                 
+%                 vDiff = d2-d{i};
             else
                
                error('not implemented')

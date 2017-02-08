@@ -52,10 +52,32 @@ elseif isequal(pln.radiationMode,'protons')
         bioParam.upperLETThreshold  = 30;    %[kev/mum]
         bioParam.lowerLETThreshold  = 0.3;   %[kev/mum]
         
-      elseif isequal(pln.bioOptimization,'MGH_RBExD') 
+      elseif isequal(pln.bioOptimization,'MCN_effect') 
         bioParam.bioOpt             = true;
         bioParam.type               = pln.bioOptimization;
-        bioParam.model              = 'MGH';
+        bioParam.model              = 'MCN';
+        bioParam.description        = 'a phenomenological relative biological effectiveness (RBE) model for proton therapy based on all published in vitro cell survival data';
+        bioParam.quantity           = 'effect';
+        bioParam.p0                 = 0.999064; % according to https://www.ncbi.nlm.nih.gov/pubmed/26459756
+        bioParam.p1                 = 0.35605;
+        bioParam.p2                 = 1.1012;
+        bioParam.p3                 = -0.0038703;  
+        
+      elseif isequal(pln.bioOptimization,'MCN_RBExD') 
+        bioParam.bioOpt             = true;
+        bioParam.type               = pln.bioOptimization;
+        bioParam.model              = 'MCN';
+        bioParam.description        = 'a phenomenological relative biological effectiveness (RBE) model for proton therapy based on all published in vitro cell survival data';
+        bioParam.quantity           = 'RBExD';
+        bioParam.p0                 = 0.99064; % according to https://www.ncbi.nlm.nih.gov/pubmed/26459756
+        bioParam.p1                 = 0.35605;
+        bioParam.p2                 = 1.1012;
+        bioParam.p3                 = -0.0038703;
+        
+              elseif isequal(pln.bioOptimization,'MCN_RBExDRef') 
+        bioParam.bioOpt             = true;
+        bioParam.type               = pln.bioOptimization;
+        bioParam.model              = 'MCNRef';
         bioParam.description        = 'a phenomenological relative biological effectiveness (RBE) model for proton therapy based on all published in vitro cell survival data';
         bioParam.quantity           = 'RBExD';
         bioParam.p0                 = 0.99064; % according to https://www.ncbi.nlm.nih.gov/pubmed/26459756
@@ -74,7 +96,7 @@ elseif isequal(pln.radiationMode,'protons')
     end
     
 %% check for supported optimization methods using CARBON ions  
-elseif isequal(pln.radiationMode,'carbons')
+elseif isequal(pln.radiationMode,'carbon')
     
     if isequal(pln.bioOptimization,'physical')
         bioParam.bioOpt           = false;

@@ -26,7 +26,7 @@ clc
 %load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
-%load BOXPHANTOM_TINY.mat
+%load([pwd filesep 'patients' filesep 'BOXPHANTOM_TINY.mat']);
 %load(['/Volumes/WS_exFat/TG119/VWWC/TG119_VWWC.mat']);
 
 load('/Volumes/WS_exFat/TG119/verification/TG119.mat')
@@ -49,13 +49,13 @@ pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.bioOptimization = 'MGH_RBExD';   % none: physical optimization;                                   const_RBExD; constant RBE of 1.1;  
+pln.bioOptimization = 'MCN_RBExD';   % none: physical optimization;                                   const_RBExD; constant RBE of 1.1;  
                                      % LSM_effect;  variable RBE Linear Scaling Model (effect based); LSM_RBExD;  variable RBE Linear Scaling Model (RBExD based)
                                      % LEMIV_effect: effect-based optimization;                       LEMIV_RBExD: optimization of RBE-weighted dose
 pln.numOfFractions         = 1;
 pln.runSequencing          = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO                 = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
-pln.machine                = 'GenericLET';
+pln.machine                = 'GenericLET';%GenericLET
 pln.minNrParticles         = 500000;
 pln.LongitudialSpotSpacing = 3;      % only relevant for HIT machine, not generic
 
@@ -104,26 +104,16 @@ end
 
 %% start gui for visualization of result
 % addpath([pwd filesep 'internal' filesep 'utilities']);
-% resultGUI = matRad_getBeamContributions(resultGUI,cst,stf,dij,'RBExDose');
-
-%matRadGUI
-
-%% dvh
-matRad_calcDVH(resultGUI,cst,pln)
 
 
-%%
+resultGUI = matRad_getBeamContributions(resultGUI,cst,stf,dij,'physicalDose');
+resultGUIMDACC = matRad_getBeamContributions(resultGUIMDACC,cst,stf,dij,'physicalDose');
+% 
+% %matRadGUI
+% 
+% %% dvh
+% matRad_calcDVH(resultGUI,cst,pln)
 
+resultGUI = matRad_calcCubes(resultGUI.w,dij,cst,1);
 
-load('/Volumes/WS_exFat/TG119/verification/MGH_RBExD/resultGUI.mat')
-data{1} = resultGUI;
-Name{1}= 'var_RBE';
-
-load('/Volumes/WS_exFat/TG119/verification/constRBE/resultGUI.mat')
-data{2} = resultGUI;
-Name{2}= 'const_RBE';
-
-matRad_calcMultipleDVH(data,cst,pln,Name)
-
-
-
+resultGUIMDACC = matRad_calcCubes(VarName2,dij,cst,1);

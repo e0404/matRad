@@ -411,10 +411,10 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                                         
                                         bixelBeta(:)         = betaX(ix(currIx));
                                         
-                                     elseif strcmp(pln.bioParam.model,'MGH')  && strcmp(pln.radiationMode,'protons')
+                                     elseif strcmp(pln.bioParam.model,'MCN')  && strcmp(pln.radiationMode,'protons')
                                         
                                         RBEmax     = pln.bioParam.p0 + ((pln.bioParam.p1 .* bixelLET )./ ab_ratio_x(ix(currIx)));
-                                        RBEmin     = pln.bioParam.p2 + (pln.bioParam.p3  .* (ab_ratio_x(ix(currIx))) .* bixelLET);
+                                        RBEmin     = pln.bioParam.p2 + (pln.bioParam.p3  .* sqrt(ab_ratio_x(ix(currIx))) .* bixelLET);
                                         bixelAlpha = RBEmax    .* alphaX(ix(currIx));
                                         bixelBeta  = RBEmin.^2 .*  betaX(ix(currIx));
                                         
