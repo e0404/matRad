@@ -130,11 +130,11 @@ for i = 1:size(cst,1)
                         scenID2       = [scenID2;repmat(k,numel(cst{i,4}{1}),1)];
                         constraintID2 = [constraintID2;constraintID2(end) + 1];
                         
-                        if isequal(type,'none') && ~isempty(jacobVec)
+                        if isequal(options.bioOpt,'none') && ~isempty(jacobVec) || isequal(options.ID,'protons_const_RBExD')
 
                            DoseProjection = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
 
-                        elseif isequal(type,'effect') && ~isempty(jacobVec)
+                        elseif isequal(options.bioOpt,'LEMIV_effect') && ~isempty(jacobVec)
 
                            mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
                            mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
@@ -142,7 +142,7 @@ for i = 1:size(cst,1)
                            voxelID                 = [voxelID ;cst{i,4}{1}];
                            constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
 
-                        elseif isequal(type,'RBExD') && ~isempty(jacobVec)
+                        elseif isequal(options.bioOpt,'LEMIV_RBExD') && ~isempty(jacobVec)
 
                            delta = jacobVec./(2*dij.bx(cst{i,4}{1}).*ScaledEffect(cst{i,4}{1}));
 
@@ -187,15 +187,15 @@ for i = 1:size(cst,1)
                                 scenID  = [scenID;k];
                                 scenID2 = [scenID2;repmat(k,numel(cst{i,4}{1}),1)];
                                 
-                                if isequal(type,'none') && ~isempty(jacobVec)
+                                if isequal(options.bioOpt,'none') && ~isempty(jacobVec) || isequal(options.ID,'protons_const_RBExD')
 
                                    DoseProjection = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
 
-                                elseif isequal(type,'effect') && ~isempty(jacobVec)
+                                elseif isequal(options.bioOpt,'LEMIV_effect') && ~isempty(jacobVec)
 
                                     error('effect optimization in Area constraint not implemented yet')
 
-                                elseif isequal(type,'RBExD') && ~isempty(jacobVec)
+                                elseif isequal(options.bioOpt,'LEMIV_RBExD') && ~isempty(jacobVec)
 
                                     error('RBExD optimization in Area constraint not implemented yet')
 
@@ -220,15 +220,15 @@ for i = 1:size(cst,1)
                             scenID2       = [scenID2;ones(numel(cst{i,4}{1}),1)];
                             constraintID2 = [constraintID2;constraintID2(end) + 1];
 
-                            if isequal(type,'none') && ~isempty(jacobVec)
+                            if isequal(options.bioOpt,'none') && ~isempty(jacobVec) || isequal(options.ID,'protons_const_RBExD')
 
                                DoseProjection = [DoseProjection,sparse(cst{cstLogical,5}.voxelID,1,jacobVec,dij.numOfVoxels,1)];
 
-                            elseif isequal(type,'effect') && ~isempty(jacobVec)
+                            elseif isequal(options.bioOpt,'LEMIV_effect') && ~isempty(jacobVec)
 
                                 error('effect optimization in Area constraint not implemented yet')
 
-                            elseif isequal(type,'RBExD') && ~isempty(jacobVec)
+                            elseif isequal(options.bioOpt,'LEMIV_RBExD') && ~isempty(jacobVec)
 
                                 error('RBExD optimization in Area constraint not implemented yet')
 
@@ -315,15 +315,15 @@ for i = 1:size(cst,1)
                                 scenID  = [scenID;k];
                                 scenID2 = [scenID2;repmat(k,numel(cst{i,4}{1}),1)];
 
-                                if isequal(type,'none') && ~isempty(jacobVec)
+                                if isequal(options.bioOpt,'none') && ~isempty(jacobVec) || isequal(options.ID,'protons_const_RBExD')
 
                                    DoseProjection = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
 
-                                elseif isequal(type,'effect') && ~isempty(jacobVec)
+                                elseif isequal(options.bioOpt,'LEMIV_effect') && ~isempty(jacobVec)
 
                                     error('effect optimization in Theta constraint not implemented yet')
 
-                                elseif isequal(type,'RBExD') && ~isempty(jacobVec)
+                                elseif isequal(options.bioOpt,'LEMIV_RBExD') && ~isempty(jacobVec)
 
                                     error('RBExD optimization in Theta constraint not implemented yet')
 
@@ -347,15 +347,15 @@ for i = 1:size(cst,1)
                                 scenID  = [scenID;1];
                                 scenID2 = [scenID2;ones(numel(cst{i,4}{1}),1)];
 
-                                if isequal(type,'none') && ~isempty(jacobVec)
+                                if isequal(options.bioOpt,'none') && ~isempty(jacobVec) || isequal(options.ID,'protons_const_RBExD')
 
                                    DoseProjection = [DoseProjection,sparse(cst{i,4}{1}-cst{i,5}.VOIShift.roundedShift.idxShift(k),1,jacobVec,dij.numOfVoxels,1)];
 
-                                elseif isequal(type,'effect') && ~isempty(jacobVec)
+                                elseif isequal(options.bioOpt,'LEMIV_effect') && ~isempty(jacobVec)
 
                                     error('effect optimization in Theta constraint not implemented yet')
 
-                                elseif isequal(type,'RBExD') && ~isempty(jacobVec)
+                                elseif isequal(options.bioOpt,'LEMIV_RBExD') && ~isempty(jacobVec)
 
                                     error('RBExD optimization in Theta constraint not implemented yet')
 
