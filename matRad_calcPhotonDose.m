@@ -99,11 +99,7 @@ end
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
-if strcmp(num2str(pln.bixelWidth),'field')
-    useCustomPrimFluenceBool = 1;
-else
-    useCustomPrimFluenceBool = 0;
-end
+useCustomPrimFluenceBool = 0;
 
 %% kernel convolution
 % prepare data for convolution to reduce calculation time
@@ -231,7 +227,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
         bixelsPerBeam = bixelsPerBeam + 1;
     
         % convolution here if custom primary fluence OR field based dose calc
-        if useCustomPrimFluenceBool
+        if useCustomPrimFluenceBool || strcmp(num2str(pln.bixelWidth),'field')
             
             % overwrite field opening if necessary
             if strcmp(num2str(pln.bixelWidth),'field')
