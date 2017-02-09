@@ -1,14 +1,13 @@
-function collimation = matRad_importFieldShapes(BeamSequence, BeamSeqNames,MUs)
+function collimation = matRad_importFieldShapes(BeamSequence, fractionSequence)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % function to import collimator shapes from a DICOM RT plan
 % 
 % call
-%   Collimation = matRad_importFieldShapes(BeamSequence, BeamSeqNames)
+%   Collimation = matRad_importFieldShapes(BeamSequence, fractionSequence)
 %
 % input
-%   BeamSequence: struct containing the BeamSequence elements from the RT    
-%   BeamSeqNames: cell containing the names of the elements in BeamSequence
-%   MUs:          array containing the total MU applied per beam
+%   BeamSequence: struct containing the BeamSequence elements from the RT plan    
+%   fractionSequence: struct containing the fractionGroupSequence elements from the RT plan    
 %
 % output
 %   Collimation: struct with all meta information about the collimators and
@@ -30,22 +29,26 @@ function collimation = matRad_importFieldShapes(BeamSequence, BeamSeqNames,MUs)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-collimation = struct;
+counter = 0;
+tmpCollimation.Fields = struct;
 
 % check for following meta data in every control point sequence
 % Format: 'DICOM Name Tag' 'Name in struct'; ... 
 meta =  {'NominalBeamEnergy' 'Energy';'GantryAngle' 'GantryAngle';...
         'PatientSupportAngle' 'CouchAngle';'SourceToSurfaceDistance' 'SSD'};
 
-counter = 0;
-tmpCollimation.Fields = struct;
 % extract field information
-for i = 1:length(BeamSeqNames)
-    currBeamSeq = BeamSequence.(BeamSeqNames{i});
+beamSeqNames = fields(BeamSequence);
+for i = 1:length(beamSeqNames)
+    
+    currBeamSeq = BeamSequence.(beamSeqNames{i});
     cumWeight = 0;
     
+    % get total MU applied by beam i
+    tmpCollimation.beamMeterset(i) = fractionSequence.ReferencedBeamSequence.(beamSeqNames{i}).BeamMeterset;
+    
     % get collimator device types 
-    currDeviceSeq = BeamSequence.(BeamSeqNames{i}).BeamLimitingDeviceSequence;
+    currDeviceSeq = BeamSequence.(beamSeqNames{i}).BeamLimitingDeviceSequence;
     currDeviceSeqNames = fieldnames(currDeviceSeq);
     
     % set device specific parameters
@@ -69,7 +72,7 @@ for i = 1:length(BeamSeqNames)
         try
             FieldMeta.(meta{j,2}) = currBeamSeq.ControlPointSequence.(currControlPointSeqNames{1}).(meta{j,1});
         catch
-            warning(['Field ' meta{j,1} ' not found on beam sequence ' BeamSeqNames{i} ...
+            warning(['Field ' meta{j,1} ' not found on beam sequence ' beamSeqNames{i} ...
                      '. No field shape import performed!']);
             return;
         end
@@ -82,15 +85,17 @@ for i = 1:length(BeamSeqNames)
        if isfield(currControlPointElement, 'BeamLimitingDevicePositionSequence')
            % get the leaf position for every device
            tmpCollimation.Fields(counter).LeafPos{length(currDeviceSeqNames),1} = [];
-               
-           for k = 1:length(currDeviceSeqNames)
-           
-               % beam limiting device position sequence has to be defined on
-               % the first control point and has to be defined on following
-               % points only if it changes -> default initilation if counter > 1
-               if counter > 1
+
+           % beam limiting device position sequence has to be defined on
+           % the first control point and has to be defined on following
+           % points only if it changes -> default initilation if counter > 1
+           if counter > 1
+               for k = 1:length(currDeviceSeqNames)
                    tmpCollimation.Fields(counter).LeafPos{k} = tmpCollimation.Fields(counter-1).LeafPos{k};
                end
+           end
+
+           for k = 1:length(currDeviceSeqNames)
 
                if isfield(currControlPointElement.BeamLimitingDevicePositionSequence,currDeviceSeqNames{k})
                    currLeafPos = currControlPointElement.BeamLimitingDevicePositionSequence.(currDeviceSeqNames{k}).LeafJawPositions;          
@@ -100,7 +105,7 @@ for i = 1:length(BeamSeqNames)
 
                    if (length(currLeafPos) ~= 2 * device(deviceIx).NumOfLeafs)
                        warning(['Number of leafs/jaws does not match given number of leaf/jaw positions in control point sequence ' ...
-                                currControlPointSeqNames{j} ' on beam sequence ' BeamSeqNames{i} ' for device ' ...
+                                currControlPointSeqNames{j} ' on beam sequence ' beamSeqNames{i} ' for device ' ...
                                 device(deviceIx).DeviceType '. No field shape import performed!']);
                        return;
                    end
@@ -117,14 +122,15 @@ for i = 1:length(BeamSeqNames)
        % get field meta information
        if isfield(currControlPointElement, 'CumulativeMetersetWeight')      
            newCumWeight = currControlPointElement.CumulativeMetersetWeight;
-           tmpCollimation.Fields(counter).Weight = (newCumWeight - cumWeight)*MUs(i)/100;
+           tmpCollimation.Fields(counter).Weight = (newCumWeight - cumWeight) / ...
+                                    currBeamSeq.FinalCumulativeMetersetWeight * ...
+                                    tmpCollimation.beamMeterset(i)/100;
            cumWeight = newCumWeight;
        else
            warning(['No CumulativeMetersetWeight found in control point sequence ' currControlPointSeqNames{j} ...
-                    ' on beam ' BeamSeqNames{i} '. No field shape import performed!']);
+                    ' on beam ' beamSeqNames{i} '. No field shape import performed!']);
            return;
        end
-       tmpCollimation.Fields(counter).FinalCumWeight = currBeamSeq.FinalCumulativeMetersetWeight;
        tmpCollimation.Fields(counter).SAD = currBeamSeq.SourceAxisDistance;
         
        % other meta information is only included in all control point
@@ -137,7 +143,7 @@ for i = 1:length(BeamSeqNames)
            end
        end
        % save information which control point sequence belongs to which beam sequence       
-       tmpCollimation.FieldOfBeam(counter).BeamIndex = i;
+       tmpCollimation.Fields(counter).BeamIndex = i;
     end
 end
 tmpCollimation.numOfFields = counter;
@@ -152,7 +158,7 @@ counter = 0;
 for i = 1:length(tmpCollimation.Fields)
     counter = counter + 1;
     shape = ones(2*convLimits/convResolution); 
-    beamIndex = tmpCollimation.FieldOfBeam(i).BeamIndex;
+    beamIndex = tmpCollimation.Fields(i).BeamIndex;
     for j = 1:length(tmpCollimation.Devices{beamIndex})
         % check for ASYM and SYM jaws == type 1
         if strncmpi(tmpCollimation.Devices{beamIndex}(j).DeviceType,'ASYM',4)

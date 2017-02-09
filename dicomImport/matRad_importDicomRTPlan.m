@@ -95,7 +95,7 @@ end
 
 % transform iso. At the moment just this way for HFS
 if ct.dicomInfo.ImageOrientationPatient == [1;0;0;0;1;0]
-    isoCenter = isoCenter{1}' - ct.dicomInfo.ImagePositionPatient' + ...
+    isoCenter = isoCenter{1}' - [ct.x(1) ct.y(1) ct.z(1)] + ...
                          [ct.resolution.x ct.resolution.y ct.resolution.z];
 else
     error('This Orientation is not yet supported.');
@@ -125,15 +125,9 @@ end
 
 % extract field shapes
 if strcmp(radiationMode, 'photons')
-    
-    % get cummulative MU per beam
-    MUfields = fields(planInfo.FractionGroupSequence.Item_1.ReferencedBeamSequence);
-    MUs = NaN * ones(numel(MUfields),1);
-    for i = 1:numel(MUfields)
-        MUs(i) = planInfo.FractionGroupSequence.Item_1.ReferencedBeamSequence.(MUfields{i}).BeamMeterset;
-    end
-        
-    pln.Collimation = matRad_importFieldShapes(BeamSequence, BeamSeqNames,MUs);
+           
+    fractionSequence = planInfo.FractionGroupSequence.Item_1;
+    pln.Collimation  = matRad_importFieldShapes(BeamSequence,fractionSequence);
     
 end
 

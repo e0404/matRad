@@ -87,6 +87,13 @@ doseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
 V = [cst{:,4}];
 V = unique(vertcat(V{:}));
 
+% ignore densities outsode of contours
+eraseCtDensMask = logical(ones(dij.numOfVoxels,1));
+eraseCtDensMask(V) = 0;
+for i = 1:dij.numOfScenarios
+    ct.cube{i}(eraseCtDensMask) = 0;
+end
+
 % Convert CT subscripts to linear indices.
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
 
