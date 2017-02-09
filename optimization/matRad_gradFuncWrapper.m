@@ -233,34 +233,39 @@ for i = 1:options.numOfScenarios
 %             gnew = delta{i}'*(A + B);
          
             % 
-            F = matRad_objFunc(d{1},cst{2,6}(j),1);
-            
-            offest = 1e-3;
-            wTest = w;
-            wTest(1) = wTest(1) + offest;
-            
-            ddelta = matRad_backProjection(wTest,dij,options);
-            Fdelta = matRad_objFunc(ddelta{1},cst{2,6}(j),1);
-            
-            NumGrad = (Fdelta - F)/offest;
-            
-           
-            RBEmax = options.p0 + ((options.p1 * LETd )./ ab);
-            RBEmin = options.p2 + (options.p3  * real(sqrt(ab)) .* LETd);
+   
+             wInit = rand(numel(w),1);
              
-            Fac   = 1 ./(sqrt(ab.^2 + (4*dp.*ab.*RBEmax) + (4*dp.^2 .* RBEmin.^2))) ;
+             f = matRad_objFunc(d{1},cst{2,6}(1),1); 
+             
+             epsilon = 1e-8;
+
+             for l = 1:5%numel(wInit)
+
+                 wDelta = wInit;
+                 wDelta(l) = wDelta(l) + epsilon;
+
+                 dDelta = matRad_backProjection(wDelta,dij,options);
+                 fDelta = matRad_objFunc(dDelta{1},cst{2,6}(1),1); 
+
+                 numGrad = (fDelta-f)/epsilon;
+                 
+                 RBEmax = options.p0 + ((options.p1 * LETd )./ ab);
+                 RBEmin = options.p2 + (options.p3  * real(sqrt(ab)) .* LETd);
+
+                 Fac   = 0.25 ./(sqrt(ab.^2 + (4*dp.*ab.*RBEmax) + (4*dp.^2 .* RBEmin.^2))) ;
             
-            for ix = 1:1
+                 part1 = (4.*ab.* options.p0.*dij.physicalDose{1}(:,l)) + (4 * options.p1 * dij.mLETDose{1}(:,l));
+                 part2 = 8*(options.p2*dp + options.p3 * sqab.* (dij.mLETDose{dij.indexforOpt(i)} * w)).* (options.p2.*dij.physicalDose{1}(:,l) + options.p3 .* sqab .* dij.mLETDose{1}(:,l));
 
-               part1 = (4.*ab.* options.p0.*dij.physicalDose{1}(:,ix)) + (4 * options.p1 * dij.mLETDose{1}(:,ix));
+                 A = Fac .* (part1 + part2);
+                 A(isnan(A)) = 0;
 
-               part2 = 8*(options.p2*dp + options.p3 * sqab.* (dij.mLETDose{dij.indexforOpt(i)} * w)).* (options.p2.*dij.physicalDose{1}(:,ix) + options.p3 .* sqab .* dij.mLETDose{1}(:,ix));
+                 g_single = (A'*delta{1}); 
 
-               A = Fac .* (part1 + part2);
-               A(isnan(A)) = 0;
-
-               g_single = 0.5*(A'*delta{1}); g(1)
-            end
+                 diff = (g_single/g(l)-1)*100;
+                 fprintf(['Component # ' num2str(l) ' - rel diff of numerical and analytical gradient = ' num2str(diff) '\n']);
+             end
 
             
         end
