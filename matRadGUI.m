@@ -1208,7 +1208,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
    
 end
 
-zoom reset;
+zoom(handles.figure1,'reset');
 axis(handles.axesFig,'tight');
 
 if handles.rememberCurrAxes
@@ -1257,7 +1257,7 @@ oldView = get(axesFig3D,'View');
 cla(axesFig3D);
 %delete(allchild(axesFig3D));
 
-test = allchild(axesFig3D);
+%test = allchild(axesFig3D);
 
 plane = get(handles.popupPlane,'Value');
 slice = round(get(handles.sliderSlice,'Value'));
@@ -1311,7 +1311,7 @@ if handles.State >= 1 && exist('Result','var')
     end
 end
 
-matRad_plotPlan3D(axesFig3D,stf);
+%matRad_plotPlan3D(axesFig3D,pln,stf);
 
 %hLight = light('Parent',axesFig3D);
 %camlight(hLight,'left');
