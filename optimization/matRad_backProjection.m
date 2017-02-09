@@ -69,24 +69,24 @@ else
                 d{i} = e;
             elseif isequal(options.quantity,'RBExD') 
                 % calculate RBX x dose
-%                 scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
-%                 scaledEffect   = zeros(length(scaledEffectSq),1);
-%                 % compute sqrt(scaledEffect) only for numeric values (not nan) to save time
-%                 [idx,~]           = find(~isnan(scaledEffectSq));
-%                 scaledEffect(idx) = sqrt(scaledEffectSq(idx));
-%                 d{i}              = scaledEffect - dij.gamma;
+                scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
+                scaledEffect   = zeros(length(scaledEffectSq),1);
+                % compute sqrt(scaledEffect) only for numeric values (not nan) to save time
+                [idx,~]           = find(~isnan(scaledEffectSq));
+                scaledEffect(idx) = sqrt(scaledEffectSq(idx));
+                d{i}              = scaledEffect - dij.gamma;
                 
                 
-                ab     = dij.ax./dij.bx;
-                dp     = dij.physicalDose{dij.indexforOpt(i)} * w;
-                LETd   = (dij.mLETDose{dij.indexforOpt(i)}  * w)./dp;     
-                RBEmax = options.p0 + ((options.p1 * LETd )./ ab);
-                RBEmin = options.p2 + (options.p3  * real(sqrt(ab)) .* LETd);
-                                        
-                
-                d{i}  = 0.5 .* (sqrt(ab.^2 + (4*dp.*ab.*RBEmax) + (4*dp.^2 .* RBEmin.^2)) - ab);
+%                 ab     = dij.ax./dij.bx;
+%                 dp     = dij.physicalDose{dij.indexforOpt(i)} * w;
+%                 LETd   = (dij.mLETDose{dij.indexforOpt(i)}  * w)./dp;     
+%                 RBEmax = options.p0 + ((options.p1 * LETd )./ ab);
+%                 RBEmin = options.p2 + (options.p3  * real(sqrt(ab)) .* LETd);
+%                                         
+%                 
+%                 d{i}  = 0.5 .* (sqrt(ab.^2 + (4*dp.*ab.*RBEmax) + (4*dp.^2 .* RBEmin.^2)) - ab);
 %                 d{i}(isnan(d{i})) = 0;
-%              d{i}  = 1./(2) .* (sqrt(ab.^2 + (4*dp.*ab.*RBEmax) + (4*dp.^2 .* RBEmin.^2)) - ab);
+
 
             else
                
