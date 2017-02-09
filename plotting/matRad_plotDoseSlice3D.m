@@ -86,7 +86,7 @@ dose_mask = alpha * (dose_slice < window(2) & dose_slice > max([window(1) thresh
 % mapping, this is why we use surface instead of slice
 doseHandle = surface(axesHandle,'XData',xMesh, 'YData',yMesh, 'ZData',zMesh, 'AlphaData',dose_mask, ...
         'CData',dose_rgb, 'CDataMapping','direct', ...
-        'EdgeColor','none', 'FaceColor','texturemap', 'BackFaceLighting','unlit','FaceLighting','flat','FaceAlpha','texturemap');
+        'EdgeColor','none', 'FaceColor','texturemap', 'BackFaceLighting','unlit','FaceLighting','flat','FaceAlpha','texturemap','Parent',axesHandle);
 
 end
 

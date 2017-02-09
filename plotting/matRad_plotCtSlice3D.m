@@ -74,9 +74,9 @@ elseif plane == 3 % Axial plane
     zMesh = ctSlice*ct.resolution.z*ones(ct.cubeDim(2),ct.cubeDim(1));    
     ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cube{cubeIdx}(:,:,ctSlice)-window(1))/(window(2) - window(1))))),cMap);
 end
-ctHandle = surface(axesHandle,'XData',xMesh, 'YData',yMesh, 'ZData',zMesh, ...
+ctHandle = surface('XData',xMesh, 'YData',yMesh, 'ZData',zMesh, ...
         'CData',ct_rgb, 'CDataMapping','direct', ...
-        'EdgeColor','none', 'FaceColor','texturemap', 'BackFaceLighting','unlit','FaceLighting','flat');
+        'EdgeColor','none', 'FaceColor','texturemap', 'BackFaceLighting','unlit','FaceLighting','flat','Parent',axesHandle);
 
 %{
 % slice plot with slice(...)
