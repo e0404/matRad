@@ -69,7 +69,7 @@ elseif isequal(pln.radiationMode,'protons')
         bioParam.model              = 'MCN';
         bioParam.description        = 'a phenomenological relative biological effectiveness (RBE) model for proton therapy based on all published in vitro cell survival data';
         bioParam.quantity           = 'RBExD';
-        bioParam.p0                 = 0.99064; % according to https://www.ncbi.nlm.nih.gov/pubmed/26459756
+        bioParam.p0                 = 0.999064; % according to https://www.ncbi.nlm.nih.gov/pubmed/26459756
         bioParam.p1                 = 0.35605;
         bioParam.p2                 = 1.1012;
         bioParam.p3                 = -0.0038703;

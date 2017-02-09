@@ -80,10 +80,10 @@ options.ipopt.limited_memory_max_history    = 6;
 options.ipopt.limited_memory_initialization = 'scalar2';
 
 % Derivative Test (C.14)
-% options.ipopt.derivative_test               = 'first-order';
-% options.ipopt.derivative_test_perturbation  = 1e-4;
-% options.ipopt.derivative_test_tol           = 1e-3;
-% options.ipopt.derivative_test_print_all     = 'yes';
+options.ipopt.derivative_test               = 'first-order';
+options.ipopt.derivative_test_perturbation  = 1e-4;
+options.ipopt.derivative_test_tol           = 1e-3;
+options.ipopt.derivative_test_print_all     = 'yes';
 
 % MA57 Linear Solver (C.16)
 %options.ipopt.ma57_automatic_scaling = 'yes';

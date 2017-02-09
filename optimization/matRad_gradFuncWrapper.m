@@ -218,7 +218,43 @@ for i = 1:options.numOfScenarios
             quadTerm     = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
             mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{dij.indexforOpt(i)})';
             g            = g + vBias + mPsi ;
+            
+            % utils
+            ab = dij.ax./dij.bx;
+            sqab = real(sqrt(ab));
+            dp   = dij.physicalDose{dij.indexforOpt(i)} * w;
+            LETd = (dij.mLETDose{dij.indexforOpt(i)} * w)./dp;
+            
+            % deriviative effect
+%             NumGrad = 1;
+%             A =  options.p0 .* dij.ax .* dij.physicalDose{1}(:,NumGrad) + options.p1 * dij.bx .* dij.mLETDose{1}(:,NumGrad);
+%             B = 2 * dij.bx .* (options.p2 * dp - options.p3 * sqab .* LETd .* dp) .* (options.p2 * dij.physicalDose{1}(:,NumGrad) - options.p3 * sqab .* dij.mLETDose{1}(:,NumGrad));
+%             
+%             gnew = delta{i}'*(A + B);
+            
+%             
+%             % 
+%             RBEmax = options.p0 + ((options.p1 ./ab).*LETd);
+%             RBEmin = options.p2 - (options.p3 * sqrt(ab).*LETd);
+%              
+%             Fac   = 1 ./(sqrt(ab.^2 + (4*dp.*ab.*RBEmax) + (4*dp.^2 .* RBEmin.^2))) ;
+%             
+%             for NumGrad = 1:7
+% 
+%                part1 = (4.*ab.* options.p0.*dij.physicalDose{1}(:,NumGrad)) + (4 * options.p1 * dij.mLETDose{1}(:,NumGrad));
+% 
+%                part2 = 8*(options.p2*dp + options.p3 * sqab.* (dij.mLETDose{dij.indexforOpt(i)} * w)).* (options.p2.*dij.physicalDose{1}(:,NumGrad) + options.p3 .* sqab .* dij.mLETDose{1}(:,NumGrad));
+% 
+%                A = Fac .* (part1 + part2);
+%                A(isnan(A)) = 0;
+% 
+%                g_single = 0.5*(A'*delta{i});
+% 
+%                g(NumGrad) = g_single;
+%             
+%             end
 
+            
         end
 
     end
