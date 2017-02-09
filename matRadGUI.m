@@ -2603,6 +2603,7 @@ if ~isempty(AllVarNames)
 
     if handles.State > 0
         ct = evalin('base','ct');
+        cst = evalin('base','cst');
         set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
                 'Value',ceil(ct.cubeDim(handles.plane)/2),...
                 'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);      
@@ -2617,14 +2618,30 @@ if handles.State == 0
     delete(contextUi)
 end
 
-handles.cBarChanged;
+if handles.State > 0
+    set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
+            'Value',ceil(ct.cubeDim(handles.plane)/2),...
+            'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);      
+    
+    % define context menu for structures
+    for i = 1:size(cst,1)
+        if cst{i,5}.Visible
+            handles.VOIPlotFlag(i) = true;
+        else
+            handles.VOIPlotFlag(i) = false;
+        end
+    end
+end
 
-guidata(hObject,handles);
+%Reset colorbar
+handles.dispWindow  = cell(3,2);
+handles.cBarChanged = true;
+
 UpdateState(handles);
+handles.rememberCurrAxes = false;
 UpdatePlot(handles);
-
-
-
+handles.rememberCurrAxes = true;
+guidata(hObject,handles);
 
 
 % text box: # fractions
