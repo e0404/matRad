@@ -17,7 +17,7 @@ bioParam.radiationMode = pln.radiationMode;
 %% check for supported optimization methods using PROTONS    
 elseif isequal(pln.radiationMode,'protons')
     
-    if isequal(pln.bioOptimization,'physical')
+    if isequal(pln.bioOptimization,'none')
         bioParam.bioOpt           = false;
         bioParam.type             = pln.bioOptimization;
         bioParam.model            = 'none';

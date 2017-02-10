@@ -27,19 +27,19 @@ options.ipopt.print_options_documentation   = 'no';
 options.ipopt.print_info_string             = 'yes';
 
 % Termination (C.2)
-options.ipopt.tol                           = 1e-11; % (Opt1)
+options.ipopt.tol                           = 1e-12; % (Opt1)
 options.ipopt.dual_inf_tol                  = 1;    % (Opt2)
-options.ipopt.constr_viol_tol               = 1e-7; % (Opt3)
-options.ipopt.compl_inf_tol                 = 1e-7; % (Opt4), Optimal Solution Found if (Opt1),...,(Opt4) fullfiled
+options.ipopt.constr_viol_tol               = 1e-8; % (Opt3)
+options.ipopt.compl_inf_tol                 = 1e-8; % (Opt4), Optimal Solution Found if (Opt1),...,(Opt4) fullfiled
 
 options.ipopt.acceptable_iter               = 3;    % (Acc1)
-options.ipopt.acceptable_tol                = 1e10; % (Acc2)
-options.ipopt.acceptable_constr_viol_tol    = 1e-4; % (Acc3)
+options.ipopt.acceptable_tol                = 1e11; % (Acc2)
+options.ipopt.acceptable_constr_viol_tol    = 1e-5; % (Acc3)
 options.ipopt.acceptable_dual_inf_tol       = 1e13; % (Acc4)
 options.ipopt.acceptable_compl_inf_tol      = 1e13; % (Acc5)
-options.ipopt.acceptable_obj_change_tol     = 1e-6; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
+options.ipopt.acceptable_obj_change_tol     = 1e-7; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
 
-options.ipopt.max_iter                      = 300;
+options.ipopt.max_iter                      = 500;
 options.ipopt.max_cpu_time                  = 3000;
 
 % NLP Scaling (C.3)
@@ -80,10 +80,10 @@ options.ipopt.limited_memory_max_history    = 6;
 options.ipopt.limited_memory_initialization = 'scalar2';
 
 % Derivative Test (C.14)
-options.ipopt.derivative_test               = 'first-order';
-options.ipopt.derivative_test_perturbation  = 1e-4;
-options.ipopt.derivative_test_tol           = 1e-3;
-options.ipopt.derivative_test_print_all     = 'yes';
+% options.ipopt.derivative_test               = 'first-order';
+% options.ipopt.derivative_test_perturbation  = 1e-4;
+% options.ipopt.derivative_test_tol           = 1e-3;
+% options.ipopt.derivative_test_print_all     = 'yes';
 
 % MA57 Linear Solver (C.16)
 %options.ipopt.ma57_automatic_scaling = 'yes';

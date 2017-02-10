@@ -204,75 +204,127 @@ for i = 1:options.numOfScenarios
             g            = g + (delta{i}' * dij.physicalDose{dij.indexforOpt(i)} * dij.RBE)';
             
         elseif isequal(options.quantity,'effect') 
-
-            vBias        = (delta{i}' * dij.mAlphaDose{dij.indexforOpt(i)})';
-            quadTerm     = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
-            mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{dij.indexforOpt(i)})';
-            g            =  g + vBias + mPsi ; 
+           if isequal(options.radMod,'carbon')
+              
+              vBias        = (delta{i}' * dij.mAlphaDose{dij.indexforOpt(i)})';
+              quadTerm     = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
+              mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{dij.indexforOpt(i)})';
+              g            =  g + vBias + mPsi ; 
+               
+           elseif isequal(options.model,'MCN')
+             
+              dp       = dij.physicalDose{dij.indexforOpt(i)} * w;
+              ix       = dp > 0;
+              LETd     = zeros(dij.numOfVoxels,1);
+              LETd(ix) = (dij.mLETDose{dij.indexforOpt(i)}(ix,:)  * w)./dp(ix);
+             
+              sqab     = zeros(dij.numOfVoxels,1);
+              sqab(ix) = sqrt(dij.abX(ix));
+               
+              part1 =  (options.p0 * ((dij.ax .* delta{i})'*dij.physicalDose{1})) + (options.p0 * options.p1 *  ((dij.bx .*delta{i})'*dij.mLETDose{1}));
+              Fac   =  (2*dij.bx .* delta{1}).*((dp * options.p2) -  ( dp * options.p3  .* sqab .* LETd));
+ 
+              part2 = (((options.p2*Fac)' * dij.physicalDose{1}) - ((options.p3 * sqab .* Fac)' *dij.mLETDose{1}));
+              
+%               
+%               ref2 = 2*dij.bx .* (dp*options.p2 - dp*options.p3 .* sqab .*LETd) .* (options.p2 .* dij.physicalDose{1}(:,3) - options.p3 * sqab .* dij.mLETDose{1}(:,3));
+%               ref22 = delta{1}'*ref2;
+%               mPsi(3)
+%               part2(3)
+%               
+              g = g + (part1 + part2)';
+           else
+              error('not implemented');
+           end
 
         elseif isequal(options.quantity,'RBExD') 
 
-            scaledEffect = d{i} + dij.gamma;
-            deltaTmp     = delta{i}./(2*dij.bx.*scaledEffect);
-            vBias        = (deltaTmp' * dij.mAlphaDose{dij.indexforOpt(i)})';
-            quadTerm     = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
-            mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{dij.indexforOpt(i)})';
-            g            = g + vBias + mPsi ;
+           if isequal(options.radMod,'MCN')
+               scaledEffect = d{i} + dij.gamma;
+               deltaTmp     = delta{i}./(2*dij.bx.*scaledEffect);
+               vBias        = (deltaTmp' * dij.mAlphaDose{dij.indexforOpt(i)})';
+               quadTerm     = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
+               mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{dij.indexforOpt(i)})';
+               g            = g + vBias + mPsi ;
             
-            % utils
-            ab = dij.ax./dij.bx; ab(isnan(ab)) = 0;
-            sqab = real(sqrt(ab));
-            dp   = dij.physicalDose{dij.indexforOpt(i)} * w;
-            LETd = (dij.mLETDose{dij.indexforOpt(i)} * w)./dp;
-            LETd(isnan(LETd)) = 0;
-            
-            % deriviative effect
-%             NumGrad = 1;
-%             A =  options.p0 .* dij.ax .* dij.physicalDose{1}(:,NumGrad) + options.p1 * dij.bx .* dij.mLETDose{1}(:,NumGrad);
-%             B = 2 * dij.bx .* (options.p2 * dp - options.p3 * sqab .* LETd .* dp) .* (options.p2 * dij.physicalDose{1}(:,NumGrad) - options.p3 * sqab .* dij.mLETDose{1}(:,NumGrad));
-%             gnew = delta{i}'*(A + B);
-         
-            % 
-   
-             wInit = rand(numel(w),1);
+           elseif isequal(options.model,'MCN')
+               % precalculations
+               dp   = dij.physicalDose{dij.indexforOpt(i)} * w;
+               ix       = dp > 0;
+               sqab = real(sqrt(dij.abX));
+               LETd     = zeros(dij.numOfVoxels,1);
+               RBEmax   = zeros(dij.numOfVoxels,1);
+               RBEmin   = zeros(dij.numOfVoxels,1); Fac = zeros(dij.numOfVoxels,1); 
+               LETd(ix) = (dij.mLETDose{dij.indexforOpt(i)}(ix,:)  * w)./dp(ix);
+
+               RBEmax(ix) = options.p0 + ((options.p1 * LETd(ix) )./ dij.abX(ix));           
+               RBEmin(ix) = options.p2 + (options.p3  * real(sqrt(dij.abX(ix))) .* LETd(ix)); 
+              
+               Fac(ix)    = 0.25./(sqrt(dij.abX(ix).^2 + (4*dp(ix).*dij.abX(ix).*RBEmax(ix)) + (4*dp(ix).^2 .* RBEmin(ix).^2))); 
+               
+               % calculate derivative of single weights
+%             for l = 1:5
+%                  part1 = (4.*ab.* options.p0.*dij.physicalDose{1}(:,l)) + (4 * options.p1 * dij.mLETDose{1}(:,l));
+%                  part2 = 8*(options.p2*dp + options.p3 * sqab.* (dij.mLETDose{dij.indexforOpt(i)} * w)).* ...
+%                          (options.p2.*dij.physicalDose{1}(:,l) + options.p3 .* sqab .* dij.mLETDose{1}(:,l));
+% 
+%                  A = Fac .* (part1 + part2);
+%                  A(isnan(A)) = 0;
+%                  g_single = (A'*delta{1}); 
+%                  g(l) =g_single;
+%             end
+
+               vHelper = 8*(options.p2*dp + options.p3 * sqab .* (dij.mLETDose{dij.indexforOpt(i)} * w));
+               Factor = (delta{1}.*Fac)';
+               g  =  g + (((4*options.p0.*dij.abX.*Factor')' * dij.physicalDose{1}) + (Factor* ((4* options.p1) * dij.mLETDose{1})) + ...
+                   ((options.p2.*Factor.*vHelper') * dij.physicalDose{1}) + ((options.p3 .*Factor.*sqab'.*vHelper') * dij.mLETDose{1}))';
+
              
-             f = matRad_objFunc(d{1},cst{2,6}(1),1); 
-             
-             epsilon = 1e-8;
+%              mPart1 = bsxfun(@times,dij.physicalDose{1},4*options.p0.*ab) + ((4* options.p1) * dij.mLETDose{1});
+%              toc
+%              vPart2a =  8*(options.p2*dp + options.p3 * sqab .* (dij.mLETDose{dij.indexforOpt(i)} * w));
+%              mPart2b = options.p2.*dij.physicalDose{1} + bsxfun(@times,dij.mLETDose{1},options.p3 .* sqab);
+%              
+%              g2 = (delta{1}' * (Fac.* ( mPart1 + bsxfun(@times,mPart2b,vPart2a))));
+%              
+%              tmp = (delta{1}.*Fac)';
+%              g3 = (tmp * mPart1) +  (tmp * bsxfun(@times,mPart2b,vPart2a)) ;
+%              
+%              ref = (tmp * mPart1);
+%              mPart1ref = ((4*options.p0.*ab.*tmp')' * dij.physicalDose{1}) + (tmp* ((4* options.p1) * dij.mLETDose{1}));
+%              
+%              ref2 = tmp * bsxfun(@times,mPart2b,vPart2a);
+%              II = ((options.p2.*tmp.*vPart2a') * dij.physicalDose{1}) + ((options.p3 .*tmp.*sqab'.*vPart2a') * dij.mLETDose{1});
+%              
+%              g4 = mPart1ref + II;
 
-             for l = 1:5%numel(wInit)
-
-                 wDelta = wInit;
-                 wDelta(l) = wDelta(l) + epsilon;
-
-                 dDelta = matRad_backProjection(wDelta,dij,options);
-                 fDelta = matRad_objFunc(dDelta{1},cst{2,6}(1),1); 
-
-                 numGrad = (fDelta-f)/epsilon;
-                 
-                 RBEmax = options.p0 + ((options.p1 * LETd )./ ab);
-                 RBEmin = options.p2 + (options.p3  * real(sqrt(ab)) .* LETd);
-
-                 Fac   = 0.25 ./(sqrt(ab.^2 + (4*dp.*ab.*RBEmax) + (4*dp.^2 .* RBEmin.^2))) ;
-            
-                 part1 = (4.*ab.* options.p0.*dij.physicalDose{1}(:,l)) + (4 * options.p1 * dij.mLETDose{1}(:,l));
-                 part2 = 8*(options.p2*dp + options.p3 * sqab.* (dij.mLETDose{dij.indexforOpt(i)} * w)).* (options.p2.*dij.physicalDose{1}(:,l) + options.p3 .* sqab .* dij.mLETDose{1}(:,l));
-
-                 A = Fac .* (part1 + part2);
-                 A(isnan(A)) = 0;
-
-                 g_single = (A'*delta{1}); 
-
-                 diff = (g_single/g(l)-1)*100;
-                 fprintf(['Component # ' num2str(l) ' - rel diff of numerical and analytical gradient = ' num2str(diff) '\n']);
-             end
-
-            
+        
+           end
         end
 
     end
 end
 
+
+% compare gradient calculation to numerical gradient
+RunGradientChecker = false;
+
+if RunGradientChecker
+   f       = matRad_objFuncWrapper(w,dij,cst,options);
+   epsilon = 1e-8;
+
+   ix = unique(randi([1 numel(w)],1,10));
+
+   for i = ix
+      wInit   = w;
+      wInit(i) = wInit(i) + epsilon;
+      fDelta   = matRad_objFuncWrapper(wInit,dij,cst,options);
+      numGrad = (fDelta-f)/epsilon;
+      diff = (numGrad/g(i)-1)*100;
+      fprintf(['Component # ' num2str(i) ' - rel diff of numerical and analytical gradient = ' num2str(diff) '\n']);
+   end
+
+end
 % apply objective scaling
 g = fScaling.*g;
 

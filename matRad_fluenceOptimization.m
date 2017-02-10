@@ -211,7 +211,7 @@ options.radMod          = pln.radiationMode;
 % options.robOpt          = pln.robOpt;
 % options.ID              = [pln.radiationMode '_' pln.bioOptimization];
 % options.numOfScenarios  = dij.numOfScenarios;
-wInit        = ones(dij.totalNumOfBixels,1);
+%wInit        = ones(dij.totalNumOfBixels,1);
 % set callback functions.
 funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,options);
 funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,options);
@@ -221,7 +221,7 @@ funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 
 % scale objective and constraint function
 gInit    = abs(matRad_gradFuncWrapper(wInit,dij,cst,options));
-fScaling = 1;%1e2/max(gInit);
+fScaling = 1e2/max(gInit);
 
 
 if ~isempty(matRad_getConstBoundsWrapper(cst,options))

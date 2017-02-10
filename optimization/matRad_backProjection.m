@@ -59,35 +59,49 @@ else
     elseif options.bioOpt
         
         for i = 1:length(dij.indexforOpt)
-            
-            % calculate effect
-            linTerm  = dij.mAlphaDose{dij.indexforOpt(i)} * w;
-            quadTerm = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
-            e        = linTerm + quadTerm.^2;   
-            
+           
+             if isequal(options.radMod,'protons')
+               
+               dp       = dij.physicalDose{dij.indexforOpt(i)} * w;
+               ix       = dp > 0;
+               LETd     = zeros(dij.numOfVoxels,1);
+               RBEmax   = zeros(dij.numOfVoxels,1);
+               RBEmin   = zeros(dij.numOfVoxels,1);
+               LETd(ix) = (dij.mLETDose{dij.indexforOpt(i)}(ix,:)  * w)./dp(ix);
+             
+               RBEmax(ix) = options.p0 + ((options.p1 * LETd(ix) )./ dij.abX(ix));           
+               RBEmin(ix) = options.p2 + (options.p3  * real(sqrt(dij.abX(ix))) .* LETd(ix)); 
+               
+             elseif isequal(options.radMod,'carbon')
+               % calculate effect
+               linTerm  = dij.mAlphaDose{dij.indexforOpt(i)} * w;
+               quadTerm = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
+               e        = linTerm + quadTerm.^2;     
+             end
+       
+
             if isequal(options.quantity,'effect') 
-                d{i} = e;
+               if isequal(options.radMod,'protons')
+                  d{i} = dij.ax.*RBEmax.*dp + dij.bx .* RBEmin.^2 .* dp.^2;
+               else
+                  d{i} = e;
+               end
             elseif isequal(options.quantity,'RBExD') 
-                % calculate RBX x dose
-                scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
-                scaledEffect   = zeros(length(scaledEffectSq),1);
-                % compute sqrt(scaledEffect) only for numeric values (not nan) to save time
-                [idx,~]           = find(~isnan(scaledEffectSq));
-                scaledEffect(idx) = sqrt(scaledEffectSq(idx));
-                d{i}              = scaledEffect - dij.gamma;
-                
-                
-%                 ab     = dij.ax./dij.bx;
-%                 dp     = dij.physicalDose{dij.indexforOpt(i)} * w;
-%                 LETd   = (dij.mLETDose{dij.indexforOpt(i)}  * w)./dp;     
-%                 RBEmax = options.p0 + ((options.p1 * LETd )./ ab);
-%                 RBEmin = options.p2 + (options.p3  * real(sqrt(ab)) .* LETd);
-%                                         
-%                 
-%                 d{i}  = 0.5 .* (sqrt(ab.^2 + (4*dp.*ab.*RBEmax) + (4*dp.^2 .* RBEmin.^2)) - ab);
-%                 d{i}(isnan(d{i})) = 0;
-
-
+               if isequal(options.radMod,'protons')
+                  d{i}  = 0.5 .* (sqrt(dij.abX.^2 + (4*dp.*dij.abX.*RBEmax) + (4*dp.^2 .* RBEmin.^2)) - dij.abX);
+               else
+                  linTerm  = dij.mAlphaDose{dij.indexforOpt(i)} * w;
+                  quadTerm = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
+                  e        = linTerm + quadTerm.^2;   
+                  % calculate RBX x dose
+                  scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
+                  scaledEffect   = zeros(length(scaledEffectSq),1);
+                  % compute sqrt(scaledEffect) only for numeric values (not nan) to save time
+                  [idx,~]           = find(~isnan(scaledEffectSq));
+                  scaledEffect(idx) = sqrt(scaledEffectSq(idx));
+                  d{i}              = scaledEffect - dij.gamma;
+               end
+                            
             else
                
                error('not implemented')

@@ -150,8 +150,9 @@ end
 if pln.bioParam.bioOpt && strcmp(pln.radiationMode,'protons')
 
     fprintf('matRad: precumputations for biological treatment planning... ');
-    alphaX = zeros(size(V,1),1);
-    betaX  = zeros(size(V,1),1);
+    dij.alphaX = zeros(dij.numOfVoxels,1);
+    dij.betaX  = zeros(dij.numOfVoxels,1);
+    dij.abX    = zeros(dij.numOfVoxels,1);
     %set overlap priorities
     cst  = matRad_setOverlapPriorities(cst);
     
@@ -161,16 +162,16 @@ if pln.bioParam.bioOpt && strcmp(pln.radiationMode,'protons')
        
         % check if cst is compatiable 
         if ~isempty(cst{i,5}) && isfield(cst{i,5},'alphaX') && isfield(cst{i,5},'betaX') 
-            alphaX(row) = cst{i,5}.alphaX;
-            betaX(row)  = cst{i,5}.betaX;               
+            dij.alphaX(V(row)) = cst{i,5}.alphaX;
+            dij.betaX(V(row))  = cst{i,5}.betaX;               
         else
-            alphaX(row) = 0.1;    % default parameter  
-            betaX(row)  = 0.05;   % default parameter
+            dij.alphaX(V(row)) = 0.1;    % default parameter  
+            dij.betaX(V(row))  = 0.05;   % default parameter
             fprintf(['matRad: using default alpha_x and beta_x parameters for ' cst{i,2} ' \n']);
         end
   
     end
-    ab_ratio_x = alphaX./betaX;
+    dij.abX(dij.betaX>0) = dij.alphaX(dij.betaX>0)./dij.betaX(dij.betaX>0);
     fprintf('done.\n');
         
 % generates tissue class matrix for biological optimization
@@ -398,8 +399,8 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
 
                                      elseif strcmp(pln.bioParam.model,'LSM')  && strcmp(pln.radiationMode,'protons')
 
-                                        alpha_0            = alphaX(ix(currIx)) - (pln.bioParam.lamda_1_1 * pln.bioParam.corrFacEntranceRBE);  
-                                        bixelAlpha         = zeros(size(bixelDose)); bixelBeta = zeros(size(bixelDose));
+                                        alpha_0            = dij.alphaX(ix(currIx)) - (pln.bioParam.lamda_1_1 * pln.bioParam.corrFacEntranceRBE);  
+                                        bixelAlpha         = zeros(size(bixelDose)); dij.bixelBeta = zeros(size(bixelDose));
                                         ixLSM              = pln.bioParam.lowerLETThreshold < bixelLET < pln.bioParam.upperLETThreshold;
 
                                         bixelAlpha(ixLSM)  = alpha_0(ixLSM) + pln.bioParam.lamda_1_1 * bixelLET;
@@ -413,11 +414,10 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                                         
                                      elseif strcmp(pln.bioParam.model,'MCN')  && strcmp(pln.radiationMode,'protons')
                                         
-                                        ab         = ab_ratio_x(ix(currIx));
-                                        RBEmax     = pln.bioParam.p0 + ((pln.bioParam.p1 * bixelLET )./ ab);
-                                        RBEmin     = pln.bioParam.p2 + (pln.bioParam.p3  * real(sqrt(ab)) .* bixelLET);
-                                        bixelAlpha = RBEmax    .* alphaX(ix(currIx));
-                                        bixelBeta  = RBEmin.^2 .*  betaX(ix(currIx));
+                                        RBEmax     = pln.bioParam.p0 + ((pln.bioParam.p1 * bixelLET )./ dij.abX(V(ix(currIx))));
+                                        RBEmin     = pln.bioParam.p2 + (pln.bioParam.p3  * sqrt(dij.abX(V(ix(currIx)))) .* bixelLET);
+                                        bixelAlpha = RBEmax    .* dij.alphaX(V(ix(currIx)));
+                                        bixelBeta  = RBEmin.^2 .* dij.betaX(V(ix(currIx)));
                                         
                                      end
 
