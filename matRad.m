@@ -26,8 +26,8 @@ clc
 %load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
-%load([pwd filesep 'patients' filesep 'BOXPHANTOM_TINY.mat']);
-load(['/Volumes/WS_exFat/TG119/verification/TG119.mat']);
+load([pwd filesep 'patients' filesep 'BOXPHANTOM_TINY.mat']);
+%load(['/Volumes/WS_exFat/TG119/verification/TG119.mat']);
 
 %load('/Volumes/WS_exFat/TG119/verification/TG119.mat')
 %cst{2,5}.alphaX = 0.1; cst{2,5}.betaX = 0.01;
@@ -43,8 +43,8 @@ pln.exportInfluenceDataToASCII = false;
 %% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 4; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0 45 315]; %[0:72:359]; % [°]
-pln.couchAngles     = [0 0 0]; % [Â°]
+pln.gantryAngles    = [0]; %[0:72:359]; % [°]
+pln.couchAngles     = [0]; % [Â°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
@@ -52,7 +52,7 @@ pln.radiationMode   = 'protons';     % either photons / protons / carbon
 pln.bioOptimization = 'MCN_RBExD';   % none: physical optimization;                                   const_RBExD; constant RBE of 1.1;  
                                      % LSM_effect;  variable RBE Linear Scaling Model (effect based); LSM_RBExD;  variable RBE Linear Scaling Model (RBExD based)
                                      % LEMIV_effect: effect-based optimization;                       LEMIV_RBExD: optimization of RBE-weighted dose
-pln.numOfFractions         = 1
+pln.numOfFractions         = 20;
 pln.runSequencing          = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO                 = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.machine                = 'GenericLET';%GenericLET
@@ -85,9 +85,9 @@ if pln.exportInfluenceDataToASCII
 end
 
 %% inverse planning for imrt
-diary('OptimizationOutput')
+%diary('OptimizationOutput')
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-diary off
+%diary off
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
     %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);

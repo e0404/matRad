@@ -70,7 +70,7 @@ else
                LETd(ix) = (dij.mLETDose{dij.indexforOpt(i)}(ix,:)  * w)./dp(ix);
              
                RBEmax(ix) = options.p0 + ((options.p1 * LETd(ix) )./ dij.abX(ix));           
-               RBEmin(ix) = options.p2 + (options.p3  * real(sqrt(dij.abX(ix))) .* LETd(ix)); 
+               RBEmin(ix) = options.p2 - (options.p3  * real(sqrt(dij.abX(ix))) .* LETd(ix)); 
                
              elseif isequal(options.radMod,'carbon')
                % calculate effect
@@ -78,8 +78,7 @@ else
                quadTerm = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
                e        = linTerm + quadTerm.^2;     
              end
-       
-
+           
             if isequal(options.quantity,'effect') 
                if isequal(options.radMod,'protons')
                   d{i} = dij.ax.*RBEmax.*dp + dij.bx .* RBEmin.^2 .* dp.^2;
@@ -87,9 +86,9 @@ else
                   d{i} = e;
                end
             elseif isequal(options.quantity,'RBExD') 
-               if isequal(options.radMod,'protons')
-                  d{i}  = 0.5 .* (sqrt(dij.abX.^2 + (4*dp.*dij.abX.*RBEmax) + (4*dp.^2 .* RBEmin.^2)) - dij.abX);
-               else
+              % if isequal(options.radMod,'protons')
+                  d_ref  = 0.5 .* (sqrt(dij.abX.^2 + (4*dp.*dij.abX.*RBEmax) + (4*dp.^2 .* RBEmin.^2)) - dij.abX);
+              % else
                   linTerm  = dij.mAlphaDose{dij.indexforOpt(i)} * w;
                   quadTerm = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
                   e        = linTerm + quadTerm.^2;   
@@ -100,7 +99,11 @@ else
                   [idx,~]           = find(~isnan(scaledEffectSq));
                   scaledEffect(idx) = sqrt(scaledEffectSq(idx));
                   d{i}              = scaledEffect - dij.gamma;
-               end
+                  
+                 if  sum(abs(d_ref -d{1})) > 1e-6
+                    error('error');
+                 end
+              % end
                             
             else
                
