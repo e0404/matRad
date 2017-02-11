@@ -95,8 +95,7 @@ end
 
 % transform iso. At the moment just this way for HFS
 if ct.dicomInfo.ImageOrientationPatient == [1;0;0;0;1;0]
-    isoCenter = isoCenter{1}' - [ct.x(1) ct.y(1) ct.z(1)] + ...
-                         [ct.resolution.x ct.resolution.y ct.resolution.z];
+    isoCenter = isoCenter{1}'-[ct.x(1) ct.y(1) ct.z(1)]+[ct.resolution.x ct.resolution.y ct.resolution.z];
 else
     error('This Orientation is not yet supported.');
 end

@@ -57,11 +57,11 @@ dose.cube = squeeze(dose.cube(:,:,1,:));
 % ct resolution is target resolution, now convert to new cube;
 
 % generating grid vectors
-x = doseInfo.ImagePositionPatient(1) + doseInfo.ImageOrientationPatient(1) * ...
+x = doseInfo.ImagePositionPatient(1) + .5*doseInfo.PixelSpacing(1) + doseInfo.ImageOrientationPatient(1) * ...
                                        doseInfo.PixelSpacing(1) * double([0:doseInfo.Columns - 1]);
-y = doseInfo.ImagePositionPatient(2) + doseInfo.ImageOrientationPatient(5) * ...
+y = doseInfo.ImagePositionPatient(2) + .5*doseInfo.PixelSpacing(2) + doseInfo.ImageOrientationPatient(5) * ...
                                        doseInfo.PixelSpacing(2) * double([0:doseInfo.Rows - 1]);
-z = [doseInfo.ImagePositionPatient(3) + doseInfo.GridFrameOffsetVector];
+z = [doseInfo.ImagePositionPatient(3) + .5*doseInfo.SliceThickness + doseInfo.GridFrameOffsetVector];
 
 % set up grid matrices - implicit dimension permuation (X Y Z-> Y X Z)
 % Matlab represents internally in the first matrix dimension the
