@@ -58,9 +58,6 @@ end
 % Remove double voxels
 V = unique(V);
 
-% density threshold used for SSD calculation
-DensityThresholdSSD = 0.05;
-
 % generate voi cube for targets
 voiTarget    = zeros(ct.cubeDim);
 voiTarget(V) = 1;
@@ -221,7 +218,6 @@ for i = 1:length(pln.gantryAngles)
     for j = 1:stf(i).numOfRays
         stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
         stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
-        stf(i).ray(j).SSD         = NaN;
         if strcmp(pln.radiationMode,'photons') 
             stf(i).ray(j).rayCorners_SCD = (repmat([0, machine.meta.SCD - SAD, 0],4,1)+ (machine.meta.SCD/SAD) * ...
                                                              [rayPos(j,:) + [+stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
@@ -237,33 +233,24 @@ for i = 1:length(pln.gantryAngles)
     for j = stf(i).numOfRays:-1:1
 
         % ray tracing necessary to determine depth of the target
-        [alpha,l,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
+        [~,l,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
                              ct.resolution, ...
                              stf(i).sourcePoint, ...
                              stf(i).ray(j).targetPoint, ...
-                             [ct.cube {voiTarget}]);
+                             {voiTarget});
 
-            ixSSD = find(rho{1} > DensityThresholdSSD,1,'first');
-
-            if isempty(ixSSD)== 1
-                warning('Surface for SSD calculation starts directly in first voxel of CT\n');
-            end
-            
-            % calculate SSD
-            stf(i).ray(j).SSD = 2 * stf(i).SAD * alpha(ixSSD);
-            
         % find appropriate energies for particles
        if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
 
            % target hit
-           if sum(rho{2}) > 0 
+           if sum(rho{1}) > 0 
 
                 % compute radiological depths
                 % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
                 radDepths = cumsum(l .* rho{1}); 
 
                 % find target entry & exit
-                diff_voi    = diff([rho{2}]);
+                diff_voi    = diff([rho{1}]);
                 targetEntry = radDepths(diff_voi == 1);
                 targetExit  = radDepths(diff_voi == -1);
 

@@ -162,6 +162,9 @@ elseif sum(strcmp(pln.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && ~str
     pln.bioOptimization = 'none';      
 end
 
+% compute SSDs
+stf = matRad_computeSSD(stf,ct);
+
 fprintf('matRad: Particle dose calculation...\n');
 counter = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
