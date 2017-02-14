@@ -27,8 +27,8 @@ if pln.robOpt
    multScen.numOfRangeShiftScen  = 2;              % number of absolute and/or relative range scnearios. if absolute and relative range scenarios are defined then relative and absolute errors are combined
    multScen.absRangeShift        = 0;              % maximum absolute over and undershoot in mm
    multScen.rangeAbsSD           = 1;              % SD of normal distribution
-   multScen.relRangeShift        = 3.5;              % maximum relative over and undershoot in %
-   multScen.rangeRelSD           = 3.5;              % SD of normal distribution
+   multScen.relRangeShift        = 3.5;            % maximum relative over and undershoot in %
+   multScen.rangeRelSD           = 3.5;            % SD of normal distribution
    multScen.ScenCombType         = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
 
 else

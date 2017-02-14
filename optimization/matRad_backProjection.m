@@ -58,66 +58,44 @@ else
         
     elseif options.bioOpt
         
-        for i = 1:length(dij.indexforOpt)
+          for i = 1:length(dij.indexforOpt)
            
-             if isequal(options.radMod,'protons')
-               
-               dp       = dij.physicalDose{dij.indexforOpt(i)} * w;
-               ix       = dp > 0;
-               LETd     = zeros(dij.numOfVoxels,1);
-               RBEmax   = zeros(dij.numOfVoxels,1);
-               RBEmin   = zeros(dij.numOfVoxels,1);
-               LETd(ix) = (dij.mLETDose{dij.indexforOpt(i)}(ix,:)  * w)./dp(ix);
-             
-               RBEmax(ix) = options.p0 + ((options.p1 * LETd(ix) )./ dij.abX(ix));           
-               RBEmin(ix) = options.p2 - (options.p3  * real(sqrt(dij.abX(ix))) .* LETd(ix)); 
-               
-             elseif isequal(options.radMod,'carbon')
-               % calculate effect
-               linTerm  = dij.mAlphaDose{dij.indexforOpt(i)} * w;
-               quadTerm = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
-               e        = linTerm + quadTerm.^2;     
-             end
-           
-            if isequal(options.quantity,'effect') 
-               if isequal(options.radMod,'protons')
-                  d{i} = dij.ax.*RBEmax.*dp + dij.bx .* RBEmin.^2 .* dp.^2;
-               else
-                  d{i} = e;
-               end
-            elseif isequal(options.quantity,'RBExD') 
-              % if isequal(options.radMod,'protons')
-                  d_ref  = 0.5 .* (sqrt(dij.abX.^2 + (4*dp.*dij.abX.*RBEmax) + (4*dp.^2 .* RBEmin.^2)) - dij.abX);
-              % else
+%                   dp       = dij.physicalDose{dij.indexforOpt(i)} * w;
+%                   ix       = dp > 0;
+%                   LETd     = zeros(dij.numOfVoxels,1);
+%                   RBEmax   = zeros(dij.numOfVoxels,1);
+%                   RBEmin   = zeros(dij.numOfVoxels,1);
+%                   LETd(ix) = (dij.mLETDose{dij.indexforOpt(i)}(ix,:)  * w)./dp(ix);
+% 
+%                   RBEmax(ix) = options.p0 + ((options.p1 * LETd(ix) )./ dij.abX(ix));           
+%                   RBEmin(ix) = options.p2 - (options.p3  * real(sqrt(dij.abX(ix))) .* LETd(ix)); 
+%                   d_ref  = 0.5 .* (sqrt(dij.abX.^2 + (4*dp.*dij.abX.*RBEmax) + (4*dp.^2 .* RBEmin.^2)) - dij.abX);
+%                   
                   linTerm  = dij.mAlphaDose{dij.indexforOpt(i)} * w;
                   quadTerm = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
-                  e        = linTerm + quadTerm.^2;   
-                  % calculate RBX x dose
-                  scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
-                  scaledEffect   = zeros(length(scaledEffectSq),1);
-                  % compute sqrt(scaledEffect) only for numeric values (not nan) to save time
-                  [idx,~]           = find(~isnan(scaledEffectSq));
-                  scaledEffect(idx) = sqrt(scaledEffectSq(idx));
-                  d{i}              = scaledEffect - dij.gamma;
-                  
-                 if  sum(abs(d_ref -d{1})) > 1e-6
-                    error('error');
-                 end
-              % end
+                  e        = linTerm + quadTerm.^2; 
+                  if isequal(options.quantity,'effect') 
+                      d{i} = e;
+                  else
+                     % calculate RBX x dose
+                     scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
+                     scaledEffect   = zeros(length(scaledEffectSq),1);
+                     % compute sqrt(scaledEffect) only for numeric values (not nan) to save time
+                     [idx,~]           = find(~isnan(scaledEffectSq));
+                     scaledEffect(idx) = sqrt(scaledEffectSq(idx));
+                     d{i}              = scaledEffect - dij.gamma;
+                  end
                             
-            else
-               
-               error('not implemented')
-
-            end
             
-        end       
+          end
+            
+    end       
        
-    end   
+end   
     
-    matRad_global_d = d;
+matRad_global_d = d;
     
 end
 
-end
+
 

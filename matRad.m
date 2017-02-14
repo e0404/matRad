@@ -26,7 +26,7 @@ clc
 %load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
-load([pwd filesep 'patients' filesep 'BOXPHANTOM_TINY.mat']);
+%load([pwd filesep 'patients' filesep 'BOXPHANTOM_TINY.mat']);
 load(['/Volumes/WS_exFat/TG119/nominal/TG119.mat']);
 
 %load('/Volumes/WS_exFat/TG119/verification/TG119.mat')
@@ -49,7 +49,7 @@ pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.bioOptimization = 'const_RBExD';   % none: physical optimization;                                   const_RBExD; constant RBE of 1.1;  
+pln.bioOptimization = 'MCN_RBExD';   % none: physical optimization;                                 const_RBExD; constant RBE of 1.1;  
                                      % LSM_effect;  variable RBE Linear Scaling Model (effect based); LSM_RBExD;  variable RBE Linear Scaling Model (RBExD based)
                                      % LEMIV_effect: effect-based optimization;                       LEMIV_RBExD: optimization of RBE-weighted dose
 pln.numOfFractions         = 25;

@@ -399,10 +399,10 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
 
                                      elseif strcmp(pln.bioParam.model,'LSM')  && strcmp(pln.radiationMode,'protons')
 
-                                        alpha_0            = dij.alphaX(ix(currIx)) - (pln.bioParam.lamda_1_1 * pln.bioParam.corrFacEntranceRBE);  
                                         bixelAlpha         = zeros(size(bixelDose)); dij.bixelBeta = zeros(size(bixelDose));
                                         ixLSM              = pln.bioParam.lowerLETThreshold < bixelLET < pln.bioParam.upperLETThreshold;
-
+                                        
+                                        alpha_0            = dij.alphaX(V(ix(currIx))) - (pln.bioParam.lamda_1_1 * pln.bioParam.corrFacEntranceRBE);  
                                         bixelAlpha(ixLSM)  = alpha_0(ixLSM) + pln.bioParam.lamda_1_1 * bixelLET;
                                         
                                         if sum(ixLSM) < length(bixelLET)
@@ -410,7 +410,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                                             bixelAlpha(bixelLET < pln.bioParam.lowerLETThreshold) =  alpha_0(bixelLET < pln.bioParam.lowerLETThreshold) + pln.bioParam.lamda_1_1 * pln.bioParam.lowerLETThreshold;
                                         end
                                         
-                                        bixelBeta(:)         = betaX(ix(currIx));
+                                        bixelBeta        = dij.betaX(V(ix(currIx)));
                                         
                                      elseif strcmp(pln.bioParam.model,'MCN')  && strcmp(pln.radiationMode,'protons')
                                         
