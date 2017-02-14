@@ -1,69 +1,31 @@
-function matRad_calcMultipleDVH(data,cst,pln,Name,lineStyleIndicator)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad dvh calculation
-% 
-% call
-%   matRad_calcDVH(d,cst,lineStyleIndicator)
-%
-% input
-%   result:             result struct from fluence optimization/sequencing
-%   cst:                matRad cst struct
-%   lineStyleIndicator: integer (1,2,3,4) to indicate the current linestyle
-%                       (hint: use different lineStyles to overlay
-%                       different dvhs)
-%
-% output
-%   graphical display of DVH & dose statistics in console   
-%
-% References
-%   -
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Copyright 2015 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
-% LICENSE file.
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function matRad_calcMultipleDVH(data,cst,pln,sQuantity,Name,filename,FlagSaveTikz)
 
 % create new figure and set default line style indicator if not explictly
 % specified
-if nargin < 5 
-    f = figure('Name','DVH','Color',[0.5 0.5 0.5],'Position',([300 300 800 600]));
-    hold on
-    lineStyleIndicator = 1;
-else
-    hold on
-end
+[folder, ~, ~] = fileparts(mfilename('fullpath'));
 
+ f = figure('Name','DVH','Color',[1 1 1]);
 numOfVois = size(cst,1);
 
-% Create the column and row names in cell arrays 
-cnames = {'dummy_a'};
-rnames = cst(:,2);
-% Create the uitable
-table = uitable(gcf,'Data',zeros(length(rnames),length(cnames)),...
-            'ColumnName',cnames,... 
-            'RowName',rnames,'ColumnWidth',{70});
+% % Create the column and row names in cell arrays 
+% cnames = {'dummy_a'};
+% rnames = cst(:,2);
+% % Create the uitable
+% table = uitable(gcf,'Data',zeros(length(rnames),length(cnames)),...
+%             'ColumnName',cnames,... 
+%             'RowName',rnames,'ColumnWidth',{70});
         
 %% calculate and print the dvh
 colorMx    = colorcube;
 colorMx    = colorMx(1:floor(64/numOfVois):64,:);
 
-lineStyles = {'-',':','--','-.'};
+lineStyles = {'-',':','-.'};
 
 n = 1000;
-sQuantity = 'physicalDose';
-if sum(strcmp(fieldnames(data{1}),'RBExDose')) > 0 && ~strcmp(pln.bioOptimization,'none')
-    sQuantity = 'RBExDose';
-end
+%sQuantity = 'physicalDose';
+% if sum(strcmp(fieldnames(data{1}),'RBExDose')) > 0 && ~strcmp(pln.bioOptimization,'none')
+%     sQuantity = 'RBExDose';
+% end
 
 dvhPoints = linspace(0,max(data{1}.(sQuantity)(:))*1.05,n);
 dvh       = NaN * ones(1,n);
@@ -85,7 +47,7 @@ for l = 1:length(data)
 
            dvh = dvh ./ numOfVoxels * 100;
 
-           subplot(211),plot(dvhPoints,dvh,'LineWidth',4,'Color',colorMx(i,:), ...
+           plot(dvhPoints,dvh,'LineWidth',4,'Color',colorMx(i,:), ...
                'LineStyle',lineStyles{l},'DisplayName',[cst{i,2} '_' Name{l}]);hold on
        end
    end
@@ -93,36 +55,45 @@ end
 fontSizeValue = 14;
 myLegend = legend('show','location','NorthEast');
 set(myLegend,'FontSize',10,'Interpreter','none');
-legend boxoff
+%legend boxoff
 
 
 ylim([0 110]);
 xlim([0 1.2*max(dvhPoints)]);
 set(gca,'YTick',0:20:120)
 
-grid on,grid minor
+grid on,%grid minor
 box(gca,'on');
 set(gca,'LineWidth',1.5,'FontSize',fontSizeValue);
 ylabel('Volume [%]','FontSize',fontSizeValue)
 
-if strcmp(sQuantity,'physicalDose');
+if strcmp(sQuantity,'physicalDose')
      xlabel('Dose [Gy]','FontSize',fontSizeValue);
 else
      xlabel('RBE x Dose [Gy(RBE)]','FontSize',fontSizeValue);
 end
 
-pos = get(subplot(2,1,2),'position');
-ylabel('VOIs');
-xlabel('dose statistics');
-set(subplot(2,1,2),'yTick',[])
-set(subplot(2,1,2),'xTick',[])
+% pos = get(subplot(2,1,2),'position');
+% ylabel('VOIs');
+% xlabel('dose statistics');
+% set(subplot(2,1,2),'yTick',[])
+% set(subplot(2,1,2),'xTick',[])
 
-set(table,'units','normalized')
-set(table,'position',pos)
+% set(table,'units','normalized')
+% set(table,'position',pos)
 
 % get quality indicators and fill table
 res = matRad_calcQualityIndicators(result,cst,pln);
+folderPath = [folder filesep 'exports'];
 
-set(table,'ColumnName',fieldnames(res.QI));
-set(table,'Data',(squeeze(struct2cell(res.QI)))');
+if FlagSaveTikz
+       matlab2tikz([folderPath filesep filename '_DVH' '.tex'],'width','\fwidth','height','\fheight','relativeDataPath','pics')
+end
+
+end
+%set(table,'ColumnName',fieldnames(res.QI));
+%set(table,'Data',(squeeze(struct2cell(res.QI)))');
+
+
+
 

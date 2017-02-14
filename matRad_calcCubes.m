@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcCubes(w,dij,cst,scenNum)
+function resultGUI = matRad_calcCubes(w,dij,cst,scenNum,pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad computation of all cubes for the resultGUI struct which is used
 % as result container and for visualization in matRad's GUI
@@ -88,7 +88,7 @@ end
 
 
 % if linear scaling model was used - check if the used lambda makes sense
-if isfield(dij,'lamda_1_1')
+if isfield(pln.bioParam,'lamda_1_1')
    
    % find all target voxels from cst cell array
    targetAlphaX = [];
@@ -116,12 +116,12 @@ if isfield(dij,'lamda_1_1')
    
    disp(['mean RBE in target is: ' num2str(meanRBE)]);
    
-   meanLambda_1_1 = ( targetAlphaX*(refConstRBE-1) + targetBetaX .* meanDose .*(refConstRBE^2-1) ) ./ (meanLET - dij.corrFacEntranceRBE);
+   meanLambda_1_1 = ( targetAlphaX*(refConstRBE-1) + targetBetaX .* meanDose .*(refConstRBE^2-1) ) ./ (meanLET - pln.bioParam.corrFacEntranceRBE);
    
-   relDiff =  (((meanLambda_1_1/dij.lamda_1_1) -1 ) * 100);
+   relDiff =  (((meanLambda_1_1/pln.bioParam.lamda_1_1) -1 ) * 100);
    if abs(relDiff) > 10
       warning(['relatve deviation of lamda_1_1: ' num2str(relDiff) '%']);
-      warning(['used lamda_1_1: ' num2str(dij.lamda_1_1) '  lamda_1_1 of ' num2str(meanLambda_1_1) ' would ensure a mean RBE of 1.1 in the target']);
+      warning(['used lamda_1_1: ' num2str(pln.bioParam.lamda_1_1) '  lamda_1_1 of ' num2str(meanLambda_1_1) ' would ensure a mean RBE of 1.1 in the target']);
    end 
       
       %%ToDO: asign non specific normal tissue a RBE of 1.1

@@ -49,7 +49,7 @@ pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.bioOptimization = 'MCN_RBExD';   % none: physical optimization;                                 const_RBExD; constant RBE of 1.1;  
+pln.bioOptimization = 'LSM_RBExD';   % none: physical optimization;                                   const_RBExD; constant RBE of 1.1;  
                                      % LSM_effect;  variable RBE Linear Scaling Model (effect based); LSM_RBExD;  variable RBE Linear Scaling Model (RBExD based)
                                      % LEMIV_effect: effect-based optimization;                       LEMIV_RBExD: optimization of RBE-weighted dose
 pln.numOfFractions         = 25;
@@ -58,7 +58,7 @@ pln.runDAO                 = false; % 1/true: run DAO, 0/false: don't / will be 
 pln.machine                = 'GenericLET';%GenericLET
 pln.minNrParticles         = 500000;
 pln.LongitudialSpotSpacing = 3;      % only relevant for HIT machine, not generic
-
+pln.calcLET                = true;
 %% initial visualization and change objective function settings if desired
 %matRadGUI
 
