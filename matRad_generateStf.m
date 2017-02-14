@@ -237,20 +237,20 @@ for i = 1:length(pln.gantryAngles)
                              ct.resolution, ...
                              stf(i).sourcePoint, ...
                              stf(i).ray(j).targetPoint, ...
-                             {voiTarget});
+                             [{ct.cube{1}} {voiTarget}]);
 
         % find appropriate energies for particles
        if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
 
            % target hit
-           if sum(rho{1}) > 0 
+           if sum(rho{2}) > 0 
 
                 % compute radiological depths
                 % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
                 radDepths = cumsum(l .* rho{1}); 
 
                 % find target entry & exit
-                diff_voi    = diff([rho{1}]);
+                diff_voi    = diff([rho{2}]);
                 targetEntry = radDepths(diff_voi == 1);
                 targetExit  = radDepths(diff_voi == -1);
 
