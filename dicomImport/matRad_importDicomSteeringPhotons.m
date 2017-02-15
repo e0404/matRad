@@ -88,7 +88,6 @@ for i = 1:size(UniqueComb,1)
     
     % set weight for output field
     stf(i).ray.weight = Fields(ia(i)).FinalCumWeight;
-    stf(i).ray.SSD    = Fields(ia(i)).SSD;
     stf(i).ray.energy = Fields(ia(i)).Energy;  
     
     ix = (ib == i);
