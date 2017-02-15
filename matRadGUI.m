@@ -120,23 +120,27 @@ function handles = resetGUI(hObject, handles, varargin)
   set(gcf,'WindowScrollWheelFcn',@matRadScrollWheelFcn);
 
   % change color of toobar
-  hToolbar = findall(hObject,'tag','uitoolbar1');
-  jToolbar = get(get(hToolbar,'JavaContainer'),'ComponentPeer');
-  jToolbar.setBorderPainted(false);
-  color = java.awt.Color.gray;
-  % Remove the toolbar border, to blend into figure contents
-  jToolbar.setBackground(color);
-  % Remove the separator line between toolbar and contents
-  warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
-  jFrame = get(handle(hObject),'JavaFrame');
-  jFrame.showTopSeparator(false);
-  jtbc = jToolbar.getComponents;
-  for idx=1:length(jtbc)
-      jtbc(idx).setOpaque(false);
-      jtbc(idx).setBackground(color);
-      for childIdx = 1 : length(jtbc(idx).getComponents)
-          jtbc(idx).getComponent(childIdx-1).setBackground(color);
+  try
+      hToolbar = findall(hObject,'tag','uitoolbar1');
+      jToolbar = get(get(hToolbar,'JavaContainer'),'ComponentPeer');
+      jToolbar.setBorderPainted(false);
+      color = java.awt.Color.gray;
+      % Remove the toolbar border, to blend into figure contents
+      jToolbar.setBackground(color);
+      % Remove the separator line between toolbar and contents
+      warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+      jFrame = get(handle(hObject),'JavaFrame');
+      jFrame.showTopSeparator(false);
+      jtbc = jToolbar.getComponents;
+      for idx=1:length(jtbc)
+          jtbc(idx).setOpaque(false);
+          jtbc(idx).setBackground(color);
+          for childIdx = 1 : length(jtbc(idx).getComponents)
+              jtbc(idx).getComponent(childIdx-1).setBackground(color);
+          end
       end
+  catch
+      warning('Java error happened here.');
   end
 
 
@@ -345,7 +349,11 @@ catch
    handles = showError(handles,'GUI OpeningFunc: Could not load ct and cst file');
 end
 
-handles = reloadGUI(hObject, handles, ct, cst);
+if ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
+    handles = reloadGUI(hObject, handles, ct, cst);
+else
+    handles = reloadGUI(hObject, handles, [], []);
+end
 
 guidata(hObject, handles);
 
@@ -389,7 +397,6 @@ function btnLoadMat_Callback(hObject, ~, handles)
 
 
 handles = resetGUI(hObject, handles);
-
 
 try 
     [FileName, FilePath] = uigetfile('*.mat');
@@ -2573,91 +2580,34 @@ UpdatePlot(handles);
 % button: refresh
 function btnRefresh_Callback(hObject, ~, handles)
 
-% parse variables from base workspace
+handles = resetGUI(hObject, handles);
+
+%% parse variables from base workspace
 AllVarNames = evalin('base','who');
-handles.State = 0;
-
-if ~isempty(AllVarNames)
-    try
-        if  sum(ismember(AllVarNames,'ct')) > 0
-            % do nothing
-        else
-            handles = showError(handles,'BtnRefreshCallback: ct struct is missing');
-        end
-
-        if  sum(ismember(AllVarNames,'cst')) > 0
-            setCstTable(handles,evalin('base','cst'));
-        else
-            handles = showError(handles,'BtnRefreshCallback: cst struct is missing');
-        end
-
-        if sum(ismember(AllVarNames,'pln')) > 0
-            setPln(handles);
-        else
-            getPlnFromGUI(handles);
+handles.AllVarNames = AllVarNames;
+try
+    if  ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
+        ct  = evalin('base','ct');
+        cst = evalin('base','cst');
+        setCstTable(handles,cst);
+        handles.State = 1;
+        % check if contours are precomputed
+        if size(cst,2) < 7
+            cst = matRad_computeVoiContours(ct,cst);
+            assignin('base','cst',cst);
         end
         
-        handles.State = 1;
-
-    catch
-        handles = showError(handles,'BtnRefreshCallback: Could not load ct/cst/pln');
-        guidata(hObject,handles);
-        return;
+    elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
+         handles = showError(handles,'GUI OpeningFunc: could not find cst file');
+    elseif ~ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
+         handles = showError(handles,'GUI OpeningFunc: could not find ct file');
     end
-
-    % check if a optimized plan was loaded
-    if sum(ismember(AllVarNames,'stf')) > 0  && sum(ismember(AllVarNames,'dij')) > 0
-        handles.State = 2;
-    end
-
-    if sum(ismember(AllVarNames,'resultGUI')) > 0
-        handles.State = 3;
-        handles.SelectedDisplayOptionIdx = 1;
-        handles.SelectedDisplayOption = 'physicalDose';
-        handles.SelectedBeam = 1;
-    end
-
-    if handles.State > 0
-        ct = evalin('base','ct');
-        cst = evalin('base','cst');
-        set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
-                'Value',ceil(ct.cubeDim(handles.plane)/2),...
-                'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);      
-    end
-
+catch  
+   handles = showError(handles,'GUI OpeningFunc: Could not load ct and cst file');
 end
 
-%% delete context menu if workspace was deleted manually and refresh button was clicked
-if handles.State == 0
-    objHandle = guidata(findobj('Name','matRadGUI'));  
-    contextUi = (get(objHandle.figure1,'UIContextMenu'));
-    delete(contextUi)
-end
-
-if handles.State > 0
-    set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
-            'Value',ceil(ct.cubeDim(handles.plane)/2),...
-            'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);      
-    
-    % define context menu for structures
-    for i = 1:size(cst,1)
-        if cst{i,5}.Visible
-            handles.VOIPlotFlag(i) = true;
-        else
-            handles.VOIPlotFlag(i) = false;
-        end
-    end
-end
-
-%Reset colorbar
-handles.dispWindow  = cell(3,2);
-handles.cBarChanged = true;
-
-UpdateState(handles);
-handles.rememberCurrAxes = false;
-UpdatePlot(handles);
-handles.rememberCurrAxes = true;
-guidata(hObject,handles);
+handles = reloadGUI(hObject, handles, ct, cst);
+guidata(hObject, handles);
 
 
 % text box: # fractions
