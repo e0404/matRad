@@ -202,6 +202,20 @@ guidata(hObject, handles);
 
 function handles = reloadGUI(hObject, handles, ct, cst)
 AllVarNames = handles.AllVarNames;
+
+% compute HU values
+if ~isfield(ct, 'cubeHU')
+    matRadRootDir = fileparts(mfilename('fullpath'));
+    addpath(fullfile(matRadRootDir,'dicomImport'));
+    ct = matRad_electronDensitiesToHU(ct);
+    assignin('base','ct',ct);
+end
+if ~isfield(ct, 'cubeHU')
+    handles.cubeHUavailable = false;
+else
+    handles.cubeHUavailable = true;
+end
+
 %set plan if available - if not create one
 try 
      if ismember('pln',AllVarNames) && handles.State > 0 
@@ -321,19 +335,6 @@ try
             cst = matRad_computeVoiContours(ct,cst);
             assignin('base','cst',cst);
         end
-    
-        % compute HU values
-        if ~isfield(ct, 'cubeHU')
-            matRadRootDir = fileparts(mfilename('fullpath'));
-            addpath(fullfile(matRadRootDir,'dicomImport'));
-            ct = matRad_electronDensitiesToHU(ct);
-            assignin('base','ct',ct);
-        end
-        if ~isfield(ct, 'cubeHU')
-            handles.cubeHUavailable = false;
-        else
-            handles.cubeHUavailable = true;
-        end
         
     elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
          handles = showError(handles,'GUI OpeningFunc: could not find cst file');
@@ -385,6 +386,10 @@ function btnLoadMat_Callback(hObject, ~, handles)
 % hObject    handle to btnLoadMat (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+
+handles = resetGUI(hObject, handles);
+
 
 try 
     [FileName, FilePath] = uigetfile('*.mat');
