@@ -58,36 +58,24 @@ else
         
     elseif options.bioOpt
         
-          for i = 1:length(dij.indexforOpt)
-           
-%                   dp       = dij.physicalDose{dij.indexforOpt(i)} * w;
-%                   ix       = dp > 0;
-%                   LETd     = zeros(dij.numOfVoxels,1);
-%                   RBEmax   = zeros(dij.numOfVoxels,1);
-%                   RBEmin   = zeros(dij.numOfVoxels,1);
-%                   LETd(ix) = (dij.mLETDose{dij.indexforOpt(i)}(ix,:)  * w)./dp(ix);
-% 
-%                   RBEmax(ix) = options.p0 + ((options.p1 * LETd(ix) )./ dij.abX(ix));           
-%                   RBEmin(ix) = options.p2 - (options.p3  * real(sqrt(dij.abX(ix))) .* LETd(ix)); 
-%                   d_ref  = 0.5 .* (sqrt(dij.abX.^2 + (4*dp.*dij.abX.*RBEmax) + (4*dp.^2 .* RBEmin.^2)) - dij.abX);
-%                   
-                  linTerm  = dij.mAlphaDose{dij.indexforOpt(i)} * w;
-                  quadTerm = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
-                  e        = linTerm + quadTerm.^2; 
-                  if isequal(options.quantity,'effect') 
-                      d{i} = e;
-                  else
-                     % calculate RBX x dose
-                     scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
-                     scaledEffect   = zeros(length(scaledEffectSq),1);
-                     % compute sqrt(scaledEffect) only for numeric values (not nan) to save time
-                     [idx,~]           = find(~isnan(scaledEffectSq));
-                     scaledEffect(idx) = sqrt(scaledEffectSq(idx));
-                     d{i}              = scaledEffect - dij.gamma;
-                  end
-                            
-            
-          end
+        for i = 1:length(dij.indexforOpt)
+
+            linTerm  = dij.mAlphaDose{dij.indexforOpt(i)} * w;
+            quadTerm = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
+            e        = linTerm + quadTerm.^2; 
+            if isequal(options.quantity,'effect') 
+                d{i} = e;
+            else
+               % calculate RBX x dose
+               scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
+               scaledEffect   = zeros(length(scaledEffectSq),1);
+               % compute sqrt(scaledEffect) only for numeric values (not nan) to save time
+               [idx,~]           = find(~isnan(scaledEffectSq));
+               scaledEffect(idx) = sqrt(scaledEffectSq(idx));
+               d{i}              = scaledEffect - dij.gamma;
+            end
+
+        end
             
     end       
        
@@ -98,4 +86,18 @@ matRad_global_d = d;
 end
 
 
-
+%% reference calculation for the MCNamaraModel
+             
+%    dp       = dij.physicalDose{dij.indexforOpt(i)} * w;
+%    ix       = dp > 0;
+%    LETd     = zeros(dij.numOfVoxels,1);
+%    LETd(ix) = (dij.mLETDose{dij.indexforOpt(i)}(ix,:)  * w)./dp(ix);
+%              
+%    sqab     = zeros(dij.numOfVoxels,1);
+%    sqab(ix) = sqrt(dij.abX(ix));
+%                
+%    part1 =  (options.p0 * ((dij.ax .* delta{i})'*dij.physicalDose{1})) + (options.p0 * options.p1 *  ((dij.bx .*delta{i})'*dij.mLETDose{1}));
+%    Fac   =  (2*dij.bx .* delta{1}).*((dp * options.p2) -  ( dp * options.p3  .* sqab .* LETd));
+%    part2 = (((options.p2*Fac)' * dij.physicalDose{1}) - ((options.p3 * sqab .* Fac)' *dij.mLETDose{1}));            
+%    g = g + (part1 + part2)';
+                      

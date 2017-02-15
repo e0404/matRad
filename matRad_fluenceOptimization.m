@@ -205,13 +205,8 @@ end
 options.robOpt          = pln.robOpt;
 options.numOfScenarios  = dij.numOfScenarios;
 options.radMod          = pln.radiationMode;
-
-% options.quantitiy       = pln.bioParam.quantitiyl;
-% options.bioOpt          = pln.bioOptimization;
-% options.robOpt          = pln.robOpt;
-% options.ID              = [pln.radiationMode '_' pln.bioOptimization];
-% options.numOfScenarios  = dij.numOfScenarios;
 %wInit        = ones(dij.totalNumOfBixels,1);
+
 % set callback functions.
 funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,options);
 funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,options);
@@ -250,6 +245,12 @@ options.ipopt.acceptable_constr_viol_tol = max(cScaling)*options.ipopt.acceptabl
 fprintf('Calculating final cubes...\n');
 
 resultGUI = matRad_calcCubes(wOpt,dij,cst,1);
+
+if strcmp(options.model,'LSM')
+   matRad_reCalcLSMParameter(cst,pln,resultGUI);
+end
+
+
 resultGUI.wUnsequenced = wOpt;
 
 % save optimization info in resultGUI

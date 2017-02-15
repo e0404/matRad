@@ -18,17 +18,17 @@ bioParam.radiationMode = pln.radiationMode;
 elseif isequal(pln.radiationMode,'protons')
     
     if isequal(pln.bioOptimization,'none')
-        bioParam.bioOpt           = false;
-        bioParam.type             = pln.bioOptimization;
-        bioParam.model            = 'none';
-        bioParam.quantity         = 'physicalDose';
+        bioParam.bioOpt             = false;
+        bioParam.type               = pln.bioOptimization;
+        bioParam.model              = 'none';
+        bioParam.quantity           = 'physicalDose';
         
     elseif isequal(pln.bioOptimization,'const_RBExD') 
-        bioParam.bioOpt           = false;
-        bioParam.type             = pln.bioOptimization;
-        bioParam.model            = 'constant RBE as used clinically';
-        bioParam.quantity         = 'RBExD';
-        bioParam.constRBE         = 1.1;
+        bioParam.bioOpt             = false;
+        bioParam.type               = pln.bioOptimization;
+        bioParam.model              = 'constant RBE as used clinically';
+        bioParam.quantity           = 'RBExD';
+        bioParam.constRBE           = 1.1;
         
     elseif isequal(pln.bioOptimization,'LSM_effect')  
         bioParam.bioOpt             = true;
@@ -36,7 +36,7 @@ elseif isequal(pln.radiationMode,'protons')
         bioParam.model              = 'LSM';
         bioParam.description        = 'linear scaling model whereas the proton alpha is a linear function of the LETd; proton beta is constant';
         bioParam.quantity           = 'effect';
-        bioParam.lamda_1_1          = 0.008; %0.008; % according to Malte Frese https://www.ncbi.nlm.nih.gov/pubmed/20382482 (fitted for head and neck patients)
+        bioParam.lamda_1_1          = 0.008; %0.008; % according to Malte Frese https://www.ncbi.nlm.nih.gov/pubmed/20382482 (fitted only for head and neck patients)
         bioParam.corrFacEntranceRBE = 0.5;   %[kev/mum]
         bioParam.upperLETThreshold  = 30;    %[kev/mum]
         bioParam.lowerLETThreshold  = 0.3;   %[kev/mum]
@@ -74,16 +74,27 @@ elseif isequal(pln.radiationMode,'protons')
         bioParam.p2                 = 1.1012;
         bioParam.p3                 = -0.0038703;
         
-              elseif isequal(pln.bioOptimization,'MCN_RBExDRef') 
+       elseif isequal(pln.bioOptimization,'WED_effect') 
         bioParam.bioOpt             = true;
         bioParam.type               = pln.bioOptimization;
-        bioParam.model              = 'MCNRef';
-        bioParam.description        = 'a phenomenological relative biological effectiveness (RBE) model for proton therapy based on all published in vitro cell survival data';
+        bioParam.model              = 'WED';
+        bioParam.description        = 'A model for the relative biological effectiveness of protons: the tissue specific parameter alpha/beta of photons is a predictor for the sensitivity to LET changes.';
+        bioParam.quantity           = 'effect';
+        bioParam.p0                 = 1; % https://www.ncbi.nlm.nih.gov/pubmed/22909391
+        bioParam.p1                 = 0.434;
+        bioParam.p2                 = 1;
+        bioParam.p3                 = 0;
+        
+       elseif isequal(pln.bioOptimization,'WED_effect') 
+        bioParam.bioOpt             = true;
+        bioParam.type               = pln.bioOptimization;
+        bioParam.model              = 'WED';
+        bioParam.description        = 'A model for the relative biological effectiveness of protons: the tissue specific parameter alpha/beta of photons is a predictor for the sensitivity to LET changes.';
         bioParam.quantity           = 'RBExD';
-        bioParam.p0                 = 0.99064; % according to https://www.ncbi.nlm.nih.gov/pubmed/26459756
-        bioParam.p1                 = 0.35605;
-        bioParam.p2                 = 1.1012;
-        bioParam.p3                 = -0.0038703;
+        bioParam.p0                 = 1; % https://www.ncbi.nlm.nih.gov/pubmed/22909391
+        bioParam.p1                 = 0.434;
+        bioParam.p2                 = 1;
+        bioParam.p3                 = 0; 
         
     else
          warning(['matRad: Invalid biological optimization: ' pln.bioOptimization ' for ' pln.radiationMode '; using const_RBExD optimization instead'])

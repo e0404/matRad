@@ -24,7 +24,7 @@ function g = matRad_gradFuncWrapper(w,dij,cst,options)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2016 the matRad development team. 
+% Copyright 2017 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -44,6 +44,7 @@ d = matRad_backProjection(w,dij,options);
 delta      = cell(options.numOfScenarios,1);
 [delta{:}] = deal(zeros(dij.numOfVoxels,1));
 
+% if composite optimization is used, create a cell array for booking
 for i = 1:size(cst,1)
   for j = 1:numel(cst{i,6})
       if strcmp(cst{i,6}(j).robustness,'COWC')
@@ -194,9 +195,7 @@ g = zeros(dij.totalNumOfBixels,1);
 
 for i = 1:options.numOfScenarios
     if any(delta{i}) % exercise only if contributions from scenario i
-
-       
-       
+          
         if isequal(options.quantity,'physicalDose')
 
             g            = g + (delta{i}' * dij.physicalDose{dij.indexforOpt(i)})';
@@ -213,6 +212,55 @@ for i = 1:options.numOfScenarios
             mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{dij.indexforOpt(i)})';
             g            =  g + vBias + mPsi ; 
                         
+        elseif isequal(options.quantity,'RBExD') 
+
+          
+            scaledEffect = d{i} + dij.gamma;
+            deltaTmp     = delta{i}./(2*dij.bx.*scaledEffect);
+            vBias        = (deltaTmp' * dij.mAlphaDose{dij.indexforOpt(i)})';
+            quadTerm     = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
+            mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{dij.indexforOpt(i)})';
+            g            = g + vBias + mPsi ;
+            
+        end
+
+    end
+end
+
+
+% compare gradient calculation to numerical gradient - make sure to not use objective functaion and gradient scaling
+RunGradientChecker = false;
+
+if RunGradientChecker
+   f       = matRad_objFuncWrapper(w,dij,cst,options);
+   epsilon = 1e-8;
+
+   ix = unique(randi([1 numel(w)],1,10));
+  
+   for i = ix
+      wInit   = w;
+      wInit(i) = wInit(i) + epsilon;
+      fDelta   = matRad_objFuncWrapper(wInit,dij,cst,options);
+      numGrad = (fDelta-f)/epsilon;
+      diff = (numGrad/g(i)-1)*100;
+      fprintf(['Component # ' num2str(i) ' - rel diff of numerical and analytical gradient = ' num2str(diff) '\n']);
+   end
+
+end
+% apply objective scaling
+g = fScaling.*g;
+
+% save min/max gradient
+global matRad_iteration
+global GRADIENT
+GRADIENT(1,1,matRad_iteration+1)= max(abs(g));
+GRADIENT(1,2,matRad_iteration+1)= min(abs(g));
+
+
+
+%% reference calculation for the MCNamara Model - obsolete code
+% effect based 
+
              
 %               dp       = dij.physicalDose{dij.indexforOpt(i)} * w;
 %               ix       = dp > 0;
@@ -229,18 +277,9 @@ for i = 1:options.numOfScenarios
                       
 
 
-        elseif isequal(options.quantity,'RBExD') 
 
-          
-               scaledEffect = d{i} + dij.gamma;
-               deltaTmp     = delta{i}./(2*dij.bx.*scaledEffect);
-               vBias        = (deltaTmp' * dij.mAlphaDose{dij.indexforOpt(i)})';
-               quadTerm     = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
-               mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{dij.indexforOpt(i)})';
-               g            = g + vBias + mPsi ;
-            
-
-               % precalculations
+% RBExD based 
+               
 %                dp       = dij.physicalDose{dij.indexforOpt(i)} * w;
 %                ix       = dp > 0;
 %                sqab     = real(sqrt(dij.abX));
@@ -271,58 +310,3 @@ for i = 1:options.numOfScenarios
 %                     g_single = (A'*delta{1}); 
 %                     g(l) =g_single;
 %                end
-
-                            
-%              mPart1 = bsxfun(@times,dij.physicalDose{1},4*options.p0.*ab) + ((4* options.p1) * dij.mLETDose{1});
-%              toc
-%              vPart2a =  8*(options.p2*dp + options.p3 * sqab .* (dij.mLETDose{dij.indexforOpt(i)} * w));
-%              mPart2b = options.p2.*dij.physicalDose{1} + bsxfun(@times,dij.mLETDose{1},options.p3 .* sqab);
-%              
-%              g2 = (delta{1}' * (Fac.* ( mPart1 + bsxfun(@times,mPart2b,vPart2a))));
-%              
-%              tmp = (delta{1}.*Fac)';
-%              g3 = (tmp * mPart1) +  (tmp * bsxfun(@times,mPart2b,vPart2a)) ;
-%              
-%              ref = (tmp * mPart1);
-%              mPart1ref = ((4*options.p0.*ab.*tmp')' * dij.physicalDose{1}) + (tmp* ((4* options.p1) * dij.mLETDose{1}));
-%              
-%              ref2 = tmp * bsxfun(@times,mPart2b,vPart2a);
-%              II = ((options.p2.*tmp.*vPart2a') * dij.physicalDose{1}) + ((options.p3 .*tmp.*sqab'.*vPart2a') * dij.mLETDose{1});
-%              
-%              g4 = mPart1ref + II;
-
-        
-           
-        end
-
-    end
-end
-
-
-% compare gradient calculation to numerical gradient
-RunGradientChecker = false;
-
-if RunGradientChecker
-   f       = matRad_objFuncWrapper(w,dij,cst,options);
-   epsilon = 1e-8;
-
-   ix = unique(randi([1 numel(w)],1,10));
-  
-   for i = ix
-      wInit   = w;
-      wInit(i) = wInit(i) + epsilon;
-      fDelta   = matRad_objFuncWrapper(wInit,dij,cst,options);
-      numGrad = (fDelta-f)/epsilon;
-      diff = (numGrad/g(i)-1)*100;
-      fprintf(['Component # ' num2str(i) ' - rel diff of numerical and analytical gradient = ' num2str(diff) '\n']);
-   end
-
-end
-% apply objective scaling
-g = fScaling.*g;
-
-% save min/max gradient
-global matRad_iteration
-global GRADIENT
-GRADIENT(1,1,matRad_iteration+1)= max(abs(g));
-GRADIENT(1,2,matRad_iteration+1)= min(abs(g));

@@ -746,6 +746,7 @@ end
 % generate steering file
 try 
    
+    pln = matRad_getBioModel(pln);
     [cst,pln] = matRad_setPlanUncertainties(evalin('base','ct'),evalin('base','cst'),pln);
 
     stf = matRad_generateStf(evalin('base','ct'),...

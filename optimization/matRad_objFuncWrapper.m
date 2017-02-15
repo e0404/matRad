@@ -39,7 +39,7 @@ d = matRad_backProjection(w,dij,options);
 
 % Initialize f
 f = 0;
-
+% if composite optimization is used, create a vector for booking
 for i = 1:size(cst,1)
   for j = 1:numel(cst{i,6})
       if strcmp(cst{i,6}(j).robustness,'COWC')
@@ -161,7 +161,7 @@ for  i = 1:size(cst,1)
     
 end
 
-% extract the objective function value of the current worst case scenario
+% extract the worst total objective function value across all scenarios
 if exist('f_COWC','var')
    f = f + max(f_COWC);
 end
