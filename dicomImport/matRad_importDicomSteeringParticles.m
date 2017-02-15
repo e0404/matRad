@@ -114,7 +114,7 @@ for i = 1:length(BeamSeqNames)
     stf(i).radiationMode = pln.radiationMode;
     % there might be several SAD's, e.g. compensator?
     stf(i).SAD           = machine.meta.SAD;
-    stf(i).isoCenter     = pln.isoCenter;
+    stf(i).isoCenter     = pln.isoCenter(i,:);
     stf(i).sourcePoint_bev = [0 -stf(i).SAD 0];
     % compute coordinates in lps coordinate system, i.e. rotate beam
     % geometry around fixed patient; use transpose matrices because we are

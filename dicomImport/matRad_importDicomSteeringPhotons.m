@@ -49,7 +49,7 @@ for i = 1:size(UniqueComb,1)
     % set necessary steering information 
     stf(i).gantryAngle  = UniqueComb(i,1);
     stf(i).couchAngle   = UniqueComb(i,2);
-    stf(i).isoCenter    = pln.isoCenter;
+    stf(i).isoCenter    = pln.isoCenter(i,:);
     
     % bixelWidth = 'field' as keyword for whole field dose calc
     stf(i).bixelWidth    = 'field';
