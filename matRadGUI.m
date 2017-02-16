@@ -329,6 +329,11 @@ function matRadGUI_OpeningFcn(hObject, ~, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to matRadGUI (see VARARGIN)
 
+% variable to check whether GUI is opened or just refreshed / new data
+% loaded, since resetGUI needs to distinguish at one point
+
+handles.initialGuiStart = true;
+
 handles = resetGUI(hObject, handles);
 
 %% parse variables from base workspace
@@ -358,7 +363,7 @@ end
 if ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
     handles = reloadGUI(hObject, handles, ct, cst);
 else
-    handles = reloadGUI(hObject, handles, [], []);
+    handles = reloadGUI(hObject, handles);
 end
 
 guidata(hObject, handles);
@@ -401,15 +406,14 @@ function btnLoadMat_Callback(hObject, ~, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+[FileName, FilePath] = uigetfile('*.mat');
+if FileName == 0 % user pressed cancel --> do nothing.
+    return;
+end
 
 handles = resetGUI(hObject, handles);
 
 try 
-    [FileName, FilePath] = uigetfile('*.mat');
-    
-    if FileName == 0 % user pressed cancel --> do nothing.
-        return;
-    end
     
     % delete existing workspace - parse variables from base workspace
     AllVarNames = evalin('base','who');
@@ -421,24 +425,10 @@ try
         end
     end
 
-    % clear state and read new data
-    handles.State = 0;
+    % read new data
     load([FilePath FileName]);
     set(handles.legendTable,'String',{'no data loaded'});
     set(handles.popupDisplayOption,'String','no option available');
-    
-    % compute HU values
-    if ~isfield(ct, 'cubeHU')
-        matRadRootDir = fileparts(mfilename('fullpath'));
-        addpath(fullfile(matRadRootDir,'dicomImport'));            
-        ct = matRad_electronDensitiesToHU(ct);
-        assignin('base','ct',ct);
-    end
-    if ~isfield(ct, 'cubeHU')
-        handles.cubeHUavailable = false;
-    else
-        handles.cubeHUavailable = true;
-    end
     
 catch
     handles = showWarning(handles,'LoadMatFileFnc: Could not load *.mat file');
@@ -457,25 +447,10 @@ try
     
     assignin('base','ct',ct);
     assignin('base','cst',cst);
+    handles.State = 1;
 catch
     handles = showError(handles,'LoadMatFileFnc: Could not load selected data');
 end
-
-try
-    if exist('pln','var')
-        % assess plan from loaded *.mat file
-        assignin('base','pln',pln);
-        setPln(handles);
-    else
-        % assess plan variable from GUI
-        getPlnFromGUI(handles);
-        setPln(handles);
-    end
-    handles.State = 1;
-catch
-    handles.State = 0;
-end
-
 
 % check if a optimized plan was loaded
 if exist('stf','var')
@@ -484,46 +459,27 @@ end
 if exist('dij','var')
     assignin('base','dij',dij);
 end
-if exist('stf','var') && exist('dij','var')
-    handles.State = 2;
-end
+% if exist('stf','var') && exist('dij','var')
+%     handles.State = 2;
+% end
 
 if exist('resultGUI','var')
     assignin('base','resultGUI',resultGUI);
-    handles.State = 3;
-    handles.SelectedDisplayOption ='physicalDose';
+    % handles.State = 3;
+    % handles.SelectedDisplayOption ='physicalDose';
 end
 
-% set slice slider
-handles.plane = get(handles.popupPlane,'value');
-if handles.State >0
-     set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
-            'Value',round(ct.cubeDim(handles.plane)/2),...
-            'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);
+% recheck current workspace variables
+AllVarNames = evalin('base','who');
+handles.AllVarNames = AllVarNames;
+
+if ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
+    handles = reloadGUI(hObject, handles, ct, cst);
+else
+    handles = reloadGUI(hObject, handles);
 end
 
-if handles.State > 0
-     % define context menu for structures
-    for i = 1:size(cst,1)
-        if cst{i,5}.Visible
-            handles.VOIPlotFlag(i) = true;
-        else
-            handles.VOIPlotFlag(i) = false;
-        end
-    end
-end
-
-%Reset colorbar
-handles.dispWindow  = cell(3,2);
-handles.cBarChanged = true;
-
-UpdateState(handles);
-handles.rememberCurrAxes = false;
-UpdatePlot(handles);
-handles.rememberCurrAxes = true;
 guidata(hObject,handles);
-
-
 
 % --- Executes on button press in btnLoadDicom.
 function btnLoadDicom_Callback(hObject, ~, handles)
@@ -851,6 +807,7 @@ AxesHandlesVOI      = gobjects(0);
 AxesHandlesIsoDose  = gobjects(0);
 
 if handles.State == 0
+    cla reset
     return
 elseif handles.State > 0
      ct  = evalin('base','ct');
@@ -2612,7 +2569,11 @@ catch
    handles = showError(handles,'GUI OpeningFunc: Could not load ct and cst file');
 end
 
-handles = reloadGUI(hObject, handles, ct, cst);
+if ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
+    handles = reloadGUI(hObject, handles, ct, cst);
+else
+    handles = reloadGUI(hObject, handles);
+end
 guidata(hObject, handles);
 
 
