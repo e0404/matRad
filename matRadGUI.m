@@ -74,158 +74,161 @@ end
 % End initialization code - DO NOT EDIT
 
 function handles = resetGUI(hObject, handles, varargin)
-  % enable opengl software rendering to visualize linewidths properly
-  if ispc
-      opengl software
-  elseif ismac
-      % opengl is not supported
+% enable opengl software rendering to visualize linewidths properly
+if ispc
+  opengl software
+elseif ismac
+  % opengl is not supported
+end
+
+
+if ~isdeployed
+  currFolder = fileparts(mfilename('fullpath'));
+else
+  currFolder = [];
+end
+
+addpath(fullfile(currFolder,'plotting'));
+addpath(fullfile(currFolder,['plotting' filesep 'colormaps']));
+
+% Choose default command line output for matRadGUI
+handles.output = hObject;
+%show matrad logo
+axes(handles.axesLogo)
+[im, ~, alpha] = imread([currFolder filesep 'dicomImport' filesep 'matrad_logo.png']);
+f = image(im);
+axis equal off
+set(f, 'AlphaData', alpha);
+% show dkfz logo
+axes(handles.axesDKFZ)
+[im, ~, alpha] = imread([currFolder filesep 'dicomImport' filesep 'DKFZ_Logo.png']);
+f = image(im);
+axis equal off;
+set(f, 'AlphaData', alpha);
+
+% turn off the datacursormode (since it does not allow to set scrolling
+% callbacks
+handles.dcm_obj = datacursormode(handles.figure1);
+set(handles.dcm_obj,'DisplayStyle','window');
+if strcmpi(get(handles.dcm_obj,'Enable'),'on')
+  set(handles.dcm_obj,'Enable','off');
+end
+%Add the callback for the datacursor display
+set(handles.dcm_obj,'UpdateFcn',@dataCursorUpdateFunction);
+
+% set callback for scroll wheel function
+set(gcf,'WindowScrollWheelFcn',@matRadScrollWheelFcn);
+
+% change color of toobar but only the first time GUI is started
+if handles.initialGuiStart
+  hToolbar = findall(hObject,'tag','uitoolbar1');
+  jToolbar = get(get(hToolbar,'JavaContainer'),'ComponentPeer');
+  jToolbar.setBorderPainted(false);
+  color = java.awt.Color.gray;
+  % Remove the toolbar border, to blend into figure contents
+  jToolbar.setBackground(color);
+  % Remove the separator line between toolbar and contents
+  warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+  jFrame = get(handle(hObject),'JavaFrame');
+  jFrame.showTopSeparator(false);
+  jtbc = jToolbar.getComponents;
+  for idx=1:length(jtbc)
+      jtbc(idx).setOpaque(false);
+      jtbc(idx).setBackground(color);
+      for childIdx = 1 : length(jtbc(idx).getComponents)
+          jtbc(idx).getComponent(childIdx-1).setBackground(color);
+      end
   end
+end
 
 
-  if ~isdeployed
-      currFolder = fileparts(mfilename('fullpath'));
+set(handles.legendTable,'String',{'no data loaded'});
+
+%seach for availabes machines
+handles.Modalities = {'photons','protons','carbon'};
+for i = 1:length(handles.Modalities)
+  pattern = [handles.Modalities{1,i} '_*'];
+  if isdeployed
+      Files = dir([ctfroot filesep 'matRad' filesep pattern]);
   else
-      currFolder = [];
+      Files = dir([fileparts(mfilename('fullpath')) filesep pattern]);        
   end
-
-  addpath(fullfile(currFolder,'plotting'));
-  addpath(fullfile(currFolder,['plotting' filesep 'colormaps']));
-
-  % Choose default command line output for matRadGUI
-  handles.output = hObject;
-  %show matrad logo
-  axes(handles.axesLogo)
-  [im, ~, alpha] = imread([currFolder filesep 'dicomImport' filesep 'matrad_logo.png']);
-  f = image(im);
-  axis equal off
-  set(f, 'AlphaData', alpha);
-  % show dkfz logo
-  axes(handles.axesDKFZ)
-  [im, ~, alpha] = imread([currFolder filesep 'dicomImport' filesep 'DKFZ_Logo.png']);
-  f = image(im);
-  axis equal off;
-  set(f, 'AlphaData', alpha);
-
-  % turn off the datacursormode (since it does not allow to set scrolling
-  % callbacks
-  handles.dcm_obj = datacursormode(handles.figure1);
-  set(handles.dcm_obj,'DisplayStyle','window');
-  if strcmpi(get(handles.dcm_obj,'Enable'),'on')
-      set(handles.dcm_obj,'Enable','off');
-  end
-  %Add the callback for the datacursor display
-  set(handles.dcm_obj,'UpdateFcn',@dataCursorUpdateFunction);
-
-  % set callback for scroll wheel function
-  set(gcf,'WindowScrollWheelFcn',@matRadScrollWheelFcn);
-
-  % change color of toobar
-  try
-      hToolbar = findall(hObject,'tag','uitoolbar1');
-      jToolbar = get(get(hToolbar,'JavaContainer'),'ComponentPeer');
-      jToolbar.setBorderPainted(false);
-      color = java.awt.Color.gray;
-      % Remove the toolbar border, to blend into figure contents
-      jToolbar.setBackground(color);
-      % Remove the separator line between toolbar and contents
-      warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
-      jFrame = get(handle(hObject),'JavaFrame');
-      jFrame.showTopSeparator(false);
-      jtbc = jToolbar.getComponents;
-      for idx=1:length(jtbc)
-          jtbc(idx).setOpaque(false);
-          jtbc(idx).setBackground(color);
-          for childIdx = 1 : length(jtbc(idx).getComponents)
-              jtbc(idx).getComponent(childIdx-1).setBackground(color);
-          end
-      end
-  catch
-      warning('Java error happened here.');
-  end
-
-
-  set(handles.legendTable,'String',{'no data loaded'});
-
-  %seach for availabes machines
-  handles.Modalities = {'photons','protons','carbon'};
-  for i = 1:length(handles.Modalities)
-      pattern = [handles.Modalities{1,i} '_*'];
-      if isdeployed
-          Files = dir([ctfroot filesep 'matRad' filesep pattern]);
-      else
-          Files = dir([fileparts(mfilename('fullpath')) filesep pattern]);        
-      end
-      for j = 1:length(Files)
-          if ~isempty(Files)
-              MachineName = Files(j).name(numel(handles.Modalities{1,i})+2:end-4);
-              if isfield(handles,'Machines')
-                  if sum(strcmp(handles.Machines,MachineName)) == 0
-                    handles.Machines{size(handles.Machines,2)+1} = MachineName;
-                  end
-              else
-                  handles.Machines = cell(1);
-                  handles.Machines{1} = MachineName;
+  for j = 1:length(Files)
+      if ~isempty(Files)
+          MachineName = Files(j).name(numel(handles.Modalities{1,i})+2:end-4);
+          if isfield(handles,'Machines')
+              if sum(strcmp(handles.Machines,MachineName)) == 0
+                handles.Machines{size(handles.Machines,2)+1} = MachineName;
               end
+          else
+              handles.Machines = cell(1);
+              handles.Machines{1} = MachineName;
           end
       end
   end
-  set(handles.popUpMachine,'String',handles.Machines);
+end
+set(handles.popUpMachine,'String',handles.Machines);
 
 
-  vChar = get(handles.editGantryAngle,'String');
-  if strcmp(vChar(1,1),'0') && length(vChar)==6
-      set(handles.editGantryAngle,'String','0');
-  end
-  vChar = get(handles.editCouchAngle,'String');
-  if strcmp(vChar(1,1),'0') && length(vChar)==3
-      set(handles.editCouchAngle,'String','0')
-  end
-  %% 
-  % handles.State=0   no data available
-  % handles.State=1   ct cst and pln available; ready for dose calculation
-  % handles.State=2   ct cst and pln available and dij matric(s) are calculated;
-  %                   ready for optimization
-  % handles.State=3   plan is optimized
+vChar = get(handles.editGantryAngle,'String');
+if strcmp(vChar(1,1),'0') && length(vChar)==6
+  set(handles.editGantryAngle,'String','0');
+end
+vChar = get(handles.editCouchAngle,'String');
+if strcmp(vChar(1,1),'0') && length(vChar)==3
+  set(handles.editCouchAngle,'String','0')
+end
+%% 
+% handles.State=0   no data available
+% handles.State=1   ct cst and pln available; ready for dose calculation
+% handles.State=2   ct cst and pln available and dij matric(s) are calculated;
+%                   ready for optimization
+% handles.State=3   plan is optimized
 
 
-  % if plan is changed go back to state 1
-  % if table VOI Type or Priorities changed go to state 1
-  % if objective parameters changed go back to state 2
-  handles.CutOffLevel            = 0.01; % relative cut off level for dose vis
-  handles.IsoDose.NewIsoDoseFlag = false;
-  handles.TableChanged           = false;
-  handles.State                  = 0;
-  handles.doseOpacity            = 0.6;
-  handles.IsoDose.Levels         = 0;
-  handles.dispWindow             = cell(3,2); % first dimension refers to the selected
+% if plan is changed go back to state 1
+% if table VOI Type or Priorities changed go to state 1
+% if objective parameters changed go back to state 2
+handles.CutOffLevel            = 0.01; % relative cut off level for dose vis
+handles.IsoDose.NewIsoDoseFlag = false;
+handles.TableChanged           = false;
+handles.State                  = 0;
+handles.doseOpacity            = 0.6;
+handles.IsoDose.Levels         = 0;
+handles.dispWindow             = cell(3,2); % first dimension refers to the selected
 
-  % suppose no ct cube in HU is available (because no ct could be available)
-  handles.cubeHUavailable = false;
+% suppose no ct cube in HU is available (because no ct could be available)
+handles.cubeHUavailable = false;
+% initial startup finished
+handles.initialGuiStart = false;
 guidata(hObject, handles);  
 % eof resetGUI
 
 function handles = reloadGUI(hObject, handles, ct, cst)
 AllVarNames = handles.AllVarNames;
 
-% compute HU values
-if ~isfield(ct, 'cubeHU')
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir,'dicomImport'));
-    ct = matRad_electronDensitiesToHU(ct);
-    assignin('base','ct',ct);
-end
-if ~isfield(ct, 'cubeHU')
-    handles.cubeHUavailable = false;
-else
-    handles.cubeHUavailable = true;
+if ismember('ct',AllVarNames)
+    % compute HU values
+    if ~isfield(ct, 'cubeHU')
+        matRadRootDir = fileparts(mfilename('fullpath'));
+        addpath(fullfile(matRadRootDir,'dicomImport'));
+        ct = matRad_electronDensitiesToHU(ct);
+        assignin('base','ct',ct);
+    end
+    if ~isfield(ct, 'cubeHU')
+        handles.cubeHUavailable = false;
+    else
+        handles.cubeHUavailable = true;
+    end
 end
 
 %set plan if available - if not create one
 try 
-     if ismember('pln',AllVarNames) && handles.State > 0 
+     if ismember('pln',AllVarNames)  && handles.State > 0 
           setPln(handles); 
      elseif handles.State > 0 
           getPlnFromGUI(handles);
+          setPln(handles);
      end
 catch
        handles.State = 0;
