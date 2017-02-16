@@ -231,27 +231,10 @@ for i = 1:length(BeamSeqNames)
     for j = 1:stf(i).numOfRays
         stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_rotated*rotMx_XZ_rotated;
         stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_rotated*rotMx_XZ_rotated;   
-        stf(i).ray(j).SSD         = NaN;
     end
     
-    % SSD
-    DensityThresholdSSD = 0.05;
+    % book keeping & calculate focus index
     for j = 1:stf(i).numOfRays
-        [alpha,~,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
-                             ct.resolution, ...
-                             stf(i).sourcePoint, ...
-                             stf(i).ray(j).targetPoint, ...
-                             ct.cube);
-
-            ixSSD = find(rho{1} > DensityThresholdSSD,1,'first');
-
-            if isempty(ixSSD)== 1
-                warning('Surface for SSD calculation starts directly in first voxel of CT\n');
-            end
-            
-            % calculate SSD
-            stf(i).ray(j).SSD = double(2 * stf(i).SAD * alpha(ixSSD));
-            % book keeping & calculate focus index
             stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);
     end
     

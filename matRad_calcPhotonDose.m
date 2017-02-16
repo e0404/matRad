@@ -132,6 +132,9 @@ if ~(strcmp(num2str(pln.bixelWidth),'field'))
     end
 end
 
+% compute SSDs
+stf = matRad_computeSSD(stf,ct);
+
 counter = 0;
 
 fprintf('matRad: Photon dose calculation...\n');
