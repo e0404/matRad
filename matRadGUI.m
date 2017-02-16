@@ -281,6 +281,9 @@ if handles.State > 0
             handles.VOIPlotFlag(i) = false;
         end
     end
+  else
+    % reset slider when nothing is loaded
+    set(handles.sliderSlice,'Min',0,'Max',1,'Value',0,'SliderStep',[1 1]);
 end
 
 %Initialize colormaps and windows
