@@ -245,11 +245,6 @@ if ismember('resultGUI',AllVarNames)
     handles.State = 3;
 end
 
-% % create unique colorcube for volumes
-% if handles.State > 0
-%   handles.cstColorcube = colorcube(size(cst,1));
-% end
-
 % set some default values
 if handles.State == 2 || handles.State == 3
     set(handles.popupDisplayOption,'String','physicalDose');
