@@ -1,4 +1,4 @@
-function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice,cMap)
+function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that plots the contours of the segmentations given in cst
 %
@@ -15,8 +15,7 @@ function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctInde
 %                       all non-ignored contours.
 %   plane               plane view (coronal=1,sagittal=2,axial=3)
 %   slice               slice in the selected plane of the 3D cube
-%   cMap                optional argument defining the colormap, default is
-%                       colorcube
+%   
 %
 % output
 %   voiContourHandles:  handles of the plotted contours
@@ -36,20 +35,9 @@ function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctInde
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%Use default colormap?
-if nargin < 8 || isempty(cMap)
-    cMap = colorcube(size(cst,1));
-end
-
 if isempty(selection) || numel(selection) ~= size(cst,1)
     selection = logical(ones(size(cst,1),1));
 end
-
-cMapScale = size(cMap,1)-1;
-
-%determine colors
-colors = cMap(round(linspace(1,cMapScale,size(cst,1))),:);
-
 
 voiContourHandles = gobjects(0);
 
@@ -65,7 +53,7 @@ for s = 1:size(cst,1)
                     steps = cst{s,7}{slice,plane}(2,lower); % number of elements of current line section
                     voiContourHandles(end+1) = line(cst{s,7}{slice,plane}(1,lower+1:lower+steps),...
                         cst{s,7}{slice,plane}(2,lower+1:lower+steps),...
-                        'Color',colors(s,:),'LineWidth',2.0,'Parent',axesHandle);
+                        'Color',cst{s,5}.visibleColor(:),'LineWidth',2.0,'Parent',axesHandle);
                     
                     lower = lower+steps+1;
                 end
@@ -76,11 +64,11 @@ for s = 1:size(cst,1)
             mask = zeros(size(ct.cube{ctIndex}));
             mask(cst{s,4}{ctIndex}) = 1;
             if plane == 1 && any(any(mask(slice,:,:) > 0))
-                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(slice,:,:)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
+                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(slice,:,:)),0.5*[1 1],'Color',cst{s,5}.visibleColor(:),'LineWidth',2);
             elseif plane == 2 && any(any(mask(:,slice,:) > 0))
-                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,slice,:)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
+                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,slice,:)),0.5*[1 1],'Color',cst{s,5}.visibleColor(:),'LineWidth',2);
             elseif plane == 3 && any(any(mask(:,:,slice) > 0))
-                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,:,slice)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
+                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,:,slice)),0.5*[1 1],'Color',cst{s,5}.visibleColor(:),'LineWidth',2);
             end     
 
         end
