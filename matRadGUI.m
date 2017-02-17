@@ -245,6 +245,11 @@ if ismember('resultGUI',AllVarNames)
     handles.State = 3;
 end
 
+% % create unique colorcube for volumes
+% if handles.State > 0
+%   handles.cstColorcube = colorcube(size(cst,1));
+% end
+
 % set some default values
 if handles.State == 2 || handles.State == 3
     set(handles.popupDisplayOption,'String','physicalDose');
@@ -343,20 +348,20 @@ try
     if  ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
         ct  = evalin('base','ct');
         cst = evalin('base','cst');
-        setCstTable(handles,cst);
+        cst = setCstTable(handles,cst);
         handles.State = 1;
         % check if contours are precomputed
         if size(cst,2) < 7
             cst = matRad_computeVoiContours(ct,cst);
-            assignin('base','cst',cst);
         end
-        
+        assignin('base','cst',cst);
+
     elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
          handles = showError(handles,'GUI OpeningFunc: could not find cst file');
     elseif ~ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
          handles = showError(handles,'GUI OpeningFunc: could not find ct file');
     end
-catch  
+catch
    handles = showError(handles,'GUI OpeningFunc: Could not load ct and cst file');
 end
 
@@ -439,12 +444,12 @@ catch
 end
 
 try
-    setCstTable(handles,cst);
+    cst = setCstTable(handles,cst);
     handles.TableChanged = false;
     set(handles.popupTypeOfPlot,'Value',1);
-    % precompute contours 
+    % precompute contours
     cst = matRad_computeVoiContours(ct,cst);
-    
+
     assignin('base','ct',ct);
     assignin('base','cst',cst);
     handles.State = 1;
@@ -992,7 +997,7 @@ set(handles.txtMaxVal,'String',num2str(handles.dispWindow{selectIx,2}(1,2)));
 
 %% plot VOIs
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
-    AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,ct,1,handles.VOIPlotFlag,plane,slice,colorcube)];
+    AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,ct,1,handles.VOIPlotFlag,plane,slice)];
 end
 
 %% Set axis labels and plot iso center
