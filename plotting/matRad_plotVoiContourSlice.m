@@ -1,4 +1,4 @@
-function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice)
+function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice,cMap)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that plots the contours of the segmentations given in cst
 %
@@ -15,7 +15,8 @@ function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctInde
 %                       all non-ignored contours.
 %   plane               plane view (coronal=1,sagittal=2,axial=3)
 %   slice               slice in the selected plane of the 3D cube
-%   
+%   cMap                optional argument defining the colormap, default is
+%                       colorcube
 %
 % output
 %   voiContourHandles:  handles of the plotted contours
@@ -34,6 +35,16 @@ function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctInde
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% overwrite colormap
+if exist('cMap', 'var')
+    cMapScale = size(cMap,1)-1;
+    %determine colors
+    colors = cMap(round(linspace(1,cMapScale,size(cst,1))),:);
+  else
+    for i = 1:size(cst,1)
+      colors(i,:) = cst{i,5}.visibleColor;
+    end
+end
 
 if isempty(selection) || numel(selection) ~= size(cst,1)
     selection = logical(ones(size(cst,1),1));
@@ -53,7 +64,7 @@ for s = 1:size(cst,1)
                     steps = cst{s,7}{slice,plane}(2,lower); % number of elements of current line section
                     voiContourHandles(end+1) = line(cst{s,7}{slice,plane}(1,lower+1:lower+steps),...
                         cst{s,7}{slice,plane}(2,lower+1:lower+steps),...
-                        'Color',cst{s,5}.visibleColor(:),'LineWidth',2.0,'Parent',axesHandle);
+                        'Color',colors(s,:),'LineWidth',2.0,'Parent',axesHandle);
                     
                     lower = lower+steps+1;
                 end
