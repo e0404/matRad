@@ -38,21 +38,21 @@ coordsOfFirstPixel = [origCtInfo.ImagePositionPatient];
 
 % set up grid vectors
 x = coordsOfFirstPixel(1,1) + origCtInfo(1).ImageOrientationPatient(1) * ...
-                              origCtInfo(1).PixelSpacing(1)*double([0:origCtInfo(1).Columns-1]) + .5*origCtInfo(1).PixelSpacing(1);
+                              origCtInfo(1).PixelSpacing(1)*double([0:origCtInfo(1).Columns-1]);
 y = coordsOfFirstPixel(2,1) + origCtInfo(1).ImageOrientationPatient(5) * ...
-                              origCtInfo(1).PixelSpacing(2)*double([0:origCtInfo(1).Rows-1]) + .5*origCtInfo(1).PixelSpacing(2);
-z = coordsOfFirstPixel(3,:) + .5*origCtInfo(1).SliceThickness;
+                              origCtInfo(1).PixelSpacing(2)*double([0:origCtInfo(1).Rows-1]);
+z = coordsOfFirstPixel(3,:);
 
 if exist('grid','var')
     xq = grid{1};
     yq = grid{2};
     zq = grid{3};
 else
-    xq = coordsOfFirstPixel(1,1)+.5*origCtInfo(1).PixelSpacing(1) + ...
-         [0:origCtInfo(1).ImageOrientationPatient(1)*resolution.x:origCtInfo(1).ImageOrientationPatient(1)*origCtInfo(1).PixelSpacing(1)*double(origCtInfo(1).Columns-1)];
-    yq = coordsOfFirstPixel(2,1)+.5*origCtInfo(1).PixelSpacing(2) + ...
-         [0:origCtInfo(1).ImageOrientationPatient(5)*resolution.y:origCtInfo(1).ImageOrientationPatient(5)*origCtInfo(1).PixelSpacing(2)*double(origCtInfo(1).Rows-1)];
-    zq = (coordsOfFirstPixel(3,1)+.5*origCtInfo(1).SliceThickness):resolution.z:(coordsOfFirstPixel(3,end)+.5*origCtInfo(3).SliceThickness);
+    xq = coordsOfFirstPixel(1,1):origCtInfo(1).ImageOrientationPatient(1)*resolution.x: ...
+        (coordsOfFirstPixel(1,1)+origCtInfo(1).ImageOrientationPatient(1)*origCtInfo(1).PixelSpacing(1)*double(origCtInfo(1).Columns-1));
+    yq = [coordsOfFirstPixel(2,1):origCtInfo(1).ImageOrientationPatient(5)*resolution.y: ...
+        (coordsOfFirstPixel(2,1)+origCtInfo(1).ImageOrientationPatient(5)*origCtInfo(1).PixelSpacing(2)*double(origCtInfo(1).Rows-1))];
+    zq = coordsOfFirstPixel(3,1):resolution.z: coordsOfFirstPixel(3,end);
 end
 
 % set up grid matrices - implicit dimension permuation (X Y Z-> Y X Z)

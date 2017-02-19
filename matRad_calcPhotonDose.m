@@ -200,9 +200,9 @@ for i = 1:dij.numOfBeams % loop over all beams
     kernel3 = machine.data.kernel(currSSDIx).kernel3;
 
     % Evaluate kernels for all distances, interpolate between values
-    kernel1Mx = interp1(kernelPos,kernel1,sqrt(X.^2+Z.^2));
-    kernel2Mx = interp1(kernelPos,kernel2,sqrt(X.^2+Z.^2));
-    kernel3Mx = interp1(kernelPos,kernel3,sqrt(X.^2+Z.^2));
+    kernel1Mx = interp1(kernelPos,kernel1,sqrt(X.^2+Z.^2),'linear',0);
+    kernel2Mx = interp1(kernelPos,kernel2,sqrt(X.^2+Z.^2),'linear',0);
+    kernel3Mx = interp1(kernelPos,kernel3,sqrt(X.^2+Z.^2),'linear',0);
     
     % convolution here if no custom primary fluence and no field based dose calc
     if ~useCustomPrimFluenceBool && ~(strcmp(num2str(pln.bixelWidth),'field'))
@@ -218,13 +218,13 @@ for i = 1:dij.numOfBeams % loop over all beams
 
         % Creates an interpolant for kernes from vectors position X and Z
         if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
-            Interp_kernel1 = griddedInterpolant(X',Z',convMx1','linear');
-            Interp_kernel2 = griddedInterpolant(X',Z',convMx2','linear');
-            Interp_kernel3 = griddedInterpolant(X',Z',convMx3','linear');
+            Interp_kernel1 = griddedInterpolant(X',Z',convMx1','linear','none');
+            Interp_kernel2 = griddedInterpolant(X',Z',convMx2','linear','none');
+            Interp_kernel3 = griddedInterpolant(X',Z',convMx3','linear','none');
         else
-            Interp_kernel1 = @(x,y)interp2(X(1,:),Z(:,1),convMx1,x,y,'linear');
-            Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear');
-            Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear');
+            Interp_kernel1 = @(x,y)interp2(X(1,:),Z(:,1),convMx1,x,y,'linear',NaN);
+            Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear',NaN);
+            Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear',NaN);
         end
     end
     
@@ -244,7 +244,7 @@ for i = 1:dij.numOfBeams % loop over all beams
             % prepare primary fluence array
             primaryFluence = machine.data.primaryFluence;
             r     = sqrt( (X-stf(i).ray(j).rayPos(1)).^2 + (Z-stf(i).ray(j).rayPos(3)).^2 );
-            Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r);
+            Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r,'linear',0);
                 
             % apply the primary fluence to the field
             Fx = F .* Psi;
@@ -259,13 +259,13 @@ for i = 1:dij.numOfBeams % loop over all beams
 
             % Creates an interpolant for kernes from vectors position X and Z
             if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
-                Interp_kernel1 = griddedInterpolant(X',Z',convMx1','linear');
-                Interp_kernel2 = griddedInterpolant(X',Z',convMx2','linear');
-                Interp_kernel3 = griddedInterpolant(X',Z',convMx3','linear');
+                Interp_kernel1 = griddedInterpolant(X',Z',convMx1','linear','none');
+                Interp_kernel2 = griddedInterpolant(X',Z',convMx2','linear','none');
+                Interp_kernel3 = griddedInterpolant(X',Z',convMx3','linear','none');
             else
-                Interp_kernel1 = @(x,y)interp2(X(1,:),Z(:,1),convMx1,x,y,'linear');
-                Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear');
-                Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear');
+                Interp_kernel1 = @(x,y)interp2(X(1,:),Z(:,1),convMx1,x,y,'linear',NaN);
+                Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear',NaN);
+                Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear',NaN);
             end
         end
 
