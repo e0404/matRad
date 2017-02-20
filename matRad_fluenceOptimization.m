@@ -121,8 +121,9 @@ elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization
                                 && strcmp(pln.radiationMode,'carbon')
 
     % check if you are running a supported rad
-    dij.ax   = zeros(dij.numOfVoxels,1);
-    dij.bx   = zeros(dij.numOfVoxels,1);
+    dij.ax      = zeros(dij.numOfVoxels,1);
+    dij.bx      = zeros(dij.numOfVoxels,1);
+
     
     for i = 1:size(cst,1)
         
@@ -139,7 +140,9 @@ elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization
             
         end
     end
-     
+    
+    dij.ixDose  = dij.bx~=0; 
+        
     if isequal(pln.bioOptimization,'LEMIV_effect')
         
            effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
@@ -150,9 +153,8 @@ elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization
     elseif isequal(pln.bioOptimization,'LEMIV_RBExD')
         
            %pre-calculations
-           dij.gamma      = zeros(dij.numOfVoxels,1);
-           idx            = dij.bx~=0; 
-           dij.gamma(idx) = dij.ax(idx)./(2*dij.bx(idx)); 
+           dij.gamma              = zeros(dij.numOfVoxels,1);   
+           dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose)); 
             
            % calculate current in target
            CurrEffectTarget = (dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2);
