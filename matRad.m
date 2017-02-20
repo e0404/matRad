@@ -30,8 +30,8 @@ load TG119.mat
 % meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0:72:359]; % [°]
-pln.couchAngles     = [0 0 0 0 0]; % [°]
+pln.gantryAngles    = [72]; % [°]
+pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;

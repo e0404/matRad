@@ -98,11 +98,7 @@ end
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
 
 % set lateral cutoff value
-if ~(strcmp(num2str(pln.bixelWidth),'field'))
-    lateralCutoff = 82; % [mm]
-else
-    lateralCutoff = 140; % [mm] due to the large field size
-end
+lateralCutoff = 82; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
@@ -117,25 +113,38 @@ catch
    error(['Could not find the following machine file: ' fileName ]); 
 end
 
-% Make a 2D grid extending +/-100mm with 0.5 mm resolution
-convLimits = 100; % [mm]
-convResolution = .5; % [mm]
-[X,Z] = meshgrid(-convLimits:convResolution:convLimits-convResolution);   
+% set up convolution grid
+if strcmp(num2str(pln.bixelWidth),'field')
+    % get data from DICOM import
+else
+    intConvResolution = .5; % [mm]
+end
+
+% Make a 2D grid extending +/- lateral cutoff for kernels
+intConvLimits = lateralCutoff; % [mm]
+[kernelX,kernelZ] = meshgrid(-intConvLimits:intConvResolution:intConvLimits-intConvResolution);   
 
 % gaussian filter to model penumbra
-sigmaGauss = 2.123/convResolution; % [mm] / see diploma thesis siggel 4.1.2
-gaussFilter =  1/(2*pi*sigmaGauss^2) * exp(-(X.^2+Z.^2)/(2*sigmaGauss^2*convResolution^2) );
+sigmaGauss = 2.123/intConvResolution; % [mm] / see diploma thesis siggel 4.1.2
+gaussFilter =  1/(2*pi*sigmaGauss^2) * exp(-(kernelX.^2+kernelZ.^2)/(2*sigmaGauss^2*intConvResolution^2) );
+kernelSize = size(gaussFilter,1);
 
 if ~(strcmp(num2str(pln.bixelWidth),'field'))
-    % Create zero matrix for the Fluence
-    F = zeros(size(X));
-
-    % set bixel opening to one
-    F(X >= -pln.bixelWidth/2 & X < pln.bixelWidth/2 & ...
-      Z >= -pln.bixelWidth/2 & Z < pln.bixelWidth/2) = 1;
+    
+    % Create fluence matrix
+    F = ones(floor(pln.bixelWidth/intConvResolution));
+    Fsize = size(F,1);
+    
     % gaussian convolution of field to model penumbra
     if ~useCustomPrimFluenceBool
-        F = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(gaussFilter) ))));
+        F = ifft2(fft2(F,Fsize+kernelSize,Fsize+kernelSize).* fft2(gaussFilter,Fsize+kernelSize,Fsize+kernelSize));
+        Fsize = size(F,1);
+    
+        convOffset = intConvResolution*ceil((Fsize-1)./2);  
+    
+        [X,Z] = meshgrid(-(intConvLimits+convOffset): ...
+                         intConvResolution: ...
+                         (intConvLimits-intConvResolution+convOffset));
     end
 end
 
@@ -200,9 +209,9 @@ for i = 1:dij.numOfBeams % loop over all beams
     kernel3 = machine.data.kernel(currSSDIx).kernel3;
 
     % Evaluate kernels for all distances, interpolate between values
-    kernel1Mx = interp1(kernelPos,kernel1,sqrt(X.^2+Z.^2),'linear',0);
-    kernel2Mx = interp1(kernelPos,kernel2,sqrt(X.^2+Z.^2),'linear',0);
-    kernel3Mx = interp1(kernelPos,kernel3,sqrt(X.^2+Z.^2),'linear',0);
+    kernel1Mx = interp1(kernelPos,kernel1,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
+    kernel2Mx = interp1(kernelPos,kernel2,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
+    kernel3Mx = interp1(kernelPos,kernel3,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
     
     % convolution here if no custom primary fluence and no field based dose calc
     if ~useCustomPrimFluenceBool && ~(strcmp(num2str(pln.bixelWidth),'field'))
@@ -212,9 +221,9 @@ for i = 1:dij.numOfBeams % loop over all beams
                 num2str(machine.data.kernel(currSSDIx).SSD) ' mm ...\n']);    
 
         % 2D convolution of Fluence and Kernels in fourier domain
-        convMx1 = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(kernel1Mx) ) )));
-        convMx2 = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(kernel2Mx) ) )));
-        convMx3 = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(kernel3Mx) ) )));
+        convMx1 = ifft2(fft2(F,Fsize+kernelSize,Fsize+kernelSize).* fft2(kernel1Mx,Fsize+kernelSize,Fsize+kernelSize));
+        convMx2 = ifft2(fft2(F,Fsize+kernelSize,Fsize+kernelSize).* fft2(kernel2Mx,Fsize+kernelSize,Fsize+kernelSize));
+        convMx3 = ifft2(fft2(F,Fsize+kernelSize,Fsize+kernelSize).* fft2(kernel3Mx,Fsize+kernelSize,Fsize+kernelSize));
 
         % Creates an interpolant for kernes from vectors position X and Z
         if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
@@ -239,6 +248,7 @@ for i = 1:dij.numOfBeams % loop over all beams
             % overwrite field opening if necessary
             if strcmp(num2str(pln.bixelWidth),'field')
                 F = stf(i).ray(j).shape;
+                Fsize = size(F,1);
             end
             
             % prepare primary fluence array
@@ -250,12 +260,19 @@ for i = 1:dij.numOfBeams % loop over all beams
             Fx = F .* Psi;
             
             % convolute with the gaussian
-            Fx = real(fftshift(ifft2(fft2( ifftshift(Fx) ).*fft2( ifftshift(gaussFilter) ))));
+            Fx = real( ifft2(fft2(Fx,Fsize+kernelSize,Fsize+kernelSize).* fft2(gaussFilter,Fsize+kernelSize,Fsize+kernelSize)) );
+            Fxsize = size(Fx,1);
+
+            convOffset = intConvResolution*ceil((Fxsize-1)./2);  
+    
+            [X,Z] = meshgrid(-(intConvLimits+convOffset): ...
+                             intConvResolution: ...
+                             (intConvLimits-intConvResolution+convOffset));
 
             % 2D convolution of Fluence and Kernels in fourier domain
-            convMx1 = real(fftshift(ifft2(fft2( ifftshift(Fx) ).*fft2( ifftshift(kernel1Mx) ) )));
-            convMx2 = real(fftshift(ifft2(fft2( ifftshift(Fx) ).*fft2( ifftshift(kernel2Mx) ) )));
-            convMx3 = real(fftshift(ifft2(fft2( ifftshift(Fx) ).*fft2( ifftshift(kernel3Mx) ) )));
+            convMx1 = real( ifft2(fft2(Fx,Fxsize+kernelSize,Fsize+kernelSize).* fft2(kernel1Mx,Fxsize+kernelSize,Fsize+kernelSize)) );
+            convMx2 = real( ifft2(fft2(Fx,Fxsize+kernelSize,Fsize+kernelSize).* fft2(kernel2Mx,Fxsize+kernelSize,Fsize+kernelSize)) );
+            convMx3 = real( ifft2(fft2(Fx,Fxsize+kernelSize,Fsize+kernelSize).* fft2(kernel3Mx,Fxsize+kernelSize,Fsize+kernelSize)) );
 
             % Creates an interpolant for kernes from vectors position X and Z
             if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
@@ -267,6 +284,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                 Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear',NaN);
                 Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear',NaN);
             end
+
         end
 
         % Display progress and update text only 200 times
