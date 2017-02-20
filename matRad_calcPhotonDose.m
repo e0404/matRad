@@ -102,7 +102,7 @@ lateralCutoff = 82; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
-useCustomPrimFluenceBool = 0;
+useCustomPrimFluenceBool = 1;
 
 %% kernel convolution
 % prepare data for convolution to reduce calculation time
@@ -135,16 +135,22 @@ if ~(strcmp(num2str(pln.bixelWidth),'field'))
     F = ones(floor(pln.bixelWidth/intConvResolution));
     Fsize = size(F,1);
     
-    % gaussian convolution of field to model penumbra
     if ~useCustomPrimFluenceBool
+    % gaussian convolution of field to model penumbra
         F = ifft2(fft2(F,Fsize+kernelSize,Fsize+kernelSize).* fft2(gaussFilter,Fsize+kernelSize,Fsize+kernelSize));
         Fsize = size(F,1);
     
         convOffset = intConvResolution*ceil((Fsize-1)./2);  
     
-        [X,Z] = meshgrid(-(intConvLimits+convOffset): ...
+        [convMx_X,convMx_Z] = meshgrid(-(intConvLimits+convOffset): ...
                          intConvResolution: ...
                          (intConvLimits-intConvResolution+convOffset));
+    else
+        convOffset = intConvResolution*ceil((Fsize-1)./2);  
+    
+        [F_X,F_Z] = meshgrid(-convOffset: ...
+                         intConvResolution: ...
+                         convOffset-intConvResolution);    
     end
 end
 
@@ -227,13 +233,13 @@ for i = 1:dij.numOfBeams % loop over all beams
 
         % Creates an interpolant for kernes from vectors position X and Z
         if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
-            Interp_kernel1 = griddedInterpolant(X',Z',convMx1','linear','none');
-            Interp_kernel2 = griddedInterpolant(X',Z',convMx2','linear','none');
-            Interp_kernel3 = griddedInterpolant(X',Z',convMx3','linear','none');
+            Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
+            Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
+            Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
         else
-            Interp_kernel1 = @(x,y)interp2(X(1,:),Z(:,1),convMx1,x,y,'linear',NaN);
-            Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear',NaN);
-            Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear',NaN);
+            Interp_kernel1 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,'linear',NaN);
+            Interp_kernel2 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,'linear',NaN);
+            Interp_kernel3 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,'linear',NaN);
         end
     end
     
@@ -249,11 +255,16 @@ for i = 1:dij.numOfBeams % loop over all beams
             if strcmp(num2str(pln.bixelWidth),'field')
                 F = stf(i).ray(j).shape;
                 Fsize = size(F,1);
+                convOffset = intConvResolution*ceil((Fsize-1)./2);  
+    
+                [F_X,F_Z] = meshgrid(-convOffset: ...
+                                 intConvResolution: ...
+                                 convOffset-intConvResolution);
             end
             
             % prepare primary fluence array
             primaryFluence = machine.data.primaryFluence;
-            r     = sqrt( (X-stf(i).ray(j).rayPos(1)).^2 + (Z-stf(i).ray(j).rayPos(3)).^2 );
+            r     = sqrt( (F_X-stf(i).ray(j).rayPos(1)).^2 + (F_Z-stf(i).ray(j).rayPos(3)).^2 );
             Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r,'linear',0);
                 
             % apply the primary fluence to the field
@@ -263,26 +274,26 @@ for i = 1:dij.numOfBeams % loop over all beams
             Fx = real( ifft2(fft2(Fx,Fsize+kernelSize,Fsize+kernelSize).* fft2(gaussFilter,Fsize+kernelSize,Fsize+kernelSize)) );
             Fxsize = size(Fx,1);
 
+            % 2D convolution of Fluence and Kernels in fourier domain
+            convMx1 = real( ifft2(fft2(Fx,Fxsize+kernelSize,Fxsize+kernelSize).* fft2(kernel1Mx,Fxsize+kernelSize,Fxsize+kernelSize)) );
+            convMx2 = real( ifft2(fft2(Fx,Fxsize+kernelSize,Fxsize+kernelSize).* fft2(kernel2Mx,Fxsize+kernelSize,Fxsize+kernelSize)) );
+            convMx3 = real( ifft2(fft2(Fx,Fxsize+kernelSize,Fxsize+kernelSize).* fft2(kernel3Mx,Fxsize+kernelSize,Fxsize+kernelSize)) );
+
+            % set up grid
             convOffset = intConvResolution*ceil((Fxsize-1)./2);  
-    
-            [X,Z] = meshgrid(-(intConvLimits+convOffset): ...
+            [convMx_X,convMx_Z] = meshgrid(-(intConvLimits+convOffset): ...
                              intConvResolution: ...
                              (intConvLimits-intConvResolution+convOffset));
 
-            % 2D convolution of Fluence and Kernels in fourier domain
-            convMx1 = real( ifft2(fft2(Fx,Fxsize+kernelSize,Fsize+kernelSize).* fft2(kernel1Mx,Fxsize+kernelSize,Fsize+kernelSize)) );
-            convMx2 = real( ifft2(fft2(Fx,Fxsize+kernelSize,Fsize+kernelSize).* fft2(kernel2Mx,Fxsize+kernelSize,Fsize+kernelSize)) );
-            convMx3 = real( ifft2(fft2(Fx,Fxsize+kernelSize,Fsize+kernelSize).* fft2(kernel3Mx,Fxsize+kernelSize,Fsize+kernelSize)) );
-
             % Creates an interpolant for kernes from vectors position X and Z
             if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
-                Interp_kernel1 = griddedInterpolant(X',Z',convMx1','linear','none');
-                Interp_kernel2 = griddedInterpolant(X',Z',convMx2','linear','none');
-                Interp_kernel3 = griddedInterpolant(X',Z',convMx3','linear','none');
+                Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
+                Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
+                Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
             else
-                Interp_kernel1 = @(x,y)interp2(X(1,:),Z(:,1),convMx1,x,y,'linear',NaN);
-                Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear',NaN);
-                Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear',NaN);
+                Interp_kernel1 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,'linear',NaN);
+                Interp_kernel2 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,'linear',NaN);
+                Interp_kernel3 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,'linear',NaN);
             end
 
         end
