@@ -23,23 +23,20 @@
 %  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-function matRad_export_HITXMLPlan_modified(planFilename,minNbParticlesSpot, minNrParticlesIES, scanPath)
-
-if (nargin < 2)
-  minNbParticlesSpot=0;
-  minNrParticlesIES = 0;
-end
+function matRad_export_HITXMLPlan_modified(planFilename, pln, stf, resultGUI, scanPath)
 
 disp('HITXML exporter: Exporting plan in the HITXML format')
-
-% get all data from workspace
-pln       = evalin('base','pln');
-stf       = evalin('base','stf');
-resultGUI = evalin('base','resultGUI');
 
 if ~strcmp(pln.radiationMode,'protons') && ~strcmp(pln.radiationMode,'carbon')
   error('HITXML plan for this radiationMode not supported!');
 end
+minNbParticlesSpot = 500000/1e6;  %for protons
+minNrParticlesIES = 25000000;    %for protons
+if strcmp(pln.radiationMode,'carbon')
+     minNbParticlesSpot = 15000/1e6;   
+     minNrParticlesIES = 0;
+end
+
 
 if ~strcmp(pln.machine,'HIT') 
   error('HITXML exporter only supports machine HIT');
