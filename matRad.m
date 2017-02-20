@@ -31,7 +31,7 @@ load LIVER.mat
 %% multiple Scenarios
 multScen.numOfCtScen          = ct.numOfCtScen; % number of imported ct scenarios
 
-multScen.numOfIntSegShiftScen = 1000; %1000;              % number of internal segmentation shift scnearios     
+multScen.numOfIntSegShiftScen = 0; %1000;              % number of internal segmentation shift scnearios     
 
 multScen.numOfShiftScen       = [0 0 0];        % number of shifts in x y and z direction       
 multScen.shiftSize            = [3 3 3];        % maximum shift [mm]
@@ -56,8 +56,8 @@ cst = matRad_coverageBasedCstManipulation(cst,ct,multScen,0,0);
 %% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 3; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [210 280 ]; %[0:72:359]; % [°]
-pln.couchAngles     = [0 0 ]; % [Â°]
+pln.gantryAngles    = [210 280]; %[0:72:359]; % [°]
+pln.couchAngles     = [0  0]; % [Â°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
@@ -68,7 +68,7 @@ pln.numOfFractions  = 25;
 pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.machine         = 'HIT'; %'Generic';
-pln.minNrParticles  = 500000;
+%pln.minNrParticles  = 500000;  %protons 500000, carbon 15000
 pln.LongitudialSpotSpacing = 3; %only relevant for HIT machine, not generic
 %% initial visualization and change objective function settings if desired
 matRadGUI
@@ -107,10 +107,10 @@ matRadGUI
 matRad_calcDVH(resultGUI,cst,pln)
 
 %% post processing
-resultGUI = matRad_postprocessing(resultGUI, dij, pln, 25000000);
+resultGUI = matRad_postprocessing(resultGUI, dij, pln);   %last number  =minNrParticlesIES
 
 %% export Plan
-matRad_export_HITXMLPlan_modified('LiverDS221_wc5555_3mmBixel_bf', 500000, 25000000, 'backforth')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
+matRad_export_HITXMLPlan_modified('Test_c12',  pln, stf, resultGUI, 'backforth')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
 
 %% calc 4D dose
-[resultGUI, delivery, ct] = matRad_calc4dDose(ct, 'LiverDS221_wc5555_3mmBixel_bf'); %TKUH005_test');  
+[resultGUI, delivery, ct] = matRad_calc4dDose(ct, 'LiverDS221_2b_bf'); %'LiverDS221_wc5555_3mmBixel_bf'); %TKUH005_test');  

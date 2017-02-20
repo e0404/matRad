@@ -1,4 +1,4 @@
-function resultGUI = matRad_postprocessing(resultGUI, dij,pln, minNrParticlesIES)
+function resultGUI = matRad_postprocessing(resultGUI, dij, pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad postprosseing function accounting for
 %       minimum number of particles per spot
@@ -36,9 +36,6 @@ function resultGUI = matRad_postprocessing(resultGUI, dij,pln, minNrParticlesIES
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 4
-    minNrParticlesIES = 0;
-end
 
 % issue warning if biological optimization impossible
 if sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose'))
@@ -63,9 +60,21 @@ if ~isdeployed % only if _not_ running as standalone
 
 end
 
+if ~strcmp(pln.radiationMode,'protons') && ~strcmp(pln.radiationMode,'carbon')
+  error('HITXML plan for this radiationMode not supported!');
+end
+Imin = 500000/1e6;  %for protons
+minNrParticlesIES = 25000000;    %for protons
+if strcmp(pln.radiationMode,'carbon')
+     Imin = 15000/1e6;   
+     minNrParticlesIES = 0;
+end
+
+
+
 %%manipulate fluence vector
 w = resultGUI.w;
-Imin = pln.minNrParticles/1e6;
+%Imin = pln.minNrParticles/1e6;
 lw = length(w);
 for i = 1:lw
     if(w(i) < Imin/2)

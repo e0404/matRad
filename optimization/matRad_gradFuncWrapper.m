@@ -172,7 +172,7 @@ for i = 1:options.numOfScenarios
 
         elseif isequal(options.ID,'protons_const_RBExD')
             
-            g            = g + (delta{i}' * dij.physicalDose{i} * dij.RBE)';
+            g            = g + (delta{i}' * dij.physicalDose{dij.indexforOpt(i)} * dij.RBE)';
             
         elseif isequal(options.bioOpt,'LEMIV_effect')
 
