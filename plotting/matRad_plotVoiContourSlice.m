@@ -75,11 +75,11 @@ for s = 1:size(cst,1)
             mask = zeros(size(ct.cube{ctIndex}));
             mask(cst{s,4}{ctIndex}) = 1;
             if plane == 1 && any(any(mask(slice,:,:) > 0))
-                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(slice,:,:)),0.5*[1 1],'Color',cst{s,5}.visibleColor(:),'LineWidth',2);
+                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(slice,:,:)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
             elseif plane == 2 && any(any(mask(:,slice,:) > 0))
-                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,slice,:)),0.5*[1 1],'Color',cst{s,5}.visibleColor(:),'LineWidth',2);
+                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,slice,:)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
             elseif plane == 3 && any(any(mask(:,:,slice) > 0))
-                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,:,slice)),0.5*[1 1],'Color',cst{s,5}.visibleColor(:),'LineWidth',2);
+                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,:,slice)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
             end     
 
         end
