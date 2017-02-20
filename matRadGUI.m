@@ -143,6 +143,10 @@ end
 
 
 set(handles.legendTable,'String',{'no data loaded'});
+% clear  VOIPlotFlag
+if isfield(handles,'VOIPlotFlag')
+  handles = rmfield(handles,'VOIPlotFlag');
+end
 
 %seach for availabes machines
 handles.Modalities = {'photons','protons','carbon'};
