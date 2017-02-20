@@ -143,6 +143,10 @@ end
 
 
 set(handles.legendTable,'String',{'no data loaded'});
+% clear  VOIPlotFlag
+if isfield(handles,'VOIPlotFlag')
+  handles = rmfield(handles,'VOIPlotFlag');
+end
 
 %seach for availabes machines
 handles.Modalities = {'photons','protons','carbon'};
@@ -343,20 +347,20 @@ try
     if  ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
         ct  = evalin('base','ct');
         cst = evalin('base','cst');
-        setCstTable(handles,cst);
+        cst = setCstTable(handles,cst);
         handles.State = 1;
         % check if contours are precomputed
         if size(cst,2) < 7
             cst = matRad_computeVoiContours(ct,cst);
-            assignin('base','cst',cst);
         end
-        
+        assignin('base','cst',cst);
+
     elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
          handles = showError(handles,'GUI OpeningFunc: could not find cst file');
     elseif ~ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
          handles = showError(handles,'GUI OpeningFunc: could not find ct file');
     end
-catch  
+catch
    handles = showError(handles,'GUI OpeningFunc: Could not load ct and cst file');
 end
 
@@ -439,12 +443,12 @@ catch
 end
 
 try
-    setCstTable(handles,cst);
+    cst = setCstTable(handles,cst);
     handles.TableChanged = false;
     set(handles.popupTypeOfPlot,'Value',1);
-    % precompute contours 
+    % precompute contours
     cst = matRad_computeVoiContours(ct,cst);
-    
+
     assignin('base','ct',ct);
     assignin('base','cst',cst);
     handles.State = 1;
@@ -992,7 +996,7 @@ set(handles.txtMaxVal,'String',num2str(handles.dispWindow{selectIx,2}(1,2)));
 
 %% plot VOIs
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
-    AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,ct,1,handles.VOIPlotFlag,plane,slice,colorcube)];
+    AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,ct,1,handles.VOIPlotFlag,plane,slice)];
 end
 
 %% Set axis labels and plot iso center
@@ -1622,14 +1626,30 @@ if strcmp(get(hObject,'Enable') ,'on')
 end
 
 % displays the cst in the GUI
-function setCstTable(handles,cst)
+function cst = setCstTable(handles,cst)
 
-% create legend according to cst file
-colors = colorcube(size(cst,1));
+colorAssigned = true;
+
+while colorAssigned == true
+  for i = 1:size(cst,1)
+    if ~isfield(cst{i,5},'visibleColor')
+      colorAssigned = false;
+    elseif isempty(cst{i,5}.visibleColor)
+      colorAssigned = false;
+    end
+  end
+end
+
+if colorAssigned == false
+  colors = colorcube(size(cst,1));
+  for i = 1:size(cst,1)
+    cst{i,5}.visibleColor = colors(i,:);
+  end
+end
 
 for s = 1:size(cst,1)
     handles.VOIPlotFlag(s) = cst{s,5}.Visible;
-    clr = dec2hex(round(colors(s,:)*255),2)';
+    clr = dec2hex(round(cst{s,5}.visibleColor(:)*255),2)';
     clr = ['#';clr(:)]';
     if handles.VOIPlotFlag(s)
         tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
@@ -2552,14 +2572,13 @@ try
     if  ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
         ct  = evalin('base','ct');
         cst = evalin('base','cst');
-        setCstTable(handles,cst);
+        cst = setCstTable(handles,cst);
         handles.State = 1;
         % check if contours are precomputed
         if size(cst,2) < 7
             cst = matRad_computeVoiContours(ct,cst);
-            assignin('base','cst',cst);
         end
-        
+        assignin('base','cst',cst);
     elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
          handles = showError(handles,'GUI OpeningFunc: could not find cst file');
     elseif ~ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
@@ -3222,10 +3241,8 @@ function legendTable_Callback(hObject, eventdata, handles)
 %        contents{get(hObject,'Value')} returns selected item from legendTable
 cst = evalin('base','cst');
 
-colors = colorcube;
-colors = colors(round(linspace(1,63,size(cst,1))),:);
 idx    = get(hObject,'Value');
-clr    = dec2hex(round(colors(idx,:)*255),2)';
+clr    = dec2hex(round(cst{idx,5}.visibleColor(:)*255),2)';
 clr    = ['#';clr(:)]';
 
 %Get the string entries
