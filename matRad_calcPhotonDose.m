@@ -120,7 +120,7 @@ end
 % Make a 2D grid extending +/-100mm with 0.5 mm resolution
 convLimits = 100; % [mm]
 convResolution = .5; % [mm]
-[X,Z] = meshgrid(-convLimits+convResolution:convResolution:convLimits);   
+[X,Z] = meshgrid(-convLimits:convResolution:convLimits-convResolution);   
 
 % gaussian filter to model penumbra
 sigmaGauss = 2.123/convResolution; % [mm] / see diploma thesis siggel 4.1.2

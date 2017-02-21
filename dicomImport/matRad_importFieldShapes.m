@@ -176,11 +176,11 @@ for i = 1:length(tmpCollimation.Fields)
         end
         for k = 1:tmpCollimation.Devices{beamIndex}(j).NumOfLeafs
             % determine corner points of the open area
-            p1 = ceil((tmpCollimation.Fields(i).LeafPos{j}(k,1)+convLimits)/convResolution) - 1; 
-            p2 = ceil((tmpCollimation.Fields(i).LeafPos{j}(k,2)+convLimits)/convResolution);                 
+            p1 = ceil((tmpCollimation.Fields(i).LeafPos{j}(k,1)+convLimits)/convResolution); 
+            p2 = ceil((tmpCollimation.Fields(i).LeafPos{j}(k,2)+convLimits)/convResolution)+1;                 
             if type == 2
-                p3 = ceil((tmpCollimation.Devices{beamIndex}(j).Limits(k)+convLimits)/convResolution) - 1;
-                p4 = ceil((tmpCollimation.Devices{beamIndex}(j).Limits(k+1)+convLimits)/convResolution) - 1;               
+                p3 = ceil((tmpCollimation.Devices{beamIndex}(j).Limits(k)+convLimits)/convResolution)+1;
+                p4 = ceil((tmpCollimation.Devices{beamIndex}(j).Limits(k+1)+convLimits)/convResolution);               
             else % for one dimensional collimation (ASMX/Y) other direction is fully open
                 p3 = 1;
                 p4 = 2*convLimits/convResolution;
