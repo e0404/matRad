@@ -176,11 +176,11 @@ for i = 1:length(tmpCollimation.Fields)
         end
         for k = 1:tmpCollimation.Devices{beamIndex}(j).NumOfLeafs
             % determine corner points of the open area
-            p1 = round((tmpCollimation.Fields(i).LeafPos{j}(k,1)+convLimits)/convResolution+1); 
-            p2 = round((tmpCollimation.Fields(i).LeafPos{j}(k,2)+convLimits)/convResolution+1);
+            p1 = ceil((tmpCollimation.Fields(i).LeafPos{j}(k,1)+convLimits)/convResolution);
+            p2 = ceil((tmpCollimation.Fields(i).LeafPos{j}(k,2)+convLimits)/convResolution)+1;
             if type == 2
-                p3 = round((tmpCollimation.Devices{beamIndex}(j).Limits(k)+convLimits)/convResolution+1);
-                p4 = round((tmpCollimation.Devices{beamIndex}(j).Limits(k+1)+convLimits)/convResolution+1);
+                p3 = ceil((tmpCollimation.Devices{beamIndex}(j).Limits(k)+convLimits)/convResolution)+1;
+                p4 = ceil((tmpCollimation.Devices{beamIndex}(j).Limits(k+1)+convLimits)/convResolution);
             else % for one dimensional collimation (ASMX/Y) other direction is fully open
                 p3 = 1;
                 p4 = 2*convLimits/convResolution;
@@ -188,17 +188,17 @@ for i = 1:length(tmpCollimation.Fields)
 
             % set elements covered by the collimator to 0
             % differentiate between x and y direction
-            if (p1 > 0) && (p1 <= 2*convLimits/convResolution+1) && ...
+            if (p1 > 0) && (p1 <= 2*convLimits/convResolution) && ...
                (p2 > 0) && (p2 <= 2*convLimits/convResolution) && ...
                (p3 > 0) && (p3 <= 2*convLimits/convResolution) && ...
-               (p4 > 0) && (p4 <= 2*convLimits/convResolution+1)
+               (p4 > 0) && (p4 <= 2*convLimits/convResolution)
                 try
                     if strcmpi(tmpCollimation.Devices{beamIndex}(j).Direction, 'X')
-                        shape(p3:(p4-1),1:(p1-1)) = 0;
-                        shape(p3:(p4-1),p2:end) = 0;
+                        shape(p3:p4,1:p1) = 0;
+                        shape(p3:p4,p2:end) = 0;
                     elseif strcmpi(tmpCollimation.Devices{beamIndex}(j).Direction, 'Y')
-                        shape(1:(p1-1),p3:(p4-1)) = 0;
-                        shape(p2:end,p3:(p4-1)) = 0;
+                        shape(1:p1,p3:p4) = 0;
+                        shape(p2:end,p3:p4) = 0;
                     else
                         warning(['Wrong collimation direction ' tmpCollimation.Devices{beamIndex}(j).Direction ...
                                  ' given for device ' tmpCollimation.Devices{beamIndex}(j).DeviceType ...
