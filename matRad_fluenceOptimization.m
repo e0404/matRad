@@ -147,6 +147,8 @@ elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization
              dij.bx(cst{i,4}{1}) = cst{i,5}.betaX;
         end
         
+        dij.ixDose = dij.bx ~= 0;
+        
         for j = 1:size(cst{i,6},2)
             % check if prescribed doses are in a valid domain
             if cst{i,6}(j).dose > 5 && isequal(cst{i,3},'TARGET')
@@ -167,8 +169,7 @@ elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization
         
            %pre-calculations
            dij.gamma      = zeros(dij.numOfVoxels,1);
-           idx            = dij.bx~=0; 
-           dij.gamma(idx) = dij.ax(idx)./(2*dij.bx(idx)); 
+           dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose)); 
             
            % calculate current in target
            CurrEffectTarget = (dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2);

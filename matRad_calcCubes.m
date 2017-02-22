@@ -70,12 +70,15 @@ if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
         end
     end
     
+        
+    ix = dij.bx~=0; 
+    
     resultGUI.effect = full(dij.mAlphaDose{scenNum}*resultGUI.w+(dij.mSqrtBetaDose{scenNum}*resultGUI.w).^2);
     resultGUI.effect = reshape(resultGUI.effect,dij.dimensions);
     
     resultGUI.RBExDose     = zeros(size(resultGUI.effect));
-    ix                     = resultGUI.effect>0;
     resultGUI.RBExDose(ix) = ((sqrt(a_x(ix).^2 + 4 .* b_x(ix) .* resultGUI.effect(ix)) - a_x(ix))./(2.*b_x(ix)));
+    
     resultGUI.RBE          = resultGUI.RBExDose./resultGUI.physicalDose;
    
     resultGUI.alpha     = zeros(size(resultGUI.effect));
