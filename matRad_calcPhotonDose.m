@@ -87,11 +87,11 @@ doseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
 V = [cst{:,4}];
 V = unique(vertcat(V{:}));
 
-% ignore densities outsode of contours
-eraseCtDensMask = logical(ones(dij.numOfVoxels,1));
+% ignore densities outside of contours
+eraseCtDensMask = ones(dij.numOfVoxels,1);
 eraseCtDensMask(V) = 0;
 for i = 1:dij.numOfScenarios
-    ct.cube{i}(eraseCtDensMask) = 0;
+    ct.cube{i}(eraseCtDensMask == 1) = 0;
 end
 
 % Convert CT subscripts to linear indices.
@@ -116,12 +116,15 @@ end
 % set up convolution grid
 if strcmp(num2str(pln.bixelWidth),'field')
     % get data from DICOM import
+    intConvResolution = pln.Collimation.ConvResolution; 
+    fieldWidth = pln.Collimation.FieldWidth;
 else
     intConvResolution = .5; % [mm]
+    fieldWidth = pln.bixelWidth;
 end
 
 % Make a 2D grid extending +/- lateral cutoff for kernels
-intConvLimits = lateralCutoff; % [mm]
+intConvLimits = lateralCutoff + ceil(fieldWidth/(2*intConvResolution))*intConvResolution; % [mm]
 [kernelX,kernelZ] = meshgrid(-intConvLimits:intConvResolution:intConvLimits-intConvResolution);   
 
 % gaussian filter to model penumbra
@@ -191,8 +194,8 @@ for i = 1:dij.numOfBeams % loop over all beams
     rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
 
     % ray tracing
-    fprintf(['matRad: calculate radiological depth cube...']);
-    [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoff);
+    fprintf('matRad: calculate radiological depth cube...');
+    [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,intConvLimits);
     fprintf('done \n');
     
     % get indices of voxels where ray tracing results are available
