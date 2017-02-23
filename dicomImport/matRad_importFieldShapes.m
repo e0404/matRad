@@ -191,12 +191,12 @@ for i = 1:length(tmpCollimation.Fields)
             p2 = ceil(tmpCollimation.Fields(i).LeafPos{j}(k,2)/convResolution)+shapeLimit+1;
             if type == 2
                 p3 = ceil(tmpCollimation.Devices{beamIndex}(j).Limits(k)/convResolution)+shapeLimit+1;
-                p4 = ceil(tmpCollimation.Devices{beamIndex}(j).Limits(k+1)/convResolution)+shapeLimit;             
+                p4 = ceil(tmpCollimation.Devices{beamIndex}(j).Limits(k+1)/convResolution)+shapeLimit;
             else % for one dimensional collimation (ASMX/Y) other direction is fully open
                 p3 = 1;
                 p4 = 2*shapeLimit;
             end
-    
+
             % set elements covered by the collimator to 0
             % differentiate between x and y direction
             if (p1 > 0) && (p1 <= 2*shapeLimit) && ...
