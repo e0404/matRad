@@ -229,9 +229,9 @@ for i = 1:length(tmpCollimation.Fields)
 end
 
 % truncate field shapes to a symmetrical field with limits maximumVoxelExtent
-range = (-maximumVoxelExtent+1:maximumVoxelExtent) + shapeLimit;
+voxelRange = (-maximumVoxelExtent+1:maximumVoxelExtent) + shapeLimit;
 for i = 1:length(tmpCollimation.Fields) 
-     tmpCollimation.Fields(i).Shape = tmpCollimation.Fields(i).Shape(range, range);
+     tmpCollimation.Fields(i).Shape = tmpCollimation.Fields(i).Shape(voxelRange, voxelRange);
 end
 collimation = tmpCollimation;
 end
