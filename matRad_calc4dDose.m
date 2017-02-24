@@ -1,4 +1,4 @@
-function [resultGUI, delivery, ct] = matRad_calc4dDose(ct, FileName)
+function [resultGUI, delivery, ct] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI, FileName)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad 4D dose calculation
 % 
@@ -40,15 +40,15 @@ end
 
 %reads in PB XML Plan and result of dose delivery simulation and creates
 %delievery struct
-delivery = matRad_readLmdout(FileName);
+delivery = matRad_readLmdout(dij, stf, FileName);
 
 %dose in each CT phase is calculated
 delivery(1).offset = 0;
 delivery(1).motionperiod = 5;
-[resultGUI, delivery] = matRad_calcPhaseDose(delivery);
+[resultGUI, delivery] = matRad_calcPhaseDose(resultGUI, dij,delivery);
 
 %dose accumulation
-[dAcc, ct, resultGUI] = matRad_doseAcc(ct, resultGUI,'DDM');  %acc Methods: 'EMT' 'DDM'
+[dAcc, ct, resultGUI] = matRad_doseAcc(ct, resultGUI, cst, 'DDM');  %acc Methods: 'EMT' 'DDM'
 resultGUI.accDose = dAcc;
 
 %visualisation

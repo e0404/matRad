@@ -1,4 +1,4 @@
-function delivery = matRad_readLmdout(FileName, FileName_lmdout)
+function delivery = matRad_readLmdout(dij, stf, FileName, FileName_lmdout)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % reads in xml Plan file and lmdout file
 % one file per beam
@@ -30,16 +30,11 @@ function delivery = matRad_readLmdout(FileName, FileName_lmdout)
 
 disp('read in delivery information')
 
-if(nargin <2)
+if(nargin <4)
     FileName_lmdout = FileName;
 end
 
 delivery = struct;
-
-% get data from workspace
-%%% ok oder besser in Funktionsaufruf übergeben???
-dij            = evalin('base','dij');
-stf            = evalin('base','stf');
 
 NumberOfBeams = length(stf);
 

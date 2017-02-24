@@ -1,4 +1,4 @@
-function [dAcc, ct, resultGUI] = matRad_doseAcc(ct, resultGUI,accMethod)
+function [dAcc, ct, resultGUI] = matRad_doseAcc(ct, resultGUI, cst, accMethod)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dose accumulation function
 % 
@@ -84,13 +84,15 @@ yGridVec = 1:dimensions(2);
 zGridVec = 1:dimensions(3);
 
 dAcc = zeros(dimensions);
-
-
+if isfield(resultGUI,'phaseAlphaDose')
+    AlphaDoseAcc = zeros(dimensions);
+    SqrtBetaDoseAcc = zeros(dimensions);
+end
 
 % DDM:  direct dose mapping
 % DDMM: divergent dose mapping
 % EMT:  energy mass transfer algorithm
-if nargin < 2 % set default accumulation method
+if nargin < 4 % set default accumulation method
     accMethod = 'DDM';
 end
 
@@ -130,6 +132,25 @@ if strcmp(accMethod,'DDM')
         
         dAcc(ix) = dAcc(ix) + d_ref;
         
+        if isfield(resultGUI,'phaseAlphaDose')
+        
+            alphaD_ref = interp3(yGridVec,xGridVec',zGridVec,resultGUI.phaseAlphaDose{1,i}(:,:,:), ...  
+                             Y(ix) + dvf_y_i(ix), ...     
+                             X(ix) + dvf_x_i(ix), ...  
+                             Z(ix) + dvf_z_i(ix), ...
+                             'linear',0);  
+
+            AlphaDoseAcc(ix) = AlphaDoseAcc(ix) + alphaD_ref;
+
+            betaD_ref = interp3(yGridVec,xGridVec',zGridVec,resultGUI.phaseSqrtBetaDose{1,i}(:,:,:), ... 
+                             Y(ix) + dvf_y_i(ix), ...     
+                             X(ix) + dvf_x_i(ix), ... 
+                             Z(ix) + dvf_z_i(ix), ...
+                             'linear',0);  
+
+            SqrtBetaDoseAcc(ix) = SqrtBetaDoseAcc(ix) + betaD_ref;
+
+        end
     end
     
 elseif strcmp(accMethod,'EMT')   % funktioniert nicht wenn Dosis in einer Phase = 0 ist...
@@ -317,4 +338,41 @@ elseif strcmp(accMethod,'DDMM')
 
     end
         
+end
+
+% compute RBE weighted dose from accumulated alpha and beta cubes
+
+% consider biological optimization for carbon ions
+if isfield(resultGUI,'phaseAlphaDose')
+
+    a_x = zeros(size(resultGUI.physicalDose));
+    b_x = zeros(size(resultGUI.physicalDose));
+
+    for i = 1:size(cst,1)
+        % Only take OAR or target VOI.
+        if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') 
+            a_x(cst{i,4}{1}) = cst{i,5}.alphaX;
+            b_x(cst{i,4}{1}) = cst{i,5}.betaX;
+        end
+    end
+    
+    % only compute where we have biologically defined tissue
+    ix = a_x~=0; 
+    
+    resultGUI.accEffect = AlphaDoseAcc+SqrtBetaDoseAcc.^2;
+    
+    resultGUI.accRBExDose     = zeros(dimensions);
+    resultGUI.accRBExDose(ix) = ((sqrt(a_x(ix).^2 + 4 .* b_x(ix) .* resultGUI.accEffect(ix)) - a_x(ix))./(2.*b_x(ix)));
+    
+    % only compute where we have finite dose
+    ix = dAcc~=0; 
+    
+    resultGUI.accRBE     = zeros(dimensions);
+    resultGUI.accRBE(ix) = resultGUI.accRBExDose(ix)./dAcc(ix);
+   
+    resultGUI.accAlpha     = zeros(dimensions);
+    resultGUI.accBeta      = zeros(dimensions);
+    resultGUI.accAlpha(ix) = AlphaDoseAcc(ix)./dAcc(ix);
+    resultGUI.accBeta(ix)  = (SqrtBetaDoseAcc(ix)./dAcc(ix)).^2;
+    
 end

@@ -110,7 +110,7 @@ matRad_calcDVH(resultGUI,cst,pln)
 resultGUI = matRad_postprocessing(resultGUI, dij, pln);   %last number  =minNrParticlesIES
 
 %% export Plan
-matRad_export_HITXMLPlan_modified('Test_c12',  pln, stf, resultGUI, 'backforth')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
+matRad_export_HITXMLPlan_modified('LiverDS221_conv_C12_bf',  pln, stf, resultGUI, 'backforth')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
 
 %% calc 4D dose
-[resultGUI, delivery, ct] = matRad_calc4dDose(ct, 'LiverDS221_2b_bf'); %'LiverDS221_wc5555_3mmBixel_bf'); %TKUH005_test');  
+[resultGUI, delivery, ct] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI,  'LiverDS221_conv_C12_bf'); %'LiverDS221_wc5555_3mmBixel_bf'); %TKUH005_test');  

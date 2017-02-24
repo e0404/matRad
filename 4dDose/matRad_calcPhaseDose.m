@@ -1,4 +1,4 @@
-function [resultGUI, delivery] = matRad_calcPhaseDose(delivery)
+function [resultGUI, delivery] = matRad_calcPhaseDose(resultGUI, dij, delivery)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 %
@@ -18,11 +18,6 @@ function [resultGUI, delivery] = matRad_calcPhaseDose(delivery)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 MOTION = 'linear'; %'CALYPSO'
-
-% get data from workspace
-multScen       = evalin('base','multScen');
-resultGUI      = evalin('base','resultGUI');
-dij            = evalin('base','dij');
 
 add = 0;
 for i=1:length(delivery)
@@ -46,7 +41,8 @@ for i=1:length(delivery)
 %%%%%%%%%Breathing motion   
     %Motion assumption1: linear
     if(MOTION == 'linear')
-    NumOfPhases = multScen.numOfCtScen;
+        %nächste Zeile falsch für shift szenario!!!! ÄNDERN
+    NumOfPhases = dij.numOfScenarios;% multScen.numOfCtScen;   % hier noch einfügen wie man gleiche Info aus dij bekommt!
     %Annahme 5s und linear 
     offset = delivery(1).offset; %0;
     phaseTime = delivery(1).motionperiod/NumOfPhases; %5/NumOfPhases;
@@ -211,10 +207,15 @@ for p=1:NumOfPhases
         Fluenzw{p} = w;
     end
  
-    %Test    
-    %resultGUI.phaseDose{p} = reshape(dij.physicalDose{1,1} * w, dij.dimensions);
     resultGUI.phaseDose{p} = reshape(dij.physicalDose{p} * w, dij.dimensions);
+    if isfield(dij,'mAlphaDose')
+    
+        resultGUI.phaseAlphaDose{p} = reshape(dij.mAlphaDose{p} * w, dij.dimensions);
+        resultGUI.phaseSqrtBetaDose{p} = reshape(dij.mSqrtBetaDose{p} * w, dij.dimensions);
+    
+    end
    
+    %hier mAlphaDose von p und mSqrtBetaDose
 end
 
 %just for testing: dose summation
