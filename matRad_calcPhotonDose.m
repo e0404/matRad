@@ -116,15 +116,15 @@ end
 % set up convolution grid
 if strcmp(num2str(pln.bixelWidth),'field')
     % get data from DICOM import
-    intConvResolution = pln.Collimation.ConvResolution; 
-    fieldWidth = pln.Collimation.FieldWidth;
+    intConvResolution = pln.Collimation.convResolution; 
+    fieldWidth = pln.Collimation.fieldWidth;
 else
     intConvResolution = .5; % [mm]
     fieldWidth = pln.bixelWidth;
 end
 
 % Make a 2D grid extending +/- lateral cutoff for kernels
-intConvLimits = lateralCutoff + ceil(fieldWidth/(2*intConvResolution))*intConvResolution; % [mm]
+intConvLimits = lateralCutoff; % [mm]
 [kernelX,kernelZ] = meshgrid(-intConvLimits:intConvResolution:intConvLimits-intConvResolution);   
 
 % gaussian filter to model penumbra

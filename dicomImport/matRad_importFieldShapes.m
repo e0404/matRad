@@ -158,11 +158,10 @@ tmpCollimation.numOfFields = counter;
 % field import works only if the leaf width is a multiple of the conv
 % resolution
 convResolution = .5; % [mm]
-tmpCollimation.ConvResolution = convResolution;
+tmpCollimation.convResolution = convResolution;
 
 % get temporary shape limits to calculate the shapes
 shapeLimit = ceil(maximumExtent / convResolution);
-tmpCollimation.FieldWidth = shapeLimit * convResolution;
 
 % calculate field shapes from leaf positions
 maximumVoxelExtent = 0;
@@ -228,6 +227,7 @@ for i = 1:length(tmpCollimation.Fields)
     tmpCollimation.Fields(i).Shape = shape;
 end
 
+tmpCollimation.fieldWidth = 2 * maximumVoxelExtent * convResolution;
 % truncate field shapes to a symmetrical field with limits maximumVoxelExtent
 voxelRange = (-maximumVoxelExtent+1:maximumVoxelExtent) + shapeLimit;
 for i = 1:length(tmpCollimation.Fields) 
