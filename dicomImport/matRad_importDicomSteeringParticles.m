@@ -37,7 +37,6 @@ function [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
 
 %% load plan file
 % load machine data
-
 pln.machine = 'HIT';
 fileName = [pln.radiationMode '_' pln.machine];
 try
@@ -201,8 +200,7 @@ for i = 1:length(BeamSeqNames)
     end
     bixelWidth_help1 = unique(round(1e3*bixelWidth_help(:,1))/1e3,'sorted');
     bixelWidth_help2 = unique(round(1e3*bixelWidth_help(:,2))/1e3,'sorted');
-    
-    bixelWidth = unique([unique(diff(bixelWidth_help1)) unique(diff(bixelWidth_help2))]);
+    bixelWidth       = unique([unique(round(diff(bixelWidth_help1),2)) unique(round(diff(bixelWidth_help2),2))]);
     
     if numel(bixelWidth) == 1
         stf(i).bixelWidth = bixelWidth;
@@ -255,6 +253,7 @@ for i = 1:length(BeamSeqNames)
             stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);
     end
     
+    showWarning = false;
     % use the original machine energies
     for j = 1:stf(i).numOfRays
         % loop over all energies
@@ -264,9 +263,14 @@ for i = 1:length(BeamSeqNames)
             if ~isempty(energyIndex)
                 stf(i).ray(j).energy(k) = machine.data(energyIndex).energy;
             else
-                error('No match between imported and machine data. Maybe wrong machine loaded.');
+               showWarning = true;
             end
         end
+    end
+    
+    if showWarning
+        warning('No match between imported and machine data. Maybe wrong machine loaded.');
+        showWarning = false;
     end
     
     % get focusIx instead of focusFWHM
@@ -277,11 +281,21 @@ for i = 1:length(BeamSeqNames)
             energyTemp = stf(i).ray(j).energy(k);
             focusFWHM = stf(i).ray(j).focusFWHM(k);
             energyIxTemp = find([machine.data.energy] == energyTemp);
-            focusIxTemp = find(abs([machine.data(energyIxTemp).initFocus.SisFWHMAtIso] - focusFWHM )< 10^-3);
+            if isempty(energyIxTemp)
+               showWarning = true;
+               [~,energyIxTemp] = min(abs([machine.data.energy] - energyTemp));
+            end
+            [~,focusIxTemp] = min(abs([machine.data(energyIxTemp).initFocus.SisFWHMAtIso] - focusFWHM));
             stf(i).ray(j).focusIx(k) = focusIxTemp;
             stf(i).ray(j).focusFWHM(k) = machine.data(energyIxTemp).initFocus.SisFWHMAtIso(stf(i).ray(j).focusIx(k));
         end
     end
+    
+    if showWarning
+        warning('Parsed energies are not in line with machine file.');
+        showWarning = false;
+    end
+    
     
     stf(i).timeStamp = datestr(clock);
     

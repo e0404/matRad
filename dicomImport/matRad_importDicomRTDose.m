@@ -48,7 +48,12 @@ for i = 1 : numDoseFiles
     itemName = strcat('Item_',num2str(i));
     doseTypeHelper      = dose.(itemName).dicomInfo.DoseType;
     doseSumHelper       = dose.(itemName).dicomInfo.DoseSummationType;
-    doseInstanceHelper  = dose.(itemName).dicomInfo.InstanceNumber;
+    
+    if ~dose.(itemName).dicomInfo.InstanceNumber
+      doseInstanceHelper  = dose.(itemName).dicomInfo.InstanceNumber;
+    else
+       doseInstanceHelper = i;
+    end
     
     if strncmpi(doseTypeHelper,'PHYSICAL',6)
         doseTypeHelper = 'physicalDose_';

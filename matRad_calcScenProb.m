@@ -1,6 +1,7 @@
 function scenProb = matRad_calcScenProb(mu,sigma,samplePos,calcType,probDist)
 
 if isequal(probDist,'normDist')
+   
     scenProb = 1;
     
     if isequal(calcType,'probBins')

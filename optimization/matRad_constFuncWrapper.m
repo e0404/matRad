@@ -59,7 +59,7 @@ for  i = 1:size(cst,1)
                 if (~isequal(cst{i,6}(j).type, 'max dose constraint')      && ~isequal(cst{i,6}(j).type, 'min dose constraint')      &&...
                     ~isequal(cst{i,6}(j).type, 'max mean dose constraint') && ~isequal(cst{i,6}(j).type, 'min mean dose constraint') && ...
                     ~isequal(cst{i,6}(j).type, 'min EUD constraint')       && ~isequal(cst{i,6}(j).type, 'max EUD constraint'))      && ...
-                    isequal(options.bioOpt,'LEMIV_effect')
+                    isequal(options.quantity,'effect') 
                      
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
                 else
@@ -74,7 +74,7 @@ for  i = 1:size(cst,1)
                     c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref)];
 
                 % if prob opt or voxel-wise worst case: add constraints of all dose scenarios
-                elseif strcmp(cst{i,6}(j).robustness,'probabilistic') || strcmp(cst{i,6}(j).robustness,'WC')
+                elseif strcmp(cst{i,6}(j).robustness,'probabilistic') || strcmp(cst{i,6}(j).robustness,'VWWC') || strcmp(cst{i,6}(j).robustness,'COWC')
                     
                     for k = 1:dij.numOfScenarios
                         

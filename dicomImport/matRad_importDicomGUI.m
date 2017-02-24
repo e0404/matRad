@@ -22,7 +22,7 @@ function varargout = matRad_importDicomGUI(varargin)
 
 % Edit the above text to modify the response to help matRad_importDicomGUI
 
-% Last Modified by GUIDE v2.5 28-Jul-2016 13:18:46
+% Last Modified by GUIDE v2.5 31-Jan-2017 15:17:35
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -611,15 +611,20 @@ if ~isempty(get(hObject,'Value')) && numel(get(hObject,'Value')) == 1
     end
     % show only the doses corresponding to the plan
     corrDoses = handles.fileList{selectedPlanLoc,13};
-    numOfDoses = size(corrDoses,2);
-    corrDosesLoc = zeros(size(handles.fileList(:,1),1),1);
-    for j = 1:numOfDoses
-        corrDosesLoc = corrDosesLoc | strcmp(handles.fileList(:,4),corrDoses(j));
+    if ~isnan(corrDoses)
+       numOfDoses = size(corrDoses,2);
+       corrDosesLoc = zeros(size(handles.fileList(:,1),1),1);
+       for j = 1:numOfDoses
+           corrDosesLoc = corrDosesLoc | strcmp(handles.fileList(:,4),corrDoses(j));
+       end
+       if get(handles.SeriesUID_radiobutton,'Value') == 1
+               set(handles.doseseries_listbox,'Value',[]); % set dummy value to one
+               set(handles.doseseries_listbox,'String',handles.fileList(corrDosesLoc,4));
+       end
+    else
+         msgbox('Couldnt find a corresponding dose', 'Warning','warn');
     end
-    if get(handles.SeriesUID_radiobutton,'Value') == 1
-            set(handles.doseseries_listbox,'Value',[]); % set dummy value to one
-            set(handles.doseseries_listbox,'String',handles.fileList(corrDosesLoc,4));
-    end
+    
 elseif numel(get(hObject,'Value')) >=2
     warning('More than one RTPLAN selected. Unsetting selection ...');
     patient_listbox_Callback(hObject, eventdata, handles)
@@ -712,4 +717,3 @@ else
     end
     
 end
-

@@ -1,4 +1,4 @@
-function stf = matRad_generateStf(ct,cst,pln,multScen,visMode)
+function stf = matRad_generateStf(ct,cst,pln,visMode)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad steering information generation
 % 
@@ -9,7 +9,6 @@ function stf = matRad_generateStf(ct,cst,pln,multScen,visMode)
 %   ct:         ct cube
 %   cst:        matRad cst struct
 %   pln:        matRad plan meta information struct
-%   multScen:   matRad multiple scnerio struct
 %   visMode:    toggle on/off different visualizations by setting this value to 1,2,3 (optional)
 %
 % output
@@ -35,11 +34,12 @@ function stf = matRad_generateStf(ct,cst,pln,multScen,visMode)
 
 
 fprintf('matRad: Generating stf struct... ');
-if nargin < 4
-      multScen.numOfShiftScen = 1;
-      multScen.shifts         = [0 0 0];
-      multScen.numOfCtScen    = 1;
-end
+% if nargin < 4
+%       pln.multScen.numOfShiftScen = 1;
+%       pln.multScen.shifts         = [0 0 0];
+%       pln.multScen.numOfCtScen    = 1;
+% end
+% funktioniert nicht mehr wenn multScen in pln integriert ist!
 
 if nargin < 5
     visMode = 0;
@@ -230,8 +230,8 @@ for i = 1:length(pln.gantryAngles)
     for j = 1:stf(i).numOfRays
         stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
         stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;        
-        for CtScen = 1:multScen.numOfCtScen
-            for ShiftScen = 1:multScen.numOfShiftScen
+        for CtScen = 1:pln.multScen.numOfCtScen
+            for ShiftScen = 1:pln.multScen.numOfShiftScen
                 stf(i).ray(j).SSD{CtScen,ShiftScen} = NaN;
             end
         end
@@ -268,15 +268,15 @@ for i = 1:length(pln.gantryAngles)
         
        
      for j = stf(i).numOfRays:-1:1
-        for ShiftScen = 1:multScen.numOfShiftScen
+        for ShiftScen = 1:pln.multScen.numOfShiftScen
             % ray tracing necessary to determine depth of the target
-            [alpha,l{ShiftScen},rho{ShiftScen},~,~] = matRad_siddonRayTracer(stf(i).isoCenter + multScen.shifts(:,ShiftScen)', ...
+            [alpha,l{ShiftScen},rho{ShiftScen},~,~] = matRad_siddonRayTracer(stf(i).isoCenter + pln.multScen.shifts(:,ShiftScen)', ...
                                                                              ct.resolution, ...
                                                                              stf(i).sourcePoint, ...
                                                                              stf(i).ray(j).targetPoint, ...
                                                                              [ct.cube {voiTarget}]);
                          
-            for CtScen = 1:multScen.numOfCtScen
+            for CtScen = 1:pln.multScen.numOfCtScen
                 ixSSD = find(rho{ShiftScen}{CtScen} > DensityThresholdSSD,1,'first');
 
                 if isempty(ixSSD)== 1
@@ -294,7 +294,7 @@ for i = 1:length(pln.gantryAngles)
 
            % target hit (in any shift scenario)
            rhoVoiTarget = [];
-           for ShiftScen = 1:multScen.numOfShiftScen
+           for ShiftScen = 1:pln.multScen.numOfShiftScen
                 rhoVoiTarget = [rhoVoiTarget,rho{ShiftScen}{end}];
            end
            
@@ -302,8 +302,8 @@ for i = 1:length(pln.gantryAngles)
     
                Counter = 0;
                
-               for CtScen = 1:multScen.numOfCtScen
-                   for ShiftScen = 1:multScen.numOfShiftScen
+               for CtScen = 1:pln.multScen.numOfCtScen
+                   for ShiftScen = 1:pln.multScen.numOfShiftScen
                        
                         Counter = Counter + 1;
                        

@@ -34,7 +34,7 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % issue warning if biological optimization impossible
-if sum(strcmp(pln.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose')) && strcmp(pln.radiationMode,'carbon')
+if sum(strcmp(pln.bioOptimization,{'LEMIV_effect','LEMIV_RBExD','LSM_effect','LSM_RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose')) && strcmp(pln.radiationMode,'carbon')
     warndlg('Alpha and beta matrices for effect based and RBE optimization not available - physical optimization is carried out instead.');
     pln.bioOptimization = 'none';
 end
@@ -133,8 +133,7 @@ if  strcmp(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'proto
     bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
         
-elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization,'LEMIV_RBExD')) ... 
-                                && strcmp(pln.radiationMode,'carbon')
+elseif pln.bioParam.bioOpt
 
     % check if you are running a supported rad
     dij.ax   = zeros(dij.numOfVoxels,1);
@@ -147,8 +146,6 @@ elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization
              dij.bx(cst{i,4}{1}) = cst{i,5}.betaX;
         end
         
-        dij.ixDose = dij.bx ~= 0;
-        
         for j = 1:size(cst{i,6},2)
             % check if prescribed doses are in a valid domain
             if cst{i,6}(j).dose > 5 && isequal(cst{i,3},'TARGET')
@@ -158,18 +155,19 @@ elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization
         end
     end
      
-    if isequal(pln.bioOptimization,'LEMIV_effect')
+    if isequal(pln.bioParam.quantity,'effect')
         
            effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
            p            = (sum(dij.mAlphaDose{1}(V,:)*wOnes)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            q            = -(effectTarget * length(V)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
 
-    elseif isequal(pln.bioOptimization,'LEMIV_RBExD')
+    elseif isequal(pln.bioParam.quantity,'RBExD')
         
            %pre-calculations
            dij.gamma      = zeros(dij.numOfVoxels,1);
-           dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose)); 
+           idx            = dij.bx~=0; 
+           dij.gamma(idx) = dij.ax(idx)./(2*dij.bx(idx)); 
             
            % calculate current in target
            CurrEffectTarget = (dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2);
@@ -178,24 +176,38 @@ elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization
            % calculate maximal RBE in target
            maxCurrRBE = max(-cst{ixTarget,5}.alphaX + sqrt(cst{ixTarget,5}.alphaX^2 + ...
                         4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*(dij.physicalDose{1}(V,:)*wOnes)));
-           wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
+           wInit      =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
     end
     
 else 
-    bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
-    wInit       = wOnes * bixelWeight;
+    bixelWeight         =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
+    wInit               = wOnes * bixelWeight;
     pln.bioOptimization = 'none';
 end
 
+%% ToDo: incorporate changes of robOpt in GUI
+
+% check if deterministic / stoachastic optimization is turned on
+if pln.robOpt
+    dij.indexforOpt     = find(~cellfun(@isempty, dij.physicalDose))'; 
+    dij.numOfScenarios  = numel(dij.indexforOpt);
+    dij.probOfScenarios = pln.multScen.ScenProb;
+else
+    dij.indexforOpt    = 1;
+    dij.numOfScenarios = 1;
+end
+
 % set optimization options
-options.radMod          = pln.radiationMode;
-options.bioOpt          = pln.bioOptimization;
-options.ID              = [pln.radiationMode '_' pln.bioOptimization];
+for fields = fieldnames(pln.bioParam)'
+   options.(fields{1}) = pln.bioParam.(fields{1});
+end
+%options                 = pln.bioParam;
+options.robOpt          = pln.robOpt;
 options.numOfScenarios  = dij.numOfScenarios;
+options.radMod          = pln.radiationMode;
+%wInit        = ones(dij.totalNumOfBixels,1);
 
 % set callback functions.
-
- 
 funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,options);
 funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,options);
 funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,options);
@@ -226,45 +238,19 @@ end
 options.ipopt.acceptable_constr_viol_tol = max(cScaling)*options.ipopt.acceptable_constr_viol_tol;
 [options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,options);  
 
-%check which scenarios should be considered during optimization
-%at the moment: if robust optimization -> all scenarios in opt, else only
-%nominell
-if(dij.numOfScenarios >1)
-    ivoi = 1;
-    robOpt = 0;
-    while ivoi <= size(cst, 1)
-        inr = 1;
-        while inr <=numel(cst{ivoi,6})
-            if strcmp(cst{ivoi,6}.robustness, 'none')
-                inr = inr+1;
-            else
-                ivoi = size(cst,1);
-                inr = numel(cst{ivoi,6})+1;
-                robOpt = 1;
-            end
-        end
-        ivoi = ivoi +1;
-    end
-    if(robOpt == 0)
-        dij.indexforOpt = [1];
-    else
-        dij.indexforOpt = find(~cellfun(@isempty, dij.physicalDose))'
-        s = size(dij.physicalDose);
-        while (s(1)>1)            
-            dij.indexforOpt(s(1)) = [];
-            s(1) = s(1)-1;
-        end
-    end
-end
-            
-
 % Run IPOPT.
-[wOpt, info]            = ipopt(wInit,funcs,options);
+[wOpt, info] = ipopt(wInit,funcs,options);
 
 % calc dose and reshape from 1D vector to 2D array
 fprintf('Calculating final cubes...\n');
 
 resultGUI = matRad_calcCubes(wOpt,dij,cst,1);
+
+if strcmp(options.model,'LSM')
+   matRad_reCalcLSMParameter(cst,pln,resultGUI);
+end
+
+
 resultGUI.wUnsequenced = wOpt;
 
 % save optimization info in resultGUI
@@ -296,3 +282,17 @@ clearvars -global kDVH kDCH GRADIENT JACOBIAN fScaling cScaling CONSTRAINT
 
 % unblock mex files
 clear mex
+
+
+if strcmp(pln.bioParam.model,'MGH')  && strcmp(pln.radiationMode,'protons')
+   
+   abRatio = dij.ax./dij.bx;
+   abRatio(isnan(abRatio)) = 0;
+   RBEref = (1./(2.*resultGUI.physicalDose(:))) .* (sqrt(abRatio.^2 + 4.*resultGUI.physicalDose(:).*abRatio.*(0.999064 + ((0.35605.*resultGUI.LET(:))./abRatio)) +...
+             4.*resultGUI.physicalDose(:).^2 .* (1.1012-0.0038703.*sqrt(abRatio) .* resultGUI.LET(:)).^2) - abRatio);
+   
+   RBEref(isnan(RBEref)) = 0;
+   resultGUI.RBEref      = reshape(RBEref,dij.dimensions);
+   resultGUI.RBExDoseRef = resultGUI.physicalDose .* resultGUI.RBEref;
+   
+end 

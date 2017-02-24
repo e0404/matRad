@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDose(ct,stf,pln,cst,multScen,calcDoseDirect)
+function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad particle dose calculation wrapper
 % cst
@@ -10,7 +10,6 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,multScen,calcDoseDirect)
 %   stf:            matRad steering information struct
 %   pln:            matRad plan meta information struct
 %   cst:            matRad cst struct
-%   multScen:       matRad multiple scnerio struct
 %   calcDoseDirect: boolian switch to bypass dose influence matrix
 %                   computation and directly calculate dose; only makes
 %                   sense in combination with matRad_calcDoseDirect.m
@@ -54,8 +53,6 @@ dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.dimensions         = pln.voxelDimensions;
-dij.numOfScenarios     = multScen.totalNumOfScen;
-dij.ScenProb           = multScen.shiftScenProb;
 
 % set up arrays for book keeping
 dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
@@ -63,11 +60,11 @@ dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
 dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 
 % Allocate space for dij.physicalDose sparse matrix
-for CtScen = 1:multScen.numOfCtScen
-    for ShiftScen = 1:multScen.numOfShiftScen
-        for RangeShiftScen = 1:multScen.numOfRangeShiftScen  
+for CtScen = 1:pln.multScen.numOfCtScen
+    for ShiftScen = 1:pln.multScen.numOfShiftScen
+        for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen  
             
-            if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
+            if pln.multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
                 dij.physicalDose{CtScen,ShiftScen,RangeShiftScen} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
             end
             
@@ -85,15 +82,18 @@ else
     numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 end
 
-doseTmpContainer = cell(numOfBixelsContainer,multScen.numOfCtScen,multScen.numOfShiftScen,multScen.numOfRangeShiftScen);
-if isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBExD')
-    alphaDoseTmpContainer = cell(numOfBixelsContainer,multScen.numOfCtScen,multScen.numOfShiftScen,multScen.numOfRangeShiftScen);
-    betaDoseTmpContainer  = cell(numOfBixelsContainer,multScen.numOfCtScen,multScen.numOfShiftScen,multScen.numOfRangeShiftScen);
-    for CtScen = 1:multScen.numOfCtScen
-        for ShiftScen = 1:multScen.numOfShiftScen
-            for RangeShiftScen = 1:multScen.numOfRangeShiftScen  
+doseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
+
+if pln.bioParam.bioOpt
+   
+    alphaDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
+    betaDoseTmpContainer  = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
+    
+    for CtScen = 1:pln.multScen.numOfCtScen
+        for ShiftScen = 1:pln.multScen.numOfShiftScen
+            for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen  
             
-                if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
+                if pln.multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
                     dij.mAlphaDose{CtScen,ShiftScen,RangeShiftScen}        = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
                     dij.mSqrtBetaDose{CtScen,ShiftScen,RangeShiftScen}     = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
                 end
@@ -101,9 +101,10 @@ if isequal(pln.bioOptimization,'effect') || isequal(pln.bioOptimization,'RBExD')
             end
         end
     end
+    
 elseif isequal(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
-    dij.RBE = 1.1;
-    fprintf(['matRad: Using a constant RBE of 1.1 \n']);   
+    dij.RBE = pln.bioParam.constRBE;
+    fprintf(['matRad: Using a constant RBE of: ' num2str(dij.RBE)]);   
 end
 
 % Only take voxels inside patient.
@@ -121,21 +122,60 @@ catch
    error(['Could not find the following machine file: ' fileName ]); 
 end
 
-if isfield(pln,'calcLET') && pln.calcLET
+ % allocate space for dij.dosexLET sparse matrix
+if (isfield(pln,'calcLET') && pln.calcLET) || pln.bioParam.bioOpt && strcmp(pln.radiationMode,'protons')
   if isfield(machine.data,'LET')
-    letDoseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
-    % Allocate space for dij.dosexLET sparse matrix
-    for i = 1:dij.numOfScenarios
-        dij.mLETDose{i} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
+      
+    letDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
+   
+    for CtScen = 1:pln.multScen.numOfCtScen
+        for ShiftScen = 1:pln.multScen.numOfShiftScen
+            for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen  
+            
+                if pln.multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
+                     dij.mLETDose{CtScen,ShiftScen,RangeShiftScen} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
+                end
+                
+            end
+        end
     end
   else
     warndlg('LET not available in the machine data. LET will not be calculated.');
   end
 end
 
+
+    
+% generate two vectors depicting reference radiosensitivity parameter of photons
+if pln.bioParam.bioOpt && strcmp(pln.radiationMode,'protons')
+
+    fprintf('matRad: precomputations for biological treatment planning... ');
+    dij.alphaX = zeros(dij.numOfVoxels,1);
+    dij.betaX  = zeros(dij.numOfVoxels,1);
+    dij.abX    = zeros(dij.numOfVoxels,1);
+    %set overlap priorities
+    cst  = matRad_setOverlapPriorities(cst);
+    
+    for i = 1:size(cst,1)
+        % find indices of structures related to V
+        [~, row] = ismember(vertcat(cst{i,4}{:}),V,'rows'); 
+       
+        % check if cst is compatiable 
+        if ~isempty(cst{i,5}) && isfield(cst{i,5},'alphaX') && isfield(cst{i,5},'betaX') 
+            dij.alphaX(V(row)) = cst{i,5}.alphaX;
+            dij.betaX(V(row))  = cst{i,5}.betaX;               
+        else
+            dij.alphaX(V(row)) = 0.1;    % default parameter  
+            dij.betaX(V(row))  = 0.05;   % default parameter
+            fprintf(['matRad: using default alpha_x and beta_x parameters for ' cst{i,2} ' \n']);
+        end
+  
+    end
+    dij.abX(dij.betaX>0) = dij.alphaX(dij.betaX>0)./dij.betaX(dij.betaX>0);
+    fprintf('done.\n');
+        
 % generates tissue class matrix for biological optimization
-if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ... 
-        && strcmp(pln.radiationMode,'carbon')
+elseif pln.bioParam.bioOpt && strcmp(pln.radiationMode,'carbon')
     
     fprintf('matRad: loading biological base data... ');
     vTissueIndex = zeros(size(V,1),1);
@@ -178,15 +218,15 @@ elseif sum(strcmp(pln.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && ~str
     pln.bioOptimization = 'none';      
 end
 
-for ShiftScen = 1:multScen.numOfShiftScen
+for ShiftScen = 1:pln.multScen.numOfShiftScen
 
     % manipulate isocenter
-    pln.isoCenter    = pln.isoCenter + multScen.shifts(:,ShiftScen)';
+    pln.isoCenter    = pln.isoCenter + pln.multScen.shifts(:,ShiftScen)';
     for k = 1:length(stf)
-        stf(k).isoCenter = stf(k).isoCenter + multScen.shifts(:,ShiftScen)';
+        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.shifts(:,ShiftScen)';
     end
     
-    fprintf(['shift scenario ' num2str(ShiftScen) ' of ' num2str(multScen.numOfShiftScen) ': \n']);
+    fprintf(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.numOfShiftScen) ': \n']);
     fprintf('matRad: Particle dose calculation...\n');
     counter = 0;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -288,18 +328,18 @@ for ShiftScen = 1:multScen.numOfShiftScen
                     % find energy index in base data
                     energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
 
-                    for CtScen = 1:multScen.numOfCtScen
-                        for RangeShiftScen = 1:multScen.numOfRangeShiftScen  
+                    for CtScen = 1:pln.multScen.numOfCtScen
+                        for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen  
 
-                            if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
+                            if pln.multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
 
                                 % manipulate radDepthCube for range scenarios
                                 radDepths = radDepthV{CtScen}(ix);                                          
 
-                                if multScen.relRangeShifts(RangeShiftScen) ~= 0 || multScen.absRangeShifts(RangeShiftScen) ~= 0
+                                if pln.multScen.relRangeShifts(RangeShiftScen) ~= 0 || pln.multScen.absRangeShifts(RangeShiftScen) ~= 0
                                     radDepths = radDepths +...                                                                                % original cube
-                                                radDepthV{CtScen}(ix)*multScen.relRangeShifts(RangeShiftScen) +... % rel range shift
-                                                multScen.absRangeShifts(RangeShiftScen);                                                      % absolute range shift
+                                                radDepthV{CtScen}(ix)*pln.multScen.relRangeShifts(RangeShiftScen) +... % rel range shift
+                                                pln.multScen.absRangeShifts(RangeShiftScen);                                                      % absolute range shift
                                     radDepths(radDepths < 0) = 0;  
                                 end
 
@@ -347,13 +387,39 @@ for ShiftScen = 1:multScen.numOfShiftScen
                                   letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix(currIx)),1,bixelLET.*bixelDose,dij.numOfVoxels,1);
                                 end                            
 
-                                if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ... 
-                                    && strcmp(pln.radiationMode,'carbon')
-                                    % calculate alpha and beta values for bixel k on ray j of                  
-                                    [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
-                                        radDepths(currIx),...
-                                        vTissueIndex_j(currIx,:),...
-                                        machine.data(energyIx));
+                                if pln.bioParam.bioOpt
+
+                                     if strcmp(pln.radiationMode,'carbon')
+
+                                         % calculate alpha and beta values for bixel k on ray j of                  
+                                        [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
+                                            radDepths(currIx),...
+                                            vTissueIndex_j(currIx,:),...
+                                            machine.data(energyIx));
+
+                                     elseif strcmp(pln.bioParam.model,'LSM')  && strcmp(pln.radiationMode,'protons')
+
+                                        bixelAlpha         = zeros(size(bixelDose)); dij.bixelBeta = zeros(size(bixelDose));
+                                        ixLSM              = pln.bioParam.lowerLETThreshold < bixelLET < pln.bioParam.upperLETThreshold;
+                                        
+                                        alpha_0            = dij.alphaX(V(ix(currIx))) - (pln.bioParam.lamda_1_1 * pln.bioParam.corrFacEntranceRBE);  
+                                        bixelAlpha(ixLSM)  = alpha_0(ixLSM) + pln.bioParam.lamda_1_1 * bixelLET;
+                                        
+                                        if sum(ixLSM) < length(bixelLET)
+                                            bixelAlpha(~ixLSM)                                    = (alpha_0(~ixLSM) + pln.bioParam.lamda_1_1 * pln.bioParam.upperLetThreshold)./(pln.bioParam.upperLetThreshold/bixelLET);
+                                            bixelAlpha(bixelLET < pln.bioParam.lowerLETThreshold) =  alpha_0(bixelLET < pln.bioParam.lowerLETThreshold) + pln.bioParam.lamda_1_1 * pln.bioParam.lowerLETThreshold;
+                                        end
+                                        
+                                        bixelBeta        = dij.betaX(V(ix(currIx)));
+                                        
+                                     elseif (strcmp(pln.bioParam.model,'MCN') || strcmp(pln.bioParam.model,'WED'))  && strcmp(pln.radiationMode,'protons')
+                                        
+                                        RBEmax     = pln.bioParam.p0 + ((pln.bioParam.p1 * bixelLET )./ dij.abX(V(ix(currIx))));
+                                        RBEmin     = pln.bioParam.p2 - (pln.bioParam.p3  * sqrt(dij.abX(V(ix(currIx)))) .* bixelLET);
+                                        bixelAlpha = RBEmax    .* dij.alphaX(V(ix(currIx)));
+                                        bixelBeta  = RBEmin.^2 .* dij.betaX(V(ix(currIx)));
+                                        
+                                     end
 
                                     alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix(currIx)),1,bixelAlpha.*bixelDose,dij.numOfVoxels,1);
                                     betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}  = sparse(V(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.numOfVoxels,1);
@@ -367,18 +433,25 @@ for ShiftScen = 1:multScen.numOfShiftScen
                     % save computation time and memory by sequentially filling the
                     % sparse matrix dose.dij from the cell array
                     if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
-                        for CtScen = 1:multScen.numOfCtScen
-                            for RangeShiftScen = 1:multScen.numOfRangeShiftScen
+                        for CtScen = 1:pln.multScen.numOfCtScen
+                            for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen
 
-                                if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
+                                if pln.multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
                                     if calcDoseDirect
                                         if isfield(stf(1).ray(1),'weight') && numel(stf(i).ray(j).weight) >= k    
                                             % score physical dose
                                             dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,1) = dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,1) + stf(i).ray(j).weight(k) * doseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen};
 
                                             if isfield(dij,'mLETDose')
+                                                % score LETxDose matrices
                                                 dij.mLETDose{CtScen,ShiftScen,RangeShiftScen}(:,1) = dij.mLETDose{CtScen,ShiftScen,RangeShiftScen}(:,1) + stf(i).ray(j).weight(k) * letDoseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen}; 
                                             end
+                                            if pln.bioParam.bioOpt
+                                                % score alphaxDose and sqrt(beta)xDose matrices
+                                                dij.mAlphaDose{CtScen,ShiftScen,RangeShiftScen}(:,1)    = dij.mAlphaDose{CtScen,ShiftScen,RangeShiftScen}(:,1)    + stf(i).ray(j).weight(k) * alphaDoseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen};
+                                                dij.mSqrtBetaDose{CtScen,ShiftScen,RangeShiftScen}(:,1) = dij.mSqrtBetaDose{CtScen,ShiftScen,RangeShiftScen}(:,1) + stf(i).ray(j).weight(k) * betaDoseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen};
+                                            end
+                            
                                         else
                                             error(['No weight available for beam ' num2str(i) ', ray ' num2str(j) ', bixel ' num2str(k)]);
                                         end
@@ -387,39 +460,22 @@ for ShiftScen = 1:multScen.numOfShiftScen
                                         dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}];
 
                                         if isfield(dij,'mLETDose')
+                                            % fill entire LETxDose influence matrix
                                             dij.mLETDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [letDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}]; 
                                         end
-                                    end
-
-                                end
-
-                            end
-                        end
-
-                        if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ... 
-                            && strcmp(pln.radiationMode,'carbon')
-                            for CtScen = 1:multScen.numOfCtScen
-                                for RangeShiftScen = 1:multScen.numOfRangeShiftScen
-
-                                    if multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
-                                        if calcDoseDirect
-                                            if isfield(stf(1).ray(1),'weight') && numel(stf(i).ray(j).weight) >= k
-                                                % score alpha and beta matrices
-                                                dij.mAlphaDose{CtScen,ShiftScen,RangeShiftScen}(:,1) = dij.mAlphaDose{CtScen,ShiftScen,RangeShiftScen}(:,1) + stf(i).ray(j).weight(k) * alphaDoseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen};
-                                                dij.mSqrtBetaDose{CtScen,ShiftScen,RangeShiftScen}(:,1) = dij.mSqrtBetaDose{CtScen,ShiftScen,RangeShiftScen}(:,1) + stf(i).ray(j).weight(k) * betaDoseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen};
-                                            else
-                                                error(['No weight available for beam ' num2str(i) ', ray ' num2str(j) ', bixel ' num2str(k)]);
-                                            end
-                                        else
-                                            % fill entire dose influence matrix
-                                            dij.mAlphaDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}];
+                                        
+                                        if pln.bioParam.bioOpt
+                                            % fill entire alphaxDose influence and sqrt(beta)xDose influence matrices
+                                            dij.mAlphaDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter)    = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}];
                                             dij.mSqrtBetaDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}];
                                         end
+                                        
                                     end
 
                                 end
-                            end
 
+                            end
+                            
                         end
 
                     end
@@ -429,18 +485,20 @@ for ShiftScen = 1:multScen.numOfShiftScen
             end
 
         end
+        
     end
 
     % manipulate isocenter
-    pln.isoCenter    = pln.isoCenter - multScen.shifts(:,ShiftScen)';
+    pln.isoCenter    = pln.isoCenter - pln.multScen.shifts(:,ShiftScen)';
     for k = 1:length(stf)
-        stf(k).isoCenter = stf(k).isoCenter - multScen.shifts(:,ShiftScen)';
+        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.shifts(:,ShiftScen)';
     end 
 
 end
 
-  dij.indexforOpt = [1];
-  
+% set dummy value
+dij.indexforOpt = 1;
+
 try
   % wait 0.1s for closing all waitbars
   allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar'); 
@@ -448,3 +506,4 @@ try
   pause(0.1); 
 catch
 end
+

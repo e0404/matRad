@@ -104,7 +104,7 @@ for i = 1:size(cst,1)
                     end
                 
                 % if prob opt or voxel-wise worst case: add constraints of all dose scenarios
-                elseif strcmp(cst{i,6}(j).robustness,'probabilistic') || strcmp(cst{i,6}(j).robustness,'WC')
+                elseif strcmp(cst{i,6}(j).robustness,'probabilistic') || strcmp(cst{i,6}(j).robustness,'VWWC') || strcmp(cst{i,6}(j).robustness,'COWC')
                     
                     for k = 1:dij.numOfScenarios
                         
