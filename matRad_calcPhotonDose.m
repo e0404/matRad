@@ -124,7 +124,7 @@ else
 end
 
 % Make a 2D grid extending +/- lateral cutoff for kernels
-intConvLimits = lateralCutoff; % [mm]
+intConvLimits = lateralCutoff + ceil(fieldWidth/(2*intConvResolution))*intConvResolution; % [mm]
 [kernelX,kernelZ] = meshgrid(-intConvLimits:intConvResolution:intConvLimits-intConvResolution);   
 
 % gaussian filter to model penumbra
@@ -322,7 +322,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                                                                stf(i).ray(j).targetPoint_bev, ...
                                                                machine.meta.SAD, ...
                                                                radDepthIx, ...
-                                                               lateralCutoff);
+                                                               intConvLimits);
 
         % calculate photon dose for beam i and bixel j
         bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
