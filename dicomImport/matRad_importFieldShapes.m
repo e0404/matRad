@@ -30,6 +30,7 @@ function collimation = matRad_importFieldShapes(BeamSequence, fractionSequence)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 counter = 0;
+maximumExtent = 0;
 tmpCollimation.Fields = struct;
 
 % check for following meta data in every control point sequence
@@ -113,6 +114,12 @@ for i = 1:length(beamSeqNames)
                    % set left and right leaf positions
                    tmpCollimation.Fields(counter).LeafPos{deviceIx}(:,1) = currLeafPos(1:device(deviceIx).NumOfLeafs);
                    tmpCollimation.Fields(counter).LeafPos{deviceIx}(:,2) = currLeafPos(device(deviceIx).NumOfLeafs+1:end);
+                   % find the total maximum extent of one beam (in any direction) 
+                   maximumExtent = max(maximumExtent, max(abs(currLeafPos))); % check opening direction
+                   % check direction perpendicular to the openening for MLC
+                   if strncmpi(device(k).DeviceType,'MLC',3)
+                       maximumExtent = max(maximumExtent,max(abs(device(deviceIx).Limits)));
+                   end
                end
            end
        else
@@ -148,16 +155,19 @@ for i = 1:length(beamSeqNames)
 end
 tmpCollimation.numOfFields = counter;
 
-% use same dimensions for field shapes as for the kernel convolution in
-% photon dose calculation
-convLimits = 100; % [mm]
+% field import works only if the leaf width is a multiple of the conv
+% resolution
 convResolution = .5; % [mm]
+tmpCollimation.convResolution = convResolution;
+
+% get temporary shape limits to calculate the shapes
+shapeLimit = ceil(maximumExtent / convResolution);
 
 % calculate field shapes from leaf positions
-counter = 0;
+maximumVoxelExtent = 0;
+[X,Y] = meshgrid(-shapeLimit:shapeLimit-1);
 for i = 1:length(tmpCollimation.Fields)
-    counter = counter + 1;
-    shape = ones(2*convLimits/convResolution); 
+    shape = ones(2*shapeLimit); 
     beamIndex = tmpCollimation.Fields(i).BeamIndex;
     for j = 1:length(tmpCollimation.Devices{beamIndex})
         % check for ASYM and SYM jaws == type 1
@@ -176,22 +186,22 @@ for i = 1:length(tmpCollimation.Fields)
         end
         for k = 1:tmpCollimation.Devices{beamIndex}(j).NumOfLeafs
             % determine corner points of the open area
-            p1 = ceil((tmpCollimation.Fields(i).LeafPos{j}(k,1)+convLimits)/convResolution);
-            p2 = ceil((tmpCollimation.Fields(i).LeafPos{j}(k,2)+convLimits)/convResolution)+1;
+            p1 = ceil(tmpCollimation.Fields(i).LeafPos{j}(k,1)/convResolution)+shapeLimit;
+            p2 = ceil(tmpCollimation.Fields(i).LeafPos{j}(k,2)/convResolution)+shapeLimit+1;
             if type == 2
-                p3 = ceil((tmpCollimation.Devices{beamIndex}(j).Limits(k)+convLimits)/convResolution)+1;
-                p4 = ceil((tmpCollimation.Devices{beamIndex}(j).Limits(k+1)+convLimits)/convResolution);
+                p3 = ceil(tmpCollimation.Devices{beamIndex}(j).Limits(k)/convResolution)+shapeLimit+1;
+                p4 = ceil(tmpCollimation.Devices{beamIndex}(j).Limits(k+1)/convResolution)+shapeLimit;
             else % for one dimensional collimation (ASMX/Y) other direction is fully open
                 p3 = 1;
-                p4 = 2*convLimits/convResolution;
+                p4 = 2*shapeLimit;
             end
 
             % set elements covered by the collimator to 0
             % differentiate between x and y direction
-            if (p1 > 0) && (p1 <= 2*convLimits/convResolution) && ...
-               (p2 > 0) && (p2 <= 2*convLimits/convResolution) && ...
-               (p3 > 0) && (p3 <= 2*convLimits/convResolution) && ...
-               (p4 > 0) && (p4 <= 2*convLimits/convResolution)
+            if (p1 > 0) && (p1 <= 2*shapeLimit) && ...
+               (p2 > 0) && (p2 <= 2*shapeLimit) && ...
+               (p3 > 0) && (p3 <= 2*shapeLimit) && ...
+               (p4 > 0) && (p4 <= 2*shapeLimit)
                 try
                     if strcmpi(tmpCollimation.Devices{beamIndex}(j).Direction, 'X')
                         shape(p3:p4,1:p1) = 0;
@@ -212,8 +222,16 @@ for i = 1:length(tmpCollimation.Fields)
             end
         end
     end
+    openVoxelDistance = [X(shape == 1); Y(shape == 1)];
+    maximumVoxelExtent = max(maximumVoxelExtent, max(abs(openVoxelDistance)));
     tmpCollimation.Fields(i).Shape = shape;
 end
 
+tmpCollimation.fieldWidth = 2 * maximumVoxelExtent * convResolution;
+% truncate field shapes to a symmetrical field with limits maximumVoxelExtent
+voxelRange = (-maximumVoxelExtent+1:maximumVoxelExtent) + shapeLimit;
+for i = 1:length(tmpCollimation.Fields) 
+     tmpCollimation.Fields(i).Shape = tmpCollimation.Fields(i).Shape(voxelRange, voxelRange);
+end
 collimation = tmpCollimation;
 end
