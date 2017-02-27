@@ -81,11 +81,11 @@ end
 bixelDoseCore       = bixelDose(ixCore);                         % save dose values that are not affected by sampling
 
 if all(ixCore)
-    %% all voxels are in the core
-    %exit function with core dose only
+    %% all bixels are in the core
     ixNew = ix(ixCore);
     bixelDoseNew = bixelDoseCore;
 else
+    %%
     logIxTail           = ~ixCore;                                   % get voxels indices beyond r0
     linIxTail           = find(logIxTail);                           % convert logical index to linear index
     numTail             = numel(linIxTail);

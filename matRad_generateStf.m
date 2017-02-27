@@ -115,10 +115,12 @@ if pln.VMAT
     %arrays per gantry angle.  In order to do VMAT, it is easier to have
     %the same MLC range and dij calculation for every possible beam/gantry
     %angle.
-    masterRayPosBEV = nan(1,3);
-    masterTargetPointBEV = nan(1,3);
-    
-    stf(1).defaultGantryRot = pln.defaultGantryRot;
+    masterRayPosBEV = cell(1,length(pln.initGantryAngles));
+    masterTargetPointBEV = cell(1,length(pln.initGantryAngles));
+    for i = 1:length(pln.initGantryAngles)
+        masterRayPosBEV{i} = nan(1,3);
+        masterTargetPointBEV{i} = nan(1,3);
+    end
 end
     
 
@@ -574,6 +576,12 @@ for i = 1:length(pln.gantryAngles)
             stf(i).optimizeBeam = false;
         end
         
+        %Determine which initialized beam the current beam belongs
+        %to
+        [~,stf(i).beamFatherInitIndex] = min(abs(pln.initGantryAngles-pln.gantryAngles(i)));
+        stf(i).beamFatherGantryAngle = pln.initGantryAngles(stf(i).beamFatherInitIndex);
+        stf(i).beamFatherIndex = find(pln.gantryAngles == stf(i).beamFatherGantryAngle);
+        
         %The following must be taken as the union of stf(:).FIELD and stf(:).FIELD:
         %ray.rayPos_bev
         %ray.targetPoint_bev
@@ -583,8 +591,8 @@ for i = 1:length(pln.gantryAngles)
         rayPosBEV = reshape([stf(i).ray(:).rayPos_bev]',3,numOfRays)';
         targetPointBEV = reshape([stf(i).ray(:).targetPoint_bev]',3,numOfRays)';
         
-        masterRayPosBEV = union(masterRayPosBEV,rayPosBEV,'rows');
-        masterTargetPointBEV = union(masterTargetPointBEV,targetPointBEV,'rows');
+        masterRayPosBEV{stf(i).beamFatherInitIndex} = union(masterRayPosBEV{stf(i).beamFatherInitIndex},rayPosBEV,'rows');
+        masterTargetPointBEV{stf(i).beamFatherInitIndex} = union(masterTargetPointBEV{stf(i).beamFatherInitIndex},targetPointBEV,'rows');
         
     end
     
@@ -726,6 +734,8 @@ end
 
 %% VMAT
 if pln.VMAT
+    numSSDErr = 0;
+    
     %After all steering file information is completed, loop over
     %initialized gantry angles.  All children and subchildren of these angles should
     %have ray positions given by the union of their own ray positions and
@@ -736,21 +746,29 @@ if pln.VMAT
     
     fprintf('matRad: Combining parent and child ray vectors in stf (VMAT)... ');
     
-    %Remove NaNs
-    masterRayPosBEV(isnan(masterRayPosBEV)) = [];
-    masterTargetPointBEV(isnan(masterTargetPointBEV)) = [];
-    masterRayPosBEV = reshape(masterRayPosBEV,[],3);
-    masterTargetPointBEV = reshape(masterTargetPointBEV,[],3);
     
     for i = 1:length(pln.gantryAngles)
-        %This is a new rotation matrix, which is meant to
-        %carry over the rayPos and
-        %targetPoint from the optimized gantry angle to the
-        %children gantry angles.
-        stf(i).numOfRays = size(masterRayPosBEV,1);
+        %Remove NaNs
+        currMasterRayPosBEV = masterRayPosBEV{stf(i).beamFatherInitIndex};
+        currMasterTargetPointBEV = masterTargetPointBEV{stf(i).beamFatherInitIndex};
+        
+        currMasterRayPosBEV(isnan(currMasterRayPosBEV)) = [];
+        currMasterTargetPointBEV(isnan(currMasterTargetPointBEV)) = [];
+        currMasterRayPosBEV = reshape(currMasterRayPosBEV,[],3);
+        currMasterTargetPointBEV = reshape(currMasterTargetPointBEV,[],3);
+        
+        stf(i).numOfRays = size(currMasterRayPosBEV,1);
         stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
         stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
         
+        if pln.halfFluOpt
+            % Determine "halfway" point of field (may not actually be halfway)
+            X = currMasterRayPosBEV(:,1);
+            X = X(:);
+            minX = min(X);
+            maxX = max(X);
+            halfX = minX+0.5*(maxX-minX)+pln.halfFluOptMargin;
+        end
         
         for j = 1:stf(i).numOfRays
             %rotate rayPos and targetPoint from BEV to patient coordinate
@@ -762,18 +780,30 @@ if pln.VMAT
                 0                        1  0;
                 sind(pln.couchAngles(i)) 0  cosd(pln.couchAngles(i))];
             
-            stf(i).ray(j).rayPos_bev = masterRayPosBEV(j,:);
-            stf(i).ray(j).targetPoint_bev = masterTargetPointBEV(j,:);
+
+            
+            stf(i).ray(j).rayPos_bev = currMasterRayPosBEV(j,:);
+            stf(i).ray(j).targetPoint_bev = currMasterTargetPointBEV(j,:);
+            
+            if pln.halfFluOpt
+                if stf(i).ray(j).rayPos_bev(:,1) >= halfX
+                    % if ray's x-pos is greater than halfway, do not optimize
+                    stf(i).ray(j).optFlu = 0;
+                else
+                    % else, optimize
+                    stf(i).ray(j).optFlu = 1;
+                end
+            end
             
             
             stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
             stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
             if strcmp(pln.radiationMode,'photons')
                 stf(i).ray(j).rayCorners_SCD = (repmat([0, machine.meta.SCD - SAD, 0],4,1)+ (machine.meta.SCD/SAD) * ...
-                    [masterRayPosBEV(j,:) + [+stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
-                    masterRayPosBEV(j,:) + [-stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
-                    masterRayPosBEV(j,:) + [-stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2];...
-                    masterRayPosBEV(j,:) + [+stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2]])*rotMx_XY_T*rotMx_XZ_T;
+                    [currMasterRayPosBEV(j,:) + [+stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
+                    currMasterRayPosBEV(j,:) + [-stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
+                    currMasterRayPosBEV(j,:) + [-stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2];...
+                    currMasterRayPosBEV(j,:) + [+stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2]])*rotMx_XY_T*rotMx_XZ_T;
             end
             
             % ray tracing necessary to determine depth of the target
@@ -786,7 +816,12 @@ if pln.VMAT
             ixSSD = find(rho{1} > DensityThresholdSSD,1,'first');
             
             if isempty(ixSSD)== 1
-                warning('Surface for SSD calculation starts directly in first voxel of CT\n');
+                %Surface for SSD calculation starts directly in first voxel of CT
+                
+                %if ~numSSDErr
+                %    warning('Surface for SSD calculation starts directly in first voxel of CT\n');
+                %end
+                numSSDErr = numSSDErr+1;
             end
             
             % calculate SSD
@@ -798,6 +833,8 @@ if pln.VMAT
         end
         matRad_progress(i,length(pln.gantryAngles));
     end
+    
+    stf(1).maxLeafSpeedCst = max(pln.leafSpeedCst);
     
     
     stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
@@ -905,7 +942,7 @@ if pln.VMAT
     %}
 end
 
-
+fprintf('\n\nNumber of SSD errors: %d out of %d.\n\n',numSSDErr,sum([stf(:).numOfRays]));
 end
 
 

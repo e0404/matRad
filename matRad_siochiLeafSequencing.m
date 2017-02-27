@@ -1,4 +1,4 @@
-function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool,doVMAT,numToKeep)
+function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool,doVMAT,numToKeep,pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated
 % beams with multiple static segments according to Siochi (1999)
@@ -70,6 +70,7 @@ end
 
 offset = 0;
 
+
 for i = 1:numOfBeams
     numOfRaysPerBeam = stf(i).numOfRays;
     if isfield(stf(i),'initializeBeam') && ~stf(i).initializeBeam
@@ -122,6 +123,9 @@ for i = 1:numOfBeams
         
         % prepare sequencer
         calFac = max(fluenceMx(:));
+        
+        
+        
         D_k = round(fluenceMx/calFac*numOfLevels);
         
         % Save the stratification in the initial intensity matrix D_0.
@@ -158,6 +162,12 @@ for i = 1:numOfBeams
         
         %Decompose the port, do rod pushing
         [tops, bases] = matRad_siochiDecomposePort(D_k,dimOfFluenceMxZ,dimOfFluenceMxX,D_k_MinZ,D_k_MaxZ,D_k_MinX,D_k_MaxX);
+        
+        %are there enough apertures?
+        if doVMAT == 1
+            numToKeep = stf(i).numOfBeamChildren;
+        end
+        
         %Form segments with and without visualization
         if visBool
             [shapes,shapesWeight,k,D_k]=matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases,visBool,i,D_k,numOfLevels,seqFig,seqSubPlots);
@@ -165,7 +175,9 @@ for i = 1:numOfBeams
             [shapes,shapesWeight,k]=matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases);
         end
         
-        %are there enough apertures?
+        
+
+        
         if numToKeep ~= 0 && k <= numToKeep
             numOfLevels = numOfLevels+1;
         else
@@ -194,6 +206,9 @@ for i = 1:numOfBeams
         totDAP_all = sum(sequencing.beam(i).DAP(:));
         totDAP_keep = sum(sequencing.beam(i).DAP(sequencing.beam(i).comPosToDAPSort(1:numToKeep)));
         
+        %totWeight_all = sum(sequencing.beam(i).shapesWeight(:));
+        %totWeight_keep = sum(sequencing.beam(i).shapesWeight(sequencing.beam(i).comPosToDAPSort(1:numToKeep)));
+        
         
         tempShapes = zeros(dimOfFluenceMxZ,dimOfFluenceMxX,numToKeep);
         tempShapesWeight = zeros(numToKeep,1);
@@ -206,6 +221,7 @@ for i = 1:numOfBeams
                 tempNewDAP(segmentKeep) = totDAP_all*sequencing.beam(i).DAP(segment)/totDAP_keep;
                 tempShapesWeight(segmentKeep) = tempNewDAP(segmentKeep)/((stf(i).bixelWidth)^2.*nnz(tempShapes(:,:,segmentKeep))); %sequencing.beam(i).shapesWeight(sequencing.beam(i).segmentSortedDAP(segment))
                 tempComPos(segmentKeep) = sequencing.beam(i).comPos(segment);
+                
                 segmentKeep = segmentKeep+1;
             else
                 continue
@@ -346,14 +362,14 @@ if doVMAT
         end
         
         if i ~= numel(optGantryAngles)
-            sequencing.beam(currInd).gantryRot = stf(1).defaultGantryRot; %gantry rotation rate until next opt angle
+            sequencing.beam(currInd).gantryRot = pln.defaultGantryRot; %gantry rotation rate until next opt angle
             nextInd = find(gantryAngles==optGantryAngles(i+1));
             sequencing.beam(currInd).MURate = dij.weightToMU.*sequencing.beam(currInd).shapesWeight.*sequencing.beam(currInd).gantryRot./(stf(nextInd).gantryAngle-stf(currInd).gantryAngle); %dose rate until next opt angle
             %Rescale weight to represent only this beam; assume piecewise
             %linear doserate
             sequencing.beam(currInd).shapesWeight = sequencing.beam(currInd).shapesWeight.*((stf(currInd+1).gantryAngle-stf(currInd).gantryAngle)./(stf(nextInd).gantryAngle-stf(currInd).gantryAngle));
         else
-            sequencing.beam(currInd).gantryRot = stf(1).defaultGantryRot; %gantry rotation rate until next opt angle
+            sequencing.beam(currInd).gantryRot = pln.defaultGantryRot; %gantry rotation rate until next opt angle
             prevInd = find(gantryAngles==optGantryAngles(i-1));
             sequencing.beam(currInd).MURate = dij.weightToMU.*sequencing.beam(currInd).shapesWeight.*sequencing.beam(currInd).gantryRot./(stf(currInd).gantryAngle-stf(prevInd).gantryAngle); %dose rate until next opt angle
             %Rescale weight to represent only this beam; assume piecewise
@@ -364,7 +380,6 @@ if doVMAT
                 sequencing.beam(currInd).shapesWeight = sequencing.beam(currInd).shapesWeight.*((stf(currInd).gantryAngle-stf(currInd-1).gantryAngle)./(stf(currInd).gantryAngle-stf(prevInd).gantryAngle));
             end
         end
-        
         
     end
     
@@ -377,9 +392,19 @@ if doVMAT
     %matRad_daoVec2ApertureInfo will interpolate subchildren gantry
     %segments
     resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector,1);
+    
+    % LEAF TRAVEL / DEGREE
+    
+    %calculate max leaf speed
+    resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
+    
+    %optimize delivery
+    resultGUI = matRad_optDelivery(resultGUI,pln,0);
+    
     sequencing.w = resultGUI.apertureInfo.bixelWeights;
     
 else
+    sequencing.weightToMU = dij.weightToMU;
     resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
 end
 

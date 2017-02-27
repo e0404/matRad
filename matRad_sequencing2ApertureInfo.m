@@ -51,6 +51,7 @@ bixelIndOffset = 0; % used for creation of bixel index maps
 totalNumOfBixels = sum([stf(:).totalNumOfBixels]);
 totalNumOfShapes = sum([Sequencing.beam.numOfShapes]);
 vectorOffset = totalNumOfShapes + 1; % used for bookkeeping in the vector for optimization
+bixOffset = 1; %used for gradient calculations
 lastOptAngle = 0;
 lastOptInd = 1;
 
@@ -177,13 +178,19 @@ for i=1:size(stf,2)
     apertureInfo.beam(i).MLCWindow = MLCWindow;
     apertureInfo.beam(i).gantryAngle = stf(i).gantryAngle;
     if doVMAT
+        
+        apertureInfo.beam(i).bixOffset = bixOffset;
+        bixOffset = bixOffset+apertureInfo.beam(i).numOfActiveLeafPairs;
+        
         apertureInfo.beam(i).optimizeBeam = stf(i).optimizeBeam;
+        apertureInfo.beam(i).initializeBeam = stf(i).initializeBeam;
+        
         if apertureInfo.beam(i).optimizeBeam
             apertureInfo.beam(i).gantryRot = Sequencing.beam(i).gantryRot;
             apertureInfo.beam(i).MURate = Sequencing.beam(i).MURate;
             apertureInfo.beam(i).nextAngleDiff = stf(i).nextAngleDiff;
             apertureInfo.beam(i).nextOptAngleDiff = stf(i).nextOptAngleDiff;
-        elseif ~apertureInfo.beam(i).optimizeBeam
+        else
             apertureInfo.beam(i).nextOptAngle = stf(i).nextOptAngle;
             apertureInfo.beam(i).nextOptInd = stf(i).nextOptInd;
             apertureInfo.beam(i).lastOptAngle = stf(i).lastOptAngle;
@@ -220,9 +227,15 @@ apertureInfo.numOfMLCLeafPairs = numOfMLCLeafPairs;
 apertureInfo.totalNumOfBixels = totalNumOfBixels;
 apertureInfo.totalNumOfShapes = sum([apertureInfo.beam.numOfShapes]);
 apertureInfo.totalNumOfLeafPairs = sum([apertureInfo.beam.numOfShapes]*[apertureInfo.beam.numOfActiveLeafPairs]');
+
 if isfield(Sequencing,'weightToMU')
     apertureInfo.weightToMU = Sequencing.weightToMU;
+end
+if doVMAT
     apertureInfo.gantryRotCst = stf.gantryRotCst;
+    apertureInfo.realTotalNumOfLeafPairs = sum([apertureInfo.beam(:).numOfActiveLeafPairs]);
+else
+    apertureInfo.realTotalNumOfLeafPairs = apertureInfo.totalNumOfLeafPairs;
 end
 
 % create vectors for optimization

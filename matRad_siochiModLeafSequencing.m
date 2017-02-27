@@ -1,11 +1,11 @@
-function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool,doVMAT,numToKeep)
+function resultGUI = matRad_siochiModLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool,doVMAT,numToKeep)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated
 % beams with multiple static segments according to Siochi (1999)
 % International Journal of Radiation Oncology * Biology * Physics,
 % originally implemented in PLUNC (https://sites.google.com/site/planunc/)
 %
-% 
+% Implented in matRad by Eric Christiansen, Emily Heath, and Tong Xu
 %
 % call
 %   resultSequencing =
@@ -13,9 +13,9 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,v
 %
 % input
 %   resultGUI:          resultGUI struct to which the output data will be
-%   added, if
-%                       this field is empty resultGUI struct will be
+%                       added, if this field is empty resultGUI struct will be
 %                       created
+%                       
 %   stf:                matRad steering information struct
 %   numOfLevels:        number of stratification levels
 %   visBool:            toggle on/off visualization (optional)
@@ -115,60 +115,73 @@ for i = 1:numOfBeams
     %Save weights in fluence matrix.
     fluenceMx(indInFluenceMx) = wOfCurrBeams;
     
-    %allow for possibility to repeat sequencing with higher number of
-    %levels if number of apertures is lower than required
-    notFinished = 1;
-    while notFinished
-        
-        % prepare sequencer
-        calFac = max(fluenceMx(:));
-        D_k = round(fluenceMx/calFac*numOfLevels);
-        
-        % Save the stratification in the initial intensity matrix D_0.
-        D_0 = D_k;
-        
-        % container to remember generated shapes; allocate space for 10000
-        % shapes
-        shapes = NaN*ones(dimOfFluenceMxZ,dimOfFluenceMxX,10000);
-        shapesWeight = zeros(10000,1);
-        k = 0;
-        
-        if visBool
-            clf(seqFig);
-            colormap(seqFig,'jet');
-            
-            seqSubPlots(1) = subplot(2,2,1,'parent',seqFig);
-            imagesc(D_k,'parent',seqSubPlots(1));
-            set(seqSubPlots(1),'CLim',[0 numOfLevels],'YDir','normal');
-            title(seqSubPlots(1),['Beam # ' num2str(i) ': max(D_0) = ' num2str(max(D_0(:))) ' - ' num2str(numel(unique(D_0))) ' intensity levels']);
-            xlabel(seqSubPlots(1),'x - direction parallel to leaf motion ')
-            ylabel(seqSubPlots(1),'z - direction perpendicular to leaf motion ')
-            colorbar;
-            drawnow
-        end
-        
-        
-        D_k_nonZero = (D_k~=0);
-        [D_k_Z, D_k_X] = ind2sub([dimOfFluenceMxZ,dimOfFluenceMxX],find(D_k_nonZero));
-        D_k_MinZ = min(D_k_Z);
-        D_k_MaxZ = max(D_k_Z);
-        D_k_MinX = min(D_k_X);
-        D_k_MaxX = max(D_k_X);
-        
-        
-        %Decompose the port, do rod pushing
-        [tops, bases] = matRad_siochiDecomposePort(D_k,dimOfFluenceMxZ,dimOfFluenceMxX,D_k_MinZ,D_k_MaxZ,D_k_MinX,D_k_MaxX);
-        %Form segments with and without visualization
-        if visBool
-            [shapes,shapesWeight,k,D_k]=matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases,visBool,i,D_k,numOfLevels,seqFig,seqSubPlots);
+    % prepare sequencer
+    calFac = max(fluenceMx(:));
+    D_k = round(fluenceMx/calFac*numOfLevels);
+    
+    % break up total fluence into chunks based on width 
+    smallChildWidth = floor(dimOfFluenceMxX/numToKeep);
+    bigChildWidth = (dimOfFluenceMxX-(numToKeep-2)*smallChildWidth)/2;
+    bigInd = [1 numToKeep];
+    if mod(bigChildWidth,1) ~= 0 
+       bigChildWidth =  dimOfFluenceMxX-(numToKeep-1)*smallChildWidth;
+       bigInd = ceil(numToKeep/2);
+    end
+    startInd = 1;
+    endInd = 0;
+    
+    % container to remember generated shapes; allocate space for 10000
+    % shapes
+    shapes = zeros(dimOfFluenceMxZ,dimOfFluenceMxX,10000);
+    shapesWeight = zeros(10000,1);
+    k = 0;
+    
+    for k = 1:numToKeep
+        child_D_k = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+        if any(k == bigInd)
+            childWidth = bigChildWidth;
         else
-            [shapes,shapesWeight,k]=matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases);
+            childWidth = smallChildWidth;
+        end
+        endInd = endInd+childWidth;
+        child_D_k(:,startInd:endInd) = D_k(:,startInd:endInd);
+        startInd = startInd+childWidth;
+        
+        % perform sequencing
+        child_D_k_nonZero = (child_D_k ~= 0);
+        [child_D_k_Z, ~] = ind2sub([dimOfFluenceMxZ,dimOfFluenceMxX],find(child_D_k_nonZero));
+        child_D_k_MinZ = min(child_D_k_Z);
+        child_D_k_MaxZ = max(child_D_k_Z);
+        
+        % go row-by-row, determining how many non-zero entries there are
+        % if more than 30% are non-zero, then let all from min to max be
+        % nonzero
+        % otherwise, let all be 0
+        for row = child_D_k_MinZ:child_D_k_MaxZ
+            rowPreShape = child_D_k_nonZero(row,:);
+            rowNumNonZero = nnz(rowPreShape);
+            if rowNumNonZero >= 0.3*childWidth
+                firstRowNonZero = find(rowPreShape ~= 0,1);
+                lastRowNonZero = find(rowPreShape ~= 0,1,'last');
+                
+                rowShape = zeros(1,dimOfFluenceMxX);
+                rowShape(firstRowNonZero:lastRowNonZero) = 1;
+                
+                shapes(row,:,k) = rowShape;
+            end
         end
         
-        if numToKeep ~= 0 && k <= numToKeep
-            numOfLevels = numOfLevels+1;
+        % the weight of the shape is given by the mean of the bixel weights
+        if any(child_D_k_nonZero(:))
+            shapesWeight(k) = mean(child_D_k(child_D_k ~= 0));
+        else
+            shapesWeight(k) = 0;
         end
     end
+    
+    % Save the stratification in the initial intensity matrix D_0.
+    D_0 = D_k;
+
     
     sequencing.beam(i).numOfShapes  = k;
     sequencing.beam(i).shapes       = shapes(:,:,1:k);
@@ -177,6 +190,7 @@ for i = 1:numOfBeams
     sequencing.beam(i).fluence      = D_0;
     sequencing.beam(i).sum          = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
     
+    %{
     if numToKeep ~= 0
         numToKeep = min(numToKeep,k);
         for segment = 1:k
@@ -215,9 +229,9 @@ for i = 1:numOfBeams
         sequencing.beam(i).comPos = tempComPos;
         k = numToKeep;
     end
+    %}
     
     if doVMAT
-        %CHANGED BEHAVIOUR OF THIS
         %Find top DAP segments in total segment, then spread to each child
         %according to the trajectory (mean leaf position)
         
@@ -279,13 +293,15 @@ for i = 1:numOfBeams
                 sequencing.beam(childIndex).numOfShapes = 1;
                 if stf(childIndex).initializeBeam
                     sequencing.beam(childIndex).tempShapes = sequencing.beam(i).shapes(:,:,sequencing.beam(childIndex).maxDAPSeg); %store segment temporarily, don't erase segments for initialized beams
-                    sequencing.beam(childIndex).tempShapesWeight = totalDAP./((stf(i).bixelWidth)^2.*nnz(sequencing.beam(i).shapes(:,:,sequencing.beam(childIndex).maxDAPSeg))); %sequencing.beam(i).shapesWeight(sequencing.beam(childIndex).maxDAPSeg)
+                    %sequencing.beam(childIndex).tempShapesWeight = totalDAP./((stf(i).bixelWidth)^2.*nnz(sequencing.beam(i).shapes(:,:,sequencing.beam(childIndex).maxDAPSeg))); %sequencing.beam(i).shapesWeight(sequencing.beam(childIndex).maxDAPSeg)
+                    sequencing.beam(childIndex).tempShapesWeight = sequencing.beam(i).shapesWeight(sequencing.beam(childIndex).maxDAPSeg);
                     sequencing.beam(childIndex).fluence = sequencing.beam(childIndex).tempShapes;
                     sequencing.beam(childIndex).sum = sequencing.beam(childIndex).tempShapesWeight*sequencing.beam(childIndex).tempShapes;
                 else
                     sequencing.beam(childIndex).numOfShapes = 1;
                     sequencing.beam(childIndex).shapes = sequencing.beam(i).shapes(:,:,sequencing.beam(childIndex).maxDAPSeg);
-                    sequencing.beam(childIndex).shapesWeight = totalDAP./((stf(i).bixelWidth)^2.*nnz(sequencing.beam(i).shapes(:,:,sequencing.beam(childIndex).maxDAPSeg))); %sequencing.beam(i).shapesWeight(sequencing.beam(childIndex).maxDAPSeg)
+                    %sequencing.beam(childIndex).shapesWeight = totalDAP./((stf(i).bixelWidth)^2.*nnz(sequencing.beam(i).shapes(:,:,sequencing.beam(childIndex).maxDAPSeg)));
+                    sequencing.beam(childIndex).shapesWeight = sequencing.beam(i).shapesWeight(sequencing.beam(childIndex).maxDAPSeg);
                     
                     big = max([i-1 childIndex-1]);
                     small = min([i childIndex]);
@@ -301,12 +317,8 @@ for i = 1:numOfBeams
                 sector = sector+1;
                 maxDAP = 0;
                 totalDAP = 0;
-                
-
             end
         end
-                %figure
-                %hist(DAP_vec);
         
         offset = offset + numOfRaysPerBeam;
         

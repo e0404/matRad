@@ -88,8 +88,10 @@ options.lb              = apertureInfo.limMx(:,1);                              
 options.ub              = apertureInfo.limMx(:,2);                                          % Upper bound on the variables.
 if isfield(pln,'VMAT') && pln.VMAT
     [options.cl,options.cu] = matRad_daoGetConstBounds(cst,apertureInfo,options,pln.leafSpeedCst,pln.doseRateCst);   % Lower and upper bounds on the constraint functions.
+    options.VMAT = pln.VMAT;
 else
     [options.cl,options.cu] = matRad_daoGetConstBounds(cst,apertureInfo,options);   % Lower and upper bounds on the constraint functions.
+    options.VMAT = 0;
 end
 
 % set optimization options
@@ -101,7 +103,7 @@ options.numOfScenarios  = dij.numOfScenarios;
 % set callback functions.
 funcs.objective         = @(x) matRad_daoObjFunc(x,apertureInfo,dij,cst,options);
 funcs.gradient          = @(x) matRad_daoGradFunc(x,apertureInfo,dij,cst,options);
-funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
+funcs.iterfunc          = @(iter,objective,parameter) matRad_IpoptIterFunc(iter,objective,parameter,options.ipopt.max_iter);
 funcs.constraints       = @(x) matRad_daoConstFunc(x,apertureInfo,dij,cst,options);
 funcs.jacobian          = @(x) matRad_daoJacobFunc(x,apertureInfo,dij,cst,options);
 funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct(apertureInfo,dij,cst);
@@ -120,6 +122,14 @@ clearvars -global matRad_global_x matRad_global_d;
 % update the apertureInfoStruct and calculate bixel weights
 optResult.apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,optApertureInfoVec);
 
+% update apertureInfoStruct with the maximum leaf speeds per segment
+if isfield(pln,'VMAT') && pln.VMAT
+    optResult.apertureInfo = matRad_maxLeafSpeed(optResult.apertureInfo);
+    
+    
+    %optimize delivery    
+    %optResult = matRad_optDelivery(optResult,pln,1);
+end
 % override also bixel weight vector in optResult struct
 optResult.w    = optResult.apertureInfo.bixelWeights;
 optResult.wDao = optResult.apertureInfo.bixelWeights;

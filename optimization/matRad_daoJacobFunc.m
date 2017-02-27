@@ -157,7 +157,6 @@ else
     s = [apertureInfo.weightToMU.*(nextOptAngleDiff./c_rottime)./nextAngleDiff; -apertureInfo.weightToMU.*weights.*(nextOptAngleDiff./(c_rottime.^2))./nextAngleDiff];
     
     jacob_dosrt = sparse(i,j,s,apertureInfo.totalNumOfShapes-1,numel(apertureInfoVec),2*(apertureInfo.totalNumOfShapes-1));
-    %%%LOOK AT SQUARED TERM
     
     % concatenate
     jacob = [jacob_dao; jacob_lfspd; jacob_dosrt; jacob_dos];

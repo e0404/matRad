@@ -42,38 +42,116 @@ end
 bixelG = matRad_gradFuncWrapper(apertureInfo.bixelWeights,dij,cst,options);
     
 % allocate gradient vector for aperture weights and leaf positions
-g = NaN * ones(size(apertureInfoVec,1),1);
+%changed from NaNs to zeros
+g = zeros(size(apertureInfoVec,1),1);
 
-% 1. calculate aperatureGrad
-% loop over all beams
-offset = 0;
-for i = 1:numel(apertureInfo.beam);
-
-    % get used bixels in beam
-    ix = ~isnan(apertureInfo.beam(i).bixelIndMap);
-
-    % loop over all shapes and add up the gradients x openingFrac for this shape
-    for j = 1:apertureInfo.beam(i).numOfShapes            
-        g(j+offset) = apertureInfo.beam(i).shape(j).shapeMap(ix)' ...
-                        * bixelG(apertureInfo.beam(i).bixelIndMap(ix));
+if options.VMAT
+    %we're doing VMAT
+    offset = 1;
+    
+    % 1. calculate aperatureGrad
+    % 2. find corresponding bixel to the leaf Positions and aperture
+    % weights to calculate the gradient
+    
+    % loop over all beams
+    
+    optBeams = find([apertureInfo.beam(:).optimizeBeam]);
+    
+    for i = 1:numel(apertureInfo.beam)
+                
+        % get used bixels in beam
+        ix = ~isnan(apertureInfo.beam(i).bixelIndMap);
+        
+        if apertureInfo.beam(i).optimizeBeam
+            %optimized beam, do regular gradient
+            %must always add to existing gradient, since gradient comes
+            %from optimized and interpolated beams
+            g(offset) = g(offset)+apertureInfo.beam(i).shape(1).shapeMap(ix)' ...
+                * bixelG(apertureInfo.beam(i).bixelIndMap(ix));
+            
+            
+            %gradient wrt leaf positions
+            indInOptVec = apertureInfo.beam(i).shape(1).vectorOffset-1+[(1:apertureInfo.beam(i).numOfActiveLeafPairs) apertureInfo.totalNumOfLeafPairs+(1:apertureInfo.beam(i).numOfActiveLeafPairs)];
+            indInBixVec = apertureInfo.beam(i).bixOffset-1+[(1:apertureInfo.beam(i).numOfActiveLeafPairs) apertureInfo.realTotalNumOfLeafPairs+(1:apertureInfo.beam(i).numOfActiveLeafPairs)];
+            
+            g(indInOptVec) = g(indInOptVec)+apertureInfoVec(i)*bixelG(apertureInfo.bixelIndices(indInBixVec)) / apertureInfo.bixelWidth;
+            
+            %increment offset
+            offset = offset+1;
+        else
+            %not optimized beam, aperture weight is interpolated between
+            %previous and next optimized weights
+            
+            %give fraction of gradient to previous optimized beam
+            
+            %first weight
+            lastOptInd = (optBeams == apertureInfo.beam(i).lastOptInd);
+            g(lastOptInd) = g(lastOptInd)+apertureInfo.beam(i).fracFromLast*apertureInfo.beam(i).shape(1).shapeMap(ix)' ...
+                * bixelG(apertureInfo.beam(i).bixelIndMap(ix));
+            
+            %now leaf pos
+            indInOptVec = apertureInfo.beam(apertureInfo.beam(i).lastOptInd).shape(1).vectorOffset-1+[(1:apertureInfo.beam(apertureInfo.beam(i).lastOptInd).numOfActiveLeafPairs) apertureInfo.totalNumOfLeafPairs+(1:apertureInfo.beam(apertureInfo.beam(i).lastOptInd).numOfActiveLeafPairs)];
+            indInBixVec = apertureInfo.beam(i).bixOffset-1+[(1:apertureInfo.beam(i).numOfActiveLeafPairs) apertureInfo.realTotalNumOfLeafPairs+(1:apertureInfo.beam(i).numOfActiveLeafPairs)];
+            
+            g(indInOptVec) = g(indInOptVec)+apertureInfo.beam(i).fracFromLast*apertureInfo.beam(i).shape(1).weight*bixelG(apertureInfo.bixelIndices(indInBixVec)) / apertureInfo.bixelWidth;
+            
+            
+            
+            %give the other fraction to next optimized beam
+            
+            %first weight
+            nextOptInd = (optBeams == apertureInfo.beam(i).nextOptInd);
+            g(nextOptInd) = g(nextOptInd)+(1-apertureInfo.beam(i).fracFromLast)*apertureInfo.beam(i).shape(1).shapeMap(ix)' ...
+                * bixelG(apertureInfo.beam(i).bixelIndMap(ix));
+            
+            %now leaf pos
+            indInOptVec = apertureInfo.beam(apertureInfo.beam(i).nextOptInd).shape(1).vectorOffset-1+[(1:apertureInfo.beam(apertureInfo.beam(i).nextOptInd).numOfActiveLeafPairs) apertureInfo.totalNumOfLeafPairs+(1:apertureInfo.beam(apertureInfo.beam(i).nextOptInd).numOfActiveLeafPairs)];
+            indInBixVec = apertureInfo.beam(i).bixOffset-1+[(1:apertureInfo.beam(i).numOfActiveLeafPairs) apertureInfo.realTotalNumOfLeafPairs+(1:apertureInfo.beam(i).numOfActiveLeafPairs)];
+            
+            g(indInOptVec) = g(indInOptVec)+(1-apertureInfo.beam(i).fracFromLast)*apertureInfo.beam(i).shape(1).weight*bixelG(apertureInfo.bixelIndices(indInBixVec)) / apertureInfo.bixelWidth;
+        end
+        
+        
     end
-
-    % increment offset
-    offset = offset + apertureInfo.beam(i).numOfShapes;
-
+    
+    % 3. set to 0 gradient wrt the times, for now.  Later on we may want to add
+    % in a dependence of obj function on total time
+    g((apertureInfo.totalNumOfShapes+2*apertureInfo.totalNumOfLeafPairs+1):(2*apertureInfo.totalNumOfShapes+2*apertureInfo.totalNumOfLeafPairs-1)) = 0;
+    
+else
+    %we're not doing VMAT
+    
+    % 1. calculate aperatureGrad
+    % loop over all beams
+    offset = 0;
+    for i = 1:numel(apertureInfo.beam)
+        
+        % get used bixels in beam
+        ix = ~isnan(apertureInfo.beam(i).bixelIndMap);
+        
+        % loop over all shapes and add up the gradients x openingFrac for this shape
+        for j = 1:apertureInfo.beam(i).numOfShapes
+            g(j+offset) = apertureInfo.beam(i).shape(j).shapeMap(ix)' ...
+                * bixelG(apertureInfo.beam(i).bixelIndMap(ix));
+        end
+        
+        % increment offset
+        offset = offset + apertureInfo.beam(i).numOfShapes;
+        
+    end
+    
+    % 2. find corresponding bixel to the leaf Positions and aperture
+    % weights to calculate the gradient
+    g(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2) = ...
+        apertureInfoVec(apertureInfo.mappingMx(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,2)) ...
+        .* bixelG(apertureInfo.bixelIndices(1:apertureInfo.totalNumOfLeafPairs*2)) / apertureInfo.bixelWidth;
+    
 end
 
-% 2. find corresponding bixel to the leaf Positions and aperture 
-% weights to calculate the gradient
-g(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2) = ...
-        apertureInfoVec(apertureInfo.mappingMx(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,2)) ...
-     .* bixelG(apertureInfo.bixelIndices(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2)) / apertureInfo.bixelWidth;
+
+
 
 % correct the sign for the left leaf positions
 g(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs) = ...
     -g(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs);
-
-% 3. set to 0 gradient wrt the times, for now.  Later on we may want to add
-% in a dependence of obj function on total time
-g((apertureInfo.totalNumOfShapes+2*apertureInfo.totalNumOfLeafPairs+1):(2*apertureInfo.totalNumOfShapes+2*apertureInfo.totalNumOfLeafPairs-1)) = 0;
 

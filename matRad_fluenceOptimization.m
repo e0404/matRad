@@ -1,4 +1,4 @@
-function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
+function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,stf)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
@@ -66,19 +66,23 @@ if isfield(pln,'VMAT') && pln.VMAT
     for i = dij.numOfBeams:-1:1
         %Go backwards so we can delete columns in the dij.physicalDose
         %matrix without worrying about indexing
-        if ~dij.initializeBeam(i)
+        if ~stf(i).initializeBeam
             dij.physicalDose{1}(:,(offsetNEW-dij.numOfRaysPerBeam(i)+1):offsetNEW) = [];
             dij.bixelNum((offsetNEW-dij.numOfRaysPerBeam(i)+1):offsetNEW,:) = [];
             dij.rayNum((offsetNEW-dij.numOfRaysPerBeam(i)+1):offsetNEW,:) = [];
             dij.beamNum((offsetNEW-dij.numOfRaysPerBeam(i)+1):offsetNEW,:) = [];
+            if pln.halfFluOpt
+                dij.optFlu((offsetNEW-dij.numOfRaysPerBeam(i)+1):offsetNEW,:) = [];
+            end
+            
         end
         offsetNEW = offsetNEW-dij.numOfRaysPerBeam(i);
     end
     
     realNumOfBeams = dij.numOfBeams;
-    dij.numOfBeams = sum(dij.initializeBeam);
+    dij.numOfBeams = sum([stf(:).initializeBeam]);
     realNumOfRaysPerBeam = dij.numOfRaysPerBeam;
-    dij.numOfRaysPerBeam(~dij.initializeBeam) = [];
+    dij.numOfRaysPerBeam(~[stf(:).initializeBeam]) = [];
     dij.totalNumOfRays = sum(dij.numOfRaysPerBeam);
     realTotalNumOfBixels = dij.totalNumOfBixels;
     dij.totalNumOfBixels = sum(dij.numOfRaysPerBeam);
@@ -127,14 +131,20 @@ matRad_ipoptOptions;
 
 % modified settings for photon dao
 if pln.runDAO && strcmp(pln.radiationMode,'photons')
-%    options.ipopt.max_iter = 50;
-%    options.ipopt.acceptable_obj_change_tol     = 7e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
-
+    %    options.ipopt.max_iter = 50;
+    %    options.ipopt.acceptable_obj_change_tol     = 7e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
+    
 end
 
 % set bounds on optimization variables
 options.lb              = zeros(1,dij.totalNumOfBixels);        % Lower bound on the variables.
 options.ub              = inf * ones(1,dij.totalNumOfBixels);   % Upper bound on the variables.
+if pln.halfFluOpt
+    %dij.optFlu is 0 if the fluence is constrained to be equal to 0
+    options.ub(dij.optFlu == 0) = 0;
+    %change initialization also
+    wOnes = dij.optFlu;
+end
 
 funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
     
@@ -231,7 +241,7 @@ if isfield(pln,'VMAT') && pln.VMAT
     offset = 0;
     wOptNEW = zeros(realTotalNumOfBixels,1);
     for i = 1:realNumOfBeams
-        if dij.initializeBeam(i)
+        if stf(i).initializeBeam
             wOptNEW((offsetNEW+1):(offsetNEW+realNumOfRaysPerBeam(i))) = wOpt((offset+1):(offset+realNumOfRaysPerBeam(i)));
             offset = offset+realNumOfRaysPerBeam(i);
         end

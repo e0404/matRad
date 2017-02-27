@@ -47,8 +47,8 @@ if nargin < 5
     cu = [cu_dao; cu_dos];
 else
     optInd = find([apertureInfo.beam.optimizeBeam]);
-    cl_lfspd = leafSpeedCst(1)*ones(2*apertureInfo.beam(1).numOfActiveLeafPairs*(numel(optInd)-1),1); %Minimum leaf travel speed (cm/s)
-    cu_lfspd = leafSpeedCst(2)*ones(2*apertureInfo.beam(1).numOfActiveLeafPairs*(numel(optInd)-1),1); %Maximum leaf travel speed (cm/s)
+    cl_lfspd = leafSpeedCst(1)*ones(2*apertureInfo.beam(1).numOfActiveLeafPairs*(numel(optInd)-1),1); %Minimum leaf travel speed (mm/s)
+    cu_lfspd = leafSpeedCst(2)*ones(2*apertureInfo.beam(1).numOfActiveLeafPairs*(numel(optInd)-1),1); %Maximum leaf travel speed (mm/s)
     %apertureInfo.beam(i).numOfActiveLeafPairs should be independent of i, due to using the union of all ray positions in the stf
     %Convert from cm/deg when checking constraints; cannot do it at this stage since gantry rotation speed is not hard-coded
     cl_dosrt = doseRateCst(1)*ones(numel(optInd)-1,1); %Minimum MU/sec

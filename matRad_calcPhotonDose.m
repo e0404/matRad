@@ -65,19 +65,14 @@ dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.dimensions         = pln.voxelDimensions;
 dij.numOfScenarios     = 1;
 
-if isfield(pln,'VMAT') && pln.VMAT
-    dij.initializeBeam = zeros(1,pln.numOfBeams);
-    for i = 1:pln.numOfBeams
-        if stf(i).initializeBeam
-            dij.initializeBeam(i) = 1;
-        end
-    end
-end
-
 % set up arrays for book keeping
 dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
 dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
 dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
+if pln.halfFluOpt
+    % do not optimize this bixel
+    dij.optFlu = NaN*ones(dij.totalNumOfRays,1);
+end
 
 % Allocate space for dij.physicalDose sparse matrix
 for i = 1:dij.numOfScenarios
@@ -109,7 +104,7 @@ end
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
-useCustomPrimFluenceBool = 0;
+useCustomPrimFluenceBool = 1;
 
 %% kernel convolution
 % prepare data for convolution to reduce calculation time
@@ -146,7 +141,7 @@ counter = 0;
 
 fprintf('matRad: Photon dose calculation...\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for i = 1:dij.numOfBeams; % loop over all beams
+for i = 31 % loop over all beams
     
     fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
 
@@ -288,6 +283,11 @@ for i = 1:dij.numOfBeams; % loop over all beams
         dij.beamNum(counter)  = i;
         dij.rayNum(counter)   = j;
         dij.bixelNum(counter) = j;
+        
+        if pln.halfFluOpt
+            % do not optimize this bixel
+            dij.optFlu(counter) = stf(i).ray(j).optFlu;
+        end
         
         % Ray tracing for beam i and bixel j
         [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = matRad_calcGeoDists(rot_coordsV, ...

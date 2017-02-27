@@ -52,11 +52,13 @@ updatedInfo.apertureVector = apertureInfoVect;
 
 shapeInd = 1;
 
-indVect = NaN*ones(size(apertureInfoVect));
+%indVect = NaN*ones(size(apertureInfoVect));
 
-%initialize variables for VMAT
-offset = apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2+1; %These are where the time variables begin
-lastOpt = 1;
+%change this to eliminate the first unused entries (which pertain to the
+%weights of the aprtures, and to make the bixelIndices work when doing VMAT
+%(and we need to potentially interpolate between control points)
+indVect = NaN*ones(2*apertureInfo.realTotalNumOfLeafPairs,1);
+offset = 0;
 
 % helper function to cope with numerical instabilities through rounding
 round2 = @(a,b) round(a*10^b)/10^b;
@@ -114,17 +116,20 @@ for i = 1:numel(updatedInfo.beam)
                     end
                     if l~=1
                         ind = find(gantryAngles == optGantryAngles(l-1));
-                        if ind ~= numel(updatedInfo.beam)
-                            updatedInfo.beam(ind).gantryRot = (optGantryAngles(l)-optGantryAngles(l-1))/nextOptTime(l-1);
-                            updatedInfo.beam(ind).MURate = optWeights(l-1)*updatedInfo.weightToMU*updatedInfo.beam(ind).gantryRot/(gantryAngles(ind+1)-gantryAngles(ind));
-                            lastInd = ind;
-                        else
+                        
+                        updatedInfo.beam(ind).MU = optWeights(l-1)*updatedInfo.weightToMU;
+                        updatedInfo.beam(ind).time = nextOptTime(l-1);
+                        updatedInfo.beam(ind).gantryRot = (optGantryAngles(l)-optGantryAngles(l-1))/updatedInfo.beam(ind).time;
+                        updatedInfo.beam(ind).MURate = updatedInfo.beam(ind).MU*updatedInfo.beam(ind).gantryRot/(gantryAngles(ind+1)-gantryAngles(ind));
+                        
+                        if l == numel(updatedInfo.beam)
                             %this is for the last optimized gantry angle.
                             %it has the same rotation speed as the last
                             %angle, and a slightly modified MU rate (scaled
                             %by the weight of the beam)
-                            updatedInfo.beam(ind).gantryRot = updatedInfo.beam(lastInd).gantryRot;
-                            updatedInfo.beam(ind).MURate = updatedInfo.beam(ind).MURate*optWeights(l-1)/optWeights(l-2);
+                            updatedInfo.beam(l).MU = optWeights(l)*updatedInfo.weightToMU;
+                            updatedInfo.beam(l).gantryRot = updatedInfo.beam(ind).gantryRot;
+                            updatedInfo.beam(l).MURate = updatedInfo.beam(ind).MURate*optWeights(l-1)/optWeights(l-2);
                             
                             %optWeights(l-1)*updatedInfo.weightToMU*updatedInfo.beam(ind).gantryRot/(gantryAngles(ind)-gantryAngles(ind-1));
                         end
@@ -139,6 +144,7 @@ for i = 1:numel(updatedInfo.beam)
                     if ~isempty(updatedInfo.beam(k).leafDir)
                         %This gives starting angle of the current sector.
                         sectorBorderGantryAngles(m) = updatedInfo.beam(k).borderAngles(1);
+                        
                         if updatedInfo.beam(k).leafDir == 1
                             %This means that the current arc sector is moving
                             %in the normal direction (L-R).
@@ -202,12 +208,40 @@ for i = 1:numel(updatedInfo.beam)
                         %non-touching segments, to minimize leaf travel, taking
                         %care of any instances of leaf touching at border
                         %angles (end of arc sector)
-                        gantryAnglesAug = [optGantryAngles,sectorBorderGantryAngles];
                         
-                        leftLeafPossAug = [reshape(mean([leftLeafPoss(:) rightLeafPoss(:)],2),size(leftLeafPoss)),borderLeftLeafPoss];
-                        
-                        notTouchingInd = setdiff(1:updatedInfo.totalNumOfShapes,touchingInd);
-                        notTouchingIndAug = [notTouchingInd,(1+numel(optGantryAngles)):(numel(optGantryAngles)+numel(sectorBorderGantryAngles))];
+                        if ~exist('leftLeafPossAug','var')
+                            %leftLeafPossAug = [reshape(mean([leftLeafPoss(:) rightLeafPoss(:)],2),size(leftLeafPoss)),borderLeftLeafPoss];
+                            leftLeafPossAugTemp = reshape(mean([leftLeafPoss(:) rightLeafPoss(:)],2),size(leftLeafPoss));
+                            
+                            numRep = 0;
+                            repInd = nan(size(optGantryAngles));
+                            for j = 1:numel(optGantryAngles)
+                                if any(optGantryAngles(j) == sectorBorderGantryAngles)
+                                    %replace leaf positions with the ones at
+                                    %the borders (eliminates repetitions)
+                                    numRep = numRep+1;
+                                    %these are the gantry angles that are
+                                    %repeated
+                                    repInd(numRep) = j;
+                                    
+                                    delInd = find(optGantryAngles(j) == sectorBorderGantryAngles);
+                                    leftLeafPossAugTemp(:,j) = borderLeftLeafPoss(:,delInd);
+                                    borderLeftLeafPoss(:,delInd) = [];
+                                    sectorBorderGantryAngles(delInd) = [];
+                                end
+                            end
+                            repInd(isnan(repInd)) = [];
+                            leftLeafPossAug = [leftLeafPossAugTemp,borderLeftLeafPoss];
+                            gantryAnglesAug = [optGantryAngles,sectorBorderGantryAngles];
+                            
+                            notTouchingInd = [setdiff(1:updatedInfo.totalNumOfShapes,touchingInd),repInd];
+                            notTouchingInd = unique(notTouchingInd);
+                            %make sure to include the repeated ones in the
+                            %interpolation!
+                            
+                            notTouchingIndAug = [notTouchingInd,(1+numel(optGantryAngles)):(numel(optGantryAngles)+numel(sectorBorderGantryAngles))];
+                            
+                        end
                         
                         leftLeafPoss(row,touchingInd) = interp1(gantryAnglesAug(notTouchingIndAug),leftLeafPossAug(row,notTouchingIndAug),optGantryAngles(touchingInd));
                         rightLeafPoss(row,touchingInd) = leftLeafPoss(row,touchingInd);
@@ -294,8 +328,9 @@ for i = 1:numel(updatedInfo.beam)
             end
             
             % store information in index vector for gradient calculation
-            indVect(apertureInfo.beam(i).shape(j).vectorOffset+[1:n]-1) = bixelIndLeftLeaf;
-            indVect(apertureInfo.beam(i).shape(j).vectorOffset+[1:n]-1+apertureInfo.totalNumOfLeafPairs) = bixelIndRightLeaf;
+            indVect(offset+[1:n]) = bixelIndLeftLeaf;
+            indVect(offset+[1:n]+apertureInfo.realTotalNumOfLeafPairs) = bixelIndRightLeaf;
+            offset = offset+n;
             
             % calculate opening fraction for every bixel in shape to construct
             % bixel weight vector
@@ -356,14 +391,17 @@ for i = 1:numel(updatedInfo.beam)
                     if l~=1
                         ind = find(gantryAngles == optGantryAngles(l-1));
                         if ind ~= numel(updatedInfo.beam)
-                            updatedInfo.beam(ind).gantryRot = (optGantryAngles(l)-optGantryAngles(l-1))/nextOptTime(l-1);
-                            updatedInfo.beam(ind).MURate = optWeights(l-1)*updatedInfo.weightToMU*updatedInfo.beam(ind).gantryRot/(gantryAngles(ind+1)-gantryAngles(ind));
+                            updatedInfo.beam(ind).MU = optWeights(l-1)*updatedInfo.weightToMU;
+                            updatedInfo.beam(ind).time = nextOptTime(l-1);
+                            updatedInfo.beam(ind).gantryRot = (optGantryAngles(l)-optGantryAngles(l-1))/updatedInfo.beam(ind).time;
+                            updatedInfo.beam(ind).MURate = updatedInfo.beam(ind).MU*updatedInfo.beam(ind).gantryRot/(gantryAngles(ind+1)-gantryAngles(ind));
                             lastInd = ind;
                         else
                             %this is for the last optimized gantry angle.
                             %it has the same rotation speed as the last
                             %angle, and a slightly modified MU rate (scaled
                             %by the weight of the beam)
+                            updatedInfo.beam(ind).MU = optWeights(l-1)*updatedInfo.weightToMU;
                             updatedInfo.beam(ind).gantryRot = updatedInfo.beam(lastInd).gantryRot;
                             updatedInfo.beam(ind).MURate = updatedInfo.beam(ind).MURate*optWeights(l-1)/optWeights(l-2);
                             
@@ -458,13 +496,20 @@ for i = 1:numel(updatedInfo.beam)
             end
         end
         
+        % get dimensions of 2d matrices that store shape/bixel information
+        n = apertureInfo.beam(i).numOfActiveLeafPairs;
+        
         %Perform interpolation
         currGantryAngle = updatedInfo.beam(i).gantryAngle;
         leftLeafPos = (interp1(optGantryAngles',leftLeafPoss',currGantryAngle))';
         rightLeafPos = (interp1(optGantryAngles',rightLeafPoss',currGantryAngle))';
         
         %assume doserate is piecewise linear over arc sector
-        updatedInfo.beam(i).MURate = interp1([updatedInfo.beam(i).lastOptAngle updatedInfo.beam(i).nextOptAngle],[updatedInfo.beam(updatedInfo.beam(i).lastOptInd).MURate updatedInfo.beam(updatedInfo.beam(i).nextOptInd).MURate],gantryAngles(i));
+        %assume gantry rotation speed is constant over arc sector
+        %updatedInfo.beam(i).MURate = interp1([updatedInfo.beam(i).lastOptAngle updatedInfo.beam(i).nextOptAngle],[updatedInfo.beam(updatedInfo.beam(i).lastOptInd).MURate updatedInfo.beam(updatedInfo.beam(i).nextOptInd).MURate],gantryAngles(i));
+        
+        updatedInfo.beam(i).fracFromLast = (updatedInfo.beam(i).nextOptAngle-gantryAngles(i))/(updatedInfo.beam(i).nextOptAngle-updatedInfo.beam(i).lastOptAngle);
+        updatedInfo.beam(i).MURate = updatedInfo.beam(i).fracFromLast*updatedInfo.beam(updatedInfo.beam(i).lastOptInd).MURate+(1-updatedInfo.beam(i).fracFromLast)*updatedInfo.beam(updatedInfo.beam(i).nextOptInd).MURate;
         if i ~= numel(updatedInfo.beam)
             weight = updatedInfo.beam(updatedInfo.beam(i).lastOptInd).MURate*(gantryAngles(i+1)-gantryAngles(i))/(updatedInfo.beam(updatedInfo.beam(i).lastOptInd).gantryRot*updatedInfo.weightToMU);
         else
@@ -475,6 +520,7 @@ for i = 1:numel(updatedInfo.beam)
         updatedInfo.beam(i).shape(1).leftLeafPos  = leftLeafPos;
         updatedInfo.beam(i).shape(1).rightLeafPos = rightLeafPos;
         updatedInfo.beam(i).shape(1).weight = weight;
+        updatedInfo.beam(i).shape(1).MU = weight*updatedInfo.weightToMU;
         
         %The following is taken from the non-VMAT case (j->1, since there is only 1
         %shape per beam in VMAT)
@@ -504,10 +550,9 @@ for i = 1:numel(updatedInfo.beam)
         end
         
         % store information in index vector for gradient calculation
-        %THIS SHOULD NOT BE NEEDED FOR INTERPOLATED BEAMS, SINCE THEY ARE
-        %NOT OPTIMIZED
-        %indVect(apertureInfo.beam(i).shape(1).vectorOffset+[1:dimZ]-1) = bixelIndLeftLeaf;
-        %indVect(apertureInfo.beam(i).shape(1).vectorOffset+[1:dimZ]-1+apertureInfo.totalNumOfLeafPairs) = bixelIndRightLeaf;
+        indVect(offset+[1:n]) = bixelIndLeftLeaf;
+        indVect(offset+[1:n]+apertureInfo.realTotalNumOfLeafPairs) = bixelIndRightLeaf;
+        offset = offset+n;
         
         % calculate opening fraction for every bixel in shape to construct
         % bixel weight vector
@@ -529,20 +574,6 @@ for i = 1:numel(updatedInfo.beam)
         
     end
     
-    if isfield(apertureInfo.beam(1),'time')
-        %only occurs for VMAT
-        if apertureInfo.beam(i).numOfShapes %only optimized beams have their time optimized and put in the vector
-            apertureInfo.beam(i).time = apertureInfoVec(offset);
-            %Update all beam times for non-optimized beams; these are
-            %simply scaled from the optimized ones
-            if lastOpt ~= i-1
-                [apertureInfo.beam((lastOpt+1):(i-1)).time] = apertureInfo.beam(lastOpt).time/count; %assume constant gantry rotation speed throughout sector
-            end
-            
-            offset = offset+1;
-            lastOpt = i;
-        end
-    end
     
 end
 
