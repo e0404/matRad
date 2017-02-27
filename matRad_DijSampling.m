@@ -81,6 +81,7 @@ end
 bixelDoseCore       = bixelDose(ixCore);                         % save dose values that are not affected by sampling
 
 if all(ixCore)
+    %% all bixels are in the core
     %exit function with core dose only
     ixNew = ix(ixCore);
     bixelDoseNew = bixelDoseCore;
