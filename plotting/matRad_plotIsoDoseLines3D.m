@@ -1,11 +1,11 @@
-function isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window)
+function isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoContours,isoLevels,plane,slice,cMap,window)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad function that plots isolines, by precomputed contourc data 
-% computed by matRad_computeIsoDoseContours or manually by calling contourc
-% itself
+% matRad function that plots isolines in 3D, by precomputed contourc data 
+% computed by matRad_computeIsoDoseContours or manually by calling 
+% contourslice itself
 %
 % call
-%   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window)
+%   isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window)
 %
 % input
 %   axesHandle  handle to axes the slice should be displayed in
@@ -15,7 +15,6 @@ function isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoCo
 %               if the parameter is empty, contours will be plotted the
 %               slow way with MATLABs contour function
 %   isoLevels   the levels of the isodose (same units as doseCube)
-%   plotLabels  if set to true labels will be added to the contours
 %   plane       plane view (coronal=1,sagittal=2,axial=3)
 %   slice       slice in the selected plane of the 3D cube
 %   cMap        optional argument defining the colormap, default is jet
@@ -44,10 +43,10 @@ function isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoCo
 
 %% manage optional arguments
 %Use default colormap?
-if nargin < 8 || isempty(cMap)
+if nargin < 7 || isempty(cMap)
     cMap = jet(64);
 end
-if nargin < 9 || isempty(window)
+if nargin < 8 || isempty(window)
     window = [min(doseCube(:)) max(doseCube(:))];
 end
 
@@ -88,11 +87,20 @@ else
     for s = 1:numel(sliceIndices)
         currSlice = sliceIndices(s);
         currSlicePlaneCoords = slices{plane}(s);
+        
+        %opacity of the isolines. Will be fully opaque if we are on the
+        %requested (and shown) slice
+        if currSlice == slice
+            opacity = 1;
+        else
+            opacity = 0.4;
+        end
+        
         %Check if there is a contour in the plane
         if any(isoContours{currSlice,plane}(:))
             % plot precalculated contourc data            
             lower = 1; % lower marks the beginning of a section
-            while lower-1 ~= size(isoContours{currSlice,plane},2);
+            while lower-1 ~= size(isoContours{currSlice,plane},2)
                 steps = isoContours{currSlice,plane}(2,lower); % number of elements of current line section
                 if numel(unique(isoLevels)) > 1
                     color = colors(isoLevels(:) == isoContours{currSlice,plane}(1,lower),:);
@@ -119,13 +127,14 @@ else
                     continue;
                 end
                
-
-                isoLineHandles(end+1) = line(isoLine3Dx,isoLine3Dy,isoLine3Dz,'Color',color,'LineWidth',1.5,'Parent',axesHandle);
-                %if plotLabels
-                %    text(isoContours{slice,plane}(1,lower+1),...
-                %        isoContours{slice,plane}(2,lower+1),...
-                %        num2str(isoContours{slice,plane}(1,lower)),'Parent',axesHandle)
-                %end
+                %We render the isodose lines transparent by adding a fourth color value (undocumented) 
+                isoLineHandles(end+1) = line(isoLine3Dx,isoLine3Dy,isoLine3Dz,'Color',[color opacity],'LineWidth',1.5,'Parent',axesHandle);
+                %We do not plot labels
+                %{
+                if plotLabels
+                    text(isoLine3Dx,isoLine3Dy,isoLine3Dz,num2str(isoContours{currSlice,plane}(1,lower)),'Parent',axesHandle);
+                end
+                %}
                 lower = lower+steps+1;
                 
             end

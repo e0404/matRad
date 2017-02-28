@@ -1,127 +1,183 @@
 function matRad_plotPlan3D(axesHandle,pln,stf)
-%MATRAD_PLOTPLAN3D Summary of this function goes here
-%   Detailed explanation goes here
 
-vectors = cell(numel(stf),2);
+% matRad function to visualize a plan in 3D. Stf is optional for plotting
+% more detailed field contours in visualization of the impinging beams.
+% 
+% call
+%  rotMat = matRad_getRotationMatrix(axesHandle,pln,stf)
+%
+% input
+%   axesHandle: handle to the axes the plan should be visualized in.
+%   pln:        matRad plan meta information struct
+%   stf:        optional steering information struct. if stf is passed and 
+%               not empty, the function will use the ray position  
+%               information to plot more detailed field contours than with 
+%               pln only
+%
+% References
+%   -
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-hold(axesHandle,'on');
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-%draws rays as lines
-for fieldIx = 1:numel(stf)
-    beamTarget = stf(fieldIx).isoCenter;
-    beamSource = stf(fieldIx).sourcePoint + stf(fieldIx).isoCenter;
-    beamVector = beamTarget - beamSource;
-    
-    %{
-    for rayIx = 1:numel(stf(fieldIx).ray)
-        ray = stf(fieldIx).ray(rayIx);
-        rayTarget = ray.targetPoint + stf(fieldIx).isoCenter;
-        rayVector = rayTarget - beamSource;
-        
-        line([beamSource(1) rayTarget(1)],[beamSource(2) rayTarget(2)],[beamSource(3) rayTarget(3)],'Parent',axesHandle,'LineStyle','-','Color',0.5*[1 1 1])
-    end
-    %}
-    
-    
-    %Alternate approach
-    bixelWidth = stf(fieldIx).bixelWidth;
-    %Accumulate ray positions in matrix
-    rayPos = [];
-    rayPos = [stf(fieldIx).ray(:).rayPos_bev];
-    rayPos = reshape(rayPos,[3 numel(rayPos)/3])';
-    
-    %Compute a ray matrix with ones where a ray is
-    %Maximum absolute values give extent in one direction
-    symmMaxExtent = max([abs(min(rayPos)); abs(max(rayPos))]);
-    %we want to have indices and not mm
-    symmMaxExtent = symmMaxExtent ./ bixelWidth;
-    %now make it symmetric
-    symmMaxExtent = 2*symmMaxExtent + [1 0 1];
-    %extra padding of one element in each direction to handle contours right
-    symmMaxExtent = symmMaxExtent + [2 0 2];
-    
-    rayMat = zeros(symmMaxExtent(1),symmMaxExtent(3));
-    for rayIx = 1:size(rayPos,1)
-        centerMat = (size(rayMat)-1) ./ 2 + 1;
-        el2D = rayPos(rayIx,[1 3]);
-        el2D = el2D ./ bixelWidth;
-        el2DIx = centerMat + el2D;
-        rayMat(el2DIx(1),el2DIx(2)) = 1;
-    end
-    %Create the x and y vectors of the ray matrix in world space
-    
-    %Create contour
-    fieldContour2D = contourc(rayMat,1);
-    
-    %Column in the contour matrix
-    cColumn = 1;
-    contourIx = 0;
-        
-    while cColumn <= size(fieldContour2D,2)
-        contourIx = contourIx + 1;
-        
-        %Get contour data
-        fieldContour3D(contourIx).level = fieldContour2D(1,cColumn);
-        fieldContour3D(contourIx).numVertices = fieldContour2D(2,cColumn);
-        fieldContour3D(contourIx).coord_bev = [ fieldContour2D(2,cColumn+1:cColumn+fieldContour3D(contourIx).numVertices); ... x
-                                                zeros(1,fieldContour3D(contourIx).numVertices);
-                                                fieldContour2D(1,cColumn+1:cColumn+fieldContour3D(contourIx).numVertices)]; ... y];
-                                                
-        fieldContour3D(contourIx).coord_bev = bsxfun(@minus,fieldContour3D(contourIx).coord_bev,symmMaxExtent'./2) * bixelWidth;
-        
-        % Transform to world space
-        % compute coordinates in lps coordinate system, i.e. rotate beam
-        % geometry around fixed patient; 
-    
-        % Rotation around Z axis (gantry)
-        rotMx_XY = [    cosd(pln.gantryAngles(fieldIx))   -sind(pln.gantryAngles(fieldIx))  0;
-                        sind(pln.gantryAngles(fieldIx))    cosd(pln.gantryAngles(fieldIx))  0;
-                        0                            0                          1];
-    
-        % Rotation around Y axis (couch)
-        rotMx_XZ = [    cosd(pln.couchAngles(fieldIx))    0    sind(pln.couchAngles(fieldIx));
-                        0                           1    0;
-                       -sind(pln.couchAngles(fieldIx))    0    cosd(pln.couchAngles(fieldIx))];
-        
-        rotMat = rotMx_XY *rotMx_XZ;
-                   
-        for v = 1:fieldContour3D(contourIx).numVertices            
-            fieldContour3D(contourIx).coord(1:3,v) = rotMat * fieldContour3D(contourIx).coord_bev(1:3,v) + beamTarget';
-            line('XData',[beamSource(1) fieldContour3D(contourIx).coord(1,v)],'YData',[beamSource(2) fieldContour3D(contourIx).coord(2,v)],'ZData',[beamSource(3) fieldContour3D(contourIx).coord(3,v)],'Parent',axesHandle,'LineWidth',1,'Color',[255 20 147]/255);
-        end    
-        
-        %Draw the contour in the isocenter
-        line('XData',fieldContour3D(contourIx).coord(1,:),'YData',fieldContour3D(contourIx).coord(2,:),'ZData',fieldContour3D(contourIx).coord(3,:),'Parent',axesHandle,'LineWidth',2,'Color',[255 20 147]/255);
-        
-        %Draw the lines from the source point
-        
-        
-        cColumn = cColumn + fieldContour3D(contourIx).numVertices + 1; 
-    end
-    
+if ishold(axesHandle)
+    wasHold = true;
+else
+    wasHold = false;
+    hold(axesHandle,'on');
 end
 
+%nice pink ;)
+beamColor = [255 20 147]/255;
 
-%{
-for fieldIx = 1:numel(stf)
-    rayPos_bev = cat(1,stf(fieldIx).ray.rayPos_bev);
-    [~,minPosIx] = min(rayPos_bev);
-    [~,maxPosIx] = max(rayPos_bev);
+%We perform a rudimentary visualization of the beam angles if there is no stf
+if nargin < 3 || isempty(stf)
+    visFieldExtent = 50;
+    visFieldPoints_bev = [-visFieldExtent 0 -visFieldExtent; ...
+        visFieldExtent  0 -visFieldExtent; ...
+        visFieldExtent  0  visFieldExtent; ...
+        -visFieldExtent 0  visFieldExtent;
+        -visFieldExtent 0 -visFieldExtent]; %repeat the first value for closed contour
     
-    minPosX = stf(fieldIx).ray(minPosIx(1)).rayPos + stf(fieldIx).isoCenter;
-    minPosZ = stf(fieldIx).ray(minPosIx(3)).rayPos + stf(fieldIx).isoCenter;
-    maxPosX = stf(fieldIx).ray(maxPosIx(1)).rayPos + stf(fieldIx).isoCenter;
-    maxPosZ = stf(fieldIx).ray(maxPosIx(3)).rayPos + stf(fieldIx).isoCenter;
+    visFieldPoints_bev = visFieldPoints_bev ./ 2;
+    visFieldPoints_bev = visFieldPoints_bev';
     
-    planeX = [minPosX(1) minPosZ(1) maxPosZ(1) maxPosX(1)];
-    planeY = [minPosX(2) minPosZ(2) maxPosZ(2) maxPosX(2)];
-    planeZ = [minPosX(3) minPosZ(3) maxPosZ(3) maxPosX(3)];
+    fileName = [pln.radiationMode '_' pln.machine];
+    %Get a SAD
+    try
+        load([fileparts(mfilename('fullpath')) filesep fileName]);
+        SAD = machine.meta.SAD;
+    catch
+        if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
+            SAD = 10000;
+        else
+            SAD = 1500;
+        end
+    end
     
-    fill3(axesHandle,planeX,planeY,planeZ,'red');
+    % default beam vector
+    beamVector = [0 SAD 0];
+   
+    
+    for beamIx = 1:pln.numOfBeams
+        rotMat = matRad_getRotationMatrix(pln,beamIx);
+        currBeamVector = rotMat*beamVector';        
+        currBeamSource = pln.isoCenter - currBeamVector';
+        currBeamOuterTarget = pln.isoCenter + currBeamVector';
+        
+        %Central ray
+        line('XData',[currBeamSource(1) pln.isoCenter(1)],'YData',[currBeamSource(2) pln.isoCenter(2)],'ZData',[currBeamSource(3) pln.isoCenter(3)],'Parent',axesHandle,'LineWidth',2,'Color',beamColor);
+        line('XData',[currBeamOuterTarget(1) pln.isoCenter(1)],'YData',[currBeamOuterTarget(2) pln.isoCenter(2)],'ZData',[currBeamOuterTarget(3) pln.isoCenter(3)],'Parent',axesHandle,'LineWidth',2,'Color',beamColor,'LineStyle',':');
+        
+        %Field rays
+        for v = 1:size(visFieldPoints_bev,2)
+            visFieldPoints_world(1:3,v) = rotMat*visFieldPoints_bev(1:3,v) + pln.isoCenter';
+            
+            %skipt the drawing of the first vertex since it is there twice
+            if v==1 
+                continue;
+            end
+            
+            
+            
+            %Draw the lines from the source point to the contour point           
+            line('XData',[currBeamSource(1) visFieldPoints_world(1,v)],'YData',[currBeamSource(2) visFieldPoints_world(2,v)],'ZData',[currBeamSource(3) visFieldPoints_world(3,v)],'Parent',axesHandle,'LineWidth',1,'Color',beamColor);
+            %extend further
+            currPointVector = visFieldPoints_world(1:3,v) - currBeamSource';
+            currPointOuterTarget = currPointVector + visFieldPoints_world(1:3,v);
+            line('XData',[currPointOuterTarget(1) visFieldPoints_world(1,v)],'YData',[currPointOuterTarget(2) visFieldPoints_world(2,v)],'ZData',[currPointOuterTarget(3) visFieldPoints_world(3,v)],'Parent',axesHandle,'LineWidth',1,'Color',beamColor,'LineStyle',':');
+            
+            %contour
+            line('XData',[visFieldPoints_world(1,v) visFieldPoints_world(1,v-1)],...
+                'YData',[visFieldPoints_world(2,v) visFieldPoints_world(2,v-1)],...
+                'ZData',[visFieldPoints_world(3,v) visFieldPoints_world(3,v-1)],...
+                'Parent',axesHandle,'LineWidth',2,'Color',beamColor);
+        end
+    end
+else %We use the steering information to visualize the field contour
+    for fieldIx = 1:numel(stf)
+        beamTarget = stf(fieldIx).isoCenter;
+        beamSource = stf(fieldIx).sourcePoint + stf(fieldIx).isoCenter;
+        
+        rotMat = matRad_getRotationMatrix(pln,fieldIx);
+        
+        bixelWidth = stf(fieldIx).bixelWidth;
+        %Accumulate ray positions in matrix
+        rayPos = [stf(fieldIx).ray(:).rayPos_bev];
+        rayPos = reshape(rayPos,[3 numel(rayPos)/3])';
+        
+        %Compute a ray matrix with ones where a ray is
+        %Maximum absolute values give extent in one direction
+        symmMaxExtent = max([abs(min(rayPos)); abs(max(rayPos))]);
+        %we want to have indices and not mm
+        symmMaxExtent = symmMaxExtent ./ bixelWidth;
+        %now make it symmetric
+        symmMaxExtent = 2*symmMaxExtent + [1 0 1];
+        %extra padding of one element in each direction to handle contours right
+        symmMaxExtent = symmMaxExtent + [2 0 2];
+        
+        %Fill the ray matrix with ones at positions of rays
+        rayMat = zeros(symmMaxExtent(1),symmMaxExtent(3));
+        for rayIx = 1:size(rayPos,1)
+            centerMat = (size(rayMat)-1) ./ 2 + 1;
+            el2D = rayPos(rayIx,[1 3]);
+            el2D = el2D ./ bixelWidth;
+            el2DIx = centerMat + el2D;
+            rayMat(el2DIx(1),el2DIx(2)) = 1;
+        end
+        %Create contour of the field
+        fieldContour2D = contourc(rayMat,1);
+        
+        %Column in the contour matrix
+        cColumn = 1;
+        contourIx = 0;
+        
+        %Orientate the contour in 3D world space
+        while cColumn <= size(fieldContour2D,2)
+            contourIx = contourIx + 1;
+            
+            %Get contour data
+            fieldContour3D(contourIx).level = fieldContour2D(1,cColumn);
+            fieldContour3D(contourIx).numVertices = fieldContour2D(2,cColumn);
+            fieldContour3D(contourIx).coord_bev = [ fieldContour2D(2,cColumn+1:cColumn+fieldContour3D(contourIx).numVertices); ... x
+                zeros(1,fieldContour3D(contourIx).numVertices);
+                fieldContour2D(1,cColumn+1:cColumn+fieldContour3D(contourIx).numVertices)]; ... y];
+                
+            fieldContour3D(contourIx).coord_bev = bsxfun(@minus,fieldContour3D(contourIx).coord_bev,symmMaxExtent'./2) * bixelWidth;
+            
+            % Transform to world space
+            % compute coordinates in lps coordinate system, i.e. rotate beam
+            % geometry around fixed patient;             
+            
+            for v = 1:fieldContour3D(contourIx).numVertices
+                fieldContour3D(contourIx).coord(1:3,v) = rotMat * fieldContour3D(contourIx).coord_bev(1:3,v) + beamTarget';
+                %Draw the lines from the source point to the contour point
+                line('XData',[beamSource(1) fieldContour3D(contourIx).coord(1,v)],'YData',[beamSource(2) fieldContour3D(contourIx).coord(2,v)],'ZData',[beamSource(3) fieldContour3D(contourIx).coord(3,v)],'Parent',axesHandle,'LineWidth',1,'Color',beamColor);
+            end
+            
+            %Draw the contour in the isocenter (shows the field)
+            line('XData',fieldContour3D(contourIx).coord(1,:),'YData',fieldContour3D(contourIx).coord(2,:),'ZData',fieldContour3D(contourIx).coord(3,:),'Parent',axesHandle,'LineWidth',2,'Color',beamColor);
+            
+            cColumn = cColumn + fieldContour3D(contourIx).numVertices + 1;
+        end
+        
+    end
 end
-%}
+
+if ~wasHold
+    hold(axesHandle,'off');
 end
 
-
-
+end

@@ -1,4 +1,4 @@
-function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,ct,doseCube,plane,slice,threshold,alpha,cMap,window)
+function [doseHandle,cMap,window] = matRad_plotDoseSlice3D(axesHandle,ct,doseCube,plane,slice,threshold,alpha,cMap,window)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that generates a dose plot of a selected slice in 3D view
 %

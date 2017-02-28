@@ -875,9 +875,9 @@ end
 
 selectIx = get(handles.popupmenu_chooseColorData,'Value');  
 
+cla(handles.axesFig); 
 %% plot ct - if a ct cube is available and type of plot is set to 1 and not 2; 1 indicate cube plotting and 2 profile plotting
 if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
-    cla(handles.axesFig); 
     
     if selectIx == 3
         ctIx = 2;
@@ -890,16 +890,19 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     if isempty(handles.dispWindow{ctIx,2})
         handles.dispWindow{ctIx,2} = [min(ct.cube{:}(:)) max(ct.cube{:}(:))];
     end
-    [AxesHandlesCT_Dose(end+1),~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,ct,1,plane,slice,ctMap,handles.dispWindow{ctIx,1});
     
-    % plot colorbar? If 1 the user asked for the CT
-    if plotColorbarSelection == 2 && handles.cBarChanged
-        %Plot the colorbar
-        handles.cBarHandel = matRad_plotColorbar(handles.axesFig,ctMap,handles.dispWindow{ctIx,1},'fontsize',defaultFontSize);
-        %adjust lables
-        set(get(handles.cBarHandel,'ylabel'),'String', 'Electron Density','fontsize',defaultFontSize);
-        % do not interprete as tex syntax
-        set(get(handles.cBarHandel,'ylabel'),'interpreter','none');
+    if get(handles.radiobtnCT,'Value') 
+        [AxesHandlesCT_Dose(end+1),~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,ct,1,plane,slice,ctMap,handles.dispWindow{ctIx,1});
+       
+        % plot colorbar? If 1 the user asked for the CT
+        if plotColorbarSelection == 2 && handles.cBarChanged
+            %Plot the colorbar
+            handles.cBarHandel = matRad_plotColorbar(handles.axesFig,ctMap,handles.dispWindow{ctIx,1},'fontsize',defaultFontSize);
+            %adjust lables
+            set(get(handles.cBarHandel,'ylabel'),'String', 'Electron Density','fontsize',defaultFontSize);
+            % do not interprete as tex syntax
+            set(get(handles.cBarHandel,'ylabel'),'interpreter','none');
+        end
     end
 end
 
@@ -1232,9 +1235,11 @@ Update3DView(handles);
 function Update3DView(handles)
 
 if isfield(handles,'axesFig3D') && isfield(handles,'fig3D') && isvalid(handles.axesFig3D) && isvalid(handles.fig3D)
+    set(handles.radiobtnPlan,'enable','on');
     axesFig3D = handles.axesFig3D;
     fig3D = handles.fig3D;    
 else
+    set(handles.radiobtnPlan,'value',0,'enable','off');
     return
 end
 
@@ -1245,10 +1250,15 @@ elseif handles.State > 0
     if  ismember('resultGUI',AllVarNames)
         Result = evalin('base','resultGUI');
     end
+    
+    if  ismember('stf',AllVarNames)
+        stf = evalin('base','stf');
+    else
+        stf = [];
+    end
 
     ct  = evalin('base','ct');
     cst = evalin('base','cst');
-    stf = evalin('base','stf');
     pln = evalin('base','pln');
 end
 
@@ -1271,18 +1281,21 @@ end
 
 set(fig3D,'Color',0.5*[1 1 1]);
 set(axesFig3D,'Color',1*[0 0 0]);
+
+%% Plot 3D structures
 hold(axesFig3D,'on');
 if get(handles.radiobtnContour,'Value') && handles.State>0
     voiPatches = matRad_plotVois3D(axesFig3D,ct,cst,handles.VOIPlotFlag,colorcube);
 end
 
-%CT slice plotting
-window = handles.dispWindow{2,1}; %(2 for ct)
-ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
-ctHandle = matRad_plotCtSlice3D(axesFig3D,ct,1,plane,slice,ctMap,window);
+%% plot the CT slice
+if get(handles.radiobtnCT,'Value')
+    window = handles.dispWindow{2,1}; %(2 for ct)
+    ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
+    ctHandle = matRad_plotCtSlice3D(axesFig3D,ct,1,plane,slice,ctMap,window);
+end
 
-
-
+%% plot the dose slice
 if handles.State >= 1 && exist('Result','var')
     doseMap = matRad_getColormap(handles.doseColorMap,handles.cMapSize);
     doseIx  = 3;
@@ -1306,12 +1319,14 @@ if handles.State >= 1 && exist('Result','var')
             [doseHandle,~,handles.dispWindow{doseIx,1}] = matRad_plotDoseSlice3D(axesFig3D,ct,dose,plane,slice,handles.CutOffLevel,handles.doseOpacity,doseMap,handles.dispWindow{doseIx,1});
         end
         if get(handles.radiobtnIsoDoseLines,'Value')
-            matRad_plotIsoDoseLines3D(axesFig3D,ct,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,false,plane,slice,doseMap,handles.dispWindow{doseIx,1});
+            matRad_plotIsoDoseLines3D(axesFig3D,ct,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plane,slice,doseMap,handles.dispWindow{doseIx,1});
         end
     end
 end
 
-%matRad_plotPlan3D(axesFig3D,pln,stf);
+if get(handles.radiobtnPlan,'Value')
+    matRad_plotPlan3D(axesFig3D,pln,stf);
+end
 
 %hLight = light('Parent',axesFig3D);
 %camlight(hLight,'left');
@@ -4020,12 +4035,24 @@ if ~isfield(handles,'axesFig3D') || ~isfield(handles,'axesFig3D') || ~isvalid(ha
 end
 %end
 
-%Update3DView(handles);
 UpdatePlot(handles);
-
-%rotate3d(axesFig3D,'on');
 
 guidata(hObject,handles);
 
+% --- Executes on button press in radiobtnCT.
+function radiobtnCT_Callback(hObject, eventdata, handles)
+% hObject    handle to radiobtnCT (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
 
+% Hint: get(hObject,'Value') returns toggle state of radiobtnCT
+UpdatePlot(handles)
 
+% --- Executes on button press in radiobtnPlan.
+function radiobtnPlan_Callback(hObject, eventdata, handles)
+% hObject    handle to radiobtnPlan (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of radiobtnPlan
+UpdatePlot(handles)
