@@ -34,7 +34,7 @@ function markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-vIsoCenter           = round(pln.isoCenter./[ct.resolution.x ct.resolution.y ct.resolution.z]);
+vIsoCenter           = round(pln.isoCenter(1)./[ct.resolution.x ct.resolution.y ct.resolution.z]);
 if  plane == 3% Axial plane
     vIsoCenterPlot  = [vIsoCenter(1) vIsoCenter(2)];
     if vIsoCenter(3) == slice
