@@ -116,24 +116,7 @@ for i = 1:length(BeamSeqNames)
     stf(i).SAD           = machine.meta.SAD;
     stf(i).isoCenter     = pln.isoCenter;
     stf(i).sourcePoint_bev = [0 -stf(i).SAD 0];
-    % compute coordinates in lps coordinate system, i.e. rotate beam
-    % geometry around fixed patient; use transpose matrices because we are
-    % working with row vectors
-
-    % Rotation around Z axis (gantry)
-    rotMx_XY_T = [ cosd(pln.gantryAngles(i)) sind(pln.gantryAngles(i)) 0;
-                  -sind(pln.gantryAngles(i)) cosd(pln.gantryAngles(i)) 0;
-                                           0                         0 1];
-
-    % Rotation around Y axis (couch)
-    rotMx_XZ_T = [cosd(pln.couchAngles(i)) 0 -sind(pln.couchAngles(i));
-                                         0 1                        0;
-                  sind(pln.couchAngles(i)) 0  cosd(pln.couchAngles(i))];
-
-    % Rotated Source point (1st gantry, 2nd couch)
-    stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMx_XY_T*rotMx_XZ_T;
-
-    % now loop over ControlPointSequences
+        % now loop over ControlPointSequences
     ControlPointSeqNames = fieldnames(ControlPointSeq);
     numOfContrPointSeq = length(ControlPointSeqNames);
     % create empty helper matrix
@@ -210,27 +193,17 @@ for i = 1:length(BeamSeqNames)
         stf(i).bixelWidth = NaN;
     end
     
-    % compute coordinates in lps coordinate system, i.e. rotate beam
-    % geometry around fixed patient
-    
-    % Rotation around Z axis (gantry)
-    rotMx_XY_rotated = [ cosd(pln.gantryAngles(i)) sind(pln.gantryAngles(i)) 0;
-        -sind(pln.gantryAngles(i)) cosd(pln.gantryAngles(i)) 0;
-        0                         0 1];
-    
-    % Rotation around Y axis (couch)
-    rotMx_XZ_rotated = [ cosd(pln.couchAngles(i)) 0 -sind(pln.couchAngles(i));
-        0 1                        0;
-        sind(pln.couchAngles(i)) 0 cosd(pln.couchAngles(i))];
-    
-    % Rotated Source point, first needs to be rotated around gantry, and then
-    % couch.
-    stf(i).sourcePoint =  stf(i).sourcePoint_bev*rotMx_XY_rotated*rotMx_XZ_rotated;
+    % coordinate transformation with rotation matrix.
+    % use transpose matrix because we are working with row vectors
+    rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln,i));
+
+    % Rotated Source point (1st gantry, 2nd couch)
+    stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMat_vectors_T;
     
     % Save ray and target position in lps system.
     for j = 1:stf(i).numOfRays
-        stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_rotated*rotMx_XZ_rotated;
-        stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_rotated*rotMx_XZ_rotated;   
+        stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMat_vectors_T;
+        stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMat_vectors_T;   
     end
     
     % book keeping & calculate focus index
