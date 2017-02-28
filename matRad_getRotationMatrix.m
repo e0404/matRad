@@ -91,7 +91,7 @@ switch system
 end
 
 switch type
-    case 'both'
+    case 'full'
         %Since the couch rotation is physically a passive rotation of the
         %system, we perform it first and then rotate the gantry
         rotMat = R_Couch*R_Gantry;
