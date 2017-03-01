@@ -1083,9 +1083,9 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     ylabel('{\color{black}dose [Gy]}')
     cColor={'black','green','magenta','cyan','yellow','red','blue'};
     
-    % Get Rotation. passive rotation & row vector multiplication
-    %  requires double matrix transpose and thus does not affect the matrix                  
-    rotMat_system_T = matRad_getRotationMatrix(pln.gantryAngles(handles.SelectedBeam),pln.couchAngles(handles.SelectedBeam));
+    % Rotate the system into the beam. 
+    % passive rotation & row vector multiplication & inverted rotation requires triple matrix transpose                  
+    rotMat_system_T = transpose(matRad_getRotationMatrix(pln.gantryAngles(handles.SelectedBeam),pln.couchAngles(handles.SelectedBeam)));
     
     if strcmp(handles.ProfileType,'longitudinal')
         sourcePointBEV = [handles.profileOffset -SAD   0];
