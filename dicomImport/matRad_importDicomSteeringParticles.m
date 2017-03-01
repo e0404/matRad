@@ -195,7 +195,7 @@ for i = 1:length(BeamSeqNames)
     
     % coordinate transformation with rotation matrix.
     % use transpose matrix because we are working with row vectors
-    rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln,i));
+    rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln.gantryAngles(i),pln.couchAngles(i)));
 
     % Rotated Source point (1st gantry, 2nd couch)
     stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMat_vectors_T;

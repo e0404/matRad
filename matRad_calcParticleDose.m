@@ -185,7 +185,7 @@ for i = 1:dij.numOfBeams % loop over all beams
     % transformation of the coordinate system need double transpose
 
     % rotation around Z axis (gantry)
-    rotMat_system_T = matRad_getRotationMatrix(pln,i);
+    rotMat_system_T = matRad_getRotationMatrix(pln.gantryAngles(i),pln.couchAngles(i));
 
     % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
     rot_coordsV = coordsV*rotMat_system_T;

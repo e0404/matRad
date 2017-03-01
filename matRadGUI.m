@@ -1085,7 +1085,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     
     % Get Rotation. passive rotation & row vector multiplication
     %  requires double matrix transpose and thus does not affect the matrix                  
-    rotMat_system_T = matRad_getRotationMatrix(pln,handles.SelectedBeam);
+    rotMat_system_T = matRad_getRotationMatrix(pln.gantryAngles(handles.SelectedBeam),pln.couchAngles(handles.SelectedBeam));
     
     if strcmp(handles.ProfileType,'longitudinal')
         sourcePointBEV = [handles.profileOffset -SAD   0];

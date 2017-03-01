@@ -1,4 +1,4 @@
-function rotMat = matRad_getRotationMatrix(arg1,arg2,type,system)
+function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)
 % matRad function to return the rotation / transformation matrix for
 % gantry and/or couch rotation. The Rotation matrix stands for a (1)
 % counter-clockwise, (2) active rotation in the patient coordinate system
@@ -9,18 +9,11 @@ function rotMat = matRad_getRotationMatrix(arg1,arg2,type,system)
 % 
 % call
 %  rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,type,system)
-%  rotMat = matRad_getRotationMatrix(pln,fieldIx,type,system)
 %
 % input
 %   gantryAngle:    beam/gantry angle
 %   couchAngle:     couch angle 
-%   or  
-%   pln:            matRad plan meta information struct
-%   fieldIx:        index of the field / beam that is requested
-%   
-%   type:       optional parameter. Can be 'full' (both rotations as
-%                   matrix, default) or 'gantry' / 'couch' for the 
-%                   individual matrices
+%
 %   system:         optional coordinate system the transformation matrix is
 %                   requested for. So far, only the default option 'LPS' is
 %                   supported (right handed system).
@@ -30,7 +23,7 @@ function rotMat = matRad_getRotationMatrix(arg1,arg2,type,system)
 %                   patient system origin via rotMat * x
 %
 % References
-%   -
+%   https://en.wikipedia.org/wiki/Rotation_matrix (2017, Mar 1)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -48,25 +41,12 @@ function rotMat = matRad_getRotationMatrix(arg1,arg2,type,system)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Parse arguments
-%We need at least two and max 6 input arguments
-narginchk(2,4);
-%check if a pln and index have been given
-if isstruct(arg1)
-    pln = arg1;
-    fieldIx = arg2;
-    gantryAngle = pln.gantryAngles(fieldIx);
-    couchAngle = pln.couchAngles(fieldIx);
-else
-    gantryAngle = arg1;
-    couchAngle = arg2;
-end 
+%We need at least two and max 3 input arguments
+narginchk(2,3);
+
 % Coordinate System (only LPS so far)
-if nargin < 4
-    system = 'LPS';
-end
-%Gantry, Couch, or full transformation?
 if nargin < 3
-    type = 'full';
+    system = 'LPS';
 end
 
 %% Set Up requested Rotation Matrix
@@ -95,18 +75,7 @@ switch system
         error('matRad only supports LPS system so far');
 end
 
-switch type
-    case 'full'
-        %Since the couch rotation is physically a passive rotation of the
-        %system, we perform it first and then rotate the gantry
-        rotMat = R_Couch*R_Gantry;
-    case 'gantry'
-        rotMat = R_Gantry;
-    case 'couch'
-        rotMat = R_Couch;
-    otherwise
-        error(['Rotation matrix ''' type ''' not known, needs to be ''full'', ''gantry'' or ''couch''']);       
-end
+rotMat = R_Couch*R_Gantry;
 
 end
 

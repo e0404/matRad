@@ -121,7 +121,7 @@ for i = 1:length(pln.gantryAngles)
     % rotation with row vector coordinates, which would introduce two 
     % inversions / transpositions of the matrix, thus no changes to the
     % rotation matrix are necessary
-    rotMat_system_T = matRad_getRotationMatrix(pln,i);
+    rotMat_system_T = matRad_getRotationMatrix(pln.gantryAngles(i),pln.couchAngles(i));
     
     rot_coords = [coordsX coordsY coordsZ]*rotMat_system_T;
     
@@ -187,7 +187,7 @@ for i = 1:length(pln.gantryAngles)
     
     % get (active) rotation matrix 
     % transpose matrix because we are working with row vectors
-    rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln,i));
+    rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln.gantryAngles(i),pln.couchAngles(i)));
     
     
     stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMat_vectors_T;
