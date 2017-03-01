@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -21,6 +21,20 @@
       ga('create', 'UA-64247123-1', 'auto');
       ga('send', 'pageview');
     </script>
+<script>
+/**
+* Function that tracks a click on an outbound link in Analytics.
+* This function takes a valid URL string as an argument, and uses that URL string
+* as the event label. Setting the transport method to 'beacon' lets the hit be sent
+* using 'navigator.sendBeacon' in browser that support it.
+*/
+var trackOutboundLink = function(url) {
+   ga('send', 'event', 'outbound', 'click', url, {
+     'transport': 'beacon',
+     'hitCallback': function(){document.location = url;}
+   });
+}
+</script>
   </head>
   <body>
     <div class="wrapper">
@@ -29,8 +43,8 @@
         <p>An open source multi-modality radiation treatment planning sytem</p>
 
         <ul>
-          <li><a href="https://github.com/e0404/matRad/zipball/master" onclick=�?var that=this;_gaq.push([‘_trackEvent’,’Download’,’PDF’,this.href]);setTimeout(function(){location.href=that.href;},200);return false;�?>Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/e0404/matRad/tarball/master" onclick=�?var that=this;_gaq.push([‘_trackEvent’,’Download’,’PDF’,this.href]);setTimeout(function(){location.href=that.href;},200);return false;�?>Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/e0404/matRad/zipball/master" onclick="trackOutboundLink('https://github.com/e0404/matRad/zipball/master'); return false;">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/e0404/matRad/tarball/master" onclick="trackOutboundLink('https://github.com/e0404/matRad/tarball/master'); return false;">Download <strong>TAR Ball</strong></a></li>
           <li><a href="https://github.com/e0404/matRad">View On <strong>GitHub</strong></a></li>
         </ul>
       </header>
@@ -86,7 +100,7 @@
 <li>Mark Bangert (<a href="http://www.dkfz.de">DKFZ</a>)</li>
 <li>Eduardo Cisternas (<a href="http://fisicamedica.uc.cl/">Universidad Cat&oacute;lica de Chile</a>)</li>
 <li>Hubert Gabrys (<a href="http://www.dkfz.de">DKFZ</a>)</li>
-<li>Oliver Jäkel (<a href="http://www.dkfz.de">DKFZ</a>/<a href="http://www.klinikum.uni-heidelberg.de/Welcome.113005.0.html?&amp;L=1">HIT</a>/<a href="http://www.heidelberg-university-hospital.com/Radiation-Therapy.137.0.html">Heidelberg University Clinic</a>)</li>
+<li>Oliver J�kel (<a href="http://www.dkfz.de">DKFZ</a>/<a href="http://www.klinikum.uni-heidelberg.de/Welcome.113005.0.html?&amp;L=1">HIT</a>/<a href="http://www.heidelberg-university-hospital.com/Radiation-Therapy.137.0.html">Heidelberg University Clinic</a>)</li>
 <li>Thomas Klinge (<a href="http://www.dkfz.de">DKFZ</a>)</li>
 <li>Andrea Mairani (<a href="http://www.cnao.it/">CNAO</a>/<a href="http://www.klinikum.uni-heidelberg.de/Welcome.113005.0.html?&amp;L=1">HIT</a>)</li>
 <li>Henning Mescher (<a href="http://www.dkfz.de">DKFZ</a>)</li>
@@ -99,7 +113,7 @@
 <h2>
 <a id="license-and-disclaimer" class="anchor" href="#license-and-disclaimer" aria-hidden="true"><span class="octicon octicon-link"></span></a>License and disclaimer</h2>
 
-<p>matRad is offered as a compilation with the Ipopt software package for large-scale nonlinear optimization. All the elements of the compilation of matRad and Ipopt are free software. You can redistribute and/or modify matRad’s source code provided as files with .m and .mat extension under the terms of the GNU GENERAL PUBLIC LICENSE Version 3 (GPL v3). You can also add to matRad the Ipopt functionality by using the precompiled mex files of the Ipopt optimizer in object code version which are licensed under the Eclipse Public License Version 1.0 (EPL v1.0), also made available for download via <a href="https://projects.coin-or.org/Ipopt">https://projects.coin-or.org/Ipopt</a>.</p>
+<p>matRad is offered as a compilation with the Ipopt software package for large-scale nonlinear optimization. All the elements of the compilation of matRad and Ipopt are free software. You can redistribute and/or modify matRad's source code provided as files with .m and .mat extension under the terms of the GNU GENERAL PUBLIC LICENSE Version 3 (GPL v3). You can also add to matRad the Ipopt functionality by using the precompiled mex files of the Ipopt optimizer in object code version which are licensed under the Eclipse Public License Version 1.0 (EPL v1.0), also made available for download via <a href="https://projects.coin-or.org/Ipopt">https://projects.coin-or.org/Ipopt</a>.</p>
 
 <p>In addition, we provide a matlab standalone version of the compilation of matRad and Ipopt, where the files of matRad and Ipopt are licensed under GPL v3 and EPL v1.0 respectively. The matlab standalone version is meant to be used by students for learning and practicing scientific programming.</p>
 
