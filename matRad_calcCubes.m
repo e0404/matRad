@@ -43,6 +43,7 @@ resultGUI.physicalDose = reshape(dij.physicalDose{scenNum}*resultGUI.w,dij.dimen
 if isfield(dij,'RBE')
    fprintf(['matRad: applying a constant RBE of ' num2str(dij.RBE) ' \n']); 
    resultGUI.RBExDose     = resultGUI.physicalDose * dij.RBE;
+   resultGUI.RBE          = ones(dij.dimensions)*dij.RBE;
 end
 
 % consider VOI priorities
@@ -56,7 +57,7 @@ if isfield(dij,'mLETDose')
 end
 
 % consider biological optimization for carbon ions
-if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
+if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose') && ~isfield(dij,'RBE')
 
     a_x = zeros(size(resultGUI.physicalDose));
     b_x = zeros(size(resultGUI.physicalDose));
@@ -69,11 +70,12 @@ if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
         end
     end
     
+    ix = dij.bx ~=0;
     resultGUI.effect = full(dij.mAlphaDose{scenNum}*resultGUI.w+(dij.mSqrtBetaDose{scenNum}*resultGUI.w).^2);
     resultGUI.effect = reshape(resultGUI.effect,dij.dimensions);
     
     resultGUI.RBExDose     = zeros(size(resultGUI.effect));
-    ix                     = resultGUI.effect>0;
+
     resultGUI.RBExDose(ix) = ((sqrt(a_x(ix).^2 + 4 .* b_x(ix) .* resultGUI.effect(ix)) - a_x(ix))./(2.*b_x(ix)));
     resultGUI.RBE          = resultGUI.RBExDose./resultGUI.physicalDose;
    
@@ -88,7 +90,6 @@ end
 
 
 % write worst case dose distribution if VWWC opt used for one objective
-% only implemented for physical dose ToDo: calculate the worst case dose for COWC
 saveWCCube = 0;
 for i = 1:size(cst,1)
    if ~isempty(cst{i,6})

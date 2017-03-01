@@ -67,12 +67,10 @@ else
                 d{i} = e;
             else
                % calculate RBX x dose
-               scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
-               scaledEffect   = zeros(length(scaledEffectSq),1);
-               % compute sqrt(scaledEffect) only for numeric values (not nan) to save time
-               [idx,~]           = find(~isnan(scaledEffectSq));
-               scaledEffect(idx) = sqrt(scaledEffectSq(idx));
-               d{i}              = scaledEffect - dij.gamma;
+
+               d{i} = zeros(dij.numOfVoxels, 1);
+               d{i}(dij.ixDose) = sqrt((e(dij.ixDose)./dij.bx(dij.ixDose)+dij.gamma(dij.ixDose).^2)) ...
+                   -dij.gamma(dij.ixDose);
             end
 
         end

@@ -214,9 +214,9 @@ for i = 1:options.numOfScenarios
                         
         elseif isequal(options.quantity,'RBExD') 
 
-          
+            deltaTmp = zeros(dij.numOfVoxels, 1);
             scaledEffect = d{i} + dij.gamma;
-            deltaTmp     = delta{i}./(2*dij.bx.*scaledEffect);
+            deltaTmp(dij.ixDose)     = delta{i}(dij.ixDose)./(2*dij.bx(dij.ixDose).*scaledEffect(dij.ixDose));
             vBias        = (deltaTmp' * dij.mAlphaDose{dij.indexforOpt(i)})';
             quadTerm     = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
             mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{dij.indexforOpt(i)})';
