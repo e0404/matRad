@@ -916,7 +916,7 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
     
     if isempty(handles.dispWindow{ctIx,2})
-        handles.dispWindow{ctIx,2} = [min(ct.cube{:}(:)) max(ct.cube{:}(:))];
+        handles.dispWindow{ctIx,2} = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
     end
     [AxesHandlesCT_Dose(end+1),~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,ct,1,plane,slice,ctMap,handles.dispWindow{ctIx,1});
     
