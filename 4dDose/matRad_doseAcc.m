@@ -1,4 +1,4 @@
-function [dAcc, ct, resultGUI] = matRad_doseAcc(ct, resultGUI, cst, accMethod)
+function resultGUI = matRad_doseAcc(ct, resultGUI, cst, accMethod)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dose accumulation function
 % 
@@ -339,6 +339,8 @@ elseif strcmp(accMethod,'DDMM')
     end
         
 end
+
+resultGUI.accDose = dAcc;
 
 % compute RBE weighted dose from accumulated alpha and beta cubes
 
