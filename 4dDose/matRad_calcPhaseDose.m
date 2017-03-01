@@ -41,8 +41,8 @@ for i=1:length(delivery)
 %%%%%%%%%Breathing motion   
     %Motion assumption1: linear
     if(MOTION == 'linear')
-        %nächste Zeile falsch für shift szenario!!!! ÄNDERN
-    NumOfPhases = dij.numOfScenarios;% multScen.numOfCtScen;   % hier noch einfügen wie man gleiche Info aus dij bekommt!
+       NumOfPhases = size(dij.physicalDose);
+        NumOfPhases =  NumOfPhases(1);  %immer richtig?
     %Annahme 5s und linear 
     offset = delivery(1).offset; %0;
     phaseTime = delivery(1).motionperiod/NumOfPhases; %5/NumOfPhases;
