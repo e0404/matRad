@@ -1,10 +1,9 @@
 function matRad_plotPlan3D(axesHandle,pln,stf)
-
 % matRad function to visualize a plan in 3D. Stf is optional for plotting
 % more detailed field contours in visualization of the impinging beams.
 % 
 % call
-%  rotMat = matRad_getRotationMatrix(axesHandle,pln,stf)
+%  rotMat = matRad_plotPlan3D(axesHandle,pln,stf)
 %
 % input
 %   axesHandle: handle to the axes the plan should be visualized in.
@@ -72,7 +71,7 @@ if nargin < 3 || isempty(stf)
    
     
     for beamIx = 1:pln.numOfBeams
-        rotMat = matRad_getRotationMatrix(pln,beamIx);
+        rotMat = matRad_getRotationMatrix(pln.gantryAngles(beamIx),pln.couchAngles(beamIx));
         currBeamVector = rotMat*beamVector';        
         currBeamSource = pln.isoCenter - currBeamVector';
         currBeamOuterTarget = pln.isoCenter + currBeamVector';
@@ -111,7 +110,7 @@ else %We use the steering information to visualize the field contour
         beamTarget = stf(fieldIx).isoCenter;
         beamSource = stf(fieldIx).sourcePoint + stf(fieldIx).isoCenter;
         
-        rotMat = matRad_getRotationMatrix(pln,fieldIx);
+        rotMat = matRad_getRotationMatrix(pln.gantryAngles(fieldIx),pln.couchAngles(fieldIx));
         
         bixelWidth = stf(fieldIx).bixelWidth;
         %Accumulate ray positions in matrix

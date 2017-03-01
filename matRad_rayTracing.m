@@ -83,18 +83,11 @@ rayMx_bev = [candidateRaysCoords_X(logical(candidateRayMx(:))) ...
 %        plot(rayMx_bev(jj,1),rayMx_bev(jj,3),'rx'),hold on 
 %     end
 
-% Rotation around Z axis (gantry)
-rotMx_XY_T = [ cosd(stf.gantryAngle) sind(stf.gantryAngle) 0;
-              -sind(stf.gantryAngle) cosd(stf.gantryAngle) 0;
-                                   0                     0 1];
-    
-% Rotation around Y axis (couch)
-rotMx_XZ_T = [cosd(stf.couchAngle) 0 -sind(stf.couchAngle);
-                                 0 1                     0;
-              sind(stf.couchAngle) 0  cosd(stf.couchAngle)];
+% Rotation matrix. Transposed because of row vectors
+rotMat_vectors_T = transpose(matRad_getRotationMatrix(stf.gantryAngle,stf.couchAngle));
 
 % rotate ray matrix from bev to world coordinates
-rayMx_world = rayMx_bev * rotMx_XY_T * rotMx_XZ_T;
+rayMx_world = rayMx_bev * rotMat_vectors_T;
 
 % criterium for ray selection
 raySelection = rayMxSpacing/2;

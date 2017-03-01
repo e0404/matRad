@@ -60,8 +60,8 @@ isoLineHandles = gobjects(0);
 
 slices = {[],[],[]};
 
-coords{1} = ct.resolution.y * (1:ct.cubeDim(1));
-coords{2} = ct.resolution.x * (1:ct.cubeDim(2));
+coords{1} = ct.resolution.x * (1:ct.cubeDim(1));
+coords{2} = ct.resolution.y * (1:ct.cubeDim(2));
 coords{3} = ct.resolution.z * (1:ct.cubeDim(3));
 
 %slice spacing
