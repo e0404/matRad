@@ -2250,7 +2250,7 @@ set(handles.editBixelWidth,'String',num2str(pln.bixelWidth));
 set(handles.editFraction,'String',num2str(pln.numOfFractions));
 
 if isfield(pln,'isoCenter')
-    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
+    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter(1,:)*10))./10), '\s+', ' '));
 end
 set(handles.editGantryAngle,'String',num2str((pln.gantryAngles)));
 set(handles.editCouchAngle,'String',num2str((pln.couchAngles)));
