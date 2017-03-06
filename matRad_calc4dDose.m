@@ -42,6 +42,11 @@ end
 %delievery struct
 delivery = matRad_readLmdout(dij, stf, FileName);
 
+%write bioModell in resultGUI for phase dose calculation and dose
+%accumulation (otherwise we need to add pln to  matRad_calcPhaseDose and 
+% matRad_doseAcc
+resultGUI.bioParam = pln.bioParam;
+
 %dose in each CT phase is calculated
 delivery(1).offset = 0;
 delivery(1).motionperiod = 5;

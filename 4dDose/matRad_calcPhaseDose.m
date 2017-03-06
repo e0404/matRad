@@ -208,7 +208,7 @@ for p=1:NumOfPhases
     end
  
     resultGUI.phaseDose{p} = reshape(dij.physicalDose{p} * w, dij.dimensions);
-    if isfield(dij,'mAlphaDose')
+    if isequal(resultGUI.bioParam.quantity,'RBExD')
     
         resultGUI.phaseAlphaDose{p} = reshape(dij.mAlphaDose{p} * w, dij.dimensions);
         resultGUI.phaseSqrtBetaDose{p} = reshape(dij.mSqrtBetaDose{p} * w, dij.dimensions);

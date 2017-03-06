@@ -84,7 +84,7 @@ yGridVec = 1:dimensions(2);
 zGridVec = 1:dimensions(3);
 
 dAcc = zeros(dimensions);
-if isfield(resultGUI,'phaseAlphaDose')
+if isequal(resultGUI.bioParam.quantity,'RBExD')
     AlphaDoseAcc = zeros(dimensions);
     SqrtBetaDoseAcc = zeros(dimensions);
 end
@@ -132,7 +132,7 @@ if strcmp(accMethod,'DDM')
         
         dAcc(ix) = dAcc(ix) + d_ref;
         
-        if isfield(resultGUI,'phaseAlphaDose')
+      if isequal(resultGUI.bioParam.quantity,'RBExD')
         
             alphaD_ref = interp3(yGridVec,xGridVec',zGridVec,resultGUI.phaseAlphaDose{1,i}(:,:,:), ...  
                              Y(ix) + dvf_y_i(ix), ...     
@@ -342,10 +342,15 @@ end
 
 resultGUI.accDose = dAcc;
 
+%for protons with const RBE ( is later overwritten for variable RBE)
+if isequal(resultGUI.bioParam.type,'const_RBExD')
+    resultGUI.accRBExDose = resultGUI.accDose *1.1;
+
+    
 % compute RBE weighted dose from accumulated alpha and beta cubes
 
 % consider biological optimization for carbon ions
-if isfield(resultGUI,'phaseAlphaDose')
+elseif isequal(resultGUI.bioParam.quantity,'RBExD')
 
     a_x = zeros(size(resultGUI.physicalDose));
     b_x = zeros(size(resultGUI.physicalDose));
