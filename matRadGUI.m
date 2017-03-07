@@ -1044,7 +1044,7 @@ elseif plane == 1 % Coronal plane
     end
 end
 
-if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln)
+if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln) && size(pln.isoCenter,1) == 1
     hIsoCenterCross = matRad_plotIsoCenterMarker(handles.axesFig,pln,ct,plane,slice);
 end
 
@@ -2250,7 +2250,15 @@ set(handles.editBixelWidth,'String',num2str(pln.bixelWidth));
 set(handles.editFraction,'String',num2str(pln.numOfFractions));
 
 if isfield(pln,'isoCenter')
-    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter(1,:)*10))./10), '\s+', ' '));
+    if size(pln.isoCenter, 1) == 1
+        set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter(1,:)*10))./10), '\s+', ' '));
+        set(handles.editIsoCenter,'Enable','on');
+        set(handles.checkIsoCenter,'Enable','on');
+    else
+        set(handles.editIsoCenter,'String','multiple isoCenter');
+        set(handles.editIsoCenter,'Enable','off');
+        set(handles.checkIsoCenter,'Enable','off');
+    end
 end
 set(handles.editGantryAngle,'String',num2str((pln.gantryAngles)));
 set(handles.editCouchAngle,'String',num2str((pln.couchAngles)));
