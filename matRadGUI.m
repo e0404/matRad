@@ -1044,7 +1044,7 @@ elseif plane == 1 % Coronal plane
     end
 end
 
-if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln) && size(pln.isoCenter,1) == 1
+if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln) && isequal(unique(pln.isoCenter,'rows') == pln.isoCenter, ones(size(pln.isoCenter)))
     hIsoCenterCross = matRad_plotIsoCenterMarker(handles.axesFig,pln,ct,plane,slice);
 end
 
@@ -2250,7 +2250,7 @@ set(handles.editBixelWidth,'String',num2str(pln.bixelWidth));
 set(handles.editFraction,'String',num2str(pln.numOfFractions));
 
 if isfield(pln,'isoCenter')
-    if size(pln.isoCenter, 1) == 1
+    if isequal(unique(pln.isoCenter,'rows') == pln.isoCenter, ones(size(pln.isoCenter)))
         set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter(1,:)*10))./10), '\s+', ' '));
         set(handles.editIsoCenter,'Enable','on');
         set(handles.checkIsoCenter,'Enable','on');
