@@ -728,7 +728,7 @@ try
         pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
         assignin('base','pln',pln);
     elseif ~get(handles.checkIsoCenter,'Value') 
-        pln.isoCenter = str2num(get(handles.editIsoCenter,'String'));
+        pln.isoCenter = ones(pln.numOfBeams,1)*str2num(get(handles.editIsoCenter,'String'));
     end
 
 catch ME
@@ -2438,9 +2438,9 @@ pln.runDAO = logical(get(handles.btnRunDAO,'Value'));
 try
     cst = evalin('base','cst');
     if sum(strcmp('TARGET',cst(:,3))) > 0 && get(handles.checkIsoCenter,'Value')
-       pln.isoCenter = matRad_getIsoCenter(cst,ct); 
+       pln.isoCenter = ones(pln.numOfBeams,1)*matRad_getIsoCenter(cst,ct); 
     else
-       pln.isoCenter = str2num(get(handles.editIsoCenter,'String'));
+       pln.isoCenter = ones(pln.numOfBeams,1)*str2num(get(handles.editIsoCenter,'String'));
     end
 catch
     warning('couldnt set isocenter in getPln function')
@@ -2617,7 +2617,7 @@ tmpIsoCenter = str2num(get(hObject,'String'));
 
 if length(tmpIsoCenter) == 3
     if any(pln.isoCenter~=tmpIsoCenter)
-        pln.isoCenter = tmpIsoCenter;
+        pln.isoCenter = ones(pln.numOfBeams,1)*tmpIsoCenter;
         handles.State = 1;
         UpdateState(handles);
     end
@@ -2638,11 +2638,11 @@ if get(hObject,'Value')
     end
     tmpIsoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
     if ~isequal(tmpIsoCenter,pln.isoCenter)
-        pln.isoCenter = tmpIsoCenter;
+        pln.isoCenter = ones(pln.numOfBeams,1)*tmpIsoCenter;
         handles.State = 1;
         UpdateState(handles);
     end
-    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
+    set(handles.editIsoCenter,'String',regexprep(num2str((round(tmpIsoCenter*10))./10), '\s+', ' '));
     set(handles.editIsoCenter,'Enable','off')
     assignin('base','pln',pln);
 else
