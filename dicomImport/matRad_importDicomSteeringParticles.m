@@ -38,13 +38,11 @@ function [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
 %% load plan file
 % load machine data
 
-pln.machine = 'HIT';
-fileName = [pln.radiationMode '_' pln.machine];
-try
-   load(fileName);
-catch
-   error(['Could not find the following machine file: ' fileName ]); 
-end
+[fileName,pathName] = uigetfile('*.mat','Import steering information from DICOM Plan. Choose corresponding matRad base data.');
+load([pathName filesep fileName]);
+
+ix = find(fileName == '_');
+pln.machine = fileName(ix(1)+1:end-4);
 
 % RT Plan consists only on meta information
 rtPlanInfo = dicominfo(rtPlanFile{1});
@@ -216,7 +214,7 @@ for i = 1:length(BeamSeqNames)
         % loop over all energies
         numOfEnergy = length(stf(i).ray(j).energy);
         for k = 1:numOfEnergy
-            energyIndex = find(abs([machine.data(:).energy]-stf(i).ray(j).energy(k))<10^-3);
+            energyIndex = find(abs([machine.data(:).energy]-stf(i).ray(j).energy(k))<10^-2);
             if ~isempty(energyIndex)
                 stf(i).ray(j).energy(k) = machine.data(energyIndex).energy;
             else
