@@ -201,6 +201,9 @@ handles.doseOpacity            = 0.6;
 handles.IsoDose.Levels         = 0;
 handles.dispWindow             = cell(3,2); % first dimension refers to the selected
 
+% do not calculate / suggest isoCenter new by default
+set(handles.checkIsoCenter, 'Value', 0);
+
 % suppose no ct cube in HU is available (because no ct could be available)
 handles.cubeHUavailable = false;
 % initial startup finished
