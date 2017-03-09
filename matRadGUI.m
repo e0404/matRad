@@ -267,7 +267,7 @@ if handles.State == 3
 end
 
 %per default the first beam is selected for the profile plot
-handles.SelectedBeam = 1;
+handles.selectedBeam = 1;
 handles.plane = get(handles.popupPlane,'Value');
 handles.DijCalcWarning = false;
 
@@ -1085,7 +1085,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     
     % Rotate the system into the beam. 
     % passive rotation & row vector multiplication & inverted rotation requires triple matrix transpose                  
-    rotMat_system_T = transpose(matRad_getRotationMatrix(pln.gantryAngles(handles.SelectedBeam),pln.couchAngles(handles.SelectedBeam)));
+    rotMat_system_T = transpose(matRad_getRotationMatrix(pln.gantryAngles(handles.selectedBeam),pln.couchAngles(handles.selectedBeam)));
     
     if strcmp(handles.ProfileType,'longitudinal')
         sourcePointBEV = [handles.profileOffset -SAD   0];
@@ -1198,7 +1198,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     end
     
     str = sprintf('profile plot - central axis of %d beam gantry angle %d? couch angle %d?',...
-        handles.SelectedBeam ,pln.gantryAngles(handles.SelectedBeam),pln.couchAngles(handles.SelectedBeam));
+        handles.selectedBeam ,pln.gantryAngles(handles.selectedBeam),pln.couchAngles(handles.selectedBeam));
     h_title = title(handles.axesFig,str,'FontSize',defaultFontSize);
     pos = get(h_title,'Position');
     set(h_title,'Position',[pos(1)-40 pos(2) pos(3)])
@@ -1392,7 +1392,7 @@ try
     else
         handles.SelectedDisplayOption = 'physicalDose';
     end
-    handles.SelectedBeam = 1;
+    handles.selectedBeam = 1;
     % check IPOPT status and return message for GUI user if no DAO or
     % particles
     if ~pln.runDAO || ~strcmp(pln.radiationMode,'photons')
@@ -1511,15 +1511,15 @@ elseif get(hObject,'Value') == 2
         if length(parseStringAsNum(get(handles.editGantryAngle,'String'),true)) > 1
             
             set(handles.sliderBeamSelection,'Enable','on');
-            handles.SelectedBeam = 1;
+            handles.selectedBeam = 1;
             pln = evalin('base','pln');
-            set(handles.sliderBeamSelection,'Min',handles.SelectedBeam,'Max',pln.numOfBeams,...
-                'Value',handles.SelectedBeam,...
+            set(handles.sliderBeamSelection,'Min',handles.selectedBeam,'Max',pln.numOfBeams,...
+                'Value',handles.selectedBeam,...
                 'SliderStep',[1/(pln.numOfBeams-1) 1/(pln.numOfBeams-1)],...
                 'Enable','on');
 
         else
-            handles.SelectedBeam = 1;
+            handles.selectedBeam = 1;
         end
     
         handles.profileOffset = get(handles.sliderOffset,'Value');
@@ -1591,8 +1591,8 @@ function sliderBeamSelection_Callback(hObject, ~, handles)
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
 
-handles.SelectedBeam = round(get(hObject,'Value'));
-set(hObject, 'Value', handles.SelectedBeam);
+handles.selectedBeam = round(get(hObject,'Value'));
+set(hObject, 'Value', handles.selectedBeam);
 handles.rememberCurrAxes = false;
 UpdatePlot(handles);
 handles.rememberCurrAxes = true;
