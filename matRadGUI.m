@@ -2451,7 +2451,8 @@ pln.runDAO = logical(get(handles.btnRunDAO,'Value'));
 
 try
     cst = evalin('base','cst');
-    if sum(strcmp('TARGET',cst(:,3))) > 0 && get(handles.checkIsoCenter,'Value')
+    if (sum(strcmp('TARGET',cst(:,3))) > 0 && get(handles.checkIsoCenter,'Value')) || ...
+            (sum(strcmp('TARGET',cst(:,3))) > 0 && ~isfield(pln,'isoCenter'))
        pln.isoCenter = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct);
        set(handles.checkIsoCenter,'Value',1);
     else
