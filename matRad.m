@@ -28,12 +28,12 @@ load TG119.mat
 %load BOXPHANTOM.mat
 
 % meta information for treatment plan
-pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = [0:72:359]; % [°]
 pln.couchAngles     = [0 0 0 0 0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
+pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.voxelDimensions = ct.cubeDim;
 pln.radiationMode   = 'photons';     % either photons / protons / carbon
 pln.bioOptimization = 'none';        % none: physical optimization;             const_RBExD; constant RBE of 1.1;
