@@ -2266,6 +2266,7 @@ if isfield(pln,'isoCenter')
     else
         set(handles.editIsoCenter,'String','multiple isoCenter');
         set(handles.editIsoCenter,'Enable','off');
+        set(handles.checkIsoCenter,'Value',0);
         set(handles.checkIsoCenter,'Enable','off');
     end
 end
