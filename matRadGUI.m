@@ -203,6 +203,7 @@ handles.dispWindow             = cell(3,2); % first dimension refers to the sele
 
 % do not calculate / suggest isoCenter new by default
 set(handles.checkIsoCenter, 'Value', 0);
+set(handles.editIsoCenter,'Enable','on')
 
 % suppose no ct cube in HU is available (because no ct could be available)
 handles.cubeHUavailable = false;
