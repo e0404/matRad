@@ -2322,8 +2322,8 @@ function btnTableSave_Callback(~, ~, handles)
 getCstTable(handles);
 if get(handles.checkIsoCenter,'Value')
     pln = evalin('base','pln'); 
-    pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
-    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
+    pln.isoCenter = ones(pln.numOfBeams,1) * matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
+    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter(1,:) * 10))./10), '\s+', ' '));
     assignin('base','pln',pln);
 end
 getPlnFromGUI(handles);
