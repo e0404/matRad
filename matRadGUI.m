@@ -731,7 +731,7 @@ try
     %% check if isocenter is already set
     if ~isfield(pln,'isoCenter')
         handles = showWarning(handles,warning('no iso center set - using center of gravity based on structures defined as TARGET'));
-        pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
+        pln.isoCenter = ones(pln.numOfBeams,1) * matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
         assignin('base','pln',pln);
     elseif ~get(handles.checkIsoCenter,'Value') 
         pln.isoCenter = ones(pln.numOfBeams,1)*str2num(get(handles.editIsoCenter,'String'));
@@ -1105,7 +1105,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     rotTargetPointBEV = targetPointBEV * rotMat_system_T;
     
     % perform raytracing on the central axis of the selected beam
-    [~,l,rho,~,ix] = matRad_siddonRayTracer(pln.isoCenter(handles.selectedBeam),ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube{1}});
+    [~,l,rho,~,ix] = matRad_siddonRayTracer(pln.isoCenter(handles.selectedBeam,:),ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube{1}});
     d = [0 l .* rho{1}];
     % Calculate accumulated d sum.
     vX = cumsum(d(1:end-1));
@@ -2444,9 +2444,9 @@ pln.runDAO = logical(get(handles.btnRunDAO,'Value'));
 try
     cst = evalin('base','cst');
     if sum(strcmp('TARGET',cst(:,3))) > 0 && get(handles.checkIsoCenter,'Value')
-       pln.isoCenter = ones(pln.numOfBeams,1)*matRad_getIsoCenter(cst,ct); 
+       pln.isoCenter = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct); 
     else
-       pln.isoCenter = ones(pln.numOfBeams,1)*str2num(get(handles.editIsoCenter,'String'));
+       pln.isoCenter = ones(pln.numOfBeams,1) * str2num(get(handles.editIsoCenter,'String'));
     end
 catch
     warning('couldnt set isocenter in getPln function')
@@ -2813,7 +2813,7 @@ if evalin('base','exist(''pln'',''var'')') && ...
     % change isocenter if that was changed and do _not_ recreate steering
     % information
     for i = 1:numel(pln.gantryAngles)
-        stf(i).isoCenter = pln.isoCenter;
+        stf(i).isoCenter = pln.isoCenter(i,:);
     end
 
     % recalculate influence matrix
