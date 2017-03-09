@@ -463,6 +463,9 @@ end
 if exist('stf','var')
     assignin('base','stf',stf);
 end
+if exist('pln','var')
+    assignin('base','pln',pln);
+end
 if exist('dij','var')
     assignin('base','dij',dij);
 end
