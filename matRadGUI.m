@@ -232,12 +232,6 @@ end
 %set plan if available - if not create one
 try 
      if ismember('pln',AllVarNames)  && handles.State > 0
-          % sanity check of isoCenter
-          if size(pln.isoCenter,1) ~= pln.numOfBeams && size(pln.isoCenter,1) == 1
-              pln.isoCenter = ones(pln.numOfBeams,1) * pln.isoCenter(1,:);
-          elseif size(pln.isoCenter,1) ~= pln.numOfBeams && size(pln.isoCenter,1) ~= 1
-              error('Isocenter in plan file are incosistent.');
-          end
           setPln(handles);
      elseif handles.State > 0 
           getPlnFromGUI(handles);
@@ -2255,6 +2249,12 @@ guidata(handles.figure1,handles);
 % fill GUI elements with plan information
 function setPln(handles)
 pln = evalin('base','pln');
+% sanity check of isoCenter
+if size(pln.isoCenter,1) ~= pln.numOfBeams && size(pln.isoCenter,1) == 1
+  pln.isoCenter = ones(pln.numOfBeams,1) * pln.isoCenter(1,:);
+elseif size(pln.isoCenter,1) ~= pln.numOfBeams && size(pln.isoCenter,1) ~= 1
+  error('Isocenter in plan file are incosistent.');
+end
 set(handles.editBixelWidth,'String',num2str(pln.bixelWidth));
 set(handles.editFraction,'String',num2str(pln.numOfFractions));
 
