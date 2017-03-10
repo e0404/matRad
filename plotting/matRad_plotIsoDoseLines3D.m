@@ -60,9 +60,9 @@ isoLineHandles = gobjects(0);
 
 slices = {[],[],[]};
 
-coords{1} = ct.resolution.x * (1:ct.cubeDim(1));
-coords{2} = ct.resolution.y * (1:ct.cubeDim(2));
-coords{3} = ct.resolution.z * (1:ct.cubeDim(3));
+coords{1} = ct.resolution.x * double(1:ct.cubeDim(1));
+coords{2} = ct.resolution.y * double(1:ct.cubeDim(2));
+coords{3} = ct.resolution.z * double(1:ct.cubeDim(3));
 
 %slice spacing
 spacing = 5;
@@ -113,16 +113,16 @@ else
                 isoLine2Dy = isoContours{currSlice,plane}(2,lower+1:lower+steps);
                 if plane == 2
                     isoLine3Dx = currSlicePlaneCoords*ones(1,numel(isoLine2Dx));
-                    isoLine3Dz = interp1(1:ct.cubeDim(3),coords{3},isoLine2Dx);
-                    isoLine3Dy = interp1(1:ct.cubeDim(2),coords{2},isoLine2Dy);
+                    isoLine3Dz = interp1(double(1:ct.cubeDim(3)),coords{3},isoLine2Dx);
+                    isoLine3Dy = interp1(double(1:ct.cubeDim(2)),coords{2},isoLine2Dy);
                 elseif plane == 1
                     isoLine3Dy = currSlicePlaneCoords*ones(1,numel(isoLine2Dx));
-                    isoLine3Dx = interp1(1:ct.cubeDim(1),coords{1},isoLine2Dy);
-                    isoLine3Dz = interp1(1:ct.cubeDim(3),coords{3},isoLine2Dx);
+                    isoLine3Dx = interp1(double(1:ct.cubeDim(1)),coords{1},isoLine2Dy);
+                    isoLine3Dz = interp1(double(1:ct.cubeDim(3)),coords{3},isoLine2Dx);
                 elseif plane == 3
                     isoLine3Dz = currSlicePlaneCoords*ones(1,numel(isoLine2Dx));
-                    isoLine3Dx = interp1(1:ct.cubeDim(1),coords{1},isoLine2Dx);
-                    isoLine3Dy = interp1(1:ct.cubeDim(2),coords{2},isoLine2Dy);
+                    isoLine3Dx = interp1(double(1:ct.cubeDim(1)),coords{1},isoLine2Dx);
+                    isoLine3Dy = interp1(double(1:ct.cubeDim(2)),coords{2},isoLine2Dy);
                 else 
                     continue;
                 end
