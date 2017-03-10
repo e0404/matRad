@@ -1779,16 +1779,18 @@ function cst = setCstTable(handles,cst)
 
 colorAssigned = true;
 
-while colorAssigned == true
-  for i = 1:size(cst,1)
+% check whether all structures have an assigned color
+for i = 1:size(cst,1)
     if ~isfield(cst{i,5},'visibleColor')
-      colorAssigned = false;
+        colorAssigned = false;
+        break;
     elseif isempty(cst{i,5}.visibleColor)
-      colorAssigned = false;
+        colorAssigned = false;
+        break;
     end
-  end
 end
 
+% assign color if color assignment is not already present or inconsistent
 if colorAssigned == false
   colors = colorcube(size(cst,1));
   for i = 1:size(cst,1)
