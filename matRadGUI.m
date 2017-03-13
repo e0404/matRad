@@ -2638,7 +2638,7 @@ pln = evalin('base','pln');
 tmpIsoCenter = str2num(get(hObject,'String'));
 
 if length(tmpIsoCenter) == 3
-    if any(pln.isoCenter~=tmpIsoCenter)
+    if sum(any(pln.isoCenter~=tmpIsoCenter))
         pln.isoCenter = ones(pln.numOfBeams,1)*tmpIsoCenter;
         handles.State = 1;
         UpdateState(handles);
@@ -2653,7 +2653,10 @@ guidata(hObject,handles);
 % check box: iso center auto
 function checkIsoCenter_Callback(hObject, ~, handles)
 
-if get(hObject,'Value')
+W = evalin('base','whos');
+doesPlnExist = ismember('pln',{W(:).name});
+
+if get(hObject,'Value') && doesPlnExist
     pln = evalin('base','pln');
     if ~isfield(pln,'isoCenter')
         pln.isoCenter = NaN;
