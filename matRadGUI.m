@@ -2423,6 +2423,12 @@ msgbox(['IPOPT finished with status ' num2str(info.status) ' (' statusmsg ')'],'
 % get pln file form GUI     
 function getPlnFromGUI(handles)
 
+% evalin pln (if existent) in order to decide whether isoCenter should be calculated
+% automatically
+if evalin('base','exist(''pln'',''var'')')
+    pln = evalin('base','pln');
+end
+
 pln.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [???]
 pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [???]
