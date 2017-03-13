@@ -2880,6 +2880,8 @@ if evalin('base','exist(''pln'',''var'')') && ...
     
     handles.cBarChanged = true;
     
+    handles = updateIsoDoseLineCache(handles);
+
     UpdateState(handles);
     
     handles.rememberCurrAxes = false;
