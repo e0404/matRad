@@ -9,7 +9,7 @@ function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,p
 %
 % input
 %   axesHandle  handle to axes the slice should be displayed in
-%   ct          the cell of ct cubes
+%   ctCube      the cell of ct cubes
 %   cubeIdx     Index of the desired cube in the ct struct
 %   plane       plane view (coronal=1,sagittal=2,axial=3)
 %   slice       slice in the selected plane of the 3D cube

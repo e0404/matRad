@@ -805,6 +805,8 @@ guidata(hObject,handles);
 %% plots ct and distributions
 function UpdatePlot(handles)
 
+%profile on;
+
 axes(handles.axesFig);
 
 % this is necessary to prevent multiple callbacks of update plot drawing on
@@ -812,7 +814,7 @@ axes(handles.axesFig);
 drawnow;
 
 defaultFontSize = 8;
-currAxes            = axis;
+currAxes            = axis(handles.axesFig);
 AxesHandlesCT_Dose  = gobjects(0);
 AxesHandlesVOI      = gobjects(0);
 AxesHandlesIsoDose  = gobjects(0);
@@ -899,9 +901,9 @@ end
 
 selectIx = get(handles.popupmenu_chooseColorData,'Value');  
 
+cla(handles.axesFig); 
 %% plot ct - if a ct cube is available and type of plot is set to 1 and not 2; 1 indicate cube plotting and 2 profile plotting
 if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
-    cla(handles.axesFig); 
     
     if selectIx == 3
         ctIx = 2;
@@ -920,20 +922,23 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     if isempty(handles.dispWindow{ctIx,2})
         handles.dispWindow{ctIx,2} = [min(ct.cube{:}(:)) max(ct.cube{:}(:))];
     end
-    [AxesHandlesCT_Dose(end+1),~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,plotCtCube,1,plane,slice,ctMap,handles.dispWindow{ctIx,1});
-    
-    % plot colorbar? If 1 the user asked for the CT
-    if plotColorbarSelection == 2 && handles.cBarChanged
-        %Plot the colorbar
-        handles.cBarHandel = matRad_plotColorbar(handles.axesFig,ctMap,handles.dispWindow{ctIx,1},'fontsize',defaultFontSize);
-        %adjust lables
-        if isfield(ct,'cubeHU')
-            set(get(handles.cBarHandel,'ylabel'),'String', 'Hounsfield Units','fontsize',defaultFontSize);
-        else
-            set(get(handles.cBarHandel,'ylabel'),'String', 'Electron Density','fontsize',defaultFontSize);
+
+    if get(handles.radiobtnCT,'Value')
+        [AxesHandlesCT_Dose(end+1),~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,plotCtCube,1,plane,slice,ctMap,handles.dispWindow{ctIx,1});
+        
+        % plot colorbar? If 1 the user asked for the CT
+        if plotColorbarSelection == 2 && handles.cBarChanged
+            %Plot the colorbar
+            handles.cBarHandel = matRad_plotColorbar(handles.axesFig,ctMap,handles.dispWindow{ctIx,1},'fontsize',defaultFontSize);
+            %adjust lables
+            if isfield(ct,'cubeHU')
+                set(get(handles.cBarHandel,'ylabel'),'String', 'Hounsfield Units','fontsize',defaultFontSize);
+            else
+                set(get(handles.cBarHandel,'ylabel'),'String', 'Electron Density','fontsize',defaultFontSize);
+            end
+            % do not interprete as tex syntax
+            set(get(handles.cBarHandel,'ylabel'),'interpreter','none');
         end
-        % do not interprete as tex syntax
-        set(get(handles.cBarHandel,'ylabel'),'interpreter','none');
     end
 end
 
@@ -1013,13 +1018,13 @@ if  plane == 3% Axial plane
         set(handles.axesFig,'YTick',0:50/ct.resolution.y:1000);
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.x);
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution.y);   
-        xlabel('x [mm]','FontSize',defaultFontSize)
-        ylabel('y [mm]','FontSize',defaultFontSize)
-        title(['axial plane z = ' num2str(ct.resolution.z*slice) ' [mm]'],'FontSize',defaultFontSize)
+        xlabel(handles.axesFig,'x [mm]','FontSize',defaultFontSize)
+        ylabel(handles.axesFig,'y [mm]','FontSize',defaultFontSize)
+        title(handles.axesFig,['axial plane z = ' num2str(ct.resolution.z*slice) ' [mm]'],'FontSize',defaultFontSize)
     else
-        xlabel('x [voxels]','FontSize',defaultFontSize)
-        ylabel('y [voxels]','FontSize',defaultFontSize)
-        title('axial plane','FontSize',defaultFontSize)
+        xlabel(handles.axesFig,'x [voxels]','FontSize',defaultFontSize)
+        ylabel(handles.axesFig,'y [voxels]','FontSize',defaultFontSize)
+        title(handles.axesFig,'axial plane','FontSize',defaultFontSize)
     end
 elseif plane == 2 % Sagittal plane
     if ~isempty(pln)
@@ -1027,13 +1032,13 @@ elseif plane == 2 % Sagittal plane
         set(handles.axesFig,'YTick',0:50/ct.resolution.y:1000)
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.z)
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution.y)
-        xlabel('z [mm]','FontSize',defaultFontSize);
-        ylabel('y [mm]','FontSize',defaultFontSize);
-        title(['sagittal plane x = ' num2str(ct.resolution.y*slice) ' [mm]'],'FontSize',defaultFontSize)
+        xlabel(handles.axesFig,'z [mm]','FontSize',defaultFontSize);
+        ylabel(handles.axesFig,'y [mm]','FontSize',defaultFontSize);
+        title(handles.axesFig,['sagittal plane x = ' num2str(ct.resolution.y*slice) ' [mm]'],'FontSize',defaultFontSize)
     else
-        xlabel('z [voxels]','FontSize',defaultFontSize)
-        ylabel('y [voxels]','FontSize',defaultFontSize)
-        title('sagittal plane','FontSize',defaultFontSize);
+        xlabel(handles.axesFig,'z [voxels]','FontSize',defaultFontSize)
+        ylabel(handles.axesFig,'y [voxels]','FontSize',defaultFontSize)
+        title(handles.axesFig,'sagittal plane','FontSize',defaultFontSize);
     end
 elseif plane == 1 % Coronal plane
     if ~isempty(pln)
@@ -1041,13 +1046,13 @@ elseif plane == 1 % Coronal plane
         set(handles.axesFig,'YTick',0:50/ct.resolution.x:1000)
         set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.z)
         set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution.x)
-        xlabel('z [mm]','FontSize',defaultFontSize)
-        ylabel('x [mm]','FontSize',defaultFontSize)
-        title(['coronal plane y = ' num2str(ct.resolution.x*slice) ' [mm]'],'FontSize',defaultFontSize)
+        xlabel(handles.axesFig,'z [mm]','FontSize',defaultFontSize)
+        ylabel(handles.axesFig,'x [mm]','FontSize',defaultFontSize)
+        title(handles.axesFig,['coronal plane y = ' num2str(ct.resolution.x*slice) ' [mm]'],'FontSize',defaultFontSize)
     else
-        xlabel('z [voxels]','FontSize',defaultFontSize)
-        ylabel('x [voxels]','FontSize',defaultFontSize)
-        title('coronal plane','FontSize',defaultFontSize)
+        xlabel(handles.axesFig,'z [voxels]','FontSize',defaultFontSize)
+        ylabel(handles.axesFig,'x [voxels]','FontSize',defaultFontSize)
+        title(handles.axesFig,'coronal plane','FontSize',defaultFontSize)
     end
 end
 
@@ -1237,8 +1242,9 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
    
 end
 
-zoom reset;
-axis tight
+zoom(handles.figure1,'reset');
+axis(handles.axesFig,'tight');
+
 if handles.rememberCurrAxes
     axis(currAxes);
 end
@@ -1247,10 +1253,156 @@ hold(handles.axesFig,'off');
 
 handles.cBarChanged = false;
 guidata(handles.axesFig,handles);
-guidata(gcf,handles);  
+%guidata(gcf,handles);  
 if get(handles.popupTypeOfPlot,'Value')==1 
     UpdateColormapOptions(handles);
 end
+
+Update3DView(handles);
+
+%profile off;
+%profile viewer;
+
+function Update3DView(handles)
+
+if isfield(handles,'axesFig3D') && isfield(handles,'fig3D') && isvalid(handles.axesFig3D) && isvalid(handles.fig3D)
+    set(handles.radiobtnPlan,'enable','on');
+    axesFig3D = handles.axesFig3D;
+    fig3D = handles.fig3D;    
+else
+    set(handles.radiobtnPlan,'value',0,'enable','off');
+    return
+end
+
+if handles.State == 0
+    return
+elseif handles.State > 0
+     AllVarNames = evalin('base','who');
+    if  ismember('resultGUI',AllVarNames)
+        Result = evalin('base','resultGUI');
+    end
+    
+    if  ismember('stf',AllVarNames)
+        stf = evalin('base','stf');
+    else
+        stf = [];
+    end
+
+    ct  = evalin('base','ct');
+    cst = evalin('base','cst');
+    pln = evalin('base','pln');
+end
+
+oldView = get(axesFig3D,'View');
+
+cla(axesFig3D);
+%delete(allchild(axesFig3D));
+
+%test = allchild(axesFig3D);
+
+plane = get(handles.popupPlane,'Value');
+slice = round(get(handles.sliderSlice,'Value'));
+defaultFontSize = 8;
+
+%Check if we need to precompute the surface data
+if size(cst,2) < 8
+    cst = matRad_computeAllVoiSurfaces(ct,cst);
+    assignin('base','cst',cst);
+end
+
+set(fig3D,'Color',0.5*[1 1 1]);
+set(axesFig3D,'Color',1*[0 0 0]);
+
+%% Plot 3D structures
+hold(axesFig3D,'on');
+if get(handles.radiobtnContour,'Value') && handles.State>0
+    voiPatches = matRad_plotVois3D(axesFig3D,ct,cst,handles.VOIPlotFlag,colorcube);
+end
+
+%% plot the CT slice
+if get(handles.radiobtnCT,'Value')
+    window = handles.dispWindow{2,1}; %(2 for ct)
+    ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
+    ctHandle = matRad_plotCtSlice3D(axesFig3D,ct,1,plane,slice,ctMap,window);
+end
+
+%% plot the dose slice
+if handles.State >= 1 && exist('Result','var')
+    doseMap = matRad_getColormap(handles.doseColorMap,handles.cMapSize);
+    doseIx  = 3;
+    % if the selected display option doesn't exist then simply display
+    % the first cube of the Result struct
+    if ~isfield(Result,handles.SelectedDisplayOption)
+        CubeNames = fieldnames(Result);
+        handles.SelectedDisplayOption = CubeNames{1,1};
+    end
+    
+    dose = Result.(handles.SelectedDisplayOption);
+    
+    % dose colorwash
+    if ~isempty(dose) && ~isvector(dose)
+        
+        if isempty(handles.dispWindow{doseIx,2})
+            handles.dispWindow{doseIx,2} = [min(dose(:)) max(dose(:))];   % set min and max dose values
+        end
+        
+        if get(handles.radiobtnDose,'Value')
+            [doseHandle,~,handles.dispWindow{doseIx,1}] = matRad_plotDoseSlice3D(axesFig3D,ct,dose,plane,slice,handles.CutOffLevel,handles.doseOpacity,doseMap,handles.dispWindow{doseIx,1});
+        end
+        if get(handles.radiobtnIsoDoseLines,'Value')
+            matRad_plotIsoDoseLines3D(axesFig3D,ct,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plane,slice,doseMap,handles.dispWindow{doseIx,1});
+        end
+    end
+end
+
+if get(handles.radiobtnPlan,'Value')
+    matRad_plotPlan3D(axesFig3D,pln,stf);
+end
+
+%hLight = light('Parent',axesFig3D);
+%camlight(hLight,'left');
+%lighting('gouraud');
+
+if ~isempty(pln)
+    set(axesFig3D,'XTick',0:50:1000);
+    set(axesFig3D,'YTick',0:50:1000);
+    set(axesFig3D,'ZTick',0:50:1000);
+    set(axesFig3D,'XTickLabel',0:50:1000);
+    set(axesFig3D,'YTickLabel',0:50:1000);
+    set(axesFig3D,'ZTickLabel',0:50:1000);
+    xlabel(axesFig3D,'x [mm]','FontSize',defaultFontSize)
+    ylabel(axesFig3D,'y [mm]','FontSize',defaultFontSize)
+    zlabel(axesFig3D,'z [mm]','FontSize',defaultFontSize)
+    %title(['axial plane z = ' num2str(ct.resolution.z*slice) ' [mm]'],'FontSize',defaultFontSize)
+    title(axesFig3D,'3D view');
+else
+    xlabel(axesFig3D,'x [voxels]','FontSize',defaultFontSize)
+    ylabel(axesFig3D,'y [voxels]','FontSize',defaultFontSize)
+    zlabel(axesFig3D,'z [voxels]','FontSize',defaultFontSize)
+    %title('axial plane','FontSize',defaultFontSize)
+    title(axesFig3D,'matRad 3D view');
+end
+
+%if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln)
+%    hIsoCenterCross = matRad_plotIsoCenterMarker(handles.axesFig,pln,ct,plane,slice);
+%end
+
+% the following line ensures the plotting order (optional)
+% set(gca,'Children',[AxesHandlesCT_Dose hIsoCenterCross AxesHandlesIsoDose  AxesHandlesVOI ]);
+
+%set axis ratio
+ratios = [1 1 1]; %[1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
+ratios = ratios([2 1 3]);
+set(axesFig3D,'DataAspectRatioMode','manual');
+set(axesFig3D,'DataAspectRatio',ratios./max(ratios));
+
+set(axesFig3D,'Ydir','reverse');
+
+upperLimits = double(ct.cubeDim).*[ct.resolution.y ct.resolution.x ct.resolution.z];
+set(axesFig3D,'xlim',[1 upperLimits(1)],'ylim',[1 upperLimits(2)],'zlim',[1 upperLimits(3)]);
+
+set(axesFig3D,'view',oldView);
+
 
 % --- Executes on selection change in popupPlane.
 function popupPlane_Callback(hObject, ~, handles)
@@ -1505,6 +1657,7 @@ if get(hObject,'Value') == 1
     set(handles.popupDisplayOption,'Enable','on')
     set(handles.btnProfileType,'Enable','off');
     set(handles.popupPlane,'Enable','on');
+    set(handles.radiobtnCT,'Enable','on');
     set(handles.radiobtnContour,'Enable','on');
     set(handles.radiobtnDose,'Enable','on');
     set(handles.radiobtnIsoDoseLines,'Enable','on');
@@ -1551,6 +1704,7 @@ elseif get(hObject,'Value') == 2
     set(handles.popupDisplayOption,'Enable','on');
     set(handles.btnProfileType,'Enable','on');
     set(handles.popupPlane,'Enable','off');
+    set(handles.radiobtnCT,'Enable','off');
     set(handles.radiobtnContour,'Enable','off');
     set(handles.radiobtnDose,'Enable','off');
     set(handles.radiobtnIsoDoseLines,'Enable','off');
@@ -2176,6 +2330,7 @@ handles.cBarChanged = true;
       set(handles.btnDVH,'Enable','off'); 
       set(handles.importDoseButton,'Enable','off');
       set(handles.btn_export,'Enable','off');
+      set(handles.btn3Dview,'Enable','off');
       
       cMapControls = allchild(handles.uipanel_colormapOptions);
       for runHandles = cMapControls
@@ -2195,6 +2350,7 @@ handles.cBarChanged = true;
       set(handles.btnDVH,'Enable','off');
       set(handles.importDoseButton,'Enable','off');
       set(handles.btn_export,'Enable','on');
+      set(handles.btn3Dview,'Enable','on');
       
       set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:2))
       set(handles.popupmenu_chooseColorData,'Value',2);
@@ -2219,6 +2375,7 @@ handles.cBarChanged = true;
       set(handles.btnDVH,'Enable','off');
       set(handles.importDoseButton,'Enable','off');
       set(handles.btn_export,'Enable','on');
+      set(handles.btn3Dview,'Enable','on');
       set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:2))
       set(handles.popupmenu_chooseColorData,'Value',2);
       AllVarNames = evalin('base','who');
@@ -2241,6 +2398,7 @@ handles.cBarChanged = true;
       set(handles.btnSaveToGUI,'Enable','on');
       set(handles.btnDVH,'Enable','on');
       set(handles.btn_export,'Enable','on');
+      set(handles.btn3Dview,'Enable','on');
       % resultGUI struct needs to be available to import dose
       % otherwise inconsistent states can be achieved
       set(handles.importDoseButton,'Enable','on');
@@ -2263,7 +2421,7 @@ set(handles.editBixelWidth,'String',num2str(pln.bixelWidth));
 set(handles.editFraction,'String',num2str(pln.numOfFractions));
 
 if isfield(pln,'isoCenter')
-    if isequal(unique(pln.isoCenter,'rows') == pln.isoCenter, ones(size(pln.isoCenter)))
+    if size(unique(pln.isoCenter,'rows'),1) == 1
         set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter(1,:)*10))./10), '\s+', ' '));
         set(handles.editIsoCenter,'Enable','on');
         set(handles.checkIsoCenter,'Enable','on');
@@ -3937,6 +4095,41 @@ function popMenuBioOpt_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+% --- Executes on button press in btn3Dview.
+function btn3Dview_Callback(hObject, eventdata, handles)
+% hObject    handle to btn3Dview (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+if ~isfield(handles,'axesFig3D') || ~isfield(handles,'axesFig3D') || ~isvalid(handles.axesFig3D)
+    handles.fig3D = figure('Name','matRad 3D View');
+    handles.axesFig3D = axes('Parent',handles.fig3D);
+    view(handles.axesFig3D,3);
+end
+%end
+
+UpdatePlot(handles);
+
+guidata(hObject,handles);
+
+% --- Executes on button press in radiobtnCT.
+function radiobtnCT_Callback(hObject, eventdata, handles)
+% hObject    handle to radiobtnCT (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of radiobtnCT
+UpdatePlot(handles)
+
+% --- Executes on button press in radiobtnPlan.
+function radiobtnPlan_Callback(hObject, eventdata, handles)
+% hObject    handle to radiobtnPlan (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of radiobtnPlan
+UpdatePlot(handles)
 
 
 % --- Executes on selection change in popupmenu_windowPreset.
