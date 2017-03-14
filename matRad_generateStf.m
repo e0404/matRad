@@ -97,18 +97,18 @@ end
 % Convert linear indices to 3D voxel coordinates
 [coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
 
-% Correct for iso center position. Whit this correction Isocenter is
-% (0,0,0) [mm]
-coordsX = coordsX_vox*ct.resolution.x - pln.isoCenter(1);
-coordsY = coordsY_vox*ct.resolution.y - pln.isoCenter(2);
-coordsZ = coordsZ_vox*ct.resolution.z - pln.isoCenter(3);
-
 % Define steering file like struct. Prellocating for speed.
 stf = struct;
 
 % loop over all angles
 for i = 1:length(pln.gantryAngles)
     
+    % Correct for iso center position. Whit this correction Isocenter is
+    % (0,0,0) [mm]
+    coordsX = coordsX_vox*ct.resolution.x - pln.isoCenter(i,1);
+    coordsY = coordsY_vox*ct.resolution.y - pln.isoCenter(i,2);
+    coordsZ = coordsZ_vox*ct.resolution.z - pln.isoCenter(i,3);
+
     % Save meta information for treatment plan
     stf(i).gantryAngle   = pln.gantryAngles(i);
     stf(i).couchAngle    = pln.couchAngles(i);

@@ -80,20 +80,19 @@ for i = 1:size(UniqueComb,1)
     stf(i).ray.targetPoint     = stf(i).ray.targetPoint_bev*rotMat_vectors_T;
     
     % set weight for output field
-    stf(i).ray.weight = Fields(ia(i)).FinalCumWeight;
+    stf(i).ray.weight = 1; % weighting incorporated into primary fluence --> finalShape
+    %stf(i).ray.SSD    = Fields(ia(i)).SSD;
     stf(i).ray.energy = Fields(ia(i)).Energy;  
     
     ix = (ib == i);
     currFieldSeq = Fields(ix);
     
     % add weighted shapes for the current beam
-    partialWeight   = [currFieldSeq(:).Weight]./stf(i).ray.weight;
     finalShape = 0;
     for j = 1:sum(ix)
-        finalShape = finalShape + partialWeight(j) * currFieldSeq(j).Shape;
+        finalShape = finalShape + currFieldSeq(j).Weight * currFieldSeq(j).Shape;
     end
     stf(i).ray.shape = finalShape;
-end
 
 end
 
