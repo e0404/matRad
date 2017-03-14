@@ -38,9 +38,9 @@ function [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
 %% load plan file
 % load machine data
 
-% messagebox only necessary for non windows users
 dlgBaseDataText = ['Import steering information from DICOM Plan.','Choose corresponding matRad base data for ', ...
         pln.radiationMode, '.'];
+% messagebox only necessary for non windows users
 if ~ispc
     uiwait(helpdlg(dlgBaseDataText,['DICOM import - ', pln.radiationMode, ' base data' ]));
 end
