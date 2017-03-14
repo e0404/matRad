@@ -1,0 +1,21 @@
+carbon_HITOLD.mat
+carbon_HITfixedBL.mat
+carbon_HITgantry.mat
+dicomImport/hlutLibrary/SIEMENS-Biograph40-ConvolutionKernel-B40s.hlut
+dicomImport/hlutLibrary/SIEMENS-Biograph40-ConvolutionKernel-H40s.hlut
+dicomImport/hlutLibrary/SIEMENS-SOMATOM Confidence-ConvolutionKernel-B40s.HLUT
+dicomImport/hlutLibrary/SIEMENS-Sensation 4-ConvolutionKernel-H40s.hlut
+dicomImport/hlutLibrary/SIEMENS-Sensation-4-ConvolutionKernel-B40s.hlut
+dicomImport/hlutLibrary/SIEMENS-Sensation-4-ConvolutionKernel-B40s_proton.hlut
+dicomImport/hlutLibrary/SIEMENS-Sensation-4-ConvolutionKernel-H40s_proton.hlut
+dicomImport/hlutLibrary/SIEMENS-Sensation-Open-ConvolutionKernel-B40s.HLUT
+dicomImport/hlutLibrary/SIEMENS-Sensation-Open-ConvolutionKernel-H40s.hlut
+dicomImport/hlutLibrary/TOSHIBA-Aquilion-ConvolutionKernel-FC13_carbon.hlut
+dicomImport/hlutLibrary/TOSHIBA-Aquilion-ConvolutionKernel-FC48_carbon.hlut
+protons_HITgantry.mat
+protons_HITgantryOLD.mat
+protons_HIT.mat
+protons_HITfixedBL.mat
+protons_HITfixedBLOLD.mat
+matRad_gammaIndex.m
+carbon_HIT.mat
