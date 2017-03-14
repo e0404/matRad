@@ -2421,7 +2421,7 @@ set(handles.editBixelWidth,'String',num2str(pln.bixelWidth));
 set(handles.editFraction,'String',num2str(pln.numOfFractions));
 
 if isfield(pln,'isoCenter')
-    if isequal(unique(pln.isoCenter,'rows') == pln.isoCenter, ones(size(pln.isoCenter)))
+    if size(unique(pln.isoCenter,'rows'),1) == 1
         set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter(1,:)*10))./10), '\s+', ' '));
         set(handles.editIsoCenter,'Enable','on');
         set(handles.checkIsoCenter,'Enable','on');
