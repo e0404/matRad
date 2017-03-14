@@ -77,20 +77,19 @@ end
 % loop over beams
 gantryAngles{length(BeamSeqNames)} = [];
 PatientSupportAngle{length(BeamSeqNames)} = [];
-isoCenter = NaN*ones(length(BeamSeqNames),3); 
+isoCenter = NaN*ones(length(BeamSeqNames),3);
 for i = 1:length(BeamSeqNames)   
     currBeamSeq             = BeamSequence.(BeamSeqNames{i});
     % parameters not changing are stored in the first ControlPointSequence
     gantryAngles{i}         = currBeamSeq.(ControlParam).Item_1.GantryAngle;
     PatientSupportAngle{i}  = currBeamSeq.(ControlParam).Item_1.PatientSupportAngle;
-    isoCenter(i,:)          = currBeamSeq.(ControlParam).Item_1.IsocenterPosition'; 
+    isoCenter(i,:)          = currBeamSeq.(ControlParam).Item_1.IsocenterPosition';
 end
 
 % transform iso. At the moment just this way for HFS
 if ct.dicomInfo.ImageOrientationPatient == [1;0;0;0;1;0]
     isoCenter = isoCenter - ones(length(BeamSeqNames),1) * ...
-        ([ct.x(1) ct.y(1) ct.z(1)] - [ct.resolution.x ct.resolution.y ct.resolution.z]);  
-
+        ([ct.x(1) ct.y(1) ct.z(1)] - [ct.resolution.x ct.resolution.y ct.resolution.z]);
 else
     error('This Orientation is not yet supported.');
 end
@@ -119,7 +118,10 @@ end
 
 % extract field shapes
 if strcmp(radiationMode, 'photons')
-    pln.Collimation = matRad_importFieldShapes(BeamSequence, BeamSeqNames);
+           
+    fractionSequence = planInfo.FractionGroupSequence.Item_1;
+    pln.Collimation  = matRad_importFieldShapes(BeamSequence,fractionSequence);
+    
 end
 
 %% write parameters found to pln variable

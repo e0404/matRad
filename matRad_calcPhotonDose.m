@@ -87,19 +87,25 @@ doseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
 V = [cst{:,4}];
 V = unique(vertcat(V{:}));
 
+% ignore densities outside of contours
+eraseCtDensMask = ones(dij.numOfVoxels,1);
+eraseCtDensMask(V) = 0;
+for i = 1:dij.numOfScenarios
+    ct.cube{i}(eraseCtDensMask == 1) = 0;
+end
+
 % Convert CT subscripts to linear indices.
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
 
 % set lateral cutoff value
-if ~(strcmp(num2str(pln.bixelWidth),'field'))
-    lateralCutoff = 82; % [mm]
-else
-    lateralCutoff = 140; % [mm] due to the large field size
-end
+lateralCutoff = 82; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
-useCustomPrimFluenceBool = 0;
+useCustomPrimFluenceBool = 1;
+
+% 0 if field calc is bixel based, 1 if dose calc is field based
+isFieldBasedDoseCalc = strcmp(num2str(pln.bixelWidth),'field');
 
 %% kernel convolution
 % prepare data for convolution to reduce calculation time
@@ -110,36 +116,67 @@ catch
    error(['Could not find the following machine file: ' fileName ]); 
 end
 
-% Make a 2D grid extending +/-100mm with 0.5 mm resolution
-convLimits = 100; % [mm]
-convResolution = .5; % [mm]
-[X,Z] = meshgrid(-convLimits:convResolution:convLimits-convResolution);   
+% set up convolution grid
+if isFieldBasedDoseCalc
+    % get data from DICOM import
+    intConvResolution = pln.Collimation.convResolution; 
+    fieldWidth = pln.Collimation.fieldWidth;
+else
+    intConvResolution = .5; % [mm]
+    fieldWidth = pln.bixelWidth;
+end
+
+% calculate field size and distances
+fieldLimit = ceil(fieldWidth/(2*intConvResolution));
+[F_X,F_Z] = meshgrid(-fieldLimit*intConvResolution: ...
+                  intConvResolution: ...
+                  (fieldLimit-1)*intConvResolution);    
 
 % gaussian filter to model penumbra
-sigmaGauss = 2.123/convResolution; % [mm] / see diploma thesis siggel 4.1.2
-gaussFilter =  1/(2*pi*sigmaGauss^2) * exp(-(X.^2+Z.^2)/(2*sigmaGauss^2*convResolution^2) );
+sigmaGauss = 2.123; % [mm] / see diploma thesis siggel 4.1.2
+% use 5 times sigma as the limits for the gaussian convolution
+gaussLimit = ceil(5*sigmaGauss/intConvResolution);
+[gaussFilterX,gaussFilterZ] = meshgrid(-gaussLimit*intConvResolution: ...
+                                    intConvResolution: ...
+                                    (gaussLimit-1)*intConvResolution);   
+gaussFilter =  1/(2*pi*sigmaGauss^2/intConvResolution^2) * exp(-(gaussFilterX.^2+gaussFilterZ.^2)/(2*sigmaGauss^2) );
+gaussConvSize = 2*(fieldLimit + gaussLimit);
 
-if ~(strcmp(num2str(pln.bixelWidth),'field'))
-    % Create zero matrix for the Fluence
-    F = zeros(size(X));
-
-    % set bixel opening to one
-    F(X >= -pln.bixelWidth/2 & X < pln.bixelWidth/2 & ...
-      Z >= -pln.bixelWidth/2 & Z < pln.bixelWidth/2) = 1;
-    % gaussian convolution of field to model penumbra
+if ~isFieldBasedDoseCalc   
+    % Create fluence matrix
+    F = ones(floor(fieldWidth/intConvResolution));
+    
     if ~useCustomPrimFluenceBool
-        F = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(gaussFilter) ))));
+    % gaussian convolution of field to model penumbra
+        F = real(ifft2(fft2(F,gaussConvSize,gaussConvSize).*fft2(gaussFilter,gaussConvSize,gaussConvSize)));     
     end
 end
 
 % compute SSDs
 stf = matRad_computeSSD(stf,ct);
 
-counter = 0;
+% get kernel size and distances
+kernelLimit = ceil(lateralCutoff/intConvResolution);
+[kernelX, kernelZ] = meshgrid(-kernelLimit*intConvResolution: ...
+                            intConvResolution: ...
+                            (kernelLimit-1)*intConvResolution);
 
+% precalculate convoluted kernel size and distances
+kernelConvLimit = fieldLimit + gaussLimit + kernelLimit;
+[convMx_X, convMx_Z] = meshgrid(-kernelConvLimit*intConvResolution: ...
+                                intConvResolution: ...
+                                (kernelConvLimit-1)*intConvResolution);
+% calculate also the total size and distance as we need this during convolution extensively
+kernelConvSize = 2*kernelConvLimit;
+% subtract a small margin from the convoluted kernel distance to avoid
+% using falsy negative kernel values at the rims due to limited precision 
+margin = 5; % [mm]
+kernelConvDistance = kernelConvLimit*intConvResolution - margin;
+
+counter = 0;
 fprintf('matRad: Photon dose calculation...\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for i = 1:dij.numOfBeams; % loop over all beams
+for i = 1:dij.numOfBeams % loop over all beams
     
     fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
 
@@ -165,8 +202,8 @@ for i = 1:dij.numOfBeams; % loop over all beams
     rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
 
     % ray tracing
-    fprintf(['matRad: calculate radiological depth cube...']);
-    [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoff);
+    fprintf('matRad: calculate radiological depth cube...');
+    [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,kernelConvDistance);
     fprintf('done \n');
     
     % get indices of voxels where ray tracing results are available
@@ -189,34 +226,33 @@ for i = 1:dij.numOfBeams; % loop over all beams
     kernel3 = machine.data.kernel(currSSDIx).kernel3;
 
     % Evaluate kernels for all distances, interpolate between values
-    kernel1Mx = interp1(kernelPos,kernel1,sqrt(X.^2+Z.^2));
-    kernel2Mx = interp1(kernelPos,kernel2,sqrt(X.^2+Z.^2));
-    kernel3Mx = interp1(kernelPos,kernel3,sqrt(X.^2+Z.^2));
+    kernel1Mx = interp1(kernelPos,kernel1,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
+    kernel2Mx = interp1(kernelPos,kernel2,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
+    kernel3Mx = interp1(kernelPos,kernel3,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
     
     % convolution here if no custom primary fluence and no field based dose calc
-    if ~useCustomPrimFluenceBool && ~(strcmp(num2str(pln.bixelWidth),'field'))
+    if ~useCustomPrimFluenceBool && ~isFieldBasedDoseCalc
         
         % Display console message.
         fprintf(['matRad: Uniform primary photon fluence -> pre-compute kernel convolution for SSD = ' ... 
                 num2str(machine.data.kernel(currSSDIx).SSD) ' mm ...\n']);    
 
         % 2D convolution of Fluence and Kernels in fourier domain
-        convMx1 = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(kernel1Mx) ) )));
-        convMx2 = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(kernel2Mx) ) )));
-        convMx3 = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(kernel3Mx) ) )));
+        convMx1 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)));
+        convMx2 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel2Mx,kernelConvSize,kernelConvSize)));
+        convMx3 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)));
 
         % Creates an interpolant for kernes from vectors position X and Z
         if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
-            Interp_kernel1 = griddedInterpolant(X',Z',convMx1','linear');
-            Interp_kernel2 = griddedInterpolant(X',Z',convMx2','linear');
-            Interp_kernel3 = griddedInterpolant(X',Z',convMx3','linear');
+            Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
+            Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
+            Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
         else
-            Interp_kernel1 = @(x,y)interp2(X(1,:),Z(:,1),convMx1,x,y,'linear');
-            Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear');
-            Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear');
+            Interp_kernel1 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,'linear',NaN);
+            Interp_kernel2 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,'linear',NaN);
+            Interp_kernel3 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,'linear',NaN);
         end
     end
-
     
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
 
@@ -224,40 +260,40 @@ for i = 1:dij.numOfBeams; % loop over all beams
         bixelsPerBeam = bixelsPerBeam + 1;
     
         % convolution here if custom primary fluence OR field based dose calc
-        if useCustomPrimFluenceBool || strcmp(num2str(pln.bixelWidth),'field')
+        if useCustomPrimFluenceBool || isFieldBasedDoseCalc
             
-            % get the field if field based dose calculation
-            if strcmp(num2str(pln.bixelWidth),'field')
-                Fx = stf(i).ray(j).shape;
-            
-            % apply the primary fluence to the field
-            elseif useCustomPrimFluenceBool
-                
-                primaryFluence = machine.data.primaryFluence;
-                r     = sqrt( (X-stf(i).ray(j).rayPos(1)).^2 + (Z-stf(i).ray(j).rayPos(3)).^2 );
-                Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r);
-                Fx = F .* Psi;
-                
+            % overwrite field opening if necessary
+            if isFieldBasedDoseCalc
+                F = stf(i).ray(j).shape;
             end
             
+            % prepare primary fluence array
+            primaryFluence = machine.data.primaryFluence;
+            r     = sqrt( (F_X-stf(i).ray(j).rayPos(1)).^2 + (F_Z-stf(i).ray(j).rayPos(3)).^2 );
+            Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r,'linear',0);
+                
+            % apply the primary fluence to the field
+            Fx = F .* Psi;
+            
             % convolute with the gaussian
-            Fx = real(fftshift(ifft2(fft2( ifftshift(Fx) ).*fft2( ifftshift(gaussFilter) ))));
+            Fx = real( ifft2(fft2(Fx,gaussConvSize,gaussConvSize).* fft2(gaussFilter,gaussConvSize,gaussConvSize)) );
 
             % 2D convolution of Fluence and Kernels in fourier domain
-            convMx1 = real(fftshift(ifft2(fft2( ifftshift(Fx) ).*fft2( ifftshift(kernel1Mx) ) )));
-            convMx2 = real(fftshift(ifft2(fft2( ifftshift(Fx) ).*fft2( ifftshift(kernel2Mx) ) )));
-            convMx3 = real(fftshift(ifft2(fft2( ifftshift(Fx) ).*fft2( ifftshift(kernel3Mx) ) )));
+            convMx1 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)) );
+            convMx2 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel2Mx,kernelConvSize,kernelConvSize)) );
+            convMx3 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)) );
 
             % Creates an interpolant for kernes from vectors position X and Z
             if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
-                Interp_kernel1 = griddedInterpolant(X',Z',convMx1','linear');
-                Interp_kernel2 = griddedInterpolant(X',Z',convMx2','linear');
-                Interp_kernel3 = griddedInterpolant(X',Z',convMx3','linear');
+                Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
+                Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
+                Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
             else
-                Interp_kernel1 = @(x,y)interp2(X(1,:),Z(:,1),convMx1,x,y,'linear');
-                Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear');
-                Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear');
+                Interp_kernel1 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,'linear',NaN);
+                Interp_kernel2 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,'linear',NaN);
+                Interp_kernel3 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,'linear',NaN);
             end
+
         end
 
         % Display progress and update text only 200 times
@@ -281,7 +317,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                                stf(i).ray(j).targetPoint_bev, ...
                                                                machine.meta.SAD, ...
                                                                radDepthIx, ...
-                                                               lateralCutoff);
+                                                               kernelConvDistance);
 
         % calculate photon dose for beam i and bixel j
         bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
@@ -295,7 +331,7 @@ for i = 1:dij.numOfBeams; % loop over all beams
                                                    isoLatDistsZ);
                                                
         % sample dose only for bixel based dose calculation
-        if ~strcmp(num2str(pln.bixelWidth),'field')
+        if ~isFieldBasedDoseCalc
             r0   = 25;   % [mm] sample beyond the inner core
             Type = 'radius';
             [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);

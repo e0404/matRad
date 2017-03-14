@@ -1056,7 +1056,7 @@ elseif plane == 1 % Coronal plane
     end
 end
 
-if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln) && isequal(unique(pln.isoCenter,'rows') == pln.isoCenter, ones(size(pln.isoCenter)))
+if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln)
     hIsoCenterCross = matRad_plotIsoCenterMarker(handles.axesFig,pln,ct,plane,slice);
 end
 
