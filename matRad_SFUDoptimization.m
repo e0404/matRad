@@ -31,8 +31,9 @@ function [resultGUI] = matRad_SFUDoptimization(pln, cst, dij, ct, stf)
 sb_cst = cst;
 for i=1:size(sb_cst,1)
     for j = 1:size(sb_cst{i,6},1)
-        % biological dose splitting
-        if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
+        % biological dose splitting for carbon
+        if strcmp(pln.bioOptimization, 'LEMIV_effect') || ...
+                        strcmp(pln.bioOptimization, 'LEMIV_RBExD')
             ab = sb_cst{i,5}.alphaX / sb_cst{i,5}.betaX;
             % dose per fraction
             fx_dose = sb_cst{i,6}(j).dose / pln.numOfFractions;
@@ -86,7 +87,9 @@ if ~isempty(dij)
         sb_pln = pln;
         sb_pln.gantryAngles = pln.gantryAngles(i);
         sb_pln.couchAngles = pln.couchAngles(i);
-
+        sb_pln.numOfBeams = 1;
+        sb_pln.isoCenter = pln.isoCenter(i,:);
+        
         % optimize single beam
         sb_resultGUI = matRad_fluenceOptimization(sb_dij,sb_cst,sb_pln);    
 
