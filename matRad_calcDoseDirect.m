@@ -58,6 +58,7 @@ end
 
 % remember bixel weight
 counter = 0;
+resultGUI.w = NaN * ones(dij.totalNumOfBixels,1);
 for i = 1:pln.numOfBeams
     for j = 1:stf(i).numOfRays
         for k = 1:stf(i).numOfBixelsPerRay(j)
