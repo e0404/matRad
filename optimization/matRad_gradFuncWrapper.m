@@ -85,7 +85,7 @@ end
 g = zeros(dij.totalNumOfBixels,1);
 
 for i = 1:options.numOfScenarios
-    if any(delta{i} > 0) % exercise only if contributions from scenario i
+    if any(delta{i} ~= 0) % exercise only if contributions from scenario i
 
         if isequal(options.bioOpt,'none')
 
