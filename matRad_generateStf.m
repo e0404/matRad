@@ -115,7 +115,7 @@ for i = 1:length(pln.gantryAngles)
     stf(i).bixelWidth    = pln.bixelWidth;
     stf(i).radiationMode = pln.radiationMode;
     stf(i).SAD           = SAD;
-    stf(i).isoCenter     = pln.isoCenter;
+    stf(i).isoCenter     = pln.isoCenter(i,:);
     
     % Get the (active) rotation matrix. We perform a passive/system 
     % rotation with row vector coordinates, which would introduce two 

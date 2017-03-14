@@ -77,26 +77,20 @@ end
 % loop over beams
 gantryAngles{length(BeamSeqNames)} = [];
 PatientSupportAngle{length(BeamSeqNames)} = [];
-isoCenter{length(BeamSeqNames)} = [];
+isoCenter = NaN*ones(length(BeamSeqNames),3); 
 for i = 1:length(BeamSeqNames)   
     currBeamSeq             = BeamSequence.(BeamSeqNames{i});
     % parameters not changing are stored in the first ControlPointSequence
     gantryAngles{i}         = currBeamSeq.(ControlParam).Item_1.GantryAngle;
     PatientSupportAngle{i}  = currBeamSeq.(ControlParam).Item_1.PatientSupportAngle;
-    isoCenter{i}            = currBeamSeq.(ControlParam).Item_1.IsocenterPosition;
-end
-
-% check wether isocenters are consistent
-if numel(isoCenter) > 1
-    if ~isequal(isoCenter{:})
-       errordlg('Values for isocenter are not consistent.')
-    end
+    isoCenter(i,:)          = currBeamSeq.(ControlParam).Item_1.IsocenterPosition'; 
 end
 
 % transform iso. At the moment just this way for HFS
 if ct.dicomInfo.ImageOrientationPatient == [1;0;0;0;1;0]
-    isoCenter = isoCenter{1}' - ct.dicomInfo.ImagePositionPatient' + ...
-                         [ct.resolution.x ct.resolution.y ct.resolution.z];
+    isoCenter = isoCenter - ones(length(BeamSeqNames),1) * ...
+        ([ct.x(1) ct.y(1) ct.z(1)] - [ct.resolution.x ct.resolution.y ct.resolution.z]);  
+
 else
     error('This Orientation is not yet supported.');
 end

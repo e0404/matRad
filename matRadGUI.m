@@ -201,6 +201,10 @@ handles.doseOpacity            = 0.6;
 handles.IsoDose.Levels         = 0;
 handles.dispWindow             = cell(3,2); % first dimension refers to the selected
 
+% do not calculate / suggest isoCenter new by default
+set(handles.checkIsoCenter, 'Value', 0);
+set(handles.editIsoCenter,'Enable','on')
+
 % suppose no ct cube in HU is available (because no ct could be available)
 handles.cubeHUavailable = false;
 % initial startup finished
@@ -228,8 +232,8 @@ end
 
 %set plan if available - if not create one
 try 
-     if ismember('pln',AllVarNames)  && handles.State > 0 
-          setPln(handles); 
+     if ismember('pln',AllVarNames)  && handles.State > 0
+          setPln(handles);
      elseif handles.State > 0 
           getPlnFromGUI(handles);
           setPln(handles);
@@ -267,7 +271,7 @@ if handles.State == 3
 end
 
 %per default the first beam is selected for the profile plot
-handles.SelectedBeam = 1;
+handles.selectedBeam = 1;
 handles.plane = get(handles.popupPlane,'Value');
 handles.DijCalcWarning = false;
 
@@ -459,6 +463,9 @@ end
 % check if a optimized plan was loaded
 if exist('stf','var')
     assignin('base','stf',stf);
+end
+if exist('pln','var')
+    assignin('base','pln',pln);
 end
 if exist('dij','var')
     assignin('base','dij',dij);
@@ -725,10 +732,10 @@ try
     %% check if isocenter is already set
     if ~isfield(pln,'isoCenter')
         handles = showWarning(handles,warning('no iso center set - using center of gravity based on structures defined as TARGET'));
-        pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
+        pln.isoCenter = ones(pln.numOfBeams,1) * matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
         assignin('base','pln',pln);
     elseif ~get(handles.checkIsoCenter,'Value') 
-        pln.isoCenter = str2num(get(handles.editIsoCenter,'String'));
+        pln.isoCenter = ones(pln.numOfBeams,1)*str2num(get(handles.editIsoCenter,'String'));
     end
 
 catch ME
@@ -1049,7 +1056,7 @@ elseif plane == 1 % Coronal plane
     end
 end
 
-if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln)
+if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln) && isequal(unique(pln.isoCenter,'rows') == pln.isoCenter, ones(size(pln.isoCenter)))
     hIsoCenterCross = matRad_plotIsoCenterMarker(handles.axesFig,pln,ct,plane,slice);
 end
 
@@ -1090,7 +1097,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     
     % Rotate the system into the beam. 
     % passive rotation & row vector multiplication & inverted rotation requires triple matrix transpose                  
-    rotMat_system_T = transpose(matRad_getRotationMatrix(pln.gantryAngles(handles.SelectedBeam),pln.couchAngles(handles.SelectedBeam)));
+    rotMat_system_T = transpose(matRad_getRotationMatrix(pln.gantryAngles(handles.selectedBeam),pln.couchAngles(handles.selectedBeam)));
     
     if strcmp(handles.ProfileType,'longitudinal')
         sourcePointBEV = [handles.profileOffset -SAD   0];
@@ -1104,7 +1111,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     rotTargetPointBEV = targetPointBEV * rotMat_system_T;
     
     % perform raytracing on the central axis of the selected beam
-    [~,l,rho,~,ix] = matRad_siddonRayTracer(pln.isoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube{1}});
+    [~,l,rho,~,ix] = matRad_siddonRayTracer(pln.isoCenter(handles.selectedBeam,:),ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube{1}});
     d = [0 l .* rho{1}];
     % Calculate accumulated d sum.
     vX = cumsum(d(1:end-1));
@@ -1203,7 +1210,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     end
     
     str = sprintf('profile plot - central axis of %d beam gantry angle %d? couch angle %d?',...
-        handles.SelectedBeam ,pln.gantryAngles(handles.SelectedBeam),pln.couchAngles(handles.SelectedBeam));
+        handles.selectedBeam ,pln.gantryAngles(handles.selectedBeam),pln.couchAngles(handles.selectedBeam));
     h_title = title(handles.axesFig,str,'FontSize',defaultFontSize);
     pos = get(h_title,'Position');
     set(h_title,'Position',[pos(1)-40 pos(2) pos(3)])
@@ -1544,7 +1551,7 @@ try
     else
         handles.SelectedDisplayOption = 'physicalDose';
     end
-    handles.SelectedBeam = 1;
+    handles.selectedBeam = 1;
     % check IPOPT status and return message for GUI user if no DAO or
     % particles
     if ~pln.runDAO || ~strcmp(pln.radiationMode,'photons')
@@ -1664,15 +1671,15 @@ elseif get(hObject,'Value') == 2
         if length(parseStringAsNum(get(handles.editGantryAngle,'String'),true)) > 1
             
             set(handles.sliderBeamSelection,'Enable','on');
-            handles.SelectedBeam = 1;
+            handles.selectedBeam = 1;
             pln = evalin('base','pln');
-            set(handles.sliderBeamSelection,'Min',handles.SelectedBeam,'Max',pln.numOfBeams,...
-                'Value',handles.SelectedBeam,...
+            set(handles.sliderBeamSelection,'Min',handles.selectedBeam,'Max',pln.numOfBeams,...
+                'Value',handles.selectedBeam,...
                 'SliderStep',[1/(pln.numOfBeams-1) 1/(pln.numOfBeams-1)],...
                 'Enable','on');
 
         else
-            handles.SelectedBeam = 1;
+            handles.selectedBeam = 1;
         end
     
         handles.profileOffset = get(handles.sliderOffset,'Value');
@@ -1745,8 +1752,8 @@ function sliderBeamSelection_Callback(hObject, ~, handles)
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
 
-handles.SelectedBeam = round(get(hObject,'Value'));
-set(hObject, 'Value', handles.SelectedBeam);
+handles.selectedBeam = round(get(hObject,'Value'));
+set(hObject, 'Value', handles.selectedBeam);
 handles.rememberCurrAxes = false;
 UpdatePlot(handles);
 handles.rememberCurrAxes = true;
@@ -2404,11 +2411,26 @@ guidata(handles.figure1,handles);
 % fill GUI elements with plan information
 function setPln(handles)
 pln = evalin('base','pln');
+% sanity check of isoCenter
+if size(pln.isoCenter,1) ~= pln.numOfBeams && size(pln.isoCenter,1) == 1
+  pln.isoCenter = ones(pln.numOfBeams,1) * pln.isoCenter(1,:);
+elseif size(pln.isoCenter,1) ~= pln.numOfBeams && size(pln.isoCenter,1) ~= 1
+  error('Isocenter in plan file are incosistent.');
+end
 set(handles.editBixelWidth,'String',num2str(pln.bixelWidth));
 set(handles.editFraction,'String',num2str(pln.numOfFractions));
 
 if isfield(pln,'isoCenter')
-    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
+    if isequal(unique(pln.isoCenter,'rows') == pln.isoCenter, ones(size(pln.isoCenter)))
+        set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter(1,:)*10))./10), '\s+', ' '));
+        set(handles.editIsoCenter,'Enable','on');
+        set(handles.checkIsoCenter,'Enable','on');
+    else
+        set(handles.editIsoCenter,'String','multiple isoCenter');
+        set(handles.editIsoCenter,'Enable','off');
+        set(handles.checkIsoCenter,'Value',0);
+        set(handles.checkIsoCenter,'Enable','off');
+    end
 end
 set(handles.editGantryAngle,'String',num2str((pln.gantryAngles)));
 set(handles.editCouchAngle,'String',num2str((pln.couchAngles)));
@@ -2462,8 +2484,8 @@ function btnTableSave_Callback(~, ~, handles)
 getCstTable(handles);
 if get(handles.checkIsoCenter,'Value')
     pln = evalin('base','pln'); 
-    pln.isoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
-    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
+    pln.isoCenter = ones(pln.numOfBeams,1) * matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
+    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter(1,:) * 10))./10), '\s+', ' '));
     assignin('base','pln',pln);
 end
 getPlnFromGUI(handles);
@@ -2559,6 +2581,12 @@ msgbox(['IPOPT finished with status ' num2str(info.status) ' (' statusmsg ')'],'
 % get pln file form GUI     
 function getPlnFromGUI(handles)
 
+% evalin pln (if existant) in order to decide whether isoCenter should be calculated
+% automatically
+if evalin('base','exist(''pln'',''var'')')
+    pln = evalin('base','pln');
+end
+
 pln.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [???]
 pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [???]
@@ -2587,10 +2615,12 @@ pln.runDAO = logical(get(handles.btnRunDAO,'Value'));
 
 try
     cst = evalin('base','cst');
-    if sum(strcmp('TARGET',cst(:,3))) > 0 && get(handles.checkIsoCenter,'Value')
-       pln.isoCenter = matRad_getIsoCenter(cst,ct); 
+    if (sum(strcmp('TARGET',cst(:,3))) > 0 && get(handles.checkIsoCenter,'Value')) || ...
+            (sum(strcmp('TARGET',cst(:,3))) > 0 && ~isfield(pln,'isoCenter'))
+       pln.isoCenter = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct);
+       set(handles.checkIsoCenter,'Value',1);
     else
-       pln.isoCenter = str2num(get(handles.editIsoCenter,'String'));
+       pln.isoCenter = ones(pln.numOfBeams,1) * str2num(get(handles.editIsoCenter,'String'));
     end
 catch
     warning('couldnt set isocenter in getPln function')
@@ -2766,8 +2796,8 @@ pln = evalin('base','pln');
 tmpIsoCenter = str2num(get(hObject,'String'));
 
 if length(tmpIsoCenter) == 3
-    if any(pln.isoCenter~=tmpIsoCenter)
-        pln.isoCenter = tmpIsoCenter;
+    if sum(any(pln.isoCenter~=tmpIsoCenter))
+        pln.isoCenter = ones(pln.numOfBeams,1)*tmpIsoCenter;
         handles.State = 1;
         UpdateState(handles);
     end
@@ -2781,18 +2811,21 @@ guidata(hObject,handles);
 % check box: iso center auto
 function checkIsoCenter_Callback(hObject, ~, handles)
 
-if get(hObject,'Value')
+W = evalin('base','whos');
+doesPlnExist = ismember('pln',{W(:).name});
+
+if get(hObject,'Value') && doesPlnExist
     pln = evalin('base','pln');
     if ~isfield(pln,'isoCenter')
         pln.isoCenter = NaN;
     end
     tmpIsoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
     if ~isequal(tmpIsoCenter,pln.isoCenter)
-        pln.isoCenter = tmpIsoCenter;
+        pln.isoCenter = ones(pln.numOfBeams,1)*tmpIsoCenter;
         handles.State = 1;
         UpdateState(handles);
     end
-    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter*10))./10), '\s+', ' '));
+    set(handles.editIsoCenter,'String',regexprep(num2str((round(tmpIsoCenter*10))./10), '\s+', ' '));
     set(handles.editIsoCenter,'Enable','off')
     assignin('base','pln',pln);
 else
@@ -2957,7 +2990,7 @@ if evalin('base','exist(''pln'',''var'')') && ...
     % change isocenter if that was changed and do _not_ recreate steering
     % information
     for i = 1:numel(pln.gantryAngles)
-        stf(i).isoCenter = pln.isoCenter;
+        stf(i).isoCenter = pln.isoCenter(i,:);
     end
 
     % recalculate influence matrix
@@ -3005,6 +3038,8 @@ if evalin('base','exist(''pln'',''var'')') && ...
     
     handles.cBarChanged = true;
     
+    handles = updateIsoDoseLineCache(handles);
+
     UpdateState(handles);
     
     handles.rememberCurrAxes = false;
