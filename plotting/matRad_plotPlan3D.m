@@ -72,17 +72,18 @@ if nargin < 3 || isempty(stf)
     
     for beamIx = 1:pln.numOfBeams
         rotMat = matRad_getRotationMatrix(pln.gantryAngles(beamIx),pln.couchAngles(beamIx));
+        beamIsoCenter = pln.isoCenter(beamIx,:);
         currBeamVector = rotMat*beamVector';        
-        currBeamSource = pln.isoCenter - currBeamVector';
-        currBeamOuterTarget = pln.isoCenter + currBeamVector';
+        currBeamSource = beamIsoCenter - currBeamVector';
+        currBeamOuterTarget = beamIsoCenter + currBeamVector';
         
         %Central ray
-        line('XData',[currBeamSource(1) pln.isoCenter(1)],'YData',[currBeamSource(2) pln.isoCenter(2)],'ZData',[currBeamSource(3) pln.isoCenter(3)],'Parent',axesHandle,'LineWidth',2,'Color',beamColor);
-        line('XData',[currBeamOuterTarget(1) pln.isoCenter(1)],'YData',[currBeamOuterTarget(2) pln.isoCenter(2)],'ZData',[currBeamOuterTarget(3) pln.isoCenter(3)],'Parent',axesHandle,'LineWidth',2,'Color',beamColor,'LineStyle',':');
+        line('XData',[currBeamSource(1) beamIsoCenter(1)],'YData',[currBeamSource(2) beamIsoCenter(2)],'ZData',[currBeamSource(3) beamIsoCenter(3)],'Parent',axesHandle,'LineWidth',2,'Color',beamColor);
+        line('XData',[currBeamOuterTarget(1) beamIsoCenter(1)],'YData',[currBeamOuterTarget(2) beamIsoCenter(2)],'ZData',[currBeamOuterTarget(3) beamIsoCenter(3)],'Parent',axesHandle,'LineWidth',2,'Color',beamColor,'LineStyle',':');
         
         %Field rays
         for v = 1:size(visFieldPoints_bev,2)
-            visFieldPoints_world(1:3,v) = rotMat*visFieldPoints_bev(1:3,v) + pln.isoCenter';
+            visFieldPoints_world(1:3,v) = rotMat*visFieldPoints_bev(1:3,v) + beamIsoCenter';
             
             %skipt the drawing of the first vertex since it is there twice
             if v==1 
