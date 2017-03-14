@@ -84,9 +84,9 @@ dose_mask = alpha * (dose_slice < window(2) & dose_slice > max([window(1) thresh
 
 % slice plot with surface(...), colormapping can be done by texture
 % mapping, this is why we use surface instead of slice
-doseHandle = surface(axesHandle,'XData',xMesh, 'YData',yMesh, 'ZData',zMesh, 'AlphaData',dose_mask, ...
+doseHandle = surface('XData',xMesh, 'YData',yMesh, 'ZData',zMesh,'AlphaData',dose_mask, ...
         'CData',dose_rgb, 'CDataMapping','direct', ...
-        'EdgeColor','none', 'FaceColor','texturemap', 'BackFaceLighting','unlit','FaceLighting','flat','FaceAlpha','texturemap','Parent',axesHandle);
+        'EdgeColor','none', 'FaceColor','texturemap', 'BackFaceLighting','unlit','FaceLighting','flat','FaceAlpha','texture','Parent',axesHandle);
 
 end
 

@@ -127,8 +127,12 @@ else
                     continue;
                 end
                
-                %We render the isodose lines transparent by adding a fourth color value (undocumented) 
-                isoLineHandles(end+1) = line(isoLine3Dx,isoLine3Dy,isoLine3Dz,'Color',[color opacity],'LineWidth',1.5,'Parent',axesHandle);
+                %We render the isodose lines transparent by adding a fourth color value (undocumented)
+                if verLessThan('matlab','8.5')
+                    isoLineHandles(end+1) = line(isoLine3Dx,isoLine3Dy,isoLine3Dz,'Color',[color        ],'LineWidth',1.5,'Parent',axesHandle);
+                else
+                    isoLineHandles(end+1) = line(isoLine3Dx,isoLine3Dy,isoLine3Dz,'Color',[color opacity],'LineWidth',1.5,'Parent',axesHandle);
+                end
                 %We do not plot labels
                 %{
                 if plotLabels

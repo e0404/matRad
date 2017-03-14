@@ -83,13 +83,12 @@ end
 
 
 if ~isdeployed
-  currFolder = fileparts(mfilename('fullpath'));
+    currFolder = fileparts(mfilename('fullpath'));
+    addpath(fullfile(currFolder,'plotting'));
+    addpath(fullfile(currFolder,['plotting' filesep 'colormaps']));
 else
-  currFolder = [];
+    currFolder = [];
 end
-
-addpath(fullfile(currFolder,'plotting'));
-addpath(fullfile(currFolder,['plotting' filesep 'colormaps']));
 
 % Choose default command line output for matRadGUI
 handles.output = hObject;
@@ -219,7 +218,9 @@ if ismember('ct',AllVarNames)
     % compute HU values
     if ~isfield(ct, 'cubeHU')
         matRadRootDir = fileparts(mfilename('fullpath'));
-        addpath(fullfile(matRadRootDir,'dicomImport'));
+        if ~isdeployed
+            addpath(fullfile(matRadRootDir,'dicomImport'));
+        end
         ct = matRad_electronDensitiesToHU(ct);
         assignin('base','ct',ct);
     end
@@ -1265,7 +1266,7 @@ Update3DView(handles);
 
 function Update3DView(handles)
 
-if isfield(handles,'axesFig3D') && isfield(handles,'fig3D') && isvalid(handles.axesFig3D) && isvalid(handles.fig3D)
+if isfield(handles,'axesFig3D') && isfield(handles,'fig3D') && isgraphics(handles.axesFig3D) && isgraphics(handles.fig3D)
     set(handles.radiobtnPlan,'enable','on');
     axesFig3D = handles.axesFig3D;
     fig3D = handles.fig3D;    
@@ -4102,7 +4103,7 @@ function btn3Dview_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-if ~isfield(handles,'axesFig3D') || ~isfield(handles,'axesFig3D') || ~isvalid(handles.axesFig3D)
+if ~isfield(handles,'axesFig3D') || ~isfield(handles,'axesFig3D') || ~isgraphics(handles.axesFig3D)
     handles.fig3D = figure('Name','matRad 3D View');
     handles.axesFig3D = axes('Parent',handles.fig3D);
     view(handles.axesFig3D,3);
