@@ -33,6 +33,25 @@ function sb_resultGUI = matRad_singleBeamView(pln, cst, weights, viewBeamNum, di
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% adjust cst for single beams
+sb_cst = cst;
+for i=1:size(sb_cst,1)
+    for j = 1:size(sb_cst{i,6},1)
+        % biological dose splitting
+        if strcmp(pln.bioOptimization, 'LEMIV_effect') || ...
+                strcmp(pln.bioOptimization, 'LEMIV_RBExD')
+            ab = sb_cst{i,5}.alphaX / sb_cst{i,5}.betaX;
+            sb_cst{i,6}(j).dose = -0.5*ab +sqrt( 0.25*ab^2 + ...
+                sb_cst{i,6}(j).dose/pln.numOfBeams +...
+                (sb_cst{i,6}(j).dose + ab));
+        % physical dose splitting
+        else
+            sb_cst{i,6}(j).dose = sb_cst{i,6}(j).dose/pln.numOfBeams;
+        end
+    end
+end
+
+
 if ~isempty(dij)
     % calculate single beam dose from dij
     if strcmp(viewBeamNum, 'all')
@@ -45,63 +64,43 @@ if ~isempty(dij)
 
     else
         % calculate single beam dose
-        
-        % adjust cst for single beams
-        sb_cst = cst;
-        for i=1:size(sb_cst,1)
-            for j = 1:size(sb_cst{i,6},1)
-                % biological dose splitting
-                if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
-                    ab = sb_cst{i,5}.alphaX / sb_cst{i,5}.betaX;
-                    sb_cst{i,6}(j).dose = -0.5*ab +sqrt( 0.25*ab^2 + ...
-                        sb_cst{i,6}(j).dose/pln.numOfBeams + ...
-                        (sb_cst{i,6}(j).dose + ab));
-                % physical dose splitting
-                else
-                    sb_cst{i,6}(j).dose = sb_cst{i,6}(j).dose/pln.numOfBeams;
-                end
-            end
+        fprintf(['Calculating Dose Beam ' num2str(viewBeamNum) '\n']);
+        % columns in total dij for single beam
+        sb_col = find(dij.beamNum == viewBeamNum);
+        % construct dij for single beam
+        sb_dij.numOfBeams = 1;
+        sb_dij.numOfVoxels = dij.numOfVoxels;
+        sb_dij.resolution = dij.resolution;
+        sb_dij.numOfRaysPerBeam = dij.numOfRaysPerBeam(viewBeamNum);
+        sb_dij.totalNumOfRays = sb_dij.numOfRaysPerBeam;
+        sb_dij.totalNumOfBixels = size(sb_col, 1);
+        sb_dij.dimensions = dij.dimensions;
+        sb_dij.numOfScenarios = dij.numOfScenarios;
+        sb_dij.bixelNum = dij.bixelNum(sb_col);
+        sb_dij.rayNum = dij.rayNum(sb_col);
+        sb_dij.beamNum = dij.beamNum(sb_col);
+        sb_dij.physicalDose{1} = dij.physicalDose{1}(:, sb_col);
+        if isfield(dij, 'RBE')
+            sb_dij.RBE = dij.RBE;
+        end
+        if isfield(dij, 'mLETDose')
+            sb_dij.mLETDose = dij.mLETDose(:, sb_col);
+        end
+        if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
+            sb_dij.mAlphaDose{1} = dij.mAlphaDose{1}(:, sb_col);
+            sb_dij.mSqrtBetaDose{1} = dij.mSqrtBetaDose{1}(:, sb_col);
         end
 
-        for i = viewBeamNum
-            fprintf(['Calculating Dose Beam ' num2str(viewBeamNum) '\n']);
-           % columns in total dij for single beam
-            sb_col = find(dij.beamNum == i);
-            % construct dij for single beam
-            sb_dij.numOfBeams = 1;
-            sb_dij.numOfVoxels = dij.numOfVoxels;
-            sb_dij.resolution = dij.resolution;
-            sb_dij.numOfRaysPerBeam = dij.numOfRaysPerBeam(i);
-            sb_dij.totalNumOfRays = sb_dij.numOfRaysPerBeam;
-            sb_dij.totalNumOfBixels = size(sb_col, 1);
-            sb_dij.dimensions = dij.dimensions;
-            sb_dij.numOfScenarios = dij.numOfScenarios;
-            sb_dij.bixelNum = dij.bixelNum(sb_col);
-            sb_dij.rayNum = dij.rayNum(sb_col);
-            sb_dij.beamNum = dij.beamNum(sb_col);
-            sb_dij.physicalDose{1} = dij.physicalDose{1}(:, sb_col);
-            if isfield(dij, 'RBE')
-                sb_dij.RBE = dij.RBE;
-            end
-            if isfield(dij, 'mLETDose')
-                sb_dij.mLETDose = dij.mLETDose(:, sb_col);
-            end
-            if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
-                sb_dij.mAlphaDose{1} = dij.mAlphaDose{1}(:, sb_col);
-                sb_dij.mSqrtBetaDose{1} = dij.mSqrtBetaDose{1}(:, sb_col);
-            end
+        % adjust pln to one beam only
+        sb_pln = pln;
+        sb_pln.gantryAngles = pln.gantryAngles(viewBeamNum);
+        sb_pln.couchAngles = pln.couchAngles(viewBeamNum);
 
-            % adjust pln to one beam only
-            sb_pln = pln;
-            sb_pln.gantryAngles = pln.gantryAngles(i);
-            sb_pln.couchAngles = pln.couchAngles(i);
+        sb_w = weights(sb_col);
+        sb_resultGUI = matRad_calcCubes(sb_w,sb_dij,sb_cst,1);
 
-            sb_w = weights(sb_col);
-            sb_resultGUI = matRad_calcCubes(sb_w,sb_dij,sb_cst,1);
-
-            % keep full set of weights and for other beams
-            sb_resultGUI.w = weights;
-        end
+        % keep full set of weights and for other beams
+        sb_resultGUI.w = weights;
     end
  
    
@@ -117,39 +116,13 @@ else
         fprintf('Error: wrong beam number format in singleBeamView \n');
 
     else
-        % calculate single beam dose
-
-        % adjust cst for single beams
-        sb_cst = cst;
-        for i=1:size(sb_cst,1)
-            for j = 1:size(sb_cst{i,6},1)
-                % biological dose splitting
-                if strcmp(pln.bioOptimization, 'LEMIV_effect') || ...
-                        strcmp(pln.bioOptimization, 'LEMIV_RBExD')
-                    ab = sb_cst{i,5}.alphaX / sb_cst{i,5}.betaX;
-                    sb_cst{i,6}(j).dose = -0.5*ab +sqrt( 0.25*ab^2 + ...
-                        sb_cst{i,6}(j).dose/pln.numOfBeams +...
-                        (sb_cst{i,6}(j).dose + ab));
-                % physical dose splitting
-                else
-                    sb_cst{i,6}(j).dose = sb_cst{i,6}(j).dose/pln.numOfBeams;
-                end
-            end
-        end
-
-
+        % calculate single beam dose       
         fprintf(['Calculating Dose Beam ' num2str(viewBeamNum) '\n']);
-
-        % singlebeam stf
+        % single beam stf
         sb_stf = stf(viewBeamNum);
-
-        % singlebeam weights
-        if viewBeamNum==1
-            offset = 0;
-        else
-            offset = sum(stf(1:(viewBeamNum-1)).totalNumOfBixels);
-        end
-        sb_weights = weights(offset + (1:stf(viewBeamNum).totalNumOfBixels));
+        % single beam weights       
+        ix_offset = sum(cat(1,stf(1:(viewBeamNum-1)).totalNumOfBixels));
+        sb_weights = weights(ix_offset + (1:stf(viewBeamNum).totalNumOfBixels));
 
         % adjust pln to one beam only
         sb_pln = pln;
