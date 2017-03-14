@@ -37,8 +37,14 @@ function [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
 
 %% load plan file
 % load machine data
-msgbox({'Import steering information from DICOM Plan.','Choose corresponding matRad base data.'},'DICOM import');
-[fileName,pathName] = uigetfile('*.mat','Import steering information from DICOM Plan. Choose corresponding matRad base data.');
+
+% messagebox only necessary for non windows users
+dlgBaseDataText = ['Import steering information from DICOM Plan.','Choose corresponding matRad base data for ', ...
+        pln.radiationMode, '.'];
+if ~ispc
+    uiwait(helpdlg(dlgBaseDataText,['DICOM import - ', pln.radiationMode, ' base data' ]));
+end
+[fileName,pathName] = uigetfile('*.mat', dlgBaseDataText);
 load([pathName filesep fileName]);
 
 ix = find(fileName == '_');
