@@ -98,7 +98,7 @@ end
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
 
 % set lateral cutoff value
-lateralCutoff = 50; % [mm]
+lateralCutoff = 82; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
@@ -168,10 +168,10 @@ kernelConvLimit = fieldLimit + gaussLimit + kernelLimit;
                                 (kernelConvLimit-1)*intConvResolution);
 % calculate also the total size and distance as we need this during convolution extensively
 kernelConvSize = 2*kernelConvLimit;
-% subtract a small margin from the convoluted kernel distance to avoid
-% using falsy negative kernel values at the rims due to limited precision 
-margin = 5; % [mm]
-kernelConvDistance = kernelConvLimit*intConvResolution - margin;
+
+% define an effective lateral cutoff where dose will be calculated. note
+% that storage within the influence matrix may be subject to sampling
+effectiveLateralCutoff = lateralCutoff + fieldWidth/2;
 
 counter = 0;
 fprintf('matRad: Photon dose calculation...\n');
@@ -203,7 +203,7 @@ for i = 1:dij.numOfBeams % loop over all beams
 
     % ray tracing
     fprintf('matRad: calculate radiological depth cube...');
-    [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,kernelConvDistance);
+    [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,effectiveLateralCutoff);
     fprintf('done \n');
     
     % get indices of voxels where ray tracing results are available
@@ -282,7 +282,7 @@ for i = 1:dij.numOfBeams % loop over all beams
             convMx1 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)) );
             convMx2 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel2Mx,kernelConvSize,kernelConvSize)) );
             convMx3 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)) );
-
+            
             % Creates an interpolant for kernes from vectors position X and Z
             if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
                 Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
@@ -317,7 +317,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                                                                stf(i).ray(j).targetPoint_bev, ...
                                                                machine.meta.SAD, ...
                                                                radDepthIx, ...
-                                                               kernelConvDistance);
+                                                               effectiveLateralCutoff);
 
         % calculate photon dose for beam i and bixel j
         bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
