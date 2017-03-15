@@ -11,5 +11,6 @@
 * Lucas-Raphael Müller
 * Alexander Stadler
 * Niklas Wahl
+* Jona Welsch
 * Hans-Peter Wieser
 * Tong Xu
