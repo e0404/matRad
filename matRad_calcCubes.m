@@ -70,7 +70,7 @@ if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
         end
     end
     
-    ix = dij.bx~=0; 
+    ix = b_x~=0; 
     
     resultGUI.effect = full(dij.mAlphaDose{scenNum}*resultGUI.w+(dij.mSqrtBetaDose{scenNum}*resultGUI.w).^2);
     resultGUI.effect = reshape(resultGUI.effect,dij.dimensions);

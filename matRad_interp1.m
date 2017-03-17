@@ -48,7 +48,7 @@ if numel(x) == 1
     if ix1 == ix2
         y = yi(ix1);
     elseif ix2 == ix1 + 1
-        y = yi(ix1) + ( yi(ix2)-yi(ix1) ) * ( x - xi(ix1) ) / ( xi(ix2) - xi(ix1) );    
+        y = yi(ix1,:) + ( yi(ix2,:)-yi(ix1,:) ) * ( x - xi(ix1) ) / ( xi(ix2) - xi(ix1) );    
     else
         error('Extrapolation not allowed');
     end

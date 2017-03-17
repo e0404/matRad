@@ -278,6 +278,12 @@ for i = 1:dij.numOfBeams % loop over all beams
                 else
                     error('cutoff must be a value between 0 and 1')
                 end
+                
+                % empty bixels may happen during recalculation of error
+                % scenarios -> skip to next bixel
+                if ~any(currIx)
+                    continue;
+                end
                  
                 % calculate particle dose for bixel k on ray j of beam i
                 bixelDose = matRad_calcParticleDoseBixel(...

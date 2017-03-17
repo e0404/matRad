@@ -41,7 +41,7 @@ depths = baseData.depths + baseData.offset;
 conversionFactor = 1.6021766208e-02;
 
  % calculate initial focus sigma
-SigmaIni = matRad_interp1(baseData.initFocus.dist(focusIx,:),baseData.initFocus.sigma(focusIx,:),SSD);
+SigmaIni = matRad_interp1(baseData.initFocus.dist(focusIx,:)',baseData.initFocus.sigma(focusIx,:)',SSD);
 
 if ~isfield(baseData,'sigma')
     

@@ -319,6 +319,12 @@ for i = 1:dij.numOfBeams % loop over all beams
                                                                radDepthIx, ...
                                                                effectiveLateralCutoff);
 
+        % empty bixels may happen during recalculation of error
+        % scenarios -> skip to next bixel
+        if isempty(ix)
+            continue;
+        end
+
         % calculate photon dose for beam i and bixel j
         bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
                                                    machine.data.betas, ...

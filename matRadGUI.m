@@ -735,8 +735,10 @@ try
         handles = showWarning(handles,warning('no iso center set - using center of gravity based on structures defined as TARGET'));
         pln.isoCenter = ones(pln.numOfBeams,1) * matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
         assignin('base','pln',pln);
-    elseif ~get(handles.checkIsoCenter,'Value') 
-        pln.isoCenter = ones(pln.numOfBeams,1)*str2num(get(handles.editIsoCenter,'String'));
+    elseif ~get(handles.checkIsoCenter,'Value')
+        if ~strcmp(get(handles.editIsoCenter,'String'),'multiple isoCenter')
+            pln.isoCenter = ones(pln.numOfBeams,1)*str2num(get(handles.editIsoCenter,'String'));
+        end
     end
 
 catch ME
@@ -2621,7 +2623,9 @@ try
        pln.isoCenter = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct);
        set(handles.checkIsoCenter,'Value',1);
     else
-       pln.isoCenter = ones(pln.numOfBeams,1) * str2num(get(handles.editIsoCenter,'String'));
+        if ~strcmp(get(handles.editIsoCenter,'String'),'multiple isoCenter')
+            pln.isoCenter = ones(pln.numOfBeams,1) * str2num(get(handles.editIsoCenter,'String'));
+        end
     end
 catch
     warning('couldnt set isocenter in getPln function')
@@ -2797,7 +2801,7 @@ pln = evalin('base','pln');
 tmpIsoCenter = str2num(get(hObject,'String'));
 
 if length(tmpIsoCenter) == 3
-    if sum(any(pln.isoCenter~=tmpIsoCenter))
+    if sum(any(unique(pln.isoCenter,'rows')~=tmpIsoCenter))
         pln.isoCenter = ones(pln.numOfBeams,1)*tmpIsoCenter;
         handles.State = 1;
         UpdateState(handles);

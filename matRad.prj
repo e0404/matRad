@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="501900349" file="d:\git\matRad\matRad.prj" location="d:\git\matRad" name="matRad" preferred-package-location="d:\git\matRad\standalone\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
+  <configuration build-checksum="189584635" file="d:\git\matRad\matRad.prj" location="d:\git\matRad" name="matRad" preferred-package-location="d:\git\matRad\standalone\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
     <param.appname>matRad</param.appname>
     <param.icon>${PROJECT_ROOT}\matRad_resources\icon.ico</param.icon>
     <param.icons>
