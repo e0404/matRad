@@ -44,7 +44,11 @@ for i = 1:numOfCtScenarios
     
     % consider VOI priorities
     for j = 1:size(cst,1)
-         
+        
+        if isempty(cst{j,6})
+           cst{j,5}.Priority = inf; 
+        end
+            
         idx = cst{j,4}{i};          
         
         for k = 1:size(cst,1)
