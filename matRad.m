@@ -34,7 +34,7 @@ matRadGUI
 %% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 3; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [250]; %[0:72:359]; % [°]
+pln.gantryAngles    = [210]; %[0:72:359]; % [°]
 pln.couchAngles     = [0]; % [Â°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
@@ -46,7 +46,7 @@ pln.bioOptimization = 'MCN_RBExD';   % none: physical optimization;             
                                      % MCN_effect; McNamara-variable RBE model for protons (effect based)     MCN_RBExD; McNamara-variable RBE model for protons (RBExD) based
                                      % WED_effect; Wedenberg-variable RBE model for protons (effect based)    MCN_RBExD; Wedenberg-variable RBE model for protons (RBExD) based
                                      % LEMIV_effect: effect-based optimization;                               LEMIV_RBExD: optimization of RBE-weighted dose
-pln.numOfFractions         = 25;
+pln.numOfFractions         = 15;
 pln.runSequencing          = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO                 = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.machine                = 'HIT'; %GenericLET
@@ -100,7 +100,7 @@ matRad_calcDVH(resultGUI,cst,pln)
 resultGUI = matRad_postprocessing(resultGUI, dij, pln);   %last number  =minNrParticlesIES
 
 %% export Plan
-matRad_export_HITXMLPlan_modified('LiverDS221_1b_constRBE_bixel5_bf',  pln, stf, resultGUI, 'backforth')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
+matRad_export_HITXMLPlan_modified('LiverDS221_1b_constRBE_bixel3_3_stf',  pln, stf, resultGUI, 'stfMode')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
 
 %% calc 4D dose
-[resultGUI, delivery] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI,  'LiverDS221_1b_constRBE_bf'); %'LiverDS221_wc5555_3mmBixel_bf'); %TKUH005_test');  
+[resultGUI, delivery] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI,  'LiverDS221_1b_constRBE_bixel3_3_bf'); %'LiverDS221_wc5555_3mmBixel_bf'); %TKUH005_test');  
