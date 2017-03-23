@@ -1,4 +1,4 @@
-function [gammaCube,myColormap,gammaPassRate] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice)
+function [gammaCube,myColormap,gammaPassRate] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,method,localglobal) %additional mode(standard, interpolation...)    local and global gamma
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % gamma index calculation according to http://www.ncbi.nlm.nih.gov/pubmed/9608475
 % 
@@ -11,7 +11,21 @@ function [gammaCube,myColormap,gammaPassRate] = matRad_gammaIndex(cube1,cube2,re
 %   resolution:     resolution of the cubes [mm/voxel]
 %   slice:          optional parameter for plotting the gamma pass rate on
 %                   a specific slice
-%   criteria:      optional [1x2] vector depicting the gamma criteria                 
+%   criteria:      optional [1x2] vector depicting the gamma criteria      
+%   method:         optional paramenter to improve gamma index calculation
+%                   + 'standard': default
+%                   + 'linear2': linear interpolation, resolution *2
+%                   + 'linear4': linear interpolation, resolution *4
+%                   + 'cubic2' : cubic interpolation, resolution *2
+%                   + 'cubic4' : cubic interpolation, resolution *4
+%                   + 'nearest2': nearest interpolation, resolution *2
+%                   + 'nearest4': nearest interpolation, resolution *4
+%                   + 'spline2' : spline interpolation, resolution *2
+%                   + 'spline4' : spline interpolation, resolution *4
+%   localglobal:    optional parameter that choose the kind of gamma want 
+%                       to evaluate
+%                   + 'global': default
+%                   + 'local': 
 %
 % output 
 %   gammaCube       relative distance between start and endpoint for the 
@@ -45,6 +59,33 @@ else
     relDoseThreshold = 1; % in [%]
 end
 
+% eventual interpolation
+if exist('method','var')
+    if ~strcmp(method,'standard')
+        n = str2num(method(end));
+        xmax=size(cube1,1)*resolution(1);
+        ymax=size(cube1,2)*resolution(2);
+        if n == 2
+            Vq=zeros([size(cube1,1)*2 size(cube1,2)*2 size(cube1,3)]);
+            Wq=Vq;
+            [X,Y]=meshgrid(1 : resolution(1) : xmax , 1 : resolution(2) : ymax);
+            [Xq,Yq]=meshgrid(1 : resolution(1)/2 : xmax , 1 : resolution(2)/2 : ymax);
+        elseif n == 4
+            Vq=zeros([size(cube1,1)*4-1 size(cube1,2)*4-1 size(cube1,3)]);
+            Wq=Vq;
+            [X,Y]=meshgrid(1 : resolution(1) : xmax , 1 : resolution(2) : ymax);
+            [Xq,Yq]=meshgrid(1 : resolution(1)/4 : xmax , 1 : resolution(2)/4 : ymax);
+        end
+        for i=1:size(cube1,3)
+            Vq(:,:,i) = interp2(X,Y,cube1(:,:,i),Xq,Yq,method(1:end-1));
+            Wq(:,:,i) = interp2(X,Y,cube2(:,:,i),Xq,Yq,method(1:end-1));
+        end
+        cube1=Vq;
+        cube2=Wq;
+        resolution=resolution./n;
+    end
+end
+
 fprintf(['matRad: using gamme criteria ' num2str(dist2AgreeMm) '[mm], ' num2str(relDoseThreshold) '[%%]' ]);
 
 % convert to absolute doses (use global max) and distance in voxels
@@ -61,8 +102,29 @@ gammaCubeSq = zeros(size(cube1));
 gammaCubeSq((1+searchX):(end-searchX), ...
             (1+searchY):(end-searchY), ...
             (1+searchZ):(end-searchZ)) = inf;
-        
-tmpCube = inf(size(cube1)); 
+
+cut1 = any(any(cube1,2),3);
+cut2 = any(any(cube1,1),3);
+cut3 = any(any(cube1,1),2);
+
+cubex1=cube1;
+
+cubex1( ~cut1, : , : ) = [];  %rows
+cubex1( :, ~cut2 , : ) = [];  %columns
+cubex1( :, :, ~cut3) = [];  %columns
+
+cubex2=cube2;
+
+cubex2( ~cut1, : , : ) = [];  %rows
+cubex2( :, ~cut2 , : ) = [];  %columns
+cubex2( :, :, ~cut3) = [];  %columns
+
+gammaCubeSq( ~cut1, : , : ) = [];  %rows
+gammaCubeSq( :, ~cut2 , : ) = [];  %columns
+gammaCubeSq( :, :, ~cut3) = [];  %columns
+
+tmpCube = inf(size(cubex1)); 
+ix = cubex1 > 0;
 
 % search for min
 for i = -searchX:searchX
@@ -76,16 +138,21 @@ for i = -searchX:searchX
             tmpCube((1+searchX):(end-searchX), ...
                     (1+searchY):(end-searchY), ...
                     (1+searchZ):(end-searchZ)) = ...
-                             cube1((1+searchX):(end-searchX), ...
+                             cubex1((1+searchX):(end-searchX), ...
                                    (1+searchY):(end-searchY), ...
                                    (1+searchZ):(end-searchZ)) ...
-                           - cube2((1+searchX+i):(end-searchX+i), ...
+                           - cubex2((1+searchX+i):(end-searchX+i), ...
                                    (1+searchY+j):(end-searchY+j), ...
                                    (1+searchZ+k):(end-searchZ+k));
 
-            tmpCube = tmpCube.^2 / absDoseThreshold.^2 + delta_sq;
+            if exist('localglobal','var') && strcmp(localglobal,'local')
+                absDoseThreshold = cube1 .* relDoseThreshold/100;
+            end
+                    
+            tmpCube = tmpCube.^2 ./ absDoseThreshold.^2 + delta_sq;
+            %gammaCubeSq(:) = min([gammaCubeSq(:) tmpCube(:)],[],2);
+            gammaCubeSq(ix) = min(gammaCubeSq(ix),tmpCube(ix));
             
-            gammaCubeSq(:) = min([gammaCubeSq(:) tmpCube(:)],[],2);
             
         end
     end
@@ -94,8 +161,12 @@ for i = -searchX:searchX
     
 end
 
-gammaCube = sqrt(gammaCubeSq);
+gammaCubeSqx = zeros(size(cube1));
+gammaCubeSqx(cut1,cut2,cut3) = gammaCubeSq;
 
+gammaCube = sqrt(gammaCubeSqx);
+infcube=isinf(gammaCube);
+gammaCube(infcube)=0;
 
     
     myColormap = [  0.2081    0.1663    0.5292
@@ -171,12 +242,15 @@ gammaCube = sqrt(gammaCubeSq);
         gammaPassRate   = 100 * numOfPassGamma / sum(doseIx(:));
         
 if nargin > 4   
-        figure
+        %figure
         set(gcf,'Color',[1 1 1]);
         imagesc(gammaCube(:,:,slice),[0 2])
         colormap(gca,myColormap);
         colorbar
         
-        title([num2str(gammaPassRate,5) '% of dose points > ' num2str(relDoseThreshold) '% pass gamma criterion (' num2str(relDoseThreshold) '% / ' num2str(dist2AgreeMm) 'mm)']);
-        
+        if exist('method','var')
+            title([num2str(gammaPassRate,5) '% of dose points > ' num2str(relDoseThreshold) '% pass gamma criterion (' num2str(relDoseThreshold) '% / ' num2str(dist2AgreeMm) 'mm)  method: ' method]);
+        else
+            title([num2str(gammaPassRate,5) '% of dose points > ' num2str(relDoseThreshold) '% pass gamma criterion (' num2str(relDoseThreshold) '% / ' num2str(dist2AgreeMm) 'mm)']);
+        end
 end
