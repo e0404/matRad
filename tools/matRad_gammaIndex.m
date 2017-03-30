@@ -1,57 +1,46 @@
-function [gammaCube,myColormap,gammaPassRate] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,interpoints,localglobal)
+function [gammaCube,gammaPassRate] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % gamma index calculation according to http://www.ncbi.nlm.nih.gov/pubmed/9608475
 % 
 % call
-%    gammaCube = matRad_gammaIndex(cube1,cube2,resolution,slice)
+%    gammaCube = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,interpoints,localglobal)
 %
 % input
-%   cube1:          dose cube as an M x N x O array
-%   cube2:          dose cube as an M x N x O array
-%   resolution:     resolution of the cubes [mm/voxel]
-%   slice:          optional parameter for plotting the gamma pass rate on
-%                   a specific slice
-%   criteria:      optional [1x2] vector depicting the gamma criteria      
-%   interpoints:   optional paramenter that represents the number of
-%                   iterative interpolations on the input cubes (e.g. if 
-%                   the input is k there will be 2^k-1 interpolation 
-%                   points). The maximum suggested value is 3. 
-%                   default value: 0
-%                   Interpolation is made with cubic interpolation.
-%   localglobal:    optional parameter that choose the kind of gamma want 
-%                       to evaluate
-%                   + 'global': default
-%                   + 'local': 
+%   cube1:         dose cube as an M x N x O array
+%   cube2:         dose cube as an M x N x O array
+%   resolution:    resolution of the cubes [mm/voxel]
+%   criteria:      [1x2] vector specifying the distance to agreement
+%                  criterion
+%   slice:         slice in cube1/2 that will be visualized (optional)
+%   n:             number of interpolations (optional). there will be 2^n-1 
+%                  interpolation points. The maximum suggested value is 3.
+%   localglobal:   parameter to choose between 'global' and 'local' 
+%                  normalization (optional)
 %
 % output 
-%   gammaCube       relative distance between start and endpoint for the 
 %
-%   gamma index calculation represents a technique for 
-%   the quantitative evaluation of dose distributions.
+%   gammaCube:     result of gamma index calculation
+%   gammaPassRate: rate of voxels passing the specified gamma criterion.
+%                  note that only voxels exceeding the dose threshold are
+%                  considered.
+%
 % References
 %   [1]  http://www.ncbi.nlm.nih.gov/pubmed/9608475
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015, Mark Bangert
-%
-% This file is NOT part of the official matRad release. 
-% This file has to be used only for internal purposes! 
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% check if cubes consistent
-if ~isequal(size(cube1),size(cube2))
-   error('dose cubes must be the same size\n'); 
-end
-
-% set parameters for gamma index calculation
-if exist('interpoints','var')
-    n = interpoints;
-else
-    n = 0;
-end
 
 % set parameters for gamma index calculation
 if exist('criteria','var')
@@ -62,21 +51,26 @@ else
     relDoseThreshold = 1; % in [%]
 end
 
+% set parameters for gamma index calculation
+if ~exist('n','var')
+    n = 0;
+end
+
 % set global or local gamma evaluation
 if ~exist('localglobal','var')
     localglobal = 'global';
 end
 
-%fprintf(['matRad: using gamme criteria ' num2str(dist2AgreeMm) '[mm], ' num2str(relDoseThreshold) '[%%]' ]);
-
-% convert to absolute doses (use global max) and distance in voxels
-absDoseThreshold = relDoseThreshold/100 * max(cube1(:));
+% check if cubes consistent
+if ~isequal(size(cube1),size(cube2))
+   error('dose cubes must be the same size\n'); 
+end
 
 % define search nighborhood and resolution
 if round(n) ~= n
     error('n must be an integer value');
 else
-    resolution=resolution./(2.^n);
+    resolution = resolution./(2.^n);
 end
 
 neighborhood = 1.5* dist2AgreeMm; % [mm]
@@ -91,54 +85,58 @@ cut2 = any(any(cube1,1),3);
 cut3 = any(any(cube1,1),2);
 
 % avoids that "zero-slides" are deleted between two interest regions
-k=find(cut1);
-cut1(k(1):k(end))=1;
-k=find(cut2);
-cut2(k(1):k(end))=1;
-k=find(cut2);
-cut2(k(1):k(end))=1;
+k = find(cut1); cut1(k(1):k(end)) = 1;
+k = find(cut2); cut2(k(1):k(end)) = 1;
+k = find(cut2); cut2(k(1):k(end)) = 1;
 
-cubex1c=cube1;
+% copy cubes
+cubex1c = cube1;
+cubex2c = cube2;
 
-cubex1c( ~cut1, : , : ) = [];  %rows
-cubex1c( :, ~cut2 , : ) = [];  %columns
-cubex1c( :, :, ~cut3) = [];  
+% cut cubes
+cubex1c( ~cut1, :, :) = []; % rows
+cubex1c( :, ~cut2, :) = []; % columns
+cubex1c( :, :, ~cut3) = []; % slices  
+cubex2c( ~cut1, :, :) = []; % rows
+cubex2c( :, ~cut2, :) = []; % columns
+cubex2c( :, :, ~cut3) = []; % slices
 
-% add some voxels with value zero around the cube
+% pad cubes
 cubex1 = zeros([size(cubex1c,1)+2*searchX size(cubex1c,2)+2*searchY size(cubex1c,3)+2*searchZ]);
-cubex1((1+searchX):(end-searchX), ...
-            (1+searchY):(end-searchY), ...
-            (1+searchZ):(end-searchZ)) = cubex1c;
-        
-cubex2c=cube2;
-
-cubex2c( ~cut1, : , : ) = [];  %rows
-cubex2c( :, ~cut2 , : ) = [];  %columns
-cubex2c( :, :, ~cut3) = [];  
-
 cubex2 = zeros([size(cubex2c,1)+2*searchX size(cubex2c,2)+2*searchY size(cubex2c,3)+2*searchZ]);
+cubex1((1+searchX):(end-searchX), ...
+       (1+searchY):(end-searchY), ...
+       (1+searchZ):(end-searchZ)) = cubex1c;
 cubex2((1+searchX):(end-searchX), ...
-            (1+searchY):(end-searchY), ...
-            (1+searchZ):(end-searchZ)) = cubex2c;
+       (1+searchY):(end-searchY), ...
+       (1+searchZ):(end-searchZ)) = cubex2c;
 
-% eventual interpolation
+% interpolate if necessary
 if n > 0
-    %cubex1 = interp3(cubex1,n,method);
     cubex2 = interp3(cubex2,n,'cubic');
 end
 
+% set up temporary cubes required for calculation
 tmpCube = zeros(size(cubex1)); 
 tmpCube((1+searchX):(end-searchX), ...
-            (1+searchY):(end-searchY), ...
-            (1+searchZ):(end-searchZ)) = inf;
+        (1+searchY):(end-searchY), ...
+        (1+searchZ):(end-searchZ)) = inf;
 
-ix = cubex1 > 0;
 
 gammaCubeSq = zeros(size(cubex1));
 gammaCubeSq((1+searchX):(end-searchX), ...
             (1+searchY):(end-searchY), ...
             (1+searchZ):(end-searchZ)) = inf;
 
+% find relevant indices for computation...
+ix = cubex1 > 0;
+
+% adjust dose threshold
+if strcmp(localglobal,'local')
+    doseThreshold = cubex1 .* relDoseThreshold/100;                
+elseif strcmp(localglobal,'global')
+    doseThreshold = relDoseThreshold/100 * max(cube1(:));
+end
 
 % search for min
 for i = -searchX:searchX
@@ -153,40 +151,54 @@ for i = -searchX:searchX
                     (1+searchY):(end-searchY), ...
                     (1+searchZ):(end-searchZ)) = ...
                              cubex1((1+searchX):(end-searchX), ...
-                                   (1+searchY):(end-searchY), ...
-                                   (1+searchZ):(end-searchZ)) ...
+                                    (1+searchY):(end-searchY), ...
+                                    (1+searchZ):(end-searchZ)) ...
                            - cubex2((1+((2^n)*searchX)+i) : 2^n : (end-((2^n)*searchX)+i), ...
-                                   (1+((2^n)*searchY)+j) : 2^n : (end-((2^n)*searchY)+j), ...
-                                   (1+((2^n)*searchZ)+k) : 2^n : (end-((2^n)*searchZ)+k));
-
-            if exist('localglobal','var') && strcmp(localglobal,'local')
-                absDoseThreshold = cubex1 .* relDoseThreshold/100;                
-            end
+                                    (1+((2^n)*searchY)+j) : 2^n : (end-((2^n)*searchY)+j), ...
+                                    (1+((2^n)*searchZ)+k) : 2^n : (end-((2^n)*searchZ)+k));
                     
-            tmpCube = tmpCube.^2 ./ absDoseThreshold.^2 + delta_sq;
-            %gammaCubeSq(:) = min([gammaCubeSq(:) tmpCube(:)],[],2);
+            tmpCube = tmpCube.^2 ./ doseThreshold.^2 + delta_sq;
+            
             gammaCubeSq(ix) = min(gammaCubeSq(ix),tmpCube(ix));
             
             
         end
     end
     
-%    display '.';
+    display '.';
     
 end
 
 % evaluate gamma cube and set to zero all the voxel that contain an
 % infinite value
-gammaCubeSqx = zeros(size(cube1));
+gammaCubeSqx                 = zeros(size(cube1));
 gammaCubeSqx(cut1,cut2,cut3) = gammaCubeSq((1+searchX):(end-searchX), ...
-            (1+searchY):(end-searchY), ...
-            (1+searchZ):(end-searchZ));
+                                           (1+searchY):(end-searchY), ...
+                                           (1+searchZ):(end-searchZ));
+gammaCube                    = sqrt(gammaCubeSqx);
 
-gammaCube = sqrt(gammaCubeSqx);
-infcube=isinf(gammaCube);
-gammaCube(infcube)=0;
+% set values where we did not compute gamma keeping inf in the cube to zero
+gammaCube(cube1<=0) = 0;
 
-    
+% need to modify the absDoseThreshold adding a 
+if strcmp(localglobal,'local')
+    doseThresholdX = zeros(size(cube1));
+    doseThresholdX(cut1,cut2,cut3) = doseThreshold((1+searchX):(end-searchX), ...
+                                                   (1+searchY):(end-searchY), ...
+                                                   (1+searchZ):(end-searchZ));
+    doseThreshold = doseThresholdX;
+end
+  
+% compute gamma pass rate
+doseIx          = cube1 > doseThreshold;
+numOfPassGamma  = sum(gammaCube(doseIx) < 1);
+gammaPassRate   = 100 * numOfPassGamma / sum(doseIx(:));
+        
+% visualize if applicable
+if exist('slice','var')
+    figure
+    set(gcf,'Color',[1 1 1]);
+    imagesc(gammaCube(:,:,slice),[0 2])
     myColormap = [  0.2081    0.1663    0.5292
                     0.2336    0.1932    0.5444
                     0.2592    0.2201    0.5596
@@ -251,25 +263,11 @@ gammaCube(infcube)=0;
                     1.0000    0.0645         0
                     1.0000    0.0323         0
                     1.0000         0         0];
- 
-% need to modify the absDoseThreshold adding a 
-if exist('localglobal','var') && strcmp(localglobal,'local')
-    absDoseThresholdx = zeros(size(cube1));
-    absDoseThresholdx(cut1,cut2,cut3) = absDoseThreshold((1+searchX):(end-searchX), ...
-    (1+searchY):(end-searchY), (1+searchZ):(end-searchZ));
-    absDoseThreshold = absDoseThresholdx;
-end
-        
-        doseIx          = cube1 > absDoseThreshold;
-        numOfPassGamma  = sum(gammaCube(doseIx) < 1);
-        gammaPassRate   = 100 * numOfPassGamma / sum(doseIx(:));
-        
-if nargin > 4   
-        figure
-        set(gcf,'Color',[1 1 1]);
-        imagesc(gammaCube(:,:,slice),[0 2])
-        colormap(gca,myColormap);
-        colorbar
-        
-        title({[num2str(gammaPassRate,5) '% of points > ' num2str(relDoseThreshold) '% pass gamma criterion (' num2str(relDoseThreshold) '% / ' num2str(dist2AgreeMm) 'mm)']; ['with ' num2str(2^n-1) ' interpolation points']});
+
+    colormap(gca,myColormap);
+    colorbar
+
+    title({[num2str(gammaPassRate,5) '% of points > ' num2str(relDoseThreshold) ...
+            '% pass gamma criterion (' num2str(relDoseThreshold) '% / ' ...
+            num2str(dist2AgreeMm) 'mm)']; ['with ' num2str(2^n-1) ' interpolation points']});
 end
