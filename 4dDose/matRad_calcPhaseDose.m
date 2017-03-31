@@ -17,7 +17,7 @@ function [resultGUI, delivery] = matRad_calcPhaseDose(resultGUI, dij, delivery)
 % Silke Ulrich Aug 2016
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-MOTION = 'linear'; %'CALYPSO'
+MOTION = 'linear'; %'CALYPSO' 'ANZAI'
 
 add = 0;
 for i=1:length(delivery)
@@ -40,7 +40,7 @@ for i=1:length(delivery)
 
 %%%%%%%%%Breathing motion   
     %Motion assumption1: linear
-    if(MOTION == 'linear')
+    if(strcmp(MOTION,'linear'))
        NumOfPhases = size(dij.physicalDose);
         NumOfPhases =  NumOfPhases(1);  %immer richtig?
     %Annahme 5s und linear 
@@ -66,7 +66,7 @@ for i=1:length(delivery)
     %Motion assumption3: from Calypso data
     %amplitude based
     % evtl. noch phase base, relative phased based according to Richter?
-    elseif(MOTION == 'CALYPSO')
+    elseif(strcmp(MOTION,'CALYPSO'))
     fid = fopen('D:\Matrad\data\4DCT\TKUH005_linux\Motion_005\RawDataTxt\Patient_005\CalypsoLung_005_F01_TrackTarget.txt');
     dataArray = textscan(fid, '%f %f %f %f %d', 'headerlines',1);
     
@@ -174,10 +174,27 @@ for i=1:length(delivery)
         %HIER FEHLEN NOCH VIELE FÄLLE!!!
     end
        
-end % if motion = CALYPSO;
+%end % if motion = CALYPSO;
+      
+  %Motion assumption3: from Anzai data
+elseif(strcmp(MOTION, 'ANZAI'))
+    fid = fopen('D:\Silke\data\CalypsoLunge\Anzai-Daten TKUH006-bisTKUH008\Anzai-Daten TKUH006-bisTKUH008\Anzai_008\Anzai_008_09.txt');
+    dataArray = textscan(fid, '%f %f %d', 'headerlines',1); 
+    
+    motion.time = dataArray{1};
+    motion.amplitude = dataArray{2};
+   
+    figure
+    plot (motion.time, motion.amplitude)
+    title('Anzai motion')
+    xlabel('time [s]')
+    ylabel('amplitude')
+    
+    %todo: Zuordnung welche Phase zu welcher Amplitude
+    % amplitude or phase based???
     
     
-    
+end
     %%%%%%%%%%%%%%%END MOTION
     
     
