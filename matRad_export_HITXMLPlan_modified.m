@@ -23,7 +23,11 @@
 %  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-function matRad_export_HITXMLPlan_modified(planFilename, pln, stf, resultGUI, scanPath)
+function matRad_export_HITXMLPlan_modified(planFilename, pln, stf, resultGUI, scanPath, vis)
+
+if nargin < 6
+    vis = 0;
+end
 
 disp('HITXML exporter: Exporting plan in the HITXML format')
 
@@ -276,6 +280,18 @@ end
                  Voxel.setAttribute('particles',aValue);
                  IES.appendChild(Voxel);
              end
+             
+             if(vis)
+                 figure
+              numOfCities = counter-1;      
+             cities = [tmpIES.voxel_x(:), tmpIES.voxel_y(:)].';
+             hold on
+             plot(cities(1,:),cities(2,:),'r.','MarkerSize',30)
+             plot(cities(1,:),cities(2,:),'g','LineWidth',2)
+                          title(['Energy slice ' num2str(iesEnergy) ' MeV']);    
+             xlabel('x [mm]')
+             ylabel('y [mm]')
+             end
          elseif(strcmp(scanPath,'backforth'))
              c=1;
              voxel_y = tmpIES.voxel_y(c);
@@ -313,6 +329,47 @@ end
                  if( c<counter)
                      voxel_y = tmpIES.voxel_y(c);
                  end
+             end
+             if(vis)
+             cities = [];                
+             c=1;
+             n=1;
+             voxel_y = tmpIES.voxel_y(c);
+             while(c<counter)  
+                 while(c<counter && tmpIES.voxel_y(c) == voxel_y)
+                     cities(1,n) = tmpIES.voxel_x(c);
+                     cities(2,n) = tmpIES.voxel_y(c);
+                     n = n+1;
+                     c= c+1;
+                 end
+             
+             if( c<counter)
+                     voxel_y = tmpIES.voxel_y(c);
+                 end
+                 c_start = c;
+                 while(c<counter && tmpIES.voxel_y(c) == voxel_y)
+                     c=c+1;
+                 end
+                 c_stop = c-1;
+                 for c= c_stop:-1:c_start
+                     cities(1,n) = tmpIES.voxel_x(c);
+                     cities(2,n) = tmpIES.voxel_y(c);
+                     n = n+1;
+                 end
+                 c= c_stop +1;
+                 if( c<counter)
+                     voxel_y = tmpIES.voxel_y(c);
+                 end
+             end
+              figure
+             hold on
+             plot(cities(1,:),cities(2,:),'r.','MarkerSize',30)
+             plot(cities(1,:),cities(2,:),'g','LineWidth',2)
+             title(['Energy slice ' num2str(iesEnergy) ' MeV']);    
+             xlabel('x [mm]')
+             ylabel('y [mm]')
+
+             
              end
          elseif(strcmp(scanPath,'TSP'))
              numOfCities = counter-1;      
