@@ -3,7 +3,7 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)
 % matRad dose calculation wrapper bypassing dij calculation
 % 
 % call
-%   dij = matRad_calcDoseDirect(ct,stf,pln,cst)
+%   resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst)
 %
 % input
 %   ct:         ct cube
