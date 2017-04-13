@@ -36,7 +36,7 @@ function pln = matRad_VMATGantryAngles(pln,way)
 if strcmp(way,'new')
     
     pln.gantryAngleSpacing = pln.minGantryAngleRes; %ideally should be spaced every 2 or 4 degrees; gantry spacing that dij is performed
-    pln.maxNumApertures = pln.maxApertureAngleSpread/pln.gantryAngleSpacing+1;
+    pln.maxNumApertures = pln.maxApertureAngleSpread/pln.gantryAngleSpacing;
     
     pln.gantryToOptAngleSpacingFactor = floor(pln.maxNumApertures/pln.numApertures);
     pln.optGantryAngleSpacing = pln.gantryAngleSpacing*pln.gantryToOptAngleSpacingFactor;
@@ -50,6 +50,10 @@ if strcmp(way,'new')
         %the final beam is not an optimized beam yet, but it should be for
         %interpolation reasons
         pln.optGantryAngles(numel(pln.optGantryAngles)+1) = pln.gantryAngles(end);
+    end
+    
+    if pln.initGantryAngles(1) == 0 && pln.initGantryAngles(end) ~= 360
+        pln.initGantryAngles(numel(pln.initGantryAngles)+1) = 360;
     end
     
     pln.numOfBeams      = numel(pln.gantryAngles);

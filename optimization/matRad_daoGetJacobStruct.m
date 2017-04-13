@@ -77,12 +77,12 @@ if ~isempty(jacobStruct_dos)
             for k = 1:apertureInfo.beam(i).numOfActiveLeafPairs
                 counter = counter + 1;
                 bixelIxInCurrRow = ~isnan(apertureInfo.beam(i).bixelIndMap(k,:));
-                jacobStruct_dos(:,counter+[0 apertureInfo.totalNumOfLeafPairs]) = ...     
+                jacobStruct_dos(:,counter+[0 apertureInfo.totalNumOfLeafPairs]) = ...
                     repmat(spones(sum(jacobStruct_dos_bixel(:,bixelIxInCurrRow),2)),1,2);
             end
-        end    
+        end
     end
-
+    
 end
 
 
@@ -91,6 +91,137 @@ if ~isfield(apertureInfo.beam(1),'optimizeBeam')
     % concatenate
     jacobStruct = [jacobStruct_dao; jacobStruct_dos];
 else
+    
+    %{
+    jacobStruct_lfspd_vec = zeros(6*apertureInfo.beam(1).numOfActiveLeafPairs*(apertureInfo.numIandFBeam-1),1);
+    indInCon_vec = zeros(6*apertureInfo.beam(1).numOfActiveLeafPairs*(apertureInfo.numIandFBeam-1),1);
+    indInVar_vec = zeros(6*apertureInfo.beam(1).numOfActiveLeafPairs*(apertureInfo.numIandFBeam-1),1);
+    counter = 1;
+    
+    optCounter = 1;
+    
+    for i = 1:numel(apertureInfo.beam)
+        if apertureInfo.beam(i).optimizeBeam
+            
+            indInIandF = apertureInfo.beam(i).IandFTimeInd;
+            
+            %leaf positions
+            indInVar = reshape(repmat(apertureInfo.beam(i).shape(1).vectorOffset-1+[0 apertureInfo.totalNumOfLeafPairs],apertureInfo.beam(1).numOfActiveLeafPairs,1)+repmat((1:apertureInfo.beam(1).numOfActiveLeafPairs)',1,2),[],1);
+            
+            if indInIandF(1) ~= 0
+                indInC = [indInIandF(1) indInIandF(1)+(apertureInfo.numIandFBeam-1)];
+                indInCon = reshape(repmat((indInC-1)*apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.beam(1).numOfActiveLeafPairs,1)+repmat((1:apertureInfo.beam(1).numOfActiveLeafPairs)',1,numel(indInC)),[],1);
+                
+                j = ones(size(indInCon));
+                
+                indInVar_vec(counter:(counter+numel(j)-1)) = indInVar;
+                indInCon_vec(counter:(counter+numel(j)-1)) = indInCon;
+                jacobStruct_lfspd_vec(counter:(counter+numel(j)-1)) = j+jacobStruct_lfspd_vec(counter:(counter+numel(j)-1));
+                counter = counter+numel(j);
+            end
+            
+            indInC = [indInIandF(2) indInIandF(2)+(apertureInfo.numIandFBeam-1)];
+            indInCon = reshape(repmat((indInC-1)*apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.beam(1).numOfActiveLeafPairs,1)+repmat((1:apertureInfo.beam(1).numOfActiveLeafPairs)',1,numel(indInC)),[],1);
+            
+            j =  ones(size(indInCon));
+            
+            indInVar_vec(counter:(counter+numel(j)-1)) = indInVar;
+            indInCon_vec(counter:(counter+numel(j)-1)) = indInCon;
+            jacobStruct_lfspd_vec(counter:(counter+numel(j)-1)) = j+jacobStruct_lfspd_vec(counter:(counter+numel(j)-1));
+            counter = counter+numel(j);
+            
+            if indInIandF(3) ~= 0
+                indInC = [indInIandF(3) indInIandF(3)+(apertureInfo.numIandFBeam-1)];
+                indInCon = reshape(repmat((indInC-1)*apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.beam(1).numOfActiveLeafPairs,1)+repmat((1:apertureInfo.beam(1).numOfActiveLeafPairs)',1,numel(indInC)),[],1);
+                
+                j =  ones(size(indInCon));
+                
+                indInVar_vec(counter:(counter+numel(j)-1)) = indInVar;
+                indInCon_vec(counter:(counter+numel(j)-1)) = indInCon;
+                jacobStruct_lfspd_vec(counter:(counter+numel(j)-1)) = j+jacobStruct_lfspd_vec(counter:(counter+numel(j)-1));
+                counter = counter+numel(j);
+            end
+            
+            
+            %times
+            indInIandF(indInIandF == 0) = [];
+            indInC = [indInIandF indInIandF+(apertureInfo.numIandFBeam-1)];
+            
+            indInVar = apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2+optCounter;
+            optCounter = optCounter+1;
+            
+            indInCon = reshape(repmat((indInC-1)*apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.beam(1).numOfActiveLeafPairs,1)+repmat((1:apertureInfo.beam(1).numOfActiveLeafPairs)',1,numel(indInC)),[],1);
+            
+            j =  ones(size(indInCon));
+            
+            indInVar_vec(counter:(counter+numel(j)-1)) = indInVar;
+            indInCon_vec(counter:(counter+numel(j)-1)) = indInCon;
+            jacobStruct_lfspd_vec(counter:(counter+numel(j)-1)) = j+jacobStruct_lfspd_vec(counter:(counter+numel(j)-1));
+            counter = counter+numel(j);
+        end
+    end
+    
+    jacobStruct_lfspd_vec(indInVar_vec == 0) = [];
+    indInVar_vec(indInVar_vec == 0) = [];
+    indInCon_vec(indInCon_vec == 0) = [];
+    
+    jacobStruct_lfspd = sparse(indInCon_vec,indInVar_vec,jacobStruct_lfspd_vec,2*(apertureInfo.IandFtotalNumOfLeafPairs-apertureInfo.beam(1).numOfActiveLeafPairs),numel(apertureInfo.apertureVector),6*apertureInfo.beam(1).numOfActiveLeafPairs*(apertureInfo.numIandFBeam-1));
+    %}
+    
+    i = sort(repmat(1:(apertureInfo.totalNumOfShapes-1),1,2));
+    j = sort(repmat(1:apertureInfo.totalNumOfShapes,1,2));
+    j(1) = [];
+    j(end) = [];
+    
+    % get index values for the jacobian
+    % variable index
+    timeInd = (1+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2-1);
+    currentLeftLeafInd = (apertureInfo.totalNumOfShapes+1):(apertureInfo.totalNumOfShapes+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeInd));
+    currentRightLeafInd = (apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+1):(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeInd));
+    nextLeftLeafInd = (apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+1):(apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeInd));
+    nextRightLeafInd = (apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+1):(apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeInd));
+    leftTimeInd = repelem(j,apertureInfo.beam(1).numOfActiveLeafPairs)+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2;
+    rightTimeInd = repelem(j,apertureInfo.beam(1).numOfActiveLeafPairs)+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2;
+    % constraint index
+    constraintInd = 1:2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeInd);
+    
+    % jacobian of the leafspeed constraint
+    i = repmat((i'-1)*apertureInfo.beam(1).numOfActiveLeafPairs,1,apertureInfo.beam(1).numOfActiveLeafPairs)+repmat(1:apertureInfo.beam(1).numOfActiveLeafPairs,2*numel(timeInd),1);
+    i = reshape([i' i'+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeInd)],1,[]);
+    
+    i = [repmat(constraintInd,1,2) i];
+    j = [currentLeftLeafInd currentRightLeafInd nextLeftLeafInd nextRightLeafInd leftTimeInd rightTimeInd];
+    % first do jacob wrt current leaf position (left, right), then next leaf
+    % position (left, right), then time (left, right)
+    
+    s = ones(1,numel(j));
+    
+    jacobStruct_lfspd = sparse(i,j,s,2*apertureInfo.beam(1).numOfActiveLeafPairs*(apertureInfo.totalNumOfShapes-1),numel(apertureInfo.apertureVector),numel(s));
+    
+    
+    % jacobian of the doserate constraint
+    i = repmat(1:apertureInfo.totalNumOfShapes,1,2);
+    j = [1:apertureInfo.totalNumOfShapes (apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2+1):(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2)];
+    % first do jacob wrt weights, then wrt times
+    
+    s = ones(1,2*(apertureInfo.totalNumOfShapes));
+    
+    jacobStruct_dosrt = sparse(i,j,s,apertureInfo.totalNumOfShapes,numel(apertureInfo.apertureVector),2*apertureInfo.totalNumOfShapes);
+    
+    jacobStruct_dao = padarray(jacobStruct_dao,[0 apertureInfo.totalNumOfShapes],0,'post');
+    jacobStruct_dos = padarray(jacobStruct_dos,[0 apertureInfo.totalNumOfShapes],0,'post');
+    % concatenate
+    jacobStruct = [jacobStruct_dao; jacobStruct_lfspd; jacobStruct_dosrt; jacobStruct_dos];
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    %{
     % get index values for the jacobian
     % variable index
     timeInd = (1+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2-1);
@@ -127,6 +258,9 @@ else
     jacobStruct_dos = padarray(jacobStruct_dos,[0 apertureInfo.totalNumOfShapes-1],0,'post');
     % concatenate
     jacobStruct = [jacobStruct_dao; jacobStruct_lfspd; jacobStruct_dosrt; jacobStruct_dos];
+    %}
+    
+    
 end
 
 

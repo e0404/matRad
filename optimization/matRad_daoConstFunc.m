@@ -47,29 +47,85 @@ c_dao        = rightLeafPos - leftLeafPos;
 % bixel based objective function calculation
 c_dos = matRad_constFuncWrapper(apertureInfo.bixelWeights,dij,cst,options);
 
-if ~isfield(apertureInfo.beam(1),'optimizeBeam')
+if ~apertureInfo.VMAT
     % concatenate
     c = [c_dao; c_dos];
 else
+    
     % values of time differences of optimized gantry angles
-    c_rottime = apertureInfoVec((1+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):end);
-    %MOVED TO upper limit on variable itself, but still used for c_dosrt
+    optInd = [apertureInfo.beam.optimizeBeam];
+    timeOptBorderAngles = apertureInfoVec((1+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):end);
+    
+    i = repelem(1:(apertureInfo.totalNumOfShapes-1),2);
+    j = repelem(1:(apertureInfo.totalNumOfShapes),2);
+    j(1) = [];
+    j(end) = [];
+    
+    timeFac = [apertureInfo.beam(optInd).timeFac]';
+    timeFac(timeFac == 0) = [];
+    
+    timeFacMatrix = sparse(i,j,timeFac,(apertureInfo.totalNumOfShapes-1),apertureInfo.totalNumOfShapes);
+    timeBNOptAngles = timeFacMatrix*timeOptBorderAngles;
     
     % values of average leaf speeds of optimized gantry angles
     c_lfspd = reshape([abs(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)) ...
-        abs(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2))]./ ... 
-        repmat(c_rottime',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(c_rottime),1);
+        abs(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2))]./ ...
+        repmat(timeBNOptAngles',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles),1);
+    
     
     % values of doserate (MU/sec) between optimized gantry angles
     weights = apertureInfoVec(1:apertureInfo.totalNumOfShapes);
-    weights(end) = [];
-    optInd = find([apertureInfo.beam.optimizeBeam]);
-    optInd(end) = [];
-    nextOptAngleDiff = [apertureInfo.beam(optInd).nextOptAngleDiff]';
-    nextAngleDiff = [apertureInfo.beam(optInd).nextAngleDiff]';
-    c_dosrt = apertureInfo.weightToMU.*weights.*(nextOptAngleDiff./c_rottime)./nextAngleDiff;
+    timeFacCurr = [apertureInfo.beam(optInd).timeFacCurr]';
+    timeOptDoseBorderAngles = timeOptBorderAngles.*timeFacCurr;
+    c_dosrt = apertureInfo.weightToMU.*weights./timeOptDoseBorderAngles;
     
     % concatenate
     c = [c_dao; c_lfspd; c_dosrt; c_dos];
+    
+    
+    %{
+    %extract initial and final leaf positions from apertureInfo
+    IandFleftLeafPos  = apertureInfo.IandFapertureVector([1:apertureInfo.IandFtotalNumOfLeafPairs]+apertureInfo.totalNumOfShapes);
+    IandFrightLeafPos = apertureInfo.IandFapertureVector(1+apertureInfo.IandFtotalNumOfLeafPairs+apertureInfo.totalNumOfShapes:apertureInfo.totalNumOfShapes+apertureInfo.IandFtotalNumOfLeafPairs*2);
+    
+    optInd = [apertureInfo.beam.optimizeBeam];
+    timeOptBorderAngles = apertureInfoVec((1+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):end);
+    
+    currIndGive = logical([apertureInfo.beam(optInd).timeFacCurr]);
+    prevIndGive = logical([apertureInfo.beam(optInd).timeFacPrev]);
+    nextIndGive = logical([apertureInfo.beam(optInd).timeFacNext]);
+    
+    timeFacCurr = [apertureInfo.beam(optInd).timeFacCurr]';
+    timeFacCurr(~currIndGive) = [];
+    timeFacPrev = [apertureInfo.beam(optInd).timeFacPrev]';
+    timeFacPrev(~prevIndGive) = [];
+    timeFacNext = [apertureInfo.beam(optInd).timeFacNext]';
+    timeFacNext(~nextIndGive) = [];
+    
+    currInd = [apertureInfo.beam(optInd).IandFTimeInd];
+    currInd = currInd(2:3:end);
+    prevInd = currInd(2:end)-1;
+    prevInd(prevInd == currInd(1:(end-1))) = [];
+    nextInd = currInd(1:(end-1))+1;
+    nextInd(nextInd == currInd(2:end)) = [];
+    
+    timeIandFDoseBorderAngles = zeros(apertureInfo.numIandFBeam-1,1);
+    timeIandFDoseBorderAngles(currInd) = timeIandFDoseBorderAngles(currInd) + timeOptBorderAngles(currIndGive).*timeFacCurr;
+    timeIandFDoseBorderAngles(prevInd) = timeIandFDoseBorderAngles(prevInd) + timeOptBorderAngles(prevIndGive).*timeFacPrev;
+    timeIandFDoseBorderAngles(nextInd) = timeIandFDoseBorderAngles(nextInd) + timeOptBorderAngles(nextIndGive).*timeFacNext;
+    
+    % values of average leaf speeds of optimized gantry angles
+    c_lfspd = reshape([abs(diff(reshape(IandFleftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,[]),1,2)) ...
+        abs(diff(reshape(IandFrightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,[]),1,2))]./ ...
+        repmat(timeIandFDoseBorderAngles',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeIandFDoseBorderAngles),1);
+    
+    % values of doserate (MU/sec) between optimized gantry angles
+    weights = apertureInfoVec(1:apertureInfo.totalNumOfShapes);
+    timeOptDoseBorderAngles = timeOptBorderAngles.*timeFacCurr;
+    c_dosrt = apertureInfo.weightToMU.*weights./timeOptDoseBorderAngles;
+    
+    % concatenate
+    c = [c_dao; c_lfspd; c_dosrt; c_dos];
+    %}
 end
 

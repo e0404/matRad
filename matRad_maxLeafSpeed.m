@@ -35,11 +35,22 @@ leftLeafPos  = apertureInfoVec([1:apertureInfo.totalNumOfLeafPairs]+apertureInfo
 rightLeafPos = apertureInfoVec(1+apertureInfo.totalNumOfLeafPairs+apertureInfo.totalNumOfShapes:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2);
 
 % values of time differences of optimized gantry angles
-c_rottime = apertureInfoVec((1+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):end);
+timeOptBorderAngles = apertureInfoVec((1+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):end);
+
+i = sort(repmat(1:(apertureInfo.totalNumOfShapes-1),1,2));
+j = sort(repmat(1:apertureInfo.totalNumOfShapes,1,2));
+j(1) = [];
+j(end) = [];
+
+timeFac = [apertureInfo.beam.timeFac]';
+timeFac(timeFac == 0) = [];
+
+timeFacMatrix = sparse(i,j,timeFac,(apertureInfo.totalNumOfShapes-1),apertureInfo.totalNumOfShapes);
+timeBNOptAngles = timeFacMatrix*timeOptBorderAngles;
 
 % values of leaf speeds of optimized gantry angles
-leftLeafSpeed = abs(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2))./repmat(c_rottime',apertureInfo.beam(1).numOfActiveLeafPairs,1);
-rightLeafSpeed = abs(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2))./repmat(c_rottime',apertureInfo.beam(1).numOfActiveLeafPairs,1);
+leftLeafSpeed = abs(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,[]),1,2))./repmat(timeBNOptAngles',apertureInfo.beam(1).numOfActiveLeafPairs,1);
+rightLeafSpeed = abs(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,[]),1,2))./repmat(timeBNOptAngles',apertureInfo.beam(1).numOfActiveLeafPairs,1);
 
 % values of max leaf speeds
 leftMaxLeafSpeed = max(leftLeafSpeed,[],1);
@@ -47,24 +58,26 @@ rightMaxLeafSpeed = max(rightLeafSpeed,[],1);
 maxLeafSpeed = max([leftMaxLeafSpeed; rightMaxLeafSpeed],[],1);
 
 % enter into apertureInfo
-l = 0;
+l = 1;
 maxMaxLeafSpeed = 0;
 for i = 1:size(apertureInfo.beam,2)
-    if apertureInfo.beam(i).numOfShapes && l < apertureInfo.totalNumOfShapes-1
-        l = l+1;
-        apertureInfo.beam(i).maxLeafSpeed = maxLeafSpeed(l);
-        if maxLeafSpeed(l) >= maxMaxLeafSpeed
+    if apertureInfo.beam(i).optimizeBeam
+        
+        if l == 1
+            apertureInfo.beam(i).maxLeafSpeed = maxLeafSpeed(l);
+        elseif l == apertureInfo.totalNumOfShapes
+            apertureInfo.beam(i).maxLeafSpeed = maxLeafSpeed(l-1);
+        else
+            apertureInfo.beam(i).maxLeafSpeed = maxLeafSpeed(l-1)*apertureInfo.beam(1).timeFac(1)+maxLeafSpeed(l)*apertureInfo.beam(1).timeFac(2);
+        end
+        
+        
+        if l < apertureInfo.totalNumOfShapes && maxLeafSpeed(l) >= maxMaxLeafSpeed
             maxMaxLeafSpeed = maxLeafSpeed(l);
         end
+        l = l+1;
     end
-    
 end
 
 apertureInfo.maxLeafSpeed = maxMaxLeafSpeed;
-
-%{
-c_lfspd = reshape([abs(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)) ...
-    abs(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2))]./ ...
-    repmat(c_rottime',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(c_rottime),1);
-%}
 

@@ -48,7 +48,7 @@ apertureInfo = matRad_maxLeafSpeed(apertureInfo);
 doInterp = 0;
 
 for i = 1:size(apertureInfo.beam,2)
-    if apertureInfo.beam(i).numOfShapes ~= 0 && apertureInfo.beam(i).gantryAngle ~= pln.optGantryAngles(end)
+    if apertureInfo.beam(i).optimizeBeam
         
         %all of these should be greater than 1, since DAO respects the
         %constraints
@@ -73,12 +73,13 @@ for i = 1:size(apertureInfo.beam,2)
         apertureInfo.beam(i).MURate = factor*apertureInfo.beam(i).MURate;
         apertureInfo.beam(i).maxLeafSpeed = factor*apertureInfo.beam(i).maxLeafSpeed;
         apertureInfo.beam(i).gantryRot = factor*apertureInfo.beam(i).gantryRot;
+        apertureInfo.beam(i).time = apertureInfo.beam(i).time/factor;
         
         factorMURate = pln.doseRateCst(1)/apertureInfo.beam(i).MURate;
         
         if factorMURate > 1
-            apertureInfo.beam(i).MURate = 1.10*factorMURate*apertureInfo.beam(i).MURate;
-            apertureInfo.beam(i).shape(1).weight = 1.10*factorMURate*apertureInfo.beam(i).shape(1).weight;
+            apertureInfo.beam(i).MURate = factorMURate*apertureInfo.beam(i).MURate;
+            apertureInfo.beam(i).shape(1).weight = factorMURate*apertureInfo.beam(i).shape(1).weight;
             
             doInterp = 1;
         end

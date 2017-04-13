@@ -68,7 +68,9 @@ for i=1:numOfBeams
     maxX = apertureInfo.beam(i).MLCWindow(2);
     
     %get maximum weight
-    wMax = max([apertureInfo.beam(i).shape(:).weight]);
+    if numOfShapes;
+        wMax = max([apertureInfo.beam(i).shape(:).weight]);
+    end
     if strcmp(mode,'leafNum')
         
         % get the active leaf Pairs
@@ -143,7 +145,7 @@ for i=1:numOfBeams
         
     end
     
-    
+    %{
     frame = getframe;
     im = frame2im(frame);
     [A,map] = rgb2ind(im,256);
@@ -153,6 +155,7 @@ for i=1:numOfBeams
     else
         imwrite(A,map,fname,'gif','WriteMode','append','DelayTime',1);
     end
+    %}
     
     
     

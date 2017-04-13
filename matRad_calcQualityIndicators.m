@@ -1,4 +1,4 @@
-function result = matRad_calcQualityIndicators(result,cst,pln,refGy,refVol)
+function result = matRad_calcQualityIndicators(result,cst,pln,refGy,refVol,loud)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad QI calculation
 % 
@@ -43,8 +43,13 @@ if sum(strcmp(fieldnames(result),'RBExDose')) > 0 && ~strcmp(pln.bioOptimization
 end
     
 if(nargin < 4)
-    refVol = [2 5 98 95];
+    refVol = [2 5 10 20 90 95 98 99];
     refGy = linspace(0,max(result.(sQuantity)(:)),6);
+    loud = 0;
+end
+
+if nargin < 6
+    loud = 0;
 end
 
 % calculate QIs per VOI
@@ -87,13 +92,18 @@ for runVoi = 1:size(cst,1)
         % if current voi is a target -> calculate homogeneity and conformity
         if strcmp(cst{runVoi,3},'TARGET') > 0      
 
-            % loop over target objectives and get the lowest dose objective 
-            referenceDose = inf;
-            for runObjective = 1:numel(cst{runVoi,6})
-               % check if this is an objective that penalizes underdosing 
-               if strcmp(cst{runVoi,6}(runObjective).type,'square deviation') > 0 || strcmp(cst{runVoi,6}(runObjective).type,'square underdosing') > 0
-                   referenceDose = (min(cst{runVoi,6}(runObjective).dose,referenceDose))/pln.numOfFractions;
-               end            
+            if ~(isfield(pln,'DRx') && any(pln.RxStruct == runVoi))
+                % loop over target objectives and get the lowest dose objective
+                referenceDose = inf;
+                for runObjective = 1:numel(cst{runVoi,6})
+                    % check if this is an objective that penalizes underdosing
+                    if strcmp(cst{runVoi,6}(runObjective).type,'square deviation') > 0 || strcmp(cst{runVoi,6}(runObjective).type,'square underdosing') > 0
+                        %referenceDose = (min(cst{runVoi,6}(runObjective).dose,referenceDose))/pln.numOfFractions;
+                        referenceDose = (min(cst{runVoi,6}(runObjective).dose/pln.numOfFractions,referenceDose));
+                    end
+                end
+            else
+                referenceDose = pln.DRx(pln.RxStruct == runVoi)/pln.numOfFractions;
             end
 
             if referenceDose == inf 
@@ -102,8 +112,8 @@ for runVoi = 1:size(cst,1)
  
                 StringReferenceDose = regexprep(num2str(round(referenceDose*100)/100),'\D','_');
                 % Conformity Index, fieldname contains reference dose
-                VTarget95 = sum(doseInVoi >= 0.95*referenceDose); % number of target voxels recieving dose >= 0.95 dPres
-                VTreated95 = sum(result.(sQuantity)(:) >= 0.95*referenceDose);  %number of all voxels recieving dose >= 0.95 dPres ("treated volume")
+                VTarget95 = sum(doseInVoi >= referenceDose); % number of target voxels recieving dose >= 0.95 dPres
+                VTreated95 = sum(result.(sQuantity)(:) >= referenceDose);  %number of all voxels recieving dose >= 0.95 dPres ("treated volume")
                 QI(runVoi).(['CI_' StringReferenceDose 'Gy']) = VTarget95^2/(numOfVoxels * VTreated95); 
 
                 % Homogeneity Index (one out of many), fieldname contains reference dose        
@@ -113,9 +123,13 @@ for runVoi = 1:size(cst,1)
                                    QI(runVoi).(['CI_' StringReferenceDose 'Gy']),QI(runVoi).(['HI_' StringReferenceDose 'Gy']),referenceDose);
             end
         end
-        fprintf('%s\n',voiPrint);
-    else    
-    fprintf('%3d %20s - No dose information.\n',cst{runVoi,1},cst{runVoi,2});
+        if loud
+            fprintf('%s\n',voiPrint);
+        end
+    else
+        if loud
+            fprintf('%3d %20s - No dose information.\n',cst{runVoi,1},cst{runVoi,2});
+        end
     end
     
 end

@@ -49,6 +49,10 @@ w = zeros(apertureInfo.totalNumOfBixels,1);
 updatedInfo = apertureInfo;
 
 updatedInfo.apertureVector = apertureInfoVect;
+if updatedInfo.VMAT
+    IandFapertureVector = apertureInfo.IandFapertureVector;
+end
+
 
 shapeInd = 1;
 
@@ -57,11 +61,124 @@ shapeInd = 1;
 %change this to eliminate the first unused entries (which pertain to the
 %weights of the aprtures, and to make the bixelIndices work when doing VMAT
 %(and we need to potentially interpolate between control points)
-indVect = NaN*ones(2*apertureInfo.realTotalNumOfLeafPairs,1);
+indVect = NaN*ones(2*apertureInfo.doseTotalNumOfLeafPairs,1);
 offset = 0;
 
 % helper function to cope with numerical instabilities through rounding
 round2 = @(a,b) round(a*10^b)/10^b;
+
+
+
+if updatedInfo.VMAT && (touchingFlag || updatedInfo.totalNumOfShapes ~= numel(updatedInfo.beam) || ~updatedInfo.dynamic)
+    %We run this if we want to fix instances of leaf touching, whereby tips
+    %were sent to the centre automatically (touchingFlag = 1) and there are 
+    %some interpolated gantry angles, OR we do not want
+    %dynamic dose calc
+    
+    %Interpolate segment between adjacent optimized gantry angles.
+    % Include in updatedInfo, but NOT the vector (since these are not
+    % optimized by DAO).  Also update bixel weights to include these.
+    
+    %Only collect this data once, to save time
+    dimZ = updatedInfo.beam(1).numOfActiveLeafPairs;
+    leftLeafPoss = nan(dimZ,updatedInfo.totalNumOfShapes); %Each non-interpolated beam should have 1 and only 1 shape
+    rightLeafPoss = nan(dimZ,updatedInfo.totalNumOfShapes);
+    optGantryAngles = zeros(1,updatedInfo.totalNumOfShapes);
+    
+    initBorderGantryAngles = unique([updatedInfo.beam.initAngleBorders]);
+    initBorderLeftLeafPoss = nan(dimZ,numel(initBorderGantryAngles));
+    
+    l = 1;
+    m = 1;
+    for k = 1:numel(updatedInfo.beam)
+        if updatedInfo.beam(k).numOfShapes
+            leftLeafPoss(:,l) = updatedInfo.beam(k).shape(1).leftLeafPos;
+            rightLeafPoss(:,l) = updatedInfo.beam(k).shape(1).rightLeafPos;
+            %leftLeafPoss(:,l) = apertureInfoVect(vectorIx);
+            %rightLeafPoss(:,l) = apertureInfoVect(vectorIx+updatedInfo.totalNumOfLeafPairs);
+            optGantryAngles(l) = updatedInfo.beam(k).gantryAngle;
+            
+            l = l+1;
+        end
+        
+        %Only important when cleaning up instances of opposing
+        %leaves touching.
+        if updatedInfo.beam(k).initializeBeam
+            if updatedInfo.beam(k).leafDir == 1
+                %This means that the current arc sector is moving
+                %in the normal direction (L-R).
+                initBorderLeftLeafPoss(:,m) = updatedInfo.beam(k).lim_l;
+                
+            elseif updatedInfo.beam(k).leafDir == -1
+                %This means that the current arc sector is moving
+                %in the reverse direction (R-L).
+                initBorderLeftLeafPoss(:,m) = updatedInfo.beam(k).lim_r;
+            end
+            m = m+1;
+            
+            %end of last sector
+            if m == numel(initBorderGantryAngles)
+                %This gives ending angle of the current sector.
+                if updatedInfo.beam(k).leafDir == 1
+                    %This means that the current arc sector is moving
+                    %in the normal direction (L-R), so the next arc
+                    %sector is moving opposite
+                    initBorderLeftLeafPoss(:,m) = updatedInfo.beam(k).lim_r;
+                elseif updatedInfo.beam(k).leafDir == -1
+                    %This means that the current arc sector is moving
+                    %in the reverse direction (R-L), so the next
+                    %arc sector is moving opposite
+                    initBorderLeftLeafPoss(:,m) = updatedInfo.beam(k).lim_l;
+                end
+            end
+        end
+    end
+    
+    %Any time leaf pairs are touching, they are set to
+    %be in the middle of the field.  Instead, move them
+    %so that they are still touching, but that they
+    %follow the motion of the MLCs across the field.
+    for row = 1:dimZ
+        
+        touchingInd = find(leftLeafPoss(row,:) == rightLeafPoss(row,:));
+        
+        if ~exist('leftLeafPossAug','var')
+            %leftLeafPossAug = [reshape(mean([leftLeafPoss(:) rightLeafPoss(:)],2),size(leftLeafPoss)),borderLeftLeafPoss];
+            leftLeafPossAugTemp = reshape(mean([leftLeafPoss(:) rightLeafPoss(:)],2),size(leftLeafPoss));
+            
+            numRep = 0;
+            repInd = nan(size(optGantryAngles));
+            for j = 1:numel(optGantryAngles)
+                if any(optGantryAngles(j) == initBorderGantryAngles)
+                    %replace leaf positions with the ones at
+                    %the borders (eliminates repetitions)
+                    numRep = numRep+1;
+                    %these are the gantry angles that are
+                    %repeated
+                    repInd(numRep) = j;
+                    
+                    delInd = find(optGantryAngles(j) == initBorderGantryAngles);
+                    leftLeafPossAugTemp(:,j) = initBorderLeftLeafPoss(:,delInd);
+                    initBorderLeftLeafPoss(:,delInd) = [];
+                    initBorderGantryAngles(delInd) = [];
+                end
+            end
+            repInd(isnan(repInd)) = [];
+            leftLeafPossAug = [leftLeafPossAugTemp,initBorderLeftLeafPoss];
+            gantryAnglesAug = [optGantryAngles,initBorderGantryAngles];
+        end
+        notTouchingInd = [setdiff(1:updatedInfo.totalNumOfShapes,touchingInd),repInd];
+        notTouchingInd = unique(notTouchingInd);
+        %make sure to include the repeated ones in the
+        %interpolation!
+        
+        notTouchingIndAug = [notTouchingInd,(1+numel(optGantryAngles)):(numel(optGantryAngles)+numel(initBorderGantryAngles))];
+        
+        leftLeafPoss(row,touchingInd) = interp1(gantryAnglesAug(notTouchingIndAug),leftLeafPossAug(row,notTouchingIndAug),optGantryAngles(touchingInd));
+        rightLeafPoss(row,touchingInd) = leftLeafPoss(row,touchingInd);
+    end
+end
+
 
 
 %% update the shapeMaps
@@ -81,190 +198,25 @@ for i = 1:numel(updatedInfo.beam)
     
     if updatedInfo.beam(i).numOfShapes ~= 0 %numOfShapes is 0 for interpolated beams!
         
-        %This should only occur for VMAT subchildren angles, i.e., not
-        %independently optimized
-        %Interpolate this segment between adjacent optimized gantry angles.
-        % Include in updatedInfo, but NOT the vector (since these are not
-        % optimized by DAO).  Also update bixel weights to include these.
-        if ~exist('leftLeafPoss','var') && isfield(apertureInfo,'gantryRotCst')
-            
-            %Only collect this data once, to save time
-            dimZ = updatedInfo.beam(1).numOfActiveLeafPairs;
-            leftLeafPoss = nan(dimZ,updatedInfo.totalNumOfShapes); %Each non-interpolated beam should have 1 and only 1 shape
-            rightLeafPoss = nan(dimZ,updatedInfo.totalNumOfShapes);
-            optWeights = zeros(1,updatedInfo.totalNumOfShapes);
-            nextOptTime = zeros(1,updatedInfo.totalNumOfShapes-1);
-            optGantryAngles = zeros(1,updatedInfo.totalNumOfShapes);
-            optGantryInd = zeros(1,updatedInfo.totalNumOfShapes);
-            gantryAngles = [updatedInfo.beam(:).gantryAngle];
-            
-            sectorBorderGantryAngles = nan(1,numel(updatedInfo.beam));
-            borderLeftLeafPoss = nan(dimZ,numel(updatedInfo.beam)+2);
-            
-            l = 1;
-            m = 1;
-            for k = 1:numel(updatedInfo.beam)
-                if updatedInfo.beam(k).numOfShapes
-                    vectorIx     = updatedInfo.beam(k).shape(1).vectorOffset + ([1:dimZ]-1);
-                    leftLeafPoss(:,l) = apertureInfoVect(vectorIx);
-                    rightLeafPoss(:,l) = apertureInfoVect(vectorIx+updatedInfo.totalNumOfLeafPairs);
-                    optWeights(l) = apertureInfoVect(l);
-                    optGantryAngles(l) = updatedInfo.beam(k).gantryAngle;
-                    optGantryInd(l) = k;
-                    if l <= updatedInfo.totalNumOfShapes-1
-                        nextOptTime(l) = apertureInfoVect(updatedInfo.totalNumOfShapes+updatedInfo.totalNumOfLeafPairs*2+l);
-                    end
-                    if l~=1
-                        ind = find(gantryAngles == optGantryAngles(l-1));
-                        
-                        updatedInfo.beam(ind).MU = optWeights(l-1)*updatedInfo.weightToMU;
-                        updatedInfo.beam(ind).time = nextOptTime(l-1);
-                        updatedInfo.beam(ind).gantryRot = (optGantryAngles(l)-optGantryAngles(l-1))/updatedInfo.beam(ind).time;
-                        updatedInfo.beam(ind).MURate = updatedInfo.beam(ind).MU*updatedInfo.beam(ind).gantryRot/(gantryAngles(ind+1)-gantryAngles(ind));
-                        
-                        if l == numel(updatedInfo.beam)
-                            %this is for the last optimized gantry angle.
-                            %it has the same rotation speed as the last
-                            %angle, and a slightly modified MU rate (scaled
-                            %by the weight of the beam)
-                            updatedInfo.beam(l).MU = optWeights(l)*updatedInfo.weightToMU;
-                            updatedInfo.beam(l).gantryRot = updatedInfo.beam(ind).gantryRot;
-                            updatedInfo.beam(l).MURate = updatedInfo.beam(ind).MURate*optWeights(l-1)/optWeights(l-2);
-                            
-                            %optWeights(l-1)*updatedInfo.weightToMU*updatedInfo.beam(ind).gantryRot/(gantryAngles(ind)-gantryAngles(ind-1));
-                        end
-                    end
-                    
-                    l = l+1;
-                end
-                
-                if touchingFlag
-                    %Only important when cleaning up instances of opposing
-                    %leaves touching.
-                    if ~isempty(updatedInfo.beam(k).leafDir)
-                        %This gives starting angle of the current sector.
-                        sectorBorderGantryAngles(m) = updatedInfo.beam(k).borderAngles(1);
-                        
-                        if updatedInfo.beam(k).leafDir == 1
-                            %This means that the current arc sector is moving
-                            %in the normal direction (L-R).
-                            borderLeftLeafPoss(:,m) = updatedInfo.beam(k).lim_l;
-                        elseif updatedInfo.beam(k).leafDir == -1
-                            %This means that the current arc sector is moving
-                            %in the reverse direction (R-L).
-                            borderLeftLeafPoss(:,m) = updatedInfo.beam(k).lim_r;
-                        end
-                        m = m+1;
-                        
-                        %end of last sector
-                        if updatedInfo.beam(k).borderAngles(2) == 360
-                            %This gives ending angle of the current sector.
-                            sectorBorderGantryAngles(m) = updatedInfo.beam(k).borderAngles(2); %starting angle of current sector
-                            if updatedInfo.beam(k).leafDir == 1
-                                %This means that the current arc sector is moving
-                                %in the normal direction (L-R), so the next arc
-                                %sector is moving opposite
-                                borderLeftLeafPoss(:,m) = updatedInfo.beam(k).lim_r;
-                            elseif updatedInfo.beam(k).leafDir == -1
-                                %This means that the current arc sector is moving
-                                %in the reverse direction (R-L), so the next
-                                %arc sector is moving opposite
-                                borderLeftLeafPoss(:,m) = updatedInfo.beam(k).lim_l;
-                            end
-                        end
-                    end
-                end
-            end
-            
-            
-            sectorBorderGantryAngles(isnan(sectorBorderGantryAngles)) = [];
-            borderLeftLeafPoss(isnan(borderLeftLeafPoss)) = [];
-            borderLeftLeafPoss = reshape(borderLeftLeafPoss,dimZ,[]);
-            
-            if touchingFlag
-                %Any time leaf pairs are touching, they are set to
-                %be in the middle of the field.  Instead, move them
-                %so that they are still touching, but that they
-                %follow the motion of the MLCs across the field.
-                for row = 1:dimZ
-                    
-                    touchingInd = find(leftLeafPoss(row,:) == rightLeafPoss(row,:) & leftLeafPoss(row,:) == 0*leftLeafPoss(row,:));
-                    
-                    if numel(touchingInd) == size(leftLeafPoss,2)
-                        %Leaves in this row are touching for all gantry angles/segments.
-                        %Set leaf positions to centre of mass position, so that
-                        %they follow the trajectory of the rest of the leaves.
-                        %Since all leaves are sliding window, COM is also
-                        %sliding window
-                        for col = touchingInd
-                            indTouching = find(leftLeafPoss(:,col) == rightLeafPoss(:,col));
-                            notIndTouching = setdiff(1:dimZ,indTouching);
-                            leftLeafPoss(row,col) = mean([mean(leftLeafPoss(notIndTouching,col),1),mean(rightLeafPoss(notIndTouching,col),1)]);
-                            rightLeafPoss(row,col) = leftLeafPoss(row,col);
-                        end
-                    elseif ~isempty(touchingInd)
-                        %Leaves are only touching for some gantry
-                        %angles/segments.  Interpolate leaf positions between
-                        %non-touching segments, to minimize leaf travel, taking
-                        %care of any instances of leaf touching at border
-                        %angles (end of arc sector)
-                        
-                        if ~exist('leftLeafPossAug','var')
-                            %leftLeafPossAug = [reshape(mean([leftLeafPoss(:) rightLeafPoss(:)],2),size(leftLeafPoss)),borderLeftLeafPoss];
-                            leftLeafPossAugTemp = reshape(mean([leftLeafPoss(:) rightLeafPoss(:)],2),size(leftLeafPoss));
-                            
-                            numRep = 0;
-                            repInd = nan(size(optGantryAngles));
-                            for j = 1:numel(optGantryAngles)
-                                if any(optGantryAngles(j) == sectorBorderGantryAngles)
-                                    %replace leaf positions with the ones at
-                                    %the borders (eliminates repetitions)
-                                    numRep = numRep+1;
-                                    %these are the gantry angles that are
-                                    %repeated
-                                    repInd(numRep) = j;
-                                    
-                                    delInd = find(optGantryAngles(j) == sectorBorderGantryAngles);
-                                    leftLeafPossAugTemp(:,j) = borderLeftLeafPoss(:,delInd);
-                                    borderLeftLeafPoss(:,delInd) = [];
-                                    sectorBorderGantryAngles(delInd) = [];
-                                end
-                            end
-                            repInd(isnan(repInd)) = [];
-                            leftLeafPossAug = [leftLeafPossAugTemp,borderLeftLeafPoss];
-                            gantryAnglesAug = [optGantryAngles,sectorBorderGantryAngles];
-                            
-                            notTouchingInd = [setdiff(1:updatedInfo.totalNumOfShapes,touchingInd),repInd];
-                            notTouchingInd = unique(notTouchingInd);
-                            %make sure to include the repeated ones in the
-                            %interpolation!
-                            
-                            notTouchingIndAug = [notTouchingInd,(1+numel(optGantryAngles)):(numel(optGantryAngles)+numel(sectorBorderGantryAngles))];
-                            
-                        end
-                        
-                        leftLeafPoss(row,touchingInd) = interp1(gantryAnglesAug(notTouchingIndAug),leftLeafPossAug(row,notTouchingIndAug),optGantryAngles(touchingInd));
-                        rightLeafPoss(row,touchingInd) = leftLeafPoss(row,touchingInd);
-                        
-                    end
-                end
-            end
-        end
-        
         % loop over all shapes
         for j = 1:updatedInfo.beam(i).numOfShapes
             % update the shape weight
             updatedInfo.beam(i).shape(j).weight = apertureInfoVect(shapeInd);
             
+            if updatedInfo.VMAT
+                updatedInfo.beam(i).MU = updatedInfo.beam(i).shape(j).weight*updatedInfo.weightToMU;
+                updatedInfo.beam(i).time = apertureInfoVect(updatedInfo.totalNumOfShapes+updatedInfo.totalNumOfLeafPairs*2+shapeInd);
+                updatedInfo.beam(i).gantryRot = updatedInfo.beam(i).optAngleBordersDiff/updatedInfo.beam(i).time;
+                updatedInfo.beam(i).MURate = updatedInfo.beam(i).MU*updatedInfo.beam(i).gantryRot/updatedInfo.beam(i).doseAngleBordersDiff;
+            end
+            
             % get dimensions of 2d matrices that store shape/bixel information
             n = apertureInfo.beam(i).numOfActiveLeafPairs;
             
-            
-            if isfield(apertureInfo,'gantryRotCst')
+            if touchingFlag
                 %Perform interpolation
-                currGantryAngle = updatedInfo.beam(i).gantryAngle;
-                leftLeafPos = (interp1(optGantryAngles',leftLeafPoss',currGantryAngle))';
-                rightLeafPos = (interp1(optGantryAngles',rightLeafPoss',currGantryAngle))';
+                leftLeafPos = (interp1(optGantryAngles',leftLeafPoss',updatedInfo.beam(i).gantryAngle))';
+                rightLeafPos = (interp1(optGantryAngles',rightLeafPoss',updatedInfo.beam(i).gantryAngle))';
                 
                 %re-update vector in case anything changed from fixing the leaf
                 %touching
@@ -276,6 +228,36 @@ for i = 1:numel(updatedInfo.beam)
                 vectorIx     = updatedInfo.beam(i).shape(j).vectorOffset + ([1:n]-1);
                 leftLeafPos  = apertureInfoVect(vectorIx);
                 rightLeafPos = apertureInfoVect(vectorIx+apertureInfo.totalNumOfLeafPairs);
+            end
+            
+            if updatedInfo.VMAT && ~updatedInfo.dynamic
+                %not doing dynamic
+                
+                % extract left and right leaf positions from shape vector
+                vectorIx     = updatedInfo.beam(i).shape(j).vectorOffset + ([1:n]-1);
+                leftLeafPos  = apertureInfoVect(vectorIx);
+                rightLeafPos = apertureInfoVect(vectorIx+apertureInfo.totalNumOfLeafPairs);
+                
+                %interpolate initial and final leaf positions
+                if apertureInfo.beam(i).doseAngleOpt(1)
+                    %initial
+                    IandFvectorIx = updatedInfo.beam(i).shape(j).IandFvectorOffset(1) + ([1:n]-1);
+                    updatedInfo.beam(i).shape(j).leftLeafPos_I = (interp1(optGantryAngles',leftLeafPoss',updatedInfo.beam(i).doseAngleBorders(1)))';
+                    updatedInfo.beam(i).shape(j).rightLeafPos_I = (interp1(optGantryAngles',rightLeafPoss',updatedInfo.beam(i).doseAngleBorders(1)))';
+                    
+                    IandFapertureVector(IandFvectorIx) = updatedInfo.beam(i).shape(j).leftLeafPos_I;
+                    IandFapertureVector(IandFvectorIx+apertureInfo.IandFtotalNumOfLeafPairs) = updatedInfo.beam(i).shape(j).rightLeafPos_I;
+                end
+                
+                if apertureInfo.beam(i).doseAngleOpt(2)
+                    %final
+                    IandFvectorIx = updatedInfo.beam(i).shape(j).IandFvectorOffset(2) + ([1:n]-1);
+                    updatedInfo.beam(i).shape(j).leftLeafPos_F = (interp1(optGantryAngles',leftLeafPoss',updatedInfo.beam(i).doseAngleBorders(2)))';
+                    updatedInfo.beam(i).shape(j).rightLeafPos_F = (interp1(optGantryAngles',rightLeafPoss',updatedInfo.beam(i).doseAngleBorders(2)))';
+                    
+                    IandFapertureVector(IandFvectorIx) = updatedInfo.beam(i).shape(j).leftLeafPos_F;
+                    IandFapertureVector(IandFvectorIx+apertureInfo.IandFtotalNumOfLeafPairs) = updatedInfo.beam(i).shape(j).rightLeafPos_F;
+                end
             end
             
             % update information in shape structure
@@ -329,7 +311,7 @@ for i = 1:numel(updatedInfo.beam)
             
             % store information in index vector for gradient calculation
             indVect(offset+[1:n]) = bixelIndLeftLeaf;
-            indVect(offset+[1:n]+apertureInfo.realTotalNumOfLeafPairs) = bixelIndRightLeaf;
+            indVect(offset+[1:n]+apertureInfo.doseTotalNumOfLeafPairs) = bixelIndRightLeaf;
             offset = offset+n;
             
             % calculate opening fraction for every bixel in shape to construct
@@ -357,170 +339,24 @@ for i = 1:numel(updatedInfo.beam)
     else
         %This should only occur for VMAT subchildren angles, i.e., not
         %independently optimized
-        %Interpolate this segment between adjacent optimized gantry angles.
-        % Include in updatedInfo, but NOT the vector (since these are not
-        % optimized by DAO).  Also update bixel weights to include these.
-        if ~exist('leftLeafPoss','var')
-            
-            %Only collect this data once, to save time
-            dimZ = updatedInfo.beam(1).numOfActiveLeafPairs;
-            leftLeafPoss = nan(dimZ,updatedInfo.totalNumOfShapes); %Each non-interpolated beam should have 1 and only 1 shape
-            rightLeafPoss = nan(dimZ,updatedInfo.totalNumOfShapes);
-            optWeights = zeros(1,updatedInfo.totalNumOfShapes);
-            nextOptTime = zeros(1,updatedInfo.totalNumOfShapes-1);
-            optGantryAngles = zeros(1,updatedInfo.totalNumOfShapes);
-            optGantryInd = zeros(1,updatedInfo.totalNumOfShapes);
-            gantryAngles = [updatedInfo.beam(:).gantryAngle];
-            
-            sectorBorderGantryAngles = nan(1,numel(updatedInfo.beam));
-            borderLeftLeafPoss = nan(dimZ,numel(updatedInfo.beam));
-            
-            l = 1;
-            m = 1;
-            for k = 1:numel(updatedInfo.beam)
-                if updatedInfo.beam(k).numOfShapes
-                    vectorIx     = updatedInfo.beam(k).shape(1).vectorOffset + ([1:dimZ]-1);
-                    leftLeafPoss(:,l) = apertureInfoVect(vectorIx);
-                    rightLeafPoss(:,l) = apertureInfoVect(vectorIx+updatedInfo.totalNumOfLeafPairs);
-                    optWeights(l) = apertureInfoVect(l);
-                    optGantryAngles(l) = updatedInfo.beam(k).gantryAngle;
-                    optGantryInd(l) = k;
-                    if l <= updatedInfo.totalNumOfShapes-1
-                        nextOptTime(l) = apertureInfoVect(updatedInfo.totalNumOfShapes+updatedInfo.totalNumOfLeafPairs*2+l);
-                    end
-                    if l~=1
-                        ind = find(gantryAngles == optGantryAngles(l-1));
-                        if ind ~= numel(updatedInfo.beam)
-                            updatedInfo.beam(ind).MU = optWeights(l-1)*updatedInfo.weightToMU;
-                            updatedInfo.beam(ind).time = nextOptTime(l-1);
-                            updatedInfo.beam(ind).gantryRot = (optGantryAngles(l)-optGantryAngles(l-1))/updatedInfo.beam(ind).time;
-                            updatedInfo.beam(ind).MURate = updatedInfo.beam(ind).MU*updatedInfo.beam(ind).gantryRot/(gantryAngles(ind+1)-gantryAngles(ind));
-                            lastInd = ind;
-                        else
-                            %this is for the last optimized gantry angle.
-                            %it has the same rotation speed as the last
-                            %angle, and a slightly modified MU rate (scaled
-                            %by the weight of the beam)
-                            updatedInfo.beam(ind).MU = optWeights(l-1)*updatedInfo.weightToMU;
-                            updatedInfo.beam(ind).gantryRot = updatedInfo.beam(lastInd).gantryRot;
-                            updatedInfo.beam(ind).MURate = updatedInfo.beam(ind).MURate*optWeights(l-1)/optWeights(l-2);
-                            
-                            %optWeights(l-1)*updatedInfo.weightToMU*updatedInfo.beam(ind).gantryRot/(gantryAngles(ind)-gantryAngles(ind-1));
-                        end
-                    end
-                    
-                    l = l+1;
-                end
-                
-                if touchingFlag
-                    %Only important when cleaning up instances of opposing
-                    %leaves touching.
-                    if ~isempty(updatedInfo.beam(k).leafDir)
-                        %This gives starting angle of the current sector.
-                        sectorBorderGantryAngles(m) = updatedInfo.beam(k).borderAngles(1);
-                        if updatedInfo.beam(k).leafDir == 1
-                            %This means that the current arc sector is moving
-                            %in the normal direction (L-R).
-                            borderLeftLeafPoss(:,m) = updatedInfo.beam(k).lim_l;
-                        elseif updatedInfo.beam(k).leafDir == -1
-                            %This means that the current arc sector is moving
-                            %in the reverse direction (R-L).
-                            borderLeftLeafPoss(:,m) = updatedInfo.beam(k).lim_r;
-                        end
-                        m = m+1;
-                        
-                        %end of last sector
-                        if updatedInfo.beam(k).borderAngles(2) == 360
-                            %This gives ending angle of the current sector.
-                            sectorBorderGantryAngles(m) = updatedInfo.beam(k).borderAngles(2); %starting angle of current sector
-                            if updatedInfo.beam(k).leafDir == 1
-                                %This means that the current arc sector is moving
-                                %in the normal direction (L-R), so the next arc
-                                %sector is moving opposite
-                                borderLeftLeafPoss(:,m) = updatedInfo.beam(k).lim_r;
-                            elseif updatedInfo.beam(k).leafDir == -1
-                                %This means that the current arc sector is moving
-                                %in the reverse direction (R-L), so the next
-                                %arc sector is moving opposite
-                                borderLeftLeafPoss(:,m) = updatedInfo.beam(k).lim_l;
-                            end
-                        end
-                    end
-                end
-            end
-            
-            
-            sectorBorderGantryAngles(isnan(sectorBorderGantryAngles)) = [];
-            borderLeftLeafPoss(isnan(borderLeftLeafPoss)) = [];
-            borderLeftLeafPoss = reshape(borderLeftLeafPoss,dimZ,[]);
-            
-            if touchingFlag
-                %Any time leaf pairs are touching, they are set to
-                %be in the middle of the field.  Instead, move them
-                %so that they are still touching, but that they
-                %follow the motion of the MLCs across the field.
-                for row = 1:dimZ
-                    
-                    touchingInd = find(leftLeafPoss(row,:) == rightLeafPoss(row,:) && leftLeafPoss(row,:) == 0*leftLeafPoss(row,:));
-                    
-                    if numel(touchingInd) == size(leftLeafPoss,2)
-                        %Leaves in this row are touching for all gantry angles/segments.
-                        %Set leaf positions to centre of mass position, so that
-                        %they follow the trajectory of the rest of the leaves.
-                        %Since all leaves are sliding window, COM is also
-                        %sliding window
-                        for col = touchingInd
-                            indTouching = find(leftLeafPoss(:,col) == rightLeafPoss(:,col));
-                            notIndTouching = setdiff(1:dimZ,indTouching);
-                            leftLeafPoss(row,col) = mean([mean(leftLeafPoss(notIndTouching,col),1),mean(rightLeafPoss(notIndTouching,col),1)]);
-                            rightLeafPoss(row,col) = leftLeafPoss(row,col);
-                        end
-                    elseif ~isempty(touchingInd)
-                        %Leaves are only touching for some gantry
-                        %angles/segments.  Interpolate leaf positions between
-                        %non-touching segments, to minimize leaf travel, taking
-                        %care of any instances of leaf touching at border
-                        %angles (end of arc sector)
-                        gantryAnglesAug = [optGantryAngles,sectorBorderGantryAngles];
-                        
-                        leftLeafPossAug = [reshape(mean([leftLeafPoss(:) rightLeafPoss(:)],2),size(leftLeafPoss)),borderLeftLeafPoss];
-                        
-                        notTouchingInd = setdiff(1:updatedInfo.totalNumOfShapes,touchingInd);
-                        notTouchingIndAug = [notTouchingInd,(1+numel(optGantryAngles)):(numel(optGantryAngles)+numel(sectorBorderGantryAngles))];
-                        
-                        leftLeafPoss(row,touchingInd) = interp1(gantryAnglesAug(notTouchingIndAug),leftLeafPossAug(row,notTouchingIndAug),optGantryAngles(touchingInd));
-                        rightLeafPoss(row,touchingInd) = leftLeafPoss(row,touchingInd);
-                        
-                    end
-                end
-            end
-        end
         
         % get dimensions of 2d matrices that store shape/bixel information
         n = apertureInfo.beam(i).numOfActiveLeafPairs;
         
         %Perform interpolation
-        currGantryAngle = updatedInfo.beam(i).gantryAngle;
-        leftLeafPos = (interp1(optGantryAngles',leftLeafPoss',currGantryAngle))';
-        rightLeafPos = (interp1(optGantryAngles',rightLeafPoss',currGantryAngle))';
+        leftLeafPos = (interp1(optGantryAngles',leftLeafPoss',updatedInfo.beam(i).gantryAngle))';
+        rightLeafPos = (interp1(optGantryAngles',rightLeafPoss',updatedInfo.beam(i).gantryAngle))';
         
-        %assume doserate is piecewise linear over arc sector
-        %assume gantry rotation speed is constant over arc sector
-        %updatedInfo.beam(i).MURate = interp1([updatedInfo.beam(i).lastOptAngle updatedInfo.beam(i).nextOptAngle],[updatedInfo.beam(updatedInfo.beam(i).lastOptInd).MURate updatedInfo.beam(updatedInfo.beam(i).nextOptInd).MURate],gantryAngles(i));
+        %MURate is interpolated between MURates of optimized apertures
+        updatedInfo.beam(i).MURate = updatedInfo.beam(i).fracFromLastOpt*updatedInfo.beam(updatedInfo.beam(i).lastOptIndex).MURate+(1-updatedInfo.beam(i).fracFromLastOpt)*updatedInfo.beam(updatedInfo.beam(i).nextOptIndex).MURate;
+        updatedInfo.beam(i).gantryRot = updatedInfo.beam(i).fracFromLastOpt*updatedInfo.beam(updatedInfo.beam(i).lastOptIndex).gantryRot+(1-updatedInfo.beam(i).fracFromLastOpt)*updatedInfo.beam(updatedInfo.beam(i).nextOptIndex).gantryRot;
         
-        updatedInfo.beam(i).fracFromLast = (updatedInfo.beam(i).nextOptAngle-gantryAngles(i))/(updatedInfo.beam(i).nextOptAngle-updatedInfo.beam(i).lastOptAngle);
-        updatedInfo.beam(i).MURate = updatedInfo.beam(i).fracFromLast*updatedInfo.beam(updatedInfo.beam(i).lastOptInd).MURate+(1-updatedInfo.beam(i).fracFromLast)*updatedInfo.beam(updatedInfo.beam(i).nextOptInd).MURate;
-        if i ~= numel(updatedInfo.beam)
-            weight = updatedInfo.beam(updatedInfo.beam(i).lastOptInd).MURate*(gantryAngles(i+1)-gantryAngles(i))/(updatedInfo.beam(updatedInfo.beam(i).lastOptInd).gantryRot*updatedInfo.weightToMU);
-        else
-            weight = updatedInfo.beam(updatedInfo.beam(i).lastOptInd).MURate*(gantryAngles(i)-gantryAngles(i-1))/(updatedInfo.beam(updatedInfo.beam(i).lastOptInd).gantryRot*updatedInfo.weightToMU);
-        end
+        updatedInfo.beam(i).MU = updatedInfo.beam(i).MURate*updatedInfo.beam(i).doseAngleBordersDiff/updatedInfo.beam(i).gantryRot;
+        updatedInfo.beam(i).shape(1).weight = updatedInfo.beam(i).MU./updatedInfo.weightToMU;
         
         % update information in shape structure
         updatedInfo.beam(i).shape(1).leftLeafPos  = leftLeafPos;
         updatedInfo.beam(i).shape(1).rightLeafPos = rightLeafPos;
-        updatedInfo.beam(i).shape(1).weight = weight;
-        updatedInfo.beam(i).shape(1).MU = weight*updatedInfo.weightToMU;
         
         %The following is taken from the non-VMAT case (j->1, since there is only 1
         %shape per beam in VMAT)
@@ -551,7 +387,7 @@ for i = 1:numel(updatedInfo.beam)
         
         % store information in index vector for gradient calculation
         indVect(offset+[1:n]) = bixelIndLeftLeaf;
-        indVect(offset+[1:n]+apertureInfo.realTotalNumOfLeafPairs) = bixelIndRightLeaf;
+        indVect(offset+[1:n]+apertureInfo.doseTotalNumOfLeafPairs) = bixelIndRightLeaf;
         offset = offset+n;
         
         % calculate opening fraction for every bixel in shape to construct
@@ -580,5 +416,9 @@ end
 updatedInfo.bixelWeights = w;
 updatedInfo.bixelIndices = indVect;
 updatedInfo.apertureVector = apertureInfoVect;
+
+if updatedInfo.VMAT
+    updatedInfo.IandFapertureVector = IandFapertureVector;
+end
 
 end

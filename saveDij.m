@@ -7,6 +7,9 @@ save([fname,'_dat'],'dijDat');
 
 startInd = 1;
 stopInd = 0;
+
+fprintf('\n\nSaving dij matrices to file.\n\n');
+
 for i = 1:dij.numOfBeams
     numOfRaysPerBeam = dij.numOfRaysPerBeam(i);
     stopInd = stopInd+numOfRaysPerBeam;
@@ -14,6 +17,8 @@ for i = 1:dij.numOfBeams
     startInd = startInd+numOfRaysPerBeam;
     
     save([fname,sprintf('_beam%i',i)],'dijDos');
+    
+    matRad_progress(i,dij.numOfBeams);
 end
 
 cd ..

@@ -1,5 +1,5 @@
 numLevels = 1:10;
-numApertures = 1:2:pln.maxNumApertures;
+numApertures = 3:2:pln.maxNumApertures;
 
 CIFMO = zeros(numel(numLevels),numel(numApertures));
 HIFMO = zeros(numel(numLevels),numel(numApertures));
@@ -47,9 +47,17 @@ for numAp = numApertures
     resultGUI = matRad_calcQualityIndicators(resultGUI,cst,pln);
     
     %enter QI
-    CIFMO(:,j) = resultGUI.QI(3).CI_1_67Gy;
-    HIFMO(:,j) = resultGUI.QI(3).HI_1_67Gy;
-
+    %CIFMO(:,j) = resultGUI.QI(3).CI_1_67Gy;
+    %HIFMO(:,j) = resultGUI.QI(3).HI_1_67Gy;
+    
+    %H&N
+    %CIFMO(:,j) = resultGUI.QI(19).CI_2_33Gy;
+    %HIFMO(:,j) = resultGUI.QI(19).HI_2_33Gy;
+    
+    %Prostate
+    CIFMO(:,j) = resultGUI.QI(6).CI_2Gy;
+    HIFMO(:,j) = resultGUI.QI(6).HI_2Gy;
+    
     for numLev = numLevels
         %change number of levels
         pln.numLevels = numLev;
@@ -67,10 +75,16 @@ for numAp = numApertures
         planModulationSeq(i,j) = resultGUI.apertureInfo.planModulation;
         planMUSeq(i,j) = resultGUI.apertureInfo.planMU;
         planAreaSeq(i,j) = resultGUI.apertureInfo.planArea;
-        CISeq(i,j) = resultGUI.QI(3).CI_1_67Gy;
-        HISeq(i,j) = resultGUI.QI(3).HI_1_67Gy;
-
+        %CISeq(i,j) = resultGUI.QI(3).CI_1_67Gy;
+        %HISeq(i,j) = resultGUI.QI(3).HI_1_67Gy;
         
+        %H&N
+        %CISeq(i,j) = resultGUI.QI(19).CI_2_33Gy;
+        %HISeq(i,j) = resultGUI.QI(19).HI_2_33Gy;
+        
+        %Prostate
+        CISeq(i,j) = resultGUI.QI(6).CI_2Gy;
+        HISeq(i,j) = resultGUI.QI(6).HI_2Gy;
         
         
         
@@ -87,15 +101,21 @@ for numAp = numApertures
         planMUSeq2(i,j) = resultGUI.apertureInfo.planMU;
         planAreaSeq2(i,j) = resultGUI.apertureInfo.planArea;
         planTimeSeq2(i,j) = resultGUI.apertureInfo.time;
-        CISeq2(i,j) = resultGUI.QI(3).CI_1_67Gy;
-        HISeq2(i,j) = resultGUI.QI(3).HI_1_67Gy;
+        %CISeq2(i,j) = resultGUI.QI(3).CI_1_67Gy;
+        %HISeq2(i,j) = resultGUI.QI(3).HI_1_67Gy;
         
+        %H&N
+        %CISeq2(i,j) = resultGUI.QI(19).CI_2_33Gy;
+        %HISeq2(i,j) = resultGUI.QI(19).HI_2_33Gy;
         
+        %Prostate
+        CISeq2(i,j) = resultGUI.QI(6).CI_2Gy;
+        HISeq2(i,j) = resultGUI.QI(6).HI_2Gy;
         
         
         
         %do DAO
-        resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
+        resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln,1,1);
         
         resultGUI = matRad_calcDeliveryMetrics(resultGUI,pln,stf);
         planTimeBeforeOpt(i,j) = resultGUI.apertureInfo.time;
@@ -112,10 +132,18 @@ for numAp = numApertures
         planMU(i,j) = resultGUI.apertureInfo.planMU;
         planArea(i,j) = resultGUI.apertureInfo.planArea;
         planTime(i,j) = resultGUI.apertureInfo.time;
-        CI(i,j) = resultGUI.QI(3).CI_1_67Gy;
-        HI(i,j) = resultGUI.QI(3).HI_1_67Gy;
+        %CI(i,j) = resultGUI.QI(3).CI_1_67Gy;
+        %HI(i,j) = resultGUI.QI(3).HI_1_67Gy;
         
-        fname = sprintf('Full FMO Apertures %d, levels %d',numLev,numAp);
+        %H&N
+        %CI(i,j) = resultGUI.QI(19).CI_2_33Gy;
+        %HI(i,j) = resultGUI.QI(19).HI_2_33Gy;
+        
+        %Prostate
+        CI(i,j) = resultGUI.QI(6).CI_2Gy;
+        HI(i,j) = resultGUI.QI(6).HI_2Gy;
+        
+        fname = sprintf('Prostate Apertures %d, levels %d',numAp,numLev);
         save(fname,'resultGUI');
         
         close all
@@ -126,6 +154,6 @@ for numAp = numApertures
     j = j+1;
 end
 
-save('Results Full FMO','plan*','num*','CI*','HI*')
+save('Results Prostate','plan*','num*','CI*','HI*')
 
 

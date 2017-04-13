@@ -117,7 +117,7 @@ beamK = [apertureInfo.beam(:).beamK]';
 apertureMU(isnan(apertureMU)) = [];
 apertureArea(isnan(apertureArea)) = [];
 
-
+%{
 figure
 histogram2(beamMU,beamArea,5,'DisplayStyle','tile')
 xlabel('Monitor units')
@@ -145,7 +145,7 @@ figure
 plot(beamK,'.')
 xlabel('Beam number')
 ylabel('k = N*(1-BM)')
-
+%}
 l = 0;
 if pln.VMAT
     %All of these are vectors
@@ -159,8 +159,7 @@ if pln.VMAT
     totTime = 0;
     
     for i = 1:size(apertureInfo.beam,2)
-        if apertureInfo.beam(i).numOfShapes && l < apertureInfo.totalNumOfShapes-1 %only optimized beams have their time in the data struct
-            %also, do not do the very last optimized beam!
+        if apertureInfo.beam(i).numOfShapes %only optimized beams have their time in the data struct
             l = l+1;
             totTime = totTime+apertureInfo.beam(i).time; %time until next optimized beam
             gantryRot(l) = apertureInfo.beam(i).gantryRot;
@@ -170,6 +169,7 @@ if pln.VMAT
     end
     apertureInfo.time = totTime;
     
+    %{
     %histogram of e.g., Modulation index vs gantry rotation, max leaf speed,
     %etc?
     figure
@@ -181,6 +181,7 @@ if pln.VMAT
     figure
     hist(maxLeafSpeed)
     xlabel('Maximum leaf speed (cm/s)')
+    %}
     
     fprintf('Min MU rate = %.1f',min(MURate));
 end

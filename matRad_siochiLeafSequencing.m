@@ -1,11 +1,11 @@
-function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool,doVMAT,numToKeep,pln)
+function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated
 % beams with multiple static segments according to Siochi (1999)
 % International Journal of Radiation Oncology * Biology * Physics,
 % originally implemented in PLUNC (https://sites.google.com/site/planunc/)
 %
-% Implented in matRad by Eric Christiansen, Emily Heath, and Tong Xu
+% Implemented in matRad by Eric Christiansen, Emily Heath, and Tong Xu
 %
 % call
 %   resultSequencing =
@@ -44,17 +44,14 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,v
 % if visBool not set toogle off visualization
 if nargin < 5
     visBool = 0;
-    doVMAT = 0;
-elseif nargin < 6
-    doVMAT = 0;
-elseif nargin < 7
-    numToKeep = 0;
 end
 
-if doVMAT
+if pln.VMAT
     %First beam sweeps right-to-left, next left-to-right, ...
-    inversion = 1;
+    leafDir = 1;
 end
+sequencing.VMAT = pln.VMAT;
+sequencing.dynamic = pln.dynamic;
     
 
 numOfBeams = numel(stf);
@@ -76,10 +73,15 @@ for i = 1:numOfBeams
     if isfield(stf(i),'initializeBeam') && ~stf(i).initializeBeam
         sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = 0;
         offset = offset + numOfRaysPerBeam;
-        if ~doVMAT
+        if ~pln.VMAT
             sequencing.beam(i).numOfShapes = 0;
+            numToKeep = pln.numApertures; %if all apertures are to be kept, this should be set to 0
         end
         continue %if this is not a beam to be initialized, continue to next iteration without generating segments
+    else
+        if pln.VMAT
+            numToKeep = stf(i).numOfBeamChildren;
+        end
     end
     
     % get relevant weights for current beam
@@ -88,9 +90,9 @@ for i = 1:numOfBeams
     X = ones(numOfRaysPerBeam,1)*NaN;
     Z = ones(numOfRaysPerBeam,1)*NaN;
     
-    for segment=1:stf(i).numOfRays
-        X(segment) = stf(i).ray(segment).rayPos_bev(:,1);
-        Z(segment) = stf(i).ray(segment).rayPos_bev(:,3);
+    for shape=1:stf(i).numOfRays
+        X(shape) = stf(i).ray(shape).rayPos_bev(:,1);
+        Z(shape) = stf(i).ray(shape).rayPos_bev(:,3);
     end
     
     % sort bixels into matrix
@@ -124,9 +126,7 @@ for i = 1:numOfBeams
         % prepare sequencer
         calFac = max(fluenceMx(:));
         
-        
-        
-        D_k = round(fluenceMx/calFac*numOfLevels);
+        D_k = round(fluenceMx/calFac*pln.numLevels);
         
         % Save the stratification in the initial intensity matrix D_0.
         D_0 = D_k;
@@ -163,11 +163,6 @@ for i = 1:numOfBeams
         %Decompose the port, do rod pushing
         [tops, bases] = matRad_siochiDecomposePort(D_k,dimOfFluenceMxZ,dimOfFluenceMxX,D_k_MinZ,D_k_MaxZ,D_k_MinX,D_k_MaxX);
         
-        %are there enough apertures?
-        if doVMAT == 1
-            numToKeep = stf(i).numOfBeamChildren;
-        end
-        
         %Form segments with and without visualization
         if visBool
             [shapes,shapesWeight,k,D_k]=matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases,visBool,i,D_k,numOfLevels,seqFig,seqSubPlots);
@@ -175,9 +170,7 @@ for i = 1:numOfBeams
             [shapes,shapesWeight,k]=matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases);
         end
         
-        
-
-        
+        %are there enough apertures?
         if numToKeep ~= 0 && k <= numToKeep
             numOfLevels = numOfLevels+1;
         else
@@ -187,18 +180,19 @@ for i = 1:numOfBeams
     
     sequencing.beam(i).numOfShapes  = k;
     sequencing.beam(i).shapes       = shapes(:,:,1:k);
-    sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
+    sequencing.beam(i).shapesWeight = shapesWeight(1:k)/pln.numLevels*calFac;
     sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
     sequencing.beam(i).fluence      = D_0;
     sequencing.beam(i).sum          = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
     
     if numToKeep ~= 0
+        %Find the numToKeep apertures having the highest dose-area product
         numToKeep = min(numToKeep,k);
-        for segment = 1:k
-            sequencing.beam(i).DAP(segment) = (stf(i).bixelWidth)^2.*nnz(sequencing.beam(i).shapes(:,:,segment)).*sequencing.beam(i).shapesWeight(segment);
-            x = repmat(1:size(sequencing.beam(i).shapes(:,:,segment),2),size(sequencing.beam(i).shapes(:,:,segment),1),1);
-            comPosRow = sum(sequencing.beam(i).shapes(:,:,segment).*x,2)./sum(sequencing.beam(i).shapes(:,:,segment),2);
-            sequencing.beam(i).comPos(segment) = mean(comPosRow(~isnan(comPosRow),1));
+        for shape = 1:k
+            sequencing.beam(i).DAP(shape) = (stf(i).bixelWidth)^2.*nnz(sequencing.beam(i).shapes(:,:,shape)).*sequencing.beam(i).shapesWeight(shape);
+            x = repmat(1:size(sequencing.beam(i).shapes(:,:,shape),2),size(sequencing.beam(i).shapes(:,:,shape),1),1);
+            comPosRow = sum(sequencing.beam(i).shapes(:,:,shape).*x,2)./sum(sequencing.beam(i).shapes(:,:,shape),2);
+            sequencing.beam(i).comPos(shape) = mean(comPosRow(~isnan(comPosRow),1));
         end
         
         [~,sequencing.beam(i).comPosToDAPSort] = sort(sequencing.beam(i).DAP,'descend');
@@ -206,21 +200,22 @@ for i = 1:numOfBeams
         totDAP_all = sum(sequencing.beam(i).DAP(:));
         totDAP_keep = sum(sequencing.beam(i).DAP(sequencing.beam(i).comPosToDAPSort(1:numToKeep)));
         
-        %totWeight_all = sum(sequencing.beam(i).shapesWeight(:));
-        %totWeight_keep = sum(sequencing.beam(i).shapesWeight(sequencing.beam(i).comPosToDAPSort(1:numToKeep)));
-        
         
         tempShapes = zeros(dimOfFluenceMxZ,dimOfFluenceMxX,numToKeep);
         tempShapesWeight = zeros(numToKeep,1);
         tempNewDAP = tempShapesWeight;
         tempComPos = tempShapesWeight;
         segmentKeep = 1;
-        for segment = 1:k
-            if sequencing.beam(i).comPosToDAPSort(segment) <= numToKeep
-                tempShapes(:,:,segmentKeep) = sequencing.beam(i).shapes(:,:,segment);
-                tempNewDAP(segmentKeep) = totDAP_all*sequencing.beam(i).DAP(segment)/totDAP_keep;
+        
+        %Keep only those numToKeep apertures with the highest DAP
+        %Preserve the shapes of the apertures, but scale the weights so
+        %that the total DAP is kept
+        for shape = 1:k
+            if sequencing.beam(i).comPosToDAPSort(shape) <= numToKeep
+                tempShapes(:,:,segmentKeep) = sequencing.beam(i).shapes(:,:,shape);
+                tempNewDAP(segmentKeep) = totDAP_all*sequencing.beam(i).DAP(shape)/totDAP_keep;
                 tempShapesWeight(segmentKeep) = tempNewDAP(segmentKeep)/((stf(i).bixelWidth)^2.*nnz(tempShapes(:,:,segmentKeep))); %sequencing.beam(i).shapesWeight(sequencing.beam(i).segmentSortedDAP(segment))
-                tempComPos(segmentKeep) = sequencing.beam(i).comPos(segment);
+                tempComPos(segmentKeep) = sequencing.beam(i).comPos(shape);
                 
                 segmentKeep = segmentKeep+1;
             else
@@ -235,103 +230,52 @@ for i = 1:numOfBeams
         k = numToKeep;
     end
     
-    if doVMAT
-        %CHANGED BEHAVIOUR OF THIS
-        %Find top DAP segments in total segment, then spread to each child
+    if pln.VMAT
+        %Spread apertures to each child angle
         %according to the trajectory (mean leaf position)
-        
-        %sort the segmentSortedDAP to reorder in terms of leaf position!!
-        
-        %Divide segments into n sectors, find top DAP segment in each
-        %sector, spread to the children of the initialized beam angle.
-        %Make assumption for now that gantry rotation speed is constant
-        %over each arc sector.
-        
-        numSectors = stf(i).numOfBeamChildren;
-        childrenAngles = stf(i).beamChildrenGantryAngles;
         childrenIndex = stf(i).beamChildrenIndex;
-        borderAngles = stf(i).borderAngles;
-        %lastBorderAngle = stf(i).lastBorderAngle;
-        %nextBorderAngle = stf(i).nextBorderAngle;
         
-        sectorBorderAngles = zeros(numSectors+1,1);
-        
-        for sectorBorder = 1:(numSectors+1)
-            switch sectorBorder
-                case 1
-                    sectorBorderAngles(sectorBorder) = borderAngles(1);
-                case numSectors+1
-                    sectorBorderAngles(sectorBorder) = borderAngles(2);
-                otherwise
-                    sectorBorderAngles(sectorBorder) = mean([childrenAngles(sectorBorder-1),childrenAngles(sectorBorder)]);
-            end
-        end
-        sectorWidths = min(abs(diff(sectorBorderAngles)),360+diff(sectorBorderAngles));
-        normSectorWidths = sectorWidths./(sum(sectorWidths));
-        if numSectors ~= k
-            normSectorCumSumScaled = cumsum(normSectorWidths)*k;
-        else
-            normSectorCumSumScaled = 1:k;
-        end
-        
-        maxDAP = 0;
-        sector = 1;
-        inversion = -1*inversion; % =1 (-1) for even (odd) init gantry angles
-        k0 = (inversion*(1-k)+(1+k))/2; % =1 (k) for even (odd) init gantry angles
+        child = 1;
+        leafDir = -1*leafDir; % =1 (-1) for even (odd) init gantry angles
+        k0 = (leafDir*(1-k)+(1+k))/2; % =1 (k) for even (odd) init gantry angles
         k1 = k+1-k0;% =k (1) for even (odd) init gantry angles
-        fracSegComplete = 0;
-        totalDAP = 0;
-        
-        DAP_vec = zeros(k,1);
-        
-        for segment = k0:inversion:k1 % = 1-to-k in forward (reverse) order for even (odd) values of i
-            DAP = (stf(i).bixelWidth)^2.*nnz(sequencing.beam(i).shapes(:,:,segment)).*sequencing.beam(i).shapesWeight(segment);
-            childIndex = childrenIndex(sector);
-            fracSegComplete = fracSegComplete+1;
-            totalDAP = totalDAP+DAP;
-            DAP_vec(segment) = DAP;
-            if DAP >= maxDAP
-                maxDAP = DAP;
-                sequencing.beam(childIndex).maxDAPSeg = segment;
-            end
-            if fracSegComplete >= normSectorCumSumScaled(sector)
-                sequencing.beam(childIndex).numOfShapes = 1;
-                if stf(childIndex).initializeBeam
-                    sequencing.beam(childIndex).tempShapes = sequencing.beam(i).shapes(:,:,sequencing.beam(childIndex).maxDAPSeg); %store segment temporarily, don't erase segments for initialized beams
-                    sequencing.beam(childIndex).tempShapesWeight = totalDAP./((stf(i).bixelWidth)^2.*nnz(sequencing.beam(i).shapes(:,:,sequencing.beam(childIndex).maxDAPSeg))); %sequencing.beam(i).shapesWeight(sequencing.beam(childIndex).maxDAPSeg)
-                    sequencing.beam(childIndex).fluence = sequencing.beam(childIndex).tempShapes;
-                    sequencing.beam(childIndex).sum = sequencing.beam(childIndex).tempShapesWeight*sequencing.beam(childIndex).tempShapes;
-                else
-                    sequencing.beam(childIndex).numOfShapes = 1;
-                    sequencing.beam(childIndex).shapes = sequencing.beam(i).shapes(:,:,sequencing.beam(childIndex).maxDAPSeg);
-                    sequencing.beam(childIndex).shapesWeight = totalDAP./((stf(i).bixelWidth)^2.*nnz(sequencing.beam(i).shapes(:,:,sequencing.beam(childIndex).maxDAPSeg))); %sequencing.beam(i).shapesWeight(sequencing.beam(childIndex).maxDAPSeg)
-                    
-                    big = max([i-1 childIndex-1]);
-                    small = min([i childIndex]);
-                    numOfRaysBN = sum([stf(small:big).numOfRays]); %num of rays between current beam and child
-                    inv = (childIndex-i)./(big-small+1); % = 1 (-1) if childIndex is bigger (smaller) than i
-                    sequencing.beam(childIndex).bixelIx = sequencing.beam(i).bixelIx+inv*numOfRaysBN;
-                    
-                    sequencing.beam(childIndex).fluence = sequencing.beam(i).shapes(:,:,sequencing.beam(childIndex).maxDAPSeg);
-                    sequencing.beam(childIndex).sum = sequencing.beam(childIndex).shapesWeight*sequencing.beam(childIndex).shapes;
-                end
-                
-                %Reset counters for next sector
-                sector = sector+1;
-                maxDAP = 0;
-                totalDAP = 0;
-                
 
+        
+        for shape = k0:leafDir:k1 % = 1-to-k in forward (reverse) order for even (odd) values of i
+            childIndex = childrenIndex(child);
+            
+            sequencing.beam(childIndex).numOfShapes = 1;
+            sequencing.beam(childIndex).leafDir = leafDir;
+            if stf(childIndex).initializeBeam
+                sequencing.beam(childIndex).tempShapes = sequencing.beam(i).shapes(:,:,shape); %store segment temporarily, don't erase segments for initialized beams
+                sequencing.beam(childIndex).tempShapesWeight = sequencing.beam(i).shapesWeight(shape); %sequencing.beam(i).shapesWeight(sequencing.beam(childIndex).maxDAPSeg)
+                sequencing.beam(childIndex).fluence = sequencing.beam(childIndex).tempShapes;
+                sequencing.beam(childIndex).sum = sequencing.beam(childIndex).tempShapesWeight*sequencing.beam(childIndex).tempShapes;
+            else
+                sequencing.beam(childIndex).numOfShapes = 1;
+                sequencing.beam(childIndex).shapes = sequencing.beam(i).shapes(:,:,shape);
+                sequencing.beam(childIndex).shapesWeight = sequencing.beam(i).shapesWeight(shape); %sequencing.beam(i).shapesWeight(sequencing.beam(childIndex).maxDAPSeg)
+                
+                big = max([i-1 childIndex-1]);
+                small = min([i childIndex]);
+                numOfRaysBN = sum([stf(small:big).numOfRays]); %num of rays between current beam and child
+                inv = (childIndex-i)./(big-small+1); % = 1 (-1) if childIndex is bigger (smaller) than i
+                sequencing.beam(childIndex).bixelIx = sequencing.beam(i).bixelIx+inv*numOfRaysBN;
+                
+                sequencing.beam(childIndex).fluence = sequencing.beam(i).shapes(:,:,shape);
+                sequencing.beam(childIndex).sum = sequencing.beam(childIndex).shapesWeight*sequencing.beam(childIndex).shapes;
             end
+            
+            %Reset counters for next sector
+            child = child+1;
+
         end
-                %figure
-                %hist(DAP_vec);
         
         offset = offset + numOfRaysPerBeam;
         
     else %NO VMAT
-        for segment = 1:sequencing.beam(i).numOfShapes
-            sequencing.beam(i).sum = sequencing.beam(i).sum+sequencing.beam(i).shapes(:,:,segment)*sequencing.beam(i).shapesWeight(segment);
+        for shape = 1:sequencing.beam(i).numOfShapes
+            sequencing.beam(i).sum = sequencing.beam(i).sum+sequencing.beam(i).shapes(:,:,shape)*sequencing.beam(i).shapesWeight(shape);
         end
         sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = sequencing.beam(i).sum(indInFluenceMx);
         
@@ -340,53 +284,39 @@ for i = 1:numOfBeams
 
 end
 
-if doVMAT
+if pln.VMAT
     gantryAngles = [stf.gantryAngle];
     optGantryAngles = [stf([stf.optimizeBeam]).gantryAngle];
     
     for i = 1:numel(optGantryAngles)
-        currInd = find(gantryAngles==optGantryAngles(i));
-        if stf(currInd).initializeBeam
+        optInd = find(gantryAngles==optGantryAngles(i));
+        if stf(optInd).initializeBeam
             %Convert tempShapes to shapes
-            sequencing.beam(currInd).numOfShapes = 1;
-            sequencing.beam(currInd).shapes = sequencing.beam(currInd).tempShapes;
-            sequencing.beam(currInd).shapesWeight = sequencing.beam(currInd).tempShapesWeight;
-            sequencing.beam(currInd).tempShapes = [];
-            sequencing.beam(currInd).tempShapesWeight = [];
+            sequencing.beam(optInd).numOfShapes = 1;
+            sequencing.beam(optInd).shapes = sequencing.beam(optInd).tempShapes;
+            sequencing.beam(optInd).shapesWeight = sequencing.beam(optInd).tempShapesWeight;
+            sequencing.beam(optInd).tempShapes = [];
+            sequencing.beam(optInd).tempShapesWeight = [];
             
-            for j = 1:stf(currInd).numOfBeamSubChildren
+            for j = 1:stf(optInd).numOfBeamSubChildren
                 %Prevents matRad_sequencing2ApertureInfo from attempting to
                 %convert shape to aperturevec for subchildren
-                sequencing.beam(stf(currInd).beamSubChildrenIndex(j)).numOfShapes = 0;
+                sequencing.beam(stf(optInd).beamSubChildrenIndex(j)).numOfShapes = 0;
             end
         end
         
-        if i ~= numel(optGantryAngles)
-            sequencing.beam(currInd).gantryRot = pln.defaultGantryRot; %gantry rotation rate until next opt angle
-            nextInd = find(gantryAngles==optGantryAngles(i+1));
-            sequencing.beam(currInd).MURate = dij.weightToMU.*sequencing.beam(currInd).shapesWeight.*sequencing.beam(currInd).gantryRot./(stf(nextInd).gantryAngle-stf(currInd).gantryAngle); %dose rate until next opt angle
-            %Rescale weight to represent only this beam; assume piecewise
-            %linear doserate
-            sequencing.beam(currInd).shapesWeight = sequencing.beam(currInd).shapesWeight.*((stf(currInd+1).gantryAngle-stf(currInd).gantryAngle)./(stf(nextInd).gantryAngle-stf(currInd).gantryAngle));
-        else
-            sequencing.beam(currInd).gantryRot = pln.defaultGantryRot; %gantry rotation rate until next opt angle
-            prevInd = find(gantryAngles==optGantryAngles(i-1));
-            sequencing.beam(currInd).MURate = dij.weightToMU.*sequencing.beam(currInd).shapesWeight.*sequencing.beam(currInd).gantryRot./(stf(currInd).gantryAngle-stf(prevInd).gantryAngle); %dose rate until next opt angle
-            %Rescale weight to represent only this beam; assume piecewise
-            %linear doserate
-            if currInd+1 <= numel(gantryAngles)
-                sequencing.beam(currInd).shapesWeight = sequencing.beam(currInd).shapesWeight.*((stf(currInd+1).gantryAngle-stf(currInd).gantryAngle)./(stf(currInd).gantryAngle-stf(prevInd).gantryAngle));
-            else
-                sequencing.beam(currInd).shapesWeight = sequencing.beam(currInd).shapesWeight.*((stf(currInd).gantryAngle-stf(currInd-1).gantryAngle)./(stf(currInd).gantryAngle-stf(prevInd).gantryAngle));
-            end
-        end
+        sequencing.beam(optInd).gantryRot = pln.defaultGantryRot; %gantry rotation rate until next opt angle
+        sequencing.beam(optInd).MURate = dij.weightToMU.*sequencing.beam(optInd).shapesWeight.*sequencing.beam(optInd).gantryRot./diff(stf(optInd).optAngleBorders); %dose rate until next opt angle
+        %Rescale weight to represent only this control point; weight will be shared
+        %with the interpolared control points in matRad_daoVec2ApertureInfo
+        sequencing.beam(optInd).shapesWeight = sequencing.beam(optInd).shapesWeight.*stf(optInd).timeFacCurr;
         
     end
     
     sequencing.beam = rmfield(sequencing.beam,{'tempShapes','tempShapesWeight'});
     %Calculate w using matRad functions
     sequencing.weightToMU = dij.weightToMU;
-    resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf,doVMAT);
+    resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
     
     
     %matRad_daoVec2ApertureInfo will interpolate subchildren gantry
@@ -420,10 +350,6 @@ resultGUI.physicalDose = reshape(dij.physicalDose{1} * sequencing.w,dij.dimensio
 if isfield(resultGUI,'wDao')
     resultGUI = rmfield(resultGUI,'wDao');
 end
-
-
-
-
 
 end
 

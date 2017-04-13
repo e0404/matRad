@@ -69,6 +69,9 @@ cMapScale = size(cMap,1) - 1;
 isoColorLevel = (isoLevels - window(1))./(window(2)-window(1));
 isoColorLevel(isoColorLevel < 0) = 0;
 isoColorLevel(isoColorLevel > 1) = 0;
+
+cMap = flipud(cMap);
+
 colors = squeeze(ind2rgb(uint8(cMapScale*isoColorLevel),cMap));
 
 isoLineHandles = gobjects(0);
@@ -90,7 +93,7 @@ if any(isoContours{slice,plane}(:))
         end
         isoLineHandles(end+1) = line(isoContours{slice,plane}(1,lower+1:lower+steps),...
             isoContours{slice,plane}(2,lower+1:lower+steps),...
-            'Color',color,'LineWidth',1.5,'Parent',axesHandle);
+            'Color',color,'LineWidth',1.5,'Parent',axesHandle,'LineStyle','--');
         if plotLabels
             text(isoContours{slice,plane}(1,lower+1),...
                 isoContours{slice,plane}(2,lower+1),...

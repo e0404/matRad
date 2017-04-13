@@ -1,4 +1,4 @@
-function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,stf)
+function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,stf,scaleDRx)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
@@ -32,6 +32,10 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,stf)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if nargin < 5
+    scaleDRx = 0;
+end
 
 % issue warning if biological optimization impossible
 if sum(strcmp(pln.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose')) && strcmp(pln.radiationMode,'carbon')
@@ -101,12 +105,12 @@ matRad_STRG_C_Pressed           = false;
 matRad_objective_function_value = [];
   
 % consider VOI priorities
-cst  = matRad_setOverlapPriorities(cst);
+cst_Over  = matRad_setOverlapPriorities(cst);
 
 % adjust objectives and constraints internally for fractionation 
-for i = 1:size(cst,1)
-    for j = 1:size(cst{i,6},1)
-       cst{i,6}(j).dose = cst{i,6}(j).dose/pln.numOfFractions;
+for i = 1:size(cst_Over,1)
+    for j = 1:size(cst_Over{i,6},1)
+       cst_Over{i,6}(j).dose = cst_Over{i,6}(j).dose/pln.numOfFractions;
     end
 end
 
@@ -115,11 +119,11 @@ end
 V          = [];
 doseTarget = [];
 ixTarget   = [];
-for i=1:size(cst,1)
-    if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
-        V = [V;cst{i,4}{1}];
-        doseTarget = [doseTarget cst{i,6}.dose];
-        ixTarget   = [ixTarget i*ones(1,length([cst{i,6}.dose]))];
+for i=1:size(cst_Over,1)
+    if isequal(cst_Over{i,3},'TARGET') && ~isempty(cst_Over{i,6})
+        V = [V;cst_Over{i,4}{1}];
+        doseTarget = [doseTarget cst_Over{i,6}.dose];
+        ixTarget   = [ixTarget i*ones(1,length([cst_Over{i,6}.dose]))];
     end
 end
 [doseTarget,i] = max(doseTarget);
@@ -164,16 +168,16 @@ elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization
     dij.ax   = zeros(dij.numOfVoxels,1);
     dij.bx   = zeros(dij.numOfVoxels,1);
     
-    for i = 1:size(cst,1)
+    for i = 1:size(cst_Over,1)
         
-        if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
-             dij.ax(cst{i,4}{1}) = cst{i,5}.alphaX;
-             dij.bx(cst{i,4}{1}) = cst{i,5}.betaX;
+        if isequal(cst_Over{i,3},'OAR') || isequal(cst_Over{i,3},'TARGET')
+             dij.ax(cst_Over{i,4}{1}) = cst_Over{i,5}.alphaX;
+             dij.bx(cst_Over{i,4}{1}) = cst_Over{i,5}.betaX;
         end
         
-        for j = 1:size(cst{i,6},2)
+        for j = 1:size(cst_Over{i,6},2)
             % check if prescribed doses are in a valid domain
-            if cst{i,6}(j).dose > 5 && isequal(cst{i,3},'TARGET')
+            if cst_Over{i,6}(j).dose > 5 && isequal(cst_Over{i,3},'TARGET')
                 error('Reference dose > 5Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.');
             end
             
@@ -182,7 +186,7 @@ elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization
      
     if isequal(pln.bioOptimization,'LEMIV_effect')
         
-           effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
+           effectTarget = cst_Over{ixTarget,5}.alphaX * doseTarget + cst_Over{ixTarget,5}.betaX * doseTarget^2;
            p            = (sum(dij.mAlphaDose{1}(V,:)*wOnes)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            q            = -(effectTarget * length(V)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
@@ -199,8 +203,8 @@ elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization
            % ensure a underestimated biological effective dose 
            TolEstBio        = 1.2;
            % calculate maximal RBE in target
-           maxCurrRBE = max(-cst{ixTarget,5}.alphaX + sqrt(cst{ixTarget,5}.alphaX^2 + ...
-                        4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*(dij.physicalDose{1}(V,:)*wOnes)));
+           maxCurrRBE = max(-cst_Over{ixTarget,5}.alphaX + sqrt(cst_Over{ixTarget,5}.alphaX^2 + ...
+                        4*cst_Over{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst_Over{ixTarget,5}.betaX*(dij.physicalDose{1}(V,:)*wOnes)));
            wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
     end
     
@@ -217,12 +221,12 @@ options.ID              = [pln.radiationMode '_' pln.bioOptimization];
 options.numOfScenarios  = dij.numOfScenarios;
 
 % set callback functions.
-[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,options);   
-funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,options);
-funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,options);
-funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,options);
-funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,options);
-funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
+[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst_Over,options);   
+funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst_Over,options);
+funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst_Over,options);
+funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst_Over,options);
+funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst_Over,options);
+funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst_Over);
 
 % Run IPOPT.
 [wOpt, info]            = ipopt(wInit,funcs,options);
@@ -231,7 +235,19 @@ funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 fprintf('Calculating final cubes...\n');
 %have to use the old wOpt in here for VMAT, since dij only contains init
 %beams
-resultGUI = matRad_calcCubes(wOpt,dij,cst);
+resultGUI = matRad_calcCubes(wOpt,dij,cst_Over);
+
+if scaleDRx
+    
+    %Scale D95 in target to RXDose
+    resultGUI = matRad_calcQualityIndicators(resultGUI,cst,pln);
+    
+    scaleFacRx = max((pln.DRx/pln.numOfFractions)./[resultGUI.QI(pln.RxStruct).D95]');
+    
+    wOpt = wOpt*scaleFacRx;
+    resultGUI = matRad_calcCubes(wOpt,dij,cst_Over);
+end
+
 
 if isfield(pln,'VMAT') && pln.VMAT
     %Check if plan is VMAT.  If it is, put zeros back in the
@@ -252,6 +268,8 @@ if isfield(pln,'VMAT') && pln.VMAT
 end
 
 resultGUI.wUnsequenced = wOpt;
+
+
 
 % unset Key Pressed Callback of Matlab command window
 if ~isdeployed

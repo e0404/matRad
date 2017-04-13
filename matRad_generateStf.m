@@ -107,7 +107,9 @@ coordsY = coordsY_vox*ct.resolution.y - pln.isoCenter(2);
 coordsZ = coordsZ_vox*ct.resolution.z - pln.isoCenter(3);
 
 % Define steering file like struct. Prellocating for speed.
-stf = struct;
+% Preallocate with known size of array to avoid errors in VMAT-specific
+% code
+stf = struct('gantryAngle',cell(size(pln.gantryAngles)));
 
 if pln.VMAT
     %Initialize master ray positions and target points with NaNs, to be
@@ -115,12 +117,13 @@ if pln.VMAT
     %arrays per gantry angle.  In order to do VMAT, it is easier to have
     %the same MLC range and dij calculation for every possible beam/gantry
     %angle.
-    masterRayPosBEV = cell(1,length(pln.initGantryAngles));
-    masterTargetPointBEV = cell(1,length(pln.initGantryAngles));
-    for i = 1:length(pln.initGantryAngles)
-        masterRayPosBEV{i} = nan(1,3);
-        masterTargetPointBEV{i} = nan(1,3);
-    end
+    masterRayPosBEV = nan(1,3);
+    masterTargetPointBEV = nan(1,3);
+    
+    %include min/max gantry rotation speed in first steering file
+    stf(1).gantryRotCst = pln.gantryRotCst;
+    
+    lastOptInd = 1;
 end
     
 
@@ -360,227 +363,128 @@ for i = 1:length(pln.gantryAngles)
     
     
     if pln.VMAT
-        %include min/max gantry rotation speed in first steering file
-        stf(1).gantryRotCst = pln.gantryRotCst;
-        %Indicate if this beam is to be included in optimization/initialization or not
-        %All beams are still considered in dose calc for objective function
-        numInitGantryAngles = length(pln.initGantryAngles);
-        
-        if any(pln.initGantryAngles==pln.gantryAngles(i)) %Assume all initialized gantry angles are included in DAO
-            stf(i).initializeBeam = true;
-            stf(i).optimizeBeam = true;
-            stf(i).beamChildrenIndex = zeros(10000,1);
-            stf(i).beamChildrenGantryAngles = zeros(10000,1);
-            stf(i).numOfBeamChildren = 0;
-            stf(i).beamSubChildrenIndex = zeros(10000,1);
-            stf(i).beamSubChildrenGantryAngles = zeros(10000,1);
-            stf(i).numOfBeamSubChildren = 0;
-            
-            initIndex = find(pln.initGantryAngles == pln.gantryAngles(i));
-            
-            currInitGantryAngle = pln.initGantryAngles(initIndex);
-            if currInitGantryAngle == 0
-                nextInitGantryAngle = pln.initGantryAngles(mod0(initIndex+1,numInitGantryAngles));
-                prevInitGantryAngle = -0.01;
-            elseif currInitGantryAngle == 360
-                nextInitGantryAngle = 360.01;
-                prevInitGantryAngle = pln.initGantryAngles(mod0(initIndex-1,numInitGantryAngles));
-            else
-                nextInitGantryAngle = pln.initGantryAngles(mod0(initIndex+1,numInitGantryAngles));
-                prevInitGantryAngle = pln.initGantryAngles(mod0(initIndex-1,numInitGantryAngles));
-            end
-
-            closerToCurrGantryAngle = 1;
-            itera = 0;
-            iterb = 0;
-            while closerToCurrGantryAngle
-                %Perform search for optimized (and interpolated) gantry angles close to
-                %initialized angles (in the sense of sequencing).
-                j = mod0(i+ceil(itera/2)*(-1)^iterb,length(pln.gantryAngles));
-                
-                testGantryAngle = pln.gantryAngles(j);
-                
-                currDiff = abs(testGantryAngle-currInitGantryAngle);
-                nextDiff = abs(testGantryAngle-nextInitGantryAngle);
-                prevDiff = abs(testGantryAngle-prevInitGantryAngle);
-                
-                if itera == iterb && (currDiff < nextDiff && currDiff < prevDiff)
-                    %Alternate between angles smaller than and greater than
-                    %current initialized gantry angle to search for any that are closer
-                    %to this one than the next
-                    if any(pln.optGantryAngles == pln.gantryAngles(j))
-                        stf(i).numOfBeamChildren = stf(i).numOfBeamChildren+1;
-                        stf(i).beamChildrenIndex(stf(i).numOfBeamChildren) = j;
-                        stf(i).beamChildrenGantryAngles(stf(i).numOfBeamChildren) = testGantryAngle;
-                    else
-                        stf(i).numOfBeamSubChildren = stf(i).numOfBeamSubChildren+1;
-                        stf(i).beamSubChildrenIndex(stf(i).numOfBeamSubChildren) = j;
-                        stf(i).beamSubChildrenGantryAngles(stf(i).numOfBeamSubChildren) = testGantryAngle;
-                    end
-                    
-                    itera = itera+1;
-                    iterb = iterb+1;
-                elseif  itera == iterb && (currDiff == nextDiff || currDiff == prevDiff)
-                    %Include the last one as a subchild
-                    if any(pln.optGantryAngles == pln.gantryAngles(j))
-                        stf(i).numOfBeamChildren = stf(i).numOfBeamChildren+1;
-                        stf(i).beamChildrenIndex(stf(i).numOfBeamChildren) = j;
-                        stf(i).beamChildrenGantryAngles(stf(i).numOfBeamChildren) = testGantryAngle;
-                    else
-                        stf(i).numOfBeamSubChildren = stf(i).numOfBeamSubChildren+1;
-                        stf(i).beamSubChildrenIndex(stf(i).numOfBeamSubChildren) = j;
-                        stf(i).beamSubChildrenGantryAngles(stf(i).numOfBeamSubChildren) = testGantryAngle;
-                    end
-                   
-                    iterb = iterb+1;
-                    border1 = testGantryAngle;
-                    borderInd1 = j;
-                elseif  itera == iterb && (currDiff > nextDiff || currDiff > prevDiff)
-                    %Now only go in one direction by locking iterb (to the next value).  Do not assume angles
-                    %are equally spaced out on both sides.
-                    itera = itera+2*(1-mod(iterb,2));
-                    % = itera+2 if iterb is even, itera if iterb is odd
-                    % prevents double-counting certain j's if iterb is even
-                    iterb = iterb+1;
-                    border1 = testGantryAngle;
-                    borderInd1 = j;
-                elseif itera ~= iterb && (currDiff < nextDiff && currDiff < prevDiff)
-                    if any(pln.optGantryAngles == pln.gantryAngles(j))
-                        stf(i).numOfBeamChildren = stf(i).numOfBeamChildren+1;
-                        stf(i).beamChildrenIndex(stf(i).numOfBeamChildren) = j;
-                        stf(i).beamChildrenGantryAngles(stf(i).numOfBeamChildren) = testGantryAngle;
-                    else
-                        stf(i).numOfBeamSubChildren = stf(i).numOfBeamSubChildren+1;
-                        stf(i).beamSubChildrenIndex(stf(i).numOfBeamSubChildren) = j;
-                        stf(i).beamSubChildrenGantryAngles(stf(i).numOfBeamSubChildren) = testGantryAngle;
-                    end
-                    itera = itera+2; %skip forward 2 because of the ceil(itera/2)
-                elseif itera ~= iterb && (currDiff >= nextDiff || currDiff >= prevDiff)
-                    %Once we have exhausted close beam angles in both
-                    %directions, finish search.
-                    %{
-                    if any(pln.optGantryAngles == pln.gantryAngles(j))
-                        stf(i).numOfBeamChildren = stf(i).numOfBeamChildren+1;
-                        stf(i).beamChildrenIndex(stf(i).numOfBeamChildren) = j;
-                        stf(i).beamChildrenGantryAngles(stf(i).numOfBeamChildren) = testGantryAngle;
-                    else
-                        stf(i).numOfBeamSubChildren = stf(i).numOfBeamSubChildren+1;
-                        stf(i).beamSubChildrenIndex(stf(i).numOfBeamSubChildren) = j;
-                        stf(i).beamSubChildrenGantryAngles(stf(i).numOfBeamSubChildren) = testGantryAngle;
-                    end
-                    %}
-                    closerToCurrGantryAngle = 0;
-                    border2 = testGantryAngle;
-                    borderInd2 = j;
-                end
-                
-            end
-            stf(i).beamChildrenGantryAngles(stf(i).beamChildrenIndex==0) = [];
-            stf(i).beamChildrenIndex(stf(i).beamChildrenIndex==0) = [];
-            [stf(i).beamChildrenGantryAngles,ind] = sortangles(stf(i).beamChildrenGantryAngles);
-            stf(i).beamChildrenGantryAngles = unique(stf(i).beamChildrenGantryAngles,'stable');
-            stf(i).beamChildrenIndex = stf(i).beamChildrenIndex(ind);
-            stf(i).beamChildrenIndex = unique(stf(i).beamChildrenIndex,'stable');
-            
-            stf(i).beamSubChildrenGantryAngles(stf(i).beamSubChildrenIndex==0) = [];
-            stf(i).beamSubChildrenIndex(stf(i).beamSubChildrenIndex==0) = [];
-            [stf(i).beamSubChildrenGantryAngles,ind] = sortangles(stf(i).beamSubChildrenGantryAngles);
-            stf(i).beamSubChildrenGantryAngles = unique(stf(i).beamSubChildrenGantryAngles,'stable');
-            stf(i).beamSubChildrenIndex = stf(i).beamSubChildrenIndex(ind);
-            stf(i).beamSubChildrenIndex = unique(stf(i).beamSubChildrenIndex,'stable');
-            
-            %borderAngles specifies the first and last angles in the arc
-            %sector (usually subChildren, except for first and last)
-            border1 = min([min(stf(i).beamSubChildrenGantryAngles) min(stf(i).beamChildrenGantryAngles)]);
-            border2 = max([max(stf(i).beamSubChildrenGantryAngles) max(stf(i).beamChildrenGantryAngles)]);
-            borderInd1 = min([min(stf(i).beamSubChildrenIndex) min(stf(i).beamChildrenIndex)]);
-            borderInd2 = max([max(stf(i).beamSubChildrenIndex) max(stf(i).beamChildrenIndex)]);
-            %stf(i).borderAngles = [border1 border2];
-            stf(i).borderAnglesIndex = [borderInd1 borderInd2];
-            
-            %[stf(i).borderAngles,ind] = sortangles([border1 border2]);
-            %borderInds = [borderInd1 borderInd2];
-            %stf(i).borderAnglesIndex = borderInds(ind);
-            
-            optGantryAngles0to360 = pln.optGantryAngles;
-            %optGantryAngles0to360(optGantryAngles0to360 == 0) = 360;
-            for j = 1:numel(stf(i).beamSubChildrenIndex)
-                stf(stf(i).beamSubChildrenIndex(j)).lastOptAngle = max(pln.optGantryAngles(0 <= stf(i).beamSubChildrenGantryAngles(j)-pln.optGantryAngles));
-                stf(stf(i).beamSubChildrenIndex(j)).lastOptInd = find(pln.gantryAngles == stf(stf(i).beamSubChildrenIndex(j)).lastOptAngle);
-                
-                stf(stf(i).beamSubChildrenIndex(j)).nextOptAngle = min(pln.optGantryAngles(0 <= pln.optGantryAngles-stf(i).beamSubChildrenGantryAngles(j)));
-                if isempty(stf(stf(i).beamSubChildrenIndex(j)).nextOptAngle)
-                    stf(stf(i).beamSubChildrenIndex(j)).nextOptAngle = min(pln.optGantryAngles(0 <= optGantryAngles0to360-stf(i).beamSubChildrenGantryAngles(j)));
-                end
-                stf(stf(i).beamSubChildrenIndex(j)).nextOptInd = find(pln.gantryAngles == stf(stf(i).beamSubChildrenIndex(j)).nextOptAngle);
-            end
-           
-            %Don't think commented part is necessary anymore since I
-            %changed the first angle from 0->nonzero
-            
-            if stf(i).gantryAngle == pln.initGantryAngles(1)
-                %                stf(i).borderAngles(1) = 2*stf(i).gantryAngle-stf(i).borderAngles(2);
-                %                stf(i).borderAnglesIndex(1) = find(pln.gantryAngles == mod(stf(i).borderAngles(1),360));
-                stf(i).borderAngles = [0 mean([currInitGantryAngle nextInitGantryAngle])];
-                stf(i).lastBorderAngle = 0;
-            elseif stf(i).gantryAngle == pln.initGantryAngles(end)
-                %                stf(i).borderAngles(2) = 2*stf(i).gantryAngle-stf(i).borderAngles(1);
-                %                stf(i).borderAnglesIndex(2) = find(pln.gantryAngles == mod0(stf(i).borderAngles(2),360));
-                %stf(lastInitInd).nextBorderAngle = stf(i).borderAngles(1);
-                %stf(i).lastBorderAngle = lastBorderAngle;
-                %stf(i).nextBorderAngle = 360+stf(i).borderAngles(2);
-                stf(i).borderAngles = [mean([prevInitGantryAngle currInitGantryAngle]) 360];
-                stf(i).lastBorderAngle = lastBorderAngle;
-                stf(i).nextBorderAngle = 360;
-            else
-                if exist('lastInitInd','var')
-                    stf(i).borderAngles = [mean([prevInitGantryAngle currInitGantryAngle]) mean([currInitGantryAngle nextInitGantryAngle])];
-                    stf(lastInitInd).nextBorderAngle = stf(i).borderAngles(1);
-                    stf(i).lastBorderAngle = lastBorderAngle;
-                end
-            end
-            lastInitInd = i;
-            lastBorderAngle = stf(i).borderAngles(2);
-            
-            optIndex = find(pln.optGantryAngles == pln.gantryAngles(i));
-            if optIndex == numel(pln.optGantryAngles)
-                stf(i).nextOptAngleDiff = pln.optGantryAngles(optIndex)-pln.optGantryAngles(optIndex-1); %this is prev not next
-            else
-                stf(i).nextOptAngleDiff = pln.optGantryAngles(optIndex+1)-pln.optGantryAngles(optIndex);
-            end
-            if i == numel(pln.gantryAngles)
-                stf(i).nextAngleDiff = pln.gantryAngles(i)-pln.gantryAngles(i-1); %this is prev not next
-            else
-                stf(i).nextAngleDiff = pln.gantryAngles(i+1)-pln.gantryAngles(i);
-            end
-            
-        elseif any(pln.optGantryAngles==pln.gantryAngles(i)) && ~any(pln.initGantryAngles==pln.gantryAngles(i))
-            %Some are not initialized, they are given apertures from the initialized angles, yet they are still independently optimized in DAO
-            stf(i).initializeBeam = false;
-            stf(i).optimizeBeam = true;
-            optIndex = find(pln.optGantryAngles == pln.gantryAngles(i));
-            if optIndex == numel(pln.optGantryAngles)
-                stf(i).nextOptAngleDiff = pln.optGantryAngles(optIndex)-pln.optGantryAngles(optIndex-1); %this is prev not next
-            else
-                stf(i).nextOptAngleDiff = pln.optGantryAngles(optIndex+1)-pln.optGantryAngles(optIndex);
-            end
-            if i == numel(pln.gantryAngles)
-                stf(i).nextAngleDiff = pln.gantryAngles(i)-pln.gantryAngles(i-1); %this is prev not next
-            else
-                stf(i).nextAngleDiff = pln.gantryAngles(i+1)-pln.gantryAngles(i);
-            end
-        else
-            %These are purely interpolated in the DAO step, but dose is
-            %calculated at these angles to improve dose calc accuracy.
-            stf(i).initializeBeam = false;
-            stf(i).optimizeBeam = false;
-        end
-        
         %Determine which initialized beam the current beam belongs
         %to
         [~,stf(i).beamFatherInitIndex] = min(abs(pln.initGantryAngles-pln.gantryAngles(i)));
         stf(i).beamFatherGantryAngle = pln.initGantryAngles(stf(i).beamFatherInitIndex);
         stf(i).beamFatherIndex = find(pln.gantryAngles == stf(i).beamFatherGantryAngle);
+        
+        %Indicate if this beam is to be included in optimization/initialization or not
+        %All beams are still considered in dose calc for objective function
+        stf(i).initializeBeam = any(pln.initGantryAngles==pln.gantryAngles(i));
+        stf(i).optimizeBeam = any(pln.optGantryAngles==pln.gantryAngles(i));
+        
+        %Determine different angle borders
+        %doseAngleBorders are the angular borders over which dose is
+        %deposited
+        
+        if i == 1
+            stf(i).doseAngleBorders = ([pln.gantryAngles(i) pln.gantryAngles(i+1)]+pln.gantryAngles(i))/2;
+            
+        elseif i == length(pln.gantryAngles)
+            stf(i).doseAngleBorders = ([pln.gantryAngles(i-1) pln.gantryAngles(i)]+pln.gantryAngles(i))/2;
+            
+        else
+            stf(i).doseAngleBorders = ([pln.gantryAngles(i-1) pln.gantryAngles(i+1)]+pln.gantryAngles(i))/2;
+            
+        end
+        
+        stf(i).doseAngleBorderCentreDiff = [stf(i).gantryAngle-stf(i).doseAngleBorders(1) stf(i).doseAngleBorders(2)-stf(i).gantryAngle];
+        stf(i).doseAngleBordersDiff = sum(stf(i).doseAngleBorderCentreDiff);
+        
+        %Assign beam to its father, either as child (optimized) or subchild
+        %(interpolated)
+        if stf(i).optimizeBeam
+            if ~isfield(stf(stf(i).beamFatherIndex),'beamChildrenGantryAngles') || isempty(stf(stf(i).beamFatherIndex).beamChildrenGantryAngles)
+                stf(stf(i).beamFatherIndex).numOfBeamChildren = 0;
+                stf(stf(i).beamFatherIndex).beamChildrenGantryAngles = nan(1000,1);
+                stf(stf(i).beamFatherIndex).beamChildrenIndex = nan(1000,1);
+            end
+            
+            stf(stf(i).beamFatherIndex).numOfBeamChildren = stf(stf(i).beamFatherIndex).numOfBeamChildren+1;
+            stf(stf(i).beamFatherIndex).beamChildrenGantryAngles(stf(stf(i).beamFatherIndex).numOfBeamChildren) = pln.gantryAngles(i);
+            stf(stf(i).beamFatherIndex).beamChildrenIndex(stf(stf(i).beamFatherIndex).numOfBeamChildren) = i;
+            
+            %Determine different angle borders
+            %optAngleBorders are the angular borders over which an optimized control point
+            %has influence
+            optIndex = find(pln.optGantryAngles == pln.gantryAngles(i));
+            
+            if optIndex == 1
+                stf(i).optAngleBorders = ([pln.optGantryAngles(optIndex) pln.optGantryAngles(optIndex+1)]+pln.optGantryAngles(optIndex))/2;
+                
+                lastOptIndex = i;
+                nextOptIndex = find(pln.gantryAngles == pln.optGantryAngles(optIndex+1));
+                
+                stf(i).lastOptIndex = i;
+                stf(i).nextOptIndex = find(pln.gantryAngles == pln.optGantryAngles(optIndex+1));
+            elseif optIndex == length(pln.optGantryAngles)
+                stf(i).optAngleBorders = ([pln.optGantryAngles(optIndex-1) pln.optGantryAngles(optIndex)]+pln.optGantryAngles(optIndex))/2;
+                
+                stf(i).lastOptIndex = find(pln.gantryAngles == pln.optGantryAngles(optIndex-1));
+                stf(i).nextOptIndex = i;
+            else
+                stf(i).optAngleBorders = ([pln.optGantryAngles(optIndex-1) pln.optGantryAngles(optIndex+1)]+pln.optGantryAngles(optIndex))/2;
+                
+                lastOptIndex = i;
+                nextOptIndex = find(pln.gantryAngles == pln.optGantryAngles(optIndex+1));
+                
+                stf(i).lastOptIndex = find(pln.gantryAngles == pln.optGantryAngles(optIndex-1));
+                stf(i).nextOptIndex = find(pln.gantryAngles == pln.optGantryAngles(optIndex+1));
+            end
+            stf(i).doseAngleOpt = ones(1,2);
+            
+            stf(i).optAngleBorderCentreDiff = [stf(i).gantryAngle-stf(i).optAngleBorders(1) stf(i).optAngleBorders(2)-stf(i).gantryAngle];
+            stf(i).optAngleBordersDiff = sum(stf(i).optAngleBorderCentreDiff);
+            
+            %This is the factor that relates the total time in the
+            %optimized arc sector to the total time in the current dose
+            %sector
+            stf(i).timeFacCurr =  stf(i).doseAngleBordersDiff./stf(i).optAngleBordersDiff;
+            
+            %These are the factors that relate the total time in the
+            %optimized arc sector to the total time in the previous and
+            %next dose sectors
+            timeFacPrevAndNext = (stf(i).optAngleBorderCentreDiff-stf(i).doseAngleBorderCentreDiff)./stf(i).optAngleBordersDiff;
+            stf(i).timeFacPrev = timeFacPrevAndNext(1);
+            stf(i).timeFacNext = timeFacPrevAndNext(2);
+
+        else
+            if ~isfield(stf(stf(i).beamFatherIndex),'beamSubChildrenGantryAngles') || isempty(stf(stf(i).beamFatherIndex).beamSubChildrenGantryAngles)
+                stf(stf(i).beamFatherIndex).numOfBeamSubChildren = 0;
+                stf(stf(i).beamFatherIndex).beamSubChildrenGantryAngles = nan(1000,1);
+                stf(stf(i).beamFatherIndex).beamSubChildrenIndex = nan(1000,1);
+            end
+            
+            stf(stf(i).beamFatherIndex).numOfBeamSubChildren = stf(stf(i).beamFatherIndex).numOfBeamSubChildren+1;
+            stf(stf(i).beamFatherIndex).beamSubChildrenGantryAngles(stf(stf(i).beamFatherIndex).numOfBeamSubChildren) = pln.gantryAngles(i);
+            stf(stf(i).beamFatherIndex).beamSubChildrenIndex(stf(stf(i).beamFatherIndex).numOfBeamSubChildren) = i;
+            
+            stf(i).fracFromLastOpt = (pln.gantryAngles(nextOptIndex)-pln.gantryAngles(i))./(pln.gantryAngles(nextOptIndex)-pln.gantryAngles(lastOptIndex));
+            stf(i).lastOptIndex = lastOptIndex;
+            stf(i).nextOptIndex = nextOptIndex;
+        end
+        
+        
+        if stf(i).initializeBeam
+            %Determine different angle borders
+            %initAngleBorders are the angular borders over which an optimized control point
+            %has influence
+            initIndex = find(pln.initGantryAngles == pln.gantryAngles(i));
+            
+            if initIndex == 1
+                stf(i).initAngleBorders = [min(pln.initGantryAngles(initIndex),pln.gantryAngles(1)) (pln.initGantryAngles(initIndex+1)+pln.initGantryAngles(initIndex))/2];
+                
+            elseif initIndex == length(pln.initGantryAngles)
+                stf(i).initAngleBorders = [(pln.initGantryAngles(initIndex-1)+pln.initGantryAngles(initIndex))/2 max(pln.initGantryAngles(initIndex),pln.gantryAngles(end))];
+                
+            else
+                stf(i).initAngleBorders = ([pln.initGantryAngles(initIndex-1) pln.initGantryAngles(initIndex+1)]+pln.initGantryAngles(initIndex))/2;
+                
+            end
+            stf(i).initAngleBorderCentreDiff = [stf(i).gantryAngle-stf(i).initAngleBorders(1) stf(i).initAngleBorders(2)-stf(i).gantryAngle];
+            stf(i).initAngleBordersDiff = sum(stf(i).initAngleBorderCentreDiff);
+        end
         
         %The following must be taken as the union of stf(:).FIELD and stf(:).FIELD:
         %ray.rayPos_bev
@@ -591,8 +495,11 @@ for i = 1:length(pln.gantryAngles)
         rayPosBEV = reshape([stf(i).ray(:).rayPos_bev]',3,numOfRays)';
         targetPointBEV = reshape([stf(i).ray(:).targetPoint_bev]',3,numOfRays)';
         
-        masterRayPosBEV{stf(i).beamFatherInitIndex} = union(masterRayPosBEV{stf(i).beamFatherInitIndex},rayPosBEV,'rows');
-        masterTargetPointBEV{stf(i).beamFatherInitIndex} = union(masterTargetPointBEV{stf(i).beamFatherInitIndex},targetPointBEV,'rows');
+        %masterRayPosBEV{stf(i).beamFatherInitIndex} = union(masterRayPosBEV{stf(i).beamFatherInitIndex},rayPosBEV,'rows');
+        %masterTargetPointBEV{stf(i).beamFatherInitIndex} = union(masterTargetPointBEV{stf(i).beamFatherInitIndex},targetPointBEV,'rows');
+        
+        masterRayPosBEV = union(masterRayPosBEV,rayPosBEV,'rows');
+        masterTargetPointBEV = union(masterTargetPointBEV,targetPointBEV,'rows');
         
     end
     
@@ -733,6 +640,7 @@ for i = 1:length(pln.gantryAngles)
 end    
 
 %% VMAT
+IandFTimeInd = 1;
 if pln.VMAT
     numSSDErr = 0;
     
@@ -748,9 +656,74 @@ if pln.VMAT
     
     
     for i = 1:length(pln.gantryAngles)
-        %Remove NaNs
-        currMasterRayPosBEV = masterRayPosBEV{stf(i).beamFatherInitIndex};
-        currMasterTargetPointBEV = masterTargetPointBEV{stf(i).beamFatherInitIndex};
+        if stf(i).optimizeBeam
+            if sum([stf([stf.optimizeBeam]).doseAngleBorders] == stf(i).doseAngleBorders(2)) > 1
+                %final dose angle is repeated
+                %do not count twice in optimization
+                stf(i).doseAngleOpt(2) = 0;
+            end
+            
+            stf(i).IandFTimeInd = zeros(1,3);
+            
+            stf(i).IandFTimeInd(2) = IandFTimeInd;
+            IandFTimeInd = IandFTimeInd+1;
+            if stf(i).doseAngleOpt(2)
+                IandFTimeInd = IandFTimeInd+1;
+            end
+            
+            stf(i).IandFFac = zeros(1,4);
+            
+            if i == 1 || ~stf(stf(i).lastOptIndex).doseAngleOpt(2)
+                stf(i).IandFFac(1) = 0;
+            else
+                stf(i).IandFFac(1) = (stf(stf(i).lastOptIndex).doseAngleBorders(2)-stf(stf(i).lastOptIndex).gantryAngle)/(stf(i).gantryAngle-stf(stf(i).lastOptIndex).gantryAngle);
+                stf(i).IandFTimeInd(1) = stf(i).IandFTimeInd(2)-1;
+            end
+            if i == length(pln.gantryAngles) || ~stf(i).doseAngleOpt(2)
+                stf(i).IandFFac(4) = 0;
+            else
+                stf(i).IandFFac(4) = (stf(stf(i).nextOptIndex).gantryAngle-stf(stf(i).nextOptIndex).doseAngleBorders(1))/(stf(stf(i).nextOptIndex).gantryAngle-stf(i).gantryAngle);
+                stf(i).IandFTimeInd(3) = stf(i).IandFTimeInd(2)+1;
+            end
+            
+            stf(i).IandFFac(2) = (stf(i).doseAngleBorders(1)-stf(stf(i).lastOptIndex).gantryAngle)/(stf(i).gantryAngle-stf(stf(i).lastOptIndex).gantryAngle);
+            stf(i).IandFFac(3) = (stf(stf(i).nextOptIndex).gantryAngle-stf(i).doseAngleBorders(2))/(stf(stf(i).nextOptIndex).gantryAngle-stf(i).gantryAngle);
+            
+            stf(i).IandFFac(isnan(stf(i).IandFFac)) = 1;
+            
+            stf(i).timeFac = zeros(1,2);
+            
+            if i == 1
+                stf(i).timeFac(1) = 0;
+                stf(i).timeFac(2) = stf(i).optAngleBorderCentreDiff(2)/stf(i).optAngleBordersDiff;
+            elseif i == length(pln.gantryAngles)
+                stf(i).timeFac(1) = stf(i).optAngleBorderCentreDiff(1)/stf(i).optAngleBordersDiff;
+                stf(i).timeFac(2) = 0;
+            else
+                stf(i).timeFac(1) = stf(i).optAngleBorderCentreDiff(1)/stf(i).optAngleBordersDiff;
+                stf(i).timeFac(2) = stf(i).optAngleBorderCentreDiff(2)/stf(i).optAngleBordersDiff;
+            end
+            
+            
+            if stf(i).initializeBeam
+                %remove NaNs from beamChildren and beamSubChildren
+                if isfield(stf(i),'beamChildrenGantryAngles')
+                    stf(i).beamChildrenGantryAngles(isnan(stf(i).beamChildrenGantryAngles)) = [];
+                    stf(i).beamChildrenIndex(isnan(stf(i).beamChildrenIndex)) = [];
+                else
+                    stf(i).numOfBeamChildren = 0;
+                end
+                if isfield(stf(i),'beamSubChildrenGantryAngles')
+                    stf(i).beamSubChildrenGantryAngles(isnan(stf(i).beamSubChildrenGantryAngles)) = [];
+                    stf(i).beamSubChildrenIndex(isnan(stf(i).beamSubChildrenIndex)) = [];
+                else
+                    stf(i).numOfBeamSubChildren = 0;
+                end
+            end
+        end
+        
+        currMasterRayPosBEV = masterRayPosBEV;
+        currMasterTargetPointBEV = masterTargetPointBEV;
         
         currMasterRayPosBEV(isnan(currMasterRayPosBEV)) = [];
         currMasterTargetPointBEV(isnan(currMasterTargetPointBEV)) = [];
@@ -839,110 +812,10 @@ if pln.VMAT
     
     stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
     stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
-    %{
-    for parent = 1:length(pln.gantryAngles)
-        if stf(parent).initializeBeam
-            parentNumOfRays = stf(parent).numOfRays;
-            parentRayPosBEV = reshape([stf(parent).ray(:).rayPos_bev]',3,parentNumOfRays)';
-            parentTargetPointBEV = reshape([stf(parent).ray(:).targetPoint_bev]',3,parentNumOfRays)';
-            
-            for child = 1:stf(parent).numOfBeamChildren
-                %The following must be taken as the union of stf(child).FIELD and stf(parent).FIELD:
-                %ray.rayPos_bev
-                %ray.targetPoint_bev
-                %Then these are rotated to form the non-bev forms;
-                %ray.rayCorners_SCD is also formed
-                childIndex = stf(parent).beamChildrenIndex(child);
-                childNumOfRays = stf(childIndex).numOfRays;
-                
-                childRayPosBEV = reshape([stf(childIndex).ray(:).rayPos_bev]',3,childNumOfRays)';
-                childTargetPointBEV = reshape([stf(childIndex).ray(:).targetPoint_bev]',3,childNumOfRays)';
-                
-                childRayPosBEV_new = union(parentRayPosBEV,childRayPosBEV,'rows');
-                childRayTargetPointBEV_new = union(parentTargetPointBEV,childTargetPointBEV,'rows');
-                stf(childIndex).numOfRays = size(childRayPosBEV_new,1);
-                
-                %This is a new rotation matrix, which is meant to
-                %carry over the rayPos and
-                %targetPoint from the optimized gantry angle to the
-                %children gantry angles.
-                rotMx_XY_T = [ cosd(pln.gantryAngles(childIndex)) sind(pln.gantryAngles(childIndex)) 0;
-                              -sind(pln.gantryAngles(childIndex)) cosd(pln.gantryAngles(childIndex)) 0;
-                               0                                  0                                  1];
-                rotMx_XZ_T = [cosd(pln.couchAngles(childIndex)) 0 -sind(pln.couchAngles(childIndex));
-                              0                                 1  0;
-                              sind(pln.couchAngles(childIndex)) 0  cosd(pln.couchAngles(childIndex))];
-                
-                for j = 1:stf(childIndex).numOfRays
-                    stf(childIndex).ray(j).rayPos_bev = childRayPosBEV_new(j,:);
-                    stf(childIndex).ray(j).targetPoint_bev = childRayTargetPointBEV_new(j,:);
-                    
-                    stf(childIndex).ray(j).rayPos      = stf(childIndex).ray(j).rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
-                    stf(childIndex).ray(j).targetPoint = stf(childIndex).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
-                    if strcmp(pln.radiationMode,'photons')
-                        stf(childIndex).ray(j).rayCorners_SCD = (repmat([0, machine.meta.SCD - SAD, 0],4,1)+ (machine.meta.SCD/SAD) * ...
-                            [childRayPosBEV_new(j,:) + [+stf(childIndex).bixelWidth/2,0,+stf(childIndex).bixelWidth/2];...
-                            childRayPosBEV_new(j,:) + [-stf(childIndex).bixelWidth/2,0,+stf(childIndex).bixelWidth/2];...
-                            childRayPosBEV_new(j,:) + [-stf(childIndex).bixelWidth/2,0,-stf(childIndex).bixelWidth/2];...
-                            childRayPosBEV_new(j,:) + [+stf(childIndex).bixelWidth/2,0,-stf(childIndex).bixelWidth/2]])*rotMx_XY_T*rotMx_XZ_T;
-                    end
-                end
-            end
-            
-            for subchild = 1:stf(parent).numOfBeamSubChildren
-                %Do the exact same thing for the subchildren (interpolated
-                %gantry angles).
-                
-                %The following must be taken as the union of stf(subchild).FIELD and stf(parent).FIELD:
-                %ray.rayPos_bev
-                %ray.targetPoint_bev
-                %Then these are rotated to form the non-bev forms;
-                %ray.rayCorners_SCD is also formed
-                subChildIndex = stf(parent).beamSubChildrenIndex(subchild);
-                subchildNumOfRays = stf(subChildIndex).numOfRays;
-                
-                subchildRayPosBEV = reshape([stf(subChildIndex).ray(:).rayPos_bev]',3,subchildNumOfRays)';
-                subchildTargetPointBEV = reshape([stf(subChildIndex).ray(:).targetPoint_bev]',3,subchildNumOfRays)';
-                
-                subchildRayPosBEV_new = union(parentRayPosBEV,subchildRayPosBEV,'rows');
-                subchildRayTargetPointBEV_new = union(parentTargetPointBEV,subchildTargetPointBEV,'rows');
-                stf(subChildIndex).numOfRays = size(subchildRayPosBEV_new,1);
-                
-                %This is a new rotation matrix, which is meant to
-                %carry over the rayPos and
-                %targetPoint from the optimized gantry angle to the
-                %subchildren gantry angles.
-                rotMx_XY_T = [ cosd(pln.gantryAngles(subChildIndex)) sind(pln.gantryAngles(subChildIndex)) 0;
-                              -sind(pln.gantryAngles(subChildIndex)) cosd(pln.gantryAngles(subChildIndex)) 0;
-                               0                                     0                                     1];
-                rotMx_XZ_T = [cosd(pln.couchAngles(subChildIndex)) 0 -sind(pln.couchAngles(subChildIndex));
-                              0                                    1  0;
-                              sind(pln.couchAngles(subChildIndex)) 0  cosd(pln.couchAngles(subChildIndex))];
-                
-                for j = 1:stf(subChildIndex).numOfRays
-                    stf(subChildIndex).ray(j).rayPos_bev = subchildRayPosBEV_new(j,:);
-                    stf(subChildIndex).ray(j).targetPoint_bev = subchildRayTargetPointBEV_new(j,:);
-                    
-                    stf(subChildIndex).ray(j).rayPos      = stf(subChildIndex).ray(j).rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
-                    stf(subChildIndex).ray(j).targetPoint = stf(subChildIndex).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
-                    if strcmp(pln.radiationMode,'photons')
-                        stf(subChildIndex).ray(j).rayCorners_SCD = (repmat([0, machine.meta.SCD - SAD, 0],4,1)+ (machine.meta.SCD/SAD) * ...
-                            [subchildRayPosBEV_new(j,:) + [+stf(subChildIndex).bixelWidth/2,0,+stf(subChildIndex).bixelWidth/2];...
-                            subchildRayPosBEV_new(j,:) + [-stf(subChildIndex).bixelWidth/2,0,+stf(subChildIndex).bixelWidth/2];...
-                            subchildRayPosBEV_new(j,:) + [-stf(subChildIndex).bixelWidth/2,0,-stf(subChildIndex).bixelWidth/2];...
-                            subchildRayPosBEV_new(j,:) + [+stf(subChildIndex).bixelWidth/2,0,-stf(subChildIndex).bixelWidth/2]])*rotMx_XY_T*rotMx_XZ_T;
-                    end
-                end
-            end
-        end
-        
-        %Show progress
-        matRad_progress(parent,length(pln.gantryAngles));
-    end
-    %}
+    
+    fprintf('\n\nNumber of SSD errors: %d out of %d.\n\n',numSSDErr,sum([stf(:).numOfRays]));
 end
 
-fprintf('\n\nNumber of SSD errors: %d out of %d.\n\n',numSSDErr,sum([stf(:).numOfRays]));
 end
 
 
