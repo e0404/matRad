@@ -68,7 +68,7 @@ for i = 1:size(apertureInfo.beam,2)
         elseif l == apertureInfo.totalNumOfShapes
             apertureInfo.beam(i).maxLeafSpeed = maxLeafSpeed(l-1);
         else
-            apertureInfo.beam(i).maxLeafSpeed = maxLeafSpeed(l-1)*apertureInfo.beam(1).timeFac(1)+maxLeafSpeed(l)*apertureInfo.beam(1).timeFac(2);
+            apertureInfo.beam(i).maxLeafSpeed = maxLeafSpeed(l-1)*apertureInfo.beam(i).timeFac(1)+maxLeafSpeed(l)*apertureInfo.beam(i).timeFac(2);
         end
         
         

@@ -1,4 +1,4 @@
-function result = matRad_calcDeliveryMetrics(result,pln,stf)
+function result = matRad_calcDeliveryMetrics(result,pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad delivery metric calculation
 % 
@@ -33,16 +33,20 @@ function result = matRad_calcDeliveryMetrics(result,pln,stf)
 apertureInfo = result.apertureInfo;
 
 apertureInfo.planMU = 0;
-apertureInfo.planArea = 0;
-apertureInfo.planModulation = 0;
+%apertureInfo.planArea = 0;
+%apertureInfo.planModulation = 0;
 
-apertureMU = nan(1000,1);
-apertureArea = nan(1000,1);
-l = 1;
+%apertureMU = nan(1000,1);
+%apertureArea = nan(1000,1);
+%l = 1;
 if pln.VMAT
     
-    initInd = find([stf(:).initializeBeam]);
+    for i = 1:numel(apertureInfo.beam)
+        apertureInfo.planMU = apertureInfo.planMU+apertureInfo.beam(i).MU;
+    end
     
+    %initInd = find([apertureInfo.beam.initializeBeam]);
+    %{
     for i = initInd
         apertureInfo.beam(i).beamMU = 0;
         apertureInfo.beam(i).beamArea = 0;
@@ -70,52 +74,21 @@ if pln.VMAT
         apertureInfo.planArea = apertureInfo.planArea+apertureInfo.beam(i).beamArea*apertureInfo.beam(i).beamMU;
         apertureInfo.planModulation = apertureInfo.planModulation+apertureInfo.beam(i).beamModulation*apertureInfo.beam(i).beamMU;
     end
-else
-    for i = 1:size(apertureInfo.beam,2)
-        if apertureInfo.beam(i).numOfShapes ~= 0
-            
-            apertureInfo.beam(i).beamMU = 0;
-            apertureInfo.beam(i).beamArea = 0;
-            apertureInfo.beam(i).unionShapeMap = 0*apertureInfo.beam(i).shape(1).shapeMap;
-            
-            for j = 1:apertureInfo.beam(i).numOfShapes
-                apertureInfo.beam(i).shape(j).MU = apertureInfo.weightToMU*apertureInfo.beam(i).shape(j).weight;
-                apertureInfo.beam(i).shape(j).apertureArea = (apertureInfo.bixelWidth/10)^2*sum(apertureInfo.beam(i).shape(j).shapeMap(:));
-                
-                apertureInfo.beam(i).beamMU = apertureInfo.beam(i).beamMU+apertureInfo.beam(i).shape(j).MU;
-                apertureInfo.beam(i).beamArea = apertureInfo.beam(i).beamArea+apertureInfo.beam(i).shape(j).MU*apertureInfo.beam(i).shape(j).apertureArea;
-                
-                apertureInfo.beam(i).unionShapeMap = max(apertureInfo.beam(i).unionShapeMap,apertureInfo.beam(i).shape(j).shapeMap);
-                
-                apertureMU(l) = apertureInfo.beam(i).shape(j).MU;
-                apertureArea(l) = apertureInfo.beam(i).shape(j).apertureArea;
-                l = l+1;
-            end
-            apertureInfo.beam(i).beamArea = apertureInfo.beam(i).beamArea./apertureInfo.beam(i).beamMU;
-            apertureInfo.beam(i).unionArea = (apertureInfo.bixelWidth/10)^2*sum(apertureInfo.beam(i).unionShapeMap(:));
-            apertureInfo.beam(i).beamModulation = 1-apertureInfo.beam(i).beamArea./apertureInfo.beam(i).unionArea;
-            apertureInfo.beam(i).beamK = apertureInfo.beam(i).numOfShapes*(1-apertureInfo.beam(i).beamModulation);
-            
-            apertureInfo.planMU = apertureInfo.planMU+apertureInfo.beam(i).beamMU;
-            apertureInfo.planArea = apertureInfo.planArea+apertureInfo.beam(i).beamArea*apertureInfo.beam(i).beamMU;
-            apertureInfo.planModulation = apertureInfo.planModulation+apertureInfo.beam(i).beamModulation*apertureInfo.beam(i).beamMU;
-            
-        end
-    end
+    %}
 end
 
-apertureInfo.planArea = apertureInfo.planArea./apertureInfo.planMU;
-apertureInfo.planModulation = apertureInfo.planModulation./apertureInfo.planMU;
+%apertureInfo.planArea = apertureInfo.planArea./apertureInfo.planMU;
+%apertureInfo.planModulation = apertureInfo.planModulation./apertureInfo.planMU;
 
 
-beamMU = [apertureInfo.beam(:).beamMU]';
-beamArea = [apertureInfo.beam(:).beamArea]';
-beamModulation = [apertureInfo.beam(:).beamModulation]';
-beamK = [apertureInfo.beam(:).beamK]';
+%beamMU = [apertureInfo.beam(:).beamMU]';
+%beamArea = [apertureInfo.beam(:).beamArea]';
+%beamModulation = [apertureInfo.beam(:).beamModulation]';
+%beamK = [apertureInfo.beam(:).beamK]';
 
 
-apertureMU(isnan(apertureMU)) = [];
-apertureArea(isnan(apertureArea)) = [];
+%apertureMU(isnan(apertureMU)) = [];
+%apertureArea(isnan(apertureArea)) = [];
 
 %{
 figure

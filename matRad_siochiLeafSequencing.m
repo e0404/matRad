@@ -330,6 +330,7 @@ if pln.VMAT
     
     %optimize delivery
     resultGUI = matRad_optDelivery(resultGUI,pln,0);
+    resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
     
     sequencing.w = resultGUI.apertureInfo.bixelWeights;
     
