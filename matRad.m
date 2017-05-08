@@ -34,8 +34,8 @@ matRadGUI
 %% meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 3; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [210]; %[0:72:359]; % [°]
-pln.couchAngles     = [0]; % [Â°]
+pln.gantryAngles    = [210 280]; %[0:72:359]; % [°]
+pln.couchAngles     = [0 0]; % [Â°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
@@ -52,7 +52,7 @@ pln.runDAO                 = false; % 1/true: run DAO, 0/false: don't / will be 
 pln.machine                = 'HIT'; %GenericLET
 pln.minNrParticles         = 500000;
 pln.LongitudialSpotSpacing = 3;      % only relevant for HIT machine, not generic
-pln.calcLET                = true;
+pln.calcLET                = false; %true;
 
 %% initial visualization and change objective function settings if desired
 matRadGUI
@@ -100,7 +100,7 @@ matRad_calcDVH(resultGUI,cst,pln)
 resultGUI = matRad_postprocessing(resultGUI, dij, pln);   %last number  =minNrParticlesIES
 
 %% export Plan
-matRad_export_HITXMLPlan_modified('test',  pln, stf, resultGUI, 'backforth')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
+matRad_export_HITXMLPlan_modified('Liver007_2beams_bf',  pln, stf, resultGUI, 'backforth')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
 
 %% calc 4D dose
-[resultGUI, delivery] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI,  'LiverDS221_1b_constRBE_bixel3_3_30fx60_bf'); %'LiverDS221_wc5555_3mmBixel_bf'); %TKUH005_test');  
+[resultGUI, delivery] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI,  'Liver007_2beams_bf'); %'LiverDS221_wc5555_3mmBixel_bf'); %TKUH005_test');  

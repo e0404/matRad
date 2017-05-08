@@ -17,7 +17,7 @@ function [resultGUI, delivery] = matRad_calcPhaseDose(resultGUI, dij, delivery)
 % Silke Ulrich Aug 2016
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-MOTION = 'linear'; %'CALYPSO' 'ANZAI'
+MOTION = 'linear'; %'CALYPSO' 'ANZAI' 
 
 add = 0;
 for i=1:length(delivery)
@@ -32,7 +32,7 @@ for i=1:length(delivery)
         if(isnan(delivery(i).j(l)))
         delivery(i).w(l) = NaN;
     else
-        delivery(i).w(l) = resultGUI.finalw(delivery(i).j(l));  %habe in delivery schon particles -> sollte gleich sein!!!
+        delivery(i).w(l) = resultGUI.w(delivery(i).j(l));  
     end
     end
     %add = max(j);
@@ -194,6 +194,8 @@ elseif(strcmp(MOTION, 'ANZAI'))
     % amplitude or phase based???
     
     
+
+    
 end
     %%%%%%%%%%%%%%%END MOTION
     
@@ -221,11 +223,17 @@ for p=1:NumOfPhases
         t =  find(delivery(i).phase == p  & ~isnan(delivery(i).w));
              
         w(delivery(i).j(t)) = delivery(i).w(t);
+        
+        %gleich verteilt
+        %t = find(~isnan(delivery(i).w))
+        %w(delivery(i).j(t)) = delivery(i).w(t)/10;
+        
+        %%%%%
         Fluenzw{p} = w;
     end
  
     resultGUI.phaseDose{p} = reshape(dij.physicalDose{p} * w, dij.dimensions);
-    if isequal(resultGUI.bioParam.quantity,'RBExD')
+    if isequal(resultGUI.bioParam.type,'MCN_RBExD')
     
         resultGUI.phaseAlphaDose{p} = reshape(dij.mAlphaDose{p} * w, dij.dimensions);
         resultGUI.phaseSqrtBetaDose{p} = reshape(dij.mSqrtBetaDose{p} * w, dij.dimensions);

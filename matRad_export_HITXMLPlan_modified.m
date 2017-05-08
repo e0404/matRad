@@ -213,7 +213,7 @@ end
 
         bixelIndex = find([tmp.beamNum==beamNb & tmp.rayNum==rayNb & tmp.bixelNum==bixelNb]==1);
 
-        voxel_nbParticles = resultGUI.finalw(bixelIndex); % if minNrParticlesSpot is same for postprocessing and export_Plan resultGUI.w would give same result
+        voxel_nbParticles = resultGUI.w(bixelIndex); % if minNrParticlesSpot is same for postprocessing and export_Plan resultGUI.w would give same result
         voxel_nbParticles = round(1e6*voxel_nbParticles);
 
         % check whether there are (enough) particles for beam delivery

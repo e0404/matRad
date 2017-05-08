@@ -39,8 +39,8 @@ function [ resultGUI ] = matRad_reCalcMCNRBExD(cst, dij,resultGUI )
    end
    
    
-   RBEmax(ix) = 0.999064 + ((0.35605  * LETd(ix) )./ dij.abX(ix));           
-   RBEmin(ix) = 1.1012 - (-0.0038703  * real(sqrt(dij.abX(ix))) .* LETd(ix)); 
+   RBEmax(ix) = 0.999064 + ((0.35605  * LETd(ix) )./ dij.abX(ix));  
+   RBEmin(ix) = 1.1012 + (-0.0038703  * real(sqrt(dij.abX(ix))) .* LETd(ix)); 
    resultGUI.RBExDose  = reshape(0.5 .* (sqrt(dij.abX.^2 + (4*dp(:).*dij.abX.*RBEmax) + (4*dp(:).^2 .* RBEmin.^2)) - dij.abX),dij.dimensions);
 
 

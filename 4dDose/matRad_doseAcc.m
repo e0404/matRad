@@ -49,6 +49,7 @@ if ~isfield(ct, 'dvf')
 %     dvffiles(5).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F04_M06_vf.mha';
     
 dvfInputFolder = 'D:\Matrad\data\4DCT\Liver007\4DSet01_10Ph\REG\MHA_DS221_fromXF\';
+%dvfInputFolder = 'D:\Silke\data\LiverPhoton002\4DSet_DS221\REG\';
 dvfFormat = 'mha';
 referencephase = 'F06';  %M06 for EMT, F06 for DDM
 dvffiles = dir([dvfInputFolder, '*.', dvfFormat]);
@@ -132,7 +133,7 @@ if strcmp(accMethod,'DDM')
         
         dAcc(ix) = dAcc(ix) + d_ref;
         
-      if isequal(resultGUI.bioParam.quantity,'RBExD')
+      if isequal(resultGUI.bioParam.type,'MCN_RBExD')
         
             alphaD_ref = interp3(yGridVec,xGridVec',zGridVec,resultGUI.phaseAlphaDose{1,i}(:,:,:), ...  
                              Y(ix) + dvf_y_i(ix), ...     
@@ -350,7 +351,7 @@ if isequal(resultGUI.bioParam.type,'const_RBExD')
 % compute RBE weighted dose from accumulated alpha and beta cubes
 
 % consider biological optimization for carbon ions
-elseif isequal(resultGUI.bioParam.quantity,'RBExD')
+elseif isequal(resultGUI.bioParam.type,'MCN_RBExD')
 
     a_x = zeros(size(resultGUI.physicalDose));
     b_x = zeros(size(resultGUI.physicalDose));

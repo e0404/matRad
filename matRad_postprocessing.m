@@ -37,51 +37,25 @@ function resultGUI = matRad_postprocessing(resultGUI, dij, pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-% issue warning if biological optimization impossible
-if sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose'))
-    warndlg('Alpha and beta matrices for effect based and RBE optimization not available - physical optimization is carried out instead.');
-    pln.bioOptimization = 'none';
-end
-
-if ~isdeployed % only if _not_ running as standalone
-    
-    % add path for optimization functions
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir,'optimization'))
-    
-    % get handle to Matlab command window
-    mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-    cw          = mde.getClient('Command Window');
-    xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-    h_cw        = handle(xCmdWndView,'CallbackProperties');
-
-    % set Key Pressed Callback of Matlab command window
-    set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
-
-end
-
-if ~strcmp(pln.radiationMode,'protons') && ~strcmp(pln.radiationMode,'carbon')
-  error('HITXML plan for this radiationMode not supported!');
-end
-Imin = 500000/1e6;  %for protons
-minNrParticlesIES = 25000000;    %for protons
-if strcmp(pln.radiationMode,'carbon')
+if strcmp(pln.radiationMode,'protons')
+    Imin = 500000/1e6;  %for protons
+    minNrParticlesIES = 25000000;    %for protons
+elseif strcmp(pln.radiationMode,'carbon')
      Imin = 15000/1e6;   
      minNrParticlesIES = 0;
 end
 
 
-
 %%manipulate fluence vector
 w = resultGUI.w;
-%Imin = pln.minNrParticles/1e6;
+resultGUI.optW = w;
 lw = length(w);
 for i = 1:lw
     if(w(i) < Imin/2)
         w(i) = 0;
     elseif(w(i) > Imin/2 && w(i) < Imin)
-        %w(i) = Imin;    WIEDER ÄNDERN; SO KONSISTENT MIT LMDOUT
-         w(i) = 0;
+         w(i) = Imin;    %WIEDER ÄNDERN; SO KONSISTENT MIT LMDOUT
+         %w(i) = 0;
     end
 end
 
@@ -91,7 +65,7 @@ resultGUI.finalDose = reshape(dij.physicalDose{1}*w,dij.dimensions);
 %d = matRad_backProjection(w,dij,'none');
 
 %resultGUI.finalDose = reshape(d{1},dij.dimensions);
-resultGUI.finalw = w;
+resultGUI.w = w;
 
 %%calc difference to optimized dose (not necessary, can be deleted)
 relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.finalDose(:)))*100;
@@ -127,7 +101,7 @@ if(minNrParticlesIES ~= 0)
                 if length(bixelNb)==1 % one IES found
                     bixelIndex = find([dij.beamNum==beamNb & dij.rayNum==rayNb & dij.bixelNum==bixelNb]==1);
 
-                     voxel_nbParticles = resultGUI.finalw(bixelIndex);
+                     voxel_nbParticles = resultGUI.w(bixelIndex);
                      voxel_nbParticles = round(1e6*voxel_nbParticles);
 
                     % check whether there are (enough) particles for beam delivery
@@ -154,7 +128,7 @@ if(minNrParticlesIES ~= 0)
 %d = matRad_backProjection(w,dij,'none');
 resultGUI.finalDose = reshape(dij.physicalDose{1}*w,dij.dimensions);
 %resultGUI.finalDose = reshape(d{1},dij.dimensions);
-resultGUI.finalw = w;
+resultGUI.w = w;
 
 %%calc difference to optimized dose (not necessary, can be deleted)
 relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.finalDose(:)))*100;
