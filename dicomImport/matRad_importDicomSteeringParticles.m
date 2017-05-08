@@ -168,7 +168,7 @@ for i = 1:length(BeamSeqNames)
         stf(i).ray(j).focusFWHM = [];
         stf(i).ray(j).focusIx = [];
         stf(i).ray(j).weight = [];
-        stf(i).ray(j).rangeshifter = struct();
+        stf(i).ray(j).rangeShifter = struct();
         ray(j).ID = [];
         ray(j).eqThickness = [];
         ray(j).sourceRashiDistance = [];
@@ -190,9 +190,9 @@ for i = 1:length(BeamSeqNames)
     % reassign to preserve data structure
     for j = 1:numel(ray)
         for k = 1:numel(ray(j).ID)
-            stf(i).ray(j).rangeshifter(k).ID = ray(j).ID(k);
-            stf(i).ray(j).rangeshifter(k).eqThickness = ray(j).eqThickness(k);
-            stf(i).ray(j).rangeshifter(k).sourceRashiDistance = stf(i).SAD - ray(j).sourceRashiDistance(k);
+            stf(i).ray(j).rangeShifter(k).ID = ray(j).ID(k);
+            stf(i).ray(j).rangeShifter(k).eqThickness = ray(j).eqThickness(k);
+            stf(i).ray(j).rangeShifter(k).sourceRashiDistance = stf(i).SAD - ray(j).sourceRashiDistance(k);
         end
     end
     

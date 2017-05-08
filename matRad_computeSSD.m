@@ -65,8 +65,11 @@ if strcmp(mode,'first')
         for j = 1:stf(i).numOfRays
             if ~isfield(stf(i).ray(j), 'rashiEqThickness') || ~isfield(stf(i).ray(j), 'rashiIsoCenterDistance') ...
                     || isempty(stf(i).ray(j).rashiEqThickness) || isempty(stf(i).ray(j).rashiIsoCenterDistance)
-                stf(i).ray(j).rashiEqThickness = zeros(size(stf(i).ray(j).energy));
-                stf(i).ray(j).rashiIsoCenterDistance = zeros(size(stf(i).ray(j).energy));
+                for k = 1:numel(stf(i).ray(j).energy)
+                    stf(i).ray(j).rangeShifter(k).ID = 0;
+                    stf(i).ray(j).rangeShifter(k).eqThickness = 0;
+                    stf(i).ray(j).rangeShifter(k).sourceRashiDistance = 0;
+                end
             end
         end
     end
