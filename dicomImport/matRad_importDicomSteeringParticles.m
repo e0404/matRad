@@ -125,8 +125,6 @@ for i = 1:length(BeamSeqNames)
     numOfContrPointSeq = length(ControlPointSeqNames);
     % create empty helper matrix
     temporarySteering = zeros(0,8);
-    % 1. col: rangeShifter ID, 2. col: rangeShifterWaterEquivalentThickness
-    % 3. col isoCentertoRangeShifterDistance
     for currContr = 1:numOfContrPointSeq
         currContrSeq = ControlPointSeq.(ControlPointSeqNames{currContr});
         % get energy, equal for all coming elements in the next loop
