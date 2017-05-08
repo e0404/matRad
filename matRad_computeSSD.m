@@ -59,6 +59,17 @@ if strcmp(mode,'first')
 
         end
     end
+    
+    % include rangeshifter data if not yet available 
+    for i = 1:size(stf,2)
+        for j = 1:stf(i).numOfRays
+            if ~isfield(stf(i).ray(j), 'rashiEqThickness') || ~isfield(stf(i).ray(j), 'rashiIsoCenterDistance') ...
+                    || isempty(stf(i).ray(j).rashiEqThickness) || isempty(stf(i).ray(j).rashiIsoCenterDistance)
+                stf(i).ray(j).rashiEqThickness = zeros(size(stf(i).ray(j).energy));
+                stf(i).ray(j).rashiIsoCenterDistance = zeros(size(stf(i).ray(j).energy));
+            end
+        end
+    end
 
 else
     
