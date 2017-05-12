@@ -64,7 +64,7 @@ for i = 1:size(cst,1)
                 if (~isequal(cst{i,6}(j).type, 'max dose constraint')      && ~isequal(cst{i,6}(j).type, 'min dose constraint')          &&...
                     ~isequal(cst{i,6}(j).type, 'max mean dose constraint') && ~isequal(cst{i,6}(j).type, 'min mean dose constraint') && ...
                     ~isequal(cst{i,6}(j).type, 'min EUD constraint')       && ~isequal(cst{i,6}(j).type, 'max EUD constraint'))           && ...
-                    isequal(options.bioOpt,'LEMIV_effect')
+                    isequal(options.quantityOpt,'effect')
                      
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
                 else
@@ -81,11 +81,11 @@ for i = 1:size(cst,1)
                     scenID  = [scenID;1];
                     scenID2 = [scenID2;ones(numel(cst{i,4}{1}),1)];
                     
-                    if isequal(options.bioOpt,'none') && ~isempty(jacobVec) || isequal(options.ID,'protons_const_RBExD')
+                    if isequal(options.quantityOpt,'dose') && ~isempty(jacobVec) || isequal(options.model,'constRBE')
 
                        DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
 
-                    elseif isequal(options.bioOpt,'LEMIV_effect') && ~isempty(jacobVec)
+                    elseif isequal(options.quantityOpt,'effect') && ~isempty(jacobVec)
 
                        mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
                        mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
@@ -93,7 +93,7 @@ for i = 1:size(cst,1)
                        voxelID                 = [voxelID ;cst{i,4}{1}];
                        constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
 
-                    elseif isequal(options.bioOpt,'LEMIV_RBExD') && ~isempty(jacobVec)
+                    elseif isequal(options.quantityOpt,'RBExD') && ~isempty(jacobVec)
                                         
                        scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i);
 
@@ -117,14 +117,14 @@ for i = 1:size(cst,1)
 
 end
 
-if isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LEMIV_RBExD')
+if isequal(options.quantityOpt,'effect') || isequal(options.quantityOpt,'RBExD')
     constraintID = constraintID(2:end);
 end
 
 % Calculate jacobian with dij projections
 for i = 1:dij.numOfScenarios
    % enter if statement also for protons using a constant RBE
-   if isequal(options.bioOpt,'none') ||  isequal(options.ID,'protons_const_RBExD')
+   if isequal(options.quantityOpt,'dose') ||  isequal(options.model,'constRBE')
 
         if ~isempty(DoseProjection)
             
@@ -133,7 +133,7 @@ for i = 1:dij.numOfScenarios
             
         end
 
-    elseif isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LEMIV_RBExD')
+    elseif isequal(options.quantityOpt,'effect') || isequal(options.quantityOpt,'RBExD')
 
         if ~isempty(mSqrtBetaDoseProjection) && ~isempty(mAlphaDoseProjection)
             

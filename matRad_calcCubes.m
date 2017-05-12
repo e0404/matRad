@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcCubes(w,dij,cst,scenNum)
+function resultGUI = matRad_calcCubes(w,dij,scenNum)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad computation of all cubes for the resultGUI struct which is used
 % as result container and for visualization in matRad's GUI
@@ -30,7 +30,7 @@ function resultGUI = matRad_calcCubes(w,dij,cst,scenNum)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 4
+if nargin < 3
     scenNum = 1;
 end
 
@@ -42,11 +42,9 @@ resultGUI.physicalDose = reshape(full(dij.physicalDose{scenNum}*resultGUI.w),dij
 % consider RBE for protons
 if isfield(dij,'RBE')
    fprintf(['matRad: applying a constant RBE of ' num2str(dij.RBE) ' \n']); 
-   resultGUI.RBExDose     = resultGUI.physicalDose * dij.RBE;
+   resultGUI.RBExD     = resultGUI.physicalDose * dij.RBE;
+   resultGUI.RBE          = (resultGUI.physicalDose>0) * dij.RBE;
 end
-
-% consider VOI priorities
-[cst,resultGUI.overlapCube]  = matRad_setOverlapPriorities(cst,dij.dimensions);
 
 if isfield(dij,'mLETDose')
     LETDoseCube       = dij.mLETDose{scenNum} * resultGUI.w;
@@ -59,26 +57,15 @@ end
 % consider biological optimization for carbon ions
 if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
 
-    a_x = zeros(size(resultGUI.physicalDose));
-    b_x = zeros(size(resultGUI.physicalDose));
-
-    for i = 1:size(cst,1)
-        % Only take OAR or target VOI.
-        if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') 
-            a_x(cst{i,4}{scenNum}) = cst{i,5}.alphaX;
-            b_x(cst{i,4}{scenNum}) = cst{i,5}.betaX;
-        end
-    end
-    
-    ix = b_x~=0; 
+    ix = dij.betaX~=0; 
     
     resultGUI.effect = full(dij.mAlphaDose{scenNum}*resultGUI.w+(dij.mSqrtBetaDose{scenNum}*resultGUI.w).^2);
     resultGUI.effect = reshape(resultGUI.effect,dij.dimensions);
     
-    resultGUI.RBExDose     = zeros(size(resultGUI.effect));
-    resultGUI.RBExDose(ix) = ((sqrt(a_x(ix).^2 + 4 .* b_x(ix) .* resultGUI.effect(ix)) - a_x(ix))./(2.*b_x(ix)));
+    resultGUI.RBExD     = zeros(size(resultGUI.effect));
+    resultGUI.RBExD(ix) = ((sqrt(dij.alphaX(ix).^2 + 4 .* dij.betaX(ix) .* resultGUI.effect(ix)) - dij.alphaX(ix))./(2.*dij.betaX(ix)));
                                  
-    resultGUI.RBE          = resultGUI.RBExDose./resultGUI.physicalDose;
+    resultGUI.RBE          = resultGUI.RBExD./resultGUI.physicalDose;
    
     resultGUI.alpha     = zeros(size(resultGUI.effect));
     resultGUI.beta      = zeros(size(resultGUI.effect));

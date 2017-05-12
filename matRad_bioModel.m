@@ -1,0 +1,361 @@
+classdef matRad_bioModel
+   
+   properties
+            
+      
+      
+   end
+    
+   properties(SetAccess = private)
+ 
+      radiationMode;     % radiation modality 
+      identifier;       % upper case short notation of the current model in combination with the quantity used for optimization (e.g. LEMIV_RBExD)
+      bioOpt;           % boolean indicating biological optimization
+      model;            % upper case short notation of the current model (e.g. LEM)
+      quantityOpt;      % quantity used for optimizaiton
+      quantityVis;      % quantity used per default for visualization
+      description;      % short description of the biological model
+      
+      % beamMixingModel  = 'ZaiderRossi';
+   end
+   
+   
+   properties(Constant = true)
+      AvailableModels               = {'none','constRBE','MCN','WED','LEMIV'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
+      AvailableradiationModealities = {'photons','protons','carbon'};
+      AvailableQuantitiesForOpt     = {'physicalDose','effect','RBExD'}
+
+   end
+   
+   properties(Constant = true, Access = private)
+      
+      constRBE = 1.1
+      
+      %McNamara variable RBE model for protons
+      p0_MCN   = 0.999064;     % according to https://www.ncbi.nlm.nih.gov/pubmed/26459756
+      p1_MCN   = 0.35605;
+      p2_MCN   = 1.1012;
+      p3_MCN   = -0.0038703;
+      
+      %Carabe Fernandez variable RBE model for protons
+      p0_CAR   = 0.843; % http://www.tandfonline.com/doi/abs/10.1080/09553000601087176?journalCode=irab20
+      p1_CAR   = 0.154;
+      p2_CAR   = 2.686;
+      p3_CAR   = 1.09; 
+      p4_CAR   = 0.006; 
+      p5_CAR   = 2.686; 
+      
+      %Wedenberg variable RBE model for protons
+      p0_WED   = 1; % https://www.ncbi.nlm.nih.gov/pubmed/22909391
+      p1_WED   = 0.434;
+      p2_WED   = 1;
+      
+      % Linear Scaling model for protons
+      p_lamda_1_1          = 0.008; %0.008; % according to Malte Frese https://www.ncbi.nlm.nih.gov/pubmed/20382482 (FITTED for head and neck patients !)
+      p_corrFacEntranceRBE = 0.5;   %[kev/mum]
+      p_upperLETThreshold  = 30;    %[kev/mum]
+      P_lowerLETThreshold  = 0.3;   %[kev/mum]
+                   
+   end
+   
+
+   % private methods go here
+   methods (Access = private)
+      function this = setBioModel(this)
+         
+         
+          % set photon parameter
+         switch  this.radiationMode 
+            
+            case {'photons'}
+               if ~isequal(this.identifier,'none_physicalDose')
+                  warning(['matRad: Invalid biological optimization: ' this.identifier ' for ' this.radiationMode  '; using physical optimization instead']);
+                  this.identifier = 'none_physicalDose';
+               end
+
+               if isequal(this.identifier,'none_physicalDose')
+                  this.bioOpt             = false;
+                  this.model              = 'none';
+                  this.quantityOpt        = 'physicalDose';
+                  this.quantityVis        = 'physicalDose';
+
+               end 
+         
+         % set proton parameter
+            case {'protons'}
+            
+               if isequal(this.identifier,'none_physicalDose')
+                    this.bioOpt             = false;
+                    this.model              = 'none';
+                    this.description        = 'optimization is based on the physical dose and neglects biological effects of charged particels';
+                    this.quantityOpt        = 'physicalDose';
+                    this.quantityVis        = 'physicalDose';
+
+                elseif isequal(this.identifier,'constRBE_RBExD') 
+                    this.bioOpt             = false;
+                    this.model              = 'constRBE';
+                    this.description        = 'constant RBE as used clinically';
+                    this.quantityOpt        = 'RBExD';
+                    this.quantityVis        = 'RBExD';
+                    
+               elseif isequal(this.identifier,'MCN_effect')  % https://www.ncbi.nlm.nih.gov/pubmed/26459756
+                    this.bioOpt             = true;
+                    this.model              = 'MCN';
+                    this.description        = 'a phenomenological relative biological effectiveness (RBE) model for proton therapy based on all published in vitro cell survival data';
+                    this.quantityOpt        = 'effect';
+                    this.quantityVis        = 'RBExD';   
+                    
+               elseif isequal(this.identifier,'MCN_RBExD')   % https://www.ncbi.nlm.nih.gov/pubmed/26459756
+                    this.bioOpt             = true;
+                    this.model              = 'MCN';
+                    this.description        = 'a phenomenological relative biological effectiveness (RBE) model for proton therapy based on all published in vitro cell survival data';
+                    this.quantityOpt        = 'RBExD';
+                    this.quantityVis        = 'RBExD';
+                    
+               elseif isequal(this.identifier,'WED_effect')  % https://www.ncbi.nlm.nih.gov/pubmed/22909391
+                    this.bioOpt             = true;
+                    this.model              = 'WED';
+                    this.description        = 'a model for the relative biological effectiveness of protons: the tissue specific parameter alpha/beta of photons is a predictor for the sensitivity to LET changes.';
+                    this.quantityOpt        = 'effect';
+                    this.quantityVis        = 'RBExD';   
+                    
+               elseif isequal(this.identifier,'WED_RBExD')  % https://www.ncbi.nlm.nih.gov/pubmed/22909391
+                    this.bioOpt             = true;
+                    this.model              = 'WED';
+                    this.description        = 'a model for the relative biological effectiveness of protons: the tissue specific parameter alpha/beta of photons is a predictor for the sensitivity to LET changes.';
+                    this.quantityOpt        = 'RBExD';
+                    this.quantityVis        = 'RBExD';     
+               else
+                    % issue warning if biological optimization not possible and use back up solution
+                    warning(['matRad: Invalid biological optimization: ' this.identifier ' for ' this.radiationMode  '; using const_RBExD optimization instead'])
+                
+                    this.bioOpt             = false;
+                    this.model              = 'constRBE';
+                    this.description        = 'constant RBE as used clinically';
+                    this.quantityOpt        = 'RBExD';
+                    this.quantityVis        = 'RBExD';
+               end
+            
+            
+         % set carbon parameter   
+            case{'carbon'}
+            
+               if isequal(this.identifier,'none_physicalDose')
+                    this.bioOpt             = false;
+                    this.model              = 'none';
+                    this.description        = 'optimization is based on the physical dose and neglects biological effects of charged particels';
+                    this.quantityOpt        = 'physicalDose';
+                    this.quantityVis        = 'physicalDose';
+
+               elseif isequal(this.identifier,'LEMIV_effect')  
+                       
+                    this.bioOpt             = true;
+                    this.model              = 'LEMIV';
+                    this.description        = 'effect based optimization using radiosensitivity parameter of the Local Effect Model IV';
+                    this.quantityOpt        = 'effect';
+                    this.quantityVis        = 'RBExD';
+
+                elseif isequal(this.identifier,'LEMIV_RBExD') 
+                   
+                    this.bioOpt             = true;
+                    this.model              = 'LEMIV';
+                    this.description        = 'RBExD based optimization using radiosensitivity parameter of the Local Effect Model IV';
+                    this.quantityOpt        = 'RBExD';
+                    this.quantityVis        = 'RBExD';
+
+               else
+                    % issue warning if biological optimization not possible and use back up solution
+                    warning(['matRad: Invalid biological optimization: ' this.identifier ' for ' this.radiationMode '; using LEMIV_RBExD optimization instead'])
+                    this.bioOpt             = true;
+                    this.model              = 'LEMIV';
+                    this.description        = 'RBExD based optimization using radiosensitivity parameter of the Local Effect Model IV';
+                    this.quantityOpt        = 'RBExD';
+                    this.quantityVis        = 'RBExD';
+               end
+               
+                 
+            otherwise
+               
+            
+          end
+         
+         
+      end
+   end
+   
+   
+      
+   % public methods go here
+   
+   methods 
+
+      % default constructor
+      function this = matRad_bioModel(sRadiationMode,sIdentifier)
+         
+         this.radiationMode = sRadiationMode;
+         this.identifier    = sIdentifier;       % setter checks for valid strings but not for valid combinations (e.g. photons_LEMIV
+         this               = setBioModel(this);    
+         
+      end % end constructor
+      
+      
+      % setters
+      function this = set.radiationMode(this,value)
+         if ischar(value) && sum(strcmp(value,{'photons','protons','carbon'})) == 1
+            this.radiationMode = value;
+         else
+            error('matRad: Cannot set radiation modality')
+         end
+      end
+      
+      function this = set.identifier(this,value)
+         
+         FLAG_ERROR = false;
+         
+         if ischar(value)
+            
+            C = strsplit(value,'_');
+            if sum(strcmp(C{1,1},this.AvailableModels) == 1) && ...
+               sum(strcmp(C{1,2},this.AvailableQuantitiesForOpt) == 1)
+           
+               this.identifier = value;
+               
+            else
+               FLAG_ERROR = true;
+            end
+         else
+            FLAG_ERROR = true;
+         end
+         
+         if FLAG_ERROR
+            error('matRad: Cannot parse optimization options')
+         end
+      end
+     
+      
+      function this = set.bioOpt(this,value)
+         if islogical(value)
+            this.bioOpt = value;
+         else
+            error('matRad: Cannot set bioOpt option')
+         end
+      end
+      
+      
+      function this = set.model(this,value)
+         if ischar(value)
+            this.model = value;
+         else
+             error('matRad: Cannot set model option')
+         end
+      end
+      
+      function this = set.quantityOpt(this,value)
+          if ischar(value)
+            this.quantityOpt = value;
+          else
+              error('matRad: Cannot set quantityOpt option')
+          end
+      end
+      
+      function this = set.quantityVis(this,value)
+          if ischar(value)
+            this.quantityVis = value;
+          else
+              error('matRad: Cannot set quantityVis option')
+          end
+      end
+                             
+      function this = set.description(this,value)
+         if ischar(value)
+            this.description = value;
+         else
+             error('matRad: Cannot set description option')
+         end
+      end
+
+      
+      
+   
+    function [bixelAlpha,bixelBeta] = calcLQParameter(this,vRadDepths,baseDataEntry,mTissueClass,vAlpha_x,vBeta_x,vABratio)
+         
+
+         bixelAlpha = NaN*ones(numel(vRadDepths),1);
+         bixelBeta  = NaN*ones(numel(vRadDepths),1);
+         
+         % range shift
+         depths = baseDataEntry.depths + baseDataEntry.offset;
+         
+         switch [this.radiationMode '_' this.model]
+            
+            case {'protons_constRBE'}
+               
+            case {'protons_LSM'}
+               
+                bixelLET = matRad_interp1(depths,baseDataEntry.LET,vRadDepths); 
+                bixelLET(isnan(bixelLET)) = 0;
+               
+                ix              = this.p_lowerLETThreshold < bixelLET < this.p_upperLETThreshold;
+
+                alpha_0            = vAlpha_x - (this.p_lamda_1_1 * this.p_corrFacEntranceRBE);  
+                bixelAlpha(ixLSM)  = alpha_0(ix) + this.p_lamda_1_1 * bixelLET;
+
+                if sum(ix) < length(bixelLET)
+                    bixelAlpha(bixelLET > pln.bioParam.lowerLETThreshold) =  alpha_0(bixelLET > this.p_upperLETThreshold) + this.p_lamda_1_1 * this.p_upperLETThreshold;
+                    bixelAlpha(bixelLET < pln.bioParam.lowerLETThreshold) =  alpha_0(bixelLET < this.p_lowerLETThreshold) + this.p_lamda_1_1 * this.p_lowerLETThreshold;
+                end
+
+                bixelBeta        = vBeta_x;
+                
+                % TODO: assign normal tissue an RBE of 1.1
+                      
+            case {'protons_MCN'}
+               
+
+               bixelLET = matRad_interp1(depths,baseDataEntry.LET,vRadDepths); 
+               bixelLET(isnan(bixelLET)) = 0;
+                                            
+               RBEmax     = this.p0_MCN + ((this.p1_MCN * bixelLET )./ vABratio);
+               RBEmin     = this.p2_MCN + (this.p3_MCN  * sqrt(vABratio) .* bixelLET);
+               bixelAlpha = RBEmax    .* vAlpha_x;
+               bixelBeta  = RBEmin.^2 .* vBeta_x;
+               
+            case {'protons_WED'}
+               
+               bixelLET = matRad_interp1(depths,baseDataEntry.LET,vRadDepths); 
+               bixelLET(isnan(bixelLET)) = 0;
+               
+               RBEmax     = this.p0_WED + ((this.p1_WED * bixelLET )./ vABratio);
+               RBEmin     = this.p2_WED;
+               bixelAlpha = RBEmax    .* vAlpha_x;
+               bixelBeta  = RBEmin.^2 .* vBeta_x;
+               
+            case {'carbon_LEMIV'}
+
+               numOfTissueClass = size(baseDataEntry(1).alpha,2);
+
+               for i = 1:numOfTissueClass
+                   bixelAlpha(mTissueClass==i) = matRad_interp1(depths,baseDataEntry.alpha(:,i),vRadDepths(mTissueClass==i));
+                   bixelBeta(mTissueClass==i)  = matRad_interp1(depths,baseDataEntry.beta(:,i), vRadDepths(mTissueClass==i));
+               end
+               
+            otherwise
+               
+         end
+            
+      end
+   
+
+      
+      
+      
+      
+   end % end public methods
+   
+   
+   methods(Static)
+        
+   end % end static public methods
+
+
+end % end class definition

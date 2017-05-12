@@ -48,10 +48,10 @@ for  i = 1:size(cst,1)
             % only perform computations for constraints
             if ~isempty(strfind(cst{i,6}(j).type,'constraint'))
 
-                if isequal(options.bioOpt,'none') || isequal(options.ID,'protons_const_RBExD') ||  isequal(options.bioOpt,'LEMIV_RBExD')
+                if isequal(options.quantityOpt,'effect')
+                    param = cst{i,5}.alphaX .* cst{i,6}(j).dose + cst{i,5}.betaX .* cst{i,6}(j).dose.^2; 
+                else 
                     param = cst{i,6}(j).dose;
-                elseif isequal(options.bioOpt,'LEMIV_effect')
-                    param = cst{i,5}.alphaX .* cst{i,6}(j).dose + cst{i,5}.betaX .* cst{i,6}(j).dose.^2;
                 end
 
                 if strcmp(cst{i,6}(j).robustness,'none')

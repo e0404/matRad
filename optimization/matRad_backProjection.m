@@ -45,35 +45,38 @@ else
     d = cell(options.numOfScenarios,1);
     
     % Calculate dose vector
-    if isequal(options.bioOpt,'none')
+    
+    if ~options.bioOpt
+       if isequal(options.model,'none')
+
+           for i = 1:length(options.indexforOpt)
+               d{i} = dij.physicalDose{options.indexforOpt(i)} * w;
+           end
+
+       elseif  isequal(options.model,'constRBE')
+
+           for i = 1:length(options.indexforOpt)
+                d{i} =  dij.physicalDose{options.indexforOpt(i)} * (w * dij.RBE);
+           end
+       end
+    else
         
-        for i = 1:options.numOfScenarios
-            d{i} = dij.physicalDose{i} * w;
-        end
-        
-    elseif  isequal(options.ID,'protons_const_RBExD')
-        
-        for i = 1:options.numOfScenarios
-             d{i} =  dij.physicalDose{i} * (w * dij.RBE );
-        end
-        
-    elseif (isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LEMIV_RBExD'))
-        
-        for i = 1:options.numOfScenarios
+        for i = 1:length(options.indexforOpt)
             
             % calculate effect
-            linTerm  = dij.mAlphaDose{i} * w;
-            quadTerm = dij.mSqrtBetaDose{i} * w;
+            linTerm  = dij.mAlphaDose{options.indexforOpt(i)} * w;
+            quadTerm = dij.mSqrtBetaDose{options.indexforOpt(i)} * w;
             e        = linTerm + quadTerm.^2;   
 
-            if isequal(options.bioOpt,'LEMIV_effect')
+            if isequal(options.quantityOpt,'effect')
                 d{i} = e;
-            else
+            elseif isequal(options.quantityOpt,'RBExD')
                 % calculate RBX x dose
                 d{i}             = zeros(dij.numOfVoxels,1);
-                d{i}(dij.ixDose) = sqrt((e(dij.ixDose)./dij.bx(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
+                d{i}(dij.ixDose) = sqrt((e(dij.ixDose)./dij.betaX(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
                                     - dij.gamma(dij.ixDose);
-               
+            else
+               error('matRad: Cannot optimze this quantity')
             end
             
         end       

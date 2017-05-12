@@ -1,4 +1,4 @@
-function stf = matRad_computeSSD(stf,ct,mode)
+function stf = matRad_computeSSD(ct,stf,pln,mode)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad SSD calculation
 % 
@@ -8,6 +8,7 @@ function stf = matRad_computeSSD(stf,ct,mode)
 % input
 %   ct:             ct cube
 %   stf:            matRad steering information struct
+%   pln:            matRad plan meta information struct
 %   mode:           optional parameter specifying how to handle multiple
 %                   cubes to compute one SSD
 % output
@@ -32,7 +33,7 @@ function stf = matRad_computeSSD(stf,ct,mode)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % default setting only use first cube
-if nargin < 3
+if nargin < 4
     mode = 'first';
 end
 
@@ -41,23 +42,25 @@ densityThreshold = 0.05;
 
 if strcmp(mode,'first')
     
-    for i = 1:size(stf,2)
-        for j = 1:stf(i).numOfRays
-            [alpha,~,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
-                                 ct.resolution, ...
-                                 stf(i).sourcePoint, ...
-                                 stf(i).ray(j).targetPoint, ...
-                                 {ct.cube{1}});
-            ixSSD = find(rho{1} > densityThreshold,1,'first');
+    for CtScen = 1:pln.multScen.numOfCtScen
+       for i = 1:size(stf,2)
+           for j = 1:stf(i).numOfRays
+               [alpha,~,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
+                                    ct.resolution, ...
+                                    stf(i).sourcePoint, ...
+                                    stf(i).ray(j).targetPoint, ...
+                                    {ct.cube{CtScen}});
+               ixSSD = find(rho{1} > densityThreshold,1,'first');
 
-            if isempty(ixSSD)== 1
-                warning('Surface for SSD calculation starts directly in first voxel of CT\n');
-            end
+               if isempty(ixSSD)== 1
+                   warning('Surface for SSD calculation starts directly in first voxel of CT\n');
+               end
 
-            % calculate SSD
-            stf(i).ray(j).SSD = double(2 * stf(i).SAD * alpha(ixSSD));
+               % calculate SSD
+               stf(i).ray(j).SSD{CtScen} = double(2 * stf(i).SAD * alpha(ixSSD));
 
-        end
+           end
+       end
     end
 
 else
