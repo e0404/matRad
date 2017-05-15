@@ -181,9 +181,11 @@ resultGUI.wUnsequenced = wOpt;
 
 % calc individual scenarios
 if pln.multScen.numOfScen > 1
+   Cnt = 1;
    for i = options.indexforOpt
       TmpresultGUI = matRad_calcCubes(wOpt,dij,i);
-      resultGUI.([pln.bioParam.quantityVis '_' num2str(i,'%d')]) = TmpresultGUI.(pln.bioParam.quantityVis);
+      resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = TmpresultGUI.(pln.bioParam.quantityVis);
+      Cnt = Cnt + 1;
    end      
 end
 

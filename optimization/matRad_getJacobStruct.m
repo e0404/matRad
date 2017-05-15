@@ -88,7 +88,8 @@ for i = 1:size(cst,1)
             if ~isempty(strfind(cst{i,6}(j).type,'constraint'))
                 
                 % if conventional opt: just add constraints of nominal dose
-                if strcmp(cst{i,6}(j).robustness,'none')
+                if strcmp(cst{i,6}(j).robustness,'none') || strcmp(cst{i,6}(j).robustness,'probabilistic') || ...
+                   strcmp(cst{i,6}(j).robustness,'VWWC') || strcmp(cst{i,6}(j).robustness,'COWC') || strcmp(cst{i,6}(j).robustness,'VWWC_CONF')
 
                     if isequal(cst{i,6}(j).type, 'max dose constraint') || ...
                        isequal(cst{i,6}(j).type, 'min dose constraint') || ...

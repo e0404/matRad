@@ -115,7 +115,6 @@ for  i = 1:size(cst,1)
                         warning('nan values in gradFuncWrapper');
                     end
                     
-                    deltaTmp = matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
 
                     if strcmp(cst{i,6}(j).robustness,'VWWC')
                         deltaTmp = matRad_gradFunc(d_i,cst{i,6}(j),d_ref);

@@ -81,7 +81,7 @@ for i = 1:size(cst,1)
                     scenID  = [scenID;1];
                     scenID2 = [scenID2;ones(numel(cst{i,4}{1}),1)];
                     
-                    if isequal(options.quantityOpt,'dose') && ~isempty(jacobVec) || isequal(options.model,'constRBE')
+                    if isequal(options.quantityOpt,'physicalDose') && ~isempty(jacobVec) || isequal(options.model,'constRBE')
 
                        DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
 
@@ -124,7 +124,7 @@ end
 % Calculate jacobian with dij projections
 for i = 1:dij.numOfScenarios
    % enter if statement also for protons using a constant RBE
-   if isequal(options.quantityOpt,'dose') ||  isequal(options.model,'constRBE')
+   if isequal(options.quantityOpt,'physicalDose') ||  isequal(options.model,'constRBE')
 
         if ~isempty(DoseProjection)
             

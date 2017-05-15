@@ -61,8 +61,8 @@ lineStyles = {'-',':','--','-.'};
 
 n = 1000;
 sQuantity = 'physicalDose';
-if sum(strcmp(fieldnames(result),'RBExDose')) > 0 && ~strcmp(pln.bioOptimization,'none')
-    sQuantity = 'RBExDose';
+if sum(strcmp(fieldnames(result),'RBExD')) > 0 && ~strcmp(pln.bioOptimization,'none')
+    sQuantity = 'RBExD';
 end
 
 dvhPoints = linspace(0,max(result.(sQuantity)(:))*1.05,n);

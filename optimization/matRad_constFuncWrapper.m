@@ -70,6 +70,18 @@ for  i = 1:size(cst,1)
 
                     c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref)];
                     
+                % if rob opt: add constraints of all dose scenarios
+                elseif strcmp(cst{i,6}(j).robustness,'probabilistic') || strcmp(cst{i,6}(j).robustness,'VWWC') || strcmp(cst{i,6}(j).robustness,'COWC')
+                    
+                    for k = 1:options.numOfScenarios
+                        
+                        d_i = d{k}(cst{i,4}{1});
+                        
+                        c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref)];
+                        
+                    end
+
+                    
                 else
                     
                     error('Invalid robustness setting.');

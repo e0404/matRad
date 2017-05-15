@@ -144,8 +144,14 @@ if (isfield(pln,'calcLET') && pln.calcLET)
   end
 end
 
-% generates tissue class matrix for carbon ion treatment planning and alpha_x, beta_x, vectors for biological treatment planning
 
+if strcmp(pln.radiationMode,'protons') && strcmp(pln.bioParam.model,'constRBE')
+
+   dij.RBE = 1.1;
+
+end
+
+% generates tissue class matrix for carbon ion treatment planning and alpha_x, beta_x, vectors for biological treatment planning
 if pln.bioParam.bioOpt
    
     dij.alphaX = zeros(dij.numOfVoxels,1);
@@ -177,11 +183,7 @@ if pln.bioParam.bioOpt
     % generates tissue class matrix for biological optimization
     vTissueIndex = zeros(size(V,1),1);
     
-   if strcmp(pln.radiationMode,'protons') && strcmp(pln.bioParam.model,'constRBBE')
-      
-      dij.RBE = 1.1;
-      
-   elseif strcmp(pln.radiationMode,'carbon')
+   if strcmp(pln.radiationMode,'carbon')
 
        for i = 1:size(cst,1)
            % find indices of structures related to V
