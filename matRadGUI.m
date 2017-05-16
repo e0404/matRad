@@ -2728,10 +2728,10 @@ SelectedCube = Content{get(handles.popupDisplayOption,'Value')};
 pln = evalin('base','pln');
 resultGUI_SelectedCube.physicalDose = resultGUI.(SelectedCube);
 
-if ~strcmp(pln.bioOptimization,'none')
+if pln.bioParam.bioOpt
 
     %check if one of the default fields is selected
-    if sum(strcmp(SelectedCube,{'physicalDose','effect','RBE,','RBExDose','alpha','beta'})) > 0
+    if sum(strcmp(SelectedCube,{'physicalDose','effect','RBE,','RBExD','alpha','beta'})) > 0
         resultGUI_SelectedCube.physicalDose = resultGUI.physicalDose;
         resultGUI_SelectedCube.RBExDose     = resultGUI.RBExDose;
     else
