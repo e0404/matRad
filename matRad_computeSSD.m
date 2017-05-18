@@ -59,19 +59,6 @@ if strcmp(mode,'first')
 
         end
     end
-    
-    % include rangeshifter data if not yet available 
-    for i = 1:size(stf,2)
-        for j = 1:stf(i).numOfRays
-            if ~isfield(stf(i).ray(j), 'rangeShifter')
-                for k = 1:numel(stf(i).ray(j).energy)
-                    stf(i).ray(j).rangeShifter(k).ID = 0;
-                    stf(i).ray(j).rangeShifter(k).eqThickness = 0;
-                    stf(i).ray(j).rangeShifter(k).sourceRashiDistance = 0;
-                end
-            end
-        end
-    end
 
 else
     

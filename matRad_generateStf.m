@@ -174,7 +174,7 @@ for i = 1:length(pln.gantryAngles)
     % Save the number of rays
     stf(i).numOfRays = size(rayPos,1);
     
-    % Save ray and target position in beam eye´s view (bev)
+    % Save ray and target position in beam eye's view (bev)
     for j = 1:stf(i).numOfRays
         stf(i).ray(j).rayPos_bev = rayPos(j,:);
         stf(i).ray(j).targetPoint_bev = [2*stf(i).ray(j).rayPos_bev(1) ...
@@ -435,6 +435,19 @@ for i = 1:length(pln.gantryAngles)
         title 'lps coordinate system'
         axis([-300 300 -300 300 -300 300]);
         %pause(1);
+    end
+    
+    % include rangeshifter data if not yet available 
+    if strcmp(pln.radiationMode, 'protons') || strcmp(pln.radiationMode, 'carbon')
+        for j = 1:stf(i).numOfRays
+            if ~isfield(stf(i).ray(j), 'rangeShifter') || isempty(stf(i).ray(j).rangeShifter)
+                for k = 1:numel(stf(i).ray(j).energy)
+                    stf(i).ray(j).rangeShifter(k).ID = 0;
+                    stf(i).ray(j).rangeShifter(k).eqThickness = 0;
+                    stf(i).ray(j).rangeShifter(k).sourceRashiDistance = 0;
+                end
+            end
+        end
     end
         
 end    
