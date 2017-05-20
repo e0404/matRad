@@ -40,16 +40,16 @@ param.calcDoseDirect = true;
 
 if exist('param','var')
    if ~isfield(param,'logLevel')
-      param.LogLevel = 1;
+      param.logLevel = 1;
    end
 else
-   param.LogLevel = 1;
+   param.logLevel = 1;
 end
 
 % copy bixel weight vector into stf struct
 if exist('w','var')
     if sum([stf.totalNumOfBixels]) ~= numel(w)
-        error('weighting does not match steering information')
+        matRad_dispToConsole('weighting does not match steering information',param,'error')
     end
     counter = 0;
     for i = 1:pln.numOfBeams
