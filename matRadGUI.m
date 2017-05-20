@@ -147,7 +147,7 @@ if isfield(handles,'VOIPlotFlag')
   handles = rmfield(handles,'VOIPlotFlag');
 end
 
-%seach for availabes machines
+%search for availabes machines
 handles.Modalities = {'photons','protons','carbon'};
 for i = 1:length(handles.Modalities)
   pattern = [handles.Modalities{1,i} '_*'];
@@ -344,6 +344,11 @@ function matRadGUI_OpeningFcn(hObject, ~, handles, varargin)
 handles.initialGuiStart = true;
 
 handles = resetGUI(hObject, handles);
+
+% get and set avilable biological models 
+bioModelInstance = matRad_bioModel('photons','none_physicalDose');
+set(handles.popMenuBioOpt,'String',bioModelInstance.AvailableModels);
+set(handles.popMenuQuantOpt,'String',bioModelInstance.AvailableQuantitiesForOpt);
 
 %% parse variables from base workspace
 AllVarNames = evalin('base','who');
@@ -595,40 +600,22 @@ switch RadIdentifier
     case 'photons'
         set(handles.vmcFlag,'Value',0);
         set(handles.vmcFlag,'Enable','on')
-
         set(handles.popMenuBioOpt,'Enable','off');
-        ix = find(strcmp(contentPopUp,'none'));
-        set(handles.popMenuBioOpt,'Value',ix);
+        set(handles.popMenuQuantOpt,'Enable','off');
+        set(handles.popMenuBioOpt,'Value',1);
         set(handles.btnSetTissue,'Enable','off');
-        
         set(handles.btnRunSequencing,'Enable','on');
         set(handles.btnRunDAO,'Enable','on');
         set(handles.txtSequencing,'Enable','on');
         set(handles.editSequencingLevel,'Enable','on');
         
-    case 'protons'
+    case {'protons','carbon'}
         set(handles.vmcFlag,'Value',0);
-        set(handles.vmcFlag,'Enable','off')
-        
+        set(handles.vmcFlag,'Enable','off') 
         set(handles.popMenuBioOpt,'Enable','on');
-        ix = find(strcmp(contentPopUp,'const_RBExD'));
-        set(handles.popMenuBioOpt,'Value',ix);
+        set(handles.popMenuQuantOpt,'Enable','on');
         set(handles.btnSetTissue,'Enable','on');
-        
         set(handles.btnSetTissue,'Enable','off');
-        set(handles.btnRunSequencing,'Enable','off');
-        set(handles.btnRunDAO,'Enable','off');
-        set(handles.txtSequencing,'Enable','off');
-        set(handles.editSequencingLevel,'Enable','off');
-        
-    case 'carbon'
-        set(handles.vmcFlag,'Value',0);
-        set(handles.vmcFlag,'Enable','off')        
-        set(handles.popMenuBioOpt,'Enable','on');
-        ix = find(strcmp(contentPopUp,'LEMIV_RBExD'));
-        set(handles.popMenuBioOpt,'Value',ix);
-        set(handles.btnSetTissue,'Enable','on');
-        
         set(handles.btnRunSequencing,'Enable','off');
         set(handles.btnRunDAO,'Enable','off');
         set(handles.txtSequencing,'Enable','off');
@@ -647,7 +634,7 @@ if handles.State > 0
                    resultGUI = evalin('base','resultGUI');
                    if isfield(resultGUI,'alpha');    resultGUI = rmfield(resultGUI,'alpha');   end
                    if isfield(resultGUI,'beta');     resultGUI = rmfield(resultGUI,'beta');    end
-                   if isfield(resultGUI,'RBExDose'); resultGUI = rmfield(resultGUI,'RBExDose');end
+                   if isfield(resultGUI,'RBExD'); resultGUI = rmfield(resultGUI,'RBExD');end
                    if isfield(resultGUI,'RBE');      resultGUI = rmfield(resultGUI,'RBE');     end
                    assignin('base','resultGUI',resultGUI);
                    handles = updateIsoDoseLineCache(handles);
@@ -752,10 +739,21 @@ end
 
 % generate steering file
 try 
+    % disable robOpt
+    pln.robOpt   = false;
+    % retrieve model parameters
+    pln.bioParam = matRad_bioModel(pln.radiationMode,pln.bioOptimization);
+    % set pln to ensure a proper bio model display
+    setPln(handles);
+    % set plan uncertainties for robust optimization
+    [pln] = matRad_setPlanUncertainties(evalin('base','ct'),pln);
+
     stf = matRad_generateStf(evalin('base','ct'),...
                                      evalin('base','cst'),...
                                      evalin('base','pln'));
     assignin('base','stf',stf);
+    assignin('base','pln',pln);
+
 catch ME
     handles = showError(handles,{'CalcDoseCallback: Error in steering file generation!',ME.message}); 
     % change state from busy to normal
@@ -1136,7 +1134,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     % plot physical dose
     Content = get(handles.popupDisplayOption,'String');
     SelectedCube = Content{get(handles.popupDisplayOption,'Value')};
-    if sum(strcmp(SelectedCube,{'physicalDose','effect','RBExDose','alpha','beta','RBE'})) > 0
+    if sum(strcmp(SelectedCube,{'physicalDose','effect','RBExD','alpha','beta','RBE'})) > 0
          Suffix = '';
     else
         Idx    = find(SelectedCube == '_');
@@ -1165,7 +1163,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
         for i=1:1:size(DispInfo,1)
             if DispInfo{i,2} && sum(strcmp(DispInfo{i,1},{['effect' Suffix],['alpha' Suffix],['beta' Suffix]})) > 0
                 %physicalDose is already plotted and RBExD vs RBE is plotted later with plotyy
-                if ~strcmp(DispInfo{i,1},['RBExDose' Suffix]) &&...
+                if ~strcmp(DispInfo{i,1},['RBExD' Suffix]) &&...
                    ~strcmp(DispInfo{i,1},['RBE' Suffix]) && ...
                    ~strcmp(DispInfo{i,1},['physicalDose' Suffix])
                
@@ -1179,14 +1177,14 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
         end
         StringYLabel2 = [StringYLabel2 '}'];
         % always plot RBExD against RBE
-        mRBExDose = Result.(['RBExDose' Suffix]);
-        vBED = mRBExDose(ix);
+        mRBExD = Result.(['RBExD' Suffix]);
+        vBED = mRBExD(ix);
         mRBE = Result.(['RBE' Suffix]);
         vRBE = mRBE(ix);
         
         % plot biological dose against RBE
         [ax, PlotHandles{Cnt,1}, PlotHandles{Cnt+1,1}]=plotyy(handles.axesFig,vX,vBED,vX,vRBE,'plot');hold on;
-        PlotHandles{Cnt,2}='RBExDose';
+        PlotHandles{Cnt,2}='RBExD';
         PlotHandles{Cnt+1,2}='RBE';
          
         % set plotyy properties
@@ -1549,8 +1547,8 @@ try
 
     handles.State = 3;
     handles.SelectedDisplayOptionIdx = 1;
-    if strcmp(pln.radiationMode,'carbon') || (strcmp(pln.radiationMode,'protons') && strcmp(pln.bioOptimization,'const_RBExD'))
-        handles.SelectedDisplayOption = 'RBExDose';
+    if pln.bioParam.bioOpt
+        handles.SelectedDisplayOption = 'RBExD';
     else
         handles.SelectedDisplayOption = 'physicalDose';
     end
@@ -2296,14 +2294,12 @@ function UpdateState(handles)
 if handles.State > 0
     pln = evalin('base','pln');
 
-    if strcmp(pln.radiationMode,'carbon')
+    if sum(strcmp(pln.radiationMode,{'carbon','protons'})>0)
         set(handles.popMenuBioOpt,'Enable','on');
         set(handles.btnSetTissue,'Enable','on');
-    elseif strcmp(pln.radiationMode,'protons')
-        set(handles.popMenuBioOpt,'Enable','on');
-        set(handles.btnSetTissue,'Enable','off');
     else
         set(handles.popMenuBioOpt,'Enable','off');
+        set(handles.popMenuQuantOpt,'Enable','off');
         set(handles.btnSetTissue,'Enable','off'); 
     end
     
@@ -2443,14 +2439,16 @@ set(handles.editCouchAngle,'String',num2str((pln.couchAngles)));
 set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),pln.radiationMode)));
 set(handles.popUpMachine,'Value',find(strcmp(get(handles.popUpMachine,'String'),pln.machine)));
 
-if ~strcmp(pln.bioOptimization,'none')  
+if ~(pln.bioParam.bioOpt)  
     set(handles.popMenuBioOpt,'Enable','on');
-    contentPopUp = get(handles.popMenuBioOpt,'String');
-    ix = find(strcmp(pln.bioOptimization,contentPopUp));
-    set(handles.popMenuBioOpt,'Value',ix);
+    cellBioModel = get(handles.popMenuBioOpt,'String');
+    cellQuantOpt = get(handles.popMenuQuantOpt,'String');
+    set(handles.popMenuBioOpt,'Value',find(strcmp(pln.bioParam.model,cellBioModel)));
+    set(handles.popMenuQuantOpt,'Value',find(strcmp(pln.bioParam.quantityOpt,cellQuantOpt)));
     set(handles.btnSetTissue,'Enable','on');
 else
     set(handles.popMenuBioOpt,'Enable','off');
+    set(handles.popMenuQuantOpt,'Enable','off');
     set(handles.btnSetTissue,'Enable','off');
 end
 %% enable sequencing and DAO button if radiation mode is set to photons
@@ -2609,15 +2607,13 @@ pln.radiationMode   = contents{get(handles.popupRadMode,'Value')}; % either phot
 contents            = get(handles.popUpMachine,'String'); 
 pln.machine         = contents{get(handles.popUpMachine,'Value')}; 
 
-if (~strcmp(pln.radiationMode,'photons'))
-    contentBioOpt = get(handles.popMenuBioOpt,'String');
-    pln.bioOptimization = contentBioOpt{get(handles.popMenuBioOpt,'Value'),:};
-else
-    pln.bioOptimization = 'none';
-end
+cellBioModel        = get(handles.popMenuBioOpt,'String');
+cellQuantOpt        = get(handles.popMenuQuantOpt,'String');
 
+pln.bioParam      = matRad_bioModel(pln.radiationMode,[cellBioModel{get(handles.popMenuBioOpt,'Value'),1} '_' cellQuantOpt{get(handles.popMenuQuantOpt,'Value'),1}]);
 pln.runSequencing = logical(get(handles.btnRunSequencing,'Value'));
-pln.runDAO = logical(get(handles.btnRunDAO,'Value'));
+pln.runDAO        = logical(get(handles.btnRunDAO,'Value'));
+
 
 try
     cst = evalin('base','cst');
@@ -2634,8 +2630,9 @@ catch
     warning('couldnt set isocenter in getPln function')
 end
 
-handles.pln = pln;
 assignin('base','pln',pln);
+handles.pln = pln;
+
 
 % parsing a string as number array
 function number = parseStringAsNum(stringIn,isVector)
@@ -2733,12 +2730,12 @@ if pln.bioParam.bioOpt
     %check if one of the default fields is selected
     if sum(strcmp(SelectedCube,{'physicalDose','effect','RBE,','RBExD','alpha','beta'})) > 0
         resultGUI_SelectedCube.physicalDose = resultGUI.physicalDose;
-        resultGUI_SelectedCube.RBExDose     = resultGUI.RBExDose;
+        resultGUI_SelectedCube.RBExD     = resultGUI.RBExD;
     else
         Idx    = find(SelectedCube == '_');
         SelectedSuffix = SelectedCube(Idx:end);
         resultGUI_SelectedCube.physicalDose = resultGUI.(['physicalDose' SelectedSuffix]);
-        resultGUI_SelectedCube.RBExDose     = resultGUI.(['RBExDose' SelectedSuffix]);
+        resultGUI_SelectedCube.RBExD     = resultGUI.(['RBExD' SelectedSuffix]);
     end
 end
 
@@ -3018,7 +3015,7 @@ if evalin('base','exist(''pln'',''var'')') && ...
     % delete old variables to avoid confusion
     if isfield(resultGUI,'effect')
         resultGUI = rmfield(resultGUI,'effect');
-        resultGUI = rmfield(resultGUI,'RBExDose'); 
+        resultGUI = rmfield(resultGUI,'RBExD'); 
         resultGUI = rmfield(resultGUI,'RBE'); 
         resultGUI = rmfield(resultGUI,'alpha'); 
         resultGUI = rmfield(resultGUI,'beta');
@@ -3074,9 +3071,15 @@ pln = evalin('base','pln');
 fileName = [pln.radiationMode '_' pln.machine];
 load(fileName);
 
-% check for available cell types characterized by alphaX and betaX 
-for i = 1:size(machine.data(1).alphaX,2)
-    CellType{i} = [num2str(machine.data(1).alphaX(i)) ' ' num2str(machine.data(1).betaX(i))];
+if strcmp(pln.radiationMode,'carbon')
+   % check for available cell types characterized by alphaX and betaX 
+   for i = 1:size(machine.data(1).alphaX,2)
+       CellType{i}  = [num2str(machine.data(1).alphaX(i)) ' ' num2str(machine.data(1).betaX(i))];
+   end
+else
+   for i = 1:size(pln.bioParam.AvailableAlphaXBetaXProton,1)
+       CellType{i}  = num2str(pln.bioParam.AvailableAlphaXBetaXProton{i,1});
+   end
 end
 
 %fill table data array
@@ -3114,7 +3117,7 @@ cNames = {'VOI','alphaX betaX','alpha beta ratio'};
 columnformat = {'char',CellType,'numeric'};
 
 tissueTable = uitable('Parent', figTissue,'Data', data,'ColumnEditable',[false true false],...
-                      'ColumnName',cNames, 'ColumnFormat',columnformat,'Position',[50 150 10 10]);
+                      'ColumnName',cNames, 'ColumnFormat',columnformat,'Position',[50 150 5 10]);
 set(tissueTable,'CellEditCallback',@tissueTable_CellEditCallback);
 % set width and height
 currTablePos = get(tissueTable,'Position');
@@ -3244,10 +3247,10 @@ if isfield(resultGUI,'w')
 end
 
 
-if ~strcmp(pln.bioOptimization,'none')
+if pln.bioParam.bioOpt
     
-    if isfield(resultGUI,'RBExDose')
-         resultGUI.(['RBExDose' Suffix]) = resultGUI.RBExDose; 
+    if isfield(resultGUI,'RBExD')
+         resultGUI.(['RBExD' Suffix]) = resultGUI.RBExD; 
     end
     
     if strcmp(pln.radiationMode,'carbon') == 1 
@@ -4078,24 +4081,37 @@ end
 
 % --- Executes on selection change in popMenuBioOpt.
 function popMenuBioOpt_Callback(hObject, ~, handles)
-pln = evalin('base','pln');
-contentBioOpt = get(handles.popMenuBioOpt,'String');
-NewBioOptimization = contentBioOpt(get(handles.popMenuBioOpt,'Value'),:);
 
 if handles.State > 0
-    if (strcmp(pln.bioOptimization,'LEMIV_effect') && strcmp(NewBioOptimization,'LEMIV_RBExD')) ||...
-       (strcmp(pln.bioOptimization,'LEMIV_RBExD') && strcmp(NewBioOptimization,'LEMIV_effect')) 
-       % do nothing - re-optimization is still possible
-    elseif ((strcmp(pln.bioOptimization,'const_RBE') && strcmp(NewBioOptimization,'none')) ||...
-           (strcmp(pln.bioOptimization,'none') && strcmp(NewBioOptimization,'const_RBE'))) && isequal(pln.radiationMode,'protons')
-       % do nothing - re-optimization is still possible
-    else
+   
+   pln = evalin('base','pln');
+   cellBioOpt   = get(handles.popMenuBioOpt,'String');
+   cellQuantOpt = get(handles.popMenuQuantOpt,'String');
+   NewBioOptimization = cellBioOpt(get(handles.popMenuBioOpt,'Value'),:);
+   NewQuantityOpt     = cellQuantOpt(get(handles.popMenuQuantOpt,'Value'),:);
+   
+   if ~strcmp(NewBioOptimization,pln.bioParam.model) || ~strcmp(NewQuantityOpt,pln.bioParam.quantityOpt)
         handles.State = 1;
-    end
-end
-getPlnFromGUI(handles);
+   end
+   
+   getPlnFromGUI(handles);
 
-UpdateState(handles);
+   UpdateState(handles);
+end
+guidata(hObject,handles);
+
+
+% --- Executes on selection change in popMenuQuantOpt.
+function popMenuQuantOpt_Callback(hObject, eventdata, handles)
+% hObject    handle to popMenuQuantOpt (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popMenuQuantOpt contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popMenuQuantOpt
+if handles.State > 0
+   
+end
 guidata(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
@@ -4189,3 +4205,16 @@ set(hObject,'Value',1);
 
 
 guidata(hObject,handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function popMenuQuantOpt_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popMenuQuantOpt (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

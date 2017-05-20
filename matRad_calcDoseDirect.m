@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)
+function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dose calculation wrapper bypassing dij calculation
 % 
@@ -12,7 +12,9 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)
 %   cst:        matRad cst struct
 %   w:          optional (if no weights available in stf): bixel weight
 %               vector
-%
+%   param:      (optional) structure defining additional parameter
+%               e.g. param.logLevel
+% 
 % output
 %   resultGUI:  matRad result struct
 %
@@ -33,7 +35,16 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-calcDoseDirect = true;
+% define default log level
+param.calcDoseDirect = true;
+
+if exist('param','var')
+   if ~isfield(param,'logLevel')
+      param.LogLevel = 1;
+   end
+else
+   param.LogLevel = 1;
+end
 
 % copy bixel weight vector into stf struct
 if exist('w','var')
@@ -51,12 +62,24 @@ if exist('w','var')
     end
 end
 
+% disable robOpt
+pln.robOpt   = false;
+
+% retrieve model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,pln.bioOptimization);
+
+% set plan uncertainties for robust optimization
+[pln] = matRad_setPlanUncertainties(ct,pln);
+
+% define certain indices set that should be used for dose calculation
+param.subIx = [];
+
 % dose calculation
 if strcmp(pln.radiationMode,'photons')
-    dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect);
+    dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-    dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect);
+    dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 end
 
 % remember bixel weight
@@ -85,32 +108,21 @@ if isfield(dij,'mLETDose')
 end
                       
 % compute biological cubes
-if strcmp(pln.bioOptimization,'const_RBExD')
+if isfield(dij,'RBE')
 
     resultGUI.RBExDose = resultGUI.physicalDose * dij.RBE;
     
-elseif strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization,'LEMIV_RBExD')
+elseif isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
 
     ix = resultGUI.physicalDose>0;
 
     resultGUI.effect     = zeros(ct.cubeDim);
     resultGUI.effect(ix) = dij.mAlphaDose{1}(ix,1) + dij.mSqrtBetaDose{1}(ix,1).^2;
 
-    a_x = zeros(size(resultGUI.physicalDose));
-    b_x = zeros(size(resultGUI.physicalDose));
+    resultGUI.RBExDose     = zeros(ct.cubeDim);
+    resultGUI.RBExDose(ix) = ((sqrt(dij.alphaX(ix).^2 + 4 .* dij.betaX(ix) .* resultGUI.effect(ix)) - dij.alphaX(ix))./(2.*dij.betaX(ix)));
 
-    for i = 1:size(cst,1)
-        % Only take OAR or target VOI.
-        if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') 
-            a_x(cst{i,4}{1}) = cst{i,5}.alphaX;
-            b_x(cst{i,4}{1}) = cst{i,5}.betaX;
-        end
-    end
-
-    resultGUI.RBExDose = zeros(ct.cubeDim);
-    resultGUI.RBExDose(ix) = ((sqrt(a_x(ix).^2 + 4 .* b_x(ix) .* resultGUI.effect(ix)) - a_x(ix))./(2.*b_x(ix)));
-
-    resultGUI.alpha    = zeros(ct.cubeDim);
+    resultGUI.alpha     = zeros(ct.cubeDim);
     resultGUI.alpha(ix) = dij.mAlphaDose{1}(ix,1)./resultGUI.physicalDose(ix);
 
     resultGUI.beta     = zeros(ct.cubeDim);

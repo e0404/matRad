@@ -21,9 +21,16 @@ classdef matRad_bioModel
    
    
    properties(Constant = true)
-      AvailableModels               = {'none','constRBE','MCN','WED','LEMIV'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
-      AvailableradiationModealities = {'photons','protons','carbon'};
-      AvailableQuantitiesForOpt     = {'physicalDose','effect','RBExD'}
+      AvailableModels                 = {'none','constRBE','MCN','WED','LEMIV'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
+      AvailableradiationModealities   = {'photons','protons','carbon'};
+      AvailableQuantitiesForOpt       = {'physicalDose','effect','RBExD'}
+      
+      AvailableAlphaXBetaXProton = {[0.036 0.024],    'prostate';
+                                    [0.089 0.287],    'rectum and normal tissue';
+                                    [0.55 0.05],     'head and neck MCN';
+                                    [0.0499 0.0238],  'brain tissue';
+                                    [0.1 0.05],       'default values';
+                                    [0.1 0.005],      'default values'}; % 
 
    end
    
@@ -194,8 +201,7 @@ classdef matRad_bioModel
          
          this.radiationMode = sRadiationMode;
          this.identifier    = sIdentifier;       % setter checks for valid strings but not for valid combinations (e.g. photons_LEMIV
-         this               = setBioModel(this);    
-         
+         this               = setBioModel(this);      
       end % end constructor
       
       

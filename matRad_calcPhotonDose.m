@@ -1,4 +1,4 @@
-function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
+function dij = matRad_calcPhotonDose(ct,stf,pln,cst,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad photon dose calculation wrapper
 % 
@@ -10,9 +10,11 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 %   stf:            matRad steering information struct
 %   pln:            matRad plan meta information struct
 %   cst:            matRad cst struct
-%   calcDoseDirect: boolian switch to bypass dose influence matrix
+%   param:          (optional) structure defining additional parameter
+%                   param.calcDoseDirect boolian switch to bypass dose influence matrix
 %                   computation and directly calculate dose; only makes
 %                   sense in combination with matRad_calcDoseDirect.m
+%                   param.logLevel defines the log level
 %
 % output
 %   dij:            matRad dij struct
@@ -36,24 +38,32 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if exist('param','var')
+   
+    % default: dose influence matrix computation
+   if ~isfield(param,'calcDoseDirect')
+      param.calcDoseDirect = false;
+   end
+   
+   if ~isfield(param,'logLevel')
+      param.logLevel = 1;
+   end
+  
+else
+   param.logLevel       = 1;
+   param.calcDoseDirect = false;
+end
+
+
 % set consistent random seed (enables reproducibility)
 rng(0);
 
-% default: dose influence matrix computation
-if ~exist('calcDoseDirect','var')
-    calcDoseDirect = false;
+if param.logLevel == 1
+   % initialize waitbar
+   figureWait = waitbar(0,'calculate dose influence matrix for photons...');
+   % show busy state
+   set(figureWait,'pointer','watch');
 end
-
-% issue warning if biological optimization not possible
-if sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0
-    warndlg('Effect based and RBE optimization not available for photons - physical optimization is carried out instead.');
-    pln.bioOptimization = 'none';
-end
-
-% initialize waitbar
-figureWait = waitbar(0,'calculate dose influence matrix for photons...');
-% show busy state
-set(figureWait,'pointer','watch');
 
 % meta information for dij
 dij.numOfBeams         = pln.numOfBeams;
@@ -83,7 +93,7 @@ for CtScen = 1:pln.multScen.numOfCtScen
 end
 
 % Allocate memory for dose_temp cell array
-if calcDoseDirect
+if param.calcDoseDirect
     numOfBixelsContainer = 1;
 else
     numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
@@ -121,7 +131,7 @@ fileName = [pln.radiationMode '_' pln.machine];
 try
    load([fileparts(mfilename('fullpath')) filesep fileName]);
 catch
-   error(['Could not find the following machine file: ' fileName ]); 
+   matRad_dispToConsole(['Could not find the following machine file: ' fileName ],param,'error'); 
 end
 
 % set up convolution grid
@@ -192,12 +202,12 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
 
    counter = 0;
 
-   fprintf(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.numOfShiftScen) ': \n']);
-   fprintf('matRad: Photon dose calculation...\n');
+   matRad_dispToConsole(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.numOfShiftScen) ': \n'],param,'info');
+   matRad_dispToConsole('matRad: photon dose calculation...\n',param,'info');
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    for i = 1:dij.numOfBeams % loop over all beams
 
-          fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
+          matRad_dispToConsole(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n'],param,'info');
 
           bixelsPerBeam = 0;
 
@@ -221,9 +231,9 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
           rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
 
           % ray tracing
-          fprintf('matRad: calculate radiological depth cube...');
+          matRad_dispToConsole('matRad: calculate radiological depth cube...',param,'info');
           [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,effectiveLateralCutoff);
-          fprintf('done \n');
+          matRad_dispToConsole('done \n',param,'info');
 
           % get indices of voxels where ray tracing results are available
           radDepthIx = find(~isnan(radDepthV{1}));
@@ -237,7 +247,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
           % get correct kernel for given SSD at central ray (nearest neighbor approximation)
           [~,currSSDIx] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD{1}));
 
-          fprintf(['                   SSD = ' num2str(machine.data.kernel(currSSDIx).SSD) 'mm                 \n']);
+          matRad_dispToConsole(['                   SSD = ' num2str(machine.data.kernel(currSSDIx).SSD) 'mm                 \n'],param,'info');
 
           kernelPos = machine.data.kernelPos;
           kernel1 = machine.data.kernel(currSSDIx).kernel1;
@@ -253,8 +263,8 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
           if ~useCustomPrimFluenceBool && ~isFieldBasedDoseCalc
 
               % Display console message.
-              fprintf(['matRad: Uniform primary photon fluence -> pre-compute kernel convolution for SSD = ' ... 
-                      num2str(machine.data.kernel(currSSDIx).SSD) ' mm ...\n']);    
+              matRad_dispToConsole(['matRad: Uniform primary photon fluence -> pre-compute kernel convolution for SSD = ' ... 
+                      num2str(machine.data.kernel(currSSDIx).SSD) ' mm ...\n'],param,'info');    
 
               % 2D convolution of Fluence and Kernels in fourier domain
               convMx1 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)));
@@ -315,16 +325,19 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
 
               end
 
-              % Display progress and update text only 200 times
-              if mod(bixelsPerBeam,max(1,round(stf(i).totalNumOfBixels/200))) == 0
-                  matRad_progress(bixelsPerBeam/max(1,round(stf(i).totalNumOfBixels/200)),...
-                                  floor(stf(i).totalNumOfBixels/max(1,round(stf(i).totalNumOfBixels/200))));
+              if param.logLevel <= 2
+                 % Display progress and update text only 200 times
+                 if mod(bixelsPerBeam,max(1,round(stf(i).totalNumOfBixels/200))) == 0
+                     matRad_progress(bixelsPerBeam/max(1,round(stf(i).totalNumOfBixels/200)),...
+                                     floor(stf(i).totalNumOfBixels/max(1,round(stf(i).totalNumOfBixels/200))));
+                 end
+                 if param.logLevel == 1
+                    % update waitbar only 100 times
+                    if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
+                        waitbar(counter/dij.totalNumOfBixels);
+                    end
+                 end
               end
-              % update waitbar only 100 times
-              if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
-                  waitbar(counter/dij.totalNumOfBixels);
-              end
-
               % remember beam and bixel number
               dij.beamNum(counter)  = i;
               dij.rayNum(counter)   = j;
@@ -391,12 +404,12 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                       for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen
 
                           if pln.multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
-                              if calcDoseDirect
+                              if param.calcDoseDirect
                                   if isfield(stf(1).ray(1),'weight')
                                       % score physical dose
                                       dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,1) = dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,1) + stf(i).ray(j).weight * doseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen};
                                   else
-                                      error(['No weight available for beam ' num2str(i) ', ray ' num2str(j)]);
+                                      matRad_dispToConsole(['No weight available for beam ' num2str(i) ', ray ' num2str(j)],param,'error');
                                   end
                               else
                                   % fill entire dose influence matrix

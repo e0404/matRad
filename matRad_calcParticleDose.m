@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
+function dij = matRad_calcParticleDose(ct,stf,pln,cst,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad particle dose calculation wrapper
 % 
@@ -10,9 +10,11 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 %   stf:            matRad steering information struct
 %   pln:            matRad plan meta information struct
 %   cst:            matRad cst struct
-%   calcDoseDirect: boolian switch to bypass dose influence matrix
+%   param:          (optional) structure defining additional parameter
+%                   param.calcDoseDirect boolian switch to bypass dose influence matrix
 %                   computation and directly calculate dose; only makes
 %                   sense in combination with matRad_calcDoseDirect.m
+%                   param.logLevel defines the log level
 %
 % output
 %   dij:            matRad dij struct
@@ -35,15 +37,30 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% default: dose influence matrix computation
-if ~exist('calcDoseDirect','var')
-    calcDoseDirect = false;
+if exist('param','var')
+   
+    % default: dose influence matrix computation
+   if ~isfield(param,'calcDoseDirect')
+      param.calcDoseDirect = false;
+   end
+   
+   if ~isfield(param,'logLevel')
+      param.logLevel = 1;
+   end
+  
+else
+   param.logLevel       = 1;
+   param.calcDoseDirect = false;
+   param.subIx          = [];
 end
 
-% initialize waitbar
-figureWait = waitbar(0,'calculate dose influence matrix for particles...');
-% prevent closure of waitbar and show busy state
-set(figureWait,'pointer','watch');
+
+if param.logLevel == 1
+   % initialize waitbar
+   figureWait = waitbar(0,'calculate dose influence matrix for particles...');
+   % prevent closure of waitbar and show busy state
+   set(figureWait,'pointer','watch');
+end
 
 % meta information for dij
 dij.numOfBeams         = pln.numOfBeams;
@@ -60,7 +77,7 @@ dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
 dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 
 
-if calcDoseDirect
+if param.calcDoseDirect
     numOfBixelsContainer = 1;
     numOfBixels          = 1;
 else
@@ -108,8 +125,12 @@ if pln.bioParam.bioOpt
 end
 
 % Only take voxels inside patient.
-V = [cst{:,4}];
-V = unique(vertcat(V{:}));
+if ~isempty(param.subIx) && param.calcDoseDirect
+   V = param.subIx; 
+else
+   V = [cst{:,4}];
+   V = unique(vertcat(V{:}));
+end
 
 % Convert CT subscripts to linear indices.
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
@@ -119,7 +140,7 @@ fileName = [pln.radiationMode '_' pln.machine];
 try
    load([fileparts(mfilename('fullpath')) filesep fileName]);
 catch
-   error(['Could not find the following machine file: ' fileName ]); 
+   matRad_dispToConsole(['Could not find the following machine file: ' fileName ],param,'error'); 
 end
 
  % allocate space for dij.dosexLET sparse matrix
@@ -140,7 +161,7 @@ if (isfield(pln,'calcLET') && pln.calcLET)
         end
     end
   else
-    warndlg('LET not available in the machine data. LET will not be calculated.');
+    matRad_dispToConsole('LET not available in the machine data. LET will not be calculated.',param,'warning');
   end
 end
 
@@ -167,7 +188,7 @@ if pln.bioParam.bioOpt
         if ~isfield(cst{i,5},'alphaX') || ~isfield(cst{i,5},'betaX') 
            cst{i,5}.alphaX = 0.1;
            cst{i,5}.betaX = 0.05;
-           fprintf(['matRad: using default alpha_x and beta_x parameters for ' cst{i,2} ' \n']);
+           matRad_dispToConsole(['matRad: using default alpha_x and beta_x parameters for ' cst{i,2} ' \n'],param);
         end
         
         if  ~isempty(cst{i,6}) && (isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET'))
@@ -200,19 +221,19 @@ if pln.bioParam.bioOpt
                    if ~isempty(IdxTissue)
                        vTissueIndex(row) = IdxTissue;
                    else
-                       error('biological base data and cst inconsistent\n');
+                       matRad_dispToConsole('biological base data and cst inconsistent \n',param,'error');
                    end
                else
                    vTissueIndex(row) = 1;
-                   fprintf(['matRad: tissue type of ' cst{i,2} ' was set to 1 \n']);
+                   matRad_dispToConsole(['matRad: tissue type of ' cst{i,2} ' was set to 1  \n'],param,'info');
                end
            else
-               error('base data is incomplement - alphaX and/or betaX is missing');
+               matRad_dispToConsole('base data is incomplement - alphaX and/or betaX is missing',param,'error');
            end
 
        end
        
-       fprintf('done.\n');
+       matRad_dispToConsole('done. \n',param,'info');
        
    end
 
@@ -222,7 +243,7 @@ end
 % compute SSDs
 stf = matRad_computeSSD(ct,stf,pln);
 
-fprintf('matRad: Particle dose calculation...\n');
+matRad_dispToConsole('matRad: Particle dose calculation... \n',param,'info');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %loop over all shift scenarios
@@ -234,14 +255,14 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
         stf(k).isoCenter = stf(k).isoCenter + pln.multScen.shifts(:,ShiftScen)';
     end
     
-    fprintf(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.numOfShiftScen) ': \n']);
-    fprintf('matRad: Particle dose calculation...\n');
+    matRad_dispToConsole(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.numOfShiftScen) ':  \n'],param,'info');
+    matRad_dispToConsole('matRad: Particle dose calculation... \n',param,'info');
     
     counter = 0;
     
    for i = 1:dij.numOfBeams % loop over all beams
 
-       fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
+       matRad_dispToConsole(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ':  \n'],param,'info');
 
        bixelsPerBeam = 0;
 
@@ -267,9 +288,9 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
 
        % Calcualte radiological depth cube
        lateralCutoffRayTracing = 50;
-       fprintf('matRad: calculate radiological depth cube...');
+       matRad_dispToConsole('matRad: calculate radiological depth cube...',param,'info');
        radDepthV = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoffRayTracing);
-       fprintf('done.\n');
+       matRad_dispToConsole('done. \n',param,'info');
 
        % get indices of voxels where ray tracing results are available
        radDepthIx = find(~isnan(radDepthV{1}));
@@ -278,12 +299,12 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
        rot_coordsV = rot_coordsV(radDepthIx,:);
 
        % Determine lateral cutoff
-       fprintf('matRad: calculate lateral cutoff...');
+       matRad_dispToConsole('matRad: calculate lateral cutoff...',param,'info');
        cutOffLevel          = .99;
        visBoolLateralCutOff = 0;
        CtScen               = 1;
        machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),CtScen,visBoolLateralCutOff);
-       fprintf('done.\n');    
+       matRad_dispToConsole('done. \n',param,'info');    
 
        for j = 1:stf(i).numOfRays % loop over all rays
 
@@ -314,17 +335,19 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                    counter = counter + 1;
                    bixelsPerBeam = bixelsPerBeam + 1;
 
-                   % Display progress and update text only 200 times
-                   if mod(bixelsPerBeam,max(1,round(stf(i).totalNumOfBixels/200))) == 0
-                           matRad_progress(bixelsPerBeam/max(1,round(stf(i).totalNumOfBixels/200)),...
-                                           floor(stf(i).totalNumOfBixels/max(1,round(stf(i).totalNumOfBixels/200))));
+                   if param.logLevel <= 2
+                      % Display progress and update text only 200 times
+                      if mod(bixelsPerBeam,max(1,round(stf(i).totalNumOfBixels/200))) == 0
+                              matRad_progress(bixelsPerBeam/max(1,round(stf(i).totalNumOfBixels/200)),...
+                                              floor(stf(i).totalNumOfBixels/max(1,round(stf(i).totalNumOfBixels/200))));
+                      end
+                      if param.logLevel == 1
+                         % update waitbar only 100 times if it is not closed
+                         if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
+                             waitbar(counter/dij.totalNumOfBixels,figureWait);
+                         end
+                      end
                    end
-
-                   % update waitbar only 100 times if it is not closed
-                   if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
-                       waitbar(counter/dij.totalNumOfBixels,figureWait);
-                   end
-
                    % remember beam and  bixel number
                    dij.beamNum(counter)  = i;
                    dij.rayNum(counter)   = j;
@@ -363,7 +386,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                                         (machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= radialDist_sq(currIx);
                                 end
                             else
-                                error('cutoff must be a value between 0 and 1')
+                                matRad_dispToConsole('cutoff must be a value between 0 and 1',param,'error')
                             end
 
                             % empty bixels may happen during recalculation of error
@@ -426,7 +449,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                             for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen
                                 if pln.multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
                   
-                                      if calcDoseDirect
+                                      if param.calcDoseDirect
                                           if isfield(stf(1).ray(1),'weight') && numel(stf(i).ray(j).weight) >= k
 
                                               % score physical dose
@@ -443,7 +466,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                                                    dij.mSqrtBetaDose{CtScen,ShiftScen,RangeShiftScen}(:,1) = dij.mSqrtBetaDose{CtScen,ShiftScen,RangeShiftScen}(:,1) + stf(i).ray(j).weight(k) * betaDoseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen};
                                               end
                                           else
-                                              error(['No weight available for beam ' num2str(i) ', ray ' num2str(j) ', bixel ' num2str(k)]);
+                                              matRad_dispToConsole(['No weight available for beam ' num2str(i) ', ray ' num2str(j) ', bixel ' num2str(k)],param,'error');
                                           end
                                       else
 
@@ -491,7 +514,4 @@ try
   pause(0.1); 
 catch
 end
-
-
-
 

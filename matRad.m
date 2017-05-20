@@ -51,7 +51,7 @@ pln.robOpt          = false;
 pln.bioParam = matRad_bioModel(pln.radiationMode,pln.bioOptimization);
 
 % set plan uncertainties for robust optimization
-[pln] = matRad_setPlanUncertainties(ct,cst,pln);
+[pln] = matRad_setPlanUncertainties(ct,pln);
 
 %% initial visualization and change objective function settings if desired
 matRadGUI

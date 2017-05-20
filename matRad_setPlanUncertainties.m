@@ -1,4 +1,4 @@
-function [pln] = matRad_setPlanUncertainties(ct,cst,pln)
+function [pln] = matRad_setPlanUncertainties(ct,pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_setPlanUncertainties function provides functionalities to define 
 % treatment planning uncertainties
@@ -8,7 +8,6 @@ function [pln] = matRad_setPlanUncertainties(ct,cst,pln)
 %
 % input
 %   ct:             ct cube
-%   cst:            matRad cst struct
 %   pln:            matRad plan meta information struct
 %
 % output
@@ -83,7 +82,7 @@ else
    % b) define range error scenarios                                                
    multScen.numOfRangeShiftScen  = 2;              % number of absolute and/or relative range scnearios. 
                                                    % if absolute and relative range scenarios are defined then multScen.rangeCombType defines the resulting number of range scenarios
-   multScen.absRangeShift        = 0;              % maximum absolute over and undershoot in mm   
+   multScen.absRangeShift        = 1;              % maximum absolute over and undershoot in mm   
    multScen.relRangeShift        = 3.5;            % maximum relative over and undershoot in % 
    multScen.rangeCombType        = 'combined';     % individual: no combination of absolute and relative range scenarios
                                                    % combined:    combine absolute and relative range scenarios
@@ -93,21 +92,8 @@ else
 end
 
 
-   % create multiScen struct
-   pln.multScen                  = matRad_setMultScen(multScen);
-
-%% if worst case objectives are defined then simply assign each scenario the same probability
-%  @Lucas if sampling is on, we need to discuss if the following code shouldnt be executed or not
-for i = 1:size(cst,1)
-   for j = 1:size(cst{i,6})
-      if sum(strncmp(cst{i,6}(j).robustness,{'COWC','VWWC','VWWC_CONF'},4)) > 0
-         pln.multScen.ScenProb = repmat(1/sum(pln.multScen.ScenCombMask(:)),1,sum(pln.multScen.ScenCombMask(:)));
-         break;
-      end
-   end
-end
-
-
+% create multiScen struct
+pln.multScen                  = matRad_setMultScen(multScen);
 
 
 

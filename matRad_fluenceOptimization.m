@@ -1,4 +1,4 @@
-function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
+function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
@@ -9,6 +9,8 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
+%   param:      (optional) structure defining additional parameter            
+%               e.g. param.logLevel defines the log level
 %
 % output
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
@@ -32,7 +34,13 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+if exist('param','var')
+   if ~isfield(param,'logLevel')
+      param.logLevel = 1;
+   end
+else
+   param.logLevel = 1;
+end
 
 if ~isdeployed % only if _not_ running as standalone
     
@@ -40,15 +48,16 @@ if ~isdeployed % only if _not_ running as standalone
     matRadRootDir = fileparts(mfilename('fullpath'));
     addpath(fullfile(matRadRootDir,'optimization'))
     
-    % get handle to Matlab command window
-    mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-    cw          = mde.getClient('Command Window');
-    xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-    h_cw        = handle(xCmdWndView,'CallbackProperties');
+    if param.logLevel == 1
+       % get handle to Matlab command window
+       mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
+       cw          = mde.getClient('Command Window');
+       xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+       h_cw        = handle(xCmdWndView,'CallbackProperties');
 
-    % set Key Pressed Callback of Matlab command window
-    set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
-
+       % set Key Pressed Callback of Matlab command window
+       set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
+    end
 end
 
 % initialize global variables for optimizer
@@ -100,7 +109,7 @@ end
 % set bounds on optimization variables
 options.lb              = zeros(1,dij.totalNumOfBixels);        % Lower bound on the variables.
 options.ub              = inf * ones(1,dij.totalNumOfBixels);   % Upper bound on the variables.
-funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
+funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter,param);
     
 % calculate initial beam intensities wInit
 if  strcmp(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
@@ -156,7 +165,9 @@ end
 
 % set optimization options
 options.indexforOpt     = find(~cellfun(@isempty, dij.physicalDose)); 
-if iscolumn(options.indexforOpt); options.indexforOpt = options.indexforOpt';end
+if iscolumn(options.indexforOpt) 
+   options.indexforOpt = options.indexforOpt';
+end
 options.numOfScenarios  = pln.multScen.numOfScen;
 options.probOfScenarios = pln.multScen.ScenProb;
 options.bioOpt          = pln.bioParam.bioOpt;
@@ -175,7 +186,7 @@ funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 [wOpt, info]            = ipopt(wInit,funcs,options);
 
 % calc dose and reshape from 1D vector to 2D array
-fprintf('Calculating final cubes...\n');
+matRad_dispToConsole('Calculating final cubes...\n',param,'info');
 resultGUI = matRad_calcCubes(wOpt,dij);
 resultGUI.wUnsequenced = wOpt;
 
@@ -191,7 +202,7 @@ end
 
 
 % unset Key Pressed Callback of Matlab command window
-if ~isdeployed
+if ~isdeployed && param.logLevel == 1
     set(h_cw, 'KeyPressedCallback',' ');
 end
 
