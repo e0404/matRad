@@ -82,17 +82,18 @@ else
    % b) define range error scenarios                                                
    multScen.numOfRangeShiftScen  = 2;              % number of absolute and/or relative range scnearios. 
                                                    % if absolute and relative range scenarios are defined then multScen.rangeCombType defines the resulting number of range scenarios
-   multScen.absRangeShift        = 1;              % maximum absolute over and undershoot in mm   
-   multScen.relRangeShift        = 3.5;            % maximum relative over and undershoot in % 
+   multScen.maxAbsRangeShift        = 1;              % maximum absolute over and undershoot in mm   
+   multScen.maxRelRangeShift        = 3.5;            % maximum relative over and undershoot in % 
    multScen.rangeCombType        = 'combined';     % individual: no combination of absolute and relative range scenarios
                                                    % combined:    combine absolute and relative range scenarios
-
-   multScen.ScenCombType         = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
+   multScen.rangeGenType         = 'equidistant';  % equidistant: equidistant range shifts, sampled: sample range shifts from normal distribution
+   multScen.scenCombType         = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
 
 end
 
 
 % create multiScen struct
+pln.multScenNotyetFinished    = matRad_setMultScenLucas(multScen); % calcProb missing.
 pln.multScen                  = matRad_setMultScen(multScen);
 
 
