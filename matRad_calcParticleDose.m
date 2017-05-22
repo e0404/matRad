@@ -14,7 +14,6 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,param)
 %                   param.calcDoseDirect boolian switch to bypass dose influence matrix
 %                   computation and directly calculate dose; only makes
 %                   sense in combination with matRad_calcDoseDirect.m
-%                   param.logLevel defines the log level
 %
 % output
 %   dij:            matRad dij struct
@@ -37,25 +36,26 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,param)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global LogLevel 
+
+if ~exist('LogLevel','var')
+   LogLevel = 1;
+end
+
 if exist('param','var')
-   
+  
     % default: dose influence matrix computation
    if ~isfield(param,'calcDoseDirect')
       param.calcDoseDirect = false;
    end
-   
-   if ~isfield(param,'logLevel')
-      param.logLevel = 1;
-   end
-  
+    
 else
-   param.logLevel       = 1;
    param.calcDoseDirect = false;
    param.subIx          = [];
 end
 
 
-if param.logLevel == 1
+if LogLevel == 1
    % initialize waitbar
    figureWait = waitbar(0,'calculate dose influence matrix for particles...');
    % prevent closure of waitbar and show busy state
@@ -161,12 +161,12 @@ if (isfield(pln,'calcLET') && pln.calcLET)
         end
     end
   else
-    matRad_dispToConsole('LET not available in the machine data. LET will not be calculated.',param,'warning');
+    matRad_dispToConsole('LET not available in the machine data. LET will not be calculated.',LogLevel,'warning');
   end
 end
 
 
-if strcmp(pln.radiationMode,'protons') && strcmp(pln.bioParam.model,'constRBE')
+if strcmp(pln.radiationMode,'protons') && strcmp(pln.bioLogLevel.model,'constRBE')
 
    dij.RBE = 1.1;
 
@@ -188,7 +188,7 @@ if pln.bioParam.bioOpt
         if ~isfield(cst{i,5},'alphaX') || ~isfield(cst{i,5},'betaX') 
            cst{i,5}.alphaX = 0.1;
            cst{i,5}.betaX = 0.05;
-           matRad_dispToConsole(['matRad: using default alpha_x and beta_x parameters for ' cst{i,2} ' \n'],param);
+           matRad_dispToConsole(['matRad: using default alpha_x and beta_x parameters for ' cst{i,2} ' \n'],LogLevel,'warning');
         end
         
         if  ~isempty(cst{i,6}) && (isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET'))
@@ -221,19 +221,19 @@ if pln.bioParam.bioOpt
                    if ~isempty(IdxTissue)
                        vTissueIndex(row) = IdxTissue;
                    else
-                       matRad_dispToConsole('biological base data and cst inconsistent \n',param,'error');
+                       matRad_dispToConsole('biological base data and cst inconsistent \n','error');
                    end
                else
                    vTissueIndex(row) = 1;
-                   matRad_dispToConsole(['matRad: tissue type of ' cst{i,2} ' was set to 1  \n'],param,'info');
+                   matRad_dispToConsole(['matRad: tissue type of ' cst{i,2} ' was set to 1  \n'],'info');
                end
            else
-               matRad_dispToConsole('base data is incomplement - alphaX and/or betaX is missing',param,'error');
+               matRad_dispToConsole('base data is incomplement - alphaX and/or betaX is missing','error');
            end
 
        end
        
-       matRad_dispToConsole('done. \n',param,'info');
+       matRad_dispToConsole('done. \n','info');
        
    end
 
@@ -243,7 +243,7 @@ end
 % compute SSDs
 stf = matRad_computeSSD(ct,stf,pln);
 
-matRad_dispToConsole('matRad: Particle dose calculation... \n',param,'info');
+matRad_dispToConsole('matRad: Particle dose calculation... \n','info');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %loop over all shift scenarios
@@ -255,14 +255,14 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
         stf(k).isoCenter = stf(k).isoCenter + pln.multScen.shifts(:,ShiftScen)';
     end
     
-    matRad_dispToConsole(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.numOfShiftScen) ':  \n'],param,'info');
-    matRad_dispToConsole('matRad: Particle dose calculation... \n',param,'info');
+    matRad_dispToConsole(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.numOfShiftScen) ':  \n'],'info');
+    matRad_dispToConsole('matRad: Particle dose calculation... \n','info');
     
     counter = 0;
     
    for i = 1:dij.numOfBeams % loop over all beams
 
-       matRad_dispToConsole(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ':  \n'],param,'info');
+       matRad_dispToConsole(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ':  \n'],'info');
 
        bixelsPerBeam = 0;
 
@@ -288,9 +288,9 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
 
        % Calcualte radiological depth cube
        lateralCutoffRayTracing = 50;
-       matRad_dispToConsole('matRad: calculate radiological depth cube...',param,'info');
+       matRad_dispToConsole('matRad: calculate radiological depth cube...','info');
        radDepthV = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoffRayTracing);
-       matRad_dispToConsole('done. \n',param,'info');
+       matRad_dispToConsole('done. \n','info');
 
        % get indices of voxels where ray tracing results are available
        radDepthIx = find(~isnan(radDepthV{1}));
@@ -299,12 +299,12 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
        rot_coordsV = rot_coordsV(radDepthIx,:);
 
        % Determine lateral cutoff
-       matRad_dispToConsole('matRad: calculate lateral cutoff...',param,'info');
+       matRad_dispToConsole('matRad: calculate lateral cutoff...','info');
        cutOffLevel          = .99;
        visBoolLateralCutOff = 0;
        CtScen               = 1;
        machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),CtScen,visBoolLateralCutOff);
-       matRad_dispToConsole('done. \n',param,'info');    
+       matRad_dispToConsole('done. \n','info');    
 
        for j = 1:stf(i).numOfRays % loop over all rays
 
@@ -386,7 +386,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                                         (machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= radialDist_sq(currIx);
                                 end
                             else
-                                matRad_dispToConsole('cutoff must be a value between 0 and 1',param,'error')
+                                matRad_dispToConsole('cutoff must be a value between 0 and 1','error')
                             end
 
                             % empty bixels may happen during recalculation of error
@@ -466,7 +466,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                                                    dij.mSqrtBetaDose{CtScen,ShiftScen,RangeShiftScen}(:,1) = dij.mSqrtBetaDose{CtScen,ShiftScen,RangeShiftScen}(:,1) + stf(i).ray(j).weight(k) * betaDoseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen};
                                               end
                                           else
-                                              matRad_dispToConsole(['No weight available for beam ' num2str(i) ', ray ' num2str(j) ', bixel ' num2str(k)],param,'error');
+                                              matRad_dispToConsole(['No weight available for beam ' num2str(i) ', ray ' num2str(j) ', bixel ' num2str(k)],'error');
                                           end
                                       else
 

@@ -34,13 +34,12 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,param)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if exist('param','var')
-   if ~isfield(param,'logLevel')
-      param.logLevel = 1;
-   end
-else
-   param.logLevel = 1;
+global LogLevel 
+
+if ~exist('LogLevel','var')
+   LogLevel = 1;
 end
+
 
 if ~isdeployed % only if _not_ running as standalone
     
@@ -48,7 +47,7 @@ if ~isdeployed % only if _not_ running as standalone
     matRadRootDir = fileparts(mfilename('fullpath'));
     addpath(fullfile(matRadRootDir,'optimization'))
     
-    if param.logLevel == 1
+    if LogLevel == 1
        % get handle to Matlab command window
        mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
        cw          = mde.getClient('Command Window');
@@ -127,7 +126,7 @@ elseif pln.bioParam.bioOpt
         for j = 1:size(cst{i,6},2)
             % check if prescribed doses are in a valid domain
             if cst{i,6}(j).dose > 5 && isequal(cst{i,3},'TARGET')
-                error('Reference dose > 5Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.');
+                matRad_dispToConsole('Reference dose > 5Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.','error');
             end
             
         end
@@ -186,7 +185,7 @@ funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 [wOpt, info]            = ipopt(wInit,funcs,options);
 
 % calc dose and reshape from 1D vector to 2D array
-matRad_dispToConsole('Calculating final cubes...\n',param,'info');
+matRad_dispToConsole('Calculating final cubes...\n','info');
 resultGUI = matRad_calcCubes(wOpt,dij);
 resultGUI.wUnsequenced = wOpt;
 
@@ -202,7 +201,7 @@ end
 
 
 % unset Key Pressed Callback of Matlab command window
-if ~isdeployed && param.logLevel == 1
+if ~isdeployed && LogLevel == 1
     set(h_cw, 'KeyPressedCallback',' ');
 end
 

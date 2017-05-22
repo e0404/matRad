@@ -14,7 +14,6 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,param)
 %                   param.calcDoseDirect boolian switch to bypass dose influence matrix
 %                   computation and directly calculate dose; only makes
 %                   sense in combination with matRad_calcDoseDirect.m
-%                   param.logLevel defines the log level
 %
 % output
 %   dij:            matRad dij struct
@@ -37,6 +36,11 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,param)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+global LogLevel 
+
+if ~exist('LogLevel','var')
+   LogLevel = 1;
+end
 
 if exist('param','var')
    
@@ -44,13 +48,9 @@ if exist('param','var')
    if ~isfield(param,'calcDoseDirect')
       param.calcDoseDirect = false;
    end
-   
-   if ~isfield(param,'logLevel')
-      param.logLevel = 1;
-   end
-  
+    
 else
-   param.logLevel       = 1;
+  
    param.calcDoseDirect = false;
 end
 
@@ -58,7 +58,7 @@ end
 % set consistent random seed (enables reproducibility)
 rng(0);
 
-if param.logLevel == 1
+if LogLevel == 1
    % initialize waitbar
    figureWait = waitbar(0,'calculate dose influence matrix for photons...');
    % show busy state
@@ -131,7 +131,7 @@ fileName = [pln.radiationMode '_' pln.machine];
 try
    load([fileparts(mfilename('fullpath')) filesep fileName]);
 catch
-   matRad_dispToConsole(['Could not find the following machine file: ' fileName ],param,'error'); 
+   matRad_dispToConsole(['Could not find the following machine file: ' fileName ],'error'); 
 end
 
 % set up convolution grid
@@ -202,12 +202,12 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
 
    counter = 0;
 
-   matRad_dispToConsole(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.numOfShiftScen) ': \n'],param,'info');
-   matRad_dispToConsole('matRad: photon dose calculation...\n',param,'info');
+   matRad_dispToConsole(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.numOfShiftScen) ': \n'],'info');
+   matRad_dispToConsole('matRad: photon dose calculation...\n','info');
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    for i = 1:dij.numOfBeams % loop over all beams
 
-          matRad_dispToConsole(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n'],param,'info');
+          matRad_dispToConsole(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n'],'info');
 
           bixelsPerBeam = 0;
 
@@ -231,9 +231,9 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
           rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
 
           % ray tracing
-          matRad_dispToConsole('matRad: calculate radiological depth cube...',param,'info');
+          matRad_dispToConsole('matRad: calculate radiological depth cube...','info');
           [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,effectiveLateralCutoff);
-          matRad_dispToConsole('done \n',param,'info');
+          matRad_dispToConsole('done \n','info');
 
           % get indices of voxels where ray tracing results are available
           radDepthIx = find(~isnan(radDepthV{1}));
@@ -247,7 +247,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
           % get correct kernel for given SSD at central ray (nearest neighbor approximation)
           [~,currSSDIx] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD{1}));
 
-          matRad_dispToConsole(['                   SSD = ' num2str(machine.data.kernel(currSSDIx).SSD) 'mm                 \n'],param,'info');
+          matRad_dispToConsole(['                   SSD = ' num2str(machine.data.kernel(currSSDIx).SSD) 'mm                 \n'],'info');
 
           kernelPos = machine.data.kernelPos;
           kernel1 = machine.data.kernel(currSSDIx).kernel1;
@@ -264,7 +264,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
 
               % Display console message.
               matRad_dispToConsole(['matRad: Uniform primary photon fluence -> pre-compute kernel convolution for SSD = ' ... 
-                      num2str(machine.data.kernel(currSSDIx).SSD) ' mm ...\n'],param,'info');    
+                      num2str(machine.data.kernel(currSSDIx).SSD) ' mm ...\n'],'info');    
 
               % 2D convolution of Fluence and Kernels in fourier domain
               convMx1 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)));
@@ -409,7 +409,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                                       % score physical dose
                                       dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,1) = dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,1) + stf(i).ray(j).weight * doseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen};
                                   else
-                                      matRad_dispToConsole(['No weight available for beam ' num2str(i) ', ray ' num2str(j)],param,'error');
+                                      matRad_dispToConsole(['No weight available for beam ' num2str(i) ', ray ' num2str(j)],'error');
                                   end
                               else
                                   % fill entire dose influence matrix
