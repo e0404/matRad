@@ -35,8 +35,8 @@ pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.voxelDimensions = ct.cubeDim;
-pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.bioOptimization = 'MCN_RBExD';   % none_physicalDose: physical optimization;                              constRBE_RBExD; constant RBE of 1.1;  
+pln.radiationMode   = 'photons';             % either photons / protons / carbon
+pln.bioOptimization = 'none_physicalDose';   % none_physicalDose: physical optimization;                              constRBE_RBExD; constant RBE of 1.1;  
                                              % MCN_effect; McNamara-variable RBE model for protons (effect based)     MCN_RBExD; McNamara-variable RBE model for protons (RBExD) based
                                              % WED_effect; Wedenberg-variable RBE model for protons (effect based)    WED_RBExD; Wedenberg-variable RBE model for protons (RBExD) based
                                              % LEMIV_effect: effect-based optimization;                               LEMIV_RBExD: optimization of RBE-weighted dose

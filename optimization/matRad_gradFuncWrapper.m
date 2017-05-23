@@ -39,15 +39,15 @@ function g = matRad_gradFuncWrapper(w,dij,cst,options)
 d = matRad_backProjection(w,dij,options);
 
 % Initializes delta
-delta      = cell(options.numOfScenarios,1);
+delta      = cell(options.numOfScen,1);
 [delta{:}] = deal(zeros(dij.numOfVoxels,1));
 
 % if composite worst case optimization is used then create a cell array for book keeping
 for i = 1:size(cst,1)
   for j = 1:numel(cst{i,6})
       if strcmp(cst{i,6}(j).robustness,'COWC')
-         f_COWC          = zeros(options.numOfScenarios,1);
-         delta_COWC      = cell(options.numOfScenarios,1);
+         f_COWC          = zeros(options.numOfScen,1);
+         delta_COWC      = cell(options.numOfScen,1);
         [delta_COWC{:}]  = deal(zeros(dij.numOfVoxels,1)); break;
       end
   end
@@ -85,11 +85,11 @@ for  i = 1:size(cst,1)
                     
                 elseif strcmp(cst{i,6}(j).robustness,'probabilistic')
 
-                    for ixScen = 1:options.numOfScenarios
+                    for ixScen = 1:options.numOfScen
 
                         d_i = d{ixScen}(cst{i,4}{1});
 
-                        delta{ixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) + options.probOfScenarios(ixScen) * matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+                        delta{ixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) + options.scenProb(ixScen) * matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
 
                     end
 
@@ -125,7 +125,7 @@ for  i = 1:size(cst,1)
                        
                     end
                     
-                    for ixScen = 1:options.numOfScenarios
+                    for ixScen = 1:options.numOfScen
 
                        if strcmp(cst{i,6}(j).robustness,'VWWC')
                            
@@ -153,7 +153,7 @@ for  i = 1:size(cst,1)
                     
                  elseif strcmp(cst{i,6}(j).robustness,'COWC')
                    
-                       for ixScen = 1:options.numOfScenarios
+                       for ixScen = 1:options.numOfScen
 
                            d_i = d{ixScen}(cst{i,4}{1});
 
@@ -181,22 +181,22 @@ end
 % Calculate gradient
 g = zeros(dij.totalNumOfBixels,1);
 
-for i = 1:options.numOfScenarios
+for i = 1:options.numOfScen
     if any(delta{i} ~= 0) % exercise only if contributions from scenario i
 
         if isequal(options.quantityOpt,'physicalDose')
 
-            g            = g + (delta{i}' * dij.physicalDose{options.indexforOpt(i)})';
+            g            = g + (delta{i}' * dij.physicalDose{options.ixForOpt(i)})';
 
         elseif isequal(options.model,'constRBE')
             
-            g            = g + (delta{i}' * dij.physicalDose{options.indexforOpt(i)} * dij.RBE)';
+            g            = g + (delta{i}' * dij.physicalDose{options.ixForOpt(i)} * dij.RBE)';
             
         elseif isequal(options.quantityOpt,'effect')
 
-            vBias        = (delta{i}' * dij.mAlphaDose{options.indexforOpt(i)})';
-            quadTerm     = dij.mSqrtBetaDose{options.indexforOpt(i)} * w;
-            mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{options.indexforOpt(i)})';
+            vBias        = (delta{i}' * dij.mAlphaDose{options.ixForOpt(i)})';
+            quadTerm     = dij.mSqrtBetaDose{options.ixForOpt(i)} * w;
+            mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{options.ixForOpt(i)})';
             g            =  g + vBias + mPsi ; 
 
         elseif isequal(options.quantityOpt,'RBExD')
@@ -204,9 +204,9 @@ for i = 1:options.numOfScenarios
             deltaTmp              = zeros(dij.numOfVoxels,1);
             scaledEffect          = d{i} + dij.gamma;
             deltaTmp(dij.ixDose)  = delta{i}(dij.ixDose)./(2*dij.betaX(dij.ixDose).*scaledEffect(dij.ixDose));
-            vBias                 = (deltaTmp' * dij.mAlphaDose{options.indexforOpt(i)})';
-            quadTerm              = dij.mSqrtBetaDose{options.indexforOpt(i)} * w;
-            mPsi                  = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{options.indexforOpt(i)})';
+            vBias                 = (deltaTmp' * dij.mAlphaDose{options.ixForOpt(i)})';
+            quadTerm              = dij.mSqrtBetaDose{options.ixForOpt(i)} * w;
+            mPsi                  = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{options.ixForOpt(i)})';
             g                     = g + vBias + mPsi ;
             
         end

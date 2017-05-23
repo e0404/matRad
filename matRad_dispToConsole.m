@@ -1,4 +1,4 @@
-function matRad_dispToConsole(string,typeOfMessage)
+function matRad_dispToConsole(string,param,typeOfMessage,formatSpec)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_dispToConsole function to display information on the console 
 % depending on the current param.logLevel
@@ -8,8 +8,9 @@ function matRad_dispToConsole(string,typeOfMessage)
 %
 % input
 %   string:          message that should be displayed on the console
+%   param:           structure containt a subfield logLevel
 %   typeOfMessage:   possible options are 'info','warning','error'
-%
+%   formatSpec:      optional
 % output
 %   
 %
@@ -28,10 +29,12 @@ function matRad_dispToConsole(string,typeOfMessage)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global LogLevel 
-
-if ~exist('LogLevel','var')
-   LogLevel = 1;
+if exist('param','var')
+   if ~isfield(param,'logLevel')
+      param.logLevel = 1;
+   end
+else
+   param.logLevel = 1;
 end
 
 switch typeOfMessage
@@ -53,9 +56,18 @@ switch typeOfMessage
 
        if param.logLevel < 3
 
-          fprintf(string);
+          if exist('formatSpec','var')
+              fprintf(formatSpec,string);
+          else
+              fprintf(string);
+          end
 
-      end
+
+       end
+   otherwise
+      
+      error('type of message not defined');
+      
 end
    
    

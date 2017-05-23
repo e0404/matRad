@@ -42,13 +42,13 @@ if isequal(probDist,'normDist')
     if isequal(calcType,'probBins')
         
         for i = 1:length(mu)
-            samplePosSorted = sort(unique(samplePos(i,:)));
+            samplePosSorted = sort(unique(samplePos(:,i)));
             if numel(samplePosSorted) == 1
                 continue;
             end
             binWidth        = (samplePosSorted(2) - samplePosSorted(1));
-            lowerBinLevel   = samplePos(i,:) - 0.5*binWidth;
-            upperBinLevel   = samplePos(i,:) + 0.5*binWidth;
+            lowerBinLevel   = samplePos(:,i) - 0.5*binWidth;
+            upperBinLevel   = samplePos(:,i) + 0.5*binWidth;
                
             scenProb        = scenProb.*0.5.*(erf((upperBinLevel-mu(i))/(sqrt(2)*sigma(i)))-erf((lowerBinLevel-mu(i))/(sqrt(2)*sigma(i))));
         end
@@ -62,7 +62,12 @@ if isequal(probDist,'normDist')
     % normalize probabilities since we use only a subset of
     % the 3D grid 
     scenProb = scenProb./sum(scenProb);
-    
+
+elseif isequal(probDist,'equalProb')
+   
+   numScen  = size(samplePos,1);
+   scenProb = repmat(1/numScen,1,numScen);
+   
 else
-    error('Until now, only normally distributed scenarios implemented')
+    matRad_dispToConsole('Until now, only normally distributed scenarios implemented','error')
 end

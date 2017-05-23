@@ -34,12 +34,14 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,param)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-global LogLevel 
 
-if ~exist('LogLevel','var')
-   LogLevel = 1;
+if exist('param','var')
+   if ~isfield(param,'logLevel')
+      param.logLevel = 1;
+   end
+else
+   param.logLevel = 1;
 end
-
 
 if ~isdeployed % only if _not_ running as standalone
     
@@ -47,7 +49,7 @@ if ~isdeployed % only if _not_ running as standalone
     matRadRootDir = fileparts(mfilename('fullpath'));
     addpath(fullfile(matRadRootDir,'optimization'))
     
-    if LogLevel == 1
+    if param.logLevel == 1
        % get handle to Matlab command window
        mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
        cw          = mde.getClient('Command Window');
@@ -126,7 +128,7 @@ elseif pln.bioParam.bioOpt
         for j = 1:size(cst{i,6},2)
             % check if prescribed doses are in a valid domain
             if cst{i,6}(j).dose > 5 && isequal(cst{i,3},'TARGET')
-                matRad_dispToConsole('Reference dose > 5Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.','error');
+                matRad_dispToConsole('Reference dose > 5Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.',param,'error');
             end
             
         end
@@ -163,12 +165,12 @@ else
 end
 
 % set optimization options
-options.indexforOpt     = find(~cellfun(@isempty, dij.physicalDose)); 
-if iscolumn(options.indexforOpt) 
-   options.indexforOpt = options.indexforOpt';
-end
-options.numOfScenarios  = pln.multScen.numOfScen;
-options.probOfScenarios = pln.multScen.ScenProb;
+options.ixForOpt     = find(~cellfun(@isempty, dij.physicalDose))'; 
+% if iscolumn(options.ixForOpt) 
+%    options.ixForOpt  = options.ixForOpt';
+% end
+options.numOfScen       = pln.multScen.numOfScen;
+options.scenProb        = pln.multScen.scenProb;
 options.bioOpt          = pln.bioParam.bioOpt;
 options.quantityOpt     = pln.bioParam.quantityOpt;
 options.model           = pln.bioParam.model;
@@ -185,14 +187,14 @@ funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 [wOpt, info]            = ipopt(wInit,funcs,options);
 
 % calc dose and reshape from 1D vector to 2D array
-matRad_dispToConsole('Calculating final cubes...\n','info');
+matRad_dispToConsole('Calculating final cubes...\n',param,'info');
 resultGUI = matRad_calcCubes(wOpt,dij);
 resultGUI.wUnsequenced = wOpt;
 
 % calc individual scenarios
 if pln.multScen.numOfScen > 1
    Cnt = 1;
-   for i = options.indexforOpt
+   for i = options.ixForOpt
       TmpresultGUI = matRad_calcCubes(wOpt,dij,i);
       resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = TmpresultGUI.(pln.bioParam.quantityVis);
       Cnt = Cnt + 1;
@@ -201,7 +203,7 @@ end
 
 
 % unset Key Pressed Callback of Matlab command window
-if ~isdeployed && LogLevel == 1
+if ~isdeployed && param.logLevel == 1
     set(h_cw, 'KeyPressedCallback',' ');
 end
 

@@ -30,12 +30,11 @@ function [pln] = matRad_setPlanUncertainties(ct,pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if ~isfield(pln,'sampling')
-   pln.sampling = false;
+
+if ~isfield(pln,'robOpt')
+   pln.robOpt = false;
 end
 
-% check if robustness flag is switched on  - possible flags are 'COWC','VWWC','VWWC_CONF'
- 
 % define standard deviation of normal distribution - important for probabilistic treatment planning
 multScen.rangeRelSD           = 3.5;               % given in [%]   
 multScen.rangeAbsSD           = 1;                 % given in [mm]   
@@ -45,10 +44,10 @@ multScen.shiftSD              = [2 2 2];           % given in [mm]
 
    
 % define parameters for individual treatment planning scenarios 
+
 multScen.numOfCtScen          = ct.numOfCtScen; % number of imported ct scenarios
 
-% calculate dose on the nominal scenario
-if ~pln.robOpt && ~pln.sampling
+if ~pln.robOpt
     % a) define shift scenarios
    multScen.numOfShiftScen       = [0 0 0];        % number of shifts in x y and z direction       
    multScen.shiftSize            = [0 0 0];        % maximum shift [mm]  % (e.g. prostate cases 5mm otherwise 3mm)
@@ -61,16 +60,14 @@ if ~pln.robOpt && ~pln.sampling
    % b) define range error scenarios                                                
    multScen.numOfRangeShiftScen  = 0;              % number of absolute and/or relative range scnearios. 
                                                    % if absolute and relative range scenarios are defined then multScen.rangeCombType defines the resulting number of range scenarios
-   multScen.absRangeShift        = 0;              % maximum absolute over and undershoot in mm   
-   multScen.relRangeShift        = 0  ;            % maximum relative over and undershoot in % 
-   multScen.rangeGenType         = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
+   multScen.maxAbsRangeShift        = 0;           % maximum absolute over and undershoot in mm   
+   multScen.maxRelRangeShift        = 0  ;         % maximum relative over and undershoot in % 
    multScen.rangeCombType        = 'combined';     % individual: no combination of absolute and relative range scenarios
                                                    % combined:    combine absolute and relative range scenarios
+   multScen.rangeGenType         = 'equidistant';  % equidistant: equidistant range shifts, sampled: sample range shifts from normal distribution
+   multScen.scenCombType         = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
 
-   multScen.ScenCombType         = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
-
-% calculate multiple scenarios for robust treatment planning
-elseif pln.robOpt && ~pln.sampling
+else 
    
    % a) define shift scenarios
    multScen.numOfShiftScen       = [2 2 2];        % number of shifts in x y and z direction       
@@ -84,45 +81,24 @@ elseif pln.robOpt && ~pln.sampling
    % b) define range error scenarios                                                
    multScen.numOfRangeShiftScen  = 2;              % number of absolute and/or relative range scnearios. 
                                                    % if absolute and relative range scenarios are defined then multScen.rangeCombType defines the resulting number of range scenarios
-   multScen.absRangeShift        = 1;              % maximum absolute over and undershoot in mm   
-   multScen.relRangeShift        = 3.5;            % maximum relative over and undershoot in % 
-   multScen.rangeGenType         = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
-   multScen.rangeCombType        = 'combined';     % individual: no combination of absolute and relative range scenarios
-                                                   % combined:    combine absolute and relative range scenarios
-
-   multScen.ScenCombType         = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
-
-% perform sampling
-elseif ~pln.robOpt && pln.sampling
+   multScen.maxAbsRangeShift     = 1;              % maximum absolute over and undershoot in mm   
+   multScen.maxRelRangeShift     = 3.5;            % maximum relative over and undershoot in % 
+   multScen.rangeCombType        = 'combined';     % individual: no combination of absolute and relative range scenarios; combined:    combine absolute and relative range scenarios
+   multScen.rangeGenType         = 'equidistant';  % equidistant: equidistant range shifts, sampled: sample range shifts from normal distribution
    
-   multScen.numOfShiftScen       = [5 5 5];        % number of shifts in x y and z direction       
-   %multScen.shiftSize            = [2 2 2];       % maximum shift [mm]  % (e.g. prostate cases 5mm otherwise 3mm)
-   multScen.shiftGenType         = 'sampled';      % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
-   multScen.shiftCombType        = 'combined';     % individual: no combination of shift scenarios, 
-                                                   % combined: combine shift scenarios, 
-                                                   % allcombined: create every possible shift combination
-   multScen.shiftGen1DIsotropy   = '+-';           % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
-
-   % b) define range error scenarios                                                
-   multScen.numOfRangeShiftScen  = 5;              % number of absolute and/or relative range scnearios. 
-                                                   % if absolute and relative range scenarios are defined then multScen.rangeCombType defines the resulting number of range scenarios
-   multScen.absRangeShift        = 1;             % maximum absolute over and undershoot in mm   
-   multScen.relRangeShift        = 3.5;           % maximum relative over and undershoot in % 
-   multScen.rangeGenType         = 'sampled';      % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
-   multScen.rangeCombType        = 'combined';     % individual: no combination of absolute and relative range scenarios
-                                                   % combined:    combine absolute and relative range scenarios
-
-   multScen.ScenCombType         = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
-  
    
-else
-   matRad_dispToConsole('matRad_setPlanUncertainties: Invalid combination','error')
+   multScen.scenCombType         = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
+
 end
 
 
 % create multiScen struct
-pln.multScen                  = matRad_setMultScen(multScen);
+pln.multScen    = matRad_setMultScen(multScen); % calcProb missing.
 
+%% get probabilities
+vMu                    = [0 0 0 0 0];
+vSD                    = [multScen.shiftSD multScen.rangeAbsSD multScen.rangeRelSD];
 
-
+pln.multScen.scenProb  = matRad_calcScenProb(vMu,vSD,pln.multScen.scenForProb,'probBins','normDist');
+ 
 end

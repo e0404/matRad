@@ -1,4 +1,4 @@
-function [Realizations,Stats,meanCube,stdCube]  = matRad_randomSampling(ct,stf,cst,pln,w)
+function [realizations,stats,meanCube,stdCube]  = matRad_randomSampling(ct,stf,cst,pln,w,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_randomSampling enables sampling multiple treatment scenarios
 % 
@@ -6,13 +6,20 @@ function [Realizations,Stats,meanCube,stdCube]  = matRad_randomSampling(ct,stf,c
 %   [cst,pln] = matRad_setPlanUncertainties(ct,cst,pln)
 %
 % input
-%   ct:             ct cube
-%   pln:            matRad plan meta information struct
+%   ct:         ct cube
+%   stf:        matRad steering information struct
+%   pln:        matRad plan meta information struct
+%   cst:        matRad cst struct
+%   w:          optional (if no weights available in stf): bixel weight
+%               vector
+%   param:      (optional) structure defining additional parameter
+%               e.g. param.logLevel
 %
 % output
-%   pln:            matRad's plan meta information struct including a sub-structure 
-%                   pln.multScen holding information about multiple treatment plan scenarios
-%
+%   realizations:  matrix depticting the sampling results in V x pln.numSamples
+%   stats          cell array denoting dose statistics
+%   meanCube       expected dose distribution
+%   stdCube        standard deviation cube
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -29,37 +36,43 @@ function [Realizations,Stats,meanCube,stdCube]  = matRad_randomSampling(ct,stf,c
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global LogLevel;
-
-if ~isfield(pln,'sampling')
-   error('matRad: pln.samling subfield does not exist');
-else
-   if ~isfield(pln,'numSampling')
-      pln.numSampling  = 30; % default number of samples
+if exist('param','var')
+    if ~isfield(param,'logLevel')
+       param.logLevel = 1;
+    end
+    % default: dose influence matrix computation
+   if ~isfield(param,'calcDoseDirect')
+      param.calcDoseDirect = false;
    end
+    
+else
+   param.calcDoseDirect = false;
+   param.subIx          = [];
+   param.logLevel       = 1;
+end
+
+
+if ~isfield(pln,'numSampling')
+   pln.numSampling  = 20; % default number of samples
+   matRad_dispToConsole(['Using default number of samples: ' num2str(pln.numSampling) '\n'],param,'info')
 end
 
 meanCube    = zeros(ct.cubeDim);
 stdCube     = zeros(ct.cubeDim);
-Stats       = 0;
+stats       = cell(pln.numSampling,1);
 
 % define voxels for sampling
 V = [cst{:,4}];
 param.subIx = unique(vertcat(V{:}));
 
 % define variable for storing scenario doses
-Realizations = single(zeros(numel(param.subIx),pln.numSampling,1));
-StorageInfo  = whos('Realizations');
-fprintf(['matRad: Realizations variable will need: ' num2str(StorageInfo.bytes/1e9) ' GB \n']);
+realizations = single(zeros(numel(param.subIx),pln.numSampling,1));
+StorageInfo  = whos('realizations');
+matRad_dispToConsole(['matRad: Realizations variable will need: ' num2str(StorageInfo.bytes/1e9) ' GB \n'],param,'info');
 
 
-% if sampling is disabled stop this function call
-if pln.sampling == false
-    return;
-end
-
-% only show warning an
-LogLevel = 3;
+% only show warnings
+param.logLevel = 3;
 
 % check if parallel toolbox is installed and license can be checked out
 try
@@ -80,7 +93,7 @@ if FlagParallToolBoxLicensed
       FlagParforProgressDisp = true;
       parfor_progress(pln.numSampling);  % http://de.mathworks.com/matlabcentral/fileexchange/32101-progress-monitor--progress-bar--that-works-with-parfor
    else
-      warning('matRad: Consider downloading parfor_progress function from the matlab central fileexchange to get feedback from loop.');
+      matRad_dispToConsole('matRad: Consider downloading parfor_progress function from the matlab central fileexchange to get feedback from parfor loop.',param,'warning');
       FlagParforProgressDisp = false;
    end
   
@@ -91,10 +104,10 @@ if FlagParallToolBoxLicensed
           % ToDo pick the i-th scenario and save into plnSamp
           plnSamp               = plnTot;
           resultSamp            = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w,param);
-          SampledDose           = resultSamp.(pln.bioParam.quantityOpt)(param.subIx);
-          Realizations(:,i)     = single(reshape(SampledDose,[],1));
-          resultQI              = matRad_calcQualityIndicators(resultSamp,cstSampling,plnSampling,param);
-          Stats{i}              = resultQI.QI;
+          sampledDose           = resultSamp.(pln.bioParam.quantityOpt)(param.subIx);
+          realizations(:,i)     = single(reshape(sampledDose,[],1));
+          resultQI              = matRad_calcQualityIndicators(resultSamp,cst,plnSamp,param);
+          stats{i,1}            = resultQI.QI;
           
           if FlagParforProgressDisp
             parfor_progress;
@@ -108,7 +121,7 @@ if FlagParallToolBoxLicensed
 else
 %% perform seriel sampling   
     h = waitbar(0,'Sampling Scenario ...');
-    Stats = cell(pln.numSampling,1);
+    stats = cell(pln.numSampling,1);
     
     plnTot               = matRad_setPlanUncertainties(ct,pln);
     
@@ -117,10 +130,10 @@ else
            % ToDo pick the i-th scenario and save into plnSamp
           plnSamp               = plnTot; 
           resultSamp            = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w,param);
-          SampledDose           = resultSamp.(pln.bioParam.quantityOpt)(param.subIx);
-          Realizations(:,i)     = single(reshape(SampledDose,[],1));
-          resultQI              = matRad_calcQualityIndicators(resultSamp,cstSampling,plnSampling,param);
-          Stats{i}              = resultQI.QI;
+          sampledDose           = resultSamp.(pln.bioParam.quantityOpt)(param.subIx);
+          realizations(:,i)     = single(reshape(sampledDose,[],1));
+          resultQI              = matRad_calcQualityIndicators(resultSamp,cst,plnSamp,param);
+          stats{i,1}            = resultQI.QI;
           
           waitbar(i/pln.numSampling);
 
@@ -129,10 +142,10 @@ else
     close(h)
 end
 
-meanCube    = zeros(ct.cubeDim);
-stdCube     = zeros(ct.cubeDim);
-meanCube(V) = mean(Realizations,2);
-stdCube(V)  = std(Realizations,1,2);
+meanCube              = zeros(ct.cubeDim);
+stdCube               = zeros(ct.cubeDim);
+meanCube(param.subIx) = mean(realizations,2);
+stdCube(param.subIx)  = std(realizations,1,2);
 
 
 end

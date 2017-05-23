@@ -42,30 +42,30 @@ else
     matRad_global_x = w;
     
     % pre-allocation
-    d = cell(options.numOfScenarios,1);
+    d = cell(options.numOfScen,1);
     
     % Calculate dose vector
     
     if ~options.bioOpt
        if isequal(options.model,'none')
 
-           for i = 1:length(options.indexforOpt)
-               d{i} = dij.physicalDose{options.indexforOpt(i)} * w;
+           for i = 1:length(options.ixForOpt)
+               d{i} = dij.physicalDose{options.ixForOpt(i)} * w;
            end
 
        elseif  isequal(options.model,'constRBE')
 
-           for i = 1:length(options.indexforOpt)
-                d{i} =  dij.physicalDose{options.indexforOpt(i)} * (w * dij.RBE);
+           for i = 1:length(options.ixForOpt)
+                d{i} =  dij.physicalDose{options.ixForOpt(i)} * (w * dij.RBE);
            end
        end
     else
         
-        for i = 1:length(options.indexforOpt)
+        for i = 1:length(options.ixForOpt)
             
             % calculate effect
-            linTerm  = dij.mAlphaDose{options.indexforOpt(i)} * w;
-            quadTerm = dij.mSqrtBetaDose{options.indexforOpt(i)} * w;
+            linTerm  = dij.mAlphaDose{options.ixForOpt(i)} * w;
+            quadTerm = dij.mSqrtBetaDose{options.ixForOpt(i)} * w;
             e        = linTerm + quadTerm.^2;   
 
             if isequal(options.quantityOpt,'effect')

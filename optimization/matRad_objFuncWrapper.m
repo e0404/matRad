@@ -42,7 +42,7 @@ f = 0;
 for i = 1:size(cst,1)
   for j = 1:numel(cst{i,6})
       if strcmp(cst{i,6}(j).robustness,'COWC')
-         f_COWC = zeros(options.numOfScenarios,1);break;
+         f_COWC = zeros(options.numOfScen,1);break;
       end
   end
 end
@@ -79,11 +79,11 @@ for  i = 1:size(cst,1)
                 % if prob opt: sum up expectation value of objectives
                 elseif strcmp(cst{i,6}(j).robustness,'probabilistic')
 
-                    for ixScen = 1:options.numOfScenarios
+                    for ixScen = 1:options.numOfScen
 
                         d_i = d{ixScen}(cst{i,4}{1});
 
-                        f = f + options.probOfScenarios(ixScen) * matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                        f = f + options.scenProb(ixScen) * matRad_objFunc(d_i,cst{i,6}(j),d_ref);
                     end
                     
                 % if voxel-wise worst case or voxel-wise conformitiy (only for target structures
@@ -115,7 +115,7 @@ for  i = 1:size(cst,1)
                     
                 elseif strcmp(cst{i,6}(j).robustness,'COWC')
                    
-                     for ixScen = 1:options.numOfScenarios
+                     for ixScen = 1:options.numOfScen
 
                         d_i = d{ixScen}(cst{i,4}{1});
          

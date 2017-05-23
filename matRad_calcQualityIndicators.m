@@ -1,4 +1,4 @@
-function result = matRad_calcQualityIndicators(result,cst,pln,refGy,refVol)
+function result = matRad_calcQualityIndicators(result,cst,pln,param,refGy,refVol)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad QI calculation
 % 
@@ -36,13 +36,20 @@ function result = matRad_calcQualityIndicators(result,cst,pln,refGy,refVol)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if exist('param','var')
+   if ~isfield(param,'logLevel')
+      param.logLevel = 1;
+   end
+else
+   param.logLevel = 1;
+end
 
 sQuantity = 'physicalDose';
-if sum(strcmp(fieldnames(result),'RBExDose')) > 0 && ~strcmp(pln.bioOptimization,'none')
-    sQuantity = 'RBExDose';
+if sum(strcmp(fieldnames(result),'RBExD')) > 0 && ~pln.bioParam.bioOpt
+    sQuantity = 'RBExD';
 end
     
-if(nargin < 4)
+if(nargin < 5)
     refVol = [2 5 98 95];
     refGy = linspace(0,max(result.(sQuantity)(:)),6);
 end
@@ -113,9 +120,12 @@ for runVoi = 1:size(cst,1)
                                    QI(runVoi).(['CI_' StringReferenceDose 'Gy']),QI(runVoi).(['HI_' StringReferenceDose 'Gy']),referenceDose);
             end
         end
-        fprintf('%s\n',voiPrint);
+
+        matRad_dispToConsole(voiPrint,param,'info','%s\n')
+        
     else    
-    fprintf('%3d %20s - No dose information.\n',cst{runVoi,1},cst{runVoi,2});
+        matRad_dispToConsole([num2str(cst{runVoi,1}) ' ' cst{runVoi,2} ' - No dose information.\n'],param,'info') 
+        
     end
     
 end

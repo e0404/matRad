@@ -37,19 +37,14 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,param)
 
 % define default log level
 param.calcDoseDirect = true;
+% define certain indices set that should be used for dose calculation
+%param.subIx = [];
 
-if exist('param','var')
-   if ~isfield(param,'logLevel')
-      param.logLevel = 1;
-   end
-else
-   param.logLevel = 1;
-end
 
 % copy bixel weight vector into stf struct
 if exist('w','var')
     if sum([stf.totalNumOfBixels]) ~= numel(w)
-        matRad_dispToConsole('weighting does not match steering information',param,'error')
+        matRad_dispToConsole('weighting does not match steering information','error')
     end
     counter = 0;
     for i = 1:pln.numOfBeams
@@ -62,17 +57,15 @@ if exist('w','var')
     end
 end
 
-% disable robOpt
-pln.robOpt   = false;
+if ~isfield(pln,'bioParam')
+   % retrieve model parameters
+   pln.bioParam = matRad_bioModel(pln.radiationMode,pln.bioOptimization);
+end
 
-% retrieve model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,pln.bioOptimization);
-
-% set plan uncertainties for robust optimization
-[pln] = matRad_setPlanUncertainties(ct,pln);
-
-% define certain indices set that should be used for dose calculation
-param.subIx = [];
+if ~isfield(pln,'multScen')
+   % set plan uncertainties
+   [pln] = matRad_setPlanUncertainties(ct,pln);
+end
 
 % dose calculation
 if strcmp(pln.radiationMode,'photons')
@@ -119,14 +112,14 @@ elseif isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
     resultGUI.effect     = zeros(ct.cubeDim);
     resultGUI.effect(ix) = dij.mAlphaDose{1}(ix,1) + dij.mSqrtBetaDose{1}(ix,1).^2;
 
-    resultGUI.RBExDose     = zeros(ct.cubeDim);
-    resultGUI.RBExDose(ix) = ((sqrt(dij.alphaX(ix).^2 + 4 .* dij.betaX(ix) .* resultGUI.effect(ix)) - dij.alphaX(ix))./(2.*dij.betaX(ix)));
+    resultGUI.RBExD      = zeros(ct.cubeDim);
+    resultGUI.RBExD(ix)  = ((sqrt(dij.alphaX(ix).^2 + 4 .* dij.betaX(ix) .* resultGUI.effect(ix)) - dij.alphaX(ix))./(2.*dij.betaX(ix)));
 
-    resultGUI.alpha     = zeros(ct.cubeDim);
-    resultGUI.alpha(ix) = dij.mAlphaDose{1}(ix,1)./resultGUI.physicalDose(ix);
+    resultGUI.alpha      = zeros(ct.cubeDim);
+    resultGUI.alpha(ix)  = dij.mAlphaDose{1}(ix,1)./resultGUI.physicalDose(ix);
 
-    resultGUI.beta     = zeros(ct.cubeDim);
-    resultGUI.beta(ix) = (dij.mSqrtBetaDose{1}(ix,1)./resultGUI.physicalDose(ix)).^2;
+    resultGUI.beta       = zeros(ct.cubeDim);
+    resultGUI.beta(ix)   = (dij.mSqrtBetaDose{1}(ix,1)./resultGUI.physicalDose(ix)).^2;
     
 end
 
