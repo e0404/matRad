@@ -15,7 +15,8 @@ addpath('D:\Matrad\')
 addpath('D:\Matrad\4Ddose')
 
 % output D with all dose cubes
-D.name = {'Dopt', 'Drecalc3D', 'Dopt -Drecalc3D', 'Drecalc4Dconst', 'Drecalc4Dvar', 'Drecalc4Dconst-Drecalc4Dvar','Dopt - Drecalc4Dconst', 'Drecalc3D-Drecalc4Dvar', 'Dopt-Drecalc4Dvar'};
+%D.name = {'Dopt', 'Drecalc3D', 'Dopt -Drecalc3D', 'Drecalc4Dconst', 'Drecalc4Dvar', 'Drecalc4Dconst-Drecalc4Dvar','Dopt - Drecalc4Dconst', 'Drecalc3D-Drecalc4Dvar', 'Dopt-Drecalc4Dvar'};
+D.name = {'(A)', '(B)', '(A)-(B)', '(C)', '(D)', '(C)-(D)','(A)-(C)', '(B)-(D)', '(A)-(D)'};
 
 D.isolines = {1, 1, 0, 1, 1, 0, 0, 0, 0};
 D.fractions = pln.numOfFractions;  

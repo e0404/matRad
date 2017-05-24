@@ -41,9 +41,8 @@ for i=1:length(delivery)
 %%%%%%%%%Breathing motion   
     %Motion assumption1: linear
     if(strcmp(MOTION,'linear'))
-       NumOfPhases = size(dij.physicalDose);
+        NumOfPhases = size(dij.physicalDose);
         NumOfPhases =  NumOfPhases(1);  %immer richtig?
-    %Annahme 5s und linear 
     offset = delivery(1).offset; %0;
     phaseTime = delivery(1).motionperiod/NumOfPhases; %5/NumOfPhases;
     j=1;

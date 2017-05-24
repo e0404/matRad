@@ -84,7 +84,7 @@ if D.isolines{i}
 vLevelDose      = maxDose  * vLevels;
 [~,~] =contour(doseSlice,vLevelDose,'LevelListMode','manual','LineWidth',1.5);  
 colormap jet;
-else
+else       
 Range = linspace(minDose,maxDose,62);
 [~,idx]  = min(abs(Range));
 idx2 = 62-idx;
@@ -102,7 +102,8 @@ d2 = ones(1,idx2);
 colormap(ax{i},costumMap); colorbar;    
 end
 if D.isolines{i}
-title([D.name{i} 'D95% GTV = '  num2str(D.statD95GTV{i})]) 
+%title([D.name{i} 'D95% GTV = '  num2str(D.statD95GTV{i})]) 
+title(D.name{i})
 else
 title(D.name{i})
 end
