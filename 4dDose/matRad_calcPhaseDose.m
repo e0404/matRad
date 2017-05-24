@@ -45,19 +45,24 @@ for i=1:length(delivery)
         NumOfPhases =  NumOfPhases(1);  %immer richtig?
     offset = delivery(1).offset; %0;
     phaseTime = delivery(1).motionperiod/NumOfPhases; %5/NumOfPhases;
-    j=1;
-    p = 1;
-    Time = offset;
-    while(j < length(delivery(i).time))
+    t=1;
+    p = ceil(offset+0.001/phaseTime);  
+    while p > NumOfPhases
+        p = p-NumOfPhases;
+    end
+    
+    Time = mod(offset, phaseTime); %offset;  
+    while(t < length(delivery(i).time))
         Time = Time + phaseTime;
-        while(j < length(delivery(i).time) && delivery(i).time(j)/1000000 < Time)  
-            delivery(i).phase(j) = p;
-            j= j+1;
+        while(t < length(delivery(i).time) && delivery(i).time(t)/1000000 < Time)  
+            delivery(i).phase(t) = p;
+            t= t+1;
         end
         p = p+1;
         if(p > NumOfPhases)
             p=1;
         end
+       
     end
     %Motion assumption2: periodic
     
