@@ -1,4 +1,4 @@
-function [gammaCube,gammaPassRate] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal)
+function [gammaCube,gammaPassRateCell] = matRad_gammaIndex_NEW(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % gamma index calculation according to http://www.ncbi.nlm.nih.gov/pubmed/9608475
 % 
@@ -193,7 +193,33 @@ end
 doseIx          = cube1 > doseThreshold;
 numOfPassGamma  = sum(gammaCube(doseIx) < 1);
 gammaPassRate   = 100 * numOfPassGamma / sum(doseIx(:));
-        
+
+
+%%%% JOSEFINE
+gammaPassRateCell = cell(1,2);
+gammaPassRateCell{1,1} = 'Whole CT';
+gammaPassRateCell{1,2} = gammaPassRate;
+
+for i=1:size(cst, 1)
+    volume = cst{i,4}{1,1};
+    if size(volume, 1) < 1000 % remove beekleys
+        continue;
+    end
+    doseIxVol = false(size(doseIx)); 
+    doseIxVol(volume) = doseIx(volume); 
+    numOfPassGammaVol  = sum(gammaCube(doseIxVol) < 1);
+    gammaPassRateVol   = 100 * numOfPassGammaVol / sum(doseIxVol(:));
+    if isnan(gammaPassRateVol) % remove organs not receiving any dose (resulting in NaN)
+        continue;
+    end
+    gammaPassRateCell{end+1, 1} = cst{i,2};
+    gammaPassRateCell{end, 2} = gammaPassRateVol;
+    
+end
+%%%% END JOSEFINE
+
+
+
 % visualize if applicable
 if exist('slice','var')
     figure
