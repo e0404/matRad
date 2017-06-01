@@ -22,7 +22,7 @@ function varargout = matRad_importDicomGUI(varargin)
 
 % Edit the above text to modify the response to help matRad_importDicomGUI
 
-% Last Modified by GUIDE v2.5 28-Jul-2016 13:18:46
+% Last Modified by GUIDE v2.5 02-Jun-2017 00:45:04
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -661,6 +661,9 @@ function checkbox3_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of checkbox3
 
 if get(hObject,'Value')
+    set(handles.resx_edit,'Enable', 'off');
+    set(handles.resy_edit,'Enable', 'off');
+    set(handles.resz_edit,'Enable', 'off');
     % retrieve and display resolution for DICOM dose cube
     doseFilesInList = get(handles.doseseries_listbox,'String');
     selectedDoseFiles = get(handles.doseseries_listbox,'Value');
@@ -682,6 +685,9 @@ if get(hObject,'Value')
     end
     
 else
+    set(handles.resx_edit,'Enable', 'on');
+    set(handles.resy_edit,'Enable', 'on');
+    set(handles.resz_edit,'Enable', 'on');
     % retrieve and display resolution for DICOM ct cube
     patient_listbox = get(handles.patient_listbox,'String');
     selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
@@ -712,4 +718,3 @@ else
     end
     
 end
-
