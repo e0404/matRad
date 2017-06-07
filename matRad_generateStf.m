@@ -237,21 +237,25 @@ for i = 1:length(pln.gantryAngles)
                 end
 
                 stf(i).ray(j).energy = [];
+                rayPeakPos = [];
 
                 % Save energies in stf struct
                 for k = 1:numel(targetEntry)
                     stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
+                    rayPeakPos = [rayPeakPos availablePeakPos(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
+
                     % adjust spot spacing according to pln.bixelWidth when using HIT basedata
                     %DefaultLongitudialSpotSpacing = pln.bixelWidth;  % in [mm]
                     DefaultLongitudialSpotSpacing = 3;
-                    if strcmp(pln.machine,'HIT') && length(stf(i).ray(j).energy)>2
+                    if strncmp(pln.machine,'HIT',3) && length(stf(i).ray(j).energy)>2
                         Tolerance = 0.5;
                         hasNext = true;
                         CntEnergy =2;
                         while hasNext
-                            if abs(stf(i).ray(j).energy(CntEnergy)-stf(i).ray(j).energy(CntEnergy-1))<...
+                            if abs(rayPeakPos(CntEnergy)-rayPeakPos(CntEnergy-1))<...
                                     DefaultLongitudialSpotSpacing-Tolerance
                                 stf(i).ray(j).energy(CntEnergy)=[];
+                                rayPeakPos(CntEnergy)=[];
                             else
                                 CntEnergy = CntEnergy+1;
                             end
