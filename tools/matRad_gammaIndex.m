@@ -1,4 +1,4 @@
-function [gammaCube,gammaPassRateCell] = matRad_gammaIndex_NEW(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)
+function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % gamma index calculation according to http://www.ncbi.nlm.nih.gov/pubmed/9608475
 % 
@@ -16,11 +16,13 @@ function [gammaCube,gammaPassRateCell] = matRad_gammaIndex_NEW(cube1,cube2,resol
 %                  interpolation points. The maximum suggested value is 3.
 %   localglobal:   parameter to choose between 'global' and 'local' 
 %                  normalization (optional)
+%   cst:           list of interessing volumes inside the patient
 %
 % output 
 %
-%   gammaCube:     result of gamma index calculation
-%   gammaPassRate: rate of voxels passing the specified gamma criterion.
+%   gammaCube:          result of gamma index calculation
+%   gammaPassRateCell:  rate of voxels passing the specified gamma criterion 
+%                  evaluated for every structure listed in 'cst'.
 %                  note that only voxels exceeding the dose threshold are
 %                  considered.
 %
@@ -194,14 +196,13 @@ doseIx          = cube1 > doseThreshold;
 numOfPassGamma  = sum(gammaCube(doseIx) < 1);
 gammaPassRate   = 100 * numOfPassGamma / sum(doseIx(:));
 
-
-%%%% JOSEFINE
+% compute stats for all segmented sturtures
 gammaPassRateCell = cell(1,2);
 gammaPassRateCell{1,1} = 'Whole CT';
 gammaPassRateCell{1,2} = gammaPassRate;
 
-for i=1:size(cst, 1)
-    volume = cst{i,4}{1,1};
+for i = 1:size(cst, 1)
+    volume = cst{i,4}{1,1}; % indices of voxels of the interesting volume
     if size(volume, 1) < 1000 % remove beekleys
         continue;
     end
@@ -216,9 +217,6 @@ for i=1:size(cst, 1)
     gammaPassRateCell{end, 2} = gammaPassRateVol;
     
 end
-%%%% END JOSEFINE
-
-
 
 % visualize if applicable
 if exist('slice','var')
@@ -297,3 +295,18 @@ if exist('slice','var')
             '% pass gamma criterion (' num2str(relDoseThreshold) '% / ' ...
             num2str(dist2AgreeMm) 'mm)']; ['with ' num2str(2^n-1) ' interpolation points']});
 end
+
+figure
+isovec = [0.001, 1, 1.5, 2];
+facevec = [0.1, 0.2, 0.4, 1];
+colorvec = ['c', 'g', 'y', 'r'];
+
+for i = 1:4
+    [f,v] = isosurface(gammaCube, isovec(i));
+    patch('Faces',f,'Vertices',v,'EdgeAlpha',0.0001,'FaceAlpha',facevec(i),'FaceColor',colorvec(i));
+end
+view(3)
+legend('region of gamma-index test',...
+    'region of gamma-index test failure',...
+    'region of gamma-index test failure over 50%',...
+    'region of gamma-index test failure over 100%')
