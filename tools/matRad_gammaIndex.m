@@ -1,4 +1,4 @@
-function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)
+function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,slice,criteria,n,localglobal,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % gamma index calculation according to http://www.ncbi.nlm.nih.gov/pubmed/9608475
 % 
@@ -49,8 +49,8 @@ if exist('criteria','var')
     dist2AgreeMm     = criteria(1); % in [mm]
     relDoseThreshold = criteria(1); % in [%]
 else
-    dist2AgreeMm     = 1; % in [mm]
-    relDoseThreshold = 1; % in [%]
+    dist2AgreeMm     = 3; % in [mm]
+    relDoseThreshold = 3; % in [%]
 end
 
 % set parameters for gamma index calculation
@@ -197,25 +197,24 @@ numOfPassGamma  = sum(gammaCube(doseIx) < 1);
 gammaPassRate   = 100 * numOfPassGamma / sum(doseIx(:));
 
 % compute stats for all segmented sturtures
-gammaPassRateCell = cell(1,2);
-gammaPassRateCell{1,1} = 'Whole CT';
-gammaPassRateCell{1,2} = gammaPassRate;
+if exist('cst','var')
+    gammaPassRateCell = cell(1,2);
+    gammaPassRateCell{1,1} = 'Whole CT';
+    gammaPassRateCell{1,2} = gammaPassRate;
 
-for i = 1:size(cst, 1)
-    volume = cst{i,4}{1,1}; % indices of voxels of the interesting volume
-    if size(volume, 1) < 1000 % remove beekleys
-        continue;
+    for i = 1:size(cst, 1)
+        volume = cst{i,4}{1,1}; % indices of voxels of the interesting volume
+        doseIxVol = false(size(doseIx)); 
+        doseIxVol(volume) = doseIx(volume); 
+        numOfPassGammaVol  = sum(gammaCube(doseIxVol) < 1);
+        gammaPassRateVol   = 100 * numOfPassGammaVol / sum(doseIxVol(:));
+        if isnan(gammaPassRateVol) % remove organs not receiving any dose (resulting in NaN)
+            continue;
+        end
+        gammaPassRateCell{end+1, 1} = cst{i,2};
+        gammaPassRateCell{end, 2} = gammaPassRateVol;
+
     end
-    doseIxVol = false(size(doseIx)); 
-    doseIxVol(volume) = doseIx(volume); 
-    numOfPassGammaVol  = sum(gammaCube(doseIxVol) < 1);
-    gammaPassRateVol   = 100 * numOfPassGammaVol / sum(doseIxVol(:));
-    if isnan(gammaPassRateVol) % remove organs not receiving any dose (resulting in NaN)
-        continue;
-    end
-    gammaPassRateCell{end+1, 1} = cst{i,2};
-    gammaPassRateCell{end, 2} = gammaPassRateVol;
-    
 end
 
 % visualize if applicable
@@ -295,18 +294,3 @@ if exist('slice','var')
             '% pass gamma criterion (' num2str(relDoseThreshold) '% / ' ...
             num2str(dist2AgreeMm) 'mm)']; ['with ' num2str(2^n-1) ' interpolation points']});
 end
-
-figure
-isovec = [0.001, 1, 1.5, 2];
-facevec = [0.1, 0.2, 0.4, 1];
-colorvec = ['c', 'g', 'y', 'r'];
-
-for i = 1:4
-    [f,v] = isosurface(gammaCube, isovec(i));
-    patch('Faces',f,'Vertices',v,'EdgeAlpha',0.0001,'FaceAlpha',facevec(i),'FaceColor',colorvec(i));
-end
-view(3)
-legend('region of gamma-index test',...
-    'region of gamma-index test failure',...
-    'region of gamma-index test failure over 50%',...
-    'region of gamma-index test failure over 100%')
