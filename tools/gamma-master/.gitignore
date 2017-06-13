@@ -1,0 +1,5 @@
+*.smbdelete*
+.DS_STORE
+*.m~
+log.txt
+test_data/
