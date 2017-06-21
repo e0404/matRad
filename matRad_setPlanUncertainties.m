@@ -95,7 +95,7 @@ elseif pln.robOpt && ~pln.sampling
    multScen.rangeGenType         = 'equidistant';   % equidistant: equidistant range shifts, sampled: sample range shifts from normal distribution
    multScen.scenCombType         = 'individual';    % individual:  no combination of range and setup scenarios, 
                                                     % combined:    combine range and setup scenarios if their scenario number is consistent 
-                                                    % allcombined: create every possible combination of range and setup scenarios
+                                                    % permuted:    create every possible combination of range and setup scenarios
    multScen.includeNomScen       = true;
    
 % definition of scenarios for sampling
@@ -105,8 +105,8 @@ elseif ~pln.robOpt && pln.sampling
    % a) define shift scenarios
    multScen.numOfShiftScen       = [0 0 0];          % number of shifts in x y and z direction       
    multScen.shiftSize            = [3 3 3];          % maximum shift [mm]  % (e.g. prostate cases 5mm otherwise 3mm)
-   multScen.shiftGenType         = 'sampled';        % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
-   multScen.shiftCombType        = 'combined';       % individual:  no combination of shift scenarios;       number of shift scenarios is sum(multScen.numOfShiftScen) 
+   multScen.shiftGenType         = 'equidistant';    % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
+   multScen.shiftCombType        = 'individual';     % individual:  no combination of shift scenarios;       number of shift scenarios is sum(multScen.numOfShiftScen) 
                                                      % combined:    combine shift scenarios;                 number of shift scenarios is multScen.numOfShiftScen(1)
                                                      % allcombined: create every possible shift combination; number of shift scenarios is 8,27,64 ... 
    multScen.shiftGen1DIsotropy   = '+-';             % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
@@ -117,10 +117,10 @@ elseif ~pln.robOpt && pln.sampling
    multScen.maxAbsRangeShift     = 1;                % maximum absolute over and undershoot in mm   
    multScen.maxRelRangeShift     = 3.5;              % maximum relative over and undershoot in % 
    multScen.rangeCombType        = 'combined';       % individual: no combination of absolute and relative range scenarios; combined:    combine absolute and relative range scenarios
-   multScen.rangeGenType         = 'sampled';        % equidistant: equidistant range shifts, sampled: sample range shifts from normal distribution
-   multScen.scenCombType         = 'combined';       % individual:  no combination of range and setup scenarios, 
+   multScen.rangeGenType         = 'equidistant';    % equidistant: equidistant range shifts, sampled: sample range shifts from normal distribution
+   multScen.scenCombType         = 'individual';     % individual:  no combination of range and setup scenarios, 
                                                      % combined:    combine range and setup scenarios if their scenario number is consistent 
-                                                     % allcombined: create every possible combination of range and setup scenarios
+                                                     % permuted:    create every possible combination of range and setup scenarios
    multScen.includeNomScen       = false;
    
    %% random sampling
@@ -142,7 +142,7 @@ elseif ~pln.robOpt && pln.sampling
 %    multScen.rangeGenType         = 'sampled';        % equidistant: equidistant range shifts, sampled: sample range shifts from normal distribution
 %    multScen.scenCombType         = 'combined';       % individual:  no combination of range and setup scenarios, 
 %                                                      % combined:    combine range and setup scenarios if their scenario number is consistent 
-%                                                      % allcombined: create every possible combination of range and setup scenarios
+%                                                      % permuted:    create every possible combination of range and setup scenarios
 %    multScen.includeNomScen       = false;
 %    
    

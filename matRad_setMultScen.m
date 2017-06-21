@@ -80,7 +80,7 @@ switch uIn.shiftCombType
         scenMaskIso(:,1,1) = true; % x shifts
         scenMaskIso(1,:,1) = true; % y shifts
         scenMaskIso(1,1,:) = true; % z shifts
-    case 'allcombined'
+    case 'permuted'
         scenMaskIso(:,:,:) = true;
     case 'combined'
         % determine that matrix is cubic
@@ -90,7 +90,7 @@ switch uIn.shiftCombType
             end
         else
             uIn.shiftCombType = 'individual';
-            matRad_dispToConsole('Numnber of isoShifts in every direction has to be equal in order to perform direct combination. Performing individually instead.','warning');
+            matRad_dispToConsole('Numnber of isoShifts in every direction has to be equal in order to perform direct combination. Performing individually instead.',[],'warning');
             % call the function itself to get a working combination
             [multScen] = matRad_setUnc(uIn);
         end
@@ -159,35 +159,71 @@ end
 
 relRangeShift        = (relRangeShift./100);
 
-% needed for calcScenProb function
-if uIn.includeNomScen
-   scenForProb          = isoShift;
-   scenForProb(:,end+2) = 0;
-   startIx = 2;
-else
-   startIx = 1;
-end
+ 
 
 % check if absolute and range error scenarios should be combined
 switch uIn.rangeCombType    
    case 'individual'
-     
-      for i = startIx:1:length(relRangeShift)
-         scenForProb(numOfShiftScen+ ((i-1)*2) - 1,4) = absRangeShift(i);
-         scenForProb(numOfShiftScen+ ((i-1)*2) - 0,5) = relRangeShift(i);
+      rangeShift = zeros(length(relRangeShift)*2 ,2);
+      for i = 1:length(relRangeShift)
+         rangeShift((i * 2)-1,1)  = absRangeShift(i);
+         rangeShift((i * 2)  ,2)  = relRangeShift(i);
       end
+      
       numOfRangeShiftScen = (numOfRelRangeShift*2)-1;
       absRangeShift       = [absRangeShift zeros(1,length(relRangeShift(relRangeShift~=0)))];
       relRangeShift       = [zeros(1,length(relRangeShift)) relRangeShift(relRangeShift~=0)] ;
       
-   case 'combined'
-      for i = startIx:1:length(relRangeShift)
-         scenForProb(numOfShiftScen+i-1,4) = absRangeShift(i);
-         scenForProb(numOfShiftScen+i-1,5) = relRangeShift(i);
+   case 'combined' 
+      rangeShift = zeros(length(relRangeShift),2);
+      for i = 1:1:length(relRangeShift) 
+         rangeShift(i,1) = absRangeShift(i);
+         rangeShift(i,2) = relRangeShift(i);
       end
       
    otherwise
       
+end
+
+
+% check if the existence shift scenarios
+ if sum(sum(~any(isoShift))) > 0 && ~uIn.includeNomScen
+    isoShift = [];
+ end
+
+% combine setup and range scenarios according to scenCombType
+
+switch uIn.scenCombType
+   
+    case 'individual'
+
+       scenForProb                             = zeros(size(isoShift,1) + size(rangeShift,1),5);
+       scenForProb(1:size(isoShift,1),1:3)     = isoShift;
+       scenForProb(size(isoShift,1)+1:end,4:5) = rangeShift;
+
+    case 'permuted'
+
+        scenForProb  = zeros(size(isoShift,1) * size(rangeShift,1),5);
+        Cnt = 1;
+        for i = 1:size(isoShift,1)
+           for j = 1:size(rangeShift,1)
+              scenForProb(Cnt,:)   = [isoShift(i,:) rangeShift(j,:)];
+              Cnt = Cnt + 1;
+           end
+        end
+
+    case 'combined'
+
+       if size(isoShift,1) == size(rangeShift,1)  && numOfShiftScen > 0 && numOfRangeShiftScen > 0
+        scenForProb            = zeros(size(isoShift,1),5);
+        scenForProb(1:end,1:3) = isoShift;
+        scenForProb(1:end,4:5) = rangeShift; 
+
+       else
+           matRad_dispToConsole('number of setup and range scenarios is not the same \n',[],'warning');
+           uIn.scenCombType = 'individual';
+           multScen = matRad_setMultScen(uIn);
+       end
 end
 
 % sanity check
@@ -202,29 +238,37 @@ multScen.scenForProb = scenForProb;
 %% set masks
 
 % 1st dim = rows: isoShift, 2nd dim: relRangeShift, 3rd dim: absRangeShift
-scenMask = false(uIn.numOfCtScen, numOfShiftScen, numOfRangeShiftScen);
+scenMask        = false(uIn.numOfCtScen, numOfShiftScen, numOfRangeShiftScen);
+scenMask(:,1,1) = true; % ct scenarios
+
 % switch between combination modes here
-switch uIn.scenCombType
-    case 'individual'
-        scenMask(:,1,1) = true; % ct scenarios
-        scenMask(1,:,1) = true; % iso shift scenarios
-        scenMask(1,1,:) = true; % range shift scenarios
-    case 'allcombined'
-        scenMask(:,:,:) = true;
-    case 'combined'
-        % determine that matrix is cubic
-        if isequal(uIn.numOfCtScen, numOfShiftScen, numOfRangeShiftScen)
-            for i = 1:numOfCtScen
-                scenMask(i,i,i) = true;
-            end
-        else
-            uIn.shiftCombType = 'individual';
-            matRad_dispToConsole('Isoshift in every direction has to be the same in order to perform direct combination. Performing individually now. Press enter to confirm you noticed.',[],'warning');
-            pause();
-            
-            % call the function itself
-            %multScen = matRad_setMultScen(uIn);
-        end
+% only makes scence when numOfShiftScen>0 and numOfRangeShiftScen>0;
+
+if numOfShiftScen > 0 && numOfRangeShiftScen > 0
+   switch uIn.scenCombType
+       case 'individual'
+           scenMask(1,:,1) = true; % iso shift scenarios
+           scenMask(1,1,:) = true; % range shift scenarios
+       case 'permuted'
+           scenMask(:,:,:) = true;
+       case 'combined'
+          
+          scenMask(1,:,1) = true; % iso shift scenarios
+          scenMask(1,1,1) = true; % range shift scenarios
+          
+%            % determine that matrix is cubic
+%            if isequal(uIn.numOfCtScen, numOfShiftScen, numOfRangeShiftScen)
+%                for i = 1:uIn.numOfCtScen
+%                    scenMask(i,i,i) = true;
+%                end
+%            else
+%                uIn.shiftCombType = 'individual';
+%                matRad_dispToConsole('Isoshift in every direction has to be the same in order to perform direct combination. Performing individually now. Press enter to confirm you noticed.',[],'warning');
+%                pause();
+%                % call the function itself
+%                %multScen = matRad_setMultScen(uIn);
+%            end
+   end
 end
 
 % create linearalized mask where the i row points to the indexes of scenMask
