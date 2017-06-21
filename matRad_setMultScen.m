@@ -27,24 +27,29 @@ function multScen = matRad_setMultScen(uIn)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   
-  
+if uIn.includeNomScen
+   nomScen = 0;
+else
+   nomScen = [];
+end
+
 %% set isoCenter shifts
 switch uIn.shiftGenType
     case 'equidistant'
         switch uIn.shiftGen1DIsotropy
             case '+-'
                 % create grid vectors
-                isoShiftVec{1} = [0 linspace(-uIn.shiftSize(1), uIn.shiftSize(1), uIn.numOfShiftScen(1))];
-                isoShiftVec{2} = [0 linspace(-uIn.shiftSize(2), uIn.shiftSize(2), uIn.numOfShiftScen(2))];
-                isoShiftVec{3} = [0 linspace(-uIn.shiftSize(3), uIn.shiftSize(3), uIn.numOfShiftScen(3))];
+                isoShiftVec{1} = [nomScen linspace(-uIn.shiftSize(1), uIn.shiftSize(1), uIn.numOfShiftScen(1))];
+                isoShiftVec{2} = [nomScen linspace(-uIn.shiftSize(2), uIn.shiftSize(2), uIn.numOfShiftScen(2))];
+                isoShiftVec{3} = [nomScen linspace(-uIn.shiftSize(3), uIn.shiftSize(3), uIn.numOfShiftScen(3))];
             case '+'
-                isoShiftVec{1} = [0 linspace(0, uIn.shiftSize(1), uIn.numOfShiftScen(1))];
-                isoShiftVec{2} = [0 linspace(0, uIn.shiftSize(2), uIn.numOfShiftScen(2))];
-                isoShiftVec{3} = [0 linspace(0, uIn.shiftSize(3), uIn.numOfShiftScen(3))];        
+                isoShiftVec{1} = [nomScen linspace(0, uIn.shiftSize(1), uIn.numOfShiftScen(1))];
+                isoShiftVec{2} = [nomScen linspace(0, uIn.shiftSize(2), uIn.numOfShiftScen(2))];
+                isoShiftVec{3} = [nomScen linspace(0, uIn.shiftSize(3), uIn.numOfShiftScen(3))];        
             case '-'
-                isoShiftVec{1} = [0 linspace(-uIn.shiftSize(1), 0, uIn.numOfShiftScen(1))];
-                isoShiftVec{2} = [0 linspace(-uIn.shiftSize(2), 0, uIn.numOfShiftScen(2))];
-                isoShiftVec{3} = [0 linspace(-uIn.shiftSize(3), 0, uIn.numOfShiftScen(3))];
+                isoShiftVec{1} = [nomScen linspace(-uIn.shiftSize(1), 0, uIn.numOfShiftScen(1))];
+                isoShiftVec{2} = [nomScen linspace(-uIn.shiftSize(2), 0, uIn.numOfShiftScen(2))];
+                isoShiftVec{3} = [nomScen linspace(-uIn.shiftSize(3), 0, uIn.numOfShiftScen(3))];
         end
     case 'sampled'
         fprintf('sampled shifts only +- \n')
@@ -53,11 +58,11 @@ switch uIn.shiftGenType
         % mean (parameter)
         meanP = zeros(1,3);
         rng('shuffle');
-        isoShiftVec{1} = [0 std(1) .* randn(1, uIn.numOfShiftScen(1)) + meanP(1)];
+        isoShiftVec{1} = [nomScen std(1) .* randn(1, uIn.numOfShiftScen(1)) + meanP(1)];
         rng('shuffle');
-        isoShiftVec{2} = [0 std(2) .* randn(1, uIn.numOfShiftScen(2)) + meanP(2)];
+        isoShiftVec{2} = [nomScen std(2) .* randn(1, uIn.numOfShiftScen(2)) + meanP(2)];
         rng('shuffle');
-        isoShiftVec{3} = [0 std(3) .* randn(1, uIn.numOfShiftScen(3)) + meanP(3)];     
+        isoShiftVec{3} = [nomScen std(3) .* randn(1, uIn.numOfShiftScen(3)) + meanP(3)];     
     otherwise
         matRad_dispToConsole('did not expect that','error');
 end
@@ -75,9 +80,9 @@ switch uIn.shiftCombType
         scenMaskIso(:,1,1) = true; % x shifts
         scenMaskIso(1,:,1) = true; % y shifts
         scenMaskIso(1,1,:) = true; % z shifts
-    case 'allCombined'
+    case 'allcombined'
         scenMaskIso(:,:,:) = true;
-    case 'direct'
+    case 'combined'
         % determine that matrix is cubic
         if isequal(numIso(1), numIso(2), numIso(3))
             for i = 1:numIso(1)
@@ -102,37 +107,44 @@ end
 
 % create isoShift vectore based on the matrix and matching
 isoShift = zeros(size(matchMaskIso,1),3);
-for i = 1:size(matchMaskIso,1)
-    matchPos = num2cell(matchMaskIso{i,2});
-    if ~isequal([isoShiftVec{1}(matchPos{1}) isoShiftVec{2}(matchPos{2}) isoShiftVec{3}(matchPos{3})],[0 0 0]) || i == 1
-    isoShift(i,:) = [isoShiftVec{1}(matchPos{1}) isoShiftVec{2}(matchPos{2}) isoShiftVec{3}(matchPos{3})] * ...
-        scenMaskIso(matchPos{:});
-    end
+if numel(isoShiftVec{1}) + numel(isoShiftVec{2}) + numel(isoShiftVec{3}) > 0
+   
+   for i = 1:size(matchMaskIso,1)
+       matchPos = num2cell(matchMaskIso{i,2});
+       
+       if ~isequal([isoShiftVec{1}(matchPos{1}) isoShiftVec{2}(matchPos{2}) isoShiftVec{3}(matchPos{3})],[0 0 0]) || i == 1
+             isoShift(i,:) = [isoShiftVec{1}(matchPos{1}) isoShiftVec{2}(matchPos{2}) isoShiftVec{3}(matchPos{3})] * ...
+                             scenMaskIso(matchPos{:});
+       end
+   end
 end
 % NOTE: if you delete the zero rows matching of isoMask is lost
 % delete all zero rows
 isoShift( ~any(isoShift,2), : ) = [];
 % attach zero row in the first line
-isoShift       = [0 0 0; isoShift];
+if uIn.includeNomScen || isempty(isoShift)
+   isoShift       = [0 0 0; isoShift];
+end
+
 numOfShiftScen = size(isoShift,1);
 
 
 %% range
 switch uIn.rangeGenType
     case 'equidistant'
-        relRangeShift = [0 linspace(-uIn.maxRelRangeShift, uIn.maxRelRangeShift, uIn.numOfRangeShiftScen)];
-        absRangeShift = [0 linspace(-uIn.maxAbsRangeShift, uIn.maxAbsRangeShift, uIn.numOfRangeShiftScen)];
+        relRangeShift = [nomScen linspace(-uIn.maxRelRangeShift, uIn.maxRelRangeShift, uIn.numOfRangeShiftScen)];
+        absRangeShift = [nomScen linspace(-uIn.maxAbsRangeShift, uIn.maxAbsRangeShift, uIn.numOfRangeShiftScen)];
     case 'sampled'
         % relRange
         std = uIn.maxRelRangeShift;
         meanP = 0;
         rng('shuffle');
-        relRangeShift = [0 std .* randn(1, uIn.numOfRangeShiftScen) + meanP];
+        relRangeShift = [nomScen std .* randn(1, uIn.numOfRangeShiftScen) + meanP];
         % absRange
         std = uIn.maxAbsRangeShift;
         meanP = 0;
         rng('shuffle');
-        absRangeShift = [0 std .* randn(1, uIn.numOfRangeShiftScen) + meanP];
+        absRangeShift = [nomScen std .* randn(1, uIn.numOfRangeShiftScen) + meanP];
     otherwise
         matRad_dispToConsole('Not a valid type of generating data.','error');
 end
@@ -145,16 +157,22 @@ else
     numOfRangeShiftScen = numOfRelRangeShift;
 end
 
+relRangeShift        = (relRangeShift./100);
 
 % needed for calcScenProb function
-scenForProb          = isoShift;
-scenForProb(:,end+2) = 0;
+if uIn.includeNomScen
+   scenForProb          = isoShift;
+   scenForProb(:,end+2) = 0;
+   startIx = 2;
+else
+   startIx = 1;
+end
 
 % check if absolute and range error scenarios should be combined
 switch uIn.rangeCombType    
    case 'individual'
      
-      for i = 2:1:length(relRangeShift)
+      for i = startIx:1:length(relRangeShift)
          scenForProb(numOfShiftScen+ ((i-1)*2) - 1,4) = absRangeShift(i);
          scenForProb(numOfShiftScen+ ((i-1)*2) - 0,5) = relRangeShift(i);
       end
@@ -162,9 +180,8 @@ switch uIn.rangeCombType
       absRangeShift       = [absRangeShift zeros(1,length(relRangeShift(relRangeShift~=0)))];
       relRangeShift       = [zeros(1,length(relRangeShift)) relRangeShift(relRangeShift~=0)] ;
       
-      
    case 'combined'
-      for i = 2:1:length(relRangeShift)
+      for i = startIx:1:length(relRangeShift)
          scenForProb(numOfShiftScen+i-1,4) = absRangeShift(i);
          scenForProb(numOfShiftScen+i-1,5) = relRangeShift(i);
       end
@@ -173,7 +190,13 @@ switch uIn.rangeCombType
       
 end
 
-relRangeShift        = (relRangeShift./100);
+% sanity check
+UniqueRowScenForProb = unique(scenForProb,'rows');
+
+if size(UniqueRowScenForProb,1) ~= size(scenForProb,1)
+     matRad_dispToConsole('Some scenarios seem to be defined multiple times',[],'warning');
+end
+
 multScen.scenForProb = scenForProb;
 
 %% set masks
@@ -186,21 +209,21 @@ switch uIn.scenCombType
         scenMask(:,1,1) = true; % ct scenarios
         scenMask(1,:,1) = true; % iso shift scenarios
         scenMask(1,1,:) = true; % range shift scenarios
-    case 'allComb'
+    case 'allcombined'
         scenMask(:,:,:) = true;
-    case 'direct'
+    case 'combined'
         % determine that matrix is cubic
-        if isequal(numOfCtScen, numOfShiftScen, numOfRangeShiftScen)
+        if isequal(uIn.numOfCtScen, numOfShiftScen, numOfRangeShiftScen)
             for i = 1:numOfCtScen
                 scenMask(i,i,i) = true;
             end
         else
             uIn.shiftCombType = 'individual';
-            warning('Isoshift in every direction has to be the same in order to perform direct combination. Performing individually now. Press enter to confirm you noticed.');
+            matRad_dispToConsole('Isoshift in every direction has to be the same in order to perform direct combination. Performing individually now. Press enter to confirm you noticed.',[],'warning');
             pause();
             
             % call the function itself
-            [multScen] = matRad_setUnc(uIn);
+            %multScen = matRad_setMultScen(uIn);
         end
 end
 

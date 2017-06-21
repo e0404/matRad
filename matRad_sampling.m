@@ -1,4 +1,4 @@
-function [realizations,stats,meanCube,stdCube]  = matRad_randomSampling(ct,stf,cst,pln,w,param)
+function [mRealizations,stats,resultCubes]  = matRad_sampling(ct,stf,cst,pln,w,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_randomSampling enables sampling multiple treatment scenarios
 % 
@@ -16,7 +16,7 @@ function [realizations,stats,meanCube,stdCube]  = matRad_randomSampling(ct,stf,c
 %               e.g. param.logLevel
 %
 % output
-%   realizations:  matrix depticting the sampling results in V x pln.numSamples
+%   mRealizations:  matrix depticting the sampling results in V x pln.numSamples
 %   stats          cell array denoting dose statistics
 %   meanCube       expected dose distribution
 %   stdCube        standard deviation cube
@@ -36,6 +36,8 @@ function [realizations,stats,meanCube,stdCube]  = matRad_randomSampling(ct,stf,c
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+pln.sampling = true;
+
 if exist('param','var')
     if ~isfield(param,'logLevel')
        param.logLevel = 1;
@@ -52,22 +54,20 @@ else
 end
 
 
-if ~isfield(pln,'numSampling')
-   pln.numSampling  = 20; % default number of samples
-   matRad_dispToConsole(['Using default number of samples: ' num2str(pln.numSampling) '\n'],param,'info')
+if ~isfield(pln,'numOfSamples')
+   pln.numOfSamples  = 20; % default number of samples
 end
+matRad_dispToConsole(['Using samples: ' num2str(pln.numOfSamples) ' in total \n'],param,'info')
 
-meanCube    = zeros(ct.cubeDim);
-stdCube     = zeros(ct.cubeDim);
-stats       = cell(pln.numSampling,1);
+stats       = cell(pln.numOfSamples,1);
 
 % define voxels for sampling
 V = [cst{:,4}];
 param.subIx = unique(vertcat(V{:}));
 
 % define variable for storing scenario doses
-realizations = single(zeros(numel(param.subIx),pln.numSampling,1));
-StorageInfo  = whos('realizations');
+mRealizations = single(zeros(numel(param.subIx),pln.numOfSamples,1));
+StorageInfo  = whos('mRealizations');
 matRad_dispToConsole(['matRad: Realizations variable will need: ' num2str(StorageInfo.bytes/1e9) ' GB \n'],param,'info');
 
 
@@ -91,7 +91,7 @@ if FlagParallToolBoxLicensed
    
    if exist('parfor_progress', 'file') == 2
       FlagParforProgressDisp = true;
-      parfor_progress(pln.numSampling);  % http://de.mathworks.com/matlabcentral/fileexchange/32101-progress-monitor--progress-bar--that-works-with-parfor
+      parfor_progress(pln.numOfSamples);  % http://de.mathworks.com/matlabcentral/fileexchange/32101-progress-monitor--progress-bar--that-works-with-parfor
    else
       matRad_dispToConsole('matRad: Consider downloading parfor_progress function from the matlab central fileexchange to get feedback from parfor loop.',param,'warning');
       FlagParforProgressDisp = false;
@@ -99,13 +99,25 @@ if FlagParallToolBoxLicensed
   
    plnTot               = matRad_setPlanUncertainties(ct,pln);
    
-   parfor i = 1:pln.numSampling
-    
-          % ToDo pick the i-th scenario and save into plnSamp
+   for i = 1:pln.numOfSamples
+          
           plnSamp               = plnTot;
+          % pick the i-th scenario and save into plnSamp
+          plnSamp.multScen.scenForProb     = plnTot.multScen.scenForProb(i,:);
+          plnSamp.multScen.relRangeShift   = plnTot.multScen.relRangeShift(i);
+          plnSamp.multScen.absRangeShift   = plnTot.multScen.absRangeShift(i);
+          plnSamp.multScen.numOfShiftScen  = 1;
+          plnSamp.multScen.numOfRangeShift = 1;
+          plnSamp.multScen.numOfCtScen     = 1;
+          plnSamp.multScen.scenMask        = 1;
+          plnSamp.multScen.linearMask      = 1;
+          plnSamp.multScen.scenProb        = 1;
+          
+          
+          % forward dose calculation
           resultSamp            = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w,param);
           sampledDose           = resultSamp.(pln.bioParam.quantityOpt)(param.subIx);
-          realizations(:,i)     = single(reshape(sampledDose,[],1));
+          mRealizations(:,i)     = single(reshape(sampledDose,[],1));
           resultQI              = matRad_calcQualityIndicators(resultSamp,cst,plnSamp,param);
           stats{i,1}            = resultQI.QI;
           
@@ -121,32 +133,47 @@ if FlagParallToolBoxLicensed
 else
 %% perform seriel sampling   
     h = waitbar(0,'Sampling Scenario ...');
-    stats = cell(pln.numSampling,1);
+    stats = cell(pln.numOfSamples,1);
     
     plnTot               = matRad_setPlanUncertainties(ct,pln);
     
-    for i = 1:pln.numSampling
+    for i = 1:pln.numOfSamples
        
-           % ToDo pick the i-th scenario and save into plnSamp
-          plnSamp               = plnTot; 
+          plnSamp               = plnTot;
+          % pick the i-th scenario and save into plnSamp
+          plnSamp.multScen.scenForProb     = plnTot.multScen.scenForProb(i,:);
+          plnSamp.multScen.relRangeShift   = plnTot.multScen.relRangeShift(i);
+          plnSamp.multScen.absRangeShift   = plnTot.multScen.absRangeShift(i);
+          plnSamp.multScen.numOfShiftScen  = 1;
+          plnSamp.multScen.numOfRangeShift = 1;
+          plnSamp.multScen.numOfCtScen     = 1;
+          plnSamp.multScen.scenMask        = 1;
+          plnSamp.multScen.linearMask      = 1;
+          plnSamp.multScen.scenProb        = 1;
+          
           resultSamp            = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w,param);
           sampledDose           = resultSamp.(pln.bioParam.quantityOpt)(param.subIx);
-          realizations(:,i)     = single(reshape(sampledDose,[],1));
+          mRealizations(:,i)     = single(reshape(sampledDose,[],1));
           resultQI              = matRad_calcQualityIndicators(resultSamp,cst,plnSamp,param);
           stats{i,1}            = resultQI.QI;
           
-          waitbar(i/pln.numSampling);
+          waitbar(i/pln.numOfSamples);
 
     end
     
     close(h)
 end
 
-meanCube              = zeros(ct.cubeDim);
-stdCube               = zeros(ct.cubeDim);
-meanCube(param.subIx) = mean(realizations,2);
-stdCube(param.subIx)  = std(realizations,1,2);
+resultCubes.meanCube              = zeros(ct.cubeDim);
+resultCubes.stdCube               = zeros(ct.cubeDim);
 
+resultCubes.meanCubeWeighted      = zeros(ct.cubeDim);
+resultCubes.stdCubeWeighted       = zeros(ct.cubeDim);
+
+resultCubes.meanCube(param.subIx)         = mean(mRealizations,2);   
+resultCubes.stdCube(param.subIx)          = std(mRealizations,1,2);  
+resultCubes.meanCubeWeighted(param.subIx) = (sum(mRealizations * diag(plnSamp.multScen.scenProb),2) )/pln.numOfSamples;
+resultCubes.stdCube(param.subIx)          = std(mRealizations,plnSamp.multScen.scenProb,2); 
 
 end
 
