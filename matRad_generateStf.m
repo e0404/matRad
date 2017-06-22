@@ -440,12 +440,10 @@ for i = 1:length(pln.gantryAngles)
     % include rangeshifter data if not yet available 
     if strcmp(pln.radiationMode, 'protons') || strcmp(pln.radiationMode, 'carbon')
         for j = 1:stf(i).numOfRays
-            if ~isfield(stf(i).ray(j), 'rangeShifter') || isempty(stf(i).ray(j).rangeShifter)
-                for k = 1:numel(stf(i).ray(j).energy)
-                    stf(i).ray(j).rangeShifter(k).ID = 0;
-                    stf(i).ray(j).rangeShifter(k).eqThickness = 0;
-                    stf(i).ray(j).rangeShifter(k).sourceRashiDistance = 0;
-                end
+            for k = 1:numel(stf(i).ray(j).energy)
+                stf(i).ray(j).rangeShifter(k).ID = 0;
+                stf(i).ray(j).rangeShifter(k).eqThickness = 0;
+                stf(i).ray(j).rangeShifter(k).sourceRashiDistance = 0;
             end
         end
     end

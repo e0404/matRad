@@ -52,17 +52,7 @@ conversionFactor = 1.6021766208e-02;
  % calculate initial focus sigma
 SigmaIni = matRad_interp1(baseData.initFocus.dist(focusIx,:)',baseData.initFocus.sigma(focusIx,:)',SSD);
 
-
-if exist('rangeShifter', 'var') && exist('radiationMode', 'var') &&  rangeShifter.eqThickness ~= 0
-  if isequal(radiationMode, 'protons')
-    sigmaRashi = matRad_sigmaRashi(baseData, rangeShifter.eqThickness, rashiSurfaceDist);
-  else % sigmaRashi = 0 for carbons
-    sigmaRashi = 0;
-  end
-  
-  else
-    sigmaRashi = 0;
-end
+sigmaRashi = matRad_sigmaRashi(baseData, radiationMode, rangeShifter.eqThickness, rashiSurfaceDist);
 
 if ~isfield(baseData,'sigma')
     

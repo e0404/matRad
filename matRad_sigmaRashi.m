@@ -1,4 +1,4 @@
-function sigmaRashi = matRad_sigmaRashi(baseData, rashiEqThickness, rashiDist)
+function sigmaRashi = matRad_sigmaRashi(baseData, radiationMode, rashiEqThickness, rashiDist)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % additional broadening calculation due to range shifter not provided
 %
@@ -17,7 +17,11 @@ function sigmaRashi = matRad_sigmaRashi(baseData, rashiEqThickness, rashiDist)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+if rashiEqThickness ~= 0 && strcmp(radiationMode, 'protons')
+  error('additional broadening calculation due to range shifter not provided');
+end
+
 sigmaRashi = 0;
-error('additional broadening calculation due to range shifter not provided');
 
 end % eof
