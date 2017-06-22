@@ -226,10 +226,15 @@ switch uIn.scenCombType
        end
 end
 
+% if no shift scenarios are defined isoShift needs to be set to [0 0 0] to ensure a proper dose calc
+if isempty(isoShift)
+   isoShift = [0 0 0];
+end
+
 % sanity check
 UniqueRowScenForProb = unique(scenForProb,'rows');
 
-if size(UniqueRowScenForProb,1) ~= size(scenForProb,1)
+if size(UniqueRowScenForProb,1) ~= size(scenForProb,1) && size(UniqueRowScenForProb,1)>1
      matRad_dispToConsole('Some scenarios seem to be defined multiple times',[],'warning');
 end
 

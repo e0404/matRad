@@ -36,7 +36,10 @@ function [mRealizations,stats,resultCubes]  = matRad_sampling(ct,stf,cst,pln,w,p
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pln.sampling = true;
+pln.sampling      = true;
+pln.robOpt        = false;
+pln.numOfSamples  = 6;
+
 
 if exist('param','var')
     if ~isfield(param,'logLevel')
@@ -174,6 +177,13 @@ resultCubes.meanCube(param.subIx)         = mean(mRealizations,2);
 resultCubes.stdCube(param.subIx)          = std(mRealizations,1,2);  
 resultCubes.meanCubeWeighted(param.subIx) = (sum(mRealizations * diag(plnSamp.multScen.scenProb),2) )/pln.numOfSamples;
 resultCubes.stdCube(param.subIx)          = std(mRealizations,plnSamp.multScen.scenProb,2); 
+
+%% add nominal scenario
+resultGUInominal          = matRad_calcDoseDirect(ct,stf,pln,cst,w,param);
+resultCubes.resultNominal = resultGUInominal.(pln.bioParam.quantityOpt);      
+        
+%% add subindices 
+resultCubes.subIx         = param.param.subIx;
 
 end
 

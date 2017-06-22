@@ -29,8 +29,8 @@ load TG119.mat
 
 % meta information for treatment plan
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0 90]; % [°]
-pln.couchAngles     = [0 0]; % [°]
+pln.gantryAngles    = [0:72:359]; % [°]
+pln.couchAngles     = [0 0 0 0 0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
@@ -90,8 +90,6 @@ matRadGUI
 matRad_calcDVH(resultGUI,cst,pln)
 
 % perform sampling
- pln.numOfSamples                 = 10;
- pln.robOpt                       = false;
 [mRealizations,stats,resultCube]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w);
 
 

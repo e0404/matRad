@@ -58,7 +58,7 @@ if ~pln.robOpt && ~pln.sampling
    multScen.shiftGenType         = 'equidistant';   % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
    multScen.shiftCombType        = 'individual';    % individual:  no combination of shift scenarios;       number of shift scenarios is sum(multScen.numOfShiftScen) 
                                                     % combined:    combine shift scenarios;                 number of shift scenarios is multScen.numOfShiftScen(1)
-                                                    % allcombined: create every possible shift combination; number of shift scenarios is 8,27,64 ... 
+                                                    % permuted:    create every possible shift combination; number of shift scenarios is 8,27,64 ... 
    multScen.shiftGen1DIsotropy   = '+-';            % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
 
    % b) define range error scenarios                                                
@@ -71,7 +71,7 @@ if ~pln.robOpt && ~pln.sampling
    multScen.rangeGenType         = 'equidistant';   % equidistant: equidistant range shifts, sampled: sample range shifts from normal distribution
    multScen.scenCombType         = 'individual';    % individual:  no combination of range and setup scenarios, 
                                                     % combined:    combine range and setup scenarios if their scenario number is consistent 
-                                                    % allcombined: create every possible combination of range and setup scenarios
+                                                    % permuted:    create every possible combination of range and setup scenarios
    multScen.includeNomScen       = true;
    
 % definition of scenarios for robust optimization   
@@ -83,7 +83,7 @@ elseif pln.robOpt && ~pln.sampling
    multScen.shiftGenType         = 'equidistant';   % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
    multScen.shiftCombType        = 'individual';    % individual:  no combination of shift scenarios;       number of shift scenarios is sum(multScen.numOfShiftScen) 
                                                     % combined:    combine shift scenarios;                 number of shift scenarios is multScen.numOfShiftScen(1)
-                                                    % allcombined: create every possible shift combination; number of shift scenarios is 8,27,64 ... 
+                                                    % permuted:    create every possible shift combination; number of shift scenarios is 8,27,64 ... 
    multScen.shiftGen1DIsotropy   = '+-';            % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
 
    % b) define range error scenarios                                                
@@ -108,7 +108,7 @@ elseif ~pln.robOpt && pln.sampling
    multScen.shiftGenType         = 'equidistant';    % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
    multScen.shiftCombType        = 'individual';     % individual:  no combination of shift scenarios;       number of shift scenarios is sum(multScen.numOfShiftScen) 
                                                      % combined:    combine shift scenarios;                 number of shift scenarios is multScen.numOfShiftScen(1)
-                                                     % allcombined: create every possible shift combination; number of shift scenarios is 8,27,64 ... 
+                                                     % permuted:    create every possible shift combination; number of shift scenarios is 8,27,64 ... 
    multScen.shiftGen1DIsotropy   = '+-';             % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
 
    % b) define range error scenarios                                                
@@ -130,7 +130,7 @@ elseif ~pln.robOpt && pln.sampling
 %    multScen.shiftGenType         = 'sampled';        % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
 %    multScen.shiftCombType        = 'combined';       % individual:  no combination of shift scenarios;       number of shift scenarios is sum(multScen.numOfShiftScen) 
 %                                                      % combined:    combine shift scenarios;                 number of shift scenarios is multScen.numOfShiftScen(1)
-%                                                      % allcombined: create every possible shift combination; number of shift scenarios is 8,27,64 ... 
+%                                                      % permuted:    create every possible shift combination; number of shift scenarios is 8,27,64 ... 
 %    multScen.shiftGen1DIsotropy   = '+-';             % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
 % 
 %    % b) define range error scenarios                                                
@@ -151,7 +151,6 @@ else
    matRad_dispToConsole('matRad_setPlanUncertainties: Invalid combination',param,'error');
  
 end
-
 
 %% create multiScen struct
 pln.multScen           = matRad_setMultScen(multScen); % calcProb missing.
