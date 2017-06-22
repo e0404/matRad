@@ -444,6 +444,9 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                       
                        for CtScen = 1:pln.multScen.numOfCtScen
                             for RangeShiftScen = 1:pln.multScen.numOfRangeShift
+                                if ~any(currIx)
+                                    continue;
+                                end
                                 if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
                   
                                       if param.calcDoseDirect
