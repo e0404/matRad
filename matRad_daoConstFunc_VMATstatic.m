@@ -1,7 +1,7 @@
-function c = matRad_daoConstFunc(apertureInfoVec,apertureInfo,dij,cst,options,daoVec2ApertureInfo)
+function c = matRad_daoConstFunc_VMATstatic(apertureInfoVec,apertureInfo,dij,cst,options,daoVec2ApertureInfo)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: constraint function for direct aperture optimization
-% 
+%
 % call
 %   c = matRad_daoObjFunc(apertueInfoVec,dij,cst)
 %
@@ -23,13 +23,13 @@ function c = matRad_daoConstFunc(apertureInfoVec,apertureInfo,dij,cst,options,da
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% Copyright 2015 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -47,43 +47,40 @@ c_dao        = rightLeafPos - leftLeafPos;
 % bixel based objective function calculation
 c_dos = matRad_constFuncWrapper(apertureInfo.bixelWeights,dij,cst,options);
 
-if ~apertureInfo.VMAT
-    % concatenate
-    c = [c_dao; c_dos];
-else
-    
-    % values of time differences of optimized gantry angles
-    optInd = [apertureInfo.beam.optimizeBeam];
-    timeOptBorderAngles = apertureInfoVec((1+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):end);
-    
-    i = repelem(1:(apertureInfo.totalNumOfShapes-1),2);
-    j = repelem(1:(apertureInfo.totalNumOfShapes),2);
-    j(1) = [];
-    j(end) = [];
-    
-    timeFac = [apertureInfo.beam(optInd).timeFac]';
-    timeFac(timeFac == 0) = [];
-    
-    timeFacMatrix = sparse(i,j,timeFac,(apertureInfo.totalNumOfShapes-1),apertureInfo.totalNumOfShapes);
-    timeBNOptAngles = timeFacMatrix*timeOptBorderAngles;
-    
-    % values of average leaf speeds of optimized gantry angles
-    c_lfspd = reshape([abs(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)) ...
-        abs(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2))]./ ...
-        repmat(timeBNOptAngles',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles),1);
-    
-    
-    % values of doserate (MU/sec) between optimized gantry angles
-    weights = apertureInfoVec(1:apertureInfo.totalNumOfShapes);
-    timeFacCurr = [apertureInfo.beam(optInd).timeFacCurr]';
-    timeOptDoseBorderAngles = timeOptBorderAngles.*timeFacCurr;
-    c_dosrt = apertureInfo.weightToMU.*weights./timeOptDoseBorderAngles;
-    
-    % concatenate
-    c = [c_dao; c_lfspd; c_dosrt; c_dos];
-    
-    
-    %{
+
+
+% values of time differences of optimized gantry angles
+optInd = [apertureInfo.beam.optimizeBeam];
+timeOptBorderAngles = apertureInfoVec((1+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):end);
+
+i = repelem(1:(apertureInfo.totalNumOfShapes-1),2);
+j = repelem(1:(apertureInfo.totalNumOfShapes),2);
+j(1) = [];
+j(end) = [];
+
+timeFac = [apertureInfo.beam(optInd).timeFac]';
+timeFac(timeFac == 0) = [];
+
+timeFacMatrix = sparse(i,j,timeFac,(apertureInfo.totalNumOfShapes-1),apertureInfo.totalNumOfShapes);
+timeBNOptAngles = timeFacMatrix*timeOptBorderAngles;
+
+% values of average leaf speeds of optimized gantry angles
+c_lfspd = reshape([abs(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)) ...
+    abs(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2))]./ ...
+    repmat(timeBNOptAngles',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles),1);
+
+
+% values of doserate (MU/sec) between optimized gantry angles
+weights = apertureInfoVec(1:apertureInfo.totalNumOfShapes);
+timeFacCurr = [apertureInfo.beam(optInd).timeFacCurr]';
+timeOptDoseBorderAngles = timeOptBorderAngles.*timeFacCurr;
+c_dosrt = apertureInfo.weightToMU.*weights./timeOptDoseBorderAngles;
+
+% concatenate
+c = [c_dao; c_lfspd; c_dosrt; c_dos];
+
+
+%{
     %extract initial and final leaf positions from apertureInfo
     IandFleftLeafPos  = apertureInfo.IandFapertureVector([1:apertureInfo.IandFtotalNumOfLeafPairs]+apertureInfo.totalNumOfShapes);
     IandFrightLeafPos = apertureInfo.IandFapertureVector(1+apertureInfo.IandFtotalNumOfLeafPairs+apertureInfo.totalNumOfShapes:apertureInfo.totalNumOfShapes+apertureInfo.IandFtotalNumOfLeafPairs*2);
@@ -126,6 +123,5 @@ else
     
     % concatenate
     c = [c_dao; c_lfspd; c_dosrt; c_dos];
-    %}
-end
+%}
 

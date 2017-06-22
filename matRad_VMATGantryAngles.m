@@ -36,6 +36,7 @@ function pln = matRad_VMATGantryAngles(pln,way)
 if strcmp(way,'new')
     
     pln.gantryAngleSpacing = pln.minGantryAngleRes; %ideally should be spaced every 2 or 4 degrees; gantry spacing that dij is performed
+    
     pln.maxNumApertures = pln.maxApertureAngleSpread/pln.gantryAngleSpacing;
     
     pln.gantryToOptAngleSpacingFactor = floor(pln.maxNumApertures/pln.numApertures);

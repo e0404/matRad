@@ -139,23 +139,18 @@ options.numOfScenarios  = dij.numOfScenarios;
 funcs.objective         = @(x) matRad_daoObjFunc(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
 if pln.VMAT
     if pln.dynamic
-        funcs.gradient          = @(x) matRad_daoGradFunc_VMATdynamic(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
-        funcs.constraints       = @(x) matRad_daoConstFunc_VMATdynamic(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
-        funcs.jacobian          = @(x) matRad_daoJacobFunc_VMATdynamic(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
-        funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct_VMATdynamic(apertureInfo,dij,cst_Over);
+        funcs.gradient          = @(x) matRad_daoGradFunc(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
     else
-        funcs.gradient          = @(x) matRad_daoGradFunc_VMATstatic(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
-        funcs.constraints       = @(x) matRad_daoConstFunc_VMATstatic(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
-        funcs.jacobian          = @(x) matRad_daoJacobFunc_VMATstatic(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
-        funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct_VMATstatic(apertureInfo,dij,cst_Over);
+        
     end
 else
-    funcs.gradient          = @(x) matRad_daoGradFunc_IMRT(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
-    funcs.constraints       = @(x) matRad_daoConstFunc_IMRT(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
-    funcs.jacobian          = @(x) matRad_daoJacobFunc_IMRT(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
-    funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct_IMRT(apertureInfo,dij,cst_Over);
+    
 end
+funcs.gradient          = @(x) matRad_daoGradFunc(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
 funcs.iterfunc          = @(iter,objective,parameter) matRad_IpoptIterFunc(iter,objective,parameter,options.ipopt.max_iter);
+funcs.constraints       = @(x) matRad_daoConstFunc(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
+funcs.jacobian          = @(x) matRad_daoJacobFunc(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
+funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct(apertureInfo,dij,cst_Over);
 
 % Run IPOPT.
 [optApertureInfoVec, info] = ipopt(apertureInfo.apertureVector,funcs,options);
@@ -181,7 +176,7 @@ end
 resultGUI.apertureInfo = daoVec2ApertureInfo(apertureInfo,optApertureInfoVec);
 
 % update apertureInfoStruct with the maximum leaf speeds per segment
-if pln.VMAT
+if isfield(pln,'VMAT') && pln.VMAT
     resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
     
     

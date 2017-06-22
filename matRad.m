@@ -21,9 +21,9 @@ clc
 
 % load patient data, i.e. ct, voi, cst
 
-load HEAD_AND_NECK
+%load HEAD_AND_NECK
 %load TG119.mat
-%load PROSTATE.mat
+load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
 
@@ -51,6 +51,7 @@ pln.machine         = 'Generic';
 pln.runSequencing   = true;
 pln.runDAO          = true;
 pln.VMAT            = true;
+pln.dynamic         = false;
 
 pln.numApertures = 7; %max val is pln.maxApertureAngleSpread/pln.minGantryAngleRes
 pln.numLevels = 7;
@@ -71,6 +72,12 @@ pln.maxLeafTravelPerDeg = pln.leafSpeedCst(2)/pln.defaultGantryRot;
 
 pln.halfFluOpt = false;
 pln.halfFluOptMargin = 10; % mm
+
+recalc.doRecalc = 0;
+recalc.dynamic = 0;
+recalc.interpNew = 0;
+recalc.pln = pln;
+recalc.pln.minGantryAngleRes = 1;
 
 %pln.halfFluOpt = false;
 
@@ -115,6 +122,8 @@ end
 if strcmp(pln.radiationMode,'photons') && pln.runDAO
    resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln,1,1);
    %matRad_visApertureInfo(resultGUI.apertureInfo);
+   
+   recalc = matRad_doseRecalc(dij,cst,pln,recalc,ct,resultGUI.apertureInfo);
 end
 
 %% start gui for visualization of result

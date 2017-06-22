@@ -1,4 +1,4 @@
-function f = matRad_daoObjFunc(apertureInfoVect,apertureInfo,dij,cst,options)
+function f = matRad_daoObjFunc(apertureInfoVect,apertureInfo,dij,cst,options,daoVec2ApertureInfo)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: objective function for direct aperture optimization
 %
@@ -36,7 +36,7 @@ function f = matRad_daoObjFunc(apertureInfoVect,apertureInfo,dij,cst,options)
 % update apertureInfo, bixel weight vector an mapping of leafes to bixels
 
 %modified to include interpolated gantry angles (for VMAT)
-apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect);
+apertureInfo = daoVec2ApertureInfo(apertureInfo,apertureInfoVect);
 
 % bixel based objective function calculation
 f = matRad_objFuncWrapper(apertureInfo.bixelWeights,dij,cst,options);

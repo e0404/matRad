@@ -1,4 +1,4 @@
-function [apertureInfoVec, IandFapertureInfoVec, mappingMx, limMx] = matRad_daoApertureInfo2Vec(apertureInfo)
+function [apertureInfoVec, mappingMx, limMx] = matRad_daoApertureInfo2Vec(apertureInfo)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to generate a vector respresentation of the aperture
 % weights and shapes and (optional) some meta information needed during
@@ -43,23 +43,23 @@ function [apertureInfoVec, IandFapertureInfoVec, mappingMx, limMx] = matRad_daoA
 
 if apertureInfo.VMAT
     apertureInfoVec = NaN * ones(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2,1); %Extra set of (apertureInfo.totalNumOfShapes) number of elements, allowing arc sector times to be optimized
-    IandFapertureInfoVec = NaN * ones(apertureInfo.totalNumOfShapes*2+apertureInfo.IandFtotalNumOfLeafPairs*2,1);
+    %IandFapertureInfoVec = NaN * ones(apertureInfo.totalNumOfShapes*2+apertureInfo.IandFtotalNumOfLeafPairs*2,1);
 else
     apertureInfoVec = NaN * ones(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,1);
-    IandFapertureInfoVec = NaN * ones(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2,1);
+    %IandFapertureInfoVec = NaN * ones(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2,1);
 end
 
 offset = 0;
-IandFoffset = 0;
+%IandFoffset = 0;
 
 %% 1. aperture weights
 for i = 1:size(apertureInfo.beam,2)
     for j = 1:apertureInfo.beam(i).numOfShapes
         apertureInfoVec(offset+j) = apertureInfo.beam(i).shape(j).weight;   %In VMAT, this weight is "spread" over unoptimized beams (assume constant dose rate over sector)  
-        IandFapertureInfoVec(offset+j) = apertureInfo.beam(i).shape(j).weight;
+        %IandFapertureInfoVec(offset+j) = apertureInfo.beam(i).shape(j).weight;
     end
     offset = offset + apertureInfo.beam(i).numOfShapes;
-    IandFoffset = IandFoffset + apertureInfo.beam(i).numOfShapes;
+    %IandFoffset = IandFoffset + apertureInfo.beam(i).numOfShapes;
 end
 
 % 2. left and right leaf positions
@@ -75,27 +75,24 @@ for i = 1:size(apertureInfo.beam,2)
         end
         
         if apertureInfo.VMAT
-            if apertureInfo.beam(i).doseAngleOpt(1)
-                IandFapertureInfoVec(IandFoffset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos_I;
-                IandFapertureInfoVec(IandFoffset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos_I;
+            if apertureInfo.dynamic
+                %IandFapertureInfoVec(IandFoffset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos_I;
+                %IandFapertureInfoVec(IandFoffset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos_I;
                 
-                IandFoffset = IandFoffset + apertureInfo.beam(i).numOfActiveLeafPairs;
+                %IandFoffset = IandFoffset + apertureInfo.beam(i).numOfActiveLeafPairs;
                 
-                if apertureInfo.dynamic
+                if apertureInfo.beam(i).doseAngleOpt(1)
                     apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos_I;
                     apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos_I;
                     
                     offset = offset + apertureInfo.beam(i).numOfActiveLeafPairs;
                 end
-            end
-            
-            if apertureInfo.beam(i).doseAngleOpt(2)
-                IandFapertureInfoVec(IandFoffset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos_F;
-                IandFapertureInfoVec(IandFoffset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos_F;
+                %IandFapertureInfoVec(IandFoffset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos_F;
+                %IandFapertureInfoVec(IandFoffset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos_F;
                 
-                IandFoffset = IandFoffset + apertureInfo.beam(i).numOfActiveLeafPairs;
+                %IandFoffset = IandFoffset + apertureInfo.beam(i).numOfActiveLeafPairs;
                 
-                if apertureInfo.dynamic
+                if apertureInfo.beam(i).doseAngleOpt(2)
                     apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos_F;
                     apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos_F;
                     
@@ -108,15 +105,16 @@ end
 %% 3. time of arc sector/beam
 if apertureInfo.VMAT
     offset = offset + apertureInfo.totalNumOfLeafPairs;
-    IandFoffset = IandFoffset + apertureInfo.IandFtotalNumOfLeafPairs;
+    %IandFoffset = IandFoffset + apertureInfo.IandFtotalNumOfLeafPairs;
     
     %this gives a vector of the arc lengths belonging to each optimized CP
     %unique gets rid of double-counted angles (which is every interior
     %angle)
-    optAngleLengths = [apertureInfo.beam([apertureInfo.beam.optimizeBeam]).optAngleBordersDiff];
-    optGantryRot = [apertureInfo.beam([apertureInfo.beam.optimizeBeam]).gantryRot];
+    optInd = [apertureInfo.beam.optimizeBeam];
+    optAngleLengths = [apertureInfo.beam(optInd).optAngleBordersDiff];
+    optGantryRot = [apertureInfo.beam(optInd).gantryRot];
     apertureInfoVec((offset+1):end) = optAngleLengths./optGantryRot; %entries are the times until the next opt gantry angle is reached
-    IandFapertureInfoVec((IandFoffset+1):end) = optAngleLengths./optGantryRot;
+    %IandFapertureInfoVec((IandFoffset+1):end) = optAngleLengths./optGantryRot;
     
 end
 
