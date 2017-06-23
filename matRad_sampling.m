@@ -1,4 +1,4 @@
-function [mRealizations,stats,resultCubes]  = matRad_sampling(ct,stf,cst,pln,w,param)
+function [mRealizations,stats,resultCubes]  = matRad_sampling(ct,stf,cst,pln,w,structSel, param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_randomSampling enables sampling multiple treatment scenarios
 % 
@@ -64,8 +64,21 @@ matRad_dispToConsole(['Using samples: ' num2str(pln.numOfSamples) ' in total \n'
 
 stats       = cell(pln.numOfSamples,1);
 
+V = [];
 % define voxels for sampling
-V = [cst{:,4}];
+if ~exist('structSel', 'var') || sum(size(structSel)) == 0
+    V = [cst{:,4}];
+else
+    for i=1:size(cst,1)
+        for j = 1:numel(structSel)
+            if strcmp(structSel{j}, cst{i,2})
+                V = [V cst{i, 4}];
+            end
+        end
+    end
+    
+end
+
 param.subIx = unique(vertcat(V{:}));
 
 % define variable for storing scenario doses
@@ -96,7 +109,7 @@ if FlagParallToolBoxLicensed
       FlagParforProgressDisp = true;
       parfor_progress(pln.numOfSamples);  % http://de.mathworks.com/matlabcentral/fileexchange/32101-progress-monitor--progress-bar--that-works-with-parfor
    else
-      matRad_dispToConsole('matRad: Consider downloading parfor_progress function from the matlab central fileexchange to get feedback from parfor loop.',param,'warning');
+      matRad_dispToConsole('matRad: Consider downloading parfor_progress function from the matlab central fileexchange to get feedback from parfor loop.\n',param,'warning');
       FlagParforProgressDisp = false;
    end
   
@@ -183,7 +196,7 @@ resultGUInominal          = matRad_calcDoseDirect(ct,stf,pln,cst,w,param);
 resultCubes.resultNominal = resultGUInominal.(pln.bioParam.quantityOpt);      
         
 %% add subindices 
-resultCubes.subIx         = param.param.subIx;
+resultCubes.subIx         = param.subIx;
 
 end
 
