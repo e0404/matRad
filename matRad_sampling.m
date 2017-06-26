@@ -113,15 +113,15 @@ if FlagParallToolBoxLicensed
       FlagParforProgressDisp = false;
    end
   
-   plnTot               = matRad_setPlanUncertainties(ct,pln);
+   pln               = matRad_setPlanUncertainties(ct,pln);
    
-   for i = 1:pln.numOfSamples
+   parfor i = 1:pln.numOfSamples
           
-          plnSamp               = plnTot;
+          plnSamp               = pln;
           % pick the i-th scenario and save into plnSamp
-          plnSamp.multScen.scenForProb     = plnTot.multScen.scenForProb(i,:);
-          plnSamp.multScen.relRangeShift   = plnTot.multScen.relRangeShift(i);
-          plnSamp.multScen.absRangeShift   = plnTot.multScen.absRangeShift(i);
+          plnSamp.multScen.scenForProb     = pln.multScen.scenForProb(i,:);
+          plnSamp.multScen.relRangeShift   = pln.multScen.relRangeShift(i);
+          plnSamp.multScen.absRangeShift   = pln.multScen.absRangeShift(i);
           plnSamp.multScen.numOfShiftScen  = 1;
           plnSamp.multScen.numOfRangeShift = 1;
           plnSamp.multScen.numOfCtScen     = 1;
@@ -151,15 +151,15 @@ else
     h = waitbar(0,'Sampling Scenario ...');
     stats = cell(pln.numOfSamples,1);
     
-    plnTot               = matRad_setPlanUncertainties(ct,pln);
+    pln               = matRad_setPlanUncertainties(ct,pln);
     
     for i = 1:pln.numOfSamples
        
-          plnSamp               = plnTot;
+          plnSamp               = pln;
           % pick the i-th scenario and save into plnSamp
-          plnSamp.multScen.scenForProb     = plnTot.multScen.scenForProb(i,:);
-          plnSamp.multScen.relRangeShift   = plnTot.multScen.relRangeShift(i);
-          plnSamp.multScen.absRangeShift   = plnTot.multScen.absRangeShift(i);
+          plnSamp.multScen.scenForProb     = pln.multScen.scenForProb(i,:);
+          plnSamp.multScen.relRangeShift   = pln.multScen.relRangeShift(i);
+          plnSamp.multScen.absRangeShift   = pln.multScen.absRangeShift(i);
           plnSamp.multScen.numOfShiftScen  = 1;
           plnSamp.multScen.numOfRangeShift = 1;
           plnSamp.multScen.numOfCtScen     = 1;
@@ -194,7 +194,6 @@ resultCubes.meanCubeWeighted(param.subIx) = (sum(mRealizations .* mHelper,2));
 
 resultCubes.stdCubeWeighted(param.subIx) = ...
 sqrt(sum((mRealizations.^2) .* mHelper,2)-resultCubes.meanCubeWeighted(param.subIx).^2);
-
 
 %% add nominal scenario
 resultGUInominal          = matRad_calcDoseDirect(ct,stf,pln,cst,w,param);
