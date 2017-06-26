@@ -1,4 +1,4 @@
-function [mRealizations,stats,resultCubes]  = matRad_sampling(ct,stf,cst,pln,w,structSel, param)
+function [mRealizations,stats, pln, resultCubes]  = matRad_sampling(ct,stf,cst,pln,w,structSel, param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_randomSampling enables sampling multiple treatment scenarios
 % 
@@ -38,7 +38,7 @@ function [mRealizations,stats,resultCubes]  = matRad_sampling(ct,stf,cst,pln,w,s
 
 pln.sampling      = true;
 pln.robOpt        = false;
-pln.numOfSamples  = 6;
+pln.numOfSamples  = 4;
 
 
 if exist('param','var')
@@ -180,22 +180,12 @@ else
     close(h)
 end
 
-resultCubes.meanCube              = zeros(ct.cubeDim);
-resultCubes.stdCube               = zeros(ct.cubeDim);
-
-resultCubes.meanCubeWeighted      = zeros(ct.cubeDim);
-resultCubes.stdCubeWeighted       = zeros(ct.cubeDim);
-
-resultCubes.meanCube(param.subIx)         = mean(mRealizations,2);   
-resultCubes.stdCube(param.subIx)          = std(mRealizations,1,2);  
-resultCubes.meanCubeWeighted(param.subIx) = (sum(mRealizations * diag(pln.multScen.scenProb),2) )/pln.numOfSamples;
-resultCubes.stdCube(param.subIx)          = std(mRealizations,pln.multScen.scenProb,2);
-
 %% add nominal scenario
 resultGUInominal          = matRad_calcDoseDirect(ct,stf,pln,cst,w,param);
 resultCubes.resultNominal = resultGUInominal.(pln.bioParam.quantityOpt);      
         
-%% add subindices 
+%% add subindices
+pln.multScen.subIx        = param.subIx;
 resultCubes.subIx         = param.subIx;
 
 end
