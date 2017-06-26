@@ -38,7 +38,7 @@ function [mRealizations,stats,resultCubes]  = matRad_sampling(ct,stf,cst,pln,w,s
 
 pln.sampling      = true;
 pln.robOpt        = false;
-pln.numOfSamples  = 6;
+pln.numOfSamples  = 20;
 
 
 if exist('param','var')
@@ -187,9 +187,13 @@ resultCubes.meanCubeWeighted      = zeros(ct.cubeDim);
 resultCubes.stdCubeWeighted       = zeros(ct.cubeDim);
 
 resultCubes.meanCube(param.subIx)         = mean(mRealizations,2);   
-resultCubes.stdCube(param.subIx)          = std(mRealizations,1,2);  
-resultCubes.meanCubeWeighted(param.subIx) = (sum(mRealizations * diag(pln.multScen.scenProb),2) )/pln.numOfSamples;
-resultCubes.stdCube(param.subIx)          = std(mRealizations,pln.multScen.scenProb,2);
+resultCubes.stdCube(param.subIx)          = std(mRealizations,1,2); 
+
+mHelper = repmat(plnTot.multScen.scenProb',size(mRealizations,1),1);
+resultCubes.meanCubeWeighted(param.subIx) = (sum(mRealizations .* mHelper,2));
+
+resultCubes.stdCubeWeighted(param.subIx) = ...
+sqrt(sum((mRealizations.^2) .* mHelper,2)-resultCubes.meanCubeWeighted(param.subIx).^2);
 
 %% add nominal scenario
 resultGUInominal          = matRad_calcDoseDirect(ct,stf,pln,cst,w,param);
