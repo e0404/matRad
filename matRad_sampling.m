@@ -115,7 +115,7 @@ if FlagParallToolBoxLicensed
   
    plnTot               = matRad_setPlanUncertainties(ct,pln);
    
-   for i = 1:pln.numOfSamples
+   parfor i = 1:pln.numOfSamples
           
           plnSamp               = plnTot;
           % pick the i-th scenario and save into plnSamp
@@ -188,8 +188,8 @@ resultCubes.stdCubeWeighted       = zeros(ct.cubeDim);
 
 resultCubes.meanCube(param.subIx)         = mean(mRealizations,2);   
 resultCubes.stdCube(param.subIx)          = std(mRealizations,1,2);  
-resultCubes.meanCubeWeighted(param.subIx) = (sum(mRealizations * diag(plnSamp.multScen.scenProb),2) )/pln.numOfSamples;
-resultCubes.stdCube(param.subIx)          = std(mRealizations,plnSamp.multScen.scenProb,2); 
+resultCubes.meanCubeWeighted(param.subIx) = (sum(mRealizations * diag(plnTot.multScen.scenProb),2) )/pln.numOfSamples;
+resultCubes.stdCube(param.subIx)          = std(mRealizations,plnTot.multScen.scenProb,2); 
 
 %% add nominal scenario
 resultGUInominal          = matRad_calcDoseDirect(ct,stf,pln,cst,w,param);
