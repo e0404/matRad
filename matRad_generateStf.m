@@ -43,7 +43,7 @@ else
    param.logLevel       = 1;
 end
 
-matRad_dispToConsole('matRad: Generating stf struct... ',param,'error'); 
+matRad_dispToConsole('matRad: Generating stf struct... ',param,'info'); 
 
 if nargin < 5
     visMode = 0;
@@ -300,7 +300,7 @@ for i = 1:length(pln.gantryAngles)
          stf(i).ray(j).energy = machine.data.energy;
          
        else
-          error('Error generating stf struct: invalid radiation modality.');
+          matRad_dispToConsole('Error generating stf struct: invalid radiation modality.',param,'error');
        end
        
     end
