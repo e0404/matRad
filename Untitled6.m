@@ -1,0 +1,10 @@
+stf2.numOfBixelsPerRay(1)=stf.numOfBixelsPerRay(85);
+stf2.numOfBixelsPerRay(2)=stf.numOfBixelsPerRay(84);
+stf2.numOfBixelsPerRay(3)=stf.numOfBixelsPerRay(86);
+stf2.numOfBixelsPerRay(4)=stf.numOfBixelsPerRay(71);
+stf2.numOfBixelsPerRay(5)=stf.numOfBixelsPerRay(72);
+stf2.numOfBixelsPerRay(6)=stf.numOfBixelsPerRay(73);
+stf2.numOfBixelsPerRay(7)=stf.numOfBixelsPerRay(97);
+stf2.numOfBixelsPerRay(8)=stf.numOfBixelsPerRay(98);
+stf2.numOfBixelsPerRay(9)=stf.numOfBixelsPerRay(99);
+stf2.numOfBixelsPerRay(10:end)=[];

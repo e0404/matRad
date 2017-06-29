@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDoseXXX3(ct,stf,pln,cst,calcDoseDirect)
+function dij = matRad_calcParticleDoseXXXfast2(ct,stf,pln,cst,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad particle dose calculation wrapper
 %
@@ -44,6 +44,20 @@ end
 figureWait = waitbar(0,'calculate dose influence matrix for particles...');
 % prevent closure of waitbar and show busy state
 set(figureWait,'pointer','watch');
+
+% rotate the ct cube agreeing with beam direction
+rotcube = imrotate(ct.cube{1},stf.gantryAngle,'bicubic','crop');
+rotcube = permute(rotcube,[1 3 2]);
+rotcube = imrotate(rotcube,-stf.couchAngle,'bicubic','crop');
+ct.cube{1} = permute(rotcube,[1 3 2]);
+
+% reset angles
+stf.gantryAngle = 0;
+stf.couchAngle = 0;
+pln.gantryAngles = 0;
+pln.couchAngles = 0;
+stf.sourcePoint = stf.sourcePoint_bev;
+[stf.ray.targetPoint] = stf.ray.targetPoint_bev;
 
 % meta information for dij
 dij.numOfBeams         = pln.numOfBeams;
@@ -198,6 +212,8 @@ for i = 1:dij.numOfBeams % loop over all beams
     lateralCutoffRayTracing = 50;
     fprintf('matRad: calculate radiological depth cube...');
     radDepthV = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoffRayTracing);
+    radDepthsMat = zeros(ct.cubeDim);
+    radDepthsMat(V) = radDepthV{1};
     
     fprintf('done.\n');
     
@@ -213,6 +229,27 @@ for i = 1:dij.numOfBeams % loop over all beams
     visBoolLateralCutOff = 0;
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
     fprintf('done.\n');
+    
+    
+    % obtain radiation depths matrix
+    for j = 1:length(stf(i).energies)
+        
+        [TracMat] = matRad_multipleRayTracing(radDepthsMat,stf(i).rayPerEnergy(j,:),...
+            pln.isoCenter,[ct.resolution.x ct.resolution.y ct.resolution.z]);
+        
+        energyIdx = find([machine.data.energy]==stf.energies(j));
+        
+        [DoseMat] = matRad_calcMultiDose(depths,TracMat,machine.data(energyIdx),sig)
+        
+    end
+        
+    
+    
+    
+    
+    
+    
+    
     
     for j = 1:stf(i).numOfRays % loop over all rays
         

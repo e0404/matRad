@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDoseXXX3(ct,stf,pln,cst,calcDoseDirect)
+function dij = matRad_calcParticleDoseXXXfast(ct,stf,pln,cst,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad particle dose calculation wrapper
 %
@@ -44,6 +44,17 @@ end
 figureWait = waitbar(0,'calculate dose influence matrix for particles...');
 % prevent closure of waitbar and show busy state
 set(figureWait,'pointer','watch');
+
+% rotate the ct cube agreeing with beam direction
+rotcube = imrotate(ct.cube{1},stf.gantryAngle,'crop');
+rotcube = permute(rotcube,[1 3 2]);
+rotcube = imrotate(rotcube,-stf.couchAngle,'crop');
+ct.cube{1} = permute(rotcube,[1 3 2]);
+
+% re-set angles to zero
+stf.gantryAngle = 0;
+stf.couchAngle = 0;
+
 
 % meta information for dij
 dij.numOfBeams         = pln.numOfBeams;
@@ -197,7 +208,7 @@ for i = 1:dij.numOfBeams % loop over all beams
     % Calcualte radiological depth cube
     lateralCutoffRayTracing = 50;
     fprintf('matRad: calculate radiological depth cube...');
-    radDepthV = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoffRayTracing);
+    radDepthV = matRad_rayTracingXXXfast(stf(i),ct,V,rot_coordsV,lateralCutoffRayTracing);
     
     fprintf('done.\n');
     
@@ -273,8 +284,8 @@ for i = 1:dij.numOfBeams % loop over all beams
                 % run over components
                 for c = 1:numOfSub
                     
-                    [idx,idx_shift] = mR_shift(V(ix), ct.cubeDim, stf(i).sourcePoint,...
-                        stf(i).ray(j).targetPoint, stf.isoCenter,...
+                    [idx,idx_shift] = mR_shift(V(ix), ct.cubeDim, stf(i).sourcePoint_bev,...
+                        stf(i).ray(j).targetPoint_bev, stf.isoCenter,...
                         [ct.resolution.x ct.resolution.y ct.resolution.z],...
                         [stf(i).gantryAngle stf(i).couchAngle], posx(c), posz(c));
                     

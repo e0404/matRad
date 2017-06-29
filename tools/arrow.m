@@ -1,0 +1,5 @@
+function arrow(x1,x2,texton)
+line([x1(1) x2(1)], [x1(2) x2(2)], 'LineWidth', 3, 'Color', 'w')
+line([x2(1) x2(1)-((x2(1)-x1(1))/10)], [x2(2) x2(2)-((x2(1)-x1(1))/10)], 'LineWidth', 3, 'Color', 'w')
+line([x2(1) x2(1)-((x2(1)-x1(1))/10)], [x2(2) x2(2)+((x2(1)-x1(1))/10)], 'LineWidth', 3, 'Color', 'w')
+text(x2(1)-((x2(1)-x1(1))/2), x2(2)-((x2(1)-x1(1))/3),texton, 'FontSize', 16, 'Color', 'w')

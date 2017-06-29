@@ -167,7 +167,7 @@ for i = -searchX:searchX
         end
     end
     
-    display '.';
+%     display '.';
     
 end
 
@@ -224,7 +224,7 @@ end
 
 % visualize if applicable
 if exist('slice','var')
-    figure
+%     figure
     set(gcf,'Color',[1 1 1]);
     imagesc(gammaCube(:,:,slice),[0 2])
     myColormap = [  0.2081    0.1663    0.5292
@@ -296,21 +296,21 @@ if exist('slice','var')
     colorbar
 
     title({[num2str(gammaPassRate,5) '% of points > ' num2str(relDoseThreshold) ...
-            '% pass gamma criterion (' num2str(relDoseThreshold) '% / ' ...
+            '% pass \gamma criterion (' num2str(relDoseThreshold) '% / ' ...
             num2str(dist2AgreeMm) 'mm)']; ['with ' num2str(2^n-1) ' interpolation points']});
 end
 
-figure
-isovec = [0.001, 1, 1.5, 2];
-facevec = [0.1, 0.2, 0.4, 1];
-colorvec = ['c', 'g', 'y', 'r'];
-
-for i=1:4
-    [f,v] = isosurface(gammaCube, isovec(i));
-    patch('Faces',f,'Vertices',v,'EdgeAlpha',0.0001,'FaceAlpha',facevec(i),'FaceColor',colorvec(i));
-end
-view(3)
-legend('region of gamma-index test',...
-    'region of gamma-index test failure',...
-    'region of gamma-index test failure over 50%',...
-    'region of gamma-index test failure over 100%')
+% figure
+% isovec = [0.001, 1, 1.5, 2];
+% facevec = [0.1, 0.2, 0.4, 1];
+% colorvec = ['c', 'g', 'y', 'r'];
+% 
+% for i=1:4
+%     [f,v] = isosurface(gammaCube, isovec(i));
+%     patch('Faces',f,'Vertices',v,'EdgeAlpha',0.0001,'FaceAlpha',facevec(i),'FaceColor',colorvec(i));
+% end
+% view(3)
+% legend('region of gamma-index test',...
+%     'region of gamma-index test failure',...
+%     'region of gamma-index test failure over 50%',...
+%     'region of gamma-index test failure over 100%')
