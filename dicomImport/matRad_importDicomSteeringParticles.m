@@ -124,7 +124,7 @@ for i = 1:length(BeamSeqNames)
     ControlPointSeqNames = fieldnames(ControlPointSeq);
     numOfContrPointSeq = length(ControlPointSeqNames);
     % create empty helper matrix
-    StfTmp = zeros(0,5);
+    temporarySteering = zeros(0,8);
     for currContr = 1:numOfContrPointSeq
         currContrSeq = ControlPointSeq.(ControlPointSeqNames{currContr});
         % get energy, equal for all coming elements in the next loop
@@ -137,25 +137,61 @@ for i = 1:length(BeamSeqNames)
         c1_help = currContrSeq.ScanSpotPositionMap(1:2:(2 * numOfScanSpots));
         c2_help = currContrSeq.ScanSpotPositionMap(2:2:(2 * numOfScanSpots));
         weight_help = currContrSeq.ScanSpotMetersetWeights;
-        StfTmp = [StfTmp; c1_help c2_help (currEnergy * ones(numOfScanSpots,1)) weight_help (currFocus * ones(numOfScanSpots,1))];
+        if isfield(currContrSeq, 'RangeShifterSettingsSequence')
+            % rangeshifter identification
+            rashiID = currContrSeq.RangeShifterSettingsSequence.Item_1.ReferencedRangeShifterNumber;
+            % rangeshifter waterequivalent thickness
+            rashiWeThickness = currContrSeq.RangeShifterSettingsSequence.Item_1.RangeShifterWaterEquivalentThickness;
+            % rangeshifter isocenter to range shifter distance
+            rashiIsoRangeDist = currContrSeq.RangeShifterSettingsSequence.Item_1.IsocenterToRangeShifterDistance;
+        elseif currContr == 1
+            rashiID = 0;
+            rashiWeThickness = 0;
+            rashiIsoRangeDist = 0;            
+        else
+            % in this case range shifter settings has not changed between this
+            % and previous control sequence, so reuse values.
+        end
+        temporarySteering = [temporarySteering; c1_help c2_help ...
+            (currEnergy * ones(numOfScanSpots,1)) weight_help (currFocus * ones(numOfScanSpots,1)) ...
+            (rashiID * ones(numOfScanSpots,1)) (rashiWeThickness * ones(numOfScanSpots,1)) (rashiIsoRangeDist * ones(numOfScanSpots,1))];     
     end
     
     % finds all unique rays and saves them in to the stf
-    [RayPosTmp, ~, ic] = unique(StfTmp(:,1:2), 'rows');
+    [RayPosTmp, ~, ic] = unique(temporarySteering(:,1:2), 'rows');
+    clear ray;
     for j = 1:size(RayPosTmp,1)
         stf(i).ray(j).rayPos_bev = double([RayPosTmp(j,1) 0 RayPosTmp(j,2)]);
         stf(i).ray(j).energy = [];
         stf(i).ray(j).focusFWHM = [];
         stf(i).ray(j).focusIx = [];
         stf(i).ray(j).weight = [];
+        stf(i).ray(j).rangeShifter = struct();
+        ray(j).ID = [];
+        ray(j).eqThickness = [];
+        ray(j).sourceRashiDistance = [];
     end
     
     % saves all energies and weights to their corresponding ray
-    for j = 1:size(StfTmp,1)
+    for j = 1:size(temporarySteering,1)
         k = ic(j);
-        stf(i).ray(k).energy = [stf(i).ray(k).energy double(StfTmp(j,3))];
-        stf(i).ray(k).focusFWHM = [stf(i).ray(k).focusFWHM double(StfTmp(j,5))];
-        stf(i).ray(k).weight = [stf(i).ray(k).weight double(StfTmp(j,4)) / 1e6];
+        stf(i).ray(k).energy = [stf(i).ray(k).energy double(temporarySteering(j,3))];
+        stf(i).ray(k).focusFWHM = [stf(i).ray(k).focusFWHM double(temporarySteering(j,5))];
+        stf(i).ray(k).weight = [stf(i).ray(k).weight double(temporarySteering(j,4)) / 1e6];
+        % helpers to construct something like a(:).b = c.b(:) after this
+        % loop
+        ray(k).ID = [ray(k).ID double(temporarySteering(j,6))];
+        ray(k).eqThickness = [ray(k).eqThickness double(temporarySteering(j,7))];
+        ray(k).sourceRashiDistance = [ray(k).sourceRashiDistance double(temporarySteering(j,8))];
+    end
+    
+    % reassign to preserve data structure
+    for j = 1:numel(ray)
+        for k = 1:numel(ray(j).ID)
+            stf(i).ray(j).rangeShifter(k).ID = ray(j).ID(k);
+            stf(i).ray(j).rangeShifter(k).eqThickness = ray(j).eqThickness(k);
+            stf(i).ray(j).rangeShifter(k).sourceRashiDistance = stf(i).SAD - ray(j).sourceRashiDistance(k);
+        end
     end
     
     
