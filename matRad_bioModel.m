@@ -23,7 +23,7 @@ classdef matRad_bioModel
    properties(Constant = true)
       AvailableModels                 = {'none','constRBE','MCN','WED','LEMIV'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
       AvailableradiationModealities   = {'photons','protons','carbon'};
-      AvailableQuantitiesForOpt       = {'physicalDose','effect','RBExD'}
+      AvailableQuantitiesForOpt       = {'physicalDose','effect','RBExD'};
       
       AvailableAlphaXBetaXProton = {[0.036 0.024],    'prostate';
                                     [0.089 0.287],    'rectum and normal tissue';
@@ -36,7 +36,7 @@ classdef matRad_bioModel
    
    properties(Constant = true, Access = private)
       
-      constRBE = 1.1
+      constRBE = 1.1;
       
       %McNamara variable RBE model for protons
       p0_MCN   = 0.999064;     % according to https://www.ncbi.nlm.nih.gov/pubmed/26459756
