@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDoseXXX3(ct,stf,pln,cst,calcDoseDirect)
+function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad particle dose calculation wrapper
 %
