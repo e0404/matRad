@@ -1,4 +1,4 @@
-function [wQ, ix] = weightedQuantile(values, quantiles, weight, sortedB, extraPolB)
+function [wQ] = weightedQuantile(values, percentiles, weight, sortedB, extraPolB)
 
   % values vector
   % quantiles what you want to know
@@ -14,7 +14,7 @@ function [wQ, ix] = weightedQuantile(values, quantiles, weight, sortedB, extraPo
   if ~exist('extraPolB', 'var') || isempty(extraPolB)
     extraPolB = false;
   end
-  if ~(quantiles(:) >= 0 & quantiles(:) <= 1)
+  if ~(percentiles(:) >= 0 & percentiles(:) <= 1)
     error('Quantiles shold be [0, 1]');
   end
 
@@ -22,18 +22,18 @@ function [wQ, ix] = weightedQuantile(values, quantiles, weight, sortedB, extraPo
     [values, sortIx] = sort(values);
     weight = weight(sortIx);
   end
-  wQtemp = cumsum(weight, 2) - 0.5 * weight;
+  wQtemp = cumsum(weight) - 0.5 * weight;
   wQtemp = wQtemp ./ sum(weight);
 
   wQ = NaN * ones(size(values,1), 2);
   
   if extraPolB
       x = single(wQtemp);
-      V = values';
-      samplePoints = {x, single(1:size(V,2))};
-      queryPoints = {single(quantiles), single(1:size(V,2))};
-      F = griddedInterpolant(samplePoints, V);
-      wQ = F(queryPoints);
+      V = values;
+      %samplePoints = {x, single(1:size(V,1))};
+      %queryPoints = {single(percentiles), single(1:size(V,1))};
+      F = griddedInterpolant(x, V);
+      wQ = F(percentiles);
   else
 
   end

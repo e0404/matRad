@@ -62,7 +62,9 @@ if ~isfield(pln,'numOfSamples')
 end
 matRad_dispToConsole(['Using samples: ' num2str(pln.numOfSamples) ' in total \n'],param,'info')
 
-stats       = cell(pln.numOfSamples,1);
+stats       = cell(pln.numOfSamples,2);
+% since parfor does not allow different calling
+dvhTemp     = cell(pln.numOfSamples,1);
 
 V = [];
 % define voxels for sampling
@@ -98,6 +100,12 @@ catch
    FlagParallToolBoxLicensed  = false;
 end
 
+%% calculate nominal scenario
+nominalScenario          = matRad_calcDoseDirect(ct,stf,pln,cst,w,param);
+resultCubes.resultNominal = nominalScenario.(pln.bioParam.quantityOpt);
+
+[DVH.points, DVH.values] = calcDVHdirect(cst, nominalScenario.(pln.bioParam.quantityOpt));
+resultCubes.dvhPoints = DVH.points;
 
 %% perform parallel sampling
 
@@ -133,9 +141,10 @@ if FlagParallToolBoxLicensed
           % forward dose calculation
           resultSamp            = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w,param);
           sampledDose           = resultSamp.(pln.bioParam.quantityOpt)(param.subIx);
-          mRealizations(:,i)     = single(reshape(sampledDose,[],1));
+          mRealizations(:,i)    = single(reshape(sampledDose,[],1));
           resultQI              = matRad_calcQualityIndicators(resultSamp,cst,plnSamp,param);
           stats{i,1}            = resultQI.QI;
+          [~,dvhTemp{i,1}]      = calcDVHdirect(cst, resultSamp.(pln.bioParam.quantityOpt), 1, resultCubes.dvhPoints);
           
           if FlagParforProgressDisp
             parfor_progress;
@@ -172,6 +181,7 @@ else
           mRealizations(:,i)     = single(reshape(sampledDose,[],1));
           resultQI              = matRad_calcQualityIndicators(resultSamp,cst,plnSamp,param);
           stats{i,1}            = resultQI.QI;
+          [~,dvhTemp{i,1}]      = calcDVHdirect(cst, resultSamp.(pln.bioParam.quantityOpt), 1, resultCubes.dvhPoints);
           
           waitbar(i/pln.numOfSamples);
 
@@ -180,12 +190,17 @@ else
     close(h)
 end
 
-%% add nominal scenario
-resultGUInominal          = matRad_calcDoseDirect(ct,stf,pln,cst,w,param);
-resultCubes.resultNominal = resultGUInominal.(pln.bioParam.quantityOpt);      
+% reassing dvh to stats structure
+for i = 1:pln.numOfSamples
+    stats{i,2} = dvhTemp{i,1};
+end
         
 %% add subindices
 pln.multScen.subIx        = param.subIx;
 resultCubes.subIx         = param.subIx;
+
+%% calculate standard deviations
+resultCubes = samplingAnalysis(mRealizations, ct, pln)
+
 
 end
