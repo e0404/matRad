@@ -108,5 +108,7 @@ if nargout > 2
    isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD; 
 end
 
+% export latDists in order to evaluate the correct rad_distancesSq outside
+% (line 298)
 latDistsX = latDistsX(subsetMask);
 latDistsZ = latDistsZ(subsetMask);

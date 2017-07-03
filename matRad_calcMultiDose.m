@@ -1,4 +1,4 @@
-function [DoseMat] = matRad_calcMultiDose(depths,TracMat,baseData,sig)
+function [DoseMat] = matRad_calcMultiDose(TracMat,baseData,sig)
 
 
 TracMatc = TracMat;
@@ -15,6 +15,7 @@ dimTM = size(TracMatc);
 interpData = griddata(repmat(baseData.depths,[1 dimTM(2)]),x1,...
     repmat(baseData.Z,[1 dimTM(2)]),TracMatc,x);
 
+TracMatf = zeros(size(TracMat));
 TracMatf(cutt2,cutt) = interpData;
 
 

@@ -1,4 +1,4 @@
-function [idx,idx_shift] = mR_shift(initIx,dim,source,target,iso, res, ang, Dx, Dz)
+function [idx,idx_shift,target, source] = mR_shift(initIx,dim,source,target,iso, res, ang, Dx, Dz)
 % This function project a point on a certain ray and return the index of
 % the projected point in the reference system of the ct cube
 %
@@ -17,38 +17,26 @@ function [idx,idx_shift] = mR_shift(initIx,dim,source,target,iso, res, ang, Dx, 
 %   - idx : projected indeces
 %   - idx_shift : indeces of the ray translated on the secondary sub-beam
 
-% iso = [stf.isoCenter(2),stf.isoCenter(1),stf.isoCenter(3)];
-% source = stf(1).sourcePoint_bev + iso;
-% target = stf(1).ray(2).targetPoint_bev + iso;
-% dim = ct.cubeDim;
-% initIx = V(ix);
 
-Dx = -Dx;
-Dz= -Dz./res(3);
-
+% Correct values for resolution
+Dx = -Dx./res(1);
+Dz = -Dz./res(3);
 iso = iso ./res;
-target = target ./res;
-source = source ./res;
-% target(1) = target0(2);
-% target(2) = target0(1);
-% target(3) = target0(3);
-% source(1) = source0(2);
-% source(2) = source0(1);
-% source(3) = source0(3);
 
 % shift for isocenter and new ray
 target = target + iso;
 target(1) = target(1) + round(Dx*cosd(ang(1)));
 target(2) = target(2) + round(Dx*sind(ang(1)));
-target(3) = target(3) + round(Dz*cosd(ang(2)));
+target(3) = target(3) + round(Dz);
 source = source + iso;
 source(1) = source(1) + round(Dx*cosd(ang(1)));
 source(2) = source(2) + round(Dx*sind(ang(1)));
-source(3) = source(3) + round(Dz*cosd(ang(2)));
+source(3) = source(3) + round(Dz);
 
 % convert index in coordinates
 [coord(:,2),coord(:,1),coord(:,3)] = ind2sub(dim,initIx);
 
+% this vectors are target and source coord repeated for every row
 Avec = repmat(source,length(initIx),1);
 Bvec = repmat(target,length(initIx),1);
 
@@ -62,7 +50,8 @@ otherDist = sqrt( sqrt(sum((coord-Bvec).^2,2)).^2 - perpDist.^2 );
 theta = asin(sqrt(sum((Avec(:,3)-Bvec(:,3)).^2,2))./sqrt(sum((Avec-Bvec).^2,2)));
 phi = acos(sqrt(sum((Avec(:,1)-Bvec(:,1)).^2,2))./sqrt(sum((Avec(:,1:2)-Bvec(:,1:2)).^2,2)));
 
-% add translation to the extreme of the ray, according to spherical coord
+% add translation to the extreme of the ray, according to spherical coord,
+% in order to obtain the coord of the projected points
 signvec = sign(Bvec-Avec);
 D0 = Bvec - signvec.*[ otherDist.*cos(theta).*cos(phi) otherDist.*cos(theta).*sin(phi) otherDist.*sin(theta)];
 D = round(D0);
@@ -74,7 +63,8 @@ D( D(:,1)<1 | D(:,1)>dim(1) | D(:,2)<1 | D(:,2)>dim(2) | D(:,3)<1 | D(:,3)>dim(3
 % index the found coordinates
 idx = sub2ind(dim,D(:,2),D(:,1),D(:,3));
 
-% Shift all indeces 
+% Shift all indeces. This gives me the indices of the dose points shifted
+% on the new ray
 idx_shift = sub2ind(dim, coord(:,2)+(Dx*sind(ang(1))),...
     coord(:,1)+round(Dx*cosd(ang(1))),...
     coord(:,3)+round(Dz*cosd(ang(2))) );

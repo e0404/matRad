@@ -56,7 +56,7 @@ if strcmp(pln.radiationMode,'photons')
     dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect);
     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-    dij = matRad_calcParticleDoseXXX3(ct,stf,pln,cst,calcDoseDirect);
+    dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect);
 end
 
 % remember bixel weight

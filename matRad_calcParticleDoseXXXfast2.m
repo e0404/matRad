@@ -230,19 +230,62 @@ for i = 1:dij.numOfBeams % loop over all beams
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
     fprintf('done.\n');
     
+    % find central ray
+    centralIdx = find(stf.rayPos_bev(:,1)==0 & stf.rayPos_bev(:,2)==0 & stf.rayPos_bev(:,3)==0);
+    centralEnergyIdx = find([machine.data.energy] == stf.ray(centralIdx).energy(1));
     
+    
+    % I should have done this with every energy. Now it is good like this,
+    % will improve in the future.
+    maxLateralCutoffDoseCalc = max(machine.data(centralEnergyIdx).LatCutOff.CutOff);
+    
+    [ix,radialDist_sq] = matRad_calcGeoDists_old(rot_coordsV, ...
+        stf(i).sourcePoint_bev, ...
+        stf(i).ray(centralIdx).targetPoint_bev, ...
+        machine.meta.SAD, ...
+        radDepthIx, ...
+        maxLateralCutoffDoseCalc);
+    
+    radDepths = radDepthV{1}(ix);
+    
+    if cutOffLevel >= 1
+        currIx = radDepths <= machine.data(centralEnergyIdx).depths(end) + machine.data(centralEnergyIdx).offset;
+    elseif cutOffLevel < 1 && cutOffLevel > 0
+        % perform rough 2D clipping
+        currIx = radDepths <= machine.data(centralEnergyIdx).depths(end) + machine.data(centralEnergyIdx).offset & ...
+            radialDist_sq <= max(machine.data(centralEnergyIdx).LatCutOff.CutOff.^2);
+        
+        % peform fine 2D clipping
+        if length(machine.data(centralEnergyIdx).LatCutOff.CutOff) > 1
+            currIx(currIx) = matRad_interp1((machine.data(centralEnergyIdx).LatCutOff.depths + machine.data(centralEnergyIdx).offset)',...
+                (machine.data(centralEnergyIdx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= radialDist_sq(currIx);
+        end
+    else
+        error('cutoff must be a value between 0 and 1')
+    end
     % obtain radiation depths matrix
+    %tic
     for j = 1:length(stf(i).energies)
+        
+        energyIdx = find([machine.data.energy]==stf.energies(j));
+                                                 
+        % Here i use mean for SSD, will find a better way in the future
+        SigmaIni = matRad_interp1(machine.data(energyIdx).initFocus.dist(1,:)',machine.data(energyIdx).initFocus.sigma(1,:)',sum([stf.ray.SSD])./length([stf.ray.SSD]));
+        
+        [finalWeight, X1, sigma_sub, radius, posx, posz, numOfSub] = ...
+                    matRad_calcWeights(SigmaIni, 2, 'circle');
         
         [TracMat] = matRad_multipleRayTracing(radDepthsMat,stf(i).rayPerEnergy(j,:),...
             pln.isoCenter,[ct.resolution.x ct.resolution.y ct.resolution.z]);
         
-        energyIdx = find([machine.data.energy]==stf.energies(j));
+        [latProf] = matRad_calcLatProf(machine.data(centralEnergyIdx),...
+            radialDist_sq(currIx), sigma_sub, ct.cubeDim, radDepths(currIx),...
+            V(ix(currIx)));
         
-        [DoseMat] = matRad_calcMultiDose(depths,TracMat,machine.data(energyIdx),sig)
+%         [DoseMat] = matRad_calcMultiDose(TracMat,machine.data(energyIdx),sig)
         
     end
-        
+        %toc
     
     
     

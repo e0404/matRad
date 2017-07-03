@@ -1,6 +1,8 @@
-dosedose = full(doseTmpContainer{1});
-dosedose = reshape(dosedose,dij.dimensions);
+% dosedose = full(doseTmpContainer{1});
+% dosedose = reshape(dosedose,dij.dimensions);
+dosedose = TracMatf;
 hold off
+scatter3(80, 80, 80, 'xr')
 hold on
 % surf([0,512;0,512],[0,0;0,0],[0,0;39,39],'FaceAlpha',0.1,'FaceColor','c')
 % surf([0,0;0,0],[0,512;0,512],[0,0;39,39],'FaceAlpha',0.1,'FaceColor','c')
