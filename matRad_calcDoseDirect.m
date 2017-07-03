@@ -103,7 +103,7 @@ end
 % compute biological cubes
 if isfield(dij,'RBE')
 
-    resultGUI.RBExDose = resultGUI.physicalDose * dij.RBE;
+    resultGUI.RBExD = resultGUI.physicalDose * dij.RBE;
     
 elseif isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
 

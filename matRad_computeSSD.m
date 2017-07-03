@@ -52,9 +52,10 @@ if strcmp(mode,'first')
                                     {ct.cube{CtScen}});
                ixSSD = find(rho{1} > densityThreshold,1,'first');
 
-               if isempty(ixSSD)== 1
-                   warning('Surface for SSD calculation starts directly in first voxel of CT\n');
-               end
+
+            if ~isempty(ixSSD) && ixSSD(1) == 1
+                warning('Surface for SSD calculation starts directly in first voxel of CT\n');
+            end
 
                % calculate SSD
                stf(i).ray(j).SSD{CtScen} = double(2 * stf(i).SAD * alpha(ixSSD));

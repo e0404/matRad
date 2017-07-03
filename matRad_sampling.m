@@ -189,4 +189,3 @@ pln.multScen.subIx        = param.subIx;
 resultCubes.subIx         = param.subIx;
 
 end
-

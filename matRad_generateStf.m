@@ -1,4 +1,4 @@
-function stf = matRad_generateStf(ct,cst,pln,visMode)
+function stf = matRad_generateStf(ct,cst,pln,param,visMode)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad steering information generation
 % 
@@ -32,19 +32,29 @@ function stf = matRad_generateStf(ct,cst,pln,visMode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if exist('param','var')
+    if ~isfield(param,'logLevel')
+       param.logLevel = 1;
+    end
+    
+else
+   param.calcDoseDirect = false;
+   param.subIx          = [];
+   param.logLevel       = 1;
+end
 
-fprintf('matRad: Generating stf struct... ');
+matRad_dispToConsole('matRad: Generating stf struct... ',param,'info'); 
 
-if nargin < 4
+if nargin < 5
     visMode = 0;
 end
 
 if numel(pln.gantryAngles) ~= numel(pln.couchAngles)
-    error('Inconsistent number of gantry and couch angles.');
+    matRad_dispToConsole('Inconsistent number of gantry and couch angles.',param,'error'); 
 end
 
 if pln.bixelWidth < 0 || ~isfinite(pln.bixelWidth)
-   error('bixel width (spot distance) needs to be a real number [mm] larger than zero.');
+   matRad_dispToConsole('bixel width (spot distance) needs to be a real number [mm] larger than zero.',param,'error'); 
 end
 
 % find all target voxels from cst cell array
@@ -71,7 +81,7 @@ end
 
 % throw error message if no target is found
 if isempty(V)
-    error('Could not find target.');
+   matRad_dispToConsole('Could not find target.',param,'error'); 
 end
 
 % prepare structures necessary for particles
@@ -80,7 +90,7 @@ try
    load([fileparts(mfilename('fullpath')) filesep fileName]);
    SAD = machine.meta.SAD;
 catch
-   error(['Could not find the following machine file: ' fileName ]); 
+   matRad_dispToConsole(['Could not find the following machine file: ' fileName ],param,'error'); 
 end
 
 if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
@@ -89,7 +99,7 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     availablePeakPos  = [machine.data.peakPos] + [machine.data.offset];
     
     if sum(availablePeakPos<0)>0
-       error('at least one available peak position is negative - inconsistent machine file') 
+        matRad_dispToConsole('at least one available peak position is negative - inconsistent machine file',param,'error'); 
     end
     %clear machine;
 end
@@ -233,7 +243,7 @@ for i = 1:length(pln.gantryAngles)
                 targetExit  = radDepths(diff_voi == -1);
 
                 if numel(targetEntry) ~= numel(targetExit)
-                    error('Inconsistency during ray tracing.');
+                    matRad_dispToConsole('Inconsistency during ray tracing.',param,'error'); 
                 end
 
                 stf(i).ray(j).energy = [];
@@ -241,26 +251,6 @@ for i = 1:length(pln.gantryAngles)
                 % Save energies in stf struct
                 for k = 1:numel(targetEntry)
                     stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
-                    % adjust spot spacing according to pln.bixelWidth when using HIT basedata
-                    %DefaultLongitudialSpotSpacing = pln.bixelWidth;  % in [mm]
-                    DefaultLongitudialSpotSpacing = 3;
-                    if strcmp(pln.machine,'HIT') && length(stf(i).ray(j).energy)>2
-                        Tolerance = 0.5;
-                        hasNext = true;
-                        CntEnergy =2;
-                        while hasNext
-                            if abs(stf(i).ray(j).energy(CntEnergy)-stf(i).ray(j).energy(CntEnergy-1))<...
-                                    DefaultLongitudialSpotSpacing-Tolerance
-                                stf(i).ray(j).energy(CntEnergy)=[];
-                            else
-                                CntEnergy = CntEnergy+1;
-                            end
-                            if CntEnergy == length(stf(i).ray(j).energy)
-                                hasNext = false;
-                            end
-                        end
-                    end
-
                 end
   
                 % book keeping & calculate focus index
@@ -290,7 +280,7 @@ for i = 1:length(pln.gantryAngles)
          stf(i).ray(j).energy = machine.data.energy;
          
        else
-          error('Error generating stf struct: invalid radiation modality.');
+          matRad_dispToConsole('Error generating stf struct: invalid radiation modality.',param,'error');
        end
        
     end
@@ -298,16 +288,65 @@ for i = 1:length(pln.gantryAngles)
     % store total number of rays for beam-i
     stf(i).numOfRays = size(stf(i).ray,2);
      
+    % post processing for particle remove energy slices
+    if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
+        
+        % get minimum energy per field
+        minEnergy = min([stf(i).ray.energy]);
+        maxEnergy = max([stf(i).ray.energy]);
+        
+        % get corresponding peak position
+        availableEnergies = [machine.data.energy];
+        minPeakPos  = machine.data(minEnergy == availableEnergies).peakPos;
+        maxPeakPos  = machine.data(maxEnergy == availableEnergies).peakPos;
+        
+        % find set of energyies with adequate spacing
+        longitudialSpotSpacing = 3;
+        tolerance              = longitudialSpotSpacing/10;
+        availablePeakPos = [machine.data.peakPos];
+        
+        useEnergyBool = availablePeakPos >= minPeakPos & availablePeakPos <= maxPeakPos;
+        
+        ixCurr = find(useEnergyBool,1,'first');
+        ixRun  = ixCurr + 1;
+        ixEnd  = find(useEnergyBool,1,'last');
+
+        while ixRun <= ixEnd
+            if abs(availablePeakPos(ixRun)-availablePeakPos(ixCurr)) < ...
+                                    longitudialSpotSpacing - tolerance
+                useEnergyBool(ixRun) = 0;
+            else
+                ixCurr = ixRun;
+            end
+            ixRun = ixRun + 1;
+        end
+        
+        for j = stf(i).numOfRays:-1:1
+            for k = stf(i).numOfBixelsPerRay(j):-1:1
+                maskEnergy = stf(i).ray(j).energy(k) == availableEnergies;
+                if ~useEnergyBool(maskEnergy)
+                    stf(i).ray(j).energy(k)     = [];
+                    stf(i).ray(j).focusIx(k)    = [];
+                    stf(i).numOfBixelsPerRay(j) = stf(i).numOfBixelsPerRay(j) - 1;
+                end
+            end
+            if isempty(stf(i).ray(j).energy)
+                stf(i).ray(j) = [];
+                stf(i).numOfBixelsPerRay(j) = [];
+                stf(i).numOfRays = stf(i).numOfRays - 1;
+            end
+        end
+        
+    end
+    
     % save total number of bixels
     stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
-    %     figure,
-    %     for jj = 1:length(stf.ray)
-    %        plot(stf.ray(jj).rayPos_bev(1),stf.ray(jj).rayPos_bev(3),'rx'),hold on 
-    %     end
     
     % Show progress
-    matRad_progress(i,length(pln.gantryAngles));
-
+    if param.logLevel <= 2
+          matRad_progress(i,length(pln.gantryAngles));
+    end
+    
     %% visualization
     if visMode > 0
         
