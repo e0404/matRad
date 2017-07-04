@@ -1,4 +1,4 @@
-function dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,SSD,focusIx,baseData)
+function dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,sigmaIni,baseData)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
@@ -9,8 +9,7 @@ function dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,SSD,focusIx
 % input
 %   radDepths:      radiological depths
 %   radialDist_sq:  squared radial distance in BEV from central ray
-%   SSD:            source to surface distance
-%   focusIx:        index of focus to be used
+%   sigmaIni:       initial Gaussian std of pencil beam entering patient
 %   baseData:       base data required for particle dose calculation
 %
 % output
@@ -41,7 +40,7 @@ depths = baseData.depths + baseData.offset;
 conversionFactor = 1.6021766208e-02;
 
  % calculate initial focus sigma
-SigmaIni = matRad_interp1(baseData.initFocus.dist(focusIx,:)',baseData.initFocus.sigma(focusIx,:)',SSD);
+% SigmaIni = matRad_interp1(baseData.initFocus.dist(focusIx,:)',baseData.initFocus.sigma(focusIx,:)',SSD);
 
 if ~isfield(baseData,'sigma')
     
@@ -49,8 +48,8 @@ if ~isfield(baseData,'sigma')
     X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
     
     % compute lateral sigmas
-    sigmaSq_Narr = X(:,2).^2 + SigmaIni^2;
-    sigmaSq_Bro  = X(:,4).^2 + SigmaIni^2;
+    sigmaSq_Narr = X(:,2).^2 + sigmaIni^2;
+    sigmaSq_Bro  = X(:,4).^2 + sigmaIni^2;
     
     % calculate lateral profile
     L_Narr =  exp( -radialDist_sq ./ (2*sigmaSq_Narr))./(2*pi*sigmaSq_Narr);
@@ -64,7 +63,7 @@ else
     X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths);
 
     %compute lateral sigma
-    sigmaSq = X(:,2).^2 + SigmaIni^2;
+    sigmaSq = X(:,2).^2 + sigmaIni^2;
     
     % calculate dose
     dose = baseData.LatCutOff.CompFac * exp( -radialDist_sq ./ (2*sigmaSq)) .* X(:,1) ./(2*pi*sigmaSq);

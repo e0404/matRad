@@ -1,4 +1,4 @@
-function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
+function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ,latDistsX,latDistsZ] = ...
           matRad_calcGeoDists(rot_coords_bev, ...
                               sourcePoint_bev, ...
                               targetPoint_bev, ...
@@ -32,12 +32,14 @@ function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
 % output
 %   ix:                 indices of voxels where we want to compute dose
 %                       influence data
+%   radialDist_sq:      squared radial distance to the central ray (where the
+%                       actual computation of the radiological depth takes place)
 %   isoLatDistsX:       lateral x-distance to the central ray projected to
 %                       iso center plane
 %   isoLatDistsZ:       lateral z-distance to the central ray projected to
 %                       iso center plane
-%   radialDist_sq:      squared radial distance to the central ray (where the
-%                       actual computation of the radiological depth takes place)
+%   latDistsX:          lateral x-distance to the central ray
+%   latDistsZ:          lateral z-distance to the central ray
 %
 % References
 %
@@ -97,15 +99,22 @@ subsetMask = rad_distancesSq ./ rot_coords_temp(:,2).^2 <= lateralCutOff^2 /SAD^
 % return index list within considered voxels
 ix = radDepthIx(subsetMask);
 
-% return radial distances squared
-if nargout > 1
-    rad_distancesSq = rad_distancesSq(subsetMask);
+% compute output only when requested (save computation time)
+if nargout > 4
+    % latDists
+    latDistsX = latDistsX(subsetMask);
+    latDistsZ = latDistsZ(subsetMask);
+else
+    % return radial distances squared
+    if nargout > 1
+        rad_distancesSq = rad_distancesSq(subsetMask);
+    end
+
+    % lateral distances projected to iso center plane
+    if nargout > 2
+       isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
+       isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD; 
+    end   
 end
 
-% return x & z distance
-if nargout > 2
-   isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
-   isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD; 
-end
-
-
+    
