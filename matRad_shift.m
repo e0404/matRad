@@ -1,4 +1,4 @@
-function [D0,idx,idx_shift,target, source] = matRad_shift(initIx,dim,source,target,iso, res, ang, Dx, Dz, rotMat)
+function [D0,idx,target, source] = matRad_shift(initIx,dim,source,target,iso, res, ang, Dx, Dz, rotMat)
 % This function project a point on a certain ray and return the index of
 % the projected point in the reference system of the ct cube
 %
@@ -52,7 +52,7 @@ pointToEndDist = dot((coord-Bvec),(Avec-Bvec),2)./repmat(norm(target-source),[si
 % signvec = sign(Bvec-Avec);
 D0 = Bvec + (Avec-Bvec)./norm(target-source).*repmat(pointToEndDist,[1,3]);
 
-D = round(D0);
+D = round(D0./repmat(res,[size(D0,1),1]));
 % D = D./ bsxfun(@times,ones(size(D)),res);
 
 % delete every point which goes out of the matrix
@@ -63,8 +63,8 @@ idx = sub2ind(dim,D(:,2),D(:,1),D(:,3));
 
 % Shift all indeces. This gives me the indices of the dose points shifted
 % on the new ray
-idx_shift = sub2ind(dim, coord(:,2)+(Dx*sind(ang(1))),...
-    coord(:,1)+round(Dx*cosd(ang(1))),...
-    coord(:,3)+round(Dz*cosd(ang(2))) );
+% idx_shift = sub2ind(dim, coord(:,2)+(Dx*sind(ang(1))),...
+%     coord(:,1)+round(Dx*cosd(ang(1))),...
+%     coord(:,3)+round(Dz*cosd(ang(2))) );
 
 
