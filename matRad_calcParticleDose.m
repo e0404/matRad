@@ -197,7 +197,7 @@ for i = 1:dij.numOfBeams % loop over all beams
     % Calcualte radiological depth cube
     lateralCutoffRayTracing = 50;
     fprintf('matRad: calculate radiological depth cube...');
-    radDepthV = matRad_rayTracing_old(stf(i),ct,V,rot_coordsV,lateralCutoffRayTracing);
+    radDepthV = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoffRayTracing);
     
     fprintf('done.\n');
     
@@ -277,24 +277,26 @@ for i = 1:dij.numOfBeams % loop over all beams
                     
                     % This funtion gives the projection the index V(ix) on
                     % the considered ray.
-                    [idx,idx_shift] = mR_shift(V(ix), ct.cubeDim, stf(i).sourcePoint,...
-                        stf(i).ray(j).targetPoint, stf.isoCenter,...
+                    [D,idx,idx_shift] = matRad_shift(V(ix), ct.cubeDim, stf(i).sourcePoint_bev,...
+                        stf(i).ray(j).targetPoint_bev, stf.isoCenter,...
                         [ct.resolution.x ct.resolution.y ct.resolution.z],...
-                        [stf(i).gantryAngle stf(i).couchAngle], posx(c), posz(c));
+                        [stf(i).gantryAngle stf(i).couchAngle], posx(c), posz(c),...
+                        rotMat_system_T);
                     
                     % take radiation depths of the ray
                     radDepthsMat = zeros(ct.cubeDim);
                     radDepthsMat(V) = radDepthV{1};
-                    radDepths = radDepthsMat(idx);
+%                     radDepths = radDepthsMat(idx);
                     
                     % The one below was a try of using intepolation instead
                     % of rounding
                     
-%                     radDepths = interp3(radDepthsMat,D(:,1),D(:,2),D(:,3),'cubic');
+                    radDepths = interp3(radDepthsMat,D(:,1)./ct.resolution.x,...
+                        D(:,2)./ct.resolution.y,D(:,3)./ct.resolution.z,'cubic');
                     % near the border there are some points which get
                     % negative values because of interpolation. We can
                     % assume them zero because they are outside of the area
-%                     radDepths(radDepths<0) = 0;
+                    radDepths(radDepths<0) = 0;
                     radDepths(isnan(radDepths)) = 0;
                     
                     radialDist_sq = (latDistsX+posx(c)).^2 + (latDistsZ+posz(c)).^2;

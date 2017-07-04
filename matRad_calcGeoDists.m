@@ -104,6 +104,9 @@ if nargout > 4
     % latDists
     latDistsX = latDistsX(subsetMask);
     latDistsZ = latDistsZ(subsetMask);
+    rad_distancesSq = NaN;
+    isoLatDistsX    = NaN;
+    isoLatDistsZ    = NaN;
 else
     % return radial distances squared
     if nargout > 1
