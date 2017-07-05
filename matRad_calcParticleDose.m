@@ -214,6 +214,9 @@ for i = 1:dij.numOfBeams % loop over all beams
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
     fprintf('done.\n');
     
+    radDepthsMat = zeros(ct.cubeDim);
+    radDepthsMat(V) = radDepthV{1};
+    
     for j = 1:stf(i).numOfRays % loop over all rays
         
         if ~isempty(stf(i).ray(j).energy)
@@ -284,20 +287,30 @@ for i = 1:dij.numOfBeams % loop over all beams
                         rotMat_system_T);
                     
                     % take radiation depths of the ray
-                    radDepthsMat = zeros(ct.cubeDim);
-                    radDepthsMat(V) = radDepthV{1};
-%                     radDepths = radDepthsMat(idx);
+%                     radDepthsMat = zeros(ct.cubeDim);
+%                     radDepthsMat(V) = radDepthV{1};
+%                       radDepths = radDepthsMat(idx);
+%                       rdIndex = radDepthsMat(idx) == 0;
+%                     zeroIdx = radDepthsX == 0;
                     
                     % The one below was a try of using intepolation instead
                     % of rounding
                     
                     radDepths = interp3(radDepthsMat,D(:,1)./ct.resolution.x,...
-                        D(:,2)./ct.resolution.y,D(:,3)./ct.resolution.z,'cubic');
+                        D(:,2)./ct.resolution.y,D(:,3)./ct.resolution.z,'linear');
                     % near the border there are some points which get
                     % negative values because of interpolation. We can
                     % assume them zero because they are outside of the area
+%                     radDepths(zeroIdx) = 0;
+%                     radDepths(abs(radDepths-radDepthsX)>5./100.*radDepthsX) = radDepthsX(abs(radDepths-radDepthsX)>5./100.*radDepthsX);
+%                     radDepths(rdIndex) = 0;
                     radDepths(radDepths<0) = 0;
                     radDepths(isnan(radDepths)) = 0;
+                    [CommonData] = intersect(idx,cst{1,4}{1});
+%                     idx2 = idx(ismember(idx,CommonData));
+%                     [~,idx2Body] = intersect(idx,idx2);
+                    radDepths(~ismember(idx,CommonData)) = 0;
+                    
                     
                     radialDist_sq = (latDistsX+posx(c)).^2 + (latDistsZ+posz(c)).^2;
                     

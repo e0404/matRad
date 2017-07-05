@@ -24,8 +24,8 @@ target(3) = target(3) + Dz;
 source(1) = source(1) + Dz;
 source(3) = source(3) + Dz;
 
-target = target * rotMat + iso;
-source = source * rotMat + iso;
+target = target * rotMat' + iso;
+source = source * rotMat' + iso;
 
 % convert index in coordinates
 [coord(:,2),coord(:,1),coord(:,3)] = ind2sub(dim,initIx);
