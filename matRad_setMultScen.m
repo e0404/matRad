@@ -118,12 +118,9 @@ if numel(isoShiftVec{1}) + numel(isoShiftVec{2}) + numel(isoShiftVec{3}) > 0
        end
    end
 end
-% NOTE: if you delete the zero rows matching of isoMask is lost
-% delete all zero rows
-isoShift( ~any(isoShift,2), : ) = [];
-% attach zero row in the first line
-if uIn.includeNomScen || isempty(isoShift)
-   isoShift       = [0 0 0; isoShift];
+
+if isempty(isoShift)
+   isoShift       = [0 0 0];
 end
 
 numOfShiftScen = size(isoShift,1);
@@ -192,15 +189,21 @@ end
  end
 
 % combine setup and range scenarios according to scenCombType
-
 switch uIn.scenCombType
-   
-    case 'individual'
+      
+    case 'individual' % combine setup and range scenarios individually
 
-       scenForProb                             = zeros(size(isoShift,1) + size(rangeShift,1),5);
-       scenForProb(1:size(isoShift,1),1:3)     = isoShift;
-       scenForProb(size(isoShift,1)+1:end,4:5) = rangeShift;
-
+       % range errors should come first
+       if uIn.includeNomScen
+          scenForProb                                = zeros(size(isoShift,1)-1 + size(rangeShift,1),5);
+          scenForProb(1:size(rangeShift,1),4:5)      = rangeShift;
+          scenForProb(size(rangeShift,1)+1:end,1:3)  = isoShift(2:end,:);
+       else
+           scenForProb                               = zeros(size(isoShift,1) + size(rangeShift,1),5);
+           scenForProb(1:size(rangeShift,1),4:5)     = rangeShift;
+           scenForProb(size(rangeShift,1)+1:end,1:3) = isoShift;
+       end
+       
     case 'permuted'
 
         scenForProb  = zeros(size(isoShift,1) * size(rangeShift,1),5);
@@ -220,9 +223,10 @@ switch uIn.scenCombType
         scenForProb(1:end,4:5) = rangeShift; 
 
        else
-           matRad_dispToConsole('number of setup and range scenarios is not the same \n',[],'warning');
+           matRad_dispToConsole('number of setup and range scenarios MUST be the same \n',[],'warning');
            uIn.scenCombType = 'individual';
-           multScen = matRad_setMultScen(uIn);
+           multScen         = matRad_setMultScen(uIn);
+           scenForProb      = multScen.scenForProb;
        end
 end
 
@@ -248,38 +252,40 @@ scenMask(:,1,1) = true; % ct scenarios
 
 % switch between combination modes here
 % only makes scence when numOfShiftScen>0 and numOfRangeShiftScen>0;
-
 if numOfShiftScen > 0 && numOfRangeShiftScen > 0
    switch uIn.scenCombType
        case 'individual'
+          
+            % get all setup scenarios
+           [~,ixUnq] = unique(scenForProb(:,1:3),'rows','stable');
+          
+           scenMask  = false(uIn.numOfCtScen, length(ixUnq), numOfRangeShiftScen);
+          
            scenMask(1,:,1) = true; % iso shift scenarios
            scenMask(1,1,:) = true; % range shift scenarios
+           
        case 'permuted'
+          
            scenMask(:,:,:) = true;
+           
        case 'combined'
           
-          scenMask(1,:,1) = true; % iso shift scenarios
-          scenMask(1,1,1) = true; % range shift scenarios
-          
-%            % determine that matrix is cubic
-%            if isequal(uIn.numOfCtScen, numOfShiftScen, numOfRangeShiftScen)
-%                for i = 1:uIn.numOfCtScen
-%                    scenMask(i,i,i) = true;
-%                end
-%            else
-%                uIn.shiftCombType = 'individual';
-%                matRad_dispToConsole('Isoshift in every direction has to be the same in order to perform direct combination. Performing individually now. Press enter to confirm you noticed.',[],'warning');
-%                pause();
-%                % call the function itself
-%                %multScen = matRad_setMultScen(uIn);
-%            end
+           % determine that matrix is cubic (ignore ct scen)
+           if isequal(numOfShiftScen, numOfRangeShiftScen)
+               for i = 1:uIn.numOfShiftScen
+                   scenMask(1,i,i) = true;
+               end
+           else
+               uIn.shiftCombType = 'individual';
+               matRad_dispToConsole('number of setup and range scenarios MUST be the same \n',[],'warning');
+               scenMask = multScen.scenMask;
+           end
    end
 end
 
 % create linearalized mask where the i row points to the indexes of scenMask
-[x{1}, x{2}, x{3}]        = ind2sub(size(scenMask),find(scenMask));
-linearMask                = cell2mat(x);
-linearMaskAlternative     = find(scenMask); 
+[x{1}, x{2}, x{3}]       = ind2sub(size(scenMask),find(scenMask));
+linearMask               = cell2mat(x);
 
 % get number of scenarios
 totalNumScen             = size(linearMask, 1);

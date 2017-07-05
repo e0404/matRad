@@ -189,7 +189,7 @@ resultCubes.stdCubeWeighted       = zeros(ct.cubeDim);
 resultCubes.meanCube(param.subIx)         = mean(mRealizations,2);   
 resultCubes.stdCube(param.subIx)          = std(mRealizations,1,2); 
 
-mHelper = repmat(plnTot.multScen.scenProb',size(mRealizations,1),1);
+mHelper = repmat(pln.multScen.scenProb',size(mRealizations,1),1);
 resultCubes.meanCubeWeighted(param.subIx) = (sum(mRealizations .* mHelper,2));
 
 resultCubes.stdCubeWeighted(param.subIx) = ...
