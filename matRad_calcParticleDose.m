@@ -356,12 +356,12 @@ for i = 1:dij.numOfBeams % loop over all beams
                         [~,idxsIntoSft] = intersect(V(ix(currIx)),superIdx);
                         %disp([size(tempBixelDose,1) max(idxsIntoV) size(bixelDose,1) max(idxsIntoTempB)]);
                         bixelDose(idxsIntoSup) = bixelDose(idxsIntoSup) + tempBixelDose(idxsIntoSft);
-                                                                idc = V(ix(currIx)); idc(idxsIntoSft)=[];
-                                                                superIdx = cat(1,superIdx,idc);
-                                                                tempBixelDose(idxsIntoSft)=[];
-                                                                bixelDose = cat(1,bixelDose,tempBixelDose);
-                                                                [superIdx,sortidx]=sort(superIdx);
-                                                                bixelDose = bixelDose(sortidx);
+%                                                                 idc = V(ix(currIx)); idc(idxsIntoSft)=[];
+%                                                                 superIdx = cat(1,superIdx,idc);
+%                                                                 tempBixelDose(idxsIntoSft)=[];
+%                                                                 bixelDose = cat(1,bixelDose,tempBixelDose);
+%                                                                 [superIdx,sortidx]=sort(superIdx);
+%                                                                 bixelDose = bixelDose(sortidx);
                     else
                         bixelDose = finalWeight(c).*matRad_calcParticleDoseBixel(...
                             radDepths(currIx), ...
