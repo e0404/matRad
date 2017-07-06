@@ -94,6 +94,9 @@ end
 V = [cst{:,4}];
 V = unique(vertcat(V{:}));
 
+% voxels in the whole ct volume
+% V = 1:numel(ct.cube{1});
+
 % Convert CT subscripts to linear indices.
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
 
@@ -197,7 +200,7 @@ for i = 1:dij.numOfBeams % loop over all beams
     % Calcualte radiological depth cube
     lateralCutoffRayTracing = 50;
     fprintf('matRad: calculate radiological depth cube...');
-    radDepthV = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoffRayTracing);
+    [radDepthsMat, radDepthV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoffRayTracing);
     
     fprintf('done.\n');
     
@@ -214,8 +217,8 @@ for i = 1:dij.numOfBeams % loop over all beams
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
     fprintf('done.\n');
     
-    radDepthsMat = zeros(ct.cubeDim);
-    radDepthsMat(V) = radDepthV{1};
+%     radDepthsMat = zeros(ct.cubeDim);
+%     radDepthsMat(V) = radDepthV{1};
     
     for j = 1:stf(i).numOfRays % loop over all rays
         
@@ -306,10 +309,10 @@ for i = 1:dij.numOfBeams % loop over all beams
 %                     radDepths(rdIndex) = 0;
                     radDepths(radDepths<0) = 0;
                     radDepths(isnan(radDepths)) = 0;
-                    [CommonData] = intersect(idx,cst{1,4}{1});
+%                     [CommonData] = intersect(idx,cst{1,4}{1});
 %                     idx2 = idx(ismember(idx,CommonData));
 %                     [~,idx2Body] = intersect(idx,idx2);
-                    radDepths(~ismember(idx,CommonData)) = 0;
+%                     radDepths(~ismember(idx,CommonData)) = 0;
                     
                     
                     radialDist_sq = (latDistsX+posx(c)).^2 + (latDistsZ+posz(c)).^2;

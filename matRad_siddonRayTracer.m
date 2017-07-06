@@ -112,46 +112,53 @@ alpha_max = min([1 max(aX_1,aX_end) max(aY_1,aY_end) max(aZ_1,aZ_end)]);
 % eq 6
 % Calculate the range of indeces who gives parametric values for
 % intersected planes.
-if targetPoint(1) == sourcePoint(1)
-    i_min = []; i_max = [];
-elseif targetPoint(1) > sourcePoint(1)
-    i_min = xNumPlanes - (xPlane_end - alpha_min * (targetPoint(1) - sourcePoint(1)) - sourcePoint(1))/resolution.x;
-    i_max = 1          + (sourcePoint(1) + alpha_max * (targetPoint(1) - sourcePoint(1)) - xPlane_1)/resolution.x;
-    % rounding
-    i_min = ceil(1/1000*(round(1000*i_min)));
-    i_max = floor(1/1000*(round(1000*i_max)));
-else
-    i_min = xNumPlanes - (xPlane_end - alpha_max * (targetPoint(1) - sourcePoint(1)) - sourcePoint(1))/resolution.x;
-    i_max = 1          + (sourcePoint(1) + alpha_min * (targetPoint(1) - sourcePoint(1)) - xPlane_1)/resolution.x;
-    i_min = ceil(1/1000*(round(1000*i_min)));
-    i_max = floor(1/1000*(round(1000*i_max)));
-end
-if targetPoint(2) == sourcePoint(2)
-    j_min = []; j_max = [];
-elseif targetPoint(2) > sourcePoint(2)
-    j_min = yNumPlanes - (yPlane_end - alpha_min * (targetPoint(2) - sourcePoint(2)) - sourcePoint(2))/resolution.y;
-    j_max = 1          + (sourcePoint(2) + alpha_max * (targetPoint(2) - sourcePoint(2)) - yPlane_1)/resolution.y;
-    j_min = ceil(1/1000*(round(1000*j_min)));
-    j_max = floor(1/1000*(round(1000*j_max)));
-else
-    j_min = yNumPlanes - (yPlane_end - alpha_max * (targetPoint(2) - sourcePoint(2)) - sourcePoint(2))/resolution.y;
-    j_max = 1          + (sourcePoint(2) + alpha_min * (targetPoint(2) - sourcePoint(2)) - yPlane_1)/resolution.y;
-    j_min = ceil(1/1000*(round(1000*j_min)));
-    j_max = floor(1/1000*(round(1000*j_max)));
-end
-if targetPoint(3) == sourcePoint(3)
-    k_min = []; k_max = [];
-elseif targetPoint(3) >= sourcePoint(3)
-    k_min = zNumPlanes - (zPlane_end - alpha_min * (targetPoint(3) - sourcePoint(3)) - sourcePoint(3))/resolution.z;
-    k_max = 1          + (sourcePoint(3) + alpha_max * (targetPoint(3) - sourcePoint(3)) - zPlane_1)/resolution.z;
-    k_min = ceil(1/1000*(round(1000*k_min)));
-    k_max = floor(1/1000*(round(1000*k_max)));
-else
-    k_min = zNumPlanes - (zPlane_end - alpha_max * (targetPoint(3) - sourcePoint(3)) - sourcePoint(3))/resolution.z;
-    k_max = 1          + (sourcePoint(3) + alpha_min * (targetPoint(3) - sourcePoint(3)) - zPlane_1)/resolution.z;
-    k_min = ceil(1/1000*(round(1000*k_min)));
-    k_max = floor(1/1000*(round(1000*k_max)));
-end
+% if targetPoint(1) == sourcePoint(1)
+%     i_min = []; i_max = [];
+% elseif targetPoint(1) > sourcePoint(1)
+%     i_min = xNumPlanes - (xPlane_end - alpha_min * (targetPoint(1) - sourcePoint(1)) - sourcePoint(1))/resolution.x;
+%     i_max = 1          + (sourcePoint(1) + alpha_max * (targetPoint(1) - sourcePoint(1)) - xPlane_1)/resolution.x;
+%     % rounding
+%     i_min = ceil(1/1000*(round(1000*i_min)));
+%     i_max = floor(1/1000*(round(1000*i_max)));
+% else
+%     i_min = xNumPlanes - (xPlane_end - alpha_max * (targetPoint(1) - sourcePoint(1)) - sourcePoint(1))/resolution.x;
+%     i_max = 1          + (sourcePoint(1) + alpha_min * (targetPoint(1) - sourcePoint(1)) - xPlane_1)/resolution.x;
+%     i_min = ceil(1/1000*(round(1000*i_min)));
+%     i_max = floor(1/1000*(round(1000*i_max)));
+% end
+% if targetPoint(2) == sourcePoint(2)
+%     j_min = []; j_max = [];
+% elseif targetPoint(2) > sourcePoint(2)
+%     j_min = yNumPlanes - (yPlane_end - alpha_min * (targetPoint(2) - sourcePoint(2)) - sourcePoint(2))/resolution.y;
+%     j_max = 1          + (sourcePoint(2) + alpha_max * (targetPoint(2) - sourcePoint(2)) - yPlane_1)/resolution.y;
+%     j_min = ceil(1/1000*(round(1000*j_min)));
+%     j_max = floor(1/1000*(round(1000*j_max)));
+% else
+%     j_min = yNumPlanes - (yPlane_end - alpha_max * (targetPoint(2) - sourcePoint(2)) - sourcePoint(2))/resolution.y;
+%     j_max = 1          + (sourcePoint(2) + alpha_min * (targetPoint(2) - sourcePoint(2)) - yPlane_1)/resolution.y;
+%     j_min = ceil(1/1000*(round(1000*j_min)));
+%     j_max = floor(1/1000*(round(1000*j_max)));
+% end
+% if targetPoint(3) == sourcePoint(3)
+%     k_min = []; k_max = [];
+% elseif targetPoint(3) >= sourcePoint(3)
+%     k_min = zNumPlanes - (zPlane_end - alpha_min * (targetPoint(3) - sourcePoint(3)) - sourcePoint(3))/resolution.z;
+%     k_max = 1          + (sourcePoint(3) + alpha_max * (targetPoint(3) - sourcePoint(3)) - zPlane_1)/resolution.z;
+%     k_min = ceil(1/1000*(round(1000*k_min)));
+%     k_max = floor(1/1000*(round(1000*k_max)));
+% else
+%     k_min = zNumPlanes - (zPlane_end - alpha_max * (targetPoint(3) - sourcePoint(3)) - sourcePoint(3))/resolution.z;
+%     k_max = 1          + (sourcePoint(3) + alpha_min * (targetPoint(3) - sourcePoint(3)) - zPlane_1)/resolution.z;
+%     k_min = ceil(1/1000*(round(1000*k_min)));
+%     k_max = floor(1/1000*(round(1000*k_max)));
+% end
+i_min = 1;
+j_min = 1;
+k_min = 1;
+i_max = size(cubes{1},1);
+j_max = size(cubes{1},2);
+k_max = size(cubes{1},3);
+
 
 % eq 7
 % For the given range of indices, calculate the paremetrics values who
@@ -213,7 +220,10 @@ j(j>yNumPlanes-1) = yNumPlanes-1;
 k(k>zNumPlanes-1) = zNumPlanes-1;
 
 % Convert to linear indices
-ix = j + (i-1)*size(cubes{1},1) + (k-1)*size(cubes{1},1)*size(cubes{1},2); 
+% ix = j + (i-1)*size(cubes{1},1) + (k-1)*size(cubes{1},1)*size(cubes{1},2); 
+ix = sub2ind(size(cubes{1}),j,i,k);
+ix(isnan(ix)) = [];
+l(isinf(l)) = [];
 
 % obtains the values from cubes
 rho = cell(numel(cubes),1);
