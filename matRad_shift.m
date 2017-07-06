@@ -62,7 +62,7 @@ projCoord = bsxfun(@plus,targetPoint,pointToEndDist*A2Bnorm);
 D = round(bsxfun(@rdivide,projCoord,res));
 
 % delete every point which goes out of the matrix
-D( D(:,1)<1 | D(:,1)>dim(1) | D(:,2)<1 | D(:,2)>dim(2) | D(:,3)<1 | D(:,3)>dim(3), :) = [];
+% D( D(:,1)<1 | D(:,1)>dim(1) | D(:,2)<1 | D(:,2)>dim(2) | D(:,3)<1 | D(:,3)>dim(3), :) = [];
 
 % index the found coordinates
  idx = sub2ind(dim,D(:,2),D(:,1),D(:,3));
