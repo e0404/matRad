@@ -94,8 +94,9 @@ end
 V = [cst{:,4}];
 V = unique(vertcat(V{:}));
 
-% voxels in the whole ct volume
-% V = 1:numel(ct.cube{1});
+% Security extension of V;
+[xv,yv,zv] = ind2sub(ct.cubeDim,V);
+
 
 % Convert CT subscripts to linear indices.
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
@@ -355,12 +356,12 @@ for i = 1:dij.numOfBeams % loop over all beams
                         [~,idxsIntoSft] = intersect(V(ix(currIx)),superIdx);
                         %disp([size(tempBixelDose,1) max(idxsIntoV) size(bixelDose,1) max(idxsIntoTempB)]);
                         bixelDose(idxsIntoSup) = bixelDose(idxsIntoSup) + tempBixelDose(idxsIntoSft);
-%                                                                 idc = V(ix(currIx)); idc(idxsIntoSft)=[];
-%                                                                 superIdx = cat(1,superIdx,idc);
-%                                                                 tempBixelDose(idxsIntoSft)=[];
-%                                                                 bixelDose = cat(1,bixelDose,tempBixelDose);
-%                                                                 [superIdx,sortidx]=sort(superIdx);
-%                                                                 bixelDose = bixelDose(sortidx);
+                                                                idc = V(ix(currIx)); idc(idxsIntoSft)=[];
+                                                                superIdx = cat(1,superIdx,idc);
+                                                                tempBixelDose(idxsIntoSft)=[];
+                                                                bixelDose = cat(1,bixelDose,tempBixelDose);
+                                                                [superIdx,sortidx]=sort(superIdx);
+                                                                bixelDose = bixelDose(sortidx);
                     else
                         bixelDose = finalWeight(c).*matRad_calcParticleDoseBixel(...
                             radDepths(currIx), ...
@@ -372,16 +373,6 @@ for i = 1:dij.numOfBeams % loop over all beams
                         % sub-sample
                         superIdx = V(ix(currIx));
                     end
-                    %                     tempBixelIdx = V(ix(currIx));
-                    %                 % calculate particle dose for bixel k on ray j of beam i
-                    %                 bixelDose = matRad_calcParticleDoseBixel(...
-                    %                     radDepths(currIx), ...
-                    %                     radialDist_sq(currIx), ...
-                    %                     stf(i).ray(j).SSD, ...
-                    %                     stf(i).ray(j).focusIx(k), ...
-                    %                     machine.data(energyIx));
-                    
-                    
                     
                     % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
                     %relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose
