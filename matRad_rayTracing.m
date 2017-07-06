@@ -112,8 +112,9 @@ for i = 1:size(rayMx_world,1)
     x_dist = coords(ixHitVoxel,1).*scale_factor - rayMx_bev(i,1);
     z_dist = coords(ixHitVoxel,3).*scale_factor - rayMx_bev(i,3);
 
-    ixRememberFromCurrTracing = x_dist > -raySelection & x_dist <= raySelection ...
-                              & z_dist > -raySelection & z_dist <= raySelection;
+    ixRememberFromCurrTracing = (x_dist > -raySelection & x_dist <= raySelection ...
+                               & z_dist > -raySelection & z_dist <= raySelection) ...
+                               | isinf(scale_factor);
 
     if any(ixRememberFromCurrTracing) > 0
 
@@ -128,8 +129,8 @@ for i = 1:size(rayMx_world,1)
             dCum = cumsum(d)-d/2;
 
             % write radiological depth for voxel which we want to remember
-%             radDepthCube{j}(ixHitVoxel(ixRememberFromCurrTracing)) = dCum(ixRememberFromCurrTracing);
-            radDepthCube{j}(ixHitVoxel) = dCum;
+            radDepthCube{j}(ixHitVoxel(ixRememberFromCurrTracing)) = dCum(ixRememberFromCurrTracing);
+
         end
     end  
     

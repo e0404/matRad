@@ -1,7 +1,7 @@
 function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad particle dose calculation wrapper
-%
+% 
 % call
 %   dij = matRad_calcParticleDose(ct,stf,pln,cst)
 %
@@ -93,10 +93,6 @@ end
 % Only take voxels inside patient.
 V = [cst{:,4}];
 V = unique(vertcat(V{:}));
-
-% Security extension of V;
-[xv,yv,zv] = ind2sub(ct.cubeDim,V);
-
 
 % Convert CT subscripts to linear indices.
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
@@ -201,7 +197,7 @@ for i = 1:dij.numOfBeams % loop over all beams
     % Calcualte radiological depth cube
     lateralCutoffRayTracing = 50;
     fprintf('matRad: calculate radiological depth cube...');
-    [radDepthsMat, radDepthV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoffRayTracing);
+    [radDepthCube, radDepthV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoffRayTracing);
     
     fprintf('done.\n');
     
@@ -232,13 +228,14 @@ for i = 1:dij.numOfBeams % loop over all beams
             maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
             
             % Ray tracing for beam i and ray j
-            [ix,~,~,~,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
+            [ix,radialDist_sq,~,~,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
                                                                  stf(i).sourcePoint_bev, ...
                                                                  stf(i).ray(j).targetPoint_bev, ...
                                                                  machine.meta.SAD, ...
                                                                  radDepthIx, ...
                                                                  maxLateralCutoffDoseCalc);
-            % radDepths = radDepthV{1}(ix);
+            %                                                 
+            radDepthsCrop = radDepthV{1}(ix);
             
             % just use tissue classes of voxels found by ray tracer
             if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ...
@@ -271,83 +268,63 @@ for i = 1:dij.numOfBeams % loop over all beams
                 energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
                 
                 % evaluate the initial sigma of the sampling beam
-                SigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist(stf(i).ray(j).focusIx(k),:)',machine.data(energyIx).initFocus.sigma(stf(i).ray(j).focusIx(k),:)',stf(i).ray(j).SSD);
+                sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist(stf(i).ray(j).focusIx(k),:)',machine.data(energyIx).initFocus.sigma(stf(i).ray(j).focusIx(k),:)',stf(i).ray(j).SSD);
                 
-                % Given the initial sigma of the sampling beam, this
+                % find depth depended lateral cut off
+                if cutOffLevel >= 1
+                    currIx = radDepthsCrop <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset;
+                elseif cutOffLevel < 1 && cutOffLevel > 0
+                    % perform rough 2D clipping
+                    currIx = radDepthsCrop <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset & ...
+                        radialDist_sq <= max(machine.data(energyIx).LatCutOff.CutOff.^2);
+
+                    % peform fine 2D clipping
+                    if length(machine.data(energyIx).LatCutOff.CutOff) > 1
+                        currIx(currIx) = matRad_interp1((machine.data(energyIx).LatCutOff.depths + machine.data(energyIx).offset)',...
+                            (machine.data(energyIx).LatCutOff.CutOff.^2)', radDepthsCrop(currIx)) >= radialDist_sq(currIx);
+                    end
+                else
+                    error('cutoff must be a value between 0 and 1')
+                end
+
+                % empty bixels may happen during recalculation of error
+                % scenarios -> skip to next bixel
+                if ~any(currIx)
+                    continue;
+                end
+                    
+                    % Given the initial sigma of the sampling beam, this
                 % function provides the weights for the sub-pencil beams,
                 % their positions and their sigma used for dose calculation
-                [finalWeight, sigma_sub, posx, posz, numOfSub] = ...
-                    matRad_calcWeights(SigmaIni, 2, 'circle');
+                [finalWeight, sigmaSub, posX, posZ, numOfSub] = ...
+                    matRad_calcWeights(sigmaIni, 2, 'circle');
                 
                 % run over components
                 for c = 1:numOfSub
-                    
-                    % This funtion gives the projection the index V(ix) on
-                    % the considered ray.
-                    [D,idx] = matRad_shift(V(ix), ct.cubeDim, stf(i).sourcePoint_bev,...
+
+                    % project coordinates to central ray
+                    projCoords = matRad_shift(V(ix(currIx)), ct.cubeDim, stf(i).sourcePoint_bev,...
                         stf(i).ray(j).targetPoint_bev, stf.isoCenter,...
                         [ct.resolution.x ct.resolution.y ct.resolution.z],...
-                        posx(c), posz(c),...
+                        posX(c), posZ(c),...
                         rotMat_system_T);
+                                       
+                    % interpolate radiological depths at projected
+                    % coordinates
+                    radDepths = interp3(radDepthCube,projCoords(:,1)./ct.resolution.x,...
+                        projCoords(:,2)./ct.resolution.y,projCoords(:,3)./ct.resolution.z,'linear');
                     
-                    % take radiation depths of the ray
-%                     radDepthsMat = zeros(ct.cubeDim);
-%                     radDepthsMat(V) = radDepthV{1};
-%                       radDepths = radDepthsMat(idx);
-%                       rdIndex = radDepthsMat(idx) == 0;
-%                     zeroIdx = radDepthsX == 0;
-                    
-                    % The one below was a try of using intepolation instead
-                    % of rounding
-                    
-                    radDepths = interp3(radDepthsMat,D(:,1)./ct.resolution.x,...
-                        D(:,2)./ct.resolution.y,D(:,3)./ct.resolution.z,'linear');
-                    % near the border there are some points which get
-                    % negative values because of interpolation. We can
-                    % assume them zero because they are outside of the area
-%                     radDepths(zeroIdx) = 0;
-%                     radDepths(abs(radDepths-radDepthsX)>5./100.*radDepthsX) = radDepthsX(abs(radDepths-radDepthsX)>5./100.*radDepthsX);
-%                     radDepths(rdIndex) = 0;
-                    radDepths(radDepths<0) = 0;
-                    radDepths(isnan(radDepths)) = 0;
-%                     [CommonData] = intersect(idx,cst{1,4}{1});
-%                     idx2 = idx(ismember(idx,CommonData));
-%                     [~,idx2Body] = intersect(idx,idx2);
-%                     radDepths(~ismember(idx,CommonData)) = 0;
-                    
-                    
-                    radialDist_sq = (latDistsX+posx(c)).^2 + (latDistsZ+posz(c)).^2;
-                    
-                    % find depth depended lateral cut off
-                    if cutOffLevel >= 1
-                        currIx = radDepths <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset;
-                    elseif cutOffLevel < 1 && cutOffLevel > 0
-                        % perform rough 2D clipping
-                        currIx = radDepths <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset & ...
-                            radialDist_sq <= max(machine.data(energyIx).LatCutOff.CutOff.^2);
-                        
-                        % peform fine 2D clipping
-                        if length(machine.data(energyIx).LatCutOff.CutOff) > 1
-                            currIx(currIx) = matRad_interp1((machine.data(energyIx).LatCutOff.depths + machine.data(energyIx).offset)',...
-                                (machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= radialDist_sq(currIx);
-                        end
-                    else
-                        error('cutoff must be a value between 0 and 1')
-                    end
-                    
-                    % empty bixels may happen during recalculation of error
-                    % scenarios -> skip to next bixel
-                    if ~any(currIx)
-                        continue;
-                    end
-                    
+                    % compute radial distances relative to pencil beam
+                    % component
+                    currRadialDist_sq = (latDistsX(currIx)+posX(c)).^2 + (latDistsZ(currIx)+posZ(c)).^2;
+                                        
                     % discriminate if is the first sub-sample (the central
                     % one) or the followings
                     if c>1
-                        tempBixelDose =finalWeight(c).*matRad_calcParticleDoseBixel(...
-                            radDepths(currIx), ...
-                            radialDist_sq(currIx), ...
-                            sigma_sub, ...
+                        tempBixelDose = finalWeight(c).*matRad_calcParticleDoseBixel(...
+                            radDepths, ...
+                            currRadialDist_sq, ...
+                            sigmaSub, ...
                             machine.data(energyIx));
                         
                         % we want to add only the contribution on the
@@ -364,9 +341,9 @@ for i = 1:dij.numOfBeams % loop over all beams
 %                                                                 bixelDose = bixelDose(sortidx);
                     else
                         bixelDose = finalWeight(c).*matRad_calcParticleDoseBixel(...
-                            radDepths(currIx), ...
-                            radialDist_sq(currIx), ...
-                            sigma_sub, ...
+                            radDepths, ...
+                            currRadialDist_sq, ...
+                            sigmaSub, ...
                             machine.data(energyIx));
                         
                         % need to remember the index of the central

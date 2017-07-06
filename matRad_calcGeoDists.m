@@ -99,25 +99,20 @@ subsetMask = rad_distancesSq ./ rot_coords_temp(:,2).^2 <= lateralCutOff^2 /SAD^
 % return index list within considered voxels
 ix = radDepthIx(subsetMask);
 
+% return radial distances squared
+rad_distancesSq = rad_distancesSq(subsetMask);
+
 % compute output only when requested (save computation time)
 if nargout > 4
     % latDists
     latDistsX = latDistsX(subsetMask);
     latDistsZ = latDistsZ(subsetMask);
-    rad_distancesSq = NaN;
     isoLatDistsX    = NaN;
     isoLatDistsZ    = NaN;
-else
-    % return radial distances squared
-    if nargout > 1
-        rad_distancesSq = rad_distancesSq(subsetMask);
-    end
-
+elseif nargout > 2
     % lateral distances projected to iso center plane
-    if nargout > 2
-       isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
-       isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD; 
-    end   
+    isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
+    isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD; 
 end
 
     

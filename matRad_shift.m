@@ -38,7 +38,7 @@ function [projCoord,idx,targetPoint, sourcePoint] = matRad_shift(initIx,dim,sour
 % add offset to target and source point in bev
 targetPoint_bev(1) = targetPoint_bev(1) + Dx;
 targetPoint_bev(3) = targetPoint_bev(3) + Dz;
-sourcePoint_bev(1) = sourcePoint_bev(1) + Dz;
+sourcePoint_bev(1) = sourcePoint_bev(1) + Dx;
 sourcePoint_bev(3) = sourcePoint_bev(3) + Dz;
 
 % rotate in world coord sys and shift by isocenter
