@@ -103,8 +103,8 @@ end
 
 % compute weights at positions
 sig  = X1(2);
-norm = X1(1);
+normSig = X1(1);
 
-finalWeight = norm * (2*pi*sig^2)^(-1) .* exp(-posX(:).^2/(2*(sig^2))) .* exp(-posY(:).^2/(2*(sig^2)));
+finalWeight = normSig * (2*pi*sig^2)^(-1) .* exp(-posX(:).^2/(2*(sig^2))) .* exp(-posY(:).^2/(2*(sig^2)));
 
 

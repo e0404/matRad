@@ -36,14 +36,17 @@ function [projCoord,idx,targetPoint, sourcePoint] = matRad_shift(initIx,dim,sour
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % add offset to target and source point in bev
-targetPoint_bev(1) = targetPoint_bev(1) + Dx;
-targetPoint_bev(3) = targetPoint_bev(3) + Dz;
-sourcePoint_bev(1) = sourcePoint_bev(1) + Dx;
-sourcePoint_bev(3) = sourcePoint_bev(3) + Dz;
+
+targetPoint_bevVec = targetPoint_bev(2).*ones([length(Dx) 3]);
+targetPoint_bevVec(:,1) = bsxfun(@plus,Dx,targetPoint_bev(1));
+targetPoint_bevVec(:,3) = bsxfun(@plus,Dz',targetPoint_bev(3));
+sourcePoint_bevVec = sourcePoint_bev(2).*ones([length(Dz) 3]);
+sourcePoint_bevVec(:,1) = bsxfun(@plus,Dx,sourcePoint_bev(1));
+sourcePoint_bevVec(:,3) = bsxfun(@plus,Dz,sourcePoint_bev(3));
 
 % rotate in world coord sys and shift by isocenter
-targetPoint = targetPoint_bev * rotMat' + isoCenter;
-sourcePoint = sourcePoint_bev * rotMat' + isoCenter;
+targetPoint = bsxfun(@plus,targetPoint_bevVec * rotMat', isoCenter);
+sourcePoint = bsxfun(@plus,sourcePoint_bevVec * rotMat', isoCenter);
 
 % convert index in coordinates
 [coord(:,2),coord(:,1),coord(:,3)] = ind2sub(dim,initIx);
@@ -51,12 +54,16 @@ coord = bsxfun(@times,coord,res);
 
 % distance of points Bvec from the projection of points coord onto the line between A 
 A2Bnorm = (targetPoint-sourcePoint)/norm(targetPoint-sourcePoint);
-pointToEndDist = bsxfun(@minus,coord,targetPoint)*A2Bnorm';
+
+% We just use the first row of targetPoint because the distance from one
+% end to the projected point does not change for parallel translations of
+% the ray
+pointToEndDist = bsxfun(@minus,coord,targetPoint(1,:))*A2Bnorm';
 
 % add translation to the extreme of the ray, according to spherical coord,
 % in order to obtain the coord of the projected points
 % signvec = sign(Bvec-Avec);
-projCoord = bsxfun(@plus,targetPoint,pointToEndDist*A2Bnorm);
+projCoord = bsxfun(@plus,reshape(targetPoint',[1,3,19]),pointToEndDist*A2Bnorm);
 
 % round to voxel coords
 D = round(bsxfun(@rdivide,projCoord,res));
