@@ -55,27 +55,27 @@ end
 % This parameters come from simulations done previously
 if n == 2
     if strcmp(method,'circle')
-        sigma_sub = 0.8237 * sigma_ray;
-        radius    = 0.6212 * sigma_ray;
-        X1(1)     = 0.3866 * sigma_ray^2;
-        X1(2)     = 0.6225 * sigma_ray;
+        sigma_sub = 0.8237 .* sigma_ray;
+        radius    = 0.6212 .* sigma_ray;
+        X1(1,:)     = 0.3866 .* sigma_ray.^2;
+        X1(2,:)     = 0.6225 .* sigma_ray;
     elseif strcmp(method,'square')
-        sigma_sub = 0.8409 * sigma_ray;
-        radius    = 0.5519 * sigma_ray;
-        X1(1)     = 0.3099 * sigma_ray^2;
-        X1(2)     = 0.5556 * sigma_ray;
+        sigma_sub = 0.8409 .* sigma_ray;
+        radius    = 0.5519 .* sigma_ray;
+        X1(1,:)     = 0.3099 .* sigma_ray.^2;
+        X1(2,:)     = 0.5556 .* sigma_ray;
     end
 elseif n == 3
     if strcmp(method,'circle')
-        sigma_sub = 0.7605 * sigma_ray;
-        radius    = 0.5000 * sigma_ray;
-        X1(1)     = 0.3006 * sigma_ray^2 - 1.3005 * sigma_ray + 7.3097;
-        X1(2)     = 0.6646 * sigma_ray - 0.0044;
+        sigma_sub = 0.7605 .* sigma_ray;
+        radius    = 0.5000 .* sigma_ray;
+        X1(1,:)     = 0.3006 .* sigma_ray.^2 - 1.3005 .* sigma_ray + 7.3097;
+        X1(2,:)     = 0.6646 .* sigma_ray - 0.0044;
     elseif strcmp(method,'square')
-        sigma_sub = 0.8409 * sigma_ray;
-        radius    = 0.5391 * sigma_ray + 0.0856;
-        X1(1)     = 0.3245 * sigma_ray^2 + 0.0001 * sigma_ray - 0.0004;
-        X1(2)     = 0.6290 * sigma_ray - 0.0403;
+        sigma_sub = 0.8409 .* sigma_ray;
+        radius    = 0.5391 .* sigma_ray + 0.0856;
+        X1(1,:)     = 0.3245 .* sigma_ray.^2 + 0.0001 .* sigma_ray - 0.0004;
+        X1(2,:)     = 0.6290 .* sigma_ray - 0.0403;
     end
 end
 
@@ -86,25 +86,26 @@ if strcmp(method,'square')
     posX     = points'*ones(1,2*n +1);
     posY     = posX';
 else
+    dim = size(radius,2);
     numOfSub = (2^n -1)*6 +1;
     ang  = zeros(1,1);
-    posX = zeros(1,1);
-    posY = zeros(1,1);
-    radiusShell = zeros(1,1);
+    posX = zeros(1,dim);
+    posY = zeros(1,dim);
+    radiusShell = zeros(1,dim);
     for i = 1:n
         subsInShell = 6 * 2^(i-1);
         % this takes the sub-beams index in one shell
         ang         = cat(2, ang, pi .* linspace(0,2-2/subsInShell, subsInShell));
-        radiusShell = cat(2, radiusShell, i.*radius.*ones(1, subsInShell));
+        radiusShell = cat(1, radiusShell, ones(subsInShell,1)*(i.*radius));
     end
-    posX = cat(2, posX, posX(1) + radiusShell(2:end).*cos(ang(2:end)));
-    posY = cat(2, posY, posY(1) + radiusShell(2:end).*sin(ang(2:end)));
+    posX = cat(1, posX, bsxfun(@times,cos(ang(2:end))',radiusShell(2:end,:)));
+    posY = cat(1, posY, bsxfun(@times,sin(ang(2:end))',radiusShell(2:end,:)));
 end
 
 % compute weights at positions
-sig  = X1(2);
-normSig = X1(1);
+sig  = ones(size(posX,1),1)*X1(2,:);
+normSig = ones(size(posX,1),1)*X1(1,:);
 
-finalWeight = normSig * (2*pi*sig^2)^(-1) .* exp(-posX(:).^2/(2*(sig^2))) .* exp(-posY(:).^2/(2*(sig^2)));
+finalWeight = normSig .* (2.*pi.*sig.^2).^(-1) .* exp(-posX.^2./(2.*(sig.^2))) .* exp(-posY.^2./(2.*(sig.^2)));
 
 

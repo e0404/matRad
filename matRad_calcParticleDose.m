@@ -243,6 +243,16 @@ for i = 1:dij.numOfBeams % loop over all beams
                 vTissueIndex_j = vTissueIndex(ix,:);
             end
             
+            % we use a function to evaluate simultaneously all the initial
+            % sigma. This function should be made faster
+            sigmaIni = matRad_calcSigmaIni(machine.data,stf(i).ray,stf(i).ray(j).SSD);
+            
+            % Given the initial sigma of the sampling beam, this
+            % function provides the weights for the sub-pencil beams,
+            % their positions and their sigma used for dose calculation
+            [finalWeight, sigmaSub, posX, posZ, numOfSub] = ...
+                matRad_calcWeights(sigmaIni, 2, 'circle');
+            
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
                 
                 counter = counter + 1;
@@ -267,25 +277,22 @@ for i = 1:dij.numOfBeams % loop over all beams
                 % find energy index in base data
                 energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
                 
-% Instead of evaluating sigmaIni here, we could evaluate this for all the
-% energies outside of this loop and move the functions calcWeights and
-% shift outside this loop and inside the ray loop.
-                % evaluate the initial sigma of the sampling beam
-                sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist(stf(i).ray(j).focusIx(k),:)',machine.data(energyIx).initFocus.sigma(stf(i).ray(j).focusIx(k),:)',stf(i).ray(j).SSD);
+                % I gotta think about this...
+                securityOffset = 1;
                 
                 % find depth depended lateral cut off
                 if cutOffLevel >= 1
-                    currIx = radDepthsCrop <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset;
+                    currIx = radDepthsCrop <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset + securityOffset ;
                 elseif cutOffLevel < 1 && cutOffLevel > 0
                     % perform rough 2D clipping
-                    currIx = radDepthsCrop <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset & ...
+                    currIx = radDepthsCrop <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset + securityOffset & ...
                         radialDist_sq <= max(machine.data(energyIx).LatCutOff.CutOff.^2);
 
                     % peform fine 2D clipping
-                    if length(machine.data(energyIx).LatCutOff.CutOff) > 1
-                        currIx(currIx) = matRad_interp1((machine.data(energyIx).LatCutOff.depths + machine.data(energyIx).offset)',...
-                            (machine.data(energyIx).LatCutOff.CutOff.^2)', radDepthsCrop(currIx)) >= radialDist_sq(currIx);
-                    end
+%                     if length(machine.data(energyIx).LatCutOff.CutOff) > 1
+%                         currIx(currIx) = matRad_interp1((machine.data(energyIx).LatCutOff.depths + machine.data(energyIx).offset)',...
+%                             (machine.data(energyIx).LatCutOff.CutOff.^2)', radDepthsCrop(currIx)) >= radialDist_sq(currIx);
+%                     end
                 else
                     error('cutoff must be a value between 0 and 1')
                 end
@@ -295,19 +302,13 @@ for i = 1:dij.numOfBeams % loop over all beams
                 if ~any(currIx)
                     continue;
                 end
-                    
-                    % Given the initial sigma of the sampling beam, this
-                % function provides the weights for the sub-pencil beams,
-                % their positions and their sigma used for dose calculation
-                [finalWeight, sigmaSub, posX, posZ, numOfSub] = ...
-                    matRad_calcWeights(sigmaIni, 2, 'circle');
                 
                 % project coordinates to central ray
                 projCoords = matRad_shift(V(ix(currIx)), ct.cubeDim, stf(i).sourcePoint_bev,...
-                    stf(i).ray(j).targetPoint_bev, stf.isoCenter,...
-                    [ct.resolution.x ct.resolution.y ct.resolution.z],...
-                    posX, posZ,...
-                    rotMat_system_T);
+                stf(i).ray(j).targetPoint_bev, stf.isoCenter,...
+                [ct.resolution.x ct.resolution.y ct.resolution.z],...
+                posX(:,k), posZ(:,k),...
+                rotMat_system_T);
                 
                 % interpolate radiological depths at projected
                 % coordinates
@@ -324,10 +325,10 @@ for i = 1:dij.numOfBeams % loop over all beams
                     % discriminate if is the first sub-sample (the central
                     % one) or the followings
                     if c>1
-                        tempBixelDose = finalWeight(c).*matRad_calcParticleDoseBixel(...
+                        tempBixelDose = finalWeight(c,k).*matRad_calcParticleDoseBixel(...
                             radDepths(:,1,c), ...
                             currRadialDist_sq, ...
-                            sigmaSub, ...
+                            sigmaSub(k), ...
                             machine.data(energyIx));
                         
                         % we want to add only the contribution on the
@@ -343,10 +344,10 @@ for i = 1:dij.numOfBeams % loop over all beams
 %                                                                 [superIdx,sortidx]=sort(superIdx);
 %                                                                 bixelDose = bixelDose(sortidx);
                     else
-                        bixelDose = finalWeight(c).*matRad_calcParticleDoseBixel(...
+                        bixelDose = finalWeight(c,k).*matRad_calcParticleDoseBixel(...
                             radDepths(:,1,c), ...
                             currRadialDist_sq, ...
-                            sigmaSub, ...
+                            sigmaSub(k), ...
                             machine.data(energyIx));
                         
                         % need to remember the index of the central
