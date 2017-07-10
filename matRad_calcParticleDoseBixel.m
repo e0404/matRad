@@ -57,6 +57,11 @@ if ~isfield(baseData,'sigma')
     L = baseData.LatCutOff.CompFac * ((1-(X(:,3))).*L_Narr) + (X(:,3).*L_Bro);
 
     dose = X(:,1).*L;
+    
+    % This is dangerous but we need this because, using a currIx evaluated
+    % once for every ray, we get a deeper radiation depths that with
+    % interpolation can give negative results.
+    dose(dose<0) = 0;
 else
     
     % interpolate depth dose and sigma

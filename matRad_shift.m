@@ -37,6 +37,9 @@ function [projCoord,idx,targetPoint, sourcePoint] = matRad_shift(initIx,dim,sour
 
 % add offset to target and source point in bev
 
+Dx = -Dx;
+Dz = -Dz;
+
 targetPoint_bevVec = targetPoint_bev(2).*ones([length(Dx) 3]);
 targetPoint_bevVec(:,1) = bsxfun(@plus,Dx,targetPoint_bev(1));
 targetPoint_bevVec(:,3) = bsxfun(@plus,Dz',targetPoint_bev(3));

@@ -277,15 +277,27 @@ for i = 1:dij.numOfBeams % loop over all beams
                 % find energy index in base data
                 energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
                 
+                % project coordinates to central ray
+                projCoords = matRad_shift(V(ix), ct.cubeDim, stf(i).sourcePoint_bev,...
+                stf(i).ray(j).targetPoint_bev, stf.isoCenter,...
+                [ct.resolution.x ct.resolution.y ct.resolution.z],...
+                posX(:,k), posZ(:,k),...
+                rotMat_system_T);
+                
+                % interpolate radiological depths at projected
+                % coordinates
+                radDepths = interp3(radDepthCube,projCoords(:,1,:)./ct.resolution.x,...
+                    projCoords(:,2,:)./ct.resolution.y,projCoords(:,3,:)./ct.resolution.z,'linear');
+                
                 % I gotta think about this...
-                securityOffset = 1;
+                securityOffset = 0;
                 
                 % find depth depended lateral cut off
                 if cutOffLevel >= 1
-                    currIx = radDepthsCrop <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset + securityOffset ;
+                    currIx = radDepths(:,:,1) <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset + securityOffset ;
                 elseif cutOffLevel < 1 && cutOffLevel > 0
                     % perform rough 2D clipping
-                    currIx = radDepthsCrop <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset + securityOffset & ...
+                    currIx = radDepths(:,:,1) <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset + securityOffset & ...
                         radialDist_sq <= max(machine.data(energyIx).LatCutOff.CutOff.^2);
 
                     % peform fine 2D clipping
@@ -303,18 +315,6 @@ for i = 1:dij.numOfBeams % loop over all beams
                     continue;
                 end
                 
-                % project coordinates to central ray
-                projCoords = matRad_shift(V(ix(currIx)), ct.cubeDim, stf(i).sourcePoint_bev,...
-                stf(i).ray(j).targetPoint_bev, stf.isoCenter,...
-                [ct.resolution.x ct.resolution.y ct.resolution.z],...
-                posX(:,k), posZ(:,k),...
-                rotMat_system_T);
-                
-                % interpolate radiological depths at projected
-                % coordinates
-                radDepths = interp3(radDepthCube,projCoords(:,1,:)./ct.resolution.x,...
-                    projCoords(:,2,:)./ct.resolution.y,projCoords(:,3,:)./ct.resolution.z,'linear');
-                
                 % run over components
                 for c = 1:numOfSub
                     
@@ -326,17 +326,18 @@ for i = 1:dij.numOfBeams % loop over all beams
                     % one) or the followings
                     if c>1
                         tempBixelDose = finalWeight(c,k).*matRad_calcParticleDoseBixel(...
-                            radDepths(:,1,c), ...
+                            radDepths(currIx,1,c), ...
                             currRadialDist_sq, ...
-                            sigmaSub(k), ...
+                            sigmaSub(k)/2, ...
                             machine.data(energyIx));
                         
                         % we want to add only the contribution on the
                         % central sub-sample
-                        [~,idxsIntoSup] = intersect(superIdx,V(ix(currIx)));
-                        [~,idxsIntoSft] = intersect(V(ix(currIx)),superIdx);
+%                         [~,idxsIntoSup] = intersect(superIdx,V(ix(currIx)));
+%                         [~,idxsIntoSft] = intersect(V(ix(currIx)),superIdx);
                         %disp([size(tempBixelDose,1) max(idxsIntoV) size(bixelDose,1) max(idxsIntoTempB)]);
-                        bixelDose(idxsIntoSup) = bixelDose(idxsIntoSup) + tempBixelDose(idxsIntoSft);
+%                         bixelDose(idxsIntoSup) = bixelDose(idxsIntoSup) + tempBixelDose(idxsIntoSft);
+                        bixelDose  = bixelDose + tempBixelDose;
 %                                                                 idc = V(ix(currIx)); idc(idxsIntoSft)=[];
 %                                                                 superIdx = cat(1,superIdx,idc);
 %                                                                 tempBixelDose(idxsIntoSft)=[];
@@ -345,9 +346,9 @@ for i = 1:dij.numOfBeams % loop over all beams
 %                                                                 bixelDose = bixelDose(sortidx);
                     else
                         bixelDose = finalWeight(c,k).*matRad_calcParticleDoseBixel(...
-                            radDepths(:,1,c), ...
+                            radDepths(currIx,1,c), ...
                             currRadialDist_sq, ...
-                            sigmaSub(k), ...
+                            sigmaSub(k)/2, ...
                             machine.data(energyIx));
                         
                         % need to remember the index of the central
