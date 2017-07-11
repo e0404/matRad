@@ -66,7 +66,7 @@ pointToEndDist = bsxfun(@minus,coord,targetPoint(1,:))*A2Bnorm';
 % add translation to the extreme of the ray, according to spherical coord,
 % in order to obtain the coord of the projected points
 % signvec = sign(Bvec-Avec);
-projCoord = bsxfun(@plus,reshape(targetPoint',[1,3,19]),pointToEndDist*A2Bnorm);
+projCoord = bsxfun(@plus,reshape(targetPoint',[1,3,length(Dx)]),pointToEndDist*A2Bnorm);
 
 % round to voxel coords
 D = round(bsxfun(@rdivide,projCoord,res));

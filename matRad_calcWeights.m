@@ -1,4 +1,4 @@
-function [finalWeight, X1, sigma_sub, radius, posX, posY, numOfSub] = matRad_calcWeights(sigma_ray, n, method)
+function [finalWeight, sigma_sub, posX, posY, numOfSub,X1,radius] = matRad_calcWeights(sigma_ray, n, method)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This function calculates weights for a fine sampling pencil beam
 % algorithm
