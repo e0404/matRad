@@ -1,9 +1,9 @@
-function [resultGUI,dij] = matRad_calcDoseDirect(ct,stf,pln,cst,w,multScen)
+function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dose calculation wrapper bypassing dij calculation
 % 
 % call
-%   dij = matRad_calcDoseDirect(ct,stf,pln,cst,w,multScen)
+%   resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst)
 %
 % input
 %   ct:         ct cube
@@ -12,7 +12,6 @@ function [resultGUI,dij] = matRad_calcDoseDirect(ct,stf,pln,cst,w,multScen)
 %   cst:        matRad cst struct
 %   w:          optional (if no weights available in stf): bixel weight
 %               vector
-%   multScen:   matRad multiple scnerio struct
 %
 % output
 %   resultGUI:  matRad result struct
@@ -38,6 +37,9 @@ calcDoseDirect = true;
 
 % copy bixel weight vector into stf struct
 if exist('w','var')
+    if sum([stf.totalNumOfBixels]) ~= numel(w)
+        error('weighting does not match steering information')
+    end
     counter = 0;
     for i = 1:pln.numOfBeams
         for j = 1:stf(i).numOfRays
@@ -51,14 +53,15 @@ end
 
 % dose calculation
 if strcmp(pln.radiationMode,'photons')
-    dij = matRad_calcPhotonDose(ct,stf,pln,cst,multScen,calcDoseDirect);
+    dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect);
     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-    dij = matRad_calcParticleDose(ct,stf,pln,cst,multScen,calcDoseDirect);
+    dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect);
 end
 
 % remember bixel weight
 counter = 0;
+resultGUI.w = NaN * ones(dij.totalNumOfBixels,1);
 for i = 1:pln.numOfBeams
     for j = 1:stf(i).numOfRays
         for k = 1:stf(i).numOfBixelsPerRay(j)
