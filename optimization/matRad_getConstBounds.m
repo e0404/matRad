@@ -84,12 +84,12 @@ elseif isequal(constraint.type, 'min DVH constraint')
     
 elseif isequal(constraint.type, 'min dose constraint (exact)') 
 
-    cl = param * ones(constraint.numCons,1);
-    cu = inf * ones(constraint.numCons,1);
+    cl = param * ones(constraint.numConst,1);
+    cu = inf * ones(constraint.numConst,1);
     
 elseif isequal(constraint.type, 'max dose constraint (exact)') 
 
-    cl = -inf * ones(constraint.numCons,1);
-    cu = param * ones(constraint.numCons,1);
+    cl = -inf * ones(constraint.numConst,1);
+    cu = param * ones(constraint.numConst,1);
         
 end % constraint switch

@@ -55,7 +55,7 @@ for  i = 1:size(cst,1)
                 end
                 
                 if ~isempty(strfind(cst{i,6}(j).type,'(exact)'))
-                    cst{i,6}(j).numCons = size(cst{i,4}{1},1);
+                    cst{i,6}(j).numConst = size(cst{i,4}{1},1);
                 end
 
                 if strcmp(cst{i,6}(j).robustness,'none')
