@@ -90,6 +90,10 @@ elseif isequal(constraint.type, 'max DVH constraint') || ...
     % %c = (deviation).^2'*(deviation).^2;               % squared square devioation
     % alternative constraint calculation 3/4 %
     
+elseif isequal(constraint.type, 'min dose constraint (exact)') || isequal(constraint.type, 'max dose constraint (exact)')
+
+    c = d_i;
+    
 end 
 
 
