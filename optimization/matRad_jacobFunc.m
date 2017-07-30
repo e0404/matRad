@@ -107,6 +107,11 @@ elseif isequal(constraint.type, 'max DVH constraint') || ...
     % jacobVec = (1/size(cst{j,4},1))*2*deviation; % square deviation with normalization
     % %jacobVec = 4*(deviation).^3;                  % squared square devioation
     % alternative constraint calculation 4/4 %
+    
+elseif isequal(constraint.type, 'max dose constraint (exact)') || ...
+       isequal(constraint.type, 'min dose constraint (exact)') 
+
+    jacobVec = ones(numOfVoxels,1);
 
 else
 

@@ -100,6 +100,11 @@ for i = 1:size(cst,1)
                        isequal(cst{i,6}(j).type, 'min DVH constraint')
 
                        jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{i,4}{1},:)))];
+                       
+                    elseif isequal(cst{i,6}(j).type, 'max dose constraint (exact)') || ...
+                           isequal(cst{i,6}(j).type, 'min dose constraint (exact)')
+                       
+                       jacobStruct = [jacobStruct; spones(dij.physicalDose{1}(cst{i,4}{1},:))];
 
                     end
                 

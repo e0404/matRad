@@ -64,6 +64,7 @@ for i = 1:size(cst,1)
                 if (~isequal(cst{i,6}(j).type, 'max dose constraint')      && ~isequal(cst{i,6}(j).type, 'min dose constraint')          &&...
                     ~isequal(cst{i,6}(j).type, 'max mean dose constraint') && ~isequal(cst{i,6}(j).type, 'min mean dose constraint') && ...
                     ~isequal(cst{i,6}(j).type, 'min EUD constraint')       && ~isequal(cst{i,6}(j).type, 'max EUD constraint'))           && ...
+                    ~isequal(cst{i,6}(j).type, 'max dose constraint (exact)') && ~isequal(cst{i,6}(j).type, 'min dose constraint (exact)') &&...
                     isequal(options.bioOpt,'LEMIV_effect')
                      
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
@@ -82,9 +83,14 @@ for i = 1:size(cst,1)
                     scenID2 = [scenID2;ones(numel(cst{i,4}{1}),1)];
                     
                     if isequal(options.bioOpt,'none') && ~isempty(jacobVec) || isequal(options.ID,'protons_const_RBExD')
-
-                       DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
-
+                        
+                        if isequal(cst{i,6}(j).type, 'max dose constraint (exact)') || isequal(cst{i,6}(j).type, 'min dose constraint (exact)')                    
+                            DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1:size(cst{i,4}{1},1),jacobVec,dij.numOfVoxels,size(cst{i,4}{1},1))];
+                            exactOptimization       = 1;
+                        else
+                            DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
+                        end
+                        
                     elseif isequal(options.bioOpt,'LEMIV_effect') && ~isempty(jacobVec)
 
                        mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
@@ -128,7 +134,11 @@ for i = 1:dij.numOfScenarios
 
         if ~isempty(DoseProjection)
             
-            jacobLogical          = (scenID == i);
+            if exist('exactOptimization', 'var') && exactOptimization == 1
+                jacobLogical          = (scenID2 == i);
+            else
+                jacobLogical          = (scenID == i);
+            end
             jacob(jacobLogical,:) = DoseProjection(:,jacobLogical)' * dij.physicalDose{i};
             
         end
