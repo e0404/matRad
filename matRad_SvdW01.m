@@ -17,7 +17,7 @@
 
 clear
 close all
-clc
+% clc
 
 % load patient data, i.e. ct, voi, cst
 
