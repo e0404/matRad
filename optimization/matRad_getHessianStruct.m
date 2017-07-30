@@ -1,4 +1,4 @@
-function jacobStruct = matRad_getHessianStruct(dij,cst)
+function hessianStruct = matRad_getHessianStruct(dij,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian structure function for inverse planning supporting max dose
 % constraint, min dose constraint, min mean dose constraint, max mean dose constraint, 
@@ -72,37 +72,29 @@ for i = 1:size(cst,1)
     end
 end
 
-% Initializes constraints
-jacobStruct = sparse([]);
+% Initializes hessian structure (zero, only linear constraints/objectives)
+hessianStruct = sparse(tril(zeros(dij.totalNumOfBixels)));
 
-% compute objective function for every VOI.
+% check whether there are non-linear constraints/objectives
 for i = 1:size(cst,1)
 
     % Only take OAR or target VOI.
     if ~isempty(cst{i,4}{1}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
 
-        % loop over the number of constraints for the current VOI
+        % loop over the number of constraints/objectives for the current VOI
         for j = 1:numel(cst{i,6})
 
-            % only perform computations for constraints
-            if ~isempty(strfind(cst{i,6}(j).type,'constraint'))
-                
-                % if conventional opt: just add constraints of nominal dose
-                if strcmp(cst{i,6}(j).robustness,'none')
+            % if conventional opt: just check for nominal dose
+            if strcmp(cst{i,6}(j).robustness,'none')
 
-                    if isequal(cst{i,6}(j).type, 'max dose constraint') || ...
-                       isequal(cst{i,6}(j).type, 'min dose constraint') || ...
-                       isequal(cst{i,6}(j).type, 'max mean dose constraint') || ...
-                       isequal(cst{i,6}(j).type, 'min mean dose constraint') || ...
-                       isequal(cst{i,6}(j).type, 'max EUD constraint') || ...
-                       isequal(cst{i,6}(j).type, 'min EUD constraint') || ...
-                       isequal(cst{i,6}(j).type, 'max DVH constraint') || ... 
-                       isequal(cst{i,6}(j).type, 'min DVH constraint')
+               if ismember(cst{i,6}(j).type, {'square underdosing','square overdosing','square deviation', 'EUD',...
+                        'min dose constraint','max dose constraint',...
+                        'min EUD constraint','max EUD constraint',...
+                        'max DVH constraint','min DVH constraint',...
+                        'max DVH objective' ,'min DVH objective'})
 
-                       jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{i,4}{1},:)))];
+                   hessianStruct = sparse(tril(ones(dij.totalNumOfBixels)));
 
-                    end
-                
                 end
 
             end
