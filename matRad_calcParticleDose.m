@@ -209,7 +209,7 @@ for i = 1:dij.numOfBeams % loop over all beams
     
     % Determine lateral cutoff
     fprintf('matRad: calculate lateral cutoff...');
-    cutOffLevel = .97;
+    cutOffLevel = 1;
     visBoolLateralCutOff = 0;
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
     fprintf('done.\n');
@@ -287,14 +287,19 @@ for i = 1:dij.numOfBeams % loop over all beams
                 % interpolate radiological depths at projected
                 % coordinates
                 radDepths = interp3(radDepthCube,projCoords(:,1,:)./ct.resolution.x,...
-                    projCoords(:,2,:)./ct.resolution.y,projCoords(:,3,:)./ct.resolution.z,'linear');
+                    projCoords(:,2,:)./ct.resolution.y,projCoords(:,3,:)./ct.resolution.z,'nearest');
+                
+%                 for ir = 1:size(projCoords,3)
+%                     radDepths(:,:,ir) = interp3(radDepthCube,projCoords(:,1,ir)./ct.resolution.x,...
+%                         projCoords(:,2,ir)./ct.resolution.y,projCoords(:,3,ir)./ct.resolution.z,'linear');
+%                 end
                 
                 % I gotta think about this...
                 securityOffset = 0;
                 
                 % compute radial distances relative to pencil beam
                 % component
-                currRadialDist_sq = reshape(bsxfun(@plus,latDistsX,posX(:,k)'),[],1,19).^2 + reshape(bsxfun(@plus,latDistsZ,posZ(:,k)'),[],1,19).^2;
+                currRadialDist_sq = reshape(bsxfun(@plus,latDistsX,posX(:,k)'),[],1,numOfSub).^2 + reshape(bsxfun(@plus,latDistsZ,posZ(:,k)'),[],1,numOfSub).^2;
 
                 
                 % find depth depended lateral cut off
