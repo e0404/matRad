@@ -251,7 +251,7 @@ for i = 1:dij.numOfBeams % loop over all beams
             % function provides the weights for the sub-pencil beams,
             % their positions and their sigma used for dose calculation
             [finalWeight, sigmaSub, posX, posZ, numOfSub] = ...
-                matRad_calcWeights(sigmaIni, 2, 'circle');
+                matRad_calcWeights(sigmaIni, 8, 'circle');
             
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
                 
@@ -287,7 +287,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                 % interpolate radiological depths at projected
                 % coordinates
                 radDepths = interp3(radDepthCube,projCoords(:,1,:)./ct.resolution.x,...
-                    projCoords(:,2,:)./ct.resolution.y,projCoords(:,3,:)./ct.resolution.z,'nearest');
+                    projCoords(:,2,:)./ct.resolution.y,projCoords(:,3,:)./ct.resolution.z,'cubic');
                 
 %                 for ir = 1:size(projCoords,3)
 %                     radDepths(:,:,ir) = interp3(radDepthCube,projCoords(:,1,ir)./ct.resolution.x,...

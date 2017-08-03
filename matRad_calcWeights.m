@@ -40,7 +40,7 @@ function [finalWeight, sigma_sub, posX, posY, numOfSub,X1,radius] = matRad_calcW
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if n~=2 && n~=3
+if n~=2 && n~=3 && n~=8
     error('number of shells n not supported');
 end
 
@@ -77,6 +77,11 @@ elseif n == 3
         X1(1,:)     = 0.3245 .* sigma_ray.^2 + 0.0001 .* sigma_ray - 0.0004;
         X1(2,:)     = 0.6290 .* sigma_ray - 0.0403;
     end
+elseif n == 8
+    sigma_sub = 0.5 .* sigma_ray;
+    radius    = 0.25 .* sigma_ray;
+    X1(1,:)     = 0.0334 .* sigma_ray.^2 - 4.1061e-06 .* sigma_ray + 1.5047e-06;
+    X1(2,:)     = 0.6 .* sigma_ray + 3.3151e-06;
 end
 
 % setting positions of sub-beams
