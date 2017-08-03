@@ -161,7 +161,7 @@ if nargout > 1
                 limMx(counter,2)     = apertureInfo.beam(i).lim_r(k);
                 counter = counter + 1;
                 
-                if apertureInfo.VMAT && apertureInfo.dynamic
+                if apertureInfo.VMAT && apertureInfo.dynamic && nnz(apertureInfo.beam(i).doseAngleOpt) == 2
                     %redo for initial and final leaf positions
                     %might have to revisit this after looking at gradient,
                     %esp. mappingMx(counter,2)

@@ -720,6 +720,14 @@ if pln.VMAT
                     stf(i).numOfBeamSubChildren = 0;
                 end
             end
+        else
+            % for leaf position interpolation
+            stf(i).fracFromLastOptI = (stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(i).doseAngleBorders(1))./(stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(stf(i).lastOptIndex).doseAngleBorders(2));
+            stf(i).fracFromLastOptF = (stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(i).doseAngleBorders(2))./(stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(stf(i).lastOptIndex).doseAngleBorders(2));
+            
+            % for time interpolation
+            stf(i).timeFracFromLastOpt = (stf(i).gantryAngle-stf(stf(i).lastOptIndex).doseAngleBorders(2))./stf(i).doseAngleBordersDiff;
+            stf(i).timeFracFromNextOpt = (stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(i).gantryAngle)./stf(i).doseAngleBordersDiff;
         end
         
         currMasterRayPosBEV = masterRayPosBEV;

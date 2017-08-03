@@ -178,6 +178,12 @@ for i = 1:numel(apertureInfoOld.beam)
             %overwritten
             apertureInfoNew.beam(j).shape(1).leftLeafPos = (interp1(oldGantryAngles',oldLeftLeafPoss',apertureInfoNew.beam(j).gantryAngle))';
             apertureInfoNew.beam(j).shape(1).rightLeafPos = (interp1(oldGantryAngles',oldRightLeafPoss',apertureInfoNew.beam(j).gantryAngle))';
+            
+            apertureInfoNew.beam(j).shape(1).leftLeafPos_I = (interp1(oldGantryAngles',oldLeftLeafPoss',apertureInfoNew.beam(j).doseAngleBorders(1)))';
+            apertureInfoNew.beam(j).shape(1).rightLeafPos_I = (interp1(oldGantryAngles',oldRightLeafPoss',apertureInfoNew.beam(j).doseAngleBorders(1)))';
+            
+            apertureInfoNew.beam(j).shape(1).leftLeafPos_F = (interp1(oldGantryAngles',oldLeftLeafPoss',apertureInfoNew.beam(j).doseAngleBorders(2)))';
+            apertureInfoNew.beam(j).shape(1).rightLeafPos_F = (interp1(oldGantryAngles',oldRightLeafPoss',apertureInfoNew.beam(j).doseAngleBorders(2)))';
         else
             apertureInfoNew.beam(j).shape(1).leftLeafPos = apertureInfoOld.beam(i).shape(1).leftLeafPos;
             apertureInfoNew.beam(j).shape(1).rightLeafPos = apertureInfoOld.beam(i).shape(1).rightLeafPos;

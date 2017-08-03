@@ -96,8 +96,11 @@ V = unique(vertcat(V{:}));
 
 % set lateral cutoff value
 if ~(strcmp(num2str(pln.bixelWidth),'field'))
-    %lateralCutoff = 82; % [mm]
-    lateralCutoff = 25; % [mm]
+    if calcDoseDirect
+        lateralCutoff = 82; % [mm]
+    else
+        lateralCutoff = 25; % [mm]
+    end
 else
     lateralCutoff = 140; % [mm] due to the large field size
 end
@@ -308,9 +311,10 @@ for i = 1:dij.numOfBeams % loop over all beams
                                                    isoLatDistsX,...
                                                    isoLatDistsZ);
                                                
-        % sample dose only for bixel based dose calculation
-        if ~strcmp(num2str(pln.bixelWidth),'field')
-            r0   = 25;   % [mm] sample beyond the inner core
+        % sample dose only for bixel based dose calculation, and only if
+        % not calculating dose directly!
+        if ~strcmp(num2str(pln.bixelWidth),'field') && ~calcDoseDirect
+            r0   = 25;   % [mm] sample beyond the iresnner core
             Type = 'radius';
             [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
         end   

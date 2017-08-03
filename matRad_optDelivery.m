@@ -66,7 +66,7 @@ for i = 1:size(apertureInfo.beam,2)
             %then do nothing (factor = 1)
             %otherwise, scale rates so that the limiting rate is 10% lower
             %than the limit
-            factor = min([1 factor*0.8]);
+            factor = min([1 factor*0.9]);
         end
         
         %multiply each speed by this factor

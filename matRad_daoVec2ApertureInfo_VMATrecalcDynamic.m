@@ -1,4 +1,4 @@
-function updatedInfo = matRad_daoVec2ApertureInfo_VMATrecalcDynamic(apertureInfo,apertureInfoVect,touchingFlag)
+function updatedInfo = matRad_daoVec2ApertureInfo_VMATrecalcDynamic(apertureInfo,apertureInfoVect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to translate the vector representation of the aperture
 % shape and weight into an aperture info struct. At the same time, the
@@ -36,10 +36,6 @@ function updatedInfo = matRad_daoVec2ApertureInfo_VMATrecalcDynamic(apertureInfo
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 3
-    touchingFlag = 0; %default is 0, it should really only be 1 when called the first time in the leaf sequencing function, never during DAO
-end
-
 % function to update the apertureInfo struct after the each iteraton of the
 % optimization
 
@@ -68,122 +64,9 @@ offset = 0;
 round2 = @(a,b) round(a*10^b)/10^b;
 
 
-
-if updatedInfo.VMAT && (touchingFlag || updatedInfo.totalNumOfShapes ~= numel(updatedInfo.beam))
-    %We run this if we want to fix instances of leaf touching, whereby tips
-    %were sent to the centre automatically (touchingFlag = 1) and there are
-    %some interpolated gantry angles, OR we do not want
-    %dynamic dose calc
-    
-    %Interpolate segment between adjacent optimized gantry angles.
-    % Include in updatedInfo, but NOT the vector (since these are not
-    % optimized by DAO).  Also update bixel weights to include these.
-    
-    %Only collect this data once, to save time
-    dimZ = updatedInfo.beam(1).numOfActiveLeafPairs;
-    numBeams = numel(unique([updatedInfo.beam.gantryAngle]));
-    leftLeafPoss = nan(dimZ,numBeams); %Each non-interpolated beam should have 1 and only 1 shape
-    rightLeafPoss = nan(dimZ,numBeams);
-    optGantryAngles = zeros(1,numBeams);
-    
-    initBorderGantryAngles = unique([updatedInfo.beam.initAngleBorders]);
-    initBorderLeftLeafPoss = nan(dimZ,numel(initBorderGantryAngles));
-    
-    l = 1;
-    m = 1;
-    for k = 1:numel(updatedInfo.beam)
-        if k ~= 1 && updatedInfo.beam(k).gantryAngle == updatedInfo.beam(k-1).gantryAngle
-            continue
-        end
-        
-        if updatedInfo.beam(k).numOfShapes
-            leftLeafPoss(:,l) = updatedInfo.beam(k).shape(1).leftLeafPos;
-            rightLeafPoss(:,l) = updatedInfo.beam(k).shape(1).rightLeafPos;
-            %leftLeafPoss(:,l) = apertureInfoVect(vectorIx);
-            %rightLeafPoss(:,l) = apertureInfoVect(vectorIx+updatedInfo.totalNumOfLeafPairs);
-            optGantryAngles(l) = updatedInfo.beam(k).gantryAngle;
-            
-            l = l+1;
-        end
-        
-        %Only important when cleaning up instances of opposing
-        %leaves touching.
-        if updatedInfo.beam(k).initializeBeam
-            if updatedInfo.beam(k).leafDir == 1
-                %This means that the current arc sector is moving
-                %in the normal direction (L-R).
-                initBorderLeftLeafPoss(:,m) = updatedInfo.beam(k).lim_l;
-                
-            elseif updatedInfo.beam(k).leafDir == -1
-                %This means that the current arc sector is moving
-                %in the reverse direction (R-L).
-                initBorderLeftLeafPoss(:,m) = updatedInfo.beam(k).lim_r;
-            end
-            m = m+1;
-            
-            %end of last sector
-            if m == numel(initBorderGantryAngles)
-                %This gives ending angle of the current sector.
-                if updatedInfo.beam(k).leafDir == 1
-                    %This means that the current arc sector is moving
-                    %in the normal direction (L-R), so the next arc
-                    %sector is moving opposite
-                    initBorderLeftLeafPoss(:,m) = updatedInfo.beam(k).lim_r;
-                elseif updatedInfo.beam(k).leafDir == -1
-                    %This means that the current arc sector is moving
-                    %in the reverse direction (R-L), so the next
-                    %arc sector is moving opposite
-                    initBorderLeftLeafPoss(:,m) = updatedInfo.beam(k).lim_l;
-                end
-            end
-        end
-    end
-    
-    %Any time leaf pairs are touching, they are set to
-    %be in the middle of the field.  Instead, move them
-    %so that they are still touching, but that they
-    %follow the motion of the MLCs across the field.
-    for row = 1:dimZ
-        
-        touchingInd = find(leftLeafPoss(row,:) == rightLeafPoss(row,:));
-        
-        if ~exist('leftLeafPossAug','var')
-            %leftLeafPossAug = [reshape(mean([leftLeafPoss(:) rightLeafPoss(:)],2),size(leftLeafPoss)),borderLeftLeafPoss];
-            leftLeafPossAugTemp = reshape(mean([leftLeafPoss(:) rightLeafPoss(:)],2),size(leftLeafPoss));
-            
-            numRep = 0;
-            repInd = nan(size(optGantryAngles));
-            for j = 1:numel(optGantryAngles)
-                if any(optGantryAngles(j) == initBorderGantryAngles)
-                    %replace leaf positions with the ones at
-                    %the borders (eliminates repetitions)
-                    numRep = numRep+1;
-                    %these are the gantry angles that are
-                    %repeated
-                    repInd(numRep) = j;
-                    
-                    delInd = find(optGantryAngles(j) == initBorderGantryAngles);
-                    leftLeafPossAugTemp(:,j) = initBorderLeftLeafPoss(:,delInd);
-                    initBorderLeftLeafPoss(:,delInd) = [];
-                    initBorderGantryAngles(delInd) = [];
-                end
-            end
-            repInd(isnan(repInd)) = [];
-            leftLeafPossAug = [leftLeafPossAugTemp,initBorderLeftLeafPoss];
-            gantryAnglesAug = [optGantryAngles,initBorderGantryAngles];
-        end
-        notTouchingInd = [setdiff(1:numBeams,touchingInd),repInd];
-        notTouchingInd = unique(notTouchingInd);
-        %make sure to include the repeated ones in the
-        %interpolation!
-        
-        notTouchingIndAug = [notTouchingInd,(1+numel(optGantryAngles)):(numel(optGantryAngles)+numel(initBorderGantryAngles))];
-        
-        leftLeafPoss(row,touchingInd) = interp1(gantryAnglesAug(notTouchingIndAug),leftLeafPossAug(row,notTouchingIndAug),optGantryAngles(touchingInd));
-        rightLeafPoss(row,touchingInd) = leftLeafPoss(row,touchingInd);
-    end
-end
-
+%Interpolate segment between adjacent optimized gantry angles.
+% Include in updatedInfo, but NOT the vector (since these are not
+% optimized by DAO).  Also update bixel weights to include these.
 
 
 %% update the shapeMaps
@@ -208,66 +91,13 @@ for i = 1:numel(updatedInfo.beam)
             % update the shape weight
             updatedInfo.beam(i).shape(j).weight = apertureInfoVect(shapeInd);
             
-            if updatedInfo.VMAT
-                updatedInfo.beam(i).MU = updatedInfo.beam(i).shape(j).weight*updatedInfo.weightToMU;
-                updatedInfo.beam(i).time = apertureInfoVect(updatedInfo.totalNumOfShapes+updatedInfo.totalNumOfLeafPairs*2+shapeInd);
-                updatedInfo.beam(i).gantryRot = updatedInfo.beam(i).optAngleBordersDiff/updatedInfo.beam(i).time;
-                updatedInfo.beam(i).MURate = updatedInfo.beam(i).MU*updatedInfo.beam(i).gantryRot/updatedInfo.beam(i).doseAngleBordersDiff;
-            end
+            updatedInfo.beam(i).MU = updatedInfo.beam(i).shape(j).weight*updatedInfo.weightToMU;
+            updatedInfo.beam(i).time = apertureInfoVect(updatedInfo.totalNumOfShapes+updatedInfo.totalNumOfLeafPairs*2+shapeInd);
+            updatedInfo.beam(i).gantryRot = updatedInfo.beam(i).optAngleBordersDiff/updatedInfo.beam(i).time;
+            updatedInfo.beam(i).MURate = updatedInfo.beam(i).MU*updatedInfo.beam(i).gantryRot/updatedInfo.beam(i).doseAngleBordersDiff;
             
             % get dimensions of 2d matrices that store shape/bixel information
             n = apertureInfo.beam(i).numOfActiveLeafPairs;
-            
-            if touchingFlag
-                %Perform interpolation
-                leftLeafPos = (interp1(optGantryAngles',leftLeafPoss',updatedInfo.beam(i).gantryAngle))';
-                rightLeafPos = (interp1(optGantryAngles',rightLeafPoss',updatedInfo.beam(i).gantryAngle))';
-                
-                %re-update vector in case anything changed from fixing the leaf
-                %touching
-                vectorIx = updatedInfo.beam(i).shape(j).vectorOffset + ([1:n]-1);
-                apertureInfoVect(vectorIx) = leftLeafPos;
-                apertureInfoVect(vectorIx+apertureInfo.totalNumOfLeafPairs) = rightLeafPos;
-            else
-                % extract left and right leaf positions from shape vector
-                vectorIx     = updatedInfo.beam(i).shape(j).vectorOffset + ([1:n]-1);
-                leftLeafPos  = apertureInfoVect(vectorIx);
-                rightLeafPos = apertureInfoVect(vectorIx+apertureInfo.totalNumOfLeafPairs);
-            end
-            
-            if updatedInfo.VMAT
-                %not doing dynamic
-                
-                % extract left and right leaf positions from shape vector
-                vectorIx     = updatedInfo.beam(i).shape(j).vectorOffset + ([1:n]-1);
-                leftLeafPos  = apertureInfoVect(vectorIx);
-                rightLeafPos = apertureInfoVect(vectorIx+apertureInfo.totalNumOfLeafPairs);
-                
-                %interpolate initial and final leaf positions
-                %if apertureInfo.beam(i).doseAngleOpt(1)
-                %initial
-                %IandFvectorIx = updatedInfo.beam(i).shape(j).IandFvectorOffset(1) + ([1:n]-1);
-                updatedInfo.beam(i).shape(j).leftLeafPos_I = (interp1(optGantryAngles',leftLeafPoss',updatedInfo.beam(i).doseAngleBorders(1)))';
-                updatedInfo.beam(i).shape(j).rightLeafPos_I = (interp1(optGantryAngles',rightLeafPoss',updatedInfo.beam(i).doseAngleBorders(1)))';
-                
-                %IandFapertureVector(IandFvectorIx) = updatedInfo.beam(i).shape(j).leftLeafPos_I;
-                %IandFapertureVector(IandFvectorIx+apertureInfo.IandFtotalNumOfLeafPairs) = updatedInfo.beam(i).shape(j).rightLeafPos_I;
-                %end
-                
-                %if apertureInfo.beam(i).doseAngleOpt(2)
-                %final
-                %IandFvectorIx = updatedInfo.beam(i).shape(j).IandFvectorOffset(2) + ([1:n]-1);
-                updatedInfo.beam(i).shape(j).leftLeafPos_F = (interp1(optGantryAngles',leftLeafPoss',updatedInfo.beam(i).doseAngleBorders(2)))';
-                updatedInfo.beam(i).shape(j).rightLeafPos_F = (interp1(optGantryAngles',rightLeafPoss',updatedInfo.beam(i).doseAngleBorders(2)))';
-                
-                %IandFapertureVector(IandFvectorIx) = updatedInfo.beam(i).shape(j).leftLeafPos_F;
-                %IandFapertureVector(IandFvectorIx+apertureInfo.IandFtotalNumOfLeafPairs) = updatedInfo.beam(i).shape(j).rightLeafPos_F;
-                %end
-            end
-            
-            % update information in shape structure
-            updatedInfo.beam(i).shape(j).leftLeafPos  = leftLeafPos;
-            updatedInfo.beam(i).shape(j).rightLeafPos = rightLeafPos;
             
             leftLeafPosI_I = min([updatedInfo.beam(i).shape(j).leftLeafPos_I,updatedInfo.beam(i).shape(j).leftLeafPos],[],2);
             leftLeafPosF_I = max([updatedInfo.beam(i).shape(j).leftLeafPos_I,updatedInfo.beam(i).shape(j).leftLeafPos],[],2);
@@ -278,6 +108,7 @@ for i = 1:numel(updatedInfo.beam)
             rightLeafPosI_F = min([updatedInfo.beam(i).shape(j).rightLeafPos,updatedInfo.beam(i).shape(j).rightLeafPos_F],[],2);
             rightLeafPosF_F = max([updatedInfo.beam(i).shape(j).rightLeafPos,updatedInfo.beam(i).shape(j).rightLeafPos_F],[],2);
             
+            %{
             leftLeafPosI_I = round2(leftLeafPosI_I,10);
             leftLeafPosF_I = round2(leftLeafPosF_I,10);
             rightLeafPosI_I = round2(rightLeafPosI_I,10);
@@ -286,6 +117,7 @@ for i = 1:numel(updatedInfo.beam)
             leftLeafPosF_F = round2(leftLeafPosF_F,10);
             rightLeafPosI_F = round2(rightLeafPosI_F,10);
             rightLeafPosF_F = round2(rightLeafPosF_F,10);
+            %}
             
             leftLeafPosI_I(leftLeafPosI_I <= apertureInfo.beam(i).lim_l) = apertureInfo.beam(i).lim_l(leftLeafPosI_I <= apertureInfo.beam(i).lim_l);
             leftLeafPosF_I(leftLeafPosF_I <= apertureInfo.beam(i).lim_l) = apertureInfo.beam(i).lim_l(leftLeafPosF_I <= apertureInfo.beam(i).lim_l);
@@ -336,8 +168,10 @@ for i = 1:numel(updatedInfo.beam)
             uncoveredByLeftLeaf_I(xPosLinearIndLeftLeafI_I) = uncoveredByLeftLeaf_I(xPosLinearIndLeftLeafI_I)+(leftLeafPosI_I-edges_l(xPosIndLeftLeafI_I)').^2./((leftLeafPosF_I-leftLeafPosI_I).*(edges_r(xPosIndLeftLeafI_I)'-edges_l(xPosIndLeftLeafI_I)').*2);
             uncoveredByLeftLeaf_I(xPosLinearIndLeftLeafF_I) = uncoveredByLeftLeaf_I(xPosLinearIndLeftLeafF_I)-(edges_r(xPosIndLeftLeafF_I)'-leftLeafPosF_I).^2./((leftLeafPosF_I-leftLeafPosI_I).*(edges_r(xPosIndLeftLeafF_I)'-edges_l(xPosIndLeftLeafF_I)').*2);
             %round <0 to 0, >1 to 1
-            uncoveredByLeftLeaf_I = (uncoveredByLeftLeaf_I+abs(uncoveredByLeftLeaf_I))/2;
-            uncoveredByLeftLeaf_I = (uncoveredByLeftLeaf_I+1-abs(uncoveredByLeftLeaf_I-1))/2;
+            uncoveredByLeftLeaf_I(uncoveredByLeftLeaf_I < 0) = 0;
+            uncoveredByLeftLeaf_I(uncoveredByLeftLeaf_I > 1) = 1;
+            %uncoveredByLeftLeaf_I = (uncoveredByLeftLeaf_I+abs(uncoveredByLeftLeaf_I))/2;
+            %uncoveredByLeftLeaf_I = (uncoveredByLeftLeaf_I+1-abs(uncoveredByLeftLeaf_I-1))/2;
             
             %calculate fraction of fluence covered by right leaf
             %initial computation
@@ -346,8 +180,8 @@ for i = 1:numel(updatedInfo.beam)
             coveredByRightLeaf_I(xPosLinearIndRightLeafI_I) = coveredByRightLeaf_I(xPosLinearIndRightLeafI_I)+(rightLeafPosI_I-edges_l(xPosIndRightLeafI_I)').^2./((rightLeafPosF_I-rightLeafPosI_I).*(edges_r(xPosIndRightLeafI_I)'-edges_l(xPosIndRightLeafI_I)').*2);
             coveredByRightLeaf_I(xPosLinearIndRightLeafF_I) = coveredByRightLeaf_I(xPosLinearIndRightLeafF_I)-(edges_r(xPosIndRightLeafF_I)'-rightLeafPosF_I).^2./((rightLeafPosF_I-rightLeafPosI_I).*(edges_r(xPosIndRightLeafF_I)'-edges_l(xPosIndRightLeafF_I)').*2);
             %round <0 to 0, >1 to 1
-            coveredByRightLeaf_I = (coveredByRightLeaf_I+abs(coveredByRightLeaf_I))/2;
-            coveredByRightLeaf_I = (coveredByRightLeaf_I+1-abs(coveredByRightLeaf_I-1))/2;
+            coveredByRightLeaf_I(coveredByRightLeaf_I < 0) = 0;
+            coveredByRightLeaf_I(coveredByRightLeaf_I > 1) = 1;
             
             %FINAL
             %calculate fraction of fluence uncovered by left leaf
@@ -357,8 +191,8 @@ for i = 1:numel(updatedInfo.beam)
             uncoveredByLeftLeaf_F(xPosLinearIndLeftLeafI_F) = uncoveredByLeftLeaf_F(xPosLinearIndLeftLeafI_F)+(leftLeafPosI_F-edges_l(xPosIndLeftLeafI_F)').^2./((leftLeafPosF_F-leftLeafPosI_F).*(edges_r(xPosIndLeftLeafI_F)'-edges_l(xPosIndLeftLeafI_F)').*2);
             uncoveredByLeftLeaf_F(xPosLinearIndLeftLeafF_F) = uncoveredByLeftLeaf_F(xPosLinearIndLeftLeafF_F)-(edges_r(xPosIndLeftLeafF_F)'-leftLeafPosF_F).^2./((leftLeafPosF_F-leftLeafPosI_F).*(edges_r(xPosIndLeftLeafF_F)'-edges_l(xPosIndLeftLeafF_F)').*2);
             %round <0 to 0, >1 to 1
-            uncoveredByLeftLeaf_F = (uncoveredByLeftLeaf_F+abs(uncoveredByLeftLeaf_F))/2;
-            uncoveredByLeftLeaf_F = (uncoveredByLeftLeaf_F+1-abs(uncoveredByLeftLeaf_F-1))/2;
+            uncoveredByLeftLeaf_F(uncoveredByLeftLeaf_F < 0) = 0;
+            uncoveredByLeftLeaf_F(uncoveredByLeftLeaf_F > 1) = 1;
             
             %calculate fraction of fluence covered by right leaf
             %initial computation
@@ -367,8 +201,8 @@ for i = 1:numel(updatedInfo.beam)
             coveredByRightLeaf_F(xPosLinearIndRightLeafI_F) = coveredByRightLeaf_F(xPosLinearIndRightLeafI_F)+(rightLeafPosI_F-edges_l(xPosIndRightLeafI_F)').^2./((rightLeafPosF_F-rightLeafPosI_F).*(edges_r(xPosIndRightLeafI_F)'-edges_l(xPosIndRightLeafI_F)').*2);
             coveredByRightLeaf_F(xPosLinearIndRightLeafF_F) = coveredByRightLeaf_F(xPosLinearIndRightLeafF_F)-(edges_r(xPosIndRightLeafF_F)'-rightLeafPosF_F).^2./((rightLeafPosF_F-rightLeafPosI_F).*(edges_r(xPosIndRightLeafF_F)'-edges_l(xPosIndRightLeafF_F)').*2);
             %round <0 to 0, >1 to 1
-            coveredByRightLeaf_F = (coveredByRightLeaf_F+abs(coveredByRightLeaf_F))/2;
-            coveredByRightLeaf_F = (coveredByRightLeaf_F+1-abs(coveredByRightLeaf_F-1))/2;
+            coveredByRightLeaf_F(coveredByRightLeaf_F < 0) = 0;
+            coveredByRightLeaf_F(coveredByRightLeaf_F > 1) = 1;
             
             %fluence is equal to fluence not covered by left leaf minus
             %fluence covered by left leaf
@@ -377,8 +211,6 @@ for i = 1:numel(updatedInfo.beam)
             
             tempMap_I = uncoveredByLeftLeaf_I-coveredByRightLeaf_I;
             tempMap_F = uncoveredByLeftLeaf_F-coveredByRightLeaf_F;
-            tempMap_I = round2(tempMap_I,10);
-            tempMap_F = round2(tempMap_F,10);
             tempMap_I(isnan(tempMap_I)) = 0;
             tempMap_F(isnan(tempMap_F)) = 0;
             
@@ -391,7 +223,17 @@ for i = 1:numel(updatedInfo.beam)
                 weight_F = updatedInfo.beam(i).doseAngleBorderCentreDiff(2)./updatedInfo.beam(i).doseAngleBordersDiff;
             end
             
+            if weight_I+weight_F ~= 1
+                %sometimes the sum is different than one by ~10^-16
+                %(rounding error in the division)
+                weight_F = 1-weight_I;
+            end
+            
             tempMap = weight_I.*tempMap_I+weight_F.*tempMap_F;
+            
+            if any(tempMap(:) < 0 | tempMap(:) > 1)
+                error('map exceeds regular thresholds of 0 and 1');
+            end
             
             % find open bixels
             tempMapIx = tempMap > 0;
@@ -400,7 +242,8 @@ for i = 1:numel(updatedInfo.beam)
             w(currBixelIx) = w(currBixelIx) + tempMap(tempMapIx)*updatedInfo.beam(i).shape(j).weight;
             
             % save the tempMap (we need to apply a positivity operator !)
-            updatedInfo.beam(i).shape(j).shapeMap = (tempMap  + abs(tempMap))  / 2;
+            updatedInfo.beam(i).shape(j).shapeMap = tempMap;
+            %updatedInfo.beam(i).shape(j).shapeMap = (tempMap  + abs(tempMap))  / 2;
             
             % increment shape index
             shapeInd = shapeInd +1;

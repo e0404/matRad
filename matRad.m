@@ -21,9 +21,9 @@ clc
 
 % load patient data, i.e. ct, voi, cst
 
-%load HEAD_AND_NECK
+load HEAD_AND_NECK
 %load TG119.mat
-load PROSTATE.mat
+%load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
 
@@ -42,7 +42,7 @@ pln.bioOptimization = 'none';        % none: physical optimization;             
 pln.runSequencing   = true; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO          = true; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.VMAT            = false; % 1/true: run VMAT, 0/false: don't
-pln.dynamic         = false;
+pln.dynamic         = true;
 pln.halfFluOpt      = false; % indicates if you want to constrain half of each field to have 0 fluence (other half is compensated on the other side)
 pln.machine         = 'Generic';
 
@@ -51,7 +51,7 @@ pln.machine         = 'Generic';
 pln.runSequencing   = true;
 pln.runDAO          = true;
 pln.VMAT            = true;
-pln.dynamic         = false;
+pln.dynamic         = true;
 
 pln.numApertures = 7; %max val is pln.maxApertureAngleSpread/pln.minGantryAngleRes
 pln.numLevels = 7;
@@ -97,6 +97,7 @@ elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
 end
 %dij.weightToMU = 100*(100/90)^2*(67/86)*(110/105)^2*(90/95)^2;
 dij.weightToMU = 100;
+dij.scaleFactor = 1;
 
 %this is equal to multiplication of factors:
 % - factor when reference conditions are equal to each other (100)

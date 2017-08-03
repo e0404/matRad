@@ -48,7 +48,7 @@ else
     if isequal(options.bioOpt,'none')
         
         for i = 1:options.numOfScenarios
-            d{i} = dij.physicalDose{i} * w;
+            d{i} = dij.physicalDose{i} * w * dij.scaleFactor;
         end
         
     elseif  isequal(options.ID,'protons_const_RBExD')
@@ -81,7 +81,7 @@ else
             
         end       
        
-    end   
+    end
     
     matRad_global_d = d;
     

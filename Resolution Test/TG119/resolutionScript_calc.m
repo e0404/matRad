@@ -17,7 +17,6 @@ for angularRes = angularResS
     recalc = matRad_doseRecalc(cst,pln,recalc,ct,resultGUI.apertureInfo);
     save(fname,'resultGUI','recalc');
     
-    
     %next, do dynamic fluence and interpolation, but using old dij matrices
     fname = sprintf('%.1f degrees, dyn + interp oldDij.mat',angularRes);
     recalc.dynamic = true;
@@ -26,6 +25,7 @@ for angularRes = angularResS
     
     recalc = matRad_doseRecalc(cst,pln,recalc,ct,resultGUI.apertureInfo);
     save(fname,'resultGUI','recalc');
+    
     
     %{
     %NOT SURE IT MAKES SENSE TO EVER DO THIS
@@ -58,7 +58,6 @@ for angularRes = angularResS
     
     recalc = matRad_doseRecalc(cst,pln,recalc,ct,resultGUI.apertureInfo);
     save(fname,'resultGUI','recalc');
-    
     
 end
 

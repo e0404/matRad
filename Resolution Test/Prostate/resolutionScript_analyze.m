@@ -3,6 +3,16 @@ fname = sprintf('0.5 degrees, dyn + interp.mat');
 load(fname)
 refDose = recalc.resultGUI.physicalDose;
 
+%refDose for not interpolated, not dynamic
+fname = sprintf('0.5 degrees, Ndyn + Ninterp.mat');
+load(fname)
+refDose_NN = recalc.resultGUI.physicalDose;
+
+%refDose for interpolated, dynamic, old Dij
+fname = sprintf('0.5 degrees, dyn + interp oldDij.mat');
+load(fname)
+refDose_YY_oldDij = recalc.resultGUI.physicalDose;
+
 % adjust overlap priorities
 cst_Over = matRad_setOverlapPriorities(cst);
 
@@ -12,7 +22,7 @@ for i = 1:size(cst_Over,1)
     for j = 1:size(cst_Over{i,6},1)
        cst_Over{i,6}(j).dose = cst_Over{i,6}(j).dose/pln.numOfFractions;
     end
-    if ~isempty(cst_Over{i,6}) && ~strcmp(cst_Over{i,2},'BODY')
+    if ~isempty(cst_Over{i,6}) && (~strcmp(cst_Over{i,2},'BODY'))
         [x, y, z] = ind2sub(size(refDose),cst_Over{i,4}{1});
         for k = 1:numel(x)
             V_TargAndNorm(x(k),y(k),z(k)) = 1;
@@ -45,6 +55,10 @@ percVErr1_NN = zeros(size(angularResS));
 percVErr3_NN = zeros(size(angularResS));
 percVErr5_NN = zeros(size(angularResS));
 percVErr10_NN = zeros(size(angularResS));
+percVErr1_NN_itself = zeros(size(angularResS));
+percVErr3_NN_itself = zeros(size(angularResS));
+percVErr5_NN_itself = zeros(size(angularResS));
+percVErr10_NN_itself = zeros(size(angularResS));
 fluence_NN = zeros(size(recalc.apertureInfo.beam(1).shape(1).shapeMap,1), size(recalc.apertureInfo.beam(1).shape(1).shapeMap,2), numel(angularResS));
 weight_NN = zeros(size(angularResS));
 obj_NN = zeros(size(angularResS));
@@ -77,6 +91,10 @@ percVErr1_YY_oldDij = zeros(size(angularResS));
 percVErr3_YY_oldDij = zeros(size(angularResS));
 percVErr5_YY_oldDij = zeros(size(angularResS));
 percVErr10_YY_oldDij = zeros(size(angularResS));
+percVErr1_YY_oldDij_itself = zeros(size(angularResS));
+percVErr3_YY_oldDij_itself = zeros(size(angularResS));
+percVErr5_YY_oldDij_itself = zeros(size(angularResS));
+percVErr10_YY_oldDij_itself = zeros(size(angularResS));
 fluence_YY_oldDij = zeros(size(recalc.apertureInfo.beam(1).shape(1).shapeMap,1), size(recalc.apertureInfo.beam(1).shape(1).shapeMap,2), numel(angularResS));
 weight_YY_oldDij = zeros(size(angularResS));
 
@@ -98,7 +116,6 @@ for angularRes = angularResS
         weight_YY(i) = weight_YY(i)+recalc.apertureInfo.beam(j).shape(1).weight;
     end
     %obj_YY(i) = matRad_daoObjFunc(recalc.apertureInfo.apertureVector,recalc.apertureInfo,dij,cst_Over,options);
-    
     
     %{
     %NOT SURE IT MAKES SENSE TO DO THIS
@@ -139,6 +156,11 @@ for angularRes = angularResS
     percVErr3_YY_oldDij(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.03 & V_TargAndNorm)./nnz(V_TargAndNorm);
     percVErr5_YY_oldDij(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.05 & V_TargAndNorm)./nnz(V_TargAndNorm);
     percVErr10_YY_oldDij(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.10 & V_TargAndNorm)./nnz(V_TargAndNorm);
+    
+    percVErr1_YY_oldDij_itself(i) = 100*nnz(abs(dose-refDose_YY_oldDij)./refDose_YY_oldDij >= 0.01 & V_TargAndNorm)./nnz(V_TargAndNorm);
+    percVErr3_YY_oldDij_itself(i) = 100*nnz(abs(dose-refDose_YY_oldDij)./refDose_YY_oldDij >= 0.03 & V_TargAndNorm)./nnz(V_TargAndNorm);
+    percVErr5_YY_oldDij_itself(i) = 100*nnz(abs(dose-refDose_YY_oldDij)./refDose_YY_oldDij >= 0.05 & V_TargAndNorm)./nnz(V_TargAndNorm);
+    percVErr10_YY_oldDij_itself(i) = 100*nnz(abs(dose-refDose_YY_oldDij)./refDose_YY_oldDij >= 0.10 & V_TargAndNorm)./nnz(V_TargAndNorm);
     for j = 1:numel(recalc.apertureInfo.beam)
         fluence_YY_oldDij(:,:,i) = fluence_YY_oldDij(:,:,i)+recalc.apertureInfo.beam(j).shape(1).weight*recalc.apertureInfo.beam(j).shape(1).shapeMap;
         weight_YY_oldDij(i) = weight_YY_oldDij(i)+recalc.apertureInfo.beam(j).shape(1).weight;
@@ -153,6 +175,11 @@ for angularRes = angularResS
     percVErr3_NN(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.03 & V_TargAndNorm)./nnz(V_TargAndNorm);
     percVErr5_NN(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.05 & V_TargAndNorm)./nnz(V_TargAndNorm);
     percVErr10_NN(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.10 & V_TargAndNorm)./nnz(V_TargAndNorm);
+    
+    percVErr1_NN_itself(i) = 100*nnz(abs(dose-refDose_NN)./refDose_NN >= 0.01 & V_TargAndNorm)./nnz(V_TargAndNorm);
+    percVErr3_NN_itself(i) = 100*nnz(abs(dose-refDose_NN)./refDose_NN >= 0.03 & V_TargAndNorm)./nnz(V_TargAndNorm);
+    percVErr5_NN_itself(i) = 100*nnz(abs(dose-refDose_NN)./refDose_NN >= 0.05 & V_TargAndNorm)./nnz(V_TargAndNorm);
+    percVErr10_NN_itself(i) = 100*nnz(abs(dose-refDose_NN)./refDose_NN >= 0.10 & V_TargAndNorm)./nnz(V_TargAndNorm);
     for j = 1:numel(recalc.apertureInfo.beam)
         fluence_NN(:,:,i) = fluence_NN(:,:,i)+recalc.apertureInfo.beam(j).shape(1).weight*recalc.apertureInfo.beam(j).shape(1).shapeMap;
         weight_NN(i) = weight_NN(i)+recalc.apertureInfo.beam(j).shape(1).weight;
@@ -164,7 +191,7 @@ for angularRes = angularResS
 end
 
 
-save('Results','*_NN', '*_NY', '*_YN', '*_YY')
+save('Results','*_NN*', '*_NY*', '*_YN*', '*_YY*')
 
 figure
 hold
@@ -190,6 +217,20 @@ xlabel('angular resolution (^\circ)')
 ylabel('Volume (%)')
 legend({'Error > 1%' 'Error > 3%' 'Error > 5%' 'Error > 10%'},'location','best')
 fname = 'Dynamic, interpolated, oldDij';
+title(fname)
+grid
+savefig(fname)
+
+figure
+hold
+plot(angularResS,percVErr1_YY_oldDij_itself)
+plot(angularResS,percVErr3_YY_oldDij_itself)
+plot(angularResS,percVErr5_YY_oldDij_itself)
+plot(angularResS,percVErr10_YY_oldDij_itself)
+xlabel('angular resolution (^\circ)')
+ylabel('Volume (%)')
+legend({'Error > 1%' 'Error > 3%' 'Error > 5%' 'Error > 10%'},'location','best')
+fname = 'Dynamic, interpolated, oldDij cf itself';
 title(fname)
 grid
 savefig(fname)
@@ -222,6 +263,19 @@ title(fname)
 grid
 savefig(fname)
 
+figure
+hold
+plot(angularResS,percVErr1_NN_itself)
+plot(angularResS,percVErr3_NN_itself)
+plot(angularResS,percVErr5_NN_itself)
+plot(angularResS,percVErr10_NN_itself)
+xlabel('angular resolution (^\circ)')
+ylabel('Volume (%)')
+legend({'Error > 1%' 'Error > 3%' 'Error > 5%' 'Error > 10%'},'location','best')
+fname = 'Not dynamic, not interpolated cf itself';
+title(fname)
+grid
+savefig(fname)
 
 
 

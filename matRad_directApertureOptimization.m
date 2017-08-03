@@ -91,10 +91,21 @@ if isfield(apertureInfo,'scaleFacRx')
 end
 
 if scaleDij
-    %rescale dij matrix, so that apertureWeight/bixelWidth ~= 1
-    dij.scaleFactor = mean(apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes))/apertureInfo.bixelWidth;
-    
-    dij.physicalDose{1} = dij.physicalDose{1}*dij.scaleFactor;
+    if pln.dynamic
+        %rescale dij matrix, so that apertureWeight/bixelWidth ~= 2
+        % gradient wrt weights ~ 1, gradient wrt leaf pos
+        % ~ apertureWeight/(2*bixelWidth) ~1
+        dij.scaleFactor = mean(apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes))/(2*apertureInfo.bixelWidth);
+        
+        %%%%%
+        %dij.scaleFactor = dij.scaleFactor/100;
+    else
+        %rescale dij matrix, so that apertureWeight/bixelWidth ~= 1
+        % gradient wrt weights ~ 1, gradient wrt leaf pos
+        % ~ apertureWeight/(bixelWidth) ~1
+        dij.scaleFactor = mean(apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes))/(apertureInfo.bixelWidth);
+    end
+    %dij.physicalDose{1} = dij.physicalDose{1}*dij.scaleFactor;
     dij.weightToMU = dij.weightToMU*dij.scaleFactor;
     
     apertureInfo.weightToMU = apertureInfo.weightToMU*dij.scaleFactor;
@@ -121,12 +132,11 @@ matRad_ipoptOptions;
 % set bounds on optimization variables
 options.lb              = apertureInfo.limMx(:,1);                                          % Lower bound on the variables.
 options.ub              = apertureInfo.limMx(:,2);                                          % Upper bound on the variables.
-if pln.VMAT
+options.VMAT = pln.VMAT;
+if options.VMAT
     [options.cl,options.cu] = matRad_daoGetConstBounds(cst_Over,apertureInfo,options,pln.leafSpeedCst,pln.doseRateCst);   % Lower and upper bounds on the constraint functions.
-    options.VMAT = pln.VMAT;
 else
     [options.cl,options.cu] = matRad_daoGetConstBounds(cst_Over,apertureInfo,options);   % Lower and upper bounds on the constraint functions.
-    options.VMAT = 0;
 end
 
 % set optimization options
@@ -170,7 +180,7 @@ clearvars -global matRad_global_x matRad_global_d;
 
 if scaleDij
     %rescale dij matrix
-    dij.physicalDose{1} = dij.physicalDose{1}/dij.scaleFactor;
+    %dij.physicalDose{1} = dij.physicalDose{1}/dij.scaleFactor;
     dij.weightToMU = dij.weightToMU/dij.scaleFactor;
     
     apertureInfo.weightToMU = apertureInfo.weightToMU/dij.scaleFactor;

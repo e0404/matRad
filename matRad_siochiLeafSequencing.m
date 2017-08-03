@@ -322,9 +322,9 @@ if pln.VMAT
     %matRad_daoVec2ApertureInfo will interpolate subchildren gantry
     %segments
     if pln.dynamic
-        resultGUI.apertureInfo = matRad_daoVec2ApertureInfo_VMATdynamic(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector,1);
+        resultGUI.apertureInfo = matRad_daoVec2ApertureInfo_VMATdynamic(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
     else
-        resultGUI.apertureInfo = matRad_daoVec2ApertureInfo_VMATstatic(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector,1);
+        resultGUI.apertureInfo = matRad_daoVec2ApertureInfo_VMATstatic(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
     end
     
     % LEAF TRAVEL / DEGREE

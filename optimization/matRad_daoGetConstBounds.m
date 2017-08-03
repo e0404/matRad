@@ -41,14 +41,14 @@ cu_dao = inf*ones(apertureInfo.totalNumOfLeafPairs,1);
 % get dosimetric bounds from cst (just like for conv opt)
 [cl_dos,cu_dos] = matRad_getConstBoundsWrapper(cst,options);
 
-if nargin < 5
+if ~apertureInfo.VMAT
     % concatenate
     cl = [cl_dao; cl_dos];
     cu = [cu_dao; cu_dos];
 else
     optInd = find([apertureInfo.beam.optimizeBeam]);
-    cl_lfspd = leafSpeedCst(1)*ones(2*(apertureInfo.totalNumOfLeafPairs-apertureInfo.beam(1).numOfActiveLeafPairs),1); %Minimum leaf travel speed (mm/s)
-    cu_lfspd = leafSpeedCst(2)*ones(2*(apertureInfo.totalNumOfLeafPairs-apertureInfo.beam(1).numOfActiveLeafPairs),1); %Maximum leaf travel speed (mm/s)
+    cl_lfspd = leafSpeedCst(1)*ones(2*numel(optInd)*apertureInfo.beam(1).numOfActiveLeafPairs,1); %Minimum leaf travel speed (mm/s)
+    cu_lfspd = leafSpeedCst(2)*ones(2*numel(optInd)*apertureInfo.beam(1).numOfActiveLeafPairs,1); %Maximum leaf travel speed (mm/s)
     %apertureInfo.beam(i).numOfActiveLeafPairs should be independent of i, due to using the union of all ray positions in the stf
     %Convert from cm/deg when checking constraints; cannot do it at this stage since gantry rotation speed is not hard-coded
     cl_dosrt = doseRateCst(1)*ones(numel(optInd),1); %Minimum MU/sec

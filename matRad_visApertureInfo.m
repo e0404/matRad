@@ -145,7 +145,7 @@ for i=1:numOfBeams
         
     end
     
-    %{
+    
     frame = getframe;
     im = frame2im(frame);
     [A,map] = rgb2ind(im,256);
@@ -155,7 +155,7 @@ for i=1:numOfBeams
     else
         imwrite(A,map,fname,'gif','WriteMode','append','DelayTime',1);
     end
-    %}
+    
     
     
     
