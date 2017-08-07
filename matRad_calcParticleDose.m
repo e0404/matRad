@@ -251,7 +251,12 @@ for i = 1:dij.numOfBeams % loop over all beams
             % function provides the weights for the sub-pencil beams,
             % their positions and their sigma used for dose calculation
             [finalWeight, sigmaSub, posX, posZ, numOfSub] = ...
-                matRad_calcWeights(sigmaIni, 8, 'circle');
+                matRad_calcWeights(sigmaIni, 2, 'circle');
+            
+            load('E:\Pezzano\MATLAB\matRad\tools\pezzWeightsData_square14.mat')
+            posX = reshape(posX,[],1);
+            posZ = reshape(posZ,[],1);
+            finalWeight = reshape(finalWeight,[],1);
             
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
                 
@@ -295,7 +300,7 @@ for i = 1:dij.numOfBeams % loop over all beams
 %                 end
                 
                 % I gotta think about this...
-                securityOffset = 0;
+                securityOffset = 30;
                 
                 % compute radial distances relative to pencil beam
                 % component

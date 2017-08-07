@@ -44,6 +44,14 @@ conversionFactor = 1.6021766208e-02;
 
 if ~isfield(baseData,'sigma')
     
+    % trick to adjust sigmas (is it legal?)
+    minimum = min(baseData.sigma1);
+    temp = (baseData.sigma1 - minimum) ./ 1.15;
+    baseData.sigma1 = temp + minimum;
+    minimum = min(baseData.sigma2);
+    temp = (baseData.sigma2 - minimum) ./ 1.15;
+    baseData.sigma2 = temp + minimum;
+    
     % interpolate depth dose, sigmas, and weights    
     X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
     
