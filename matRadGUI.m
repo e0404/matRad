@@ -1521,9 +1521,18 @@ try
     
     pln = evalin('base','pln');
     ct  = evalin('base','ct');
+    cst  = evalin('base','cst');
     
     % optimize
     [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
+    
+    % calculate qi and dvh
+    if isfield(resultGUIcurrentRun,'RBExDose')
+        [dvh, qi] = matRad_calcIndicators(cst,pln,resultGUIcurrentRun.RBExDose);
+    else
+        [dvh, qi] = matRad_calcIndicators(cst,pln,resultGUIcurrentRun.physicalDose);
+    end
+    cst = [cst, dvh, qi];
     
     %if resultGUI already exists then overwrite the "standard" fields
     AllVarNames = evalin('base','who');
@@ -1537,6 +1546,7 @@ try
         resultGUI = resultGUIcurrentRun;
     end
     assignin('base','resultGUI',resultGUI);
+    assignin('base','cst',cst);
 
     % set some values
     if handles.plane == 1
@@ -2747,7 +2757,7 @@ cst = evalin('base','cst');
 for i = 1:size(cst,1)
     cst{i,5}.Visible = handles.VOIPlotFlag(i);
 end
-matRad_calcDVH(resultGUI_SelectedCube,cst,evalin('base','pln'));
+matRad_calcDVH(evalin('base','cst') ,evalin('base','pln'));
 
 % radio button: plot isolines labels
 function radiobtnIsoDoseLinesLabels_Callback(~, ~, handles)

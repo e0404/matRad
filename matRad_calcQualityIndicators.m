@@ -113,9 +113,9 @@ for runVoi = 1:size(cst,1)
                                    QI(runVoi).(['CI_' StringReferenceDose 'Gy']),QI(runVoi).(['HI_' StringReferenceDose 'Gy']),referenceDose);
             end
         end
-        fprintf('%s\n',voiPrint);
+        matRad_dispToConsole(voiPrint,param,'info','%s\n')
     else    
-    fprintf('%3d %20s - No dose information.\n',cst{runVoi,1},cst{runVoi,2});
+    matRad_dispToConsole([num2str(cst{runVoi,1}) ' ' cst{runVoi,2} ' - No dose information.\n'],param,'info') 
     end
     
 end

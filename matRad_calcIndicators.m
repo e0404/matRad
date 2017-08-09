@@ -1,4 +1,4 @@
-function [dvhV, QI, doseGrid] = ...
+function [dvh, qi] = ...
     matRad_calcIndicators(cst,pln,doseCube,dvhType,doseGrid,refGy,refVol,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad indictor calculation (contains QI as well as DVH)
@@ -75,22 +75,20 @@ if ~exist('refGy', 'var') || isempty(refGy)
     refGy = linspace(0,max(doseCube(:)),6);
 end
 
-[doseGrid, dvhV] = calcDVH(cst, doseCube, dvhType, doseGrid);
-QI = matRad_calcQualityIndicators(cst,pln,doseCube,param,refGy,refVol);
+dvh = calcDVH(cst, doseCube, dvhType, doseGrid);
+qi = matRad_calcQualityIndicators(cst,pln,doseCube,param,refGy,refVol);
 
-    function [doseGrid, dvhV] = calcDVH(cst, doseCube, dvhType, doseGrid)
+    function dvhV = calcDVH(cst, doseCube, dvhType, doseGrid)
 
     numOfVois = size(cst,1);
-    dvhV{numOfVois} = [];
+    dvhV{numOfVois,1} = [];
     for i = 1:numOfVois
-        dvhV{i} = getDVHPoints(cst, i, doseCube, doseGrid, dvhType);
+        dvhV{i,1} = [doseGrid; getDVHPoints(cst, i, doseCube, doseGrid, dvhType)];
     end
 
         function [dvh] = getDVHPoints(cst, sIx, doseCube, dvhPoints, dvhType)
         n = numel(dvhPoints);
         dvh       = NaN * ones(1,n);
-        % maxDVH = 0;
-        % counter = 0;
         indices     = cst{sIx,4}{1};
         numOfVoxels = numel(indices);
 
