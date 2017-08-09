@@ -1527,13 +1527,7 @@ try
     [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
     
     % calculate qi and dvh
-    if isfield(resultGUIcurrentRun,'RBExDose')
-        [dvh, qi] = matRad_calcIndicators(cst,pln,resultGUIcurrentRun.RBExDose);
-    else
-        [dvh, qi] = matRad_calcIndicators(cst,pln,resultGUIcurrentRun.physicalDose);
-    end
-    cst(:,8) = dvh;
-    cst(:,9) = qi;
+    cst = matRad_indicatorWrapper(cst,pln,resultGUIcurrentRun);
     
     %if resultGUI already exists then overwrite the "standard" fields
     AllVarNames = evalin('base','who');

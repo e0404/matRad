@@ -1,4 +1,4 @@
-function matRad_showDVH(cst,pln,lineStyleIndicator)
+function matRad_showDVH(cst,pln,scenIx,lineStyleIndicator)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dvh calculation
 % 
@@ -8,6 +8,7 @@ function matRad_showDVH(cst,pln,lineStyleIndicator)
 % input
 %   result:             result struct from fluence optimization/sequencing
 %   cst:                matRad cst struct
+%   scenIx: (optional)  index of scenario (default: 1)
 %   lineStyleIndicator: integer (1,2,3,4) to indicate the current linestyle
 %                       (hint: use different lineStyles to overlay
 %                       different dvhs)
@@ -35,7 +36,11 @@ function matRad_showDVH(cst,pln,lineStyleIndicator)
 
 % create new figure and set default line style indicator if not explictly
 % specified
-if nargin < 4 
+if ~exist('scenIx','var') || isempty(scenIx)
+    scenIx = 1;
+end
+
+if ~exist('lineStyleIndicator','var') || isempty(lineStyleIndicator)
     f = figure('Name','DVH','Color',[0.5 0.5 0.5],'Position',([300 300 800 600]));
     hold on
     lineStyleIndicator = 1;
@@ -61,7 +66,7 @@ lineStyles = {'-',':','--','-.'};
 
 for i = 1:numOfVois
     if cst{i,5}.Visible
-        dvh = cst{i,8};
+        dvh = cst{i,8}{scenIx};
         subplot(211);
         plot(dvh(1,:),dvh(2,:),'LineWidth',4,'Color',colorMx(i,:), ...
             'LineStyle',lineStyles{lineStyleIndicator},'DisplayName',cst{i,2});hold on
@@ -101,7 +106,7 @@ set(table,'position',pos)
 % get quality indicators and fill table
 QI = [];
 for i = 1:numOfVois
-    QI = [QI; cst{i,9}];
+    QI = [QI; cst{i,9}{scenIx}];
 end
 
 set(table,'ColumnName',fieldnames(QI));
