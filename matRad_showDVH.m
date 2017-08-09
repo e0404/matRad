@@ -1,4 +1,4 @@
-function matRad_calcDVH(result,cst,pln,lineStyleIndicator)
+function matRad_showDVH(cst,pln,lineStyleIndicator)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dvh calculation
 % 
@@ -53,37 +53,17 @@ table = uitable(gcf,'Data',zeros(length(rnames),length(cnames)),...
             'ColumnName',cnames,... 
             'RowName',rnames,'ColumnWidth',{70});
         
-%% calculate and print the dvh
+%% print the dvh
 colorMx    = colorcube;
 colorMx    = colorMx(1:floor(64/numOfVois):64,:);
 
 lineStyles = {'-',':','--','-.'};
 
-n = 1000;
-sQuantity = 'physicalDose';
-if sum(strcmp(fieldnames(result),'RBExD')) > 0 && ~strcmp(pln.bioOptimization,'none')
-    sQuantity = 'RBExD';
-end
-
-dvhPoints = linspace(0,max(result.(sQuantity)(:))*1.05,n);
-dvh       = NaN * ones(1,n);
-
 for i = 1:numOfVois
     if cst{i,5}.Visible
-        indices     = cst{i,4}{1};
-        numOfVoxels = numel(indices);
-        doseInVoi   = result.(sQuantity)(indices);   
-
-        % fprintf('%3d %20s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy)\n', ...
-        %     cst{i,1},cst{i,2},mean(doseInVoi),std(doseInVoi),max(doseInVoi),min(doseInVoi))
-
-        for j = 1:n
-            dvh(j) = sum(doseInVoi > dvhPoints(j));
-        end
-
-        dvh = dvh ./ numOfVoxels * 100;
-
-        subplot(211),plot(dvhPoints,dvh,'LineWidth',4,'Color',colorMx(i,:), ...
+        dvh = cst{i,8};
+        subplot(211);
+        plot(dvh(1,:),dvh(2,:),'LineWidth',4,'Color',colorMx(i,:), ...
             'LineStyle',lineStyles{lineStyleIndicator},'DisplayName',cst{i,2});hold on
     end
 end
@@ -95,7 +75,7 @@ legend boxoff
 
 
 ylim([0 110]);
-xlim([0 1.2*max(dvhPoints)]);
+xlim([0 1.2*max(dvh(1,:))]);
 set(gca,'YTick',0:20:120)
 
 grid on,grid minor
@@ -103,7 +83,7 @@ box(gca,'on');
 set(gca,'LineWidth',1.5,'FontSize',fontSizeValue);
 ylabel('Volume [%]','FontSize',fontSizeValue)
 
-if strcmp(sQuantity,'physicalDose');
+if strcmp(pln.bioOptimization,'none')
      xlabel('Dose [Gy]','FontSize',fontSizeValue);
 else
      xlabel('RBE x Dose [Gy(RBE)]','FontSize',fontSizeValue);
@@ -119,8 +99,10 @@ set(table,'units','normalized')
 set(table,'position',pos)
 
 % get quality indicators and fill table
-res = matRad_calcQualityIndicators(result,cst,pln);
+QI = [];
+for i = 1:numOfVois
+    QI = [QI; cst{i,9}];
+end
 
-set(table,'ColumnName',fieldnames(res.QI));
-set(table,'Data',(squeeze(struct2cell(res.QI)))');
-
+set(table,'ColumnName',fieldnames(QI));
+set(table,'Data',(squeeze(struct2cell(QI)))');

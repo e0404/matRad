@@ -70,6 +70,15 @@ end
 %% inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
+%% indicator calculation
+if isfield(resultGUI,'RBExDose')
+    [dvh, qi] = matRad_calcIndicators(cst,pln,resultGUI.RBExDose);
+else
+    [dvh, qi] = matRad_calcIndicators(cst,pln,resultGUI.physicalDose);
+end
+cst(:,8) = dvh;
+cst(:,9) = qi;
+
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
     %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
@@ -86,16 +95,10 @@ end
 %% start gui for visualization of result
 matRadGUI
 
-%% calculate dvh
-matRad_calcDVH(resultGUI,cst,pln)
+%% show DVH and QI
+matRad_showDVH(cst,pln)
 
 %% perform sampling
 % select structures to include in sampling; leave empty to sample dose for all structures
 structSel = {}; % structures = {'CTV','OAR1'}
 [mRealizations,stats,resultCube]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w, structSel);
-
-
-
-
-
-
