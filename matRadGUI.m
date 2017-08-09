@@ -1532,7 +1532,8 @@ try
     else
         [dvh, qi] = matRad_calcIndicators(cst,pln,resultGUIcurrentRun.physicalDose);
     end
-    cst = [cst, dvh, qi];
+    cst(:,8) = dvh;
+    cst(:,9) = qi;
     
     %if resultGUI already exists then overwrite the "standard" fields
     AllVarNames = evalin('base','who');
@@ -2757,7 +2758,7 @@ cst = evalin('base','cst');
 for i = 1:size(cst,1)
     cst{i,5}.Visible = handles.VOIPlotFlag(i);
 end
-matRad_calcDVH(evalin('base','cst') ,evalin('base','pln'));
+matRad_showDVH(evalin('base','cst'), evalin('base','pln'));
 
 % radio button: plot isolines labels
 function radiobtnIsoDoseLinesLabels_Callback(~, ~, handles)
