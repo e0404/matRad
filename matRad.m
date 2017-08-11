@@ -71,13 +71,7 @@ end
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% indicator calculation
-if isfield(resultGUI,'RBExDose')
-    [dvh, qi] = matRad_calcIndicators(cst,pln,resultGUI.RBExDose);
-else
-    [dvh, qi] = matRad_calcIndicators(cst,pln,resultGUI.physicalDose);
-end
-cst(:,8) = dvh;
-cst(:,9) = qi;
+cst = matRad_indicatorWrapper(cst,pln,resultGUI);
 
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
