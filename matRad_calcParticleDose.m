@@ -214,9 +214,6 @@ for i = 1:dij.numOfBeams % loop over all beams
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
     fprintf('done.\n');
     
-%     radDepthsMat = zeros(ct.cubeDim);
-%     radDepthsMat(V) = radDepthV{1};
-    
     for j = 1:stf(i).numOfRays % loop over all rays
         
         if ~isempty(stf(i).ray(j).energy)
@@ -228,14 +225,12 @@ for i = 1:dij.numOfBeams % loop over all beams
             maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
             
             % Ray tracing for beam i and ray j
-            [ix,radialDist_sq,~,~,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
+            [ix,~,~,~,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
                                                                  stf(i).sourcePoint_bev, ...
                                                                  stf(i).ray(j).targetPoint_bev, ...
                                                                  machine.meta.SAD, ...
                                                                  radDepthIx, ...
                                                                  maxLateralCutoffDoseCalc);
-            %                                                 
-            radDepthsCrop = radDepthV{1}(ix);
             
             % just use tissue classes of voxels found by ray tracer
             if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ...
@@ -253,10 +248,10 @@ for i = 1:dij.numOfBeams % loop over all beams
             [finalWeight, sigmaSub, posX, posZ, numOfSub] = ...
                 matRad_calcWeights(sigmaIni, 2, 'circle');
             
-            load('E:\Pezzano\MATLAB\matRad\tools\pezzWeightsData_square14.mat')
-            posX = reshape(posX,[],1);
-            posZ = reshape(posZ,[],1);
-            finalWeight = reshape(finalWeight,[],1);
+%             load('E:\Pezzano\MATLAB\matRad\tools\pezzWeightsData_square14.mat')
+%             posX = reshape(posX,[],1);
+%             posZ = reshape(posZ,[],1);
+%             finalWeight = reshape(finalWeight,[],1);
             
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
                 
@@ -293,11 +288,6 @@ for i = 1:dij.numOfBeams % loop over all beams
                 % coordinates
                 radDepths = interp3(radDepthCube,projCoords(:,1,:)./ct.resolution.x,...
                     projCoords(:,2,:)./ct.resolution.y,projCoords(:,3,:)./ct.resolution.z,'cubic');
-                
-%                 for ir = 1:size(projCoords,3)
-%                     radDepths(:,:,ir) = interp3(radDepthCube,projCoords(:,1,ir)./ct.resolution.x,...
-%                         projCoords(:,2,ir)./ct.resolution.y,projCoords(:,3,ir)./ct.resolution.z,'linear');
-%                 end
                 
                 % I gotta think about this...
                 securityOffset = 30;
@@ -349,12 +339,12 @@ for i = 1:dij.numOfBeams % loop over all beams
                         %disp([size(tempBixelDose,1) max(idxsIntoV) size(bixelDose,1) max(idxsIntoTempB)]);
                         bixelDose(idxsIntoSup) = bixelDose(idxsIntoSup) + tempBixelDose(idxsIntoSft);
 %                         bixelDose  = bixelDose + tempBixelDose;
-%                                                                 idc = V(ix(currIx)); idc(idxsIntoSft)=[];
-%                                                                 superIdx = cat(1,superIdx,idc);
-%                                                                 tempBixelDose(idxsIntoSft)=[];
-%                                                                 bixelDose = cat(1,bixelDose,tempBixelDose);
-%                                                                 [superIdx,sortidx]=sort(superIdx);
-%                                                                 bixelDose = bixelDose(sortidx);
+%                         idc = V(ix(currIx)); idc(idxsIntoSft)=[];
+%                         superIdx = cat(1,superIdx,idc);
+%                         tempBixelDose(idxsIntoSft)=[];
+%                         bixelDose = cat(1,bixelDose,tempBixelDose);
+%                         [superIdx,sortidx]=sort(superIdx);
+%                         bixelDose = bixelDose(sortidx);
                     else
                         bixelDose = finalWeight(c,k).*matRad_calcParticleDoseBixel(...
                             radDepths(currIx(:,:,c),1,c), ...
