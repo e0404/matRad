@@ -51,8 +51,9 @@ function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter, ...
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Add isocenter to source and target point. Because the algorithm does not
-% works with negatives values. This put (0,0,0) in the center of first
-% voxel
+% works with negatives values. This put (resolution.x,resolution.y,resolution.z)
+% in the center of first voxel
+
 sourcePoint = sourcePoint + isocenter;
 targetPoint = targetPoint + isocenter;
 

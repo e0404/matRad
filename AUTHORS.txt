@@ -16,4 +16,5 @@ List of all matRad developers that contributed code (alphabetical)
 * Niklas Wahl
 * Jona Welsch
 * Hans-Peter Wieser
+* Johanna Winter
 * Tong Xu
