@@ -153,13 +153,6 @@ else
     k_min = ceil(1/1000*(round(1000*k_min)));
     k_max = floor(1/1000*(round(1000*k_max)));
 end
-% i_min = 1;
-% j_min = 1;
-% k_min = 1;
-% i_max = size(cubes{1},1);
-% j_max = size(cubes{1},2);
-% k_max = size(cubes{1},3);
-
 
 % eq 7
 % For the given range of indices, calculate the paremetrics values who
