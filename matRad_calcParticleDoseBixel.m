@@ -48,20 +48,10 @@ radDepths = radDepths + rangeShifter.eqThickness;
 % convert from MeV cm^2/g per primary to Gy mm^2 per 1e6 primaries
 conversionFactor = 1.6021766208e-02;
 
- % calculate initial focus sigma
-% SigmaIni = matRad_interp1(baseData.initFocus.dist(focusIx,:)',baseData.initFocus.sigma(focusIx,:)',SSD);
-
+ % calculate contribution to sigma from range shifter
 sigmaRashi = matRad_sigmaRashi(baseData, radiationMode, rangeShifter.eqThickness, rashiSurfaceDist);
 
 if ~isfield(baseData,'sigma')
-    
-    % trick to adjust sigmas (is it legal?)
-%     minimum = min(baseData.sigma1);
-%     temp = (baseData.sigma1 - minimum) ./ 1.15;
-%     baseData.sigma1 = temp + minimum;
-%     minimum = min(baseData.sigma2);
-%     temp = (baseData.sigma2 - minimum) ./ 1.15;
-%     baseData.sigma2 = temp + minimum;
     
     % interpolate depth dose, sigmas, and weights    
     X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
