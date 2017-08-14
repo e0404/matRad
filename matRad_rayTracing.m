@@ -50,7 +50,7 @@ end
 
 % set up list with bev coordinates for calculation of radiological depth
 coords = zeros(prod(ct.cubeDim),3);
-coords(V,:) = rot_coordsV; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+coords(V,:) = rot_coordsV; 
 
 % calculate spacing of rays on ray matrix
 rayMxSpacing = 1/sqrt(2) * min([ct.resolution.x ct.resolution.y ct.resolution.z]);
@@ -106,7 +106,7 @@ for i = 1:size(rayMx_world,1)
     % the closest ray by projecting the voxel coordinates to the
     % intersection points with the ray matrix and checking if the distance 
     % in x and z direction is smaller than the resolution of the ray matrix
-    scale_factor = (rayMx_bev_y - stf.sourcePoint_bev(2)) ./ ... %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    scale_factor = (rayMx_bev_y - stf.sourcePoint_bev(2)) ./ ... 
                    coords(ixHitVoxel,2);
 
     x_dist = coords(ixHitVoxel,1).*scale_factor - rayMx_bev(i,1);
