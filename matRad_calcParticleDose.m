@@ -287,7 +287,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                 % interpolate radiological depths at projected
                 % coordinates
                 radDepths = interp3(radDepthCube,projCoords(:,1,:)./ct.resolution.x,...
-                    projCoords(:,2,:)./ct.resolution.y,projCoords(:,3,:)./ct.resolution.z,'cubic');
+                    projCoords(:,2,:)./ct.resolution.y,projCoords(:,3,:)./ct.resolution.z,'linear');
                 
                 % I gotta think about this...
                 securityOffset = 30;

@@ -77,7 +77,7 @@ elseif n == 3
         X1(1,:)     = 0.3245 .* sigma_ray.^2 + 0.0001 .* sigma_ray - 0.0004;
         X1(2,:)     = 0.6290 .* sigma_ray - 0.0403;
     end
-elseif n == 8
+elseif n == 8 && strcmp(method,'circle')
     sigma_sub = 0.5 .* sigma_ray;
     radius    = 0.25 .* sigma_ray;
     X1(1,:)     = 0.0334 .* sigma_ray.^2 - 4.1061e-06 .* sigma_ray + 1.5047e-06;
@@ -111,6 +111,6 @@ end
 sig  = ones(size(posX,1),1)*X1(2,:);
 normSig = ones(size(posX,1),1)*X1(1,:);
 
-finalWeight = normSig .* (2.*pi.*sig.^2).^(-1) .* exp(-posX.^2./(2.*(sig.^2))) .* exp(-posY.^2./(2.*(sig.^2)));
+finalWeight = normSig .* (2.*pi.*sig.^2).^(-1) .* exp(-(posX.^2+posY.^2)./(2.*(sig.^2)));
 
 

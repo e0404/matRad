@@ -1,4 +1,4 @@
-function [projCoord,idx,targetPoint, sourcePoint] = matRad_shift(initIx,dim,sourcePoint_bev,targetPoint_bev,isoCenter, res, Dx, Dz, rotMat)
+function [projCoord,idx,targetPoint, sourcePoint] = matRad_projectOnComponents(initIx,dim,sourcePoint_bev,targetPoint_bev,isoCenter, res, Dx, Dz, rotMat)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This function projects a point on a certain ray and returns both the index
 % of the projected point in the reference system of the ct cube and its
@@ -37,13 +37,10 @@ function [projCoord,idx,targetPoint, sourcePoint] = matRad_shift(initIx,dim,sour
 
 % add offset to target and source point in bev
 
-Dx = -Dx;
-Dz = -Dz;
-
-targetPoint_bevVec = targetPoint_bev(2).*ones([length(Dx) 3]);
+targetPoint_bevVec(:,2) = targetPoint_bev(2).*ones([length(Dx) 1]);
 targetPoint_bevVec(:,1) = bsxfun(@plus,Dx,targetPoint_bev(1));
 targetPoint_bevVec(:,3) = bsxfun(@plus,Dz',targetPoint_bev(3));
-sourcePoint_bevVec = sourcePoint_bev(2).*ones([length(Dz) 3]);
+sourcePoint_bevVec(:,2) = sourcePoint_bev(2).*ones([length(Dz) 1]);
 sourcePoint_bevVec(:,1) = bsxfun(@plus,Dx,sourcePoint_bev(1));
 sourcePoint_bevVec(:,3) = bsxfun(@plus,Dz,sourcePoint_bev(3));
 
@@ -51,8 +48,20 @@ sourcePoint_bevVec(:,3) = bsxfun(@plus,Dz,sourcePoint_bev(3));
 targetPoint = bsxfun(@plus,targetPoint_bevVec * rotMat', isoCenter);
 sourcePoint = bsxfun(@plus,sourcePoint_bevVec * rotMat', isoCenter);
 
-% convert index in coordinates
-[coord(:,2),coord(:,1),coord(:,3)] = ind2sub(dim,initIx);
+% convert index in coordinates, it does the same job as:
+%       [coord(:,2),coord(:,1),coord(:,3)] = ind2sub(dim,initIx);
+if max(initIx) > prod(dim) || min(initIx) < 0
+    error('Index exceeds matrix dimensions')
+else
+    v1 = floor(initIx./dim(1)); 
+    coord(:,2) = rem(initIx,dim(1)); coord(coord(:,2)==0, 2) = dim(1);
+    coord(:,1) = rem(v1,dim(2)) + 1; 
+    coord(coord(:,2)==dim(1), 1) = coord(coord(:,2)==dim(1), 1) -1;
+    coord(coord(:,1)==0, 1) = dim(2);
+    coord(:,3) = floor((v1)./dim(2)) + 1;
+end
+
+
 coord = bsxfun(@times,coord,res);
 
 % distance of points Bvec from the projection of points coord onto the line between A 
@@ -74,8 +83,9 @@ D = round(bsxfun(@rdivide,projCoord,res));
 % delete every point which goes out of the matrix
 % D( D(:,1)<1 | D(:,1)>dim(1) | D(:,2)<1 | D(:,2)>dim(2) | D(:,3)<1 | D(:,3)>dim(3), :) = [];
 
-% index the found coordinates
- idx = sub2ind(dim,D(:,2),D(:,1),D(:,3));
+% index the found coordinates, it does the same thing as:
+%       idx = sub2ind(dim,D(:,2),D(:,1),D(:,3));
+ idx = D(:,2) + (D(:,1)-1)*dim(1) + (D(:,3)-1)*dim(1)*dim(2);
 
 
 
