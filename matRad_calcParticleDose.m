@@ -240,7 +240,7 @@ for i = 1:dij.numOfBeams % loop over all beams
             
             % we use a function to evaluate simultaneously all the initial
             % sigma. This function should be made faster
-            sigmaIni = matRad_calcSigmaIni(machine.data,stf(i).ray,stf(i).ray(j).SSD);
+            sigmaIni = matRad_calcSigmaIni(machine.data,stf(i).ray(j),stf(i).ray(j).SSD);
             
             % Given the initial sigma of the sampling beam, this
             % function provides the weights for the sub-pencil beams,
