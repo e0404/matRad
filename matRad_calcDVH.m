@@ -1,28 +1,30 @@
-function matRad_calcDVH(result,cst,pln,lineStyleIndicator)
+function dvh = matRad_calcDVH(cst,doseCube,dvhType,doseGrid)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad dvh calculation
+% matRad indictor calculation (contains QI as well as DVH)
 % 
 % call
-%   matRad_calcDVH(d,cst,lineStyleIndicator)
+%   matRad_calcIndicators(cst,pln,cube,dvhType,param,refGy,refVol,lineStyleIndicator)
 %
 % input
-%   result:             result struct from fluence optimization/sequencing
-%   cst:                matRad cst struct
-%   lineStyleIndicator: integer (1,2,3,4) to indicate the current linestyle
-%                       (hint: use different lineStyles to overlay
-%                       different dvhs)
+%   cst:                  matRad cst struct
+%   doseCube:             arbitrary doseCube (e.g. physicalDose)
+%   dvhType: (optional)   string, 'cum' for cumulative, 'diff' for differential
+%                         dvh
+%   doseGrid: (optional): use predefined evaluation points. Useful when
+%                         comparing multiple realizations
 %
 % output
-%   graphical display of DVH & dose statistics in console   
+%   dose volume histogram
 %
 % References
-%   -
+%   van't Riet et. al., IJROBP, 1997 Feb 1;37(3):731-6.
+%   Kataria et. al., J Med Phys. 2012 Oct-Dec; 37(4): 207�213.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2016 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -33,94 +35,51 @@ function matRad_calcDVH(result,cst,pln,lineStyleIndicator)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% create new figure and set default line style indicator if not explictly
-% specified
-if nargin < 4 
-    f = figure('Name','DVH','Color',[0.5 0.5 0.5],'Position',([300 300 800 600]));
-    hold on
-    lineStyleIndicator = 1;
-else
-    hold on
+if ~exist('dvhType','var') || isempty(dvhType)
+    dvhType = 'cum';
 end
 
-numOfVois = size(cst,1);
+if ~exist('doseGrid', 'var') || isempty(doseGrid)
+    maxDose = max(doseCube(:));
+    minDose = min(doseCube(:));
 
-% Create the column and row names in cell arrays 
-cnames = {'dummy_a'};
-rnames = cst(:,2);
-% Create the uitable
-table = uitable(gcf,'Data',zeros(length(rnames),length(cnames)),...
-            'ColumnName',cnames,... 
-            'RowName',rnames,'ColumnWidth',{70});
-        
-%% calculate and print the dvh
-colorMx    = colorcube;
-colorMx    = colorMx(1:floor(64/numOfVois):64,:);
-
-lineStyles = {'-',':','--','-.'};
-
-n = 1000;
-sQuantity = 'physicalDose';
-if sum(strcmp(fieldnames(result),'RBExDose')) > 0 && ~strcmp(pln.bioOptimization,'none')
-    sQuantity = 'RBExDose';
-end
-
-dvhPoints = linspace(0,max(result.(sQuantity)(:))*1.05,n);
-dvh       = NaN * ones(1,n);
-
-for i = 1:numOfVois
-    if cst{i,5}.Visible
-        indices     = cst{i,4}{1};
-        numOfVoxels = numel(indices);
-        doseInVoi   = result.(sQuantity)(indices);   
-
-        % fprintf('%3d %20s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy)\n', ...
-        %     cst{i,1},cst{i,2},mean(doseInVoi),std(doseInVoi),max(doseInVoi),min(doseInVoi))
-
-        for j = 1:n
-            dvh(j) = sum(doseInVoi > dvhPoints(j));
-        end
-
-        dvh = dvh ./ numOfVoxels * 100;
-
-        subplot(211),plot(dvhPoints,dvh,'LineWidth',4,'Color',colorMx(i,:), ...
-            'LineStyle',lineStyles{lineStyleIndicator},'DisplayName',cst{i,2});hold on
+    % get dvhPoints for every structure and every scenario the same
+    n = 1000;
+    if strcmp(dvhType, 'cum')
+        doseGrid = linspace(0,maxDose*1.05,n);
+    elseif strcmp(dvhType, 'diff')
+        doseGrid = linspace(minDose * 1.05,maxDose*1.05,n);
     end
 end
 
-fontSizeValue = 14;
-myLegend = legend('show','location','NorthEast');
-set(myLegend,'FontSize',10,'Interpreter','none');
-legend boxoff
-
-
-ylim([0 110]);
-xlim([0 1.2*max(dvhPoints)]);
-set(gca,'YTick',0:20:120)
-
-grid on,grid minor
-box(gca,'on');
-set(gca,'LineWidth',1.5,'FontSize',fontSizeValue);
-ylabel('Volume [%]','FontSize',fontSizeValue)
-
-if strcmp(sQuantity,'physicalDose');
-     xlabel('Dose [Gy]','FontSize',fontSizeValue);
-else
-     xlabel('RBE x Dose [Gy(RBE)]','FontSize',fontSizeValue);
+numOfVois = size(cst,1);
+dvh{numOfVois,1} = [];
+for i = 1:numOfVois
+    dvh{i,1} = [doseGrid; getDVHPoints(cst, i, doseCube, doseGrid, dvhType)];
 end
 
-pos = get(subplot(2,1,2),'position');
-ylabel('VOIs');
-xlabel('dose statistics');
-set(subplot(2,1,2),'yTick',[])
-set(subplot(2,1,2),'xTick',[])
+    function dvh = getDVHPoints(cst, sIx, doseCube, dvhPoints, dvhType)
+    n = numel(dvhPoints);
+    dvh       = NaN * ones(1,n);
+    indices     = cst{sIx,4}{1};
+    numOfVoxels = numel(indices);
 
-set(table,'units','normalized')
-set(table,'position',pos)
+    doseInVoi   = doseCube(indices);
 
-% get quality indicators and fill table
-res = matRad_calcQualityIndicators(result,cst,pln);
+    switch dvhType
+        case 'cum' % cummulative DVH
+            for j = 1:n
+                dvh(j) = sum(doseInVoi > dvhPoints(j));
+            end
 
-set(table,'ColumnName',fieldnames(res.QI));
-set(table,'Data',(squeeze(struct2cell(res.QI)))');
+        case 'diff' % differential DVH
+            binning = (dvhPoints(2) - dvhPoints(1))/2;
+            for j = 1:n % differential DVH        
+                dvh(j) = sum(dvhPoints(j) + binning > doseInVoi & doseInVoi > dvhPoints(j) - binning);
+            end
 
+    end
+    dvh = dvh ./ numOfVoxels * 100;
+  end %eof getDVHPoints
+
+end %eof 
