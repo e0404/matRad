@@ -1,4 +1,4 @@
-function QIcell = matRad_calcQualityIndicators(cst,pln,doseCube,param,refGy,refVol)
+function QIcell = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad QI calculation
 % 
@@ -7,6 +7,8 @@ function QIcell = matRad_calcQualityIndicators(cst,pln,doseCube,param,refGy,refV
 %
 % input
 %   cst:                matRad cst struct
+%   pln:                matRad pln struct
+%   doseCube:           arbitrary doseCube (e.g. physicalDose)
 %   refGy: (optional)   array of dose values used for V_XGy calculation
 %                       default is [40 50 60]
 %   refVol:(optional)   array of volumes (0-100) used for D_X calculation
@@ -35,6 +37,14 @@ function QIcell = matRad_calcQualityIndicators(cst,pln,doseCube,param,refGy,refV
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if ~exist('refVol', 'var') || isempty(refVol)
+    refVol = [2 5 98 95];
+end
+
+if ~exist('refGy', 'var') || isempty(refGy)
+    refGy = linspace(0,max(doseCube(:)),6);
+end
+
 if exist('param','var')
    if ~isfield(param,'logLevel')
       param.logLevel = 1;
