@@ -28,10 +28,11 @@ function [wQ] = weightedQuantile(values, percentiles, weight, sortedB, extraPolB
   wQ = NaN * ones(size(values,1), 2);
   
   if extraPolB
-      x = single(wQtemp);
-      V = values;
+      [x,ia] = unique(wQtemp);
       %samplePoints = {x, single(1:size(V,1))};
       %queryPoints = {single(percentiles), single(1:size(V,1))};
+      
+      V = values(ia);
       F = griddedInterpolant(x, V);
       wQ = F(percentiles);
   else
