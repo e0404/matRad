@@ -1,4 +1,4 @@
-function stf = matRad_generateStf(ct,cst,pln,param,visMode)
+function stf = matRad_generateStf(ct,cst,pln,visMode)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad steering information generation
 % 
@@ -32,29 +32,19 @@ function stf = matRad_generateStf(ct,cst,pln,param,visMode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if exist('param','var')
-    if ~isfield(param,'logLevel')
-       param.logLevel = 1;
-    end
-    
-else
-   param.calcDoseDirect = false;
-   param.subIx          = [];
-   param.logLevel       = 1;
-end
 
-matRad_dispToConsole('matRad: Generating stf struct... ',param,'info'); 
+fprintf('matRad: Generating stf struct... ');
 
-if nargin < 5
+if nargin < 4
     visMode = 0;
 end
 
 if numel(pln.gantryAngles) ~= numel(pln.couchAngles)
-    matRad_dispToConsole('Inconsistent number of gantry and couch angles.',param,'error'); 
+    error('Inconsistent number of gantry and couch angles.');
 end
 
 if pln.bixelWidth < 0 || ~isfinite(pln.bixelWidth)
-   matRad_dispToConsole('bixel width (spot distance) needs to be a real number [mm] larger than zero.',param,'error'); 
+   error('bixel width (spot distance) needs to be a real number [mm] larger than zero.');
 end
 
 % find all target voxels from cst cell array
@@ -81,7 +71,7 @@ end
 
 % throw error message if no target is found
 if isempty(V)
-   matRad_dispToConsole('Could not find target.',param,'error'); 
+    error('Could not find target.');
 end
 
 % prepare structures necessary for particles
@@ -90,7 +80,7 @@ try
    load([fileparts(mfilename('fullpath')) filesep fileName]);
    SAD = machine.meta.SAD;
 catch
-   matRad_dispToConsole(['Could not find the following machine file: ' fileName ],param,'error'); 
+   error(['Could not find the following machine file: ' fileName ]); 
 end
 
 if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
@@ -99,7 +89,7 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     availablePeakPos  = [machine.data.peakPos] + [machine.data.offset];
     
     if sum(availablePeakPos<0)>0
-        matRad_dispToConsole('at least one available peak position is negative - inconsistent machine file',param,'error'); 
+       error('at least one available peak position is negative - inconsistent machine file') 
     end
     %clear machine;
 end
@@ -243,7 +233,7 @@ for i = 1:length(pln.gantryAngles)
                 targetExit  = radDepths(diff_voi == -1);
 
                 if numel(targetEntry) ~= numel(targetExit)
-                    matRad_dispToConsole('Inconsistency during ray tracing.',param,'error'); 
+                    error('Inconsistency during ray tracing.');
                 end
 
                 stf(i).ray(j).energy = [];
@@ -280,7 +270,7 @@ for i = 1:length(pln.gantryAngles)
          stf(i).ray(j).energy = machine.data.energy;
          
        else
-          matRad_dispToConsole('Error generating stf struct: invalid radiation modality.',param,'error');
+          error('Error generating stf struct: invalid radiation modality.');
        end
        
     end
@@ -343,10 +333,8 @@ for i = 1:length(pln.gantryAngles)
     stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
     
     % Show progress
-    if param.logLevel <= 2
-          matRad_progress(i,length(pln.gantryAngles));
-    end
-    
+    matRad_progress(i,length(pln.gantryAngles));
+
     %% visualization
     if visMode > 0
         
