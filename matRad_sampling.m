@@ -1,4 +1,4 @@
-function [mRealizations,stats, pln, resultCubes]  = matRad_sampling(ct,stf,cst,pln,w,structSel, param)
+function [mRealizations,stats, cst, pln, resultCubes,nominalScenario]  = matRad_sampling(ct,stf,cst,pln,w,structSel, param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_randomSampling enables sampling multiple treatment scenarios
 % 
@@ -38,7 +38,7 @@ function [mRealizations,stats, pln, resultCubes]  = matRad_sampling(ct,stf,cst,p
 
 pln.sampling      = true;
 pln.robOpt        = false;
-pln.numOfSamples  = 4;
+pln.numOfSamples  = 108;
 
 
 if exist('param','var')
@@ -102,10 +102,22 @@ end
 
 %% calculate nominal scenario
 nominalScenario          = matRad_calcDoseDirect(ct,stf,pln,cst,w,param);
-resultCubes.resultNominal = nominalScenario.(pln.bioParam.quantityOpt);
 
-[DVH.points, DVH.values] = calcDVHdirect(cst, nominalScenario.(pln.bioParam.quantityOpt));
-resultCubes.dvhPoints = DVH.points;
+nominalScenario.cst = cst;
+nominalScenario.dvh = matRad_calcDVH(cst,nominalScenario.(pln.bioParam.quantityOpt),'cum');
+
+refVol = [2 5 98 95];
+refGy = linspace(0,max(nominalScenario.(pln.bioParam.quantityOpt)(:)),6);
+nomQi = matRad_calcQualityIndicators(cst,pln,nominalScenario.(pln.bioParam.quantityOpt),refGy,refVol);
+nominalScenario.qi = nomQi;
+for i = 1:size(nominalScenario.cst,1)
+    nominalScenario.cst{i,8} = cell(1,1);
+    nominalScenario.cst{i,9} = cell(1,1);
+    
+    nominalScenario.cst{i,8}{1} = nominalScenario.dvh{i};
+    nominalScenario.cst{i,9}{1} = nomQi{i};
+end  
+dvhPoints = nominalScenario.dvh{1}(1,:);
 
 %% perform parallel sampling
 
@@ -142,9 +154,13 @@ if FlagParallToolBoxLicensed
           resultSamp            = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w,param);
           sampledDose           = resultSamp.(pln.bioParam.quantityOpt)(param.subIx);
           mRealizations(:,i)    = single(reshape(sampledDose,[],1));
-          resultQI              = matRad_calcQualityIndicators(resultSamp,cst,plnSamp,param);
-          stats{i,1}            = resultQI.QI;
-          [~,dvhTemp{i,1}]      = calcDVHdirect(cst, resultSamp.(pln.bioParam.quantityOpt), 1, resultCubes.dvhPoints);
+          
+          dvh{i} = matRad_calcDVH(cst,resultSamp.(pln.bioParam.quantityOpt),'cum',dvhPoints);
+          qi{i} = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityOpt),refGy,refVol);
+          
+          % resultQI              = matRad_calcQualityIndicators(resultSamp,cst,plnSamp,param);
+          % stats{i,1}            = resultQI.QI;
+          % [~,dvhTemp{i,1}]      = calcDVHdirect(cst, resultSamp.(pln.bioParam.quantityOpt), 1, resultCubes.dvhPoints);
           
           if FlagParforProgressDisp
             parfor_progress;
@@ -179,9 +195,9 @@ else
           resultSamp            = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w,param);
           sampledDose           = resultSamp.(pln.bioParam.quantityOpt)(param.subIx);
           mRealizations(:,i)     = single(reshape(sampledDose,[],1));
-          resultQI              = matRad_calcQualityIndicators(resultSamp,cst,plnSamp,param);
-          stats{i,1}            = resultQI.QI;
-          [~,dvhTemp{i,1}]      = calcDVHdirect(cst, resultSamp.(pln.bioParam.quantityOpt), 1, resultCubes.dvhPoints);
+          
+          dvh{i} = matRad_calcDVH(cst,sampledDose,'cum',dvhPoints);
+          qi{i} = matRad_calcQualityIndicators(cst,pln,sampleDose,refGy,refVol);
           
           waitbar(i/pln.numOfSamples);
 
@@ -191,16 +207,17 @@ else
 end
 
 % reassing dvh to stats structure
-for i = 1:pln.numOfSamples
-    stats{i,2} = dvhTemp{i,1};
+for i = 1:size(nominalScenario.cst,1)
+    cst{i,8} = cell(pln.numOfSamples,1);
+    cst{i,9} = cell(pln.numOfSamples,1);
+    for j = 1:pln.numOfSamples
+        cst{i,8}{j} = dvh{j}{i};
+        cst{i,9}{j} = qi{j}{i};
+    end  
 end
         
 %% add subindices
 pln.multScen.subIx        = param.subIx;
 resultCubes.subIx         = param.subIx;
-
-%% calculate standard deviations
-resultCubes = samplingAnalysis(mRealizations, ct, pln)
-
 
 end

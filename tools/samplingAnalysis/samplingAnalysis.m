@@ -1,19 +1,16 @@
-function structureStat = samplingAnalysis(cst,w)
+function [structureStat, doseStat] = samplingAnalysis(ct,cst,subIx,mRealizations,w)
 
-% weights
-% weights = pln.multScen.scenProb;
-% 
-% % calculate mean and std cube
-% resultCubes.meanCube              = zeros(ct.cubeDim);
-% resultCubes.stdCube               = zeros(ct.cubeDim);
-% 
-% resultCubes.meanCubeWeighted      = zeros(ct.cubeDim);
-% resultCubes.stdCubeWeighted       = zeros(ct.cubeDim);
-% 
-% resultCubes.meanCube(pln.multScen.subIx)         = mean(mRealizations,2);   
-% resultCubes.stdCube(pln.multScen.subIx)          = std(mRealizations,1,2);  
-% resultCubes.meanCubeWeighted(pln.multScen.subIx) = (sum(mRealizations * diag(pln.multScen.scenProb),2) )/pln.numOfSamples;
-% resultCubes.stdCube(pln.multScen.subIx)          = std(mRealizations,pln.multScen.scenProb,2);
+%% calculate mean and std cube
+doseStat.meanCube              = zeros(ct.cubeDim);
+doseStat.stdCube               = zeros(ct.cubeDim);
+
+doseStat.meanCubeW             = zeros(ct.cubeDim);
+doseStat.stdCubeW              = zeros(ct.cubeDim);
+
+doseStat.meanCube(subIx)       = mean(mRealizations,2);   
+doseStat.stdCube(subIx)        = std(mRealizations,1,2);  
+doseStat.meanCubeW(subIx)      = (sum(mRealizations * diag(w),2) );
+doseStat.stdCubeW(subIx)       = std(mRealizations,w,2);
 
 %% percentiles
 percentiles = [0.02 0.1 0.2 0.3 0.7 0.8 0.9 0.98];
@@ -97,4 +94,3 @@ end
     end % eof calcQiStat
 
 end
-
