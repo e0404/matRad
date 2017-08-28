@@ -112,7 +112,7 @@ elseif ~pln.robOpt && pln.sampling
    multScen.shiftGen1DIsotropy   = '+-';             % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
 
    % b) define range error scenarios                                                
-   multScen.numOfRangeShiftScen  = pln.numOfSamples; % number of absolute and/or relative range scnearios. 
+   multScen.numOfRangeShiftScen  = 20; % number of absolute and/or relative range scnearios. 
                                                      % if absolute and relative range scenarios are defined then multScen.rangeCombType defines the resulting number of range scenarios
    multScen.maxAbsRangeShift     = 1;                % maximum absolute over and undershoot in mm   
    multScen.maxRelRangeShift     = 3.5;              % maximum relative over and undershoot in % 
@@ -153,7 +153,8 @@ else
 end
 
 %% create multiScen struct
-pln.multScen           = matRad_setMultScen(multScen); % calcProb missing.
+pln.multScen           = matRad_setMultScen(multScen);
+pln.numOfSamples       = pln.multScen.numOfScen;
 
 %% get probabilities
 

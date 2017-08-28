@@ -38,7 +38,7 @@ function [mRealizations,stats, cst, pln, resultCubes,nominalScenario]  = matRad_
 
 pln.sampling      = true;
 pln.robOpt        = false;
-pln.numOfSamples  = 108;
+%pln.numOfSamples  deprecated. Calculated automatically.
 
 
 if exist('param','var')
@@ -56,6 +56,9 @@ else
    param.logLevel       = 1;
 end
 
+% save nonSampling pln for nominal scenario calculation
+plnNominal = pln;
+pln = matRad_setPlanUncertainties(ct,pln);
 
 if ~isfield(pln,'numOfSamples')
    pln.numOfSamples  = 20; % default number of samples
@@ -78,10 +81,16 @@ else
             end
         end
     end
-    
 end
 
 param.subIx = unique(vertcat(V{:}));
+
+% disable structures which are not completely in subIx
+for i = 1:size(cst,1)
+    if ~any(strfind(cst{i,4}{1}',param.subIx'))
+        cst{i,5}.Visible = false;
+    end
+end
 
 % define variable for storing scenario doses
 mRealizations = single(zeros(numel(param.subIx),pln.numOfSamples,1));
@@ -101,12 +110,13 @@ catch
 end
 
 %% calculate nominal scenario
-nominalScenario          = matRad_calcDoseDirect(ct,stf,pln,cst,w,param);
+nominalScenario          = matRad_calcDoseDirect(ct,stf,plnNominal,cst,w,param);
+fprintf('Finished nominal Scenario Calculation.\n');
 
 nominalScenario.cst = cst;
 nominalScenario.dvh = matRad_calcDVH(cst,nominalScenario.(pln.bioParam.quantityOpt),'cum');
 
-refVol = [2 5 98 95];
+refVol = [2 5 95 98];
 refGy = linspace(0,max(nominalScenario.(pln.bioParam.quantityOpt)(:)),6);
 nomQi = matRad_calcQualityIndicators(cst,pln,nominalScenario.(pln.bioParam.quantityOpt),refGy,refVol);
 nominalScenario.qi = nomQi;
@@ -133,15 +143,16 @@ if FlagParallToolBoxLicensed
       FlagParforProgressDisp = false;
    end
   
-   pln               = matRad_setPlanUncertainties(ct,pln);
-   
+   %pln               = matRad_setPlanUncertainties(ct,pln);
+   tic
    parfor i = 1:pln.numOfSamples
           
           plnSamp               = pln;
           % pick the i-th scenario and save into plnSamp
           plnSamp.multScen.scenForProb     = pln.multScen.scenForProb(i,:);
-          plnSamp.multScen.relRangeShift   = pln.multScen.relRangeShift(i);
-          plnSamp.multScen.absRangeShift   = pln.multScen.absRangeShift(i);
+          plnSamp.multScen.relRangeShift   = pln.multScen.scenForProb(i,5);
+          plnSamp.multScen.absRangeShift   = pln.multScen.scenForProb(i,4);
+          plnSamp.multScen.isoShift        = pln.multScen.scenForProb(i,1:3);
           plnSamp.multScen.numOfShiftScen  = 1;
           plnSamp.multScen.numOfRangeShift = 1;
           plnSamp.multScen.numOfCtScen     = 1;
@@ -158,14 +169,11 @@ if FlagParallToolBoxLicensed
           dvh{i} = matRad_calcDVH(cst,resultSamp.(pln.bioParam.quantityOpt),'cum',dvhPoints);
           qi{i} = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityOpt),refGy,refVol);
           
-          % resultQI              = matRad_calcQualityIndicators(resultSamp,cst,plnSamp,param);
-          % stats{i,1}            = resultQI.QI;
-          % [~,dvhTemp{i,1}]      = calcDVHdirect(cst, resultSamp.(pln.bioParam.quantityOpt), 1, resultCubes.dvhPoints);
-          
           if FlagParforProgressDisp
             parfor_progress;
           end
    end
+   toc
 
    if FlagParforProgressDisp
       parfor_progress(0);
@@ -176,15 +184,16 @@ else
     h = waitbar(0,'Sampling Scenario ...');
     stats = cell(pln.numOfSamples,1);
     
-    pln               = matRad_setPlanUncertainties(ct,pln);
+    %pln               = matRad_setPlanUncertainties(ct,pln);
     
     for i = 1:pln.numOfSamples
        
           plnSamp               = pln;
           % pick the i-th scenario and save into plnSamp
           plnSamp.multScen.scenForProb     = pln.multScen.scenForProb(i,:);
-          plnSamp.multScen.relRangeShift   = pln.multScen.relRangeShift(i);
-          plnSamp.multScen.absRangeShift   = pln.multScen.absRangeShift(i);
+          plnSamp.multScen.relRangeShift   = pln.multScen.scenForProb(i,5);
+          plnSamp.multScen.absRangeShift   = pln.multScen.scenForProb(i,4);
+          plnSamp.multScen.isoShift        = pln.multScen.scenForProb(i,1:3);
           plnSamp.multScen.numOfShiftScen  = 1;
           plnSamp.multScen.numOfRangeShift = 1;
           plnSamp.multScen.numOfCtScen     = 1;
@@ -194,10 +203,10 @@ else
           
           resultSamp            = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w,param);
           sampledDose           = resultSamp.(pln.bioParam.quantityOpt)(param.subIx);
-          mRealizations(:,i)     = single(reshape(sampledDose,[],1));
+          mRealizations(:,i)    = single(reshape(sampledDose,[],1));
           
-          dvh{i} = matRad_calcDVH(cst,sampledDose,'cum',dvhPoints);
-          qi{i} = matRad_calcQualityIndicators(cst,pln,sampleDose,refGy,refVol);
+          dvh{i} = matRad_calcDVH(cst,resultSamp.(pln.bioParam.quantityOpt),'cum',dvhPoints);
+          qi{i} = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityOpt),refGy,refVol);
           
           waitbar(i/pln.numOfSamples);
 
