@@ -72,7 +72,7 @@ for s = 1:size(cst,1)
         else
             %If we do not have precomputed contours available, do it the
             %slow way with the contour function
-            mask = zeros(size(ct.cube{ctIndex}));
+            mask = zeros(size(ct{ctIndex}));
             mask(cst{s,4}{ctIndex}) = 1;
             if plane == 1 && any(any(mask(slice,:,:) > 0))
                 [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(slice,:,:)),0.5*[1 1],'Color',colors(s,:),'LineWidth',2);
