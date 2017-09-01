@@ -1001,7 +1001,7 @@ if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Re
                     warning('Could not compute isodose lines! Will try slower contour function!');
                 end
             end
-            AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plotLabels,plane,slice,doseMap,handles.dispWindow{doseIx,1});
+            AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plotLabels,plane,slice,doseMap,handles.dispWindow{doseIx,1},'LineWidth',1.5);
         end
 end
 
@@ -1011,7 +1011,7 @@ set(handles.txtMaxVal,'String',num2str(handles.dispWindow{selectIx,2}(1,2)));
 
 %% plot VOIs
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
-    AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,ct,1,handles.VOIPlotFlag,plane,slice)];
+    AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,ct,1,handles.VOIPlotFlag,plane,slice,[],'LineWidth',2)];
 end
 
 %% Set axis labels and plot iso center
@@ -1353,7 +1353,7 @@ if handles.State >= 1 && exist('Result','var')
             [doseHandle,~,handles.dispWindow{doseIx,1}] = matRad_plotDoseSlice3D(axesFig3D,ct,dose,plane,slice,handles.CutOffLevel,handles.doseOpacity,doseMap,handles.dispWindow{doseIx,1});
         end
         if get(handles.radiobtnIsoDoseLines,'Value')
-            matRad_plotIsoDoseLines3D(axesFig3D,ct,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plane,slice,doseMap,handles.dispWindow{doseIx,1});
+            matRad_plotIsoDoseLines3D(axesFig3D,ct,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plane,slice,doseMap,handles.dispWindow{doseIx,1},'LineWidth',1.5);
         end
     end
 end
@@ -2325,7 +2325,7 @@ if handles.cubeHUavailable
 else
     cMapOptionsSelectList = {'None','CT (ED)','Result (i.e. dose)'};
     set(handles.popupmenu_windowPreset,'Visible','off');
-    set(handles.text_windowPreset,'String','Window Presets are not available');
+    set(handles.text_windowPreset,'String','No available Window Presets');
 end
 handles.cBarChanged = true;
 
