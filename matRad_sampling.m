@@ -87,7 +87,7 @@ param.subIx = unique(vertcat(V{:}));
 
 % disable structures which are not completely in subIx
 for i = 1:size(cst,1)
-    if ~any(strfind(cst{i,4}{1}',param.subIx'))
+    if ~all(ismember(cst{i,4}{1}, param.subIx))
         cst{i,5}.Visible = false;
     end
 end
