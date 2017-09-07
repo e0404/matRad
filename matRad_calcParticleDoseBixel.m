@@ -71,7 +71,7 @@ if ~isfield(baseData,'sigma')
     L_Bro  =  exp( -radialDist_sq ./ (2*sigmaSq_Bro ))./(2*pi*sigmaSq_Bro );
     L = baseData.LatCutOff.CompFac * ((1-X(:,3)).*L_Narr + X(:,3).*L_Bro);
 
-    dose = baseData.LatCutOff.CompFac * X(:,1) .* L;
+    dose = X(:,1) .* L;
 else
     
     % interpolate depth dose and sigma
