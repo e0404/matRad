@@ -50,7 +50,7 @@ r_mid   = (0.5*(vX(1:end-1) +  vX(2:end)))'; % [mm]
 dr      = (vX(2:end) - vX(1:end-1))';
 
 % number of depth points for which a lateral cutoff is determined
-NumDepthVal = 40; 
+NumDepthVal = 30; 
 
 % define function handles for single and double gauss
 SG    =  @(vR,Sigma)((1/(2*pi*Sigma^2)).*exp(-(vR.^2)./(2*Sigma^2)));
@@ -135,17 +135,9 @@ for energyIx = vEnergiesIx
         
         % save depth value
         machine.data(energyIx).LatCutOff.depths(j) = machine.data(energyIx).depths(ixDepth(j));
-
-        radDepths      = machine.data(energyIx).LatCutOff.depths(j) * ones(numel(r_mid),1);
-       
+        radDepths      = machine.data(energyIx).LatCutOff.depths(j) * ones(numel(r_mid),1);       
         dose_r         = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, maxSSD, maxfocusIx, baseData, rangeShifter, radiationMode);
        
-        % sanity check
-        IntDose = cumsum(2*pi.*r_mid.*dose_r.*dr);
-        if abs((idd(ixDepth(j)) * conversionFactor) - IntDose(end)) > 1e-3
-            warning('shell integration is wrong')
-        end
-        
         if cutOffLevel == 1
             machine.data(energyIx).LatCutOff.CompFac = 1;
             machine.data(energyIx).LatCutOff.CutOff  = Inf;
@@ -165,10 +157,17 @@ for energyIx = vEnergiesIx
                       end  
 
                 case '1D'
+                    
                       IX = find(dose_r  <= (1-cutOffLevel) * dosePeakPos ,1 ,'first');   
                       machine.data(energyIx).LatCutOff.CompFac = cutOffLevel^-1;
+                      
                 case '2D'
                       cumArea = cumsum(2*pi.*r_mid.*dose_r.*dr);
+                      
+                      if abs((idd(ixDepth(j)) * conversionFactor) - cumArea(end)) > 1e-3
+                         warning('shell integration is wrong')
+                      end
+        
                       if cumArea(end) > iddPeak * (1-cutOffLevel)
                           IX = find(cumArea >= cumArea(end) * cutOffLevel,1, 'first'); 
                       else
@@ -177,6 +176,8 @@ for energyIx = vEnergiesIx
                       machine.data(energyIx).LatCutOff.CompFac = cutOffLevel^-1;
                 case '3D'
                       warning('not yet implemented')
+                      % find smallest enclosing volume that covers X-percent of the
+                      % total integral dose
             end
 
 
@@ -249,7 +250,12 @@ if visBool
              vDoseInt(kk) = cumAreaCut(end);
          end
     end
-    vLevelsDose = max(mDose(:)).*[0.01 0.05 0.1 0.9];
+    
+    % obtain maximum dose
+    [~,peakixDepth] = max(machine.data(energyIx).Z); 
+    dosePeakPos = matRad_calcParticleDoseBixel(machine.data(energyIx).depths(peakixDepth), 0, maxSSD, maxfocusIx, baseData, rangeShifter, radiationMode);   
+    
+    vLevelsDose = dosePeakPos.*[0.01 0.05 0.1 0.9];
     figure,set(gcf,'Color',[1 1 1]);
     subplot(121),h=imagesc(squeeze(mDose(midPos,:,:)));hold on;
     set(h,'AlphaData', .8*double(squeeze(mDose(fix(numel(vLatX)/2),:,:))>0));
