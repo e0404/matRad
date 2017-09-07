@@ -261,7 +261,14 @@ if visBool
     contour(squeeze(mDose(fix(numel(vLatX)/2),:,:)),vLevelsDose,'LevelListMode','manual','LineWidth',3);hold on
     plot(machine.data(energyIx).LatCutOff.depths, machine.data(energyIx).LatCutOff.CutOff * sStep^-1 + midPos,'rx');
     legend({'isodose 1%,5%,10% 90%','calculated cutoff'}) ,colorbar,set(gca,'FontSize',12),xlabel('z [mm]')',ylabel('x [mm]')
-    subplot(212),plot(machine.data(energyIx).depths,machine.data(energyIx).Z*conversionFactor,'k','LineWidth',2),grid on,hold on
+       
+    entry = machine.data(energyIx);
+    if isstruct(entry.Z)
+       idd = SumGauss(entry.depths,entry.Z.mean,entry.Z.width.^2,entry.Z.weight);
+    else
+        idd = machine.data(energyIx).Z;
+    end
+    subplot(212),plot(machine.data(energyIx).depths,idd*conversionFactor,'k','LineWidth',2),grid on,hold on
                  plot(radDepths - machine.data(energyIx).offset,vDoseInt,'r--','LineWidth',2),hold on,
                  plot(radDepths - machine.data(energyIx).offset,vDoseInt * TmpCompFac,'bx','LineWidth',1),hold on,
     legend({'original IDD',['cut off IDD at ' num2str(cutOffLevel) '%'],'cut off IDD with compensation'},'Location','northwest'),xlabel('z [mm]') ,set(gca,'FontSize',12)     
