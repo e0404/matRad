@@ -303,3 +303,7 @@ multScen.numOfRangeShift = numOfRangeShiftScen;
 multScen.scenMask        = scenMask;
 multScen.linearMask      = linearMask;
 multScen.numOfScen       = totalNumScen;
+
+multScen.rangeRelSD      = uIn.rangeRelSD;
+multScen.rangeAbsSD      = uIn.rangeAbsSD;
+multScen.shiftSD         = uIn.shiftSD;  

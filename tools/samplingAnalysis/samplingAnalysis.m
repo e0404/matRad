@@ -13,7 +13,7 @@ doseStat.meanCubeW(subIx)      = (sum(mRealizations * diag(w),2) );
 doseStat.stdCubeW(subIx)       = std(mRealizations,w,2);
 
 %% percentiles
-percentiles = [0.02 0.1 0.2 0.3 0.7 0.8 0.9 0.98];
+percentiles = [0.005 0.05 0.125 0.25 0.75 0.875 0.95 0.995];
 percentileNames = cell(numel(percentiles),1);
 % create fieldnames
 for i = 1:numel(percentiles)
