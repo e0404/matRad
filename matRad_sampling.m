@@ -144,7 +144,7 @@ if FlagParallToolBoxLicensed
    end
   
    %pln               = matRad_setPlanUncertainties(ct,pln);
-   parfor i = 1:pln.numOfSamples
+   parfor i = 1:size(pln.multScen.scenForProb,1)
           
           plnSamp               = pln;
           % pick the i-th scenario and save into plnSamp

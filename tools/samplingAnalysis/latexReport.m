@@ -1,4 +1,37 @@
 function latexReport(ct, cst, pln, nominalScenario, structureStat, param)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad uncertainty analysis report generaator function
+% 
+% call
+%   latexReport(ct, cst, pln, nominalScenario, structureStat, param)
+%
+% input
+%   ct:                 ct cube
+%   cst:                matRad cst struct
+%   pln:                matRad plan meta information struct
+%   nominalScenario:    struct containing dose, qi and dvh of the nominal scenario
+%   structureStat:      structures which were examined (can be empty, 
+%                       when all structures were examined)
+%   param               (optional) struct set of parameters, such as output path
+
+% output
+%   (binary)            a pdf report will be generated and saved
+%
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2017 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if exist('param','var') && ~isempty(param)
         outputPath = param.outputPath;
     end

@@ -1,4 +1,36 @@
 function [structureStat, doseStat] = samplingAnalysis(ct,cst,subIx,mRealizations,w)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad uncertainty sampling analysis function
+% 
+% call
+%   [structureStat, doseStat] = samplingAnalysis(ct,cst,subIx,mRealizations,w)
+%
+% input
+%   ct:             ct cube
+%   cst:            matRad cst struct
+%   subIx           set of indices of the cube which are used for dose calculation
+%   mRealizations   resulting dose of the individual scenarios
+%   w               vector containing probabilities of the scenarios
+%
+% output
+%   structureStat   structure-wise statistics (mean, max, percentiles, ...)
+%   doseStat        dose-wise statistics (mean, max, percentiles, ...)
+%
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2017 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% calculate mean and std cube
 doseStat.meanCube              = zeros(ct.cubeDim);

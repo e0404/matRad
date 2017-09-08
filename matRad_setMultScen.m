@@ -288,7 +288,7 @@ end
 linearMask               = cell2mat(x);
 
 % get number of scenarios
-totalNumScen             = size(linearMask, 1);
+totalNumScen             = size(scenForProb, 1);
 
 % write to scenario information variable
 multScen.numOfCtScen     = uIn.numOfCtScen;
