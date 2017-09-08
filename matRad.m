@@ -70,6 +70,9 @@ end
 %% inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
+%% indicator calculation
+cst = matRad_indicatorWrapper(cst,pln,resultGUI);
+
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
     %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
@@ -86,8 +89,8 @@ end
 %% start gui for visualization of result
 matRadGUI
 
-%% calculate dvh
-matRad_calcDVH(resultGUI,cst,pln)
+%% show DVH and QI
+matRad_showDVH(cst,pln)
 
 %% perform sampling
 % select structures to include in sampling; leave empty to sample dose for all structures
