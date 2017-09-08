@@ -1,4 +1,4 @@
-function shadowPlot(x, yLow, yUp, color, legendName, alphaTrans)
+function s = shadowPlot(x, yLow, yUp, color, legendName, alphaTrans)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_randomSampling enables sampling multiple treatment scenarios
 % 

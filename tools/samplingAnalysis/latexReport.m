@@ -1,0 +1,274 @@
+function latexReport(ct, cst, pln, nominalScenario, structureStat, param)
+    if exist('param','var') && ~isempty(param)
+        outputPath = param.outputPath;
+    end
+    %% create latex Report
+    if ~exist('outputPath','var')
+        outputPath = uigetdir;
+    end
+    %outputPath = fullfile('tools','reportGeneration','latex','output');
+
+    %% correct cst for unwanted characters
+    for i = 1:size(cst,1)
+        cst{i,2} = regexprep(cst{i,2},'[^a-zA-Z0-9]','-');
+        if isempty(cst{i,4}{1})
+            cst{i,5}.Visible = false;
+        end
+    end
+
+    %% insert standard patient information
+
+    %%% import patient information
+    try
+    %%% import patient information
+        patientInformation.firstName = ct.dicomInfo.PatientName.GivenName;
+        patientInformation.lastName = ct.dicomInfo.PatientName.FamilyName;
+        patientInformation.sex = ct.dicomMeta.PatientSex;
+        patientInformation.patientID = ct.dicomMeta.PatientID;
+    catch
+        patientInformation.firstName = 'N.A.';
+        patientInformation.lastName = 'N.A.';
+        patientInformation.sex = 'N.A.';
+        patientInformation.patientID = 'N.A.';
+    end
+
+
+    %%% import plan information
+    planInformation.gantryAngles = num2str(pln.gantryAngles);
+    planInformation.couchAngles = num2str(pln.couchAngles);
+    planInformation.modality = pln.radiationMode;
+
+
+    line = cell(0);
+    line =  [line; '\newcommand{\patientFirstName}{',patientInformation.firstName,'}'];
+    line =  [line; '\newcommand{\patientLastName}{',patientInformation.lastName,'}'];
+    line =  [line; '\newcommand{\patientSex}{',patientInformation.sex,'}'];
+    line =  [line; '\newcommand{\patientID}{',patientInformation.patientID,'}'];
+    line =  [line; '\newcommand{\operator}{',param.operator,'}'];
+
+    line =  [line; '\newcommand{\reportGenerationDate}{\today}'];
+
+    line =  [line; '\newcommand{\planGantryAngles}{',planInformation.gantryAngles,'}'];
+    line =  [line; '\newcommand{\planCouchAngles}{',planInformation.couchAngles,'}'];
+    line =  [line; '\newcommand{\planRadiationModality}{',planInformation.modality,'}'];
+
+    fid = fopen(fullfile(outputPath,'patientInformation.tex'),'w');
+    for i = 1:numel(line)
+        text = regexprep(line{i},'\','\\\');
+        fprintf(fid,text);
+        fprintf(fid,'\n');
+    end
+    fclose(fid);
+    %% nominal plan
+
+    % add dvh and qi table
+    colors = jet(size(cst,1));
+    hold off;
+    for i = 1:size(cst,1)
+        if cst{i,5}.Visible == true
+            h(1) = plot(nominalScenario.dvh{i}(1,:),nominalScenario.dvh{i}(2,:),'LineWidth',2, 'Color', colors(i,:), 'DisplayName', cst{i,2});      
+            ylim([0 100]);
+            if strcmp(pln.bioParam, 'RBExDose')
+                xlabel('Dose RBE x [Gy]');
+            else
+                xlabel('Dose [Gy]');
+            end
+            ylabel('Volume [%]');
+            lh = legend('show','Location','northeastoutside');
+            hold on;
+        end
+    end
+    drawnow;
+    matlab2tikz(fullfile(outputPath,'nominalDVH.tex'),'showInfo', false);
+    hold off
+    close
+
+    % qi
+    nomQi = nominalScenario.qi{1};
+    structName = {};
+    c = 1;
+    for i = 1:size(cst,1)
+        if cst{i,5}.Visible == true && ~isempty(cst{i,4}{1})
+            nomQi(c) = nominalScenario.qi{i};
+            structName = [structName, cst{i,2}];
+            c = c + 1;
+        end
+    end
+
+    nomQiTable = struct2table(nomQi);
+    nomQiTable.Properties.RowNames = structName;
+    input.data = nomQiTable(:,1:8);
+    input.format = {'%.2f'};
+    input.tablePlacement = '!bht';
+    input.tableBorders = 0;
+    input.tableCaption = 'Nominal Plan - Quality Indicators.';
+    input.tableLabel = 'nomDVH';
+
+    latex = latexTable(input);
+
+    % save LaTex code as file
+    filename{i}.QI = regexprep([cst{i,2},'_QI.tex'], '\s+', '');
+    fid=fopen(fullfile(outputPath,'nominalQI.tex'),'w');
+    [nrows,ncols] = size(latex);
+    for row = 1:nrows
+        fprintf(fid,'%s\n',latex{row,:});
+    end
+    fclose(fid);
+    clear latex
+    clear input
+
+    %% analysis parameters
+    line = cell(0);
+    if pln.multScen.numOfCtScen == 1
+        line =  [line; '\newcommand{\ctScen}{false}'];
+    else
+        line =  [line; '\newcommand{\ctScen}{true}'];
+    end
+
+    if pln.multScen.numOfRangeShift == 1
+        line =  [line; '\newcommand{\rangeScen}{false}'];
+        line =  [line; '\newcommand{\rangeRelSD}{', num2str(0), '}'];
+        line =  [line; '\newcommand{\rangeAbsSD}{', num2str(0), '}'];
+    else
+        line =  [line; '\newcommand{\rangeScen}{true}'];
+        if max(pln.multScen.relRangeShift) == 0 && min(pln.multScen.relRangeShift) == 0
+            line =  [line; '\newcommand{\rangeRelSD}{', num2str(0), '}'];
+        else
+            line =  [line; '\newcommand{\rangeRelSD}{', num2str(pln.multScen.rangeRelSD), '}'];
+        end
+        if max(pln.multScen.absRangeShift) == 0 && min(pln.multScen.absRangeShift) == 0
+            line =  [line; '\newcommand{\rangeAbsSD}{', num2str(0), '}'];
+        else
+            line =  [line; '\newcommand{\rangeAbsSD}{', num2str(pln.multScen.rangeAbsSD), '}'];
+        end
+    end
+
+    if pln.multScen.numOfShiftScen == 1
+        line =  [line; '\newcommand{\shiftScen}{false}'];
+        line =  [line; '\newcommand{\shiftSD}{', num2str([0 0 0]), '}'];
+    else
+        line =  [line; '\newcommand{\shiftScen}{true}'];
+        line =  [line; '\newcommand{\shiftSD}{', num2str(pln.multScen.shiftSD), '}'];
+    end
+
+    fid = fopen(fullfile(outputPath,'uncertaintyParameters.tex'),'w');
+    for i = 1:numel(line)
+        text = regexprep(line{i},'\','\\\');
+        fprintf(fid,text);
+        fprintf(fid,'\n');
+    end
+    fclose(fid);
+
+    %% add DVH and QI
+
+    clear h
+    clear filename
+    % relative file path (relative to main.tex)
+    relativePath = fullfile('data','structures');
+
+    for i = 1:size(cst,1)
+        if cst{i,5}.Visible == true
+            if mod(size(structureStat(1).dvhStat.percDVH,1),2) ~= 0
+                error('Bands must always consists of upper and lower band.');
+            else
+                % num of confidence intervals
+                numOfConf = size(structureStat(i).dvhStat.percDVH,1) / 2;
+            end
+            % DVH
+            doseGrid = structureStat(i).dvhStat.mean(1,:);
+
+            % plot nominal plan
+            h(1) = plot(nominalScenario.dvh{i}(1,:),nominalScenario.dvh{i}(2,:),'LineWidth',2, 'Color', 'k', 'DisplayName', 'nominal');
+            hold on;
+            % plot mean
+            h(2) = plot(structureStat(i).dvhStat.mean(1,:),structureStat(i).dvhStat.mean(2,:),'LineWidth',2, 'Color', 'b', 'DisplayName', '\mu');
+            % plot dvh confidence bands
+            % colors
+            colors = jet(numOfConf);
+            alphaTrans = 1;
+
+            hIx = numel(h);
+            for j = 1:numOfConf
+                hIx = hIx + 1;
+                lIx = j;
+                hIx = size(structureStat(i).dvhStat.percDVH,1) - (j-1);
+                lowerLimit = structureStat(i).dvhStat.percDVH(lIx,:);
+                upperLimit = structureStat(i).dvhStat.percDVH(hIx,:);
+                confIn = structureStat(i).percentiles(hIx) - structureStat(i).percentiles(lIx);
+                confName = ['C', num2str(round(confIn * 100,0))];
+                h(hIx) = shadowPlot(doseGrid, lowerLimit, upperLimit, colors(j,:), confName, 1);
+            end
+
+            ylim([0 100]);
+            if strcmp(pln.bioParam, 'RBExDose')
+                xlabel('Dose RBE x [Gy]');
+            else
+                xlabel('Dose [Gy]');
+            end
+            ylabel('Volume [%]');
+            lh = legend('show','Location','northeastoutside');
+            uistack(h(2), 'top')
+            uistack(h(1), 'top')
+            labels = get(legend(), 'String');
+            neworder = numel(labels):-1:1;
+            plots = flipud(get(gca, 'children'));
+
+            % Now re-create the legend
+            legend(plots(neworder), labels(neworder))
+
+            drawnow;
+            hold off;
+            cleanfigure();
+            filename{i}.DVH = regexprep([cst{i,2},'_DVH.tex'], '\s+', '');
+            matlab2tikz(fullfile(outputPath,'structures',filename{i}.DVH),'showInfo', false, 'extraAxisOptions', 'reverse legend');
+            close
+
+            % QI
+            qiTable = structureStat(i).qiStat;
+            input.data = qiTable(:,1:8);
+            input.format = {'%.2f'};
+            input.tablePlacement = '!bht';
+            input.tableBorders = 0;
+            input.tableCaption = 'Scenario Analysis. Quality Indicators are shown horicontally, metrics of scenario analysis vertically.';
+            input.tableLabel = ['scen-', cst{i,2}];
+
+            latex = latexTable(input);
+
+            % save LaTex code as file
+            filename{i}.QI = regexprep([cst{i,2},'_QI.tex'], '\s+', '');
+            fid=fopen(fullfile(outputPath,'structures',filename{i}.QI),'w');
+            [nrows,ncols] = size(latex);
+            for row = 1:nrows
+                fprintf(fid,'%s\n',latex{row,:});
+            end
+            fclose(fid);        
+        end
+    end
+
+    % write them to structureWrapper
+    counter = 0;
+    line = cell(0);
+    for i = 1:size(cst,1)
+        if cst{i,5}.Visible == true
+            counter = counter + 1;
+            if counter ~= 1
+                line =  [line; '\newpage'];
+            end
+            line =  [line; ['\subsection{', cst{i,2}, '}']];
+            line =  [line; '\begin{center}'];
+            line =  [line; ['\input{', regexprep(fullfile(relativePath,filename{i}.DVH),'\','/'), '}']];
+            line =  [line; '\end{center}'];
+            line =  [line; ['\input{', regexprep(fullfile(relativePath,filename{i}.QI),'\','/'), '}']];
+        end
+    end
+
+    fid = fopen(fullfile(outputPath,'structureWrapper.tex'),'w');
+    for i = 1:numel(line)
+        text = regexprep(line{i},'\','\\\');
+        fprintf(fid,text);
+        fprintf(fid,'\n');
+    end
+    fclose(fid);
+    %% clean up
+    close all
+end

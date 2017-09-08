@@ -1,4 +1,4 @@
-function [mRealizations,stats, cst, pln, resultCubes,nominalScenario]  = matRad_sampling(ct,stf,cst,pln,w,structSel, param)
+function [mRealizations,stats, cst, pln, resultCubes, nominalScenario]  = matRad_sampling(ct,stf,cst,pln,w,structSel, multScen, param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_randomSampling enables sampling multiple treatment scenarios
 % 
@@ -58,7 +58,7 @@ end
 
 % save nonSampling pln for nominal scenario calculation
 plnNominal = pln;
-pln = matRad_setPlanUncertainties(ct,pln);
+pln = matRad_setPlanUncertainties(ct,pln, multScen, param);
 
 if ~isfield(pln,'numOfSamples')
    pln.numOfSamples  = 20; % default number of samples
@@ -118,7 +118,7 @@ nominalScenario.dvh = matRad_calcDVH(cst,nominalScenario.(pln.bioParam.quantityO
 
 refVol = [2 5 95 98];
 refGy = linspace(0,max(nominalScenario.(pln.bioParam.quantityOpt)(:)),6);
-nomQi = matRad_calcQualityIndicators(cst,pln,nominalScenario.(pln.bioParam.quantityOpt),refGy,refVol);
+nomQi = matRad_calcQualityIndicators(cst,pln,nominalScenario.(pln.bioParam.quantityOpt),refGy,refVol,param);
 nominalScenario.qi = nomQi;
 for i = 1:size(nominalScenario.cst,1)
     nominalScenario.cst{i,8} = cell(1,1);
@@ -144,7 +144,6 @@ if FlagParallToolBoxLicensed
    end
   
    %pln               = matRad_setPlanUncertainties(ct,pln);
-   tic
    parfor i = 1:pln.numOfSamples
           
           plnSamp               = pln;
@@ -167,13 +166,12 @@ if FlagParallToolBoxLicensed
           mRealizations(:,i)    = single(reshape(sampledDose,[],1));
           
           dvh{i} = matRad_calcDVH(cst,resultSamp.(pln.bioParam.quantityOpt),'cum',dvhPoints);
-          qi{i} = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityOpt),refGy,refVol);
+          qi{i} = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityOpt),refGy,refVol,param);
           
           if FlagParforProgressDisp
             parfor_progress;
           end
    end
-   toc
 
    if FlagParforProgressDisp
       parfor_progress(0);
@@ -206,7 +204,7 @@ else
           mRealizations(:,i)    = single(reshape(sampledDose,[],1));
           
           dvh{i} = matRad_calcDVH(cst,resultSamp.(pln.bioParam.quantityOpt),'cum',dvhPoints);
-          qi{i} = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityOpt),refGy,refVol);
+          qi{i} = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityOpt),refGy,refVol,param);
           
           waitbar(i/pln.numOfSamples);
 
