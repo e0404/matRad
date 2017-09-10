@@ -164,12 +164,12 @@ function latexReport(ct, cst, pln, nominalScenario, structureStat, param)
         line =  [line; '\newcommand{\rangeAbsSD}{', num2str(0), '}'];
     else
         line =  [line; '\newcommand{\rangeScen}{true}'];
-        if max(pln.multScen.relRangeShift) == 0 && min(pln.multScen.relRangeShift) == 0
+        if isempty(pln.multScen.relRangeShift) || ((max(pln.multScen.relRangeShift) == 0) && (min(pln.multScen.relRangeShift) == 0))
             line =  [line; '\newcommand{\rangeRelSD}{', num2str(0), '}'];
         else
             line =  [line; '\newcommand{\rangeRelSD}{', num2str(pln.multScen.rangeRelSD), '}'];
         end
-        if max(pln.multScen.absRangeShift) == 0 && min(pln.multScen.absRangeShift) == 0
+        if isempty(pln.multScen.relRangeShift) || ((max(pln.multScen.absRangeShift) == 0 && min(pln.multScen.absRangeShift) == 0))
             line =  [line; '\newcommand{\rangeAbsSD}{', num2str(0), '}'];
         else
             line =  [line; '\newcommand{\rangeAbsSD}{', num2str(pln.multScen.rangeAbsSD), '}'];
