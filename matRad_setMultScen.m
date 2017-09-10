@@ -39,17 +39,17 @@ switch uIn.shiftGenType
         switch uIn.shiftGen1DIsotropy
             case '+-'
                 % create grid vectors
-                isoShiftVec{1} = [nomScen linspace(-uIn.shiftSize(1), uIn.shiftSize(1), uIn.numOfShiftScen(1))];
-                isoShiftVec{2} = [nomScen linspace(-uIn.shiftSize(2), uIn.shiftSize(2), uIn.numOfShiftScen(2))];
-                isoShiftVec{3} = [nomScen linspace(-uIn.shiftSize(3), uIn.shiftSize(3), uIn.numOfShiftScen(3))];
+                isoShiftVec{1} = [0 linspace(-uIn.shiftSize(1), uIn.shiftSize(1), uIn.numOfShiftScen(1))];
+                isoShiftVec{2} = [0 linspace(-uIn.shiftSize(2), uIn.shiftSize(2), uIn.numOfShiftScen(2))];
+                isoShiftVec{3} = [0 linspace(-uIn.shiftSize(3), uIn.shiftSize(3), uIn.numOfShiftScen(3))];
             case '+'
-                isoShiftVec{1} = [nomScen linspace(0, uIn.shiftSize(1), uIn.numOfShiftScen(1))];
-                isoShiftVec{2} = [nomScen linspace(0, uIn.shiftSize(2), uIn.numOfShiftScen(2))];
-                isoShiftVec{3} = [nomScen linspace(0, uIn.shiftSize(3), uIn.numOfShiftScen(3))];        
+                isoShiftVec{1} = [0 linspace(0, uIn.shiftSize(1), uIn.numOfShiftScen(1))];
+                isoShiftVec{2} = [0 linspace(0, uIn.shiftSize(2), uIn.numOfShiftScen(2))];
+                isoShiftVec{3} = [0 linspace(0, uIn.shiftSize(3), uIn.numOfShiftScen(3))];        
             case '-'
-                isoShiftVec{1} = [nomScen linspace(-uIn.shiftSize(1), 0, uIn.numOfShiftScen(1))];
-                isoShiftVec{2} = [nomScen linspace(-uIn.shiftSize(2), 0, uIn.numOfShiftScen(2))];
-                isoShiftVec{3} = [nomScen linspace(-uIn.shiftSize(3), 0, uIn.numOfShiftScen(3))];
+                isoShiftVec{1} = [0 linspace(-uIn.shiftSize(1), 0, uIn.numOfShiftScen(1))];
+                isoShiftVec{2} = [0 linspace(-uIn.shiftSize(2), 0, uIn.numOfShiftScen(2))];
+                isoShiftVec{3} = [0 linspace(-uIn.shiftSize(3), 0, uIn.numOfShiftScen(3))];
         end
     case 'sampled'
         fprintf('sampled shifts only +- \n')
@@ -123,6 +123,9 @@ if isempty(isoShift)
    isoShift       = [0 0 0];
 end
 
+if ~uIn.includeNomScen
+    isoShift = isoShift(2:end,:);
+end
 numOfShiftScen = size(isoShift,1);
 
 

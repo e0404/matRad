@@ -56,9 +56,14 @@ else
    param.logLevel       = 1;
 end
 
+
 % save nonSampling pln for nominal scenario calculation
 plnNominal = pln;
-pln = matRad_setPlanUncertainties(ct,pln, multScen, param);
+if exist('multScen','var')
+    pln = matRad_setPlanUncertainties(ct,pln, multScen, param);
+else
+    pln = matRad_setPlanUncertainties(ct,pln, [], param);
+end
 
 if ~isfield(pln,'numOfSamples')
    pln.numOfSamples  = 20; % default number of samples
