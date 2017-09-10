@@ -12,7 +12,7 @@ multScen.shiftCombType        = 'individual';     % individual:  no combination 
 multScen.shiftGen1DIsotropy   = '+-';             % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
 
 % b) define range error scenarios                                                
-multScen.numOfRangeShiftScen  = 12; % number of absolute and/or relative range scnearios. 
+multScen.numOfRangeShiftScen  = 4; % number of absolute and/or relative range scnearios. 
                                                   % if absolute and relative range scenarios are defined then multScen.rangeCombType defines the resulting number of range scenarios
 multScen.maxAbsRangeShift     = 0;                % maximum absolute over and undershoot in mm   
 multScen.maxRelRangeShift     = 7;              % maximum relative over and undershoot in % 
@@ -30,9 +30,12 @@ multScen.shiftSD              = [2 2 2];           % given in [mm]
 
 %% path for output pdf and mat
 param.outputPath = pwd;
+% addpath(genpath('C:\git\matRad')) % optional add your matRad path here if not yet added to searchpath
 
-%%
-addpath(genpath('C:\git\matRad'))
+%% add your name here
+param.operator = 'Werner Heisenberg';
+
+%% start calculation
 calcStudy(examineStructures, multScen, param);
-%exit;
 
+% exit;
