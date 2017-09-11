@@ -152,13 +152,13 @@ function latexReport(ct, cst, pln, nominalScenario, structureStat, param)
 
     %% analysis parameters
     line = cell(0);
-    if pln.multScen.numOfCtScen == 1
+    if pln.multScen.numOfCtScen <= 1
         line =  [line; '\newcommand{\ctScen}{false}'];
     else
         line =  [line; '\newcommand{\ctScen}{true}'];
     end
 
-    if pln.multScen.numOfRangeShift == 1
+    if pln.multScen.numOfRangeShift <= 1
         line =  [line; '\newcommand{\rangeScen}{false}'];
         line =  [line; '\newcommand{\rangeRelSD}{', num2str(0), '}'];
         line =  [line; '\newcommand{\rangeAbsSD}{', num2str(0), '}'];
@@ -176,7 +176,7 @@ function latexReport(ct, cst, pln, nominalScenario, structureStat, param)
         end
     end
 
-    if pln.multScen.numOfShiftScen == 1
+    if pln.multScen.numOfShiftScen <= 1
         line =  [line; '\newcommand{\shiftScen}{false}'];
         line =  [line; '\newcommand{\shiftSD}{', num2str([0 0 0]), '}'];
     else

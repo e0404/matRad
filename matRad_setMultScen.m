@@ -94,6 +94,8 @@ switch uIn.shiftCombType
             % call the function itself to get a working combination
             [multScen] = matRad_setUnc(uIn);
         end
+    otherwise
+        matRad_dispToConsole('Uncaught exception. Probably TYPO.','error');
 end
 
 % create list of increasing integers with referenced scenario
