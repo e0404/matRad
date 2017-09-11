@@ -80,7 +80,7 @@ copyfile(fullfile(matRadPath,'tools','samplingAnalysis','main_template.tex'),'re
 latexReport(ct, cst, pln, nominalScenario, structureStat, param);
 
 cd('report');
-executeLatex = 'xelatex main.tex';
+executeLatex = 'xelatex -shell-escape main.tex';
 system(executeLatex);
 system(executeLatex);
 system('main.pdf');
