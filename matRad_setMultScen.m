@@ -39,17 +39,17 @@ switch uIn.shiftGenType
         switch uIn.shiftGen1DIsotropy
             case '+-'
                 % create grid vectors
-                isoShiftVec{1} = [nomScen linspace(-uIn.shiftSize(1), uIn.shiftSize(1), uIn.numOfShiftScen(1))];
-                isoShiftVec{2} = [nomScen linspace(-uIn.shiftSize(2), uIn.shiftSize(2), uIn.numOfShiftScen(2))];
-                isoShiftVec{3} = [nomScen linspace(-uIn.shiftSize(3), uIn.shiftSize(3), uIn.numOfShiftScen(3))];
+                isoShiftVec{1} = [0 linspace(-uIn.shiftSize(1), uIn.shiftSize(1), uIn.numOfShiftScen(1))];
+                isoShiftVec{2} = [0 linspace(-uIn.shiftSize(2), uIn.shiftSize(2), uIn.numOfShiftScen(2))];
+                isoShiftVec{3} = [0 linspace(-uIn.shiftSize(3), uIn.shiftSize(3), uIn.numOfShiftScen(3))];
             case '+'
-                isoShiftVec{1} = [nomScen linspace(0, uIn.shiftSize(1), uIn.numOfShiftScen(1))];
-                isoShiftVec{2} = [nomScen linspace(0, uIn.shiftSize(2), uIn.numOfShiftScen(2))];
-                isoShiftVec{3} = [nomScen linspace(0, uIn.shiftSize(3), uIn.numOfShiftScen(3))];        
+                isoShiftVec{1} = [0 linspace(0, uIn.shiftSize(1), uIn.numOfShiftScen(1))];
+                isoShiftVec{2} = [0 linspace(0, uIn.shiftSize(2), uIn.numOfShiftScen(2))];
+                isoShiftVec{3} = [0 linspace(0, uIn.shiftSize(3), uIn.numOfShiftScen(3))];        
             case '-'
-                isoShiftVec{1} = [nomScen linspace(-uIn.shiftSize(1), 0, uIn.numOfShiftScen(1))];
-                isoShiftVec{2} = [nomScen linspace(-uIn.shiftSize(2), 0, uIn.numOfShiftScen(2))];
-                isoShiftVec{3} = [nomScen linspace(-uIn.shiftSize(3), 0, uIn.numOfShiftScen(3))];
+                isoShiftVec{1} = [0 linspace(-uIn.shiftSize(1), 0, uIn.numOfShiftScen(1))];
+                isoShiftVec{2} = [0 linspace(-uIn.shiftSize(2), 0, uIn.numOfShiftScen(2))];
+                isoShiftVec{3} = [0 linspace(-uIn.shiftSize(3), 0, uIn.numOfShiftScen(3))];
         end
     case 'sampled'
         fprintf('sampled shifts only +- \n')
@@ -94,6 +94,8 @@ switch uIn.shiftCombType
             % call the function itself to get a working combination
             [multScen] = matRad_setUnc(uIn);
         end
+    otherwise
+        matRad_dispToConsole('Uncaught exception. Probably TYPO.','error');
 end
 
 % create list of increasing integers with referenced scenario
@@ -123,6 +125,9 @@ if isempty(isoShift)
    isoShift       = [0 0 0];
 end
 
+if ~uIn.includeNomScen
+    isoShift = isoShift(2:end,:);
+end
 numOfShiftScen = size(isoShift,1);
 
 
@@ -288,7 +293,7 @@ end
 linearMask               = cell2mat(x);
 
 % get number of scenarios
-totalNumScen             = size(linearMask, 1);
+totalNumScen             = size(scenForProb, 1);
 
 % write to scenario information variable
 multScen.numOfCtScen     = uIn.numOfCtScen;
@@ -303,3 +308,7 @@ multScen.numOfRangeShift = numOfRangeShiftScen;
 multScen.scenMask        = scenMask;
 multScen.linearMask      = linearMask;
 multScen.numOfScen       = totalNumScen;
+
+multScen.rangeRelSD      = uIn.rangeRelSD;
+multScen.rangeAbsSD      = uIn.rangeAbsSD;
+multScen.shiftSD         = uIn.shiftSD;  

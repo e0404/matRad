@@ -1,0 +1,149 @@
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad uncertainty analysis report latex template
+% 
+% call
+%   e.g. 'xelatex  main.tex' in console
+% output
+%   pdf report
+%
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2017 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[a4paper]{scrartcl}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[verbose]{placeins}
+\usepackage{fullpage}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[colorinlistoftodos]{todonotes}
+\addtokomafont{disposition}{\rmfamily}
+
+% pgfplots for matlab2tikz
+\usepackage{pgfplots}
+\pgfplotsset{compat=newest}
+%% the following commands are needed for some matlab2tikz features
+\usetikzlibrary{plotmarks}
+\usetikzlibrary{arrows.meta}
+\usepgfplotslibrary{patchplots}
+\usepackage{grffile}
+\usepackage{amsmath}
+%\usepackage{float}
+\usepackage{footnote}
+\makesavenoteenv{figure}
+
+\usetikzlibrary{external}
+\tikzexternalize[prefix=data/figures/]
+
+% use this command to incldue a tikz graphics file from folder "tikz/", the temporary external file will be written to "tikz_ext/"
+% \newcommand{\includetikz}[1]{%
+%     \tikzsetnextfilename{tikz_ext/#1}%
+%     \input{tikz/#1.tikz}%
+% }
+
+\usepackage[babel,english=british]{csquotes} % cool quotes
+%\usepackage[backend=biber]{biblatex} % bibliogrpahy
+%\addbibresource{literature.bib}
+
+\begin{document}
+% include dynamic from matlab
+\input{data/patientInformation.tex}
+
+\title{Uncertainty Sampling Report}
+\subtitle{\patientLastName{}, \patientFirstName{}, \patientID}
+\author{\operator}
+% \date{\today}
+\maketitle
+
+\tableofcontents
+
+\newpage
+\section{Patient Information}
+\label{sec:patientInformation}
+
+\begin{table}[h]
+\centering
+%\caption{My caption}
+\label{table:patientInformation}
+\begin{tabular}{rl}
+Patient's name & \patientLastName{}, \patientFirstName \\
+Patient ID     & \patientID                             \\
+Patient's sex  & \patientSex
+\end{tabular}
+\end{table}
+
+\section{Plan Overview}
+\label{sex:planOverview}
+
+\subsection{Setup}
+
+\begin{table}[h]
+  \centering
+  %\caption{My caption}
+  \label{table:planInformation}
+  \begin{tabular}{rl}
+    Gantry angles   & \planGantryAngles \\
+    Couch angles    & \planCouchAngles  \\
+    Radiation modalitiy & \planRadiationModality
+  \end{tabular}
+\end{table}
+
+\subsection{Parameter for Uncertainty Analysis}
+\input{data/uncertaintyParameters.tex}
+The following uncertainties were incorporated in this analysis.
+\begin{table}[!h]
+  \centering
+  %\caption{My caption}
+  \label{table:typeUncertainty}
+  \begin{tabular}{rl}
+    Ct uncertainties   & \ctScen \\
+    Shift uncertainties    & \shiftScen  \\
+    Range uncertainties & \rangeScen
+  \end{tabular}
+\end{table}
+
+Assuming the uncertainties above to be distributed by a normally around 0 with standard deviaton
+\begin{table}[!h]
+  \centering
+  %\caption{My caption}
+  \label{table:uncertaintySD}
+  \begin{tabular}{rl}
+    $\sigma_{shift} $    & \shiftSD  \ mm\\
+    $\sigma_{relRange} $ & \rangeRelSD \ \% \\
+    $\sigma_{absRange} $ & \rangeAbsSD \ mm \\
+  \end{tabular}
+\end{table}
+\FloatBarrier
+
+\newpage
+\section{Nominal Plan}
+
+\begin{center}
+\input{data/nominalDVH.tex}
+\end{center}
+\input{data/nominalQI.tex}
+
+\FloatBarrier
+\newpage
+\section{Uncertainty Scenario Analysis}
+
+\input{data/structureWrapper.tex}
+
+
+
+
+\end{document}

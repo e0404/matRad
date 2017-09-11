@@ -95,10 +95,6 @@ matRad_showDVH(cst,pln)
 %% perform sampling
 % select structures to include in sampling; leave empty to sample dose for all structures
 structSel = {}; % structures = {'CTV','OAR1'}
-[mRealizations,stats,resultCube]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w, structSel);
-
-
-
-
+[mRealizations,stats, cst, pln, resultCubes,nominalScenario]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w, structSel);
 
 
