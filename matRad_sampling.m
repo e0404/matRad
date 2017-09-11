@@ -1,4 +1,4 @@
-function [mRealizations,stats, cst, pln, resultCubes, nominalScenario]  = matRad_sampling(ct,stf,cst,pln,w,structSel, multScen, param)
+function [mRealizations,stats, cst, pln, nominalScenario]  = matRad_sampling(ct,stf,cst,pln,w,structSel, multScen, param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_randomSampling enables sampling multiple treatment scenarios
 % 
@@ -224,24 +224,9 @@ for i = 1:size(nominalScenario.cst,1)
         cst{i,9}{j} = qi{j}{i};
     end  
 end
-        
-resultCubes.meanCube              = zeros(ct.cubeDim);
-resultCubes.stdCube               = zeros(ct.cubeDim);
-
-resultCubes.meanCubeWeighted      = zeros(ct.cubeDim);
-resultCubes.stdCubeWeighted       = zeros(ct.cubeDim);
-
-resultCubes.meanCube(param.subIx) = mean(mRealizations,2);   
-resultCubes.stdCube(param.subIx)  = std(mRealizations,1,2); 
-
-mHelper = repmat(pln.multScen.scenProb',size(mRealizations,1),1);
-resultCubes.meanCubeWeighted(param.subIx) = (sum(mRealizations .* mHelper,2));
-
-resultCubes.stdCubeWeighted(param.subIx) = ...
-sqrt(sum((mRealizations.^2) .* mHelper,2)-resultCubes.meanCubeWeighted(param.subIx).^2);
+ 
 
 %% add subindices
 pln.multScen.subIx        = param.subIx;
-resultCubes.subIx         = param.subIx;
 
 end
