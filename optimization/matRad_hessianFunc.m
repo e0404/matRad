@@ -1,4 +1,4 @@
-function hessianMatrix = matRad_hessianFunc(dij,prescription,structure)
+function hessianMatrix = matRad_hessianFunc(dij,d_i,prescription,structure,d_ref)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian function for inverse planning supporting max dose
 % constraint, min dose constraint, min mean dose constraint, max mean dose constraint, 
@@ -47,38 +47,28 @@ function hessianMatrix = matRad_hessianFunc(dij,prescription,structure)
 
 if isequal(prescription.type, 'square underdosing') 
 
-%     % underdose : Dose minus prefered dose
-%     underdose = d_i - d_ref;
-% 
-%     % apply positive operator
-%     underdose(underdose>0) = 0;
-% 
-%     % calculate delta
-%     delta = 2 * (objective.penalty/numOfVoxels)*underdose;
+    % underdose : Dose minus prefered dose
+    underdose = d_i - d_ref;
 
+    % calculated Hessian
+    hessianMatrix = sparse(tril(2 * (dij.physicalDose{1}(structure{1}(underdose<0),:)' * dij.physicalDose{1}(structure{1}(underdose<0),:)) * prescription.penalty / size(structure{1},1)));
+    
 elseif isequal(prescription.type, 'square overdosing')
 
-%     % overdose : Dose minus prefered dose
-%     overdose = d_i - d_ref;
-% 
-%     % apply positive operator
-%     overdose(overdose<0) = 0;
-% 
-%     %calculate delta
-%     delta = 2 * (objective.penalty/numOfVoxels)*overdose;
+    % overdose : Dose minus prefered dose
+    overdose = d_i - d_ref;
 
-elseif isequal(prescription.type, 'square deviation')
-
-%     % deviation : Dose minus prefered dose
-%     deviation = d_i - d_ref;
-% 
-%     % calculate delta
-%     delta = 2 * (objective.penalty/numOfVoxels)*deviation;
+    % calculated Hessian
+    hessianMatrix = sparse(tril(2 * (dij.physicalDose{1}(structure{1}(overdose>0),:)' * dij.physicalDose{1}(structure{1}(overdose>0),:)) * prescription.penalty / size(structure{1},1)));
     
-    hessianMatrix = sparse(tril((dij.physicalDose{1}(structure{1},:)' * dij.physicalDose{1}(structure{1},:)) * prescription.penalty / size(structure{1},1)));
+elseif isequal(prescription.type, 'square deviation')
+    
+    % calculated Hessian
+    hessianMatrix = sparse(tril(2 * (dij.physicalDose{1}(structure{1},:)' * dij.physicalDose{1}(structure{1},:)) * prescription.penalty / size(structure{1},1)));
 
 elseif isequal(prescription.type, 'mean')              
 
+    % calculated Hessian
     hessianMatrix = sparse(zeros(dij.totalNumOfBixels));
     
 elseif isequal(prescription.type, 'EUD') 

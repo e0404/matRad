@@ -34,7 +34,7 @@ function hessian = matRad_hessianFuncWrapper(w,sigma,lambda,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % get current dose / effect / RBExDose vector
-% d = matRad_backProjection(w,dij,options);
+d = matRad_backProjection(w,dij,options);
 
 % % initialize jacobian
 % hessian = sparse([]);
@@ -65,21 +65,21 @@ for i = 1:size(cst,1)
             % discriminate between objectives and constraints
             if isempty(strfind(cst{i,6}(j).type,'constraint'))
                 
-%                 % compute reference
-%                 if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) &&...
-%                     isequal(options.bioOpt,'LEMIV_effect') 
-% 
-%                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
-%                 else
-%                     d_ref = cst{i,6}(j).dose;
-%                 end
+                % compute reference
+                if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) &&...
+                    isequal(options.bioOpt,'LEMIV_effect') 
+
+                    d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
+                else
+                    d_ref = cst{i,6}(j).dose;
+                end
                 
                 % if conventional opt: just add objectives of nominal dose
                 if strcmp(cst{i,6}(j).robustness,'none')
                     
-%                     d_i = d{1}(cst{i,4}{1});
+                    d_i = d{1}(cst{i,4}{1});
                     
-                    objectiveHessian = objectiveHessian + matRad_hessianFunc(dij,cst{i,6}(j),cst{i,4});
+                    objectiveHessian = objectiveHessian + matRad_hessianFunc(dij,d_i,cst{i,6}(j),cst{i,4},d_ref);
                     
                 else
                     error('robust exact optimization not supported yet!!!')
@@ -111,9 +111,9 @@ for i = 1:size(cst,1)
 %                     d_i = d{1}(cst{i,4}{1});
                     
                     if isequal(cst{i,6}(j).type, 'max dose constraint (exact)') || isequal(cst{i,6}(j).type, 'min dose constraint (exact)')
-                        constraintHessian = constraintHessian + matRad_hessianFunc(dij,cst{i,6}(j),cst{i,4});
+                        constraintHessian = constraintHessian + sparse(zeros(dij.totalNumOfBixels));
                     else
-                        constraintHessian = constraintHessian + lambda(constraintCounter) * matRad_hessianFunc(dij,cst{i,6}(j),cst{i,4});
+                        constraintHessian = constraintHessian + lambda(constraintCounter) * matRad_hessianFunc(dij,d_i,cst{i,6}(j),cst{i,4},d_ref);
                     end
                     
 %                     scenID  = [scenID;1];
