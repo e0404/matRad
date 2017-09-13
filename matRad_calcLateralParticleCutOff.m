@@ -43,7 +43,7 @@ if (cutOffLevel < 0 || cutOffLevel > 0.9999) && (cutOffLevel ~= 1)
    cutOffLevel = 0.99;
 end
 % define some variables needed for the cutoff calculation
-vX     = [0 logspace(-1,5,1200)]; % [mm]
+vX     = [0 logspace(-1,4,1000)]; % [mm]
 
 % integration steps
 r_mid   = (0.5*(vX(1:end-1) +  vX(2:end)))'; % [mm]
@@ -133,8 +133,6 @@ for energyIx = vEnergiesIx
      
     for j = 1:length(ixDepth)
         
-        %% ToDo: ensure a proper depth grid spacing - different base data score depth with different density
-
         % save depth value
         machine.data(energyIx).LatCutOff.depths(j) = machine.data(energyIx).depths(ixDepth(j));
         
