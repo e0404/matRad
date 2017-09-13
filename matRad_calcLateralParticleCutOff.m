@@ -50,7 +50,7 @@ r_mid   = (0.5*(vX(1:end-1) +  vX(2:end)))'; % [mm]
 dr      = (vX(2:end) - vX(1:end-1))';
 
 % number of depth points for which a lateral cutoff is determined
-NumDepthVal = 40; 
+NumDepthVal = 35; 
 
 % define function handles for single and double gauss
 SG    =  @(vR,Sigma)((1/(2*pi*Sigma^2)).*exp(-(vR.^2)./(2*Sigma^2)));
@@ -109,11 +109,11 @@ for energyIx = vEnergiesIx
     
     [~,peakixDepth] = max(idd); 
     % define depth positions for which lateral cut off should be calculated
-    ixDepth = round(linspace(1,length(machine.data(energyIx).depths),NumDepthVal-1));
-    
-    
-    ixDepth = unique(sort([ixDepth peakixDepth]));
-    
+    % include peak position and sample denser behind bragg peak
+    NumDepthValTail = round((2*NumDepthVal)/3);
+    NumDepthValRest = round((NumDepthVal)/3);
+    ixDepth         = unique(sort(round([linspace(1,peakixDepth-1,NumDepthValRest) peakixDepth linspace(peakixDepth+1,length(machine.data(energyIx).depths),NumDepthValTail)])));
+
     % get inital beam width
     cnt = cnt +1 ;
     % % calculate maximum dose in spot
