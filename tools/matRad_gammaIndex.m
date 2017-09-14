@@ -10,7 +10,8 @@ function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolutio
 %   cube2:         dose cube as an M x N x O array
 %   resolution:    resolution of the cubes [mm/voxel]
 %   criteria:      [1x2] vector specifying the distance to agreement
-%                  criterion
+%                  criterion; first element is percentage difference,
+%                  second element is distance [mm]
 %   slice:         slice in cube1/2 that will be visualized (optional)
 %   n:             number of interpolations (optional). there will be 2^n-1 
 %                  interpolation points. The maximum suggested value is 3.
@@ -46,8 +47,8 @@ function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolutio
 
 % set parameters for gamma index calculation
 if exist('criteria','var')
-    dist2AgreeMm     = criteria(2); % in [mm]
     relDoseThreshold = criteria(1); % in [%]
+    dist2AgreeMm     = criteria(2); % in [mm]
 else
     dist2AgreeMm     = 3; % in [mm]
     relDoseThreshold = 3; % in [%]
