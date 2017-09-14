@@ -76,7 +76,7 @@ for i = 1:pln.numOfBeams
 end
 
 for i = 1:(length(stf))
-    beamInfo(i).suffix = ['_', num2str(i)];
+    beamInfo(i).suffix = ['Beam', num2str(i)];
 end
 
 % compute phyical dose

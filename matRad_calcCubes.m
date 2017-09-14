@@ -44,7 +44,7 @@ for i = 1:(numOfBeams + 1)
       beamInfo(i).suffix = '';
       beamInfo(i).isCurrBeam = ones(size(dij.beamNum));
     else
-      beamInfo(i).suffix = ['_', num2str(i)];
+      beamInfo(i).suffix = ['Beam', num2str(i)];
       beamInfo(i).isCurrBeam = (dij.beamNum == i);      
     end
 end
