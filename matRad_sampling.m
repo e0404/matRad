@@ -1,4 +1,4 @@
-function [mRealizations,stats, cst, pln, nominalScenario]  = matRad_sampling(ct,stf,cst,pln,w,structSel, multScen, param)
+function [mRealizations,stats, cstSamp, pln, nominalScenario]  = matRad_sampling(ct,stf,cst,pln,w,structSel, multScen, param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_randomSampling enables sampling multiple treatment scenarios
 % 
@@ -38,8 +38,6 @@ function [mRealizations,stats, cst, pln, nominalScenario]  = matRad_sampling(ct,
 
 pln.sampling      = true;
 pln.robOpt        = false;
-%pln.numOfSamples  deprecated. Calculated automatically.
-
 
 if exist('param','var')
     if ~isfield(param,'logLevel')
@@ -65,10 +63,8 @@ else
     pln = matRad_setPlanUncertainties(ct,pln, [], param);
 end
 
-if ~isfield(pln,'numOfSamples')
-   pln.numOfSamples  = 20; % default number of samples
-end
-matRad_dispToConsole(['Using samples: ' num2str(pln.numOfSamples) ' in total \n'],param,'info')
+
+matRad_dispToConsole(['Using ' num2str(pln.multScen.numOfScen) 'samples in total \n'],param,'info')
 
 stats       = cell(pln.numOfSamples,2);
 % since parfor does not allow different calling
@@ -152,16 +148,16 @@ if FlagParallToolBoxLicensed
           
           plnSamp               = pln;
           % pick the i-th scenario and save into plnSamp
-          plnSamp.multScen.scenForProb     = pln.multScen.scenForProb(i,:);
-          plnSamp.multScen.relRangeShift   = pln.multScen.scenForProb(i,5);
-          plnSamp.multScen.absRangeShift   = pln.multScen.scenForProb(i,4);
-          plnSamp.multScen.isoShift        = pln.multScen.scenForProb(i,1:3);
-          plnSamp.multScen.numOfShiftScen  = 1;
-          plnSamp.multScen.numOfRangeShift = 1;
-          plnSamp.multScen.numOfCtScen     = 1;
-          plnSamp.multScen.scenMask        = 1;
-          plnSamp.multScen.linearMask      = 1;
-          plnSamp.multScen.scenProb        = 1;
+          plnSamp.multScen.scenForProb         = pln.multScen.scenForProb(i,:);
+          plnSamp.multScen.relRangeShift       = pln.multScen.scenForProb(i,5);
+          plnSamp.multScen.absRangeShift       = pln.multScen.scenForProb(i,4);
+          plnSamp.multScen.isoShift            = pln.multScen.scenForProb(i,1:3);
+          plnSamp.multScen.numOfShiftScen      = 1;
+          plnSamp.multScen.numOfRangeShiftScen = 1;
+          plnSamp.multScen.numOfCtScen         = 1;
+          plnSamp.multScen.scenMask            = 1;
+          plnSamp.multScen.linearMask          = 1;
+          plnSamp.multScen.scenProb            = 1;
           
           
           % forward dose calculation
@@ -183,23 +179,23 @@ if FlagParallToolBoxLicensed
 
 else
 %% perform seriel sampling   
-    h = waitbar(0,'Sampling Scenario ...');
+  
     stats = cell(pln.numOfSamples,1);
     
     for i = 1:pln.numOfSamples
        
           plnSamp               = pln;
           % pick the i-th scenario and save into plnSamp
-          plnSamp.multScen.scenForProb     = pln.multScen.scenForProb(i,:);
-          plnSamp.multScen.relRangeShift   = pln.multScen.scenForProb(i,5);
-          plnSamp.multScen.absRangeShift   = pln.multScen.scenForProb(i,4);
-          plnSamp.multScen.isoShift        = pln.multScen.scenForProb(i,1:3);
-          plnSamp.multScen.numOfShiftScen  = 1;
-          plnSamp.multScen.numOfRangeShift = 1;
-          plnSamp.multScen.numOfCtScen     = 1;
-          plnSamp.multScen.scenMask        = 1;
-          plnSamp.multScen.linearMask      = 1;
-          plnSamp.multScen.scenProb        = 1;
+          plnSamp.multScen.scenForProb         = pln.multScen.scenForProb(i,:);
+          plnSamp.multScen.relRangeShift       = pln.multScen.scenForProb(i,5);
+          plnSamp.multScen.absRangeShift       = pln.multScen.scenForProb(i,4);
+          plnSamp.multScen.isoShift            = pln.multScen.scenForProb(i,1:3);
+          plnSamp.multScen.numOfShiftScen      = 1;
+          plnSamp.multScen.numOfRangeShiftScen = 1;
+          plnSamp.multScen.numOfCtScen         = 1;
+          plnSamp.multScen.scenMask            = 1;
+          plnSamp.multScen.linearMask          = 1;
+          plnSamp.multScen.scenProb            = 1;
           
           resultSamp            = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w,param);
           sampledDose           = resultSamp.(pln.bioParam.quantityOpt)(param.subIx);
@@ -207,21 +203,20 @@ else
           
           dvh{i} = matRad_calcDVH(cst,resultSamp.(pln.bioParam.quantityOpt),'cum',dvhPoints);
           qi{i} = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityOpt),refGy,refVol,param);
-          
-          waitbar(i/pln.numOfSamples);
-
+          matRad_progress(i, pln.numOfSamples)
     end
     
-    close(h)
+
 end
 
+cstSamp = cst;
 % reassing dvh to stats structure
 for i = 1:size(nominalScenario.cst,1)
-    cst{i,8} = cell(pln.numOfSamples,1);
-    cst{i,9} = cell(pln.numOfSamples,1);
+    cstSamp{i,9} = cell(pln.numOfSamples,1);
+    cstSamp{i,10} = cell(pln.numOfSamples,1);
     for j = 1:pln.numOfSamples
-        cst{i,8}{j} = dvh{j}{i};
-        cst{i,9}{j} = qi{j}{i};
+        cstSamp{i,9}{j} = dvh{j}{i};
+        cstSamp{i,10}{j} = qi{j}{i};
     end  
 end
  

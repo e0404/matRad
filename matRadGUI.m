@@ -360,7 +360,7 @@ try
         cst = setCstTable(handles,cst);
         handles.State = 1;
         % check if contours are precomputed
-        if size(cst,2) < 7
+        if isempty([cst{:,7}])
             cst = matRad_computeVoiContours(ct,cst);
         end
         assignin('base','cst',cst);
@@ -1837,7 +1837,7 @@ AllObjectiveFunction = {'square underdosing','square overdosing','square deviati
 
 columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
        AllObjectiveFunction,...
-       'numeric','numeric','numeric','numeric',{'none','WC','prob'}};
+       'numeric','numeric','numeric','numeric',{'none','prob','VWWC','VWWC_CONF','COWC'}};
    
 numOfObjectives = 0;
 for i = 1:size(cst,1)
@@ -2444,18 +2444,11 @@ set(handles.editCouchAngle,'String',num2str((pln.couchAngles)));
 set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),pln.radiationMode)));
 set(handles.popUpMachine,'Value',find(strcmp(get(handles.popUpMachine,'String'),pln.machine)));
 
-if ~(pln.bioParam.bioOpt)  
-    set(handles.popMenuBioOpt,'Enable','on');
-    cellBioModel = get(handles.popMenuBioOpt,'String');
-    cellQuantOpt = get(handles.popMenuQuantOpt,'String');
-    set(handles.popMenuBioOpt,'Value',find(strcmp(pln.bioParam.model,cellBioModel)));
-    set(handles.popMenuQuantOpt,'Value',find(strcmp(pln.bioParam.quantityOpt,cellQuantOpt)));
-    set(handles.btnSetTissue,'Enable','on');
-else
-    set(handles.popMenuBioOpt,'Enable','off');
-    set(handles.popMenuQuantOpt,'Enable','off');
-    set(handles.btnSetTissue,'Enable','off');
-end
+cellBioModel = get(handles.popMenuBioOpt,'String');
+cellQuantOpt = get(handles.popMenuQuantOpt,'String');
+set(handles.popMenuBioOpt,'Value',find(strcmp(pln.bioParam.model,cellBioModel)));
+set(handles.popMenuQuantOpt,'Value',find(strcmp(pln.bioParam.quantityOpt,cellQuantOpt)));
+
 %% enable sequencing and DAO button if radiation mode is set to photons
 if strcmp(pln.radiationMode,'photons') && pln.runSequencing
     set(handles.btnRunSequencing,'Enable','on');
@@ -4093,14 +4086,28 @@ if handles.State > 0
    cellBioOpt   = get(handles.popMenuBioOpt,'String');
    cellQuantOpt = get(handles.popMenuQuantOpt,'String');
    NewBioOptimization = cellBioOpt(get(handles.popMenuBioOpt,'Value'),:);
-   NewQuantityOpt     = cellQuantOpt(get(handles.popMenuQuantOpt,'Value'),:);
+   NewQuantityOpt     = cellQuantOpt(get(handles.popMenuQuantOpt,'Value'),:);   
+   OldBioOptimization = pln.bioParam.model;
+   
+   % switch from biological opt to physical optimization
+   if ~strcmp(NewBioOptimization,'none') && strcmp(OldBioOptimization,'none')
+        NewQuantityOpt = 'RBExD';
+        set(handles.popMenuQuantOpt,'Value',find(strcmp(cellQuantOpt,NewQuantityOpt)))
+   end
+   
+   % switch from biological opt to physical optimization
+   if strcmp(NewBioOptimization,'none') && ~strcmp(OldBioOptimization,'none')
+        NewQuantityOpt = 'physicalDose';
+        set(handles.popMenuQuantOpt,'Value',find(strcmp(cellQuantOpt,NewQuantityOpt)))
+   end
+   
    
    if ~strcmp(NewBioOptimization,pln.bioParam.model) || ~strcmp(NewQuantityOpt,pln.bioParam.quantityOpt)
         handles.State = 1;
    end
    
    getPlnFromGUI(handles);
-
+   setPln(handles);
    UpdateState(handles);
 end
 guidata(hObject,handles);
@@ -4108,15 +4115,11 @@ guidata(hObject,handles);
 
 % --- Executes on selection change in popMenuQuantOpt.
 function popMenuQuantOpt_Callback(hObject, eventdata, handles)
-% hObject    handle to popMenuQuantOpt (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns popMenuQuantOpt contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popMenuQuantOpt
-if handles.State > 0
-   
-end
+   getPlnFromGUI(handles);
+   setPln(handles);
+   UpdateState(handles);
+ 
 guidata(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.

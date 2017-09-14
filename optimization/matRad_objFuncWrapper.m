@@ -86,7 +86,7 @@ for  i = 1:size(cst,1)
                         f = f + options.scenProb(ixScen) * matRad_objFunc(d_i,cst{i,6}(j),d_ref);
                     end
                     
-                % if voxel-wise worst case or voxel-wise conformitiy (only for target structures
+                % if voxel-wise worst case or voxel-wise conformitiy (only for target structures)
                 elseif strcmp(cst{i,6}(j).robustness,'VWWC') || strcmp(cst{i,6}(j).robustness,'VWWC_CONF')
 
                     % prepare min/max dose vector
@@ -112,7 +112,7 @@ for  i = 1:size(cst,1)
                         f = f + matRad_objFunc(d_min,cst{i,6}(j),d_ref);     
                     end
                     
-                    
+                % composite worst case consideres ovarall the worst objective function value       
                 elseif strcmp(cst{i,6}(j).robustness,'COWC')
                    
                      for ixScen = 1:options.numOfScen
@@ -123,6 +123,11 @@ for  i = 1:size(cst,1)
                         
                      end   
             
+                % objective-wise worst case consideres the worst individual objective function value        
+                elseif strcmp(cst{i,6}(j).robustness,'OWC')
+                    
+                     matRad_dispToConsole(['not yet implemented \n'],param,'error');
+                 
                 end
        
             end

@@ -85,7 +85,7 @@ classdef matRad_bioModel
                   this.model              = 'none';
                   this.quantityOpt        = 'physicalDose';
                   this.quantityVis        = 'physicalDose';
-
+                  
                end 
          
          % set proton parameter
@@ -141,6 +141,7 @@ classdef matRad_bioModel
                     this.description        = 'constant RBE as used clinically';
                     this.quantityOpt        = 'RBExD';
                     this.quantityVis        = 'RBExD';
+                    this.identifier         = 'constRBE_RBExD';
                end
             
             
@@ -178,6 +179,7 @@ classdef matRad_bioModel
                     this.description        = 'RBExD based optimization using radiosensitivity parameter of the Local Effect Model IV';
                     this.quantityOpt        = 'RBExD';
                     this.quantityVis        = 'RBExD';
+                    this.identifier         = 'LEMIV_RBExD';
                end
                
                  
@@ -198,7 +200,6 @@ classdef matRad_bioModel
 
       % default constructor
       function this = matRad_bioModel(sRadiationMode,sIdentifier)
-         
          this.radiationMode = sRadiationMode;
          this.identifier    = sIdentifier;       % setter checks for valid strings but not for valid combinations (e.g. photons_LEMIV
          this               = setBioModel(this);      

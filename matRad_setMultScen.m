@@ -58,11 +58,11 @@ switch uIn.shiftGenType
         % mean (parameter)
         meanP = zeros(1,3);
         rng('shuffle');
-        isoShiftVec{1} = [nomScen std(1) .* randn(1, uIn.numOfShiftScen(1)) + meanP(1)];
+        isoShiftVec{1} = [0 std(1) .* randn(1, uIn.numOfShiftScen(1)) + meanP(1)];
         rng('shuffle');
-        isoShiftVec{2} = [nomScen std(2) .* randn(1, uIn.numOfShiftScen(2)) + meanP(2)];
+        isoShiftVec{2} = [0 std(2) .* randn(1, uIn.numOfShiftScen(2)) + meanP(2)];
         rng('shuffle');
-        isoShiftVec{3} = [nomScen std(3) .* randn(1, uIn.numOfShiftScen(3)) + meanP(3)];     
+        isoShiftVec{3} = [0 std(3) .* randn(1, uIn.numOfShiftScen(3)) + meanP(3)];     
     otherwise
         matRad_dispToConsole('did not expect that','error');
 end
@@ -161,8 +161,6 @@ end
 
 relRangeShift        = (relRangeShift./100);
 
- 
-
 % check if absolute and range error scenarios should be combined
 switch uIn.rangeCombType    
    case 'individual'
@@ -186,7 +184,6 @@ switch uIn.rangeCombType
    otherwise
       
 end
-
 
 % check if the existence shift scenarios
  if sum(sum(~any(isoShift))) > 0 && ~uIn.includeNomScen
@@ -275,9 +272,9 @@ if numOfShiftScen > 0 && numOfRangeShiftScen > 0
            
        case 'combined'
           
-           % determine that matrix is cubic (ignore ct scen)
+           % check if scenForProb is cubic (ignore ct scen) - if so fill diagonal
            if isequal(numOfShiftScen, numOfRangeShiftScen)
-               for i = 1:uIn.numOfShiftScen
+               for i = 1:size(scenForProb, 1)
                    scenMask(1,i,i) = true;
                end
            else
@@ -289,26 +286,31 @@ if numOfShiftScen > 0 && numOfRangeShiftScen > 0
 end
 
 % create linearalized mask where the i row points to the indexes of scenMask
-[x{1}, x{2}, x{3}]       = ind2sub(size(scenMask),find(scenMask));
-linearMask               = cell2mat(x);
+[x{1}, x{2}, x{3}]           = ind2sub(size(scenMask),find(scenMask));
+linearMask                   = cell2mat(x);
 
 % get number of scenarios
-totalNumScen             = size(scenForProb, 1);
+totalNumScen                 = size(scenForProb, 1);
 
 % write to scenario information variable
-multScen.numOfCtScen     = uIn.numOfCtScen;
+multScen.numOfCtScen         = uIn.numOfCtScen;
 
-multScen.isoShift        = isoShift;
-multScen.numOfShiftScen  = numOfShiftScen;
+multScen.isoShift            = isoShift;
+multScen.numOfShiftScen      = numOfShiftScen;
 
-multScen.relRangeShift   = relRangeShift;
-multScen.absRangeShift   = absRangeShift;
-multScen.numOfRangeShift = numOfRangeShiftScen;
+multScen.relRangeShift       = relRangeShift;
+multScen.absRangeShift       = absRangeShift;
+multScen.numOfRangeShiftScen = numOfRangeShiftScen;
 
-multScen.scenMask        = scenMask;
-multScen.linearMask      = linearMask;
-multScen.numOfScen       = totalNumScen;
+multScen.scenMask            = scenMask;
+multScen.linearMask          = linearMask;
+multScen.numOfScen           = totalNumScen;
 
-multScen.rangeRelSD      = uIn.rangeRelSD;
-multScen.rangeAbsSD      = uIn.rangeAbsSD;
-multScen.shiftSD         = uIn.shiftSD;  
+multScen.rangeRelSD          = uIn.rangeRelSD;
+multScen.rangeAbsSD          = uIn.rangeAbsSD;
+multScen.shiftSD             = uIn.shiftSD;  
+
+multScen.scenCombType        = uIn.scenCombType;  
+
+
+

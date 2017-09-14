@@ -104,9 +104,9 @@ elseif ~pln.robOpt && pln.sampling
     requiredFields = {'numOfShiftScen','shiftSize','shiftGenType','shiftCombType',...
         'shiftGen1DIsotropy','numOfRangeShiftScen','maxAbsRangeShift','maxRelRangeShift',...
         'rangeCombType','rangeGenType','scenCombType','includeNomScen'};
-    if sum(isfield(multScen,requiredFields)) == 0
+  if sum(isfield(multScen,requiredFields)) == 0
 
-       %% grid sampling
+     %% grid sampling
        % a) define shift scenarios
        multScen.numOfShiftScen       = [0 0 0];          % number of shifts in x y and z direction       
        multScen.shiftSize            = [3 3 3];          % maximum shift [mm]  % (e.g. prostate cases 5mm otherwise 3mm)
@@ -127,12 +127,10 @@ elseif ~pln.robOpt && pln.sampling
                                                          % combined:    combine range and setup scenarios if their scenario number is consistent 
                                                          % permuted:    create every possible combination of range and setup scenarios
        multScen.includeNomScen       = false;
-    elseif sum(isfield(multScen,requiredFields)) ~= numel(requiredFields)
-       matRad_dispToConsole('Set of parameters is incomplete.',param,'error');
-   end
+   
    %% random sampling
-%    x = pln.numOfSamples;
-%    multScen.numOfShiftScen       = [x x x];          % number of shifts in x y and z direction       
+%    NumOfSamples = 20;
+%    multScen.numOfShiftScen       = [NumOfSamples NumOfSamples NumOfSamples];  % number of shifts in x y and z direction       
 %    multScen.shiftSize            = [3 3 3];          % maximum shift [mm]  % (e.g. prostate cases 5mm otherwise 3mm)
 %    multScen.shiftGenType         = 'sampled';        % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
 %    multScen.shiftCombType        = 'combined';       % individual:  no combination of shift scenarios;       number of shift scenarios is sum(multScen.numOfShiftScen) 
@@ -141,7 +139,7 @@ elseif ~pln.robOpt && pln.sampling
 %    multScen.shiftGen1DIsotropy   = '+-';             % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
 % 
 %    % b) define range error scenarios                                                
-%    multScen.numOfRangeShiftScen  = x;                % number of absolute and/or relative range scnearios. 
+%    multScen.numOfRangeShiftScen  = NumOfSamples;     % number of absolute and/or relative range scnearios. 
 %                                                      % if absolute and relative range scenarios are defined then multScen.rangeCombType defines the resulting number of range scenarios
 %    multScen.maxAbsRangeShift     = 1;                % maximum absolute over and undershoot in mm   
 %    multScen.maxRelRangeShift     = 3.5;              % maximum relative over and undershoot in % 
@@ -152,6 +150,10 @@ elseif ~pln.robOpt && pln.sampling
 %                                                      % permuted:    create every possible combination of range and setup scenarios
 %    multScen.includeNomScen       = false;
 %    
+   
+ elseif sum(isfield(multScen,requiredFields)) ~= numel(requiredFields)
+       matRad_dispToConsole('Set of parameters is incomplete.',param,'error');
+ end
    
 else
    matRad_dispToConsole('matRad_setPlanUncertainties: Invalid combination',param,'error');

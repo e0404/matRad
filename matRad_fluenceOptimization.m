@@ -166,14 +166,11 @@ end
 
 % set optimization options
 options.ixForOpt     = find(~cellfun(@isempty, dij.physicalDose))'; 
-% if iscolumn(options.ixForOpt) 
-%    options.ixForOpt  = options.ixForOpt';
-% end
-options.numOfScen       = pln.multScen.numOfScen;
-options.scenProb        = pln.multScen.scenProb;
-options.bioOpt          = pln.bioParam.bioOpt;
-options.quantityOpt     = pln.bioParam.quantityOpt;
-options.model           = pln.bioParam.model;
+options.numOfScen    = pln.multScen.numOfScen;
+options.scenProb     = pln.multScen.scenProb;
+options.bioOpt       = pln.bioParam.bioOpt;
+options.quantityOpt  = pln.bioParam.quantityOpt;
+options.model        = pln.bioParam.model;
 
 % set callback functions.
 [options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,options);   

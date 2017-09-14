@@ -93,10 +93,10 @@ for  i = 1:size(cst,1)
 
                     end
 
-                    
+                 % VWWC = voxel-wise worst case; VWWC_CONF = conformity voxel-wise worst case    
                  elseif strcmp(cst{i,6}(j).robustness,'VWWC') || strcmp(cst{i,6}(j).robustness,'VWWC_CONF')
 
-                    % prepare min/max dose vector for voxel-wise worst case
+                    % prepare min/max dose vector for voxel-wise worst case  
                     if ~exist('d_tmp','var')
                          d_tmp = [d{:}];
                     end   
@@ -115,7 +115,6 @@ for  i = 1:size(cst,1)
                         warning('nan values in gradFuncWrapper');
                     end
                     
-
                     if strcmp(cst{i,6}(j).robustness,'VWWC')
                         deltaTmp = matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
                     elseif strcmp(cst{i,6}(j).robustness,'VWWC_CONF') && isequal(cst{i,6}(j).type, 'square overdosing')
@@ -151,6 +150,7 @@ for  i = 1:size(cst,1)
 
                     end 
                     
+                 % composite worst case consideres ovarall the worst objective function value   
                  elseif strcmp(cst{i,6}(j).robustness,'COWC')
                    
                        for ixScen = 1:options.numOfScen
@@ -160,7 +160,12 @@ for  i = 1:size(cst,1)
                            f_COWC(ixScen)                     = f_COWC(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
                            delta_COWC{ixScen}(cst{i,4}{1})    = delta_COWC{ixScen}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
                        end   
-
+                       
+                 % objective-wise worst case consideres the worst individual objective function value        
+                 elseif strcmp(cst{i,6}(j).robustness,'OWC')
+                     
+                     matRad_dispToConsole(['not yet implemented \n'],param,'error');
+                     
                  end
                 
             end

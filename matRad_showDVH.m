@@ -66,7 +66,7 @@ lineStyles = {'-',':','--','-.'};
 
 for i = 1:numOfVois
     if cst{i,5}.Visible
-        dvh = cst{i,8}{scenIx};
+        dvh = cst{i,9}{scenIx};
         subplot(211);
         plot(dvh(1,:),dvh(2,:),'LineWidth',4,'Color',colorMx(i,:), ...
             'LineStyle',lineStyles{lineStyleIndicator},'DisplayName',cst{i,2});hold on
@@ -106,7 +106,7 @@ set(table,'position',pos)
 % get quality indicators and fill table
 QI = [];
 for i = 1:numOfVois
-    QI = [QI; cst{i,9}{scenIx}];
+    QI = [QI; cst{i,10}{scenIx}];
 end
 
 set(table,'ColumnName',fieldnames(QI));

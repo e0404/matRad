@@ -31,12 +31,6 @@ function cst = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if isfield(resultGUI,'RBExDose')
-    doseCube = resultGUI.RBExDose;
-else
-    doseCube = resultGUI.physicalDose;
-end
-
 if ~exist('refVol', 'var') 
     refVol = [];
 end
@@ -54,19 +48,29 @@ else
 end
 
 
-dvh = matRad_calcDVH(cst,doseCube,'cum');
-qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param);
+% find indices of corresponding dose cubes
+fieldNames = fieldnames(resultGUI);
+ixCalc = []; 
+% find corresponding scenario names
+for k = 1:length(fieldNames)  
+   res = regexp(fieldNames{k,1},[pln.bioParam.quantityVis]);
+   if ~isempty(res)
+      ixCalc = [ixCalc; k];
+   end
+end
+        
+for Scen = 1:numel(ixCalc)
 
-numOfScenarios = 1;
-for i = 1:size(cst,1)
-    % overload with scenarios
-    cst{i,8} = cell(numOfScenarios,1);
-    cst{i,9} = cell(numOfScenarios,1);
+    doseCube = resultGUI.(fieldNames{ixCalc(Scen),1});
+    dvh = matRad_calcDVH(cst,doseCube,'cum');
+    qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param);
     
-    cst{i,8}{1} = dvh{i};
-    cst{i,9}{1} = qi{i};
-end    
+    for i = 1:size(cst,1)
+        cst{i,9}{Scen} = dvh{i};
+        cst{i,10}{Scen} = qi{i};
+    end
 
+end
 
 end % eof
 

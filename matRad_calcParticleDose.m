@@ -85,7 +85,7 @@ end
 % Allocate space for dij.physicalDose sparse matrix
 for CtScen = 1:pln.multScen.numOfCtScen
     for ShiftScen = 1:pln.multScen.numOfShiftScen
-        for RangeShiftScen = 1:pln.multScen.numOfRangeShift  
+        for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen  
             
             if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
                 dij.physicalDose{CtScen,ShiftScen,RangeShiftScen} = spalloc(prod(ct.cubeDim),numOfBixels,1);
@@ -99,16 +99,16 @@ end
 round2 = @(a,b)round(a*10^b)/10^b;
 
 % Allocate memory for dose_temp cell array
-doseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShift);
+doseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
 
 if pln.bioParam.bioOpt
    
-    alphaDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShift);
-    betaDoseTmpContainer  = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShift);
+    alphaDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
+    betaDoseTmpContainer  = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
     
     for CtScen = 1:pln.multScen.numOfCtScen
         for ShiftScen = 1:pln.multScen.numOfShiftScen
-            for RangeShiftScen = 1:pln.multScen.numOfRangeShift  
+            for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen  
             
                 if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
                     dij.mAlphaDose{CtScen,ShiftScen,RangeShiftScen}        = spalloc(prod(ct.cubeDim),numOfBixels,1);
@@ -144,11 +144,11 @@ end
 if (isfield(pln,'calcLET') && pln.calcLET) 
   if isfield(machine.data,'LET')
       
-    letDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShift);
+    letDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
    
     for CtScen = 1:pln.multScen.numOfCtScen
         for ShiftScen = 1:pln.multScen.numOfShiftScen
-            for RangeShiftScen = 1:pln.multScen.numOfRangeShift  
+            for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen  
             
                 if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
                      dij.mLETDose{CtScen,ShiftScen,RangeShiftScen} = spalloc(prod(ct.cubeDim),numOfBixels,1);
@@ -355,7 +355,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
 
                    
                    for CtScen = 1:pln.multScen.numOfCtScen
-                       for RangeShiftScen = 1:pln.multScen.numOfRangeShift 
+                       for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen 
                           
                           if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
                              
@@ -443,7 +443,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                    if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
                       
                        for CtScen = 1:pln.multScen.numOfCtScen
-                            for RangeShiftScen = 1:pln.multScen.numOfRangeShift
+                            for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen
                                 if ~any(currIx)
                                     continue;
                                 end

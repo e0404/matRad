@@ -95,6 +95,6 @@ matRad_showDVH(cst,pln)
 %% perform sampling
 % select structures to include in sampling; leave empty to sample dose for all structures
 param.subIx = {}; % param.subIx = {'CTV','OAR1'}
-[mRealizations,stats, cst, plnSamp, nominalScenario]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w,[],param.subIx);
+[mRealizations,stats, cstSamp, plnSamp, nominalScenario]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w,[],param.subIx);
 
 
