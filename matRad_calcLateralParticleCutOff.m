@@ -30,7 +30,7 @@ function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-TypeOfCutOffCalc = '2D'; % 'classic','1D','2D','3D',
+TypeOfCutOffCalc = '2D'; % 'classic','2D','3D',
 LcutDefaultSigma = 3.5;  % in sigma units - this value is only used by the classica approach - only 0.2% of fluence is missed when using 3.5
 conversionFactor = 1.6021766208e-02;
 
@@ -46,8 +46,9 @@ end
 vX     = [0 logspace(-1,4,1000)]; % [mm]
 
 % integration steps
-r_mid   = (0.5*(vX(1:end-1) +  vX(2:end)))'; % [mm]
-dr      = (vX(2:end) - vX(1:end-1))';
+r_mid          = (0.5*(vX(1:end-1) +  vX(2:end)))'; % [mm]
+dr             = (vX(2:end) - vX(1:end-1))';
+radialDist_sq  = r_mid.^2;
 
 % number of depth points for which a lateral cutoff is determined
 NumDepthVal = 35; 
@@ -102,9 +103,9 @@ for energyIx = vEnergiesIx
     if isstruct(machine.data(energyIx).Z)
         idd = SumGauss(machine.data(energyIx).depths,machine.data(energyIx).Z.mean,...
                                                      machine.data(energyIx).Z.width.^2,...
-                                                     machine.data(energyIx).Z.weight);
+                                                     machine.data(energyIx).Z.weight) * conversionFactor;
     else
-        idd = machine.data(energyIx).Z;
+        idd = machine.data(energyIx).Z * conversionFactor;
     end
     
     [~,peakixDepth] = max(idd); 
@@ -114,23 +115,17 @@ for energyIx = vEnergiesIx
     NumDepthValRest = round((NumDepthVal)/3);
     ixDepth         = unique(sort(round([linspace(1,peakixDepth-1,NumDepthValRest) peakixDepth linspace(peakixDepth+1,length(machine.data(energyIx).depths),NumDepthValTail)])));
 
+    
     % get inital beam width
     cnt = cnt +1 ;
     % % calculate maximum dose in spot
     baseData                   = machine.data(energyIx);
-    radDepths                  = machine.data(energyIx).depths(peakixDepth) ;
-    radialDist_sq              = 0;
     maxfocusIx                 = energySigmaLUT(ix_Max(cnt),2);
     maxSSD                     = energySigmaLUT(ix_Max(cnt),3);
     radiationMode              = stf(1).radiationMode;
     rangeShifter               = rangeShifterLUT(ix_Max(cnt));
-    baseData.LatCutOff.CompFac = 1;
-    
-    dosePeakPos = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, maxSSD, maxfocusIx, baseData, rangeShifter, radiationMode);   
-    iddPeak     = idd(peakixDepth) * conversionFactor;    
-
-    radialDist_sq  = r_mid.^2;
-     
+    baseData.LatCutOff.CompFac = 1;   
+  
     for j = 1:length(ixDepth)
         
         % save depth value
@@ -156,26 +151,15 @@ for energyIx = vEnergiesIx
                         IX   =  find(r_mid  >  Sigma2 * 0.85*LcutDefaultSigma2 ,1 ,'first');   
                         machine.data(energyIx).LatCutOff.CompFac = CF(LcutDefaultSigma2);
                       end  
-
-                case '1D'
-                    
-                      IX = find(dose_r  <= (1-cutOffLevel) * dosePeakPos ,1 ,'first');   
-                      machine.data(energyIx).LatCutOff.CompFac = cutOffLevel^-1;
-                      
+    
                 case '2D'
                       cumArea = cumsum(2*pi.*r_mid.*dose_r.*dr);
-                      if abs( ( idd(ixDepth(j)) * conversionFactor ) - cumArea(end) ) > 1e-3
+                      relativeThreshold = 0.5; %in [%]
+                      if abs((cumArea(end)./(idd(ixDepth(j))))-1)*100 > relativeThreshold && (cumArea(end) > relativeThreshold * idd(peakixDepth))
                          warning('LateralParticleCutOff: shell integration is wrong')
                       end
         
-                      IX = find(cumArea >= cumArea(end) * cutOffLevel,1, 'first'); 
-                      
-                      %% tail handling
-                      % if current IDD value is smaller than then x percent of the peak IDD then apply cutoff
-                      if cumArea(end) < iddPeak * (1-cutOffLevel)  
-                          IX = 1;
-                      end
-
+                      IX = find(cumArea >= idd(ixDepth(j)) * cutOffLevel,1, 'first'); 
                       machine.data(energyIx).LatCutOff.CompFac = cutOffLevel^-1;
                       
                 case '3D'
@@ -287,11 +271,11 @@ if visBool
     DoseLevel = DoseSlice(midPos,LevelixDepth);
     
     figure,set(gcf,'Color',[1 1 1]);
-    subplot(221),surf(X,Y,DoseSlice),xlabel('x'),ylabel('y'),zlabel('double lateral gauss'), hold on, axis tight
+    subplot(221),surf(X,Y,DoseSlice,'EdgeColor','none','LineStyle','none','FaceLighting','phong'),xlabel('x'),ylabel('y'),zlabel('double lateral gauss'), hold on, axis tight
     contour3(X,Y,DoseSlice,[(DoseLevel+0.001*DoseLevel) DoseLevel],'LineWidth',3,'color','r'),hold on;
     title({['beam with energy ' num2str(machine.data(energyIx).energy) ' at depth index ' num2str(j)], ['cutoff = ' num2str(cutOffLevel)]}),set(gca,'FontSize',12);
     
-    subplot(222),surf(X,Y,DoseSlice),xlabel('x'),ylabel('y'),zlabel('double lateral gauss'), hold on, axis tight
+    subplot(222),surf(X,Y,DoseSlice,'EdgeColor','none','LineStyle','none','FaceLighting','phong'),xlabel('x'),ylabel('y'),zlabel('double lateral gauss'), hold on, axis tight
     contour3(X,Y,DoseSlice,[(DoseLevel+0.001*DoseLevel) DoseLevel],'LineWidth',3,'color','r'),hold on; title(['intensity profile; cutoff = ' num2str(cutOffLevel)]),view(0,90)
     
     vDoseLat = mDose(round(numel(vLatX)/2),:,j);
@@ -300,7 +284,7 @@ if visBool
     plot([CutOff,CutOff],[0 max(vDoseLat)],'r','LineWidth',2),hold on
     plot([-CutOff,-CutOff],[0 max(vDoseLat)],'r','LineWidth',2),hold on, title('lateral profile 2D - cross section')
     
-    subplot(224),surf(X,Y,DoseSlice),xlabel('x'),ylabel('y'),zlabel('double lateral gauss'),colormap(parula(256)), hold on
+    subplot(224),surf(X,Y,DoseSlice,'EdgeColor','none','LineStyle','none','FaceLighting','phong'),xlabel('x'),ylabel('y'),zlabel('double lateral gauss'),colormap(parula(256)), hold on
     title(['proton beam with energy ' num2str(machine.data(energyIx).energy) ' at depth index ' num2str(j)]),set(gca,'FontSize',12);
     contour3(X,Y,DoseSlice,[(DoseLevel+0.001*DoseLevel) DoseLevel],'LineWidth',3,'color','r');title('lateral profile 3D'); view([0 0]);
 
