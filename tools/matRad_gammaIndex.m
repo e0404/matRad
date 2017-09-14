@@ -46,7 +46,7 @@ function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolutio
 
 % set parameters for gamma index calculation
 if exist('criteria','var')
-    dist2AgreeMm     = criteria(1); % in [mm]
+    dist2AgreeMm     = criteria(2); % in [mm]
     relDoseThreshold = criteria(1); % in [%]
 else
     dist2AgreeMm     = 3; % in [mm]
