@@ -174,7 +174,7 @@ for i = 1:length(pln.gantryAngles)
     % Save the number of rays
     stf(i).numOfRays = size(rayPos,1);
     
-    % Save ray and target position in beam eye´s view (bev)
+    % Save ray and target position in beam eye's view (bev)
     for j = 1:stf(i).numOfRays
         stf(i).ray(j).rayPos_bev = rayPos(j,:);
         stf(i).ray(j).targetPoint_bev = [2*stf(i).ray(j).rayPos_bev(1) ...
@@ -237,34 +237,10 @@ for i = 1:length(pln.gantryAngles)
                 end
 
                 stf(i).ray(j).energy = [];
-                rayPeakPos = [];
 
                 % Save energies in stf struct
                 for k = 1:numel(targetEntry)
                     stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
-                    rayPeakPos = [rayPeakPos availablePeakPos(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
-
-                    % adjust spot spacing according to pln.bixelWidth when using HIT basedata
-                    %DefaultLongitudialSpotSpacing = pln.bixelWidth;  % in [mm]
-                    DefaultLongitudialSpotSpacing = 3;
-                    if strncmp(pln.machine,'HIT',3) && length(stf(i).ray(j).energy)>2
-                        Tolerance = 0.5;
-                        hasNext = true;
-                        CntEnergy =2;
-                        while hasNext
-                            if abs(rayPeakPos(CntEnergy)-rayPeakPos(CntEnergy-1))<...
-                                    DefaultLongitudialSpotSpacing-Tolerance
-                                stf(i).ray(j).energy(CntEnergy)=[];
-                                rayPeakPos(CntEnergy)=[];
-                            else
-                                CntEnergy = CntEnergy+1;
-                            end
-                            if CntEnergy == length(stf(i).ray(j).energy)
-                                hasNext = false;
-                            end
-                        end
-                    end
-
                 end
   
                 % book keeping & calculate focus index
@@ -302,12 +278,59 @@ for i = 1:length(pln.gantryAngles)
     % store total number of rays for beam-i
     stf(i).numOfRays = size(stf(i).ray,2);
      
+    % post processing for particle remove energy slices
+    if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
+        
+        % get minimum energy per field
+        minEnergy = min([stf(i).ray.energy]);
+        maxEnergy = max([stf(i).ray.energy]);
+        
+        % get corresponding peak position
+        availableEnergies = [machine.data.energy];
+        minPeakPos  = machine.data(minEnergy == availableEnergies).peakPos;
+        maxPeakPos  = machine.data(maxEnergy == availableEnergies).peakPos;
+        
+        % find set of energyies with adequate spacing
+        longitudialSpotSpacing = 3;
+        tolerance              = longitudialSpotSpacing/10;
+        availablePeakPos = [machine.data.peakPos];
+        
+        useEnergyBool = availablePeakPos >= minPeakPos & availablePeakPos <= maxPeakPos;
+        
+        ixCurr = find(useEnergyBool,1,'first');
+        ixRun  = ixCurr + 1;
+        ixEnd  = find(useEnergyBool,1,'last');
+
+        while ixRun <= ixEnd
+            if abs(availablePeakPos(ixRun)-availablePeakPos(ixCurr)) < ...
+                                    longitudialSpotSpacing - tolerance
+                useEnergyBool(ixRun) = 0;
+            else
+                ixCurr = ixRun;
+            end
+            ixRun = ixRun + 1;
+        end
+        
+        for j = stf(i).numOfRays:-1:1
+            for k = stf(i).numOfBixelsPerRay(j):-1:1
+                maskEnergy = stf(i).ray(j).energy(k) == availableEnergies;
+                if ~useEnergyBool(maskEnergy)
+                    stf(i).ray(j).energy(k)     = [];
+                    stf(i).ray(j).focusIx(k)    = [];
+                    stf(i).numOfBixelsPerRay(j) = stf(i).numOfBixelsPerRay(j) - 1;
+                end
+            end
+            if isempty(stf(i).ray(j).energy)
+                stf(i).ray(j) = [];
+                stf(i).numOfBixelsPerRay(j) = [];
+                stf(i).numOfRays = stf(i).numOfRays - 1;
+            end
+        end
+        
+    end
+    
     % save total number of bixels
     stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
-    %     figure,
-    %     for jj = 1:length(stf.ray)
-    %        plot(stf.ray(jj).rayPos_bev(1),stf.ray(jj).rayPos_bev(3),'rx'),hold on 
-    %     end
     
     % Show progress
     matRad_progress(i,length(pln.gantryAngles));
@@ -439,6 +462,17 @@ for i = 1:length(pln.gantryAngles)
         title 'lps coordinate system'
         axis([-300 300 -300 300 -300 300]);
         %pause(1);
+    end
+    
+    % include rangeshifter data if not yet available 
+    if strcmp(pln.radiationMode, 'protons') || strcmp(pln.radiationMode, 'carbon')
+        for j = 1:stf(i).numOfRays
+            for k = 1:numel(stf(i).ray(j).energy)
+                stf(i).ray(j).rangeShifter(k).ID = 0;
+                stf(i).ray(j).rangeShifter(k).eqThickness = 0;
+                stf(i).ray(j).rangeShifter(k).sourceRashiDistance = 0;
+            end
+        end
     end
         
 end    
