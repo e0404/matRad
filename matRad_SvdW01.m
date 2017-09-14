@@ -22,7 +22,7 @@ close all
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-load TG119_SvdW01c.mat
+load TG119_SvdW04.mat
 %load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
