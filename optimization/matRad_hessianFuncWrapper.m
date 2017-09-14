@@ -79,7 +79,7 @@ for i = 1:size(cst,1)
                     
                     d_i = d{1}(cst{i,4}{1});
                     
-                    objectiveHessian = objectiveHessian + matRad_hessianFunc(dij,d_i,cst{i,6}(j),cst{i,4},d_ref);
+                    objectiveHessian = objectiveHessian + matRad_hessianFunc(dij,d_i,cst{i,6}(j),cst{i,4}{1},d_ref);
                     
                 else
                     error('robust exact optimization not supported yet!!!')
@@ -113,7 +113,7 @@ for i = 1:size(cst,1)
                     if isequal(cst{i,6}(j).type, 'max dose constraint (exact)') || isequal(cst{i,6}(j).type, 'min dose constraint (exact)')
                         constraintHessian = constraintHessian + sparse(zeros(dij.totalNumOfBixels));
                     else
-                        constraintHessian = constraintHessian + lambda(constraintCounter) * matRad_hessianFunc(dij,d_i,cst{i,6}(j),cst{i,4},d_ref);
+                        constraintHessian = constraintHessian + lambda(constraintCounter) * matRad_hessianFunc(dij,d_i,cst{i,6}(j),cst{i,4}{1},d_ref);
                     end
                     
 %                     scenID  = [scenID;1];
