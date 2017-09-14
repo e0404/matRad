@@ -1,4 +1,4 @@
-function c = matRad_daoConstFunc_VMATstatic(apertureInfoVec,apertureInfo,dij,cst,options,daoVec2ApertureInfo)
+function c = matRad_daoConstFunc_VMATstatic(apertureInfoVec,dij,cst,options,daoVec2ApertureInfo)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: constraint function for direct aperture optimization
 %
@@ -34,10 +34,18 @@ function c = matRad_daoConstFunc_VMATstatic(apertureInfoVec,apertureInfo,dij,cst
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% update apertureInfo if necessary
+% read in the global apertureInfo and apertureVector variables
+global matRad_global_apertureInfo;
+% update apertureInfo from the global variable
+apertureInfo = matRad_global_apertureInfo;
+
+% update apertureInfo, bixel weight vector an mapping of leafes to bixels
 if ~isequal(apertureInfoVec,apertureInfo.apertureVector)
     apertureInfo = daoVec2ApertureInfo(apertureInfo,apertureInfoVec);
+    matRad_global_apertureInfo = apertureInfo;
 end
+
+
 
 % value of constraints for leaves
 leftLeafPos  = apertureInfoVec([1:apertureInfo.totalNumOfLeafPairs]+apertureInfo.totalNumOfShapes);
@@ -71,7 +79,7 @@ c_lfspd = reshape([abs(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActive
 
 
 % values of doserate (MU/sec) between optimized gantry angles
-weights = apertureInfoVec(1:apertureInfo.totalNumOfShapes);
+weights = apertureInfoVec(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale;
 timeFacCurr = [apertureInfo.beam(optInd).timeFacCurr]';
 timeOptDoseBorderAngles = timeOptBorderAngles.*timeFacCurr;
 c_dosrt = apertureInfo.weightToMU.*weights./timeOptDoseBorderAngles;

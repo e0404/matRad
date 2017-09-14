@@ -1,6 +1,6 @@
 tic
 
-angularResS = [0.5 1 2 4];
+angularResS = [4];
 
 for angularRes = angularResS
     %for each angular resolution, proceed from the best approximation to

@@ -1,4 +1,4 @@
-function jacob = matRad_daoJacobFunc_VMATstatic(apertureInfoVec,apertureInfo,dij,cst,type,daoVec2ApertureInfo)
+function jacob = matRad_daoJacobFunc_VMATstatic(apertureInfoVec,dij,cst,type,daoVec2ApertureInfo)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian function for direct aperture optimization
 %
@@ -32,10 +32,18 @@ function jacob = matRad_daoJacobFunc_VMATstatic(apertureInfoVec,apertureInfo,dij
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% update apertureInfo if necessary
+% read in the global apertureInfo and apertureVector variables
+global matRad_global_apertureInfo;
+% update apertureInfo from the global variable
+apertureInfo = matRad_global_apertureInfo;
+
+% update apertureInfo, bixel weight vector an mapping of leafes to bixels
 if ~isequal(apertureInfoVec,apertureInfo.apertureVector)
     apertureInfo = daoVec2ApertureInfo(apertureInfo,apertureInfoVec);
+    matRad_global_apertureInfo = apertureInfo;
 end
+
+
 
 % jacobian of the dao constraints
 
@@ -153,7 +161,7 @@ jacob_lfspd = sparse(i,j,s,2*apertureInfo.beam(1).numOfActiveLeafPairs*(aperture
 
 % jacobian of the doserate constraint
 % values of doserate (MU/sec) between optimized gantry angles
-weights = apertureInfoVec(1:apertureInfo.totalNumOfShapes);
+weights = apertureInfoVec(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale;
 timeFacCurr = [apertureInfo.beam(optInd).timeFacCurr]';
 timeOptDoseBorderAngles = timeOptBorderAngles.*timeFacCurr;
 
@@ -161,7 +169,7 @@ i = repmat(1:apertureInfo.totalNumOfShapes,1,2);
 j = [1:apertureInfo.totalNumOfShapes (apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2+1):(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2)];
 % first do jacob wrt weights, then wrt times
 
-s = [apertureInfo.weightToMU.*timeOptDoseBorderAngles; -apertureInfo.weightToMU.*weights.*timeFacCurr./(timeOptDoseBorderAngles.^2)];
+s = [apertureInfo.weightToMU./(timeOptDoseBorderAngles.*apertureInfo.jacobiScale); -apertureInfo.weightToMU.*weights.*timeFacCurr./(timeOptDoseBorderAngles.^2)];
 
 jacob_dosrt = sparse(i,j,s,apertureInfo.totalNumOfShapes,numel(apertureInfoVec),2*(apertureInfo.totalNumOfShapes));
 

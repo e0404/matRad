@@ -72,15 +72,12 @@ bixelJApVec_j = zeros(1,bixelJApVec_sz);
 bixelJApVec_offset = 0;
 
 
-%% update the shapeMaps
-% here the new colimator positions are used to create new shapeMaps that
-% now include decimal values instead of binary
 
 if ~all([updatedInfo.beam.optimizeBeam])
     for i = 1:numel(updatedInfo.beam)
         if updatedInfo.beam(i).optimizeBeam
             % update the shape weight
-            updatedInfo.beam(i).shape(j).weight = apertureInfoVect(shapeInd);
+            updatedInfo.beam(i).shape(j).weight = apertureInfoVect(shapeInd)./updatedInfo.beam(i).shape(j).jacobiScale;
             
             updatedInfo.beam(i).MU = updatedInfo.beam(i).shape(j).weight*updatedInfo.weightToMU;
             updatedInfo.beam(i).time = apertureInfoVect(updatedInfo.totalNumOfShapes+updatedInfo.totalNumOfLeafPairs*2+shapeInd);
@@ -116,7 +113,7 @@ for i = 1:numel(updatedInfo.beam)
     % for non-optimized beams, interpolate MURate and leaf speed
     if updatedInfo.beam(i).optimizeBeam
         % update the shape weight
-        updatedInfo.beam(i).shape(j).weight = apertureInfoVect(shapeInd);
+        updatedInfo.beam(i).shape(j).weight = apertureInfoVect(shapeInd)./updatedInfo.beam(i).shape(j).jacobiScale;
         
         updatedInfo.beam(i).MU = updatedInfo.beam(i).shape(j).weight*updatedInfo.weightToMU;
         updatedInfo.beam(i).time = apertureInfoVect(updatedInfo.totalNumOfShapes+updatedInfo.totalNumOfLeafPairs*2+shapeInd);
@@ -149,22 +146,22 @@ for i = 1:numel(updatedInfo.beam)
         updatedInfo.beam(i).shape(1).weight = updatedInfo.beam(i).MU./updatedInfo.weightToMU;
         
         vectorIx_LI_last = updatedInfo.beam(updatedInfo.beam(i).lastOptIndex).shape(j).vectorOffset(1) + ([1:n]-1);
-        vectorIx_RI_last = vectorIx_LI+apertureInfo.totalNumOfLeafPairs;
+        vectorIx_RI_last = vectorIx_LI_last+apertureInfo.totalNumOfLeafPairs;
         leftLeafPos_I_last = apertureInfoVect(vectorIx_LI_last);
         rightLeafPos_I_last = apertureInfoVect(vectorIx_RI_last);
         
         vectorIx_LI_next = updatedInfo.beam(updatedInfo.beam(i).nextOptIndex).shape(j).vectorOffset(1) + ([1:n]-1);
-        vectorIx_RI_next = vectorIx_LI+apertureInfo.totalNumOfLeafPairs;
+        vectorIx_RI_next = vectorIx_LI_next+apertureInfo.totalNumOfLeafPairs;
         leftLeafPos_I_next = apertureInfoVect(vectorIx_LI_next);
         rightLeafPos_I_next = apertureInfoVect(vectorIx_RI_next);
         
         vectorIx_LF_last = updatedInfo.beam(updatedInfo.beam(i).lastOptIndex).shape(j).vectorOffset(2) + ([1:n]-1);
-        vectorIx_RF_last = vectorIx_LF+apertureInfo.totalNumOfLeafPairs;
+        vectorIx_RF_last = vectorIx_LF_last+apertureInfo.totalNumOfLeafPairs;
         leftLeafPos_F_last = apertureInfoVect(vectorIx_LF_last);
         rightLeafPos_F_last = apertureInfoVect(vectorIx_RF_last);
         
         vectorIx_LF_next = updatedInfo.beam(updatedInfo.beam(i).nextOptIndex).shape(j).vectorOffset(2) + ([1:n]-1);
-        vectorIx_RF_next = vectorIx_LF+apertureInfo.totalNumOfLeafPairs;
+        vectorIx_RF_next = vectorIx_LF_next+apertureInfo.totalNumOfLeafPairs;
         leftLeafPos_F_next = apertureInfoVect(vectorIx_LF_next);
         rightLeafPos_F_next = apertureInfoVect(vectorIx_RF_next);
         
@@ -332,7 +329,7 @@ for i = 1:numel(updatedInfo.beam)
         vectorIx_RF = repmat(vectorIx_RF',1,numBix);
         
         % wrt weight
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = updatedInfo.beam(i).shape(j).shapeMap(saveBixelIx);
+        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = updatedInfo.beam(i).shape(j).shapeMap(saveBixelIx)./apertureInfo.beam(i).shape(1).jacobiScale;
         bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = shapeInd;
         bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = apertureInfo.beam(i).bixelIndMap(saveBixelIx);
         bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
@@ -360,6 +357,23 @@ for i = 1:numel(updatedInfo.beam)
         bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = vectorIx_RF(saveBixelIx);
         bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = apertureInfo.beam(i).bixelIndMap(saveBixelIx);
         bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
+        
+        
+        if apertureInfo.updateJacobi
+            dijScaleFactor = mean(apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale)/(2*apertureInfo.bixelWidth);
+            
+            if apertureInfo.jacobi
+                % "incorrect"
+                %updatedInfo.beam(i).shape(j).jacobiScale = sqrt(sum(updatedInfo.beam(i).shape(j).shapeMap(:)));
+                % "correct"
+                updatedInfo.beam(i).shape(j).jacobiScale = (dijScaleFactor./apertureInfo.beam(i).shape(j).weight).*sqrt(sum(updatedInfo.beam(i).shape(j).shapeMap(:).^2))./sqrt(mean([sum(dUl_dLI.^2,2); sum(dUl_dLF.^2,2); sum(dCr_dRI.^2,2); sum(dCr_dRF.^2,2)]));
+            end
+            % rescale the vector from the weight using the current
+            % iteration scaling factor
+            apertureInfoVect(shapeInd) = updatedInfo.beam(i).shape(j).jacobiScale*updatedInfo.beam(i).shape(j).weight;
+            
+            updatedInfo.jacobiScale(shapeInd) = updatedInfo.beam(i).shape(j).jacobiScale;
+        end
         
         % increment shape index
         shapeInd = shapeInd +1;

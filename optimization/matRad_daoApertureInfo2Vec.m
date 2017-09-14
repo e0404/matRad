@@ -55,11 +55,11 @@ offset = 0;
 %% 1. aperture weights
 for i = 1:size(apertureInfo.beam,2)
     for j = 1:apertureInfo.beam(i).numOfShapes
-        apertureInfoVec(offset+j) = apertureInfo.beam(i).shape(j).weight;   %In VMAT, this weight is "spread" over unoptimized beams (assume constant dose rate over sector)  
-        %IandFapertureInfoVec(offset+j) = apertureInfo.beam(i).shape(j).weight;
+        
+        apertureInfoVec(offset+j) = apertureInfo.beam(i).shape(j).jacobiScale*apertureInfo.beam(i).shape(j).weight;   %In VMAT, this weight is "spread" over unoptimized beams (assume constant dose rate over sector)
+        
     end
     offset = offset + apertureInfo.beam(i).numOfShapes;
-    %IandFoffset = IandFoffset + apertureInfo.beam(i).numOfShapes;
 end
 
 % 2. left and right leaf positions
@@ -76,10 +76,6 @@ for i = 1:size(apertureInfo.beam,2)
         
         if apertureInfo.VMAT
             if apertureInfo.dynamic
-                %IandFapertureInfoVec(IandFoffset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos_I;
-                %IandFapertureInfoVec(IandFoffset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos_I;
-                
-                %IandFoffset = IandFoffset + apertureInfo.beam(i).numOfActiveLeafPairs;
                 
                 if apertureInfo.beam(i).doseAngleOpt(1)
                     apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos_I;
@@ -87,10 +83,6 @@ for i = 1:size(apertureInfo.beam,2)
                     
                     offset = offset + apertureInfo.beam(i).numOfActiveLeafPairs;
                 end
-                %IandFapertureInfoVec(IandFoffset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos_F;
-                %IandFapertureInfoVec(IandFoffset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos_F;
-                
-                %IandFoffset = IandFoffset + apertureInfo.beam(i).numOfActiveLeafPairs;
                 
                 if apertureInfo.beam(i).doseAngleOpt(2)
                     apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos_F;
@@ -105,7 +97,6 @@ end
 %% 3. time of arc sector/beam
 if apertureInfo.VMAT
     offset = offset + apertureInfo.totalNumOfLeafPairs;
-    %IandFoffset = IandFoffset + apertureInfo.IandFtotalNumOfLeafPairs;
     
     %this gives a vector of the arc lengths belonging to each optimized CP
     %unique gets rid of double-counted angles (which is every interior
@@ -114,7 +105,6 @@ if apertureInfo.VMAT
     optAngleLengths = [apertureInfo.beam(optInd).optAngleBordersDiff];
     optGantryRot = [apertureInfo.beam(optInd).gantryRot];
     apertureInfoVec((offset+1):end) = optAngleLengths./optGantryRot; %entries are the times until the next opt gantry angle is reached
-    %IandFapertureInfoVec((IandFoffset+1):end) = optAngleLengths./optGantryRot;
     
 end
 

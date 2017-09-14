@@ -89,7 +89,7 @@ for i = 1:numel(updatedInfo.beam)
         % loop over all shapes
         for j = 1:updatedInfo.beam(i).numOfShapes
             % update the shape weight
-            updatedInfo.beam(i).shape(j).weight = apertureInfoVect(shapeInd);
+            updatedInfo.beam(i).shape(j).weight = apertureInfoVect(shapeInd)./updatedInfo.beam(i).shape(j).jacobiScale;
             
             updatedInfo.beam(i).MU = updatedInfo.beam(i).shape(j).weight*updatedInfo.weightToMU;
             updatedInfo.beam(i).time = apertureInfoVect(updatedInfo.totalNumOfShapes+updatedInfo.totalNumOfLeafPairs*2+shapeInd);

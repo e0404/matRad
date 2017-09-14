@@ -1,6 +1,13 @@
-fname = input('Dij file name?','s');
+function dij = loadDij(fname)
 
-cd dij
+dir = pwd;
+if nargin < 1
+    fname = input('Dij file name?','s');
+end
+
+dij_dir = 'C:\Users\eric\Documents\GitHub\matRad\dij';
+
+cd(dij_dir)
 
 load([fname,'_dat'])
 
@@ -25,6 +32,6 @@ for i = 1:dij.numOfBeams
     matRad_progress(i,dij.numOfBeams);
 end
 
-cd ..
+cd(dir)
 
-clear fname dijDat dijDos startInd stopInd numOfRaysPerBeam i
+end

@@ -35,8 +35,20 @@ function g = matRad_gradFuncWrapper(w,dij,cst,options)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,options);
+% read in global dose and bixel variables
+global matRad_global_x;
+global matRad_global_d;
+
+if ~isequal(w,matRad_global_x)
+    % new bixel weights, update dose
+    % get current dose / effect / RBExDose vector
+    d = matRad_backProjection(w,dij,options);
+    matRad_global_d = d;
+    matRad_global_x = w;
+else
+    % old bixel weights, use global dose
+    d = matRad_global_d;
+end
 
 % Initializes delta
 delta      = cell(options.numOfScenarios,1);
@@ -89,7 +101,7 @@ for i = 1:options.numOfScenarios
 
         if isequal(options.bioOpt,'none')
 
-            g            = g + (delta{i}' * dij.physicalDose{i})';
+            g            = g + (delta{i}' * dij.physicalDose{i} * dij.scaleFactor)';
 
         elseif isequal(options.ID,'protons_const_RBExD')
             

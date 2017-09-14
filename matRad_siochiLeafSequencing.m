@@ -107,6 +107,7 @@ for i = 1:numOfBeams
     %Create the fluence matrix.
     fluenceMx = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
     
+    
     % Calculate X and Z position of every fluence's matrix spot z axis =
     % axis of leaf movement!
     xPos = (X-minX)/stf(i).bixelWidth+1;
@@ -117,16 +118,24 @@ for i = 1:numOfBeams
     
     %Save weights in fluence matrix.
     fluenceMx(indInFluenceMx) = wOfCurrBeams;
+
+    temp = zeros(size(fluenceMx));
+    for row = 1:dimOfFluenceMxZ
+        temp(row,:) = imgaussfilt(fluenceMx(row,:),1);
+    end
+    fluenceMx = temp;
+    clear temp
     
     %allow for possibility to repeat sequencing with higher number of
     %levels if number of apertures is lower than required
     notFinished = 1;
+    numOfLevels = pln.numLevels;
     while notFinished
         
         % prepare sequencer
         calFac = max(fluenceMx(:));
         
-        D_k = round(fluenceMx/calFac*pln.numLevels);
+        D_k = round(fluenceMx/calFac*numOfLevels);
         
         % Save the stratification in the initial intensity matrix D_0.
         D_0 = D_k;
@@ -171,7 +180,7 @@ for i = 1:numOfBeams
         end
         
         %are there enough apertures?
-        if numToKeep ~= 0 && k <= numToKeep
+        if numToKeep ~= 0 && k < numToKeep
             numOfLevels = numOfLevels+1;
         else
             notFinished = 0;
@@ -180,7 +189,7 @@ for i = 1:numOfBeams
     
     sequencing.beam(i).numOfShapes  = k;
     sequencing.beam(i).shapes       = shapes(:,:,1:k);
-    sequencing.beam(i).shapesWeight = shapesWeight(1:k)/pln.numLevels*calFac;
+    sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
     sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
     sequencing.beam(i).fluence      = D_0;
     sequencing.beam(i).sum          = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
@@ -316,16 +325,19 @@ if pln.VMAT
     sequencing.beam = rmfield(sequencing.beam,{'tempShapes','tempShapesWeight'});
     %Calculate w using matRad functions
     sequencing.weightToMU = dij.weightToMU;
+    sequencing.jacobi = pln.jacobi;
     resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
     
     
     %matRad_daoVec2ApertureInfo will interpolate subchildren gantry
     %segments
+    resultGUI.apertureInfo.updateJacobi = true;
     if pln.dynamic
         resultGUI.apertureInfo = matRad_daoVec2ApertureInfo_VMATdynamic(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
     else
         resultGUI.apertureInfo = matRad_daoVec2ApertureInfo_VMATstatic(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
     end
+    resultGUI.apertureInfo.updateJacobi = false;
     
     % LEAF TRAVEL / DEGREE
     

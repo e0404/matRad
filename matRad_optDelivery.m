@@ -87,6 +87,8 @@ for i = 1:size(apertureInfo.beam,2)
 end
 
 %recalculate vector with new times
+
+%%%LOOK PAST THIS
 [apertureInfo.apertureVector,~,~] = matRad_daoApertureInfo2Vec(apertureInfo);
 
 %redo interpolation

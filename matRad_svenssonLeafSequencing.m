@@ -1,4 +1,4 @@
-function resultGUI = matRad_svenssonLeafSequencing(resultGUI,stf,dij,pln,numToKeep,visBool)
+function resultGUI = matRad_svenssonLeafSequencing(resultGUI,stf,dij,pln,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated
 % beams with multiple static segments according to Siochi (1999)
@@ -43,20 +43,15 @@ function resultGUI = matRad_svenssonLeafSequencing(resultGUI,stf,dij,pln,numToKe
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % if visBool not set toogle off visualization
 if nargin < 5
-    numToKeep = 0;
-elseif nargin < 6
-     visBool = 0;
+    visBool = 0;
 end
 
 if pln.VMAT
     %First beam sweeps right-to-left, next left-to-right, ...
-    inversion = 1;
-else
-    if numToKeep == 0
-        error('\n\nIf not doing VMAT, must keep a non-zero number of apertures.\n\n');
-    end
+    leafDir = 1;
 end
-    
+sequencing.VMAT = pln.VMAT;
+sequencing.dynamic = pln.dynamic;
 
 numOfBeams = numel(stf);
 
@@ -117,34 +112,52 @@ for i = 1:numOfBeams
     %Save weights in fluence matrix.
     fluenceMx(indInFluenceMx) = wOfCurrBeams;
     
-    t = fluenceMx/(pln.defaultDoseRate/dij.weightToMU);
-    [dtdx,~] = gradient(t);
-    dtdx = dtdx./stf(i).bixelWidth;
+    temp = zeros(size(fluenceMx));
+    for row = 1:dimOfFluenceMxZ
+        temp(row,:) = imgaussfilt(fluenceMx(row,:),1);
+    end
+    fluenceMx = temp;
+    clear temp
     
+    t = fluenceMx/(pln.defaultDoseRate/dij.weightToMU);
+    
+    minInd = zeros(dimOfFluenceMxZ,1);
+    maxInd = zeros(dimOfFluenceMxZ,1);
+    
+    for row = 1:dimOfFluenceMxZ
+        minInd(row) = find(t(row,:) > 0,1,'first');
+        maxInd(row) = find(t(row,:) > 0,1,'last');
+    end
+    
+    tpad = padarray(t,[0 1],0,'both');
+    %dtdx = grad(t)./stf(i).bixelWidth;
+    
+    dtdx = diff(tpad,1,2)./stf(i).bixelWidth;
     dtdx_pos = dtdx;
     dtdx_neg = dtdx;
     dtdx_pos(dtdx_pos < 0) = 0;
     dtdx_neg(dtdx_neg >= 0) = 0;
     
-    tL = zeros(size(t,1),size(t,2)+1);
-    tR = zeros(size(t,1),size(t,2)+1);
-    
-    tMin = zeros(size(t,1),1);
-    tGrad = zeros(size(t,1),1);
+    tL = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+    tR = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
     
     %first, find longest trajectory time
+    tMin = (maxInd-minInd+1)*stf(i).bixelWidth/pln.defaultLeafSpeed+stf(i).bixelWidth*sum(dtdx_pos,2);
+    tGrad = stf(i).bixelWidth*sum(dtdx_pos,2);
+    %{
     for row = 1:size(tL,1)
         tMin(row) = (size(tL,2)-1)*stf(i).bixelWidth/pln.defaultLeafSpeed+stf(i).bixelWidth*sum(dtdx_pos(row,1:(size(tL,2)-1)));
         tGrad(row) = stf(i).bixelWidth*sum(dtdx_pos(row,1:(size(tL,2)-1)));
     end
+    %}
     tMinMax = max(tMin);
     
-    maxLeafSpeed = (size(tL,2)-1)*stf(i).bixelWidth./(tMinMax-tGrad);
+    maxLeafSpeed = (maxInd-minInd+1)*stf(i).bixelWidth./(tMinMax-tGrad);
     
-    for row = 1:size(tL,1)
-        for col = 1:size(tL,2)
-            tL(row,col) = (col-1)*stf(i).bixelWidth/maxLeafSpeed(row)+stf(i).bixelWidth*sum(dtdx_pos(row,1:(col-1)));
-            tR(row,col) = (col-1)*stf(i).bixelWidth/maxLeafSpeed(row)-stf(i).bixelWidth*sum(dtdx_neg(row,1:(col-1)));
+    for row = 1:dimOfFluenceMxZ
+        for col = 1:dimOfFluenceMxX
+            tL(row,col) = (col-minInd(row)+1)*stf(i).bixelWidth/maxLeafSpeed(row)+stf(i).bixelWidth*sum(dtdx_pos(row,1:col));
+            tR(row,col) = (col-minInd(row)+1)*stf(i).bixelWidth/maxLeafSpeed(row)-stf(i).bixelWidth*sum(dtdx_neg(row,1:col));
         end
     end
     
@@ -155,8 +168,8 @@ for i = 1:numOfBeams
     end
     %}
     
-    if numToKeep ~= 0 && ~pln.VMAT
-        k = numToKeep;
+    if ~pln.VMAT
+        k = pln.numApertures;
         shapes = zeros(dimOfFluenceMxZ,dimOfFluenceMxX,k);
         shapesWeight = zeros(k,1);
         
@@ -192,7 +205,7 @@ for i = 1:numOfBeams
         
         offset = offset + numOfRaysPerBeam;
         
-    elseif pln.VMAT
+    elseif pln.VMAT && pln.dynamic
         %Divide segments into n sectors, sample leaf trajectory at n points
         %to get left and right leaf positions.  Spread apertures to
         %children of the initialized beam angle.  Make assumption that
@@ -201,39 +214,59 @@ for i = 1:numOfBeams
         
         sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
         
+        angleInit_I = stf(i).initAngleBorders(1);
+        angleInit_F = stf(i).initAngleBorders(2);
+        totAngleInit = stf(i).initAngleBordersDiff;
         numSectors = stf(i).numOfBeamChildren;
-        childrenAngles = stf(i).beamChildrenGantryAngles;
         childrenIndex = stf(i).beamChildrenIndex;
-        borderAngles = stf(i).borderAngles;
         
-        angleStep = diff(childrenAngles);
-        angleStep = padarray(angleStep,[1,0],angleStep(end),'pre');
-        tStep = tMinMax*angleStep/sum(angleStep);
-        tSample = cumsum(tStep)-tStep/2;
+        leafDir = -1*leafDir; % =1 (-1) for even (odd) init gantry angles
+        xPos = unique(X');
+        if leafDir == -1
+            tL = tMinMax-tL;
+            tR = tMinMax-tR;
+        end
         
-        sector = 1;
-        inversion = -1*inversion; % =1 (-1) for even (odd) init gantry angles
-        sector0 = (inversion*(1-numSectors)+(1+numSectors))/2; % =1 (k) for even (odd) init gantry angles
-        sector1 = numSectors+1-sector0;% =k (1) for even (odd) init gantry angles
-        
-        for segment = sector0:inversion:sector1 % = 1-to-k in forward (reverse) order for even (odd) values of i
-            shape = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+        for segment = 1:numSectors
+            childIndex = childrenIndex(segment);
+            
+            angleSample_I = stf(childIndex).doseAngleBorders(1);
+            angleSample_F = stf(childIndex).doseAngleBorders(2);
+            angleSample = stf(childIndex).gantryAngle;
+            
+            tSample_I = (angleSample_I-angleInit_I)*tMinMax./totAngleInit;
+            tSample_F = (angleSample_F-angleInit_I)*tMinMax./totAngleInit;
+            tSample = (angleSample-angleInit_I)*tMinMax./totAngleInit;
+            
+            xL_I = zeros(size(tL,1),1);
+            xR_I = zeros(size(tL,1),1);
+            xL_F = zeros(size(tL,1),1);
+            xR_F = zeros(size(tL,1),1);
+            xL = zeros(size(tL,1),1);
+            xR = zeros(size(tL,1),1);
             
             for row = 1:size(tL,1)
-                xL = round(interp1(tL(row,:),(1:size(tL,2)),tSample(segment),'linear','extrap'));
-                xR = round(interp1(tR(row,:),(1:size(tL,2))-1,tSample(segment),'linear','extrap'));
+                xL_I(row) = interp1(tL(row,:),xPos,tSample_I,'linear','extrap');
+                xR_I(row) = interp1(tR(row,:),xPos,tSample_I,'linear','extrap');
                 
-                xL = min(xL,size(tL,2));
-                xR = min(xR,size(tL,2)-1);
+                xL_F(row) = interp1(tL(row,:),xPos,tSample_F,'linear','extrap');
+                xR_F(row) = interp1(tR(row,:),xPos,tSample_F,'linear','extrap');
                 
-                shape(row,xL:xR) = 1;
+                xL(row) = interp1(tL(row,:),xPos,tSample,'linear','extrap');
+                xR(row) = interp1(tR(row,:),xPos,tSample,'linear','extrap');
             end
-            shapeWeight = (pln.defaultDoseRate/dij.weightToMU)*tStep(segment);
+            shapeWeight = (pln.defaultDoseRate/dij.weightToMU)*(tSample_F-tSample_I);
             
-            childIndex = childrenIndex(sector);
+            sequencing.beam(childIndex).shape(1).leftLeafPos_I = xL_I;
+            sequencing.beam(childIndex).shape(1).rightLeafPos_I = xR_I;
+            sequencing.beam(childIndex).shape(1).leftLeafPos_F = xL_F;
+            sequencing.beam(childIndex).shape(1).rightLeafPos_F = xR_F;
+            sequencing.beam(childIndex).shape(1).leftLeafPos = xL;
+            sequencing.beam(childIndex).shape(1).rightLeafPos = xR;
             
             sequencing.beam(childIndex).numOfShapes = 1;
-            sequencing.beam(childIndex).shapes = shape;
+            sequencing.beam(childIndex).leafDir = leafDir;
+            
             sequencing.beam(childIndex).shapesWeight = shapeWeight;
             
             big = max([i-1 childIndex-1]);
@@ -241,11 +274,6 @@ for i = 1:numOfBeams
             numOfRaysBN = sum([stf(small:big).numOfRays]); %num of rays between current beam and child
             inv = (childIndex-i)./(big-small+1); % = 1 (-1) if childIndex is bigger (smaller) than i
             sequencing.beam(childIndex).bixelIx = sequencing.beam(i).bixelIx+inv*numOfRaysBN;
-            
-            sequencing.beam(childIndex).fluence = shape;
-            sequencing.beam(childIndex).sum = shapeWeight*shape;
-            
-            sector = sector+1;
         end
         
         offset = offset + numOfRaysPerBeam;
@@ -257,47 +285,39 @@ if pln.VMAT
     optGantryAngles = [stf([stf.optimizeBeam]).gantryAngle];
     
     for i = 1:numel(optGantryAngles)
-        currInd = find(gantryAngles==optGantryAngles(i));
+        optInd = find(gantryAngles==optGantryAngles(i));
         
-        if stf(currInd).initializeBeam
-            
-            for j = 1:stf(currInd).numOfBeamSubChildren
+        if stf(optInd).initializeBeam
+            for j = 1:stf(optInd).numOfBeamSubChildren
                 %Prevents matRad_sequencing2ApertureInfo from attempting to
                 %convert shape to aperturevec for subchildren
-                sequencing.beam(stf(currInd).beamSubChildrenIndex(j)).numOfShapes = 0;
+                sequencing.beam(stf(optInd).beamSubChildrenIndex(j)).numOfShapes = 0;
             end
         end
         
-        if i ~= numel(optGantryAngles)
-            sequencing.beam(currInd).gantryRot = pln.defaultGantryRot; %gantry rotation rate until next opt angle
-            nextInd = find(gantryAngles==optGantryAngles(i+1));
-            sequencing.beam(currInd).MURate = dij.weightToMU.*sequencing.beam(currInd).shapesWeight.*sequencing.beam(currInd).gantryRot./(stf(nextInd).gantryAngle-stf(currInd).gantryAngle); %dose rate until next opt angle
-            %Rescale weight to represent only this beam; assume piecewise
-            %linear doserate
-            sequencing.beam(currInd).shapesWeight = sequencing.beam(currInd).shapesWeight.*((stf(currInd+1).gantryAngle-stf(currInd).gantryAngle)./(stf(nextInd).gantryAngle-stf(currInd).gantryAngle));
-        else
-            sequencing.beam(currInd).gantryRot = pln.defaultGantryRot; %gantry rotation rate until next opt angle
-            prevInd = find(gantryAngles==optGantryAngles(i-1));
-            sequencing.beam(currInd).MURate = dij.weightToMU.*sequencing.beam(currInd).shapesWeight.*sequencing.beam(currInd).gantryRot./(stf(currInd).gantryAngle-stf(prevInd).gantryAngle); %dose rate until next opt angle
-            %Rescale weight to represent only this beam; assume piecewise
-            %linear doserate
-            if currInd+1 <= numel(gantryAngles)
-                sequencing.beam(currInd).shapesWeight = sequencing.beam(currInd).shapesWeight.*((stf(currInd+1).gantryAngle-stf(currInd).gantryAngle)./(stf(currInd).gantryAngle-stf(prevInd).gantryAngle));
-            else
-                sequencing.beam(currInd).shapesWeight = sequencing.beam(currInd).shapesWeight.*((stf(currInd).gantryAngle-stf(currInd-1).gantryAngle)./(stf(currInd).gantryAngle-stf(prevInd).gantryAngle));
-            end
-        end
+        sequencing.beam(optInd).gantryRot = pln.defaultGantryRot; %gantry rotation rate until next opt angle
+        sequencing.beam(optInd).MURate = dij.weightToMU.*sequencing.beam(optInd).shapesWeight.*sequencing.beam(optInd).gantryRot./diff(stf(optInd).optAngleBorders); %dose rate until next opt angle
+        %Rescale weight to represent only this control point; weight will be shared
+        %with the interpolared control points in matRad_daoVec2ApertureInfo
+        sequencing.beam(optInd).shapesWeight = sequencing.beam(optInd).shapesWeight.*stf(optInd).timeFacCurr;
         
     end
     
     %Calculate w using matRad functions
     sequencing.weightToMU = dij.weightToMU;
-    resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf,pln.VMAT);
+    sequencing.jacobi = pln.jacobi;
+    resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
     
     
     %matRad_daoVec2ApertureInfo will interpolate subchildren gantry
     %segments
-    resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector,1);
+    resultGUI.apertureInfo.updateJacobi = true;
+    if pln.dynamic
+        resultGUI.apertureInfo = matRad_daoVec2ApertureInfo_VMATdynamic(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
+    else
+        resultGUI.apertureInfo = matRad_daoVec2ApertureInfo_VMATstatic(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
+    end
+    resultGUI.apertureInfo.updateJacobi = false;
     
     % LEAF TRAVEL / DEGREE
     
@@ -306,6 +326,7 @@ if pln.VMAT
     
     %optimize delivery
     resultGUI = matRad_optDelivery(resultGUI,pln,0);
+    resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
     
     sequencing.w = resultGUI.apertureInfo.bixelWeights;
     
@@ -327,8 +348,20 @@ if isfield(resultGUI,'wDao')
     resultGUI = rmfield(resultGUI,'wDao');
 end
 
+end
 
 
+function g = grad(f)
+% f is a m x n matrix
+% g is the gradient of f in the horizontal ([0 1]) direction
 
+fpad = padarray(f,[0 1],0,'both');
+g = zeros(size(fpad));
+
+for i = 2:(size(fpad,2)-2)
+    g(:,i) = (fpad(:,i+1)-fpad(:,i-1))/2;
+end
+g(:,1) = [];
+g(:,end) = [];
 
 end

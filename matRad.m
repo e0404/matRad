@@ -21,9 +21,9 @@ clc
 
 % load patient data, i.e. ct, voi, cst
 
-load HEAD_AND_NECK
+%load HEAD_AND_NECK
 %load TG119.mat
-%load PROSTATE.mat
+load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
 
@@ -51,7 +51,12 @@ pln.machine         = 'Generic';
 pln.runSequencing   = true;
 pln.runDAO          = true;
 pln.VMAT            = true;
+
+pln.scaleDRx        = true;
+pln.scaleDij        = true;
+pln.jacobi          = true;
 pln.dynamic         = true;
+
 
 pln.numApertures = 7; %max val is pln.maxApertureAngleSpread/pln.minGantryAngleRes
 pln.numLevels = 7;
@@ -116,12 +121,12 @@ if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
     %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
     %resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
     resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln,0);
-    %resultGUI = matRad_svenssonLeafSequencing(resultGUI,stf,dij,pln,5,0);
+    %resultGUI = matRad_svenssonLeafSequencing(resultGUI,stf,dij,pln,0);
 end
 
 %% DAO
 if strcmp(pln.radiationMode,'photons') && pln.runDAO
-   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln,1,1);
+   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
    %matRad_visApertureInfo(resultGUI.apertureInfo);
    
    recalc = matRad_doseRecalc(dij,cst,pln,recalc,ct,resultGUI.apertureInfo);

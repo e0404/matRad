@@ -33,9 +33,15 @@ function g = matRad_daoGradFunc_VMATdynamic(apertureInfoVec,apertureInfo,dij,cst
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% read in the global apertureInfo and apertureVector variables
+global matRad_global_apertureInfo;
+% update apertureInfo from the global variable
+apertureInfo = matRad_global_apertureInfo;
+
 % update apertureInfo, bixel weight vector an mapping of leafes to bixels
 if ~isequal(apertureInfoVec,apertureInfo.apertureVector)
     apertureInfo = daoVec2ApertureInfo(apertureInfo,apertureInfoVec);
+    matRad_global_apertureInfo = apertureInfo;
 end
 
 % bixel based gradient calculation

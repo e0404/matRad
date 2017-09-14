@@ -35,8 +35,19 @@ function jacob = matRad_jacobFuncWrapper(w,dij,cst,options)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,options);
+% read in global dose and bixel variables
+global matRad_global_x;
+global matRad_global_d;
+
+if ~isequal(w,matRad_global_x)
+    % new bixel weights, update dose
+    % get current dose / effect / RBExDose vector
+    d = matRad_backProjection(w,dij,options);
+    matRad_global_d = d;
+else
+    % old bixel weights, use global dose
+    d = matRad_global_d;
+end
 
 % initialize jacobian
 jacob = sparse([]);

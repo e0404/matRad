@@ -34,9 +34,15 @@ function c = matRad_daoConstFunc_VMATdynamic(apertureInfoVec,apertureInfo,dij,cs
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% update apertureInfo if necessary
+% read in the global apertureInfo and apertureVector variables
+global matRad_global_apertureInfo;
+% update apertureInfo from the global variable
+apertureInfo = matRad_global_apertureInfo;
+
+% update apertureInfo, bixel weight vector an mapping of leafes to bixels
 if ~isequal(apertureInfoVec,apertureInfo.apertureVector)
     apertureInfo = daoVec2ApertureInfo(apertureInfo,apertureInfoVec);
+    matRad_global_apertureInfo = apertureInfo;
 end
 
 % value of constraints for leaves
@@ -64,7 +70,7 @@ c_lfspd = reshape(abs([leftLeafDiff rightLeafDiff])./ ...
     repmat(timeDoseBorderAngles',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeDoseBorderAngles),1);
 
 % values of doserate (MU/sec) in an arc surrounding the optimized angles
-weights = apertureInfoVec(1:apertureInfo.totalNumOfShapes);
+weights = apertureInfoVec(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale;
 c_dosrt = apertureInfo.weightToMU.*weights./timeDoseBorderAngles;
 
 % concatenate

@@ -1,4 +1,4 @@
-function g = matRad_daoGradFunc_VMATstatic(apertureInfoVec,apertureInfo,dij,cst,options,daoVec2ApertureInfo)
+function g = matRad_daoGradFunc_VMATstatic(apertureInfoVec,dij,cst,options,daoVec2ApertureInfo)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: gradient function for direct aperture optimization
 %
@@ -33,10 +33,18 @@ function g = matRad_daoGradFunc_VMATstatic(apertureInfoVec,apertureInfo,dij,cst,
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% read in the global apertureInfo and apertureVector variables
+global matRad_global_apertureInfo;
+% update apertureInfo from the global variable
+apertureInfo = matRad_global_apertureInfo;
+
 % update apertureInfo, bixel weight vector an mapping of leafes to bixels
 if ~isequal(apertureInfoVec,apertureInfo.apertureVector)
     apertureInfo = daoVec2ApertureInfo(apertureInfo,apertureInfoVec);
+    matRad_global_apertureInfo = apertureInfo;
 end
+
+
 
 % bixel based gradient calculation
 bixelG = matRad_gradFuncWrapper(apertureInfo.bixelWeights,dij,cst,options);
@@ -65,14 +73,14 @@ for i = 1:numel(apertureInfo.beam)
         %must always add to existing gradient, since gradient comes
         %from optimized and interpolated beams
         g(offset) = g(offset)+apertureInfo.beam(i).shape(1).shapeMap(ix)' ...
-            * bixelG(apertureInfo.beam(i).bixelIndMap(ix));
+            * bixelG(apertureInfo.beam(i).bixelIndMap(ix)) ./ apertureInfo.beam(i).shape(1).jacobiScale;
         
         
         %gradient wrt leaf positions
         indInOptVec = apertureInfo.beam(i).shape(1).vectorOffset-1+[(1:apertureInfo.beam(i).numOfActiveLeafPairs) apertureInfo.totalNumOfLeafPairs+(1:apertureInfo.beam(i).numOfActiveLeafPairs)];
         indInBixVec = apertureInfo.beam(i).bixOffset-1+[(1:apertureInfo.beam(i).numOfActiveLeafPairs) apertureInfo.doseTotalNumOfLeafPairs+(1:apertureInfo.beam(i).numOfActiveLeafPairs)];
         
-        g(indInOptVec) = g(indInOptVec)+apertureInfoVec(i)*bixelG(apertureInfo.bixelIndices(indInBixVec)) / apertureInfo.bixelWidth;
+        g(indInOptVec) = g(indInOptVec)+apertureInfo.beam(i).shape(1).weight*bixelG(apertureInfo.bixelIndices(indInBixVec)) / apertureInfo.bixelWidth;
         
         %increment offset
         offset = offset+1;
