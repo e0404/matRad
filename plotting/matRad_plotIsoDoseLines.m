@@ -22,7 +22,7 @@ function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContour
 %               you can use an empty array []
 %   window      optional argument defining the displayed range. default is
 %               [min(doseCube(:)) max(doseCube(:))]
-%   varargin    Additional MATLAB Line-Property/Value-Pairs etc.)
+%   varargin    Additional MATLAB Line-Property/Value-Pairs etc.
 %
 % output
 %   isoLineHandles: handle to the plotted isolines
