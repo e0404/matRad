@@ -168,7 +168,7 @@ stf = matRad_computeSSD(stf,ct);
 fprintf('matRad: Particle dose calculation...\n');
 counter = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for i = 1:dij.numOfBeams % loop over all beams
+for i = 1:length(stf) % loop over all beams
     
     fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
 
@@ -185,7 +185,7 @@ for i = 1:dij.numOfBeams % loop over all beams
     % transformation of the coordinate system need double transpose
 
     % rotation around Z axis (gantry)
-    rotMat_system_T = matRad_getRotationMatrix(pln.gantryAngles(i),pln.couchAngles(i));
+    rotMat_system_T = matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).couchAngle);
 
     % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
     rot_coordsV = coordsV*rotMat_system_T;

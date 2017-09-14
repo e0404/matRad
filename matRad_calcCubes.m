@@ -37,54 +37,72 @@ end
 resultGUI.w = w;
 
 % calc dose and reshape from 1D vector to 2D array
-resultGUI.physicalDose = reshape(full(dij.physicalDose{scenNum}*resultGUI.w),dij.dimensions);
+numOfBeams = max(unique(dij.beamNum));
+
+for i = 1:(numOfBeams + 1)
+    if i == (numOfBeams + 1)
+      beamInfo(i).suffix = '';
+      beamInfo(i).isCurrBeam = ones(size(dij.beamNum));
+    else
+      beamInfo(i).suffix = ['_', num2str(i)];
+      beamInfo(i).isCurrBeam = (dij.beamNum == i);      
+    end
+end
+
+for i = 1:length(beamInfo)
+    resultGUI.(['physicalDose', beamInfo(i).suffix]) = reshape(full(dij.physicalDose{scenNum} * (resultGUI.w .* beamInfo(i).isCurrBeam)),dij.dimensions);
+end
 
 % consider RBE for protons
 if isfield(dij,'RBE')
-   fprintf(['matRad: applying a constant RBE of ' num2str(dij.RBE) ' \n']); 
-   resultGUI.RBExDose     = resultGUI.physicalDose * dij.RBE;
+   fprintf(['matRad: applying a constant RBE of ' num2str(dij.RBE) ' \n']);
+   for i = 1:length(beamInfo)
+        resultGUI.(['RBExDose', beamInfo(i).suffix]) = resultGUI.(['physicalDose', beamInfo(i).suffix]) * dij.RBE;
+   end
 end
 
 % consider VOI priorities
 [cst,resultGUI.overlapCube]  = matRad_setOverlapPriorities(cst,dij.dimensions);
 
 if isfield(dij,'mLETDose')
-    LETDoseCube       = dij.mLETDose{scenNum} * resultGUI.w;
-    resultGUI.LET     = zeros(dij.dimensions);
-    ix                = resultGUI.physicalDose>0;
-    resultGUI.LET(ix) = LETDoseCube(ix)./resultGUI.physicalDose(ix);
-
+    for i = 1:length(beamInfo)
+        LETDoseCube                      = dij.mLETDose{scenNum} * (resultGUI.w .* beamInfo(i).isCurrBeam);
+        resultGUI.(['LET', beamInfo(i).suffix]) = zeros(dij.dimensions);
+        ix                               = resultGUI.(['physicalDose', beamInfo(i).suffix]) > 0;
+        resultGUI.(['LET', beamInfo(i).suffix])(ix) = LETDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix);
+    end
 end
 
 % consider biological optimization for carbon ions
 if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
+    for i = 1:length(beamInfo)
 
-    a_x = zeros(size(resultGUI.physicalDose));
-    b_x = zeros(size(resultGUI.physicalDose));
+    a_x = zeros(size(resultGUI.(['physicalDose', beamInfo(i).suffix])));
+    b_x = zeros(size(resultGUI.(['physicalDose', beamInfo(i).suffix])));
 
-    for i = 1:size(cst,1)
+    for j = 1:size(cst,1)
         % Only take OAR or target VOI.
-        if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') 
-            a_x(cst{i,4}{scenNum}) = cst{i,5}.alphaX;
-            b_x(cst{i,4}{scenNum}) = cst{i,5}.betaX;
+        if isequal(cst{j,3},'OAR') || isequal(cst{j,3},'TARGET') 
+            a_x(cst{j,4}{scenNum}) = cst{j,5}.alphaX;
+            b_x(cst{j,4}{scenNum}) = cst{j,5}.betaX;
         end
     end
     
-    ix = b_x~=0; 
+    ix = b_x~=0;
     
-    resultGUI.effect = full(dij.mAlphaDose{scenNum}*resultGUI.w+(dij.mSqrtBetaDose{scenNum}*resultGUI.w).^2);
-    resultGUI.effect = reshape(resultGUI.effect,dij.dimensions);
+    resultGUI.(['effect', beamInfo(i).suffix]) = full(dij.mAlphaDose{scenNum}*(resultGUI.w .* beamInfo(i).isCurrBeam)+(dij.mSqrtBetaDose{scenNum}*(resultGUI.w .* beamInfo(i).isCurrBeam)).^2);
+    resultGUI.(['effect', beamInfo(i).suffix]) = reshape(resultGUI.(['effect', beamInfo(i).suffix]),dij.dimensions);
     
-    resultGUI.RBExDose     = zeros(size(resultGUI.effect));
-    resultGUI.RBExDose(ix) = ((sqrt(a_x(ix).^2 + 4 .* b_x(ix) .* resultGUI.effect(ix)) - a_x(ix))./(2.*b_x(ix)));
+    resultGUI.(['RBExDose', beamInfo(i).suffix])     = zeros(size(resultGUI.(['effect', beamInfo(i).suffix])));
+    resultGUI.(['RBExDose', beamInfo(i).suffix])(ix) = ((sqrt(a_x(ix).^2 + 4 .* b_x(ix) .* resultGUI.(['effect', beamInfo(i).suffix])(ix)) - a_x(ix))./(2.*b_x(ix)));
                                  
-    resultGUI.RBE          = resultGUI.RBExDose./resultGUI.physicalDose;
+    resultGUI.(['RBE', beamInfo(i).suffix])          = resultGUI.(['RBExDose', beamInfo(i).suffix])./resultGUI.(['physicalDose', beamInfo(i).suffix]);
    
-    resultGUI.alpha     = zeros(size(resultGUI.effect));
-    resultGUI.beta      = zeros(size(resultGUI.effect));
-    AlphaDoseCube       = full(dij.mAlphaDose{scenNum} * resultGUI.w);
-    resultGUI.alpha(ix) = AlphaDoseCube(ix)./resultGUI.physicalDose(ix);
-    SqrtBetaDoseCube    = full(dij.mSqrtBetaDose{scenNum} * resultGUI.w);
-    resultGUI.beta(ix)  = (SqrtBetaDoseCube(ix)./resultGUI.physicalDose(ix)).^2;
-    
+    resultGUI.(['alpha', beamInfo(i).suffix])     = zeros(size(resultGUI.(['effect', beamInfo(i).suffix])));
+    resultGUI.(['beta', beamInfo(i).suffix])      = zeros(size(resultGUI.(['effect', beamInfo(i).suffix])));
+    AlphaDoseCube       = full(dij.mAlphaDose{scenNum} * (resultGUI.w .* beamInfo(i).isCurrBeam));
+    resultGUI.(['alpha', beamInfo(i).suffix])(ix) = AlphaDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix);
+    SqrtBetaDoseCube    = full(dij.mSqrtBetaDose{scenNum} * (resultGUI.w .* beamInfo(i).isCurrBeam));
+    resultGUI.(['beta', beamInfo(i).suffix])(ix)  = (SqrtBetaDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix)).^2;
+  end
 end
