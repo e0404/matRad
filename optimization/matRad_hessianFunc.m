@@ -50,7 +50,7 @@ if isequal(prescription.type, 'square underdosing')
     % underdose : Dose minus prefered dose
     underdose = d_i - d_ref;
 
-    % calculated Hessian
+    % calculate Hessian
     hessianMatrix = sparse(tril(2 * (dij.physicalDose{1}(structure(underdose<0),:)' * dij.physicalDose{1}(structure(underdose<0),:)) * prescription.penalty / numOfVoxels));
     
 elseif isequal(prescription.type, 'square overdosing')
@@ -58,17 +58,17 @@ elseif isequal(prescription.type, 'square overdosing')
     % overdose : Dose minus prefered dose
     overdose = d_i - d_ref;
 
-    % calculated Hessian
+    % calculate Hessian
     hessianMatrix = sparse(tril(2 * (dij.physicalDose{1}(structure(overdose>0),:)' * dij.physicalDose{1}(structure(overdose>0),:)) * prescription.penalty / numOfVoxels));
     
 elseif isequal(prescription.type, 'square deviation')
     
-    % calculated Hessian
+    % calculate Hessian
     hessianMatrix = sparse(tril(2 * (dij.physicalDose{1}(structure,:)' * dij.physicalDose{1}(structure,:)) * prescription.penalty / numOfVoxels));
 
 elseif isequal(prescription.type, 'mean')              
 
-    % calculated Hessian
+    % calculate Hessian
     hessianMatrix = sparse(zeros(dij.totalNumOfBixels));
     
 elseif isequal(prescription.type, 'EUD') 
@@ -94,18 +94,18 @@ elseif isequal(prescription.type, 'EUD')
     % get exponent for EUD
     exponent = prescription.EUD;
 
-    % calculate objective function and delta
-%     if sum(d_i.^exponent)>0
+    % calculate Hessian
+    if sum(d_i.^exponent)>0
+        
+        
         hessianDiag = prescription.penalty*nthroot(1/numOfVoxels,exponent) * ((1-exponent)*sum(d_i.^exponent)^(1/exponent-2)*d_i.^(2*(exponent-1)) + ...
             (exponent-1)*sum(d_i.^exponent)^(1/exponent-1)*d_i.^(exponent-2));
         
         hessianMatrix = sparse(tril(bsxfun(@times, dij.physicalDose{1}(structure,:)', hessianDiag') * dij.physicalDose{1}(structure,:)));
 
-%     else
-%         
-%         hessianMatrix = zeros(size(d_i));
-% 
-%     end
+    else        
+        hessianMatrix = sparse(zeros(dij.totalNumOfBixels));
+    end
 
 elseif isequal(prescription.type, 'max dose constraint')
     
