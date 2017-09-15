@@ -80,7 +80,7 @@ dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 % Allocate space for dij.physicalDose sparse matrix
 for CtScen = 1:pln.multScen.numOfCtScen
     for ShiftScen = 1:pln.multScen.numOfShiftScen
-        for RangeShiftScen = 1:pln.multScen.numOfRangeShift  
+        for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen 
             
             if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
                 dij.physicalDose{CtScen,ShiftScen,RangeShiftScen} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
@@ -97,7 +97,7 @@ else
     numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 end
 
-doseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShift);
+doseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
 
 % Only take voxels inside patient.
 if ~isempty(param.subIx) && param.calcDoseDirect
@@ -361,7 +361,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
 
 
               for CtScen = 1:pln.multScen.numOfCtScen
-                  for RangeShiftScen = 1:pln.multScen.numOfRangeShift  
+                  for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen  
 
                       if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
 
@@ -403,7 +403,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
               % sparse matrix dose.dij from the cell array
               if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
                   for CtScen = 1:pln.multScen.numOfCtScen
-                      for RangeShiftScen = 1:pln.multScen.numOfRangeShift
+                      for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen
 
                           if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
                               if param.calcDoseDirect

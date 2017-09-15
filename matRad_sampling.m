@@ -1,4 +1,4 @@
-function [mRealizations,stats, cstSamp, pln, nominalScenario]  = matRad_sampling(ct,stf,cst,pln,w,structSel, multScen, param)
+function [mRealizations, cstSamp, pln, nominalScenario]  = matRad_sampling(ct,stf,cst,pln,w,structSel, multScen, param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_randomSampling enables sampling multiple treatment scenarios
 % 
@@ -65,10 +65,6 @@ end
 
 
 matRad_dispToConsole(['Using ' num2str(pln.multScen.numOfScen) 'samples in total \n'],param,'info')
-
-stats       = cell(pln.numOfSamples,2);
-% since parfor does not allow different calling
-dvhTemp     = cell(pln.numOfSamples,1);
 
 V = [];
 % define voxels for sampling
@@ -178,9 +174,7 @@ if FlagParallToolBoxLicensed
    end
 
 else
-%% perform seriel sampling   
-  
-    stats = cell(pln.numOfSamples,1);
+%% perform seriel sampling     
     
     for i = 1:pln.numOfSamples
        

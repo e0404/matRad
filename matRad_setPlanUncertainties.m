@@ -39,10 +39,10 @@ if ~isfield(pln,'sampling')
    pln.sampling = false;
 end
 
-% define standard deviation of normal distribution - important for probabilistic treatment planning
+% define standard deviation of normal distribution - only relevant for probabilistic treatment planning
 multScen.rangeRelSD           = 3.5;               % given in [%]   
 multScen.rangeAbsSD           = 1;                 % given in [mm]   
-multScen.shiftSD              = [2 2 2];           % given in [mm]   
+multScen.shiftSD              = [3 3 3];           % given in [mm]   
 
 
  %% create multiple scenario struc

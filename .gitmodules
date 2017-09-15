@@ -1,6 +1,3 @@
-[submodule "submodules"]
-	path = submodules
-	url = https://github.com/matlab2tikz/matlab2tikz.git
 [submodule "submodules/matlab2tikz"]
 	path = submodules/matlab2tikz
 	url = https://github.com/matlab2tikz/matlab2tikz.git

@@ -9,7 +9,7 @@ classdef matRad_bioModel
    properties(SetAccess = private)
  
       radiationMode;     % radiation modality 
-      identifier;       % upper case short notation of the current model in combination with the quantity used for optimization (e.g. LEMIV_RBExD)
+      identifier;       % upper case short notation of the current model in combination with the quantity used for optimization (e.g. LEM_RBExD)
       bioOpt;           % boolean indicating biological optimization
       model;            % upper case short notation of the current model (e.g. LEM)
       quantityOpt;      % quantity used for optimizaiton
@@ -21,7 +21,7 @@ classdef matRad_bioModel
    
    
    properties(Constant = true)
-      AvailableModels                 = {'none','constRBE','MCN','WED','LEMIV'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
+      AvailableModels                 = {'none','constRBE','MCN','WED','LEM'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
       AvailableradiationModealities   = {'photons','protons','carbon'};
       AvailableQuantitiesForOpt       = {'physicalDose','effect','RBExD'};
       
@@ -155,31 +155,31 @@ classdef matRad_bioModel
                     this.quantityOpt        = 'physicalDose';
                     this.quantityVis        = 'physicalDose';
 
-               elseif isequal(this.identifier,'LEMIV_effect')  
+               elseif isequal(this.identifier,'LEM_effect')  
                        
                     this.bioOpt             = true;
-                    this.model              = 'LEMIV';
+                    this.model              = 'LEM';
                     this.description        = 'effect based optimization using radiosensitivity parameter of the Local Effect Model IV';
                     this.quantityOpt        = 'effect';
                     this.quantityVis        = 'RBExD';
 
-                elseif isequal(this.identifier,'LEMIV_RBExD') 
+                elseif isequal(this.identifier,'LEM_RBExD') 
                    
                     this.bioOpt             = true;
-                    this.model              = 'LEMIV';
+                    this.model              = 'LEM';
                     this.description        = 'RBExD based optimization using radiosensitivity parameter of the Local Effect Model IV';
                     this.quantityOpt        = 'RBExD';
                     this.quantityVis        = 'RBExD';
 
                else
                     % issue warning if biological optimization not possible and use back up solution
-                    warning(['matRad: Invalid biological optimization: ' this.identifier ' for ' this.radiationMode '; using LEMIV_RBExD optimization instead'])
+                    warning(['matRad: Invalid biological optimization: ' this.identifier ' for ' this.radiationMode '; using LEM_RBExD optimization instead'])
                     this.bioOpt             = true;
-                    this.model              = 'LEMIV';
+                    this.model              = 'LEM';
                     this.description        = 'RBExD based optimization using radiosensitivity parameter of the Local Effect Model IV';
                     this.quantityOpt        = 'RBExD';
                     this.quantityVis        = 'RBExD';
-                    this.identifier         = 'LEMIV_RBExD';
+                    this.identifier         = 'LEM_RBExD';
                end
                
                  
@@ -201,7 +201,7 @@ classdef matRad_bioModel
       % default constructor
       function this = matRad_bioModel(sRadiationMode,sIdentifier)
          this.radiationMode = sRadiationMode;
-         this.identifier    = sIdentifier;       % setter checks for valid strings but not for valid combinations (e.g. photons_LEMIV
+         this.identifier    = sIdentifier;       % setter checks for valid strings but not for valid combinations (e.g. photons_LEM
          this               = setBioModel(this);      
       end % end constructor
       
@@ -337,7 +337,7 @@ classdef matRad_bioModel
                bixelAlpha = RBEmax    .* vAlpha_x;
                bixelBeta  = RBEmin.^2 .* vBeta_x;
                
-            case {'carbon_LEMIV'}
+            case {'carbon_LEM'}
 
                numOfTissueClass = size(baseDataEntry(1).alpha,2);
 

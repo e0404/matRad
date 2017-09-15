@@ -360,8 +360,12 @@ try
         cst = setCstTable(handles,cst);
         handles.State = 1;
         % check if contours are precomputed
-        if isempty([cst{:,7}])
+        if size(cst,1)<7 
             cst = matRad_computeVoiContours(ct,cst);
+        else 
+             if isempty([cst{:,7}])
+                 cst = matRad_computeVoiContours(ct,cst);
+             end
         end
         assignin('base','cst',cst);
 
