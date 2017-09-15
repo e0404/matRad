@@ -60,7 +60,7 @@ try
         warndlg(warnText,'Could not load HLUT');
         warning('matRad default HLUT loaded');
         % load default HLUT
-        hlutFileName = strcat(hlutDir,'matRad_default.hlut');
+        hlutFileName = strcat(hlutDir,'matRad_default_', particle, '.hlut');
     else
         hlutFileName = hlutFileCell{existIx};
     end
