@@ -44,6 +44,9 @@ if ~exist('calcDoseDirect','var')
     calcDoseDirect = false;
 end
 
+% calculate rED or rSP from HU
+ct = matRad_calcWaterEqD(ct, pln);
+
 % issue warning if biological optimization not possible
 if sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0
     warndlg('Effect based and RBE optimization not available for photons - physical optimization is carried out instead.');
