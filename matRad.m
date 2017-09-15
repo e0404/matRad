@@ -39,7 +39,7 @@ pln.radiationMode   = 'photons';             % either photons / protons / carbon
 pln.bioOptimization = 'none_physicalDose';   % none_physicalDose: physical optimization;                              constRBE_RBExD; constant RBE of 1.1;  
                                              % MCN_effect; McNamara-variable RBE model for protons (effect based)     MCN_RBExD; McNamara-variable RBE model for protons (RBExD) based
                                              % WED_effect; Wedenberg-variable RBE model for protons (effect based)    WED_RBExD; Wedenberg-variable RBE model for protons (RBExD) based
-                                             % LEMIV_effect: effect-based optimization;                               LEMIV_RBExD: optimization of RBE-weighted dose
+                                             % LEM_effect: effect-based optimization;                                 LEM_RBExD: optimization of RBE-weighted dose
 
 pln.numOfFractions  = 30;
 pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
