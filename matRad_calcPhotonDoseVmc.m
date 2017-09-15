@@ -30,7 +30,7 @@ end
 
 % set output level. 0 = no vmc specific output. 1 = print to matlab cmd.
 % 2 = open in terminal(s)
-verbose = 0;
+verbose = 1;
 
 if ~isdeployed % only if _not_ running as standalone    
     % add path for optimization functions
@@ -119,7 +119,7 @@ absCalibrationFactorVmc = 99.818252282632300;
 % 1 source
 VmcOptions.beamletSource.myName       = 'source 1';                        % name of source
 VmcOptions.beamletSource.monitorUnits = 1;                                 
-VmcOptions.beamletSource.spectrum     = ['.' filesep 'spectra' filesep 'var_6MV.spectrum'];    % energy spectrum source (only used if no mono-Energy given)
+VmcOptions.beamletSource.spectrum     = ['./spectra/var_6MV.spectrum'];    % energy spectrum source (only used if no mono-Energy given)
 VmcOptions.beamletSource.charge       = 0;                                 % charge (-1,0,1)
 % 2 transport parameter
 VmcOptions.McParameter.automatic_parameter = 'yes';                        % if yes, automatic transport parameters are used
@@ -137,7 +137,7 @@ VmcOptions.quasi.skip      = 1;
 % 6 geometry
 VmcOptions.geometry.XyzGeometry.methodOfInput = 'CT-PHANTOM';              % input method ('CT-PHANTOM', 'individual', 'groups') 
 VmcOptions.geometry.XyzGeometry.Ct            = 'CT';                      % name of geometry
-VmcOptions.geometry.XyzGeometry.CtFile        = ['.' filesep 'phantoms' filesep 'matRad_CT.ct']; % path of density matrix (only needed if input method is 'CT-PHANTOM')
+VmcOptions.geometry.XyzGeometry.CtFile        = ['./phantoms/matRad_CT.ct']; % path of density matrix (only needed if input method is 'CT-PHANTOM')
 % 7 scoring manager
 VmcOptions.scoringOptions.startInGeometry               = 'CT';            % geometry in which partciles start their transport
 VmcOptions.scoringOptions.doseOptions.scoreInGeometries = 'CT';            % geometry in which dose is recorded
@@ -207,8 +207,8 @@ for i = 1:dij.numOfBeams; % loop over all beams
         beamSource  = beamSource([2,1,3]);
         
         % c) set vmc++ parameters
-        %VMC_options.beamletSource.monoEnergy                = stf(i).ray(j).energy;                 % photon energy
-        VmcOptions.beamletSource.monoEnergy                 = []                  ;                  % use photon spectrum
+        VmcOptions.beamletSource.monoEnergy                = stf(i).ray(j).energy;                 % photon energy
+        %VmcOptions.beamletSource.monoEnergy                 = []                  ;                  % use photon spectrum
         VmcOptions.beamletSource.beamletEdges               = [rayCorner1,rayCorner2,rayCorner3];    % counter-clockwise beamlet edges
         VmcOptions.beamletSource.virtualPointSourcePosition = beamSource;                            % virtual beam source position
         
