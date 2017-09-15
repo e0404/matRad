@@ -1,9 +1,9 @@
-function hlut = matRad_loadHLUT(ct)
+function hlut = matRad_loadHLUT(ct, pln)
   % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   % matRad function to load HLUT file based on the provided ct
   %
   % call
-  %   hlut = matRad_loadHLUT(ct)
+  %   hlut = matRad_loadHLUT(ct, pln)
   %
   % input
   %   ct: unprocessed dicom ct data 
@@ -37,9 +37,10 @@ try
     manufacturer = ct.dicomInfo.Manufacturer;
     model = ct.dicomInfo.ManufacturerModelName;
     convKernel = ct.dicomInfo.ConvolutionKernel;
+    particle = pln.radiationMode;
     
     hlutFileName = strcat(manufacturer, '-', model, '-ConvolutionKernel-',...
-        convKernel, '.hlut');
+        convKernel, '_', particle, '.hlut');
     
     % check whether fileNames used '-' or '_' instead of blanks
     hlutFileCell{1} = hlutFileName;

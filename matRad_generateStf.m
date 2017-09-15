@@ -31,7 +31,7 @@ function stf = matRad_generateStf(ct,cst,pln,visMode)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+ct = matRad_calcWaterEqD(ct, pln);
 
 fprintf('matRad: Generating stf struct... ');
 

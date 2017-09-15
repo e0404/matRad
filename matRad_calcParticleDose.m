@@ -40,6 +40,7 @@ if ~exist('calcDoseDirect','var')
     calcDoseDirect = false;
 end
 
+
 % initialize waitbar
 figureWait = waitbar(0,'calculate dose influence matrix for particles...');
 % prevent closure of waitbar and show busy state

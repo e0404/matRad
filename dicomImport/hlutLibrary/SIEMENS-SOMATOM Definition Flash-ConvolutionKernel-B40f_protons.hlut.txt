@@ -1,0 +1,16 @@
+# matRad DKFZ HU lookup table (Benjamin Ackermann?, SomatomDefinitionFlash)
+# 
+# First column:    Hounsfield values (typically -1000...+3000)
+# Second column:   Relative stopping power (typically 1.0 for water)
+-1025	0.000100000000000000
+-1000	0.00100000000000000
+-200	0.800000000000000
+-114	0.940000000000000
+-39	0.995000000000000
+0	1
+77	1.07500000000000
+196	1.11000000000000
+1540	1.70000000000000
+1974	1.77800000000000
+3096	2.07700000000000
+
