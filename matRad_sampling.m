@@ -57,6 +57,7 @@ end
 
 % save nonSampling pln for nominal scenario calculation
 plnNominal = pln;
+plnNominal.multScen.numOfRangeShiftScen = 1;
 if exist('multScen','var')
     pln = matRad_setPlanUncertainties(ct,pln, multScen, param);
 else

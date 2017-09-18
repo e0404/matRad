@@ -59,7 +59,7 @@ pln.robOpt = false;
 pln.sampling = true;
 
 %% perform calculation
-[mRealizations,stats, cst, pln, resultCubes,nominalScenario]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w,examineStructures, multScen, param);
+[mRealizations, cst, pln, nominalScenario]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w,examineStructures, multScen, param);
 
 %% perform analysis
 [structureStat, doseStat] = samplingAnalysis(ct,cst,pln.multScen.subIx,mRealizations,pln.multScen.scenProb);
@@ -77,7 +77,7 @@ param.outputPath = fullfile('report','data');
 copyfile(fullfile(matRadPath,'tools','samplingAnalysis','main_template.tex'),'report/main.tex');
 
 % generate actual latex report
-latexReport(ct, cst, pln, nominalScenario, structureStat, param);
+latexReport(ct, cst, pln, nominalScenario, structureStat, resultGUI, param);
 
 cd('report');
 executeLatex = 'xelatex -shell-escape main.tex';

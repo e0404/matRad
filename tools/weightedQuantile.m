@@ -29,9 +29,7 @@ function [wQ] = weightedQuantile(values, percentiles, weight, sortedB, extraPolB
   
   if extraPolB
       [x,ia] = unique(wQtemp);
-      %samplePoints = {x, single(1:size(V,1))};
-      %queryPoints = {single(percentiles), single(1:size(V,1))};
-      
+     
       V = values(ia);
       F = griddedInterpolant(x, V);
       wQ = F(percentiles);
@@ -40,9 +38,5 @@ function [wQ] = weightedQuantile(values, percentiles, weight, sortedB, extraPolB
   end
   
   wQ = wQ';
-  
-  % give the ranger of the most outer quantiles
-  %ix = NaN;
-  %ix = getRange(values, [wQ(wQ == min(wQ(:))), wQ(wQ == max(wQ(:)))]);
 
 end % eof

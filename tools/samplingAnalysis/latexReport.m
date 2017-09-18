@@ -1,4 +1,4 @@
-function latexReport(ct, cst, pln, nominalScenario, structureStat, param)
+function latexReport(ct, cst, pln, nominalScenario, structureStat, resultGUI, param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad uncertainty analysis report generaator function
 % 
@@ -43,6 +43,7 @@ function latexReport(ct, cst, pln, nominalScenario, structureStat, param)
 
     %% correct cst for unwanted characters
     for i = 1:size(cst,1)
+        % use only alphanumerical characters
         cst{i,2} = regexprep(cst{i,2},'[^a-zA-Z0-9]','-');
         if isempty(cst{i,4}{1})
             cst{i,5}.Visible = false;
@@ -93,6 +94,33 @@ function latexReport(ct, cst, pln, nominalScenario, structureStat, param)
     end
     fclose(fid);
     %% nominal plan
+    % add slice at iso
+    for plane=1:3
+        figure; ax = gca;
+        switch plane 
+            case 1
+                slice = round(pln.isoCenter(plane) / ct.resolution.x,0);
+            case 2
+                slice = round(pln.isoCenter(plane) / ct.resolution.y,0);
+            case 3
+                slice = round(pln.isoCenter(plane) / ct.resolution.z,0);
+        end
+        colors = colorcube(size(cst,1));
+        if isfield(resultGUI,'RBExDose')
+            doseCube = resultGUI.RBExDose;
+            colorMapLabel = 'physicalDose [Gy]';
+        else
+            doseCube = resultGUI.physicalDose;
+            colorMapLabel = 'RBExDose [Gy(RBE)]';
+        end
+        
+        matRad_plotSliceWrapper(ax,ct,cst,1,doseCube,plane,slice,[],[],colors,[],colorMapLabel);
+        drawnow();
+        cleanfigure();
+        matlab2tikz(fullfile(outputPath,['isoSlicePlane', num2str(plane), '.tex']), 'relativeDataPath', 'data', 'showInfo', false, 'width', '\figW')
+        close
+    end
+    
 
     % add dvh and qi table
     colors = jet(size(cst,1));
@@ -158,7 +186,7 @@ function latexReport(ct, cst, pln, nominalScenario, structureStat, param)
         line =  [line; '\newcommand{\ctScen}{true}'];
     end
 
-    if pln.multScen.numOfRangeShift <= 1
+    if pln.multScen.numOfRangeShiftScen <= 1
         line =  [line; '\newcommand{\rangeScen}{false}'];
         line =  [line; '\newcommand{\rangeRelSD}{', num2str(0), '}'];
         line =  [line; '\newcommand{\rangeAbsSD}{', num2str(0), '}'];
@@ -253,7 +281,7 @@ function latexReport(ct, cst, pln, nominalScenario, structureStat, param)
             hold off;
             cleanfigure();
             filename{i}.DVH = regexprep([cst{i,2},'_DVH.tex'], '\s+', '');
-            matlab2tikz(fullfile(outputPath,'structures',filename{i}.DVH),'showInfo', false, 'extraAxisOptions', 'reverse legend');
+            matlab2tikz(fullfile(outputPath,'structures',filename{i}.DVH),'showInfo', false, 'width', '\figW', 'extraAxisOptions', 'reverse legend');
             close
 
             % QI

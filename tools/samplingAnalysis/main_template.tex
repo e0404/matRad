@@ -49,18 +49,13 @@
 \usetikzlibrary{external}
 \tikzexternalize[prefix=data/figures/]
 
-% use this command to incldue a tikz graphics file from folder "tikz/", the temporary external file will be written to "tikz_ext/"
-% \newcommand{\includetikz}[1]{%
-%     \tikzsetnextfilename{tikz_ext/#1}%
-%     \input{tikz/#1.tikz}%
-% }
+\newlength\figW
+\setlength{\figW}{0.9\textwidth}
 
-\usepackage[babel,english=british]{csquotes} % cool quotes
-%\usepackage[backend=biber]{biblatex} % bibliogrpahy
-%\addbibresource{literature.bib}
+\usepackage[babel,english=british]{csquotes}
+
 
 \begin{document}
-% include dynamic from matlab
 \input{data/patientInformation.tex}
 
 \title{Uncertainty Sampling Report}
@@ -131,7 +126,27 @@ Assuming the uncertainties above to be distributed by a normally around 0 with s
 
 \newpage
 \section{Nominal Plan}
+\subsection{Slices at isoCentre}
+\begin{figure}[!b]
+  \centering
+  \input{data/isoSlicePlane1.tex}
+  \caption{CT and dose at isocentre. Coronal view.}
+\end{figure}
 
+\begin{figure}[p]
+  \centering
+  \input{data/isoSlicePlane2.tex}
+  \caption{CT and dose at isocentre. Saggital view.}
+\end{figure}
+
+\begin{figure}[p]
+  \centering
+  \input{data/isoSlicePlane3.tex}
+  \caption{CT and dose at isocentre. Axial view.}
+\end{figure}
+
+\newpage
+\subsection{DVH and Quality Indicator}
 \begin{center}
 \input{data/nominalDVH.tex}
 \end{center}

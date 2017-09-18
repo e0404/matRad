@@ -57,13 +57,13 @@ metric = vertcat({'mean';'min';'max';'std'},percentileNames{:});
 % create statstics where structure based results (QI and DVH) are available
 for i = 1:size(cst,1)
     structureStat(i).name = cst{i,2};
-    structureStat(i).dvh = cst{i,8};
-    structureStat(i).qi = cst{i,9};
+    structureStat(i).dvh = cst{i,9};
+    structureStat(i).qi = cst{i,10};
     structureStat(i).percentiles = percentiles;
     structureStat(i).metric = metric;
     
-    structureStat(i).dvhStat = calcDVHStat(cst{i,8},percentiles,w);
-    structureStat(i).qiStat = calcQiStat(cst{i,9},percentiles,w);
+    structureStat(i).dvhStat = calcDVHStat(cst{i,9},percentiles,w);
+    structureStat(i).qiStat = calcQiStat(cst{i,10},percentiles,w);
 end
 
 
