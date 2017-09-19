@@ -33,7 +33,7 @@ function latexReport(ct, cst, pln, nominalScenario, structureStat, resultGUI, pa
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if exist('param','var') && ~isempty(param)
-        outputPath = param.outputPath;
+        outputPath = param.reportPath;
     end
     %% create latex Report
     if ~exist('outputPath','var')
@@ -41,11 +41,12 @@ function latexReport(ct, cst, pln, nominalScenario, structureStat, resultGUI, pa
     end
     %outputPath = fullfile('tools','reportGeneration','latex','output');
 
-    %% correct cst for unwanted characters
+    %% correct cst for unwanted characters and disable commonly not wanted structures
+    notVisibleStructs = {'Beekleys', 'Beekley', 'CT-Referenzpunkt'};
     for i = 1:size(cst,1)
         % use only alphanumerical characters
         cst{i,2} = regexprep(cst{i,2},'[^a-zA-Z0-9]','-');
-        if isempty(cst{i,4}{1})
+        if isempty(cst{i,4}{1}) || (sum(strcmp(cst{i,2}, notVisibleStructs)) >= 1)
             cst{i,5}.Visible = false;
         end
     end
@@ -108,7 +109,7 @@ function latexReport(ct, cst, pln, nominalScenario, structureStat, resultGUI, pa
         colors = colorcube(size(cst,1));
         if isfield(resultGUI,'RBExDose')
             doseCube = resultGUI.RBExDose;
-            colorMapLabel = 'physicalDose [Gy]';
+            colorMapLabel = 'physical Dose [Gy]';
         else
             doseCube = resultGUI.physicalDose;
             colorMapLabel = 'RBExDose [Gy(RBE)]';
@@ -140,7 +141,7 @@ function latexReport(ct, cst, pln, nominalScenario, structureStat, resultGUI, pa
         end
     end
     drawnow;
-    matlab2tikz(fullfile(outputPath,'nominalDVH.tex'),'showInfo', false);
+    matlab2tikz(fullfile(outputPath,'nominalDVH.tex'),'showInfo', false, 'width', '0.7\textwidth');
     hold off
     close
 
@@ -159,11 +160,10 @@ function latexReport(ct, cst, pln, nominalScenario, structureStat, resultGUI, pa
     nomQiTable = struct2table(nomQi);
     nomQiTable.Properties.RowNames = structName;
     input.data = nomQiTable(:,1:8);
-    input.format = {'%.2f'};
-    input.tablePlacement = '!bht';
+    input.dataFormat = {'%.2f'};
+    input.booktabs = 1;
     input.tableBorders = 0;
-    input.tableCaption = 'Nominal Plan - Quality Indicators.';
-    input.tableLabel = 'nomDVH';
+    input.tableEnvironment = 0;
 
     latex = latexTable(input);
 
@@ -281,17 +281,17 @@ function latexReport(ct, cst, pln, nominalScenario, structureStat, resultGUI, pa
             hold off;
             cleanfigure();
             filename{i}.DVH = regexprep([cst{i,2},'_DVH.tex'], '\s+', '');
-            matlab2tikz(fullfile(outputPath,'structures',filename{i}.DVH),'showInfo', false, 'width', '\figW', 'extraAxisOptions', 'reverse legend');
+            matlab2tikz(fullfile(outputPath,'structures',filename{i}.DVH),'showInfo', false, 'width', '\figW', 'height', '\figH', 'extraAxisOptions', 'reverse legend');
             close
 
             % QI
             qiTable = structureStat(i).qiStat;
             input.data = qiTable(:,1:8);
-            input.format = {'%.2f'};
-            input.tablePlacement = '!bht';
+            input.dataFormat = {'%.2f'};
             input.tableBorders = 0;
-            input.tableCaption = 'Scenario Analysis. Quality Indicators are shown horicontally, metrics of scenario analysis vertically.';
-            input.tableLabel = ['scen-', cst{i,2}];
+            input.booktabs = 1;
+            input.tableEnvironment = 0;
+            input.tableRowLabel = ['scen-', cst{i,2}];
 
             latex = latexTable(input);
 

@@ -73,7 +73,7 @@ save(filename);
 cd(param.outputPath)
 mkdir(fullfile('report','data'));
 mkdir(fullfile('report','data','figures'));
-param.outputPath = fullfile('report','data');
+param.reportPath = fullfile('report','data');
 copyfile(fullfile(matRadPath,'tools','samplingAnalysis','main_template.tex'),'report/main.tex');
 
 % generate actual latex report

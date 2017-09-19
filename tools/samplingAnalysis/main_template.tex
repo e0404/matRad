@@ -42,6 +42,7 @@
 \usepgfplotslibrary{patchplots}
 \usepackage{grffile}
 \usepackage{amsmath}
+\usepackage{booktabs}
 %\usepackage{float}
 \usepackage{footnote}
 \makesavenoteenv{figure}
@@ -51,6 +52,8 @@
 
 \newlength\figW
 \setlength{\figW}{0.9\textwidth}
+\newlength\figH
+\setlength{\figH}{0.56\textwidth} % 0.9 / golden ratio
 
 \usepackage[babel,english=british]{csquotes}
 
@@ -122,9 +125,15 @@ Assuming the uncertainties above to be distributed by a normally around 0 with s
     $\sigma_{absRange} $ & \rangeAbsSD \ mm \\
   \end{tabular}
 \end{table}
-\FloatBarrier
 
+\subsection{Explenatory Information}
+In section \ref{sec:usa} common quality indictors are used to examine their behaviour under the influence of uncertainties. 
+The quality indicator can also be found in the table (top row, column-wise).
+Metrics applied on an individual quality indicator due to the scenarios can be found in the first column (row-wise).
+
+\FloatBarrier
 \newpage
+
 \section{Nominal Plan}
 \subsection{Slices at isoCentre}
 \begin{figure}[!b]
@@ -155,6 +164,7 @@ Assuming the uncertainties above to be distributed by a normally around 0 with s
 \FloatBarrier
 \newpage
 \section{Uncertainty Scenario Analysis}
+\label{sec:usa}
 
 \input{data/structureWrapper.tex}
 
