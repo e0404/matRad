@@ -170,7 +170,7 @@ counter = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:length(stf) % loop over all beams
     
-    fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
+    fprintf(['Beam ' num2str(i) ' of ' num2str(length(stf)) ': \n']);
 
     bixelsPerBeam = 0;
     

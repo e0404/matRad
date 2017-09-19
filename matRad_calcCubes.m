@@ -37,20 +37,21 @@ end
 resultGUI.w = w;
 
 % calc dose and reshape from 1D vector to 2D array
-numOfBeams = max(unique(dij.beamNum));
+numOfBeams = dij.numOfBeams;
 
+% get bixel - beam correspondence  
 for i = 1:(numOfBeams + 1)
     if i == (numOfBeams + 1)
       beamInfo(i).suffix = '';
-      beamInfo(i).isCurrBeam = ones(size(dij.beamNum));
+      beamInfo(i).logIx  = true(size(dij.beamNum));
     else
-      beamInfo(i).suffix = ['Beam', num2str(i)];
-      beamInfo(i).isCurrBeam = (dij.beamNum == i);      
+      beamInfo(i).suffix = ['_beam', num2str(i)];
+      beamInfo(i).logIx  = (dij.beamNum == i);      
     end
 end
 
 for i = 1:length(beamInfo)
-    resultGUI.(['physicalDose', beamInfo(i).suffix]) = reshape(full(dij.physicalDose{scenNum} * (resultGUI.w .* beamInfo(i).isCurrBeam)),dij.dimensions);
+    resultGUI.(['physicalDose', beamInfo(i).suffix]) = reshape(full(dij.physicalDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.dimensions);
 end
 
 % consider RBE for protons
@@ -66,19 +67,19 @@ end
 
 if isfield(dij,'mLETDose')
     for i = 1:length(beamInfo)
-        LETDoseCube                      = dij.mLETDose{scenNum} * (resultGUI.w .* beamInfo(i).isCurrBeam);
-        resultGUI.(['LET', beamInfo(i).suffix]) = zeros(dij.dimensions);
-        ix                               = resultGUI.(['physicalDose', beamInfo(i).suffix]) > 0;
+        LETDoseCube                                 = dij.mLETDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx);
+        resultGUI.(['LET', beamInfo(i).suffix])     = zeros(dij.dimensions);
+        ix                                          = resultGUI.(['physicalDose', beamInfo(i).suffix]) > 0;
         resultGUI.(['LET', beamInfo(i).suffix])(ix) = LETDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix);
     end
 end
 
+
 % consider biological optimization for carbon ions
 if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
-    for i = 1:length(beamInfo)
-
-    a_x = zeros(size(resultGUI.(['physicalDose', beamInfo(i).suffix])));
-    b_x = zeros(size(resultGUI.(['physicalDose', beamInfo(i).suffix])));
+   
+    a_x = zeros(dij.dimensions);
+    b_x = zeros(dij.dimensions);
 
     for j = 1:size(cst,1)
         % Only take OAR or target VOI.
@@ -87,22 +88,34 @@ if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
             b_x(cst{j,4}{scenNum}) = cst{j,5}.betaX;
         end
     end
-    
+
     ix = b_x~=0;
+
+    for i = 1:length(beamInfo)  
+       resultGUI.(['effect', beamInfo(i).suffix])       = full(dij.mAlphaDose{scenNum}    * (resultGUI.w .* beamInfo(i).logIx) + ...
+                                                              (dij.mSqrtBetaDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx)).^2);
+       resultGUI.(['effect', beamInfo(i).suffix])       = reshape(resultGUI.(['effect', beamInfo(i).suffix]),dij.dimensions);
     
-    resultGUI.(['effect', beamInfo(i).suffix]) = full(dij.mAlphaDose{scenNum}*(resultGUI.w .* beamInfo(i).isCurrBeam)+(dij.mSqrtBetaDose{scenNum}*(resultGUI.w .* beamInfo(i).isCurrBeam)).^2);
-    resultGUI.(['effect', beamInfo(i).suffix]) = reshape(resultGUI.(['effect', beamInfo(i).suffix]),dij.dimensions);
-    
-    resultGUI.(['RBExDose', beamInfo(i).suffix])     = zeros(size(resultGUI.(['effect', beamInfo(i).suffix])));
-    resultGUI.(['RBExDose', beamInfo(i).suffix])(ix) = ((sqrt(a_x(ix).^2 + 4 .* b_x(ix) .* resultGUI.(['effect', beamInfo(i).suffix])(ix)) - a_x(ix))./(2.*b_x(ix)));
-                                 
-    resultGUI.(['RBE', beamInfo(i).suffix])          = resultGUI.(['RBExDose', beamInfo(i).suffix])./resultGUI.(['physicalDose', beamInfo(i).suffix]);
-   
-    resultGUI.(['alpha', beamInfo(i).suffix])     = zeros(size(resultGUI.(['effect', beamInfo(i).suffix])));
-    resultGUI.(['beta', beamInfo(i).suffix])      = zeros(size(resultGUI.(['effect', beamInfo(i).suffix])));
-    AlphaDoseCube       = full(dij.mAlphaDose{scenNum} * (resultGUI.w .* beamInfo(i).isCurrBeam));
-    resultGUI.(['alpha', beamInfo(i).suffix])(ix) = AlphaDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix);
-    SqrtBetaDoseCube    = full(dij.mSqrtBetaDose{scenNum} * (resultGUI.w .* beamInfo(i).isCurrBeam));
-    resultGUI.(['beta', beamInfo(i).suffix])(ix)  = (SqrtBetaDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix)).^2;
-  end
+       resultGUI.(['RBExDose', beamInfo(i).suffix])     = zeros(size(resultGUI.(['effect', beamInfo(i).suffix])));
+       resultGUI.(['RBExDose', beamInfo(i).suffix])(ix) = ((sqrt(a_x(ix).^2 + 4 .* b_x(ix) .* resultGUI.(['effect', beamInfo(i).suffix])(ix)) - a_x(ix))./(2.*b_x(ix)));
+
+       resultGUI.(['RBE', beamInfo(i).suffix])          = resultGUI.(['RBExDose', beamInfo(i).suffix])./resultGUI.(['physicalDose', beamInfo(i).suffix]);
+
+       resultGUI.(['alpha', beamInfo(i).suffix])        = zeros(dij.dimensions);
+       resultGUI.(['beta',  beamInfo(i).suffix])        = zeros(dij.dimensions);
+
+       AlphaDoseCube                                    = full(dij.mAlphaDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx));
+       resultGUI.(['alpha', beamInfo(i).suffix])(ix)    = AlphaDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix);
+
+       SqrtBetaDoseCube                                 = full(dij.mSqrtBetaDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx));
+       resultGUI.(['beta', beamInfo(i).suffix])(ix)     = (SqrtBetaDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix)).^2;
+    end
 end
+
+% group similar fields together
+resultGUI = orderfields(resultGUI);
+
+end
+
+
+
