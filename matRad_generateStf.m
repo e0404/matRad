@@ -291,9 +291,15 @@ for i = 1:length(pln.gantryAngles)
         maxPeakPos  = machine.data(maxEnergy == availableEnergies).peakPos;
         
         % find set of energyies with adequate spacing
-        longitudialSpotSpacing = 3;
+        
+        if strcmp(machine.meta.machine,'Generic')
+            longitudialSpotSpacing = 1.5; % enforce all entries to be used
+        else
+            longitudialSpotSpacing = 3;   % default value for all other treatment machines
+        end
+        
         tolerance              = longitudialSpotSpacing/10;
-        availablePeakPos = [machine.data.peakPos];
+        availablePeakPos       = [machine.data.peakPos];
         
         useEnergyBool = availablePeakPos >= minPeakPos & availablePeakPos <= maxPeakPos;
         
