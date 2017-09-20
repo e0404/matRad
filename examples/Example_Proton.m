@@ -1,142 +1,160 @@
-%% Example Proton Treatment Plan with Isocenter shift
-% In this example we will show how to load some patient data on matrad and
-% how to setup a simulation directly from command window in MatLab.
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad proton code script
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Import
-% Let's begin importing examples ct and cst files in our workspace and 
-% adding the path of the main folder.
-addpath('..\')
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2017 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% Example Proton Treatment Plan with subsequent Isocenter shift
+% In this example we will show how to load patient data into matRad and
+% how to setup a proton dose calculation and inverse optimization directly 
+% from command window in MatLab. Next, we simulate a lateral patient
+% displacement by shifting the iso-center and perform forward dose
+% calculation utilizting the previously optimized pencil beam intensities
+
+%% Patient Data Import
+% Let's begin with a clear Matlab environment. Next, import the protstate
+% case into your workspace. The patient is comprised of a 'ct' and 'cst' structure defining 
+% the CT images and the structure set. Make sure the matRad root directy with all its
+% subdirectories is added to the Matlab search path.
+clc,clear,close all
 load('PROSTATE.mat');
 
 %%
-
-% We can check if we have all the information we need, calling the two
-% imported files. 'ct' is a very simple structure containing just: the ct
-% cube; its dimension; its resolution; and the number of scenes (usefull if
-% we want to plan on a 4D ct).
+% Let's check the two variables, we have just imported. 'ct' comprises the ct cube 
+% along with some meta information describing the ct cube (cube dimensions, resolution, number of CT scenarios (usefull if
+% we want to plan on a 4D ct)
 ct
 
 %%
-% In 'cst' file we have the data of the different areas inside the ct.
-% Apart from index, name and classification, we have the indeces
-% representing the volume of that specific area in a cell in the fouth
-% column.
+% The 'cst' cell array defines volumes of interest/structures. Each row belongs to one certain VOI, whereas each column holds
+% a different information. Specifically, the second and third column show the name and the type of the structure. The fourth column depicts a linear 
+% index vector depicting voxels in the CT cube that are covered by the VOI. In total, 17 structures are defined in the cst
 cst
-%%
-% Fifth column represents meta parameters or tissue information. and
-% options for tissue visualization.
-cst{1,5}
 
 %%
-% Sixth column contains optimization information.
-cst{1,6}
+% The fifth column represents meta parameters used for optimization such as the overlap priority. A lower overlap priority indicates increased importance. In contrast,
+% a higher overlap priority indicatets a strcture with lower importance. The parameters alphaX and betaX depict the tissue's photon-radiosensitivity parameter
+% which are required for biological treatment planning using a variable
+% RBE. Let's output the meta optimization parameter of the rectum the rectum:
+cst{8,2}
+cst{8,5}
 
-%% Plan
-% Next step is to build our treatment plan. This has different parameters
-% that we will set together and we usually refer to it as 'pln'.
 %%
-% First of all, we need to set the some basic parameters about the machine.
-% We add the chosen particle for treatment then we set the substruct
-% machine as 'Generic' so in this way the sofware will look for
-% 'proton_Generic.mat' in our folder and will assign those as machine data
-% for this simulation.
+% The sixth column contains optimization information such as objective and constraints which are required to calculate the objective function value. 
+% Please note, that multiple objectives/constraints can be defined for individual structures. As the rectum is an OAR, we have defined and
+% squared overdosing objective so that it is considered to be expensive for the optimizer delivering more than 50 Gy to the rectum. 
+cst{8,6}
+
+
+%% Treatment Plan
+% The next step is to define your treatment plan labeld as 'pln'. This structure requires input from the treatment planner and defines 
+% the most important cornerstones of your treatment plan.
+
+%%
+% First of all, we need to define what kind of radiation modality we would like to use.
+% Then, we need to define a treatment machine to correctly load the corresponding base data. Since we provide
+% generic base data we set the machine to 'Genereric. By this means the the sofware will look for
+% 'proton_Generic.mat' in our root directory and will use the data provided in there for dose calculation
 pln.radiationMode = 'protons';
-pln.machine = 'Generic';
-
-
-%%
-% Now we set some beam parameters. We can chose multiple angles for the
-% treatment and pass these to the plan as a vector and then MatRad will now
-% what to do. In this case, we chose 2 parallel beams coming from opposite
-% directions and we set a 5 mm bixel width.
-pln.gantryAngles = [90 270];
-pln.couchAngles = [0, 0];
-pln.numOfBeams = 2;
-pln.bixelWidth = 5;
+pln.machine       = 'Generic';
 
 %%
-% Some physical parameters still need to be set. We repeat the isocenter
-% coordinates for every entering beam.
-pln.isoCenter = repmat([92, 92, 45],pln.numOfBeams,1);
-pln.voxelDimensions = ct.cubeDim;
-pln.numOfVoxels = prod(pln.voxelDimensions);
-
-%%
-% Last, some extra feature..
+% Define the flavour of biological optimization for treatment planning along with the quantity that should be used for
+% optimizaion. const_RBExD results in using a constant RBE of 1.1 and use the RBE-weighted dose during optimization.
 pln.bioOptimization = 'const_RBExD';
-pln.runDAO = 0;
+
+%%
+% Now we have to further specify the treatment plan. We define two opposing beams. For the first beam we set the gantry angle to 90 degree and the 
+% corresponding couch angle to 0 degree. The second beam possess a gantry angle of 270 degree and a couch angle of 0 degree. 
+% Furthermore, we want the lateral pencil beam spacing in x and y to be 3 mm in the iso-center slice.
+% In total we are using 30 fractions. It is noteworthy that matRad is always optimizing the fraction dose.
+pln.gantryAngles    = [90 270];
+pln.couchAngles     = [0 0];
+pln.bixelWidth      = 3;
+pln.numOfFractions  = 30;
+
+%%
+% Obtain the number of beams and voxels from the existing variables and calculate the iso-center which is per default the mass of gravity of all target voxels.
+pln.numOfBeams      = numel(pln.gantryAngles);
+pln.numOfVoxels     = prod(ct.cubeDim);
+pln.voxelDimensions = ct.cubeDim;
+pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+
+%%
+% Disable sequencing and direct aperture optimization, as we have a particle plan.
+pln.runDAO        = 0;
 pln.runSequencing = 0;
 
 %%
-% and our Plan is ready!
+% and ZACK our treatment plan is ready. Lets have a look at it:
 pln
 
-%% Stf
-% This acronym stands for Steering File. There is a very simple way to
-% generate this, we just call the following function:
+%% Generatet Beam Geometry STF
+% This acronym stands for steering file and comprises the beam geomtry along with 
+% the ray and pencil beam positions
 stf = matRad_generateStf(ct,cst,pln);
 
-%%
-% And we get, for example for the second beam:
-stf(1,2)
+%% Let's display the beam geomtry information of the second beam
+stf(2)
 
 %% Dose Calculation
-% In order to run a calculation, we simply create weights data (that will
-% be corrected by optimization and call:
-w = ones(1, sum([stf.numOfBixelsPerRay]));
-resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w);
+% Calculate dose influence matrix for unit pencil beam intensities. 
+dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
-%%
-% Now let's try to change the isocenter and see what happens
-pln.isoCenter = pln.isoCenter +3;
-stf(1,1).isoCenter = stf(1,1).isoCenter +3;
-stf(1,2).isoCenter = stf(1,2).isoCenter +3;
-%%
-resultGUI_isoShift = matRad_calcDoseDirect(ct,stf,pln,cst,w);
+%% Inverse Optimizaiton for IMPT
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
-%% Plot
-% Now you surely want to see what the result of this computation is.
-% The simpliest way to do this is to call
+%% Plot the Resulting Dose Slice
+% Let's plot the transversal iso-center dose slice
+slice = round(pln.isoCenter(1,3)./ct.resolution.z);
 figure
-imagesc(resultGUI.physicalDose(:,:,stf(1,1).isoCenter(3)))
-%%
-% Or you can use a MatRad function that Plots not only a slice of the Dose 
-% but it does it on the appropriate ct slice.
-%%
-% Let's say we would like to plot the slice that corresponds to the
-% isocenter on the axial plane. We set
+imagesc(resultGUI.RBExDose(:,:,slice)),colorbar
+
+%% Now let's simulate a patient shift in y direction in both beams
+stf(1).isoCenter(2) = stf(1).isoCenter(2) - 4;
+stf(2).isoCenter(2) = stf(2).isoCenter(2) - 4;
+pln.isoCenter       = reshape([stf.isoCenter],[3 pln.numOfBeams])';
+
+%% Recalculate Plan
+% Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
+resultGUI_isoShift = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+
+%%  Visual Comparison of results
+% Let's compare the new recalculation against the optimization result.
 plane = 3;
-slice = stf(1,1).isoCenter(3);
+doseWindow = [0 max([resultGUI.RBExDose(:); resultGUI_isoShift.RBExDose(:)])];
 
-%%
-% and get
-addpath('tools\')
-figure
-[hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube)
-figure
-[hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_isoShift.physicalDose,plane,slice,[],[],colorcube)
+figure,title('original plan')
+[~,~,~,~,~] = matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+figure,title('shifted plan')
+[~,~,~,~,~] = matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_isoShift.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
 
-%% Comparisons
-% At this point one would like to compare the simulations we made with each
-% other, to see the differences and maybe check the validity of a certain
-% prediction. We should now use another MatRad usefull function that will
-% give us a map of the so called gamma-index (method described on Low et
-% al. 1998).
-%%
-% We set some parameters before.
-% 'criteria' indicates the level of accuracy we look for, in this case, we
-% set them at 3% of the Dose and 1mm of distance. 'n' is the number of
-% times we want to interpolate the matrix before the comparison. We suggest
-% to use values from 1 to 3, you can set it higher at you own risk.
-criteria = [3, 1];
+
+%% Quantitative Comparison of results
+% Compare the two dose cubes using a gamma-index analysis. To do so, we need
+% to define thresholds for passing the gamma-index test. In this example,
+% we set dose difference to 2 % and the distance-to criteria to 2 mm.
+% Additionaly, we set the number of interpolations for the gamma index
+% calculation to 1. 
+criteria = [2, 2];
 n = 1;
 
-%%
-% Here we can call the function, after including folder in the path
 [gammaCube,gammaPassRateCell] = matRad_gammaIndex(...
-    resultGUI_isoShift.physicalDose,resultGUI.physicalDose,...
+    resultGUI_isoShift.RBExDose,resultGUI.RBExDose,...
     [ct.resolution.x, ct.resolution.y, ct.resolution.z],...
-    stf(1,1).isoCenter(3),criteria,n,'global',cst);
+    slice,criteria,n,'global',cst);
 
 
 
