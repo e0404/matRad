@@ -78,7 +78,7 @@ for runVoi = 1:size(cst,1)
         voiPrint = sprintf('%s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy)\n%27s', ...
                            voiPrint,QI(runVoi).mean,QI(runVoi).std,QI(runVoi).max,QI(runVoi).min,' ');
 
-        DX = @(x) doseInVoi(ceil((100-x)*0.01*numOfVoxels));
+        DX = @(x) matRad_interp1(linspace(0,1,numOfVoxels),doseInVoi,(100-x)*0.01);
         VX = @(x) numel(doseInVoi(doseInVoi >= x)) / numOfVoxels;
 
         % create VX and DX struct fieldnames at runtime and fill
