@@ -193,7 +193,7 @@ if strcmp(localglobal,'local')
 end
   
 % compute gamma pass rate
-doseIx          = cube2 > max(cube1(:))/100 | cube2 > max(cube1(:))/100;
+doseIx          = cube1 > threshold | cube2 > threshold;
 numOfPassGamma  = sum(gammaCube(doseIx) < 1);
 gammaPassRate   = 100 * numOfPassGamma / sum(doseIx(:));
 
