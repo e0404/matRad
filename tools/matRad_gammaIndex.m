@@ -1,4 +1,4 @@
-function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,slice,criteria,n,localglobal,cst)
+function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % gamma index calculation according to http://www.ncbi.nlm.nih.gov/pubmed/9608475
 % 
@@ -114,6 +114,9 @@ cubex2((1+searchX):(end-searchX), ...
        (1+searchY):(end-searchY), ...
        (1+searchZ):(end-searchZ)) = cubex2c;
 
+% find relevant indices for computation...
+ix = cubex1 > 0 | cubex2 > 0;
+   
 % interpolate if necessary
 if n > 0
     cubex2 = interp3(cubex2,n,'cubic');
@@ -130,9 +133,6 @@ gammaCubeSq = zeros(size(cubex1));
 gammaCubeSq((1+searchX):(end-searchX), ...
             (1+searchY):(end-searchY), ...
             (1+searchZ):(end-searchZ)) = inf;
-
-% find relevant indices for computation...
-ix = cubex1 > 0;
 
 % adjust dose threshold
 if strcmp(localglobal,'local')
@@ -168,7 +168,7 @@ for i = -searchX:searchX
         end
     end
     
-    display '.';
+%     display '.';
     
 end
 
@@ -181,7 +181,7 @@ gammaCubeSqx(cut1,cut2,cut3) = gammaCubeSq((1+searchX):(end-searchX), ...
 gammaCube                    = sqrt(gammaCubeSqx);
 
 % set values where we did not compute gamma keeping inf in the cube to zero
-gammaCube(cube1<=0) = 0;
+gammaCube(cube1<=0 & cube2<=0) = 0;
 
 % need to modify the absDoseThreshold adding a 
 if strcmp(localglobal,'local')
@@ -193,7 +193,7 @@ if strcmp(localglobal,'local')
 end
   
 % compute gamma pass rate
-doseIx          = cube1 > doseThreshold;
+doseIx          = cube1 > doseThreshold | cube2 > doseThreshold;
 numOfPassGamma  = sum(gammaCube(doseIx) < 1);
 gammaPassRate   = 100 * numOfPassGamma / sum(doseIx(:));
 
