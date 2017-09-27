@@ -1,4 +1,4 @@
-function calcStudy(examineStructures, multScen, param)
+function matRad_calcStudy(examineStructures, multScen, param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad uncertainty study wrapper
 % 
@@ -62,7 +62,7 @@ pln.sampling = true;
 [mRealizations, cst, pln, nominalScenario]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w,examineStructures, multScen, param);
 
 %% perform analysis
-[structureStat, doseStat] = samplingAnalysis(ct,cst,pln.multScen.subIx,mRealizations,pln.multScen.scenProb);
+[structureStat, doseStat] = matRad_samplingAnalysis(ct,cst,pln.multScen.subIx,mRealizations,pln.multScen.scenProb);
 
 %% save
 filename = 'resultSampling';
@@ -77,10 +77,19 @@ param.reportPath = fullfile('report','data');
 copyfile(fullfile(matRadPath,'tools','samplingAnalysis','main_template.tex'),'report/main.tex');
 
 % generate actual latex report
-latexReport(ct, cst, pln, nominalScenario, structureStat, resultGUI, param);
+matRad_latexReport(ct, cst, pln, nominalScenario, structureStat, resultGUI, param);
 
 cd('report');
-executeLatex = 'xelatex -shell-escape main.tex';
-system(executeLatex);
-system(executeLatex);
-system('main.pdf');
+if ispc
+    executeLatex = 'xelatex --shell-escape --interaction=nonstopmode main.tex';
+elseif isunix
+    executeLatex = '/Library/TeX/texbin/xelatex --shell-escape --interaction=nonstopmode main.tex';
+end
+
+response = system(executeLatex);
+if response == 127 % means not found
+    warning('Could not find tex distribution. Please compile manually.');
+else
+    system(executeLatex);
+    system('main.pdf');
+end

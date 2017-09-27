@@ -36,6 +36,6 @@ param.outputPath = pwd;
 param.operator = 'Werner Heisenberg';
 
 %% start calculation
-calcStudy(examineStructures, multScen, param);
+matRad_calcStudy(examineStructures, multScen, param);
 
 % exit;

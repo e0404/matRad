@@ -40,9 +40,12 @@ if ~isfield(pln,'sampling')
 end
 
 % define standard deviation of normal distribution - only relevant for probabilistic treatment planning
-multScen.rangeRelSD           = 3.5;               % given in [%]   
-multScen.rangeAbsSD           = 1;                 % given in [mm]   
-multScen.shiftSD              = [3 3 3];           % given in [mm]   
+requiredFields = {'rangeRelSD', 'rangeAbsSD', 'shiftSD'};
+if sum(isfield(multScen,requiredFields)) == 0
+    multScen.rangeRelSD           = 3.5;               % given in %
+    multScen.rangeAbsSD           = 1;                 % given in [mm]   
+    multScen.shiftSD              = [3 3 3];           % given in [mm]
+end
 
 
  %% create multiple scenario struc
@@ -165,7 +168,7 @@ pln.numOfSamples       = pln.multScen.numOfScen;
 
 %% get probabilities
 
-pln.multScen.scenProb  = matRad_calcScenProb([0 0 0 0 0],[multScen.shiftSD multScen.rangeAbsSD multScen.rangeRelSD],...
+pln.multScen.scenProb  = matRad_calcScenProb([0 0 0 0 0],[multScen.shiftSD multScen.rangeAbsSD multScen.rangeRelSD/100],...
                          pln.multScen.scenForProb,'probBins','normDist');
  
 end

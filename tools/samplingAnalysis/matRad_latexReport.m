@@ -1,4 +1,4 @@
-function latexReport(ct, cst, pln, nominalScenario, structureStat, resultGUI, param)
+function matRad_latexReport(ct, cst, pln, nominalScenario, structureStat, resultGUI, param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad uncertainty analysis report generaator function
 % 

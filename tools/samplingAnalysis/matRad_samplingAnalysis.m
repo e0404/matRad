@@ -1,4 +1,4 @@
-function [structureStat, doseStat] = samplingAnalysis(ct,cst,subIx,mRealizations,w)
+function [structureStat, doseStat] = matRad_samplingAnalysis(ct,cst,subIx,mRealizations,w)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad uncertainty sampling analysis function
 % 
@@ -88,7 +88,7 @@ end
         dvhStat.percDVH = NaN * ones(numel(percentiles),size(dvh{1},2));
         
         for j = 1:size(dvhMat,2)
-            wQ =  weightedQuantile(dvhMat(:,j), percentiles, w', false, true);
+            wQ =  matRad_weightedQuantile(dvhMat(:,j), percentiles, w', false, true);
             dvhStat.percDVH(:,j) = wQ;
         end
     end % eof calcDVHStat
@@ -110,7 +110,7 @@ end
                 qiStatH(2).(fields{j}) = min([qiStruct(:).(fields{j})]);
                 qiStatH(3).(fields{j}) = max([qiStruct(:).(fields{j})]);
                 qiStatH(4).(fields{j}) = std([qiStruct(:).(fields{j})],w);
-                wQ = weightedQuantile([qiStruct(:).(fields{j})], percentiles, w', false, true);
+                wQ = matRad_weightedQuantile([qiStruct(:).(fields{j})], percentiles, w', false, true);
                 for k = 1:numel(wQ)
                     sIx = k + 4;
                     qiStatH(sIx).(fields{j}) = wQ(k);
