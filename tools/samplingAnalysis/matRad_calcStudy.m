@@ -43,7 +43,8 @@ listOfMat = dir('*.mat');
 if numel(listOfMat) == 1
   load(listOfMat.name);
 else
-   matRad_dispToConsole('Ambigous set of .mat files in the current folder (i.e. more than one possible patient).',param,'error');
+   matRad_dispToConsole('Ambigous set of .mat files in the current folder (i.e. more than one possible patient or already results available).\n',param,'error');
+   return
 end
 
 % matRad path
@@ -65,6 +66,7 @@ pln.sampling = true;
 [structureStat, doseStat] = matRad_samplingAnalysis(ct,cst,pln.multScen.subIx,mRealizations,pln.multScen.scenProb);
 
 %% save
+param.reportPath = fullfile('report','data');
 filename = 'resultSampling';
 save(filename);
 
@@ -73,11 +75,10 @@ save(filename);
 cd(param.outputPath)
 mkdir(fullfile('report','data'));
 mkdir(fullfile('report','data','figures'));
-param.reportPath = fullfile('report','data');
 copyfile(fullfile(matRadPath,'tools','samplingAnalysis','main_template.tex'),'report/main.tex');
 
 % generate actual latex report
-matRad_latexReport(ct, cst, pln, nominalScenario, structureStat, resultGUI, param);
+matRad_latexReport(ct, cst, pln, nominalScenario, structureStat, doseStat, resultGUI, param);
 
 cd('report');
 if ispc

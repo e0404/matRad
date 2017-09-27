@@ -1,4 +1,4 @@
-function matRad_latexReport(ct, cst, pln, nominalScenario, structureStat, resultGUI, param)
+function matRad_latexReport(ct, cst, pln, nominalScenario, structureStat, doseStat, resultGUI, param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad uncertainty analysis report generaator function
 % 
@@ -97,7 +97,6 @@ function matRad_latexReport(ct, cst, pln, nominalScenario, structureStat, result
     %% nominal plan
     % add slice at iso
     for plane=1:3
-        figure; ax = gca;
         switch plane 
             case 1
                 slice = round(pln.isoCenter(plane) / ct.resolution.x,0);
@@ -107,19 +106,30 @@ function matRad_latexReport(ct, cst, pln, nominalScenario, structureStat, result
                 slice = round(pln.isoCenter(plane) / ct.resolution.z,0);
         end
         colors = colorcube(size(cst,1));
-        if isfield(resultGUI,'RBExDose')
-            doseCube = resultGUI.RBExDose;
-            colorMapLabel = 'physical Dose [Gy]';
-        else
-            doseCube = resultGUI.physicalDose;
-            colorMapLabel = 'RBExDose [Gy(RBE)]';
+        for cubesToPlot = 1:3
+            if cubesToPlot == 1
+                if isfield(resultGUI,'RBExDose')
+                    doseCube = resultGUI.RBExDose;
+                    colorMapLabel = 'physical Dose [Gy]';
+                else
+                    doseCube = resultGUI.physicalDose;
+                    colorMapLabel = 'RBExDose [Gy(RBE)]';
+                end
+                fileSuffix = 'nominal';
+            elseif cubesToPlot == 2
+                doseCube = doseStat.meanCubeW;
+                fileSuffix = 'meanW';
+            elseif cubesToPlot == 3
+                doseCube = doseStat.stdCubeW;
+                fileSuffix = 'stdW';
+            end
+            figure; ax = gca;
+            matRad_plotSliceWrapper(ax,ct,cst,1,doseCube,plane,slice,[],[],colors,[],colorMapLabel);
+            drawnow();
+            cleanfigure();
+            matlab2tikz(fullfile(outputPath,['isoSlicePlane', num2str(plane), '_', fileSuffix, '.tex']), 'relativeDataPath', 'data', 'showInfo', false, 'width', '\figW')
+            close
         end
-        
-        matRad_plotSliceWrapper(ax,ct,cst,1,doseCube,plane,slice,[],[],colors,[],colorMapLabel);
-        drawnow();
-        cleanfigure();
-        matlab2tikz(fullfile(outputPath,['isoSlicePlane', num2str(plane), '.tex']), 'relativeDataPath', 'data', 'showInfo', false, 'width', '\figW')
-        close
     end
     
 
