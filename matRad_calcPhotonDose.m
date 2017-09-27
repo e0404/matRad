@@ -75,13 +75,14 @@ for i = 1:dij.numOfScenarios
     dij.physicalDose{i} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
 end
 
-% Allocate memory for dose_temp cell array
+% initialize weight vector in the case of forward dose calculation
 if calcDoseDirect
-    numOfBixelsContainer = 1;
-else
-    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+    weight = NaN*ones(dij.totalNumOfBixels,1);
 end
-doseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
+
+% Allocate memory for dose_temp cell array
+numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+doseTmpContainer     = cell(numOfBixelsContainer,dij.numOfScenarios);
 
 % take only voxels inside patient
 V = [cst{:,4}];
@@ -325,6 +326,11 @@ for i = 1:dij.numOfBeams % loop over all beams
             continue;
         end
 
+        % remember pencil beam weight in case of forward dose calculation
+        if calcDoseDirect
+            weight(counter) = stf(i).ray(j).weight;
+        end
+                
         % calculate photon dose for beam i and bixel j
         bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
                                                    machine.data.betas, ...
@@ -351,8 +357,9 @@ for i = 1:dij.numOfBeams % loop over all beams
             if calcDoseDirect
                 if isfield(stf(1).ray(1),'weight')
                     % score physical dose
-                    dij.physicalDose{1}(:,1) = dij.physicalDose{1}(:,1) + stf(i).ray(j).weight * doseTmpContainer{1,1};
-                else
+                    dij.physicalDose{1}(:,1) = dij.physicalDose{1}(:,1) + ...
+                                  sum(bsxfun(@times,weight(counter - mod(counter-1,numOfBixelsContainer):counter)',[doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}]),2);
+                  else
                     error(['No weight available for beam ' num2str(i) ', ray ' num2str(j)]);
                 end
             else

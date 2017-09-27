@@ -68,12 +68,14 @@ end
 % helper function for energy selection
 round2 = @(a,b)round(a*10^b)/10^b;
 
-% Allocate memory for dose_temp cell array
+% initialize weight vector in the case of forward dose calculation
 if calcDoseDirect
-    numOfBixelsContainer = 1;
-else
-    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+    weight = NaN*ones(dij.totalNumOfBixels,1);
 end
+
+% Allocate memory for dose_temp cell array
+numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+
 doseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
 if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ... 
         && strcmp(pln.radiationMode,'carbon')
@@ -259,6 +261,11 @@ for i = 1:length(stf) % loop over all beams
                 dij.rayNum(counter)   = j;
                 dij.bixelNum(counter) = k;
 
+                % remember pencil beam weight in case of forward dose calculation
+                if calcDoseDirect
+                    weight(counter) = stf(i).ray(j).weight(k);
+                end
+                
                 % find energy index in base data
                 energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
                 
@@ -332,21 +339,25 @@ for i = 1:length(stf) % loop over all beams
                     
                     if calcDoseDirect
                         if isfield(stf(1).ray(1),'weight') && numel(stf(i).ray(j).weight) >= k
-                            
-                            % score physical dose
-                            dij.physicalDose{1}(:,1) = dij.physicalDose{1}(:,1) + stf(i).ray(j).weight(k) * doseTmpContainer{1,1};
+                                                    
+                            weightBlock = weight(counter - mod(counter-1,numOfBixelsContainer):counter)';
+                            dij.physicalDose{1}(:,1) = dij.physicalDose{1}(:,1) + ...
+                                sum(bsxfun(@times,weightBlock,[doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}]),2);
                             
                             if isfield(dij,'mLETDose')
-                                dij.mLETDose{1}(:,1) = dij.mLETDose{1}(:,1) + stf(i).ray(j).weight(k) * letDoseTmpContainer{1,1};
+                                dij.mLETDose{1}(:,1) = dij.mLETDose{1}(:,1) + ...
+                                     sum(bsxfun(@times,weightBlock,[letDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}]),2);
                             end
                             
                             if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ... 
                                 && strcmp(pln.radiationMode,'carbon')
                                 
                                 % score alpha and beta matrices
-                                dij.mAlphaDose{1}(:,1) = dij.mAlphaDose{1}(:,1) + stf(i).ray(j).weight(k) * alphaDoseTmpContainer{1,1};
-                                dij.mSqrtBetaDose{1}(:,1) = dij.mSqrtBetaDose{1}(:,1) + stf(i).ray(j).weight(k) * betaDoseTmpContainer{1,1};
-                                
+                                dij.mAlphaDose{1}(:,1) = dij.mAlphaDose{1}(:,1) +...
+                                    sum(bsxfun(@times,weightBlock,[alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}]),2);
+                            
+                                dij.mSqrtBetaDose{1}(:,1) = dij.mSqrtBetaDose{1}(:,1) +...
+                                    sum(bsxfun(@times,weightBlock,[betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}]),2);                      
                             end
                         else
                             
@@ -364,7 +375,7 @@ for i = 1:length(stf) % loop over all beams
                         if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ... 
                             && strcmp(pln.radiationMode,'carbon')
                         
-                            dij.mAlphaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                            dij.mAlphaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter)    = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
                             dij.mSqrtBetaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
                         end
                     
