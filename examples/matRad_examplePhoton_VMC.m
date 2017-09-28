@@ -14,15 +14,17 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% 
-% In this example we will show how to load patient data into matRad,
-% how to setup a photon dose calculation based on the VMC++ monte carlo algorithm and how to inversly optimize directly 
-% from command window in MatLab.
+% In this example we will show 
+% (i) how to load patient data into matRad
+% (ii) how to setup a photon dose calculation based on the VMC++ Monte Carlo algorithm 
+% (iii) how to inversly optimize the beamlet intensities directly from command window in MATLAB. 
+% (iv) how to visualize the result
 
 %% Patient Data Import
-% Let's begin with a clear Matlab environment. Next, import the TG119
-% phantom into your workspace. The phantom is comprised of a 'ct' and 'cst' structure defining 
-% the CT images and the structure set. Make sure the matRad root directy with all its
-% subdirectories is added to the Matlab search path.
+% Let's begin with a clear Matlab environment. First, import the boxphantom
+% into your workspace. The phantom is comprised of a 'ct' and 'cst' structure defining 
+% the CT images and the structure set. Make sure the matRad root directory with all its
+% SUBDIRECTORIES is added to the Matlab search path.
 clc,clear,close all
 load('BOXPHANTOM.mat');
 
@@ -34,10 +36,10 @@ load('BOXPHANTOM.mat');
 ct
 
 %%
-% The 'cst' cell array defines volumes of interest along with information required for optimization.
+% The 'cst' cell array defines volumes of interests along with information required for optimization.
 % Each row belongs to one certain VOI, whereas each column defines different proprties. Specifically, the second and third column 
 % show the name and the type of the structure. The tpe can be set to OAR, TARGET or IGNORED. The fourth column depicts a linear 
-% index vector depicting voxels in the CT cube that are covered by the VOI. In total, 2 structures are defined in the cst
+% index vector depicting voxels in the CT cube that are covered by the corresponding VOI. In total, 2 structures are defined in the cst
 cst
 
 %% Treatment Plan
@@ -50,13 +52,13 @@ cst
 % Then, we need to define a treatment machine to correctly load the corresponding base data. Since we provide
 % generic base data we set the machine to 'Genereric. By this means matRad will look for
 % 'photons_Generic.mat' in our root directory and will use the data provided in there for dose calculation
-pln.radiationMode = 'photons';   % either photons / protons / carbon
+pln.radiationMode = 'photons';  
 pln.machine       = 'Generic';
 
 %%
-% Define the flavour of biological optimization for treatment planning along with the quantity that should be used for
+% Define the flavour of biological optimization along with the quantity that should be used for
 % optimizaion. Possible values are (none: physical optimization; const_RBExD: constant RBE of 1.1; LEMIV_effect: 
-% effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose. As we are using photons, simply set the parameter to
+% effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose. As we are using photons, we simply set the parameter to
 % 'none' thereby indicating the physical dose should be optimized.
 pln.bioOptimization = 'none';    
 
@@ -73,15 +75,16 @@ pln.bixelWidth      = 10;
 pln.numOfFractions  = 30;
 
 %%
-% Obtain the number of beams and voxels from the existing variables and calculate the iso-center which is per default the mass of gravity of all target voxels.
+% Obtain the number of beams and voxels from the existing variables and calculate the iso-center which is per default
+% the mass of gravity of all target voxels.
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
 pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
 %%
-% Enable sequencing and disable direct aperture optimization (DAO) for now.
-% A DAO optimization is shown in a seperate example. The multileaf collimator leaf sequencing algorithm stratifies each beam in N static segments.
+% Disable sequencing and direct aperture optimization (DAO) for now.
+% The application of the sequencing algorithm and DAO optimization is shown in a seperate example.
 pln.runSequencing = 0;
 pln.runDAO        = 0;
 
@@ -90,8 +93,8 @@ pln.runDAO        = 0;
 pln
 
 %% Generatet Beam Geometry STF
-% This acronym stands for steering file and comprises the beam geomtry along with 
-% the ray and pencil beam positions
+% This acronym stands for steering file and comprises the complet beam geomtry along with 
+% ray position, beamlet positions, source to axis distance (SAD) etc.
 stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
@@ -112,4 +115,14 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 slice = round(pln.isoCenter(1,3)./ct.resolution.z);
 figure,
 imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet)
+
+%%
+% Exemplary, we show how to obtain the dose in the target and plot the histogram
+ixTarget     = cst{2,4}{1};
+doseInTarget = resultGUI.physicalDose(ixTarget);
+figure,histogram(doseInTarget),title('dose in target'),xlabel('[Gy]')
+
+%% Start the GUI for Visualization
+matRadGUI
+
 

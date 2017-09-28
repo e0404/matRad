@@ -36,7 +36,7 @@ for ixFile = 1:size(folderInfo,1)
         %make sure not to use auto saved files (*.asv)
         [pathstr,name,ext] = fileparts(folderInfo(ixFile).name);
         
-       if ~folderInfo(ixFile).isdir && ~strcmp(folderInfo(ixFile).name,mfilename) && strcmp(ext,'.m')
+       if ~folderInfo(ixFile).isdir && ~strcmp(name,mfilename) && strcmp(ext,'.m') ...
            
            save('workspace')
            publish(folderInfo(ixFile).name,format{ixFormat});

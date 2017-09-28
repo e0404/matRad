@@ -13,17 +13,20 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%
-% In this example we will demonstrate:
-% (i)  how to load one of the open source patient datasets into matRad 
-% (ii) how to setup a carbon ion treatment plan including variable RBE optimization
-% (iii) perform a recalculation assuming a different tissue radio-sensitivity
+%% 
+% In this example we will show 
+% (i) how to load patient data into matRad
+% (ii) how to setup a carbon ion dose calculation plan including variable RBE optimization
+% (iii) how to inversly optimize the pencil beam intensities 
+% (v) how to change the tissus radiobiological characterisitcs
+% (vi) how to recalculated the dose consideringthe previously optimzed pencil beam intensities
+% (vii) how to compare the two results
 
-%% Import
-% Let's begin with a clear Matlab environment. Next, import the liver patient data
-% into your workspace. The patient is comprised of a 'ct' and 'cst' structure defining 
-% the CT images and the structure set. Make sure the matRad root directy with all its
-% subdirectories is added to the Matlab search path.
+%% Patient Data Import
+% Let's begin with a clear Matlab environment. First, import the liver
+% patient into your workspace. The phantom is comprised of a 'ct' and 'cst' structure defining 
+% the CT images and the structure set. Make sure the matRad root directory with all its
+% SUBDIRECTORIES is added to the Matlab search path.
 clc,clear,close all
 load('LIVER.mat');
 
@@ -35,15 +38,16 @@ load('LIVER.mat');
 ct
 
 %%
-% The 'cst' cell array defines volumes of interest along with information required for optimization.
+% The 'cst' cell array defines volumes of interests along with information required for optimization.
 % Each row belongs to one certain VOI, whereas each column defines different proprties. Specifically, the second and third column 
 % show the name and the type of the structure. The tpe can be set to OAR, TARGET or IGNORED. The fourth column depicts a linear 
-% index vector depicting voxels in the CT cube that are covered by the VOI. In total, 17 structures are defined in the cst
+% index vector depicting voxels in the CT cube that are covered by the corresponding VOI. In total, 17 structures are defined in the cst
 cst
 %%
-% The fifth column represents meta parameters used for optimization such as the overlap priority, which can be specified in double presision. A lower overlap priority indicates increased importance. In contrast,
-% a higher overlap priority indicatets a strcture with lower importance. The parameters alphaX and betaX depict the tissue's photon-radiosensitivity parameter
-% which are required for biological treatment planning using a variable RBE. Since the PTV, is stored in the tenth column, lets output the PTVs meta information
+% The fifth column represents meta parameters used for optimization such as the overlap priority, which can be specified in double presision. 
+% A lower overlap priority indicates increased importance. In contrast, a higher overlap priority indicatets a strcture with lower importance. 
+% The parameters alphaX and betaX depict the tissue's photon-radiosensitivity parameter of the linear quadratic model. These parameter
+% are required for biological treatment planning using a variable RBE. Since the PTV, is stored in the tenth column, lets output the PTVs meta information
 cst{10,5}
 
 %%
@@ -53,7 +57,7 @@ cst{10,5}
 cst{10,6}
 
 %%
-% Now lets increase the importance of the square deviation objective to 2000
+% Now lets increase the importance of the squared deviation objective to 2000
 cst{10,6}.penalty = 2000;
 
 %% Treatment Plan
@@ -62,10 +66,9 @@ cst{10,6}.penalty = 2000;
 %%
 % First of all, we need to define what kind of radiation modality we would
 % like to use. Possible values are photons, protons or carbon. In this
-% example we would like to use carbon ions for treatment planning.
-% Then, we need to define a treatment machine to correctly load the corresponding base data. Since we provide
+% example we would like to use carbon ions for treatment planning. Then, we need to define a treatment machine to correctly load the corresponding base data. Since we provide
 % generic base data we set the machine to 'Genereric. By this means matRad will look for
-% 'carbon_Generic.mat' in our root directory and will use the data provided in there for dose calculation
+% 'proton_Generic.mat' in our root directory and will use the data provided in there for dose calculation
 pln.radiationMode = 'carbon';            
 pln.machine       = 'Generic';
 
@@ -87,7 +90,8 @@ pln.bixelWidth      = 3;
 pln.numOfFractions  = 30;
 
 %%
-% Obtain the number of beams and voxels from the existing variables and calculate the iso-center which is per default the mass of gravity of all target voxels.
+% Obtain the number of beams and voxels from the existing variables and calculate the iso-center which is per default
+% the mass of gravity of all target voxels.
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
@@ -103,13 +107,32 @@ pln.runSequencing = 0;
 pln
 
 %% Generatet Beam Geometry STF
-% This acronym stands for steering file and comprises the beam geomtry along with 
-% the ray and pencil beam positions
+% This acronym stands for steering file and comprises the complet beam geomtry along with 
+% ray position, pencil beam positions and energies, source to axis distance (SAD) etc.
 stf = matRad_generateStf(ct,cst,pln);
 
 %%
 % Let's display the beam geomtry information
 stf
+
+%%
+% Output the total number of rays. 
+stf.numOfRays
+%%
+% The following substructre stores the number of bixels/pencil beams per
+% ray. Exemplary lets out put information of ray 100.
+N = stf.numOfBixelsPerRay(100)
+%%
+% Let's have a closer look on the stf.ray sub-structure since it contains the actual 
+% beam/ray geomtry information. For illustration purposes we want to show the one-hundreds ray.
+% Besides geometricl information about the position and orientation of the ray, we can also 
+% find pencil beam information. If the ray coincides with the target, pencil beams were defined along the ray
+% from target entry to target exit. 
+stf.ray(100)
+
+%%
+% We now expect to find exactly N-different energy levels on the 100 rays. 
+stf.ray(100).energy
 
 %% Dose Calculation
 % Calculate dose influence matrix for unit pencil beam intensities. 
@@ -126,7 +149,7 @@ slice = round(pln.isoCenter(3)./ct.resolution.z);
 figure,
 imagesc(resultGUI.RBExDose (:,:,slice)),colorbar, colormap(jet)
 
-%% Manipulate the cst
+%% Change Radiosensitivity
 % The previous treatment plan was optimized using an photon alpha-beta ratio of 2. Now, Let's
 % change the radiosensitivity by adapting alphaX. This will change the photon alpha-beta ratio
 % from 2 to 10.
@@ -138,7 +161,6 @@ end
 %% Recalculate Plan
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
 resultGUI_tissue = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
-
 
 %% Result Comparison
 % Let's compare the new recalculation against the optimization result.

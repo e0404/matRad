@@ -14,19 +14,21 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%
-% In this example we will show how to load patient data into matRad and
-% how to setup a photon dose calculation including optimizing the beamlet intensities.
-% Next we will apply a sequezing algorithm with a subsequent direct
-% aperture optimization.
-
+% In this example we will show 
+% (i) how to load patient data into matRad
+% (ii) how to setup a photon dose calculation and 
+% (iii) how to inversly optimize directly from command window in MatLab.
+% (iv) how to apply a sequencing algorithm
+% (v) how to run a direct aperture optimization
+% (iv) how to visually and quantitatively evalute the result
 
 %% Patient Data Import
-% Let's begin with a clear Matlab environment. Next, import the protstate
-% case into your workspace. The patient is comprised of a 'ct' and 'cst' structure defining 
-% the CT images and the structure set. Make sure the matRad root directy with all its
-% subdirectories is added to the Matlab search path.
+% Let's begin with a clear Matlab environment. First, import the head &
+% neck patient into your workspace. The phantom is comprised of a 'ct' and 'cst' structure defining 
+% the CT images and the structure set. Make sure the matRad root directory with all its
+% SUBDIRECTORIES is added to the Matlab search path.
 clc,clear,close all
-load('PROSTATE.mat');
+load('HEAD_AND_NECK.mat');
 
 %%
 % Let's check the two variables, we have just imported. First, the 'ct' variable comprises the ct cube 
@@ -36,10 +38,10 @@ load('PROSTATE.mat');
 ct
 
 %%
-% The 'cst' cell array defines volumes of interest along with information required for optimization.
+% The 'cst' cell array defines volumes of interests along with information required for optimization.
 % Each row belongs to one certain VOI, whereas each column defines different proprties. Specifically, the second and third column 
 % show the name and the type of the structure. The tpe can be set to OAR, TARGET or IGNORED. The fourth column depicts a linear 
-% index vector depicting voxels in the CT cube that are covered by the VOI. In total, 17 structures are defined in the cst
+% index vector depicting voxels in the CT cube that are covered by the corresponding VOI. In total, 24 structures are defined in the cst
 cst
 
 %% Treatment Plan
@@ -75,7 +77,8 @@ pln.bixelWidth      = 5;
 pln.numOfFractions  = 30;
 
 %%
-% Obtain the number of beams and voxels from the existing variables and calculate the iso-center which is per default the mass of gravity of all target voxels.
+% Obtain the number of beams and voxels from the existing variables and calculate the iso-center which is per default
+% the mass of gravity of all target voxels.
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
@@ -91,19 +94,25 @@ pln.runDAO        = 1;
 pln
 
 %% Generatet Beam Geometry STF
-% This acronym stands for steering file and comprises the beam geomtry along with 
-% the ray and pencil beam positions
+% This acronym stands for steering file and comprises the complet beam geomtry along with 
+% ray position, beamlet positions, source to axis distance (SAD) etc.
 stf = matRad_generateStf(ct,cst,pln);
 
+%% Start the GUI for Visualization
+% Show the ct cube along with contours
+matRadGUI
+
 %% Dose Calculation
-% Lets generate dosimetric information by pre-computing dose influence matrices for inverse planning.
+% Lets generate dosimetric information by pre-computing dose influence matrices for unit beamlet intensities. Having dose influences available allows then 
+% later on inverse optimization.
 dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 
 %% Inverse Planning for IMRT
-% This function optimizes the fluence of the beam, giving back the weights
-% used to scale the number of photons in every ray of the beam, improving
-% the accuracy of the simulation
+% The goal of the fluence optimization is to find a set of beamlet weights which yield the best possible
+% dose distribution according to the predefined clinical objectives and constraints underlying the radiation treatment.
+% Once the optimization has finished, trigger once the GUI to visualize the optimized dose cubes.
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+matRadGUI
 
 %% Sequencing
 % This is a multileaf collimator leaf sequencing algorithm that is used in 
