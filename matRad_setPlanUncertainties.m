@@ -41,7 +41,7 @@ end
 
 % define standard deviation of normal distribution - only relevant for probabilistic treatment planning
 requiredFields = {'rangeRelSD', 'rangeAbsSD', 'shiftSD'};
-if sum(isfield(multScen,requiredFields)) == 0
+if ~exist('multScen', 'var') || sum(isfield(multScen,requiredFields)) == 0
     multScen.rangeRelSD           = 3.5;               % given in %
     multScen.rangeAbsSD           = 1;                 % given in [mm]   
     multScen.shiftSD              = [3 3 3];           % given in [mm]
