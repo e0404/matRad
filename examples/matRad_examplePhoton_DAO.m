@@ -17,10 +17,10 @@
 % In this example we will show 
 % (i) how to load patient data into matRad
 % (ii) how to setup a photon dose calculation and 
-% (iii) how to inversly optimize directly from command window in MatLab.
+% (iii) how to inversely optimize directly from command window in MatLab.
 % (iv) how to apply a sequencing algorithm
 % (v) how to run a direct aperture optimization
-% (iv) how to visually and quantitatively evalute the result
+% (iv) how to visually and quantitatively evaluate the result
 
 %% Patient Data Import
 % Let's begin with a clear Matlab environment. First, import the head &
@@ -33,19 +33,19 @@ load('HEAD_AND_NECK.mat');
 %%
 % Let's check the two variables, we have just imported. First, the 'ct' variable comprises the ct cube 
 % along with some meta information describing properties of the ct cube (cube dimensions,
-% resolution, number of CT scenarios). Please note that mutiple ct cubes
+% resolution, number of CT scenarios). Please note that multiple ct cubes
 % (e.g. 4D CT) can be stored in the cell array ct.cube{}
 ct
 
 %%
 % The 'cst' cell array defines volumes of interests along with information required for optimization.
-% Each row belongs to one certain VOI, whereas each column defines different proprties. Specifically, the second and third column 
-% show the name and the type of the structure. The tpe can be set to OAR, TARGET or IGNORED. The fourth column depicts a linear 
+% Each row belongs to one certain VOI, whereas each column defines different properties. Specifically, the second and third column 
+% show the name and the type of the structure. The type can be set to OAR, TARGET or IGNORED. The fourth column depicts a linear 
 % index vector depicting voxels in the CT cube that are covered by the corresponding VOI. In total, 24 structures are defined in the cst
 cst
 
 %% Treatment Plan
-% The next step is to define your treatment plan labeld as 'pln'. This structure requires input from the treatment planner and defines 
+% The next step is to define your treatment plan labeled as 'pln'. This structure requires input from the treatment planner and defines 
 % the most important cornerstones of your treatment plan.
 
 %%
@@ -58,15 +58,15 @@ pln.radiationMode = 'photons';   % either photons / protons / carbon
 pln.machine       = 'Generic';
 
 %%
-% Define the flavour of biological optimization for treatment planning along with the quantity that should be used for
-% optimizaion. Possible values are (none: physical optimization; const_RBExD: constant RBE of 1.1; LEMIV_effect: 
+% Define the flavor of biological optimization for treatment planning along with the quantity that should be used for
+% optimization. Possible values are (none: physical optimization; const_RBExD: constant RBE of 1.1; LEMIV_effect: 
 % effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose. As we are using photons, simply set the parameter to
 % 'none' thereby indicating the physical dose should be optimized.
 pln.bioOptimization = 'none';    
 
 %%
 % Now we have to set some beam parameters. We can define multiple beam angles for the
-% treatment and pass these to the plan as a vector.matRad will then interpret the vector as multiple beams.
+% treatment and pass these to the plan as a vector. matRad will then interpret the vector as multiple beams.
 % In this case, we define linear spaced beams from 0 degree to 359 degree in
 % 30 degree steps. This results in 12 beams. All corresponding couch angles are set to 0 at this point.
 % Moreover, we set the bixelWidth to 5, which results in a beamlet size of 5 x 5 mm. The number of fractions
@@ -93,8 +93,8 @@ pln.runDAO        = 1;
 % y listo our treatment plan is ready. Lets have a look at it:
 pln
 
-%% Generatet Beam Geometry STF
-% This acronym stands for steering file and comprises the complet beam geomtry along with 
+%% Generate Beam Geometry STF
+% This acronym stands for steering file and comprises the complete beam geometry along with 
 % ray position, beamlet positions, source to axis distance (SAD) etc.
 stf = matRad_generateStf(ct,cst,pln);
 
@@ -123,7 +123,7 @@ resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
 
 %% DAO - Direct Aperture Optimization
 % The Direct Aperture Optimization is an automated planning system, only
-% possibble for photons in which we bypass the traditional intensity
+% possible for photons in which we bypass the traditional intensity
 % optimization, and instead directly optimize the shapes and the weights of
 % the apertures. This technique allows the user to specify the maximum
 % number of apertures per beam direction, and hence provides significant

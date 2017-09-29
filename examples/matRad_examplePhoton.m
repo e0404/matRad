@@ -17,8 +17,8 @@
 % In this example we will show 
 % (i) how to load patient data into matRad
 % (ii) how to setup a photon dose calculation and 
-% (iii) how to inversly optimize beamlet intensities
-% (iv) how to visually and quantitatively evalute the result
+% (iii) how to inversely optimize beamlet intensities
+% (iv) how to visually and quantitatively evaluate the result
 
 %% Patient Data Import
 % Let's begin with a clear Matlab environment. First, import the TG119
@@ -31,20 +31,20 @@ load('TG119.mat');
 %%
 % Let's check the two variables, we have just imported. First, the 'ct' variable comprises the ct cube 
 % along with some meta information describing properties of the ct cube (cube dimensions,
-% resolution, number of CT scenarios). Please note that mutiple ct cubes
+% resolution, number of CT scenarios). Please note that multiple ct cubes
 % (e.g. 4D CT) can be stored in the cell array ct.cube{}
 ct
 
 %%
 % The 'cst' cell array defines volumes of interests along with information required for optimization.
-% Each row belongs to one certain VOI, whereas each column defines different proprties. Specifically, the second and third column 
-% show the name and the type of the structure. The tpe can be set to OAR, TARGET or IGNORED. The fourth column depicts a linear 
+% Each row belongs to one certain VOI, whereas each column defines different properties. Specifically, the second and third column 
+% show the name and the type of the structure. The type can be set to OAR, TARGET or IGNORED. The fourth column depicts a linear 
 % index vector depicting voxels in the CT cube that are covered by the corresponding VOI. In total, 3 structures are defined in the cst
 cst
 
 %%
-% The fifth column represents meta parameters used for optimization such as the overlap priority, which can be specified in double presision. 
-% A lower overlap priority indicates increased importance. In contrast, a higher overlap priority indicatets a strcture with lower importance. 
+% The fifth column represents meta parameters used for optimization such as the overlap priority, which can be specified in double precision. 
+% A lower overlap priority indicates increased importance. In contrast, a higher overlap priority indicates a structure with lower importance. 
 % The parameters alphaX and betaX depict the tissue's photon-radiosensitivity parameter of the linear quadratic model. These parameter
 % are required for biological treatment planning using a variable RBE. Let's output the meta optimization parameter of the target structure:
 ixTarget = 3;
@@ -53,11 +53,11 @@ cst{ixTarget,5}
 %%
 % The sixth column contains optimization information such as objectives and constraints which are required to calculate the objective function value. 
 % Please note, that multiple objectives/constraints can be defined for individual structures. Here, we have defined a squared deviation objective 
-% making it 'expensive/costly' for the optimizer to over and underdose the target structure (both are equaly important). 
+% making it 'expensive/costly' for the optimizer to over and underdose the target structure (both are equally important). 
 cst{ixTarget,6}
 
 %% Treatment Plan
-% The next step is to define your treatment plan labeld as 'pln'. This structure requires input from the treatment planner and defines 
+% The next step is to define your treatment plan labeled as 'pln'. This structure requires input from the treatment planner and defines 
 % the most important cornerstones of your treatment plan.
 
 %%
@@ -70,8 +70,8 @@ pln.radiationMode = 'photons';
 pln.machine       = 'Generic';
 
 %%
-% Define the flavour of biological optimization along with the quantity that should be used for
-% optimizaion. Possible values are (none: physical optimization; const_RBExD: constant RBE of 1.1; LEMIV_effect: 
+% Define the flavor of biological optimization along with the quantity that should be used for
+% optimization. Possible values are (none: physical optimization; const_RBExD: constant RBE of 1.1; LEMIV_effect: 
 % effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose. As we are using photons, we simply set the parameter to
 % 'none' thereby indicating the physical dose should be optimized.
 pln.bioOptimization = 'none';    
@@ -106,13 +106,13 @@ pln.runDAO        = 0;
 % and et voila our treatment plan is ready. Lets have a look at it:
 pln
 
-%% Generatet Beam Geometry STF
-% This acronym stands for steering file and comprises the complet beam geomtry along with 
+%% Generate Beam Geometry STF
+% This acronym stands for steering file and comprises the complete beam geometry along with 
 % ray position, beamlet positions, source to axis distance (SAD) etc.
 stf = matRad_generateStf(ct,cst,pln);
 
 %%
-% Let's display the beam geomtry information of the 6th beam
+% Let's display the beam geometry information of the 6th beam
 stf(6)
 
 %% Dose Calculation
@@ -120,7 +120,7 @@ stf(6)
 % later on inverse optimization.
 dij       = matRad_calcPhotonDose(ct,stf,pln,cst);
 
-%% Inverse Optimizaiton for IMRT
+%% Inverse Optimization for IMRT
 % The goal of the fluence optimization is to find a set of beamlet/pencil beam weights which yield the best possible
 % dose distribution according to the clinical objectives and constraints underlying the radiation treatment.
 % Once the optimization has finished, trigger once the GUI to visualize the optimized dose cubes.

@@ -17,10 +17,10 @@
 % In this example we will show 
 % (i) how to load patient data into matRad
 % (ii) how to setup a proton dose calculation 
-% (iii) how to inversly optimize the pencil beam intensities directly from command window in MATLAB.
+% (iii) how to inversely optimize the pencil beam intensities directly from command window in MATLAB.
 % (iv) how to re-optimize a treatment plan
 % (v) how to manipulate the CT cube by adding noise to the cube 
-% (vi) how to recalculated the dose considering the manipulated CT cube and the previously optimzed pencil beam intensities
+% (vi) how to recalculated the dose considering the manipulated CT cube and the previously optimized pencil beam intensities
 % (vii) how to compare the two results
 
 %% Patient Data Import
@@ -34,20 +34,20 @@ load('PROSTATE.mat');
 %%
 % Let's check the two variables, we have just imported. First, the 'ct' variable comprises the ct cube 
 % along with some meta information describing properties of the ct cube (cube dimensions,
-% resolution, number of CT scenarios). Please note that mutiple ct cubes
+% resolution, number of CT scenarios). Please note that multiple ct cubes
 % (e.g. 4D CT) can be stored in the cell array ct.cube{}
 ct
 
 %%
 % The 'cst' cell array defines volumes of interests along with information required for optimization.
-% Each row belongs to one certain VOI, whereas each column defines different proprties. Specifically, the second and third column 
-% show the name and the type of the structure. The tpe can be set to OAR, TARGET or IGNORED. The fourth column depicts a linear 
+% Each row belongs to one certain VOI, whereas each column defines different properties. Specifically, the second and third column 
+% show the name and the type of the structure. The type can be set to OAR, TARGET or IGNORED. The fourth column depicts a linear 
 % index vector depicting voxels in the CT cube that are covered by the corresponding VOI. In total, 17 structures are defined in the cst
 cst
 
 %%
-% The fifth column represents meta parameters used for optimization such as the overlap priority, which can be specified in double presision. 
-% A lower overlap priority indicates increased importance. In contrast, a higher overlap priority indicatets a strcture with lower importance. 
+% The fifth column represents meta parameters used for optimization such as the overlap priority, which can be specified in double precision. 
+% A lower overlap priority indicates increased importance. In contrast, a higher overlap priority indicates a structure with lower importance. 
 % The parameters alphaX and betaX depict the tissue's photon-radiosensitivity parameter of the linear quadratic model. These parameter
 % are required for biological treatment planning using a variable RBE. Let's output the meta optimization parameter of the rectum, which is stored in the eighth row:
 ixRectum = 8;
@@ -62,7 +62,7 @@ cst{ixRectum,6}
 
 
 %% Treatment Plan
-% The next step is to define your treatment plan labeld as 'pln'. This structure requires input from the treatment planner and defines 
+% The next step is to define your treatment plan labeled as 'pln'. This structure requires input from the treatment planner and defines 
 % the most important cornerstones of your treatment plan.
 
 %%
@@ -75,10 +75,10 @@ pln.radiationMode = 'protons';
 pln.machine       = 'Generic';
 
 %%
-% Define the flavour of biological optimization for treatment planning along with the quantity that should be used for
-% optimizaion. Possible values are (none: physical optimization; const_RBExD: constant RBE of 1.1; LEMIV_effect: 
+% Define the flavor of biological optimization for treatment planning along with the quantity that should be used for
+% optimization. Possible values are (none: physical optimization; const_RBExD: constant RBE of 1.1; LEMIV_effect: 
 % effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose. As we use protons, we follow here the clinical standard and use a constant 
-% relative biological effectivness of 1.1. Therefore we set bioOptimization to const_RBExD
+% relative biological effectiveness of 1.1. Therefore we set bioOptimization to const_RBExD
 pln.bioOptimization = 'const_RBExD';     
                                          
 %%
@@ -110,13 +110,13 @@ pln.runSequencing = 0;
 % and et voila our treatment plan is ready. Lets have a look at it:
 pln
 
-%% Generatet Beam Geometry STF
-% This acronym stands for steering file and comprises the complet beam geomtry along with 
+%% Generate Beam Geometry STF
+% This acronym stands for steering file and comprises the complete beam geometry along with 
 % ray position, pencil beam positions and energies, source to axis distance (SAD) etc.
 stf = matRad_generateStf(ct,cst,pln);
 
 %%
-% Let's display the beam geomtry information of the first beam
+% Let's display the beam geometry information of the first beam
 stf(1)
 
 %% Start the GUI for Visualization
@@ -129,15 +129,15 @@ matRadGUI
 % later on inverse optimization. 
 dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
-%% Inverse Optimizaiton for IMPT
+%% Inverse Optimization for IMPT
 % The goal of the fluence optimization is to find a set of bixel/spot weights which yield the best possible
 % dose distribution according to the clinical objectives and constraints underlying the radiation treatment
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Re-optimization
-% Let's calculte treatment plan quality indicators. As the rectum is
+% Let's calculate treatment plan quality indicators. As the rectum is
 % considered to be an organ at risk we especially what to pay attention to this structure and
-% show the dose level that is the deliviered to 5% percent of the rectum.
+% show the dose level that is the delivered to 5% percent of the rectum.
 cst       = matRad_indicatorWrapper(cst,pln,resultGUI);
 D5_rectum = cst{ixRectum,9}{1}.D5
 
@@ -191,9 +191,9 @@ figure,plot(profileOrginal,'LineWidth',2),grid on,hold on,
        
 %% Quantitative Comparison of results
 % Compare the two dose cubes using a gamma-index analysis. The gamma index
-% is a composite quality distribution equaly taking into account a dose difference and a distance to
-% criteria in order to reveal differences betweent two dose cubes.
-% A gamma-index value of smaller than 1 indicates a successfull test and a
+% is a composite quality distribution equally taking into account a dose difference and a distance to
+% criteria in order to reveal differences between two dose cubes.
+% A gamma-index value of smaller than 1 indicates a successful test and a
 % value greater than 1 illustrates a failed test.
 
 doseDifference   = 2;

@@ -17,7 +17,7 @@
 % In this example we will show 
 % (i) how to load patient data into matRad
 % (ii) how to setup a photon dose calculation based on the VMC++ Monte Carlo algorithm 
-% (iii) how to inversly optimize the beamlet intensities directly from command window in MATLAB. 
+% (iii) how to inversely optimize the beamlet intensities directly from command window in MATLAB. 
 % (iv) how to visualize the result
 
 %% Patient Data Import
@@ -31,19 +31,19 @@ load('BOXPHANTOM.mat');
 %%
 % Let's check the two variables, we have just imported. First, the 'ct' variable comprises the ct cube 
 % along with some meta information describing properties of the ct cube (cube dimensions,
-% resolution, number of CT scenarios). Please note that mutiple ct cubes
+% resolution, number of CT scenarios). Please note that multiple ct cubes
 % (e.g. 4D CT) can be stored in the cell array ct.cube{}
 ct
 
 %%
 % The 'cst' cell array defines volumes of interests along with information required for optimization.
-% Each row belongs to one certain VOI, whereas each column defines different proprties. Specifically, the second and third column 
-% show the name and the type of the structure. The tpe can be set to OAR, TARGET or IGNORED. The fourth column depicts a linear 
+% Each row belongs to one certain VOI, whereas each column defines different properties. Specifically, the second and third column 
+% show the name and the type of the structure. The type can be set to OAR, TARGET or IGNORED. The fourth column depicts a linear 
 % index vector depicting voxels in the CT cube that are covered by the corresponding VOI. In total, 2 structures are defined in the cst
 cst
 
 %% Treatment Plan
-% The next step is to define your treatment plan labeld as 'pln'. This structure requires input from the treatment planner and defines 
+% The next step is to define your treatment plan labeled as 'pln'. This structure requires input from the treatment planner and defines 
 % the most important cornerstones of your treatment plan.
 
 %%
@@ -56,8 +56,8 @@ pln.radiationMode = 'photons';
 pln.machine       = 'Generic';
 
 %%
-% Define the flavour of biological optimization along with the quantity that should be used for
-% optimizaion. Possible values are (none: physical optimization; const_RBExD: constant RBE of 1.1; LEMIV_effect: 
+% Define the flavor of biological optimization along with the quantity that should be used for
+% optimization. Possible values are (none: physical optimization; const_RBExD: constant RBE of 1.1; LEMIV_effect: 
 % effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose. As we are using photons, we simply set the parameter to
 % 'none' thereby indicating the physical dose should be optimized.
 pln.bioOptimization = 'none';    
@@ -65,7 +65,7 @@ pln.bioOptimization = 'none';
 
 %%
 % Now we have to set some beam parameters. We can define multiple beam angles for the
-% treatment and pass these to the plan as a vector.matRad will then interpret the vector as multiple beams.
+% treatment and pass these to the plan as a vector. matRad will then interpret the vector as multiple beams.
 % In this case, we define one single beam from 0 degree gantry angle and 0 degree couch angle.
 % Moreover, we set the bixelWidth to 10, which results in a beamlet size of 10 x 10 mm. The number of fractions
 % is set to 30. Be advised that matRad is always optimizing the fraction dose.
@@ -84,7 +84,7 @@ pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
 %%
 % Disable sequencing and direct aperture optimization (DAO) for now.
-% The application of the sequencing algorithm and DAO optimization is shown in a seperate example.
+% The application of the sequencing algorithm and DAO optimization is shown in a separate example.
 pln.runSequencing = 0;
 pln.runDAO        = 0;
 
@@ -92,8 +92,8 @@ pln.runDAO        = 0;
 % and et voila our treatment plan is ready. Lets have a look at it:
 pln
 
-%% Generatet Beam Geometry STF
-% This acronym stands for steering file and comprises the complet beam geomtry along with 
+%% Generate Beam Geometry STF
+% This acronym stands for steering file and comprises the complete beam geometry along with 
 % ray position, beamlet positions, source to axis distance (SAD) etc.
 stf = matRad_generateStf(ct,cst,pln);
 
@@ -105,7 +105,7 @@ stf = matRad_generateStf(ct,cst,pln);
 nCasePerBixel = 700;              
 dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,700,1);
 
-%% Inverse Optimizaiton for IMRT
+%% Inverse Optimization for IMRT
 % The goal of the fluence optimization is to find a set of bixel/spot weights which yield the best possible
 % dose distribution according to the clinical objectives and constraints underlying the radiation treatment.
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
