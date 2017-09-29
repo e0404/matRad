@@ -59,11 +59,20 @@ set(figureWait,'pointer','watch');
 dij.numOfBeams         = pln.numOfBeams;
 dij.numOfVoxels        = pln.numOfVoxels;
 dij.resolution         = ct.resolution;
-dij.numOfRaysPerBeam   = [stf(:).numOfRays];
-dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
-dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.dimensions         = pln.voxelDimensions;
 dij.numOfScenarios     = 1;
+dij.numOfRaysPerBeam   = [stf(:).numOfRays];
+dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
+
+% check if full dose influence data is required
+if calcDoseDirect 
+    weight                 = NaN*ones(dij.totalNumOfBixels,1);
+    dij.totalNumOfRays     = length(stf);
+    dij.columnSize         = length(stf);
+else
+    dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
+    dij.columnSize         = dij.totalNumOfBixels;
+end
 
 % set up arrays for book keeping
 dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
@@ -72,7 +81,7 @@ dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
 
 % Allocate space for dij.physicalDose sparse matrix
 for i = 1:dij.numOfScenarios
-    dij.physicalDose{i} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
+    dij.physicalDose{i} = spalloc(prod(ct.cubeDim),dij.columnSize,1);
 end
 
 % initialize weight vector in the case of forward dose calculation
@@ -181,6 +190,13 @@ for i = 1:dij.numOfBeams % loop over all beams
     
     fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
 
+    if calcDoseDirect
+        % remember beam and  bixel number
+        dij.beamNum(i)  = i;
+        dij.rayNum(i)   = i;
+        dij.bixelNum(i) = i;
+    end
+    
     bixelsPerBeam = 0;
 
     % convert voxel indices to real coordinates using iso center of beam i
@@ -307,10 +323,12 @@ for i = 1:dij.numOfBeams % loop over all beams
             waitbar(counter/dij.totalNumOfBixels);
         end
         
-        % remember beam and bixel number
-        dij.beamNum(counter)  = i;
-        dij.rayNum(counter)   = j;
-        dij.bixelNum(counter) = j;
+        if ~calcDoseDirect
+            % remember beam and bixel number
+            dij.beamNum(counter)  = i;
+            dij.rayNum(counter)   = j;
+            dij.bixelNum(counter) = j;
+        end
         
         % Ray tracing for beam i and bixel j
         [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
@@ -356,9 +374,12 @@ for i = 1:dij.numOfBeams % loop over all beams
         if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
             if calcDoseDirect
                 if isfield(stf(1).ray(1),'weight')
+                    
                     % score physical dose
-                    dij.physicalDose{1}(:,1) = dij.physicalDose{1}(:,1) + ...
-                                  sum(bsxfun(@times,weight(counter - mod(counter-1,numOfBixelsContainer):counter)',[doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}]),2);
+                    weightBlock = sparse(weight(counter - mod(counter-1,numOfBixelsContainer):counter)');
+                    
+                    dij.physicalDose{1}(:,i) = dij.physicalDose{1}(:,i) + [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}] * weightBlock';
+      
                   else
                     error(['No weight available for beam ' num2str(i) ', ray ' num2str(j)]);
                 end

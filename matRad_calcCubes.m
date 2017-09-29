@@ -36,14 +36,11 @@ end
 
 resultGUI.w = w;
 
-% calc dose and reshape from 1D vector to 2D array
-numOfBeams = dij.numOfBeams;
-
 % get bixel - beam correspondence  
-for i = 1:(numOfBeams + 1)
-    if i == (numOfBeams + 1)
+for i = 1:(dij.numOfBeams + 1)
+    if i == (dij.numOfBeams + 1)
       beamInfo(i).suffix = '';
-      beamInfo(i).logIx  = true(size(dij.beamNum));
+      beamInfo(i).logIx  = true(size(w));
     else
       beamInfo(i).suffix = ['_beam', num2str(i)];
       beamInfo(i).logIx  = (dij.beamNum == i);      
@@ -92,8 +89,8 @@ if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
     ix = b_x~=0;
 
     for i = 1:length(beamInfo)  
-       resultGUI.(['effect', beamInfo(i).suffix])       = full(dij.mAlphaDose{scenNum}    * (resultGUI.w .* beamInfo(i).logIx) + ...
-                                                              (dij.mSqrtBetaDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx)).^2);
+       wBeam = (resultGUI.w .* beamInfo(i).logIx);
+       resultGUI.(['effect', beamInfo(i).suffix])       = full(dij.mAlphaDose{scenNum} * wBeam + (dij.mSqrtBetaDose{scenNum} * wBeam).^2);
        resultGUI.(['effect', beamInfo(i).suffix])       = reshape(resultGUI.(['effect', beamInfo(i).suffix]),dij.dimensions);
     
        resultGUI.(['RBExDose', beamInfo(i).suffix])     = zeros(size(resultGUI.(['effect', beamInfo(i).suffix])));
@@ -104,10 +101,10 @@ if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
        resultGUI.(['alpha', beamInfo(i).suffix])        = zeros(dij.dimensions);
        resultGUI.(['beta',  beamInfo(i).suffix])        = zeros(dij.dimensions);
 
-       AlphaDoseCube                                    = full(dij.mAlphaDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx));
+       AlphaDoseCube                                    = full(dij.mAlphaDose{scenNum} * wBeam);
        resultGUI.(['alpha', beamInfo(i).suffix])(ix)    = AlphaDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix);
 
-       SqrtBetaDoseCube                                 = full(dij.mSqrtBetaDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx));
+       SqrtBetaDoseCube                                 = full(dij.mSqrtBetaDose{scenNum} * wBeam);
        resultGUI.(['beta', beamInfo(i).suffix])(ix)     = (SqrtBetaDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix)).^2;
     end
 end
