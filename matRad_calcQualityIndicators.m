@@ -42,7 +42,7 @@ if ~exist('refVol', 'var') || isempty(refVol)
 end
 
 if ~exist('refGy', 'var') || isempty(refGy)
-    refGy = linspace(0,max(doseCube(:)),6);
+    refGy = floor(linspace(0,max(doseCube(:)),6)*10)/10;
 end
 
 if exist('param','var')
@@ -53,10 +53,6 @@ else
    param.logLevel = 1;
 end
     
-if(nargin < 4)
-    refVol = [2 5 50 95 98];
-    refGy = linspace(0,max(doseCube(:)),6);
-end
 % calculate QIs per VOI
 for runVoi = 1:size(cst,1)
     
