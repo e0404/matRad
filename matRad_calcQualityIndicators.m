@@ -38,7 +38,7 @@ function QIcell = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,par
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if ~exist('refVol', 'var') || isempty(refVol)
-    refVol = [2 5 98 95];
+    refVol = [2 5 50 95 98];
 end
 
 if ~exist('refGy', 'var') || isempty(refGy)
@@ -54,7 +54,7 @@ else
 end
     
 if(nargin < 4)
-    refVol = [2 5 98 95];
+    refVol = [2 5 50 95 98];
     refGy = linspace(0,max(doseCube(:)),6);
 end
 % calculate QIs per VOI

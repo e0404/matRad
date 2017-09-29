@@ -56,6 +56,10 @@ numOfVois = size(cst,1);
 dvh{numOfVois,1} = [];
 for i = 1:numOfVois
     dvh{i,1} = [doseGrid; getDVHPoints(cst, i, doseCube, doseGrid, dvhType)];
+    if strcmp(dvhType, 'cum')
+        [~,argmin] = min(dvh{i,1}(2,:));
+        dvh{i,1}(2,argmin + 1:end) = NaN;
+    end
 end
 
     function dvh = getDVHPoints(cst, sIx, doseCube, dvhPoints, dvhType)
@@ -69,7 +73,7 @@ end
     switch dvhType
         case 'cum' % cummulative DVH
             for j = 1:n
-                dvh(j) = sum(doseInVoi > dvhPoints(j));
+                dvh(j) = sum(doseInVoi >= dvhPoints(j));
             end
 
         case 'diff' % differential DVH
