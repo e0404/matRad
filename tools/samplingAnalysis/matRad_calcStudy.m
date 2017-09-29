@@ -75,7 +75,7 @@ save(filename);
 cd(param.outputPath)
 mkdir(fullfile('report','data'));
 mkdir(fullfile('report','data','figures'));
-copyfile(fullfile(matRadPath,'tools','samplingAnalysis','main_template.tex'),'report/main.tex');
+copyfile(fullfile(matRadPath,'tools','samplingAnalysis','main_template.tex'),fullfile('report','main.tex'));
 
 % generate actual latex report
 matRad_latexReport(ct, cst, pln, nominalScenario, structureStat, doseStat, resultGUI, param);
