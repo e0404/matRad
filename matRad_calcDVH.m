@@ -48,7 +48,7 @@ if ~exist('doseGrid', 'var') || isempty(doseGrid)
     if strcmp(dvhType, 'cum')
         doseGrid = linspace(0,maxDose*1.05,n);
     elseif strcmp(dvhType, 'diff')
-        doseGrid = linspace(minDose * 1.05,maxDose*1.05,n);
+        doseGrid = linspace(0.01*maxDose,maxDose*1.05,n);
     end
 end
 
@@ -63,28 +63,29 @@ for i = 1:numOfVois
     end
 end
 
-    function dvh = getDVHPoints(cst, sIx, doseCube, dvhPoints, dvhType)
-    n = numel(dvhPoints);
-    dvh       = NaN * ones(1,n);
-    indices     = cst{sIx,4}{1};
-    numOfVoxels = numel(indices);
-
-    doseInVoi   = doseCube(indices);
-
-    switch dvhType
-        case 'cum' % cummulative DVH
-            for j = 1:n
-                dvh(j) = sum(doseInVoi >= dvhPoints(j));
-            end
-
-        case 'diff' % differential DVH
-            binning = (dvhPoints(2) - dvhPoints(1))/2;
-            for j = 1:n % differential DVH        
-                dvh(j) = sum(dvhPoints(j) + binning > doseInVoi & doseInVoi > dvhPoints(j) - binning);
-            end
-
-    end
-    dvh = dvh ./ numOfVoxels * 100;
-  end %eof getDVHPoints
-
 end %eof 
+
+function dvh = getDVHPoints(cst, sIx, doseCube, dvhPoints, dvhType)
+n = numel(dvhPoints);
+dvh       = NaN * ones(1,n);
+indices     = cst{sIx,4}{1};
+numOfVoxels = numel(indices);
+
+doseInVoi   = doseCube(indices);
+
+switch dvhType
+    case 'cum' % cummulative DVH
+        for j = 1:n
+            dvh(j) = sum(doseInVoi >= dvhPoints(j));
+        end
+
+    case 'diff' % differential DVH
+        binning = (dvhPoints(2) - dvhPoints(1))/2;
+        for j = 1:n % differential DVH        
+            dvh(j) = sum(dvhPoints(j) + binning > doseInVoi & doseInVoi > dvhPoints(j) - binning);
+        end
+
+end
+dvh = dvh ./ numOfVoxels * 100;
+end %eof getDVHPoints
+

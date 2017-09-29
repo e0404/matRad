@@ -64,12 +64,15 @@ colorMx    = colorMx(1:floor(64/numOfVois):64,:);
 
 lineStyles = {'-',':','--','-.'};
 
+maxDVH = 0;
+
 for i = 1:numOfVois
     if cst{i,5}.Visible
         dvh = cst{i,8}{scenIx};
         subplot(211);
         plot(dvh(1,:),dvh(2,:),'LineWidth',4,'Color',colorMx(i,:), ...
             'LineStyle',lineStyles{lineStyleIndicator},'DisplayName',cst{i,2});hold on
+        maxDVH = max(maxDVH,max(dvh(2,:)));
     end
 end
 
@@ -79,7 +82,7 @@ set(myLegend,'FontSize',10,'Interpreter','none');
 legend boxoff
 
 
-ylim([0 110]);
+ylim([0 1.1*maxDVH]);
 xlim([0 1.2*max(dvh(1,:))]);
 set(gca,'YTick',0:20:120)
 
