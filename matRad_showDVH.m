@@ -112,6 +112,15 @@ for i = 1:numOfVois
     QI = [QI; cst{i,9}{scenIx}];
 end
 
-set(table,'ColumnName',fieldnames(QI));
+% remove underscore from display
+indicatorNames = fieldnames(QI);
+for i = 1:numel(indicatorNames)
+    ix = find(indicatorNames{i}(4:end) == '_');
+    if ~isempty(ix)
+        indicatorNames{i}(ix+3) = '.';
+    end
+end
+
+set(table,'ColumnName',indicatorNames);
 set(table,'Data',(squeeze(struct2cell(QI)))');
 
