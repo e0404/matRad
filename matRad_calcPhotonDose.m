@@ -65,11 +65,6 @@ dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 
-% set up arrays for book keeping
-dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
-dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
-dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
-
 % check if full dose influence data is required
 if calcDoseDirect 
     columnSize           = length(stf);
@@ -78,6 +73,11 @@ else
     columnSize           = dij.totalNumOfBixels;
     numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 end
+
+% set up arrays for book keeping
+dij.bixelNum = NaN*ones(columnSize,1);
+dij.rayNum   = NaN*ones(columnSize,1);
+dij.beamNum  = NaN*ones(columnSize,1);
 
 % Allocate space for dij.physicalDose sparse matrix
 for i = 1:dij.numOfScenarios
@@ -387,10 +387,3 @@ try
 catch
 end
 
-
-if calcDoseDirect
-  % remember beam and  bixel number
-  dij.beamNum    = (1:length(stf))';
-  dij.rayNum     = (1:length(stf))';
-  dij.bixelNum   = (1:length(stf))';
-end
