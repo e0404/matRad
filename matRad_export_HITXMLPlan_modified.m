@@ -253,7 +253,7 @@ end
     if newIES % new IES
         %check if enough particles in IES
         if(sum(tmpIES.voxel_nbParticles(:)) < minNrParticlesIES)
-            fprintf(['Not enough particles in IES' num2str(rayIESenergy) 'deleted']);
+            disp(['Not enough particles in IES' num2str(rayIESenergy) 'in beam' num2str(i) ':deleted']);
         else    
         
         iesFocus = machine.data(energyIx).initFocus.SisFWHMAtIso(rayIESfocusIx);

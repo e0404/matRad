@@ -21,6 +21,12 @@ D.name = {'(A)', '(B)', '(A)-(B)', '(C)', '(D)', '(C)-(D)','(A)-(C)', '(B)-(D)',
 D.isolines = {1, 1, 0, 1, 1, 0, 0, 0, 0};
 D.fractions = pln.numOfFractions;  
 
+% richtiges cst???
+% for i = 1:size(cst, 1)
+%     cst{i,5}.betaX = 0.05;  %0.05 0.01
+% end
+
+
 pln.bioOptimization = 'const_RBExD';
 pln = matRad_getBioModel(pln);
 [cst,pln] = matRad_setPlanUncertainties(ct,cst,pln);

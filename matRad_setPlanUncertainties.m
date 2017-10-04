@@ -24,7 +24,7 @@ if pln.robOpt
    multScen.shiftCombType        = 'individual';   % individual: no combination of shift scenarios, combined: combine shift scenarios, allcombined: create every possible shift combination
    multScen.shiftGen1DIsotropy   = '+-';           % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
 
-   multScen.numOfRangeShiftScen  = 0;              % number of absolute and/or relative range scnearios. if absolute and relative range scenarios are defined then relative and absolute errors are combined
+   multScen.numOfRangeShiftScen  = 2;              % number of absolute and/or relative range scnearios. if absolute and relative range scenarios are defined then relative and absolute errors are combined
    multScen.absRangeShift        = 0;              % maximum absolute over and undershoot in mm
    multScen.rangeAbsSD           = 1;              % SD of normal distribution
    multScen.relRangeShift        = 3.5;            % maximum relative over and undershoot in %
@@ -46,7 +46,7 @@ else
 
    multScen.numOfRangeShiftScen  = 0;              % number of absolute and/or relative range scnearios. if absolute and relative range scenarios are defined then relative and absolute errors are combined
    multScen.maxAbsRangeShift     = 0;              % maximum absolute over and undershoot in mm
-   multScen.maxRelRangeShift     = 0;              % maximum relative over and undershoot in %
+   multScen.maxRelRangeShift     = 5;              % maximum relative over and undershoot in %
    multScen.rangeGenType         = 'equidistant';  % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
    multScen.ScenCombType         = 'individual';   % individual: no combination of scenarios, allcombined: combine all scenarios
  

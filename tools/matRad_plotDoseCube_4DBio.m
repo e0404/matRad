@@ -34,6 +34,7 @@ indicesPTV = cst{4,4}{1};  %PTV
 numOfVoxels = numel(indices);
 numOfVoxelsPTV = numel(indicesPTV);
 
+indicesLivermGTV = cst{6,4}{1};  %Liver-GTV
 
 for i = 1:9
     if D.isolines{i} 
@@ -41,6 +42,7 @@ for i = 1:9
     relevantDose = D.data{i};
     doseInVoi    = sort(D.data{i}(indices));
     doseInPTV    = sort(D.data{i}(indicesPTV));
+    doseInLiver = sort(D.data{i}(indicesLivermGTV));
     
     refGy = round(linspace(1,round(max(relevantDose(:))),3));
     
@@ -62,6 +64,8 @@ for i = 1:9
     
     D.V95GTV{i} = VX(2*0.95);  %für 2 Gy prescribed
     D.V107GTV{i} = VX(2*1.07);
+    
+    D.meanLivermGTV{i} = mean(doseInLiver);
     end
 end
 
@@ -192,3 +196,29 @@ end
 legend(legendName)
 title('DVH Liver')
 end
+
+figure
+n=1000;
+c = 1;
+legendName{c} = D.name{1};
+for i=1:9    
+if D.isolines{i} 
+dvhPointsOpt = linspace(0,max(D.data{i}(:))*1.05,n);
+dvh       = NaN * ones(1,n);
+indicesLiver     = cst{6,4}{1};  %Liver -GTV
+numOfVoxels = numel(indicesLiver);
+doseInVoi   = D.data{i}(indicesLiver); 
+for j = 1:n
+    dvh(j) = sum(doseInVoi > dvhPointsOpt(j));
+end
+dvhOpt = dvh ./ numOfVoxels * 100;
+  
+    plot(dvhPointsOpt, dvhOpt, 'LineWidth', 1.5);hold on
+legendName{c} = D.name{i};
+    c = c+1;
+end
+end 
+legend(legendName)
+title('DVH Liver-GTV')
+end
+

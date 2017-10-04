@@ -105,7 +105,7 @@ if(minNrParticlesIES ~= 0)
                      voxel_nbParticles = round(1e6*voxel_nbParticles);
 
                     % check whether there are (enough) particles for beam delivery
-                    if (voxel_nbParticles>pln.minNrParticles)
+                    if (voxel_nbParticles>=pln.minNrParticles)
                         NrParticlesIES = NrParticlesIES + voxel_nbParticles;
                         tmpBixelIndex(counter) = bixelIndex;
                         counter = counter +1;

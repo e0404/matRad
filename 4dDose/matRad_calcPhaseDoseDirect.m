@@ -109,6 +109,7 @@ for p=1:NumOfPhases
       end
  
       ctPhase.cube{1} = ct.cube{1,p};
+      disp(['Dose calculation in CT phase ', num2str(p)]);
        resultHelp = matRad_calcDoseDirect(ctPhase,stf,pln,cst,w);
        resultGUI.phaseDose{p} = resultHelp.physicalDose;
 end
