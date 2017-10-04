@@ -39,6 +39,14 @@ function [mRealizations, cstSamp, pln, nominalScenario]  = matRad_sampling(ct,st
 pln.sampling      = true;
 pln.robOpt        = false;
 
+% calculate RBExDose
+if strcmp(pln.radiationMode, 'protons')
+    pln.bioOptimization = 'constRBE_RBExD';
+else strcmp(pln.radiationMode, 'carbon')
+    pln.bioOptimization = 'LEM_RBExD';
+end
+pln.bioParam = matRad_bioModel(pln.radiationMode,pln.bioOptimization);
+
 if exist('param','var')
     if ~isfield(param,'logLevel')
        param.logLevel = 1;
