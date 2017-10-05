@@ -49,7 +49,7 @@ color(:,2) = 0;
 for i=1:numOfBeams
 
     % open new figure for every beam
-    figure
+    figure('units','inches')
 
     % get the MLC dimensions for this beam
     minX = apertureInfo.beam(i).MLCWindow(1);
@@ -68,6 +68,8 @@ for i=1:numOfBeams
     
     subplotColumns = ceil(apertureInfo.beam(i).numOfShapes/2);
     subplotLines   = ceil(apertureInfo.beam(i).numOfShapes/subplotColumns);
+    %adjust figure position
+    set(gcf,'pos',[0 0 1.8*subplotColumns 3*subplotLines])
     
     % loop over all shapes of the beam 
     for j = 1:apertureInfo.beam(i).numOfShapes
