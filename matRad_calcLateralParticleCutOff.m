@@ -30,6 +30,11 @@ function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if cutOffLevel <= 0.98
+   warning('a lateral cut off below 0.98 may result in an inaccurate dose calculation') 
+end
+
 TypeOfCutOffCalc = '2D'; % 'classic','2D','3D',
 LcutDefaultSigma = 3.5;  % in sigma units - this value is only used by the classica approach - only 0.2% of fluence is missed when using 3.5
 conversionFactor = 1.6021766208e-02;
@@ -43,7 +48,7 @@ if (cutOffLevel < 0 || cutOffLevel > 0.9999) && (cutOffLevel ~= 1)
    cutOffLevel = 0.99;
 end
 % define some variables needed for the cutoff calculation
-vX     = [0 logspace(-1,4,1000)]; % [mm]
+vX = [0 logspace(-1,4,1000)]; % [mm]
 
 % integration steps
 r_mid          = (0.5*(vX(1:end-1) +  vX(2:end)))'; % [mm]
@@ -51,14 +56,11 @@ dr             = (vX(2:end) - vX(1:end-1))';
 radialDist_sq  = r_mid.^2;
 
 % number of depth points for which a lateral cutoff is determined
-NumDepthVal       = 25; 
+NumDepthVal       = 35; 
 epsilon           = 1e-5;  
 
 % define function handles for single and double gauss
-SG    =  @(vR,Sigma)((1/(2*pi*Sigma^2)).*exp(-(vR.^2)./(2*Sigma^2)));
-DG    =  @(vR,Z,w,Sigma1,Sigma2) Z*(((1-w)*SG(vR,Sigma1)) + (w*SG(vR,Sigma2)));
 CF    =  @(LcutSigma)(1/(1-exp((-LcutSigma^2)/2)));
-CDF   =  @(vR,Si) (1/2)*(1+erf(vR/(Si*(sqrt(2)))));
 
 % extract SSD for each bixel
 vSSDBixel = ones(1,length([stf.ray(:).energy]));
@@ -117,7 +119,7 @@ for energyIx = vEnergiesIx
     if strcmp(machine.meta.radiationMode,'protons')
         EnergySteps        = 0:(cumIntEnergy(end)/NumDepthVal):cumIntEnergy(end);
     else
-        peakTailRelation   = 0.4;
+        peakTailRelation   = 0.5;
         NumDepthValToPeak  = ceil(NumDepthVal*peakTailRelation);
         NumDepthValTail    = ceil(NumDepthVal*(1-peakTailRelation));
         EnergyStepsToPeak  = cumIntEnergy(peakIxOrg)/NumDepthValToPeak;
@@ -125,10 +127,9 @@ for energyIx = vEnergiesIx
         EnergySteps        = [0:EnergyStepsToPeak:cumIntEnergy(peakIxOrg) cumIntEnergy(peakIxOrg+1):EnergyStepsTail:cumIntEnergy(end)];
     end
     
-    depthValues        = matRad_interp1(cumIntEnergy,machine.data(energyIx).depths,EnergySteps);
-    
-    idd =   matRad_interp1(machine.data(energyIx).depths,idd_org,depthValues);          
-    [~,peakIx] = max(idd); 
+    depthValues  = matRad_interp1(cumIntEnergy,machine.data(energyIx).depths,EnergySteps);
+    idd          =  matRad_interp1(machine.data(energyIx).depths,idd_org,depthValues);          
+    [~,peakIx]   = max(idd); 
     
     % get inital beam width
     cnt = cnt +1 ;
@@ -228,7 +229,7 @@ if visBool
          mDose(:,:,kk) = reshape(matRad_calcParticleDoseBixel(radDepths(kk)*ones(numel(radialDist_sq),1), radialDist_sq, maxSSD,...
               maxfocusIx, baseData, rangeShifter, radiationMode),[dimX dimX]);
           
-         IX               = find((radDepths(kk) - machine.data(energyIx).offset - machine.data(energyIx).LatCutOff.depths)>=0,1,'last');
+         [~,IX]           = min(abs((machine.data(energyIx).LatCutOff.depths + machine.data(energyIx).offset) - radDepths(kk)));
          TmpCutOff        = machine.data(energyIx).LatCutOff.CutOff(IX);    
          vXCut            = vX(vX<=TmpCutOff);
          
@@ -256,7 +257,16 @@ if visBool
     subplot(311),h=imagesc(squeeze(mDose(midPos,:,:)));hold on;
     set(h,'AlphaData', .8*double(doseSlice>0));
     contour(doseSlice,vLevelsDose,'LevelListMode','manual','LineWidth',2);hold on
-    plot(machine.data(energyIx).LatCutOff.depths*sStep^-1, machine.data(energyIx).LatCutOff.CutOff * sStep^-1 + midPos,'rx');
+    
+    ax = gca;
+    ax.XTickLabelMode = 'manual';
+    ax.XTickLabel     = strsplit(num2str(ax.XTick*sStep + machine.data(energyIx).offset),' ')';
+    ax.YTickLabelMode = 'manual';
+    ax.YTickLabel     = strsplit(num2str(ax.YTick*sStep + machine.data(energyIx).offset),' ')';
+  
+    plot(1+(machine.data(energyIx).LatCutOff.depths)*sStep^-1,...
+          machine.data(energyIx).LatCutOff.CutOff * sStep^-1 + midPos,'rx');
+
     legend({'isodose 1%,5%,10% 90%','calculated cutoff'}) ,colorbar,set(gca,'FontSize',12),xlabel('z [mm]'),ylabel('x [mm]');
        
     entry = machine.data(energyIx);
@@ -267,7 +277,7 @@ if visBool
     end
     subplot(312),plot(machine.data(energyIx).depths,idd*conversionFactor,'k','LineWidth',2),grid on,hold on
                  plot(radDepths - machine.data(energyIx).offset,vDoseInt,'r--','LineWidth',2),hold on,
-                 plot(radDepths - machine.data(energyIx).offset,vDoseInt * TmpCompFac,'bx','LineWidth',2),hold on,
+                 plot(radDepths - machine.data(energyIx).offset,vDoseInt * TmpCompFac,'bx','LineWidth',1),hold on,
     legend({'original IDD',['cut off IDD at ' num2str(cutOffLevel) '%'],'cut off IDD with compensation'},'Location','northwest'),xlabel('z [mm]') ,set(gca,'FontSize',12)     
            
     totEnergy        = trapz(machine.data(energyIx).depths,machine.data(energyIx).Z*conversionFactor) ;
