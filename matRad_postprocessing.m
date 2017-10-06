@@ -1,4 +1,4 @@
-function resultGUI = matRad_postprocessing(resultGUI, dij, pln)
+function resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad postprosseing function accounting for
 %       minimum number of particles per spot
@@ -60,15 +60,25 @@ for i = 1:lw
 end
 
 %%calc dose (nicht backprojection da options nicht zur Verfügung steht,
-%%nicht calc cubes da sonst resultGUI.physicalDose überschrieben wird
-resultGUI.finalDose = reshape(dij.physicalDose{1}*w,dij.dimensions);
-%d = matRad_backProjection(w,dij,'none');
-
-%resultGUI.finalDose = reshape(d{1},dij.dimensions);
 resultGUI.w = w;
 
+if isequal(pln.bioOptimization,'none') %auf jeden Fall Teilchen
+    resultGUI.OptDose = resultGUI.physicalDose;
+else
+    resultGUI.OptRBExDose = resultGUI.RBExDose;
+end
+CalcCubes = matRad_calcCubes(w,dij,cst,1);
+
+if isequal(pln.bioOptimization,'none')
 %%calc difference to optimized dose (not necessary, can be deleted)
-relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.finalDose(:)))*100;
+resultGUI.physicalDose = CalcCubes.physicalDose;
+relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.OptDose(:)))*100;
+
+else
+        resultGUI.RBExDose = CalcCubes.RBExDose;
+    relIntDoseDif = (1-sum(resultGUI.RBExDose(:))/sum(resultGUI.OptRBExDose(:)))*100;
+
+end
 
 fprintf(['Relative difference in integral dose after deleting spots: ' num2str(relIntDoseDif) '%%\n']);
 
@@ -124,21 +134,29 @@ if(minNrParticlesIES ~= 0)
     end %beam
    
     
-%%calc dose
-%d = matRad_backProjection(w,dij,'none');
-resultGUI.finalDose = reshape(dij.physicalDose{1}*w,dij.dimensions);
-%resultGUI.finalDose = reshape(d{1},dij.dimensions);
 resultGUI.w = w;
 
+if isequal(pln.bioOptimization,'none') %auf jeden Fall Teilchen
+    resultGUI.OptDose = resultGUI.physicalDose;
+else
+    resultGUI.OptRBExDose = resultGUI.RBExDose;
+end
+CalcCubes = matRad_calcCubes(w,dij,cst,1);
+
+if isequal(pln.bioOptimization,'none')
 %%calc difference to optimized dose (not necessary, can be deleted)
-relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.finalDose(:)))*100;
+resultGUI.physicalDose = CalcCubes.physicalDose;
+relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.OptDose(:)))*100;
+
+else
+        resultGUI.RBExDose = CalcCubes.RBExDose;
+    relIntDoseDif = (1-sum(resultGUI.RBExDose(:))/sum(resultGUI.OptRBExDose(:)))*100;
+
+end
 
 fprintf(['Relative difference in integral dose after deleting IES: ' num2str(relIntDoseDif) '%%\n']);
 
-maxDosefinal = max(resultGUI.finalDose(:));
-maxDiff = max(resultGUI.physicalDose(:) - resultGUI.finalDose(:));
-    
-fprintf(['Absolute difference: ' num2str(maxDiff) 'Gy. Max dose: ' num2str(maxDosefinal) 'Gy\n']);
+
 end
                         
   
