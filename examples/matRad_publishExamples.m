@@ -48,7 +48,7 @@ for ixFile = 1:size(folderInfo,1)
     
 end
 
-
+delete workspace.mat
 
 
 
