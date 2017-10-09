@@ -33,6 +33,11 @@ function matRad_latexReport(ct, cst, pln, nominalScenario, structureStat, doseSt
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+function [y, argmin] = cutAtArgmin(x)
+  [~,argmin] = min(x);
+  y = x(1:argmin);
+end
+
 if exist('param','var') && ~isempty(param)
     outputPath = param.reportPath;
 end
@@ -141,7 +146,9 @@ colors = jet(size(cst,1));
 hold off;
 for i = 1:size(cst,1)
     if cst{i,5}.Visible == true
-        h(1) = plot(nominalScenario.dvh{i}(1,:),nominalScenario.dvh{i}(2,:),'LineWidth',2, 'Color', colors(i,:), 'DisplayName', cst{i,2});      
+        [y, argmin] = cutAtArgmin(nominalScenario.dvh{i}(2,:));
+        x = nominalScenario.dvh{i}(1,1:argmin);        
+        h(1) = plot(x,y,'LineWidth',2, 'Color', colors(i,:), 'DisplayName', cst{i,2});      
         ylim([0 100]);
         if strcmp(pln.bioParam, 'RBExDose')
             xlabel('Dose RBE x [Gy]');
@@ -255,21 +262,19 @@ relativePath = fullfile('data','structures');
 
 for i = 1:size(cst,1)
     if cst{i,5}.Visible == true
-%         if mod(size(structureStat(1).dvhStat.percDVH,1),2) ~= 0
-%             error('Bands must always consists of upper and lower band.');
-%         else
-%             % num of confidence intervals
-%             numOfConf = size(structureStat(i).dvhStat.percDVH,1) / 2;
-%         end
         numOfConf = floor(size(structureStat(i).dvhStat.percDVH,1) / 2);
         % DVH
         doseGrid = structureStat(i).dvhStat.mean(1,:);
 
         % plot nominal plan
-        h(1) = plot(nominalScenario.dvh{i}(1,:),nominalScenario.dvh{i}(2,:),'LineWidth',2, 'Color', 'k', 'DisplayName', 'nominal');
+        [y, argmin] = cutAtArgmin(nominalScenario.dvh{i}(2,:));
+        x = nominalScenario.dvh{i}(1,1:argmin); 
+        h(1) = plot(x,y,'LineWidth',2, 'Color', 'k', 'DisplayName', 'nominal');
         hold on;
         % plot mean
-        h(2) = plot(structureStat(i).dvhStat.mean(1,:),structureStat(i).dvhStat.mean(2,:),'LineWidth',2, 'Color', 'b', 'DisplayName', '\mu');
+        [y, argmin] = cutAtArgmin(structureStat(i).dvhStat.mean(2,:));
+        x = structureStat(i).dvhStat.mean(1,1:argmin); 
+        h(2) = plot(x,y,'--','LineWidth',2, 'Color', 'k', 'DisplayName', '\mu');
         % plot dvh confidence bands
         % colors
         colors = jet(numOfConf);

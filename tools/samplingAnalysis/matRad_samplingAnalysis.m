@@ -80,18 +80,18 @@ end
         
         dvhStat.mean(1,:) = doseGrid;
         dvhStat.mean(2,:) = wMean(dvhMat,w);
-        [~,argmin] = min(dvhStat.mean(2,:));
-        dvhStat.mean(2,argmin + 1:end) = NaN;
+        % [~,argmin] = min(dvhStat.mean(2,:));
+        % dvhStat.mean(2,argmin + 1:end) = NaN;
         
         dvhStat.min(1,:) = doseGrid;
         dvhStat.min(2,:) = min(dvhMat);
-        [~,argmin] = min(dvhStat.min(2,:));
-        dvhStat.min(2,argmin + 1:end) = NaN;
+        % [~,argmin] = min(dvhStat.min(2,:));
+        % dvhStat.min(2,argmin + 1:end) = NaN;
         
         dvhStat.max(1,:) = doseGrid;
         dvhStat.max(2,:) = max(dvhMat);
-        [~,argmin] = min(dvhStat.max(2,:));
-        dvhStat.max(2,argmin + 1:end) = NaN;
+        % [~,argmin] = min(dvhStat.max(2,:));
+        % dvhStat.max(2,argmin + 1:end) = NaN;
         
         dvhStat.std(1,:) = doseGrid;
         dvhStat.std(2,:) = std(dvhMat,w);
@@ -99,11 +99,8 @@ end
         dvhStat.percDVH = NaN * ones(numel(percentiles),size(dvh{1},2));
         
         for j = 1:size(dvhMat,2)
-            wQ =  matRad_weightedQuantile(dvhMat(:,j), percentiles, w', false, true);
+            wQ =  matRad_weightedQuantile(dvhMat(:,j), percentiles, w', false, 'nearest');
             dvhStat.percDVH(:,j) = wQ;
-            if sum(wQ == 0) == numel(percentiles)
-                break;
-            end
         end
 
     end % eof calcDVHStat
@@ -125,7 +122,7 @@ end
                 qiStatH(2).(fields{j}) = min([qiStruct(:).(fields{j})]);
                 qiStatH(3).(fields{j}) = max([qiStruct(:).(fields{j})]);
                 qiStatH(4).(fields{j}) = std([qiStruct(:).(fields{j})],w);
-                wQ = matRad_weightedQuantile([qiStruct(:).(fields{j})], percentiles, w', false, true);
+                wQ = matRad_weightedQuantile([qiStruct(:).(fields{j})], percentiles, w', false, 'nearest');
                 for k = 1:numel(wQ)
                     sIx = k + 4;
                     qiStatH(sIx).(fields{j}) = wQ(k);

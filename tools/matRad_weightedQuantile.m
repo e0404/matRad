@@ -1,4 +1,4 @@
-function [wQ] = matRad_weightedQuantile(values, percentiles, weight, isSorted, extraPol)
+function wQ = matRad_weightedQuantile(values, percentiles, weight, isSorted, extraPolMethod)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad uncertainty analysis report generaator function
 % 
@@ -53,12 +53,11 @@ function [wQ] = matRad_weightedQuantile(values, percentiles, weight, isSorted, e
 
   V = values(ia);
   F = griddedInterpolant(x, V);
-  if ~exist('extraPolB', 'var') || isempty(extraPol)
+  if ~exist('extraPolMethod', 'var') || isempty(extraPolMethod)
     F.ExtrapolationMethod = 'none';
+  else
+      F.ExtrapolationMethod = extraPolMethod;
   end
   wQ = F(percentiles);
-
   
-  wQ = wQ';
-
 end % eof

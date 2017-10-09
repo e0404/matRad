@@ -38,6 +38,12 @@ else
    param.logLevel     = 4;
 end
 
+% require minimum number of scenarios to ensure proper statistics
+if multScen.numOfRangeShiftScen + sum(multScen.numOfShiftScen) < 12
+    warning('You use a very low number of scenarios. Proceeding is not recommended.');
+    pause(10);
+end
+
 %% load DICOM imported patient
 listOfMat = dir('*.mat');
 if numel(listOfMat) == 1
