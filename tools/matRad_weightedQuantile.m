@@ -3,16 +3,13 @@ function [wQ] = matRad_weightedQuantile(values, percentiles, weight, isSorted, e
 % matRad uncertainty analysis report generaator function
 % 
 % call
-%   latexReport(ct, cst, pln, nominalScenario, structureStat, param)
+%   matRad_weightedQuantile(values, percentiles, weight, isSorted, extraPol)
 %
 % input
 %   values:             random variable vector
 %   percentiles:        percentiles to be calculated
 %   weight:             (optional) weight vector (same length as values)
 %   isSorted:           (optional) bool: are the values sorted alreay?
-
-% output
-%   (binary)            a pdf report will be generated and saved
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -37,9 +34,6 @@ function [wQ] = matRad_weightedQuantile(values, percentiles, weight, isSorted, e
   if ~exist('weight', 'var') || isempty(weight)
     weight = ones(size(values));
   end
-  if ~exist('extraPolB', 'var') || isempty(extraPol)
-    extraPol = false;
-  end
   if ~(percentiles(:) >= 0 & percentiles(:) <= 1)
     error('Quantiles must not be outside [0, 1]');
   end
@@ -59,6 +53,9 @@ function [wQ] = matRad_weightedQuantile(values, percentiles, weight, isSorted, e
 
   V = values(ia);
   F = griddedInterpolant(x, V);
+  if ~exist('extraPolB', 'var') || isempty(extraPol)
+    F.ExtrapolationMethod = 'none';
+  end
   wQ = F(percentiles);
 
   

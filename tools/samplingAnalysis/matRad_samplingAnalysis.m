@@ -73,14 +73,25 @@ end
         doseGrid = dvh{1}(1,:);
         dvhMat = NaN * ones(numel(dvh),size(dvh{1},2));
         for j = 1:numel(dvh)
-            dvhMat(j,:) = dvh{j}(2,:);
+            dvhMat(j,:) = dvh{j}(2,:);            
         end
+        % for statistical reasons, treat NaN as 0
+        dvhMat(isnan(dvhMat)) = 0;
+        
         dvhStat.mean(1,:) = doseGrid;
         dvhStat.mean(2,:) = wMean(dvhMat,w);
+        [~,argmin] = min(dvhStat.mean(2,:));
+        dvhStat.mean(2,argmin + 1:end) = NaN;
+        
         dvhStat.min(1,:) = doseGrid;
         dvhStat.min(2,:) = min(dvhMat);
+        [~,argmin] = min(dvhStat.min(2,:));
+        dvhStat.min(2,argmin + 1:end) = NaN;
+        
         dvhStat.max(1,:) = doseGrid;
         dvhStat.max(2,:) = max(dvhMat);
+        [~,argmin] = min(dvhStat.max(2,:));
+        dvhStat.max(2,argmin + 1:end) = NaN;
         
         dvhStat.std(1,:) = doseGrid;
         dvhStat.std(2,:) = std(dvhMat,w);
@@ -90,7 +101,11 @@ end
         for j = 1:size(dvhMat,2)
             wQ =  matRad_weightedQuantile(dvhMat(:,j), percentiles, w', false, true);
             dvhStat.percDVH(:,j) = wQ;
+            if sum(wQ == 0) == numel(percentiles)
+                break;
+            end
         end
+
     end % eof calcDVHStat
 
     % qi statistics
