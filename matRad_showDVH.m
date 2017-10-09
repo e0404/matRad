@@ -69,6 +69,9 @@ maxDVH = 0;
 for i = 1:numOfVois
     if cst{i,5}.Visible
         dvh = cst{i,8}{scenIx};
+        % cut off after max dose has been reached
+        [~,argmin] = min(dvh(2,:));
+        dvh = dvh(:,1:argmin);
         subplot(211);
         plot(dvh(1,:),dvh(2,:),'LineWidth',4,'Color',colorMx(i,:), ...
             'LineStyle',lineStyles{lineStyleIndicator},'DisplayName',cst{i,2});hold on
