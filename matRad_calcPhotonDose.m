@@ -59,29 +59,33 @@ set(figureWait,'pointer','watch');
 dij.numOfBeams         = pln.numOfBeams;
 dij.numOfVoxels        = pln.numOfVoxels;
 dij.resolution         = ct.resolution;
-dij.numOfRaysPerBeam   = [stf(:).numOfRays];
-dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
-dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.dimensions         = pln.voxelDimensions;
 dij.numOfScenarios     = 1;
+dij.numOfRaysPerBeam   = [stf(:).numOfRays];
+dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
+dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
+
+% check if full dose influence data is required
+if calcDoseDirect 
+    numOfColumnsDij           = length(stf);
+    numOfBixelsContainer = 1;
+else
+    numOfColumnsDij           = dij.totalNumOfBixels;
+    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+end
 
 % set up arrays for book keeping
-dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
-dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
-dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
+dij.bixelNum = NaN*ones(numOfColumnsDij,1);
+dij.rayNum   = NaN*ones(numOfColumnsDij,1);
+dij.beamNum  = NaN*ones(numOfColumnsDij,1);
 
 % Allocate space for dij.physicalDose sparse matrix
 for i = 1:dij.numOfScenarios
-    dij.physicalDose{i} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
+    dij.physicalDose{i} = spalloc(prod(ct.cubeDim),numOfColumnsDij,1);
 end
 
 % Allocate memory for dose_temp cell array
-if calcDoseDirect
-    numOfBixelsContainer = 1;
-else
-    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
-end
-doseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
+doseTmpContainer     = cell(numOfBixelsContainer,dij.numOfScenarios);
 
 % take only voxels inside patient
 V = [cst{:,4}];
@@ -179,7 +183,14 @@ fprintf('matRad: Photon dose calculation...\n');
 for i = 1:dij.numOfBeams % loop over all beams
     
     fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
-
+    
+    % remember beam and bixel number
+    if calcDoseDirect
+        dij.beamNum(i)    = i;
+        dij.rayNum(i)     = i;
+        dij.bixelNum(i)   = i;
+    end
+    
     bixelsPerBeam = 0;
 
     % convert voxel indices to real coordinates using iso center of beam i
@@ -307,9 +318,11 @@ for i = 1:dij.numOfBeams % loop over all beams
         end
         
         % remember beam and bixel number
-        dij.beamNum(counter)  = i;
-        dij.rayNum(counter)   = j;
-        dij.bixelNum(counter) = j;
+        if ~calcDoseDirect
+           dij.beamNum(counter)  = i;
+           dij.rayNum(counter)   = j;
+           dij.bixelNum(counter) = j;
+        end
         
         % Ray tracing for beam i and bixel j
         [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
@@ -325,6 +338,7 @@ for i = 1:dij.numOfBeams % loop over all beams
             continue;
         end
 
+                
         % calculate photon dose for beam i and bixel j
         bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
                                                    machine.data.betas, ...
@@ -351,7 +365,7 @@ for i = 1:dij.numOfBeams % loop over all beams
             if calcDoseDirect
                 if isfield(stf(1).ray(1),'weight')
                     % score physical dose
-                    dij.physicalDose{1}(:,1) = dij.physicalDose{1}(:,1) + stf(i).ray(j).weight * doseTmpContainer{1,1};
+                    dij.physicalDose{1}(:,i) = dij.physicalDose{1}(:,i) + stf(i).ray(j).weight * doseTmpContainer{1,1};
                 else
                     error(['No weight available for beam ' num2str(i) ', ray ' num2str(j)]);
                 end
@@ -360,6 +374,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                 dij.physicalDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
             end
         end
+        
         
     end
 end
@@ -371,5 +386,4 @@ try
   pause(0.1);
 catch
 end
-
 
