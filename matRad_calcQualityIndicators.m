@@ -38,11 +38,11 @@ function QIcell = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,par
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if ~exist('refVol', 'var') || isempty(refVol)
-    refVol = [2 5 98 95];
+    refVol = [2 5 50 95 98];
 end
 
 if ~exist('refGy', 'var') || isempty(refGy)
-    refGy = linspace(0,max(doseCube(:)),6);
+    refGy = floor(linspace(0,max(doseCube(:)),6)*10)/10;
 end
 
 if exist('param','var')
@@ -53,10 +53,6 @@ else
    param.logLevel = 1;
 end
     
-if(nargin < 4)
-    refVol = [2 5 98 95];
-    refGy = linspace(0,max(doseCube(:)),6);
-end
 % calculate QIs per VOI
 for runVoi = 1:size(cst,1)
     
@@ -78,18 +74,18 @@ for runVoi = 1:size(cst,1)
         voiPrint = sprintf('%s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy)\n%27s', ...
                            voiPrint,QI(runVoi).mean,QI(runVoi).std,QI(runVoi).max,QI(runVoi).min,' ');
 
-        DX = @(x) doseInVoi(ceil((100-x)*0.01*numOfVoxels));
+        DX = @(x) matRad_interp1(linspace(0,1,numOfVoxels),doseInVoi,(100-x)*0.01);
         VX = @(x) numel(doseInVoi(doseInVoi >= x)) / numOfVoxels;
 
         % create VX and DX struct fieldnames at runtime and fill
         for runDX = 1:numel(refVol)
-            QI(runVoi).(strcat('D',num2str(refVol(runDX)))) = DX(refVol(runDX));
+            QI(runVoi).(strcat('D_',num2str(refVol(runDX)))) = DX(refVol(runDX));
             voiPrint = sprintf('%sD%d%% = %5.2f Gy, ',voiPrint,refVol(runDX),DX(refVol(runDX)));
         end
         voiPrint = sprintf('%s\n%27s',voiPrint,' ');
         for runVX = 1:numel(refGy)
             sRefGy = num2str(refGy(runVX),3);
-            QI(runVoi).(['V' strrep(sRefGy,'.','_') 'Gy']) = VX(refGy(runVX));
+            QI(runVoi).(['V_' strrep(sRefGy,'.','_') 'Gy']) = VX(refGy(runVX));
             voiPrint = sprintf(['%sV' sRefGy 'Gy = %6.2f%%, '],voiPrint,VX(refGy(runVX))*100);
         end
         voiPrint = sprintf('%s\n%27s',voiPrint,' ');

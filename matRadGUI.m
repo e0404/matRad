@@ -2741,7 +2741,7 @@ if ~strcmp(pln.bioOptimization,'none')
         resultGUI_SelectedCube.RBExDose     = resultGUI.RBExDose;
     else
         Idx    = find(SelectedCube == '_');
-        SelectedSuffix = SelectedCube(Idx:end);
+        SelectedSuffix = SelectedCube(Idx(1):end);
         resultGUI_SelectedCube.physicalDose = resultGUI.(['physicalDose' SelectedSuffix]);
         resultGUI_SelectedCube.RBExDose     = resultGUI.(['RBExDose' SelectedSuffix]);
     end
@@ -2752,7 +2752,12 @@ cst = evalin('base','cst');
 for i = 1:size(cst,1)
     cst{i,5}.Visible = handles.VOIPlotFlag(i);
 end
-matRad_showDVH(evalin('base','cst'), evalin('base','pln'));
+
+cst = matRad_indicatorWrapper(cst,pln,resultGUI_SelectedCube);
+
+matRad_showDVH(cst, evalin('base','pln'));
+
+assignin('base','cst',cst);
 
 % radio button: plot isolines labels
 function radiobtnIsoDoseLinesLabels_Callback(~, ~, handles)
@@ -2969,6 +2974,8 @@ if evalin('base','exist(''pln'',''var'')') && ...
    evalin('base','exist(''cst'',''var'')') && ...
    evalin('base','exist(''resultGUI'',''var'')')
 
+try
+
     % indicate that matRad is busy
     % change mouse pointer to hour glass 
     Figures = gcf;%findobj('type','figure');
@@ -3060,6 +3067,18 @@ if evalin('base','exist(''pln'',''var'')') && ...
     handles.rememberCurrAxes = true;   
 
     guidata(hObject,handles);
+
+catch ME
+    handles = showError(handles,{'CalcDoseCallback: Error in dose recalculation!',ME.message}); 
+
+    % change state from busy to normal
+    set(Figures, 'pointer', 'arrow');
+    set(InterfaceObj,'Enable','on');
+
+    guidata(hObject,handles);
+    return;
+
+end
     
 end
 

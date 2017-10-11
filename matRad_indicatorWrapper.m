@@ -53,7 +53,6 @@ else
    param.logLevel = 1;
 end
 
-
 dvh = matRad_calcDVH(cst,doseCube,'cum');
 qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param);
 
