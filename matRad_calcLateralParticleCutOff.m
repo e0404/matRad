@@ -48,7 +48,7 @@ if (cutOffLevel < 0 || cutOffLevel > 0.9999) && (cutOffLevel ~= 1)
    cutOffLevel = 0.99;
 end
 % define some variables needed for the cutoff calculation
-vX = [0 logspace(-1,4,1000)]; % [mm]
+vX = [0 logspace(-1,3,1200)]; % [mm]
 
 % integration steps
 r_mid          = (0.5*(vX(1:end-1) +  vX(2:end)))'; % [mm]
@@ -113,8 +113,8 @@ for energyIx = vEnergiesIx
     
     [~,peakIxOrg] = max(idd_org); 
     
-     % get indices for which a lateral cutoff should be calculated - always include peak position 
-    cumIntEnergy       = cumtrapz(machine.data(energyIx).depths,machine.data(energyIx).Z);
+     % get indices for which a lateral cutoff should be calculated
+    cumIntEnergy = cumtrapz(machine.data(energyIx).depths,machine.data(energyIx).Z);
     
     if strcmp(machine.meta.radiationMode,'protons')
         EnergySteps        = 0:(cumIntEnergy(end)/NumDepthVal):cumIntEnergy(end);
@@ -278,26 +278,30 @@ if visBool
     subplot(312),plot(machine.data(energyIx).depths,idd*conversionFactor,'k','LineWidth',2),grid on,hold on
                  plot(radDepths - machine.data(energyIx).offset,vDoseInt,'r--','LineWidth',2),hold on,
                  plot(radDepths - machine.data(energyIx).offset,vDoseInt * TmpCompFac,'bx','LineWidth',1),hold on,
-    legend({'original IDD',['cut off IDD at ' num2str(cutOffLevel) '%'],'cut off IDD with compensation'},'Location','northwest'),xlabel('z [mm]') ,set(gca,'FontSize',12)     
+    legend({'original IDD',['cut off IDD at ' num2str(cutOffLevel) '%'],'cut off IDD with compensation'},'Location','northwest'),
+    xlabel('z [mm]'),ylabel('[MeV cm^2 /(g * primary)]'),set(gca,'FontSize',12)     
            
     totEnergy        = trapz(machine.data(energyIx).depths,machine.data(energyIx).Z*conversionFactor) ;
     totEnergyCutOff  = trapz(radDepths,vDoseInt * TmpCompFac) ;
     relDiff          =  ((totEnergy/totEnergyCutOff)-1)*100;   
     title(['rel diff of integral dose ' num2str(relDiff) '%']);
     baseData.LatCutOff.CompFac = TmpCompFac;
- 
+    
+    subplot(313),
     if isfield(machine.data(energyIx),'sigma1')
-        subplot(313),
-        yyaxis left; 
-        plot(machine.data(energyIx).depths,(machine.data(energyIx).sigma1),'LineWidth',2),grid on,hold on
+        yyaxis left;
+        plot(machine.data(energyIx).LatCutOff.depths,machine.data(energyIx).LatCutOff.CutOff,'LineWidth',2),hold on
+        plot(machine.data(energyIx).depths,(machine.data(energyIx).sigma1),':','LineWidth',2),grid on,hold on,ylabel('mm')
         yyaxis right; 
-        plot(machine.data(energyIx).depths,(machine.data(energyIx).sigma2),'LineWidth',2),grid on,hold on
-        legend({'sigma1','sigma2'});
+        plot(machine.data(energyIx).depths,(machine.data(energyIx).sigma2),'-.','LineWidth',2),grid on,hold on,ylabel('mm')
+        legend({'Cutoff','sigma1','sigma2'});
     else
-        subplot(313),plot(machine.data(energyIx).depths,machine.data(energyIx).sigma,'LineWidth',2),grid on,hold on
-         legend({'sigma'});
+        yyaxis left;plot(machine.data(energyIx).LatCutOff.depths,machine.data(energyIx).LatCutOff.CutOff,'LineWidth',2),hold on,ylabel('mm')
+        yyaxis right;subplot(313),plot(machine.data(energyIx).depths,machine.data(energyIx).sigma,'LineWidth',2),grid on,hold on
+        legend({'Cutoff','sigma'});ylabel('mm')
     end
-    set(gca,'FontSize',12),xlabel('z [mm]')
+
+    set(gca,'FontSize',12),xlabel('z [mm]'),  ylabel('mm')
 
     % plot cutoff of different energies
     figure,set(gcf,'Color',[1 1 1]);
@@ -311,7 +315,6 @@ if visBool
     title(['cutoff level = ' num2str(cutOffLevel)]),
     ylim = get(gca,'Ylim');    set(gca,'Ylim',[0 ylim(2)+3]),    legend(cellLegend)
 end
-
 
 
 
