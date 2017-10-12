@@ -126,10 +126,10 @@ for energyIx = vEnergiesIx
         EnergyStepsTail    = (cumIntEnergy(end)-cumIntEnergy(peakIxOrg))/NumDepthValTail;
         EnergySteps        = [0:EnergyStepsToPeak:cumIntEnergy(peakIxOrg) cumIntEnergy(peakIxOrg+1):EnergyStepsTail:cumIntEnergy(end)];
     end
-    
-    depthValues  = matRad_interp1(cumIntEnergy,machine.data(energyIx).depths,EnergySteps);
-    idd          =  matRad_interp1(machine.data(energyIx).depths,idd_org,depthValues);          
-    [~,peakIx]   = max(idd); 
+    [cumIntEnergy,ix] = unique(cumIntEnergy);
+    depthValues       = matRad_interp1(cumIntEnergy,machine.data(energyIx).depths(ix),EnergySteps);
+    idd               =  matRad_interp1(machine.data(energyIx).depths,idd_org,depthValues);          
+    [~,peakIx]        = max(idd); 
     
     % get inital beam width
     cnt = cnt +1 ;
