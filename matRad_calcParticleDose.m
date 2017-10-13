@@ -299,22 +299,39 @@ for i = 1:length(stf) % loop over all beams
                     continue;
                 end
                 
+                % adjust radDepth according to range shifter
+                currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
+
+                % calculate initial focus sigma
+                sigmaIniAir = matRad_interp1(machine.data(energyIx).initFocus.dist (stf(i).ray(j).focusIx(k),:)', ...
+                                             machine.data(energyIx).initFocus.sigma(stf(i).ray(j).focusIx(k),:)',stf(i).ray(j).SSD);
+
+                % note: I think this should also go into the sigma rashi
+                % calculation
+                rashiSurfaceDist = stf(i).ray(j).SSD - stf(i).ray(j).rangeShifter(k).sourceRashiDistance;
+                
+                sigmaRashi = matRad_sigmaRashi(machine.data(energyIx), ...
+                                               stf(i).radiationMode, ...
+                                               stf(i).ray(j).rangeShifter(k).eqThickness, ...
+                                               rashiSurfaceDist);
+
+                % spot spezifisch
+                currSigmaIni_sq = scalingFac(i,j,k) * sigmaIniAir^2 + sigmaRashi^2;
+                
+                % spezifisch für Energy
+                currSigmaIni_sq = scalingFac(energyIx) * sigmaIniAir^2 + sigmaRashi^2;
+                
                 % calculate particle dose for bixel k on ray j of beam i
                 bixelDose = matRad_calcParticleDoseBixel(...
-                    radDepths(currIx), ...
+                    currRadDepths, ...
                     radialDist_sq(currIx), ...
-                    stf(i).ray(j).SSD, ...
-                    stf(i).ray(j).focusIx(k), ...
-                    machine.data(energyIx), ...
-                    stf(i).ray(j).rangeShifter(k), ...
-                    stf(i).radiationMode); 
-                
+                    currSigmaIni_sq, ...
+                    machine.data(energyIx));                 
   
                 % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
                 %relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose
                 %Type               = 'dose';
                 %[currIx,bixelDose] = matRad_DijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
-
                 
                 % Save dose for every bixel in cell array
                 doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelDose,dij.numOfVoxels,1);
