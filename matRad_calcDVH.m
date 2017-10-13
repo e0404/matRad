@@ -56,11 +56,6 @@ numOfVois = size(cst,1);
 dvh{numOfVois,1} = [];
 for i = 1:numOfVois
     dvh{i,1} = [doseGrid; getDVHPoints(cst, i, doseCube, doseGrid, dvhType)];
-    % cut off after max dose has been reached
-    if strcmp(dvhType, 'cum')
-        [~,argmin] = min(dvh{i,1}(2,:));
-        dvh{i,1}(2,argmin + 1:end) = NaN;
-    end
 end
 
 end %eof 
