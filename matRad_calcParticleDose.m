@@ -310,13 +310,10 @@ for i = 1:length(stf) % loop over all beams
                 % consider range shifter for protons if applicable
                 if stf(i).ray(j).rangeShifter(k).eqThickness > 0 && strcmp(pln.radiationMode,'protons')
                     
-                    % check if valid computation possible or range shifter to thick
-                    if stf(i).ray(j).rangeShifter(k).eqThickness / machine.data(energyIx).peakPos >= 0.95
-                        error('Computation of range shifter sigma invalid.');
-                    end
-                    
                     % compute!
-                    sigmaRashi = matRad_clacSigmaRashi(stf(i).ray(j).rangeShifter(k),SSD);
+                    sigmaRashi = matRad_calcSigmaRashi(machine.data(energyIx).energy, ...
+                                                       stf(i).ray(j).rangeShifter(k), ...
+                                                       stf(i).ray(j).SSD);
                               
                     % add to initial sigma in quadrature
                     sigmaIni_sq = sigmaIni_sq +  sigmaRashi^2;

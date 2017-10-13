@@ -1,4 +1,4 @@
-function sigmaRashi = matRad_calcSigmaRashi(rangeShifter,SSD)
+function sigmaRashi = matRad_calcSigmaRashi(energy,rangeShifter,SSD)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % calculation of additional beam broadening due to the use of range shifters (only for protons)
 % 
@@ -6,6 +6,7 @@ function sigmaRashi = matRad_calcSigmaRashi(rangeShifter,SSD)
 %   sigmaRashi = matRad_calcSigmaRashi(rangeShifter,SSD)
 %
 % input
+%   energy:       initial particle energy
 %   rangeShifter: structure defining range shifter geometry
 %   SSD:          source to surface distance
 %
