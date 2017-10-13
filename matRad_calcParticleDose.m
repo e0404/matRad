@@ -303,29 +303,31 @@ for i = 1:length(stf) % loop over all beams
                 currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
 
                 % calculate initial focus sigma
-                sigmaIniAir = matRad_interp1(machine.data(energyIx).initFocus.dist (stf(i).ray(j).focusIx(k),:)', ...
+                sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist (stf(i).ray(j).focusIx(k),:)', ...
                                              machine.data(energyIx).initFocus.sigma(stf(i).ray(j).focusIx(k),:)',stf(i).ray(j).SSD);
-
-                % note: I think this should also go into the sigma rashi
-                % calculation
-                rashiSurfaceDist = stf(i).ray(j).SSD - stf(i).ray(j).rangeShifter(k).sourceRashiDistance;
+                sigmaIni_sq = sigmaIni^2;
                 
-                sigmaRashi = matRad_sigmaRashi(machine.data(energyIx), ...
-                                               stf(i).radiationMode, ...
-                                               stf(i).ray(j).rangeShifter(k).eqThickness, ...
-                                               rashiSurfaceDist);
-
-                % spot spezifisch
-                currSigmaIni_sq = scalingFac(i,j,k) * sigmaIniAir^2 + sigmaRashi^2;
-                
-                % spezifisch für Energy
-                currSigmaIni_sq = scalingFac(energyIx) * sigmaIniAir^2 + sigmaRashi^2;
-                
+                % consider range shifter for protons if applicable
+                if stf(i).ray(j).rangeShifter(k).eqThickness > 0 && strcmp(pln.radiationMode,'protons')
+                    
+                    % check if valid computation possible or range shifter to thick
+                    if stf(i).ray(j).rangeShifter(k).eqThickness / machine.data(energyIx).peakPos >= 0.95
+                        error('Computation of range shifter sigma invalid.');
+                    end
+                    
+                    % compute!
+                    sigmaRashi = matRad_clacSigmaRashi(stf(i).ray(j).rangeShifter(k),SSD);
+                              
+                    % add to initial sigma in quadrature
+                    sigmaIni_sq = sigmaIni_sq +  sigmaRashi^2;
+                    
+                end
+                                
                 % calculate particle dose for bixel k on ray j of beam i
                 bixelDose = matRad_calcParticleDoseBixel(...
                     currRadDepths, ...
                     radialDist_sq(currIx), ...
-                    currSigmaIni_sq, ...
+                    sigmaIni_sq, ...
                     machine.data(energyIx));                 
   
                 % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
