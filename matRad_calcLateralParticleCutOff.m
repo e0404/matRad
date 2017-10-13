@@ -63,31 +63,52 @@ epsilon           = 1e-5;
 CF    =  @(LcutSigma)(1/(1-exp((-LcutSigma^2)/2)));
 
 % extract SSD for each bixel
-vSSDBixel = ones(1,length([stf.ray(:).energy]));
+vSSD = ones(1,length([stf.ray(:).energy]));
 cnt = 1;
 for i  = 1:length(stf.ray)
-    vSSDBixel(cnt:cnt+numel([stf.ray(i).energy])-1) = stf.ray(i).SSD;
+    vSSD(cnt:cnt+numel([stf.ray(i).energy])-1) = stf.ray(i).SSD;
     cnt = cnt + numel(stf.ray(i).energy);
 end
 
 % setup energy sigma look up table
-energySigmaLUT  = unique([[stf.ray(:).energy]; [stf.ray(:).focusIx] ; vSSDBixel]','rows');
+[energySigmaLUT,ixUnique]  = unique([[stf.ray(:).energy]; [stf.ray(:).focusIx] ; vSSD]','rows');
 rangeShifterLUT = [stf.ray(:).rangeShifter];
+rangeShifterLUT = rangeShifterLUT(1,ixUnique);
+% find the largest inital beam width considering foci, SSD and range shifter for each unique energy
 
-% calculate for each energy its inital beam width considering foci and SSD
 for i = 1:size(energySigmaLUT,1)
+   
     energyIx = find(ismember([machine.data(:).energy],energySigmaLUT(i,1)));
-    energySigmaLUT(i,4) = matRad_interp1(machine.data(energyIx).initFocus.dist(energySigmaLUT(i,2),:)',...
-                                  machine.data(energyIx).initFocus.sigma(energySigmaLUT(i,2),:)',...
+    currFoci = energySigmaLUT(i,2);
+    sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist(currFoci,:)',...
+                                  machine.data(energyIx).initFocus.sigma(currFoci,:)',...
                                   energySigmaLUT(i,3));
+    sigmaIni_sq = sigmaIni^2;
+    
+    % consider range shifter for protons if applicable
+    if  strcmp(machine.meta.radiationMode,'protons') && ~strcmp(machine.meta.machine,'Generic')
+
+        %get max range shift
+        % compute!
+        sigmaRashi = matRad_calcSigmaRashi(machine.data(energyIx).energy, ...
+                                           rangeShifterLUT(i), ...
+                                           energySigmaLUT(i,3));
+
+        % add to initial sigma in quadrature
+        sigmaIni_sq = sigmaIni_sq +  sigmaRashi.^2;
+
+    end                          
+                                                         
+    energySigmaLUT(i,4) = sigmaIni_sq;
+    
 end
 
 % find for each energy the broadest inital beam width
 uniqueEnergies = unique(energySigmaLUT(:,1));
-largestFocus4uniqueEnergies = NaN * ones(numel(uniqueEnergies),1);
+largestSigma4uniqueEnergies = NaN * ones(numel(uniqueEnergies),1);
 ix_Max                      = NaN * ones(numel(uniqueEnergies),1);
 for i = 1:numel(uniqueEnergies)
-    [largestFocus4uniqueEnergies(i), ix_Max(i)] = max(energySigmaLUT(uniqueEnergies(i) == energySigmaLUT(:,1),4));
+    [largestSigma4uniqueEnergies(i), ix_Max(i)] = max(energySigmaLUT(uniqueEnergies(i) == energySigmaLUT(:,1),4));
 end
 
 % get energy indices for looping
@@ -128,17 +149,13 @@ for energyIx = vEnergiesIx
     end
     [cumIntEnergy,ix] = unique(cumIntEnergy);
     depthValues       = matRad_interp1(cumIntEnergy,machine.data(energyIx).depths(ix),EnergySteps);
-    idd               =  matRad_interp1(machine.data(energyIx).depths,idd_org,depthValues);          
+    idd               = matRad_interp1(machine.data(energyIx).depths,idd_org,depthValues);          
     [~,peakIx]        = max(idd); 
     
-    % get inital beam width
+    
     cnt = cnt +1 ;
-    % % calculate maximum dose in spot
+    % % calculate dose in spot
     baseData                   = machine.data(energyIx);
-    maxfocusIx                 = energySigmaLUT(ix_Max(cnt),2);
-    maxSSD                     = energySigmaLUT(ix_Max(cnt),3);
-    radiationMode              = stf(1).radiationMode;
-    rangeShifter               = rangeShifterLUT(ix_Max(cnt));
     baseData.LatCutOff.CompFac = 1;   
   
     for j = 1:numel(depthValues)
@@ -147,7 +164,7 @@ for energyIx = vEnergiesIx
         machine.data(energyIx).LatCutOff.depths(j) = depthValues(j);
         
         radDepths      = (depthValues(j) + baseData.offset - epsilon) * ones(numel(r_mid),1);  
-        dose_r         = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, maxSSD, maxfocusIx, baseData, rangeShifter, radiationMode);
+        dose_r         = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, largestSigma4uniqueEnergies(cnt), baseData);
        
         if cutOffLevel == 1
             machine.data(energyIx).LatCutOff.CompFac = 1;
