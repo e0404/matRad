@@ -1,9 +1,9 @@
-function QIcell = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
+function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad QI calculation
 % 
 % call
-%   matRad_calcQualityIndicators(d,cst,refGy,refVol)
+%   qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
 %
 % input
 %   cst:                matRad cst struct
@@ -16,8 +16,8 @@ function QIcell = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,par
 %                       NOTE: Call either both or none!
 %
 % output
-%   various quality indicators like CI, HI (for targets) and DX, VX within 
-%   a structure set   
+%   qi                  various quality indicators like CI, HI (for 
+%                       targets) and DX, VX within a structure set   
 %
 % References
 %   van't Riet et. al., IJROBP, 1997 Feb 1;37(3):731-6.
@@ -65,27 +65,29 @@ for runVoi = 1:size(cst,1)
         
     if ~isempty(doseInVoi)
         
+        qi(runVoi).name = cst{runVoi,2};
+        
         % easy stats
-        QI(runVoi).mean = mean(doseInVoi);
-        QI(runVoi).std  = std(doseInVoi);
-        QI(runVoi).max  = doseInVoi(end);
-        QI(runVoi).min  = doseInVoi(1);
+        qi(runVoi).mean = mean(doseInVoi);
+        qi(runVoi).std  = std(doseInVoi);
+        qi(runVoi).max  = doseInVoi(end);
+        qi(runVoi).min  = doseInVoi(1);
 
         voiPrint = sprintf('%s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy)\n%27s', ...
-                           voiPrint,QI(runVoi).mean,QI(runVoi).std,QI(runVoi).max,QI(runVoi).min,' ');
+                           voiPrint,qi(runVoi).mean,qi(runVoi).std,qi(runVoi).max,qi(runVoi).min,' ');
 
         DX = @(x) matRad_interp1(linspace(0,1,numOfVoxels),doseInVoi,(100-x)*0.01);
         VX = @(x) numel(doseInVoi(doseInVoi >= x)) / numOfVoxels;
 
         % create VX and DX struct fieldnames at runtime and fill
         for runDX = 1:numel(refVol)
-            QI(runVoi).(strcat('D_',num2str(refVol(runDX)))) = DX(refVol(runDX));
+            qi(runVoi).(strcat('D_',num2str(refVol(runDX)))) = DX(refVol(runDX));
             voiPrint = sprintf('%sD%d%% = %5.2f Gy, ',voiPrint,refVol(runDX),DX(refVol(runDX)));
         end
         voiPrint = sprintf('%s\n%27s',voiPrint,' ');
         for runVX = 1:numel(refGy)
             sRefGy = num2str(refGy(runVX),3);
-            QI(runVoi).(['V_' strrep(sRefGy,'.','_') 'Gy']) = VX(refGy(runVX));
+            qi(runVoi).(['V_' strrep(sRefGy,'.','_') 'Gy']) = VX(refGy(runVX));
             voiPrint = sprintf(['%sV' sRefGy 'Gy = %6.2f%%, '],voiPrint,VX(refGy(runVX))*100);
         end
         voiPrint = sprintf('%s\n%27s',voiPrint,' ');
@@ -110,13 +112,13 @@ for runVoi = 1:size(cst,1)
                 % Conformity Index, fieldname contains reference dose
                 VTarget95 = sum(doseInVoi >= 0.95*referenceDose); % number of target voxels recieving dose >= 0.95 dPres
                 VTreated95 = sum(doseCube(:) >= 0.95*referenceDose);  %number of all voxels recieving dose >= 0.95 dPres ("treated volume")
-                QI(runVoi).(['CI_' StringReferenceDose 'Gy']) = VTarget95^2/(numOfVoxels * VTreated95); 
+                qi(runVoi).(['CI_' StringReferenceDose 'Gy']) = VTarget95^2/(numOfVoxels * VTreated95); 
 
                 % Homogeneity Index (one out of many), fieldname contains reference dose        
-                QI(runVoi).(['HI_' StringReferenceDose 'Gy']) = (DX(5) - DX(95))/referenceDose * 100;
+                qi(runVoi).(['HI_' StringReferenceDose 'Gy']) = (DX(5) - DX(95))/referenceDose * 100;
 
                 voiPrint = sprintf('%sCI = %6.4f, HI = %5.2f for reference dose of %3.1f Gy\n',voiPrint,...
-                                   QI(runVoi).(['CI_' StringReferenceDose 'Gy']),QI(runVoi).(['HI_' StringReferenceDose 'Gy']),referenceDose);
+                                   qi(runVoi).(['CI_' StringReferenceDose 'Gy']),qi(runVoi).(['HI_' StringReferenceDose 'Gy']),referenceDose);
             end
         end
         matRad_dispToConsole(voiPrint,param,'info','%s\n')
@@ -124,11 +126,6 @@ for runVoi = 1:size(cst,1)
     matRad_dispToConsole([num2str(cst{runVoi,1}) ' ' cst{runVoi,2} ' - No dose information.\n'],param,'info') 
     end
     
-end
-
-QIcell = cell(numel(QI),1);
-for i = 1:numel(QIcell)
-    QIcell{i} = QI(i);
 end
  
 end    

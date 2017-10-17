@@ -1,4 +1,4 @@
-function cst = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)
+function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad indictor wrapper
 % 
@@ -11,7 +11,9 @@ function cst = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)
 %   resultGUI:            matRad resultGUI struct
 %
 % output
-%   various quality indicators as well as dvh stored in cst
+%   dvh: matRad dvh result struct
+%   qi:  matRad quality indicator result struct
+%   graphical display of all results
 %
 % References
 %   -
@@ -54,18 +56,13 @@ else
 end
 
 dvh = matRad_calcDVH(cst,doseCube,'cum');
-qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param);
+qi  = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param);
 
-numOfScenarios = 1;
-for i = 1:size(cst,1)
-    % overload with scenarios
-    cst{i,8} = cell(numOfScenarios,1);
-    cst{i,9} = cell(numOfScenarios,1);
-    
-    cst{i,8}{1} = dvh{i};
-    cst{i,9}{1} = qi{i};
-end    
+figure
+subplot(2,1,1)
+matRad_showDVH(dvh,cst,pln);
+subplot(2,1,2)
+matRad_showQualityIndicators(qi);
 
 
-end % eof
 
