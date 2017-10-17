@@ -1521,13 +1521,9 @@ try
     
     pln = evalin('base','pln');
     ct  = evalin('base','ct');
-    cst  = evalin('base','cst');
     
     % optimize
     [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
-    
-    % calculate qi and dvh
-    cst = matRad_indicatorWrapper(cst,pln,resultGUIcurrentRun);
     
     %if resultGUI already exists then overwrite the "standard" fields
     AllVarNames = evalin('base','who');
@@ -1541,7 +1537,6 @@ try
         resultGUI = resultGUIcurrentRun;
     end
     assignin('base','resultGUI',resultGUI);
-    assignin('base','cst',cst);
 
     % set some values
     if handles.plane == 1
@@ -2753,9 +2748,7 @@ for i = 1:size(cst,1)
     cst{i,5}.Visible = handles.VOIPlotFlag(i);
 end
 
-cst = matRad_indicatorWrapper(cst,pln,resultGUI_SelectedCube);
-
-matRad_showDVH(cst, evalin('base','pln'));
+matRad_indicatorWrapper(cst,pln,resultGUI_SelectedCube);
 
 assignin('base','cst',cst);
 
