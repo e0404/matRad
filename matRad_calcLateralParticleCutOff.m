@@ -61,6 +61,8 @@ epsilon           = 1e-5;
 
 % define function handles for single and double gauss
 CF    =  @(LcutSigma)(1/(1-exp((-LcutSigma^2)/2)));
+% helper function for energy selection
+round2 = @(a,b)round(a*10^b)/10^b;
 
 % extract SSD for each bixel
 vSSD = ones(1,length([stf.ray(:).energy]));
@@ -70,26 +72,27 @@ for i  = 1:length(stf.ray)
     cnt = cnt + numel(stf.ray(i).energy);
 end
 
-% setup energy sigma look up table
+% setup energy, focus index, sigma look up table - only consider unique rows
 [energySigmaLUT,ixUnique]  = unique([[stf.ray(:).energy]; [stf.ray(:).focusIx] ; vSSD]','rows');
 rangeShifterLUT = [stf.ray(:).rangeShifter];
 rangeShifterLUT = rangeShifterLUT(1,ixUnique);
-% find the largest inital beam width considering foci, SSD and range shifter for each unique energy
 
+% find the largest inital beam width considering focus index, SSD and range shifter for each individual energy
 for i = 1:size(energySigmaLUT,1)
    
-    energyIx = find(ismember([machine.data(:).energy],energySigmaLUT(i,1)));
+    % find index of maximum used energy (round to keV for numerical reasons
+    energyIx = max(round2(energySigmaLUT(i,1),4)) == round2([machine.data.energy],4);
+    
     currFoci = energySigmaLUT(i,2);
     sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist(currFoci,:)',...
-                                  machine.data(energyIx).initFocus.sigma(currFoci,:)',...
-                                  energySigmaLUT(i,3));
+                              machine.data(energyIx).initFocus.sigma(currFoci,:)',...
+                              energySigmaLUT(i,3));
     sigmaIni_sq = sigmaIni^2;
     
     % consider range shifter for protons if applicable
-    if  strcmp(machine.meta.radiationMode,'protons') && ~strcmp(machine.meta.machine,'Generic')
+    if  strcmp(machine.meta.radiationMode,'protons') && rangeShifterLUT(i).eqThickness > 0  && ~strcmp(machine.meta.machine,'Generic')
 
         %get max range shift
-        % compute!
         sigmaRashi = matRad_calcSigmaRashi(machine.data(energyIx).energy, ...
                                            rangeShifterLUT(i), ...
                                            energySigmaLUT(i,3));
@@ -103,24 +106,22 @@ for i = 1:size(energySigmaLUT,1)
     
 end
 
-% find for each energy the broadest inital beam width
-uniqueEnergies = unique(energySigmaLUT(:,1));
-largestSigma4uniqueEnergies = NaN * ones(numel(uniqueEnergies),1);
-ix_Max                      = NaN * ones(numel(uniqueEnergies),1);
+% find for each individual energy the broadest inital beam width
+uniqueEnergies                = unique(energySigmaLUT(:,1));
+largestSigmaSq4uniqueEnergies = NaN * ones(numel(uniqueEnergies),1);
+ix_Max                        = NaN * ones(numel(uniqueEnergies),1);
 for i = 1:numel(uniqueEnergies)
-    [largestSigma4uniqueEnergies(i), ix_Max(i)] = max(energySigmaLUT(uniqueEnergies(i) == energySigmaLUT(:,1),4));
+    [largestSigmaSq4uniqueEnergies(i), ix_Max(i)] = max(energySigmaLUT(uniqueEnergies(i) == energySigmaLUT(:,1),4));
 end
 
 % get energy indices for looping
 vEnergiesIx = find(ismember([machine.data(:).energy],uniqueEnergies(:,1)));
-
-cnt = 0;    
+cnt         = 0;    
 
 % loop over all entries in the machine.data struct
 for energyIx = vEnergiesIx
    
-    % set default depth cut off - finite value will be set during first
-    % iteration
+    % set default depth cut off - finite value will be set during first iteration
     depthDoseCutOff = inf;
 
     % get the current integrated depth dose profile
@@ -134,24 +135,24 @@ for energyIx = vEnergiesIx
     
     [~,peakIxOrg] = max(idd_org); 
     
-     % get indices for which a lateral cutoff should be calculated
-    cumIntEnergy = cumtrapz(machine.data(energyIx).depths,machine.data(energyIx).Z);
+    % get indices for which a lateral cutoff should be calculated
+    cumIntEnergy = cumtrapz(machine.data(energyIx).depths,idd_org);
     
     if strcmp(machine.meta.radiationMode,'protons')
-        EnergySteps        = 0:(cumIntEnergy(end)/NumDepthVal):cumIntEnergy(end);
+        vEnergySteps        = 0:(cumIntEnergy(end)/NumDepthVal):cumIntEnergy(end);
     else
         peakTailRelation   = 0.5;
-        NumDepthValToPeak  = ceil(NumDepthVal*peakTailRelation);
-        NumDepthValTail    = ceil(NumDepthVal*(1-peakTailRelation));
+        NumDepthValToPeak  = ceil(NumDepthVal*peakTailRelation);                                                                          % number of depth values from 0 to peak position
+        NumDepthValTail    = ceil(NumDepthVal*(1-peakTailRelation));                                                                      % number of depth values behind peak position
         EnergyStepsToPeak  = cumIntEnergy(peakIxOrg)/NumDepthValToPeak;
         EnergyStepsTail    = (cumIntEnergy(end)-cumIntEnergy(peakIxOrg))/NumDepthValTail;
-        EnergySteps        = [0:EnergyStepsToPeak:cumIntEnergy(peakIxOrg) cumIntEnergy(peakIxOrg+1):EnergyStepsTail:cumIntEnergy(end)];
+        vEnergySteps       = [0:EnergyStepsToPeak:cumIntEnergy(peakIxOrg) cumIntEnergy(peakIxOrg+1):EnergyStepsTail:cumIntEnergy(end)];
     end
+    
     [cumIntEnergy,ix] = unique(cumIntEnergy);
-    depthValues       = matRad_interp1(cumIntEnergy,machine.data(energyIx).depths(ix),EnergySteps);
+    depthValues       = matRad_interp1(cumIntEnergy,machine.data(energyIx).depths(ix),vEnergySteps);
     idd               = matRad_interp1(machine.data(energyIx).depths,idd_org,depthValues);          
     [~,peakIx]        = max(idd); 
-    
     
     cnt = cnt +1 ;
     % % calculate dose in spot
@@ -163,9 +164,11 @@ for energyIx = vEnergiesIx
         % save depth value
         machine.data(energyIx).LatCutOff.depths(j) = depthValues(j);
         
-        radDepths      = (depthValues(j) + baseData.offset - epsilon) * ones(numel(r_mid),1);  
-        dose_r         = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, largestSigma4uniqueEnergies(cnt), baseData);
+        radDepths      = (depthValues(j) + baseData.offset - epsilon) * ones(numel(r_mid),1); 
+        
+        dose_r         = matRad_calcParticleDoseBixel(depthValues(j) + baseData.offset, radialDist_sq, largestSigmaSq4uniqueEnergies(cnt), baseData);
        
+             
         if cutOffLevel == 1
             machine.data(energyIx).LatCutOff.CompFac = 1;
             machine.data(energyIx).LatCutOff.CutOff  = Inf;
@@ -222,10 +225,9 @@ if visBool
     energyIx = vEnergiesIx(subIx);
     
     baseData       = machine.data(energyIx);
-    maxfocusIx     = energySigmaLUT(ix_Max(subIx),2);
+    focusIx        = energySigmaLUT(ix_Max(subIx),2);
     maxSSD         = energySigmaLUT(ix_Max(subIx),3);
     rangeShifter   = rangeShifterLUT(ix_Max(subIx));
-    radiationMode  = stf(1).radiationMode;
     TmpCompFac     = baseData.LatCutOff.CompFac;
     baseData.LatCutOff.CompFac = 1;
     
@@ -242,9 +244,26 @@ if visBool
     mDose         = zeros(dimX,dimX,numel(radDepths));
     vDoseInt      = zeros(numel(radDepths),1);
     
-    for kk = 1:numel(radDepths)          
-         mDose(:,:,kk) = reshape(matRad_calcParticleDoseBixel(radDepths(kk)*ones(numel(radialDist_sq),1), radialDist_sq, maxSSD,...
-              maxfocusIx, baseData, rangeShifter, radiationMode),[dimX dimX]);
+    for kk = 1:numel(radDepths)    
+          
+         % calculate initial focus sigma
+         sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist(focusIx,:)', ...
+                                   machine.data(energyIx).initFocus.sigma(focusIx,:)',maxSSD);
+         sigmaIni_sq = sigmaIni^2;
+
+         % consider range shifter for protons if applicable
+         if rangeShifter.eqThickness > 0 && strcmp(pln.radiationMode,'protons')
+
+              % compute!
+              sigmaRashi = matRad_calcSigmaRashi(machine.data(energyIx).energy,rangeShifter,maxSSD);
+
+              % add to initial sigma in quadrature
+              sigmaIni_sq = sigmaIni_sq +  sigmaRashi^2;
+
+         end
+                      
+       
+         mDose(:,:,kk) = reshape(matRad_calcParticleDoseBixel(radDepths(kk), radialDist_sq, sigmaIni_sq,baseData),[dimX dimX]);
           
          [~,IX]           = min(abs((machine.data(energyIx).LatCutOff.depths + machine.data(energyIx).offset) - radDepths(kk)));
          TmpCutOff        = machine.data(energyIx).LatCutOff.CutOff(IX);    
@@ -253,9 +272,9 @@ if visBool
          % integration steps
          r_mid_Cut        = (0.5*(vXCut(1:end-1) +  vXCut(2:end)))'; % [mm]
          dr_Cut           = (vXCut(2:end) - vXCut(1:end-1))';
-         radialDist_sqCut = r_mid_Cut.^2;     
-         dose_r_Cut       = matRad_calcParticleDoseBixel(radDepths(kk)*ones(numel(radialDist_sqCut),1), radialDist_sqCut(:), maxSSD,...
-                                 maxfocusIx, baseData, rangeShifter, radiationMode);
+         radialDist_sqCut = r_mid_Cut.^2;    
+         
+         dose_r_Cut       = matRad_calcParticleDoseBixel(radDepths(kk), radialDist_sqCut(:), sigmaIni_sq,baseData);
          
          cumAreaCut = cumsum(2*pi.*r_mid_Cut.*dose_r_Cut.*dr_Cut);  
          
@@ -266,7 +285,7 @@ if visBool
     
     % obtain maximum dose
     [~,peakixDepth] = max(machine.data(energyIx).Z); 
-    dosePeakPos = matRad_calcParticleDoseBixel(machine.data(energyIx).depths(peakixDepth), 0, maxSSD, maxfocusIx, baseData, rangeShifter, radiationMode);   
+    dosePeakPos = matRad_calcParticleDoseBixel(machine.data(energyIx).depths(peakixDepth), 0, sigmaIni_sq, baseData);   
     
     vLevelsDose = dosePeakPos.*[0.01 0.05 0.1 0.9];
     doseSlice   = squeeze(mDose(midPos,:,:));
