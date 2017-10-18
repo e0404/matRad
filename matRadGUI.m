@@ -603,6 +603,7 @@ switch RadIdentifier
         
         set(handles.btnRunSequencing,'Enable','on');
         set(handles.btnRunDAO,'Enable','on');
+        set(handles.radiobutton3Dconf,'Enable','on');
         set(handles.txtSequencing,'Enable','on');
         set(handles.editSequencingLevel,'Enable','on');
         
@@ -618,6 +619,7 @@ switch RadIdentifier
         set(handles.btnSetTissue,'Enable','off');
         set(handles.btnRunSequencing,'Enable','off');
         set(handles.btnRunDAO,'Enable','off');
+        set(handles.radiobutton3Dconf,'Enable','off');
         set(handles.txtSequencing,'Enable','off');
         set(handles.editSequencingLevel,'Enable','off');
         
@@ -631,6 +633,7 @@ switch RadIdentifier
         
         set(handles.btnRunSequencing,'Enable','off');
         set(handles.btnRunDAO,'Enable','off');
+        set(handles.radiobutton3Dconf,'Enable','off');
         set(handles.txtSequencing,'Enable','off');
         set(handles.editSequencingLevel,'Enable','off');
 end
@@ -1524,7 +1527,12 @@ try
     cst  = evalin('base','cst');
     
     % optimize
-    [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
+    if get(handles.radiobutton3Dconf,'Value') && strcmp(handles.Modalities{get(handles.popupRadMode,'Value')},'photons')
+        % conformal plan if photons and 3d conformal
+        [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(matRad_collapseDij(evalin('base','dij')),evalin('base','cst'),pln);        
+    else
+        [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
+    end
     
     % calculate qi and dvh
     cst = matRad_indicatorWrapper(cst,pln,resultGUIcurrentRun);
@@ -2481,9 +2489,11 @@ end
 %% enable stratification level input if radiation mode is set to photons
 if strcmp(pln.radiationMode,'photons')
     set(handles.txtSequencing,'Enable','on');
+    set(handles.radiobutton3Dconf,'Enable','on');
     set(handles.editSequencingLevel,'Enable','on');
 else
     set(handles.txtSequencing,'Enable','off');
+    set(handles.radiobutton3Dconf,'Enable','off');
     set(handles.editSequencingLevel,'Enable','off');
 end
 
@@ -4213,3 +4223,12 @@ set(hObject,'Value',1);
 
 
 guidata(hObject,handles);
+
+
+% --- Executes on button press in radiobutton3Dconf.
+function radiobutton3Dconf_Callback(hObject, eventdata, handles)
+% hObject    handle to radiobutton3Dconf (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of radiobutton3Dconf
