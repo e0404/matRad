@@ -1,5 +1,7 @@
 # General information
 
+[![Join the chat at https://gitter.im/e0404/matRad](https://badges.gitter.im/e0404/matRad.svg)](https://gitter.im/e0404/matRad?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ---
 
 matRad is an open source treatment planning system for radiation therapy written in Matlab. It is meant for educational and research purposes and supports planning of intensity-modulated radiation therapy for mutliple modalities. The source code is maintained by a development team at the German Cancer Reserach Center DKFZ in Heidelberg, Germany, and other contributors around the world. We are always looking for more people willing to help improve matRad. Do not hesitate and [get in touch](mailto:matrad@dkfz.de).
@@ -12,7 +14,7 @@ Copyright 2015 the matRad development team.
 
 matrad@dkfz.de
 
-All the elements of the compilation of matRad and Ipopt are free software. You can redistribute and/or modify matRad’s source code version provided as files with .m and .mat extension under the terms of the GNU GENERAL PUBLIC LICENSE Version 3 (GPL v3). You can also add to matRad the Ipopt functionality by using the precompiled mex files of the Ipopt optimizer in object code version which are licensed under the Eclipse Public License Version 1.0 (EPL v1.0), also made available for download via https://projects.coin-or.org/Ipopt.
+All the elements of the compilation of matRad and Ipopt are free software. You can redistribute and/or modify matRadâ€™s source code version provided as files with .m and .mat extension under the terms of the GNU GENERAL PUBLIC LICENSE Version 3 (GPL v3). You can also add to matRad the Ipopt functionality by using the precompiled mex files of the Ipopt optimizer in object code version which are licensed under the Eclipse Public License Version 1.0 (EPL v1.0), also made available for download via https://projects.coin-or.org/Ipopt.
 
 In addition, we provide a matlab standalone version of the compilation of matRad and Ipopt, where the files of matRad and Ipopt are licensed under GPL v3 and EPL v1.0 respectively. The matlab standalone version is meant to be used by students for learning and practicing scientific programming.
 
