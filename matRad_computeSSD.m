@@ -50,7 +50,7 @@ if strcmp(mode,'first')
                                  {ct.cube{1}});
             ixSSD = find(rho{1} > densityThreshold,1,'first');
 
-            if isempty(ixSSD)== 1
+            if ~isempty(ixSSD) && ixSSD(1) == 1
                 warning('Surface for SSD calculation starts directly in first voxel of CT\n');
             end
 

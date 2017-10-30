@@ -3,7 +3,7 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)
 % matRad dose calculation wrapper bypassing dij calculation
 % 
 % call
-%   dij = matRad_calcDoseDirect(ct,stf,pln,cst)
+%   resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst)
 %
 % input
 %   ct:         ct cube
@@ -37,6 +37,9 @@ calcDoseDirect = true;
 
 % copy bixel weight vector into stf struct
 if exist('w','var')
+    if sum([stf.totalNumOfBixels]) ~= numel(w)
+        error('weighting does not match steering information')
+    end
     counter = 0;
     for i = 1:pln.numOfBeams
         for j = 1:stf(i).numOfRays
