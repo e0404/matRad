@@ -36,15 +36,6 @@ function hessianMatrix = matRad_hessianFunc(dij,d_i,prescription,structure,d_ref
 
 numOfVoxels = numel(d_i);
 
-% if ismember(prescription.type, {'EUD',...
-%                         'min dose constraint','max dose constraint',...
-%                         'min EUD constraint','max EUD constraint',...
-%                         'max DVH constraint','min DVH constraint',...
-%                         'max DVH objective' ,'min DVH objective'})
-%                     
-%     error('Exact optimization not yet available for ''%s''!!!', prescription.type)
-% end
-
 if isequal(prescription.type, 'square underdosing') 
 
     % underdose : Dose minus prefered dose
@@ -71,143 +62,121 @@ elseif isequal(prescription.type, 'mean')
     % calculate Hessian
     hessianMatrix = sparse(zeros(dij.totalNumOfBixels));
     
-elseif isequal(prescription.type, 'EUD') 
-
-%     % get exponent for EUD
-%     exponent = objective.EUD;
-% 
-%     % calculate objective function and delta
-%     if sum(d_i.^exponent)>0
-% 
-%         delta = objective.penalty*nthroot(1/numOfVoxels,exponent) * sum(d_i.^exponent)^((1-exponent)/exponent) * (d_i.^(exponent-1));
-%         
-%     else
-%         
-%         delta = zeros(size(d_i));
-% 
-%     end
-% 
-%     if any(~isfinite(delta)) % check for inf and nan for numerical stability
-%         error(['EUD computation failed. Reduce exponent to resolve numerical problems.']);
-%     end
+elseif isequal(prescription.type, 'EUD')
         
     % get exponent for EUD
     exponent = prescription.EUD;
 
     % calculate Hessian
-    if sum(d_i.^exponent)>0
+    if sum(d_i.^exponent)>0 && exponent ~= 1
         
-        
+        % calculate Hessian diagonal
         hessianDiag = prescription.penalty*nthroot(1/numOfVoxels,exponent) * ((1-exponent)*sum(d_i.^exponent)^(1/exponent-2)*d_i.^(2*(exponent-1)) + ...
             (exponent-1)*sum(d_i.^exponent)^(1/exponent-1)*d_i.^(exponent-2));
         
+        % construct Hessian matrix
         hessianMatrix = sparse(tril(bsxfun(@times, dij.physicalDose{1}(structure,:)', hessianDiag') * dij.physicalDose{1}(structure,:)));
-
     else        
         hessianMatrix = sparse(zeros(dij.totalNumOfBixels));
     end
-
-elseif isequal(prescription.type, 'max dose constraint')
     
-%     % use log sum exp approximation, see appendix A in
-%     % http://scitation.aip.org/content/aapm/journal/medphys/41/8/10.1118/1.4883837
-% 
-%     epsilon = 1e-3;
-% 
-%     jacobVec = exp( (d_i-max(d_i))/epsilon );
-%     jacobVec = jacobVec/sum(jacobVec);
-
-elseif isequal(prescription.type, 'min dose constraint')
-    
-%     % use log sum exp approximation, see appendix A in
-%     % http://scitation.aip.org/content/aapm/journal/medphys/41/8/10.1118/1.4883837
-% 
-%     epsilon = 1e-3;
-% 
-%     jacobVec = exp( (min(d_i)-d_i)/epsilon );
-%     jacobVec = jacobVec/sum(jacobVec);
-
-elseif isequal(prescription.type, 'max mean dose constraint') || ...
-       isequal(prescription.type, 'min mean dose constraint') 
-
-    hessianMatrix = sparse(zeros(dij.totalNumOfBixels));
-
 elseif isequal(prescription.type, 'max EUD constraint') || ...
        isequal(prescription.type, 'min EUD constraint') 
 
-%     % exponenent for EUD constraint
-%     exponent = constraint.EUD;
-% 
-%     jacobVec = nthroot(1/numOfVoxels,exponent) * sum(d_i.^exponent)^((1-exponent)/exponent) * ...
-%                   (d_i.^(exponent-1));
-% 
-%     delta = objective.penalty*nthroot(1/numOfVoxels,exponent) * sum(d_i.^exponent)^((1-exponent)/exponent) * (d_i.^(exponent-1));
+    % exponenent for EUD constraint
+    exponent = constraint.EUD;
+
+    % calculate Hessian diagonal
+    hessianDiag = nthroot(1/numOfVoxels,exponent) * ((1-exponent)*sum(d_i.^exponent)^(1/exponent-2)*d_i.^(2*(exponent-1)) + ...
+        (exponent-1)*sum(d_i.^exponent)^(1/exponent-1)*d_i.^(exponent-2));
+
+    % construct Hessian matrix
+    hessianMatrix = sparse(tril(bsxfun(@times, dij.physicalDose{1}(structure,:)', hessianDiag') * dij.physicalDose{1}(structure,:)));
+
+elseif isequal(prescription.type, 'max dose constraint')
+    
+    % Approximated max dose constraint not supported
+    error('Exact optimization not available for ''%s''!!! Select exact version!', prescription.type)
+
+elseif isequal(prescription.type, 'min dose constraint')
+    
+    % Approximated min dose constraint not supported
+    error('Exact optimization not available for ''%s''!!! Select exact version!', prescription.type)
+
+elseif isequal(prescription.type, 'max mean dose constraint') || ...
+       isequal(prescription.type, 'min mean dose constraint') 
+   
+    % calculate Hessian
+    hessianMatrix = sparse(zeros(dij.totalNumOfBixels));
 
 elseif isequal(prescription.type, 'max DVH constraint') || ...
        isequal(prescription.type, 'min DVH constraint')
 
-%     d_i_sort = sort(d_i);
-% 
-%     % calculate scaling
-%     VoxelRatio   = 1;
-%     NoVoxels     = max(VoxelRatio*numel(d_i),10);
-%     absDiffsort  = sort(abs(d_ref - d_i_sort));
-%     deltaDoseMax = absDiffsort(ceil(NoVoxels/2));
-% 
-%     % calclulate DVHC scaling
-%     ReferenceVal            = 0.01;
-%     DVHCScaling             = min((log(1/ReferenceVal-1))/(2*deltaDoseMax),250);
-% 
-%     jacobVec = (2/numOfVoxels)*DVHCScaling*exp(2*DVHCScaling*(d_i-d_ref))./(exp(2*DVHCScaling*(d_i-d_ref))+1).^2;
-% 
-%     % alternative constraint calculation 4/4 %               
-%     % % get reference Volume
-%     % refVol = cst{j,6}(k).volume/100;
-%     %  
-%     % % calc deviation
-%     % deviation = d_i - d_ref;
-%     % 
-%     % % calc d_ref2: V(d_ref2) = refVol
-%     % d_ref2 = matRad_calcInversDVH(refVol,d_i);
-%     % 
-%     % % apply lower and upper dose limits
-%     % if isequal(cst{j,6}(k).type, 'max DVH constraint')
-%     %      deviation(d_i < d_ref | d_i > d_ref2) = 0;
-%     % elseif isequal(cst{j,6}(k).type, 'min DVH constraint')
-%     %      deviation(d_i > d_ref | d_i < d_ref2) = 0;
-%     % end
-%     %   
-%     % %jacobVec = ones(size(cst{j,4}));             % linear deviation
-%     % %jacobVec = 2*deviation;                      % square deviation
-%     % jacobVec = (1/size(cst{j,4},1))*2*deviation; % square deviation with normalization
-%     % %jacobVec = 4*(deviation).^3;                  % squared square devioation
-%     % alternative constraint calculation 4/4 %
+    d_i_sort = sort(d_i);
+
+    % calculate scaling
+    VoxelRatio   = 1;
+    NoVoxels     = max(VoxelRatio*numel(d_i),10);
+    absDiffsort  = sort(abs(d_ref - d_i_sort));
+    deltaDoseMax = absDiffsort(ceil(NoVoxels/2));
+
+    % calclulate DVHC scaling
+    ReferenceVal            = 0.01;
+    DVHCScaling             = min((log(1/ReferenceVal-1))/(2*deltaDoseMax),250);
+    
+    % calculate Hessian diagonal
+    exp_term = exp(2*DVHCScaling*(d_i-d_ref));    
+    hessianDiag = (2 * DVHCScaling)^2/numOfVoxels * (exp_term .* (1 - exp_term)) ./ (exp_term + 1).^3;
+
+    % construct Hessian matrix
+    hessianMatrix = sparse(tril(bsxfun(@times, dij.physicalDose{1}(structure,:)', hessianDiag') * dij.physicalDose{1}(structure,:)));
+ 
+    % alternative constraint calculation 4/4 %               
+    % % get reference Volume
+    % refVol = cst{j,6}(k).volume/100;
+    %  
+    % % calc deviation
+    % deviation = d_i - d_ref;
+    % 
+    % % calc d_ref2: V(d_ref2) = refVol
+    % d_ref2 = matRad_calcInversDVH(refVol,d_i);
+    % 
+    % % apply lower and upper dose limits
+    % if isequal(cst{j,6}(k).type, 'max DVH constraint')
+    %      deviation(d_i < d_ref | d_i > d_ref2) = 0;
+    % elseif isequal(cst{j,6}(k).type, 'min DVH constraint')
+    %      deviation(d_i > d_ref | d_i < d_ref2) = 0;
+    % end
+    %   
+    % %jacobVec = ones(size(cst{j,4}));             % linear deviation
+    % %jacobVec = 2*deviation;                      % square deviation
+    % jacobVec = (1/size(cst{j,4},1))*2*deviation; % square deviation with normalization
+    % %jacobVec = 4*(deviation).^3;                  % squared square devioation
+    % alternative constraint calculation 4/4 %
 
 elseif isequal(prescription.type, 'max DVH objective') ||...
        isequal(prescription.type, 'min DVH objective')
 
-%     % get reference Volume
-%     refVol = objective.volume/100;
-% 
-%     % calc deviation
-%     deviation = d_i - d_ref;
-% 
-%     % calc d_ref2: V(d_ref2) = refVol
-%     d_ref2 = matRad_calcInversDVH(refVol,d_i);
-% 
-%     % apply lower and upper dose limits
-%     if isequal(objective.type, 'max DVH objective')
-%          deviation(d_i < d_ref | d_i > d_ref2) = 0;
-%     elseif isequal(objective.type, 'min DVH objective')
-%          deviation(d_i > d_ref | d_i < d_ref2) = 0;
-%     end
-% 
-%     % calculate delta
-%     delta = 2 * (objective.penalty/numOfVoxels)*deviation;
+    % get reference Volume
+    refVol = prescription.volume/100;
+
+    % calc d_ref2: V(d_ref2) = refVol
+    d_ref2 = matRad_calcInversDVH(refVol,d_i);
+
+    % apply lower and upper dose limits
+    if isequal(prescription.type, 'max DVH objective')
+         voxel_idx = (d_i >= d_ref & d_i <= d_ref2);
+    elseif isequal(prescription.type, 'min DVH objective')
+         voxel_idx = (d_i <= d_ref & d_i >= d_ref2);
+    end
+    
+    % calculate Hessian
+    hessianMatrix = sparse(tril(2 * (dij.physicalDose{1}(structure(voxel_idx),:)' * dij.physicalDose{1}(structure(voxel_idx),:)) * prescription.penalty / numOfVoxels));
     
 elseif isequal(prescription.type, 'max dose constraint (exact)') || ...
-       isequal(prescription.type, 'min dose constraint (exact)') 
-
+       isequal(prescription.type, 'min dose constraint (exact)')
+   
+    % calculate Hessian
     hessianMatrix = sparse(zeros(dij.totalNumOfBixels));
 
 end

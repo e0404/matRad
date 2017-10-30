@@ -106,13 +106,12 @@ for i = 1:size(cst,1)
                         constraintCounter = constraintCounter + size(cst{i,4}{1},1);
                     else
                         constraintCounter = constraintCounter + 1;
-                    end
-
-%                     d_i = d{1}(cst{i,4}{1});
+                    end                    
                     
                     if isequal(cst{i,6}(j).type, 'max dose constraint (exact)') || isequal(cst{i,6}(j).type, 'min dose constraint (exact)')
                         constraintHessian = constraintHessian + sparse(zeros(dij.totalNumOfBixels));
                     else
+                        d_i = d{1}(cst{i,4}{1});
                         constraintHessian = constraintHessian + lambda(constraintCounter) * matRad_hessianFunc(dij,d_i,cst{i,6}(j),cst{i,4}{1},d_ref);
                     end
                     

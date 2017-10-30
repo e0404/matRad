@@ -87,6 +87,7 @@ for i = 1:size(cst,1)
                         if isequal(cst{i,6}(j).type, 'max dose constraint (exact)') || isequal(cst{i,6}(j).type, 'min dose constraint (exact)')                    
                             DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1:size(cst{i,4}{1},1),jacobVec,dij.numOfVoxels,size(cst{i,4}{1},1))];
                             exactOptimization       = 1;
+                            scenID  = [scenID(1:end-1,1);ones(size(cst{i,4}{1},1),1)];
                         else
                             DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
                         end
@@ -134,11 +135,7 @@ for i = 1:dij.numOfScenarios
 
         if ~isempty(DoseProjection)
             
-            if exist('exactOptimization', 'var') && exactOptimization == 1
-                jacobLogical          = (scenID2 == i);
-            else
-                jacobLogical          = (scenID == i);
-            end
+            jacobLogical          = (scenID == i);
             jacob(jacobLogical,:) = DoseProjection(:,jacobLogical)' * dij.physicalDose{i};
             
         end
