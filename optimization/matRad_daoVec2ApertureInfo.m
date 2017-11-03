@@ -86,8 +86,8 @@ for i = 1:numel(updatedInfo.beam)
         updatedInfo.beam(i).shape(j).rightLeafPos = rightLeafPos;
         
         % rounding for numerical stability
-        leftLeafPos  = round2(leftLeafPos,10);
-        rightLeafPos = round2(rightLeafPos,10);
+        leftLeafPos  = round2(leftLeafPos,6);
+        rightLeafPos = round2(rightLeafPos,6);
         
         %
         xPosIndLeftLeaf  = round((leftLeafPos - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth + 1);
