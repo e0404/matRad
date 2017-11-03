@@ -36,9 +36,6 @@ function hessian = matRad_hessianFuncWrapper(w,sigma,lambda,dij,cst,options)
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,options);
 
-% % initialize jacobian
-% hessian = sparse([]);
-
 % % initialize projection matrices and id containers
 % DoseProjection          = sparse([]);
 % mAlphaDoseProjection    = sparse([]);
@@ -52,6 +49,7 @@ d = matRad_backProjection(w,dij,options);
 objectiveHessian = sparse(zeros(dij.totalNumOfBixels));
 constraintHessian = sparse(zeros(dij.totalNumOfBixels));
 constraintCounter = 0;
+hessianDiag = zeros(dij.numOfVoxels,1); % sparse?
 
 % compute objective function for every VOI.
 for i = 1:size(cst,1)
@@ -77,9 +75,14 @@ for i = 1:size(cst,1)
                 % if conventional opt: just add objectives of nominal dose
                 if strcmp(cst{i,6}(j).robustness,'none')
                     
-                    d_i = d{1}(cst{i,4}{1});
+                    d_i = d{1}(cst{i,4}{1});              
+                    hessianMatrix = matRad_hessianFunc(dij,d_i,cst{i,6}(j),cst{i,4}{1},d_ref);
+                    objectiveHessian = objectiveHessian + hessianMatrix;
+                    clear hessianMatrix
                     
-                    objectiveHessian = objectiveHessian + matRad_hessianFunc(dij,d_i,cst{i,6}(j),cst{i,4}{1},d_ref);
+                    [~, hessianDiagTemp] = matRad_hessianFunc(dij,d_i,cst{i,6}(j),cst{i,4}{1},d_ref);
+                    hessianDiag = hessianDiag + sigma * hessianDiagTemp;
+                    clear hessianDiagTemp
                     
                 else
                     error('robust exact optimization not supported yet!!!')
@@ -87,42 +90,42 @@ for i = 1:size(cst,1)
                 
             else                
                 
-%                 % compute reference
-%                 if (~isequal(cst{i,6}(j).type, 'max dose constraint')      && ~isequal(cst{i,6}(j).type, 'min dose constraint')          &&...
-%                     ~isequal(cst{i,6}(j).type, 'max mean dose constraint') && ~isequal(cst{i,6}(j).type, 'min mean dose constraint') && ...
-%                     ~isequal(cst{i,6}(j).type, 'min EUD constraint')       && ~isequal(cst{i,6}(j).type, 'max EUD constraint'))           && ...
-%                     ~isequal(cst{i,6}(j).type, 'max dose constraint (exact)')      && ~isequal(cst{i,6}(j).type, 'min dose constraint (exact)') &&...
-%                     isequal(options.bioOpt,'LEMIV_effect')
-%                      
-%                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
-%                 else
-%                     d_ref = cst{i,6}(j).dose;
-%                 end
+                % compute reference
+                if (~isequal(cst{i,6}(j).type, 'max dose constraint')      && ~isequal(cst{i,6}(j).type, 'min dose constraint')          &&...
+                    ~isequal(cst{i,6}(j).type, 'max mean dose constraint') && ~isequal(cst{i,6}(j).type, 'min mean dose constraint') && ...
+                    ~isequal(cst{i,6}(j).type, 'min EUD constraint')       && ~isequal(cst{i,6}(j).type, 'max EUD constraint'))           && ...
+                    ~isequal(cst{i,6}(j).type, 'max dose constraint (exact)')      && ~isequal(cst{i,6}(j).type, 'min dose constraint (exact)') &&...
+                    isequal(options.bioOpt,'LEMIV_effect')
+                     
+                    d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
+                else
+                    d_ref = cst{i,6}(j).dose;
+                end
                 
                 % if conventional opt: just add constraints of nominal dose
                 if strcmp(cst{i,6}(j).robustness,'none')
 
                     if isequal(cst{i,6}(j).type, 'max dose constraint (exact)') || isequal(cst{i,6}(j).type, 'min dose constraint (exact)')
+                        
                         constraintCounter = constraintCounter + size(cst{i,4}{1},1);
-                    else
-                        constraintCounter = constraintCounter + 1;
-                    end                    
-                    
-                    if isequal(cst{i,6}(j).type, 'max dose constraint (exact)') || isequal(cst{i,6}(j).type, 'min dose constraint (exact)')
                         constraintHessian = constraintHessian + sparse(zeros(dij.totalNumOfBixels));
                     else
+                        
                         d_i = d{1}(cst{i,4}{1});
-                        constraintHessian = constraintHessian + lambda(constraintCounter) * matRad_hessianFunc(dij,d_i,cst{i,6}(j),cst{i,4}{1},d_ref);
+                        constraintCounter = constraintCounter + 1;                        
+                        hessianMatrix = matRad_hessianFunc(dij,d_i,cst{i,6}(j),cst{i,4}{1},d_ref);
+                        constraintHessian = constraintHessian + lambda(constraintCounter) * hessianMatrix;
+                        clear hessianMatrix
+                        
+                        [~, hessianDiagTemp] = matRad_hessianFunc(dij,d_i,cst{i,6}(j),cst{i,4}{1},d_ref);
+                        hessianDiag = hessianDiag + lambda(constraintCounter) * hessianDiagTemp;
+                        clear hessianDiagTemp                        
                     end
                     
 %                     scenID  = [scenID;1];
 %                     scenID2 = [scenID2;ones(numel(cst{i,4}{1}),1)];
                     
-                    if isequal(options.bioOpt,'none') && ~isempty(constraintHessian) || isequal(options.ID,'protons_const_RBExD')
-
-%                        DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
-
-                    elseif isequal(options.bioOpt,'LEMIV_effect') && ~isempty(constraintHessian)
+                    if isequal(options.bioOpt,'LEMIV_effect') && ~isempty(constraintHessian)
 
                         error('biological optimization not supported yet for exact optimization!!!')
 
@@ -150,18 +153,15 @@ for i = 1:size(cst,1)
                     
                 else
                     error('robust exact optimization not supported yet!!!')
-
                 end
-
             end
-
         end
-
     end
-
 end
 
 hessian = sigma * objectiveHessian + constraintHessian;
+
+hessian02 = sparse(tril(bsxfun(@times, dij.physicalDose{1}', hessianDiag') * dij.physicalDose{1}));
 
 % if isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LEMIV_RBExD')
 %     constraintID = constraintID(2:end);
