@@ -178,12 +178,27 @@ options.bioOpt          = pln.bioOptimization;
 options.ID              = [pln.radiationMode '_' pln.bioOptimization];
 options.numOfScenarios  = dij.numOfScenarios;
 
-% set options for exact min/max constraints
-for  i = 1:size(cst,1)
-    for j = 1:numel(cst{i,6})
-        if ~isempty(strfind(cst{i,6}(j).type,'(exact)'))
-            options.ipopt.hessian_approximation = 'exact';
-            break
+% set exact optimizarion options
+if isfield(pln, 'exactOptimization') && ~isempty(pln.exactOptimization) && pln.exactOptimization == 1
+    options.ipopt.hessian_approximation = 'exact';
+else
+    for  i = 1:size(cst,1)
+        for j = 1:numel(cst{i,6})
+            if ~isempty(strfind(cst{i,6}(j).type,'(exact)'))
+                options.ipopt.hessian_approximation = 'exact';
+                break
+            end
+        end
+    end
+end
+
+% set optimization options for exact min/max constraints
+if isequal(options.ipopt.hessian_approximation, 'exact')
+    for  i = 1:size(cst,1)
+        for j = 1:numel(cst{i,6})
+            if isequal(cst{i,6}(j).type, 'max dose constraint') || isequal(cst{i,6}(j).type, 'min dose constraint')
+                cst{i,6}(j).type = strcat(cst{i,6}(j).type, ' (exact)');
+            end
         end
     end
 end

@@ -22,10 +22,13 @@ close all
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-load TG119_SvdW07.mat
+load TG119_SvdW09.mat
 %load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
+
+% set exact optimization (or not)
+pln.exactOptimization = 1;
 
 % meta information for treatment plan
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
