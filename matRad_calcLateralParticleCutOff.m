@@ -57,7 +57,6 @@ radialDist_sq  = r_mid.^2;
 
 % number of depth points for which a lateral cutoff is determined
 NumDepthVal       = 35; 
-epsilon           = 1e-5;  
 
 % define function handles for single and double gauss
 CF    =  @(LcutSigma)(1/(1-exp((-LcutSigma^2)/2)));
@@ -163,12 +162,9 @@ for energyIx = vEnergiesIx
         
         % save depth value
         machine.data(energyIx).LatCutOff.depths(j) = depthValues(j);
-        
-        radDepths      = (depthValues(j) + baseData.offset - epsilon) * ones(numel(r_mid),1); 
-        
+        % calculate dose
         dose_r         = matRad_calcParticleDoseBixel(depthValues(j) + baseData.offset, radialDist_sq, largestSigmaSq4uniqueEnergies(cnt), baseData);
        
-             
         if cutOffLevel == 1
             machine.data(energyIx).LatCutOff.CompFac = 1;
             machine.data(energyIx).LatCutOff.CutOff  = Inf;
@@ -261,8 +257,7 @@ if visBool
               sigmaIni_sq = sigmaIni_sq +  sigmaRashi^2;
 
          end
-                      
-       
+
          mDose(:,:,kk) = reshape(matRad_calcParticleDoseBixel(radDepths(kk), radialDist_sq, sigmaIni_sq,baseData),[dimX dimX]);
           
          [~,IX]           = min(abs((machine.data(energyIx).LatCutOff.depths + machine.data(energyIx).offset) - radDepths(kk)));
