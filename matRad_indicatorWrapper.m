@@ -1,4 +1,4 @@
-function cst = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)
+function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad indictor wrapper
 % 
@@ -9,9 +9,16 @@ function cst = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)
 %   cst:                  matRad cst struct
 %   pln:                  matRad pln struct
 %   resultGUI:            matRad resultGUI struct
+%   refGy: (optional)     array of dose values used for V_XGy calculation
+%                         default is [40 50 60]
+%   refVol:(optional)     array of volumes (0-100) used for D_X calculation
+%                         default is [2 5 95 98]
+%                         NOTE: Call either both or none!
 %
 % output
-%   various quality indicators as well as dvh stored in cst
+%   dvh: matRad dvh result struct
+%   qi:  matRad quality indicator result struct
+%   graphical display of all results
 %
 % References
 %   -
@@ -20,7 +27,7 @@ function cst = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2016 the matRad development team. 
+% Copyright 2017 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -54,18 +61,13 @@ else
 end
 
 dvh = matRad_calcDVH(cst,doseCube,'cum');
-qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param);
+qi  = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param);
 
-numOfScenarios = 1;
-for i = 1:size(cst,1)
-    % overload with scenarios
-    cst{i,8} = cell(numOfScenarios,1);
-    cst{i,9} = cell(numOfScenarios,1);
-    
-    cst{i,8}{1} = dvh{i};
-    cst{i,9}{1} = qi{i};
-end    
+figure,set(gcf,'Color',[1 1 1]);
+subplot(2,1,1)
+matRad_showDVH(dvh,cst,pln);
+subplot(2,1,2)
+matRad_showQualityIndicators(qi);
 
 
-end % eof
 
