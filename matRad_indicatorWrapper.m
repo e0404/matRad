@@ -9,6 +9,11 @@ function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param
 %   cst:                  matRad cst struct
 %   pln:                  matRad pln struct
 %   resultGUI:            matRad resultGUI struct
+%   refGy: (optional)     array of dose values used for V_XGy calculation
+%                         default is [40 50 60]
+%   refVol:(optional)     array of volumes (0-100) used for D_X calculation
+%                         default is [2 5 95 98]
+%                         NOTE: Call either both or none!
 %
 % output
 %   dvh: matRad dvh result struct
@@ -22,7 +27,7 @@ function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2016 the matRad development team. 
+% Copyright 2017 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -58,7 +63,7 @@ end
 dvh = matRad_calcDVH(cst,doseCube,'cum');
 qi  = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param);
 
-figure
+figure,set(gcf,'Color',[1 1 1]);
 subplot(2,1,1)
 matRad_showDVH(dvh,cst,pln);
 subplot(2,1,2)

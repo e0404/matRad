@@ -76,9 +76,6 @@ end
 %% start gui for visualization of result
 matRadGUI
 
-%% indicator calculation
-cst = matRad_indicatorWrapper(cst,pln,resultGUI);
-
-%% show DVH and QI
-matRad_showDVH(cst,pln)
+%% indicator calculation and show DVH and QI
+[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI);
 
