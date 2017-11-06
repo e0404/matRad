@@ -1,9 +1,9 @@
 function dvh = matRad_calcDVH(cst,doseCube,dvhType,doseGrid)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad indictor calculation (contains QI as well as DVH)
+% matRad dvh calculation
 % 
 % call
-%   matRad_calcIndicators(cst,pln,cube,dvhType,param,refGy,refVol,lineStyleIndicator)
+%   dvh = matRad_calcDVH(cst,doseCube,dvhType,doseGrid)
 %
 % input
 %   cst:                  matRad cst struct
@@ -48,21 +48,23 @@ if ~exist('doseGrid', 'var') || isempty(doseGrid)
     if strcmp(dvhType, 'cum')
         doseGrid = linspace(0,maxDose*1.05,n);
     elseif strcmp(dvhType, 'diff')
-        doseGrid = linspace(0.01*maxDose,maxDose*1.05,n);
+        doseGrid = linspace(0.95*minDose,maxDose*1.05,n);
     end
 end
 
 numOfVois = size(cst,1);
-dvh{numOfVois,1} = [];
+dvh = struct;
 for i = 1:numOfVois
-    dvh{i,1} = [doseGrid; getDVHPoints(cst, i, doseCube, doseGrid, dvhType)];
+    dvh(i).doseGrid     = doseGrid;
+    dvh(i).volumePoints = getDVHPoints(cst, i, doseCube, doseGrid, dvhType);
+    dvh(i).VOIname      = cst{i,2};
 end
 
 end %eof 
 
 function dvh = getDVHPoints(cst, sIx, doseCube, dvhPoints, dvhType)
 n = numel(dvhPoints);
-dvh       = NaN * ones(1,n);
+dvh         = NaN * ones(1,n);
 indices     = cst{sIx,4}{1};
 numOfVoxels = numel(indices);
 
