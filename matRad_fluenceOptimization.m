@@ -194,6 +194,13 @@ end
 
 % set optimization options for exact min/max constraints
 if isequal(options.ipopt.hessian_approximation, 'exact')
+    
+    % initialize global variables for Hessian
+    global matRad_global_hessian_diag;
+    global matRad_global_hessian_matrix;
+    matRad_global_hessian_diag = sparse(zeros(dij.numOfVoxels,1));
+    matRad_global_hessian_matrix = sparse(zeros(dij.totalNumOfBixels));
+    
     for  i = 1:size(cst,1)
         for j = 1:numel(cst{i,6})
             if isequal(cst{i,6}(j).type, 'max dose constraint') || isequal(cst{i,6}(j).type, 'min dose constraint')
@@ -211,7 +218,7 @@ funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,options);
 funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,options);
 funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 if isequal(options.ipopt.hessian_approximation, 'exact')
-    funcs.hessian          = @(x,sigma,lambda) matRad_hessianFuncWrapper(x,sigma,lambda,dij,cst,options);
+    funcs.hessian          = @(x,sigma,lambda) matRad_hessianFuncWrapper_new(x,sigma,lambda,dij,cst,options);
     funcs.hessianstructure = @( ) matRad_getHessianStruct(dij,cst);
 end
 
