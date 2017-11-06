@@ -50,14 +50,14 @@ colorMx    = colorMx(1:floor(64/numOfVois):64,:);
 
 lineStyles = {'-',':','--','-.'};
 
-maxDVHvol = 0;
+maxDVHvol  = 0;
 maxDVHdose = 0;
 
 for i = 1:numOfVois
     if cst{i,5}.Visible
         % cut off at the first zero value where there is no more signal
         % behind
-        ix = find(dvh(i).volumePoints>0,1,'last');
+        ix      = max([1 find(dvh(i).volumePoints>0,1,'last')]);
         currDvh = [dvh(i).doseGrid(1:ix);dvh(i).volumePoints(1:ix)];
         
         plot(currDvh(1,:),currDvh(2,:),'LineWidth',4,'Color',colorMx(i,:), ...

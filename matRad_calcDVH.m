@@ -64,7 +64,7 @@ end %eof
 
 function dvh = getDVHPoints(cst, sIx, doseCube, dvhPoints, dvhType)
 n = numel(dvhPoints);
-dvh       = NaN * ones(1,n);
+dvh         = NaN * ones(1,n);
 indices     = cst{sIx,4}{1};
 numOfVoxels = numel(indices);
 
