@@ -1429,11 +1429,11 @@ try
             pln = evalin('base','pln');
             
             if handles.plane == 1
-                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.x));
+                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,2)/ct.resolution.x));
             elseif handles.plane == 2
-                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.y));
+                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,1)/ct.resolution.y));
             elseif handles.plane == 3
-                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.z));
+                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,3)/ct.resolution.z));
             end
             
         end
@@ -1540,11 +1540,11 @@ try
 
     % set some values
     if handles.plane == 1
-        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.x));
+        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,2)/ct.resolution.x));
     elseif handles.plane == 2
-        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.y));
+        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,1)/ct.resolution.y));
     elseif handles.plane == 3
-        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.z));
+        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,3)/ct.resolution.z));
     end
 
     handles.State = 3;
