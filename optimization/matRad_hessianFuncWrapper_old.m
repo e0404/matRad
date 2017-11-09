@@ -1,4 +1,4 @@
-function hessian = matRad_hessianFuncWrapper_new(w,sigma,lambda,dij,cst,options)
+function hessian = matRad_hessianFuncWrapper_old(w,sigma,lambda,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian function for inverse planning supporting max dose
 % constraint, min dose constraint, min mean dose constraint, max mean dose constraint,
@@ -46,8 +46,10 @@ d = matRad_backProjection(w,dij,options);
 % scenID2                 = [];
 
 % initialize hessian matrices for objectives and constraints
+objectiveHessian = sparse(zeros(dij.totalNumOfBixels));
+constraintHessian = sparse(zeros(dij.totalNumOfBixels));
 constraintCounter = 0;
-hessianDiag = sparse(zeros(dij.numOfVoxels,1)); % sparse?
+hessianDiag = zeros(dij.numOfVoxels,1); % sparse?
 
 % compute objective function for every VOI.
 for i = 1:size(cst,1)
@@ -74,7 +76,7 @@ for i = 1:size(cst,1)
                 if strcmp(cst{i,6}(j).robustness,'none')
                     
                     d_i = d{1}(cst{i,4}{1});              
-                    hessianDiag = hessianDiag + sigma * matRad_hessianFunc_new(dij,d_i,cst{i,6}(j),cst{i,4}{1},d_ref);                    
+                    objectiveHessian = objectiveHessian + matRad_hessianFunc_old(dij,d_i,cst{i,6}(j),cst{i,4}{1},d_ref);                    
                 else
                     error('robust exact optimization not supported yet!!!')
                 end
@@ -99,11 +101,12 @@ for i = 1:size(cst,1)
                     if isequal(cst{i,6}(j).type, 'max dose constraint (exact)') || isequal(cst{i,6}(j).type, 'min dose constraint (exact)')
                         
                         constraintCounter = constraintCounter + size(cst{i,4}{1},1);
+                        constraintHessian = constraintHessian + sparse(zeros(dij.totalNumOfBixels));
                     else
                         
                         d_i = d{1}(cst{i,4}{1});
                         constraintCounter = constraintCounter + 1;                        
-                        hessianDiag = hessianDiag + lambda(constraintCounter) * matRad_hessianFunc_new(dij,d_i,cst{i,6}(j),cst{i,4}{1},d_ref);    
+                        constraintHessian = constraintHessian + lambda(constraintCounter) * matRad_hessianFunc_old(dij,d_i,cst{i,6}(j),cst{i,4}{1},d_ref);
                     end
                     
 %                     scenID  = [scenID;1];
@@ -143,14 +146,7 @@ for i = 1:size(cst,1)
     end
 end
 
-% calculate hessian matrix
-voxel_idx = (hessianDiag ~= 0);
-hessian = sparse(tril(bsxfun(@times, dij.physicalDose{1}(voxel_idx,:)', hessianDiag(voxel_idx)') * dij.physicalDose{1}(voxel_idx,:)));
-% if nnz(hessianDiag) == 0
-%     hessian = sparse(zeros(dij.totalNumOfBixels));
-% else
-%     hessian = matRad_constructHessian(hessianDiag,dij,options);
-% end
+hessian = sigma * objectiveHessian + constraintHessian;
 
 % if isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LEMIV_RBExD')
 %     constraintID = constraintID(2:end);
