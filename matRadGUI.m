@@ -355,8 +355,11 @@ try
         cst = setCstTable(handles,cst);
         handles.State = 1;
         % check if contours are precomputed
-        if size(cst,2) < 7
-            cst = matRad_computeVoiContours(ct,cst);
+        for i = 1:size(cst,1)
+            if isempty(cst{i,7})
+                cst = matRad_computeVoiContours(ct,cst);
+                break
+            end
         end
         assignin('base','cst',cst);
 
@@ -452,7 +455,13 @@ try
     handles.TableChanged = false;
     set(handles.popupTypeOfPlot,'Value',1);
     % precompute contours
-    cst = matRad_computeVoiContours(ct,cst);
+    % precompute contours if necessary
+    for i = 1:size(cst,1)
+        if isempty(cst{i,7})
+            cst = matRad_computeVoiContours(ct,cst);
+            break
+        end
+    end
 
     assignin('base','ct',ct);
     assignin('base','cst',cst);
@@ -2778,8 +2787,11 @@ try
         cst = setCstTable(handles,cst);
         handles.State = 1;
         % check if contours are precomputed
-        if size(cst,2) < 7
-            cst = matRad_computeVoiContours(ct,cst);
+        for i = 1:size(cst,1)
+            if isempty(cst{i,7})
+                cst = matRad_computeVoiContours(ct,cst);
+                break
+            end
         end
         assignin('base','cst',cst);
     elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
