@@ -39,53 +39,28 @@ if isequal(hessianDiag,matRad_global_hessian_diag)
     
 else
     
+    % set global hessian diagonal
     matRad_global_hessian_diag = hessianDiag;
     
-    voxel_idx = (hessianDiag ~= 0);
-    hessianMatrix = sparse(tril(bsxfun(@times, dij.physicalDose{1}(voxel_idx,:)', hessianDiag(voxel_idx)') * dij.physicalDose{1}(voxel_idx,:)));
+    % construct hessian matrix
+    if isequal(options.bioOpt,'none')
+        
+        voxel_idx = any(hessianDiag,2) & any(dij.physicalDose{1},2);
+        hessianMatrix = sparse(tril(bsxfun(@times, dij.physicalDose{1}(voxel_idx,:)', hessianDiag(voxel_idx)') * dij.physicalDose{1}(voxel_idx,:)));
+        
+    elseif  isequal(options.ID,'protons_const_RBExD')
+        
+        error('biological optimization not supported yet for exact optimization!!!')
+        
+    elseif (isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LEMIV_RBExD'))
+        
+        error('biological optimization not supported yet for exact optimization!!!')  
+       
+    end   
     
-%     % pre-allocation
-%     d = cell(options.numOfScenarios,1);
-%     
-%     % Calculate hessian matrix
-%     if isequal(options.bioOpt,'none')
-%         
-%         for i = 1:options.numOfScenarios
-%             d{i} = dij.physicalDose{i} * w;
-%         end
-%         
-%     elseif  isequal(options.ID,'protons_const_RBExD')
-%         
-%         for i = 1:options.numOfScenarios
-%              d{i} =  dij.physicalDose{i} * (w * dij.RBE );
-%         end
-%         
-%     elseif (isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LEMIV_RBExD'))
-%         
-%         for i = 1:options.numOfScenarios
-%             
-%             % calculate effect
-%             linTerm  = dij.mAlphaDose{i} * w;
-%             quadTerm = dij.mSqrtBetaDose{i} * w;
-%             e        = linTerm + quadTerm.^2;   
-% 
-%             if isequal(options.bioOpt,'LEMIV_effect')
-%                 d{i} = e;
-%             else
-%                 % calculate RBX x dose
-%                 d{i}             = zeros(dij.numOfVoxels,1);
-%                 d{i}(dij.ixDose) = sqrt((e(dij.ixDose)./dij.bx(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
-%                                     - dij.gamma(dij.ixDose);
-%                
-%             end
-%             
-%         end       
-%        
-%     end   
-    
+    % set global hessian matrix
     matRad_global_hessian_matrix = hessianMatrix;
     
 end
 
 end
-

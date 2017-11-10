@@ -37,16 +37,13 @@ function hessianDiag = matRad_hessianFunc(dij,d_i,prescription,structure,d_ref)
 % number of voxels
 numOfVoxels = numel(d_i);
 
-% initialize hessian diagonal
-hessianDiag = sparse(zeros(dij.numOfVoxels,1)); %sparse?
-
 if isequal(prescription.type, 'square underdosing') 
 
     % underdose : Dose minus prefered dose
     underdose = d_i - d_ref;
     
     % calculate hessian diagonal
-    hessianDiag(structure(underdose<0)) = 2 * prescription.penalty / numOfVoxels;
+    hessianDiag = sparse(structure(underdose<0), ones(nnz(underdose<0),1), (2 * prescription.penalty / numOfVoxels) * ones(nnz(underdose<0),1), dij.numOfVoxels, 1);
     
 elseif isequal(prescription.type, 'square overdosing')
 
@@ -54,19 +51,17 @@ elseif isequal(prescription.type, 'square overdosing')
     overdose = d_i - d_ref;
     
     % calculate hessian diagonal
-    hessianDiag(structure(overdose>0)) = 2 * prescription.penalty / numOfVoxels;
+    hessianDiag = sparse(structure(overdose>0), ones(nnz(overdose>0),1), (2 * prescription.penalty / numOfVoxels) * ones(nnz(overdose>0),1), dij.numOfVoxels, 1);
     
 elseif isequal(prescription.type, 'square deviation')
     
     % calculate hessian diagonal
-    hessianDiag(structure) = 2 * prescription.penalty / numOfVoxels;
-%     hessianDiag = sparse(structure, ones(length(structure),1), (2 * prescription.penalty / numOfVoxels) * ones(length(structure),1), dij.numOfVoxels, 1);
-%     hessianDiag = sparse(structure(c), ones(length(structure(c)),1), (2 * prescription.penalty / numOfVoxels) * ones(length(structure(c)),1), dij.numOfVoxels, 1);
+    hessianDiag = sparse(structure, ones(length(structure),1), (2 * prescription.penalty / numOfVoxels) * ones(length(structure),1), dij.numOfVoxels, 1);
     
 elseif isequal(prescription.type, 'mean')
     
-    % calculate hessian diagonal
-    % ALL ZERO, NO ADJUSTMENT
+    % set all-zero hessian diagonal
+    hessianDiag = sparse(dij.numOfVoxels,1);
     
 elseif isequal(prescription.type, 'EUD')
         
@@ -77,11 +72,12 @@ elseif isequal(prescription.type, 'EUD')
     if sum(d_i.^exponent)>0 && exponent ~= 1
         
         % calculate hessian diagonal
-        hessianDiag(structure) = prescription.penalty*nthroot(1/numOfVoxels,exponent) * ((1-exponent)*sum(d_i.^exponent)^(1/exponent-2)*d_i.^(2*(exponent-1)) + ...
-            (exponent-1)*sum(d_i.^exponent)^(1/exponent-1)*d_i.^(exponent-2));
+        hessianDiag = sparse(structure, ones(length(structure),1), ...
+            prescription.penalty*nthroot(1/numOfVoxels,exponent) * ((1-exponent)*sum(d_i.^exponent)^(1/exponent-2)*d_i.^(2*(exponent-1)) + (exponent-1)*sum(d_i.^exponent)^(1/exponent-1)*d_i.^(exponent-2)), ...
+            dij.numOfVoxels, 1);    
     else                
-        % calculate hessian diagonal
-        % ALL ZERO, NO ADJUSTMENT
+        % set all-zero hessian diagonal
+        hessianDiag = sparse(dij.numOfVoxels,1);
     end
     
 elseif isequal(prescription.type, 'max EUD constraint') || ...
@@ -91,8 +87,9 @@ elseif isequal(prescription.type, 'max EUD constraint') || ...
     exponent = constraint.EUD;
     
     % calculate hessian diagonal
-    hessianDiag(structure) = nthroot(1/numOfVoxels,exponent) * ((1-exponent)*sum(d_i.^exponent)^(1/exponent-2)*d_i.^(2*(exponent-1)) + ...
-        (exponent-1)*sum(d_i.^exponent)^(1/exponent-1)*d_i.^(exponent-2));
+    hessianDiag = sparse(structure, ones(length(structure),1), ...
+        nthroot(1/numOfVoxels,exponent) * ((1-exponent)*sum(d_i.^exponent)^(1/exponent-2)*d_i.^(2*(exponent-1)) + (exponent-1)*sum(d_i.^exponent)^(1/exponent-1)*d_i.^(exponent-2)), ...
+        dij.numOfVoxels, 1);    
 
 elseif isequal(prescription.type, 'max dose constraint')
     
@@ -107,8 +104,8 @@ elseif isequal(prescription.type, 'min dose constraint')
 elseif isequal(prescription.type, 'max mean dose constraint') || ...
        isequal(prescription.type, 'min mean dose constraint') 
     
-    % calculate hessian diagonal
-    % ALL ZERO, NO ADJUSTMENT
+    % set all-zero hessian diagonal
+    hessianDiag = sparse(dij.numOfVoxels,1);
     
 elseif isequal(prescription.type, 'max DVH constraint') || ...
        isequal(prescription.type, 'min DVH constraint')
@@ -129,7 +126,7 @@ elseif isequal(prescription.type, 'max DVH constraint') || ...
     exp_term = exp(2*DVHCScaling*(d_i-d_ref));
     
     % calculate hessian diagonal
-    hessianDiag(structure) = (2 * DVHCScaling)^2/numOfVoxels * (exp_term .* (1 - exp_term)) ./ (exp_term + 1).^3;
+    hessianDiag = sparse(structure, ones(length(structure),1), (2 * DVHCScaling)^2/numOfVoxels * (exp_term .* (1 - exp_term)) ./ (exp_term + 1).^3, dij.numOfVoxels, 1);    
  
     % alternative constraint calculation 4/4 %               
     % % get reference Volume
@@ -171,11 +168,11 @@ elseif isequal(prescription.type, 'max DVH objective') ||...
     end
     
     % calculate hessian diagonal
-    hessianDiag(structure(voxel_idx)) = 2 * prescription.penalty / numOfVoxels;
+    hessianDiag = sparse(structure(voxel_idx), ones(nnz(voxel_idx),1), (2 * prescription.penalty / numOfVoxels) * ones(nnz(voxel_idx),1), dij.numOfVoxels, 1);
     
 elseif isequal(prescription.type, 'max dose constraint (exact)') || ...
        isequal(prescription.type, 'min dose constraint (exact)')
     
-    % calculate hessian diagonal
-    % ALL ZERO, NO ADJUSTMENT
+    % set all-zero hessian diagonal
+    hessianDiag = sparse(dij.numOfVoxels,1);
 end

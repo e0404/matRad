@@ -47,7 +47,7 @@ d = matRad_backProjection(w,dij,options);
 
 % initialize hessian matrices for objectives and constraints
 constraintCounter = 0;
-hessianDiag = sparse(zeros(dij.numOfVoxels,1)); % sparse?
+hessianDiag = sparse(dij.numOfVoxels,1);
 
 % compute objective function for every VOI.
 for i = 1:size(cst,1)
@@ -104,10 +104,7 @@ for i = 1:size(cst,1)
                         d_i = d{1}(cst{i,4}{1});
                         constraintCounter = constraintCounter + 1;                        
                         hessianDiag = hessianDiag + lambda(constraintCounter) * matRad_hessianFunc(dij,d_i,cst{i,6}(j),cst{i,4}{1},d_ref);    
-                    end
-                    
-%                     scenID  = [scenID;1];
-%                     scenID2 = [scenID2;ones(numel(cst{i,4}{1}),1)];
+                    end                    
                     
                     if isequal(options.bioOpt,'LEMIV_effect') && ~isempty(constraintHessian)
 
@@ -144,45 +141,6 @@ for i = 1:size(cst,1)
 end
 
 % calculate hessian matrix
-% voxel_idx = (hessianDiag ~= 0);
-% hessian = sparse(tril(bsxfun(@times, dij.physicalDose{1}(voxel_idx,:)', hessianDiag(voxel_idx)') * dij.physicalDose{1}(voxel_idx,:)));
-% if nnz(hessianDiag) == 0
-%     hessian = sparse(zeros(dij.totalNumOfBixels));
-% else
 hessian = matRad_constructHessian(hessianDiag,dij,options);
-% end
 
-% if isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LEMIV_RBExD')
-%     constraintID = constraintID(2:end);
-% end
-% 
-% % Calculate jacobian with dij projections
-% for i = 1:dij.numOfScenarios
-%    % enter if statement also for protons using a constant RBE
-%    if isequal(options.bioOpt,'none') ||  isequal(options.ID,'protons_const_RBExD')
-% 
-%         if ~isempty(DoseProjection)
-%             
-%             jacobLogical          = (scenID == i);
-%             jacob(jacobLogical,:) = DoseProjection(:,jacobLogical)' * dij.physicalDose{i};
-%             
-%         end
-% 
-%     elseif isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LEMIV_RBExD')
-% 
-%         if ~isempty(mSqrtBetaDoseProjection) && ~isempty(mAlphaDoseProjection)
-%             
-%             jacobLogical            = (scenID == i);
-%             jacobLogical2           = (scenID2 == i);
-%             mSqrtBetaDoseProjection = mSqrtBetaDoseProjection(:,jacobLogical2)' * dij.mSqrtBetaDose{i} * w;
-%             mSqrtBetaDoseProjection = sparse(voxelID(jacobLogical2),constraintID(jacobLogical2),mSqrtBetaDoseProjection,...
-%                                          size(mAlphaDoseProjection(:,jacobLogical),1),size(mAlphaDoseProjection(:,jacobLogical),2));
-%                                      
-%             jacob(jacobLogical,:)   = mAlphaDoseProjection(:,jacobLogical)' * dij.mAlphaDose{i} +... 
-%                                       mSqrtBetaDoseProjection' * dij.mSqrtBetaDose{i};
-%             
-%         end
-%     end
-% end
-% 
 end
