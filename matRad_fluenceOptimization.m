@@ -108,9 +108,9 @@ if pln.runDAO && strcmp(pln.radiationMode,'photons')
 end
 
 % set bounds on optimization variables
-options.lb              = zeros(1,dij.totalNumOfBixels);        % Lower bound on the variables.
-options.ub              = inf * ones(1,dij.totalNumOfBixels);   % Upper bound on the variables.
-funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter,param);
+options.lb       = zeros(1,dij.totalNumOfBixels);        % Lower bound on the variables.
+options.ub       = inf * ones(1,dij.totalNumOfBixels);   % Upper bound on the variables.
+funcs.iterfunc   = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter,param);
     
 % calculate initial beam intensities wInit
 if  strcmp(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
@@ -185,19 +185,18 @@ funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 
 % calc dose and reshape from 1D vector to 2D array
 matRad_dispToConsole('Calculating final cubes...\n',param,'info');
-resultGUI = matRad_calcCubes(wOpt,dij);
+resultGUI = matRad_calcCubes(wOpt,dij,cst);
 resultGUI.wUnsequenced = wOpt;
 
 % calc individual scenarios
 if pln.multScen.numOfScen > 1
    Cnt = 1;
    for i = options.ixForOpt
-      TmpresultGUI = matRad_calcCubes(wOpt,dij,i);
-      resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = TmpresultGUI.(pln.bioParam.quantityVis);
+      tmpResultGUI = matRad_calcCubes(wOpt,dij,cst,i);
+      resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
       Cnt = Cnt + 1;
    end      
 end
-
 
 % unset Key Pressed Callback of Matlab command window
 if ~isdeployed && param.logLevel == 1

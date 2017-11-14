@@ -30,7 +30,7 @@ end
 
 % set output level. 0 = no vmc specific output. 1 = print to matlab cmd.
 % 2 = open in terminal(s)
-verbose = 0;
+verbose = 1;
 
 if ~isdeployed % only if _not_ running as standalone    
     % add path for optimization functions
@@ -42,11 +42,36 @@ end
 dij.numOfBeams         = pln.numOfBeams;
 dij.numOfVoxels        = pln.numOfVoxels;
 dij.resolution         = ct.resolution;
-dij.numOfRaysPerBeam   = [stf(:).numOfRays];
-dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
-dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.dimensions         = pln.voxelDimensions;
 dij.numOfScenarios     = 1;
+dij.numOfRaysPerBeam   = [stf(:).numOfRays];
+dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
+dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
+
+% check if full dose influence data is required
+if calcDoseDirect 
+    numOfColumnsDij           = length(stf);
+    numOfBixelsContainer = 1;
+else
+    numOfColumnsDij           = dij.totalNumOfBixels;
+    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+end
+
+% set up arrays for book keeping
+dij.bixelNum = NaN*ones(numOfColumnsDij,1);
+dij.rayNum   = NaN*ones(numOfColumnsDij,1);
+dij.beamNum  = NaN*ones(numOfColumnsDij,1);
+
+bixelNum = NaN*ones(dij.totalNumOfBixels,1);
+rayNum   = NaN*ones(dij.totalNumOfBixels,1);
+beamNum  = NaN*ones(dij.totalNumOfBixels,1);
+
+doseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
+
+% Allocate space for dij.physicalDose sparse matrix
+for i = 1:dij.numOfScenarios
+    dij.physicalDose{i} = spalloc(prod(ct.cubeDim),numOfColumnsDij,1);
+end
 
 % set environment variables for vmc++
 if exist(['vmc++' filesep 'bin'],'dir') ~= 7
@@ -119,7 +144,7 @@ absCalibrationFactorVmc = 99.818252282632300;
 % 1 source
 VmcOptions.beamletSource.myName       = 'source 1';                        % name of source
 VmcOptions.beamletSource.monitorUnits = 1;                                 
-VmcOptions.beamletSource.spectrum     = ['.' filesep 'spectra' filesep 'var_6MV.spectrum'];    % energy spectrum source (only used if no mono-Energy given)
+VmcOptions.beamletSource.spectrum     = ['./spectra/var_6MV.spectrum'];    % energy spectrum source (only used if no mono-Energy given)
 VmcOptions.beamletSource.charge       = 0;                                 % charge (-1,0,1)
 % 2 transport parameter
 VmcOptions.McParameter.automatic_parameter = 'yes';                        % if yes, automatic transport parameters are used
@@ -137,7 +162,7 @@ VmcOptions.quasi.skip      = 1;
 % 6 geometry
 VmcOptions.geometry.XyzGeometry.methodOfInput = 'CT-PHANTOM';              % input method ('CT-PHANTOM', 'individual', 'groups') 
 VmcOptions.geometry.XyzGeometry.Ct            = 'CT';                      % name of geometry
-VmcOptions.geometry.XyzGeometry.CtFile        = ['.' filesep 'phantoms' filesep 'matRad_CT.ct']; % path of density matrix (only needed if input method is 'CT-PHANTOM')
+VmcOptions.geometry.XyzGeometry.CtFile        = ['./phantoms/matRad_CT.ct']; % path of density matrix (only needed if input method is 'CT-PHANTOM')
 % 7 scoring manager
 VmcOptions.scoringOptions.startInGeometry               = 'CT';            % geometry in which partciles start their transport
 VmcOptions.scoringOptions.doseOptions.scoreInGeometries = 'CT';            % geometry in which dose is recorded
@@ -147,24 +172,6 @@ VmcOptions.scoringOptions.outputOptions.dumpDose        = 2;               % out
 
 % export CT cube as binary file for vmc++
 matRad_exportCtVmc(ct, fullfile(phantomPath, 'matRad_CT.ct'));
-
-% set up arrays for book keeping
-dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
-dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
-dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
-
-% Allocate space for dij.physicalDose sparse matrix
-for i = 1:dij.numOfScenarios
-    dij.physicalDose{i} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
-end
-
-% Allocate memory for dose_temp cell array
-if calcDoseDirect
-    numOfBixelsContainer = 1;
-else
-    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
-end
-doseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
 
 % take only voxels inside patient
 V = [cst{:,4}];
@@ -179,8 +186,15 @@ figureWait = waitbar(0,'VMC++ photon dose influence matrix calculation..');
 
 fprintf('matRad: VMC++ photon dose calculation... ');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for i = 1:dij.numOfBeams; % loop over all beams
-           
+for i = 1:dij.numOfBeams % loop over all beams
+       
+   % remember beam and bixel number
+    if calcDoseDirect
+        dij.beamNum(i)    = i;
+        dij.rayNum(i)     = i;
+        dij.bixelNum(i)   = i;
+    end
+    
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
         
         writeCounter = writeCounter + 1;
@@ -189,16 +203,21 @@ for i = 1:dij.numOfBeams; % loop over all beams
         VmcOptions.McControl.rngSeeds = [randi(30000),randi(30000)];
 
         % remember beam and bixel number
-        dij.beamNum(writeCounter)  = i;
-        dij.rayNum(writeCounter)   = j;
-        dij.bixelNum(writeCounter) = j;
+        if ~calcDoseDirect
+           dij.beamNum(writeCounter)  = i;
+           dij.rayNum(writeCounter)   = j;
+           dij.bixelNum(writeCounter) = j;
+        end
+        beamNum(writeCounter)  = i;
+        rayNum(writeCounter)   = j;
+        bixelNum(writeCounter) = j;
         
         % set ray specific vmc++ parameters
         % a) change coordinate system (Isocenter cs-> physical cs) and units mm -> cm
-        rayCorner1 = (stf(i).ray(j).rayCorners_SCD(1,:) + pln.isoCenter)/10;              
-        rayCorner2 = (stf(i).ray(j).rayCorners_SCD(2,:) + pln.isoCenter)/10;
-        rayCorner3 = (stf(i).ray(j).rayCorners_SCD(3,:) + pln.isoCenter)/10; %vmc needs only three corners (counter-clockwise)
-        beamSource = (stf(i).sourcePoint + pln.isoCenter)/10;
+        rayCorner1 = (stf(i).ray(j).rayCorners_SCD(1,:) + pln.isoCenter(i,:))/10;              
+        rayCorner2 = (stf(i).ray(j).rayCorners_SCD(2,:) + pln.isoCenter(i,:))/10;
+        rayCorner3 = (stf(i).ray(j).rayCorners_SCD(3,:) + pln.isoCenter(i,:))/10; %vmc needs only three corners (counter-clockwise)
+        beamSource = (stf(i).sourcePoint + pln.isoCenter(i,:))/10;
         
         % b) swap x and y (CT-standard = [y,x,z])
         rayCorner1 = rayCorner1([2,1,3]);              
@@ -207,8 +226,8 @@ for i = 1:dij.numOfBeams; % loop over all beams
         beamSource  = beamSource([2,1,3]);
         
         % c) set vmc++ parameters
-        %VMC_options.beamletSource.monoEnergy                = stf(i).ray(j).energy;                 % photon energy
-        VmcOptions.beamletSource.monoEnergy                 = []                  ;                  % use photon spectrum
+        VmcOptions.beamletSource.monoEnergy                = stf(i).ray(j).energy;                 % photon energy
+        %VmcOptions.beamletSource.monoEnergy                 = []                  ;                  % use photon spectrum
         VmcOptions.beamletSource.beamletEdges               = [rayCorner1,rayCorner2,rayCorner3];    % counter-clockwise beamlet edges
         VmcOptions.beamletSource.virtualPointSourcePosition = beamSource;                            % virtual beam source position
         
@@ -273,11 +292,11 @@ for i = 1:dij.numOfBeams; % loop over all beams
                 % sparse matrix dose.dij from the cell array
                 if mod(readCounter,numOfBixelsContainer) == 0 || readCounter == dij.totalNumOfBixels
                     if calcDoseDirect
-                        if isfield(stf(i).ray(j),'weight')
+                        if isfield(stf(beamNum(readCounter)).ray(rayNum(readCounter)),'weight')
                             % score physical dose
-                            dij.physicalDose{1}(:,1) = dij.physicalDose{1}(:,1) + stf(dij.beamNum(readCounter)).ray(dij.rayNum(readCounter)).weight * doseTmpContainer{1,1};
+                            dij.physicalDose{1}(:,i) = dij.physicalDose{1}(:,i) + stf(beamNum(readCounter)).ray(rayNum(readCounter)).weight * doseTmpContainer{1,1};
                         else
-                            error(['No weight available for beam ' num2str(i) ', ray ' num2str(j)]);
+                            error(['No weight available for beam ' num2str(beamNum(readCounter)) ', ray ' num2str(rayNum(readCounter))]);
                         end
                     else
                         % fill entire dose influence matrix

@@ -1,6 +1,19 @@
-function sigmaRashi = matRad_sigmaRashi(baseData, radiationMode, rashiEqThickness, rashiDist)
+function sigmaRashi = matRad_calcSigmaRashi(energy,rangeShifter,SSD)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% additional broadening calculation due to range shifter not provided
+% calculation of additional beam broadening due to the use of range shifters (only for protons)
+% 
+% call
+%   sigmaRashi = matRad_calcSigmaRashi(rangeShifter,SSD)
+%
+% input
+%   energy:       initial particle energy
+%   rangeShifter: structure defining range shifter geometry
+%   SSD:          source to surface distance
+%
+% output
+%   sigmaRashi:   sigma of range shifter (to be added ^2) in mm
+%
+% References
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -17,11 +30,6 @@ function sigmaRashi = matRad_sigmaRashi(baseData, radiationMode, rashiEqThicknes
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-if rashiEqThickness ~= 0 && strcmp(radiationMode, 'protons')
-  error('additional broadening calculation due to range shifter not provided');
-end
+warning('Range shifter calculation not included in public matRad release');
 
 sigmaRashi = 0;
-
-end % eof
