@@ -67,15 +67,26 @@ end
 dij.numOfBeams         = pln.numOfBeams;
 dij.numOfVoxels        = pln.numOfVoxels;
 dij.resolution         = ct.resolution;
-dij.numOfRaysPerBeam   = [stf(:).numOfRays];
-dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
-dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.dimensions         = pln.voxelDimensions;
 
+dij.numOfScenarios     = 1;
+dij.numOfRaysPerBeam   = [stf(:).numOfRays];
+dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
+dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
+
+% check if full dose influence data is required
+if param.calcDoseDirect 
+    numOfColumnsDij      = length(stf);
+    numOfBixelsContainer = 1;
+else
+    numOfColumnsDij      = dij.totalNumOfBixels;
+    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+end
+
 % set up arrays for book keeping
-dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
-dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
-dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
+dij.bixelNum = NaN*ones(numOfColumnsDij,1);
+dij.rayNum   = NaN*ones(numOfColumnsDij,1);
+dij.beamNum  = NaN*ones(numOfColumnsDij,1);
 
 % Allocate space for dij.physicalDose sparse matrix
 for CtScen = 1:pln.multScen.numOfCtScen
@@ -88,13 +99,6 @@ for CtScen = 1:pln.multScen.numOfCtScen
             
         end
     end
-end
-
-% Allocate memory for dose_temp cell array
-if param.calcDoseDirect
-    numOfBixelsContainer = 1;
-else
-    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 end
 
 doseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
@@ -193,7 +197,6 @@ kernelConvSize = 2*kernelConvLimit;
 % that storage within the influence matrix may be subject to sampling
 effectiveLateralCutoff = lateralCutoff + fieldWidth/2;
 
-
 for ShiftScen = 1:pln.multScen.numOfShiftScen
 
    % manipulate isocenter
@@ -248,6 +251,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
 
           % get correct kernel for given SSD at central ray (nearest neighbor approximation)
           [~,currSSDIx] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD{1}));
+          warning('consider SSD{ctScen}')
 
           matRad_dispToConsole(['                   SSD = ' num2str(machine.data.kernel(currSSDIx).SSD) 'mm                 \n'],param,'info');
 
@@ -287,7 +291,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
 
           for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
 
-              counter = counter + 1;
+              counter       = counter + 1;
               bixelsPerBeam = bixelsPerBeam + 1;
 
               % convolution here if custom primary fluence OR field based dose calc
@@ -340,10 +344,13 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                     end
                  end
               end
+              
               % remember beam and bixel number
-              dij.beamNum(counter)  = i;
-              dij.rayNum(counter)   = j;
-              dij.bixelNum(counter) = j;
+              if ~param.calcDoseDirect
+                 dij.beamNum(counter)  = i;
+                 dij.rayNum(counter)   = j;
+                 dij.bixelNum(counter) = j;
+              end
 
               % Ray tracing for beam i and bixel j
               [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
@@ -409,7 +416,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                               if param.calcDoseDirect
                                   if isfield(stf(1).ray(1),'weight')
                                       % score physical dose
-                                      dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,1) = dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,1) + stf(i).ray(j).weight * doseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen};
+                                      dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,i) = dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,i) + stf(i).ray(j).weight * doseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen};
                                   else
                                       matRad_dispToConsole(['No weight available for beam ' num2str(i) ', ray ' num2str(j)],param,'error');
                                   end
@@ -441,5 +448,4 @@ try
   pause(0.1);
 catch
 end
-
 

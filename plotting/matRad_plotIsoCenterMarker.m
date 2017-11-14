@@ -74,7 +74,7 @@ for i = 1:size(uniqueIsoCenters,1)
         style = 'lines';
     end
 
-    markerSize = 13;
+    markerSize = 36/ct.resolution.x;
     markerColor = [0.27 0.27 0.27];
 
     if strcmpi(style,'marker')

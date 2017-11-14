@@ -1003,7 +1003,7 @@ if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Re
                     warning('Could not compute isodose lines! Will try slower contour function!');
                 end
             end
-            AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plotLabels,plane,slice,doseMap,handles.dispWindow{doseIx,1});
+            AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plotLabels,plane,slice,doseMap,handles.dispWindow{doseIx,1},'LineWidth',1.5);
         end
 end
 
@@ -1013,7 +1013,7 @@ set(handles.txtMaxVal,'String',num2str(handles.dispWindow{selectIx,2}(1,2)));
 
 %% plot VOIs
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
-    AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,ct,1,handles.VOIPlotFlag,plane,slice)];
+    AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,ct,1,handles.VOIPlotFlag,plane,slice,[],'LineWidth',2)];
 end
 
 %% Set axis labels and plot iso center
@@ -1355,7 +1355,7 @@ if handles.State >= 1 && exist('Result','var')
             [doseHandle,~,handles.dispWindow{doseIx,1}] = matRad_plotDoseSlice3D(axesFig3D,ct,dose,plane,slice,handles.CutOffLevel,handles.doseOpacity,doseMap,handles.dispWindow{doseIx,1});
         end
         if get(handles.radiobtnIsoDoseLines,'Value')
-            matRad_plotIsoDoseLines3D(axesFig3D,ct,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plane,slice,doseMap,handles.dispWindow{doseIx,1});
+            matRad_plotIsoDoseLines3D(axesFig3D,ct,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plane,slice,doseMap,handles.dispWindow{doseIx,1},'LineWidth',1.5);
         end
     end
 end
@@ -1431,11 +1431,11 @@ try
             pln = evalin('base','pln');
             
             if handles.plane == 1
-                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.x));
+                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,2)/ct.resolution.x));
             elseif handles.plane == 2
-                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.y));
+                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,1)/ct.resolution.y));
             elseif handles.plane == 3
-                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.z));
+                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,3)/ct.resolution.z));
             end
             
         end
@@ -1523,13 +1523,9 @@ try
     
     pln = evalin('base','pln');
     ct  = evalin('base','ct');
-    cst  = evalin('base','cst');
     
     % optimize
     [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
-    
-    % calculate qi and dvh
-    cst = matRad_indicatorWrapper(cst,pln,resultGUIcurrentRun);
     
     %if resultGUI already exists then overwrite the "standard" fields
     AllVarNames = evalin('base','who');
@@ -1543,15 +1539,14 @@ try
         resultGUI = resultGUIcurrentRun;
     end
     assignin('base','resultGUI',resultGUI);
-    assignin('base','cst',cst);
 
     % set some values
     if handles.plane == 1
-        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.x));
+        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,2)/ct.resolution.x));
     elseif handles.plane == 2
-        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.y));
+        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,1)/ct.resolution.y));
     elseif handles.plane == 3
-        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.z));
+        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,3)/ct.resolution.z));
     end
 
     handles.State = 3;
@@ -2325,7 +2320,7 @@ if handles.cubeHUavailable
 else
     cMapOptionsSelectList = {'None','CT (ED)','Result (i.e. dose)'};
     set(handles.popupmenu_windowPreset,'Visible','off');
-    set(handles.text_windowPreset,'String','Window Presets are not available');
+    set(handles.text_windowPreset,'String','No available Window Presets');
 end
 handles.cBarChanged = true;
 
@@ -2735,7 +2730,7 @@ if pln.bioParam.bioOpt
         resultGUI_SelectedCube.RBExD     = resultGUI.RBExD;
     else
         Idx    = find(SelectedCube == '_');
-        SelectedSuffix = SelectedCube(Idx:end);
+        SelectedSuffix = SelectedCube(Idx(1):end);
         resultGUI_SelectedCube.physicalDose = resultGUI.(['physicalDose' SelectedSuffix]);
         resultGUI_SelectedCube.RBExD     = resultGUI.(['RBExD' SelectedSuffix]);
     end
@@ -2746,7 +2741,10 @@ cst = evalin('base','cst');
 for i = 1:size(cst,1)
     cst{i,5}.Visible = handles.VOIPlotFlag(i);
 end
-matRad_showDVH(evalin('base','cst'), evalin('base','pln'));
+
+matRad_indicatorWrapper(cst,pln,resultGUI_SelectedCube);
+
+assignin('base','cst',cst);
 
 % radio button: plot isolines labels
 function radiobtnIsoDoseLinesLabels_Callback(~, ~, handles)
@@ -2963,6 +2961,8 @@ if evalin('base','exist(''pln'',''var'')') && ...
    evalin('base','exist(''cst'',''var'')') && ...
    evalin('base','exist(''resultGUI'',''var'')')
 
+try
+
     % indicate that matRad is busy
     % change mouse pointer to hour glass 
     Figures = gcf;%findobj('type','figure');
@@ -3054,6 +3054,18 @@ if evalin('base','exist(''pln'',''var'')') && ...
     handles.rememberCurrAxes = true;   
 
     guidata(hObject,handles);
+
+catch ME
+    handles = showError(handles,{'CalcDoseCallback: Error in dose recalculation!',ME.message}); 
+
+    % change state from busy to normal
+    set(Figures, 'pointer', 'arrow');
+    set(InterfaceObj,'Enable','on');
+
+    guidata(hObject,handles);
+    return;
+
+end
     
 end
 

@@ -1,4 +1,4 @@
-function cst = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)
+function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad indictor wrapper
 % 
@@ -9,9 +9,16 @@ function cst = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)
 %   cst:                  matRad cst struct
 %   pln:                  matRad pln struct
 %   resultGUI:            matRad resultGUI struct
+%   refGy: (optional)     array of dose values used for V_XGy calculation
+%                         default is [40 50 60]
+%   refVol:(optional)     array of volumes (0-100) used for D_X calculation
+%                         default is [2 5 95 98]
+%                         NOTE: Call either both or none!
 %
 % output
-%   various quality indicators as well as dvh stored in cst
+%   dvh: matRad dvh result struct
+%   qi:  matRad quality indicator result struct
+%   graphical display of all results
 %
 % References
 %   -
@@ -20,7 +27,7 @@ function cst = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2016 the matRad development team. 
+% Copyright 2017 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -30,6 +37,12 @@ function cst = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if isfield(resultGUI,'RBExDose')
+    doseCube = resultGUI.RBExDose;
+else
+    doseCube = resultGUI.physicalDose;
+end
 
 if ~exist('refVol', 'var') 
     refVol = [];
@@ -47,30 +60,14 @@ else
    param.logLevel = 1;
 end
 
+dvh = matRad_calcDVH(cst,doseCube,'cum');
+qi  = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param);
 
-% find indices of corresponding dose cubes
-fieldNames = fieldnames(resultGUI);
-ixCalc = []; 
-% find corresponding scenario names
-for k = 1:length(fieldNames)  
-   res = regexp(fieldNames{k,1},[pln.bioParam.quantityVis]);
-   if ~isempty(res)
-      ixCalc = [ixCalc; k];
-   end
-end
-        
-for Scen = 1:numel(ixCalc)
+figure,set(gcf,'Color',[1 1 1]);
+subplot(2,1,1)
+matRad_showDVH(dvh,cst,pln);
+subplot(2,1,2)
+matRad_showQualityIndicators(qi);
 
-    doseCube = resultGUI.(fieldNames{ixCalc(Scen),1});
-    dvh = matRad_calcDVH(cst,doseCube,'cum');
-    qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param);
-    
-    for i = 1:size(cst,1)
-        cst{i,9}{Scen} = dvh{i};
-        cst{i,10}{Scen} = qi{i};
-    end
 
-end
-
-end % eof
 

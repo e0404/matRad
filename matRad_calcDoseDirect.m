@@ -69,6 +69,7 @@ end
 
 % dose calculation
 if strcmp(pln.radiationMode,'photons')
+<<<<<<< HEAD
     dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
@@ -106,12 +107,23 @@ if isfield(dij,'RBE')
     resultGUI.RBExD = resultGUI.physicalDose * dij.RBE;
     
 elseif isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
+=======
+  %dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect);
+  dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
+elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
+  dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect);
+end
 
-    ix = resultGUI.physicalDose>0;
+% calculate cubes; use uniform weights here, weighting with actual fluence 
+% already performed in dij construction 
+resultGUI    = matRad_calcCubes(ones(pln.numOfBeams,1),dij,cst);
+>>>>>>> dev
 
-    resultGUI.effect     = zeros(ct.cubeDim);
-    resultGUI.effect(ix) = dij.mAlphaDose{1}(ix,1) + dij.mSqrtBetaDose{1}(ix,1).^2;
+% remember original fluence weights
+resultGUI.w  = w; 
 
+
+<<<<<<< HEAD
     resultGUI.RBExD      = zeros(ct.cubeDim);
     resultGUI.RBExD(ix)  = ((sqrt(dij.alphaX(ix).^2 + 4 .* dij.betaX(ix) .* resultGUI.effect(ix)) - dij.alphaX(ix))./(2.*dij.betaX(ix)));
 
@@ -122,4 +134,7 @@ elseif isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
     resultGUI.beta(ix)   = (dij.mSqrtBetaDose{1}(ix,1)./resultGUI.physicalDose(ix)).^2;
     
 end
+=======
+
+>>>>>>> dev
 

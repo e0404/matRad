@@ -1,4 +1,4 @@
-function isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoContours,isoLevels,plane,slice,cMap,window)
+function isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoContours,isoLevels,plane,slice,cMap,window,varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that plots isolines in 3D, by precomputed contourc data 
 % computed by matRad_computeIsoDoseContours or manually by calling 
@@ -22,6 +22,7 @@ function isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoCo
 %               you can use an empty array []
 %   window      optional argument defining the displayed range. default is
 %               [min(doseCube(:)) max(doseCube(:))]
+%   varargin    Additional Matlab Line-Property/value pairs
 %
 % output
 %   isoLineHandles: handle to the plotted isolines
@@ -129,9 +130,9 @@ else
                
                 %We render the isodose lines transparent by adding a fourth color value (undocumented)
                 if verLessThan('matlab','8.5')
-                    isoLineHandles(end+1) = line(isoLine3Dx,isoLine3Dy,isoLine3Dz,'Color',[color        ],'LineWidth',1.5,'Parent',axesHandle);
+                    isoLineHandles(end+1) = line(isoLine3Dx,isoLine3Dy,isoLine3Dz,'Color',[color        ],'Parent',axesHandle,varargin{:});
                 else
-                    isoLineHandles(end+1) = line(isoLine3Dx,isoLine3Dy,isoLine3Dz,'Color',[color opacity],'LineWidth',1.5,'Parent',axesHandle);
+                    isoLineHandles(end+1) = line(isoLine3Dx,isoLine3Dy,isoLine3Dz,'Color',[color opacity],'Parent',axesHandle,varargin{:});
                 end
                 %We do not plot labels
                 %{
