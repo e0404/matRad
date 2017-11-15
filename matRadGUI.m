@@ -356,7 +356,7 @@ try
         handles.State = 1;
         % check if contours are precomputed
         for i = 1:size(cst,1)
-            if isempty(cst{i,7})
+            if size(cst,2) < 7 || isempty(cst{i,7})
                 cst = matRad_computeVoiContours(ct,cst);
                 break
             end
@@ -457,7 +457,7 @@ try
     % precompute contours
     % precompute contours if necessary
     for i = 1:size(cst,1)
-        if isempty(cst{i,7})
+        if size(cst,2) < 7 || isempty(cst{i,7})
             cst = matRad_computeVoiContours(ct,cst);
             break
         end
@@ -1438,11 +1438,11 @@ try
             pln = evalin('base','pln');
             
             if handles.plane == 1
-                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.x));
+                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,2)/ct.resolution.x));
             elseif handles.plane == 2
-                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.y));
+                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,1)/ct.resolution.y));
             elseif handles.plane == 3
-                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.z));
+                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,3)/ct.resolution.z));
             end
             
         end
@@ -1530,13 +1530,9 @@ try
     
     pln = evalin('base','pln');
     ct  = evalin('base','ct');
-    cst  = evalin('base','cst');
     
     % optimize
     [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
-    
-    % calculate qi and dvh
-    cst = matRad_indicatorWrapper(cst,pln,resultGUIcurrentRun);
     
     %if resultGUI already exists then overwrite the "standard" fields
     AllVarNames = evalin('base','who');
@@ -1550,15 +1546,14 @@ try
         resultGUI = resultGUIcurrentRun;
     end
     assignin('base','resultGUI',resultGUI);
-    assignin('base','cst',cst);
 
     % set some values
     if handles.plane == 1
-        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.x));
+        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,2)/ct.resolution.x));
     elseif handles.plane == 2
-        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.y));
+        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,1)/ct.resolution.y));
     elseif handles.plane == 3
-        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,handles.plane)/ct.resolution.z));
+        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,3)/ct.resolution.z));
     end
 
     handles.State = 3;
@@ -2762,9 +2757,7 @@ for i = 1:size(cst,1)
     cst{i,5}.Visible = handles.VOIPlotFlag(i);
 end
 
-cst = matRad_indicatorWrapper(cst,pln,resultGUI_SelectedCube);
-
-matRad_showDVH(cst, evalin('base','pln'));
+matRad_indicatorWrapper(cst,pln,resultGUI_SelectedCube);
 
 assignin('base','cst',cst);
 
@@ -2788,7 +2781,7 @@ try
         handles.State = 1;
         % check if contours are precomputed
         for i = 1:size(cst,1)
-            if isempty(cst{i,7})
+            if size(cst,2) < 7 || isempty(cst{i,7})
                 cst = matRad_computeVoiContours(ct,cst);
                 break
             end
