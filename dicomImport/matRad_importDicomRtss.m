@@ -41,7 +41,7 @@ if nargin < 3
 end
 
 %% get info
-structInfo = dicominfo(filename);
+structInfo = dicominfo(filename,'UseVRHeuristic',false);
 
 % list the defined structures
 listOfDefStructs = fieldnames(structInfo.StructureSetROISequence);
