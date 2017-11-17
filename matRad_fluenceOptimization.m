@@ -179,18 +179,18 @@ options.ID              = [pln.radiationMode '_' pln.bioOptimization];
 options.numOfScenarios  = dij.numOfScenarios;
 
 % set exact optimization options
-if isfield(pln, 'exactOptimization') && ~isempty(pln.exactOptimization) && pln.exactOptimization == 1
+if isfield(pln, 'exactOptimization') && ~isempty(pln.exactOptimization) && pln.exactOptimization
     
     % set exact optimization
     options.ipopt.hessian_approximation = 'exact';
     
     % initialize global variables for Hessian
-    global matRad_global_hessian_diag;
-    global matRad_global_hessian_matrix;
-    matRad_global_hessian_diag = sparse(zeros(dij.numOfVoxels,1));
-    matRad_global_hessian_matrix = sparse(zeros(dij.totalNumOfBixels));
+    global matRad_global_hessianDiag;
+    global matRad_global_hessianMatrix;
+    matRad_global_hessianDiag = sparse(zeros(dij.numOfVoxels,1));
+    matRad_global_hessianMatrix = sparse(zeros(dij.totalNumOfBixels));
     
-    % adjust min/max dose constraints
+    % if present, set min/max dose constraints to exact version
     for  i = 1:size(cst,1)
         for j = 1:numel(cst{i,6})
             if isequal(cst{i,6}(j).type, 'max dose constraint') || isequal(cst{i,6}(j).type, 'min dose constraint')
@@ -227,6 +227,9 @@ end
 
 % clear global variables
 clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;
+if isequal(options.ipopt.hessian_approximation, 'exact')
+    clearvars -global matRad_global_hessianDiag matRad_global_hessianMatrix;
+end
 
 % unblock mex files
 clear mex

@@ -54,6 +54,7 @@ for  i = 1:size(cst,1)
                     param = cst{i,5}.alphaX .* cst{i,6}(j).dose + cst{i,5}.betaX .* cst{i,6}(j).dose.^2;
                 end
                 
+                % exact min/max dose constraints, temporarily add voxel number to cst-structure
                 if ~isempty(strfind(cst{i,6}(j).type,'(exact)'))
                     cst{i,6}(j).numConst = size(cst{i,4}{1},1);
                 end

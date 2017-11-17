@@ -1,8 +1,9 @@
 function jacob = matRad_jacobFuncWrapper(w,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad IPOPT callback: jacobian function for inverse planning supporting max dose
-% constraint, min dose constraint, min mean dose constraint, max mean dose constraint,
-% min EUD constraint, max EUD constraint, max DVH constraint, min DVH constraint 
+% matRad IPOPT callback: jacobian function for inverse planning supporting 
+% (exact) max dose constraint, (exact) min dose constraint, min mean dose 
+% constraint, max mean dose constraint, min EUD constraint, max EUD 
+% constraint, max DVH constraint, min DVH constraint 
 % 
 % call
 %   jacob = matRad_jacobFunc(w,dij,cst,options)
@@ -86,8 +87,7 @@ for i = 1:size(cst,1)
                         
                         if isequal(cst{i,6}(j).type, 'max dose constraint (exact)') || isequal(cst{i,6}(j).type, 'min dose constraint (exact)')                    
                             DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1:size(cst{i,4}{1},1),jacobVec,dij.numOfVoxels,size(cst{i,4}{1},1))];
-                            exactOptimization       = 1;
-                            scenID  = [scenID(1:end-1,1);ones(size(cst{i,4}{1},1),1)];
+                            scenID                  = [scenID(1:end-1,1);ones(size(cst{i,4}{1},1),1)];
                         else
                             DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
                         end

@@ -1,21 +1,27 @@
 function hessianDiag = matRad_hessianFunc(dij,d_i,prescription,structure,d_ref)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad IPOPT callback: jacobian function for inverse planning supporting max dose
-% constraint, min dose constraint, min mean dose constraint, max mean dose constraint, 
-% min EUD constraint, max EUD constraint, max DVH constraint, min DVH constraint 
-% 
+% matRad IPOPT callback: hessian function for inverse planning supporting 
+% squared underdosage, squared overdosage, squared deviation, mean dose 
+% objectives, EUD objectives, DVH objectives, (exact) max dose constraint, 
+% (exact) min dose constraint, min mean dose constraint, max mean dose 
+% constraint, min EUD constraint, max EUD constraint, max DVH constraint,
+% min DVH constraint 
+%
 % call
-%   jacobVec = matRad_jacobFunc(d_i,constraint,d_ref)
+%   hessianDiag = matRad_hessianFunc(dij,d_i,prescription,structure,d_ref)
 %
 % input
-%   d_i:        dose vector
-%   constraint: matRad constraint struct
-%   d_ref:      reference dose
+%   dij:            dose influence matrix
+%   d_i:            dose vector
+%   prescription:   matRad objective/constraint struct
+%   structure:      structure voxels
+%   d_ref:          reference dose
 %
 % output
-%   jacobVec:  jacobian vector of constraint for differentation with
-%              respect to dose. need subsequent differentation for jacobian
-%              in beamlet weights (see jacobFunWrapper)
+%   hessianDiag:    hessian diagonal (i.e. second derivative with respect
+%                   to dose) of the objectives and constraints. Needs 
+%                   subsequent matrix-multiplication (dij-matrix) for 
+%                   hessian matrix (see hessianFunWrapper)
 %
 % References
 %
@@ -23,7 +29,7 @@ function hessianDiag = matRad_hessianFunc(dij,d_i,prescription,structure,d_ref)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2016 the matRad development team. 
+% Copyright 2017 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -79,6 +85,25 @@ elseif isequal(prescription.type, 'EUD')
         % set all-zero hessian diagonal
         hessianDiag = sparse(dij.numOfVoxels,1);
     end
+    
+elseif isequal(prescription.type, 'max DVH objective') ||...
+       isequal(prescription.type, 'min DVH objective')
+
+    % get reference Volume
+    refVol = prescription.volume/100;
+
+    % calc d_ref2: V(d_ref2) = refVol
+    d_ref2 = matRad_calcInversDVH(refVol,d_i);
+
+    % apply lower and upper dose limits
+    if isequal(prescription.type, 'max DVH objective')
+         voxel_idx = (d_i >= d_ref & d_i <= d_ref2);
+    elseif isequal(prescription.type, 'min DVH objective')
+         voxel_idx = (d_i <= d_ref & d_i >= d_ref2);
+    end
+    
+    % calculate hessian diagonal
+    hessianDiag = sparse(structure(voxel_idx), ones(nnz(voxel_idx),1), (2 * prescription.penalty / numOfVoxels) * ones(nnz(voxel_idx),1), dij.numOfVoxels, 1);
     
 elseif isequal(prescription.type, 'max EUD constraint') || ...
        isequal(prescription.type, 'min EUD constraint') 
@@ -151,25 +176,6 @@ elseif isequal(prescription.type, 'max DVH constraint') || ...
     % %jacobVec = 4*(deviation).^3;                  % squared square devioation
     % alternative constraint calculation 4/4 %
 
-elseif isequal(prescription.type, 'max DVH objective') ||...
-       isequal(prescription.type, 'min DVH objective')
-
-    % get reference Volume
-    refVol = prescription.volume/100;
-
-    % calc d_ref2: V(d_ref2) = refVol
-    d_ref2 = matRad_calcInversDVH(refVol,d_i);
-
-    % apply lower and upper dose limits
-    if isequal(prescription.type, 'max DVH objective')
-         voxel_idx = (d_i >= d_ref & d_i <= d_ref2);
-    elseif isequal(prescription.type, 'min DVH objective')
-         voxel_idx = (d_i <= d_ref & d_i >= d_ref2);
-    end
-    
-    % calculate hessian diagonal
-    hessianDiag = sparse(structure(voxel_idx), ones(nnz(voxel_idx),1), (2 * prescription.penalty / numOfVoxels) * ones(nnz(voxel_idx),1), dij.numOfVoxels, 1);
-    
 elseif isequal(prescription.type, 'max dose constraint (exact)') || ...
        isequal(prescription.type, 'min dose constraint (exact)')
     

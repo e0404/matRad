@@ -1,8 +1,9 @@
 function jacobStruct = matRad_getJacobStruct(dij,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad IPOPT callback: jacobian structure function for inverse planning supporting max dose
-% constraint, min dose constraint, min mean dose constraint, max mean dose constraint, 
-% min EUD constraint, max EUD constraint, max DVH constraint, min DVH constraint 
+% matRad IPOPT callback: jacobian structure function for inverse planning 
+% supporting (exact) max dose constraint, (exact) min dose constraint, min 
+% mean dose constraint, max mean dose constraint, min EUD constraint, max 
+% EUD constraint, max DVH constraint, min DVH constraint 
 % 
 % call
 %   jacobStruct = matRad_getJacobStruct(dij,cst)

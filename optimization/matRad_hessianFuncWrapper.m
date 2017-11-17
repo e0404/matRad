@@ -1,20 +1,25 @@
 function hessian = matRad_hessianFuncWrapper(w,sigma,lambda,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad IPOPT callback: jacobian function for inverse planning supporting max dose
-% constraint, min dose constraint, min mean dose constraint, max mean dose constraint,
-% min EUD constraint, max EUD constraint, max DVH constraint, min DVH constraint 
+% matRad IPOPT callback: hessian function for inverse planning supporting 
+% squared underdosage, squared overdosage, squared deviation, mean dose 
+% objectives, EUD objectives, DVH objectives, (exact) max dose constraint, 
+% (exact) min dose constraint, min mean dose constraint, max mean dose 
+% constraint, min EUD constraint, max EUD constraint, max DVH constraint,
+% min DVH constraint 
 % 
 % call
-%   jacob = matRad_jacobFunc(w,dij,cst,options)
+%   hessian = matRad_hessianFuncWrapper(w,sigma,lambda,dij,cst,options)
 %
 % input
-%   w:    bixel weight vector
-%   dij:  dose influence matrix
-%   cst:  matRad cst struct
+%   w:      bixel weight vector
+%   sigma:  scalar factor on the objective
+%   lambda: Lagrange multipliers for the constraints
+%   dij:    dose influence matrix
+%   cst:    matRad cst struct
 %   options: option struct defining the type of optimization
 %
 % output
-%   jacob: jacobian of constraint function
+%   hessian: hessian of the Langrangian at the current point
 %
 % References
 %
@@ -22,7 +27,7 @@ function hessian = matRad_hessianFuncWrapper(w,sigma,lambda,dij,cst,options)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2016 the matRad development team. 
+% Copyright 2017 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -45,17 +50,17 @@ d = matRad_backProjection(w,dij,options);
 % scenID                  = [];
 % scenID2                 = [];
 
-% initialize hessian matrices for objectives and constraints
-constraintCounter = 0;
+% initialize hessian diagonal
 hessianDiag = sparse(dij.numOfVoxels,1);
+constraintCounter = 0;
 
-% compute objective function for every VOI.
+% compute hessian diagonal function for every VOI.
 for i = 1:size(cst,1)
 
     % Only take OAR or target VOI.
     if ~isempty(cst{i,4}{1}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
 
-        % loop over the number of constraints for the current VOI
+        % loop over the number of objective and constraints for the current VOI
         for j = 1:numel(cst{i,6})
 
             % discriminate between objectives and constraints
@@ -97,7 +102,7 @@ for i = 1:size(cst,1)
                 if strcmp(cst{i,6}(j).robustness,'none')
 
                     if isequal(cst{i,6}(j).type, 'max dose constraint (exact)') || isequal(cst{i,6}(j).type, 'min dose constraint (exact)')
-                        
+                        % skip calculation hessian diagonal, zero by definition
                         constraintCounter = constraintCounter + size(cst{i,4}{1},1);
                     else
                         
@@ -106,7 +111,7 @@ for i = 1:size(cst,1)
                         hessianDiag = hessianDiag + lambda(constraintCounter) * matRad_hessianFunc(dij,d_i,cst{i,6}(j),cst{i,4}{1},d_ref);    
                     end                    
                     
-                    if isequal(options.bioOpt,'LEMIV_effect') && ~isempty(constraintHessian)
+                    if isequal(options.bioOpt,'LEMIV_effect')
 
                         error('biological optimization not supported yet for exact optimization!!!')
 
@@ -116,7 +121,7 @@ for i = 1:size(cst,1)
 %                        voxelID                 = [voxelID ;cst{i,4}{1}];
 %                        constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
 
-                    elseif isequal(options.bioOpt,'LEMIV_RBExD') && ~isempty(constraintHessian)
+                    elseif isequal(options.bioOpt,'LEMIV_RBExD')
 
                         error('biological optimization not supported yet for exact optimization!!!')
                                         
@@ -140,7 +145,7 @@ for i = 1:size(cst,1)
     end
 end
 
-% calculate hessian matrix
+% construct hessian matrix from diagonal
 hessian = matRad_constructHessian(hessianDiag,dij,options);
 
 end

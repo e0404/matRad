@@ -1,18 +1,21 @@
 function hessianStruct = matRad_getHessianStruct(dij,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad IPOPT callback: jacobian structure function for inverse planning supporting max dose
-% constraint, min dose constraint, min mean dose constraint, max mean dose constraint, 
-% min EUD constraint, max EUD constraint, max DVH constraint, min DVH constraint 
+% matRad IPOPT callback: hessian structure function for inverse planning 
+% supporting squared underdosage, squared overdosage, squared deviation, 
+% mean dose objectives, EUD objectives, DVH objectives, (exact) max dose 
+% constraint, (exact) min dose constraint, min mean dose constraint, max 
+% mean dose constraint, min EUD constraint, max EUD constraint, max DVH 
+% constraint, min DVH constraint 
 % 
 % call
-%   jacobStruct = matRad_getJacobStruct(dij,cst)
+%   hessianStruct = matRad_getHessianStruct(dij,cst)
 %
 % input
 %   dij: dose influence matrix
 %   cst: matRad cst struct
 %
 % output
-%   jacobStruct: jacobian of constraint function
+%   hessianStruct: hessian matrix (sparse, lower triangular matrix)
 %
 % References
 %
@@ -20,7 +23,7 @@ function hessianStruct = matRad_getHessianStruct(dij,cst)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2016 the matRad development team. 
+% Copyright 2017 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -72,8 +75,8 @@ for i = 1:size(cst,1)
     end
 end
 
-% Initializes hessian structure (zero, only linear constraints/objectives)
-hessianStruct = sparse(tril(zeros(dij.totalNumOfBixels)));
+% initialize hessian structure (zero, only linear constraints/objectives)
+hessianStruct = sparse(dij.totalNumOfBixels, dij.totalNumOfBixels);
 
 % check whether there are non-linear constraints/objectives
 for i = 1:size(cst,1)
@@ -94,6 +97,9 @@ for i = 1:size(cst,1)
                         'max DVH objective' ,'min DVH objective'})
 
                    hessianStruct = sparse(tril(ones(dij.totalNumOfBixels)));
+                   
+                   % return once non-linear objective/constraint has been encountered
+                   return
 
                 end
 
