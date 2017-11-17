@@ -66,6 +66,13 @@ if isequal(pln.bioOptimization,'none') %auf jeden Fall Teilchen
     resultGUI.OptDose = resultGUI.physicalDose;
 else
     resultGUI.OptRBExDose = resultGUI.RBExDose;
+    if  strcmp(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
+        % check if a constant RBE is defined - if not use 1.1
+        if ~isfield(dij,'RBE')
+        dij.RBE = 1.1;
+        end
+    end
+      
 end
 CalcCubes = matRad_calcCubes(w,dij,cst,1);
 
