@@ -55,7 +55,7 @@ for  i = 1:size(cst,1)
                 end
                 
                 % exact min/max dose constraints, temporarily add voxel number to cst-structure
-                if ~isempty(strfind(cst{i,6}(j).type,'(exact)'))
+                if isequal(cst{i,6}(j).type.type, 'min dose constraint (exact)') || isequal(cst{i,6}(j).type.type, 'max dose constraint (exact)')
                     cst{i,6}(j).numConst = size(cst{i,4}{1},1);
                 end
 
