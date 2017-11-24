@@ -97,7 +97,7 @@ matRadGUI
 matRad_calcDVH(resultGUI,cst,pln)
 
 %% post processing
-resultGUI = matRad_postprocessing(resultGUI, dij, pln);   %last number  =minNrParticlesIES
+resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf)
 
 %% export Plan
 matRad_export_HITXMLPlan_modified('Liver_210320_constRBE_bf',  pln, stf, resultGUI, 'backforth')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)

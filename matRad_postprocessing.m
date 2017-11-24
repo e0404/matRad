@@ -1,4 +1,4 @@
-function resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst)
+function resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad postprosseing function accounting for
 %       minimum number of particles per spot
@@ -36,7 +36,8 @@ function resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
+round2 = @(a,b)round(a*10^b)/10^b;
+ 
 if strcmp(pln.radiationMode,'protons')
     Imin = 500000/1e6;  %for protons
     minNrParticlesIES = 25000000;    %for protons
@@ -87,16 +88,12 @@ else
 
 end
 
+if relIntDoseDif ~= 0
 fprintf(['Relative difference in integral dose after deleting spots: ' num2str(relIntDoseDif) '%%\n']);
-
+end
 
 %% delete IES with less than XXX particles
-if(minNrParticlesIES ~= 0)
-    
-    % get data from workspace
-    stf       = evalin('base','stf');
-    % helper function for energy selection
-    round2 = @(a,b)round(a*10^b)/10^b;
+if(minNrParticlesIES ~= 0)   
     
     % Find IES values
     for beamNb = 1:pln.numOfBeams 
@@ -130,7 +127,7 @@ if(minNrParticlesIES ~= 0)
                 end
             end %ray
             if(NrParticlesIES < minNrParticlesIES && counter > 1)  % not enough particles in IES, all spots are deleted
-                fprintf(['IES ' num2str(iesEnergy) ' deleted\n']);
+                fprintf(['IES ' num2str(iesEnergy) ' in beam ' beamNb ' deleted\n']);
                 while(counter > 1)
                     counter = counter -1;
                     w(tmpBixelIndex(counter)) = 0;
@@ -161,8 +158,9 @@ else
 
 end
 
+if relIntDoseDif ~= 0
 fprintf(['Relative difference in integral dose after deleting IES: ' num2str(relIntDoseDif) '%%\n']);
-
+end
 
 end
                         

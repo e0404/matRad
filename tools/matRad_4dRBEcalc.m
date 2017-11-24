@@ -50,7 +50,7 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst,false);
 pln.bioOptimization = 'const_RBExD';
 pln = matRad_getBioModel(pln);
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst);  
+resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf)
 Dopt = resultGUI.RBExDose;
 matRad_export_HITXMLPlan_modified('PlanRBE',  pln, stf, resultGUI, 'stfMode')  
 
