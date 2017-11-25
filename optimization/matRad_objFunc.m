@@ -1,4 +1,4 @@
-function f = matRad_objFunc(d_i,objective,d_ref)
+function f = matRad_objFunc(d_i,objective,d_ref,w)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: objective function for inverse planning supporting mean dose
 % objectives, EUD objectives, squared overdosage, squared underdosage,
@@ -102,6 +102,14 @@ elseif isequal(objective.type, 'max DVH objective') ||...
 
     % claculate objective function
     f = (objective.penalty/numOfVoxels)*(deviation'*deviation);
+    
+elseif isequal(objective.type, 'max dose objective (exact)')
+    
+    f = w(objective.auxVarNum) * objective.penalty - d_ref;
+    
+elseif isequal(objective.type, 'min dose objective (exact)')
+    
+    f = d_ref - w(objective.auxVarNum) * objective.penalty;
     
 end
       

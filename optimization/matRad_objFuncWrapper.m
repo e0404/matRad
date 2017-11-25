@@ -63,8 +63,8 @@ for  i = 1:size(cst,1)
                 if strcmp(cst{i,6}(j).robustness,'none')
 
                     d_i = d{1}(cst{i,4}{1});
-
-                    f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                    
+                    f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref,w);
                     
                 end
             

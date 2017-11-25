@@ -1,4 +1,4 @@
-function c = matRad_constFunc(d_i,constraint,d_ref)
+function c = matRad_constFunc(d_i,constraint,d_ref,w)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: constraint function for inverse planning 
 % supporting (exact) max dose constraint, (exact) min dose constraint, max 
@@ -95,7 +95,10 @@ elseif isequal(constraint.type, 'min dose constraint (exact)') || isequal(constr
 
     c = d_i;
     
-end 
+elseif isequal(constraint.type, 'minimax constraint (exact)') || isequal(constraint.type, 'maximin constraint (exact)')
 
+    c = d_i - w(constraint.auxVarNum);
+    
+end
 
 end

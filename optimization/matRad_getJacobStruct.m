@@ -107,6 +107,12 @@ for i = 1:size(cst,1)
                        
                        jacobStruct = [jacobStruct; spones(dij.physicalDose{1}(cst{i,4}{1},:))];
 
+                    elseif isequal(cst{i,6}(j).type, 'minimax constraint (exact)') || ...
+                           isequal(cst{i,6}(j).type, 'maximin constraint (exact)')
+                       
+                       jacobStruct = [jacobStruct; spones(dij.physicalDose{1}(cst{i,4}{1},:))];
+                       jacobStruct(end-size(cst{i,4}{1},1)+1:end, cst{i,6}(j).auxVarNum) = 1;
+
                     end
                 
                 end

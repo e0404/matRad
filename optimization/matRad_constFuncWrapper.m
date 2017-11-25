@@ -57,6 +57,7 @@ for  i = 1:size(cst,1)
                     ~isequal(cst{i,6}(j).type, 'max mean dose constraint') && ~isequal(cst{i,6}(j).type, 'min mean dose constraint') && ...
                     ~isequal(cst{i,6}(j).type, 'min EUD constraint')       && ~isequal(cst{i,6}(j).type, 'max EUD constraint'))      && ...
                     ~isequal(cst{i,6}(j).type, 'max dose constraint (exact)') && ~isequal(cst{i,6}(j).type, 'min dose constraint (exact)') && ...
+                    ~isequal(cst{i,6}(j).type, 'minimax constraint (exact)') && ~isequal(cst{i,6}(j).type, 'maximin constraint (exact)') && ...
                     isequal(options.bioOpt,'LEMIV_effect')
                      
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
@@ -68,8 +69,8 @@ for  i = 1:size(cst,1)
                 if strcmp(cst{i,6}(j).robustness,'none')
 
                     d_i = d{1}(cst{i,4}{1});
-
-                    c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref)];
+                    
+                    c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref,w)];
                     
                 else
                     

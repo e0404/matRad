@@ -114,6 +114,11 @@ elseif isequal(constraint.type, 'max dose constraint (exact)') || ...
 
     jacobVec = ones(numOfVoxels,1);
 
+elseif isequal(constraint.type, 'minimax constraint (exact)') || ...
+       isequal(constraint.type, 'maximin constraint (exact)') 
+
+    jacobVec = ones(numOfVoxels,1);
+
 else
 
     jacobVec = [];

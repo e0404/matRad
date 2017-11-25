@@ -54,8 +54,9 @@ for  i = 1:size(cst,1)
                     param = cst{i,5}.alphaX .* cst{i,6}(j).dose + cst{i,5}.betaX .* cst{i,6}(j).dose.^2;
                 end
                 
-                % exact min/max dose constraints, temporarily add voxel number to cst-structure
-                if isequal(cst{i,6}(j).type.type, 'min dose constraint (exact)') || isequal(cst{i,6}(j).type.type, 'max dose constraint (exact)')
+                % exact min/max/minimax/maximin dose constraints, temporarily add voxel number to cst-structure
+                if isequal(cst{i,6}(j).type, 'min dose constraint (exact)') || isequal(cst{i,6}(j).type, 'max dose constraint (exact)') || ...
+                   isequal(cst{i,6}(j).type, 'minimax constraint (exact)') || isequal(cst{i,6}(j).type, 'maximin constraint (exact)')                        
                     cst{i,6}(j).numConst = size(cst{i,4}{1},1);
                 end
 

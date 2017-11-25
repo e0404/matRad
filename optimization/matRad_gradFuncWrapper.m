@@ -42,6 +42,11 @@ d = matRad_backProjection(w,dij,options);
 delta      = cell(options.numOfScenarios,1);
 [delta{:}] = deal(zeros(dij.numOfVoxels,1));
 
+% initialize gradient for auxiliary variables
+if isfield(dij, 'totalNumOfAuxVars') && ~isempty(dij.totalNumOfAuxVars)
+    gAux = zeros(dij.totalNumOfBixels,1);
+end
+
 % compute objective function for every VOI.
 for  i = 1:size(cst,1)
     
@@ -66,10 +71,16 @@ for  i = 1:size(cst,1)
                 % different gradient construction depending on robust
                 % optimization
                 if strcmp(cst{i,6}(j).robustness,'none')
-                
-                    d_i = d{1}(cst{i,4}{1});
+                    
+                    if isequal(cst{i,6}(j).type, 'max dose objective (exact)')                        
+                        gAux(cst{i,6}(j).auxVarNum) = 1 * cst{i,6}(j).penalty;
+                    elseif isequal(cst{i,6}(j).type, 'min dose objective (exact)')
+                        gAux(cst{i,6}(j).auxVarNum) = -1 * cst{i,6}(j).penalty;
+                    else
+                        d_i = d{1}(cst{i,4}{1});
 
-                    delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+                        delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+                    end
 
                 end
                 
@@ -115,4 +126,9 @@ for i = 1:options.numOfScenarios
         end
 
     end
+end
+
+% add gradient for auxiliary variables
+if exist('gAux', 'var')
+    g = g + gAux;
 end

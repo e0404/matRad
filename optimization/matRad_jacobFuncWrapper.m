@@ -49,6 +49,11 @@ constraintID            = 0;
 scenID                  = [];
 scenID2                 = [];
 
+% initialize gradient for auxiliary variables
+if isfield(dij, 'totalNumOfAuxVars') && ~isempty(dij.totalNumOfAuxVars)
+    jacobAux = struct([]);
+end
+
 % compute objective function for every VOI.
 for i = 1:size(cst,1)
 
@@ -66,6 +71,7 @@ for i = 1:size(cst,1)
                     ~isequal(cst{i,6}(j).type, 'max mean dose constraint') && ~isequal(cst{i,6}(j).type, 'min mean dose constraint') && ...
                     ~isequal(cst{i,6}(j).type, 'min EUD constraint')       && ~isequal(cst{i,6}(j).type, 'max EUD constraint'))           && ...
                     ~isequal(cst{i,6}(j).type, 'max dose constraint (exact)') && ~isequal(cst{i,6}(j).type, 'min dose constraint (exact)') &&...
+                    ~isequal(cst{i,6}(j).type, 'minimax constraint (exact)') && ~isequal(cst{i,6}(j).type, 'maximin constraint (exact)') &&...
                     isequal(options.bioOpt,'LEMIV_effect')
                      
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
@@ -85,9 +91,17 @@ for i = 1:size(cst,1)
                     
                     if isequal(options.bioOpt,'none') && ~isempty(jacobVec) || isequal(options.ID,'protons_const_RBExD')
                         
-                        if isequal(cst{i,6}(j).type, 'max dose constraint (exact)') || isequal(cst{i,6}(j).type, 'min dose constraint (exact)')                    
+                        if isequal(cst{i,6}(j).type, 'max dose constraint (exact)') || isequal(cst{i,6}(j).type, 'min dose constraint (exact)')                              
                             DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1:size(cst{i,4}{1},1),jacobVec,dij.numOfVoxels,size(cst{i,4}{1},1))];
                             scenID                  = [scenID(1:end-1,1);ones(size(cst{i,4}{1},1),1)];
+                        elseif isequal(cst{i,6}(j).type, 'minimax constraint (exact)') || isequal(cst{i,6}(j).type, 'maximin constraint (exact)')                                
+                            DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1:size(cst{i,4}{1},1),jacobVec,dij.numOfVoxels,size(cst{i,4}{1},1))];
+                            scenID                  = [scenID(1:end-1,1);ones(size(cst{i,4}{1},1),1)];
+                            
+                            % keep track of constraints involving auxiliary variables
+                            jacobAuxIdx = size(jacobAux,1)+1;
+                            jacobAux(jacobAuxIdx,1).auxVarNum = cst{i,6}(j).auxVarNum;
+                            jacobAux(jacobAuxIdx,1).constraintIdx = (size(DoseProjection,2)-size(cst{i,4}{1},1)+1):size(DoseProjection,2);
                         else
                             DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
                         end
@@ -138,6 +152,12 @@ for i = 1:dij.numOfScenarios
             jacobLogical          = (scenID == i);
             jacob(jacobLogical,:) = DoseProjection(:,jacobLogical)' * dij.physicalDose{i};
             
+            % adjust jacobian matrix for auxiliary variables
+            if exist('jacobAux', 'var') && ~isempty(jacobAux)
+                for jacobAuxIdx = 1:size(jacobAux,1)
+                    jacob(jacobAux(jacobAuxIdx).constraintIdx, jacobAux(jacobAuxIdx).auxVarNum) = -1 * ones(length(jacobAux(jacobAuxIdx).constraintIdx),1);
+                end
+            end            
         end
 
     elseif isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LEMIV_RBExD')

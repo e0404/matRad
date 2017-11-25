@@ -91,5 +91,15 @@ elseif isequal(constraint.type, 'max dose constraint (exact)')
 
     cl = -inf * ones(constraint.numConst,1);
     cu = param * ones(constraint.numConst,1);
+    
+elseif isequal(constraint.type, 'minimax constraint (exact)') 
+
+    cl = -inf * ones(constraint.numConst,1);
+    cu = param * ones(constraint.numConst,1);
+    
+elseif isequal(constraint.type, 'maximin constraint (exact)') 
+
+    cl = param * ones(constraint.numConst,1);
+    cu = inf * ones(constraint.numConst,1);
         
 end % constraint switch

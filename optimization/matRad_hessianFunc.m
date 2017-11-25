@@ -181,4 +181,16 @@ elseif isequal(prescription.type, 'max dose constraint (exact)') || ...
     
     % set all-zero hessian diagonal
     hessianDiag = sparse(dij.numOfVoxels,1);
+
+elseif isequal(prescription.type, 'max dose objective (exact)') || ...
+       isequal(prescription.type, 'min dose objective (exact)')
+    
+    % set all-zero hessian diagonal
+    hessianDiag = sparse(dij.numOfVoxels,1);
+    
+elseif isequal(prescription.type, 'minimax constraint (exact)') || ...
+       isequal(prescription.type, 'maximin constraint (exact)')
+    
+    % set all-zero hessian diagonal
+    hessianDiag = sparse(dij.numOfVoxels,1);
 end
