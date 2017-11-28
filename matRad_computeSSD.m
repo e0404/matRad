@@ -32,6 +32,21 @@ function stf = matRad_computeSSD(stf,ct,mode)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % default setting only use first cube
+function bestSSD = closestNeighbourSSD(rayPos, SSD, currPos)
+    distances = sum((rayPos - currPos).^2,2);
+    [~, idx] = sort(distances);
+    for a = 1:numel(idx)
+        bestSSD = SSD{idx(a)};
+        % if SSD has been found, bestSSD is not empty
+        if ~any(isempty(bestSSD))
+            break
+        end
+    end
+    if any(isempty(bestSSD))
+        error('Could not fix SSD calculation.');
+    end
+end
+
 if nargin < 3
     mode = 'first';
 end
@@ -42,6 +57,7 @@ densityThreshold = 0.05;
 if strcmp(mode,'first')
     
     for i = 1:size(stf,2)
+        SSD = cell(1,stf(i).numOfRays);
         for j = 1:stf(i).numOfRays
             [alpha,~,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
                                  ct.resolution, ...
@@ -50,18 +66,29 @@ if strcmp(mode,'first')
                                  {ct.cube{1}});
             ixSSD = find(rho{1} > densityThreshold,1,'first');
 
-            if ~isempty(ixSSD) && ixSSD(1) == 1
+            
+            if isempty(ixSSD)
+                warning('Ray is off patient. Trying to fix afterwards...');
+            elseif ixSSD(1) == 1
                 warning('Surface for SSD calculation starts directly in first voxel of CT\n');
             end
 
             % calculate SSD
-            stf(i).ray(j).SSD = double(2 * stf(i).SAD * alpha(ixSSD));
-
+            SSD{j} = double(2 * stf(i).SAD * alpha(ixSSD));
+            stf(i).ray(j).SSD = SSD{j};            
+        end
+        
+        % try to fix SSD by using closest neighbouring ray
+        SSDnotSet = find(cellfun('isempty',SSD));
+        if ~isempty(SSDnotSet)
+            rayPos_bev = reshape([stf(i).ray(:).rayPos_bev],[],3);
+            for j = SSDnotSet
+                pos = rayPos_bev(j,:);
+                stf(i).ray(j).SSD = closestNeighbourSSD(rayPos_bev, SSD, pos);
+            end
         end
     end
-
 else
-    
     error('mode not defined for SSD calculation');
-    
+end
 end
