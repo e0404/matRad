@@ -65,7 +65,7 @@ for runVoi = 1:size(cst,1)
         
     if ~isempty(doseInVoi)
         
-        qi(runVoi).name = cst{runVoi,2};
+        qi(runVoi).VOIname = cst{runVoi,2};
         
         % easy stats
         qi(runVoi).mean = mean(doseInVoi);
