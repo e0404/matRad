@@ -1,6 +1,6 @@
-function s = shadowPlot(x, yLow, yUp, color, legendName, alphaTrans)
+function s = matRad_shadowPlot(x, yLow, yUp, color, legendName, alphaTrans)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad_randomSampling enables sampling multiple treatment scenarios
+% shadowPlot to plot confidence bands mainly
 % 
 % call
 %   shadowPlot(x, yLow, yUp, color, legendName, alphaTrans)
@@ -14,7 +14,7 @@ function s = shadowPlot(x, yLow, yUp, color, legendName, alphaTrans)
 %   alphaTrans: transparency
 %
 % output
-%   (figure)
+%   axesHandle
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -41,17 +41,23 @@ if size(x, 1) == 1
     x = x';
 end
 if size(yLow, 1) == 1
-    y = yLow';
+    yLow = yLow';
 end
 if size(yUp, 1) == 1
     yUp = yUp';
 end
 
-% no shadow under the lower limit line
-sThick.low = 0 * y;
-sThick.up = yUp - y;    
+% check for nan
+if any(isnan(yLow)) || any(isnan(yUp))
+    s = gca;
+    return
+end
 
-s = fill([x;flipud(x)],[y - sThick.low;flipud(y + sThick.up)], color,'linestyle','none', 'DisplayName', legendName);
+% no shadow under the lower limit line
+sThick.low = 0 * yLow;
+sThick.up = yUp - yLow;    
+
+s = fill([x;flipud(x)],[yLow - sThick.low;flipud(yLow + sThick.up)], color,'linestyle','none', 'DisplayName', legendName);
 alpha(s, alphaTrans)
 hold on;
 
