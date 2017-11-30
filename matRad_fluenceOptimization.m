@@ -56,49 +56,12 @@ if ~isdeployed % only if _not_ running as standalone
 
 end
 
-% check for minimax/maximin optimization
+% check for minimax/maximin objectives
 prescriptions = cell2mat(cst(~cellfun(@isempty, cst(:,6)),6));
 if (nnz(contains({prescriptions.type}, 'max dose objective (exact)')) > 0) || (nnz(contains({prescriptions.type}, 'min dose objective (exact)')) > 0)
     
-    % initialize auxiliary variable number
-    auxVarNumber = 0;
-    
-    % loop over objectives/constraints
-    for  i = 1:size(cst,1)
-        for j = 1:numel(cst{i,6})
-            if isequal(cst{i,6}(j).type, 'max dose objective (exact)') || isequal(cst{i,6}(j).type, 'min dose objective (exact)')
-                
-                % set auxiliary variable number
-                auxVarNumber = auxVarNumber + 1;
-                cst{i,6}(j).auxVarNum = dij.totalNumOfBixels + auxVarNumber;
-                
-                % add auxiliary constraint
-                cst{i,6}(numel(cst{i,6}) + 1) = cst{i,6}(j);
-                if isequal(cst{i,6}(j).type, 'max dose objective (exact)')
-                    cst{i,6}(numel(cst{i,6})).type = 'minimax constraint (exact)';
-                    cst{i,6}(numel(cst{i,6})).dose = 0;
-                    cst{i,6}(numel(cst{i,6})).penalty = NaN;
-                    cst{i,6}(numel(cst{i,6})).auxVarNum = dij.totalNumOfBixels + auxVarNumber;
-                elseif isequal(cst{i,6}(j).type, 'min dose objective (exact)')
-                    cst{i,6}(numel(cst{i,6})).type = 'maximin constraint (exact)';
-                    cst{i,6}(numel(cst{i,6})).dose = 0;
-                    cst{i,6}(numel(cst{i,6})).penalty = NaN;
-                    cst{i,6}(numel(cst{i,6})).auxVarNum = dij.totalNumOfBixels + auxVarNumber;
-                end                
-            end
-        end
-    end
-    
-    % add auxiliary variables
-    dij.physicalDose{1}(:,end+1:end+auxVarNumber) = sparse(size(dij.physicalDose{1},1), auxVarNumber);
-    dij.totalNumOfBixels = dij.totalNumOfBixels + auxVarNumber;
-    dij.totalNumOfAuxVars = auxVarNumber;
-    
-    % set exact optimization
-    pln.exactOptimization = true;
-    
-    % clear
-    clear auxVarNumber
+    % add auxiliary constraints and variables for minimax/maximin objectives
+    [cst,dij,pln] = matRad_setMinimaxOptimization(cst,dij,pln);
 end
 clear prescriptions
 
@@ -258,23 +221,15 @@ if isequal(options.ipopt.hessian_approximation, 'exact')
     funcs.hessianstructure = @( ) matRad_getHessianStruct(dij,cst);
 end
 
-% if exist('w.mat', 'file')
-%     load w.mat
-%     wInit = wInit_new;
-% end
-
 % Run IPOPT.
 [wOpt, info]            = ipopt(wInit,funcs,options);
 
-% wInit_new = wOpt;
-% save w.mat wInit_new
-
 % clean up auxiliary variables
 if isfield(dij, 'totalNumOfAuxVars') && ~isempty(dij.totalNumOfAuxVars)
-    wOpt = wOpt(1:end-dij.totalNumOfAuxVars);
-    dij.physicalDose{1} = dij.physicalDose{1}(:,1:end-dij.totalNumOfAuxVars);
-    dij.totalNumOfBixels = dij.totalNumOfBixels - dij.totalNumOfAuxVars;
-    dij = rmfield(dij, 'totalNumOfAuxVars');    
+    wOpt                    = wOpt(1:end-dij.totalNumOfAuxVars);
+    dij.physicalDose{1}     = dij.physicalDose{1}(:,1:end-dij.totalNumOfAuxVars);
+    dij.totalNumOfBixels    = dij.totalNumOfBixels - dij.totalNumOfAuxVars;
+    dij                     = rmfield(dij, 'totalNumOfAuxVars');    
 end    
     
 % calc dose and reshape from 1D vector to 2D array
