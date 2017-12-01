@@ -54,6 +54,7 @@ else
 end
     
 % calculate QIs per VOI
+qi = struct;
 for runVoi = 1:size(cst,1)
     
     indices     = cst{runVoi,4}{1};
