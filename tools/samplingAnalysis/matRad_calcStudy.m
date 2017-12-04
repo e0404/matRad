@@ -66,18 +66,18 @@ addpath(fullfile(matRadPath,'tools','samplingAnalysis'));
 pln.robOpt = false;
 pln.sampling = true;
 
-%% perform calculation
+%% perform calculation and save
 tic
 [sampRes, sampDose, pln, nominalScenario]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w,examineStructures, multScen, param);
-
-%% perform analysis
-[structureStat, doseStat, param] = matRad_samplingAnalysis(ct,cst,pln.multScen.subIx, sampRes, sampDose, pln.multScen.scenProb,nominalScenario, pln.multScen, param);
 param.computationTime = toc;
 
-%% save
 param.reportPath = fullfile('report','data');
 filename = 'resultSampling';
 save(filename, '-v7.3');
+
+%% perform analysis 
+% start here loading resultSampling.mat if something went wrong during analysis or report generation
+[structureStat, doseStat, param] = matRad_samplingAnalysis(ct,cst,pln.multScen.subIx, sampRes, sampDose, pln.multScen.scenProb,nominalScenario, pln.multScen, param);
 
 %% generate report
 listOfQI = {'mean', 'std', 'max', 'min', 'D_2', 'D_5', 'D_50', 'D_95', 'D_98'};

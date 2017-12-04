@@ -134,11 +134,16 @@ if FlagParallToolBoxLicensed
    % Create parallel pool on cluster
    p = gcp('nocreate'); % If no pool, do not create new one.
    
+   % rough estimate of total computation time
+   totCompTime = size(pln.multScen.scenForProb,1) * nomScenTime * 1.25 / p.NumWorkers;
+   fprintf(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600, 2)), ...
+                      'h. Estimated finish: ', datestr(datetime('now') + seconds(totCompTime)), '\n']);
+   
    if exist('parfor_progress', 'file') == 2
       FlagParforProgressDisp = true;
       parfor_progress(pln.numOfSamples);  % http://de.mathworks.com/matlabcentral/fileexchange/32101-progress-monitor--progress-bar--that-works-with-parfor
    else
-      matRad_dispToConsole('matRad: Consider downloading parfor_progress function from the matlab central fileexchange to get feedback from parfor loop.\n',param,'warning');
+      Console('matRad: Consider downloading parfor_progress function from the matlab central fileexchange to get feedback from parfor loop.\n',param,'warning');
       FlagParforProgressDisp = false;
    end
   
@@ -178,7 +183,11 @@ if FlagParallToolBoxLicensed
    end
 
 else
-%% perform seriel sampling     
+%% perform seriel sampling
+% rough estimate of total computation time
+totCompTime = size(pln.multScen.scenForProb,1) * nomScenTime * 1.1;
+fprintf(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600, 2)), ...
+                      'h. Estimated finish: ', datestr(datetime('now') + seconds(totCompTime)), '\n']);
     
     for i = 1:pln.numOfSamples
        
