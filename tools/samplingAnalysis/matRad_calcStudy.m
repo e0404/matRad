@@ -103,5 +103,4 @@ if response == 127 % means not found
     warning('Could not find tex distribution. Please compile manually.');
 else
     system(executeLatex);
-    system('main.pdf');
 end
