@@ -116,8 +116,10 @@ catch
 end
 
 %% calculate nominal scenario
+nomScenTimer = tic;
 nominalScenario          = matRad_calcDoseDirect(ct,stf,plnNominal,cst,w,param);
-fprintf('Finished nominal Scenario Calculation.\n');
+nomScenTime = toc(nomScenTimer);
+fprintf(['Finished nominal Scenario Calculation. Computation time: ', num2str(round(nomScenTime / 3600, 2)), 'h \n']);
 
 refVol = [2 5 50 95 98];
 refGy = linspace(0,max(nominalScenario.(pln.bioParam.quantityOpt)(:)),6);
