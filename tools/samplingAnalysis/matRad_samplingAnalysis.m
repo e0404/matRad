@@ -40,10 +40,9 @@ cstStat = struct();
 % reassing dvh to stats structure
 for i = 1:size(nominalScenario.cst,1)
     cstStat(i).VOIname = sampRes(1).qi(i).VOIname;
-    %cstSamp(i).dvh = struct([]);
-    %cstSamp(i).qi  = struct([]);
     for l = 1:numel(sampRes)
-        if ~strcmp(cstStat(i).VOIname, {sampRes(l).dvh(i).VOIname, sampRes(l).qi(i).VOIname})
+        % check whether structures still match
+        if any(~strcmp(cstStat(i).VOIname, {sampRes(l).dvh(i).VOIname, sampRes(l).qi(i).VOIname}))
             matRad_dispToConsole('matRad: Error, wrong structure.' , param, 'error');
         end
         cstStat(i).dvh(l).doseGrid = sampRes(l).dvh(i).doseGrid;
