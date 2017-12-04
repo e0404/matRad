@@ -232,7 +232,10 @@ if isfield(nominalScenario,'RBExDose')
 else
     legendColorbar = 'RBExDose [Gy(RBE)]';
 end
-matRad_createAnimationForLatexReport(param.confidenceValue, ct, cst, slice, doseStat.meanCubeW, sampDose, pln.multScen.scenProb, pln.multScen.subIx, outPath, legendColorbar);
+% any(w == 0) is not allowed, due to numerical reasons use insignificant w, for weights which are numerically zero
+w = pln.multScen.scenProb;
+w(w == 0) = eps(class(w));
+matRad_createAnimationForLatexReport(param.confidenceValue, ct, cst, slice, doseStat.meanCubeW, sampDose, w, pln.multScen.subIx, outPath, legendColorbar);
 
 line = cell(0);
 line =  [line; '\newcommand{\framerate}{24}'];

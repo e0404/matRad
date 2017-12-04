@@ -42,7 +42,7 @@ pln.robOpt        = false;
 % calculate RBExDose
 if strcmp(pln.radiationMode, 'protons')
     pln.bioOptimization = 'constRBE_RBExD';
-else strcmp(pln.radiationMode, 'carbon')
+elseif strcmp(pln.radiationMode, 'carbon')
     pln.bioOptimization = 'LEM_RBExD';
 end
 pln.bioParam = matRad_bioModel(pln.radiationMode,pln.bioOptimization);
@@ -134,10 +134,15 @@ nominalScenario.cst = cst;
 
 if FlagParallToolBoxLicensed
    % Create parallel pool on cluster
-   p = gcp('nocreate'); % If no pool, do not create new one.
+   p = gcp(); % If no pool, create new one.
    
-   % rough estimate of total computation time
-   totCompTime = size(pln.multScen.scenForProb,1) * nomScenTime * 1.25 / p.NumWorkers;
+   if isempty(p)
+       poolSize = 1;
+   else
+       poolSize = p.NumWorkers;
+   end
+      % rough estimate of total computation time
+   totCompTime = size(pln.multScen.scenForProb,1) * nomScenTime * 1.25 / poolSize;
    fprintf(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600, 2)), ...
                       'h. Estimated finish: ', datestr(datetime('now') + seconds(totCompTime)), '\n']);
    
