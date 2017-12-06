@@ -36,14 +36,25 @@ function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctInde
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
 % overwrite colormap
 if exist('cMap', 'var') && ~isempty(cMap)
     cMapScale = size(cMap,1)-1;
     %determine colors
     colors = cMap(round(linspace(1,cMapScale,size(cst,1))),:);
-  else
+else
+    isConsistent = true;
     for i = 1:size(cst,1)
-      colors(i,:) = cst{i,5}.visibleColor;
+      if isfield(cst{i,5},'visibleColor')
+        colors(i,:) = cst{i,5}.visibleColor;
+      else
+          isConsistent = false;
+      end
+    end
+    if ~isConsistent
+        colors = colorcube(size(cst,1));
     end
 end
 

@@ -1,12 +1,16 @@
-%% sampling
-% examine only specific structures? improves calculation time
-examineStructures = {}; % e.g. examinedStructures = {'CTV', 'OAR'};
+%% script to generate trusted scenarios
+warning('You need to recheck everything by hand before generating a trusted testCase file. Copy hash to testScen.');
 
+ct.numOfCtScen = 1;
+pln.sampling = true;
+i = 1;
+%%
 % a) define shift scenarios
 multScen.numOfShiftScen       = [0 0 0];          % number of shifts in x y and z direction       
 multScen.shiftSize            = [3 3 3];          % maximum shift [mm]  % (e.g. prostate cases 5mm otherwise 3mm)
 multScen.shiftGenType         = 'equidistant';    % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
-multScen.shiftCombType        = 'individual';     % individual:  no combination of shift scenarios;       number of shift scenarios is sum(multScen.numOfShiftScen)
+multScen.shiftCombType        = 'individual';     % individual:  no combination of shift scenarios;       number of shift scenarios is sum(multScen.numOfShiftScen) 
+                                                  % combined:    combine shift scenarios;                 number of shift scenarios is multScen.numOfShiftScen(1)
                                                   % permuted:    create every possible shift combination; number of shift scenarios is 8,27,64 ... 
 multScen.shiftGen1DIsotropy   = '+-';             % for equidistant shifts: '+-': positive and negative, '-': negative, '+': positive shift generation 
 
@@ -22,19 +26,20 @@ multScen.scenCombType         = 'individual';     % individual:  no combination 
                                                   % permuted:    create every possible combination of range and setup scenarios
 multScen.includeNomScen       = false;
 
-%% define standard deviation of normal distribution - important for probabilistic treatment planning
+% define standard deviation of normal distribution - important for probabilistic treatment planning
 multScen.rangeRelSD           = 3.5;               % given in [%]   
 multScen.rangeAbsSD           = 1;                 % given in [mm]   
 multScen.shiftSD              = [2 2 2];           % given in [mm]
 
-%% path for output pdf and mat
-param.outputPath = pwd;
-% addpath(genpath('C:\git\matRad')) % optional add your matRad path here if not yet added to searchpath
+multScenCases(i).multScen = multScen;
+pln = matRad_setPlanUncertainties(ct, pln, multScen);
+multScenCases(i).prob = pln.multScen.scenProb;
+multScenCases(i).scenParam = pln.multScen.scenForProb;
 
-%% add your name here
-param.operator = 'Werner Heisenberg';
+clear multScen;
+i = i + 1;
 
-%% start calculation
-matRad_calcStudy(examineStructures, multScen, param);
-
-% exit;
+%% write to file
+testCase.multScenCases = multScenCases;
+DataHash(testCase)
+save(fullfile('unitTest','testCases.mat'), 'testCase');
