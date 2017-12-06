@@ -1,4 +1,4 @@
-function calcStudy(examineStructures, multScen, param)
+function matRad_calcStudy(examineStructures, multScen, param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad uncertainty study wrapper
 % 
@@ -38,12 +38,20 @@ else
    param.logLevel     = 4;
 end
 
+% require minimum number of scenarios to ensure proper statistics
+if multScen.numOfRangeShiftScen + sum(multScen.numOfShiftScen) < 20
+    matRad_dispToConsole('You use a very low number of scenarios. Proceeding is not recommended.',param,'warning');
+    param.sufficientStatistics = false;
+    pause(10);
+end
+
 %% load DICOM imported patient
 listOfMat = dir('*.mat');
 if numel(listOfMat) == 1
   load(listOfMat.name);
 else
-   matRad_dispToConsole('Ambigous set of .mat files in the current folder (i.e. more than one possible patient).',param,'error');
+   matRad_dispToConsole('Ambigous set of .mat files in the current folder (i.e. more than one possible patient or already results available).\n',param,'error');
+   return
 end
 
 % matRad path
@@ -58,29 +66,41 @@ addpath(fullfile(matRadPath,'tools','samplingAnalysis'));
 pln.robOpt = false;
 pln.sampling = true;
 
-%% perform calculation
-[mRealizations,stats, cst, pln, resultCubes,nominalScenario]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w,examineStructures, multScen, param);
+%% perform calculation and save
+tic
+[sampRes, sampDose, pln, nominalScenario]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w,examineStructures, multScen, param);
+param.computationTime = toc;
 
-%% perform analysis
-[structureStat, doseStat] = samplingAnalysis(ct,cst,pln.multScen.subIx,mRealizations,pln.multScen.scenProb);
-
-%% save
+param.reportPath = fullfile('report','data');
 filename = 'resultSampling';
-save(filename);
+save(filename, '-v7.3');
+
+%% perform analysis 
+% start here loading resultSampling.mat if something went wrong during analysis or report generation
+[structureStat, doseStat, param] = matRad_samplingAnalysis(ct,cst,pln.multScen.subIx, sampRes, sampDose, pln.multScen.scenProb,nominalScenario, pln.multScen, param);
 
 %% generate report
+listOfQI = {'mean', 'std', 'max', 'min', 'D_2', 'D_5', 'D_50', 'D_95', 'D_98'};
 
 cd(param.outputPath)
 mkdir(fullfile('report','data'));
+mkdir(fullfile('report','data','frames'));
 mkdir(fullfile('report','data','figures'));
-param.outputPath = fullfile('report','data');
-copyfile(fullfile(matRadPath,'tools','samplingAnalysis','main_template.tex'),'report/main.tex');
+copyfile(fullfile(matRadPath,'tools','samplingAnalysis','main_template.tex'),fullfile('report','main.tex'));
 
 % generate actual latex report
-latexReport(ct, cst, pln, nominalScenario, structureStat, param);
+matRad_latexReport(ct, cst, pln, nominalScenario, structureStat, doseStat, sampDose, listOfQI, param);
 
 cd('report');
-executeLatex = 'xelatex -shell-escape main.tex';
-system(executeLatex);
-system(executeLatex);
-system('main.pdf');
+if ispc
+    executeLatex = 'xelatex --shell-escape --interaction=nonstopmode main.tex';
+elseif isunix
+    executeLatex = '/Library/TeX/texbin/xelatex --shell-escape --interaction=nonstopmode main.tex';
+end
+
+response = system(executeLatex);
+if response == 127 % means not found
+    warning('Could not find tex distribution. Please compile manually.');
+else
+    system(executeLatex);
+end

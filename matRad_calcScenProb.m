@@ -43,7 +43,7 @@ if isequal(probDist,'normDist')
         
         for i = 1:length(mu)
             samplePosSorted = sort(unique(samplePos(:,i)));
-            if numel(samplePosSorted) == 1
+            if numel(samplePosSorted) == 1 || sigma(i) == 0
                 continue;
             end
             binWidth        = (samplePosSorted(2) - samplePosSorted(1));
@@ -55,7 +55,7 @@ if isequal(probDist,'normDist')
         
     elseif isequal(calcType,'pointwise')
         for i = 1:length(mu)
-            scenProb = scenProb .* (1/sqrt(2*pi*sigma(i)^2)*exp(-((samplePos(i,:)-mu(i)).^2./(2*sigma(i)^2))));
+            scenProb = scenProb .* (1/sqrt(2*pi*sigma(i)^2)*exp(-((samplePos(:,i)-mu(i)).^2./(2*sigma(i)^2))));
         end
     end
     

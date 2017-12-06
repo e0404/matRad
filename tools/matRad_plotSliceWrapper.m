@@ -1,4 +1,4 @@
-function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels)
+function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,colorMapLabel,doseWindow,doseIsoLevels)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad tool function to directly plot a complete slice of a ct with dose
 % including contours and isolines.
@@ -45,23 +45,29 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandl
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Handle the argument list
-if nargin < 8
+if ~exist('tresh','var') || isempty(thresh)
     thresh = [];
 end
-if nargin < 9
+if ~exist('alpha','var') || isempty(alpha)
     alpha = [];
 end
-if nargin < 10
+if ~exist('contourColorMap','var') || isempty(contourColorMap)
    contourColorMap = [];
 end
-if nargin < 11
+if ~exist('doseColorMap','var') || isempty(doseColorMap)
    doseColorMap = [];
 end
-if nargin < 12
+if ~exist('doseWindow','var') || isempty(doseWindow)
    doseWindow = [];
 end
-if nargin < 13
+if ~exist('doseIsoLevels','var') || isempty(doseIsoLevels)
    doseIsoLevels = [];
+end
+if ~exist('colorMapLabel','var') || isempty(colorMapLabel)
+   colorMapLabel = '';
+end
+if ~exist('disableInterpretor','var') || isempty(disableInterpretor)
+    disableInterpretor = true;
 end
 
 
@@ -82,4 +88,3 @@ daspect(axesHandle,[1 1 1]);
 colormap(doseColorMap);
 hCMap = matRad_plotColorbar(axesHandle,doseColorMap,doseWindow,'Location','EastOutside');
 end
-

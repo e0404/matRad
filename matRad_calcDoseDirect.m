@@ -69,72 +69,16 @@ end
 
 % dose calculation
 if strcmp(pln.radiationMode,'photons')
-<<<<<<< HEAD
-    dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
-    %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
-elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-    dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
-end
-
-% remember bixel weight
-counter = 0;
-resultGUI.w = NaN * ones(dij.totalNumOfBixels,1);
-for i = 1:pln.numOfBeams
-    for j = 1:stf(i).numOfRays
-        for k = 1:stf(i).numOfBixelsPerRay(j)
-            counter = counter + 1;
-            resultGUI.w(counter) = stf(i).ray(j).weight(k);
-        end
-    end
-end
-
-% compute phyical dose
-resultGUI.physicalDose = reshape(full(dij.physicalDose{1}(:,1)),ct.cubeDim);
-
-% compute LET if applicable
-if isfield(dij,'mLETDose')
-    
-    ix = resultGUI.physicalDose>0;
-    
-    resultGUI.LET     = zeros(ct.cubeDim);
-    resultGUI.LET(ix) = dij.mLETDose{1}(ix,1)./resultGUI.physicalDose(ix);
-    
-end
-                      
-% compute biological cubes
-if isfield(dij,'RBE')
-
-    resultGUI.RBExD = resultGUI.physicalDose * dij.RBE;
-    
-elseif isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
-=======
   %dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect);
-  dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
+  dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,param);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-  dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect);
+  dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 end
 
 % calculate cubes; use uniform weights here, weighting with actual fluence 
 % already performed in dij construction 
 resultGUI    = matRad_calcCubes(ones(pln.numOfBeams,1),dij,cst);
->>>>>>> dev
 
 % remember original fluence weights
 resultGUI.w  = w; 
-
-
-<<<<<<< HEAD
-    resultGUI.RBExD      = zeros(ct.cubeDim);
-    resultGUI.RBExD(ix)  = ((sqrt(dij.alphaX(ix).^2 + 4 .* dij.betaX(ix) .* resultGUI.effect(ix)) - dij.alphaX(ix))./(2.*dij.betaX(ix)));
-
-    resultGUI.alpha      = zeros(ct.cubeDim);
-    resultGUI.alpha(ix)  = dij.mAlphaDose{1}(ix,1)./resultGUI.physicalDose(ix);
-
-    resultGUI.beta       = zeros(ct.cubeDim);
-    resultGUI.beta(ix)   = (dij.mSqrtBetaDose{1}(ix,1)./resultGUI.physicalDose(ix)).^2;
-    
-end
-=======
-
->>>>>>> dev
 

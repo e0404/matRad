@@ -85,4 +85,3 @@ switch dvhType
 end
 dvh = dvh ./ numOfVoxels * 100;
 end %eof getDVHPoints
-
