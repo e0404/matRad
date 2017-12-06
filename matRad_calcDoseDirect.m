@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,param)
+function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dose calculation wrapper bypassing dij calculation
 % 
@@ -12,9 +12,7 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,param)
 %   cst:        matRad cst struct
 %   w:          optional (if no weights available in stf): bixel weight
 %               vector
-%   param:      (optional) structure defining additional parameter
-%               e.g. param.logLevel
-% 
+%
 % output
 %   resultGUI:  matRad result struct
 %
@@ -35,16 +33,12 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,param)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% define default log level
-param.calcDoseDirect = true;
-% define certain indices set that should be used for dose calculation
-%param.subIx = [];
-
+calcDoseDirect = true;
 
 % copy bixel weight vector into stf struct
 if exist('w','var')
     if sum([stf.totalNumOfBixels]) ~= numel(w)
-        matRad_dispToConsole('weighting does not match steering information','error')
+        error('weighting does not match steering information')
     end
     counter = 0;
     for i = 1:pln.numOfBeams
@@ -55,24 +49,25 @@ if exist('w','var')
             end
         end
     end
-end
-
-if ~isfield(pln,'bioParam')
-   % retrieve model parameters
-   pln.bioParam = matRad_bioModel(pln.radiationMode,pln.bioOptimization);
-end
-
-if ~isfield(pln,'multScen')
-   % set plan uncertainties
-   [pln] = matRad_setPlanUncertainties(ct,pln);
+else % weights need to be in stf!
+    w = NaN*ones(sum([stf.totalNumOfBixels]),1);
+    counter = 0;
+    for i = 1:pln.numOfBeams
+        for j = 1:stf(i).numOfRays
+            for k = 1:stf(i).numOfBixelsPerRay(j)
+                counter = counter + 1;
+                w(counter) = stf(i).ray(j).weight(k);
+            end
+        end
+    end    
 end
 
 % dose calculation
 if strcmp(pln.radiationMode,'photons')
-  %dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect);
-  dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,param);
+  dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect);
+  %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-  dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
+  dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect);
 end
 
 % calculate cubes; use uniform weights here, weighting with actual fluence 
@@ -81,4 +76,7 @@ resultGUI    = matRad_calcCubes(ones(pln.numOfBeams,1),dij,cst);
 
 % remember original fluence weights
 resultGUI.w  = w; 
+
+
+
 
