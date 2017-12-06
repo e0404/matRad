@@ -28,7 +28,7 @@ function delivery = matRad_readLmdout(dij, stf, FileName, FileName_lmdout)
 % Silke Ulrich Aug 2016
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-disp('read in delivery information')
+%disp('read in delivery information')
 
 if(nargin <4)
     FileName_lmdout = FileName;

@@ -196,7 +196,7 @@ end
 
     
 %berechne Dosis für jede Phase  
-disp('calc dose in each CT phase')
+%disp('calc dose in each CT phase')
 for p=1:NumOfPhases
       w=zeros(dij.totalNumOfBixels, 1); 
       for i=1:length(delivery)

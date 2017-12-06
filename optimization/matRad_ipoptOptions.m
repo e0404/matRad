@@ -21,7 +21,7 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Output (C.1)
-options.ipopt.print_level                   = 5;
+options.ipopt.print_level                   = 3;  %standard 5
 options.ipopt.print_user_options            = 'no';
 options.ipopt.print_options_documentation   = 'no';
 options.ipopt.print_info_string             = 'yes';
