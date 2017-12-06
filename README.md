@@ -1,3 +1,5 @@
+[![GitPitch](https://gitpitch.com/assets/badge.svg)](https://gitpitch.com/e0404/matRad/dev) 
+
 # General information
 
 ---
@@ -8,11 +10,11 @@ More information can be found on the project page  at <http://e0404.github.io/ma
 
 ---
 
-Copyright 2015 the matRad development team. 
+Copyright 2017 the matRad development team. 
 
 matrad@dkfz.de
 
-All the elements of the compilation of matRad and Ipopt are free software. You can redistribute and/or modify matRad’s source code version provided as files with .m and .mat extension under the terms of the GNU GENERAL PUBLIC LICENSE Version 3 (GPL v3). You can also add to matRad the Ipopt functionality by using the precompiled mex files of the Ipopt optimizer in object code version which are licensed under the Eclipse Public License Version 1.0 (EPL v1.0), also made available for download via https://projects.coin-or.org/Ipopt.
+All the elements of the compilation of matRad and Ipopt are free software. You can redistribute and/or modify matRad's source code version provided as files with .m and .mat extension under the terms of the GNU GENERAL PUBLIC LICENSE Version 3 (GPL v3). You can also add to matRad the Ipopt functionality by using the precompiled mex files of the Ipopt optimizer in object code version which are licensed under the Eclipse Public License Version 1.0 (EPL v1.0), also made available for download via https://projects.coin-or.org/Ipopt.
 
 In addition, we provide a matlab standalone version of the compilation of matRad and Ipopt, where the files of matRad and Ipopt are licensed under GPL v3 and EPL v1.0 respectively. The matlab standalone version is meant to be used by students for learning and practicing scientific programming.
 

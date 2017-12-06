@@ -40,8 +40,13 @@ if nargin < 3
     visBool = 0;
 end
 
-%% get info
-structInfo = dicominfo(filename);
+% read dicom info (this includes already all data for the rtss)
+if verLessThan('matlab','9')
+    structInfo = dicominfo(filename);
+else % apply 'UseVRHeuristic' option when available to use a to help read certain 
+     % noncompliant files which switch value representation (VR) modes incorrectly
+    structInfo = dicominfo(filename,'UseVRHeuristic',false);
+end
 
 % list the defined structures
 listOfDefStructs = fieldnames(structInfo.StructureSetROISequence);
