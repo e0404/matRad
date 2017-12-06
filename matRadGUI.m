@@ -1801,7 +1801,12 @@ end
 
 % assign color if color assignment is not already present or inconsistent
 if colorAssigned == false
-  colors = colorcube(size(cst,1));
+  m         = 64;
+  colorStep = ceil(m/size(cst,1));
+  colors    = colorcube(colorStep*size(cst,1));
+  % spread individual VOI colors in the colorcube color palette
+  colors    = colors(1:colorStep:end,:);
+  
   for i = 1:size(cst,1)
     cst{i,5}.visibleColor = colors(i,:);
   end
