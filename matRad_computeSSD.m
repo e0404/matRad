@@ -31,22 +31,6 @@ function stf = matRad_computeSSD(stf,ct,mode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% default setting only use first cube
-function bestSSD = closestNeighbourSSD(rayPos, SSD, currPos)
-    distances = sum((rayPos - currPos).^2,2);
-    [~, idx] = sort(distances);
-    for a = 1:numel(idx)
-        bestSSD = SSD{idx(a)};
-        % if SSD has been found, bestSSD is not empty
-        if ~any(isempty(bestSSD))
-            break
-        end
-    end
-    if any(isempty(bestSSD))
-        error('Could not fix SSD calculation.');
-    end
-end
-
 if nargin < 3
     mode = 'first';
 end
@@ -68,7 +52,7 @@ if strcmp(mode,'first')
 
             
             if isempty(ixSSD)
-                warning('Ray is off patient. Trying to fix afterwards...');
+                warning('ray does not hit patient. Trying to fix afterwards...');
             elseif ixSSD(1) == 1
                 warning('Surface for SSD calculation starts directly in first voxel of CT\n');
             end
@@ -78,17 +62,39 @@ if strcmp(mode,'first')
             stf(i).ray(j).SSD = SSD{j};            
         end
         
-        % try to fix SSD by using closest neighbouring ray
+        % try to fix SSD by using SSD of closest neighbouring ray
         SSDnotSet = find(cellfun('isempty',SSD));
         if ~isempty(SSDnotSet)
-            rayPos_bev = reshape([stf(i).ray(:).rayPos_bev],[],3);
+            rayPos_bev = reshape([stf(i).ray(:).rayPos_bev]',[3 stf(i).numOfRays])';
             for j = SSDnotSet
-                pos = rayPos_bev(j,:);
-                stf(i).ray(j).SSD = closestNeighbourSSD(rayPos_bev, SSD, pos);
+                stf(i).ray(j).SSD =  matRad_closestNeighbourSSD(rayPos_bev, SSD, rayPos_bev(j,:));
             end
         end
     end
 else
     error('mode not defined for SSD calculation');
 end
+
+
+% default setting only use first cube
+function bestSSD = matRad_closestNeighbourSSD(rayPos, SSD, currPos)
+    vDistances = sum((rayPos - currPos).^2,2);
+    [~, vIdx]   = sort(vDistances);
+    for ix = vIdx'
+        bestSSD = SSD{ix};
+        % if SSD has been found, bestSSD is not empty
+        if ~any(isempty(bestSSD))
+            break
+        end
+    end
+    if any(isempty(bestSSD))
+        error('Could not fix SSD calculation.');
+    end
+end
+
+
+
+
+
+
 end
