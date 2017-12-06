@@ -125,12 +125,14 @@ for runVoi = 1:size(cst,1)
     else    
         matRad_dispToConsole([num2str(cst{runVoi,1}) ' ' cst{runVoi,2} ' - No dose information.\n'],param,'info') 
         % if VOI contains no voxel indices then fill qi's with NaN's  but assign VOIname
+        if exist('qi', 'var')
         listOfFields = fieldnames(qi);
-        for j = 1:numel(listOfFields)
-            if strcmp(listOfFields{j}, 'VOIname')
-                qi(runVoi).(listOfFields{j}) = cst{runVoi,2};
-            else
-                qi(runVoi).(listOfFields{j}) = NaN;
+            for j = 1:numel(listOfFields)
+                if strcmp(listOfFields{j}, 'VOIname')
+                    qi(runVoi).(listOfFields{j}) = cst{runVoi,2};
+                else
+                    qi(runVoi).(listOfFields{j}) = NaN;
+                end
             end
         end
     end

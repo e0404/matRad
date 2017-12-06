@@ -63,9 +63,19 @@ else
 end
 
 
-% save nonSampling pln for nominal scenario calculation
+% save nonSampling pln for nominal scenario calculation and add dummy fields
 plnNominal = pln;
+plnNominal.multScen.numOfShiftScen      = 1;
 plnNominal.multScen.numOfRangeShiftScen = 1;
+plnNominal.multScen.numOfCtScen         = 1;
+plnNominal.multScen.scenMask            = 1;
+plnNominal.multScen.linearMask          = 1;
+plnNominal.multScen.relRangeShift       = 0;
+plnNominal.multScen.absRangeShift       = 0;
+plnNominal.multScen.isoShift            = [0 0 0];
+plnNominal.multScen.scenProb            = 1;
+plnNominal.multScen.scenForProb         = [0 0 0 0 0];
+
 if exist('multScen','var')
     pln = matRad_setPlanUncertainties(ct,pln, multScen, param);
 else
@@ -141,8 +151,8 @@ if FlagParallToolBoxLicensed
    else
        poolSize = p.NumWorkers;
    end
-      % rough estimate of total computation time
-   totCompTime = size(pln.multScen.scenForProb,1) * nomScenTime * 1.25 / poolSize;
+   % rough estimate of total computation time
+   totCompTime = ceil(size(pln.multScen.scenForProb,1) / poolSize) * nomScenTime * 1.35;
    fprintf(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600, 2)), ...
                       'h. Estimated finish: ', datestr(datetime('now') + seconds(totCompTime)), '\n']);
    
