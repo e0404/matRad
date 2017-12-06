@@ -37,7 +37,16 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set consistent random seed (enables reproducibility)
-rng(0);
+matRadRootDir = fileparts(mfilename('fullpath'));
+addpath(fullfile(matRadRootDir,'tools'))
+[env, ~] = matRad_getEnvironment();
+
+switch env
+     case 'MATLAB'
+          rng(0);
+     case 'OCTAVE'
+          rand('seed',0)
+end
 
 % default: dose influence matrix computation
 if ~exist('calcDoseDirect','var')
