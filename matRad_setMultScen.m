@@ -296,11 +296,14 @@ totalNumScen                 = size(scenForProb, 1);
 multScen.numOfCtScen         = uIn.numOfCtScen;
 
 multScen.isoShift            = isoShift;
+multScen.shiftCombType       = uIn.shiftCombType;
+multScen.shiftGen1DIsotropy  = uIn.shiftGen1DIsotropy;
 multScen.numOfShiftScen      = numOfShiftScen;
 
 multScen.relRangeShift       = relRangeShift;
 multScen.absRangeShift       = absRangeShift;
 multScen.numOfRangeShiftScen = numOfRangeShiftScen;
+multScen.rangeCombType       = uIn.rangeCombType;
 
 multScen.scenMask            = scenMask;
 multScen.linearMask          = linearMask;
@@ -310,7 +313,10 @@ multScen.rangeRelSD          = uIn.rangeRelSD;
 multScen.rangeAbsSD          = uIn.rangeAbsSD;
 multScen.shiftSD             = uIn.shiftSD;  
 
-multScen.scenCombType        = uIn.scenCombType;  
+multScen.scenCombType        = uIn.scenCombType;
+
+% save original user input
+multScen.userInput = uIn;
 
 
 
