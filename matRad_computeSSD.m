@@ -1,4 +1,4 @@
-function stf = matRad_computeSSD(stf,ct,mode)
+function stf = matRad_computeSSD(stf,ct,ctScen,mode)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad SSD calculation
 % 
@@ -31,7 +31,7 @@ function stf = matRad_computeSSD(stf,ct,mode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 3
+if nargin < 4
     mode = 'first';
 end
 
@@ -47,7 +47,7 @@ if strcmp(mode,'first')
                                  ct.resolution, ...
                                  stf(i).sourcePoint, ...
                                  stf(i).ray(j).targetPoint, ...
-                                 {ct.cube{1}});
+                                 {ct.cube{ctScen}});
             ixSSD = find(rho{1} > densityThreshold,1,'first');
 
             
@@ -59,7 +59,7 @@ if strcmp(mode,'first')
 
             % calculate SSD
             SSD{j} = double(2 * stf(i).SAD * alpha(ixSSD));
-            stf(i).ray(j).SSD = SSD{j};            
+            stf(i).ray(j).SSD{ctScen} = SSD{j};            
         end
         
         % try to fix SSD by using SSD of closest neighbouring ray
@@ -67,7 +67,7 @@ if strcmp(mode,'first')
         if ~isempty(SSDnotSet)
             rayPos_bev = reshape([stf(i).ray(:).rayPos_bev]',[3 stf(i).numOfRays])';
             for j = SSDnotSet
-                stf(i).ray(j).SSD =  matRad_closestNeighbourSSD(rayPos_bev, SSD, rayPos_bev(j,:));
+                stf(i).ray(j).SSD{ctScen} =  matRad_closestNeighbourSSD(rayPos_bev, SSD, rayPos_bev(j,:));
             end
         end
     end

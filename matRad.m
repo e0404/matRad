@@ -51,7 +51,7 @@ pln.robOpt          = false;
 pln.bioParam = matRad_bioModel(pln.radiationMode,pln.bioOptimization);
 
 % set plan uncertainties for robust optimization
-[pln] = matRad_setPlanUncertainties(ct,pln);
+pln = matRad_setPlanUncertainties(ct,pln);
 
 %% initial visualization and change objective function settings if desired
 matRadGUI
@@ -68,7 +68,7 @@ elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
 end
 
 %% inverse planning for imrt
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI  = matRad_fluenceOptimization(dij,cst,pln);
 
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
@@ -91,7 +91,7 @@ matRadGUI
 
 %% perform sampling
 % select structures to include in sampling; leave empty to sample dose for all structures
-param.subIx = {}; % param.subIx = {'CTV','OAR1'}
-[mRealizations, cstSamp, plnSamp, nominalScenario]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w,[],param.subIx);
-
+structSel = {}; % structSel = {'PTV','OAR1'};
+[caSampRes, mSampDose, plnSamp, resultGUInomScen] = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,[],[]);
+[cstStat, resultGUIStat, param]                   = matRad_samplingAnalysis(ct,cst,plnSamp,caSampRes, mSampDose, resultGUInomScen,[]);
 

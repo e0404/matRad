@@ -80,8 +80,8 @@ if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
     for j = 1:size(cst,1)
         % Only take OAR or target VOI.
         if isequal(cst{j,3},'OAR') || isequal(cst{j,3},'TARGET') 
-            a_x(cst{j,4}{scenNum}) = cst{j,5}.alphaX;
-            b_x(cst{j,4}{scenNum}) = cst{j,5}.betaX;
+            a_x(cst{j,4}{1}) = cst{j,5}.alphaX;
+            b_x(cst{j,4}{1}) = cst{j,5}.betaX;
         end
     end
 
@@ -92,8 +92,8 @@ if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
        resultGUI.(['effect', beamInfo(i).suffix])       = full(dij.mAlphaDose{scenNum} * wBeam + (dij.mSqrtBetaDose{scenNum} * wBeam).^2);
        resultGUI.(['effect', beamInfo(i).suffix])       = reshape(resultGUI.(['effect', beamInfo(i).suffix]),dij.dimensions);
     
-       resultGUI.(['RBExD', beamInfo(i).suffix])     = zeros(size(resultGUI.(['effect', beamInfo(i).suffix])));
-       resultGUI.(['RBExD', beamInfo(i).suffix])(ix) = (sqrt(a_x(ix).^2 + 4 .* b_x(ix) .* resultGUI.(['effect', beamInfo(i).suffix])(ix)) - a_x(ix))./(2.*b_x(ix));
+       resultGUI.(['RBExD', beamInfo(i).suffix])        = zeros(size(resultGUI.(['effect', beamInfo(i).suffix])));
+       resultGUI.(['RBExD', beamInfo(i).suffix])(ix)    = (sqrt(a_x(ix).^2 + 4 .* b_x(ix) .* resultGUI.(['effect', beamInfo(i).suffix])(ix)) - a_x(ix))./(2.*b_x(ix));
 
        resultGUI.(['RBE', beamInfo(i).suffix])          = resultGUI.(['RBExD', beamInfo(i).suffix])./resultGUI.(['physicalDose', beamInfo(i).suffix]);
 
