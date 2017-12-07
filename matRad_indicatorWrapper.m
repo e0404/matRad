@@ -38,8 +38,8 @@ function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if isfield(resultGUI,'RBExDose')
-    doseCube = resultGUI.RBExDose;
+if isfield(resultGUI,'RBExD')
+    doseCube = resultGUI.RBExD;
 else
     doseCube = resultGUI.physicalDose;
 end

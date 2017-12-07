@@ -57,7 +57,7 @@ dvh = struct;
 for i = 1:numOfVois
     dvh(i).doseGrid     = doseGrid;
     dvh(i).volumePoints = getDVHPoints(cst, i, doseCube, doseGrid, dvhType);
-    dvh(i).VOIname      = cst{i,2};
+    dvh(i).name         = cst{i,2};
 end
 
 end %eof 

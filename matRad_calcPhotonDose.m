@@ -94,7 +94,7 @@ for CtScen = 1:pln.multScen.numOfCtScen
         for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen 
             
             if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
-                dij.physicalDose{CtScen,ShiftScen,RangeShiftScen} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
+                dij.physicalDose{CtScen,ShiftScen,RangeShiftScen} = spalloc(prod(ct.cubeDim),numOfColumnsDij,1);
             end
             
         end
@@ -176,9 +176,6 @@ if ~isFieldBasedDoseCalc
     end
 end
 
-% compute SSDs
-stf = matRad_computeSSD(ct,stf,pln);
-
 % get kernel size and distances
 kernelLimit = ceil(lateralCutoff/intConvResolution);
 [kernelX, kernelZ] = meshgrid(-kernelLimit*intConvResolution: ...
@@ -197,6 +194,8 @@ kernelConvSize = 2*kernelConvLimit;
 % that storage within the influence matrix may be subject to sampling
 effectiveLateralCutoff = lateralCutoff + fieldWidth/2;
 
+ctScen = 1;
+
 for ShiftScen = 1:pln.multScen.numOfShiftScen
 
    % manipulate isocenter
@@ -207,6 +206,9 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
 
    counter = 0;
 
+   % compute SSDs
+   stf = matRad_computeSSD(stf,ct,ctScen);
+
    matRad_dispToConsole(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.numOfShiftScen) ': \n'],param,'info');
    matRad_dispToConsole('matRad: photon dose calculation...\n',param,'info');
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -214,6 +216,13 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
 
           matRad_dispToConsole(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n'],param,'info');
 
+          % remember beam and bixel number
+           if param.calcDoseDirect
+            dij.beamNum(i)    = i;
+            dij.rayNum(i)     = i;
+            dij.bixelNum(i)   = i;
+           end
+       
           bixelsPerBeam = 0;
 
           % convert voxel indices to real coordinates using iso center of beam i
@@ -250,8 +259,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
           [~,center] = min(sum(reshape([stf(i).ray.rayPos_bev],3,[]).^2));
 
           % get correct kernel for given SSD at central ray (nearest neighbor approximation)
-          [~,currSSDIx] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD{1}));
-          warning('consider SSD{ctScen}')
+          [~,currSSDIx] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD{ctScen}));
 
           matRad_dispToConsole(['                   SSD = ' num2str(machine.data.kernel(currSSDIx).SSD) 'mm                 \n'],param,'info');
 
@@ -337,7 +345,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                      matRad_progress(bixelsPerBeam/max(1,round(stf(i).totalNumOfBixels/200)),...
                                      floor(stf(i).totalNumOfBixels/max(1,round(stf(i).totalNumOfBixels/200))));
                  end
-                 if param.logLevel == 2
+                 if param.logLevel == 1
                     % update waitbar only 100 times
                     if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
                         waitbar(counter/dij.totalNumOfBixels);

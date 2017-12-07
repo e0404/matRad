@@ -1,14 +1,16 @@
-function matRad_calcStudy(examineStructures, multScen, param)
+function matRad_calcStudy(structSel,multScen,matPatientPath,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad uncertainty study wrapper
 % 
 % call
-%   calcStudy(examineStructures, multScen, param)
+%   calcStudy(structSel,multScen,param)
 %
 % input
-%   examineStructures:  structures which should be examined (can be empty, 
+%   structSel:          structures which should be examined (can be empty, 
 %                       to examine all structures) cube
 %   multScen:           parameterset of uncertainty analysis
+%   matPatientPath:     (optional) absolut path to patient mat file. If
+%                       empty mat file in current folder will be used
 %   param:              structure defining additional parameter
 %                       outputPath
 % output
@@ -38,20 +40,34 @@ else
    param.logLevel     = 4;
 end
 
+%
+if ~isfield(param,'outputPath')
+    param.outputPath = mfilename('fullpath');
+end
+
 % require minimum number of scenarios to ensure proper statistics
 if multScen.numOfRangeShiftScen + sum(multScen.numOfShiftScen) < 20
-    matRad_dispToConsole('You use a very low number of scenarios. Proceeding is not recommended.',param,'warning');
+    matRad_dispToConsole('Detected a low number of scenarios. Proceeding is not recommended.',param,'warning');
     param.sufficientStatistics = false;
-    pause(10);
+    pause(1);
 end
 
 %% load DICOM imported patient
-listOfMat = dir('*.mat');
-if numel(listOfMat) == 1
-  load(listOfMat.name);
+if exist(matPatientPath,'file') == 2
+    load(matPatientPath)
 else
-   matRad_dispToConsole('Ambigous set of .mat files in the current folder (i.e. more than one possible patient or already results available).\n',param,'error');
-   return
+    listOfMat = dir('*.mat');
+    if numel(listOfMat) == 1
+      load(listOfMat.name);
+    else
+       matRad_dispToConsole('Ambigous set of .mat files in the current folder (i.e. more than one possible patient or already results available).\n',param,'error');
+       return
+    end
+end
+
+% check if nominal workspace is complete
+if exist('ct','var') && exist('cst','var') && exist('stf','var') && exist('pln','var') && exist('resultGUI','var')
+    matRad_dispToConsole('Nominal workspace for sampling is incomplete.\n',param,'error');
 end
 
 % matRad path
@@ -63,21 +79,21 @@ else
 end
 addpath(fullfile(matRadPath,'tools','samplingAnalysis'));
 
-pln.robOpt = false;
+pln.robOpt   = false;
 pln.sampling = true;
 
 %% perform calculation and save
 tic
-[sampRes, sampDose, pln, nominalScenario]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w,examineStructures, multScen, param);
+[caSampRes, mSampDose, pln, resultGUInomScen]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,multScen,param);
 param.computationTime = toc;
 
 param.reportPath = fullfile('report','data');
-filename = 'resultSampling';
+filename         = 'resultSampling';
 save(filename, '-v7.3');
 
 %% perform analysis 
 % start here loading resultSampling.mat if something went wrong during analysis or report generation
-[structureStat, doseStat, param] = matRad_samplingAnalysis(ct,cst,pln.multScen.subIx, sampRes, sampDose, pln.multScen.scenProb,nominalScenario, pln.multScen, param);
+[structureStat, doseStat, param] = matRad_samplingAnalysis(ct,cst,pln,caSampRes,mSampDose,resultGUInomScen,param);
 
 %% generate report
 listOfQI = {'mean', 'std', 'max', 'min', 'D_2', 'D_5', 'D_50', 'D_95', 'D_98'};

@@ -10,11 +10,12 @@ classdef matRad_bioModel
  
       radiationMode;     % radiation modality 
       identifier;       % upper case short notation of the current model in combination with the quantity used for optimization (e.g. LEM_RBExD)
-      bioOpt;           % boolean indicating biological optimization
+      bioOpt;           % boolean indicating biological optimization (=true) or physical optimization (=false)
       model;            % upper case short notation of the current model (e.g. LEM)
       quantityOpt;      % quantity used for optimizaiton
       quantityVis;      % quantity used per default for visualization
       description;      % short description of the biological model
+      RBE;              % constant RBE
       
       % beamMixingModel  = 'ZaiderRossi';
    end
@@ -25,9 +26,9 @@ classdef matRad_bioModel
       AvailableradiationModealities   = {'photons','protons','carbon'};
       AvailableQuantitiesForOpt       = {'physicalDose','effect','RBExD'};
       
-      AvailableAlphaXBetaXProton = {[0.036 0.024],    'prostate';
+      AvailableAlphaXBetaX       = {[0.036 0.024],    'prostate';
                                     [0.089 0.287],    'rectum and normal tissue';
-                                    [0.55 0.05],     'head and neck MCN';
+                                    [0.55 0.05],      'head and neck MCN';
                                     [0.0499 0.0238],  'brain tissue';
                                     [0.1 0.05],       'default values';
                                     [0.1 0.005],      'default values'}; % 
@@ -36,7 +37,7 @@ classdef matRad_bioModel
    
    properties(Constant = true, Access = private)
       
-      constRBE = 1.1;
+      constRBE_protons = 1.1;
       
       %McNamara variable RBE model for protons
       p0_MCN   = 0.999064;     % according to https://www.ncbi.nlm.nih.gov/pubmed/26459756
@@ -70,6 +71,7 @@ classdef matRad_bioModel
    methods (Access = private)
       function this = setBioModel(this)
          
+         this.RBE = NaN;
          
           % set photon parameter
          switch  this.radiationMode 
@@ -85,18 +87,20 @@ classdef matRad_bioModel
                   this.model              = 'none';
                   this.quantityOpt        = 'physicalDose';
                   this.quantityVis        = 'physicalDose';
-                  
+                  this.RBE                = 1;
                end 
+               
          
          % set proton parameter
             case {'protons'}
             
                if isequal(this.identifier,'none_physicalDose')
-                    this.bioOpt             = false;
+                    this.bioOpt             = false;        
                     this.model              = 'none';
                     this.description        = 'optimization is based on the physical dose and neglects biological effects of charged particels';
                     this.quantityOpt        = 'physicalDose';
                     this.quantityVis        = 'physicalDose';
+                    this.RBE                = 1;
 
                 elseif isequal(this.identifier,'constRBE_RBExD') 
                     this.bioOpt             = false;
@@ -104,6 +108,7 @@ classdef matRad_bioModel
                     this.description        = 'constant RBE as used clinically';
                     this.quantityOpt        = 'RBExD';
                     this.quantityVis        = 'RBExD';
+                    this.RBE                = this.constRBE_protons;
                     
                elseif isequal(this.identifier,'MCN_effect')  % https://www.ncbi.nlm.nih.gov/pubmed/26459756
                     this.bioOpt             = true;
@@ -142,6 +147,7 @@ classdef matRad_bioModel
                     this.quantityOpt        = 'RBExD';
                     this.quantityVis        = 'RBExD';
                     this.identifier         = 'constRBE_RBExD';
+                    this.RBE                = this.constRBE_protons;
                end
             
             
@@ -154,6 +160,7 @@ classdef matRad_bioModel
                     this.description        = 'optimization is based on the physical dose and neglects biological effects of charged particels';
                     this.quantityOpt        = 'physicalDose';
                     this.quantityVis        = 'physicalDose';
+                    this.RBE                = 1;
 
                elseif isequal(this.identifier,'LEM_effect')  
                        

@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)
+function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dose calculation wrapper bypassing dij calculation
 % 
@@ -33,7 +33,16 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-calcDoseDirect = true;
+if exist('param','var')
+    if ~isfield(param,'logLevel')
+       param.logLevel = 1;
+    end 
+else
+   param.subIx          = [];
+   param.logLevel       = 1;
+end
+
+param.calcDoseDirect = true;
 
 % copy bixel weight vector into stf struct
 if exist('w','var')
@@ -64,15 +73,43 @@ end
 
 % dose calculation
 if strcmp(pln.radiationMode,'photons')
-  dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect);
+  dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
   %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-  dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect);
+  dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 end
 
-% calculate cubes; use uniform weights here, weighting with actual fluence 
-% already performed in dij construction 
-resultGUI    = matRad_calcCubes(ones(pln.numOfBeams,1),dij,cst);
+% calc resulting dose
+if pln.multScen.numOfScen == 1
+    % calculate cubes; use uniform weights here, weighting with actual fluence 
+    % already performed in dij construction 
+    resultGUI    = matRad_calcCubes(ones(pln.numOfBeams,1),dij,cst);
+    
+% calc individual scenarios    
+else    
+    plnNom          = pln;
+    plnNom.robOpt   = false;
+    plnNom.sampling = false;
+    
+    % nominal dose calculation
+    if strcmp(pln.radiationMode,'photons')
+      dijNom = matRad_calcPhotonDose(ct,stf,plnNom,cst,param);
+      %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
+    elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
+      dijNom = matRad_calcParticleDose(ct,stf,plnNom,cst,param);
+    end
+    
+    resultGUI    = matRad_calcCubes(ones(pln.numOfBeams,1),dijNom,cst);
+    Cnt          = 1;
+    ixForOpt     = find(~cellfun(@isempty, dij.physicalDose))';
+    for i = ixForOpt
+      tmpResultGUI = matRad_calcCubes(ones(pln.numOfBeams,1),dij,cst,i);
+      resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
+      Cnt = Cnt + 1;
+    end      
+end
+
+
 
 % remember original fluence weights
 resultGUI.w  = w; 

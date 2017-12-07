@@ -315,6 +315,7 @@ multScen.shiftSD             = uIn.shiftSD;
 
 multScen.scenCombType        = uIn.scenCombType;
 
+multScen.includeNomScen      = uIn.includeNomScen;
 % save original user input
 multScen.userInput = uIn;
 
