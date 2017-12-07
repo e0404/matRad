@@ -131,9 +131,8 @@ multScen = pln.multScen;
 % shift parameters
 line =  [line; '\newcommand{\numOfShiftScen}{', num2str(multScen.numOfShiftScen), '}'];
 line =  [line; '\newcommand{\shiftSize}{', num2str(max(multScen.isoShift)), '}'];
-% line =  [line; '\newcommand{\shiftGenType}{', num2str(multScen.shiftGenType), '}'];
-line =  [line; '\newcommand{\shiftCombType}{', num2str(multScen.shiftCombType), '}'];
-line =  [line; '\newcommand{\shiftGenIsotropy}{', num2str(multScen.shiftGen1DIsotropy), '}'];
+line =  [line; '\newcommand{\shiftGenType}{', num2str(multScen.shiftGenType), '}'];
+
 
 % range parameters
 line =  [line; '\newcommand{\numOfRangeShiftScen}{', num2str(multScen.numOfRangeShiftScen), '}'];

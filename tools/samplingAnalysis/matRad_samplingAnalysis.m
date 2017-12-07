@@ -49,7 +49,7 @@ for i = 1:size(nominalScenario.cst,1)
         cstStat(i).dvh(l).volumePoints = sampRes(l).dvh(i).volumePoints;
         cstStat(i).qi(l)  = sampRes(l).qi(i);
         cstStat(i).w(l)   = w(l)';
-    end  
+    end
 end
 %% calculate mean and std cube
 % compute doseMatrix with columns correspond to scenarios
