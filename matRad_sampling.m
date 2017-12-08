@@ -70,7 +70,7 @@ plnNominal.multScen.scenProb            = 1;
 plnNominal.multScen.scenForProb         = [0 0 0 0 0];
 
 % create new pln.multScen for sampling
-if exist('multScen','var')
+if exist('multScen','var') && ~isempty(multScen)
     pln = matRad_setPlanUncertainties(ct,pln, multScen, param);
 else
     pln = matRad_setPlanUncertainties(ct,pln, [], param);
