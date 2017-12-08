@@ -755,9 +755,15 @@ end
 
 % generate steering file
 try 
+    currPln = evalin('base','pln');
+    % if we run 3d conf opt -> hijack runDao to trigger computation of
+    % connected bixels
+    if strcmp(pln.radiationMode,'photons') && get(handles.radiobutton3Dconf,'Value')
+       currPln.runDAO = true; 
+    end
     stf = matRad_generateStf(evalin('base','ct'),...
                                      evalin('base','cst'),...
-                                     evalin('base','pln'));
+                                     currPln);
     assignin('base','stf',stf);
 catch ME
     handles = showError(handles,{'CalcDoseCallback: Error in steering file generation!',ME.message}); 
@@ -1529,6 +1535,9 @@ try
     % optimize
     if get(handles.radiobutton3Dconf,'Value') && strcmp(handles.Modalities{get(handles.popupRadMode,'Value')},'photons')
         % conformal plan if photons and 3d conformal
+        if ~matRad_checkForConnectedBixelRows(evalin('base','stf'))
+            error('disconnetced dose influence data in BEV - run dose calculation again with consistent settings');
+        end
         [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(matRad_collapseDij(evalin('base','dij')),evalin('base','cst'),pln);
         resultGUIcurrentRun.w = resultGUIcurrentRun.w * ones(evalin('base','dij.totalNumOfBixels'),1);
         resultGUIcurrentRun.wUnsequenced = resultGUIcurrentRun.w;
@@ -1613,6 +1622,9 @@ try
     %% DAO
     if strcmp(pln.radiationMode,'photons') && pln.runDAO
         handles = showWarning(handles,{'Observe: You are running direct aperture optimization','This is experimental code that has not been thoroughly debugged - especially in combination with constrained optimization.'});
+        if ~matRad_checkForConnectedBixelRows(evalin('base','stf'))
+            error('disconnetced dose influence data in BEV - run dose calculation again with consistent settings');
+        end
        [resultGUI,ipoptInfo] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst'),...
            resultGUI.apertureInfo,resultGUI,pln);
        assignin('base','resultGUI',resultGUI);
@@ -4234,3 +4246,26 @@ function radiobutton3Dconf_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of radiobutton3Dconf
+
+function x = matRad_checkForConnectedBixelRows(stf)
+
+x = true;
+
+for i = 1:size(stf,2)
+    
+    bixelPos = reshape([stf(i).ray.rayPos_bev],3,[]);
+   
+    rowCoords = unique(bixelPos(3,:));
+    
+    for j = 1:numel(rowCoords)
+        
+        increments = diff(bixelPos(1,rowCoords(j) == bixelPos(3,:)));
+        
+        % if we find one not connected row -> return false
+        if numel(unique(increments)) > 1
+            x = false;
+            return;
+        end
+    end
+    
+end
