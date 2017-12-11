@@ -1,4 +1,4 @@
-function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice,cMap,varargin)
+function [voiContourHandles, visibleOnSlice] = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice,cMap,varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that plots the contours of the segmentations given in cst
 %
@@ -21,6 +21,8 @@ function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctInde
 %
 % output
 %   voiContourHandles:  handles of the plotted contours
+%   visibleOnSlice:     logicals defining if the contour is actually
+%                       visible on the current slice
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -36,6 +38,8 @@ function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctInde
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+visibleOnSlice = logical(zeros(size(cst,1),1));
+
 % overwrite colormap
 if exist('cMap', 'var') && ~isempty(cMap)
     cMapScale = size(cMap,1)-1;
@@ -69,6 +73,7 @@ for s = 1:size(cst,1)
                     
                     lower = lower+steps+1;
                 end
+                visibleOnSlice(s) = true;
             end     
         else
             %If we do not have precomputed contours available, do it the
@@ -77,13 +82,17 @@ for s = 1:size(cst,1)
             mask(cst{s,4}{ctIndex}) = 1;
             if plane == 1 && any(any(mask(slice,:,:) > 0))
                 [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(slice,:,:)),0.5*[1 1],'Color',colors(s,:),varargin{:});
+                visibleOnSlice(s) = true;
             elseif plane == 2 && any(any(mask(:,slice,:) > 0))
                 [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,slice,:)),0.5*[1 1],'Color',colors(s,:),varargin{:});
+                visibleOnSlice(s) = true;
             elseif plane == 3 && any(any(mask(:,:,slice) > 0))
                 [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,:,slice)),0.5*[1 1],'Color',colors(s,:),varargin{:});
+                visibleOnSlice(s) = true;
             end     
-
+             
         end
+        
     end
 end
 
