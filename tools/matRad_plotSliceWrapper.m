@@ -102,10 +102,12 @@ else
 end
 
 %plot VOI contours
-[hContour, visibleOnSlice] = matRad_plotVoiContourSlice(axesHandle,cst,ct.cube,cubeIdx,voiSelection,plane,slice,contourColorMap,varargin{:});
+hContour = matRad_plotVoiContourSlice(axesHandle,cst,ct.cube,cubeIdx,voiSelection,plane,slice,contourColorMap,varargin{:});
 
 if boolPlotLegend
-   hLegend  =  legend(axesHandle,hContour,[cst(visibleOnSlice,2)]);
+   visibleOnSlice = (~cellfun(@isempty,hContour));
+   hContourTmp    = cellfun(@(X) X(1),hContour(visibleOnSlice),'UniformOutput',false);
+   hLegend        =  legend(axesHandle,[hContourTmp{:}],[cst(visibleOnSlice,2)]);
    set(hLegend,'Box','Off');
    set(hLegend,'TextColor',[1 1 1]);
    set(hLegend,'FontSize',12);
@@ -115,6 +117,8 @@ axis(axesHandle,'tight');
 set(axesHandle,'xtick',[],'ytick',[]);
 daspect(axesHandle,[1 1 1]);
 colormap(doseColorMap);
+
+matRad_plotAxisLabels(axesHandle,ct,plane,slice,[])
 
  hCMap = matRad_plotColorbar(axesHandle,doseColorMap,doseWindow,'Location','EastOutside');
 if ~isempty(colorBarLabel)
