@@ -28,7 +28,7 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandl
 %   colorBarLabel   string defining the yLabel of the colorBar
 %   boolPlotLegend  boolean if legend should be plottet or not
 %   varargin        additional input parameters that are passed on to
-%                   individual plotting functions (e.g. 'LineWidth',1.5
+%                   individual plotting functions (e.g. 'LineWidth',1.5)
 %   
 %
 % output
@@ -77,7 +77,7 @@ if ~exist('voiSelection','var') || isempty(voiSelection)
    voiSelection = [];
 end
 
-if ~exist('colorMapLabel','var') || isempty(colorBarLabel)
+if ~exist('colorBarLabel','var') || isempty(colorBarLabel)
    colorBarLabel = [];
 end
 
@@ -107,7 +107,7 @@ hContour = matRad_plotVoiContourSlice(axesHandle,cst,ct.cube,cubeIdx,voiSelectio
 if boolPlotLegend
    visibleOnSlice = (~cellfun(@isempty,hContour));
    hContourTmp    = cellfun(@(X) X(1),hContour(visibleOnSlice),'UniformOutput',false);
-   hLegend        =  legend(axesHandle,[hContourTmp{:}],[cst(visibleOnSlice,2)]);
+   hLegend        =  legend(axesHandle,[hContourTmp{:}],[cst(visibleOnSlice,2)],'AutoUpdate','off');
    set(hLegend,'Box','Off');
    set(hLegend,'TextColor',[1 1 1]);
    set(hLegend,'FontSize',12);
@@ -122,7 +122,7 @@ matRad_plotAxisLabels(axesHandle,ct,plane,slice,[])
 
  hCMap = matRad_plotColorbar(axesHandle,doseColorMap,doseWindow,'Location','EastOutside');
 if ~isempty(colorBarLabel)
-    set(get(hCMap,'YLabel'),'String', colorMapLabel,'FontSize',14);
+    set(get(hCMap,'YLabel'),'String', colorBarLabel,'FontSize',14);
 end
 
 end
