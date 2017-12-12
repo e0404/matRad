@@ -1,4 +1,5 @@
-function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels)
+function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,...
+                                                                       doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad tool function to directly plot a complete slice of a ct with dose
 % including contours and isolines.
@@ -21,6 +22,14 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandl
 %   doseColorMap    colormap for the dose
 %   doseWindow      dose value window
 %   doseIsoLevels   levels defining the isodose contours
+%   voiSelection    logicals defining the current selection of contours
+%                   that should be plotted. Can be set to [] to plot
+%                   all non-ignored contours.
+%   colorBarLabel   string defining the yLabel of the colorBar
+%   boolPlotLegend  boolean if legend should be plottet or not
+%   varargin        additional input parameters that are passed on to
+%                   individual plotting functions (e.g. 'LineWidth',1.5)
+%   
 %
 % output
 %   hCMap       handle to the colormap
@@ -45,41 +54,76 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandl
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Handle the argument list
-if nargin < 8
+if ~exist('tresh','var') || isempty(thresh)
     thresh = [];
 end
-if nargin < 9
+if ~exist('alpha','var') || isempty(alpha)
     alpha = [];
 end
-if nargin < 10
+if ~exist('contourColorMap','var') || isempty(contourColorMap)
    contourColorMap = [];
 end
-if nargin < 11
+if ~exist('doseColorMap','var') || isempty(doseColorMap)
    doseColorMap = [];
 end
-if nargin < 12
+if ~exist('doseWindow','var') || isempty(doseWindow)
    doseWindow = [];
 end
-if nargin < 13
+if ~exist('doseIsoLevels','var') || isempty(doseIsoLevels)
    doseIsoLevels = [];
 end
 
+if ~exist('voiSelection','var') || isempty(voiSelection)
+   voiSelection = [];
+end
+
+if ~exist('colorBarLabel','var') || isempty(colorBarLabel)
+   colorBarLabel = [];
+end
+
+if ~exist('boolPlotLegend','var') || isempty(boolPlotLegend)
+   boolPlotLegend = false;
+end
 
 set(axesHandle,'YDir','Reverse');
+% plot ct slice
 hCt = matRad_plotCtSlice(axesHandle,ct.cube,cubeIdx,plane,slice); 
 hold on;
 
-hContour = matRad_plotVoiContourSlice(axesHandle,cst,ct.cube,cubeIdx,[],plane,slice,contourColorMap);
+% plot dose
 [hDose,doseColorMap,doseWindow] = matRad_plotDoseSlice(axesHandle,dose,plane,slice,thresh,alpha,doseColorMap,doseWindow);
+
+% plot iso dose lines
 if ~isempty(doseIsoLevels)
-    hIsoDose = matRad_plotIsoDoseLines(axesHandle,dose,[],doseIsoLevels,false,plane,slice,doseColorMap,doseWindow);
+    hIsoDose = matRad_plotIsoDoseLines(axesHandle,dose,[],doseIsoLevels,false,plane,slice,doseColorMap,doseWindow,varargin{:});
+    hold on;
 else
     hIsoDose = [];
 end
+
+%plot VOI contours
+hContour = matRad_plotVoiContourSlice(axesHandle,cst,ct.cube,cubeIdx,voiSelection,plane,slice,contourColorMap,varargin{:});
+
+if boolPlotLegend
+   visibleOnSlice = (~cellfun(@isempty,hContour));
+   hContourTmp    = cellfun(@(X) X(1),hContour(visibleOnSlice),'UniformOutput',false);
+   hLegend        =  legend(axesHandle,[hContourTmp{:}],[cst(visibleOnSlice,2)],'AutoUpdate','off');
+   set(hLegend,'Box','Off');
+   set(hLegend,'TextColor',[1 1 1]);
+   set(hLegend,'FontSize',12);
+end
+
 axis(axesHandle,'tight');
 set(axesHandle,'xtick',[],'ytick',[]);
 daspect(axesHandle,[1 1 1]);
 colormap(doseColorMap);
-hCMap = matRad_plotColorbar(axesHandle,doseColorMap,doseWindow,'Location','EastOutside');
+
+matRad_plotAxisLabels(axesHandle,ct,plane,slice,[])
+
+ hCMap = matRad_plotColorbar(axesHandle,doseColorMap,doseWindow,'Location','EastOutside');
+if ~isempty(colorBarLabel)
+    set(get(hCMap,'YLabel'),'String', colorBarLabel,'FontSize',14);
+end
+
 end
 
