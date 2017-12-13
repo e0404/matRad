@@ -41,7 +41,7 @@ for i=1:length(delivery)
 
     
     
-        NumOfPhases = ct.numOfCtScen;
+        NumOfPhases = delivery.NumOfPhases; %ct.numOfCtScen;
         
         offset = delivery(1).offset; %0;
         phaseTime = delivery(1).motionperiod/NumOfPhases; %5/NumOfPhases;
@@ -94,7 +94,12 @@ end
 
 
 numOfCtScen = ct.numOfCtScen;
-    
+
+help = 0;
+if(numOfCtScen ~= NumOfPhases)
+    help = 1;
+end
+
 %berechne Dosis für jede Phase  
 disp('calc dose in each CT phase')
 pln.multScen.numOfCtScen = 1; 
@@ -108,7 +113,7 @@ for p=1:NumOfPhases
          w(delivery(i).j(t)) = delivery(i).w(t) .* delivery(i).phase(t,p);       
       end
  
-      ctPhase.cube{1} = ct.cube{1,p};
+      ctPhase.cube{1} = ct.cube{1,p+help};
       disp(['Dose calculation in CT phase ', num2str(p)]);
        resultHelp = matRad_calcDoseDirect(ctPhase,stf,pln,cst,w);
        resultGUI.phaseDose{p} = resultHelp.physicalDose;

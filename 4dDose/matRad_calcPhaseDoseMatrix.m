@@ -19,7 +19,7 @@ function [resultGUI, delivery] = matRad_calcPhaseDoseMatrix(resultGUI, dij, deli
 
 %MOTION =  'linear';  %'sampled_periode' ; %'linear'; %'sampled_phase' 
     
-    
+
 add = 0;
 for i=1:length(delivery)
     delivery(i).phase = zeros(length(delivery(i).es), 1); 
@@ -42,7 +42,7 @@ for i=1:length(delivery)
 %%%%%%%%%Breathing motion   
     %Motion assumption1: linear
     if(strcmp(MOTION,'linear'))
-        NumOfPhases = size(dij.physicalDose,1);
+        NumOfPhases = delivery(1).NumOfPhases; %size(dij.physicalDose,1);
         offset = delivery(1).offset; %0;
         phaseTime = delivery(1).motionperiod/NumOfPhases; %5/NumOfPhases;
          
@@ -89,7 +89,8 @@ for i=1:length(delivery)
     end
     
     elseif(strcmp(MOTION,'sampled_periode')) 
-      NumOfPhases = size(dij.physicalDose,1);
+        NumOfPhases = delivery(1).NumOfPhases;
+     % NumOfPhases = size(dij.physicalDose,1);
         offset = delivery(1).offset; %0;
         
         phaseTimeMean = delivery(1).motionperiod/NumOfPhases; 
@@ -144,7 +145,8 @@ for i=1:length(delivery)
    
     
     elseif(strcmp(MOTION,'sampled_phase'))
-      NumOfPhases = size(dij.physicalDose,1);
+        NumOfPhases = delivery(1).NumOfPhases;
+      %NumOfPhases = size(dij.physicalDose,1);
         offset = delivery(1).offset; %0;
         phaseTimeMean = delivery(1).motionperiod/NumOfPhases; 
         %phaseTimeDev = 0.05; %?????
@@ -197,6 +199,10 @@ end
     
 %berechne Dosis für jede Phase  
 %disp('calc dose in each CT phase')
+help = 0;
+if(size(dij.physicalDose, 1) ~= NumOfPhases)
+    help = 1;
+end
 for p=1:NumOfPhases
       w=zeros(dij.totalNumOfBixels, 1); 
       for i=1:length(delivery)
@@ -204,13 +210,13 @@ for p=1:NumOfPhases
          w(delivery(i).j(t)) = delivery(i).w(t) .* delivery(i).phase(t,p);       
       end
  
-       resultGUI.phaseDose{p} = reshape(dij.physicalDose{p} * w , dij.dimensions);
+       resultGUI.phaseDose{p} = reshape(dij.physicalDose{p+help} * w , dij.dimensions);
           
       
     if isequal(resultGUI.bioParam.type,'MCN_RBExD')
     
-        resultGUI.phaseAlphaDose{p} = reshape(dij.mAlphaDose{p} * w, dij.dimensions);
-        resultGUI.phaseSqrtBetaDose{p} = reshape(dij.mSqrtBetaDose{p} * w, dij.dimensions);
+        resultGUI.phaseAlphaDose{p} = reshape(dij.mAlphaDose{p+help} * w, dij.dimensions);
+        resultGUI.phaseSqrtBetaDose{p} = reshape(dij.mSqrtBetaDose{p+help} * w, dij.dimensions);
     
     end
 end

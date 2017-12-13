@@ -35,23 +35,13 @@ if ~isfield(ct, 'dvf')
   
     
     addpath('D:\Matrad\data\4DCT\ReadData3d')
+
     
-    dvffiles(1).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M06_vf.mha';  %'D:\Matrad\data\4DCT\Boxphantom\DVF\DVF_1_1.mha';   %   %'D:\Matrad\data\4DCT\testphan\DVF_1_1.mha';   %
-    dvffiles(2).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M08_vf.mha';   %'D:\Matrad\data\4DCT\testphan\DVF_2_1.mha'   %
-    dvffiles(3).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M10_vf.mha';
-    dvffiles(4).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M02_vf.mha';
-    dvffiles(5).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M04_vf.mha';
-    
-%     dvffiles(1).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F06_M06_vf.mha'; 
-%     dvffiles(2).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F08_M06_vf.mha'; 
-%     dvffiles(3).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F10_M06_vf.mha';
-%     dvffiles(4).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F02_M06_vf.mha';
-%     dvffiles(5).name = 'D:\Matrad\data\4DCT\reduced_TKUH005\REG\TKUH005_REG_F04_M06_vf.mha';
-    
-dvfInputFolder = 'D:\Matrad\data\4DCT\Liver007\4DSet01_10Ph\REG\MHA_DS221_fromXF\';
-%dvfInputFolder = 'D:\Silke\data\LiverPhoton002\4DSet_DS221\REG\';
+%dvfInputFolder = 'D:\Matrad\data\4DCT\Liver007\4DSet01_10Ph\REG\MHA_DS221_fromXF\';
+dvfInputFolder = 'D:\Silke\data\S0002\REG221\';
+
 dvfFormat = 'mha';
-referencephase = 'F06';  %M06 for EMT, F06 for DDM
+referencephase = 'F01';  %M06 for EMT, F06 for DDM
 dvffiles = dir([dvfInputFolder, '*.', dvfFormat]);
 dvffiles = dvffiles(~cellfun('isempty', strfind({dvffiles.name}, 'vf')));
 dvffiles = dvffiles(~cellfun('isempty', strfind({dvffiles.name}, referencephase)));

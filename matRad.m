@@ -100,7 +100,7 @@ matRad_calcDVH(resultGUI,cst,pln)
 resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf)
 
 %% export Plan
-matRad_export_HITXMLPlan_modified('Liver_210320_constRBE_bf',  pln, stf, resultGUI, 'backforth')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
+matRad_export_HITXMLPlan_modified('S02_orgpln',  pln, stf, resultGUI, 'stfMode')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
 
 %% calc 4D dose
-[resultGUI, delivery] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI, 'Liver_210320_constRBE_bf'); %'LiverDS221_1b_bf'); %'LiverDS221_1b_constRBE_bixel3_3_30fx60_bf'); %'Liver007_Bix5_1');  %'LiverDS221_1b_bf'); %'LiverDS221_wc5555_3mmBixel_bf'); %TKUH005_test');  
+[resultGUI, delivery] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI, 'S02_orgpln'); %'LiverDS221_1b_bf'); %'LiverDS221_1b_constRBE_bixel3_3_30fx60_bf'); %'Liver007_Bix5_1');  %'LiverDS221_1b_bf'); %'LiverDS221_wc5555_3mmBixel_bf'); %TKUH005_test');  

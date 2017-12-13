@@ -37,7 +37,7 @@ if ~isdeployed % only if _not_ running as standalone
 
 end
 
-
+    
 %reads in PB XML Plan and result of dose delivery simulation and creates
 %delievery struct
 delivery = matRad_readLmdout(dij, stf, FileName);
@@ -51,6 +51,13 @@ resultGUI.bioParam = pln.bioParam;
 delivery(1).offset = 0;
 delivery(1).motionperiod = 5;
 
+delivery(1).NumOfPhases = size(dij.physicalDose,1);
+if isfield(ct, 'dvf')
+if size(ct.dvf,2) < size(ct.cube,2)
+    delivery(1).NumOfPhases = size(ct.dvf,2);
+end
+end
+
 if(ct.numOfCtScen == size(dij.physicalDose,1))
     [resultGUI, delivery] = matRad_calcPhaseDoseMatrix(resultGUI, dij,delivery, 'linear', 0.01);
 else
@@ -61,7 +68,7 @@ end
 resultGUI = matRad_doseAcc(ct, resultGUI, cst, 'DDM');  %acc Methods: 'EMT' 'DDM'
 
 %visualisation
-%matRad_plotPhaseDose_2(resultGUI); %optional kann slice angegeben werden  TKUH005 slice 110 % T6H slice 50  %testphan slice 50 % Boxphan_3phases
+matRad_plotPhaseDose_2(resultGUI); %optional kann slice angegeben werden  TKUH005 slice 110 % T6H slice 50  %testphan slice 50 % Boxphan_3phases
 
 
 
