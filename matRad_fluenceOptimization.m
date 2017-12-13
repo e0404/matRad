@@ -205,7 +205,12 @@ if ~isdeployed && strcmp(env,'MATLAB')
 end
 
 % clear global variables
-clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;
+switch env
+     case 'MATLAB'
+        clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;
+     case 'OCTAVE'
+        clear     -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;           
+end
 
 % unblock mex files
 clear mex

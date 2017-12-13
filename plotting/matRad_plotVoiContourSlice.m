@@ -36,6 +36,9 @@ function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctInde
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+addpath('tools')
+[env, ~] = matRad_getEnvironment();
+
 % overwrite colormap
 if exist('cMap', 'var') && ~isempty(cMap)
     cMapScale = size(cMap,1)-1;
@@ -51,7 +54,12 @@ if isempty(selection) || numel(selection) ~= size(cst,1)
     selection = logical(ones(size(cst,1),1));
 end
 
-voiContourHandles = gobjects(0);
+switch env
+    case 'MATLAB'
+        voiContourHandles = gobjects(0);
+    case 'OCTAVE'
+        voiContourHandles = [];
+end
 
 for s = 1:size(cst,1)
     if ~strcmp(cst{s,3},'IGNORED') && selection(s)

@@ -36,7 +36,15 @@ function y = matRad_interp1(xi,yi,x)
 persistent isGriddedInterpolantAvailable;
 
 if isempty(isGriddedInterpolantAvailable)
-    isGriddedInterpolantAvailable = exist('griddedInterpolant','class');
+    matRadRootDir = fileparts(mfilename('fullpath'));
+    addpath(fullfile(matRadRootDir,'tools'))
+    [env, ~] = matRad_getEnvironment();
+    switch env
+        case 'MATLAB'
+            isGriddedInterpolantAvailable = exist('griddedInterpolant','class');
+        case 'OCTAVE'
+            isGriddedInterpolantAvailable = exist('griddedInterpolant');
+    end
 end
 
 % manual interpolation for only one query point to save time

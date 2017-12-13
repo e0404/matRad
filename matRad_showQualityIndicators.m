@@ -28,7 +28,10 @@ function matRad_showQualityIndicators(qi)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+matRadRootDir = fileparts(mfilename('fullpath'));
+addpath(fullfile(matRadRootDir,'tools'))
+[env, ~] = matRad_getEnvironment();
+    
 % Create the column and row names in cell arrays 
 cnames = fieldnames(qi);
 for i = 1:numel(cnames)
@@ -39,12 +42,17 @@ for i = 1:numel(cnames)
 end
 rnames = {qi.name};
 
-% Create the uitable
-table = uitable(gcf,'Data',(squeeze(struct2cell(qi)))',...
-            'ColumnName',cnames,... 
-            'RowName',rnames,'ColumnWidth',{70});
+switch env
+     case 'MATLAB'
+        % Create the uitable
+        table = uitable(gcf,'Data',(squeeze(struct2cell(qi)))',...
+                    'ColumnName',cnames,... 
+                    'RowName',rnames,'ColumnWidth',{70});
 
-% Layout
-pos = get(gca,'position');
-set(table,'units','normalized','position',pos)
-axis off
+        % Layout
+        pos = get(gca,'position');
+        set(table,'units','normalized','position',pos)
+        axis off
+    case 'OCTAVE'
+        warning('the uitable function is not yet implemented in Octave')
+end

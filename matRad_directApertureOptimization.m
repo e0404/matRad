@@ -116,7 +116,12 @@ if ~isdeployed && strcmp(env,'MATLAB')
 end
 
 % clear global variables after optimization
-clearvars -global matRad_global_x matRad_global_d;
+switch env
+    case 'MATLAB'
+        clearvars -global matRad_global_x matRad_global_d;
+    case 'OCTAVE' 
+        clear -global matRad_global_x matRad_global_d;
+end
 
 % update the apertureInfoStruct and calculate bixel weights
 optResult.apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,optApertureInfoVec);
