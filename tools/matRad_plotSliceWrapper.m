@@ -106,8 +106,9 @@ hContour = matRad_plotVoiContourSlice(axesHandle,cst,ct.cube,cubeIdx,voiSelectio
 
 if boolPlotLegend
    visibleOnSlice = (~cellfun(@isempty,hContour));
+   ixLegend = find(voiSelection);
    hContourTmp    = cellfun(@(X) X(1),hContour(visibleOnSlice),'UniformOutput',false);
-   hLegend        =  legend(axesHandle,[hContourTmp{:}],[cst(visibleOnSlice,2)],'AutoUpdate','off');
+   hLegend        =  legend(axesHandle,[hContourTmp{:}],[cst(ixLegend(visibleOnSlice),2)],'AutoUpdate','off');
    set(hLegend,'Box','Off');
    set(hLegend,'TextColor',[1 1 1]);
    set(hLegend,'FontSize',12);
