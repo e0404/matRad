@@ -77,6 +77,5 @@ figure, imagesc(DoseDiff);colorbar
 ---
 
 ## More Code Examples on
-## <span style="color:rgb(0,107,182)">https://github.com/e0404/matRad/examples</span> 
+## <span style="color:rgb(0,107,182)">https://github.com/e0404/matRad/tree/master/examples</span> 
 ---
-
