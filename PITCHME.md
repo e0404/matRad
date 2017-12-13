@@ -18,12 +18,12 @@
 ![Logo](https://github.com/e0404/matRad/wiki/images/GUI-Guide_optimizedGUIScreenshot.png)
 ---
 ## Code Example
-'''matlab
+```matlab
 load 'LIVER.mat'
 
 pln.bixelWidth      = 5;     % [mm] 
-pln.gantryAngles    = [300]; % [°]
-pln.couchAngles     = [0];   % [°]
+pln.gantryAngles    = [300]; % [ï¿½]
+pln.couchAngles     = [0];   % [ï¿½]
 pln.radiationMode   = 'carbon';
 pln.bioOptimization = 'LEMIV_RBExD';
 
@@ -34,7 +34,7 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst);
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 matRadGUI
-'''
+```
 @[1](import a open source liver patient)
 @[3-7](define your treatment plan)
 @[9](generate beam and ray geometry)
@@ -77,6 +77,6 @@ figure, imagesc(DoseDiff);colorbar
 ---
 
 ## More Code Examples on
-### <span style="color:rgb(0,107,182)">https://github.com/e0404/matRad/examples</span> 
+## <span style="color:rgb(0,107,182)">https://github.com/e0404/matRad/examples</span> 
 ---
 
