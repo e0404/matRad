@@ -97,13 +97,13 @@ end
 round2 = @(a,b)round(a*10^b)/10^b;
 
 % Allocate memory for dose_temp cell array
-doseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
+doseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
 
 % if biological optimization considering a variable RBE is true then create alphaDose and betaDose containers and sparse matrices 
 if pln.bioParam.bioOpt
    
-    alphaDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
-    betaDoseTmpContainer  = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
+    alphaDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
+    betaDoseTmpContainer  = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
     
     for ctScen = 1:pln.multScen.numOfCtScen
         for ShiftScen = 1:pln.multScen.numOfShiftScen
@@ -247,7 +247,7 @@ matRad_dispToConsole('matRad: Particle dose calculation... \n',param,'info');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %loop over all shift scenarios
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for ShiftScen = 1:pln.multScen.numOfShiftScen
+for ShiftScen = 1:pln.multScen.totNumShiftScen
    
     % manipulate isocenter
     pln.isoCenter    = pln.isoCenter + pln.multScen.isoShift(ShiftScen,:);
@@ -255,12 +255,11 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
         stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(ShiftScen,:);
     end
     
-    matRad_dispToConsole(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.numOfShiftScen) ':  \n'],param,'info');
+    matRad_dispToConsole(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.totNumShiftScen) ':  \n'],param,'info');
     matRad_dispToConsole('matRad: Particle dose calculation... \n',param,'info');
     
     counter = 0;
     
-
     % compute SSDs
     stf = matRad_computeSSD(stf,ct,ctScen);
 
@@ -270,9 +269,9 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
 
        % remember beam and bixel number
        if param.calcDoseDirect
-        dij.beamNum(i)    = i;
-        dij.rayNum(i)     = i;
-        dij.bixelNum(i)   = i;
+         dij.beamNum(i)    = i;
+         dij.rayNum(i)     = i;
+         dij.bixelNum(i)   = i;
        end
 
        bixelsPerBeam = 0;
@@ -369,7 +368,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                    energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
  
                    for ctScen = 1:pln.multScen.numOfCtScen
-                       for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen 
+                       for RangeShiftScen = 1:pln.multScen.totNumRangeScen 
                           
                           if pln.multScen.scenMask(ctScen,ShiftScen,RangeShiftScen)
                              
@@ -475,7 +474,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
                    if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
                       
                        for ctScen = 1:pln.multScen.numOfCtScen
-                            for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen
+                            for RangeShiftScen = 1:pln.multScen.totNumRangeScen
                                 if ~any(currIx)
                                     continue;
                                 end

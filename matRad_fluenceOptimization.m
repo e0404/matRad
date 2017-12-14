@@ -166,7 +166,7 @@ end
 
 % set optimization options
 options.ixForOpt     = find(~cellfun(@isempty, dij.physicalDose))'; 
-options.numOfScen    = pln.multScen.numOfScen;
+options.numOfScen    = numel(options.ixForOpt);
 options.scenProb     = pln.multScen.scenProb;
 options.bioOpt       = pln.bioParam.bioOpt;
 options.quantityOpt  = pln.bioParam.quantityOpt;
@@ -189,7 +189,7 @@ resultGUI = matRad_calcCubes(wOpt,dij,cst);
 resultGUI.wUnsequenced = wOpt;
 
 % calc individual scenarios
-if pln.multScen.numOfScen > 1
+if options.numOfScen > 1
    Cnt = 1;
    for i = options.ixForOpt
       tmpResultGUI = matRad_calcCubes(wOpt,dij,cst,i);

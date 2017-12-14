@@ -47,11 +47,12 @@ pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored
 pln.machine         = 'Generic';
 pln.robOpt          = false;
 
-% retrieve model parameters
+
+% retrieve bio model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,pln.bioOptimization);
 
-% set plan uncertainties for robust optimization
-pln = matRad_setPlanUncertainties(ct,pln);
+% retrieve scenarios for dose calculation and optimziation
+pln.multScen = matRad_multScen(ct,'nomScen'); % 'wcScen'  'rndScen' 'impScen'
 
 %% initial visualization and change objective function settings if desired
 matRadGUI

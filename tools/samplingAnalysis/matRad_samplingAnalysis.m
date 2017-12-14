@@ -50,7 +50,7 @@ end
 %% check integrity of statistics
 param.sufficientStatistics = matRad_checkSampIntegrity(pln.multScen, param);
 
-ix    = pln.multScen.subIx;
+ix    = pln.subIx;
 vProb = pln.multScen.scenProb;
 
 %% generate structurewise statistics
@@ -216,7 +216,7 @@ end
             return
         end
         
-        if multScen.numOfScen > 20
+        if multScen.totNumScen > 20
             totalNum = true;
         else
             totalNum = false;
