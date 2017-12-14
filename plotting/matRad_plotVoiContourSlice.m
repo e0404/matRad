@@ -1,4 +1,4 @@
-function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice,cMap,varargin)
+function [voiContourHandles] = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice,cMap,varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that plots the contours of the segmentations given in cst
 %
@@ -21,6 +21,8 @@ function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctInde
 %
 % output
 %   voiContourHandles:  handles of the plotted contours
+%   visibleOnSlice:     logicals defining if the contour is actually
+%                       visible on the current slice
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -37,64 +39,65 @@ function voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctInde
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-
 % overwrite colormap
 if exist('cMap', 'var') && ~isempty(cMap)
     cMapScale = size(cMap,1)-1;
     %determine colors
     colors = cMap(round(linspace(1,cMapScale,size(cst,1))),:);
-else
-    isConsistent = true;
+  else
     for i = 1:size(cst,1)
-      if isfield(cst{i,5},'visibleColor')
-        colors(i,:) = cst{i,5}.visibleColor;
-      else
-          isConsistent = false;
-      end
-    end
-    if ~isConsistent
-        colors = colorcube(size(cst,1));
+      colors(i,:) = cst{i,5}.visibleColor;
     end
 end
 
 if isempty(selection) || numel(selection) ~= size(cst,1)
-    selection = logical(ones(size(cst,1),1));
+    selection = true(size(cst,1),1);
 end
 
-voiContourHandles = gobjects(0);
+voiContourHandles = cell(0);
 
 for s = 1:size(cst,1)
+    
     if ~strcmp(cst{s,3},'IGNORED') && selection(s)
         %Check for precalculated contours
+        C =[];
         if size(cst,2) >= 7 && ~isempty(cst{s,7})
-            % plot precalculated contourc data
-            if any(cst{s,7}{slice,plane}(:))
-                lower = 1; % lower marks the beginning of a section
-                while lower-1 ~= size(cst{s,7}{slice,plane},2);
-                    hold on
-                    steps = cst{s,7}{slice,plane}(2,lower); % number of elements of current line section
-                    voiContourHandles(end+1) = line(cst{s,7}{slice,plane}(1,lower+1:lower+steps),...
-                        cst{s,7}{slice,plane}(2,lower+1:lower+steps),...
-                        'Color',colors(s,:),'Parent',axesHandle,varargin{:});
-                    
-                    lower = lower+steps+1;
-                end
-            end     
+            C = cst{s,7}{slice,plane};
         else
-            %If we do not have precomputed contours available, do it the
-            %slow way with the contour function
+            %If we do not have precomputed contours available, then compute them
             mask = zeros(size(ct{ctIndex}));
             mask(cst{s,4}{ctIndex}) = 1;
+            
             if plane == 1 && any(any(mask(slice,:,:) > 0))
-                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(slice,:,:)),0.5*[1 1],'Color',colors(s,:),varargin{:});
+                C = contourc(squeeze(mask(slice,:,:)),.5*[1 1]);
             elseif plane == 2 && any(any(mask(:,slice,:) > 0))
-                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,slice,:)),0.5*[1 1],'Color',colors(s,:),varargin{:});
+                C = contourc(squeeze(mask(:,slice,:)),.5*[1 1]);
             elseif plane == 3 && any(any(mask(:,:,slice) > 0))
-                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,:,slice)),0.5*[1 1],'Color',colors(s,:),varargin{:});
-            end     
-
+                C = contourc(squeeze(mask(:,:,slice)),.5*[1 1]);
+            end  
         end
+        
+        % plot precalculated contourc data
+        tmpLineHandle = gobjects(0);
+        if any(C(:))
+            lower = 1; % lower marks the beginning of a section
+            while lower-1 ~= size(C,2)
+                hold on
+                steps = C(2,lower); % number of elements of current line section
+                tmpLineHandle(end+1) = line(C(1,lower+1:lower+steps),...
+                    C(2,lower+1:lower+steps),...
+                    'Color',colors(s,:),'Parent',axesHandle,varargin{:});
+
+                lower = lower+steps+1;
+            end
+            voiContourHandles{end+1} = tmpLineHandle;
+        else
+            % create empty line object
+            voiContourHandles{end+1} = {};
+        end     
+
+            
+        
     end
 end
 

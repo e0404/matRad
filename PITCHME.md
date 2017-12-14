@@ -18,7 +18,23 @@
 ![Logo](https://github.com/e0404/matRad/wiki/images/GUI-Guide_optimizedGUIScreenshot.png)
 ---
 ## Code Example
-+++?gist=becker89/d1681e8ff3ba1e22dd26b645ad6b0544
+```matlab
+load 'LIVER.mat'
+
+pln.bixelWidth      = 5;     % [mm] 
+pln.gantryAngles    = [300]; % [�]
+pln.couchAngles     = [0];   % [�]
+pln.radiationMode   = 'carbon';
+pln.bioOptimization = 'LEMIV_RBExD';
+
+stf = matRad_generateStf(ct,cst,pln);
+
+dij = matRad_calcParticleDose(ct,stf,pln,cst);
+
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+
+matRadGUI
+```
 @[1](import a open source liver patient)
 @[3-7](define your treatment plan)
 @[9](generate beam and ray geometry)
@@ -60,28 +76,6 @@ figure, imagesc(DoseDiff);colorbar
 @[10](plot dose difference slice)
 ---
 
-```matlab
-%% generate steering file
-stf = matRad_generateStf(ct,cst,pln);
-
-%% dose calculation
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
-
-%% inverse planning for imrt
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-
-%% indicator calculation
-cst = matRad_indicatorWrapper(cst,pln,resultGUI);
-
-%% sequencing
-resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
-
-%% DAO
-resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
-matRad_visApertureInfo(resultGUI.apertureInfo);
-
-%% start gui for visualization of result
-matRadGUI
-matRad_showDVH(cst,pln)
-```
+## More Code Examples on
+## <span style="color:rgb(0,107,182)">https://github.com/e0404/matRad/tree/master/examples</span> 
 ---
