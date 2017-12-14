@@ -141,11 +141,9 @@ end
 
 %% put weight also into resultGUI
 if exist('stf','var') && exist('resultGUI','var')
-    if (strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon'))
-        resultGUI.w = [];
-        for i = 1:size(stf,2)
-            resultGUI.w = [resultGUI.w; [stf(i).ray.weight]'];
-        end
+    resultGUI.w = [];
+    for i = 1:size(stf,2)
+        resultGUI.w = [resultGUI.w; [stf(i).ray.weight]'];
     end
 end
 
