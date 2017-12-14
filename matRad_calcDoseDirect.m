@@ -85,7 +85,7 @@ elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
 end
 
 % calc resulting dose
-if pln.multScen.numOfScen == 1
+if pln.multScen.totNumScen == 1
     % calculate cubes; use uniform weights here, weighting with actual fluence 
     % already performed in dij construction 
     resultGUI    = matRad_calcCubes(ones(pln.numOfBeams,1),dij,cst);

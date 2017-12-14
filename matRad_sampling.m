@@ -37,8 +37,6 @@ function [caSampRes, mSampDose, pln, resultGUInomScen]  = matRad_sampling(ct,stf
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pln.sampling      = true;
-pln.robOpt        = false;
 
 if exist('param','var')
     if ~isfield(param,'logLevel')
@@ -58,25 +56,18 @@ end
 
 % save nonSampling pln for nominal scenario calculation and add dummy fields
 plnNominal = pln;
-plnNominal.multScen.numOfShiftScen      = 1;
-plnNominal.multScen.numOfRangeShiftScen = 1;
-plnNominal.multScen.numOfCtScen         = 1;
-plnNominal.multScen.scenMask            = 1;
-plnNominal.multScen.linearMask          = 1;
-plnNominal.multScen.relRangeShift       = 0;
-plnNominal.multScen.absRangeShift       = 0;
-plnNominal.multScen.isoShift            = [0 0 0];
-plnNominal.multScen.scenProb            = 1;
-plnNominal.multScen.scenForProb         = [0 0 0 0 0];
+% create nominal scenario
+plnNominal.multScen = matRad_multScen(ct,'nomScen'); 
 
-% create new pln.multScen for sampling
+% either use existing multScen struct or create new one
 if exist('multScen','var') && ~isempty(multScen)
-    pln = matRad_setPlanUncertainties(ct,pln, multScen, param);
+    pln.multScen = multScen;
 else
-    pln = matRad_setPlanUncertainties(ct,pln, [], param);
+    % create random scenarios for sampling
+    pln.multScen = matRad_multScen(ct,'rndScen'); % 'impSamp' or 'wcSamp'
 end
 
-matRad_dispToConsole(['Using ' num2str(pln.multScen.numOfScen) 'samples in total \n'],param,'info')
+matRad_dispToConsole(['Using ' num2str(pln.multScen.totNumScen) 'samples in total \n'],param,'info')
 
 V = [];
 % define voxels for sampling
@@ -103,7 +94,7 @@ for i = 1:size(cst,1)
 end
 
 % define variable for storing scenario doses
-mSampDose   = single(zeros(numel(param.subIx),pln.numOfSamples,1));
+mSampDose   = single(zeros(numel(param.subIx),pln.multScen.totNumScen,1));
 StorageInfo = whos('mSampDose');
 matRad_dispToConsole(['matRad: Realizations variable will need: ' num2str(StorageInfo.bytes/1e9) ' GB \n'],param,'info');
 
@@ -157,16 +148,18 @@ if FlagParallToolBoxLicensed
       FlagParforProgressDisp = false;
    end
   
-   parfor i = 1:size(pln.multScen.scenForProb,1)
+   parfor i = 1:pln.multScen.totNumScen
           
-          plnSamp               = pln;
+          % create nominal scenario
+          plnSamp          = pln;
+          plnSamp.multScen = matRad_multScen(ct,'nomScen'); 
           % pick the i-th scenario and save into plnSamp
           plnSamp.multScen.scenForProb         = pln.multScen.scenForProb(i,:);
           plnSamp.multScen.relRangeShift       = pln.multScen.scenForProb(i,5);
           plnSamp.multScen.absRangeShift       = pln.multScen.scenForProb(i,4);
           plnSamp.multScen.isoShift            = pln.multScen.scenForProb(i,1:3);
-          plnSamp.multScen.numOfShiftScen      = 1;
-          plnSamp.multScen.numOfRangeShiftScen = 1;
+          plnSamp.multScen.totNumShiftScen     = 1;
+          plnSamp.multScen.totNumRangeScen     = 1;
           plnSamp.multScen.numOfCtScen         = 1;
           plnSamp.multScen.scenMask            = 1;
           plnSamp.multScen.linearMask          = 1;
@@ -199,16 +192,18 @@ totCompTime = size(pln.multScen.scenForProb,1) * nomScenTime * 1.1;
 fprintf(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600, 2)), ...
                         'h. Estimated finish: ', datestr(datetime('now') + seconds(totCompTime)), '\n']);
     
-    for i = 1:pln.numOfSamples
+    for i = 1:pln.multScen.totNumScen
        
-          plnSamp = pln;
+          % create nominal scenario
+          plnSamp          = pln;
+          plnSamp.multScen = matRad_multScen(ct,'nomScen'); 
           % pick the i-th scenario and save into plnSamp
           plnSamp.multScen.scenForProb         = pln.multScen.scenForProb(i,:);
           plnSamp.multScen.relRangeShift       = pln.multScen.scenForProb(i,5);
           plnSamp.multScen.absRangeShift       = pln.multScen.scenForProb(i,4);
           plnSamp.multScen.isoShift            = pln.multScen.scenForProb(i,1:3);
-          plnSamp.multScen.numOfShiftScen      = 1;
-          plnSamp.multScen.numOfRangeShiftScen = 1;
+          plnSamp.multScen.totNumShiftScen     = 1;
+          plnSamp.multScen.totNumRangeScen     = 1;
           plnSamp.multScen.numOfCtScen         = 1;
           plnSamp.multScen.scenMask            = 1;
           plnSamp.multScen.linearMask          = 1;
@@ -224,12 +219,12 @@ fprintf(['Approximate Total calculation time: ', num2str(round(totCompTime / 360
           
           caSampRes(i).dvh = matRad_calcDVH(cst,resultSamp.(pln.bioParam.quantityOpt),'cum',dvhPoints);
           caSampRes(i).qi  = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityOpt),refGy,refVol,param);
-          matRad_progress(i, pln.numOfSamples)
+          matRad_progress(i, pln.multScen.totNumScen)
     end
     
 end
 
 %% add subindices
-pln.multScen.subIx        = param.subIx;
+pln.subIx        = param.subIx;
 
 end

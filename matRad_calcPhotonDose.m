@@ -26,7 +26,7 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,param)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2017 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -90,8 +90,8 @@ dij.beamNum  = NaN*ones(numOfColumnsDij,1);
 
 % Allocate space for dij.physicalDose sparse matrix
 for CtScen = 1:pln.multScen.numOfCtScen
-    for ShiftScen = 1:pln.multScen.numOfShiftScen
-        for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen 
+    for ShiftScen = 1:pln.multScen.totNumShiftScen
+        for RangeShiftScen = 1:pln.multScen.totNumRangeScen 
             
             if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
                 dij.physicalDose{CtScen,ShiftScen,RangeShiftScen} = spalloc(prod(ct.cubeDim),numOfColumnsDij,1);
@@ -101,7 +101,7 @@ for CtScen = 1:pln.multScen.numOfCtScen
     end
 end
 
-doseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
+doseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
 
 % Only take voxels inside patient.
 if ~isempty(param.subIx) && param.calcDoseDirect
@@ -196,7 +196,7 @@ effectiveLateralCutoff = lateralCutoff + fieldWidth/2;
 
 ctScen = 1;
 
-for ShiftScen = 1:pln.multScen.numOfShiftScen
+for ShiftScen = 1:pln.multScen.totNumShiftScen
 
    % manipulate isocenter
    pln.isoCenter    = pln.isoCenter + pln.multScen.isoShift(ShiftScen,:);
@@ -209,7 +209,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
    % compute SSDs
    stf = matRad_computeSSD(stf,ct,ctScen);
 
-   matRad_dispToConsole(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.numOfShiftScen) ': \n'],param,'info');
+   matRad_dispToConsole(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.totNumShiftScen) ': \n'],param,'info');
    matRad_dispToConsole('matRad: photon dose calculation...\n',param,'info');
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    for i = 1:dij.numOfBeams % loop over all beams
@@ -218,9 +218,9 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
 
           % remember beam and bixel number
            if param.calcDoseDirect
-            dij.beamNum(i)    = i;
-            dij.rayNum(i)     = i;
-            dij.bixelNum(i)   = i;
+                dij.beamNum(i)    = i;
+                dij.rayNum(i)     = i;
+                dij.bixelNum(i)   = i;
            end
        
           bixelsPerBeam = 0;
@@ -376,7 +376,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
 
 
               for CtScen = 1:pln.multScen.numOfCtScen
-                  for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen  
+                  for RangeShiftScen = 1:pln.multScen.totNumRangeScen  
 
                       if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
 
@@ -418,7 +418,7 @@ for ShiftScen = 1:pln.multScen.numOfShiftScen
               % sparse matrix dose.dij from the cell array
               if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
                   for CtScen = 1:pln.multScen.numOfCtScen
-                      for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen
+                      for RangeShiftScen = 1:pln.multScen.totNumRangeScen
 
                           if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
                               if param.calcDoseDirect
