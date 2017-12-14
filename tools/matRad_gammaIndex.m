@@ -126,7 +126,7 @@ if n > 0
         case 'MATLAB'
             cubex2 = interp3(cubex2,n,'cubic');
         case 'OCTAVE'
-            warning('3-D interpolation not yet supported by octave. Function will continue without interpolation.')
+            cubex2 = interp3(cubex2,n,'linear');
     end
 end
 
