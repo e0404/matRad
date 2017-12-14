@@ -1874,6 +1874,7 @@ set(handles.uiTable,'ColumnFormat',columnformat);
 set(handles.uiTable,'ColumnEditable',[true true true true true true true true true true]);
 set(handles.uiTable,'Data',data);
 
+generateCstTable(handles,cst);
 
 function Flag = getCstTable (handles)
 
@@ -4199,3 +4200,75 @@ set(hObject,'Value',1);
 
 
 guidata(hObject,handles);
+
+%-- generates the CST table
+function cst = generateCstTable(handles,cst)
+
+cstPanel = handles.uipanel3;
+
+delete(cstPanel.Children);
+
+cstPanelPos = getpixelposition(cstPanel);
+
+
+columnname = {'VOI name','VOI type','priority','obj. / const.'};%,'penalty','dose', 'EUD','volume','robustness'};
+
+AllObjectiveFunction = {'square underdosing','square overdosing','square deviation', 'mean', 'EUD',...
+                        'min dose constraint','max dose constraint',...
+                        'min mean dose constraint','max mean dose constraint',...
+                        'min EUD constraint','max EUD constraint',...
+                        'max DVH constraint','min DVH constraint',...
+                        'max DVH objective' ,'min DVH objective'};
+
+columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
+       AllObjectiveFunction,...
+       'numeric','numeric','numeric','numeric',{'none','WC','prob'}};
+   
+numOfObjectives = 0;
+for i = 1:size(cst,1)
+    if ~isempty(cst{i,6})
+        numOfObjectives = numOfObjectives + numel(cst{i,6});
+    end
+end
+
+dimArr = [numOfObjectives size(columnname,2)];
+data = cell(dimArr);
+data(:,6) = {''};
+Counter = 0;
+
+for i = 1:size(cst,1)   
+   if strcmp(cst(i,3),'IGNORED')~=1
+       for j=1:size(cst{i,6},1)
+       %VOI
+       %data{Counter,1}  = cst{i,2};
+       ypos = 20 + Counter*20;
+       
+       uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Position',[5 cstPanelPos(4)-ypos 100 15]);
+       %{       
+       %VOI Type
+       data{Counter,2}  = cst{i,3};
+       %Priority
+       data{Counter,3}  = cst{i,5}.Priority;
+       %Objective Function
+       objFunc          = cst{i,6}(j).type;
+       data{Counter,4}  = objFunc;
+       % set Penalty
+       data{Counter,5}  = cst{i,6}(j).penalty;
+       data{Counter,6}  = cst{i,6}(j).dose;
+       data{Counter,7}  = cst{i,6}(j).EUD;
+       data{Counter,8}  = cst{i,6}(j).volume;
+       data{Counter,9}  = cst{i,6}(j).robustness;
+       %}
+       Counter = Counter +1;
+       end
+   end
+   
+end
+
+%set(handles.uiTable,'ColumnName',columnname);
+%set(handles.uiTable,'ColumnFormat',columnformat);
+%set(handles.uiTable,'ColumnEditable',[true true true true true true true true true true]);
+%set(handles.uiTable,'Data',data);
+
+
+
