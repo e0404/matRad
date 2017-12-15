@@ -229,7 +229,7 @@ for i = 1:options.numOfScen
             
             if i == 1
                 deltaTmp              = zeros(dij.numOfVoxels,1);
-                scaledEffect          = d_exp + dij.gamma;
+                scaledEffect          = d_exp{1} + dij.gamma;
                 deltaTmp(dij.ixDose)  = delta_exp{i}(dij.ixDose)./(2*dij.betaX(dij.ixDose).*scaledEffect(dij.ixDose));
                 vBias                 = (deltaTmp' * dij.mAlphaDoseExp{1})';
                 quadTerm              = dij.mSqrtBetaDoseExp{1} * w;
@@ -239,21 +239,4 @@ for i = 1:options.numOfScen
         end
 
     end
-end
-
-RunGradientChecker = true;
-if RunGradientChecker 
-   f       = matRad_objFuncWrapper(w,dij,cst,options);
-   epsilon = 1e-6;
-   ix = unique(randi([1 numel(w)],1,5));
-  
-   for i = ix
-      wInit    = w;
-      wInit(i) = wInit(i) + epsilon;
-      fDelta   = matRad_objFuncWrapper(wInit,dij,cst,options);
-      numGrad  = (fDelta-f)/epsilon;
-      diff     = (numGrad/g(i)-1)*100;
-      fprintf(['Component # ' num2str(i) ' - rel diff of numerical and analytical gradient = ' num2str(diff) '\n']);
-   end
-
 end
