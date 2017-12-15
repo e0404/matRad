@@ -1,11 +1,48 @@
 classdef matRad_bioModel
-   
-   properties
-            
-      
+ % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  matRad_bioModel 
+%  This class creates all required biological model parameters according to
+% a given radiation modatlity and a given bio model identifier string. 
+%
+% constructor call
+%   pln.bioParam = matRad_bioModel(sRadiationMode,sIdentifier)
+%
+%   e.g. pln.bioParam = matRad_bioModel('protons','constRBE_RBExD')  
+%
+% input
+%   sRadiationMode:     radiation modality 'photons' 'protons' 'carbon'
+%   sIdentifier:        string to denote a biological model along with the
+%                       quantity used for optimization
+%                       none_physicalDose: physical optimization;                              constRBE_RBExD; constant RBE of 1.1;  
+%                       MCN_effect; McNamara-variable RBE model for protons (effect based)     MCN_RBExD; McNamara-variable RBE model for protons (RBExD) based
+%                       WED_effect; Wedenberg-variable RBE model for protons (effect based)    WED_RBExD; Wedenberg-variable RBE model for protons (RBExD) based
+%                       LEM_effect: effect-based optimization;                                 LEM_RBExD: optimization of RBE-weighted dose
+%
+% output
+%   bioParam:           matRad's bioParam structure containing information
+%                       about the choosen biological model
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2017 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+       
+   % public properties which can be changed outside this class
+   properties       
       
    end
-    
+   
+   % public properties which can only be changed inside this class
    properties(SetAccess = private)
  
       radiationMode;     % radiation modality 
@@ -20,7 +57,7 @@ classdef matRad_bioModel
       % beamMixingModel  = 'ZaiderRossi';
    end
    
-   
+   % constant public properties which are visible outside of this class
    properties(Constant = true)
       AvailableModels                 = {'none','constRBE','MCN','WED','LEM'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
       AvailableradiationModealities   = {'photons','protons','carbon'};
@@ -35,6 +72,7 @@ classdef matRad_bioModel
 
    end
    
+   % constant private properties which are only visible within this class
    properties(Constant = true, Access = private)
       
       constRBE_protons = 1.1;
@@ -66,6 +104,7 @@ classdef matRad_bioModel
                    
    end
    
+   %% methods
 
    % private methods go here
    methods (Access = private)
@@ -213,7 +252,7 @@ classdef matRad_bioModel
       end % end constructor
       
       
-      % setters
+      % setter functions
       function this = set.radiationMode(this,value)
          if ischar(value) && sum(strcmp(value,{'photons','protons','carbon'})) == 1
             this.radiationMode = value;

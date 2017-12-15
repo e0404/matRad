@@ -33,7 +33,7 @@ function f = matRad_objFuncWrapper(w,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,options);
+[d,d_exp,Omega] = matRad_backProjection(w,dij,cst,options);
 
 % Initialize f
 f = 0;
@@ -77,14 +77,15 @@ for  i = 1:size(cst,1)
                     
                 
                 % if prob opt: sum up expectation value of objectives
-                elseif strcmp(cst{i,6}(j).robustness,'probabilistic')
-
-                    for ixScen = 1:options.numOfScen
-
-                        d_i = d{ixScen}(cst{i,4}{1});
-
-                        f = f + options.scenProb(ixScen) * matRad_objFunc(d_i,cst{i,6}(j),d_ref);
-                    end
+                elseif strcmp(cst{i,6}(j).robustness,'PROB')
+                    
+                        d_i = d_exp{1}(cst{i,4}{1});
+                        
+                        f   = f +  matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                        
+                        if j == 1
+                            f = f + w' * Omega{i};
+                        end
                     
                 % if voxel-wise worst case or voxel-wise conformitiy (only for target structures)
                 elseif strcmp(cst{i,6}(j).robustness,'VWWC') || strcmp(cst{i,6}(j).robustness,'VWWC_CONF')

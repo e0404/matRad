@@ -64,11 +64,15 @@ end
 % initialize global variables for optimizer
 global matRad_global_x;
 global matRad_global_d;
+global matRad_global_d_exp;
+global matRad_global_Omega;
 global matRad_STRG_C_Pressed;
 global matRad_objective_function_value;
 
 matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
 matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
+matRad_global_d_exp             = NaN * ones(dij.numOfVoxels,1);
+matRad_global_Omega             = cell(size(cst,1),1);
 matRad_STRG_C_Pressed           = false;
 matRad_objective_function_value = [];
   
@@ -163,6 +167,54 @@ else
     bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
 end
+
+
+if ~pln.bioParam.bioOpt
+    fNames = {'physicalDose'};
+else
+    fNames = {'mAlphaDose','mSqrtBetaDose'};
+end
+
+%% calculate probabilistic quantities for probabilistic optimization
+if pln.multScen.totNumScen == 1
+   for i = 1:numel(fNames)
+       dij.([fNames{1,i} 'Exp']){1} = spalloc(prod(dij.dimensions),dij.totalNumOfBixels,1);
+   end
+else
+
+    ixDij = find(~cellfun(@isempty, dij.physicalDose))'; 
+    
+    for i = 1:numel(fNames)
+        % create expected ij structure
+        dij.([fNames{1,i} 'Exp']){1} = spalloc(prod(dij.dimensions),dij.totalNumOfBixels,1);
+        % add up sparse matrices - should possess almost same sparsity pattern
+        for j = 1:pln.multScen.totNumScen
+            dij.([fNames{1,i} 'Exp']){1} = dij.([fNames{1,i} 'Exp']){1} + dij.([fNames{1,i}]){ixDij(j)} .* pln.multScen.scenProb(j);
+        end
+    end
+    
+    % find VOI indicies with objective or constraint
+    voiIx = [];
+    for i = 1:size(cst,1)     
+        if ~isempty(cst{i,6})
+            voiIx = [voiIx i];
+            cst{i,6}(1).mOmega = 0;
+        end
+    end
+    % loop over VOIs
+    for i = voiIx
+        % loop over scenarios and calculate the integral variance of each
+        % spot combination; bio bio optimization only consider std in the
+        % linear part of the biological effect
+        for j = 1:pln.multScen.totNumScen
+              cst{i,6}(1).mOmega = cst{i,6}(1).mOmega + ...
+                  ((dij.(fNames{1,1}){ixDij(j)}(cst{i,4}{1},:)' * dij.(fNames{1,1}){ixDij(j)}(cst{i,4}{1},:)) * pln.multScen.scenProb(j));
+        end
+        cst{i,6}(1).mOmega = cst{i,6}(1).mOmega - (dij.([fNames{1,1} 'Exp']){1}(cst{i,4}{1},:)' * dij.([fNames{1,1} 'Exp']){1}(cst{i,4}{1},:));
+     end
+    
+end
+
 
 % set optimization options
 options.ixForOpt     = find(~cellfun(@isempty, dij.physicalDose))'; 

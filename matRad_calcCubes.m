@@ -51,7 +51,6 @@ end
 
 % consider RBE for protons
 if isfield(dij,'RBE')
-   fprintf(['matRad: applying a constant RBE of ' num2str(dij.RBE) ' \n']);
    for i = 1:length(beamInfo)
         resultGUI.(['RBExD', beamInfo(i).suffix]) = resultGUI.(['physicalDose', beamInfo(i).suffix]) * dij.RBE;
    end

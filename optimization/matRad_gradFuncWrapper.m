@@ -36,11 +36,13 @@ function g = matRad_gradFuncWrapper(w,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,options);
+[d,d_exp,Omega] = matRad_backProjection(w,dij,cst,options);
 
 % Initializes delta
-delta      = cell(options.numOfScen,1);
-[delta{:}] = deal(zeros(dij.numOfVoxels,1));
+delta         = cell(options.numOfScen,1);
+[delta{:}]    = deal(zeros(dij.numOfVoxels,1));
+delta_exp{1}  = zeros(dij.numOfVoxels,1);
+vOmega        = 0;
 
 % if composite worst case optimization is used then create a cell array for book keeping
 for i = 1:size(cst,1)
@@ -83,16 +85,14 @@ for  i = 1:size(cst,1)
 
                     delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
                     
-                elseif strcmp(cst{i,6}(j).robustness,'probabilistic')
+                elseif strcmp(cst{i,6}(j).robustness,'PROB')
 
-                    for ixScen = 1:options.numOfScen
+                        d_i = d_exp{1}(cst{i,4}{1});
 
-                        d_i = d{ixScen}(cst{i,4}{1});
+                        delta_exp{1}(cst{i,4}{1}) = delta_exp{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
 
-                        delta{ixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) + options.scenProb(ixScen) * matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
-
-                    end
-
+                        vOmega = vOmega + Omega{i};
+                        
                  % VWWC = voxel-wise worst case; VWWC_CONF = conformity voxel-wise worst case    
                  elseif strcmp(cst{i,6}(j).robustness,'VWWC') || strcmp(cst{i,6}(j).robustness,'VWWC_CONF')
 
@@ -187,15 +187,21 @@ end
 g = zeros(dij.totalNumOfBixels,1);
 
 for i = 1:options.numOfScen
-    if any(delta{i} ~= 0) % exercise only if contributions from scenario i
+    if any(delta{i} ~= 0) || any(delta_exp{1} ~= 0) % exercise only if contributions from scenario i
 
         if isequal(options.quantityOpt,'physicalDose')
 
             g            = g + (delta{i}' * dij.physicalDose{options.ixForOpt(i)})';
+            if i == 1
+                g        = g + ((delta_exp{i}' * dij.physicalDoseExp{1})' + (2 * vOmega)); 
+            end
 
         elseif isequal(options.model,'constRBE')
             
             g            = g + (delta{i}' * dij.physicalDose{options.ixForOpt(i)} * dij.RBE)';
+            if i == 1
+                g        = g + (delta_exp{i}' * dij.physicalDoseExp{options.ixForOpt(i)} * dij.RBE)' + (2 * vOmega);
+            end
             
         elseif isequal(options.quantityOpt,'effect')
 
@@ -203,6 +209,13 @@ for i = 1:options.numOfScen
             quadTerm     = dij.mSqrtBetaDose{options.ixForOpt(i)} * w;
             mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{options.ixForOpt(i)})';
             g            =  g + vBias + mPsi ; 
+            
+            if i == 1
+                vBias        = (delta_exp{i}' * dij.mAlphaDoseExp{1})';
+                quadTerm     = dij.mSqrtBetaDoseExp{1} * w;
+                mPsi         = (2*(delta_exp{i}.*quadTerm)'*dij.mSqrtBetaDoseExp{1})';
+                g            =  g + vBias + mPsi ; 
+            end
 
         elseif isequal(options.quantityOpt,'RBExD')
 
@@ -214,7 +227,33 @@ for i = 1:options.numOfScen
             mPsi                  = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{options.ixForOpt(i)})';
             g                     = g + vBias + mPsi ;
             
+            if i == 1
+                deltaTmp              = zeros(dij.numOfVoxels,1);
+                scaledEffect          = d_exp + dij.gamma;
+                deltaTmp(dij.ixDose)  = delta_exp{i}(dij.ixDose)./(2*dij.betaX(dij.ixDose).*scaledEffect(dij.ixDose));
+                vBias                 = (deltaTmp' * dij.mAlphaDoseExp{1})';
+                quadTerm              = dij.mSqrtBetaDoseExp{1} * w;
+                mPsi                  = (2*(delta_exp{i}.*quadTerm)'*dij.mSqrtBetaDoseExp{1})';
+                g                     = g + vBias + mPsi ;
+            end
         end
 
     end
+end
+
+RunGradientChecker = true;
+if RunGradientChecker 
+   f       = matRad_objFuncWrapper(w,dij,cst,options);
+   epsilon = 1e-6;
+   ix = unique(randi([1 numel(w)],1,5));
+  
+   for i = ix
+      wInit    = w;
+      wInit(i) = wInit(i) + epsilon;
+      fDelta   = matRad_objFuncWrapper(wInit,dij,cst,options);
+      numGrad  = (fDelta-f)/epsilon;
+      diff     = (numGrad/g(i)-1)*100;
+      fprintf(['Component # ' num2str(i) ' - rel diff of numerical and analytical gradient = ' num2str(diff) '\n']);
+   end
+
 end
