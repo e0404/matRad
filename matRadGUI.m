@@ -1295,7 +1295,7 @@ if handles.State >= 1 && exist('Result','var')
     if ~isempty(dose) && ~isvector(dose)
         
         if isempty(handles.dispWindow{doseIx,2})
-            handles.dispWindow{doseIx,2} = [min(dose(:)) max(dose(:))];   % set min and max dose values
+            handles.dispWindow{doseIx,2} = [min(dose(:)) max(dose(:))+1e-3];   % set min and max dose values
         end
         
         if get(handles.radiobtnDose,'Value')
@@ -1788,7 +1788,7 @@ AllObjectiveFunction = {'square underdosing','square overdosing','square deviati
 
 columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
        AllObjectiveFunction,...
-       'numeric','numeric','numeric','numeric',{'none','WC','prob','VWWC','COWC'}};
+       'numeric','numeric','numeric','numeric',{'none','VWWC','PROB','VWWC_CONF','COWC'}};
    
 numOfObjectives = 0;
 for i = 1:size(cst,1)

@@ -1,18 +1,20 @@
-function d = matRad_backProjection(w,dij,options)
+function [d,d_exp,Omega] = matRad_backProjection(w,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad back projection function to calculate the current dose-,effect- or
 % RBExDose- vector based on the dij struct.
 % 
 % call
-%   d = matRad_backProjection(w,dij,options)
+%   [d,vOmega] = matRad_backProjection(w,dij,options)
 %
 % input
 %   w:       bixel weight vector
 %   dij:     dose influence matrix
+%   cst:     matRad cst struct
 %   options: option struct defining the type of optimization
 %
 % output
 %   d:       dose vector, effect vector or RBExDose vector 
+%   d_exp:   expected dose vector
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -31,50 +33,77 @@ function d = matRad_backProjection(w,dij,options)
 
 global matRad_global_x;
 global matRad_global_d;
+global matRad_global_d_exp;
+global matRad_global_Omega;
 
 if isequal(w,matRad_global_x)
     
     % get dose from global variable
-    d = matRad_global_d;
+    d      = matRad_global_d;
+    d_exp  = matRad_global_d_exp;
+    Omega  = matRad_global_Omega;
     
 else
     
     matRad_global_x = w;
     
     % pre-allocation
-    d = cell(options.numOfScen,1);
+    d     = cell(options.numOfScen,1);
+    d_exp = cell(1,1);
+    Omega = cell(size(cst,1),1);
+    
+    % calculate integral variance vector
+    if options.numOfScen > 1
+       for i = 1:size(cst,1)
+          if ~isempty(cst{i,6})                       
+                Omega{i}  = ((cst{i,6}(1).penalty/numel(cst{i,4}{1})) * (cst{i,6}(1).mOmega) * w);
+          end
+       end
+    end
     
     % Calculate dose vector
-    
     if ~options.bioOpt
        if isequal(options.model,'none')
 
+           d_exp{1} = dij.physicalDoseExp{1} * w;
+           
            for i = 1:length(options.ixForOpt)
                d{i} = dij.physicalDose{options.ixForOpt(i)} * w;
-           end
-
+           end     
+           
        elseif  isequal(options.model,'constRBE')
 
+           d_exp{1} = dij.physicalDoseExp{1} * (w * dij.RBE);
+           
            for i = 1:length(options.ixForOpt)
                 d{i} =  dij.physicalDose{options.ixForOpt(i)} * (w * dij.RBE);
-           end
+           end       
        end
     else
         
         for i = 1:length(options.ixForOpt)
             
             % calculate effect
-            linTerm  = dij.mAlphaDose{options.ixForOpt(i)} * w;
+            linTerm  = dij.mAlphaDose{options.ixForOpt(i)}    * w;
             quadTerm = dij.mSqrtBetaDose{options.ixForOpt(i)} * w;
             e        = linTerm + quadTerm.^2;   
 
+            linTermExp  = dij.mAlphaDoseExp{1}    * w;
+            quadTermExp = dij.mSqrtBetaDoseExp{1} * w;
+            e_exp       = linTermExp + quadTermExp.^2;   
+           
             if isequal(options.quantityOpt,'effect')
-                d{i} = e;
+                d{i}  = e;
+                d_exp{1} = e_exp;
             elseif isequal(options.quantityOpt,'RBExD')
                 % calculate RBX x dose
                 d{i}             = zeros(dij.numOfVoxels,1);
                 d{i}(dij.ixDose) = sqrt((e(dij.ixDose)./dij.betaX(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
                                     - dij.gamma(dij.ixDose);
+                                    
+                d_exp{1}(dij.ixDose) = sqrt((e_exp(dij.ixDose)./dij.betaX(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
+                                        - dij.gamma(dij.ixDose);          
+                                
             else
                error('matRad: Cannot optimze this quantity')
             end
@@ -83,7 +112,9 @@ else
        
     end   
     
-    matRad_global_d = d;
+    matRad_global_d     = d;
+    matRad_global_d_exp = d_exp;
+    matRad_global_Omega = Omega;
     
 end
 

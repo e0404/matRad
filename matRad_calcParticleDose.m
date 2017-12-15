@@ -81,8 +81,8 @@ dij.beamNum  = NaN*ones(numOfColumnsDij,1);
 
 % Allocate space for dij.physicalDose sparse matrix
 for ctScen = 1:pln.multScen.numOfCtScen
-    for ShiftScen = 1:pln.multScen.numOfShiftScen
-        for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen  
+    for ShiftScen = 1:pln.multScen.totNumShiftScen
+        for RangeShiftScen = 1:pln.multScen.totNumRangeScen  
             
             if pln.multScen.scenMask(ctScen,ShiftScen,RangeShiftScen)
                 dij.physicalDose{ctScen,ShiftScen,RangeShiftScen} = spalloc(prod(ct.cubeDim),numOfColumnsDij,1);
@@ -106,8 +106,8 @@ if pln.bioParam.bioOpt
     betaDoseTmpContainer  = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
     
     for ctScen = 1:pln.multScen.numOfCtScen
-        for ShiftScen = 1:pln.multScen.numOfShiftScen
-            for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen  
+        for ShiftScen = 1:pln.multScen.totNumShiftScen
+            for RangeShiftScen = 1:pln.multScen.totNumRangeScen  
             
                 if pln.multScen.scenMask(ctScen,ShiftScen,RangeShiftScen)
                     dij.mAlphaDose{ctScen,ShiftScen,RangeShiftScen}        = spalloc(prod(ct.cubeDim),numOfColumnsDij,1);
@@ -166,7 +166,7 @@ end
 
 % book keeping - this is necessary since pln is not used in optimization or
 % matRad_calcCubes
-if pln.bioParam.bioOpt == 0
+if strcmp(pln.bioParam.model,'constRBE');
    dij.RBE = pln.bioParam.RBE;
 end
 
@@ -537,6 +537,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
    
 end % end shift scenario loop
         
+
 
 try
   % wait 0.1s for closing all waitbars
