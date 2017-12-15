@@ -81,29 +81,35 @@ else
        end
     else
         
+        % calculated expected effect
+        linTermExp  = dij.mAlphaDoseExp{1}    * w;
+        quadTermExp = dij.mSqrtBetaDoseExp{1} * w;
+        e_exp       = linTermExp + quadTermExp.^2;
+        
+        if isequal(options.quantityOpt,'effect')
+            d_exp{1} = e_exp;
+        elseif isequal(options.quantityOpt,'RBExD')
+            % calculate expected RBX x dose
+            d_exp{1}             = zeros(dij.numOfVoxels,1);                 
+            d_exp{1}(dij.ixDose) = sqrt((e_exp(dij.ixDose)./dij.betaX(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
+                                  - dij.gamma(dij.ixDose);          
+        end
+       
+        % loop over all scenarios
         for i = 1:length(options.ixForOpt)
             
             % calculate effect
             linTerm  = dij.mAlphaDose{options.ixForOpt(i)}    * w;
             quadTerm = dij.mSqrtBetaDose{options.ixForOpt(i)} * w;
             e        = linTerm + quadTerm.^2;   
-
-            linTermExp  = dij.mAlphaDoseExp{1}    * w;
-            quadTermExp = dij.mSqrtBetaDoseExp{1} * w;
-            e_exp       = linTermExp + quadTermExp.^2;   
-           
+            
             if isequal(options.quantityOpt,'effect')
-                d{i}  = e;
-                d_exp{1} = e_exp;
+                d{i}     = e;
             elseif isequal(options.quantityOpt,'RBExD')
                 % calculate RBX x dose
                 d{i}             = zeros(dij.numOfVoxels,1);
                 d{i}(dij.ixDose) = sqrt((e(dij.ixDose)./dij.betaX(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
-                                    - dij.gamma(dij.ixDose);
-                                    
-                d_exp{1}(dij.ixDose) = sqrt((e_exp(dij.ixDose)./dij.betaX(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
-                                        - dij.gamma(dij.ixDose);          
-                                
+                                    - dij.gamma(dij.ixDose);                 
             else
                error('matRad: Cannot optimze this quantity')
             end

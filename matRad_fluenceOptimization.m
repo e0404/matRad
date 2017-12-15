@@ -169,6 +169,8 @@ else
 end
 
 
+matRad_dispToConsole('Calculating probabilistic quantities for optimization ...\n',param,'info');
+      
 if ~pln.bioParam.bioOpt
     fNames = {'physicalDose'};
 else

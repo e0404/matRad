@@ -83,6 +83,7 @@ for  i = 1:size(cst,1)
                         
                         f   = f +  matRad_objFunc(d_i,cst{i,6}(j),d_ref);
                         
+                        % only one variance term per VOI
                         if j == 1
                             f = f + w' * Omega{i};
                         end
