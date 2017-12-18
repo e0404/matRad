@@ -36,7 +36,7 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)
 calcDoseDirect = true;
 
 % check if weight vector is available, either in function call or in stf - otherwise dose calculation not possible
-if ~exist('w','var') && ~exist('stf.ray.weight')
+if ~exist('w','var') && ~isfield([stf.ray],'weight')
      error('No weight vector available. Please provide w or add info to stf')
 end
 
