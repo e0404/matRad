@@ -1628,9 +1628,6 @@ try
     %% DAO
     if strcmp(pln.radiationMode,'photons') && pln.runDAO
         handles = showWarning(handles,{'Observe: You are running direct aperture optimization','This is experimental code that has not been thoroughly debugged - especially in combination with constrained optimization.'});
-%         if ~matRad_checkForConnectedBixelRows(evalin('base','stf'))
-%             error('disconnetced dose influence data in BEV - run dose calculation again with consistent settings');
-%         end
        [resultGUI,ipoptInfo] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst'),...
            resultGUI.apertureInfo,resultGUI,pln);
        assignin('base','resultGUI',resultGUI);
