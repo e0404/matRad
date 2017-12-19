@@ -46,7 +46,7 @@ if numel(x) == 1
     ix2 = find((x <= xi), 1, 'first');
     
     if ix1 == ix2
-        y = yi(ix1);
+        y = yi(ix1,:);
     elseif ix2 == ix1 + 1
         y = yi(ix1,:) + ( yi(ix2,:)-yi(ix1,:) ) * ( x - xi(ix1) ) / ( xi(ix2) - xi(ix1) );    
     else
