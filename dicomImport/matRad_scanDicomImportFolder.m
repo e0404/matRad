@@ -163,11 +163,11 @@ if ~isempty(fileList)
                 end
                 fileList{i,13} = corrDose;
             else
-                fileList{i,13} = NaN;
+                fileList{i,13} = {'NaN'};
             end
 
         catch
-            fileList{i,13} = NaN;
+            fileList{i,13} = {'NaN'};
         end
         matRad_progress(numOfFiles+1-i, numOfFiles);
         
