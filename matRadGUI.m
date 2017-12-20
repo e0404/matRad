@@ -1464,7 +1464,10 @@ try
 
         switch choice
             case 'Cancel'
-                return
+                set(Figures, 'pointer', 'arrow');
+                set(InterfaceObj,'Enable','on');
+                guidata(hObject,handles);
+                return;
             case 'Calculate dij again and optimize'
                 handles.DijCalcWarning = false;
                 btnCalcDose_Callback(hObject, eventdata, handles)      
