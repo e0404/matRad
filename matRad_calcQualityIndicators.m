@@ -137,7 +137,7 @@ for i = 1:size(cst,1)
       for j = 1:numel(listOfFields)
           qi(i).(listOfFields{j}) = NaN;
       end
-      qi(i).VOIname = cst{i,2};
+      qi(i).name = cst{i,2};
   end
 end
 
