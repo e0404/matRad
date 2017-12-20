@@ -97,6 +97,7 @@ classdef matRad_multScen
     
     % constant properties which are visible outside of matRad_multScen
     properties(Constant = true)
+        
         rangeRelSD  = 3.5;                % given in %
         rangeAbsSD  = 1;                  % given in [mm]   
         shiftSD     = [2.25 2.25 2.25];   % given in [mm]
@@ -195,9 +196,10 @@ classdef matRad_multScen
    end % end public methods 
     
    
-   % public static methods go here
+   % public static methods go here, they can be called without creating an
+   % instance of this class
    methods(Static)    
-          
+   
    end % end static public methods
    
    
@@ -210,7 +212,12 @@ classdef matRad_multScen
            
            % set all parameters according to the choosen scenario creation
            % type
-           this.numOfCtScen          = ct.numOfCtScen;
+           if isempty(ct)
+                this.numOfCtScen = 1;   
+           else
+                this.numOfCtScen = ct.numOfCtScen;
+           end
+           
            this.numOfShiftScen       = this.(['numOfShiftScen_' this.TYPE]);
            this.shiftSize            = this.(['shiftSize_' this.TYPE]);
            this.shiftGenType         = this.(['shiftGenType_' this.TYPE]);        
