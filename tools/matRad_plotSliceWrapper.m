@@ -120,12 +120,25 @@ end
 
 axis(axesHandle,'tight');
 set(axesHandle,'xtick',[],'ytick',[]);
-daspect(axesHandle,[1 1 1]);
 colormap(doseColorMap);
 
 matRad_plotAxisLabels(axesHandle,ct,plane,slice,[])
 
- hCMap = matRad_plotColorbar(axesHandle,doseColorMap,doseWindow,'Location','EastOutside');
+% set axis ratio
+ratios = [1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
+set(axesHandle,'DataAspectRatioMode','manual');
+if plane == 1 
+      res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);  
+      set(axesHandle,'DataAspectRatio',[res 1])
+elseif plane == 2 % sagittal plane
+      res = [ratios(3) ratios(1)]./max([ratios(3) ratios(1)]);  
+      set(axesHandle,'DataAspectRatio',[res 1]) 
+elseif  plane == 3 % Axial plane
+      res = [ratios(2) ratios(1)]./max([ratios(2) ratios(1)]);  
+      set(axesHandle,'DataAspectRatio',[res 1])
+end
+
+hCMap = matRad_plotColorbar(axesHandle,doseColorMap,doseWindow,'Location','EastOutside');
 if ~isempty(colorBarLabel)
     set(get(hCMap,'YLabel'),'String', colorBarLabel,'FontSize',14);
 end
