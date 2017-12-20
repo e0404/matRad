@@ -142,7 +142,7 @@ if FlagParallToolBoxLicensed
    
    if exist('parfor_progress', 'file') == 2
       FlagParforProgressDisp = true;
-      parfor_progress(pln.numOfSamples);  % http://de.mathworks.com/matlabcentral/fileexchange/32101-progress-monitor--progress-bar--that-works-with-parfor
+      parfor_progress(pln.multScen.totNumScen);  % http://de.mathworks.com/matlabcentral/fileexchange/32101-progress-monitor--progress-bar--that-works-with-parfor
    else
       fprintf('matRad: Consider downloading parfor_progress function from the matlab central fileexchange to get feedback from parfor loop.\n');
       FlagParforProgressDisp = false;
