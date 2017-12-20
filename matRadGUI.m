@@ -278,8 +278,20 @@ handles.DijCalcWarning = false;
 
 % set slice slider
 if handles.State > 0
+    if evalin('base','exist(''pln'',''var'')')
+        currPln = evalin('base','pln');
+        if handles.plane == 1
+            currSlice = ceil(currPln.isoCenter(1,2)/ct.resolution.x);
+        elseif handles.plane == 2
+            currSlice = ceil(currPln.isoCenter(1,1)/ct.resolution.y);
+        elseif handles.plane == 3
+            currSlice = ceil(currPln.isoCenter(1,3)/ct.resolution.z);
+        end 
+    else % no pln -> no isocenter -> use middle
+        currSlice = ceil(ct.cubeDim(handles.plane)/2);
+    end
     set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
-            'Value',ceil(ct.cubeDim(handles.plane)/2),...
+            'Value',currSlice,...
             'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);      
     
     % define context menu for structures
