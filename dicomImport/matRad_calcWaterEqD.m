@@ -1,4 +1,4 @@
-function ct = matRad_calcWaterEqD(ct)
+function ct = matRad_calcWaterEqD(ct, pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to calculate the equivalent densities from a 
 % dicom ct that originally uses intensity values
@@ -32,30 +32,30 @@ function ct = matRad_calcWaterEqD(ct)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% conversion from IV to HU
-ctHU = double(ct.cube{1}) * double(ct.dicomInfo.RescaleSlope) + double(ct.dicomInfo.RescaleIntercept);
+% %% conversion from IV to HU
+% ct = double(ct.cube{1}) * double(ct.dicomInfo.RescaleSlope) + double(ct.dicomInfo.RescaleIntercept);
+
+% save original iV cube
+ct.cubeIV{1} = ct.cube{1};
 
 %% conversion from HU to water equivalent density
 
 % load hlut
-hlut = matRad_loadHLUT(ct);
+hlut = matRad_loadHLUT(ct, pln);
 
 % Manual adjustments if ct data is corrupt. If some values are out of range
 % of the LUT, then these values are adjusted.
-if max(ctHU(:)) > max(hlut(:,1))
+if max(ct.cubeHU{1}(:)) > max(hlut(:,1))
     warning('projecting out of range HU values');
-    ctHU(ctHU > max(hlut(:,1))) = max(hlut(:,1));
+    ct.cubeHU{1}(ct.cubeHU{1} > max(hlut(:,1))) = max(hlut(:,1));
 end
-if min(ctHU(:)) < min(hlut(:,1))
+if min(ct.cubeHU{1}(:)) < min(hlut(:,1))
     warning('projecting out of range HU values');
-    ctHU(ctHU < min(hlut(:,1))) = min(hlut(:,1));
+    ct.cubeHU{1}(ct.cubeHU{1} < min(hlut(:,1))) = min(hlut(:,1));
 end
 
 % interpolate HU to relative electron density based on lookup table
-ct.cube{1} = interp1(hlut(:,1),hlut(:,2),double(ctHU));
-
-% save ct cube in HU
-ct.cubeHU{1} = ctHU;
+ct.cube{1} = interp1(hlut(:,1),hlut(:,2),double(ct.cubeHU{1}));
 
 % save hlut
 ct.hlut = hlut;
