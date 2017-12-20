@@ -172,6 +172,8 @@ for i = 1:length(handles.Modalities)
 end
 set(handles.popUpMachine,'String',handles.Machines);
 
+multScenDummy = matRad_multScen([],'nomScen');
+set(handles.popupmenuScenGen,'String',multScenDummy.AvailableScenCreationTYPE);
 
 vChar = get(handles.editGantryAngle,'String');
 if strcmp(vChar(1,1),'0') && length(vChar)==6
@@ -733,20 +735,11 @@ end
 
 % generate steering file
 try 
-    % disable robOpt
-    pln.robOpt   = false;
-    % retrieve model parameters
-    pln.bioParam = matRad_bioModel(pln.radiationMode,pln.bioOptimization);
-    % set pln to ensure a proper bio model display
-    setPln(handles);
-    % set plan uncertainties for robust optimization
-    [pln] = matRad_setPlanUncertainties(evalin('base','ct'),pln);
 
     stf = matRad_generateStf(evalin('base','ct'),...
                                      evalin('base','cst'),...
                                      evalin('base','pln'));
     assignin('base','stf',stf);
-    assignin('base','pln',pln);
 catch ME
     handles = showError(handles,{'CalcDoseCallback: Error in steering file generation!',ME.message}); 
     % change state from busy to normal
@@ -1829,7 +1822,7 @@ end
 
 set(handles.uiTable,'ColumnName',columnname);
 set(handles.uiTable,'ColumnFormat',columnformat);
-set(handles.uiTable,'ColumnEditable',[true true true true true true true true true true]);
+set(handles.uiTable,'ColumnEditable',[true true true true true true true true true]);
 set(handles.uiTable,'Data',data);
 
 
@@ -2006,8 +1999,7 @@ function uiTable_CellEditCallback(hObject, eventdata, handles)
 %	Error: error string when failed to convert EditData to appropriate value for Data
 % handles    structure with handles and user data (see GUIDATA)
 
-Placeholder = NaN;
-PlaceholderRob  = 'none';
+Placeholder     = NaN;
 
 % get table data and current index of cell
 if isempty(eventdata)
@@ -2137,7 +2129,6 @@ if sum(strcmp(ObjFunction, {'square underdosing','square overdosing','square dev
     end 
     data{eventdata.Indices(1),7} = Placeholder;
     data{eventdata.Indices(1),8} = Placeholder;
-    data{eventdata.Indices(1),9} = PlaceholderRob;
    
 elseif strcmp(ObjFunction,'mean')
     
@@ -2147,7 +2138,6 @@ elseif strcmp(ObjFunction,'mean')
         data{eventdata.Indices(1),6} = Placeholder;    
         data{eventdata.Indices(1),7} = Placeholder;   
         data{eventdata.Indices(1),8} = Placeholder;
-        data{eventdata.Indices(1),9} = PlaceholderRob;
 
 elseif strcmp(ObjFunction,'EUD')
     
@@ -2158,7 +2148,6 @@ elseif strcmp(ObjFunction,'EUD')
         end 
        data{eventdata.Indices(1),6} = Placeholder; 
        data{eventdata.Indices(1),8} = Placeholder;
-       data{eventdata.Indices(1),9} = PlaceholderRob;
        
 elseif sum(strcmp(ObjFunction,{'min dose constraint','max dose constraint'...
                                'min mean dose constraint','max mean dose constraint'}))> 0
@@ -2169,7 +2158,6 @@ elseif sum(strcmp(ObjFunction,{'min dose constraint','max dose constraint'...
          data{eventdata.Indices(1),5} = Placeholder;
          data{eventdata.Indices(1),7} = Placeholder;
          data{eventdata.Indices(1),8} = Placeholder;
-         data{eventdata.Indices(1),9} = PlaceholderRob;
          
 elseif sum(strcmp(ObjFunction,{'min EUD constraint','max EUD constraint'}) ) > 0
         
@@ -2179,7 +2167,6 @@ elseif sum(strcmp(ObjFunction,{'min EUD constraint','max EUD constraint'}) ) > 0
         data{eventdata.Indices(1),5} = Placeholder;
         data{eventdata.Indices(1),6} = Placeholder;
         data{eventdata.Indices(1),8} = Placeholder;
-        data{eventdata.Indices(1),9} = PlaceholderRob;
         
 elseif sum(strcmp(ObjFunction,{'min DVH constraint','max DVH constraint'}) ) > 0
         
@@ -2190,7 +2177,6 @@ elseif sum(strcmp(ObjFunction,{'min DVH constraint','max DVH constraint'}) ) > 0
         end    
         data{eventdata.Indices(1),5} = Placeholder;
         data{eventdata.Indices(1),7} = Placeholder;
-        data{eventdata.Indices(1),9} = PlaceholderRob;
 
 elseif sum(strcmp(ObjFunction,{'min DVH objective','max DVH objective'}) ) > 0
         
@@ -2200,7 +2186,6 @@ elseif sum(strcmp(ObjFunction,{'min DVH objective','max DVH objective'}) ) > 0
         end
     end
     data{eventdata.Indices(1),7} = Placeholder;
-    data{eventdata.Indices(1),9} = PlaceholderRob;
     
 end
     
@@ -2399,6 +2384,10 @@ if (pln.bioParam.bioOpt)
 else
     set(handles.btnSetTissue,'Enable','off');
 end
+
+multScenDummy = matRad_multScen([],pln.scenGenType);
+ix = find(strcmp(multScenDummy.AvailableScenCreationTYPE,pln.multScen.TYPE));
+set(handles.popupmenuScenGen,'Value',ix);
 %% enable sequencing and DAO button if radiation mode is set to photons
 if strcmp(pln.radiationMode,'photons') && pln.runSequencing
     set(handles.btnRunSequencing,'Enable','on');
@@ -2560,6 +2549,18 @@ cellQuantOpt        = get(handles.popMenuQuantOpt,'String');
 
 pln.bioParam        = matRad_bioModel(pln.radiationMode,[cellBioModel{get(handles.popMenuBioOpt,'Value'),1} '_' cellQuantOpt{get(handles.popMenuQuantOpt,'Value'),1}]);
 pln.bioOptimization = pln.bioParam.identifier;
+
+scenGenTypes    = get(handles.popupmenuScenGen,'String');
+scenGenSelect   = get(handles.popupmenuScenGen,'Value');
+pln.scenGenType = scenGenTypes{scenGenSelect,1};
+
+if evalin('base','exist(''ct'',''var'')')
+    pln.multScen        = matRad_multScen(evalin('base','ct'),scenGenTypes{scenGenSelect,1});
+else
+    pln.multScen        = matRad_multScen([],scenGenTypes{scenGenSelect,1});
+end
+
+
 pln.runSequencing   = logical(get(handles.btnRunSequencing,'Value'));
 pln.runDAO          = logical(get(handles.btnRunDAO,'Value'));
 
@@ -4196,3 +4197,36 @@ guidata(hObject,handles);
 
 
 
+
+
+% --- Executes on selection change in popupmenuScenGen.
+function popupmenuScenGen_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenuScenGen (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenuScenGen contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenuScenGen
+contents = cellstr(get(hObject,'String'));
+
+if handles.State > 1
+    ct = evalin('base','ct');
+    pln = evalin('base','pln');
+    pln.scenGenType = contents{get(hObject,'Value')};
+    pln.multScen = matRad_multScen(ct,pln.scenGenType);
+    assignin('base','pln',pln);
+end
+
+
+
+% --- Executes during object creation, after setting all properties.
+function popupmenuScenGen_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenuScenGen (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
