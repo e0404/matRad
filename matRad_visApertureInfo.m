@@ -80,7 +80,7 @@ for i=1:numOfBeams
         title(['Beam: ' num2str(i) ' Shape: ' num2str(j) ' w=' ...
                 num2str(apertureInfo.beam(i).shape(j).weight,2)],...
                     'Fontsize',8)
-        colorInd = ceil((apertureInfo.beam(i).shape(j).weight/wMax)*61+eps);
+        colorInd = max(ceil((apertureInfo.beam(i).shape(j).weight/wMax)*61+eps),1);
         set(gca,'Color',color(colorInd,:));
         
         hold on
