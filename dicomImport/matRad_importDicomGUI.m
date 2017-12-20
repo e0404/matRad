@@ -320,7 +320,11 @@ if ~isempty(rtdose) && ~isempty(get(handles.doseseries_listbox,'Value'))
     selectedRtDose   = get(handles.doseseries_listbox,'String');
     selectedRtDoseIx = NaN*ones(1,numel(selectedRtDose));
     for i = 1:numel(selectedRtDose)
-        selectedRtDoseIx(i) = find(strcmp(rtdose(:,4),selectedRtDose{i}));
+        if get(handles.SeriesUID_radiobutton,'Value') == 1
+            selectedRtDoseIx(i) = find(strcmp(rtdose(:,4),selectedRtDose{i}));
+        elseif get(handles.SeriesNumber_radiobutton,'Value') == 1
+            selectedRtDoseIx(i) = find(strcmp(rtdose(:,5),selectedRtDose{i}));
+        end
     end
     files.rtdose = rtdose(selectedRtDoseIx,:);
 end
@@ -633,12 +637,16 @@ if ~isempty(get(hObject,'Value')) && numel(get(hObject,'Value')) == 1
         corrDosesLoc = strcmp(handles.fileList(:,2),'RTDOSE');
     end
 
+    set(handles.doseseries_listbox,'Value',[]); % set dummy value to one
     if get(handles.SeriesUID_radiobutton,'Value') == 1
-            set(handles.doseseries_listbox,'Value',[]); % set dummy value to one
             set(handles.doseseries_listbox,'String',handles.fileList(corrDosesLoc,4));
     elseif get(handles.SeriesNumber_radiobutton,'Value') == 1
-            set(handles.doseseries_listbox,'Value',[]); % set dummy value to one
             set(handles.doseseries_listbox,'String',handles.fileList(corrDosesLoc,5));
+    end
+    % disable checkbox for use dose grid is currently checked
+    if get(handles.checkbox3,'Value') == 1
+        set(handles.checkbox3,'Value',0);
+        checkbox3_Callback(handles.checkbox3,[], handles);
     end
     
 elseif numel(get(hObject,'Value')) >=2
@@ -692,9 +700,18 @@ if get(hObject,'Value')
     % retrieve and display resolution for DICOM dose cube
     doseFilesInList = get(handles.doseseries_listbox,'String');
     selectedDoseFiles = get(handles.doseseries_listbox,'Value');
+    if isempty(selectedDoseFiles)
+        set(hObject,'Value',0)
+        errordlg('no dose file selected');
+        return;
+    end
     for i = 1:numel(selectedDoseFiles)
         selectedDoseFile = doseFilesInList{selectedDoseFiles(i)};
-        dicomDoseInfo = dicominfo(handles.fileList{find(strcmp(handles.fileList(:,4),selectedDoseFile)),1});
+        if get(handles.SeriesUID_radiobutton,'Value') == 1
+            dicomDoseInfo = dicominfo(handles.fileList{find(strcmp(handles.fileList(:,4),selectedDoseFile)),1});
+        elseif get(handles.SeriesNumber_radiobutton,'Value') == 1
+            dicomDoseInfo = dicominfo(handles.fileList{find(strcmp(handles.fileList(:,5),selectedDoseFile)),1});
+        end
         res_x{i} = dicomDoseInfo.PixelSpacing(1);
         res_y{i} = dicomDoseInfo.PixelSpacing(2);
         res_z{i} = dicomDoseInfo.SliceThickness;
