@@ -225,9 +225,9 @@ end
 
 ct.timeStamp = datestr(clock);
 
-% convert to water equivalent electron densities
-fprintf('\nconversion of ct-Cube to waterEqD...');
-ct = matRad_calcWaterEqD(ct);
+% convert to hounsfield units
+fprintf('\nconversion of ct-Cube to houndsfield units...');
+ct = matRad_calcHU(ct);
 fprintf('finished!\n');
 
 end
