@@ -53,13 +53,12 @@ else
     Omega = cell(size(cst,1),1);
     
     % calculate integral variance vector
-    if options.numOfScen > 1
-       for i = 1:size(cst,1)
-          if ~isempty(cst{i,6})                       
-                Omega{i}  = ((cst{i,6}(1).penalty/numel(cst{i,4}{1})) * (cst{i,6}(1).mOmega) * w);
-          end
+    for i = 1:size(cst,1)
+       if ~isempty(cst{i,6})                       
+             Omega{i}  = ((cst{i,6}(1).penalty/numel(cst{i,4}{1})) * (cst{i,6}(1).mOmega) * w);
        end
     end
+    
     
     % Calculate dose vector
     if ~options.bioOpt

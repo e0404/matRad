@@ -169,6 +169,7 @@ else
 end
 
 
+
 matRad_dispToConsole('Calculating probabilistic quantities for optimization ...\n',param,'info');
       
 if ~pln.bioParam.bioOpt
@@ -177,8 +178,35 @@ else
     fNames = {'mAlphaDose','mSqrtBetaDose'};
 end
 
-%% calculate probabilistic quantities for probabilistic optimization
-if pln.multScen.totNumScen == 1
+%% calculate probabilistic quantities for probabilistic optimization if at least
+% one robust objective is defined
+
+% find VOI indicies with objective or constraint
+voiIx = [];
+for i = 1:size(cst,1)     
+  if ~isempty(cst{i,6})
+      voiIx = [voiIx i];
+      cst{i,6}(1).mOmega = 0;
+  end
+end
+    
+FLAG_CALC_PROB = false;
+FLAG_ROB_OPT   = false;
+
+for i = 1:size(cst,1)
+    for j = 1:size(cst{i,6},1)
+       if strcmp(cst{i,6}(j).robustness,'PROB')
+          FLAG_CALC_PROB = true;
+       end
+       if ~strcmp(cst{i,6}(j).robustness,'none') 
+          FLAG_ROB_OPT = true;
+       end
+    end
+end
+
+
+
+if pln.multScen.totNumScen == 1 || ~FLAG_ROB_OPT
    for i = 1:numel(fNames)
        dij.([fNames{1,i} 'Exp']){1} = spalloc(prod(dij.dimensions),dij.totalNumOfBixels,1);
    end
@@ -195,14 +223,6 @@ else
         end
     end
     
-    % find VOI indicies with objective or constraint
-    voiIx = [];
-    for i = 1:size(cst,1)     
-        if ~isempty(cst{i,6})
-            voiIx = [voiIx i];
-            cst{i,6}(1).mOmega = 0;
-        end
-    end
     % loop over VOIs
     for i = voiIx
         % loop over scenarios and calculate the integral variance of each
@@ -218,8 +238,14 @@ else
 end
 
 
+
 % set optimization options
-options.ixForOpt     = find(~cellfun(@isempty, dij.physicalDose))'; 
+if FLAG_CALC_PROB
+   options.ixForOpt = 1;
+else
+   options.ixForOpt = find(~cellfun(@isempty, dij.physicalDose))'; 
+end
+
 options.numOfScen    = numel(options.ixForOpt);
 options.scenProb     = pln.multScen.scenProb;
 options.bioOpt       = pln.bioParam.bioOpt;
@@ -243,9 +269,9 @@ resultGUI = matRad_calcCubes(wOpt,dij,cst);
 resultGUI.wUnsequenced = wOpt;
 
 % calc individual scenarios
-if options.numOfScen > 1
+if options.numOfScen > 1 || FLAG_CALC_PROB
    Cnt = 1;
-   for i = options.ixForOpt
+   for i = find(~cellfun(@isempty, dij.physicalDose))'
       tmpResultGUI = matRad_calcCubes(wOpt,dij,cst,i);
       resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
       Cnt = Cnt + 1;
