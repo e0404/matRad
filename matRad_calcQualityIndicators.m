@@ -127,17 +127,6 @@ for runVoi = 1:size(cst,1)
     else
         
         matRad_dispToConsole([num2str(cst{runVoi,1}) ' ' cst{runVoi,2} ' - No dose information.\n'],param,'info')
-        qi(runVoi).mean = [];
-        qi(runVoi).std  = [];
-        qi(runVoi).max  = [];
-        qi(runVoi).min  = [];
-        for runDX = 1:numel(refVol)
-            qi(runVoi).(strcat('D_',num2str(refVol(runDX)))) = [];
-        end
-        for runVX = 1:numel(refGy)
-            sRefGy = num2str(refGy(runVX),3);
-            qi(runVoi).(['V_' strrep(sRefGy,'.','_') 'Gy']) = [];
-        end
         
     end
 end
