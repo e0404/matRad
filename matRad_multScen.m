@@ -84,9 +84,14 @@ classdef matRad_multScen
         scenProb;               % probability of each scenario stored in a vector
         scenMask;
         linearMask;
+        
+        rangeRelSD  = 3.5;                % given in %
+        rangeAbsSD  = 1;                  % given in [mm]   
+        shiftSD     = [2.25 2.25 2.25];   % given in [mm]
+        
     end
     
-    % public properties which can only be changed inside matRad_multScen
+    % private properties which can only be changed inside matRad_multScen
     properties(SetAccess = private)
         
         DEFAULT_TYPE      = 'nomScen'; 
@@ -97,10 +102,6 @@ classdef matRad_multScen
     
     % constant properties which are visible outside of matRad_multScen
     properties(Constant = true)
-        
-        rangeRelSD  = 3.5;                % given in %
-        rangeAbsSD  = 1;                  % given in [mm]   
-        shiftSD     = [2.25 2.25 2.25];   % given in [mm]
         
         AvailableScenCreationTYPE = {'nomScen','wcScen','impScen','rndScen'};
     end
@@ -161,7 +162,6 @@ classdef matRad_multScen
         rangeGenType_rndScen              = 'sampled';                     % sampled: sample range shifts from normal distribution
         scenCombType_rndScen              = 'combined';                    % combine range and setup scenarios if their scenario number is consistent  
         includeNomScen_rndScen            = false;                         % exclude nominal scenario
-        
     end
     
    %% methods
@@ -192,6 +192,22 @@ classdef matRad_multScen
           this      = calcScenProb(this);
       end % end constructor
       
+      % create valid instance of an object
+      function this = matRad_createValidInstance(this)
+          this      = setMultScen(this);
+          this      = calcScenProb(this);
+      end
+      
+      %% setters to check for valid input
+      function this = set.numOfShiftScen(this,value)
+          
+         if ~isempty(value)
+            this.numOfShiftScen = value;
+         else
+            this.numOfShiftScen = this.numOfRangeShiftScen_nomScen; 
+         end
+         
+      end
       
    end % end public methods 
     
