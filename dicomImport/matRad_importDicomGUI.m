@@ -418,7 +418,7 @@ if isfield(handles, 'fileList')
     set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),5)));
     set(handles.rtseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),5)));
     set(handles.rtplan_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTPLAN') & strcmp(handles.fileList(:,3), selected_patient),5)),'Value',[]);
-    set(handles.doseseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTDOSE') & strcmp(handles.fileList(:,3), selected_patient),12),'Value',[]);
+    set(handles.doseseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTDOSE') & strcmp(handles.fileList(:,3), selected_patient),5),'Value',[]);
 else
     fprintf('No patient loaded, so just switching default display option to SeriesNumber. \n');
 end
@@ -720,6 +720,9 @@ if get(hObject,'Value')
     if numel(unique(cell2mat(res_x)))*numel(unique(cell2mat(res_y)))*numel(unique(cell2mat(res_z))) ~= 1
         set(handles.checkbox3,'Value',0);
         warndlg('Different resolutions in dose file(s)');
+        set(handles.resx_edit,'Enable', 'on');
+        set(handles.resy_edit,'Enable', 'on');
+        set(handles.resz_edit,'Enable', 'on');
     else
         set(handles.resx_edit,'String',num2str(res_x{1}));
         set(handles.resy_edit,'String',num2str(res_y{1}));
