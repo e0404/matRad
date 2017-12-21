@@ -1,4 +1,4 @@
-classdef matRad_SquaredDeviationObjective < matRad_DoseObjective
+classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
     %MATRAD_DOSEOBJECTIVE Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -7,7 +7,7 @@ classdef matRad_SquaredDeviationObjective < matRad_DoseObjective
     end
     
     properties
-        parameters = {'Reference Dose'; 60}
+        parameters = {'Ref. Dose'; 60}
         penalty = 1
     end
     

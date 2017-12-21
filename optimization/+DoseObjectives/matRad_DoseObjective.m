@@ -6,6 +6,10 @@ classdef (Abstract) matRad_DoseObjective
         name
     end
     
+    properties (Constant)
+        type = 'Objective';
+    end
+    
     properties (Abstract, Access = public)
         parameters
         penalty

@@ -1,13 +1,13 @@
-classdef matRad_SquaredOverdosingObjective < matRad_DoseObjective
+classdef matRad_SquaredUnderdosing < DoseObjectives.matRad_DoseObjective
     %MATRAD_DOSEOBJECTIVE Summary of this class goes here
     %   Detailed explanation goes here
     
     properties (Constant)
-        name = 'Squared Overdosing'
+        name = 'Squared Underdosing'
     end
     
     properties
-        parameters = {'Reference Max Dose'; 30}
+        parameters = {'Ref. Min Dose'; 60}
         penalty = 1
     end
     
@@ -15,25 +15,25 @@ classdef matRad_SquaredOverdosingObjective < matRad_DoseObjective
         %% Calculates the Objective Function value
         function fDose = computeDoseObjectiveFunction(obj,dose)                       
             % overdose : dose minus prefered dose
-            overdose = dose - obj.parameters{2,1};
+            underdose = dose - obj.parameters{2,1};
             
             % apply positive operator
-            overdose(overdose<0) = 0;
+            underdose(underdose>0) = 0;
 
             % claculate objective function
-            fDose = obj.penalty/numel(dose) * (overdose'*overdose);
+            fDose = obj.penalty/numel(dose) * (underdose'*underdose);
         end
         
         %% Calculates the Objective Function gradient
         function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
             % overdose : dose minus prefered dose
-            overdose = dose - obj.parameters{2,1};
+            underdose = dose - obj.parameters{2,1};
             
             % apply positive operator
-            overdose(overdose<0) = 0;
+            underdose(underdose>0) = 0;
 
             % calculate delta
-            fDoseGrad = 2 * obj.penalty/numel(dose) * overdose;
+            fDoseGrad = 2 * obj.penalty/numel(dose) * underdose;
         end
     end
     

@@ -1839,6 +1839,7 @@ for i = 1:size(cst,1)
     end
 end
 
+%{
 dimArr = [numOfObjectives size(columnname,2)];
 data = cell(dimArr);
 data(:,6) = {''};
@@ -1873,7 +1874,7 @@ set(handles.uiTable,'ColumnName',columnname);
 set(handles.uiTable,'ColumnFormat',columnformat);
 set(handles.uiTable,'ColumnEditable',[true true true true true true true true true true]);
 set(handles.uiTable,'Data',data);
-
+%}
 generateCstTable(handles,cst);
 
 function Flag = getCstTable (handles)
@@ -4219,6 +4220,21 @@ AllObjectiveFunction = {'square underdosing','square overdosing','square deviati
                         'min EUD constraint','max EUD constraint',...
                         'max DVH constraint','min DVH constraint',...
                         'max DVH objective' ,'min DVH objective'};
+            
+%Get all Classes & classNames                   
+mpkgObjectives = meta.package.fromName('DoseObjectives');
+mpkgConstraints = meta.package.fromName('DoseConstraints');
+classList = [mpkgObjectives.ClassList; mpkgConstraints.ClassList];
+
+classList = classList(not([classList.Abstract]));
+
+%Now get the "internal" name from the properties
+p = [classList.PropertyList];
+pNameIx = arrayfun(@(p) strcmp(p.Name,'name'),p);
+p = p(pNameIx);
+
+% Collect Class-File & Display Names
+classNames = {classList.Name; p.DefaultValue};
 
 columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
        AllObjectiveFunction,...
@@ -4236,15 +4252,52 @@ data = cell(dimArr);
 data(:,6) = {''};
 Counter = 0;
 
+objHeight = 22;
+lineHeight = 25;
+fieldSep = 2;
+yTopSep = 40;
+
+
 for i = 1:size(cst,1)   
    if strcmp(cst(i,3),'IGNORED')~=1
        for j=1:size(cst{i,6},1)
-       %VOI
-       %data{Counter,1}  = cst{i,2};
-       ypos = 20 + Counter*20;
-       
-       uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Position',[5 cstPanelPos(4)-ypos 100 15]);
-       %{       
+           
+           obj = cst{i,6}(j);
+           
+           %VOI
+           %data{Counter,1}  = cst{i,2};
+           ypos = cstPanelPos(4) - (yTopSep + Counter*lineHeight);
+           xPos = 5;
+           
+           %h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Position',[xPos ypos 100 objHeight]);
+           %h.Value = i;
+           h = uicontrol(cstPanel,'Style','pushbutton','String','-','Position',[xPos ypos objHeight objHeight],'TooltipString','Remove Objective/Constraint');
+            xPos = xPos + h.Position(3) + fieldSep;
+           h = uicontrol(cstPanel','Style','edit','String',cst{i,2},'Position',[xPos ypos 100 objHeight],'Enable','inactive','TooltipString','Name');
+           xPos = xPos + h.Position(3) + fieldSep;
+           h = uicontrol(cstPanel,'Style','edit','String',num2str(cst{i,5}.Priority),'Position',[xPos ypos objHeight objHeight],'TooltipString',['Overlap Priority' char(10) '(Smaller number overlaps higher number)']);
+           xPos = xPos + h.Position(3) + fieldSep;
+           
+           h = uicontrol(cstPanel,'Style','popupmenu','String',classNames(2,:)','Value',find(strcmp(obj.name,classNames(2,:))),'Position',[xPos ypos 120 objHeight],'TooltipString','Select Objective/Constraint');
+           xPos = xPos + h.Position(3) + fieldSep;
+           
+           %Check if we have an objective to display penalty
+           if isa(obj,'DoseObjectives.matRad_DoseObjective')
+               h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.penalty),'Position',[xPos ypos 50 objHeight],'TooltipString','Objective Penalty');
+           else
+               h = uicontrol(cstPanel,'Style','edit','String','----','Position',[xPos ypos 50 objHeight],'Enable','off');
+           end
+           xPos = xPos + h.Position(3) + fieldSep;
+           
+           for p = 1:size(obj.parameters,2)
+              h = uicontrol(cstPanel,'Style','edit','String',obj.parameters{1,p},'Position',[xPos ypos 100 objHeight],'Enable','inactive');
+              xPos = xPos + h.Position(3) + fieldSep;
+              h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{2,p}),'TooltipString',obj.parameters{1,p},'Position',[xPos ypos 50 objHeight]);
+              xPos = xPos + h.Position(3) + fieldSep;
+           end
+           
+           %set(h
+           %{
        %VOI Type
        data{Counter,2}  = cst{i,3};
        %Priority
@@ -4258,12 +4311,19 @@ for i = 1:size(cst,1)
        data{Counter,7}  = cst{i,6}(j).EUD;
        data{Counter,8}  = cst{i,6}(j).volume;
        data{Counter,9}  = cst{i,6}(j).robustness;
-       %}
-       Counter = Counter +1;
+           %}
+           Counter = Counter +1;
        end
-   end
-   
+   end   
 end
+ypos = cstPanelPos(4) - (yTopSep + Counter*lineHeight);
+xPos = 5;
+h = uicontrol(cstPanel,'Style','pushbutton','String','+','Position',[xPos ypos objHeight objHeight],'TooltipString','Add Objective/Constraint');
+xPos = xPos + h.Position(3) + fieldSep;
+h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Position',[xPos ypos 100 objHeight]);
+
+
+%uicontrol(cstPanel,'Style','pushbutton','String','+','Position',[5 cstPanelPos(4)-ypos-25 100 objHeight]);
 
 %set(handles.uiTable,'ColumnName',columnname);
 %set(handles.uiTable,'ColumnFormat',columnformat);

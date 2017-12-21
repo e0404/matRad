@@ -1,4 +1,4 @@
-classdef matRad_MinDVHObjective < matRad_DoseObjective
+classdef matRad_MinDVH < DoseObjectives.matRad_DoseObjective
     %MATRAD_DOSEOBJECTIVE Summary of this class goes here
     %   Detailed explanation goes here
     

@@ -1,4 +1,4 @@
-classdef matRad_MaxDVHObjective < matRad_DoseObjective
+classdef matRad_MaxDVH < DoseObjectives.matRad_DoseObjective
     %MATRAD_DOSEOBJECTIVE Summary of this class goes here
     %   Detailed explanation goes here
     
