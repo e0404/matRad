@@ -7,7 +7,7 @@ classdef matRad_MeanDose < DoseObjectives.matRad_DoseObjective
     end
     
     properties
-        parameters = {'reference mean'; 0}
+        parameters = {'\bar{d}^{ref}'; 0}
         penalty = 1
     end
     

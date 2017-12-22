@@ -7,7 +7,7 @@ classdef matRad_SquaredOverdosing < DoseObjectives.matRad_DoseObjective
     end
     
     properties
-        parameters = {'Ref. Max Dose'; 30}
+        parameters = {'d^{max}'; 30}
         penalty = 1
     end
     

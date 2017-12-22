@@ -7,7 +7,7 @@ classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
     end
     
     properties
-        parameters = {'Reference EUD', 'EUD Exponent'; 0, 3.5}
+        parameters = {'EUD^{ref}', 'k'; 0, 3.5}
         penalty = 1
     end
     

@@ -7,7 +7,7 @@ classdef matRad_MinDVH < DoseObjectives.matRad_DoseObjective
     end
     
     properties
-        parameters = {'Reference Dose', 'Reference Min Volume [%]'; 60,95}
+        parameters = {'d', 'V^{min}'; 60,95}
         penalty = 1
     end
     

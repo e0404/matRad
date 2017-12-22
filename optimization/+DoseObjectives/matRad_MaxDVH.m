@@ -7,7 +7,7 @@ classdef matRad_MaxDVH < DoseObjectives.matRad_DoseObjective
     end
     
     properties
-        parameters = {'Reference Dose', 'Reference Max Volume [%]'; 30,95}
+        parameters = {'d', 'V^{max}'; 30,95}
         penalty = 1
     end
     

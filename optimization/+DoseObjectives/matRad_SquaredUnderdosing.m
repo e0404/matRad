@@ -7,7 +7,7 @@ classdef matRad_SquaredUnderdosing < DoseObjectives.matRad_DoseObjective
     end
     
     properties
-        parameters = {'Ref. Min Dose'; 60}
+        parameters = {'d^{min}'; 60}
         penalty = 1
     end
     
