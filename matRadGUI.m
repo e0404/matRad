@@ -4296,11 +4296,15 @@ for i = 1:size(cst,1)
            h = uicontrol(cstPanel,'Style','pushbutton','String','-','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Remove Objective/Constraint','Callback',{@btObjRemove_Callback,handles},...
                'UserData',[i,j]);
            xPos = xPos + h.Position(3) + fieldSep;
-           h = uicontrol(cstPanel','Style','edit','String',cst{i,2},'Position',[xPos ypos(cnt) nameW objHeight],'Enable','inactive','TooltipString','Name');
+           h = uicontrol(cstPanel','Style','edit','String',cst{i,2},'Position',[xPos ypos(cnt) nameW objHeight],'TooltipString','Name',...
+               'Enable','inactive',... %Disable editing of name atm
+               'UserData',[i,2],'Callback',{@editCstParams_Callback,handles}); %Callback added, however, editing is disabled atm
            xPos = xPos + h.Position(3) + fieldSep;
-           h = uicontrol(cstPanel,'Style','popupmenu','String',organTypes','Value',find(strcmp(cst{i,3},organTypes)),'Position',[xPos ypos(cnt) typeW objHeight],'TooltipString','Segmentation Classification');
+           h = uicontrol(cstPanel,'Style','popupmenu','String',organTypes','Value',find(strcmp(cst{i,3},organTypes)),'Position',[xPos ypos(cnt) typeW objHeight],'TooltipString','Segmentation Classification',...
+               'UserData',[i,3],'Callback',{@editCstParams_Callback,handles});
            xPos = xPos + h.Position(3) + fieldSep;
-           h = uicontrol(cstPanel,'Style','edit','String',num2str(cst{i,5}.Priority),'Position',[xPos ypos(cnt) opW objHeight],'TooltipString',['Overlap Priority' newline '(Smaller number overlaps higher number)']);
+           h = uicontrol(cstPanel,'Style','edit','String',num2str(cst{i,5}.Priority),'Position',[xPos ypos(cnt) opW objHeight],'TooltipString',['Overlap Priority' newline '(Smaller number overlaps higher number)'],...
+               'UserData',[i,5],'Callback',{@editCstParams_Callback,handles});
            xPos = xPos + h.Position(3) + fieldSep;
            
            h = uicontrol(cstPanel,'Style','popupmenu','String',classNames(2,:)','Value',find(strcmp(obj.name,classNames(2,:))),'Position',[xPos ypos(cnt) functionW objHeight],'TooltipString','Select Objective/Constraint',...
@@ -4468,6 +4472,29 @@ if ~strcmp(currentClass,classToCreate)
    
    generateCstTable(handles,cst);
 end
+
+function editCstParams_Callback(hObject,~,handles)
+data = hObject.UserData;
+ix = data(1);
+col = data(2);
+
+cst = evalin('base','cst');
+
+switch col
+    case 2
+        cst{ix,col} = hObject.String;
+    case 3
+        cst{ix,col} = hObject.String{hObject.Value};
+    case 5
+        cst{ix,col}.Priority = uint32(str2double(hObject.String));
+    otherwise
+        warning('Wrong column assignment in GUI based cst setting');
+end
+
+assignin('base','cst',cst);
+
+generateCstTable(handles,cst);
+
     
 
 
