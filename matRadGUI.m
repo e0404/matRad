@@ -699,14 +699,14 @@ try
     InterfaceObj = findobj(Figures,'Enable','on');
     set(InterfaceObj,'Enable','off');
     
-    pause(0.1);
-    uiTable_CellEditCallback(hObject,[],handles);
-    pause(0.3);
+    %pause(0.1);
+    %uiTable_CellEditCallback(hObject,[],handles);
+    %pause(0.3);
 
     %% get cst from table
-    if ~getCstTable(handles);
-        return
-    end
+    %if ~getCstTable(handles)
+    %    return
+    %end
     % read plan from gui and save it to workspace
     % gets also IsoCenter from GUI if checkbox is not checked
     getPlnFromGUI(handles);
@@ -1495,7 +1495,7 @@ try
     InterfaceObj = findobj(Figures,'Enable','on');
     set(InterfaceObj,'Enable','off');
     % wait until the table is updated
-    btnTableSave_Callback([],[],handles);
+    btnTableSave_Callback([],[],handles); %We don't need it?
 
 
     % if a critical change to the cst has been made which affects the dij matrix
@@ -2485,7 +2485,8 @@ function btnTableSave_Callback(~, ~, handles)
 % hObject    handle to btnTableSave (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-getCstTable(handles);
+
+%getCstTable(handles);
 if get(handles.checkIsoCenter,'Value')
     pln = evalin('base','pln'); 
     pln.isoCenter = ones(pln.numOfBeams,1) * matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 

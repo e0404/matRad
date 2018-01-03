@@ -18,7 +18,7 @@ classdef (Abstract) matRad_DoseObjective
     methods (Abstract)
         fDose       = computeDoseObjectiveFunction(obj,dose)
         fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
-    end
+    end        
     
 end
 
