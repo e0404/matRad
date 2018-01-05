@@ -52,7 +52,11 @@ if ~isempty(fileList)
     for i = numOfFiles:-1:1
         waitbar((numOfFiles+1-i) / steps)
         try % try to get DicomInfo
-            info = dicominfo(fileList{i});
+            if verLessThan('matlab','9')
+                info = dicominfo(fileList{i});
+            else
+                info = dicominfo(fileList{i},'UseDictionaryVR',true);
+            end
         catch
             fileList(i,:) = [];
             matRad_progress(numOfFiles+1-i, numOfFiles);
@@ -87,6 +91,12 @@ if ~isempty(fileList)
                 catch
                     fileList{i,4} = NaN;
                 end
+            case 'RTSTRUCT'
+                try
+                    fileList{i,4} = info.SOPInstanceUID;
+                catch
+                    fileList{i,4} = NaN;
+               end
             otherwise
                 try
                     fileList{i,4} = info.SeriesInstanceUID;
