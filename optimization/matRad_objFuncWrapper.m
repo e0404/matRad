@@ -46,27 +46,31 @@ for  i = 1:size(cst,1)
 
         % loop over the number of constraints for the current VOI
         for j = 1:numel(cst{i,6})
-
+            
+            obj = cst{i,6}{j};
+            
             % only perform gradient computations for objectives
-            if isempty(strfind(cst{i,6}(j).type,'constraint'))
+            if isempty(strfind(obj.type,'constraint'))
 
-                % compute reference
-                if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) &&...
+                % if we have effect optimization, temporarily replace doses with effect
+                if (~isequal(obj.name, 'Mean Dose') && ~isequal(obj.type, 'EUD')) &&...
                     isequal(options.bioOpt,'LEMIV_effect') 
-
-                    d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
-                else
-                    d_ref = cst{i,6}(j).dose;
+                    
+                    doses = obj.getDoseParameters();
+                
+                    effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
+                    
+                    obj = obj.setDoseParameters(effect);
                 end
                 
-               % if conventional opt: just sum objectives of nominal dose
-                if strcmp(cst{i,6}(j).robustness,'none')
+                % if conventional opt: just sum objectives of nominal dose
+                %if strcmp(cst{i,6}{j}.robustness,'none')
 
                     d_i = d{1}(cst{i,4}{1});
 
-                    f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                    f = f + obj.computeDoseObjectiveFunction(d_i);
                     
-                end
+                %end
             
             end
        

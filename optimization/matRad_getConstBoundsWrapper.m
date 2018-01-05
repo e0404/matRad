@@ -46,7 +46,7 @@ for  i = 1:size(cst,1)
         for j = 1:numel(cst{i,6})
             
             % only perform computations for constraints
-            if ~isempty(strfind(cst{i,6}(j).type,'constraint'))
+            if ~isempty(strfind(cst{i,6}{j}.type,'constraint'))
 
                 if isequal(options.bioOpt,'none') || isequal(options.ID,'protons_const_RBExD') ||  isequal(options.bioOpt,'LEMIV_RBExD')
                     param = cst{i,6}(j).dose;

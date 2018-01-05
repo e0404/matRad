@@ -3,12 +3,14 @@ classdef matRad_MeanDose < DoseObjectives.matRad_DoseObjective
     %   Detailed explanation goes here
     
     properties (Constant)
-        name = 'Mean Dose'
+        name = 'Mean Dose';
+        parameterNames = {'\bar{d}^{ref}'};
+        parameterIsDose = true;
     end
     
     properties
-        parameters = {'\bar{d}^{ref}'; 0}
-        penalty = 1
+        parameters = {0};
+        penalty = 1;
     end
     
     methods 

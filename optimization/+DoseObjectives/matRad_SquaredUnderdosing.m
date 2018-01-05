@@ -3,19 +3,21 @@ classdef matRad_SquaredUnderdosing < DoseObjectives.matRad_DoseObjective
     %   Detailed explanation goes here
     
     properties (Constant)
-        name = 'Squared Underdosing'
+        name = 'Squared Underdosing';
+        parameterNames = {'d^{min}'};
+        parameterIsDose = true;
     end
     
     properties
-        parameters = {'d^{min}'; 60}
-        penalty = 1
+        parameters = {60};
+        penalty = 1;
     end
     
     methods 
         %% Calculates the Objective Function value
         function fDose = computeDoseObjectiveFunction(obj,dose)                       
             % overdose : dose minus prefered dose
-            underdose = dose - obj.parameters{2,1};
+            underdose = dose - obj.parameters{1};
             
             % apply positive operator
             underdose(underdose>0) = 0;
@@ -27,7 +29,7 @@ classdef matRad_SquaredUnderdosing < DoseObjectives.matRad_DoseObjective
         %% Calculates the Objective Function gradient
         function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
             % overdose : dose minus prefered dose
-            underdose = dose - obj.parameters{2,1};
+            underdose = dose - obj.parameters{1};
             
             % apply positive operator
             underdose(underdose>0) = 0;

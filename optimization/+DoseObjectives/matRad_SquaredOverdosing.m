@@ -3,19 +3,21 @@ classdef matRad_SquaredOverdosing < DoseObjectives.matRad_DoseObjective
     %   Detailed explanation goes here
     
     properties (Constant)
-        name = 'Squared Overdosing'
+        name = 'Squared Overdosing';
+        parameterNames = {'d^{max}'};
+        parameterIsDose = true;
     end
     
     properties
-        parameters = {'d^{max}'; 30}
-        penalty = 1
+        parameters = {30};
+        penalty = 1;
     end
     
     methods 
         %% Calculates the Objective Function value
         function fDose = computeDoseObjectiveFunction(obj,dose)                       
             % overdose : dose minus prefered dose
-            overdose = dose - obj.parameters{2,1};
+            overdose = dose - obj.parameters{1};
             
             % apply positive operator
             overdose(overdose<0) = 0;
@@ -27,7 +29,7 @@ classdef matRad_SquaredOverdosing < DoseObjectives.matRad_DoseObjective
         %% Calculates the Objective Function gradient
         function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
             % overdose : dose minus prefered dose
-            overdose = dose - obj.parameters{2,1};
+            overdose = dose - obj.parameters{1};
             
             % apply positive operator
             overdose(overdose<0) = 0;

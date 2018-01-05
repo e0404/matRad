@@ -3,28 +3,30 @@ classdef matRad_MaxDVH < DoseObjectives.matRad_DoseObjective
     %   Detailed explanation goes here
     
     properties (Constant)
-        name = 'Max DVH'
+        name = 'Max DVH';
+        parameterNames = {'d', 'V^{max}'};
+        parameterIsDose = logical([1 0]);
     end
     
     properties
-        parameters = {'d', 'V^{max}'; 30,95}
-        penalty = 1
+        parameters = {30,95};
+        penalty = 1;
     end
     
     methods 
         %% Calculates the Objective Function value
         function fDose = computeDoseObjectiveFunction(obj,dose)                       
             % get reference Volume
-            refVol = obj.parameters{2,2}/100;
+            refVol = obj.parameters{2}/100;
             
             % calc deviation
-            deviation = dose - obj.parameters{2,1};
+            deviation = dose - obj.parameters{1};
 
             % calc d_ref2: V(d_ref2) = refVol
             d_ref2 = matRad_calcInversDVH(refVol,dose);
 
             
-            deviation(dose < obj.parameters{2,1} | dose > d_ref2) = 0;
+            deviation(dose < obj.parameters{1} | dose > d_ref2) = 0;
    
             % claculate objective function
             fDose = (obj.penalty/numel(dose))*(deviation'*deviation);
@@ -33,15 +35,15 @@ classdef matRad_MaxDVH < DoseObjectives.matRad_DoseObjective
         %% Calculates the Objective Function gradient
         function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
             % get reference Volume
-            refVol = objective.volume/100;
+            refVol = obj.parameters{2}/100;
             
             % calc deviation
-            deviation = d_i - d_ref;
+            deviation = dose - obj.parameters{1};
             
             % calc d_ref2: V(d_ref2) = refVol
-            d_ref2 = matRad_calcInversDVH(refVol,d_i);
+            d_ref2 = matRad_calcInversDVH(refVol,dose);
             
-            deviation(dose < obj.parameters{2,1} | dose > d_ref2) = 0;
+            deviation(dose < obj.parameters{1} | dose > d_ref2) = 0;
 
             % calculate delta
             fDoseGrad = 2 * (obj.penalty/numel(dose))*deviation;

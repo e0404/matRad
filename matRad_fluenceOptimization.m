@@ -72,8 +72,12 @@ cst  = matRad_setOverlapPriorities(cst);
 
 % adjust objectives and constraints internally for fractionation 
 for i = 1:size(cst,1)
-    for j = 1:size(cst{i,6},1)
-       cst{i,6}(j).dose = cst{i,6}(j).dose/pln.numOfFractions;
+    for j = 1:numel(cst{i,6})
+        %This checks if our optimization function is dose related by
+        %checking inheritance from the respective base classes
+        if isa(cst{i,6}{j},'DoseObjectives.matRad_DoseObjective') || isa(cst{i,6}{j},'DoseObjectives.matRad_DoseConstraint')
+            cst{i,6}{j} = cst{i,6}{j}.setDoseParameters(cst{i,6}{j}.getDoseParameters()/pln.numOfFractions);
+        end
     end
 end
 
@@ -85,8 +89,19 @@ ixTarget   = [];
 for i=1:size(cst,1)
     if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
         V = [V;cst{i,4}{1}];
-        doseTarget = [doseTarget cst{i,6}.dose];
-        ixTarget   = [ixTarget i*ones(1,length([cst{i,6}.dose]))];
+        
+        %Iterate through objectives/constraints
+        fDoses = [];
+        for fObjCell = cst{i,6}
+            %Check if we have a Dose dependent function
+            if isa(fObjCell{1},'DoseObjectives.matRad_DoseObjective') || isa(fObjCell{1},'DoseObjectives.matRad_DoseConstraint')
+                fDoses = [fDoses fObjCell{1}.getDoseParameters()];
+            end
+        end
+                
+        
+        doseTarget = [doseTarget fDoses];
+        ixTarget   = [ixTarget i*ones(1,length(fDoses))];
     end
 end
 [doseTarget,i] = max(doseTarget);

@@ -58,25 +58,25 @@ for i = 1:size(cst,1)
         for j = 1:numel(cst{i,6})
 
             % only perform computations for constraints
-            if ~isempty(strfind(cst{i,6}(j).type,'constraint'))
+            if ~isempty(strfind(cst{i,6}{j}.type,'constraint'))
                 
                 % compute reference
-                if (~isequal(cst{i,6}(j).type, 'max dose constraint')      && ~isequal(cst{i,6}(j).type, 'min dose constraint')          &&...
-                    ~isequal(cst{i,6}(j).type, 'max mean dose constraint') && ~isequal(cst{i,6}(j).type, 'min mean dose constraint') && ...
-                    ~isequal(cst{i,6}(j).type, 'min EUD constraint')       && ~isequal(cst{i,6}(j).type, 'max EUD constraint'))           && ...
+                if (~isequal(cst{i,6}{j}.type, 'max dose constraint')      && ~isequal(cst{i,6}{j}.type, 'min dose constraint')          &&...
+                    ~isequal(cst{i,6}{j}.type, 'max mean dose constraint') && ~isequal(cst{i,6}{j}.type, 'min mean dose constraint') && ...
+                    ~isequal(cst{i,6}{j}.type, 'min EUD constraint')       && ~isequal(cst{i,6}{j}.type, 'max EUD constraint'))           && ...
                     isequal(options.bioOpt,'LEMIV_effect')
                      
-                    d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
+                    d_ref = cst{i,5}.alphaX*cst{i,6}{j}.dose + cst{i,5}.betaX*cst{i,6}{j}.dose^2;
                 else
-                    d_ref = cst{i,6}(j).dose;
+                    d_ref = cst{i,6}{j}.dose;
                 end
                 
                 % if conventional opt: just add constraints of nominal dose
-                if strcmp(cst{i,6}(j).robustness,'none')
+                if strcmp(cst{i,6}{j}.robustness,'none')
 
                     d_i = d{1}(cst{i,4}{1});
 
-                    jacobVec =  matRad_jacobFunc(d_i,cst{i,6}(j),d_ref);
+                    jacobVec =  matRad_jacobFunc(d_i,cst{i,6}{j},d_ref);
                     
                     scenID  = [scenID;1];
                     scenID2 = [scenID2;ones(numel(cst{i,4}{1}),1)];

@@ -3,19 +3,21 @@ classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
     %   Detailed explanation goes here
     
     properties (Constant)
-        name = 'EUD'
+        name = 'EUD';
+        parameterNames = {'EUD^{ref}', 'k'};
+        parameterIsDose = logical([1 0]);
     end
     
     properties
-        parameters = {'EUD^{ref}', 'k'; 0, 3.5}
-        penalty = 1
+        parameters = {0, 3.5};
+        penalty = 1;
     end
     
     methods 
         %% Calculates the Objective Function value
         function fDose = computeDoseObjectiveFunction(obj,dose)                       
             % get exponent for EUD
-            k = obj.parameters{2,2};
+            k = obj.parameters{2};
 
             % calculate power sum
             powersum = sum(dose.^k);
@@ -26,14 +28,14 @@ classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
             
             %This check is not needed since dose is always positive
             %if powersum > 0
-            fDose = obj.penalty * abs(nthroot(powersum/numel(dose),k) - obj.parameters{1,2});
+            fDose = obj.penalty * abs(nthroot(powersum/numel(dose),k) - obj.parameters{1});
             %end
         end
         
         %% Calculates the Objective Function gradient
         function fDoseGrad  = computeDoseObjectiveGradient(obj,dose)
             % get exponent for EUD
-            k = obj.parameters{2,2};
+            k = obj.parameters{2};
 
             % calculate power sum
             powersum = sum(dose.^k);
@@ -41,11 +43,11 @@ classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
             %if powersum > 0
             
             %derivatives = nthroot(1/numel(dose),k) * powersum^((1-k)/k) * (dose.^(k-1));
-            fDoseGrad = obj.penalty * nthroot(1/numel(dose),k) * powersum^((1-k)/k) * (dose.^(k-1)) .* sign(dose - obj.parameters{2,1});
+            fDoseGrad = obj.penalty * nthroot(1/numel(dose),k) * powersum^((1-k)/k) * (dose.^(k-1)) .* sign(dose - obj.parameters{1});
             %end
-    if any(~isfinite(fDoseGrad)) % check for inf and nan for numerical stability
-        error(['EUD computation failed. Reduce exponent to resolve numerical problems.']);
-    end
+            if any(~isfinite(fDoseGrad)) % check for inf and nan for numerical stability
+                error(['EUD computation failed. Reduce exponent to resolve numerical problems.']);
+            end
         end
     end
     

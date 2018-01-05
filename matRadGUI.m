@@ -4320,15 +4320,15 @@ for i = 1:size(cst,1)
            end
            xPos = xPos + h.Position(3) + fieldSep;
            
-           for p = 1:size(obj.parameters,2)
+           for p = 1:numel(obj.parameterNames)
               %h = uicontrol(cstPanel,'Style','edit','String',obj.parameters{1,p},'Position',[xPos ypos(cnt) 100 objHeight],'Enable','inactive');
               %xPos = xPos + h.Position(3) + fieldSep;
-              h = text(tmpAxes,'String',['| ' obj.parameters{1,p} ':'],'VerticalAlignment','middle','units','pix','Position',[xPos ypos(cnt)+lineHeight/2],'Interpreter','tex','FontWeight','normal',...
+              h = text(tmpAxes,'String',['| ' obj.parameterNames{p} ':'],'VerticalAlignment','middle','units','pix','Position',[xPos ypos(cnt)+lineHeight/2],'Interpreter','tex','FontWeight','normal',...
                   'FontSize',cstPanel.FontSize,'FontName',cstPanel.FontName,'FontUnits',cstPanel.FontUnits,'FontWeight','normal');%[xPos ypos(cnt) 100 objHeight]);
               xPos = xPos + h.Extent(3) + fieldSep;
               %h = annotation(cstPanel,'textbox','String',obj.parameters{1,p},'Units','pix','Position', [xPos ypos(cnt) 100 objHeight],'Interpreter','Tex');
               
-              h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{2,p}),'TooltipString',obj.parameters{1,p},'Position',[xPos ypos(cnt) paramW objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
+              h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{p}),'TooltipString',obj.parameterNames{p},'Position',[xPos ypos(cnt) paramW objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
               xPos = xPos + h.Position(3) + fieldSep;
            end
 
@@ -4425,7 +4425,7 @@ cst = evalin('base','cst');
 if ix(3) == 0
     cst{ix(1),6}{ix(2)}.penalty = str2double(hObject.String);
 else
-    cst{ix(1),6}{ix(2)}.parameters{2,ix(3)} = str2double(hObject.String);
+    cst{ix(1),6}{ix(2)}.parameters{ix(3)} = str2double(hObject.String);
 end
     
 assignin('base','cst',cst);
