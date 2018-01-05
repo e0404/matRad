@@ -39,7 +39,11 @@ if size(rtPlanFiles,1) ~= 1
 end
 
 % read information out of the RT file
-planInfo = dicominfo(rtPlanFiles{1});
+if verLessThan('matlab','9')
+    planInfo = dicominfo(rtPlanFiles{1});
+else
+    planInfo = dicominfo(rtPlanFiles{1},'UseDictionaryVR',true);
+end
 
 % check which type of Radiation is used
 if isfield(planInfo, 'BeamSequence')
