@@ -263,7 +263,7 @@ for i = 1:dij.numOfBeams % loop over all beams
         convMx3 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)));
 
         % Creates an interpolant for kernes from vectors position X and Z
-        if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
+        if strcmp(env,'MATLAB')
             Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
             Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
             Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
@@ -304,7 +304,7 @@ for i = 1:dij.numOfBeams % loop over all beams
             convMx3 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)) );
             
             % Creates an interpolant for kernes from vectors position X and Z
-            if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
+            if strcmp(env,'MATLAB')
                 Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
                 Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
                 Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
