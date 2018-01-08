@@ -29,6 +29,7 @@
 \usepackage[autoplay,loop]{animate}
 \usepackage[verbose]{placeins}
 \usepackage{fullpage}
+\usepackage{ifthen}
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage[colorinlistoftodos]{todonotes}
@@ -70,10 +71,12 @@
 \author{\operator}
 % \date{\today}
 \maketitle
-\begin{figure}[!b]
-  \centering
-  \animategraphics[controls,width = \textwidth]{\framerate}{data/frames/anim_}{\firstframe}{\lastframe}
-\end{figure}
+\IfFileExists{anim_1.png}{
+  \begin{figure}[!b]
+    \centering
+    \animategraphics[controls,width = \textwidth]{\framerate}{data/frames/anim_}{\firstframe}{\lastframe}
+  \end{figure}
+  }{}
 
 \newpage
 \tableofcontents
@@ -125,7 +128,6 @@ The following parameters were used as scenarios, set by the user \operator.
     Number of shifts       & \numOfShiftScen \\
     Shift size             & \shiftSize  \\
     Shift combination     & \shiftCombType  \\
-    Shift isotropy         & \shiftGenIsotropy  \\
     Number of range shifts & \numOfRangeShiftScen \\
     Max abs. range Shift   & \maxAbsRangeShift  \\
     Max rel. range Shift   & \maxRelRangeShift  \\
@@ -165,7 +167,7 @@ Assuming the uncertainties above to be distributed by a normally around 0 with s
 \subsection{Explenatory Information}
 In section \ref{sec:usa} common quality indictors are used to examine their behaviour under the influence of uncertainties. 
 The quality indicator can also be found in the table (top row, column-wise).
-Metrics applied on an individual quality indicator due to the scenarios can be found in the first column (row-wise).
+Metrics (i.e. percentiles and confidence values) are applied on an individual quality indicators of the scenarios and can be found in the first column (row-wise).
 
 \subsubsection{Statistics}
 All types of uncertainties are assumed to be uncorrelated, i.e. range uncertainties are not correlated to shift uncertainties.
@@ -204,42 +206,6 @@ It can be set to \textit{individual}, where one type is computed after the other
 \subsection{Slices at isoCentre}
 \begin{figure}[!b]
   \centering
-  \input{data/isoSlicePlane1_nominal.tex}
-  \caption{CT and nominal dose at isocentre. Coronal view.}
-\end{figure}
-
-\begin{figure}[!b]
-  \centering
-  \input{data/isoSlicePlane1_stdW.tex}
-  \caption{CT and standard deviation of dose at isocentre. Coronal view.}
-\end{figure}
-
-\begin{figure}[!b]
-  \centering
-  \input{data/isoSlicePlane1_gamma.tex}
-  \caption{CT and $\gamma$ index of nominal and mean dose (2\%, 2mm, global). Coronal view.}
-\end{figure}
-
-\begin{figure}[!b]
-  \centering
-  \input{data/isoSlicePlane2_nominal.tex}
-  \caption{CT and nominal dose at isocentre. Saggital view.}
-\end{figure}
-
-\begin{figure}[!b]
-  \centering
-  \input{data/isoSlicePlane2_stdW.tex}
-  \caption{CT and standard deviation of dose at isocentre. Saggital view.}
-\end{figure}
-
-\begin{figure}[!b]
-  \centering
-  \input{data/isoSlicePlane2_gamma.tex}
-  \caption{CT and $\gamma$ index of nominal and mean dose (2\%, 2mm, global). Saggital view.}
-\end{figure}
-
-\begin{figure}[!b]
-  \centering
   \input{data/isoSlicePlane3_nominal.tex}
   \caption{CT and nominal dose at isocentre. Axial view.}
 \end{figure}
@@ -253,7 +219,43 @@ It can be set to \textit{individual}, where one type is computed after the other
 \begin{figure}[!b]
   \centering
   \input{data/isoSlicePlane3_gamma.tex}
-  \caption{CT and $\gamma$ index of nominal and mean dose (2\%, 2mm, global). Axial view.}
+  \caption{CT and $\gamma$ index of nominal and mean dose (\gammaDoseAgreement \%, \gammaDoseAgreement mm, global). Axial view.}
+\end{figure}
+
+\begin{figure}[!b]
+  \centering
+  \input{data/isoSlicePlane1_nominal.tex}
+  \caption{CT and nominal dose at isocentre. Coronal view.}
+\end{figure}
+
+\begin{figure}[!b]
+  \centering
+  \input{data/isoSlicePlane1_stdW.tex}
+  \caption{CT and standard deviation of dose at isocentre. Coronal view.}
+\end{figure}
+
+\begin{figure}[!b]
+  \centering
+  \input{data/isoSlicePlane1_gamma.tex}
+  \caption{CT and $\gamma$ index of nominal and mean dose (\gammaDoseAgreement \%, \gammaDoseAgreement mm, global). Coronal view.}
+\end{figure}
+
+\begin{figure}[!b]
+  \centering
+  \input{data/isoSlicePlane2_nominal.tex}
+  \caption{CT and nominal dose at isocentre. Sagittal view.}
+\end{figure}
+
+\begin{figure}[!b]
+  \centering
+  \input{data/isoSlicePlane2_stdW.tex}
+  \caption{CT and standard deviation of dose at isocentre. Sagittal view.}
+\end{figure}
+
+\begin{figure}[!b]
+  \centering
+  \input{data/isoSlicePlane2_gamma.tex}
+  \caption{CT and $\gamma$ index of nominal and mean dose (\gammaDoseAgreement \%, \gammaDoseAgreement mm, global). Sagittal view.}
 \end{figure}
 
 
