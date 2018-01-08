@@ -53,7 +53,7 @@ if multScen.numOfRangeShiftScen + sum(multScen.numOfShiftScen) < 20
 end
 
 %% load DICOM imported patient
-if exist(matPatientPath,'file') == 2
+if exist('matPatientPath', 'var') && ~isempty(matPatientPath) && exist('matPatientPath','file') == 2
     load(matPatientPath)
 else
     listOfMat = dir('*.mat');
@@ -66,7 +66,7 @@ else
 end
 
 % check if nominal workspace is complete
-if exist('ct','var') && exist('cst','var') && exist('stf','var') && exist('pln','var') && exist('resultGUI','var')
+if ~(exist('ct','var') && exist('cst','var') && exist('stf','var') && exist('pln','var') && exist('resultGUI','var'))
     matRad_dispToConsole('Nominal workspace for sampling is incomplete.\n',param,'error');
 end
 
@@ -105,7 +105,7 @@ mkdir(fullfile('report','data','figures'));
 copyfile(fullfile(matRadPath,'tools','samplingAnalysis','main_template.tex'),fullfile('report','main.tex'));
 
 % generate actual latex report
-matRad_latexReport(ct, cst, pln, nominalScenario, structureStat, doseStat, sampDose, listOfQI, param);
+matRad_latexReport(ct, cst, pln, resultGUInomScen, structureStat, doseStat, mSampDose, listOfQI, param);
 
 cd('report');
 if ispc

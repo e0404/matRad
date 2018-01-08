@@ -85,21 +85,22 @@ doseStat.meanCubeW(ix) = (sum(mSampDose * diag(vProb),2));
 doseStat.stdCubeW(ix)  = std(mSampDose,vProb,2);
 
 % gamma cube
-if isfield(resultGUInomScen,'RBExD')
-    doseCube = resultGUInomScen.RBExD;
+doseCube = resultGUInomScen.(pln.bioParam.quantityOpt);
+if strncmp(pln.bioParam.quantityOpt,'RBExD', 5)
     doseStat.gammaAnalysis.cube1Name = 'resultGUInomScen.RBExD';
 else
-    doseCube = resultGUInomScen.physicalDose;
     doseStat.gammaAnalysis.cube1Name = 'resultGUInomScen.physicalDose';
 end
 
 doseStat.gammaAnalysis.cube1 = doseCube;
 doseStat.gammaAnalysis.cube2 = doseStat.meanCubeW;
 doseStat.gammaAnalysis.cube2Name = 'doseStat.meanCubeW';
-criteria = [2 2];
-matRad_dispToConsole(['matRad: Performing gamma index analysis with parameters', num2str(criteria), '[% mm] \n'],param,'info');
-doseStat.gammaAnalysis.doseAgreement = criteria(1);
-doseStat.gammaAnalysis.distAgreement = criteria(2);
+if ~isfield(param, 'criteria')
+    param.criteria = [2 2];
+end
+matRad_dispToConsole(['matRad: Performing gamma index analysis with parameters', num2str(param.criteria), '[% mm] \n'],param,'info');
+doseStat.gammaAnalysis.doseAgreement = param.criteria(1);
+doseStat.gammaAnalysis.distAgreement = param.criteria(2);
 
 doseStat.gammaAnalysis.gammaCube = matRad_gammaIndex(doseCube,doseStat.meanCubeW,[ct.resolution.x ct.resolution.y ct.resolution.z],criteria);
 
