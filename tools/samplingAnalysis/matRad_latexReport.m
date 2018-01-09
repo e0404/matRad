@@ -82,16 +82,28 @@ else
     warnMessage = '';
 end
 
+if isfield(ct.dicomInfo, 'PatientName')
+    if isfield(ct.dicomInfo.PatientName, 'GivenName')
+        patientInformation.firstName = ct.dicomInfo.PatientName.GivenName;
+    else
+        patientInformation.firstName = 'N.A.';
+    end
+    
+    if isfield(ct.dicomInfo.PatientName, 'FamilyName')
+        patientInformation.lastName = ct.dicomInfo.PatientName.FamilyName;
+    else
+        patientInformation.lastName = 'N.A.';
+    end
+end
 try
-    % import patient information
-    patientInformation.firstName = ct.dicomInfo.PatientName.GivenName;
-    patientInformation.lastName = ct.dicomInfo.PatientName.FamilyName;
     patientInformation.sex = ct.dicomMeta.PatientSex;
+    
+catch
+    patientInformation.sex = 'N.A.';
+end
+try
     patientInformation.patientID = ct.dicomMeta.PatientID;
 catch
-    patientInformation.firstName = 'N.A.';
-    patientInformation.lastName = 'N.A.';
-    patientInformation.sex = 'N.A.';
     patientInformation.patientID = 'N.A.';
 end
 
