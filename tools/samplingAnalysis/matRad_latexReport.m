@@ -190,14 +190,12 @@ fclose(fid);
 
 
 %% plot isocentre slices (nominal, mean, std)
-if isfield(nominalScenario,'RBExD')
-    doseCube = nominalScenario.RBExD;
-else
-    doseCube = nominalScenario.physicalDose;
-end
-doseWindow = [0 1.1 * max(doseCube(:))];
-stdWindow = [0 1.1 * max(doseStat.stdCubeW(:))];
+doseCube = nominalScenario.(pln.bioParam.quantityVis);
+
+doseWindow  = [0 1.1 * max(doseCube(:))];
+stdWindow   = [0 1.1 * max(doseStat.stdCubeW(:))];
 gammaWindow = [0 1.1 * max(doseStat.gammaAnalysis.gammaCube(:))];
+
 for plane=1:3
     switch plane 
         case 1
@@ -210,33 +208,38 @@ for plane=1:3
     colors = colorcube(size(cst,1));
     for cubesToPlot = 1:3
         figure; ax = gca;
-        if cubesToPlot == 1
-          if isfield(nominalScenario,'RBExD')
-              doseCube = nominalScenario.RBExD;
+        
+        doseCube = nominalScenario.(pln.bioParam.quantityVis); 
+        
+        if cubesToPlot == 1 
+            
+            if isfield(nominalScenario,'RBExD')              
               colorMapLabel = 'RBExDose [Gy(RBE)]';
             else
-                doseCube = nominalScenario.physicalDose;
                 colorMapLabel = 'physical Dose [Gy]';
             end
             fileSuffix = 'nominal';
             matRad_plotSliceWrapper(ax,ct,cst,1,doseCube,plane,slice,[],[],colors,[],[],[],[],colorMapLabel);
+            
         elseif cubesToPlot == 2
+            
             doseCube = doseStat.gammaAnalysis.gammaCube;
             colorMapLabel = 'gamma index';
             fileSuffix = 'gamma';
             gammaColormap = matRad_getColormap('gammaIndex');
             matRad_plotSliceWrapper(ax,ct,cst,1,doseCube,plane,slice,[],[],colors,gammaColormap,[0 2],[],[],colorMapLabel);
+            
         elseif cubesToPlot == 3
+            
             if isfield(nominalScenario,'RBExD')
-              doseCube = nominalScenario.RBExD;
-              colorMapLabel = 'Standard deviation [Gy(RBE)]';
+                colorMapLabel = 'Standard deviation [Gy(RBE)]';
             else
-                doseCube = nominalScenario.physicalDose;
                 colorMapLabel = 'Standard deviation [Gy]';
             end
             doseCube = doseStat.stdCubeW;
             fileSuffix = 'stdW';
             matRad_plotSliceWrapper(ax,ct,cst,1,doseCube,plane,slice,[],[],colors,[],[],[],[],colorMapLabel);
+            
         end
         drawnow();
         cleanfigure();          
@@ -285,7 +288,7 @@ for i = 1:size(cst,1)
         x = nominalScenario.dvh(i).doseGrid(1:argmin);        
         h(1) = plot(x,y,'LineWidth',2, 'Color', colors(i,:), 'DisplayName', cst{i,2});      
         ylim([0 100]);
-        if strncmp(pln.bioParam.quantityOpt, 'RBExD',5)
+        if strncmp(pln.bioParam.quantityVis,'RBExD',5)
             xlabel('Dose RBE x [Gy]');
         else
             xlabel('Dose [Gy]');
@@ -353,7 +356,7 @@ clear filename
 % relative file path (relative to main.tex)
 relativePath = fullfile('data','structures');
 
-if strcmp(pln.bioParam.quantityOpt, 'RBExD')
+if strcmp(pln.bioParam.quantityVis, 'RBExD')
     labelDoseDVH = 'Dose RBE x [Gy]';
 else
    labelDoseDVH = 'Dose [Gy]';
