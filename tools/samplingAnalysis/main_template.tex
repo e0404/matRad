@@ -71,12 +71,12 @@
 \author{\operator}
 % \date{\today}
 \maketitle
-\IfFileExists{anim_1.png}{
+\IfFileExists{data/frames/anim_1.png}{
   \begin{figure}[!b]
     \centering
     \animategraphics[controls,width = \textwidth]{\framerate}{data/frames/anim_}{\firstframe}{\lastframe}
   \end{figure}
-  }{}
+  }{No animation available.}
 
 \newpage
 \tableofcontents

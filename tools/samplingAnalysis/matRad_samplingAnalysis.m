@@ -102,7 +102,7 @@ matRad_dispToConsole(['matRad: Performing gamma index analysis with parameters',
 doseStat.gammaAnalysis.doseAgreement = param.criteria(1);
 doseStat.gammaAnalysis.distAgreement = param.criteria(2);
 
-doseStat.gammaAnalysis.gammaCube = matRad_gammaIndex(doseCube,doseStat.meanCubeW,[ct.resolution.x ct.resolution.y ct.resolution.z],criteria);
+doseStat.gammaAnalysis.gammaCube = matRad_gammaIndex(doseCube,doseStat.meanCubeW,[ct.resolution.x ct.resolution.y ct.resolution.z],param.criteria);
 
 %% percentiles
 if ~isfield(param, 'percentiles')
