@@ -2,12 +2,15 @@ classdef MatRadScenario < handle
 
     properties (Access = private)
         dvhQiReady = false
+        doseCubeDim
         % during calcQiDVH
         cst
         pln
     end
     
     properties (SetAccess = private)
+
+        subIx;
         shift;
         relRangeShift;
         absRangeShift;
@@ -25,16 +28,26 @@ classdef MatRadScenario < handle
     properties (SetObservable, AbortSet, SetAccess = private)
         % container of scenarios
         dose;
+        doseLin;
     end
     
     properties (Dependent=true, SetAccess = private)
     end
     
     methods
-        function obj = MatRadScenario(dose, weight, radiationQuantity, ctShiftIdentifier, shift, ...
-                relRangeShift, absRangeShift)
+        function obj = MatRadScenario(dose, subIx, weight, radiationQuantity, ctShiftIdentifier, shift, ...
+                relRangeShift, absRangeShift, doseCubeDim)
             
-            obj.dose = dose;
+            if ndims(dose) == 3
+                obj.dose = dose;
+                obj.subIx = [];
+                obj.doseCubeDim = size(obj.dose);
+            else
+                obj.doseCubeDim = doseCubeDim;
+                obj.subIx = subIx;
+                obj.doseLin = dose;
+                obj.dose = [];
+            end
             obj.weight = weight;
             obj.radiationQuantity = radiationQuantity;
             
@@ -44,6 +57,7 @@ classdef MatRadScenario < handle
             obj.absRangeShift = absRangeShift;
             
             addlistener(obj,'dose','PostSet',@obj.handleChangeOfDose);
+            addlistener(obj,'doseLin','PostSet',@obj.handleChangeOfDose);
         end % eof constructor
         
         function obj = calcQiDVH(obj, cst, pln, dvhType, doseGrid, refGy, refVol)
@@ -77,6 +91,18 @@ classdef MatRadScenario < handle
         function singleStructQi = getSingleStructQi(obj, voi)
             ix = obj.getIndexOfStruct(obj.qi, voi, 'name');
             singleStructQi = obj.qi(ix);
+        end
+        
+        function dose = get.dose(obj)
+            if isempty(obj.dose)
+                dose = obj.get3dDoseFromLin(obj.doseLin, obj.subIx, obj.doseCubeDim);
+            else
+                dose = obj.dose;
+            end
+        end
+        
+        function set.dose(obj, v)
+            obj.dose = v;
         end
         
         function dvh = get.dvh(obj)
@@ -131,6 +157,11 @@ classdef MatRadScenario < handle
                 ix = NaN;
                 error('VOI needs to be either string or numeric');
             end
+        end
+        
+        function dose3D = get3dDoseFromLin(doseLin, subIx, doseCubeDim)
+            dose3D = zeros(doseCubeDim(1), doseCubeDim(2), doseCubeDim(3));
+            dose3D(subIx) = doseLin;
         end
         
     end
