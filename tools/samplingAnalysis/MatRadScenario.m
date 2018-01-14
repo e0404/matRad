@@ -2,21 +2,20 @@ classdef MatRadScenario < handle
 
     properties (Access = private)
         dvhQiReady = false
-        doseCubeDim
         % during calcQiDVH
         cst
         pln
     end
     
     properties (SetAccess = private)
-
+        weight;
         subIx;
         shift;
         relRangeShift;
         absRangeShift;
         ctShiftIdentifier;
-        weight;
         radiationQuantity;
+        doseCubeDim;
         
         % computed properties which need to be recalculated when dose
         % changes. is not in Dependent properties because calculation is
@@ -28,27 +27,29 @@ classdef MatRadScenario < handle
     properties (SetObservable, AbortSet, SetAccess = private)
         % container of scenarios
         dose;
-        doseLin;
     end
     
     properties (Dependent=true, SetAccess = private)
     end
     
     methods
-        function obj = MatRadScenario(dose, subIx, weight, radiationQuantity, ctShiftIdentifier, shift, ...
-                relRangeShift, absRangeShift, doseCubeDim)
+        function obj = MatRadScenario(dose, subIx, radiationQuantity, ctShiftIdentifier, shift, ...
+                relRangeShift, absRangeShift, doseCubeDim, weight)
             
+            obj.dose = dose;
             if ndims(dose) == 3
-                obj.dose = dose;
-                obj.subIx = [];
+                obj.subIx = (1:numel(obj.dose))';
                 obj.doseCubeDim = size(obj.dose);
             else
                 obj.doseCubeDim = doseCubeDim;
                 obj.subIx = subIx;
-                obj.doseLin = dose;
-                obj.dose = [];
             end
-            obj.weight = weight;
+            
+            if exist('weight','var') && ~isempty(weight)
+                obj.weight = weight;
+            else
+                obj.weight = NaN;
+            end
             obj.radiationQuantity = radiationQuantity;
             
             obj.ctShiftIdentifier = ctShiftIdentifier;
@@ -57,7 +58,7 @@ classdef MatRadScenario < handle
             obj.absRangeShift = absRangeShift;
             
             addlistener(obj,'dose','PostSet',@obj.handleChangeOfDose);
-            addlistener(obj,'doseLin','PostSet',@obj.handleChangeOfDose);
+            % addlistener(obj,'doseLin','PostSet',@obj.handleChangeOfDose);
         end % eof constructor
         
         function obj = calcQiDVH(obj, cst, pln, dvhType, doseGrid, refGy, refVol)
@@ -95,7 +96,9 @@ classdef MatRadScenario < handle
         
         function dose = get.dose(obj)
             if isempty(obj.dose)
-                dose = obj.get3dDoseFromLin(obj.doseLin, obj.subIx, obj.doseCubeDim);
+                dose = [];
+            elseif ndims(obj.dose) ~= 3
+                dose = obj.get3dDoseFromLin(obj.dose, obj.subIx, obj.doseCubeDim);
             else
                 dose = obj.dose;
             end
@@ -104,6 +107,14 @@ classdef MatRadScenario < handle
         function set.dose(obj, v)
             obj.dose = v;
         end
+        
+%         function doseLin = get.doseLin(obj)
+%             if ~isempty(obj.doseLin)
+%                 doseLin = obj.doseLin;
+%             else
+%                 doseLin = obj.dose(:);
+%             end
+%         end
         
         function dvh = get.dvh(obj)
             if isempty(obj.dvh)
@@ -148,7 +159,7 @@ classdef MatRadScenario < handle
                 ix = voi;
             elseif ischar(voi)
                 for i = 1:numel(voiInStruct)
-                    if voiInStruct(i).(fieldname) == voi
+                    if strcmp(voiInStruct(i).(fieldname), voi)
                         ix = i;
                         break;
                     end
