@@ -44,9 +44,15 @@ end
 if ~isfield(param,'outputPath')
     param.outputPath = mfilename('fullpath');
 end
+if ~isfield(param, 'percentiles')
+    param.percentiles = [0.01 0.05 0.125 0.25 0.5 0.75 0.875 0.95 0.99];
+end
+if ~isfield(param, 'criteria')
+    param.gammaCriteria = [2 2];
+end
 
 % require minimum number of scenarios to ensure proper statistics
-if multScen.numOfRangeShiftScen + sum(multScen.numOfShiftScen) < 20
+if multScen.totNumScen < 20 % multScen.numOfRangeShiftScen + sum(multScen.numOfShiftScen) < 20
     matRad_dispToConsole('Detected a low number of scenarios. Proceeding is not recommended.',param,'warning');
     param.sufficientStatistics = false;
     pause(1);
@@ -95,7 +101,7 @@ pln.sampling = true;
 
 %% perform calculation and save
 tic
-[caSampRes, mSampDose, pln, resultGUInomScen]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,multScen,param);
+[treatmentSimulation, scenContainer, pln, resultGUInomScen, nomScen] = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,multScen,param);
 param.computationTime = toc;
 
 param.reportPath = fullfile('report','data');
@@ -104,30 +110,30 @@ save(filename, '-v7.3');
 
 %% perform analysis 
 % start here loading resultSampling.mat if something went wrong during analysis or report generation
-[structureStat, doseStat, param] = matRad_samplingAnalysis(ct,cst,pln,caSampRes,mSampDose,resultGUInomScen,param);
+treatmentSimulation.runAnalysis(param.gammaCriteria, param.percentiles);
 
-%% generate report
-listOfQI = {'mean', 'std', 'max', 'min', 'D_2', 'D_5', 'D_50', 'D_95', 'D_98'};
-
-cd(param.outputPath)
-mkdir(fullfile('report','data'));
-mkdir(fullfile('report','data','frames'));
-mkdir(fullfile('report','data','figures'));
-copyfile(fullfile(matRadPath,'tools','samplingAnalysis','main_template.tex'),fullfile('report','main.tex'));
-
-% generate actual latex report
-matRad_latexReport(ct, cst, pln, resultGUInomScen, structureStat, doseStat, mSampDose, listOfQI, param);
-
-cd('report');
-if ispc
-    executeLatex = 'xelatex --shell-escape --interaction=nonstopmode main.tex';
-elseif isunix
-    executeLatex = '/Library/TeX/texbin/xelatex --shell-escape --interaction=nonstopmode main.tex';
-end
-
-response = system(executeLatex);
-if response == 127 % means not found
-    warning('Could not find tex distribution. Please compile manually.');
-else
-    system(executeLatex);
-end
+% %% generate report
+% listOfQI = {'mean', 'std', 'max', 'min', 'D_2', 'D_5', 'D_50', 'D_95', 'D_98'};
+% 
+% cd(param.outputPath)
+% mkdir(fullfile('report','data'));
+% mkdir(fullfile('report','data','frames'));
+% mkdir(fullfile('report','data','figures'));
+% copyfile(fullfile(matRadPath,'tools','samplingAnalysis','main_template.tex'),fullfile('report','main.tex'));
+% 
+% % generate actual latex report
+% matRad_latexReport(ct, cst, pln, resultGUInomScen, structureStat, doseStat, mSampDose, listOfQI, param);
+% 
+% cd('report');
+% if ispc
+%     executeLatex = 'xelatex --shell-escape --interaction=nonstopmode main.tex';
+% elseif isunix
+%     executeLatex = '/Library/TeX/texbin/xelatex --shell-escape --interaction=nonstopmode main.tex';
+% end
+% 
+% response = system(executeLatex);
+% if response == 127 % means not found
+%     warning('Could not find tex distribution. Please compile manually.');
+% else
+%     system(executeLatex);
+% end

@@ -30,6 +30,7 @@ classdef MatRadScenario < handle
     end
     
     properties (Dependent=true, SetAccess = private)
+        doseLin;
     end
     
     methods
@@ -38,7 +39,7 @@ classdef MatRadScenario < handle
             
             obj.dose = dose;
             if ndims(dose) == 3
-                obj.subIx = (1:numel(obj.dose))';
+                obj.subIx = subIx;
                 obj.doseCubeDim = size(obj.dose);
             else
                 obj.doseCubeDim = doseCubeDim;
@@ -58,8 +59,8 @@ classdef MatRadScenario < handle
             obj.absRangeShift = absRangeShift;
             
             addlistener(obj,'dose','PostSet',@obj.handleChangeOfDose);
-            % addlistener(obj,'doseLin','PostSet',@obj.handleChangeOfDose);
         end % eof constructor
+        
         
         function obj = calcQiDVH(obj, cst, pln, dvhType, doseGrid, refGy, refVol)
             obj.cst = cst;
@@ -108,17 +109,20 @@ classdef MatRadScenario < handle
             obj.dose = v;
         end
         
-%         function doseLin = get.doseLin(obj)
-%             if ~isempty(obj.doseLin)
-%                 doseLin = obj.doseLin;
-%             else
-%                 doseLin = obj.dose(:);
-%             end
-%         end
+        function doseLin = get.doseLin(obj)
+            % is a derived quantity to ensure subIx like linear output of
+            % dose.
+            if isempty(obj.dose)
+                doseLin = [];
+            else
+                doseLin = obj.dose(obj.subIx);
+            end  
+        end
         
         function dvh = get.dvh(obj)
             if isempty(obj.dvh)
-                error('DVH is not yet calculated.');
+                dvh = NaN;
+                warning('DVH is not yet calculated.');
             else
                 dvh = obj.dvh;
             end
@@ -126,7 +130,8 @@ classdef MatRadScenario < handle
         
         function qi = get.qi(obj)
             if isempty(obj.qi)
-                error('QI are not yet calculated.');
+                qi = NaN;
+                warning('QI are not yet calculated.');
             else
                 qi = obj.qi;
             end
@@ -139,7 +144,6 @@ classdef MatRadScenario < handle
         function obj = handleChangeOfDose(obj,src,data)
             obj.dvhQiReady = false;
             obj.resetComputedProperties;
-            fprintf('Changed.');
         end
         
         function obj = resetComputedProperties(obj)
