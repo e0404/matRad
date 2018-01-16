@@ -133,22 +133,26 @@ for energyIx = vEnergiesIx
     % get indices for which a lateral cutoff should be calculated
     cumIntEnergy = cumtrapz(machine.data(energyIx).depths,idd_org);
     
-    if strcmp(machine.meta.radiationMode,'protons')
-        vEnergySteps        = 0:(cumIntEnergy(end)/numDepthVal):cumIntEnergy(end);
-    else
-        peakTailRelation   = 0.5;
-        numDepthValToPeak  = ceil(numDepthVal*peakTailRelation);                                                                          % number of depth values from 0 to peak position
-        numDepthValTail    = ceil(numDepthVal*(1-peakTailRelation));                                                                      % number of depth values behind peak position
-        energyStepsToPeak  = cumIntEnergy(peakIxOrg)/numDepthValToPeak;
-        energyStepsTail    = (cumIntEnergy(end)-cumIntEnergy(peakIxOrg))/numDepthValTail;
-        vEnergySteps       = [0:energyStepsToPeak:cumIntEnergy(peakIxOrg) cumIntEnergy(peakIxOrg+1):energyStepsTail:cumIntEnergy(end)];
-    end
-    
+    peakTailRelation   = 0.5;
+    numDepthValToPeak  = ceil(numDepthVal*peakTailRelation);                                                                          % number of depth values from 0 to peak position
+    numDepthValTail    = ceil(numDepthVal*(1-peakTailRelation));                                                                      % number of depth values behind peak position
+    energyStepsToPeak  = cumIntEnergy(peakIxOrg)/numDepthValToPeak;
+    energyStepsTail    = (cumIntEnergy(end)-cumIntEnergy(peakIxOrg))/numDepthValTail;
+    % make sure to include 0, peak position and end position
+    vEnergySteps       = unique([0:energyStepsToPeak:cumIntEnergy(peakIxOrg) cumIntEnergy(peakIxOrg) ...
+                                 cumIntEnergy(peakIxOrg+1):energyStepsTail:cumIntEnergy(end) cumIntEnergy(end)]);
+
     [cumIntEnergy,ix] = unique(cumIntEnergy);
     depthValues       = matRad_interp1(cumIntEnergy,machine.data(energyIx).depths(ix),vEnergySteps);
-    idd               = matRad_interp1(machine.data(energyIx).depths,idd_org,depthValues);          
-    [~,peakIx]        = max(idd); 
-    
+
+    if isstruct(machine.data(energyIx).Z)
+        idd = sumGauss(depthValues,machine.data(energyIx).Z.mean,...
+                                   machine.data(energyIx).Z.width.^2,...
+                                   machine.data(energyIx).Z.weight) * conversionFactor;
+    else
+        idd  = matRad_interp1(machine.data(energyIx).depths,machine.data(energyIx).Z,depthValues) * conversionFactor; 
+    end
+     
     cnt = cnt +1 ;
     % % calculate dose in spot
     baseData                   = machine.data(energyIx);
@@ -168,8 +172,8 @@ for energyIx = vEnergiesIx
             dose_r = matRad_calcParticleDoseBixel(depthValues(j) + baseData.offset, radialDist_sq, largestSigmaSq4uniqueEnergies(cnt), baseData);
 
             cumArea = cumsum(2*pi.*r_mid.*dose_r.*dr);
-            relativeThreshold = 0.5; %in [%]
-            if abs((cumArea(end)./(idd(j)))-1)*100 > relativeThreshold && (cumArea(end) > relativeThreshold * idd(peakIx))
+            relativeTolerance = 0.5; %in [%]
+            if abs((cumArea(end)./(idd(j)))-1)*100 > relativeTolerance
                 warning('LateralParticleCutOff: shell integration is wrong')
             end
 
@@ -254,7 +258,15 @@ if visBool
     end
     
     % obtain maximum dose
-    [~,peakixDepth] = max(machine.data(energyIx).Z); 
+    if isstruct(machine.data(energyIx).Z)
+        idd = sumGauss(depthValues,machine.data(energyIx).Z.mean,...
+                                   machine.data(energyIx).Z.width.^2,...
+                                   machine.data(energyIx).Z.weight) * conversionFactor;
+    else
+        idd  = matRad_interp1(machine.data(energyIx).depths,machine.data(energyIx).Z,depthValues) * conversionFactor; 
+    end
+    
+    [~,peakixDepth] = max(idd); 
     dosePeakPos = matRad_calcParticleDoseBixel(machine.data(energyIx).depths(peakixDepth), 0, sigmaIni_sq, baseData);   
     
     vLevelsDose = dosePeakPos.*[0.01 0.05 0.1 0.9];
