@@ -30,6 +30,8 @@ function matRad_showQualityIndicators(qi)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Create the column and row names in cell arrays 
+rnames = {qi.name};
+qi = rmfield(qi,'name');
 cnames = fieldnames(qi);
 for i = 1:numel(cnames)
     ix = find(cnames{i}(4:end) == '_');
@@ -37,7 +39,6 @@ for i = 1:numel(cnames)
         cnames{i}(ix+3) = '.';
     end
 end
-rnames = {qi.name};
 
 % Create the uitable
 table = uitable(gcf,'Data',(squeeze(struct2cell(qi)))',...

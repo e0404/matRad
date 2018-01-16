@@ -48,7 +48,12 @@ end
 numOfSlices = size(ctList,1);
 fprintf('\ncreating info...')
 for i = 1:numOfSlices
-    tmpDicomInfo = dicominfo(ctList{i,1});
+
+    if verLessThan('matlab','9')
+        tmpDicomInfo = dicominfo(ctList{i,1});
+    else
+        tmpDicomInfo = dicominfo(ctList{i,1},'UseDictionaryVR',true);
+    end
     
     % remember relevant dicom info - do not record everything as some tags
     % might not been defined for individual files
