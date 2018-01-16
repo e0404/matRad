@@ -51,7 +51,11 @@ ix = find(fileName == '_');
 pln.machine = fileName(ix(1)+1:end-4);
 
 % RT Plan consists only on meta information
-rtPlanInfo = dicominfo(rtPlanFile{1});
+if verLessThan('matlab','9')
+    rtPlanInfo = dicominfo(rtPlanFile{1});
+else
+    rtPlanInfo = dicominfo(rtPlanFile{1},'UseDictionaryVR',true);
+end
 BeamSeq = rtPlanInfo.IonBeamSequence;
 BeamSeqNames = fieldnames(BeamSeq);
 % Number of Beams from plan

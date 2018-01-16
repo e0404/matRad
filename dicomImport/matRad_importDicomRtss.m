@@ -45,7 +45,7 @@ if verLessThan('matlab','9')
     structInfo = dicominfo(filename);
 else % apply 'UseVRHeuristic' option when available to use a to help read certain 
      % noncompliant files which switch value representation (VR) modes incorrectly
-    structInfo = dicominfo(filename,'UseVRHeuristic',false);
+    structInfo = dicominfo(filename,'UseVRHeuristic',false,'UseDictionaryVR',true);
 end
 
 % list the defined structures
