@@ -174,14 +174,15 @@ for energyIx = vEnergiesIx
             cumArea = cumsum(2*pi.*r_mid.*dose_r.*dr);
             relativeTolerance = 0.5; %in [%]
             if abs((cumArea(end)./(idd(j)))-1)*100 > relativeTolerance
-                warning('LateralParticleCutOff: shell integration is wrong')
+                warning('LateralParticleCutOff: shell integration is wrong !')
             end
 
             IX = find(cumArea >= idd(j) * cutOffLevel,1, 'first'); 
             machine.data(energyIx).LatCutOff.CompFac = cutOffLevel^-1;
 
             if isempty(IX)
-                depthDoseCutOff = 0;
+                depthDoseCutOff = Inf;
+                warning('LateralParticleCutOff: Couldnt find lateral cut off !')
             elseif isnumeric(IX)
                 depthDoseCutOff = r_mid(IX);
             end
