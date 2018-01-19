@@ -1524,6 +1524,14 @@ try
     if  ismember('resultGUI',AllVarNames)
         resultGUI = evalin('base','resultGUI');
         sNames = fieldnames(resultGUIcurrentRun);
+        oldNames = fieldnames(resultGUI);
+        if(length(oldNames) > length(sNames))
+            for j = 1:length(oldNames)
+            if strfind(oldNames{j}, 'beam')
+                resultGUI = rmfield(resultGUI, oldNames{j});
+            end
+            end
+        end
         for j = 1:length(sNames)
             resultGUI.(sNames{j}) = resultGUIcurrentRun.(sNames{j});
         end
