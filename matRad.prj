@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="2964076584" file="d:\git\matRad\matRad.prj" location="d:\git\matRad" name="matRad" preferred-package-location="d:\git\matRad\standalone\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
+  <configuration build-checksum="369792437" file="d:\git\matRad\matRad.prj" location="d:\git\matRad" name="matRad" preferred-package-location="d:\git\matRad\standalone\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
     <param.appname>matRad</param.appname>
     <param.icon>${PROJECT_ROOT}\matRad_resources\icon.ico</param.icon>
     <param.icons>
@@ -107,20 +107,26 @@
       <file>${PROJECT_ROOT}\matRad_calcPhotonDoseVmc.m</file>
       <file>${PROJECT_ROOT}\matRad_calcQualityIndicators.m</file>
       <file>${PROJECT_ROOT}\matRad_calcRadDepthCubes.m</file>
+      <file>${PROJECT_ROOT}\matRad_calcSigmaRashi.m</file>
+      <file>${PROJECT_ROOT}\matRad_collapseDij.m</file>
       <file>${PROJECT_ROOT}\matRad_computeSSD.m</file>
       <file>${PROJECT_ROOT}\matRad_DijSampling.m</file>
       <file>${PROJECT_ROOT}\matRad_directApertureOptimization.m</file>
+      <file>${PROJECT_ROOT}\matRad_dispToConsole.m</file>
       <file>${PROJECT_ROOT}\matRad_electronDensitiesToHU.m</file>
       <file>${PROJECT_ROOT}\matRad_engelLeafSequencing.m</file>
       <file>${PROJECT_ROOT}\matRad_fluenceOptimization.m</file>
       <file>${PROJECT_ROOT}\matRad_generateStf.m</file>
       <file>${PROJECT_ROOT}\matRad_getIsoCenter.m</file>
       <file>${PROJECT_ROOT}\matRad_getRotationMatrix.m</file>
+      <file>${PROJECT_ROOT}\matRad_indicatorWrapper.m</file>
       <file>${PROJECT_ROOT}\matRad_interp1.m</file>
       <file>${PROJECT_ROOT}\matRad_progress.m</file>
       <file>${PROJECT_ROOT}\matRad_rayTracing.m</file>
       <file>${PROJECT_ROOT}\matRad_sequencing2ApertureInfo.m</file>
       <file>${PROJECT_ROOT}\matRad_setOverlapPriorities.m</file>
+      <file>${PROJECT_ROOT}\matRad_showDVH.m</file>
+      <file>${PROJECT_ROOT}\matRad_showQualityIndicators.m</file>
       <file>${PROJECT_ROOT}\matRad_siddonRayTracer.m</file>
       <file>${PROJECT_ROOT}\matRad_siochiLeafSequencing.m</file>
       <file>${PROJECT_ROOT}\matRad_visApertureInfo.m</file>
