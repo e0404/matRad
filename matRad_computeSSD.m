@@ -78,7 +78,7 @@ end
 
 % default setting only use first cube
 function bestSSD = matRad_closestNeighbourSSD(rayPos, SSD, currPos)
-    vDistances = sum((rayPos - currPos).^2,2);
+    vDistances = sum((rayPos - repmat(currPos,size(rayPos,1),1)).^2,2);
     [~, vIdx]   = sort(vDistances);
     for ix = vIdx'
         bestSSD = SSD{ix};
