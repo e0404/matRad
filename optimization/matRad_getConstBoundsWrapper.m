@@ -45,21 +45,28 @@ for  i = 1:size(cst,1)
         % loop over the number of constraints for the current VOI
         for j = 1:numel(cst{i,6})
             
+            obj = cst{i,6}{j};
+            
             % only perform computations for constraints
             if ~isempty(strfind(cst{i,6}{j}.type,'constraint'))
 
                 if isequal(options.bioOpt,'none') || isequal(options.ID,'protons_const_RBExD') ||  isequal(options.bioOpt,'LEMIV_RBExD')
-                    param = cst{i,6}(j).dose;
+                    %param = cst{i,6}(j).dose;
                 elseif isequal(options.bioOpt,'LEMIV_effect')
-                    param = cst{i,5}.alphaX .* cst{i,6}(j).dose + cst{i,5}.betaX .* cst{i,6}(j).dose.^2;
+                    %param = cst{i,5}.alphaX .* cst{i,6}(j).dose + cst{i,5}.betaX .* cst{i,6}(j).dose.^2;
+                    doses = obj.getDoseParameters();
+                
+                    effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
+                    
+                    obj = obj.setDoseParameters(effect);
                 end
 
                 if strcmp(cst{i,6}(j).robustness,'none')
 
-                    [clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param);
+                    %[clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param);
                     
-                    cl = [cl;clTmp];
-                    cu = [cu;cuTmp];
+                    cl = [cl;obj.getLowerBounds()];
+                    cu = [cu;obj.getUpperBounds()];
                     
                 end
             end

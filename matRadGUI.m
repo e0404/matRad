@@ -4226,12 +4226,18 @@ classList = [mpkgObjectives.ClassList; mpkgConstraints.ClassList];
 classList = classList(not([classList.Abstract]));
 
 %Now get the "internal" name from the properties
-p = [classList.PropertyList];
-pNameIx = arrayfun(@(p) strcmp(p.Name,'name'),p);
-p = p(pNameIx);
+classNames = cell(2,numel(classList));
+for clIx = 1:numel(classList)
+    cl = classList(clIx);
+    pList = cl.PropertyList; %Get List of all properties
+    pNameIx = arrayfun(@(p) strcmp(p.Name,'name'),pList); %get index of the "name" property
+    p = pList(pNameIx); %select name property
+    pName = p.DefaultValue; % get value / name
+    classNames(:,clIx) = {cl.Name; pName}; %Store class name and display name
+end
 
 % Collect Class-File & Display Names
-classNames = {classList.Name; p.DefaultValue};
+%classNames = {classList.Name; p.DefaultValue};
 
 %columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
 %       AllObjectiveFunction,...
@@ -4454,24 +4460,26 @@ cst = evalin('base','cst');
 %user-friendly
 currentObj = cst{ix(1),6}{ix(2)};
 currentClass = class(currentObj);
-if ~strcmp(currentClass,classToCreate)
-   %Keep the penalty
-   oldPenalty = currentObj.penalty;
-   
-   newObj = eval(classToCreate);
-   newObj.penalty = oldPenalty;
-   
-   cst{ix(1),6}{ix(2)} = newObj;
-   
-   assignin('base','cst',cst); 
-   
-   %set(handles.uiTable,'data',data);
-   
-   %handles.State=1;
-   %guidata(hObject,handles);
-   %UpdateState(handles);
-   
-   generateCstTable(handles,cst);
+if ~strcmp(currentClass,classToCreate)    
+    newObj = eval(classToCreate);
+    
+    % Only if we have a penalty value for optimization, apply the new one
+    % Maybe this check should be more exact?        
+    if isprop(newObj,'penalty') && isprop(currentObj,'penalty')
+        newObj.penalty = currentObj.penalty;
+    end
+    
+    cst{ix(1),6}{ix(2)} = newObj;
+    
+    assignin('base','cst',cst);
+    
+    %set(handles.uiTable,'data',data);
+    
+    %handles.State=1;
+    %guidata(hObject,handles);
+    %UpdateState(handles);
+    
+    generateCstTable(handles,cst);
 end
 
 function editCstParams_Callback(hObject,~,handles)

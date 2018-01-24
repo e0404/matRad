@@ -3,23 +3,25 @@ classdef matRad_MinMaxDVH < DoseConstraints.matRad_DoseConstraint
     %   Detailed explanation goes here
     
     properties (Constant)
-        name = 'Min/Max DVH'
+        name = 'DVH constraint';
+        parameterNames = {'d^{ref}', 'V^{min}', 'V^{max}'};
+        parameterIsDose = logical([1 0 0]);
     end
     
     properties
-        parameters = {'Reference Dose (Max)', 'Reference Min Volume [%]', 'Reference Max Volume [%]'; 60,0,1}
         voxelScalingRatio = 1;
         referenceScalingVal = 0.01;
+        parameters = {30,0,1};
     end
-    
+        
     methods
-        function cu = upperBound(obj)
-            cu = obj.parameters{2,3};
+        function cu = upperBounds(obj)
+            cu = obj.parameters{3};
         end
-        function cl = lowerBound(obj)
-            cl = obj.parameters{2,2};
+        function cl = lowerBounds(obj)
+            cl = obj.parameters{2};
         end
-        %% Calculates the Objective Function value
+        %% Calculates the Constraint Function value
         function cDose = computeDoseConstraintFunction(obj,dose)
             cDose = sum(dose >= obj.parameters{2,1})/numel(dose);
             
@@ -47,7 +49,7 @@ classdef matRad_MinMaxDVH < DoseConstraints.matRad_DoseConstraint
             % alternative constraint calculation 3/4 %
         end
         
-        %% Calculates the Objective Function gradient
+        %% Calculates the Constraint jacobian
         function cDoseJacob  = computeDoseConstraintJacobian(obj,dose)
             %logistic approximation
             
