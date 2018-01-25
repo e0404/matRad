@@ -51,7 +51,7 @@ for i = 1:size(uniqueIsoCenters,1)
         if vIsoCenter(2) == slice
             isoCenterDirection = 0;
         else
-            isoCenterDirection = sign(double(vIsoCenter(2) > slice) - 0.5);
+            isoCenterDirection = sign(double(vIsoCenter(1) > slice) - 0.5);
         end
 
     elseif plane == 1    
@@ -59,7 +59,7 @@ for i = 1:size(uniqueIsoCenters,1)
         if vIsoCenter(1) == slice
             isoCenterDirection = 0;
         else
-            isoCenterDirection = sign(double(vIsoCenter(1) > slice) - 0.5);
+            isoCenterDirection = sign(double(vIsoCenter(2) > slice) - 0.5);
         end
     end
 

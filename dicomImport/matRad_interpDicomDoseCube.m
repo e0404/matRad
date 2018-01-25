@@ -33,7 +33,11 @@ function [ dose ] = matRad_interpDicomDoseCube( ct, currDose )
 
 % read information out of the RT file
 dosefile = currDose{1};
-doseInfo = dicominfo(dosefile);
+if verLessThan('matlab','9')
+    doseInfo = dicominfo(dosefile);
+else
+    doseInfo = dicominfo(dosefile,'UseDictionaryVR',true);
+end
 
 % read the dosefile itself
 dosedata = dicomread(dosefile);

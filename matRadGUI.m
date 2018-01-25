@@ -278,8 +278,20 @@ handles.DijCalcWarning = false;
 
 % set slice slider
 if handles.State > 0
+    if evalin('base','exist(''pln'',''var'')')
+        currPln = evalin('base','pln');
+        if handles.plane == 1
+            currSlice = ceil(currPln.isoCenter(1,2)/ct.resolution.x);
+        elseif handles.plane == 2
+            currSlice = ceil(currPln.isoCenter(1,1)/ct.resolution.y);
+        elseif handles.plane == 3
+            currSlice = ceil(currPln.isoCenter(1,3)/ct.resolution.z);
+        end 
+    else % no pln -> no isocenter -> use middle
+        currSlice = ceil(ct.cubeDim(handles.plane)/2);
+    end
     set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
-            'Value',ceil(ct.cubeDim(handles.plane)/2),...
+            'Value',currSlice,...
             'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);      
     
     % define context menu for structures
@@ -599,6 +611,7 @@ switch RadIdentifier
         
         set(handles.btnRunSequencing,'Enable','on');
         set(handles.btnRunDAO,'Enable','on');
+        set(handles.radiobutton3Dconf,'Enable','on');
         set(handles.txtSequencing,'Enable','on');
         set(handles.editSequencingLevel,'Enable','on');
         
@@ -614,6 +627,7 @@ switch RadIdentifier
         set(handles.btnSetTissue,'Enable','off');
         set(handles.btnRunSequencing,'Enable','off');
         set(handles.btnRunDAO,'Enable','off');
+        set(handles.radiobutton3Dconf,'Enable','off');
         set(handles.txtSequencing,'Enable','off');
         set(handles.editSequencingLevel,'Enable','off');
         
@@ -627,6 +641,7 @@ switch RadIdentifier
         
         set(handles.btnRunSequencing,'Enable','off');
         set(handles.btnRunDAO,'Enable','off');
+        set(handles.radiobutton3Dconf,'Enable','off');
         set(handles.txtSequencing,'Enable','off');
         set(handles.editSequencingLevel,'Enable','off');
 end
@@ -748,9 +763,15 @@ end
 
 % generate steering file
 try 
+    currPln = evalin('base','pln');
+    % if we run 3d conf opt -> hijack runDao to trigger computation of
+    % connected bixels
+    if strcmp(pln.radiationMode,'photons') && get(handles.radiobutton3Dconf,'Value')
+       currPln.runDAO = true; 
+    end
     stf = matRad_generateStf(evalin('base','ct'),...
                                      evalin('base','cst'),...
-                                     evalin('base','pln'));
+                                     currPln);
     assignin('base','stf',stf);
 catch ME
     handles = showError(handles,{'CalcDoseCallback: Error in steering file generation!',ME.message}); 
@@ -815,7 +836,7 @@ drawnow;
 defaultFontSize = 8;
 currAxes            = axis(handles.axesFig);
 AxesHandlesCT_Dose  = gobjects(0);
-AxesHandlesVOI      = gobjects(0);
+AxesHandlesVOI      = cell(0);
 AxesHandlesIsoDose  = gobjects(0);
 
 if handles.State == 0
@@ -1011,49 +1032,7 @@ if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')=
 end
 
 %% Set axis labels and plot iso center
-if  plane == 3% Axial plane
-    if ~isempty(pln)
-        set(handles.axesFig,'XTick',0:50/ct.resolution.x:1000);
-        set(handles.axesFig,'YTick',0:50/ct.resolution.y:1000);
-        set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.x);
-        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution.y);   
-        xlabel(handles.axesFig,'x [mm]','FontSize',defaultFontSize)
-        ylabel(handles.axesFig,'y [mm]','FontSize',defaultFontSize)
-        title(handles.axesFig,['axial plane z = ' num2str(ct.resolution.z*slice) ' [mm]'],'FontSize',defaultFontSize)
-    else
-        xlabel(handles.axesFig,'x [voxels]','FontSize',defaultFontSize)
-        ylabel(handles.axesFig,'y [voxels]','FontSize',defaultFontSize)
-        title(handles.axesFig,'axial plane','FontSize',defaultFontSize)
-    end
-elseif plane == 2 % Sagittal plane
-    if ~isempty(pln)
-        set(handles.axesFig,'XTick',0:50/ct.resolution.z:1000)
-        set(handles.axesFig,'YTick',0:50/ct.resolution.y:1000)
-        set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.z)
-        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution.y)
-        xlabel(handles.axesFig,'z [mm]','FontSize',defaultFontSize);
-        ylabel(handles.axesFig,'y [mm]','FontSize',defaultFontSize);
-        title(handles.axesFig,['sagittal plane x = ' num2str(ct.resolution.y*slice) ' [mm]'],'FontSize',defaultFontSize)
-    else
-        xlabel(handles.axesFig,'z [voxels]','FontSize',defaultFontSize)
-        ylabel(handles.axesFig,'y [voxels]','FontSize',defaultFontSize)
-        title(handles.axesFig,'sagittal plane','FontSize',defaultFontSize);
-    end
-elseif plane == 1 % Coronal plane
-    if ~isempty(pln)
-        set(handles.axesFig,'XTick',0:50/ct.resolution.z:1000)
-        set(handles.axesFig,'YTick',0:50/ct.resolution.x:1000)
-        set(handles.axesFig,'XTickLabel',0:50:1000*ct.resolution.z)
-        set(handles.axesFig,'YTickLabel',0:50:1000*ct.resolution.x)
-        xlabel(handles.axesFig,'z [mm]','FontSize',defaultFontSize)
-        ylabel(handles.axesFig,'x [mm]','FontSize',defaultFontSize)
-        title(handles.axesFig,['coronal plane y = ' num2str(ct.resolution.x*slice) ' [mm]'],'FontSize',defaultFontSize)
-    else
-        xlabel(handles.axesFig,'z [voxels]','FontSize',defaultFontSize)
-        ylabel(handles.axesFig,'x [voxels]','FontSize',defaultFontSize)
-        title(handles.axesFig,'coronal plane','FontSize',defaultFontSize)
-    end
-end
+matRad_plotAxisLabels(handles.axesFig,ct,plane,slice,defaultFontSize);
 
 if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln)
     hIsoCenterCross = matRad_plotIsoCenterMarker(handles.axesFig,pln,ct,plane,slice);
@@ -1506,7 +1485,10 @@ try
 
         switch choice
             case 'Cancel'
-                return
+                set(Figures, 'pointer', 'arrow');
+                set(InterfaceObj,'Enable','on');
+                guidata(hObject,handles);
+                return;
             case 'Calculate dij again and optimize'
                 handles.DijCalcWarning = false;
                 btnCalcDose_Callback(hObject, eventdata, handles)      
@@ -1519,13 +1501,37 @@ try
     ct  = evalin('base','ct');
     
     % optimize
-    [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
+    if get(handles.radiobutton3Dconf,'Value') && strcmp(handles.Modalities{get(handles.popupRadMode,'Value')},'photons')
+        % conformal plan if photons and 3d conformal
+        if ~matRad_checkForConnectedBixelRows(evalin('base','stf'))
+            error('disconnetced dose influence data in BEV - run dose calculation again with consistent settings');
+        end
+        [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(matRad_collapseDij(evalin('base','dij')),evalin('base','cst'),pln);
+        resultGUIcurrentRun.w = resultGUIcurrentRun.w * ones(evalin('base','dij.totalNumOfBixels'),1);
+        resultGUIcurrentRun.wUnsequenced = resultGUIcurrentRun.w;
+    else
+        if pln.runDAO
+        if ~matRad_checkForConnectedBixelRows(evalin('base','stf'))
+            error('disconnetced dose influence data in BEV - run dose calculation again with consistent settings');
+        end
+        end
+        
+        [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
+    end
     
     %if resultGUI already exists then overwrite the "standard" fields
     AllVarNames = evalin('base','who');
     if  ismember('resultGUI',AllVarNames)
         resultGUI = evalin('base','resultGUI');
         sNames = fieldnames(resultGUIcurrentRun);
+        oldNames = fieldnames(resultGUI);
+        if(length(oldNames) > length(sNames))
+            for j = 1:length(oldNames)
+            if strfind(oldNames{j}, 'beam')
+                resultGUI = rmfield(resultGUI, oldNames{j});
+            end
+            end
+        end
         for j = 1:length(sNames)
             resultGUI.(sNames{j}) = resultGUIcurrentRun.(sNames{j});
         end
@@ -1801,7 +1807,12 @@ end
 
 % assign color if color assignment is not already present or inconsistent
 if colorAssigned == false
-  colors = colorcube(size(cst,1));
+  m         = 64;
+  colorStep = ceil(m/size(cst,1));
+  colors    = colorcube(colorStep*size(cst,1));
+  % spread individual VOI colors in the colorcube color palette
+  colors    = colors(1:colorStep:end,:);
+  
   for i = 1:size(cst,1)
     cst{i,5}.visibleColor = colors(i,:);
   end
@@ -2474,9 +2485,11 @@ end
 %% enable stratification level input if radiation mode is set to photons
 if strcmp(pln.radiationMode,'photons')
     set(handles.txtSequencing,'Enable','on');
+    set(handles.radiobutton3Dconf,'Enable','on');
     set(handles.editSequencingLevel,'Enable','on');
 else
     set(handles.txtSequencing,'Enable','off');
+    set(handles.radiobutton3Dconf,'Enable','off');
     set(handles.editSequencingLevel,'Enable','off');
 end
 
@@ -4508,3 +4521,35 @@ generateCstTable(handles,cst);
 
 
 
+
+
+% --- Executes on button press in radiobutton3Dconf.
+function radiobutton3Dconf_Callback(hObject, eventdata, handles)
+% hObject    handle to radiobutton3Dconf (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of radiobutton3Dconf
+
+function x = matRad_checkForConnectedBixelRows(stf)
+
+x = true;
+
+for i = 1:size(stf,2)
+    
+    bixelPos = reshape([stf(i).ray.rayPos_bev],3,[]);
+   
+    rowCoords = unique(bixelPos(3,:));
+    
+    for j = 1:numel(rowCoords)
+        
+        increments = diff(bixelPos(1,rowCoords(j) == bixelPos(3,:)));
+        
+        % if we find one not connected row -> return false
+        if numel(unique(increments)) > 1
+            x = false;
+            return;
+        end
+    end
+    
+end
