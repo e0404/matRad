@@ -4371,9 +4371,6 @@ hAdd.UserData = h;
 %set(handles.uiTable,'Data',data);
 
 
-
-
-
 % --- Executes when uipanel3 is resized.
 function uipanel3_SizeChangedFcn(hObject, eventdata, handles)
 % hObject    handle to uipanel3 (see GCBO)
@@ -4518,11 +4515,6 @@ assignin('base','cst',cst);
 generateCstTable(handles,cst);
 
     
-
-
-
-
-
 % --- Executes on button press in radiobutton3Dconf.
 function radiobutton3Dconf_Callback(hObject, eventdata, handles)
 % hObject    handle to radiobutton3Dconf (see GCBO)

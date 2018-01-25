@@ -65,13 +65,13 @@ for  i = 1:size(cst,1)
                 end
                 
                 % if conventional opt: just sum objectives of nominal dose
-                if strcmp(cst{i,6}{j}.robustness,'none')
+                %if strcmp(cst{i,6}{j}.robustness,'none')
 
                     d_i = d{1}(cst{i,4}{1});
 
                     f = f + obj.computeDoseObjectiveFunction(d_i);
                     
-                end
+                %end
             
             end
        
