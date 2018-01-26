@@ -365,7 +365,7 @@ try
         ct  = evalin('base','ct');
         cst = evalin('base','cst');
         %cst = setCstTable(handles,cst);
-        generateCstTable(hanles,cst);
+        cst = generateCstTable(handles,cst);
         handles.State = 1;
         cst = matRad_computeVoiContoursWrapper(cst,ct);
         assignin('base','cst',cst);
