@@ -70,10 +70,14 @@ matRad_objective_function_value = [];
 % adjust overlap priorities
 cst = matRad_setOverlapPriorities(cst);
 
-% adjust objectives _and_ constraints internally for fractionation 
+% adjust objectives and constraints internally for fractionation 
 for i = 1:size(cst,1)
-    for j = 1:size(cst{i,6},1)
-       cst{i,6}(j).dose = cst{i,6}(j).dose/pln.numOfFractions;
+    for j = 1:numel(cst{i,6})
+        %This checks if our optimization function is dose related by
+        %checking inheritance from the respective base classes
+        if isa(cst{i,6}{j},'DoseObjectives.matRad_DoseObjective') || isa(cst{i,6}{j},'DoseObjectives.matRad_DoseConstraint')
+            cst{i,6}{j} = cst{i,6}{j}.setDoseParameters(cst{i,6}{j}.getDoseParameters()/pln.numOfFractions);
+        end
     end
 end
 

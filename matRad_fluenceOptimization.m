@@ -149,7 +149,7 @@ elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization
         
         for j = 1:size(cst{i,6},2)
             % check if prescribed doses are in a valid domain
-            if cst{i,6}(j).dose > 5 && isequal(cst{i,3},'TARGET')
+            if any(cst{i,6}{j}.getDoseParameters() > 5) && isequal(cst{i,3},'TARGET')
                 error('Reference dose > 5Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.');
             end
             
