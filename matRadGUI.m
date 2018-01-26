@@ -364,7 +364,8 @@ try
     if  ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
         ct  = evalin('base','ct');
         cst = evalin('base','cst');
-        cst = setCstTable(handles,cst);
+        %cst = setCstTable(handles,cst);
+        generateCstTable(hanles,cst);
         handles.State = 1;
         cst = matRad_computeVoiContoursWrapper(cst,ct);
         assignin('base','cst',cst);
@@ -457,7 +458,7 @@ catch
 end
 
 try
-    cst = setCstTable(handles,cst);
+    generateCstTable(handles,cst);
     handles.TableChanged = false;
     set(handles.popupTypeOfPlot,'Value',1);
     cst = matRad_computeVoiContoursWrapper(cst,ct);
@@ -2780,7 +2781,8 @@ try
     if  ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
         ct  = evalin('base','ct');
         cst = evalin('base','cst');
-        cst = setCstTable(handles,cst);
+        %cst = setCstTable(handles,cst);
+        generateCstTable(handles,cst);
         handles.State = 1;
         cst = matRad_computeVoiContoursWrapper(cst,ct);
         assignin('base','cst',cst);
@@ -3560,7 +3562,8 @@ try
     if evalin('base','exist(''cst'',''var'')') == 1 && evalin('base','exist(''ct'',''var'')') == 1
         cst = evalin('base','cst');
         ct = evalin('base','ct');
-        setCstTable(handles,cst);
+        %setCstTable(handles,cst);
+        generateCstTable(hanles,cst);
         handles.TableChanged = false;
         set(handles.popupTypeOfPlot,'Value',1);
         
@@ -4280,6 +4283,8 @@ penaltyW = 40;
 paramTitleW = 120;
 paramW = 30;
 
+newline = '\n';
+
 %Setup Headlines
 ypos = @(c) cstPanelPos(4) - (yTopSep + c*lineHeight);
 xPos = 5;
@@ -4342,7 +4347,7 @@ for i = 1:size(cst,1)
            for p = 1:numel(obj.parameterNames)
               %h = uicontrol(cstPanel,'Style','edit','String',obj.parameters{1,p},'Position',[xPos ypos(cnt) 100 objHeight],'Enable','inactive');
               %xPos = xPos + h.Position(3) + fieldSep;
-              h = text(tmpAxes,'String',['| ' obj.parameterNames{p} ':'],'VerticalAlignment','middle','units','pix','Position',[xPos ypos(cnt)+lineHeight/2],'Interpreter','tex','FontWeight','normal',...
+              h = text('Parent',tmpAxes,'String',['| ' obj.parameterNames{p} ':'],'VerticalAlignment','middle','units','pix','Position',[xPos ypos(cnt)+lineHeight/2],'Interpreter','tex','FontWeight','normal',...
                   'FontSize',cstPanel.FontSize,'FontName',cstPanel.FontName,'FontUnits',cstPanel.FontUnits,'FontWeight','normal');%[xPos ypos(cnt) 100 objHeight]);
               xPos = xPos + h.Extent(3) + fieldSep;
               %h = annotation(cstPanel,'textbox','String',obj.parameters{1,p},'Units','pix','Position', [xPos ypos(cnt) 100 objHeight],'Interpreter','Tex');
