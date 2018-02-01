@@ -52,7 +52,8 @@ for  i = 1:size(cst,1)
             obj = cst{i,6}{j};
             
             % only perform computations for constraints
-            if ~isempty(strfind(obj.type,'constraint'))
+            % if ~isempty(strfind(obj.type,'constraint'))
+            if isa(obj,'DoseConstraints.matRad_DoseConstraint')
                 
                 % if we have effect optimization, temporarily replace doses with effect
                 % Maybe we should put some switch into the classes for that
@@ -69,18 +70,18 @@ for  i = 1:size(cst,1)
                 end
 
                 % if conventional opt: just add constraints of nominal dose
-                if strcmp(cst{i,6}(j).robustness,'none')
+                %if strcmp(cst{i,6}(j).robustness,'none')
 
                     d_i = d{1}(cst{i,4}{1});
 
                     %c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref)];
                     c = [c; obj.computeDoseConstraintFunction(d_i)];
                     
-                else
+                %else
                     
-                    error('Invalid robustness setting.');
+                    %error('Invalid robustness setting.');
 
-                end % if we are in the nominal sceario or rob opt
+                %end % if we are in the nominal sceario or rob opt
             
             end % if we are a constraint
 

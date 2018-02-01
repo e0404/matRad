@@ -54,7 +54,8 @@ for  i = 1:size(cst,1)
             obj = cst{i,6}{j};
             
             % only perform gradient computations for objectives
-            if isempty(strfind(obj.type,'constraint'))
+            if isa(obj,'DoseObjectives.matRad_DoseObjective')
+            %if isempty(strfind(obj.type,'constraint'))
 
                 % compute reference
                 if (~isequal(obj.name, 'Mean Dose') && ~isequal(obj.name, 'EUD')) &&...

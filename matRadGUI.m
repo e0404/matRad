@@ -1790,104 +1790,7 @@ if strcmp(get(hObject,'Enable') ,'on')
  
 end
 
-% displays the cst in the GUI
-function cst = setCstTable(handles,cst)
 
-colorAssigned = true;
-
-% check whether all structures have an assigned color
-for i = 1:size(cst,1)
-    if ~isfield(cst{i,5},'visibleColor')
-        colorAssigned = false;
-        break;
-    elseif isempty(cst{i,5}.visibleColor)
-        colorAssigned = false;
-        break;
-    end
-end
-
-% assign color if color assignment is not already present or inconsistent
-if colorAssigned == false
-  m         = 64;
-  colorStep = ceil(m/size(cst,1));
-  colors    = colorcube(colorStep*size(cst,1));
-  % spread individual VOI colors in the colorcube color palette
-  colors    = colors(1:colorStep:end,:);
-  
-  for i = 1:size(cst,1)
-    cst{i,5}.visibleColor = colors(i,:);
-  end
-end
-
-for s = 1:size(cst,1)
-    handles.VOIPlotFlag(s) = cst{s,5}.Visible;
-    clr = dec2hex(round(cst{s,5}.visibleColor(:)*255),2)';
-    clr = ['#';clr(:)]';
-    if handles.VOIPlotFlag(s)
-        tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
-    else
-        tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
-    end
-end
-set(handles.legendTable,'String',tmpString);
-
-columnname = {'VOI name','VOI type','priority','obj. / const.','penalty','dose', 'EUD','volume','robustness'};
-
-AllObjectiveFunction = {'square underdosing','square overdosing','square deviation', 'mean', 'EUD',...
-                        'min dose constraint','max dose constraint',...
-                        'min mean dose constraint','max mean dose constraint',...
-                        'min EUD constraint','max EUD constraint',...
-                        'max DVH constraint','min DVH constraint',...
-                        'max DVH objective' ,'min DVH objective'};
-
-columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
-       AllObjectiveFunction,...
-       'numeric','numeric','numeric','numeric',{'none','WC','prob'}};
-   
-numOfObjectives = 0;
-for i = 1:size(cst,1)
-    if ~isempty(cst{i,6})
-        numOfObjectives = numOfObjectives + numel(cst{i,6});
-    end
-end
-
-%{
-dimArr = [numOfObjectives size(columnname,2)];
-data = cell(dimArr);
-data(:,6) = {''};
-Counter = 1;
-for i = 1:size(cst,1)
-   
-   if strcmp(cst(i,3),'IGNORED')~=1
-       for j=1:size(cst{i,6},1)
-       %VOI
-       data{Counter,1}  = cst{i,2};
-       %VOI Type
-       data{Counter,2}  = cst{i,3};
-       %Priority
-       data{Counter,3}  = cst{i,5}.Priority;
-       %Objective Function
-       objFunc          = cst{i,6}(j).type;
-       data{Counter,4}  = objFunc;
-       % set Penalty
-       data{Counter,5}  = cst{i,6}(j).penalty;
-       data{Counter,6}  = cst{i,6}(j).dose;
-       data{Counter,7}  = cst{i,6}(j).EUD;
-       data{Counter,8}  = cst{i,6}(j).volume;
-       data{Counter,9}  = cst{i,6}(j).robustness;
-       
-       Counter = Counter +1;
-       end
-   end
-   
-end
-
-set(handles.uiTable,'ColumnName',columnname);
-set(handles.uiTable,'ColumnFormat',columnformat);
-set(handles.uiTable,'ColumnEditable',[true true true true true true true true true true]);
-set(handles.uiTable,'Data',data);
-%}
-generateCstTable(handles,cst);
 
 function Flag = getCstTable (handles)
 
@@ -4219,8 +4122,49 @@ set(hObject,'Value',1);
 
 guidata(hObject,handles);
 
+function cst = updateStructureTable(handles,cst)
+colorAssigned = true;
+
+% check whether all structures have an assigned color
+for i = 1:size(cst,1)
+    if ~isfield(cst{i,5},'visibleColor')
+        colorAssigned = false;
+        break;
+    elseif isempty(cst{i,5}.visibleColor)
+        colorAssigned = false;
+        break;
+    end
+end
+
+% assign color if color assignment is not already present or inconsistent
+if colorAssigned == false
+  m         = 64;
+  colorStep = ceil(m/size(cst,1));
+  colors    = colorcube(colorStep*size(cst,1));
+  % spread individual VOI colors in the colorcube color palette
+  colors    = colors(1:colorStep:end,:);
+  
+  for i = 1:size(cst,1)
+    cst{i,5}.visibleColor = colors(i,:);
+  end
+end
+
+for s = 1:size(cst,1)
+    handles.VOIPlotFlag(s) = cst{s,5}.Visible;
+    clr = dec2hex(round(cst{s,5}.visibleColor(:)*255),2)';
+    clr = ['#';clr(:)]';
+    if handles.VOIPlotFlag(s)
+        tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
+    else
+        tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
+    end
+end
+set(handles.legendTable,'String',tmpString);
+
 %-- generates the CST table
 function cst = generateCstTable(handles,cst)
+
+cst = updateStructureTable(handles,cst);
 
 cstPanel = handles.uipanel3;
 delete(cstPanel.Children);
@@ -4352,7 +4296,13 @@ for i = 1:size(cst,1)
               xPos = xPos + h.Extent(3) + fieldSep;
               %h = annotation(cstPanel,'textbox','String',obj.parameters{1,p},'Units','pix','Position', [xPos ypos(cnt) 100 objHeight],'Interpreter','Tex');
               
-              h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{p}),'TooltipString',obj.parameterNames{p},'Position',[xPos ypos(cnt) paramW objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
+              %Check if we have a cell and therefore a parameter list
+              if iscell(obj.parameterTypes{p})                  
+                  h = uicontrol(cstPanel,'Style','popupmenu','String',obj.parameterTypes{p}','Value',obj.parameters{p},'TooltipString',obj.parameterNames{p},'Position',[xPos ypos(cnt) paramW*2 objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
+              else
+                h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{p}),'TooltipString',obj.parameterNames{p},'Position',[xPos ypos(cnt) paramW objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
+              end
+              
               xPos = xPos + h.Position(3) + fieldSep;
            end
 
@@ -4443,8 +4393,12 @@ cst = evalin('base','cst');
 %Add Standard Objective
 
 %if the third index is 0 we changed the penalty
+%if we have a popupmenu selection we use value
+%otherwise we use the edit string
 if ix(3) == 0
     cst{ix(1),6}{ix(2)}.penalty = str2double(hObject.String);
+elseif isequal(hObject.Style,'popupmenu')
+    cst{ix(1),6}{ix(2)}.parameters{ix(3)} = hObject.Value;
 else
     cst{ix(1),6}{ix(2)}.parameters{ix(3)} = str2double(hObject.String);
 end
@@ -4549,4 +4503,26 @@ for i = 1:size(stf,2)
         end
     end
     
+end
+
+
+% --- Executes on slider movement.
+function cstTableSlider_Callback(hObject, eventdata, handles)
+% hObject    handle to cstTableSlider (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+
+% --- Executes during object creation, after setting all properties.
+function cstTableSlider_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to cstTableSlider (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
 end

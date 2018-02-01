@@ -5,11 +5,8 @@ classdef (Abstract) matRad_DoseObjective
     properties (Abstract, Constant)        
         name
         parameterNames
-        parameterIsDose
-    end
-    
-    properties (Constant)
-        type = 'Objective';
+        %parameterIsDose
+        parameterTypes
     end
     
     properties (Abstract, Access = public)
@@ -26,15 +23,21 @@ classdef (Abstract) matRad_DoseObjective
     methods (Access = public)
         %Get only the parameters describing some kind of reference dose as
         %numeric array
+        %Get only the parameters describing some kind of reference dose as
+        %numeric array
         function doseParams = getDoseParameters(obj)
-            doseParams = [obj.parameters{obj.parameterIsDose}];
+            ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
+            doseParams = [obj.parameters{ix}];
         end
         
         %Set only the parameters describing some kind of reference dose,
         %where doseParams is an array of numeric values
         function obj = setDoseParameters(obj,doseParams)
-            c = mat2cell(doseParams,1,numel(doseParams));
-            [obj.parameters{obj.parameterIsDose}] = deal(c{:});
+            %c = mat2cell(doseParams,1,numel(doseParams));
+            %[obj.parameters{obj.parameterIsDose}] = deal(c{:});
+            ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
+            obj.parameters(ix) = num2cell(doseParams);
+
         end
     end
 end

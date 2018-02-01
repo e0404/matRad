@@ -48,7 +48,8 @@ for  i = 1:size(cst,1)
             obj = cst{i,6}{j};
             
             % only perform computations for constraints
-            if ~isempty(strfind(cst{i,6}{j}.type,'constraint'))
+            %if ~isempty(strfind(cst{i,6}{j}.type,'constraint'))
+            if isa(obj,'DoseConstraints.matRad_DoseConstraint')
 
                 if isequal(options.bioOpt,'none') || isequal(options.ID,'protons_const_RBExD') ||  isequal(options.bioOpt,'LEMIV_RBExD')
                     %param = cst{i,6}(j).dose;
@@ -61,14 +62,14 @@ for  i = 1:size(cst,1)
                     obj = obj.setDoseParameters(effect);
                 end
 
-                if strcmp(cst{i,6}(j).robustness,'none')
+                %if strcmp(cst{i,6}(j).robustness,'none')
 
                     %[clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param);
                     
-                    cl = [cl;obj.getLowerBounds()];
-                    cu = [cu;obj.getUpperBounds()];
+                    cl = [cl;obj.lowerBounds(numel(cst{i,4}{1}))];
+                    cu = [cu;obj.upperBounds(numel(cst{i,4}{1}))];
                     
-                end
+                %end
             end
 
         end % over all objectives of structure

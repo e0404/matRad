@@ -50,11 +50,12 @@ for  i = 1:size(cst,1)
             obj = cst{i,6}{j};
             
             % only perform gradient computations for objectives
-            if isempty(strfind(obj.type,'constraint'))
+            %if isempty(strfind(obj.type,'constraint'))
+            if isa(obj,'DoseObjectives.matRad_DoseObjective')
 
                 % if we have effect optimization, temporarily replace doses with effect
                 % Maybe we should put some switch into the classes for that
-                if (~isequal(obj.name, 'Mean Dose') && ~isequal(obj.type, 'EUD')) &&...
+                if (~isequal(obj.name, 'Mean Dose') && ~isequal(obj.name, 'EUD')) &&...
                     isequal(options.bioOpt,'LEMIV_effect') 
                     
                     doses = obj.getDoseParameters();

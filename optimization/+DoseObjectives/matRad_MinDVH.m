@@ -5,7 +5,7 @@ classdef matRad_MinDVH < DoseObjectives.matRad_DoseObjective
     properties (Constant)
         name = 'Min DVH';
         parameterNames = {'d', 'V^{min}'};
-        parameterIsDose = logical([1 0]);
+        parameterTypes = {'dose','numeric'};
     end
     
     properties

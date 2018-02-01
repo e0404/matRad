@@ -5,7 +5,8 @@ classdef matRad_MinMaxDVH < DoseConstraints.matRad_DoseConstraint
     properties (Constant)
         name = 'DVH constraint';
         parameterNames = {'d^{ref}', 'V^{min}', 'V^{max}'};
-        parameterIsDose = logical([1 0 0]);
+        %parameterIsDose = logical([1 0 0]);
+        parameterTypes = {'dose','numeric','numeric'};
     end
     
     properties
@@ -15,15 +16,15 @@ classdef matRad_MinMaxDVH < DoseConstraints.matRad_DoseConstraint
     end
         
     methods
-        function cu = upperBounds(obj)
+        function cu = upperBounds(obj,n)
             cu = obj.parameters{3};
         end
-        function cl = lowerBounds(obj)
+        function cl = lowerBounds(obj,n)
             cl = obj.parameters{2};
         end
         %% Calculates the Constraint Function value
         function cDose = computeDoseConstraintFunction(obj,dose)
-            cDose = sum(dose >= obj.parameters{2,1})/numel(dose);
+            cDose = sum(dose >= obj.parameters{1})/numel(dose);
             
             % alternative constraint calculation 3/4 %
             % % get reference Volume
@@ -58,13 +59,13 @@ classdef matRad_MinMaxDVH < DoseConstraints.matRad_DoseConstraint
             
             % calculate scaling
             NoVoxels     = max(obj.voxelScalingRatio*numel(dose),10);
-            absDiffsort  = sort(abs(obj.parameters{2,1} - dose_sort));
+            absDiffsort  = sort(abs(obj.parameters{1} - dose_sort));
             deltaDoseMax = absDiffsort(ceil(NoVoxels/2));
             
             % calclulate DVHC scaling
             DVHCScaling = min((log(1/obj.referenceScalingVal-1))/(2*deltaDoseMax),250);
                        
-            d_diff = dose - obj.parameters{2,1};   
+            d_diff = dose - obj.parameters{1};   
             
             cDoseJacob = (2/numel(dose))*DVHCScaling*exp(2*DVHCScaling*d_diff)./(exp(2*DVHCScaling*d_diff)+1).^2;
             

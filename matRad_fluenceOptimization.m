@@ -75,7 +75,7 @@ for i = 1:size(cst,1)
     for j = 1:numel(cst{i,6})
         %This checks if our optimization function is dose related by
         %checking inheritance from the respective base classes
-        if isa(cst{i,6}{j},'DoseObjectives.matRad_DoseObjective') || isa(cst{i,6}{j},'DoseObjectives.matRad_DoseConstraint')
+        if isa(cst{i,6}{j},'DoseObjectives.matRad_DoseObjective') || isa(cst{i,6}{j},'DoseConstraints.matRad_DoseConstraint')
             cst{i,6}{j} = cst{i,6}{j}.setDoseParameters(cst{i,6}{j}.getDoseParameters()/pln.numOfFractions);
         end
     end
@@ -94,8 +94,12 @@ for i=1:size(cst,1)
         fDoses = [];
         for fObjCell = cst{i,6}
             %Check if we have a Dose dependent function
-            if isa(fObjCell{1},'DoseObjectives.matRad_DoseObjective') || isa(fObjCell{1},'DoseObjectives.matRad_DoseConstraint')
-                fDoses = [fDoses fObjCell{1}.getDoseParameters()];
+            if isa(fObjCell{1},'DoseObjectives.matRad_DoseObjective') || isa(fObjCell{1},'DoseConstraints.matRad_DoseConstraint')
+                dParams = fObjCell{1}.getDoseParameters();
+                %Don't care for Inf constraints
+                dParams = dParams(isfinite(dParams));
+                %Add do dose list
+                fDoses = [fDoses dParams];
             end
         end
                 

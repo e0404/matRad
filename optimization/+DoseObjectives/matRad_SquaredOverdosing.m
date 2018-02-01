@@ -5,7 +5,7 @@ classdef matRad_SquaredOverdosing < DoseObjectives.matRad_DoseObjective
     properties (Constant)
         name = 'Squared Overdosing';
         parameterNames = {'d^{max}'};
-        parameterIsDose = true;
+        parameterTypes = {'dose'};
     end
     
     properties

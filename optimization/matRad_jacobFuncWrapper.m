@@ -60,7 +60,8 @@ for i = 1:size(cst,1)
             obj = cst{i,6}{j}; %Get the Optimization Object
 
             % only perform computations for constraints
-            if ~isempty(strfind(obj.type,'constraint'))
+            %if ~isempty(strfind(obj.type,'constraint'))
+            if isa(obj,'DoseConstraints.matRad_DoseConstraint')
                 
                 % compute reference
                 if (~isequal(obj.name, 'max dose constraint')      && ~isequal(obj.name, 'min dose constraint')      &&...
@@ -76,43 +77,47 @@ for i = 1:size(cst,1)
                 end
                 
                 % if conventional opt: just add constraints of nominal dose
-                if strcmp(cst{i,6}{j}.robustness,'none')
+                %if strcmp(cst{i,6}{j}.robustness,'none')
 
                     d_i = d{1}(cst{i,4}{1});
 
                     %jacobVec =  matRad_jacobFunc(d_i,cst{i,6}{j},d_ref);
-                    jacobVec = obj.computeDoseConstraintJacobian(d_i);
+                    jacobSub = obj.computeDoseConstraintJacobian(d_i);
                     
-                    scenID  = [scenID;1];
+                    scenID  = [scenID;ones(size(jacobSub,2),1)];
                     scenID2 = [scenID2;ones(numel(cst{i,4}{1}),1)];
                     
-                    if isequal(options.bioOpt,'none') && ~isempty(jacobVec) || isequal(options.ID,'protons_const_RBExD')
-
-                       DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
-
-                    elseif isequal(options.bioOpt,'LEMIV_effect') && ~isempty(jacobVec)
-
-                       mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
-                       mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
-                                                  sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*jacobVec,dij.numOfVoxels,numel(cst{i,4}{1}))];
-                       voxelID                 = [voxelID ;cst{i,4}{1}];
-                       constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
-
-                    elseif isequal(options.bioOpt,'LEMIV_RBExD') && ~isempty(jacobVec)
-                                        
-                       scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i);
-
-                       delta = jacobVec./(2*dij.bx(cst{i,4}{1}).*scaledEffect);
-
-                       mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,delta,dij.numOfVoxels,1)];
-                       mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
-                                                  sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*delta,dij.numOfVoxels,numel(cst{i,4}{1}))];
-                       voxelID                 = [voxelID ;cst{i,4}{1}];
-                       constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
-
+                    %Iterate through columns of the sub-jacobian
+                    for c = 1:size(jacobSub,2)
+                        jacobVec = jacobSub(:,c);
+                        
+                        if isequal(options.bioOpt,'none') && ~isempty(jacobVec) || isequal(options.ID,'protons_const_RBExD')
+                            
+                            DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
+                            
+                        elseif isequal(options.bioOpt,'LEMIV_effect') && ~isempty(jacobVec)
+                            
+                            mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
+                            mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
+                                sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*jacobVec,dij.numOfVoxels,numel(cst{i,4}{1}))];
+                            voxelID                 = [voxelID ;cst{i,4}{1}];
+                            constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
+                            
+                        elseif isequal(options.bioOpt,'LEMIV_RBExD') && ~isempty(jacobVec)
+                            
+                            scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i);
+                            
+                            delta = jacobVec./(2*dij.bx(cst{i,4}{1}).*scaledEffect);
+                            
+                            mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,delta,dij.numOfVoxels,1)];
+                            mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
+                                sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*delta,dij.numOfVoxels,numel(cst{i,4}{1}))];
+                            voxelID                 = [voxelID ;cst{i,4}{1}];
+                            constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
+                            
+                        end
                     end
-
-                end
+                %end
 
             end
 

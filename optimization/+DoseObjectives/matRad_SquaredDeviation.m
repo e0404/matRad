@@ -5,7 +5,7 @@ classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
     properties (Constant)
         name = 'Squared Deviation';
         parameterNames = {'d^{ref}'};
-        parameterIsDose = true;
+        parameterTypes = {'dose'};
     end
     
     properties

@@ -5,7 +5,7 @@ classdef matRad_SquaredUnderdosing < DoseObjectives.matRad_DoseObjective
     properties (Constant)
         name = 'Squared Underdosing';
         parameterNames = {'d^{min}'};
-        parameterIsDose = true;
+        parameterTypes = {'dose'};
     end
     
     properties

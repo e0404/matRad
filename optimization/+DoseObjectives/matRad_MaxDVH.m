@@ -5,7 +5,7 @@ classdef matRad_MaxDVH < DoseObjectives.matRad_DoseObjective
     properties (Constant)
         name = 'Max DVH';
         parameterNames = {'d', 'V^{max}'};
-        parameterIsDose = logical([1 0]);
+        parameterTypes = {'dose','numeric'};
     end
     
     properties
