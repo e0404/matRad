@@ -42,6 +42,6 @@ param.operator = 'Lucas-Raphael Mueller';
 % param.criteria = [3 3]; %%% [X % Y mm]
 
 %% start calculation
-matRad_calcStudy(examineStructures, multScen, param);
+matRad_calcStudy(examineStructures, multScen, [], param);
 
 % exit;
