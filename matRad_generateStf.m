@@ -66,7 +66,7 @@ voiTarget    = zeros(ct.cubeDim);
 voiTarget(V) = 1;
     
 % add margin
-addmarginBool = 1;
+addmarginBool = 0;
 if addmarginBool
     voiTarget = matRad_addMargin(voiTarget,cst,ct.resolution,ct.resolution,true);
     V   = find(voiTarget>0);
@@ -239,7 +239,7 @@ for i = 1:length(pln.gantryAngles)
     for j = 1:stf(i).numOfRays
         stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
         stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
-        stf(i).ray(j).SSD         = NaN;
+        stf(i).ray(j).SSD         = cell(ct.numOfCtScen,1);
         if strcmp(pln.radiationMode,'photons') 
             stf(i).ray(j).rayCorners_SCD = (repmat([0, machine.meta.SCD - SAD, 0],4,1)+ (machine.meta.SCD/SAD) * ...
                                                              [rayPos(j,:) + [+stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
@@ -261,16 +261,25 @@ for i = 1:length(pln.gantryAngles)
                 ct.resolution, ...
                 stf(i).sourcePoint, ...
                 stf(i).ray(j).targetPoint, ...
+                ct.cube);
+            %{
+            [alpha,l,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
+                ct.resolution, ...
+                stf(i).sourcePoint, ...
+                stf(i).ray(j).targetPoint, ...
                 [ct.cube {voiTarget}]);
+                %}
             
-            ixSSD = find(rho{1} > DensityThresholdSSD,1,'first');
-            
-            if isempty(ixSSD)== 1
-                warning('Surface for SSD calculation starts directly in first voxel of CT\n');
+            for k = 1:ct.numOfCtScen
+                ixSSD = find(rho{k} > DensityThresholdSSD,1,'first');
+                
+                if isempty(ixSSD)== 1
+                    warning('Surface for SSD calculation starts directly in first voxel of CT\n');
+                end
+                
+                % calculate SSD
+                stf(i).ray(j).SSD{k} = 2 * stf(i).SAD * alpha(ixSSD);
             end
-            
-            % calculate SSD
-            stf(i).ray(j).SSD = 2 * stf(i).SAD * alpha(ixSSD);
             
             % find appropriate energies for particles
             if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
@@ -365,9 +374,9 @@ for i = 1:length(pln.gantryAngles)
     if pln.VMAT
         %Determine which initialized beam the current beam belongs
         %to
-        [~,stf(i).beamFatherInitIndex] = min(abs(pln.initGantryAngles-pln.gantryAngles(i)));
-        stf(i).beamFatherGantryAngle = pln.initGantryAngles(stf(i).beamFatherInitIndex);
-        stf(i).beamFatherIndex = find(pln.gantryAngles == stf(i).beamFatherGantryAngle);
+        [~,stf(i).beamParentInitIndex] = min(abs(pln.initGantryAngles-pln.gantryAngles(i)));
+        stf(i).beamParentGantryAngle = pln.initGantryAngles(stf(i).beamParentInitIndex);
+        stf(i).beamParentIndex = find(pln.gantryAngles == stf(i).beamParentGantryAngle);
         
         %Indicate if this beam is to be included in optimization/initialization or not
         %All beams are still considered in dose calc for objective function
@@ -392,18 +401,18 @@ for i = 1:length(pln.gantryAngles)
         stf(i).doseAngleBorderCentreDiff = [stf(i).gantryAngle-stf(i).doseAngleBorders(1) stf(i).doseAngleBorders(2)-stf(i).gantryAngle];
         stf(i).doseAngleBordersDiff = sum(stf(i).doseAngleBorderCentreDiff);
         
-        %Assign beam to its father, either as child (optimized) or subchild
+        %Assign beam to its Parent, either as child (optimized) or subchild
         %(interpolated)
         if stf(i).optimizeBeam
-            if ~isfield(stf(stf(i).beamFatherIndex),'beamChildrenGantryAngles') || isempty(stf(stf(i).beamFatherIndex).beamChildrenGantryAngles)
-                stf(stf(i).beamFatherIndex).numOfBeamChildren = 0;
-                stf(stf(i).beamFatherIndex).beamChildrenGantryAngles = nan(1000,1);
-                stf(stf(i).beamFatherIndex).beamChildrenIndex = nan(1000,1);
+            if ~isfield(stf(stf(i).beamParentIndex),'beamChildrenGantryAngles') || isempty(stf(stf(i).beamParentIndex).beamChildrenGantryAngles)
+                stf(stf(i).beamParentIndex).numOfBeamChildren = 0;
+                stf(stf(i).beamParentIndex).beamChildrenGantryAngles = nan(1000,1);
+                stf(stf(i).beamParentIndex).beamChildrenIndex = nan(1000,1);
             end
             
-            stf(stf(i).beamFatherIndex).numOfBeamChildren = stf(stf(i).beamFatherIndex).numOfBeamChildren+1;
-            stf(stf(i).beamFatherIndex).beamChildrenGantryAngles(stf(stf(i).beamFatherIndex).numOfBeamChildren) = pln.gantryAngles(i);
-            stf(stf(i).beamFatherIndex).beamChildrenIndex(stf(stf(i).beamFatherIndex).numOfBeamChildren) = i;
+            stf(stf(i).beamParentIndex).numOfBeamChildren = stf(stf(i).beamParentIndex).numOfBeamChildren+1;
+            stf(stf(i).beamParentIndex).beamChildrenGantryAngles(stf(stf(i).beamParentIndex).numOfBeamChildren) = pln.gantryAngles(i);
+            stf(stf(i).beamParentIndex).beamChildrenIndex(stf(stf(i).beamParentIndex).numOfBeamChildren) = i;
             
             %Determine different angle borders
             %optAngleBorders are the angular borders over which an optimized control point
@@ -450,15 +459,15 @@ for i = 1:length(pln.gantryAngles)
             stf(i).timeFacNext = timeFacPrevAndNext(2);
 
         else
-            if ~isfield(stf(stf(i).beamFatherIndex),'beamSubChildrenGantryAngles') || isempty(stf(stf(i).beamFatherIndex).beamSubChildrenGantryAngles)
-                stf(stf(i).beamFatherIndex).numOfBeamSubChildren = 0;
-                stf(stf(i).beamFatherIndex).beamSubChildrenGantryAngles = nan(1000,1);
-                stf(stf(i).beamFatherIndex).beamSubChildrenIndex = nan(1000,1);
+            if ~isfield(stf(stf(i).beamParentIndex),'beamSubChildrenGantryAngles') || isempty(stf(stf(i).beamParentIndex).beamSubChildrenGantryAngles)
+                stf(stf(i).beamParentIndex).numOfBeamSubChildren = 0;
+                stf(stf(i).beamParentIndex).beamSubChildrenGantryAngles = nan(1000,1);
+                stf(stf(i).beamParentIndex).beamSubChildrenIndex = nan(1000,1);
             end
             
-            stf(stf(i).beamFatherIndex).numOfBeamSubChildren = stf(stf(i).beamFatherIndex).numOfBeamSubChildren+1;
-            stf(stf(i).beamFatherIndex).beamSubChildrenGantryAngles(stf(stf(i).beamFatherIndex).numOfBeamSubChildren) = pln.gantryAngles(i);
-            stf(stf(i).beamFatherIndex).beamSubChildrenIndex(stf(stf(i).beamFatherIndex).numOfBeamSubChildren) = i;
+            stf(stf(i).beamParentIndex).numOfBeamSubChildren = stf(stf(i).beamParentIndex).numOfBeamSubChildren+1;
+            stf(stf(i).beamParentIndex).beamSubChildrenGantryAngles(stf(stf(i).beamParentIndex).numOfBeamSubChildren) = pln.gantryAngles(i);
+            stf(stf(i).beamParentIndex).beamSubChildrenIndex(stf(stf(i).beamParentIndex).numOfBeamSubChildren) = i;
             
             stf(i).fracFromLastOpt = (pln.gantryAngles(nextOptIndex)-pln.gantryAngles(i))./(pln.gantryAngles(nextOptIndex)-pln.gantryAngles(lastOptIndex));
             stf(i).lastOptIndex = lastOptIndex;
@@ -495,8 +504,8 @@ for i = 1:length(pln.gantryAngles)
         rayPosBEV = reshape([stf(i).ray(:).rayPos_bev]',3,numOfRays)';
         targetPointBEV = reshape([stf(i).ray(:).targetPoint_bev]',3,numOfRays)';
         
-        %masterRayPosBEV{stf(i).beamFatherInitIndex} = union(masterRayPosBEV{stf(i).beamFatherInitIndex},rayPosBEV,'rows');
-        %masterTargetPointBEV{stf(i).beamFatherInitIndex} = union(masterTargetPointBEV{stf(i).beamFatherInitIndex},targetPointBEV,'rows');
+        %masterRayPosBEV{stf(i).beamParentInitIndex} = union(masterRayPosBEV{stf(i).beamParentInitIndex},rayPosBEV,'rows');
+        %masterTargetPointBEV{stf(i).beamParentInitIndex} = union(masterTargetPointBEV{stf(i).beamParentInitIndex},targetPointBEV,'rows');
         
         masterRayPosBEV = union(masterRayPosBEV,rayPosBEV,'rows');
         masterTargetPointBEV = union(masterTargetPointBEV,targetPointBEV,'rows');
@@ -724,10 +733,24 @@ if pln.VMAT
             % for leaf position interpolation
             stf(i).fracFromLastOptI = (stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(i).doseAngleBorders(1))./(stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(stf(i).lastOptIndex).doseAngleBorders(2));
             stf(i).fracFromLastOptF = (stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(i).doseAngleBorders(2))./(stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(stf(i).lastOptIndex).doseAngleBorders(2));
+            stf(i).fracFromNextOptI = (stf(i).doseAngleBorders(1)-stf(stf(i).lastOptIndex).doseAngleBorders(2))./(stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(stf(i).lastOptIndex).doseAngleBorders(2));
+            stf(i).fracFromNextOptF = (stf(i).doseAngleBorders(2)-stf(stf(i).lastOptIndex).doseAngleBorders(2))./(stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(stf(i).lastOptIndex).doseAngleBorders(2));
             
             % for time interpolation
-            stf(i).timeFracFromLastOpt = (stf(i).gantryAngle-stf(stf(i).lastOptIndex).doseAngleBorders(2))./stf(i).doseAngleBordersDiff;
-            stf(i).timeFracFromNextOpt = (stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(i).gantryAngle)./stf(i).doseAngleBordersDiff;
+            stf(i).timeFracFromLastOpt = (stf(stf(i).lastOptIndex).optAngleBorders(2)-stf(i).doseAngleBorders(1))./stf(i).doseAngleBordersDiff;
+            stf(i).timeFracFromNextOpt = (stf(i).doseAngleBorders(2)-stf(stf(i).lastOptIndex).optAngleBorders(2))./stf(i).doseAngleBordersDiff;
+            %stf(i).timeFracFromLastOpt = (stf(i).gantryAngle-stf(stf(i).lastOptIndex).doseAngleBorders(2))./stf(i).doseAngleBordersDiff;
+            %stf(i).timeFracFromNextOpt = (stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(i).gantryAngle)./stf(i).doseAngleBordersDiff;
+            if stf(i).timeFracFromLastOpt > 1
+                stf(i).timeFracFromLastOpt = 1;
+            elseif stf(i).timeFracFromLastOpt < 0
+                stf(i).timeFracFromLastOpt = 0;
+            end
+            if stf(i).timeFracFromNextOpt > 1
+                stf(i).timeFracFromNextOpt = 1;
+            elseif stf(i).timeFracFromNextOpt < 0
+                stf(i).timeFracFromNextOpt = 0;
+            end
         end
         
         currMasterRayPosBEV = masterRayPosBEV;
@@ -741,7 +764,7 @@ if pln.VMAT
         stf(i).numOfRays = size(currMasterRayPosBEV,1);
         stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
         stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
-        
+        %{
         if pln.halfFluOpt
             % Determine "halfway" point of field (may not actually be halfway)
             X = currMasterRayPosBEV(:,1);
@@ -750,6 +773,7 @@ if pln.VMAT
             maxX = max(X);
             halfX = minX+0.5*(maxX-minX)+pln.halfFluOptMargin;
         end
+        %}
         
         for j = 1:stf(i).numOfRays
             %rotate rayPos and targetPoint from BEV to patient coordinate
@@ -765,7 +789,7 @@ if pln.VMAT
             
             stf(i).ray(j).rayPos_bev = currMasterRayPosBEV(j,:);
             stf(i).ray(j).targetPoint_bev = currMasterTargetPointBEV(j,:);
-            
+            %{
             if pln.halfFluOpt
                 if stf(i).ray(j).rayPos_bev(:,1) >= halfX
                     % if ray's x-pos is greater than halfway, do not optimize
@@ -775,7 +799,7 @@ if pln.VMAT
                     stf(i).ray(j).optFlu = 1;
                 end
             end
-            
+            %}
             
             stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
             stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
@@ -792,21 +816,30 @@ if pln.VMAT
                 ct.resolution, ...
                 stf(i).sourcePoint, ...
                 stf(i).ray(j).targetPoint, ...
-                [ct.cube {voiTarget}]);
+                ct.cube);
+            %{
+            [alpha,~,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
+                ct.resolution, ...
+                stf(i).sourcePoint, ...
+                stf(i).ray(j).targetPoint, ...
+                [ct.cube{1} {voiTarget}]);
+                %}
             
-            ixSSD = find(rho{1} > DensityThresholdSSD,1,'first');
-            
-            if isempty(ixSSD)== 1
-                %Surface for SSD calculation starts directly in first voxel of CT
+            for k = 1:ct.numOfCtScen
+                ixSSD = find(rho{k} > DensityThresholdSSD,1,'first');
                 
-                %if ~numSSDErr
-                %    warning('Surface for SSD calculation starts directly in first voxel of CT\n');
-                %end
-                numSSDErr = numSSDErr+1;
+                if isempty(ixSSD)== 1
+                    %Surface for SSD calculation starts directly in first voxel of CT
+                    
+                    %if ~numSSDErr
+                    %    warning('Surface for SSD calculation starts directly in first voxel of CT\n');
+                    %end
+                    numSSDErr = numSSDErr+1;
+                end
+                
+                % calculate SSD
+                stf(i).ray(j).SSD{k} = 2 * stf(i).SAD * alpha(ixSSD);
             end
-            
-            % calculate SSD
-            stf(i).ray(j).SSD = 2 * stf(i).SAD * alpha(ixSSD);
             
             % book keeping for photons
             stf(i).ray(j).energy = machine.data.energy;

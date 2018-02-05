@@ -60,7 +60,7 @@ if ~isdeployed % only if _not_ running as standalone
 
 end
 
-
+%{
 if isfield(pln,'VMAT') && pln.VMAT
     %Check if plan is VMAT.  If it is, remove any elements of the dij
     %matrix belonging to non-initialized beams.  Put zeros back in the
@@ -75,9 +75,6 @@ if isfield(pln,'VMAT') && pln.VMAT
             dij.bixelNum((offsetNEW-dij.numOfRaysPerBeam(i)+1):offsetNEW,:) = [];
             dij.rayNum((offsetNEW-dij.numOfRaysPerBeam(i)+1):offsetNEW,:) = [];
             dij.beamNum((offsetNEW-dij.numOfRaysPerBeam(i)+1):offsetNEW,:) = [];
-            if pln.halfFluOpt
-                dij.optFlu((offsetNEW-dij.numOfRaysPerBeam(i)+1):offsetNEW,:) = [];
-            end
             
         end
         offsetNEW = offsetNEW-dij.numOfRaysPerBeam(i);
@@ -91,7 +88,7 @@ if isfield(pln,'VMAT') && pln.VMAT
     realTotalNumOfBixels = dij.totalNumOfBixels;
     dij.totalNumOfBixels = sum(dij.numOfRaysPerBeam);
 end
-
+%}
 
 % initialize global variables for optimizer
 global matRad_global_x;
@@ -142,18 +139,37 @@ end
 
 % set bounds on optimization variables
 options.lb              = zeros(1,dij.totalNumOfBixels);        % Lower bound on the variables.
-options.ub              = inf * ones(1,dij.totalNumOfBixels);   % Upper bound on the variables.
-if pln.halfFluOpt
-    %dij.optFlu is 0 if the fluence is constrained to be equal to 0
-    options.ub(dij.optFlu == 0) = 0;
-    %change initialization also
-    wOnes = dij.optFlu;
+options.ub              = inf * wOnes;   % Upper bound on the variables.
+
+if isfield(pln,'VMAT') && pln.VMAT
+    % loop through angles
+    offset = 0;
+    for i = 1:dij.numOfBeams
+        % if angle is not an initialization angle, do not optimize fluence
+        % in bixels
+        if ~stf(i).initializeBeam
+            rayIndices = offset+(1:dij.numOfRaysPerBeam(i));
+            % set upper bound to 0
+            options.ub(rayIndices) = 0;
+            %set wOnes to 0 (initial value)
+            wOnes(rayIndices) = 0;
+        end
+        offset = offset+dij.numOfRaysPerBeam(i);
+    end
 end
+dij.optBixel = logical(wOnes);
+
 
 funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
     
 % calculate initial beam intensities wInit
 if  strcmp(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
+    % set optimization options
+    options.radMod          = pln.radiationMode;
+    options.bioOpt          = pln.bioOptimization;
+    options.ID              = [pln.radiationMode '_' pln.bioOptimization];
+    options.numOfScenarios  = dij.numOfScenarios;
+    
     % check if a constant RBE is defined - if not use 1.1
     if ~isfield(dij,'RBE')
         dij.RBE = 1.1;
@@ -163,6 +179,11 @@ if  strcmp(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'proto
         
 elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization,'LEMIV_RBExD')) ... 
                                 && strcmp(pln.radiationMode,'carbon')
+    % set optimization options
+    options.radMod          = pln.radiationMode;
+    options.bioOpt          = pln.bioOptimization;
+    options.ID              = [pln.radiationMode '_' pln.bioOptimization];
+    options.numOfScenarios  = dij.numOfScenarios;
 
     % check if you are running a supported rad
     dij.ax   = zeros(dij.numOfVoxels,1);
@@ -208,17 +229,22 @@ elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization
            wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
     end
     
-else 
-    bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
-    wInit       = wOnes * bixelWeight;
+else
     pln.bioOptimization = 'none';
+    % set optimization options
+    options.radMod          = pln.radiationMode;
+    options.bioOpt          = pln.bioOptimization;
+    options.ID              = [pln.radiationMode '_' pln.bioOptimization];
+    options.numOfScenarios  = dij.numOfScenarios;
+    
+    d = matRad_backProjection(wOnes,dij,options);
+    
+    %bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,dij.optBixel)*wOnes(dij.optBixel)));
+    bixelWeight =  (doseTarget)/(mean(d{1}(V)));
+    wInit       = wOnes * bixelWeight;
 end
 
-% set optimization options
-options.radMod          = pln.radiationMode;
-options.bioOpt          = pln.bioOptimization;
-options.ID              = [pln.radiationMode '_' pln.bioOptimization];
-options.numOfScenarios  = dij.numOfScenarios;
+
 
 % set callback functions.
 [options.cl,options.cu] = matRad_getConstBoundsWrapper(cst_Over,options);   
@@ -233,12 +259,10 @@ funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst_Over);
 
 % calc dose and reshape from 1D vector to 2D array
 fprintf('Calculating final cubes...\n');
-%have to use the old wOpt in here for VMAT, since dij only contains init
-%beams
+
 resultGUI = matRad_calcCubes(wOpt,dij,cst_Over);
 
 if scaleDRx
-    
     %Scale D95 in target to RXDose
     resultGUI = matRad_calcQualityIndicators(resultGUI,cst,pln);
     
@@ -248,7 +272,7 @@ if scaleDRx
     resultGUI = matRad_calcCubes(wOpt,dij,cst_Over);
 end
 
-
+%{
 if isfield(pln,'VMAT') && pln.VMAT
     %Check if plan is VMAT.  If it is, put zeros back in the
     %wOpt array
@@ -266,7 +290,7 @@ if isfield(pln,'VMAT') && pln.VMAT
     wOpt = wOptNEW;
     clear wOptNEW
 end
-
+%}
 resultGUI.wUnsequenced = wOpt;
 
 

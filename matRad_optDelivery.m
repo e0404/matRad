@@ -92,8 +92,13 @@ end
 [apertureInfo.apertureVector,~,~] = matRad_daoApertureInfo2Vec(apertureInfo);
 
 %redo interpolation
+if apertureInfo.dynamic
+    apertureInfo = matRad_daoVec2ApertureInfo_VMATdynamic(apertureInfo,apertureInfo.apertureVector);
+else
+    apertureInfo = matRad_daoVec2ApertureInfo_VMATstatic(apertureInfo,apertureInfo.apertureVector);
+end
+
 if doInterp
-    apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector,1);
     fprintf('\n\nWE ARE REDOING INTERPOLATION\n\n');
 else
     fprintf('\n\nWE ARE NOT REDOING INTERPOLATION\n\n');

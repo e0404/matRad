@@ -37,7 +37,28 @@ end
 resultGUI.w = w;
 
 % calc dose and reshape from 1D vector to 2D array
-resultGUI.physicalDose = reshape(full(dij.physicalDose{scenNum}*resultGUI.w),dij.dimensions);
+d = cell(1);
+d{1} = dij.physicalDose{scenNum}*resultGUI.w;
+if dij.memorySaver
+    depthOffset = uint32(0);
+    tailOffset = uint32(0);
+    
+    for j = 1:dij.totalNumOfRays
+        depthInd = depthOffset+(1:uint32(dij.nDepth(j)));
+        depthOffset = depthOffset+uint32(dij.nDepth(j));
+        
+        for k = depthInd
+            tailInd = tailOffset+(1:uint32(dij.nTailPerDepth(k)));
+            tailOffset = tailOffset+uint32(dij.nTailPerDepth(k));
+            
+            voxInd = dij.ixTail(tailInd);
+            d{1}(voxInd) = d{1}(voxInd) + dij.bixelDoseTail(k).*w(j);
+        end
+    end
+end
+d{1} = d{1}.*dij.scaleFactor;
+
+resultGUI.physicalDose = reshape(full(d{1}),dij.dimensions);
 
 % consider RBE for protons
 if isfield(dij,'RBE')

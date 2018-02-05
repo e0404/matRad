@@ -40,17 +40,28 @@ function [radDepthV,geoDistV] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCu
 radDepthCube = repmat({NaN*ones(ct.cubeDim)},ct.numOfCtScen);
 
 % set up ray matrix direct behind last voxel
-rayMx_bev_y = max(rot_coordsV(:,2)) + max([ct.resolution.x ct.resolution.y ct.resolution.z]);
+rayMx_bev_y = -inf;
+for i = 1:ct.numOfCtScen
+    rayMx_bev_y = max(max(rot_coordsV{i}(:,2)) + max([ct.resolution.x ct.resolution.y ct.resolution.z]),rayMx_bev_y);
+end
+
 rayMx_bev_y = rayMx_bev_y + stf.sourcePoint_bev(2);
 
 % calculate geometric distances
+geoDistV = cell(ct.numOfCtScen,1);
 if nargout > 1
-    geoDistV = sqrt(sum(rot_coordsV.^2,2));
+    for i = 1:ct.numOfCtScen
+        geoDistV{i} = sqrt(sum(rot_coordsV{i}.^2,2));
+    end
 end
 
 % set up list with bev coordinates for calculation of radiological depth
-coords = zeros(prod(ct.cubeDim),3);
-coords(V,:) = rot_coordsV;
+coords = cell(ct.numOfCtScen,1);
+
+for i = 1:ct.numOfCtScen
+    coords{i} = zeros(prod(ct.cubeDim),3);
+    coords{i}(V{i},:) = rot_coordsV{i};
+end
 
 % calculate spacing of rays on ray matrix
 rayMxSpacing = 1/sqrt(2) * min([ct.resolution.x ct.resolution.y ct.resolution.z]);
@@ -108,41 +119,42 @@ for i = 1:size(rayMx_world,1)
                                 stf.sourcePoint, ...
                                 rayMx_world(i,:), ...
                                 ct.cube);
-
-    % find voxels for which we should remember this tracing because this is    
-    % the closest ray by projecting the voxel coordinates to the
-    % intersection points with the ray matrix and checking if the distance 
-    % in x and z direction is smaller than the resolution of the ray matrix
-    scale_factor = (rayMx_bev_y - stf.sourcePoint_bev(2)) ./ ...
-                   coords(ixHitVoxel,2);
-
-    x_dist = coords(ixHitVoxel,1).*scale_factor - rayMx_bev(i,1);
-    z_dist = coords(ixHitVoxel,3).*scale_factor - rayMx_bev(i,3);
-
-    ixRememberFromCurrTracing = x_dist > -raySelection & x_dist <= raySelection ...
-                              & z_dist > -raySelection & z_dist <= raySelection;
-
-    if any(ixRememberFromCurrTracing) > 0
-
-        for j = 1:ct.numOfCtScen
+    
+    for j = 1:ct.numOfCtScen
+        % find voxels for which we should remember this tracing because this is
+        % the closest ray by projecting the voxel coordinates to the
+        % intersection points with the ray matrix and checking if the distance
+        % in x and z direction is smaller than the resolution of the ray matrix
+        scale_factor = (rayMx_bev_y - stf.sourcePoint_bev(2)) ./ ...
+            coords{j}(ixHitVoxel,2);
+        
+        x_dist = coords{j}(ixHitVoxel,1).*scale_factor - rayMx_bev(i,1);
+        z_dist = coords{j}(ixHitVoxel,3).*scale_factor - rayMx_bev(i,3);
+        
+        ixRememberFromCurrTracing = x_dist > -raySelection & x_dist <= raySelection ...
+            & z_dist > -raySelection & z_dist <= raySelection;
+        
+        if any(ixRememberFromCurrTracing) > 0
+            
+            
             % calc radiological depths
-
+            
             % eq 14
             % It multiply voxel intersections with \rho values.
             d = l .* rho{j}; %Note. It is not a number "one"; it is the letter "l"
-
+            
             % Calculate accumulated d sum.
             dCum = cumsum(d)-d/2;
-
+            
             % write radiological depth for voxel which we want to remember
             radDepthCube{j}(ixHitVoxel(ixRememberFromCurrTracing)) = dCum(ixRememberFromCurrTracing);
+            
         end
-    end  
-    
+    end
 end
 
 % only take voxel inside the patient
 for i = 1:ct.numOfCtScen
-    radDepthV{i} = radDepthCube{i}(V);
+    radDepthV{i} = radDepthCube{i}(V{i});
 end
 

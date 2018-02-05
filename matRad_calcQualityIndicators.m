@@ -112,8 +112,8 @@ for runVoi = 1:size(cst,1)
  
                 StringReferenceDose = regexprep(num2str(round(referenceDose*100)/100),'\D','_');
                 % Conformity Index, fieldname contains reference dose
-                VTarget95 = sum(doseInVoi >= referenceDose); % number of target voxels recieving dose >= 0.95 dPres
-                VTreated95 = sum(result.(sQuantity)(:) >= referenceDose);  %number of all voxels recieving dose >= 0.95 dPres ("treated volume")
+                VTarget95 = sum(doseInVoi >= 0.95*referenceDose); % number of target voxels recieving dose >= 0.95 dPres
+                VTreated95 = sum(result.(sQuantity)(:) >= 0.95*referenceDose);  %number of all voxels recieving dose >= 0.95 dPres ("treated volume")
                 QI(runVoi).(['CI_' StringReferenceDose 'Gy']) = VTarget95^2/(numOfVoxels * VTreated95); 
 
                 % Homogeneity Index (one out of many), fieldname contains reference dose        

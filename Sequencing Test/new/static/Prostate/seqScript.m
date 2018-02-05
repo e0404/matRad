@@ -1,7 +1,7 @@
 %% prep
 
-clearvars -except *dir
-close all
+%clearvars -except *dir
+%close all
 
 % load patient data, i.e. ct, voi, cst
 
@@ -68,11 +68,15 @@ recalc.pln = pln;
 recalc.pln.minGantryAngleRes = 1;
 
 
-% generate steering file
-stf = matRad_generateStf(ct,cst,pln);
+if ~exist('stf','var')
+    stf = matRad_generateStf(ct,cst,pln);
+end
 
 %load Dij
-dij = loadDij('Prostate');
+
+if ~exist('dij','var')
+    dij = loadDij('Prostate');
+end
 
 % inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln,stf,0);
@@ -80,7 +84,7 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln,stf,0);
 %% run DAO 4 times with different sequencing algorithms
 
 % Siochi
-fname = 'Siochi';
+fname = 'Siochi50';
 resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln,0);
 
 t0_nDij_nJ = tic;

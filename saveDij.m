@@ -1,9 +1,12 @@
 fname = input('Dij file name?','s');
 
-cd dij
+dir = pwd;
+dij_dir = 'C:\Users\eric\Documents\GitHub\matRad\dij';
+
+cd(dij_dir)
 
 dijDat = rmfield(dij,'physicalDose');
-save([fname,'_dat'],'dijDat');
+save([fname,'_dat'],'dijDat','-v7.3');
 
 startInd = 1;
 stopInd = 0;
@@ -21,6 +24,6 @@ for i = 1:dij.numOfBeams
     matRad_progress(i,dij.numOfBeams);
 end
 
-cd ..
+cd(dir)
 
 clear fname dijDat dijDos startInd stopInd numOfRaysPerBeam i
