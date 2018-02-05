@@ -173,7 +173,8 @@ for i = 1:numel(apertureInfoOld.beam)
         
         apertureInfoNew.beam(j).MURate = apertureInfoNew.beam(j).MU.*apertureInfoNew.beam(j).gantryRot./apertureInfoNew.beam(j).doseAngleBordersDiff;
         
-        apertureInfoNew.beam(j).shape(1).jacobiScale = apertureInfoOld.beam(i).shape(1).jacobiScale;
+        %apertureInfoNew.beam(j).shape(1).jacobiScale = apertureInfoOld.beam(i).shape(1).jacobiScale;
+        apertureInfoNew.beam(j).shape(1).jacobiScale = 1;
         
         if recalc.interpNew
             %interpolate new apertures now so that weights are not

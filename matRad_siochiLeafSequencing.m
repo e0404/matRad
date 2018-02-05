@@ -246,9 +246,13 @@ for i = 1:numOfBeams
         
         child = 1;
         leafDir = -1*leafDir; % =1 (-1) for even (odd) init gantry angles
-        k0 = (leafDir*(1-k)+(1+k))/2; % =1 (k) for even (odd) init gantry angles
-        k1 = k+1-k0;% =k (1) for even (odd) init gantry angles
-
+        if leafDir == 1
+            k0 = 1;
+            k1 = k;
+        else
+            k0 = k;
+            k1 = 1;
+        end
         
         for shape = k0:leafDir:k1 % = 1-to-k in forward (reverse) order for even (odd) values of i
             childIndex = childrenIndex(child);
@@ -268,6 +272,11 @@ for i = 1:numOfBeams
                 big = max([i-1 childIndex-1]);
                 small = min([i childIndex]);
                 numOfRaysBN = sum([stf(small:big).numOfRays]); %num of rays between current beam and child
+                if childIndex > i
+                    inv = 1;
+                else
+                    inv = -1;
+                end
                 inv = (childIndex-i)./(big-small+1); % = 1 (-1) if childIndex is bigger (smaller) than i
                 sequencing.beam(childIndex).bixelIx = sequencing.beam(i).bixelIx+inv*numOfRaysBN;
                 
@@ -277,7 +286,6 @@ for i = 1:numOfBeams
             
             %Reset counters for next sector
             child = child+1;
-
         end
         
         offset = offset + numOfRaysPerBeam;
@@ -361,7 +369,10 @@ resultGUI.wSequenced = sequencing.w;
 resultGUI.sequencing   = sequencing;
 
 %EXAMINE
-resultGUI.physicalDose = reshape(dij.physicalDose{1} * sequencing.w,dij.dimensions);
+options.numOfScenarios = 1;
+options.bioOpt = 'none';
+d = matRad_backProjection(sequencing.w,dij,options);
+resultGUI.physicalDose = reshape(d{1},dij.dimensions);
 
 % if weights exists from an former DAO remove it
 if isfield(resultGUI,'wDao')
