@@ -164,9 +164,5 @@ end
 pln.robOpt   = false;
 % retrieve model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,pln.bioOptimization);
-% set plan uncertainties for robust optimization
-[pln]        = matRad_setPlanUncertainties(ct,pln);
-
-
 
 end

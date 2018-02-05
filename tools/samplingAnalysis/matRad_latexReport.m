@@ -38,6 +38,17 @@ function [y, argmin] = cutAtArgmin(x)
   y = x(1:argmin);
 end
 
+function text = parseFromDicom(dicomStruct, field, default)
+    if ~exist('default', 'var') || isempty(default)
+        default = 'N.A.';
+    end
+    if isfield(dicomStruct, field)
+        text = dicomStruct.(field);
+    else
+        text = default;
+    end    
+end
+
 if exist('param','var') && ~isempty(param)
     outputPath = param.reportPath;
 end
@@ -82,29 +93,29 @@ else
     warnMessage = '';
 end
 
-if isfield(ct.dicomInfo, 'PatientName')
-    if isfield(ct.dicomInfo.PatientName, 'GivenName')
-        patientInformation.firstName = ct.dicomInfo.PatientName.GivenName;
-    else
-        patientInformation.firstName = 'N.A.';
+if isfield(ct, 'dicomInfo')
+    if isfield(ct.dicomInfo, 'PatientName')
+        patientInformation.firstName = parseFromDicom(ct.dicomInfo.PatientName, 'GivenName');
+        patientInformation.lastName = parseFromDicom(ct.dicomInfo.PatientName, 'FamilyName');
     end
-    
-    if isfield(ct.dicomInfo.PatientName, 'FamilyName')
-        patientInformation.lastName = ct.dicomInfo.PatientName.FamilyName;
-    else
-        patientInformation.lastName = 'N.A.';
-    end
+    %%% in future release, patient sex and patient id might be moved in dicomInfo
+    patientInformation.sex = parseFromDicom(ct.dicomInfo, 'PatientSex');
+    patientInformation.patientID = parseFromDicom(ct.dicomInfo, 'PatientID');
+else
+    patientInformation.firstName = 'N.A.';
+    patientInformation.lastName = 'N.A.';
+    patientInformation.sex = 'N.A.';
+    patientInformation.patientID = 'N.A.';
 end
+
+%%% when id and sex moved to dicomInfo this get's obsolete
 try
     patientInformation.sex = ct.dicomMeta.PatientSex;
-    
 catch
-    patientInformation.sex = 'N.A.';
 end
 try
     patientInformation.patientID = ct.dicomMeta.PatientID;
 catch
-    patientInformation.patientID = 'N.A.';
 end
 
 % import plan information
