@@ -48,8 +48,9 @@ for i = 1:numOfCtScenarios
         idx = cst{j,4}{i};          
         
         for k = 1:size(cst,1)
-            if cst{k,5}.Priority < cst{j,5}.Priority && ~(j==k)
+            if cst{k,5}.Priority < cst{j,5}.Priority && ~(j==k) && ~isempty(cst{k,6})
                 % remove indices from VOI with higher priority from current VOI
+                % if an objective has been defined
                 idx = setdiff(idx,cst{k,4}{i});
             end
         end
@@ -57,7 +58,7 @@ for i = 1:numOfCtScenarios
         cst{j,4}{i} = idx;
         
         if isempty(cst{j,4}{i}) && ~isempty(cst{j,6})
-            warning([cst{j,2} ': Objective(s) for inverse planning defined ' ...
+            error([cst{j,2} ': Objective(s) and/or constraints for inverse planning defined ' ...
                  'but structure overlapped by structure with higher overlap priority.' ...
                  'Objective(s) will not be considered during optimization']); 
         end

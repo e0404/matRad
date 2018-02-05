@@ -53,9 +53,15 @@ resolution.y = files.resy;
 resolution.z = files.resz; % [mm] / lps coordinate system
 if files.useDoseGrid && isfield(files,'rtdose')
     % get grid from dose cube
-    doseInfo = dicominfo(files.rtdose{1,1});
-    doseGrid{1} = doseInfo.ImagePositionPatient(1) + doseInfo.PixelSpacing(1) * double(0:doseInfo.Columns - 1);
-    doseGrid{2} = doseInfo.ImagePositionPatient(2) + doseInfo.PixelSpacing(2) * double(0:doseInfo.Rows - 1);
+    if verLessThan('matlab','9')
+        doseInfo = dicominfo(files.rtdose{1,1});
+    else
+        doseInfo = dicominfo(files.rtdose{1,1},'UseDictionaryVR',true);
+    end
+    doseGrid{1} = doseInfo.ImagePositionPatient(1) + doseInfo.ImageOrientationPatient(1) * ...
+                                                     doseInfo.PixelSpacing(1) * double(0:doseInfo.Columns - 1);
+    doseGrid{2} = doseInfo.ImagePositionPatient(2) + doseInfo.ImageOrientationPatient(5) * ...
+                                                     doseInfo.PixelSpacing(2) * double(0:doseInfo.Rows - 1);
     doseGrid{3} = doseInfo.ImagePositionPatient(3) + doseInfo.GridFrameOffsetVector(:)';
 
     % get ct on grid
@@ -139,11 +145,9 @@ end
 
 %% put weight also into resultGUI
 if exist('stf','var') && exist('resultGUI','var')
-    if (strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon'))
-        resultGUI.w = [];
-        for i = 1:size(stf,2)
-            resultGUI.w = [resultGUI.w; [stf(i).ray.weight]'];
-        end
+    resultGUI.w = [];
+    for i = 1:size(stf,2)
+        resultGUI.w = [resultGUI.w; [stf(i).ray.weight]'];
     end
 end
 

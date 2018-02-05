@@ -38,55 +38,7 @@ ctHU = double(ct.cube{1}) * double(ct.dicomInfo.RescaleSlope) + double(ct.dicomI
 %% conversion from HU to water equivalent density
 
 % load hlut
-
-% directory with look up table files
-hlutDir = fullfile(fileparts(mfilename('fullpath')),'hlutLibrary',filesep);
-
-% if possible -> file standard out of dicom tags
-try
-    manufacturer = ct.dicomInfo.Manufacturer;
-    model = ct.dicomInfo.ManufacturerModelName;
-    convKernel = ct.dicomInfo.ConvolutionKernel;
-    
-    hlutFileName = strcat(manufacturer, '-', model, '-ConvolutionKernel-',...
-        convKernel, '.hlut');
-    
-    % check whether fileNames used '-' or '_' instead of blanks
-    hlutFileCell{1} = hlutFileName;
-    hlutFileCell{2} = regexprep(hlutFileName,' ','-');
-    hlutFileCell{3} = regexprep(hlutFileName,' ','_');
-    
-    % add pathname
-    hlutFileCell = strcat(hlutDir,hlutFileCell);
-
-    for i = 1:3
-        existIx(i) = exist(hlutFileCell{i}, 'file') == 2;
-    end
-
-    if sum(existIx) == 0
-        warnText = {['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
-            ' matRad default HLUT loaded']};
-        warndlg(warnText,'Could not load HLUT');
-        warning('matRad default HLUT loaded');
-        % load default HLUT
-        hlutFileName = strcat(hlutDir,'matRad_default.hlut');
-    else
-        hlutFileName = hlutFileCell{existIx};
-    end
-
-catch
-    warnText = {['Could not construct hlut file name from DICOM tags.' ...
-        ' matRad default HLUT loaded']};
-    warndlg(warnText,'Could not load HLUT');
-    warning('matRad default HLUT loaded');
-       
-    hlutFileName = strcat(hlutDir,'matRad_default.hlut');
-
-end
-
-hlutFile = fopen(hlutFileName,'r');
-hlut = cell2mat(textscan(hlutFile,'%f %f','CollectOutput',1,'commentStyle','#'));
-fclose(hlutFile);
+hlut = matRad_loadHLUT(ct);
 
 % Manual adjustments if ct data is corrupt. If some values are out of range
 % of the LUT, then these values are adjusted.
@@ -101,6 +53,9 @@ end
 
 % interpolate HU to relative electron density based on lookup table
 ct.cube{1} = interp1(hlut(:,1),hlut(:,2),double(ctHU));
+
+% save ct cube in HU
+ct.cubeHU{1} = ctHU;
 
 % save hlut
 ct.hlut = hlut;

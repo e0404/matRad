@@ -83,7 +83,7 @@ bixelDoseCore       = bixelDose(ixCore);                         % save dose val
 if all(ixCore)
     %% all bixels are in the core
     %exit function with core dose only
-    ixNew = ix(ixCore);
+    ixNew = ix;
     bixelDoseNew = bixelDoseCore;
 else
     logIxTail           = ~ixCore;                                   % get voxels indices beyond r0

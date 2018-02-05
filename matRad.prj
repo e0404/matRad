@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="151759798" file="d:\git\matRad\matRad.prj" location="d:\git\matRad" name="matRad" preferred-package-location="d:\git\matRad\standalone\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
+  <configuration build-checksum="369792437" file="d:\git\matRad\matRad.prj" location="d:\git\matRad" name="matRad" preferred-package-location="d:\git\matRad\standalone\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
     <param.appname>matRad</param.appname>
     <param.icon>${PROJECT_ROOT}\matRad_resources\icon.ico</param.icon>
     <param.icons>
@@ -78,6 +78,7 @@
       <file>${PROJECT_ROOT}\dicomImport\matRad_interpDicomCtCube.m</file>
       <file>${PROJECT_ROOT}\dicomImport\matRad_interpDicomDoseCube.m</file>
       <file>${PROJECT_ROOT}\dicomImport\matRad_listAllFiles.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_loadHLUT.m</file>
       <file>${PROJECT_ROOT}\dicomImport\matrad_logo.png</file>
       <file>${PROJECT_ROOT}\dicomImport\matRad_progress.m</file>
       <file>${PROJECT_ROOT}\dicomImport\matRad_scanDicomImportFolder.m</file>
@@ -106,18 +107,28 @@
       <file>${PROJECT_ROOT}\matRad_calcPhotonDoseVmc.m</file>
       <file>${PROJECT_ROOT}\matRad_calcQualityIndicators.m</file>
       <file>${PROJECT_ROOT}\matRad_calcRadDepthCubes.m</file>
+      <file>${PROJECT_ROOT}\matRad_calcSigmaRashi.m</file>
+      <file>${PROJECT_ROOT}\matRad_collapseDij.m</file>
+      <file>${PROJECT_ROOT}\matRad_computeSSD.m</file>
       <file>${PROJECT_ROOT}\matRad_DijSampling.m</file>
       <file>${PROJECT_ROOT}\matRad_directApertureOptimization.m</file>
+      <file>${PROJECT_ROOT}\matRad_dispToConsole.m</file>
+      <file>${PROJECT_ROOT}\matRad_electronDensitiesToHU.m</file>
       <file>${PROJECT_ROOT}\matRad_engelLeafSequencing.m</file>
       <file>${PROJECT_ROOT}\matRad_fluenceOptimization.m</file>
       <file>${PROJECT_ROOT}\matRad_generateStf.m</file>
       <file>${PROJECT_ROOT}\matRad_getIsoCenter.m</file>
+      <file>${PROJECT_ROOT}\matRad_getRotationMatrix.m</file>
+      <file>${PROJECT_ROOT}\matRad_indicatorWrapper.m</file>
       <file>${PROJECT_ROOT}\matRad_interp1.m</file>
       <file>${PROJECT_ROOT}\matRad_progress.m</file>
       <file>${PROJECT_ROOT}\matRad_rayTracing.m</file>
       <file>${PROJECT_ROOT}\matRad_sequencing2ApertureInfo.m</file>
       <file>${PROJECT_ROOT}\matRad_setOverlapPriorities.m</file>
+      <file>${PROJECT_ROOT}\matRad_showDVH.m</file>
+      <file>${PROJECT_ROOT}\matRad_showQualityIndicators.m</file>
       <file>${PROJECT_ROOT}\matRad_siddonRayTracer.m</file>
+      <file>${PROJECT_ROOT}\matRad_siochiLeafSequencing.m</file>
       <file>${PROJECT_ROOT}\matRad_visApertureInfo.m</file>
       <file>${PROJECT_ROOT}\matRad_xiaLeafSequencing.m</file>
       <file>${PROJECT_ROOT}\matRadGUI.fig</file>
@@ -152,15 +163,21 @@
       <file>${PROJECT_ROOT}\optimization\matRad_objFuncWrapper.m</file>
       <file>${PROJECT_ROOT}\photons_Generic.mat</file>
       <file>${PROJECT_ROOT}\plotting\colormaps\colormapTemplate.txt</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_computeAllVoiSurfaces.m</file>
       <file>${PROJECT_ROOT}\plotting\matRad_computeIsoDoseContours.m</file>
       <file>${PROJECT_ROOT}\plotting\matRad_computeVoiContours.m</file>
       <file>${PROJECT_ROOT}\plotting\matRad_getColormap.m</file>
       <file>${PROJECT_ROOT}\plotting\matRad_plotColorbar.m</file>
       <file>${PROJECT_ROOT}\plotting\matRad_plotCtSlice.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotCtSlice3D.m</file>
       <file>${PROJECT_ROOT}\plotting\matRad_plotDoseSlice.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotDoseSlice3D.m</file>
       <file>${PROJECT_ROOT}\plotting\matRad_plotIsoCenterMarker.m</file>
       <file>${PROJECT_ROOT}\plotting\matRad_plotIsoDoseLines.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotIsoDoseLines3D.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotPlan3D.m</file>
       <file>${PROJECT_ROOT}\plotting\matRad_plotVoiContourSlice.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotVois3D.m</file>
       <file>${PROJECT_ROOT}\protons_Generic.mat</file>
       <file>${PROJECT_ROOT}\vmc++\matRad_createVmcBatchFile.m</file>
       <file>${PROJECT_ROOT}\vmc++\matRad_createVmcInput.m</file>

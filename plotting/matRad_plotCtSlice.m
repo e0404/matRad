@@ -1,4 +1,4 @@
-function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ct,cubeIdx,plane,slice,cMap,window)
+function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,plane,slice,cMap,window)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that generates the plot for the CT in the GUI. The
 % function can also be used in personal matlab figures by passing the
@@ -9,7 +9,7 @@ function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ct,cubeIdx,plane
 %
 % input
 %   axesHandle  handle to axes the slice should be displayed in
-%   ct          the ct struct used in matRad
+%   ctCube      the cell of ct cubes
 %   cubeIdx     Index of the desired cube in the ct struct
 %   plane       plane view (coronal=1,sagittal=2,axial=3)
 %   slice       slice in the selected plane of the 3D cube
@@ -45,19 +45,19 @@ if nargin < 6 || isempty(cMap)
 end
 
 if nargin < 7 || isempty(window)
-    window = [min(ct.cube{cubeIdx}(:)) max(ct.cube{cubeIdx}(:))];    
+    window = [min(ctCube{cubeIdx}(:)) max(ctCube{cubeIdx}(:))];    
 end
 
 cMapScale = size(cMap,1) - 1;
 
 if plane == 1 % Coronal plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cube{cubeIdx}(slice,:,:)-window(1))/(window(2) - window(1))))),cMap);
+    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube{cubeIdx}(slice,:,:)-window(1))/(window(2) - window(1))))),cMap);
       
 elseif plane == 2 % sagittal plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cube{cubeIdx}(:,slice,:)-window(1))/(window(2) - window(1))))),cMap);
+    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,slice,:)-window(1))/(window(2) - window(1))))),cMap);
        
 elseif plane == 3 % Axial plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cube{cubeIdx}(:,:,slice)-window(1))/(window(2) - window(1))))),cMap);
+    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,:,slice)-window(1))/(window(2) - window(1))))),cMap);
 end
 ctHandle = image('CData',ct_rgb,'Parent',axesHandle);
 

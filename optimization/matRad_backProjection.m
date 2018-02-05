@@ -48,7 +48,55 @@ else
     if isequal(options.bioOpt,'none')
         
         for i = 1:options.numOfScenarios
-            d{i} = dij.physicalDose{i} * w;
+            
+            if isfield(dij,'optBixel')
+                
+                d{i} = dij.physicalDose{i}(:,dij.optBixel) * w(dij.optBixel);
+                
+                if dij.memorySaver
+                    depthOffset = uint32(0);
+                    tailOffset = uint32(0);
+                    
+                    for j = 1:dij.totalNumOfRays
+                        if ~dij.optBixel(j)
+                            continue
+                        end
+                        depthInd = depthOffset+(1:uint32(dij.nDepth(j)));
+                        depthOffset = depthOffset+uint32(dij.nDepth(j));
+                        
+                        for k = depthInd
+                            tailInd = tailOffset+(1:uint32(dij.nTailPerDepth(k)));
+                            tailOffset = tailOffset+uint32(dij.nTailPerDepth(k));
+                            
+                            voxInd = dij.ixTail(tailInd);
+                            d{i}(voxInd) = d{i}(voxInd) + dij.bixelDoseTail(k).*w(j);
+                        end
+                    end
+                end
+            else
+                
+                d{i} = dij.physicalDose{i} * w;
+                
+                if dij.memorySaver
+                    depthOffset = uint32(0);
+                    tailOffset = uint32(0);
+                    
+                    for j = 1:dij.totalNumOfRays
+                        depthInd = depthOffset+(1:uint32(dij.nDepth(j)));
+                        depthOffset = depthOffset+uint32(dij.nDepth(j));
+                        
+                        for k = depthInd
+                            tailInd = tailOffset+(1:uint32(dij.nTailPerDepth(k)));
+                            tailOffset = tailOffset+uint32(dij.nTailPerDepth(k));
+                            
+                            voxInd = dij.ixTail(tailInd);
+                            d{i}(voxInd) = d{i}(voxInd) + dij.bixelDoseTail(k).*w(j);
+                        end
+                    end
+                end
+            end
+            
+            d{i} = d{i}.*dij.scaleFactor;
         end
         
     elseif  isequal(options.ID,'protons_const_RBExD')
@@ -70,18 +118,15 @@ else
                 d{i} = e;
             else
                 % calculate RBX x dose
-                scaledEffectSq = (e./dij.bx)+(dij.gamma.^2);
-                scaledEffect   = zeros(length(scaledEffectSq),1);
-                % compute sqrt(scaledEffect) only for numeric values (not nan) to save time
-                [idx,~]           = find(~isnan(scaledEffectSq));
-                scaledEffect(idx) = sqrt(scaledEffectSq(idx));
-                d{i}              = scaledEffect - dij.gamma;
-
+                d{i}             = zeros(dij.numOfVoxels,1);
+                d{i}(dij.ixDose) = sqrt((e(dij.ixDose)./dij.bx(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
+                                    - dij.gamma(dij.ixDose);
+               
             end
             
         end       
        
-    end   
+    end
     
     matRad_global_d = d;
     
