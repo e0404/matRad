@@ -1,7 +1,7 @@
 %% prep
 
-%clearvars -except *dir
-%close all
+clearvars -except *dir
+close all
 
 % load patient data, i.e. ct, voi, cst
 
@@ -69,15 +69,10 @@ recalc.pln.minGantryAngleRes = 1;
 
 
 % generate steering file
-if ~exist('stf','var')
-    stf = matRad_generateStf(ct,cst,pln);
-end
+stf = matRad_generateStf(ct,cst,pln);
 
 %load Dij
-
-if ~exist('dij','var')
-    dij = loadDij('H&N');
-end
+dij = loadDij('H&N');
 
 % inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln,stf,0);

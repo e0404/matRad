@@ -69,7 +69,7 @@ try
         warndlg(warnText,'Could not load HLUT');
         warning('matRad default HLUT loaded');
         % load default HLUT
-        hlutFileName = strcat(hlutDir,'matRad_XCAT.hlut');
+        hlutFileName = strcat(hlutDir,'matRad_default.hlut');
     else
         hlutFileName = hlutFileCell{existIx};
     end
@@ -80,7 +80,7 @@ catch
     warndlg(warnText,'Could not load HLUT');
     warning('matRad default HLUT loaded');
        
-    hlutFileName = strcat(hlutDir,'matRad_XCAT.hlut');
+    hlutFileName = strcat(hlutDir,'matRad_default.hlut');
 
 end
 

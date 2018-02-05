@@ -22,17 +22,16 @@ clc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-load LUNG_XCAT
 %load TG119.mat
-%load PROSTATE.mat
+load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
 
 % meta information for treatment plan
 pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0]; % [°]
-pln.couchAngles     = [0]; % [°]
+pln.gantryAngles    = [0:72:359]; % [°]
+pln.couchAngles     = [0 0 0 0 0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
@@ -43,30 +42,30 @@ pln.bioOptimization = 'none';        % none: physical optimization;             
 pln.runSequencing   = true; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO          = true; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.VMAT            = false; % 1/true: run VMAT, 0/false: don't
-%pln.dynamic         = false;
-%pln.halfFluOpt      = false; % indicates if you want to constrain half of each field to have 0 fluence (other half is compensated on the other side)
+pln.dynamic         = true;
+pln.halfFluOpt      = false; % indicates if you want to constrain half of each field to have 0 fluence (other half is compensated on the other side)
 pln.machine         = 'Generic';
 
 
 %% For VMAT
 pln.runSequencing   = true;
-pln.numLevels = 7;
 pln.runDAO          = true;
-
-pln.memorySaver     = false;
+pln.VMAT            = true;
 
 pln.scaleDRx        = true;
-
-pln.VMAT            = true;
 pln.scaleDij        = true;
 pln.jacobi          = true;
-%pln.dynamic         = true;
+pln.dynamic         = true;
 
 
 pln.numApertures = 7; %max val is pln.maxApertureAngleSpread/pln.minGantryAngleRes
+pln.numLevels = 7;
+
 pln.minGantryAngleRes = 4; %Bzdusek
 pln.maxApertureAngleSpread = 28; %should be an even multiple of pln.minGantryAngleRes; Bzdusek
-pln = matRad_VMATGantryAngles(pln);
+
+pln = matRad_VMATGantryAngles(pln,'new');
+
 
 pln.gantryRotCst = [0 6]; %degrees per second
 pln.defaultGantryRot = max(pln.gantryRotCst); %degrees per second
@@ -74,13 +73,18 @@ pln.leafSpeedCst = [0 6]*10; %mm per second
 pln.defaultLeafSpeed = pln.leafSpeedCst(2);
 pln.doseRateCst = [75 600]/60; %MU per second
 pln.defaultDoseRate = pln.doseRateCst(2);
-%pln.maxLeafTravelPerDeg = pln.leafSpeedCst(2)/pln.defaultGantryRot;
+pln.maxLeafTravelPerDeg = pln.leafSpeedCst(2)/pln.defaultGantryRot;
+
+pln.halfFluOpt = false;
+pln.halfFluOptMargin = 10; % mm
 
 recalc.doRecalc = 0;
 recalc.dynamic = 0;
 recalc.interpNew = 0;
 recalc.pln = pln;
 recalc.pln.minGantryAngleRes = 1;
+
+%pln.halfFluOpt = false;
 
 
 
@@ -97,6 +101,8 @@ elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
 end
 %dij.weightToMU = 100*(100/90)^2*(67/86)*(110/105)^2*(90/95)^2;
+dij.weightToMU = 100;
+dij.scaleFactor = 1;
 
 %this is equal to multiplication of factors:
 % - factor when reference conditions are equal to each other (100)
@@ -120,7 +126,7 @@ end
 
 %% DAO
 if strcmp(pln.radiationMode,'photons') && pln.runDAO
-   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln,stf);
+   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
    %matRad_visApertureInfo(resultGUI.apertureInfo);
    
    recalc = matRad_doseRecalc(dij,cst,pln,recalc,ct,resultGUI.apertureInfo);

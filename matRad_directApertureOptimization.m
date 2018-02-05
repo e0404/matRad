@@ -1,4 +1,4 @@
-function [resultGUI,info] = matRad_directApertureOptimization(dij,cst,apertureInfo,resultGUI,pln,stf)
+function [resultGUI,info] = matRad_directApertureOptimization(dij,cst,apertureInfo,resultGUI,pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to run direct aperture optimization
 %
@@ -146,9 +146,9 @@ options.numOfScenarios  = dij.numOfScenarios;
 funcs.objective         = @(x) matRad_daoObjFunc(x,dij,cst_Over,options,daoVec2ApertureInfo);
 if pln.VMAT
     if pln.dynamic
-        funcs.gradient          = @(x) matRad_daoGradFunc_VMATdynamic(x,dij,cst_Over,options,daoVec2ApertureInfo);
-        funcs.constraints       = @(x) matRad_daoConstFunc_VMATdynamic(x,dij,cst_Over,options,daoVec2ApertureInfo);
-        funcs.jacobian          = @(x) matRad_daoJacobFunc_VMATdynamic(x,dij,cst_Over,options,daoVec2ApertureInfo);
+        funcs.gradient          = @(x) matRad_daoGradFunc_VMATdynamic(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
+        funcs.constraints       = @(x) matRad_daoConstFunc_VMATdynamic(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
+        funcs.jacobian          = @(x) matRad_daoJacobFunc_VMATdynamic(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
         funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct_VMATdynamic(apertureInfo,dij,cst_Over);
     else
         funcs.gradient          = @(x) matRad_daoGradFunc_VMATstatic(x,dij,cst_Over,options,daoVec2ApertureInfo);
@@ -181,22 +181,10 @@ if pln.scaleDij
     %rescale dij matrix
     %dij.physicalDose{1} = dij.physicalDose{1}/dij.scaleFactor;
     dij.weightToMU = dij.weightToMU/dij.scaleFactor;
+    
     apertureInfo.weightToMU = apertureInfo.weightToMU/dij.scaleFactor;
     optApertureInfoVec(1:apertureInfo.totalNumOfShapes) = optApertureInfoVec(1:apertureInfo.totalNumOfShapes)*dij.scaleFactor;
-    
-    dij.scaleFactor = 1;
 end
-
-% update the apertureInfoStruct and calculate bixel weights
-resultGUI.apertureInfo = daoVec2ApertureInfo(apertureInfo,optApertureInfoVec);
-
-% override also bixel weight vector in optResult struct
-resultGUI.w    = resultGUI.apertureInfo.bixelWeights;
-resultGUI.wDao = resultGUI.apertureInfo.bixelWeights;
-
-% calc dose and reshape from 1D vector to 3D array
-d = matRad_backProjection(resultGUI.w,dij,options);
-resultGUI.physicalDose = reshape(d{1},dij.dimensions);
 
 if pln.scaleDRx
     %Scale D95 in target to RXDose
@@ -207,13 +195,18 @@ if pln.scaleDRx
     
     % update the apertureInfoStruct and calculate bixel weights
     resultGUI.apertureInfo = daoVec2ApertureInfo(resultGUI.apertureInfo,optApertureInfoVec);
-    
-    % override also bixel weight vector in optResult struct
-    resultGUI.w    = resultGUI.apertureInfo.bixelWeights;
-    resultGUI.wDao = resultGUI.apertureInfo.bixelWeights;
-    
-    resultGUI.physicalDose = resultGUI.physicalDose.*resultGUI.apertureInfo.scaleFacRx;
+else
+    % update the apertureInfoStruct and calculate bixel weights
+    resultGUI.apertureInfo = daoVec2ApertureInfo(apertureInfo,optApertureInfoVec);
 end
+
+% override also bixel weight vector in optResult struct
+resultGUI.w    = resultGUI.apertureInfo.bixelWeights;
+resultGUI.wDao = resultGUI.apertureInfo.bixelWeights;
+
+% calc dose and reshape from 1D vector to 3D array
+resultGUI.physicalDose = reshape(dij.physicalDose{1}*resultGUI.w,dij.dimensions);
+
 
 % update apertureInfoStruct with the maximum leaf speeds per segment
 if pln.VMAT
@@ -222,6 +215,6 @@ if pln.VMAT
     
     %optimize delivery
     resultGUI = matRad_optDelivery(resultGUI,pln,1);
-    resultGUI = matRad_calcDeliveryMetrics(resultGUI,pln,stf);
+    resultGUI = matRad_calcDeliveryMetrics(resultGUI,pln);
 end
 

@@ -64,22 +64,15 @@ dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.dimensions         = pln.voxelDimensions;
 dij.numOfScenarios     = 1;
-dij.weightToMU         = 100;
-dij.scaleFactor        = 1;
-dij.memorySaver        = pln.memorySaver;
 
 % set up arrays for book keeping
 dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
 dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
 dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
-
-dij.nCore   = zeros*ones(dij.totalNumOfRays,1,'uint16');
-dij.nTail    = zeros*ones(dij.totalNumOfRays,1,'uint16');
-dij.nDepth  = zeros*ones(dij.totalNumOfRays,1,'uint16');
-
-dij.ixTail          = intmax('uint32')*ones(1000*dij.totalNumOfRays,1,'uint32');
-dij.nTailPerDepth   = intmax('uint16')*ones(100*dij.totalNumOfRays,1,'uint16');
-dij.bixelDoseTail   = -1*ones(100*dij.totalNumOfRays,1,'double');
+if pln.halfFluOpt
+    % do not optimize this bixel
+    dij.optFlu = NaN*ones(dij.totalNumOfRays,1);
+end
 
 % Allocate space for dij.physicalDose sparse matrix
 for i = 1:dij.numOfScenarios
@@ -106,7 +99,7 @@ if ~(strcmp(num2str(pln.bixelWidth),'field'))
     if calcDoseDirect
         lateralCutoff = 82; % [mm]
     else
-        lateralCutoff = 50; % [mm]
+        lateralCutoff = 25; % [mm]
     end
 else
     lateralCutoff = 140; % [mm] due to the large field size
@@ -148,8 +141,6 @@ if ~(strcmp(num2str(pln.bixelWidth),'field'))
 end
 
 counter = 0;
-offsetTail = 0;
-offsetDepth = 0;
 
 fprintf('matRad: Photon dose calculation...\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -296,6 +287,11 @@ for i = 1:dij.numOfBeams % loop over all beams
         dij.rayNum(counter)   = j;
         dij.bixelNum(counter) = j;
         
+        if pln.halfFluOpt
+            % do not optimize this bixel
+            dij.optFlu(counter) = stf(i).ray(j).optFlu;
+        end
+        
         % Ray tracing for beam i and bixel j
         [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
                                                                stf(i).sourcePoint_bev, ...
@@ -320,24 +316,8 @@ for i = 1:dij.numOfBeams % loop over all beams
         if ~strcmp(num2str(pln.bixelWidth),'field') && ~calcDoseDirect
             r0   = 25;   % [mm] sample beyond the iresnner core
             Type = 'radius';
-            
-            if dij.memorySaver
-                [ix,bixelDose,ixTail,nTailPerDepth,bixelDoseTail,nTail,nDepth,nCore] = matRad_DijSampling_memorySaver(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
-                
-                dij.ixTail(offsetTail+(1:nTail)) = uint32(V(ixTail));
-                dij.nTailPerDepth(offsetDepth+(1:nDepth)) = nTailPerDepth;
-                dij.bixelDoseTail(offsetDepth+(1:nDepth)) = bixelDoseTail;
-                
-                dij.nCore(counter) = uint16(nCore);
-                dij.nTail(counter) = uint16(nTail);
-                dij.nDepth(counter) = uint16(nDepth);
-                
-                offsetTail = offsetTail+nTail;
-                offsetDepth = offsetDepth+nDepth;
-            else
-                [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
-            end
-        end
+            [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
+        end   
         % Save dose for every bixel in cell array
         doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix),1,bixelDose,dij.numOfVoxels,1);
                 
@@ -359,10 +339,6 @@ for i = 1:dij.numOfBeams % loop over all beams
         
     end
 end
-
-dij.ixTail(dij.ixTail == intmax('uint32')) = [];
-dij.nTailPerDepth(dij.nTailPerDepth == intmax('uint16')) = [];
-dij.bixelDoseTail(dij.bixelDoseTail == -1) = [];
 
 try
   % wait 0.1s for closing all waitbars

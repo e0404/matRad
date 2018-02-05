@@ -1,4 +1,4 @@
-function recalc = matRad_doseRecalc(cst,pln,recalc,ct,apertureInfo,calcDoseDirect,dij)
+function recalc = matRad_doseRecalc(cst,pln,recalc,ct,apertureInfo)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to recalculate dose on a Dij angular resolution, or using
 % the dynamic method, whichever the user wants%
@@ -34,10 +34,6 @@ function recalc = matRad_doseRecalc(cst,pln,recalc,ct,apertureInfo,calcDoseDirec
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-if nargin < 6
-    calcDoseDirect = true;
-end
 
 recalc.apertureInfo = apertureInfo;
 recalc.apertureInfo.recalcDynamic = recalc.dynamic;
@@ -151,15 +147,12 @@ else
     recalc.apertureInfo =  matRad_daoVec2ApertureInfo_VMATstatic(recalc.apertureInfo,recalc.apertureInfo.apertureVector);
 end
 
-if calcDoseDirect
-    recalc.resultGUI = matRad_calcDoseDirect(ct,recalc.stf,recalc.pln,cst,recalc.apertureInfo.bixelWeights);
-else
-    recalc.resultGUI.w = recalc.apertureInfo.bixelWeights;
-    
-    options.numOfScenarios = 1;
-    options.bioOpt = 'none';
-    d = matRad_backProjection(recalc.resultGUI.w,dij,options);
-    recalc.resultGUI.physicalDose = reshape(d{1},dij.dimensions);
-end
+recalc.resultGUI = matRad_calcDoseDirect(ct,recalc.stf,recalc.pln,cst,recalc.apertureInfo.bixelWeights);
+
+
+
+
+
+
 
 

@@ -17,10 +17,10 @@ refDose_YY_oldDij = recalc.resultGUI.physicalDose;
 cst_Over = matRad_setOverlapPriorities(cst);
 
 V_TargAndNorm = false(size(refDose));
-% adjust objectives _and_ constraints internally for fractionation
+% adjust objectives _and_ constraints internally for fractionation 
 for i = 1:size(cst_Over,1)
     for j = 1:size(cst_Over{i,6},1)
-        cst_Over{i,6}(j).dose = cst_Over{i,6}(j).dose/pln.numOfFractions;
+       cst_Over{i,6}(j).dose = cst_Over{i,6}(j).dose/pln.numOfFractions;
     end
     if ~isempty(cst_Over{i,6}) && (~strcmp(cst_Over{i,2},'BODY'))
         [x, y, z] = ind2sub(size(refDose),cst_Over{i,4}{1});
@@ -98,19 +98,6 @@ percVErr10_YY_oldDij_itself = zeros(size(angularResS));
 fluence_YY_oldDij = zeros(size(recalc.apertureInfo.beam(1).shape(1).shapeMap,1), size(recalc.apertureInfo.beam(1).shape(1).shapeMap,2), numel(angularResS));
 weight_YY_oldDij = zeros(size(angularResS));
 
-numPVHPoints = 1e3;
-
-PVH_YY = zeros(numel(angularResS),numPVHPoints);
-PVH_NY = zeros(numel(angularResS),numPVHPoints);
-PVH_YY_oldDij = zeros(numel(angularResS),numPVHPoints);
-PVH_NN = zeros(numel(angularResS),numPVHPoints);
-
-PVHPoints_YY = zeros(numel(angularResS),numPVHPoints);
-PVHPoints_NY = zeros(numel(angularResS),numPVHPoints);
-PVHPoints_YY_oldDij = zeros(numel(angularResS),numPVHPoints);
-PVHPoints_NN = zeros(numel(angularResS),numPVHPoints);
-
-
 i = 1;
 for angularRes = angularResS
     %for each angular resolution, proceed from the best approximation to
@@ -120,23 +107,10 @@ for angularRes = angularResS
     fname = sprintf('%.1f degrees, dyn + interp.mat',angularRes);
     load(fname);
     dose = recalc.resultGUI.physicalDose;
-    
-    percDiff = 100*abs(dose-refDose)./refDose;
-    percDiff(~V_TargAndNorm) = [];
-    percDiff = percDiff(:);
-    numVox = numel(percDiff);
-    
-    PVHPoints_YY(i,:) = linspace(0,max(percDiff)*1.05,numPVHPoints);
-    for j = 1:numPVHPoints
-        PVH_YY(i,j) = sum(percDiff > PVHPoints_YY(i,j));
-    end
-    PVH_YY(i,:) = 100.*PVH_YY(i,:)./numVox;
-    
     percVErr1_YY(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.01 & V_TargAndNorm)./nnz(V_TargAndNorm);
     percVErr3_YY(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.03 & V_TargAndNorm)./nnz(V_TargAndNorm);
     percVErr5_YY(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.05 & V_TargAndNorm)./nnz(V_TargAndNorm);
     percVErr10_YY(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.10 & V_TargAndNorm)./nnz(V_TargAndNorm);
-    
     for j = 1:numel(recalc.apertureInfo.beam)
         fluence_YY(:,:,i) = fluence_YY(:,:,i)+recalc.apertureInfo.beam(j).shape(1).weight*recalc.apertureInfo.beam(j).shape(1).shapeMap;
         weight_YY(i) = weight_YY(i)+recalc.apertureInfo.beam(j).shape(1).weight;
@@ -164,18 +138,6 @@ for angularRes = angularResS
     fname = sprintf('%.1f degrees, Ndyn + interp.mat',angularRes);
     load(fname);
     dose = recalc.resultGUI.physicalDose;
-    
-    percDiff = 100*abs(dose-refDose)./refDose;
-    percDiff(~V_TargAndNorm) = [];
-    percDiff = percDiff(:);
-    numVox = numel(percDiff);
-    
-    PVHPoints_NY(i,:) = linspace(0,max(percDiff)*1.05,numPVHPoints);
-    for j = 1:numPVHPoints
-        PVH_NY(i,j) = sum(percDiff > PVHPoints_NY(i,j));
-    end
-    PVH_NY(i,:) = 100.*PVH_NY(i,:)./numVox;
-    
     percVErr1_NY(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.01 & V_TargAndNorm)./nnz(V_TargAndNorm);
     percVErr3_NY(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.03 & V_TargAndNorm)./nnz(V_TargAndNorm);
     percVErr5_NY(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.05 & V_TargAndNorm)./nnz(V_TargAndNorm);
@@ -191,18 +153,6 @@ for angularRes = angularResS
     fname = sprintf('%.1f degrees, dyn + interp oldDij.mat',angularRes);
     load(fname);
     dose = recalc.resultGUI.physicalDose;
-    
-    percDiff = 100*abs(dose-refDose)./refDose;
-    percDiff(~V_TargAndNorm) = [];
-    percDiff = percDiff(:);
-    numVox = numel(percDiff);
-    
-    PVHPoints_YY_oldDij(i,:) = linspace(0,max(percDiff)*1.05,numPVHPoints);
-    for j = 1:numPVHPoints
-        PVH_YY_oldDij(i,j) = sum(percDiff > PVHPoints_YY_oldDij(i,j));
-    end
-    PVH_YY_oldDij(i,:) = 100.*PVH_YY_oldDij(i,:)./numVox;
-    
     percVErr1_YY_oldDij(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.01 & V_TargAndNorm)./nnz(V_TargAndNorm);
     percVErr3_YY_oldDij(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.03 & V_TargAndNorm)./nnz(V_TargAndNorm);
     percVErr5_YY_oldDij(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.05 & V_TargAndNorm)./nnz(V_TargAndNorm);
@@ -222,18 +172,6 @@ for angularRes = angularResS
     fname = sprintf('%.1f degrees, Ndyn + Ninterp.mat',angularRes);
     load(fname);
     dose = recalc.resultGUI.physicalDose;
-    
-    percDiff = 100*abs(dose-refDose)./refDose;
-    percDiff(~V_TargAndNorm) = [];
-    percDiff = percDiff(:);
-    numVox = numel(percDiff);
-    
-    PVHPoints_NN(i,:) = linspace(0,max(percDiff)*1.05,numPVHPoints);
-    for j = 1:numPVHPoints
-        PVH_NN(i,j) = sum(percDiff > PVHPoints_NN(i,j));
-    end
-    PVH_NN(i,:) = 100.*PVH_NN(i,:)./numVox;
-    
     percVErr1_NN(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.01 & V_TargAndNorm)./nnz(V_TargAndNorm);
     percVErr3_NN(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.03 & V_TargAndNorm)./nnz(V_TargAndNorm);
     percVErr5_NN(i) = 100*nnz(abs(dose-refDose)./refDose >= 0.05 & V_TargAndNorm)./nnz(V_TargAndNorm);
@@ -254,8 +192,8 @@ for angularRes = angularResS
 end
 
 
-save('Results','*_NN', '*_NY', '*_YN', '*_YY','*_YY_oldDij')
-%{
+save('Results','*_NN', '*_NY', '*_YN', '*_YY')
+
 figure
 hold
 plot(angularResS,percVErr1_YY)
@@ -339,73 +277,6 @@ fname = 'Not dynamic, not interpolated cf itself';
 title(fname)
 grid
 savefig(fname)
-%}
-for i = 1:numel(angularResS)
-    figure(1)
-    semilogy(PVHPoints_YY(i,:),PVH_YY(i,:))
-    hold on
-    
-    figure(2)
-    semilogy(PVHPoints_NN(i,:),PVH_NN(i,:))
-    hold on
-    
-    figure(3)
-    semilogy(PVHPoints_YY_oldDij(i,:),PVH_YY_oldDij(i,:))
-    hold on
-    
-    figure(4)
-    semilogy(PVHPoints_NY(i,:),PVH_NY(i,:))
-    hold on
-end
 
-path = 'C:\Users\eric\Carleton University\OneDrive - Carleton University\Carleton\PhD Project\Papers\Dynamic Fluence Calculation\Figures\';
-
-figure(1)
-xlabel('Relative dose difference (\%)')
-ylabel('Volume (\%)')
-fname = 'TG119_Dynamic_interpolated';
-%title(fname)
-legend({'$\Delta\theta_{\mathrm{dose}} = \SI{0.5}{\degree}$','$\Delta\theta_{\mathrm{dose}} = \SI{1}{\degree}$','$\Delta\theta_{\mathrm{dose}} = \SI{2}{\degree}$','$\Delta\theta_{\mathrm{dose}} = \SI{4}{\degree}$'},'Location','Best')
-grid on
-set(gca,'YMinorTick','on','XMinorTick','on')
-savefig(fname)
-fullpath = [path fname '.tex'];
-matlab2tikz('filename',fullpath,'interpretTickLabelsAsTex',true,'parseStrings',false,'noSize',true,'extraAxisOptions','minor y tick num=4,minor x tick num=4,width=\linewidth,height=\linewidth','showInfo',false);
-
-figure(2)
-xlabel('Relative dose difference (\%)')
-ylabel('Volume (\%)')
-fname = 'TG119_Notdynamic_notinterpolated';
-%title(fname)
-legend({'$\Delta\theta_{\mathrm{dose}} = \SI{0.5}{\degree}$','$\Delta\theta_{\mathrm{dose}} = \SI{1}{\degree}$','$\Delta\theta_{\mathrm{dose}} = \SI{2}{\degree}$','$\Delta\theta_{\mathrm{dose}} = \SI{4}{\degree}$'},'Location','Best')
-grid on
-set(gca,'YMinorTick','on','XMinorTick','on')
-savefig(fname)
-fullpath = [path fname '.tex'];
-matlab2tikz('filename',fullpath,'interpretTickLabelsAsTex',true,'parseStrings',false,'noSize',true,'extraAxisOptions','minor y tick num=4,minor x tick num=4,width=\linewidth,height=\linewidth','showInfo',false);
-
-figure(3)
-xlabel('Relative dose difference (\%)')
-ylabel('Volume (\%)')
-fname = 'TG119_Dynamic_interpolated_oldDij';
-%title(fname)
-legend({'$\Delta\theta_{\mathrm{dose}} = \SI{0.5}{\degree}$','$\Delta\theta_{\mathrm{dose}} = \SI{1}{\degree}$','$\Delta\theta_{\mathrm{dose}} = \SI{2}{\degree}$','$\Delta\theta_{\mathrm{dose}} = \SI{4}{\degree}$'},'Location','Best')
-grid on
-set(gca,'YMinorTick','on','XMinorTick','on')
-savefig(fname)
-fullpath = [path fname '.tex'];
-matlab2tikz('filename',fullpath,'interpretTickLabelsAsTex',true,'parseStrings',false,'noSize',true,'extraAxisOptions','minor y tick num=4,minor x tick num=4,width=\linewidth,height=\linewidth','showInfo',false);
-
-figure(4)
-xlabel('Relative dose difference (\%)')
-ylabel('Volume (\%)')
-fname = 'TG119_Notdynamic_interpolated';
-%title(fname)
-legend({'$\Delta\theta_{\mathrm{dose}} = \SI{0.5}{\degree}$','$\Delta\theta_{\mathrm{dose}} = \SI{1}{\degree}$','$\Delta\theta_{\mathrm{dose}} = \SI{2}{\degree}$','$\Delta\theta_{\mathrm{dose}} = \SI{4}{\degree}$'},'Location','Best')
-grid on
-set(gca,'YMinorTick','on','XMinorTick','on')
-savefig(fname)
-fullpath = [path fname '.tex'];
-matlab2tikz('filename',fullpath,'interpretTickLabelsAsTex',true,'parseStrings',false,'noSize',true,'extraAxisOptions','minor y tick num=4,minor x tick num=4,width=\linewidth,height=\linewidth','showInfo',false);
 
 

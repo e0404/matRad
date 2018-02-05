@@ -114,7 +114,6 @@ else
         subDose            = bixelDoseTail(ixTmp);                   % get tail dose in current cluster
         subIx              = ixTail(ixTmp);                          % get indices in current cluster
         thresholdDose      = max(subDose);
-        rng(i);
         r                  = rand(numel(subDose),1);                 % get random samples
         ixSamp             = r<=(subDose/thresholdDose);
         NumSamples         = sum(ixSamp);

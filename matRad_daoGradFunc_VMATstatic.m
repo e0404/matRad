@@ -91,51 +91,40 @@ for i = 1:numel(apertureInfo.beam)
         %give fraction of gradient to previous optimized beam
         
         %first weight
-        lastOptInd = find(optBeams == apertureInfo.beam(i).lastOptIndex,1);
-        g(lastOptInd) = g(lastOptInd)+apertureInfo.beam(i).fracFromLastOpt.*(apertureInfo.beam(i).time./apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).time) ...
-            *apertureInfo.beam(i).shape(1).shapeMap(ix)' * bixelG(apertureInfo.beam(i).bixelIndMap(ix))./apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).shape(1).jacobiScale;
-        %g(lastOptInd) = g(lastOptInd)+(apertureInfo.beam(i).fracFromLastOpt*apertureInfo.beam(i).doseAngleBordersDiff*apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).gantryRot ...
-            %./(apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).doseAngleBordersDiff*apertureInfo.beam(i).gantryRot))*apertureInfo.beam(i).shape(1).shapeMap(ix)' ...
-            %* bixelG(apertureInfo.beam(i).bixelIndMap(ix)) ./ apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).shape(1).jacobiScale;
+        lastOptInd = (optBeams == apertureInfo.beam(i).lastOptIndex);
+        g(lastOptInd) = g(lastOptInd)+apertureInfo.beam(i).fracFromLastOpt*apertureInfo.beam(i).shape(1).shapeMap(ix)' ...
+            * bixelG(apertureInfo.beam(i).bixelIndMap(ix));
         
         %now leaf pos
         indInOptVec = apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).shape(1).vectorOffset-1+[(1:apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).numOfActiveLeafPairs) apertureInfo.totalNumOfLeafPairs+(1:apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).numOfActiveLeafPairs)];
         indInBixVec = apertureInfo.beam(i).bixOffset-1+[(1:apertureInfo.beam(i).numOfActiveLeafPairs) apertureInfo.doseTotalNumOfLeafPairs+(1:apertureInfo.beam(i).numOfActiveLeafPairs)];
         
-        g(indInOptVec) = g(indInOptVec)+apertureInfo.beam(i).fracFromLastOpt*apertureInfo.beam(i).shape(1).weight*bixelG(apertureInfo.bixelIndices(indInBixVec)) / apertureInfo.bixelWidth;
+        %This is an approximation, we are assuming that the gantry
+        %spends equal time in the arcs before and after the current arc
+        %actual MU is MU = f1*t1/t*MU1+f2*t2/t*MU2, where t is the time
+        %in the current arc
+        g(indInOptVec) = g(indInOptVec)+(apertureInfo.beam(i).doseAngleBordersDiff/apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).doseAngleBordersDiff)*apertureInfo.beam(i).fracFromLastOpt*apertureInfo.beam(i).shape(1).weight*bixelG(apertureInfo.bixelIndices(indInBixVec)) / apertureInfo.bixelWidth;
         
-        %now time
-        lastOptIndTime = lastOptInd+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2;
-        g(lastOptIndTime) = g(lastOptIndTime)+(apertureInfo.beam(i).doseAngleBordersDiff.*apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).timeFacCurr) ...
-            .*(-apertureInfo.beam(i).fracFromLastOpt.*apertureInfo.beam(i).timeFracFromNextOpt.*(apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).shape(1).weight./apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).doseAngleBordersDiff).*(apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).time./apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).time.^2) ...
-            +(1-apertureInfo.beam(i).fracFromLastOpt).*apertureInfo.beam(i).timeFracFromLastOpt.*(apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).shape(1).weight./apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).doseAngleBordersDiff).*(1./apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).time)) ... 
-            * apertureInfo.beam(i).shape(1).shapeMap(ix)' * bixelG(apertureInfo.beam(i).bixelIndMap(ix));
+        
         
         %give the other fraction to next optimized beam
         
         %first weight
-        nextOptInd = find(optBeams == apertureInfo.beam(i).nextOptIndex,1);
-        g(nextOptInd) = g(nextOptInd)+(1-apertureInfo.beam(i).fracFromLastOpt).*(apertureInfo.beam(i).time./apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).time) ...
-            *apertureInfo.beam(i).shape(1).shapeMap(ix)' * bixelG(apertureInfo.beam(i).bixelIndMap(ix))./apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).shape(1).jacobiScale;
-        %g(nextOptInd) = g(nextOptInd)+((1-apertureInfo.beam(i).fracFromLastOpt)*apertureInfo.beam(i).doseAngleBordersDiff*apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).gantryRot ...
-            %./(apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).doseAngleBordersDiff*apertureInfo.beam(i).gantryRot))*apertureInfo.beam(i).shape(1).shapeMap(ix)' ...
-            %* bixelG(apertureInfo.beam(i).bixelIndMap(ix)) ./ apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).shape(1).jacobiScale;
+        nextOptInd = (optBeams == apertureInfo.beam(i).nextOptIndex);
+        g(nextOptInd) = g(nextOptInd)+(1-apertureInfo.beam(i).fracFromLastOpt)*apertureInfo.beam(i).shape(1).shapeMap(ix)' ...
+            * bixelG(apertureInfo.beam(i).bixelIndMap(ix));
         
         %now leaf pos
         indInOptVec = apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).shape(1).vectorOffset-1+[(1:apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).numOfActiveLeafPairs) apertureInfo.totalNumOfLeafPairs+(1:apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).numOfActiveLeafPairs)];
         indInBixVec = apertureInfo.beam(i).bixOffset-1+[(1:apertureInfo.beam(i).numOfActiveLeafPairs) apertureInfo.doseTotalNumOfLeafPairs+(1:apertureInfo.beam(i).numOfActiveLeafPairs)];
         
-        g(indInOptVec) = g(indInOptVec)+(1-apertureInfo.beam(i).fracFromLastOpt)*apertureInfo.beam(i).shape(1).weight*bixelG(apertureInfo.bixelIndices(indInBixVec)) / apertureInfo.bixelWidth;
-        
-        %now time
-        nextOptIndTime = nextOptInd+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2;
-        g(nextOptIndTime) = g(nextOptIndTime)+(apertureInfo.beam(i).doseAngleBordersDiff.*apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).timeFacCurr) ...
-            .*(apertureInfo.beam(i).fracFromLastOpt.*apertureInfo.beam(i).timeFracFromNextOpt.*(apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).shape(1).weight./apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).doseAngleBordersDiff).*(1./apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).time) ...
-            -(1-apertureInfo.beam(i).fracFromLastOpt).*apertureInfo.beam(i).timeFracFromLastOpt.*(apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).shape(1).weight./apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).doseAngleBordersDiff).*(apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).time./apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).time.^2)) ...
-            * apertureInfo.beam(i).shape(1).shapeMap(ix)' * bixelG(apertureInfo.beam(i).bixelIndMap(ix));
-        
+        g(indInOptVec) = g(indInOptVec)+(apertureInfo.beam(i).doseAngleBordersDiff/apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).doseAngleBordersDiff)*(1-apertureInfo.beam(i).fracFromLastOpt)*apertureInfo.beam(i).shape(1).weight*bixelG(apertureInfo.bixelIndices(indInBixVec)) / apertureInfo.bixelWidth;
     end
 end
+
+% 3. set to 0 gradient wrt the times, for now.  Later on we may want to add
+% in a dependence of obj function on total time
+g((apertureInfo.totalNumOfShapes+2*apertureInfo.totalNumOfLeafPairs+1):(2*apertureInfo.totalNumOfShapes+2*apertureInfo.totalNumOfLeafPairs-1)) = 0;
 
 
 % correct the sign for the left leaf positions

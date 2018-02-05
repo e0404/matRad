@@ -75,9 +75,9 @@ if ~all([updatedInfo.beam.optimizeBeam])
             updatedInfo.beam(i).shape(j).weight = apertureInfoVect(shapeInd)./updatedInfo.beam(i).shape(j).jacobiScale;
             
             updatedInfo.beam(i).MU = updatedInfo.beam(i).shape(j).weight*updatedInfo.weightToMU;
-            updatedInfo.beam(i).time = apertureInfoVect(updatedInfo.totalNumOfShapes+updatedInfo.totalNumOfLeafPairs*2+shapeInd)*updatedInfo.beam(i).doseAngleBordersDiff./updatedInfo.beam(i).optAngleBordersDiff;
-            updatedInfo.beam(i).gantryRot = updatedInfo.beam(i).doseAngleBordersDiff/updatedInfo.beam(i).time;
-            updatedInfo.beam(i).MURate = updatedInfo.beam(i).MU./updatedInfo.beam(i).time;
+            updatedInfo.beam(i).time = apertureInfoVect(updatedInfo.totalNumOfShapes+updatedInfo.totalNumOfLeafPairs*2+shapeInd);
+            updatedInfo.beam(i).gantryRot = updatedInfo.beam(i).optAngleBordersDiff/updatedInfo.beam(i).time;
+            updatedInfo.beam(i).MURate = updatedInfo.beam(i).MU*updatedInfo.beam(i).gantryRot/updatedInfo.beam(i).doseAngleBordersDiff;
             
             shapeInd = shapeInd+1;
         end
@@ -88,7 +88,6 @@ end
 % here the new colimator positions are used to create new shapeMaps that
 % now include decimal values instead of binary
 
-shapeInd = 1;
 % loop over all beams
 for i = 1:numel(updatedInfo.beam)
     
@@ -112,9 +111,9 @@ for i = 1:numel(updatedInfo.beam)
         updatedInfo.beam(i).shape(j).weight = apertureInfoVect(shapeInd)./updatedInfo.beam(i).shape(j).jacobiScale;
         
         updatedInfo.beam(i).MU = updatedInfo.beam(i).shape(j).weight*updatedInfo.weightToMU;
-        updatedInfo.beam(i).time = apertureInfoVect(updatedInfo.totalNumOfShapes+updatedInfo.totalNumOfLeafPairs*2+shapeInd)*updatedInfo.beam(i).doseAngleBordersDiff./updatedInfo.beam(i).optAngleBordersDiff;
-        updatedInfo.beam(i).gantryRot = updatedInfo.beam(i).doseAngleBordersDiff/updatedInfo.beam(i).time;
-        updatedInfo.beam(i).MURate = updatedInfo.beam(i).MU./updatedInfo.beam(i).time;
+        updatedInfo.beam(i).time = apertureInfoVect(updatedInfo.totalNumOfShapes+updatedInfo.totalNumOfLeafPairs*2+shapeInd);
+        updatedInfo.beam(i).gantryRot = updatedInfo.beam(i).optAngleBordersDiff/updatedInfo.beam(i).time;
+        updatedInfo.beam(i).MURate = updatedInfo.beam(i).MU*updatedInfo.beam(i).gantryRot/updatedInfo.beam(i).doseAngleBordersDiff;
         
         
         vectorIx_L = updatedInfo.beam(i).shape(j).vectorOffset + ([1:n]-1);
@@ -130,9 +129,8 @@ for i = 1:numel(updatedInfo.beam)
         %MURate is interpolated between MURates of optimized apertures
         updatedInfo.beam(i).MURate = updatedInfo.beam(i).fracFromLastOpt*updatedInfo.beam(updatedInfo.beam(i).lastOptIndex).MURate+(1-updatedInfo.beam(i).fracFromLastOpt)*updatedInfo.beam(updatedInfo.beam(i).nextOptIndex).MURate;
         updatedInfo.beam(i).gantryRot = 1./(updatedInfo.beam(i).timeFracFromLastOpt./updatedInfo.beam(updatedInfo.beam(i).lastOptIndex).gantryRot+updatedInfo.beam(i).timeFracFromNextOpt./updatedInfo.beam(updatedInfo.beam(i).nextOptIndex).gantryRot);
-        updatedInfo.beam(i).time = updatedInfo.beam(i).doseAngleBordersDiff./updatedInfo.beam(i).gantryRot;
         
-        updatedInfo.beam(i).MU = updatedInfo.beam(i).MURate.*updatedInfo.beam(i).time;
+        updatedInfo.beam(i).MU = updatedInfo.beam(i).MURate*updatedInfo.beam(i).doseAngleBordersDiff/updatedInfo.beam(i).gantryRot;
         updatedInfo.beam(i).shape(1).weight = updatedInfo.beam(i).MU./updatedInfo.weightToMU;
         
         vectorIx_L_last = updatedInfo.beam(updatedInfo.beam(i).lastOptIndex).shape(j).vectorOffset + ([1:n]-1);

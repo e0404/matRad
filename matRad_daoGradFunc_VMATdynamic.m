@@ -1,4 +1,4 @@
-function g = matRad_daoGradFunc_VMATdynamic(apertureInfoVec,dij,cst,options,daoVec2ApertureInfo)
+function g = matRad_daoGradFunc_VMATdynamic(apertureInfoVec,apertureInfo,dij,cst,options,daoVec2ApertureInfo)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: gradient function for direct aperture optimization
 %

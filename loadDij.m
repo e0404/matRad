@@ -18,11 +18,6 @@ stopInd = 0;
 
 fprintf('\nLoading dij matrices from file.\n\n');
 
-if isfield(dij,'nnz')
-    dij.physicalDose{1} = spalloc(dij.numOfVoxels,dij.totalNumOfBixels,dij.nnz);
-else
-    dij.physicalDose{1} = spalloc(dij.numOfVoxels,dij.totalNumOfBixels,1);
-end
 
 for i = 1:dij.numOfBeams
     load([fname,sprintf('_beam%i',i)])

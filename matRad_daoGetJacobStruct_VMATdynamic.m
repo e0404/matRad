@@ -89,19 +89,19 @@ end
 
 % get index values for the jacobian
 % variable index
-initialLeftLeafInd = [apertureInfo.beam([apertureInfo.beam.optimizeBeam]).initialLeftLeafInd];
-initialRightLeafInd = [apertureInfo.beam([apertureInfo.beam.optimizeBeam]).initialRightLeafInd];
-finalLeftLeafInd = [apertureInfo.beam([apertureInfo.beam.optimizeBeam]).finalLeftLeafInd];
-finalRightLeafInd = [apertureInfo.beam([apertureInfo.beam.optimizeBeam]).finalRightLeafInd];
-leftTimeInd = [apertureInfo.beam([apertureInfo.beam.optimizeBeam]).leftTimeInd];
-rightTimeInd = [apertureInfo.beam([apertureInfo.beam.optimizeBeam]).rightTimeInd];
+currentLeftLeafInd = (apertureInfo.totalNumOfShapes+1):(apertureInfo.totalNumOfShapes+apertureInfo.beam(1).numOfActiveLeafPairs*apertureInfo.totalNumOfShapes);
+currentRightLeafInd = (apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+1):(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+apertureInfo.beam(1).numOfActiveLeafPairs*apertureInfo.totalNumOfShapes);
+nextLeftLeafInd = (apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+1):(apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.beam(1).numOfActiveLeafPairs*apertureInfo.totalNumOfShapes);
+nextRightLeafInd = (apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+1):(apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+apertureInfo.beam(1).numOfActiveLeafPairs*apertureInfo.totalNumOfShapes);
+leftTimeInd = repelem((apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2+1):(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2),apertureInfo.beam(1).numOfActiveLeafPairs);
+rightTimeInd = repelem((apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2+1):(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2),apertureInfo.beam(1).numOfActiveLeafPairs);
 % constraint index
 constraintInd = 1:2*apertureInfo.beam(1).numOfActiveLeafPairs*apertureInfo.totalNumOfShapes;
 
 % jacobian of the leafspeed constraint
 i = repmat(constraintInd,1,3);
-j = [initialLeftLeafInd initialRightLeafInd finalLeftLeafInd finalRightLeafInd leftTimeInd rightTimeInd];
-% first do jacob wrt initial leaf position (left, right), then final leaf
+j = [currentLeftLeafInd currentRightLeafInd nextLeftLeafInd nextRightLeafInd leftTimeInd rightTimeInd];
+% first do jacob wrt current leaf position (left, right), then next leaf
 % position (left, right), then time (left, right)
 
 s = ones(1,6*apertureInfo.beam(1).numOfActiveLeafPairs*apertureInfo.totalNumOfShapes);
