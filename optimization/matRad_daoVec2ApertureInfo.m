@@ -550,8 +550,8 @@ for i = 1:numel(updatedInfo.beam)
         %The following is taken from the non-VMAT case (j->1, since there is only 1
         %shape per beam in VMAT)
         % rounding for numerical stability
-        leftLeafPos  = round2(leftLeafPos,10);
-        rightLeafPos = round2(rightLeafPos,10);
+        leftLeafPos  = round2(leftLeafPos,6);
+        rightLeafPos = round2(rightLeafPos,6);
         
         %
         xPosIndLeftLeaf  = round((leftLeafPos - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth + 1);

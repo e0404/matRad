@@ -1,4 +1,4 @@
-function pln = matRad_VMATGantryAngles(pln)
+function pln = matRad_VMATGantryAngles(pln,cst,ct)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad determine gantry angles for VMAT
 % 
@@ -62,7 +62,7 @@ pln.numOfBeams      = numel(pln.gantryAngles);
 pln.couchAngles     = 0*pln.gantryAngles;
 
 
-
+pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
 
 

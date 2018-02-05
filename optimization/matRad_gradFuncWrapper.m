@@ -97,7 +97,8 @@ end
 g = zeros(dij.totalNumOfBixels,1);
 
 for i = 1:options.numOfScenarios
-    if any(delta{i} > 0) % exercise only if contributions from scenario i
+    
+    if any(delta{i} ~= 0) % exercise only if contributions from scenario i
         
         if isequal(options.bioOpt,'none')
             
@@ -164,12 +165,13 @@ for i = 1:options.numOfScenarios
 
         elseif isequal(options.bioOpt,'LEMIV_RBExD')
 
-            scaledEffect = d{i} + dij.gamma;
-            deltaTmp     = delta{i}./(2*dij.bx.*scaledEffect);
-            vBias        = (deltaTmp' * dij.mAlphaDose{i})';
-            quadTerm     = dij.mSqrtBetaDose{i} * w;
-            mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{i})';
-            g            = g + vBias + mPsi ;
+            deltaTmp              = zeros(dij.numOfVoxels,1);
+            scaledEffect          = d{i} + dij.gamma;
+            deltaTmp(dij.ixDose)  = delta{i}(dij.ixDose)./(2*dij.bx(dij.ixDose).*scaledEffect(dij.ixDose));
+            vBias                 = (deltaTmp' * dij.mAlphaDose{i})';
+            quadTerm              = dij.mSqrtBetaDose{i} * w;
+            mPsi                  = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{i})';
+            g                     = g + vBias + mPsi ;
 
         end
 

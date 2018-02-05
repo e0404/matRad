@@ -126,6 +126,12 @@ matRad_global_apertureInfo = apertureInfo;
 % Set the IPOPT options.
 matRad_ipoptOptions;
 
+% set optimization options
+options.radMod          = pln.radiationMode;
+options.bioOpt          = pln.bioOptimization;
+options.ID              = [pln.radiationMode '_' pln.bioOptimization];
+options.numOfScenarios  = dij.numOfScenarios;
+
 % set bounds on optimization variables
 options.lb              = apertureInfo.limMx(:,1);                                          % Lower bound on the variables.
 options.ub              = apertureInfo.limMx(:,2);                                          % Upper bound on the variables.
@@ -164,7 +170,6 @@ else
     funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct_IMRT(apertureInfo,dij,cst_Over);
     funcs.iterfunc          = @(iter,objective,parameter) matRad_IpoptIterFunc(iter,objective,parameter,options.ipopt.max_iter);
 end
-
 
 % Run IPOPT.
 [optApertureInfoVec, info] = ipopt(apertureInfo.apertureVector,funcs,options);

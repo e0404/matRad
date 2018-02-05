@@ -39,10 +39,18 @@ function matRad_writeCube(filepath,cube,datatype,metadata)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Sanity check
+%% Sanity checks
 [filedir,filename,ext] = fileparts(filepath);
 if ~exist(filedir,'dir')
     error(['Directory ' filedir ' does not exist!']);
+end
+
+%No Special characters in filename (allow only _ and alphanumeric
+%characters
+robustFileName = filename(isstrprop(filename,'alphanum') | filename == '_');
+if ~strcmp(robustFileName,filename)
+    warning(['Changing filename from ''' filename ''' to ''' robustFileName ''' to get rid of special characters!']);
+    filepath = fullfile(filedir,[robustFileName ext]);
 end
 
 %% Prepare Metadata

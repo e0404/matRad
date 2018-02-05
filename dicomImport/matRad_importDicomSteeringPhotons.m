@@ -28,6 +28,10 @@ function [stf, pln] = matRad_importDicomSteeringPhotons(pln)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+stf = struct;
+if ~isfield(pln.Collimation,'Fields')
+    return
+end
 
 % get fields possessing a field weight vector greater than 0
 Fields = pln.Collimation.Fields([pln.Collimation.Fields(:).Weight] > 0);
@@ -45,7 +49,7 @@ for i = 1:size(UniqueComb,1)
     % set necessary steering information 
     stf(i).gantryAngle  = UniqueComb(i,1);
     stf(i).couchAngle   = UniqueComb(i,2);
-    stf(i).isoCenter    = pln.isoCenter;
+    stf(i).isoCenter    = pln.isoCenter(i,:);
     
     % bixelWidth = 'field' as keyword for whole field dose calc
     stf(i).bixelWidth    = 'field';
@@ -59,45 +63,36 @@ for i = 1:size(UniqueComb,1)
     stf(i).SAD               = Fields(ia(i)).SAD;
     stf(i).sourcePoint_bev   = [0 -stf(i).SAD 0];
     
-    % compute coordinates in lps coordinate system, i.e. rotate beam
-    % geometry around fixed patient; use transpose matrices because we are
-    % working with row vectors
-    % Rotation around Z axis (gantry)
-    rotMx_XY_T = [ cosd(stf(i).gantryAngle) sind(stf(i).gantryAngle) 0;
-                  -sind(stf(i).gantryAngle) cosd(stf(i).gantryAngle) 0;
-                                          0                        0 1];
-    % Rotation around Y axis (couch)
-    rotMx_XZ_T = [cosd(stf(i).couchAngle) 0 -sind(stf(i).couchAngle);
-                                        0 1                        0;
-                  sind(stf(i).couchAngle) 0  cosd(stf(i).couchAngle)];
+    % coordinate transformation with rotation matrix.
+    % use transpose matrix because we are working with row vectors
+    rotMat_vectors_T = transpose(matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).couchAngle));
+
 
     % Rotated Source point (1st gantry, 2nd couch)
-    stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMx_XY_T*rotMx_XZ_T;
+    stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMat_vectors_T;
     
     % only one ray in center position
     stf(i).ray.rayPos_bev = [0 0 0];
-    stf(i).ray.rayPos     = stf(i).ray.rayPos_bev*rotMx_XY_T*rotMx_XZ_T;
+    stf(i).ray.rayPos     = stf(i).ray.rayPos_bev*rotMat_vectors_T;
 
     % target point is for ray in center position at
     stf(i).ray.targetPoint_bev = [0 stf(i).SAD 0];
-    stf(i).ray.targetPoint     = stf(i).ray.targetPoint_bev*rotMx_XY_T*rotMx_XZ_T;
+    stf(i).ray.targetPoint     = stf(i).ray.targetPoint_bev*rotMat_vectors_T;
     
     % set weight for output field
-    stf(i).ray.weight = Fields(ia(i)).FinalCumWeight;
-    stf(i).ray.SSD    = Fields(ia(i)).SSD;
+    stf(i).ray.weight = 1; % weighting incorporated into primary fluence --> finalShape
+    %stf(i).ray.SSD    = Fields(ia(i)).SSD;
     stf(i).ray.energy = Fields(ia(i)).Energy;  
     
     ix = (ib == i);
     currFieldSeq = Fields(ix);
     
     % add weighted shapes for the current beam
-    partialWeight   = [currFieldSeq(:).Weight]./stf(i).ray.weight;
     finalShape = 0;
     for j = 1:sum(ix)
-        finalShape = finalShape + partialWeight(j) * currFieldSeq(j).Shape;
+        finalShape = finalShape + currFieldSeq(j).Weight * currFieldSeq(j).Shape;
     end
     stf(i).ray.shape = finalShape;
-end
 
 end
 

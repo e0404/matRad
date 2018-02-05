@@ -81,9 +81,9 @@ end
 bixelDoseCore       = bixelDose(ixCore);                         % save dose values that are not affected by sampling
 
 if all(ixCore)
-    %% all voxels are in the core
+    %% all bixels are in the core
     %exit function with core dose only
-    ixNew = ix(ixCore);
+    ixNew = ix;
     bixelDoseNew = bixelDoseCore;
 else
     logIxTail           = ~ixCore;                                   % get voxels indices beyond r0
@@ -114,7 +114,6 @@ else
         subDose            = bixelDoseTail(ixTmp);                   % get tail dose in current cluster
         subIx              = ixTail(ixTmp);                          % get indices in current cluster
         thresholdDose      = max(subDose);
-        rng(i);
         r                  = rand(numel(subDose),1);                 % get random samples
         ixSamp             = r<=(subDose/thresholdDose);
         NumSamples         = sum(ixSamp);

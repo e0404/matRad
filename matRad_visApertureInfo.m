@@ -61,7 +61,7 @@ for i=1:numOfBeams
     numOfShapes = numel(apertureInfo.beam(i).shape);
     
     % open new figure for every beam
-    figure
+    figure('units','inches')
     
     % get the MLC dimensions for this beam
     minX = apertureInfo.beam(i).MLCWindow(1);
@@ -80,20 +80,22 @@ for i=1:numOfBeams
         activeLeafInd = flipud(find(apertureInfo.beam(i).isActiveLeafPair));
     end
     
-    subplotColumns = ceil(numOfShapes/2);
-    subplotLines   = ceil(numOfShapes/subplotColumns);
+    subplotColumns = ceil(apertureInfo.beam(i).numOfShapes/2);
+    subplotLines   = ceil(apertureInfo.beam(i).numOfShapes/subplotColumns);
+    %adjust figure position
+    set(gcf,'pos',[0 0 1.8*subplotColumns 3*subplotLines])
     
     % loop over all shapes of the beam
     for j = 1:numOfShapes
         
         % creating subplots
         subplot(subplotLines,subplotColumns,j)
+
+        title(['Beam: ' num2str(i) ' Shape: ' num2str(j) ' w=' ...
+                num2str(apertureInfo.beam(i).shape(j).weight,2)],...
+                    'Fontsize',8)
+        colorInd = max(ceil((apertureInfo.beam(i).shape(j).weight/wMax)*61+eps),1);
         
-        title(['Beam: ' num2str(i) ' Shape: ' num2str(j) ' Angle : ' ...
-            num2str(apertureInfo.beam(i).gantryAngle) ' w=' ...
-            num2str(apertureInfo.beam(i).shape(j).weight,2)],...
-            'Fontsize',8)
-        colorInd = ceil((apertureInfo.beam(i).shape(j).weight/wMax)*61+eps);
         set(gca,'Color',color(colorInd,:));
         
         hold on

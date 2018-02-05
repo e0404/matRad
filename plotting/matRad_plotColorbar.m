@@ -38,7 +38,7 @@ colormap(axesHandle,cMap);
 caxis(window);
 
 if str2double(v(1:3))>=8.5
-    cBarHandle = colorbar(gca,varargin{:});
+    cBarHandle = colorbar(axesHandle,varargin{:});
 else
     cBarHandle = colorbar('peer',axesHandle,varargin{:});
 end

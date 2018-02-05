@@ -67,13 +67,17 @@ end
 cMapScale = size(cMap,1) - 1;
 dose_rgb = ind2rgb(uint8(cMapScale*(dose_slice - window(1))/(window(2)-window(1))),cMap);
 
+maxDose = max(doseCube(:));
 % plot dose distribution
 doseHandle = image('CData',dose_rgb,'Parent',axesHandle);
+
+% define and set alpha mask
 if ~isempty(threshold)
-    set(doseHandle,'AlphaData', alpha*(abs(dose_slice)>threshold));
+    mask = alpha * (dose_slice < window(2) & dose_slice > window(1) & abs(dose_slice) > threshold*maxDose);
 else
-    set(doseHandle,'AlphaData', alpha*ones(size(dose_slice)));
+    mask = alpha * (dose_slice < window(2) & dose_slice > window(1));
 end
+set(doseHandle,'AlphaData',mask);
 
 end
 

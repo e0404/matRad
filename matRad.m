@@ -22,19 +22,19 @@ clc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-load LUNG_XCAT
+%load LUNG_XCAT
 %load TG119.mat
-%load PROSTATE.mat
+load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
 
 % meta information for treatment plan
-pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
 pln.gantryAngles    = [0]; % [°]
 pln.couchAngles     = [0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
+pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.voxelDimensions = ct.cubeDim;
 pln.radiationMode   = 'photons';     % either photons / protons / carbon
 pln.bioOptimization = 'none';        % none: physical optimization;             const_RBExD; constant RBE of 1.1;
@@ -66,7 +66,7 @@ pln.jacobi          = true;
 pln.numApertures = 7; %max val is pln.maxApertureAngleSpread/pln.minGantryAngleRes
 pln.minGantryAngleRes = 4; %Bzdusek
 pln.maxApertureAngleSpread = 28; %should be an even multiple of pln.minGantryAngleRes; Bzdusek
-pln = matRad_VMATGantryAngles(pln);
+pln = matRad_VMATGantryAngles(pln,cst,ct);
 
 pln.gantryRotCst = [0 6]; %degrees per second
 pln.defaultGantryRot = max(pln.gantryRotCst); %degrees per second
@@ -129,6 +129,6 @@ end
 %% start gui for visualization of result
 matRadGUI
 
-%% dvh
-matRad_calcDVH(resultGUI,cst,pln)
+%% indicator calculation and show DVH and QI
+[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI);
 

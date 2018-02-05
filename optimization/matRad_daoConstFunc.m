@@ -10,7 +10,7 @@ function c = matRad_daoConstFunc(apertureInfoVec,apertureInfo,dij,cst,options,da
 %   apertureInfo:   aperture info struct
 %   dij:            dose influence matrix
 %   cst:            matRad cst struct
-%   options: option struct defining the type of optimization
+%   options:        option struct defining the type of optimization
 %
 % output
 %   c:              value of constraints

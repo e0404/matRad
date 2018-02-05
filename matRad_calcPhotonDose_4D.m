@@ -1,7 +1,7 @@
 function dij = matRad_calcPhotonDose_4D(ct,stf,pln,cst,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad photon dose calculation wrapper
-% 
+%
 % call
 %   dij = matRad_calcPhotonDose(ct,stf,pln,cst)
 %
@@ -25,16 +25,38 @@ function dij = matRad_calcPhotonDose_4D(ct,stf,pln,cst,calcDoseDirect)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% Copyright 2015 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%{
+FOR SSD FUNCTIOn
+            [alpha,l,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
+                ct.resolution, ...
+                stf(i).sourcePoint, ...
+                stf(i).ray(j).targetPoint, ...
+                ct.cube);
+
+
+for k = 1:ct.numOfCtScen
+    ixSSD = find(rho{k} > DensityThresholdSSD,1,'first');
+    
+    if isempty(ixSSD)== 1
+        warning('Surface for SSD calculation starts directly in first voxel of CT\n');
+    end
+    
+    % calculate SSD
+    stf(i).ray(j).SSD{k} = 2 * stf(i).SAD * alpha(ixSSD);
+end
+%}
 
 % set consistent random seed (enables reproducibility)
 rng(0);
@@ -156,15 +178,15 @@ useCustomPrimFluenceBool = 1;
 % prepare data for convolution to reduce calculation time
 fileName = [pln.radiationMode '_' pln.machine];
 try
-   load([fileparts(mfilename('fullpath')) filesep fileName]);
+    load([fileparts(mfilename('fullpath')) filesep fileName]);
 catch
-   error(['Could not find the following machine file: ' fileName ]); 
+    error(['Could not find the following machine file: ' fileName ]);
 end
 
 % Make a 2D grid extending +/-100mm with 0.5 mm resolution
 convLimits = 100; % [mm]
 convResolution = .5; % [mm]
-[X,Z] = meshgrid(-convLimits:convResolution:convLimits-convResolution);   
+[X,Z] = meshgrid(-convLimits:convResolution:convLimits-convResolution);
 
 % gaussian filter to model penumbra
 sigmaGauss = 2.123/convResolution; % [mm] / see diploma thesis siggel 4.1.2
@@ -173,10 +195,10 @@ gaussFilter =  1/(2*pi*sigmaGauss^2) * exp(-(X.^2+Z.^2)/(2*sigmaGauss^2*convReso
 if ~(strcmp(num2str(pln.bixelWidth),'field'))
     % Create zero matrix for the Fluence
     F = zeros(size(X));
-
+    
     % set bixel opening to one
     F(X >= -pln.bixelWidth/2 & X < pln.bixelWidth/2 & ...
-      Z >= -pln.bixelWidth/2 & Z < pln.bixelWidth/2) = 1;
+        Z >= -pln.bixelWidth/2 & Z < pln.bixelWidth/2) = 1;
     % gaussian convolution of field to model penumbra
     if ~useCustomPrimFluenceBool
         F = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(gaussFilter) ))));
@@ -196,9 +218,9 @@ fprintf('matRad: Photon dose calculation...\n');
 for i = 1:dij.numOfBeams % loop over all beams
     
     fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
-
+    
     bixelsPerBeam = 0;
-
+    
     % convert voxel indices to real coordinates using iso center of beam i
     xCoordsV = cell(dij.numOfScenarios,1);
     yCoordsV = cell(dij.numOfScenarios,1);
@@ -232,7 +254,7 @@ for i = 1:dij.numOfBeams % loop over all beams
         rot_coordsV{j}(:,2) = rot_coordsV{j}(:,2)-stf(i).sourcePoint_bev(2);
         rot_coordsV{j}(:,3) = rot_coordsV{j}(:,3)-stf(i).sourcePoint_bev(3);
     end
-
+    
     % ray tracing
     fprintf(['matRad: calculate radiological depth cube...']);
     [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoff);
@@ -297,18 +319,18 @@ for i = 1:dij.numOfBeams % loop over all beams
     end
     
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
-
+        
         counter = counter + 1;
         bixelsPerBeam = bixelsPerBeam + 1;
-    
+        
         % convolution here if custom primary fluence OR field based dose calc
         if useCustomPrimFluenceBool || strcmp(num2str(pln.bixelWidth),'field')
             
             % get the field if field based dose calculation
             if strcmp(num2str(pln.bixelWidth),'field')
                 Fx = stf(i).ray(j).shape;
-            
-            % apply the primary fluence to the field
+                
+                % apply the primary fluence to the field
             elseif useCustomPrimFluenceBool
                 
                 primaryFluence = machine.data.primaryFluence;
@@ -339,11 +361,11 @@ for i = 1:dij.numOfBeams % loop over all beams
                 end
             end
         end
-
+        
         % Display progress and update text only 200 times
         if mod(bixelsPerBeam,max(1,round(stf(i).totalNumOfBixels/200))) == 0
             matRad_progress(bixelsPerBeam/max(1,round(stf(i).totalNumOfBixels/200)),...
-                            floor(stf(i).totalNumOfBixels/max(1,round(stf(i).totalNumOfBixels/200))));
+                floor(stf(i).totalNumOfBixels/max(1,round(stf(i).totalNumOfBixels/200))));
         end
         % update waitbar only 100 times
         if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
@@ -357,11 +379,11 @@ for i = 1:dij.numOfBeams % loop over all beams
         
         % Ray tracing for beam i and bixel j
         [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
-                                                               stf(i).sourcePoint_bev, ...
-                                                               stf(i).ray(j).targetPoint_bev, ...
-                                                               machine.meta.SAD, ...
-                                                               radDepthIx, ...
-                                                               lateralCutoff);
+            stf(i).sourcePoint_bev, ...
+            stf(i).ray(j).targetPoint_bev, ...
+            machine.meta.SAD, ...
+            radDepthIx, ...
+            lateralCutoff);
         
         for k = 1:dij.numOfScenarios
             % calculate photon dose for beam i and bixel j
@@ -428,10 +450,10 @@ for i = 1:dij.numOfScenarios
 end
 
 try
-  % wait 0.1s for closing all waitbars
-  allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar'); 
-  delete(allWaitBarFigures);
-  pause(0.1);
+    % wait 0.1s for closing all waitbars
+    allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
+    delete(allWaitBarFigures);
+    pause(0.1);
 catch
 end
 

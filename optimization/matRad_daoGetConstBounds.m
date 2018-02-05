@@ -8,8 +8,7 @@ function [cl,cu] = matRad_daoGetConstBounds(cst,apertureInfo,options,leafSpeedCs
 % input
 %   cst:            matRad cst struct
 %   apertureInfo:   aperture info struct
-%   numOfScenarios: number of scenarios considered
-%   options: option struct defining the type of optimization
+%   options:        option struct defining the type of optimization
 %
 % output
 %   cl: lower bounds on constraints
@@ -66,5 +65,4 @@ else
     cl = [cl_dao; cl_lfspd; cl_dosrt; cl_dos];
     cu = [cu_dao; cu_lfspd; cu_dosrt; cu_dos];
 end
-
 

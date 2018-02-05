@@ -16,7 +16,8 @@ function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,vi
 %   visBool:            toggle on/off visualization (optional)
 %
 % output
-%   resultGUI xxxx
+%   resultGUI:          matRad result struct containing the new dose cube
+%                       as well as the corresponding weights
 %
 % References
 %   [1] http://www.sciencedirect.com/science/article/pii/S0166218X05001411
@@ -92,10 +93,8 @@ for i = 1:numOfBeams
     %Save weights in fluence matrix.
     fluenceMx(indInFluenceMx) = wOfCurrBeams;
     
-    % prepare sequencer
-    calFac = max(fluenceMx(:));
-
     % Stratification
+    calFac = max(fluenceMx(:));
     D_k = round(fluenceMx/calFac*numOfLevels); 
     
     % Save the stratification in the initial intensity matrix D_0.
@@ -104,7 +103,6 @@ for i = 1:numOfBeams
     % container to remember generated shapes; allocate space for 10000 shapes
     shapes = NaN*ones(dimOfFluenceMxZ,dimOfFluenceMxX,10000);
   
-
     k = 0;
     
     if visBool

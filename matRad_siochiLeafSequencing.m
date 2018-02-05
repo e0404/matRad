@@ -1,4 +1,4 @@
-function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln,visBool)
+function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated
 % beams with multiple static segments according to Siochi (1999)
@@ -13,16 +13,16 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln,visBool)
 %
 % input
 %   resultGUI:          resultGUI struct to which the output data will be
-%   added, if
-%                       this field is empty resultGUI struct will be
-%                       created
+%                       added, if this field is empty resultGUI struct will
+%                       be created
 %   stf:                matRad steering information struct
+%   dij:                matRad's dij matrix
 %   numOfLevels:        number of stratification levels
 %   visBool:            toggle on/off visualization (optional)
 %
 % output
 %   resultGUI:          matRad result struct containing the new dose cube
-%   as well as the corresponding weights
+%                       as well as the corresponding weights
 %
 % References
 %   [1] https://www.ncbi.nlm.nih.gov/pubmed/10078655
@@ -52,7 +52,6 @@ if pln.VMAT
 end
 sequencing.VMAT = pln.VMAT;
 sequencing.dynamic = pln.dynamic;
-    
 
 numOfBeams = numel(stf);
 
@@ -66,7 +65,6 @@ if visBool
 end
 
 offset = 0;
-
 
 for i = 1:numOfBeams
     numOfRaysPerBeam = stf(i).numOfRays;
@@ -90,9 +88,9 @@ for i = 1:numOfBeams
     X = ones(numOfRaysPerBeam,1)*NaN;
     Z = ones(numOfRaysPerBeam,1)*NaN;
     
-    for shape=1:stf(i).numOfRays
-        X(shape) = stf(i).ray(shape).rayPos_bev(:,1);
-        Z(shape) = stf(i).ray(shape).rayPos_bev(:,3);
+    for j = 1:stf(i).numOfRays
+        X(j) = stf(i).ray(j).rayPos_bev(:,1);
+        Z(j) = stf(i).ray(j).rayPos_bev(:,3);
     end
     
     % sort bixels into matrix
@@ -106,7 +104,6 @@ for i = 1:numOfBeams
     
     %Create the fluence matrix.
     fluenceMx = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
-    
     
     % Calculate X and Z position of every fluence's matrix spot z axis =
     % axis of leaf movement!
@@ -185,6 +182,7 @@ for i = 1:numOfBeams
         else
             notFinished = 0;
         end
+
     end
     
     sequencing.beam(i).numOfShapes  = k;
@@ -193,7 +191,7 @@ for i = 1:numOfBeams
     sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
     sequencing.beam(i).fluence      = D_0;
     sequencing.beam(i).sum          = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
-    
+
     if numToKeep ~= 0
         %Find the numToKeep apertures having the highest dose-area product
         numToKeep = min(numToKeep,k);
@@ -368,11 +366,12 @@ resultGUI.wSequenced = sequencing.w;
 
 resultGUI.sequencing   = sequencing;
 
-%EXAMINE
+
 options.numOfScenarios = 1;
 options.bioOpt = 'none';
 d = matRad_backProjection(sequencing.w,dij,options);
 resultGUI.physicalDose = reshape(d{1},dij.dimensions);
+
 
 % if weights exists from an former DAO remove it
 if isfield(resultGUI,'wDao')
@@ -391,7 +390,9 @@ bases = zeros(dimZ, dimX);
 
 for i = minX:maxX
     maxTop = -1;
+    
     TnG = 0; %FOR NOW
+    
     for j = minZ:maxZ
         if i == minX
             bases(j,i) = 1;
