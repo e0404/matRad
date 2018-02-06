@@ -60,36 +60,6 @@ if ~isdeployed % only if _not_ running as standalone
 
 end
 
-%{
-if isfield(pln,'VMAT') && pln.VMAT
-    %Check if plan is VMAT.  If it is, remove any elements of the dij
-    %matrix belonging to non-initialized beams.  Put zeros back in the
-    %wUnsequenced array later
-    
-    offsetNEW = dij.totalNumOfRays;
-    for i = dij.numOfBeams:-1:1
-        %Go backwards so we can delete columns in the dij.physicalDose
-        %matrix without worrying about indexing
-        if ~stf(i).initializeBeam
-            dij.physicalDose{1}(:,(offsetNEW-dij.numOfRaysPerBeam(i)+1):offsetNEW) = [];
-            dij.bixelNum((offsetNEW-dij.numOfRaysPerBeam(i)+1):offsetNEW,:) = [];
-            dij.rayNum((offsetNEW-dij.numOfRaysPerBeam(i)+1):offsetNEW,:) = [];
-            dij.beamNum((offsetNEW-dij.numOfRaysPerBeam(i)+1):offsetNEW,:) = [];
-            
-        end
-        offsetNEW = offsetNEW-dij.numOfRaysPerBeam(i);
-    end
-    
-    realNumOfBeams = dij.numOfBeams;
-    dij.numOfBeams = sum([stf(:).initializeBeam]);
-    realNumOfRaysPerBeam = dij.numOfRaysPerBeam;
-    dij.numOfRaysPerBeam(~[stf(:).initializeBeam]) = [];
-    dij.totalNumOfRays = sum(dij.numOfRaysPerBeam);
-    realTotalNumOfBixels = dij.totalNumOfBixels;
-    dij.totalNumOfBixels = sum(dij.numOfRaysPerBeam);
-end
-%}
-
 % initialize global variables for optimizer
 global matRad_global_x;
 global matRad_global_d;
@@ -274,25 +244,6 @@ if scaleDRx
     resultGUI = matRad_calcCubes(wOpt,dij,cst_Over);
 end
 
-%{
-if isfield(pln,'VMAT') && pln.VMAT
-    %Check if plan is VMAT.  If it is, put zeros back in the
-    %wOpt array
-    
-    offsetNEW = 0;
-    offset = 0;
-    wOptNEW = zeros(realTotalNumOfBixels,1);
-    for i = 1:realNumOfBeams
-        if stf(i).initializeBeam
-            wOptNEW((offsetNEW+1):(offsetNEW+realNumOfRaysPerBeam(i))) = wOpt((offset+1):(offset+realNumOfRaysPerBeam(i)));
-            offset = offset+realNumOfRaysPerBeam(i);
-        end
-        offsetNEW = offsetNEW+realNumOfRaysPerBeam(i);
-    end
-    wOpt = wOptNEW;
-    clear wOptNEW
-end
-%}
 resultGUI.wUnsequenced = wOpt;
 
 
