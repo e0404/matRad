@@ -154,25 +154,12 @@ for i=1:size(stf,2)
             apertureInfo.beam(i).shape(m).rightLeafPos = sequencing.beam(i).shape(m).rightLeafPos;
             apertureInfo.beam(i).shape(m).weight = sequencing.beam(i).shapesWeight(m);
             
-            if sequencing.dynamic
-                apertureInfo.beam(i).shape(m).leftLeafPos_I = sequencing.beam(i).shape(m).leftLeafPos_I;
-                apertureInfo.beam(i).shape(m).rightLeafPos_I = sequencing.beam(i).shape(m).rightLeafPos_I;
-                apertureInfo.beam(i).shape(m).leftLeafPos_F = sequencing.beam(i).shape(m).leftLeafPos_F;
-                apertureInfo.beam(i).shape(m).rightLeafPos_F = sequencing.beam(i).shape(m).rightLeafPos_F;
-            end
         end
         
-        if sequencing.dynamic
-            apertureInfo.beam(i).shape(m).vectorOffset = [vectorOffset vectorOffset+dimZ];
-            
-            % update index for bookkeeping
-            vectorOffset = vectorOffset + dimZ*nnz(stf(i).doseAngleOpt);
-        else
-            apertureInfo.beam(i).shape(m).vectorOffset = vectorOffset;
-            
-            % update index for bookkeeping
-            vectorOffset = vectorOffset + dimZ;
-        end
+        apertureInfo.beam(i).shape(m).vectorOffset = vectorOffset;
+        
+        % update index for bookkeeping
+        vectorOffset = vectorOffset + dimZ;
         
 
            
@@ -279,9 +266,7 @@ for i=1:size(stf,2)
 end
 
 % save global data
-apertureInfo.recalcDynamic = 0;
 apertureInfo.VMAT = sequencing.VMAT;
-apertureInfo.dynamic = sequencing.dynamic;
 apertureInfo.jacobi = sequencing.jacobi;
 apertureInfo.bixelWidth = bixelWidth;
 apertureInfo.numOfMLCLeafPairs = numOfMLCLeafPairs;
@@ -297,28 +282,8 @@ if sequencing.VMAT
     apertureInfo.gantryRotCst = stf.gantryRotCst;
     apertureInfo.doseTotalNumOfLeafPairs = sum([apertureInfo.beam(:).numOfActiveLeafPairs]);
     
-    if apertureInfo.dynamic
-        apertureInfo.totalNumOfLeafPairs = sum(reshape([apertureInfo.beam([apertureInfo.beam.optimizeBeam]).doseAngleOpt],2,[]),1)*[apertureInfo.beam([apertureInfo.beam.optimizeBeam]).numOfActiveLeafPairs]';
-        %apertureInfo.IandFtotalNumOfLeafPairs = sum(reshape([apertureInfo.beam([apertureInfo.beam.optimizeBeam]).doseAngleOpt],2,[]),1)*[apertureInfo.beam([apertureInfo.beam.optimizeBeam]).numOfActiveLeafPairs]';
-        
-        j = 1;
-        for i = 1:numel(apertureInfo.beam)
-            if apertureInfo.beam(i).optimizeBeam
-                apertureInfo.beam(i).initialLeftLeafInd = apertureInfo.beam(i).shape(1).vectorOffset:(apertureInfo.beam(i).shape(1).vectorOffset+dimZ-1);
-                apertureInfo.beam(i).finalLeftLeafInd = (apertureInfo.beam(i).shape(1).vectorOffset+dimZ):(apertureInfo.beam(i).shape(1).vectorOffset+2*dimZ-1);
-                
-                apertureInfo.beam(i).initialRightLeafInd = apertureInfo.beam(i).initialLeftLeafInd+apertureInfo.totalNumOfLeafPairs;
-                apertureInfo.beam(i).finalRightLeafInd = apertureInfo.beam(i).finalLeftLeafInd+apertureInfo.totalNumOfLeafPairs;
-                
-                apertureInfo.beam(i).leftTimeInd = repmat(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2+j,1,apertureInfo.beam(1).numOfActiveLeafPairs);
-                apertureInfo.beam(i).rightTimeInd = repmat(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2+j,1,apertureInfo.beam(1).numOfActiveLeafPairs);
-                j = j+1;
-            end
-        end
-    else
-        apertureInfo.totalNumOfLeafPairs = sum([apertureInfo.beam([apertureInfo.beam.optimizeBeam]).numOfShapes]*[apertureInfo.beam([apertureInfo.beam.optimizeBeam]).numOfActiveLeafPairs]');
-        %apertureInfo.IandFtotalNumOfLeafPairs = sum(reshape([apertureInfo.beam([apertureInfo.beam.optimizeBeam]).doseAngleOpt],2,[]),1)*[apertureInfo.beam([apertureInfo.beam.optimizeBeam]).numOfActiveLeafPairs]';
-    end
+    apertureInfo.totalNumOfLeafPairs = sum([apertureInfo.beam([apertureInfo.beam.optimizeBeam]).numOfShapes]*[apertureInfo.beam([apertureInfo.beam.optimizeBeam]).numOfActiveLeafPairs]');
+    %apertureInfo.IandFtotalNumOfLeafPairs = sum(reshape([apertureInfo.beam([apertureInfo.beam.optimizeBeam]).doseAngleOpt],2,[]),1)*[apertureInfo.beam([apertureInfo.beam.optimizeBeam]).numOfActiveLeafPairs]';
     
     % create vectors for optimization
     %[apertureInfo.apertureVector, apertureInfo.IandFapertureVector, apertureInfo.mappingMx, apertureInfo.limMx] = matRad_daoApertureInfo2Vec(apertureInfo);

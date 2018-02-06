@@ -1,4 +1,4 @@
-function jacobStruct = matRad_daoGetJacobStruct_VMATstatic(apertureInfo,dij,cst)
+function jacobStruct = matRad_daoGetJacobStruct_VMAT(apertureInfo,dij,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: get jacobian structure for direct aperture optimization
 %

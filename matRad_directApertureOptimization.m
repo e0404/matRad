@@ -85,20 +85,11 @@ if isfield(apertureInfo,'scaleFacRx')
 end
 
 if pln.scaleDij
-    if pln.dynamic
-        %rescale dij matrix, so that apertureWeight/bixelWidth ~= 2
-        % gradient wrt weights ~ 1, gradient wrt leaf pos
-        % ~ apertureWeight/(2*bixelWidth) ~1
-        dij.scaleFactor = mean(apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale)/(2*apertureInfo.bixelWidth);
-        
-        %%%%%
-        %dij.scaleFactor = dij.scaleFactor/100;
-    else
-        %rescale dij matrix, so that apertureWeight/bixelWidth ~= 1
-        % gradient wrt weights ~ 1, gradient wrt leaf pos
-        % ~ apertureWeight/(bixelWidth) ~1
-        dij.scaleFactor = mean(apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale)/(apertureInfo.bixelWidth);
-    end
+    %rescale dij matrix, so that apertureWeight/bixelWidth ~= 1
+    % gradient wrt weights ~ 1, gradient wrt leaf pos
+    % ~ apertureWeight/(bixelWidth) ~1
+    dij.scaleFactor = mean(apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale)/(apertureInfo.bixelWidth);
+    
     %dij.physicalDose{1} = dij.physicalDose{1}*dij.scaleFactor;
     dij.weightToMU = dij.weightToMU*dij.scaleFactor;
     
@@ -108,11 +99,7 @@ end
 
 %set daoVec2ApertureInfo function handle
 if pln.VMAT
-    if pln.dynamic
-        daoVec2ApertureInfo =  @matRad_daoVec2ApertureInfo_VMATdynamic;
-    else
-        daoVec2ApertureInfo =  @matRad_daoVec2ApertureInfo_VMATstatic;
-    end
+    daoVec2ApertureInfo =  @matRad_daoVec2ApertureInfo_VMAT;
 else
     daoVec2ApertureInfo =  @matRad_daoVec2ApertureInfo_IMRT;
 end
@@ -150,25 +137,17 @@ options.numOfScenarios  = dij.numOfScenarios;
 
 % set callback functions.
 funcs.objective         = @(x) matRad_daoObjFunc(x,dij,cst_Over,options,daoVec2ApertureInfo);
+funcs.iterfunc          = @(iter,objective,parameter) matRad_IpoptIterFunc(iter,objective,parameter,options.ipopt.max_iter);
 if pln.VMAT
-    if pln.dynamic
-        funcs.gradient          = @(x) matRad_daoGradFunc_VMATdynamic(x,dij,cst_Over,options,daoVec2ApertureInfo);
-        funcs.constraints       = @(x) matRad_daoConstFunc_VMATdynamic(x,dij,cst_Over,options,daoVec2ApertureInfo);
-        funcs.jacobian          = @(x) matRad_daoJacobFunc_VMATdynamic(x,dij,cst_Over,options,daoVec2ApertureInfo);
-        funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct_VMATdynamic(apertureInfo,dij,cst_Over);
-    else
-        funcs.gradient          = @(x) matRad_daoGradFunc_VMATstatic(x,dij,cst_Over,options,daoVec2ApertureInfo);
-        funcs.constraints       = @(x) matRad_daoConstFunc_VMATstatic(x,dij,cst_Over,options,daoVec2ApertureInfo);
-        funcs.jacobian          = @(x) matRad_daoJacobFunc_VMATstatic(x,dij,cst_Over,options,daoVec2ApertureInfo);
-        funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct_VMATstatic(apertureInfo,dij,cst_Over);
-    end
-    funcs.iterfunc          = @(iter,objective,parameter) matRad_IpoptIterFunc_VMAT(iter,objective,parameter,options.ipopt.max_iter);
+    funcs.gradient          = @(x) matRad_daoGradFunc_VMATstatic(x,dij,cst_Over,options,daoVec2ApertureInfo);
+    funcs.constraints       = @(x) matRad_daoConstFunc_VMATstatic(x,dij,cst_Over,options,daoVec2ApertureInfo);
+    funcs.jacobian          = @(x) matRad_daoJacobFunc_VMATstatic(x,dij,cst_Over,options,daoVec2ApertureInfo);
+    funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct_VMATstatic(apertureInfo,dij,cst_Over);
 else
     funcs.gradient          = @(x) matRad_daoGradFunc_IMRT(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
     funcs.constraints       = @(x) matRad_daoConstFunc_IMRT(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
     funcs.jacobian          = @(x) matRad_daoJacobFunc_IMRT(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
     funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct_IMRT(apertureInfo,dij,cst_Over);
-    funcs.iterfunc          = @(iter,objective,parameter) matRad_IpoptIterFunc(iter,objective,parameter,options.ipopt.max_iter);
 end
 
 % Run IPOPT.

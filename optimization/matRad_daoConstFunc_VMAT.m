@@ -1,4 +1,4 @@
-function c = matRad_daoConstFunc_VMATstatic(apertureInfoVec,dij,cst,options,daoVec2ApertureInfo)
+function c = matRad_daoConstFunc_VMAT(apertureInfoVec,dij,cst,options,daoVec2ApertureInfo)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: constraint function for direct aperture optimization
 %

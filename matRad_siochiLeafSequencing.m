@@ -1,4 +1,4 @@
-function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
+function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated
 % beams with multiple static segments according to Siochi (1999)
@@ -51,7 +51,6 @@ if pln.VMAT
     leafDir = 1;
 end
 sequencing.VMAT = pln.VMAT;
-sequencing.dynamic = pln.dynamic;
 
 numOfBeams = numel(stf);
 
@@ -338,11 +337,7 @@ if pln.VMAT
     %matRad_daoVec2ApertureInfo will interpolate subchildren gantry
     %segments
     resultGUI.apertureInfo.updateJacobi = true;
-    if pln.dynamic
-        resultGUI.apertureInfo = matRad_daoVec2ApertureInfo_VMATdynamic(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
-    else
-        resultGUI.apertureInfo = matRad_daoVec2ApertureInfo_VMATstatic(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
-    end
+    resultGUI.apertureInfo = matRad_daoVec2ApertureInfo_VMAT(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
     resultGUI.apertureInfo.updateJacobi = false;
     
     % LEAF TRAVEL / DEGREE

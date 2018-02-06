@@ -1,4 +1,4 @@
-function updatedInfo = matRad_daoVec2ApertureInfo_VMATstatic(apertureInfo,apertureInfoVect)
+function updatedInfo = matRad_daoVec2ApertureInfo_VMAT(apertureInfo,apertureInfoVect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to translate the vector representation of the aperture
 % shape and weight into an aperture info struct. At the same time, the

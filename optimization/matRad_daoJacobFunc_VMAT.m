@@ -1,4 +1,4 @@
-function jacob = matRad_daoJacobFunc_VMATstatic(apertureInfoVec,dij,cst,type,daoVec2ApertureInfo)
+function jacob = matRad_daoJacobFunc_VMAT(apertureInfoVec,dij,cst,type,daoVec2ApertureInfo)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian function for direct aperture optimization
 %

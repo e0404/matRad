@@ -40,21 +40,20 @@ pln.bioOptimization = 'none';        % none: physical optimization;             
                                      % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
 pln.numOfFractions  = 38;
 pln.runSequencing   = true; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
+pln.numLevels = 7;
 pln.runDAO          = true; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.VMAT            = false; % 1/true: run VMAT, 0/false: don't
 pln.machine         = 'Generic';
 
-pln.runSequencing   = true;
-pln.numLevels = 7;
-pln.runDAO          = true;
-
+pln.scaleDRx        = false;
 pln.memorySaver     = false;
-
-pln.scaleDRx        = true;
-
-pln.VMAT            = true;
 pln.scaleDij        = true;
 pln.jacobi          = true;
+
+
+%% For VMAT
+pln.scaleDRx        = false;
+pln.VMAT            = true;
 
 
 pln.numApertures = 7; %max val is pln.maxApertureAngleSpread/pln.minGantryAngleRes
@@ -68,14 +67,6 @@ pln.leafSpeedCst = [0 6]*10; %mm per second
 pln.defaultLeafSpeed = pln.leafSpeedCst(2);
 pln.doseRateCst = [75 600]/60; %MU per second
 pln.defaultDoseRate = pln.doseRateCst(2);
-
-recalc.doRecalc = 0;
-recalc.dynamic = 0;
-recalc.interpNew = 0;
-recalc.pln = pln;
-recalc.pln.minGantryAngleRes = 1;
-
-
 
 %% initial visualization and change objective function settings if desired
 matRadGUI
@@ -115,8 +106,6 @@ end
 if strcmp(pln.radiationMode,'photons') && pln.runDAO
    resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln,stf);
    %matRad_visApertureInfo(resultGUI.apertureInfo);
-   
-   recalc = matRad_doseRecalc(dij,cst,pln,recalc,ct,resultGUI.apertureInfo);
 end
 
 %% start gui for visualization of result
