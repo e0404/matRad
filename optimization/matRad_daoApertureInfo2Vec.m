@@ -23,14 +23,25 @@ function [apertureInfoVec, mappingMx, limMx] = matRad_daoApertureInfo2Vec(apertu
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
-% LICENSE file.
+% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+%
+% m.bangert@dkfz.de
+%
+% This file is part of matRad.
+%
+% matrad is free software: you can redistribute it and/or modify it under
+% the terms of the GNU General Public License as published by the Free
+% Software Foundation, either version 3 of the License, or (at your option)
+% any later version.
+%
+% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
+% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+% details.
+%
+% You should have received a copy of the GNU General Public License in the
+% file license.txt along with matRad. If not, see
+% <http://www.gnu.org/licenses/>.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -41,23 +52,14 @@ function [apertureInfoVec, mappingMx, limMx] = matRad_daoApertureInfo2Vec(apertu
 
 % initializing variables
 
-if apertureInfo.VMAT
-    apertureInfoVec = NaN * ones(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2,1); %Extra set of (apertureInfo.totalNumOfShapes) number of elements, allowing arc sector times to be optimized
-    %IandFapertureInfoVec = NaN * ones(apertureInfo.totalNumOfShapes*2+apertureInfo.IandFtotalNumOfLeafPairs*2,1);
-else
-    apertureInfoVec = NaN * ones(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,1);
-    %IandFapertureInfoVec = NaN * ones(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2,1);
-end
+apertureInfoVec = NaN * ones(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,1);
 
 offset = 0;
-%IandFoffset = 0;
 
 %% 1. aperture weights
 for i = 1:size(apertureInfo.beam,2)
     for j = 1:apertureInfo.beam(i).numOfShapes
-        
-        apertureInfoVec(offset+j) = apertureInfo.beam(i).shape(j).jacobiScale*apertureInfo.beam(i).shape(j).weight;   %In VMAT, this weight is "spread" over unoptimized beams (assume constant dose rate over sector)
-        
+        apertureInfoVec(offset+j) = apertureInfo.beam(i).shape(j).weight;            
     end
     offset = offset + apertureInfo.beam(i).numOfShapes;
 end
@@ -66,111 +68,37 @@ end
 %% fill the vector for all shapes of all beams
 for i = 1:size(apertureInfo.beam,2)
     for j = 1:apertureInfo.beam(i).numOfShapes
-        
-        if ~apertureInfo.dynamic
-            apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos;
-            apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos;
-            
-            offset = offset + apertureInfo.beam(i).numOfActiveLeafPairs;
-        end
-        
-        if apertureInfo.VMAT
-            if apertureInfo.dynamic
-                
-                if apertureInfo.beam(i).doseAngleOpt(1)
-                    apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos_I;
-                    apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos_I;
-                    
-                    offset = offset + apertureInfo.beam(i).numOfActiveLeafPairs;
-                end
-                
-                if apertureInfo.beam(i).doseAngleOpt(2)
-                    apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos_F;
-                    apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos_F;
-                    
-                    offset = offset + apertureInfo.beam(i).numOfActiveLeafPairs;
-                end
-            end
-        end
+        apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos;
+        apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos;
+        offset = offset + apertureInfo.beam(i).numOfActiveLeafPairs;
     end
 end
-%% 3. time of arc sector/beam
-if apertureInfo.VMAT
-    offset = offset + apertureInfo.totalNumOfLeafPairs;
     
-    %this gives a vector of the arc lengths belonging to each optimized CP
-    %unique gets rid of double-counted angles (which is every interior
-    %angle)
-    optInd = [apertureInfo.beam.optimizeBeam];
-    optAngleLengths = [apertureInfo.beam(optInd).optAngleBordersDiff];
-    optGantryRot = [apertureInfo.beam(optInd).gantryRot];
-    apertureInfoVec((offset+1):end) = optAngleLengths./optGantryRot; %entries are the times until the next opt gantry angle is reached
-    
-end
 
-%% 4. create additional information for later use
+%% 3. create additional information for later use
 if nargout > 1
-    %FIX MAPPINGMX AND LIMMX
-    if apertureInfo.VMAT
-        mappingMx =  NaN * ones(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2,4);
-        limMx     =  NaN * ones(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2,2);
-    else
-        mappingMx =  NaN * ones(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,4);
-        limMx     =  NaN * ones(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,2);
-    end
     
+    mappingMx =  NaN * ones(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,2);
+    limMx     =  NaN * ones(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,2);
     limMx(1:apertureInfo.totalNumOfShapes,:) = ones(apertureInfo.totalNumOfShapes,1)*[0 inf];
     
-    counter = 1;
-    for i = 1:numel(apertureInfo.beam)
-        for j = 1:apertureInfo.beam(i).numOfShapes
-            mappingMx(counter,1) = i;
-            if apertureInfo.VMAT
-                timeLimL = diff(apertureInfo.beam(i).optAngleBorders)/apertureInfo.gantryRotCst(2); %Minimum time interval between two optimized beams/gantry angles
-                timeLimU = diff(apertureInfo.beam(i).optAngleBorders)/apertureInfo.gantryRotCst(1); %Maximum time interval between two optimized beams/gantry angles
-                
-                mappingMx(counter+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,1) = i;
-                limMx(counter+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,:) = [timeLimL timeLimU];
-            else
-                
-            end
-            counter = counter + 1;
-        end
-    end
-    
+    counter = apertureInfo.totalNumOfShapes + 1;
     shapeOffset = 0;
     for i = 1:numel(apertureInfo.beam)
         for j = 1:apertureInfo.beam(i).numOfShapes
             for k = 1:apertureInfo.beam(i).numOfActiveLeafPairs
                 mappingMx(counter,1) = i;
                 mappingMx(counter,2) = j + shapeOffset; % store global shape number for grad calc
-                mappingMx(counter,3) = j; % store local shape number
-                mappingMx(counter,4) = k; % store local leaf number
-                
+                %mappingMx(counter,3) = k;
                 limMx(counter,1)     = apertureInfo.beam(i).lim_l(k);
                 limMx(counter,2)     = apertureInfo.beam(i).lim_r(k);
                 counter = counter + 1;
-                
-                if apertureInfo.VMAT && apertureInfo.dynamic && nnz(apertureInfo.beam(i).doseAngleOpt) == 2
-                    %redo for initial and final leaf positions
-                    %might have to revisit this after looking at gradient,
-                    %esp. mappingMx(counter,2)
-                    %only an issue for non-interpolated deliveries
-                    mappingMx(counter,1) = i;
-                    mappingMx(counter,2) = j + shapeOffset; % store global shape number for grad calc
-                    mappingMx(counter,3) = j; % store local shape number
-                    mappingMx(counter,4) = k; % store local leaf number
-                    
-                    limMx(counter,1)     = apertureInfo.beam(i).lim_l(k);
-                    limMx(counter,2)     = apertureInfo.beam(i).lim_r(k);
-                    counter = counter + 1;
-                end
             end
         end
         shapeOffset = shapeOffset + apertureInfo.beam(i).numOfShapes;
     end
     
-    mappingMx(counter:(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2),:) = mappingMx(apertureInfo.totalNumOfShapes+1:counter-1,:);
-    limMx(counter:(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2),:)     = limMx(apertureInfo.totalNumOfShapes+1:counter-1,:);
-    
+    mappingMx(counter:end,:) = mappingMx(apertureInfo.totalNumOfShapes+1:counter-1,:);
+    limMx(counter:end,:)     = limMx(apertureInfo.totalNumOfShapes+1:counter-1,:);
+
 end

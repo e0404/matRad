@@ -22,7 +22,6 @@ clc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-%load LUNG_XCAT
 %load TG119.mat
 load PROSTATE.mat
 %load LIVER.mat
@@ -39,16 +38,12 @@ pln.voxelDimensions = ct.cubeDim;
 pln.radiationMode   = 'photons';     % either photons / protons / carbon
 pln.bioOptimization = 'none';        % none: physical optimization;             const_RBExD; constant RBE of 1.1;
                                      % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
-%pln.numOfFractions  = 38;
+pln.numOfFractions  = 38;
 pln.runSequencing   = true; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO          = true; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.VMAT            = false; % 1/true: run VMAT, 0/false: don't
-%pln.dynamic         = false;
-%pln.halfFluOpt      = false; % indicates if you want to constrain half of each field to have 0 fluence (other half is compensated on the other side)
 pln.machine         = 'Generic';
 
-
-%% For VMAT
 pln.runSequencing   = true;
 pln.numLevels = 7;
 pln.runDAO          = true;
@@ -60,7 +55,6 @@ pln.scaleDRx        = true;
 pln.VMAT            = true;
 pln.scaleDij        = true;
 pln.jacobi          = true;
-%pln.dynamic         = true;
 
 
 pln.numApertures = 7; %max val is pln.maxApertureAngleSpread/pln.minGantryAngleRes
@@ -74,7 +68,6 @@ pln.leafSpeedCst = [0 6]*10; %mm per second
 pln.defaultLeafSpeed = pln.leafSpeedCst(2);
 pln.doseRateCst = [75 600]/60; %MU per second
 pln.defaultDoseRate = pln.doseRateCst(2);
-%pln.maxLeafTravelPerDeg = pln.leafSpeedCst(2)/pln.defaultGantryRot;
 
 recalc.doRecalc = 0;
 recalc.dynamic = 0;
