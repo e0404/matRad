@@ -3,7 +3,7 @@ classdef matRad_MeanDose < DoseObjectives.matRad_DoseObjective
     %   Detailed explanation goes here
     
     properties (Constant)
-        name = 'Min. Mean Dose';
+        name = 'Mean Dose';
         parameterNames = {'d^{ref}'};
         parameterTypes = {'dose'};
         %parameterNames = {};

@@ -1,46 +1,68 @@
 classdef (Abstract) matRad_DoseConstraint
-    %MATRAD_DOSEOBJECTIVE Summary of this class goes here
-    %   Detailed explanation goes here
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad_DoseConstraint: Interface for optimization constraints.
+%   This abstract base class provides the interface of constraints for
+%   non-linear optimization.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Abstract, Constant)        
-        name
-        parameterNames
-        %parameterIsDose
-        parameterTypes
+        name                %Display name of the Objective. Needs to be implemented in sub-classes.
+        parameterNames      %Cell array of Display names of the parameters. Needs to be implemented in sub-classes.
+        parameterTypes      %Cell array of parameter types. Valid types are 'dose', 'numeric', or a cell list of string options. Needs to be implemented in sub-classes.
     end
     
     properties (Abstract, Access = public)
-        parameters
+        parameters          %Cell array of parameter values              
     end
         
     methods (Abstract)
+        %returns the constraint function(s) value(s) for a given dose
+        %vector. Needs to be implemented in sub-classes.
         cDose        = computeDoseConstraintFunction(obj,dose)
+        
+        %return the (dose-dependent) constraint function jacobian for a
+        %given dose vector. Needs to be implemented in sub-classes.
         cDoseJacob   = computeDoseConstraintJacobian(obj,dose)
+        
+        %Returns upper bound(s) / max value(s) for constraint function(s)
+        %Needs to be implemented in sub-classes.
         cu           = upperBounds(obj,n)
+        
+        %Returns lower bound(s) / min value(s) for constraint function(s)
+        %Needs to be implemented in sub-classes.
         cl           = lowerBounds(obj,n)                
     end
-    
-        %Helper methods
+
     methods (Access = public)
         function jStruct = getDoseConstraintJacobianStructure(obj,n)
-            %The default structure for scalar constraint functions is a
-            %gradient vector
+        %return the structure of the (dose-dependent) constraint function 
+        %jacobian for a given length n of the dose vector. Returns a
+        %default of a jStruct
             jStruct = ones(n,1);
         end
   
-        
-        %Get only the parameters describing some kind of reference dose as
-        %numeric array
         function doseParams = getDoseParameters(obj)
+            %Get only the dose related parameters.
             ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
             doseParams = [obj.parameters{ix}];
         end
-        
-        %Set only the parameters describing some kind of reference dose,
-        %where doseParams is an array of numeric values
+                
         function obj = setDoseParameters(obj,doseParams)
-            %c = mat2cell(doseParams,1,numel(doseParams));
-            %[obj.parameters{obj.parameterIsDose}] = deal(c{:});
+            %Set only the dose related parameters.
             ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
             obj.parameters(ix) = num2cell(doseParams);
 

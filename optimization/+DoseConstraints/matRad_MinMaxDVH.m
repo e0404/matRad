@@ -15,7 +15,8 @@ classdef matRad_MinMaxDVH < DoseConstraints.matRad_DoseConstraint
         parameters = {30,0,1};
     end
         
-    methods
+    methods  
+        
         function cu = upperBounds(obj,n)
             cu = obj.parameters{3};
         end
