@@ -45,8 +45,8 @@ pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
 pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.runDAO        = 0;
-pln.runSequencing = 0;
+pln.runDAO          = 0;
+pln.runSequencing   = 0;
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -58,9 +58,9 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst);
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Calculate quality indicators 
-cst       = matRad_indicatorWrapper(cst,pln,resultGUI);
-ixRectum  = 8;
-D5_rectum = cst{ixRectum,9}{1}.D_5
+[dvh,qi]       = matRad_indicatorWrapper(cst,pln,resultGUI);
+ixRectum       = 8;
+display(qi(ixRectum).D_5);
 
 %%
 % Let's change the optimization parameter of the rectum in such a way that it
@@ -70,8 +70,8 @@ D5_rectum = cst{ixRectum,9}{1}.D_5
 cst{ixRectum,6}.penalty = 500;
 cst{ixRectum,6}.dose    = 40;
 resultGUI               = matRad_fluenceOptimization(dij,cst,pln);
-cst                     = matRad_indicatorWrapper(cst,pln,resultGUI);
-D5_rectum               = cst{ixRectum,9}{1}.D_5
+[dvh2,qi2]              = matRad_indicatorWrapper(cst,pln,resultGUI);
+display(qi2(ixRectum).D_5);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
@@ -91,7 +91,7 @@ resultGUI_noise = matRad_calcDoseDirect(ct_manip,stf,pln,cst,resultGUI.w);
 
 %%  Visual Comparison of results
 % Let's compare the new recalculation against the optimization result.
-plane = 3;
+plane      = 3;
 doseWindow = [0 max([resultGUI.RBExDose(:); resultGUI_noise.RBExDose(:)])];
 
 figure,title('original plan')
@@ -117,7 +117,7 @@ addpath([fileparts(fileparts(mfilename('fullpath'))) filesep 'tools']);
 
 doseDifference   = 2;
 distToAgreement  = 2;
-n        = 1;
+n                = 1;
 
 [gammaCube,gammaPassRateCell] = matRad_gammaIndex(...
     resultGUI_noise.RBExDose,resultGUI.RBExDose,...
