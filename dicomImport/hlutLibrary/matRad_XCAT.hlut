@@ -1,7 +1,0 @@
-# matRad default HU lookup table
-# 
-# First column:    Hounsfield values (typically -1000...+3000)
-# Second column:   Relative electron density (typically 1.0 for water)
--1000   0
-0       1
-3000    4
