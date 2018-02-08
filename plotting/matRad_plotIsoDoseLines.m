@@ -41,6 +41,8 @@ function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContour
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+addpath('tools')
+[env, ~] = matRad_getEnvironment();
 
 %% manage optional arguments
 %Use default colormap?
@@ -65,14 +67,18 @@ if isempty(isoContours)
 end
 
 %% Plotting
-
 cMapScale = size(cMap,1) - 1;
 isoColorLevel = (isoLevels - window(1))./(window(2)-window(1));
 isoColorLevel(isoColorLevel < 0) = 0;
 isoColorLevel(isoColorLevel > 1) = 0;
 colors = squeeze(ind2rgb(uint8(cMapScale*isoColorLevel),cMap));
 
-isoLineHandles = gobjects(0);
+switch env
+    case 'MATLAB'
+        isoLineHandles = gobjects(0);
+    case 'OCTAVE'
+        isoLineHandles = [];
+end
 
 axes(axesHandle);
 hold on;
