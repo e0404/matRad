@@ -35,6 +35,9 @@ if nargin < 3
     mode = 'first';
 end
 
+
+
+
 % set density threshold for SSD computation
 densityThreshold = 0.05;
 

@@ -7,7 +7,7 @@ function updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)
 % calculation
 %
 % call
-%   updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)
+%   [updatedInfo,w,indVect] = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)
 %
 % input
 %   apertureInfo:     aperture shape info struct
@@ -23,14 +23,25 @@ function updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
-% LICENSE file.
+% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+%
+% m.bangert@dkfz.de
+%
+% This file is part of matRad.
+%
+% matrad is free software: you can redistribute it and/or modify it under
+% the terms of the GNU General Public License as published by the Free
+% Software Foundation, either version 3 of the License, or (at your option)
+% any later version.
+%
+% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
+% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+% details.
+%
+% You should have received a copy of the GNU General Public License in the
+% file license.txt along with matRad. If not, see
+% <http://www.gnu.org/licenses/>.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -47,10 +58,6 @@ updatedInfo.apertureVector = apertureInfoVect;
 shapeInd = 1;
 
 indVect = NaN*ones(apertureInfo.totalNumOfShapes + apertureInfo.totalNumOfLeafPairs,1);
-
-% helper function to cope with numerical instabilities through rounding
-round2 = @(a,b) round(a*10^b)/10^b;
-
 
 %% update the shapeMaps
 % here the new colimator positions are used to create new shapeMaps that
@@ -85,30 +92,22 @@ for i = 1:numel(updatedInfo.beam)
         updatedInfo.beam(i).shape(j).leftLeafPos  = leftLeafPos;
         updatedInfo.beam(i).shape(j).rightLeafPos = rightLeafPos;
         
-        % rounding for numerical stability
-        leftLeafPos  = round2(leftLeafPos,6);
-        rightLeafPos = round2(rightLeafPos,6);
         
-        %
         xPosIndLeftLeaf  = round((leftLeafPos - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth + 1);
         xPosIndRightLeaf = round((rightLeafPos - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth + 1);
         
         % check limits because of rounding off issues at maximum, i.e., 
-        % enforce round(X.5) -> X
+        % enfore round(X.5) -> X
         xPosIndLeftLeaf(leftLeafPos == apertureInfo.beam(i).lim_r) = ...
             .5 + (leftLeafPos(leftLeafPos == apertureInfo.beam(i).lim_r) ...
             - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth;
         xPosIndRightLeaf(rightLeafPos == apertureInfo.beam(i).lim_r) = ...
             .5 + (rightLeafPos(rightLeafPos == apertureInfo.beam(i).lim_r) ...
             - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth;
-        
+
         % find the bixel index that the leaves currently touch
         bixelIndLeftLeaf  = apertureInfo.beam(i).bixelIndMap((xPosIndLeftLeaf-1)*n+[1:n]');
         bixelIndRightLeaf = apertureInfo.beam(i).bixelIndMap((xPosIndRightLeaf-1)*n+[1:n]');
-        
-        if any(isnan(bixelIndLeftLeaf)) || any(isnan(bixelIndRightLeaf))
-            error('cannot map leaf position to bixel index');
-        end
         
         % store information in index vector for gradient calculation
         indVect(apertureInfo.beam(i).shape(j).vectorOffset+[1:n]-1) = bixelIndLeftLeaf;

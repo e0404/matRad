@@ -41,6 +41,7 @@ if ~exist('refVol', 'var') || isempty(refVol)
     refVol = [2 5 50 95 98];
 end
 
+
 if ~exist('refGy', 'var') || isempty(refGy)
     refGy = floor(linspace(0,max(doseCube(:)),6)*10)/10;
 end
@@ -96,13 +97,18 @@ for runVoi = 1:size(cst,1)
         % if current voi is a target -> calculate homogeneity and conformity
         if strcmp(cst{runVoi,3},'TARGET') > 0      
 
-            % loop over target objectives and get the lowest dose objective 
-            referenceDose = inf;
-            for runObjective = 1:numel(cst{runVoi,6})
-               % check if this is an objective that penalizes underdosing 
-               if strcmp(cst{runVoi,6}(runObjective).type,'square deviation') > 0 || strcmp(cst{runVoi,6}(runObjective).type,'square underdosing') > 0
-                   referenceDose = (min(cst{runVoi,6}(runObjective).dose,referenceDose))/pln.numOfFractions;
-               end            
+            if ~(isfield(pln,'DRx') && any(pln.RxStruct == runVoi))
+                % loop over target objectives and get the lowest dose objective
+                referenceDose = inf;
+                for runObjective = 1:numel(cst{runVoi,6})
+                    % check if this is an objective that penalizes underdosing
+                    if strcmp(cst{runVoi,6}(runObjective).type,'square deviation') > 0 || strcmp(cst{runVoi,6}(runObjective).type,'square underdosing') > 0
+                        %referenceDose = (min(cst{runVoi,6}(runObjective).dose,referenceDose))/pln.numOfFractions;
+                        referenceDose = (min(cst{runVoi,6}(runObjective).dose/pln.numOfFractions,referenceDose));
+                    end
+                end
+            else
+                referenceDose = pln.DRx(pln.RxStruct == runVoi)/pln.numOfFractions;
             end
 
             if referenceDose == inf 

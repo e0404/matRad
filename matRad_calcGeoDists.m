@@ -82,30 +82,41 @@ else
     ssc = @(v) [0 -v(3) v(2); v(3) 0 -v(1); -v(2) v(1) 0];
     R   = eye(3) + ssc(cross(a,b)) + ssc(cross(a,b))^2*(1-dot(a,b))/(norm(cross(a,b))^2);
     
-    % Rotate every CT voxel 
-    rot_coords_temp = rot_coords_bev*R;
+    % Rotate every CT voxel
+    rot_coords_temp = cell(size(rot_coords_bev));
+    for i = 1:size(rot_coords_bev,1)
+        rot_coords_temp{i} = rot_coords_bev{i}*R;
+    end
 end
 
-% Put [0 0 0] position CT in center of the beamlet.
-latDistsX = rot_coords_temp(:,1) + sourcePoint_bev(1);
-latDistsZ = rot_coords_temp(:,3) + sourcePoint_bev(3);
+latDistsX = cell(size(rot_coords_bev));
+latDistsZ = cell(size(rot_coords_bev));
+rad_distancesSq = cell(size(rot_coords_bev));
+ix = cell(size(rot_coords_bev));
+isoLatDistsX = cell(size(rot_coords_bev));
+isoLatDistsZ = cell(size(rot_coords_bev));
 
-% check of radial distance exceeds lateral cutoff (projected to iso center)
-rad_distancesSq = latDistsX.^2 + latDistsZ.^2;
-subsetMask = rad_distancesSq ./ rot_coords_temp(:,2).^2 <= lateralCutOff^2 /SAD^2;
-
-% return index list within considered voxels
-ix = radDepthIx(subsetMask);
-
-% return radial distances squared
-if nargout > 1
-    rad_distancesSq = rad_distancesSq(subsetMask);
+for i = 1:size(rot_coords_bev,1)
+    % Put [0 0 0] position CT in center of the beamlet.
+    latDistsX{i} = rot_coords_temp{i}(:,1) + sourcePoint_bev(1);
+    latDistsZ{i} = rot_coords_temp{i}(:,3) + sourcePoint_bev(3);
+    
+    % check of radial distance exceeds lateral cutoff (projected to iso center)
+    rad_distancesSq{i} = latDistsX{i}.^2 + latDistsZ{i}.^2;
+    subsetMask = rad_distancesSq{i} ./ rot_coords_temp{i}(:,2).^2 <= lateralCutOff^2 /SAD^2;
+    
+    % return index list within considered voxels
+    ix{i} = radDepthIx{i}(subsetMask);
+    
+    % return radial distances squared
+    if nargout > 1
+        rad_distancesSq{i} = rad_distancesSq{i}(subsetMask);
+    end
+    
+    % return x & z distance
+    if nargout > 2
+        isoLatDistsX{i} = latDistsX{i}(subsetMask)./rot_coords_temp{i}(subsetMask,2)*SAD;
+        isoLatDistsZ{i} = latDistsZ{i}(subsetMask)./rot_coords_temp{i}(subsetMask,2)*SAD;
+    end
 end
-
-% return x & z distance
-if nargout > 2
-   isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
-   isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD; 
-end
-
 

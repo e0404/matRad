@@ -847,8 +847,13 @@ axes(handles.axesFig);
 % top of each other in matlab <2014
 drawnow;
 
+<<<<<<< HEAD
+defaultFontSize = 12;
+currAxes            = axis;
+=======
 defaultFontSize = 8;
 currAxes            = axis(handles.axesFig);
+>>>>>>> refs/remotes/e0404/dev
 AxesHandlesCT_Dose  = gobjects(0);
 AxesHandlesVOI      = cell(0);
 AxesHandlesIsoDose  = gobjects(0);
@@ -1007,7 +1012,8 @@ if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Re
                 handles.cBarHandel = matRad_plotColorbar(handles.axesFig,doseMap,handles.dispWindow{selectIx,1},'fontsize',defaultFontSize);
                 %adjust lables
                 Idx = find(strcmp(handles.SelectedDisplayOption,DispInfo(:,1)));
-                set(get(handles.cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
+                %set(get(handles.cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
+                set(get(handles.cBarHandel,'ylabel'),'String', ['Dose' ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
                 % do not interprete as tex syntax
                 set(get(handles.cBarHandel,'ylabel'),'interpreter','none');
             end
