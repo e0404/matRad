@@ -79,6 +79,17 @@ else
 end
 addpath(fullfile(matRadPath,'tools','samplingAnalysis'));
 
+% calculate RBExDose
+if ~isfield(pln, 'bioParam')
+    if strcmp(pln.radiationMode, 'protons')
+        pln.bioOptimization = 'constRBE_RBExD';
+    elseif strcmp(pln.radiationMode, 'carbon')
+        pln.bioOptimization = 'LEM_RBExD';
+    end
+    pln.bioParam = matRad_bioModel(pln.radiationMode,pln.bioOptimization);
+end
+    
+
 pln.robOpt   = false;
 pln.sampling = true;
 
