@@ -190,21 +190,14 @@ matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 %% Obtain dose statistics
 % Two more columns will be added to the cst structure depicting the DVH and
 % standard dose statistics such as D95,D98, mean dose, max dose etc.
-cst        = matRad_indicatorWrapper(cst,pln,resultGUI);
-cst_coarse = matRad_indicatorWrapper(cst,pln,resultGUI_coarse);
+[dvh,qi]               = matRad_indicatorWrapper(cst,pln,resultGUI);
+[dvh_coarse,qi_coarse] = matRad_indicatorWrapper(cst,pln,resultGUI_coarse);
 
 %%
 % The treatment plan using more beams should in principle result in a
 % better OAR sparing. Therefore lets have a look at the D95 of the OAR of 
 % both plans
 ixOAR = 2;
-display(cst{ixOAR,9}{1}.D_95);
-display(cst_coarse{ixOAR,9}{1}.D_95);
-
-%%
-% Indeed, the coarse beam plan yields a higher D95 in the OAR. Finally, 
-% let's plot the DVH 
-matRad_showDVH(cst,pln);
-
-
+display(qi(ixOAR).D_95);
+display(qi_coarse(ixOAR).D_95);
 

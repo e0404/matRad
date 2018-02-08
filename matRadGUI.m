@@ -38,11 +38,20 @@ function varargout = matRadGUI(varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % abort for octave
-if exist('OCTAVE_VERSION','builtin');
-    fprintf('matRad GUI not available for Octave.\n');
-    return;
-end
-    
+matRadRootDir = fileparts(mfilename('fullpath'));
+addpath(fullfile(matRadRootDir,'tools'))
+[env, versionString] = matRad_getEnvironment();
+
+switch env
+     case 'MATLAB'
+         
+     case 'OCTAVE'
+         fprintf(['matRad GUI not available for ' env ' ' versionString ' \n']);
+         return;
+     otherwise
+         fprintf(['not yet tested']);
+ end
+        
 % Begin initialization code - DO NOT EDIT
 % set platform specific look and feel
 if ispc
