@@ -73,6 +73,8 @@ doseHandle = image('CData',dose_rgb,'Parent',axesHandle);
 
 % define and set alpha mask
 mask = alpha * (dose_slice < window(2) & dose_slice > max([window(1) threshold*maxDose]));
+
+% alphadata for image objects is not yet implemented in Octave
 set(doseHandle,'AlphaData',mask);
 
 end

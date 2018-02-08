@@ -73,26 +73,41 @@ for s = 1:size(cst,1)
                     steps = cst{s,7}{slice,plane}(2,lower); % number of elements of current line section
                     voiContourHandles(end+1) = line(cst{s,7}{slice,plane}(1,lower+1:lower+steps),...
                         cst{s,7}{slice,plane}(2,lower+1:lower+steps),...
-                        'Color',colors(s,:),'Parent',axesHandle,varargin{:});
+                        'color',colors(s,:),'Parent',axesHandle,varargin{:});
                     
                     lower = lower+steps+1;
                 end
             end     
         else
-            %If we do not have precomputed contours available, do it the
-            %slow way with the contour function
+        
+            %if we do not have precomputed contours available, do it the slow way with the contour function
             mask = zeros(size(ct{ctIndex}));
             mask(cst{s,4}{ctIndex}) = 1;
-            if plane == 1 && any(any(mask(slice,:,:) > 0))
-                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(slice,:,:)),0.5*[1 1],'Color',colors(s,:),varargin{:});
-            elseif plane == 2 && any(any(mask(:,slice,:) > 0))
-                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,slice,:)),0.5*[1 1],'Color',colors(s,:),varargin{:});
-            elseif plane == 3 && any(any(mask(:,:,slice) > 0))
-                [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,:,slice)),0.5*[1 1],'Color',colors(s,:),varargin{:});
-            end     
 
+            switch env
+              case 'MATLAB'
+                  if plane == 1 && any(any(mask(slice,:,:) > 0))
+                      [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(slice,:,:)),0.5*[1 1],'color',colors(s,:),varargin{:});
+                  elseif plane == 2 && any(any(mask(:,slice,:) > 0))
+                      [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,slice,:)),0.5*[1 1],'color',colors(s,:),varargin{:});
+                  elseif plane == 3 && any(any(mask(:,:,slice) > 0))
+                      [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,:,slice)),0.5*[1 1],'color',colors(s,:),varargin{:});
+                  end 
+
+              case 'OCTAVE'
+                  if plane == 1 && any(any(mask(slice,:,:) > 0))
+                      [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(slice,:,:)),0.5*[1 1],'LineColor',colors(s,:),varargin{:});
+                  elseif plane == 2 && any(any(mask(:,slice,:) > 0))
+                      [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,slice,:)),0.5*[1 1],'LineColor',colors(s,:),varargin{:});
+                  elseif plane == 3 && any(any(mask(:,:,slice) > 0))
+                      [~, voiContourHandles(end+1)] = contour(axesHandle,squeeze(mask(:,:,slice)),0.5*[1 1],'LineColor',colors(s,:),varargin{:});
+                  end 
+            end
+    
+          
         end
     end
 end
+
 
 end
