@@ -85,6 +85,4 @@ resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,res
 matRad_visApertureInfo(resultGUI.apertureInfo);
 
 %% Indicator Calculation and display of DVH and QI
-cst = matRad_indicatorWrapper(cst,pln,resultGUI);
-matRad_showDVH(cst,pln);
-
+[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI);

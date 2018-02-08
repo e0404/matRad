@@ -36,6 +36,9 @@ function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+addpath('tools');
+[env, ~] = matRad_getEnvironment();
+    
 %%
 if ~exist('dicomMetaBool','var')
   dicomMetaBool = true;
@@ -156,7 +159,12 @@ matRadFileName = [files.ct{1,3} '.mat']; % use default from dicom
 [FileName,PathName] = uiputfile('*','Save as...',matRadFileName);
 if ischar(FileName)
     % delete unnecessary variables
-    clearvars -except ct cst pln stf resultGUI FileName PathName
+    switch env
+    case 'MATLAB'
+        clearvars -except ct cst pln stf resultGUI FileName PathName;
+    case 'OCTAVE' 
+        clear -x ct cst pln stf resultGUI FileName PathName;
+    end
     % save all except FileName and PathName
     save([PathName, FileName], '-regexp', '^(?!(FileName|PathName)$).','-v7.3');
 end
