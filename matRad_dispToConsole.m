@@ -41,8 +41,7 @@ switch typeOfMessage
 
    case {'error'}
 
-        fprintf(string);
-
+        error(string);
 
    case{'warning'}
 

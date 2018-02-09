@@ -137,6 +137,9 @@ figure,plot(profileOrginal,'LineWidth',2),grid on,hold on,
 % indicates a successful test and a value greater than 1 illustrates a 
 % failed test.
 
+% add tools subdirectory
+addpath([fileparts(fileparts(mfilename('fullpath'))) filesep 'tools']);
+
 doseDifference  = 2;
 distToAgreement = 2;
 n               = 1;
@@ -147,5 +150,14 @@ n               = 1;
     [doseDifference distToAgreement],slice,n,'global',cst);
 
 
+[env, ~] = matRad_getEnvironment();
 % Let's plot the gamma index histogram
-figure,histogram(gammaCube(gammaCube>0),100),title('gamma index histogram')
+switch env
+     case 'MATLAB'
+          figure,histogram(gammaCube(gammaCube>0),100),title('gamma index histogram')
+     case 'OCTAVE'
+          figure,hist(gammaCube(gammaCube>0),100),title('gamma index histogram')
+end
+
+
+

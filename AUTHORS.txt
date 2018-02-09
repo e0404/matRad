@@ -3,6 +3,7 @@ List of all matRad developers that contributed code (alphabetical)
 * Mark Bangert
 * Lucas Burigo
 * Eduadro Cisternas
+* Louis Charton
 * Eric Christiansen
 * Hubert Gabrys
 * Josefine Handrack

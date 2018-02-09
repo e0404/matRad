@@ -45,7 +45,7 @@ if ~isfield(baseData,'sigma')
     X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
     
     % set dose for query > tabulated depth dose values to zero
-    X(radDepths >= max(depths),1) = 0;
+    X(radDepths > max(depths),1) = 0;
         
     % compute lateral sigmas
     sigmaSq_Narr = X(:,2).^2 + sigmaIni_sq;

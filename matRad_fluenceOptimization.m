@@ -48,16 +48,24 @@ if ~isdeployed % only if _not_ running as standalone
     % add path for optimization functions
     matRadRootDir = fileparts(mfilename('fullpath'));
     addpath(fullfile(matRadRootDir,'optimization'))
+    addpath(fullfile(matRadRootDir,'tools'))
     
     if param.logLevel == 1
-       % get handle to Matlab command window
-       mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-       cw          = mde.getClient('Command Window');
-       xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-       h_cw        = handle(xCmdWndView,'CallbackProperties');
+      
+          [env, ~] = matRad_getEnvironment();
 
-       % set Key Pressed Callback of Matlab command window
-       set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
+          switch env
+               case 'MATLAB'
+                 % get handle to Matlab command window
+                  mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
+                  cw          = mde.getClient('Command Window');
+                  xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+                  h_cw        = handle(xCmdWndView,'CallbackProperties');
+
+                  % set Key Pressed Callback of Matlab command window
+                  set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
+          end
+
     end
 end
 
@@ -278,12 +286,18 @@ if options.numOfScen > 1 || FLAG_ROB_OPT
 end
 
 % unset Key Pressed Callback of Matlab command window
-if ~isdeployed && param.logLevel == 1
+
+if ~isdeployed && strcmp(env,'MATLAB') && param.logLevel == 1
     set(h_cw, 'KeyPressedCallback',' ');
 end
 
 % clear global variables
-clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;
+switch env
+     case 'MATLAB'
+        clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;
+     case 'OCTAVE'
+        clear     -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;           
+end
 
 % unblock mex files
 clear mex
