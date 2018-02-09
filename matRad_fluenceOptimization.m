@@ -125,7 +125,7 @@ options.ub       = inf * ones(1,dij.totalNumOfBixels);   % Upper bound on the va
 funcs.iterfunc   = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter,param);
     
 % calculate initial beam intensities wInit
-if  strcmp(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
+if  strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
     % check if a constant RBE is defined - if not use 1.1
     if ~isfield(dij,'RBE')
         dij.RBE = 1.1;
