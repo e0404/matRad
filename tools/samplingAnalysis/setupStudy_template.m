@@ -5,7 +5,7 @@ examineStructures = {}; % e.g. examinedStructures = {'CTV', 'OAR'};
 multScen = matRad_multScen([],'impScen');
 % a) define shift scenarios
 multScen.numOfShiftScen       = [0 0 0];          % number of shifts in x y and z direction       
-multScen.shiftSize            = [3 3 3];          % maximum shift [mm]  % (e.g. prostate cases 5mm otherwise 3mm)
+multScen.shiftSize            = [4.5 4.5 4.5];          % maximum shift [mm]  % (e.g. prostate cases 5mm otherwise 3mm)
 multScen.shiftGenType         = 'equidistant';    % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
 multScen.shiftCombType        = 'individual';     % individual:  no combination of shift scenarios;       number of shift scenarios is sum(multScen.numOfShiftScen)
                                                   % permuted:    create every possible shift combination; number of shift scenarios is 8,27,64 ... 
@@ -23,9 +23,9 @@ multScen.includeNomScen       = false;
 
 
 % define standard deviation of normal distribution - important for probabilistic treatment planning
-multScen.rangeRelSD           = 1.8;               % given in [%]   
-multScen.rangeAbsSD           = 0.8;                 % given in [mm]   
-multScen.shiftSD              = [2 2 2];           % given in [mm]
+multScen.rangeRelSD           = 0;               % given in [%]   
+multScen.rangeAbsSD           = 1.8;                 % given in [mm]   
+multScen.shiftSD              = [1.8 1.8 1.8];           % given in [mm]
 
 multScen = multScen.matRad_createValidInstance();
 
@@ -42,6 +42,6 @@ param.operator = 'Lucas-Raphael Mueller';
 % param.criteria = [3 3]; %%% [X % Y mm]
 
 %% start calculation
-matRad_calcStudy(examineStructures, multScen, param);
+matRad_calcStudy(examineStructures, multScen, [], param);
 
 % exit;

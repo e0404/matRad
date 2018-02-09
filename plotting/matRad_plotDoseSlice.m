@@ -77,6 +77,8 @@ if ~isempty(threshold)
 else
     mask = alpha * (dose_slice < window(2) & dose_slice > window(1));
 end
+
+% alphadata for image objects is not yet implemented in Octave
 set(doseHandle,'AlphaData',mask);
 
 end
