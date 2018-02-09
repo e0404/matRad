@@ -5,7 +5,6 @@ classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
     properties (Constant)
         name = 'EUD';
         parameterNames = {'EUD^{ref}', 'k'};
-        %parameterIsDose = logical([1 0]);
         parameterTypes = {'dose','numeric'};
     end
     

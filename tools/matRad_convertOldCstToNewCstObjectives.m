@@ -82,8 +82,55 @@ for m=1:size(cst,1)
                 obj.parameters{1} = cst{m,6}(n).dose;
                 obj.parameters{2} = cst{m,6}(n).EUD;                
                 newCst{m,6}{n} = obj;
+            
+            %Constraints
+            elseif isequal(cst{m,6}(n).type, 'max dose constraint')
+                obj = DoseConstraints.matRad_MinMaxDose;
+                obj.parameters{1} = 0;
+                obj.parameters{2} = cst{m,6}(n).dose;
+            
+            elseif isequal(constraint.type, 'min dose constraint')
+                obj = DoseConstraints.matRad_MinMaxDose;
+                obj.parameters{1} = cst{m,6}(n).dose;
+                obj.parameters{2} = Inf;
+
+            elseif isequal(constraint.type, 'min mean dose constraint')
+                obj = DoseConstraints.matRad_MinMaxMeanDose;
+                obj.parameters{1} = cst{m,6}(n).dose;
+                obj.parameters{2} = Inf;
+                
+            elseif isequal(constraint.type, 'max mean dose constraint') 
+                obj = DoseConstraints.matRad_MinMaxMeanDose;
+                obj.parameters{1} = 0;
+                obj.parameters{2} = cst{m,6}(n).dose;
+
+
+            elseif isequal(constraint.type, 'min EUD constraint')
+                obj = DoseConstraints.matRad_MinMaxEUD;
+                obj.parameters{1} = cst{m,6}(n).EUD;
+                obj.parameters{2} = cst{m,6}(n).dose;
+                obj.parameters{3} = Inf;
+                
+            elseif isequal(constraint.type, 'max EUD constraint')
+                obj = DoseConstraints.matRad_MinMaxEUD;
+                obj.parameters{1} = cst{m,6}(n).EUD;
+                obj.parameters{2} = 0;
+                obj.parameters{3} = cst{m,6}(n).dose;
+        
+
+            elseif isequal(constraint.type, 'max DVH constraint')
+                obj = DoseConstraints.matRad_MinMaxDVH;
+                obj.parameters{1} = cst{m,6}(n).dose;
+                obj.parameters{2} = 0;
+                obj.parameters{3} = cst{m,6}(n).volume;
+            
+            elseif isequal(constraint.type, 'min DVH constraint')             
+                obj = DoseConstraints.matRad_MinMaxDVH;
+                obj.parameters{1} = cst{m,6}(n).dose;
+                obj.parameters{2} = cst{m,6}(n).volume;
+                obj.parameters{3} = 1;
             else
-                warndlg('ERROR. Can not read file.','Loading Error');
+                warndlg('ERROR. Can not convert CST objectives/constraints.','Loading Error');
                 break;
             end
         end
