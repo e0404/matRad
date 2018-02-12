@@ -250,7 +250,7 @@ matRad_dispToConsole('matRad: Particle dose calculation... \n',param,'info');
 for ShiftScen = 1:pln.multScen.totNumShiftScen
    
     % manipulate isocenter
-    pln.isoCenter    = pln.isoCenter + pln.multScen.isoShift(ShiftScen,:);
+    pln.isoCenter    = pln.isoCenter + repmat(pln.multScen.isoShift(ShiftScen,:),size(pln.isoCenter,1),1) ;
     for k = 1:length(stf)
         stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(ShiftScen,:);
     end
@@ -530,7 +530,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
    end % end beam loop
    
    % manipulate isocenter
-   pln.isoCenter    = pln.isoCenter - pln.multScen.isoShift(ShiftScen,:);
+   pln.isoCenter    = pln.isoCenter - repmat(pln.multScen.isoShift(ShiftScen,:),size(pln.isoCenter,1),1) ;
    for k = 1:length(stf)
        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(ShiftScen,:);
    end 
