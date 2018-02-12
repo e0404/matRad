@@ -81,7 +81,7 @@ box(gca,'on');
 set(gca,'LineWidth',1.5,'FontSize',fontSizeValue);
 ylabel('Volume [%]','FontSize',fontSizeValue)
 
-if strcmp(pln.bioOptimization,'none')
+if strcmp(pln.bioParam.model,'none')
      xlabel('Dose [Gy]','FontSize',fontSizeValue);
 else
      xlabel('RBE x Dose [Gy(RBE)]','FontSize',fontSizeValue);

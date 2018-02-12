@@ -2581,7 +2581,7 @@ pln.machine         = contents{get(handles.popUpMachine,'Value')};
 cellBioModel        = get(handles.popMenuBioOpt,'String');
 cellQuantOpt        = get(handles.popMenuQuantOpt,'String');
 
-pln.bioParam        = matRad_bioModel(pln.radiationMode,[cellBioModel{get(handles.popMenuBioOpt,'Value'),1} '_' cellQuantOpt{get(handles.popMenuQuantOpt,'Value'),1}]);
+pln.bioParam        = matRad_bioModel(pln.radiationMode, cellQuantOpt{get(handles.popMenuQuantOpt,'Value'),1}, cellBioModel{get(handles.popMenuBioOpt,'Value'),1}); 
 pln.bioOptimization = pln.bioParam.identifier;
 
 scenGenTypes    = get(handles.popupmenuScenGen,'String');
