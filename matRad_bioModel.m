@@ -134,11 +134,11 @@ classdef matRad_bioModel
                                 end
                                 
                             case {'constRBE'}
-                                if strcmp(this.quantityOpt, 'constRBE')
+                                if strcmp(this.quantityOpt, 'RBExD')
                                     boolCHECK = true;
                                 else
                                     matRad_dispToConsole(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using constant RBE instead'],[],'warning');
-                                    this.quantityOpt  = 'constRBE';
+                                    this.quantityOpt  = 'RBExD';
                                 end
                                 
                             otherwise
@@ -168,7 +168,7 @@ classdef matRad_bioModel
                                 
                             case {'MCN'}
                                 switch this.quantityOpt
-                                    case {'RBE','effect'}
+                                    case {'RBExD','effect'}
                                         boolCHECK = true;
                                     otherwise
                                         matRad_dispToConsole(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using effect based optimization instead'],[],'warning');
@@ -177,7 +177,7 @@ classdef matRad_bioModel
                                 
                             case {'WED'}
                                 switch this.quantityOpt
-                                    case {'RBE','effect'}
+                                    case {'RBExD','effect'}
                                         boolCHECK = true;
                                     otherwise
                                         matRad_dispToConsole(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using effect based optimization instead'],[],'warning');
@@ -201,7 +201,7 @@ classdef matRad_bioModel
                                 
                             case {'LEM'}
                                 switch this.quantityOpt
-                                    case {'RBE','effect'}
+                                    case {'RBExD','effect'}
                                         boolCHECK = true;
                                     otherwise
                                         matRad_dispToConsole(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using effect based optimization instead'],[],'warning');
@@ -235,7 +235,7 @@ classdef matRad_bioModel
                         case{'physicalDose'}
                             this.bioOpt       = false;
                             this.quantityVis  = 'physicalDose';
-                        case {'constRBE'}
+                        case {'RBExD'}
                             this.bioOpt       = true;
                             this.quantityVis  = 'RBExD';
                             this.RBE          = this.constRBE_photons;
@@ -278,7 +278,7 @@ classdef matRad_bioModel
                         case{'physicalDose'}
                             this.bioOpt       = false;
                             this.quantityVis  = 'physicalDose';
-                        case{'RBE'}
+                        case{'RBExD'}
                             this.bioOpt       = true;
                             this.quantityVis  = 'RBExD';
                         case{'effect'}

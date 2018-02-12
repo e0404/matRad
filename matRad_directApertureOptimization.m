@@ -61,6 +61,14 @@ if ~isdeployed % only if _not_ running as standalone
 
 end
 
+if exist('param','var')
+   if ~isfield(param,'logLevel')
+      param.logLevel = 1;
+   end
+else
+   param.logLevel = 1;
+end
+
 % initialize global variables for optimizer
 global matRad_global_x;
 global matRad_global_d;

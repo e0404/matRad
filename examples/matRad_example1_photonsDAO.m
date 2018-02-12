@@ -44,6 +44,15 @@ pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.voxelDimensions = ct.cubeDim;
 pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.scenGenType     = 'nomScen';
+pln.multScen        = matRad_multScen(ct,pln.scenGenType);
+quantityOpt         = 'physicalDose';     % either  physicalDose / effect / RBExD
+modelName           = 'none';             % none: for photons, protons, carbon                                    constRBE: constant RBE model
+                                          % MCN: McNamara-variable RBE model for protons                          WED: Wedenberg-variable RBE model for protons 
+                                          % LEM: Local Effect Model for carbon ions
+% retrieve bio model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+
 
 %%
 % Enable sequencing and direct aperture optimization (DAO).
