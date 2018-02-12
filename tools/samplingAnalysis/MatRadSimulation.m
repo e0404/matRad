@@ -119,7 +119,7 @@ classdef MatRadSimulation < handle
                     absRangeShifts(runIx) = scenarios{s}.absRangeShift;
                     runIx = runIx + 1;
                 end
-                obj.scenContainer{obj.nextScenIdentifier} = MatRadScenario(cumDose, scenarios{1}.subIx, 'phsicalDose', ctIndex, shifts, ...
+                obj.scenContainer{obj.nextScenIdentifier} = MatRadScenario(cumDose, scenarios{1}.subIx, obj.radiationQuantity, ctIndex, shifts, ...
                             relRangeShifts, absRangeShifts, scenarios{1}.doseCubeDim, 1);
             end
         end
@@ -135,6 +135,7 @@ classdef MatRadSimulation < handle
             obj.computeAllDvhQi();
             obj.computeStructureWiseDvhQi();
             obj.computeStructureWiseStatistics();
+            obj.statisticsComputed = true;
         end
         
         function weights_unnormalised = get.weights_unnormalised(obj)
@@ -173,6 +174,26 @@ classdef MatRadSimulation < handle
             % create table rownames
             metric = vertcat({'mean';'min';'max';'std'},percentileNames{:});
         end
+        
+        % plot
+        function plotDVHband(obj, listOfStruct)
+            if ~obj.statisticsComputed
+                warning('Please run statistical analysis first.');
+            else
+                
+                for i = 1:numel(listOfStruct)
+                    for j = 1:numel(obj.dvhStatistics)
+                        if strcmp(obj.nominalScenario.dvh(j).name, listOfStruct{i})
+                            nomDVH = obj.nominalScenario.dvh(j);
+                        end
+                        if strcmp(obj.dvhStatistics(j).name, listOfStruct{i})
+                            structStat = obj.dvhStatistics(j).stat;
+                        end
+                    end
+                    matRad_plotDVHBand(obj.dvhDoseGrid, nomDVH, structStat, obj.percentiles, obj.radiationQuantity, listOfStruct{i})
+                end
+            end
+        end
     end
     
     methods (Static)
@@ -189,10 +210,6 @@ classdef MatRadSimulation < handle
               S = mean(X);
           end
         end % eof wMean
-        
-
-        
-
     end
 
     methods (Access = private)
@@ -240,7 +257,7 @@ classdef MatRadSimulation < handle
         function computeStructureWiseStatistics(obj)
             % create statstics where structure based results (QI and DVH) are available
             for i = 1:numel(obj.dvhContainer)
-              obj.dvhStatistics(i).VOIname     = obj.dvhContainer(i).name;
+              obj.dvhStatistics(i).name     = obj.dvhContainer(i).name;
                 obj.dvhStatistics(i).stat     = obj.calcDVHStat(obj.dvhContainer(i).volumePoints, obj.percentiles, obj.weights);
               
               obj.qiStatistics(i).name      = obj.qiContainer(i).name;
@@ -250,22 +267,22 @@ classdef MatRadSimulation < handle
         
         function validScen = isValidScen(obj, scenario)
             if ~strcmp(scenario.radiationQuantity,obj.radiationQuantity)
-                error('Scenarios can only be added if they are of the same quantity.');
                 validScen = false;
+                error('Scenarios can only be added if they are of the same quantity.');
             else
                 validScen = true;
             end
             
             if ~(scenario.subIx == obj.subIx)
-                error('Scenarios can only be added if they feature the same sub indices');
                 validScen = false;
+                error('Scenarios can only be added if they feature the same sub indices');
             else
                 validScen = true;
             end
             
             if ~(scenario.doseCubeDim == obj.doseCubeDimensions)
-                error('Scenarios can only be added if their cube dimension agree.');
                 validScen = false;
+                error('Scenarios can only be added if their cube dimension agree.');
             else
                 validScen = true;
             end
@@ -302,8 +319,8 @@ classdef MatRadSimulation < handle
           meanCube(ix) = (sum(obj.doseContainer * diag(obj.weights),2));
           stdCube(ix)  = std(obj.doseContainer, obj.weights,2);
           
-          obj.meanDoseScenario = MatRadScenario(meanCube, obj.subIx, obj.radiationQuantity, NaN, NaN, NaN, NaN, obj.doseCubeDim, NaN)
-          obj.stdDoseScenario = MatRadScenario(stdCube, obj.subIx, obj.radiationQuantity, NaN, NaN, NaN, NaN, obj.doseCubeDim, NaN)
+          obj.meanDoseScenario = MatRadScenario(meanCube, obj.subIx, obj.radiationQuantity, NaN, NaN, NaN, NaN, obj.doseCubeDim, NaN);
+          obj.stdDoseScenario = MatRadScenario(stdCube, obj.subIx, obj.radiationQuantity, NaN, NaN, NaN, NaN, obj.doseCubeDim, NaN);
         end
         
         function computeGammaCube(obj)

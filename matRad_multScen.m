@@ -538,14 +538,3 @@ classdef matRad_multScen
    
    
 end  % end of matRad_multScen class
-
-
-
-
-
-
-
-
-
-
-

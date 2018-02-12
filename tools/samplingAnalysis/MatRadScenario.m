@@ -81,8 +81,8 @@ classdef MatRadScenario < handle
             end
         end
         
-        function plotDoseSlice(obj, ax, ct, plane, slice)
-            matRad_plotSliceWrapper(ax,ct,obj.cst,1,obj.dose,plane,slice)
+        function plotDoseSlice(obj, ax, ct, plane, slice,legendOn)
+            matRad_plotSliceWrapper(ax,ct,obj.cst,1,obj.dose,plane,slice,[],[],jet,[],[],[],[],[],legendOn);
         end
         
         function singleStructDVH = getSingleStructDVH(obj, voi)
@@ -179,6 +179,14 @@ classdef MatRadScenario < handle
             dose3D(subIx) = doseLin;
         end
         
+    end
+    
+    methods (Static)
+        function cubes = computeDerivedCubes(physicalDose, alpha, beta, bioParam)
+          RBExD = physicalDose * dij.RBE;
+          %%% WRITE HERE %%%
+          
+        end
     end
     
 end % eof classdef

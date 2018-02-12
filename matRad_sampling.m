@@ -77,7 +77,7 @@ else
     for i=1:size(cst,1)
         for j = 1:numel(structSel)
             if strcmp(structSel{j}, cst{i,2})
-                V = [V cst{i,4}{1}];
+                V = [V {cst{i,4}{1}}];
             end
         end
     end
@@ -99,13 +99,13 @@ StorageInfo = whos('mSampDose');
 matRad_dispToConsole(['matRad: Realizations variable will need: ' num2str(StorageInfo.bytes/1e9) ' GB \n'],param,'info');
 
 % check if parallel toolbox is installed and license can be checked out
-try
-   ver('distcomp')                 
-   FlagParallToolBoxLicensed  = license('test','Distrib_Computing_Toolbox'); 
-catch
-   FlagParallToolBoxLicensed  = false;
-end
-
+% try
+%    ver('distcomp')                 
+%    FlagParallToolBoxLicensed  = license('test','Distrib_Computing_Toolbox'); 
+% catch
+%    FlagParallToolBoxLicensed  = false;
+% end
+FlagParallToolBoxLicensed  = false;
 %% calculate nominal scenario
 nomScenTimer     = tic;
 resultGUInomScen = matRad_calcDoseDirect(ct,stf,plnNominal,cst,w,param);
@@ -131,6 +131,7 @@ nomScen = MatRadScenario(nomDoseLin, param.subIx, pln.bioParam.quantityVis, 1, [
 param.logLevel = 3;
 
 %% perform parallel sampling
+scenContainer = cell(pln.multScen.totNumScen,1);
 if FlagParallToolBoxLicensed
    % Create parallel pool on cluster
    p = gcp(); % If no pool, create new one.
@@ -152,8 +153,7 @@ if FlagParallToolBoxLicensed
       fprintf('matRad: Consider downloading parfor_progress function from the matlab central fileexchange to get feedback from parfor loop.\n');
       FlagParforProgressDisp = false;
    end
-  
-   scenContainer = cell(pln.multScen.totNumScen,1);
+   
    parfor i = 1:pln.multScen.totNumScen
           
           % create nominal scenario
@@ -232,6 +232,7 @@ pln.subIx        = param.subIx;
 
 %% account for fractionation
 treatmentSimulation = MatRadSimulation(pln.bioParam.quantityVis, nomScen, ct, cst, pln, pln.numOfFractions);
-treatmentSimulation.initFractionatedTreatments(scenContainer, multScen.fraction_index, 'random')
-
+for i = 1:numel(scenContainer)
+    treatmentSimulation.initNewScen(scenContainer{i})
+end
 end
