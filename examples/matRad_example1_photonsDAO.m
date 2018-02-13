@@ -53,7 +53,6 @@ modelName           = 'none';             % none: for photons, protons, carbon  
 % retrieve bio model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
-
 %%
 % Enable sequencing and direct aperture optimization (DAO).
 pln.runSequencing = 1;
