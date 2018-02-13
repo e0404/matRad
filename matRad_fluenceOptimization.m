@@ -1,4 +1,4 @@
-function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,stf,scaleDRx)
+function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,stf)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
@@ -32,10 +32,6 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,stf,scaleDRx)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-if nargin < 5
-    scaleDRx = 0;
-end
 
 % issue warning if biological optimization impossible
 if sum(strcmp(pln.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose')) && strcmp(pln.radiationMode,'carbon')
@@ -234,7 +230,7 @@ fprintf('Calculating final cubes...\n');
 
 resultGUI = matRad_calcCubes(wOpt,dij,cst_Over);
 
-if scaleDRx
+if pln.scaleDRx
     %Scale D95 in target to RXDose
     resultGUI = matRad_calcQualityIndicators(resultGUI,cst,pln);
     

@@ -92,7 +92,7 @@ end
 %At DKFZ: 95 cm SAD, 10 cm depth, 10x10cm2
 
 %% inverse planning for imrt
-resultGUI = matRad_fluenceOptimization(dij,cst,pln,stf,0);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln,stf);
 
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
