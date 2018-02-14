@@ -157,7 +157,7 @@ if isfield(handles,'VOIPlotFlag')
 end
 
 %search for availabes machines
-handles.Modalities = {'photons','protons','carbon'};
+handles.Modalities = {'photons','protons','helium','carbon'};
 for i = 1:length(handles.Modalities)
   pattern = [handles.Modalities{1,i} '_*'];
   if isdeployed
