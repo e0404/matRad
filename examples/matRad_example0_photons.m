@@ -113,8 +113,6 @@ pln.numOfFractions  = 30;
 % calculate the iso-center which is per default the center of gravity of 
 % all target voxels.
 pln.numOfBeams      = numel(pln.gantryAngles);
-pln.numOfVoxels     = prod(ct.cubeDim);
-pln.voxelDimensions = ct.cubeDim;
 pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
 %%

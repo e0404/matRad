@@ -47,9 +47,9 @@ set(figureWait,'pointer','watch');
 
 % meta information for dij
 dij.numOfBeams         = pln.numOfBeams;
-dij.numOfVoxels        = pln.numOfVoxels;
+dij.numOfVoxels        = prod(ct.cubeDim);
 dij.resolution         = ct.resolution;
-dij.dimensions         = pln.voxelDimensions;
+dij.dimensions         = ct.cubeDim;
 dij.numOfScenarios     = 1;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
