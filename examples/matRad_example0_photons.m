@@ -91,7 +91,7 @@ pln.machine       = 'Generic';
 % optimization; LEMIV_RBExD: optimization of RBE-weighted dose. As we are 
 % using photons, we simply set the parameter to 'none' thereby indicating 
 % the physical dose should be optimized.
-pln.bioOptimization = 'none';    
+pln.propOpt.bioOptimization = 'none';    
 
 %%
 % Now we have to set some beam parameters. We can define multiple beam 
@@ -103,23 +103,23 @@ pln.bioOptimization = 'none';
 % size of 5 x 5 mm in the isocenter plane. The number of fractions is set 
 % to 30. Internally, matRad considers the fraction dose for optimization, 
 % however, objetives and constraints are defined for the entire treatment.
-pln.gantryAngles    = [0:40:359];
-pln.couchAngles     = zeros(1,numel(pln.gantryAngles));
-pln.bixelWidth      = 5;
+pln.propStf.gantryAngles    = [0:40:359];
+pln.propStf.couchAngles     = zeros(1,numel(pln.propStf.gantryAngles));
+pln.propStf.bixelWidth      = 5;
 pln.numOfFractions  = 30;
 
 %%
 % Obtain the number of beams and voxels from the existing variables and 
 % calculate the iso-center which is per default the center of gravity of 
 % all target voxels.
-pln.numOfBeams      = numel(pln.gantryAngles);
-pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
 %%
 % Enable sequencing and disable direct aperture optimization (DAO) for now.
 % A DAO optimization is shown in a seperate example.
-pln.runSequencing = 1;
-pln.runDAO        = 0;
+pln.propOpt.runSequencing = 1;
+pln.propOpt.runDAO        = 0;
 
 %%
 % and et voila our treatment plan structure is ready. Lets have a look:
@@ -151,17 +151,17 @@ matRadGUI;
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = round(pln.isoCenter(1,3)./ct.resolution.z);
+slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 figure
 imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet);
 
 %% Now let's create another treatment plan but this time use a coarser beam spacing.
 % Instead of 40 degree spacing use a 50 degree geantry beam spacing
-pln.gantryAngles = [0:50:359];
-pln.couchAngles  = zeros(1,numel(pln.gantryAngles));
-pln.numOfBeams   = numel(pln.gantryAngles);
-stf              = matRad_generateStf(ct,cst,pln);
-pln.isoCenter    = stf.isoCenter;
+pln.propStf.gantryAngles = [0:50:359];
+pln.propStf.couchAngles  = zeros(1,numel(pln.propStf.gantryAngles));
+pln.propStf.numOfBeams   = numel(pln.propStf.gantryAngles);
+stf                      = matRad_generateStf(ct,cst,pln);
+pln.propStf.isoCenter    = stf.isoCenter;
 dij              = matRad_calcPhotonDose(ct,stf,pln,cst);
 resultGUI_coarse = matRad_fluenceOptimization(dij,cst,pln);
 

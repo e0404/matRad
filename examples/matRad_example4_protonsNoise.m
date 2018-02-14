@@ -36,15 +36,15 @@ load('PROSTATE.mat');
 
 pln.radiationMode   = 'protons';           
 pln.machine         = 'Generic';
-pln.bioOptimization = 'const_RBExD';     
-pln.gantryAngles    = [90 270];
-pln.couchAngles     = [0 0];
-pln.bixelWidth      = 3;
+pln.propOpt.bioOptimization = 'const_RBExD';     
+pln.propStf.gantryAngles    = [90 270];
+pln.propStf.couchAngles     = [0 0];
+pln.propStf.bixelWidth      = 3;
 pln.numOfFractions  = 30;
-pln.numOfBeams      = numel(pln.gantryAngles);
-pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.runDAO          = 0;
-pln.runSequencing   = 0;
+pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propOpt.runDAO          = 0;
+pln.propOpt.runSequencing   = 0;
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -73,7 +73,7 @@ display(qi2(ixRectum).D_5);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = round(pln.isoCenter(1,3)./ct.resolution.z);
+slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 figure
 imagesc(resultGUI.RBExDose(:,:,slice)),colorbar, colormap(jet)
 
@@ -98,7 +98,7 @@ figure,title('manipulated plan')
 matRad_plotSliceWrapper(gca,ct_manip,cst,1,resultGUI_noise.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
 
 % Let's plot single profiles along the beam direction
-ixProfileY = round(pln.isoCenter(1,1)./ct.resolution.x);
+ixProfileY = round(pln.propStf.isoCenter(1,1)./ct.resolution.x);
 
 profileOrginal = resultGUI.RBExDose(:,ixProfileY,slice);
 profileNoise   = resultGUI_noise.RBExDose(:,ixProfileY,slice);

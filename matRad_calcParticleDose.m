@@ -110,7 +110,9 @@ catch
    error(['Could not find the following machine file: ' fileName ]); 
 end
 
-if isfield(pln.propDoseCalc,'calcLET') && pln.propDoseCalc.calcLET
+if isfield(pln,'propDoseCalc') && ...
+   isfield(pln.propDoseCalc,'calcLET') && ...
+   pln.propDoseCalc.calcLET
   if isfield(machine.data,'LET')
     letDoseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
     % Allocate space for dij.dosexLET sparse matrix
