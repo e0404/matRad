@@ -46,14 +46,18 @@ pln.radiationMode = 'carbon';
 pln.machine       = 'Generic';
 
 %%
-% Define the flavor of biological optimization for treatment planning along
-% with the quantity that should be used for optimization. Possible values 
-% are (none: physical optimization; const_RBExD: constant RBE of 1.1; 
-% LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of 
-% RBE-weighted dose. As we use carbon ions, we decide to use base data from 
-% the local effect model IV and want to optimize the RBE-weighted dose. 
-% Therefore we set bioOptimization to LEMIV_RBExD
-pln.bioOptimization = 'LEMIV_RBExD';                                              
+% Define the biological optimization model for treatment planning along
+% with the quantity that should be used for optimization. Possible model values 
+% are:
+%('none': physical optimization;
+%'constRBE': constant RBE of 1.1; 
+% 'MCN': McNamara-variable RBE model for protons; 
+% 'WED':  Wedenberg-variable RBE model for protons
+% 'LEM': local effect model 
+% As we use carbons, we use the local effect model.
+% Therefore we set modelName to LEM
+modelName           = 'LEM';
+quantityOpt         = 'RBExD';   
 
 %%
 % The remaining plan parameters are set like in the previous example files
@@ -67,6 +71,14 @@ pln.voxelDimensions = ct.cubeDim;
 pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.runDAO         = 0;
 pln.runSequencing  = 0;
+pln.scenGenType     = 'nomScen'; % optimize on the nominal scenario
+pln.robOpt          = false;
+
+% retrieve bio model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
+
+% retrieve scenarios for dose calculation and optimziation
+pln.multScen = matRad_multScen(ct,pln.scenGenType);
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -97,13 +109,15 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 % Let's plot the transversal iso-center dose slice
 slice = round(pln.isoCenter(3)./ct.resolution.z);
 figure,
-imagesc(resultGUI.RBExDose (:,:,slice)),colorbar, colormap(jet);
+imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
 
-%% Inverse Optimization  for IMPT based on biological effect
+%% Inverse Optimization for IMPT based on biological effect
 % To perform a dose optimization for carbon ions we can also use the
 % biological effect instead of the RBE-weighted dose. Therefore we have to
 % change the optimization mode and restart the optimization
-pln.bioOptimization = 'LEMIV_effect'; 
+quantityOpt  = 'effect'; 
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
+
 resultGUI_effect = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Visualize differences
@@ -111,7 +125,7 @@ resultGUI_effect = matRad_fluenceOptimization(dij,cst,pln);
 % different dose distribution as visualized by the following dose
 % difference map
 figure;
-imagesc(resultGUI.RBExDose (:,:,slice)-resultGUI_effect.RBExDose(:,:,slice));
+imagesc(resultGUI.RBExD(:,:,slice)-resultGUI_effect.RBExD(:,:,slice));
 colorbar;
 colormap(jet);
 
@@ -132,16 +146,16 @@ resultGUI_tissue = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
 %% Result Comparison
 % Let's compare the new recalculation against the optimization result.
 plane = 3;
-doseWindow = [0 max([resultGUI_effect.RBExDose(:); resultGUI_tissue.RBExDose(:)])];
+doseWindow = [0 max([resultGUI_effect.RBExD(:); resultGUI_tissue.RBExD(:)])];
 
 figure,title('original plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_effect.RBExDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_effect.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);
 figure,title('manipulated plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_tissue.RBExDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_tissue.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);
 
 %% 
 % At this point we would like to see the absolute difference of the original optimization and the 
 % recalculation. 
-absDiffCube = resultGUI_effect.RBExDose-resultGUI_tissue.RBExDose;
+absDiffCube = resultGUI_effect.RBExD-resultGUI_tissue.RBExD;
 figure,title('absolute difference')
 matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);

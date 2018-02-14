@@ -59,7 +59,7 @@ classdef matRad_bioModel
     
     % constant public properties which are visible outside of this class
     properties(Constant = true)
-        AvailableModels                 = {'none','constRBE','MCN','WED','LEM'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
+        AvailableModels                 = {'none','MCN','WED','LEM'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
         AvailableradiationModealities   = {'photons','protons','carbon'};
         AvailableQuantitiesForOpt       = {'physicalDose','effect','RBExD'};
         
@@ -112,7 +112,7 @@ classdef matRad_bioModel
                 % biomodel data validation function
         function this = checkBioModel(this)
             
-            boolCHECK = false;
+            boolCHECK    = false;
             
             while ~boolCHECK
                 
@@ -123,17 +123,18 @@ classdef matRad_bioModel
                             
                             case {'physicalDose'}
                                 if strcmp( this.model, 'none')
-                                    boolCHECK = true;
+                                    boolCHECK    = true;
                                 else
-                                    matRad_dispToConsole(['matRad: Invalid biological model: ' this.model  '; using "none" instead'],[],'warning');
+                                    matRad_dispToConsole(['matRad: Invalid biological model: ' this.model  '; using "none" instead. \n'],[],'warning');
                                     this.model  = 'none';
                                 end
                                 
                             case {'RBExD'}
                                 if sum(strcmp(this.model, {'constRBE', 'none'})) == 1
+                                    this.RBE  = this.constRBE_photons;
                                     boolCHECK = true;
                                 else
-                                    matRad_dispToConsole(['matRad: Invalid biological Model: ' this.model  '; using constant RBE instead'],[],'warning');
+                                    matRad_dispToConsole(['matRad: Invalid biological model: ' this.model  '; using constant RBE instead. \n'],[],'warning');
                                     this.model = 'constRBE';
                                 end
                                 
@@ -141,12 +142,12 @@ classdef matRad_bioModel
                                 if strcmp( this.model, 'none')
                                     boolCHECK = true;
                                 else
-                                    matRad_dispToConsole(['matRad: Invalid biological model: ' this.model  '; using "none" instead'],[],'warning');
+                                    matRad_dispToConsole(['matRad: Invalid biological model: ' this.model  '; using "none" instead. \n'],[],'warning');
                                     this.model  = 'none';
                                 end
                                 
                             otherwise
-                                matRad_dispToConsole(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using physical Dose instead'],[],'warning');
+                                matRad_dispToConsole(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using physical dose instead. \n'],[],'warning');
                                 this.quantityOpt = 'physicalDose';
                         end
                         
@@ -158,15 +159,18 @@ classdef matRad_bioModel
                                 if strcmp( this.model, 'none')
                                     boolCHECK = true;
                                 else
-                                    matRad_dispToConsole(['matRad: Invalid biological model: ' this.model  '; using "none" instead'],[],'warning');
+                                    matRad_dispToConsole(['matRad: Invalid biological model: ' this.model  '; using "none" instead. \n'],[],'warning');
                                     this.model  = 'none';
                                 end
                                 
                             case {'RBExD'}
                                 if sum(strcmp( this.model, {'constRBE','MCN','WED'})) == 1
                                     boolCHECK = true;
+                                    if sum(strcmp( this.model, {'constRBE'})) == 1
+                                        this.RBE  = this.constRBE_protons;
+                                    end  
                                 else
-                                    matRad_dispToConsole(['matRad: Invalid biological model: ' this.model  '; using constant RBE instead'],[],'warning');
+                                    matRad_dispToConsole(['matRad: Invalid biological model: ' this.model  '; using constant RBE instead. \n'],[],'warning');
                                     this.model  = 'constRBE';
                                 end
                                 
@@ -174,12 +178,12 @@ classdef matRad_bioModel
                                 if sum(strcmp( this.model, {'MCN','WED'})) == 1
                                     boolCHECK = true;
                                 else
-                                    matRad_dispToConsole(['matRad: Invalid biological model: ' this.model  '; using MCN Model instead'],[],'warning');
+                                    matRad_dispToConsole(['matRad: Invalid biological model: ' this.model  '; using MCN Model instead. \n'],[],'warning');
                                     this.model  = 'MCN';
                                 end
                                 
                             otherwise
-                                matRad_dispToConsole(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using "none" instead'],[],'warning');
+                                matRad_dispToConsole(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using "none" instead. \n'],[],'warning');
                                 this.quantityOpt = 'physicalDose';
                         end
                         
@@ -190,45 +194,60 @@ classdef matRad_bioModel
                                 if strcmp( this.model, 'none')
                                     boolCHECK = true;
                                 else
-                                    matRad_dispToConsole(['matRad: Invalid biological model: ' this.model  '; using "none" instead'],[],'warning');
+                                    matRad_dispToConsole(['matRad: Invalid biological model: ' this.model  '; using "none" instead. \n'],[],'warning');
                                     this.model  = 'none';
                                 end
                                 
-                            case {'RBExD'}
+                            case {'effect','RBExD'}
                                 if strcmp(this.model,'LEM')
                                     boolCHECK = true;
                                 else
-                                    matRad_dispToConsole(['matRad: Invalid biological Model: ' this.model  '; using Local Effect Model instead'],[],'warning');
-                                    this.model = 'LEM';
-                                end
-                                
-                            case {'effect'}
-                                if strcmp(this.model,'LEM')
-                                    boolCHECK = true;
-                                else
-                                    matRad_dispToConsole(['matRad: Invalid biological Model: ' this.model  '; using Local Effect Model instead'],[],'warning');
+                                    matRad_dispToConsole(['matRad: Invalid biological Model: ' this.model  '; using Local Effect Model instead. \n'],[],'warning');
                                     this.model = 'LEM';
                                 end
                                 
                             otherwise
-                                matRad_dispToConsole(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using "none" instead'],[],'warning');
+                                matRad_dispToConsole(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using "none" instead. \n'],[],'warning');
                                 this.quantityOpt = 'physicalDose';
                         end
                         
                     otherwise
-                        matRad_dispToConsole(['matRad: Invalid biological radiation mode: ' this.radiationMode  '; using photons instead'],[],'warning');
+                        matRad_dispToConsole(['matRad: Invalid biological radiation mode: ' this.radiationMode  '; using photons instead. \n'],[],'warning');
                         this.radiationMode = 'photons';
                 end
             end
+            
         end
         
         
         function this = setBioModel(this)
             
             this.RBE = NaN;
+            % check for valid combinations 
             this     = checkBioModel(this);
             
-            % set photon parameter
+            % check bio model boolean
+            switch this.model
+                case{'none','constRBE'}
+                    this.bioOpt = false;
+                case{'MCN','WED','LEM'}
+                    this.bioOpt = true;
+                otherwise
+                     matRad_dispToConsole(['matRad: Invalid biological model: ' this.model  '\n'],[],'error');
+            end
+            
+            % check quantity for optimization
+            if this.bioOpt 
+                if sum(strcmp(this.quantityOpt,{'physicalDose','RBExD','effect'})) == 0
+                    matRad_dispToConsole(['matRad: Invalid quantity for optimization: ' this.quantityOpt  '\n'],[],'error');
+                end
+            else
+                if sum(strcmp(this.quantityOpt,{'physicalDose','RBExD'})) == 0
+                    matRad_dispToConsole(['matRad: Invalid quantity for optimization: ' this.quantityOpt  '\n'],[],'error');
+                end
+            end
+            
+            % set default quantity for visualization
             switch  this.radiationMode
                 
                 case {'photons'}
@@ -236,42 +255,22 @@ classdef matRad_bioModel
                     switch this.quantityOpt
                         
                         case{'physicalDose'}
-                            this.bioOpt       = false;
                             this.quantityVis  = 'physicalDose';
                         case {'RBExD'}
-                            this.bioOpt       = true;
                             this.quantityVis  = 'RBExD';
-                            this.RBE          = this.constRBE_photons;
                         case{'effect'}
-                            this.bioOpt       = true;
                             this.quantityVis  = 'RBExD';                
-                        otherwise
-                            matRad_dispToConsole(['matRad: Invalid biological optimization: ' this.identifier ' for ' this.radiationMode  '; using physical optimization instead'],[],'warning');
-                            this.model        = 'none';
-                            this.bioOpt       = false;
                     end
                     
                 case {'protons'}
                     
                     switch this.quantityOpt
-                        
                         case{'physicalDose'}
-                            this.bioOpt       = false;
                             this.quantityVis  = 'physicalDose';
-                        case {'constRBE'}
-                            this.bioOpt       = true;
-                            this.quantityVis  = 'RBExD';
-                            this.RBE          = this.constRBE_protons;
-                        case{'RBE'}
-                            this.bioOpt       = true;
+                        case{'RBExD'}
                             this.quantityVis  = 'RBExD';
                         case{'effect'}
-                            this.bioOpt       = true;
                             this.quantityVis  = 'RBExD';
-                        otherwise
-                            matRad_dispToConsole(['matRad: Invalid biological optimization: ' this.quantityOpt ' for ' this.radiationMode  '; using physical optimization instead'],[],'warning');
-                            this.model        = 'none';
-                            this.bioOpt       = false;
                     end
                     
                 case {'carbon'}
@@ -279,27 +278,38 @@ classdef matRad_bioModel
                     switch this.quantityOpt
                         
                         case{'physicalDose'}
-                            this.bioOpt       = false;
                             this.quantityVis  = 'physicalDose';
                         case{'RBExD'}
-                            this.bioOpt       = true;
                             this.quantityVis  = 'RBExD';
                         case{'effect'}
-                            this.bioOpt       = true;
                             this.quantityVis  = 'RBExD';
-                        otherwise
-                            matRad_dispToConsole(['matRad: Invalid biological optimization: ' this.quantityOpt ' for ' this.radiationMode  '; using physical optimization instead'],[],'warning');
-                            this.model        = 'none';
-                            this.bioOpt       = true;
                             
                     end
                     
+                 case {'helium'}
+                     
+                     warning('not yet implemented')
+                     
                 otherwise
-                    
-                    
+                           
             end
-        end
-    end
+            
+            
+            % check quantity for visualization
+            if this.bioOpt 
+                if sum(strcmp(this.quantityVis,{'physicalDose','RBExD','effect'})) == 0
+                    matRad_dispToConsole(['matRad: Invalid quantity for visualization: ' this.quantityVis  '\n'],[],'error');
+                end
+            else
+                if sum(strcmp(this.quantityVis,{'physicalDose','RBExD'})) == 0
+                    matRad_dispToConsole(['matRad: Invalid quantity for visualization: ' this.quantityVis  '\n'],[],'error');
+                end
+            end
+            
+            
+            
+        end % end of this = setBioModel(this)
+    end % end off access methods private
     
     
     
@@ -388,7 +398,7 @@ classdef matRad_bioModel
                     bixelLET = matRad_interp1(depths,baseDataEntry.LET,vRadDepths);
                     bixelLET(isnan(bixelLET)) = 0;
                     
-                    ix              = this.p_lowerLETThreshold < bixelLET < this.p_upperLETThreshold;
+                    ix                 = this.p_lowerLETThreshold < bixelLET < this.p_upperLETThreshold;
                     
                     alpha_0            = vAlpha_x - (this.p_lamda_1_1 * this.p_corrFacEntranceRBE);
                     bixelAlpha(ixLSM)  = alpha_0(ix) + this.p_lamda_1_1 * bixelLET;
