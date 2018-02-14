@@ -41,8 +41,6 @@ pln.couchAngles     = [0 0 0 0 0];
 pln.bixelWidth      = 5;
 pln.numOfFractions  = 30;
 pln.numOfBeams      = numel(pln.gantryAngles);
-pln.numOfVoxels     = prod(ct.cubeDim);
-pln.voxelDimensions = ct.cubeDim;
 pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
 %%

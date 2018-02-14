@@ -40,9 +40,9 @@ end
 
 % meta information for dij
 dij.numOfBeams         = pln.numOfBeams;
-dij.numOfVoxels        = pln.numOfVoxels;
+dij.numOfVoxels        = prod(ct.cubeDim);
 dij.resolution         = ct.resolution;
-dij.dimensions         = pln.voxelDimensions;
+dij.dimensions         = ct.cubeDim;
 dij.numOfScenarios     = 1;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
@@ -76,8 +76,7 @@ end
 % set environment variables for vmc++
 if exist(['vmc++' filesep 'bin'],'dir') ~= 7
     error(['Could not locate vmc++ environment. ' ...
-          'Please provide the files in the correct folder structure at matRadroot' filesep 'vmc++' ...
-          '(CERR hosts compatible files at http://www.cerr.info/download.php).']);
+          'Please provide the files in the correct folder structure at matRadroot' filesep 'vmc++.']);
 else
     VMCPath     = fullfile(pwd , 'vmc++');
     runsPath    = fullfile(VMCPath, 'runs');
