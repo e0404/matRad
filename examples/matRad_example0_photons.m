@@ -176,11 +176,10 @@ imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet);
 
 %% Now let's create another treatment plan but this time use a coarser beam spacing.
 % Instead of 40 degree spacing use a 50 degree geantry beam spacing
-pln.gantryAngles = [0:50:359];
 pln.couchAngles  = zeros(1,numel(pln.gantryAngles));
 pln.numOfBeams   = numel(pln.gantryAngles);
+pln.isoCenter    = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 stf              = matRad_generateStf(ct,cst,pln);
-pln.isoCenter    = stf.isoCenter;
 dij              = matRad_calcPhotonDose(ct,stf,pln,cst);
 resultGUI_coarse = matRad_fluenceOptimization(dij,cst,pln);
 
