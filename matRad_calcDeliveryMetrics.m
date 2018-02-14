@@ -32,6 +32,14 @@ function result = matRad_calcDeliveryMetrics(result,pln,stf)
 
 apertureInfo = result.apertureInfo;
 
+fileName = apertureInfo.vmatOptions.machineConstraintFile;
+try
+    load([fileparts(mfilename('fullpath')) filesep fileName],'machineConstraints');
+catch
+    error(['Could not find the following machine file: ' fileName ]);
+end
+
+
 apertureInfo.planMU = 0;
 %apertureInfo.planArea = 0;
 %apertureInfo.planModulation = 0;
@@ -208,7 +216,7 @@ if pln.VMAT
         hold on
         counter = 1;
         for border = initBorders
-            plot([border border],[-pln.leafSpeedCst(2) pln.leafSpeedCst(2)],'r-')
+            plot([border border],[-resultGUI.apertureInfo.machineConstraints.leafSpeed(2) resultGUI.apertureInfo.machineConstraints.leafSpeed(2)],'r-')
             
             if border < initBorders(end)
                 curr_lfspd = lfspd(initBorders(counter) <= optAnglesMat & optAnglesMat <= initBorders(counter+1));
@@ -222,29 +230,29 @@ if pln.VMAT
         end
         plot([min(initBorders)-5 max(initBorders)+5],[0 0],'k--')
         xlim([min(initBorders)-5 max(initBorders)+5])
-        ylim([-pln.leafSpeedCst(2)-5 pln.leafSpeedCst(2)+5])
+        ylim([-resultGUI.apertureInfo.machineConstraints.leafSpeed(2)-5 resultGUI.apertureInfo.machineConstraints.leafSpeed(2)+5])
         xlabel('gantry angle (^\circ)')
         ylabel('leaf speed (cm/s)')
         
         figure
         plot(optAngles,gantryRot,'.')
         xlim([min(initBorders)-5 max(initBorders)+5])
-        ylim([0 pln.gantryRotCst(2)+1])
+        ylim([0 resultGUI.apertureInfo.machineConstraints.gantryRotationSpeed(2)+1])
         xlabel('gantry angle (^\circ)')
         ylabel('gantry rotation speed (^\circ/s)')
         
         figure
         plot(optAngles,MURate,'.')
         xlim([min(initBorders)-5 max(initBorders)+5])
-        ylim([0 60*pln.doseRateCst(2)+5])
+        ylim([0 60*resultGUI.apertureInfo.machineConstraints.monitorUnitRate(2)+5])
         xlabel('gantry angle (^\circ)')
         ylabel('MU rate (MU/min)')
         
-        apertureInfo.fracMaxMURate = sum(times(MURate > 60*pln.doseRateCst(2)*(1-1e-5)))./sum(times);
-        apertureInfo.fracMinMURate = sum(times(MURate < 60*pln.doseRateCst(1)*(1+1e-5)))./sum(times);
-        apertureInfo.fracMaxGantryRot = sum(times(gantryRot > pln.gantryRotCst(2)*(1-1e-5)))./sum(times);
-        apertureInfo.fracMaxLeafSpeed = sum(times(maxLeafSpeed > pln.leafSpeedCst(2)/10*(1-1e-5)))./sum(times);
-        apertureInfo.fracHalfMaxLeafSpeed = sum(times(maxLeafSpeed > pln.leafSpeedCst(2)/10*(1-1e-5)/2))./sum(times);
+        apertureInfo.fracMaxMURate = sum(times(MURate > 60*machine.constraints.monitorUnitRate(2)*(1-1e-5)))./sum(times);
+        apertureInfo.fracMinMURate = sum(times(MURate < 60*machine.constraints.monitorUnitRate(1)*(1+1e-5)))./sum(times);
+        apertureInfo.fracMaxGantryRot = sum(times(gantryRot > machine.constraints.gantryRotationSpeed(2)*(1-1e-5)))./sum(times);
+        apertureInfo.fracMaxLeafSpeed = sum(times(maxLeafSpeed > machine.constraints.leafSpeed(2)/10*(1-1e-5)))./sum(times);
+        apertureInfo.fracHalfMaxLeafSpeed = sum(times(maxLeafSpeed > machine.constraints.leafSpeed(2)/10*(1-1e-5)/2))./sum(times);
         
         apertureInfo.fracForward = numForward./(numForward+numBackward);
         apertureInfo.fracBackward = 1-apertureInfo.fracForward;

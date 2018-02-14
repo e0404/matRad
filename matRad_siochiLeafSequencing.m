@@ -328,11 +328,12 @@ if pln.VMAT
     end
     
     sequencing.beam = rmfield(sequencing.beam,{'tempShapes','tempShapesWeight'});
-    %Calculate w using matRad functions
+
     sequencing.weightToMU = dij.weightToMU;
     sequencing.jacobi = pln.jacobi;
-    resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
+    sequencing.vmatOptions = pln.vmatOptions;
     
+    resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
     
     %matRad_daoVec2ApertureInfo will interpolate subchildren gantry
     %segments
@@ -340,13 +341,11 @@ if pln.VMAT
     resultGUI.apertureInfo = matRad_daoVec2ApertureInfo_VMAT(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
     resultGUI.apertureInfo.updateJacobi = false;
     
-    % LEAF TRAVEL / DEGREE
-    
     %calculate max leaf speed
     resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
     
     %optimize delivery
-    resultGUI = matRad_optDelivery(resultGUI,pln,0);
+    resultGUI = matRad_optDelivery(resultGUI,0);
     resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
     
     sequencing.w = resultGUI.apertureInfo.bixelWeights;

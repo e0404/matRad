@@ -22,15 +22,15 @@ clc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-%load TG119.mat
-load PROSTATE.mat
+load TG119.mat
+%load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
 
 % meta information for treatment plan
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0]; % [°]
-pln.couchAngles     = [0]; % [°]
+pln.gantryAngles    = [0:72:359]; % [°]
+pln.couchAngles     = [0 0 0 0 0]; % [°]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
@@ -38,10 +38,10 @@ pln.voxelDimensions = ct.cubeDim;
 pln.radiationMode   = 'photons';     % either photons / protons / carbon
 pln.bioOptimization = 'none';        % none: physical optimization;             const_RBExD; constant RBE of 1.1;
                                      % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
-pln.numOfFractions  = 38;
-pln.runSequencing   = true; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
+pln.numOfFractions  = 30;
+pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.numLevels = 7;
-pln.runDAO          = true; % 1/true: run DAO, 0/false: don't / will be ignored for particles
+pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.VMAT            = false; % 1/true: run VMAT, 0/false: don't
 pln.machine         = 'Generic';
 
@@ -52,21 +52,43 @@ pln.jacobi          = true;
 
 
 %% For VMAT
-pln.scaleDRx        = false;
-pln.VMAT            = true;
 
+clear
+close all
+clc
 
-pln.numApertures = 7; %max val is pln.maxApertureAngleSpread/pln.minGantryAngleRes
-pln.minGantryAngleRes = 4; %Bzdusek
-pln.maxApertureAngleSpread = 28; %should be an even multiple of pln.minGantryAngleRes; Bzdusek
+% load patient data, i.e. ct, voi, cst
+
+%load HEAD_AND_NECK
+load TG119.mat
+%load PROSTATE.mat
+%load LIVER.mat
+%load BOXPHANTOM.mat
+
+% meta information for treatment plan
+pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
+pln.numOfBeams      = numel(pln.gantryAngles);
+pln.numOfVoxels     = prod(ct.cubeDim);
+pln.voxelDimensions = ct.cubeDim;
+pln.radiationMode   = 'photons';     % either photons / protons / carbon
+pln.bioOptimization = 'none';        % none: physical optimization;             const_RBExD; constant RBE of 1.1;
+                                     % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
+pln.numOfFractions  = 30;
+pln.runSequencing   = true; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
+pln.numLevels = 7;
+pln.runDAO          = true; % 1/true: run DAO, 0/false: don't / will be ignored for particles
+pln.VMAT            = true; % 1/true: run VMAT, 0/false: don't
+pln.machine         = 'Generic';
+
+pln.minGantryAngleRes = 4;      % Min gantry angle spacing for dose calculation
+pln.maxApertureAngleSpread = 28;% Max gantry angle spread between apertures from same optimized fluence map; should be a multiple of pln.minGantryAngleRes
+pln.numApertures = 7;           % Number of apertures to keep after sequencing; max val is pln.maxApertureAngleSpread/pln.minGantryAngleRes
 pln = matRad_VMATGantryAngles(pln,cst,ct);
 
-pln.gantryRotCst = [0 6]; %degrees per second
-pln.defaultGantryRot = max(pln.gantryRotCst); %degrees per second
-pln.leafSpeedCst = [0 6]*10; %mm per second
-pln.defaultLeafSpeed = pln.leafSpeedCst(2);
-pln.doseRateCst = [75 600]/60; %MU per second
-pln.defaultDoseRate = pln.doseRateCst(2);
+pln.scaleDRx        = true;
+pln.memorySaver     = false;
+pln.scaleDij        = true;
+pln.jacobi          = true;
 
 %% initial visualization and change objective function settings if desired
 matRadGUI

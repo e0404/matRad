@@ -110,11 +110,6 @@ if pln.VMAT
     %angle.
     masterRayPosBEV = nan(1,3);
     masterTargetPointBEV = nan(1,3);
-    
-    %include min/max gantry rotation speed in first steering file
-    stf(1).gantryRotCst = pln.gantryRotCst;
-    
-    lastOptInd = 1;
 end
 
 
@@ -397,14 +392,14 @@ for i = 1:length(pln.gantryAngles)
         %deposited
         
         if i == 1
+            
             stf(i).doseAngleBorders = ([pln.gantryAngles(i) pln.gantryAngles(i+1)]+pln.gantryAngles(i))/2;
-            
         elseif i == length(pln.gantryAngles)
+            
             stf(i).doseAngleBorders = ([pln.gantryAngles(i-1) pln.gantryAngles(i)]+pln.gantryAngles(i))/2;
-            
         else
-            stf(i).doseAngleBorders = ([pln.gantryAngles(i-1) pln.gantryAngles(i+1)]+pln.gantryAngles(i))/2;
             
+            stf(i).doseAngleBorders = ([pln.gantryAngles(i-1) pln.gantryAngles(i+1)]+pln.gantryAngles(i))/2;
         end
         
         stf(i).doseAngleBorderCentreDiff = [stf(i).gantryAngle-stf(i).doseAngleBorders(1) stf(i).doseAngleBorders(2)-stf(i).gantryAngle];
@@ -463,9 +458,12 @@ for i = 1:length(pln.gantryAngles)
             %These are the factors that relate the total time in the
             %optimized arc sector to the total time in the previous and
             %next dose sectors
-            timeFacPrevAndNext = (stf(i).optAngleBorderCentreDiff-stf(i).doseAngleBorderCentreDiff)./stf(i).optAngleBordersDiff;
-            stf(i).timeFacPrev = timeFacPrevAndNext(1);
-            stf(i).timeFacNext = timeFacPrevAndNext(2);
+            
+            %DO NOT THINK WE NEED THESE, EC 2018-02-14
+            
+            %timeFacPrevAndNext = (stf(i).optAngleBorderCentreDiff-stf(i).doseAngleBorderCentreDiff)./stf(i).optAngleBordersDiff;
+            %stf(i).timeFacPrev = timeFacPrevAndNext(1);
+            %stf(i).timeFacNext = timeFacPrevAndNext(2);
             
         else
             if ~isfield(stf(stf(i).beamParentIndex),'beamSubChildrenGantryAngles') || isempty(stf(stf(i).beamParentIndex).beamSubChildrenGantryAngles)
@@ -491,14 +489,14 @@ for i = 1:length(pln.gantryAngles)
             initIndex = find(pln.initGantryAngles == pln.gantryAngles(i));
             
             if initIndex == 1
+                
                 stf(i).initAngleBorders = [min(pln.initGantryAngles(initIndex),pln.gantryAngles(1)) (pln.initGantryAngles(initIndex+1)+pln.initGantryAngles(initIndex))/2];
-                
             elseif initIndex == length(pln.initGantryAngles)
+                
                 stf(i).initAngleBorders = [(pln.initGantryAngles(initIndex-1)+pln.initGantryAngles(initIndex))/2 max(pln.initGantryAngles(initIndex),pln.gantryAngles(end))];
-                
             else
-                stf(i).initAngleBorders = ([pln.initGantryAngles(initIndex-1) pln.initGantryAngles(initIndex+1)]+pln.initGantryAngles(initIndex))/2;
                 
+                stf(i).initAngleBorders = ([pln.initGantryAngles(initIndex-1) pln.initGantryAngles(initIndex+1)]+pln.initGantryAngles(initIndex))/2;
             end
             stf(i).initAngleBorderCentreDiff = [stf(i).gantryAngle-stf(i).initAngleBorders(1) stf(i).initAngleBorders(2)-stf(i).gantryAngle];
             stf(i).initAngleBordersDiff = sum(stf(i).initAngleBorderCentreDiff);
@@ -518,7 +516,6 @@ for i = 1:length(pln.gantryAngles)
         
         masterRayPosBEV = union(masterRayPosBEV,rayPosBEV,'rows');
         masterTargetPointBEV = union(masterTargetPointBEV,targetPointBEV,'rows');
-        
     end
     
     
@@ -669,7 +666,10 @@ for i = 1:length(pln.gantryAngles)
 end
 
 %% VMAT
-IandFTimeInd = 1;
+
+%EC 2018-02-04
+%IandFTimeInd = 1;
+
 if pln.VMAT
     numSSDErr = 0;
     
@@ -686,6 +686,8 @@ if pln.VMAT
     
     for i = 1:length(pln.gantryAngles)
         if stf(i).optimizeBeam
+            %EC 2018-02-04
+            %{
             if sum([stf([stf.optimizeBeam]).doseAngleBorders] == stf(i).doseAngleBorders(2)) > 1
                 %final dose angle is repeated
                 %do not count twice in optimization
@@ -719,6 +721,7 @@ if pln.VMAT
             stf(i).IandFFac(3) = (stf(stf(i).nextOptIndex).gantryAngle-stf(i).doseAngleBorders(2))/(stf(stf(i).nextOptIndex).gantryAngle-stf(i).gantryAngle);
             
             stf(i).IandFFac(isnan(stf(i).IandFFac)) = 1;
+            %}
             
             stf(i).timeFac = zeros(1,2);
             
@@ -751,16 +754,15 @@ if pln.VMAT
             end
         else
             % for leaf position interpolation
-            stf(i).fracFromLastOptI = (stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(i).doseAngleBorders(1))./(stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(stf(i).lastOptIndex).doseAngleBorders(2));
-            stf(i).fracFromLastOptF = (stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(i).doseAngleBorders(2))./(stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(stf(i).lastOptIndex).doseAngleBorders(2));
-            stf(i).fracFromNextOptI = (stf(i).doseAngleBorders(1)-stf(stf(i).lastOptIndex).doseAngleBorders(2))./(stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(stf(i).lastOptIndex).doseAngleBorders(2));
-            stf(i).fracFromNextOptF = (stf(i).doseAngleBorders(2)-stf(stf(i).lastOptIndex).doseAngleBorders(2))./(stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(stf(i).lastOptIndex).doseAngleBorders(2));
+            %EC 2018-02-04
+            %stf(i).fracFromLastOptI = (stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(i).doseAngleBorders(1))./(stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(stf(i).lastOptIndex).doseAngleBorders(2));
+            %stf(i).fracFromLastOptF = (stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(i).doseAngleBorders(2))./(stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(stf(i).lastOptIndex).doseAngleBorders(2));
+            %stf(i).fracFromNextOptI = (stf(i).doseAngleBorders(1)-stf(stf(i).lastOptIndex).doseAngleBorders(2))./(stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(stf(i).lastOptIndex).doseAngleBorders(2));
+            %stf(i).fracFromNextOptF = (stf(i).doseAngleBorders(2)-stf(stf(i).lastOptIndex).doseAngleBorders(2))./(stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(stf(i).lastOptIndex).doseAngleBorders(2));
             
             % for time interpolation
             stf(i).timeFracFromLastOpt = (stf(stf(i).lastOptIndex).optAngleBorders(2)-stf(i).doseAngleBorders(1))./stf(i).doseAngleBordersDiff;
             stf(i).timeFracFromNextOpt = (stf(i).doseAngleBorders(2)-stf(stf(i).lastOptIndex).optAngleBorders(2))./stf(i).doseAngleBordersDiff;
-            %stf(i).timeFracFromLastOpt = (stf(i).gantryAngle-stf(stf(i).lastOptIndex).doseAngleBorders(2))./stf(i).doseAngleBordersDiff;
-            %stf(i).timeFracFromNextOpt = (stf(stf(i).nextOptIndex).doseAngleBorders(1)-stf(i).gantryAngle)./stf(i).doseAngleBordersDiff;
             if stf(i).timeFracFromLastOpt > 1
                 stf(i).timeFracFromLastOpt = 1;
             elseif stf(i).timeFracFromLastOpt < 0
@@ -970,9 +972,6 @@ if pln.VMAT
         
         matRad_progress(i,length(pln.gantryAngles));
     end
-    
-    stf(1).maxLeafSpeedCst = max(pln.leafSpeedCst);
-    
     
     stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
     stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);

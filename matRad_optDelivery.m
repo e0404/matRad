@@ -1,13 +1,12 @@
-function result = matRad_optDelivery(result,pln,fast)
+function result = matRad_optDelivery(result,fast)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad: optimize VMAT delivery
 % 
 % call
-%   matRad_optDelivery(result,pln)
+%   matRad_optDelivery(result,fast)
 %
 % input
 %   result:             result struct from fluence optimization/sequencing
-%   pln:                matRad plan meta information struct
 %   fast:               1 => fastest possible delivery
 %                       0 => mutliply delivery time by 10%
 %
@@ -42,6 +41,15 @@ end
 
 apertureInfo = result.apertureInfo;
 
+fileName = apertureInfo.vmatOptions.machineConstraintFile;
+try
+    load([fileparts(mfilename('fullpath')) filesep fileName],'machineConstraints');
+catch
+    error(['Could not find the following machine file: ' fileName ]);
+end
+
+
+
 %calculate max leaf speed
 apertureInfo = matRad_maxLeafSpeed(apertureInfo);
 
@@ -54,9 +62,9 @@ for i = 1:size(apertureInfo.beam,2)
         %constraints
         
         %if one of them is less than 1, then a constraint is violated
-        factorMURate = pln.doseRateCst(2)/apertureInfo.beam(i).MURate;
-        factorLeafSpeed = pln.leafSpeedCst(2)/apertureInfo.beam(i).maxLeafSpeed;
-        factorGantryRot = pln.gantryRotCst(2)/apertureInfo.beam(i).gantryRot;
+        factorMURate = machine.constraints.monitorUnitRate(2)/apertureInfo.beam(i).MURate;
+        factorLeafSpeed = machine.constraints.leafSpeed(2)/apertureInfo.beam(i).maxLeafSpeed;
+        factorGantryRot = machine.constraints.gantryRotationSpeed(2)/apertureInfo.beam(i).gantryRot;
         
         %The constraint that is limiting the speed the most is the one
         %whose factor is closest to 1
@@ -75,7 +83,7 @@ for i = 1:size(apertureInfo.beam,2)
         apertureInfo.beam(i).gantryRot = factor*apertureInfo.beam(i).gantryRot;
         apertureInfo.beam(i).time = apertureInfo.beam(i).time/factor;
         
-        factorMURate = pln.doseRateCst(1)/apertureInfo.beam(i).MURate;
+        factorMURate = machine.constraints.monitorUnitRate(1)/apertureInfo.beam(i).MURate;
         
         if factorMURate > 1
             apertureInfo.beam(i).MURate = factorMURate*apertureInfo.beam(i).MURate;

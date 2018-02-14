@@ -35,17 +35,17 @@ function pln = matRad_VMATGantryAngles(pln,cst,ct)
 
 
 
-pln.gantryAngleSpacing = pln.minGantryAngleRes; %ideally should be spaced every 2 or 4 degrees; gantry spacing that dij is performed
+gantryAngleSpacing = pln.minGantryAngleRes; %ideally should be spaced every 2 or 4 degrees; gantry spacing that dij is performed
 
-pln.maxNumApertures = pln.maxApertureAngleSpread/pln.gantryAngleSpacing;
+maxNumApertures = pln.maxApertureAngleSpread/gantryAngleSpacing;
 
-pln.gantryToOptAngleSpacingFactor = floor(pln.maxNumApertures/pln.numApertures);
-pln.optGantryAngleSpacing = pln.gantryAngleSpacing*pln.gantryToOptAngleSpacingFactor;
-pln.initGantryAngleSpacing = pln.numApertures*pln.optGantryAngleSpacing;
+gantryToOptAngleSpacingFactor = floor(maxNumApertures/pln.numApertures);
+optGantryAngleSpacing = gantryAngleSpacing*gantryToOptAngleSpacingFactor;
+initGantryAngleSpacing = pln.numApertures*optGantryAngleSpacing;
 
-pln.gantryAngles    = 0:pln.gantryAngleSpacing:360;
-pln.optGantryAngles = 0:pln.optGantryAngleSpacing:360;
-pln.initGantryAngles = (pln.optGantryAngleSpacing*floor(pln.numApertures/2)):pln.initGantryAngleSpacing:361;
+pln.gantryAngles    = 0:gantryAngleSpacing:360;
+pln.optGantryAngles = 0:optGantryAngleSpacing:360;
+pln.initGantryAngles = (optGantryAngleSpacing*floor(pln.numApertures/2)):initGantryAngleSpacing:361;
 
 if pln.gantryAngles(end) ~= pln.optGantryAngles(end)
     %the final beam is not an optimized beam yet, but it should be for
