@@ -86,13 +86,24 @@ pln.machine       = 'Generic';
 
 %%
 % Define the flavor of optimization along with the quantity that should be
-% used for optimization. Possible values are (none: physical optimization; 
-% const_RBExD: constant RBE of 1.1; LEMIV_effect: effect-based 
-% optimization; LEMIV_RBExD: optimization of RBE-weighted dose. As we are 
-% using photons, we simply set the parameter to 'none' thereby indicating 
-% the physical dose should be optimized.
-pln.bioOptimization = 'none';    
+% used for optimization. Possible quantities used for optimization are: 
+% physicalDose: physical dose based optimization; 
+% effect: biological effect based optimization;
+% RBExD: RBE weighted dose based optimzation;
+% Possible biological models are:
+% none:        use no specific biological model
+% constRBE:    use a constant RBE
+% MCN:         use the variable RBE McNamara model for protons
+% WED:         use the variable RBE Wedenberg model for protons
+% LEM:         use the biophysical variable RBE Local Effect model for carbons
+% As we are  using photons, we simply set the parameter to 'physicalDose' and
+% and 'none'
+quantityOpt    = 'physicalDose';                                     
+modelName      = 'none';  
 
+% disable robust optimization
+pln.robOpt       = false;
+pln.scenGenType  = 'nomScen';
 %%
 % Now we have to set some beam parameters. We can define multiple beam 
 % angles for the treatment and pass these to the plan as a vector. matRad 
@@ -122,6 +133,12 @@ pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 % A DAO optimization is shown in a seperate example.
 pln.runSequencing = 1;
 pln.runDAO        = 0;
+
+% retrieve bio model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+
+% retrieve scenarios for dose calculation and optimziation
+pln.multScen = matRad_multScen(ct,pln.scenGenType);
 
 %%
 % and et voila our treatment plan structure is ready. Lets have a look:
@@ -162,8 +179,8 @@ imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet);
 pln.gantryAngles = [0:50:359];
 pln.couchAngles  = zeros(1,numel(pln.gantryAngles));
 pln.numOfBeams   = numel(pln.gantryAngles);
+pln.isoCenter    = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 stf              = matRad_generateStf(ct,cst,pln);
-pln.isoCenter    = stf.isoCenter;
 dij              = matRad_calcPhotonDose(ct,stf,pln,cst);
 resultGUI_coarse = matRad_fluenceOptimization(dij,cst,pln);
 

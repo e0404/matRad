@@ -33,7 +33,6 @@ load('BOXPHANTOM.mat');
 
 pln.radiationMode = 'photons';  
 pln.machine       = 'Generic';
-pln.bioOptimization = 'none';    
 pln.gantryAngles    = [0];
 pln.couchAngles     = [0];
 pln.bixelWidth      = 10;
@@ -44,6 +43,19 @@ pln.voxelDimensions = ct.cubeDim;
 pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.runSequencing   = 0;
 pln.runDAO          = 0;
+
+quantityOpt    = 'physicalDose';                                     
+modelName      = 'none';  
+
+% disable robust optimization
+pln.robOpt       = false;
+pln.scenGenType  = 'nomScen';
+
+% retrieve bio model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+
+% retrieve scenarios for dose calculation and optimziation
+pln.multScen = matRad_multScen(ct,pln.scenGenType);
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
