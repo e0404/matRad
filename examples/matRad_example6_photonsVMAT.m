@@ -36,16 +36,49 @@ load('HEAD_AND_NECK.mat');
 
 pln.radiationMode   = 'photons';   % either photons / protons / carbon
 pln.machine         = 'Generic';
-pln.bioOptimization = 'none';    
-pln.bixelWidth      = 5;
 pln.numOfFractions  = 30;
-pln.numOfVoxels     = prod(ct.cubeDim);
-pln.voxelDimensions = ct.cubeDim;
-pln.memorySaver     = false;    % option to decrease memory occupied by Dij matrix; also increases iteration time
+
+%pln.propertiesCt.numofVoxels = prod(ct.cubeDim);
+%pln.propertiesCt.voxelDimensions = ct.cubeDim;
+
+pln.propertiesStf.gantryAngles
+pln.propertiesStf.couchAngles
+pln.propertiesStf.isoCenter
+
+pln.propertiesDoseCalc.memorySaver = true;
+
+pln.propertiesOpt.bioOptimization = 'none';
+pln.propertiesOpt.runVMAT = true;
+pln.propertiesOpt.runDAO = true;
+pln.propertiesOpt.runSequencing = true;
+pln.propertiesOpt.VMAToptions = 7;
+pln.propertiesOpt.preconditioner = true;
+
+
+% Enable DAO and enter relevant parameters.
+
+pln.scaleDij        = true; % do Dij scaling
+pln.jacobi          = true; % do jacobi preconditioning
+
+
+pln.ctOptions
+pln.sequencing
+pln.doseCalcOptions
+pln.optimization
+pln.VMAToptions
+pln.DAOoptions
+
+
+
+pln.bixelWidth      = 5;
+
+
 pln.VMAT            = true;     % do VMAT optimization
 pln.minGantryAngleRes = 4;      % Min gantry angle spacing for dose calculation
 pln.maxApertureAngleSpread = 28;% Max gantry angle spread between apertures from same optimized fluence map; should be a multiple of pln.minGantryAngleRes
 pln.numApertures = 7;           % Number of apertures to keep after sequencing; max val is pln.maxApertureAngleSpread/pln.minGantryAngleRes
+
+
 
 %%
 % Generate dose calculation, DAO, and FMO angles from the parameters input
@@ -58,14 +91,10 @@ pln = matRad_VMATGantryAngles(pln,cst,ct);
 
 %%
 % Enable sequencing and enter relevant parameters.
-pln.runSequencing = true;
-pln.numLevels = 7;
+
 
 %%
-% Enable DAO and enter relevant parameters.
-pln.runDAO        = true;
-pln.scaleDij        = true; % do Dij scaling
-pln.jacobi          = true; % do jacobi preconditioning
+
 
 %%
 % Enter min and max values for the delivery constrains in VMAT.
