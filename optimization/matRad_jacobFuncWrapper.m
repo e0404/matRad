@@ -34,7 +34,7 @@ function jacob = matRad_jacobFuncWrapper(w,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,options);
+d = matRad_backProjection(w,dij,cst,options);
 
 % initialize jacobian
 jacob = sparse([]);
