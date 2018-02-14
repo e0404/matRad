@@ -39,13 +39,13 @@ gantryAngleSpacing = pln.propOpt.VMAToptions.minGantryAngleRes; %ideally should 
 
 maxNumApertures = pln.propOpt.VMAToptions.maxApertureAngleSpread/gantryAngleSpacing;
 
-gantryToOptAngleSpacingFactor = floor(maxNumApertures/pln.propOpt.VMAToptions.numApertures);
+gantryToOptAngleSpacingFactor = floor(maxNumApertures/pln.propOpt.numApertures);
 optGantryAngleSpacing = gantryAngleSpacing*gantryToOptAngleSpacingFactor;
-initGantryAngleSpacing = pln.propOpt.VMAToptions.numApertures*optGantryAngleSpacing;
+initGantryAngleSpacing = pln.propOpt.numApertures*optGantryAngleSpacing;
 
 pln.propStf.gantryAngles    = 0:gantryAngleSpacing:360;
 pln.propStf.optGantryAngles = 0:optGantryAngleSpacing:360;
-pln.propStf.initGantryAngles = (optGantryAngleSpacing*floor(pln.propOpt.VMAToptions.numApertures/2)):initGantryAngleSpacing:361;
+pln.propStf.initGantryAngles = (optGantryAngleSpacing*floor(pln.propOpt.numApertures/2)):initGantryAngleSpacing:361;
 
 if pln.propStf.gantryAngles(end) ~= pln.propStf.optGantryAngles(end)
     %the final beam is not an optimized beam yet, but it should be for

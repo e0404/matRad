@@ -204,9 +204,7 @@ for i = 1:numOfBeams
     end
     
     if pln.runVMAT
-        %replace this with an arc sequencing function, maybe do it after
-        %every aperture has been generated? No need to do it now, and would
-        %cut down on the number of if statements and increase readability
+        %replace this with an arc sequencing function, mayb
         
         %Spread apertures to each child angle
         %according to the trajectory (mean leaf position)
