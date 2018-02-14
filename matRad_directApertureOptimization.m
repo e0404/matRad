@@ -123,11 +123,7 @@ options.numOfScenarios  = dij.numOfScenarios;
 options.lb              = apertureInfo.limMx(:,1);                                          % Lower bound on the variables.
 options.ub              = apertureInfo.limMx(:,2);                                          % Upper bound on the variables.
 options.VMAT            = pln.VMAT;
-if options.VMAT
-    [options.cl,options.cu] = matRad_daoGetConstBounds(cst_Over,apertureInfo,options,pln.leafSpeedCst,pln.doseRateCst);   % Lower and upper bounds on the constraint functions.
-else
-    [options.cl,options.cu] = matRad_daoGetConstBounds(cst_Over,apertureInfo,options);   % Lower and upper bounds on the constraint functions.
-end
+[options.cl,options.cu] = matRad_daoGetConstBounds(cst_Over,apertureInfo,options);   % Lower and upper bounds on the constraint functions.
 
 % set optimization options
 options.radMod          = pln.radiationMode;
@@ -139,10 +135,10 @@ options.numOfScenarios  = dij.numOfScenarios;
 funcs.objective         = @(x) matRad_daoObjFunc(x,dij,cst_Over,options,daoVec2ApertureInfo);
 funcs.iterfunc          = @(iter,objective,parameter) matRad_IpoptIterFunc(iter,objective,parameter,options.ipopt.max_iter);
 if pln.VMAT
-    funcs.gradient          = @(x) matRad_daoGradFunc_VMATstatic(x,dij,cst_Over,options,daoVec2ApertureInfo);
-    funcs.constraints       = @(x) matRad_daoConstFunc_VMATstatic(x,dij,cst_Over,options,daoVec2ApertureInfo);
-    funcs.jacobian          = @(x) matRad_daoJacobFunc_VMATstatic(x,dij,cst_Over,options,daoVec2ApertureInfo);
-    funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct_VMATstatic(apertureInfo,dij,cst_Over);
+    funcs.gradient          = @(x) matRad_daoGradFunc_VMAT(x,dij,cst_Over,options,daoVec2ApertureInfo);
+    funcs.constraints       = @(x) matRad_daoConstFunc_VMAT(x,dij,cst_Over,options,daoVec2ApertureInfo);
+    funcs.jacobian          = @(x) matRad_daoJacobFunc_VMAT(x,dij,cst_Over,options,daoVec2ApertureInfo);
+    funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct_VMAT(apertureInfo,dij,cst_Over);
 else
     funcs.gradient          = @(x) matRad_daoGradFunc_IMRT(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
     funcs.constraints       = @(x) matRad_daoConstFunc_IMRT(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
@@ -205,7 +201,7 @@ if pln.VMAT
     
     
     %optimize delivery
-    resultGUI = matRad_optDelivery(resultGUI,pln,1);
+    resultGUI = matRad_optDelivery(resultGUI,1);
     resultGUI = matRad_calcDeliveryMetrics(resultGUI,pln,stf);
 end
 

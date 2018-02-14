@@ -235,11 +235,10 @@ for i=1:size(stf,2)
             
             apertureInfo.beam(i).timeFac = stf(i).timeFac;
             
-            apertureInfo.beam(i).IandFFac = stf(i).IandFFac;
-            
-            apertureInfo.beam(i).IandFTimeInd = stf(i).IandFTimeInd;
-            
-            apertureInfo.beam(i).doseAngleOpt = stf(i).doseAngleOpt;
+            %EC 2018-02-04
+            %apertureInfo.beam(i).IandFFac = stf(i).IandFFac;
+            %apertureInfo.beam(i).IandFTimeInd = stf(i).IandFTimeInd;
+            %apertureInfo.beam(i).doseAngleOpt = stf(i).doseAngleOpt;
             
             apertureInfo.beam(i).lastOptIndex = stf(i).lastOptIndex;
             apertureInfo.beam(i).nextOptIndex = stf(i).nextOptIndex;
@@ -278,15 +277,14 @@ if isfield(sequencing,'weightToMU')
 end
 if sequencing.VMAT
     apertureInfo.totalNumOfOptBixels = totalNumOfOptBixels;
-    apertureInfo.numIandFBeam = nnz([stf([stf.optimizeBeam]).doseAngleOpt]);
-    apertureInfo.gantryRotCst = stf.gantryRotCst;
+    %EC 2018-02-04
+    %apertureInfo.numIandFBeam = nnz([stf([stf.optimizeBeam]).doseAngleOpt]);
+    apertureInfo.vmatOptions = sequencing.vmatOptions;
     apertureInfo.doseTotalNumOfLeafPairs = sum([apertureInfo.beam(:).numOfActiveLeafPairs]);
     
     apertureInfo.totalNumOfLeafPairs = sum([apertureInfo.beam([apertureInfo.beam.optimizeBeam]).numOfShapes]*[apertureInfo.beam([apertureInfo.beam.optimizeBeam]).numOfActiveLeafPairs]');
-    %apertureInfo.IandFtotalNumOfLeafPairs = sum(reshape([apertureInfo.beam([apertureInfo.beam.optimizeBeam]).doseAngleOpt],2,[]),1)*[apertureInfo.beam([apertureInfo.beam.optimizeBeam]).numOfActiveLeafPairs]';
     
     % create vectors for optimization
-    %[apertureInfo.apertureVector, apertureInfo.IandFapertureVector, apertureInfo.mappingMx, apertureInfo.limMx] = matRad_daoApertureInfo2Vec(apertureInfo);
     apertureInfo = matRad_leafTouching(apertureInfo);
     [apertureInfo.apertureVector, apertureInfo.mappingMx, apertureInfo.limMx] = matRad_daoApertureInfo2Vec(apertureInfo);
     

@@ -36,7 +36,6 @@ rightLeafPos = apertureInfoVec(1+apertureInfo.totalNumOfLeafPairs+apertureInfo.t
 
 % values of time differences of optimized gantry angles
 timeOptBorderAngles = apertureInfoVec((1+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):end);
-timeDoseBorderAngles = timeOptBorderAngles.*[apertureInfo.beam([apertureInfo.beam.optimizeBeam]).timeFacCurr]';
 
 i = sort(repmat(1:(apertureInfo.totalNumOfShapes-1),1,2));
 j = sort(repmat(1:apertureInfo.totalNumOfShapes,1,2));
