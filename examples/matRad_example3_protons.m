@@ -51,18 +51,18 @@ pln.machine       = 'Generic';
 % RBE-weighted dose. As we use protons, we follow here the clinical 
 % standard and use a constant relative biological effectiveness of 1.1. 
 % Therefore we set bioOptimization to const_RBExD
-pln.bioOptimization = 'const_RBExD';   
+pln.propOpt.bioOptimization = 'const_RBExD';   
                                        
 %%
 % Now we have to set the remaining plan parameters.
-pln.gantryAngles    = [90 270];
-pln.couchAngles     = [0 0];
-pln.bixelWidth      = 3;
+pln.propStf.gantryAngles    = [90 270];
+pln.propStf.couchAngles     = [0 0];
+pln.propStf.bixelWidth      = 3;
 pln.numOfFractions  = 30;
-pln.numOfBeams      = numel(pln.gantryAngles);
-pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.runDAO        = 0;
-pln.runSequencing = 0;
+pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propOpt.runDAO        = 0;
+pln.propOpt.runSequencing = 0;
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -82,7 +82,7 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = round(pln.isoCenter(1,3)./ct.resolution.z);
+slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 figure
 imagesc(resultGUI.RBExDose(:,:,slice)),colorbar,colormap(jet)
 
@@ -97,7 +97,7 @@ subplot(122),imagesc(resultGUI.RBExDose_beam2(:,:,slice)),colorbar,colormap(jet)
 % Now let's simulate a patient shift in y direction for both beams
 stf(1).isoCenter(2) = stf(1).isoCenter(2) - 4;
 stf(2).isoCenter(2) = stf(2).isoCenter(2) - 4;
-pln.isoCenter       = reshape([stf.isoCenter],[3 pln.numOfBeams])';
+pln.propStf.isoCenter       = reshape([stf.isoCenter],[3 pln.propStf.numOfBeams])';
 
 %% Recalculate Plan
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
@@ -118,7 +118,7 @@ figure,title('absolute difference')
 matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 
 % Let's plot single profiles that are perpendicular to the beam direction
-ixProfileY = round(pln.isoCenter(1,2)./ct.resolution.y);
+ixProfileY = round(pln.propStf.isoCenter(1,2)./ct.resolution.y);
 
 profileOrginal = resultGUI.RBExDose(:,ixProfileY,slice);
 profileShifted = resultGUI_isoShift.RBExDose(:,ixProfileY,slice);

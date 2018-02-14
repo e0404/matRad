@@ -39,7 +39,7 @@ if ~isdeployed % only if _not_ running as standalone
 end
 
 % meta information for dij
-dij.numOfBeams         = pln.numOfBeams;
+dij.numOfBeams         = pln.propStf.numOfBeams;
 dij.numOfVoxels        = prod(ct.cubeDim);
 dij.resolution         = ct.resolution;
 dij.dimensions         = ct.cubeDim;
@@ -213,10 +213,10 @@ for i = 1:dij.numOfBeams % loop over all beams
         
         % set ray specific vmc++ parameters
         % a) change coordinate system (Isocenter cs-> physical cs) and units mm -> cm
-        rayCorner1 = (stf(i).ray(j).rayCorners_SCD(1,:) + pln.isoCenter(i,:))/10;              
-        rayCorner2 = (stf(i).ray(j).rayCorners_SCD(2,:) + pln.isoCenter(i,:))/10;
-        rayCorner3 = (stf(i).ray(j).rayCorners_SCD(3,:) + pln.isoCenter(i,:))/10; %vmc needs only three corners (counter-clockwise)
-        beamSource = (stf(i).sourcePoint + pln.isoCenter(i,:))/10;
+        rayCorner1 = (stf(i).ray(j).rayCorners_SCD(1,:) + stf(i).isoCenter)/10;              
+        rayCorner2 = (stf(i).ray(j).rayCorners_SCD(2,:) + stf(i).isoCenter)/10;
+        rayCorner3 = (stf(i).ray(j).rayCorners_SCD(3,:) + stf(i).isoCenter)/10; %vmc needs only three corners (counter-clockwise)
+        beamSource = (stf(i).sourcePoint + stf(i).isoCenter)/10;
         
         % b) swap x and y (CT-standard = [y,x,z])
         rayCorner1 = rayCorner1([2,1,3]);              

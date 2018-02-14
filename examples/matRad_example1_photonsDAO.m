@@ -35,18 +35,20 @@ load('HEAD_AND_NECK.mat');
 
 pln.radiationMode   = 'photons';   % either photons / protons / carbon
 pln.machine         = 'Generic';
-pln.bioOptimization = 'none';    
-pln.gantryAngles    = [0:72:359];
-pln.couchAngles     = [0 0 0 0 0];
-pln.bixelWidth      = 5;
 pln.numOfFractions  = 30;
-pln.numOfBeams      = numel(pln.gantryAngles);
-pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+
+pln.propOpt.bioOptimization = 'none';    
+
+pln.propStf.gantryAngles    = [0:72:359];
+pln.propStf.couchAngles     = [0 0 0 0 0];
+pln.propStf.bixelWidth      = 5;
+pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
 %%
 % Enable sequencing and direct aperture optimization (DAO).
-pln.runSequencing = 1;
-pln.runDAO        = 1;
+pln.propOpt.runSequencing = 1;
+pln.propOpt.runDAO        = 1;
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
