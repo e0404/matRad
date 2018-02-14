@@ -29,18 +29,15 @@ load TG119.mat
 
 % meta information for treatment plan
 pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0:72:359]; % [°]
-pln.couchAngles     = [0 0 0 0 0]; % [°]
+pln.gantryAngles    = [0:72:359]; % [?]
+pln.couchAngles     = [0 0 0 0 0]; % [?]
 pln.numOfBeams      = numel(pln.gantryAngles);
 pln.numOfVoxels     = prod(ct.cubeDim);
 pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.voxelDimensions = ct.cubeDim;
-pln.radiationMode   = 'photons';             % either photons / protons / carbon
-pln.bioOptimization = 'none_physicalDose';   % none_physicalDose: physical optimization;                              constRBE_RBExD; constant RBE of 1.1;  
-                                             % MCN_effect; McNamara-variable RBE model for protons (effect based)     MCN_RBExD; McNamara-variable RBE model for protons (RBExD) based
-                                             % WED_effect; Wedenberg-variable RBE model for protons (effect based)    WED_RBExD; Wedenberg-variable RBE model for protons (RBExD) based
-                                             % LEM_effect: effect-based optimization;                                 LEM_RBExD: optimization of RBE-weighted dose
-pln.scenGenType     = 'nomScen';             % scenario creation type'nomScen'  'wcScen' 'impScen' 'rndScen' 
+pln.radiationMode   = 'photons';           % either photons / protons / carbon
+
+pln.scenGenType     = 'nomScen';           % scenario creation type'nomScen'  'wcScen' 'impScen' 'rndScen'
 
 pln.numOfFractions  = 30;
 pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
@@ -48,12 +45,15 @@ pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored
 pln.machine         = 'Generic';
 pln.robOpt          = false;
 
-
+quantityOpt         = 'physicalDose';     % options: physicalDose, constRBE, effect, RBExD
+modelName           = 'none';             % none: for photons, protons, carbon                                    MCN: McNamara-variable RBE model for protons
+                                          % WED: Wedenberg-variable RBE model for protons                         LEM: Local Effect Model for carbon ions
+                                        
 % retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,pln.bioOptimization);
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
 % retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,pln.scenGenType); 
+pln.multScen = matRad_multScen(ct,pln.scenGenType);
 
 %% initial visualization and change objective function settings if desired
 matRadGUI
