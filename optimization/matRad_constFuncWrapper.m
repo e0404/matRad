@@ -35,7 +35,7 @@ function c = matRad_constFuncWrapper(w,dij,cst,options)
 
 
 % get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,options);
+d = matRad_backProjection(w,dij,cst,options);
 
 % Initializes constraints
 c = [];
