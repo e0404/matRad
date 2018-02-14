@@ -47,7 +47,7 @@ totalNumOfShapes = sum([sequencing.beam.numOfShapes]);
 vectorOffset = totalNumOfShapes + 1; % used for bookkeeping in the vector for optimization
 bixOffset = 1; %used for gradient calculations
 
-if sequencing.VMAT
+if sequencing.runVMAT
     totalNumOfOptBixels = sum([stf([stf.optimizeBeam]).totalNumOfBixels]);
     apertureInfo.jacobiScale = zeros(nnz([stf.optimizeBeam]),1);
     k = 1;
@@ -199,7 +199,7 @@ for i=1:size(stf,2)
     apertureInfo.beam(i).MLCWindow = MLCWindow;
     apertureInfo.beam(i).gantryAngle = stf(i).gantryAngle;
     
-    if sequencing.VMAT
+    if sequencing.runVMAT
         
         apertureInfo.beam(i).bixOffset = bixOffset;
         bixOffset = bixOffset+apertureInfo.beam(i).numOfActiveLeafPairs;
@@ -230,15 +230,7 @@ for i=1:size(stf,2)
             apertureInfo.beam(i).optAngleBordersDiff = stf(i).optAngleBordersDiff;
             
             apertureInfo.beam(i).timeFacCurr = stf(i).timeFacCurr;
-            apertureInfo.beam(i).timeFacPrev = stf(i).timeFacPrev;
-            apertureInfo.beam(i).timeFacNext = stf(i).timeFacNext;
-            
             apertureInfo.beam(i).timeFac = stf(i).timeFac;
-            
-            %EC 2018-02-04
-            %apertureInfo.beam(i).IandFFac = stf(i).IandFFac;
-            %apertureInfo.beam(i).IandFTimeInd = stf(i).IandFTimeInd;
-            %apertureInfo.beam(i).doseAngleOpt = stf(i).doseAngleOpt;
             
             apertureInfo.beam(i).lastOptIndex = stf(i).lastOptIndex;
             apertureInfo.beam(i).nextOptIndex = stf(i).nextOptIndex;
@@ -254,10 +246,6 @@ for i=1:size(stf,2)
             apertureInfo.beam(i).fracFromLastOpt = stf(i).fracFromLastOpt;
             apertureInfo.beam(i).timeFracFromLastOpt = stf(i).timeFracFromLastOpt;
             apertureInfo.beam(i).timeFracFromNextOpt = stf(i).timeFracFromNextOpt;
-            apertureInfo.beam(i).fracFromLastOptI = stf(i).fracFromLastOptI;
-            apertureInfo.beam(i).fracFromLastOptF = stf(i).fracFromLastOptF;
-            apertureInfo.beam(i).fracFromNextOptI = stf(i).fracFromNextOptI;
-            apertureInfo.beam(i).fracFromNextOptF = stf(i).fracFromNextOptF;
             apertureInfo.beam(i).lastOptIndex = stf(i).lastOptIndex;
             apertureInfo.beam(i).nextOptIndex = stf(i).nextOptIndex;
         end
@@ -265,7 +253,8 @@ for i=1:size(stf,2)
 end
 
 % save global data
-apertureInfo.VMAT = sequencing.VMAT;
+apertureInfo.runVMAT = sequencing.runVMAT;
+apertureInfo.VMAToptions = sequencing.VMAToptions;
 apertureInfo.jacobi = sequencing.jacobi;
 apertureInfo.bixelWidth = bixelWidth;
 apertureInfo.numOfMLCLeafPairs = numOfMLCLeafPairs;
@@ -275,17 +264,18 @@ apertureInfo.totalNumOfShapes = sum([apertureInfo.beam.numOfShapes]);
 if isfield(sequencing,'weightToMU')
     apertureInfo.weightToMU = sequencing.weightToMU;
 end
-if sequencing.VMAT
+if sequencing.runVMAT
     apertureInfo.totalNumOfOptBixels = totalNumOfOptBixels;
-    %EC 2018-02-04
-    %apertureInfo.numIandFBeam = nnz([stf([stf.optimizeBeam]).doseAngleOpt]);
-    apertureInfo.vmatOptions = sequencing.vmatOptions;
+    apertureInfo.VMAToptions = sequencing.VMAToptions;
     apertureInfo.doseTotalNumOfLeafPairs = sum([apertureInfo.beam(:).numOfActiveLeafPairs]);
     
     apertureInfo.totalNumOfLeafPairs = sum([apertureInfo.beam([apertureInfo.beam.optimizeBeam]).numOfShapes]*[apertureInfo.beam([apertureInfo.beam.optimizeBeam]).numOfActiveLeafPairs]');
     
     % create vectors for optimization
-    apertureInfo = matRad_leafTouching(apertureInfo);
+    
+    %EC 2018-02-04
+    % where did this go? it's still on my workstation in Ottawa...
+    %apertureInfo = matRad_leafTouching(apertureInfo);
     [apertureInfo.apertureVector, apertureInfo.mappingMx, apertureInfo.limMx] = matRad_daoApertureInfo2Vec(apertureInfo);
     
 else

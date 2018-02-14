@@ -38,7 +38,15 @@ pln.radiationMode   = 'photons';   % either photons / protons / carbon
 pln.machine         = 'Generic';
 pln.numOfFractions  = 30;
 
+%pln.propertiesCt.numofVoxels = prod(ct.cubeDim);
+%pln.propertiesCt.voxelDimensions = ct.cubeDim;
+
 pln.propertiesStf.bixelWidth = 5;
+% the following are generated in matRad_VMATGantryAngles
+%pln.propertiesStf.gantryAngles
+%pln.propertiesStf.couchAngles
+%pln.propertiesStf.isoCenter
+
 
 pln.propertiesDoseCalc.memorySaver = true;
 
@@ -48,7 +56,7 @@ pln.propertiesOpt.runDAO = true;
 pln.propertiesOpt.runSequencing = true;
 pln.propertiesOpt.preconditioner = true;
 
-pln.propertiesOpt.VMAToptions.machineConstraintFile = [pln.radiationMode '_' pln.machine];
+pln.propertiesOpt.VMAToptions.
 pln.propertiesOpt.VMAToptions.minGantryAngleRes = 4;      % Min gantry angle spacing for dose calculation
 pln.propertiesOpt.VMAToptions.maxApertureAngleSpread = 28;% Max gantry angle spread between apertures from same optimized fluence map; should be a multiple of pln.minGantryAngleRes
 pln.propertiesOpt.VMAToptions.numApertures = 7;           % Number of apertures to keep after sequencing; max val is pln.maxApertureAngleSpread/pln.minGantryAngleRes
@@ -62,6 +70,14 @@ pln.propertiesOpt.VMAToptions.numApertures = 7;           % Number of apertures 
 % calculation (each iteration).
 pln = matRad_VMATGantryAngles(pln,cst,ct);
 
+%%
+% Enter min and max values for the delivery constrains in VMAT.
+pln.gantryRotCst = [0 6];       %degrees per second
+pln.defaultGantryRot = pln.gantryRotCst(2);
+pln.leafSpeedCst = [0 6]*10;    %mm per second
+pln.defaultLeafSpeed = pln.leafSpeedCst(2);
+pln.doseRateCst = [75 600]/60;  %MU per second
+pln.defaultDoseRate = pln.doseRateCst(2);
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);

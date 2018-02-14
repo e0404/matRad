@@ -32,9 +32,9 @@ function result = matRad_calcDeliveryMetrics(result,pln,stf)
 
 apertureInfo = result.apertureInfo;
 
-fileName = apertureInfo.vmatOptions.machineConstraintFile;
+fileName = apertureInfo.VMAToptions.machineConstraintFile;
 try
-    load([fileparts(mfilename('fullpath')) filesep fileName],'machineConstraints');
+    load([pwd filesep fileName],'machine');
 catch
     error(['Could not find the following machine file: ' fileName ]);
 end
@@ -47,7 +47,7 @@ apertureInfo.planMU = 0;
 %apertureMU = nan(1000,1);
 %apertureArea = nan(1000,1);
 %l = 1;
-if pln.VMAT
+if pln.propOpt.runVMAT
     
     for i = 1:numel(apertureInfo.beam)
         apertureInfo.planMU = apertureInfo.planMU+apertureInfo.beam(i).MU;
@@ -129,15 +129,15 @@ ylabel('k = N*(1-BM)')
 
 %}
 l = 0;
-if pln.VMAT
+if pln.propOpt.VMAT
     %All of these are vectors
     %Each entry corresponds to a beam angle
     %Later, we will convert these to histograms, find max, mean, min, etc.
-    gantryRot = zeros(1,size(pln.optGantryAngles,2)-1);
+    gantryRot = zeros(1,size(pln.propStf.optGantryAngles,2)-1);
     MURate = gantryRot;
     times = gantryRot;
     angles = gantryRot;
-    maxLeafSpeed = 0*pln.optGantryAngles;
+    maxLeafSpeed = 0*pln.propStf.optGantryAngles;
     
     
     totTime = 0;

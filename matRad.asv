@@ -61,7 +61,6 @@ clc
 
 %load HEAD_AND_NECK
 load TG119.mat
-clear pln
 %load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
@@ -73,26 +72,40 @@ pln.machine         = 'Generic';
 
 pln.numOfFractions  = 30;
 
-pln.propDoseCalc.memorySaver = false;
+pln.propertiesStf.bixelWidth = 5;
 
-% beam geometry settings
-pln.propStf.bixelWidth = 5;
+pln.propertiesDoseCalc.memorySaver = true;
+
+% beam geometrz s
 
 
-% optimization settings
-pln.propOpt.bioOptimization = 'none';
-pln.propOpt.runVMAT = true;
-pln.propOpt.runDAO = true;
-pln.propOpt.runSequencing = true;
-pln.propOpt.preconditioner = true;
-pln.propOpt.numLevels = 7;
 
-pln.propOpt.VMAToptions.machineConstraintFile = [pln.radiationMode '_' pln.machine];
-pln.propOpt.VMAToptions.minGantryAngleRes = 4;      % Min gantry angle spacing for dose calculation
-pln.propOpt.VMAToptions.maxApertureAngleSpread = 28;% Max gantry angle spread between apertures from same optimized fluence map; should be a multiple of pln.minGantryAngleRes
-pln.propOpt.VMAToptions.numApertures = 7;           % Number of apertures to keep after sequencing; max val is pln.maxApertureAngleSpread/pln.minGantryAngleRes
 
+
+% meta information for treatment plan
+pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
+pln.numOfBeams      = numel(pln.gantryAngles);
+pln.numOfVoxels     = prod(ct.cubeDim);
+pln.voxelDimensions = ct.cubeDim;
+pln.radiationMode   = 'photons';     % either photons / protons / carbon
+pln.bioOptimization = 'none';        % none: physical optimization;             const_RBExD; constant RBE of 1.1;
+                                     % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
+pln.numOfFractions  = 30;
+pln.runSequencing   = true; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
+pln.numLevels = 7;
+pln.runDAO          = true; % 1/true: run DAO, 0/false: don't / will be ignored for particles
+pln.VMAT            = true; % 1/true: run VMAT, 0/false: don't
+pln.machine         = 'Generic';
+
+pln.minGantryAngleRes = 2;      % Min gantry angle spacing for dose calculation
+pln.maxApertureAngleSpread = 28;% Max gantry angle spread between apertures from same optimized fluence map; should be a multiple of pln.minGantryAngleRes
+pln.numApertures = 7;           % Number of apertures to keep after sequencing; max val is pln.maxApertureAngleSpread/pln.minGantryAngleRes
 pln = matRad_VMATGantryAngles(pln,cst,ct);
+
+pln.scaleDRx        = true;
+pln.memorySaver     = false;
+pln.scaleDij        = true;
+pln.jacobi          = true;
 
 %% initial visualization and change objective function settings if desired
 matRadGUI

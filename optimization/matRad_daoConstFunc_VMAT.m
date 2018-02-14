@@ -61,8 +61,8 @@ c_dos = matRad_constFuncWrapper(apertureInfo.bixelWeights,dij,cst,options);
 optInd = [apertureInfo.beam.optimizeBeam];
 timeOptBorderAngles = apertureInfoVec((1+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):end);
 
-i = repelem(1:(apertureInfo.totalNumOfShapes-1),2);
-j = repelem(1:(apertureInfo.totalNumOfShapes),2);
+i = sort(repmat(1:(apertureInfo.totalNumOfShapes-1),1,2));
+j = sort(repmat(1:apertureInfo.totalNumOfShapes,1,2));
 j(1) = [];
 j(end) = [];
 

@@ -35,34 +35,34 @@ function pln = matRad_VMATGantryAngles(pln,cst,ct)
 
 
 
-gantryAngleSpacing = pln.minGantryAngleRes; %ideally should be spaced every 2 or 4 degrees; gantry spacing that dij is performed
+gantryAngleSpacing = pln.propOpt.VMAToptions.minGantryAngleRes; %ideally should be spaced every 2 or 4 degrees; gantry spacing that dij is performed
 
-maxNumApertures = pln.maxApertureAngleSpread/gantryAngleSpacing;
+maxNumApertures = pln.propOpt.VMAToptions.maxApertureAngleSpread/gantryAngleSpacing;
 
-gantryToOptAngleSpacingFactor = floor(maxNumApertures/pln.numApertures);
+gantryToOptAngleSpacingFactor = floor(maxNumApertures/pln.propOpt.VMAToptions.numApertures);
 optGantryAngleSpacing = gantryAngleSpacing*gantryToOptAngleSpacingFactor;
-initGantryAngleSpacing = pln.numApertures*optGantryAngleSpacing;
+initGantryAngleSpacing = pln.propOpt.VMAToptions.numApertures*optGantryAngleSpacing;
 
-pln.gantryAngles    = 0:gantryAngleSpacing:360;
-pln.optGantryAngles = 0:optGantryAngleSpacing:360;
-pln.initGantryAngles = (optGantryAngleSpacing*floor(pln.numApertures/2)):initGantryAngleSpacing:361;
+pln.propStf.gantryAngles    = 0:gantryAngleSpacing:360;
+pln.propStf.optGantryAngles = 0:optGantryAngleSpacing:360;
+pln.propStf.initGantryAngles = (optGantryAngleSpacing*floor(pln.propOpt.VMAToptions.numApertures/2)):initGantryAngleSpacing:361;
 
-if pln.gantryAngles(end) ~= pln.optGantryAngles(end)
+if pln.propStf.gantryAngles(end) ~= pln.propStf.optGantryAngles(end)
     %the final beam is not an optimized beam yet, but it should be for
     %interpolation reasons
-    pln.optGantryAngles(numel(pln.optGantryAngles)+1) = pln.gantryAngles(end);
+    pln.propStf.optGantryAngles(numel(pln.optGantryAngles)+1) = pln.propStf.gantryAngles(end);
 end
 
-if pln.initGantryAngles(1) == 0 && pln.initGantryAngles(end) ~= 360
-    pln.initGantryAngles(numel(pln.initGantryAngles)+1) = 360;
+if pln.propStf.initGantryAngles(1) == 0 && pln.propStf.initGantryAngles(end) ~= 360
+    pln.propStf.initGantryAngles(numel(pln.propStf.initGantryAngles)+1) = 360;
 end
 
-pln.numOfBeams      = numel(pln.gantryAngles);
+pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 
-pln.couchAngles     = 0*pln.gantryAngles;
+pln.propStf.couchAngles     = 0*pln.propStf.gantryAngles;
 
 
-pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
 
 

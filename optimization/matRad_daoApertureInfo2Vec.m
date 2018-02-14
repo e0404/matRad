@@ -41,7 +41,7 @@ function [apertureInfoVec, mappingMx, limMx] = matRad_daoApertureInfo2Vec(apertu
 
 % initializing variables
 
-if apertureInfo.VMAT
+if apertureInfo.runVMAT
     apertureInfoVec = NaN * ones(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2,1); %Extra set of (apertureInfo.totalNumOfShapes) number of elements, allowing arc sector times to be optimized
 else
     apertureInfoVec = NaN * ones(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,1);
@@ -71,7 +71,7 @@ for i = 1:size(apertureInfo.beam,2)
     end
 end
 %% 3. time of arc sector/beam
-if apertureInfo.VMAT
+if apertureInfo.runVMAT
     offset = offset + apertureInfo.totalNumOfLeafPairs;
     
     %this gives a vector of the arc lengths belonging to each optimized CP
@@ -87,7 +87,7 @@ end
 %% 4. create additional information for later use
 if nargout > 1
     %FIX MAPPINGMX AND LIMMX
-    if apertureInfo.VMAT
+    if apertureInfo.runVMAT
         mappingMx =  NaN * ones(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2,4);
         limMx     =  NaN * ones(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2,2);
     else
@@ -101,10 +101,10 @@ if nargout > 1
     for i = 1:numel(apertureInfo.beam)
         for j = 1:apertureInfo.beam(i).numOfShapes
             mappingMx(counter,1) = i;
-            if apertureInfo.VMAT
-                fileName = apertureInfo.vmatOptions.machineConstraintFile;
+            if apertureInfo.runVMAT
+                fileName = apertureInfo.VMAToptions.machineConstraintFile;
                 try
-                    load([fileparts(mfilename('fullpath')) filesep fileName],'machineConstraints');
+                    load([pwd filesep fileName],'machine');
                 catch
                     error(['Could not find the following machine file: ' fileName ]);
                 end

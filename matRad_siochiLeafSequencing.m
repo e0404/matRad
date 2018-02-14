@@ -46,11 +46,11 @@ if nargin < 5
     visBool = 0;
 end
 
-if pln.VMAT
+if pln.propOpt.runVMAT
     %First beam sweeps right-to-left, next left-to-right, ...
     leafDir = 1;
 end
-sequencing.VMAT = pln.VMAT;
+sequencing.runVMAT = pln.propOpt.runVMAT;
 
 numOfBeams = numel(stf);
 
@@ -70,13 +70,14 @@ for i = 1:numOfBeams
     if isfield(stf(i),'initializeBeam') && ~stf(i).initializeBeam
         sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = 0;
         offset = offset + numOfRaysPerBeam;
-        if ~pln.VMAT
+        if ~pln.propOpt.runVMAT
             sequencing.beam(i).numOfShapes = 0;
-            numToKeep = pln.numApertures; %if all apertures are to be kept, this should be set to 0
+            %does this make sense to discard apertures if VMAT isn't run?
+            numToKeep = pln.propOpt.VMAToptions.numApertures; %if all apertures are to be kept, this should be set to 0
         end
         continue %if this is not a beam to be initialized, continue to next iteration without generating segments
     else
-        if pln.VMAT
+        if pln.propOpt.runVMAT
             numToKeep = stf(i).numOfBeamChildren;
         end
     end
@@ -114,18 +115,19 @@ for i = 1:numOfBeams
     
     %Save weights in fluence matrix.
     fluenceMx(indInFluenceMx) = wOfCurrBeams;
-
+    %{
     temp = zeros(size(fluenceMx));
     for row = 1:dimOfFluenceMxZ
         temp(row,:) = imgaussfilt(fluenceMx(row,:),1);
     end
     fluenceMx = temp;
     clear temp
+    %}
     
     %allow for possibility to repeat sequencing with higher number of
     %levels if number of apertures is lower than required
     notFinished = 1;
-    numOfLevels = pln.numLevels;
+    numOfLevels = pln.propOpt.numLevels;
     while notFinished
         
         % prepare sequencer
@@ -236,7 +238,7 @@ for i = 1:numOfBeams
         k = numToKeep;
     end
     
-    if pln.VMAT
+    if pln.runVMAT
         %Spread apertures to each child angle
         %according to the trajectory (mean leaf position)
         childrenIndex = stf(i).beamChildrenIndex;
@@ -298,7 +300,15 @@ for i = 1:numOfBeams
 
 end
 
-if pln.VMAT
+if pln.runVMAT
+    
+    fileName = pln.propOpt.VMAToptions.machineConstraintFile;
+    try
+        load([pwd filesep fileName],'machine');
+    catch
+        error(['Could not find the following machine file: ' fileName ]);
+    end
+    
     gantryAngles = [stf.gantryAngle];
     optGantryAngles = [stf([stf.optimizeBeam]).gantryAngle];
     
@@ -319,7 +329,7 @@ if pln.VMAT
             end
         end
         
-        sequencing.beam(optInd).gantryRot = pln.defaultGantryRot; %gantry rotation rate until next opt angle
+        sequencing.beam(optInd).gantryRot = machine.constraints.gantryRotationSpeed(2); %gantry rotation rate until next opt angle
         sequencing.beam(optInd).MURate = dij.weightToMU.*sequencing.beam(optInd).shapesWeight.*sequencing.beam(optInd).gantryRot./diff(stf(optInd).optAngleBorders); %dose rate until next opt angle
         %Rescale weight to represent only this control point; weight will be shared
         %with the interpolared control points in matRad_daoVec2ApertureInfo
@@ -330,8 +340,8 @@ if pln.VMAT
     sequencing.beam = rmfield(sequencing.beam,{'tempShapes','tempShapesWeight'});
 
     sequencing.weightToMU = dij.weightToMU;
-    sequencing.jacobi = pln.jacobi;
-    sequencing.vmatOptions = pln.vmatOptions;
+    sequencing.preconditioner = pln.propOpt.preconditioner;
+    sequencing.VMAToptions = pln.propOpt.VMAToptions;
     
     resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
     

@@ -36,45 +36,47 @@ end
 
 resultGUI.w = w;
 
+%ADDED, DON'T KNOW WHAT TO DO ABOUT THE beamInfo
+
+% calc dose and reshape from 1D vector to 2D array
+d = cell(1);
+d{1} = dij.physicalDose{scenNum}*resultGUI.w;
 if dij.memorySaver
-    %ADDED, DON'T KNOW WHAT TO DO ABOUT THE beamInfo
+    depthOffset = uint32(0);
+    tailOffset = uint32(0);
     
-    % calc dose and reshape from 1D vector to 2D array
-    d = cell(1);
-    d{1} = dij.physicalDose{scenNum}*resultGUI.w;
-    if dij.memorySaver
-        depthOffset = uint32(0);
-        tailOffset = uint32(0);
+    for j = 1:dij.totalNumOfRays
+        depthInd = depthOffset+(1:uint32(dij.nDepth(j)));
+        depthOffset = depthOffset+uint32(dij.nDepth(j));
         
-        for j = 1:dij.totalNumOfRays
-            depthInd = depthOffset+(1:uint32(dij.nDepth(j)));
-            depthOffset = depthOffset+uint32(dij.nDepth(j));
+        for k = depthInd
+            tailInd = tailOffset+(1:uint32(dij.nTailPerDepth(k)));
+            tailOffset = tailOffset+uint32(dij.nTailPerDepth(k));
             
-            for k = depthInd
-                tailInd = tailOffset+(1:uint32(dij.nTailPerDepth(k)));
-                tailOffset = tailOffset+uint32(dij.nTailPerDepth(k));
-                
-                voxInd = dij.ixTail(tailInd);
-                d{1}(voxInd) = d{1}(voxInd) + dij.bixelDoseTail(k).*w(j);
-            end
+            voxInd = dij.ixTail(tailInd);
+            d{1}(voxInd) = d{1}(voxInd) + dij.bixelDoseTail(k).*w(j);
         end
     end
-    d{1} = d{1}.*dij.scaleFactor;
+end
+d{1} = d{1}.*dij.scaleFactor;
+
+resultGUI.physicalDose = reshape(full(d{1}),dij.dimensions);
+
+if ~strcmp(dij.radiationMode,'photons')
+    % do not do this for photon beams
     
-    resultGUI.physicalDose = reshape(full(d{1}),dij.dimensions);
-end
-
-% get bixel - beam correspondence  
-for i = 1:dij.numOfBeams
-    beamInfo(i).suffix = ['_beam', num2str(i)];
-    beamInfo(i).logIx  = (dij.beamNum == i);      
-end
-beamInfo(dij.numOfBeams+1).suffix = '';
-beamInfo(dij.numOfBeams+1).logIx  = true(size(w));
-
-% compute physical dose for all beams individually and together
-for i = 1:length(beamInfo)
-    resultGUI.(['physicalDose', beamInfo(i).suffix]) = reshape(full(dij.physicalDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.dimensions);
+    % get bixel - beam correspondence
+    for i = 1:dij.numOfBeams
+        beamInfo(i).suffix = ['_beam', num2str(i)];
+        beamInfo(i).logIx  = (dij.beamNum == i);
+    end
+    beamInfo(dij.numOfBeams+1).suffix = '';
+    beamInfo(dij.numOfBeams+1).logIx  = true(size(w));
+    
+    % compute physical dose for all beams individually and together
+    for i = 1:length(beamInfo)
+        resultGUI.(['physicalDose', beamInfo(i).suffix]) = reshape(full(dij.physicalDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.dimensions);
+    end
 end
 
 % consider RBE for protons

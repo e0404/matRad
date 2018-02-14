@@ -107,7 +107,7 @@ end
 options.lb              = zeros(1,dij.totalNumOfBixels);        % Lower bound on the variables.
 options.ub              = inf * wOnes;   % Upper bound on the variables.
 
-if isfield(pln,'VMAT') && pln.VMAT
+if pln.propOpt.runVMAT
     % loop through angles
     offset = 0;
     for i = 1:dij.numOfBeams
@@ -232,9 +232,9 @@ resultGUI = matRad_calcCubes(wOpt,dij,cst_Over);
 
 if pln.scaleDRx
     %Scale D95 in target to RXDose
-    resultGUI = matRad_calcQualityIndicators(resultGUI,cst,pln);
+    resultGUI.QI = matRad_calcQualityIndicators(cst,pln,resultGUI.physicalDose);
     
-    scaleFacRx = max((pln.DRx/pln.numOfFractions)./[resultGUI.QI(pln.RxStruct).D95]');
+    scaleFacRx = max((pln.DRx/pln.numOfFractions)./[resultGUI.QI(pln.RxStruct).D_95]');
     
     wOpt = wOpt*scaleFacRx;
     resultGUI = matRad_calcCubes(wOpt,dij,cst_Over);

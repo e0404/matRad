@@ -41,9 +41,9 @@ end
 
 apertureInfo = result.apertureInfo;
 
-fileName = apertureInfo.vmatOptions.machineConstraintFile;
+fileName = apertureInfo.VMAToptions.machineConstraintFile;
 try
-    load([fileparts(mfilename('fullpath')) filesep fileName],'machineConstraints');
+    load([pwd filesep fileName],'machine');
 catch
     error(['Could not find the following machine file: ' fileName ]);
 end
@@ -100,7 +100,7 @@ end
 [apertureInfo.apertureVector,~,~] = matRad_daoApertureInfo2Vec(apertureInfo);
 
 %redo interpolation
-apertureInfo = matRad_daoVec2ApertureInfo_VMATstatic(apertureInfo,apertureInfo.apertureVector);
+apertureInfo = matRad_daoVec2ApertureInfo_VMAT(apertureInfo,apertureInfo.apertureVector);
 
 if doInterp
     fprintf('\n\nWE ARE REDOING INTERPOLATION\n\n');

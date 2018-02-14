@@ -84,7 +84,7 @@ if isfield(apertureInfo,'scaleFacRx')
     apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) = apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)/apertureInfo.scaleFacRx;
 end
 
-if pln.scaleDij
+if pln.propOpt.preconditioner
     %rescale dij matrix, so that apertureWeight/bixelWidth ~= 1
     % gradient wrt weights ~ 1, gradient wrt leaf pos
     % ~ apertureWeight/(bixelWidth) ~1
@@ -98,7 +98,7 @@ if pln.scaleDij
 end
 
 %set daoVec2ApertureInfo function handle
-if pln.VMAT
+if pln.propOpt.runVMAT
     daoVec2ApertureInfo =  @matRad_daoVec2ApertureInfo_VMAT;
 else
     daoVec2ApertureInfo =  @matRad_daoVec2ApertureInfo_IMRT;
@@ -122,7 +122,7 @@ options.numOfScenarios  = dij.numOfScenarios;
 % set bounds on optimization variables
 options.lb              = apertureInfo.limMx(:,1);                                          % Lower bound on the variables.
 options.ub              = apertureInfo.limMx(:,2);                                          % Upper bound on the variables.
-options.VMAT            = pln.VMAT;
+options.runVMAT         = pln.propOpt.runVMAT;
 [options.cl,options.cu] = matRad_daoGetConstBounds(cst_Over,apertureInfo,options);   % Lower and upper bounds on the constraint functions.
 
 % set optimization options
@@ -134,7 +134,7 @@ options.numOfScenarios  = dij.numOfScenarios;
 % set callback functions.
 funcs.objective         = @(x) matRad_daoObjFunc(x,dij,cst_Over,options,daoVec2ApertureInfo);
 funcs.iterfunc          = @(iter,objective,parameter) matRad_IpoptIterFunc(iter,objective,parameter,options.ipopt.max_iter);
-if pln.VMAT
+if pln.propOpt.runVMAT
     funcs.gradient          = @(x) matRad_daoGradFunc_VMAT(x,dij,cst_Over,options,daoVec2ApertureInfo);
     funcs.constraints       = @(x) matRad_daoConstFunc_VMAT(x,dij,cst_Over,options,daoVec2ApertureInfo);
     funcs.jacobian          = @(x) matRad_daoJacobFunc_VMAT(x,dij,cst_Over,options,daoVec2ApertureInfo);
@@ -157,9 +157,8 @@ end
 % clear global variables after optimization
 clearvars -global matRad_global_x matRad_global_d;
 
-if pln.scaleDij
+if pln.propOpt.preconditioner
     %rescale dij matrix
-    %dij.physicalDose{1} = dij.physicalDose{1}/dij.scaleFactor;
     dij.weightToMU = dij.weightToMU/dij.scaleFactor;
     apertureInfo.weightToMU = apertureInfo.weightToMU/dij.scaleFactor;
     optApertureInfoVec(1:apertureInfo.totalNumOfShapes) = optApertureInfoVec(1:apertureInfo.totalNumOfShapes)*dij.scaleFactor;
@@ -180,9 +179,9 @@ resultGUI.physicalDose = reshape(d{1},dij.dimensions);
 
 if pln.scaleDRx
     %Scale D95 in target to RXDose
-    resultGUI = matRad_calcQualityIndicators(resultGUI,cst,pln);
+    resultGUI.QI = matRad_calcQualityIndicators(cst,pln,resultGUI.physicalDose);
     
-    resultGUI.apertureInfo.scaleFacRx = max((pln.DRx/pln.numOfFractions)./[resultGUI.QI(pln.RxStruct).D95]');
+    resultGUI.apertureInfo.scaleFacRx = max((pln.DRx/pln.numOfFractions)./[resultGUI.QI(pln.RxStruct).D_95]');
     optApertureInfoVec(1:resultGUI.apertureInfo.totalNumOfShapes) = optApertureInfoVec(1:resultGUI.apertureInfo.totalNumOfShapes)*resultGUI.apertureInfo.scaleFacRx;
     
     % update the apertureInfoStruct and calculate bixel weights
@@ -196,7 +195,7 @@ if pln.scaleDRx
 end
 
 % update apertureInfoStruct with the maximum leaf speeds per segment
-if pln.VMAT
+if pln.propOpt.runVMAT
     resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
     
     
