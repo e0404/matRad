@@ -50,6 +50,13 @@ modelName      = 'none';
 % disable robust optimization
 pln.robOpt       = false;
 pln.scenGenType  = 'nomScen';
+
+% retrieve bio model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+
+% retrieve scenarios for dose calculation and optimziation
+pln.multScen = matRad_multScen(ct,pln.scenGenType);
+
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
 
