@@ -93,7 +93,7 @@ catch
    matRad_dispToConsole(['Could not find the following machine file: ' fileName ],param,'error'); 
 end
 
-if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
+if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'helium') || strcmp(pln.radiationMode,'carbon')
       
     availableEnergies = [machine.data.energy];
     availablePeakPos  = [machine.data.peakPos] + [machine.data.offset];
@@ -228,7 +228,7 @@ for i = 1:length(pln.gantryAngles)
                              [{ct.cube{1}} {voiTarget}]);
 
         % find appropriate energies for particles
-       if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
+       if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'helium') || strcmp(stf(i).radiationMode,'carbon')
 
            % target hit
            if sum(rho{2}) > 0 
@@ -483,7 +483,7 @@ for i = 1:length(pln.gantryAngles)
     end
     
     % include rangeshifter data if not yet available 
-    if strcmp(pln.radiationMode, 'protons') || strcmp(pln.radiationMode, 'carbon')
+    if strcmp(pln.radiationMode, 'protons') || strcmp(pln.radiationMode, 'helium') || strcmp(pln.radiationMode, 'carbon')
         for j = 1:stf(i).numOfRays
             for k = 1:numel(stf(i).ray(j).energy)
                 stf(i).ray(j).rangeShifter(k).ID = 0;

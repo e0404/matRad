@@ -60,7 +60,7 @@ classdef matRad_bioModel
     % constant public properties which are visible outside of this class
     properties(Constant = true)
         AvailableModels                 = {'none','constRBE','MCN','WED','LEM'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
-        AvailableradiationModealities   = {'photons','protons','carbon'};
+        AvailableradiationModealities   = {'photons','protons','helium','carbon'};
         AvailableQuantitiesForOpt       = {'physicalDose','effect','RBExD'};
         
         AvailableAlphaXBetaX       = {[0.036 0.024],    'prostate';
@@ -200,6 +200,23 @@ classdef matRad_bioModel
                                 matRad_dispToConsole(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using "none" instead. \n'],[],'warning');
                                 this.quantityOpt = 'physicalDose';
                         end
+                       
+                    case {'helium'}
+                        switch this.quantityOpt
+                            
+                            case {'physicalDose'}
+                                if strcmp( this.model, 'none')
+                                    boolCHECK           = true;
+                                    this.bioOpt         = false;
+                                    this.quantityVis    = 'physicalDose';
+                                else
+                                    matRad_dispToConsole(['matRad: Invalid biological model: ' this.model  '; using "none" instead. \n'],[],'warning');
+                                    this.model  = 'none';
+                                end
+                            otherwise
+                                matRad_dispToConsole(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using "none" instead. \n'],[],'warning');
+                                this.quantityOpt = 'physicalDose';
+                        end
                         
                     case {'carbon'}
                         switch this.quantityOpt
@@ -285,7 +302,7 @@ classdef matRad_bioModel
         
         % setter functions
         function this = set.radiationMode(this,value)
-            if ischar(value) && sum(strcmp(value,{'photons','protons','carbon'})) == 1
+            if ischar(value) && sum(strcmp(value,{'photons','protons','helium','carbon'})) == 1
                 this.radiationMode = value;
             else
                 error('matRad: Cannot set radiation modality')
