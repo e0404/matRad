@@ -46,10 +46,10 @@ figureWait = waitbar(0,'calculate dose influence matrix for particles...');
 set(figureWait,'pointer','watch');
 
 % meta information for dij
-dij.numOfBeams         = pln.numOfBeams;
-dij.numOfVoxels        = pln.numOfVoxels;
+dij.numOfBeams         = pln.propStf.numOfBeams;
+dij.numOfVoxels        = prod(ct.cubeDim);
 dij.resolution         = ct.resolution;
-dij.dimensions         = pln.voxelDimensions;
+dij.dimensions         = ct.cubeDim;
 dij.numOfScenarios     = 1;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
@@ -80,7 +80,7 @@ round2 = @(a,b)round(a*10^b)/10^b;
 % Allocate memory for dose_temp cell array
 doseTmpContainer     = cell(numOfBixelsContainer,dij.numOfScenarios);
 
-if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ... 
+if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
         && strcmp(pln.radiationMode,'carbon')
    
         alphaDoseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
@@ -90,7 +90,7 @@ if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'
             dij.mSqrtBetaDose{i} = spalloc(prod(ct.cubeDim),numOfColumnsDij,1);
         end
         
-elseif isequal(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
+elseif isequal(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
             dij.RBE = 1.1;
             fprintf(['matRad: Using a constant RBE of 1.1 \n']);   
 end
@@ -110,7 +110,9 @@ catch
    error(['Could not find the following machine file: ' fileName ]); 
 end
 
-if isfield(pln,'calcLET') && pln.calcLET
+if isfield(pln,'propDoseCalc') && ...
+   isfield(pln.propDoseCalc,'calcLET') && ...
+   pln.propDoseCalc.calcLET
   if isfield(machine.data,'LET')
     letDoseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
     % Allocate space for dij.dosexLET sparse matrix
@@ -123,7 +125,7 @@ if isfield(pln,'calcLET') && pln.calcLET
 end
 
 % generates tissue class matrix for biological optimization
-if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ... 
+if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
         && strcmp(pln.radiationMode,'carbon')
     
     fprintf('matRad: loading biological base data... ');
@@ -161,10 +163,10 @@ if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'
     fprintf('done.\n');
 
 % issue warning if biological optimization not possible
-elseif sum(strcmp(pln.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && ~strcmp(pln.radiationMode,'carbon') ||...
-       ~strcmp(pln.radiationMode,'protons') && strcmp(pln.bioOptimization,'const_RBExD')
-    warndlg([pln.bioOptimization ' optimization not possible with ' pln.radiationMode '- physical optimization is carried out instead.']);
-    pln.bioOptimization = 'none';      
+elseif sum(strcmp(pln.propOpt.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && ~strcmp(pln.radiationMode,'carbon') ||...
+       ~strcmp(pln.radiationMode,'protons') && strcmp(pln.propOpt.bioOptimization,'const_RBExD')
+    warndlg([pln.propOpt.bioOptimization ' optimization not possible with ' pln.radiationMode '- physical optimization is carried out instead.']);
+    pln.propOpt.bioOptimization = 'none';      
 end
 
 % compute SSDs
@@ -245,7 +247,7 @@ for i = 1:length(stf) % loop over all beams
             radDepths = radDepthV{1}(ix);   
             
             % just use tissue classes of voxels found by ray tracer
-            if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ... 
+            if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
                 && strcmp(pln.radiationMode,'carbon')
                     vTissueIndex_j = vTissueIndex(ix,:);
             end
@@ -344,7 +346,7 @@ for i = 1:length(stf) % loop over all beams
                   letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelLET.*bixelDose,dij.numOfVoxels,1);
                 end
                              
-                if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ... 
+                if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
                     && strcmp(pln.radiationMode,'carbon')
                     % calculate alpha and beta values for bixel k on ray j of                  
                     [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
@@ -370,7 +372,7 @@ for i = 1:length(stf) % loop over all beams
                                 dij.mLETDose{1}(:,i) = dij.mLETDose{1}(:,i) + stf(i).ray(j).weight(k) * letDoseTmpContainer{1,1};
                             end
                             
-                            if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ... 
+                            if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
                                 && strcmp(pln.radiationMode,'carbon')
                                 
                                 % score alpha and beta matrices
@@ -391,7 +393,7 @@ for i = 1:length(stf) % loop over all beams
                             dij.mLETDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [letDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
                         end
                         
-                        if (isequal(pln.bioOptimization,'LEMIV_effect') || isequal(pln.bioOptimization,'LEMIV_RBExD')) ... 
+                        if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
                             && strcmp(pln.radiationMode,'carbon')
                         
                             dij.mAlphaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];

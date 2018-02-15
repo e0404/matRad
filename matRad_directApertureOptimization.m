@@ -90,8 +90,8 @@ matRad_ipoptOptions;
 
 % set optimization options
 options.radMod          = pln.radiationMode;
-options.bioOpt          = pln.bioOptimization;
-options.ID              = [pln.radiationMode '_' pln.bioOptimization];
+options.bioOpt          = pln.propOpt.bioOptimization;
+options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
 options.numOfScenarios  = dij.numOfScenarios;
 
 % set bounds on optimization variables
