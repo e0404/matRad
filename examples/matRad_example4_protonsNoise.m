@@ -34,13 +34,13 @@ load('PROSTATE.mat');
 % structure requires input from the treatment planner and defines 
 % the most important cornerstones of your treatment plan.
 
-pln.radiationMode   = 'protons';           
-pln.machine         = 'Generic';
+pln.radiationMode           = 'protons';           
+pln.machine                 = 'Generic';
+pln.numOfFractions          = 30;
 pln.propOpt.bioOptimization = 'const_RBExD';     
 pln.propStf.gantryAngles    = [90 270];
 pln.propStf.couchAngles     = [0 0];
 pln.propStf.bixelWidth      = 3;
-pln.numOfFractions  = 30;
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO          = 0;

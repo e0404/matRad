@@ -38,7 +38,6 @@ pln.machine         = 'Generic';
 pln.numOfFractions  = 30;
 
 pln.propOpt.bioOptimization = 'none';    
-
 pln.propStf.gantryAngles    = [0:72:359];
 pln.propStf.couchAngles     = [0 0 0 0 0];
 pln.propStf.bixelWidth      = 5;

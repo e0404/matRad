@@ -103,10 +103,10 @@ pln.propOpt.bioOptimization = 'none';
 % size of 5 x 5 mm in the isocenter plane. The number of fractions is set 
 % to 30. Internally, matRad considers the fraction dose for optimization, 
 % however, objetives and constraints are defined for the entire treatment.
-pln.propStf.gantryAngles    = [0:40:359];
-pln.propStf.couchAngles     = zeros(1,numel(pln.propStf.gantryAngles));
-pln.propStf.bixelWidth      = 5;
-pln.numOfFractions  = 30;
+pln.numOfFractions         = 30;
+pln.propStf.gantryAngles   = [0:40:359];
+pln.propStf.couchAngles    = zeros(1,numel(pln.propStf.gantryAngles));
+pln.propStf.bixelWidth     = 5;
 
 %%
 % Obtain the number of beams and voxels from the existing variables and 
@@ -138,7 +138,7 @@ display(stf(6));
 % Let's generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows subsequent inverse optimization.
-dij       = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 
 %% Inverse Optimization for IMRT
 % The goal of the fluence optimization is to find a set of beamlet/pencil 
@@ -162,8 +162,8 @@ pln.propStf.couchAngles  = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.numOfBeams   = numel(pln.propStf.gantryAngles);
 stf                      = matRad_generateStf(ct,cst,pln);
 pln.propStf.isoCenter    = stf.isoCenter;
-dij              = matRad_calcPhotonDose(ct,stf,pln,cst);
-resultGUI_coarse = matRad_fluenceOptimization(dij,cst,pln);
+dij                      = matRad_calcPhotonDose(ct,stf,pln,cst);
+resultGUI_coarse         = matRad_fluenceOptimization(dij,cst,pln);
 
 %%  Visual Comparison of results
 % Let's compare the new recalculation against the optimization result.
