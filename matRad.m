@@ -47,7 +47,7 @@ modelName    = 'none';             % none: for photons, protons, carbon         
                                    % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
                                    % LEM: Local Effect Model for carbon ions
 
-scenGenType  = 'wcScen';           % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen'                                          
+scenGenType  = 'nomScen';          % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen'                                          
 
 % retrieve bio model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
