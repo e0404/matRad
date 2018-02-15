@@ -56,7 +56,7 @@ for i = 1:numel(apertureInfo.beam)
     % loop over all shapes and add up the gradients x openingFrac for this shape
     for j = 1:apertureInfo.beam(i).numOfShapes
         g(j+offset) = apertureInfo.beam(i).shape(j).shapeMap(ix)' ...
-            * bixelG(apertureInfo.beam(i).bixelIndMap(ix));
+            * bixelG(apertureInfo.beam(i).bixelIndMap(ix))./apertureInfo.beam(i).shape(j).jacobiScale;
     end
     
     % increment offset
@@ -68,7 +68,8 @@ end
 % weights to calculate the gradient
 g(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2) = ...
     apertureInfoVec(apertureInfo.mappingMx(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,2)) ...
-    .* bixelG(apertureInfo.bixelIndices(1:apertureInfo.totalNumOfLeafPairs*2)) / apertureInfo.bixelWidth;
+    .* bixelG(apertureInfo.bixelIndices(1:apertureInfo.totalNumOfLeafPairs*2)) ./ ... 
+    (apertureInfo.bixelWidth.*apertureInfo.jacobiScale(apertureInfo.mappingMx(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,2)));
 
 
 % correct the sign for the left leaf positions

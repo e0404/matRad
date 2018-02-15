@@ -230,23 +230,6 @@ for i = 1:numel(updatedInfo.beam)
     updatedInfo.beam(i).shape(j).shapeMap = (tempMap  + abs(tempMap))  / 2;
     
     if updatedInfo.beam(i).optimizeBeam
-        
-        if apertureInfo.updatePreconditioner
-            dijScaleFactor = mean(apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale)/(apertureInfo.bixelWidth);
-            
-            if apertureInfo.preconditioner
-                % "incorrect"
-                %updatedInfo.beam(i).shape(j).jacobiScale = sqrt(sum(updatedInfo.beam(i).shape(j).shapeMap(:)));
-                % "correct"
-                updatedInfo.beam(i).shape(j).jacobiScale = (dijScaleFactor.*apertureInfo.bixelWidth./apertureInfo.beam(i).shape(j).weight).*sqrt(sum(updatedInfo.beam(i).shape(j).shapeMap(:).^2));
-            end
-            % rescale the vector from the weight using the current
-            % iteration scaling factor
-            apertureInfoVect(shapeInd) = updatedInfo.beam(i).shape(j).jacobiScale*updatedInfo.beam(i).shape(j).weight;
-            
-            updatedInfo.jacobiScale(shapeInd) = updatedInfo.beam(i).shape(j).jacobiScale;
-        end
-        
         % increment shape index
         shapeInd = shapeInd +1;
     end
@@ -256,9 +239,5 @@ end
 updatedInfo.bixelWeights = w;
 updatedInfo.bixelIndices = indVect;
 updatedInfo.apertureVector = apertureInfoVect;
-
-%if updatedInfo.VMAT
-%updatedInfo.IandFapertureVector = IandFapertureVector;
-%end
 
 end

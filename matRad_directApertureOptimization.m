@@ -93,11 +93,12 @@ if pln.propOpt.preconditioner
     %rescale dij matrix, so that apertureWeight/bixelWidth ~= 1
     % gradient wrt weights ~ 1, gradient wrt leaf pos
     % ~ apertureWeight/(bixelWidth) ~1
+    
+    % need to get the actual weights, so use the jacobiScale vector to
+    % convert from the variables
     dij.scaleFactor = mean(apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale)/(apertureInfo.bixelWidth);
     
-    %dij.physicalDose{1} = dij.physicalDose{1}*dij.scaleFactor;
     dij.weightToMU = dij.weightToMU*dij.scaleFactor;
-    
     apertureInfo.weightToMU = apertureInfo.weightToMU*dij.scaleFactor;
     apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) = apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)/dij.scaleFactor;
 end
@@ -159,15 +160,6 @@ switch env
         clearvars -global matRad_global_x matRad_global_d;
     case 'OCTAVE' 
         clear -global matRad_global_x matRad_global_d;
-end
-
-if pln.propOpt.preconditioner
-    %rescale dij matrix
-    dij.weightToMU = dij.weightToMU/dij.scaleFactor;
-    apertureInfo.weightToMU = apertureInfo.weightToMU/dij.scaleFactor;
-    optApertureInfoVec(1:apertureInfo.totalNumOfShapes) = optApertureInfoVec(1:apertureInfo.totalNumOfShapes)*dij.scaleFactor;
-    
-    dij.scaleFactor = 1;
 end
 
 % update the apertureInfoStruct and calculate bixel weights

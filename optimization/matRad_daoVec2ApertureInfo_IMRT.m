@@ -78,7 +78,7 @@ for i = 1:numel(updatedInfo.beam)
     % loop over all shapes
     for j = 1:updatedInfo.beam(i).numOfShapes
         % update the shape weight
-        updatedInfo.beam(i).shape(j).weight = apertureInfoVect(shapeInd);
+        updatedInfo.beam(i).shape(j).weight = apertureInfoVect(shapeInd)./updatedInfo.beam(i).shape(j).jacobiScale;
         
         % get dimensions of 2d matrices that store shape/bixel information
         n = apertureInfo.beam(i).numOfActiveLeafPairs;
