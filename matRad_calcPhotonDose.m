@@ -64,11 +64,10 @@ if param.logLevel == 1
 end
 
 % meta information for dij
-dij.numOfBeams         = pln.numOfBeams;
-dij.numOfVoxels        = pln.numOfVoxels;
+dij.numOfBeams         = pln.propStf.numOfBeams;
+dij.numOfVoxels        = prod(ct.cubeDim);
 dij.resolution         = ct.resolution;
-dij.dimensions         = pln.voxelDimensions;
-
+dij.dimensions         = ct.cubeDim;
 dij.numOfScenarios     = 1;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
@@ -129,7 +128,7 @@ lateralCutoff = 50; % [mm]
 useCustomPrimFluenceBool = 0;
 
 % 0 if field calc is bixel based, 1 if dose calc is field based
-isFieldBasedDoseCalc = strcmp(num2str(pln.bixelWidth),'field');
+isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
 
 %% kernel convolution
 % prepare data for convolution to reduce calculation time
@@ -147,7 +146,7 @@ if isFieldBasedDoseCalc
     fieldWidth = pln.Collimation.fieldWidth;
 else
     intConvResolution = .5; % [mm]
-    fieldWidth = pln.bixelWidth;
+    fieldWidth = pln.propStf.bixelWidth;
 end
 
 % calculate field size and distances
@@ -194,12 +193,18 @@ kernelConvSize = 2*kernelConvLimit;
 % that storage within the influence matrix may be subject to sampling
 effectiveLateralCutoff = lateralCutoff + fieldWidth/2;
 
+% book keeping - this is necessary since pln is not used in optimization or
+% matRad_calcCubes
+if strcmp(pln.bioParam.model,'constRBE')
+   dij.RBE = pln.bioParam.RBE;
+end
+
 ctScen = 1;
 
 for ShiftScen = 1:pln.multScen.totNumShiftScen
 
    % manipulate isocenter
-   pln.isoCenter    = pln.isoCenter + pln.multScen.isoShift(ShiftScen,:);
+   pln.propStf.isoCenter    = pln.propStf.isoCenter + pln.multScen.isoShift(ShiftScen,:);
    for k = 1:length(stf)
        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(ShiftScen,:);
    end
@@ -235,7 +240,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
           % Do not transpose matrix since we usage of row vectors &
           % transformation of the coordinate system need double transpose
 
-          rotMat_system_T = matRad_getRotationMatrix(pln.gantryAngles(i),pln.couchAngles(i));
+          rotMat_system_T = matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i));
 
           % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
           rot_coordsV = coordsV*rotMat_system_T;
@@ -442,7 +447,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
    end
 
    % manipulate isocenter
-   pln.isoCenter = pln.isoCenter - pln.multScen.isoShift(ShiftScen,:);
+   pln.propStf.isoCenter = pln.propStf.isoCenter - pln.multScen.isoShift(ShiftScen,:);
    for k = 1:length(stf)
        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(ShiftScen,:);
    end   

@@ -61,24 +61,20 @@ quantityOpt         = 'RBExD';
 
 %%
 % The remaining plan parameters are set like in the previous example files
-pln.gantryAngles    = 315;
-pln.couchAngles     = 0;
-pln.bixelWidth      = 3;
-pln.numOfFractions  = 30;
-pln.numOfBeams      = numel(pln.gantryAngles);
-pln.numOfVoxels     = prod(ct.cubeDim);
-pln.voxelDimensions = ct.cubeDim;
-pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.runDAO         = 0;
-pln.runSequencing  = 0;
-pln.scenGenType     = 'nomScen'; % optimize on the nominal scenario
-pln.robOpt          = false;
+pln.numOfFractions        = 30;
+pln.propStf.gantryAngles  = 315;
+pln.propStf.couchAngles   = 0;
+pln.propStf.bixelWidth    = 6;
+pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
+pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propOpt.runDAO        = 0;
+pln.propOpt.runSequencing = 0;
 
 % retrieve bio model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 
 % retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,pln.scenGenType);
+pln.multScen = matRad_multScen(ct,'nomScen'); % optimize on the nominal scenario                                            
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -107,7 +103,7 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = round(pln.isoCenter(3)./ct.resolution.z);
+slice = round(pln.propStf.isoCenter(3)./ct.resolution.z);
 figure,
 imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
 

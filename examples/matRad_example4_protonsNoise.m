@@ -33,21 +33,17 @@ load('PROSTATE.mat');
 % The next step is to define your treatment plan labeled as 'pln'. This 
 % structure requires input from the treatment planner and defines 
 % the most important cornerstones of your treatment plan.
+pln.radiationMode           = 'protons';           
+pln.machine                 = 'Generic';
+pln.numOfFractions          = 30;  
+pln.propStf.gantryAngles    = [90 270];
+pln.propStf.couchAngles     = [0 0];
+pln.propStf.bixelWidth      = 3;
+pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propOpt.runDAO          = 0;
+pln.propOpt.runSequencing   = 0;
 
-pln.radiationMode   = 'protons';           
-pln.machine         = 'Generic';  
-pln.gantryAngles    = [90 270];
-pln.couchAngles     = [0 0];
-pln.bixelWidth      = 3;
-pln.numOfFractions  = 30;
-pln.numOfBeams      = numel(pln.gantryAngles);
-pln.numOfVoxels     = prod(ct.cubeDim);
-pln.voxelDimensions = ct.cubeDim;
-pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.runDAO          = 0;
-pln.runSequencing   = 0;
-pln.scenGenType     = 'nomScen'; % optimize on the nominal scenario
-pln.robOpt          = false;
 %%
 % Define the biological optimization model for treatment planning along
 % with the quantity that should be used for optimization. Possible model values 
@@ -60,14 +56,14 @@ pln.robOpt          = false;
 % As we use protons, we follow here the clinical 
 % standard and use a constant relative biological effectiveness of 1.1. 
 % Therefore we set modelName to constRBE
-modelName           = 'constRBE';
-quantityOpt         = 'RBExD';   
+modelName    = 'constRBE';
+quantityOpt  = 'RBExD'; 
 
 % retrieve bio model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 
 % retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,pln.scenGenType);
+pln.multScen = matRad_multScen(ct,'nomScen');  % optimize on the nominal scenario
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -96,7 +92,7 @@ display(qi2(ixRectum).D_5);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = round(pln.isoCenter(1,3)./ct.resolution.z);
+slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 figure
 imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet)
 
@@ -121,7 +117,7 @@ figure,title('manipulated plan')
 matRad_plotSliceWrapper(gca,ct_manip,cst,1,resultGUI_noise.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
 
 % Let's plot single profiles along the beam direction
-ixProfileY = round(pln.isoCenter(1,1)./ct.resolution.x);
+ixProfileY = round(pln.propStf.isoCenter(1,1)./ct.resolution.x);
 
 profileOrginal = resultGUI.RBExD(:,ixProfileY,slice);
 profileNoise   = resultGUI_noise.RBExD(:,ixProfileY,slice);

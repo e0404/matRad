@@ -292,11 +292,11 @@ if handles.State > 0
     if evalin('base','exist(''pln'',''var'')')
         currPln = evalin('base','pln');
         if handles.plane == 1
-            currSlice = ceil(currPln.isoCenter(1,2)/ct.resolution.x);
+            currSlice = ceil(currPln.propStf.isoCenter(1,2)/ct.resolution.x);
         elseif handles.plane == 2
-            currSlice = ceil(currPln.isoCenter(1,1)/ct.resolution.y);
+            currSlice = ceil(currPln.propStf.isoCenter(1,1)/ct.resolution.y);
         elseif handles.plane == 3
-            currSlice = ceil(currPln.isoCenter(1,3)/ct.resolution.z);
+            currSlice = ceil(currPln.propStf.isoCenter(1,3)/ct.resolution.z);
         end 
     else % no pln -> no isocenter -> use middle
         currSlice = ceil(ct.cubeDim(handles.plane)/2);
@@ -728,7 +728,7 @@ try
     % already defined
     pln = evalin('base','pln');
 
-    if length(pln.gantryAngles) ~= length(pln.couchAngles) 
+    if length(pln.propStf.gantryAngles) ~= length(pln.propStf.couchAngles) 
         handles = showWarning(handles,'number of gantryAngles != number of couchAngles'); 
     end
     %%
@@ -740,13 +740,13 @@ try
     end
 
     %% check if isocenter is already set
-    if ~isfield(pln,'isoCenter')
+    if ~isfield(pln.propStf,'isoCenter')
         handles = showWarning(handles,'no iso center set - using center of gravity based on structures defined as TARGET');
-        pln.isoCenter = ones(pln.numOfBeams,1) * matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
+        pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
         assignin('base','pln',pln);
     elseif ~get(handles.checkIsoCenter,'Value')
         if ~strcmp(get(handles.editIsoCenter,'String'),'multiple isoCenter')
-            pln.isoCenter = ones(pln.numOfBeams,1)*str2num(get(handles.editIsoCenter,'String'));
+            pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*str2num(get(handles.editIsoCenter,'String'));
         end
     end
 
@@ -761,6 +761,12 @@ end
 
 % generate steering file
 try 
+    currPln = evalin('base','pln');
+    % if we run 3d conf opt -> hijack runDao to trigger computation of
+    % connected bixels
+    if strcmp(pln.radiationMode,'photons') && get(handles.radiobutton3Dconf,'Value')
+       currpln.propOpt.runDAO = true; 
+    end
 
     stf = matRad_generateStf(evalin('base','ct'),...
                                      evalin('base','cst'),...
@@ -1068,7 +1074,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     
     % Rotate the system into the beam. 
     % passive rotation & row vector multiplication & inverted rotation requires triple matrix transpose                  
-    rotMat_system_T = transpose(matRad_getRotationMatrix(pln.gantryAngles(handles.selectedBeam),pln.couchAngles(handles.selectedBeam)));
+    rotMat_system_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(handles.selectedBeam),pln.propStf.couchAngles(handles.selectedBeam)));
     
     if strcmp(handles.ProfileType,'longitudinal')
         sourcePointBEV = [handles.profileOffset -SAD   0];
@@ -1082,7 +1088,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     rotTargetPointBEV = targetPointBEV * rotMat_system_T;
     
     % perform raytracing on the central axis of the selected beam
-    [~,l,rho,~,ix] = matRad_siddonRayTracer(pln.isoCenter(handles.selectedBeam,:),ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube{1}});
+    [~,l,rho,~,ix] = matRad_siddonRayTracer(pln.propStf.isoCenter(handles.selectedBeam,:),ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube{1}});
     d = [0 l .* rho{1}];
     % Calculate accumulated d sum.
     vX = cumsum(d(1:end-1));
@@ -1181,7 +1187,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     end
     
     str = sprintf('profile plot - central axis of %d beam gantry angle %d? couch angle %d?',...
-        handles.selectedBeam ,pln.gantryAngles(handles.selectedBeam),pln.couchAngles(handles.selectedBeam));
+        handles.selectedBeam ,pln.propStf.gantryAngles(handles.selectedBeam),pln.propStf.couchAngles(handles.selectedBeam));
     h_title = title(handles.axesFig,str,'FontSize',defaultFontSize);
     pos = get(h_title,'Position');
     set(h_title,'Position',[pos(1)-40 pos(2) pos(3)])
@@ -1397,11 +1403,11 @@ try
             pln = evalin('base','pln');
             
             if handles.plane == 1
-                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,2)/ct.resolution.x));
+                set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,2)/ct.resolution.x));
             elseif handles.plane == 2
-                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,1)/ct.resolution.y));
+                set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,1)/ct.resolution.y));
             elseif handles.plane == 3
-                set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,3)/ct.resolution.z));
+                set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,3)/ct.resolution.z));
             end
             
         end
@@ -1491,7 +1497,23 @@ try
     ct  = evalin('base','ct');
  
     % optimize
-    [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
+    if get(handles.radiobutton3Dconf,'Value') && strcmp(handles.Modalities{get(handles.popupRadMode,'Value')},'photons')
+        % conformal plan if photons and 3d conformal
+        if ~matRad_checkForConnectedBixelRows(evalin('base','stf'))
+            error('disconnetced dose influence data in BEV - run dose calculation again with consistent settings');
+        end
+        [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(matRad_collapseDij(evalin('base','dij')),evalin('base','cst'),pln);
+        resultGUIcurrentRun.w = resultGUIcurrentRun.w * ones(evalin('base','dij.totalNumOfBixels'),1);
+        resultGUIcurrentRun.wUnsequenced = resultGUIcurrentRun.w;
+    else
+        if pln.propOpt.runDAO
+        if ~matRad_checkForConnectedBixelRows(evalin('base','stf'))
+            error('disconnetced dose influence data in BEV - run dose calculation again with consistent settings');
+        end
+        end
+        
+        [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
+    end
     
     %if resultGUI already exists then overwrite the "standard" fields
     AllVarNames = evalin('base','who');
@@ -1516,24 +1538,20 @@ try
 
     % set some values
     if handles.plane == 1
-        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,2)/ct.resolution.x));
+        set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,2)/ct.resolution.x));
     elseif handles.plane == 2
-        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,1)/ct.resolution.y));
+        set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,1)/ct.resolution.y));
     elseif handles.plane == 3
-        set(handles.sliderSlice,'Value',ceil(pln.isoCenter(1,3)/ct.resolution.z));
+        set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,3)/ct.resolution.z));
     end
 
     handles.State = 3;
     handles.SelectedDisplayOptionIdx = 1;
-    if strcmp(pln.radiationMode,'carbon') || (strcmp(pln.radiationMode,'protons') && strcmp(pln.bioOptimization,'const_RBExD'))
-        handles.SelectedDisplayOption = 'RBExD';
-    else
-        handles.SelectedDisplayOption = 'physicalDose';
-    end
+    handles.SelectedDisplayOption = pln.bioParam.quantityVis;
     handles.selectedBeam = 1;
     % check IPOPT status and return message for GUI user if no DAO or
     % particles
-    if ~pln.runDAO || ~strcmp(pln.radiationMode,'photons')
+    if ~pln.propOpt.runDAO || ~strcmp(pln.radiationMode,'photons')
         CheckIpoptStatus(ipoptInfo,'Fluence')
     end
     
@@ -1550,7 +1568,7 @@ end
 try
     
     %% sequencing
-    if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
+    if strcmp(pln.radiationMode,'photons') && (pln.propOpt.runSequencing || pln.propOpt.runDAO)
     %   resultGUI = matRad_xiaLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
     %       ,get(handles.editSequencingLevel,'Value'));
     %   resultGUI = matRad_engelLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
@@ -1572,7 +1590,7 @@ end
 
 try
     %% DAO
-    if strcmp(pln.radiationMode,'photons') && pln.runDAO
+    if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO
         handles = showWarning(handles,['Observe: You are running direct aperture optimization' filesep 'This is experimental code that has not been thoroughly debugged - especially in combination with constrained optimization.']);
        [resultGUI,ipoptInfo] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst'),...
            resultGUI.apertureInfo,resultGUI,pln);
@@ -1581,7 +1599,7 @@ try
        CheckIpoptStatus(ipoptInfo,'DAO');      
     end
     
-    if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
+    if strcmp(pln.radiationMode,'photons') && (pln.propOpt.runSequencing || pln.propOpt.runDAO)
         matRad_visApertureInfo(resultGUI.apertureInfo);
     end
    
@@ -1655,9 +1673,9 @@ elseif get(hObject,'Value') == 2
             set(handles.sliderBeamSelection,'Enable','on');
             handles.selectedBeam = 1;
             pln = evalin('base','pln');
-            set(handles.sliderBeamSelection,'Min',handles.selectedBeam,'Max',pln.numOfBeams,...
+            set(handles.sliderBeamSelection,'Min',handles.selectedBeam,'Max',pln.propStf.numOfBeams,...
                 'Value',handles.selectedBeam,...
-                'SliderStep',[1/(pln.numOfBeams-1) 1/(pln.numOfBeams-1)],...
+                'SliderStep',[1/(pln.propStf.numOfBeams-1) 1/(pln.propStf.numOfBeams-1)],...
                 'Enable','on');
 
         else
@@ -2383,17 +2401,17 @@ guidata(handles.figure1,handles);
 function setPln(handles)
 pln = evalin('base','pln');
 % sanity check of isoCenter
-if size(pln.isoCenter,1) ~= pln.numOfBeams && size(pln.isoCenter,1) == 1
-  pln.isoCenter = ones(pln.numOfBeams,1) * pln.isoCenter(1,:);
-elseif size(pln.isoCenter,1) ~= pln.numOfBeams && size(pln.isoCenter,1) ~= 1
+if size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) == 1
+  pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * pln.propStf.isoCenter(1,:);
+elseif size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) ~= 1
   error('Isocenter in plan file are incosistent.');
 end
-set(handles.editBixelWidth,'String',num2str(pln.bixelWidth));
+set(handles.editBixelWidth,'String',num2str(pln.propStf.bixelWidth));
 set(handles.editFraction,'String',num2str(pln.numOfFractions));
 
-if isfield(pln,'isoCenter')
-    if size(unique(pln.isoCenter,'rows'),1) == 1
-        set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter(1,:)*10))./10), '\s+', ' '));
+if isfield(pln.propStf,'isoCenter')
+    if size(unique(pln.propStf.isoCenter,'rows'),1) == 1
+        set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.propStf.isoCenter(1,:)*10))./10), '\s+', ' '));
         set(handles.editIsoCenter,'Enable','on');
         set(handles.checkIsoCenter,'Enable','on');
     else
@@ -2403,8 +2421,8 @@ if isfield(pln,'isoCenter')
         set(handles.checkIsoCenter,'Enable','off');
     end
 end
-set(handles.editGantryAngle,'String',num2str((pln.gantryAngles)));
-set(handles.editCouchAngle,'String',num2str((pln.couchAngles)));
+set(handles.editGantryAngle,'String',num2str((pln.propStf.gantryAngles)));
+set(handles.editCouchAngle,'String',num2str((pln.propStf.couchAngles)));
 set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),pln.radiationMode)));
 set(handles.popUpMachine,'Value',find(strcmp(get(handles.popUpMachine,'String'),pln.machine)));
 
@@ -2419,24 +2437,24 @@ else
     set(handles.btnSetTissue,'Enable','off');
 end
 
-multScenDummy = matRad_multScen([],pln.scenGenType);
+multScenDummy = matRad_multScen([],pln.multScen.TYPE);
 ix = find(strcmp(multScenDummy.AvailableScenCreationTYPE,pln.multScen.TYPE));
 set(handles.popupmenuScenGen,'Value',ix);
 %% enable sequencing and DAO button if radiation mode is set to photons
-if strcmp(pln.radiationMode,'photons') && pln.runSequencing
+if strcmp(pln.radiationMode,'photons') && pln.propOpt.runSequencing
     set(handles.btnRunSequencing,'Enable','on');
     set(handles.btnRunSequencing,'Value',1);
-elseif strcmp(pln.radiationMode,'photons') && ~pln.runSequencing
+elseif strcmp(pln.radiationMode,'photons') && ~pln.propOpt.runSequencing
     set(handles.btnRunSequencing,'Enable','on');
     set(handles.btnRunSequencing,'Value',0);
 else
     set(handles.btnRunSequencing,'Enable','off');
 end
 %% enable DAO button if radiation mode is set to photons
-if strcmp(pln.radiationMode,'photons') && pln.runDAO
+if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO
     set(handles.btnRunDAO,'Enable','on');
     set(handles.btnRunDAO,'Value',1);
-elseif strcmp(pln.radiationMode,'photons') && ~pln.runDAO
+elseif strcmp(pln.radiationMode,'photons') && ~pln.propOpt.runDAO
     set(handles.btnRunDAO,'Enable','on');
     set(handles.btnRunDAO,'Value',0);
 else
@@ -2459,8 +2477,8 @@ function btnTableSave_Callback(~, ~, handles)
 getCstTable(handles);
 if get(handles.checkIsoCenter,'Value')
     pln = evalin('base','pln'); 
-    pln.isoCenter = ones(pln.numOfBeams,1) * matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
-    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.isoCenter(1,:) * 10))./10), '\s+', ' '));
+    pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
+    set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.propStf.isoCenter(1,:) * 10))./10), '\s+', ' '));
     assignin('base','pln',pln);
 end
 getPlnFromGUI(handles);
@@ -2562,10 +2580,10 @@ if evalin('base','exist(''pln'',''var'')')
     pln = evalin('base','pln');
 end
 
-pln.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [???]
-pln.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [???]
-pln.numOfBeams      = numel(pln.gantryAngles);
+pln.propStf.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [???]
+pln.propStf.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [???]
+pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 try
     ct = evalin('base','ct');
     pln.numOfVoxels     = prod(ct.cubeDim);
@@ -2586,7 +2604,6 @@ pln.bioOptimization = pln.bioParam.identifier;
 
 scenGenTypes    = get(handles.popupmenuScenGen,'String');
 scenGenSelect   = get(handles.popupmenuScenGen,'Value');
-pln.scenGenType = scenGenTypes{scenGenSelect,1};
 
 if evalin('base','exist(''ct'',''var'')')
     pln.multScen        = matRad_multScen(evalin('base','ct'),scenGenTypes{scenGenSelect,1});
@@ -2594,19 +2611,18 @@ else
     pln.multScen        = matRad_multScen([],scenGenTypes{scenGenSelect,1});
 end
 
-
-pln.runSequencing   = logical(get(handles.btnRunSequencing,'Value'));
-pln.runDAO          = logical(get(handles.btnRunDAO,'Value'));
+pln.propOpt.runSequencing   = logical(get(handles.btnRunSequencing,'Value'));
+pln.propOpt.runDAO          = logical(get(handles.btnRunDAO,'Value'));
 
 try
     cst = evalin('base','cst');
     if (sum(strcmp('TARGET',cst(:,3))) > 0 && get(handles.checkIsoCenter,'Value')) || ...
-            (sum(strcmp('TARGET',cst(:,3))) > 0 && ~isfield(pln,'isoCenter'))
-       pln.isoCenter = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct);
+            (sum(strcmp('TARGET',cst(:,3))) > 0 && ~isfield(pln.propStf,'isoCenter'))
+       pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct);
        set(handles.checkIsoCenter,'Value',1);
     else
         if ~strcmp(get(handles.editIsoCenter,'String'),'multiple isoCenter')
-            pln.isoCenter = ones(pln.numOfBeams,1) * str2num(get(handles.editIsoCenter,'String'));
+            pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * str2num(get(handles.editIsoCenter,'String'));
         end
     end
 catch
@@ -2802,8 +2818,8 @@ pln = evalin('base','pln');
 tmpIsoCenter = str2num(get(hObject,'String'));
 
 if length(tmpIsoCenter) == 3
-    if sum(any(unique(pln.isoCenter,'rows')~=tmpIsoCenter))
-        pln.isoCenter = ones(pln.numOfBeams,1)*tmpIsoCenter;
+    if sum(any(unique(pln.propStf.isoCenter,'rows')~=tmpIsoCenter))
+        pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*tmpIsoCenter;
         handles.State = 1;
         UpdateState(handles);
     end
@@ -2822,12 +2838,12 @@ doesPlnExist = ismember('pln',{W(:).name});
 
 if get(hObject,'Value') && doesPlnExist
     pln = evalin('base','pln');
-    if ~isfield(pln,'isoCenter')
-        pln.isoCenter = NaN;
+    if ~isfield(pln.propStf,'isoCenter')
+        pln.propStf.isoCenter = NaN;
     end
     tmpIsoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
-    if ~isequal(tmpIsoCenter,pln.isoCenter)
-        pln.isoCenter = ones(pln.numOfBeams,1)*tmpIsoCenter;
+    if ~isequal(tmpIsoCenter,pln.propStf.isoCenter)
+        pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*tmpIsoCenter;
         handles.State = 1;
         UpdateState(handles);
     end
@@ -2997,8 +3013,8 @@ try
     
     % change isocenter if that was changed and do _not_ recreate steering
     % information
-    for i = 1:numel(pln.gantryAngles)
-        stf(i).isoCenter = pln.isoCenter(i,:);
+    for i = 1:numel(pln.propStf.gantryAngles)
+        stf(i).isoCenter = pln.propStf.isoCenter(i,:);
     end
 
     % recalculate influence matrix

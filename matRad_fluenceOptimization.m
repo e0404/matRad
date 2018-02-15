@@ -114,7 +114,7 @@ wOnes          = ones(dij.totalNumOfBixels,1);
 matRad_ipoptOptions;
 
 % modified settings for photon dao
-if pln.runDAO && strcmp(pln.radiationMode,'photons')
+if pln.propOpt.runDAO && strcmp(pln.radiationMode,'photons')
 %    options.ipopt.max_iter = 50;
 %    options.ipopt.acceptable_obj_change_tol     = 7e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
 end
@@ -125,6 +125,7 @@ options.ub       = inf * ones(1,dij.totalNumOfBixels);   % Upper bound on the va
 funcs.iterfunc   = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter,param);
     
 % calculate initial beam intensities wInit
+
 if  strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
     % check if a constant RBE is defined - if not use 1.1
     if ~isfield(dij,'RBE')
@@ -149,14 +150,14 @@ elseif pln.bioParam.bioOpt
     dij.ixDose  = dij.betaX~=0; 
         
     if isequal(pln.bioParam.quantityOpt,'effect')
-        
+
            effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
            p            = (sum(dij.mAlphaDose{1}(V,:)*wOnes)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            q            = -(effectTarget * length(V)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
 
     elseif isequal(pln.bioParam.quantityOpt,'RBExD')
-        
+
            %pre-calculations
            dij.gamma              = zeros(dij.numOfVoxels,1);   
            dij.gamma(dij.ixDose) = dij.alphaX(dij.ixDose)./(2*dij.betaX(dij.ixDose)); 
@@ -175,8 +176,6 @@ else
     bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
 end
-
-
 
 matRad_dispToConsole('Calculating probabilistic quantities for optimization ...\n',param,'info');
       

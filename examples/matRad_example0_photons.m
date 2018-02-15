@@ -101,9 +101,6 @@ pln.machine       = 'Generic';
 quantityOpt    = 'physicalDose';                                     
 modelName      = 'none';  
 
-% disable robust optimization
-pln.robOpt       = false;
-pln.scenGenType  = 'nomScen';
 %%
 % Now we have to set some beam parameters. We can define multiple beam 
 % angles for the treatment and pass these to the plan as a vector. matRad 
@@ -114,31 +111,29 @@ pln.scenGenType  = 'nomScen';
 % size of 5 x 5 mm in the isocenter plane. The number of fractions is set 
 % to 30. Internally, matRad considers the fraction dose for optimization, 
 % however, objetives and constraints are defined for the entire treatment.
-pln.gantryAngles    = [0:40:359];
-pln.couchAngles     = zeros(1,numel(pln.gantryAngles));
-pln.bixelWidth      = 5;
-pln.numOfFractions  = 30;
+pln.numOfFractions         = 30;
+pln.propStf.gantryAngles   = [0:40:359];
+pln.propStf.couchAngles    = zeros(1,numel(pln.propStf.gantryAngles));
+pln.propStf.bixelWidth     = 5;
 
 %%
 % Obtain the number of beams and voxels from the existing variables and 
 % calculate the iso-center which is per default the center of gravity of 
 % all target voxels.
-pln.numOfBeams      = numel(pln.gantryAngles);
-pln.numOfVoxels     = prod(ct.cubeDim);
-pln.voxelDimensions = ct.cubeDim;
-pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
 %%
 % Enable sequencing and disable direct aperture optimization (DAO) for now.
 % A DAO optimization is shown in a seperate example.
-pln.runSequencing = 1;
-pln.runDAO        = 0;
+pln.propOpt.runSequencing = 1;
+pln.propOpt.runDAO        = 0;
 
 % retrieve bio model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
 % retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,pln.scenGenType);
+pln.multScen = matRad_multScen(ct,'nomScen');
 
 %%
 % and et voila our treatment plan structure is ready. Lets have a look:
@@ -157,7 +152,7 @@ display(stf(6));
 % Let's generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows subsequent inverse optimization.
-dij       = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 
 %% Inverse Optimization for IMRT
 % The goal of the fluence optimization is to find a set of beamlet/pencil 
@@ -170,19 +165,19 @@ matRadGUI;
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = round(pln.isoCenter(1,3)./ct.resolution.z);
+slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 figure
 imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet);
 
 %% Now let's create another treatment plan but this time use a coarser beam spacing.
 % Instead of 40 degree spacing use a 50 degree geantry beam spacing
-pln.gantryAngles = [0:50:359];
-pln.couchAngles  = zeros(1,numel(pln.gantryAngles));
-pln.numOfBeams   = numel(pln.gantryAngles);
-pln.isoCenter    = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-stf              = matRad_generateStf(ct,cst,pln);
-dij              = matRad_calcPhotonDose(ct,stf,pln,cst);
-resultGUI_coarse = matRad_fluenceOptimization(dij,cst,pln);
+pln.propStf.gantryAngles = [0:50:359];
+pln.propStf.couchAngles  = zeros(1,numel(pln.propStf.gantryAngles));
+pln.propStf.numOfBeams   = numel(pln.propStf.gantryAngles);
+stf                      = matRad_generateStf(ct,cst,pln);
+pln.propStf.isoCenter    = stf.isoCenter;
+dij                      = matRad_calcPhotonDose(ct,stf,pln,cst);
+resultGUI_coarse         = matRad_fluenceOptimization(dij,cst,pln);
 
 %%  Visual Comparison of results
 % Let's compare the new recalculation against the optimization result.
