@@ -53,7 +53,7 @@ else
                 
                 d{i} = dij.physicalDose{i}(:,dij.optBixel) * w(dij.optBixel);
                 
-                if dij.memorySaver
+                if dij.memorySaverPhoton
                     depthOffset = uint32(0);
                     tailOffset = uint32(0);
                     
@@ -77,7 +77,7 @@ else
                 
                 d{i} = dij.physicalDose{i} * w;
                 
-                if dij.memorySaver
+                if dij.memorySaverPhoton
                     depthOffset = uint32(0);
                     tailOffset = uint32(0);
                     

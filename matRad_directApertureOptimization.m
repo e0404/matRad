@@ -130,12 +130,6 @@ options.ub              = apertureInfo.limMx(:,2);                              
 options.runVMAT         = pln.propOpt.runVMAT;
 [options.cl,options.cu] = matRad_daoGetConstBounds(cst_Over,apertureInfo,options);   % Lower and upper bounds on the constraint functions.
 
-% set optimization options
-options.radMod          = pln.radiationMode;
-options.bioOpt          = pln.bioOptimization;
-options.ID              = [pln.radiationMode '_' pln.bioOptimization];
-options.numOfScenarios  = dij.numOfScenarios;
-
 % set callback functions.
 funcs.objective         = @(x) matRad_daoObjFunc(x,dij,cst_Over,options,daoVec2ApertureInfo);
 funcs.iterfunc          = @(iter,objective,parameter) matRad_IpoptIterFunc(iter,objective,parameter,options.ipopt.max_iter);
@@ -187,7 +181,7 @@ resultGUI.wDao = resultGUI.apertureInfo.bixelWeights;
 d = matRad_backProjection(resultGUI.w,dij,options);
 resultGUI.physicalDose = reshape(d{1},dij.dimensions);
 
-if pln.scaleDRx
+if isfield(pln,'scaleDRx') && pln.scaleDRx
     %Scale D95 in target to RXDose
     resultGUI.QI = matRad_calcQualityIndicators(cst,pln,resultGUI.physicalDose);
     

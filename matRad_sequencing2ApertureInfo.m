@@ -49,9 +49,10 @@ bixOffset = 1; %used for gradient calculations
 
 if sequencing.runVMAT
     totalNumOfOptBixels = sum([stf([stf.optimizeBeam]).totalNumOfBixels]);
-    apertureInfo.jacobiScale = zeros(nnz([stf.optimizeBeam]),1);
-    k = 1;
 end
+
+apertureInfo.jacobiScale = zeros(totalNumOfShapes,1);
+k = 1;
 
 % loop over all beams
 for i=1:size(stf,2)
@@ -156,13 +157,14 @@ for i=1:size(stf,2)
             
         end
         
+        apertureInfo.beam(i).shape(m).jacobiScale = 1;
+        apertureInfo.jacobiScale(k) = apertureInfo.beam(i).shape(m).jacobiScale;
+        k = k+1;
+        
         apertureInfo.beam(i).shape(m).vectorOffset = vectorOffset;
         
         % update index for bookkeeping
         vectorOffset = vectorOffset + dimZ;
-        
-
-           
     end
         
     % z-coordinates of active leaf pairs        
@@ -207,8 +209,6 @@ for i=1:size(stf,2)
         apertureInfo.beam(i).optimizeBeam = stf(i).optimizeBeam;
         apertureInfo.beam(i).initializeBeam = stf(i).initializeBeam;
         
-        apertureInfo.beam(i).leafDir = sequencing.beam(i).leafDir;
-        
         apertureInfo.beam(i).doseAngleBorders = stf(i).doseAngleBorders;
         apertureInfo.beam(i).doseAngleBorderCentreDiff = stf(i).doseAngleBorderCentreDiff;
         apertureInfo.beam(i).doseAngleBordersDiff = stf(i).doseAngleBordersDiff;
@@ -216,14 +216,6 @@ for i=1:size(stf,2)
         if apertureInfo.beam(i).optimizeBeam
             apertureInfo.beam(i).gantryRot = sequencing.beam(i).gantryRot;
             apertureInfo.beam(i).MURate = sequencing.beam(i).MURate;
-            
-            %if sequencing.jacobi
-                %apertureInfo.beam(i).shape(m).jacobiScale = sqrt(sum(apertureInfo.beam(i).shape(m).shapeMap(:)));
-            %else
-                apertureInfo.beam(i).shape(m).jacobiScale = 1;
-            %end
-            apertureInfo.jacobiScale(k) = apertureInfo.beam(i).shape(m).jacobiScale;
-            k = k+1;
             
             apertureInfo.beam(i).optAngleBorders = stf(i).optAngleBorders;
             apertureInfo.beam(i).optAngleBorderCentreDiff = stf(i).optAngleBorderCentreDiff;
@@ -254,8 +246,7 @@ end
 
 % save global data
 apertureInfo.runVMAT = sequencing.runVMAT;
-apertureInfo.VMAToptions = sequencing.VMAToptions;
-apertureInfo.jacobi = sequencing.jacobi;
+apertureInfo.preconditioner = sequencing.preconditioner;
 apertureInfo.bixelWidth = bixelWidth;
 apertureInfo.numOfMLCLeafPairs = numOfMLCLeafPairs;
 apertureInfo.totalNumOfBixels = totalNumOfBixels;
@@ -265,6 +256,8 @@ if isfield(sequencing,'weightToMU')
     apertureInfo.weightToMU = sequencing.weightToMU;
 end
 if sequencing.runVMAT
+    apertureInfo.VMAToptions = sequencing.VMAToptions;
+    
     apertureInfo.totalNumOfOptBixels = totalNumOfOptBixels;
     apertureInfo.VMAToptions = sequencing.VMAToptions;
     apertureInfo.doseTotalNumOfLeafPairs = sum([apertureInfo.beam(:).numOfActiveLeafPairs]);

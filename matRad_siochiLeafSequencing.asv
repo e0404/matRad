@@ -204,7 +204,9 @@ for i = 1:numOfBeams
     end
     
     if pln.runVMAT
-        %replace this with an arc sequencing function, mayb
+        %replace this with an arc sequencing function, maybe do it after
+        %every aperture has been generated? No need to do it now, and would
+        %cut down on the number of if statements and increase readability
         
         %Spread apertures to each child angle
         %according to the trajectory (mean leaf position)
@@ -305,6 +307,9 @@ if pln.runVMAT
     end
     
     sequencing.beam = rmfield(sequencing.beam,{'tempShapes','tempShapesWeight'});
+    
+    
+    %%%%% New arc sequencing functio
 
     sequencing.weightToMU = dij.weightToMU;
     sequencing.preconditioner = pln.propOpt.preconditioner;

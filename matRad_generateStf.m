@@ -100,7 +100,7 @@ end
 % Define steering file like struct. Prellocating for speed.
 % Preallocate with known size of array to avoid errors in VMAT-specific
 % code
-stf = struct('gantryAngle',cell(size(pln.gantryAngles)));
+stf = struct('gantryAngle',cell(size(pln.propStf.gantryAngles)));
 
 if pln.propOpt.runVMAT
     %Initialize master ray positions and target points with NaNs, to be

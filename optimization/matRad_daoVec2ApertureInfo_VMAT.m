@@ -231,10 +231,10 @@ for i = 1:numel(updatedInfo.beam)
     
     if updatedInfo.beam(i).optimizeBeam
         
-        if apertureInfo.updateJacobi
+        if apertureInfo.updatePreconditioner
             dijScaleFactor = mean(apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale)/(apertureInfo.bixelWidth);
             
-            if apertureInfo.jacobi
+            if apertureInfo.preconditioner
                 % "incorrect"
                 %updatedInfo.beam(i).shape(j).jacobiScale = sqrt(sum(updatedInfo.beam(i).shape(j).shapeMap(:)));
                 % "correct"

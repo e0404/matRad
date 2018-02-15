@@ -41,95 +41,9 @@ end
 
 
 apertureInfo.planMU = 0;
-%apertureInfo.planArea = 0;
-%apertureInfo.planModulation = 0;
 
-%apertureMU = nan(1000,1);
-%apertureArea = nan(1000,1);
-%l = 1;
-if pln.propOpt.runVMAT
-    
-    for i = 1:numel(apertureInfo.beam)
-        apertureInfo.planMU = apertureInfo.planMU+apertureInfo.beam(i).MU;
-    end
-    
-    %initInd = find([apertureInfo.beam.initializeBeam]);
-    %{
-    for i = initInd
-        apertureInfo.beam(i).beamMU = 0;
-        apertureInfo.beam(i).beamArea = 0;
-        apertureInfo.beam(i).unionShapeMap = 0*apertureInfo.beam(i).shape(1).shapeMap;
-        
-        for j = stf(i).beamChildrenIndex'
-            apertureInfo.beam(j).shape(1).MU = apertureInfo.weightToMU*apertureInfo.beam(j).shape(1).weight;
-            apertureInfo.beam(j).shape(1).apertureArea = (apertureInfo.bixelWidth/10)^2*sum(apertureInfo.beam(j).shape(1).shapeMap(:));
-            
-            apertureInfo.beam(i).beamMU = apertureInfo.beam(i).beamMU+apertureInfo.beam(j).shape(1).MU;
-            apertureInfo.beam(i).beamArea = apertureInfo.beam(i).beamArea+apertureInfo.beam(j).shape(1).MU*apertureInfo.beam(j).shape(1).apertureArea;
-            
-            apertureInfo.beam(i).unionShapeMap = max(apertureInfo.beam(i).unionShapeMap,apertureInfo.beam(j).shape(1).shapeMap);
-            
-            apertureMU(l) = apertureInfo.beam(j).shape(1).MU;
-            apertureArea(l) = apertureInfo.beam(j).shape(1).apertureArea;
-            l = l+1;
-        end
-        apertureInfo.beam(i).beamArea = apertureInfo.beam(i).beamArea./apertureInfo.beam(i).beamMU;
-        apertureInfo.beam(i).unionArea = (apertureInfo.bixelWidth/10)^2*sum(apertureInfo.beam(i).unionShapeMap(:));
-        apertureInfo.beam(i).beamModulation = 1-apertureInfo.beam(i).beamArea./apertureInfo.beam(i).unionArea;
-        apertureInfo.beam(i).beamK = apertureInfo.beam(i).numOfShapes*(1-apertureInfo.beam(i).beamModulation);
-        
-        apertureInfo.planMU = apertureInfo.planMU+apertureInfo.beam(i).beamMU;
-        apertureInfo.planArea = apertureInfo.planArea+apertureInfo.beam(i).beamArea*apertureInfo.beam(i).beamMU;
-        apertureInfo.planModulation = apertureInfo.planModulation+apertureInfo.beam(i).beamModulation*apertureInfo.beam(i).beamMU;
-    end
-    %}
-end
-
-%apertureInfo.planArea = apertureInfo.planArea./apertureInfo.planMU;
-%apertureInfo.planModulation = apertureInfo.planModulation./apertureInfo.planMU;
-
-
-%beamMU = [apertureInfo.beam(:).beamMU]';
-%beamArea = [apertureInfo.beam(:).beamArea]';
-%beamModulation = [apertureInfo.beam(:).beamModulation]';
-%beamK = [apertureInfo.beam(:).beamK]';
-
-
-%apertureMU(isnan(apertureMU)) = [];
-%apertureArea(isnan(apertureArea)) = [];
-
-%{
-figure
-histogram2(beamMU,beamArea,5,'DisplayStyle','tile')
-xlabel('Monitor units')
-ylabel('Beam area (cm^2)')
-colorbar
-
-figure
-plot(apertureMU,apertureArea,'.')
-xlabel('Monitor units')
-ylabel('Aperture area (cm^2)')
-
-figure
-histogram2(beamMU,beamModulation,5,'DisplayStyle','tile')
-xlabel('Monitor units')
-ylabel('Beam modulation')
-colorbar
-
-figure
-histogram2(beamArea,beamModulation,5,'DisplayStyle','tile')
-xlabel('Area (cm^2)')
-ylabel('Beam modulation')
-colorbar
-
-figure
-plot(beamK,'.')
-xlabel('Beam number')
-ylabel('k = N*(1-BM)')
-
-%}
 l = 0;
-if pln.propOpt.VMAT
+if pln.propOpt.runVMAT
     %All of these are vectors
     %Each entry corresponds to a beam angle
     %Later, we will convert these to histograms, find max, mean, min, etc.
@@ -143,9 +57,13 @@ if pln.propOpt.VMAT
     totTime = 0;
     
     for i = 1:size(apertureInfo.beam,2)
-        if apertureInfo.beam(i).numOfShapes %only optimized beams have their time in the data struct
+        apertureInfo.planMU = apertureInfo.planMU+apertureInfo.beam(i).MU;
+        
+        totTime = totTime+apertureInfo.beam(i).time;
+        
+        if apertureInfo.beam(i).numOfShapes
             l = l+1;
-            totTime = totTime+apertureInfo.beam(i).time; %time until next optimized beam
+            
             gantryRot(l) = apertureInfo.beam(i).gantryRot;
             MURate(l) = apertureInfo.beam(i).MURate*60;
             times(l) = apertureInfo.beam(i).time;
@@ -156,7 +74,8 @@ if pln.propOpt.VMAT
     apertureInfo.time = totTime;
     
     
-    apertureInfoVec = apertureInfo.apertureVector;
+    %apertureInfoVec = apertureInfo.apertureVector;
+    %{
     if pln.dynamic
         leftLeafPos  = apertureInfoVec([1:apertureInfo.totalNumOfLeafPairs]+apertureInfo.totalNumOfShapes);
         rightLeafPos = apertureInfoVec(1+apertureInfo.totalNumOfLeafPairs+apertureInfo.totalNumOfShapes:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2);
@@ -260,6 +179,7 @@ if pln.propOpt.VMAT
         %apertureInfo.totalFracForward = sum(apertureInfo.fracForward.*timeInInit)./sum(timeInInit);
         apertureInfo.totalFracBackward = 1-apertureInfo.totalFracForward;
     end
+    %}
     
 end
 

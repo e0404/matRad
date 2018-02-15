@@ -41,7 +41,7 @@ resultGUI.w = w;
 % calc dose and reshape from 1D vector to 2D array
 d = cell(1);
 d{1} = dij.physicalDose{scenNum}*resultGUI.w;
-if dij.memorySaver
+if dij.memorySaverPhoton
     depthOffset = uint32(0);
     tailOffset = uint32(0);
     

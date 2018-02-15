@@ -70,7 +70,7 @@ pln.machine         = 'Generic';
 
 pln.numOfFractions  = 30;
 
-pln.propDoseCalc.memorySaver = false;
+pln.propDoseCalc.memorySaverPhoton = false;
 
 % beam geometry settings
 pln.propStf.bixelWidth = 5;
@@ -86,7 +86,7 @@ pln.propOpt.numLevels = 7;
 pln.propOpt.numApertures = 7;           % Number of apertures to keep after sequencing; max val is pln.maxApertureAngleSpread/pln.minGantryAngleRes
 
 pln.propOpt.VMAToptions.machineConstraintFile = [pln.radiationMode '_' pln.machine];
-pln.propOpt.VMAToptions.minGantryAngleRes = 4;      % Min gantry angle spacing for dose calculation
+pln.propOpt.VMAToptions.minGantryAngleRes = 2;      % Min gantry angle spacing for dose calculation
 pln.propOpt.VMAToptions.maxApertureAngleSpread = 28;% Max gantry angle spread between apertures from same optimized fluence map; should be a multiple of pln.minGantryAngleRes
 
 pln = matRad_VMATGantryAngles(pln,cst,ct);
@@ -118,7 +118,7 @@ end
 resultGUI = matRad_fluenceOptimization(dij,cst,pln,stf);
 
 %% sequencing
-if strcmp(pln.radiationMode,'photons') && (pln.propertiesOpt.runSequencing || pln.propertiesOpt.runDAO)
+if strcmp(pln.radiationMode,'photons') && (pln.propOpt.runSequencing || pln.propOpt.runDAO)
     %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
     %resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
     resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln,0);
@@ -126,8 +126,8 @@ if strcmp(pln.radiationMode,'photons') && (pln.propertiesOpt.runSequencing || pl
 end
 
 %% DAO
-if strcmp(pln.radiationMode,'photons') && pln.propertiesOpt.runDAO
-   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
+if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO
+   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln,stf);
    matRad_visApertureInfo(resultGUI.apertureInfo);
 end
 

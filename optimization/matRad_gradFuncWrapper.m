@@ -105,7 +105,7 @@ for i = 1:options.numOfScenarios
             if isfield(dij,'optBixel')
                 g(dij.optBixel) = g(dij.optBixel) + (delta{i}' * dij.physicalDose{i}(:,dij.optBixel))';
                 
-                if dij.memorySaver
+                if dij.memorySaverPhoton
                     depthOffset = uint32(0);
                     tailOffset = uint32(0);
                     
@@ -130,7 +130,7 @@ for i = 1:options.numOfScenarios
             else
                 g = g + (delta{i}' * dij.physicalDose{i})';
                 
-                if dij.memorySaver
+                if dij.memorySaverPhoton
                     depthOffset = uint32(0);
                     tailOffset = uint32(0);
                     

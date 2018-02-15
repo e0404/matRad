@@ -74,7 +74,7 @@ dij.dimensions         = ct.cubeDim;
 dij.numOfScenarios     = 1;
 dij.weightToMU         = 100;
 dij.scaleFactor        = 1;
-dij.memorySaver        = pln.memorySaver;
+dij.memorySaverPhoton  = pln.propDoseCalc.memorySaverPhoton;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
@@ -382,7 +382,7 @@ for i = 1:dij.numOfBeams % loop over all beams
             r0   = 25;   % [mm] sample beyond the inner core
             Type = 'radius';
             
-            if dij.memorySaver
+            if dij.memorySaverPhoton
                 [ix,bixelDose,ixTail,nTailPerDepth,bixelDoseTail,nTail,nDepth,nCore] = matRad_DijSampling_memorySaver(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
                 
                 dij.ixTail(offsetTail+(1:nTail)) = uint32(V(ixTail));

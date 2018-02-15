@@ -223,7 +223,7 @@ fprintf('Calculating final cubes...\n');
 
 resultGUI = matRad_calcCubes(wOpt,dij,cst_Over);
 
-if pln.scaleDRx
+if isfield(pln,'scaleDRx') && pln.scaleDRx
     %Scale D95 in target to RXDose
     resultGUI.QI = matRad_calcQualityIndicators(cst,pln,resultGUI.physicalDose);
     
