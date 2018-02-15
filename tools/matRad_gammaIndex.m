@@ -45,6 +45,9 @@ function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolutio
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+addpath('tools')
+[env, ~] = matRad_getEnvironment();
+
 % set parameters for gamma index calculation
 if exist('criteria','var')
     relDoseThreshold = criteria(1); % in [%]
@@ -119,7 +122,12 @@ ix = cubex1 > 0 | cubex2 > 0;
    
 % interpolate if necessary
 if n > 0
-    cubex2 = interp3(cubex2,n,'cubic');
+    switch env
+        case 'MATLAB'
+            cubex2 = interp3(cubex2,n,'cubic');
+        case 'OCTAVE'
+            cubex2 = interp3(cubex2,n,'linear');
+    end
 end
 
 % set up temporary cubes required for calculation

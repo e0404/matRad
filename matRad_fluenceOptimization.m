@@ -44,15 +44,20 @@ if ~isdeployed % only if _not_ running as standalone
     % add path for optimization functions
     matRadRootDir = fileparts(mfilename('fullpath'));
     addpath(fullfile(matRadRootDir,'optimization'))
-    
-    % get handle to Matlab command window
-    mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-    cw          = mde.getClient('Command Window');
-    xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-    h_cw        = handle(xCmdWndView,'CallbackProperties');
+    addpath(fullfile(matRadRootDir,'tools'))
+    [env, ~] = matRad_getEnvironment();
 
-    % set Key Pressed Callback of Matlab command window
-    set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
+    switch env
+         case 'MATLAB'
+           % get handle to Matlab command window
+            mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
+            cw          = mde.getClient('Command Window');
+            xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+            h_cw        = handle(xCmdWndView,'CallbackProperties');
+
+            % set Key Pressed Callback of Matlab command window
+            set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
+    end
 
 end
 
@@ -214,12 +219,17 @@ resultGUI = matRad_calcCubes(wOpt,dij,cst);
 resultGUI.wUnsequenced = wOpt;
 
 % unset Key Pressed Callback of Matlab command window
-if ~isdeployed
+if ~isdeployed && strcmp(env,'MATLAB')
     set(h_cw, 'KeyPressedCallback',' ');
 end
 
 % clear global variables
-clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;
+switch env
+     case 'MATLAB'
+        clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;
+     case 'OCTAVE'
+        clear     -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;           
+end
 
 % unblock mex files
 clear mex
