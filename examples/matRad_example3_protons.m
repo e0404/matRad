@@ -60,24 +60,20 @@ quantityOpt         = 'RBExD';
 
 %%
 % Now we have to set the remaining plan parameters.
-pln.gantryAngles    = [90 270];
-pln.couchAngles     = [0 0];
-pln.bixelWidth      = 3;
-pln.numOfFractions  = 30;
-pln.numOfBeams      = numel(pln.gantryAngles);
-pln.numOfVoxels     = prod(ct.cubeDim);
-pln.voxelDimensions = ct.cubeDim;
-pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.runDAO          = 0;
-pln.runSequencing   = 0;
-pln.scenGenType     = 'nomScen'; % optimize on the nominal scenario
-pln.robOpt          = false;
+pln.numOfFractions        = 30;
+pln.propStf.gantryAngles  = [90 270];
+pln.propStf.couchAngles   = [0 0];
+pln.propStf.bixelWidth    = 3;
+pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
+pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propOpt.runDAO        = 0;
+pln.propOpt.runSequencing = 0;
 
 % retrieve bio model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 
 % retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,pln.scenGenType);
+pln.multScen = matRad_multScen(ct,'nomScen'); % optimize on the nominal scenario
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -96,7 +92,7 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = round(pln.isoCenter(1,3)./ct.resolution.z);
+slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 figure
 imagesc(resultGUI.RBExD(:,:,slice)),colorbar,colormap(jet)
 
@@ -111,7 +107,7 @@ subplot(122),imagesc(resultGUI.RBExD_beam2(:,:,slice)),colorbar,colormap(jet),ti
 % Now let's simulate a patient shift in y direction for both beams
 stf(1).isoCenter(2) = stf(1).isoCenter(2) - 4;
 stf(2).isoCenter(2) = stf(2).isoCenter(2) - 4;
-pln.isoCenter       = reshape([stf.isoCenter],[3 pln.numOfBeams])';
+pln.propStf.isoCenter       = reshape([stf.isoCenter],[3 pln.propStf.numOfBeams])';
 
 %% Recalculate Plan
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
@@ -132,7 +128,7 @@ figure,title('absolute difference')
 matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 
 % Let's plot single profiles that are perpendicular to the beam direction
-ixProfileY = round(pln.isoCenter(1,2)./ct.resolution.y);
+ixProfileY = round(pln.propStf.isoCenter(1,2)./ct.resolution.y);
 
 profileOrginal = resultGUI.RBExD(:,ixProfileY,slice);
 profileShifted = resultGUI_isoShift.RBExD(:,ixProfileY,slice);

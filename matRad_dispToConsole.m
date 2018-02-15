@@ -47,7 +47,7 @@ switch typeOfMessage
 
       if param.logLevel < 4
 
-         fprintf(string);
+         fprintf(['[\bWarning:]\b ' string]);
 
       end
 
