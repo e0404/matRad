@@ -39,12 +39,12 @@ if nargin < 4
     visMode = 0;
 end
 
-if numel(pln.gantryAngles) ~= numel(pln.couchAngles)
+if numel(pln.propStf.gantryAngles) ~= numel(pln.propStf.couchAngles)
     error('Inconsistent number of gantry and couch angles.');
 end
 
-if pln.bixelWidth < 0 || ~isfinite(pln.bixelWidth)
-    error('bixel width (spot distance) needs to be a real number [mm] larger than zero.');
+if pln.propStf.bixelWidth < 0 || ~isfinite(pln.propStf.bixelWidth)
+   error('bixel width (spot distance) needs to be a real number [mm] larger than zero.');
 end
 
 % find all target voxels from cst cell array
@@ -114,27 +114,27 @@ end
 
 
 % loop over all angles
-for i = 1:length(pln.gantryAngles)
+for i = 1:length(pln.propStf.gantryAngles)
     
     % Correct for iso center position. Whit this correction Isocenter is
     % (0,0,0) [mm]
-    coordsX = coordsX_vox*ct.resolution.x - pln.isoCenter(i,1);
-    coordsY = coordsY_vox*ct.resolution.y - pln.isoCenter(i,2);
-    coordsZ = coordsZ_vox*ct.resolution.z - pln.isoCenter(i,3);
+    coordsX = coordsX_vox*ct.resolution.x - pln.propStf.isoCenter(i,1);
+    coordsY = coordsY_vox*ct.resolution.y - pln.propStf.isoCenter(i,2);
+    coordsZ = coordsZ_vox*ct.resolution.z - pln.propStf.isoCenter(i,3);
     
     % Save meta information for treatment plan
-    stf(i).gantryAngle   = pln.gantryAngles(i);
-    stf(i).couchAngle    = pln.couchAngles(i);
-    stf(i).bixelWidth    = pln.bixelWidth;
+    stf(i).gantryAngle   = pln.propStf.gantryAngles(i);
+    stf(i).couchAngle    = pln.propStf.couchAngles(i);
+    stf(i).bixelWidth    = pln.propStf.bixelWidth;
     stf(i).radiationMode = pln.radiationMode;
     stf(i).SAD           = SAD;
-    stf(i).isoCenter     = pln.isoCenter(i,:);
+    stf(i).isoCenter     = pln.propStf.isoCenter(i,:);
     
     % Get the (active) rotation matrix. We perform a passive/system
     % rotation with row vector coordinates, which would introduce two
     % inversions / transpositions of the matrix, thus no changes to the
     % rotation matrix are necessary
-    rotMat_system_T = matRad_getRotationMatrix(pln.gantryAngles(i),pln.couchAngles(i));
+    rotMat_system_T = matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i));
     
     rot_coords = [coordsX coordsY coordsZ]*rotMat_system_T;
     
@@ -143,43 +143,43 @@ for i = 1:length(pln.gantryAngles)
     coordsAtIsoCenterPlane(:,2) = (rot_coords(:,3)*SAD)./(SAD + rot_coords(:,2));
     
     % Take unique rows values for beamlets positions. Calculate position of
-    % central ray for every bixel
-    rayPos = unique(pln.bixelWidth*round([            coordsAtIsoCenterPlane(:,1) ...
-        zeros(size(coordsAtIsoCenterPlane,1),1) ...
-        coordsAtIsoCenterPlane(:,2)]/pln.bixelWidth),'rows');
-    
+    % central ray for every bixel    
+    rayPos = unique(pln.propStf.bixelWidth*round([           coordsAtIsoCenterPlane(:,1) ... 
+                                                  zeros(size(coordsAtIsoCenterPlane,1),1) ...
+                                                             coordsAtIsoCenterPlane(:,2)]/pln.propStf.bixelWidth),'rows');
+                                                  
     % pad ray position array if resolution of target voxel grid not sufficient
     maxCtResolution = max([ct.resolution.x ct.resolution.y ct.resolution.z]);
-    if pln.bixelWidth < maxCtResolution
+    if pln.propStf.bixelWidth < maxCtResolution
         origRayPos = rayPos;
-        for j = -floor(maxCtResolution/pln.bixelWidth):floor(maxCtResolution/pln.bixelWidth)
-            for k = -floor(maxCtResolution/pln.bixelWidth):floor(maxCtResolution/pln.bixelWidth)
+        for j = -floor(maxCtResolution/pln.propStf.bixelWidth):floor(maxCtResolution/pln.propStf.bixelWidth)
+            for k = -floor(maxCtResolution/pln.propStf.bixelWidth):floor(maxCtResolution/plnpropStf.bixelWidth)
                 if abs(j)+abs(k)==0
                     continue;
-                end
-                rayPos = [rayPos; origRayPos(:,1)+j*pln.bixelWidth origRayPos(:,2) origRayPos(:,3)+k*pln.bixelWidth];
+                end                
+                rayPos = [rayPos; origRayPos(:,1)+j*pln.propStf.bixelWidth origRayPos(:,2) origRayPos(:,3)+k*pln.propStf.bixelWidth];
             end
         end
-    end
-    
-    % remove spaces within rows of bixels for DAO
-    if pln.runDAO
-        % create single x,y,z vectors
-        x = rayPos(:,1);
-        y = rayPos(:,2);
-        z = rayPos(:,3);
-        uniZ = unique(z);
-        for j = 1:numel(uniZ)
-            x_loc = x(z == uniZ(j));
-            x_min = min(x_loc);
-            x_max = max(x_loc);
-            x = [x; [x_min:pln.bixelWidth:x_max]'];
-            y = [y; zeros((x_max-x_min)/pln.bixelWidth+1,1)];
-            z = [z; uniZ(j)*ones((x_max-x_min)/pln.bixelWidth+1,1)];
-        end
-        
-        rayPos = [x,y,z];
-    end
+     end
+
+     % remove spaces within rows of bixels for DAO
+     if pln.propOpt.runDAO
+         % create single x,y,z vectors
+         x = rayPos(:,1);
+         y = rayPos(:,2);
+         z = rayPos(:,3);
+         uniZ = unique(z);
+         for j = 1:numel(uniZ)
+             x_loc = x(z == uniZ(j));
+             x_min = min(x_loc);
+             x_max = max(x_loc);
+             x = [x; [x_min:pln.propStf.bixelWidth:x_max]'];
+             y = [y; zeros((x_max-x_min)/pln.propStf.bixelWidth+1,1)];
+             z = [z; uniZ(j)*ones((x_max-x_min)/pln.propStf.bixelWidth+1,1)];             
+         end
+         
+         rayPos = [x,y,z];
+     end
     
     % remove double rays
     rayPos = unique(rayPos,'rows');
@@ -203,7 +203,7 @@ for i = 1:length(pln.gantryAngles)
         
         % get (active) rotation matrix
         % transpose matrix because we are working with row vectors
-        rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln.gantryAngles(i),pln.couchAngles(i)));
+        rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i)));
         
         
         stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMat_vectors_T;
@@ -351,17 +351,19 @@ for i = 1:length(pln.gantryAngles)
                 else
                     ixCurr = ixRun;
                 end
-                ixRun = ixRun + 1;
-            end
-            
-            for j = stf(i).numOfRays:-1:1
-                for k = stf(i).numOfBixelsPerRay(j):-1:1
-                    maskEnergy = stf(i).ray(j).energy(k) == availableEnergies;
-                    if ~useEnergyBool(maskEnergy)
-                        stf(i).ray(j).energy(k)     = [];
-                        stf(i).ray(j).focusIx(k)    = [];
-                        stf(i).numOfBixelsPerRay(j) = stf(i).numOfBixelsPerRay(j) - 1;
-                    end
+  
+                % book keeping & calculate focus index
+                stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);
+                currentMinimumFWHM = matRad_interp1(machine.meta.LUT_bxWidthminFWHM(1,:)',...
+                                             machine.meta.LUT_bxWidthminFWHM(2,:)',...
+                                             pln.propStf.bixelWidth);
+                focusIx  =  ones(stf(i).numOfBixelsPerRay(j),1);
+                [~, vEnergyIx] = min(abs(bsxfun(@minus,[machine.data.energy]',...
+                                repmat(stf(i).ray(j).energy,length([machine.data]),1))));
+
+                % get for each spot the focus index
+                for k = 1:stf(i).numOfBixelsPerRay(j)                    
+                    focusIx(k) = find(machine.data(vEnergyIx(k)).initFocus.SisFWHMAtIso > currentMinimumFWHM,1,'first');
                 end
                 if isempty(stf(i).ray(j).energy)
                     stf(i).ray(j) = [];
@@ -564,21 +566,21 @@ for i = 1:length(pln.gantryAngles)
         for j = 1:stf(i).numOfRays
             
             % Compute border for every bixels
-            targetPoint_vox_X_1 = stf(i).ray(j).targetPoint_bev(:,1) + pln.bixelWidth;
+            targetPoint_vox_X_1 = stf(i).ray(j).targetPoint_bev(:,1) + pln.propStf.bixelWidth;
             targetPoint_vox_Y_1 = stf(i).ray(j).targetPoint_bev(:,2);
-            targetPoint_vox_Z_1 = stf(i).ray(j).targetPoint_bev(:,3) + pln.bixelWidth;
+            targetPoint_vox_Z_1 = stf(i).ray(j).targetPoint_bev(:,3) + pln.propStf.bixelWidth;
             
-            targetPoint_vox_X_2 = stf(i).ray(j).targetPoint_bev(:,1) + pln.bixelWidth;
+            targetPoint_vox_X_2 = stf(i).ray(j).targetPoint_bev(:,1) + pln.propStf.bixelWidth;
             targetPoint_vox_Y_2 = stf(i).ray(j).targetPoint_bev(:,2);
-            targetPoint_vox_Z_2 = stf(i).ray(j).targetPoint_bev(:,3) - pln.bixelWidth;
+            targetPoint_vox_Z_2 = stf(i).ray(j).targetPoint_bev(:,3) - pln.propStf.bixelWidth;
             
-            targetPoint_vox_X_3 = stf(i).ray(j).targetPoint_bev(:,1) - pln.bixelWidth;
+            targetPoint_vox_X_3 = stf(i).ray(j).targetPoint_bev(:,1) - pln.propStf.bixelWidth;
             targetPoint_vox_Y_3 = stf(i).ray(j).targetPoint_bev(:,2);
-            targetPoint_vox_Z_3 = stf(i).ray(j).targetPoint_bev(:,3) - pln.bixelWidth;
+            targetPoint_vox_Z_3 = stf(i).ray(j).targetPoint_bev(:,3) - pln.propStf.bixelWidth;
             
-            targetPoint_vox_X_4 = stf(i).ray(j).targetPoint_bev(:,1) - pln.bixelWidth;
+            targetPoint_vox_X_4 = stf(i).ray(j).targetPoint_bev(:,1) - pln.propStf.bixelWidth;
             targetPoint_vox_Y_4 = stf(i).ray(j).targetPoint_bev(:,2);
-            targetPoint_vox_Z_4 = stf(i).ray(j).targetPoint_bev(:,3) + pln.bixelWidth;
+            targetPoint_vox_Z_4 = stf(i).ray(j).targetPoint_bev(:,3) + pln.propStf.bixelWidth;
             
             % plot
             plot3([stf(i).sourcePoint_bev(1) targetPoint_vox_X_1],[stf(i).sourcePoint_bev(2) targetPoint_vox_Y_1],[stf(i).sourcePoint_bev(3) targetPoint_vox_Z_1],'g')
@@ -613,10 +615,10 @@ for i = 1:length(pln.gantryAngles)
         % Plot rotated bixels border.
         for j = 1:stf(i).numOfRays
             % Generate rotated projection target points.
-            targetPoint_vox_1_rotated = [stf(i).ray(j).targetPoint_bev(:,1) + pln.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) + pln.bixelWidth]*rotMat_vectors_T;
-            targetPoint_vox_2_rotated = [stf(i).ray(j).targetPoint_bev(:,1) + pln.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) - pln.bixelWidth]*rotMat_vectors_T;
-            targetPoint_vox_3_rotated = [stf(i).ray(j).targetPoint_bev(:,1) - pln.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) - pln.bixelWidth]*rotMat_vectors_T;
-            targetPoint_vox_4_rotated = [stf(i).ray(j).targetPoint_bev(:,1) - pln.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) + pln.bixelWidth]*rotMat_vectors_T;
+            targetPoint_vox_1_rotated = [stf(i).ray(j).targetPoint_bev(:,1) + pln.propStf.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) + pln.propStf.bixelWidth]*rotMat_vectors_T;
+            targetPoint_vox_2_rotated = [stf(i).ray(j).targetPoint_bev(:,1) + pln.propStf.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) - pln.propStf.bixelWidth]*rotMat_vectors_T;
+            targetPoint_vox_3_rotated = [stf(i).ray(j).targetPoint_bev(:,1) - pln.propStf.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) - pln.propStf.bixelWidth]*rotMat_vectors_T;
+            targetPoint_vox_4_rotated = [stf(i).ray(j).targetPoint_bev(:,1) - pln.propStf.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) + pln.propStf.bixelWidth]*rotMat_vectors_T;
             
             % Plot rotated target points.
             plot3([stf(i).sourcePoint(1) targetPoint_vox_1_rotated(:,1)],[stf(i).sourcePoint(2) targetPoint_vox_1_rotated(:,2)],[stf(i).sourcePoint(3) targetPoint_vox_1_rotated(:,3)],'g')
@@ -763,7 +765,6 @@ if pln.propOpt.runVMAT
         % loop over all rays to determine meta information for each ray
         stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
         
-        
         for j = stf(i).numOfRays:-1:1
             
             % ray tracing necessary to determine depth of the target
@@ -848,72 +849,6 @@ if pln.propOpt.runVMAT
                 else
                     error('Error generating stf struct: invalid radiation modality.');
                 end
-                
-                
-                
-                % store total number of rays for beam-i
-                stf(i).numOfRays = size(stf(i).ray,2);
-                
-                % post processing for particle remove energy slices
-                if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
-                    
-                    % get minimum energy per field
-                    minEnergy = min([stf(i).ray.energy]);
-                    maxEnergy = max([stf(i).ray.energy]);
-                    
-                    % get corresponding peak position
-                    availableEnergies = [machine.data.energy];
-                    minPeakPos  = machine.data(minEnergy == availableEnergies).peakPos;
-                    maxPeakPos  = machine.data(maxEnergy == availableEnergies).peakPos;
-                    
-                    % find set of energyies with adequate spacing
-                    
-                    if strcmp(machine.meta.machine,'Generic')
-                        longitudinalSpotSpacing = 1.5; % enforce all entries to be used
-                    else
-                        longitudinalSpotSpacing = 3;   % default value for all other treatment machines
-                    end
-                    
-                    tolerance              = longitudinalSpotSpacing/10;
-                    availablePeakPos       = [machine.data.peakPos];
-                    
-                    useEnergyBool = availablePeakPos >= minPeakPos & availablePeakPos <= maxPeakPos;
-                    
-                    ixCurr = find(useEnergyBool,1,'first');
-                    ixRun  = ixCurr + 1;
-                    ixEnd  = find(useEnergyBool,1,'last');
-                    
-                    while ixRun <= ixEnd
-                        if abs(availablePeakPos(ixRun)-availablePeakPos(ixCurr)) < ...
-                                longitudinalSpotSpacing - tolerance
-                            useEnergyBool(ixRun) = 0;
-                        else
-                            ixCurr = ixRun;
-                        end
-                        ixRun = ixRun + 1;
-                    end
-                    
-                    for j = stf(i).numOfRays:-1:1
-                        for k = stf(i).numOfBixelsPerRay(j):-1:1
-                            maskEnergy = stf(i).ray(j).energy(k) == availableEnergies;
-                            if ~useEnergyBool(maskEnergy)
-                                stf(i).ray(j).energy(k)     = [];
-                                stf(i).ray(j).focusIx(k)    = [];
-                                stf(i).numOfBixelsPerRay(j) = stf(i).numOfBixelsPerRay(j) - 1;
-                            end
-                        end
-                        if isempty(stf(i).ray(j).energy)
-                            stf(i).ray(j) = [];
-                            stf(i).numOfBixelsPerRay(j) = [];
-                            stf(i).numOfRays = stf(i).numOfRays - 1;
-                        end
-                    end
-                    
-                end
-                
-                % save total number of bixels
-                stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
-                
         end
         
         matRad_progress(i,length(pln.propStf.gantryAngles));

@@ -91,7 +91,7 @@ pln.machine       = 'Generic';
 % optimization; LEMIV_RBExD: optimization of RBE-weighted dose. As we are 
 % using photons, we simply set the parameter to 'none' thereby indicating 
 % the physical dose should be optimized.
-pln.bioOptimization = 'none';    
+pln.propOpt.bioOptimization = 'none';    
 
 %%
 % Now we have to set some beam parameters. We can define multiple beam 
@@ -103,25 +103,23 @@ pln.bioOptimization = 'none';
 % size of 5 x 5 mm in the isocenter plane. The number of fractions is set 
 % to 30. Internally, matRad considers the fraction dose for optimization, 
 % however, objetives and constraints are defined for the entire treatment.
-pln.gantryAngles    = [0:40:359];
-pln.couchAngles     = zeros(1,numel(pln.gantryAngles));
-pln.bixelWidth      = 5;
-pln.numOfFractions  = 30;
+pln.numOfFractions         = 30;
+pln.propStf.gantryAngles   = [0:40:359];
+pln.propStf.couchAngles    = zeros(1,numel(pln.propStf.gantryAngles));
+pln.propStf.bixelWidth     = 5;
 
 %%
 % Obtain the number of beams and voxels from the existing variables and 
 % calculate the iso-center which is per default the center of gravity of 
 % all target voxels.
-pln.numOfBeams      = numel(pln.gantryAngles);
-pln.numOfVoxels     = prod(ct.cubeDim);
-pln.voxelDimensions = ct.cubeDim;
-pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
 %%
 % Enable sequencing and disable direct aperture optimization (DAO) for now.
 % A DAO optimization is shown in a seperate example.
-pln.runSequencing = 1;
-pln.runDAO        = 0;
+pln.propOpt.runSequencing = 1;
+pln.propOpt.runDAO        = 0;
 
 %%
 % and et voila our treatment plan structure is ready. Lets have a look:
@@ -140,7 +138,7 @@ display(stf(6));
 % Let's generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows subsequent inverse optimization.
-dij       = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 
 %% Inverse Optimization for IMRT
 % The goal of the fluence optimization is to find a set of beamlet/pencil 
@@ -153,19 +151,19 @@ matRadGUI;
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = round(pln.isoCenter(1,3)./ct.resolution.z);
+slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 figure
 imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet);
 
 %% Now let's create another treatment plan but this time use a coarser beam spacing.
 % Instead of 40 degree spacing use a 50 degree geantry beam spacing
-pln.gantryAngles = [0:50:359];
-pln.couchAngles  = zeros(1,numel(pln.gantryAngles));
-pln.numOfBeams   = numel(pln.gantryAngles);
-stf              = matRad_generateStf(ct,cst,pln);
-pln.isoCenter    = stf.isoCenter;
-dij              = matRad_calcPhotonDose(ct,stf,pln,cst);
-resultGUI_coarse = matRad_fluenceOptimization(dij,cst,pln);
+pln.propStf.gantryAngles = [0:50:359];
+pln.propStf.couchAngles  = zeros(1,numel(pln.propStf.gantryAngles));
+pln.propStf.numOfBeams   = numel(pln.propStf.gantryAngles);
+stf                      = matRad_generateStf(ct,cst,pln);
+pln.propStf.isoCenter    = stf.isoCenter;
+dij                      = matRad_calcPhotonDose(ct,stf,pln,cst);
+resultGUI_coarse         = matRad_fluenceOptimization(dij,cst,pln);
 
 %%  Visual Comparison of results
 % Let's compare the new recalculation against the optimization result.
@@ -190,21 +188,14 @@ matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 %% Obtain dose statistics
 % Two more columns will be added to the cst structure depicting the DVH and
 % standard dose statistics such as D95,D98, mean dose, max dose etc.
-cst        = matRad_indicatorWrapper(cst,pln,resultGUI);
-cst_coarse = matRad_indicatorWrapper(cst,pln,resultGUI_coarse);
+[dvh,qi]               = matRad_indicatorWrapper(cst,pln,resultGUI);
+[dvh_coarse,qi_coarse] = matRad_indicatorWrapper(cst,pln,resultGUI_coarse);
 
 %%
 % The treatment plan using more beams should in principle result in a
 % better OAR sparing. Therefore lets have a look at the D95 of the OAR of 
 % both plans
 ixOAR = 2;
-display(cst{ixOAR,9}{1}.D_95);
-display(cst_coarse{ixOAR,9}{1}.D_95);
-
-%%
-% Indeed, the coarse beam plan yields a higher D95 in the OAR. Finally, 
-% let's plot the DVH 
-matRad_showDVH(cst,pln);
-
-
+display(qi(ixOAR).D_95);
+display(qi_coarse(ixOAR).D_95);
 

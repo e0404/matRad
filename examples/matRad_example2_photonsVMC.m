@@ -31,19 +31,17 @@ load('BOXPHANTOM.mat');
 % structure requires input from the treatment planner and defines the most
 % important cornerstones of your treatment plan.
 
-pln.radiationMode = 'photons';  
-pln.machine       = 'Generic';
-pln.bioOptimization = 'none';    
-pln.gantryAngles    = [0];
-pln.couchAngles     = [0];
-pln.bixelWidth      = 10;
-pln.numOfFractions  = 30;
-pln.numOfBeams      = numel(pln.gantryAngles);
-pln.numOfVoxels     = prod(ct.cubeDim);
-pln.voxelDimensions = ct.cubeDim;
-pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.runSequencing   = 0;
-pln.runDAO          = 0;
+pln.radiationMode  = 'photons';  
+pln.machine        = 'Generic';
+pln.numOfFractions = 30;
+pln.propOpt.bioOptimization = 'none';    
+pln.propStf.gantryAngles    = [0];
+pln.propStf.couchAngles     = [0];
+pln.propStf.bixelWidth      = 10;
+pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propOpt.runSequencing   = 0;
+pln.propOpt.runDAO          = 0;
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -61,7 +59,7 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the Resulting Dose Slice
 % Just let's plot the transversal iso-center dose slice
-slice = round(pln.isoCenter(1,3)./ct.resolution.z);
+slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 figure,
 imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet)
 

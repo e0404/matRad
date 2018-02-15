@@ -35,20 +35,19 @@ load('HEAD_AND_NECK.mat');
 
 pln.radiationMode   = 'photons';   % either photons / protons / carbon
 pln.machine         = 'Generic';
-pln.bioOptimization = 'none';    
-pln.gantryAngles    = [0:72:359];
-pln.couchAngles     = [0 0 0 0 0];
-pln.bixelWidth      = 5;
 pln.numOfFractions  = 30;
-pln.numOfBeams      = numel(pln.gantryAngles);
-pln.numOfVoxels     = prod(ct.cubeDim);
-pln.voxelDimensions = ct.cubeDim;
-pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+
+pln.propOpt.bioOptimization = 'none';    
+pln.propStf.gantryAngles    = [0:72:359];
+pln.propStf.couchAngles     = [0 0 0 0 0];
+pln.propStf.bixelWidth      = 5;
+pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
 %%
 % Enable sequencing and direct aperture optimization (DAO).
-pln.runSequencing = 1;
-pln.runDAO        = 1;
+pln.propOpt.runSequencing = 1;
+pln.propOpt.runDAO        = 1;
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -85,6 +84,4 @@ resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,res
 matRad_visApertureInfo(resultGUI.apertureInfo);
 
 %% Indicator Calculation and display of DVH and QI
-cst = matRad_indicatorWrapper(cst,pln,resultGUI);
-matRad_showDVH(cst,pln);
-
+[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI);
