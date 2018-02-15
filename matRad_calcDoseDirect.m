@@ -46,7 +46,7 @@ if exist('w','var')
         error('weighting does not match steering information')
     end
     counter = 0;
-    for i = 1:pln.numOfBeams
+    for i = 1:size(stf,2)
         for j = 1:stf(i).numOfRays
             for k = 1:stf(i).numOfBixelsPerRay(j)
                 counter = counter + 1;
@@ -57,7 +57,7 @@ if exist('w','var')
 else % weights need to be in stf!
     w = NaN*ones(sum([stf.totalNumOfBixels]),1);
     counter = 0;
-    for i = 1:pln.numOfBeams
+    for i = 1:size(stf,2)
         for j = 1:stf(i).numOfRays
             for k = 1:stf(i).numOfBixelsPerRay(j)
                 counter = counter + 1;
@@ -77,7 +77,7 @@ end
 
 % calculate cubes; use uniform weights here, weighting with actual fluence 
 % already performed in dij construction 
-resultGUI    = matRad_calcCubes(ones(pln.numOfBeams,1),dij,cst);
+resultGUI    = matRad_calcCubes(ones(pln.propStf.numOfBeams,1),dij,cst);
 
 % remember original fluence weights
 resultGUI.w  = w; 
