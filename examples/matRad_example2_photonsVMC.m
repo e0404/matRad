@@ -31,13 +31,13 @@ load('BOXPHANTOM.mat');
 % structure requires input from the treatment planner and defines the most
 % important cornerstones of your treatment plan.
 
-pln.radiationMode = 'photons';  
-pln.machine       = 'Generic';
+pln.radiationMode  = 'photons';  
+pln.machine        = 'Generic';
+pln.numOfFractions = 30;
 pln.propOpt.bioOptimization = 'none';    
 pln.propStf.gantryAngles    = [0];
 pln.propStf.couchAngles     = [0];
 pln.propStf.bixelWidth      = 10;
-pln.numOfFractions  = 30;
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runSequencing   = 0;
