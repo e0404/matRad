@@ -51,7 +51,13 @@ pln.machine       = 'Generic';
 % RBE-weighted dose. As we use protons, we follow here the clinical 
 % standard and use a constant relative biological effectiveness of 1.1. 
 % Therefore we set bioOptimization to const_RBExD
-pln.propOpt.bioOptimization = 'const_RBExD';   
+pln.propOpt.bioOptimization = 'const_RBExD';
+
+%%
+% for particles it is possible to also calculate the LET disutribution
+% alongside the physical dose. Therefore you need to activate the
+% corresponding option during dose calculcation
+pln.propDoseCalc.calcLET = 1;
                                        
 %%
 % Now we have to set the remaining plan parameters.
@@ -91,6 +97,11 @@ imagesc(resultGUI.RBExDose(:,:,slice)),colorbar,colormap(jet)
 figure
 subplot(121),imagesc(resultGUI.RBExDose_beam1(:,:,slice)),colorbar,colormap(jet),title('dose of beam 1')
 subplot(122),imagesc(resultGUI.RBExDose_beam2(:,:,slice)),colorbar,colormap(jet),title('dose of beam 2')
+
+%% and the corresponding LET distribution
+% Transversal iso-center slice
+figure
+imagesc(resultGUI.LET(:,:,slice)),colormap(jet),colorbar,title('LET [keV/µm]')
 
 %%
 % Now let's simulate a patient shift in y direction for both beams
