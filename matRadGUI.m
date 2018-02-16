@@ -847,13 +847,8 @@ axes(handles.axesFig);
 % top of each other in matlab <2014
 drawnow;
 
-<<<<<<< HEAD
-defaultFontSize = 12;
-currAxes            = axis;
-=======
 defaultFontSize = 8;
 currAxes            = axis(handles.axesFig);
->>>>>>> refs/remotes/e0404/dev
 AxesHandlesCT_Dose  = gobjects(0);
 AxesHandlesVOI      = cell(0);
 AxesHandlesIsoDose  = gobjects(0);

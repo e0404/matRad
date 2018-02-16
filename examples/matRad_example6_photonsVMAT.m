@@ -36,22 +36,29 @@ load('HEAD_AND_NECK.mat');
 
 pln.radiationMode   = 'photons';   % either photons / protons / carbon
 pln.machine         = 'Generic';
+
 pln.numOfFractions  = 30;
 
-pln.propertiesStf.bixelWidth = 5;
+% turn on or off the memory saver option
+pln.propDoseCalc.memorySaverPhoton = false;
 
-pln.propertiesDoseCalc.memorySaver = true;
+% beam geometry settings
+pln.propStf.bixelWidth = 5;
 
-pln.propertiesOpt.bioOptimization = 'none';
-pln.propertiesOpt.runVMAT = true;
-pln.propertiesOpt.runDAO = true;
-pln.propertiesOpt.runSequencing = true;
-pln.propertiesOpt.preconditioner = true;
+% optimization settings
+pln.propOpt.bioOptimization = 'none';
+pln.propOpt.runVMAT = true;
+pln.propOpt.runDAO = true;
+pln.propOpt.runSequencing = true;
+pln.propOpt.preconditioner = true;
+pln.propOpt.numLevels = 7;
+pln.propOpt.numApertures = 7;           % Number of apertures to keep after sequencing; max val is pln.maxApertureAngleSpread/pln.minGantryAngleRes
 
-pln.propertiesOpt.VMAToptions.machineConstraintFile = [pln.radiationMode '_' pln.machine];
-pln.propertiesOpt.VMAToptions.minGantryAngleRes = 4;      % Min gantry angle spacing for dose calculation
-pln.propertiesOpt.VMAToptions.maxApertureAngleSpread = 28;% Max gantry angle spread between apertures from same optimized fluence map; should be a multiple of pln.minGantryAngleRes
-pln.propertiesOpt.VMAToptions.numApertures = 7;           % Number of apertures to keep after sequencing; max val is pln.maxApertureAngleSpread/pln.minGantryAngleRes
+pln.propOpt.VMAToptions.machineConstraintFile = [pln.radiationMode '_' pln.machine];
+pln.propOpt.VMAToptions.minGantryAngleRes = 2;      % Min gantry angle spacing for dose calculation
+pln.propOpt.VMAToptions.maxApertureAngleSpread = 28;% Max gantry angle spread between apertures from same optimized fluence map; should be a multiple of pln.minGantryAngleRes
+
+pln = matRad_VMATGantryAngles(pln,cst,ct);
 
 %%
 % Generate dose calculation, DAO, and FMO angles from the parameters input

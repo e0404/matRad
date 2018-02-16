@@ -61,4 +61,4 @@ options.ipopt.limited_memory_initialization = 'scalar2';
 %options.ipopt.derivative_test               = 'first-order';
 %options.ipopt.derivative_test_tol           = 1e-8;
 %options.ipopt.derivative_test_perturbation  = 1e-8;
-%options.ipopt.derivative_test_first_index   = 8100;
+%options.ipopt.derivative_test_first_index   = 1;
