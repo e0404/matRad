@@ -117,7 +117,7 @@ if pln.propOpt.runVMAT
     for i = 1:dij.numOfBeams
         % if angle is not an initialization angle, do not optimize fluence
         % in bixels
-        if ~stf(i).propVMAT.initializeBeam
+        if ~stf(i).propVMAT.FMOBeam
             rayIndices = offset+(1:dij.numOfRaysPerBeam(i));
             % set upper bound to 0
             options.ub(rayIndices) = 0;

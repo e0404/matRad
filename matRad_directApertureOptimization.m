@@ -83,6 +83,9 @@ for i = 1:size(cst_Over,1)
     end
 end
 
+% create optBixel mask, which is just true everywhere
+dij.optBixel = true(dij.totalNumOfBixels,1);
+
 if isfield(apertureInfo,'scaleFacRx')
     %weights were scaled to acheive 95% PTV coverage
     %scale back to "optimal" weights
@@ -103,7 +106,7 @@ if pln.propOpt.preconditioner
     apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) = apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)/dij.scaleFactor;
 end
 
-%set daoVec2ApertureInfo function handle
+% set daoVec2ApertureInfo function handle
 if pln.propOpt.runVMAT
     daoVec2ApertureInfo =  @matRad_daoVec2ApertureInfo_VMAT;
 else
