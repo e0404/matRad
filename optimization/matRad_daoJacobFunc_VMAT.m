@@ -110,7 +110,7 @@ leftLeafPos  = apertureInfoVec([1:apertureInfo.totalNumOfLeafPairs]+apertureInfo
 rightLeafPos = apertureInfoVec(1+apertureInfo.totalNumOfLeafPairs+apertureInfo.totalNumOfShapes:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2);
 
 % values of time differences of optimized gantry angles
-optInd = [apertureInfo.beam.optimizeBeam];
+optInd = [apertureInfo.propVMAT.beam.optimizeBeam];
 timeOptBorderAngles = apertureInfoVec((1+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):end);
 
 i = sort(repmat(1:(apertureInfo.totalNumOfShapes-1),1,2));
@@ -118,7 +118,7 @@ j = sort(repmat(1:apertureInfo.totalNumOfShapes,1,2));
 j(1) = [];
 j(end) = [];
 
-timeFac = [apertureInfo.beam(optInd).timeFac]';
+timeFac = [apertureInfo.propVMAT.beam(optInd).timeFac]';
 timeFac(timeFac == 0) = [];
 
 timeFacMatrix = sparse(i,j,timeFac,(apertureInfo.totalNumOfShapes-1),apertureInfo.totalNumOfShapes);
@@ -164,7 +164,7 @@ jacob_lfspd = sparse(i,j,s,2*apertureInfo.beam(1).numOfActiveLeafPairs*(aperture
 % jacobian of the doserate constraint
 % values of doserate (MU/sec) between optimized gantry angles
 weights = apertureInfoVec(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale;
-timeFacCurr = [apertureInfo.beam(optInd).timeFacCurr]';
+timeFacCurr = [apertureInfo.propVMAT.beam(optInd).timeFacCurr]';
 timeOptDoseBorderAngles = timeOptBorderAngles.*timeFacCurr;
 
 i = repmat(1:apertureInfo.totalNumOfShapes,1,2);

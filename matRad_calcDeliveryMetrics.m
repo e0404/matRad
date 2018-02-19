@@ -32,7 +32,7 @@ function result = matRad_calcDeliveryMetrics(result,pln,stf)
 
 apertureInfo = result.apertureInfo;
 
-fileName = apertureInfo.VMAToptions.machineConstraintFile;
+fileName = apertureInfo.propVMAT.machineConstraintFile;
 try
     load([pwd filesep fileName],'machine');
 catch

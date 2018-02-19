@@ -41,7 +41,7 @@ end
 
 apertureInfo = result.apertureInfo;
 
-fileName = apertureInfo.VMAToptions.machineConstraintFile;
+fileName = apertureInfo.propVMAT.machineConstraintFile;
 try
     load([pwd filesep fileName],'machine');
 catch
@@ -56,7 +56,7 @@ apertureInfo = matRad_maxLeafSpeed(apertureInfo);
 doInterp = 0;
 
 for i = 1:size(apertureInfo.beam,2)
-    if apertureInfo.beam(i).optimizeBeam
+    if apertureInfo.propVMAT.beam(i).optimizeBeam
         
         %all of these should be greater than 1, since DAO respects the
         %constraints

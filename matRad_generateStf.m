@@ -226,16 +226,16 @@ for i = 1:length(pln.propStf.gantryAngles)
         
         
         for j = stf(i).numOfRays:-1:1
-            
-            % ray tracing necessary to determine depth of the target
-            [~,l,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
-                ct.resolution, ...
-                stf(i).sourcePoint, ...
-                stf(i).ray(j).targetPoint, ...
-                [ct.cube {voiTarget}]);
                 
                 % find appropriate energies for particles
                 if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
+                    
+                    % ray tracing necessary to determine depth of the target
+                    [~,l,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
+                        ct.resolution, ...
+                        stf(i).sourcePoint, ...
+                        stf(i).ray(j).targetPoint, ...
+                        [ct.cube {voiTarget}]);
                     
                     % target hit
                     if sum(rho{2}) > 0
@@ -380,14 +380,14 @@ for i = 1:length(pln.propStf.gantryAngles)
     else
         %Determine which initialized beam the current beam belongs
         %to
-        [~,stf(i).beamParentInitIndex] = min(abs(pln.propStf.initGantryAngles-pln.propStf.gantryAngles(i)));
-        stf(i).beamParentGantryAngle = pln.propStf.initGantryAngles(stf(i).beamParentInitIndex);
-        stf(i).beamParentIndex = find(pln.propStf.gantryAngles == stf(i).beamParentGantryAngle);
+        [~,stf(i).propVMAT.beamParentInitIndex] = min(abs(pln.propStf.initGantryAngles-pln.propStf.gantryAngles(i)));
+        stf(i).propVMAT.beamParentGantryAngle = pln.propStf.initGantryAngles(stf(i).propVMAT.beamParentInitIndex);
+        stf(i).propVMAT.beamParentIndex = find(pln.propStf.gantryAngles == stf(i).propVMAT.beamParentGantryAngle);
         
         %Indicate if this beam is to be included in optimization/initialization or not
         %All beams are still considered in dose calc for objective function
-        stf(i).initializeBeam = any(pln.propStf.initGantryAngles==pln.propStf.gantryAngles(i));
-        stf(i).optimizeBeam = any(pln.propStf.optGantryAngles==pln.propStf.gantryAngles(i));
+        stf(i).propVMAT.initializeBeam = any(pln.propStf.initGantryAngles==pln.propStf.gantryAngles(i));
+        stf(i).propVMAT.optimizeBeam = any(pln.propStf.optGantryAngles==pln.propStf.gantryAngles(i));
         
         %Determine different angle borders
         %doseAngleBorders are the angular borders over which dose is
@@ -395,30 +395,30 @@ for i = 1:length(pln.propStf.gantryAngles)
         
         if i == 1
             
-            stf(i).doseAngleBorders = ([pln.propStf.gantryAngles(i) pln.propStf.gantryAngles(i+1)]+pln.propStf.gantryAngles(i))/2;
+            stf(i).propVMAT.doseAngleBorders = ([pln.propStf.gantryAngles(i) pln.propStf.gantryAngles(i+1)]+pln.propStf.gantryAngles(i))/2;
         elseif i == length(pln.propStf.gantryAngles)
             
-            stf(i).doseAngleBorders = ([pln.propStf.gantryAngles(i-1) pln.propStf.gantryAngles(i)]+pln.propStf.gantryAngles(i))/2;
+            stf(i).propVMAT.doseAngleBorders = ([pln.propStf.gantryAngles(i-1) pln.propStf.gantryAngles(i)]+pln.propStf.gantryAngles(i))/2;
         else
             
-            stf(i).doseAngleBorders = ([pln.propStf.gantryAngles(i-1) pln.propStf.gantryAngles(i+1)]+pln.propStf.gantryAngles(i))/2;
+            stf(i).propVMAT.doseAngleBorders = ([pln.propStf.gantryAngles(i-1) pln.propStf.gantryAngles(i+1)]+pln.propStf.gantryAngles(i))/2;
         end
         
-        stf(i).doseAngleBorderCentreDiff = [stf(i).gantryAngle-stf(i).doseAngleBorders(1) stf(i).doseAngleBorders(2)-stf(i).gantryAngle];
-        stf(i).doseAngleBordersDiff = sum(stf(i).doseAngleBorderCentreDiff);
+        stf(i).propVMAT.doseAngleBorderCentreDiff = [stf(i).gantryAngle-stf(i).propVMAT.doseAngleBorders(1) stf(i).propVMAT.doseAngleBorders(2)-stf(i).gantryAngle];
+        stf(i).propVMAT.doseAngleBordersDiff = sum(stf(i).propVMAT.doseAngleBorderCentreDiff);
         
         %Assign beam to its Parent, either as child (optimized) or subchild
         %(interpolated)
-        if stf(i).optimizeBeam
-            if ~isfield(stf(stf(i).beamParentIndex),'beamChildrenGantryAngles') || isempty(stf(stf(i).beamParentIndex).beamChildrenGantryAngles)
-                stf(stf(i).beamParentIndex).numOfBeamChildren = 0;
-                stf(stf(i).beamParentIndex).beamChildrenGantryAngles = nan(1000,1);
-                stf(stf(i).beamParentIndex).beamChildrenIndex = nan(1000,1);
+        if stf(i).propVMAT.optimizeBeam
+            if ~isfield(stf(stf(i).propVMAT.beamParentIndex).propVMAT,'beamChildrenGantryAngles') || isempty(stf(stf(i).propVMAT.beamParentIndex).propVMAT.beamChildrenGantryAngles)
+                stf(stf(i).propVMAT.beamParentIndex).propVMAT.numOfBeamChildren = 0;
+                stf(stf(i).propVMAT.beamParentIndex).propVMAT.beamChildrenGantryAngles = nan(1000,1);
+                stf(stf(i).propVMAT.beamParentIndex).propVMAT.beamChildrenIndex = nan(1000,1);
             end
             
-            stf(stf(i).beamParentIndex).numOfBeamChildren = stf(stf(i).beamParentIndex).numOfBeamChildren+1;
-            stf(stf(i).beamParentIndex).beamChildrenGantryAngles(stf(stf(i).beamParentIndex).numOfBeamChildren) = pln.propStf.gantryAngles(i);
-            stf(stf(i).beamParentIndex).beamChildrenIndex(stf(stf(i).beamParentIndex).numOfBeamChildren) = i;
+            stf(stf(i).propVMAT.beamParentIndex).propVMAT.numOfBeamChildren = stf(stf(i).propVMAT.beamParentIndex).propVMAT.numOfBeamChildren+1;
+            stf(stf(i).propVMAT.beamParentIndex).propVMAT.beamChildrenGantryAngles(stf(stf(i).propVMAT.beamParentIndex).propVMAT.numOfBeamChildren) = pln.propStf.gantryAngles(i);
+            stf(stf(i).propVMAT.beamParentIndex).propVMAT.beamChildrenIndex(stf(stf(i).propVMAT.beamParentIndex).propVMAT.numOfBeamChildren) = i;
             
             %Determine different angle borders
             %optAngleBorders are the angular borders over which an optimized control point
@@ -426,59 +426,59 @@ for i = 1:length(pln.propStf.gantryAngles)
             optIndex = find(pln.propStf.optGantryAngles == pln.propStf.gantryAngles(i));
             
             if optIndex == 1
-                stf(i).optAngleBorders = ([pln.propStf.optGantryAngles(optIndex) pln.propStf.optGantryAngles(optIndex+1)]+pln.propStf.optGantryAngles(optIndex))/2;
+                stf(i).propVMAT.optAngleBorders = ([pln.propStf.optGantryAngles(optIndex) pln.propStf.optGantryAngles(optIndex+1)]+pln.propStf.optGantryAngles(optIndex))/2;
                 
                 lastOptIndex = i;
                 nextOptIndex = find(pln.propStf.gantryAngles == pln.propStf.optGantryAngles(optIndex+1));
                 
-                stf(i).lastOptIndex = i;
-                stf(i).nextOptIndex = find(pln.propStf.gantryAngles == pln.propStf.optGantryAngles(optIndex+1));
+                stf(i).propVMAT.lastOptIndex = i;
+                stf(i).propVMAT.nextOptIndex = find(pln.propStf.gantryAngles == pln.propStf.optGantryAngles(optIndex+1));
             elseif optIndex == length(pln.propStf.optGantryAngles)
-                stf(i).optAngleBorders = ([pln.propStf.optGantryAngles(optIndex-1) pln.propStf.optGantryAngles(optIndex)]+pln.propStf.optGantryAngles(optIndex))/2;
+                stf(i).propVMAT.optAngleBorders = ([pln.propStf.optGantryAngles(optIndex-1) pln.propStf.optGantryAngles(optIndex)]+pln.propStf.optGantryAngles(optIndex))/2;
                 
-                stf(i).lastOptIndex = find(pln.propStf.gantryAngles == pln.propStf.optGantryAngles(optIndex-1));
-                stf(i).nextOptIndex = i;
+                stf(i).propVMAT.lastOptIndex = find(pln.propStf.gantryAngles == pln.propStf.optGantryAngles(optIndex-1));
+                stf(i).propVMAT.nextOptIndex = i;
             else
-                stf(i).optAngleBorders = ([pln.propStf.optGantryAngles(optIndex-1) pln.propStf.optGantryAngles(optIndex+1)]+pln.propStf.optGantryAngles(optIndex))/2;
+                stf(i).propVMAT.optAngleBorders = ([pln.propStf.optGantryAngles(optIndex-1) pln.propStf.optGantryAngles(optIndex+1)]+pln.propStf.optGantryAngles(optIndex))/2;
                 
                 lastOptIndex = i;
                 nextOptIndex = find(pln.propStf.gantryAngles == pln.propStf.optGantryAngles(optIndex+1));
                 
-                stf(i).lastOptIndex = find(pln.propStf.gantryAngles == pln.propStf.optGantryAngles(optIndex-1));
-                stf(i).nextOptIndex = find(pln.propStf.gantryAngles == pln.propStf.optGantryAngles(optIndex+1));
+                stf(i).propVMAT.lastOptIndex = find(pln.propStf.gantryAngles == pln.propStf.optGantryAngles(optIndex-1));
+                stf(i).propVMAT.nextOptIndex = find(pln.propStf.gantryAngles == pln.propStf.optGantryAngles(optIndex+1));
             end
-            stf(i).doseAngleOpt = ones(1,2);
+            stf(i).propVMAT.doseAngleOpt = ones(1,2);
             
-            stf(i).optAngleBorderCentreDiff = [stf(i).gantryAngle-stf(i).optAngleBorders(1) stf(i).optAngleBorders(2)-stf(i).gantryAngle];
-            stf(i).optAngleBordersDiff = sum(stf(i).optAngleBorderCentreDiff);
+            stf(i).propVMAT.optAngleBorderCentreDiff = [stf(i).gantryAngle-stf(i).propVMAT.optAngleBorders(1) stf(i).propVMAT.optAngleBorders(2)-stf(i).gantryAngle];
+            stf(i).propVMAT.optAngleBordersDiff = sum(stf(i).propVMAT.optAngleBorderCentreDiff);
             
             %This is the factor that relates the total time in the
             %optimized arc sector to the total time in the current dose
             %sector
-            stf(i).timeFacCurr =  stf(i).doseAngleBordersDiff./stf(i).optAngleBordersDiff;
+            stf(i).propVMAT.timeFacCurr =  stf(i).propVMAT.doseAngleBordersDiff./stf(i).propVMAT.optAngleBordersDiff;
             
             %These are the factors that relate the total time in the
             %optimized arc sector to the total time in the previous and
             %next dose sectors
             
         else
-            if ~isfield(stf(stf(i).beamParentIndex),'beamSubChildrenGantryAngles') || isempty(stf(stf(i).beamParentIndex).beamSubChildrenGantryAngles)
-                stf(stf(i).beamParentIndex).numOfBeamSubChildren = 0;
-                stf(stf(i).beamParentIndex).beamSubChildrenGantryAngles = nan(1000,1);
-                stf(stf(i).beamParentIndex).beamSubChildrenIndex = nan(1000,1);
+            if ~isfield(stf(stf(i).propVMAT.beamParentIndex).propVMAT,'beamSubChildrenGantryAngles') || isempty(stf(stf(i).propVMAT.beamParentIndex).propVMAT.beamSubChildrenGantryAngles)
+                stf(stf(i).propVMAT.beamParentIndex).propVMAT.numOfBeamSubChildren = 0;
+                stf(stf(i).propVMAT.beamParentIndex).propVMAT.beamSubChildrenGantryAngles = nan(1000,1);
+                stf(stf(i).propVMAT.beamParentIndex).propVMAT.beamSubChildrenIndex = nan(1000,1);
             end
             
-            stf(stf(i).beamParentIndex).numOfBeamSubChildren = stf(stf(i).beamParentIndex).numOfBeamSubChildren+1;
-            stf(stf(i).beamParentIndex).beamSubChildrenGantryAngles(stf(stf(i).beamParentIndex).numOfBeamSubChildren) = pln.propStf.gantryAngles(i);
-            stf(stf(i).beamParentIndex).beamSubChildrenIndex(stf(stf(i).beamParentIndex).numOfBeamSubChildren) = i;
+            stf(stf(i).propVMAT.beamParentIndex).propVMAT.numOfBeamSubChildren = stf(stf(i).propVMAT.beamParentIndex).propVMAT.numOfBeamSubChildren+1;
+            stf(stf(i).propVMAT.beamParentIndex).propVMAT.beamSubChildrenGantryAngles(stf(stf(i).propVMAT.beamParentIndex).propVMAT.numOfBeamSubChildren) = pln.propStf.gantryAngles(i);
+            stf(stf(i).propVMAT.beamParentIndex).propVMAT.beamSubChildrenIndex(stf(stf(i).propVMAT.beamParentIndex).propVMAT.numOfBeamSubChildren) = i;
             
-            stf(i).fracFromLastOpt = (pln.propStf.gantryAngles(nextOptIndex)-pln.propStf.gantryAngles(i))./(pln.propStf.gantryAngles(nextOptIndex)-pln.propStf.gantryAngles(lastOptIndex));
-            stf(i).lastOptIndex = lastOptIndex;
-            stf(i).nextOptIndex = nextOptIndex;
+            stf(i).propVMAT.fracFromLastOpt = (pln.propStf.gantryAngles(nextOptIndex)-pln.propStf.gantryAngles(i))./(pln.propStf.gantryAngles(nextOptIndex)-pln.propStf.gantryAngles(lastOptIndex));
+            stf(i).propVMAT.lastOptIndex = lastOptIndex;
+            stf(i).propVMAT.nextOptIndex = nextOptIndex;
         end
         
         
-        if stf(i).initializeBeam
+        if stf(i).propVMAT.initializeBeam
             %Determine different angle borders
             %initAngleBorders are the angular borders over which an optimized control point
             %has influence
@@ -486,16 +486,16 @@ for i = 1:length(pln.propStf.gantryAngles)
             
             if initIndex == 1
                 
-                stf(i).initAngleBorders = [min(pln.propStf.initGantryAngles(initIndex),pln.propStf.gantryAngles(1)) (pln.propStf.initGantryAngles(initIndex+1)+pln.propStf.initGantryAngles(initIndex))/2];
+                stf(i).propVMAT.initAngleBorders = [min(pln.propStf.initGantryAngles(initIndex),pln.propStf.gantryAngles(1)) (pln.propStf.initGantryAngles(initIndex+1)+pln.propStf.initGantryAngles(initIndex))/2];
             elseif initIndex == length(pln.propStf.initGantryAngles)
                 
-                stf(i).initAngleBorders = [(pln.propStf.initGantryAngles(initIndex-1)+pln.propStf.initGantryAngles(initIndex))/2 max(pln.propStf.initGantryAngles(initIndex),pln.propStf.gantryAngles(end))];
+                stf(i).propVMAT.initAngleBorders = [(pln.propStf.initGantryAngles(initIndex-1)+pln.propStf.initGantryAngles(initIndex))/2 max(pln.propStf.initGantryAngles(initIndex),pln.propStf.gantryAngles(end))];
             else
                 
-                stf(i).initAngleBorders = ([pln.propStf.initGantryAngles(initIndex-1) pln.propStf.initGantryAngles(initIndex+1)]+pln.propStf.initGantryAngles(initIndex))/2;
+                stf(i).propVMAT.initAngleBorders = ([pln.propStf.initGantryAngles(initIndex-1) pln.propStf.initGantryAngles(initIndex+1)]+pln.propStf.initGantryAngles(initIndex))/2;
             end
-            stf(i).initAngleBorderCentreDiff = [stf(i).gantryAngle-stf(i).initAngleBorders(1) stf(i).initAngleBorders(2)-stf(i).gantryAngle];
-            stf(i).initAngleBordersDiff = sum(stf(i).initAngleBorderCentreDiff);
+            stf(i).propVMAT.initAngleBorderCentreDiff = [stf(i).gantryAngle-stf(i).propVMAT.initAngleBorders(1) stf(i).propVMAT.initAngleBorders(2)-stf(i).gantryAngle];
+            stf(i).propVMAT.initAngleBordersDiff = sum(stf(i).propVMAT.initAngleBorderCentreDiff);
         end
         
         %The following must be taken as the union of stf(:).FIELD and stf(:).FIELD:
@@ -661,7 +661,6 @@ end
 %% VMAT
 
 if pln.propOpt.runVMAT
-    numSSDErr = 0;
     
     %After all steering file information is completed, loop over
     %initialized gantry angles.  All children and subchildren of these angles should
@@ -675,51 +674,51 @@ if pln.propOpt.runVMAT
     
     
     for i = 1:length(pln.propStf.gantryAngles)
-        if stf(i).optimizeBeam
+        if stf(i).propVMAT.optimizeBeam
             
-            stf(i).timeFac = zeros(1,2);
+            stf(i).propVMAT.timeFac = zeros(1,2);
             
             if i == 1
-                stf(i).timeFac(1) = 0;
-                stf(i).timeFac(2) = stf(i).optAngleBorderCentreDiff(2)/stf(i).optAngleBordersDiff;
+                stf(i).propVMAT.timeFac(1) = 0;
+                stf(i).propVMAT.timeFac(2) = stf(i).propVMAT.optAngleBorderCentreDiff(2)/stf(i).propVMAT.optAngleBordersDiff;
             elseif i == length(pln.propStf.gantryAngles)
-                stf(i).timeFac(1) = stf(i).optAngleBorderCentreDiff(1)/stf(i).optAngleBordersDiff;
-                stf(i).timeFac(2) = 0;
+                stf(i).propVMAT.timeFac(1) = stf(i).propVMAT.optAngleBorderCentreDiff(1)/stf(i).propVMAT.optAngleBordersDiff;
+                stf(i).propVMAT.timeFac(2) = 0;
             else
-                stf(i).timeFac(1) = stf(i).optAngleBorderCentreDiff(1)/stf(i).optAngleBordersDiff;
-                stf(i).timeFac(2) = stf(i).optAngleBorderCentreDiff(2)/stf(i).optAngleBordersDiff;
+                stf(i).propVMAT.timeFac(1) = stf(i).propVMAT.optAngleBorderCentreDiff(1)/stf(i).propVMAT.optAngleBordersDiff;
+                stf(i).propVMAT.timeFac(2) = stf(i).propVMAT.optAngleBorderCentreDiff(2)/stf(i).propVMAT.optAngleBordersDiff;
             end
             
             
-            if stf(i).initializeBeam
+            if stf(i).propVMAT.initializeBeam
                 %remove NaNs from beamChildren and beamSubChildren
-                if isfield(stf(i),'beamChildrenGantryAngles')
-                    stf(i).beamChildrenGantryAngles(isnan(stf(i).beamChildrenGantryAngles)) = [];
-                    stf(i).beamChildrenIndex(isnan(stf(i).beamChildrenIndex)) = [];
+                if isfield(stf(i).propVMAT,'beamChildrenGantryAngles')
+                    stf(i).propVMAT.beamChildrenGantryAngles(isnan(stf(i).propVMAT.beamChildrenGantryAngles)) = [];
+                    stf(i).propVMAT.beamChildrenIndex(isnan(stf(i).propVMAT.beamChildrenIndex)) = [];
                 else
-                    stf(i).numOfBeamChildren = 0;
+                    stf(i).propVMAT.numOfBeamChildren = 0;
                 end
-                if isfield(stf(i),'beamSubChildrenGantryAngles')
-                    stf(i).beamSubChildrenGantryAngles(isnan(stf(i).beamSubChildrenGantryAngles)) = [];
-                    stf(i).beamSubChildrenIndex(isnan(stf(i).beamSubChildrenIndex)) = [];
+                if isfield(stf(i).propVMAT,'beamSubChildrenGantryAngles')
+                    stf(i).propVMAT.beamSubChildrenGantryAngles(isnan(stf(i).propVMAT.beamSubChildrenGantryAngles)) = [];
+                    stf(i).propVMAT.beamSubChildrenIndex(isnan(stf(i).propVMAT.beamSubChildrenIndex)) = [];
                 else
-                    stf(i).numOfBeamSubChildren = 0;
+                    stf(i).propVMAT.numOfBeamSubChildren = 0;
                 end
             end
         else
             
             % for time interpolation
-            stf(i).timeFracFromLastOpt = (stf(stf(i).lastOptIndex).optAngleBorders(2)-stf(i).doseAngleBorders(1))./stf(i).doseAngleBordersDiff;
-            stf(i).timeFracFromNextOpt = (stf(i).doseAngleBorders(2)-stf(stf(i).lastOptIndex).optAngleBorders(2))./stf(i).doseAngleBordersDiff;
-            if stf(i).timeFracFromLastOpt > 1
-                stf(i).timeFracFromLastOpt = 1;
-            elseif stf(i).timeFracFromLastOpt < 0
-                stf(i).timeFracFromLastOpt = 0;
+            stf(i).propVMAT.timeFracFromLastOpt = (stf(stf(i).propVMAT.lastOptIndex).propVMAT.optAngleBorders(2)-stf(i).propVMAT.doseAngleBorders(1))./stf(i).propVMAT.doseAngleBordersDiff;
+            stf(i).propVMAT.timeFracFromNextOpt = (stf(i).propVMAT.doseAngleBorders(2)-stf(stf(i).propVMAT.lastOptIndex).propVMAT.optAngleBorders(2))./stf(i).propVMAT.doseAngleBordersDiff;
+            if stf(i).propVMAT.timeFracFromLastOpt > 1
+                stf(i).propVMAT.timeFracFromLastOpt = 1;
+            elseif stf(i).propVMAT.timeFracFromLastOpt < 0
+                stf(i).propVMAT.timeFracFromLastOpt = 0;
             end
-            if stf(i).timeFracFromNextOpt > 1
-                stf(i).timeFracFromNextOpt = 1;
-            elseif stf(i).timeFracFromNextOpt < 0
-                stf(i).timeFracFromNextOpt = 0;
+            if stf(i).propVMAT.timeFracFromNextOpt > 1
+                stf(i).propVMAT.timeFracFromNextOpt = 1;
+            elseif stf(i).propVMAT.timeFracFromNextOpt < 0
+                stf(i).propVMAT.timeFracFromNextOpt = 0;
             end
         end
         
@@ -766,88 +765,14 @@ if pln.propOpt.runVMAT
         stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
         
         for j = stf(i).numOfRays:-1:1
-            
-            % ray tracing necessary to determine depth of the target
-            [~,l,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
-                ct.resolution, ...
-                stf(i).sourcePoint, ...
-                stf(i).ray(j).targetPoint, ...
-                [ct.cube {voiTarget}]);
                 
                 % find appropriate energies for particles
-                if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
-                    
-                    % target hit
-                    if sum(rho{2}) > 0
-                        
-                        % compute radiological depths
-                        % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
-                        radDepths = cumsum(l .* rho{1});
-                        
-                        % find target entry & exit
-                        diff_voi    = diff([rho{2}]);
-                        targetEntry = radDepths(diff_voi == 1);
-                        targetExit  = radDepths(diff_voi == -1);
-                        
-                        if numel(targetEntry) ~= numel(targetExit)
-                            error('Inconsistency during ray tracing.');
-                        end
-                        
-                        stf(i).ray(j).energy = [];
-                        
-                        % Save energies in stf struct
-                        for k = 1:numel(targetEntry)
-                            stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
-                            % adjust spot spacing according to pln.bixelWidth when using HIT basedata
-                            %DefaultLongitudialSpotSpacing = pln.bixelWidth;  % in [mm]
-                            DefaultLongitudialSpotSpacing = 3;
-                            if strcmp(pln.machine,'HIT') && length(stf(i).ray(j).energy)>2
-                                Tolerance = 0.5;
-                                hasNext = true;
-                                CntEnergy =2;
-                                while hasNext
-                                    if abs(stf(i).ray(j).energy(CntEnergy)-stf(i).ray(j).energy(CntEnergy-1))<...
-                                            DefaultLongitudialSpotSpacing-Tolerance
-                                        stf(i).ray(j).energy(CntEnergy)=[];
-                                    else
-                                        CntEnergy = CntEnergy+1;
-                                    end
-                                    if CntEnergy == length(stf(i).ray(j).energy)
-                                        hasNext = false;
-                                    end
-                                end
-                            end
-                            
-                        end
-                        
-                        % book keeping & calculate focus index
-                        stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);
-                        currentMinimumFWHM = matRad_interp1(machine.meta.LUT_bxWidthminFWHM(1,:),...
-                            machine.meta.LUT_bxWidthminFWHM(2,:),...
-                            pln.bixelWidth);
-                        focusIx  =  ones(stf(i).numOfBixelsPerRay(j),1);
-                        [~, vEnergyIx] = min(abs(bsxfun(@minus,[machine.data.energy]',...
-                            repmat(stf(i).ray(j).energy,length([machine.data]),1))));
-                        
-                        % get for each spot the focus index
-                        for k = 1:stf(i).numOfBixelsPerRay(j)
-                            focusIx(k) = find(machine.data(vEnergyIx(k)).initFocus.SisFWHMAtIso > currentMinimumFWHM,1,'first');
-                        end
-                        
-                        stf(i).ray(j).focusIx = focusIx';
-                        
-                    else % target not hit
-                        stf(i).ray(j)               = [];
-                        stf(i).numOfBixelsPerRay(j) = [];
-                    end
-                    
-                elseif strcmp(stf(i).radiationMode,'photons')
+                if strcmp(stf(i).radiationMode,'photons')
                     
                     % book keeping for photons
                     stf(i).ray(j).energy = machine.data.energy;
-                    
                 else
-                    error('Error generating stf struct: invalid radiation modality.');
+                    error('Error generating stf struct: invalid radiation modality for VMAT.');
                 end
         end
         
@@ -856,8 +781,6 @@ if pln.propOpt.runVMAT
     
     stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
     stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
-    
-    fprintf('\n\nNumber of SSD errors: %d out of %d.\n\n',numSSDErr,sum([stf(:).numOfRays]));
 end
 
 end

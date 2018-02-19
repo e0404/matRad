@@ -41,7 +41,7 @@ shapeInd = 1;
 
 for i = 1:numel(apertureInfo.beam)
     
-    if ~apertureInfo.runVMAT || (apertureInfo.runVMAT && apertureInfo.beam(i).optimizeBeam)
+    if ~apertureInfo.runVMAT || (apertureInfo.runVMAT && apertureInfo.propVMAT.beam(i).optimizeBeam)
         % in other words, do this for every beam if it's not VMAT, and for
         % optimized beams only if it is
         

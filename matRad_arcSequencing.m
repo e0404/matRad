@@ -47,14 +47,14 @@ leafDir = 1;
 
 for i = 1:numOfBeams
     
-    if stf(i).initializeBeam
+    if stf(i).propVMAT.initializeBeam
         
         %Spread apertures to each child angle
         %according to the trajectory (mean leaf position). Assume that
         %shapes are already order in increased (left to right) position
         leafDir = -1*leafDir;
         
-        childrenIndex = stf(i).beamChildrenIndex;
+        childrenIndex = stf(i).propVMAT.beamChildrenIndex;
         if leafDir == -1
             % reverse order of shapes
             childrenIndex = flipud(childrenIndex);
@@ -95,7 +95,7 @@ end
 for i = 1:numOfBeams
     % now go through and calculate gantry rotation speed, MU rate, etc.
     
-    if stf(i).initializeBeam
+    if stf(i).propVMAT.initializeBeam
         beam(i).numOfShapes = beam(i).tempNumOfShapes;
         beam(i).shapes = beam(i).tempShapes;
         beam(i).shapesWeight = beam(i).tempShapesWeight;
@@ -104,19 +104,19 @@ for i = 1:numOfBeams
         beam(i).tempShapes = [];
         beam(i).tempShapesWeight = [];
         
-        for j = 1:stf(i).numOfBeamSubChildren
+        for j = 1:stf(i).propVMAT.numOfBeamSubChildren
             %Prevents matRad_sequencing2ApertureInfo from attempting to
             %convert shape to aperturevec for subchildren
-            beam(stf(i).beamSubChildrenIndex(j)).numOfShapes = 0;
+            beam(stf(i).propVMAT.beamSubChildrenIndex(j)).numOfShapes = 0;
         end
     end
     
-    if stf(i).optimizeBeam
+    if stf(i).propVMAT.optimizeBeam
         beam(i).gantryRot = machine.constraints.gantryRotationSpeed(2); %gantry rotation rate until next opt angle
-        beam(i).MURate = weightToMU.*beam(i).shapesWeight.*beam(i).gantryRot./stf(i).optAngleBordersDiff; %dose rate until next opt angle
+        beam(i).MURate = weightToMU.*beam(i).shapesWeight.*beam(i).gantryRot./stf(i).propVMAT.optAngleBordersDiff; %dose rate until next opt angle
         %Rescale weight to represent only this control point; weight will be shared
         %with the interpolared control points in matRad_daoVec2ApertureInfo
-        beam(i).shapesWeight = beam(i).shapesWeight.*stf(i).timeFacCurr;
+        beam(i).shapesWeight = beam(i).shapesWeight.*stf(i).propVMAT.timeFacCurr;
     end
 end
 

@@ -35,8 +35,8 @@ if nargin < 3
     mode = 'first';
 end
 
-
-
+% boolean to show warnings only once in the console
+boolShowWarning = true;
 
 % set density threshold for SSD computation
 densityThreshold = 0.05;
@@ -53,11 +53,14 @@ if strcmp(mode,'first')
                                  {ct.cube{1}});
             ixSSD = find(rho{1} > densityThreshold,1,'first');
 
-            
-            if isempty(ixSSD)
-                warning('ray does not hit patient. Trying to fix afterwards...');
-            elseif ixSSD(1) == 1
-                warning('Surface for SSD calculation starts directly in first voxel of CT\n');
+            if boolShowWarning
+                if isempty(ixSSD)
+                    matRad_dispToConsole('ray does not hit patient. Trying to fix afterwards...',[],'warning');
+                    boolShowWarning = false;
+                elseif ixSSD(1) == 1
+                    matRad_dispToConsole('Surface for SSD calculation starts directly in first voxel of CT\n',[],'warning');
+                    boolShowWarning = false;
+                end
             end
 
             % calculate SSD

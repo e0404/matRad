@@ -72,13 +72,13 @@ for i = 1:numOfBeams
     
     if pln.propOpt.runVMAT
         
-        if ~stf(i).initializeBeam
+        if ~stf(i).propVMAT.initializeBeam
             sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = 0;
             sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
             offset = offset + numOfRaysPerBeam;
             continue %if this is not a beam to be initialized, continue to next iteration without generating segments
         else
-            numToKeep = stf(i).numOfBeamChildren;
+            numToKeep = stf(i).propVMAT.numOfBeamChildren;
         end
     else
         
@@ -221,7 +221,7 @@ if pln.propOpt.runVMAT
 
     sequencing.weightToMU = dij.weightToMU;
     sequencing.preconditioner = pln.propOpt.preconditioner;
-    sequencing.VMAToptions = pln.propOpt.VMAToptions;
+    sequencing.propVMAT = pln.propOpt.VMAToptions;
     
     resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
     

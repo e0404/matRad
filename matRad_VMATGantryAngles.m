@@ -29,15 +29,37 @@ function pln = matRad_VMATGantryAngles(pln,cst,ct)
 
 %should have already defined fields:
 %   numApertures
-%   numLevels
 %   minGantryAngleRes
 %   maxApertureAngleSpread
 
+if ~isfield(pln.propOpt.VMAToptions,'minGantryAngleRes')
+    error('Please define pln.propOpt.minGantryAngleRes.');
+end
+
+if ~isfield(pln.propOpt.VMAToptions,'maxApertureAngleSpread')
+    error('Please define pln.propOpt.maxApertureAngleSpread.');
+end
+
+if ~isfield(pln.propOpt,'numApertures')
+    error('Please define pln.propOpt.numApertures.');
+end
+
+if mod(pln.propOpt.VMAToptions.maxApertureAngleSpread,pln.propOpt.VMAToptions.minGantryAngleRes) ~= 0
+    error('pln.propOpt.maxApertureAngleSpread should be a multiple of pln.propOpt.minGantryAngleRes.');
+end
+
+if mod(pln.propOpt.numApertures,2) ~= 1
+    error('pln.propOpt.numApertures should be odd.');
+end
 
 
-gantryAngleSpacing = pln.propOpt.VMAToptions.minGantryAngleRes; %ideally should be spaced every 2 or 4 degrees; gantry spacing that dij is performed
+gantryAngleSpacing = pln.propOpt.VMAToptions.minGantryAngleRes;
 
 maxNumApertures = pln.propOpt.VMAToptions.maxApertureAngleSpread/gantryAngleSpacing;
+
+if pln.propOpt.numApertures > maxNumApertures
+    error('With current settings, pln.propOpt.numApertures should be less than %d.',maxNumApertures);
+end
 
 gantryToOptAngleSpacingFactor = floor(maxNumApertures/pln.propOpt.numApertures);
 optGantryAngleSpacing = gantryAngleSpacing*gantryToOptAngleSpacingFactor;
@@ -57,10 +79,10 @@ if pln.propStf.initGantryAngles(1) == 0 && pln.propStf.initGantryAngles(end) ~= 
     pln.propStf.initGantryAngles(numel(pln.propStf.initGantryAngles)+1) = 360;
 end
 
+
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 
 pln.propStf.couchAngles     = 0*pln.propStf.gantryAngles;
-
 
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 

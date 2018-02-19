@@ -58,8 +58,6 @@ pln.propOpt.VMAToptions.machineConstraintFile = [pln.radiationMode '_' pln.machi
 pln.propOpt.VMAToptions.minGantryAngleRes = 2;      % Min gantry angle spacing for dose calculation
 pln.propOpt.VMAToptions.maxApertureAngleSpread = 28;% Max gantry angle spread between apertures from same optimized fluence map; should be a multiple of pln.minGantryAngleRes
 
-pln = matRad_VMATGantryAngles(pln,cst,ct);
-
 %%
 % Generate dose calculation, DAO, and FMO angles from the parameters input
 % above. FMO is performed only on the initGantryAngles set. In the DAO

@@ -48,7 +48,8 @@ vectorOffset = totalNumOfShapes + 1; % used for bookkeeping in the vector for op
 bixOffset = 1; %used for gradient calculations
 
 if sequencing.runVMAT
-    totalNumOfOptBixels = sum([stf([stf.optimizeBeam]).totalNumOfBixels]);
+    totalNumOfOptBixels = 0;
+    totalNumOfLeafPairs = 0;
 end
 
 apertureInfo.jacobiScale = zeros(totalNumOfShapes,1);
@@ -206,40 +207,44 @@ for i=1:size(stf,2)
         apertureInfo.beam(i).bixOffset = bixOffset;
         bixOffset = bixOffset+apertureInfo.beam(i).numOfActiveLeafPairs;
         
-        apertureInfo.beam(i).optimizeBeam = stf(i).optimizeBeam;
-        apertureInfo.beam(i).initializeBeam = stf(i).initializeBeam;
+        apertureInfo.propVMAT.beam(i).optimizeBeam = stf(i).propVMAT.optimizeBeam;
+        apertureInfo.propVMAT.beam(i).initializeBeam = stf(i).propVMAT.initializeBeam;
         
-        apertureInfo.beam(i).doseAngleBorders = stf(i).doseAngleBorders;
-        apertureInfo.beam(i).doseAngleBorderCentreDiff = stf(i).doseAngleBorderCentreDiff;
-        apertureInfo.beam(i).doseAngleBordersDiff = stf(i).doseAngleBordersDiff;
+        apertureInfo.propVMAT.beam(i).doseAngleBorders = stf(i).propVMAT.doseAngleBorders;
+        apertureInfo.propVMAT.beam(i).doseAngleBorderCentreDiff = stf(i).propVMAT.doseAngleBorderCentreDiff;
+        apertureInfo.propVMAT.beam(i).doseAngleBordersDiff = stf(i).propVMAT.doseAngleBordersDiff;
         
-        if apertureInfo.beam(i).optimizeBeam
+        if apertureInfo.propVMAT.beam(i).optimizeBeam
+            
+            totalNumOfOptBixels = totalNumOfOptBixels+stf(i).totalNumOfBixels;
+            totalNumOfLeafPairs = totalNumOfLeafPairs+apertureInfo.beam(i).numOfShapes*apertureInfo.beam(i).numOfActiveLeafPairs;
+            
             apertureInfo.beam(i).gantryRot = sequencing.beam(i).gantryRot;
             apertureInfo.beam(i).MURate = sequencing.beam(i).MURate;
             
-            apertureInfo.beam(i).optAngleBorders = stf(i).optAngleBorders;
-            apertureInfo.beam(i).optAngleBorderCentreDiff = stf(i).optAngleBorderCentreDiff;
-            apertureInfo.beam(i).optAngleBordersDiff = stf(i).optAngleBordersDiff;
+            apertureInfo.propVMAT.beam(i).optAngleBorders = stf(i).propVMAT.optAngleBorders;
+            apertureInfo.propVMAT.beam(i).optAngleBorderCentreDiff = stf(i).propVMAT.optAngleBorderCentreDiff;
+            apertureInfo.propVMAT.beam(i).optAngleBordersDiff = stf(i).propVMAT.optAngleBordersDiff;
             
-            apertureInfo.beam(i).timeFacCurr = stf(i).timeFacCurr;
-            apertureInfo.beam(i).timeFac = stf(i).timeFac;
+            apertureInfo.propVMAT.beam(i).timeFacCurr = stf(i).propVMAT.timeFacCurr;
+            apertureInfo.propVMAT.beam(i).timeFac = stf(i).propVMAT.timeFac;
             
-            apertureInfo.beam(i).lastOptIndex = stf(i).lastOptIndex;
-            apertureInfo.beam(i).nextOptIndex = stf(i).nextOptIndex;
+            apertureInfo.propVMAT.beam(i).lastOptIndex = stf(i).propVMAT.lastOptIndex;
+            apertureInfo.propVMAT.beam(i).nextOptIndex = stf(i).propVMAT.nextOptIndex;
             
             
-            if apertureInfo.beam(i).initializeBeam
-                apertureInfo.beam(i).initAngleBorders = stf(i).initAngleBorders;
-                apertureInfo.beam(i).initAngleBorderCentreDiff = stf(i).initAngleBorderCentreDiff;
-                apertureInfo.beam(i).initAngleBordersDiff = stf(i).initAngleBordersDiff;
+            if apertureInfo.propVMAT.beam(i).initializeBeam
+                apertureInfo.propVMAT.beam(i).initAngleBorders = stf(i).propVMAT.initAngleBorders;
+                apertureInfo.propVMAT.beam(i).initAngleBorderCentreDiff = stf(i).propVMAT.initAngleBorderCentreDiff;
+                apertureInfo.propVMAT.beam(i).initAngleBordersDiff = stf(i).propVMAT.initAngleBordersDiff;
             end
             
         else
-            apertureInfo.beam(i).fracFromLastOpt = stf(i).fracFromLastOpt;
-            apertureInfo.beam(i).timeFracFromLastOpt = stf(i).timeFracFromLastOpt;
-            apertureInfo.beam(i).timeFracFromNextOpt = stf(i).timeFracFromNextOpt;
-            apertureInfo.beam(i).lastOptIndex = stf(i).lastOptIndex;
-            apertureInfo.beam(i).nextOptIndex = stf(i).nextOptIndex;
+            apertureInfo.propVMAT.beam(i).fracFromLastOpt = stf(i).propVMAT.fracFromLastOpt;
+            apertureInfo.propVMAT.beam(i).timeFracFromLastOpt = stf(i).propVMAT.timeFracFromLastOpt;
+            apertureInfo.propVMAT.beam(i).timeFracFromNextOpt = stf(i).propVMAT.timeFracFromNextOpt;
+            apertureInfo.propVMAT.beam(i).lastOptIndex = stf(i).propVMAT.lastOptIndex;
+            apertureInfo.propVMAT.beam(i).nextOptIndex = stf(i).propVMAT.nextOptIndex;
         end
     end
 end
@@ -256,13 +261,13 @@ if isfield(sequencing,'weightToMU')
     apertureInfo.weightToMU = sequencing.weightToMU;
 end
 if sequencing.runVMAT
-    apertureInfo.VMAToptions = sequencing.VMAToptions;
+    tempStruct = apertureInfo.propVMAT.beam;
+    apertureInfo.propVMAT = sequencing.propVMAT;
+    apertureInfo.propVMAT.beam = tempStruct;
     
     apertureInfo.totalNumOfOptBixels = totalNumOfOptBixels;
-    apertureInfo.VMAToptions = sequencing.VMAToptions;
     apertureInfo.doseTotalNumOfLeafPairs = sum([apertureInfo.beam(:).numOfActiveLeafPairs]);
-    
-    apertureInfo.totalNumOfLeafPairs = sum([apertureInfo.beam([apertureInfo.beam.optimizeBeam]).numOfShapes]*[apertureInfo.beam([apertureInfo.beam.optimizeBeam]).numOfActiveLeafPairs]');
+    apertureInfo.totalNumOfLeafPairs = totalNumOfLeafPairs;
     
     % create vectors for optimization
     
