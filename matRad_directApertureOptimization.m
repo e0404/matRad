@@ -1,4 +1,4 @@
-function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)
+function [resultGUI,info] = matRad_directApertureOptimization(dij,cst,apertureInfo,resultGUI,pln,stf)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to run direct aperture optimization
 %
@@ -66,6 +66,7 @@ global matRad_global_x;
 global matRad_global_d;
 global matRad_STRG_C_Pressed;
 global matRad_objective_function_value;
+global matRad_global_apertureInfo;
 
 matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1); % works with bixel weights even though we do dao!
 matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
@@ -73,17 +74,47 @@ matRad_STRG_C_Pressed           = false;
 matRad_objective_function_value = [];
 
 % adjust overlap priorities
-cst = matRad_setOverlapPriorities(cst);
+cst_Over = matRad_setOverlapPriorities(cst);
 
 % adjust objectives _and_ constraints internally for fractionation 
-for i = 1:size(cst,1)
-    for j = 1:size(cst{i,6},1)
-       cst{i,6}(j).dose = cst{i,6}(j).dose/pln.numOfFractions;
+for i = 1:size(cst_Over,1)
+    for j = 1:size(cst_Over{i,6},1)
+       cst_Over{i,6}(j).dose = cst_Over{i,6}(j).dose/pln.numOfFractions;
     end
 end
 
+if isfield(apertureInfo,'scaleFacRx')
+    %weights were scaled to acheive 95% PTV coverage
+    %scale back to "optimal" weights
+    apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) = apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)/apertureInfo.scaleFacRx;
+end
+
+if pln.propOpt.preconditioner
+    %rescale dij matrix, so that apertureWeight/bixelWidth ~= 1
+    % gradient wrt weights ~ 1, gradient wrt leaf pos
+    % ~ apertureWeight/(bixelWidth) ~1
+    
+    % need to get the actual weights, so use the jacobiScale vector to
+    % convert from the variables
+    dij.scaleFactor = mean(apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale)/(apertureInfo.bixelWidth);
+    
+    dij.weightToMU = dij.weightToMU*dij.scaleFactor;
+    apertureInfo.weightToMU = apertureInfo.weightToMU*dij.scaleFactor;
+    apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) = apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)/dij.scaleFactor;
+end
+
+%set daoVec2ApertureInfo function handle
+if pln.propOpt.runVMAT
+    daoVec2ApertureInfo =  @matRad_daoVec2ApertureInfo_VMAT;
+else
+    daoVec2ApertureInfo =  @matRad_daoVec2ApertureInfo_IMRT;
+end
+
 % update aperture info vector
-apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
+apertureInfo = daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
+apertureInfo.newIteration = true;
+% define apertureInfo as a global vector to be updated once each iteration
+matRad_global_apertureInfo = apertureInfo;
 
 % Set the IPOPT options.
 matRad_ipoptOptions;
@@ -97,15 +128,23 @@ options.numOfScenarios  = dij.numOfScenarios;
 % set bounds on optimization variables
 options.lb              = apertureInfo.limMx(:,1);                                          % Lower bound on the variables.
 options.ub              = apertureInfo.limMx(:,2);                                          % Upper bound on the variables.
-[options.cl,options.cu] = matRad_daoGetConstBounds(cst,apertureInfo,options);   % Lower and upper bounds on the constraint functions.
+options.runVMAT         = pln.propOpt.runVMAT;
+[options.cl,options.cu] = matRad_daoGetConstBounds(cst_Over,apertureInfo,options);   % Lower and upper bounds on the constraint functions.
 
 % set callback functions.
-funcs.objective         = @(x) matRad_daoObjFunc(x,apertureInfo,dij,cst,options);
-funcs.constraints       = @(x) matRad_daoConstFunc(x,apertureInfo,dij,cst,options);
-funcs.gradient          = @(x) matRad_daoGradFunc(x,apertureInfo,dij,cst,options);
-funcs.jacobian          = @(x) matRad_daoJacobFunc(x,apertureInfo,dij,cst,options);
-funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct(apertureInfo,dij,cst);
-funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
+funcs.objective         = @(x) matRad_daoObjFunc(x,dij,cst_Over,options,daoVec2ApertureInfo);
+funcs.iterfunc          = @(iter,objective,parameter) matRad_IpoptIterFunc(iter,objective,parameter,options.ipopt.max_iter);
+if pln.propOpt.runVMAT
+    funcs.gradient          = @(x) matRad_daoGradFunc_VMAT(x,dij,cst_Over,options,daoVec2ApertureInfo);
+    funcs.constraints       = @(x) matRad_daoConstFunc_VMAT(x,dij,cst_Over,options,daoVec2ApertureInfo);
+    funcs.jacobian          = @(x) matRad_daoJacobFunc_VMAT(x,dij,cst_Over,options,daoVec2ApertureInfo);
+    funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct_VMAT(apertureInfo,dij,cst_Over);
+else
+    funcs.gradient          = @(x) matRad_daoGradFunc_IMRT(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
+    funcs.constraints       = @(x) matRad_daoConstFunc_IMRT(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
+    funcs.jacobian          = @(x) matRad_daoJacobFunc_IMRT(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
+    funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct_IMRT(apertureInfo,dij,cst_Over);
+end
 
 % Run IPOPT.
 [optApertureInfoVec, info] = ipopt(apertureInfo.apertureVector,funcs,options);
@@ -124,11 +163,40 @@ switch env
 end
 
 % update the apertureInfoStruct and calculate bixel weights
-optResult.apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,optApertureInfoVec);
+resultGUI.apertureInfo = daoVec2ApertureInfo(apertureInfo,optApertureInfoVec);
 
 % override also bixel weight vector in optResult struct
-optResult.w    = optResult.apertureInfo.bixelWeights;
-optResult.wDao = optResult.apertureInfo.bixelWeights;
+resultGUI.w    = resultGUI.apertureInfo.bixelWeights;
+resultGUI.wDao = resultGUI.apertureInfo.bixelWeights;
 
 % calc dose and reshape from 1D vector to 3D array
-optResult.physicalDose = reshape(dij.physicalDose{1}*optResult.w,dij.dimensions);
+d = matRad_backProjection(resultGUI.w,dij,options);
+resultGUI.physicalDose = reshape(d{1},dij.dimensions);
+
+if isfield(pln,'scaleDRx') && pln.scaleDRx
+    %Scale D95 in target to RXDose
+    resultGUI.QI = matRad_calcQualityIndicators(cst,pln,resultGUI.physicalDose);
+    
+    resultGUI.apertureInfo.scaleFacRx = max((pln.DRx/pln.numOfFractions)./[resultGUI.QI(pln.RxStruct).D_95]');
+    optApertureInfoVec(1:resultGUI.apertureInfo.totalNumOfShapes) = optApertureInfoVec(1:resultGUI.apertureInfo.totalNumOfShapes)*resultGUI.apertureInfo.scaleFacRx;
+    
+    % update the apertureInfoStruct and calculate bixel weights
+    resultGUI.apertureInfo = daoVec2ApertureInfo(resultGUI.apertureInfo,optApertureInfoVec);
+    
+    % override also bixel weight vector in optResult struct
+    resultGUI.w    = resultGUI.apertureInfo.bixelWeights;
+    resultGUI.wDao = resultGUI.apertureInfo.bixelWeights;
+    
+    resultGUI.physicalDose = resultGUI.physicalDose.*resultGUI.apertureInfo.scaleFacRx;
+end
+
+% update apertureInfoStruct with the maximum leaf speeds per segment
+if pln.propOpt.runVMAT
+    resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
+    
+    
+    %optimize delivery
+    resultGUI = matRad_optDelivery(resultGUI,1);
+    resultGUI = matRad_calcDeliveryMetrics(resultGUI,pln,stf);
+end
+

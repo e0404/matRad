@@ -1,4 +1,4 @@
-function apertureInfo = matRad_sequencing2ApertureInfo(Sequencing,stf)
+function apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to generate a shape info struct based on the result of
 % multileaf collimator sequencing
@@ -31,6 +31,7 @@ function apertureInfo = matRad_sequencing2ApertureInfo(Sequencing,stf)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 % MLC parameters:
 bixelWidth = stf(1).bixelWidth; % [mm]
 numOfMLCLeafPairs = 80;
@@ -42,8 +43,17 @@ centralLeafPair = ceil(numOfMLCLeafPairs/2);
 % initializing variables
 bixelIndOffset = 0; % used for creation of bixel index maps
 totalNumOfBixels = sum([stf(:).totalNumOfBixels]);
-totalNumOfShapes = sum([Sequencing.beam.numOfShapes]);
+totalNumOfShapes = sum([sequencing.beam.numOfShapes]);
 vectorOffset = totalNumOfShapes + 1; % used for bookkeeping in the vector for optimization
+bixOffset = 1; %used for gradient calculations
+
+if sequencing.runVMAT
+    totalNumOfOptBixels = 0;
+    totalNumOfLeafPairs = 0;
+end
+
+apertureInfo.jacobiScale = zeros(totalNumOfShapes,1);
+k = 1;
 
 % loop over all beams
 for i=1:size(stf,2)
@@ -96,42 +106,66 @@ for i=1:size(stf,2)
         
     % get leaf positions for all shapes
     % leaf positions can be extracted from the shapes created in Sequencing
-    for m = 1:Sequencing.beam(i).numOfShapes
+    for m = 1:sequencing.beam(i).numOfShapes
         
-        % loading shape from Sequencing result
-        shapeMap = Sequencing.beam(i).shapes(:,:,m);
-        % get left and right leaf indices from shapemap
-        % initializing limits
-        leftLeafPos = NaN * ones(dimZ,1);
-        rightLeafPos = NaN * ones(dimZ,1);
-        % looping over leaf pairs
-        for l = 1:dimZ
-            leftLeafPosInd  = find(shapeMap(l,:),1,'first');
-            rightLeafPosInd = find(shapeMap(l,:),1,'last');
+        if isfield(sequencing.beam(i),'shapes')
             
-            if isempty(leftLeafPosInd) && isempty(rightLeafPosInd) % if no bixel is open, use limits from Ray positions
-                leftLeafPos(l) = (lim_l(l)+lim_r(l))/2;
-                rightLeafPos(l) = leftLeafPos(l);
-            else
-            % the physical position [mm] can be calculated from the indices
-                leftLeafPos(l) = (leftLeafPosInd-1)*bixelWidth...
-                                    + minX - 1/2*bixelWidth;
-                rightLeafPos(l) = (rightLeafPosInd-1)*bixelWidth...
-                                    + minX + 1/2*bixelWidth;
-                              
+            % loading shape from Sequencing result
+            shapeMap = sequencing.beam(i).shapes(:,:,m);
+            % get left and right leaf indices from shapemap
+            % initializing limits
+            leftLeafPos = NaN * ones(dimZ,1);
+            rightLeafPos = NaN * ones(dimZ,1);
+            % looping over leaf pairs
+            for l = 1:dimZ
+                leftLeafPosInd  = find(shapeMap(l,:),1,'first');
+                rightLeafPosInd = find(shapeMap(l,:),1,'last');
+                
+                if isempty(leftLeafPosInd) && isempty(rightLeafPosInd) % if no bixel is open, use limits from Ray positions
+                    leftLeafPos(l) = (lim_l(l)+lim_r(l))/2;
+                    rightLeafPos(l) = leftLeafPos(l);
+                else
+                    % the physical position [mm] can be calculated from the indices
+                    leftLeafPos(l) = (leftLeafPosInd-1)*bixelWidth...
+                        + minX - 1/2*bixelWidth;
+                    rightLeafPos(l) = (rightLeafPosInd-1)*bixelWidth...
+                        + minX + 1/2*bixelWidth;
+                    
+                    %Can happen in some cases in SW trajectory sampling
+                    if leftLeafPos(l) < lim_l(l)
+                        leftLeafPos(l) = lim_l(l);
+                    end
+                    if rightLeafPos(l) > lim_r(l)
+                        rightLeafPos(l) = lim_r(l);
+                    end
+                    
+                end
             end
+            
+            % save data for each shape of this beam
+            apertureInfo.beam(i).shape(m).leftLeafPos = leftLeafPos;
+            apertureInfo.beam(i).shape(m).rightLeafPos = rightLeafPos;
+            apertureInfo.beam(i).shape(m).weight = sequencing.beam(i).shapesWeight(m);
+            apertureInfo.beam(i).shape(m).shapeMap = shapeMap;
+            
+        elseif isfield(sequencing.beam(i).shape(m),'leftLeafPos')
+            % leaf positions already determined
+            
+            % save data for each shape of this beam
+            apertureInfo.beam(i).shape(m).leftLeafPos = sequencing.beam(i).shape(m).leftLeafPos;
+            apertureInfo.beam(i).shape(m).rightLeafPos = sequencing.beam(i).shape(m).rightLeafPos;
+            apertureInfo.beam(i).shape(m).weight = sequencing.beam(i).shapesWeight(m);
+            
         end
         
-        % save data for each shape of this beam
-        apertureInfo.beam(i).shape(m).leftLeafPos = leftLeafPos;
-        apertureInfo.beam(i).shape(m).rightLeafPos = rightLeafPos;
-        apertureInfo.beam(i).shape(m).weight = Sequencing.beam(i).shapesWeight(m);
-        apertureInfo.beam(i).shape(m).shapeMap = shapeMap;
+        apertureInfo.beam(i).shape(m).jacobiScale = 1;
+        apertureInfo.jacobiScale(k) = apertureInfo.beam(i).shape(m).jacobiScale;
+        k = k+1;
+        
         apertureInfo.beam(i).shape(m).vectorOffset = vectorOffset;
         
         % update index for bookkeeping
         vectorOffset = vectorOffset + dimZ;
-           
     end
         
     % z-coordinates of active leaf pairs        
@@ -156,7 +190,7 @@ for i=1:size(stf,2)
                     minZ-bixelWidth/2 maxZ+bixelWidth/2];
     
     % save data for each beam
-    apertureInfo.beam(i).numOfShapes = Sequencing.beam(i).numOfShapes;
+    apertureInfo.beam(i).numOfShapes = sequencing.beam(i).numOfShapes;
     apertureInfo.beam(i).numOfActiveLeafPairs = dimZ;
     apertureInfo.beam(i).leafPairPos = leafPairPos;
     apertureInfo.beam(i).isActiveLeafPair = isActiveLeafPair;
@@ -166,17 +200,97 @@ for i=1:size(stf,2)
     apertureInfo.beam(i).bixelIndMap = bixelIndMap;
     apertureInfo.beam(i).posOfCornerBixel = posOfCornerBixel;
     apertureInfo.beam(i).MLCWindow = MLCWindow;
+    apertureInfo.beam(i).gantryAngle = stf(i).gantryAngle;
     
+    if sequencing.runVMAT
+        
+        apertureInfo.beam(i).bixOffset = bixOffset;
+        bixOffset = bixOffset+apertureInfo.beam(i).numOfActiveLeafPairs;
+        
+        apertureInfo.propVMAT.beam(i).optimizeBeam = stf(i).propVMAT.optimizeBeam;
+        apertureInfo.propVMAT.beam(i).initializeBeam = stf(i).propVMAT.initializeBeam;
+        
+        apertureInfo.propVMAT.beam(i).doseAngleBorders = stf(i).propVMAT.doseAngleBorders;
+        apertureInfo.propVMAT.beam(i).doseAngleBorderCentreDiff = stf(i).propVMAT.doseAngleBorderCentreDiff;
+        apertureInfo.propVMAT.beam(i).doseAngleBordersDiff = stf(i).propVMAT.doseAngleBordersDiff;
+        
+        if apertureInfo.propVMAT.beam(i).optimizeBeam
+            
+            totalNumOfOptBixels = totalNumOfOptBixels+stf(i).totalNumOfBixels;
+            totalNumOfLeafPairs = totalNumOfLeafPairs+apertureInfo.beam(i).numOfShapes*apertureInfo.beam(i).numOfActiveLeafPairs;
+            
+            apertureInfo.beam(i).gantryRot = sequencing.beam(i).gantryRot;
+            apertureInfo.beam(i).MURate = sequencing.beam(i).MURate;
+            
+            apertureInfo.propVMAT.beam(i).optAngleBorders = stf(i).propVMAT.optAngleBorders;
+            apertureInfo.propVMAT.beam(i).optAngleBorderCentreDiff = stf(i).propVMAT.optAngleBorderCentreDiff;
+            apertureInfo.propVMAT.beam(i).optAngleBordersDiff = stf(i).propVMAT.optAngleBordersDiff;
+            
+            apertureInfo.propVMAT.beam(i).timeFacCurr = stf(i).propVMAT.timeFacCurr;
+            apertureInfo.propVMAT.beam(i).timeFac = stf(i).propVMAT.timeFac;
+            
+            apertureInfo.propVMAT.beam(i).lastOptIndex = stf(i).propVMAT.lastOptIndex;
+            apertureInfo.propVMAT.beam(i).nextOptIndex = stf(i).propVMAT.nextOptIndex;
+            
+            
+            if apertureInfo.propVMAT.beam(i).initializeBeam
+                apertureInfo.propVMAT.beam(i).initAngleBorders = stf(i).propVMAT.initAngleBorders;
+                apertureInfo.propVMAT.beam(i).initAngleBorderCentreDiff = stf(i).propVMAT.initAngleBorderCentreDiff;
+                apertureInfo.propVMAT.beam(i).initAngleBordersDiff = stf(i).propVMAT.initAngleBordersDiff;
+            end
+            
+        else
+            apertureInfo.propVMAT.beam(i).fracFromLastOpt = stf(i).propVMAT.fracFromLastOpt;
+            apertureInfo.propVMAT.beam(i).timeFracFromLastOpt = stf(i).propVMAT.timeFracFromLastOpt;
+            apertureInfo.propVMAT.beam(i).timeFracFromNextOpt = stf(i).propVMAT.timeFracFromNextOpt;
+            apertureInfo.propVMAT.beam(i).lastOptIndex = stf(i).propVMAT.lastOptIndex;
+            apertureInfo.propVMAT.beam(i).nextOptIndex = stf(i).propVMAT.nextOptIndex;
+        end
+    end
 end
 
 % save global data
+apertureInfo.runVMAT = sequencing.runVMAT;
+apertureInfo.preconditioner = sequencing.preconditioner;
 apertureInfo.bixelWidth = bixelWidth;
 apertureInfo.numOfMLCLeafPairs = numOfMLCLeafPairs;
 apertureInfo.totalNumOfBixels = totalNumOfBixels;
 apertureInfo.totalNumOfShapes = sum([apertureInfo.beam.numOfShapes]);
-apertureInfo.totalNumOfLeafPairs = sum([apertureInfo.beam.numOfShapes]*[apertureInfo.beam.numOfActiveLeafPairs]');
 
-% create vectors for optimization
-[apertureInfo.apertureVector, apertureInfo.mappingMx, apertureInfo.limMx] = matRad_daoApertureInfo2Vec(apertureInfo);
+if isfield(sequencing,'weightToMU')
+    apertureInfo.weightToMU = sequencing.weightToMU;
+end
+if sequencing.runVMAT
+    tempStruct = apertureInfo.propVMAT.beam;
+    apertureInfo.propVMAT = sequencing.propVMAT;
+    apertureInfo.propVMAT.beam = tempStruct;
+    
+    apertureInfo.totalNumOfOptBixels = totalNumOfOptBixels;
+    apertureInfo.doseTotalNumOfLeafPairs = sum([apertureInfo.beam(:).numOfActiveLeafPairs]);
+    apertureInfo.totalNumOfLeafPairs = totalNumOfLeafPairs;
+    
+    % create vectors for optimization
+    
+    %EC 2018-02-04
+    % where did this go? it's still on my workstation in Ottawa...
+    %apertureInfo = matRad_leafTouching(apertureInfo);
+    [apertureInfo.apertureVector, apertureInfo.mappingMx, apertureInfo.limMx] = matRad_daoApertureInfo2Vec(apertureInfo);
+    
+else
+    apertureInfo.totalNumOfLeafPairs = sum([apertureInfo.beam.numOfShapes]*[apertureInfo.beam.numOfActiveLeafPairs]');
+    apertureInfo.doseTotalNumOfLeafPairs = apertureInfo.totalNumOfLeafPairs;
+    
+    % create vectors for optimization
+    [apertureInfo.apertureVector, apertureInfo.mappingMx, apertureInfo.limMx] = matRad_daoApertureInfo2Vec(apertureInfo);
+end
+
+
+
 
 end
+
+
+
+
+
+

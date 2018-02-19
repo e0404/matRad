@@ -35,6 +35,8 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+dij.radiationMode = pln.radiationMode;
+
 % default: dose influence matrix computation
 if ~exist('calcDoseDirect','var')
     calcDoseDirect = false;

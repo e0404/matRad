@@ -47,4 +47,3 @@ for i = 1:numOfTissueClass
         vBeta(mask)  = matRad_interp1(depths,baseData.beta(:,i), vRadDepths(mask));
     end
 end
-

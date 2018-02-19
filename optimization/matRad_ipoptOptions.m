@@ -36,10 +36,10 @@ options.ipopt.acceptable_tol                = 1e10; % (Acc2)
 options.ipopt.acceptable_constr_viol_tol    = 1e10; % (Acc3)
 options.ipopt.acceptable_dual_inf_tol       = 1e10; % (Acc4)
 options.ipopt.acceptable_compl_inf_tol      = 1e10; % (Acc5)
-options.ipopt.acceptable_obj_change_tol     = 1e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
+options.ipopt.acceptable_obj_change_tol     = 1e-4; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
 
-options.ipopt.max_iter                      = 500;
-options.ipopt.max_cpu_time                  = 3000;
+options.ipopt.max_iter                      = double(intmax('uint16'));
+options.ipopt.max_cpu_time                  = 3000*10^10;
 
 % Barrier Parameter (C.6)
 options.ipopt.mu_strategy = 'adaptive';
@@ -59,4 +59,6 @@ options.ipopt.limited_memory_initialization = 'scalar2';
 
 % Derivative Test (C.14)
 %options.ipopt.derivative_test               = 'first-order';
-%options.ipopt.derivative_test_tol           = 1e-3;
+%options.ipopt.derivative_test_tol           = 1e-8;
+%options.ipopt.derivative_test_perturbation  = 1e-8;
+%options.ipopt.derivative_test_first_index   = 1;

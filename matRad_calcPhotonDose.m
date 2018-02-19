@@ -48,6 +48,8 @@ switch env
           rand('seed',0)
 end
 
+dij.radiationMode = pln.radiationMode;
+
 % default: dose influence matrix computation
 if ~exist('calcDoseDirect','var')
     calcDoseDirect = false;
@@ -70,6 +72,9 @@ dij.numOfVoxels        = prod(ct.cubeDim);
 dij.resolution         = ct.resolution;
 dij.dimensions         = ct.cubeDim;
 dij.numOfScenarios     = 1;
+dij.weightToMU         = 100;
+dij.scaleFactor        = 1;
+dij.memorySaverPhoton  = pln.propDoseCalc.memorySaverPhoton;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
@@ -87,6 +92,14 @@ end
 dij.bixelNum = NaN*ones(numOfColumnsDij,1);
 dij.rayNum   = NaN*ones(numOfColumnsDij,1);
 dij.beamNum  = NaN*ones(numOfColumnsDij,1);
+
+dij.nCore   = zeros*ones(dij.totalNumOfRays,1,'uint16');
+dij.nTail    = zeros*ones(dij.totalNumOfRays,1,'uint16');
+dij.nDepth  = zeros*ones(dij.totalNumOfRays,1,'uint16');
+
+dij.ixTail          = intmax('uint32')*ones(1000*dij.totalNumOfRays,1,'uint32');
+dij.nTailPerDepth   = intmax('uint16')*ones(100*dij.totalNumOfRays,1,'uint16');
+dij.bixelDoseTail   = -1*ones(100*dij.totalNumOfRays,1,'double');
 
 % Allocate space for dij.physicalDose sparse matrix
 for i = 1:dij.numOfScenarios
@@ -115,7 +128,7 @@ lateralCutoff = 50; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
-useCustomPrimFluenceBool = 0;
+useCustomPrimFluenceBool = 1;
 
 % 0 if field calc is bixel based, 1 if dose calc is field based
 isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
@@ -165,6 +178,9 @@ if ~isFieldBasedDoseCalc
     end
 end
 
+offsetTail = 0;
+offsetDepth = 0;
+
 % compute SSDs
 stf = matRad_computeSSD(stf,ct);
 
@@ -173,6 +189,7 @@ kernelLimit = ceil(lateralCutoff/intConvResolution);
 [kernelX, kernelZ] = meshgrid(-kernelLimit*intConvResolution: ...
                             intConvResolution: ...
                             (kernelLimit-1)*intConvResolution);
+
 
 % precalculate convoluted kernel size and distances
 kernelConvLimit = fieldLimit + gaussLimit + kernelLimit;
@@ -359,12 +376,29 @@ for i = 1:dij.numOfBeams % loop over all beams
                                                    isoLatDistsX,...
                                                    isoLatDistsZ);
                                                
+
         % sample dose only for bixel based dose calculation
-        if ~isFieldBasedDoseCalc
+        if ~isFieldBasedDoseCalc && ~calcDoseDirect
             r0   = 25;   % [mm] sample beyond the inner core
             Type = 'radius';
-            [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
-        end   
+            
+            if dij.memorySaverPhoton
+                [ix,bixelDose,ixTail,nTailPerDepth,bixelDoseTail,nTail,nDepth,nCore] = matRad_DijSampling_memorySaver(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
+                
+                dij.ixTail(offsetTail+(1:nTail)) = uint32(V(ixTail));
+                dij.nTailPerDepth(offsetDepth+(1:nDepth)) = nTailPerDepth;
+                dij.bixelDoseTail(offsetDepth+(1:nDepth)) = bixelDoseTail;
+                
+                dij.nCore(counter) = uint16(nCore);
+                dij.nTail(counter) = uint16(nTail);
+                dij.nDepth(counter) = uint16(nDepth);
+                
+                offsetTail = offsetTail+nTail;
+                offsetDepth = offsetDepth+nDepth;
+            else
+                [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
+            end
+        end
         % Save dose for every bixel in cell array
         doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix),1,bixelDose,dij.numOfVoxels,1);
                 
@@ -387,6 +421,10 @@ for i = 1:dij.numOfBeams % loop over all beams
         
     end
 end
+
+dij.ixTail(dij.ixTail == intmax('uint32')) = [];
+dij.nTailPerDepth(dij.nTailPerDepth == intmax('uint16')) = [];
+dij.bixelDoseTail(dij.bixelDoseTail == -1) = [];
 
 try
   % wait 0.1s for closing all waitbars

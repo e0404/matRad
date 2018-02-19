@@ -1,4 +1,4 @@
-function f = matRad_daoObjFunc(apertureInfoVect,apertureInfo,dij,cst,options)
+function f = matRad_daoObjFunc(apertureInfoVec,dij,cst,options,daoVec2ApertureInfo)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: objective function for direct aperture optimization
 %
@@ -33,8 +33,17 @@ function f = matRad_daoObjFunc(apertureInfoVect,apertureInfo,dij,cst,options)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% read in the global apertureInfo and apertureVector variables
+global matRad_global_apertureInfo;
+% update apertureInfo from the global variable
+apertureInfo = matRad_global_apertureInfo;
+
 % update apertureInfo, bixel weight vector an mapping of leafes to bixels
-apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect);
+if ~isequal(apertureInfoVec,apertureInfo.apertureVector)
+    apertureInfo = daoVec2ApertureInfo(apertureInfo,apertureInfoVec);
+    matRad_global_apertureInfo = apertureInfo;
+end
+
 
 % bixel based objective function calculation
 f = matRad_objFuncWrapper(apertureInfo.bixelWeights,dij,cst,options);

@@ -138,4 +138,3 @@ end
 for i = 1:ct.numOfCtScen
     radDepthV{i} = radDepthCube{i}(V);
 end
-
