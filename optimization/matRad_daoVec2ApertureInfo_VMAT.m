@@ -66,9 +66,9 @@ offset = 0;
 round2 = @(a,b) round(a*10^b)/10^b;
 
 
-if ~all([updatedInfo.propVMAT.beam.optimizeBeam])
+if ~all([updatedInfo.propVMAT.beam.DAOBeam])
     for i = 1:numel(updatedInfo.beam)
-        if updatedInfo.propVMAT.beam(i).optimizeBeam
+        if updatedInfo.propVMAT.beam(i).DAOBeam
             % update the shape weight
             % rescale the weight from the vector using the previous
             % iteration scaling factor
@@ -105,7 +105,7 @@ for i = 1:numel(updatedInfo.beam)
     % extract leaf position and aperture weight information from vector
     % for optimized beams, this is straightforward
     % for non-optimized beams, interpolate MURate and leaf speed
-    if updatedInfo.propVMAT.beam(i).optimizeBeam
+    if updatedInfo.propVMAT.beam(i).DAOBeam
         % update the shape weight
         % rescale the weight from the vector using the previous
         % iteration scaling factor
@@ -128,26 +128,26 @@ for i = 1:numel(updatedInfo.beam)
         updatedInfo.beam(i).shape(j).rightLeafPos = rightLeafPos;
     else
         %MURate is interpolated between MURates of optimized apertures
-        updatedInfo.beam(i).MURate = updatedInfo.propVMAT.beam(i).fracFromLastOpt*updatedInfo.beam(updatedInfo.propVMAT.beam(i).lastOptIndex).MURate+(1-updatedInfo.propVMAT.beam(i).fracFromLastOpt)*updatedInfo.beam(updatedInfo.propVMAT.beam(i).nextOptIndex).MURate;
-        updatedInfo.beam(i).gantryRot = 1./(updatedInfo.propVMAT.beam(i).timeFracFromLastOpt./updatedInfo.beam(updatedInfo.propVMAT.beam(i).lastOptIndex).gantryRot+updatedInfo.propVMAT.beam(i).timeFracFromNextOpt./updatedInfo.beam(updatedInfo.propVMAT.beam(i).nextOptIndex).gantryRot);
+        updatedInfo.beam(i).MURate = updatedInfo.propVMAT.beam(i).fracFromLastDAO*updatedInfo.beam(updatedInfo.propVMAT.beam(i).lastDAOIndex).MURate+(1-updatedInfo.propVMAT.beam(i).fracFromLastDAO)*updatedInfo.beam(updatedInfo.propVMAT.beam(i).nextDAOIndex).MURate;
+        updatedInfo.beam(i).gantryRot = 1./(updatedInfo.propVMAT.beam(i).timeFracFromLastDAO./updatedInfo.beam(updatedInfo.propVMAT.beam(i).lastDAOIndex).gantryRot+updatedInfo.propVMAT.beam(i).timeFracFromNextDAO./updatedInfo.beam(updatedInfo.propVMAT.beam(i).nextDAOIndex).gantryRot);
         updatedInfo.beam(i).time = updatedInfo.propVMAT.beam(i).doseAngleBordersDiff./updatedInfo.beam(i).gantryRot;
         
         updatedInfo.beam(i).MU = updatedInfo.beam(i).MURate.*updatedInfo.beam(i).time;
         updatedInfo.beam(i).shape(1).weight = updatedInfo.beam(i).MU./updatedInfo.weightToMU;
         
-        vectorIx_L_last = updatedInfo.beam(updatedInfo.propVMAT.beam(i).lastOptIndex).shape(j).vectorOffset + ([1:n]-1);
+        vectorIx_L_last = updatedInfo.beam(updatedInfo.propVMAT.beam(i).lastDAOIndex).shape(j).vectorOffset + ([1:n]-1);
         vectorIx_R_last = vectorIx_L_last+apertureInfo.totalNumOfLeafPairs;
         leftLeafPos_last = apertureInfoVect(vectorIx_L_last);
         rightLeafPos_last = apertureInfoVect(vectorIx_R_last);
         
-        vectorIx_L_next = updatedInfo.beam(updatedInfo.propVMAT.beam(i).nextOptIndex).shape(j).vectorOffset + ([1:n]-1);
+        vectorIx_L_next = updatedInfo.beam(updatedInfo.propVMAT.beam(i).nextDAOIndex).shape(j).vectorOffset + ([1:n]-1);
         vectorIx_R_next = vectorIx_L_next+apertureInfo.totalNumOfLeafPairs;
         leftLeafPos_next = apertureInfoVect(vectorIx_L_next);
         rightLeafPos_next = apertureInfoVect(vectorIx_R_next);
         
         
-        updatedInfo.beam(i).shape(j).leftLeafPos = updatedInfo.propVMAT.beam(i).fracFromLastOpt*leftLeafPos_last+(1-updatedInfo.propVMAT.beam(i).fracFromLastOpt)*leftLeafPos_next;
-        updatedInfo.beam(i).shape(j).rightLeafPos = updatedInfo.propVMAT.beam(i).fracFromLastOpt*rightLeafPos_last+(1-updatedInfo.propVMAT.beam(i).fracFromLastOpt)*rightLeafPos_next;
+        updatedInfo.beam(i).shape(j).leftLeafPos = updatedInfo.propVMAT.beam(i).fracFromLastDAO*leftLeafPos_last+(1-updatedInfo.propVMAT.beam(i).fracFromLastDAO)*leftLeafPos_next;
+        updatedInfo.beam(i).shape(j).rightLeafPos = updatedInfo.propVMAT.beam(i).fracFromLastDAO*rightLeafPos_last+(1-updatedInfo.propVMAT.beam(i).fracFromLastDAO)*rightLeafPos_next;
     end
     
     leftLeafPos = updatedInfo.beam(i).shape(j).leftLeafPos;
@@ -229,7 +229,7 @@ for i = 1:numel(updatedInfo.beam)
     % save the tempMap (we need to apply a positivity operator !)
     updatedInfo.beam(i).shape(j).shapeMap = (tempMap  + abs(tempMap))  / 2;
     
-    if updatedInfo.propVMAT.beam(i).optimizeBeam
+    if updatedInfo.propVMAT.beam(i).DAOBeam
         % increment shape index
         shapeInd = shapeInd +1;
     end

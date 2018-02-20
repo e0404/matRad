@@ -47,7 +47,7 @@ leafDir = 1;
 
 for i = 1:numOfBeams
     
-    if stf(i).propVMAT.initializeBeam
+    if stf(i).propVMAT.FMOBeam
         
         %Spread apertures to each child angle
         %according to the trajectory (mean leaf position). Assume that
@@ -95,7 +95,7 @@ end
 for i = 1:numOfBeams
     % now go through and calculate gantry rotation speed, MU rate, etc.
     
-    if stf(i).propVMAT.initializeBeam
+    if stf(i).propVMAT.FMOBeam
         beam(i).numOfShapes = beam(i).tempNumOfShapes;
         beam(i).shapes = beam(i).tempShapes;
         beam(i).shapesWeight = beam(i).tempShapesWeight;
@@ -111,9 +111,9 @@ for i = 1:numOfBeams
         end
     end
     
-    if stf(i).propVMAT.optimizeBeam
+    if stf(i).propVMAT.DAOBeam
         beam(i).gantryRot = machine.constraints.gantryRotationSpeed(2); %gantry rotation rate until next opt angle
-        beam(i).MURate = weightToMU.*beam(i).shapesWeight.*beam(i).gantryRot./stf(i).propVMAT.optAngleBordersDiff; %dose rate until next opt angle
+        beam(i).MURate = weightToMU.*beam(i).shapesWeight.*beam(i).gantryRot./stf(i).propVMAT.DAOAngleBordersDiff; %dose rate until next opt angle
         %Rescale weight to represent only this control point; weight will be shared
         %with the interpolared control points in matRad_daoVec2ApertureInfo
         beam(i).shapesWeight = beam(i).shapesWeight.*stf(i).propVMAT.timeFacCurr;

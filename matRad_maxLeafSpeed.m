@@ -66,7 +66,7 @@ maxLeafSpeed = max([leftMaxLeafSpeed; rightMaxLeafSpeed],[],1);
 l = 1;
 maxMaxLeafSpeed = 0;
 for i = 1:size(apertureInfo.beam,2)
-    if apertureInfo.propVMAT.beam(i).optimizeBeam
+    if apertureInfo.propVMAT.beam(i).DAOBeam
         % for static, we take the max leaf speed to be the max leaf
         % of two speeds, one being the speed in the first half-arc, the
         % second being the speed in the second half-arc (these will be

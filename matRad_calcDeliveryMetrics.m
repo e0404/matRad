@@ -47,11 +47,11 @@ if pln.propOpt.runVMAT
     %All of these are vectors
     %Each entry corresponds to a beam angle
     %Later, we will convert these to histograms, find max, mean, min, etc.
-    gantryRot = zeros(1,size(pln.propStf.optGantryAngles,2)-1);
+    gantryRot = zeros(1,size(pln.propStf.DAOGantryAngles,2)-1);
     MURate = gantryRot;
     times = gantryRot;
     angles = gantryRot;
-    maxLeafSpeed = 0*pln.propStf.optGantryAngles;
+    maxLeafSpeed = 0*pln.propStf.DAOGantryAngles;
     
     
     totTime = 0;

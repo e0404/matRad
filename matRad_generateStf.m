@@ -428,26 +428,26 @@ for i = 1:length(pln.propStf.gantryAngles)
             if DAOIndex == 1
                 stf(i).propVMAT.DAOAngleBorders = ([pln.propStf.DAOGantryAngles(DAOIndex) pln.propStf.DAOGantryAngles(DAOIndex+1)]+pln.propStf.DAOGantryAngles(DAOIndex))/2;
                 
-                lastOptIndex = i;
-                nextOptIndex = find(pln.propStf.gantryAngles == pln.propStf.DAOGantryAngles(DAOIndex+1));
+                lastDAOIndex = i;
+                nextDAOIndex = find(pln.propStf.gantryAngles == pln.propStf.DAOGantryAngles(DAOIndex+1));
                 
-                stf(i).propVMAT.lastOptIndex = i;
-                stf(i).propVMAT.nextOptIndex = find(pln.propStf.gantryAngles == pln.propStf.DAOGantryAngles(DAOIndex+1));
+                stf(i).propVMAT.lastDAOIndex = i;
+                stf(i).propVMAT.nextDAOIndex = find(pln.propStf.gantryAngles == pln.propStf.DAOGantryAngles(DAOIndex+1));
             elseif DAOIndex == length(pln.propStf.DAOGantryAngles)
                 stf(i).propVMAT.DAOAngleBorders = ([pln.propStf.DAOGantryAngles(DAOIndex-1) pln.propStf.DAOGantryAngles(DAOIndex)]+pln.propStf.DAOGantryAngles(DAOIndex))/2;
                 
-                stf(i).propVMAT.lastOptIndex = find(pln.propStf.gantryAngles == pln.propStf.DAOGantryAngles(DAOIndex-1));
-                stf(i).propVMAT.nextOptIndex = i;
+                stf(i).propVMAT.lastDAOIndex = find(pln.propStf.gantryAngles == pln.propStf.DAOGantryAngles(DAOIndex-1));
+                stf(i).propVMAT.nextDAOIndex = i;
             else
                 stf(i).propVMAT.DAOAngleBorders = ([pln.propStf.DAOGantryAngles(DAOIndex-1) pln.propStf.DAOGantryAngles(DAOIndex+1)]+pln.propStf.DAOGantryAngles(DAOIndex))/2;
                 
-                lastOptIndex = i;
-                nextOptIndex = find(pln.propStf.gantryAngles == pln.propStf.DAOGantryAngles(DAOIndex+1));
+                lastDAOIndex = i;
+                nextDAOIndex = find(pln.propStf.gantryAngles == pln.propStf.DAOGantryAngles(DAOIndex+1));
                 
-                stf(i).propVMAT.lastOptIndex = find(pln.propStf.gantryAngles == pln.propStf.DAOGantryAngles(DAOIndex-1));
-                stf(i).propVMAT.nextOptIndex = find(pln.propStf.gantryAngles == pln.propStf.DAOGantryAngles(DAOIndex+1));
+                stf(i).propVMAT.lastDAOIndex = find(pln.propStf.gantryAngles == pln.propStf.DAOGantryAngles(DAOIndex-1));
+                stf(i).propVMAT.nextDAOIndex = find(pln.propStf.gantryAngles == pln.propStf.DAOGantryAngles(DAOIndex+1));
             end
-            stf(i).propVMAT.doseAngleOpt = ones(1,2);
+            stf(i).propVMAT.doseAngleDAO = ones(1,2);
             
             stf(i).propVMAT.DAOAngleBorderCentreDiff = [stf(i).gantryAngle-stf(i).propVMAT.DAOAngleBorders(1) stf(i).propVMAT.DAOAngleBorders(2)-stf(i).gantryAngle];
             stf(i).propVMAT.DAOAngleBordersDiff = sum(stf(i).propVMAT.DAOAngleBorderCentreDiff);
@@ -472,9 +472,9 @@ for i = 1:length(pln.propStf.gantryAngles)
             stf(stf(i).propVMAT.beamParentIndex).propVMAT.beamSubChildrenGantryAngles(stf(stf(i).propVMAT.beamParentIndex).propVMAT.numOfBeamSubChildren) = pln.propStf.gantryAngles(i);
             stf(stf(i).propVMAT.beamParentIndex).propVMAT.beamSubChildrenIndex(stf(stf(i).propVMAT.beamParentIndex).propVMAT.numOfBeamSubChildren) = i;
             
-            stf(i).propVMAT.fracFromLastOpt = (pln.propStf.gantryAngles(nextOptIndex)-pln.propStf.gantryAngles(i))./(pln.propStf.gantryAngles(nextOptIndex)-pln.propStf.gantryAngles(lastOptIndex));
-            stf(i).propVMAT.lastOptIndex = lastOptIndex;
-            stf(i).propVMAT.nextOptIndex = nextOptIndex;
+            stf(i).propVMAT.fracFromLastDAO = (pln.propStf.gantryAngles(nextDAOIndex)-pln.propStf.gantryAngles(i))./(pln.propStf.gantryAngles(nextDAOIndex)-pln.propStf.gantryAngles(lastDAOIndex));
+            stf(i).propVMAT.lastDAOIndex = lastDAOIndex;
+            stf(i).propVMAT.nextDAOIndex = nextDAOIndex;
         end
         
         
@@ -482,20 +482,20 @@ for i = 1:length(pln.propStf.gantryAngles)
             %Determine different angle borders
             %initAngleBorders are the angular borders over which an optimized control point
             %has influence
-            initIndex = find(pln.propStf.FMOGantryAngles == pln.propStf.gantryAngles(i));
+            FMOIndex = find(pln.propStf.FMOGantryAngles == pln.propStf.gantryAngles(i));
             
-            if initIndex == 1
+            if FMOIndex == 1
                 
-                stf(i).propVMAT.initAngleBorders = [min(pln.propStf.FMOGantryAngles(initIndex),pln.propStf.gantryAngles(1)) (pln.propStf.FMOGantryAngles(initIndex+1)+pln.propStf.FMOGantryAngles(initIndex))/2];
-            elseif initIndex == length(pln.propStf.FMOGantryAngles)
+                stf(i).propVMAT.FMOAngleBorders = [min(pln.propStf.FMOGantryAngles(FMOIndex),pln.propStf.gantryAngles(1)) (pln.propStf.FMOGantryAngles(FMOIndex+1)+pln.propStf.FMOGantryAngles(FMOIndex))/2];
+            elseif FMOIndex == length(pln.propStf.FMOGantryAngles)
                 
-                stf(i).propVMAT.initAngleBorders = [(pln.propStf.FMOGantryAngles(initIndex-1)+pln.propStf.FMOGantryAngles(initIndex))/2 max(pln.propStf.FMOGantryAngles(initIndex),pln.propStf.gantryAngles(end))];
+                stf(i).propVMAT.FMOAngleBorders = [(pln.propStf.FMOGantryAngles(FMOIndex-1)+pln.propStf.FMOGantryAngles(FMOIndex))/2 max(pln.propStf.FMOGantryAngles(FMOIndex),pln.propStf.gantryAngles(end))];
             else
                 
-                stf(i).propVMAT.initAngleBorders = ([pln.propStf.FMOGantryAngles(initIndex-1) pln.propStf.FMOGantryAngles(initIndex+1)]+pln.propStf.FMOGantryAngles(initIndex))/2;
+                stf(i).propVMAT.FMOAngleBorders = ([pln.propStf.FMOGantryAngles(FMOIndex-1) pln.propStf.FMOGantryAngles(FMOIndex+1)]+pln.propStf.FMOGantryAngles(FMOIndex))/2;
             end
-            stf(i).propVMAT.initAngleBorderCentreDiff = [stf(i).gantryAngle-stf(i).propVMAT.initAngleBorders(1) stf(i).propVMAT.initAngleBorders(2)-stf(i).gantryAngle];
-            stf(i).propVMAT.initAngleBordersDiff = sum(stf(i).propVMAT.initAngleBorderCentreDiff);
+            stf(i).propVMAT.FMOAngleBorderCentreDiff = [stf(i).gantryAngle-stf(i).propVMAT.FMOAngleBorders(1) stf(i).propVMAT.FMOAngleBorders(2)-stf(i).gantryAngle];
+            stf(i).propVMAT.FMOAngleBordersDiff = sum(stf(i).propVMAT.FMOAngleBorderCentreDiff);
         end
         
         %The following must be taken as the union of stf(:).FIELD and stf(:).FIELD:
@@ -708,17 +708,17 @@ if pln.propOpt.runVMAT
         else
             
             % for time interpolation
-            stf(i).propVMAT.timeFracFromLastOpt = (stf(stf(i).propVMAT.lastOptIndex).propVMAT.DAOAngleBorders(2)-stf(i).propVMAT.doseAngleBorders(1))./stf(i).propVMAT.doseAngleBordersDiff;
-            stf(i).propVMAT.timeFracFromNextOpt = (stf(i).propVMAT.doseAngleBorders(2)-stf(stf(i).propVMAT.lastOptIndex).propVMAT.DAOAngleBorders(2))./stf(i).propVMAT.doseAngleBordersDiff;
-            if stf(i).propVMAT.timeFracFromLastOpt > 1
-                stf(i).propVMAT.timeFracFromLastOpt = 1;
-            elseif stf(i).propVMAT.timeFracFromLastOpt < 0
-                stf(i).propVMAT.timeFracFromLastOpt = 0;
+            stf(i).propVMAT.timeFracFromLastDAO = (stf(stf(i).propVMAT.lastDAOIndex).propVMAT.DAOAngleBorders(2)-stf(i).propVMAT.doseAngleBorders(1))./stf(i).propVMAT.doseAngleBordersDiff;
+            stf(i).propVMAT.timeFracFromNextDAO = (stf(i).propVMAT.doseAngleBorders(2)-stf(stf(i).propVMAT.lastDAOIndex).propVMAT.DAOAngleBorders(2))./stf(i).propVMAT.doseAngleBordersDiff;
+            if stf(i).propVMAT.timeFracFromLastDAO > 1
+                stf(i).propVMAT.timeFracFromLastDAO = 1;
+            elseif stf(i).propVMAT.timeFracFromLastDAO < 0
+                stf(i).propVMAT.timeFracFromLastDAO = 0;
             end
-            if stf(i).propVMAT.timeFracFromNextOpt > 1
-                stf(i).propVMAT.timeFracFromNextOpt = 1;
-            elseif stf(i).propVMAT.timeFracFromNextOpt < 0
-                stf(i).propVMAT.timeFracFromNextOpt = 0;
+            if stf(i).propVMAT.timeFracFromNextDAO > 1
+                stf(i).propVMAT.timeFracFromNextDAO = 1;
+            elseif stf(i).propVMAT.timeFracFromNextDAO < 0
+                stf(i).propVMAT.timeFracFromNextDAO = 0;
             end
         end
         

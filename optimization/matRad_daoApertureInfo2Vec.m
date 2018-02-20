@@ -77,8 +77,10 @@ if apertureInfo.runVMAT
     %this gives a vector of the arc lengths belonging to each optimized CP
     %unique gets rid of double-counted angles (which is every interior
     %angle)
-    optInd = [apertureInfo.propVMAT.beam.optimizeBeam];
-    optAngleLengths = [apertureInfo.propVMAT.beam(optInd).optAngleBordersDiff];
+    
+    %%%%%% CHANGE OPT TO DAO?
+    optInd = [apertureInfo.propVMAT.beam.DAOBeam];
+    optAngleLengths = [apertureInfo.propVMAT.beam(optInd).DAOAngleBordersDiff];
     optGantryRot = [apertureInfo.beam(optInd).gantryRot];
     apertureInfoVec((offset+1):end) = optAngleLengths./optGantryRot; %entries are the times until the next opt gantry angle is reached
     
@@ -109,8 +111,8 @@ if nargout > 1
                     error(['Could not find the following machine file: ' fileName ]);
                 end
                 
-                timeLimL = diff(apertureInfo.propVMAT.beam(i).optAngleBorders)/machine.constraints.gantryRotationSpeed(2); %Minimum time interval between two optimized beams/gantry angles
-                timeLimU = diff(apertureInfo.propVMAT.beam(i).optAngleBorders)/machine.constraints.gantryRotationSpeed(1); %Maximum time interval between two optimized beams/gantry angles
+                timeLimL = diff(apertureInfo.propVMAT.beam(i).DAOAngleBorders)/machine.constraints.gantryRotationSpeed(2); %Minimum time interval between two optimized beams/gantry angles
+                timeLimU = diff(apertureInfo.propVMAT.beam(i).DAOAngleBorders)/machine.constraints.gantryRotationSpeed(1); %Maximum time interval between two optimized beams/gantry angles
                 
                 mappingMx(counter+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,1) = i;
                 limMx(counter+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,:) = [timeLimL timeLimU];

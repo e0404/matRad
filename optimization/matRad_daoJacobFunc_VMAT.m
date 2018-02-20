@@ -110,19 +110,19 @@ leftLeafPos  = apertureInfoVec([1:apertureInfo.totalNumOfLeafPairs]+apertureInfo
 rightLeafPos = apertureInfoVec(1+apertureInfo.totalNumOfLeafPairs+apertureInfo.totalNumOfShapes:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2);
 
 % values of time differences of optimized gantry angles
-optInd = [apertureInfo.propVMAT.beam.optimizeBeam];
-timeOptBorderAngles = apertureInfoVec((1+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):end);
+DAOInd = [apertureInfo.propVMAT.beam.DAOBeam];
+timeDAOBorderAngles = apertureInfoVec((1+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):end);
 
 i = sort(repmat(1:(apertureInfo.totalNumOfShapes-1),1,2));
 j = sort(repmat(1:apertureInfo.totalNumOfShapes,1,2));
 j(1) = [];
 j(end) = [];
 
-timeFac = [apertureInfo.propVMAT.beam(optInd).timeFac]';
+timeFac = [apertureInfo.propVMAT.beam(DAOInd).timeFac]';
 timeFac(timeFac == 0) = [];
 
 timeFacMatrix = sparse(i,j,timeFac,(apertureInfo.totalNumOfShapes-1),apertureInfo.totalNumOfShapes);
-timeBNOptAngles = timeFacMatrix*timeOptBorderAngles;
+timeBNOptAngles = timeFacMatrix*timeDAOBorderAngles;
 
 currentLeftLeafInd = (apertureInfo.totalNumOfShapes+1):(apertureInfo.totalNumOfShapes+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles));
 currentRightLeafInd = (apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+1):(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles));
@@ -164,8 +164,8 @@ jacob_lfspd = sparse(i,j,s,2*apertureInfo.beam(1).numOfActiveLeafPairs*(aperture
 % jacobian of the doserate constraint
 % values of doserate (MU/sec) between optimized gantry angles
 weights = apertureInfoVec(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale;
-timeFacCurr = [apertureInfo.propVMAT.beam(optInd).timeFacCurr]';
-timeOptDoseBorderAngles = timeOptBorderAngles.*timeFacCurr;
+timeFacCurr = [apertureInfo.propVMAT.beam(DAOInd).timeFacCurr]';
+timeOptDoseBorderAngles = timeDAOBorderAngles.*timeFacCurr;
 
 i = repmat(1:apertureInfo.totalNumOfShapes,1,2);
 j = [1:apertureInfo.totalNumOfShapes (apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2+1):(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2)];
