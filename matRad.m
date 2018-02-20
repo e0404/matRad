@@ -40,12 +40,15 @@ pln.propStf.couchAngles     = [0 0 0 0 0]; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
+% dose calculation settings
+pln.propDoseCalc.memorySaverPhoton = false;
 
 % optimization settings
 pln.propOpt.bioOptimization = 'none'; % none: physical optimization;             const_RBExD; constant RBE of 1.1;
                                             % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
 pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
+pln.propOpt.runVMAT         = false;  % 1/true: run VMAT, 0/false: don't
 
 
 %% For VMAT
