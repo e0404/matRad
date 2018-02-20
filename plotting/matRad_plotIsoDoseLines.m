@@ -71,9 +71,6 @@ cMapScale = size(cMap,1) - 1;
 isoColorLevel = (isoLevels - window(1))./(window(2)-window(1));
 isoColorLevel(isoColorLevel < 0) = 0;
 isoColorLevel(isoColorLevel > 1) = 0;
-
-cMap = flipud(cMap);
-
 colors = squeeze(ind2rgb(uint8(cMapScale*isoColorLevel),cMap));
 
 switch env
