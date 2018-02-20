@@ -56,7 +56,7 @@ apertureInfo = matRad_maxLeafSpeed(apertureInfo);
 doInterp = 0;
 
 for i = 1:size(apertureInfo.beam,2)
-    if apertureInfo.propVMAT.beam(i).optimizeBeam
+    if apertureInfo.propVMAT.beam(i).DAOBeam
         
         %all of these should be greater than 1, since DAO respects the
         %constraints

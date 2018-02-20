@@ -52,7 +52,7 @@ else
         error(['Could not find the following machine file: ' fileName ]);
     end
     
-    optInd = find([apertureInfo.propVMAT.beam.optimizeBeam]);
+    optInd = find([apertureInfo.propVMAT.beam.DAOBeam]);
     cl_lfspd = machine.constraints.leafSpeed(1)*ones(2*(numel(optInd)-1)*apertureInfo.beam(1).numOfActiveLeafPairs,1); %Minimum leaf travel speed (mm/s)
     cu_lfspd = machine.constraints.leafSpeed(2)*ones(2*(numel(optInd)-1)*apertureInfo.beam(1).numOfActiveLeafPairs,1); %Maximum leaf travel speed (mm/s)
     %apertureInfo.beam(i).numOfActiveLeafPairs should be independent of i, due to using the union of all ray positions in the stf

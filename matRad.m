@@ -83,11 +83,12 @@ pln.propOpt.runDAO = true;
 pln.propOpt.runSequencing = true;
 pln.propOpt.preconditioner = true;
 pln.propOpt.numLevels = 7;
-pln.propOpt.numApertures = 7;           % Number of apertures to keep after sequencing; max val is pln.maxApertureAngleSpread/pln.minGantryAngleRes
 
 pln.propOpt.VMAToptions.machineConstraintFile = [pln.radiationMode '_' pln.machine];
-pln.propOpt.VMAToptions.minGantryAngleRes = 2;      % Min gantry angle spacing for dose calculation
-pln.propOpt.VMAToptions.maxApertureAngleSpread = 28;% Max gantry angle spread between apertures from same optimized fluence map; should be a multiple of pln.minGantryAngleRes
+
+pln.propOpt.VMAToptions.maxGantryAngleSpacing = 2;      % Max gantry angle spacing for dose calculation
+pln.propOpt.VMAToptions.maxDAOGantryAngleSpacing = 4;      % Max gantry angle spacing for DAO
+pln.propOpt.VMAToptions.maxFMOGantryAngleSpacing = 28;      % Max gantry angle spacing for FMO
 
 pln = matRad_VMATGantryAngles(pln,cst,ct);
 

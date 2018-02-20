@@ -207,14 +207,14 @@ for i=1:size(stf,2)
         apertureInfo.beam(i).bixOffset = bixOffset;
         bixOffset = bixOffset+apertureInfo.beam(i).numOfActiveLeafPairs;
         
-        apertureInfo.propVMAT.beam(i).optimizeBeam = stf(i).propVMAT.optimizeBeam;
-        apertureInfo.propVMAT.beam(i).initializeBeam = stf(i).propVMAT.initializeBeam;
+        apertureInfo.propVMAT.beam(i).DAOBeam = stf(i).propVMAT.DAOBeam;
+        apertureInfo.propVMAT.beam(i).FMOBeam = stf(i).propVMAT.FMOBeam;
         
         apertureInfo.propVMAT.beam(i).doseAngleBorders = stf(i).propVMAT.doseAngleBorders;
         apertureInfo.propVMAT.beam(i).doseAngleBorderCentreDiff = stf(i).propVMAT.doseAngleBorderCentreDiff;
         apertureInfo.propVMAT.beam(i).doseAngleBordersDiff = stf(i).propVMAT.doseAngleBordersDiff;
         
-        if apertureInfo.propVMAT.beam(i).optimizeBeam
+        if apertureInfo.propVMAT.beam(i).DAOBeam
             
             totalNumOfOptBixels = totalNumOfOptBixels+stf(i).totalNumOfBixels;
             totalNumOfLeafPairs = totalNumOfLeafPairs+apertureInfo.beam(i).numOfShapes*apertureInfo.beam(i).numOfActiveLeafPairs;
@@ -222,29 +222,29 @@ for i=1:size(stf,2)
             apertureInfo.beam(i).gantryRot = sequencing.beam(i).gantryRot;
             apertureInfo.beam(i).MURate = sequencing.beam(i).MURate;
             
-            apertureInfo.propVMAT.beam(i).optAngleBorders = stf(i).propVMAT.optAngleBorders;
-            apertureInfo.propVMAT.beam(i).optAngleBorderCentreDiff = stf(i).propVMAT.optAngleBorderCentreDiff;
-            apertureInfo.propVMAT.beam(i).optAngleBordersDiff = stf(i).propVMAT.optAngleBordersDiff;
+            apertureInfo.propVMAT.beam(i).DAOAngleBorders = stf(i).propVMAT.DAOAngleBorders;
+            apertureInfo.propVMAT.beam(i).DAOAngleBorderCentreDiff = stf(i).propVMAT.DAOAngleBorderCentreDiff;
+            apertureInfo.propVMAT.beam(i).DAOAngleBordersDiff = stf(i).propVMAT.DAOAngleBordersDiff;
             
             apertureInfo.propVMAT.beam(i).timeFacCurr = stf(i).propVMAT.timeFacCurr;
             apertureInfo.propVMAT.beam(i).timeFac = stf(i).propVMAT.timeFac;
             
-            apertureInfo.propVMAT.beam(i).lastOptIndex = stf(i).propVMAT.lastOptIndex;
-            apertureInfo.propVMAT.beam(i).nextOptIndex = stf(i).propVMAT.nextOptIndex;
+            apertureInfo.propVMAT.beam(i).lastDAOIndex = stf(i).propVMAT.lastDAOIndex;
+            apertureInfo.propVMAT.beam(i).nextDAOIndex = stf(i).propVMAT.nextDAOIndex;
             
             
-            if apertureInfo.propVMAT.beam(i).initializeBeam
-                apertureInfo.propVMAT.beam(i).initAngleBorders = stf(i).propVMAT.initAngleBorders;
-                apertureInfo.propVMAT.beam(i).initAngleBorderCentreDiff = stf(i).propVMAT.initAngleBorderCentreDiff;
-                apertureInfo.propVMAT.beam(i).initAngleBordersDiff = stf(i).propVMAT.initAngleBordersDiff;
+            if apertureInfo.propVMAT.beam(i).FMOBeam
+                apertureInfo.propVMAT.beam(i).FMOAngleBorders = stf(i).propVMAT.FMOAngleBorders;
+                apertureInfo.propVMAT.beam(i).FMOAngleBorderCentreDiff = stf(i).propVMAT.FMOAngleBorderCentreDiff;
+                apertureInfo.propVMAT.beam(i).FMOAngleBordersDiff = stf(i).propVMAT.FMOAngleBordersDiff;
             end
             
         else
-            apertureInfo.propVMAT.beam(i).fracFromLastOpt = stf(i).propVMAT.fracFromLastOpt;
-            apertureInfo.propVMAT.beam(i).timeFracFromLastOpt = stf(i).propVMAT.timeFracFromLastOpt;
-            apertureInfo.propVMAT.beam(i).timeFracFromNextOpt = stf(i).propVMAT.timeFracFromNextOpt;
-            apertureInfo.propVMAT.beam(i).lastOptIndex = stf(i).propVMAT.lastOptIndex;
-            apertureInfo.propVMAT.beam(i).nextOptIndex = stf(i).propVMAT.nextOptIndex;
+            apertureInfo.propVMAT.beam(i).fracFromLastDAO = stf(i).propVMAT.fracFromLastDAO;
+            apertureInfo.propVMAT.beam(i).timeFracFromLastDAO = stf(i).propVMAT.timeFracFromLastDAO;
+            apertureInfo.propVMAT.beam(i).timeFracFromNextDAO = stf(i).propVMAT.timeFracFromNextDAO;
+            apertureInfo.propVMAT.beam(i).lastDAOIndex = stf(i).propVMAT.lastDAOIndex;
+            apertureInfo.propVMAT.beam(i).nextDAOIndex = stf(i).propVMAT.nextDAOIndex;
         end
     end
 end

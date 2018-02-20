@@ -72,7 +72,7 @@ for i = 1:numOfBeams
     
     if pln.propOpt.runVMAT
         
-        if ~stf(i).propVMAT.initializeBeam
+        if ~stf(i).propVMAT.FMOBeam
             sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = 0;
             sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
             offset = offset + numOfRaysPerBeam;
