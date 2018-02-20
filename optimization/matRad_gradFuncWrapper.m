@@ -90,56 +90,30 @@ for i = 1:options.numOfScenarios
         
         if isequal(options.bioOpt,'none')
             
-            if isfield(dij,'optBixel')
-                g(dij.optBixel) = g(dij.optBixel) + (delta{i}' * dij.physicalDose{i}(:,dij.optBixel))';
-                
-                if dij.memorySaverPhoton
-                    depthOffset = uint32(0);
-                    tailOffset = uint32(0);
-                    
-                    for j = 1:dij.totalNumOfRays
-                        if ~dij.optBixel(j)
-                            continue
-                        end
-                        depthInd = depthOffset+(1:uint32(dij.nDepth(j)));
-                        depthOffset = depthOffset+uint32(dij.nDepth(j));
-                        
-                        for k = depthInd
-                            tailInd = tailOffset+(1:uint32(dij.nTailPerDepth(k)));
-                            tailOffset = tailOffset+uint32(dij.nTailPerDepth(k));
-                            
-                            voxInd = dij.ixTail(tailInd);
-                            
-                            g(j) = g(j)+sum(delta{i}(voxInd)).*dij.bixelDoseTail(k);
-                        end
+            g(dij.optBixel) = g(dij.optBixel) + (delta{i}' * dij.physicalDose{i}(:,dij.optBixel))';
+
+            if dij.memorySaverPhoton
+                depthOffset = uint32(0);
+                tailOffset = uint32(0);
+
+                for j = 1:dij.totalNumOfRays
+                    if ~dij.optBixel(j)
+                        continue
                     end
-                end
-                
-            else
-                g = g + (delta{i}' * dij.physicalDose{i})';
-                
-                if dij.memorySaverPhoton
-                    depthOffset = uint32(0);
-                    tailOffset = uint32(0);
-                    
-                    for j = 1:dij.totalNumOfRays
-                        depthInd = depthOffset+(1:uint32(dij.nDepth(j)));
-                        depthOffset = depthOffset+uint32(dij.nDepth(j));
-                        
-                        for k = depthInd
-                            tailInd = tailOffset+(1:uint32(dij.nTailPerDepth(k)));
-                            tailOffset = tailOffset+uint32(dij.nTailPerDepth(k));
-                            
-                            voxInd = dij.ixTail(tailInd);
-                            
-                            g(j) = g(j)+sum(delta{i}(voxInd)).*dij.bixelDoseTail(k);
-                        end
+                    depthInd = depthOffset+(1:uint32(dij.nDepth(j)));
+                    depthOffset = depthOffset+uint32(dij.nDepth(j));
+
+                    for k = depthInd
+                        tailInd = tailOffset+(1:uint32(dij.nTailPerDepth(k)));
+                        tailOffset = tailOffset+uint32(dij.nTailPerDepth(k));
+
+                        voxInd = dij.ixTail(tailInd);
+
+                        g(j) = g(j)+sum(delta{i}(voxInd)).*dij.bixelDoseTail(k);
                     end
                 end
             end
             
-            g = g.*dij.scaleFactor;
-
         elseif isequal(options.ID,'protons_const_RBExD')
             
             g            = g + (delta{i}' * dij.physicalDose{i} * dij.RBE)';
@@ -164,4 +138,9 @@ for i = 1:options.numOfScenarios
         end
 
     end
+    
 end
+
+% apply general dij scale factor
+g = g * dij.scaleFactor;
+

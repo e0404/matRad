@@ -60,4 +60,3 @@ options.ipopt.limited_memory_initialization = 'scalar2';
 % Derivative Test (C.14)
 %options.ipopt.derivative_test               = 'first-order';
 %options.ipopt.derivative_test_tol           = 1e-3;
-%options.ipopt.derivative_test_first_index   = 1;
