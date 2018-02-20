@@ -41,7 +41,6 @@ if ~exist('refVol', 'var') || isempty(refVol)
     refVol = [2 5 50 95 98];
 end
 
-
 if ~exist('refGy', 'var') || isempty(refGy)
     refGy = floor(linspace(0,max(doseCube(:)),6)*10)/10;
 end

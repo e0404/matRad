@@ -108,3 +108,4 @@ if nargout > 2
    isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD; 
 end
 
+

@@ -1,4 +1,4 @@
-function flag = matRad_IpoptIterFunc(iter,objective,parameter,~)
+function flag = matRad_IpoptIterFunc(iter,objective,~,~)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: iter function
 % 
