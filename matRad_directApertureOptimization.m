@@ -137,17 +137,10 @@ options.runVMAT         = pln.propOpt.runVMAT;
 % set callback functions.
 funcs.objective         = @(x) matRad_daoObjFunc(x,dij,cst_Over,options,daoVec2ApertureInfo);
 funcs.iterfunc          = @(iter,objective,parameter) matRad_IpoptIterFunc(iter,objective,parameter,options.ipopt.max_iter);
-if pln.propOpt.runVMAT
-    funcs.gradient          = @(x) matRad_daoGradFunc_VMAT(x,dij,cst_Over,options,daoVec2ApertureInfo);
-    funcs.constraints       = @(x) matRad_daoConstFunc_VMAT(x,dij,cst_Over,options,daoVec2ApertureInfo);
-    funcs.jacobian          = @(x) matRad_daoJacobFunc_VMAT(x,dij,cst_Over,options,daoVec2ApertureInfo);
-    funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct_VMAT(apertureInfo,dij,cst_Over);
-else
-    funcs.gradient          = @(x) matRad_daoGradFunc_IMRT(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
-    funcs.constraints       = @(x) matRad_daoConstFunc_IMRT(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
-    funcs.jacobian          = @(x) matRad_daoJacobFunc_IMRT(x,apertureInfo,dij,cst_Over,options,daoVec2ApertureInfo);
-    funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct_IMRT(apertureInfo,dij,cst_Over);
-end
+funcs.gradient          = @(x) matRad_daoGradFunc(x,dij,cst_Over,options,daoVec2ApertureInfo);
+funcs.constraints       = @(x) matRad_daoConstFunc(x,dij,cst_Over,options,daoVec2ApertureInfo);
+funcs.jacobian          = @(x) matRad_daoJacobFunc(x,dij,cst_Over,options,daoVec2ApertureInfo);
+funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct(apertureInfo,dij,cst_Over);
 
 % Run IPOPT.
 [optApertureInfoVec, info] = ipopt(apertureInfo.apertureVector,funcs,options);
