@@ -70,7 +70,7 @@ yCoordsV = yCoordsV * ct.resolution.y;
 zCoordsV = zCoordsV * ct.resolution.z;
 
 % Calculated isocenter.
-isoCenter = mean([xCoordsV yCoordsV zCoordsV],1);
+isoCenter = mean([xCoordsV yCoordsV zCoordsV]);
 
 % Visualization
 if visBool
