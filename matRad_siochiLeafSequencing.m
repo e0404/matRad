@@ -84,7 +84,11 @@ for i = 1:numOfBeams
         
         sequencing.beam(i).numOfShapes = 0;
         %does this make sense to discard apertures if VMAT isn't run?
-        numToKeep = pln.propOpt.numApertures; %if all apertures are to be kept, this should be set to 0
+        if isfield(pln.propOpt,'numApertures')
+            numToKeep = pln.propOpt.numApertures; %if all apertures are to be kept, this should be set to 0
+        else
+            numToKeep = 0;
+        end
     end
     
     % get relevant weights for current beam
