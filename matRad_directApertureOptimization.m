@@ -190,7 +190,6 @@ end
 if pln.propOpt.runVMAT
     resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
     
-    
     %optimize delivery
     resultGUI = matRad_optDelivery(resultGUI,1);
     resultGUI = matRad_calcDeliveryMetrics(resultGUI,pln,stf);
