@@ -208,7 +208,7 @@ options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
 options.numOfScenarios  = dij.numOfScenarios;
 
 % set callback functions.
-[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst_Over,options);   
+[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst_Over,options);
 funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst_Over,options);
 funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst_Over,options);
 funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst_Over,options);

@@ -61,7 +61,6 @@ clc
 
 %load HEAD_AND_NECK
 load TG119.mat
-clear pln
 %load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat

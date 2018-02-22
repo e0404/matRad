@@ -31,6 +31,8 @@ function jacobStruct = matRad_getJacobStruct(dij,cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+numOfConstraints = 0;
 % check consitency of constraints
 for i = 1:size(cst,1)    
     for j = 1:numel(cst{i,6})
@@ -44,6 +46,8 @@ for i = 1:size(cst,1)
                             error('Simultatenous definition of min mean and max mean dose constraint\n');
                     end
                 end
+                
+                numOfConstraints = numOfConstraints+1;
         elseif isequal(cst{i,6}(j).type, 'max EUD constraint') || ...
                isequal(cst{i,6}(j).type, 'min EUD constraint') 
 
@@ -54,7 +58,8 @@ for i = 1:size(cst,1)
                             error('Simultatenous definition of min EUD and max EUD constraint\n');
                     end
                 end
-
+                
+                numOfConstraints = numOfConstraints+1;
         elseif isequal(cst{i,6}(j).type, 'max DVH constraint') ||...
                isequal(cst{i,6}(j).type, 'min DVH constraint')
 
@@ -67,13 +72,16 @@ for i = 1:size(cst,1)
 
                         error('Simultatenous definition of DVH constraint\n');
                 end
-            end    
+            end
+            
+            numOfConstraints = numOfConstraints+1;
         end
     end
 end
 
 % Initializes constraints
-jacobStruct = sparse([]);
+jacobStructVec = zeros(1,numOfConstraints*nnz(dij.optBixel));
+offset = 0;
 
 % compute objective function for every VOI.
 for i = 1:size(cst,1)
@@ -98,9 +106,40 @@ for i = 1:size(cst,1)
                        isequal(cst{i,6}(j).type, 'min EUD constraint') || ...
                        isequal(cst{i,6}(j).type, 'max DVH constraint') || ... 
                        isequal(cst{i,6}(j).type, 'min DVH constraint')
+                   
+                   jacobStructVec(offset+(1:nnz(dij.optBixel))) = mean(dij.physicalDose{1}(cst{i,4}{1},dij.optBixel));
+                   
+                   if dij.memorySaverPhoton
+                       depthOffset = uint32(0);
+                       tailOffset = uint32(0);
+                       bixelOffset = 1;
+                       
+                       for k = 1:dij.totalNumOfRays
+                           if ~dij.optBixel(k)
+                               continue
+                           end
+                           depthInd = depthOffset+(1:uint32(dij.nDepth(k)));
+                           depthOffset = depthOffset+uint32(dij.nDepth(k));
+                           
+                           for l = depthInd
+                               tailInd = tailOffset+(1:uint32(dij.nTailPerDepth(l)));
+                               tailOffset = tailOffset+uint32(dij.nTailPerDepth(l));
+                               
+                               voxInd = dij.ixTail(tailInd);
+                               voxInd = intersect(voxInd,cst{i,4}{1});
+                               % if there are no voxels in the tail that
+                               % are part of the structure, move on
+                               if isempty(voxInd)
+                                   continue
+                               end
+                               jacobStructVec(offset+bixelOffset) = 1;
+                           end
+                           
+                           bixelOffset = bixelOffset+1;
+                       end
+                   end
 
-                       jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{i,4}{1},:)))];
-
+                       offset = offset+nnz(dij.optBixel);
                     end
                 
                 end
@@ -112,4 +151,15 @@ for i = 1:size(cst,1)
     end
 
 end
+
+i = 1:numOfConstraints;
+i = kron(i,ones(1,nnz(dij.optBixel)));
+
+j = 1:dij.totalNumOfBixels;
+j(~dij.optBixel) = [];
+j = repmat(j,1,numOfConstraints);
+
+jacobStructVec(jacobStructVec ~= 0) = 1;
+
+jacobStruct = sparse(i,j,jacobStructVec,numOfConstraints,dij.totalNumOfBixels);
   
