@@ -90,7 +90,7 @@ for i = 1:options.numOfScenarios
         
         if isequal(options.bioOpt,'none')
             
-            g(dij.optBixel) = g(dij.optBixel) + (delta{i}' * dij.physicalDose{i}(:,dij.optBixel))';
+            g(dij.optBixel) = g(dij.optBixel) + dij.scaleFactor * (delta{i}' * dij.physicalDose{i}(:,dij.optBixel))';
 
             if dij.memorySaverPhoton
                 depthOffset = uint32(0);
@@ -109,14 +109,14 @@ for i = 1:options.numOfScenarios
 
                         voxInd = dij.ixTail(tailInd);
 
-                        g(j) = g(j)+sum(delta{i}(voxInd)).*dij.bixelDoseTail(k);
+                        g(j) = g(j) + dij.scaleFactor * sum(delta{i}(voxInd)).*dij.bixelDoseTail(k);
                     end
                 end
             end
             
         elseif isequal(options.ID,'protons_const_RBExD')
             
-            g            = g + (delta{i}' * dij.physicalDose{i} * dij.RBE)';
+            g = g + dij.scaleFactor * dij.RBE * (delta{i}' * dij.physicalDose{i})';
             
         elseif isequal(options.bioOpt,'LEMIV_effect')
 
@@ -140,7 +140,3 @@ for i = 1:options.numOfScenarios
     end
     
 end
-
-% apply general dij scale factor
-g = g * dij.scaleFactor;
-
