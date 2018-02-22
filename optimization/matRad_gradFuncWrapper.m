@@ -84,6 +84,10 @@ end
 % Calculate gradient
 g = zeros(dij.totalNumOfBixels,1);
 
+if ~isfield(dij,'optBixel')
+    dij.optBixel = true(dij.totalNumOfBixels,1);
+end
+
 for i = 1:options.numOfScenarios
     
     if any(delta{i} ~= 0) % exercise only if contributions from scenario i

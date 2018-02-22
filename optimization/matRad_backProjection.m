@@ -44,6 +44,10 @@ else
     % pre-allocation
     d = cell(options.numOfScenarios,1);
     
+    if ~isfield(dij,'optBixel')
+        dij.optBixel = true(dij.totalNumOfBixels,1);
+    end
+    
     % Calculate dose vector
     if isequal(options.bioOpt,'none')
         

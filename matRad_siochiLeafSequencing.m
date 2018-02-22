@@ -231,7 +231,7 @@ if pln.propOpt.runVMAT
     
     %matRad_daoVec2ApertureInfo will interpolate subchildren gantry
     %segments
-    resultGUI.apertureInfo = matRad_daoVec2ApertureInfo_VMAT(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
+    resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
     
     %calculate max leaf speed
     resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
@@ -248,9 +248,7 @@ else
     
     resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
     
-    resultGUI.apertureInfo.updatePreconditioner = true;
-    resultGUI.apertureInfo = matRad_daoVec2ApertureInfo_IMRT(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
-    resultGUI.apertureInfo.updatePreconditioner = false;
+    resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
 end
 
 if pln.propOpt.preconditioner

@@ -23,25 +23,14 @@ function updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+% Copyright 2015 the matRad development team.
 %
-% m.bangert@dkfz.de
-%
-% This file is part of matRad.
-%
-% matrad is free software: you can redistribute it and/or modify it under
-% the terms of the GNU General Public License as published by the Free
-% Software Foundation, either version 3 of the License, or (at your option)
-% any later version.
-%
-% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
-% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-% details.
-%
-% You should have received a copy of the GNU General Public License in the
-% file license.txt along with matRad. If not, see
-% <http://www.gnu.org/licenses/>.
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -57,7 +46,32 @@ updatedInfo.apertureVector = apertureInfoVect;
 
 shapeInd = 1;
 
-indVect = NaN*ones(apertureInfo.totalNumOfShapes + apertureInfo.totalNumOfLeafPairs,1);
+indVect = NaN*ones(2*apertureInfo.doseTotalNumOfLeafPairs,1);
+offset = 0;
+
+% helper function to cope with numerical instabilities through rounding
+round2 = @(a,b) round(a*10^b)/10^b;
+
+if updatedInfo.runVMAT && ~all([updatedInfo.propVMAT.beam.DAOBeam])
+    j = 1;
+    for i = 1:numel(updatedInfo.beam)
+        if updatedInfo.propVMAT.beam(i).DAOBeam
+            % update the shape weight
+            % rescale the weight from the vector using the previous
+            % iteration scaling factor
+            updatedInfo.beam(i).shape(j).weight = apertureInfoVect(shapeInd)./updatedInfo.beam(i).shape(j).jacobiScale;
+            
+            updatedInfo.beam(i).MU = updatedInfo.beam(i).shape(j).weight*updatedInfo.weightToMU;
+            updatedInfo.beam(i).time = apertureInfoVect(updatedInfo.totalNumOfShapes+updatedInfo.totalNumOfLeafPairs*2+shapeInd)*updatedInfo.propVMAT.beam(i).timeFacCurr;
+            updatedInfo.beam(i).gantryRot = updatedInfo.propVMAT.beam(i).doseAngleBordersDiff/updatedInfo.beam(i).time;
+            updatedInfo.beam(i).MURate = updatedInfo.beam(i).MU./updatedInfo.beam(i).time;
+            
+            shapeInd = shapeInd+1;
+        end
+    end
+    shapeInd = 1;
+end
+
 
 %% update the shapeMaps
 % here the new colimator positions are used to create new shapeMaps that
@@ -74,45 +88,116 @@ for i = 1:numel(updatedInfo.beam)
     edges_r = updatedInfo.beam(i).posOfCornerBixel(1)...
                  + ([1:size(apertureInfo.beam(i).bixelIndMap,2)]-1+1/2)*updatedInfo.bixelWidth;
     
+    % get dimensions of 2d matrices that store shape/bixel information
+    n = apertureInfo.beam(i).numOfActiveLeafPairs;
+    
     % loop over all shapes
-    for j = 1:updatedInfo.beam(i).numOfShapes
+    if updatedInfo.runVMAT
+        numOfShapes = 1;
+    else
+        numOfShapes = updatedInfo.beam(i).numOfShapes;
+    end
+    for j = 1:numOfShapes
         
-        % update the shape weight
-        updatedInfo.beam(i).shape(j).weight = apertureInfoVect(shapeInd);
-        
-        % get dimensions of 2d matrices that store shape/bixel information
-        n = apertureInfo.beam(i).numOfActiveLeafPairs;
-        
-        % extract left and right leaf positions from shape vector
-        vectorIx     = updatedInfo.beam(i).shape(j).vectorOffset + ([1:n]-1);
-        leftLeafPos  = apertureInfoVect(vectorIx);
-        rightLeafPos = apertureInfoVect(vectorIx+apertureInfo.totalNumOfLeafPairs);
+        if ~updatedInfo.runVMAT || updatedInfo.propVMAT.beam(i).DAOBeam
+            % either this is not VMAT, or if it is VMAT, this is a DAO beam
+            
+            % update the shape weight
+            updatedInfo.beam(i).shape(j).weight = apertureInfoVect(shapeInd);
+            
+            if updatedInfo.runVMAT
+                updatedInfo.beam(i).MU = updatedInfo.beam(i).shape(j).weight*updatedInfo.weightToMU;
+                updatedInfo.beam(i).time = apertureInfoVect(updatedInfo.totalNumOfShapes+updatedInfo.totalNumOfLeafPairs*2+shapeInd)*updatedInfo.propVMAT.beam(i).timeFacCurr;
+                updatedInfo.beam(i).gantryRot = updatedInfo.propVMAT.beam(i).doseAngleBordersDiff/updatedInfo.beam(i).time;
+                updatedInfo.beam(i).MURate = updatedInfo.beam(i).MU./updatedInfo.beam(i).time;
+            end
+            
+            
+            % extract left and right leaf positions from shape vector
+            vectorIx_L = updatedInfo.beam(i).shape(j).vectorOffset + ([1:n]-1);
+            vectorIx_R = vectorIx_L+apertureInfo.totalNumOfLeafPairs;
+            leftLeafPos  = apertureInfoVect(vectorIx_L);
+            rightLeafPos = apertureInfoVect(vectorIx_R);
+            
+        else
+            % this is an interpolated beam
+            
+            %MURate is interpolated between MURates of optimized apertures
+            updatedInfo.beam(i).MURate = updatedInfo.propVMAT.beam(i).fracFromLastDAO*updatedInfo.beam(updatedInfo.propVMAT.beam(i).lastDAOIndex).MURate+(1-updatedInfo.propVMAT.beam(i).fracFromLastDAO)*updatedInfo.beam(updatedInfo.propVMAT.beam(i).nextDAOIndex).MURate;
+            updatedInfo.beam(i).gantryRot = 1./(updatedInfo.propVMAT.beam(i).timeFracFromLastDAO./updatedInfo.beam(updatedInfo.propVMAT.beam(i).lastDAOIndex).gantryRot+updatedInfo.propVMAT.beam(i).timeFracFromNextDAO./updatedInfo.beam(updatedInfo.propVMAT.beam(i).nextDAOIndex).gantryRot);
+            updatedInfo.beam(i).time = updatedInfo.propVMAT.beam(i).doseAngleBordersDiff./updatedInfo.beam(i).gantryRot;
+            
+            % calculate MU, weight
+            updatedInfo.beam(i).MU = updatedInfo.beam(i).MURate.*updatedInfo.beam(i).time;
+            updatedInfo.beam(i).shape(j).weight = updatedInfo.beam(i).MU./updatedInfo.weightToMU;
+            
+            % obtain leaf positions at last DAO beam
+            vectorIx_L_last = updatedInfo.beam(updatedInfo.propVMAT.beam(i).lastDAOIndex).shape(j).vectorOffset + ([1:n]-1);
+            vectorIx_R_last = vectorIx_L_last+apertureInfo.totalNumOfLeafPairs;
+            leftLeafPos_last = apertureInfoVect(vectorIx_L_last);
+            rightLeafPos_last = apertureInfoVect(vectorIx_R_last);
+            
+            % obtain leaf positions at next DAO beam
+            vectorIx_L_next = updatedInfo.beam(updatedInfo.propVMAT.beam(i).nextDAOIndex).shape(j).vectorOffset + ([1:n]-1);
+            vectorIx_R_next = vectorIx_L_next+apertureInfo.totalNumOfLeafPairs;
+            leftLeafPos_next = apertureInfoVect(vectorIx_L_next);
+            rightLeafPos_next = apertureInfoVect(vectorIx_R_next);
+            
+            % interpolate leaf positions
+            leftLeafPos = updatedInfo.propVMAT.beam(i).fracFromLastDAO*leftLeafPos_last+(1-updatedInfo.propVMAT.beam(i).fracFromLastDAO)*leftLeafPos_next;
+            rightLeafPos = updatedInfo.propVMAT.beam(i).fracFromLastDAO*rightLeafPos_last+(1-updatedInfo.propVMAT.beam(i).fracFromLastDAO)*rightLeafPos_next;
+        end
         
         % update information in shape structure
         updatedInfo.beam(i).shape(j).leftLeafPos  = leftLeafPos;
         updatedInfo.beam(i).shape(j).rightLeafPos = rightLeafPos;
         
+        % rounding for numerical stability
+        leftLeafPos  = round2(leftLeafPos,10);
+        rightLeafPos = round2(rightLeafPos,10);
         
+        % check overshoot of leaf positions
+        leftLeafPos(leftLeafPos <= apertureInfo.beam(i).lim_l) = apertureInfo.beam(i).lim_l(leftLeafPos <= apertureInfo.beam(i).lim_l);
+        rightLeafPos(rightLeafPos <= apertureInfo.beam(i).lim_l) = apertureInfo.beam(i).lim_l(rightLeafPos <= apertureInfo.beam(i).lim_l);
+        leftLeafPos(leftLeafPos >= apertureInfo.beam(i).lim_r) = apertureInfo.beam(i).lim_r(leftLeafPos >= apertureInfo.beam(i).lim_r);
+        rightLeafPos(rightLeafPos >= apertureInfo.beam(i).lim_r) = apertureInfo.beam(i).lim_r(rightLeafPos >= apertureInfo.beam(i).lim_r);
+        
+        %
         xPosIndLeftLeaf  = round((leftLeafPos - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth + 1);
         xPosIndRightLeaf = round((rightLeafPos - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth + 1);
         
-        % check limits because of rounding off issues at maximum, i.e., 
-        % enfore round(X.5) -> X
-        xPosIndLeftLeaf(leftLeafPos == apertureInfo.beam(i).lim_r) = ...
-            .5 + (leftLeafPos(leftLeafPos == apertureInfo.beam(i).lim_r) ...
-            - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth;
-        xPosIndRightLeaf(rightLeafPos == apertureInfo.beam(i).lim_r) = ...
-            .5 + (rightLeafPos(rightLeafPos == apertureInfo.beam(i).lim_r) ...
-            - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth;
+        %
+        xPosIndLeftLeaf_lim  = floor((apertureInfo.beam(i).lim_l - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth+1);
+        xPosIndRightLeaf_lim = ceil((apertureInfo.beam(i).lim_r - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth + 1);
+        
+        xPosIndLeftLeaf(xPosIndLeftLeaf <= xPosIndLeftLeaf_lim) = xPosIndLeftLeaf_lim(xPosIndLeftLeaf <= xPosIndLeftLeaf_lim)+1;
+        xPosIndRightLeaf(xPosIndRightLeaf >= xPosIndRightLeaf_lim) = xPosIndRightLeaf_lim(xPosIndRightLeaf >= xPosIndRightLeaf_lim)-1;
+        
+        % check limits because of rounding off issues at maximum, i.e.,
+        % enforce round(X.5) -> X
+        % LeafPos can occasionally go slightly beyond lim_r, so changed
+        % == check to >=
+        xPosIndLeftLeaf(leftLeafPos >= apertureInfo.beam(i).lim_r) = round(...
+            .5 + (leftLeafPos(leftLeafPos >= apertureInfo.beam(i).lim_r) ...
+            - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth);
+        
+        xPosIndRightLeaf(rightLeafPos >= apertureInfo.beam(i).lim_r) = round(...
+            .5 + (rightLeafPos(rightLeafPos >= apertureInfo.beam(i).lim_r) ...
+            - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth);
 
         % find the bixel index that the leaves currently touch
         bixelIndLeftLeaf  = apertureInfo.beam(i).bixelIndMap((xPosIndLeftLeaf-1)*n+[1:n]');
         bixelIndRightLeaf = apertureInfo.beam(i).bixelIndMap((xPosIndRightLeaf-1)*n+[1:n]');
         
+        if any(isnan(bixelIndLeftLeaf)) || any(isnan(bixelIndRightLeaf))
+            error('cannot map leaf position to bixel index');
+        end
+        
         % store information in index vector for gradient calculation
-        indVect(apertureInfo.beam(i).shape(j).vectorOffset+[1:n]-1) = bixelIndLeftLeaf;
-        indVect(apertureInfo.beam(i).shape(j).vectorOffset+[1:n]-1+apertureInfo.totalNumOfLeafPairs) = bixelIndRightLeaf;
-
+        indVect(offset+[1:n]) = bixelIndLeftLeaf;
+        indVect(offset+[1:n]+apertureInfo.doseTotalNumOfLeafPairs) = bixelIndRightLeaf;
+        offset = offset+n;
+        
         % calculate opening fraction for every bixel in shape to construct
         % bixel weight vector
         
@@ -131,13 +216,15 @@ for i = 1:numel(updatedInfo.beam)
         % save the tempMap (we need to apply a positivity operator !)
         updatedInfo.beam(i).shape(j).shapeMap = (tempMap  + abs(tempMap))  / 2;
         
-        % increment shape index
-        shapeInd = shapeInd +1;
+        if ~updatedInfo.runVMAT || updatedInfo.propVMAT.beam(i).DAOBeam
+            % increment shape index
+            shapeInd = shapeInd +1;
+        end
     end
-    
 end
 
 updatedInfo.bixelWeights = w;
 updatedInfo.bixelIndices = indVect;
+updatedInfo.apertureVector = apertureInfoVect;
 
 end

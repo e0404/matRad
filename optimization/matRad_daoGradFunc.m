@@ -1,4 +1,4 @@
-function g = matRad_daoGradFunc(apertureInfoVec,dij,cst,options,daoVec2ApertureInfo)
+function g = matRad_daoGradFunc(apertureInfoVec,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: gradient function for direct aperture optimization
 %
@@ -39,7 +39,7 @@ apertureInfo = matRad_global_apertureInfo;
 
 % update apertureInfo, bixel weight vector an mapping of leafes to bixels
 if ~isequal(apertureInfoVec,apertureInfo.apertureVector)
-    apertureInfo = daoVec2ApertureInfo(apertureInfo,apertureInfoVec);
+    apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVec);
     matRad_global_apertureInfo = apertureInfo;
 end
 
