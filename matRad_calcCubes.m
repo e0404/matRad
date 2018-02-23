@@ -48,30 +48,21 @@ if ~strcmp(dij.radiationMode,'photons')
     end
 end
 
+if ~isfield(dij,'optBixel')
+    dij.optBixel = true(dij.totalNumOfBixels,1);
+end
+
 % compute physical dose for all beams individually and together
 for i = 1:length(beamInfo)
-
-    resultGUI.(['physicalDose', beamInfo(i).suffix]) = dij.scaleFactor * reshape(full(dij.physicalDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.dimensions);
-
+    
+    d = dij.physicalDose{scenNum}(:,dij.optBixel) * (w(dij.optBixel) * dij.scaleFactor);
+    
     if dij.memorySaverPhoton
-        depthOffset = uint32(0);
-        tailOffset = uint32(0);
-
-        for j = 1:dij.totalNumOfRays
-            depthInd = depthOffset+(1:uint32(dij.nDepth(j)));
-            depthOffset = depthOffset+uint32(dij.nDepth(j));
-
-            for k = depthInd
-                tailInd = tailOffset+(1:uint32(dij.nTailPerDepth(k)));
-                tailOffset = tailOffset+uint32(dij.nTailPerDepth(k));
-
-                voxInd = dij.ixTail(tailInd);
-                resultGUI.(['physicalDose', beamInfo(i).suffix])(voxInd) = dij.scaleFactor * ...
-                    resultGUI.(['physicalDose', beamInfo(i).suffix])(voxInd) + dij.bixelDoseTail(k).*w(j);
-            end
-        end
+        % don't worry about computing individual dose for photons
+        d = d+matRad_memorySaverDoseAndGrad(w,dij,'dose');
     end
-
+    
+    resultGUI.(['physicalDose', beamInfo(i).suffix]) = reshape(d,dij.dimensions);
 end
 
 % consider RBE for protons

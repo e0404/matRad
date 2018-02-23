@@ -97,25 +97,7 @@ for i = 1:options.numOfScenarios
             g(dij.optBixel) = g(dij.optBixel) + dij.scaleFactor * (delta{i}' * dij.physicalDose{i}(:,dij.optBixel))';
 
             if dij.memorySaverPhoton
-                depthOffset = uint32(0);
-                tailOffset = uint32(0);
-
-                for j = 1:dij.totalNumOfRays
-                    if ~dij.optBixel(j)
-                        continue
-                    end
-                    depthInd = depthOffset+(1:uint32(dij.nDepth(j)));
-                    depthOffset = depthOffset+uint32(dij.nDepth(j));
-
-                    for k = depthInd
-                        tailInd = tailOffset+(1:uint32(dij.nTailPerDepth(k)));
-                        tailOffset = tailOffset+uint32(dij.nTailPerDepth(k));
-
-                        voxInd = dij.ixTail(tailInd);
-
-                        g(j) = g(j) + dij.scaleFactor * sum(delta{i}(voxInd)).*dij.bixelDoseTail(k);
-                    end
-                end
+                g = g+matRad_memorySaverDoseAndGrad(delta{i},dij,'gradient');
             end
             
         elseif isequal(options.ID,'protons_const_RBExD')

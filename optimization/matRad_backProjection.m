@@ -56,24 +56,7 @@ else
             d{i} = dij.physicalDose{i}(:,dij.optBixel) * (w(dij.optBixel) * dij.scaleFactor);
 
             if dij.memorySaverPhoton
-                depthOffset = uint32(0);
-                tailOffset = uint32(0);
-
-                for j = 1:dij.totalNumOfRays
-                    if ~dij.optBixel(j)
-                        continue
-                    end
-                    depthInd = depthOffset+(1:uint32(dij.nDepth(j)));
-                    depthOffset = depthOffset+uint32(dij.nDepth(j));
-
-                    for k = depthInd
-                        tailInd = tailOffset+(1:uint32(dij.nTailPerDepth(k)));
-                        tailOffset = tailOffset+uint32(dij.nTailPerDepth(k));
-
-                        voxInd = dij.ixTail(tailInd);
-                        d{i}(voxInd) = d{i}(voxInd) + dij.bixelDoseTail(k)*w(j)*dij.scaleFactor;
-                    end
-                end
+                d{i} = d{i}+matRad_memorySaverDoseAndGrad(w,dij,'dose');
             end
 
         end

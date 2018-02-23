@@ -152,36 +152,13 @@ for i = 1:dij.numOfScenarios
                 indInSparseVec = repmat(1:nnz(dij.optBixel),1,numel(currConstraints))...
                     +kron((currConstraints-1)*nnz(dij.optBixel),ones(1,nnz(dij.optBixel)));
                 
-                jacobSparseVec(indInSparseVec) = transpose(physicalDoseProjection(:,jacobLogical)' * dij.physicalDose{i}(:,dij.optBixel));
+                jacobSparseVec(indInSparseVec) = transpose(physicalDoseProjection(:,jacobLogical)' * dij.scaleFactor * dij.physicalDose{i}(:,dij.optBixel));
                 
-                
-                %% CHANGE THIS
                 if dij.memorySaverPhoton
-                    depthOffset = uint32(0);
-                    tailOffset = uint32(0);
-                    bixelOffset = 1;
+                    jacobVariables.currConstraints = currConstraints;
+                    jacobVariables.jacobLogical = jacobLogical;
                     
-                    for j = 1:dij.totalNumOfRays
-                        if ~dij.optBixel(j)
-                            continue
-                        end
-                        depthInd = depthOffset+(1:uint32(dij.nDepth(j)));
-                        depthOffset = depthOffset+uint32(dij.nDepth(j));
-                        
-                        indInSparseVec = repmat(bixelOffset,1,numel(currConstraints))...
-                            +(currConstraints-1)*nnz(dij.optBixel);
-                        
-                        for k = depthInd
-                            tailInd = tailOffset+(1:uint32(dij.nTailPerDepth(k)));
-                            tailOffset = tailOffset+uint32(dij.nTailPerDepth(k));
-                            
-                            voxInd = dij.ixTail(tailInd);
-                            
-                            jacobSparseVec(indInSparseVec) = jacobSparseVec(indInSparseVec)+sum(physicalDoseProjection(voxInd,jacobLogical)).*dij.bixelDoseTail(k);
-                        end
-                        
-                        bixelOffset = bixelOffset+1;
-                    end
+                    jacobSparseVec = jacobSparseVec+matRad_memorySaverDoseAndGrad(physicalDoseProjection,dij,'jacobian',jacobVariables);
                 end
                 
             end
@@ -204,8 +181,6 @@ for i = 1:dij.numOfScenarios
 end
 
 if isequal(options.bioOpt,'none') ||  isequal(options.ID,'protons_const_RBExD')
-    % apply general dij scale factor
-    jacobSparseVec = jacobSparseVec * dij.scaleFactor;
     jacob = sparse(i_sparse,j_sparse,jacobSparseVec,numOfConstraints,dij.totalNumOfBixels);
 end
 
