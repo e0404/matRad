@@ -36,8 +36,7 @@ function jacob = matRad_jacobFuncWrapper(w,dij,cst,options)
 % get current dose / effect / RBExDose vector
 d = matRad_backProjection(w,dij,options);
 
-% initialize jacobian
-jacob = sparse([]);
+
 
 % initialize projection matrices and id containers
 physicalDoseProjection  = sparse([]);
@@ -118,28 +117,45 @@ for i = 1:size(cst,1)
 end
 
 if isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LEMIV_RBExD')
+    
+    % initialize jacobian
+    jacob = sparse([]);
+    
     constraintID = constraintID(2:end);
 end
 
+
+
 numOfConstraints = numel(scenID);
+
+i_sparse = 1:numOfConstraints;
+i_sparse = kron(i_sparse,ones(1,nnz(dij.optBixel)));
+
+j_sparse = 1:dij.totalNumOfBixels;
+j_sparse(~dij.optBixel) = [];
+j_sparse = repmat(j_sparse,1,numOfConstraints);
+
 jacobSparseVec = zeros(1,numOfConstraints*nnz(dij.optBixel));
+
+setOfConstraints = 1:numOfConstraints;
 
 % Calculate jacobian with dij projections
 for i = 1:dij.numOfScenarios
-    
-    setOfConstraints = (find(scenID == i))';
-    
-    for constraint = setOfConstraints
-        
         % enter if statement also for protons using a constant RBE
         if isequal(options.bioOpt,'none') ||  isequal(options.ID,'protons_const_RBExD')
             
             if ~isempty(physicalDoseProjection)
                 
-                offset = (constraint-1)*nnz(dij.optBixel);
+                jacobLogical          = (scenID == i);
+                currConstraints = setOfConstraints(jacobLogical);
                 
-                jacobSparseVec(offset+(1:nnz(dij.optBixel))) = physicalDoseProjection(:,constraint)' * dij.physicalDose{i}(:,dij.optBixel);
+                indInSparseVec = repmat(1:nnz(dij.optBixel),1,numel(currConstraints))...
+                    +kron((currConstraints-1)*nnz(dij.optBixel),ones(1,nnz(dij.optBixel)));
                 
+                jacobSparseVec(indInSparseVec) = transpose(physicalDoseProjection(:,jacobLogical)' * dij.physicalDose{i}(:,dij.optBixel));
+                
+                
+                %% CHANGE THIS
                 if dij.memorySaverPhoton
                     depthOffset = uint32(0);
                     tailOffset = uint32(0);
@@ -152,13 +168,16 @@ for i = 1:dij.numOfScenarios
                         depthInd = depthOffset+(1:uint32(dij.nDepth(j)));
                         depthOffset = depthOffset+uint32(dij.nDepth(j));
                         
+                        indInSparseVec = repmat(bixelOffset,1,numel(currConstraints))...
+                            +(currConstraints-1)*nnz(dij.optBixel);
+                        
                         for k = depthInd
                             tailInd = tailOffset+(1:uint32(dij.nTailPerDepth(k)));
                             tailOffset = tailOffset+uint32(dij.nTailPerDepth(k));
                             
                             voxInd = dij.ixTail(tailInd);
                             
-                            jacobSparseVec(offset+bixelOffset) = jacobSparseVec(bixelOffset)+sum(physicalDoseProjection(voxInd,constraint)).*dij.bixelDoseTail(k);
+                            jacobSparseVec(indInSparseVec) = jacobSparseVec(indInSparseVec)+sum(physicalDoseProjection(voxInd,jacobLogical)).*dij.bixelDoseTail(k);
                         end
                         
                         bixelOffset = bixelOffset+1;
@@ -182,18 +201,12 @@ for i = 1:dij.numOfScenarios
                 
             end
         end
-    end
 end
 
-i = 1:numOfConstraints;
-i = kron(i,ones(1,nnz(dij.optBixel)));
-
-j = 1:dij.totalNumOfBixels;
-j(~dij.optBixel) = [];
-j = repmat(j,1,numOfConstraints);
-
-% apply general dij scale factor
-jacobSparseVec = jacobSparseVec * dij.scaleFactor;
-jacob = sparse(i,j,jacobSparseVec,numOfConstraints,dij.totalNumOfBixels);
+if isequal(options.bioOpt,'none') ||  isequal(options.ID,'protons_const_RBExD')
+    % apply general dij scale factor
+    jacobSparseVec = jacobSparseVec * dij.scaleFactor;
+    jacob = sparse(i_sparse,j_sparse,jacobSparseVec,numOfConstraints,dij.totalNumOfBixels);
+end
 
 end
