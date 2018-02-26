@@ -21,7 +21,7 @@ function stf = matRad_generateStf(ct,cst,pln,visMode)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team.
+% Copyright 2018 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -103,13 +103,13 @@ end
 stf = struct('gantryAngle',cell(size(pln.propStf.gantryAngles)));
 
 if pln.propOpt.runVMAT
-    %Initialize master ray positions and target points with NaNs, to be
-    %deleted later.  These arrays are the unions of the corresponding
-    %arrays per gantry angle.  In order to do VMAT, it is easier to have
-    %the same MLC range and dij calculation for every possible beam/gantry
-    %angle.
-    masterRayPosBEV = nan(1,3);
-    masterTargetPointBEV = nan(1,3);
+    % Initialize master ray positions and target points with NaNs, to be
+    % deleted later. These arrays are the unions of the corresponding
+    % arrays per gantry angle.  In order to do VMAT, it is easier to have
+    % the same MLC range and dij calculation for every possible beam/gantry
+    % angle.
+    masterRayPos_bev      = nan(1,3);
+    masterTargetPoint_bev = nan(1,3);
 end
 
 
@@ -177,7 +177,6 @@ for i = 1:length(pln.propStf.gantryAngles)
              y = [y; zeros((x_max-x_min)/pln.propStf.bixelWidth+1,1)];
              z = [z; uniZ(j)*ones((x_max-x_min)/pln.propStf.bixelWidth+1,1)];             
          end
-         
          rayPos = [x,y,z];
      end
     
@@ -196,15 +195,13 @@ for i = 1:length(pln.propStf.gantryAngles)
     end
     
     if ~pln.propOpt.runVMAT
-        %If it is VMAT, we will do this later
-        
+               
         % source position in bev
         stf(i).sourcePoint_bev = [0 -SAD 0];
         
         % get (active) rotation matrix
         % transpose matrix because we are working with row vectors
         rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i)));
-        
         
         stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMat_vectors_T;
         
@@ -223,7 +220,6 @@ for i = 1:length(pln.propStf.gantryAngles)
         
         % loop over all rays to determine meta information for each ray
         stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
-        
         
         for j = stf(i).numOfRays:-1:1
                 
@@ -384,14 +380,16 @@ for i = 1:length(pln.propStf.gantryAngles)
         %ray.targetPoint_bev
         %Then these are rotated to form the non-bev forms;
         %ray.rayCorners_SCD is also formed
-        numOfRays = stf(i).numOfRays;
-        rayPosBEV = reshape([stf(i).ray(:).rayPos_bev]',3,numOfRays)';
-        targetPointBEV = reshape([stf(i).ray(:).targetPoint_bev]',3,numOfRays)';
         
-        masterRayPosBEV = union(masterRayPosBEV,rayPosBEV,'rows');
-        masterTargetPointBEV = union(masterTargetPointBEV,targetPointBEV,'rows');
+        % all ray positions have been determined
+        numOfRays             = stf(i).numOfRays;
+        rayPos_bev            = reshape([stf(i).ray(:).rayPos_bev]',3,numOfRays)';
+        targetPoint_bev       = reshape([stf(i).ray(:).targetPoint_bev]',3,numOfRays)';  
+        
+        masterRayPos_bev      = union(masterRayPos_bev,rayPos_bev,'rows');
+        masterTargetPoint_bev = union(masterTargetPoint_bev,targetPoint_bev,'rows');
+        
     end
-    
     
     
     % Show progress
@@ -537,14 +535,11 @@ for i = 1:length(pln.propStf.gantryAngles)
         end
     end
     
-end
+end %eof gantry angle loop
 
-%% VMAT
-
+% post-processing function for VMAT
 if pln.propOpt.runVMAT
-    
-    % post-processing function for VMAT
-    stf = matRad_StfVMATPost(stf,pln,masterRayPosBEV,masterTargetPointBEV,SAD,machine);
+    stf = matRad_StfVMATPost(stf,pln,masterRayPos_bev,masterTargetPoint_bev,SAD,machine);
 end
 
 end

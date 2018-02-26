@@ -97,7 +97,7 @@ for i = 1:options.numOfScenarios
             g(dij.optBixel) = g(dij.optBixel) + dij.scaleFactor * (delta{i}' * dij.physicalDose{i}(:,dij.optBixel))';
 
             if dij.memorySaverPhoton
-                g = g+matRad_memorySaverDoseAndGrad(delta{i},dij,'gradient');
+                g = g +  matRad_memorySaverDoseAndGrad(delta{i},options.optBixel,'gradient',dij);
             end
             
         elseif isequal(options.ID,'protons_const_RBExD')

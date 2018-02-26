@@ -44,8 +44,8 @@ else
     % pre-allocation
     d = cell(options.numOfScenarios,1);
     
-    if ~isfield(dij,'optBixel')
-        dij.optBixel = true(dij.totalNumOfBixels,1);
+    if ~isfield(options,'optBixel')
+        options.optBixel = true(dij.totalNumOfBixels,1);
     end
     
     % Calculate dose vector
@@ -53,10 +53,10 @@ else
         
         for i = 1:options.numOfScenarios
                             
-            d{i} = dij.physicalDose{i}(:,dij.optBixel) * (w(dij.optBixel) * dij.scaleFactor);
+            d{i} = dij.physicalDose{i}(:,options.optBixel) * (w(options.optBixel) * dij.scaleFactor);
 
             if dij.memorySaverPhoton
-                d{i} = d{i}+matRad_memorySaverDoseAndGrad(w,dij,'dose');
+                 d{i} = d{i} + matRad_memorySaverDoseAndGrad(w,options.optBixel,'dose',dij);
             end
 
         end
@@ -79,7 +79,7 @@ else
             if isequal(options.bioOpt,'LEMIV_effect')
                 d{i} = e;
             else
-                % calculate RBX x dose
+                % calculate RBE x dose
                 d{i}             = zeros(dij.numOfVoxels,1);
                 d{i}(dij.ixDose) = sqrt((e(dij.ixDose)./dij.bx(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
                                     - dij.gamma(dij.ixDose);
