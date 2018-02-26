@@ -210,6 +210,8 @@ for i=1:size(stf,2)
         apertureInfo.propVMAT.beam(i).DAOBeam = stf(i).propVMAT.DAOBeam;
         apertureInfo.propVMAT.beam(i).FMOBeam = stf(i).propVMAT.FMOBeam;
         
+        apertureInfo.propVMAT.beam(i).leafDir = sequencing.beam(i).leafDir;
+        
         apertureInfo.propVMAT.beam(i).doseAngleBorders = stf(i).propVMAT.doseAngleBorders;
         apertureInfo.propVMAT.beam(i).doseAngleBorderCentreDiff = stf(i).propVMAT.doseAngleBorderCentreDiff;
         apertureInfo.propVMAT.beam(i).doseAngleBordersDiff = stf(i).propVMAT.doseAngleBordersDiff;
@@ -271,9 +273,7 @@ if sequencing.runVMAT
     
     % create vectors for optimization
     
-    %EC 2018-02-04
-    % where did this go? it's still on my workstation in Ottawa...
-    %apertureInfo = matRad_leafTouching(apertureInfo);
+    apertureInfo = matRad_leafTouching(apertureInfo);
     [apertureInfo.apertureVector, apertureInfo.mappingMx, apertureInfo.limMx] = matRad_daoApertureInfo2Vec(apertureInfo);
     
 else
