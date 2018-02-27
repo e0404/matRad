@@ -122,10 +122,10 @@ options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
 options.numOfScenarios  = dij.numOfScenarios;
 
 % set bounds on optimization variables
-options.lb              = apertureInfo.limMx(:,1);                                          % Lower bound on the variables.
-options.ub              = apertureInfo.limMx(:,2);                                          % Upper bound on the variables.
+options.lb              = apertureInfo.limMx(:,1);                                          % lower bound on the variables.
+options.ub              = apertureInfo.limMx(:,2);                                          % upper bound on the variables.
 options.runVMAT         = pln.propOpt.runVMAT;
-[options.cl,options.cu] = matRad_daoGetConstBounds(cst_Over,apertureInfo,options);   % Lower and upper bounds on the constraint functions.
+[options.cl,options.cu] = matRad_daoGetConstBounds(cst_Over,apertureInfo,options);          % lower and upper bounds on the constraint functions.
 
 % set callback functions.
 funcs.objective         = @(x) matRad_daoObjFunc(x,dij,cst_Over,options);
