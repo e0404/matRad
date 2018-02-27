@@ -65,6 +65,7 @@ for i = 1:numOfBeams
         
         for shape = 1:numOfShapes
             childIndex = childrenIndex(count);
+            beam(childIndex).leafDir = leafDir;
             
             if childIndex == i
                 % do not overwrite information, since we will need it for
