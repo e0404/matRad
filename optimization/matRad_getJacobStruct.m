@@ -1,4 +1,4 @@
-function jacobStruct = matRad_getJacobStruct(dij,cst)
+function jacobStruct = matRad_getJacobStruct(dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian structure function for inverse planning supporting max dose
 % constraint, min dose constraint, min mean dose constraint, max mean dose constraint,
@@ -80,7 +80,7 @@ for i = 1:size(cst,1)
 end
 
 % Initializes constraints
-jacobStructVec = zeros(1,numOfConstraints*nnz(dij.optBixel));
+jacobStructVec = zeros(1,numOfConstraints*nnz(options.optBixel));
 offset = 0;
 
 % compute objective function for every VOI.
@@ -107,7 +107,7 @@ for i = 1:size(cst,1)
                             isequal(cst{i,6}(j).type, 'max DVH constraint') || ...
                             isequal(cst{i,6}(j).type, 'min DVH constraint')
                         
-                        jacobStructVec(offset+(1:nnz(dij.optBixel))) = mean(dij.physicalDose{1}(cst{i,4}{1},dij.optBixel));
+                        jacobStructVec(offset+(1:nnz(options.optBixel))) = mean(dij.physicalDose{1}(cst{i,4}{1},options.optBixel));
                         
                         if dij.memorySaverPhoton
                             jacobVariables.voxInStructure = cst{i,4}{1};
@@ -117,7 +117,7 @@ for i = 1:size(cst,1)
                             jacobStructVec = jacobStructVec+matRad_memorySaverDoseAndGrad([],dij,'jacobianStruct',jacobVariables);
                         end
                         
-                        offset = offset+nnz(dij.optBixel);
+                        offset = offset+nnz(options.optBixel);
                     end
                     
                 end
@@ -131,10 +131,10 @@ for i = 1:size(cst,1)
 end
 
 i = 1:numOfConstraints;
-i = kron(i,ones(1,nnz(dij.optBixel)));
+i = kron(i,ones(1,nnz(options.optBixel)));
 
 j = 1:dij.totalNumOfBixels;
-j(~dij.optBixel) = [];
+j(~options.optBixel) = [];
 j = repmat(j,1,numOfConstraints);
 
 jacobStructVec(jacobStructVec ~= 0) = 1;

@@ -129,13 +129,13 @@ end
 numOfConstraints = numel(scenID);
 
 i_sparse = 1:numOfConstraints;
-i_sparse = kron(i_sparse,ones(1,nnz(dij.optBixel)));
+i_sparse = kron(i_sparse,ones(1,nnz(options.optBixel)));
 
 j_sparse = 1:dij.totalNumOfBixels;
-j_sparse(~dij.optBixel) = [];
+j_sparse(~options.optBixel) = [];
 j_sparse = repmat(j_sparse,1,numOfConstraints);
 
-jacobSparseVec = zeros(1,numOfConstraints*nnz(dij.optBixel));
+jacobSparseVec = zeros(1,numOfConstraints*nnz(options.optBixel));
 
 setOfConstraints = 1:numOfConstraints;
 
@@ -149,10 +149,10 @@ for i = 1:dij.numOfScenarios
                 jacobLogical          = (scenID == i);
                 currConstraints = setOfConstraints(jacobLogical);
                 
-                indInSparseVec = repmat(1:nnz(dij.optBixel),1,numel(currConstraints))...
-                    +kron((currConstraints-1)*nnz(dij.optBixel),ones(1,nnz(dij.optBixel)));
+                indInSparseVec = repmat(1:nnz(options.optBixel),1,numel(currConstraints))...
+                    +kron((currConstraints-1)*nnz(options.optBixel),ones(1,nnz(options.optBixel)));
                 
-                jacobSparseVec(indInSparseVec) = transpose(physicalDoseProjection(:,jacobLogical)' * dij.scaleFactor * dij.physicalDose{i}(:,dij.optBixel));
+                jacobSparseVec(indInSparseVec) = transpose(physicalDoseProjection(:,jacobLogical)' * dij.scaleFactor * dij.physicalDose{i}(:,options.optBixel));
                 
                 if dij.memorySaverPhoton
                     jacobVariables.currConstraints = currConstraints;

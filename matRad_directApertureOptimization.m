@@ -84,7 +84,7 @@ for i = 1:size(cst_Over,1)
 end
 
 % create optBixel mask, which is just true everywhere
-dij.optBixel = true(dij.totalNumOfBixels,1);
+options.optBixel = true(dij.totalNumOfBixels,1);
 
 if isfield(apertureInfo,'scaleFacRx')
     %weights were scaled to acheive 95% PTV coverage
@@ -133,7 +133,7 @@ funcs.iterfunc          = @(iter,objective,parameter) matRad_IpoptIterFunc(iter,
 funcs.gradient          = @(x) matRad_daoGradFunc(x,dij,cst_Over,options);
 funcs.constraints       = @(x) matRad_daoConstFunc(x,dij,cst_Over,options);
 funcs.jacobian          = @(x) matRad_daoJacobFunc(x,dij,cst_Over,options);
-funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct(apertureInfo,dij,cst_Over);
+funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct(apertureInfo,dij,cst_Over,options);
 
 % Run IPOPT.
 [optApertureInfoVec, info] = ipopt(apertureInfo.apertureVector,funcs,options);

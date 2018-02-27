@@ -26,7 +26,7 @@
 %% Patient Data Import
 % Let's begin with a clear Matlab environment and import the head &
 % neck patient into your workspace.
-clc,clear,close all;
+%clc,clear,close all;
 load('HEAD_AND_NECK.mat');
 
 %% Treatment Plan
@@ -47,17 +47,17 @@ pln.propStf.bixelWidth = 5;
 
 % optimization settings
 pln.propOpt.bioOptimization = 'none';
-pln.propOpt.runVMAT = true;
-pln.propOpt.runDAO = true;
-pln.propOpt.runSequencing = true;
-pln.propOpt.preconditioner = true;
-pln.propOpt.numLevels = 7;
-
+pln.propOpt.runVMAT         = true;
+pln.propOpt.runDAO          = true;
+pln.propOpt.runSequencing   = true;
+pln.propOpt.preconditioner  = true;
+pln.propOpt.numLevels       = 7;
+ 
 pln.propOpt.VMAToptions.machineConstraintFile = [pln.radiationMode '_' pln.machine];
 
-pln.propOpt.VMAToptions.maxGantryAngleSpacing = 2;      % Max gantry angle spacing for dose calculation
+pln.propOpt.VMAToptions.maxGantryAngleSpacing    = 2;      % Max gantry angle spacing for dose calculation
 pln.propOpt.VMAToptions.maxDAOGantryAngleSpacing = 4;      % Max gantry angle spacing for DAO
-pln.propOpt.VMAToptions.maxFMOGantryAngleSpacing = 28;      % Max gantry angle spacing for FMO
+pln.propOpt.VMAToptions.maxFMOGantryAngleSpacing = 28;     % Max gantry angle spacing for FMO
 
 %%
 % Generate dose calculation, DAO, and FMO angles from the parameters input
@@ -67,7 +67,6 @@ pln.propOpt.VMAToptions.maxFMOGantryAngleSpacing = 28;      % Max gantry angle s
 % angles in the gantryAngles set to increase the accuracy of the dose
 % calculation (each iteration).
 pln = matRad_VMATGantryAngles(pln,cst,ct);
-
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
