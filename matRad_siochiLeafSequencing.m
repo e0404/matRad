@@ -52,9 +52,8 @@ if pln.propOpt.runVMAT
     %First beam sweeps right-to-left, next left-to-right, ...
     leafDir = 1;
 end
-sequencing.runVMAT = pln.propOpt.runVMAT;
 
-numOfBeams = numel(stf);
+
 
 if visBool
     % create the sequencing figure
@@ -65,16 +64,18 @@ if visBool
     seqFig = figure('position',[xpos,ypos,sz(2),sz(1)]);     
 end
 
-offset = 0;
+offset             = 0;
+sequencing.runVMAT = pln.propOpt.runVMAT;
 
-for i = 1:numOfBeams
+for i = 1:numel(stf)
+   
     numOfRaysPerBeam = stf(i).numOfRays;
     
     if pln.propOpt.runVMAT
         
         if ~stf(i).propVMAT.FMOBeam
             sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = 0;
-            sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
+            sequencing.beam(i).bixelIx = 1+offset:numOfRaysPerBeam+offset;
             offset = offset + numOfRaysPerBeam;
             continue %if this is not a beam to be initialized, continue to next iteration without generating segments
         else
@@ -124,14 +125,6 @@ for i = 1:numOfBeams
     
     %Save weights in fluence matrix.
     fluenceMx(indInFluenceMx) = wOfCurrBeams;
-    %{
-    temp = zeros(size(fluenceMx));
-    for row = 1:dimOfFluenceMxZ
-        temp(row,:) = imgaussfilt(fluenceMx(row,:),1);
-    end
-    fluenceMx = temp;
-    clear temp
-    %}
     
     %allow for possibility to repeat sequencing with higher number of
     %levels if number of apertures is lower than required
@@ -223,32 +216,29 @@ if pln.propOpt.runVMAT
     
     sequencing.beam = matRad_arcSequencing(sequencing.beam,stf,pln,dij.weightToMU);
 
-    sequencing.weightToMU = dij.weightToMU;
+    sequencing.weightToMU     = dij.weightToMU;
     sequencing.preconditioner = pln.propOpt.preconditioner;
-    sequencing.propVMAT = pln.propOpt.VMAToptions;
+    sequencing.propVMAT       = pln.propOpt.VMAToptions;
     
     resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
     
-    %matRad_daoVec2ApertureInfo will interpolate subchildren gantry
-    %segments
+    % matRad_daoVec2ApertureInfo will interpolate subchildren gantry segments
     resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
     
-    %calculate max leaf speed
+    % calculate max leaf speed
     resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
     
-    %optimize delivery
-    resultGUI = matRad_optDelivery(resultGUI,0);
+    % optimize delivery
+    resultGUI              = matRad_optDelivery(resultGUI,0);
     resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
     
     sequencing.w = resultGUI.apertureInfo.bixelWeights;
     
 else
-    sequencing.weightToMU = dij.weightToMU;
-    sequencing.preconditioner = pln.propOpt.preconditioner;
-    
-    resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
-    
-    resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
+    sequencing.weightToMU     = dij.weightToMU;
+    sequencing.preconditioner = pln.propOpt.preconditioner;    
+    resultGUI.apertureInfo    = matRad_sequencing2ApertureInfo(sequencing,stf);
+    resultGUI.apertureInfo    = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
 end
 
 if pln.propOpt.preconditioner
