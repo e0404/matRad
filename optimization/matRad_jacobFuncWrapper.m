@@ -126,6 +126,10 @@ end
 
 
 
+if ~isfield(options,'optBixel')
+    options.optBixel = true(dij.totalNumOfBixels,1);
+end
+
 numOfConstraints = numel(scenID);
 
 i_sparse = 1:numOfConstraints;

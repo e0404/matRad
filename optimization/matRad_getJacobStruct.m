@@ -79,6 +79,10 @@ for i = 1:size(cst,1)
     end
 end
 
+if ~isfield(options,'optBixel')
+    options.optBixel = true(dij.totalNumOfBixels,1);
+end
+
 % Initializes constraints
 jacobStructVec = zeros(1,numOfConstraints*nnz(options.optBixel));
 offset = 0;

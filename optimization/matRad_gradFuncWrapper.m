@@ -84,8 +84,8 @@ end
 % Calculate gradient
 g = zeros(dij.totalNumOfBixels,1);
 
-if ~isfield(dij,'optBixel')
-    dij.optBixel = true(dij.totalNumOfBixels,1);
+if ~isfield(options,'optBixel')
+    options.optBixel = true(dij.totalNumOfBixels,1);
 end
 
 for i = 1:options.numOfScenarios
@@ -94,7 +94,7 @@ for i = 1:options.numOfScenarios
         
         if isequal(options.bioOpt,'none')
             
-            g(dij.optBixel) = g(dij.optBixel) + dij.scaleFactor * (delta{i}' * dij.physicalDose{i}(:,dij.optBixel))';
+            g(options.optBixel) = g(options.optBixel) + dij.scaleFactor * (delta{i}' * dij.physicalDose{i}(:,options.optBixel))';
             
         elseif isequal(options.ID,'protons_const_RBExD')
             
