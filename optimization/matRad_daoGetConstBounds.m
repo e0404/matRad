@@ -52,14 +52,15 @@ else
         error(['Could not find the following machine file: ' fileName ]);
     end
     
-    optInd = find([apertureInfo.propVMAT.beam.DAOBeam]);
-    cl_lfspd = machine.constraints.leafSpeed(1)*ones(2*(numel(optInd)-1)*apertureInfo.beam(1).numOfActiveLeafPairs,1); %Minimum leaf travel speed (mm/s)
-    cu_lfspd = machine.constraints.leafSpeed(2)*ones(2*(numel(optInd)-1)*apertureInfo.beam(1).numOfActiveLeafPairs,1); %Maximum leaf travel speed (mm/s)
-    %apertureInfo.beam(i).numOfActiveLeafPairs should be independent of i, due to using the union of all ray positions in the stf
-    %Convert from cm/deg when checking constraints; cannot do it at this stage since gantry rotation speed is not hard-coded
+    optInd   = find([apertureInfo.propVMAT.beam.DAOBeam]);
+    cl_lfspd = machine.constraints.leafSpeed(1)*ones(2*(numel(optInd)-1)*apertureInfo.beam(1).numOfActiveLeafPairs,1); % minimum leaf travel speed (mm/s)
+    cu_lfspd = machine.constraints.leafSpeed(2)*ones(2*(numel(optInd)-1)*apertureInfo.beam(1).numOfActiveLeafPairs,1); % maximum leaf travel speed (mm/s)
     
-    cl_dosrt = machine.constraints.monitorUnitRate(1)*ones(numel(optInd),1); %Minimum MU/sec
-    cu_dosrt = machine.constraints.monitorUnitRate(2)*ones(numel(optInd),1); %Maximum MU/sec
+    % apertureInfo.beam(i).numOfActiveLeafPairs should be independent of i, due to using the union of all ray positions in the stf
+    % convert from cm/deg when checking constraints; cannot do it at this stage since gantry rotation speed is not hard-coded
+    
+    cl_dosrt = machine.constraints.monitorUnitRate(1)*ones(numel(optInd),1); % minimum MU/sec
+    cu_dosrt = machine.constraints.monitorUnitRate(2)*ones(numel(optInd),1); % maximum MU/sec
     
     % concatenate
     cl = [cl_dao; cl_lfspd; cl_dosrt; cl_dos];

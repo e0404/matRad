@@ -47,17 +47,17 @@ pln.propStf.bixelWidth = 5;
 
 % optimization settings
 pln.propOpt.bioOptimization = 'none';
-pln.propOpt.runVMAT = true;
-pln.propOpt.runDAO = true;
-pln.propOpt.runSequencing = true;
-pln.propOpt.preconditioner = true;
-pln.propOpt.numLevels = 7;
-
+pln.propOpt.runVMAT         = true;
+pln.propOpt.runDAO          = true;
+pln.propOpt.runSequencing   = true;
+pln.propOpt.preconditioner  = true;
+pln.propOpt.numLevels       = 7;
+ 
 pln.propOpt.VMAToptions.machineConstraintFile = [pln.radiationMode '_' pln.machine];
 
-pln.propOpt.VMAToptions.maxGantryAngleSpacing = 2;      % Max gantry angle spacing for dose calculation
+pln.propOpt.VMAToptions.maxGantryAngleSpacing    = 2;      % Max gantry angle spacing for dose calculation
 pln.propOpt.VMAToptions.maxDAOGantryAngleSpacing = 4;      % Max gantry angle spacing for DAO
-pln.propOpt.VMAToptions.maxFMOGantryAngleSpacing = 28;      % Max gantry angle spacing for FMO
+pln.propOpt.VMAToptions.maxFMOGantryAngleSpacing = 28;     % Max gantry angle spacing for FMO
 
 %%
 % Generate dose calculation, DAO, and FMO angles from the parameters input
@@ -66,8 +66,10 @@ pln.propOpt.VMAToptions.maxFMOGantryAngleSpacing = 28;      % Max gantry angle s
 % optGantryAngles set. Weights and leaf positions are interpolated at the
 % angles in the gantryAngles set to increase the accuracy of the dose
 % calculation (each iteration).
+% FMO: optimize fluence on coarse subset of gantry angles
+% Sequencing: select subset of apertures and spread to finer angles
+% DAO: constrain for leaf speed, gantry rotation speed and MU rate
 pln = matRad_VMATGantryAngles(pln,cst,ct);
-
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);

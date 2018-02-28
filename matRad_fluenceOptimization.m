@@ -94,6 +94,7 @@ for i=1:size(cst_Over,1)
         ixTarget   = [ixTarget i*ones(1,length([cst_Over{i,6}.dose]))];
     end
 end
+
 [doseTarget,i] = max(doseTarget);
 ixTarget       = ixTarget(i);
 wOnes          = ones(dij.totalNumOfBixels,1);
@@ -109,8 +110,10 @@ end
 
 % set bounds on optimization variables
 options.lb              = zeros(1,dij.totalNumOfBixels);        % Lower bound on the variables.
-options.ub              = inf * wOnes;   % Upper bound on the variables.
+options.ub              = inf * wOnes;                          % Upper bound on the variables.
 
+% create logical vector to determined which parameters should be used for
+% the optimization
 if pln.propOpt.runVMAT
     % loop through angles
     offset = 0;
@@ -118,19 +121,19 @@ if pln.propOpt.runVMAT
         % if angle is not an initialization angle, do not optimize fluence
         % in bixels
         if ~stf(i).propVMAT.FMOBeam
-            rayIndices = offset+(1:dij.numOfRaysPerBeam(i));
+            rayIndices = offset + (1:dij.numOfRaysPerBeam(i));
             % set upper bound to 0
             options.ub(rayIndices) = 0;
             %set wOnes to 0 (initial value)
             wOnes(rayIndices) = 0;
         end
-        offset = offset+dij.numOfRaysPerBeam(i);
+        offset = offset + dij.numOfRaysPerBeam(i);
     end
 end
-dij.optBixel = logical(wOnes);
 
+options.optBixel = logical(wOnes);
 
-funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
+funcs.iterfunc  = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
     
 % calculate initial beam intensities wInit
 if  strcmp(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')

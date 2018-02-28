@@ -97,7 +97,7 @@ for i = 1:options.numOfScenarios
             g(dij.optBixel) = g(dij.optBixel) + dij.scaleFactor * (delta{i}' * dij.physicalDose{i}(:,dij.optBixel))';
 
             if dij.memorySaverPhoton
-                g = g+matRad_memorySaverDoseAndGrad(delta{i},dij,'gradient');
+                g = g +  matRad_memorySaverDoseAndGrad(delta{i},options.optBixel,'gradient',dij);
             end
             
         elseif isequal(options.ID,'protons_const_RBExD')
@@ -125,4 +125,20 @@ for i = 1:options.numOfScenarios
 
     end
     
+end
+
+RUN_FMO_GRADIENT_CHECKER = false;
+ 
+if RUN_FMO_GRADIENT_CHECKER   
+    f       = matRad_objFuncWrapper(w,dij,cst,options);
+    epsilon = 1e-4;
+    IX      = unique(randi([1 numel(w)],1,10));
+    for i = IX
+         wInit    = w;
+         wInit(i) = wInit(i) + epsilon;
+         fDelta   = matRad_objFuncWrapper(wInit,dij,cst,options);
+         numGrad  = (fDelta-f)/epsilon;
+         diff     = (numGrad/g(i)-1) * 100;
+         fprintf(['Component # ' num2str(i) ' - rel diff of numerical and analytical gradient = ' num2str(diff) '\n']);
+    end
 end

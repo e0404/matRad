@@ -84,7 +84,7 @@ for i = 1:size(cst_Over,1)
 end
 
 % create optBixel mask, which is just true everywhere
-dij.optBixel = true(dij.totalNumOfBixels,1);
+options.optBixel = true(dij.totalNumOfBixels,1);
 
 if isfield(apertureInfo,'scaleFacRx')
     %weights were scaled to acheive 95% PTV coverage
@@ -122,10 +122,10 @@ options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
 options.numOfScenarios  = dij.numOfScenarios;
 
 % set bounds on optimization variables
-options.lb              = apertureInfo.limMx(:,1);                                          % Lower bound on the variables.
-options.ub              = apertureInfo.limMx(:,2);                                          % Upper bound on the variables.
+options.lb              = apertureInfo.limMx(:,1);                                          % lower bound on the variables.
+options.ub              = apertureInfo.limMx(:,2);                                          % upper bound on the variables.
 options.runVMAT         = pln.propOpt.runVMAT;
-[options.cl,options.cu] = matRad_daoGetConstBounds(cst_Over,apertureInfo,options);   % Lower and upper bounds on the constraint functions.
+[options.cl,options.cu] = matRad_daoGetConstBounds(cst_Over,apertureInfo,options);          % lower and upper bounds on the constraint functions.
 
 % set callback functions.
 funcs.objective         = @(x) matRad_daoObjFunc(x,dij,cst_Over,options);
@@ -133,7 +133,7 @@ funcs.iterfunc          = @(iter,objective,parameter) matRad_IpoptIterFunc(iter,
 funcs.gradient          = @(x) matRad_daoGradFunc(x,dij,cst_Over,options);
 funcs.constraints       = @(x) matRad_daoConstFunc(x,dij,cst_Over,options);
 funcs.jacobian          = @(x) matRad_daoJacobFunc(x,dij,cst_Over,options);
-funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct(apertureInfo,dij,cst_Over);
+funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct(apertureInfo,dij,cst_Over,options);
 
 % Run IPOPT.
 [optApertureInfoVec, info] = ipopt(apertureInfo.apertureVector,funcs,options);

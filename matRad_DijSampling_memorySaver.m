@@ -85,13 +85,13 @@ nCore = sum(ixCore);
 if all(ixCore)
     %% all voxels are in the core
     %exit function with core dose only
-    ixNew = ix;
+    ixNew        = ix;
     bixelDoseNew = bixelDoseCore;
     
-    ixTailNew = uint32.empty;
-    nTailPerDepth = uint16.empty;
+    ixTailNew        = uint32.empty;
+    nTailPerDepth    = uint16.empty;
     bixelDoseTailNew = double.empty;
-    nTail = 0;
+    nTail  = 0;
     nDepth = 0;
     
 else
@@ -109,10 +109,10 @@ else
     maxRadDepth         = double(max(B_r));
     C                   = int32(linspace(0,maxRadDepth,round(maxRadDepth)/deltaRadDepth));     % coarse clustering of rad depths
     
-    nDepth = numel(C)-1;
-    bixelDoseTailNew = zeros(nDepth,1);
-    ixTailNew = zeros(nDepth*500,1,'uint32');
-    nTailPerDepth = zeros(nDepth,1,'uint16');
+    nDepth              = numel(C)-1;
+    bixelDoseTailNew    = zeros(nDepth,1);
+    ixTailNew           = zeros(nDepth*500,1,'uint32');
+    nTailPerDepth       = zeros(nDepth,1,'uint16');
     
     ixNew               = zeros(numTail,1);                          % inizialize new index vector
     bixelDoseNew        = zeros(numTail,1);                          % inizialize new dose vector
@@ -135,9 +135,9 @@ else
         ixNew(IxCnt:IxCnt+NumSamples-1,1)        = subIx(ixSamp);    % save new indices
         bixelDoseNew(IxCnt:IxCnt+NumSamples-1,1) = thresholdDose;    % set the dose
         
-        bixelDoseTailNew(i) = thresholdDose;
+        bixelDoseTailNew(i)               = thresholdDose;
         ixTailNew(IxCnt-1+(1:NumSamples)) = uint32(subIx(ixSamp));
-        nTailPerDepth(i) = NumSamples;
+        nTailPerDepth(i)                  = NumSamples;
         
         IxCnt = IxCnt + NumSamples;
     end

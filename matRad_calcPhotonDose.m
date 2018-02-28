@@ -93,8 +93,28 @@ dij.bixelNum = NaN*ones(numOfColumnsDij,1);
 dij.rayNum   = NaN*ones(numOfColumnsDij,1);
 dij.beamNum  = NaN*ones(numOfColumnsDij,1);
 
+% set lateral cutoff value
+lateralCutoff = 50; % [mm]
+
+% enable memory saver if RAM memory is to small
+if ~isfield(dij,'memorySaverPhoton')
+    [userview,~] = memory;
+    userview.MemAvailableAllArrays  % from bytes to GB
+    % estimated dose values per beamlet
+    NNZs  = dij.numOfBeams * dij.totalNumOfBixels * ...
+            ct.resolution.x^-1 * ct.resolution.y^-1 * ct.resolution.z^-1 * lateralCutoff^3;
+    Bytes = (max(NNZs,1) * (4 + 8) + (numOfColumnsDij+1)*4);  
+
+    if userview.MemAvailableAllArrays < Bytes
+        dij.memorySaverPhoton = true;
+        if userview.MemAvailableAllArrays < Bytes * 0.3
+            matRad_dispToConsole('matRad_calcPhotonDose: RAM memory might not be enough! \n',param,'warning');
+        end
+    end
+end
+
 dij.nCore   = zeros*ones(dij.totalNumOfRays,1,'uint16');
-dij.nTail    = zeros*ones(dij.totalNumOfRays,1,'uint16');
+dij.nTail   = zeros*ones(dij.totalNumOfRays,1,'uint16');
 dij.nDepth  = zeros*ones(dij.totalNumOfRays,1,'uint16');
 
 dij.ixTail          = intmax('uint32')*ones(1000*dij.totalNumOfRays,1,'uint32');
@@ -122,9 +142,6 @@ end
 
 % Convert CT subscripts to linear indices.
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
-
-% set lateral cutoff value
-lateralCutoff = 50; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
@@ -178,7 +195,7 @@ if ~isFieldBasedDoseCalc
     end
 end
 
-offsetTail = 0;
+offsetTail  = 0;
 offsetDepth = 0;
 
 % compute SSDs
@@ -385,16 +402,16 @@ for i = 1:dij.numOfBeams % loop over all beams
             if dij.memorySaverPhoton
                 [ix,bixelDose,ixTail,nTailPerDepth,bixelDoseTail,nTail,nDepth,nCore] = matRad_DijSampling_memorySaver(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
                 
-                dij.ixTail(offsetTail+(1:nTail)) = uint32(V(ixTail));
+                dij.ixTail(offsetTail+(1:nTail))          = uint32(V(ixTail));
                 dij.nTailPerDepth(offsetDepth+(1:nDepth)) = nTailPerDepth;
                 dij.bixelDoseTail(offsetDepth+(1:nDepth)) = bixelDoseTail;
                 
-                dij.nCore(counter) = uint16(nCore);
-                dij.nTail(counter) = uint16(nTail);
+                dij.nCore(counter)  = uint16(nCore);
+                dij.nTail(counter)  = uint16(nTail);
                 dij.nDepth(counter) = uint16(nDepth);
                 
-                offsetTail = offsetTail+nTail;
-                offsetDepth = offsetDepth+nDepth;
+                offsetTail  = offsetTail+nTail;
+                offsetDepth = offsetDepth+nDepth;  
             else
                 [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
             end
@@ -422,9 +439,9 @@ for i = 1:dij.numOfBeams % loop over all beams
     end
 end
 
-dij.ixTail(dij.ixTail == intmax('uint32')) = [];
+dij.ixTail(dij.ixTail == intmax('uint32'))               = [];
 dij.nTailPerDepth(dij.nTailPerDepth == intmax('uint16')) = [];
-dij.bixelDoseTail(dij.bixelDoseTail == -1) = [];
+dij.bixelDoseTail(dij.bixelDoseTail == -1)               = [];
 
 try
   % wait 0.1s for closing all waitbars

@@ -78,12 +78,12 @@ switch  Type
     ixCore      = bixelDose > relDoseThreshold * max(bixelDose); % get voxels indices having a greater dose than the thresholdDose
 end
 
-bixelDoseCore       = bixelDose(ixCore);                         % save dose values that are not affected by sampling
+bixelDoseCore = bixelDose(ixCore);                         % save dose values that are not affected by sampling
 
 if all(ixCore)
     %% all bixels are in the core
     %exit function with core dose only
-    ixNew = ix;
+    ixNew        = ix;
     bixelDoseNew = bixelDoseCore;
 else
     logIxTail           = ~ixCore;                                   % get voxels indices beyond r0
@@ -127,6 +127,7 @@ else
     % cut new vectors and add inner core values
     ixNew        = [ix(ixCore);    ixNew(1:IxCnt-1)];
     bixelDoseNew = [bixelDoseCore; bixelDoseNew(1:IxCnt-1)];
+    
 end
 
 

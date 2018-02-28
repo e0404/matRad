@@ -1,4 +1,4 @@
-function jacobStruct = matRad_daoGetJacobStruct(apertureInfo,dij,cst)
+function jacobStruct = matRad_daoGetJacobStruct(apertureInfo,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: get jacobian structure for direct aperture optimization
 %
@@ -45,7 +45,7 @@ jacobStruct_dao = sparse(i,j,s, ...
     numel(apertureInfo.apertureVector), ...
     2*apertureInfo.totalNumOfLeafPairs);
 
-jacobStruct_dos_bixel = matRad_getJacobStruct(dij,cst);
+jacobStruct_dos_bixel = matRad_getJacobStruct(dij,cst,options);
 % --> gives me a matrix with number of rows = num of constraints and tells
 % me in th columns if a beamlet has an influence on this constraint
 
