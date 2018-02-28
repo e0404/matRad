@@ -55,10 +55,6 @@ else
                             
             d{i} = dij.physicalDose{i}(:,options.optBixel) * (w(options.optBixel) * dij.scaleFactor);
 
-            if dij.memorySaverPhoton
-                 d{i} = d{i} + matRad_memorySaverDoseAndGrad(w,options.optBixel,'dose',dij);
-            end
-
         end
         
     elseif  isequal(options.ID,'protons_const_RBExD')

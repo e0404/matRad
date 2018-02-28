@@ -57,11 +57,6 @@ for i = 1:length(beamInfo)
     
     d = dij.physicalDose{scenNum}(:,dij.optBixel) * (w(dij.optBixel) * dij.scaleFactor);
     
-    if dij.memorySaverPhoton
-        % don't worry about computing individual dose for photons
-        d = d + matRad_memorySaverDoseAndGrad(w,true(numel(w),1),'dose',dij);
-    end
-    
     resultGUI.(['physicalDose', beamInfo(i).suffix]) = reshape(d,dij.dimensions);
 end
 

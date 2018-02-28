@@ -154,13 +154,6 @@ for i = 1:dij.numOfScenarios
                 
                 jacobSparseVec(indInSparseVec) = transpose(physicalDoseProjection(:,jacobLogical)' * dij.scaleFactor * dij.physicalDose{i}(:,options.optBixel));
                 
-                if dij.memorySaverPhoton
-                    jacobVariables.currConstraints = currConstraints;
-                    jacobVariables.jacobLogical = jacobLogical;
-                    
-                    jacobSparseVec = jacobSparseVec+matRad_memorySaverDoseAndGrad(physicalDoseProjection,dij,'jacobian',jacobVariables);
-                end
-                
             end
             
         elseif isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LEMIV_RBExD')

@@ -109,14 +109,6 @@ for i = 1:size(cst,1)
                         
                         jacobStructVec(offset+(1:nnz(options.optBixel))) = mean(dij.physicalDose{1}(cst{i,4}{1},options.optBixel));
                         
-                        if dij.memorySaverPhoton
-                            jacobVariables.voxInStructure = cst{i,4}{1};
-                            jacobVariables.numOfConstraints = numOfConstraints;
-                            jacobVariables.offset = offset;
-                            
-                            jacobStructVec = jacobStructVec+matRad_memorySaverDoseAndGrad([],dij,'jacobianStruct',jacobVariables);
-                        end
-                        
                         offset = offset+nnz(options.optBixel);
                     end
                     

@@ -74,7 +74,6 @@ dij.dimensions         = ct.cubeDim;
 dij.numOfScenarios     = 1;
 dij.weightToMU         = 100;
 dij.scaleFactor        = 1;
-dij.memorySaverPhoton  = pln.propDoseCalc.memorySaverPhoton;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
@@ -95,23 +94,6 @@ dij.beamNum  = NaN*ones(numOfColumnsDij,1);
 
 % set lateral cutoff value
 lateralCutoff = 50; % [mm]
-
-% enable memory saver if RAM memory is to small
-if ~isfield(dij,'memorySaverPhoton')
-    [userview,~] = memory;
-    userview.MemAvailableAllArrays  % from bytes to GB
-    % estimated dose values per beamlet
-    NNZs  = dij.numOfBeams * dij.totalNumOfBixels * ...
-            ct.resolution.x^-1 * ct.resolution.y^-1 * ct.resolution.z^-1 * lateralCutoff^3;
-    Bytes = (max(NNZs,1) * (4 + 8) + (numOfColumnsDij+1)*4);  
-
-    if userview.MemAvailableAllArrays < Bytes
-        dij.memorySaverPhoton = true;
-        if userview.MemAvailableAllArrays < Bytes * 0.3
-            matRad_dispToConsole('matRad_calcPhotonDose: RAM memory might not be enough! \n',param,'warning');
-        end
-    end
-end
 
 dij.nCore   = zeros*ones(dij.totalNumOfRays,1,'uint16');
 dij.nTail   = zeros*ones(dij.totalNumOfRays,1,'uint16');
@@ -399,26 +381,11 @@ for i = 1:dij.numOfBeams % loop over all beams
             r0   = 25;   % [mm] sample beyond the inner core
             Type = 'radius';
             
-            if dij.memorySaverPhoton
-                [ix,bixelDose,ixTail,nTailPerDepth,bixelDoseTail,nTail,nDepth,nCore] = matRad_DijSampling_memorySaver(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
-                
-                dij.ixTail(offsetTail+(1:nTail))          = uint32(V(ixTail));
-                dij.nTailPerDepth(offsetDepth+(1:nDepth)) = nTailPerDepth;
-                dij.bixelDoseTail(offsetDepth+(1:nDepth)) = bixelDoseTail;
-                
-                dij.nCore(counter)  = uint16(nCore);
-                dij.nTail(counter)  = uint16(nTail);
-                dij.nDepth(counter) = uint16(nDepth);
-                
-                offsetTail  = offsetTail+nTail;
-                offsetDepth = offsetDepth+nDepth;  
-            else
-                [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
-            end
+            [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
         end
         % Save dose for every bixel in cell array
         doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix),1,bixelDose,dij.numOfVoxels,1);
-                
+        
         % save computation time and memory by sequentially filling the 
         % sparse matrix dose.dij from the cell array
         if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels

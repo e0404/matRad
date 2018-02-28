@@ -72,7 +72,6 @@ pln.machine         = 'Generic';
 
 pln.numOfFractions  = 30;
 
-pln.propDoseCalc.memorySaverPhoton = false;
 
 % beam geometry settings
 pln.propStf.bixelWidth = 5;
