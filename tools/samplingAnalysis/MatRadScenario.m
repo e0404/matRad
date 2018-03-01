@@ -61,6 +61,9 @@ classdef MatRadScenario < handle
             addlistener(obj,'dose','PostSet',@obj.handleChangeOfDose);
         end % eof constructor
         
+        function obj = cumulateDose(obj, dose)
+            obj.dose = obj.dose + dose;
+        end
         
         function obj = calcQiDVH(obj, cst, pln, dvhType, doseGrid, refGy, refVol)
             obj.cst = cst;

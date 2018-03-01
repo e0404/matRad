@@ -32,6 +32,19 @@ function matRad_calcStudy(structSel,multScen,matPatientPath,param)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [treatmentSimulation, scenContainer] = mergeSplittedScen(scenContainerParts)
+    scenContainer = scenContainerParts{1};
+    for j = 1:numel(scenContainer)
+        for k = 2:numel(scenContainerParts)
+            scenContainer{j}.cumulateDose(scenContainerParts{k}{j});
+        end
+    end
+    treatmentSimulation = MatRadSimulation(pln.bioParam.quantityVis, nomScen, ct, cst, pln, pln.numOfFractions);
+    for j = 1:numel(scenContainer)
+        treatmentSimulation.initNewScen(scenContainer{j})
+    end
+end
+
 if exist('param','var')
     if ~isfield(param,'logLevel')
        param.logLevel = 4;
@@ -100,8 +113,32 @@ pln.robOpt   = false;
 pln.sampling = true;
 
 %% perform calculation and save
+multScen = multScen.matRad_createValidInstance();
+
 tic
-[treatmentSimulation, scenContainer, pln, resultGUInomScen, nomScen] = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,multScen,param);
+if strcmp(multScen.deepestCorrelationBreak, 'fraction')
+    [treatmentSimulation, scenContainer, pln, resultGUInomScen, nomScen] = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,multScen,param);
+elseif strcmp(multScen.deepestCorrelationBreak, 'beam')
+    scenContainerParts = cell(numel(stf),1);
+    for i = 1:numel(stf)
+        stfPart = stf(i);
+        plnPart = pln;
+        plnPart.isoCenter = pln.isoCenter(i,:);
+        if strcmp(multScen.rangeShiftCorrelationBreak, 'beam') && strcmp(multScen.isoShiftCorrelationBreak, 'beam')
+            multScen = multScen.matRad_recreateInstance;
+        elseif strcmp(multScen.isoShiftCorrelationBreak, 'beam')
+            multScen = multScen.matRad_recreateInstance('range');
+        elseif strcmp(multScen.rangeShiftCorrelationBreak, 'beam')
+            multScen = multScen.matRad_recreateInstance('setup');
+        else
+            erorr('Incosistency');
+        end
+        
+        [~, scenContainerPart, pln, ~, ~] = matRad_sampling(ct,stfPart,cst,plnPart,resultGUI.w,structSel,multScen,param);
+        scenContainerParts{i} = scenContainerPart;
+    end
+    
+end
 param.computationTime = toc;
 
 param.reportPath = fullfile('report','data');
