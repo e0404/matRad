@@ -68,7 +68,6 @@ dij.numOfBeams         = pln.propStf.numOfBeams;
 dij.numOfVoxels        = prod(ct.cubeDim);
 dij.resolution         = ct.resolution;
 dij.dimensions         = ct.cubeDim;
-dij.numOfScenarios     = 1;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
@@ -204,7 +203,6 @@ ctScen = 1;
 for ShiftScen = 1:pln.multScen.totNumShiftScen
 
    % manipulate isocenter
-   pln.propStf.isoCenter    = pln.propStf.isoCenter + pln.multScen.isoShift(ShiftScen,:);
    for k = 1:length(stf)
        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(ShiftScen,:);
    end
@@ -447,7 +445,6 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
    end
 
    % manipulate isocenter
-   pln.propStf.isoCenter = pln.propStf.isoCenter - pln.multScen.isoShift(ShiftScen,:);
    for k = 1:length(stf)
        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(ShiftScen,:);
    end   
