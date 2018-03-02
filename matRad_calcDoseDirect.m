@@ -80,7 +80,7 @@ end
 if strcmp(pln.radiationMode,'photons')
   dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
   %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
-elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
+elseif any(strcmp(pln.radiationMode,{'protons','helium','carbon'}))
   dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 end
 
@@ -100,7 +100,7 @@ else
     if strcmp(pln.radiationMode,'photons')
       dijNom = matRad_calcPhotonDose(ct,stf,plnNom,cst,param);
       %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
-    elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
+    elseif any(strcmp(pln.radiationMode,{'protons','helium','carbon'}))
       dijNom = matRad_calcParticleDose(ct,stf,plnNom,cst,param);
     end
     
@@ -116,7 +116,4 @@ end
 
 % remember original fluence weights
 resultGUI.w  = w; 
-
-
-
 
