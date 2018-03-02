@@ -64,12 +64,6 @@ pln.multScen = matRad_multScen(ct,scenGenType);
 %% initial visualization and change objective function settings if desired
 matRadGUI
 
-%% retrieve model parameters
-pln = matRad_getBioModel(pln);
-
-%% set plan uncertainties for robust optimization
-[cst,pln] = matRad_setPlanUncertainties(ct,cst,pln);
-
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
 
