@@ -27,32 +27,39 @@ clc
 %load LIVER.mat
 load BOXPHANTOM.mat
 
-
 %% initial visualization and change objective function settings if desired
 matRadGUI
 
-%% meta information for treatment plan
-pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
-pln.bixelWidth      = 3; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [210 320]; %[0:72:359]; % [°]
-pln.couchAngles     = [0 0]; % [Â°]
-pln.numOfBeams      = numel(pln.gantryAngles);
-pln.numOfVoxels     = prod(ct.cubeDim);
-pln.voxelDimensions = ct.cubeDim;
-pln.radiationMode   = 'protons';     % either photons / protons / carbon
+% meta information for treatment plan
+pln.numOfFractions  = 30;
+pln.radiationMode   = 'photons';           % either photons / protons / helium / carbon
+pln.machine         = 'Generic';
 
-pln.bioOptimization = 'const_RBExD';   % none: physical optimization;                                         const_RBExD; constant RBE of 1.1;  
-                                     % LSM_effect;  variable RBE Linear Scaling Model (effect based);         LSM_RBExD;  variable RBE Linear Scaling Model (RBExD based)
-                                     % MCN_effect; McNamara-variable RBE model for protons (effect based)     MCN_RBExD; McNamara-variable RBE model for protons (RBExD) based
-                                     % WED_effect; Wedenberg-variable RBE model for protons (effect based)    MCN_RBExD; Wedenberg-variable RBE model for protons (RBExD) based
-                                     % LEMIV_effect: effect-based optimization;                               LEMIV_RBExD: optimization of RBE-weighted dose
-pln.numOfFractions         = 30;
-pln.runSequencing          = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
-pln.runDAO                 = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
-pln.machine                = 'HIT'; %GenericLET
-pln.minNrParticles         = 500000;
-pln.LongitudialSpotSpacing = 3;      % only relevant for HIT machine, not generic
-pln.calcLET                = false; %true;
+% beam geometry settings
+pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.longSpotSpacing = 3;      % only relevant for HIT machine, not generic
+pln.propStf.gantryAngles    = [0:72:359]; % [?] ;
+pln.propStf.couchAngles     = [0 0 0 0 0]; % [?] ; 
+pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+
+pln.propOpt.minNrParticles  = 500000;
+
+pln.propOpt.runDAO          = false;      % 1/true: run DAO, 0/false: don't / will be ignored for particles
+pln.propOpt.runSequencing   = false;      % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
+
+quantityOpt  = 'physicalDose';     % options: physicalDose, effect, RBExD
+modelName    = 'none';             % none: for photons, protons, carbon            % constRBE: constant RBE 
+                                   % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
+                                   % LEM: Local Effect Model for carbon ions
+
+scenGenType  = 'nomScen';          % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen'                                          
+
+% retrieve bio model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+
+% retrieve scenarios for dose calculation and optimziation
+pln.multScen = matRad_multScen(ct,scenGenType);
 
 %% initial visualization and change objective function settings if desired
 matRadGUI
@@ -70,22 +77,22 @@ stf = matRad_generateStf(ct,cst,pln);
 if strcmp(pln.radiationMode,'photons')
     dij = matRad_calcPhotonDose(ct,stf,pln,cst,false);
     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
-elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-    dij = matRad_calcParticleDose(ct,stf,pln,cst,false);
+elseif any(strcmp(pln.radiationMode,{'protons','helium','carbon'}))
+    dij = matRad_calcParticleDose(ct,stf,pln,cst);
 end
 
 %% inverse planning for imrt
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI  = matRad_fluenceOptimization(dij,cst,pln);
 
 %% sequencing
-if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
+if strcmp(pln.radiationMode,'photons') && (pln.propertiesOpt.runSequencing || pln.propertiesOpt.runDAO)
     %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
     %resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
     resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
 end
 
 %% DAO
-if strcmp(pln.radiationMode,'photons') && pln.runDAO
+if strcmp(pln.radiationMode,'photons') && pln.propertiesOpt.runDAO
    resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
    matRad_visApertureInfo(resultGUI.apertureInfo);
 end
@@ -93,11 +100,19 @@ end
 %% start gui for visualization of result
 matRadGUI
 
-%% dvh
-matRad_calcDVH(resultGUI,cst,pln)
+%% indicator calculation and show DVH and QI
+[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI);
+
+%% perform sampling
+% select structures to include in sampling; leave empty to sample dose for all structures
+structSel = {}; % structSel = {'PTV','OAR1'};
+[caSampRes, mSampDose, plnSamp, resultGUInomScen] = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,[],[]);
+[cstStat, resultGUIStat, param]                   = matRad_samplingAnalysis(ct,cst,plnSamp,caSampRes, mSampDose, resultGUInomScen,[]);
+
+
 
 %% post processing
-resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf)
+resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf);
 
 %% export Plan
 matRad_export_HITXMLPlan_modified('S02_orgpln',  pln, stf, resultGUI, 'stfMode')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)

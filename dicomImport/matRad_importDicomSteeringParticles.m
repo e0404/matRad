@@ -37,16 +37,25 @@ function [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
 
 %% load plan file
 % load machine data
-pln.machine = 'HIT';
-fileName = [pln.radiationMode '_' pln.machine];
-try
-   load(fileName);
-catch
-   error(['Could not find the following machine file: ' fileName ]); 
+
+dlgBaseDataText = ['Import steering information from DICOM Plan.','Choose corresponding matRad base data for ', ...
+        pln.radiationMode, '.'];
+% messagebox only necessary for non windows users
+if ~ispc
+    uiwait(helpdlg(dlgBaseDataText,['DICOM import - ', pln.radiationMode, ' base data' ]));
 end
+[fileName,pathName] = uigetfile('*.mat', dlgBaseDataText);
+load([pathName filesep fileName]);
+
+ix = find(fileName == '_');
+pln.machine = fileName(ix(1)+1:end-4);
 
 % RT Plan consists only on meta information
-rtPlanInfo = dicominfo(rtPlanFile{1});
+if verLessThan('matlab','9')
+    rtPlanInfo = dicominfo(rtPlanFile{1});
+else
+    rtPlanInfo = dicominfo(rtPlanFile{1},'UseDictionaryVR',true);
+end
 BeamSeq = rtPlanInfo.IonBeamSequence;
 BeamSeqNames = fieldnames(BeamSeq);
 % Number of Beams from plan
@@ -113,30 +122,13 @@ for i = 1:length(BeamSeqNames)
     stf(i).radiationMode = pln.radiationMode;
     % there might be several SAD's, e.g. compensator?
     stf(i).SAD           = machine.meta.SAD;
-    stf(i).isoCenter     = pln.isoCenter;
+    stf(i).isoCenter     = pln.isoCenter(i,:);
     stf(i).sourcePoint_bev = [0 -stf(i).SAD 0];
-    % compute coordinates in lps coordinate system, i.e. rotate beam
-    % geometry around fixed patient; use transpose matrices because we are
-    % working with row vectors
-
-    % Rotation around Z axis (gantry)
-    rotMx_XY_T = [ cosd(pln.gantryAngles(i)) sind(pln.gantryAngles(i)) 0;
-                  -sind(pln.gantryAngles(i)) cosd(pln.gantryAngles(i)) 0;
-                                           0                         0 1];
-
-    % Rotation around Y axis (couch)
-    rotMx_XZ_T = [cosd(pln.couchAngles(i)) 0 -sind(pln.couchAngles(i));
-                                         0 1                        0;
-                  sind(pln.couchAngles(i)) 0  cosd(pln.couchAngles(i))];
-
-    % Rotated Source point (1st gantry, 2nd couch)
-    stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMx_XY_T*rotMx_XZ_T;
-
-    % now loop over ControlPointSequences
+        % now loop over ControlPointSequences
     ControlPointSeqNames = fieldnames(ControlPointSeq);
     numOfContrPointSeq = length(ControlPointSeqNames);
     % create empty helper matrix
-    StfTmp = zeros(0,5);
+    temporarySteering = zeros(0,8);
     for currContr = 1:numOfContrPointSeq
         currContrSeq = ControlPointSeq.(ControlPointSeqNames{currContr});
         % get energy, equal for all coming elements in the next loop
@@ -149,25 +141,61 @@ for i = 1:length(BeamSeqNames)
         c1_help = currContrSeq.ScanSpotPositionMap(1:2:(2 * numOfScanSpots));
         c2_help = currContrSeq.ScanSpotPositionMap(2:2:(2 * numOfScanSpots));
         weight_help = currContrSeq.ScanSpotMetersetWeights;
-        StfTmp = [StfTmp; c1_help c2_help (currEnergy * ones(numOfScanSpots,1)) weight_help (currFocus * ones(numOfScanSpots,1))];
+        if isfield(currContrSeq, 'RangeShifterSettingsSequence')
+            % rangeshifter identification
+            rashiID = currContrSeq.RangeShifterSettingsSequence.Item_1.ReferencedRangeShifterNumber;
+            % rangeshifter waterequivalent thickness
+            rashiWeThickness = currContrSeq.RangeShifterSettingsSequence.Item_1.RangeShifterWaterEquivalentThickness;
+            % rangeshifter isocenter to range shifter distance
+            rashiIsoRangeDist = currContrSeq.RangeShifterSettingsSequence.Item_1.IsocenterToRangeShifterDistance;
+        elseif currContr == 1
+            rashiID = 0;
+            rashiWeThickness = 0;
+            rashiIsoRangeDist = 0;            
+        else
+            % in this case range shifter settings has not changed between this
+            % and previous control sequence, so reuse values.
+        end
+        temporarySteering = [temporarySteering; c1_help c2_help ...
+            (currEnergy * ones(numOfScanSpots,1)) weight_help (currFocus * ones(numOfScanSpots,1)) ...
+            (rashiID * ones(numOfScanSpots,1)) (rashiWeThickness * ones(numOfScanSpots,1)) (rashiIsoRangeDist * ones(numOfScanSpots,1))];     
     end
     
     % finds all unique rays and saves them in to the stf
-    [RayPosTmp, ~, ic] = unique(StfTmp(:,1:2), 'rows');
+    [RayPosTmp, ~, ic] = unique(temporarySteering(:,1:2), 'rows');
+    clear ray;
     for j = 1:size(RayPosTmp,1)
         stf(i).ray(j).rayPos_bev = double([RayPosTmp(j,1) 0 RayPosTmp(j,2)]);
         stf(i).ray(j).energy = [];
         stf(i).ray(j).focusFWHM = [];
         stf(i).ray(j).focusIx = [];
         stf(i).ray(j).weight = [];
+        stf(i).ray(j).rangeShifter = struct();
+        ray(j).ID = [];
+        ray(j).eqThickness = [];
+        ray(j).sourceRashiDistance = [];
     end
     
     % saves all energies and weights to their corresponding ray
-    for j = 1:size(StfTmp,1)
+    for j = 1:size(temporarySteering,1)
         k = ic(j);
-        stf(i).ray(k).energy = [stf(i).ray(k).energy double(StfTmp(j,3))];
-        stf(i).ray(k).focusFWHM = [stf(i).ray(k).focusFWHM double(StfTmp(j,5))];
-        stf(i).ray(k).weight = [stf(i).ray(k).weight double(StfTmp(j,4)) / 1e6];
+        stf(i).ray(k).energy = [stf(i).ray(k).energy double(temporarySteering(j,3))];
+        stf(i).ray(k).focusFWHM = [stf(i).ray(k).focusFWHM double(temporarySteering(j,5))];
+        stf(i).ray(k).weight = [stf(i).ray(k).weight double(temporarySteering(j,4)) / 1e6];
+        % helpers to construct something like a(:).b = c.b(:) after this
+        % loop
+        ray(k).ID = [ray(k).ID double(temporarySteering(j,6))];
+        ray(k).eqThickness = [ray(k).eqThickness double(temporarySteering(j,7))];
+        ray(k).sourceRashiDistance = [ray(k).sourceRashiDistance double(temporarySteering(j,8))];
+    end
+    
+    % reassign to preserve data structure
+    for j = 1:numel(ray)
+        for k = 1:numel(ray(j).ID)
+            stf(i).ray(j).rangeShifter(k).ID = ray(j).ID(k);
+            stf(i).ray(j).rangeShifter(k).eqThickness = ray(j).eqThickness(k);
+            stf(i).ray(j).rangeShifter(k).sourceRashiDistance = stf(i).SAD - ray(j).sourceRashiDistance(k);
+        end
     end
     
     
@@ -200,7 +228,8 @@ for i = 1:length(BeamSeqNames)
     end
     bixelWidth_help1 = unique(round(1e3*bixelWidth_help(:,1))/1e3,'sorted');
     bixelWidth_help2 = unique(round(1e3*bixelWidth_help(:,2))/1e3,'sorted');
-    bixelWidth       = unique([unique(round(diff(bixelWidth_help1),2)) unique(round(diff(bixelWidth_help2),2))]);
+    
+    bixelWidth = unique([unique(diff(bixelWidth_help1)) unique(diff(bixelWidth_help2))]);
     
     if numel(bixelWidth) == 1
         stf(i).bixelWidth = bixelWidth;
@@ -208,69 +237,36 @@ for i = 1:length(BeamSeqNames)
         stf(i).bixelWidth = NaN;
     end
     
-    % compute coordinates in lps coordinate system, i.e. rotate beam
-    % geometry around fixed patient
-    
-    % Rotation around Z axis (gantry)
-    rotMx_XY_rotated = [ cosd(pln.gantryAngles(i)) sind(pln.gantryAngles(i)) 0;
-        -sind(pln.gantryAngles(i)) cosd(pln.gantryAngles(i)) 0;
-        0                         0 1];
-    
-    % Rotation around Y axis (couch)
-    rotMx_XZ_rotated = [ cosd(pln.couchAngles(i)) 0 -sind(pln.couchAngles(i));
-        0 1                        0;
-        sind(pln.couchAngles(i)) 0 cosd(pln.couchAngles(i))];
-    
-    % Rotated Source point, first needs to be rotated around gantry, and then
-    % couch.
-    stf(i).sourcePoint =  stf(i).sourcePoint_bev*rotMx_XY_rotated*rotMx_XZ_rotated;
+    % coordinate transformation with rotation matrix.
+    % use transpose matrix because we are working with row vectors
+    rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln.gantryAngles(i),pln.couchAngles(i)));
+
+    % Rotated Source point (1st gantry, 2nd couch)
+    stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMat_vectors_T;
     
     % Save ray and target position in lps system.
     for j = 1:stf(i).numOfRays
-        stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMx_XY_rotated*rotMx_XZ_rotated;
-        stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMx_XY_rotated*rotMx_XZ_rotated;   
-        stf(i).ray(j).SSD         = NaN;
+        stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMat_vectors_T;
+        stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMat_vectors_T;   
     end
     
-    % SSD
-    DensityThresholdSSD = 0.05;
+    % book keeping & calculate focus index
     for j = 1:stf(i).numOfRays
-        [alpha,~,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
-                             ct.resolution, ...
-                             stf(i).sourcePoint, ...
-                             stf(i).ray(j).targetPoint, ...
-                             ct.cube);
-
-            ixSSD = find(rho{1} > DensityThresholdSSD,1,'first');
-
-            if isempty(ixSSD)== 1
-                warning('Surface for SSD calculation starts directly in first voxel of CT\n');
-            end
-            
-            % calculate SSD
-            stf(i).ray(j).SSD = double(2 * stf(i).SAD * alpha(ixSSD));
-            % book keeping & calculate focus index
             stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);
     end
     
-    showWarning = false;
     % use the original machine energies
     for j = 1:stf(i).numOfRays
         % loop over all energies
         numOfEnergy = length(stf(i).ray(j).energy);
         for k = 1:numOfEnergy
-            energyIndex = find(abs([machine.data(:).energy]-stf(i).ray(j).energy(k))<10^-3);
+            energyIndex = find(abs([machine.data(:).energy]-stf(i).ray(j).energy(k))<10^-2);
             if ~isempty(energyIndex)
                 stf(i).ray(j).energy(k) = machine.data(energyIndex).energy;
             else
-               showWarning = true;
+                error('No match between imported and machine data. Maybe wrong machine loaded.');
             end
         end
-    end
-    
-    if showWarning
-        warning('No match between imported and machine data. Maybe wrong machine loaded.');
-        showWarning = false;
     end
     
     % get focusIx instead of focusFWHM
@@ -281,21 +277,11 @@ for i = 1:length(BeamSeqNames)
             energyTemp = stf(i).ray(j).energy(k);
             focusFWHM = stf(i).ray(j).focusFWHM(k);
             energyIxTemp = find([machine.data.energy] == energyTemp);
-            if isempty(energyIxTemp)
-               showWarning = true;
-               [~,energyIxTemp] = min(abs([machine.data.energy] - energyTemp));
-            end
-            [~,focusIxTemp] = min(abs([machine.data(energyIxTemp).initFocus.SisFWHMAtIso] - focusFWHM));
+            focusIxTemp = find(abs([machine.data(energyIxTemp).initFocus.SisFWHMAtIso] - focusFWHM )< 10^-3);
             stf(i).ray(j).focusIx(k) = focusIxTemp;
             stf(i).ray(j).focusFWHM(k) = machine.data(energyIxTemp).initFocus.SisFWHMAtIso(stf(i).ray(j).focusIx(k));
         end
     end
-    
-    if showWarning
-        warning('Parsed energies are not in line with machine file.');
-        showWarning = false;
-    end
-    
     
     stf(i).timeStamp = datestr(clock);
     

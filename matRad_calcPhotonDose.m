@@ -1,4 +1,4 @@
-function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
+function dij = matRad_calcPhotonDose(ct,stf,pln,cst,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad photon dose calculation wrapper
 % 
@@ -10,7 +10,8 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 %   stf:            matRad steering information struct
 %   pln:            matRad plan meta information struct
 %   cst:            matRad cst struct
-%   calcDoseDirect: boolian switch to bypass dose influence matrix
+%   param:          (optional) structure defining additional parameter
+%                   param.calcDoseDirect boolian switch to bypass dose influence matrix
 %                   computation and directly calculate dose; only makes
 %                   sense in combination with matRad_calcDoseDirect.m
 %
@@ -25,7 +26,7 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2017 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -36,80 +37,98 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if exist('param','var')
+    if ~isfield(param,'logLevel')
+       param.logLevel = 1;
+    end
+    % default: dose influence matrix computation
+   if ~isfield(param,'calcDoseDirect')
+      param.calcDoseDirect = false;
+   end
+    
+else
+   param.calcDoseDirect = false;
+   param.subIx          = [];
+   param.logLevel       = 1;
+end
+
+
 % set consistent random seed (enables reproducibility)
 rng(0);
 
-% default: dose influence matrix computation
-if ~exist('calcDoseDirect','var')
-    calcDoseDirect = false;
+if param.logLevel == 1
+   % initialize waitbar
+   figureWait = waitbar(0,'calculate dose influence matrix for photons...');
+   % show busy state
+   set(figureWait,'pointer','watch');
 end
-
-% issue warning if biological optimization not possible
-if sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0
-    warndlg('Effect based and RBE optimization not available for photons - physical optimization is carried out instead.');
-    pln.bioOptimization = 'none';
-end
-
-% initialize waitbar
-figureWait = waitbar(0,'calculate dose influence matrix for photons...');
-% show busy state
-set(figureWait,'pointer','watch');
 
 % meta information for dij
-dij.numOfBeams         = pln.numOfBeams;
-dij.numOfVoxels        = pln.numOfVoxels;
+dij.numOfBeams         = pln.propStf.numOfBeams;
+dij.numOfVoxels        = prod(ct.cubeDim);
 dij.resolution         = ct.resolution;
+dij.dimensions         = ct.cubeDim;
+dij.numOfScenarios     = 1;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
-dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
-dij.dimensions         = pln.voxelDimensions;
-dij.numOfScenarios     = pln.multScen.totalNumOfScen;
-dij.ScenProb           = pln.multScen.shiftScenProb;
+dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 
+% check if full dose influence data is required
+if param.calcDoseDirect 
+    numOfColumnsDij      = length(stf);
+    numOfBixelsContainer = 1;
+else
+    numOfColumnsDij      = dij.totalNumOfBixels;
+    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+end
 
 % set up arrays for book keeping
-dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
-dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
-dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
+dij.bixelNum = NaN*ones(numOfColumnsDij,1);
+dij.rayNum   = NaN*ones(numOfColumnsDij,1);
+dij.beamNum  = NaN*ones(numOfColumnsDij,1);
 
 % Allocate space for dij.physicalDose sparse matrix
 for CtScen = 1:pln.multScen.numOfCtScen
-    for ShiftScen = 1:pln.multScen.numOfShiftScen
-        for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen  
+    for ShiftScen = 1:pln.multScen.totNumShiftScen
+        for RangeShiftScen = 1:pln.multScen.totNumRangeScen 
             
-            if pln.multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
-                dij.physicalDose{CtScen,ShiftScen,RangeShiftScen} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
+            if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
+                dij.physicalDose{CtScen,ShiftScen,RangeShiftScen} = spalloc(prod(ct.cubeDim),numOfColumnsDij,1);
             end
             
         end
     end
 end
 
-% Allocate memory for dose_temp cell array
-if calcDoseDirect
-    numOfBixelsContainer = 1;
-else
-    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
-end
-doseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
+doseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
 
-% take only voxels inside patient
-V = [cst{:,4}];
-V = unique(vertcat(V{:}));
+% Only take voxels inside patient.
+if ~isempty(param.subIx) && param.calcDoseDirect
+   V = param.subIx; 
+else
+   V = [cst{:,4}];
+   V = unique(vertcat(V{:}));
+end
+
+% ignore densities outside of contours
+eraseCtDensMask = ones(dij.numOfVoxels,1);
+eraseCtDensMask(V) = 0;
+for i = 1:ct.numOfCtScen
+    ct.cube{i}(eraseCtDensMask == 1) = 0;
+end
 
 % Convert CT subscripts to linear indices.
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
 
 % set lateral cutoff value
-if ~(strcmp(num2str(pln.bixelWidth),'field'))
-    lateralCutoff = 82; % [mm]
-else
-    lateralCutoff = 140; % [mm] due to the large field size
-end
+lateralCutoff = 50; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
 useCustomPrimFluenceBool = 0;
+
+% 0 if field calc is bixel based, 1 if dose calc is field based
+isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
 
 %% kernel convolution
 % prepare data for convolution to reduce calculation time
@@ -117,271 +136,323 @@ fileName = [pln.radiationMode '_' pln.machine];
 try
    load([fileparts(mfilename('fullpath')) filesep fileName]);
 catch
-   error(['Could not find the following machine file: ' fileName ]); 
+   matRad_dispToConsole(['Could not find the following machine file: ' fileName ],param,'error'); 
 end
 
-% Make a 2D grid extending +/-100mm with 0.5 mm resolution
-convLimits = 100; % [mm]
-convResolution = .5; % [mm]
-[X,Z] = meshgrid(-convLimits:convResolution:convLimits-convResolution);   
+% set up convolution grid
+if isFieldBasedDoseCalc
+    % get data from DICOM import
+    intConvResolution = pln.Collimation.convResolution; 
+    fieldWidth = pln.Collimation.fieldWidth;
+else
+    intConvResolution = .5; % [mm]
+    fieldWidth = pln.propStf.bixelWidth;
+end
+
+% calculate field size and distances
+fieldLimit = ceil(fieldWidth/(2*intConvResolution));
+[F_X,F_Z] = meshgrid(-fieldLimit*intConvResolution: ...
+                  intConvResolution: ...
+                  (fieldLimit-1)*intConvResolution);    
 
 % gaussian filter to model penumbra
-sigmaGauss = 2.123/convResolution; % [mm] / see diploma thesis siggel 4.1.2
-gaussFilter =  1/(2*pi*sigmaGauss^2) * exp(-(X.^2+Z.^2)/(2*sigmaGauss^2*convResolution^2) );
+sigmaGauss = 2.123; % [mm] / see diploma thesis siggel 4.1.2
+% use 5 times sigma as the limits for the gaussian convolution
+gaussLimit = ceil(5*sigmaGauss/intConvResolution);
+[gaussFilterX,gaussFilterZ] = meshgrid(-gaussLimit*intConvResolution: ...
+                                    intConvResolution: ...
+                                    (gaussLimit-1)*intConvResolution);   
+gaussFilter =  1/(2*pi*sigmaGauss^2/intConvResolution^2) * exp(-(gaussFilterX.^2+gaussFilterZ.^2)/(2*sigmaGauss^2) );
+gaussConvSize = 2*(fieldLimit + gaussLimit);
 
-if ~(strcmp(num2str(pln.bixelWidth),'field'))
-    % Create zero matrix for the Fluence
-    F = zeros(size(X));
-
-    % set bixel opening to one
-    F(X >= -pln.bixelWidth/2 & X < pln.bixelWidth/2 & ...
-      Z >= -pln.bixelWidth/2 & Z < pln.bixelWidth/2) = 1;
-    % gaussian convolution of field to model penumbra
+if ~isFieldBasedDoseCalc   
+    % Create fluence matrix
+    F = ones(floor(fieldWidth/intConvResolution));
+    
     if ~useCustomPrimFluenceBool
-        F = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(gaussFilter) ))));
+    % gaussian convolution of field to model penumbra
+        F = real(ifft2(fft2(F,gaussConvSize,gaussConvSize).*fft2(gaussFilter,gaussConvSize,gaussConvSize)));     
     end
 end
 
-for ShiftScen = 1:pln.multScen.numOfShiftScen
+% get kernel size and distances
+kernelLimit = ceil(lateralCutoff/intConvResolution);
+[kernelX, kernelZ] = meshgrid(-kernelLimit*intConvResolution: ...
+                            intConvResolution: ...
+                            (kernelLimit-1)*intConvResolution);
 
-% manipulate isocenter
-pln.isoCenter = pln.isoCenter + pln.multScen.shifts(:,ShiftScen)';
-for k = 1:length(stf)
-    stf(k).isoCenter = stf(k).isoCenter + pln.multScen.shifts(:,ShiftScen)';
+% precalculate convoluted kernel size and distances
+kernelConvLimit = fieldLimit + gaussLimit + kernelLimit;
+[convMx_X, convMx_Z] = meshgrid(-kernelConvLimit*intConvResolution: ...
+                                intConvResolution: ...
+                                (kernelConvLimit-1)*intConvResolution);
+% calculate also the total size and distance as we need this during convolution extensively
+kernelConvSize = 2*kernelConvLimit;
+
+% define an effective lateral cutoff where dose will be calculated. note
+% that storage within the influence matrix may be subject to sampling
+effectiveLateralCutoff = lateralCutoff + fieldWidth/2;
+
+% book keeping - this is necessary since pln is not used in optimization or
+% matRad_calcCubes
+if strcmp(pln.bioParam.model,'constRBE')
+   dij.RBE = pln.bioParam.RBE;
 end
 
-counter = 0;
+ctScen = 1;
 
-fprintf(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.numOfShiftScen) ': \n']);
-fprintf('matRad: Photon dose calculation...\n');
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for i = 1:dij.numOfBeams; % loop over all beams
+for ShiftScen = 1:pln.multScen.totNumShiftScen
 
-    fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
+   % manipulate isocenter
+   pln.propStf.isoCenter    = pln.propStf.isoCenter + pln.multScen.isoShift(ShiftScen,:);
+   for k = 1:length(stf)
+       stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(ShiftScen,:);
+   end
 
-    bixelsPerBeam = 0;
+   counter = 0;
 
-    % convert voxel indices to real coordinates using iso center of beam i
-    xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
-    yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
-    zCoordsV = zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
-    coordsV  = [xCoordsV yCoordsV zCoordsV];
+   % compute SSDs
+   stf = matRad_computeSSD(stf,ct,ctScen);
 
-    % Set gantry and couch rotation matrices according to IEC 61217
-    % Use transpose matrices because we are working with row vectros
+   matRad_dispToConsole(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.totNumShiftScen) ': \n'],param,'info');
+   matRad_dispToConsole('matRad: photon dose calculation...\n',param,'info');
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   for i = 1:dij.numOfBeams % loop over all beams
 
-    % rotation around Z axis (gantry)
-    inv_rotMx_XY_T = [ cosd(-pln.gantryAngles(i)) sind(-pln.gantryAngles(i)) 0;
-                      -sind(-pln.gantryAngles(i)) cosd(-pln.gantryAngles(i)) 0;
-                                                0                          0 1];
+          matRad_dispToConsole(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n'],param,'info');
 
-    % rotation around Y axis (couch)
-    inv_rotMx_XZ_T = [cosd(-pln.couchAngles(i)) 0 -sind(-pln.couchAngles(i));
-                                              0 1                         0;
-                      sind(-pln.couchAngles(i)) 0  cosd(-pln.couchAngles(i))];
+          % remember beam and bixel number
+           if param.calcDoseDirect
+                dij.beamNum(i)    = i;
+                dij.rayNum(i)     = i;
+                dij.bixelNum(i)   = i;
+           end
+       
+          bixelsPerBeam = 0;
 
-    % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
-    rot_coordsV = coordsV*inv_rotMx_XZ_T*inv_rotMx_XY_T;
+          % convert voxel indices to real coordinates using iso center of beam i
+          xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
+          yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
+          zCoordsV = zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
+          coordsV  = [xCoordsV yCoordsV zCoordsV];
 
-    rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
-    rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
-    rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
+          % Get Rotation Matrix
+          % Do not transpose matrix since we usage of row vectors &
+          % transformation of the coordinate system need double transpose
 
-    % ray tracing
-    fprintf(['matRad: calculate radiological depth cube...']);
-    [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoff);
-    fprintf('done \n');
-    
-    % get indices of voxels where ray tracing results are available
-    radDepthIx = find(~isnan(radDepthV{1}));
-    
-    % limit rotated coordinates to positions where ray tracing is availabe
-    rot_coordsV = rot_coordsV(radDepthIx,:);
-    
-    % get index of central ray or closest to the central ray
-    [~,centerIx] = min(sum(reshape([stf(i).ray.rayPos_bev],3,[]).^2));
-    
-    % get correct kernel for given SSD at central ray (nearest neighbor approximation)
+          rotMat_system_T = matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i));
 
-    [~,currSSDIx] = min(abs([machine.data.kernel.SSD]-stf(i).ray(centerIx).SSD{1}));
-    fprintf(['matRad: SSD = ' num2str(machine.data.kernel(currSSDIx).SSD) 'mm\n']);
-    
-    kernelPos = machine.data.kernelPos;
-    kernel1 = machine.data.kernel(currSSDIx).kernel1;
-    kernel2 = machine.data.kernel(currSSDIx).kernel2;
-    kernel3 = machine.data.kernel(currSSDIx).kernel3;
+          % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
+          rot_coordsV = coordsV*rotMat_system_T;
 
-    % Evaluate kernels for all distances, interpolate between values
-    kernel1Mx = interp1(kernelPos,kernel1,sqrt(X.^2+Z.^2));
-    kernel2Mx = interp1(kernelPos,kernel2,sqrt(X.^2+Z.^2));
-    kernel3Mx = interp1(kernelPos,kernel3,sqrt(X.^2+Z.^2));
-    
-    % convolution here if no custom primary fluence and no field based dose calc
-    if ~useCustomPrimFluenceBool && ~(strcmp(num2str(pln.bixelWidth),'field'))
-        
-        % Display console message.
-        fprintf(['matRad: Uniform primary photon fluence -> pre-compute kernel convolution for SSD = ' ... 
-                num2str(machine.data.kernel(currSSDIx).SSD) ' mm ...\n']);    
+          rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
+          rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
+          rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
 
-        % 2D convolution of Fluence and Kernels in fourier domain
-        convMx1 = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(kernel1Mx) ) )));
-        convMx2 = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(kernel2Mx) ) )));
-        convMx3 = real(fftshift(ifft2(fft2( ifftshift(F) ).*fft2( ifftshift(kernel3Mx) ) )));
+          % ray tracing
+          matRad_dispToConsole('matRad: calculate radiological depth cube...',param,'info');
+          [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,effectiveLateralCutoff);
+          matRad_dispToConsole('done \n',param,'info');
 
-        % Creates an interpolant for kernes from vectors position X and Z
-        if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
-            Interp_kernel1 = griddedInterpolant(X',Z',convMx1','linear');
-            Interp_kernel2 = griddedInterpolant(X',Z',convMx2','linear');
-            Interp_kernel3 = griddedInterpolant(X',Z',convMx3','linear');
-        else
-            Interp_kernel1 = @(x,y)interp2(X(1,:),Z(:,1),convMx1,x,y,'linear');
-            Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear');
-            Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear');
-        end
-    end
+          % get indices of voxels where ray tracing results are available
+          radDepthIx = find(~isnan(radDepthV{1}));
 
-    
-    for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
+          % limit rotated coordinates to positions where ray tracing is availabe
+          rot_coordsV = rot_coordsV(radDepthIx,:);
 
-        counter = counter + 1;
-        bixelsPerBeam = bixelsPerBeam + 1;
-    
-        % convolution here if custom primary fluence OR field based dose calc
-        if useCustomPrimFluenceBool || strcmp(num2str(pln.bixelWidth),'field')
-            
-            % get the field if field based dose calculation
-            if strcmp(num2str(pln.bixelWidth),'field')
-                Fx = stf(i).ray(j).shape;
-            
-            % apply the primary fluence to the field
-            elseif useCustomPrimFluenceBool
-                
-                primaryFluence = machine.data.primaryFluence;
-                r     = sqrt( (X-stf(i).ray(j).rayPos(1)).^2 + (Z-stf(i).ray(j).rayPos(3)).^2 );
-                Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r);
-                Fx = F .* Psi;
-                
-            end
-            
-            % convolute with the gaussian
-            Fx = real(fftshift(ifft2(fft2( ifftshift(Fx) ).*fft2( ifftshift(gaussFilter) ))));
+          % get index of central ray or closest to the central ray
+          [~,center] = min(sum(reshape([stf(i).ray.rayPos_bev],3,[]).^2));
 
-            % 2D convolution of Fluence and Kernels in fourier domain
-            convMx1 = real(fftshift(ifft2(fft2( ifftshift(Fx) ).*fft2( ifftshift(kernel1Mx) ) )));
-            convMx2 = real(fftshift(ifft2(fft2( ifftshift(Fx) ).*fft2( ifftshift(kernel2Mx) ) )));
-            convMx3 = real(fftshift(ifft2(fft2( ifftshift(Fx) ).*fft2( ifftshift(kernel3Mx) ) )));
+          % get correct kernel for given SSD at central ray (nearest neighbor approximation)
+          [~,currSSDIx] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD{ctScen}));
 
-            % Creates an interpolant for kernes from vectors position X and Z
-            if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
-                Interp_kernel1 = griddedInterpolant(X',Z',convMx1','linear');
-                Interp_kernel2 = griddedInterpolant(X',Z',convMx2','linear');
-                Interp_kernel3 = griddedInterpolant(X',Z',convMx3','linear');
-            else
-                Interp_kernel1 = @(x,y)interp2(X(1,:),Z(:,1),convMx1,x,y,'linear');
-                Interp_kernel2 = @(x,y)interp2(X(1,:),Z(:,1),convMx2,x,y,'linear');
-                Interp_kernel3 = @(x,y)interp2(X(1,:),Z(:,1),convMx3,x,y,'linear');
-            end
-        end
+          matRad_dispToConsole(['                   SSD = ' num2str(machine.data.kernel(currSSDIx).SSD) 'mm                 \n'],param,'info');
 
-        % Display progress and update text only 200 times
-        if mod(bixelsPerBeam,round(stf(i).totalNumOfBixels/200)) == 0
-            matRad_progress(bixelsPerBeam/round(stf(i).totalNumOfBixels/200),...
-                            floor(stf(i).totalNumOfBixels/round(stf(i).totalNumOfBixels/200)));
-        end
-        % update waitbar only 100 times
-        if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
-            waitbar(counter/dij.totalNumOfBixels);
-        end
+          kernelPos = machine.data.kernelPos;
+          kernel1 = machine.data.kernel(currSSDIx).kernel1;
+          kernel2 = machine.data.kernel(currSSDIx).kernel2;
+          kernel3 = machine.data.kernel(currSSDIx).kernel3;
 
-        % remember beam and bixel number
-        dij.beamNum(counter)  = i;
-        dij.rayNum(counter)   = j;
-        dij.bixelNum(counter) = j;
+          % Evaluate kernels for all distances, interpolate between values
+          kernel1Mx = interp1(kernelPos,kernel1,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
+          kernel2Mx = interp1(kernelPos,kernel2,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
+          kernel3Mx = interp1(kernelPos,kernel3,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
 
+          % convolution here if no custom primary fluence and no field based dose calc
+          if ~useCustomPrimFluenceBool && ~isFieldBasedDoseCalc
 
-        % Ray tracing for beam i and bixel j
-        [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
-                                                               stf(i).sourcePoint_bev, ...
-                                                               stf(i).ray(j).targetPoint_bev, ...
-                                                               machine.meta.SAD, ...
-                                                               radDepthIx, ...
-                                                               lateralCutoff);
+              % Display console message.
+              matRad_dispToConsole(['matRad: Uniform primary photon fluence -> pre-compute kernel convolution for SSD = ' ... 
+                      num2str(machine.data.kernel(currSSDIx).SSD) ' mm ...\n'],param,'info');    
 
-        for CtScen = 1:pln.multScen.numOfCtScen
-            for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen  
+              % 2D convolution of Fluence and Kernels in fourier domain
+              convMx1 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)));
+              convMx2 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel2Mx,kernelConvSize,kernelConvSize)));
+              convMx3 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)));
 
-                if pln.multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
+              % Creates an interpolant for kernes from vectors position X and Z
+              if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
+                  Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
+                  Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
+                  Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
+              else
+                  Interp_kernel1 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,'linear',NaN);
+                  Interp_kernel2 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,'linear',NaN);
+                  Interp_kernel3 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,'linear',NaN);
+              end
+          end
 
-                    % manipulate radDepthCube for range scenarios
-                    manipulatedRadDepthCube = radDepthV{CtScen}(ix);                                        
+          for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
 
-                    if pln.multScen.relRangeShifts(RangeShiftScen) ~= 0 || pln.multScen.absRangeShifts(RangeShiftScen) ~= 0
-                        manipulatedRadDepthCube = manipulatedRadDepthCube +...                                                                                % original cube
-                                                  radDepthV{CtScen}(ix)*pln.multScen.relRangeShifts(RangeShiftScen) +... % rel range shift
-                                                  pln.multScen.absRangeShifts(RangeShiftScen);                                                      % absolute range shift
-                        manipulatedRadDepthCube(manipulatedRadDepthCube < 0) = 0;  
-                    end                    
+              counter       = counter + 1;
+              bixelsPerBeam = bixelsPerBeam + 1;
 
-                    % calculate photon dose for beam i and bixel j
-                    bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
-                                                               machine.data.betas, ...
-                                                               Interp_kernel1,...
-                                                               Interp_kernel2,...
-                                                               Interp_kernel3,...
-                                                               manipulatedRadDepthCube,...
-                                                               geoDistV(ix),...
-                                                               isoLatDistsX,...
-                                                               isoLatDistsZ);
-                                                       
-                    % sample dose only for bixel based dose calculation
-                    if ~strcmp(num2str(pln.bixelWidth),'field')
-                        r0   = 25;   % [mm] sample beyond the inner core
-                        Type = 'radius';
-                        [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
-                    end                                                      
-                    % Save dose for every bixel in cell array
-                    doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ix),1,bixelDose,dij.numOfVoxels,1);
-                end
+              % convolution here if custom primary fluence OR field based dose calc
+              if useCustomPrimFluenceBool || isFieldBasedDoseCalc
 
-            end
-        end
+                  % overwrite field opening if necessary
+                  if isFieldBasedDoseCalc
+                      F = stf(i).ray(j).shape;
+                  end
 
-        % save computation time and memory by sequentially filling the 
-        % sparse matrix dose.dij from the cell array
-        if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
-            for CtScen = 1:pln.multScen.numOfCtScen
-                for RangeShiftScen = 1:pln.multScen.numOfRangeShiftScen
+                  % prepare primary fluence array
+                  primaryFluence = machine.data.primaryFluence;
+                  r     = sqrt( (F_X-stf(i).ray(j).rayPos(1)).^2 + (F_Z-stf(i).ray(j).rayPos(3)).^2 );
+                  Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r,'linear',0);
 
-                    if pln.multScen.ScenCombMask(CtScen,ShiftScen,RangeShiftScen)
-                        if calcDoseDirect
-                            if isfield(stf(1).ray(1),'weight')
-                                % score physical dose
-                                dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,1) = dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,1) + stf(i).ray(j).weight * doseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen};
-                            else
-                                error(['No weight available for beam ' num2str(i) ', ray ' num2str(j)]);
-                            end
-                        else
-                            % fill entire dose influence matrix
-                            dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}];
-                        end
+                  % apply the primary fluence to the field
+                  Fx = F .* Psi;
+
+                  % convolute with the gaussian
+                  Fx = real( ifft2(fft2(Fx,gaussConvSize,gaussConvSize).* fft2(gaussFilter,gaussConvSize,gaussConvSize)) );
+
+                  % 2D convolution of Fluence and Kernels in fourier domain
+                  convMx1 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)) );
+                  convMx2 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel2Mx,kernelConvSize,kernelConvSize)) );
+                  convMx3 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)) );
+
+                  % Creates an interpolant for kernes from vectors position X and Z
+                  if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
+                      Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
+                      Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
+                      Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
+                  else
+                      Interp_kernel1 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,'linear',NaN);
+                      Interp_kernel2 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,'linear',NaN);
+                      Interp_kernel3 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,'linear',NaN);
+                  end
+
+              end
+
+              if param.logLevel <= 2
+                 % Display progress and update text only 200 times
+                 if mod(bixelsPerBeam,max(1,round(stf(i).totalNumOfBixels/200))) == 0
+                     matRad_progress(bixelsPerBeam/max(1,round(stf(i).totalNumOfBixels/200)),...
+                                     floor(stf(i).totalNumOfBixels/max(1,round(stf(i).totalNumOfBixels/200))));
+                 end
+                 if param.logLevel == 1
+                    % update waitbar only 100 times
+                    if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
+                        waitbar(counter/dij.totalNumOfBixels);
                     end
+                 end
+              end
+              
+              % remember beam and bixel number
+              if ~param.calcDoseDirect
+                 dij.beamNum(counter)  = i;
+                 dij.rayNum(counter)   = j;
+                 dij.bixelNum(counter) = j;
+              end
 
-                end
-            end
-        end
-    end
-end 
+              % Ray tracing for beam i and bixel j
+              [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
+                                                                     stf(i).sourcePoint_bev, ...
+                                                                     stf(i).ray(j).targetPoint_bev, ...
+                                                                     machine.meta.SAD, ...
+                                                                     radDepthIx, ...
+                                                                     effectiveLateralCutoff);
 
-dij.indexforOpt = [1];
+              % empty bixels may happen during recalculation of error
+              % scenarios -> skip to next bixel
+              if isempty(ix)
+                  continue;
+              end
 
-% manipulate isocenter
-pln.isoCenter = pln.isoCenter - pln.multScen.shifts(:,ShiftScen)';
-for k = 1:length(stf)
-    stf(k).isoCenter = stf(k).isoCenter - pln.pln.multScen.shifts(:,ShiftScen)';
-end    
+
+              for CtScen = 1:pln.multScen.numOfCtScen
+                  for RangeShiftScen = 1:pln.multScen.totNumRangeScen  
+
+                      if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
+
+                          % manipulate radDepthCube for range scenarios
+                          manipulatedRadDepthCube = radDepthV{CtScen}(ix);                                        
+
+                          if pln.multScen.relRangeShift(RangeShiftScen) ~= 0 || pln.multScen.absRangeShift(RangeShiftScen) ~= 0
+                              manipulatedRadDepthCube = manipulatedRadDepthCube +...                                                                                % original cube
+                                                        radDepthV{CtScen}(ix)*pln.multScen.relRangeShift(RangeShiftScen) +... % rel range shift
+                                                        pln.multScen.absRangeShift(RangeShiftScen);                                                      % absolute range shift
+                              manipulatedRadDepthCube(manipulatedRadDepthCube < 0) = 0;  
+                          end  
+
+                          % calculate photon dose for beam i and bixel j
+                          bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
+                                                                     machine.data.betas, ...
+                                                                     Interp_kernel1,...
+                                                                     Interp_kernel2,...
+                                                                     Interp_kernel3,...
+                                                                     manipulatedRadDepthCube,...
+                                                                     geoDistV(ix),...
+                                                                     isoLatDistsX,...
+                                                                     isoLatDistsZ);
+
+                          % sample dose only for bixel based dose calculation
+                          if ~isFieldBasedDoseCalc
+                              r0   = 25;   % [mm] sample beyond the inner core
+                              Type = 'radius';
+                              [ixSamp,bixelDose] = matRad_DijSampling(ix,bixelDose,manipulatedRadDepthCube,rad_distancesSq,Type,r0);
+                          end   
+                          % Save dose for every bixel in cell array
+                          doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen} = sparse(V(ixSamp),1,bixelDose,dij.numOfVoxels,1);
+                      end
+                  end
+              end
+
+
+              % save computation time and memory by sequentially filling the 
+              % sparse matrix dose.dij from the cell array
+              if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
+                  for CtScen = 1:pln.multScen.numOfCtScen
+                      for RangeShiftScen = 1:pln.multScen.totNumRangeScen
+
+                          if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
+                              if param.calcDoseDirect
+                                  if isfield(stf(1).ray(1),'weight')
+                                      % score physical dose
+                                      dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,i) = dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,i) + stf(i).ray(j).weight * doseTmpContainer{1,CtScen,ShiftScen,RangeShiftScen};
+                                  else
+                                      matRad_dispToConsole(['No weight available for beam ' num2str(i) ', ray ' num2str(j)],param,'error');
+                                  end
+                              else
+                                  % fill entire dose influence matrix
+                                  dij.physicalDose{CtScen,ShiftScen,RangeShiftScen}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,CtScen,ShiftScen,RangeShiftScen}];
+                              end
+                          end
+
+                      end
+                  end
+              end
+
+          end
+   end
+
+   % manipulate isocenter
+   pln.propStf.isoCenter = pln.propStf.isoCenter - pln.multScen.isoShift(ShiftScen,:);
+   for k = 1:length(stf)
+       stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(ShiftScen,:);
+   end   
 
 end
-
 
 try
   % wait 0.1s for closing all waitbars
@@ -390,5 +461,4 @@ try
   pause(0.1);
 catch
 end
-
 

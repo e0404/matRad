@@ -39,7 +39,11 @@ if size(rtPlanFiles,1) ~= 1
 end
 
 % read information out of the RT file
-planInfo = dicominfo(rtPlanFiles{1});
+if verLessThan('matlab','9')
+    planInfo = dicominfo(rtPlanFiles{1});
+else
+    planInfo = dicominfo(rtPlanFiles{1},'UseDictionaryVR',true);
+end
 
 % check which type of Radiation is used
 if isfield(planInfo, 'BeamSequence')
@@ -77,26 +81,19 @@ end
 % loop over beams
 gantryAngles{length(BeamSeqNames)} = [];
 PatientSupportAngle{length(BeamSeqNames)} = [];
-isoCenter{length(BeamSeqNames)} = [];
+isoCenter = NaN*ones(length(BeamSeqNames),3);
 for i = 1:length(BeamSeqNames)   
     currBeamSeq             = BeamSequence.(BeamSeqNames{i});
     % parameters not changing are stored in the first ControlPointSequence
     gantryAngles{i}         = currBeamSeq.(ControlParam).Item_1.GantryAngle;
     PatientSupportAngle{i}  = currBeamSeq.(ControlParam).Item_1.PatientSupportAngle;
-    isoCenter{i}            = currBeamSeq.(ControlParam).Item_1.IsocenterPosition;
-end
-
-% check wether isocenters are consistent
-if numel(isoCenter) > 1
-    if ~isequal(isoCenter{:})
-       errordlg('Values for isocenter are not consistent.')
-    end
+    isoCenter(i,:)          = currBeamSeq.(ControlParam).Item_1.IsocenterPosition';
 end
 
 % transform iso. At the moment just this way for HFS
 if ct.dicomInfo.ImageOrientationPatient == [1;0;0;0;1;0]
-    isoCenter = isoCenter{1}' - ct.dicomInfo.ImagePositionPatient' + ...
-                         [ct.resolution.x ct.resolution.y ct.resolution.z];
+    isoCenter = isoCenter - ones(length(BeamSeqNames),1) * ...
+        ([ct.x(1) ct.y(1) ct.z(1)] - [ct.resolution.x ct.resolution.y ct.resolution.z]);
 else
     error('This Orientation is not yet supported.');
 end
@@ -125,7 +122,10 @@ end
 
 % extract field shapes
 if strcmp(radiationMode, 'photons')
-    pln.Collimation = matRad_importFieldShapes(BeamSequence, BeamSeqNames);
+           
+    fractionSequence = planInfo.FractionGroupSequence.Item_1;
+    pln.Collimation  = matRad_importFieldShapes(BeamSequence,fractionSequence);
+    
 end
 
 %% write parameters found to pln variable
@@ -137,11 +137,17 @@ pln.couchAngles     = [PatientSupportAngle{1:length(BeamSeqNames)}]; % [°]
 pln.numOfBeams      = length(BeamSeqNames);
 pln.numOfVoxels     = numel(ct.cube{1});
 pln.voxelDimensions = ct.cubeDim;
-pln.bioOptimization = 'none'; % none: physical optimization; effect: effect-based optimization; RBExD: optimization of RBE-weighted dose
 pln.numOfFractions  = planInfo.FractionGroupSequence.Item_1.NumberOfFractionsPlanned;
 pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.machine         = 'Generic';
+quantityOpt         = 'physicalDose';                                     
+modelName           = 'none';  
+
+% disable robust optimization
+pln.robOpt          = false;
+pln.scenGenType     = 'nomScen';
+
 
 % if we imported field shapes then let's trigger field based dose calc by
 % setting the bixelWidth to 'field'
@@ -163,4 +169,11 @@ end
 if dicomMetaBool == true
     pln.DicomInfo.Meta = planInfo;
 end
+
+% retrieve bio model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+
+% retrieve scenarios for dose calculation and optimziation
+pln.multScen = matRad_multScen(ct,pln.scenGenType);
+
 end

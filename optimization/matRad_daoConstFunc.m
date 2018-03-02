@@ -1,4 +1,4 @@
-function c = matRad_daoConstFunc(apertureInfoVec,apertureInfo,dij,cst,type)
+function c = matRad_daoConstFunc(apertureInfoVec,apertureInfo,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: constraint function for direct aperture optimization
 % 
@@ -10,7 +10,7 @@ function c = matRad_daoConstFunc(apertureInfoVec,apertureInfo,dij,cst,type)
 %   apertureInfo:   aperture info struct
 %   dij:            dose influence matrix
 %   cst:            matRad cst struct
-%   type:   type of optimizaiton; either 'none','effect' or 'RBExD'
+%   options:        option struct defining the type of optimization
 %
 % output
 %   c:              value of constraints
@@ -40,7 +40,7 @@ rightLeafPos = apertureInfoVec(1+apertureInfo.totalNumOfLeafPairs+apertureInfo.t
 c_dao        = rightLeafPos - leftLeafPos;
 
 % bixel based objective function calculation
-c_dos = matRad_constFuncWrapper(apertureInfo.bixelWeights,dij,cst,type);
+c_dos = matRad_constFuncWrapper(apertureInfo.bixelWeights,dij,cst,options);
 
 % concatenate
 c = [c_dao; c_dos];

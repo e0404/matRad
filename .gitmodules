@@ -1,0 +1,9 @@
+[submodule "submodules/matlab2tikz"]
+	path = submodules/matlab2tikz
+	url = https://github.com/matlab2tikz/matlab2tikz.git
+[submodule "submodules/latexTable"]
+	path = submodules/latexTable
+	url = https://github.com/eliduenisch/latexTable.git
+[submodule "submodules/parfor_progress"]
+	path = submodules/parfor_progress
+	url = https://github.com/dumbmatter/parfor_progress.git

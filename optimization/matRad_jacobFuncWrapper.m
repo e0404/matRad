@@ -33,14 +33,8 @@ function jacob = matRad_jacobFuncWrapper(w,dij,cst,options)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global cScaling
-global kDVH;
-global kDCH;
-global matRad_iteration;
-global JACOBIAN;
-
 % get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,options);
+d = matRad_backProjection(w,dij,cst,options);
 
 % initialize jacobian
 jacob = sparse([]);
@@ -51,7 +45,6 @@ mAlphaDoseProjection    = sparse([]);
 mSqrtBetaDoseProjection = sparse([]);
 voxelID                 = [];
 constraintID            = 0;
-constraintID2           = 0;
 scenID                  = [];
 scenID2                 = [];
 
@@ -68,10 +61,10 @@ for i = 1:size(cst,1)
             if ~isempty(strfind(cst{i,6}(j).type,'constraint'))
                 
                 % compute reference
-                if (~isequal(cst{i,6}(j).type, 'max dose constraint')      && ~isequal(cst{i,6}(j).type, 'min dose constraint')      &&...
+                if (~isequal(cst{i,6}(j).type, 'max dose constraint')      && ~isequal(cst{i,6}(j).type, 'min dose constraint')          &&...
                     ~isequal(cst{i,6}(j).type, 'max mean dose constraint') && ~isequal(cst{i,6}(j).type, 'min mean dose constraint') && ...
-                    ~isequal(cst{i,6}(j).type, 'min EUD constraint')       && ~isequal(cst{i,6}(j).type, 'max EUD constraint'))      && ...
-                     isequal(options.quantity,'effect') 
+                    ~isequal(cst{i,6}(j).type, 'min EUD constraint')       && ~isequal(cst{i,6}(j).type, 'max EUD constraint'))           && ...
+                    isequal(options.quantityOpt,'effect')
                      
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
                 else
@@ -85,16 +78,14 @@ for i = 1:size(cst,1)
 
                     jacobVec =  matRad_jacobFunc(d_i,cst{i,6}(j),d_ref);
                     
-                    % set ID vectors
-                    scenID        = [scenID;1];
-                    scenID2       = [scenID2;ones(numel(cst{i,4}{1}),1)];
-                    constraintID2 = [constraintID2;constraintID2(end) + 1];
+                    scenID  = [scenID;1];
+                    scenID2 = [scenID2;ones(numel(cst{i,4}{1}),1)];
                     
-                    if isequal(options.quantity,'physicalDose') && ~isempty(jacobVec) || isequal(options.type,'const_RBExD')
+                    if isequal(options.quantityOpt,'physicalDose') && ~isempty(jacobVec) || isequal(options.model,'constRBE')
 
                        DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
 
-                    elseif isequal(options.quantity,'effect')  && ~isempty(jacobVec)
+                    elseif isequal(options.quantityOpt,'effect') && ~isempty(jacobVec)
 
                        mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
                        mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
@@ -102,7 +93,7 @@ for i = 1:size(cst,1)
                        voxelID                 = [voxelID ;cst{i,4}{1}];
                        constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
 
-                    elseif isequal(options.quantity,'RBExD')  && ~isempty(jacobVec)
+                    elseif isequal(options.quantityOpt,'RBExD') && ~isempty(jacobVec)
                                         
                        scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i);
 
@@ -116,256 +107,6 @@ for i = 1:size(cst,1)
 
                     end
 
-                % if prob opt or voxel-wise worst case: add constraints of all dose scenarios
-                elseif strcmp(cst{i,6}(j).robustness,'probabilistic') || strcmp(cst{i,6}(j).robustness,'VWWC') || strcmp(cst{i,6}(j).robustness,'COWC')
-                    
-                    for k = 1:dij.numOfScenarios
-                        
-                        d_i = d{k}(cst{i,4}{1});
-                        
-                        jacobVec =  matRad_jacobFunc(d_i,cst{i,6}(j),d_ref);
-                        
-                        % set ID vectors
-                        scenID        = [scenID;k];
-                        scenID2       = [scenID2;repmat(k,numel(cst{i,4}{1}),1)];
-                        constraintID2 = [constraintID2;constraintID2(end) + 1];
-                        
-                        if isequal(options.quantity,'physicalDose') && ~isempty(jacobVec) || isequal(options.type,'const_RBExD')
-
-                           DoseProjection = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
-
-                        elseif isequal(options.quantity,'effect') && ~isempty(jacobVec)
-
-                           mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
-                           mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
-                                                      sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*jacobVec,dij.numOfVoxels,numel(cst{i,4}{1}))];
-                           voxelID                 = [voxelID ;cst{i,4}{1}];
-                           constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
-
-                        elseif isequal(options.quantity,'RBExD') && ~isempty(jacobVec)
-
-                           delta = jacobVec./(2*dij.bx(cst{i,4}{1}).*ScaledEffect(cst{i,4}{1}));
-
-                           mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,delta,dij.numOfVoxels,1)];
-                           mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
-                                                      sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*delta,dij.numOfVoxels,numel(cst{i,4}{1}))];
-                           voxelID                 = [voxelID ;cst{i,4}{1}];
-                           constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
-
-                        end
-                                              
-                    end
-                    
-                % if coveraged based opt     
-                elseif strcmp(cst{i,6}(j).robustness,'coverage')
-  
-                    if isequal(cst{i,6}(j).type, 'max DCH Area constraint') || ...
-                       isequal(cst{i,6}(j).type, 'min DCH Area constraint')
-                   
-                        % calc invers DCH
-                        Q_ref  = cst{i,6}(j).coverage/100;
-                        V_ref  = cst{i,6}(j).volume/100;
-                        d_ref2 = matRad_calcInversDCH(V_ref,Q_ref,d,dij,cst(i,:));
-                            
-                        if dij.numOfScenarios > 1
-                            
-                            % set coverage constraint ID2 vector
-                            constraintID2 = [constraintID2;repmat(1 + constraintID2(end),dij.numOfScenarios,1)];
-
-                            for k = 1:dij.numOfScenarios
-
-                                % get VOI dose in current scenario
-                                d_i = d{k}(cst{i,4}{1});
-
-                                % get voxel dependent weigthing
-                                voxelWeighting = 1;  
-
-                                % calculate delta
-                                jacobVec = dij.ScenProb(k) * matRad_jacobFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);                   
-                                
-                                % set ID vectors
-                                scenID  = [scenID;k];
-                                scenID2 = [scenID2;repmat(k,numel(cst{i,4}{1}),1)];
-                                
-                                if isequal(options.quantity,'physicalDose') && ~isempty(jacobVec) || isequal(options.type,'const_RBExD')
-
-                                   DoseProjection = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
-
-                                elseif isequal(type,'effect') && ~isempty(jacobVec)
-
-                                    error('effect optimization in Area constraint not implemented yet')
-
-                                elseif isequal(type,'RBExD') && ~isempty(jacobVec)
-
-                                    error('RBExD optimization in Area constraint not implemented yet')
-
-                                end                                
-
-                            end
-
-                        else                                                    
-
-                            % get VOI ScenUnion dose of nominal scneario
-                            cstLogical = strcmp(cst(:,2),[cst{i,2},' ScenUnion']);
-                            d_i        = d{1}(cst{cstLogical,5}.voxelID);
-
-                            % get voxel dependent weigthing
-                            voxelWeighting = 1;  
-
-                            % calculate delta
-                            jacobVec = matRad_jacobFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);                  
-                            
-                            % set ID vectors
-                            scenID        = [scenID;1];
-                            scenID2       = [scenID2;ones(numel(cst{i,4}{1}),1)];
-                            constraintID2 = [constraintID2;constraintID2(end) + 1];
-
-                            if isequal(type,'none') && ~isempty(jacobVec)
-
-                               DoseProjection = [DoseProjection,sparse(cst{cstLogical,5}.voxelID,1,jacobVec,dij.numOfVoxels,1)];
-
-                            elseif isequal(options.quantity,'effect') && ~isempty(jacobVec)
-
-                                error('effect optimization in Area constraint not implemented yet')
-
-                            elseif isequal(options.quantity,'RBExD') && ~isempty(jacobVec)
-
-                                error('RBExD optimization in Area constraint not implemented yet')
-
-                            end
-
-                        end
-                        
-                    elseif isequal(cst{i,6}(j).type, 'max DCH Theta constraint') || ...
-                           isequal(cst{i,6}(j).type, 'min DCH Theta constraint')
-                                              
-                        if dij.numOfScenarios > 1
-                            
-                            % get VOI dose union in every scneario
-                            dUnion = [];
-                            for k = 1:dij.numOfScenarios
-                                % get current dose
-                                dUnion = union(dUnion,d{k}(cst{i,4}{1}));
-                            end
-                            
-                            % calculate DVH logistic function scaling
-                            DVHScaling = matRad_calcLogisticFuncScaling(dUnion,d_ref,0.5,0.01,0,250);                            
-                            kDVH(j,matRad_iteration+1)= DVHScaling;
-                            
-                            for k = 1:dij.numOfScenarios
-
-                                % get VOI dose in current scenario
-                                d_i = d{k}(cst{i,4}{1});
-
-                                % calculate volumes
-                                volume_pi(k) = sum(1./(1+exp(-2*DVHScaling*(d_i-d_ref))))/numel(d_i);
-
-                            end
-                            
-                            % get scenario probabilities
-                            scenProb = dij.ScenProb;
-                            
-                        else
-                            
-                            % get VOI ScenUnion dose of nominal scneario
-                            cstLogical = strcmp(cst(:,2),[cst{i,2},' ScenUnion']);
-                            d_i        = d{1}(cst{cstLogical,5}.voxelID);
-                            
-                            % calculate DVH logistic function scaling
-                            DVHScaling = matRad_calcLogisticFuncScaling(d_i,d_ref,0.5,0.01,0,250);                            
-                            kDVH(j,matRad_iteration+1)= DVHScaling;
-                            
-                            for k = 1:cst{i,5}.VOIShift.ncase
-
-                                % get VOI dose in current scenario
-                                if isequal(cst{i,5}.VOIShift.shiftType,'rounded')
-                                    d_i = d{1}(cst{i,4}{1}-cst{i,5}.VOIShift.roundedShift.idxShift(k));
-                                elseif isequal(cst{i,5}.VOIShift.shiftType,'linInterp')
-                                    error('linInterp in DCH Theta constraint not implemented yet')
-                                end
-                                
-                                % calculate volumes
-                                volume_pi(k) = sum(1./(1+exp(-2*DVHScaling*(d_i-d_ref))))/numel(d_i);
-
-                            end
-                            
-                            % get scenario probabilities
-                            scenProb = 1/cst{i,5}.VOIShift.ncase;  % assume equiprobable scenarios
-                            
-                        end
-
-                        % calculate DCH logistic function scaling
-                        DCHScaling = matRad_calcLogisticFuncScaling(volume_pi,cst{i,6}(j).volume/100,1,0.01,0,1000);
-                        kDCH(j,matRad_iteration+1)= DCHScaling;
-                        
-                        if dij.numOfScenarios > 1
-                            
-                            % set coverage constraint ID2 vector
-                            constraintID2 = [constraintID2;repmat(1 + constraintID2(end),dij.numOfScenarios,1)];
-                            
-                            for k = 1:dij.numOfScenarios
-                                
-                                % get VOI dose in current scenario
-                                d_i = d{k}(cst{i,4}{1});
-                                
-                                % calculate delta
-                                jacobVec = scenProb(k)*matRad_jacobFunc(d_i,cst{i,6}(j),d_ref,0,0,DVHScaling,DCHScaling,volume_pi(k));
-                                    
-                                % set ID vectors
-                                scenID  = [scenID;k];
-                                scenID2 = [scenID2;repmat(k,numel(cst{i,4}{1}),1)];
-
-                                if isequal(options.quantity,'physicalDose') && ~isempty(jacobVec) || isequal(options.type,'const_RBExD')
-
-                                   DoseProjection = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
-
-                                elseif isequal(options.quantity,'effect') && ~isempty(jacobVec)
-
-                                    error('effect optimization in Theta constraint not implemented yet')
-
-                                elseif isequal(options.quantity,'RBExD') && ~isempty(jacobVec)
-
-                                    error('RBExD optimization in Theta constraint not implemented yet')
-
-                                end
-
-                            end
-                        else
-                            
-                            % set coverage constraint ID2 vector
-                            constraintID2 = [constraintID2;repmat(1 + constraintID2(end),cst{i,5}.VOIShift.ncase,1)];
-                            
-                            for k = 1:cst{i,5}.VOIShift.ncase
-                                
-                                % get VOI dose in current scenario
-                                d_i = d{1}(cst{i,4}{1}-cst{i,5}.VOIShift.roundedShift.idxShift(k));
-                                
-                                % calculate delta
-                                jacobVec = scenProb*matRad_jacobFunc(d_i,cst{i,6}(j),d_ref,0,0,DVHScaling,DCHScaling,volume_pi(k));
-                                    
-                                % set ID vectors
-                                scenID  = [scenID;1];
-                                scenID2 = [scenID2;ones(numel(cst{i,4}{1}),1)];
-
-                                if iisequal(options.quantity,'physicalDose') && ~isempty(jacobVec) || isequal(options.type,'const_RBExD')
-
-                                   DoseProjection = [DoseProjection,sparse(cst{i,4}{1}-cst{i,5}.VOIShift.roundedShift.idxShift(k),1,jacobVec,dij.numOfVoxels,1)];
-
-                                elseif isequal(options.quantity,'effect') && ~isempty(jacobVec)
-
-                                    error('effect optimization in Theta constraint not implemented yet')
-
-                                elseif isequal(options.quantity,'RBExD') && ~isempty(jacobVec)
-
-                                    error('RBExD optimization in Theta constraint not implemented yet')
-
-                                end
-
-                            end
-                        end
-                        
-                    end
-
                 end
 
             end
@@ -376,14 +117,14 @@ for i = 1:size(cst,1)
 
 end
 
-if isequal(options.quantity,'effect') || isequal(options.quantity,'RBExD')
+if isequal(options.quantityOpt,'effect') || isequal(options.quantityOpt,'RBExD')
     constraintID = constraintID(2:end);
 end
 
 % Calculate jacobian with dij projections
 for i = 1:dij.numOfScenarios
    % enter if statement also for protons using a constant RBE
-   if isequal(options.quantity,'physicalDose') || isequal(options.type,'const_RBExD')
+   if isequal(options.quantityOpt,'physicalDose') ||  isequal(options.model,'constRBE')
 
         if ~isempty(DoseProjection)
             
@@ -392,47 +133,19 @@ for i = 1:dij.numOfScenarios
             
         end
 
-    elseif isequal(options.quantity,'effect') || isequal(options.quantity,'RBExD')
+    elseif isequal(options.quantityOpt,'effect') || isequal(options.quantityOpt,'RBExD')
 
         if ~isempty(mSqrtBetaDoseProjection) && ~isempty(mAlphaDoseProjection)
-
+            
             jacobLogical            = (scenID == i);
             jacobLogical2           = (scenID2 == i);
             mSqrtBetaDoseProjection = mSqrtBetaDoseProjection(:,jacobLogical2)' * dij.mSqrtBetaDose{i} * w;
             mSqrtBetaDoseProjection = sparse(voxelID(jacobLogical2),constraintID(jacobLogical2),mSqrtBetaDoseProjection,...
                                          size(mAlphaDoseProjection(:,jacobLogical),1),size(mAlphaDoseProjection(:,jacobLogical),2));
-
+                                     
             jacob(jacobLogical,:)   = mAlphaDoseProjection(:,jacobLogical)' * dij.mAlphaDose{i} +... 
                                       mSqrtBetaDoseProjection' * dij.mSqrtBetaDose{i};
-
-        end
-    end
-end
-
-% summ over scenarios with eqaul constraintID2
-if numel(unique(constraintID2)) < numel(constraintID2)
-    
-    [rows, cols] = ndgrid(constraintID2(2:end),1:size(jacob,2));
-    jacob        = accumarray([rows(:) cols(:)],jacob(:));
-   
-end
-
-% apply constraint scaling
-jacob = bsxfun(@times,cScaling,jacob);
-
-% save min/max jacobian
-if ~isempty(jacob)
-    for k = 1:size(jacob,1)
-        jacob_ = jacob(k,:);
-        if isempty(max(abs(jacob_(jacob_ ~= 0))))
-            JACOBIAN(k,1,matRad_iteration+1)= 0;
-        else
-            JACOBIAN(k,1,matRad_iteration+1)= max(abs(jacob_(jacob_ ~= 0)));
-        end
-        if isempty(min(abs(jacob_(jacob_ ~= 0))))
-            JACOBIAN(k,2,matRad_iteration+1)= 0;
-        else
-            JACOBIAN(k,2,matRad_iteration+1)= min(abs(jacob_(jacob_ ~= 0)));
+            
         end
     end
 end

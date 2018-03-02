@@ -1,4 +1,4 @@
-function jacob = matRad_daoJacobFunc(apertureInfoVec,apertureInfo,dij,cst,type)
+function jacob = matRad_daoJacobFunc(apertureInfoVec,apertureInfo,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian function for direct aperture optimization
 % 
@@ -10,7 +10,7 @@ function jacob = matRad_daoJacobFunc(apertureInfoVec,apertureInfo,dij,cst,type)
 %   apertureInfo:    aperture info struct
 %   dij:             dose influence matrix
 %   cst:             matRad cst struct
-%   type:   type of optimizaiton; either 'none','effect' or 'RBExD'
+%   options:         option struct defining the type of optimization
 %
 % output
 %   jacob:           jacobian of constraint function
@@ -56,7 +56,7 @@ jacob_dao = sparse(i,j,s, ...
 % compute jacobian of dosimetric constrainst
 
 % dosimetric jacobian in bixel space
-jacob_dos_bixel = matRad_jacobFuncWrapper(apertureInfo.bixelWeights,dij,cst,type);
+jacob_dos_bixel = matRad_jacobFuncWrapper(apertureInfo.bixelWeights,dij,cst,options);
 
 % allocate sparse matrix for dosimetric jacobian
 jacob_dos = sparse(size(jacob_dos_bixel,1),numel(apertureInfoVec));

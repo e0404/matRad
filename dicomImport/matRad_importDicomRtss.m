@@ -40,8 +40,13 @@ if nargin < 3
     visBool = 0;
 end
 
-%% get info
-structInfo = dicominfo(filename);
+% read dicom info (this includes already all data for the rtss)
+if verLessThan('matlab','9')
+    structInfo = dicominfo(filename);
+else % apply 'UseVRHeuristic' option when available to use a to help read certain 
+     % noncompliant files which switch value representation (VR) modes incorrectly
+    structInfo = dicominfo(filename,'UseVRHeuristic',false,'UseDictionaryVR',true);
+end
 
 % list the defined structures
 listOfDefStructs = fieldnames(structInfo.StructureSetROISequence);
@@ -61,8 +66,9 @@ for i = 1:numOfContStructs % loop over every structure
             break;
         end
     end    
-    structures(i).structName   = structInfo.StructureSetROISequence.(...
-                                 listOfDefStructs{j}).ROIName;
+    structures(i).structName   = regexprep(...  % replace nonregular characters by whitespace
+        structInfo.StructureSetROISequence.(listOfDefStructs{j}).ROIName,...
+        '[^a-zA-Z0-9]',' ');
                              
     structures(i).structNumber = structInfo.ROIContourSequence.(...
                                  listOfContStructs{i}).ReferencedROINumber;

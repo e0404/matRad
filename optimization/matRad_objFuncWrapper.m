@@ -32,18 +32,17 @@ function f = matRad_objFuncWrapper(w,dij,cst,options)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global fScaling
-
 % get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,options);
+[d,d_exp,Omega] = matRad_backProjection(w,dij,cst,options);
 
 % Initialize f
 f = 0;
-% if composite optimization is used, create a vector for booking
+
+% if composite worst case optimization is used then create a vector for book keeping
 for i = 1:size(cst,1)
   for j = 1:numel(cst{i,6})
       if strcmp(cst{i,6}(j).robustness,'COWC')
-         f_COWC = zeros(options.numOfScenarios,1);break;
+         f_COWC = zeros(options.numOfScen,1);break;
       end
   end
 end
@@ -61,7 +60,8 @@ for  i = 1:size(cst,1)
             if isempty(strfind(cst{i,6}(j).type,'constraint'))
 
                 % compute reference
-                if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) && isequal(options.quantity,'effect') 
+                if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) &&...
+                    isequal(options.quantityOpt,'effect') 
 
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
                 else
@@ -74,97 +74,72 @@ for  i = 1:size(cst,1)
                     d_i = d{1}(cst{i,4}{1});
 
                     f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
-
-                % if prob opt: sum up expectation value of objectives
-                elseif strcmp(cst{i,6}(j).robustness,'probabilistic')
-
-                    for ixScen = 1:dij.numOfScenarios
-
-                        d_i = d{ixScen}(cst{i,4}{1});
-
-                        f = f + dij.probOfScenarios(ixScen) * matRad_objFunc(d_i,cst{i,6}(j),d_ref);
-                    end
-
-                % if voxel-wise worst case: sum up objective of min/max dose
-                elseif strcmp(cst{i,6}(j).robustness,'VWWC')
-
-                    % prepare min/max dose vector we have chosen voxel-wise worst case
-                    if ~exist('d_max','var')
-                        d_max = max([d{:}],[],2);
-                        d_min = min([d{:}],[],2);
-                    end
-
-                    if isequal(cst{i,3},'OAR')
-                        d_i = d_max(cst{i,4}{1});
-                    elseif isequal(cst{i,3},'TARGET')
-                        d_i = d_min(cst{i,4}{1});
-                    end
-
-                    f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
                     
+                
+                % if prob opt: sum up expectation value of objectives
+                elseif strcmp(cst{i,6}(j).robustness,'PROB')
+                    
+                        d_i = d_exp{1}(cst{i,4}{1});
+                        
+                        f   = f +  matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                        
+                        % only one variance term per VOI
+                        if j == 1
+                            f = f + w' * Omega{i};
+                        end
+                    
+                % if voxel-wise worst case or voxel-wise conformitiy (only for target structures)
+                elseif strcmp(cst{i,6}(j).robustness,'VWWC') || strcmp(cst{i,6}(j).robustness,'VWWC_CONF')
+
+                    % prepare min/max dose vector
+                    if ~exist('d_tmp','var')
+                         d_tmp = [d{:}];
+                    end
+                    
+                    d_Scen = d_tmp(cst{i,4}{1},:);
+                    d_max = max(d_Scen,[],2);
+                    d_min = min(d_Scen,[],2);
+                         
+                    if isequal(cst{i,3},'OAR')
+                        d_i = d_max;
+                    elseif isequal(cst{i,3},'TARGET')
+                        d_i = d_min;
+                    end
+
+                    if strcmp(cst{i,6}(j).robustness,'VWWC')
+                        f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                    elseif strcmp(cst{i,6}(j).robustness,'VWWC_CONF') && isequal(cst{i,6}(j).type, 'square overdosing')
+                        f = f + matRad_objFunc(d_max,cst{i,6}(j),d_ref);
+                    elseif strcmp(cst{i,6}(j).robustness,'VWWC_CONF') && isequal(cst{i,6}(j).type, 'square underdosing')
+                        f = f + matRad_objFunc(d_min,cst{i,6}(j),d_ref);     
+                    end
+                    
+                % composite worst case consideres ovarall the worst objective function value       
                 elseif strcmp(cst{i,6}(j).robustness,'COWC')
                    
-                     for ixScen = 1:dij.numOfScenarios
+                     for ixScen = 1:options.numOfScen
 
                         d_i = d{ixScen}(cst{i,4}{1});
          
                         f_COWC(ixScen) = f_COWC(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
                         
-                     end
+                     end   
+            
+                % objective-wise worst case consideres the worst individual objective function value        
+                elseif strcmp(cst{i,6}(j).robustness,'OWC')
                     
-                % if coveraged based opt    
-                elseif strcmp(cst{i,6}(j).robustness,'coverage')
-                    
-                    % calc invers DCH
-                    Q_ref  = cst{i,6}(j).coverage/100;
-                    V_ref  = cst{i,6}(j).volume/100;
-                    d_ref2 = matRad_calcInversDCH(V_ref,Q_ref,d,dij,cst(i,:)); 
-                    
-                    if dij.numOfScenarios > 1
-                        
-                        for ixScen = 1:dij.numOfScenarios
-                            
-                            % get VOI dose in current scenario
-                            d_i = d{ixScen}(cst{i,4}{1});
-
-                            % get voxel dependent weigthing
-                            voxelWeighting = 1; 
-                            
-                            % calculate dose deviations from d_ref
-                            fTmp(ixScen) = matRad_objFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);
-                        end
-                        
-                        % claculate objective function
-                        f = f + sum(dij.ScenProb.*fTmp);
-                        
-                    else
-                        
-                        % get VOI ScenUnion dose of nominal scneario
-                        cstLogical = strcmp(cst(:,2),[cst{i,2},' ScenUnion']);
-                        d_i        = d{1}(cst{cstLogical,5}.voxelID);
-                        
-                        % get voxel dependent weigthing
-                        voxelWeighting = 5*cst{cstLogical,5}.voxelProb;
-                        
-                        % calculate objective function
-                        f = f + matRad_objFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);
-                        
-                    end
-                    
+                     matRad_dispToConsole(['not yet implemented \n'],param,'error');
+                 
                 end
-            
-            end
        
-        end
+            end
             
-    end
+        end
     
+    end
 end
 
 % extract the worst total objective function value across all scenarios
 if exist('f_COWC','var')
    f = f + max(f_COWC);
 end
-
-% apply objective scaling
-f = fScaling*f;

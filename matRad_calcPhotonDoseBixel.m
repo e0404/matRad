@@ -60,7 +60,9 @@ dose = lat1 .* func_Di(betas(1),radDepths) + ...
 % inverse square correction
 dose = dose .* (SAD./geoDists(:)).^2;
 
-% check if we have valid dose values
+% check if we have valid dose values and adjust numerical instabilities
+% from fft convolution
+dose(dose < 0 & dose > -1e-14) = 0;
 if any(isnan(dose)) || any(dose<0)
    error('Error in photon dose calculation.');
 end

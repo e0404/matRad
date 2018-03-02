@@ -24,7 +24,7 @@ function g = matRad_gradFuncWrapper(w,dij,cst,options)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2017 the matRad development team. 
+% Copyright 2016 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -35,25 +35,26 @@ function g = matRad_gradFuncWrapper(w,dij,cst,options)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global fScaling
-
 % get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,options);
+[d,d_exp,Omega] = matRad_backProjection(w,dij,cst,options);
 
 % Initializes delta
-delta      = cell(options.numOfScenarios,1);
-[delta{:}] = deal(zeros(dij.numOfVoxels,1));
+delta         = cell(options.numOfScen,1);
+[delta{:}]    = deal(zeros(dij.numOfVoxels,1));
+delta_exp{1}  = zeros(dij.numOfVoxels,1);
+vOmega        = 0;
 
-% if composite optimization is used, create a cell array for booking
+% if composite worst case optimization is used then create a cell array for book keeping
 for i = 1:size(cst,1)
   for j = 1:numel(cst{i,6})
       if strcmp(cst{i,6}(j).robustness,'COWC')
-         f_COWC = zeros(options.numOfScenarios,1);
-         delta_COWC      = cell(options.numOfScenarios,1);
-        [delta_COWC{:}]  = deal(zeros(dij.numOfVoxels,1));
+         f_COWC          = zeros(options.numOfScen,1);
+         delta_COWC      = cell(options.numOfScen,1);
+        [delta_COWC{:}]  = deal(zeros(dij.numOfVoxels,1)); break;
       end
   end
 end
+
 
 % compute objective function for every VOI.
 for  i = 1:size(cst,1)
@@ -68,7 +69,8 @@ for  i = 1:size(cst,1)
             if isempty(strfind(cst{i,6}(j).type,'constraint'))
 
                 % compute reference
-                if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) && isequal(options.quantity,'effect')
+                if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) &&...
+                    isequal(options.quantityOpt,'effect') 
 
                     d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
                 else
@@ -82,98 +84,89 @@ for  i = 1:size(cst,1)
                     d_i = d{1}(cst{i,4}{1});
 
                     delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+                    
+                elseif strcmp(cst{i,6}(j).robustness,'PROB')
 
-                elseif strcmp(cst{i,6}(j).robustness,'probabilistic')
+                        d_i = d_exp{1}(cst{i,4}{1});
 
-                    for ixScen = 1:dij.numOfScenarios
+                        delta_exp{1}(cst{i,4}{1}) = delta_exp{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
 
-                        d_i = d{ixScen}(cst{i,4}{1});
+                        vOmega = vOmega + Omega{i};
+                        
+                 % VWWC = voxel-wise worst case; VWWC_CONF = conformity voxel-wise worst case    
+                 elseif strcmp(cst{i,6}(j).robustness,'VWWC') || strcmp(cst{i,6}(j).robustness,'VWWC_CONF')
 
-                        delta{ixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) + dij.probOfScenarios(ixScen) * matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
-
-                    end
-
-                elseif strcmp(cst{i,6}(j).robustness,'VWWC')
-
-                    % prepare min/max dose vector for voxel-wise worst case
-                    if ~exist('d_max','var')
-                        [d_max,max_ix] = max([d{:}],[],2);   
-                        [d_min,min_ix] = min([d{:}],[],2);
-                    end
-
+                    % prepare min/max dose vector for voxel-wise worst case  
+                    if ~exist('d_tmp','var')
+                         d_tmp = [d{:}];
+                    end   
+                    
+                    d_Scen = d_tmp(cst{i,4}{1},:);
+                    [d_max,max_ix] = max(d_Scen,[],2);
+                    [d_min,min_ix] = min(d_Scen,[],2);
+                    
                     if isequal(cst{i,3},'OAR')
-                        d_i = d_max(cst{i,4}{1});
-                    elseif isequal(cst{i,3},'TARGET')
-                        d_i = d_min(cst{i,4}{1});
+                        d_i = d_max;
+                    elseif isequal(cst{i,3},'TARGET')          
+                        d_i = d_min;
                     end
 
                     if sum(isnan(d_min)) > 0
                         warning('nan values in gradFuncWrapper');
                     end
                     
-                    deltaTmp = matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+                    if strcmp(cst{i,6}(j).robustness,'VWWC')
+                        deltaTmp = matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+                    elseif strcmp(cst{i,6}(j).robustness,'VWWC_CONF') && isequal(cst{i,6}(j).type, 'square overdosing')
+                        deltaTmp = matRad_gradFunc(d_max,cst{i,6}(j),d_ref);
+                    elseif strcmp(cst{i,6}(j).robustness,'VWWC_CONF') && isequal(cst{i,6}(j).type, 'square underdosing')
+                        deltaTmp = matRad_gradFunc(d_min,cst{i,6}(j),d_ref);
+                       
+                    end
+                    
+                    for ixScen = 1:options.numOfScen
 
-                    for ixScen = 1:dij.numOfScenarios
-
-                        if isequal(cst{i,3},'OAR')
-                            currWcIx = max_ix(cst{i,4}{1}) == ixScen;   %
-
-                        elseif isequal(cst{i,3},'TARGET')
-                            currWcIx = min_ix(cst{i,4}{1}) == ixScen;
+                       if strcmp(cst{i,6}(j).robustness,'VWWC')
+                           
+                           if isequal(cst{i,3},'OAR')
+                               currWcIx = max_ix == ixScen;   
+                           elseif isequal(cst{i,3},'TARGET')
+                               currWcIx = min_ix == ixScen;
+                           end
+                        
+                           delta{ixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) + deltaTmp.*currWcIx;
+                           
+                        elseif strcmp(cst{i,6}(j).robustness,'VWWC_CONF') && isequal(cst{i,6}(j).type, 'square overdosing')
+                          
+                               currWcIx = max_ix == ixScen;
+                               delta{ixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) + deltaTmp.*currWcIx;
+                           
+                        elseif strcmp(cst{i,6}(j).robustness,'VWWC_CONF') && isequal(cst{i,6}(j).type, 'square underdosing')
+                          
+                               currWcIx = min_ix == ixScen;
+                               delta{ixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) + deltaTmp.*currWcIx;
+                           
                         end
 
-                        delta{ixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) + deltaTmp.*currWcIx;
-
-                    end
-                 
-                elseif strcmp(cst{i,6}(j).robustness,'COWC')
+                    end 
+                    
+                 % composite worst case consideres ovarall the worst objective function value   
+                 elseif strcmp(cst{i,6}(j).robustness,'COWC')
                    
-                    for ixScen = 1:dij.numOfScenarios
+                       for ixScen = 1:options.numOfScen
 
-                        d_i = d{ixScen}(cst{i,4}{1});
+                           d_i = d{ixScen}(cst{i,4}{1});
 
-                        f_COWC(ixScen) = f_COWC(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
-                        delta_COWC{ixScen}(cst{i,4}{1}) = delta_COWC{ixScen}(cst{i,4}{1}) +  matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
-                    end
+                           f_COWC(ixScen)                     = f_COWC(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                           delta_COWC{ixScen}(cst{i,4}{1})    = delta_COWC{ixScen}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+                       end   
+                       
+                 % objective-wise worst case consideres the worst individual objective function value        
+                 elseif strcmp(cst{i,6}(j).robustness,'OWC')
                      
-
-                elseif strcmp(cst{i,6}(j).robustness,'coverage')
-                    
-                    % calc invers DCH
-                    Q_ref  = cst{i,6}(j).coverage/100;
-                    V_ref  = cst{i,6}(j).volume/100;
-                    d_ref2 = matRad_calcInversDCH(V_ref,Q_ref,d,dij,cst(i,:)); 
-                    
-                    if dij.numOfScenarios > 1
-                        
-                        for ixScen = 1:dij.numOfScenarios
-                            
-                            % get VOI dose in current scenario
-                            d_i = d{ixScen}(cst{i,4}{1});
-
-                            % get voxel dependent weigthing
-                            voxelWeighting = 1; 
-                            
-                            % calculate dose deviations from d_ref
-                            delta{ixScen}(cst{i,4}{1}) = delta{ixScen}(cst{i,4}{1}) + dij.ScenProb(ixScen)*matRad_gradFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);    
-                                                                 
-                        end
-                        
-                    else
-                        
-                        % get VOI ScenUnion dose of nominal scneario
-                        cstLogical = strcmp(cst(:,2),[cst{i,2},' ScenUnion']);
-                        d_i        = d{1}(cst{cstLogical,5}.voxelID);
-                        
-                        % get voxel dependent weigthing
-                        voxelWeighting = 5*cst{cstLogical,5}.voxelProb;  
-                        
-                        % calculate delta
-                        delta{1}(cst{cstLogical,4}{1}) = delta{1}(cst{cstLogical,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref,d_ref2,voxelWeighting);
-                        
-                    end
-                    
-                end
+                     matRad_dispToConsole(['not yet implemented \n'],param,'error');
+                     
+                 end
                 
             end
        
@@ -183,130 +176,67 @@ for  i = 1:size(cst,1)
     
 end
 
-
 % extract current worst case scenario
 if exist('f_COWC','var')
    [~,ixCurrWC]    = max(f_COWC(:));
    delta{ixCurrWC} = delta_COWC{ixCurrWC};
 end
 
+
 % Calculate gradient
 g = zeros(dij.totalNumOfBixels,1);
 
-for i = 1:options.numOfScenarios
-    if any(delta{i}) % exercise only if contributions from scenario i
-          
-        if isequal(options.quantity,'physicalDose')
+for i = 1:options.numOfScen
+    if any(delta{i} ~= 0) || any(delta_exp{1} ~= 0) % exercise only if contributions from scenario i
 
-            g            = g + (delta{i}' * dij.physicalDose{dij.indexforOpt(i)})';
+        if isequal(options.quantityOpt,'physicalDose')
 
-        elseif isequal(options.type,'const_RBExD')
+            g            = g + (delta{i}' * dij.physicalDose{options.ixForOpt(i)})';
+            if i == 1
+                g        = g + ((delta_exp{i}' * dij.physicalDoseExp{1})' + (2 * vOmega)); 
+            end
+
+        elseif isequal(options.model,'constRBE')
             
-            g            = g + (delta{i}' * dij.physicalDose{dij.indexforOpt(i)} * dij.RBE)';
+            g            = g + (delta{i}' * dij.physicalDose{options.ixForOpt(i)} * dij.RBE)';
+            if i == 1
+                g        = g + (delta_exp{i}' * dij.physicalDoseExp{options.ixForOpt(i)} * dij.RBE)' + (2 * vOmega);
+            end
             
-        elseif isequal(options.quantity,'effect') 
-          
-              
-            vBias        = (delta{i}' * dij.mAlphaDose{dij.indexforOpt(i)})';
-            quadTerm     = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
-            mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{dij.indexforOpt(i)})';
+        elseif isequal(options.quantityOpt,'effect')
+
+            vBias        = (delta{i}' * dij.mAlphaDose{options.ixForOpt(i)})';
+            quadTerm     = dij.mSqrtBetaDose{options.ixForOpt(i)} * w;
+            mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{options.ixForOpt(i)})';
             g            =  g + vBias + mPsi ; 
-                        
-        elseif isequal(options.quantity,'RBExD') 
-
-            deltaTmp = zeros(dij.numOfVoxels, 1);
-            scaledEffect = d{i} + dij.gamma;
-            deltaTmp(dij.ixDose)     = delta{i}(dij.ixDose)./(2*dij.bx(dij.ixDose).*scaledEffect(dij.ixDose));
-            vBias        = (deltaTmp' * dij.mAlphaDose{dij.indexforOpt(i)})';
-            quadTerm     = dij.mSqrtBetaDose{dij.indexforOpt(i)} * w;
-            mPsi         = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{dij.indexforOpt(i)})';
-            g            = g + vBias + mPsi ;
             
+            if i == 1
+                vBias        = (delta_exp{i}' * dij.mAlphaDoseExp{1})';
+                quadTerm     = dij.mSqrtBetaDoseExp{1} * w;
+                mPsi         = (2*(delta_exp{i}.*quadTerm)'*dij.mSqrtBetaDoseExp{1})';
+                g            =  g + vBias + mPsi ; 
+            end
+
+        elseif isequal(options.quantityOpt,'RBExD')
+
+            deltaTmp              = zeros(dij.numOfVoxels,1);
+            scaledEffect          = d{i} + dij.gamma;
+            deltaTmp(dij.ixDose)  = delta{i}(dij.ixDose)./(2*dij.betaX(dij.ixDose).*scaledEffect(dij.ixDose));
+            vBias                 = (deltaTmp' * dij.mAlphaDose{options.ixForOpt(i)})';
+            quadTerm              = dij.mSqrtBetaDose{options.ixForOpt(i)} * w;
+            mPsi                  = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{options.ixForOpt(i)})';
+            g                     = g + vBias + mPsi ;
+            
+            if i == 1
+                deltaTmp              = zeros(dij.numOfVoxels,1);
+                scaledEffect          = d_exp{1} + dij.gamma;
+                deltaTmp(dij.ixDose)  = delta_exp{i}(dij.ixDose)./(2*dij.betaX(dij.ixDose).*scaledEffect(dij.ixDose));
+                vBias                 = (deltaTmp' * dij.mAlphaDoseExp{1})';
+                quadTerm              = dij.mSqrtBetaDoseExp{1} * w;
+                mPsi                  = (2*(delta_exp{i}.*quadTerm)'*dij.mSqrtBetaDoseExp{1})';
+                g                     = g + vBias + mPsi ;
+            end
         end
 
     end
 end
-
-
-% compare gradient calculation to numerical gradient - make sure to not use objective functaion and gradient scaling
-RunGradientChecker = false;
-
-if RunGradientChecker
-   f       = matRad_objFuncWrapper(w,dij,cst,options);
-   epsilon = 1e-8;
-
-   ix = unique(randi([1 numel(w)],1,10));
-  
-   for i = ix
-      wInit   = w;
-      wInit(i) = wInit(i) + epsilon;
-      fDelta   = matRad_objFuncWrapper(wInit,dij,cst,options);
-      numGrad = (fDelta-f)/epsilon;
-      diff = (numGrad/g(i)-1)*100;
-      fprintf(['Component # ' num2str(i) ' - rel diff of numerical and analytical gradient = ' num2str(diff) '\n']);
-   end
-
-end
-% apply objective scaling
-g = fScaling.*g;
-
-% save min/max gradient
-global matRad_iteration
-global GRADIENT
-GRADIENT(1,1,matRad_iteration+1)= max(abs(g));
-GRADIENT(1,2,matRad_iteration+1)= min(abs(g));
-
-
-
-%% reference calculation for the MCNamara Model - obsolete code
-% effect based 
-
-             
-%               dp       = dij.physicalDose{dij.indexforOpt(i)} * w;
-%               ix       = dp > 0;
-%               LETd     = zeros(dij.numOfVoxels,1);
-%               LETd(ix) = (dij.mLETDose{dij.indexforOpt(i)}(ix,:)  * w)./dp(ix);
-%              
-%               sqab     = zeros(dij.numOfVoxels,1);
-%               sqab(ix) = sqrt(dij.abX(ix));
-%                
-%               part1 =  (options.p0 * ((dij.ax .* delta{i})'*dij.physicalDose{1})) + (options.p0 * options.p1 *  ((dij.bx .*delta{i})'*dij.mLETDose{1}));
-%               Fac   =  (2*dij.bx .* delta{1}).*((dp * options.p2) -  ( dp * options.p3  .* sqab .* LETd));
-%               part2 = (((options.p2*Fac)' * dij.physicalDose{1}) - ((options.p3 * sqab .* Fac)' *dij.mLETDose{1}));            
-%               g = g + (part1 + part2)';
-                      
-
-
-
-% RBExD based 
-               
-%                dp       = dij.physicalDose{dij.indexforOpt(i)} * w;
-%                ix       = dp > 0;
-%                sqab     = real(sqrt(dij.abX));
-%                LETd     = zeros(dij.numOfVoxels,1);
-%                RBEmax   = zeros(dij.numOfVoxels,1);
-%                RBEmin   = zeros(dij.numOfVoxels,1); Fac = zeros(dij.numOfVoxels,1); 
-%                LETd(ix) = (dij.mLETDose{dij.indexforOpt(i)}(ix,:)  * w)./dp(ix);
-% 
-%                RBEmax(ix) = options.p0 + ((options.p1 * LETd(ix) )./ dij.abX(ix));           
-%                RBEmin(ix) = options.p2 - (options.p3  * real(sqrt(dij.abX(ix))) .* LETd(ix)); 
-%               
-%                Fac(ix)    = 0.25./(sqrt(dij.abX(ix).^2 + (4*dp(ix).*dij.abX(ix).*RBEmax(ix)) + (4*dp(ix).^2 .* RBEmin(ix).^2))); 
-%                
-%                vHelper = 8*(options.p2*dp - options.p3 * sqab .* (dij.mLETDose{dij.indexforOpt(i)} * w));
-%                Factor = (delta{1}.*Fac)';
-%                g  =  g + (((4*options.p0.*dij.abX.*Factor')' * dij.physicalDose{1}) + (Factor* ((4* options.p1) * dij.mLETDose{1})) + ...
-%                    ((options.p2.*Factor.*vHelper') * dij.physicalDose{1})  - ((options.p3 .*Factor.*sqab'.*vHelper') * dij.mLETDose{1}))';
-
-                
-                  % calculate derivative of single weights
-%                for l = 1:5
-%                     part1 = (4.*dij.abX.* options.p0.*dij.physicalDose{1}(:,l)) + (4 * options.p1 * dij.mLETDose{1}(:,l));
-%                     part2 = 8*(options.p2*dp - options.p3 * sqab.* (dij.mLETDose{dij.indexforOpt(i)} * w)).* ...
-%                             (options.p2.*dij.physicalDose{1}(:,l) - options.p3 .* sqab .* dij.mLETDose{1}(:,l));
-% 
-%                     A = Fac .* (part1 + part2);
-%                     A(isnan(A)) = 0;
-%                     g_single = (A'*delta{1}); 
-%                     g(l) =g_single;
-%                end
