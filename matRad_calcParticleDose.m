@@ -62,7 +62,6 @@ dij.numOfBeams         = pln.propStf.numOfBeams;
 dij.numOfVoxels        = prod(ct.cubeDim);
 dij.resolution         = ct.resolution;
 dij.dimensions         = ct.cubeDim;
-dij.numOfScenarios     = pln.multScen.totalNumOfScen;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
@@ -256,7 +255,6 @@ matRad_dispToConsole('matRad: Particle dose calculation... \n',param,'info');
 for ShiftScen = 1:pln.multScen.totNumShiftScen
    
     % manipulate isocenter
-    pln.propStf.isoCenter  = pln.propStf.isoCenter + pln.multScen.isoShift(ShiftScen,:);
     for k = 1:length(stf)
         stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(ShiftScen,:);
     end
@@ -536,7 +534,6 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
    end % end beam loop
    
    % manipulate isocenter
-   pln.propStf.isoCenter    = pln.propStf.isoCenter - pln.multScen.isoShift(ShiftScen,:);
    for k = 1:length(stf)
        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(ShiftScen,:);
    end 

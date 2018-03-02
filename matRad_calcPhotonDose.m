@@ -68,7 +68,6 @@ dij.numOfBeams         = pln.propStf.numOfBeams;
 dij.numOfVoxels        = prod(ct.cubeDim);
 dij.resolution         = ct.resolution;
 dij.dimensions         = ct.cubeDim;
-dij.numOfScenarios     = pln.multScen.totalNumOfScen;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
@@ -103,7 +102,7 @@ end
 doseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
 
 % Only take voxels inside patient.
-if ~isempty(param.subIx) && param.calcDoseDirect
+if isfield(param,'subIx') && ~isempty(param.subIx)
    V = param.subIx; 
 else
    V = [cst{:,4}];
@@ -204,7 +203,6 @@ ctScen = 1;
 for ShiftScen = 1:pln.multScen.totNumShiftScen
 
    % manipulate isocenter
-   pln.propStf.isoCenter    = pln.propStf.isoCenter + pln.multScen.isoShift(ShiftScen,:);
    for k = 1:length(stf)
        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(ShiftScen,:);
    end
@@ -447,7 +445,6 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
    end
 
    % manipulate isocenter
-   pln.propStf.isoCenter = pln.propStf.isoCenter - pln.multScen.isoShift(ShiftScen,:);
    for k = 1:length(stf)
        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(ShiftScen,:);
    end   
