@@ -303,7 +303,7 @@ for i = 1:length(pln.propStf.gantryAngles)
         % find set of energyies with adequate spacing
         
         if isfield(pln.propStf,'longSpotSpacing')
-            longitudinalSpotSpacing = pln.propOptStf.longSpotSpacing;
+            longitudinalSpotSpacing = pln.propStf.longSpotSpacing;
         else
             if strcmp(machine.meta.machine,'Generic')
                 longitudinalSpotSpacing = 1.5; % enforce all entries to be used
