@@ -33,7 +33,10 @@ function matRad_calcStudy(structSel,multScen,matPatientPath,param)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [treatmentSimulation, scenContainer, nominalScenario] = mergeSplittedScen(scenContainerParts, nomScenParts)
-    % merge nominal scenario
+    % Merge nominal scenario by cumulating on first part. Remember that all 
+    % scenario class is subclass of abstract handle class, therefore 
+    % nomScenParts{1} changes.
+    
     nominalScenario = nomScenParts{1};
     for k = 2:numel(nomScenParts)
         nominalScenario.cumulateDose(nomScenParts{k}.dose);
@@ -148,10 +151,12 @@ if strcmp(multScen.deepestCorrelationBreak, 'fraction')
     [treatmentSimulation, scenContainer, pln, resultGUInomScen, nomScen] = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,multScen,param);
 elseif strcmp(multScen.deepestCorrelationBreak, 'beam')
     scenContainerParts = cell(numel(stf),1);
-    nomScenParts = scenContainerParts;
+    nomScenParts = cell(numel(stf),1);
     for i = 1:numel(stf)
         stfPart = stf(i);
         plnPart = pln;
+        plnPart.couchAngles = pln.couchAngles(i);
+        plnPart.gantryAngles = pln.gantryAngles(i);
         plnPart.isoCenter = pln.isoCenter(i,:);
         plnPart.numOfBeams = 1;
         if strcmp(multScen.rangeShiftCorrelationBreak, 'beam') && strcmp(multScen.isoShiftCorrelationBreak, 'beam')

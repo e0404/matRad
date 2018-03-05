@@ -58,7 +58,7 @@ if param.logLevel == 1
 end
 
 % meta information for dij
-dij.numOfBeams         = pln.numOfBeams;
+dij.numOfBeams         = numel(stf);
 dij.numOfVoxels        = pln.numOfVoxels;
 dij.resolution         = ct.resolution;
 dij.dimensions         = pln.voxelDimensions;
@@ -263,7 +263,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
     % compute SSDs
     stf = matRad_computeSSD(stf,ct,ctScen);
 
-   for i = 1:dij.numOfBeams % loop over all beams
+   for i = 1:numel(stf) % loop over all beams
 
        matRad_dispToConsole(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ':  \n'],param,'info');
 
@@ -287,7 +287,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
        % transformation of the coordinate system need double transpose
 
        % rotation around Z axis (gantry)
-       rotMat_system_T = matRad_getRotationMatrix(pln.gantryAngles(i),pln.couchAngles(i));
+       rotMat_system_T = matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).couchAngle);
 
        % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
        rot_coordsV = coordsV*rotMat_system_T;
