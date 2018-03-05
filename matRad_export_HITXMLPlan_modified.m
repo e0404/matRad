@@ -42,7 +42,7 @@ end
 % end
 
 
-if ~strcmp(pln.machine,'HIT') 
+if ~strcmp(pln.machine,'HITfixedBL') && ~strcmp(pln.machine,'HITgantry')
   error('HITXML exporter only supports machine HIT');
 end
 
@@ -147,7 +147,11 @@ end
 
   TxRoom = docNode.createElement('TxRoom');
 %  TxRoom.setAttribute('name','Room1Fixed90');
-  TxRoom.setAttribute('name','Room3');
+  if strcmp(pln.machine,'HITfixedBL')
+    TxRoom.setAttribute('name','Room1');%Name korrekt?
+  elseif strcmp(pln.machine,'HITgantry')
+    TxRoom.setAttribute('name','Room3');
+  end
   if strcmp(pln.radiationMode,'protons')
     TxRoom.setAttribute('projectile','PROTON');
     TxRoom.setAttribute('charge','');
@@ -216,10 +220,11 @@ end
         voxel_nbParticles = resultGUI.w(bixelIndex); 
         voxel_nbParticles = round(1e6*voxel_nbParticles);
 
-        rayPos_bev = stf(beamNb).ray(rayNb).rayPos_bev;
+        if(voxel_nbParticles ~= 0)
+            rayPos_bev = stf(beamNb).ray(rayNb).rayPos_bev;
         % HITXML, x-y-z(beam)
         % matRad, x-y(beam)-z -> z-x-y(beam)
-        voxel_x = rayPos_bev(3);
+            voxel_x = rayPos_bev(3);
             voxel_y = rayPos_bev(1);
   
             rayIESenergy=stf(beamNb).ray(rayNb).energy(bixelNb);
@@ -241,7 +246,7 @@ end
            counter= counter +1;
            
            newIES = true;
-                  
+        end      
       elseif length(bixelNb)>1
           error('Unexpected number of IES in the same ray.');
           return;
