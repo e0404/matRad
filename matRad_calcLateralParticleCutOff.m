@@ -1,4 +1,4 @@
-function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,CtScen,visBool)
+function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to calculate a depth dependend lateral cutoff for each 
 % pristine particle beam
@@ -63,7 +63,7 @@ round2 = @(a,b)round(a*10^b)/10^b;
 vSSD = ones(1,length([stf.ray(:).energy]));
 cnt = 1;
 for i  = 1:length(stf.ray)
-    vSSD(cnt:cnt+numel([stf.ray(i).energy])-1) = stf.ray(i).SSD{CtScen};
+    vSSD(cnt:cnt+numel([stf.ray(i).energy])-1) = max([stf.ray(i).SSD{:}]);
     cnt = cnt + numel(stf.ray(i).energy);
 end
 
