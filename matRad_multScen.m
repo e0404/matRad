@@ -457,6 +457,7 @@ classdef matRad_multScen
                        this.scenMask  = false(this.numOfCtScen, length(ixUnq), this.totNumRangeScen);
                        this.scenMask(1,:,1) = true; % iso shift scenarios
                        this.scenMask(1,1,:) = true; % range shift scenarios
+                       this.scenMask(:,1,1) = true; % ct shift scenarios                       
                    case 'permuted'
                        this.scenMask(:,:,:) = true;
                    case 'combined'
