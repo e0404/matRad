@@ -1,25 +1,23 @@
 function resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad postprosseing function accounting for
-%       minimum number of particles per spot
-%       minimum number of particles per IES???
-%       (scan path)???
-%       ...
+%       minimum number of particles per spot - necessary for lmdout
+%       minimum number of particles per IES - not necessary
+%   
 % 
 % call
-%   resultGUI = matRad_fluenceOptimization(resultGUI, dij,cst,pln)
-%
+%   resultGUI =  matRad_postprocessing(resultGUI, dij, pln, cst, stf)
+
 % input
 %   resultGUI   struct containing optimized fluence vector
 %   dij:        matRad dij struct
 %   pln:        matRad pln struct
-%
+%   cst:        for calc_cubes
+%   stf:        necessary for IES delete
+
 % output
-%   resultGUI:  struct containing optimized fluence vector, dose, and (for
-%               biological optimization) RBE-weighted dose etc.
+%   resultGUI:  new w and doses in resultGUI
 %
-% References
-%   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -44,6 +42,8 @@ if strcmp(pln.radiationMode,'protons')
 elseif strcmp(pln.radiationMode,'carbon')
      Imin = 15000/1e6;   
      minNrParticlesIES = 0;
+else
+    warning('postprocessing only for proton and carbon therapy')
 end
 
 
@@ -55,37 +55,34 @@ for i = 1:lw
     if(w(i) < Imin/2)
         w(i) = 0;
     elseif(w(i) > Imin/2 && w(i) < Imin)
-         w(i) = Imin;    %WIEDER ÄNDERN; SO KONSISTENT MIT LMDOUT
-         %w(i) = 0;
+         w(i) = Imin;   
     end
 end
 
 %%calc dose (nicht backprojection da options nicht zur Verfügung steht,
 resultGUI.w = w;
 
-if isequal(pln.bioOptimization,'none') %auf jeden Fall Teilchen
-    resultGUI.OptDose = resultGUI.physicalDose;
+if isequal(pln.bioParam.model,'none')
+    resultGUI.optDose = resultGUI.physicalDose;
 else
-    resultGUI.OptRBExDose = resultGUI.RBExDose;
-    if  strcmp(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
+    resultGUI.optRBExDose = resultGUI.RBExDose;
+    if  strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
         % check if a constant RBE is defined - if not use 1.1
         if ~isfield(dij,'RBE')
-        dij.RBE = 1.1;
+            dij.RBE = 1.1;
         end
-    end
-      
+    end  
 end
+
 CalcCubes = matRad_calcCubes(w,dij,cst,1);
 
-if isequal(pln.bioOptimization,'none')
-%%calc difference to optimized dose (not necessary, can be deleted)
-resultGUI.physicalDose = CalcCubes.physicalDose;
-relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.OptDose(:)))*100;
-
+if isequal(pln.bioParam.model,'none')
+    %%calc difference to optimized dose (not necessary, can be deleted)
+    resultGUI.physicalDose = CalcCubes.physicalDose;
+    relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.optDose(:)))*100;
 else
-        resultGUI.RBExDose = CalcCubes.RBExDose;
-    relIntDoseDif = (1-sum(resultGUI.RBExDose(:))/sum(resultGUI.OptRBExDose(:)))*100;
-
+    resultGUI.RBExDose = CalcCubes.RBExDose;
+    relIntDoseDif = (1-sum(resultGUI.RBExDose(:))/sum(resultGUI.optRBExDose(:)))*100;
 end
 
 if relIntDoseDif ~= 0
@@ -96,7 +93,7 @@ end
 if(minNrParticlesIES ~= 0)   
     
     % Find IES values
-    for beamNb = 1:pln.numOfBeams 
+    for beamNb = 1:pln.propStf.numOfBeams 
         iesArray = [];
         for rayNb=1:stf(beamNb).numOfRays
             iesArray = unique([iesArray stf(beamNb).ray(rayNb).energy]);
@@ -119,7 +116,7 @@ if(minNrParticlesIES ~= 0)
                      voxel_nbParticles = round(1e6*voxel_nbParticles);
 
                     % check whether there are (enough) particles for beam delivery
-                    if (voxel_nbParticles>=pln.minNrParticles)
+                    if (voxel_nbParticles>=Imin)
                         NrParticlesIES = NrParticlesIES + voxel_nbParticles;
                         tmpBixelIndex(counter) = bixelIndex;
                         counter = counter +1;
@@ -127,7 +124,7 @@ if(minNrParticlesIES ~= 0)
                 end
             end %ray
             if(NrParticlesIES < minNrParticlesIES && counter > 1)  % not enough particles in IES, all spots are deleted
-                fprintf(['IES ' num2str(iesEnergy) ' in beam ' beamNb ' deleted\n']);
+                fprintf(['IES ' num2str(iesEnergy) ' in beam ' num2str(beamNb) ' deleted\n']);
                 while(counter > 1)
                     counter = counter -1;
                     w(tmpBixelIndex(counter)) = 0;
@@ -140,20 +137,20 @@ if(minNrParticlesIES ~= 0)
     
 resultGUI.w = w;
 
-if isequal(pln.bioOptimization,'none') %auf jeden Fall Teilchen
+if isequal(pln.bioParam.model,'none') 
     resultGUI.OptDose = resultGUI.physicalDose;
 else
     resultGUI.OptRBExDose = resultGUI.RBExDose;
 end
 CalcCubes = matRad_calcCubes(w,dij,cst,1);
 
-if isequal(pln.bioOptimization,'none')
+if isequal(pln.bioParam.model,'none')
 %%calc difference to optimized dose (not necessary, can be deleted)
 resultGUI.physicalDose = CalcCubes.physicalDose;
 relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.OptDose(:)))*100;
 
 else
-        resultGUI.RBExDose = CalcCubes.RBExDose;
+    resultGUI.RBExDose = CalcCubes.RBExDose;
     relIntDoseDif = (1-sum(resultGUI.RBExDose(:))/sum(resultGUI.OptRBExDose(:)))*100;
 
 end
