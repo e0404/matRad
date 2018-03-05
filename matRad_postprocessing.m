@@ -65,7 +65,7 @@ resultGUI.w = w;
 if isequal(pln.bioParam.model,'none')
     resultGUI.optDose = resultGUI.physicalDose;
 else
-    resultGUI.optRBExDose = resultGUI.RBExDose;
+    resultGUI.optRBExD = resultGUI.RBExD;
     if  strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
         % check if a constant RBE is defined - if not use 1.1
         if ~isfield(dij,'RBE')
@@ -81,8 +81,8 @@ if isequal(pln.bioParam.model,'none')
     resultGUI.physicalDose = CalcCubes.physicalDose;
     relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.optDose(:)))*100;
 else
-    resultGUI.RBExDose = CalcCubes.RBExDose;
-    relIntDoseDif = (1-sum(resultGUI.RBExDose(:))/sum(resultGUI.optRBExDose(:)))*100;
+    resultGUI.RBExDose = CalcCubes.RBExD;
+    relIntDoseDif = (1-sum(resultGUI.RBExD(:))/sum(resultGUI.optRBExD(:)))*100;
 end
 
 if relIntDoseDif ~= 0
@@ -140,7 +140,7 @@ resultGUI.w = w;
 if isequal(pln.bioParam.model,'none') 
     resultGUI.OptDose = resultGUI.physicalDose;
 else
-    resultGUI.OptRBExDose = resultGUI.RBExDose;
+    resultGUI.OptRBExD = resultGUI.RBExD;
 end
 CalcCubes = matRad_calcCubes(w,dij,cst,1);
 
@@ -150,8 +150,8 @@ resultGUI.physicalDose = CalcCubes.physicalDose;
 relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.OptDose(:)))*100;
 
 else
-    resultGUI.RBExDose = CalcCubes.RBExDose;
-    relIntDoseDif = (1-sum(resultGUI.RBExDose(:))/sum(resultGUI.OptRBExDose(:)))*100;
+    resultGUI.RBExD = CalcCubes.RBExD;
+    relIntDoseDif = (1-sum(resultGUI.RBExD(:))/sum(resultGUI.OptRBExD(:)))*100;
 
 end
 
