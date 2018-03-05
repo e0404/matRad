@@ -99,13 +99,13 @@ StorageInfo = whos('mSampDose');
 matRad_dispToConsole(['matRad: Realizations variable will need: ' num2str(StorageInfo.bytes/1e9) ' GB \n'],param,'info');
 
 % check if parallel toolbox is installed and license can be checked out
-% try
-%    ver('distcomp')                 
-%    FlagParallToolBoxLicensed  = license('test','Distrib_Computing_Toolbox'); 
-% catch
-%    FlagParallToolBoxLicensed  = false;
-% end
-FlagParallToolBoxLicensed  = false;
+try
+   ver('distcomp')                 
+   FlagParallToolBoxLicensed  = license('test','Distrib_Computing_Toolbox'); 
+catch
+   FlagParallToolBoxLicensed  = false;
+end
+
 %% calculate nominal scenario
 nomScenTimer     = tic;
 resultGUInomScen = matRad_calcDoseDirect(ct,stf,plnNominal,cst,w,param);

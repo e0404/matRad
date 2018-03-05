@@ -32,16 +32,36 @@ function matRad_calcStudy(structSel,multScen,matPatientPath,param)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [treatmentSimulation, scenContainer] = mergeSplittedScen(scenContainerParts)
+function [treatmentSimulation, scenContainer, nominalScenario] = mergeSplittedScen(scenContainerParts, nomScenParts)
+    % merge nominal scenario
+    nominalScenario = nomScenParts{1};
+    for k = 2:numel(nomScenParts)
+        nominalScenario.cumulateDose(nomScenParts{k}.dose);
+    end
     scenContainer = scenContainerParts{1};
     for j = 1:numel(scenContainer)
         for k = 2:numel(scenContainerParts)
-            scenContainer{j}.cumulateDose(scenContainerParts{k}{j});
+            scenContainer{j}.cumulateDose(scenContainerParts{k}{j}.dose);
         end
     end
-    treatmentSimulation = MatRadSimulation(pln.bioParam.quantityVis, nomScen, ct, cst, pln, pln.numOfFractions);
+    treatmentSimulation = MatRadSimulation(pln.bioParam.quantityVis, nominalScenario, ct, cst, pln, pln.numOfFractions);
     for j = 1:numel(scenContainer)
         treatmentSimulation.initNewScen(scenContainer{j})
+    end
+end
+
+function stf = copyWeightsToStf(stf, w)
+    if sum([stf.totalNumOfBixels]) ~= numel(w)
+        error('weighting does not match steering information')
+    end
+    counter = 0;
+    for ii = 1:numel(stf)
+        for j = 1:stf(ii).numOfRays
+            for k = 1:stf(ii).numOfBixelsPerRay(j)
+                counter = counter + 1;
+                stf(ii).ray(j).weight(k) = w(counter);
+            end
+        end
     end
 end
 
@@ -53,7 +73,6 @@ else
    param.logLevel     = 4;
 end
 
-%
 if ~isfield(param,'outputPath')
     param.outputPath = mfilename('fullpath');
 end
@@ -72,6 +91,13 @@ if multScen.totNumScen < 20 % multScen.numOfRangeShiftScen + sum(multScen.numOfS
 end
 
 %% load DICOM imported patient
+cst = [];
+ct = [];
+pln = [];
+dij = [];
+resultGUI = [];
+stf = [];
+
 if exist('matPatientPath', 'var') && ~isempty(matPatientPath) && exist('matPatientPath','file') == 2
     load(matPatientPath)
 else
@@ -83,6 +109,8 @@ else
        return
     end
 end
+
+stf = copyWeightsToStf(stf, resultGUI.w);
 
 % check if nominal workspace is complete
 if ~(exist('ct','var') && exist('cst','var') && exist('stf','var') && exist('pln','var') && exist('resultGUI','var'))
@@ -120,10 +148,12 @@ if strcmp(multScen.deepestCorrelationBreak, 'fraction')
     [treatmentSimulation, scenContainer, pln, resultGUInomScen, nomScen] = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,multScen,param);
 elseif strcmp(multScen.deepestCorrelationBreak, 'beam')
     scenContainerParts = cell(numel(stf),1);
+    nomScenParts = scenContainerParts;
     for i = 1:numel(stf)
         stfPart = stf(i);
         plnPart = pln;
         plnPart.isoCenter = pln.isoCenter(i,:);
+        plnPart.numOfBeams = 1;
         if strcmp(multScen.rangeShiftCorrelationBreak, 'beam') && strcmp(multScen.isoShiftCorrelationBreak, 'beam')
             multScen = multScen.matRad_recreateInstance;
         elseif strcmp(multScen.isoShiftCorrelationBreak, 'beam')
@@ -134,10 +164,12 @@ elseif strcmp(multScen.deepestCorrelationBreak, 'beam')
             erorr('Incosistency');
         end
         
-        [~, scenContainerPart, pln, ~, ~] = matRad_sampling(ct,stfPart,cst,plnPart,resultGUI.w,structSel,multScen,param);
+        [~, scenContainerPart, ~, ~, nomScenPart] = matRad_sampling(ct, stfPart, cst, plnPart, [],structSel, multScen, param);
+        nomScenParts{i} = nomScenPart;
         scenContainerParts{i} = scenContainerPart;
     end
     
+    [treatmentSimulation, scenContainer, nomScen] = mergeSplittedScen(scenContainerParts, nomScenParts);
 end
 param.computationTime = toc;
 
@@ -174,3 +206,4 @@ treatmentSimulation.runAnalysis(param.gammaCriteria, param.percentiles);
 % else
 %     system(executeLatex);
 % end
+end
