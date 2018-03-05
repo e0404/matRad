@@ -246,14 +246,14 @@ if pln.bioParam.bioOpt
 
 end
 
-ctScen  = 1;        % current ct scenario
+%ctScen  = 1;        % current ct scenario
 matRad_dispToConsole('matRad: Particle dose calculation... \n',param,'info');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %loop over all shift scenarios
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for ShiftScen = 1:pln.multScen.totNumShiftScen
-   
+    
     % manipulate isocenter
     for k = 1:length(stf)
         stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(ShiftScen,:);
@@ -265,9 +265,9 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
     counter = 0;
     
     % compute SSDs
-    stf = matRad_computeSSD(stf,ct,ctScen);
+    stf = matRad_computeSSD(stf,ct);  
 
-   for i = 1:dij.numOfBeams % loop over all beams
+   for i = 1:dij.numOfBeams % loop over all beams    
 
        matRad_dispToConsole(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ':  \n'],param,'info');
 
@@ -316,7 +316,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
        matRad_dispToConsole('matRad: calculate lateral cutoff...',param,'info');
        cutOffLevel          = 0.99;
        visBoolLateralCutOff = 0;
-       machine              = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),ctScen,visBoolLateralCutOff);
+       machine              = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
        matRad_dispToConsole('done. \n',param,'info');    
 
        for j = 1:stf(i).numOfRays % loop over all rays

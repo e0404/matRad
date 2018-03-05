@@ -32,19 +32,18 @@ matRadGUI
 
 % meta information for treatment plan
 pln.numOfFractions  = 30;
-pln.radiationMode   = 'photons';           % either photons / protons / helium / carbon
-pln.machine         = 'Generic';
+pln.radiationMode   = 'protons';           % either photons / protons / helium / carbon
+pln.machine         = 'HIT';
 
 % beam geometry settings
 pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
 pln.propStf.longSpotSpacing = 3;      % only relevant for HIT machine, not generic
-pln.propStf.gantryAngles    = [0:72:359]; % [?] ;
-pln.propStf.couchAngles     = [0 0 0 0 0]; % [?] ; 
+pln.propStf.gantryAngles    = [0 80]; % [?] ;
+pln.propStf.couchAngles     = [0 0]; % [?] ; 
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
-pln.propOpt.minNrParticles  = 500000;
-
+%optimization settings
 pln.propOpt.runDAO          = false;      % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.propOpt.runSequencing   = false;      % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
@@ -54,6 +53,7 @@ modelName    = 'none';             % none: for photons, protons, carbon         
                                    % LEM: Local Effect Model for carbon ions
 
 scenGenType  = 'nomScen';          % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen'                                          
+
 
 % retrieve bio model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
@@ -109,7 +109,7 @@ structSel = {}; % structSel = {'PTV','OAR1'};
 resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf);
 
 %% export Plan
-matRad_export_HITXMLPlan_modified('S02_orgpln',  pln, stf, resultGUI, 'stfMode')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
+matRad_export_HITXMLPlan_modified('Plan01_5new',  pln, stf, resultGUI, 'stfMode')  %500000 minNbParticles HIT Minimum für Patienten, minNrParticlesIES, scan path mode: 'stfMode', 'backforth','TSP' (very slow)
 
 %% calc 4D dose
-[resultGUI, delivery] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI, 'S02_orgpln'); %'LiverDS221_1b_bf'); %'LiverDS221_1b_constRBE_bixel3_3_30fx60_bf'); %'Liver007_Bix5_1');  %'LiverDS221_1b_bf'); %'LiverDS221_wc5555_3mmBixel_bf'); %TKUH005_test');  
+[resultGUI, delivery] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI, 'Plan01_5new'); %'LiverDS221_1b_bf'); %'LiverDS221_1b_constRBE_bixel3_3_30fx60_bf'); %'Liver007_Bix5_1');  %'LiverDS221_1b_bf'); %'LiverDS221_wc5555_3mmBixel_bf'); %TKUH005_test');  
