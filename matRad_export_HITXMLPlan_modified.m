@@ -34,12 +34,12 @@ disp('HITXML exporter: Exporting plan in the HITXML format')
 if ~strcmp(pln.radiationMode,'protons') && ~strcmp(pln.radiationMode,'carbon')
   error('HITXML plan for this radiationMode not supported!');
 end
-minNbParticlesSpot = 500000/1e6;  %for protons
-minNrParticlesIES = 25000000;    %for protons
-if strcmp(pln.radiationMode,'carbon')
-     minNbParticlesSpot = 15000/1e6;   
-     minNrParticlesIES = 0;
-end
+% minNbParticlesSpot = 500000/1e6;  %for protons
+% minNrParticlesIES = 25000000;    %for protons
+% if strcmp(pln.radiationMode,'carbon')
+%      minNbParticlesSpot = 15000/1e6;   
+%      minNrParticlesIES = 0;
+% end
 
 
 if ~strcmp(pln.machine,'HIT') 
@@ -49,7 +49,7 @@ end
 % Compute bixel index as it is done on matRad_calParticleDose
 counter = 0;
 
-for i = 1:pln.numOfBeams; % loop over all beams
+for i = 1:pln.propStf.numOfBeams; % loop over all beams
 
     for j = 1:stf(i).numOfRays % loop over all rays
 
@@ -99,7 +99,7 @@ if exist('OCTAVE_VERSION','builtin');
   javaaddpath ('/usr/share/java/xml-commons-apis.jar');
 end
 
-for beamNb = 1:pln.numOfBeams % loop over beams
+for beamNb = 1:pln.propStf.numOfBeams % loop over beams
   filename = sprintf('PBP_%02d_%s.xml',beamNb-1,planFilename);
 
   % helper function for energy selection
@@ -213,16 +213,13 @@ end
 
         bixelIndex = find([tmp.beamNum==beamNb & tmp.rayNum==rayNb & tmp.bixelNum==bixelNb]==1);
 
-        voxel_nbParticles = resultGUI.w(bixelIndex); % if minNrParticlesSpot is same for postprocessing and export_Plan resultGUI.w would give same result
+        voxel_nbParticles = resultGUI.w(bixelIndex); 
         voxel_nbParticles = round(1e6*voxel_nbParticles);
 
-        % check whether there are (enough) particles for beam delivery
-        if (voxel_nbParticles>minNbParticlesSpot)
-            
-            rayPos_bev = stf(beamNb).ray(rayNb).rayPos_bev;
-            % HITXML, x-y-z(beam)
-            % matRad, x-y(beam)-z -> z-x-y(beam)
-            voxel_x = rayPos_bev(3);
+        rayPos_bev = stf(beamNb).ray(rayNb).rayPos_bev;
+        % HITXML, x-y-z(beam)
+        % matRad, x-y(beam)-z -> z-x-y(beam)
+        voxel_x = rayPos_bev(3);
             voxel_y = rayPos_bev(1);
   
             rayIESenergy=stf(beamNb).ray(rayNb).energy(bixelNb);
@@ -244,18 +241,14 @@ end
            counter= counter +1;
            
            newIES = true;
-        end % there are enough particles            
+                  
       elseif length(bixelNb)>1
           error('Unexpected number of IES in the same ray.');
           return;
       end % one IES found
     end % loop over rays
     if newIES % new IES
-        %check if enough particles in IES
-        if(sum(tmpIES.voxel_nbParticles(:)) < minNrParticlesIES)
-            disp(['Not enough particles in IES' num2str(rayIESenergy) 'in beam' num2str(i) ':deleted']);
-        else    
-        
+         
         iesFocus = machine.data(energyIx).initFocus.SisFWHMAtIso(rayIESfocusIx);
 
         IES = docNode.createElement('IES');
@@ -492,7 +485,6 @@ end
          else                             
              error('No available Scan Path Mode selected');             
          end
-        end
     end   
     
   end % find focus and "Voxel (x,y,nbParticles)" for each IES
