@@ -1,4 +1,4 @@
-function stf = matRad_computeSSD(stf,ct,ctScen,mode)
+function stf = matRad_computeSSD(stf,ct,mode)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad SSD calculation
 % 
@@ -50,9 +50,13 @@ if strcmp(mode,'first')
                                  ct.resolution, ...
                                  stf(i).sourcePoint, ...
                                  stf(i).ray(j).targetPoint, ...
-                                 {ct.cube{ctScen}});
-            ixSSD = find(rho{1} > densityThreshold,1,'first');
+                                 ct.cube);
+            %ixSSD = find(rho{1} > densityThreshold,1,'first');
+            for ctScen = 1:ct.numOfCtScen
+                ixSSD = find(rho{ctScen} > densityThreshold,1,'first');
 
+            
+            
             if boolShowWarning
                 if isempty(ixSSD)
                     matRad_dispToConsole('ray does not hit patient. Trying to fix afterwards...',[],'warning');
@@ -66,6 +70,7 @@ if strcmp(mode,'first')
             % calculate SSD
             SSD{j} = double(2 * stf(i).SAD * alpha(ixSSD));
             stf(i).ray(j).SSD{ctScen} = SSD{j};            
+            end
         end
         
         % try to fix SSD by using SSD of closest neighbouring ray
