@@ -180,7 +180,6 @@ classdef MatRadSimulation < handle
             if ~obj.statisticsComputed
                 warning('Please run statistical analysis first.');
             else
-                
                 for i = 1:numel(listOfStruct)
                     for j = 1:numel(obj.dvhStatistics)
                         if strcmp(obj.nominalScenario.dvh(j).name, listOfStruct{i})

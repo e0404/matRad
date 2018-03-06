@@ -84,8 +84,8 @@ classdef MatRadScenario < handle
             end
         end
         
-        function plotDoseSlice(obj, ax, ct, plane, slice,legendOn)
-            matRad_plotSliceWrapper(ax,ct,obj.cst,1,obj.dose,plane,slice,[],[],jet,[],[],[],[],[],legendOn);
+        function plotDoseSlice(obj, ax, ct, plane, slice, doseWindow, legendOn)
+            matRad_plotSliceWrapper(ax,ct,obj.cst,1,obj.dose,plane,slice,[],[],jet,[],doseWindow,[],[],[],legendOn);
         end
         
         function singleStructDVH = getSingleStructDVH(obj, voi)

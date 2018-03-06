@@ -32,7 +32,7 @@ function matRad_calcStudy(structSel,multScen,matPatientPath,param)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [treatmentSimulation, scenContainer, nominalScenario] = mergeSplittedScen(scenContainerParts, nomScenParts)
+function [treatmentSimulation, nominalScenario] = mergeSplittedScen(scenContainerParts, nomScenParts)
     % Merge nominal scenario by cumulating on first part. Remember that all 
     % scenario class is subclass of abstract handle class, therefore 
     % nomScenParts{1} changes.
@@ -41,15 +41,15 @@ function [treatmentSimulation, scenContainer, nominalScenario] = mergeSplittedSc
     for k = 2:numel(nomScenParts)
         nominalScenario.cumulateDose(nomScenParts{k}.dose);
     end
-    scenContainer = scenContainerParts{1};
-    for j = 1:numel(scenContainer)
+    sc = scenContainerParts{1};
+    for j = 1:numel(sc)
         for k = 2:numel(scenContainerParts)
-            scenContainer{j}.cumulateDose(scenContainerParts{k}{j}.dose);
+            sc{j}.cumulateDose(scenContainerParts{k}{j}.dose);
         end
     end
     treatmentSimulation = MatRadSimulation(pln.bioParam.quantityVis, nominalScenario, ct, cst, pln, pln.numOfFractions);
-    for j = 1:numel(scenContainer)
-        treatmentSimulation.initNewScen(scenContainer{j})
+    for j = 1:numel(sc)
+        treatmentSimulation.initNewScen(sc{j})
     end
 end
 
@@ -104,9 +104,19 @@ stf = [];
 if exist('matPatientPath', 'var') && ~isempty(matPatientPath) && exist('matPatientPath','file') == 2
     load(matPatientPath)
 else
+    % search for .mat files
     listOfMat = dir('*.mat');
+    % exclude all resultSampling_*.mat
+    listOfMat = {listOfMat(:).name};
+    deleteIx = false(1,numel(listOfMat));
+    for i = 1:numel(listOfMat)
+        if strncmp(listOfMat{i}, 'resultSampling', 14)
+            deleteIx(i) = true;
+        end
+    end
+    listOfMat(deleteIx) = [];
     if numel(listOfMat) == 1
-      load(listOfMat.name);
+      load(listOfMat{1});
     else
        matRad_dispToConsole('Ambigous set of .mat files in the current folder (i.e. more than one possible patient or already results available).\n',param,'error');
        return
@@ -174,12 +184,14 @@ elseif strcmp(multScen.deepestCorrelationBreak, 'beam')
         scenContainerParts{i} = scenContainerPart;
     end
     
-    [treatmentSimulation, scenContainer, nomScen] = mergeSplittedScen(scenContainerParts, nomScenParts);
+    [treatmentSimulation, nomScen] = mergeSplittedScen(scenContainerParts, nomScenParts);
 end
 param.computationTime = toc;
 
 param.reportPath = fullfile('report','data');
-filename         = 'resultSampling';
+t = datetime('now','Format','yyyy-MM-dd''T''HHmmss');
+filename         = ['resultSampling_', char(t)];
+clear scenContainer scenContainerPart scenContainerParts  % redundant vars
 save(filename, '-v7.3');
 
 %% perform analysis 
