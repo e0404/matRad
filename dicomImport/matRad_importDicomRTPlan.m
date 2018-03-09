@@ -124,7 +124,7 @@ end
 if strcmp(radiationMode, 'photons')
            
     fractionSequence         = planInfo.FractionGroupSequence.Item_1;
-    pln.propStf.Collimation  = matRad_importFieldShapes(BeamSequence,fractionSequence);
+    pln.propStf.collimation  = matRad_importFieldShapes(BeamSequence,fractionSequence);
     
 end
 
@@ -148,7 +148,7 @@ pln.propOpt.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be
 
 % if we imported field shapes then let's trigger field based dose calc by
 % setting the bixelWidth to 'field'
-if isfield(pln.propStf,'Collimation')
+if isfield(pln.propStf,'collimation')
     pln.propStf.bixelWidth  = 'field'; 
 end
 
