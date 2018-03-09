@@ -36,7 +36,10 @@ function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-addpath('tools');
+if ~isdeployed
+    addpath('tools');
+end
+
 [env, ~] = matRad_getEnvironment();
     
 %%

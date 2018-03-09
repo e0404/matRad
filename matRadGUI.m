@@ -37,11 +37,14 @@ function varargout = matRadGUI(varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% abort for octave
-matRadRootDir = fileparts(mfilename('fullpath'));
-addpath(fullfile(matRadRootDir,'tools'))
+if ~isdeployed
+    matRadRootDir = fileparts(mfilename('fullpath'));
+    addpath(fullfile(matRadRootDir,'tools'))
+end
+
 [env, versionString] = matRad_getEnvironment();
 
+% abort for octave
 switch env
      case 'MATLAB'
          
@@ -3548,7 +3551,9 @@ resultGUI = evalin('base','resultGUI');
 for filename = filenames
     [~,name,~] = fileparts(filename{1});
     matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir,'IO'))
+    if ~isdeployed
+        addpath(fullfile(matRadRootDir,'IO'))
+    end
     [cube,~] = matRad_readCube(fullfile(filepath,filename{1}));
     if ~isequal(ct.cubeDim, size(cube))
         errordlg('Dimensions of the imported cube do not match with ct','Import failed!','modal');
