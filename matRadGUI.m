@@ -872,7 +872,7 @@ if  ismember('resultGUI',AllVarNames)
 end
 
 if exist('Result','var')
-    if ~isempty(Result) && ~isempty(ct.cube) && ~isfield(handles,'DispInfo')
+    if ~isempty(Result) && ~isempty(ct.cubeHU) && ~isfield(handles,'DispInfo')
         
         DispInfo = fieldnames(Result);
         
@@ -948,16 +948,16 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
         ctIx = selectIx;
     end
     
-    if isfield(ct, 'cubeHU')
-        plotCtCube = ct.cubeHU;
-    else
+    if isfield(ct, 'cube')
         plotCtCube = ct.cube;
+    else
+        plotCtCube = ct.cubeHU;
     end
     
     ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
     
     if isempty(handles.dispWindow{ctIx,2})
-        handles.dispWindow{ctIx,2} = [min(ct.cube{:}(:)) max(ct.cube{:}(:))];
+        handles.dispWindow{ctIx,2} = [min(ct.cubeHU{:}(:)) max(ct.cubeHU{:}(:))];
     end
 
     if get(handles.radiobtnCT,'Value')
@@ -1105,8 +1105,9 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     rotSourcePointBEV = sourcePointBEV * rotMat_system_T;
     rotTargetPointBEV = targetPointBEV * rotMat_system_T;
     
-    % perform raytracing on the central axis of the selected beam
-    [~,l,rho,~,ix] = matRad_siddonRayTracer(pln.propStf.isoCenter(handles.selectedBeam,:),ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{ct.cube{1}});
+    % perform raytracing on the central axis of the selected beam, use unit
+    % electron density for plotting against the geometrical depth
+    [~,l,rho,~,ix] = matRad_siddonRayTracer(pln.propStf.isoCenter(handles.selectedBeam,:),ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{0*ct.cubeHU{1}+1});
     d = [0 l .* rho{1}];
     % Calculate accumulated d sum.
     vX = cumsum(d(1:end-1));
@@ -3718,10 +3719,10 @@ try
         ct = evalin('base','ct');
         currentMap = handles.ctColorMap;
         window = handles.dispWindow{selectionIndex,1};
-        if isfield(ct, 'cubeHU')
-            minMax = [min(ct.cubeHU{1}(:)) max(ct.cubeHU{1}(:))];
-        else
+        if isfield(ct, 'cube')
             minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
+        else
+            minMax = [min(ct.cubeHU{1}(:)) max(ct.cubeHU{1}(:))];
         end
         % adjust value for custom window to current
         handles.windowPresets(1).width = max(window) - min(window);
@@ -4105,8 +4106,8 @@ if get(handles.popupTypeOfPlot,'Value')==1 %Image view
             coords(3) = cubePos(3)*ct.resolution.z;            
             cursorText{end+1,1} = ['Space Coordinates: ' mat2str(coords,5) ' mm'];
             
-            ctVal = ct.cube{1}(cubeIx(1),cubeIx(2),cubeIx(3));
-            cursorText{end+1,1} = ['CT Value: ' num2str(ctVal,3)];
+            ctVal = ct.cubeHU{1}(cubeIx(1),cubeIx(2),cubeIx(3));
+            cursorText{end+1,1} = ['HU Value: ' num2str(ctVal,3)];
         end
         
         %Add dose information if available
