@@ -34,25 +34,32 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % issue warning if biological optimization impossible
-if sum(strcmp(pln.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose')) && strcmp(pln.radiationMode,'carbon')
+if sum(strcmp(pln.propOpt.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose')) && strcmp(pln.radiationMode,'carbon')
     warndlg('Alpha and beta matrices for effect based and RBE optimization not available - physical optimization is carried out instead.');
-    pln.bioOptimization = 'none';
+    pln.propOpt.bioOptimization = 'none';
 end
+
+% determine if Matlab or Octave
+[env, ~] = matRad_getEnvironment();
 
 if ~isdeployed % only if _not_ running as standalone
     
     % add path for optimization functions
     matRadRootDir = fileparts(mfilename('fullpath'));
     addpath(fullfile(matRadRootDir,'optimization'))
-    
-    % get handle to Matlab command window
-    mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-    cw          = mde.getClient('Command Window');
-    xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-    h_cw        = handle(xCmdWndView,'CallbackProperties');
+    addpath(fullfile(matRadRootDir,'tools'))
 
-    % set Key Pressed Callback of Matlab command window
-    set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
+    switch env
+         case 'MATLAB'
+           % get handle to Matlab command window
+            mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
+            cw          = mde.getClient('Command Window');
+            xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+            h_cw        = handle(xCmdWndView,'CallbackProperties');
+
+            % set Key Pressed Callback of Matlab command window
+            set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
+    end
 
 end
 
@@ -97,7 +104,7 @@ wOnes          = ones(dij.totalNumOfBixels,1);
 matRad_ipoptOptions;
 
 % modified settings for photon dao
-if pln.runDAO && strcmp(pln.radiationMode,'photons')
+if pln.propOpt.runDAO && strcmp(pln.radiationMode,'photons')
 %    options.ipopt.max_iter = 50;
 %    options.ipopt.acceptable_obj_change_tol     = 7e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
 
@@ -109,7 +116,7 @@ options.ub              = inf * ones(1,dij.totalNumOfBixels);   % Upper bound on
 funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
     
 % calculate initial beam intensities wInit
-if  strcmp(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
+if  strcmp(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
     % check if a constant RBE is defined - if not use 1.1
     if ~isfield(dij,'RBE')
         dij.RBE = 1.1;
@@ -117,7 +124,7 @@ if  strcmp(pln.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'proto
     bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
         
-elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization,'LEMIV_RBExD')) ... 
+elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
                                 && strcmp(pln.radiationMode,'carbon')
 
     % check if you are running a supported rad
@@ -143,14 +150,14 @@ elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization
     
     dij.ixDose  = dij.bx~=0; 
         
-    if isequal(pln.bioOptimization,'LEMIV_effect')
+    if isequal(pln.propOpt.bioOptimization,'LEMIV_effect')
         
            effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
            p            = (sum(dij.mAlphaDose{1}(V,:)*wOnes)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            q            = -(effectTarget * length(V)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
            wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
 
-    elseif isequal(pln.bioOptimization,'LEMIV_RBExD')
+    elseif isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')
         
            %pre-calculations
            dij.gamma              = zeros(dij.numOfVoxels,1);   
@@ -169,13 +176,13 @@ elseif (strcmp(pln.bioOptimization,'LEMIV_effect') || strcmp(pln.bioOptimization
 else 
     bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
-    pln.bioOptimization = 'none';
+    pln.propOpt.bioOptimization = 'none';
 end
 
 % set optimization options
 options.radMod          = pln.radiationMode;
-options.bioOpt          = pln.bioOptimization;
-options.ID              = [pln.radiationMode '_' pln.bioOptimization];
+options.bioOpt          = pln.propOpt.bioOptimization;
+options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
 options.numOfScenarios  = dij.numOfScenarios;
 
 % set callback functions.
@@ -195,12 +202,17 @@ resultGUI = matRad_calcCubes(wOpt,dij,cst);
 resultGUI.wUnsequenced = wOpt;
 
 % unset Key Pressed Callback of Matlab command window
-if ~isdeployed
+if ~isdeployed && strcmp(env,'MATLAB')
     set(h_cw, 'KeyPressedCallback',' ');
 end
 
 % clear global variables
-clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;
+switch env
+     case 'MATLAB'
+        clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;
+     case 'OCTAVE'
+        clear     -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;           
+end
 
 % unblock mex files
 clear mex
