@@ -37,7 +37,18 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set consistent random seed (enables reproducibility)
-rng(0);
+if ~isdeployed
+    matRadRootDir = fileparts(mfilename('fullpath'));
+    addpath(fullfile(matRadRootDir,'tools'))
+end
+[env, ~] = matRad_getEnvironment();
+
+switch env
+     case 'MATLAB'
+          rng(0);
+     case 'OCTAVE'
+          rand('seed',0)
+end
 
 % default: dose influence matrix computation
 if ~exist('calcDoseDirect','var')
@@ -45,7 +56,7 @@ if ~exist('calcDoseDirect','var')
 end
 
 % issue warning if biological optimization not possible
-if sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0
+if sum(strcmp(pln.propOpt.bioOptimization,{'effect','RBExD'}))>0
     warndlg('Effect based and RBE optimization not available for photons - physical optimization is carried out instead.');
     pln.bioOptimization = 'none';
 end
@@ -56,32 +67,36 @@ figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 set(figureWait,'pointer','watch');
 
 % meta information for dij
-dij.numOfBeams         = pln.numOfBeams;
-dij.numOfVoxels        = pln.numOfVoxels;
+dij.numOfBeams         = pln.propStf.numOfBeams;
+dij.numOfVoxels        = prod(ct.cubeDim);
 dij.resolution         = ct.resolution;
-dij.numOfRaysPerBeam   = [stf(:).numOfRays];
-dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
-dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
-dij.dimensions         = pln.voxelDimensions;
+dij.dimensions         = ct.cubeDim;
 dij.numOfScenarios     = 1;
+dij.numOfRaysPerBeam   = [stf(:).numOfRays];
+dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
+dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
+
+% check if full dose influence data is required
+if calcDoseDirect 
+    numOfColumnsDij           = length(stf);
+    numOfBixelsContainer = 1;
+else
+    numOfColumnsDij           = dij.totalNumOfBixels;
+    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+end
 
 % set up arrays for book keeping
-dij.bixelNum = NaN*ones(dij.totalNumOfRays,1);
-dij.rayNum   = NaN*ones(dij.totalNumOfRays,1);
-dij.beamNum  = NaN*ones(dij.totalNumOfRays,1);
+dij.bixelNum = NaN*ones(numOfColumnsDij,1);
+dij.rayNum   = NaN*ones(numOfColumnsDij,1);
+dij.beamNum  = NaN*ones(numOfColumnsDij,1);
 
 % Allocate space for dij.physicalDose sparse matrix
 for i = 1:dij.numOfScenarios
-    dij.physicalDose{i} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
+    dij.physicalDose{i} = spalloc(prod(ct.cubeDim),numOfColumnsDij,1);
 end
 
 % Allocate memory for dose_temp cell array
-if calcDoseDirect
-    numOfBixelsContainer = 1;
-else
-    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
-end
-doseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
+doseTmpContainer     = cell(numOfBixelsContainer,dij.numOfScenarios);
 
 % take only voxels inside patient
 V = [cst{:,4}];
@@ -105,7 +120,7 @@ lateralCutoff = 50; % [mm]
 useCustomPrimFluenceBool = 0;
 
 % 0 if field calc is bixel based, 1 if dose calc is field based
-isFieldBasedDoseCalc = strcmp(num2str(pln.bixelWidth),'field');
+isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
 
 %% kernel convolution
 % prepare data for convolution to reduce calculation time
@@ -123,7 +138,7 @@ if isFieldBasedDoseCalc
     fieldWidth = pln.Collimation.fieldWidth;
 else
     intConvResolution = .5; % [mm]
-    fieldWidth = pln.bixelWidth;
+    fieldWidth = pln.propStf.bixelWidth;
 end
 
 % calculate field size and distances
@@ -179,7 +194,14 @@ fprintf('matRad: Photon dose calculation...\n');
 for i = 1:dij.numOfBeams % loop over all beams
     
     fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
-
+    
+    % remember beam and bixel number
+    if calcDoseDirect
+        dij.beamNum(i)    = i;
+        dij.rayNum(i)     = i;
+        dij.bixelNum(i)   = i;
+    end
+    
     bixelsPerBeam = 0;
 
     % convert voxel indices to real coordinates using iso center of beam i
@@ -192,7 +214,7 @@ for i = 1:dij.numOfBeams % loop over all beams
     % Do not transpose matrix since we usage of row vectors &
     % transformation of the coordinate system need double transpose
 
-    rotMat_system_T = matRad_getRotationMatrix(pln.gantryAngles(i),pln.couchAngles(i));
+    rotMat_system_T = matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i));
 
     % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
     rot_coordsV = coordsV*rotMat_system_T;
@@ -243,7 +265,7 @@ for i = 1:dij.numOfBeams % loop over all beams
         convMx3 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)));
 
         % Creates an interpolant for kernes from vectors position X and Z
-        if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
+        if strcmp(env,'MATLAB')
             Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
             Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
             Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
@@ -284,7 +306,7 @@ for i = 1:dij.numOfBeams % loop over all beams
             convMx3 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)) );
             
             % Creates an interpolant for kernes from vectors position X and Z
-            if exist('griddedInterpolant','class') % use griddedInterpoland class when available 
+            if strcmp(env,'MATLAB')
                 Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
                 Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
                 Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
@@ -307,9 +329,11 @@ for i = 1:dij.numOfBeams % loop over all beams
         end
         
         % remember beam and bixel number
-        dij.beamNum(counter)  = i;
-        dij.rayNum(counter)   = j;
-        dij.bixelNum(counter) = j;
+        if ~calcDoseDirect
+           dij.beamNum(counter)  = i;
+           dij.rayNum(counter)   = j;
+           dij.bixelNum(counter) = j;
+        end
         
         % Ray tracing for beam i and bixel j
         [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
@@ -325,6 +349,7 @@ for i = 1:dij.numOfBeams % loop over all beams
             continue;
         end
 
+                
         % calculate photon dose for beam i and bixel j
         bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
                                                    machine.data.betas, ...
@@ -351,7 +376,7 @@ for i = 1:dij.numOfBeams % loop over all beams
             if calcDoseDirect
                 if isfield(stf(1).ray(1),'weight')
                     % score physical dose
-                    dij.physicalDose{1}(:,1) = dij.physicalDose{1}(:,1) + stf(i).ray(j).weight * doseTmpContainer{1,1};
+                    dij.physicalDose{1}(:,i) = dij.physicalDose{1}(:,i) + stf(i).ray(j).weight * doseTmpContainer{1,1};
                 else
                     error(['No weight available for beam ' num2str(i) ', ray ' num2str(j)]);
                 end
@@ -360,6 +385,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                 dij.physicalDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
             end
         end
+        
         
     end
 end
@@ -371,5 +397,4 @@ try
   pause(0.1);
 catch
 end
-
 

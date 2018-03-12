@@ -56,12 +56,12 @@ if exist('grid','var')
     zqRe = coordsOfFirstPixel(3,1):resolution.z: coordsOfFirstPixel(3,end);
     
     % cut values
-    xq(xq < min(xqRe)) = []
-    xq(xq > max(xqRe)) = []
-    yq(yq < min(yqRe)) = []
-    yq(yq > max(yqRe)) = []
-    zq(zq < min(zqRe)) = []
-    zq(zq > max(zqRe)) = []
+    xq(xq < min(xqRe)) = [];
+    xq(xq > max(xqRe)) = [];
+    yq(yq < min(yqRe)) = [];
+    yq(yq > max(yqRe)) = [];
+    zq(zq < min(zqRe)) = [];
+    zq(zq > max(zqRe)) = [];
 else
     xq = coordsOfFirstPixel(1,1):origCtInfo(1).ImageOrientationPatient(1)*resolution.x: ...
         (coordsOfFirstPixel(1,1)+origCtInfo(1).ImageOrientationPatient(1)*origCtInfo(1).PixelSpacing(1)*double(origCtInfo(1).Columns-1));

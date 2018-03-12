@@ -1,4 +1,4 @@
-function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, SSD, focusIx, baseData, rangeShifter, radiationMode)
+function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
@@ -9,11 +9,8 @@ function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, SSD, focu
 % input
 %   radDepths:      radiological depths
 %   radialDist_sq:  squared radial distance in BEV from central ray
-%   SSD:            source to surface distance
-%   focusIx:        index of focus to be used
+%   sigmaIni_sq:    initial Gaussian sigma^2 of beam at patient surface
 %   baseData:       base data required for particle dose calculation
-%   rangeShifter    struct with fields ID, equivalent thickness, source to rashi (upstream) surface
-%   radiationMode   'protons', 'carbon' 
 %
 % output
 %   dose:   particle dose at specified locations as linear vector
@@ -36,23 +33,11 @@ function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, SSD, focu
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% simplification since SSD is not exactly in y direction but sourceRashiDistance is
-% upstream value is used, since we then don't rashi need geometrical thickness
-rashiSurfaceDist = SSD - rangeShifter.sourceRashiDistance;
-
-% range shift
+% add potential offset
 depths = baseData.depths + baseData.offset;
-
-% adjust radDepth according to range shifter
-radDepths = radDepths + rangeShifter.eqThickness;
 
 % convert from MeV cm^2/g per primary to Gy mm^2 per 1e6 primaries
 conversionFactor = 1.6021766208e-02;
-
- % calculate initial focus sigma
-SigmaIni = matRad_interp1(baseData.initFocus.dist(focusIx,:)',baseData.initFocus.sigma(focusIx,:)',SSD);
-
-sigmaRashi = matRad_sigmaRashi(baseData, radiationMode, rangeShifter.eqThickness, rashiSurfaceDist);
 
 if ~isfield(baseData,'sigma')
     
@@ -60,16 +45,16 @@ if ~isfield(baseData,'sigma')
     X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
     
     % set dose for query > tabulated depth dose values to zero
-    X(radDepths >= max(depths),1) = 0;
+    X(radDepths > max(depths),1) = 0;
         
     % compute lateral sigmas
-    sigmaSq_Narr = X(:,2).^2 + sigmaRashi.^2 + SigmaIni^2;
-    sigmaSq_Bro  = X(:,4).^2 + sigmaRashi.^2 + SigmaIni^2;
+    sigmaSq_Narr = X(:,2).^2 + sigmaIni_sq;
+    sigmaSq_Bro  = X(:,4).^2 + sigmaIni_sq;
     
     % calculate lateral profile
     L_Narr =  exp( -radialDist_sq ./ (2*sigmaSq_Narr))./(2*pi*sigmaSq_Narr);
     L_Bro  =  exp( -radialDist_sq ./ (2*sigmaSq_Bro ))./(2*pi*sigmaSq_Bro );
-    L = baseData.LatCutOff.CompFac * ((1-(X(:,3))).*L_Narr) + (X(:,3).*L_Bro);
+    L = baseData.LatCutOff.CompFac * ((1-X(:,3)).*L_Narr + X(:,3).*L_Bro);
 
     dose = X(:,1).*L;
 else
@@ -78,7 +63,7 @@ else
     X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths);
 
     %compute lateral sigma
-    sigmaSq = X(:,2).^2 + sigmaRashi.^2 + SigmaIni^2;
+    sigmaSq = X(:,2).^2 + sigmaIni_sq;
     
     % calculate dose
     dose = baseData.LatCutOff.CompFac * exp( -radialDist_sq ./ (2*sigmaSq)) .* X(:,1) ./(2*pi*sigmaSq);

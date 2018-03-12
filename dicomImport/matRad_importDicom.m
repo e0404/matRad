@@ -36,6 +36,12 @@ function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if ~isdeployed
+    addpath('tools');
+end
+
+[env, ~] = matRad_getEnvironment();
+    
 %%
 if ~exist('dicomMetaBool','var')
   dicomMetaBool = true;
@@ -53,7 +59,11 @@ resolution.y = files.resy;
 resolution.z = files.resz; % [mm] / lps coordinate system
 if files.useDoseGrid && isfield(files,'rtdose')
     % get grid from dose cube
-    doseInfo = dicominfo(files.rtdose{1,1});
+    if verLessThan('matlab','9')
+        doseInfo = dicominfo(files.rtdose{1,1});
+    else
+        doseInfo = dicominfo(files.rtdose{1,1},'UseDictionaryVR',true);
+    end
     doseGrid{1} = doseInfo.ImagePositionPatient(1) + doseInfo.ImageOrientationPatient(1) * ...
                                                      doseInfo.PixelSpacing(1) * double(0:doseInfo.Columns - 1);
     doseGrid{2} = doseInfo.ImagePositionPatient(2) + doseInfo.ImageOrientationPatient(5) * ...
@@ -110,7 +120,7 @@ if isfield(files,'rtplan')
             %% import steering file
             % pln output because bixelWidth is determined via the stf
             [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, files.rtplan);
-        elseif strcmp(pln.radiationMode, 'photons') && isfield(pln,'Collimation')
+        elseif strcmp(pln.radiationMode, 'photons') && isfield(pln.propStf,'collimation')
             % return correct angles in pln 
             [stf, pln] = matRad_importDicomSteeringPhotons(pln);
         else
@@ -141,11 +151,9 @@ end
 
 %% put weight also into resultGUI
 if exist('stf','var') && exist('resultGUI','var')
-    if (strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon'))
-        resultGUI.w = [];
-        for i = 1:size(stf,2)
-            resultGUI.w = [resultGUI.w; [stf(i).ray.weight]'];
-        end
+    resultGUI.w = [];
+    for i = 1:size(stf,2)
+        resultGUI.w = [resultGUI.w; [stf(i).ray.weight]'];
     end
 end
 
@@ -154,7 +162,12 @@ matRadFileName = [files.ct{1,3} '.mat']; % use default from dicom
 [FileName,PathName] = uiputfile('*','Save as...',matRadFileName);
 if ischar(FileName)
     % delete unnecessary variables
-    clearvars -except ct cst pln stf resultGUI FileName PathName
+    switch env
+    case 'MATLAB'
+        clearvars -except ct cst pln stf resultGUI FileName PathName;
+    case 'OCTAVE' 
+        clear -x ct cst pln stf resultGUI FileName PathName;
+    end
     % save all except FileName and PathName
     save([PathName, FileName], '-regexp', '^(?!(FileName|PathName)$).','-v7.3');
 end

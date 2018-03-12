@@ -1,4 +1,4 @@
-function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window)
+function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window,varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that plots isolines, by precomputed contourc data 
 % computed by matRad_computeIsoDoseContours or manually by calling contourc
@@ -22,6 +22,7 @@ function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContour
 %               you can use an empty array []
 %   window      optional argument defining the displayed range. default is
 %               [min(doseCube(:)) max(doseCube(:))]
+%   varargin    Additional MATLAB Line-Property/Value-Pairs etc.
 %
 % output
 %   isoLineHandles: handle to the plotted isolines
@@ -40,6 +41,12 @@ function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContour
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if ~isdeployed
+    addpath('tools')
+end
+
+[env, ~] = matRad_getEnvironment();
 
 %% manage optional arguments
 %Use default colormap?
@@ -64,14 +71,18 @@ if isempty(isoContours)
 end
 
 %% Plotting
-
 cMapScale = size(cMap,1) - 1;
 isoColorLevel = (isoLevels - window(1))./(window(2)-window(1));
 isoColorLevel(isoColorLevel < 0) = 0;
 isoColorLevel(isoColorLevel > 1) = 0;
 colors = squeeze(ind2rgb(uint8(cMapScale*isoColorLevel),cMap));
 
-isoLineHandles = gobjects(0);
+switch env
+    case 'MATLAB'
+        isoLineHandles = gobjects(0);
+    case 'OCTAVE'
+        isoLineHandles = [];
+end
 
 axes(axesHandle);
 hold on;
@@ -81,7 +92,7 @@ if any(isoContours{slice,plane}(:))
     % plot precalculated contourc data
     
     lower = 1; % lower marks the beginning of a section
-    while lower-1 ~= size(isoContours{slice,plane},2);
+    while lower-1 ~= size(isoContours{slice,plane},2)
         steps = isoContours{slice,plane}(2,lower); % number of elements of current line section
         if numel(unique(isoLevels)) > 1
             color = colors(isoLevels(:) == isoContours{slice,plane}(1,lower),:);
@@ -90,7 +101,7 @@ if any(isoContours{slice,plane}(:))
         end
         isoLineHandles(end+1) = line(isoContours{slice,plane}(1,lower+1:lower+steps),...
             isoContours{slice,plane}(2,lower+1:lower+steps),...
-            'Color',color,'LineWidth',1.5,'Parent',axesHandle);
+            'Color',color,'Parent',axesHandle,varargin{:});
         if plotLabels
             text(isoContours{slice,plane}(1,lower+1),...
                 isoContours{slice,plane}(2,lower+1),...
