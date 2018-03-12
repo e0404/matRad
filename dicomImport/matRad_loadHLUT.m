@@ -6,7 +6,7 @@ function hlut = matRad_loadHLUT(ct, pln)
   %   hlut = matRad_loadHLUT(ct, pln)
   %
   % input
-  %   ct: unprocessed dicom ct data 
+  %   ct:      unprocessed dicom ct data 
   %
   % output
   %   hlut:   lookup table
@@ -18,7 +18,7 @@ function hlut = matRad_loadHLUT(ct, pln)
 
   % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %
-  % Copyright 2015 the matRad development team. 
+  % Copyright 2018 the matRad development team. 
   % 
   % This file is part of the matRad project. It is subject to the license 
   % terms in the LICENSE file found in the top-level directory of this 
@@ -35,9 +35,9 @@ hlutDir = fullfile(fileparts(mfilename('fullpath')),'hlutLibrary',filesep);
 % if possible -> file standard out of dicom tags
 try
     manufacturer = ct.dicomInfo.Manufacturer;
-    model = ct.dicomInfo.ManufacturerModelName;
-    convKernel = ct.dicomInfo.ConvolutionKernel;
-    particle = pln.radiationMode;
+    model        = ct.dicomInfo.ManufacturerModelName;
+    convKernel   = ct.dicomInfo.ConvolutionKernel;
+    particle     = pln.radiationMode;
     
     hlutFileName = strcat(manufacturer, '-', model, '-ConvolutionKernel-',...
         convKernel, '_', particle, '.hlut');

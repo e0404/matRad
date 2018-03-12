@@ -53,6 +53,11 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandl
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% add plotting subdirectory 
+if ~isdeployed
+    addpath([fileparts(fileparts(mfilename('fullpath'))) filesep 'plotting']);
+end
+
 %Handle the argument list
 if ~exist('thresh','var') || isempty(thresh)
     thresh = [];
