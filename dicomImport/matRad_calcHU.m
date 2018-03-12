@@ -1,6 +1,6 @@
 function ct = matRad_calcHU(ct)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad function to calculate the equivalent densities from a 
+% matRad function to calculate Hounsfield units from a 
 % dicom ct that originally uses intensity values
 %
 % call
@@ -32,7 +32,8 @@ function ct = matRad_calcHU(ct)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% conversion from IV to HU
-ct.cubeHU{1} = double(ct.cube{1}) * double(ct.dicomInfo.RescaleSlope) + double(ct.dicomInfo.RescaleIntercept);
+for i = 1:ct.numOfCtScen
+    ct.cubeHU{i} = double(ct.cube{i}) * double(ct.dicomInfo.RescaleSlope) + double(ct.dicomInfo.RescaleIntercept);
+end
 
 end
