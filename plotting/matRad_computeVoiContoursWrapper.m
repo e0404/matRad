@@ -1,12 +1,25 @@
-function sigmaRashi = matRad_sigmaRashi(baseData, radiationMode, rashiEqThickness, rashiDist)
+function cst = matRad_computeVoiContoursWrapper(cst,ct)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% additional broadening calculation due to range shifter not provided
-%
+% matRad computation of VOI contours if not precomputed
+% 
+% call
+%   cst = matRad_computeVoiContoursWrapper(ct,cst)
+% 
+% input:
+%   cst:        matRad cst struct
+%   ct:         matRad ct struct
+% 
+% output:
+%   cst:        matRad cst struct with VOI contours
+% 
+% References
+%   -
+% 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2017 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -17,11 +30,13 @@ function sigmaRashi = matRad_sigmaRashi(baseData, radiationMode, rashiEqThicknes
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-if rashiEqThickness ~= 0 && strcmp(radiationMode, 'protons')
-  error('additional broadening calculation due to range shifter not provided');
+if size(cst,2) < 7
+    cst = matRad_computeVoiContours(ct,cst);
+else
+    for i = 1:size(cst,1)
+        if isempty(cst{i,7})
+            cst = matRad_computeVoiContours(ct,cst);
+            break
+        end
+    end
 end
-
-sigmaRashi = 0;
-
-end % eof
