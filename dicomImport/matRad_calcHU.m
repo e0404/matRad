@@ -33,7 +33,9 @@ function ct = matRad_calcHU(ct)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for i = 1:ct.numOfCtScen
-    ct.cubeHU{i} = double(ct.cube{i}) * double(ct.dicomInfo.RescaleSlope) + double(ct.dicomInfo.RescaleIntercept);
+    ct.cubeHU{i} = double(ct.cubeIV{i}) * double(ct.dicomInfo.RescaleSlope) + double(ct.dicomInfo.RescaleIntercept);
 end
+
+ct = rmfield(ct,'cubeIV');
 
 end

@@ -55,10 +55,9 @@ try
     end
 
     if sum(existIx) == 0
-        warnText = {['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
-            ' matRad default HLUT loaded']};
-        warndlg(warnText,'Could not load HLUT');
-        warning('matRad default HLUT loaded');
+        warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
+            ' matRad default HLUT loaded'];
+        warning(warnText,'backtrace','off');
         % load default HLUT
         hlutFileName = strcat(hlutDir,'matRad_default_', particle, '.hlut');
     else
@@ -66,12 +65,13 @@ try
     end
 
 catch
-    warnText = {['Could not construct hlut file name from DICOM tags.' ...
-        ' matRad default HLUT loaded']};
-    warndlg(warnText,'Could not load HLUT');
-    warning('matRad default HLUT loaded');
-       
-    hlutFileName = strcat(hlutDir,'matRad_default.hlut');
+    
+    warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
+                ' matRad default HLUT loaded'];
+    warning(warnText,'backtrace','off');
+    
+    % load default HLUT
+    hlutFileName = strcat(hlutDir,'matRad_default_', particle, '.hlut');
 
 end
 
