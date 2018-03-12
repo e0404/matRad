@@ -21,7 +21,7 @@ function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
 %
 % References
 %   van't Riet et. al., IJROBP, 1997 Feb 1;37(3):731-6.
-%   Kataria et. al., J Med Phys. 2012 Oct-Dec; 37(4): 207?213.
+%   Kataria et. al., J Med Phys. 2012 Oct-Dec; 37(4)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

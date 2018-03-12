@@ -230,8 +230,8 @@ end
 
 ct.timeStamp = datestr(clock);
 
-% convert to hounsfield units
-fprintf('\nconversion of ct-Cube to houndsfield units...');
+% convert to Hounsfield units
+fprintf('\nconversion of ct-Cube to Hounsfield units...');
 ct = matRad_calcHU(ct);
 fprintf('finished!\n');
 

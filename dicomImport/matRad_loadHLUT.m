@@ -6,10 +6,10 @@ function hlut = matRad_loadHLUT(ct, pln)
   %   hlut = matRad_loadHLUT(ct, pln)
   %
   % input
-  %   ct:      unprocessed dicom ct data 
+  %   ct:   unprocessed dicom ct data 
   %
   % output
-  %   hlut:   lookup table
+  %   hlut: lookup table
   %
   % References
   %   -
