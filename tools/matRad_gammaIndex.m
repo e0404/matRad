@@ -45,7 +45,10 @@ function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolutio
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-addpath('tools')
+if ~isdeployed
+    addpath('tools')
+end
+
 [env, ~] = matRad_getEnvironment();
 
 % set parameters for gamma index calculation
@@ -116,9 +119,6 @@ cubex1((1+searchX):(end-searchX), ...
 cubex2((1+searchX):(end-searchX), ...
        (1+searchY):(end-searchY), ...
        (1+searchZ):(end-searchZ)) = cubex2c;
-
-% find relevant indices for computation...
-ix = cubex1 > 0 | cubex2 > 0;
    
 % interpolate if necessary
 if n > 0
@@ -131,16 +131,7 @@ if n > 0
 end
 
 % set up temporary cubes required for calculation
-tmpCube = zeros(size(cubex1)); 
-tmpCube((1+searchX):(end-searchX), ...
-        (1+searchY):(end-searchY), ...
-        (1+searchZ):(end-searchZ)) = inf;
-
-
-gammaCubeSq = zeros(size(cubex1));
-gammaCubeSq((1+searchX):(end-searchX), ...
-            (1+searchY):(end-searchY), ...
-            (1+searchZ):(end-searchZ)) = inf;
+gammaCubeSq = inf*ones(size(cubex1c));
 
 % adjust dose threshold
 if strcmp(localglobal,'local')
@@ -158,19 +149,13 @@ for i = -searchX:searchX
                         (j*resolution(2))^2 + ...
                         (k*resolution(3))^2) / dist2AgreeMm^2;                 
             
-            tmpCube((1+searchX):(end-searchX), ...
-                    (1+searchY):(end-searchY), ...
-                    (1+searchZ):(end-searchZ)) = ...
-                             cubex1((1+searchX):(end-searchX), ...
-                                    (1+searchY):(end-searchY), ...
-                                    (1+searchZ):(end-searchZ)) ...
-                           - cubex2((1+((2^n)*searchX)+i) : 2^n : (end-((2^n)*searchX)+i), ...
-                                    (1+((2^n)*searchY)+j) : 2^n : (end-((2^n)*searchY)+j), ...
-                                    (1+((2^n)*searchZ)+k) : 2^n : (end-((2^n)*searchZ)+k));
+            tmpCube = cubex1c - cubex2((1+((2^n)*searchX)+i) : 2^n : (end-((2^n)*searchX)+i), ...
+                                       (1+((2^n)*searchY)+j) : 2^n : (end-((2^n)*searchY)+j), ...
+                                       (1+((2^n)*searchZ)+k) : 2^n : (end-((2^n)*searchZ)+k));
                     
             tmpCube = tmpCube.^2 ./ doseThreshold.^2 + delta_sq;
             
-            gammaCubeSq(ix) = min(gammaCubeSq(ix),tmpCube(ix));
+            gammaCubeSq = min(gammaCubeSq,tmpCube);
             
             
         end
@@ -183,9 +168,7 @@ end
 % evaluate gamma cube and set to zero all the voxel that contain an
 % infinite value
 gammaCubeSqx                 = zeros(size(cube1));
-gammaCubeSqx(cut1,cut2,cut3) = gammaCubeSq((1+searchX):(end-searchX), ...
-                                           (1+searchY):(end-searchY), ...
-                                           (1+searchZ):(end-searchZ));
+gammaCubeSqx(cut1,cut2,cut3) = gammaCubeSq;
 gammaCube                    = sqrt(gammaCubeSqx);
 
 % set values where we did not compute gamma keeping inf in the cube to zero

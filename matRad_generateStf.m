@@ -94,6 +94,13 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     %clear machine;
 end
 
+% calculate rED or rSP from HU
+if ~isdeployed
+   addpath(['dicomImport'])
+   addpath(['dicomImport' filesep 'hlutLibrary'])
+end
+ct = matRad_calcWaterEqD(ct, pln);
+
 % Convert linear indices to 3D voxel coordinates
 [coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
 
@@ -153,7 +160,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     if pln.propStf.bixelWidth < maxCtResolution
         origRayPos = rayPos;
         for j = -floor(maxCtResolution/pln.propStf.bixelWidth):floor(maxCtResolution/pln.propStf.bixelWidth)
-            for k = -floor(maxCtResolution/pln.propStf.bixelWidth):floor(maxCtResolution/plnpropStf.bixelWidth)
+            for k = -floor(maxCtResolution/pln.propStf.bixelWidth):floor(maxCtResolution/pln.propStf.bixelWidth)
                 if abs(j)+abs(k)==0
                     continue;
                 end                

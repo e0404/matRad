@@ -28,8 +28,10 @@ function matRad_showQualityIndicators(qi)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-matRadRootDir = fileparts(mfilename('fullpath'));
-addpath(fullfile(matRadRootDir,'tools'))
+if ~isdeployed
+    matRadRootDir = fileparts(mfilename('fullpath'));
+    addpath(fullfile(matRadRootDir,'tools'))
+end
 [env, ~] = matRad_getEnvironment();
     
 % Create the column and row names in cell arrays 

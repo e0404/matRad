@@ -37,8 +37,10 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set consistent random seed (enables reproducibility)
-matRadRootDir = fileparts(mfilename('fullpath'));
-addpath(fullfile(matRadRootDir,'tools'))
+if ~isdeployed
+    matRadRootDir = fileparts(mfilename('fullpath'));
+    addpath(fullfile(matRadRootDir,'tools'))
+end
 [env, ~] = matRad_getEnvironment();
 
 switch env
@@ -54,6 +56,9 @@ dij.radiationMode = pln.radiationMode;
 if ~exist('calcDoseDirect','var')
     calcDoseDirect = false;
 end
+
+% calculate rED or rSP from HU
+ct = matRad_calcWaterEqD(ct, pln);
 
 % issue warning if biological optimization not possible
 if sum(strcmp(pln.propOpt.bioOptimization,{'effect','RBExD'}))>0

@@ -39,13 +39,15 @@ if sum(strcmp(pln.propOpt.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && 
     pln.propOpt.bioOptimization = 'none';
 end
 
+% determine if Matlab or Octave
+[env, ~] = matRad_getEnvironment();
+
 if ~isdeployed % only if _not_ running as standalone
     
     % add path for optimization functions
     matRadRootDir = fileparts(mfilename('fullpath'));
     addpath(fullfile(matRadRootDir,'optimization'))
     addpath(fullfile(matRadRootDir,'tools'))
-    [env, ~] = matRad_getEnvironment();
 
     switch env
          case 'MATLAB'
