@@ -36,7 +36,10 @@ function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-addpath('tools');
+if ~isdeployed
+    addpath('tools');
+end
+
 [env, ~] = matRad_getEnvironment();
     
 %%
@@ -117,7 +120,7 @@ if isfield(files,'rtplan')
             %% import steering file
             % pln output because bixelWidth is determined via the stf
             [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, files.rtplan);
-        elseif strcmp(pln.radiationMode, 'photons') && isfield(pln,'Collimation')
+        elseif strcmp(pln.radiationMode, 'photons') && isfield(pln.propStf,'collimation')
             % return correct angles in pln 
             [stf, pln] = matRad_importDicomSteeringPhotons(pln);
         else

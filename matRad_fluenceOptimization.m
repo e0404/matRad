@@ -43,30 +43,33 @@ else
    param.logLevel = 1;
 end
 
+% determine if Matlab or Octave
+[env, ~] = matRad_getEnvironment();
+
 if ~isdeployed % only if _not_ running as standalone
-    
-    % add path for optimization functions
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir,'optimization'))
-    addpath(fullfile(matRadRootDir,'tools'))
-    
-    if param.logLevel == 1
+   
+   % add path for optimization functions
+   matRadRootDir = fileparts(mfilename('fullpath'));
+   addpath(fullfile(matRadRootDir,'optimization'))
+   addpath(fullfile(matRadRootDir,'tools'))
+   
+   if param.logLevel == 1
       
-          [env, ~] = matRad_getEnvironment();
-
-          switch env
-               case 'MATLAB'
-                 % get handle to Matlab command window
-                  mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-                  cw          = mde.getClient('Command Window');
-                  xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-                  h_cw        = handle(xCmdWndView,'CallbackProperties');
-
-                  % set Key Pressed Callback of Matlab command window
-                  set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
-          end
-
-    end
+      [env, ~] = matRad_getEnvironment();
+      
+      switch env
+         case 'MATLAB'
+            % get handle to Matlab command window
+            mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
+            cw          = mde.getClient('Command Window');
+            xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+            h_cw        = handle(xCmdWndView,'CallbackProperties');
+            
+            % set Key Pressed Callback of Matlab command window
+            set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
+      end
+      
+   end
 end
 
 % initialize global variables for optimizer

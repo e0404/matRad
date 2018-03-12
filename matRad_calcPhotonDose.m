@@ -37,6 +37,7 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,param)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 if exist('param','var')
     if ~isfield(param,'logLevel')
        param.logLevel = 1;
@@ -50,6 +51,21 @@ else
    param.calcDoseDirect = false;
    param.subIx          = [];
    param.logLevel       = 1;
+end
+
+% set consistent random seed (enables reproducibility)
+if ~isdeployed
+    matRadRootDir = fileparts(mfilename('fullpath'));
+    addpath(fullfile(matRadRootDir,'tools'))
+end
+
+[env, ~] = matRad_getEnvironment();
+
+switch env
+     case 'MATLAB'
+          rng(0);
+     case 'OCTAVE'
+          rand('seed',0)
 end
 
 

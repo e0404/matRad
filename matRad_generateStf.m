@@ -150,7 +150,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     if pln.propStf.bixelWidth < maxCtResolution
         origRayPos = rayPos;
         for j = -floor(maxCtResolution/pln.propStf.bixelWidth):floor(maxCtResolution/pln.propStf.bixelWidth)
-            for k = -floor(maxCtResolution/pln.propStf.bixelWidth):floor(maxCtResolution/plnpropStf.bixelWidth)
+            for k = -floor(maxCtResolution/pln.propStf.bixelWidth):floor(maxCtResolution/pln.propStf.bixelWidth)
                 if abs(j)+abs(k)==0
                     continue;
                 end                

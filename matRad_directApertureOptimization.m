@@ -39,13 +39,10 @@ function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureIn
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if exist('param','var')
-   if ~isfield(param,'logLevel')
-      param.logLevel = 1;
-   end
-else
-   param.logLevel = 1;
-end
+
+% determine if Matlab or Octave
+[env, ~] = matRad_getEnvironment();
+
 
 if ~isdeployed % only if _not_ running as standalone
     
@@ -53,7 +50,6 @@ if ~isdeployed % only if _not_ running as standalone
     matRadRootDir = fileparts(mfilename('fullpath'));
     addpath(fullfile(matRadRootDir,'optimization'))
     addpath(fullfile(matRadRootDir,'tools'))
-    [env, ~] = matRad_getEnvironment();
     
     if param.logLevel == 1
         switch env

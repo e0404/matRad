@@ -29,19 +29,19 @@ function [stf, pln] = matRad_importDicomSteeringPhotons(pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 stf = struct;
-if ~isfield(pln.Collimation,'Fields')
+if ~isfield(pln.propStf.collimation,'Fields')
     return
 end
 
 % get fields possessing a field weight vector greater than 0
-Fields = pln.Collimation.Fields([pln.Collimation.Fields(:).Weight] > 0);
+Fields = pln.propStf.collimation.Fields([pln.propStf.collimation.Fields(:).Weight] > 0);
 
 [UniqueComb,ia,ib] = unique( vertcat([Fields(:).GantryAngle], [Fields(:).CouchAngle])','rows');
 
 % return corret angles to pln, because some angle derivations might be 
 % only in the control point sequences
-pln.gantryAngles = UniqueComb(:,1)';
-pln.couchAngles = UniqueComb(:,2)';
+pln.propStf.gantryAngles = UniqueComb(:,1)';
+pln.propStf.couchAngles  = UniqueComb(:,2)';
 
 stf = struct;
 % loop over all fields
@@ -49,7 +49,7 @@ for i = 1:size(UniqueComb,1)
     % set necessary steering information 
     stf(i).gantryAngle  = UniqueComb(i,1);
     stf(i).couchAngle   = UniqueComb(i,2);
-    stf(i).isoCenter    = pln.isoCenter(i,:);
+    stf(i).isoCenter    = pln.propStf.isoCenter(i,:);
     
     % bixelWidth = 'field' as keyword for whole field dose calc
     stf(i).bixelWidth    = 'field';
