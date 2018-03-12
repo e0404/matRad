@@ -13,6 +13,7 @@ classdef MatRadScenario < handle
         shift;
         relRangeShift;
         absRangeShift;
+        isoShift;
         ctShiftIdentifier;
         radiationQuantity;
         doseCubeDim;
@@ -61,8 +62,12 @@ classdef MatRadScenario < handle
             addlistener(obj,'dose','PostSet',@obj.handleChangeOfDose);
         end % eof constructor
         
-        function obj = cumulateDose(obj, dose)
+        function obj = cumulateDose(obj, dose, ctShiftIdentifier, shift, absRangeShift, relRangeShift)
             obj.dose = obj.dose + dose;
+            obj.ctShiftIdentifier = [obj.ctShiftIdentifier ctShiftIdentifier];
+            obj.shift = [obj.shift; shift];
+            obj.absRangeShift = [obj.absRangeShift absRangeShift];
+            obj.relRangeShift = [obj.relRangeShift relRangeShift];
         end
         
         function obj = calcQiDVH(obj, cst, pln, dvhType, doseGrid, refGy, refVol)
@@ -140,6 +145,13 @@ classdef MatRadScenario < handle
             end
         end
         
+        function shift = set.shift(obj, v)
+            if isempty(v)
+                obj.shift = [0 0 0];
+            else
+                obj.shift = v;
+            end
+        end
         
     end % eof methods
     

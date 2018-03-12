@@ -39,12 +39,16 @@ function [treatmentSimulation, nominalScenario] = mergeSplittedScen(scenContaine
     
     nominalScenario = nomScenParts{1};
     for k = 2:numel(nomScenParts)
-        nominalScenario.cumulateDose(nomScenParts{k}.dose);
+        nominalScenario.cumulateDose(nomScenParts{k}.dose, 1, [0 0 0], 0, 0);
     end
     sc = scenContainerParts{1};
     for j = 1:numel(sc)
         for k = 2:numel(scenContainerParts)
-            sc{j}.cumulateDose(scenContainerParts{k}{j}.dose);
+            sc{j}.cumulateDose(scenContainerParts{k}{j}.dose, ...
+                               1, ...  % ct shift identifier
+                               scenContainerParts{k}{j}.shift, ...
+                               scenContainerParts{k}{j}.absRangeShift, ...
+                               scenContainerParts{k}{j}.relRangeShift);
         end
     end
     treatmentSimulation = MatRadSimulation(pln.bioParam.quantityVis, nominalScenario, ct, cst, pln, pln.numOfFractions);
@@ -78,6 +82,9 @@ end
 
 if ~isfield(param,'outputPath')
     param.outputPath = mfilename('fullpath');
+end
+if ~isfield(param,'fileSuffix')
+    param.fileSuffix = '';
 end
 if ~isfield(param, 'percentiles')
     param.percentiles = [0.01 0.05 0.125 0.25 0.5 0.75 0.875 0.95 0.99];
@@ -190,7 +197,7 @@ param.computationTime = toc;
 
 param.reportPath = fullfile('report','data');
 t = datetime('now','Format','yyyy-MM-dd''T''HHmmss');
-filename         = ['resultSampling_', char(t)];
+filename         = ['resultSampling_', char(t), param.fileSuffix];
 clear scenContainer scenContainerPart scenContainerParts  % redundant vars
 save(filename, '-v7.3');
 
