@@ -77,7 +77,7 @@ end
 [Yq, Xq, Zq] = meshgrid(xq,yq,zq);
 
 % interpolate cube - cube is now stored in Y X Z 
-interpCt.cube{1} = interp3(Y,X,Z,origCt,Yq,Xq,Zq);
+interpCt.cubeIV{1} = interp3(Y,X,Z,double(origCt),Yq,Xq,Zq);
 
 % some meta information
 interpCt.resolution = resolution;
