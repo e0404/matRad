@@ -58,7 +58,8 @@ try
     if sum(existIx) == 0
         warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
             ' matRad default HLUT loaded'];
-        warning(warnText,'backtrace','off');
+        matRad_dispToConsole(warnText,[],'warning');
+        
         % load default HLUT
         hlutFileName = strcat(hlutDir,'matRad_default_', particle, '.hlut');
     else
