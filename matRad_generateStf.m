@@ -104,6 +104,13 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'helium') || 
     %clear machine;
 end
 
+% calculate rED or rSP from HU
+if ~isdeployed
+   addpath(['dicomImport'])
+   addpath(['dicomImport' filesep 'hlutLibrary'])
+end
+ct = matRad_calcWaterEqD(ct, pln);
+
 % Convert linear indices to 3D voxel coordinates
 [coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
 

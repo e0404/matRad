@@ -68,16 +68,15 @@ switch env
           rand('seed',0)
 end
 
-
-% set consistent random seed (enables reproducibility)
-rng(0);
-
 if param.logLevel == 1
    % initialize waitbar
    figureWait = waitbar(0,'calculate dose influence matrix for photons...');
    % show busy state
    set(figureWait,'pointer','watch');
 end
+
+% calculate rED or rSP from HU
+ct = matRad_calcWaterEqD(ct, pln);
 
 % meta information for dij
 dij.numOfBeams         = pln.propStf.numOfBeams;

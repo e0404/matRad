@@ -50,12 +50,16 @@ else
    param.logLevel       = 1;
 end
 
+
 if param.logLevel == 1
    % initialize waitbar
    figureWait = waitbar(0,'calculate dose influence matrix for particles...');
    % prevent closure of waitbar and show busy state
    set(figureWait,'pointer','watch');
 end
+
+% calculate rED or rSP from HU
+ct = matRad_calcWaterEqD(ct, pln);
 
 % meta information for dij
 dij.numOfBeams         = pln.propStf.numOfBeams;
