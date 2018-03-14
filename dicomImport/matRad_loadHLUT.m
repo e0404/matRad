@@ -34,10 +34,11 @@ hlutDir = fullfile(fileparts(mfilename('fullpath')),'hlutLibrary',filesep);
 
 % if possible -> file standard out of dicom tags
 try
+    hlutFileName = '';
+    particle     = pln.radiationMode;
     manufacturer = ct.dicomInfo.Manufacturer;
     model        = ct.dicomInfo.ManufacturerModelName;
     convKernel   = ct.dicomInfo.ConvolutionKernel;
-    particle     = pln.radiationMode;
     
     hlutFileName = strcat(manufacturer, '-', model, '-ConvolutionKernel-',...
         convKernel, '_', particle, '.hlut');
@@ -57,7 +58,8 @@ try
     if sum(existIx) == 0
         warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
             ' matRad default HLUT loaded'];
-        warning(warnText,'backtrace','off');
+        matRad_dispToConsole(warnText,[],'warning');
+        
         % load default HLUT
         hlutFileName = strcat(hlutDir,'matRad_default_', particle, '.hlut');
     else
