@@ -30,7 +30,11 @@ function hlut = matRad_loadHLUT(ct, pln)
   % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % directory with look up table files
-hlutDir = fullfile(fileparts(mfilename('fullpath')),'hlutLibrary',filesep);
+if ~isdeployed
+    hlutDir = fullfile(fileparts(mfilename('fullpath')),'hlutLibrary',filesep);
+else
+    hlutDir = [];
+end
 
 % if possible -> file standard out of dicom tags
 try
@@ -70,7 +74,7 @@ catch
     warning(warnText,'backtrace','off');
     
     % load default HLUT
-    hlutFileName = strcat(hlutDir,'matRad_default_', particle, '.hlut');
+    hlutFileName = strcat(hlutDir,'matRad_default_photons.hlut');
 
 end
 
