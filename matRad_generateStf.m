@@ -227,28 +227,79 @@ for i = 1:length(pln.propStf.gantryAngles)
     
     for j = stf(i).numOfRays:-1:1
 
+        for ShiftScen = 1:pln.multScen.totNumShiftScen
         % ray tracing necessary to determine depth of the target
-        [~,l,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
+            [~,l{ShiftScen},rho{ShiftScen},~,~] = matRad_siddonRayTracer(stf(i).isoCenter + pln.multScen.isoShift(ShiftScen,:), ...
                              ct.resolution, ...
                              stf(i).sourcePoint, ...
                              stf(i).ray(j).targetPoint, ...
-                             [{ct.cube{1}} {voiTarget}]);
-
+                             [ct.cube {voiTarget}]);
+        end
+                      
         % find appropriate energies for particles
        if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'helium') || strcmp(stf(i).radiationMode,'carbon')
 
-           % target hit
-           if sum(rho{2}) > 0 
+           % target hit   
+           rhoVOITarget = [];
+           for ShiftScen = 1:pln.multScen.totNumShiftScen
+               rhoVOITarget = [rhoVOITarget, rho{ShiftScen}{end}];
+           end
+           
+           if sum(rhoVOITarget) > 0 
 
-                % compute radiological depths
-                % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
-                radDepths = cumsum(l .* rho{1}); 
-
-                % find target entry & exit
-                diff_voi    = diff([rho{2}]);
-                targetEntry = radDepths(diff_voi == 1);
-                targetExit  = radDepths(diff_voi == -1);
-
+               Counter = 0;
+               
+               for CtScen = 1:pln.multScen.numOfCtScen
+                   for ShiftScen = 1:pln.multScen.totNumShiftScen
+                          for RangeShiftScen = 1:pln.multScen.totNumRangeScen 
+                          
+                              if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
+                                  Counter = Counter+1;
+                                  
+                                  % compute radiological depths
+                                  % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
+                                  radDepths = cumsum(l{ShiftScen} .* rho{ShiftScen}{CtScen});
+                                  
+                                  if pln.multScen.relRangeShift(RangeShiftScen) ~= 0 || pln.multScen.absRangeShift(RangeShiftScen) ~= 0
+                                      radDepths = radDepths +...                                                        % original cube
+                                          rho{ShiftScen}{CtScen}*pln.multScen.relRangeShift(RangeShiftScen) +... % rel range shift
+                                          pln.multScen.absRangeShift(RangeShiftScen);                           % absolute range shift
+                                      radDepths(radDepths < 0) = 0;
+                                  end
+                                  
+                                  % find target entry & exit
+                                  diff_voi    = diff([rho{ShiftScen}{end}]);
+                                  targetEntry(Counter,1:length(radDepths(diff_voi == 1))) = radDepths(diff_voi == 1);
+                                  targetExit(Counter,1:length(radDepths(diff_voi == -1))) = radDepths(diff_voi == -1);
+                                  
+                              end
+                          end
+                          
+                   end
+               end
+               
+               targetEntry(targetEntry == 0) = NaN;
+               targetExit(targetExit == 0)   = NaN;
+               
+               targetEntry = min(targetEntry);
+               targetExit  = max(targetExit);
+               
+               %check that each energy appears only once in stf
+               if(numel(targetEntry)>1)                 
+                   m = numel(targetEntry);
+                   while(m>1)
+                       if(targetEntry(m) < targetExit(m-1))
+                           targetExit(m-1) = max(targetExit(m-1:m));
+                           targetExit(m)=[];
+                           targetEntry(m-1) = min(targetEntry(m-1:m));
+                           targetEntry(m)=[];
+                           m = numel(targetEntry)+1; 
+                       end
+                       m=m-1;
+                   end
+               end
+               
+               
                 if numel(targetEntry) ~= numel(targetExit)
                     matRad_dispToConsole('Inconsistency during ray tracing.',param,'error'); 
                 end
@@ -260,6 +311,11 @@ for i = 1:length(pln.propStf.gantryAngles)
                     stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
                 end
   
+                
+                targetEntry = [];
+                targetExit = [];
+                
+                
                 % book keeping & calculate focus index
                 stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);
                 currentMinimumFWHM = matRad_interp1(machine.meta.LUT_bxWidthminFWHM(1,:)',...
