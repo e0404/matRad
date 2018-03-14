@@ -81,7 +81,7 @@ if isequal(pln.bioParam.model,'none')
     resultGUI.physicalDose = CalcCubes.physicalDose;
     relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.optDose(:)))*100;
 else
-    resultGUI.RBExDose = CalcCubes.RBExD;
+    resultGUI.RBExD = CalcCubes.RBExD;
     relIntDoseDif = (1-sum(resultGUI.RBExD(:))/sum(resultGUI.optRBExD(:)))*100;
 end
 
@@ -137,21 +137,21 @@ if(minNrParticlesIES ~= 0)
     
 resultGUI.w = w;
 
-if isequal(pln.bioParam.model,'none') 
-    resultGUI.OptDose = resultGUI.physicalDose;
-else
-    resultGUI.OptRBExD = resultGUI.RBExD;
-end
+% if isequal(pln.bioParam.model,'none') 
+%     resultGUI.OptDose = resultGUI.physicalDose;
+% else
+%     resultGUI.OptRBExD = resultGUI.RBExD;
+% end
 CalcCubes = matRad_calcCubes(w,dij,cst,1);
 
 if isequal(pln.bioParam.model,'none')
 %%calc difference to optimized dose (not necessary, can be deleted)
 resultGUI.physicalDose = CalcCubes.physicalDose;
-relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.OptDose(:)))*100;
+relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.optDose(:)))*100;
 
 else
     resultGUI.RBExD = CalcCubes.RBExD;
-    relIntDoseDif = (1-sum(resultGUI.RBExD(:))/sum(resultGUI.OptRBExD(:)))*100;
+    relIntDoseDif = (1-sum(resultGUI.RBExD(:))/sum(resultGUI.optRBExD(:)))*100;
 
 end
 
