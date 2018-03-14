@@ -66,8 +66,7 @@ try
 
 catch
     
-    warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
-                ' matRad default HLUT loaded'];
+    warnText = ['matRad default HLUT loaded'];
     warning(warnText,'backtrace','off');
     
     % load default HLUT
