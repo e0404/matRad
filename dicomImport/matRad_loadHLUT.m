@@ -72,11 +72,12 @@ try
 
 catch
     
-    warnText = ['matRad default HLUT loaded'];
+    warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
+                ' matRad default HLUT loaded'];
     warning(warnText,'backtrace','off');
     
     % load default HLUT
-    hlutFileName = strcat(hlutDir,'matRad_default_photons.hlut');
+    hlutFileName = strcat(hlutDir,'matRad_default_', particle, '.hlut');
 
 end
 
