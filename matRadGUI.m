@@ -463,8 +463,9 @@ try
     set(handles.legendTable,'String',{'no data loaded'});
     set(handles.popupDisplayOption,'String','no option available');
     
-catch
-    handles = showWarning(handles,'LoadMatFileFnc: Could not load *.mat file');
+catch ME
+    handles = showError(handles,'LoadMatFileFnc: Could not load *.mat file',ME); 
+
     guidata(hObject,handles);
     UpdateState(handles);
     UpdatePlot(handles);
@@ -480,8 +481,8 @@ try
     assignin('base','ct',ct);
     assignin('base','cst',cst);
     handles.State = 1;
-catch
-    handles = showError(handles,'LoadMatFileFnc: Could not load selected data');
+catch ME
+    handles = showError(handles,'LoadMatFileFnc: Could not load *.mat file',ME); 
 end
 
 % check if a optimized plan was loaded
@@ -4201,9 +4202,38 @@ function cst = generateCstTable(handles,cst)
 cst = updateStructureTable(handles,cst);
 
 cstPanel = handles.uipanel3;
-delete(cstPanel.Children);
 
 cstPanelPos = getpixelposition(cstPanel);
+
+%Parameters for line height
+objHeight = 22;
+lineHeight = 25;
+fieldSep = 2;
+yTopSep = 40;
+tableViewHeight = cstPanelPos(4) - yTopSep;
+
+%Widths of the fields
+buttonW = objHeight;
+nameW = 90;
+typeW = 70;
+opW = objHeight;
+functionW = 120;
+penaltyW = 40;
+paramTitleW = 120;
+paramW = 30;
+
+
+%Scrollbar
+cstVertTableScroll = findobj(cstPanel.Children,'Style','slider');
+if isempty(cstVertTableScroll)
+    sliderPos = 0;
+else
+    sliderPos = cstVertTableScroll.Value;
+end
+disp(num2str(sliderPos));
+ypos = @(c) cstPanelPos(4) - (yTopSep + c*lineHeight + sliderPos);
+
+delete(cstPanel.Children);
 
 %Creates a dummy axis to allow for the use of textboxes instead of uicontrol to be able to use the (la)tex interpreter
 tmpAxes = axes('Parent',cstPanel,'units','normalized','position',[0 0 1 1],'visible','off');
@@ -4246,25 +4276,9 @@ end
 
 cnt = 0;
 
-objHeight = 22;
-lineHeight = 25;
-fieldSep = 2;
-yTopSep = 40;
-
-%Widths of the fields
-buttonW = objHeight;
-nameW = 90;
-typeW = 70;
-opW = objHeight;
-functionW = 120;
-penaltyW = 40;
-paramTitleW = 120;
-paramW = 30;
-
 newline = '\n';
 
 %Setup Headlines
-ypos = @(c) cstPanelPos(4) - (yTopSep + c*lineHeight);
 xPos = 5;
 h = uicontrol(cstPanel,'Style','text','String','+/-','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Remove or add Constraint or Objective');
 xPos = xPos + h.Position(3) + fieldSep;
@@ -4344,15 +4358,22 @@ for i = 1:size(cst,1)
        end
    end   
 end
-ypos = cstPanelPos(4) - (yTopSep + cnt*lineHeight);
 xPos = 5;
-hAdd = uicontrol(cstPanel,'Style','pushbutton','String','+','Position',[xPos ypos buttonW objHeight],'TooltipString','Add Objective/Constraint','Callback',{@btObjAdd_Callback,handles});
+hAdd = uicontrol(cstPanel,'Style','pushbutton','String','+','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Add Objective/Constraint','Callback',{@btObjAdd_Callback,handles});
 xPos = xPos + hAdd.Position(3) + fieldSep;
-h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Position',[xPos ypos nameW objHeight]);
+h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Position',[xPos ypos(cnt) nameW objHeight]);
 hAdd.UserData = h;
 
+%Calculate Scrollbar
+lastPos = ypos(cnt)+objHeight;
+firstPos = ypos(1);
+tableHeight = firstPos - lastPos;
 
-%uicontrol(cstPanel,'Style','pushbutton','String','+','Position',[5 cstPanelPos(4)-ypos-25 100 objHeight]);
+exceedFac = tableHeight / tableViewHeight;
+uicontrol(cstPanel,'Style','slider','Units','normalized','Position',[0.975 0 0.025 1],'Min',0,'Max',ceil(exceedFac)*tableViewHeight,'SliderStep',[lineHeight tableViewHeight] ./ (ceil(exceedFac)*tableViewHeight),'Value',sliderPos);
+
+
+
 
 %set(handles.uiTable,'ColumnName',columnname);
 %set(handles.uiTable,'ColumnFormat',columnformat);
