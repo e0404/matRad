@@ -30,7 +30,11 @@ function hlut = matRad_loadHLUT(ct, pln)
   % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % directory with look up table files
-hlutDir = fullfile(fileparts(mfilename('fullpath')),'hlutLibrary',filesep);
+if ~isdeployed
+    hlutDir = fullfile(fileparts(mfilename('fullpath')),'hlutLibrary',filesep);
+else
+    hlutDir = [];
+end
 
 % if possible -> file standard out of dicom tags
 try
