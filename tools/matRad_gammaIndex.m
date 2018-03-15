@@ -149,6 +149,9 @@ elseif strcmp(localglobal,'global')
     doseThreshold = relDoseThreshold/100 * max(cube1(:));
 end
 
+totalEval = numel(-searchX:searchX);
+ixEval = 1;
+%matRad_progress(ixEval,totalEval);
 % search for min
 for i = -searchX:searchX
     for j = -searchY:searchY
@@ -171,10 +174,11 @@ for i = -searchX:searchX
             tmpCube = tmpCube.^2 ./ doseThreshold.^2 + delta_sq;
             
             gammaCubeSq(ix) = min(gammaCubeSq(ix),tmpCube(ix));
-            
-            
+
         end
     end
+    matRad_progress(ixEval,totalEval);
+    ixEval = ixEval + 1;
     
 %     display '.';
     
