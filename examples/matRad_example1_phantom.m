@@ -34,8 +34,7 @@ ct.resolution.z = 3;
 ct.numOfCtScen  = 1;
  
 % create an ct image series with zeros - it will be filled later
-ct.cube{1} = zeros(ct.cubeDim);
-
+ct.cubeHU{1} = ones(ct.cubeDim) * -1000; % assign HU of Air
 
 %% Create the VOI data for the phantom
 % Now we define structures a contour for the phantom and a target
@@ -178,14 +177,12 @@ cst{ixPTV,4}{1} = find(cubeHelper);
 display(ct);
 display(cst);
 
-
 %% Assign relative electron densities
 vIxOAR = cst{ixOAR,4}{1};
 vIxPTV = cst{ixPTV,4}{1};
 
-ct.cube{1}(vIxOAR) = 1;
-ct.cube{1}(vIxPTV) = 1;
-
+ct.cubeHU{1}(vIxOAR) = 1;
+ct.cubeHU{1}(vIxPTV) = 1;
 
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
