@@ -4,6 +4,9 @@
 % 
 % Here we wil show the workflow for 4D dose calculation
 %  
+% You can find the data (LiverDS221 mat data and treatment plan PBP... and lmdout output file (D...)) used for this example here:  \\radfsjulia\E040\E0404\DataSilke_4D\Liver007
+%
+%
 % Prerequisite for 4D dose calculation: 
 %
 % (1) 4D-CT incl. vector fields  
@@ -99,7 +102,8 @@ matRad_export_HITXMLPlan_modified('Plan01_5new',  pln, stf, resultGUI, 'backfort
 % Aufruf: makeLmdout -p PBP_0X_Plan01.xml -o D_0X_Plan01 -y v2015 für jeden
 % beam X
 % the name of the output file should be the same as for the plan file (for matRad_calc4dDose) 
-
+% copy both the plan file (PBP...) and the output file (D...) to the 4dDose
+% folder in matrad
 
 %% calc 4D dose
 % make sure that the correct pln, dij and stf are loeaded in the workspace
