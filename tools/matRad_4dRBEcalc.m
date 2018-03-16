@@ -1,4 +1,4 @@
-function D = matRad_4dRBEcalc(ct, cst, dij, resultGUI, pln, File)
+function [D, pln, dij, resultGUI] = matRad_4dRBEcalc(ct, cst, File)
 
 % calculates all variations of 4D and RBE calculations
 %  
@@ -19,52 +19,65 @@ addpath('D:\Matrad\4Ddose')
 D.name = {'(A)', '(B)', '(A)-(B)', '(C)', '(D)', '(C)-(D)','(A)-(C)', '(B)-(D)', '(A)-(D)'};
 
 D.isolines = {1, 1, 0, 1, 1, 0, 0, 0, 0};
-D.fractions = pln.numOfFractions;  
+
 
 %Pln info
-pln.isoCenter       = matRad_getIsoCenter(cst,ct,0);
-pln.bixelWidth      = 5; 
-pln.gantryAngles    = [210]; 
-pln.couchAngles     = [0]; 
-pln.numOfBeams      = numel(pln.gantryAngles);
-pln.numOfVoxels     = prod(ct.cubeDim);
-pln.voxelDimensions = ct.cubeDim;
-pln.radiationMode   = 'protons';    
-pln.numOfFractions         = 30;
-pln.runSequencing          = false; 
-pln.runDAO                 = false; 
-pln.machine                = 'HIT'; 
-pln.minNrParticles         = 500000;
-pln.LongitudialSpotSpacing = 5;      
-pln.calcLET                = false; 
+pln.numOfFractions  = 30;
+D.fractions = pln.numOfFractions;  
+pln.radiationMode   = 'protons';           % either photons / protons / helium / carbon
+pln.machine         = 'HITfixedBL';
 
-pln.bioOptimization = 'MCN_RBExD';
-pln = matRad_getBioModel(pln);
-[cst,pln] = matRad_setPlanUncertainties(ct,cst,pln);
+% beam geometry settings
+pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.longSpotSpacing = 5;      % only relevant for HIT machine, not generic
+pln.propStf.gantryAngles    = [210]; % [?] ;
+pln.propStf.couchAngles     = [0 ]; % [?] ; 
+pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+
+%optimization settings
+pln.propOpt.runDAO          = false;      % 1/true: run DAO, 0/false: don't / will be ignored for particles
+pln.propOpt.runSequencing   = false;      % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
+
+quantityOpt  = 'RBExD';     % options: physicalDose, effect, RBExD
+modelName    = 'MCN';             % none: for photons, protons, carbon            % constRBE: constant RBE 
+                                   % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
+                                   % LEM: Local Effect Model for carbon ions
+
+scenGenType  = 'nomScen';          % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen'                                          
+
+
+% retrieve bio model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+
+% retrieve scenarios for dose calculation and optimziation
+pln.multScen = matRad_multScen(ct,scenGenType);
 
 %calc dose matrix
 stf = matRad_generateStf(ct,cst,pln);
 dij = matRad_calcParticleDose(ct,stf,pln,cst,false);
 
 %opt for const RBE
-pln.bioOptimization = 'const_RBExD';
-pln = matRad_getBioModel(pln);
+pln.bioOptimization = 'constRBE';
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf)
+resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf);
 Dopt = resultGUI.RBExDose;
-matRad_export_HITXMLPlan_modified('PlanRBE',  pln, stf, resultGUI, 'stfMode')  
+matRad_export_HITXMLPlan_modified('PlanRBE_new',  pln, stf, resultGUI, 'stfMode')  
+
+%% break for makeLmdout
 
 %4D for const RBE
 [resultGUI, ~] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI,  File);
 
-Drecalc4Dconst = resultGUI.accRBExDose;
+Drecalc4Dconst = resultGUI.accRBExD;
 
 %4D for variable RBE
-pln.bioOptimization = 'MCN_RBExD';
-pln = matRad_getBioModel(pln);
+pln.bioOptimization = 'MCN';
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 [cst,pln] = matRad_setPlanUncertainties(ct,cst,pln);
 [resultGUI, ~] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI,  File);
-Drecalc4Dvar = resultGUI.accRBExDose;
+Drecalc4Dvar = resultGUI.accRBExD;
 
 %recalc for variable RBE
 Drecalc3D  = matRad_calcMcNRBExD(dij, cst, resultGUI);

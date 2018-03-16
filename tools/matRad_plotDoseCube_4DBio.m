@@ -23,10 +23,7 @@ figure
 slice = 97; %Liver007
 %slice = 110;  %Liver002
 vLevels         = [ 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.75 0.8 0.9 0.95 1 1.1 ];
-
-
 ctSlice      = squeeze(ct.cube{1}(:,:,slice));
-
 
 %Dosisstatistik
 indices     = cst{5,4}{1};  %GTV
@@ -70,7 +67,6 @@ for i = 1:9
 end
 
 
-
 for i = 1:9
 ax{i} = subplot(3,3,i);
 ct_rgb = ind2rgb(uint8(63*squeeze(ctSlice)/max(ct.cube{1}(:))),bone);
@@ -112,15 +108,9 @@ else
 title(D.name{i})
 end
 
-
 cBarHandel = colorbar(gca);
 caxis(gca,[minDose, maxDose]);
-%set(get(cBarHandel,'ylabel'),'String', 'dose [Gy]','fontsize','Interpreter','Latex');
 set(cBarHandel,'YLim',[minDose maxDose]);
-
-    
-
-
 
 colors = colorcube; maskCst = zeros(ct.cubeDim);
     ColorCnt = 1; CntLegend = 1; cHandle = [];
@@ -142,10 +132,8 @@ colors = colorcube; maskCst = zeros(ct.cubeDim);
                  end
              end
     end
-    %legend(cHandle,sLegend,'FontSize',defFontSize,'Location','northwestoutside')
 end
 linkaxes([ax{1}, ax{2}, ax{3}, ax{4}, ax{5}, ax{6}, ax{7}, ax{8}, ax{9}],'xy');
-
 
 
 if DVH
