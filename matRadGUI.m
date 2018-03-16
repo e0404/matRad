@@ -939,7 +939,7 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
     
     if isempty(handles.dispWindow{ctIx,2})
-        handles.dispWindow{ctIx,2} = [min(ct.cube{:}(:)) max(ct.cube{:}(:))];
+        handles.dispWindow{ctIx,2} = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
     end
 
     if get(handles.radiobtnCT,'Value')
