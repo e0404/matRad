@@ -33,7 +33,7 @@ matRadGUI
 % meta information for treatment plan
 pln.numOfFractions  = 30;
 pln.radiationMode   = 'protons';           % either photons / protons / helium / carbon
-pln.machine         = 'HIT';
+pln.machine         = 'HITfixedBL';
 
 % beam geometry settings
 pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles

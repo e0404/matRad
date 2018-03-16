@@ -204,20 +204,19 @@ if(size(dij.physicalDose, 1) ~= NumOfPhases)
     help = 1;
 end
 for p=1:NumOfPhases
-      w=zeros(dij.totalNumOfBixels, 1); 
-      for i=1:length(delivery)
-         t =  find(delivery(i).phase(:,p) ~= 0  & ~isnan(delivery(i).w));
-         w(delivery(i).j(t)) = delivery(i).w(t) .* delivery(i).phase(t,p);       
-      end
- 
-       resultGUI.phaseDose{p} = reshape(dij.physicalDose{p+help} * w , dij.dimensions);
-          
-      
-    if isequal(resultGUI.bioParam.type,'MCN_RBExD')
+    w=zeros(dij.totalNumOfBixels, 1);
+    for i=1:length(delivery)
+        t =  find(delivery(i).phase(:,p) ~= 0  & ~isnan(delivery(i).w));
+        w(delivery(i).j(t)) = delivery(i).w(t) .* delivery(i).phase(t,p);
+    end
     
+    resultGUI.phaseDose{p} = reshape(dij.physicalDose{p+help} * w , dij.dimensions);
+      
+    if isequal(resultGUI.bioParam.model,'MCN')
+        
         resultGUI.phaseAlphaDose{p} = reshape(dij.mAlphaDose{p+help} * w, dij.dimensions);
         resultGUI.phaseSqrtBetaDose{p} = reshape(dij.mSqrtBetaDose{p+help} * w, dij.dimensions);
-    
+        
     end
 end
   
