@@ -138,6 +138,13 @@ classdef MatRadSimulation < handle
             obj.statisticsComputed = true;
         end
         
+        function obj = runReducedAnalysis(obj)
+            obj.fillDoseContainer();
+            obj.computeMeanStdCube();
+
+            obj.statisticsComputed = true;
+        end
+        
         function weights_unnormalised = get.weights_unnormalised(obj)
           weights_unnormalised = NaN * ones(obj.numOfScen, 1);
             for i = 1:obj.numOfScen
@@ -193,7 +200,16 @@ classdef MatRadSimulation < handle
                 end
             end
         end
-    end
+        
+        % consistency checker / repair functions
+        function checkRepairCst(obj)
+            fprintf('Trying to resolve utf8 character encoding. Recheck structure names.\n');
+            for i = 1:size(obj.cst,1)
+                obj.cst{i,2} = regexprep(obj.cst{i,2}, '[^a-zA-Z0-9]', ' ');
+            end
+        end
+        
+   end
     
     methods (Static)
         function S = wMean(X,w)
@@ -224,6 +240,19 @@ classdef MatRadSimulation < handle
                 obj.scenContainer{i}.calcQiDVH(obj.cst, obj.pln, 'cum', doseGrid, refGy, refVol);
             end
             obj.dvhDoseGrid = doseGrid;
+         end
+        
+         function computeMeanStdCube(obj)
+          meanCube = zeros(obj.doseCubeDim);
+          stdCube  = zeros(obj.doseCubeDim);
+          
+          ix = obj.subIx;
+          
+          meanCube(ix) = (sum(obj.doseContainer * diag(obj.weights),2));
+          stdCube(ix)  = std(obj.doseContainer, obj.weights,2);
+          
+          obj.meanDoseScenario = MatRadScenario(meanCube, obj.subIx, obj.radiationQuantity, NaN, NaN, NaN, NaN, obj.doseCubeDim, NaN);
+          obj.stdDoseScenario = MatRadScenario(stdCube, obj.subIx, obj.radiationQuantity, NaN, NaN, NaN, NaN, obj.doseCubeDim, NaN);
         end
         
         function computeStructureWiseDvhQi(obj)
@@ -307,19 +336,6 @@ classdef MatRadSimulation < handle
             for i=1:obj.numOfScen
                 obj.doseContainer(:,i) = obj.scenContainer{i}.doseLin;
             end
-        end
-        
-        function computeMeanStdCube(obj)
-          meanCube = zeros(obj.doseCubeDim);
-          stdCube  = zeros(obj.doseCubeDim);
-          
-          ix = obj.subIx;
-          
-          meanCube(ix) = (sum(obj.doseContainer * diag(obj.weights),2));
-          stdCube(ix)  = std(obj.doseContainer, obj.weights,2);
-          
-          obj.meanDoseScenario = MatRadScenario(meanCube, obj.subIx, obj.radiationQuantity, NaN, NaN, NaN, NaN, obj.doseCubeDim, NaN);
-          obj.stdDoseScenario = MatRadScenario(stdCube, obj.subIx, obj.radiationQuantity, NaN, NaN, NaN, NaN, obj.doseCubeDim, NaN);
         end
         
         function computeGammaCube(obj)
