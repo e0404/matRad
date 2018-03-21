@@ -55,14 +55,15 @@ pln.multScen = matRad_multScen(ct,scenGenType);
 
 %calc dose matrix
 stf = matRad_generateStf(ct,cst,pln);
+
 dij = matRad_calcParticleDose(ct,stf,pln,cst,false);
 
 %opt for const RBE
-pln.bioOptimization = 'constRBE';
+modelName = 'constRBE';
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf);
-Dopt = resultGUI.RBExDose;
+Dopt = resultGUI.RBExD;
 matRad_export_HITXMLPlan_modified('PlanRBE_new',  pln, stf, resultGUI, 'stfMode')  
 
 %% break for makeLmdout
@@ -73,9 +74,8 @@ matRad_export_HITXMLPlan_modified('PlanRBE_new',  pln, stf, resultGUI, 'stfMode'
 Drecalc4Dconst = resultGUI.accRBExD;
 
 %4D for variable RBE
-pln.bioOptimization = 'MCN';
+modelName = 'MCN';
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
-[cst,pln] = matRad_setPlanUncertainties(ct,cst,pln);
 [resultGUI, ~] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI,  File);
 Drecalc4Dvar = resultGUI.accRBExD;
 
