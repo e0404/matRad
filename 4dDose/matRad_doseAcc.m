@@ -366,7 +366,7 @@ elseif isequal(resultGUI.bioParam.model,'MCN')
     ix = dAcc~=0; 
     
     resultGUI.accRBE     = zeros(dimensions);
-    resultGUI.accRBE(ix) = resultGUI.accRBExDose(ix)./dAcc(ix);
+    resultGUI.accRBE(ix) = resultGUI.accRBExD(ix)./dAcc(ix);
    
     resultGUI.accAlpha     = zeros(dimensions);
     resultGUI.accBeta      = zeros(dimensions);
