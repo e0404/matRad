@@ -96,7 +96,7 @@ resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf) ;
 % 'TSP' (attention, very slow) the shortest path between all spots in each
 % energy slice is calculated
 
-plnExportFilename = 'Plan01_5new';
+plnExportFilename = 'Plan01';
 matRad_export_HITXMLPlan_modified(plnExportFilename, pln, stf, resultGUI, 'backforth')  
 
 %% makeLmdout
