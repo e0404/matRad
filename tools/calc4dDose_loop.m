@@ -1,6 +1,14 @@
 function accDose = calc4dDose_loop(ct, pln, dij, stf, cst, resultGUI, FileName, GTVName, OARName, count, MOTION, phaseTimeDev)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % calculation of accumulated dose for large number of Lmdout files  
+% count gives you the number of lmdout files (that were generated with
+% external program makeLmdout)
+% you can choose
+%   * maxnumberoffset = number of offset values (= different start point of
+%   dose delivery) randomly sampled
+%   * maxnumbermotionperiod = breathing period randomly sampled with mean
+%   value 6s
+%   * maxnumbermotionvariations = assumption of non regular breathing motion
 %
 % please check: dose accumulation DDM or EMT and correct VF?!?
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -18,30 +26,28 @@ resultGUI.bioParam = pln.bioParam;
 
 c=1;
 Ndoses = 1;
-maxnumberoffset = 5;
-maxnumbermotionperiod = 5;
+maxnumberoffset = 2;
+maxnumbermotionperiod = 2;
 maxnumbermotionvariations = 1;
-%offsetA = [0 1.5 3 2 8 6 4 1 7 3 9 4.5 6.5 2.5 8.5 0.5 7.5 1.5 3.5 0.2 7 1.8 4.5 0.4 10 0.3 4.1 2.1 9.4 6.9 5.5];
-%motionperiodA = [5 3 8 10 4 6 5 7 5.5 6.5 3.5 9.5 4.5 7.5 9.5];
 
 NumOfPhases = size(ct.cube,2);
 if isfield(ct, 'dvf')
-if size(ct.dvf,2) < size(ct.cube,2)
-    NumOfPhases = size(ct.dvf,2);
-end
+    if size(ct.dvf,2) < size(ct.cube,2)
+        NumOfPhases = size(ct.dvf,2);
+    end
 end
 
 while c<=count
     disp(['Delivery file ', num2str(c), ' von ', num2str(count)]);
     if(count ==1 )
-       FileName_lmdout = FileName; 
+        FileName_lmdout = FileName;
     else
         n = num2str(c);
         FileName_lmdout = [FileName '_' n];
     end
     
     % reads in PB XML Plan and result of dose delivery simulation and creates
-    % delievery struct    
+    % delievery struct
     delivery = matRad_readLmdout(dij, stf, FileName, FileName_lmdout);
     delivery(1).NumOfPhases = NumOfPhases;
     
@@ -57,8 +63,8 @@ while c<=count
                  % centered at 6 sec
                  delivery(1).motionperiod = 6+ randn(1); % breathing period  3-10 ? 5? %motionperiodA(motionperiod);                 
                  delivery(1).offset = NumOfPhases*rand(1); %offsetA(offset); 
-                 
-    %[resultGUI, delivery] = matRad_calcPhaseDose(resultGUI, dij, delivery);  
+                
+ 
     [resultGUI, delivery] = matRad_calcPhaseDoseMatrix(resultGUI, dij, delivery, MOTION, phaseTimeDev);  %Matrix
     
     % dose accumulation
@@ -67,7 +73,7 @@ while c<=count
     if  strcmp(pln.bioOptimization,'none')
         accDose.D{Ndoses} = resultGUI.accDose;
     else
-        accDose.D{Ndoses} = resultGUI.accRBExDose;    
+        accDose.D{Ndoses} = resultGUI.accRBExD;    
     end
     
     accDose.offset{Ndoses} = delivery(1).offset;
@@ -81,7 +87,6 @@ while c<=count
     c=c+1;
 end
 
-
 %plot
 vIsoCenter = round(pln.isoCenter./[ct.resolution.x ct.resolution.y ct.resolution.z]);
 slice = vIsoCenter(3);
@@ -91,7 +96,6 @@ fignr = fignr(2);
 
 c= ceil(fignr/3);
 r = ceil(fignr/c);
-
 
 
 %%
@@ -165,7 +169,6 @@ doseInVoi    = sort(resultGUI.physicalDose(indices));
     accDose.HI(f) = (DX(2)/DX(98));
       
 %%
-     
      
 
  %1 DVH
