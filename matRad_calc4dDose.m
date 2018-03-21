@@ -68,7 +68,7 @@ end
 resultGUI = matRad_doseAcc(ct, resultGUI, cst, 'DDM');  %acc Methods: 'EMT' 'DDM'
 
 %visualisation
-matRad_plotPhaseDose_2(resultGUI); %optional kann slice angegeben werden  TKUH005 slice 110 % T6H slice 50  %testphan slice 50 % Boxphan_3phases
+matRad_plotPhaseDose_2(ct, cst, pln, resultGUI); %optional kann slice angegeben werden  
 
 
 
