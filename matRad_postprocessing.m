@@ -37,8 +37,8 @@ function resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf)
 round2 = @(a,b)round(a*10^b)/10^b;
  
 if strcmp(pln.radiationMode,'protons')
-    Imin = 500000/1e6;  %for protons
-    minNrParticlesIES = 25000000;    %for protons
+    Imin = 500000/1e6; % intensity per spot
+    minNrParticlesIES = 25000000; % intensity per energy slice
 elseif strcmp(pln.radiationMode,'carbon')
      Imin = 15000/1e6;   
      minNrParticlesIES = 0;
@@ -47,7 +47,7 @@ else
 end
 
 
-%%manipulate fluence vector
+% %manipulate fluence vector
 w = resultGUI.w;
 resultGUI.optW = w;
 lw = length(w);

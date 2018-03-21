@@ -69,16 +69,18 @@ pln.multScen = matRad_multScen(ct,scenGenType);
 % generate steering file
 stf = matRad_generateStf(ct,cst,pln);
 
+param.subIx = cst{4,4}{1};
+
 % dose calculation
-dij = matRad_calcParticleDose(ct,stf,pln,cst,false);
+dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 
 % inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 
 %% post processing
-%This step is necessary to remove beam spots with too few particles that
-%could not be delivered
+% This step is necessary to remove beam spots with too few particles that
+% cannot not be delivered, dose is recalculated accordingly
 resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf) ; 
 
 %% export Plan
@@ -90,20 +92,26 @@ resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf) ;
 % left and so on
 % 'TSP' (attention, very slow) the shortest path between all spots in each
 % energy slice is calculated
-%
-matRad_export_HITXMLPlan_modified('Plan01_5new',  pln, stf, resultGUI, 'backforth')  
+
+plnExportFilename = 'Plan01_5new';
+matRad_export_HITXMLPlan_modified(plnExportFilename, pln, stf, resultGUI, 'backforth')  
 
 %% makeLmdout
 % now we need to call the external program makeLmdout (installed on sievert22) to calculate the time
 % structure of the delivery - this is not possible directly in matlab
-% Aufruf: makeLmdout -p PBP_0X_Plan01.xml -o D_0X_Plan01 -y v2015 für jeden
-% beam X
+% call: "./makeLmdout -p PBP_0X_Plan01.xml -o D_0X_Plan01 -y v2015" for all
+% beams X - the binary is available on radf1 and runs on Sievert22 at
+% /home/bangertm/lmdout. also note the necessary changes to
+% /home/bangertm/.bash_login in order to run the binary
 % the name of the output file should be the same as for the plan file (for matRad_calc4dDose) 
-
+% if you call "./makeLmdout -p PBP_0X_Plan01.xml -o D_0X_Plan01 -y v2015 -
+% x RANDOMINTEGER" and you supply a random integer after the argument
+% identifer -x you can set a different random seed for the time sequence
+% generation and thereby simulate uncertainty in the delivery sequence
 
 %% calc 4D dose
 % make sure that the correct pln, dij and stf are loeaded in the workspace
-[resultGUI, delivery] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI, 'Plan01_5new'); 
+[resultGUI, delivery] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI, plnExportFilename); 
 
 % Plot the result in comparison to the static dose
 slice = round(pln.isoCenter(1,3)./ct.resolution.z); 
