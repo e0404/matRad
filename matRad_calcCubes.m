@@ -71,7 +71,7 @@ end
 
 
 % consider biological optimization for carbon ions
-if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
+if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose') && ~isfield(dij,'RBE')
    
     a_x = zeros(dij.dimensions);
     b_x = zeros(dij.dimensions);
