@@ -59,7 +59,7 @@ if param.logLevel == 1
 end
 
 % calculate rED or rSP from HU
-ct = matRad_calcWaterEqD(ct, pln);
+ct = matRad_calcWaterEqD(ct, pln, param);
 
 % meta information for dij
 dij.numOfBeams         = pln.propStf.numOfBeams;
@@ -269,7 +269,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
     counter = 0;
     
     % compute SSDs
-    stf = matRad_computeSSD(stf,ct,ctScen);
+    stf = matRad_computeSSD(stf,ct,ctScen,param);
 
    for i = 1:dij.numOfBeams % loop over all beams
 

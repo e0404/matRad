@@ -1,4 +1,4 @@
-function stf = matRad_computeSSD(stf,ct,ctScen,mode)
+function stf = matRad_computeSSD(stf,ct,ctScen,param,mode)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad SSD calculation
 % 
@@ -31,8 +31,16 @@ function stf = matRad_computeSSD(stf,ct,ctScen,mode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 4
+if nargin < 5
     mode = 'first';
+end
+
+if exist('param','var')
+    if ~isfield(param,'logLevel')
+       param.logLevel = 1;
+    end
+else
+   param.logLevel       = 1;
 end
 
 % booleon to show warnings only once in the console
@@ -55,10 +63,10 @@ if strcmp(mode,'first')
 
             if boolShowWarning
                 if isempty(ixSSD)
-                    matRad_dispToConsole('ray does not hit patient. Trying to fix afterwards...',[],'warning');
+                    matRad_dispToConsole('ray does not hit patient. Trying to fix afterwards...',param,'warning');
                     boolShowWarning = false;
                 elseif ixSSD(1) == 1
-                    matRad_dispToConsole('Surface for SSD calculation starts directly in first voxel of CT\n',[],'warning');
+                    matRad_dispToConsole('Surface for SSD calculation starts directly in first voxel of CT\n',param,'warning');
                     boolShowWarning = false;
                 end
             end
@@ -94,7 +102,7 @@ function bestSSD = matRad_closestNeighbourSSD(rayPos, SSD, currPos)
         end
     end
     if any(isempty(bestSSD))
-        error('Could not fix SSD calculation.');
+        matRad_dispToConsole('Could not fix SSD calculation.\n',param,'error');
     end
 end
 

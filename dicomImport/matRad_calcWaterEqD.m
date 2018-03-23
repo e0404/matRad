@@ -1,4 +1,4 @@
-function ct = matRad_calcWaterEqD(ct, pln)
+function ct = matRad_calcWaterEqD(ct, pln, param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to calculate the equivalent densities from a 
 % dicom ct that originally uses intensity values
@@ -32,8 +32,16 @@ function ct = matRad_calcWaterEqD(ct, pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if exist('param','var')
+    if ~isfield(param,'logLevel')
+       param.logLevel = 1;
+    end
+else
+   param.logLevel       = 1;
+end
+
 % load hlut
-hlut = matRad_loadHLUT(ct, pln);
+hlut = matRad_loadHLUT(ct, pln, param);
     
 for i = 1:ct.numOfCtScen
 

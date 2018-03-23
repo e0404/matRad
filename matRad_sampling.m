@@ -100,10 +100,13 @@ matRad_dispToConsole(['matRad: Realizations variable will need: ' num2str(Storag
 
 % check if parallel toolbox is installed and license can be checked out
 try
-   ver('distcomp')                 
-   FlagParallToolBoxLicensed  = license('test','Distrib_Computing_Toolbox'); 
+    [FlagParallToolBoxLicensed,msg]  = license('checkout','Distrib_Computing_Toolbox');
+    if ~FlagParallToolBoxLicensed
+        matRad_dispToConsole(['Could not check out parallel computing toolbox. \n'],param,'warning');
+    end
+    
 catch
-   FlagParallToolBoxLicensed  = false;
+    FlagParallToolBoxLicensed  = false;
 end
 
 %% calculate nominal scenario
@@ -122,8 +125,8 @@ nomQi                = matRad_calcQualityIndicators(cst,pln,resultGUInomScen.(pl
 resultGUInomScen.qi  = nomQi;
 resultGUInomScen.cst = cst;
 
-% only show warnings and disable waitbars and figures
-param.logLevel = 3;
+% only show errors and disable waitbars and figures
+param.logLevel = 4;
 
 %% perform parallel sampling
 if FlagParallToolBoxLicensed

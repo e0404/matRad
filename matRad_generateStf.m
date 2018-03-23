@@ -109,7 +109,7 @@ if ~isdeployed
    addpath(['dicomImport'])
    addpath(['dicomImport' filesep 'hlutLibrary'])
 end
-ct = matRad_calcWaterEqD(ct, pln);
+ct = matRad_calcWaterEqD(ct, pln, param);
 
 % Convert linear indices to 3D voxel coordinates
 [coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);

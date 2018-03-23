@@ -76,7 +76,7 @@ if param.logLevel == 1
 end
 
 % calculate rED or rSP from HU
-ct = matRad_calcWaterEqD(ct, pln);
+ct = matRad_calcWaterEqD(ct, pln, param);
 
 % meta information for dij
 dij.numOfBeams         = pln.propStf.numOfBeams;
