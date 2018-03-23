@@ -26,8 +26,8 @@ resultGUI.bioParam = pln.bioParam;
 
 c=1;
 Ndoses = 1;
-maxnumberoffset = 2;
-maxnumbermotionperiod = 2;
+maxnumberoffset = 5;
+maxnumbermotionperiod = 5;
 maxnumbermotionvariations = 1;
 
 NumOfPhases = size(ct.cube,2);
