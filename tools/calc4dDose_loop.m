@@ -156,8 +156,8 @@ f=f+1;
 relevantDose = resultGUI.physicalDose;
 doseInVoi    = sort(resultGUI.physicalDose(indices));
  else
-   relevantDose = resultGUI.RBExDose;
- doseInVoi    = sort(resultGUI.RBExDose(indices));
+   relevantDose = resultGUI.RBExD;
+ doseInVoi    = sort(resultGUI.RBExD(indices));
  end
  refGy = round(linspace(1,round(max(relevantDose(:))),3));
     
@@ -181,11 +181,11 @@ dvh       = NaN * ones(1,n);
 numOfVoxels = numel(indices);
 doseInVoi   = resultGUI.finalDose(indices);
  else
-    dvhPointsOpt = linspace(0,max(resultGUI.RBExDose(:))*1.05,n);
+    dvhPointsOpt = linspace(0,max(resultGUI.RBExD(:))*1.05,n);
 dvh       = NaN * ones(1,n);
 %indices     = cst{5,4}{1};  %GTV
 numOfVoxels = numel(indices);
-doseInVoi   = resultGUI.RBExDose(indices); 
+doseInVoi   = resultGUI.RBExD(indices); 
  end
 for j = 1:n
     dvh(j) = sum(doseInVoi > dvhPointsOpt(j));
@@ -263,8 +263,8 @@ f=f+1;
 relevantDose = resultGUI.physicalDose;
 doseInVoi    = sort(resultGUI.physicalDose(indices));
  else
-   relevantDose = resultGUI.RBExDose;
-doseInVoi    = sort(resultGUI.RBExDose(indices));
+   relevantDose = resultGUI.RBExD;
+doseInVoi    = sort(resultGUI.RBExD(indices));
  end
  refGy = round(linspace(1,round(max(relevantDose(:))),3));
     
@@ -285,10 +285,10 @@ dvh       = NaN * ones(1,n);
 numOfVoxels = numel(indices);
 doseInVoi   = resultGUI.finalDose(indices);
  else
-    dvhPointsOpt = linspace(0,max(resultGUI.RBExDose(:))*1.05,n);
+    dvhPointsOpt = linspace(0,max(resultGUI.RBExD(:))*1.05,n);
 dvh       = NaN * ones(1,n);
 numOfVoxels = numel(indices);
-doseInVoi   = resultGUI.RBExDose(indices); 
+doseInVoi   = resultGUI.RBExD(indices); 
  end
 for j = 1:n
     dvh(j) = sum(doseInVoi > dvhPointsOpt(j));

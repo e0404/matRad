@@ -35,7 +35,7 @@
  
  
 %% Treatment planning
-% First we plan the treatment (alternatively an existent treatment plan can
+% First we plan the treatment (alternatively an existing treatment plan can
 % be imported)
 
 clc,clear,close all
@@ -46,6 +46,7 @@ addpath('D:\Matrad\tools')
 
 load('Liver_DS221.mat')
 
+%%
 % meta information for treatment plan
 pln.numOfFractions  = 30;
 pln.radiationMode   = 'protons';           % either photons / protons / helium / carbon
@@ -70,7 +71,6 @@ modelName    = 'constRBE';             % none: for photons, protons, carbon     
 
 scenGenType  = 'nomScen';          % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen'       
 
-
 % retrieve bio model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
@@ -80,8 +80,10 @@ pln.multScen = matRad_multScen(ct,scenGenType);
 % generate steering file
 stf = matRad_generateStf(ct,cst,pln);
 
+param.subIx = cst{4,4}{1};
+
 % dose calculation
-dij = matRad_calcParticleDose(ct,stf,pln,cst,false);
+dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 
 % inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
@@ -102,19 +104,28 @@ resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf) ;
 % 'TSP' (attention, very slow) the shortest path between all spots in each
 % energy slice is calculated
 %
-matRad_export_HITXMLPlan_modified('Plan01_new',  pln, stf, resultGUI, 'backforth')  
+plnExportFilename = 'Plan01';
+matRad_export_HITXMLPlan_modified(plnExportFilename, pln, stf, resultGUI, 'backforth')  
+
 
 %% makeLmdout
 % now we need to call the external program makeLmdout (installed on sievert22) to calculate the time
 % structure of the delivery - this is not possible directly in matlab
-% Aufruf: makeLmdout -p PBP_0X_Plan01.xml -o D_0X_Plan01 -y v2015 für jeden
-% beam X
+% call: "./makeLmdout -p PBP_0X_Plan01.xml -o D_0X_Plan01 -y v2015" for all
+% beams X - the binary is available on radf1 and runs on Sievert22 at
+% /home/bangertm/lmdout. also note the necessary changes to
+% /home/bangertm/.bash_login in order to run the binary
 % the name of the output file should be the same as for the plan file (for matRad_calc4dDose) 
-
+% if you call "./makeLmdout -p PBP_0X_Plan01.xml -o D_0X_Plan01 -y v2015 -
+% x RANDOMINTEGER" and you supply a random integer after the argument
+% identifer -x you can set a different random seed for the time sequence
+% generation and thereby simulate uncertainty in the delivery sequence
+% afterwards copy both the plan file (PBP...) and the output file (D...) to the 4dDose
+% folder in matrad
 
 %% calc 4D dose
 % make sure that the correct pln, dij and stf are loeaded in the workspace
-[resultGUI, delivery] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI, 'Plan01_new'); 
+[resultGUI, delivery] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI, plnExportFilename); 
 
 % Plot the result in comparison to the static dose
 slice = round(pln.isoCenter(1,3)./ct.resolution.z); 
@@ -137,38 +148,13 @@ title('Difference')
 % a loop to calculate 4D dose for different lmdout files, different motion
 % periods or different start of dose delivery (called motionoffset).
 
-FileName = 'Plan01_new';
+FileName = plnExportFilename;
 GTVName = 'pseudoGTV';
 OARName = 'Leber-GTV';
-count = 1; %number of Lmdout files
-MOTION = 'linear'; %spends same time in each motion phase
+count = 2; % number of Lmdout files; the count has to be appended to the 
+           % file name following an '_' (compare line 44, matRad_readLmdout)
+MOTION = 'linear'; % spends same time in each motion phase
 phaseTimeDev = 0; % only if sampling of different times in each phase is used
 accDose = calc4dDose_loop(ct, pln, dij, stf, cst, resultGUI, FileName, GTVName, OARName, count, MOTION, phaseTimeDev);
 
 % also a simulation of motion variation (not assuming perfectly regular motion) is possible
-
-%% Variable RBE
-%attention: requires a lot of memory and time, 
-% Four dose distributions are calculated: static, motion, static variable
-% RBE, motion and variable RBE
-File = 'PlanRBE_new';
-[D, pln, dij, resultGUI] = matRad_4dRBEcalc(ct, cst, File);
-%plotting functionality at the moment only valid for patient LiverDS221 (==
-%Liver007) to do: generalize
-%% Dose distributions
-%
-% * (A)3D const RBE (optimized)
-% * (B)3D var RBE
-% * (C)4D const RBE
-% * (D)4D var RBE
-%
-D = matRad_plotDoseCube_4DBio(ct,cst,D, 1);
-
-%% ConvVsWC.m
-% combination of 3D worst case optimization and recalculation considering
-% motion
-%
-% Attention: for this script bixel size changed to 5mm to save memory and time 
-%
-[ct, cst, pln, dij, resultGUI, DoseDis, D95, HI, accDose_Opt, accDose_WC] = ConvVsWC();
-
