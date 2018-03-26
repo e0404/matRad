@@ -45,19 +45,21 @@ end
 % interpolate rel. electron dens. to HU based on lookup table
 if isequal(hlut(:,2),unique(hlut(:,2))) && isequal(hlut(:,1),unique(hlut(:,1)))
 
-    % Manual adjustments if ct data is corrupt. If some values are out of range
-    % of the LUT, then these values are adjusted.
-    if max(ct.cube{1}(:)) > max(hlut(:,2))
-        warning('projecting out of range electron density values');
-        ct.cube{1}(ct.cube{1}(:) > max(hlut(:,2))) = max(hlut(:,2));
-    end
-    if min(ct.cube{1}(:)) < min(hlut(:,2))
-        warning('projecting out of range electron density values');
-        ct.cube{1}(ct.cube{1}(:) < min(hlut(:,2))) = min(hlut(:,2));
+    for i = 1:ct.numOfCtScen
+        % Manual adjustments if ct data is corrupt. If some values are out of range
+        % of the LUT, then these values are adjusted.
+        if max(ct.cube{i}(:)) > max(hlut(:,2))
+            warning('projecting out of range electron density values');
+            ct.cube{i}(ct.cube{i}(:) > max(hlut(:,2))) = max(hlut(:,2));
+        end
+        if min(ct.cube{i}(:)) < min(hlut(:,2))
+            warning('projecting out of range electron density values');
+            ct.cube{i}(ct.cube{i}(:) < min(hlut(:,2))) = min(hlut(:,2));
+        end
+
+        ct.cubeHU{i} = interp1(hlut(:,2),hlut(:,1),ct.cube{i});
     end
     
-    ct.cubeHU{1} = interp1(hlut(:,2),hlut(:,1),ct.cube{1});
-
 else
     fprintf('Reconversion of HU values could not be done because HLUT is not bijective.\n');
 end

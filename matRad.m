@@ -22,38 +22,39 @@ clc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-% load TG119.mat
+load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-load BOXPHANTOM_TINY.mat
+%load BOXPHANTOM.mat
 
 % meta information for treatment plan
-pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0:72:359]; % [°]
-pln.couchAngles     = [0 0 0 0 0]; % [°]
-pln.numOfBeams      = numel(pln.gantryAngles);
-pln.numOfVoxels     = prod(ct.cubeDim);
-pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.voxelDimensions = ct.cubeDim;
-pln.radiationMode   = 'protons';             % either photons / protons / carbon
-pln.bioOptimization = 'none_physicalDose';   % none_physicalDose: physical optimization;                              constRBE_RBExD; constant RBE of 1.1;  
-                                             % MCN_effect; McNamara-variable RBE model for protons (effect based)     MCN_RBExD; McNamara-variable RBE model for protons (RBExD) based
-                                             % WED_effect; Wedenberg-variable RBE model for protons (effect based)    WED_RBExD; Wedenberg-variable RBE model for protons (RBExD) based
-                                             % LEM_effect: effect-based optimization;                                 LEM_RBExD: optimization of RBE-weighted dose
-pln.scenGenType     = 'nomScen';             % scenario creation type'nomScen'  'wcScen' 'impScen' 'rndScen' 
-
 pln.numOfFractions  = 30;
-pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
-pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
+pln.radiationMode   = 'photons';           % either photons / protons / helium / carbon
 pln.machine         = 'Generic';
-pln.robOpt          = false;
 
+% beam geometry settings
+pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.gantryAngles    = [0:72:359]; % [?] ;
+pln.propStf.couchAngles     = [0 0 0 0 0]; % [?] ; 
+pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+% optimization settings
+pln.propOpt.runDAO          = false;      % 1/true: run DAO, 0/false: don't / will be ignored for particles
+pln.propOpt.runSequencing   = false;      % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
+
+quantityOpt  = 'physicalDose';     % options: physicalDose, effect, RBExD
+modelName    = 'none';             % none: for photons, protons, carbon            % constRBE: constant RBE 
+                                   % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
+                                   % LEM: Local Effect Model for carbon ions
+
+
+scenGenType  = 'nomScen';          % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen'                                          
 
 % retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,pln.bioOptimization);
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
 % retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,pln.scenGenType); 
+pln.multScen = matRad_multScen(ct,scenGenType);
 
 %% initial visualization and change objective function settings if desired
 matRadGUI
@@ -65,7 +66,7 @@ stf = matRad_generateStf(ct,cst,pln);
 if strcmp(pln.radiationMode,'photons')
     dij = matRad_calcPhotonDose(ct,stf,pln,cst);
     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
-elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
+elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'helium') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
 end
 
@@ -73,14 +74,14 @@ end
 resultGUI  = matRad_fluenceOptimization(dij,cst,pln);
 
 %% sequencing
-if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
+if strcmp(pln.radiationMode,'photons') && (pln.propOpt.runSequencing || pln.propOpt.runDAO)
     %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
     %resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
     resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
 end
 
 %% DAO
-if strcmp(pln.radiationMode,'photons') && pln.runDAO
+if strcmp(pln.radiationMode,'photons') && pln.propertiesOpt.runDAO
    resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
    matRad_visApertureInfo(resultGUI.apertureInfo);
 end
@@ -96,6 +97,3 @@ matRadGUI
 structSel = {}; % structSel = {'PTV','OAR1'};
 [caSampRes, mSampDose, plnSamp, resultGUInomScen] = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,[],[]);
 [cstStat, resultGUIStat, param]                   = matRad_samplingAnalysis(ct,cst,plnSamp,caSampRes, mSampDose, resultGUInomScen,[]);
-
-
-

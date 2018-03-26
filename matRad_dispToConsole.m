@@ -41,14 +41,13 @@ switch typeOfMessage
 
    case {'error'}
 
-        fprintf(string);
-
+        error(string);
 
    case{'warning'}
 
       if param.logLevel < 4
 
-         fprintf(string);
+         fprintf(['[\bWarning:]\b ' string]);
 
       end
 

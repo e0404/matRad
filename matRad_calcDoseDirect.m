@@ -55,7 +55,7 @@ if exist('w','var') && ~isempty(w)
         error('weighting does not match steering information')
     end
     counter = 0;
-    for i = 1:pln.numOfBeams
+    for i = 1:size(stf,2)
         for j = 1:stf(i).numOfRays
             for k = 1:stf(i).numOfBixelsPerRay(j)
                 counter = counter + 1;
@@ -66,7 +66,7 @@ if exist('w','var') && ~isempty(w)
 else % weights need to be in stf!
     w = NaN*ones(sum([stf.totalNumOfBixels]),1);
     counter = 0;
-    for i = 1:pln.numOfBeams
+    for i = 1:size(stf,2)
         for j = 1:stf(i).numOfRays
             for k = 1:stf(i).numOfBixelsPerRay(j)
                 counter = counter + 1;
@@ -88,33 +88,19 @@ end
 if pln.multScen.totNumScen == 1
     % calculate cubes; use uniform weights here, weighting with actual fluence 
     % already performed in dij construction 
-    resultGUI    = matRad_calcCubes(ones(pln.numOfBeams,1),dij,cst);
+    resultGUI    = matRad_calcCubes(ones(pln.propStf.numOfBeams,1),dij,cst);
     
 % calc individual scenarios    
 else    
-    plnNom          = pln;
-    plnNom.robOpt   = false;
-    plnNom.sampling = false;
-    
-    % nominal dose calculation
-    if strcmp(pln.radiationMode,'photons')
-      dijNom = matRad_calcPhotonDose(ct,stf,plnNom,cst,param);
-      %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
-    elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-      dijNom = matRad_calcParticleDose(ct,stf,plnNom,cst,param);
-    end
-    
-    resultGUI    = matRad_calcCubes(ones(pln.numOfBeams,1),dijNom,cst);
+
     Cnt          = 1;
     ixForOpt     = find(~cellfun(@isempty, dij.physicalDose))';
     for i = ixForOpt
-      tmpResultGUI = matRad_calcCubes(ones(pln.numOfBeams,1),dij,cst,i);
+      tmpResultGUI = matRad_calcCubes(ones(pln.propStf.numOfBeams,1),dij,cst,i);
       resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
       Cnt = Cnt + 1;
     end      
 end
-
-
 
 % remember original fluence weights
 resultGUI.w  = w; 

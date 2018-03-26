@@ -50,6 +50,7 @@ else
    param.logLevel       = 1;
 end
 
+
 if param.logLevel == 1
    % initialize waitbar
    figureWait = waitbar(0,'calculate dose influence matrix for particles...');
@@ -57,11 +58,14 @@ if param.logLevel == 1
    set(figureWait,'pointer','watch');
 end
 
+% calculate rED or rSP from HU
+ct = matRad_calcWaterEqD(ct, pln, param);
+
 % meta information for dij
 dij.numOfBeams         = numel(stf);
-dij.numOfVoxels        = pln.numOfVoxels;
+dij.numOfVoxels        = prod(ct.cubeDim);
 dij.resolution         = ct.resolution;
-dij.dimensions         = pln.voxelDimensions;
+dij.dimensions         = ct.cubeDim;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
@@ -99,9 +103,10 @@ round2 = @(a,b)round(a*10^b)/10^b;
 % Allocate memory for dose_temp cell array
 doseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
 
+
 % if biological optimization considering a variable RBE is true then create alphaDose and betaDose containers and sparse matrices 
 if pln.bioParam.bioOpt
-   
+
     alphaDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
     betaDoseTmpContainer  = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
     
@@ -117,6 +122,7 @@ if pln.bioParam.bioOpt
             end
 
         end
+
     end
     
 end
@@ -140,8 +146,11 @@ catch
    matRad_dispToConsole(['Could not find the following machine file: ' fileName ],param,'error'); 
 end
 
- % allocate space for dij.mLETDose sparse matrix
-if (isfield(pln,'calcLET') && pln.calcLET) 
+
+if isfield(pln,'propDoseCalc') && ...
+   isfield(pln.propDoseCalc,'calcLET') && ...
+   pln.propDoseCalc.calcLET
+
   if isfield(machine.data,'LET')
 
     letDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
@@ -166,7 +175,7 @@ end
 
 % book keeping - this is necessary since pln is not used in optimization or
 % matRad_calcCubes
-if strcmp(pln.bioParam.model,'constRBE');
+if strcmp(pln.bioParam.model,'constRBE')
    dij.RBE = pln.bioParam.RBE;
 end
 
@@ -250,7 +259,6 @@ matRad_dispToConsole('matRad: Particle dose calculation... \n',param,'info');
 for ShiftScen = 1:pln.multScen.totNumShiftScen
    
     % manipulate isocenter
-    pln.isoCenter    = pln.isoCenter + pln.multScen.isoShift(ShiftScen,:);
     for k = 1:length(stf)
         stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(ShiftScen,:);
     end
@@ -261,7 +269,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
     counter = 0;
     
     % compute SSDs
-    stf = matRad_computeSSD(stf,ct,ctScen);
+    stf = matRad_computeSSD(stf,ct,ctScen,param);
 
    for i = 1:numel(stf) % loop over all beams
 
@@ -530,7 +538,6 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
    end % end beam loop
    
    % manipulate isocenter
-   pln.isoCenter    = pln.isoCenter - pln.multScen.isoShift(ShiftScen,:);
    for k = 1:length(stf)
        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(ShiftScen,:);
    end 

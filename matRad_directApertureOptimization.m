@@ -1,4 +1,4 @@
-function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)
+function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to run direct aperture optimization
 %
@@ -39,21 +39,39 @@ function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureIn
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+% determine if Matlab or Octave
+[env, ~] = matRad_getEnvironment();
+
+
 if ~isdeployed % only if _not_ running as standalone
     
     % add path for optimization functions    
     matRadRootDir = fileparts(mfilename('fullpath'));
     addpath(fullfile(matRadRootDir,'optimization'))
+    addpath(fullfile(matRadRootDir,'tools'))
     
-    % get handle to Matlab command window
-    mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-    cw          = mde.getClient('Command Window');
-    xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-    h_cw        = handle(xCmdWndView,'CallbackProperties');
+    if param.logLevel == 1
+        switch env
+             case 'MATLAB'
+                % get handle to Matlab command window
+                mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
+                cw          = mde.getClient('Command Window');
+                xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+                h_cw        = handle(xCmdWndView,'CallbackProperties');
 
-    % set Key Pressed Callback of Matlab command window
-    set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
+                % set Key Pressed Callback of Matlab command window
+                set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
+        end
+    end
+end
 
+if exist('param','var')
+   if ~isfield(param,'logLevel')
+      param.logLevel = 1;
+   end
+else
+   param.logLevel = 1;
 end
 
 % initialize global variables for optimizer
@@ -80,14 +98,26 @@ end
 % update aperture info vector
 apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
 
+% find VOI indicies with objective or constraint
+voiIx = [];
+for i = 1:size(cst,1)     
+  if ~isempty(cst{i,6})
+      voiIx = [voiIx i];
+      cst{i,6}(1).mOmega = 0;
+  end
+end
+dij.physicalDoseExp{1}  = spalloc(dij.numOfVoxels,dij.totalNumOfBixels,1);
+
 % Set the IPOPT options.
 matRad_ipoptOptions;
 
 % set optimization options
-options.radMod          = pln.radiationMode;
-options.bioOpt          = pln.bioOptimization;
-options.ID              = [pln.radiationMode '_' pln.bioOptimization];
-options.numOfScenarios  = dij.numOfScenarios;
+options.ixForOpt     = 1;
+options.numOfScen    = 1;
+options.scenProb     = 1;
+options.bioOpt       = pln.bioParam.bioOpt;
+options.quantityOpt  = pln.bioParam.quantityOpt;
+options.model        = pln.bioParam.model;
 
 % set bounds on optimization variables
 options.lb              = apertureInfo.limMx(:,1);                                          % Lower bound on the variables.
@@ -100,18 +130,23 @@ funcs.constraints       = @(x) matRad_daoConstFunc(x,apertureInfo,dij,cst,option
 funcs.gradient          = @(x) matRad_daoGradFunc(x,apertureInfo,dij,cst,options);
 funcs.jacobian          = @(x) matRad_daoJacobFunc(x,apertureInfo,dij,cst,options);
 funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct(apertureInfo,dij,cst);
-funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
+funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter,param);
 
 % Run IPOPT.
 [optApertureInfoVec, info] = ipopt(apertureInfo.apertureVector,funcs,options);
 
 % unset Key Pressed Callback of Matlab command window and delete waitbar
-if ~isdeployed
+if ~isdeployed && strcmp(env,'MATLAB')
     set(h_cw, 'KeyPressedCallback',' ');
 end
 
 % clear global variables after optimization
-clearvars -global matRad_global_x matRad_global_d;
+switch env
+    case 'MATLAB'
+        clearvars -global matRad_global_x matRad_global_d;
+    case 'OCTAVE' 
+        clear -global matRad_global_x matRad_global_d;
+end
 
 % update the apertureInfoStruct and calculate bixel weights
 optResult.apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,optApertureInfoVec);

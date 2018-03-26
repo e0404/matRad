@@ -85,8 +85,8 @@ doseStat.meanCubeW(ix) = (sum(mSampDose * diag(vProb),2));
 doseStat.stdCubeW(ix)  = std(mSampDose,vProb,2);
 
 % gamma cube
-doseCube = resultGUInomScen.(pln.bioParam.quantityOpt);
-if strncmp(pln.bioParam.quantityOpt,'RBExD', 5)
+doseCube = resultGUInomScen.(pln.bioParam.quantityVis);
+if strncmp(pln.bioParam.quantityVis,'RBExD', 5)
     doseStat.gammaAnalysis.cube1Name = 'resultGUInomScen.RBExD';
 else
     doseStat.gammaAnalysis.cube1Name = 'resultGUInomScen.physicalDose';

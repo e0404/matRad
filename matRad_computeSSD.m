@@ -1,4 +1,4 @@
-function stf = matRad_computeSSD(stf,ct,ctScen,mode)
+function stf = matRad_computeSSD(stf,ct,ctScen,param,mode)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad SSD calculation
 % 
@@ -31,9 +31,20 @@ function stf = matRad_computeSSD(stf,ct,ctScen,mode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 4
+if nargin < 5
     mode = 'first';
 end
+
+if exist('param','var')
+    if ~isfield(param,'logLevel')
+       param.logLevel = 1;
+    end
+else
+   param.logLevel       = 1;
+end
+
+% booleon to show warnings only once in the console
+boolShowWarning = true;
 
 % set density threshold for SSD computation
 densityThreshold = 0.05;
@@ -50,13 +61,16 @@ if strcmp(mode,'first')
                                  {ct.cube{ctScen}});
             ixSSD = find(rho{1} > densityThreshold,1,'first');
 
-            
-            if isempty(ixSSD)
-                warning('ray does not hit patient. Trying to fix afterwards...');
-            elseif ixSSD(1) == 1
-                warning('Surface for SSD calculation starts directly in first voxel of CT\n');
+            if boolShowWarning
+                if isempty(ixSSD)
+                    matRad_dispToConsole('ray does not hit patient. Trying to fix afterwards...',param,'warning');
+                    boolShowWarning = false;
+                elseif ixSSD(1) == 1
+                    matRad_dispToConsole('Surface for SSD calculation starts directly in first voxel of CT\n',param,'warning');
+                    boolShowWarning = false;
+                end
             end
-
+            
             % calculate SSD
             SSD{j} = double(2 * stf(i).SAD * alpha(ixSSD));
             stf(i).ray(j).SSD{ctScen} = SSD{j};            
@@ -78,7 +92,7 @@ end
 
 % default setting only use first cube
 function bestSSD = matRad_closestNeighbourSSD(rayPos, SSD, currPos)
-    vDistances = sum((rayPos - currPos).^2,2);
+    vDistances = sum((rayPos - repmat(currPos,size(rayPos,1),1)).^2,2);
     [~, vIdx]   = sort(vDistances);
     for ix = vIdx'
         bestSSD = SSD{ix};
@@ -88,7 +102,7 @@ function bestSSD = matRad_closestNeighbourSSD(rayPos, SSD, currPos)
         end
     end
     if any(isempty(bestSSD))
-        error('Could not fix SSD calculation.');
+        matRad_dispToConsole('Could not fix SSD calculation.\n',param,'error');
     end
 end
 

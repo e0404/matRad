@@ -100,10 +100,13 @@ matRad_dispToConsole(['matRad: Realizations variable will need: ' num2str(Storag
 
 % check if parallel toolbox is installed and license can be checked out
 try
-   ver('distcomp')                 
-   FlagParallToolBoxLicensed  = license('test','Distrib_Computing_Toolbox'); 
+    [FlagParallToolBoxLicensed,msg]  = license('checkout','Distrib_Computing_Toolbox');
+    if ~FlagParallToolBoxLicensed
+        matRad_dispToConsole(['Could not check out parallel computing toolbox. \n'],param,'warning');
+    end
+    
 catch
-   FlagParallToolBoxLicensed  = false;
+    FlagParallToolBoxLicensed  = false;
 end
 
 %% calculate nominal scenario
@@ -113,11 +116,11 @@ nomScenTime      = toc(nomScenTimer);
 matRad_dispToConsole(['Finished nominal Scenario Calculation. Computation time: ', num2str(round(nomScenTime / 3600, 2)), 'h \n'],param,'info');
 
 refVol = [2 5 50 95 98];
-refGy = linspace(0,max(resultGUInomScen.(pln.bioParam.quantityOpt)(:)),6);
+refGy = linspace(0,max(resultGUInomScen.(pln.bioParam.quantityVis)(:)),6);
 
-resultGUInomScen.dvh = matRad_calcDVH(cst,resultGUInomScen.(pln.bioParam.quantityOpt),'cum');
+resultGUInomScen.dvh = matRad_calcDVH(cst,resultGUInomScen.(pln.bioParam.quantityVis),'cum');
 dvhPoints            = resultGUInomScen.dvh(1).doseGrid;
-nomQi                = matRad_calcQualityIndicators(cst,pln,resultGUInomScen.(pln.bioParam.quantityOpt),refGy,refVol,param);
+nomQi                = matRad_calcQualityIndicators(cst,pln,resultGUInomScen.(pln.bioParam.quantityVis),refGy,refVol,param);
 
 resultGUInomScen.qi  = nomQi;
 resultGUInomScen.cst = cst;
