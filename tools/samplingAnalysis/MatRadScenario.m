@@ -90,7 +90,14 @@ classdef MatRadScenario < handle
         end
         
         function plotDoseSlice(obj, ax, ct, plane, slice, doseWindow, legendOn)
-            matRad_plotSliceWrapper(ax,ct,obj.cst,1,obj.dose,plane,slice,[],[],jet,[],doseWindow,[],[],[],legendOn);
+            if ~exist('doseWindow', 'var') || isempty(doseWindow)
+                doseWindow = [0 max(obj.dose(:))];
+            end
+            if ~exist('legendOn', 'var') || isempty(legendOn)
+                legendOn = false;
+            end
+            colorMapLabel = obj.radiationQuantity;
+            matRad_plotSliceWrapper(ax,ct,obj.cst,1,obj.dose,plane,slice,[],[],jet,[],doseWindow,[],[],colorMapLabel,legendOn);
         end
         
         function singleStructDVH = getSingleStructDVH(obj, voi)
