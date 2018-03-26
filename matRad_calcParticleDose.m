@@ -62,7 +62,7 @@ end
 ct = matRad_calcWaterEqD(ct, pln, param);
 
 % meta information for dij
-dij.numOfBeams         = pln.propStf.numOfBeams;
+dij.numOfBeams         = numel(stf);
 dij.numOfVoxels        = prod(ct.cubeDim);
 dij.resolution         = ct.resolution;
 dij.dimensions         = ct.cubeDim;
@@ -271,7 +271,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
     % compute SSDs
     stf = matRad_computeSSD(stf,ct,ctScen,param);
 
-   for i = 1:dij.numOfBeams % loop over all beams
+   for i = 1:numel(stf) % loop over all beams
 
        matRad_dispToConsole(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ':  \n'],param,'info');
 
@@ -295,7 +295,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
        % transformation of the coordinate system need double transpose
 
        % rotation around Z axis (gantry)
-       rotMat_system_T = matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i));
+       rotMat_system_T = matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).couchAngle);
 
        % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
        rot_coordsV = coordsV*rotMat_system_T;
