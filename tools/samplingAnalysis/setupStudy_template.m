@@ -9,6 +9,9 @@ multScen.shiftSize            = [4.5 4.5 4.5];          % maximum shift [mm]  % 
 multScen.shiftGenType         = 'equidistant';    % equidistant: equidistant shifts, sampled: sample shifts from normal distribution
 multScen.shiftCombType        = 'individual';     % individual:  no combination of shift scenarios;       number of shift scenarios is sum(multScen.numOfShiftScen)
                                                   % permuted:    create every possible shift combination; number of shift scenarios is 8,27,64 ... 
+                                                  % combined: number of shifts in each directions must be the same. only use when shifts are sampled
+
+                                             
 % b) define range error scenarios                                                
 multScen.numOfRangeShiftScen  = 30;                % number of absolute and/or relative range scnearios. 
                                                   % if absolute and relative range scenarios are defined then multScen.rangeCombType defines the resulting number of range scenarios

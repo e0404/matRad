@@ -347,11 +347,11 @@ classdef matRad_multScen
                     this.absRangeShift = [nomScen linspace(-this.maxAbsRangeShift, this.maxAbsRangeShift, this.numOfRangeShiftScen)];
                 case 'sampled'
                     % relRange
-                    std = this.maxRelRangeShift; meanP = 0;
+                    std = this.rangeRelSD; meanP = 0;
                     rng('shuffle');
                     this.relRangeShift = [nomScen std .* randn(1, this.numOfRangeShiftScen) + meanP];
                     % absRange
-                    std = this.maxAbsRangeShift; meanP = 0;
+                    std = this.rangeAbsSD; meanP = 0;
                     rng('shuffle');
                     this.absRangeShift = [nomScen std .* randn(1, this.numOfRangeShiftScen) + meanP];
                 otherwise
