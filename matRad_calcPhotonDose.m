@@ -79,7 +79,7 @@ end
 ct = matRad_calcWaterEqD(ct, pln, param);
 
 % meta information for dij
-dij.numOfBeams         = pln.propStf.numOfBeams;
+dij.numOfBeams         = numel(stf);
 dij.numOfVoxels        = prod(ct.cubeDim);
 dij.resolution         = ct.resolution;
 dij.dimensions         = ct.cubeDim;
@@ -218,7 +218,7 @@ ctScen = 1;
 for ShiftScen = 1:pln.multScen.totNumShiftScen
 
    % manipulate isocenter
-   for k = 1:length(stf)
+   for k = 1:numel(stf)
        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(ShiftScen,:);
    end
 
@@ -230,7 +230,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
    matRad_dispToConsole(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.totNumShiftScen) ': \n'],param,'info');
    matRad_dispToConsole('matRad: photon dose calculation...\n',param,'info');
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-   for i = 1:dij.numOfBeams % loop over all beams
+   for i = 1:numel(stf) % loop over all beams
 
           matRad_dispToConsole(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n'],param,'info');
 
