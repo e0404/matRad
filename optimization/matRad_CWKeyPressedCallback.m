@@ -26,13 +26,13 @@ function matRad_CWKeyPressedCallback(~,KeyEvent)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_STRG_C_Pressed
+global matRad_Q_Pressed
 
-% check if user pressed STRG_C or q
+% check if user pressed ctrl+q
 if (get(KeyEvent,'keyCode') == 67 && get(KeyEvent,'modifiers') == 2) || ...
     get(KeyEvent,'keyCode') == 81
 
-    matRad_STRG_C_Pressed = true;
+    matRad_Q_Pressed = true;
 
 end
 

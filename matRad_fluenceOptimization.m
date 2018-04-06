@@ -66,12 +66,12 @@ end
 % initialize global variables for optimizer
 global matRad_global_x;
 global matRad_global_d;
-global matRad_STRG_C_Pressed;
+global matRad_Q_Pressed;
 global matRad_objective_function_value;
 
 matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
 matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
-matRad_STRG_C_Pressed           = false;
+matRad_Q_Pressed                = false;
 matRad_objective_function_value = [];
   
 % consider VOI priorities
@@ -209,9 +209,9 @@ end
 % clear global variables
 switch env
      case 'MATLAB'
-        clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;
+        clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_Q_Pressed;
      case 'OCTAVE'
-        clear     -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;           
+        clear     -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_Q_Pressed;           
 end
 
 % unblock mex files
