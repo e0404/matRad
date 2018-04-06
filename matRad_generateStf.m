@@ -43,7 +43,7 @@ else
    param.logLevel       = 1;
 end
 
-matRad_dispToConsole('matRad: Generating stf struct... ',param,'info'); 
+matRad_dispToConsole('matRad: Generating stf struct...\n',param,'info'); 
 
 if nargin < 5
     visMode = 0;

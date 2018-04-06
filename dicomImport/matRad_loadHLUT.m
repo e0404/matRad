@@ -70,9 +70,10 @@ try
    end
    
    if sum(existIx) == 0
-      warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
-         ' matRad default HLUT loaded'];
-      matRad_dispToConsole(warnText,[],'warning');
+      warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder. \n'];
+      matRad_dispToConsole(warnText,param,'warning');
+      infoText = ['matRad default HLUT loaded. \n'];
+      matRad_dispToConsole(infoText,param,'info');
       
       % load default HLUT
       hlutFileName = strcat(hlutDir,'matRad_default_', particle, '.hlut');
@@ -85,10 +86,10 @@ catch
    hlutFileName = strcat(hlutDir,'matRad_default_', particle, '.hlut');
    
    if isempty(ShowHLUTWarning)
-      warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
-         ' matRad default HLUT loaded \n'];
+      warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder. \n'];
       matRad_dispToConsole(warnText,param,'warning');
-      
+      infoText = ['matRad default HLUT loaded. \n'];
+      matRad_dispToConsole(infoText,param,'info');
       ShowHLUTWarning = false;
    end
 end
