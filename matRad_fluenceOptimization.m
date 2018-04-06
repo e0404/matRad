@@ -193,6 +193,10 @@ funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,options);
 funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,options);
 funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 
+% Informing user to press q to terminate optimization
+fprintf('\nOptimzation initiating...\n');
+fprintf('Press q to terminate the optimization...\n');
+
 % Run IPOPT.
 [wOpt, info]            = ipopt(wInit,funcs,options);
 

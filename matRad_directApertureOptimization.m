@@ -109,6 +109,10 @@ funcs.jacobian          = @(x) matRad_daoJacobFunc(x,apertureInfo,dij,cst,option
 funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct(apertureInfo,dij,cst);
 funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
 
+% Informing user to press q to terminate optimization
+fprintf('\nOptimzation initiating...\n');
+fprintf('Press q to terminate the optimization...\n');
+
 % Run IPOPT.
 [optApertureInfoVec, info] = ipopt(apertureInfo.apertureVector,funcs,options);
 
