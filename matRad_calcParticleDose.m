@@ -202,7 +202,7 @@ if pln.bioParam.bioOpt
            matRad_dispToConsole(['matRad: using default alpha_x and beta_x parameters for ' cst{i,2} ' \n'],param,'warning');
         end
         
-        if  ~isempty(cst{i,6}) && (isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET'))
+        if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
             dij.alphaX(cst{i,4}{1}) = cst{i,5}.alphaX;
             dij.betaX(cst{i,4}{1})  = cst{i,5}.betaX;               
         end
@@ -375,6 +375,13 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
                    % find energy index in base data
                    energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
  
+                   % create offset vector to account for additional offsets modelled in the base data and a potential 
+                   % range shifter. In the following, we only perform dose calculation for voxels having a radiological depth
+                   % that is within the limits of the base data set (-> machine.data(i).dephts). By this means, we only allow  
+                   % interpolations in matRad_calcParticleDoseBixel() and avoid extrapolations.
+                   offsetRadDepth = machine.data(energyIx).offset - stf(i).ray(j).rangeShifter(k).eqThickness;
+
+                
                    for ctScen = 1:pln.multScen.numOfCtScen
                        for RangeShiftScen = 1:pln.multScen.totNumRangeScen 
                           
@@ -392,15 +399,15 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
                                 
                             % find depth depended lateral cut off
                             if cutOffLevel >= 1
-                                currIx = radDepths <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset;
+                                currIx = radDepths <= machine.data(energyIx).depths(end) + offsetRadDepth;
                             elseif cutOffLevel < 1 && cutOffLevel > 0
                                 % perform rough 2D clipping
-                                currIx = radDepths <= machine.data(energyIx).depths(end) + machine.data(energyIx).offset & ...
+                                currIx = radDepths <= machine.data(energyIx).depths(end) + offsetRadDepth & ...
                                      radialDist_sq <= max(machine.data(energyIx).LatCutOff.CutOff.^2);
 
                                 % peform fine 2D clipping  
                                 if length(machine.data(energyIx).LatCutOff.CutOff) > 1
-                                    currIx(currIx) = matRad_interp1((machine.data(energyIx).LatCutOff.depths + machine.data(energyIx).offset)',...
+                                   currIx(currIx) = matRad_interp1((machine.data(energyIx).LatCutOff.depths + offsetRadDepth)',...
                                         (machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= radialDist_sq(currIx);
                                 end
                             else
