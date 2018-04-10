@@ -124,9 +124,9 @@ end
 % clear global variables after optimization
 switch env
     case 'MATLAB'
-        clearvars -global matRad_global_x matRad_global_d matRad_Q_Pressed;
+        clearvars -global matRad_global_x matRad_global_d matRad_Q_Pressed matRad_objective_function_value;
     case 'OCTAVE' 
-        clear -global matRad_global_x matRad_global_d matRad_Q_Pressed;
+        clear -global matRad_global_x matRad_global_d matRad_Q_Pressed matRad_objective_function_value;
 end
 
 % update the apertureInfoStruct and calculate bixel weights
