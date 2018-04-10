@@ -66,12 +66,12 @@ end
 % initialize global variables for optimizer
 global matRad_global_x;
 global matRad_global_d;
-global matRad_STRG_C_Pressed;
+global matRad_Q_Pressed;
 global matRad_objective_function_value;
 
 matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
 matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
-matRad_STRG_C_Pressed           = false;
+matRad_Q_Pressed                = false;
 matRad_objective_function_value = [];
   
 % consider VOI priorities
@@ -193,6 +193,10 @@ funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,options);
 funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,options);
 funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
 
+% Informing user to press q to terminate optimization
+fprintf('\nOptimzation initiating...\n');
+fprintf('Press q to terminate the optimization...\n');
+
 % Run IPOPT.
 [wOpt, info]            = ipopt(wInit,funcs,options);
 
@@ -209,9 +213,9 @@ end
 % clear global variables
 switch env
      case 'MATLAB'
-        clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;
+        clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_Q_Pressed;
      case 'OCTAVE'
-        clear     -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_STRG_C_Pressed;           
+        clear     -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_Q_Pressed;           
 end
 
 % unblock mex files
