@@ -81,7 +81,7 @@ if strcmp(pln.radiationMode,'photons') && (pln.propOpt.runSequencing || pln.prop
 end
 
 %% DAO
-if strcmp(pln.radiationMode,'photons') && pln.propertiesOpt.runDAO
+if strcmp(pln.radiationMode,'photons') && pln.propStf.runDAO
    resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
    matRad_visApertureInfo(resultGUI.apertureInfo);
 end
