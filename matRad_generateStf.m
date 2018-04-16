@@ -124,6 +124,11 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).SAD           = SAD;
     stf(i).isoCenter     = pln.propStf.isoCenter(i,:);
     
+    if isfield(pln.propStf, 'longitudinalSpotSpacing')
+        stf(i).longitudinalSpotSpacing = pln.propStf.longitudinalSpotSpacing;
+    end
+    
+    
     % Get the (active) rotation matrix. We perform a passive/system 
     % rotation with row vector coordinates, which would introduce two 
     % inversions / transpositions of the matrix, thus no changes to the
@@ -298,11 +303,12 @@ for i = 1:length(pln.propStf.gantryAngles)
         maxPeakPos  = machine.data(maxEnergy == availableEnergies).peakPos;
         
         % find set of energyies with adequate spacing
-        
-        if strcmp(machine.meta.machine,'Generic')
-            longitudinalSpotSpacing = 1.5; % enforce all entries to be used
-        else
-            longitudinalSpotSpacing = 3;   % default value for all other treatment machines
+        if ~isfield(stf(i), 'longitudinalSpotSpacing')
+            if strcmp(machine.meta.machine,'Generic')
+                longitudinalSpotSpacing = 1.5; % enforce all entries to be used
+            else
+                longitudinalSpotSpacing = 3;   % default value for all other treatment machines
+            end
         end
         
         tolerance              = longitudinalSpotSpacing/10;
