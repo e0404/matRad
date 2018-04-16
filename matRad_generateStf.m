@@ -123,12 +123,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).radiationMode = pln.radiationMode;
     stf(i).SAD           = SAD;
     stf(i).isoCenter     = pln.propStf.isoCenter(i,:);
-    
-    if isfield(pln.propStf, 'longitudinalSpotSpacing')
-        stf(i).longitudinalSpotSpacing = pln.propStf.longitudinalSpotSpacing;
-    end
-    
-    
+        
     % Get the (active) rotation matrix. We perform a passive/system 
     % rotation with row vector coordinates, which would introduce two 
     % inversions / transpositions of the matrix, thus no changes to the
@@ -309,6 +304,8 @@ for i = 1:length(pln.propStf.gantryAngles)
             else
                 longitudinalSpotSpacing = 3;   % default value for all other treatment machines
             end
+        else
+            stf(i).longitudinalSpotSpacing = pln.propStf.longitudinalSpotSpacing;
         end
         
         tolerance              = longitudinalSpotSpacing/10;
