@@ -3,7 +3,8 @@
 	url = https://github.com/matlab2tikz/matlab2tikz.git
 [submodule "submodules/latexTable"]
 	path = submodules/latexTable
-	url = https://github.com/eliduenisch/latexTable.git
+	url = https://github.com/e0404/latexTable.git
+	branch = dev
 [submodule "submodules/parfor_progress"]
 	path = submodules/parfor_progress
 	url = https://github.com/dumbmatter/parfor_progress.git
