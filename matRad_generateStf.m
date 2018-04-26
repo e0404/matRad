@@ -305,8 +305,10 @@ for i = 1:length(pln.propStf.gantryAngles)
                 longitudinalSpotSpacing = 3;   % default value for all other treatment machines
             end
         else
-            stf(i).longitudinalSpotSpacing = pln.propStf.longitudinalSpotSpacing;
+            longitudinalSpotSpacing = pln.propStf.longitudinalSpotSpacing;
         end
+        
+        stf(i).longitudinalSpotSpacing = longitudinalSpotSpacing;
         
         tolerance              = longitudinalSpotSpacing/10;
         availablePeakPos       = [machine.data.peakPos];
