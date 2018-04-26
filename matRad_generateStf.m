@@ -298,7 +298,7 @@ for i = 1:length(pln.propStf.gantryAngles)
         maxPeakPos  = machine.data(maxEnergy == availableEnergies).peakPos;
         
         % find set of energyies with adequate spacing
-        if ~isfield(stf(i), 'longitudinalSpotSpacing')
+        if ~isfield(pln.propStf, 'longitudinalSpotSpacing')
             if strcmp(machine.meta.machine,'Generic')
                 longitudinalSpotSpacing = 1.5; % enforce all entries to be used
             else
