@@ -155,7 +155,7 @@ classdef matRad_multScen
         shiftSize_rndScen                 = [3 3 3];                       % given in [mm]
         shiftGenType_rndScen              = 'sampled';                     % sample shifts from normal distribution
         shiftCombType_rndScen             = 'combined';                    % individual:  no combination of shift scenarios;
-        numOfRangeShiftScen_rndScen       = 20;                            % number of absolute and/or relative range scnearios.
+        numOfRangeShiftScen_rndScen       = 25;                            % number of absolute and/or relative range scnearios.
         maxAbsRangeShift_rndScen          = 1;                             % maximum absolute over and undershoot in mm 
         maxRelRangeShift_rndScen          = 3.5;                           % maximum relative over and undershoot in % 
         rangeCombType_rndScen             = 'combined';                    % combine absolute and relative range scenarios             
