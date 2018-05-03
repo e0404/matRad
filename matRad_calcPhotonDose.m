@@ -108,7 +108,7 @@ V = unique(vertcat(V{:}));
 % ignore densities outside of contours
 eraseCtDensMask = ones(dij.numOfVoxels,1);
 eraseCtDensMask(V) = 0;
-for i = 1:dij.numOfScenarios
+for i = 1:ct.numOfCtScen
     ct.cube{i}(eraseCtDensMask == 1) = 0;
 end
 
