@@ -34,7 +34,7 @@ function markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-uniqueIsoCenters = unique(pln.isoCenter,'rows');
+uniqueIsoCenters = unique(pln.propStf.isoCenter,'rows');
 
 for i = 1:size(uniqueIsoCenters,1)
 

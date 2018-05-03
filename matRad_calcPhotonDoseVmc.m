@@ -39,10 +39,10 @@ if ~isdeployed % only if _not_ running as standalone
 end
 
 % meta information for dij
-dij.numOfBeams         = pln.numOfBeams;
-dij.numOfVoxels        = pln.numOfVoxels;
+dij.numOfBeams         = pln.propStf.numOfBeams;
+dij.numOfVoxels        = prod(ct.cubeDim);
 dij.resolution         = ct.resolution;
-dij.dimensions         = pln.voxelDimensions;
+dij.dimensions         = ct.cubeDim;
 dij.numOfScenarios     = 1;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
@@ -76,8 +76,7 @@ end
 % set environment variables for vmc++
 if exist(['vmc++' filesep 'bin'],'dir') ~= 7
     error(['Could not locate vmc++ environment. ' ...
-          'Please provide the files in the correct folder structure at matRadroot' filesep 'vmc++' ...
-          '(CERR hosts compatible files at http://www.cerr.info/download.php).']);
+          'Please provide the files in the correct folder structure at matRadroot' filesep 'vmc++.']);
 else
     VMCPath     = fullfile(pwd , 'vmc++');
     runsPath    = fullfile(VMCPath, 'runs');
@@ -214,10 +213,10 @@ for i = 1:dij.numOfBeams % loop over all beams
         
         % set ray specific vmc++ parameters
         % a) change coordinate system (Isocenter cs-> physical cs) and units mm -> cm
-        rayCorner1 = (stf(i).ray(j).rayCorners_SCD(1,:) + pln.isoCenter(i,:))/10;              
-        rayCorner2 = (stf(i).ray(j).rayCorners_SCD(2,:) + pln.isoCenter(i,:))/10;
-        rayCorner3 = (stf(i).ray(j).rayCorners_SCD(3,:) + pln.isoCenter(i,:))/10; %vmc needs only three corners (counter-clockwise)
-        beamSource = (stf(i).sourcePoint + pln.isoCenter(i,:))/10;
+        rayCorner1 = (stf(i).ray(j).rayCorners_SCD(1,:) + stf(i).isoCenter)/10;              
+        rayCorner2 = (stf(i).ray(j).rayCorners_SCD(2,:) + stf(i).isoCenter)/10;
+        rayCorner3 = (stf(i).ray(j).rayCorners_SCD(3,:) + stf(i).isoCenter)/10; %vmc needs only three corners (counter-clockwise)
+        beamSource = (stf(i).sourcePoint + stf(i).isoCenter)/10;
         
         % b) swap x and y (CT-standard = [y,x,z])
         rayCorner1 = rayCorner1([2,1,3]);              

@@ -37,8 +37,10 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set consistent random seed (enables reproducibility)
-matRadRootDir = fileparts(mfilename('fullpath'));
-addpath(fullfile(matRadRootDir,'tools'))
+if ~isdeployed
+    matRadRootDir = fileparts(mfilename('fullpath'));
+    addpath(fullfile(matRadRootDir,'tools'))
+end
 [env, ~] = matRad_getEnvironment();
 
 switch env
@@ -53,8 +55,11 @@ if ~exist('calcDoseDirect','var')
     calcDoseDirect = false;
 end
 
+% calculate rED or rSP from HU
+ct = matRad_calcWaterEqD(ct, pln);
+
 % issue warning if biological optimization not possible
-if sum(strcmp(pln.bioOptimization,{'effect','RBExD'}))>0
+if sum(strcmp(pln.propOpt.bioOptimization,{'effect','RBExD'}))>0
     warndlg('Effect based and RBE optimization not available for photons - physical optimization is carried out instead.');
     pln.bioOptimization = 'none';
 end
@@ -65,10 +70,10 @@ figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 set(figureWait,'pointer','watch');
 
 % meta information for dij
-dij.numOfBeams         = pln.numOfBeams;
-dij.numOfVoxels        = pln.numOfVoxels;
+dij.numOfBeams         = pln.propStf.numOfBeams;
+dij.numOfVoxels        = prod(ct.cubeDim);
 dij.resolution         = ct.resolution;
-dij.dimensions         = pln.voxelDimensions;
+dij.dimensions         = ct.cubeDim;
 dij.numOfScenarios     = 1;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
@@ -103,7 +108,7 @@ V = unique(vertcat(V{:}));
 % ignore densities outside of contours
 eraseCtDensMask = ones(dij.numOfVoxels,1);
 eraseCtDensMask(V) = 0;
-for i = 1:dij.numOfScenarios
+for i = 1:ct.numOfCtScen
     ct.cube{i}(eraseCtDensMask == 1) = 0;
 end
 
@@ -118,7 +123,7 @@ lateralCutoff = 50; % [mm]
 useCustomPrimFluenceBool = 0;
 
 % 0 if field calc is bixel based, 1 if dose calc is field based
-isFieldBasedDoseCalc = strcmp(num2str(pln.bixelWidth),'field');
+isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
 
 %% kernel convolution
 % prepare data for convolution to reduce calculation time
@@ -136,7 +141,7 @@ if isFieldBasedDoseCalc
     fieldWidth = pln.Collimation.fieldWidth;
 else
     intConvResolution = .5; % [mm]
-    fieldWidth = pln.bixelWidth;
+    fieldWidth = pln.propStf.bixelWidth;
 end
 
 % calculate field size and distances
@@ -212,7 +217,7 @@ for i = 1:dij.numOfBeams % loop over all beams
     % Do not transpose matrix since we usage of row vectors &
     % transformation of the coordinate system need double transpose
 
-    rotMat_system_T = matRad_getRotationMatrix(pln.gantryAngles(i),pln.couchAngles(i));
+    rotMat_system_T = matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i));
 
     % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
     rot_coordsV = coordsV*rotMat_system_T;

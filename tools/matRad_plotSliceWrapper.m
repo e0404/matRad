@@ -54,7 +54,9 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandl
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % add plotting subdirectory 
-addpath([fileparts(fileparts(mfilename('fullpath'))) filesep 'plotting']);
+if ~isdeployed
+    addpath([fileparts(fileparts(mfilename('fullpath'))) filesep 'plotting']);
+end
 
 %Handle the argument list
 if ~exist('thresh','var') || isempty(thresh)
@@ -90,7 +92,7 @@ end
 
 set(axesHandle,'YDir','Reverse');
 % plot ct slice
-hCt = matRad_plotCtSlice(axesHandle,ct.cube,cubeIdx,plane,slice); 
+hCt = matRad_plotCtSlice(axesHandle,ct.cubeHU,cubeIdx,plane,slice); 
 hold on;
 
 % plot dose
@@ -105,7 +107,7 @@ else
 end
 
 %plot VOI contours
-hContour = matRad_plotVoiContourSlice(axesHandle,cst,ct.cube,cubeIdx,voiSelection,plane,slice,contourColorMap,varargin{:});
+hContour = matRad_plotVoiContourSlice(axesHandle,cst,ct.cubeHU,cubeIdx,voiSelection,plane,slice,contourColorMap,varargin{:});
 
 if boolPlotLegend
    visibleOnSlice = (~cellfun(@isempty,hContour));

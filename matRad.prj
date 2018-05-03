@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="369792437" file="d:\git\matRad\matRad.prj" location="d:\git\matRad" name="matRad" preferred-package-location="d:\git\matRad\standalone\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
+  <configuration build-checksum="4236383462" file="d:\git\matRad\matRad.prj" location="d:\git\matRad" name="matRad" preferred-package-location="d:\git\matRad\standalone\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
     <param.appname>matRad</param.appname>
     <param.icon>${PROJECT_ROOT}\matRad_resources\icon.ico</param.icon>
     <param.icons>
@@ -60,7 +60,10 @@
     <fileset.resources>
       <file>${PROJECT_ROOT}\carbon_Generic.mat</file>
       <file>${PROJECT_ROOT}\dicomImport\DKFZ_Logo.png</file>
-      <file>${PROJECT_ROOT}\dicomImport\hlutLibrary\matRad_default.hlut</file>
+      <file>${PROJECT_ROOT}\dicomImport\hlutLibrary\matRad_default_carbon.hlut</file>
+      <file>${PROJECT_ROOT}\dicomImport\hlutLibrary\matRad_default_photons.hlut</file>
+      <file>${PROJECT_ROOT}\dicomImport\hlutLibrary\matRad_default_protons.hlut</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_calcHU.m</file>
       <file>${PROJECT_ROOT}\dicomImport\matRad_calcWaterEqD.m</file>
       <file>${PROJECT_ROOT}\dicomImport\matRad_convRtssContours2Indices.m</file>
       <file>${PROJECT_ROOT}\dicomImport\matRad_createCst.m</file>
@@ -108,7 +111,6 @@
       <file>${PROJECT_ROOT}\matRad_calcQualityIndicators.m</file>
       <file>${PROJECT_ROOT}\matRad_calcRadDepthCubes.m</file>
       <file>${PROJECT_ROOT}\matRad_calcSigmaRashi.m</file>
-      <file>${PROJECT_ROOT}\matRad_collapseDij.m</file>
       <file>${PROJECT_ROOT}\matRad_computeSSD.m</file>
       <file>${PROJECT_ROOT}\matRad_DijSampling.m</file>
       <file>${PROJECT_ROOT}\matRad_directApertureOptimization.m</file>
@@ -139,6 +141,7 @@
       <file>${PROJECT_ROOT}\optimization\ipopt.mexw64</file>
       <file>${PROJECT_ROOT}\optimization\matRad_backProjection.m</file>
       <file>${PROJECT_ROOT}\optimization\matRad_calcInversDVH.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_collapseDij.m</file>
       <file>${PROJECT_ROOT}\optimization\matRad_constFunc.m</file>
       <file>${PROJECT_ROOT}\optimization\matRad_constFuncWrapper.m</file>
       <file>${PROJECT_ROOT}\optimization\matRad_CWKeyPressedCallback.m</file>
@@ -166,7 +169,9 @@
       <file>${PROJECT_ROOT}\plotting\matRad_computeAllVoiSurfaces.m</file>
       <file>${PROJECT_ROOT}\plotting\matRad_computeIsoDoseContours.m</file>
       <file>${PROJECT_ROOT}\plotting\matRad_computeVoiContours.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_computeVoiContoursWrapper.m</file>
       <file>${PROJECT_ROOT}\plotting\matRad_getColormap.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotAxisLabels.m</file>
       <file>${PROJECT_ROOT}\plotting\matRad_plotColorbar.m</file>
       <file>${PROJECT_ROOT}\plotting\matRad_plotCtSlice.m</file>
       <file>${PROJECT_ROOT}\plotting\matRad_plotCtSlice3D.m</file>
@@ -179,6 +184,7 @@
       <file>${PROJECT_ROOT}\plotting\matRad_plotVoiContourSlice.m</file>
       <file>${PROJECT_ROOT}\plotting\matRad_plotVois3D.m</file>
       <file>${PROJECT_ROOT}\protons_Generic.mat</file>
+      <file>${PROJECT_ROOT}\tools\matRad_getEnvironment.m</file>
       <file>${PROJECT_ROOT}\vmc++\matRad_createVmcBatchFile.m</file>
       <file>${PROJECT_ROOT}\vmc++\matRad_createVmcInput.m</file>
       <file>${PROJECT_ROOT}\vmc++\matRad_exportCtVmc.m</file>

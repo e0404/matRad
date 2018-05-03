@@ -28,20 +28,25 @@ load TG119.mat
 %load BOXPHANTOM.mat
 
 % meta information for treatment plan
-pln.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.gantryAngles    = [0:72:359]; % [?]
-pln.couchAngles     = [0 0 0 0 0]; % [?]
-pln.numOfBeams      = numel(pln.gantryAngles);
-pln.numOfVoxels     = prod(ct.cubeDim);
-pln.isoCenter       = ones(pln.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.voxelDimensions = ct.cubeDim;
+
 pln.radiationMode   = 'photons';     % either photons / protons / carbon
-pln.bioOptimization = 'none';        % none: physical optimization;             const_RBExD; constant RBE of 1.1;
-                                     % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
-pln.numOfFractions  = 30;
-pln.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
-pln.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.machine         = 'Generic';
+
+pln.numOfFractions  = 30;
+
+% beam geometry settings
+pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.gantryAngles    = [0:72:359]; % [?]
+pln.propStf.couchAngles     = [0 0 0 0 0]; % [?]
+pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+
+
+% optimization settings
+pln.propOpt.bioOptimization = 'none'; % none: physical optimization;             const_RBExD; constant RBE of 1.1;
+                                      % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
+pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
+pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
 %% initial visualization and change objective function settings if desired
 matRadGUI
@@ -61,14 +66,14 @@ end
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% sequencing
-if strcmp(pln.radiationMode,'photons') && (pln.runSequencing || pln.runDAO)
+if strcmp(pln.radiationMode,'photons') && (pln.propertiesOpt.runSequencing || pln.propertiesOpt.runDAO)
     %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
     %resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
     resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
 end
 
 %% DAO
-if strcmp(pln.radiationMode,'photons') && pln.runDAO
+if strcmp(pln.radiationMode,'photons') && pln.propertiesOpt.runDAO
    resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
    matRad_visApertureInfo(resultGUI.apertureInfo);
 end
