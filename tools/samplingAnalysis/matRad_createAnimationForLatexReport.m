@@ -74,12 +74,12 @@ for f=1:nFrames
     sampleCube = zeros(size(meanCube));
     sampleCube(selectIx) = samples(:,f);
     matRad_plotSliceWrapper(gca,ct,cst,1,sampleCube,3,slice,0,alpha,colorcube,jet,[0.01*dPres samplesMax],[0.1 0.25 0.6 0.9 0.95 1 1.05 1.25]'*dPres,[],legendColorbar,false);%,figXzoom,[figYzoom]);
-    F(f) = getframe(gcf);
-    im = frame2im(F(f));
-    [imind,cm] = rgb2ind(im,256);
-    
+    %F(f) = getframe(gcf);
+    %im = frame2im(F(f));
+    %[imind,cm] = rgb2ind(im,256);
     outfile = fullfile(outpath,[fname '_' num2str(f) '.png']);
-    imwrite(imind,cm,outfile,'png');
+    print(outfile,'-dpng','-r200')
+    %imwrite(imind,cm,outfile,'png');
     delete(gca);
 end
 close
