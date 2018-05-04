@@ -310,6 +310,7 @@ for i = 1:size(cst,1)
     end
 end
 drawnow;
+cleanfigure();
 matlab2tikz(fullfile(outputPath,'nominalDVH.tex'),'showInfo', false, 'width', '0.7\textwidth');
 hold off
 close
