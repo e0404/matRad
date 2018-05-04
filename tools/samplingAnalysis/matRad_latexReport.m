@@ -119,8 +119,8 @@ catch
 end
 
 % import plan information
-planInformation.gantryAngles = num2str(pln.gantryAngles);
-planInformation.couchAngles = num2str(pln.couchAngles);
+planInformation.gantryAngles = num2str(pln.propStf.gantryAngles);
+planInformation.couchAngles = num2str(pln.propStf.couchAngles);
 planInformation.modality = pln.radiationMode;
 
 line = cell(0);
@@ -210,11 +210,11 @@ gammaWindow = [0 1.1 * max(doseStat.gammaAnalysis.gammaCube(:))];
 for plane=1:3
     switch plane 
         case 1
-            slice = round(pln.isoCenter(1,2) / ct.resolution.x,0);
+            slice = round(pln.propStf.isoCenter(1,2) / ct.resolution.x,0);
         case 2
-            slice = round(pln.isoCenter(1,1) / ct.resolution.y,0);
+            slice = round(pln.propStf.isoCenter(1,1) / ct.resolution.y,0);
         case 3
-            slice = round(pln.isoCenter(1,3) / ct.resolution.z,0);
+            slice = round(pln.propStf.isoCenter(1,3) / ct.resolution.z,0);
     end
     colors = colorcube(size(cst,1));
     for cubesToPlot = 1:3
@@ -263,7 +263,7 @@ end
 if exist('matRad_getGaussianOrbitSamples','file') == 2
     param.confidenceValue = 0.5;
 
-    slice = round(pln.isoCenter(1,plane) / ct.resolution.z,0);            
+    slice = round(pln.propStf.isoCenter(1,plane) / ct.resolution.z,0);            
     outPath = fullfile(outputPath, 'frames');
     if isfield(nominalScenario,'RBExD')
         legendColorbar = 'RBExDose [Gy(RBE)]';

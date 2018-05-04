@@ -2444,15 +2444,21 @@ end
 multScenDummy = matRad_multScen([],pln.multScen.TYPE);
 ix = find(strcmp(multScenDummy.AvailableScenCreationTYPE,pln.multScen.TYPE));
 set(handles.popupmenuScenGen,'Value',ix);
-%% enable sequencing and DAO button if radiation mode is set to photons
+%% enable sequencing button if radiation mode is set to photons
 if strcmp(pln.radiationMode,'photons') && pln.propOpt.runSequencing
     set(handles.btnRunSequencing,'Enable','on');
     set(handles.btnRunSequencing,'Value',1);
+    set(handles.txtSequencing,'Enable','on');
+    set(handles.editSequencingLevel,'Enable','on');
 elseif strcmp(pln.radiationMode,'photons') && ~pln.propOpt.runSequencing
     set(handles.btnRunSequencing,'Enable','on');
     set(handles.btnRunSequencing,'Value',0);
+    set(handles.txtSequencing,'Enable','off');
+    set(handles.editSequencingLevel,'Enable','off');
 else
     set(handles.btnRunSequencing,'Enable','off');
+    set(handles.txtSequencing,'Enable','off');
+    set(handles.editSequencingLevel,'Enable','off');
 end
 %% enable DAO button if radiation mode is set to photons
 if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO
@@ -2464,14 +2470,7 @@ elseif strcmp(pln.radiationMode,'photons') && ~pln.propOpt.runDAO
 else
     set(handles.btnRunDAO,'Enable','off');
 end
-%% enable stratification level input if radiation mode is set to photons
-if strcmp(pln.radiationMode,'photons')
-    set(handles.txtSequencing,'Enable','on');
-    set(handles.editSequencingLevel,'Enable','on');
-else
-    set(handles.txtSequencing,'Enable','off');
-    set(handles.editSequencingLevel,'Enable','off');
-end
+
 
 % --- Executes on button press in btnTableSave.
 function btnTableSave_Callback(~, ~, handles)

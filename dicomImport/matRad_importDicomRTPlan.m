@@ -133,16 +133,20 @@ pln.radiationMode   = radiationMode; % either photons / protons / carbon
 pln.numOfFractions  = planInfo.FractionGroupSequence.Item_1.NumberOfFractionsPlanned;
 pln.machine         = 'Generic';
 
+% set handling of multiple scenarios -> default: only nominal
+pln.multScen = matRad_multScen(ct,'nomScen');
 
+% set bio model parameters (default physical opt, no bio model)
+pln.bioParam = matRad_bioModel(pln.radiationMode,'physicalDose','none');
+
+% set properties for steering
 pln.propStf.isoCenter    = isoCenter;
 pln.propStf.bixelWidth   = NaN; % [mm] / also corresponds to lateral spot spacing for particles
 pln.propStf.gantryAngles = [gantryAngles{1:length(BeamSeqNames)}];
 pln.propStf.couchAngles  = [PatientSupportAngle{1:length(BeamSeqNames)}]; % [°]
 pln.propStf.numOfBeams   = length(BeamSeqNames);
 
-
-pln.propOpt.bioOptimization = 'none'; % none: physical optimization;             const_RBExD; constant RBE of 1.1;
-                                      % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
+% turn off sequerncing an DAO by default
 pln.propOpt.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.propOpt.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 
