@@ -229,7 +229,7 @@ for i = 1:length(BeamSeqNames)
     bixelWidth_help1 = unique(round(1e3*bixelWidth_help(:,1))/1e3,'sorted');
     bixelWidth_help2 = unique(round(1e3*bixelWidth_help(:,2))/1e3,'sorted');
     
-    bixelWidth = unique([unique(diff(bixelWidth_help1)) unique(diff(bixelWidth_help2))]);
+    bixelWidth = unique([unique(diff(bixelWidth_help1))' unique(diff(bixelWidth_help2))']);
     
     if numel(bixelWidth) == 1
         stf(i).bixelWidth = bixelWidth;
