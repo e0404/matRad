@@ -185,15 +185,29 @@ if ~isempty(fileList)
     close(h)
     
     if ~isempty(fileList)
-        patientList = unique(fileList(:,3));
-        
-        if isempty(patientList)
-            msgbox('No patient found with DICOM CT _and_ RT structure set in patient directory!', 'Error','error');
-        end
+       
+       if ~iscellstr(fileList(:,3))
+          msgbox('Cannot find PatientID - dummy ID will be used instead', 'Warning','warn');
+          for k = 1:size(fileList,1)
+             if isnan(fileList{k,3})
+                fileList{k,3} = '0000001';  % creates dummy PatientID
+             end
+             if unique(isnan(fileList{k,4})) && strcmp('CT',fileList{k,2})
+                fileList{k,4} = '1000000';  % creates dummy SeriesInstanceUID
+             end
+          end
+       end
+       
+       patientList = unique(fileList(:,3));
+       
+       if isempty(patientList)
+          msgbox('No patient found with DICOM CT _and_ RT structure set in patient directory!', 'Error','error');
+       end
+       
     else
-        msgbox('No DICOM files found in patient directory!', 'Error','error');
-        %h.WindowStyle = 'Modal';
-        %error('No DICOM files found in patient directory');
+       msgbox('No DICOM files found in patient directory!', 'Error','error');
+       %h.WindowStyle = 'Modal';
+       %error('No DICOM files found in patient directory');
     end
 else
     msgbox('Search folder empty!', 'Error','error');
