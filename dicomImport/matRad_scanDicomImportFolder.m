@@ -34,8 +34,8 @@ function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )
 fprintf('Dose series matched to the different plans are displayed and could be selected.\n');
 fprintf('Rechecking of correct matching procedure is recommended.\n');
 
-global showWarnDlgDICOMtag;
-showWarnDlgDICOMtag = true;
+global warnDlgDICOMtagShown;
+warnDlgDICOMtagShown = false;
 
 %% get all files in search directory
 
@@ -169,12 +169,13 @@ else
     
 end
 
+clear warnDlgDICOMtagShown;
 
 end
 
 function fileList = parseDicomTag(fileList,info,tag,row,column)
 
-global showWarnDlgDICOMtag;
+global warnDlgDICOMtagShown;
 
 defaultPlaceHolder = '001';
 
@@ -192,13 +193,13 @@ catch
    fileList{row,column} = NaN;
 end
 
-if showWarnDlgDICOMtag
+if ~warnDlgDICOMtagShown && strcmp(fileList{row,column},defaultPlaceHolder) && (column == 3 || column == 4)
  
    dlgTitle    = 'Dicom Tag import';
    dlgQuestion = ['matRad_scanDicomImportFolder: Could not parse dicom tag: ' tag '. Using placeholder ' defaultPlaceHolder ' instead. Please check importet data carefully! Do you want to continue.'];
    answer      = questdlg(dlgQuestion,dlgTitle,'Yes','No', 'Yes');
    
-   showWarnDlgDICOMtag = false;
+   warnDlgDICOMtagShown = true;
    
    switch answer
       case 'No'
