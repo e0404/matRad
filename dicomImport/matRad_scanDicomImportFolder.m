@@ -196,7 +196,7 @@ end
 if ~warnDlgDICOMtagShown && strcmp(fileList{row,column},defaultPlaceHolder) && (column == 3 || column == 4)
  
    dlgTitle    = 'Dicom Tag import';
-   dlgQuestion = ['matRad_scanDicomImportFolder: Could not parse dicom tag: ' tag '. Using placeholder ' defaultPlaceHolder ' instead. Please check importet data carefully! Do you want to continue.'];
+   dlgQuestion = ['matRad_scanDicomImportFolder: Could not parse dicom tag: ' tag '. Using placeholder ' defaultPlaceHolder ' instead. Please check imported data carefully! Do you want to continue?'];
    answer      = questdlg(dlgQuestion,dlgTitle,'Yes','No', 'Yes');
    
    warnDlgDICOMtagShown = true;
