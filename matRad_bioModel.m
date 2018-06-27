@@ -221,6 +221,17 @@ classdef matRad_bioModel
                                     matRad_dispToConsole(['matRad: Invalid biological model: ' this.model  '; using "none" instead. \n'],[],'warning');
                                     this.model  = 'none';
                                 end
+                                
+                            case {'effect','RBExD'}
+                                if strcmp(this.model,'LEM')
+                                    boolCHECK           = true;
+                                    this.bioOpt         = true;
+                                    this.quantityVis    = 'RBExD';
+                                else
+                                    matRad_dispToConsole(['matRad: Invalid biological Model: ' this.model  '; using Local Effect Model instead. \n'],[],'warning');
+                                    this.model = 'LEM';
+                                end
+                                
                             otherwise
                                 matRad_dispToConsole(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using "none" instead. \n'],[],'warning');
                                 this.quantityOpt = 'physicalDose';

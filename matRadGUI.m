@@ -796,7 +796,7 @@ try
                 error('VMC++ not available in matRad standalone application');
             end
         end
-    elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
+    elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon') || strcmp(pln.radiationMode,'helium')
         dij = matRad_calcParticleDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
     end
 
@@ -4305,3 +4305,12 @@ function popupmenuScenGen_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in radiobutton3Dconf.
+function radiobutton3Dconf_Callback(hObject, eventdata, handles)
+% hObject    handle to radiobutton3Dconf (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of radiobutton3Dconf
