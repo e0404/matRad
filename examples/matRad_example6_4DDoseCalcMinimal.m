@@ -80,7 +80,8 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 % inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
-
+%% lmdout replication
+order = matRad_getSpotOrder(stf, 'on');
 %% post processing
 % This step is necessary to remove beam spots with too few particles that
 % cannot not be delivered, dose is recalculated accordingly
