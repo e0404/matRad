@@ -87,10 +87,14 @@ for i = 1:length(stf)
 				% follwing if block assigns corresponding stf index for the
 				% current ray dependent on (beam number, ray number, and
 				% energy slice)
-				if (i ~= 1) && (j ~= 1) %all except first ray in first beam(avoid zero indexing error)
-					w_index = (i - 1) * stf(i-1).totalNumOfBixels ...
+				if (i ~= 1) && (j ~= 1) %to avoid zero indexing
+					w_index = (i - 1) * stf(i-1).totalNumOfBixels ... 
 						+ sum(stf(i).numOfBixelsPerRay(1:j-1)) ...
 						+ find(stf(i).ray(j).energy == usedEnergiesSorted(e));
+                   
+                    %w_index = number of bixels in previous beam
+                    %         + number of bixels in previous rays
+                    %         + number of previous bixels in current ray  
 				elseif (j == 1) && (i ~= 1)
 					w_index = (i - 1) * stf(i-1).totalNumOfBixels ...
 						+ find(stf(i).ray(j).energy == usedEnergiesSorted(e));
