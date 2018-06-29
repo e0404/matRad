@@ -1,4 +1,21 @@
 function order = matRad_getSpotOrder(stf, plotting)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad inverse planning wrapper function
+% 
+% call
+%   [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
+%
+% input
+%   stf:            matRad steering information struct
+%   plotting:       set's the plotting option 'on' or 'off' (temporary)
+%
+% output
+%   order:			order of each bixel according to the spot scanning
+%
+% References
+%   -
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 order = zeros(sum([stf.totalNumOfBixels]), 1);
 backforth = struct;
