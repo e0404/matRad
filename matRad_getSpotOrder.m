@@ -118,7 +118,7 @@ for i = 1:length(stf)
                         clf
                         h = animatedline('LineStyle', 'none', 'Marker', 'o');
                         axis([-50 50 -50 50])
-                        title(['beam #', num2str(i), ' energy slice ', num2str(e)])
+                        title(['Beam #', num2str(i), ', IES #', num2str(e)])
                     end
                     
                     temp = e;
