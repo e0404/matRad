@@ -18,7 +18,7 @@ function order = matRad_getSpotOrder(stf, plotting)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 order = zeros(sum([stf.totalNumOfBixels]), 1);
-backforth = struct;
+bixelInfo = struct;
 
 
 % first loop loops over all bixels to store their position and ray number
@@ -39,9 +39,9 @@ for i = 1:length(stf) % looping over all beams
                 x = stf(i).ray(j).rayPos_bev(1);
                 y = stf(i).ray(j).rayPos_bev(3);
                 
-                backforth(i).IES(e).x(s) = x; % store x position
-                backforth(i).IES(e).y(s) = y; % store y position
-                backforth(i).IES(e).j(s) = j; % store ray number
+                bixelInfo(i).IES(e).x(s) = x; % store x position
+                bixelInfo(i).IES(e).y(s) = y; % store y position
+                bixelInfo(i).IES(e).j(s) = j; % store ray number
                 
                 s = s + 1;
                 
@@ -64,14 +64,14 @@ for i = 1:length(stf)
     for e = 1: length(usedEnergies)
         
         % sort the y positions from high to low (backforth is up do down)
-        y_sorted = sort(unique(backforth(i).IES(e).y), 'descend');
+        y_sorted = sort(unique(bixelInfo(i).IES(e).y), 'descend');
         
         for k = 1:length(y_sorted)
             
             y = y_sorted(k);
             % find indexes corresponding to current y position
             % in other words, number of bixels in the current row
-            index = find(backforth(i).IES(e).y == y);
+            index = find(bixelInfo(i).IES(e).y == y);
             
             % since backforth fasion is zig zag like, flip the order every
             % second row
@@ -81,8 +81,9 @@ for i = 1:length(stf)
             
             % loop over all the bixels in the row
             for ss = index
-                j = backforth(i).IES(e).j(ss);
-                x = backforth(i).IES(e).x(ss);
+                
+                j = bixelInfo(i).IES(e).j(ss);
+                x = bixelInfo(i).IES(e).x(ss);
                 
                 % follwing if block assigns corresponding stf index for the
                 % current ray dependent on (beam number, ray number, and
@@ -92,9 +93,13 @@ for i = 1:length(stf)
                         + sum(stf(i).numOfBixelsPerRay(1:j-1)) ...
                         + find(stf(i).ray(j).energy == usedEnergiesSorted(e));
                     
-                    %w_index = number of bixels in previous beam
+                    % this is how w_index is calculated:
+                    % w_index = number of bixels in previous beam
                     %         + number of bixels in previous rays
                     %         + number of previous bixels in current ray
+                    
+                    % following does the same as above, they are separated to
+                    % avoid zero indexing
                 elseif (j == 1) && (i ~= 1)
                     w_index = (i - 1) * stf(i-1).totalNumOfBixels ...
                         + find(stf(i).ray(j).energy == usedEnergiesSorted(e));
