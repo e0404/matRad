@@ -7,10 +7,10 @@ function order = matRad_getSpotOrder(stf, plotting)
 %
 % input
 %   stf:            matRad steering information struct
-%   plotting:       set's the plotting option 'on' or 'off' (temporary)
+%   plotting:       sets the plotting option 'on' or 'off' (temporary)
 %
 % output
-%   order:			order of each bixel according to the spot scanning
+%   order:          order of each bixel according to the spot scanning
 %
 % References
 %   -
