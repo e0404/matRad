@@ -1,25 +1,20 @@
-function order = matRad_getSpotOrder(stf, plotting)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad inverse planning wrapper function
-%
-% call
-%   [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
-%
-% input
-%   stf:            matRad steering information struct
-%   plotting:       sets the plotting option 'on' or 'off' (temporary)
-%
-% output
-%   order:          order of each bixel according to the spot scanning
-%
-% References
-%   -
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function bixelInfo = matRad_makeBixelTimeSeq(stf, w, plotting)
 
-if nargin < 2
+mil = 10^6;
+es_time = 4 * mil;
+spill_recharge_time = 2 * mil;
+scan_speed = 10; % m/s
+spill_size = 4 * 10 ^ 10;
+spill_intensity = 4 * 10 ^ 8; 
+
+for i = 1:length(stf)
+    spot_time(i) = stf(i).bixelWidth * (10 ^ 3)/ scan_speed;
+end
+
+if nargin < 3
     plotting = 'off';
 end
+
 
 order = zeros(sum([stf.totalNumOfBixels]), 1);
 bixelInfo = struct;
@@ -31,6 +26,11 @@ for i = 1:length(stf) % looping over all beams
     
     usedEnergies = unique([stf(i).ray(:).energy]);
     usedEnergiesSorted = sort(usedEnergies, 'descend');
+    
+    bixelInfo(i).order = zeros(stf(i).totalNumOfBixels, 1);
+    bixelInfo(i).time = zeros(stf(i).totalNumOfBixels, 1);
+    bixelInfo(i).time_ordered = zeros(stf(i).totalNumOfBixels, 1);
+    bixelInfo(i).e = zeros(stf(i).totalNumOfBixels, 1);
         
     for e = 1:length(usedEnergies) % looping over IES's
         
@@ -43,7 +43,7 @@ for i = 1:length(stf) % looping over all beams
                 
                 x = stf(i).ray(j).rayPos_bev(1);
                 y = stf(i).ray(j).rayPos_bev(3);
-                
+
                 bixelInfo(i).IES(e).x(s)       = x; % store x position
                 bixelInfo(i).IES(e).y(s)       = y; % store y position
                 bixelInfo(i).IES(e).w_index(s) = wOffset + ...
@@ -60,16 +60,20 @@ for i = 1:length(stf) % looping over all beams
     
 end
 
+%
 % after storing all the required information,
 % same loop over all bixels will put each bixel in it's order
 
 order_counter = 1;
+spill_usage = 0;
+offset = 0;
 
 for i = 1:length(stf)
     
     usedEnergies = unique([stf(i).ray(:).energy]);
     usedEnergiesSorted = sort(usedEnergies, 'descend');
     temp = 0; % temporary variable for plotting figures
+    t = 0;
     
     for e = 1: length(usedEnergies)
         
@@ -97,6 +101,18 @@ for i = 1:length(stf)
                 x = bixelInfo(i).IES(e).x(ss);
                 
                 w_index = bixelInfo(i).IES(e).w_index(ss);
+                protons = w(w_index)* 10^6;
+                
+                spill_time = protons * 10^6 / spill_intensity;
+                
+                t = t + spot_time(i) + spill_time;
+                
+                if(spill_usage + protons > spill_size)
+                    t = t + spill_recharge_time;
+                    spill_usage = 0;
+                end
+                
+                spill_usage = spill_usage + protons;
                 
                 % following is to plot the bixel ordering, can be deleted
                 % in the final version of the code
@@ -118,12 +134,28 @@ for i = 1:length(stf)
                     drawnow
                 end
                 
+                % temp solution!
+                order_ind = order_counter - offset;
+                w_ind = w_index - offset;
+                
                 % assign the order to the corresponding stf index
+                bixelInfo(i).time_ordered(order_ind) = t;
+                bixelInfo(i).time(w_ind) = t;
+                bixelInfo(i).order(w_ind) = order_ind;
+                bixelInfo(i).e(order_ind) = e;
+                
                 order(w_index) = order_counter;
                 order_counter  = order_counter + 1;
             end
         end
+        
+        t = t + es_time;
     end
+    
+    offset = offset + stf(i).totalNumOfBixels;
+    
+    
 end
 
 end
+%}

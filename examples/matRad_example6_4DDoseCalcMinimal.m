@@ -81,7 +81,7 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% lmdout replication
-order = matRad_getSpotOrder(stf, 'on');
+order = matRad_getSpotOrder(stf);
 %% post processing
 % This step is necessary to remove beam spots with too few particles that
 % cannot not be delivered, dose is recalculated accordingly
