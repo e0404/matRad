@@ -1,5 +1,10 @@
 function bixelInfo = matRad_makeBixelTimeSeq(stf, w, plotting)
 
+
+if nargin < 3
+    plotting = 'off';
+end
+
 mil = 10^6;
 es_time = 4 * mil;
 spill_recharge_time = 2 * mil;
@@ -11,14 +16,10 @@ for i = 1:length(stf)
     spot_time(i) = stf(i).bixelWidth * (10 ^ 3)/ scan_speed;
 end
 
-if nargin < 3
-    plotting = 'off';
-end
-
-
 order = zeros(sum([stf.totalNumOfBixels]), 1);
 bixelInfo = struct;
 
+bixelInfo.NumOfPhases = 
 % first loop loops over all bixels to store their position and ray number
 % in each IES
 wOffset = 0;
