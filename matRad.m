@@ -97,6 +97,3 @@ matRadGUI
 structSel = {}; % structSel = {'PTV','OAR1'};
 [caSampRes, mSampDose, plnSamp, resultGUInomScen] = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,[],[]);
 [cstStat, resultGUIStat, param]                   = matRad_samplingAnalysis(ct,cst,plnSamp,caSampRes, mSampDose, resultGUInomScen,[]);
-
-
-

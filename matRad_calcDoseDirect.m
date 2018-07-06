@@ -50,7 +50,7 @@ if ~exist('w','var') && ~isfield([stf.ray],'weight')
 end
 
 % copy bixel weight vector into stf struct
-if exist('w','var')
+if exist('w','var') && ~isempty(w)
     if sum([stf.totalNumOfBixels]) ~= numel(w)
         error('weighting does not match steering information')
     end

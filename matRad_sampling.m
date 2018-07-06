@@ -1,4 +1,4 @@
-function [caSampRes, mSampDose, pln, resultGUInomScen]  = matRad_sampling(ct,stf,cst,pln,w,structSel,multScen,param)
+function [treatmentSimulation, scenContainer, pln, resultGUInomScen, nomScen]  = matRad_sampling(ct,stf,cst,pln,w,structSel,multScen,param)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_randomSampling enables sampling multiple treatment scenarios
 % 
@@ -77,7 +77,7 @@ else
     for i=1:size(cst,1)
         for j = 1:numel(structSel)
             if strcmp(structSel{j}, cst{i,2})
-                V = [V cst{i,4}{1}];
+                V = [V {cst{i,4}{1}}];
             end
         end
     end
@@ -125,10 +125,16 @@ nomQi                = matRad_calcQualityIndicators(cst,pln,resultGUInomScen.(pl
 resultGUInomScen.qi  = nomQi;
 resultGUInomScen.cst = cst;
 
-% only show errors and disable waitbars and figures
-param.logLevel = 4;
+nomDose                = resultGUInomScen.(pln.bioParam.quantityVis)(param.subIx);
+nomDoseLin             = single(reshape(nomDose,[],1));
+
+nomScen = MatRadScenario(nomDoseLin, param.subIx, pln.bioParam.quantityVis, 1, [0 0 0], 0, 0, size(resultGUInomScen.(pln.bioParam.quantityVis)), NaN);
+
+% only show warnings and disable waitbars and figures
+param.logLevel = 3;
 
 %% perform parallel sampling
+scenContainer = cell(pln.multScen.totNumScen,1);
 if FlagParallToolBoxLicensed
    % Create parallel pool on cluster
    p = gcp(); % If no pool, create new one.
@@ -150,7 +156,7 @@ if FlagParallToolBoxLicensed
       fprintf('matRad: Consider downloading parfor_progress function from the matlab central fileexchange to get feedback from parfor loop.\n');
       FlagParforProgressDisp = false;
    end
-  
+   
    parfor i = 1:pln.multScen.totNumScen
           
           % create nominal scenario
@@ -170,14 +176,12 @@ if FlagParallToolBoxLicensed
           
           resultSamp                 = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w,param);
           sampledDose                = resultSamp.(pln.bioParam.quantityVis)(param.subIx);
-          mSampDose(:,i)             = single(reshape(sampledDose,[],1));
-          caSampRes(i).bioParam      = pln.bioParam;
-          caSampRes(i).relRangeShift = plnSamp.multScen.relRangeShift;
-          caSampRes(i).absRangeShift = plnSamp.multScen.absRangeShift;
-          caSampRes(i).isoShift      = plnSamp.multScen.isoShift;
+          sampledDoseLin             = single(reshape(sampledDose,[],1));
+          scenContainer{i}           = MatRadScenario(sampledDoseLin, param.subIx, pln.bioParam.quantityVis, 1, plnSamp.multScen.isoShift, ...
+                plnSamp.multScen.relRangeShift, plnSamp.multScen.absRangeShift, size(resultSamp.(pln.bioParam.quantityVis)), 1);
           
-          caSampRes(i).dvh = matRad_calcDVH(cst,resultSamp.(pln.bioParam.quantityVis),'cum',dvhPoints);
-          caSampRes(i).qi  = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityVis),refGy,refVol,param);
+          % caSampRes(i).dvh = matRad_calcDVH(cst,resultSamp.(pln.bioParam.quantityOpt),'cum',dvhPoints);
+          % caSampRes(i).qi  = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityOpt),refGy,refVol,param);
           
           if FlagParforProgressDisp
             parfor_progress;
@@ -214,14 +218,13 @@ fprintf(['Approximate Total calculation time: ', num2str(round(totCompTime / 360
           
           resultSamp                 = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w,param);
           sampledDose                = resultSamp.(pln.bioParam.quantityVis)(param.subIx);
-          mSampDose(:,i)             = single(reshape(sampledDose,[],1));
-          caSampRes(i).bioParam      = pln.bioParam;
-          caSampRes(i).relRangeShift = plnSamp.multScen.relRangeShift;
-          caSampRes(i).absRangeShift = plnSamp.multScen.absRangeShift;
-          caSampRes(i).isoShift      = plnSamp.multScen.isoShift;
+          sampledDoseLin             = single(reshape(sampledDose,[],1));
+          scenContainer{i}           = MatRadScenario(sampledDoseLin, param.subIx, pln.bioParam.quantityVis, 1, plnSamp.multScen.isoShift, ...
+                plnSamp.multScen.relRangeShift, plnSamp.multScen.absRangeShift, size(resultSamp.(pln.bioParam.quantityVis)), 1);
           
-          caSampRes(i).dvh = matRad_calcDVH(cst,resultSamp.(pln.bioParam.quantityVis),'cum',dvhPoints);
-          caSampRes(i).qi  = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityVis),refGy,refVol,param);
+          % caSampRes(i).dvh = matRad_calcDVH(cst,resultSamp.(pln.bioParam.quantityOpt),'cum',dvhPoints);
+          % caSampRes(i).qi  = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityOpt),refGy,refVol,param);
+
           matRad_progress(i, pln.multScen.totNumScen)
     end
     
@@ -230,4 +233,9 @@ end
 %% add subindices
 pln.subIx        = param.subIx;
 
+%% account for fractionation
+treatmentSimulation = MatRadSimulation(pln.bioParam.quantityVis, nomScen, ct, cst, pln, pln.numOfFractions);
+for i = 1:numel(scenContainer)
+    treatmentSimulation.initNewScen(scenContainer{i})
+end
 end

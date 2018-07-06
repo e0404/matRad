@@ -56,6 +56,8 @@ classdef matRad_multScen
         shiftCombType;          % 'individual':  no combination of shift scenarios;       number of shift scenarios is sum(multScen.numOfShiftScen) 
                                 % 'combined':    combine shift scenarios;                 number of shift scenarios is numOfShiftScen
                                 % 'permuted':    create every possible shift combination; number of shift scenarios is 8,27,64 .
+                                
+        isoShiftCorrelationBreak = 'fraction';    % correlation type for isoshifts ('fraction', 'beam', 'ray')
                         
         % b) define range error scenarios                                                
         numOfRangeShiftScen;    % number of absolute and/or relative range scnearios. 
@@ -65,6 +67,8 @@ classdef matRad_multScen
         rangeCombType;          % 'individual':  no combination of absolute and relative range scenarios
                                 % 'combined':    combine absolute and relative range scenarios
         rangeGenType;           % 'equidistant': equidistant range shifts, 'sampled': sample range shifts from normal distribution
+        
+        rangeShiftCorrelationBreak = 'fraction';  % correlation type for rangeshifts ('fraction', 'beam', 'ray')
         scenCombType;           % 'individual':  no combination of range and setup scenarios, 
                                 % 'combined':    combine range and setup scenarios if their scenario number is consistent 
                                 % 'permuted':    create every possible combination of range and setup scenarios
@@ -89,6 +93,8 @@ classdef matRad_multScen
         rangeAbsSD  = 1;                  % given in [mm]   
         shiftSD     = [2.25 2.25 2.25];   % given in [mm]
         
+        deepestCorrelationBreak = 'fraction';    % argmax of isoShiftCorrelationBreak, rangeShiftCorrelationBreak
+        
     end
     
     % private properties which can only be changed inside matRad_multScen
@@ -104,6 +110,8 @@ classdef matRad_multScen
     properties(Constant = true)
         
         AvailableScenCreationTYPE = {'nomScen','wcScen','impScen','rndScen'};
+        AvailableCorrelationTYPES = {'fraction', 'beam', 'ray'};
+        AvailableUncertainties = {'range', 'setup'};
     end
     
     % constant private properties which are only visible within matRad_multScen
@@ -196,6 +204,32 @@ classdef matRad_multScen
       function this = matRad_createValidInstance(this)
           this      = setMultScen(this);
           this      = calcScenProb(this);
+      end
+      
+      function this = matRad_recreateInstance(this, keep)
+          % function to recreate instance (usefule if sampling is used, and
+          % one wants to sample again. Possibility to keep one, either or
+          % both uncertainties fixed.
+          if ~exist('keep', 'var') || isempty(keep)
+              this = setMultScen(this);
+
+          elseif isequal(sort(keep), sort(this.AvailableUncertainties))
+              % do nothing
+              
+          elseif strcmp(keep, 'range')
+               rangeShiftRel = this.relRangeShift;
+               rangeShiftAbs = this.absRangeShift;
+               this = setMultScen(this);
+               
+               this.relRangeShift = rangeShiftRel;
+               this.absRangeShift = rangeShiftAbs;
+               
+          elseif strcmp(keep, 'setup')
+               isoShift = this.isoShift;
+               this = setMultScen(this);
+               this.isoShift = isoShift;
+          end
+          this = calcScenProb(this);
       end
       
       %% setters to check for valid input
@@ -472,7 +506,19 @@ classdef matRad_multScen
                        end
                end
             end
-
+            
+            % check correlationt types
+            if ~ismember(this.isoShiftCorrelationBreak, this.AvailableCorrelationTYPES) ...
+                    || ~ismember(this.rangeShiftCorrelationBreak, this.AvailableCorrelationTYPES)
+                matRad_dispToConsole('Correlationbreak not implemented as specified. \n',[],'error');
+            end
+            if strcmp(this.isoShiftCorrelationBreak, 'ray') || strcmp(this.rangeShiftCorrelationBreak, 'ray')
+                this.deepestCorrelationBreak = 'ray';
+            elseif strcmp(this.isoShiftCorrelationBreak, 'beam') || strcmp(this.rangeShiftCorrelationBreak, 'beam')
+                 this.deepestCorrelationBreak = 'beam';
+            else
+                this.deepestCorrelationBreak = 'fraction';
+            end
             
             % create linearalized mask where the i row points to the indexes of scenMask
             [x{1}, x{2}, x{3}] = ind2sub(size(this.scenMask),find(this.scenMask));
@@ -538,14 +584,3 @@ classdef matRad_multScen
    
    
 end  % end of matRad_multScen class
-
-
-
-
-
-
-
-
-
-
-

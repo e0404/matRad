@@ -32,6 +32,46 @@ function matRad_calcStudy(structSel,multScen,matPatientPath,param)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [treatmentSimulation, nominalScenario] = mergeSplittedScen(scenContainerParts, nomScenParts)
+    % Merge nominal scenario by cumulating on first part. Remember that all 
+    % scenario class is subclass of abstract handle class, therefore 
+    % nomScenParts{1} changes.
+    
+    nominalScenario = nomScenParts{1};
+    for k = 2:numel(nomScenParts)
+        nominalScenario.cumulateDose(nomScenParts{k}.dose, 1, [0 0 0], 0, 0);
+    end
+    sc = scenContainerParts{1};
+    for j = 1:numel(sc)
+        for k = 2:numel(scenContainerParts)
+            sc{j}.cumulateDose(scenContainerParts{k}{j}.dose, ...
+                               1, ...  % ct shift identifier
+                               scenContainerParts{k}{j}.shift, ...
+                               scenContainerParts{k}{j}.absRangeShift, ...
+                               scenContainerParts{k}{j}.relRangeShift);
+        end
+    end
+    treatmentSimulation = MatRadSimulation(pln.bioParam.quantityVis, nominalScenario, ct, cst, pln, pln.numOfFractions);
+    for j = 1:numel(sc)
+        treatmentSimulation.initNewScen(sc{j})
+    end
+end
+
+function stf = copyWeightsToStf(stf, w)
+    if sum([stf.totalNumOfBixels]) ~= numel(w)
+        error('weighting does not match steering information')
+    end
+    counter = 0;
+    for ii = 1:numel(stf)
+        for j = 1:stf(ii).numOfRays
+            for k = 1:stf(ii).numOfBixelsPerRay(j)
+                counter = counter + 1;
+                stf(ii).ray(j).weight(k) = w(counter);
+            end
+        end
+    end
+end
+
 if exist('param','var')
     if ~isfield(param,'logLevel')
        param.logLevel = 4;
@@ -40,30 +80,57 @@ else
    param.logLevel     = 4;
 end
 
-%
 if ~isfield(param,'outputPath')
     param.outputPath = mfilename('fullpath');
 end
+if ~isfield(param,'fileSuffix')
+    param.fileSuffix = '';
+end
+if ~isfield(param, 'percentiles')
+    param.percentiles = [0.01 0.05 0.125 0.25 0.5 0.75 0.875 0.95 0.99];
+end
+if ~isfield(param, 'criteria')
+    param.gammaCriteria = [2 2];
+end
 
 % require minimum number of scenarios to ensure proper statistics
-if multScen.numOfRangeShiftScen + sum(multScen.numOfShiftScen) < 20
+if multScen.totNumScen < 20 % multScen.numOfRangeShiftScen + sum(multScen.numOfShiftScen) < 20
     matRad_dispToConsole('Detected a low number of scenarios. Proceeding is not recommended.',param,'warning');
     param.sufficientStatistics = false;
     pause(1);
 end
 
 %% load DICOM imported patient
+cst = [];
+ct = [];
+pln = [];
+dij = [];
+resultGUI = [];
+stf = [];
+
 if exist('matPatientPath', 'var') && ~isempty(matPatientPath) && exist('matPatientPath','file') == 2
     load(matPatientPath)
 else
+    % search for .mat files
     listOfMat = dir('*.mat');
+    % exclude all resultSampling_*.mat
+    listOfMat = {listOfMat(:).name};
+    deleteIx = false(1,numel(listOfMat));
+    for i = 1:numel(listOfMat)
+        if strncmp(listOfMat{i}, 'resultSampling', 14)
+            deleteIx(i) = true;
+        end
+    end
+    listOfMat(deleteIx) = [];
     if numel(listOfMat) == 1
-      load(listOfMat.name);
+      load(listOfMat{1});
     else
        matRad_dispToConsole('Ambigous set of .mat files in the current folder (i.e. more than one possible patient or already results available).\n',param,'error');
        return
     end
 end
+
+stf = copyWeightsToStf(stf, resultGUI.w);
 
 % check if nominal workspace is complete
 if ~(exist('ct','var') && exist('cst','var') && exist('stf','var') && exist('pln','var') && exist('resultGUI','var'))
@@ -96,40 +163,73 @@ pln.robOpt   = false;
 pln.sampling = true;
 
 %% perform calculation and save
+multScen = multScen.matRad_createValidInstance();
+
 tic
-[caSampRes, mSampDose, pln, resultGUInomScen]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,multScen,param);
+if strcmp(multScen.deepestCorrelationBreak, 'fraction')
+    [treatmentSimulation, scenContainer, pln, resultGUInomScen, nomScen] = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,multScen,param);
+elseif strcmp(multScen.deepestCorrelationBreak, 'beam')
+    scenContainerParts = cell(numel(stf),1);
+    nomScenParts = cell(numel(stf),1);
+    for i = 1:numel(stf)
+        stfPart = stf(i);
+        plnPart = pln;
+        plnPart.couchAngles = pln.couchAngles(i);
+        plnPart.gantryAngles = pln.gantryAngles(i);
+        plnPart.isoCenter = pln.isoCenter(i,:);
+        plnPart.numOfBeams = 1;
+        if strcmp(multScen.rangeShiftCorrelationBreak, 'beam') && strcmp(multScen.isoShiftCorrelationBreak, 'beam')
+            multScen = multScen.matRad_recreateInstance;
+        elseif strcmp(multScen.isoShiftCorrelationBreak, 'beam')
+            multScen = multScen.matRad_recreateInstance('range');
+        elseif strcmp(multScen.rangeShiftCorrelationBreak, 'beam')
+            multScen = multScen.matRad_recreateInstance('setup');
+        else
+            erorr('Incosistency');
+        end
+        
+        [~, scenContainerPart, ~, ~, nomScenPart] = matRad_sampling(ct, stfPart, cst, plnPart, [],structSel, multScen, param);
+        nomScenParts{i} = nomScenPart;
+        scenContainerParts{i} = scenContainerPart;
+    end
+    
+    [treatmentSimulation, nomScen] = mergeSplittedScen(scenContainerParts, nomScenParts);
+end
 param.computationTime = toc;
 
 param.reportPath = fullfile('report','data');
-filename         = 'resultSampling';
+t = datetime('now','Format','yyyy-MM-dd''T''HHmmss');
+filename         = ['resultSampling_', char(t), param.fileSuffix];
+clear scenContainer scenContainerPart scenContainerParts  % redundant vars
 save(filename, '-v7.3');
 
 %% perform analysis 
 % start here loading resultSampling.mat if something went wrong during analysis or report generation
-[structureStat, doseStat, param] = matRad_samplingAnalysis(ct,cst,pln,caSampRes,mSampDose,resultGUInomScen,param);
+treatmentSimulation.runAnalysis(param.gammaCriteria, param.percentiles);
 
-%% generate report
-listOfQI = {'mean', 'std', 'max', 'min', 'D_2', 'D_5', 'D_50', 'D_95', 'D_98'};
-
-cd(param.outputPath)
-mkdir(fullfile('report','data'));
-mkdir(fullfile('report','data','frames'));
-mkdir(fullfile('report','data','figures'));
-copyfile(fullfile(matRadPath,'tools','samplingAnalysis','main_template.tex'),fullfile('report','main.tex'));
-
-% generate actual latex report
-matRad_latexReport(ct, cst, pln, resultGUInomScen, structureStat, doseStat, mSampDose, listOfQI, param);
-
-cd('report');
-if ispc
-    executeLatex = 'xelatex --shell-escape --interaction=nonstopmode main.tex';
-elseif isunix
-    executeLatex = '/Library/TeX/texbin/xelatex --shell-escape --interaction=nonstopmode main.tex';
-end
-
-response = system(executeLatex);
-if response == 127 % means not found
-    warning('Could not find tex distribution. Please compile manually.');
-else
-    system(executeLatex);
+% %% generate report
+% listOfQI = {'mean', 'std', 'max', 'min', 'D_2', 'D_5', 'D_50', 'D_95', 'D_98'};
+% 
+% cd(param.outputPath)
+% mkdir(fullfile('report','data'));
+% mkdir(fullfile('report','data','frames'));
+% mkdir(fullfile('report','data','figures'));
+% copyfile(fullfile(matRadPath,'tools','samplingAnalysis','main_template.tex'),fullfile('report','main.tex'));
+% 
+% % generate actual latex report
+% matRad_latexReport(ct, cst, pln, resultGUInomScen, structureStat, doseStat, mSampDose, listOfQI, param);
+% 
+% cd('report');
+% if ispc
+%     executeLatex = 'xelatex --shell-escape --interaction=nonstopmode main.tex';
+% elseif isunix
+%     executeLatex = '/Library/TeX/texbin/xelatex --shell-escape --interaction=nonstopmode main.tex';
+% end
+% 
+% response = system(executeLatex);
+% if response == 127 % means not found
+%     warning('Could not find tex distribution. Please compile manually.');
+% else
+%     system(executeLatex);
+% end
 end
