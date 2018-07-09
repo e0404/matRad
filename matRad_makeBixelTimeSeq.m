@@ -19,7 +19,6 @@ end
 order = zeros(sum([stf.totalNumOfBixels]), 1);
 bixelInfo = struct;
 
-bixelInfo.NumOfPhases = 
 % first loop loops over all bixels to store their position and ray number
 % in each IES
 wOffset = 0;
