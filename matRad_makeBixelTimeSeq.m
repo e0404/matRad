@@ -31,7 +31,9 @@ for i = 1:length(stf) % looping over all beams
     bixelInfo(i).time = zeros(stf(i).totalNumOfBixels, 1);
     bixelInfo(i).time_ordered = zeros(stf(i).totalNumOfBixels, 1);
     bixelInfo(i).e = zeros(stf(i).totalNumOfBixels, 1);
-        
+    
+    bixelInfo(i).w_index = [];
+    
     for e = 1:length(usedEnergies) % looping over IES's
         
         s = 1;
@@ -54,6 +56,9 @@ for i = 1:length(stf) % looping over all beams
                 
             end
         end
+        
+    bixelInfo(i).w_index = [bixelInfo(i).w_index; bixelInfo(i).IES(e).w_index'];
+        
     end
     
     wOffset = wOffset + sum(stf(i).numOfBixelsPerRay);
@@ -101,6 +106,8 @@ for i = 1:length(stf)
                 x = bixelInfo(i).IES(e).x(ss);
                 
                 w_index = bixelInfo(i).IES(e).w_index(ss);
+                
+                
                 protons = w(w_index)* 10^6;
                 
                 spill_time = protons * 10^6 / spill_intensity;
@@ -142,6 +149,7 @@ for i = 1:length(stf)
                 bixelInfo(i).time_ordered(order_ind) = t;
                 bixelInfo(i).time(w_ind) = t;
                 bixelInfo(i).order(w_ind) = order_ind;
+                bixelInfo(i).w(w_ind) = w(w_index);
                 bixelInfo(i).e(order_ind) = e;
                 
                 order(w_index) = order_counter;

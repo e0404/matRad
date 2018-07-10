@@ -31,9 +31,9 @@
 
 clc,clear,close all
 
-addpath('D:\Matrad\')
-addpath('D:\Matrad\4Ddose')
-addpath('D:\Matrad\tools')
+
+addpath('C:\Matrad\4Ddose')
+addpath('C:\Matrad\tools')
 
 load('Liver_DS221.mat')
 
