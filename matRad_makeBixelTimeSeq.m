@@ -29,7 +29,6 @@ for i = 1:length(stf) % looping over all beams
     
     bixelInfo(i).order = zeros(stf(i).totalNumOfBixels, 1);
     bixelInfo(i).time = zeros(stf(i).totalNumOfBixels, 1);
-    bixelInfo(i).time_ordered = zeros(stf(i).totalNumOfBixels, 1);
     bixelInfo(i).e = zeros(stf(i).totalNumOfBixels, 1);
     
     bixelInfo(i).w_index = [];
@@ -146,8 +145,7 @@ for i = 1:length(stf)
                 w_ind = w_index - offset;
                 
                 % assign the order to the corresponding stf index
-                bixelInfo(i).time_ordered(order_ind) = t;
-                bixelInfo(i).time(w_ind) = t;
+                bixelInfo(i).time(order_ind) = t;
                 bixelInfo(i).order(w_ind) = order_ind;
                 bixelInfo(i).w(w_ind) = w(w_index);
                 bixelInfo(i).e(order_ind) = e;

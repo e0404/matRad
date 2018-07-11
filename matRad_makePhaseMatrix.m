@@ -1,4 +1,4 @@
-function bixelInfo= matRad_makePhaseMatrix(bixelInfo, numOfPhases, motionPeriod, motion)
+function bixelInfo = matRad_makePhaseMatrix(bixelInfo, numOfPhases, motionPeriod, motion)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 %
@@ -35,13 +35,17 @@ for i = 1:length(bixelInfo)
     iTime = 1;
 
     while (iTime <= length(bixelInfo(i).time))
-        if(bixelInfo(i).time_ordered(iTime) < realTime)
-            bixelInfo(i).time_ordered(iTime);
-            while(iTime <= length(bixelInfo(i).time) && bixelInfo(i).time_ordered(iTime) < realTime)
+        if(bixelInfo(i).time(iTime) < realTime)
+            
+            bixelInfo(i).time(iTime);
+            
+            while(iTime <= length(bixelInfo(i).time) && bixelInfo(i).time(iTime) < realTime)
                 bixelInfo(i).phaseMatrix(iTime, iPhase) = 1;
                 iTime = iTime + 1;
             end
+            
         else
+            
             iPhase = iPhase + 1;
             if(iPhase > numOfPhases)
                 iPhase = 1;
