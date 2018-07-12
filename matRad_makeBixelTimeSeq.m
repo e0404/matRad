@@ -5,18 +5,24 @@ if nargin < 3
     plotting = 'off';
 end
 
-mil = 10^6;
-es_time = 4 * mil;
-spill_recharge_time = 2 * mil;
-scan_speed = 10; % m/s
+% defining the constant parameters
+%
+% time required for synchrotron to change energy
+es_time = 4 * 10^6;
+% time required for synchrotron to recharge it's spill
+spill_recharge_time = 2 * 10^6;
+% number of particles generated in each spill
 spill_size = 4 * 10 ^ 10;
-spill_intensity = 4 * 10 ^ 8; 
+% speed of synchrotron's lateral scanning in an IES
+scan_speed = 10; % m/s
+% number of particles per second
+spill_intensity = 4 * 10 ^ 8;
+
 
 for i = 1:length(stf)
-    spot_time(i) = stf(i).bixelWidth * (10 ^ 3)/ scan_speed;
+    steerTime(i) = stf(i).bixelWidth * (10 ^ 3)/ scan_speed;
 end
 
-order = zeros(sum([stf.totalNumOfBixels]), 1);
 bixelInfo = struct;
 
 % first loop loops over all bixels to store their position and ray number
@@ -31,8 +37,6 @@ for i = 1:length(stf) % looping over all beams
     bixelInfo(i).time = zeros(stf(i).totalNumOfBixels, 1);
     bixelInfo(i).e = zeros(stf(i).totalNumOfBixels, 1);
     
-    bixelInfo(i).w_index = [];
-    
     for e = 1:length(usedEnergies) % looping over IES's
         
         s = 1;
@@ -44,20 +48,17 @@ for i = 1:length(stf) % looping over all beams
                 
                 x = stf(i).ray(j).rayPos_bev(1);
                 y = stf(i).ray(j).rayPos_bev(3);
-
+                %
                 bixelInfo(i).IES(e).x(s)       = x; % store x position
                 bixelInfo(i).IES(e).y(s)       = y; % store y position
                 bixelInfo(i).IES(e).w_index(s) = wOffset + ...
-                                                 sum(stf(i).numOfBixelsPerRay(1:(j-1))) + ...
-                                                 find(stf(i).ray(j).energy == usedEnergiesSorted(e)); % store index
+                    sum(stf(i).numOfBixelsPerRay(1:(j-1))) + ...
+                    find(stf(i).ray(j).energy == usedEnergiesSorted(e)); % store index
                 
                 s = s + 1;
                 
             end
         end
-        
-    bixelInfo(i).w_index = [bixelInfo(i).w_index; bixelInfo(i).IES(e).w_index'];
-        
     end
     
     wOffset = wOffset + sum(stf(i).numOfBixelsPerRay);
@@ -75,7 +76,7 @@ offset = 0;
 for i = 1:length(stf)
     
     usedEnergies = unique([stf(i).ray(:).energy]);
-    usedEnergiesSorted = sort(usedEnergies, 'descend');
+    
     temp = 0; % temporary variable for plotting figures
     t = 0;
     
@@ -88,37 +89,44 @@ for i = 1:length(stf)
         for k = 1:length(y_sorted)
             
             y = y_sorted(k);
-            x = x_sorted(k);
             % find indexes corresponding to current y position
             % in other words, number of bixels in the current row
-            index = find(bixelInfo(i).IES(e).y == y);
+            ind_y = find(bixelInfo(i).IES(e).y == y);
             
             % since backforth fasion is zig zag like, flip the order every
             % second row
             if ~rem(k,2)
-                index = fliplr(index);
+                ind_y = fliplr(ind_y);
             end
             
             % loop over all the bixels in the row
-            for ss = index
+            for s = ind_y
                 
-                x = bixelInfo(i).IES(e).x(ss);
+                x = bixelInfo(i).IES(e).x(s);
+                % TODO: sort x's in case someone hacked stf
                 
-                w_index = bixelInfo(i).IES(e).w_index(ss);
+                w_index = bixelInfo(i).IES(e).w_index(s);
                 
-                
+                % calculating the time:
+                %
+                % required spot fluence
                 protons = w(w_index)* 10^6;
-                
-                spill_time = protons * 10^6 / spill_intensity;
-                
-                t = t + spot_time(i) + spill_time;
-                
+                % time spent to spill the required spot fluence
+                spillTime = protons * 10^6 / spill_intensity;
+                %
+                % spotTime:time spent to steer scan along IES per bixel
+                t = t + steerTime(i) + spillTime;
+                %
+                % taking account of the time to recharge the spill in case
+                % the required fluence was more than spill size
                 if(spill_usage + protons > spill_size)
                     t = t + spill_recharge_time;
                     spill_usage = 0;
                 end
-                
+                %
+                % used amount of fluence from current spill
                 spill_usage = spill_usage + protons;
+                
                 
                 % following is to plot the bixel ordering, can be deleted
                 % in the final version of the code
@@ -140,28 +148,30 @@ for i = 1:length(stf)
                     drawnow
                 end
                 
-                % temp solution!
-                order_ind = order_counter - offset;
+                % storing the time and the order of bixels
+                %
+                % make the both counter and index 'per beam'
+                order_count = order_counter - offset;
                 w_ind = w_index - offset;
-                
-                % assign the order to the corresponding stf index
-                bixelInfo(i).time(order_ind) = t;
-                bixelInfo(i).order(w_ind) = order_ind;
-                bixelInfo(i).w(w_ind) = w(w_index);
-                bixelInfo(i).e(order_ind) = e;
-                
-                order(w_index) = order_counter;
+                %
+                % timeline according to the spot scanning order
+                bixelInfo(i).time(order_count) = t;
+                bixelInfo(i).e(order_count) = e;
+                %
+                % order of stf_indexed variables
+                bixelInfo(i).order(w_ind) = order_count;
+                %
                 order_counter  = order_counter + 1;
+                
             end
         end
         
         t = t + es_time;
+        
     end
     
     offset = offset + stf(i).totalNumOfBixels;
     
-    
 end
 
 end
-%}

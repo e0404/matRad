@@ -27,12 +27,11 @@ numOfPhases = size(ct.cube, 2);
 % prepare a phase matrix in which place each bixel dose in it's phase
 bixelInfo = matRad_makePhaseMatrix(bixelInfo, numOfPhases, motionPeriod, motion);
 
+
 % for iPhase = 1:numOfPhases
 %     w = zeros(dij.totalNumOfBixels, 1);
 %     for i = 1:length(bixelInfo)
 %         iTime = find(bixelInfo(i).phaseMatrix(:, iPhase) ~= 0);
 %         w(bixelInfo(i).w_index(iTime)) = bixelInfo(i).w(iTime) .* bixelInfo(i).phaseMatrix(iTime, iPhase);
 %     end
-% end
-
-      
+% end      
