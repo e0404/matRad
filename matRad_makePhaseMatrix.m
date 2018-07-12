@@ -65,9 +65,10 @@ for i = 1:length(bixelInfo)
             realTime = realTime + phaseTime;
         end
     end
+    
+    bixelInfo(i).phaseMatSTF = bixelInfo(i).phaseMatrix(bixelInfo(i).orderToSTF,:);
+    bixelInfo(i).phaseMatSTF = bixelInfo(i).phaseMatSTF .* bixelInfo(i).w;
+    
 end
 
-%         phaseTime = motionPeriod * 10 ^ 6/numOfPhases;
-%         amp = phaseTime * motionPeriod / 4;
-%         periodicTerm =  - phaseTime / 2 + amp * abs(sin(pi * realTime/ motionPeriod));
-%             periodicTerm = abs(sin((pi * realTime  * Ix/ motionPeriod) + pi/2))
+bixelInfo(1).phaseMatSTF_total = vertcat(bixelInfo.phaseMatSTF);

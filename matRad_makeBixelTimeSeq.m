@@ -1,4 +1,4 @@
-function bixelInfo = matRad_makeBixelTimeSeq(stf, w, plotting)
+function bixelInfo = matRad_makeBixelTimeSeq(stf, resultGUI, plotting)
 
 
 if nargin < 3
@@ -33,9 +33,10 @@ for i = 1:length(stf) % looping over all beams
     usedEnergies = unique([stf(i).ray(:).energy]);
     usedEnergiesSorted = sort(usedEnergies, 'descend');
     
-    bixelInfo(i).order = zeros(stf(i).totalNumOfBixels, 1);
+    bixelInfo(i).orderToSTF = zeros(stf(i).totalNumOfBixels, 1);
     bixelInfo(i).time = zeros(stf(i).totalNumOfBixels, 1);
     bixelInfo(i).e = zeros(stf(i).totalNumOfBixels, 1);
+    bixelInfo(i).orderToIRR = zeros(stf(i).totalNumOfBixels, 1);
     
     for e = 1:length(usedEnergies) % looping over IES's
         
@@ -110,7 +111,7 @@ for i = 1:length(stf)
                 % calculating the time:
                 %
                 % required spot fluence
-                protons = w(w_index)* 10^6;
+                protons = resultGUI.w(w_index)* 10^6;
                 % time spent to spill the required spot fluence
                 spillTime = protons * 10^6 / spill_intensity;
                 %
@@ -157,9 +158,10 @@ for i = 1:length(stf)
                 % timeline according to the spot scanning order
                 bixelInfo(i).time(order_count) = t;
                 bixelInfo(i).e(order_count) = e;
+                bixelInfo(i).orderToIRR(order_count) = w_ind;
                 %
                 % order of stf_indexed variables
-                bixelInfo(i).order(w_ind) = order_count;
+                bixelInfo(i).orderToSTF(w_ind) = order_count;
                 %
                 order_counter  = order_counter + 1;
                 
@@ -169,6 +171,8 @@ for i = 1:length(stf)
         t = t + es_time;
         
     end
+    
+    bixelInfo(i).w = resultGUI.w(offset + 1: offset + stf(i).totalNumOfBixels);
     
     offset = offset + stf(i).totalNumOfBixels;
     
