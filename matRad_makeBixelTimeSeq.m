@@ -1,5 +1,21 @@
 function bixelInfo = matRad_makeBixelTimeSeq(stf, resultGUI, plotting)
-
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+% call
+%   
+%
+% input
+%       
+%  
+% output
+%
+% comment:
+% 
+% References
+%
+% Ahmad Neishabouri June 2018
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin < 3
     plotting = 'off';
@@ -36,7 +52,7 @@ for i = 1:length(stf) % looping over all beams
     bixelInfo(i).orderToSTF = zeros(stf(i).totalNumOfBixels, 1);
     bixelInfo(i).time = zeros(stf(i).totalNumOfBixels, 1);
     bixelInfo(i).e = zeros(stf(i).totalNumOfBixels, 1);
-    bixelInfo(i).orderToIRR = zeros(stf(i).totalNumOfBixels, 1);
+    bixelInfo(i).orderToSS = zeros(stf(i).totalNumOfBixels, 1);
     
     for e = 1:length(usedEnergies) % looping over IES's
         
@@ -151,16 +167,23 @@ for i = 1:length(stf)
                 
                 % storing the time and the order of bixels
                 %
-                % make the both counter and index 'per beam'
+                % make the both counter and index 'per beam' - help index
                 order_count = order_counter - offset;
                 w_ind = w_index - offset;
                 %
                 % timeline according to the spot scanning order
                 bixelInfo(i).time(order_count) = t;
+                % IES of bixels according to the spot scanning order
                 bixelInfo(i).e(order_count) = e;
-                bixelInfo(i).orderToIRR(order_count) = w_ind;
+                % according to spot scanning order, sorts w index of all
+                % bixels, use this order to transfer STF order to Spot
+                % Scanning order
+                bixelInfo(i).orderToSS(order_count) = w_ind;
                 %
-                % order of stf_indexed variables
+                % according to STF order, gives us order of irradiation of
+                % each bixel, use this order to transfer Spot Scanning
+                % order to STF order
+                % orderToSTF(orderToSS) = orderToSS(orderToSTF) = 1:#bixels
                 bixelInfo(i).orderToSTF(w_ind) = order_count;
                 %
                 order_counter  = order_counter + 1;
@@ -172,6 +195,7 @@ for i = 1:length(stf)
         
     end
     
+    % storing the fluence per beam
     bixelInfo(i).w = resultGUI.w(offset + 1: offset + stf(i).totalNumOfBixels);
     
     offset = offset + stf(i).totalNumOfBixels;

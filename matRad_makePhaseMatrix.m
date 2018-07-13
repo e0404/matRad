@@ -22,11 +22,13 @@ if nargin < 4
 end
 
 phaseTimeDev = .01;
+% time of each phase in micro seconds
 phaseTime = motionPeriod * 10 ^ 6/numOfPhases;
 
 
 
 for i = 1:length(bixelInfo)
+    
     
     realTime = phaseTime;
     bixelInfo(i).phaseMatrix = zeros(length(bixelInfo(i).time),numOfPhases);
@@ -36,8 +38,6 @@ for i = 1:length(bixelInfo)
 
     while (iTime <= length(bixelInfo(i).time))
         if(bixelInfo(i).time(iTime) < realTime)
-            
-            bixelInfo(i).time(iTime);
             
             while(iTime <= length(bixelInfo(i).time) && bixelInfo(i).time(iTime) < realTime)
                 bixelInfo(i).phaseMatrix(iTime, iPhase) = 1;
@@ -53,7 +53,7 @@ for i = 1:length(bixelInfo)
             
             switch motion
                 case 'linear'
-                    ...
+                    phaseTime = motionPeriod * 10 ^ 6/numOfPhases;
                 case 'sampled_period'
                     phaseTime = phaseTime + phaseTimeDev * randn(1);
                 case 'periodic'
@@ -63,12 +63,15 @@ for i = 1:length(bixelInfo)
             end
             
             realTime = realTime + phaseTime;
+            
         end
     end
     
-    bixelInfo(i).phaseMatSTF = bixelInfo(i).phaseMatrix(bixelInfo(i).orderToSTF,:);
-    bixelInfo(i).phaseMatSTF = bixelInfo(i).phaseMatSTF .* bixelInfo(i).w;
+    % permuatation of phaseMatrix from SS order to STF order
+    bixelInfo(i).phaseMatrix = bixelInfo(i).phaseMatrix(bixelInfo(i).orderToSTF,:);
+    % inserting the fluence in phaseMatrix
+    bixelInfo(i).phaseMatrix = bixelInfo(i).phaseMatrix .* bixelInfo(i).w;
     
 end
-
-bixelInfo(1).phaseMatSTF_total = vertcat(bixelInfo.phaseMatSTF);
+% storing all phase matrices in one total matrix
+bixelInfo(1).totalPhaseMatrix = vertcat(bixelInfo.phaseMatrix);

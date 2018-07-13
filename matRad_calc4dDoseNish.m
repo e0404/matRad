@@ -31,7 +31,7 @@ resultGUI.bioParam = pln.bioParam;
 
 for iPhase = 1:numOfPhases
     
-    w = bixelInfo(1).phaseMatSTF_total(:,iPhase);
+    w = bixelInfo(1).totalPhaseMatrix(:,iPhase);
     
     resultGUI.phaseDose{iPhase} = reshape(dij.physicalDose{iPhase} * w, dij.dimensions);
     
@@ -48,3 +48,16 @@ resultGUI = matRad_doseAcc(ct, resultGUI, cst, 'DDM');  %acc Methods: 'EMT' 'DDM
 
 %visualisation
 matRad_plotPhaseDose_2(ct, cst, pln, resultGUI); %optional kann slice angegeben werden  
+
+% Plot the result in comparison to the static dose
+slice = round(pln.isoCenter(1,3)./ct.resolution.z); 
+figure 
+subplot(2,2,1)
+imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet); 
+title('static dose distribution')
+subplot(2,2,2)
+imagesc(resultGUI.accRBExD(:,:,slice)),colorbar, colormap(jet); 
+title('4D dose distribution')
+subplot(2,2,3)
+imagesc(resultGUI.RBExD(:,:,slice) - resultGUI.accRBExD(:,:,slice)) ,colorbar, colormap(jet); 
+title('Difference')
