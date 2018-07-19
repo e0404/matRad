@@ -16,7 +16,7 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,param)
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
 %               biological optimization) RBE-weighted dose etc.
 %   info:       struct containing information about optimization
-%
+% 
 % References
 %   -
 %
@@ -43,6 +43,17 @@ else
    param.logLevel = 1;
 end
 
+if ismac
+    % Code to run on Mac plaform
+elseif isunix
+    % Code to run on Linux plaform
+    param.logLevel = 2;
+elseif ispc
+    % Code to run on Windows platform
+else
+    disp('Platform not supported')
+end
+    
 % determine if Matlab or Octave
 [env, ~] = matRad_getEnvironment();
 
@@ -93,7 +104,7 @@ cst  = matRad_setOverlapPriorities(cst);
 
 % adjust objectives and constraints internally for fractionation 
 for i = 1:size(cst,1)
-    for j = 1:size(cst{i,6},1)
+    for j = 1:size(cst{i,6},2)
        cst{i,6}(j).dose = cst{i,6}(j).dose/pln.numOfFractions;
     end
 end
@@ -106,8 +117,8 @@ ixTarget   = [];
 for i=1:size(cst,1)
     if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
         V = [V;cst{i,4}{1}];
-        doseTarget = [doseTarget cst{i,6}.dose];
-        ixTarget   = [ixTarget i*ones(1,length([cst{i,6}.dose]))];
+        doseTarget = [doseTarget max(vertcat(cst{i,6}(:).dose))];  % what if multiple objectives are defined
+        ixTarget   = [ixTarget i*ones(1,length([cst{i,4}{1}]))];
     end
 end
 [doseTarget,i] = max(doseTarget);
@@ -144,7 +155,7 @@ elseif pln.bioParam.bioOpt
 
         for j = 1:size(cst{i,6},2)
             % check if prescribed doses are in a valid domain
-            if cst{i,6}(j).dose > 5 && isequal(cst{i,3},'TARGET')
+            if cst{i,6}(j).dose(1) > 5 && isequal(cst{i,3},'TARGET')
                 matRad_dispToConsole('Reference dose > 5Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.',param,'error');
             end
             
@@ -181,71 +192,26 @@ else
     wInit       = wOnes * bixelWeight;
 end
 
-matRad_dispToConsole('Calculating probabilistic quantities for optimization ...\n',param,'info');
-      
-if ~pln.bioParam.bioOpt
-    fNames = {'physicalDose'};
-else
-    fNames = {'mAlphaDose','mSqrtBetaDose'};
-end
 
 %% calculate probabilistic quantities for probabilistic optimization if at least
 % one robust objective is defined
-
 linIxDIJ = find(~cellfun(@isempty,dij.physicalDose))';
-
-% find VOI indicies with objective or constraint
-voiIx = [];
-for i = 1:size(cst,1)     
-  if ~isempty(cst{i,6})
-      voiIx = [voiIx i];
-      cst{i,6}(1).mOmega = 0;
-  end
-end
     
 FLAG_CALC_PROB = false;
 FLAG_ROB_OPT   = false;
 
 for i = 1:size(cst,1)
     for j = 1:size(cst{i,6},1)
-       if strcmp(cst{i,6}(j).robustness,'PROB') && numel(linIxDIJ) > 1
+       %% allow for probabilistic optimization when a prob objective function 
+       % and a expected dose influence matrix is found
+       if strcmp(cst{i,6}(j).robustness,'PROB') && sum(isfield(dij,{'physicalDoseExp','alphaDoseExp'})) > 0
           FLAG_CALC_PROB = true;
        end
+       % enable robust optimziation if robust object is found and the
+       % number of discrete scenarios is greater than one
        if ~strcmp(cst{i,6}(j).robustness,'none') && numel(linIxDIJ) > 1
           FLAG_ROB_OPT = true;
        end
-    end
-end
-
-% create placeholders for expected ij matrices
-for i = 1:numel(fNames)
-   dij.([fNames{1,i} 'Exp']){1} = spalloc(prod(dij.dimensions),dij.totalNumOfBixels,1);
-end
-   
-
-if FLAG_CALC_PROB
-
-    ixDij = find(~cellfun(@isempty, dij.physicalDose))'; 
-    
-    for i = 1:numel(fNames)
-        % create expected ij structure
-        dij.([fNames{1,i} 'Exp']){1} = spalloc(prod(dij.dimensions),dij.totalNumOfBixels,1);
-        % add up sparse matrices - should possess almost same sparsity pattern
-        for j = 1:pln.multScen.totNumScen
-            dij.([fNames{1,i} 'Exp']){1} = dij.([fNames{1,i} 'Exp']){1} + dij.([fNames{1,i}]){ixDij(j)} .* pln.multScen.scenProb(j);
-        end
-    end
-    
-    % loop over VOIs
-    for i = voiIx
-        % loop over scenarios and calculate the integral variance of each
-        % spot combination; bio bio optimization only consider std in the
-        % linear part of the biological effect
-        for j = 1:pln.multScen.totNumScen
-              cst{i,6}(1).mOmega = cst{i,6}(1).mOmega + ...
-                  ((dij.(fNames{1,1}){ixDij(j)}(cst{i,4}{1},:)' * dij.(fNames{1,1}){ixDij(j)}(cst{i,4}{1},:)) * pln.multScen.scenProb(j));
-        end
-        cst{i,6}(1).mOmega = cst{i,6}(1).mOmega - (dij.([fNames{1,1} 'Exp']){1}(cst{i,4}{1},:)' * dij.([fNames{1,1} 'Exp']){1}(cst{i,4}{1},:));
     end
 end
 
@@ -254,6 +220,29 @@ if ~FLAG_ROB_OPT || FLAG_CALC_PROB     % if multiple robust objectives are defin
    options.ixForOpt = 1;
 else
    options.ixForOpt = find(~cellfun(@isempty,dij.physicalDose))';
+end
+
+% adapt OAR dose prescription
+if FLAG_CALC_PROB
+    for i = 1:size(cst,1)
+        if ~isempty(cst{i,4}) && ~isempty(cst{i,6})
+           for j = 1:size(cst{i,6},2)
+                if isequal(cst{i,3},'OAR') 
+                    if strcmp(cst{i,6}.type,'square overdosing')
+                        warning('rob opt only supports squared deviation objectives for OARs');
+                    end
+                    cst{i,6}.type = 'square overdosing';%'square deviation';
+                    cst{i,6}.dose = zeros(numel(cst{i,4}{1}),1);
+                elseif isequal(cst{i,3},'TARGET')
+                   % cst{i,6}.type = 'square deviation';
+                end
+           end
+        end
+    end     
+end
+
+if isfield(param,'w')
+   wInit = param.w; 
 end
 
 options.numOfScen    = numel(options.ixForOpt);
@@ -284,10 +273,19 @@ resultGUI.wUnsequenced = wOpt;
 
 % calc individual scenarios
 if options.numOfScen > 1 || FLAG_ROB_OPT
+    
    Cnt = 1;
-   for i = find(~cellfun(@isempty,dij.physicalDose))'
-      tmpResultGUI = matRad_calcCubes(wOpt,dij,cst,i);
-      resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
+   
+   if FLAG_ROB_OPT
+       robID = 'Rob';
+   else
+       robID = '';
+   end
+   
+   ixScen = find(~cellfun(@isempty,dij.physicalDose));
+   for i = ixScen(:)'
+      tmpResultGUI = matRad_calcCubes(wOpt,dij,cst,i,false);
+      resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d') robID]) = tmpResultGUI.([pln.bioParam.quantityVis robID]);
       Cnt = Cnt + 1;
    end      
 end

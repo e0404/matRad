@@ -34,7 +34,7 @@ function jacob = matRad_jacobFuncWrapper(w,dij,cst,options)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % get current dose / effect / RBExDose vector
-d = matRad_backProjection(w,dij,cst,options);
+[d,d_exp,~] = matRad_backProjection(w,dij,cst,options);
 
 % initialize jacobian
 jacob = sparse([]);
@@ -72,16 +72,20 @@ for i = 1:size(cst,1)
                 end
                 
                 % if conventional opt: just add constraints of nominal dose
-                if strcmp(cst{i,6}(j).robustness,'none')
+                if strcmp(cst{i,6}(j).robustness,'none') || strcmp(cst{i,6}(j).robustness,'PROB')
 
-                    d_i = d{1}(cst{i,4}{1});
-
-                    jacobVec =  matRad_jacobFunc(d_i,cst{i,6}(j),d_ref);
-                    
-                    scenID  = [scenID;1];
-                    scenID2 = [scenID2;ones(numel(cst{i,4}{1}),1)];
-                    
-                    if isequal(options.quantityOpt,'physicalDose') && ~isempty(jacobVec) || isequal(options.model,'constRBE')
+                   if strcmp(cst{i,6}(j).robustness,'none')
+                       d_i = d{1}(cst{i,4}{1});
+                   elseif strcmp(cst{i,6}(j).robustness,'PROB')
+                       d_i = d_exp{1}(cst{i,4}{1});
+                   end
+                   
+                   jacobVec =  matRad_jacobFunc(d_i,cst{i,6}(j),d_ref);
+                   
+                   scenID  = [scenID;1];
+                   scenID2 = [scenID2;ones(numel(cst{i,4}{1}),1)];
+                   
+                   if isequal(options.quantityOpt,'physicalDose') && ~isempty(jacobVec) || isequal(options.model,'constRBE')
 
                        DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
 
@@ -95,9 +99,9 @@ for i = 1:size(cst,1)
 
                     elseif isequal(options.quantityOpt,'RBExD') && ~isempty(jacobVec)
                                         
-                       scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i);
+                       scaledEffect            = (dij.gamma(cst{i,4}{1}) + d_i);
 
-                       delta = jacobVec./(2*dij.bx(cst{i,4}{1}).*scaledEffect);
+                       delta                   = jacobVec./(2*dij.betaX(cst{i,4}{1}).*scaledEffect);
 
                        mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,delta,dij.numOfVoxels,1)];
                        mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
@@ -122,7 +126,7 @@ if isequal(options.quantityOpt,'effect') || isequal(options.quantityOpt,'RBExD')
 end
 
 % Calculate jacobian with dij projections
-for i = 1:dij.numOfScenarios
+for i = 1:options.numOfScen
    % enter if statement also for protons using a constant RBE
    if isequal(options.quantityOpt,'physicalDose') ||  isequal(options.model,'constRBE')
 

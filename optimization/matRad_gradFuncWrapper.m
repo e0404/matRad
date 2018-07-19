@@ -72,7 +72,7 @@ for  i = 1:size(cst,1)
                 if (~isequal(cst{i,6}(j).type, 'mean') && ~isequal(cst{i,6}(j).type, 'EUD')) &&...
                     isequal(options.quantityOpt,'effect') 
 
-                    d_ref = cst{i,5}.alphaX*cst{i,6}(j).dose + cst{i,5}.betaX*cst{i,6}(j).dose^2;
+                    d_ref = cst{i,5}.alphaX.*cst{i,6}(j).dose + cst{i,5}.betaX.*cst{i,6}(j).dose.^2;
                 else
                     d_ref = cst{i,6}(j).dose;
                 end
@@ -214,7 +214,7 @@ for i = 1:options.numOfScen
                 vBias        = (delta_exp{i}' * dij.mAlphaDoseExp{1})';
                 quadTerm     = dij.mSqrtBetaDoseExp{1} * w;
                 mPsi         = (2*(delta_exp{i}.*quadTerm)'*dij.mSqrtBetaDoseExp{1})';
-                g            =  g + vBias + mPsi ; 
+                g            =  g + vBias + mPsi + (2 * vOmega);   
             end
 
         elseif isequal(options.quantityOpt,'RBExD')
@@ -240,3 +240,21 @@ for i = 1:options.numOfScen
 
     end
 end
+
+RUN_GRADIENT_CHECKER = false;
+
+if RUN_GRADIENT_CHECKER
+    f       = matRad_objFuncWrapper(w,dij,cst,options);
+    epsilon = 1e-6;
+    ix      = unique(randi([1 numel(w)],1,5));
+
+    for i = ix
+         wInit    = w;
+         wInit(i) = wInit(i) + epsilon;
+         fDelta   = matRad_objFuncWrapper(wInit,dij,cst,options);
+         numGrad  = (fDelta-f)/epsilon;
+         diff     = (numGrad/g(i)-1)*100;
+         fprintf(['Component # ' num2str(i) ' - rel diff of numerical and analytical gradient = ' num2str(diff) '\n']);
+    end
+end
+

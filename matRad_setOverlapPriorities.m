@@ -1,4 +1,4 @@
-function [cst,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)
+function [cst,voiIndexCube,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % function to handle overlap priorities during fluence optimizaiton and
 % dose calculation. If you have overlapping volumes of interest you need to
@@ -66,13 +66,21 @@ for i = 1:numOfCtScenarios
     end
 end
 
-%Calculate the overlap cube if requested
 if nargout == 2 && nargin == 2
+    voiIndexCube = zeros(ctDim);
+    for i = 1:size(cst,1)
+         voiIndexCube(cst{i,4}{1}) = i;
+    end
+end
+
+%Calculate the overlap cube if requested
+if nargout == 3 && nargin == 2
    overlapPriorityCube = zeros(ctDim);
     for i = 1:size(cst,1)
         overlapPriorityCube(cst{i,4}{1}) = cst{i,5}.Priority;
     end
 end
+    
     
 
 end

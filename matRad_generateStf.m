@@ -74,8 +74,14 @@ voiTarget(V) = 1;
     
 % add margin
 addmarginBool = 1;
+SigmaUnit     = 2.5; 
 if addmarginBool
-    voiTarget = matRad_addMargin(voiTarget,cst,ct.resolution,ct.resolution,true);
+      
+    margin.x = SigmaUnit * ct.resolution.x;
+    margin.y = SigmaUnit * ct.resolution.y;
+    margin.z = SigmaUnit * ct.resolution.z;
+    
+    voiTarget = matRad_addMargin(voiTarget,cst,ct.resolution,margin,true);
     V   = find(voiTarget>0);
 end
 
@@ -228,12 +234,19 @@ for i = 1:length(pln.propStf.gantryAngles)
     for j = stf(i).numOfRays:-1:1
 
         for ShiftScen = 1:pln.multScen.totNumShiftScen
-        % ray tracing necessary to determine depth of the target
-            [~,l{ShiftScen},rho{ShiftScen},~,~] = matRad_siddonRayTracer(stf(i).isoCenter + pln.multScen.isoShift(ShiftScen,:), ...
-                             ct.resolution, ...
-                             stf(i).sourcePoint, ...
-                             stf(i).ray(j).targetPoint, ...
-                             [ct.cube {voiTarget}]);
+            
+            if strcmp(pln.multScen.TYPE,'apmScen')
+                vOffset = [0 0 0]; % already covered in margin expansion
+            else
+                vOffset = pln.multScen.isoShift(ShiftScen,:);
+            end
+            
+            % ray tracing necessary to determine depth of the target
+            [~,l{ShiftScen},rho{ShiftScen},~,~] = matRad_siddonRayTracer(stf(i).isoCenter + vOffset, ...
+                ct.resolution, ...
+                stf(i).sourcePoint, ...
+                stf(i).ray(j).targetPoint, ...
+                [ct.cube {voiTarget}]);
         end
                       
         % find appropriate energies for particles
@@ -259,18 +272,37 @@ for i = 1:length(pln.propStf.gantryAngles)
                                   % compute radiological depths
                                   % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
                                   radDepths = cumsum(l{ShiftScen} .* rho{ShiftScen}{CtScen});
+                                  diff_voi  = diff([rho{ShiftScen}{end}]);
                                   
-                                  if pln.multScen.relRangeShift(RangeShiftScen) ~= 0 || pln.multScen.absRangeShift(RangeShiftScen) ~= 0
-                                      radDepths = radDepths +...                                                        % original cube
-                                          rho{ShiftScen}{CtScen}*pln.multScen.relRangeShift(RangeShiftScen) +... % rel range shift
-                                          pln.multScen.absRangeShift(RangeShiftScen);                           % absolute range shift
+                                  if strcmp(pln.multScen.TYPE,'apmScen')
+                                      vOffset =  rho{ShiftScen}{CtScen}* ((SigmaUnit*pln.multScen.rangeSDsys)/100) +...                % rel range shift
+                                                 SigmaUnit* pln.multScen.rangeSDrnd; 
+                                      
+                                      % absolute range shift
+                                      radDepthsUnder = radDepths + vOffset;
+                                      radDepthsOver  = radDepths - vOffset;
+                                      radDepthsUnder(radDepthsUnder < 0) = 0;
+                                      radDepthsOver(radDepthsOver < 0) = 0;
+                                      
+                                      % find target entry & exit
+                                      targetEntry(Counter,1:length(radDepthsOver(diff_voi == 1))) = radDepthsOver(diff_voi == 1);
+                                      targetExit(Counter,1:length(radDepthsUnder(diff_voi == -1))) = radDepthsUnder(diff_voi == -1);
+                                      
+                                  elseif pln.multScen.relRangeShift(RangeShiftScen) ~= 0 || pln.multScen.absRangeShift(RangeShiftScen) ~= 0
+                                      vOffset =  rho{ShiftScen}{CtScen}*pln.multScen.relRangeShift(RangeShiftScen) +... % rel range shift
+                                                 pln.multScen.absRangeShift(RangeShiftScen);                            % absolute range shift
+                                      
+                                      radDepths = radDepths + vOffset ;
                                       radDepths(radDepths < 0) = 0;
+                                      
+                                      % find target entry & exit
+                                      targetEntry(Counter,1:length(radDepths(diff_voi == 1))) = radDepths(diff_voi == 1);
+                                      targetExit(Counter,1:length(radDepths(diff_voi == -1))) = radDepths(diff_voi == -1);
+                                  else
+                                      % find target entry & exit
+                                      targetEntry(Counter,1:length(radDepths(diff_voi == 1))) = radDepths(diff_voi == 1);
+                                      targetExit(Counter,1:length(radDepths(diff_voi == -1))) = radDepths(diff_voi == -1);
                                   end
-                                  
-                                  % find target entry & exit
-                                  diff_voi    = diff([rho{ShiftScen}{end}]);
-                                  targetEntry(Counter,1:length(radDepths(diff_voi == 1))) = radDepths(diff_voi == 1);
-                                  targetExit(Counter,1:length(radDepths(diff_voi == -1))) = radDepths(diff_voi == -1);
                                   
                               end
                           end
@@ -304,11 +336,14 @@ for i = 1:length(pln.propStf.gantryAngles)
                     matRad_dispToConsole('Inconsistency during ray tracing.',param,'error'); 
                 end
 
-                stf(i).ray(j).energy = [];
-
+                stf(i).ray(j).energy   = [];
+                stf(i).ray(j).energyIx = [];
+                
                 % Save energies in stf struct
                 for k = 1:numel(targetEntry)
-                    stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
+                    energyIx               = availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k);
+                    stf(i).ray(j).energy   = [stf(i).ray(j).energy availableEnergies(energyIx)];
+                    stf(i).ray(j).energyIx = [stf(i).ray(j).energyIx find(energyIx)];
                 end
   
                 
@@ -400,6 +435,7 @@ for i = 1:length(pln.propStf.gantryAngles)
                 maskEnergy = stf(i).ray(j).energy(k) == availableEnergies;
                 if ~useEnergyBool(maskEnergy)
                     stf(i).ray(j).energy(k)     = [];
+                    stf(i).ray(j).energyIx(k)   = [];
                     stf(i).ray(j).focusIx(k)    = [];
                     stf(i).numOfBixelsPerRay(j) = stf(i).numOfBixelsPerRay(j) - 1;
                 end

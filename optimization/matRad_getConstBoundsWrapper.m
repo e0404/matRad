@@ -54,7 +54,7 @@ for  i = 1:size(cst,1)
                     param = cst{i,6}(j).dose;
                 end
 
-                if strcmp(cst{i,6}(j).robustness,'none') || strcmp(cst{i,6}(j).robustness,'probabilistic') || strcmp(cst{i,6}(j).robustness,'VWWC') ||...
+                if strcmp(cst{i,6}(j).robustness,'none') || strcmp(cst{i,6}(j).robustness,'PROB') || strcmp(cst{i,6}(j).robustness,'VWWC') ||...
                    strcmp(cst{i,6}(j).robustness,'COWC') || strcmp(cst{i,6}(j).robustness,'VWWC_CONF')
 
 
