@@ -19,6 +19,7 @@ function options = matRad_probOptions(ct,cst,pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 global INPUT_UNCERTAINTY;
+global OUTPUT_UNCERTAINTY;
 global SHOW_PARALLELTOOLBOX_WARNING;
 
 SHOW_PARALLELTOOLBOX_WARNING = true;
@@ -48,7 +49,6 @@ if FlagParallToolBoxLicensed
     options.probOpt.typeVarCalc  = 'parallelParFor'; 
 end
 
-%options.probOpt.typeVarCalc  = 'parallel'; 
 options.probOpt.omegaTarget  = false;               %  if true only target voxels are used for omega filling  
 
 options.probOpt.LatCutOff    = 3.5^2;               % [sigma units] or set it to Inf if no additional cutoff should be used
@@ -71,6 +71,13 @@ if ~isempty(INPUT_UNCERTAINTY)
 else
    options.probOpt.InputUCT = 'phys'; %'phys', 'bio', 'biophys'
 end
+
+if ~isempty(OUTPUT_UNCERTAINTY)
+   options.probOpt.OutputUCT = OUTPUT_UNCERTAINTY;
+else
+   options.probOpt.OutputUCT = 'phys'; %'phys', 'bio', 'biophys'
+end
+
 %%  define voxel list for which variance should be calculated
 % use all voxels in the cst
 %V = [cst{:,4}];

@@ -378,9 +378,6 @@ for k = 1:numOmega
          matRad_dispToConsole('matRad_calcParticleVarSeriel: NaN values in std',[],'warning');
       end
       
-      %stdTotFracTmp(i)    = real(sqrt(Var_FracTot));
-      %stdSingleFracTmp(i) = real(sqrt(Var_Corr));
-      
       stdTotFracTmp(i) = sqrt(Var_FracTot);
       if imag(stdTotFracTmp(i))
          stdTotFracTmp(i) = 0;

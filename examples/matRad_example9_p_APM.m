@@ -14,10 +14,9 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% 
-% In this example we will show
-% (i) how to create arbitrary ct data (resolution, ct numbers)
-% (ii) how to create a cst structure containing the volume of interests of the phantom
-% (iii) generate a treatment plan for this phantom
+% In this example we will show how to calculate the variance of a proton
+% treatment plan and how to perform probabilistic optimization by
+% optimization the expectation value of a squared deviation objective
 clc, clear, close all
 
 %% Create a CT image series
@@ -56,8 +55,8 @@ cst{ixOAR,5}.betaX       = 0.0500;
 cst{ixOAR,5}.Priority    = 2;
 cst{ixOAR,5}.Visible     = 1;
 cst{ixOAR,6}.type        = 'square overdosing';
-cst{ixOAR,6}.dose        = 30;
-cst{ixOAR,6}.penalty     = 10;
+cst{ixOAR,6}.dose        = 20;
+cst{ixOAR,6}.penalty     = 50;
 cst{ixOAR,6}.EUD         = NaN;
 cst{ixOAR,6}.volume      = NaN;
 cst{ixOAR,6}.coverage    = NaN;
@@ -70,7 +69,7 @@ cst{ixPTV,5}.Priority    = 1;
 cst{ixPTV,5}.Visible     = 1;
 cst{ixPTV,6}.type        = 'square deviation';
 cst{ixPTV,6}.dose        = 60;
-cst{ixPTV,6}.penalty     = 50;
+cst{ixPTV,6}.penalty     = 300;
 cst{ixPTV,6}.EUD         = NaN;
 cst{ixPTV,6}.volume      = NaN;
 cst{ixPTV,6}.coverage    = NaN;
@@ -104,7 +103,7 @@ switch TYPE
       
    case {'spheric'}
       
-      radiusOAR = xDim/4;
+      radiusOAR = xDim/6;
       
       for x = 1:xDim
          for y = 1:yDim
@@ -149,7 +148,7 @@ switch TYPE
       
    case {'spheric'}
       
-      radiusPTV = xDim/12;
+      radiusPTV = xDim/14;
       
       for x = 1:xDim
          for y = 1:yDim
@@ -209,18 +208,15 @@ quantityOpt  = 'physicalDose';
 
 %%
 % The remaining plan parameters are set like in the previous example files
-pln.numOfFractions        = 30;
-pln.propStf.gantryAngles  = [90 270];
+pln.numOfFractions        = 20;
+pln.propStf.gantryAngles  = [0 90];
 pln.propStf.couchAngles   = [0 0];
 pln.propStf.bixelWidth    = 5;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
-
-global INPUT_UNCERTAINTY;
-INPUT_UNCERTAINTY = 'phys'; %'phys', 'bio', 'biophys'
-   
+  
 % retrieve bio model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 
@@ -251,7 +247,6 @@ resultGUIrob  = matRad_fluenceOptimization(dij,cst,pln,param);
 
 %% calculate variance of robust pencil beam weights
 [cst,resultGUIrob] = matRad_calcVar(ct,cst,stf,pln,dij,resultGUIrob);
-
 
 %% plot everthing
 plane         = 3;

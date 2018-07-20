@@ -14,20 +14,19 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% 
-% In this example we will show
-% (i) how to create arbitrary ct data (resolution, ct numbers)
-% (ii) how to create a cst structure containing the volume of interests of the phantom
-% (iii) generate a treatment plan for this phantom
+% In this example we will show how to calculate the variance of a carbon
+% ion treatment plan and how to perform probabilistic optimization by
+% optimization the expectation value of a squared deviation objective
 clc, clear, close all
 
 %% Create a CT image series
-xDim = 150;
-yDim = 150;
+xDim = 130;
+yDim = 130;
 zDim = 50;
 
 ct.cubeDim      = [xDim yDim zDim];
-ct.resolution.x = 1;
-ct.resolution.y = 1;
+ct.resolution.x = 1.7;
+ct.resolution.y = 1.7;
 ct.resolution.z = 2;
 ct.numOfCtScen  = 1;
  
@@ -56,8 +55,8 @@ cst{ixOAR,5}.betaX       = 0.0500;
 cst{ixOAR,5}.Priority    = 2;
 cst{ixOAR,5}.Visible     = 1;
 cst{ixOAR,6}.type        = 'square overdosing';
-cst{ixOAR,6}.dose        = 30;
-cst{ixOAR,6}.penalty     = 10;
+cst{ixOAR,6}.dose        = 20;
+cst{ixOAR,6}.penalty     = 50;
 cst{ixOAR,6}.EUD         = NaN;
 cst{ixOAR,6}.volume      = NaN;
 cst{ixOAR,6}.coverage    = NaN;
@@ -70,7 +69,7 @@ cst{ixPTV,5}.Priority    = 1;
 cst{ixPTV,5}.Visible     = 1;
 cst{ixPTV,6}.type        = 'square deviation';
 cst{ixPTV,6}.dose        = 60;
-cst{ixPTV,6}.penalty     = 50;
+cst{ixPTV,6}.penalty     = 300;
 cst{ixPTV,6}.EUD         = NaN;
 cst{ixPTV,6}.volume      = NaN;
 cst{ixPTV,6}.coverage    = NaN;
@@ -104,7 +103,7 @@ switch TYPE
       
    case {'spheric'}
       
-      radiusOAR = xDim/4;
+      radiusOAR = xDim/6;
       
       for x = 1:xDim
          for y = 1:yDim
@@ -149,7 +148,7 @@ switch TYPE
       
    case {'spheric'}
       
-      radiusPTV = xDim/12;
+      radiusPTV = xDim/16;
       
       for x = 1:xDim
          for y = 1:yDim
@@ -180,6 +179,7 @@ vIxPTV = cst{ixPTV,4}{1};
 ct.cubeHU{1}(vIxOAR) = 1;  % assign HU of water
 ct.cubeHU{1}(vIxPTV) = 1;  % assign HU of water
 
+%load(['patients' filesep 'BOXPHANTOM_TINY.mat'])
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
 % structure requires input from the treatment planner and defines the most
@@ -209,8 +209,8 @@ quantityOpt  = 'effect';
 
 %%
 % The remaining plan parameters are set like in the previous example files
-pln.numOfFractions        = 30;
-pln.propStf.gantryAngles  = [90 270];
+pln.numOfFractions        = 20;
+pln.propStf.gantryAngles  = [0 90];
 pln.propStf.couchAngles   = [0 0];
 pln.propStf.bixelWidth    = 5;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
@@ -218,8 +218,8 @@ pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter
 pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
 
-global INPUT_UNCERTAINTY;
-INPUT_UNCERTAINTY = 'phys'; %'phys', 'bio', 'biophys'
+% global INPUT_UNCERTAINTY;
+% INPUT_UNCERTAINTY = 'phys'; %'phys', 'bio', 'biophys'
    
 % retrieve bio model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
@@ -252,16 +252,15 @@ resultGUIrob  = matRad_fluenceOptimization(dij,cst,pln,param);
 %% calculate variance of robust pencil beam weights
 [cst,resultGUIrob] = matRad_calcVar(ct,cst,stf,pln,dij,resultGUIrob);
 
-
 %% plot everthing
 plane         = 3;
 slice         = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-doseWindowExp = [0 max([max(max(resultGUI.physicalDoseExp(:,:,slice))) max(max(resultGUIrob.physicalDoseExpRob(:,:,slice)))])];
-doseWindowStd = [0 max([max(max(resultGUI.physicalDoseStdTotFrac(:,:,slice))) max(max(resultGUIrob.physicalDoseStdTotFracRob(:,:,slice)))])];
+doseWindowExp = [0 max([max(max(resultGUI.RBExDExp(:,:,slice))) max(max(resultGUIrob.RBExDExpRob(:,:,slice)))])];
+doseWindowStd = [0 max([max(max(resultGUI.RBExDStdTotFrac(:,:,slice))) max(max(resultGUIrob.RBExDStdTotFracRob(:,:,slice)))])];
 
 figure,title('phantom plan')
-subplot(221),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDoseExp,plane,slice,[],[],colorcube,[],doseWindowExp,[]);
-subplot(222),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDoseStdTotFrac,plane,slice,[],[],colorcube,[],doseWindowStd,[]);
-subplot(223),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrob.physicalDoseExpRob,plane,slice,[],[],colorcube,[],doseWindowExp,[]);
-subplot(224),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrob.physicalDoseStdTotFracRob,plane,slice,[],[],colorcube,[],doseWindowStd,[]);
+subplot(221),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExDExp,plane,slice,[],[],colorcube,[],doseWindowExp,[]);
+subplot(222),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExDStdSingleFrac,plane,slice,[],[],colorcube,[],doseWindowStd,[]);
+subplot(223),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrob.RBExDExpRob,plane,slice,[],[],colorcube,[],doseWindowExp,[]);
+subplot(224),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrob.RBExDStdTotFracRob,plane,slice,[],[],colorcube,[],doseWindowStd,[]);
 
