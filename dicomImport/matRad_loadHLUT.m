@@ -82,16 +82,17 @@ try
    end
    
 catch
-   % load default HLUT
-   hlutFileName = strcat(hlutDir,'matRad_default_', particle, '.hlut');
    
+   % load default HLUT
    if isempty(ShowHLUTWarning)
+      hlutFileName = strcat(hlutDir,'matRad_default.hlut');
       warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder. \n'];
       matRad_dispToConsole(warnText,param,'warning');
       infoText = ['matRad default HLUT loaded. \n'];
       matRad_dispToConsole(infoText,param,'info');
       ShowHLUTWarning = false;
    end
+    
 end
 
 hlutFile = fopen(hlutFileName,'r');
