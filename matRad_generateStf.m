@@ -75,11 +75,11 @@ voiTarget(V) = 1;
 % add margin
 addmarginBool = 1;
 SigmaUnit     = 2.5; 
+
 if addmarginBool
-      
-    margin.x = SigmaUnit * ct.resolution.x;
-    margin.y = SigmaUnit * ct.resolution.y;
-    margin.z = SigmaUnit * ct.resolution.z;
+    margin.x = max([pln.propStf.bixelWidth SigmaUnit * ct.resolution.x]);
+    margin.y = max([pln.propStf.bixelWidth SigmaUnit * ct.resolution.y]);
+    margin.z = max([pln.propStf.bixelWidth SigmaUnit * ct.resolution.z]);
     
     voiTarget = matRad_addMargin(voiTarget,cst,ct.resolution,margin,true);
     V   = find(voiTarget>0);

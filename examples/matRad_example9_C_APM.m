@@ -246,21 +246,28 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 %%
 cst{1,6}.robustness = 'PROB';
 cst{2,6}.robustness = 'PROB';
+for i= 1:size(cst,1)
+    cst{i,4}{1} = cstOrg{i,4}{1};
+end
 param.w       = resultGUI.w;
 resultGUIrob  = matRad_fluenceOptimization(dij,cst,pln,param);
 
 %% calculate variance of robust pencil beam weights
-[cst,resultGUIrob] = matRad_calcVar(ct,cst,stf,pln,dij,resultGUIrob);
+[~,resultGUIrob] = matRad_calcVar(ct,cst,stf,pln,dij,resultGUIrob);
 
 %% plot everthing
 plane         = 3;
 slice         = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-doseWindowExp = [0 max([max(max(resultGUI.RBExDExp(:,:,slice))) max(max(resultGUIrob.RBExDExpRob(:,:,slice)))])];
-doseWindowStd = [0 max([max(max(resultGUI.RBExDStdTotFrac(:,:,slice))) max(max(resultGUIrob.RBExDStdTotFracRob(:,:,slice)))])];
+doseWindowExp = [0 max([max(max(resultGUI.RBExDExp(:,:,slice))) max(max(resultGUIrob.RBExDExpRob(:,:,slice)))])]*1.05;
+doseWindowStd = [0 max([max(max(resultGUI.RBExDStdSingleFrac(:,:,slice))) max(max(resultGUIrob.RBExDStdSingleFracRob(:,:,slice)))])]*1.05;
 
 figure,title('phantom plan')
 subplot(221),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExDExp,plane,slice,[],[],colorcube,[],doseWindowExp,[]);
 subplot(222),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExDStdSingleFrac,plane,slice,[],[],colorcube,[],doseWindowStd,[]);
 subplot(223),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrob.RBExDExpRob,plane,slice,[],[],colorcube,[],doseWindowExp,[]);
-subplot(224),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrob.RBExDStdTotFracRob,plane,slice,[],[],colorcube,[],doseWindowStd,[]);
+subplot(224),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrob.RBExDStdSingleFracRob,plane,slice,[],[],colorcube,[],doseWindowStd,[]);
+
+%% append results and show them in GUI
+resultGUI  = matRad_appendResultGUI(resultGUI,resultGUIrob,0);
+matRadGUI
 

@@ -106,11 +106,11 @@ classdef matRad_multScen < handle
       mCovSpot;               % component wise correlation of one individual pencil beam
       
       % values for APM
-      rangeSDsys  = 3.5;      % given in %
+      rangeSDsys  = 4;        % given in %
       rangeSDrnd  = 1;        % given in [mm]
       
       shiftSDsys  = 2;        % absolut values given in [mm]
-      shiftSDrnd  = 1;        % absolut values given in [mm]
+      shiftSDrnd  = 2;        % absolut values given in [mm]
       
    end
    

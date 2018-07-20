@@ -20,14 +20,14 @@
 clc, clear, close all
 
 %% Create a CT image series
-xDim = 150;
-yDim = 150;
-zDim = 50;
+xDim = 160;
+yDim = 160;
+zDim = 80;
 
 ct.cubeDim      = [xDim yDim zDim];
-ct.resolution.x = 1;
-ct.resolution.y = 1;
-ct.resolution.z = 2;
+ct.resolution.x = 3;
+ct.resolution.y = 3;
+ct.resolution.z = 3;
 ct.numOfCtScen  = 1;
  
 % create an ct image series with zeros - it will be filled later
@@ -77,7 +77,7 @@ cst{ixPTV,6}.robustness  = 'none';
 
 
 %% Lets create either a cubic or a spheric phantom
-TYPE = 'spheric';   % either 'cubic' or 'spheric'
+TYPE = 'cubic';   % either 'cubic' or 'spheric'
 
 % first the OAR
 cubeHelper = zeros(ct.cubeDim);
@@ -85,13 +85,13 @@ cubeHelper = zeros(ct.cubeDim);
 switch TYPE
    
    case {'cubic'}
-      
-      xLowOAR  = round(xDim/2 - xDim/4);
-      xHighOAR = round(xDim/2 + xDim/4);
-      yLowOAR  = round(yDim/2 - yDim/4);
-      yHighOAR = round(yDim/2 + yDim/4);
-      zLowOAR  = round(zDim/2 - zDim/4);
-      zHighOAR = round(zDim/2 + zDim/4);
+      fac      = 15;
+      xLowOAR  = round(xDim/2 - xDim/fac);
+      xHighOAR = round(xDim/2 + xDim/fac);
+      yLowOAR  = round(yDim/2 - yDim/fac);
+      yHighOAR = round(yDim/2 + yDim/fac);
+      zLowOAR  = round(zDim/2 - zDim/fac);
+      zHighOAR = round(zDim/2 + zDim/fac);
       
       for x = xLowOAR:1:xHighOAR
          for y = yLowOAR:1:yHighOAR
@@ -129,12 +129,13 @@ switch TYPE
    
    case {'cubic'}
       
-      xLowPTV  = round(xDim/2 - xDim/8);
-      xHighPTV = round(xDim/2 + xDim/8);
-      yLowPTV  = round(yDim/2 - yDim/8);
-      yHighPTV = round(yDim/2 + yDim/8);
-      zLowPTV  = round(zDim/2 - zDim/8);
-      zHighPTV = round(zDim/2 + zDim/8);
+      fac = 28; 
+      xLowPTV  = round(xDim/2 - xDim/fac);
+      xHighPTV = round(xDim/2 + xDim/fac);
+      yLowPTV  = round(yDim/2 - yDim/fac);
+      yHighPTV = round(yDim/2 + yDim/fac);
+      zLowPTV  = round(zDim/2 - zDim/fac);
+      zHighPTV = round(zDim/2 + zDim/fac);
       
       cubeHelper = zeros(ct.cubeDim);
       
@@ -148,7 +149,7 @@ switch TYPE
       
    case {'spheric'}
       
-      radiusPTV = xDim/14;
+      radiusPTV = xDim/16;
       
       for x = 1:xDim
          for y = 1:yDim
@@ -179,6 +180,7 @@ vIxPTV = cst{ixPTV,4}{1};
 ct.cubeHU{1}(vIxOAR) = 1;  % assign HU of water
 ct.cubeHU{1}(vIxPTV) = 1;  % assign HU of water
 
+cstOrg = cst;
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
 % structure requires input from the treatment planner and defines the most
@@ -235,28 +237,36 @@ stf = matRad_generateStf(ct,cst,pln);
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-
+matRadGUI
  %% calculate variance
 [cst,resultGUI] = matRad_calcVar(ct,cst,stf,pln,dij,resultGUI);
    
 %%
 cst{1,6}.robustness = 'PROB';
 cst{2,6}.robustness = 'PROB';
+for i= 1:size(cst,1)
+    cst{i,4}{1} = cstOrg{i,4}{1};
+end
 param.w       = resultGUI.w;
 resultGUIrob  = matRad_fluenceOptimization(dij,cst,pln,param);
 
 %% calculate variance of robust pencil beam weights
-[cst,resultGUIrob] = matRad_calcVar(ct,cst,stf,pln,dij,resultGUIrob);
+[~,resultGUIrob] = matRad_calcVar(ct,cst,stf,pln,dij,resultGUIrob);
 
 %% plot everthing
 plane         = 3;
 slice         = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-doseWindowExp = [0 max([max(max(resultGUI.physicalDoseExp(:,:,slice))) max(max(resultGUIrob.physicalDoseExpRob(:,:,slice)))])];
-doseWindowStd = [0 max([max(max(resultGUI.physicalDoseStdTotFrac(:,:,slice))) max(max(resultGUIrob.physicalDoseStdTotFracRob(:,:,slice)))])];
+doseWindowExp = [0 max([max(max(resultGUI.physicalDoseExp(:,:,slice))) max(max(resultGUIrob.physicalDoseExpRob(:,:,slice)))])]*1.05;
+doseWindowStd = [0 max([max(max(resultGUI.physicalDoseStdSingleFrac(:,:,slice))) max(max(resultGUIrob.physicalDoseStdSingleFracRob(:,:,slice)))])]*1.05;
 
 figure,title('phantom plan')
 subplot(221),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDoseExp,plane,slice,[],[],colorcube,[],doseWindowExp,[]);
-subplot(222),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDoseStdTotFrac,plane,slice,[],[],colorcube,[],doseWindowStd,[]);
+subplot(222),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDoseStdSingleFrac,plane,slice,[],[],colorcube,[],doseWindowStd,[]);
 subplot(223),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrob.physicalDoseExpRob,plane,slice,[],[],colorcube,[],doseWindowExp,[]);
-subplot(224),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrob.physicalDoseStdTotFracRob,plane,slice,[],[],colorcube,[],doseWindowStd,[]);
+subplot(224),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrob.physicalDoseStdSingleFracRob,plane,slice,[],[],colorcube,[],doseWindowStd,[]);
+
+%% append results and show them in GUI
+resultGUI  = matRad_appendResultGUI(resultGUI,resultGUIrob,0);
+matRadGUI
+
 
