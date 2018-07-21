@@ -1,4 +1,4 @@
-function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)
+function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem,bSubstract)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad add margin function
 % 
@@ -40,6 +40,10 @@ elseif nargin < 4
     error('not enough input parameters specified for matRad_addMargin');
 end
 
+if ~exist('bSubstract','var')
+    bSubstract = false;
+end
+
 % generate voi cube for patient surface/patient skin
 voiSurface      = zeros(size(mVOI));
 idx             = [cst{:,4}];
@@ -55,15 +59,19 @@ NewIdx = [];
 [xUpperLim,yUpperLim,zUpperLim]=size(mVOI);
 
 for Cnt = 1:max(voxelMargins)
-
-    % for multiple loops consider just added margin
-    NewIdx = setdiff(find(mVOIEnlarged),NewIdx);
-    [xCoord, yCoord, zCoord] = ind2sub(size(mVOIEnlarged),NewIdx);
-
-    % find indices on border and take out
-    borderIx = xCoord==1 | xCoord==xUpperLim | ...
-               yCoord==1 | yCoord==yUpperLim | ...
-               zCoord==1 | zCoord==zUpperLim;
+   
+   if ~bSubstract
+      % for multiple loops consider just added margin
+      NewIdx = setdiff(find(mVOIEnlarged),NewIdx);
+   else
+      NewIdx = (find(mVOIEnlarged));
+   end
+   [xCoord, yCoord, zCoord] = ind2sub(size(mVOIEnlarged),NewIdx);
+   
+   % find indices on border and take out
+   borderIx = xCoord==1 | xCoord==xUpperLim | ...
+      yCoord==1 | yCoord==yUpperLim | ...
+      zCoord==1 | zCoord==zUpperLim;
 
     xCoord(borderIx) = [];
     yCoord(borderIx) = [];
@@ -87,7 +95,17 @@ for Cnt = 1:max(voxelMargins)
                 % check if new indices are part of voiSurfaceIdx
                 bWithinPatient = ismember(newIx,voiSurfaceIdx);
                 
-                mVOIEnlarged(newIx(bWithinPatient)) = 1;
+                if bSubstract
+                    mVOIEnlargedTmp = mVOIEnlarged;
+
+                    mVOIEnlargedTmp(newIx(bWithinPatient)) = 0;
+                    mVOIEnlargedLoop = mVOIEnlarged;
+                    mVOIEnlarged     = zeros(size(mVOI));
+                    mVOIEnlarged(setdiff(find(mVOIEnlargedLoop),find(mVOIEnlargedTmp))) = 1;
+                else
+                    mVOIEnlarged(newIx(bWithinPatient)) = 1;
+                end
+                
 
             end
         end
