@@ -327,7 +327,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
        cutOffLevel          = 0.99;
        visBoolLateralCutOff = 0;
        % compute cut off only for the first scenario
-       machine              = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),1,visBoolLateralCutOff);
+       machine              = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
        matRad_dispToConsole('done. \n',param,'info');    
 
        for j = 1:stf(i).numOfRays % loop over all rays
@@ -432,7 +432,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
 
                             % calculate initial focus sigma
                             sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist(stf(i).ray(j).focusIx(k),:)', ...
-                                                      machine.data(energyIx).initFocus.sigma(stf(i).ray(j).focusIx(k),:)',stf(i).ray(j).SSD{ctScen});
+                                                      machine.data(energyIx).initFocus.sigma(stf(i).ray(j).focusIx(k),:)',stf(i).ray(j).SSD);
                             sigmaIni_sq = sigmaIni^2;
 
                             % consider range shifter for protons if applicable
