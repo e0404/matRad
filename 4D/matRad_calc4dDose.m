@@ -56,14 +56,11 @@ for iPhase = 1:numOfPhases
     end
 end
 
-%dose accumulation
+% dose accumulation
 resultGUI = matRad_doseAcc(ct, resultGUI, cst, 'DDM');  %acc Methods: 'EMT' 'DDM'
 
-%visualisation
-matRad_plotPhaseDose_2(ct, cst, pln, resultGUI); %optional kann slice angegeben werden  
-
-% Plot the result in comparison to the static dose
-slice = round(pln.isoCenter(1,3)./ct.resolution.z); 
+% plot the result in comparison to the static dose
+slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z); 
 figure 
 subplot(2,2,1)
 imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet); 
