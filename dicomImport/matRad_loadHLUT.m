@@ -48,53 +48,57 @@ end
 
 % if possible -> file standard out of dicom tags
 try
-   hlutFileName = '';
-   particle     = pln.radiationMode;
-   manufacturer = ct.dicomInfo.Manufacturer;
-   model        = ct.dicomInfo.ManufacturerModelName;
-   convKernel   = ct.dicomInfo.ConvolutionKernel;
-   
-   hlutFileName = strcat(manufacturer, '-', model, '-ConvolutionKernel-',...
-      convKernel, '_', particle, '.hlut');
-   
-   % check whether fileNames used '-' or '_' instead of blanks
-   hlutFileCell{1} = hlutFileName;
-   hlutFileCell{2} = regexprep(hlutFileName,' ','-');
-   hlutFileCell{3} = regexprep(hlutFileName,' ','_');
-   
-   % add pathname
-   hlutFileCell = strcat(hlutDir,hlutFileCell);
-   
-   for i = 1:3
-      existIx(i) = exist(hlutFileCell{i}, 'file') == 2;
-   end
-   
-   if sum(existIx) == 0
-      warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder. \n'];
-      matRad_dispToConsole(warnText,param,'warning');
-      infoText = ['matRad default HLUT loaded. \n'];
-      matRad_dispToConsole(infoText,param,'info');
-      
-      % load default HLUT
-      hlutFileName = strcat(hlutDir,'matRad_default_', particle, '.hlut');
-   else
-      hlutFileName = hlutFileCell{existIx};
-   end
-   
+
+    hlutFileName = '';
+    particle     = pln.radiationMode;
+    manufacturer = ct.dicomInfo.Manufacturer;
+    model        = ct.dicomInfo.ManufacturerModelName;
+    convKernel   = ct.dicomInfo.ConvolutionKernel;
+    
+    hlutFileName = strcat(manufacturer, '-', model, '-ConvolutionKernel-',...
+        convKernel, '_', particle, '.hlut');
+    
+    % check whether fileNames used '-' or '_' instead of blanks
+    hlutFileCell{1} = hlutFileName;
+    hlutFileCell{2} = regexprep(hlutFileName,' ','-');
+    hlutFileCell{3} = regexprep(hlutFileName,' ','_');
+    
+    % add pathname
+    hlutFileCell = strcat(hlutDir,hlutFileCell);
+
+    for i = 1:3
+        existIx(i) = exist(hlutFileCell{i}, 'file') == 2;
+    end
+
+    if sum(existIx) == 0
+        warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder. \n'];
+        matRad_dispToConsole(warnText,param,'warning');
+        infoText = ['matRad default HLUT loaded. \n'];
+        matRad_dispToConsole(infoText,param,'info');
+        
+        % load default HLUT
+        hlutFileName = strcat(hlutDir,'matRad_default.hlut');
+    else
+        hlutFileName = hlutFileCell{existIx};
+    end
+
 catch
-   % load default HLUT
-   hlutFileName = strcat(hlutDir,'matRad_default_', particle, '.hlut');
-   
-   if isempty(ShowHLUTWarning)
-      warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder. \n'];
-      matRad_dispToConsole(warnText,param,'warning');
-      infoText = ['matRad default HLUT loaded. \n'];
-      matRad_dispToConsole(infoText,param,'info');
-      ShowHLUTWarning = false;
-   end
+        
+    % load default HLUT
+    hlutFileName = strcat(hlutDir,'matRad_default.hlut');
+
+    if isempty(ShowHLUTWarning)
+        warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder. \n'];
+        matRad_dispToConsole(warnText,param,'warning');
+        infoText = ['matRad default HLUT loaded. \n'];
+        matRad_dispToConsole(infoText,param,'info');
+        ShowHLUTWarning = false;
+    end
+
 end
 
 hlutFile = fopen(hlutFileName,'r');
 hlut = cell2mat(textscan(hlutFile,'%f %f','CollectOutput',1,'commentStyle','#'));
 fclose(hlutFile);
+
 end
