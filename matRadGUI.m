@@ -891,7 +891,7 @@ if exist('Result','var')
 
         set(handles.popupDisplayOption,'String',fieldnames(Result));
         if sum(strcmp(handles.SelectedDisplayOption,fieldnames(Result))) == 0
-            handles.SelectedDisplayOption = 'physicalDose';
+            handles.SelectedDisplayOption = DispInfo{find([DispInfo{:,2}],1,'first'),1};
         end
         set(handles.popupDisplayOption,'Value',find(strcmp(handles.SelectedDisplayOption,fieldnames(Result))));
 
