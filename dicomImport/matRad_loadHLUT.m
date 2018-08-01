@@ -84,7 +84,7 @@ try
 catch
    
    % load default HLUT
-   if isempty(ShowHLUTWarning)
+   if isempty(ShowHLUTWarning) | ~ShowHLUTWarning
       hlutFileName = strcat(hlutDir,'matRad_default.hlut');
       warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder. \n'];
       matRad_dispToConsole(warnText,param,'warning');
