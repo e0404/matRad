@@ -3485,12 +3485,17 @@ tmpString = get(handles.legendTable,'String');
 
 if handles.VOIPlotFlag(idx)
     handles.VOIPlotFlag(idx) = false;
+    cst{idx,5}.Visible = false;
     tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
 elseif ~handles.VOIPlotFlag(idx)
     handles.VOIPlotFlag(idx) = true;
+    cst{idx,5}.Visible = true;
     tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
 end
 set(handles.legendTable,'String',tmpString);
+
+% update cst in workspace accordingly
+assignin('base','cst',cst)
 
 guidata(hObject, handles);
 UpdatePlot(handles)
