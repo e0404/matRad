@@ -18,7 +18,7 @@ function [resultGUI, bixelInfo] = matRad_calc4dDose(ct, pln, dij, stf, cst, resu
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 201( the matRad development team. 
+% Copyright 2018 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
