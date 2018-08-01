@@ -80,10 +80,10 @@ resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf) ;
 
 %% calc 4D dose
 % make sure that the correct pln, dij and stf are loeaded in the workspace
-[resultGUI, delivery] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI); 
- 
-% Plot the result in comparison to the static dose
-slice = round(pln.isoCenter(1,3)./ct.resolution.z); 
+[resultGUI, bixelInfo] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI); 
+
+% plot the result in comparison to the static dose
+slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z); 
 figure 
 subplot(2,2,1)
 imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet); 
