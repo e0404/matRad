@@ -45,10 +45,6 @@ function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolutio
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if ~isdeployed
-    addpath('tools')
-end
-
 [env, ~] = matRad_getEnvironment();
 
 % set parameters for gamma index calculation
