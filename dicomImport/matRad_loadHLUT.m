@@ -38,6 +38,7 @@ end
 
 % if possible -> file standard out of dicom tags
 try
+    
     hlutFileName = '';
     particle     = pln.radiationMode;
     manufacturer = ct.dicomInfo.Manufacturer;
@@ -55,17 +56,11 @@ try
     % add pathname
     hlutFileCell = strcat(hlutDir,hlutFileCell);
 
-    for i = 1:3
-        existIx(i) = exist(hlutFileCell{i}, 'file') == 2;
-    end
-
+    % check if files exist
+    existIx = cellfun(@(x) exist(x,'file') == 2,hlutFileCell);
+    
     if sum(existIx) == 0
-        warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
-            ' matRad default HLUT loaded'];
-        matRad_dispToConsole(warnText,[],'warning');
-        
-        % load default HLUT
-        hlutFileName = strcat(hlutDir,'matRad_default.hlut');
+        produce an error to enter catch statment below :)
     else
         hlutFileName = hlutFileCell{existIx};
     end
@@ -74,7 +69,8 @@ catch
     
     warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
                 ' matRad default HLUT loaded'];
-    warning(warnText,'backtrace','off');
+    warning('off','backtrace')
+    warning(warnText);
     
     % load default HLUT
     hlutFileName = strcat(hlutDir,'matRad_default.hlut');
