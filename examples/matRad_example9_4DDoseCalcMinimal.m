@@ -24,7 +24,7 @@
 
 clc,clear,close all
 
-load('C:\Home\Bangertm\Patientendaten\Liver_DS221.mat')
+load('Liver_DS221.mat')
 
 %%
 % meta information for treatment plan
