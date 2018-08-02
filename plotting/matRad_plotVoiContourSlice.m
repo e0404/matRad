@@ -40,7 +40,7 @@ function [voiContourHandles] = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIn
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if ~isdeployed
-    addpath('tools')
+    addpath([fileparts(fileparts(mfilename('fullpath'))) filesep 'tools']);
 end
 
 [env, ~] = matRad_getEnvironment();
