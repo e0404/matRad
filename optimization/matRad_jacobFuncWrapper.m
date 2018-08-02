@@ -122,7 +122,7 @@ if isequal(options.bioOpt,'LEMIV_effect') || isequal(options.bioOpt,'LEMIV_RBExD
 end
 
 % Calculate jacobian with dij projections
-for i = 1:dij.numOfScenarios
+for i = 1:options.numOfScenarios
    % enter if statement also for protons using a constant RBE
    if isequal(options.bioOpt,'none') ||  isequal(options.ID,'protons_const_RBExD')
 
