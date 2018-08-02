@@ -222,7 +222,7 @@ if pln.bioParam.bioOpt
     % generates tissue class matrix for biological optimization
     vTissueIndex = zeros(size(V,1),1);
     
-   if strcmp(pln.radiationMode,'carbon')
+   if strcmp(pln.radiationMode,'carbon') || strcmp(pln.radiationMode,'helium')
 
        for i = 1:size(cst,1)
            % find indices of structures related to V

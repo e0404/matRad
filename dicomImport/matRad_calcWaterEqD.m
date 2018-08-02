@@ -41,7 +41,7 @@ else
 end
 
 % load hlut
-hlut = matRad_loadHLUT(ct, pln, param);
+hlut = matRad_loadHLUT(ct, pln);
     
 for i = 1:ct.numOfCtScen
 

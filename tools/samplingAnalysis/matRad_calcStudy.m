@@ -60,7 +60,7 @@ else
     if numel(listOfMat) == 1
       load(listOfMat.name);
     else
-       matRad_dispToConsole('Ambigous set of .mat files in the current folder (i.e. more than one possible patient or already results available).\n',param,'error');
+       matRad_dispToConsole('Ambigous set of .mat files in the current folder (i.e. more than one possible patient or already results available).',param,'error');
        return
     end
 end

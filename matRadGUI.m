@@ -796,7 +796,7 @@ try
                 error('VMC++ not available in matRad standalone application');
             end
         end
-    elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
+    elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon') || strcmp(pln.radiationMode,'helium')
         dij = matRad_calcParticleDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
     end
 
@@ -891,7 +891,7 @@ if exist('Result','var')
 
         set(handles.popupDisplayOption,'String',fieldnames(Result));
         if sum(strcmp(handles.SelectedDisplayOption,fieldnames(Result))) == 0
-            handles.SelectedDisplayOption = 'physicalDose';
+            handles.SelectedDisplayOption = DispInfo{find([DispInfo{:,2}],1,'first'),1};
         end
         set(handles.popupDisplayOption,'Value',find(strcmp(handles.SelectedDisplayOption,fieldnames(Result))));
 
@@ -942,7 +942,7 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
     
     if isempty(handles.dispWindow{ctIx,2})
-        handles.dispWindow{ctIx,2} = [min(ct.cubeHU{:}(:)) max(ct.cubeHU{:}(:))];
+        handles.dispWindow{ctIx,2} = [min(reshape([ct.cubeHU{:}],[],1)) max(reshape([ct.cubeHU{:}],[],1))];
     end
 
     if get(handles.radiobtnCT,'Value')
@@ -3485,12 +3485,17 @@ tmpString = get(handles.legendTable,'String');
 
 if handles.VOIPlotFlag(idx)
     handles.VOIPlotFlag(idx) = false;
+    cst{idx,5}.Visible = false;
     tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
 elseif ~handles.VOIPlotFlag(idx)
     handles.VOIPlotFlag(idx) = true;
+    cst{idx,5}.Visible = true;
     tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
 end
 set(handles.legendTable,'String',tmpString);
+
+% update cst in workspace accordingly
+assignin('base','cst',cst)
 
 guidata(hObject, handles);
 UpdatePlot(handles)
@@ -4305,3 +4310,12 @@ function popupmenuScenGen_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in radiobutton3Dconf.
+function radiobutton3Dconf_Callback(hObject, eventdata, handles)
+% hObject    handle to radiobutton3Dconf (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of radiobutton3Dconf
