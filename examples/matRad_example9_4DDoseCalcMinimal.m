@@ -64,10 +64,10 @@ pln.multScen.scenMask = ones(10,1);
 % generate steering file
 stf = matRad_generateStf(ct,cst,pln);
 
-param.subIx = cst{4,4}{1};
+% param.subIx = cst{4,4}{1};
 
 % dose calculation
-dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
+dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
 % inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
