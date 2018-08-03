@@ -33,12 +33,12 @@ function [resultGUI, bixelInfo] = matRad_calc4dDose(ct, pln, dij, stf, cst, resu
 % follows the backforth spot scanning
 bixelInfo = matRad_makeBixelTimeSeq(stf, resultGUI);
 
-motionPeriod = 5; % a whole breathing motion period (in seconds)
+
 motion = 'linear'; % the assumed motion of chest
 numOfPhases = size(ct.cube, 2);
 
 % prepare a phase matrix in which place each bixel dose in it's phase
-bixelInfo = matRad_makePhaseMatrix(bixelInfo, numOfPhases, motionPeriod, motion);
+bixelInfo = matRad_makePhaseMatrix(bixelInfo, numOfPhases, ct.motionPeriod, motion);
 
 resultGUI.bioParam = pln.bioParam;
 

@@ -80,6 +80,7 @@ resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf) ;
 
 %% add movement to the patient
 ct.numOfCtScen = 10;
+ct.motionPeriod = 5; % a whole breathing motion period (in seconds)
 ct = matRad_addMovement(ct, 5, ct.numOfCtScen);
 
 %% calc 4D dose
