@@ -78,6 +78,10 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 % cannot not be delivered, dose is recalculated accordingly
 resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf) ; 
 
+%% add movement to the patient
+ct.numOfCtScen = 10;
+ct = matRad_addMovement(ct, 5, ct.numOfCtScen);
+
 %% calc 4D dose
 % make sure that the correct pln, dij and stf are loeaded in the workspace
 [resultGUI, bixelInfo] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI); 
