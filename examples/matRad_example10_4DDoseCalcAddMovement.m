@@ -24,7 +24,7 @@
 
 clc,clear,close all
 
-load('Liver_DS221.mat')
+load('BOXPHANTOM.mat')
 
 %%
 % meta information for treatment plan
@@ -40,6 +40,7 @@ pln.propStf.couchAngles     = [0 0];
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
+
 %optimization settings
 pln.propOpt.runDAO          = false;      % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.propOpt.runSequencing   = false;      % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
@@ -50,8 +51,13 @@ modelName    = 'constRBE';             % none: for photons, protons, carbon     
                                    % LEM: Local Effect Model for carbon ions
 
 scenGenType  = 'nomScen';          % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen'                                          
-ct.motionPeriod = 5; % a whole breathing motion period (in seconds)
 
+%% add movement to the patient
+numOfCtScen = 10; 
+motionPeriod = 5; % a whole breathing motion period (in seconds)
+ct = matRad_addMovement(ct, motionPeriod, numOfCtScen);
+
+movementPlotting(ct, 120); %temp
 % retrieve bio model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
@@ -64,10 +70,8 @@ pln.multScen.scenMask = ones(10,1);
 % generate steering file
 stf = matRad_generateStf(ct,cst,pln);
 
-param.subIx = cst{4,4}{1};
-
 % dose calculation
-dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
+dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
 % inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
