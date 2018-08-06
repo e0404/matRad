@@ -42,8 +42,15 @@ bixelInfo = matRad_makeBixelTimeSeq(stf, resultGUI);
 motion = 'linear'; % the assumed motion of chest
 numOfPhases = size(ct.cube, 2);
 
+if isfield(ct, 'motionPeriod')
+    motionPeriod = ct.motionPeriod;
+else
+    disp('motionPeriod is not defined in ct structure')
+    % TODO: make the above as matRad error message
+end
+
 % prepare a phase matrix in which place each bixel dose in it's phase
-bixelInfo = matRad_makePhaseMatrix(bixelInfo, numOfPhases, ct.motionPeriod, motion);
+bixelInfo = matRad_makePhaseMatrix(bixelInfo, numOfPhases, motionPeriod, motion);
 
 resultGUI.bioParam = pln.bioParam;
 
