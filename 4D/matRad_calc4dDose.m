@@ -1,18 +1,23 @@
 function [resultGUI, bixelInfo] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad 4D dose calculation
+% wrapper for the whole 4D dose calculation pipeline and calculated dose
+% aacumulation
 %
 % call
-%
+%   ct = matRad_addmovement(ct, ct.motionPeriod, ct.numOfCtScen, amp)
 %
 % input
-%
-%
+%   ct :            ct cube
+%   pln:            matRad plan meta information struct
+%   dij:            matRad dij struct
+%   stf:            matRad steering information struct
+%   cst:            matRad cst struct
+%   resultGUI:      struct containing optimized fluence vector
 % output
-%
+%   resultGUI:      structure containing phase dose, RBE weighted dose, etc
 %
 % References
-%
+%   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
