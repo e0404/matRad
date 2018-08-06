@@ -97,7 +97,7 @@ for i = 1:size(cst,1)
                                         
                        scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i);
 
-                       delta = jacobVec./(2*dij.bx(cst{i,4}{1}).*scaledEffect);
+                       delta = jacobVec./(2*dij.betaX(cst{i,4}{1}).*scaledEffect);
 
                        mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,delta,dij.numOfVoxels,1)];
                        mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
@@ -122,7 +122,7 @@ if isequal(options.quantityOpt,'effect') || isequal(options.quantityOpt,'RBExD')
 end
 
 % Calculate jacobian with dij projections
-for i = 1:dij.numOfScenarios
+for i = 1:options.numOfScen
    % enter if statement also for protons using a constant RBE
    if isequal(options.quantityOpt,'physicalDose') ||  isequal(options.model,'constRBE')
 
