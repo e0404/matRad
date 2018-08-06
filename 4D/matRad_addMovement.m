@@ -42,7 +42,8 @@ if isfield(ct,'dvf')
     return
 end
 
-figure %temp
+ct.motionPeriod = motionPeriod;
+ct.numOfCtScen = numOfCtScen;
 
 for i = 1:numOfCtScen
     
@@ -56,16 +57,7 @@ for i = 1:numOfCtScen
     
 
     ct.cube{i} = imwarp(im, ct.dvf{i});
-    
-    % plotting %temp{
-    subplot(121)
-    imagesc(im(:,:,120))
-    subplot(122)
-    imagesc(ct.cube{i}(:,:,120))
-    title(i)
-    pause(.8)
-    hold on  %}
-
+    ct.cubeHU{i} = imwarp(im, ct.dvf{i});
     
     ct.dvf{i}(:,:,:,1) = ct.dvf{i}(:,:,:,1) * ct.resolution.x;
     ct.dvf{i}(:,:,:,2) = ct.dvf{i}(:,:,:,2) * ct.resolution.y;
@@ -73,6 +65,5 @@ for i = 1:numOfCtScen
     ct.dvf{i} = permute(ct.dvf{i}, [4,1,2,3]);
     
 end
-close % temp
 end
 
