@@ -3692,7 +3692,13 @@ end
 oldPos = get(handles.axesFig,'Position');
 set(new_handle(1),'units','normalized', 'Position',oldPos);
 
-[filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view','./screenshot.png');
+if ~isfield(handles,'lastStoragePath') || exist(handles.lastStoragePath,'dir') ~= 7
+    handles.lastStoragePath = [];   
+end
+
+[filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view',[handles.lastStoragePath 'screenshot.png']);
+
+handles.lastStoragePath = pathname;
 
 if ~isequal(filename,0) && ~isequal(pathname,0)
     set(gcf, 'pointer', 'watch');
@@ -3704,6 +3710,9 @@ else
     uiwait(msgbox('Aborted saving, showing figure instead!'));
     set(tmpFig,'Visible','on');
 end
+
+guidata(hObject,handles);
+
 
 %% Callbacks & Functions for color setting
 function UpdateColormapOptions(handles)
