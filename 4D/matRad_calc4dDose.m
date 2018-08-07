@@ -1,24 +1,29 @@
 function [resultGUI, bixelInfo] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad 4D dose calculation
+% wrapper for the whole 4D dose calculation pipeline and calculated dose
+% aacumulation
 %
 % call
-%
+%   ct = matRad_addmovement(ct, ct.motionPeriod, ct.numOfCtScen, amp)
 %
 % input
-%
-%
+%   ct :            ct cube
+%   pln:            matRad plan meta information struct
+%   dij:            matRad dij struct
+%   stf:            matRad steering information struct
+%   cst:            matRad cst struct
+%   resultGUI:      struct containing optimized fluence vector
 % output
-%
+%   resultGUI:      structure containing phase dose, RBE weighted dose, etc
 %
 % References
-%
+%   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 201( the matRad development team. 
+% Copyright 2018 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -33,9 +38,16 @@ function [resultGUI, bixelInfo] = matRad_calc4dDose(ct, pln, dij, stf, cst, resu
 % follows the backforth spot scanning
 bixelInfo = matRad_makeBixelTimeSeq(stf, resultGUI);
 
-motionPeriod = 5; % a whole breathing motion period (in seconds)
+
 motion = 'linear'; % the assumed motion of chest
 numOfPhases = size(ct.cube, 2);
+
+if isfield(ct, 'motionPeriod')
+    motionPeriod = ct.motionPeriod;
+else
+    disp('motionPeriod is not defined in ct structure')
+    % TODO: make the above as matRad error message
+end
 
 % prepare a phase matrix in which place each bixel dose in it's phase
 bixelInfo = matRad_makePhaseMatrix(bixelInfo, numOfPhases, motionPeriod, motion);
@@ -58,16 +70,3 @@ end
 
 % dose accumulation
 resultGUI = matRad_doseAcc(ct, resultGUI, cst, 'DDM');  %acc Methods: 'EMT' 'DDM'
-
-% plot the result in comparison to the static dose
-slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z); 
-figure 
-subplot(2,2,1)
-imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet); 
-title('static dose distribution')
-subplot(2,2,2)
-imagesc(resultGUI.accRBExD(:,:,slice)),colorbar, colormap(jet); 
-title('4D dose distribution')
-subplot(2,2,3)
-imagesc(resultGUI.RBExD(:,:,slice) - resultGUI.accRBExD(:,:,slice)) ,colorbar, colormap(jet); 
-title('Difference')
