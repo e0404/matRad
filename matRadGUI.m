@@ -4084,9 +4084,9 @@ function cursorText = dataCursorUpdateFunction(obj,event_obj)
 % event_obj    Handle to event object
 % output_txt   Data cursor text string (string or cell array of strings).
 
-target = get(event_obj,'Target');
+target = findall(0,'Name','matRadGUI');
 
-%Get GUI data (maybe there is another way?)
+% Get GUI data (maybe there is another way?)
 handles = guidata(target);
 
 % position of the data point to label
