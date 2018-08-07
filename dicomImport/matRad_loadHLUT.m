@@ -83,7 +83,6 @@ try
    
 catch
       
-      hlutFileName = strcat(hlutDir,'matRad_default.hlut');
    % load default HLUT
    if isempty(ShowHLUTWarning)
       hlutFileName = strcat(hlutDir,'matRad_default.hlut');
