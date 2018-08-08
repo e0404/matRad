@@ -41,7 +41,7 @@ end
 % defining the constant parameters
 %
 % time required for synchrotron to change energy
-es_time = 4 * 10^6;
+es_time = 3 * 10^6;
 % time required for synchrotron to recharge it's spill
 spill_recharge_time = 2 * 10^6;
 % number of particles generated in each spill

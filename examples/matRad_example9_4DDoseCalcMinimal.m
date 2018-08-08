@@ -24,19 +24,19 @@
 
 clc,clear,close all
 
-load('Liver_DS221.mat')
+load('BOXPHANTOM.mat')
 
 %%
 % meta information for treatment plan
-pln.numOfFractions  = 30;
+pln.numOfFractions  = 39;
 pln.radiationMode   = 'protons';           % either photons / protons / helium / carbon
 pln.machine         = 'Generic';
 
 % beam geometry settings
-pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.longSpotSpacing = 5;      % only relevant for HIT machine, not generic
-pln.propStf.gantryAngles    = [210 320]; 
-pln.propStf.couchAngles     = [0 0]; 
+pln.propStf.bixelWidth      = 40; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.longitudinalSpotSpacing = 40;      % only relevant for HIT machine, not generic
+pln.propStf.gantryAngles    = [0]; 
+pln.propStf.couchAngles     = [0]; 
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
@@ -50,8 +50,13 @@ modelName    = 'constRBE';             % none: for photons, protons, carbon     
                                    % LEM: Local Effect Model for carbon ions
 
 scenGenType  = 'nomScen';          % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen'                                          
-ct.motionPeriod = 5; % a whole breathing motion period (in seconds)
 
+%% add movement to the patient
+numOfCtScen = 2; 
+motionPeriod = 5; % a whole breathing motion period (in seconds) 
+ct = matRad_addMovement(ct, motionPeriod, numOfCtScen, 'linear', [20 0 0]);
+
+nishAddMovement(ct, 120);
 % retrieve bio model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
@@ -64,10 +69,8 @@ pln.multScen.scenMask = ones(10,1);
 % generate steering file
 stf = matRad_generateStf(ct,cst,pln);
 
-param.subIx = cst{4,4}{1};
-
 % dose calculation
-dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
+dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
 % inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
