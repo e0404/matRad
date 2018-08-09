@@ -38,6 +38,9 @@ function ct = matRad_addMovement(ct, motionPeriod, numOfCtScen, amp)
 ct.motionPeriod = motionPeriod;
 ct.numOfCtScen = numOfCtScen;
 
+% set type
+ct.dvfType = 'pull'; % push or pull
+
 % generate scenarios
 for i = 1:numOfCtScen
         

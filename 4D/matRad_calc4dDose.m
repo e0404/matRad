@@ -15,6 +15,7 @@ function [resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, r
 %   resultGUI:      struct containing optimized fluence vector
 % output
 %   resultGUI:      structure containing phase dose, RBE weighted dose, etc
+%   timeSequence:   timing information about the irradiation
 %
 % References
 %   -
@@ -38,31 +39,54 @@ function [resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, r
 % follows the backforth spot scanning
 timeSequence = matRad_makeBixelTimeSeq(stf, resultGUI);
 
-if isfield(ct, 'motionPeriod')
-    motionPeriod = ct.motionPeriod;
-else
-    error('motionPeriod is not defined in ct structure')
-end
-
 % prepare a phase matrix
 motion = 'linear'; % the assumed motion type
-timeSequence = matRad_makePhaseMatrix(timeSequence, ct.numOfCtScen, motionPeriod, motion);
+timeSequence = matRad_makePhaseMatrix(timeSequence, ct.numOfCtScen, ct.motionPeriod, motion);
 
 resultGUI.bioParam = pln.bioParam;
 
-totalPhaseMatrix = resultGUI.w*[0 1 0];%vertcat(timeSequence.phaseMatrix);
+totalPhaseMatrix = vertcat(timeSequence.phaseMatrix);
 
-for iPhase = 1:ct.numOfCtScen
+% compute all phases
+for i = 1:ct.numOfCtScen
     
-    resultGUI.phaseDose{iPhase} = reshape(dij.physicalDose{iPhase} * totalPhaseMatrix(:,iPhase), dij.dimensions);
+    tmpResultGUI = matRad_calcCubes(totalPhaseMatrix(:,i),dij,cst,i);
     
-    if isequal(resultGUI.bioParam.model,'MCN')
-        
-        resultGUI.phaseAlphaDose{iPhase} = reshape(dij.mAlphaDose{iPhase} * w, dij.dimensions);
-        resultGUI.phaseSqrtBetaDose{iPhase} = reshape(dij.mSqrtBetaDose{iPhase} * w, dij.dimensions);
-        
+    % compute physical dose for physical opt
+    if strcmp(pln.bioParam.model,'none')       
+        resultGUI.phaseDose{i} = tmpResultGUI.physicalDose;
+    % compute RBExD with const RBE
+    elseif strcmp(pln.bioParam.model,'constRBE')
+        resultGUI.phaseRBExD{i} = tmpResultGUI.RBExD;
+    % compute all fields
+    elseif any(strcmp(pln.bioParam.model,{'MCN','LEM','WED'}))
+        resultGUI.phaseAlphaDose{i}    = tmpResultGUI.alpha .* tmpResultGUI.physicalDose;
+        resultGUI.phaseSqrtBetaDose{i} = sqrt(tmpResultGUI.beta) .* tmpResultGUI.physicalDose;
     end
+    
 end
 
-% dose accumulation
-resultGUI = matRad_doseAcc(ct, resultGUI, cst, 'DDM');  %acc Methods: 'EMT' 'DDM'
+% accumulation
+if strcmp(pln.bioParam.model,'none')       
+    
+    resultGUI.accPhysicalDose = matRad_doseAcc(ct,resultGUI.phaseDose, 'DDM');
+
+elseif strcmp(pln.bioParam.model,'constRBE')
+
+    resultGUI.accRBExD = matRad_doseAcc(ct,resultGUI.phaseRBExD, 'DDM');
+
+elseif any(strcmp(pln.bioParam.model,{'MCN','LEM','WED'}))
+
+    resultGUI.accAlphaDose    = matRad_doseAcc(ct,resultGUI.phaseAlphaDose, 'DDM');
+    resultGUI.accSqrtBetaDose = matRad_doseAcc(ct,resultGUI.phaseSqrtBetaDose, 'DDM');
+
+    % only compute where we have biologically defined tissue
+    ix = dij.alphaX~=0; 
+    
+    resultGUI.accEffect = resultGUI.accAlphaDose + resultGUI.accSqrtBetaDose.^2;
+    
+    resultGUI.accRBExD     = zeros(ct.cubeDim);
+    resultGUI.accRBExD(ix) = ((sqrt(dij.alphaX(ix).^2 + 4 .* dij.betaX(ix) .* resultGUI.accEffect(ix)) - dij.alphaX(ix))./(2.*dij.betaX(ix)));
+        
+end
+

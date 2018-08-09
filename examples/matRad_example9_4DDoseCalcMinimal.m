@@ -26,13 +26,13 @@ clc,clear,close all
 
 load BOXPHANTOM.mat
 
-amplitude    = [2 10 20]; % [voxels]
+amplitude    = [0 2 0]; % [voxels]
 numOfCtScen  = 3;
 motionPeriod = 4; % [s] 
 
 ct = matRad_addMovement(ct, motionPeriod, numOfCtScen, amplitude);
 
-%%
+%% Set up a plan, compute dose influence on all phases, conventional optimization
 % meta information for treatment plan
 pln.numOfFractions  = 30;
 pln.radiationMode   = 'protons';           % either photons / protons / helium / carbon
@@ -51,7 +51,7 @@ pln.propOpt.runDAO          = false;      % 1/true: run DAO, 0/false: don't / wi
 pln.propOpt.runSequencing   = false;      % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
 quantityOpt  = 'RBExD';     % options: physicalDose, effect, RBExD
-modelName    = 'constRBE';             % none: for photons, protons, carbon            % constRBE: constant RBE 
+modelName    = 'MCN';             % none: for photons, protons, carbon            % constRBE: constant RBE 
                                    % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
                                    % LEM: Local Effect Model for carbon ions
 
@@ -84,19 +84,23 @@ resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf) ;
 
 %% calc 4D dose
 % make sure that the correct pln, dij and stf are loeaded in the workspace
-[resultGUI, bixelInfo] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI); 
+resultGUI = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI); 
 
 % plot the result in comparison to the static dose
 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z); 
+
 figure 
+
 subplot(2,2,1)
-imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet); 
-title('static dose distribution')
+imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
+title('static dose distribution [Gy (RBE)]')
+
 subplot(2,2,2)
-imagesc(resultGUI.accDose(:,:,slice)),colorbar, colormap(jet); 
-title('4D dose distribution')
+imagesc(resultGUI.accRBExD(:,:,slice)),colorbar, colormap(jet); 
+title('accumulated (4D) dose distribution [Gy (RBE)]')
+
 subplot(2,2,3)
-imagesc(resultGUI.physicalDose(:,:,slice) - resultGUI.accDose(:,:,slice)) ,colorbar, colormap(jet); 
-title('Difference')
+imagesc(resultGUI.RBExD(:,:,slice) - resultGUI.accRBExD(:,:,slice)) ,colorbar, colormap(jet); 
+title('static dose distribution - accumulated (4D) dose distribution [Gy (RBE)]')
 
 
