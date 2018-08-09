@@ -374,7 +374,10 @@ metadata.compress = get(handles.checkbox_compress,'Value');
 %Check if we have position information
 if isfield(ct,'dicomInfo')
     if isfield(ct.dicomInfo,'ImagePositionPatient')
-       metadata.imageOrigin = ct.dicomInfo.ImagePositionPatient;       
+       metadata.imageOrigin = ct.dicomInfo.ImagePositionPatient; 
+       if ~isrow(metadata.imageOrigin)
+           metadata.imageOrigin = transpose(metadata.imageOrigin);
+       end
     end    
 end
 

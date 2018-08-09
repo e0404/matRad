@@ -192,6 +192,7 @@ if ~isempty(originFieldIx)
     for c=1:metadata.dimension
         metadata.imageOrigin(c) = originVector{c};
     end
+    %metadata.imageOrigin = transpose(metadata.imageOrigin);
 end
 
 %Coordinate system - optional
