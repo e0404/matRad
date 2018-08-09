@@ -245,12 +245,21 @@ end
 
 %set plan if available - if not create one
 try 
-     if ismember('pln',AllVarNames)  && handles.State > 0
-          setPln(handles);
-     elseif handles.State > 0 
-          getPlnFromGUI(handles);
-          setPln(handles);
-     end
+    
+    if ismember('pln',AllVarNames) && handles.State > 0
+        % check if you are working with a valid pln
+        pln = evalin('base','pln');
+        if ~isfield(pln,'propStf')
+            handles = showWarning(handles,'GUI OpeningFunc: Overwriting outdated pln format with default GUI pln');
+            evalin('base','clear pln');
+            getPlnFromGUI(handles);
+        end
+        setPln(handles);
+    elseif handles.State > 0 
+         getPlnFromGUI(handles);
+         setPln(handles);
+    end
+        
 catch
        handles.State = 0;
        handles = showError(handles,'GUI OpeningFunc: Could not set or get pln');
