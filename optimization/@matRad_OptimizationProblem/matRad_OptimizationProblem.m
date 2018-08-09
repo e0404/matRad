@@ -1,9 +1,8 @@
 classdef matRad_OptimizationProblem < handle
-    %UNTITLED2 Summary of this class goes here
-    %   Detailed explanation goes here
+    %handle class to keep state easily
     
     properties
-        BP
+        BP %backProjection
         bioOpt = '';
     end
     
@@ -13,8 +12,8 @@ classdef matRad_OptimizationProblem < handle
     end
     
     methods
-        function obj = matRad_OptimizationProblem(matRad_BackProjection,dij,cst)
-            obj.BP = matRad_BackProjection;
+        function obj = matRad_OptimizationProblem(backProjection,dij,cst)
+            obj.BP = backProjection;
         end       
         
         %Objective function declaration
