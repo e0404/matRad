@@ -20,8 +20,7 @@ if strcmpi(getEnvironment(), 'Octave')
 end
 
 %% Run tests
-status = testHeadless('testFunctionIndices', allTests,...
-                     'testsuite',           suite, varargin{:});
+status = coreTest(1);
 
 if isJenkins
     makeTapReport(status, 'stream', 'results.test.tap');
