@@ -36,4 +36,9 @@ function [stat] = check_some_stuff()
   disp('coreTest is running yow!')
   disp(stat.description)
 
+  load('BOXPHANTOM.mat')
+  ct
+
 end
+
+function [stat] 
