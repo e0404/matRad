@@ -6,7 +6,6 @@ CI_MODE = strcmpi(getenv('CONTINUOUS_INTEGRATION'),'true') || strcmp(getenv('CI'
 isJenkins = ~isempty(getenv('JENKINS_URL'));
 
 %% Set path
-addpath(fullfile(pwd,'..','src'));
 addpath(fullfile(pwd,'suites'));
 
 %% Select functions to runs
