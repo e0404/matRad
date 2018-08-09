@@ -1,10 +1,10 @@
-classdef matRad_OptimizationProblem
+classdef matRad_OptimizationProblem < handle
     %UNTITLED2 Summary of this class goes here
     %   Detailed explanation goes here
     
     properties
-        cst
-        bioOpt
+        BP
+        bioOpt = '';
     end
     
     properties (Access = private)
@@ -13,11 +13,8 @@ classdef matRad_OptimizationProblem
     end
     
     methods
-        function obj = matRad_OptimizationProblem(cst)
-            %UNTITLED2 Construct an instance of this class
-            %   Detailed explanation goes here
-            obj.cst = cst;
-            obj.bioOpt = false;
+        function obj = matRad_OptimizationProblem(matRad_BackProjection,dij,cst)
+            obj.BP = matRad_BackProjection;
         end       
         
         %Objective function declaration

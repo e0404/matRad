@@ -142,6 +142,8 @@ if  strcmp(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMod
     end
     bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
+    
+    
         
 elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
                                 && strcmp(pln.radiationMode,'carbon')
@@ -211,6 +213,15 @@ funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,options);
 funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,options);
 funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,options);
 funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
+
+%Select Projection
+backProjection = matRad_DoseProjection;
+
+optiProb = matRad_OptimizationProblem(backProjection);
+
+optimizer = matRad_OptimizerIPOPT;
+
+optimizer.optimize(optiProb);
 
 % Informing user to press q to terminate optimization
 fprintf('\nOptimzation initiating...\n');

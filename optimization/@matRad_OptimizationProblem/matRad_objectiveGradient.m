@@ -37,7 +37,8 @@ function weightGradient = matRad_objectiveGradient(optiProb,w,dij,cst)
 
 % get current dose / effect / RBExDose vector
 %d = matRad_backProjection(w,dij,optiProb);
-d = optiProb.matRad_backProjection(w,dij);
+optiProb.BP = optiProb.BP.compute(w,dij);
+d = optiProb.BP.GetResult();
 
 % Initializes dose gradient
 doseGradient = zeros(dij.numOfVoxels,1);

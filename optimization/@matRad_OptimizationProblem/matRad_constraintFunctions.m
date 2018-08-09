@@ -36,7 +36,8 @@ function c = matRad_constraintFunctions(optiProb,w,dij,cst)
 
 % get current dose / effect / RBExDose vector
 %d = matRad_backProjection(w,dij,optiProb);
-d = optiProb.matRad_backProjection(w,dij);
+optiProb.BP = optiProb.BP.compute(w,dij);
+d = optiProb.BP.GetResult();
 
 % Initializes constraints
 c = [];

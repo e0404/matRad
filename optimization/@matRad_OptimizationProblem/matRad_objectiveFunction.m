@@ -32,7 +32,10 @@ function f = matRad_objectiveFunction(optiProb,w,dij,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % get current dose / effect / RBExDose vector
-d = optiProb.matRad_backProjection(w,dij);
+%d = optiProb.matRad_backProjection(w,dij);
+optiProb.BP = optiProb.BP.compute(w,dij);
+d = optiProb.BP.GetResult();
+
 
 % Initialize f
 f = 0;
