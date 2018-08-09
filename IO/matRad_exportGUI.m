@@ -382,11 +382,14 @@ if isfield(ct,'dicomInfo')
 end
 
 %This is only for the waitbar to get the number of cubes you wanna save
+numExportCubes = 0;
 if (saveCT)
     if isfield(ct,'cubeHU')
-        numExportCubes = 2;
-    else
-        numExportCubes = 1;
+        numExportCubes = numExportCubes + 1;
+    end
+    
+    if isfield(ct,'cube')
+        numExportCubes = numExportCubes + 1;
     end
     voiNames = get(handles.uitable_vois,'Data');
     voiIndices = find([voiNames{:,1}] == true);
@@ -395,6 +398,7 @@ if (saveCT)
 else
     numExportCubes = 0;
 end
+
 if saveResults
    cubeNames = get(handles.uitable_doseCubes,'data');
    cubeIndices = find([cubeNames{:,1}] == true);
@@ -414,11 +418,13 @@ cleanUp = onCleanup(@() close(hWaitbar));
 
 %CT and Mask export
 if saveCT   
-    %Export the CT (ED suffix to clarify it is not in HU)
-    currentCube = currentCube + 1;
-    waitbar(currentCube/numExportCubes,hWaitbar,['Exporting CT Intensity values (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
     
-    matRad_writeCube(fullfile(exportDir,['CT_ED' extension]),ct.cube{1},'double',metadata);
+    if isfield(ct,'cube')
+        %Export the CT (ED suffix to clarify it is not in HU)
+        currentCube = currentCube + 1;
+        waitbar(currentCube/numExportCubes,hWaitbar,['Exporting CT Intensity values (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
+        matRad_writeCube(fullfile(exportDir,['CT_ED' extension]),ct.cube{1},'double',metadata);
+    end
     
     if isfield(ct,'cubeHU')
         currentCube = currentCube + 1;

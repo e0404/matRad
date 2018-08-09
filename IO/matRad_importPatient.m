@@ -38,12 +38,10 @@ function [ct,cst] = matRad_importPatient(ctFile,maskFiles,hlutFilename)
 
 ct = struct();
 cst = cell(0,6);
-%Create dummy cst?
 
-if nargin < 3
-    ct.cube{1} = cube;
-else
-    ct.cubeHU{1} = cube;
+ct.cubeHU{1} = cube;
+
+if nargin == 3
     HLUT = matRad_readHLUT(hlutFilename);
     ct.cube{1} = interp1(HLUT(:,1),HLUT(:,2),double(cube));
     ct.hlut = HLUT;
