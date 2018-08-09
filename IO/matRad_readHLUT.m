@@ -1,9 +1,9 @@
 function hlut = matRad_readHLUT(filename)
   % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  % matRad function to load HLUT file based on the provided ct
+  % matRad function to read HLUT from filename
   %
   % call
-  %   hlut = matRad_loadHLUT(filename)
+  %   hlut = matRad_readHLUT(filename)
   %
   % input
   %   filename:   hlut filename
