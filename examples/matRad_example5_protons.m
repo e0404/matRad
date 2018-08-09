@@ -70,6 +70,10 @@ pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter
 pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
 
+pln.multScen = matRad_multScen(ct, 'nomScen');
+
+pln.bioParam = matRad_bioModel(pln.radiationMode, 'RBExD', 'constRBE');
+
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
 
