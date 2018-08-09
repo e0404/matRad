@@ -383,10 +383,15 @@ end
 
 %This is only for the waitbar to get the number of cubes you wanna save
 if (saveCT)
-    numExportCubes = 1;
+    if isfield(ct,'cubeHU')
+        numExportCubes = 2;
+    else
+        numExportCubes = 1;
+    end
     voiNames = get(handles.uitable_vois,'Data');
     voiIndices = find([voiNames{:,1}] == true);
     numExportCubes = numExportCubes + numel(voiIndices);
+ 
 else
     numExportCubes = 0;
 end
@@ -411,9 +416,15 @@ cleanUp = onCleanup(@() close(hWaitbar));
 if saveCT   
     %Export the CT (ED suffix to clarify it is not in HU)
     currentCube = currentCube + 1;
-    waitbar(currentCube/numExportCubes,hWaitbar,['Exporting CT (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
+    waitbar(currentCube/numExportCubes,hWaitbar,['Exporting CT Intensity values (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
     
     matRad_writeCube(fullfile(exportDir,['CT_ED' extension]),ct.cube{1},'double',metadata);
+    
+    if isfield(ct,'cubeHU')
+        currentCube = currentCube + 1;
+        waitbar(currentCube/numExportCubes,hWaitbar,['Exporting CT in HU (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
+        matRad_writeCube(fullfile(exportDir,['CT_HU' extension]),ct.cubeHU{1},'double',metadata);
+    end
     
     %Export VOI masks
     cst = evalin('base','cst');

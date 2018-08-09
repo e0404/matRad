@@ -77,7 +77,6 @@ catch
 
 end
 
-hlutFile = fopen(hlutFileName,'r');
-hlut = cell2mat(textscan(hlutFile,'%f %f','CollectOutput',1,'commentStyle','#'));
-fclose(hlutFile);
+hlut = matRad_readHLUT(hlutFileName);
+
 end
