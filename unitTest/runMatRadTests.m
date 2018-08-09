@@ -7,6 +7,7 @@ isJenkins = ~isempty(getenv('JENKINS_URL'));
 
 %% Set path
 addpath(fullfile(pwd,'suites'));
+addpath(fullfile(pwd,'..'));
 
 %% Select functions to runs
 suite = @coreTest;
@@ -22,6 +23,11 @@ end
 %% Run tests
 status = coreTest(1);
 
+load('BOXPHANTOM.mat');
+assert(ct.resolution.x == 3)
+disp('halleluja')
+
+assert(ct.resolution)
 if isJenkins
     makeTapReport(status, 'stream', 'results.test.tap');
     makeTravisReport(status, 'stream', 'results.test.md');
