@@ -10,7 +10,7 @@ addpath(fullfile(pwd,'..','src'));
 addpath(fullfile(pwd,'suites'));
 
 %% Select functions to runs
-suite = @ACID;
+suite = @coreTest;
 allTests = 1:numel(suite(0));
 
 %% Prepare environment
