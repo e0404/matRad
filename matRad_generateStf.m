@@ -106,8 +106,8 @@ end
 
 % calculate rED or rSP from HU
 if ~isdeployed
-   addpath(addpath(fullfile(pwd,'dicomImport')));
-   addpath(addpath(fullfile(pwd,'dicomImport', 'hlutLibrary')));
+   addpath(addpath(fullfile(pwd,'..', 'dicomImport')));
+   addpath(addpath(fullfile(pwd,'..', 'dicomImport', 'hlutLibrary')));
 end
 ct = matRad_calcWaterEqD(ct, pln, param);
 
