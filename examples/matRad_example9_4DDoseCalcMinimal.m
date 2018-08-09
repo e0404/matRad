@@ -51,7 +51,7 @@ pln.propOpt.runDAO          = false;      % 1/true: run DAO, 0/false: don't / wi
 pln.propOpt.runSequencing   = false;      % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
 quantityOpt  = 'RBExD';     % options: physicalDose, effect, RBExD
-modelName    = 'MCN';             % none: for photons, protons, carbon            % constRBE: constant RBE 
+modelName    = 'constRBE';             % none: for photons, protons, carbon            % constRBE: constant RBE 
                                    % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
                                    % LEM: Local Effect Model for carbon ions
 
@@ -86,7 +86,7 @@ resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf) ;
 % make sure that the correct pln, dij and stf are loeaded in the workspace
 resultGUI = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI); 
 
-% plot the result in comparison to the static dose
+%% plot the result in comparison to the static dose
 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z); 
 
 figure 
