@@ -1,19 +1,20 @@
-function ct = matRad_addMovement(ct, motionPeriod, numOfCtScen, movementType, amp)
+function ct = matRad_addMovement(ct, motionPeriod, numOfCtScen, amp)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% adds artificial patient movement by creating a Deformation Vector Filed
-% and applying it to the ct.cube by geometric transformation of the ct
+% adds artificial sinosodal patient motion by creating a deformation vector
+% field and applying it to the ct.cube by geometric transformation
 %
 % call
-%   ct = matRad_addmovement(ct, ct.motionPeriod, ct.numOfCtScen, amp)
+%   ct = matRad_addMovement(ct, ct.motionPeriod, ct.numOfCtScen, amp)
 %
 % input
-%   ct :            ct cube
-%   motionPeriod:   the extent of a whole breathing cycle (in seconds)
-%   numOfCtScen:    number of the desired phases
-%   amp:            amplitude of the sinosoidal movement(in pixels)
+%   ct:             matRad ct struct
+%   motionPeriod:   the length of a whole breathing cycle (in seconds)
+%   numOfCtScen:    number of ct phases
+%   amp:            amplitude of the sinosoidal movement (in pixels)
 %
 % output
-%   ct :            dvf and cube fields for each scenario added
+%   ct :            modified matRad ct struct including dvf and cubes for 
+%                   all phases
 %
 % References
 %
@@ -23,77 +24,39 @@ function ct = matRad_addMovement(ct, motionPeriod, numOfCtScen, movementType, am
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2018 the matRad development team.
-%
-% This file is part of the matRad project. It is subject to the license
-% terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
-% of the matRad project, including this file, may be copied, modified,
-% propagated, or distributed except according to the terms contained in the
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 5
-    amp = [0 5 0];
-end
-
-% if there is already a dvf, no need to addMovement
-if isfield(ct,'dvf')
-    return
-end
-
+% book keeping
 ct.motionPeriod = motionPeriod;
 ct.numOfCtScen = numOfCtScen;
 
-switch movementType
-    case 'linear'
-        
-        for i = 1:numOfCtScen
-            
-            im = ct.cube{1};
-            
-            ct.dvf{i} = zeros([size(im), 3]);
-            
-            ct.dvf{i}(:,:,:,1) = amp(1) * (i - 1);
-            ct.dvf{i}(:,:,:,2) = amp(2) * (i - 1);
-            ct.dvf{i}(:,:,:,3) = amp(3) * (i - 1);
-            
-            
-            ct.cube{i} = imwarp(im, ct.dvf{i});
-            ct.cubeHU{i} = imwarp(ct.cubeHU{1}, ct.dvf{i});
-            
-            ct.dvf{i}(:,:,:,1) = ct.dvf{i}(:,:,:,1) * ct.resolution.x;
-            ct.dvf{i}(:,:,:,2) = ct.dvf{i}(:,:,:,2) * ct.resolution.y;
-            ct.dvf{i}(:,:,:,3) = ct.dvf{i}(:,:,:,3) * ct.resolution.z;
-            ct.dvf{i} = permute(ct.dvf{i}, [4,1,2,3]);
-            
-        end
-        
-    case 'sinusoide'
-        
-        for i = 1:numOfCtScen
-            
-            im = ct.cube{1};
-            
-            ct.dvf{i} = zeros([size(im), 3]);
-            
-            ct.dvf{i}(:,:,:,1) = amp(1) * sin((i - 1) * pi / (motionPeriod * 2));
-            ct.dvf{i}(:,:,:,2) = amp(2) * sin((i - 1) * pi / (motionPeriod * 2));
-            ct.dvf{i}(:,:,:,3) = amp(3) * sin((i - 1) * pi / (motionPeriod * 2));
-            
-            
-            ct.cube{i} = imwarp(im, ct.dvf{i});
-            ct.cubeHU{i} = imwarp(im, ct.dvf{i});
-            
-            ct.dvf{i}(:,:,:,1) = ct.dvf{i}(:,:,:,1) * ct.resolution.x;
-            ct.dvf{i}(:,:,:,2) = ct.dvf{i}(:,:,:,2) * ct.resolution.y;
-            ct.dvf{i}(:,:,:,3) = ct.dvf{i}(:,:,:,3) * ct.resolution.z;
-            ct.dvf{i} = permute(ct.dvf{i}, [4,1,2,3]);
-            
-        end
-        
-    otherwise
-        disp('define the movement type')
-        %TODO: make it matRad like
-end
+% set type
+ct.dvfType = 'pull'; % push or pull
 
+% generate scenarios
+for i = 1:numOfCtScen
+        
+    ct.dvf{i} = zeros([ct.cubeDim, 3]);
+    
+    ct.dvf{i}(:,:,:,1) = amp(1) * sin((i-1)*pi / numOfCtScen)^2;
+    ct.dvf{i}(:,:,:,2) = amp(2) * sin((i-1)*pi / numOfCtScen)^2;
+    ct.dvf{i}(:,:,:,3) = amp(3) * sin((i-1)*pi / numOfCtScen)^2;
+    
+    ct.cube{i}   = imwarp(ct.cube{1},   ct.dvf{i});
+    ct.cubeHU{i} = imwarp(ct.cubeHU{1}, ct.dvf{i});
+    
+    ct.dvf{i}(:,:,:,1) = ct.dvf{i}(:,:,:,1) * ct.resolution.x;
+    ct.dvf{i}(:,:,:,2) = ct.dvf{i}(:,:,:,2) * ct.resolution.y;
+    ct.dvf{i}(:,:,:,3) = ct.dvf{i}(:,:,:,3) * ct.resolution.z;
+    
+    ct.dvf{i} = permute(ct.dvf{i}, [4,1,2,3]);
+    
+end

@@ -247,12 +247,21 @@ end
 
 %set plan if available - if not create one
 try 
-     if ismember('pln',AllVarNames)  && handles.State > 0
-          setPln(handles);
-     elseif handles.State > 0 
-          getPlnFromGUI(handles);
-          setPln(handles);
-     end
+    
+    if ismember('pln',AllVarNames) && handles.State > 0
+        % check if you are working with a valid pln
+        pln = evalin('base','pln');
+        if ~isfield(pln,'propStf')
+            handles = showWarning(handles,'GUI OpeningFunc: Overwriting outdated pln format with default GUI pln');
+            evalin('base','clear pln');
+            getPlnFromGUI(handles);
+        end
+        setPln(handles);
+    elseif handles.State > 0 
+         getPlnFromGUI(handles);
+         setPln(handles);
+    end
+        
 catch
        handles.State = 0;
        handles = showError(handles,'GUI OpeningFunc: Could not set or get pln');
@@ -891,7 +900,7 @@ if exist('Result','var')
 
         set(handles.popupDisplayOption,'String',fieldnames(Result));
         if sum(strcmp(handles.SelectedDisplayOption,fieldnames(Result))) == 0
-            handles.SelectedDisplayOption = 'physicalDose';
+            handles.SelectedDisplayOption = DispInfo{find([DispInfo{:,2}],1,'first'),1};
         end
         set(handles.popupDisplayOption,'Value',find(strcmp(handles.SelectedDisplayOption,fieldnames(Result))));
 
@@ -3485,12 +3494,17 @@ tmpString = get(handles.legendTable,'String');
 
 if handles.VOIPlotFlag(idx)
     handles.VOIPlotFlag(idx) = false;
+    cst{idx,5}.Visible = false;
     tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
 elseif ~handles.VOIPlotFlag(idx)
     handles.VOIPlotFlag(idx) = true;
+    cst{idx,5}.Visible = true;
     tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
 end
 set(handles.legendTable,'String',tmpString);
+
+% update cst in workspace accordingly
+assignin('base','cst',cst)
 
 guidata(hObject, handles);
 UpdatePlot(handles)
@@ -3663,7 +3677,13 @@ end
 oldPos = get(handles.axesFig,'Position');
 set(new_handle(1),'units','normalized', 'Position',oldPos);
 
-[filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view','./screenshot.png');
+if ~isfield(handles,'lastStoragePath') || exist(handles.lastStoragePath,'dir') ~= 7
+    handles.lastStoragePath = [];   
+end
+
+[filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view',[handles.lastStoragePath 'screenshot.png']);
+
+handles.lastStoragePath = pathname;
 
 if ~isequal(filename,0) && ~isequal(pathname,0)
     set(gcf, 'pointer', 'watch');
@@ -3675,6 +3695,9 @@ else
     uiwait(msgbox('Aborted saving, showing figure instead!'));
     set(tmpFig,'Visible','on');
 end
+
+guidata(hObject,handles);
+
 
 %% Callbacks & Functions for color setting
 function UpdateColormapOptions(handles)
@@ -4046,9 +4069,9 @@ function cursorText = dataCursorUpdateFunction(obj,event_obj)
 % event_obj    Handle to event object
 % output_txt   Data cursor text string (string or cell array of strings).
 
-target = get(event_obj,'Target');
+target = findall(0,'Name','matRadGUI');
 
-%Get GUI data (maybe there is another way?)
+% Get GUI data (maybe there is another way?)
 handles = guidata(target);
 
 % position of the data point to label

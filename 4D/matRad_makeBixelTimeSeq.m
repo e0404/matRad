@@ -34,10 +34,6 @@ function bixelInfo = matRad_makeBixelTimeSeq(stf, resultGUI)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 3
-    plotting = 'off';
-end
-
 % defining the constant parameters
 %
 % time required for synchrotron to change energy
@@ -52,9 +48,7 @@ scan_speed = 10; % m/s
 spill_intensity = 4 * 10 ^ 8;
 
 
-for i = 1:length(stf)
-    steerTime(i) = stf(i).bixelWidth * (10 ^ 3)/ scan_speed;
-end
+steerTime = [stf.bixelWidth] * (10 ^ 3)/ scan_speed;
 
 bixelInfo = struct;
 
@@ -112,7 +106,6 @@ for i = 1:length(stf)
     
     usedEnergies = unique([stf(i).ray(:).energy]);
     
-    temp = 0; % temporary variable for plotting figures
     t = 0;
     
     for e = 1: length(usedEnergies)

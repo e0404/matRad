@@ -1,4 +1,4 @@
-function bixelInfo = matRad_makePhaseMatrix(bixelInfo, numOfPhases, motionPeriod, motion)
+function timeSequence = matRad_makePhaseMatrix(timeSequence, numOfPhases, motionPeriod, motion)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   using the time sequence and the ordering of the bixel iradiation, and
 %   number of scenarios, makes a phase matrix of size number of bixels *
@@ -6,10 +6,10 @@ function bixelInfo = matRad_makePhaseMatrix(bixelInfo, numOfPhases, motionPeriod
 %
 %
 % call
-%   bixelInfo = matRad_makePhaseMatrix(bixelInfo, numOfPhases, motionPeriod, motion)
+%   timeSequence = matRad_makePhaseMatrix(timeSequence, numOfPhases, motionPeriod, motion)
 %
 % input
-%   bixelInfo:      struct containing bixel ordering information and the
+%   timeSequence:   struct containing bixel ordering information and the
 %                   time sequence of the spot scanning
 %   numOfCtScen:    number of the desired phases
 %   motionPeriod:   the extent of a whole breathing cycle (in seconds)
@@ -44,22 +44,19 @@ phaseTimeDev = .01;
 % time of each phase in micro seconds
 phaseTime = motionPeriod * 10 ^ 6/numOfPhases;
 
-
-
-for i = 1:length(bixelInfo)
-    
+for i = 1:length(timeSequence)
     
     realTime = phaseTime;
-    bixelInfo(i).phaseMatrix = zeros(length(bixelInfo(i).time),numOfPhases);
+    timeSequence(i).phaseMatrix = zeros(length(timeSequence(i).time),numOfPhases);
     
     iPhase = 1;
     iTime = 1;
 
-    while (iTime <= length(bixelInfo(i).time))
-        if(bixelInfo(i).time(iTime) < realTime)
+    while (iTime <= length(timeSequence(i).time))
+        if(timeSequence(i).time(iTime) < realTime)
             
-            while(iTime <= length(bixelInfo(i).time) && bixelInfo(i).time(iTime) < realTime)
-                bixelInfo(i).phaseMatrix(iTime, iPhase) = 1;
+            while(iTime <= length(timeSequence(i).time) && timeSequence(i).time(iTime) < realTime)
+                timeSequence(i).phaseMatrix(iTime, iPhase) = 1;
                 iTime = iTime + 1;
             end
             
@@ -87,10 +84,10 @@ for i = 1:length(bixelInfo)
     end
     
     % permuatation of phaseMatrix from SS order to STF order
-    bixelInfo(i).phaseMatrix = bixelInfo(i).phaseMatrix(bixelInfo(i).orderToSTF,:);
+    timeSequence(i).phaseMatrix = timeSequence(i).phaseMatrix(timeSequence(i).orderToSTF,:);
+    
     % inserting the fluence in phaseMatrix
-    bixelInfo(i).phaseMatrix = bixelInfo(i).phaseMatrix .* bixelInfo(i).w;
+    timeSequence(i).phaseMatrix = timeSequence(i).phaseMatrix .* timeSequence(i).w;
     
 end
-% storing all phase matrices in one total matrix
-bixelInfo(1).totalPhaseMatrix = vertcat(bixelInfo.phaseMatrix);
+

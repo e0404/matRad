@@ -60,7 +60,7 @@ else
     if numel(listOfMat) == 1
       load(listOfMat.name);
     else
-       matRad_dispToConsole('Ambigous set of .mat files in the current folder (i.e. more than one possible patient or already results available).\n',param,'error');
+       matRad_dispToConsole('Ambigous set of .mat files in the current folder (i.e. more than one possible patient or already results available).',param,'error');
        return
     end
 end
@@ -122,9 +122,9 @@ matRad_latexReport(ct, cst, pln, resultGUInomScen, structureStat, doseStat, mSam
 
 cd('report');
 if ispc
-    executeLatex = 'xelatex --shell-escape --interaction=nonstopmode main.tex';
+    executeLatex = 'lualatex --shell-escape --interaction=nonstopmode main.tex';
 elseif isunix
-    executeLatex = '/Library/TeX/texbin/xelatex --shell-escape --interaction=nonstopmode main.tex';
+    executeLatex = '/Library/TeX/texbin/lualatex --shell-escape --interaction=nonstopmode main.tex';
 end
 
 response = system(executeLatex);

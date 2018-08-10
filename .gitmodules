@@ -1,6 +1,7 @@
 [submodule "submodules/matlab2tikz"]
 	path = submodules/matlab2tikz
-	url = https://github.com/matlab2tikz/matlab2tikz.git
+	url = https://github.com/e0404/matlab2tikz.git
+	branch = dev
 [submodule "submodules/latexTable"]
 	path = submodules/latexTable
 	url = https://github.com/e0404/latexTable.git
