@@ -127,13 +127,26 @@ for i = 1:length(stf)
                 ind_y = fliplr(ind_y);
             end
             
+            % multi adds steerTime when there is a row change
+            if k==1 multi = 0, else multi = 1, end
+            
             % loop over all the bixels in the row
-            for s = ind_y
+            for is = 1:lenth(ind_y)
                 
-                x = bixelInfo(i).IES(e).x(s);
-                % TODO: sort x's in case someone hacked stf
+                s = ind_y(is);
+                
+                x = x_sorted(s);
                 
                 w_index = bixelInfo(i).IES(e).w_index(s);
+                         
+                % in case there were holes inside the plan multi adds
+                % steerTime 
+                if (is ~= 1)
+                    % depeding on the hole size adds steerTime
+                    multi = abs(x_prev - x)/stf(i).bixelWidth;                    
+                end
+                
+                x_prev = x;
                 
                 % calculating the time:
                 %
@@ -143,7 +156,7 @@ for i = 1:length(stf)
                 spillTime = protons * 10^6 / spill_intensity;
                 %
                 % spotTime:time spent to steer scan along IES per bixel
-                t = t + steerTime(i) + spillTime;
+                t = t + multi * steerTime(i) + spillTime;
                 %
                 % taking account of the time to recharge the spill in case
                 % the required fluence was more than spill size
