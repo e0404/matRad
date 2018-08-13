@@ -127,26 +127,31 @@ for i = 1:length(stf)
                 ind_y = fliplr(ind_y);
             end
             
-            % multi adds steerTime when there is a row change
-            if k==1 multi = 0, else multi = 1, end
+
             
             % loop over all the bixels in the row
-            for is = 1:lenth(ind_y)
+            for is = 1:length(ind_y)
                 
                 s = ind_y(is);
                 
                 x = x_sorted(s);
                 
                 w_index = bixelInfo(i).IES(e).w_index(s);
-                         
-                % in case there were holes inside the plan multi adds
-                % steerTime 
-                if (is ~= 1)
-                    % depeding on the hole size adds steerTime
-                    multi = abs(x_prev - x)/stf(i).bixelWidth;                    
-                end
                 
+                % in case there were holes inside the plan "multi"
+                % multiplies the steertime to take it into account:
+                if(k == 1 && is == 1)
+                    x_prev = x;
+                    y_prev = y;
+                end
+                % x direction
+                multi = abs(x_prev - x)/stf(i).bixelWidth;
+                % y direction
+                multi = multi + abs(y_prev - y)/stf(i).bixelWidth;
+                %
                 x_prev = x;
+                y_prev = y;
+                
                 
                 % calculating the time:
                 %
