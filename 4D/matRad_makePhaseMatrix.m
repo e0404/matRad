@@ -16,7 +16,7 @@ function timeSequence = matRad_makePhaseMatrix(timeSequence, numOfPhases, motion
 %   motion:         motion scenario: 'linear'(default), 'sampled_period' 
 %
 % output
-%   bixelInfo:      phase matrix field added
+%   timeSequence:      phase matrix field added
 %
 % References
 %   -

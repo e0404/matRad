@@ -1,17 +1,17 @@
-function bixelInfo = matRad_makeBixelTimeSeq(stf, resultGUI)
+function timeSequence = matRad_makeBixelTimeSeq(stf, resultGUI)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % using the steering information of matRad, makes a time sequenced order
 % according to the irradiation scheme in spot scanning
 %
 % call
-%   bixelInfo = matRad_makeBixelTimeSeq(stf, resultGUI)
+%   timeSequence = matRad_makeBixelTimeSeq(stf, resultGUI)
 %
 % input
 %   stf:            matRad steering information struct
 %   resultGUI:      struct containing optimized fluence vector
 %
 % output
-%   bixelInfo:      struct containing bixel ordering information and the
+%   timeSequence:      struct containing bixel ordering information and the
 %                   time sequence of the spot scanning
 %
 % References
@@ -50,7 +50,7 @@ spill_intensity = 4 * 10 ^ 8;
 
 steerTime = [stf.bixelWidth] * (10 ^ 3)/ scan_speed;
 
-bixelInfo = struct;
+timeSequence = struct;
 
 % first loop loops over all bixels to store their position and ray number
 % in each IES
@@ -60,10 +60,10 @@ for i = 1:length(stf) % looping over all beams
     usedEnergies = unique([stf(i).ray(:).energy]);
     usedEnergiesSorted = sort(usedEnergies, 'descend');
     
-    bixelInfo(i).orderToSTF = zeros(stf(i).totalNumOfBixels, 1);
-    bixelInfo(i).orderToSS = zeros(stf(i).totalNumOfBixels, 1);
-    bixelInfo(i).time = zeros(stf(i).totalNumOfBixels, 1);
-    bixelInfo(i).e = zeros(stf(i).totalNumOfBixels, 1);
+    timeSequence(i).orderToSTF = zeros(stf(i).totalNumOfBixels, 1);
+    timeSequence(i).orderToSS = zeros(stf(i).totalNumOfBixels, 1);
+    timeSequence(i).time = zeros(stf(i).totalNumOfBixels, 1);
+    timeSequence(i).e = zeros(stf(i).totalNumOfBixels, 1);
     
     
     for e = 1:length(usedEnergies) % looping over IES's
@@ -78,9 +78,9 @@ for i = 1:length(stf) % looping over all beams
                 x = stf(i).ray(j).rayPos_bev(1);
                 y = stf(i).ray(j).rayPos_bev(3);
                 %
-                bixelInfo(i).IES(e).x(s)       = x; % store x position
-                bixelInfo(i).IES(e).y(s)       = y; % store y position
-                bixelInfo(i).IES(e).w_index(s) = wOffset + ...
+                timeSequence(i).IES(e).x(s)       = x; % store x position
+                timeSequence(i).IES(e).y(s)       = y; % store y position
+                timeSequence(i).IES(e).w_index(s) = wOffset + ...
                     sum(stf(i).numOfBixelsPerRay(1:(j-1))) + ...
                     find(stf(i).ray(j).energy == usedEnergiesSorted(e)); % store index
                 
@@ -111,15 +111,15 @@ for i = 1:length(stf)
     for e = 1: length(usedEnergies)
         
         % sort the y positions from high to low (backforth is up do down)
-        y_sorted = sort(unique(bixelInfo(i).IES(e).y), 'descend');
-        x_sorted = sort(bixelInfo(i).IES(e).x, 'ascend');
+        y_sorted = sort(unique(timeSequence(i).IES(e).y), 'descend');
+        x_sorted = sort(timeSequence(i).IES(e).x, 'ascend');
         
         for k = 1:length(y_sorted)
             
             y = y_sorted(k);
             % find indexes corresponding to current y position
             % in other words, number of bixels in the current row
-            ind_y = find(bixelInfo(i).IES(e).y == y);
+            ind_y = find(timeSequence(i).IES(e).y == y);
             
             % since backforth fasion is zig zag like, flip the order every
             % second row
@@ -136,7 +136,7 @@ for i = 1:length(stf)
                 
                 x = x_sorted(s);
                 
-                w_index = bixelInfo(i).IES(e).w_index(s);
+                w_index = timeSequence(i).IES(e).w_index(s);
                 
                 % in case there were holes inside the plan "multi"
                 % multiplies the steertime to take it into account:
@@ -180,19 +180,19 @@ for i = 1:length(stf)
                 w_ind = w_index - offset;
                 %
                 % timeline according to the spot scanning order
-                bixelInfo(i).time(order_count) = t;
+                timeSequence(i).time(order_count) = t;
                 % IES of bixels according to the spot scanning order
-                bixelInfo(i).e(order_count) = e;
+                timeSequence(i).e(order_count) = e;
                 % according to spot scanning order, sorts w index of all
                 % bixels, use this order to transfer STF order to Spot
                 % Scanning order
-                bixelInfo(i).orderToSS(order_count) = w_ind;
+                timeSequence(i).orderToSS(order_count) = w_ind;
                 %
                 % according to STF order, gives us order of irradiation of
                 % each bixel, use this order to transfer Spot Scanning
                 % order to STF order
                 % orderToSTF(orderToSS) = orderToSS(orderToSTF) = 1:#bixels
-                bixelInfo(i).orderToSTF(w_ind) = order_count;
+                timeSequence(i).orderToSTF(w_ind) = order_count;
                 %
                 order_counter  = order_counter + 1;
                 
@@ -204,7 +204,7 @@ for i = 1:length(stf)
     end
     
     % storing the fluence per beam
-    bixelInfo(i).w = resultGUI.w(offset + 1: offset + stf(i).totalNumOfBixels);
+    timeSequence(i).w = resultGUI.w(offset + 1: offset + stf(i).totalNumOfBixels);
     
     offset = offset + stf(i).totalNumOfBixels;
     
