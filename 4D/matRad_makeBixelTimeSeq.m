@@ -105,7 +105,7 @@ for i = 1:length(stf)
     usedEnergies = unique([stf(i).ray(:).energy]);
     
     t = 0;
-    order_counter = 1;
+    order_count = 1;
     
     for e = 1: length(usedEnergies)
         
@@ -189,7 +189,7 @@ for i = 1:length(stf)
                 % orderToSTF(orderToSS) = orderToSS(orderToSTF) = 1:#bixels
                 timeSequence(i).orderToSTF(w_ind) = order_count;
                 
-                order_counter  = order_counter + 1;
+                order_count  = order_count + 1;
                 
             end
         end
