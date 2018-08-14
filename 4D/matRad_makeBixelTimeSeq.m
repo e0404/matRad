@@ -37,6 +37,7 @@ function timeSequence = matRad_makeBixelTimeSeq(stf, resultGUI)
 % defining the constant parameters
 %
 % time required for synchrotron to change energy
+
 es_time = 3 * 10^6; % [\mu s]
 % time required for synchrotron to recharge it' spill
 spill_recharge_time = 2 * 10^6; % [\mu s]
@@ -158,7 +159,7 @@ for i = 1:length(stf)
                 
                 % spotTime:time spent to steer scan along IES per bixel
                 t = t + multi * steerTime(i) + spillTime;
-                
+
                 % taking account of the time to recharge the spill in case
                 % the required fluence was more than spill size
                 if(spill_usage + numOfParticles > spill_size)
@@ -182,7 +183,7 @@ for i = 1:length(stf)
                 % bixels, use this order to transfer STF order to Spot
                 % Scanning order
                 timeSequence(i).orderToSS(order_count) = w_ind;
-                
+
                 % according to STF order, gives us order of irradiation of
                 % each bixel, use this order to transfer Spot Scanning
                 % order to STF order
