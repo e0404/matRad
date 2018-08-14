@@ -12,6 +12,12 @@ function ct = matRad_addMovement(ct, motionPeriod, numOfCtScen, amp)
 %   numOfCtScen:    number of ct phases
 %   amp:            amplitude of the sinosoidal movement (in pixels)
 %
+%   note:           1st dim --> x LPS coordinate system
+%                   2nd dim --> y LPS coordinate system
+%                   3rd dim --> z LPS coordinate system
+%                   a positive amplitude moves the phantom to the right,
+%                   anterior, inferior
+%
 % output
 %   ct :            modified matRad ct struct including dvf and cubes for 
 %                   all phases
