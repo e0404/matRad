@@ -37,9 +37,10 @@ function timeSequence = matRad_makeBixelTimeSeq(stf, resultGUI)
 % defining the constant parameters
 %
 % time required for synchrotron to change energy
-es_time = 3 * 10^6;
-% time required for synchrotron to recharge it's spill
-spill_recharge_time = 2 * 10^6;
+
+es_time = 3 * 10^6; % [\mu s]
+% time required for synchrotron to recharge it' spill
+spill_recharge_time = 2 * 10^6; % [\mu s]
 % number of particles generated in each spill
 spill_size = 4 * 10 ^ 10;
 % speed of synchrotron's lateral scanning in an IES
@@ -48,7 +49,7 @@ scan_speed = 10; % m/s
 spill_intensity = 4 * 10 ^ 8;
 
 
-steerTime = [stf.bixelWidth] * (10 ^ 3)/ scan_speed;
+steerTime = [stf.bixelWidth] * (10 ^ 3)/ scan_speed; % [\mu s]
 
 timeSequence = struct;
 
@@ -94,11 +95,9 @@ for i = 1:length(stf) % looping over all beams
     
 end
 
-%
 % after storing all the required information,
 % same loop over all bixels will put each bixel in it's order
 
-order_counter = 1;
 spill_usage = 0;
 offset = 0;
 
@@ -107,6 +106,7 @@ for i = 1:length(stf)
     usedEnergies = unique([stf(i).ray(:).energy]);
     
     t = 0;
+    order_count = 1;
     
     for e = 1: length(usedEnergies)
         
@@ -126,9 +126,7 @@ for i = 1:length(stf)
             if ~rem(k,2)
                 ind_y = fliplr(ind_y);
             end
-            
-
-            
+                        
             % loop over all the bixels in the row
             for is = 1:length(ind_y)
                 
@@ -152,33 +150,31 @@ for i = 1:length(stf)
                 x_prev = x;
                 y_prev = y;
                 
-                
                 % calculating the time:
-                %
+                
                 % required spot fluence
-                protons = resultGUI.w(w_index)* 10^6;
+                numOfParticles = resultGUI.w(w_index)* 10^6;
                 % time spent to spill the required spot fluence
-                spillTime = protons * 10^6 / spill_intensity;
-                %
+                spillTime = numOfParticles * 10^6 / spill_intensity;
+                
                 % spotTime:time spent to steer scan along IES per bixel
                 t = t + multi * steerTime(i) + spillTime;
-                %
+
                 % taking account of the time to recharge the spill in case
                 % the required fluence was more than spill size
-                if(spill_usage + protons > spill_size)
+                if(spill_usage + numOfParticles > spill_size)
                     t = t + spill_recharge_time;
                     spill_usage = 0;
                 end
-                %
+                
                 % used amount of fluence from current spill
-                spill_usage = spill_usage + protons;
+                spill_usage = spill_usage + numOfParticles;
                 
                 % storing the time and the order of bixels
-                %
+                
                 % make the both counter and index 'per beam' - help index
-                order_count = order_counter - offset;
                 w_ind = w_index - offset;
-                %
+                
                 % timeline according to the spot scanning order
                 timeSequence(i).time(order_count) = t;
                 % IES of bixels according to the spot scanning order
@@ -187,14 +183,14 @@ for i = 1:length(stf)
                 % bixels, use this order to transfer STF order to Spot
                 % Scanning order
                 timeSequence(i).orderToSS(order_count) = w_ind;
-                %
+
                 % according to STF order, gives us order of irradiation of
                 % each bixel, use this order to transfer Spot Scanning
                 % order to STF order
                 % orderToSTF(orderToSS) = orderToSS(orderToSTF) = 1:#bixels
                 timeSequence(i).orderToSTF(w_ind) = order_count;
-                %
-                order_counter  = order_counter + 1;
+                
+                order_count  = order_count + 1;
                 
             end
         end

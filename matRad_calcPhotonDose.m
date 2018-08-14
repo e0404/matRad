@@ -225,7 +225,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
    counter = 0;
 
    % compute SSDs
-   stf = matRad_computeSSD(stf,ct,ctScen);
+   stf = matRad_computeSSD(stf,ct);
 
    matRad_dispToConsole(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.totNumShiftScen) ': \n'],param,'info');
    matRad_dispToConsole('matRad: photon dose calculation...\n',param,'info');
@@ -277,7 +277,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
           [~,center] = min(sum(reshape([stf(i).ray.rayPos_bev],3,[]).^2));
 
           % get correct kernel for given SSD at central ray (nearest neighbor approximation)
-          [~,currSSDIx] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD{ctScen}));
+          [~,currSSDIx] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD));
 
           matRad_dispToConsole(['                   SSD = ' num2str(machine.data.kernel(currSSDIx).SSD) 'mm                 \n'],param,'info');
 
