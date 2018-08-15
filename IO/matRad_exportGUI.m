@@ -234,7 +234,7 @@ function exportDir = pushbutton_dir_export_browse_Callback(hObject, eventdata, h
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-exportDir = uigetdir('', 'Choose the input directory...');
+exportDir = uigetdir('', 'Choose the export directory...');
 if exportDir ~= 0
     exportDir = [exportDir filesep];
     set(handles.edit_dir_export,'String',exportDir);
