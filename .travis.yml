@@ -20,7 +20,7 @@ before_install:
   - git clone https://github.com/ebertolazzi/mexIPOPT
 
 # compile interface
-  - mkoctfile --mex -ImexIPOPT/src -I/usr/include/coin -I/usr/include/octave_4*/octave mexIPOPT/src/ipopt.cc mexIPOPT/src/IpoptInterfaceCommon.cc -v -largeArrayDims -fPIC -O3 -DMATLAB_MEXFILE -DHAVE_CSTDDEF -DIPOPT_INTERFACE_MISSING_COPY_N -lipopt
+  - mkoctfile --mex -ImexIPOPT/src -I/usr/include/coin -I/usr/include/octave_4*/octave mexIPOPT/src/ipopt.cc mexIPOPT/src/IpoptInterfaceCommon.cc -v -largeArrayDims -fPIC -O3 -DMATLAB_MEXFILE -DHAVE_CSTDDEF -DIPOPT_INTERFACE_MISSING_COPY_N -lipopt -std=gnu++11
 
 
 before_script:
