@@ -14,11 +14,7 @@ before_install:
   - sudo apt-get install liboctave-dev --yes --force-yes
   - sudo apt-get install coinor-libipopt-dev --yes --force-yes
   - sudo apt-get install git --yes --force-yes
-  - tar -xzf mpich-3.2.1.tar.gz
-  - cd mpich-3.2.1
-  - ./configure --disable-fortran
-  - make; sudo make install
-  - mpiexec --version
+  - sudo apt-get install -y mpich2 --yes --force-yes
 
 # clone repository with IpOpt Interface
   - git clone https://github.com/ebertolazzi/mexIPOPT
