@@ -26,7 +26,7 @@
 % Let's begin with a clear Matlab environment and import the prostate
 % patient into your workspace
 % clc,clear,close all;
-load('PROSTATE.mat');
+load('BOXPHANTOM.mat');
 
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
@@ -62,15 +62,17 @@ pln.propDoseCalc.calcLET = 0;
 %%
 % Now we have to set the remaining plan parameters.
 pln.numOfFractions        = 30;
-pln.propStf.gantryAngles  = [90 270];
-pln.propStf.couchAngles   = [0 0];
-pln.propStf.bixelWidth    = 3;
+pln.propStf.gantryAngles  = [0];
+pln.propStf.couchAngles   = [0];
+pln.propStf.bixelWidth    = 5;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
 
 pln.multScen = matRad_multScen(ct, 'nomScen');
+
+param.logLevel = 3;
 
 pln.bioParam = matRad_bioModel(pln.radiationMode, 'RBExD', 'constRBE');
 
@@ -81,14 +83,14 @@ stf = matRad_generateStf(ct,cst,pln);
 % Lets generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows for subsequent inverse optimization. 
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
+dij = matRad_calcParticleDose(ct,stf,pln,cst, param);
 
 disp(size(dij.physicalDose{1}))
 %% Inverse Optimization for IMPT
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the 
 % clinical objectives and constraints underlying the radiation treatment
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln, param);
 % 
 % %% Plot the Resulting Dose Slice
 % % Let's plot the transversal iso-center dose slice
