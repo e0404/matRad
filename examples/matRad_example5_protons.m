@@ -88,7 +88,7 @@ disp(size(dij.physicalDose{1}))
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the 
 % clinical objectives and constraints underlying the radiation treatment
-% resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 % 
 % %% Plot the Resulting Dose Slice
 % % Let's plot the transversal iso-center dose slice
