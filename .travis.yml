@@ -21,7 +21,7 @@ before_install:
 
 # compile interface
   - mkoctfile --mex -ImexIPOPT/src -I/usr/include/coin -I/usr/include/octave_4*/octave mexIPOPT/src/ipopt.cc mexIPOPT/src/IpoptInterfaceCommon.cc -v -largeArrayDims -fPIC -O3 -DMATLAB_MEXFILE -DHAVE_CSTDDEF -DIPOPT_INTERFACE_MISSING_COPY_N -lipopt -std=gnu++11
-
+  - find . -name \*.mex\*
 
 before_script:
   - ulimit -c unlimited -S  # enable core dumps for Octave crash debugging
