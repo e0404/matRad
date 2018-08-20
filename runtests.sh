@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo 'what up'
+
 ## Make sure some failures are detected by the CI runners
 function exitIfError {
 	# pass "$?" as argument: i.e. the exit status of the last call
