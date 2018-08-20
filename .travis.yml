@@ -18,36 +18,36 @@ before_install:
 #sudo apt-get install coinor-libipopt-dev --yes --force-yes
 # Compiling IpOpt
 
-- mkdir IpoptMUMPS
-- cd IpoptMUMPS
-- wget https://www.coin-or.org/download/source/Ipopt/Ipopt-3.12.10.tgz
-- tar -zxvf Ipopt-3.12.10.tgz
-- cd Ipopt-3.12.10/
-- export IPOPTDIR=`pwd`
+  - mkdir IpoptMUMPS
+  - cd IpoptMUMPS
+  - wget https://www.coin-or.org/download/source/Ipopt/Ipopt-3.12.10.tgz
+  - tar -zxvf Ipopt-3.12.10.tgz
+  - cd Ipopt-3.12.10/
+  - export IPOPTDIR=`pwd`
 
-- cd $IPOPTDIR/ThirdParty/Blas
-- ./get.Blas
-- cd $IPOPTDIR/ThirdParty/Lapack
-- ./get.Lapack
-- cd $IPOPTDIR/ThirdParty/Metis
-- ./get.Metis
-- cd $IPOPTDIR/ThirdParty/Mumps
-- ./get.Mumps
+  - cd $IPOPTDIR/ThirdParty/Blas
+  - ./get.Blas
+  - cd $IPOPTDIR/ThirdParty/Lapack
+  - ./get.Lapack
+  - cd $IPOPTDIR/ThirdParty/Metis
+  - ./get.Metis
+  - cd $IPOPTDIR/ThirdParty/Mumps
+  - ./get.Mumps
 
-- mkdir $IPOPTDIR/build
-- cd $IPOPTDIR/build
+  - mkdir $IPOPTDIR/build
+  - cd $IPOPTDIR/build
 
-- $IPOPTDIR/configure --prefix=/usr/local
-- make
+  - $IPOPTDIR/configure --prefix=/usr/local
+  - make
 #make test
-- make install
-- sudo ldconfig
+  - make install
+  - sudo ldconfig
 
 # clone repository with IpOpt Interface
-- git clone https://github.com/ebertolazzi/mexIPOPT
+  - git clone https://github.com/ebertolazzi/mexIPOPT
 
 # compile interface
-- mkoctfile --mex -ImexIPOPT/src -I/usr/local/include/coin mexIPOPT/src/ipopt.cc mexIPOPT/src/IpoptInterfaceCommon.cc -v -DMATLAB_MEXFILE -DHAVE_CSTDDEF -DIPOPT_INTERFACE_MISSING_COPY_N -Wl,--no-undefined -lipopt -lcoinmumps -lcoinlapack -lcoinblas -L/usr/local/lib -std=gnu++11
+  - mkoctfile --mex -ImexIPOPT/src -I/usr/local/include/coin mexIPOPT/src/ipopt.cc mexIPOPT/src/IpoptInterfaceCommon.cc -v -DMATLAB_MEXFILE -DHAVE_CSTDDEF -DIPOPT_INTERFACE_MISSING_COPY_N -Wl,--no-undefined -lipopt -lcoinmumps -lcoinlapack -lcoinblas -L/usr/local/lib -std=gnu++11
 
 before_script:
   - ulimit -c unlimited -S  # enable core dumps for Octave crash debugging
