@@ -13,7 +13,7 @@ before_install:
   - sudo apt-get install octave --yes --force-yes
   - sudo apt-get install liboctave-dev --yes --force-yes
   - sudo apt-get install git --yes --force-yes
-  - pwd
+  - export HOME='pwd'
 
 # IpOpt in Ubuntu repo is too old
 #sudo apt-get install coinor-libipopt-dev --yes --force-yes
@@ -49,6 +49,7 @@ before_install:
 
 # compile interface
   - mkoctfile --mex -ImexIPOPT/src -I/usr/local/include/coin mexIPOPT/src/ipopt.cc mexIPOPT/src/IpoptInterfaceCommon.cc -v -DMATLAB_MEXFILE -DHAVE_CSTDDEF -DIPOPT_INTERFACE_MISSING_COPY_N -Wl,--no-undefined -lipopt -lcoinmumps -lcoinlapack -lcoinblas -L/usr/local/lib -std=gnu++11
+  - cd $HOME
   - pwd 
 before_script:
   - ulimit -c unlimited -S  # enable core dumps for Octave crash debugging
