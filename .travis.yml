@@ -38,9 +38,9 @@ before_install:
   - cd $IPOPTDIR/build
 
   - $IPOPTDIR/configure --prefix=/usr/local
-  - make
+  - sudo make
 #make test
-  - make install
+  - sudo make install
   - sudo ldconfig
 
 # clone repository with IpOpt Interface
