@@ -6,6 +6,8 @@ function statusAll = runMatRadTests(varargin)
 addpath(fullfile(pwd,'..'));
 addpath(fullfile(pwd,'..','examples'));
 
+
 matRad_example5_protons
+matRad_example1_phantom
 
 exit

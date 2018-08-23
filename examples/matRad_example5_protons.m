@@ -85,7 +85,7 @@ stf = matRad_generateStf(ct,cst,pln);
 % allows for subsequent inverse optimization. 
 dij = matRad_calcParticleDose(ct,stf,pln,cst, param);
 
-disp(size(dij.physicalDose{1}))
+disp('end of example 5')
 %% Inverse Optimization for IMPT
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the 

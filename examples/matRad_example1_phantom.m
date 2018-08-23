@@ -247,5 +247,5 @@ doseWindow = [0 max([resultGUI.physicalDose(:)])];
 figure,title('phantom plan')
 matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
 
-
+disp('end of example 1')
 
