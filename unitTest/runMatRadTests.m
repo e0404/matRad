@@ -26,13 +26,6 @@ status = coreTest(1);
 
 matRad_example5_protons
 
-if isJenkins
-    makeTapReport(status, 'stream', 'results.test.tap');
-    makeTravisReport(status, 'stream', 'results.test.md');
-end
-
-nErrors = makeTravisReport(status);
-
 %% Calculate exit code
 if CI_MODE
     exit(nErrors);
