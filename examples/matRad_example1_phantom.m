@@ -237,7 +237,7 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+% resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the resulting dose slice
 plane      = 3;
