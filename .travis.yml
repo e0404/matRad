@@ -59,7 +59,7 @@ before_install:
 before_script:
   # - ulimit -c unlimited -S  # enable core dumps for Octave crash debugging
 script:
-  - ./runtests.sh /usr/bin/octave
+  - ./unitTest/runMatRadTests.m /usr/bin/octave
 after_failure:
   - COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) # find core file
   - gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch /usr/bin/octave-cli # print stack trace
