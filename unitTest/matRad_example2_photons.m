@@ -152,7 +152,8 @@ stf = matRad_generateStf(ct,cst,pln);
 % Let's generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows subsequent inverse optimization.
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+param.logLevel = 3;
+dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
 
 %% Inverse Optimization for IMRT
 % The goal of the fluence optimization is to find a set of beamlet/pencil 

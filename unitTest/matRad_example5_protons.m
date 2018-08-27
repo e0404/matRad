@@ -25,7 +25,7 @@
 %% Patient Data Import
 % Let's begin with a clear Matlab environment and import the prostate
 % patient into your workspace
-% clc,clear,close all;
+clc,clear,close all;
 load('BOXPHANTOM.mat');
 
 %% Treatment Plan

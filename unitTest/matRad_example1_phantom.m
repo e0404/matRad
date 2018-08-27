@@ -231,7 +231,8 @@ pln.multScen = matRad_multScen(ct,'nomScen');
 stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+param.logLevel = 3;
+dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
 
 disp('end of example 1')
 %% Inverse Optimization for intensity-modulated photon therapy

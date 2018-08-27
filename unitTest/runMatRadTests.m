@@ -9,5 +9,6 @@ addpath(fullfile(pwd,'..','tools'));
 
 matRad_example5_protons
 matRad_example1_phantom
+matRad_example2_photons
 
 exit
