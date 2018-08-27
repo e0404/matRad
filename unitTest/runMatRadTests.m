@@ -4,8 +4,8 @@ function statusAll = runMatRadTests(varargin)
 %% Set path
 
 addpath(fullfile(pwd,'..'));
-addpath(fullfile(pwd,'..','examples'));
-
+addpath(fullfile(pwd,'..','dicomImport'));
+addpath(fullfile(pwd,'..','tools'));
 
 matRad_example5_protons
 matRad_example1_phantom
