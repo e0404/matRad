@@ -65,7 +65,8 @@ stf = matRad_generateStf(ct,cst,pln);
 % Lets generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows for subsequent inverse optimization.
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+param.logLevel = 3;
+dij = matRad_calcPhotonDose(ct,stf,pln,cst, param);
 
 %% Inverse Planning for IMRT
 % The goal of the fluence optimization is to find a set of beamlet weights 
@@ -73,24 +74,24 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % predefined clinical objectives and constraints underlying the radiation 
 % treatment. Once the optimization has finished, trigger once the GUI to
 % visualize the optimized dose cubes.
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-matRadGUI;
-
-%% Sequencing
-% This is a multileaf collimator leaf sequencing algorithm that is used in 
-% order to modulate the intensity of the beams with multiple static 
-% segments, so that translates each intensity map into a set of deliverable 
-% aperture shapes.
-resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
-
-%% DAO - Direct Aperture Optimization
-% The Direct Aperture Optimization is an optimization approach where we 
-% directly optimize aperture shapes and weights.
-resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
-
-%% Aperture visualization
-% Use a matrad function to visualize the resulting aperture shapes
-matRad_visApertureInfo(resultGUI.apertureInfo);
-
-%% Indicator Calculation and display of DVH and QI
-[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI);
+% resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+% matRadGUI;
+% 
+% %% Sequencing
+% % This is a multileaf collimator leaf sequencing algorithm that is used in 
+% % order to modulate the intensity of the beams with multiple static 
+% % segments, so that translates each intensity map into a set of deliverable 
+% % aperture shapes.
+% resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
+% 
+% %% DAO - Direct Aperture Optimization
+% % The Direct Aperture Optimization is an optimization approach where we 
+% % directly optimize aperture shapes and weights.
+% resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
+% 
+% %% Aperture visualization
+% % Use a matrad function to visualize the resulting aperture shapes
+% matRad_visApertureInfo(resultGUI.apertureInfo);
+% 
+% %% Indicator Calculation and display of DVH and QI
+% [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI);
