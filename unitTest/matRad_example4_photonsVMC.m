@@ -62,22 +62,22 @@ stf = matRad_generateStf(ct,cst,pln);
 %  matRadrootDirectory\vmc++.
 dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
 
-%% Inverse Optimization for IMRT
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-
-%% Plot the Resulting Dose Slice
-% Just let's plot the transversal iso-center dose slice
-slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-figure,
-imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet)
-
-%%
-% Exemplary, we show how to obtain the dose in the target and plot the histogram
-ixTarget     = cst{2,4}{1};
-doseInTarget = resultGUI.physicalDose(ixTarget);
-figure
-histogram(doseInTarget);
-title('dose in target'),xlabel('[Gy]'),ylabel('#');
-
-%% Start the GUI for Visualization
-matRadGUI
+% %% Inverse Optimization for IMRT
+% resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+% 
+% %% Plot the Resulting Dose Slice
+% % Just let's plot the transversal iso-center dose slice
+% slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+% figure,
+% imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet)
+% 
+% %%
+% % Exemplary, we show how to obtain the dose in the target and plot the histogram
+% ixTarget     = cst{2,4}{1};
+% doseInTarget = resultGUI.physicalDose(ixTarget);
+% figure
+% histogram(doseInTarget);
+% title('dose in target'),xlabel('[Gy]'),ylabel('#');
+% 
+% %% Start the GUI for Visualization
+% matRadGUI

@@ -72,74 +72,74 @@ stf = matRad_generateStf(ct,cst,pln);
 dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
 %% Inverse Optimization for IMPT
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-
-%% Calculate quality indicators 
-[dvh,qi]       = matRad_indicatorWrapper(cst,pln,resultGUI);
-ixRectum       = 8;
-display(qi(ixRectum).D_5);
-
-%%
-% Let's change the optimization parameter of the rectum in such a way that it
-% will be better spared. We increase the penalty and lower the threshold 
-% of the squared overdose objective function. Afterwards we re-optimize 
-% the treatment plan and evaluate dose statistics one more time.
-cst{ixRectum,6}.penalty = 500;
-cst{ixRectum,6}.dose    = 40;
-resultGUI               = matRad_fluenceOptimization(dij,cst,pln);
-[dvh2,qi2]              = matRad_indicatorWrapper(cst,pln,resultGUI);
-display(qi2(ixRectum).D_5);
-
-%% Plot the Resulting Dose Slice
-% Let's plot the transversal iso-center dose slice
-slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-figure
-imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet)
-
-%%
-% Now let's simulate a range undershoot by scaling the relative stopping power cube by 3.5% percent
-ct_manip         = ct;
-noise            = ct.cube{1} .* 0.035; 
-ct_manip.cube{1} = ct_manip.cube{1} + noise;
-
-%% Recalculate Plan
-% Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
-resultGUI_noise = matRad_calcDoseDirect(ct_manip,stf,pln,cst,resultGUI.w);
-
-%%  Visual Comparison of results
-% Let's compare the new recalculation against the optimization result.
-plane      = 3;
-doseWindow = [0 max([resultGUI.RBExD(:); resultGUI_noise.RBExD(:)])];
-
-figure,title('original plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
-figure,title('manipulated plan')
-matRad_plotSliceWrapper(gca,ct_manip,cst,1,resultGUI_noise.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
-
-% Let's plot single profiles along the beam direction
-ixProfileY = round(pln.propStf.isoCenter(1,1)./ct.resolution.x);
-
-profileOrginal = resultGUI.RBExD(:,ixProfileY,slice);
-profileNoise   = resultGUI_noise.RBExD(:,ixProfileY,slice);
-
-figure,plot(profileOrginal,'LineWidth',2),grid on,hold on, 
-       plot(profileNoise,'LineWidth',2),legend({'original profile','noise profile'}),
-       xlabel('mm'),ylabel('Gy(RBE)'),title('profile plot')
-       
-%% Quantitative Comparison of results
-% Compare the two dose cubes using a gamma-index analysis.
-
-% add tools subdirectory
-addpath([fileparts(fileparts(mfilename('fullpath'))) filesep 'tools']);
-
-doseDifference   = 2;
-distToAgreement  = 2;
-n                = 1;
-
-[gammaCube,gammaPassRateCell] = matRad_gammaIndex(...
-    resultGUI_noise.RBExD,resultGUI.RBExD,...
-    [ct.resolution.x, ct.resolution.y, ct.resolution.z],...
-    [doseDifference distToAgreement],slice,n,'global',cst);
+% resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+% 
+% %% Calculate quality indicators 
+% [dvh,qi]       = matRad_indicatorWrapper(cst,pln,resultGUI);
+% ixRectum       = 8;
+% display(qi(ixRectum).D_5);
+% 
+% %%
+% % Let's change the optimization parameter of the rectum in such a way that it
+% % will be better spared. We increase the penalty and lower the threshold 
+% % of the squared overdose objective function. Afterwards we re-optimize 
+% % the treatment plan and evaluate dose statistics one more time.
+% cst{ixRectum,6}.penalty = 500;
+% cst{ixRectum,6}.dose    = 40;
+% resultGUI               = matRad_fluenceOptimization(dij,cst,pln);
+% [dvh2,qi2]              = matRad_indicatorWrapper(cst,pln,resultGUI);
+% display(qi2(ixRectum).D_5);
+% 
+% %% Plot the Resulting Dose Slice
+% % Let's plot the transversal iso-center dose slice
+% slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+% figure
+% imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet)
+% 
+% %%
+% % Now let's simulate a range undershoot by scaling the relative stopping power cube by 3.5% percent
+% ct_manip         = ct;
+% noise            = ct.cube{1} .* 0.035; 
+% ct_manip.cube{1} = ct_manip.cube{1} + noise;
+% 
+% %% Recalculate Plan
+% % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
+% resultGUI_noise = matRad_calcDoseDirect(ct_manip,stf,pln,cst,resultGUI.w);
+% 
+% %%  Visual Comparison of results
+% % Let's compare the new recalculation against the optimization result.
+% plane      = 3;
+% doseWindow = [0 max([resultGUI.RBExD(:); resultGUI_noise.RBExD(:)])];
+% 
+% figure,title('original plan')
+% matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+% figure,title('manipulated plan')
+% matRad_plotSliceWrapper(gca,ct_manip,cst,1,resultGUI_noise.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+% 
+% % Let's plot single profiles along the beam direction
+% ixProfileY = round(pln.propStf.isoCenter(1,1)./ct.resolution.x);
+% 
+% profileOrginal = resultGUI.RBExD(:,ixProfileY,slice);
+% profileNoise   = resultGUI_noise.RBExD(:,ixProfileY,slice);
+% 
+% figure,plot(profileOrginal,'LineWidth',2),grid on,hold on, 
+%        plot(profileNoise,'LineWidth',2),legend({'original profile','noise profile'}),
+%        xlabel('mm'),ylabel('Gy(RBE)'),title('profile plot')
+%        
+% %% Quantitative Comparison of results
+% % Compare the two dose cubes using a gamma-index analysis.
+% 
+% % add tools subdirectory
+% addpath([fileparts(fileparts(mfilename('fullpath'))) filesep 'tools']);
+% 
+% doseDifference   = 2;
+% distToAgreement  = 2;
+% n                = 1;
+% 
+% [gammaCube,gammaPassRateCell] = matRad_gammaIndex(...
+%     resultGUI_noise.RBExD,resultGUI.RBExD,...
+%     [ct.resolution.x, ct.resolution.y, ct.resolution.z],...
+%     [doseDifference distToAgreement],slice,n,'global',cst);
 
 
 

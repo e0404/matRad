@@ -86,7 +86,7 @@ stf = matRad_generateStf(ct,cst,pln);
 % and orientation of the ray, we can also find pencil beam information. If 
 % the ray coincides with the target, pencil beams were defined along the 
 % ray from target entry to target exit. 
-display(stf.ray(100));
+% display(stf.ray(100));
 
 %%
 % Here are the energies selected on ray # 100: 
@@ -99,59 +99,59 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst);
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-
-%% Plot the Resulting Dose Slice
-% Let's plot the transversal iso-center dose slice
-slice = round(pln.propStf.isoCenter(3)./ct.resolution.z);
-figure,
-imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
-
-%% Inverse Optimization for IMPT based on biological effect
-% To perform a dose optimization for carbon ions we can also use the
-% biological effect instead of the RBE-weighted dose. Therefore we have to
-% change the optimization mode and restart the optimization
-quantityOpt  = 'effect'; 
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
-
-resultGUI_effect = matRad_fluenceOptimization(dij,cst,pln);
-
-%% Visualize differences
-% Through optimzation based on the biological effect we obtain a slightly
-% different dose distribution as visualized by the following dose
-% difference map
-figure;
-imagesc(resultGUI.RBExD(:,:,slice)-resultGUI_effect.RBExD(:,:,slice));
-colorbar;
-colormap(jet);
-
-%% Change Radiosensitivity
-% The previous treatment plan was optimized using an photon alpha-beta 
-% ratio of 2 for all tissues. Now, Let's change the radiosensitivity by 
-% adapting alphaX. This will change the photon alpha-beta ratio
-% from 2 to 10.
-for i = 1:size(cst,1)
-    cst{i,5}.alphaX      = 0.5;
-    cst{i,5}.TissueClass = 2;
-end
-
-%% Recalculate Plan
-% Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
-resultGUI_tissue = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
-
-%% Result Comparison
-% Let's compare the new recalculation against the optimization result.
-plane = 3;
-doseWindow = [0 max([resultGUI_effect.RBExD(:); resultGUI_tissue.RBExD(:)])];
-
-figure,title('original plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_effect.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);
-figure,title('manipulated plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_tissue.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);
-
-%% 
-% At this point we would like to see the absolute difference of the original optimization and the 
-% recalculation. 
-absDiffCube = resultGUI_effect.RBExD-resultGUI_tissue.RBExD;
-figure,title('absolute difference')
-matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
+% resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+% 
+% %% Plot the Resulting Dose Slice
+% % Let's plot the transversal iso-center dose slice
+% slice = round(pln.propStf.isoCenter(3)./ct.resolution.z);
+% figure,
+% imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
+% 
+% %% Inverse Optimization for IMPT based on biological effect
+% % To perform a dose optimization for carbon ions we can also use the
+% % biological effect instead of the RBE-weighted dose. Therefore we have to
+% % change the optimization mode and restart the optimization
+% quantityOpt  = 'effect'; 
+% pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
+% 
+% resultGUI_effect = matRad_fluenceOptimization(dij,cst,pln);
+% 
+% %% Visualize differences
+% % Through optimzation based on the biological effect we obtain a slightly
+% % different dose distribution as visualized by the following dose
+% % difference map
+% figure;
+% imagesc(resultGUI.RBExD(:,:,slice)-resultGUI_effect.RBExD(:,:,slice));
+% colorbar;
+% colormap(jet);
+% 
+% %% Change Radiosensitivity
+% % The previous treatment plan was optimized using an photon alpha-beta 
+% % ratio of 2 for all tissues. Now, Let's change the radiosensitivity by 
+% % adapting alphaX. This will change the photon alpha-beta ratio
+% % from 2 to 10.
+% for i = 1:size(cst,1)
+%     cst{i,5}.alphaX      = 0.5;
+%     cst{i,5}.TissueClass = 2;
+% end
+% 
+% %% Recalculate Plan
+% % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
+% resultGUI_tissue = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+% 
+% %% Result Comparison
+% % Let's compare the new recalculation against the optimization result.
+% plane = 3;
+% doseWindow = [0 max([resultGUI_effect.RBExD(:); resultGUI_tissue.RBExD(:)])];
+% 
+% figure,title('original plan')
+% matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_effect.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);
+% figure,title('manipulated plan')
+% matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_tissue.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);
+% 
+% %% 
+% % At this point we would like to see the absolute difference of the original optimization and the 
+% % recalculation. 
+% absDiffCube = resultGUI_effect.RBExD-resultGUI_tissue.RBExD;
+% figure,title('absolute difference')
+% matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
