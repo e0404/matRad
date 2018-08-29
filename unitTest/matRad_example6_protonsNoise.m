@@ -69,7 +69,8 @@ pln.multScen = matRad_multScen(ct,'nomScen');  % optimize on the nominal scenari
 stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
+param.logLevel = 3;
+dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 
 %% Inverse Optimization for IMPT
 % resultGUI = matRad_fluenceOptimization(dij,cst,pln);

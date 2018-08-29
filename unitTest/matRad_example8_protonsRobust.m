@@ -176,7 +176,8 @@ pln.multScen = matRad_multScen(ct,'wcScen');
 stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
+param.logLevel = 3;
+dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 
 %% Inverse Optimization  for IMPT based on RBE-weighted dose
 % The goal of the fluence optimization is to find a set of bixel/spot 
