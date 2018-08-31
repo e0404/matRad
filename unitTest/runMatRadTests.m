@@ -8,7 +8,7 @@ addpath(fullfile(pwd,'..','dicomImport'));
 addpath(fullfile(pwd,'..','tools'));
 
 
-test testForOctave
+test matRad_example1_phantom
 
 
 % matRad_example1_phantom
