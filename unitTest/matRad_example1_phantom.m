@@ -1,4 +1,4 @@
-function [cst, stf] = matRad_example1_phantom()
+function [cst, ct, dij, stf, pln] = matRad_example1_phantom()
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -18,8 +18,9 @@ function [cst, stf] = matRad_example1_phantom()
 % (i) how to create arbitrary ct data (resolution, ct numbers)
 % (ii) how to create a cst structure containing the volume of interests of the phantom
 % (iii) generate a treatment plan for this phantom
-clc, clear, close all
-
+clc, clear all, close all
+addpath([pwd filesep '../dicomImport'])
+addpath([pwd filesep '..'])
 %% Create a CT image series
 xDim = 200;
 yDim = 200;
@@ -214,8 +215,8 @@ quantityOpt  = 'physicalDose';
 %%
 % The remaining plan parameters are set like in the previous example files
 pln.numOfFractions        = 30;
-pln.propStf.gantryAngles  = [0];
-pln.propStf.couchAngles   = [0];
+pln.propStf.gantryAngles  = [0 90];
+pln.propStf.couchAngles   = [0 0];
 pln.propStf.bixelWidth    = 5;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
@@ -250,6 +251,7 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
 % 
 end
 
-%!test
-%! [cst, stf] = matRad_example1_phantom()
-%! assert(size(cst),[2,6])
+%!test 'Check for sizes'
+%! [cst, stf, pln] = matRad_example1_phantom();
+%! assert(size(cst),[pln.propStf.numOfBeams,6]);
+%! assert(size(stf), size(pln.propStf.gantryAngles))
