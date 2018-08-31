@@ -1,4 +1,4 @@
-%% Example: Generate your own phantom geometry
+function [cst, stf] = matRad_example1_phantom()
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -78,11 +78,11 @@ cst{ixPTV,6}.robustness  = 'none';
 
 
 %% Lets create either a cubic or a spheric phantom
-TYPE = 'spheric';   % either 'cubic' or 'spheric'
+TYPE = 'cubic';   % either 'cubic' or 'spheric'
 
 % first the OAR
 cubeHelper = zeros(ct.cubeDim);
-
+disp('flag 1')
 switch TYPE
    
    case {'cubic'}
@@ -122,7 +122,7 @@ end
 % extract the voxel indices and save it in the cst
 cst{ixOAR,4}{1} = find(cubeHelper);
 
-
+disp('flag 2')
 % second the PTV
 cubeHelper = zeros(ct.cubeDim);
 
@@ -165,6 +165,7 @@ switch TYPE
 end
 
 
+disp('flag 3')
 
 % extract the voxel indices and save it in the cst
 cst{ixPTV,4}{1} = find(cubeHelper);
@@ -229,12 +230,10 @@ pln.multScen = matRad_multScen(ct,'nomScen');
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
-
+disp('flag 4')
 %% Dose Calculation
 param.logLevel = 3;
 dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
-
-disp('end of example 1')
 %% Inverse Optimization for intensity-modulated photon therapy
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
@@ -249,5 +248,8 @@ disp('end of example 1')
 % figure,title('phantom plan')
 % matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
 % 
+end
 
-
+%!test
+%! [cst, stf] = matRad_example1_phantom()
+%! assert(size(cst),[2,6])
