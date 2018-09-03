@@ -1,3 +1,4 @@
+function [cst, stf, pln, ct, dij, resultGUI] = matRad_example5_protons()
 %% Example: Proton Treatment Plan with subsequent Isocenter shift
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -58,7 +59,7 @@ pln.propOpt.bioOptimization = 'const_RBExD';
 % alongside the physical dose. Therefore you need to activate the
 % corresponding option during dose calculcation
 pln.propDoseCalc.calcLET = 0;
-                                       
+
 %%
 % Now we have to set the remaining plan parameters.
 pln.numOfFractions        = 30;
@@ -85,7 +86,6 @@ stf = matRad_generateStf(ct,cst,pln);
 % allows for subsequent inverse optimization. 
 dij = matRad_calcParticleDose(ct,stf,pln,cst, param);
 
-disp('end of example 5')
 %% Inverse Optimization for IMPT
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the 
@@ -172,7 +172,12 @@ disp('end of example 5')
 %           figure,histogram(gammaCube(gammaCube>0),100),title('gamma index histogram')
 %      case 'OCTAVE'
 %           figure,hist(gammaCube(gammaCube>0),100),title('gamma index histogram')
-% end
-% 
-% 
-% 
+end
+
+%!test 'check for sizes 5'
+%! [cst, stf, pln, ct, dij] = matRad_example5_protons();
+%! assert(size(cst),[pln.propStf.numOfBeams,6]);
+%! assert(size(stf), size(pln.propStf.gantryAngles))
+ 
+ 
+ 

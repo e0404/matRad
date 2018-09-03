@@ -1,4 +1,4 @@
-function [cst, stf, pln, ct, dij] = matRad_example1_phantom()
+function [cst, stf, pln, ct, dij, resultGUI] = matRad_example1_phantom()
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

@@ -1,4 +1,4 @@
-function [cst, stf, pln, dij] = matRad_example2_photons()
+function [cst, stf, pln, ct, dij, resultGUI] = matRad_example2_photons()
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -217,6 +217,6 @@ stf = matRad_generateStf(ct,cst,pln);
 end
 
 %!test 'check for sizes 2'
-%! [cst, stf, pln] = matRad_example1_phantom();
-%! assert(size(cst),[pln.propStf.numOfBeams,5]);
+%! [cst, stf, pln] = matRad_example2_photons();
+%! assert(size(cst),[pln.propStf.numOfBeams,6]);
 %! assert(size(stf), size(pln.propStf.gantryAngles))
