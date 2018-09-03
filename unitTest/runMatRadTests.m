@@ -7,20 +7,17 @@ addpath(fullfile(pwd,'..'));
 addpath(fullfile(pwd,'..','dicomImport'));
 addpath(fullfile(pwd,'..','tools'));
 
+##status = test("matRad_example1_phantom")
+##status = [status; test("matRad_example2_photons")]
+##
+##if any(~status)
+##  error ('test failure')
+##  else
+##  disp('All test suits has been passed!')
+##end
 
-##[success, nmax] = test("matRad_example1_phantom")
+test matRad_example2_photons
 
-
-status = test("matRad_example1_phantom")
-status = [status; test("matRad_example2_photons")]
-
-if any(~status)
-  error ('test failure')
-else
-  disp('All test suits has been passed!')
-end
-
-  
 % matRad_example1_phantom
 % disp('example 1 done')
 % matRad_example2_photons
