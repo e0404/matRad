@@ -1,4 +1,4 @@
-function [cst, ct, dij, stf, pln] = matRad_example1_phantom()
+function [cst, stf, pln, ct, dij] = matRad_example1_phantom()
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -22,9 +22,9 @@ clc, clear all, close all
 addpath([pwd filesep '../dicomImport'])
 addpath([pwd filesep '..'])
 %% Create a CT image series
-xDim = 200;
-yDim = 200;
-zDim = 50;
+xDim = 40;
+yDim = 40;
+zDim = 10;
 
 ct.cubeDim      = [xDim yDim zDim];
 ct.resolution.x = 2;
@@ -233,8 +233,8 @@ pln.multScen = matRad_multScen(ct,'nomScen');
 stf = matRad_generateStf(ct,cst,pln);
 disp('flag 4')
 %% Dose Calculation
-param.logLevel = 3;
-dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
+##param.logLevel = 3;
+##dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
 %% Inverse Optimization for intensity-modulated photon therapy
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the

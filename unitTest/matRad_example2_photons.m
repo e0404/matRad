@@ -1,4 +1,4 @@
-%% Example: Photon Treatment Plan
+function [cst, stf, pln, dij] = matRad_example2_photons()
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -152,8 +152,8 @@ stf = matRad_generateStf(ct,cst,pln);
 % Let's generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows subsequent inverse optimization.
-param.logLevel = 3;
-dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
+##param.logLevel = 3;
+##dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
 
 %% Inverse Optimization for IMRT
 % The goal of the fluence optimization is to find a set of beamlet/pencil 
@@ -214,3 +214,9 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
 % display(qi(ixOAR).D_95);
 % display(qi_coarse(ixOAR).D_95);
 % 
+end
+
+%!test 'check for sizes 2'
+%! [cst, stf, pln] = matRad_example1_phantom();
+%! assert(size(cst),[pln.propStf.numOfBeams,5]);
+%! assert(size(stf), size(pln.propStf.gantryAngles))
