@@ -232,6 +232,7 @@ pln.multScen = matRad_multScen(ct,'nomScen');
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
 disp('flag 4')
+assert(size(cst),[pln.propStf.numOfBeams,5]);
 %% Dose Calculation
 ##param.logLevel = 3;
 ##dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
@@ -254,4 +255,4 @@ end
 %!test 'Check for sizes'
 %! [cst, stf, pln] = matRad_example1_phantom();
 %! assert(size(cst),[pln.propStf.numOfBeams,6]);
-%! assert(size(stf), size(pln.propStf.gantryAngles))
+%! assert(size(stf), 1))
