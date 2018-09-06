@@ -117,7 +117,7 @@ end
 doseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
 
 % Only take voxels inside patient.
-if ~isempty(param.subIx) && param.calcDoseDirect
+if isfield(param, 'subIx') && ~isempty(param.subIx) && param.calcDoseDirect
    V = param.subIx; 
 else
    V = [cst{:,4}];
