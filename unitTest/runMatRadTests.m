@@ -11,7 +11,7 @@ addpath(fullfile(pwd,'..','tools'));
 
 
 status = []
-status = test("matRad_example1_phantom")`
+status = test("matRad_example1_phantom")
 % status = [status; test("matRad_example2_photons")]
 % status = [status; test("matRad_example5_protons")]
 
