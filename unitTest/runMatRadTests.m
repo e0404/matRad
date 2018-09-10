@@ -7,18 +7,21 @@ addpath(fullfile(pwd,'..'));
 addpath(fullfile(pwd,'..','dicomImport'));
 addpath(fullfile(pwd,'..','tools'));
 
+[cst, stf, pln, ct] = matRad_example1_phantom();
+report = matRad_unitTest_sizeCheck(cst);
 
+status = [];
+status = [status; report.status];
 
-
-status = []
-status = test("matRad_example1_phantom")
-% status = [status; test("matRad_example2_photons")]
-% status = [status; test("matRad_example5_protons")]
+% status = []
+% status = test("matRad_example1_phantom")
+% % status = [status; test("matRad_example2_photons")]
+% % status = [status; test("matRad_example5_protons")]
 
 if any(~status)
-  error ('test failure')
+  error ('Test suit has not passed, look into the warnings to find the source of the error.')
   else
-  disp('All test suits has been passed!')
+  disp('All tests has been passed!')
 end
 
 
