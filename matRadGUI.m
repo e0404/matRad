@@ -1770,7 +1770,12 @@ function popupDisplayOption_Callback(hObject, ~, handles)
 content = get(hObject,'String');
 handles.SelectedDisplayOption = content{get(hObject,'Value'),1};
 handles.SelectedDisplayOptionIdx = get(hObject,'Value');
-handles.dispWindow{3,1} = []; handles.dispWindow{3,2} = [];
+%handles.dispWindow{3,1} = []; handles.dispWindow{3,2} = [];
+
+if ~isfield(handles,'colormapLocked') || ~handles.colormapLocked
+    handles.dispWindow{3,1} = []; handles.dispWindow{3,2} = [];
+end
+
 handles = updateIsoDoseLineCache(handles);
 handles.cBarChanged = true;
 guidata(hObject, handles);
