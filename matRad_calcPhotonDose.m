@@ -137,8 +137,8 @@ end
 % set up convolution grid
 if isFieldBasedDoseCalc
     % get data from DICOM import
-    intConvResolution = pln.Collimation.convResolution; 
-    fieldWidth = pln.Collimation.fieldWidth;
+    intConvResolution = pln.propStf.collimation.convResolution; 
+    fieldWidth = pln.propStf.collimation.fieldWidth;
 else
     intConvResolution = .5; % [mm]
     fieldWidth = pln.propStf.bixelWidth;
