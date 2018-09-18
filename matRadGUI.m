@@ -1770,7 +1770,12 @@ function popupDisplayOption_Callback(hObject, ~, handles)
 content = get(hObject,'String');
 handles.SelectedDisplayOption = content{get(hObject,'Value'),1};
 handles.SelectedDisplayOptionIdx = get(hObject,'Value');
-handles.dispWindow{3,1} = []; handles.dispWindow{3,2} = [];
+%handles.dispWindow{3,1} = []; handles.dispWindow{3,2} = [];
+
+if ~isfield(handles,'colormapLocked') || ~handles.colormapLocked
+    handles.dispWindow{3,1} = []; handles.dispWindow{3,2} = [];
+end
+
 handles = updateIsoDoseLineCache(handles);
 handles.cBarChanged = true;
 guidata(hObject, handles);
@@ -3726,6 +3731,10 @@ guidata(hObject,handles);
 %% Callbacks & Functions for color setting
 function UpdateColormapOptions(handles)
 
+if isfield(handles,'colormapLocked') && handles.colormapLocked
+    return;
+end
+
 selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
 
 cMapSelectionIndex = get(handles.popupmenu_chooseColormap,'Value');
@@ -4276,6 +4285,34 @@ set(hObject,'Value',1);
 
 guidata(hObject,handles);
 
+% --- Executes on button press in checkbox_lockColormap.
+function checkbox_lockColormap_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_lockColormap (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_lockColormap
+handles.colormapLocked = get(hObject,'Value');
+
+if handles.colormapLocked
+    state = 'Off'; %'Inactive';
+else
+    state = 'On';
+end
+
+set(handles.popupmenu_chooseColorData,'Enable',state);
+set(handles.popupmenu_windowPreset,'Enable',state);
+set(handles.slider_windowWidth,'Enable',state);
+set(handles.slider_windowCenter,'Enable',state);
+set(handles.edit_windowWidth,'Enable',state);
+set(handles.edit_windowCenter,'Enable',state);
+set(handles.edit_windowRange,'Enable',state);
+set(handles.popupmenu_chooseColormap,'Enable',state);
+
+
+guidata(hObject,handles);
+
+
 
 % --- Executes on button press in radiobutton3Dconf.
 function radiobutton3Dconf_Callback(hObject, eventdata, handles)
@@ -4307,3 +4344,7 @@ for i = 1:size(stf,2)
     end
     
 end
+
+
+
+
