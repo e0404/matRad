@@ -366,7 +366,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                                                
         % sample dose only for bixel based dose calculation
         if ~isFieldBasedDoseCalc
-            r0   = 25;   % [mm] sample beyond the inner core
+            r0   = 20 + stf(i).bixelWidth;   % [mm] sample beyond the inner core
             Type = 'radius';
             [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
         end   
