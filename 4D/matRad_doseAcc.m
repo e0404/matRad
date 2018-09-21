@@ -61,23 +61,23 @@ if strcmp(accMethod,'DDM')
         error('dose accumulation via direct dose mapping (DDM) requires pull dvfs');
     end    
          
-    [Y,X,Z] = meshgrid(xGridVec,yGridVec,zGridVec);
+    [Y,X,Z] = meshgrid(yGridVec,xGridVec,zGridVec);
 
     % TODODODODODOD %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ix = 1:prod(ct.cubeDim);%    resultGUI.phaseDose{1,i}(:,:,:)>0;       %d.physicalDose(:,:,:,i) > 0;
     
     for i = 1:ct.numOfCtScen
           
-        dvf_x_i = squeeze(ct.dvf{1,i}(1,:,:,:))/ct.resolution.x;
-        dvf_y_i = squeeze(ct.dvf{1,i}(2,:,:,:))/ct.resolution.y;
+        dvf_x_i = squeeze(ct.dvf{1,i}(2,:,:,:))/ct.resolution.y;
+        dvf_y_i = squeeze(ct.dvf{1,i}(1,:,:,:))/ct.resolution.x;
         dvf_z_i = squeeze(ct.dvf{1,i}(3,:,:,:))/ct.resolution.z;
-
+        
         d_ref = interp3(yGridVec,xGridVec',zGridVec,phaseCubes{i}, ...
                          Y(ix) + dvf_y_i(ix), ...     
                          X(ix) + dvf_x_i(ix), ... 
                          Z(ix) + dvf_z_i(ix), ...
                          'linear',0);  
-        
+
         dAcc(ix) = dAcc(ix) + d_ref;
       
     end
