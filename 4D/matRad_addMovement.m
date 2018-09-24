@@ -1,4 +1,4 @@
-function ct = matRad_addMovement(ct, motionPeriod, numOfCtScen, amp)
+function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % adds artificial sinosodal patient motion by creating a deformation vector
 % field and applying it to the ct.cube by geometric transformation
@@ -8,6 +8,7 @@ function ct = matRad_addMovement(ct, motionPeriod, numOfCtScen, amp)
 %
 % input
 %   ct:             matRad ct struct
+%   cst:            matRad cst struct
 %   motionPeriod:   the length of a whole breathing cycle (in seconds)
 %   numOfCtScen:    number of ct phases
 %   amp:            amplitude of the sinosoidal movement (in pixels)
@@ -15,12 +16,13 @@ function ct = matRad_addMovement(ct, motionPeriod, numOfCtScen, amp)
 %   note:           1st dim --> x LPS coordinate system
 %                   2nd dim --> y LPS coordinate system
 %                   3rd dim --> z LPS coordinate system
-%                   a positive amplitude moves the phantom to the right,
+%                   a positive amplitude moves the phantom to the left,
 %                   anterior, inferior
 %
 % output
-%   ct :            modified matRad ct struct including dvf and cubes for 
+%   ct:             modified matRad ct struct including dvf and cubes for 
 %                   all phases
+%   cst:            modified matRad cst struct
 %
 % References
 %
@@ -56,12 +58,27 @@ for i = 1:numOfCtScen
     ct.dvf{i}(:,:,:,2) = amp(2) * sin((i-1)*pi / numOfCtScen)^2;
     ct.dvf{i}(:,:,:,3) = amp(3) * sin((i-1)*pi / numOfCtScen)^2;
     
+    % warp ct
     ct.cube{i}   = imwarp(ct.cube{1},   ct.dvf{i});
     ct.cubeHU{i} = imwarp(ct.cubeHU{1}, ct.dvf{i});
     
-    ct.dvf{i}(:,:,:,1) = ct.dvf{i}(:,:,:,1) * ct.resolution.x;
-    ct.dvf{i}(:,:,:,2) = ct.dvf{i}(:,:,:,2) * ct.resolution.y;
-    ct.dvf{i}(:,:,:,3) = ct.dvf{i}(:,:,:,3) * ct.resolution.z;
+    % warp cst
+    for j = 1:size(cst,1)
+        tmp = zeros(ct.cubeDim);
+        tmp(cst{j,4}{1}) = 1;
+        tmpWarp = imwarp(tmp, ct.dvf{i});
+%         clf
+%         subplot(2,2,1)
+%         imagesc(tmp(:,:,80))
+%         subplot(2,2,2)
+%         imagesc(tmpWarp(:,:,80))
+        cst{j,4}{i} = find(tmpWarp > .5);
+    end
+    
+    % convert dvfs to [mm]
+    ct.dvf{i}(:,:,:,1) = -ct.dvf{i}(:,:,:,1) * ct.resolution.x;
+    ct.dvf{i}(:,:,:,2) = -ct.dvf{i}(:,:,:,2) * ct.resolution.y;
+    ct.dvf{i}(:,:,:,3) = -ct.dvf{i}(:,:,:,3) * ct.resolution.z;
     
     ct.dvf{i} = permute(ct.dvf{i}, [4,1,2,3]);
     

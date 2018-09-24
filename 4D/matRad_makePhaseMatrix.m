@@ -36,12 +36,7 @@ function timeSequence = matRad_makePhaseMatrix(timeSequence, numOfPhases, motion
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 4
-    motion = 'linear';
-end
-
-phaseTimeDev = .01;
-% time of each phase in micro seconds
+% time of each phase [/mu s]
 phaseTime = motionPeriod * 10 ^ 6/numOfPhases;
 
 for i = 1:length(timeSequence)
@@ -62,20 +57,12 @@ for i = 1:length(timeSequence)
             
         else
             
+            
             iPhase = iPhase + 1;
+            
+            % back to 1 after going over all phases
             if(iPhase > numOfPhases)
                 iPhase = 1;
-            end
-            
-            switch motion
-                case 'linear'
-                    ...
-                case 'sampled_period'
-                    phaseTime = phaseTime + phaseTimeDev * randn(1);
-                case 'periodic'
-                    % To Do
-                otherwise
-                    fprintf('The specified motion scenario is not included.')
             end
             
             realTime = realTime + phaseTime;
