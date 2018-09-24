@@ -26,7 +26,6 @@ function [cst, stf, pln, ct, dij, resultGUI] = matRad_example2_photons()
 % structure defining the CT images and the structure set. Make sure the 
 % matRad root directory with all its subdirectories is added to the Matlab 
 % search path.
-clc,clear,close all;
 load('TG119.mat');
 
 %%
@@ -114,7 +113,7 @@ modelName      = 'none';
 pln.numOfFractions         = 30;
 pln.propStf.gantryAngles   = [0:40:359];
 pln.propStf.couchAngles    = zeros(1,numel(pln.propStf.gantryAngles));
-pln.propStf.bixelWidth     = 5;
+pln.propStf.bixelWidth     = 10;
 
 %%
 % Obtain the number of beams and voxels from the existing variables and 
@@ -152,8 +151,8 @@ stf = matRad_generateStf(ct,cst,pln);
 % Let's generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows subsequent inverse optimization.
-##param.logLevel = 3;
-##dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
+param.logLevel = 3;
+dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
 
 %% Inverse Optimization for IMRT
 % The goal of the fluence optimization is to find a set of beamlet/pencil 
@@ -161,7 +160,7 @@ stf = matRad_generateStf(ct,cst,pln);
 % the clinical objectives and constraints underlying the radiation 
 % treatment. Once the optimization has finished, trigger once the GUI to 
 % visualize the optimized dose cubes.
-% resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
 % matRadGUI;
 % 
 % %% Plot the Resulting Dose Slice

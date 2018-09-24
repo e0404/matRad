@@ -18,13 +18,10 @@ function [cst, stf, pln, ct, dij, resultGUI] = matRad_example1_phantom()
 % (i) how to create arbitrary ct data (resolution, ct numbers)
 % (ii) how to create a cst structure containing the volume of interests of the phantom
 % (iii) generate a treatment plan for this phantom
-clc, clear all, close all
-addpath([pwd filesep '../dicomImport'])
-addpath([pwd filesep '..'])
 %% Create a CT image series
-xDim = 40;
-yDim = 40;
-zDim = 10;
+xDim = 200;
+yDim = 200;
+zDim = 50;
 
 ct.cubeDim      = [xDim yDim zDim];
 ct.resolution.x = 2;
@@ -83,7 +80,6 @@ TYPE = 'cubic';   % either 'cubic' or 'spheric'
 
 % first the OAR
 cubeHelper = zeros(ct.cubeDim);
-disp('flag 1')
 switch TYPE
    
    case {'cubic'}
@@ -123,7 +119,6 @@ end
 % extract the voxel indices and save it in the cst
 cst{ixOAR,4}{1} = find(cubeHelper);
 
-disp('flag 2')
 % second the PTV
 cubeHelper = zeros(ct.cubeDim);
 
@@ -165,8 +160,6 @@ switch TYPE
       
 end
 
-
-disp('flag 3')
 
 % extract the voxel indices and save it in the cst
 cst{ixPTV,4}{1} = find(cubeHelper);
@@ -217,7 +210,7 @@ quantityOpt  = 'physicalDose';
 pln.numOfFractions        = 30;
 pln.propStf.gantryAngles  = [0 90];
 pln.propStf.couchAngles   = [0 0];
-pln.propStf.bixelWidth    = 5;
+pln.propStf.bixelWidth    = 10;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO        = 0;
@@ -231,15 +224,14 @@ pln.multScen = matRad_multScen(ct,'nomScen');
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
-disp('flag 4')
 %% Dose Calculation
-##param.logLevel = 3;
-##dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
+param.logLevel = 3;
+dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
 %% Inverse Optimization for intensity-modulated photon therapy
-% The goal of the fluence optimization is to find a set of bixel/spot 
-% weights which yield the best possible dose distribution according to the
-% clinical objectives and constraints underlying the radiation treatment.
-% resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+% % The goal of the fluence optimization is to find a set of bixel/spot 
+% % weights which yield the best possible dose distribution according to the
+% % clinical objectives and constraints underlying the radiation treatment.
+resultGUI = matRad_fluenceOptimization(dij,cst,pln, param);
 
 %% Plot the resulting dose slice
 % plane      = 3;
@@ -248,7 +240,7 @@ disp('flag 4')
 % 
 % figure,title('phantom plan')
 % matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
-% 
+
 end
 
 %!test 'Check for sizes'

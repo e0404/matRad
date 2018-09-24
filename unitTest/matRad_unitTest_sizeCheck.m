@@ -1,12 +1,17 @@
-function report = matRad_unitTest_sizeCheck(cst, ct, stf, dij, resultGui)
+function report = matRad_unitTest_sizeCheck(verVars, cst, ct, stf,pln, dij, resultGUI)
 
 report.status = 1;
-report.cst.size2 = size(cst, 2);
 
-if(report.cst.size2 != 5)
-    report.status = 0;
-    warning ("Wrong size: expected 5, but got %d",report.cst.size2)
-endif
+status = [];
+status = [status; nish_comparevars(cst, verVars.cst)];
+status = [status; nish_comparevars(ct, verVars.ct)];
+status = [status; nish_comparevars(stf, verVars.stf)];
+status = [status; nish_comparevars(pln, verVars.pln)];
+status = [status; nish_comparevars(dij, verVars.dij)];
+status = [status; nish_comparevars(resultGUI, verVars.resultGUI)];
+
+report.status = all(status);
 
 
 end
+
