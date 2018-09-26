@@ -54,8 +54,8 @@ for i = 1:numOfCtScen
         
     ct.dvf{i} = zeros([ct.cubeDim, 3]);
     
-    ct.dvf{i}(:,:,:,1) = amp(1) * sin((i-1)*pi / numOfCtScen)^2;
-    ct.dvf{i}(:,:,:,2) = amp(2) * sin((i-1)*pi / numOfCtScen)^2;
+    ct.dvf{i}(:,:,:,1) = amp(1) * sin((i-1)*pi / numOfCtScen)^2; % deformation along x direction (i.e. 2nd coordinate in dose/ct)
+    ct.dvf{i}(:,:,:,2) = amp(2) * sin((i-1)*pi / numOfCtScen)^2; % deformation along y direction (i.e. 3rd coordiatie in dose/ct)
     ct.dvf{i}(:,:,:,3) = amp(3) * sin((i-1)*pi / numOfCtScen)^2;
     
     % warp ct
@@ -76,8 +76,9 @@ for i = 1:numOfCtScen
     end
     
     % convert dvfs to [mm]
-    ct.dvf{i}(:,:,:,1) = -ct.dvf{i}(:,:,:,1) * ct.resolution.x;
-    ct.dvf{i}(:,:,:,2) = -ct.dvf{i}(:,:,:,2) * ct.resolution.y;
+    tmp = ct.dvf{i}(:,:,:,1);
+    ct.dvf{i}(:,:,:,1) = -ct.dvf{i}(:,:,:,2) * ct.resolution.x;
+    ct.dvf{i}(:,:,:,2) = -tmp * ct.resolution.y;
     ct.dvf{i}(:,:,:,3) = -ct.dvf{i}(:,:,:,3) * ct.resolution.z;
     
     ct.dvf{i} = permute(ct.dvf{i}, [4,1,2,3]);

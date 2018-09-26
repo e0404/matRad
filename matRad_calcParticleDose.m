@@ -558,6 +558,38 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
    
 end % end shift scenario loop
         
+% remove dose influence for voxels outside of segmentations for every ct
+% scenario
+for i = 1:pln.multScen.numOfCtScen
+    
+    % generate index set to erase
+    tmpIx = [];
+    for j = 1:size(cst,1)
+        tmpIx = unique([tmpIx; cst{j,4}{i}]);
+    end
+    ix = setdiff(1:prod(ct.cubeDim),tmpIx);
+    
+    for j = 1:pln.multScen.totNumRangeScen
+        for k = 1:pln.multScen.totNumShiftScen
+             if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
+                 
+                 dij.physicalDose{i,j,k}(ix,:)      = 0;
+                 
+                 if isfield(dij,'mLETDose')
+                     dij.mLETDose{i,j,k}(ix,:)      = 0;
+                 end
+                 
+                 if pln.bioParam.bioOpt
+                     dij.mAlphaDose{i,j,k}(ix,:)    = 0;
+                     dij.mSqrtBetaDose{i,j,k}(ix,:) = 0;
+                 end
+                 
+             end
+                                               
+        end
+    end
+end
+
 
 
 try

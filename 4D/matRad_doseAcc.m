@@ -49,8 +49,8 @@ end
 ct.cubeDim = ct.cubeDim;
 
 % helper variables
-xGridVec = 1:ct.cubeDim(1);
-yGridVec = 1:ct.cubeDim(2);
+xGridVec = 1:ct.cubeDim(2);
+yGridVec = 1:ct.cubeDim(1);
 zGridVec = 1:ct.cubeDim(3);
 
 % result container
@@ -72,8 +72,8 @@ if strcmp(accMethod,'DDM')
 
     for i = 1:ct.numOfCtScen
           
-        dvf_x_i = squeeze(ct.dvf{1,i}(2,:,:,:))/ct.resolution.y;
-        dvf_y_i = squeeze(ct.dvf{1,i}(1,:,:,:))/ct.resolution.x;
+        dvf_x_i = squeeze(ct.dvf{1,i}(1,:,:,:))/ct.resolution.x;
+        dvf_y_i = squeeze(ct.dvf{1,i}(2,:,:,:))/ct.resolution.y;
         dvf_z_i = squeeze(ct.dvf{1,i}(3,:,:,:))/ct.resolution.z;
         
         d_ref = interp3(yGridVec,xGridVec',zGridVec,phaseCubes{i}, ...
