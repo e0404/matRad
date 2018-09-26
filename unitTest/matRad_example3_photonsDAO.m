@@ -75,7 +75,7 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst, param);
 % predefined clinical objectives and constraints underlying the radiation 
 % treatment. Once the optimization has finished, trigger once the GUI to
 % visualize the optimized dose cubes.
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln, param);
 % matRadGUI;
 % 
 % %% Sequencing
@@ -88,7 +88,7 @@ resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
 % %% DAO - Direct Aperture Optimization
 % % The Direct Aperture Optimization is an optimization approach where we 
 % % directly optimize aperture shapes and weights.
-resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
+resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln, param);
 % 
 % %% Aperture visualization
 % % Use a matrad function to visualize the resulting aperture shapes
