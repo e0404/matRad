@@ -1,3 +1,4 @@
+function [cst, stf, pln, ct, dij, resultGUI] = matRad_example3_photonsDAO()
 %% Example Photon Treatment Plan with Direct aperture optimization
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -82,7 +83,7 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst, param);
 % % order to modulate the intensity of the beams with multiple static 
 % % segments, so that translates each intensity map into a set of deliverable 
 % % aperture shapes.
-% resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
+resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
 % 
 % %% DAO - Direct Aperture Optimization
 % % The Direct Aperture Optimization is an optimization approach where we 

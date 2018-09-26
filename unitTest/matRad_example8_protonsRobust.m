@@ -1,3 +1,4 @@
+function [cst, stf, pln, ct, dij, resultGUI] = matRad_example8_protonsRobust()
 %% Example: Robust Treatment Planning with Protons
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -184,7 +185,7 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
 % 
-% resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 % 
 % %% Trigger robust optimization
 % % Make the objective to a composite worst case objective

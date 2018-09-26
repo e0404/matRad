@@ -46,18 +46,3 @@ ${Runner} ${Switches} "cd('${TESTDIR}'); runMatRadTests"
 exitIfError $?
 cd ..
 
-## Post-processing
-
-# # convert MD report into HTML using pandoc if available
-# MDFILE="unitTest/results.test.md"
-# if [ ! -z `which pandoc` ]; then
-# 	if [ -f $MDFILE ]; then
-# 	    HTMLFILE=${MDFILE/md/html}
-# 	    # replace the emoji while we're at it
-# 	    pandoc -f markdown -t html $MDFILE -o $HTMLFILE
-# 	    sed -i -- 's/:heavy_exclamation_mark:/❗️/g' $HTMLFILE
-# 	    sed -i -- 's/:white_check_mark:/✅/g' $HTMLFILE
-# 	    sed -i -- 's/:grey_question:/❔/g' $HTMLFILE
-# 	fi
-# fi
-
