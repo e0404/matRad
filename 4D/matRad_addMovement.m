@@ -16,7 +16,7 @@ function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp)
 %   note:           1st dim --> x LPS coordinate system
 %                   2nd dim --> y LPS coordinate system
 %                   3rd dim --> z LPS coordinate system
-%                   a positive amplitude moves the phantom to the left,
+%                   a positive amplitude moves the phantom to the right,
 %                   anterior, inferior
 %
 % output
@@ -59,8 +59,8 @@ for i = 1:numOfCtScen
     ct.dvf{i}(:,:,:,3) = amp(3) * sin((i-1)*pi / numOfCtScen)^2;
     
     % warp ct
-    ct.cube{i}   = imwarp(ct.cube{1},   ct.dvf{i});
-    ct.cubeHU{i} = imwarp(ct.cubeHU{1}, ct.dvf{i});
+    ct.cube{i}   = imwarp(ct.cube{1},   ct.dvf{i},'FillValues',0);
+    ct.cubeHU{i} = imwarp(ct.cubeHU{1}, ct.dvf{i},'FillValues',min(ct.hlut(:,2)));
     
     % warp cst
     for j = 1:size(cst,1)

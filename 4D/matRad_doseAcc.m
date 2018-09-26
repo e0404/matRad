@@ -1,4 +1,4 @@
-function dAcc = matRad_doseAcc(ct, phaseCubes, accMethod)
+function dAcc = matRad_doseAcc(ct, phaseCubes, cst, accMethod)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dose accumulation function
 % 
@@ -9,6 +9,7 @@ function dAcc = matRad_doseAcc(ct, phaseCubes, accMethod)
 %   ct:         matRad ct struct inclduing 4d ct, deformation vector
 %               fields, and meta information
 %   phaseCubes: cell array of cubes to be accumulated
+%   cst:        matRad cst struct
 %   accMethod:  method used for accumulation, either direct dose mapping
 %               (DDM), energy mass transfer method (EMT), or divergent dose
 %               mapping method (DDMP)
@@ -64,8 +65,11 @@ if strcmp(accMethod,'DDM')
     [Y,X,Z] = meshgrid(yGridVec,xGridVec,zGridVec);
 
     % TODODODODODOD %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    ix = 1:prod(ct.cubeDim);%    resultGUI.phaseDose{1,i}(:,:,:)>0;       %d.physicalDose(:,:,:,i) > 0;
-    
+    ix = [];1:prod(ct.cubeDim);%[];
+    for i = 1:size(cst,1)
+        ix = unique([ix; cst{i,4}{1}]);
+    end
+
     for i = 1:ct.numOfCtScen
           
         dvf_x_i = squeeze(ct.dvf{1,i}(2,:,:,:))/ct.resolution.y;
