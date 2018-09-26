@@ -74,7 +74,7 @@ param.logLevel = 3;
 dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 
 %% Inverse Optimization for IMPT
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln, param);
 % 
 % %% Calculate quality indicators 
 % [dvh,qi]       = matRad_indicatorWrapper(cst,pln,resultGUI);

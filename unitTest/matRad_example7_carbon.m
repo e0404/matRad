@@ -101,7 +101,7 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln, param);
 % 
 % %% Plot the Resulting Dose Slice
 % % Let's plot the transversal iso-center dose slice
@@ -109,14 +109,14 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 % figure,
 % imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
 % 
-% %% Inverse Optimization for IMPT based on biological effect
-% % To perform a dose optimization for carbon ions we can also use the
-% % biological effect instead of the RBE-weighted dose. Therefore we have to
-% % change the optimization mode and restart the optimization
-% quantityOpt  = 'effect'; 
-% pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
-% 
-% resultGUI_effect = matRad_fluenceOptimization(dij,cst,pln);
+%% Inverse Optimization for IMPT based on biological effect
+% To perform a dose optimization for carbon ions we can also use the
+% biological effect instead of the RBE-weighted dose. Therefore we have to
+% change the optimization mode and restart the optimization
+quantityOpt  = 'effect'; 
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
+
+resultGUI_effect = matRad_fluenceOptimization(dij,cst,pln, param);
 % 
 % %% Visualize differences
 % % Through optimzation based on the biological effect we obtain a slightly
@@ -132,14 +132,14 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 % % ratio of 2 for all tissues. Now, Let's change the radiosensitivity by 
 % % adapting alphaX. This will change the photon alpha-beta ratio
 % % from 2 to 10.
-% for i = 1:size(cst,1)
-%     cst{i,5}.alphaX      = 0.5;
-%     cst{i,5}.TissueClass = 2;
-% end
+for i = 1:size(cst,1)
+    cst{i,5}.alphaX      = 0.5;
+    cst{i,5}.TissueClass = 2;
+end
 % 
 % %% Recalculate Plan
 % % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
-% resultGUI_tissue = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+resultGUI_tissue = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w, param);
 % 
 % %% Result Comparison
 % % Let's compare the new recalculation against the optimization result.
