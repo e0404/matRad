@@ -156,8 +156,8 @@ end
 % set up convolution grid
 if isFieldBasedDoseCalc
     % get data from DICOM import
-    intConvResolution = pln.Collimation.convResolution; 
-    fieldWidth = pln.Collimation.fieldWidth;
+    intConvResolution = pln.propStf.collimation.convResolution; 
+    fieldWidth = pln.propStf.collimation.fieldWidth;
 else
     intConvResolution = .5; % [mm]
     fieldWidth = pln.propStf.bixelWidth;
@@ -494,6 +494,30 @@ for i = 1:pln.multScen.numOfCtScen
                  
              end
                                                
+             % sample dose only for bixel based dose calculation
+             if ~isFieldBasedDoseCalc
+                 r0   = 20 + stf(i).bixelWidth;   % [mm] sample beyond the inner core
+                 Type = 'radius';
+                 [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
+             end
+             % Save dose for every bixel in cell array
+             doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix),1,bixelDose,dij.numOfVoxels,1);
+             
+             % save computation time and memory by sequentially filling the
+             % sparse matrix dose.dij from the cell array
+             if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
+                 if calcDoseDirect
+                     if isfield(stf(1).ray(1),'weight')
+                         % score physical dose
+                         dij.physicalDose{1}(:,i) = dij.physicalDose{1}(:,i) + stf(i).ray(j).weight * doseTmpContainer{1,1};
+                     else
+                         error(['No weight available for beam ' num2str(i) ', ray ' num2str(j)]);
+                     end
+                 else
+                     % fill entire dose influence matrix
+                     dij.physicalDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+                 end
+             end
         end
     end
 end
