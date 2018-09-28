@@ -479,7 +479,7 @@ for i = 1:pln.multScen.numOfCtScen
     
     for j = 1:pln.multScen.totNumRangeScen
         for k = 1:pln.multScen.totNumShiftScen
-             if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
+             if pln.multScen.scenMask(ctScen,ShiftScen,RangeShiftScen)
                  
                  dij.physicalDose{i,j,k}(ix,:)      = 0;
                  
