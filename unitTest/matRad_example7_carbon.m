@@ -136,7 +136,7 @@ for i = 1:size(cst,1)
     cst{i,5}.alphaX      = 0.5;
     cst{i,5}.TissueClass = 2;
 end
-disp('flag0')
+
 % 
 % %% Recalculate Plan
 % % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose

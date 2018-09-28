@@ -81,18 +81,14 @@ if strcmp(pln.radiationMode,'photons')
   dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
   %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-  disp('flag1')
   dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
-  disp('flag2')
 end
 
 % calc resulting dose
 if pln.multScen.totNumScen == 1
     % calculate cubes; use uniform weights here, weighting with actual fluence 
     % already performed in dij construction 
-    disp('flag3')
     resultGUI    = matRad_calcCubes(ones(pln.propStf.numOfBeams,1),dij,cst);
-    disp('flag4')
     
 % calc individual scenarios    
 else    
