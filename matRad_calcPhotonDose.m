@@ -225,7 +225,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
    counter = 0;
 
    % compute SSDs
-   stf = matRad_computeSSD(stf,ct,ctScen);
+   stf = matRad_computeSSD(stf,ct);
 
    matRad_dispToConsole(['shift scenario ' num2str(ShiftScen) ' of ' num2str(pln.multScen.totNumShiftScen) ': \n'],param,'info');
    matRad_dispToConsole('matRad: photon dose calculation...\n',param,'info');
@@ -277,7 +277,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
           [~,center] = min(sum(reshape([stf(i).ray.rayPos_bev],3,[]).^2));
 
           % get correct kernel for given SSD at central ray (nearest neighbor approximation)
-          [~,currSSDIx] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD{ctScen}));
+          [~,currSSDIx] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD));
 
           matRad_dispToConsole(['                   SSD = ' num2str(machine.data.kernel(currSSDIx).SSD) 'mm                 \n'],param,'info');
 
@@ -465,6 +465,41 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
    end   
 
 end
+
+% remove dose influence for voxels outside of segmentations for every ct
+% scenario
+for i = 1:pln.multScen.numOfCtScen
+    
+    % generate index set to erase
+    tmpIx = [];
+    for j = 1:size(cst,1)
+        tmpIx = unique([tmpIx; cst{j,4}{i}]);
+    end
+    ix = setdiff(1:prod(ct.cubeDim),tmpIx);
+    
+    for j = 1:pln.multScen.totNumRangeScen
+        for k = 1:pln.multScen.totNumShiftScen
+             if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
+                 
+                 dij.physicalDose{i,j,k}(ix,:)      = 0;
+                 
+                 if isfield(dij,'mLETDose')
+                     dij.mLETDose{i,j,k}(ix,:)      = 0;
+                 end
+                 
+                 if pln.bioParam.bioOpt
+                     dij.mAlphaDose{i,j,k}(ix,:)    = 0;
+                     dij.mSqrtBetaDose{i,j,k}(ix,:) = 0;
+                 end
+                 
+             end
+                                               
+        end
+    end
+end
+
+
+
 
 try
   % wait 0.1s for closing all waitbars

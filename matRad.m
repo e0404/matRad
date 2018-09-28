@@ -81,7 +81,7 @@ if strcmp(pln.radiationMode,'photons') && (pln.propOpt.runSequencing || pln.prop
 end
 
 %% DAO
-if strcmp(pln.radiationMode,'photons') && pln.propStf.runDAO
+if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO
    resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
    matRad_visApertureInfo(resultGUI.apertureInfo);
 end
@@ -91,12 +91,4 @@ matRadGUI
 
 %% indicator calculation and show DVH and QI
 [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI);
-
-%% perform sampling
-% select structures to include in sampling; leave empty to sample dose for all structures
-structSel = {}; % structSel = {'PTV','OAR1'};
-[caSampRes, mSampDose, plnSamp, resultGUInomScen] = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,[],[]);
-[cstStat, resultGUIStat, param]                   = matRad_samplingAnalysis(ct,cst,plnSamp,caSampRes, mSampDose, resultGUInomScen,[]);
-
-
 
