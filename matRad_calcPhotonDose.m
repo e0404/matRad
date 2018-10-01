@@ -479,7 +479,6 @@ for i = 1:pln.multScen.numOfCtScen
     
     for j = 1:pln.multScen.totNumRangeScen
         for k = 1:pln.multScen.totNumShiftScen
-            
             if pln.multScen.scenMask(i,k,j)
                  
                  dij.physicalDose{i,j,k}(ix,:)      = 0;
@@ -493,7 +492,8 @@ for i = 1:pln.multScen.numOfCtScen
                      dij.mSqrtBetaDose{i,j,k}(ix,:) = 0;
                  end
                  
-             end                                              
+            end
+            
         end
     end
 end
