@@ -171,8 +171,8 @@ cst{ixPTV,4}{1} = find(cubeHelper);
 
 
 % now we have ct data and cst data for a new phantom
-% display(ct);
-% display(cst);
+display(ct);
+display(cst);
 
 
 %% Assign relative electron densities
@@ -213,8 +213,8 @@ quantityOpt  = 'physicalDose';
 %%
 % The remaining plan parameters are set like in the previous example files
 pln.numOfFractions        = 30;
-pln.propStf.gantryAngles  = [0];
-pln.propStf.couchAngles   = [0];
+pln.propStf.gantryAngles  = [0 45];
+pln.propStf.couchAngles   = [0 0];
 pln.propStf.bixelWidth    = 5;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
@@ -233,20 +233,16 @@ stf = matRad_generateStf(ct,cst,pln);
 %% Dose Calculation
 dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 
-disp('end of example 1')
 %% Inverse Optimization for intensity-modulated photon therapy
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
-% resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the resulting dose slice
-% plane      = 3;
-% slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-% doseWindow = [0 max([resultGUI.physicalDose(:)])];
-% 
-% figure,title('phantom plan')
-% matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
-% 
+plane      = 3;
+slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+doseWindow = [0 max([resultGUI.physicalDose(:)])];
 
-
+figure,title('phantom plan')
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
