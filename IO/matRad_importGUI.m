@@ -22,7 +22,7 @@ function varargout = matRad_importGUI(varargin)
 
 % Edit the above text to modify the response to help matRad_importGUI
 
-% Last Modified by GUIDE v2.5 04-Oct-2016 14:21:41
+% Last Modified by GUIDE v2.5 09-Aug-2018 15:18:30
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -183,7 +183,13 @@ if isempty(ctFile) || isempty(maskFiles)
     errordlg('Please sepecify a CT and at least one mask!');
 end
 
-[ct,cst] = matRad_importPatient(ctFile,maskFiles,'default');
+convertHU = get(handles.checkbox_huConvert,'Value');
+
+if convertHU
+    [ct,cst] = matRad_importPatient(ctFile,maskFiles,get(handles.edit_hlut,'String'));
+else
+    [ct,cst] = matRad_importPatient(ctFile,maskFiles);
+end
 
 cst = showCheckDialog(cst);
 
@@ -260,3 +266,60 @@ catch
     warning('Closed checkdialog without confirmation! Using default cst information!');
 end
 delete(handle);
+
+
+% --- Executes on button press in checkbox_huConvert.
+function checkbox_huConvert_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_huConvert (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_huConvert
+
+checked = get(hObject,'Value');
+
+if checked
+    fieldState = 'on';
+else
+    fieldState = 'off';
+end
+
+
+set(handles.edit_hlut,'Enable',fieldState);
+set(handles.pushbutton_hlutFile,'Enable',fieldState);
+
+
+function edit_hlut_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_hlut (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_hlut as text
+%        str2double(get(hObject,'String')) returns contents of edit_hlut as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_hlut_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_hlut (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in pushbutton_hlutFile.
+function pushbutton_hlutFile_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_hlutFile (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+[importHLUTFile,importHLUTPath,~] = uigetfile({'*.hlut', 'matRad HLUT-Files'}, 'Choose the HLUT file...');
+if importHLUTFile ~= 0
+    set(handles.edit_hlut,'String',fullfile(importHLUTPath,importHLUTFile));
+    % Update handles structure
+    guidata(hObject, handles);
+end

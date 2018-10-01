@@ -156,8 +156,8 @@ end
 % set up convolution grid
 if isFieldBasedDoseCalc
     % get data from DICOM import
-    intConvResolution = pln.Collimation.convResolution; 
-    fieldWidth = pln.Collimation.fieldWidth;
+    intConvResolution = pln.propStf.collimation.convResolution; 
+    fieldWidth = pln.propStf.collimation.fieldWidth;
 else
     intConvResolution = .5; % [mm]
     fieldWidth = pln.propStf.bixelWidth;
@@ -479,7 +479,7 @@ for i = 1:pln.multScen.numOfCtScen
     
     for j = 1:pln.multScen.totNumRangeScen
         for k = 1:pln.multScen.totNumShiftScen
-             if pln.multScen.scenMask(ctScen,ShiftScen,RangeShiftScen)
+            if pln.multScen.scenMask(i,k,j)
                  
                  dij.physicalDose{i,j,k}(ix,:)      = 0;
                  
@@ -492,8 +492,8 @@ for i = 1:pln.multScen.numOfCtScen
                      dij.mSqrtBetaDose{i,j,k}(ix,:) = 0;
                  end
                  
-             end
-                                               
+            end
+            
         end
     end
 end
