@@ -1,8 +1,19 @@
 %% This file runs the complete matRad test suite.
 
 %% Set path
-clc; clear all; close all
+clc; clear; close all
 addpath(fullfile(pwd,'..'));
+
+
+% limiting the optimization to 10 iterations
+cd ./../optimization/
+fileId = fopen('matRad_ipoptOptions.m', 'a');
+fprintf(fileId, '\n');
+fwrite(fileId, 'options.ipopt.max_iter = 10;');
+fclose(fileId);
+cd ./../unitTest/
+
+% supressing the inherent Ocatave warnings for division by zero
 warning("off", "Octave:divide-by-zero")
 
 unitTests = {@matRad_example0, ...
