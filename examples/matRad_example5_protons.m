@@ -166,3 +166,6 @@ switch env
      case 'OCTAVE'
           figure,hist(gammaCube(gammaCube>0),100),title('gamma index histogram')
 end
+
+
+
