@@ -89,6 +89,16 @@ pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter
 pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
 
+quantityOpt   = 'physicalDose';     % either  physicalDose / effect / RBExD
+modelName     = 'none';             % none: for photons, protons, carbon                                    constRBE: constant RBE model
+                                    % MCN: McNamara-variable RBE model for protons                          WED: Wedenberg-variable RBE model for protons 
+                                    % LEM: Local Effect Model for carbon ions
+% retrieve bio model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+
+% retrieve scenarios for dose calculation and optimziation
+pln.multScen = matRad_multScen(ct,'nomScen');
+
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln,param);
 
