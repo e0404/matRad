@@ -76,21 +76,21 @@ pln.propOpt.bioOptimization = 'const_RBExD';
 % for particles it is possible to also calculate the LET disutribution
 % alongside the physical dose. Therefore you need to activate the
 % corresponding option during dose calculcation
-pln.propDoseCalc.calcLET = 1;
+pln.propDoseCalc.calcLET = 0;
                                        
 %%
 % Now we have to set the remaining plan parameters.
 pln.numOfFractions        = 30;
 pln.propStf.gantryAngles  = [90 270];
 pln.propStf.couchAngles   = [0 0];
-pln.propStf.bixelWidth    = 3;
+pln.propStf.bixelWidth    = 5;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
 
-quantityOpt   = 'physicalDose';     % either  physicalDose / effect / RBExD
-modelName     = 'none';             % none: for photons, protons, carbon                                    constRBE: constant RBE model
+quantityOpt   = 'RBExD';     % either  physicalDose / effect / RBExD
+modelName     = 'constRBE';             % none: for photons, protons, carbon                                    constRBE: constant RBE model
                                     % MCN: McNamara-variable RBE model for protons                          WED: Wedenberg-variable RBE model for protons 
                                     % LEM: Local Effect Model for carbon ions
 % retrieve bio model parameters
@@ -116,8 +116,8 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
+slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 if param.logLevel == 1
-    slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
     figure
     imagesc(resultGUI.RBExDose(:,:,slice)),colorbar,colormap(jet)
 end
@@ -186,7 +186,7 @@ distToAgreement = 2;
 n               = 1;
 
 [gammaCube,gammaPassRateCell] = matRad_gammaIndex(...
-    resultGUI_isoShift.RBExDose,resultGUI.RBExDose,...
+    resultGUI_isoShift.RBExD,resultGUI.RBExD,...
     [ct.resolution.x, ct.resolution.y, ct.resolution.z],...
     [doseDifference distToAgreement],slice,n,'global',cst);
 
