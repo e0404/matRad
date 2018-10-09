@@ -434,11 +434,11 @@ classdef matRad_multScen
             end
             
             % sanity check
-%             UniqueRowScenForProb = unique(this.scenForProb,'rows');
+            UniqueRowScenForProb = unique(this.scenForProb,'rows');
 
-%             if size(UniqueRowScenForProb,1) ~= size(this.scenForProb,1) && size(UniqueRowScenForProb,1)>1
-%                  matRad_dispToConsole('Some scenarios seem to be defined multiple times',[],'warning');
-%             end
+            if size(UniqueRowScenForProb,1) ~= size(this.scenForProb,1) && size(UniqueRowScenForProb,1)>1
+                 matRad_dispToConsole('Some scenarios seem to be defined multiple times',[],'warning');
+            end
 
             %% setup and fill combinatorics mask
             % 1st dim: ct scenarios, 
@@ -453,20 +453,7 @@ classdef matRad_multScen
                switch this.scenCombType
                    case 'individual'
                        % get all setup scenarios
-%                        [~,ixUnq] = unique(this.scenForProb(:,1:3),'rows','stable');
-                        uq   = this.scenForProb(1,1:3);
-                       ixUnq = [1];
-                       for col  = 2: size(this.scenForProb(:,1:3),1)
-                           flag=1;
-                           for colq = 1: size(uq,1)
-                               if (sum(this.scenForProb(col,1:3) ==uq(colq,:)) == 3 )
-                                   flag=0;
-                               end
-                           end
-                           if flag
-                               ixUnq = [ixUnq; col];
-                           end
-                       end
+                       [~,ixUnq] = unique(this.scenForProb(:,1:3),'rows','stable');
                        this.scenMask  = false(this.numOfCtScen, length(ixUnq), this.totNumRangeScen);
                        this.scenMask(1,:,1) = true; % iso shift scenarios
                        this.scenMask(1,1,:) = true; % range shift scenarios

@@ -480,20 +480,18 @@ for i = 1:pln.multScen.numOfCtScen
     for j = 1:pln.multScen.totNumRangeScen
         for k = 1:pln.multScen.totNumShiftScen
             if pln.multScen.scenMask(i,k,j)
-                 
-                 dij.physicalDose{i,j,k}(ix,:)      = 0;
-                 
-                 if isfield(dij,'mLETDose')
-                     dij.mLETDose{i,j,k}(ix,:)      = 0;
-                 end
-                 
-                 if pln.bioParam.bioOpt
-                     dij.mAlphaDose{i,j,k}(ix,:)    = 0;
-                     dij.mSqrtBetaDose{i,j,k}(ix,:) = 0;
-                 end
-                 
-            end
-            
+                dij.physicalDose{i,j,k}(ix,:)      = 0;
+                
+                if isfield(dij,'mLETDose')
+                    dij.mLETDose{i,j,k}(ix,:)      = 0;
+                end
+                
+                if pln.bioParam.bioOpt
+                    dij.mAlphaDose{i,j,k}(ix,:)    = 0;
+                    dij.mSqrtBetaDose{i,j,k}(ix,:) = 0;
+                end
+                
+            end            
         end
     end
 end

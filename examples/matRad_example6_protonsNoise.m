@@ -111,8 +111,8 @@ display(qi2(ixRectum).D_5);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
+slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 if param.logLevel == 1
-    slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
     figure
     imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet)
 end
@@ -149,7 +149,7 @@ if param.logLevel == 1
 end       
 %% Quantitative Comparison of results
 % Compare the two dose cubes using a gamma-index analysis.
-
+disp('flag')
 % add tools subdirectory
 addpath([fileparts(fileparts(mfilename('fullpath'))) filesep 'tools']);
 
@@ -163,7 +163,7 @@ n                = 1;
     [doseDifference distToAgreement],slice,n,'global',cst);
 
 
-
+disp('end of example 6')
 
 
 
