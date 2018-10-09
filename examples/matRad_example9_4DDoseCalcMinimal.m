@@ -21,8 +21,26 @@
 %% Load data, add generic 4D information, and display 'moving' geometry
 % First we plan the treatment (alternatively an existent treatment plan can
 % be imported)
+clc, close all;
 
-clc,clear,close all
+switch matRad_getEnvironment
+    case 'MATLAB'
+        clearvars -except param
+    case 'OCTAVE'
+        clear -x param
+end
+
+if exist('param','var')
+    if ~isfield(param,'logLevel')
+       param.logLevel = 1;
+    end
+    
+else
+   param.calcDoseDirect = false;
+   param.subIx          = [];
+   param.logLevel       = 1;
+end
+
 load BOXPHANTOM.mat
 %%
 
@@ -66,13 +84,13 @@ pln.multScen = matRad_multScen(ct,scenGenType);
 pln.multScen.scenMask = ones(10,1);
 
 % generate steering file
-stf = matRad_generateStf(ct,cst,pln);
+stf = matRad_generateStf(ct,cst,pln,param);
 
 % dose calculation
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
+dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 
 % inverse planning for imrt
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
 
 
 % post processing
@@ -85,23 +103,24 @@ resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf) ;
 [resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI); 
 
 % plot the result in comparison to the static dose
-slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z); 
+if param.logLevel == 1
+    slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z); 
 
-figure 
+    figure 
 
-subplot(2,2,1)
-imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
-title('static dose distribution [Gy (RBE)]')
-axis equal
+    subplot(2,2,1)
+    imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
+    title('static dose distribution [Gy (RBE)]')
+    axis equal
 
-subplot(2,2,3)
-imagesc(resultGUI.accRBExD(:,:,slice)),colorbar, colormap(jet); 
-title('accumulated (4D) dose distribution [Gy (RBE)]')
-axis equal
+    subplot(2,2,3)
+    imagesc(resultGUI.accRBExD(:,:,slice)),colorbar, colormap(jet); 
+    title('accumulated (4D) dose distribution [Gy (RBE)]')
+    axis equal
 
-subplot(2,2,2)
-imagesc(resultGUI.RBExD(:,:,slice) - resultGUI.accRBExD(:,:,slice)) ,colorbar, colormap(jet); 
-title('static dose distribution - accumulated (4D) dose distribution [Gy (RBE)]')
+    subplot(2,2,2)
+    imagesc(resultGUI.RBExD(:,:,slice) - resultGUI.accRBExD(:,:,slice)) ,colorbar, colormap(jet); 
+    title('static dose distribution - accumulated (4D) dose distribution [Gy (RBE)]')
 
-axis equal
-
+    axis equal
+end

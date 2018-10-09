@@ -108,6 +108,8 @@ resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,res
 
 %% Aperture visualization
 % Use a matrad function to visualize the resulting aperture shapes
-matRad_visApertureInfo(resultGUI.apertureInfo);
+if param.logLevel == 1
+    matRad_visApertureInfo(resultGUI.apertureInfo);
+end
 %% Indicator Calculation and display of DVH and QI
 [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,[],[],param);

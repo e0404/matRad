@@ -28,7 +28,26 @@
 %% Patient Data Import
 % Let's begin with a clear Matlab environment and import the liver
 % patient into your workspace.
-clc,clear,close all;
+clc, close all;
+
+switch matRad_getEnvironment
+    case 'MATLAB'
+        clearvars -except param
+    case 'OCTAVE'
+        clear -x param
+end
+
+if exist('param','var')
+    if ~isfield(param,'logLevel')
+       param.logLevel = 1;
+    end
+    
+else
+   param.calcDoseDirect = false;
+   param.subIx          = [];
+   param.logLevel       = 1;
+end
+
 load('LIVER.mat');
 
 %% Treatment Plan
@@ -77,7 +96,7 @@ pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 pln.multScen = matRad_multScen(ct,'nomScen'); % optimize on the nominal scenario                                            
 
 %% Generate Beam Geometry STF
-stf = matRad_generateStf(ct,cst,pln);
+stf = matRad_generateStf(ct,cst,pln,param);
 
 %%
 % Let's have a closer look on the stf.ray sub-structure which contains the 
@@ -86,27 +105,30 @@ stf = matRad_generateStf(ct,cst,pln);
 % and orientation of the ray, we can also find pencil beam information. If 
 % the ray coincides with the target, pencil beams were defined along the 
 % ray from target entry to target exit. 
-display(stf.ray(100));
-
+if param.logLevel == 1
+    display(stf.ray(100));
+end
 %%
 % Here are the energies selected on ray # 100: 
-display(stf.ray(100).energy);
-
+if param.logLevel == 1
+    display(stf.ray(100).energy);
+end
 %% Dose Calculation
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
+dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 
 %% Inverse Optimization  for IMPT based on RBE-weighted dose
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = round(pln.propStf.isoCenter(3)./ct.resolution.z);
-figure,
-imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
-
+if param.logLevel == 1
+    slice = round(pln.propStf.isoCenter(3)./ct.resolution.z);
+    figure,
+    imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
+end
 %% Inverse Optimization for IMPT based on biological effect
 % To perform a dose optimization for carbon ions we can also use the
 % biological effect instead of the RBE-weighted dose. Therefore we have to
@@ -114,17 +136,18 @@ imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
 quantityOpt  = 'effect'; 
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 
-resultGUI_effect = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI_effect = matRad_fluenceOptimization(dij,cst,pln,param);
 
 %% Visualize differences
 % Through optimzation based on the biological effect we obtain a slightly
 % different dose distribution as visualized by the following dose
 % difference map
-figure;
-imagesc(resultGUI.RBExD(:,:,slice)-resultGUI_effect.RBExD(:,:,slice));
-colorbar;
-colormap(jet);
-
+if param.logLevel == 1
+    figure;
+    imagesc(resultGUI.RBExD(:,:,slice)-resultGUI_effect.RBExD(:,:,slice));
+    colorbar;
+    colormap(jet);
+end
 %% Change Radiosensitivity
 % The previous treatment plan was optimized using an photon alpha-beta 
 % ratio of 2 for all tissues. Now, Let's change the radiosensitivity by 
@@ -137,21 +160,24 @@ end
 
 %% Recalculate Plan
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
-resultGUI_tissue = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+resultGUI_tissue = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w,param);
 
 %% Result Comparison
 % Let's compare the new recalculation against the optimization result.
-plane = 3;
-doseWindow = [0 max([resultGUI_effect.RBExD(:); resultGUI_tissue.RBExD(:)])];
+if param.logLevel == 1
+    plane = 3;
+    doseWindow = [0 max([resultGUI_effect.RBExD(:); resultGUI_tissue.RBExD(:)])];
 
-figure,title('original plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_effect.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);
-figure,title('manipulated plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_tissue.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);
-
+    figure,title('original plan')
+    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_effect.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);
+    figure,title('manipulated plan')
+    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_tissue.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);
+end
 %% 
 % At this point we would like to see the absolute difference of the original optimization and the 
 % recalculation. 
-absDiffCube = resultGUI_effect.RBExD-resultGUI_tissue.RBExD;
-figure,title('absolute difference')
-matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
+if param.logLevel == 1
+    absDiffCube = resultGUI_effect.RBExD-resultGUI_tissue.RBExD;
+    figure,title('absolute difference')
+    matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
+end

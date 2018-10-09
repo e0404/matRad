@@ -201,10 +201,10 @@ end
 pln.propStf.gantryAngles = [0:50:359];
 pln.propStf.couchAngles  = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.numOfBeams   = numel(pln.propStf.gantryAngles);
-stf                      = matRad_generateStf(ct,cst,pln);
+stf                      = matRad_generateStf(ct,cst,pln,param);
 pln.propStf.isoCenter    = stf.isoCenter;
-dij                      = matRad_calcPhotonDose(ct,stf,pln,cst);
-resultGUI_coarse         = matRad_fluenceOptimization(dij,cst,pln);
+dij                      = matRad_calcPhotonDose(ct,stf,pln,cst,param);
+resultGUI_coarse         = matRad_fluenceOptimization(dij,cst,pln,param);
 
 %%  Visual Comparison of results
 % Let's compare the new recalculation against the optimization result.
