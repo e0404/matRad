@@ -41,8 +41,8 @@ end
 
 
 %% Create a CT image series
-xDim = 200;
-yDim = 200;
+xDim = 150;
+yDim = 150;
 zDim = 50;
 
 ct.cubeDim      = [xDim yDim zDim];

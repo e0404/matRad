@@ -24,9 +24,5 @@ matRad_example3_photonsDAO
 matRad_example5_protons
 matRad_example6_protonsNoise
 matRad_example7_carbon
-try
-    matRad_example8_protonsRobust
-catch
-    warning('example 8')
-end
 matRad
+matRad_example8_protonsRobust
