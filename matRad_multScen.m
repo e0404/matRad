@@ -249,7 +249,6 @@ classdef matRad_multScen
            this.includeNomScen       = this.(['includeNomScen_' this.TYPE]);  
        end
        
-       env = matRad_getEnvironment;
        %%
        % creates individual treatment planning scenarios
        function this = setMultScen(this)
@@ -269,11 +268,11 @@ classdef matRad_multScen
                     isoShiftVec{3} = [0 linspace(-this.shiftSize(3), this.shiftSize(3), this.numOfShiftScen(3))];
                 case 'sampled'
                     meanP = zeros(1,3); % mean (parameter)
-                    if env == 'MATLAB' rng('shuffle'), end;
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     isoShiftVec{1} = [0 this.shiftSD(1) .* randn(1, this.numOfShiftScen(1)) + meanP(1)];
-                    if env == 'MATLAB' rng('shuffle'), end;
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     isoShiftVec{2} = [0 this.shiftSD(2) .* randn(1, this.numOfShiftScen(2)) + meanP(2)];
-                    if env == 'MATLAB' rng('shuffle'), end;
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     isoShiftVec{3} = [0 this.shiftSD(3) .* randn(1, this.numOfShiftScen(3)) + meanP(3)];     
                 otherwise
                     matRad_dispToConsole('did not expect that','error');
@@ -348,11 +347,11 @@ classdef matRad_multScen
                 case 'sampled'
                     % relRange
                     std = this.rangeRelSD; meanP = 0;
-                    if env == 'MATLAB' rng('shuffle'), end;
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     this.relRangeShift = [nomScen std .* randn(1, this.numOfRangeShiftScen) + meanP];
                     % absRange
                     std = this.rangeAbsSD; meanP = 0;
-                    if env == 'MATLAB' rng('shuffle'), end;
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     this.absRangeShift = [nomScen std .* randn(1, this.numOfRangeShiftScen) + meanP];
                 otherwise
                     matRad_dispToConsole('Not a valid type of generating data.','error');
