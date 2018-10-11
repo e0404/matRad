@@ -192,7 +192,7 @@ else
 %% perform seriel sampling
 % rough estimate of total computation time
 totCompTime = size(pln.multScen.scenForProb,1) * nomScenTime * 1.1;
-fprintf(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600, 2)), ...
+fprintf(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600)), ...
                         'h. Estimated finish: ', datestr(datetime('now') + seconds(totCompTime)), '\n']);
     
     for i = 1:pln.multScen.totNumScen
