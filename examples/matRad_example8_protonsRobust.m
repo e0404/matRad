@@ -194,14 +194,12 @@ stf = matRad_generateStf(ct,cst,pln,param);
 
 %% Dose Calculation
 dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
-disp('flag4')
 %% Inverse Optimization  for IMPT based on RBE-weighted dose
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
 % 
 resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
-disp('flag5')
 %% Trigger robust optimization
 % Make the objective to a composite worst case objective
 cst{ixPTV,6}.robustness  = 'COWC';
@@ -215,7 +213,6 @@ cst{ixOAR,6}.robustness  = 'COWC';
 % cst{ixOAR,6}(2,1).robustness  = 'VWWC';
 
 resultGUIrobust = matRad_fluenceOptimization(dij,cst,pln,param);
-disp('flag6')
 %% Visualize results
 if param.logLevel == 1
     addpath('tools')
@@ -235,7 +232,6 @@ if param.logLevel == 1
 end
 %% Indicator calculation and show DVH and QI
 [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUIrobust,[],[],param);
-disp('flag7')
 %% Perform sampling
 addpath(['tools' filesep 'samplingAnalysis'])
 % select structures to include in sampling; leave empty to sample dose for all structures
@@ -253,6 +249,3 @@ if param.logLevel == 1
     figure,title('std dose cube based on sampling - robust')
     matRad_plotSliceWrapper(gca,ct,cst,1,resultGUISampRob.stdCube,plane,slice,[],[],colorcube,[],[0 max(resultGUISampRob.stdCube(:))],[]);
 end
-
-disp('flag8')
-
