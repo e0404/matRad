@@ -569,10 +569,10 @@ for i = 1:pln.multScen.numOfCtScen
     end
     ix = setdiff(1:prod(ct.cubeDim),tmpIx);
     
-    for j = 1:pln.multScen.totNumRangeScen
-        for k = 1:pln.multScen.totNumShiftScen
+    for j = 1:pln.multScen.totNumShiftScen
+        for k = 1:pln.multScen.totNumRangeScen
             
-             if pln.multScen.scenMask(i,k,j)
+             if pln.multScen.scenMask(i,j,k)
                  
                  dij.physicalDose{i,j,k}(ix,:)      = 0;
                  
