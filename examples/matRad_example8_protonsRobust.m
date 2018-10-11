@@ -229,7 +229,7 @@ if param.logLevel == 1
     b = uicontrol('Parent',f,'Style','slider','Position',[50,5,419,23],...
        'value',numScen, 'min',1, 'max',pln.multScen.totNumScen,'SliderStep', [1/(pln.multScen.totNumScen-1) , 1/(pln.multScen.totNumScen-1)]);
     b.Callback = @(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExD_' num2str(round(es.Value))]),plane,slice,[],[],colorcube,[],doseWindow,[]); 
-end
+
 %% Indicator calculation and show DVH and QI
 [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUIrobust,[],[],param);
 %% Perform sampling
@@ -242,7 +242,7 @@ structSel = {}; % structSel = {'PTV','OAR1'};
 [caSampRob, mSampDoseRob, plnSampRob, resultGUInomScen] = matRad_sampling(ct,stf,cst,pln,resultGUIrobust.w,structSel,[],param);
 [cstStatRob, resultGUISampRob, paramRob]                = matRad_samplingAnalysis(ct,cst,plnSampRob,caSampRob, mSampDoseRob, resultGUInomScen,param);
 
-if param.logLevel == 1
+
     figure,title('std dose cube based on sampling - conventional')
     matRad_plotSliceWrapper(gca,ct,cst,1,resultGUISamp.stdCube,plane,slice,[],[],colorcube,[],[0 max(resultGUISamp.stdCube(:))],[]);
 

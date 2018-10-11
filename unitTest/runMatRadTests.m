@@ -18,11 +18,11 @@ warning("off", "Octave:divide-by-zero")
 
 param.logLevel = 3;
 
-% matRad_example1_phantom
-% matRad_example2_photons
-% matRad_example3_photonsDAO
-% matRad_example5_protons
-% matRad_example6_protonsNoise
-% matRad_example7_carbon
-% matRad
+matRad_example1_phantom
+matRad_example2_photons
+matRad_example3_photonsDAO
+matRad_example5_protons
+matRad_example6_protonsNoise
+matRad_example7_carbon
 matRad_example8_protonsRobust
+matRad
