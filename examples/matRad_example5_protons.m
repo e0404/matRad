@@ -119,19 +119,19 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 if param.logLevel == 1
     figure
-    imagesc(resultGUI.RBExDose(:,:,slice)),colorbar,colormap(jet)
+    imagesc(resultGUI.RBExD(:,:,slice)),colorbar,colormap(jet)
 end
 %% Plot the Resulting Beam Dose Slice
 % Let's plot the transversal iso-center dose slice of beam 1 and beam 2
 % separately 
 if param.logLevel == 1
     figure
-    subplot(121),imagesc(resultGUI.RBExDose_beam1(:,:,slice)),colorbar,colormap(jet),title('dose of beam 1')
-    subplot(122),imagesc(resultGUI.RBExDose_beam2(:,:,slice)),colorbar,colormap(jet),title('dose of beam 2')
+    subplot(121),imagesc(resultGUI.RBExD_beam1(:,:,slice)),colorbar,colormap(jet),title('dose of beam 1')
+    subplot(122),imagesc(resultGUI.RBExD_beam2(:,:,slice)),colorbar,colormap(jet),title('dose of beam 2')
 end
 %% and the corresponding LET distribution
 % Transversal iso-center slice
-if param.logLevel == 1
+if param.logLevel == 1 && pln.propDoseCalc.calcLET
     figure
     imagesc(resultGUI.LET(:,:,slice)),colormap(jet),colorbar,title('LET [keV/µm]')
 end
@@ -149,22 +149,22 @@ resultGUI_isoShift = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w,param);
 % Let's compare the new recalculation against the optimization result.
 if param.logLevel == 1
     plane = 3;
-    doseWindow = [0 max([resultGUI.RBExDose(:); resultGUI_isoShift.RBExDose(:)])];
+    doseWindow = [0 max([resultGUI.RBExD(:); resultGUI_isoShift.RBExD(:)])];
 
     figure,title('original plan')
-    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
     figure,title('shifted plan')
-    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_isoShift.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_isoShift.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
 
-    absDiffCube = resultGUI.RBExDose-resultGUI_isoShift.RBExDose;
+    absDiffCube = resultGUI.RBExD-resultGUI_isoShift.RBExD;
     figure,title('absolute difference')
     matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 
     % Let's plot single profiles that are perpendicular to the beam direction
     ixProfileY = round(pln.propStf.isoCenter(1,2)./ct.resolution.y);
 
-    profileOrginal = resultGUI.RBExDose(:,ixProfileY,slice);
-    profileShifted = resultGUI_isoShift.RBExDose(:,ixProfileY,slice);
+    profileOrginal = resultGUI.RBExD(:,ixProfileY,slice);
+    profileShifted = resultGUI_isoShift.RBExD(:,ixProfileY,slice);
 
     figure,plot(profileOrginal,'LineWidth',2),grid on,hold on, 
            plot(profileShifted,'LineWidth',2),legend({'original profile','shifted profile'}),
