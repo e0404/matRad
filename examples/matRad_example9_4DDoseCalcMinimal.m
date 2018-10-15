@@ -21,8 +21,8 @@
 %% Load data, add generic 4D information, and display 'moving' geometry
 % First we plan the treatment (alternatively an existent treatment plan can
 % be imported)
-clc,clear, close all;
 
+clc,clear,close all
 load BOXPHANTOM.mat
 %%
 
@@ -66,24 +66,28 @@ pln.multScen = matRad_multScen(ct,scenGenType);
 pln.multScen.scenMask = ones(10,1);
 
 % generate steering file
-stf = matRad_generateStf(ct,cst,pln,param);
+stf = matRad_generateStf(ct,cst,pln);
+
 % dose calculation
-dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
+dij = matRad_calcParticleDose(ct,stf,pln,cst);
+
 % inverse planning for imrt
-resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+
 
 % post processing
 % This step is necessary to remove beam spots with too few particles that
 % cannot not be delivered, dose is recalculated accordingly
 resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf) ; 
+
 % calc 4D dose
 % make sure that the correct pln, dij and stf are loeaded in the workspace
 [resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI); 
+
 % plot the result in comparison to the static dose
+slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z); 
 
-slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-
-figure
+figure 
 
 subplot(2,2,1)
 imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
@@ -91,12 +95,12 @@ title('static dose distribution [Gy (RBE)]')
 axis equal
 
 subplot(2,2,3)
-imagesc(resultGUI.accRBExD(:,:,slice)),colorbar, colormap(jet);
+imagesc(resultGUI.accRBExD(:,:,slice)),colorbar, colormap(jet); 
 title('accumulated (4D) dose distribution [Gy (RBE)]')
 axis equal
 
 subplot(2,2,2)
-imagesc(resultGUI.RBExD(:,:,slice) - resultGUI.accRBExD(:,:,slice)) ,colorbar, colormap(jet);
+imagesc(resultGUI.RBExD(:,:,slice) - resultGUI.accRBExD(:,:,slice)) ,colorbar, colormap(jet); 
 title('static dose distribution - accumulated (4D) dose distribution [Gy (RBE)]')
 
 axis equal
