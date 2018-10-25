@@ -90,7 +90,7 @@ slices{plane} = coords{plane}(sliceIndices);
 %fly
 if isempty(isoContours)
     
-    [xMesh,yMesh,zMesh] = meshgrid(coords{:});
+    [xMesh,yMesh,zMesh] = meshgrid(coords{2},coords{1},coords{3});
     isoLineHandles = contourslice(axesHandle,xMesh,yMesh,zMesh,doseCube,slices{[2 1 3]},isoLevels);
 else  
     axes(axesHandle);
@@ -126,15 +126,15 @@ else
                 if plane == 2
                     isoLine3Dx = currSlicePlaneCoords*ones(1,numel(isoLine2Dx));
                     isoLine3Dz = interp1(double(1:ct.cubeDim(3)),coords{3},isoLine2Dx);
-                    isoLine3Dy = interp1(double(1:ct.cubeDim(2)),coords{2},isoLine2Dy);
+                    isoLine3Dy = interp1(double(1:ct.cubeDim(1)),coords{1},isoLine2Dy);
                 elseif plane == 1
                     isoLine3Dy = currSlicePlaneCoords*ones(1,numel(isoLine2Dx));
-                    isoLine3Dx = interp1(double(1:ct.cubeDim(1)),coords{1},isoLine2Dy);
+                    isoLine3Dx = interp1(double(1:ct.cubeDim(2)),coords{2},isoLine2Dy);
                     isoLine3Dz = interp1(double(1:ct.cubeDim(3)),coords{3},isoLine2Dx);
                 elseif plane == 3
                     isoLine3Dz = currSlicePlaneCoords*ones(1,numel(isoLine2Dx));
-                    isoLine3Dx = interp1(double(1:ct.cubeDim(1)),coords{1},isoLine2Dx);
-                    isoLine3Dy = interp1(double(1:ct.cubeDim(2)),coords{2},isoLine2Dy);
+                    isoLine3Dx = interp1(double(1:ct.cubeDim(2)),coords{2},isoLine2Dx);
+                    isoLine3Dy = interp1(double(1:ct.cubeDim(1)),coords{1},isoLine2Dy);
                 else 
                     continue;
                 end

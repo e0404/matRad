@@ -12,7 +12,7 @@ function cst = matRad_computeAllVoiSurfaces(ct,cst)
     yCoord = ct.resolution.y * double(1:ct.cubeDim(2));
     zCoord = ct.resolution.z * double(1:ct.cubeDim(3));
     
-    [xMesh,yMesh,zMesh] = meshgrid(xCoord,yCoord,zCoord);
+    [xMesh,yMesh,zMesh] = meshgrid(yCoord,xCoord,zCoord);
 
     numVois = size(cst,1);
     
