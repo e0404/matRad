@@ -60,18 +60,18 @@ coords{3} = ct.resolution.z * (1:ct.cubeDim(3));
 % slice plot with surface(...), colormapping can be done by texture
 % mapping, this is why we use surface instead of slice
 if plane == 1 % Coronal plane
-    [xMesh,zMesh] = meshgrid(coords{1},coords{3});
-    yMesh = ctSlice*ct.resolution.x*ones(ct.cubeDim(3),ct.cubeDim(1));
+    [xMesh,zMesh] = meshgrid(coords{2},coords{3});
+    yMesh = ctSlice*ct.resolution.x*ones(size(xMesh));
     ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cubeHU{cubeIdx}(ctSlice,:,:)-window(1))/(window(2) - window(1))))),cMap);
-    ct_rgb = permute(ct_rgb,[2 1 3]);
+%    ct_rgb = permute(ct_rgb,[2 1 3]);
 elseif plane == 2 % sagittal plane
-    [yMesh,zMesh] = meshgrid(coords{2},coords{3});
-    xMesh = ctSlice*ct.resolution.y*ones(ct.cubeDim(3),ct.cubeDim(2));
+    [yMesh,zMesh] = meshgrid(coords{1},coords{3});
+    xMesh = ctSlice*ct.resolution.y*ones(size(yMesh));
     ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cubeHU{cubeIdx}(:,ctSlice,:)-window(1))/(window(2) - window(1))))),cMap);
-    ct_rgb = permute(ct_rgb,[2 1 3]);
+%    ct_rgb = permute(ct_rgb,[2 1 3]);
 elseif plane == 3 % Axial plane
-    [xMesh,yMesh] = meshgrid(coords{1},coords{2});
-    zMesh = ctSlice*ct.resolution.z*ones(ct.cubeDim(2),ct.cubeDim(1));    
+    [xMesh,yMesh] = meshgrid(coords{2},coords{1});
+    zMesh = ctSlice*ct.resolution.z*ones(size(xMesh));    
     ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cubeHU{cubeIdx}(:,:,ctSlice)-window(1))/(window(2) - window(1))))),cMap);
 end
 ctHandle = surface('XData',xMesh, 'YData',yMesh, 'ZData',zMesh, ...
