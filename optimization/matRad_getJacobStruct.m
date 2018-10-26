@@ -47,7 +47,6 @@ for i = 1:size(cst,1)
                 end
             end
             
-            numOfConstraints = numOfConstraints+1;
         elseif isequal(cst{i,6}(j).type, 'max EUD constraint') || ...
                 isequal(cst{i,6}(j).type, 'min EUD constraint')
             
@@ -59,7 +58,6 @@ for i = 1:size(cst,1)
                 end
             end
             
-            numOfConstraints = numOfConstraints+1;
         elseif isequal(cst{i,6}(j).type, 'max DVH constraint') ||...
                 isequal(cst{i,6}(j).type, 'min DVH constraint')
             
@@ -73,7 +71,9 @@ for i = 1:size(cst,1)
                     error('Simultatenous definition of DVH constraint\n');
                 end
             end
-            
+        end
+        
+        if strfind(cst{i,6}(j).type,'constraint')
             numOfConstraints = numOfConstraints+1;
         end
     end
@@ -84,7 +84,8 @@ if ~isfield(options,'optBixel')
 end
 
 % Initializes constraints
-jacobStructVec = zeros(1,numOfConstraints*nnz(options.optBixel));
+numOptBixel = nnz(options.optBixel);
+jacobStructVec = zeros(1,numOfConstraints*numOptBixel);
 offset = 0;
 
 % compute objective function for every VOI.
@@ -111,9 +112,9 @@ for i = 1:size(cst,1)
                             isequal(cst{i,6}(j).type, 'max DVH constraint') || ...
                             isequal(cst{i,6}(j).type, 'min DVH constraint')
                         
-                        jacobStructVec(offset+(1:nnz(options.optBixel))) = mean(dij.physicalDose{1}(cst{i,4}{1},options.optBixel));
+                        jacobStructVec(offset+(1:numOptBixel)) = mean(dij.physicalDose{1}(cst{i,4}{1},options.optBixel));
                         
-                        offset = offset+nnz(options.optBixel);
+                        offset = offset+numOptBixel;
                     end
                     
                 end
@@ -127,7 +128,7 @@ for i = 1:size(cst,1)
 end
 
 i = 1:numOfConstraints;
-i = kron(i,ones(1,nnz(options.optBixel)));
+i = kron(i,ones(1,numOptBixel));
 
 j = 1:dij.totalNumOfBixels;
 j(~options.optBixel) = [];

@@ -61,6 +61,16 @@ if ~isdeployed % only if _not_ running as standalone
 
 end
 
+% Set the IPOPT options.
+matRad_ipoptOptions;
+
+% set optimization options
+options.radMod          = pln.radiationMode;
+options.bioOpt          = pln.propOpt.bioOptimization;
+options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
+options.FMO             = false; % let optimizer know that this is FMO
+options.numOfScenarios  = dij.numOfScenarios;
+
 % initialize global variables for optimizer
 global matRad_global_x;
 global matRad_global_d;
@@ -83,13 +93,10 @@ for i = 1:size(cst_Over,1)
     end
 end
 
-% create optBixel mask, which is just true everywhere
-options.optBixel = true(dij.totalNumOfBixels,1);
-
 if isfield(apertureInfo,'scaleFacRx')
     %weights were scaled to acheive 95% PTV coverage
     %scale back to "optimal" weights
-    apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) = apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)/apertureInfo.scaleFacRx;
+    apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes*apertureInfo.numPhases) = apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes*apertureInfo.numPhases)/apertureInfo.scaleFacRx;
 end
 
 if pln.propOpt.preconditioner
@@ -112,20 +119,11 @@ apertureInfo.newIteration = true;
 % define apertureInfo as a global vector to be updated once each iteration
 matRad_global_apertureInfo = apertureInfo;
 
-% Set the IPOPT options.
-matRad_ipoptOptions;
-
-% set optimization options
-options.radMod          = pln.radiationMode;
-options.bioOpt          = pln.propOpt.bioOptimization;
-options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
-options.numOfScenarios  = dij.numOfScenarios;
-
 % set bounds on optimization variables
-options.lb              = apertureInfo.limMx(:,1);                                          % lower bound on the variables.
-options.ub              = apertureInfo.limMx(:,2);                                          % upper bound on the variables.
+options.lb              = apertureInfo.limMx(:,1);                                          % Lower bound on the variables.
+options.ub              = apertureInfo.limMx(:,2);                                          % Upper bound on the variables.
 options.runVMAT         = pln.propOpt.runVMAT;
-[options.cl,options.cu] = matRad_daoGetConstBounds(cst_Over,apertureInfo,options);          % lower and upper bounds on the constraint functions.
+[options.cl,options.cu] = matRad_daoGetConstBounds(cst_Over,apertureInfo,options);   % Lower and upper bounds on the constraint functions.
 
 % set callback functions.
 funcs.objective         = @(x) matRad_daoObjFunc(x,dij,cst_Over,options);
@@ -158,9 +156,19 @@ resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,optApertureInfo
 resultGUI.w    = resultGUI.apertureInfo.bixelWeights;
 resultGUI.wDao = resultGUI.apertureInfo.bixelWeights;
 
+if pln.propOpt.preconditioner
+    % revert scaling
+    
+    dij.weightToMU = dij.weightToMU./dij.scaleFactor;
+    resultGUI.apertureInfo.weightToMU = resultGUI.apertureInfo.weightToMU./dij.scaleFactor;
+    resultGUI.apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes*apertureInfo.numPhases) = resultGUI.apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes*apertureInfo.numPhases).*dij.scaleFactor;
+    
+    dij.scaleFactor = 1;
+end
+
 % calc dose and reshape from 1D vector to 3D array
 d = matRad_backProjection(resultGUI.w,dij,options);
-resultGUI.physicalDose = reshape(d{1},dij.dimensions);
+resultGUI.physicalDose = reshape(d,dij.dimensions);
 
 if isfield(pln,'scaleDRx') && pln.scaleDRx
     %Scale D95 in target to RXDose

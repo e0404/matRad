@@ -61,6 +61,21 @@ if ~isdeployed % only if _not_ running as standalone
 
 end
 
+% set the IPOPT options.
+matRad_ipoptOptions;
+
+% modified settings for photon dao
+if pln.propOpt.runDAO && strcmp(pln.radiationMode,'photons')
+%    options.ipopt.max_iter = 50;
+%    options.ipopt.acceptable_obj_change_tol     = 7e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
+end
+
+% set optimization options
+options.radMod          = pln.radiationMode;
+options.bioOpt          = pln.propOpt.bioOptimization;
+options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
+options.FMO             = true; % let optimizer know that this is FMO
+
 % initialize global variables for optimizer
 global matRad_global_x;
 global matRad_global_d;
@@ -95,35 +110,21 @@ for i=1:size(cst_Over,1)
     end
 end
 
-[doseTarget,i] = max(doseTarget);
-ixTarget       = ixTarget(i);
-wOnes          = ones(dij.totalNumOfBixels,1);
+[doseTarget,i]  = max(doseTarget);
+ixTarget        = ixTarget(i);
+wOnes           = ones(dij.totalNumOfBixels,1);
 
-% set the IPOPT options.
-matRad_ipoptOptions;
-
-% modified settings for photon dao
-if pln.propOpt.runDAO && strcmp(pln.radiationMode,'photons')
-%    options.ipopt.max_iter = 50;
-%    options.ipopt.acceptable_obj_change_tol     = 7e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
-end
-
-% set bounds on optimization variables
-options.lb              = zeros(1,dij.totalNumOfBixels);        % Lower bound on the variables.
-options.ub              = inf * wOnes;                          % Upper bound on the variables.
-
-% create logical vector to determined which parameters should be used for
-% the optimization
+% determine wOnes
 if pln.propOpt.runVMAT
     % loop through angles
     offset = 0;
     for i = 1:dij.numOfBeams
-        % if angle is not an initialization angle, do not optimize fluence
-        % in bixels
+        
+        rayIndices = offset+(1:dij.numOfRaysPerBeam(i));
         if ~stf(i).propVMAT.FMOBeam
-            rayIndices = offset + (1:dij.numOfRaysPerBeam(i));
-            % set upper bound to 0
-            options.ub(rayIndices) = 0;
+            % if angle is not an initialization angle, do not optimize fluence
+            % in bixels
+            
             %set wOnes to 0 (initial value)
             wOnes(rayIndices) = 0;
         end
@@ -133,17 +134,24 @@ end
 
 options.optBixel = logical(wOnes);
 
-funcs.iterfunc  = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
-    
+% set bounds on optimization variables - put in separate function?
+options.lb = 0 * wOnes;    % Lower bound on the variables.
+options.ub = wOnes;        % Upper bound on the variables.
+options.ub(wOnes == 1) = inf;
+
+% set bounds on constraints
+[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst_Over,options);
+
 % calculate initial beam intensities wInit
 if  strcmp(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
     % check if a constant RBE is defined - if not use 1.1
     if ~isfield(dij,'RBE')
         dij.RBE = 1.1;
     end
-    bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
+    
+    bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes));
     wInit       = wOnes * bixelWeight;
-        
+    
 elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
                                 && strcmp(pln.radiationMode,'carbon')
     % set optimization options
@@ -198,25 +206,20 @@ elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt
            wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
     end
     
-else 
-    bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
-    wInit       = wOnes * bixelWeight;
+else
+    dOnes = matRad_backProjection(wOnes,dij,options);
+    bixelWeight = (doseTarget)/mean(dOnes(V));
+    wInit = wOnes * bixelWeight;
     pln.propOpt.bioOptimization = 'none';
 end
 
-% set optimization options
-options.radMod          = pln.radiationMode;
-options.bioOpt          = pln.propOpt.bioOptimization;
-options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
-options.numOfScenarios  = dij.numOfScenarios;
-
 % set callback functions.
-[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst_Over,options);
+funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
 funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst_Over,options);
 funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst_Over,options);
 funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst_Over,options);
 funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst_Over,options);
-funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst_Over);
+funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst_Over,options);
 
 % Run IPOPT.
 [wOpt, info]            = ipopt(wInit,funcs,options);
@@ -224,20 +227,20 @@ funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst_Over);
 % calc dose and reshape from 1D vector to 2D array
 fprintf('Calculating final cubes...\n');
 
-resultGUI = matRad_calcCubes(wOpt,dij,cst_Over);
+resultGUI = matRad_calcCubes(wOpt,dij,cst_Over,options);
 
 if isfield(pln,'scaleDRx') && pln.scaleDRx
     %Scale D95 in target to RXDose
     resultGUI.QI = matRad_calcQualityIndicators(cst,pln,resultGUI.physicalDose);
     
     scaleFacRx = max((pln.DRx/pln.numOfFractions)./[resultGUI.QI(pln.RxStruct).D_95]');
-    
     wOpt = wOpt*scaleFacRx;
-    resultGUI = matRad_calcCubes(wOpt,dij,cst_Over);
+    resultGUI = matRad_calcCubes(wOpt,dij,cst_Over,options);
+    
+    resultGUI.scaleFacRx_FMO = scaleFacRx;
 end
 
 resultGUI.wUnsequenced = wOpt;
-
 
 
 % unset Key Pressed Callback of Matlab command window

@@ -45,15 +45,15 @@ color = flipud(color);
 color(:,3) = 0;
 color(:,2) = 0;
 
-% loop over all beams
-%{
-wMax = 0;
-for i=1:numOfBeams
-    if wMax <= apertureInfo.beam(i).shape(1).weight
-        wMax = apertureInfo.beam(i).shape(1).weight;
+if apertureInfo.runVMAT
+    % if doing VMAT, let wMax be the max weight across ALL angles
+    wMax = 0;
+    for i=1:numOfBeams
+        if wMax <= apertureInfo.beam(i).shape(1).weight
+            wMax = apertureInfo.beam(i).shape(1).weight;
+        end
     end
 end
-%}
 
 
 for i=1:numOfBeams
@@ -67,9 +67,11 @@ for i=1:numOfBeams
     minX = apertureInfo.beam(i).MLCWindow(1);
     maxX = apertureInfo.beam(i).MLCWindow(2);
     
-    %get maximum weight
-    if numOfShapes;
-        wMax = max([apertureInfo.beam(i).shape(:).weight]);
+    if ~apertureInfo.runVMAT
+        % if not VMAT, let wMax be the max weight of a particular angle
+        if numOfShapes;
+            wMax = max([apertureInfo.beam(i).shape(:).weight]);
+        end
     end
     if strcmp(mode,'leafNum')
         
@@ -146,20 +148,6 @@ for i=1:numOfBeams
         end
         
     end
-    
-    
-    frame = getframe;
-    im = frame2im(frame);
-    [A,map] = rgb2ind(im,256);
-    fname = 'DAO_Apertures_3.gif';
-    if i == 1
-        imwrite(A,map,fname,'gif','LoopCount',Inf,'DelayTime',1);
-    else
-        imwrite(A,map,fname,'gif','WriteMode','append','DelayTime',1);
-    end
-    
-    
-    
     
 end
 

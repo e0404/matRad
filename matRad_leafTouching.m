@@ -62,24 +62,18 @@ for k = 1:numel(apertureInfo.beam)
     if ~isfield(apertureInfo.beam(1).shape(1),'leftLeafPos_I')
         leftLeafPoss(:,l) = apertureInfo.beam(k).shape(1).leftLeafPos;
         rightLeafPoss(:,l) = apertureInfo.beam(k).shape(1).rightLeafPos;
-        %leftLeafPoss(:,l) = apertureInfoVect(vectorIx);
-        %rightLeafPoss(:,l) = apertureInfoVect(vectorIx+apertureInfo.totalNumOfLeafPairs);
         gantryAngles(l) = apertureInfo.beam(k).gantryAngle;
         
         l = l+1;
     else
         leftLeafPoss(:,l) = apertureInfo.beam(k).shape(1).leftLeafPos_I;
         rightLeafPoss(:,l) = apertureInfo.beam(k).shape(1).rightLeafPos_I;
-        %leftLeafPoss(:,l) = apertureInfoVect(vectorIx);
-        %rightLeafPoss(:,l) = apertureInfoVect(vectorIx+apertureInfo.totalNumOfLeafPairs);
         gantryAngles(l) = apertureInfo.beam(k).doseAngleBorders(1);
         
         l = l+1;
         
         leftLeafPoss(:,l) = apertureInfo.beam(k).shape(1).leftLeafPos_F;
         rightLeafPoss(:,l) = apertureInfo.beam(k).shape(1).rightLeafPos_F;
-        %leftLeafPoss(:,l) = apertureInfoVect(vectorIx);
-        %rightLeafPoss(:,l) = apertureInfoVect(vectorIx+apertureInfo.totalNumOfLeafPairs);
         gantryAngles(l) = apertureInfo.beam(k).doseAngleBorders(2);
         
         l = l+1;

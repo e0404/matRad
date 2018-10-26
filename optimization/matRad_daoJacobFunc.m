@@ -46,10 +46,10 @@ end
 % jacobian of the dao constraints
 
 % row indices
-i = repmat(1:apertureInfo.totalNumOfLeafPairs,1,2);
+i = repmat(1:apertureInfo.totalNumOfLeafPairs*apertureInfo.numPhases,1,2);
 % column indices
-j = [apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs ...
-    apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+1:apertureInfo.totalNumOfShapes+2*apertureInfo.totalNumOfLeafPairs];
+j = [(apertureInfo.totalNumOfShapes+1):(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs) ...
+    ((apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs)+1):(apertureInfo.totalNumOfShapes+2*apertureInfo.totalNumOfLeafPairs)];
 
 % -1 for left leaves, 1 for right leaves
 s = [-1*ones(1,apertureInfo.totalNumOfLeafPairs) ones(1,apertureInfo.totalNumOfLeafPairs)];
@@ -78,100 +78,17 @@ if ~isempty(jacob_dos_bixel)
     
     if apertureInfo.runVMAT
         
-        % 1. calculate aperatureGrad
-        % 2. find corresponding bixel to the leaf Positions and aperture
-        % weights to calculate the gradient
+        jacob_dos = sparse(numOfConstraints,numel(apertureInfoVec));
         
-        offset = 1;
-        DAOBeams = find([apertureInfo.propVMAT.beam.DAOBeam]);
+        % use the Jacobian calculated in daoVec2ApertureInfo.
+        % should also do this for non-VMAT
+        jacob_dos = jacob_dos+jacob_dos_bixel*apertureInfo.bixelJApVec';
         
-        for i = 1:numel(apertureInfo.beam);
-            
-            % get used bixels in beam
-            ix = ~isnan(apertureInfo.beam(i).bixelIndMap);
-            
-            if apertureInfo.propVMAT.beam(i).DAOBeam
-                %optimized beam, do regular gradient
-                %must always add to existing gradient, since gradient comes
-                %from optimized and interpolated beams
-                jacobSparseVec(offset == j_sparse) = jacobSparseVec(offset == j_sparse) + ...
-                    jacob_dos_bixel(:,apertureInfo.beam(i).bixelIndMap(ix)) ...
-                    * apertureInfo.beam(i).shape(1).shapeMap(ix)./apertureInfo.beam(i).shape(1).jacobiScale;
-                
-                %gradient wrt leaf positions
-                indInOptVec = apertureInfo.beam(i).shape(1).vectorOffset-1+[(1:apertureInfo.beam(i).numOfActiveLeafPairs) apertureInfo.totalNumOfLeafPairs+(1:apertureInfo.beam(i).numOfActiveLeafPairs)];
-                indInSparseVec = repmat(indInOptVec,1,numOfConstraints)...
-                    +kron((0:numOfConstraints-1)*numel(apertureInfoVec),ones(1,apertureInfo.beam(i).numOfActiveLeafPairs*2));
-                indInBixVec = apertureInfo.beam(i).bixOffset-1+[(1:apertureInfo.beam(i).numOfActiveLeafPairs) apertureInfo.doseTotalNumOfLeafPairs+(1:apertureInfo.beam(i).numOfActiveLeafPairs)];
-                
-                jacobSparseVec(indInSparseVec) = jacobSparseVec(indInSparseVec) + ...
-                    reshape(transpose(apertureInfo.beam(i).shape(1).weight ...
-                    .* jacob_dos_bixel(:,apertureInfo.bixelIndices(indInBixVec)) ./ apertureInfo.bixelWidth),[],1);
-                
-                offset = offset+1;
-            else
-                %not optimized beam, aperture weight is interpolated between
-                %previous and next optimized weights
-                
-                %give fraction of gradient to previous optimized beam
-                
-                %first weight
-                lastDAOInd = find(DAOBeams == apertureInfo.propVMAT.beam(i).lastDAOIndex,1);
-                jacobSparseVec(lastDAOInd == j_sparse) = jacobSparseVec(lastDAOInd == j_sparse) + ...
-                    apertureInfo.propVMAT.beam(i).fracFromLastDAO.*(apertureInfo.beam(i).time./apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).time) ...
-                    * jacob_dos_bixel(:,apertureInfo.beam(i).bixelIndMap(ix)) * apertureInfo.beam(i).shape(1).shapeMap(ix)./apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).shape(1).jacobiScale;
-                
-                %now leaf pos
-                indInOptVec = apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).shape(1).vectorOffset-1+[(1:apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).numOfActiveLeafPairs) apertureInfo.totalNumOfLeafPairs+(1:apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).numOfActiveLeafPairs)];
-                indInSparseVec = repmat(indInOptVec,1,numOfConstraints)...
-                    +kron((0:numOfConstraints-1)*numel(apertureInfoVec),ones(1,apertureInfo.beam(i).numOfActiveLeafPairs*2));
-                indInBixVec = apertureInfo.beam(i).bixOffset-1+[(1:apertureInfo.beam(i).numOfActiveLeafPairs) apertureInfo.doseTotalNumOfLeafPairs+(1:apertureInfo.beam(i).numOfActiveLeafPairs)];
-                
-                jacobSparseVec(indInSparseVec) = jacobSparseVec(indInSparseVec) + ...
-                    apertureInfo.propVMAT.beam(i).fracFromLastDAO*reshape(transpose(apertureInfo.beam(i).shape(1).weight ...
-                    .* jacob_dos_bixel(:,apertureInfo.bixelIndices(indInBixVec)) ./ apertureInfo.bixelWidth),[],1);
-                
-                %now time
-                lastDAOIndTime = lastDAOInd+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2;
-                jacobSparseVec(lastDAOIndTime == j_sparse) = jacobSparseVec(lastDAOIndTime == j_sparse) + ...
-                    (apertureInfo.propVMAT.beam(i).doseAngleBordersDiff.*apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).timeFacCurr) ...
-                    .*(-apertureInfo.propVMAT.beam(i).fracFromLastDAO.*apertureInfo.propVMAT.beam(i).timeFracFromNextDAO.*(apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).shape(1).weight./apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).doseAngleBordersDiff).*(apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).time./apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).time.^2) ...
-                    +(1-apertureInfo.propVMAT.beam(i).fracFromLastDAO).*apertureInfo.propVMAT.beam(i).timeFracFromLastDAO.*(apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).shape(1).weight./apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).doseAngleBordersDiff).*(1./apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).time)) ...
-                    * jacob_dos_bixel(:,apertureInfo.beam(i).bixelIndMap(ix)) * apertureInfo.beam(i).shape(1).shapeMap(ix);
-                
-                
-                %give the other fraction to next optimized beam
-                
-                %first weight
-                nextDAOInd = find(DAOBeams == apertureInfo.propVMAT.beam(i).nextDAOIndex,1);
-                jacobSparseVec(nextDAOInd == j_sparse) = jacobSparseVec(nextDAOInd == j_sparse) + ...
-                    (1-apertureInfo.propVMAT.beam(i).fracFromLastDAO).*(apertureInfo.beam(i).time./apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).time) ...
-                    * jacob_dos_bixel(:,apertureInfo.beam(i).bixelIndMap(ix)) * apertureInfo.beam(i).shape(1).shapeMap(ix)./apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).shape(1).jacobiScale;
-                
-                %now leaf pos
-                indInOptVec = apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).shape(1).vectorOffset-1+[(1:apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).numOfActiveLeafPairs) apertureInfo.totalNumOfLeafPairs+(1:apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).numOfActiveLeafPairs)];
-                indInSparseVec = repmat(indInOptVec,1,numOfConstraints)...
-                    +kron((0:numOfConstraints-1)*numel(apertureInfoVec),ones(1,apertureInfo.beam(i).numOfActiveLeafPairs*2));
-                indInBixVec = apertureInfo.beam(i).bixOffset-1+[(1:apertureInfo.beam(i).numOfActiveLeafPairs) apertureInfo.doseTotalNumOfLeafPairs+(1:apertureInfo.beam(i).numOfActiveLeafPairs)];
-                
-                jacobSparseVec(indInSparseVec) = jacobSparseVec(indInSparseVec) + ...
-                    (1-apertureInfo.propVMAT.beam(i).fracFromLastDAO)*reshape(transpose(apertureInfo.beam(i).shape(1).weight ...
-                    .* jacob_dos_bixel(:,apertureInfo.bixelIndices(indInBixVec)) ./ apertureInfo.bixelWidth),[],1);
-                
-                %now time
-                nextDAOIndTime = nextDAOInd+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2;
-                jacobSparseVec(nextDAOIndTime == j_sparse) = jacobSparseVec(nextDAOIndTime == j_sparse) + ...
-                    (apertureInfo.propVMAT.beam(i).doseAngleBordersDiff.*apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).timeFacCurr) ...
-                    .*(apertureInfo.propVMAT.beam(i).fracFromLastDAO.*apertureInfo.propVMAT.beam(i).timeFracFromNextDAO.*(apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).shape(1).weight./apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).doseAngleBordersDiff).*(1./apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).time) ...
-                    -(1-apertureInfo.propVMAT.beam(i).fracFromLastDAO).*apertureInfo.propVMAT.beam(i).timeFracFromLastDAO.*(apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).shape(1).weight./apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).doseAngleBordersDiff).*(apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).time./apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).time.^2)) ...
-                    * jacob_dos_bixel(:,apertureInfo.beam(i).bixelIndMap(ix)) * apertureInfo.beam(i).shape(1).shapeMap(ix);
-            end
-        end
     else
         
         % 1. calculate jacobian for aperture weights
         % loop over all beams
-        offset = 0;
+        conOffset = 0;
         for i = 1:numel(apertureInfo.beam);
             
             % get used bixels in beam
@@ -180,12 +97,12 @@ if ~isempty(jacob_dos_bixel)
             % loop over all shapes and add up the gradients x openingFrac for this shape
             for j = 1:apertureInfo.beam(i).numOfShapes
                 
-                jacobSparseVec(offset+j == j_sparse) = jacob_dos_bixel(:,apertureInfo.beam(i).bixelIndMap(ix)) ...
+                jacobSparseVec(conOffset+j == j_sparse) = jacob_dos_bixel(:,apertureInfo.beam(i).bixelIndMap(ix)) ...
                     * apertureInfo.beam(i).shape(j).shapeMap(ix)./apertureInfo.beam(i).shape(j).jacobiScale;
             end
             
             % increment offset
-            offset = offset + apertureInfo.beam(i).numOfShapes;
+            conOffset = conOffset + apertureInfo.beam(i).numOfShapes;
             
         end
         
@@ -199,15 +116,16 @@ if ~isempty(jacob_dos_bixel)
             .* jacob_dos_bixel(:,apertureInfo.bixelIndices(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2)) ./ ...
             (ones(numOfConstraints,1) * (apertureInfo.bixelWidth.*apertureInfo.jacobiScale(apertureInfo.mappingMx(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,2)))')),[],1);
         
+        
+        % correct the sign for the left leaf positions
+        indInSparseVec = repmat(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs,1,numOfConstraints) ...
+            +kron((0:numOfConstraints-1)*numel(apertureInfoVec),ones(1,apertureInfo.totalNumOfLeafPairs));
+        
+        jacobSparseVec(indInSparseVec) = -jacobSparseVec(indInSparseVec);
+        
+        jacob_dos = sparse(i_sparse,j_sparse,jacobSparseVec,numOfConstraints,numel(apertureInfoVec));
     end
     
-    % correct the sign for the left leaf positions
-    indInSparseVec = repmat(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs,1,numOfConstraints) ...
-        +kron((0:numOfConstraints-1)*numel(apertureInfoVec),ones(1,apertureInfo.totalNumOfLeafPairs));
-    
-    jacobSparseVec(indInSparseVec) = -jacobSparseVec(indInSparseVec);
-    
-    jacob_dos = sparse(i_sparse,j_sparse,jacobSparseVec,numOfConstraints,numel(apertureInfoVec));
 else
     jacob_dos = sparse(0,0);
 end
@@ -217,77 +135,218 @@ if ~apertureInfo.runVMAT
     jacob = [jacob_dao; jacob_dos];
 else
     
-    % get index values for the jacobian
-    % variable index
-    % value of constraints for leaves
-    leftLeafPos  = apertureInfoVec((1:apertureInfo.totalNumOfLeafPairs)+apertureInfo.totalNumOfShapes);
-    rightLeafPos = apertureInfoVec(1+apertureInfo.totalNumOfLeafPairs+apertureInfo.totalNumOfShapes:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2);
+    % values of times spent in an arc surrounding the optimized angles (full
+    % arc/dose influence arc)
+    timeDAOBorderAngles = apertureInfoVec((apertureInfo.numPhases*(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2)+1):end);
+    timeFacCurr = [apertureInfo.propVMAT.beam([apertureInfo.propVMAT.beam.DAOBeam]).timeFacCurr]';
+    timeDoseBorderAngles = timeDAOBorderAngles.*timeFacCurr;
     
-    % values of time differences of optimized gantry angles
-    DAOInd = [apertureInfo.propVMAT.beam.DAOBeam];
-    timeDAOBorderAngles = apertureInfoVec((1+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):end);
-    
-    i = sort(repmat(1:(apertureInfo.totalNumOfShapes-1),1,2));
-    j = sort(repmat(1:apertureInfo.totalNumOfShapes,1,2));
-    j(1) = [];
-    j(end) = [];
-    
-    timeFac = [apertureInfo.propVMAT.beam(DAOInd).timeFac]';
-    timeFac(timeFac == 0) = [];
-    
-    timeFacMatrix = sparse(i,j,timeFac,(apertureInfo.totalNumOfShapes-1),apertureInfo.totalNumOfShapes);
-    timeBNOptAngles = timeFacMatrix*timeDAOBorderAngles;
-    
-    currentLeftLeafInd = (apertureInfo.totalNumOfShapes+1):(apertureInfo.totalNumOfShapes+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles));
-    currentRightLeafInd = (apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+1):(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles));
-    nextLeftLeafInd = (apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+1):(apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles));
-    nextRightLeafInd = (apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+1):(apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles));
-    leftTimeInd = kron(j,ones(1,apertureInfo.beam(1).numOfActiveLeafPairs))+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2;
-    rightTimeInd = kron(j,ones(1,apertureInfo.beam(1).numOfActiveLeafPairs))+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2;
-    %leftTimeInd = repelem(j,apertureInfo.beam(1).numOfActiveLeafPairs)+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2;
-    %rightTimeInd = repelem(j,apertureInfo.beam(1).numOfActiveLeafPairs)+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2;
-    % constraint index
-    constraintInd = 1:2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles);
-    
-    
-    % jacobian of the leafspeed constraint
-    i = repmat((i'-1)*apertureInfo.beam(1).numOfActiveLeafPairs,1,apertureInfo.beam(1).numOfActiveLeafPairs)+repmat(1:apertureInfo.beam(1).numOfActiveLeafPairs,2*numel(timeBNOptAngles),1);
-    i = reshape([i' i'+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles)],1,[]);
-    
-    i = [repmat(constraintInd,1,2) i];
-    j = [currentLeftLeafInd currentRightLeafInd nextLeftLeafInd nextRightLeafInd leftTimeInd rightTimeInd];
-    % first do jacob wrt current leaf position (left, right), then next leaf
-    % position (left, right), then time (left, right)
-    j_lfspd_cur = -reshape([sign(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)) ...
-        sign(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2))]./ ...
-        repmat(timeBNOptAngles',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles),1);
-    
-    j_lfspd_nxt = reshape([sign(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)) ...
-        sign(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2))]./ ...
-        repmat(timeBNOptAngles',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles),1);
-    
-    j_lfspd_t = -reshape([kron(abs(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)),ones(1,2)).*repmat(timeFac',apertureInfo.beam(1).numOfActiveLeafPairs,1) ...
-        kron(abs(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)),ones(1,2)).*repmat(timeFac',apertureInfo.beam(1).numOfActiveLeafPairs,1)]./ ...
-        repmat(kron((timeBNOptAngles.^2)',ones(1,2)),apertureInfo.beam(1).numOfActiveLeafPairs,2),[],1);
-    
-    s = [j_lfspd_cur; j_lfspd_nxt; j_lfspd_t];
-    
-    jacob_lfspd = sparse(i,j,s,2*apertureInfo.beam(1).numOfActiveLeafPairs*(apertureInfo.totalNumOfShapes-1),numel(apertureInfoVec),numel(s));
-    
+    if apertureInfo.propVMAT.continuousAperture
+        timeFac = [apertureInfo.propVMAT.beam.timeFac]';
+        deleteInd = timeFac == 0;
+        timeFac(deleteInd) = [];
+        
+        i = [apertureInfo.propVMAT.beam.timeFacInd]';
+        i(deleteInd) = [];
+        
+        j = repelem(1:apertureInfo.totalNumOfShapes,1,3);
+        j(deleteInd) = [];
+        
+        timeFacMatrix = sparse(i,j,timeFac,max(i),apertureInfo.totalNumOfShapes);
+        timeBNOptAngles = timeFacMatrix*timeDAOBorderAngles;
+        
+        % set up
+        n = apertureInfo.beam(1).numOfActiveLeafPairs;
+        indInSparseVec  = (1:n);
+        indInConVec     = (1:n);
+        shapeInd        = 1;
+        
+        % sparse matrix
+        numElem     = n.*(apertureInfo.propVMAT.numLeafSpeedConstraintDAO*6+(apertureInfo.propVMAT.numLeafSpeedConstraint-apertureInfo.propVMAT.numLeafSpeedConstraintDAO)*8);
+        i_sparse    = zeros(numElem,1);
+        j_sparse    = zeros(numElem,1);
+        s_sparse    = zeros(numElem,1);
+        
+        for i = 1:numel(apertureInfo.beam)
+            % loop over beams
+            
+            if ~isempty(apertureInfo.propVMAT.beam(i).leafConstMask)
+                
+                % get vector indices
+                if apertureInfo.propVMAT.beam(i).DAOBeam
+                    % if it's a DAO beam, use own vector offset
+                    vectorIx_LI = apertureInfo.beam(i).shape(1).vectorOffset(1) + ((1:n)-1);
+                    vectorIx_LF = apertureInfo.beam(i).shape(1).vectorOffset(2) + ((1:n)-1);
+                else
+                    % otherwise, use vector offset of previous and next
+                    % beams
+                    vectorIx_LI = apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).shape(1).vectorOffset(2) + ((1:n)-1);
+                    vectorIx_LF = apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).shape(1).vectorOffset(1) + ((1:n)-1);
+                end
+                vectorIx_RI = vectorIx_LI+apertureInfo.totalNumOfLeafPairs;
+                vectorIx_RF = vectorIx_LF+apertureInfo.totalNumOfLeafPairs;
+                
+                % extract leaf positions, time
+                leftLeafPos_I   = apertureInfoVec(vectorIx_LI);
+                rightLeafPos_I  = apertureInfoVec(vectorIx_RI);
+                leftLeafPos_F   = apertureInfoVec(vectorIx_LF);
+                rightLeafPos_F  = apertureInfoVec(vectorIx_RF);
+                t               = timeBNOptAngles(shapeInd);
+                
+                % calc diffs
+                leftLeafDiff    = leftLeafPos_F-leftLeafPos_I;
+                rightLeafDiff   = rightLeafPos_F-rightLeafPos_I;
+                
+                % calc jacobs
+                
+                % wrt initial leaf positions (left, then right)
+                i_sparse(indInSparseVec)    = indInConVec;
+                j_sparse(indInSparseVec)    = vectorIx_LI;
+                s_sparse(indInSparseVec)    = -sign(leftLeafDiff)./t;
+                indInSparseVec              = indInSparseVec+n;
+                
+                i_sparse(indInSparseVec)    = indInConVec+apertureInfo.propVMAT.numLeafSpeedConstraint*apertureInfo.beam(1).numOfActiveLeafPairs;
+                j_sparse(indInSparseVec)    = vectorIx_RI;
+                s_sparse(indInSparseVec)    = -sign(rightLeafDiff)./t;
+                indInSparseVec              = indInSparseVec+n;
+                
+                % wrt final leaf positions (left, then right)
+                i_sparse(indInSparseVec)    = indInConVec;
+                j_sparse(indInSparseVec)    = vectorIx_LF;
+                s_sparse(indInSparseVec)    = sign(leftLeafDiff)./t;
+                indInSparseVec              = indInSparseVec+n;
+                
+                i_sparse(indInSparseVec)    = indInConVec+apertureInfo.propVMAT.numLeafSpeedConstraint*apertureInfo.beam(1).numOfActiveLeafPairs;
+                j_sparse(indInSparseVec)    = vectorIx_RF;
+                s_sparse(indInSparseVec)    = sign(rightLeafDiff)./t;
+                indInSparseVec              = indInSparseVec+n;
+                
+                % wrt time (left, then right)
+                % how we do this depends on if it's a DAO beam or
+                % not
+                if apertureInfo.propVMAT.beam(i).DAOBeam
+                    % if it is, then speeds only depend on its own
+                    % time
+                    i_sparse(indInSparseVec)    = indInConVec;
+                    j_sparse(indInSparseVec)    = apertureInfo.propVMAT.beam(i).timeInd;
+                    s_sparse(indInSparseVec)    = -apertureInfo.propVMAT.beam(i).timeFac(2).*abs(leftLeafDiff)./(t.^2);
+                    indInSparseVec              = indInSparseVec+n;
+                    
+                    i_sparse(indInSparseVec)    = indInConVec+apertureInfo.propVMAT.numLeafSpeedConstraint*apertureInfo.beam(1).numOfActiveLeafPairs;
+                    j_sparse(indInSparseVec)    = apertureInfo.propVMAT.beam(i).timeInd;
+                    s_sparse(indInSparseVec)    = -apertureInfo.propVMAT.beam(i).timeFac(2).*abs(rightLeafDiff)./(t.^2);
+                    indInSparseVec              = indInSparseVec+n;
+                    
+                else
+                    % otherwise, speed depends on time of DAO
+                    % before and DAO after
+                    
+                    % before
+                    i_sparse(indInSparseVec)    = indInConVec;
+                    j_sparse(indInSparseVec)    = apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).timeInd;
+                    s_sparse(indInSparseVec)    = -apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).timeFac(3).*abs(leftLeafDiff)./(t.^2);
+                    indInSparseVec              = indInSparseVec+n;
+                    
+                    i_sparse(indInSparseVec)    = indInConVec+apertureInfo.propVMAT.numLeafSpeedConstraint*apertureInfo.beam(1).numOfActiveLeafPairs;
+                    j_sparse(indInSparseVec)    = apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).timeInd;
+                    s_sparse(indInSparseVec)    = -apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).timeFac(3).*abs(rightLeafDiff)./(t.^2);
+                    indInSparseVec              = indInSparseVec+n;
+                    
+                    % after
+                    i_sparse(indInSparseVec)    = indInConVec;
+                    j_sparse(indInSparseVec)    = apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).timeInd;
+                    s_sparse(indInSparseVec)    = -apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).timeFac(1).*abs(leftLeafDiff)./(t.^2);
+                    indInSparseVec              = indInSparseVec+n;
+                    
+                    i_sparse(indInSparseVec)    = indInConVec+apertureInfo.propVMAT.numLeafSpeedConstraint*apertureInfo.beam(1).numOfActiveLeafPairs;
+                    j_sparse(indInSparseVec)    = apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).timeInd;
+                    s_sparse(indInSparseVec)    = -apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).timeFac(1).*abs(rightLeafDiff)./(t.^2);
+                    indInSparseVec              = indInSparseVec+n;
+                    
+                end
+                
+                % update offset
+                indInConVec = indInConVec+n;
+                
+                % increment shapeInd only for beams which have transtion
+                % defined
+                shapeInd = shapeInd+1;
+            end
+        end
+        
+        jacob_lfspd = sparse(i_sparse,j_sparse,s_sparse,2*apertureInfo.beam(1).numOfActiveLeafPairs*apertureInfo.propVMAT.numLeafSpeedConstraint,numel(apertureInfoVec));
+        
+    else
+        
+        % get index values for the jacobian
+        % variable index
+        % value of constraints for leaves
+        leftLeafPos  = apertureInfoVec((1:apertureInfo.totalNumOfLeafPairs)+apertureInfo.totalNumOfShapes);
+        rightLeafPos = apertureInfoVec(1+apertureInfo.totalNumOfLeafPairs+apertureInfo.totalNumOfShapes:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2);
+        
+        i = sort(repmat(1:(apertureInfo.totalNumOfShapes-1),1,2));
+        j = sort(repmat(1:apertureInfo.totalNumOfShapes,1,2));
+        j(1) = [];
+        j(end) = [];
+        
+        timeFac = [apertureInfo.propVMAT.beam([apertureInfo.propVMAT.beam.DAOBeam]).timeFac]';
+        timeFac(1) = [];
+        timeFac(end) = [];
+        %timeFac(timeFac == 0) = [];
+        
+        timeFacMatrix = sparse(i,j,timeFac,(apertureInfo.totalNumOfShapes-1),apertureInfo.totalNumOfShapes);
+        timeBNOptAngles = timeFacMatrix*timeDAOBorderAngles;
+        
+        currentLeftLeafInd = (apertureInfo.totalNumOfShapes+1):(apertureInfo.totalNumOfShapes+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles));
+        currentRightLeafInd = (apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+1):(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles));
+        nextLeftLeafInd = (apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+1):(apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles));
+        nextRightLeafInd = (apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+1):(apertureInfo.beam(1).numOfActiveLeafPairs+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles));
+        leftTimeInd = kron(j,ones(1,apertureInfo.beam(1).numOfActiveLeafPairs))+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2;
+        rightTimeInd = kron(j,ones(1,apertureInfo.beam(1).numOfActiveLeafPairs))+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2;
+        %leftTimeInd = repelem(j,apertureInfo.beam(1).numOfActiveLeafPairs)+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2;
+        %rightTimeInd = repelem(j,apertureInfo.beam(1).numOfActiveLeafPairs)+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2;
+        % constraint index
+        constraintInd = 1:2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles);
+        
+        
+        % jacobian of the leafspeed constraint
+        i = repmat((i'-1)*apertureInfo.beam(1).numOfActiveLeafPairs,1,apertureInfo.beam(1).numOfActiveLeafPairs)+repmat(1:apertureInfo.beam(1).numOfActiveLeafPairs,2*numel(timeBNOptAngles),1);
+        i = reshape([i' i'+apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles)],1,[]);
+        
+        i = [repmat(constraintInd,1,2) i];
+        j = [currentLeftLeafInd currentRightLeafInd nextLeftLeafInd nextRightLeafInd leftTimeInd rightTimeInd];
+        % first do jacob wrt current leaf position (left, right), then next leaf
+        % position (left, right), then time (left, right)
+        j_lfspd_cur = -reshape([sign(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)) ...
+            sign(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2))]./ ...
+            repmat(timeBNOptAngles',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles),1);
+        
+        j_lfspd_nxt = reshape([sign(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)) ...
+            sign(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2))]./ ...
+            repmat(timeBNOptAngles',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles),1);
+        
+        j_lfspd_t = -reshape([kron(abs(diff(reshape(leftLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)),ones(1,2)).*repmat(timeFac',apertureInfo.beam(1).numOfActiveLeafPairs,1) ...
+            kron(abs(diff(reshape(rightLeafPos,apertureInfo.beam(1).numOfActiveLeafPairs,apertureInfo.totalNumOfShapes),1,2)),ones(1,2)).*repmat(timeFac',apertureInfo.beam(1).numOfActiveLeafPairs,1)]./ ...
+            repmat(kron((timeBNOptAngles.^2)',ones(1,2)),apertureInfo.beam(1).numOfActiveLeafPairs,2),[],1);
+        
+        s = [j_lfspd_cur; j_lfspd_nxt; j_lfspd_t];
+        
+        jacob_lfspd = sparse(i,j,s,2*apertureInfo.beam(1).numOfActiveLeafPairs*(apertureInfo.totalNumOfShapes-1),numel(apertureInfoVec),numel(s));
+    end
     
     % jacobian of the doserate constraint
     % values of doserate (MU/sec) between optimized gantry angles
-    weights = apertureInfoVec(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale;
-    timeFacCurr = [apertureInfo.propVMAT.beam(DAOInd).timeFacCurr]';
-    timeOptDoseBorderAngles = timeDAOBorderAngles.*timeFacCurr;
+    weights = apertureInfoVec(1:(apertureInfo.totalNumOfShapes))./apertureInfo.jacobiScale;
     
-    i = repmat(1:apertureInfo.totalNumOfShapes,1,2);
-    j = [1:apertureInfo.totalNumOfShapes (apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2+1):(apertureInfo.totalNumOfShapes*2+apertureInfo.totalNumOfLeafPairs*2)];
+    i = repmat(1:(apertureInfo.totalNumOfShapes),1,2);
+    j = [1:(apertureInfo.totalNumOfShapes) ...
+        ((apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2)+1):((apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2)+apertureInfo.totalNumOfShapes)];
     % first do jacob wrt weights, then wrt times
     
-    s = [apertureInfo.weightToMU./(timeOptDoseBorderAngles.*apertureInfo.jacobiScale); -apertureInfo.weightToMU.*weights.*timeFacCurr./(timeOptDoseBorderAngles.^2)];
+    s = [apertureInfo.weightToMU./(timeDoseBorderAngles.*apertureInfo.jacobiScale); -apertureInfo.weightToMU.*weights.*timeFacCurr./(timeDoseBorderAngles.^2)];
     
-    jacob_dosrt = sparse(i,j,s,apertureInfo.totalNumOfShapes,numel(apertureInfoVec),2*(apertureInfo.totalNumOfShapes));
+    jacob_dosrt = sparse(i,j,s,apertureInfo.totalNumOfShapes*apertureInfo.numPhases,numel(apertureInfoVec),2*apertureInfo.totalNumOfShapes*apertureInfo.numPhases);
+    
     
     % concatenate
     jacob = [jacob_dao; jacob_lfspd; jacob_dosrt; jacob_dos];
