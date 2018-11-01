@@ -42,8 +42,7 @@ pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
 % dose calculation settings
-pln.propDoseCalc.memorySaverPhoton          = false;
-pln.propDoseCalc.vmc                        = true;
+pln.propDoseCalc.vmc                        = false;
 pln.propDoseCalc.vmcOptions.source          = 'phsp';
 pln.propDoseCalc.vmcOptions.phspBaseName    = '5x5_at_50cm';
 pln.propDoseCalc.vmcOptions.SCD             = 500;
@@ -55,10 +54,11 @@ pln.propDoseCalc.vmcOptions.numOfParMCSim   = 8;
 % optimization settings
 pln.propOpt.bioOptimization = 'none'; % none: physical optimization;             const_RBExD; constant RBE of 1.1;
                                             % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
-pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
-pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
+pln.propOpt.runDAO          = true;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
+pln.propOpt.runSequencing   = true;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.propOpt.runVMAT         = false;  % 1/true: run VMAT, 0/false: don't
-
+pln.propOpt.preconditioner = true;
+pln.propOpt.numLevels = 7;
 
 %% For VMAT
 
@@ -79,14 +79,13 @@ load TG119.mat
 pln.radiationMode   = 'photons';   % either photons / protons / carbon
 pln.machine         = 'Generic';
 
-pln.numOfFractions  = 30;
+%pln.numOfFractions  = 30;
 
 % beam geometry settings
 pln.propStf.bixelWidth = 5;
 
 % dose calculation settings
-pln.propDoseCalc.memorySaverPhoton          = false;
-pln.propDoseCalc.vmc                        = true;
+pln.propDoseCalc.vmc                        = false;
 pln.propDoseCalc.vmcOptions.source          = 'phsp';
 pln.propDoseCalc.vmcOptions.phspBaseName    = '5x5_at_50cm';
 pln.propDoseCalc.vmcOptions.SCD             = 500;
@@ -112,7 +111,7 @@ pln.propOpt.VMAToptions.continuousAperture = true;
 pln.propOpt.VMAToptions.startingAngle = -180;
 pln.propOpt.VMAToptions.finishingAngle = 180;
 pln.propOpt.VMAToptions.maxGantryAngleSpacing = 4;      % Max gantry angle spacing for dose calculation
-pln.propOpt.VMAToptions.maxDAOGantryAngleSpacing = 8;      % Max gantry angle spacing for DAO
+pln.propOpt.VMAToptions.maxDAOGantryAngleSpacing = 4;      % Max gantry angle spacing for DAO
 pln.propOpt.VMAToptions.maxFMOGantryAngleSpacing = 28;      % Max gantry angle spacing for FMO
 
 pln = matRad_VMATGantryAngles(pln,cst,ct);

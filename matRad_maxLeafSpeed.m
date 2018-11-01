@@ -118,7 +118,7 @@ else
     % value of constraints for leaves
     %leftLeafPos  = apertureInfoVec([1:apertureInfo.totalNumOfLeafPairs]+apertureInfo.totalNumOfShapes);
     %rightLeafPos = apertureInfoVec(1+apertureInfo.totalNumOfLeafPairs+apertureInfo.totalNumOfShapes:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2);
-    leftLeafPos  = apertureInfoVec((1:(apertureInfo.numPhases*apertureInfo.totalNumOfLeafPairs))+apertureInfo.totalNumOfShapes);
+    leftLeafPos  = apertureInfoVec((1:(apertureInfo.totalNumOfLeafPairs))+apertureInfo.totalNumOfShapes);
     rightLeafPos = apertureInfoVec(1+(apertureInfo.totalNumOfLeafPairs+apertureInfo.totalNumOfShapes):(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2));
     
     % Using the static fluence calculation, we have the leaf positions in
@@ -161,8 +161,24 @@ for i = 1:size(apertureInfo.beam,2)
                 maxMaxLeafSpeed = apertureInfo.beam(i).maxLeafSpeed;
             end
         else
-            %apertureInfo.beam(i).maxLeafSpeed = maxLeafSpeed(l-1)*apertureInfo.beam(i).timeFac(1)+maxLeafSpeed(l)*apertureInfo.beam(i).timeFac(2);
-            apertureInfo.beam(i).maxLeafSpeed = max(maxLeafSpeed(l-1),maxLeafSpeed(l));
+            % for static, we take the max leaf speed to be the max leaf
+            % of two speeds, one being the speed in the first half-arc, the
+            % second being the speed in the second half-arc (these will be
+            % different in general)
+            
+            if l == 1
+                apertureInfo.beam(i).maxLeafSpeed = maxLeafSpeed(l);
+            elseif l == apertureInfo.totalNumOfShapes
+                apertureInfo.beam(i).maxLeafSpeed = maxLeafSpeed(l-1);
+            else
+                %apertureInfo.beam(i).maxLeafSpeed = maxLeafSpeed(l-1)*apertureInfo.beam(i).timeFac(1)+maxLeafSpeed(l)*apertureInfo.beam(i).timeFac(2);
+                apertureInfo.beam(i).maxLeafSpeed = max(maxLeafSpeed(l-1),maxLeafSpeed(l));
+            end
+            
+            
+            if l < apertureInfo.totalNumOfShapes && maxLeafSpeed(l) >= maxMaxLeafSpeed
+                maxMaxLeafSpeed = maxLeafSpeed(l);
+            end
         end
         
         

@@ -47,6 +47,7 @@ totalNumOfShapes = sum([sequencing.beam.numOfShapes]);
 weightOffset = 1;
 vectorOffset = totalNumOfShapes + 1; % used for bookkeeping in the vector for optimization
 bixOffset = 1; %used for gradient calculations
+interpGetsTransition = false; % boolean to determine if an interpolated beam is responsible for a leaf speed constraint check
 
 if pln.propOpt.runVMAT
     totalNumOfOptBixels = 0;
@@ -55,8 +56,7 @@ if pln.propOpt.runVMAT
     apertureInfo.propVMAT.jacobT = zeros(sum([sequencing.beam.numOfShapes]),numel(sequencing.beam));
 end
 
-apertureInfo.jacobiScale = zeros(totalNumOfShapes,1);
-k = 1;
+apertureInfo.jacobiScale = ones(totalNumOfShapes,1);
 
 % loop over all beams
 for i=1:size(stf,2)
@@ -158,7 +158,7 @@ for i=1:size(stf,2)
         
         apertureInfo.beam(i).shape(m).jacobiScale = 1;
         
-        if pln.propOpt.VMAToptions.continuousAperture
+        if pln.propOpt.runVMAT && pln.propOpt.VMAToptions.continuousAperture
             apertureInfo.beam(i).shape(m).vectorOffset = [vectorOffset vectorOffset+dimZ];
             
             % update index for bookkeeping
@@ -248,6 +248,9 @@ for i=1:size(stf,2)
             if pln.propOpt.VMAToptions.continuousAperture
                 apertureInfo.propVMAT.beam(i).timeFacInd = stf(i).propVMAT.timeFacInd;
                 apertureInfo.propVMAT.beam(i).doseAngleDAO = stf(i).propVMAT.doseAngleDAO;
+                
+                apertureInfo.propVMAT.beam(i).leafConstMask = 1;
+                interpGetsTransition = apertureInfo.propVMAT.beam(i).timeFac(3) ~= 0;
             end
             
             apertureInfo.propVMAT.jacobT(stf(i).propVMAT.DAOIndex,i) = stf(i).propVMAT.timeFacCurr;
@@ -268,6 +271,11 @@ for i=1:size(stf,2)
             
             apertureInfo.propVMAT.jacobT(stf(stf(i).propVMAT.lastDAOIndex).propVMAT.DAOIndex,i) = stf(stf(i).propVMAT.lastDAOIndex).propVMAT.timeFacCurr.*stf(i).propVMAT.timeFracFromLastDAO.*stf(i).propVMAT.doseAngleBordersDiff./stf(stf(i).propVMAT.lastDAOIndex).propVMAT.doseAngleBordersDiff;
             apertureInfo.propVMAT.jacobT(stf(stf(i).propVMAT.nextDAOIndex).propVMAT.DAOIndex,i) = stf(stf(i).propVMAT.nextDAOIndex).propVMAT.timeFacCurr.*stf(i).propVMAT.timeFracFromNextDAO.*stf(i).propVMAT.doseAngleBordersDiff./stf(stf(i).propVMAT.lastDAOIndex).propVMAT.doseAngleBordersDiff;
+            
+            if interpGetsTransition
+                apertureInfo.propVMAT.beam(i).leafConstMask = 1;
+            end
+            interpGetsTransition = false;
         end
     end
 end
@@ -297,6 +305,10 @@ if pln.propOpt.runVMAT
     
     if apertureInfo.propVMAT.continuousAperture
         apertureInfo.totalNumOfLeafPairs = sum(reshape([apertureInfo.propVMAT.beam([apertureInfo.propVMAT.beam.DAOBeam]).doseAngleDAO],2,[]),1)*[apertureInfo.beam([apertureInfo.propVMAT.beam.DAOBeam]).numOfActiveLeafPairs]';
+        
+        % count number of transitions
+        apertureInfo.propVMAT.numLeafSpeedConstraint      = nnz([apertureInfo.propVMAT.beam.leafConstMask]);
+        apertureInfo.propVMAT.numLeafSpeedConstraintDAO   = nnz([apertureInfo.propVMAT.beam([apertureInfo.propVMAT.beam.DAOBeam]).leafConstMask]);
     else
         apertureInfo.totalNumOfLeafPairs = totalNumOfLeafPairs;
     end
@@ -304,7 +316,16 @@ if pln.propOpt.runVMAT
     % fix instances of leaf touching
     apertureInfo = matRad_leafTouching(apertureInfo);
     
+    shapeInd = 0;
+    for i = 1:numel(apertureInfo.beam)
+        if apertureInfo.propVMAT.beam(i).DAOBeam
+            shapeInd = shapeInd+1;
+            apertureInfo.propVMAT.beam(i).timeInd = apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2+shapeInd;
+        end
+    end
+    
 else
+    apertureInfo.totalNumOfOptBixels = sum(stf(i).totalNumOfBixels);
     apertureInfo.totalNumOfLeafPairs = sum([apertureInfo.beam.numOfShapes]*[apertureInfo.beam.numOfActiveLeafPairs]');
     apertureInfo.doseTotalNumOfLeafPairs = apertureInfo.totalNumOfLeafPairs;
 end

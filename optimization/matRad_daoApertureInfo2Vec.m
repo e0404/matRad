@@ -35,10 +35,10 @@ function [apertureInfoVec, mappingMx, limMx] = matRad_daoApertureInfo2Vec(apertu
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % function to create a single vector for the direct aperature optimization
-% first: aperature weights (all phases)
-% second: left leaf positions (all phases)
-% third: right leaf positions (all phases)
-% fourth (VMAT only): times between successive DAO gantry angles (all phases)
+% first: aperature weights
+% second: left leaf positions
+% third: right leaf positions
+% fourth (VMAT only): times between successive DAO gantry angles
 
 % initializing variables
 
@@ -53,15 +53,13 @@ apertureInfoVec = NaN * ones(vecLength,1);
 offset = 0;
 
 %% 1. aperture weights
-for phase = 1:apertureInfo.numPhases
-    for i = 1:size(apertureInfo.beam,2)
-        for j = 1:apertureInfo.beam(i).numOfShapes
-            
-            apertureInfoVec(offset+j) = apertureInfo.beam(i).shape(j).jacobiScale*apertureInfo.beam(i).shape(j).weight;   %In VMAT, this weight is "spread" over unoptimized beams (assume constant dose rate over sector)
-            
-        end
-        offset = offset + apertureInfo.beam(i).numOfShapes;
+for i = 1:size(apertureInfo.beam,2)
+    for j = 1:apertureInfo.beam(i).numOfShapes
+        
+        apertureInfoVec(offset+j) = apertureInfo.beam(i).shape(j).jacobiScale*apertureInfo.beam(i).shape(j).weight;   %In VMAT, this weight is "spread" over unoptimized beams (assume constant dose rate over sector)
+        
     end
+    offset = offset + apertureInfo.beam(i).numOfShapes;
 end
 
 % 2. left and right leaf positions
@@ -69,24 +67,24 @@ end
 for i = 1:size(apertureInfo.beam,2)
     for j = 1:apertureInfo.beam(i).numOfShapes
         
-        if ~apertureInfo.propVMAT.continuousAperture
+        if ~apertureInfo.runVMAT || ~apertureInfo.propVMAT.continuousAperture
             
             apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos;
-            apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs*apertureInfo.numPhases) = apertureInfo.beam(i).shape(j).rightLeafPos;
+            apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos;
             
             offset = offset + apertureInfo.beam(i).numOfActiveLeafPairs;
         else
             
             if apertureInfo.propVMAT.beam(i).doseAngleDAO(1)
                 apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos_I;
-                apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs*apertureInfo.numPhases) = apertureInfo.beam(i).shape(j).rightLeafPos_I;
+                apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos_I;
                 
                 offset = offset + apertureInfo.beam(i).numOfActiveLeafPairs;
             end
             
             if apertureInfo.propVMAT.beam(i).doseAngleDAO(2)
                 apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos_F;
-                apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs*apertureInfo.numPhases) = apertureInfo.beam(i).shape(j).rightLeafPos_F;
+                apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos_F;
                 
                 offset = offset + apertureInfo.beam(i).numOfActiveLeafPairs;
             end
@@ -115,14 +113,14 @@ if nargout > 1
     mappingMx = NaN * ones(vecLength,4);
     limMx = NaN * ones(vecLength,2);
     
-    limMx(1:(apertureInfo.totalNumOfShapes*apertureInfo.numPhases),:) = ones((apertureInfo.totalNumOfShapes*apertureInfo.numPhases),1)*[0 inf];
+    limMx(1:(apertureInfo.totalNumOfShapes),:) = ones((apertureInfo.totalNumOfShapes),1)*[0 inf];
     
     counter = 1;
     
     for i = 1:numel(apertureInfo.beam)
         for j = 1:apertureInfo.beam(i).numOfShapes
             mappingMx(counter,1) = i;
-            if apertureInfo.runVMAT && phase == 1
+            if apertureInfo.runVMAT
                 fileName = apertureInfo.propVMAT.machineConstraintFile;
                 try
                     load(fileName,'machine');
@@ -171,6 +169,9 @@ if nargout > 1
         end
         shapeOffset = shapeOffset + apertureInfo.beam(i).numOfShapes;
     end
+    
+    mappingMx(counter:(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2),:) = mappingMx(apertureInfo.totalNumOfShapes+1:counter-1,:);
+    limMx(counter:(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2),:)     = limMx(apertureInfo.totalNumOfShapes+1:counter-1,:);
     
 end
 

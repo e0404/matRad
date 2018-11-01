@@ -46,7 +46,7 @@ if ~isequal(apertureInfoVec,apertureInfo.apertureVector)
 end
 
 % value of constraints for leaves
-leftLeafPos  = apertureInfoVec((1:apertureInfo.totalNumOfLeafPairs*apertureInfo.numPhases)+apertureInfo.totalNumOfShapes);
+leftLeafPos  = apertureInfoVec((1:apertureInfo.totalNumOfLeafPairs)+apertureInfo.totalNumOfShapes);
 rightLeafPos = apertureInfoVec((1+(apertureInfo.totalNumOfLeafPairs+apertureInfo.totalNumOfShapes)):(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2));
 c_dao        = rightLeafPos - leftLeafPos;
 
@@ -106,8 +106,8 @@ else
                     vectorIx_LI = apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).shape(1).vectorOffset(2) + ((1:n)-1);
                     vectorIx_LF = apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).shape(1).vectorOffset(1) + ((1:n)-1);
                 end
-                vectorIx_RI = vectorIx_LI+apertureInfo.totalNumOfLeafPairs*apertureInfo.numPhases;
-                vectorIx_RF = vectorIx_LF+apertureInfo.totalNumOfLeafPairs*apertureInfo.numPhases;
+                vectorIx_RI = vectorIx_LI+apertureInfo.totalNumOfLeafPairs;
+                vectorIx_RF = vectorIx_LF+apertureInfo.totalNumOfLeafPairs;
                 
                 % extract leaf positions, time
                 leftLeafPos_I   = apertureInfoVec(vectorIx_LI);

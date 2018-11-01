@@ -67,7 +67,7 @@ for  i = 1:size(cst,1)
                 % optimization
                 if strcmp(cst{i,6}(j).robustness,'none')
                     
-                    d_i = d(cst{i,4}{1});
+                    d_i = d{1}(cst{i,4}{1});
                     
                     delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
                     

@@ -46,7 +46,7 @@ end
 % jacobian of the dao constraints
 
 % row indices
-i = repmat(1:apertureInfo.totalNumOfLeafPairs*apertureInfo.numPhases,1,2);
+i = repmat(1:apertureInfo.totalNumOfLeafPairs,1,2);
 % column indices
 j = [(apertureInfo.totalNumOfShapes+1):(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs) ...
     ((apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs)+1):(apertureInfo.totalNumOfShapes+2*apertureInfo.totalNumOfLeafPairs)];
@@ -137,7 +137,7 @@ else
     
     % values of times spent in an arc surrounding the optimized angles (full
     % arc/dose influence arc)
-    timeDAOBorderAngles = apertureInfoVec((apertureInfo.numPhases*(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2)+1):end);
+    timeDAOBorderAngles = apertureInfoVec(((apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2)+1):end);
     timeFacCurr = [apertureInfo.propVMAT.beam([apertureInfo.propVMAT.beam.DAOBeam]).timeFacCurr]';
     timeDoseBorderAngles = timeDAOBorderAngles.*timeFacCurr;
     
@@ -345,7 +345,7 @@ else
     
     s = [apertureInfo.weightToMU./(timeDoseBorderAngles.*apertureInfo.jacobiScale); -apertureInfo.weightToMU.*weights.*timeFacCurr./(timeDoseBorderAngles.^2)];
     
-    jacob_dosrt = sparse(i,j,s,apertureInfo.totalNumOfShapes*apertureInfo.numPhases,numel(apertureInfoVec),2*apertureInfo.totalNumOfShapes*apertureInfo.numPhases);
+    jacob_dosrt = sparse(i,j,s,apertureInfo.totalNumOfShapes,numel(apertureInfoVec),2*apertureInfo.totalNumOfShapes);
     
     
     % concatenate

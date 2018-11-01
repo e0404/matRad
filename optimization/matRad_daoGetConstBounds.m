@@ -68,8 +68,8 @@ else
         %apertureInfo.beam(i).numOfActiveLeafPairs should be independent of i, due to using the union of all ray positions in the stf
         %Convert from cm/deg when checking constraints; cannot do it at this stage since gantry rotation speed is not hard-coded
     end
-    cl_dosrt = machine.constraints.monitorUnitRate(1)*ones(numel(optInd)*apertureInfo.numPhases,1); %Minimum MU/sec
-    cu_dosrt = machine.constraints.monitorUnitRate(2)*ones(numel(optInd)*apertureInfo.numPhases,1); %Maximum MU/sec
+    cl_dosrt = machine.constraints.monitorUnitRate(1)*ones(numel(optInd),1); %Minimum MU/sec
+    cu_dosrt = machine.constraints.monitorUnitRate(2)*ones(numel(optInd),1); %Maximum MU/sec
     
     % concatenate
     cl = [cl_dao; cl_lfspd; cl_dosrt; cl_dos];

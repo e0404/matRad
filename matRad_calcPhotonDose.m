@@ -95,14 +95,6 @@ dij.beamNum  = NaN*ones(numOfColumnsDij,1);
 % set lateral cutoff value
 lateralCutoff = 50; % [mm]
 
-dij.nCore   = zeros*ones(dij.totalNumOfRays,1,'uint16');
-dij.nTail   = zeros*ones(dij.totalNumOfRays,1,'uint16');
-dij.nDepth  = zeros*ones(dij.totalNumOfRays,1,'uint16');
-
-dij.ixTail          = intmax('uint32')*ones(1000*dij.totalNumOfRays,1,'uint32');
-dij.nTailPerDepth   = intmax('uint16')*ones(100*dij.totalNumOfRays,1,'uint16');
-dij.bixelDoseTail   = -1*ones(100*dij.totalNumOfRays,1,'double');
-
 % Allocate space for dij.physicalDose sparse matrix
 for i = 1:dij.numOfScenarios
     dij.physicalDose{i} = spalloc(prod(ct.cubeDim),numOfColumnsDij,1);
@@ -176,9 +168,6 @@ if ~isFieldBasedDoseCalc
         F = real(ifft2(fft2(F,gaussConvSize,gaussConvSize).*fft2(gaussFilter,gaussConvSize,gaussConvSize)));     
     end
 end
-
-offsetTail  = 0;
-offsetDepth = 0;
 
 % compute SSDs
 stf = matRad_computeSSD(stf,ct);
@@ -405,10 +394,6 @@ for i = 1:dij.numOfBeams % loop over all beams
         
     end
 end
-
-dij.ixTail(dij.ixTail == intmax('uint32'))               = [];
-dij.nTailPerDepth(dij.nTailPerDepth == intmax('uint16')) = [];
-dij.bixelDoseTail(dij.bixelDoseTail == -1)               = [];
 
 try
   % wait 0.1s for closing all waitbars

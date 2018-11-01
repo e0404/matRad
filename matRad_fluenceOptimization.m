@@ -74,7 +74,7 @@ end
 options.radMod          = pln.radiationMode;
 options.bioOpt          = pln.propOpt.bioOptimization;
 options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
-options.FMO             = true; % let optimizer know that this is FMO
+options.numOfScenarios  = dij.numOfScenarios;
 
 % initialize global variables for optimizer
 global matRad_global_x;
@@ -158,7 +158,6 @@ elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt
     options.radMod          = pln.radiationMode;
     options.bioOpt          = pln.bioOptimization;
     options.ID              = [pln.radiationMode '_' pln.bioOptimization];
-    options.numOfScenarios  = dij.numOfScenarios;
 
     % check if you are running a supported rad
     dij.ax      = zeros(dij.numOfVoxels,1);
@@ -208,7 +207,7 @@ elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt
     
 else
     dOnes = matRad_backProjection(wOnes,dij,options);
-    bixelWeight = (doseTarget)/mean(dOnes(V));
+    bixelWeight = (doseTarget)/mean(dOnes{1}(V));
     wInit = wOnes * bixelWeight;
     pln.propOpt.bioOptimization = 'none';
 end

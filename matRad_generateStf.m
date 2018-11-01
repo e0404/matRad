@@ -370,9 +370,10 @@ for i = 1:length(pln.propStf.gantryAngles)
             end
             
         end
+        
+        % save total number of bixels
+        stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
     end
-    % save total number of bixels
-    stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
     
     if pln.propOpt.runVMAT || (pln.propDoseCalc.vmc && strcmp(pln.propDoseCalc.vmcOptions.source,'phsp'))
         % For VMAT, The following must be taken as the union of stf(:).FIELD and stf(:).FIELD:

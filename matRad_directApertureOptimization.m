@@ -96,7 +96,7 @@ end
 if isfield(apertureInfo,'scaleFacRx')
     %weights were scaled to acheive 95% PTV coverage
     %scale back to "optimal" weights
-    apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes*apertureInfo.numPhases) = apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes*apertureInfo.numPhases)/apertureInfo.scaleFacRx;
+    apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) = apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)/apertureInfo.scaleFacRx;
 end
 
 if pln.propOpt.preconditioner
@@ -149,36 +149,38 @@ switch env
         clear -global matRad_global_x matRad_global_d;
 end
 
-% update the apertureInfoStruct and calculate bixel weights
-resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,optApertureInfoVec);
-
-% override also bixel weight vector in optResult struct
-resultGUI.w    = resultGUI.apertureInfo.bixelWeights;
-resultGUI.wDao = resultGUI.apertureInfo.bixelWeights;
-
 if pln.propOpt.preconditioner
     % revert scaling
     
     dij.weightToMU = dij.weightToMU./dij.scaleFactor;
     resultGUI.apertureInfo.weightToMU = resultGUI.apertureInfo.weightToMU./dij.scaleFactor;
-    resultGUI.apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes*apertureInfo.numPhases) = resultGUI.apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes*apertureInfo.numPhases).*dij.scaleFactor;
-    
-    dij.scaleFactor = 1;
+    optApertureInfoVec(1:apertureInfo.totalNumOfShapes) = optApertureInfoVec(1:apertureInfo.totalNumOfShapes).*dij.scaleFactor;
 end
+
+% update the apertureInfoStruct and calculate bixel weights
+resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,optApertureInfoVec);
+
+% override also bixel weight vector in optResult struct
+resultGUI.w    = resultGUI.apertureInfo.bixelWeights;
+resultGUI.wDao = resultGUI.apertureInfo.bixelWeights;
+
+dij.scaleFactor = 1;
+
+resultGUI.apertureInfo = matRad_preconditionFactors(resultGUI.apertureInfo);
 
 % calc dose and reshape from 1D vector to 3D array
 d = matRad_backProjection(resultGUI.w,dij,options);
-resultGUI.physicalDose = reshape(d,dij.dimensions);
+resultGUI.physicalDose = reshape(d{1},dij.dimensions);
 
 if isfield(pln,'scaleDRx') && pln.scaleDRx
     %Scale D95 in target to RXDose
     resultGUI.QI = matRad_calcQualityIndicators(cst,pln,resultGUI.physicalDose);
     
     resultGUI.apertureInfo.scaleFacRx = max((pln.DRx/pln.numOfFractions)./[resultGUI.QI(pln.RxStruct).D_95]');
-    optApertureInfoVec(1:resultGUI.apertureInfo.totalNumOfShapes) = optApertureInfoVec(1:resultGUI.apertureInfo.totalNumOfShapes)*resultGUI.apertureInfo.scaleFacRx;
+    resultGUI.apertureInfo.apertureVector(1:resultGUI.apertureInfo.totalNumOfShapes) = resultGUI.apertureInfo.apertureVector(1:resultGUI.apertureInfo.totalNumOfShapes)*resultGUI.apertureInfo.scaleFacRx;
     
     % update the apertureInfoStruct and calculate bixel weights
-    resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,optApertureInfoVec);
+    resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
     
     % override also bixel weight vector in optResult struct
     resultGUI.w    = resultGUI.apertureInfo.bixelWeights;

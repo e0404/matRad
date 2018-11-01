@@ -56,16 +56,14 @@ if visBool
     screensize = get(0,'ScreenSize');
     xpos = ceil((screensize(3)-sz(2))/2); % center the figure on the screen horizontally
     ypos = ceil((screensize(4)-sz(1))/2); % center the figure on the screen vertically
-    seqFig = figure('position',[xpos,ypos,sz(2),sz(1)]);     
+    seqFig = figure('position',[xpos,ypos,sz(2),sz(1)]);
 end
 
 offset             = 0;
 sequencing.runVMAT = pln.propOpt.runVMAT;
 
 if isfield(resultGUI,'scaleFacRx_FMO')
-    for i = 1:numel(resultGUI.wUnsequenced)
-        resultGUI.wUnsequenced{i} = resultGUI.wUnsequenced{i}/resultGUI.scaleFacRx_FMO;
-    end
+    resultGUI.wUnsequenced = resultGUI.wUnsequenced/resultGUI.scaleFacRx_FMO;
 end
 
 for i = 1:numOfBeams
@@ -96,7 +94,7 @@ for i = 1:numOfBeams
     
     % get relevant weights for current beam
     % probably have to fix the resultGUI.wUnsequenced{1}
-    wOfCurrBeams = resultGUI.wUnsequenced{1}(1+offset:numOfRaysPerBeam+offset);%REVIEW OFFSET
+    wOfCurrBeams = resultGUI.wUnsequenced(1+offset:numOfRaysPerBeam+offset);%REVIEW OFFSET
     
     X = ones(numOfRaysPerBeam,1)*NaN;
     Z = ones(numOfRaysPerBeam,1)*NaN;
@@ -248,7 +246,6 @@ if pln.propOpt.runVMAT
     
 else
     sequencing.weightToMU = dij.weightToMU;
-    sequencing.preconditioner = pln.propOpt.preconditioner;
     
     resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf,pln);
     
@@ -267,8 +264,6 @@ resultGUI.sequencing   = sequencing;
 
 options.numOfScenarios = 1;
 options.bioOpt = 'none';
-options.run4D = pln.propOpt.run4D;
-options.FMO = false;
 
 d = matRad_backProjection(sequencing.w,dij,options);
 resultGUI.physicalDose = reshape(d{1},dij.dimensions);
