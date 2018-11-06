@@ -433,11 +433,11 @@ classdef matRad_multScen
             end
             
             % sanity check
-%             UniqueRowScenForProb = unique(this.scenForProb,'rows');
+            UniqueRowScenForProb = unique(this.scenForProb,'rows');
 
-%             if size(UniqueRowScenForProb,1) ~= size(this.scenForProb,1) && size(UniqueRowScenForProb,1)>1
-%                  matRad_dispToConsole('Some scenarios seem to be defined multiple times',[],'warning');
-%             end
+            if size(UniqueRowScenForProb,1) ~= size(this.scenForProb,1) && size(UniqueRowScenForProb,1)>1
+                 matRad_dispToConsole('Some scenarios seem to be defined multiple times',[],'warning');
+            end
 
             %% setup and fill combinatorics mask
             % 1st dim: ct scenarios, 
