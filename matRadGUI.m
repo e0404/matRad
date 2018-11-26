@@ -1388,8 +1388,8 @@ set(axesFig3D,'DataAspectRatio',ratios./max(ratios));
 
 set(axesFig3D,'Ydir','reverse');
 
-upperLimits = double(ct.cubeDim).*[ct.resolution.y ct.resolution.x ct.resolution.z];
-set(axesFig3D,'xlim',[1 upperLimits(1)],'ylim',[1 upperLimits(2)],'zlim',[1 upperLimits(3)]);
+upperLimits = double(ct.cubeDim).*[ct.resolution.x ct.resolution.y ct.resolution.z];
+set(axesFig3D,'xlim',[1 upperLimits(2)],'ylim',[1 upperLimits(1)],'zlim',[1 upperLimits(3)]);
 
 set(axesFig3D,'view',oldView);
 
