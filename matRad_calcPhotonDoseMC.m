@@ -195,14 +195,14 @@ for i = 1:dij.numOfBeams % loop over all beams
         % set ray specific vmc++ parameters
         % a) change coordinate system (Isocenter cs-> physical cs) and units mm -> cm
         for k = 1:4
-            currRayCorner = (stf(i).ray(j).rayCorners_SCD(k,:) + stf(i).isoCenter)/10;
+            currRayCorner = (stf(i).ray(j).beamletCornersAtIso(k,:) + stf(i).isoCenter)/10;
             fwrite(fileHandle,currRayCorner,'double');   
             
             % rays connecting source and ray corner
             plot3([beamSource(1) currRayCorner(1)],[beamSource(2) currRayCorner(2)],[beamSource(3) currRayCorner(3)],'y')
             % connection between corners
             l = mod(k,4) + 1;
-            lRayCorner = (stf(i).ray(j).rayCorners_SCD(l,:) + stf(i).isoCenter)/10;
+            lRayCorner = (stf(i).ray(j).beamletCornersAtIso(l,:) + stf(i).isoCenter)/10;
             plot3([lRayCorner(1) currRayCorner(1)],[lRayCorner(2) currRayCorner(2)],[lRayCorner(3) currRayCorner(3)],'r')
             
         end
