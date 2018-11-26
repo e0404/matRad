@@ -156,8 +156,8 @@ end
 % set up convolution grid
 if isFieldBasedDoseCalc
     % get data from DICOM import
-    intConvResolution = pln.Collimation.convResolution; 
-    fieldWidth = pln.Collimation.fieldWidth;
+    intConvResolution = pln.propStf.collimation.convResolution; 
+    fieldWidth = pln.propStf.collimation.fieldWidth;
 else
     intConvResolution = .5; % [mm]
     fieldWidth = pln.propStf.bixelWidth;
@@ -465,6 +465,41 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
    end   
 
 end
+
+% remove dose influence for voxels outside of segmentations for every ct
+% scenario
+for i = 1:pln.multScen.numOfCtScen
+    
+    % generate index set to erase
+    tmpIx = [];
+    for j = 1:size(cst,1)
+        tmpIx = unique([tmpIx; cst{j,4}{i}]);
+    end
+    ix = setdiff(1:prod(ct.cubeDim),tmpIx);
+    
+    for j = 1:pln.multScen.totNumShiftScen
+        for k = 1:pln.multScen.totNumRangeScen
+            if pln.multScen.scenMask(i,j,k)
+                 
+                 dij.physicalDose{i,j,k}(ix,:)      = 0;
+                 
+                 if isfield(dij,'mLETDose')
+                     dij.mLETDose{i,j,k}(ix,:)      = 0;
+                 end
+                 
+                 if pln.bioParam.bioOpt
+                     dij.mAlphaDose{i,j,k}(ix,:)    = 0;
+                     dij.mSqrtBetaDose{i,j,k}(ix,:) = 0;
+                 end
+                 
+            end
+            
+        end
+    end
+end
+
+
+
 
 try
   % wait 0.1s for closing all waitbars

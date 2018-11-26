@@ -1,4 +1,4 @@
-function dAcc = matRad_doseAcc(ct, phaseCubes, accMethod)
+function dAcc = matRad_doseAcc(ct, phaseCubes, cst, accMethod)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dose accumulation function
 % 
@@ -9,6 +9,7 @@ function dAcc = matRad_doseAcc(ct, phaseCubes, accMethod)
 %   ct:         matRad ct struct inclduing 4d ct, deformation vector
 %               fields, and meta information
 %   phaseCubes: cell array of cubes to be accumulated
+%   cst:        matRad cst struct
 %   accMethod:  method used for accumulation, either direct dose mapping
 %               (DDM), energy mass transfer method (EMT), or divergent dose
 %               mapping method (DDMP)
@@ -48,8 +49,8 @@ end
 ct.cubeDim = ct.cubeDim;
 
 % helper variables
-xGridVec = 1:ct.cubeDim(1);
-yGridVec = 1:ct.cubeDim(2);
+xGridVec = 1:ct.cubeDim(2);
+yGridVec = 1:ct.cubeDim(1);
 zGridVec = 1:ct.cubeDim(3);
 
 % result container
@@ -61,23 +62,26 @@ if strcmp(accMethod,'DDM')
         error('dose accumulation via direct dose mapping (DDM) requires pull dvfs');
     end    
          
-    [Y,X,Z] = meshgrid(xGridVec,yGridVec,zGridVec);
+    [Y,X,Z] = meshgrid(yGridVec,xGridVec,zGridVec);
 
     % TODODODODODOD %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    ix = 1:prod(ct.cubeDim);%    resultGUI.phaseDose{1,i}(:,:,:)>0;       %d.physicalDose(:,:,:,i) > 0;
-    
+    ix = [];1:prod(ct.cubeDim);%[];
+    for i = 1:size(cst,1)
+        ix = unique([ix; cst{i,4}{1}]);
+    end
+
     for i = 1:ct.numOfCtScen
           
         dvf_x_i = squeeze(ct.dvf{1,i}(1,:,:,:))/ct.resolution.x;
         dvf_y_i = squeeze(ct.dvf{1,i}(2,:,:,:))/ct.resolution.y;
         dvf_z_i = squeeze(ct.dvf{1,i}(3,:,:,:))/ct.resolution.z;
-
+        
         d_ref = interp3(yGridVec,xGridVec',zGridVec,phaseCubes{i}, ...
                          Y(ix) + dvf_y_i(ix), ...     
                          X(ix) + dvf_x_i(ix), ... 
                          Z(ix) + dvf_z_i(ix), ...
                          'linear',0);  
-        
+
         dAcc(ix) = dAcc(ix) + d_ref;
       
     end

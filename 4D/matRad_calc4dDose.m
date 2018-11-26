@@ -69,16 +69,16 @@ end
 % accumulation
 if strcmp(pln.bioParam.model,'none')       
     
-    resultGUI.accPhysicalDose = matRad_doseAcc(ct,resultGUI.phaseDose, 'DDM');
+    resultGUI.accPhysicalDose = matRad_doseAcc(ct,resultGUI.phaseDose, cst, 'DDM');
 
 elseif strcmp(pln.bioParam.model,'constRBE')
 
-    resultGUI.accRBExD = matRad_doseAcc(ct,resultGUI.phaseRBExD, 'DDM');
+    resultGUI.accRBExD = matRad_doseAcc(ct,resultGUI.phaseRBExD, cst, 'DDM');
 
 elseif any(strcmp(pln.bioParam.model,{'MCN','LEM','WED'}))
 
-    resultGUI.accAlphaDose    = matRad_doseAcc(ct,resultGUI.phaseAlphaDose, 'DDM');
-    resultGUI.accSqrtBetaDose = matRad_doseAcc(ct,resultGUI.phaseSqrtBetaDose, 'DDM');
+    resultGUI.accAlphaDose    = matRad_doseAcc(ct,resultGUI.phaseAlphaDose, cst, 'DDM');
+    resultGUI.accSqrtBetaDose = matRad_doseAcc(ct,resultGUI.phaseSqrtBetaDose, cst, 'DDM');
 
     % only compute where we have biologically defined tissue
     ix = dij.alphaX~=0; 
