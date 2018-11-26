@@ -356,7 +356,7 @@ for i = 1:length(stf) % loop over all beams
                 if isfield(dij,'mLETDose')
                   % calculate particle LET for bixel k on ray j of beam i
                   depths = machine.data(energyIx).depths + machine.data(energyIx).offset; 
-                  bixelLET = matRad_interp1(depths,machine.data(energyIx).LET,radDepths(currIx)); 
+                  bixelLET = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths); 
 
                   % Save LET for every bixel in cell array
                   letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelLET.*bixelDose,dij.numOfVoxels,1);
@@ -366,7 +366,7 @@ for i = 1:length(stf) % loop over all beams
                     && strcmp(pln.radiationMode,'carbon')
                     % calculate alpha and beta values for bixel k on ray j of                  
                     [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
-                        radDepths(currIx),...
+                        currRadDepths,...
                         vTissueIndex_j(currIx,:),...
                         machine.data(energyIx));
                 
