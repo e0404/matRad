@@ -251,7 +251,7 @@ pln.multScen = matRad_multScen(ct,'nomScen');
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln,param);
-
+disp('flag2')
 %% Dose Calculation
 dij = matRad_calcPhotonDose(ct,stf,pln,cst, param);
 

@@ -10,7 +10,7 @@ addpath(genpath(fullfile(pwd,'..')));
 matRad_unitTestTextManipulation('matRad_calcPhotonDose.m', 'lateralCutoff = 50', 'lateralCutoff = 20;')
 matRad_unitTestTextManipulation('matRad_calcParticleDose.m', 'cutOffLevel          = 0.99', '       cutOffLevel          = 0.8;')
 matRad_unitTestTextManipulation('matRad_ipoptOptions.m', 'options.ipopt.max_iter', 'options.ipopt.max_iter = 10;')
-
+disp('flag1')
 
 % supressing the inherent Ocatave warnings for division by zero
 warning("off", "Octave:divide-by-zero")
