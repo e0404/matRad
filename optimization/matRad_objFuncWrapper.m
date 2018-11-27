@@ -116,14 +116,20 @@ for  i = 1:size(cst,1)
                     
                 % composite worst case consideres ovarall the worst objective function value       
                 elseif strcmp(cst{i,6}(j).robustness,'COWC')
+                     
+                   numContours = numel(cst{i,4});
                    
-                     for ixScen = 1:options.numOfScen
-
-                        d_i = d{ixScen}(cst{i,4}{1});
-         
-                        f_COWC(ixScen) = f_COWC(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
-                        
-                     end   
+                   for ixScen = 1:options.numOfScen
+                      % if propagated contours are available (e.g. 4D CT) then use it
+                      if numContours == options.numOfScen
+                         d_i = d{ixScen}(cst{i,4}{ixScen});
+                      else
+                         d_i = d{ixScen}(cst{i,4}{1});
+                      end
+                      
+                      f_COWC(ixScen) = f_COWC(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                      
+                   end
             
                 % objective-wise worst case consideres the worst individual objective function value        
                 elseif strcmp(cst{i,6}(j).robustness,'OWC')

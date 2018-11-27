@@ -153,13 +153,20 @@ for  i = 1:size(cst,1)
                  % composite worst case consideres ovarall the worst objective function value   
                  elseif strcmp(cst{i,6}(j).robustness,'COWC')
                    
-                       for ixScen = 1:options.numOfScen
-
-                           d_i = d{ixScen}(cst{i,4}{1});
-
-                           f_COWC(ixScen)                     = f_COWC(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
-                           delta_COWC{ixScen}(cst{i,4}{1})    = delta_COWC{ixScen}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
-                       end   
+                    numContours = numel(cst{i,4});
+                    
+                    for ixScen = 1:options.numOfScen
+                       
+                       if numContours == options.numOfScen
+                          contourIndex = ixScen;
+                       else
+                          contourIndex = 1;
+                       end
+                       
+                       d_i = d{ixScen}(cst{i,4}{contourIndex});
+                       f_COWC(ixScen)                             = f_COWC(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                       delta_COWC{ixScen}(cst{i,4}{contourIndex}) = delta_COWC{ixScen}(cst{i,4}{contourIndex}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+                    end
                        
                  % objective-wise worst case consideres the worst individual objective function value        
                  elseif strcmp(cst{i,6}(j).robustness,'OWC')
@@ -240,3 +247,4 @@ for i = 1:options.numOfScen
 
     end
 end
+

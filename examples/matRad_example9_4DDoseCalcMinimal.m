@@ -62,9 +62,6 @@ pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,scenGenType);
 
-% hack multScen structure to compute dose for all scenarios
-pln.multScen.scenMask = ones(10,1);
-
 % generate steering file
 stf = matRad_generateStf(ct,cst,pln);
 

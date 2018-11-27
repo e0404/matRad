@@ -176,20 +176,20 @@ classdef matRad_multScen
       
       % default constructor
       function this = matRad_multScen(ct,TYPE)
-          
-          if exist('TYPE','var') && ~isempty(TYPE)
-              if sum(strcmp(this.AvailableScenCreationTYPE,TYPE))>0
-                    this.TYPE = TYPE;
-              else
-                   matRad_dispToConsole(['matRad_multScen: Unknown TYPE - using the nominal scenario now'],[],'warning')
-                   this.TYPE = this.DEFAULT_TYPE;
-              end
-          else
+         
+         if exist('TYPE','var') && ~isempty(TYPE)
+            if sum(strcmp(this.AvailableScenCreationTYPE,TYPE))>0
+               this.TYPE = TYPE;
+            else
+               matRad_dispToConsole(['matRad_multScen: Unknown TYPE - using the nominal scenario now'],[],'warning')
+               this.TYPE = this.DEFAULT_TYPE;
+            end
+         else
             this.TYPE = this.DEFAULT_TYPE;
-          end
-          this      = getMultScenParam(ct,this);
-          this      = setMultScen(this);
-          this      = calcScenProb(this);
+         end
+         this      = getMultScenParam(ct,this);
+         this      = setMultScen(this);
+         this      = calcScenProb(this);
       end % end constructor
       
       % create valid instance of an object
@@ -455,6 +455,7 @@ classdef matRad_multScen
                        % get all setup scenarios
                        [~,ixUnq] = unique(this.scenForProb(:,1:3),'rows','stable');
                        this.scenMask  = false(this.numOfCtScen, length(ixUnq), this.totNumRangeScen);
+                       this.scenMask(:,1,1) = true; % ct scenarios
                        this.scenMask(1,:,1) = true; % iso shift scenarios
                        this.scenMask(1,1,:) = true; % range shift scenarios
                    case 'permuted'
@@ -477,7 +478,7 @@ classdef matRad_multScen
             % create linearalized mask where the i row points to the indexes of scenMask
             [x{1}, x{2}, x{3}] = ind2sub(size(this.scenMask),find(this.scenMask));
             this.linearMask    = cell2mat(x);
-            this.totNumScen    = size(this.scenForProb,1);
+            this.totNumScen    = sum(this.scenMask(:));
             
        end % end of setMultScen
        
