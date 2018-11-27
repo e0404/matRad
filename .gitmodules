@@ -1,0 +1,4 @@
+[submodule "ompMC"]
+	path = ompMC
+	url = https://github.com/edoerner/ompMC.git
+	branch = master
