@@ -74,7 +74,7 @@ if param.logLevel == 1
    % show busy state
    set(figureWait,'pointer','watch');
 end
-disp('flag3')
+
 % calculate rED or rSP from HU
 ct = matRad_calcWaterEqD(ct, pln, param);
 
@@ -143,7 +143,7 @@ useCustomPrimFluenceBool = 0;
 
 % 0 if field calc is bixel based, 1 if dose calc is field based
 isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
-disp('flag4')
+
 %% kernel convolution
 % prepare data for convolution to reduce calculation time
 fileName = [pln.radiationMode '_' pln.machine];
@@ -188,7 +188,7 @@ if ~isFieldBasedDoseCalc
         F = real(ifft2(fft2(F,gaussConvSize,gaussConvSize).*fft2(gaussFilter,gaussConvSize,gaussConvSize)));     
     end
 end
-disp('flag5')
+
 % get kernel size and distances
 kernelLimit = ceil(lateralCutoff/intConvResolution);
 [kernelX, kernelZ] = meshgrid(-kernelLimit*intConvResolution: ...
@@ -465,7 +465,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
    end   
 
 end
-disp('flag6')
+
 % remove dose influence for voxels outside of segmentations for every ct
 % scenario
 for i = 1:pln.multScen.numOfCtScen

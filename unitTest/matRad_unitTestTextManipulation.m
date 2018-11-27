@@ -1,4 +1,8 @@
-function matRad_unitTestTextManipulation(filename, string1, string2)
+function matRad_unitTestTextManipulation(filename, string1, string2, path)
+
+if nargin < 4
+    path = '../';
+end
 
 fid=fopen(filename);
 fo=fopen('tempFile.m','w');
@@ -14,9 +18,12 @@ while ischar(tline)
     tline = fgetl(fid);
 end
 
+
 fclose(fid);
 fclose(fo);
 
-movefile('tempFile.m', '../matRad_calcPhotonDose.m', 'f');
+
+movefile('tempFile.m', [path filename], 'f');
 end
+
 
