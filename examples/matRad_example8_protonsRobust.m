@@ -89,8 +89,8 @@ xLowOAR    = round(xDim/2 - xDim/6);
 xHighOAR   = round(xDim/2 + xDim/6);
 yLowOAR    = round(yDim/2 - yDim/6);
 yHighOAR   = round(yDim/2 + yDim/6);
-zLowOAR    = round(zDim/2 - zDim/6);
-zHighOAR   = round(zDim/2 + zDim/6);
+zLowOAR    = round(zDim/2 - zDim/4);
+zHighOAR   = round(zDim/2 + zDim/4);
 
 for x = xLowOAR:1:xHighOAR
    for y = yLowOAR:1:yHighOAR
@@ -105,7 +105,7 @@ cst{ixOAR,4}{1} = find(cubeHelper);
 
 % second the PTV
 cubeHelper = zeros(ct.cubeDim);
-radiusPTV = xDim/12;
+radiusPTV = xDim/14;
 for x = 1:xDim
    for y = 1:yDim
       for z = 1:zDim
@@ -201,19 +201,22 @@ resultGUIrobust = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Visualize results
 addpath('tools')
-plane      = 3;
-slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-
-figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExD_beam1      ,plane,slice,[],[],colorcube,[],[0 max(resultGUI.RBExD_beam1(:))],[]);title('conventional plan - beam1')
-figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.RBExD_beam1,plane,slice,[],[],colorcube,[],[0 max(resultGUIrobust.RBExD_beam1(:))],[]);title('robust plan - beam1')
+plane         = 3;
+slice         = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+maxDose       = max([max(resultGUI.([quantityOpt '_' 'beam1'])(:,:,slice)) max(resultGUIrobust.([quantityOpt '_' 'beam1'])(:,:,slice))])+1e-4;
+doseIsoLevels = linspace(0.1 * maxDose,maxDose,10);
+figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.([quantityOpt '_' 'beam1'])      ,plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);title('conventional plan - beam1')
+figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.([quantityOpt '_' 'beam1']),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);title('robust plan - beam1')
 
 % create an interactive plot to slide through individual scnearios
-f = figure;title('individual scenarios');
-numScen = 1;doseWindow = [0 3.5];
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExD_' num2str(round(numScen))]),plane,slice,[],[],colorcube,[],doseWindow,[]);
+f       = figure;title('individual scenarios');
+numScen = 1;
+maxDose       = max(max(resultGUIrobust.([quantityOpt '_' num2str(round(numScen))])(:,:,slice)))+0.2;
+doseIsoLevels = linspace(0.1 * maxDose,maxDose,10);
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.([quantityOpt '_' num2str(round(numScen))]),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);
 b = uicontrol('Parent',f,'Style','slider','Position',[50,5,419,23],...
    'value',numScen, 'min',1, 'max',pln.multScen.totNumScen,'SliderStep', [1/(pln.multScen.totNumScen-1) , 1/(pln.multScen.totNumScen-1)]);
-b.Callback = @(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExD_' num2str(round(es.Value))]),plane,slice,[],[],colorcube,[],doseWindow,[]); 
+b.Callback = @(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.([quantityOpt '_' num2str(round(es.Value))]),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels); 
 
 %% Indicator calculation and show DVH and QI
 [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUIrobust);
