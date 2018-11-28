@@ -25,7 +25,26 @@
 %% Patient Data Import
 % Let's begin with a clear Matlab environment and import the prostate
 % patient into your workspace
-clc,clear,close all;
+clc, close all;
+
+switch matRad_getEnvironment
+    case 'MATLAB'
+        clearvars -except param
+    case 'OCTAVE'
+        clear -x param
+end
+
+if exist('param','var')
+    if ~isfield(param,'logLevel')
+       param.logLevel = 1;
+    end
+    
+else
+   param.calcDoseDirect = false;
+   param.subIx          = [];
+   param.logLevel       = 1;
+end
+
 load('PROSTATE.mat');
 
 %% Treatment Plan
@@ -57,52 +76,65 @@ pln.propOpt.bioOptimization = 'const_RBExD';
 % for particles it is possible to also calculate the LET disutribution
 % alongside the physical dose. Therefore you need to activate the
 % corresponding option during dose calculcation
-pln.propDoseCalc.calcLET = 1;
+pln.propDoseCalc.calcLET = 0;
                                        
 %%
 % Now we have to set the remaining plan parameters.
 pln.numOfFractions        = 30;
 pln.propStf.gantryAngles  = [90 270];
 pln.propStf.couchAngles   = [0 0];
-pln.propStf.bixelWidth    = 3;
+pln.propStf.bixelWidth    = 5;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
 
+quantityOpt   = 'RBExD';     % either  physicalDose / effect / RBExD
+modelName     = 'constRBE';             % none: for photons, protons, carbon                                    constRBE: constant RBE model
+                                    % MCN: McNamara-variable RBE model for protons                          WED: Wedenberg-variable RBE model for protons 
+                                    % LEM: Local Effect Model for carbon ions
+% retrieve bio model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+
+% retrieve scenarios for dose calculation and optimziation
+pln.multScen = matRad_multScen(ct,'nomScen');
+
 %% Generate Beam Geometry STF
-stf = matRad_generateStf(ct,cst,pln);
+stf = matRad_generateStf(ct,cst,pln,param);
 
 %% Dose Calculation
 % Lets generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows for subsequent inverse optimization. 
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
+dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 
 %% Inverse Optimization for IMPT
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the 
 % clinical objectives and constraints underlying the radiation treatment
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-figure
-imagesc(resultGUI.RBExDose(:,:,slice)),colorbar,colormap(jet)
-
+if param.logLevel == 1
+    figure
+    imagesc(resultGUI.RBExD(:,:,slice)),colorbar,colormap(jet)
+end
 %% Plot the Resulting Beam Dose Slice
 % Let's plot the transversal iso-center dose slice of beam 1 and beam 2
 % separately 
-figure
-subplot(121),imagesc(resultGUI.RBExDose_beam1(:,:,slice)),colorbar,colormap(jet),title('dose of beam 1')
-subplot(122),imagesc(resultGUI.RBExDose_beam2(:,:,slice)),colorbar,colormap(jet),title('dose of beam 2')
-
+if param.logLevel == 1
+    figure
+    subplot(121),imagesc(resultGUI.RBExD_beam1(:,:,slice)),colorbar,colormap(jet),title('dose of beam 1')
+    subplot(122),imagesc(resultGUI.RBExD_beam2(:,:,slice)),colorbar,colormap(jet),title('dose of beam 2')
+end
 %% and the corresponding LET distribution
 % Transversal iso-center slice
-figure
-imagesc(resultGUI.LET(:,:,slice)),colormap(jet),colorbar,title('LET [keV/µm]')
-
+if param.logLevel == 1 && pln.propDoseCalc.calcLET
+    figure
+    imagesc(resultGUI.LET(:,:,slice)),colormap(jet),colorbar,title('LET [keV/µm]')
+end
 %%
 % Now let's simulate a patient shift in y direction for both beams
 stf(1).isoCenter(2) = stf(1).isoCenter(2) - 4;
@@ -111,32 +143,33 @@ pln.propStf.isoCenter       = reshape([stf.isoCenter],[3 pln.propStf.numOfBeams]
 
 %% Recalculate Plan
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
-resultGUI_isoShift = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+resultGUI_isoShift = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w,param);
 
 %%  Visual Comparison of results
 % Let's compare the new recalculation against the optimization result.
-plane = 3;
-doseWindow = [0 max([resultGUI.RBExDose(:); resultGUI_isoShift.RBExDose(:)])];
+if param.logLevel == 1
+    plane = 3;
+    doseWindow = [0 max([resultGUI.RBExD(:); resultGUI_isoShift.RBExD(:)])];
 
-figure,title('original plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
-figure,title('shifted plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_isoShift.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
- 
-absDiffCube = resultGUI.RBExDose-resultGUI_isoShift.RBExDose;
-figure,title('absolute difference')
-matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
+    figure,title('original plan')
+    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+    figure,title('shifted plan')
+    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_isoShift.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
 
-% Let's plot single profiles that are perpendicular to the beam direction
-ixProfileY = round(pln.propStf.isoCenter(1,2)./ct.resolution.y);
+    absDiffCube = resultGUI.RBExD-resultGUI_isoShift.RBExD;
+    figure,title('absolute difference')
+    matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 
-profileOrginal = resultGUI.RBExDose(:,ixProfileY,slice);
-profileShifted = resultGUI_isoShift.RBExDose(:,ixProfileY,slice);
+    % Let's plot single profiles that are perpendicular to the beam direction
+    ixProfileY = round(pln.propStf.isoCenter(1,2)./ct.resolution.y);
 
-figure,plot(profileOrginal,'LineWidth',2),grid on,hold on, 
-       plot(profileShifted,'LineWidth',2),legend({'original profile','shifted profile'}),
-       xlabel('mm'),ylabel('Gy(RBE)'),title('profile plot')
-       
+    profileOrginal = resultGUI.RBExD(:,ixProfileY,slice);
+    profileShifted = resultGUI_isoShift.RBExD(:,ixProfileY,slice);
+
+    figure,plot(profileOrginal,'LineWidth',2),grid on,hold on, 
+           plot(profileShifted,'LineWidth',2),legend({'original profile','shifted profile'}),
+           xlabel('mm'),ylabel('Gy(RBE)'),title('profile plot')
+end
 %% Quantitative Comparison of results
 % Compare the two dose cubes using a gamma-index analysis. The gamma index
 % is a composite quality distribution equally taking into account a dose 
@@ -153,19 +186,19 @@ distToAgreement = 2;
 n               = 1;
 
 [gammaCube,gammaPassRateCell] = matRad_gammaIndex(...
-    resultGUI_isoShift.RBExDose,resultGUI.RBExDose,...
+    resultGUI_isoShift.RBExD,resultGUI.RBExD,...
     [ct.resolution.x, ct.resolution.y, ct.resolution.z],...
     [doseDifference distToAgreement],slice,n,'global',cst);
 
-
-[env, ~] = matRad_getEnvironment();
-% Let's plot the gamma index histogram
-switch env
-     case 'MATLAB'
-          figure,histogram(gammaCube(gammaCube>0),100),title('gamma index histogram')
-     case 'OCTAVE'
-          figure,hist(gammaCube(gammaCube>0),100),title('gamma index histogram')
+if param.logLevel == 1
+    [env, ~] = matRad_getEnvironment();
+    % Let's plot the gamma index histogram
+    switch env
+         case 'MATLAB'
+              figure,histogram(gammaCube(gammaCube>0),100),title('gamma index histogram')
+         case 'OCTAVE'
+              figure,hist(gammaCube(gammaCube>0),100),title('gamma index histogram')
+    end
 end
-
 
 
