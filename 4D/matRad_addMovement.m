@@ -43,6 +43,10 @@ function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp,
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if ~exist('visBool','var')
+   visBool = false;
+end
+
 % book keeping
 ct.motionPeriod = motionPeriod;
 ct.numOfCtScen = numOfCtScen;
@@ -97,7 +101,7 @@ end
 
 
 if visBool
-   slice       = round(ct.cubeDim(3)/2);
+   slice = round(ct.cubeDim(3)/2);
    figure,
    for i = 1:numOfCtScen
       clf,
