@@ -35,9 +35,8 @@ function apertureInfo = matRad_preconditionFactors(apertureInfo)
 % This is the dij scaling factor which will be applied during DAO.  It is
 % given by the dividing the mean of the actual aperture weights by the
 % bixel width.  This factor will divide all of the aperture weights.
-dijScaleFactor = mean(apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale)/(apertureInfo.bixelWidth);
 
-shapeInd = 1;
+dijScaleFactor = mean(apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale)/(apertureInfo.bixelWidth);
 
 for i = 1:numel(apertureInfo.beam)
     
@@ -55,16 +54,19 @@ for i = 1:numel(apertureInfo.beam)
             % open bixels (slight modification to Esther Wild's formula).
             % The variables corresponding to the aperture weights will be
             % multiplied by this number, which will decrease the gradients.
-            apertureInfo.beam(i).shape(j).jacobiScale = (dijScaleFactor.*apertureInfo.bixelWidth./apertureInfo.beam(i).shape(j).weight).*sqrt(sum(apertureInfo.beam(i).shape(j).shapeMap(:).^2));
-            apertureInfo.jacobiScale(shapeInd) = apertureInfo.beam(i).shape(j).jacobiScale;
             
-            apertureInfo.apertureVector(shapeInd) = apertureInfo.beam(i).shape(j).jacobiScale*apertureInfo.beam(i).shape(j).weight;
+            if apertureInfo.runVMAT
+                apertureInfo.beam(i).shape(j).jacobiScale = (dijScaleFactor./apertureInfo.beam(i).shape(j).weight).*sqrt(sum(apertureInfo.beam(i).shape(j).shapeMap(:).^2)./apertureInfo.beam(i).shape(j).sumGradSq);
+            else
+                apertureInfo.beam(i).shape(j).jacobiScale = (dijScaleFactor.*apertureInfo.bixelWidth./apertureInfo.beam(i).shape(j).weight).*sqrt(sum(apertureInfo.beam(i).shape(j).shapeMap(:).^2));
+            end
+            apertureInfo.jacobiScale(apertureInfo.beam(i).shape(j).weightOffset) = apertureInfo.beam(i).shape(j).jacobiScale;
             
-            
-            shapeInd = shapeInd+1;
+            apertureInfo.apertureVector(apertureInfo.beam(i).shape(j).weightOffset) = apertureInfo.beam(i).shape(j).jacobiScale*apertureInfo.beam(i).shape(j).weight;
         end
     end
 end
 
+end
 
 

@@ -33,7 +33,7 @@ if ispc % parallelization only possible on windows systems
 
     parallelProcesses = cell(1,parallelSimulations);
     for i = 1:parallelSimulations
-        parallelProcesses{1,i} = ['start "" 9>"%lock%',num2str(i),'" ' verboseString ' .\bin\vmc_Windows.exe MCpencilbeam_temp_',num2str(i)];
+        parallelProcesses{1,i} = ['start "" 9>"%lock%',num2str(i),'" ' verboseString ' .\bin\vmc_Windows.exe -i MCpencilbeam_temp_',num2str(i)];
     end
 
     batchFile = {...

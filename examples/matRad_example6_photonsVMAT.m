@@ -39,7 +39,6 @@ pln.machine         = 'Generic';
 
 pln.numOfFractions  = 30;
 
-
 % beam geometry settings
 pln.propStf.bixelWidth = 5;
 
@@ -64,9 +63,11 @@ pln.propOpt.VMAToptions.maxFMOGantryAngleSpacing = 28;     % Max gantry angle sp
 % optGantryAngles set. Weights and leaf positions are interpolated at the
 % angles in the gantryAngles set to increase the accuracy of the dose
 % calculation (each iteration).
+
 % FMO: optimize fluence on coarse subset of gantry angles
 % Sequencing: select subset of apertures and spread to finer angles
 % DAO: constrain for leaf speed, gantry rotation speed and MU rate
+
 pln = matRad_VMATGantryAngles(pln,cst,ct);
 
 %% Generate Beam Geometry STF

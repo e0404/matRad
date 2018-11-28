@@ -26,6 +26,7 @@ load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
+%load lungPatient0_3DVMAT
 
 % meta information for treatment plan
 pln.radiationMode   = 'photons';     % either photons / protons / carbon
@@ -35,21 +36,29 @@ pln.numOfFractions  = 30;
 
 % beam geometry settings
 pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.gantryAngles    = [0:72:359]; % [?]
+pln.propStf.gantryAngles    = 0:72:359; % [?]
 pln.propStf.couchAngles     = [0 0 0 0 0]; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
 % dose calculation settings
-pln.propDoseCalc.memorySaverPhoton = false;
+pln.propDoseCalc.vmc                        = false;
+pln.propDoseCalc.vmcOptions.source          = 'phsp';
+pln.propDoseCalc.vmcOptions.phspBaseName    = '5x5_at_50cm';
+pln.propDoseCalc.vmcOptions.SCD             = 500;
+pln.propDoseCalc.vmcOptions.dumpDose        = 1;
+pln.propDoseCalc.vmcOptions.version         = 'Carleton';
+pln.propDoseCalc.vmcOptions.nCasePerBixel   = 5000;
+pln.propDoseCalc.vmcOptions.numOfParMCSim   = 8;
 
 % optimization settings
 pln.propOpt.bioOptimization = 'none'; % none: physical optimization;             const_RBExD; constant RBE of 1.1;
                                             % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
-pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
-pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
+pln.propOpt.runDAO          = true;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
+pln.propOpt.runSequencing   = true;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.propOpt.runVMAT         = false;  % 1/true: run VMAT, 0/false: don't
-
+pln.propOpt.preconditioner = true;
+pln.propOpt.numLevels = 7;
 
 %% For VMAT
 
@@ -70,12 +79,23 @@ load TG119.mat
 pln.radiationMode   = 'photons';   % either photons / protons / carbon
 pln.machine         = 'Generic';
 
-pln.numOfFractions  = 30;
-
+%pln.numOfFractions  = 30;
 
 % beam geometry settings
 pln.propStf.bixelWidth = 5;
 
+% dose calculation settings
+pln.propDoseCalc.vmc                        = false;
+pln.propDoseCalc.vmcOptions.source          = 'phsp';
+pln.propDoseCalc.vmcOptions.phspBaseName    = '5x5_at_50cm';
+pln.propDoseCalc.vmcOptions.SCD             = 500;
+pln.propDoseCalc.vmcOptions.dumpDose        = 1;
+pln.propDoseCalc.vmcOptions.version         = 'Carleton';
+pln.propDoseCalc.vmcOptions.nCasePerBixel   = 5000;
+pln.propDoseCalc.vmcOptions.numOfParMCSim   = 8;
+
+% beam geometry settings
+pln.propStf.bixelWidth = 5;
 
 % optimization settings
 pln.propOpt.bioOptimization = 'none';
@@ -86,8 +106,11 @@ pln.propOpt.preconditioner = true;
 pln.propOpt.numLevels = 7;
 
 pln.propOpt.VMAToptions.machineConstraintFile = [pln.radiationMode '_' pln.machine];
+pln.propOpt.VMAToptions.continuousAperture = true;
 
-pln.propOpt.VMAToptions.maxGantryAngleSpacing = 2;      % Max gantry angle spacing for dose calculation
+pln.propOpt.VMAToptions.startingAngle = -180;
+pln.propOpt.VMAToptions.finishingAngle = 180;
+pln.propOpt.VMAToptions.maxGantryAngleSpacing = 4;      % Max gantry angle spacing for dose calculation
 pln.propOpt.VMAToptions.maxDAOGantryAngleSpacing = 4;      % Max gantry angle spacing for DAO
 pln.propOpt.VMAToptions.maxFMOGantryAngleSpacing = 28;      % Max gantry angle spacing for FMO
 
@@ -101,7 +124,11 @@ stf = matRad_generateStf(ct,cst,pln);
 
 %% dose calculation
 if strcmp(pln.radiationMode,'photons')
-    dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+    if pln.propDoseCalc.vmc
+        dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
+    else
+        dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+    end
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
 end
@@ -114,7 +141,7 @@ end
 % - Mayneord factor to move SSD from 100 cm to 85 cm
 
 %At TOH: 100 cm SAD, 5 cm depth, 10x10cm2
-%At DKFZ: 95 cm SAD, 10 cm depth, 10x10cm2
+%At DKFZ: 104 cm SAD, 5 cm depth, 5x5cm2
 
 %% inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln,stf);

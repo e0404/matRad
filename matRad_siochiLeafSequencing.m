@@ -48,12 +48,7 @@ if nargin < 5
     visBool = 0;
 end
 
-if pln.propOpt.runVMAT
-    %First beam sweeps right-to-left, next left-to-right, ...
-    leafDir = 1;
-end
-
-
+numOfBeams = numel(stf);
 
 if visBool
     % create the sequencing figure
@@ -61,21 +56,26 @@ if visBool
     screensize = get(0,'ScreenSize');
     xpos = ceil((screensize(3)-sz(2))/2); % center the figure on the screen horizontally
     ypos = ceil((screensize(4)-sz(1))/2); % center the figure on the screen vertically
-    seqFig = figure('position',[xpos,ypos,sz(2),sz(1)]);     
+    seqFig = figure('position',[xpos,ypos,sz(2),sz(1)]);
 end
 
 offset             = 0;
 sequencing.runVMAT = pln.propOpt.runVMAT;
 
-for i = 1:numel(stf)
-   
+if isfield(resultGUI,'scaleFacRx_FMO')
+    resultGUI.wUnsequenced = resultGUI.wUnsequenced/resultGUI.scaleFacRx_FMO;
+end
+
+for i = 1:numOfBeams
     numOfRaysPerBeam = stf(i).numOfRays;
     
     if pln.propOpt.runVMAT
         
         if ~stf(i).propVMAT.FMOBeam
             sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = 0;
-            sequencing.beam(i).bixelIx = 1+offset:numOfRaysPerBeam+offset;
+            
+            sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
+            
             offset = offset + numOfRaysPerBeam;
             continue %if this is not a beam to be initialized, continue to next iteration without generating segments
         else
@@ -93,6 +93,7 @@ for i = 1:numel(stf)
     end
     
     % get relevant weights for current beam
+    % probably have to fix the resultGUI.wUnsequenced{1}
     wOfCurrBeams = resultGUI.wUnsequenced(1+offset:numOfRaysPerBeam+offset);%REVIEW OFFSET
     
     X = ones(numOfRaysPerBeam,1)*NaN;
@@ -125,6 +126,13 @@ for i = 1:numel(stf)
     
     %Save weights in fluence matrix.
     fluenceMx(indInFluenceMx) = wOfCurrBeams;
+    
+    temp = zeros(size(fluenceMx));
+    for row = 1:dimOfFluenceMxZ
+        temp(row,:) = imgaussfilt(fluenceMx(row,:),1);
+    end
+    fluenceMx = temp;
+    clear temp
     
     %allow for possibility to repeat sequencing with higher number of
     %levels if number of apertures is lower than required
@@ -214,31 +222,34 @@ end
 
 if pln.propOpt.runVMAT
     
+    % do arc sequencing
     sequencing.beam = matRad_arcSequencing(sequencing.beam,stf,pln,dij.weightToMU);
-
-    sequencing.weightToMU     = dij.weightToMU;
-    sequencing.preconditioner = pln.propOpt.preconditioner;
-    sequencing.propVMAT       = pln.propOpt.VMAToptions;
     
-    resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
+    % carry variables
+    sequencing.weightToMU       = dij.weightToMU;
     
-    % matRad_daoVec2ApertureInfo will interpolate subchildren gantry segments
+    % get apertureInfo
+    resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf,pln);
+    
+    %matRad_daoVec2ApertureInfo will interpolate subchildren gantry
+    %segments
     resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
     
-    % calculate max leaf speed
+    %calculate max leaf speed
     resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
     
-    % optimize delivery
-    resultGUI              = matRad_optDelivery(resultGUI,0);
+    %optimize delivery
+    resultGUI = matRad_optDelivery(resultGUI,0);
     resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
     
     sequencing.w = resultGUI.apertureInfo.bixelWeights;
     
 else
-    sequencing.weightToMU     = dij.weightToMU;
-    sequencing.preconditioner = pln.propOpt.preconditioner;    
-    resultGUI.apertureInfo    = matRad_sequencing2ApertureInfo(sequencing,stf);
-    resultGUI.apertureInfo    = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
+    sequencing.weightToMU = dij.weightToMU;
+    
+    resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf,pln);
+    
+    resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
 end
 
 if pln.propOpt.preconditioner
@@ -251,12 +262,11 @@ resultGUI.wSequenced = sequencing.w;
 
 resultGUI.sequencing   = sequencing;
 
-
 options.numOfScenarios = 1;
 options.bioOpt = 'none';
+
 d = matRad_backProjection(sequencing.w,dij,options);
 resultGUI.physicalDose = reshape(d{1},dij.dimensions);
-
 
 % if weights exists from an former DAO remove it
 if isfield(resultGUI,'wDao')

@@ -61,6 +61,16 @@ if ~isdeployed % only if _not_ running as standalone
 
 end
 
+% Set the IPOPT options.
+matRad_ipoptOptions;
+
+% set optimization options
+options.radMod          = pln.radiationMode;
+options.bioOpt          = pln.propOpt.bioOptimization;
+options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
+options.FMO             = false; % let optimizer know that this is FMO
+options.numOfScenarios  = dij.numOfScenarios;
+
 % initialize global variables for optimizer
 global matRad_global_x;
 global matRad_global_d;
@@ -82,9 +92,6 @@ for i = 1:size(cst_Over,1)
        cst_Over{i,6}(j).dose = cst_Over{i,6}(j).dose/pln.numOfFractions;
     end
 end
-
-% create optBixel mask, which is just true everywhere
-options.optBixel = true(dij.totalNumOfBixels,1);
 
 if isfield(apertureInfo,'scaleFacRx')
     %weights were scaled to acheive 95% PTV coverage
@@ -112,20 +119,11 @@ apertureInfo.newIteration = true;
 % define apertureInfo as a global vector to be updated once each iteration
 matRad_global_apertureInfo = apertureInfo;
 
-% Set the IPOPT options.
-matRad_ipoptOptions;
-
-% set optimization options
-options.radMod          = pln.radiationMode;
-options.bioOpt          = pln.propOpt.bioOptimization;
-options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
-options.numOfScenarios  = dij.numOfScenarios;
-
 % set bounds on optimization variables
-options.lb              = apertureInfo.limMx(:,1);                                          % lower bound on the variables.
-options.ub              = apertureInfo.limMx(:,2);                                          % upper bound on the variables.
+options.lb              = apertureInfo.limMx(:,1);                                          % Lower bound on the variables.
+options.ub              = apertureInfo.limMx(:,2);                                          % Upper bound on the variables.
 options.runVMAT         = pln.propOpt.runVMAT;
-[options.cl,options.cu] = matRad_daoGetConstBounds(cst_Over,apertureInfo,options);          % lower and upper bounds on the constraint functions.
+[options.cl,options.cu] = matRad_daoGetConstBounds(cst_Over,apertureInfo,options);   % Lower and upper bounds on the constraint functions.
 
 % set callback functions.
 funcs.objective         = @(x) matRad_daoObjFunc(x,dij,cst_Over,options);
@@ -151,12 +149,24 @@ switch env
         clear -global matRad_global_x matRad_global_d;
 end
 
+if pln.propOpt.preconditioner
+    % revert scaling
+    
+    dij.weightToMU = dij.weightToMU./dij.scaleFactor;
+    resultGUI.apertureInfo.weightToMU = resultGUI.apertureInfo.weightToMU./dij.scaleFactor;
+    optApertureInfoVec(1:apertureInfo.totalNumOfShapes) = optApertureInfoVec(1:apertureInfo.totalNumOfShapes).*dij.scaleFactor;
+end
+
 % update the apertureInfoStruct and calculate bixel weights
-resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,optApertureInfoVec);
+resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,optApertureInfoVec);
 
 % override also bixel weight vector in optResult struct
 resultGUI.w    = resultGUI.apertureInfo.bixelWeights;
 resultGUI.wDao = resultGUI.apertureInfo.bixelWeights;
+
+dij.scaleFactor = 1;
+
+resultGUI.apertureInfo = matRad_preconditionFactors(resultGUI.apertureInfo);
 
 % calc dose and reshape from 1D vector to 3D array
 d = matRad_backProjection(resultGUI.w,dij,options);
@@ -167,10 +177,10 @@ if isfield(pln,'scaleDRx') && pln.scaleDRx
     resultGUI.QI = matRad_calcQualityIndicators(cst,pln,resultGUI.physicalDose);
     
     resultGUI.apertureInfo.scaleFacRx = max((pln.DRx/pln.numOfFractions)./[resultGUI.QI(pln.RxStruct).D_95]');
-    optApertureInfoVec(1:resultGUI.apertureInfo.totalNumOfShapes) = optApertureInfoVec(1:resultGUI.apertureInfo.totalNumOfShapes)*resultGUI.apertureInfo.scaleFacRx;
+    resultGUI.apertureInfo.apertureVector(1:resultGUI.apertureInfo.totalNumOfShapes) = resultGUI.apertureInfo.apertureVector(1:resultGUI.apertureInfo.totalNumOfShapes)*resultGUI.apertureInfo.scaleFacRx;
     
     % update the apertureInfoStruct and calculate bixel weights
-    resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,optApertureInfoVec);
+    resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
     
     % override also bixel weight vector in optResult struct
     resultGUI.w    = resultGUI.apertureInfo.bixelWeights;

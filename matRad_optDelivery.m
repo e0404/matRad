@@ -43,7 +43,7 @@ apertureInfo = result.apertureInfo;
 
 fileName = apertureInfo.propVMAT.machineConstraintFile;
 try
-    load([pwd filesep fileName],'machine');
+    load(fileName,'machine');
 catch
     error(['Could not find the following machine file: ' fileName ]);
 end
@@ -62,7 +62,7 @@ for i = 1:size(apertureInfo.beam,2)
         %constraints
         
         %if one of them is less than 1, then a constraint is violated
-        factorMURate = machine.constraints.monitorUnitRate(2)/apertureInfo.beam(i).MURate;
+        factorMURate    = machine.constraints.monitorUnitRate(2)/apertureInfo.beam(i).shape(1).MURate;
         factorLeafSpeed = machine.constraints.leafSpeed(2)/apertureInfo.beam(i).maxLeafSpeed;
         factorGantryRot = machine.constraints.gantryRotationSpeed(2)/apertureInfo.beam(i).gantryRot;
         
@@ -78,15 +78,15 @@ for i = 1:size(apertureInfo.beam,2)
         end
         
         %multiply each speed by this factor
-        apertureInfo.beam(i).MURate = factor*apertureInfo.beam(i).MURate;
+        apertureInfo.beam(i).shape.MURate = factor*apertureInfo.beam(i).shape.MURate;
         apertureInfo.beam(i).maxLeafSpeed = factor*apertureInfo.beam(i).maxLeafSpeed;
         apertureInfo.beam(i).gantryRot = factor*apertureInfo.beam(i).gantryRot;
         apertureInfo.beam(i).time = apertureInfo.beam(i).time/factor;
         
-        factorMURate = machine.constraints.monitorUnitRate(1)/apertureInfo.beam(i).MURate;
+        factorMURate = machine.constraints.monitorUnitRate(1)/apertureInfo.beam(i).shape(1).MURate;
         
         if factorMURate > 1
-            apertureInfo.beam(i).MURate = factorMURate*apertureInfo.beam(i).MURate;
+            apertureInfo.beam(i).shape(1).MURate = factorMURate*apertureInfo.beam(i).shape(1).MURate;
             apertureInfo.beam(i).shape(1).weight = factorMURate*apertureInfo.beam(i).shape(1).weight;
             
             doInterp = 1;

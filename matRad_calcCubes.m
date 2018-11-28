@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcCubes(w,dij,cst,scenNum)
+function resultGUI = matRad_calcCubes(w,dij,cst,options,scenNum)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad computation of all cubes for the resultGUI struct which is used
 % as result container and for visualization in matRad's GUI
@@ -30,7 +30,7 @@ function resultGUI = matRad_calcCubes(w,dij,cst,scenNum)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 4
+if nargin < 5
     scenNum = 1;
 end
 
@@ -48,14 +48,14 @@ if ~strcmp(dij.radiationMode,'photons')
     end
 end
 
-if ~isfield(dij,'optBixel')
-    dij.optBixel = true(dij.totalNumOfBixels,1);
+if ~isfield(options,'optBixel')
+    options.optBixel = true(dij.totalNumOfBixels,1);
 end
 
 % compute physical dose for all beams individually and together
 for i = 1:length(beamInfo)
     
-    d = dij.physicalDose{scenNum}(:,dij.optBixel) * (w(dij.optBixel) * dij.scaleFactor);
+    d = dij.physicalDose{scenNum}(:,options.optBixel) * (w(options.optBixel) * dij.scaleFactor);
     
     resultGUI.(['physicalDose', beamInfo(i).suffix]) = reshape(d,dij.dimensions);
 end

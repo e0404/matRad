@@ -102,14 +102,14 @@ end
 % code
 stf = struct('gantryAngle',cell(size(pln.propStf.gantryAngles)));
 
-if pln.propOpt.runVMAT
-    % Initialize master ray positions and target points with NaNs, to be
-    % deleted later. These arrays are the unions of the corresponding
-    % arrays per gantry angle.  In order to do VMAT, it is easier to have
-    % the same MLC range and dij calculation for every possible beam/gantry
-    % angle.
-    masterRayPos_bev      = nan(1,3);
-    masterTargetPoint_bev = nan(1,3);
+if pln.propOpt.runVMAT || (pln.propDoseCalc.vmc && strcmp(pln.propDoseCalc.vmcOptions.source,'phsp'))
+    %Initialize master ray positions and target points with NaNs, to be
+    %deleted later.  These arrays are the unions of the corresponding
+    %arrays per gantry angle.  In order to do VMAT, it is easier to have
+    %the same MLC range and dij calculation for every possible beam/gantry
+    %angle.
+    masterRayPosBEV = zeros(0,3);
+    
 end
 
 
@@ -173,7 +173,7 @@ for i = 1:length(pln.propStf.gantryAngles)
              x_loc = x(z == uniZ(j));
              x_min = min(x_loc);
              x_max = max(x_loc);
-             x = [x; [x_min:pln.propStf.bixelWidth:x_max]'];
+             x = [x; (x_min:pln.propStf.bixelWidth:x_max)'];
              y = [y; zeros((x_max-x_min)/pln.propStf.bixelWidth+1,1)];
              z = [z; uniZ(j)*ones((x_max-x_min)/pln.propStf.bixelWidth+1,1)];             
          end
@@ -195,7 +195,8 @@ for i = 1:length(pln.propStf.gantryAngles)
     end
     
     if ~pln.propOpt.runVMAT
-               
+        %If it is VMAT, we will do this later
+        
         % source position in bev
         stf(i).sourcePoint_bev = [0 -SAD 0];
         
@@ -372,23 +373,21 @@ for i = 1:length(pln.propStf.gantryAngles)
         
         % save total number of bixels
         stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
-        
-    else
-        
-        %The following must be taken as the union of stf(:).FIELD and stf(:).FIELD:
+    end
+    
+    if pln.propOpt.runVMAT || (pln.propDoseCalc.vmc && strcmp(pln.propDoseCalc.vmcOptions.source,'phsp'))
+        % For VMAT, The following must be taken as the union of stf(:).FIELD and stf(:).FIELD:
         %ray.rayPos_bev
         %ray.targetPoint_bev
         %Then these are rotated to form the non-bev forms;
         %ray.rayCorners_SCD is also formed
         
-        % all ray positions have been determined
-        numOfRays             = stf(i).numOfRays;
-        rayPos_bev            = reshape([stf(i).ray(:).rayPos_bev]',3,numOfRays)';
-        targetPoint_bev       = reshape([stf(i).ray(:).targetPoint_bev]',3,numOfRays)';  
+        % For vmc++ with phsp, masterRayPosBEV is useful to have (phsp
+        % definition)
+        numOfRays = stf(i).numOfRays;
+        rayPosBEV = reshape([stf(i).ray(:).rayPos_bev]',3,numOfRays)';
         
-        masterRayPos_bev      = union(masterRayPos_bev,rayPos_bev,'rows');
-        masterTargetPoint_bev = union(masterTargetPoint_bev,targetPoint_bev,'rows');
-        
+        masterRayPosBEV = union(masterRayPosBEV,rayPosBEV,'rows');
     end
     
     
@@ -535,12 +534,44 @@ for i = 1:length(pln.propStf.gantryAngles)
         end
     end
     
-end %eof gantry angle loop
+end
 
-% post-processing function for VMAT
+%% VMAT
+
 if pln.propOpt.runVMAT
-    stf = matRad_StfVMATPost(stf,pln,masterRayPos_bev,masterTargetPoint_bev,SAD,machine);
+    
+    % ensure all bixels in a row are on
+    
+    % masterRayPosBEV
+    x = masterRayPosBEV(:,1);
+    y = masterRayPosBEV(:,2);
+    z = masterRayPosBEV(:,3);
+    uniZ = unique(z);
+    for j = 1:numel(uniZ)
+        x_loc = x(z == uniZ(j));
+        x_min = min(x_loc);
+        x_max = max(x_loc);
+        x = [x; (x_min:pln.propStf.bixelWidth:x_max)'];
+        y = [y; zeros((x_max-x_min)/pln.propStf.bixelWidth+1,1)];
+        z = [z; uniZ(j)*ones((x_max-x_min)/pln.propStf.bixelWidth+1,1)];
+    end
+    
+    masterRayPosBEV = [x,y,z];
+    masterRayPosBEV = unique(masterRayPosBEV,'rows');
+    masterTargetPointBEV = [2*masterRayPosBEV(:,1) SAD*ones(size(masterRayPosBEV,1),1) 2*masterRayPosBEV(:,3)];
+    
+    % post-processing function for VMAT
+    stf = matRad_StfVMATPost(stf,pln,masterRayPosBEV,masterTargetPointBEV,SAD,machine);
+    
 end
 
+%% vmc++
+
+if pln.propDoseCalc.vmc && strcmp(pln.propDoseCalc.vmcOptions.source,'phsp')
+    stf = matRad_bixelPhspVmc(stf,masterRayPosBEV,pln.propDoseCalc.vmcOptions);
 end
 
+% compute SSDs
+stf = matRad_computeSSD(stf,ct);
+
+end

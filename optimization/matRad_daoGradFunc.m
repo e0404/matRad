@@ -51,87 +51,10 @@ bixelG = matRad_gradFuncWrapper(apertureInfo.bixelWeights,dij,cst,options);
 g = zeros(size(apertureInfoVec,1),1);
 
 if apertureInfo.runVMAT
-    %we're doing VMAT
-    offset = 1;
-    DAOBeams = find([apertureInfo.propVMAT.beam.DAOBeam]);
     
-    % 1. calculate aperatureGrad
-    % 2. find corresponding bixel to the leaf positions and aperture
-    % weights to calculate the gradient
-    
-    % loop over all beams
-    for i = 1:numel(apertureInfo.beam)
-        
-        % get used bixels in beam
-        ix = ~isnan(apertureInfo.beam(i).bixelIndMap);
-        
-        if apertureInfo.propVMAT.beam(i).DAOBeam
-            % optimized beam, do regular gradient
-            % must always add to existing gradient, since gradient comes
-            % from optimized and interpolated beams
-            g(offset) = g(offset) + apertureInfo.beam(i).shape(1).shapeMap(ix)' ...
-                * bixelG(apertureInfo.beam(i).bixelIndMap(ix)) ./ apertureInfo.beam(i).shape(1).jacobiScale;
-            
-            % gradient with respect to leaf positions
-            indInOptVec = apertureInfo.beam(i).shape(1).vectorOffset-1+[(1:apertureInfo.beam(i).numOfActiveLeafPairs) apertureInfo.totalNumOfLeafPairs+(1:apertureInfo.beam(i).numOfActiveLeafPairs)];
-            indInBixVec = apertureInfo.beam(i).bixOffset-1+[(1:apertureInfo.beam(i).numOfActiveLeafPairs) apertureInfo.doseTotalNumOfLeafPairs+(1:apertureInfo.beam(i).numOfActiveLeafPairs)];
-            
-            g(indInOptVec) = g(indInOptVec)+apertureInfo.beam(i).shape(1).weight*bixelG(apertureInfo.bixelIndices(indInBixVec)) / apertureInfo.bixelWidth;
-            
-            %increment offset
-            offset = offset+1;
-        else
-            % not optimized beam, aperture weight is interpolated between
-            % previous and next optimized weights
-            
-            % give fraction of gradient to previous optimized beam
-            
-            % first weight
-            lastDAOInd = find(DAOBeams == apertureInfo.propVMAT.beam(i).lastDAOIndex,1);
-            g(lastDAOInd) = g(lastDAOInd)+apertureInfo.propVMAT.beam(i).fracFromLastDAO.*(apertureInfo.beam(i).time./apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).time) ...
-                *apertureInfo.beam(i).shape(1).shapeMap(ix)' * bixelG(apertureInfo.beam(i).bixelIndMap(ix))./apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).shape(1).jacobiScale;
-            % g(lastOptInd) = g(lastOptInd)+(apertureInfo.beam(i).fracFromLastDAO*apertureInfo.beam(i).doseAngleBordersDiff*apertureInfo.beam(apertureInfo.beam(i).lastDAOIndex).gantryRot ...
-            % ./(apertureInfo.beam(apertureInfo.beam(i).lastDAOIndex).doseAngleBordersDiff*apertureInfo.beam(i).gantryRot))*apertureInfo.beam(i).shape(1).shapeMap(ix)' ...
-            % * bixelG(apertureInfo.beam(i).bixelIndMap(ix)) ./ apertureInfo.beam(apertureInfo.beam(i).lastDAOIndex).shape(1).jacobiScale;
-            
-            % now leaf pos
-            indInOptVec = apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).shape(1).vectorOffset-1+[(1:apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).numOfActiveLeafPairs) apertureInfo.totalNumOfLeafPairs+(1:apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).numOfActiveLeafPairs)];
-            indInBixVec = apertureInfo.beam(i).bixOffset-1+[(1:apertureInfo.beam(i).numOfActiveLeafPairs) apertureInfo.doseTotalNumOfLeafPairs+(1:apertureInfo.beam(i).numOfActiveLeafPairs)];
-            
-            g(indInOptVec) = g(indInOptVec)+apertureInfo.propVMAT.beam(i).fracFromLastDAO*apertureInfo.beam(i).shape(1).weight*bixelG(apertureInfo.bixelIndices(indInBixVec)) / apertureInfo.bixelWidth;
-            
-            % now time
-            lastDAOIndTime = lastDAOInd+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2;
-            g(lastDAOIndTime) = g(lastDAOIndTime)+(apertureInfo.propVMAT.beam(i).doseAngleBordersDiff.*apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).timeFacCurr) ...
-                .*(-apertureInfo.propVMAT.beam(i).fracFromLastDAO.*apertureInfo.propVMAT.beam(i).timeFracFromNextDAO.*(apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).shape(1).weight./apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).doseAngleBordersDiff).*(apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).time./apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).time.^2) ...
-                +(1-apertureInfo.propVMAT.beam(i).fracFromLastDAO).*apertureInfo.propVMAT.beam(i).timeFracFromLastDAO.*(apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).shape(1).weight./apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).doseAngleBordersDiff).*(1./apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).time)) ...
-                * apertureInfo.beam(i).shape(1).shapeMap(ix)' * bixelG(apertureInfo.beam(i).bixelIndMap(ix));
-            
-            % give the other fraction to next optimized beam
-            
-            % first weight
-            nextDAOInd = find(DAOBeams == apertureInfo.propVMAT.beam(i).nextDAOIndex,1);
-            g(nextDAOInd) = g(nextDAOInd)+(1-apertureInfo.propVMAT.beam(i).fracFromLastDAO).*(apertureInfo.beam(i).time./apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).time) ...
-                *apertureInfo.beam(i).shape(1).shapeMap(ix)' * bixelG(apertureInfo.beam(i).bixelIndMap(ix))./apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).shape(1).jacobiScale;
-            %g(nextOptInd) = g(nextOptInd)+((1-apertureInfo.beam(i).fracFromLastDAO)*apertureInfo.beam(i).doseAngleBordersDiff*apertureInfo.beam(apertureInfo.beam(i).nextDAOIndex).gantryRot ...
-            %./(apertureInfo.beam(apertureInfo.beam(i).nextDAOIndex).doseAngleBordersDiff*apertureInfo.beam(i).gantryRot))*apertureInfo.beam(i).shape(1).shapeMap(ix)' ...
-            %* bixelG(apertureInfo.beam(i).bixelIndMap(ix)) ./ apertureInfo.beam(apertureInfo.beam(i).nextDAOIndex).shape(1).jacobiScale;
-            
-            %now leaf pos
-            indInOptVec = apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).shape(1).vectorOffset-1+[(1:apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).numOfActiveLeafPairs) apertureInfo.totalNumOfLeafPairs+(1:apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).numOfActiveLeafPairs)];
-            indInBixVec = apertureInfo.beam(i).bixOffset-1+[(1:apertureInfo.beam(i).numOfActiveLeafPairs) apertureInfo.doseTotalNumOfLeafPairs+(1:apertureInfo.beam(i).numOfActiveLeafPairs)];
-            
-            g(indInOptVec) = g(indInOptVec)+(1-apertureInfo.propVMAT.beam(i).fracFromLastDAO)*apertureInfo.beam(i).shape(1).weight*bixelG(apertureInfo.bixelIndices(indInBixVec)) / apertureInfo.bixelWidth;
-            
-            %now time
-            nextDAOIndTime = nextDAOInd+apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2;
-            g(nextDAOIndTime) = g(nextDAOIndTime)+(apertureInfo.propVMAT.beam(i).doseAngleBordersDiff.*apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).timeFacCurr) ...
-                .*(apertureInfo.propVMAT.beam(i).fracFromLastDAO.*apertureInfo.propVMAT.beam(i).timeFracFromNextDAO.*(apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).shape(1).weight./apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).doseAngleBordersDiff).*(1./apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).time) ...
-                -(1-apertureInfo.propVMAT.beam(i).fracFromLastDAO).*apertureInfo.propVMAT.beam(i).timeFracFromLastDAO.*(apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).shape(1).weight./apertureInfo.propVMAT.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).doseAngleBordersDiff).*(apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).time./apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).time.^2)) ...
-                * apertureInfo.beam(i).shape(1).shapeMap(ix)' * bixelG(apertureInfo.beam(i).bixelIndMap(ix));
-            
-        end
-    end
+    % use the Jacobian calculated in daoVec2ApertureInfo.
+    % should also do this for non-VMAT
+    g = g+apertureInfo.bixelJApVec * bixelG;
 else
     %we're not doing VMAT
     
@@ -161,34 +84,11 @@ else
         .* bixelG(apertureInfo.bixelIndices(1:apertureInfo.totalNumOfLeafPairs*2)) ./ ...
         (apertureInfo.bixelWidth.*apertureInfo.jacobiScale(apertureInfo.mappingMx(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,2)));
     
-end
-
-% correct the sign for the left leaf positions
-g(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs) = ...
-    -g(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs);
-
-
-RUN_DAO_GRADIENT_CHECKER = false;
- 
-if RUN_DAO_GRADIENT_CHECKER
-   
-    f       = matRad_objFuncWrapper(apertureInfo.bixelWeights,dij,cst,options);
-    epsilon = 1e-4;
-    % select gradient index
-    IX      = unique(randi([1 numel(apertureInfo.bixelWeights)],1,5));
-    for i = IX
-         wInit    = apertureInfo.bixelWeights;
-         wInit(i) = wInit(i) + epsilon;
-         fDelta   = matRad_objFuncWrapper(wInit,dij,cst,options);
-         numGrad  = (fDelta-f)/epsilon;
-         diff     = (numGrad/g(i)-1) * 100;
-         fprintf(['Component # ' num2str(i) ' - rel diff of numerical and analytical gradient = ' num2str(diff) '\n']);
-    end
+    % correct the sign for the left leaf positions
+    g(apertureInfo.totalNumOfShapes+(1:(apertureInfo.totalNumOfLeafPairs))) = ...
+        -g(apertureInfo.totalNumOfShapes+(1:(apertureInfo.totalNumOfLeafPairs)));
+    
 end
 
 
-
-
-
-
-
+end
