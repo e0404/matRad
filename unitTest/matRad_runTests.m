@@ -12,9 +12,11 @@ matRad_unitTestTextManipulation('matRad_calcParticleDose.m', 'cutOffLevel       
 matRad_unitTestTextManipulation('matRad_ipoptOptions.m', 'options.ipopt.max_iter', 'options.ipopt.max_iter = 10;', '../optimization/')
 
 % supressing the inherent Ocatave warnings for division by zero
-warning("off", "Octave:divide-by-zero")
+if strcmp(matRad_getEnvironment,'OCTAVE')
+    warning("off", "Octave:divide-by-zero")
+end
 
-param.logLevel = 3;
+unitTestBool = true;
 
 matRad_example1_phantom
 matRad_example2_photons

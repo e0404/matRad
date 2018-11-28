@@ -13,8 +13,7 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% 
-% In this example we will show 
+%% In this example we will show 
 % (i) how to load patient data into matRad
 % (ii) how to setup a proton dose calculation 
 % (iii) how to inversely optimize the pencil beam intensities directly from command window in MATLAB.
@@ -23,29 +22,10 @@
 % (vi) how to recalculate the dose considering the manipulated CT cube and the previously optimized pencil beam intensities
 % (vii) how to compare the two results
 
+%% set matRad runtime configuration
+matRad_rc
+
 %% Patient Data Import
-% Let's begin with a clear Matlab environment and import the prostate 
-% patient into your workspace.
-clc, close all;
-
-switch matRad_getEnvironment
-    case 'MATLAB'
-        clearvars -except param
-    case 'OCTAVE'
-        clear -x param
-end
-
-if exist('param','var')
-    if ~isfield(param,'logLevel')
-       param.logLevel = 1;
-    end
-    
-else
-   param.calcDoseDirect = false;
-   param.subIx          = [];
-   param.logLevel       = 1;
-end
-
 load('PROSTATE.mat');
 
 %% Treatment Plan
@@ -149,9 +129,6 @@ if param.logLevel == 1
 end       
 %% Quantitative Comparison of results
 % Compare the two dose cubes using a gamma-index analysis.
-
-% add tools subdirectory
-addpath([fileparts(fileparts(mfilename('fullpath'))) filesep 'tools']);
 
 doseDifference   = 2;
 distToAgreement  = 2;

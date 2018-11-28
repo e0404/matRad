@@ -32,12 +32,6 @@ end
 % 2 = open in terminal(s)
 verbose = 1;
 
-if ~isdeployed % only if _not_ running as standalone    
-    % add path for optimization functions
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir,'vmc++'))
-end
-
 % meta information for dij
 dij.numOfBeams         = pln.propStf.numOfBeams;
 dij.numOfVoxels        = prod(ct.cubeDim);

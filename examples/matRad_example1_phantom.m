@@ -13,32 +13,13 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% 
-% In this example we will show
+%% In this example we will show
 % (i) how to create arbitrary ct data (resolution, ct numbers)
 % (ii) how to create a cst structure containing the volume of interests of the phantom
 % (iii) generate a treatment plan for this phantom
-clc, close all
 
-switch matRad_getEnvironment
-    case 'MATLAB'
-        clearvars -except param
-    case 'OCTAVE'
-        clear -x param
-end
-
-
-if exist('param','var')
-    if ~isfield(param,'logLevel')
-       param.logLevel = 1;
-    end
-    
-else
-   param.calcDoseDirect = false;
-   param.subIx          = [];
-   param.logLevel       = 1;
-end
-
+%% set matRad runtime configuration
+matRad_rc
 
 %% Create a CT image series
 xDim = 200;

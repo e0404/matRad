@@ -13,39 +13,16 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%
-% In this example we will show 
+%% In this example we will show 
 % (i) how to load patient data into matRad
 % (ii) how to setup a photon dose calculation and 
 % (iii) how to inversely optimize beamlet intensities
 % (iv) how to visually and quantitatively evaluate the result
 
+%% set matRad runtime configuration
+matRad_rc
+
 %% Patient Data Import
-% Let's begin with a clear Matlab environment. Then, import the TG119
-% phantom into your workspace. The phantom is comprised of a 'ct' and 'cst'
-% structure defining the CT images and the structure set. Make sure the 
-% matRad root directory with all its subdirectories is added to the Matlab 
-% search path.
-clc, close all;
-
-switch matRad_getEnvironment
-    case 'MATLAB'
-        clearvars -except param
-    case 'OCTAVE'
-        clear -x param
-end
-
-if exist('param','var')
-    if ~isfield(param,'logLevel')
-       param.logLevel = 1;
-    end
-    
-else
-   param.calcDoseDirect = false;
-   param.subIx          = [];
-   param.logLevel       = 1;
-end
-
 load('TG119.mat');
 
 %%

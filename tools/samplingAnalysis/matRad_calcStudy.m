@@ -77,7 +77,6 @@ if isempty(matRadPath)
 else
     matRadPath = matRadPath(1:(end-8));
 end
-addpath(fullfile(matRadPath,'tools','samplingAnalysis'));
 
 % calculate RBExDose
 if ~isfield(pln, 'bioParam')

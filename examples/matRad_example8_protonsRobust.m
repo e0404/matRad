@@ -13,8 +13,7 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% 
-% In this example we will  
+%% In this example we will  
 % (i)   create a small artifical phantom
 % (ii)  create a scanned proton treatment plan considering a constant RBE of 1.1
 % (iii) we will enable dose calculation on nine selected worst case scenarios
@@ -23,28 +22,10 @@
 % (v)   visualise all individual dose scenarios 
 % (vi)  sample discrete scenarios from Gaussian uncertainty assumptions
 
-%% Patient Data
-% Let's begin with a clear Matlab environment and import the liver
-% patient into your workspace.
-clc, close all;
 
-switch matRad_getEnvironment
-    case 'MATLAB'
-        clearvars -except param
-    case 'OCTAVE'
-        clear -x param
-end
+%% set matRad runtime configuration
+matRad_rc
 
-if exist('param','var')
-    if ~isfield(param,'logLevel')
-       param.logLevel = 1;
-    end
-    
-else
-   param.calcDoseDirect = false;
-   param.subIx          = [];
-   param.logLevel       = 1;
-end
 %% Create a CT image series
 xDim = 150;
 yDim = 150;
@@ -215,7 +196,7 @@ cst{ixOAR,6}.robustness  = 'COWC';
 resultGUIrobust = matRad_fluenceOptimization(dij,cst,pln,param);
 %% Visualize results
 if param.logLevel == 1
-    addpath('tools')
+
     plane      = 3;
     slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 
@@ -233,7 +214,6 @@ if param.logLevel == 1
     %% Indicator calculation and show DVH and QI
     [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUIrobust,[],[],param);
     %% Perform sampling
-    addpath(['tools' filesep 'samplingAnalysis'])
     % select structures to include in sampling; leave empty to sample dose for all structures
     structSel = {}; % structSel = {'PTV','OAR1'};
     [caSamp, mSampDose, plnSamp, resultGUInomScen]          = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,[],param);

@@ -112,12 +112,6 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'helium') || 
 end
 
 % calculate rED or rSP from HU
-if ~isdeployed
-   addpath(fullfile(pwd,'..', 'dicomImport'));
-   addpath(fullfile(pwd,'..', 'dicomImport', 'hlutLibrary'));
-   addpath(fullfile(pwd,'..', 'IO'));
-
-end
 ct = matRad_calcWaterEqD(ct, pln, param);
 
 % take only voxels inside patient

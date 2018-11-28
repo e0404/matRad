@@ -13,8 +13,7 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% 
-% In this example we will  
+%% In this example we will  
 % (i)   create a small artifical phantom
 % (ii)  create a scanned proton treatment plan considering a constant RBE of 1.1
 % (iii) we will enable dose calculation on nine selected worst case scenarios
@@ -23,10 +22,8 @@
 % (v)   visualise all individual dose scenarios 
 % (vi)  sample discrete scenarios from Gaussian uncertainty assumptions
 
-%% Patient Data
-% Let's begin with a clear Matlab environment and import the liver
-% patient into your workspace.
-clc,clear,close all
+%% set matRad runtime configuration
+matRad_rc
 
 %% Create a CT image series
 xDim = 150;
@@ -133,7 +130,6 @@ amplitude    = [3 0 0]; % [voxels]
 numOfCtScen  = 10;
 motionPeriod = 5; % [s] 
 
-addpath('4D')
 [ct,cst] = matRad_addMovement(ct, cst,motionPeriod, numOfCtScen, amplitude,1);
 
 % clear helper variables to get clean workspace
@@ -211,7 +207,6 @@ cst{ixOAR,6}.robustness  = 'COWC';
 resultGUIrobust = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Visualize results
-addpath('tools')
 plane         = 3;
 slice         = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 maxDose       = max([max(resultGUI.([quantityOpt])(:,:,slice)) max(resultGUIrobust.([quantityOpt])(:,:,slice))])+1e-4;
@@ -238,7 +233,6 @@ b.Callback = @(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,round(es.Value),result
 [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUIrobust);
 
 %% Perform sampling
-addpath(['tools' filesep 'samplingAnalysis'])
 % select structures to include in sampling; leave empty to sample dose for all structures
 structSel = {}; % structSel = {'PTV','OAR1'};
 [caSamp, mSampDose, plnSamp, resultGUInomScen]          = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,[],[]);
