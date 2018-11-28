@@ -67,7 +67,7 @@ stf = matRad_generateStf(ct,cst,pln);
 % dose calculation
 dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
-% inverse planning for imrt
+% inverse planning for imrt on a static CT
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 

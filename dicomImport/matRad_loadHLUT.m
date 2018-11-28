@@ -80,4 +80,3 @@ end
 hlut = matRad_readHLUT(hlutFileName);
 
 end
-
