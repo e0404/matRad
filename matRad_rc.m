@@ -16,17 +16,17 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set search path
-addpath(genpath('4D'));
-addpath(genpath('dicomImport'));
-addpath(genpath('examples'));
-addpath(genpath('IO'));
-addpath(genpath('optimization'));
-addpath(genpath('plotting'));
-addpath(genpath('standalone'));
-addpath(genpath('submodules'));
-addpath(genpath('tools'));
-addpath(genpath('unitTest'));
-addpath(genpath('vmc++'));
+addpath(genpath([pwd filesep '4D']));
+addpath(genpath([pwd filesep 'dicomImport']));
+addpath(genpath([pwd filesep 'examples']));
+addpath(genpath([pwd filesep 'IO']));
+addpath(genpath([pwd filesep 'optimization']));
+addpath(genpath([pwd filesep 'plotting']));
+addpath(genpath([pwd filesep 'standalone']));
+addpath(genpath([pwd filesep 'submodules']));
+addpath(genpath([pwd filesep 'tools']));
+addpath(genpath([pwd filesep 'unitTest']));
+addpath(genpath([pwd filesep 'vmc++']));
 
 
 
