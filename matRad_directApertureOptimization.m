@@ -44,25 +44,18 @@ function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureIn
 [env, ~] = matRad_getEnvironment();
 
 
-if ~isdeployed % only if _not_ running as standalone
+if ~isdeployed && param.logLevel == 1 % only if _not_ running as standalone
     
-    % add path for optimization functions    
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir,'optimization'))
-    addpath(fullfile(matRadRootDir,'tools'))
-    
-    if param.logLevel == 1
-        switch env
-             case 'MATLAB'
-                % get handle to Matlab command window
-                mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-                cw          = mde.getClient('Command Window');
-                xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-                h_cw        = handle(xCmdWndView,'CallbackProperties');
+    switch env
+         case 'MATLAB'
+            % get handle to Matlab command window
+            mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
+            cw          = mde.getClient('Command Window');
+            xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+            h_cw        = handle(xCmdWndView,'CallbackProperties');
 
-                % set Key Pressed Callback of Matlab command window
-                set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
-        end
+            % set Key Pressed Callback of Matlab command window
+            set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
     end
 end
 
@@ -140,7 +133,7 @@ fprintf('Press q to terminate the optimization...\n');
 [optApertureInfoVec, info] = ipopt(apertureInfo.apertureVector,funcs,options);
 
 % unset Key Pressed Callback of Matlab command window and delete waitbar
-if ~isdeployed && strcmp(env,'MATLAB')
+if ~isdeployed && strcmp(env,'MATLAB') && param.logLevel == 1
     set(h_cw, 'KeyPressedCallback',' ');
 end
 

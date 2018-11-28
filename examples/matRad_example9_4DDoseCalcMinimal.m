@@ -12,18 +12,17 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%
-% In this example we will show 
+%% In this example we will show 
 % (i) the structure of 4D data within matRad
 % (ii) how to perform standard treatment planning
 % (iii) how to run a dose recalculation considering interplay effects 
  
-%% Load data, add generic 4D information, and display 'moving' geometry
-% First we plan the treatment (alternatively an existent treatment plan can
-% be imported)
+%% set matRad runtime configuration
+matRad_rc
 
-clc,clear,close all
+%% Load data, add generic 4D information, and display 'moving' geometry
 load BOXPHANTOM.mat
+
 %%
 
 amplitude    = [0 3 0]; % [voxels]

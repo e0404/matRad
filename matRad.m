@@ -15,11 +15,10 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clear
-close all
-clc
+%% set matRad runtime configuration
+matRad_rc
 
-% load patient data, i.e. ct, voi, cst
+%% load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
 load TG119.mat
@@ -64,14 +63,14 @@ stf = matRad_generateStf(ct,cst,pln);
 
 %% dose calculation
 if strcmp(pln.radiationMode,'photons')
-    dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+    dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'helium') || strcmp(pln.radiationMode,'carbon')
-    dij = matRad_calcParticleDose(ct,stf,pln,cst);
+    dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 end
 
 %% inverse planning for imrt
-resultGUI  = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI  = matRad_fluenceOptimization(dij,cst,pln,param);
 
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.propOpt.runSequencing || pln.propOpt.runDAO)
@@ -82,7 +81,7 @@ end
 
 %% DAO
 if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO
-   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
+   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln,param);
    matRad_visApertureInfo(resultGUI.apertureInfo);
 end
 
@@ -90,5 +89,5 @@ end
 matRadGUI
 
 %% indicator calculation and show DVH and QI
-[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI);
+[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,[],[],param);
 

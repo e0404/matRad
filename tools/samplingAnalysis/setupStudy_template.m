@@ -34,10 +34,9 @@ multScen = multScen.matRad_createValidInstance();
 
 %% path for output pdf and mat
 param.outputPath = pwd;
-% addpath(genpath('C:\git\matRad')) % optional add your matRad path here if not yet added to searchpath
 
 %% report parameters
-param.operator = 'Lucas-Raphael Mueller';
+param.operator = 'matrad';
 
 % default set of percentiles for scenario analysis; uncomment to override
 % param.percentiles = [0.01 0.05 0.125 0.25 0.5 0.75 0.875 0.95 0.99];

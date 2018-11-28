@@ -113,7 +113,7 @@ end
 nomScenTimer     = tic;
 resultGUInomScen = matRad_calcDoseDirect(ct,stf,plnNominal,cst,w,param);
 nomScenTime      = toc(nomScenTimer);
-matRad_dispToConsole(['Finished nominal Scenario Calculation. Computation time: ', num2str(round(nomScenTime / 3600, 2)), 'h \n'],param,'info');
+matRad_dispToConsole(['Finished nominal Scenario Calculation. Computation time: ', num2str(round(nomScenTime / 3600)), 'h \n'],param,'info');
 
 refVol = [2 5 50 95 98];
 refGy = linspace(0,max(resultGUInomScen.(pln.bioParam.quantityVis)(:)),6);
@@ -140,7 +140,7 @@ if FlagParallToolBoxLicensed
    end
    % rough estimate of total computation time
    totCompTime = ceil(size(pln.multScen.scenForProb,1) / poolSize) * nomScenTime * 1.35;
-   fprintf(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600, 2)), ...
+   fprintf(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600)), ...
                       'h. Estimated finish: ', datestr(datetime('now') + seconds(totCompTime)), '\n']);
    
    if exist('parfor_progress', 'file') == 2
@@ -192,9 +192,13 @@ else
 %% perform seriel sampling
 % rough estimate of total computation time
 totCompTime = size(pln.multScen.scenForProb,1) * nomScenTime * 1.1;
-fprintf(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600, 2)), ...
-                        'h. Estimated finish: ', datestr(datetime('now') + seconds(totCompTime)), '\n']);
-    
+try
+    fprintf(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600)), ...
+        'h. Estimated finish: ', datestr(datetime('now') + seconds(totCompTime)), '\n']);
+catch
+    fprintf(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600)), '\n']);
+end
+
     for i = 1:pln.multScen.totNumScen
        
           % create nominal scenario

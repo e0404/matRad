@@ -13,8 +13,7 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%
-% In this example we will show 
+%% In this example we will show 
 % (i) how to load patient data into matRad
 % (ii) how to setup a photon dose calculation and 
 % (iii) how to inversely optimize directly from command window in MatLab.
@@ -22,10 +21,10 @@
 % (v) how to run a direct aperture optimization
 % (iv) how to visually and quantitatively evaluate the result
 
+%% set matRad runtime configuration
+matRad_rc
+
 %% Patient Data Import
-% Let's begin with a clear Matlab environment and import the head &
-% neck patient into your workspace.
-clc,clear,close all;
 load('HEAD_AND_NECK.mat');
 
 %% Treatment Plan
@@ -59,13 +58,13 @@ pln.propOpt.runSequencing = 1;
 pln.propOpt.runDAO        = 1;
 
 %% Generate Beam Geometry STF
-stf = matRad_generateStf(ct,cst,pln);
+stf = matRad_generateStf(ct,cst,pln,param);
 
 %% Dose Calculation
 % Lets generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows for subsequent inverse optimization.
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
 
 %% Inverse Planning for IMRT
 % The goal of the fluence optimization is to find a set of beamlet weights 
@@ -73,7 +72,7 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % predefined clinical objectives and constraints underlying the radiation 
 % treatment. Once the optimization has finished, trigger once the GUI to
 % visualize the optimized dose cubes.
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
 matRadGUI;
 
 %% Sequencing
@@ -86,11 +85,12 @@ resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
 %% DAO - Direct Aperture Optimization
 % The Direct Aperture Optimization is an optimization approach where we 
 % directly optimize aperture shapes and weights.
-resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
+resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln,param);
 
 %% Aperture visualization
 % Use a matrad function to visualize the resulting aperture shapes
-matRad_visApertureInfo(resultGUI.apertureInfo);
-
+if param.logLevel == 1
+    matRad_visApertureInfo(resultGUI.apertureInfo);
+end
 %% Indicator Calculation and display of DVH and QI
-[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI);
+[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,[],[],param);

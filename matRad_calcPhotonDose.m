@@ -54,11 +54,6 @@ else
 end
 
 % set consistent random seed (enables reproducibility)
-if ~isdeployed
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir,'tools'))
-end
-
 [env, ~] = matRad_getEnvironment();
 
 switch env
@@ -135,7 +130,7 @@ end
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
 
 % set lateral cutoff value
-lateralCutoff = 50; % [mm]
+lateralCutoff = 20;
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data

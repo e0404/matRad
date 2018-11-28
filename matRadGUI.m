@@ -37,11 +37,6 @@ function varargout = matRadGUI(varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if ~isdeployed
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir,'tools'))
-end
-
 [env, versionString] = matRad_getEnvironment();
 
 % abort for octave
@@ -53,7 +48,16 @@ switch env
          return;
      otherwise
          fprintf(['not yet tested']);
- end
+end
+
+% abort if unit testing
+if ismember('unitTestBool',evalin('base','who')) && ...
+   ~isempty(evalin('base','unitTestBool')) && ...
+   evalin('base','unitTestBool')
+    fprintf('matRad GUI not used for unit testing\n');
+    return;
+end
+
         
 % Begin initialization code - DO NOT EDIT
 % set platform specific look and feel
@@ -93,26 +97,17 @@ elseif ismac
   % opengl is not supported
 end
 
-
-if ~isdeployed
-    currFolder = fileparts(mfilename('fullpath'));
-    addpath(fullfile(currFolder,'plotting'));
-    addpath(fullfile(currFolder,['plotting' filesep 'colormaps']));
-else
-    currFolder = [];
-end
-
 % Choose default command line output for matRadGUI
 handles.output = hObject;
 %show matrad logo
 axes(handles.axesLogo)
-[im, ~, alpha] = imread([currFolder filesep 'dicomImport' filesep 'matrad_logo.png']);
+[im, ~, alpha] = imread('matrad_logo.png');
 f = image(im);
 axis equal off
 set(f, 'AlphaData', alpha);
 % show dkfz logo
 axes(handles.axesDKFZ)
-[im, ~, alpha] = imread([currFolder filesep 'dicomImport' filesep 'DKFZ_Logo.png']);
+[im, ~, alpha] = imread('DKFZ_Logo.png');
 f = image(im);
 axis equal off;
 set(f, 'AlphaData', alpha);
@@ -231,10 +226,6 @@ AllVarNames = handles.AllVarNames;
 if ismember('ct',AllVarNames)
     % compute HU values
     if ~isfield(ct, 'cubeHU')
-        matRadRootDir = fileparts(mfilename('fullpath'));
-        if ~isdeployed
-            addpath(fullfile(matRadRootDir,'dicomImport'));
-        end
         ct = matRad_electronDensitiesToHU(ct);
         assignin('base','ct',ct);
     end
@@ -545,10 +536,6 @@ try
         end
     end
     handles.State = 0;
-    if ~isdeployed
-        matRadRootDir = fileparts(mfilename('fullpath'));
-        addpath(fullfile(matRadRootDir,'dicomImport'))
-    end
     matRad_importDicomGUI;
  
 catch
@@ -565,10 +552,6 @@ function btn_export_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 try
-    if ~isdeployed
-        matRadRootDir = fileparts(mfilename('fullpath'));
-        addpath(fullfile(matRadRootDir,'IO'))
-    end
     matRad_exportGUI;
 catch
     handles = showError(handles,'Could not export data'); 
@@ -3546,10 +3529,6 @@ resultGUI = evalin('base','resultGUI');
 
 for filename = filenames
     [~,name,~] = fileparts(filename{1});
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    if ~isdeployed
-        addpath(fullfile(matRadRootDir,'IO'))
-    end
     [cube,~] = matRad_readCube(fullfile(filepath,filename{1}));
     if ~isequal(ct.cubeDim, size(cube))
         errordlg('Dimensions of the imported cube do not match with ct','Import failed!','modal');
@@ -3580,10 +3559,6 @@ try
         end
     end
     handles.State = 0;
-    if ~isdeployed
-        matRadRootDir = fileparts(mfilename('fullpath'));
-        addpath(fullfile(matRadRootDir,'IO'))
-    end
     
     %call the gui
     uiwait(matRad_importGUI);

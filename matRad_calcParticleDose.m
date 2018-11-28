@@ -324,7 +324,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
 
        % Determine lateral cutoff
        matRad_dispToConsole('matRad: calculate lateral cutoff...',param,'info');
-       cutOffLevel          = 0.99;
+       cutOffLevel          = 0.8;
        visBoolLateralCutOff = 0;
        % compute cut off only for the first scenario
        machine              = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
