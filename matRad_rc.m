@@ -16,20 +16,7 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set search path
-addpath(pwd)
-addpath(genpath([pwd filesep '4D']));
-addpath(genpath([pwd filesep 'dicomImport']));
-addpath(genpath([pwd filesep 'examples']));
-addpath(genpath([pwd filesep 'IO']));
-addpath(genpath([pwd filesep 'optimization']));
-addpath(genpath([pwd filesep 'plotting']));
-addpath(genpath([pwd filesep 'standalone']));
-addpath(genpath([pwd filesep 'submodules']));
-addpath(genpath([pwd filesep 'tools']));
-addpath(genpath([pwd filesep 'unitTest']));
-addpath(genpath([pwd filesep 'vmc++']));
-
-
+addpath(genpath(pwd));
 
 % clear workspace and command prompt, close all figures
 switch matRad_getEnvironment
