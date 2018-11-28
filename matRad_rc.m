@@ -16,6 +16,7 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set search path
+addpath(pwd)
 addpath(genpath([pwd filesep '4D']));
 addpath(genpath([pwd filesep 'dicomImport']));
 addpath(genpath([pwd filesep 'examples']));
