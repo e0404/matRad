@@ -1,8 +1,7 @@
 %% This file runs the complete matRad test suite.
 
 %% Set path
-clc; clear; close all
-addpath(genpath(fullfile(pwd,'..')));
+run(['..' filesep 'matRad_rc'])
 
 
 % limiting the optimization to 10 iterations for faster computation
