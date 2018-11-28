@@ -6,14 +6,18 @@ classdef matRad_EffectProjection < matRad_BackProjection
         function obj = matRad_EffectProjection()
         end
         
-        function e = computeResult(obj,w,dij)
+        function e = computeResult(obj,dij,w)
             e = cell(numel(dij.mAlphaDose));
             % calculate effect
             for i = 1:numel(e)                
-                linTerm  = dij.mAlphaDose{i} * w;
-                quadTerm = dij.mSqrtBetaDose{i} * w;
-                e{i} = linTerm + quadTerm.^2;                   
+                e{i} = obj.computeSingleScenarioEffect(dij,w,i);                  
             end
+        end
+        
+        function effect = computeSingleScenarioEffect(obj,dij,w,i)
+            linTerm = dij.mAlphaDose{i} * w;
+            quadTerm = dij.mSqrtBetaDose{i} * w;
+            effect = linTerm + quadTerm.^2;
         end
     end
 end

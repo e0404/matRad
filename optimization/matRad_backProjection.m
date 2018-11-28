@@ -1,21 +1,26 @@
 classdef matRad_BackProjection
    
     properties (Access = private)
-        w
+        wCache
         d
     end
     
+    properties 
+        dij
+    end
+
+    
     methods
         function obj = matRad_BackProjection()
-            obj.w = [];
+            obj.wCache = [];
             obj.d = [];
             
         end
         
-        function obj = compute(obj,w,dij)
-            if ~isequal(obj.w,w)
-                obj.d = obj.computeResult(w,dij);
-                obj.w = w;
+        function obj = compute(obj,dij,w)
+            if ~isequal(obj.wCache,w)
+                obj.d = obj.computeResult(dij,w);
+                obj.wCache = w;
             end
         end
         
@@ -25,7 +30,7 @@ classdef matRad_BackProjection
     end
     
     methods (Abstract)
-        d = computeResult(obj,w,dij)
+        d = computeResult(obj,dij,w)
     end
 end
 

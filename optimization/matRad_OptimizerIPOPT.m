@@ -4,6 +4,8 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
     
     properties
         options
+        wResult
+        resultInfo
     end
     
     methods
@@ -12,6 +14,8 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             %   Detailed explanation goes here
             %obj = createDefaultOptimizerOptions;
             %obj.Property1 = inputArg1 + inputArg2;
+            obj.wResult = [];
+            obj.resultInfo = [];           
         end
         
     function obj  = createDefaultOptimizerOptions(obj)
@@ -52,7 +56,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.options.limited_memory_initialization = 'scalar2';
         end
         
-        function obj = optimize(obj,optiProb)
+        function obj = optimize(obj,w0,optiProb,dij,cst)
             % set optimization options
             %options.radMod          = pln.radiationMode;
             %options.bioOpt          = pln.propOpt.bioOptimization;
@@ -63,16 +67,16 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             ipoptStruct = struct;
             
             %optimizer options
-            ipoptStruct.ipopt.options = obj.options;
+            ipoptStruct.ipopt = obj.options;
             
             %variable bounds
-            ipoptStruct.lb = optiProb.lowerBounds();
-            ipoptStruct.ub = optiProb.upperBounds();
+            ipoptStruct.lb = optiProb.lowerBounds(w0);
+            ipoptStruct.ub = optiProb.upperBounds(w0);
             
             %constraint bounds
             %ipoptStruct.cl = optiProb.getLowerConstraintBounds();
             %ipoptStruct.cu = optiProb.getUpperConstraintBounds();
-            [ipoptStruct.cl,ipopstStruct.cu] = optiProb.matRad_getConstraintBounds(optiProb.cst);
+            [ipoptStruct.cl,ipoptStruct.cu] = optiProb.matRad_getConstraintBounds(cst);
             
             % set callback functions.
             %[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,options);
@@ -86,10 +90,10 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             fprintf('\nOptimzation initiating...\n');
             fprintf('Press q to terminate the optimization...\n');
             
-            ipoptStruct.options = obj.options;
+            %ipoptStruct.options = obj.options;
             
             % Run IPOPT.
-            [wOpt, info]            = ipopt(wInit,funcs,ipoptStruct);
+            [obj.wResult, obj.resultInfo]            = ipopt(w0,funcs,ipoptStruct);
         end
     end
 end

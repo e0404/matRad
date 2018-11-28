@@ -36,7 +36,7 @@ function jacob = matRad_constraintJacobian(optiProb,w,dij,cst)
 % get current dose / effect / RBExDose vector
 %d = matRad_backProjection(w,dij,optiProb);
 %d = optiProb.matRad_backProjection(w,dij);
-optiProb.BP = optiProb.BP.compute(w,dij);
+optiProb.BP = optiProb.BP.compute(dij,w);
 d = optiProb.BP.GetResult();
 
 % initialize jacobian
@@ -70,7 +70,7 @@ for i = 1:size(cst,1)
                 if (~isequal(obj.name, 'max dose constraint')      && ~isequal(obj.name, 'min dose constraint')      &&...
                     ~isequal(obj.name, 'max mean dose constraint') && ~isequal(obj.name, 'min mean dose constraint') && ...
                     ~isequal(obj.name, 'min EUD constraint')       && ~isequal(obj.name, 'max EUD constraint'))      && ...
-                    isequal(optiProb.bioOpt,'LEMIV_effect')
+                    (isa(optiProb.BP,'matRad_EffectProjection') && ~isa(optiProb.BP,'matRad_VariableRBEProjection'))
                      
                     doses = obj.getDoseParameters();
                 
@@ -91,22 +91,16 @@ for i = 1:size(cst,1)
                     scenID2 = [scenID2;ones(numel(cst{i,4}{1}),1)];
                     
                     %Iterate through columns of the sub-jacobian
+                    %TODO: Maybe this could all be function of the projection
+                    %Objects???
                     for c = 1:size(jacobSub,2)
                         jacobVec = jacobSub(:,c);
                         
-                        if isequal(optiProb.bioOpt,'none') && ~isempty(jacobVec) || isequal(optiProb.ID,'protons_const_RBExD')
+                        if isa(optiProb.BP,'matRad_DoseProjection') && ~isempty(jacobVec) || isa(optiProb.BP,'matRad_ConstantRBEProjection')
                             
                             DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
                             
-                        elseif isequal(optiProb.bioOpt,'LEMIV_effect') && ~isempty(jacobVec)
-                            
-                            mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
-                            mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
-                                sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*jacobVec,dij.numOfVoxels,numel(cst{i,4}{1}))];
-                            voxelID                 = [voxelID ;cst{i,4}{1}];
-                            constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
-                            
-                        elseif isequal(optiProb.bioOpt,'LEMIV_RBExD') && ~isempty(jacobVec)
+                        elseif isequal(optiProb.BP,'matRad_VariableRBEProjection') && ~isempty(jacobVec)
                             
                             scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i);
                             
@@ -117,7 +111,16 @@ for i = 1:size(cst,1)
                                 sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*delta,dij.numOfVoxels,numel(cst{i,4}{1}))];
                             voxelID                 = [voxelID ;cst{i,4}{1}];
                             constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
+                           
+                        
+                        elseif isa(optiProb.BP,'matRad_EffectProjection') && ~isempty(jacobVec)
                             
+                            mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
+                            mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
+                                sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*jacobVec,dij.numOfVoxels,numel(cst{i,4}{1}))];
+                            voxelID                 = [voxelID ;cst{i,4}{1}];
+                            constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
+                                                    
                         end
                     end
                 %end
@@ -130,14 +133,14 @@ for i = 1:size(cst,1)
 
 end
 
-if isequal(optiProb.bioOpt,'LEMIV_effect') || isequal(optiProb.bioOpt,'LEMIV_RBExD')
+if isa(optiProb.BP,'matRad_EffectProjection')
     constraintID = constraintID(2:end);
 end
 
 % Calculate jacobian with dij projections
 for i = 1:dij.numOfScenarios
    % enter if statement also for protons using a constant RBE
-   if isequal(optiProb.bioOpt,'none') ||  isequal(optiProb.ID,'protons_const_RBExD')
+   if isa(optiProb.BP,'matRad_DoseProjection') || isa(optiProb.BP,'matRad_ConstantRBEProjection')
 
         if ~isempty(DoseProjection)
             
@@ -146,7 +149,7 @@ for i = 1:dij.numOfScenarios
             
         end
 
-    elseif isequal(optiProb.bioOpt,'LEMIV_effect') || isequal(optiProb.bioOpt,'LEMIV_RBExD')
+    elseif isa(optiProb.BP,'matRad_EffectProjection')
 
         if ~isempty(mSqrtBetaDoseProjection) && ~isempty(mAlphaDoseProjection)
             

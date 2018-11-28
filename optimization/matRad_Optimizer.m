@@ -4,6 +4,8 @@ classdef (Abstract) matRad_Optimizer
     
     properties (Abstract)
         options %options struct
+        wResult
+        resultInfo
     end
     
     methods
@@ -13,13 +15,13 @@ classdef (Abstract) matRad_Optimizer
             obj = createDefaultOptimizerOptions(obj);
         end
         
-        %function result = optimize(
+        
     end
     
     methods (Abstract)
         obj  = createDefaultOptimizerOptions(obj)
         
-        
+        obj = optimize(obj,w0,optiProb,dij,cst)
     end
 end
 

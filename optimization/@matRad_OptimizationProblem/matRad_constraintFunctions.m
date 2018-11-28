@@ -36,7 +36,7 @@ function c = matRad_constraintFunctions(optiProb,w,dij,cst)
 
 % get current dose / effect / RBExDose vector
 %d = matRad_backProjection(w,dij,optiProb);
-optiProb.BP = optiProb.BP.compute(w,dij);
+optiProb.BP = optiProb.BP.compute(dij,w);
 d = optiProb.BP.GetResult();
 
 % Initializes constraints
@@ -61,8 +61,8 @@ for  i = 1:size(cst,1)
                 % Maybe we should put some switch into the classes for that
                 if (~isequal(obj.name, 'max dose constraint')      && ~isequal(obj.name, 'min dose constraint')      &&...
                     ~isequal(obj.name, 'max mean dose constraint') && ~isequal(obj.name, 'min mean dose constraint') && ...
-                    ~isequal(obj.name, 'min EUD constraint')       && ~isequal(obj.name, 'max EUD constraint'))      && ...
-                    isequal(optiProb.bioOpt,'LEMIV_effect')
+                    ~isequal(obj.name, 'min EUD constraint')       && ~isequal(obj.name, 'max EUD constraint'))     && ...
+                    (isa(optiProb.BP,'matRad_EffectProjection') && ~isa(optiProb.BP,'matRad_VariableRBEProjection'))
                     
                     doses = obj.getDoseParameters();
                     

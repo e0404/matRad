@@ -2,17 +2,17 @@ classdef matRad_OptimizationProblem < handle
     %handle class to keep state easily
     
     properties
-        BP %backProjection
+        BP
         bioOpt = '';
     end
     
-    properties (Access = private)
-        currentDose
-        currentWeights
-    end
+    %properties (Access = private)
+    %    currentDose
+    %    currentWeights
+    %end
     
     methods
-        function obj = matRad_OptimizationProblem(backProjection,dij,cst)
+        function obj = matRad_OptimizationProblem(backProjection)
             obj.BP = backProjection;
         end       
         
@@ -30,12 +30,12 @@ classdef matRad_OptimizationProblem < handle
         
         [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
         
-        function lb = lowerBounds(optiProb)
-            lb = zeros(size(optiProb.currentWeights));
+        function lb = lowerBounds(optiProb,w)
+            lb = zeros(size(w));
         end
         
-        function ub = upperBounds(optiProb)
-            ub = Inf * ones(size(optiProb.currentWeights));
+        function ub = upperBounds(optiProb,w)
+            ub = Inf * ones(size(w));
         end
     end
 end

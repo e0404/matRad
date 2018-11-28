@@ -129,9 +129,6 @@ if pln.propOpt.runDAO && strcmp(pln.radiationMode,'photons')
 
 end
 
-% set bounds on optimization variables
-options.lb              = zeros(1,dij.totalNumOfBixels);        % Lower bound on the variables.
-options.ub              = inf * ones(1,dij.totalNumOfBixels);   % Upper bound on the variables.
 funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
     
 % calculate initial beam intensities wInit
@@ -206,34 +203,53 @@ options.bioOpt          = pln.propOpt.bioOptimization;
 options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
 options.numOfScenarios  = dij.numOfScenarios;
 
-% set callback functions.
-[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,options);   
-funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,options);
-funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,options);
-funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,options);
-funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,options);
-funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
-
 %Select Projection
-backProjection = matRad_DoseProjection;
+
+switch pln.propOpt.bioOptimization
+    case 'LEMIV_effect'
+        backProjection = matRad_EffectProjection;
+    case 'const_RBExD'
+        backProjection = matRad_ConstantRBEProjection;
+    case 'LEMIV_RBExD'
+        backProjection = matRad_VariableRBEProjection;
+    case 'none'
+        backProjection = matRad_DoseProjection;
+    otherwise
+        warning(['Did not recognize bioloigcal setting ''' pln.probOpt.bioOptimization '''!\nUsing physical dose optimization!']);
+        backProjection = matRad_DoseProjection;
+end
+        
+
+%backProjection = matRad_DoseProjection();
 
 optiProb = matRad_OptimizationProblem(backProjection);
 
-optimizer = matRad_OptimizerIPOPT;
+%optimizer = matRad_OptimizerIPOPT;
 
-optimizer.optimize(optiProb);
+if ~isfield(pln.propOpt,'optimizer')
+    pln.propOpt.optimizer = 'IPOPT';
+end
 
-% Informing user to press q to terminate optimization
-fprintf('\nOptimzation initiating...\n');
-fprintf('Press q to terminate the optimization...\n');
+switch pln.propOpt.optimizer
+    case 'IPOPT'
+        optimizer = matRad_OptimizerIPOPT;
+    case 'fmincon'
+        optimizer = matRad_OptimizerFmincon;
+    otherwise
+        warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
+        optimizer = matRad_OptimizerIPOPT;
+end
+        
+%optimizer = matRad_OptimizerFmincon;
 
-% Run IPOPT.
-[wOpt, info]            = ipopt(wInit,funcs,options);
+optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 
-% calc dose and reshape from 1D vector to 2D array
-fprintf('Calculating final cubes...\n');
+wOpt = optimizer.wResult;
+info = optimizer.resultInfo;
+
 resultGUI = matRad_calcCubes(wOpt,dij,cst);
 resultGUI.wUnsequenced = wOpt;
+resultGUI.optiInfo = info;
 
 % unset Key Pressed Callback of Matlab command window
 if ~isdeployed && strcmp(env,'MATLAB')

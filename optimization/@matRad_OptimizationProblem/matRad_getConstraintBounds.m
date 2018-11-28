@@ -53,7 +53,7 @@ for  i = 1:size(cst,1)
 
                 if isequal(optiProb.bioOpt,'none') || isequal(optiProb.bioOpt,'LEMIV_RBExD')
                     %param = cst{i,6}(j).dose;
-                elseif isequal(ptiProb.bioOpt,'LEMIV_effect')
+                elseif isequal(optiProb.bioOpt,'LEMIV_effect')
                     %param = cst{i,5}.alphaX .* cst{i,6}(j).dose + cst{i,5}.betaX .* cst{i,6}(j).dose.^2;
                     doses = optiFunc.getDoseParameters();
                 
