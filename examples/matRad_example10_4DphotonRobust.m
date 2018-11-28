@@ -24,11 +24,6 @@
 % (v)   visualise all individual dose scenarios 
 % (vi)  sample discrete scenarios from Gaussian uncertainty assumptions
 
-
-%% Patient Data
-% Let's begin with a clear Matlab environment
-clc,clear,close all
-
 %% set matRad runtime configuration
 matRad_rc
 
