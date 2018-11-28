@@ -1,4 +1,4 @@
-function resultGUI = matRad_appendResultGUI(resultGUI,resultGUItoAppend,boolOverwrite)
+function resultGUI = matRad_appendResultGUI(resultGUI,resultGUItoAppend,boolOverwrite,Identifier)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % function to merge two seperate resultGUI structs into one for
 % visualisation
@@ -34,12 +34,20 @@ if ~exist('boolOverwrite','var')
     boolOverwrite = false;
 end
 
+if ~exist('Identifier','var')
+   Identifier = '2';
+end
+
 caFieldnames = fieldnames(resultGUItoAppend);
 
 for i = 1:numel(caFieldnames)
 
    if boolOverwrite
        resultGUI.(caFieldnames{i,1}) =   resultGUItoAppend.(caFieldnames{i,1}); 
+       
+   elseif isfield(resultGUI,caFieldnames{i,1})
+      resultGUI.([caFieldnames{i,1} '_' Identifier]) =   resultGUItoAppend.(caFieldnames{i,1}); 
+      
    elseif ~isfield(resultGUI,caFieldnames{i,1})
         resultGUI.(caFieldnames{i,1}) =   resultGUItoAppend.(caFieldnames{i,1}); 
    end

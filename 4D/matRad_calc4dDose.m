@@ -1,10 +1,10 @@
 function [resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % wrapper for the whole 4D dose calculation pipeline and calculated dose
-% aacumulation
+% accumulation
 %
 % call
-%   ct = matRad_addmovement(ct, ct.motionPeriod, ct.numOfCtScen, amp)
+%   ct = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI)
 %
 % input
 %   ct :            ct cube
@@ -40,12 +40,12 @@ function [resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, r
 timeSequence = matRad_makeBixelTimeSeq(stf, resultGUI);
 
 % prepare a phase matrix
-motion = 'linear'; % the assumed motion type
+motion       = 'linear'; % the assumed motion type
 timeSequence = matRad_makePhaseMatrix(timeSequence, ct.numOfCtScen, ct.motionPeriod, motion);
 
 resultGUI.bioParam = pln.bioParam;
 
-totalPhaseMatrix = vertcat(timeSequence.phaseMatrix);
+totalPhaseMatrix   = vertcat(timeSequence.phaseMatrix);
 
 % compute all phases
 for i = 1:ct.numOfCtScen

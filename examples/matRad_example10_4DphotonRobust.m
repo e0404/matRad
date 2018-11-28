@@ -1,4 +1,4 @@
-%% Example: Robust Treatment Planning with Protons
+%% Example: 4D robust Treatment Planning with photons
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -16,34 +16,35 @@
 %% 
 % In this example we will  
 % (i)   create a small artifical phantom
-% (ii)  create a scanned proton treatment plan considering a constant RBE of 1.1
-% (iii) we will enable dose calculation on nine selected worst case scenarios
-% (iv)  robustly optimize the pencil beam intensities on all 9 dose scenarios 
-%       using the composite worst case paradigm 
+% (ii)  add a movement to the phantom to create a 4D CT
+% (iii) create a photon treatment plan with two beams
+% (iv)  perform dose calculation on each 4D CT
+% (iv)  perform first a fluence optimization on the first CT scenario and then secondly
+%       another fluence optimization using the composite worst case paradigm 
+%       considering all 4D CTs
 % (v)   visualise all individual dose scenarios 
 % (vi)  sample discrete scenarios from Gaussian uncertainty assumptions
 
 %% Patient Data
-% Let's begin with a clear Matlab environment and import the liver
-% patient into your workspace.
+% Let's begin with a clear Matlab environment
 clc,clear,close all
 
-%% Create a CT image series
+%% Create an artifiical CT image series
 xDim = 150;
 yDim = 150;
 zDim = 50;
 
 ct.cubeDim      = [xDim yDim zDim];
-ct.resolution.x = 2;
-ct.resolution.y = 2;
-ct.resolution.z = 3;
+ct.resolution.x = 2; % mm
+ct.resolution.y = 2; % mm
+ct.resolution.z = 3; % mm
 ct.numOfCtScen  = 1;
  
 % create an ct image series with zeros - it will be filled later
 ct.cubeHU{1} = ones(ct.cubeDim) * -1024;
 
 %% Create the VOI data for the phantom
-% Now we define structures a contour for the phantom and a target
+% Now we define two structures for the phantom 
 ixOAR = 1;
 ixPTV = 2;
 
@@ -83,7 +84,7 @@ cst{ixPTV,6}.coverage    = NaN;
 cst{ixPTV,6}.robustness  = 'none';
 
 %% Lets create a cubic phantom
-% first the OAR
+% first define the dimensions of the OAR
 cubeHelper = zeros(ct.cubeDim);
 xLowOAR    = round(xDim/2 - xDim/6);
 xHighOAR   = round(xDim/2 + xDim/6);
@@ -100,7 +101,7 @@ for x = xLowOAR:1:xHighOAR
    end
 end
       
-% extract the voxel indices and save it in the cst
+% extract the linear voxel indices and save it in the cst
 cst{ixOAR,4}{1} = find(cubeHelper);
 
 % second the PTV
@@ -117,24 +118,47 @@ for x = 1:xDim
    end
 end
 
-% extract the voxel indices and save it in the cst
+% extract the linear voxel indices and save it in the cst
 cst{ixPTV,4}{1} = find(cubeHelper);
 
-%a ssign relative electron densities
+% assign relative electron densities
 vIxOAR = cst{ixOAR,4}{1};
 vIxPTV = cst{ixPTV,4}{1};
 
 ct.cubeHU{1}(vIxOAR) = 300; % assign HU of soft tissue
 ct.cubeHU{1}(vIxPTV) = 0;   % assign HU of water
 
-%%
+%% add motion to the phantom and artificially create a 4D CT with vector fields
 
-amplitude    = [3 0 0]; % [voxels]
+amplitude    = [5 0 0]; % [voxels]
 numOfCtScen  = 10;
 motionPeriod = 5; % [s] 
 
 addpath('4D')
 [ct,cst] = matRad_addMovement(ct, cst,motionPeriod, numOfCtScen, amplitude,1);
+
+% show the deformation vector field
+slice = 25; ctPhase = 9;   % select a specific slice and and ct phase to plot the vector field
+[a,xDim,yDim,zDim] = size(ct.dvf{1});
+
+[mX,mY]      = meshgrid(1:xDim,1:yDim);
+
+figure,
+for ctPhase = 1:ct.numOfCtScen 
+   clf;
+   xVectorField = squeeze(ct.dvf{ctPhase}(1,:,:,slice));  % retrieve the deformation vector field in x-direction of slice 25
+   yVectorField = squeeze(ct.dvf{ctPhase}(2,:,:,slice));  % retrieve the deformation vector field in y-direction of slice 25
+   quiver(mX,mY,yVectorField,xVectorField); title(['deformation vector field of phase ' num2str(ctPhase)]),
+   set(gca,'XLim',[70 80]);set(gca,'YLim',[70 80]);
+   % flip y axis to be consistent with the previous plot
+   ax = gca; ax.YDir = 'reverse';
+   pause(0.5);  
+end
+
+% magnitude of the vector field should change over ct scenarios
+% vector field refers to the first (initial) ct scenario
+% investigate in the difference of 4D dose accumulatino
+
 
 % clear helper variables to get clean workspace
 clear x y z xDim yDim zDim xHighOAR xLowOAR xHighOAR yHighOAR yLowOAR zHighOAR zLowOAR vIxOAR vIxPTV cubeHelper currPost radiusPTV
@@ -209,6 +233,13 @@ cst{ixOAR,6}.robustness  = 'COWC';
 % cst{ixOAR,6}(2,1).robustness  = 'VWWC';
 
 resultGUIrobust = matRad_fluenceOptimization(dij,cst,pln);
+
+% add resultGUIrobust dose cubes to the existing resultGUI structure to allow the visualization in the GUI
+resultGUI = matRad_appendResultGUI(resultGUI,resultGUIrobust,0,'robust');
+
+%% calc 4D dose
+% make sure that the correct pln, dij and stf are loeaded in the workspace
+[resultGUIrobust4D, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUIrobust); 
 
 %% Visualize results
 addpath('tools')
