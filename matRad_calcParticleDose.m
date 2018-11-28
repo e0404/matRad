@@ -101,6 +101,8 @@ end
 % Only take voxels inside patient.
 V = [cst{:,4}];
 V = unique(vertcat(V{:}));
+maskCube = matRad_CtDownsamplingMask(ct,pln.propOpt.downRes);
+V = intersect(V, find(maskCube));
 
 % ignore densities outside of contours
 eraseCtDensMask = ones(dij.numOfVoxels,1);
