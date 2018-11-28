@@ -38,6 +38,7 @@ export CONTINUOUS_INTEGRATION=true
 export CI=true
 
 ## Actually run the test suite
+rm optimization/ipopt.m
 cd unitTest
 TESTDIR=`pwd`
 # also CD in MATLAB/Octave to make sure that startup files
