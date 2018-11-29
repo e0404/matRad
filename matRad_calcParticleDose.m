@@ -467,7 +467,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                             if isfield(dij,'mLETDose')
                               % calculate particle LET for bixel k on ray j of beam i
                               depths   = machine.data(energyIx).depths + machine.data(energyIx).offset; 
-                              bixelLET = matRad_interp1(depths,machine.data(energyIx).LET,radDepths(currIx)); 
+                              bixelLET = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths); 
                               bixelLET(isnan(bixelLET)) = 0;
                               % save LET for every bixel in cell array
                               letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(V(ix(currIx)),1,bixelLET.*bixelDose,dij.numOfVoxels,1);
@@ -476,7 +476,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                             % save alpha_p and beta_p radiosensititvy parameter for every bixel in cell array 
                             if pln.bioParam.bioOpt
 
-                               [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(radDepths(currIx),machine.data(energyIx),vTissueIndex_j(currIx,:),dij.alphaX(V(ix(currIx))),...
+                               [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(currRadDepths,machine.data(energyIx),vTissueIndex_j(currIx,:),dij.alphaX(V(ix(currIx))),...
                                                                                                          dij.betaX(V(ix(currIx))),...
                                                                                                          dij.abX(V(ix(currIx))));
                                   
