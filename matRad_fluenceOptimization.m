@@ -1,4 +1,4 @@
-function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
+function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
@@ -13,7 +13,7 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 % output
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
 %               biological optimization) RBE-weighted dose etc.
-%   info:       struct containing information about optimization
+%   optimizer:  Used Optimizer Object
 %
 % References
 %   -
@@ -249,7 +249,8 @@ info = optimizer.resultInfo;
 
 resultGUI = matRad_calcCubes(wOpt,dij,cst);
 resultGUI.wUnsequenced = wOpt;
-resultGUI.optiInfo = info;
+resultGUI.usedOptimizer = optimizer;
+resultGUI.info = info;
 
 % unset Key Pressed Callback of Matlab command window
 if ~isdeployed && strcmp(env,'MATLAB')

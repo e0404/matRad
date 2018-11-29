@@ -32,6 +32,9 @@ function [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+BPtype = class(optiProb.BP);
+isEffectBP = strcmp(BPtype,'matRad_EffectProjection');
+
 % Initialize bounds
 cl = [];
 cu = [];
@@ -50,11 +53,9 @@ for  i = 1:size(cst,1)
             % only perform computations for constraints
             %if ~isempty(strfind(cst{i,6}{j}.type,'constraint'))
             if isa(optiFunc,'DoseConstraints.matRad_DoseConstraint')
-
-                if isequal(optiProb.bioOpt,'none') || isequal(optiProb.bioOpt,'LEMIV_RBExD')
-                    %param = cst{i,6}(j).dose;
-                elseif isequal(optiProb.bioOpt,'LEMIV_effect')
-                    %param = cst{i,5}.alphaX .* cst{i,6}(j).dose + cst{i,5}.betaX .* cst{i,6}(j).dose.^2;
+                
+                
+                if isEffectBP
                     doses = optiFunc.getDoseParameters();
                 
                     effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
@@ -62,9 +63,6 @@ for  i = 1:size(cst,1)
                     optiFunc = optiFunc.setDoseParameters(effect);
                 end
 
-                %if strcmp(cst{i,6}(j).robustness,'none')
-
-                    %[clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param);
                     
                  cl = [cl;optiFunc.lowerBounds(numel(cst{i,4}{1}))];
                  cu = [cu;optiFunc.upperBounds(numel(cst{i,4}{1}))];

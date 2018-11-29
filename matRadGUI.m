@@ -1526,7 +1526,7 @@ try
         if ~matRad_checkForConnectedBixelRows(evalin('base','stf'))
             error('disconnetced dose influence data in BEV - run dose calculation again with consistent settings');
         end
-        [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(matRad_collapseDij(evalin('base','dij')),evalin('base','cst'),pln);
+        [resultGUIcurrentRun,usedOptimizer] = matRad_fluenceOptimization(matRad_collapseDij(evalin('base','dij')),evalin('base','cst'),pln);
         resultGUIcurrentRun.w = resultGUIcurrentRun.w * ones(evalin('base','dij.totalNumOfBixels'),1);
         resultGUIcurrentRun.wUnsequenced = resultGUIcurrentRun.w;
     else
@@ -1536,7 +1536,7 @@ try
         end
         end
         
-        [resultGUIcurrentRun,ipoptInfo] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
+        [resultGUIcurrentRun,usedOptimizer] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
     end
     
     %if resultGUI already exists then overwrite the "standard" fields
@@ -1580,7 +1580,7 @@ try
     % check IPOPT status and return message for GUI user if no DAO or
     % particles
     if ~pln.propOpt.runDAO || ~strcmp(pln.radiationMode,'photons')
-        CheckIpoptStatus(ipoptInfo,'Fluence')
+        CheckOptimizerStatus(usedOptimizer,'Fluence')
     end
     
 catch ME
@@ -1620,11 +1620,11 @@ try
     %% DAO
     if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO
         handles = showWarning(handles,['Observe: You are running direct aperture optimization' filesep 'This is experimental code that has not been thoroughly debugged - especially in combination with constrained optimization.']);
-       [resultGUI,ipoptInfo] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst'),...
+       [resultGUI,usedOptimizer] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst'),...
            resultGUI.apertureInfo,resultGUI,pln);
        assignin('base','resultGUI',resultGUI);
        % check IPOPT status and return message for GUI user
-       CheckIpoptStatus(ipoptInfo,'DAO');      
+       CheckOptimizerStatus(usedOptimizer,'DAO');      
     end
     
     if strcmp(pln.radiationMode,'photons') && (pln.propOpt.runSequencing || pln.propOpt.runDAO)
@@ -2469,55 +2469,17 @@ if any(Val < 0)
 end
 
 % return IPOPT status as message box
-function CheckIpoptStatus(info,OptCase) 
+function CheckOptimizerStatus(usedOptimizer,OptCase) 
       
-if info.status == 0
-    statusmsg = 'solved';  
-elseif info.status == 1
-    statusmsg = 'solved to acceptable level';          
-elseif info.status == 2
-    statusmsg = 'infeasible problem detected';           
-elseif info.status == 3    
-    statusmsg = 'search direction too small';             
-elseif info.status == 4 
-    statusmsg = 'diverging iterates';     
-elseif info.status == 5
-    statusmsg = 'user requested stop';     
-elseif info.status == -1        
-    statusmsg = 'maximum number of iterations';     
-elseif info.status == -2    
-    statusmsg = 'restoration phase failed';     
-elseif info.status == -3         
-    statusmsg = 'error in step computation';     
-elseif info.status == -4
-    statusmsg = 'maximum CPU time exceeded';     
-elseif info.status == -10        
-    statusmsg = 'not enough degrees of freedom';     
-elseif info.status == -11    
-    statusmsg = 'invalid problem definition';     
-elseif info.status == -12   
-    statusmsg = 'invalid option';     
-elseif info.status == -13        
-    statusmsg = 'invalid number detected';     
-elseif info.status == -100
-    statusmsg = 'unrecoverable exception';     
-elseif info.status == -101        
-    statusmsg = 'non-IPOPT exception thrown';     
-elseif info.status == -102    
-    statusmsg = 'insufficient memory';     
-elseif info.status == -199
-    statusmsg = 'IPOPT internal error';     
-else
-    statusmsg = 'IPOPT returned no status';
-end
+[statusmsg,statusflag] = usedOptimizer.GetStatus();
     
-if info.status == 0 || info.status == 1
+if statusflag == 0 || statusflag == 1
     status = 'none';
 else
     status = 'warn';
 end
 
-msgbox(['IPOPT finished with status ' num2str(info.status) ' (' statusmsg ')'],'IPOPT',status,'modal');
+msgbox(['Optimizer finished with status ' num2str(statusflag) ' (' statusmsg ')'],'Optimizer',status,'modal');
 
 % get pln file form GUI     
 function getPlnFromGUI(handles)

@@ -12,20 +12,24 @@ classdef matRad_MinMaxDVH < DoseConstraints.matRad_DoseConstraint
     properties
         voxelScalingRatio = 1;
         referenceScalingVal = 0.01;
-        parameters = {30,0,1};
+        parameters = {30,0,100};
     end
         
     methods  
         
         function cu = upperBounds(obj,n)
-            cu = obj.parameters{3};
+            cu = obj.parameters{3} / 100;
         end
         function cl = lowerBounds(obj,n)
-            cl = obj.parameters{2};
+            cl = obj.parameters{2} / 100;
         end
         %% Calculates the Constraint Function value
         function cDose = computeDoseConstraintFunction(obj,dose)
+            
+            %Fast DVH point calculation
             cDose = sum(dose >= obj.parameters{1})/numel(dose);
+            
+            %cDose = 100 * cDose; %In Percent
             
             % alternative constraint calculation 3/4 %
             % % get reference Volume

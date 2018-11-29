@@ -13,8 +13,7 @@ classdef matRad_BackProjection
     methods
         function obj = matRad_BackProjection()
             obj.wCache = [];
-            obj.d = [];
-            
+            obj.d = [];            
         end
         
         function obj = compute(obj,dij,w)
