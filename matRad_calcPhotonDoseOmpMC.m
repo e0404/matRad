@@ -97,15 +97,15 @@ end
 %}
 
 %% Setup OmpMC options / parameters
-ompMCgeo.nFields = numel(stf);
-ompMCgeo.nBixels = [stf(:).totalNumOfBixels];
+%ompMCgeo.nFields = numel(stf);
+%ompMCgeo.nBixels = [stf(:).totalNumOfBixels];
 ompMCgeo.ctRes = [ct.resolution.x ct.resolution.y ct.resolution.z];
 
 %display options
 ompMCoptions.verbose = true;
 
 % start MC control          
-ompMCoptions.nHistories = 10000000;
+ompMCoptions.nHistories = 5000;
 ompMCoptions.nBatches = 10;
 ompMCoptions.randomSeeds = [97 33];
 
@@ -118,11 +118,15 @@ ompMCoptions.colliBounds = [-2.5 2.5 -2.5 2.5];
 ompMCoptions.ssd = 90.0; %This has to be calculated by matRad?
                                                                     
 % start MC transport
-ompMCoptions.photonXsection = [pwd '/ompMC/data/xcom'];
+ompMCoptions.dataFolder = [pwd '/ompMC/data/'];
 ompMCoptions.pegsFile = [pwd '/ompMC/pegs4/700icru.pegs4dat'];
+ompMCoptions.pgs4formFile = [pwd '/ompMC/pegs4/pgs4form.dat'];
 
 ompMCoptions.global_ecut = 0.700;
-ompMCoptions.global_pcut = 0.010;        
+ompMCoptions.global_pcut = 0.010; 
+
+% Output folders
+ompMCoptions.outputFolder = [pwd '/ompMC/output/'];
 
 
 %% Create Material Density Cube
@@ -142,11 +146,10 @@ material{4,2} = 101; material{4,3} = 1976;
 material{4,4} = 1.101; material{4,5} = 2.088;
 
 for s=1:dij.numOfScenarios
-        % From HU to densities
+    % From HU to densities
     [cubeRho{s},cubeMatIx{s}] = arrayfun(@(HU) HUtoDensityAndMaterial(HU,material),ct.cubeHU{s});
     
-    %C Indexing
-    cubeMatIx{s} = int32(cubeMatIx{s} - 1);
+    cubeMatIx{s} = int32(cubeMatIx{s});
 end
 
 ompMCgeo.material = material;
@@ -158,6 +161,53 @@ ompMCgeo.xBounds = [(ct.x - ct.resolution.x*0.5) (ct.x(ct.cubeDim(1)) + ct.resol
 ompMCgeo.yBounds = [(ct.y - ct.resolution.y*0.5) (ct.y(ct.cubeDim(2)) + ct.resolution.y)] ./ scale;
 ompMCgeo.zBounds = [(ct.z - ct.resolution.z*0.5) (ct.z(ct.cubeDim(3)) + ct.resolution.z)] ./ scale;
 
+%% Create beamlet source
+numOfBixels = zeros(dij.numOfBeams, 1);
+beamSource = zeros(dij.numOfBeams, 3);
+
+bixelCorner = zeros(dij.totalNumOfBixels,3);
+bixelSide1 = zeros(dij.totalNumOfBixels,3);
+bixelSide2 = zeros(dij.totalNumOfBixels,3);
+
+for i = 1:dij.numOfBeams % loop over all beams
+   
+    % define beam source in physical coordinate system in cm
+    beamSource(i,:) = (stf(i).sourcePoint + stf(i).isoCenter)/10;
+    %fwrite(fileHandle,beamSource,'double');   
+    
+    % write number of beamlets into file
+    %fwrite(fileHandle,stf(i).numOfRays,'int');
+    numOfBixels(i) = stf(i).numOfRays;
+
+    for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
+        
+        % get bixel corner and delimiting vectors.
+        % a) change coordinate system (Isocenter cs-> physical cs) and units mm -> cm
+        currCorner = (stf(i).ray(j).beamletCornersAtIso(1,:) + stf(i).isoCenter) ./ scale;
+        bixelCorner((i-1)*stf(i).numOfRays + j,:) = currCorner;
+        bixelSide1((i-1)*stf(i).numOfRays + j,:) = (stf(i).ray(j).beamletCornersAtIso(2,:) + stf(i).isoCenter) ./ scale - currCorner;
+        bixelSide2((i-1)*stf(i).numOfRays + j,:) = (stf(i).ray(j).beamletCornersAtIso(4,:) + stf(i).isoCenter) ./ scale - currCorner;
+        
+    end
+end
+
+ompMCsource.nBeams = dij.numOfBeams;
+ompMCsource.xSource = beamSource(:,1);
+ompMCsource.ySource = beamSource(:,2);
+ompMCsource.zSource = beamSource(:,3);
+
+ompMCsource.nBixels = numOfBixels(:);
+ompMCsource.xCorner = bixelCorner(:,1);
+ompMCsource.yCorner = bixelCorner(:,2);
+ompMCsource.zCorner = bixelCorner(:,3);
+
+ompMCsource.xSide1 = bixelSide1(:,1);
+ompMCsource.ySide1 = bixelSide1(:,2);
+ompMCsource.zSide1 = bixelSide1(:,3);
+
+ompMCsource.xSide2 = bixelSide2(:,1);
+ompMCsource.ySide2 = bixelSide2(:,2);
+ompMCsource.zSide2 = bixelSide2(:,3);
 
 %% Call the OmpMC interface
 %initialize waitbar
@@ -170,7 +220,7 @@ for s = 1:dij.numOfScenarios
      
     ompMCgeo.isoCenter = [stf(:).isoCenter];
     
-    dij.physicalDose{s} = matRad_ompInterface(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCoptions);
+    dij.physicalDose{s} = matRad_ompInterface(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
 end
 
 
