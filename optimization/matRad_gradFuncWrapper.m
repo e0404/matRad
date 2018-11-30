@@ -85,13 +85,35 @@ for  i = 1:size(cst,1)
 
                     delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
                     
+                    
+                % perform probabilistic optimization
                 elseif strcmp(cst{i,6}(j).robustness,'PROB')
+                    
+                   numContours = numel(cst{i,4});
+                   
+                   for ixScen = 1:options.numOfScen
+                      
+                      if numContours == options.numOfScen
+                          contourIndex = ixScen;
+                       else
+                          contourIndex = 1;
+                      end
+                       
+                      d_i = d{ixScen}(cst{i,4}{contourIndex});
+                      
+                      delta{ixScen}(cst{i,4}{contourIndex}) = delta{ixScen}(cst{i,4}{contourIndex}) + ...
+                         (matRad_gradFunc(d_i,cst{i,6}(j),d_ref) * options.scenProb(ixScen));
+                      
+                   end
+                 
+                % use the expectation value and the integral variance influence matrix        
+                elseif strcmp(cst{i,6}(j).robustness,'PROB_ANA')
 
-                        d_i = d_exp{1}(cst{i,4}{1});
-
-                        delta_exp{1}(cst{i,4}{1}) = delta_exp{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
-
-                        vOmega = vOmega + Omega{i};
+                   d_i = d_exp{1}(cst{i,4}{1});
+                   
+                   delta_exp{1}(cst{i,4}{1}) = delta_exp{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+                   
+                   vOmega = vOmega + Omega{i};
                         
                  % VWWC = voxel-wise worst case; VWWC_CONF = conformity voxel-wise worst case    
                  elseif strcmp(cst{i,6}(j).robustness,'VWWC') || strcmp(cst{i,6}(j).robustness,'VWWC_CONF')
@@ -171,7 +193,36 @@ for  i = 1:size(cst,1)
                  % objective-wise worst case consideres the worst individual objective function value        
                  elseif strcmp(cst{i,6}(j).robustness,'OWC')
                      
-                     matRad_dispToConsole(['not yet implemented \n'],param,'error');
+                    numContours   = numel(cst{i,4});
+                    f_OWC         = zeros(options.numOfScen,1);
+                    deltaOWC      = cell(options.numOfScen,1);
+                    [deltaOWC{:}] = deal(zeros(dij.numOfVoxels,1));
+
+                    for ixScen = 1:5
+                       
+                       if numContours == options.numOfScen
+                          contourIndex = ixScen;
+                       else
+                          contourIndex = 1;
+                       end
+                       
+                       d_i = d{ixScen}(cst{i,4}{contourIndex});
+                       
+                       f_OWC(ixScen) = matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                       
+                       deltaOWC{ixScen}(cst{i,4}{contourIndex}) = matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+                       
+                    end
+                    
+                    [~,ix] = max(f_OWC);
+                    
+                    if numContours == options.numOfScen
+                        contourIndex = ix;
+                    else
+                        contourIndex = 1;
+                    end
+                    
+                    delta{1}(cst{i,4}{contourIndex}) = delta{1}(cst{i,4}{contourIndex}) + deltaOWC{ix}(cst{i,4}{contourIndex});
                      
                  end
                 
@@ -247,4 +298,3 @@ for i = 1:options.numOfScen
 
     end
 end
-

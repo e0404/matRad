@@ -125,6 +125,10 @@ nomQi                = matRad_calcQualityIndicators(cst,pln,resultGUInomScen.(pl
 resultGUInomScen.qi  = nomQi;
 resultGUInomScen.cst = cst;
 
+% default ct scenario for sampling
+ctScenSampling = 1;
+matRad_dispToConsole(['Sampling will be performed on ct scenario: ', num2str(ctScenSampling), ' \n'],param,'info');
+
 % only show errors and disable waitbars and figures
 param.logLevel = 4;
 
@@ -163,7 +167,7 @@ if FlagParallToolBoxLicensed
           plnSamp.multScen.isoShift            = pln.multScen.scenForProb(i,1:3);
           plnSamp.multScen.totNumShiftScen     = 1;
           plnSamp.multScen.totNumRangeScen     = 1;
-          plnSamp.multScen.numOfCtScen         = 1;
+          plnSamp.multScen.numOfCtScen         = ctScenSampling;
           plnSamp.multScen.scenMask            = 1;
           plnSamp.multScen.linearMask          = 1;
           plnSamp.multScen.scenProb            = 1;
@@ -211,7 +215,7 @@ end
           plnSamp.multScen.isoShift            = pln.multScen.scenForProb(i,1:3);
           plnSamp.multScen.totNumShiftScen     = 1;
           plnSamp.multScen.totNumRangeScen     = 1;
-          plnSamp.multScen.numOfCtScen         = 1;
+          plnSamp.multScen.numOfCtScen         = ctScenSampling;
           plnSamp.multScen.scenMask            = 1;
           plnSamp.multScen.linearMask          = 1;
           plnSamp.multScen.scenProb            = 1;

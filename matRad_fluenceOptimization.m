@@ -198,7 +198,7 @@ FLAG_ROB_OPT   = false;
 
 for i = 1:size(cst,1)
     for j = 1:size(cst{i,6},1)
-       if strcmp(cst{i,6}(j).robustness,'PROB') && numel(linIxDIJ) > 1
+       if strcmp(cst{i,6}(j).robustness,'PROB_ANA') && numel(linIxDIJ) > 1
           FLAG_CALC_PROB = true;
        end
        if ~strcmp(cst{i,6}(j).robustness,'none') && numel(linIxDIJ) > 1
@@ -207,7 +207,7 @@ for i = 1:size(cst,1)
     end
 end
 
-% create placeholders for expected ij matrices
+% create placeholders for expected influence matrices
 for i = 1:numel(fNames)
    dij.([fNames{1,i} 'Exp']){1} = spalloc(prod(dij.dimensions),dij.totalNumOfBixels,1);
 end
@@ -218,24 +218,38 @@ if FLAG_CALC_PROB
     ixDij = find(~cellfun(@isempty, dij.physicalDose))'; 
     
     for i = 1:numel(fNames)
-        % create expected ij structure
+        % create expected influence structure
         dij.([fNames{1,i} 'Exp']){1} = spalloc(prod(dij.dimensions),dij.totalNumOfBixels,1);
-        % add up sparse matrices - should possess almost same sparsity pattern
-        for j = 1:pln.multScen.totNumScen
-            dij.([fNames{1,i} 'Exp']){1} = dij.([fNames{1,i} 'Exp']){1} + dij.([fNames{1,i}]){ixDij(j)} .* pln.multScen.scenProb(j);
+        
+        NumShiftRangeScen = pln.multScen.numOfRangeShiftScen; 
+        if NumShiftRangeScen==0; NumShiftRangeScen= 1;end
+        
+        % add up sparse matrices
+        for ctScen = pln.multScen.numOfCtScen
+           for rangeShitScen = 1:NumShiftRangeScen
+               dij.([fNames{1,i} 'Exp']){1} = ...
+                  dij.([fNames{1,i} 'Exp']){1} + dij.([fNames{1,i}]){ctScen,rangeShitScen} .* pln.multScen.scenProb(ctScen*rangeShitScen);
+           end
         end
     end
     
     % loop over VOIs
     for i = voiIx
-        % loop over scenarios and calculate the integral variance of each
-        % spot combination; bio bio optimization only consider std in the
-        % linear part of the biological effect
-        for j = 1:pln.multScen.totNumScen
-              cst{i,6}(1).mOmega = cst{i,6}(1).mOmega + ...
-                  ((dij.(fNames{1,1}){ixDij(j)}(cst{i,4}{1},:)' * dij.(fNames{1,1}){ixDij(j)}(cst{i,4}{1},:)) * pln.multScen.scenProb(j));
-        end
-        cst{i,6}(1).mOmega = cst{i,6}(1).mOmega - (dij.([fNames{1,1} 'Exp']){1}(cst{i,4}{1},:)' * dij.([fNames{1,1} 'Exp']){1}(cst{i,4}{1},:));
+       for j = 1:size(cst{i,6},1)
+          if isequal(cst{i,6}(j).robustness,'PROB')
+             % loop over scenarios and calculate the integral variance of beamlet combinations;
+             for ctScen = pln.multScen.numOfCtScen
+                for rangeShitScen = 1:NumShiftRangeScen
+                   cst{i,6}(j).mOmega = cst{i,6}(j).mOmega + ...
+                      (((dij.(fNames{1,1}){ctScen,rangeShitScen}(cst{i,4}{1},:)' * pln.multScen.scenProb(ctScen*rangeShitScen))*...
+                        (dij.(fNames{1,1}){ctScen,rangeShitScen}(cst{i,4}{1},:)) * pln.multScen.scenProb(ctScen*rangeShitScen)));
+                end
+             end
+             
+             cst{i,6}(j).mOmega = cst{i,6}(j).mOmega - (dij.([fNames{1,1} 'Exp']){1}(cst{i,4}{j},:)' * dij.([fNames{1,1} 'Exp']){1}(cst{i,4}{j},:));
+             
+          end
+       end
     end
 end
 

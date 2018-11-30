@@ -938,7 +938,20 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     end
 
     if get(handles.radiobtnCT,'Value')
-        [AxesHandlesCT_Dose(end+1),~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,plotCtCube,1,plane,slice,ctMap,handles.dispWindow{ctIx,1});
+
+       % retrieve number of dose cube and check if a corresponding CT is available
+       num = regexp(handles.SelectedDisplayOption, '\d+', 'match');
+
+       if isempty(num)
+          ctScenNum = 1;
+       else
+          ctScenNum = str2num(num{1});
+          if ~isnumeric(ctScenNum)
+             ctScenNum = 1;
+          end
+       end
+       
+       [AxesHandlesCT_Dose(end+1),~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,plotCtCube,ctScenNum,plane,slice,ctMap,handles.dispWindow{ctIx,1});
         
         % plot colorbar? If 1 the user asked for the CT
         if plotColorbarSelection == 2 && handles.cBarChanged
@@ -1022,7 +1035,7 @@ set(handles.txtMaxVal,'String',num2str(handles.dispWindow{selectIx,2}(1,2)));
 
 %% plot VOIs
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
-    AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,ct,1,handles.VOIPlotFlag,plane,slice,[],'LineWidth',2)];
+    AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,ct,ctScenNum,handles.VOIPlotFlag,plane,slice,[],'LineWidth',2)];
 end
 
 %% Set axis labels and plot iso center

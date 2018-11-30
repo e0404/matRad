@@ -79,24 +79,52 @@ for  i = 1:size(cst,1)
                 % if prob opt: sum up expectation value of objectives
                 elseif strcmp(cst{i,6}(j).robustness,'PROB')
                     
-                        d_i = d_exp{1}(cst{i,4}{1});
-                        
-                        f   = f +  matRad_objFunc(d_i,cst{i,6}(j),d_ref);
-                        
-                        % only one variance term per VOI
-                        if j == 1
-                            f = f + w' * Omega{i};
-                        end
+                   numContours = numel(cst{i,4});
+                   
+                   for ixScen = 1:options.numOfScen
+                      
+                      if numContours == options.numOfScen
+                          contourIndex = ixScen;
+                       else
+                          contourIndex = 1;
+                      end
+                      
+                      d_i = d{ixScen}(cst{i,4}{contourIndex});
+                      
+                      f   = f + (matRad_objFunc(d_i,cst{i,6}(j),d_ref) * options.scenProb(ixScen));
+                      
+                   end
+                 
+                % if prob opt: sum up expectation value of objectives
+                elseif strcmp(cst{i,6}(j).robustness,'PROB_ANA')
                     
+                   d_i = d_exp{1}(cst{i,4}{1});
+                   
+                   f   = f +  matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                   
+                   % only one variance term per VOI
+                   if j == 1
+                      f = f + w' * Omega{i};
+                   end
+                        
                 % if voxel-wise worst case or voxel-wise conformitiy (only for target structures)
                 elseif strcmp(cst{i,6}(j).robustness,'VWWC') || strcmp(cst{i,6}(j).robustness,'VWWC_CONF')
 
+                   % check if contours for different phases are available
+                   numContours = numel(cst{i,4});
+                   
                     % prepare min/max dose vector
                     if ~exist('d_tmp','var')
                          d_tmp = [d{:}];
                     end
                     
-                    d_Scen = d_tmp(cst{i,4}{1},:);
+                    if numContours == options.numOfScen
+                        error('4D VWWC optimization is currently not supported');
+                        % voxels need to be tracked through the 4D CT
+                    else
+                         d_Scen = d_tmp(cst{i,4}{1},:);
+                    end
+                    
                     d_max = max(d_Scen,[],2);
                     d_min = min(d_Scen,[],2);
                          
@@ -131,10 +159,27 @@ for  i = 1:size(cst,1)
                       
                    end
             
-                % objective-wise worst case consideres the worst individual objective function value        
+                % objective-wise worst case considers the worst individual objective function value        
                 elseif strcmp(cst{i,6}(j).robustness,'OWC')
                     
-                     matRad_dispToConsole(['not yet implemented \n'],param,'error');
+                    numContours = numel(cst{i,4});
+                    f_OWC       = zeros(options.numOfScen,1);
+
+                    for ixScen = 1:5
+                       
+                       if numContours == options.numOfScen
+                          contourIndex = ixScen;
+                       else
+                          contourIndex = 1;
+                       end
+                       
+                       d_i = d{ixScen}(cst{i,4}{contourIndex});
+                       
+                       f_OWC(ixScen) = matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                         
+                    end
+                    
+                    f = f + max(f_OWC);
                  
                 end
        
@@ -149,3 +194,4 @@ end
 if exist('f_COWC','var')
    f = f + max(f_COWC);
 end
+

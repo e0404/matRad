@@ -93,13 +93,17 @@ if pln.multScen.totNumScen == 1
 % calc individual scenarios    
 else    
 
-    Cnt          = 1;
-    ixForOpt     = find(~cellfun(@isempty, dij.physicalDose))';
-    for i = ixForOpt
+   Cnt          = 1;
+   ixForOpt     = find(~cellfun(@isempty, dij.physicalDose))';
+   for i = ixForOpt
       tmpResultGUI = matRad_calcCubes(ones(pln.propStf.numOfBeams,1),dij,cst,i);
+      if i == 1
+         resultGUI.([pln.bioParam.quantityVis]) = tmpResultGUI.(pln.bioParam.quantityVis);
+      end
       resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
       Cnt = Cnt + 1;
-    end      
+   end 
+    
 end
 
 % remember original fluence weights
