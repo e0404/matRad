@@ -1,4 +1,4 @@
-function dij = matRad_calcPhotonDoseOmpMC(ct,stf,pln,cst)
+function dij = matRad_calcPhotonDoseOmpMC(ct,stf,pln,cst,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad ompMC monte carlo photon dose calculation wrapper
 %
@@ -10,6 +10,7 @@ function dij = matRad_calcPhotonDoseOmpMC(ct,stf,pln,cst)
 %   stf:                        matRad steering information struct
 %   pln:                        matRad plan meta information struct
 %   cst:                        matRad cst struct
+%   visBool:                    binary switch to enable visualization
 % output
 %   dij:                        matRad dij struct
 %
@@ -18,19 +19,9 @@ function dij = matRad_calcPhotonDoseOmpMC(ct,stf,pln,cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% default: dose influence matrix computation
-if ~exist('calcDoseDirect','var')
-    calcDoseDirect = false;
-end
-
-% set output level. 0 = no vmc specific output. 1 = print to matlab cmd.
-% 2 = open in terminal(s)
-verbose = 1;
-
-if ~isdeployed % only if _not_ running as standalone
-    % add path for optimization functions
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir,'ompMC'))
+% disable visualiazation by default
+if nargin < 5
+    visBool = false;
 end
 
 % meta information for dij
@@ -136,27 +127,43 @@ ompMCoptions.outputFolder = [pwd '/ompMC/output/'];
 materialFile = [pwd '/ompMC/700icru.pegs4dat'];
 material = cell(4,5);
 material{1,1} = 'AIR700ICRU';
-material{1,2} = -1024; material{1,3} = -974;
-material{1,4} = 0.001; material{1,5} = 0.044;
+material{1,2} = -1024; 
+material{1,3} = -974;
+material{1,4} = 0.001;
+material{1,5} = 0.044;
 material{2,1} = 'LUNG700ICRU';
-material{2,2} = -974; material{2,3} = -724;
-material{2,4} = 0.044; material{2,5} = 0.302;
+material{2,2} = -974; 
+material{2,3} = -724;
+material{2,4} = 0.044; 
+material{2,5} = 0.302;
 material{3,1} = 'ICRUTISSUE700ICRU';
-material{3,2} = -724; material{3,3} = 101;
-material{3,4} = 0.302; material{3,5} = 1.101;
+material{3,2} = -724; 
+material{3,3} = 101;
+material{3,4} = 0.302; 
+material{3,5} = 1.101;
 material{4,1} = 'ICRPBONE700ICRU';
-material{4,2} = 101; material{4,3} = 1976;
-material{4,4} = 1.101; material{4,5} = 2.088;
+material{4,2} = 101; 
+material{4,3} = 1976;
+material{4,4} = 1.101; 
+material{4,5} = 2.088;
 
-for s=1:dij.numOfScenarios
-    % From HU to densities
-    [cubeRho{s},cubeMatIx{s}] = arrayfun(@(HU) HUtoDensityAndMaterial(HU,material),ct.cubeHU{s});
+% conversion from HU to densities & materials
+for s = 1:dij.numOfScenarios
+          
+    % find material index
+    cubeMatIx{s} = NaN*ones(ct.cubeDim,'int32');
+    for i = size(material,1):-1:1
+        cubeMatIx{s}(ct.cubeHU{s} <= material{i,3}) = i;
+    end
     
-    cubeMatIx{s} = int32(cubeMatIx{s});
+    % create an artificial HU lookup table
+    hlut = [];
+    for i = 1:size(material,1)       
+        hlut = [hlut;material{i,2} material{i,4};material{i,3}-1e-10 material{i,5}]; % add eps for interpolation
+    end
     
-    permutation = [2 1 3];
-    cubeMatIx{s} = permute(cubeMatIx{s},permutation);
-    cubeRho{s} = permute(cubeRho{s},permutation); 
+    cubeRho{s} = interp1(hlut(:,1),hlut(:,2),ct.cubeHU{s});
+
 end
 
 ompMCgeo.material = material;
@@ -181,6 +188,37 @@ end
 ompMCgeo.xBounds = [(ct.x - ct.resolution.x*0.5) (ct.x(ct.cubeDim(1)) + ct.resolution.x)] ./ scale;
 ompMCgeo.yBounds = [(ct.y - ct.resolution.y*0.5) (ct.y(ct.cubeDim(2)) + ct.resolution.y)] ./ scale;
 ompMCgeo.zBounds = [(ct.z - ct.resolution.z*0.5) (ct.z(ct.cubeDim(3)) + ct.resolution.z)] ./ scale;
+
+%% visualization
+if visBool
+
+    clf
+    hold on
+    axis equal
+    
+    % ct box
+    ctCorner1 = [ompMCgeo.xBounds(1) ompMCgeo.yBounds(1) ompMCgeo.zBounds(1)];
+    ctCorner2 = [ompMCgeo.xBounds(end) ompMCgeo.yBounds(end) ompMCgeo.zBounds(end)];
+    plot3([ctCorner1(1) ctCorner2(1)],[ctCorner1(2) ctCorner1(2)],[ctCorner1(3) ctCorner1(3)],'k' )
+    plot3([ctCorner1(1) ctCorner2(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner1(3) ctCorner1(3)],'k' )
+    plot3([ctCorner1(1) ctCorner1(1)],[ctCorner1(2) ctCorner2(2)],[ctCorner1(3) ctCorner1(3)],'k' )
+    plot3([ctCorner2(1) ctCorner2(1)],[ctCorner1(2) ctCorner2(2)],[ctCorner1(3) ctCorner1(3)],'k' )
+    plot3([ctCorner1(1) ctCorner2(1)],[ctCorner1(2) ctCorner1(2)],[ctCorner2(3) ctCorner2(3)],'k' )
+    plot3([ctCorner1(1) ctCorner2(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner2(3) ctCorner2(3)],'k' )
+    plot3([ctCorner1(1) ctCorner1(1)],[ctCorner1(2) ctCorner2(2)],[ctCorner2(3) ctCorner2(3)],'k' )
+    plot3([ctCorner2(1) ctCorner2(1)],[ctCorner1(2) ctCorner2(2)],[ctCorner2(3) ctCorner2(3)],'k' )
+    plot3([ctCorner1(1) ctCorner1(1)],[ctCorner1(2) ctCorner1(2)],[ctCorner1(3) ctCorner2(3)],'k' )
+    plot3([ctCorner2(1) ctCorner2(1)],[ctCorner1(2) ctCorner1(2)],[ctCorner1(3) ctCorner2(3)],'k' )
+    plot3([ctCorner1(1) ctCorner1(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner1(3) ctCorner2(3)],'k' )
+    plot3([ctCorner2(1) ctCorner2(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner1(3) ctCorner2(3)],'k' )
+    
+    xlabel('x [cm]')
+    ylabel('y [cm]')
+    zlabel('z [cm]')
+
+    rotate3d on
+    
+end
 
 %% Create beamlet source
 numOfBixels = zeros(dij.numOfBeams, 1);
@@ -209,7 +247,19 @@ for i = 1:dij.numOfBeams % loop over all beams
         bixelSide1((i-1)*stf(i).numOfRays + j,:) = (stf(i).ray(j).beamletCornersAtIso(2,:) + stf(i).isoCenter) ./ scale - currCorner;
         bixelSide2((i-1)*stf(i).numOfRays + j,:) = (stf(i).ray(j).beamletCornersAtIso(4,:) + stf(i).isoCenter) ./ scale - currCorner;
         
+        if visBool
+            for k = 1:4
+                currCornerVis = (stf(i).ray(j).beamletCornersAtIso(k,:) + stf(i).isoCenter)/10;
+                % rays connecting source and ray corner
+                plot3([beamSource(i,1) currCornerVis(1)],[beamSource(i,2) currCornerVis(2)],[beamSource(i,3) currCornerVis(3)],'y')
+                % connection between corners
+                lRayCorner = (stf(i).ray(j).beamletCornersAtIso(mod(k,4) + 1,:) + stf(i).isoCenter)/10;
+                plot3([lRayCorner(1) currCornerVis(1)],[lRayCorner(2) currCornerVis(2)],[lRayCorner(3) currCornerVis(3)],'r')
+            end
+        end
+        
     end
+        
 end
 
 ompMCsource.nBeams = dij.numOfBeams;
@@ -246,7 +296,6 @@ for s = 1:dij.numOfScenarios
     dij.physicalDose{s} = matRad_ompInterface(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
 end
 
-
 try
     % wait 0.1s for closing all waitbars
     allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
@@ -255,20 +304,4 @@ try
 catch
 end
 
-end
-
-function [rho,matIx] = HUtoDensityAndMaterial(HU,material)
-    rho = [];
-    for i = 1:size(material,1)
-        if HU <= material{i,3}
-            matIx = i;
-            m = (material{i,5}-material{i,4})/(material{i,3}-material{i,2});
-            b = material{i,4} - m*material{i,2};
-            rho = m*HU + b;
-            break;
-        end
-    end
-    if isempty(rho)
-        error(['Error in CT density calculation: No material/density could be assigned to HU value of ' num2str(HU) '!']);
-    end
 end

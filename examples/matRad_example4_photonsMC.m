@@ -52,7 +52,7 @@ stf = matRad_generateStf(ct,cst,pln);
 % simulated per beamlet to be 700. You can find compatible VMC++ files at
 % http://www.cerr.info/download.php which have to located in
 %  matRadrootDirectory\vmc++.
-dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
+dij = matRad_calcPhotonDoseOmpMC(ct,stf,pln,cst);
 
 %% Inverse Optimization for IMRT
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
