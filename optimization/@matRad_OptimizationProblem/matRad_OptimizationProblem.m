@@ -28,6 +28,9 @@ classdef matRad_OptimizationProblem < handle
         %Constraint Jacobian declaration
         cJacob = matRad_constraintJacobian(optiProb,w,dij,cst)
         
+        %Jacobian Structure
+        jacobStruct = matRad_getJacobianStructure(optiProb,w,dij,cst)
+        
         [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
         
         function lb = lowerBounds(optiProb,w)

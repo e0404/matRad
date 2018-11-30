@@ -91,7 +91,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             funcs.constraints       = @(x) optiProb.matRad_constraintFunctions(x,dij,cst);
             funcs.gradient          = @(x) optiProb.matRad_objectiveGradient(x,dij,cst);
             funcs.jacobian          = @(x) optiProb.matRad_constraintJacobian(x,dij,cst);
-            funcs.jacobianstructure = @( ) matRad_getJacobStruct(w,dij,cst);
+            funcs.jacobianstructure = @( ) optiProb.matRad_getJacobianStructure(w0,dij,cst);
             funcs.iterfunc          = @(iter,objective,paramter) obj.iterFunc(iter,objective,paramter,ipoptStruct.ipopt.max_iter);
             
             % Informing user to press q to terminate optimization
