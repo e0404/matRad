@@ -251,21 +251,20 @@ for i = 1:dij.numOfBeams % loop over all beams
     rot_coordsVcoarse(:,2) = rot_coordsVcoarse(:,2)-stf(i).sourcePoint_bev(2);
     rot_coordsVcoarse(:,3) = rot_coordsVcoarse(:,3)-stf(i).sourcePoint_bev(3);
 
+    % calculate geometric distances
+    geoDistVcoarse{1}= sqrt(sum(rot_coordsVcoarse.^2,2));
+    
     % ray tracing
     fprintf('matRad: calculate radiological depth cube...');
-    [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,effectiveLateralCutoff);
+    radDepthV = matRad_rayTracing(stf(i),ct,V,rot_coordsV,effectiveLateralCutoff);
     fprintf('done \n');
-    
-    % get indices of voxels where ray tracing results are available
-    radDepthIx = find(~isnan(radDepthV{1}));
-    
-     % interpolate radiological depth cube to dose grid resolution
-    [radDepthIxcoarse,radDepthVcoarse,geoDistVcoarse] = matRad_interpRadDepth...
-        (ct,1,V,Vcoarse,vXgridcoarse,vYgridcoarse,vZgridcoarse,radDepthIx,radDepthV,geoDistV);
+        
+    % interpolate radiological depth cube to dose grid resolution
+    radDepthVcoarse = matRad_interpRadDepth...
+        (ct,1,V,Vcoarse,vXgridcoarse,vYgridcoarse,vZgridcoarse,radDepthV);
     
     % limit rotated coordinates to positions where ray tracing is availabe
-    % rot_coordsV = rot_coordsV(radDepthIx,:);
-    rot_coordsVcoarse = rot_coordsVcoarse(radDepthIxcoarse,:);
+    rot_coordsVcoarse = rot_coordsVcoarse(find(~isnan(radDepthVcoarse{1})),:);
     
     % get index of central ray or closest to the central ray
     [~,center] = min(sum(reshape([stf(i).ray.rayPos_bev],3,[]).^2));
@@ -373,7 +372,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                                                                stf(i).sourcePoint_bev, ...
                                                                stf(i).ray(j).targetPoint_bev, ...
                                                                machine.meta.SAD, ...
-                                                               radDepthIxcoarse, ...
+                                                               find(~isnan(radDepthVcoarse{1})), ...
                                                                effectiveLateralCutoff);
 
         % empty bixels may happen during recalculation of error

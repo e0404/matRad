@@ -251,16 +251,12 @@ for i = 1:length(stf) % loop over all beams
     radDepthV = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoffRayTracing);
     fprintf('done.\n');
     
-    % get indices of voxels where ray tracing results are available
-    radDepthIx = find(~isnan(radDepthV{1}));
-    
     % interpolate radiological depth cube to dose grid resolution
-    [radDepthIxcoarse,radDepthVcoarse,~] = matRad_interpRadDepth...
-        (ct,1,V,Vcoarse,vXgridcoarse,vYgridcoarse,vZgridcoarse,radDepthIx,radDepthV);
+    radDepthVcoarse = matRad_interpRadDepth...
+        (ct,1,V,Vcoarse,vXgridcoarse,vYgridcoarse,vZgridcoarse,radDepthV);
     
     % limit rotated coordinates to positions where ray tracing is availabe
-    % rot_coordsV       = rot_coordsV(radDepthIx,:);
-    rot_coordsVcoarse = rot_coordsVcoarse(radDepthIxcoarse,:);
+    rot_coordsVcoarse = rot_coordsVcoarse(find(~isnan(radDepthVcoarse{1})),:);
 
     % Determine lateral cutoff
     fprintf('matRad: calculate lateral cutoff...');
@@ -284,11 +280,10 @@ for i = 1:length(stf) % loop over all beams
                                                      stf(i).sourcePoint_bev, ...
                                                      stf(i).ray(j).targetPoint_bev, ...
                                                      machine.meta.SAD, ...
-                                                     radDepthIxcoarse, ...
+                                                     find(~isnan(radDepthVcoarse{1})), ...
                                                      maxLateralCutoffDoseCalc);
              
             radDepths = radDepthVcoarse{1}(ix);   
-            %  radialDist_sq = radialDist_sq(ix);
                        
             % just use tissue classes of voxels found by ray tracer
             if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 

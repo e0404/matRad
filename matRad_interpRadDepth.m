@@ -1,4 +1,4 @@
-function [radDepthIxcoarse,radDepthVcoarse,geoDistVcoarse] = matRad_interpRadDepth(ct,ctScenNum,V,Vcoarse,vXgrid,vYgrid,vZgrid,radDepthIx,radDepthV,geoDistV)
+function radDepthVcoarse = matRad_interpRadDepth(ct,ctScenNum,V,Vcoarse,vXgrid,vYgrid,vZgrid,radDepthV)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % down/up sampling the radiological depth dose cubes
 % 
@@ -7,7 +7,6 @@ function [radDepthIxcoarse,radDepthVcoarse,geoDistVcoarse] = matRad_interpRadDep
 % input
 %   ct:             matRad ct structure
 %   V:              linear voxel indices of the cst 
-%   radDepthIx:     linear voxel indices for which radiological depth was calculated
 %   radDepthV:      radiological depth of radDepthIx
 %   vXgrid:         query points of now location in x dimension
 %   vYgrid:         query points of now location in y dimension
@@ -15,8 +14,6 @@ function [radDepthIxcoarse,radDepthVcoarse,geoDistVcoarse] = matRad_interpRadDep
 %   Vcoarse:        linear voxel indices of the down sampled grid resolution
 %
 % output
-
-%   radDepthIxcoarse:  linear index of Vcoarse of voxels with radiological depths for coarse cube
 %   radDepthVcoarse:   interpolated radiological depth of radDepthIx
 %
 % References
@@ -41,21 +38,11 @@ function [radDepthIxcoarse,radDepthVcoarse,geoDistVcoarse] = matRad_interpRadDep
 [Yq, Xq, Zq] = meshgrid(vXgrid,vYgrid,vZgrid);
 
 radDepthCube                = NaN*ones(ct.cubeDim);
-radDepthCube(V(radDepthIx)) = radDepthV{ctScenNum}(radDepthIx);
+radDepthCube(V(find(~isnan(radDepthV{1})))) = radDepthV{ctScenNum}(find(~isnan(radDepthV{1})));
 
 % interpolate cube - cube is now stored in Y X Z 
 coarseRadDepthCube          = (interp3(Y,X,Z,radDepthCube,Yq,Xq,Zq));
 radDepthVcoarse{ctScenNum}  = coarseRadDepthCube(Vcoarse);
-radDepthlinIxcoarse         = find(~isnan(coarseRadDepthCube));
-[~,radDepthIxcoarse]        = ismember(radDepthlinIxcoarse,Vcoarse);
 
-if exist('geoDistV','var') && nargout > 2
-   geoDistCube                = NaN*ones(ct.cubeDim);
-   geoDistCube(V(radDepthIx)) = geoDistV(radDepthIx);
-   geoDistCube                = interp3(Y,X,Z,geoDistCube,Yq,Xq,Zq);
-   geoDistVcoarse{ctScenNum}  = geoDistCube(Vcoarse);
-end
-
- 
 end
 
