@@ -89,25 +89,22 @@ end
 V          = [];
 doseTarget = [];
 ixTarget   = [];
-% resizing  cst to dose cube resolution 
-vXcoarse = ct.x(1):pln.propOpt.downRes(1):ct.x(end);
-vYcoarse = ct.y(1):pln.propOpt.downRes(2):ct.y(end);
-vZcoarse = ct.z(1):pln.propOpt.downRes(3):ct.z(end);
+
+% resizing cst to dose cube resolution 
+vXcoarse = ct.x(1):dij.resolution.x:ct.x(end);
+vYcoarse = ct.y(1):dij.resolution.y:ct.y(end);
+vZcoarse = ct.z(1):dij.resolution.z:ct.z(end);
 
 [ Y,  X,  Z] = meshgrid(ct.x,ct.y,ct.z);
 [Yq, Xq, Zq] = meshgrid(vXcoarse,vYcoarse,vZcoarse);
 
-for i= 1: size(cst,1)
-    tmpCube              = zeros(ct.cubeDim);
-    tmpCube(cst{i,4}{1}) = 1;
-    cst{i,4}{1}          = find(interp3(Y,X,Z,tmpCube,Yq,Xq,Zq));
+for i = 1:size(cst,1)
+   for ixScen = 1:ct.numOfCtScen
+    tmpCube                   = zeros(ct.cubeDim);
+    tmpCube(cst{i,4}{ixScen}) = 1;
+    cst{i,4}{ixScen}          = find(interp3(Y,X,Z,tmpCube,Yq,Xq,Zq)>.5);
+   end
 end
-
-
-
-% interpolate cube - cube is now stored in Y X Z 
-Vcoarse = find(interp3(Y,X,Z,tmpCube,Yq,Xq,Zq));
-
 
 for i=1:size(cst,1)
     if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
