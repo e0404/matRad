@@ -48,11 +48,15 @@ figureWait = waitbar(0,'calculate dose influence matrix for particles...');
 % prevent closure of waitbar and show busy state
 set(figureWait,'pointer','watch');
 
+vXcoarse = ct.x(1):pln.propOpt.downRes(1):ct.x(end);
+vYcoarse = ct.y(1):pln.propOpt.downRes(2):ct.y(end);
+vZcoarse = ct.z(1):pln.propOpt.downRes(3):ct.z(end);
+
 % meta information for dij
 dij.numOfBeams         = pln.propStf.numOfBeams;
-dij.numOfVoxels        = prod(ct.cubeDim);
-dij.resolution         = ct.resolution;
-dij.dimensions         = ct.cubeDim;
+dij.dimensions         = [numel(vXcoarse) numel(vYcoarse) numel(vZcoarse)];
+dij.numOfVoxels        = prod(dij.dimensions);
+dij.resolution         = pln.propOpt.downRes;
 dij.numOfScenarios     = 1;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
@@ -74,7 +78,7 @@ dij.beamNum  = NaN*ones(numOfColumnsDij,1);
 
 % Allocate space for dij.physicalDose sparse matrix
 for i = 1:dij.numOfScenarios
-    dij.physicalDose{i} = spalloc(prod(ct.cubeDim),numOfColumnsDij,1);
+    dij.physicalDose{i} = spalloc(dij.numOfVoxels,numOfColumnsDij,1);
 end
 
 % helper function for energy selection
@@ -101,8 +105,7 @@ end
 % Only take voxels inside patient.
 V = [cst{:,4}];
 V = unique(vertcat(V{:}));
-maskCube = matRad_CtDownsamplingMask(ct,pln.propOpt.downRes);
-V = intersect(V, find(maskCube));
+
 
 % ignore densities outside of contours
 eraseCtDensMask = ones(dij.numOfVoxels,1);
@@ -186,6 +189,11 @@ stf = matRad_computeSSD(stf,ct);
 
 fprintf('matRad: Particle dose calculation...\n');
 counter = 0;
+
+[Vcoarse,cubeDimCoarse,vXgridcoarse,vYgridcoarse,vZgridcoarse] = matRad_coarseGrid(ct,pln.propOpt.downRes,V);
+% Convert CT subscripts to coarse linear indices.
+[yCoordsV_voxCoarse, xCoordsV_voxCoarse, zCoordsV_voxCoarse] = ind2sub(cubeDimCoarse,Vcoarse);
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:length(stf) % loop over all beams
     
@@ -206,6 +214,11 @@ for i = 1:length(stf) % loop over all beams
     zCoordsV = zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
     coordsV  = [xCoordsV yCoordsV zCoordsV];
 
+    xCoordsVcoarse = xCoordsV_voxCoarse(:)*pln.propOpt.downRes(1)-stf(i).isoCenter(1);
+    yCoordsVcoarse = yCoordsV_voxCoarse(:)*pln.propOpt.downRes(2)-stf(i).isoCenter(2);
+    zCoordsVcoarse = zCoordsV_voxCoarse(:)*pln.propOpt.downRes(3)-stf(i).isoCenter(3);
+    coordsVcoarse  = [xCoordsVcoarse yCoordsVcoarse zCoordsVcoarse];
+    
     % Get Rotation Matrix
     % Do not transpose matrix since we usage of row vectors &
     % transformation of the coordinate system need double transpose
@@ -214,13 +227,18 @@ for i = 1:length(stf) % loop over all beams
     rotMat_system_T = matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).couchAngle);
 
     % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
-    rot_coordsV = coordsV*rotMat_system_T;
+    rot_coordsV       = coordsV*rotMat_system_T;
+    rot_coordsVcoarse = coordsVcoarse*rotMat_system_T;
 
     rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
     rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
     rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
 
-    % Calcualte radiological depth cube
+    rot_coordsVcoarse(:,1) = rot_coordsVcoarse(:,1)-stf(i).sourcePoint_bev(1);
+    rot_coordsVcoarse(:,2) = rot_coordsVcoarse(:,2)-stf(i).sourcePoint_bev(2);
+    rot_coordsVcoarse(:,3) = rot_coordsVcoarse(:,3)-stf(i).sourcePoint_bev(3);
+    
+    % Calculate radiological depth cube
     lateralCutoffRayTracing = 50;
     fprintf('matRad: calculate radiological depth cube...');
     radDepthV = matRad_rayTracing(stf(i),ct,V,rot_coordsV,lateralCutoffRayTracing);
@@ -229,9 +247,15 @@ for i = 1:length(stf) % loop over all beams
     % get indices of voxels where ray tracing results are available
     radDepthIx = find(~isnan(radDepthV{1}));
     
-    % limit rotated coordinates to positions where ray tracing is availabe
-    rot_coordsV = rot_coordsV(radDepthIx,:);
+    % Downsampling radiological depth cube to dose grid resolution
+    [radDepthVcoarse,radDepthIxcoarse] = matRad_interpRadDepth...
+        (ct,V,radDepthIx,radDepthV,vXgridcoarse,vYgridcoarse,vZgridcoarse,Vcoarse);
     
+    
+    % limit rotated coordinates to positions where ray tracing is availabe
+    % rot_coordsV       = rot_coordsV(radDepthIx,:);
+    rot_coordsVcoarse = rot_coordsVcoarse(radDepthIxcoarse,:);
+
     % Determine lateral cutoff
     fprintf('matRad: calculate lateral cutoff...');
     cutOffLevel = .995;
@@ -250,14 +274,16 @@ for i = 1:length(stf) % loop over all beams
             maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
 
             % Ray tracing for beam i and ray j
-            [ix,radialDist_sq] = matRad_calcGeoDists(rot_coordsV, ...
+            [ix,radialDist_sq] = matRad_calcGeoDists(rot_coordsVcoarse, ...
                                                      stf(i).sourcePoint_bev, ...
                                                      stf(i).ray(j).targetPoint_bev, ...
                                                      machine.meta.SAD, ...
-                                                     radDepthIx, ...
+                                                     radDepthIxcoarse, ...
                                                      maxLateralCutoffDoseCalc);
-            radDepths = radDepthV{1}(ix);   
-            
+             
+            radDepths = radDepthVcoarse{1}(ix);   
+            %  radialDist_sq = radialDist_sq(ix);
+                       
             % just use tissue classes of voxels found by ray tracer
             if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
                 && strcmp(pln.radiationMode,'carbon')
@@ -353,7 +379,7 @@ for i = 1:length(stf) % loop over all beams
                 %[currIx,bixelDose] = matRad_DijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
                 
                 % Save dose for every bixel in cell array
-                doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelDose,dij.numOfVoxels,1);
+                doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(Vcoarse(ix(currIx)),1,bixelDose,dij.numOfVoxels,1);
 
                 if isfield(dij,'mLETDose')
                   % calculate particle LET for bixel k on ray j of beam i
@@ -361,7 +387,7 @@ for i = 1:length(stf) % loop over all beams
                   bixelLET = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths); 
 
                   % Save LET for every bixel in cell array
-                  letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelLET.*bixelDose,dij.numOfVoxels,1);
+                  letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(Vcoarse(ix(currIx)),1,bixelLET.*bixelDose,dij.numOfVoxels,1);
                 end
                              
                 if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
@@ -372,8 +398,8 @@ for i = 1:length(stf) % loop over all beams
                         vTissueIndex_j(currIx,:),...
                         machine.data(energyIx));
                 
-                    alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix(currIx)),1,bixelAlpha.*bixelDose,dij.numOfVoxels,1);
-                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1}  = sparse(V(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.numOfVoxels,1);
+                    alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(Vcoarse(ix(currIx)),1,bixelAlpha.*bixelDose,dij.numOfVoxels,1);
+                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1}  = sparse(Vcoarse(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.numOfVoxels,1);
                 end
                 
                 % save computation time and memory by sequentially filling the

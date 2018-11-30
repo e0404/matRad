@@ -1,4 +1,4 @@
-function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
+function [resultGUI,info] = matRad_fluenceOptimization(dij,ct,cst,pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
@@ -89,6 +89,26 @@ end
 V          = [];
 doseTarget = [];
 ixTarget   = [];
+% resizing  cst to dose cube resolution 
+vXcoarse = ct.x(1):pln.propOpt.downRes(1):ct.x(end);
+vYcoarse = ct.y(1):pln.propOpt.downRes(2):ct.y(end);
+vZcoarse = ct.z(1):pln.propOpt.downRes(3):ct.z(end);
+
+[ Y,  X,  Z] = meshgrid(ct.x,ct.y,ct.z);
+[Yq, Xq, Zq] = meshgrid(vXcoarse,vYcoarse,vZcoarse);
+
+for i= 1: size(cst,1)
+    tmpCube              = zeros(ct.cubeDim);
+    tmpCube(cst{i,4}{1}) = 1;
+    cst{i,4}{1}          = find(interp3(Y,X,Z,tmpCube,Yq,Xq,Zq));
+end
+
+
+
+% interpolate cube - cube is now stored in Y X Z 
+Vcoarse = find(interp3(Y,X,Z,tmpCube,Yq,Xq,Zq));
+
+
 for i=1:size(cst,1)
     if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
         V = [V;cst{i,4}{1}];
@@ -202,7 +222,7 @@ fprintf('Press q to terminate the optimization...\n');
 
 % calc dose and reshape from 1D vector to 2D array
 fprintf('Calculating final cubes...\n');
-resultGUI = matRad_calcCubes(wOpt,dij,cst);
+resultGUI = matRad_calcCubes(wOpt,dij,ct,cst);
 resultGUI.wUnsequenced = wOpt;
 
 % unset Key Pressed Callback of Matlab command window

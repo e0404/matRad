@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcCubes(w,dij,cst,scenNum)
+function resultGUI = matRad_calcCubes(w,dij,ct,cst,scenNum)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad computation of all cubes for the resultGUI struct which is used
 % as result container and for visualization in matRad's GUI
@@ -43,10 +43,19 @@ for i = 1:dij.numOfBeams
 end
 beamInfo(dij.numOfBeams+1).suffix = '';
 beamInfo(dij.numOfBeams+1).logIx  = true(size(w));
+%
+% resizing  dose to  ct cube resolution 
+vXcoarse = ct.x(1):dij.resolution(1):ct.x(end);
+vYcoarse = ct.y(1):dij.resolution(2):ct.y(end);
+vZcoarse = ct.z(1):dij.resolution(3):ct.z(end);
+
+[ Y,  X,  Z] = meshgrid(ct.x,ct.y,ct.z);
+[Yq, Xq, Zq] = meshgrid(vXcoarse,vYcoarse,vZcoarse);
 
 % compute physical dose for all beams individually and together
 for i = 1:length(beamInfo)
-    resultGUI.(['physicalDose', beamInfo(i).suffix]) = reshape(full(dij.physicalDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.dimensions);
+    Tc = reshape(full(dij.physicalDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.dimensions);
+    resultGUI.(['physicalDose', beamInfo(i).suffix]) = interp3(Yq,Xq,Zq, Tc, Y,X,Z);
 end
 
 % consider RBE for protons
