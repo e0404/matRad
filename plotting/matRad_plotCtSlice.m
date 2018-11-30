@@ -1,4 +1,4 @@
-function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,plane,slice,cMap,window)
+function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,plane,slice,ct,cMap,window)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that generates the plot for the CT in the GUI. The
 % function can also be used in personal matlab figures by passing the
@@ -51,15 +51,25 @@ end
 cMapScale = size(cMap,1) - 1;
 
 if plane == 1 % Coronal plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube{cubeIdx}(slice,:,:)-window(1))/(window(2) - window(1))))),cMap);
-      
+    ctSlice = (uint8(cMapScale*(squeeze((ctCube{cubeIdx}(slice,:,:)-window(1))/(window(2) - window(1))))));
+    gridDim1 = ct.y;
+    gridDim2 = ct.z;  
 elseif plane == 2 % sagittal plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,slice,:)-window(1))/(window(2) - window(1))))),cMap);
-       
+    ctSlice = (uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,slice,:)-window(1))/(window(2) - window(1))))));
+    gridDim1 = ct.x;
+    gridDim2 = ct.z;   
 elseif plane == 3 % Axial plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,:,slice)-window(1))/(window(2) - window(1))))),cMap);
+    ctSlice = (uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,:,slice)-window(1))/(window(2) - window(1))))));
+    gridDim1 = ct.x;
+    gridDim2 = ct.y;
 end
-ctHandle = image('CData',ct_rgb,'Parent',axesHandle);
+
+[mX,mY]  = meshgrid(gridDim1,gridDim2);
+ctHandle = pcolor(mX,mY,ctSlice,'Parent',axesHandle); 
+colormap(cMap); shading flat; hold on
+set(gca,'Xlim',[gridDim1(1) gridDim1(end)]);
+set(gca,'Ylim',[gridDim2(1) gridDim2(end)]);
+
 
 end
 
