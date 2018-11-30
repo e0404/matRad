@@ -105,7 +105,7 @@ ompMCgeo.ctRes = [ct.resolution.x ct.resolution.y ct.resolution.z];
 ompMCoptions.verbose = true;
 
 % start MC control          
-ompMCoptions.nHistories = 5000000;
+ompMCoptions.nHistories = 5000;
 ompMCoptions.nBatches = 10;
 ompMCoptions.randomSeeds = [97 33];
 
