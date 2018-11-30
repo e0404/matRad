@@ -1,5 +1,4 @@
 function jacobVec = matRad_jacobFunc(d_i,constraint,d_ref)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian function for inverse planning supporting max dose
 % constraint, min dose constraint, min mean dose constraint, max mean dose constraint, 
 % min EUD constraint, max EUD constraint, max DVH constraint, min DVH constraint 
@@ -18,9 +17,8 @@ function jacobVec = matRad_jacobFunc(d_i,constraint,d_ref)
 %              in beamlet weights (see jacobFunWrapper)
 %
 % References
+%   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 

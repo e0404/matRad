@@ -1,5 +1,4 @@
 function collimation = matRad_importFieldShapes(beamSequence, fractionSequence)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % function to import collimator shapes from a DICOM RT plan
 % 
 % call
@@ -14,9 +13,8 @@ function collimation = matRad_importFieldShapes(beamSequence, fractionSequence)
 %   all field shape matrices 
 %
 % References
+%   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -29,6 +27,7 @@ function collimation = matRad_importFieldShapes(beamSequence, fractionSequence)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 counter = 0;
 maximumExtent = 0;
 tmpCollimation.Fields = struct;

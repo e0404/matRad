@@ -1,5 +1,4 @@
 function c = matRad_constFunc(d_i,constraint,d_ref)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: constraint function for inverse planning supporting max dose
 % constraint, min dose constraint, max dose constraint, min mean, 
 % min EUD constraint, max EUDconstraint, max DVH constraint, min DVH constraint 
@@ -16,10 +15,8 @@ function c = matRad_constFunc(d_i,constraint,d_ref)
 %   c: value of constraints
 %
 % Reference
+%   -
 %
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 

@@ -1,5 +1,4 @@
 function d = matRad_backProjection(w,dij,options)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad back projection function to calculate the current dose-,effect- or
 % RBExDose- vector based on the dij struct.
 % 
@@ -14,8 +13,6 @@ function d = matRad_backProjection(w,dij,options)
 % output
 %   d:       dose vector, effect vector or RBExDose vector 
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 

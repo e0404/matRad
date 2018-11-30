@@ -1,5 +1,4 @@
 function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad particle dose calculation wrapper
 % 
 % call
@@ -20,8 +19,6 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 % References
 %   [1] http://iopscience.iop.org/0031-9155/41/8/005
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

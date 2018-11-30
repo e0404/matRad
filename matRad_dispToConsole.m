@@ -1,5 +1,4 @@
 function matRad_dispToConsole(string,param,typeOfMessage,formatSpec)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_dispToConsole function to display information on the console 
 % depending on the current param.logLevel
 
@@ -14,8 +13,6 @@ function matRad_dispToConsole(string,param,typeOfMessage,formatSpec)
 % output
 %   
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 

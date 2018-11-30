@@ -1,5 +1,4 @@
 function [radDepthV,geoDistV] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
 % 
@@ -21,8 +20,6 @@ function [radDepthV,geoDistV] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCu
 % References
 %   [1] http://www.sciencedirect.com/science/article/pii/S1120179711001359
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

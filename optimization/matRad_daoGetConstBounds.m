@@ -1,5 +1,4 @@
 function [cl,cu] = matRad_daoGetConstBounds(cst,apertureInfo,options)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT get constraint bounds function for direct aperture optimization
 % 
 % call
@@ -15,10 +14,8 @@ function [cl,cu] = matRad_daoGetConstBounds(cst,apertureInfo,options)
 %   cu: lower bounds on constraints
 %
 % References
+%   -
 %
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

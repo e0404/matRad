@@ -1,5 +1,4 @@
 function output = matRad_getColormap(name,size)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function wrapper for getting a colormap. We use this wrapper to
 % manually handle the supported colormaps enabling the definition of custom
 % colormaps.
@@ -18,8 +17,6 @@ function output = matRad_getColormap(name,size)
 %   This is either the requested colormap, or a list of all available
 %   colormaps (see above)
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
