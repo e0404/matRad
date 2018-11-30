@@ -1,5 +1,4 @@
 function scenProb = matRad_calcScenProb(mu,sigma,samplePos,calcType,probDist)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_calcScenProb provides different ways of calculating the probability 
 % of occurance of individual scenarios
 % 
@@ -19,8 +18,6 @@ function scenProb = matRad_calcScenProb(mu,sigma,samplePos,calcType,probDist)
 %   scenProb:       occurance probability of the specified scenario
 %
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 

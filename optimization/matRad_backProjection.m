@@ -1,5 +1,4 @@
 function [d,d_exp,Omega] = matRad_backProjection(w,dij,cst,options)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad back projection function to calculate the current dose-,effect- or
 % RBExDose- vector based on the dij struct.
 % 
@@ -16,8 +15,6 @@ function [d,d_exp,Omega] = matRad_backProjection(w,dij,cst,options)
 %   d:       dose vector, effect vector or RBExDose vector 
 %   d_exp:   expected dose vector
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 

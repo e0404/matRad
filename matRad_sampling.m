@@ -1,5 +1,4 @@
 function [caSampRes, mSampDose, pln, resultGUInomScen]  = matRad_sampling(ct,stf,cst,pln,w,structSel,multScen,param)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_randomSampling enables sampling multiple treatment scenarios
 % 
 % call
@@ -22,8 +21,7 @@ function [caSampRes, mSampDose, pln, resultGUInomScen]  = matRad_sampling(ct,stf
 %   pln:               matRad pln struct containing sampling information
 %   resultGUInomScen:  resultGUI struct of the nominal scenario
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 

@@ -1,5 +1,4 @@
 function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,param)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
 % call
@@ -20,8 +19,6 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,param)
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 

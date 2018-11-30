@@ -1,5 +1,4 @@
 function resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated 
 % beams with multiple static segments according to Xia et al. (1998)
 % Medical Physics
@@ -22,8 +21,6 @@ function resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels,visB
 % References
 %   [1] http://online.medphys.org/resource/1/mphya6/v25/i8/p1424_s1
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

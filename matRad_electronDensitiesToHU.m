@@ -1,5 +1,4 @@
 function ct = matRad_electronDensitiesToHU(ct)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to calculate recalculate HU values from equivalent 
 % densities. This is done to provide downward compatability to previous
 % matRad versions where HU values were not automatically saved during the
@@ -18,8 +17,6 @@ function ct = matRad_electronDensitiesToHU(ct)
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

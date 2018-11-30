@@ -1,5 +1,4 @@
 function sigmaRashi = matRad_calcSigmaRashi(energy,rangeShifter,SSD)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % calculation of additional beam broadening due to the use of range shifters (only for protons)
 % 
 % call
@@ -17,8 +16,6 @@ function sigmaRashi = matRad_calcSigmaRashi(energy,rangeShifter,SSD)
 %   https://www.ncbi.nlm.nih.gov/pubmed/12375823
 %   https://www.ncbi.nlm.nih.gov/pubmed/12701891
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

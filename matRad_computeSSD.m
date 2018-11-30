@@ -1,7 +1,5 @@
 function stf = matRad_computeSSD(stf,ct,param,mode)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad SSD calculation. Note that this function only computes the SSD of
-% the first scenario if multiple CTs are present in the data set
+% matRad SSD calculation
 % 
 % call
 %   stf = matRad_computeSSD(stf,ct,mode)
@@ -16,9 +14,7 @@ function stf = matRad_computeSSD(stf,ct,param,mode)
 %
 % References
 %
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%   -
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 

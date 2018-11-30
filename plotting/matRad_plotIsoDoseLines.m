@@ -1,5 +1,4 @@
 function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window,varargin)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that plots isolines, by precomputed contourc data 
 % computed by matRad_computeIsoDoseContours or manually by calling contourc
 % itself
@@ -27,8 +26,6 @@ function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContour
 % output
 %   isoLineHandles: handle to the plotted isolines
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

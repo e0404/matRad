@@ -1,5 +1,4 @@
 classdef matRad_multScen 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  matRad_multScen 
 %  This class creates all required biological model parameters according to
 % a given radiation modatlity and a given bio model identifier string. 
@@ -21,8 +20,6 @@ classdef matRad_multScen
 %   bioParam:           matRad's bioParam structure containing information
 %                       about the choosen biological model
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 

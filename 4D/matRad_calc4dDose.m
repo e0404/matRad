@@ -1,5 +1,4 @@
 function [resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI, totalPhaseMatrix)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % wrapper for the whole 4D dose calculation pipeline and calculated dose
 % accumulation
 %
@@ -21,8 +20,6 @@ function [resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, r
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2018 the matRad development team.

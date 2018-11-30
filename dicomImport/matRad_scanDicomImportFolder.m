@@ -1,5 +1,4 @@
 function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to scan a folder for dicom data
 % 
 % call
@@ -17,8 +16,6 @@ function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -30,6 +27,7 @@ function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% print current status of the import script
 fprintf('Dose series matched to the different plans are displayed and could be selected.\n');
 fprintf('Rechecking of correct matching procedure is recommended.\n');

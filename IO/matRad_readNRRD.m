@@ -1,5 +1,4 @@
 function [cube, metadata] = matRad_readNRRD(filename)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad NRRD reader
 % 
 % call
@@ -15,8 +14,6 @@ function [cube, metadata] = matRad_readNRRD(filename)
 % References
 %   [1] http://teem.sourceforge.net/nrrd/format.html5
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

@@ -1,5 +1,4 @@
 function matRad_plotDVHBand(nominalDVH, structureStat, doseLabel)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_plotDVHBand to plot dose volume bands
 % 
 % call
@@ -11,9 +10,8 @@ function matRad_plotDVHBand(nominalDVH, structureStat, doseLabel)
 %   doseLabel:        upper bound (end of shadowing)
 %
 % output
+%   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 

@@ -19,8 +19,7 @@ function timeSequence = matRad_makeBixelTimeSeq(stf, resultGUI)
 %   http://cdsweb.cern.ch/record/1182954
 %   http://iopscience.iop.org/article/10.1088/0031-9155/56/20/003/meta
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2018 the matRad development team.

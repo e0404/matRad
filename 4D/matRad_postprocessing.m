@@ -1,5 +1,4 @@
 function resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad postprosseing function accounting for
 %       minimum number of particles per spot
 %       minimum number of particles per iso-energy slice
@@ -18,8 +17,6 @@ function resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf)
 %   resultGUI:  new w and doses in resultGUI
 %
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2018 the matRad development team. 

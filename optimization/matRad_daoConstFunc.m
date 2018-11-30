@@ -1,5 +1,4 @@
 function c = matRad_daoConstFunc(apertureInfoVec,apertureInfo,dij,cst,options)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: constraint function for direct aperture optimization
 % 
 % call
@@ -19,8 +18,6 @@ function c = matRad_daoConstFunc(apertureInfoVec,apertureInfo,dij,cst,options)
 %   [1] http://www.sciencedirect.com/science/article/pii/S0958394701000577
 %   [2] http://www.sciencedirect.com/science/article/pii/S0360301601025858
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

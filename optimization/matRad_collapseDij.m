@@ -1,5 +1,4 @@
 function dijNew = matRad_collapseDij(dij)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad collapse dij function to to supress intensity-modulation for 
 % photons in order to simulate 3D conformal treatments.
 %
@@ -13,10 +12,8 @@ function dijNew = matRad_collapseDij(dij)
 %   dij:            collapsed dose influence matrix
 %
 % References
+%   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2018 the matRad development team. 

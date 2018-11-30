@@ -19,8 +19,6 @@ function matRad_calcStudy(structSel,multScen,matPatientPath,param)
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 
 % 
@@ -32,6 +30,7 @@ function matRad_calcStudy(structSel,multScen,matPatientPath,param)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 if exist('param','var')
     if ~isfield(param,'logLevel')
        param.logLevel = 4;

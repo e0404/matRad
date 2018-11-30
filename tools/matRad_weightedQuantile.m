@@ -1,5 +1,4 @@
 function wQ = matRad_weightedQuantile(values, percentiles, weight, isSorted, extraPolMethod)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad uncertainty analysis report generaator function
 % 
 % call
@@ -12,8 +11,6 @@ function wQ = matRad_weightedQuantile(values, percentiles, weight, isSorted, ext
 %   isSorted:           (optional) bool: are the values sorted alreay?
 %
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 

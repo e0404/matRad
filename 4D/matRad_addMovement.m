@@ -1,5 +1,4 @@
 function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp,visBool)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % adds artificial sinosodal patient motion by creating a deformation vector
 % field and applying it to the ct.cube by geometric transformation
 %
@@ -28,8 +27,6 @@ function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp,
 % References
 %
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2018 the matRad development team.

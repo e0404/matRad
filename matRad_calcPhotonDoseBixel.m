@@ -1,7 +1,6 @@
 function dose = matRad_calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,...
                   Interp_kernel2,Interp_kernel3,radDepths,geoDists,...
                   isoLatDistsX,isoLatDistsZ)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad photon dose calculation for an individual bixel
 % 
 % call
@@ -29,8 +28,6 @@ function dose = matRad_calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,...
 % References
 %   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

@@ -1,5 +1,4 @@
 function dij = matRad_calcPhotonDose(ct,stf,pln,cst,param)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad photon dose calculation wrapper
 % 
 % call
@@ -21,9 +20,6 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,param)
 % References
 %   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 

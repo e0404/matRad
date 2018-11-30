@@ -1,5 +1,4 @@
 function resultGUI = matRad_appendResultGUI(resultGUI,resultGUItoAppend,boolOverwrite,Identifier)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % function to merge two seperate resultGUI structs into one for
 % visualisation
 % 
@@ -15,8 +14,6 @@ function resultGUI = matRad_appendResultGUI(resultGUI,resultGUItoAppend,boolOver
 % output
 %   resultGUI:        matRads resultGUI struct
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2018 the matRad development team. 

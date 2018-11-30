@@ -1,5 +1,4 @@
 function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,param)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dose calculation wrapper bypassing dij calculation
 % 
 % call
@@ -17,9 +16,8 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,param)
 %   resultGUI:  matRad result struct
 %
 % References
+%   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
