@@ -1,5 +1,4 @@
 function dose = matRad_calcInversDVH(volume,doseVec)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse DVH (Dose Volume Histogram) calculation
 % 
 % call
@@ -13,9 +12,8 @@ function dose = matRad_calcInversDVH(volume,doseVec)
 %   dose: dose that corresponds to rel volume
 %
 % References
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%   -
+%    
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -28,7 +26,6 @@ function dose = matRad_calcInversDVH(volume,doseVec)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 
 % sort dose values
 dosePoints = sort(doseVec,'descend');

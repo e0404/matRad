@@ -1,5 +1,4 @@
 function markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice,style)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that plots an isocenter marker
 %
 % call
@@ -19,8 +18,6 @@ function markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice
 % output
 %   markerHandle:       handle to the isocenter marker
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

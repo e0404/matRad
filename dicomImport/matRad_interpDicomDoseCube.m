@@ -1,5 +1,4 @@
 function [ dose ] = matRad_interpDicomDoseCube( ct, currDose )
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to interpolate a given Dicom Dose Cube dicom RTDOSE data
 %
 % call
@@ -15,8 +14,6 @@ function [ dose ] = matRad_interpDicomDoseCube( ct, currDose )
 %
 % References
 %   -
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

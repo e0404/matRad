@@ -1,5 +1,4 @@
 function stf = matRad_generateStf(ct,cst,pln,visMode)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad steering information generation
 % 
 % call
@@ -17,8 +16,6 @@ function stf = matRad_generateStf(ct,cst,pln,visMode)
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -57,7 +54,6 @@ end
 
 % Remove double voxels
 V = unique(V);
-
 % generate voi cube for targets
 voiTarget    = zeros(ct.cubeDim);
 voiTarget(V) = 1;
@@ -73,6 +69,9 @@ end
 if isempty(V)
     error('Could not find target.');
 end
+
+% Convert linear indices to 3D voxel coordinates
+[coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
 
 % prepare structures necessary for particles
 fileName = [pln.radiationMode '_' pln.machine];
@@ -96,13 +95,22 @@ end
 
 % calculate rED or rSP from HU
 if ~isdeployed
+   addpath(['IO']) 
    addpath(['dicomImport'])
    addpath(['dicomImport' filesep 'hlutLibrary'])
 end
 ct = matRad_calcWaterEqD(ct, pln);
 
-% Convert linear indices to 3D voxel coordinates
-[coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
+% take only voxels inside patient
+V = [cst{:,4}];
+V = unique(vertcat(V{:}));
+
+% ignore densities outside of contours
+eraseCtDensMask = ones(prod(ct.cubeDim),1);
+eraseCtDensMask(V) = 0;
+for i = 1:ct.numOfCtScen
+    ct.cube{i}(eraseCtDensMask == 1) = 0;
+end
 
 % Define steering file like struct. Prellocating for speed.
 stf = struct;

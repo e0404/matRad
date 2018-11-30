@@ -1,5 +1,4 @@
 function [cube, metadata] = matRad_readCube(filename)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad Cube read wrapper
 % determines the extension and assigns the appropriate reader to it
 % 
@@ -10,8 +9,6 @@ function [cube, metadata] = matRad_readCube(filename)
 %   filename:   full path of the file
 %
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

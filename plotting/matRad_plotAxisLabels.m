@@ -1,5 +1,4 @@
 function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to plot x and y labels denoting the ct dimensions according to
 % the selected plane
 %
@@ -16,8 +15,6 @@ function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize)
 % output
 %  
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 

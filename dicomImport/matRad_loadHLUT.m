@@ -1,5 +1,4 @@
 function hlut = matRad_loadHLUT(ct, pln)
-  % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   % matRad function to load HLUT file based on the provided ct
   %
   % call
@@ -14,8 +13,6 @@ function hlut = matRad_loadHLUT(ct, pln)
   % References
   %   -
   %
-  % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
   % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %
   % Copyright 2018 the matRad development team. 
@@ -38,6 +35,7 @@ end
 
 % if possible -> file standard out of dicom tags
 try
+    
     hlutFileName = '';
     particle     = pln.radiationMode;
     manufacturer = ct.dicomInfo.Manufacturer;
@@ -55,17 +53,11 @@ try
     % add pathname
     hlutFileCell = strcat(hlutDir,hlutFileCell);
 
-    for i = 1:3
-        existIx(i) = exist(hlutFileCell{i}, 'file') == 2;
-    end
-
+    % check if files exist
+    existIx = cellfun(@(x) exist(x,'file') == 2,hlutFileCell);
+    
     if sum(existIx) == 0
-        warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
-            ' matRad default HLUT loaded'];
-        matRad_dispToConsole(warnText,[],'warning');
-        
-        % load default HLUT
-        hlutFileName = strcat(hlutDir,'matRad_default_', particle, '.hlut');
+        produce an error to enter catch statment below :)
     else
         hlutFileName = hlutFileCell{existIx};
     end
@@ -74,14 +66,14 @@ catch
     
     warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
                 ' matRad default HLUT loaded'];
-    warning(warnText,'backtrace','off');
+    warning('off','backtrace')
+    warning(warnText);
     
     % load default HLUT
-    hlutFileName = strcat(hlutDir,'matRad_default_', particle, '.hlut');
+    hlutFileName = strcat(hlutDir,'matRad_default.hlut');
 
 end
 
-hlutFile = fopen(hlutFileName,'r');
-hlut = cell2mat(textscan(hlutFile,'%f %f','CollectOutput',1,'commentStyle','#'));
-fclose(hlutFile);
+hlut = matRad_readHLUT(hlutFileName);
+
 end

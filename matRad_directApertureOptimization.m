@@ -1,5 +1,4 @@
 function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to run direct aperture optimization
 %
 % call
@@ -24,9 +23,7 @@ function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureIn
 % References
 %   [1] http://dx.doi.org/10.1118/1.4914863
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 

@@ -1,5 +1,4 @@
 function varargout = matRadGUI(varargin)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad GUI
 %
 % call
@@ -22,8 +21,7 @@ function varargout = matRadGUI(varargin)
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -245,12 +243,21 @@ end
 
 %set plan if available - if not create one
 try 
-     if ismember('pln',AllVarNames)  && handles.State > 0
-          setPln(handles);
-     elseif handles.State > 0 
-          getPlnFromGUI(handles);
-          setPln(handles);
-     end
+    
+    if ismember('pln',AllVarNames) && handles.State > 0
+        % check if you are working with a valid pln
+        pln = evalin('base','pln');
+        if ~isfield(pln,'propStf')
+            handles = showWarning(handles,'GUI OpeningFunc: Overwriting outdated pln format with default GUI pln');
+            evalin('base','clear pln');
+            getPlnFromGUI(handles);
+        end
+        setPln(handles);
+    elseif handles.State > 0 
+         getPlnFromGUI(handles);
+         setPln(handles);
+    end
+        
 catch
        handles.State = 0;
        handles = showError(handles,'GUI OpeningFunc: Could not set or get pln');
@@ -908,7 +915,7 @@ if exist('Result','var')
 
         set(handles.popupDisplayOption,'String',fieldnames(Result));
         if sum(strcmp(handles.SelectedDisplayOption,fieldnames(Result))) == 0
-            handles.SelectedDisplayOption = 'physicalDose';
+            handles.SelectedDisplayOption = DispInfo{find([DispInfo{:,2}],1,'first'),1};
         end
         set(handles.popupDisplayOption,'Value',find(strcmp(handles.SelectedDisplayOption,fieldnames(Result))));
 
@@ -959,7 +966,7 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
     
     if isempty(handles.dispWindow{ctIx,2})
-        handles.dispWindow{ctIx,2} = [min(ct.cubeHU{:}(:)) max(ct.cubeHU{:}(:))];
+        handles.dispWindow{ctIx,2} = [min(reshape([ct.cubeHU{:}],[],1)) max(reshape([ct.cubeHU{:}],[],1))];
     end
 
     if get(handles.radiobtnCT,'Value')
@@ -1396,8 +1403,8 @@ set(axesFig3D,'DataAspectRatio',ratios./max(ratios));
 
 set(axesFig3D,'Ydir','reverse');
 
-upperLimits = double(ct.cubeDim).*[ct.resolution.y ct.resolution.x ct.resolution.z];
-set(axesFig3D,'xlim',[1 upperLimits(1)],'ylim',[1 upperLimits(2)],'zlim',[1 upperLimits(3)]);
+upperLimits = double(ct.cubeDim).*[ct.resolution.x ct.resolution.y ct.resolution.z];
+set(axesFig3D,'xlim',[1 upperLimits(2)],'ylim',[1 upperLimits(1)],'zlim',[1 upperLimits(3)]);
 
 set(axesFig3D,'view',oldView);
 
@@ -1763,7 +1770,12 @@ function popupDisplayOption_Callback(hObject, ~, handles)
 content = get(hObject,'String');
 handles.SelectedDisplayOption = content{get(hObject,'Value'),1};
 handles.SelectedDisplayOptionIdx = get(hObject,'Value');
-handles.dispWindow{3,1} = []; handles.dispWindow{3,2} = [];
+%handles.dispWindow{3,1} = []; handles.dispWindow{3,2} = [];
+
+if ~isfield(handles,'colormapLocked') || ~handles.colormapLocked
+    handles.dispWindow{3,1} = []; handles.dispWindow{3,2} = [];
+end
+
 handles = updateIsoDoseLineCache(handles);
 handles.cBarChanged = true;
 guidata(hObject, handles);
@@ -3380,12 +3392,17 @@ tmpString = get(handles.legendTable,'String');
 
 if handles.VOIPlotFlag(idx)
     handles.VOIPlotFlag(idx) = false;
+    cst{idx,5}.Visible = false;
     tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
 elseif ~handles.VOIPlotFlag(idx)
     handles.VOIPlotFlag(idx) = true;
+    cst{idx,5}.Visible = true;
     tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
 end
 set(handles.legendTable,'String',tmpString);
+
+% update cst in workspace accordingly
+assignin('base','cst',cst)
 
 guidata(hObject, handles);
 UpdatePlot(handles)
@@ -3559,7 +3576,13 @@ end
 oldPos = get(handles.axesFig,'Position');
 set(new_handle(1),'units','normalized', 'Position',oldPos);
 
-[filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view','./screenshot.png');
+if ~isfield(handles,'lastStoragePath') || exist(handles.lastStoragePath,'dir') ~= 7
+    handles.lastStoragePath = [];   
+end
+
+[filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view',[handles.lastStoragePath 'screenshot.png']);
+
+handles.lastStoragePath = pathname;
 
 if ~isequal(filename,0) && ~isequal(pathname,0)
     set(gcf, 'pointer', 'watch');
@@ -3572,8 +3595,15 @@ else
     set(tmpFig,'Visible','on');
 end
 
+guidata(hObject,handles);
+
+
 %% Callbacks & Functions for color setting
 function UpdateColormapOptions(handles)
+
+if isfield(handles,'colormapLocked') && handles.colormapLocked
+    return;
+end
 
 selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
 
@@ -3942,9 +3972,9 @@ function cursorText = dataCursorUpdateFunction(obj,event_obj)
 % event_obj    Handle to event object
 % output_txt   Data cursor text string (string or cell array of strings).
 
-target = get(event_obj,'Target');
+target = findall(0,'Name','matRadGUI');
 
-%Get GUI data (maybe there is another way?)
+% Get GUI data (maybe there is another way?)
 handles = guidata(target);
 
 % position of the data point to label
@@ -4124,6 +4154,34 @@ set(hObject,'Value',1);
 
 
 guidata(hObject,handles);
+
+% --- Executes on button press in checkbox_lockColormap.
+function checkbox_lockColormap_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_lockColormap (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_lockColormap
+handles.colormapLocked = get(hObject,'Value');
+
+if handles.colormapLocked
+    state = 'Off'; %'Inactive';
+else
+    state = 'On';
+end
+
+set(handles.popupmenu_chooseColorData,'Enable',state);
+set(handles.popupmenu_windowPreset,'Enable',state);
+set(handles.slider_windowWidth,'Enable',state);
+set(handles.slider_windowCenter,'Enable',state);
+set(handles.edit_windowWidth,'Enable',state);
+set(handles.edit_windowCenter,'Enable',state);
+set(handles.edit_windowRange,'Enable',state);
+set(handles.popupmenu_chooseColormap,'Enable',state);
+
+
+guidata(hObject,handles);
+
 
 function cst = updateStructureTable(handles,cst)
 colorAssigned = true;
@@ -4528,7 +4586,6 @@ for i = 1:size(stf,2)
     
 end
 
-
 % --- Executes on slider movement.
 function cstTableSlider_Callback(hObject, eventdata, handles)
 % hObject    handle to cstTableSlider (see GCBO)
@@ -4549,3 +4606,4 @@ function cstTableSlider_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+

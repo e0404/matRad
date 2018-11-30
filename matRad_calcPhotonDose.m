@@ -1,5 +1,4 @@
 function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad photon dose calculation wrapper
 % 
 % call
@@ -20,9 +19,6 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 % References
 %   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -137,8 +133,8 @@ end
 % set up convolution grid
 if isFieldBasedDoseCalc
     % get data from DICOM import
-    intConvResolution = pln.Collimation.convResolution; 
-    fieldWidth = pln.Collimation.fieldWidth;
+    intConvResolution = pln.propStf.collimation.convResolution; 
+    fieldWidth = pln.propStf.collimation.fieldWidth;
 else
     intConvResolution = .5; % [mm]
     fieldWidth = pln.propStf.bixelWidth;
@@ -366,7 +362,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                                                
         % sample dose only for bixel based dose calculation
         if ~isFieldBasedDoseCalc
-            r0   = 25;   % [mm] sample beyond the inner core
+            r0   = 20 + stf(i).bixelWidth;   % [mm] sample beyond the inner core
             Type = 'radius';
             [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
         end   

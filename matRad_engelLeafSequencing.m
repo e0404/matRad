@@ -1,5 +1,4 @@
 function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated 
 % beams with multiple static segments accroding to Engel et al. 2005
 % Discrete Applied Mathematics
@@ -22,8 +21,6 @@ function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,vi
 % References
 %   [1] http://www.sciencedirect.com/science/article/pii/S0166218X05001411
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
