@@ -157,8 +157,8 @@ if isfield(pln,'propDoseCalc') && ...
 
   if isfield(machine.data,'LET')
 
-    letDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.numOfShiftScen,pln.multScen.numOfRangeShiftScen);
-   
+    letDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
+                            
     for ctScen = 1:pln.multScen.numOfCtScen
         for shiftScen = 1:pln.multScen.numOfShiftScen
             for rangeShiftScen = 1:pln.multScen.numOfRangeShiftScen  
@@ -597,8 +597,3 @@ try
   pause(0.1); 
 catch
 end
-<<<<<<< HEAD
-=======
-
-    
->>>>>>> 7b6362efccf235ed358f06b50343c52e8488860f
