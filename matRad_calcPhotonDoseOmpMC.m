@@ -105,7 +105,7 @@ ompMCgeo.ctRes = [ct.resolution.x ct.resolution.y ct.resolution.z];
 ompMCoptions.verbose = true;
 
 % start MC control          
-ompMCoptions.nHistories = 5000;
+ompMCoptions.nHistories = 5000000;
 ompMCoptions.nBatches = 10;
 ompMCoptions.randomSeeds = [97 33];
 
@@ -114,7 +114,7 @@ ompMCoptions.randomSeeds = [97 33];
 ompMCoptions.spectrumFile = [pwd '/ompMC/spectra/mohan6.spectrum'];
 ompMCoptions.monoEnergy = 0.1; 
 ompMCoptions.charge = 0;
-ompMCoptions.colliBounds = [-2.5 2.5 -2.5 2.5];
+ompMCoptions.colliBounds = [-0.25 0.25 -0.25 0.25];
 ompMCoptions.ssd = 90.0; %This has to be calculated by matRad?
                                                                     
 % start MC transport
@@ -124,6 +124,9 @@ ompMCoptions.pgs4formFile = [pwd '/ompMC/pegs4/pgs4form.dat'];
 
 ompMCoptions.global_ecut = 0.700;
 ompMCoptions.global_pcut = 0.010; 
+
+% Relative Threshold for dose
+ompMCoptions.relDoseThreshold = 0.01;
 
 % Output folders
 ompMCoptions.outputFolder = [pwd '/ompMC/output/'];
@@ -150,12 +153,30 @@ for s=1:dij.numOfScenarios
     [cubeRho{s},cubeMatIx{s}] = arrayfun(@(HU) HUtoDensityAndMaterial(HU,material),ct.cubeHU{s});
     
     cubeMatIx{s} = int32(cubeMatIx{s});
+    
+    permutation = [2 1 3];
+    cubeMatIx{s} = permute(cubeMatIx{s},permutation);
+    cubeRho{s} = permute(cubeRho{s},permutation); 
 end
 
 ompMCgeo.material = material;
 ompMCgeo.materialFile = materialFile;
 
 scale = 10; %cm?
+
+if ~isfield(ct,'x')
+    %length = (1:ct.cubeDim(1) * ct.resolution.x) - ct.resolution.x;
+    ct.x =  ct.resolution.x * [0:ct.cubeDim(1)-1] - (ct.resolution.x * ct.cubeDim(1))/2;
+    %ct.x = (ct.cubeDim(1)/2 - 1:ct.cubeDim(1));
+end
+
+if ~isfield(ct,'y')
+    ct.y =  ct.resolution.y * [0:ct.cubeDim(2)-1] - (ct.resolution.y * ct.cubeDim(2))/2;
+end
+
+if ~isfield(ct,'z')
+    ct.z =  ct.resolution.z * [0:ct.cubeDim(3)-1] - (ct.resolution.z * ct.cubeDim(3))/2;
+end
 
 ompMCgeo.xBounds = [(ct.x - ct.resolution.x*0.5) (ct.x(ct.cubeDim(1)) + ct.resolution.x)] ./ scale;
 ompMCgeo.yBounds = [(ct.y - ct.resolution.y*0.5) (ct.y(ct.cubeDim(2)) + ct.resolution.y)] ./ scale;
@@ -219,6 +240,8 @@ for s = 1:dij.numOfScenarios
     fprintf('Scenario %d... ',s);
      
     ompMCgeo.isoCenter = [stf(:).isoCenter];
+    
+    
     
     dij.physicalDose{s} = matRad_ompInterface(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
 end
