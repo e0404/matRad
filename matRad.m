@@ -29,7 +29,7 @@ load PROSTATE.mat
 
 % meta information for treatment plan
 
-pln.radiationMode   = 'protons';     % either photons / protons / carbon
+pln.radiationMode   = 'photons';     % either photons / protons / carbon
 pln.machine         = 'Generic';
 
 pln.numOfFractions  = 30;

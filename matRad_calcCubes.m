@@ -30,7 +30,7 @@ function resultGUI = matRad_calcCubes(w,dij,ct,cst,scenNum)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 4
+if nargin < 5
     scenNum = 1;
 end
 
@@ -55,7 +55,7 @@ vZcoarse = ct.z(1):dij.resolution(3):ct.z(end);
 % compute physical dose for all beams individually and together
 for i = 1:length(beamInfo)
     Tc = reshape(full(dij.physicalDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.dimensions);
-    resultGUI.(['physicalDose', beamInfo(i).suffix]) = interp3(Yq,Xq,Zq, Tc, Y,X,Z);
+    resultGUI.(['physicalDose', beamInfo(i).suffix]) = Tc; %interp3(Yq,Xq,Zq, Tc, Y,X,Z);
 end
 
 % consider RBE for protons
