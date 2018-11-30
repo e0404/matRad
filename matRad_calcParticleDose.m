@@ -40,6 +40,10 @@ if ~exist('calcDoseDirect','var')
     calcDoseDirect = false;
 end
 
+dij.resolution.x = 5; % [mm]
+dij.resolution.y = 5; % [mm]
+dij.resolution.z = 5; % [mm]
+
 % calculate rED or rSP from HU
 ct = matRad_calcWaterEqD(ct, pln);
 
@@ -48,15 +52,15 @@ figureWait = waitbar(0,'calculate dose influence matrix for particles...');
 % prevent closure of waitbar and show busy state
 set(figureWait,'pointer','watch');
 
-vXcoarse = ct.x(1):pln.propOpt.downRes(1):ct.x(end);
-vYcoarse = ct.y(1):pln.propOpt.downRes(2):ct.y(end);
-vZcoarse = ct.z(1):pln.propOpt.downRes(3):ct.z(end);
+% retrieve spatial location of the coarser dose grid
+vXcoarse = ct.x(1):dij.resolution.x:ct.x(end);
+vYcoarse = ct.y(1):dij.resolution.y:ct.y(end);
+vZcoarse = ct.z(1):dij.resolution.z:ct.z(end);
 
 % meta information for dij
 dij.numOfBeams         = pln.propStf.numOfBeams;
 dij.dimensions         = [numel(vXcoarse) numel(vYcoarse) numel(vZcoarse)];
 dij.numOfVoxels        = prod(dij.dimensions);
-dij.resolution         = pln.propOpt.downRes;
 dij.numOfScenarios     = 1;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
@@ -102,13 +106,13 @@ elseif isequal(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiatio
             fprintf(['matRad: Using a constant RBE of 1.1 \n']);   
 end
 
-% Only take voxels inside patient.
+% Only take voxels inside patient at full ct resolution
 V = [cst{:,4}];
 V = unique(vertcat(V{:}));
 
 
 % ignore densities outside of contours
-eraseCtDensMask = ones(dij.numOfVoxels,1);
+eraseCtDensMask = ones(prod(ct.cubeDim),1);
 eraseCtDensMask(V) = 0;
 for i = 1:ct.numOfCtScen
     ct.cube{i}(eraseCtDensMask == 1) = 0;
@@ -116,6 +120,13 @@ end
 
 % Convert CT subscripts to linear indices.
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
+
+% receive linear indices and grid locations from the coarse dose grid
+[Vcoarse,cubeDimCoarse,vXgridcoarse,vYgridcoarse,vZgridcoarse] = matRad_coarseGrid(ct,dij.resolution,V);
+
+% Convert CT subscripts to coarse linear indices.
+[yCoordsV_voxCoarse, xCoordsV_voxCoarse, zCoordsV_voxCoarse] = ind2sub(cubeDimCoarse,Vcoarse);
+
 
 % load machine file
 fileName = [pln.radiationMode '_' pln.machine];
@@ -190,10 +201,6 @@ stf = matRad_computeSSD(stf,ct);
 fprintf('matRad: Particle dose calculation...\n');
 counter = 0;
 
-[Vcoarse,cubeDimCoarse,vXgridcoarse,vYgridcoarse,vZgridcoarse] = matRad_coarseGrid(ct,pln.propOpt.downRes,V);
-% Convert CT subscripts to coarse linear indices.
-[yCoordsV_voxCoarse, xCoordsV_voxCoarse, zCoordsV_voxCoarse] = ind2sub(cubeDimCoarse,Vcoarse);
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:length(stf) % loop over all beams
     
@@ -209,14 +216,14 @@ for i = 1:length(stf) % loop over all beams
     bixelsPerBeam = 0;
     
     % convert voxel indices to real coordinates using iso center of beam i
-    xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
-    yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
-    zCoordsV = zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
-    coordsV  = [xCoordsV yCoordsV zCoordsV];
+    xCoordsV       = xCoordsV_vox(:)      * ct.resolution.x-stf(i).isoCenter(1);
+    yCoordsV       = yCoordsV_vox(:)      * ct.resolution.y-stf(i).isoCenter(2);
+    zCoordsV       = zCoordsV_vox(:)      * ct.resolution.z-stf(i).isoCenter(3);
+    coordsV        = [xCoordsV yCoordsV zCoordsV];
 
-    xCoordsVcoarse = xCoordsV_voxCoarse(:)*pln.propOpt.downRes(1)-stf(i).isoCenter(1);
-    yCoordsVcoarse = yCoordsV_voxCoarse(:)*pln.propOpt.downRes(2)-stf(i).isoCenter(2);
-    zCoordsVcoarse = zCoordsV_voxCoarse(:)*pln.propOpt.downRes(3)-stf(i).isoCenter(3);
+    xCoordsVcoarse = xCoordsV_voxCoarse(:) * dij.resolution.x-stf(i).isoCenter(1);
+    yCoordsVcoarse = yCoordsV_voxCoarse(:) * dij.resolution.y-stf(i).isoCenter(2);
+    zCoordsVcoarse = zCoordsV_voxCoarse(:) * dij.resolution.z-stf(i).isoCenter(3);
     coordsVcoarse  = [xCoordsVcoarse yCoordsVcoarse zCoordsVcoarse];
     
     % Get Rotation Matrix
@@ -247,10 +254,9 @@ for i = 1:length(stf) % loop over all beams
     % get indices of voxels where ray tracing results are available
     radDepthIx = find(~isnan(radDepthV{1}));
     
-    % Downsampling radiological depth cube to dose grid resolution
-    [radDepthVcoarse,radDepthIxcoarse] = matRad_interpRadDepth...
-        (ct,V,radDepthIx,radDepthV,vXgridcoarse,vYgridcoarse,vZgridcoarse,Vcoarse);
-    
+    % interpolate radiological depth cube to dose grid resolution
+    [radDepthIxcoarse,radDepthVcoarse] = matRad_interpRadDepth...
+        (ct,1,V,radDepthIx,radDepthV,vXgridcoarse,vYgridcoarse,vZgridcoarse,Vcoarse);
     
     % limit rotated coordinates to positions where ray tracing is availabe
     % rot_coordsV       = rot_coordsV(radDepthIx,:);
