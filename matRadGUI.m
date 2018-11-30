@@ -970,7 +970,7 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     end
 
     if get(handles.radiobtnCT,'Value')
-        [AxesHandlesCT_Dose(end+1),~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,plotCtCube,1,plane,slice,ctMap,handles.dispWindow{ctIx,1});
+        [AxesHandlesCT_Dose(end+1),~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,plotCtCube,1,plane,slice,ct,ctMap,handles.dispWindow{ctIx,1});
         
         % plot colorbar? If 1 the user asked for the CT
         if plotColorbarSelection == 2 && handles.cBarChanged
@@ -1009,7 +1009,7 @@ if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Re
             end
             
             if get(handles.radiobtnDose,'Value')
-                [doseHandle,~,handles.dispWindow{doseIx,1}] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,handles.CutOffLevel,handles.doseOpacity,doseMap,handles.dispWindow{doseIx,1});
+                [doseHandle,~,handles.dispWindow{doseIx,1}] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,ct,handles.CutOffLevel,handles.doseOpacity,doseMap,handles.dispWindow{doseIx,1});
                 AxesHandlesCT_Dose(end+1)         = doseHandle;
             end            
                     
