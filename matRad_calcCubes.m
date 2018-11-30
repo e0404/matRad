@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcCubes(w,dij,ct,cst,scenNum)
+function resultGUI = matRad_calcCubes(w,dij,cst,scenNum)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad computation of all cubes for the resultGUI struct which is used
 % as result container and for visualization in matRad's GUI

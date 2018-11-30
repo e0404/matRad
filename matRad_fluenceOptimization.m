@@ -219,7 +219,7 @@ fprintf('Press q to terminate the optimization...\n');
 
 % calc dose and reshape from 1D vector to 2D array
 fprintf('Calculating final cubes...\n');
-resultGUI = matRad_calcCubes(wOpt,dij,ct,cst);
+resultGUI = matRad_calcCubes(wOpt,dij,cst);
 resultGUI.wUnsequenced = wOpt;
 
 % unset Key Pressed Callback of Matlab command window
