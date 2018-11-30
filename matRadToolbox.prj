@@ -22,6 +22,7 @@
 myManipulationScript.m
 %
 % A single file in a subfolder of the toolbox folder:
+.git/
 protons_g*.mat
 protons_HIT*.mat
 carbon_HIT*.mat
@@ -80,7 +81,6 @@ dicomImport\hlutLibrary\SIEMENS*
       <file>C:\Home\Bangertm\Git\matRad</file>
     </fileset.rootdir>
     <fileset.rootfiles>
-      <file>${PROJECT_ROOT}\.git</file>
       <file>${PROJECT_ROOT}\.gitignore</file>
       <file>${PROJECT_ROOT}\AUTHORS.txt</file>
       <file>${PROJECT_ROOT}\BOXPHANTOM.mat</file>
