@@ -16,7 +16,7 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set search path
-addpath(genpath(fullfile(pwd)))
+addpath(genpath(pwd));
 
 % clear workspace and command prompt, close all figures
 switch matRad_getEnvironment
