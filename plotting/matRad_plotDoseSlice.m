@@ -79,8 +79,7 @@ maxDose = max(doseCube(:));
 [mX,mY] = meshgrid(gridDim1,gridDim2);
 
 doseHandle = pcolor(mX,mY,doseSlice,'Parent',axesHandle);
-ax = gca;
-colormap(ax,cMap);
+colormap(cMap);
 shading interp;
 
 % plot dose distribution

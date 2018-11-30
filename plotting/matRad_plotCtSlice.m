@@ -40,11 +40,11 @@ function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,p
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Use default colormap?
-if nargin < 6 || isempty(cMap)
+if nargin < 7 || isempty(cMap)
     cMap = bone(64);
 end
 
-if nargin < 7 || isempty(window)
+if nargin < 8 || isempty(window)
     window = [min(ctCube{cubeIdx}(:)) max(ctCube{cubeIdx}(:))];    
 end
 
