@@ -1,4 +1,4 @@
-function [radDepthIxcoarse,radDepthVcoarse] = matRad_interpRadDepth(ct,ctScenNum,V,radDepthIx,radDepthV,vXgrid,vYgrid,vZgrid,Vcoarse)
+function [radDepthIxcoarse,radDepthVcoarse,geoDistVcoarse] = matRad_interpRadDepth(ct,ctScenNum,V,Vcoarse,vXgrid,vYgrid,vZgrid,radDepthIx,radDepthV,geoDistV)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % down/up sampling the radiological depth dose cubes
 % 
@@ -37,17 +37,25 @@ function [radDepthIxcoarse,radDepthVcoarse] = matRad_interpRadDepth(ct,ctScenNum
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-radDepthCube                = NaN*ones(ct.cubeDim);
-radDepthCube(V(radDepthIx)) = radDepthV{ctScenNum}(radDepthIx);
-
 [ Y,  X,  Z] = meshgrid(ct.x,ct.y,ct.z);
 [Yq, Xq, Zq] = meshgrid(vXgrid,vYgrid,vZgrid);
+
+radDepthCube                = NaN*ones(ct.cubeDim);
+radDepthCube(V(radDepthIx)) = radDepthV{ctScenNum}(radDepthIx);
 
 % interpolate cube - cube is now stored in Y X Z 
 coarseRadDepthCube          = (interp3(Y,X,Z,radDepthCube,Yq,Xq,Zq));
 radDepthVcoarse{ctScenNum}  = coarseRadDepthCube(Vcoarse);
 radDepthlinIxcoarse         = find(~isnan(coarseRadDepthCube));
 [~,radDepthIxcoarse]        = ismember(radDepthlinIxcoarse,Vcoarse);
+
+if exist('geoDistV','var') && nargout > 2
+   geoDistCube                = NaN*ones(ct.cubeDim);
+   geoDistCube(V(radDepthIx)) = geoDistV(radDepthIx);
+   geoDistCube                = interp3(Y,X,Z,geoDistCube,Yq,Xq,Zq);
+   geoDistVcoarse{ctScenNum}  = geoDistCube(Vcoarse);
+end
+
  
 end
 

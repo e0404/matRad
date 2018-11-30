@@ -40,9 +40,9 @@ if ~exist('calcDoseDirect','var')
     calcDoseDirect = false;
 end
 
-dij.resolution.x = 5; % [mm]
-dij.resolution.y = 5; % [mm]
-dij.resolution.z = 5; % [mm]
+dij.resolution.x = 2.5; % [mm]
+dij.resolution.y = 2.5; % [mm]
+dij.resolution.z = 3;   % [mm]
 
 % calculate rED or rSP from HU
 ct = matRad_calcWaterEqD(ct, pln);
@@ -255,8 +255,8 @@ for i = 1:length(stf) % loop over all beams
     radDepthIx = find(~isnan(radDepthV{1}));
     
     % interpolate radiological depth cube to dose grid resolution
-    [radDepthIxcoarse,radDepthVcoarse] = matRad_interpRadDepth...
-        (ct,1,V,radDepthIx,radDepthV,vXgridcoarse,vYgridcoarse,vZgridcoarse,Vcoarse);
+    [radDepthIxcoarse,radDepthVcoarse,~] = matRad_interpRadDepth...
+        (ct,1,V,Vcoarse,vXgridcoarse,vYgridcoarse,vZgridcoarse,radDepthIx,radDepthV);
     
     % limit rotated coordinates to positions where ray tracing is availabe
     % rot_coordsV       = rot_coordsV(radDepthIx,:);
