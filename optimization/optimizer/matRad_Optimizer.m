@@ -1,4 +1,4 @@
-classdef (Abstract) matRad_Optimizer
+classdef (Abstract) matRad_Optimizer < handle
     %OPTIMIZER Summary of this class goes here
     %   Detailed explanation goes here
     

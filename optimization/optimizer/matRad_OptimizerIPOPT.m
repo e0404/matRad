@@ -8,6 +8,12 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         resultInfo
     end
     
+    properties (Access = private)
+        allObjectiveFunctionValues
+        axesHandle
+        abortRequested
+    end
+    
     methods
         function obj = matRad_OptimizerIPOPT
             %UNTITLED Construct an instance of this class
@@ -16,6 +22,8 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             %obj.Property1 = inputArg1 + inputArg2;
             obj.wResult = [];
             obj.resultInfo = [];
+            obj.axesHandle = [];
+            obj.allObjectiveFunctionValues = [];
         end
         
         function obj  = createDefaultOptimizerOptions(obj)
@@ -73,18 +81,17 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             ipoptStruct.lb = optiProb.lowerBounds(w0);
             ipoptStruct.ub = optiProb.upperBounds(w0);
             
-            %constraint bounds
-            %ipoptStruct.cl = optiProb.getLowerConstraintBounds();
-            %ipoptStruct.cu = optiProb.getUpperConstraintBounds();
+            %constraint bounds;
             [ipoptStruct.cl,ipoptStruct.cu] = optiProb.matRad_getConstraintBounds(cst);
             
             % set callback functions.
-            %[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,options);
+  
             funcs.objective         = @(x) optiProb.matRad_objectiveFunction(x,dij,cst);
             funcs.constraints       = @(x) optiProb.matRad_constraintFunctions(x,dij,cst);
             funcs.gradient          = @(x) optiProb.matRad_objectiveGradient(x,dij,cst);
             funcs.jacobian          = @(x) optiProb.matRad_constraintJacobian(x,dij,cst);
             funcs.jacobianstructure = @( ) matRad_getJacobStruct(w,dij,cst);
+            funcs.iterfunc          = @(iter,objective,paramter) obj.iterFunc(iter,objective,paramter,ipoptStruct.ipopt.max_iter);
             
             % Informing user to press q to terminate optimization
             fprintf('\nOptimzation initiating...\n');
@@ -94,6 +101,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             % Run IPOPT.
             [obj.wResult, obj.resultInfo] = ipopt(w0,funcs,ipoptStruct);
+            
+            % Empty the array of stored function values
+            obj.allObjectiveFunctionValues = [];
         end
         
         function [statusmsg,statusflag] = GetStatus(obj)
@@ -151,6 +161,37 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                 statusflag = -1;
             end
         end
+        
+        function flag = iterFunc(obj,iter,objective,~,~)
+            obj.allObjectiveFunctionValues(iter + 1) = objective;
+        end
+        
+        function plotFunction(obj)
+            % plot objective function output
+            if ~isvalid(obj.axesHandle)
+                hFig = figure('Name','Progress of IPOPT Optimization','NumberTitle','off','Color',[.5 .5 .5],'KeyPressFcn',@Key_Down,);
+                obj.axesHandle = axes(hFig);
+                hold(obj.axesHandle,'on');
+                grid(obj.axesHandle,'on');
+                grid(obj.axesHandle,'minor');
+            else
+                hFig = obj.axesHandle.Parent;
+            end
+                       
+            defaultFontSize = 14;
+            set(obj.axesHandle,'YScale','log');
+            title(obj.axesHandle,'Progress of Optimization','LineWidth',defaultFontSize),
+            xlabel(obj.axesHandle,'# iterations','Fontsize',defaultFontSize),ylabel(obj.axesHandle,'objective function value','Fontsize',defaultFontSize)
+            
+            % draw updated axes
+            plot(obj.axesHandle,1:numel(obj.allObjectiveFunctionValues),obj.allObjectiveFunctionValues,'xb','LineWidth',1.5);
+            drawnow;
+            
+            % ensure to bring optimization window to front also for a re-optimization
+            figure(hFig);
+            
+        end                
+            
     end
     
     
