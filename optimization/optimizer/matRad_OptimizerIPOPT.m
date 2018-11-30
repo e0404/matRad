@@ -22,8 +22,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             %obj.Property1 = inputArg1 + inputArg2;
             obj.wResult = [];
             obj.resultInfo = [];
-            obj.axesHandle = [];
+            obj.axesHandle = gobjects(0);
             obj.allObjectiveFunctionValues = [];
+            obj.abortRequested = false;
         end
         
         function obj  = createDefaultOptimizerOptions(obj)
@@ -85,7 +86,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             [ipoptStruct.cl,ipoptStruct.cu] = optiProb.matRad_getConstraintBounds(cst);
             
             % set callback functions.
-  
+            
             funcs.objective         = @(x) optiProb.matRad_objectiveFunction(x,dij,cst);
             funcs.constraints       = @(x) optiProb.matRad_constraintFunctions(x,dij,cst);
             funcs.gradient          = @(x) optiProb.matRad_objectiveGradient(x,dij,cst);
@@ -97,11 +98,35 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             fprintf('\nOptimzation initiating...\n');
             fprintf('Press q to terminate the optimization...\n');
             
-            %ipoptStruct.options = obj.options;
+            %Set Callback
+            % determine if Matlab or Octave
+            [env, ~] = matRad_getEnvironment();
             
+            if ~isdeployed % only if _not_ running as standalone                               
+                switch env
+                    case 'MATLAB'
+                        % get handle to Matlab command window
+                        mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
+                        cw          = mde.getClient('Command Window');
+                        xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+                        h_cw        = handle(xCmdWndView,'CallbackProperties');
+                        
+                        % set Key Pressed Callback of Matlab command window
+                        set(h_cw, 'KeyPressedCallback', @(h,event) obj.abortCallbackKey(h,event));
+                end                
+            end
+            
+            %ipoptStruct.options = obj.options;
+            obj.abortRequested = false;
             % Run IPOPT.
             [obj.wResult, obj.resultInfo] = ipopt(w0,funcs,ipoptStruct);
             
+            % unset Key Pressed Callback of Matlab command window
+            if ~isdeployed && strcmp(env,'MATLAB')
+                set(h_cw, 'KeyPressedCallback',' ');
+            end
+            
+            obj.abortRequested = false;
             % Empty the array of stored function values
             obj.allObjectiveFunctionValues = [];
         end
@@ -153,7 +178,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                     statusflag = 0;
                 elseif obj.resultInfo.status > 0
                     statusflag = 1;
-                else 
+                else
                     statusflag = -1;
                 end
             catch
@@ -164,20 +189,27 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         
         function flag = iterFunc(obj,iter,objective,~,~)
             obj.allObjectiveFunctionValues(iter + 1) = objective;
+            obj.plotFunction();
+            flag = ~obj.abortRequested;
         end
         
         function plotFunction(obj)
             % plot objective function output
-            if ~isvalid(obj.axesHandle)
-                hFig = figure('Name','Progress of IPOPT Optimization','NumberTitle','off','Color',[.5 .5 .5],'KeyPressFcn',@Key_Down,);
+            if isempty(obj.axesHandle) || ~isvalid(obj.axesHandle)
+                hFig = figure('Name','Progress of IPOPT Optimization','NumberTitle','off','Color',[.5 .5 .5]);
                 obj.axesHandle = axes(hFig);
                 hold(obj.axesHandle,'on');
                 grid(obj.axesHandle,'on');
                 grid(obj.axesHandle,'minor');
+                c = uicontrol;
+                c.String = 'Stop';
+                c.Position(1) = 5;
+                c.Position(2) = 5;
+                c.Callback = @obj.abortCallbackButton;                
             else
                 hFig = obj.axesHandle.Parent;
             end
-                       
+            
             defaultFontSize = 14;
             set(obj.axesHandle,'YScale','log');
             title(obj.axesHandle,'Progress of Optimization','LineWidth',defaultFontSize),
@@ -190,9 +222,24 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             % ensure to bring optimization window to front also for a re-optimization
             figure(hFig);
             
-        end                
+        end
+        
+        function abortCallbackKey(obj,~,KeyEvent)
             
+            % check if user pressed q
+            if  get(KeyEvent,'keyCode') == 81
+                
+                obj.abortRequested = true;
+                
+            end
+            
+        end
+        
+        function abortCallbackButton(obj,~,~,~)
+            obj.abortRequested = true;
+        end
+        
+        
+        
     end
-    
-    
 end

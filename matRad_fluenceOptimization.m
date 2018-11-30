@@ -39,41 +39,7 @@ if sum(strcmp(pln.propOpt.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && 
     pln.propOpt.bioOptimization = 'none';
 end
 
-% determine if Matlab or Octave
-[env, ~] = matRad_getEnvironment();
-
-if ~isdeployed % only if _not_ running as standalone
-    
-    % add path for optimization functions
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir,'optimization'))
-    addpath(fullfile(matRadRootDir,'tools'))
-
-    switch env
-         case 'MATLAB'
-           % get handle to Matlab command window
-            mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-            cw          = mde.getClient('Command Window');
-            xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-            h_cw        = handle(xCmdWndView,'CallbackProperties');
-
-            % set Key Pressed Callback of Matlab command window
-            set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
-    end
-
-end
-
-% initialize global variables for optimizer
-global matRad_global_x;
-global matRad_global_d;
-global matRad_Q_Pressed;
-global matRad_objective_function_value;
-
-matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
-matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
-matRad_Q_Pressed                = false;
-matRad_objective_function_value = [];
-  
+ 
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
 
@@ -120,7 +86,7 @@ ixTarget       = ixTarget(i);
 wOnes          = ones(dij.totalNumOfBixels,1);
 
 % set the IPOPT options.
-matRad_ipoptOptions;
+%matRad_ipoptOptions;
 
 % modified settings for photon dao
 if pln.propOpt.runDAO && strcmp(pln.radiationMode,'photons')
@@ -128,9 +94,6 @@ if pln.propOpt.runDAO && strcmp(pln.radiationMode,'photons')
 %    options.ipopt.acceptable_obj_change_tol     = 7e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
 
 end
-
-funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
-    
 % calculate initial beam intensities wInit
 if  strcmp(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
     % check if a constant RBE is defined - if not use 1.1
@@ -251,19 +214,6 @@ resultGUI = matRad_calcCubes(wOpt,dij,cst);
 resultGUI.wUnsequenced = wOpt;
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
-
-% unset Key Pressed Callback of Matlab command window
-if ~isdeployed && strcmp(env,'MATLAB')
-    set(h_cw, 'KeyPressedCallback',' ');
-end
-
-% clear global variables
-switch env
-     case 'MATLAB'
-        clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_Q_Pressed;
-     case 'OCTAVE'
-        clear     -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_Q_Pressed;           
-end
 
 % unblock mex files
 clear mex
