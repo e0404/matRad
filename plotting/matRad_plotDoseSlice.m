@@ -43,45 +43,30 @@ function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,pla
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Use default colormap?
-if nargin < 8 || isempty(cMap)
+if nargin < 7 || isempty(cMap)
     cMap = jet(64);
 end
-if nargin < 7 || isempty(alpha)
+if nargin < 6 || isempty(alpha)
     alpha = 0.6;
 end
-if nargin < 9 || isempty(window)
+if nargin < 8 || isempty(window)
     window = [min(doseCube(:)) max(doseCube(:))];
 end
 
 if plane == 1  % Coronal plane
     dose_slice = squeeze(doseCube(slice,:,:));
-    gridDim1 = ct.y;
-    gridDim2 = ct.z;
 elseif plane == 2 % sagittal plane
     dose_slice = squeeze(doseCube(:,slice,:));
-    gridDim1 = ct.x;
-    gridDim2 = ct.z;
 elseif plane == 3 % Axial plane
     dose_slice = squeeze(doseCube(:,:,slice));
-    gridDim1 = ct.x;
-    gridDim2 = ct.y;
 end
 
 cMapScale = size(cMap,1) - 1;
-
-doseSlice = (uint8(cMapScale*(dose_slice - window(1))/(window(2)-window(1))));
+dose_rgb = ind2rgb(uint8(cMapScale*(dose_slice - window(1))/(window(2)-window(1))),cMap);
 
 maxDose = max(doseCube(:));
-
-[mX,mY] = meshgrid(gridDim1,gridDim2);
-
-doseHandle = pcolor(mX,mY,doseSlice,'Parent',axesHandle);
-colormap(cMap);
-shading interp;
-
 % plot dose distribution
-%dose_rgb = ind2rgb(uint8(cMapScale*(dose_slice - window(1))/(window(2)-window(1))),cMap);
-%doseHandle = image('CData',dose_rgb,'Parent',axesHandle);
+doseHandle = image('CData',dose_rgb,'Parent',axesHandle);
 
 % define and set alpha mask
 if ~isempty(threshold)
