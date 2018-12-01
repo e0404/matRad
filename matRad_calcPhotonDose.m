@@ -51,6 +51,10 @@ if ~exist('calcDoseDirect','var')
     calcDoseDirect = false;
 end
 
+dij.resolution.x = 2.5; % [mm]
+dij.resolution.y = 2.5; % [mm]
+dij.resolution.z = 3;   % [mm]
+
 % calculate rED or rSP from HU
 ct = matRad_calcWaterEqD(ct, pln);
 
@@ -65,11 +69,14 @@ figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 % show busy state
 set(figureWait,'pointer','watch');
 
+vXcoarse = ct.x(1):dij.resolution.x:ct.x(end);
+vYcoarse = ct.y(1):dij.resolution.y:ct.y(end);
+vZcoarse = ct.z(1):dij.resolution.z:ct.z(end);
+
 % meta information for dij
 dij.numOfBeams         = pln.propStf.numOfBeams;
-dij.numOfVoxels        = prod(ct.cubeDim);
-dij.resolution         = ct.resolution;
-dij.dimensions         = ct.cubeDim;
+dij.dimensions         = [numel(vXcoarse) numel(vYcoarse) numel(vZcoarse)];
+dij.numOfVoxels        = prod(dij.dimensions);
 dij.numOfScenarios     = 1;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
@@ -91,7 +98,7 @@ dij.beamNum  = NaN*ones(numOfColumnsDij,1);
 
 % Allocate space for dij.physicalDose sparse matrix
 for i = 1:dij.numOfScenarios
-    dij.physicalDose{i} = spalloc(prod(ct.cubeDim),numOfColumnsDij,1);
+    dij.physicalDose{i} = spalloc(dij.numOfVoxels,numOfColumnsDij,1);
 end
 
 % Allocate memory for dose_temp cell array
@@ -101,8 +108,9 @@ doseTmpContainer     = cell(numOfBixelsContainer,dij.numOfScenarios);
 V = [cst{:,4}];
 V = unique(vertcat(V{:}));
 
+
 % ignore densities outside of contours
-eraseCtDensMask = ones(dij.numOfVoxels,1);
+eraseCtDensMask = ones(prod(ct.cubeDim),1);
 eraseCtDensMask(V) = 0;
 for i = 1:ct.numOfCtScen
     ct.cube{i}(eraseCtDensMask == 1) = 0;
@@ -110,6 +118,12 @@ end
 
 % Convert CT subscripts to linear indices.
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
+
+% receive linear indices and grid locations from the coarse dose grid
+[Vcoarse,cubeDimCoarse,vXgridcoarse,vYgridcoarse,vZgridcoarse] = matRad_coarseGrid(ct,dij.resolution,V);
+
+% Convert CT subscripts to coarse linear indices.
+[yCoordsV_voxCoarse, xCoordsV_voxCoarse, zCoordsV_voxCoarse] = ind2sub(cubeDimCoarse,Vcoarse);
 
 % set lateral cutoff value
 lateralCutoff = 50; % [mm]
@@ -189,6 +203,7 @@ effectiveLateralCutoff = lateralCutoff + fieldWidth/2;
 
 counter = 0;
 fprintf('matRad: Photon dose calculation...\n');
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams % loop over all beams
     
@@ -204,10 +219,15 @@ for i = 1:dij.numOfBeams % loop over all beams
     bixelsPerBeam = 0;
 
     % convert voxel indices to real coordinates using iso center of beam i
-    xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
-    yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
-    zCoordsV = zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
-    coordsV  = [xCoordsV yCoordsV zCoordsV];
+    xCoordsV       = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
+    yCoordsV       = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
+    zCoordsV       = zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
+    coordsV        = [xCoordsV yCoordsV zCoordsV];
+    
+    xCoordsVcoarse = xCoordsV_voxCoarse(:)*dij.resolution.x-stf(i).isoCenter(1);
+    yCoordsVcoarse = yCoordsV_voxCoarse(:)*dij.resolution.y-stf(i).isoCenter(2);
+    zCoordsVcoarse = zCoordsV_voxCoarse(:)*dij.resolution.z-stf(i).isoCenter(3);
+    coordsVcoarse  = [xCoordsVcoarse yCoordsVcoarse zCoordsVcoarse];
 
     % Get Rotation Matrix
     % Do not transpose matrix since we usage of row vectors &
@@ -217,21 +237,30 @@ for i = 1:dij.numOfBeams % loop over all beams
 
     % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
     rot_coordsV = coordsV*rotMat_system_T;
+    rot_coordsVcoarse = coordsVcoarse*rotMat_system_T;
 
     rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
     rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
     rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
+    
+    rot_coordsVcoarse(:,1) = rot_coordsVcoarse(:,1)-stf(i).sourcePoint_bev(1);
+    rot_coordsVcoarse(:,2) = rot_coordsVcoarse(:,2)-stf(i).sourcePoint_bev(2);
+    rot_coordsVcoarse(:,3) = rot_coordsVcoarse(:,3)-stf(i).sourcePoint_bev(3);
 
+    % calculate geometric distances
+    geoDistVcoarse{1}= sqrt(sum(rot_coordsVcoarse.^2,2));
+    
     % ray tracing
     fprintf('matRad: calculate radiological depth cube...');
-    [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,effectiveLateralCutoff);
+    radDepthV = matRad_rayTracing(stf(i),ct,V,rot_coordsV,effectiveLateralCutoff);
     fprintf('done \n');
-    
-    % get indices of voxels where ray tracing results are available
-    radDepthIx = find(~isnan(radDepthV{1}));
+        
+    % interpolate radiological depth cube to dose grid resolution
+    radDepthVcoarse = matRad_interpRadDepth...
+        (ct,1,V,Vcoarse,vXgridcoarse,vYgridcoarse,vZgridcoarse,radDepthV);
     
     % limit rotated coordinates to positions where ray tracing is availabe
-    rot_coordsV = rot_coordsV(radDepthIx,:);
+    rot_coordsVcoarse = rot_coordsVcoarse(find(~isnan(radDepthVcoarse{1})),:);
     
     % get index of central ray or closest to the central ray
     [~,center] = min(sum(reshape([stf(i).ray.rayPos_bev],3,[]).^2));
@@ -335,11 +364,11 @@ for i = 1:dij.numOfBeams % loop over all beams
         end
         
         % Ray tracing for beam i and bixel j
-        [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
+        [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = matRad_calcGeoDists(rot_coordsVcoarse, ...
                                                                stf(i).sourcePoint_bev, ...
                                                                stf(i).ray(j).targetPoint_bev, ...
                                                                machine.meta.SAD, ...
-                                                               radDepthIx, ...
+                                                               find(~isnan(radDepthVcoarse{1})), ...
                                                                effectiveLateralCutoff);
 
         % empty bixels may happen during recalculation of error
@@ -355,8 +384,8 @@ for i = 1:dij.numOfBeams % loop over all beams
                                                    Interp_kernel1,...
                                                    Interp_kernel2,...
                                                    Interp_kernel3,...
-                                                   radDepthV{1}(ix),...
-                                                   geoDistV(ix),...
+                                                   radDepthVcoarse{1}(ix),...
+                                                   geoDistVcoarse{1}(ix),...
                                                    isoLatDistsX,...
                                                    isoLatDistsZ);
                                                
@@ -364,10 +393,10 @@ for i = 1:dij.numOfBeams % loop over all beams
         if ~isFieldBasedDoseCalc
             r0   = 20 + stf(i).bixelWidth;   % [mm] sample beyond the inner core
             Type = 'radius';
-            [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
+            [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthVcoarse{1}(ix),rad_distancesSq,Type,r0);
         end   
         % Save dose for every bixel in cell array
-        doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix),1,bixelDose,dij.numOfVoxels,1);
+        doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(Vcoarse(ix),1,bixelDose,dij.numOfVoxels,1);
                 
         % save computation time and memory by sequentially filling the 
         % sparse matrix dose.dij from the cell array

@@ -28,11 +28,13 @@ function resultGUI = matRad_calcCubes(w,dij,cst,scenNum)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 4
+if nargin < 5
     scenNum = 1;
 end
 
-resultGUI.w = w;
+resultGUI.w          = w;
+resultGUI.resolution = dij.resolution;
+resultGUI.dimensions = dij.dimensions;
 
 % get bixel - beam correspondence  
 for i = 1:dij.numOfBeams
@@ -41,6 +43,7 @@ for i = 1:dij.numOfBeams
 end
 beamInfo(dij.numOfBeams+1).suffix = '';
 beamInfo(dij.numOfBeams+1).logIx  = true(size(w));
+%
 
 % compute physical dose for all beams individually and together
 for i = 1:length(beamInfo)

@@ -1,4 +1,4 @@
-function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
+function [resultGUI,info] = matRad_fluenceOptimization(dij,ct,cst,pln)
 % matRad inverse planning wrapper function
 % 
 % call
@@ -86,6 +86,23 @@ end
 V          = [];
 doseTarget = [];
 ixTarget   = [];
+
+% resizing cst to dose cube resolution 
+vXcoarse = ct.x(1):dij.resolution.x:ct.x(end);
+vYcoarse = ct.y(1):dij.resolution.y:ct.y(end);
+vZcoarse = ct.z(1):dij.resolution.z:ct.z(end);
+
+[ Y,  X,  Z] = meshgrid(ct.x,ct.y,ct.z);
+[Yq, Xq, Zq] = meshgrid(vXcoarse,vYcoarse,vZcoarse);
+
+for i = 1:size(cst,1)
+   for ixScen = 1:ct.numOfCtScen
+    tmpCube                   = zeros(ct.cubeDim);
+    tmpCube(cst{i,4}{ixScen}) = 1;
+    cst{i,4}{ixScen}          = find(interp3(Y,X,Z,tmpCube,Yq,Xq,Zq)>.5);
+   end
+end
+
 for i=1:size(cst,1)
     if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
         V = [V;cst{i,4}{1}];
