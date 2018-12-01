@@ -1,4 +1,4 @@
-function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,plane,slice,ct,threshold,alpha,cMap,window)
+function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,plane,slice,threshold,alpha,cMap,window)
 % matRad function that generates a dose plot of a selected slice. The
 % function can also be used in personal matlab figures by passing the
 % corresponding axes handle
@@ -91,14 +91,8 @@ else
 end
 
 % alphadata for image objects is not yet implemented in Octave
-%set(doseHandle,'AlphaData',mask);
-%set(doseHandle,'Facealpha',mask);
+set(doseHandle,'AlphaData',mask);
 
-doseHandle.FaceAlpha = 'interp';
-doseHandle.AlphaData = mask;
-doseHandle.AlphaDataMapping = 'scaled';
-set(gca,'Xlim',[gridDim1(1) gridDim1(end)]);
-set(gca,'Ylim',[gridDim2(1) gridDim2(end)]);
 end
 
 
