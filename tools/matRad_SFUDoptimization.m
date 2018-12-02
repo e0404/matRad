@@ -72,12 +72,11 @@ if ~isempty(dij)
         sb_col = find(dij.beamNum == i);
         % construct dij for single beam
         sb_dij.numOfBeams = 1;
-        sb_dij.numOfVoxels = dij.numOfVoxels;
-        sb_dij.resolution = dij.resolution;
+        sb_dij.doseGrid = dij.doseGrid;
+        sb_dij.ctGrid = dij.ctGrid;
         sb_dij.numOfRaysPerBeam = dij.numOfRaysPerBeam(i);
         sb_dij.totalNumOfRays = sb_dij.numOfRaysPerBeam;
         sb_dij.totalNumOfBixels = size(sb_col, 1);
-        sb_dij.dimensions = dij.dimensions;
         sb_dij.numOfScenarios = dij.numOfScenarios;
         sb_dij.bixelNum = dij.bixelNum(sb_col);
         sb_dij.rayNum = dij.rayNum(sb_col);

@@ -75,7 +75,7 @@ end
 
 % calculate cubes; use uniform weights here, weighting with actual fluence 
 % already performed in dij construction 
-resultGUI    = matRad_calcCubes(ones(pln.propStf.numOfBeams,1),dij,cst);
+resultGUI    = matRad_calcCubes(ones(pln.propStf.numOfBeams,1),dij);
 
 % remember original fluence weights
 resultGUI.w  = w; 
