@@ -1,5 +1,4 @@
 function matRad_CWKeyPressedCallback(~,KeyEvent)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad command window key pressed callback
 % 
 % call
@@ -10,9 +9,8 @@ function matRad_CWKeyPressedCallback(~,KeyEvent)
 %
 %
 % References
+%   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

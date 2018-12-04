@@ -1,5 +1,4 @@
 function ct = matRad_calcWaterEqD(ct, pln)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to calculate the equivalent densities from a 
 % dicom ct that originally uses intensity values
 %
@@ -17,8 +16,6 @@ function ct = matRad_calcWaterEqD(ct, pln)
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2018 the matRad development team. 

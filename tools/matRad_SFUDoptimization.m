@@ -26,6 +26,17 @@ function [resultGUI] = matRad_SFUDoptimization(pln, cst, dij, ct, stf)
 %   [1]    https://ro-journal.biomedcentral.com/articles/10.1186/s13014-016-0705-8
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % adjust cst for single beams
 sb_cst = cst;
@@ -61,12 +72,11 @@ if ~isempty(dij)
         sb_col = find(dij.beamNum == i);
         % construct dij for single beam
         sb_dij.numOfBeams = 1;
-        sb_dij.numOfVoxels = dij.numOfVoxels;
-        sb_dij.resolution = dij.resolution;
+        sb_dij.doseGrid = dij.doseGrid;
+        sb_dij.ctGrid = dij.ctGrid;
         sb_dij.numOfRaysPerBeam = dij.numOfRaysPerBeam(i);
         sb_dij.totalNumOfRays = sb_dij.numOfRaysPerBeam;
         sb_dij.totalNumOfBixels = size(sb_col, 1);
-        sb_dij.dimensions = dij.dimensions;
         sb_dij.numOfScenarios = dij.numOfScenarios;
         sb_dij.bixelNum = dij.bixelNum(sb_col);
         sb_dij.rayNum = dij.rayNum(sb_col);

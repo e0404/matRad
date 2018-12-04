@@ -1,5 +1,4 @@
 function g = matRad_gradFuncWrapper(w,dij,cst,options)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: gradient function for inverse planning supporting mean dose
 % objectives, EUD objectives, squared overdosage, squared underdosage,
 % squared deviation and DVH objectives
@@ -21,8 +20,6 @@ function g = matRad_gradFuncWrapper(w,dij,cst,options)
 %   [2] http://www.sciencedirect.com/science/article/pii/S0360301601025858
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 
 % 
@@ -40,7 +37,7 @@ d = matRad_backProjection(w,dij,options);
 
 % Initializes delta
 delta      = cell(options.numOfScenarios,1);
-[delta{:}] = deal(zeros(dij.numOfVoxels,1));
+[delta{:}] = deal(zeros(dij.doseGrid.numOfVoxels,1));
 
 % compute objective function for every VOI.
 for  i = 1:size(cst,1)
@@ -104,7 +101,7 @@ for i = 1:options.numOfScenarios
 
         elseif isequal(options.bioOpt,'LEMIV_RBExD')
 
-            deltaTmp              = zeros(dij.numOfVoxels,1);
+            deltaTmp              = zeros(dij.doseGrid.numOfVoxels,1);
             scaledEffect          = d{i} + dij.gamma;
             deltaTmp(dij.ixDose)  = delta{i}(dij.ixDose)./(2*dij.bx(dij.ixDose).*scaledEffect(dij.ixDose));
             vBias                 = (deltaTmp' * dij.mAlphaDose{i})';

@@ -1,5 +1,4 @@
 function y = matRad_interp1(xi,yi,x)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % interpolates 1-D data (table lookup) and utilizes griddedInterpolant if
 % availabe in the used MATLAB version
 %
@@ -18,8 +17,6 @@ function y = matRad_interp1(xi,yi,x)
 % interpolation. yi can be a matrix consisting out of several 1-D datasets 
 % in each column, which will all be interpolated for the given query points.
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

@@ -1,5 +1,4 @@
 function jacob = matRad_jacobFuncWrapper(w,dij,cst,options)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian function for inverse planning supporting max dose
 % constraint, min dose constraint, min mean dose constraint, max mean dose constraint,
 % min EUD constraint, max EUD constraint, max DVH constraint, min DVH constraint 
@@ -17,9 +16,8 @@ function jacob = matRad_jacobFuncWrapper(w,dij,cst,options)
 %   jacob: jacobian of constraint function
 %
 % References
+%   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 
@@ -83,13 +81,13 @@ for i = 1:size(cst,1)
                     
                     if isequal(options.bioOpt,'none') && ~isempty(jacobVec) || isequal(options.ID,'protons_const_RBExD')
 
-                       DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
+                       DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.doseGrid.numOfVoxels,1)];
 
                     elseif isequal(options.bioOpt,'LEMIV_effect') && ~isempty(jacobVec)
 
-                       mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
+                       mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.doseGrid.numOfVoxels,1)];
                        mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
-                                                  sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*jacobVec,dij.numOfVoxels,numel(cst{i,4}{1}))];
+                                                  sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*jacobVec,dij.doseGrid.numOfVoxels,numel(cst{i,4}{1}))];
                        voxelID                 = [voxelID ;cst{i,4}{1}];
                        constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
 
@@ -99,9 +97,9 @@ for i = 1:size(cst,1)
 
                        delta = jacobVec./(2*dij.bx(cst{i,4}{1}).*scaledEffect);
 
-                       mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,delta,dij.numOfVoxels,1)];
+                       mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,delta,dij.doseGrid.numOfVoxels,1)];
                        mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
-                                                  sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*delta,dij.numOfVoxels,numel(cst{i,4}{1}))];
+                                                  sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*delta,dij.doseGrid.numOfVoxels,numel(cst{i,4}{1}))];
                        voxelID                 = [voxelID ;cst{i,4}{1}];
                        constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
 

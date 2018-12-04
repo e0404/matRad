@@ -71,5 +71,3 @@ figure
 histogram(doseInTarget);
 title('dose in target'),xlabel('[Gy]'),ylabel('#');
 
-%% Start the GUI for Visualization
-matRadGUI

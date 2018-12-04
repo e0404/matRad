@@ -1,5 +1,4 @@
 function [vAlpha, vBeta] = matRad_calcLQParameter(vRadDepths,mTissueClass,baseData)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
 % call
@@ -17,8 +16,6 @@ function [vAlpha, vBeta] = matRad_calcLQParameter(vRadDepths,mTissueClass,baseDa
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

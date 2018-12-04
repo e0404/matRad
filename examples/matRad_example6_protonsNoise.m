@@ -80,8 +80,7 @@ imagesc(resultGUI.RBExDose(:,:,slice)),colorbar, colormap(jet)
 %%
 % Now let's simulate a range undershoot by scaling the relative stopping power cube by 3.5% percent
 ct_manip         = ct;
-noise            = ct.cube{1} .* 0.035; 
-ct_manip.cube{1} = ct_manip.cube{1} + noise;
+ct_manip.cubeHU{1} = 1.035*ct_manip.cubeHU{1};
 
 %% Recalculate Plan
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose

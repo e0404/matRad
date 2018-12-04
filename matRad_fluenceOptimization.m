@@ -1,5 +1,4 @@
-function [resultGUI,info] = matRad_fluenceOptimization(dij,ct,cst,pln)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 % matRad inverse planning wrapper function
 % 
 % call
@@ -18,8 +17,6 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,ct,cst,pln)
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 
@@ -70,7 +67,7 @@ global matRad_Q_Pressed;
 global matRad_objective_function_value;
 
 matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
-matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
+matRad_global_d                 = NaN * ones(dij.doseGrid.numOfVoxels,1);
 matRad_Q_Pressed                = false;
 matRad_objective_function_value = [];
   
@@ -84,29 +81,24 @@ for i = 1:size(cst,1)
     end
 end
 
+% resizing cst to dose cube resolution 
+for i = 1:size(cst,1)
+   for j = 1:dij.numOfScenarios
+    tmpCube              = zeros(dij.ctGrid.dimensions);
+    tmpCube(cst{i,4}{j}) = 1;
+    cst{i,4}{j}          = find(interp3(dij.ctGrid.y,dij.ctGrid.x',dij.ctGrid.z, ...
+                                             tmpCube, ...
+                                             dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'nearest'));
+   end
+end
+
 % find target indices and described dose(s) for weight vector
 % initialization
 V          = [];
 doseTarget = [];
 ixTarget   = [];
 
-% resizing cst to dose cube resolution 
-vXcoarse = ct.x(1):dij.resolution.x:ct.x(end);
-vYcoarse = ct.y(1):dij.resolution.y:ct.y(end);
-vZcoarse = ct.z(1):dij.resolution.z:ct.z(end);
-
-[ Y,  X,  Z] = meshgrid(ct.x,ct.y,ct.z);
-[Yq, Xq, Zq] = meshgrid(vXcoarse,vYcoarse,vZcoarse);
-
 for i = 1:size(cst,1)
-   for ixScen = 1:ct.numOfCtScen
-    tmpCube                   = zeros(ct.cubeDim);
-    tmpCube(cst{i,4}{ixScen}) = 1;
-    cst{i,4}{ixScen}          = find(interp3(Y,X,Z,tmpCube,Yq,Xq,Zq)>.5);
-   end
-end
-
-for i=1:size(cst,1)
     if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
         V = [V;cst{i,4}{1}];
         doseTarget = [doseTarget cst{i,6}.dose];
@@ -144,22 +136,12 @@ if  strcmp(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMod
 elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
                                 && strcmp(pln.radiationMode,'carbon')
 
-    % check if you are running a supported rad
-    dij.ax      = zeros(dij.numOfVoxels,1);
-    dij.bx      = zeros(dij.numOfVoxels,1);
-
-    
     for i = 1:size(cst,1)
-        
-        if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
-             dij.ax(cst{i,4}{1}) = cst{i,5}.alphaX;
-             dij.bx(cst{i,4}{1}) = cst{i,5}.betaX;
-        end
         
         for j = 1:size(cst{i,6},2)
             % check if prescribed doses are in a valid domain
-            if cst{i,6}(j).dose > 5 && isequal(cst{i,3},'TARGET')
-                error('Reference dose > 5Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.');
+            if cst{i,6}(j).dose > 10 && isequal(cst{i,3},'TARGET')
+                error('Reference dose > 10 Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.');
             end
             
         end
@@ -177,7 +159,7 @@ elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt
     elseif isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')
         
            %pre-calculations
-           dij.gamma              = zeros(dij.numOfVoxels,1);   
+           dij.gamma              = zeros(dij.doseGrid.numOfVoxels,1);   
            dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose)); 
             
            % calculate current in target

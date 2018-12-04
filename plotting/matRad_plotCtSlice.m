@@ -1,5 +1,4 @@
-function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,plane,slice,ct,cMap,window)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,plane,slice,cMap,window)
 % matRad function that generates the plot for the CT in the GUI. The
 % function can also be used in personal matlab figures by passing the
 % corresponding axes handle
@@ -25,8 +24,6 @@ function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,p
 %   window      used window (same as input if set)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -40,36 +37,26 @@ function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,p
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Use default colormap?
-if nargin < 7 || isempty(cMap)
+if nargin < 6 || isempty(cMap)
     cMap = bone(64);
 end
 
-if nargin < 8 || isempty(window)
+if nargin < 7 || isempty(window)
     window = [min(ctCube{cubeIdx}(:)) max(ctCube{cubeIdx}(:))];    
 end
 
 cMapScale = size(cMap,1) - 1;
 
 if plane == 1 % Coronal plane
-    ctSlice = (uint8(cMapScale*(squeeze((ctCube{cubeIdx}(slice,:,:)-window(1))/(window(2) - window(1))))));
-    gridDim1 = ct.y;
-    gridDim2 = ct.z;  
+    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube{cubeIdx}(slice,:,:)-window(1))/(window(2) - window(1))))),cMap);
+      
 elseif plane == 2 % sagittal plane
-    ctSlice = (uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,slice,:)-window(1))/(window(2) - window(1))))));
-    gridDim1 = ct.x;
-    gridDim2 = ct.z;   
+    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,slice,:)-window(1))/(window(2) - window(1))))),cMap);
+       
 elseif plane == 3 % Axial plane
-    ctSlice = (uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,:,slice)-window(1))/(window(2) - window(1))))));
-    gridDim1 = ct.x;
-    gridDim2 = ct.y;
+    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,:,slice)-window(1))/(window(2) - window(1))))),cMap);
 end
-
-[mX,mY]  = meshgrid(gridDim1,gridDim2);
-ctHandle = pcolor(mX,mY,ctSlice,'Parent',axesHandle); 
-colormap(cMap); shading flat; hold on
-set(gca,'Xlim',[gridDim1(1) gridDim1(end)]);
-set(gca,'Ylim',[gridDim2(1) gridDim2(end)]);
-
+ctHandle = image('CData',ct_rgb,'Parent',axesHandle);
 
 end
 

@@ -1,5 +1,4 @@
 function updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to translate the vector representation of the aperture
 % shape and weight into an aperture info struct. At the same time, the
 % updated bixel weight vector w is computed and a vector listing the
@@ -17,10 +16,8 @@ function updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)
 %   updatedInfo: updated aperture shape info struct according to apertureInfoVect
 %
 % References
+%   -
 %   
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

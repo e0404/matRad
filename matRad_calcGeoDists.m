@@ -5,7 +5,6 @@ function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
                               SAD, ...
                               radDepthIx, ...
                               lateralCutOff)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad calculation of lateral distances from central ray used for
 % dose calcultion
 % 
@@ -42,8 +41,6 @@ function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
 % References
 %
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

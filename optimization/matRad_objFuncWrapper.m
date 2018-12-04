@@ -1,5 +1,4 @@
 function f = matRad_objFuncWrapper(w,dij,cst,options)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT objective function wrapper
 % 
 % call
@@ -15,10 +14,8 @@ function f = matRad_objFuncWrapper(w,dij,cst,options)
 %   f: objective function value
 %
 % References
+%   -
 %
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 

@@ -1,5 +1,4 @@
 function [cl,cu] = matRad_getConstBounds(constraint,param)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT get constraint bounds function
 % 
 % call
@@ -14,10 +13,8 @@ function [cl,cu] = matRad_getConstBounds(constraint,param)
 %   cu: lower bounds on constraints
 %
 % References
+%   -
 %
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 

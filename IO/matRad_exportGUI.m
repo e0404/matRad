@@ -23,7 +23,7 @@ function varargout = matRad_exportGUI(varargin)
 % Edit the above text to modify the response to help matRad_exportGUI
 
 % Last Modified by GUIDE v2.5 07-Jul-2016 14:50:05
-
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

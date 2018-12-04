@@ -1,5 +1,4 @@
 function jacob = matRad_daoJacobFunc(apertureInfoVec,apertureInfo,dij,cst,options)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: jacobian function for direct aperture optimization
 % 
 % call
@@ -16,9 +15,8 @@ function jacob = matRad_daoJacobFunc(apertureInfoVec,apertureInfo,dij,cst,option
 %   jacob:           jacobian of constraint function
 %
 % References
+%   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

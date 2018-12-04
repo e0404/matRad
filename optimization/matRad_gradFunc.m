@@ -1,5 +1,4 @@
 function delta = matRad_gradFunc(d_i,objective,d_ref)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: gradient function for inverse planning supporting mean dose
 % objectives, EUD objectives, squared overdosage, squared underdosage,
 % squared deviation and DVH objectives
@@ -21,8 +20,6 @@ function delta = matRad_gradFunc(d_i,objective,d_ref)
 %   [1] http://www.sciencedirect.com/science/article/pii/S0958394701000577
 %   [2] http://www.sciencedirect.com/science/article/pii/S0360301601025858
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

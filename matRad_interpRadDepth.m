@@ -34,14 +34,11 @@ function radDepthVcoarse = matRad_interpRadDepth(ct,ctScenNum,V,Vcoarse,vXgrid,v
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[ Y,  X,  Z] = meshgrid(ct.x,ct.y,ct.z);
-[Yq, Xq, Zq] = meshgrid(vXgrid,vYgrid,vZgrid);
-
 radDepthCube                = NaN*ones(ct.cubeDim);
-radDepthCube(V(find(~isnan(radDepthV{1})))) = radDepthV{ctScenNum}(find(~isnan(radDepthV{1})));
+radDepthCube(V(~isnan(radDepthV{1}))) = radDepthV{ctScenNum}(~isnan(radDepthV{1}));
 
 % interpolate cube - cube is now stored in Y X Z 
-coarseRadDepthCube          = (interp3(Y,X,Z,radDepthCube,Yq,Xq,Zq));
+coarseRadDepthCube          = (interp3(ct.y,ct.x',ct.z,radDepthCube,vYgrid,vXgrid',vZgrid));
 radDepthVcoarse{ctScenNum}  = coarseRadDepthCube(Vcoarse);
 
 end

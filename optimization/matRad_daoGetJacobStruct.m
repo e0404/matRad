@@ -1,5 +1,4 @@
 function jacobStruct = matRad_daoGetJacobStruct(apertureInfo,dij,cst)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: get jacobian structure for direct aperture optimization
 % 
 % call
@@ -14,9 +13,8 @@ function jacobStruct = matRad_daoGetJacobStruct(apertureInfo,dij,cst)
 %   jacobStruct: jacobian of constraint function
 %
 % References
+%   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

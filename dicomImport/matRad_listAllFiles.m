@@ -1,5 +1,4 @@
 function fileList = matRad_listAllFiles(dirPath,uiInput)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to get all fiiles in arbitrary deep subfolders
 % 
 % call
@@ -20,7 +19,6 @@ function fileList = matRad_listAllFiles(dirPath,uiInput)
 %                   list a huge amount of files you may have to: 
 %                   >> % N = Number of allowed recursions
 %                   >> set(0,'RecursionLimit',N)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
