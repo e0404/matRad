@@ -65,8 +65,8 @@ display(qi(ixRectum).D_5);
 % will be better spared. We increase the penalty and lower the threshold 
 % of the squared overdose objective function. Afterwards we re-optimize 
 % the treatment plan and evaluate dose statistics one more time.
-cst{ixRectum,6}.penalty = 500;
-cst{ixRectum,6}.dose    = 40;
+cst{ixRectum,6}{1}.setDoseParameters(40);
+cst{ixRectum,6}{1}.penalty = 500;
 resultGUI               = matRad_fluenceOptimization(dij,cst,pln);
 [dvh2,qi2]              = matRad_indicatorWrapper(cst,pln,resultGUI);
 display(qi2(ixRectum).D_5);
@@ -120,9 +120,4 @@ n                = 1;
     resultGUI_noise.RBExDose,resultGUI.RBExDose,...
     [ct.resolution.x, ct.resolution.y, ct.resolution.z],...
     [doseDifference distToAgreement],slice,n,'global',cst);
-
-
-
-
-
 
