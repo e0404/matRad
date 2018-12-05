@@ -105,7 +105,7 @@ ompMCoptions.randomSeeds = [97 33];
 ompMCoptions.spectrumFile = [pwd '/ompMC/spectra/mohan6.spectrum'];
 ompMCoptions.monoEnergy = 0.1; 
 ompMCoptions.charge = 0;
-ompMCoptions.colliBounds = [-0.25 0.25 -0.25 0.25];
+ompMCoptions.colliBounds = [22.5 27.5 22.5 27.5];
 ompMCoptions.ssd = 90.0; %This has to be calculated by matRad?
                                                                     
 % start MC transport
@@ -169,25 +169,12 @@ end
 ompMCgeo.material = material;
 ompMCgeo.materialFile = materialFile;
 
-scale = 10; %cm?
+scale = 10; % units must be in cm for Monte Carlo calculation
 
-if ~isfield(ct,'x')
-    %length = (1:ct.cubeDim(1) * ct.resolution.x) - ct.resolution.x;
-    ct.x =  ct.resolution.x * [0:ct.cubeDim(1)-1] - (ct.resolution.x * ct.cubeDim(1))/2;
-    %ct.x = (ct.cubeDim(1)/2 - 1:ct.cubeDim(1));
-end
-
-if ~isfield(ct,'y')
-    ct.y =  ct.resolution.y * [0:ct.cubeDim(2)-1] - (ct.resolution.y * ct.cubeDim(2))/2;
-end
-
-if ~isfield(ct,'z')
-    ct.z =  ct.resolution.z * [0:ct.cubeDim(3)-1] - (ct.resolution.z * ct.cubeDim(3))/2;
-end
-
-ompMCgeo.xBounds = [(ct.x - ct.resolution.x*0.5) (ct.x(ct.cubeDim(1)) + ct.resolution.x)] ./ scale;
-ompMCgeo.yBounds = [(ct.y - ct.resolution.y*0.5) (ct.y(ct.cubeDim(2)) + ct.resolution.y)] ./ scale;
-ompMCgeo.zBounds = [(ct.z - ct.resolution.z*0.5) (ct.z(ct.cubeDim(3)) + ct.resolution.z)] ./ scale;
+% write voxel corner location in cm in physical cs with ct cube corner at [.5 .5 .5]
+ompMCgeo.xBounds = [.5:(ct.cubeDim(1)+.5)]*ct.resolution.x/scale;
+ompMCgeo.yBounds = [.5:(ct.cubeDim(2)+.5)]*ct.resolution.y/scale;
+ompMCgeo.zBounds = [.5:(ct.cubeDim(3)+.5)]*ct.resolution.z/scale;
 
 %% visualization
 if visBool
