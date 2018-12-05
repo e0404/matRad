@@ -6,12 +6,13 @@ function radDepthVcoarse = matRad_interpRadDepth(ct,ctScenNum,V,Vcoarse,vXgrid,v
 %   [radDepthVcoarse,radDepthIxcoarse] = matRad_interpRadDepth(ct,V,radDepthIx,radDepthV,vXgrid,vYgrid,vZgrid,Vcoarse)
 % input
 %   ct:             matRad ct structure
+%   ctScenNum:      selcted CT scenario
 %   V:              linear voxel indices of the cst 
-%   radDepthV:      radiological depth of radDepthIx
+%   Vcoarse:        linear voxel indices of the down sampled grid resolution
 %   vXgrid:         query points of now location in x dimension
 %   vYgrid:         query points of now location in y dimension
 %   vZgrid:         query points of now location in z dimension
-%   Vcoarse:        linear voxel indices of the down sampled grid resolution
+%   radDepthV:      radiological depth of radDepthIx
 %
 % output
 %   radDepthVcoarse:   interpolated radiological depth of radDepthIx

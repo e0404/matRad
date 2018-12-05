@@ -82,15 +82,8 @@ for i = 1:size(cst,1)
 end
 
 % resizing cst to dose cube resolution 
-for i = 1:size(cst,1)
-   for j = 1:dij.numOfScenarios
-    tmpCube              = zeros(dij.ctGrid.dimensions);
-    tmpCube(cst{i,4}{j}) = 1;
-    cst{i,4}{j}          = find(interp3(dij.ctGrid.y,dij.ctGrid.x',dij.ctGrid.z, ...
-                                             tmpCube, ...
-                                             dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'nearest'));
-   end
-end
+cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
+                                 dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
 
 % update aperture info vector
 apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
