@@ -55,10 +55,12 @@ before_install:
 before_script:
   - ulimit -c unlimited -S  # enable core dumps for Octave crash debugging
 script:
-#  - ./runtests.sh /usr/bin/octave > runtests.log 2> runtests.err
-  - travis_wait 45 ./runtests.sh /usr/bin/octave 
+  - while sleep 5m; do echo "== $SECONDS seconds: runtests still running... =="; done & #runs sleep in background that outputs to console to prevent travis' no log abort
+  - ./runtests.sh /usr/bin/octave > runtests.log 2> runtests.err
+  - kill %1 # kills the background job
+
 after_failure:
   - COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) # find core file
   - gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch /usr/bin/octave-cli # print stack trace
-#  - tail runtests.log
-#  - tail runtests.err
+  - tail runtests.log
+  - tail runtests.err
