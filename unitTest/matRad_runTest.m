@@ -42,7 +42,5 @@ disp('Unit test run example 6');
 matRad_example6_protonsNoise
 disp('Unit test run example 7');
 matRad_example7_carbon
-disp('Unit test run example 8');
-matRad_example8_protonsRobust
 disp('Unit test run matRad script');
 matRad
