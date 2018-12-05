@@ -12,8 +12,18 @@ classdef matRad_MinMaxMeanDose < DoseConstraints.matRad_DoseConstraint
     properties
         parameters = {0,30};
     end
-        
+    
     methods
+        function obj = matRad_MinMaxMeanDose(minMeanDose,maxMeanDose)
+            if nargin == 2 && isscalar(maxMeanDose)
+                obj.parameters{2} = maxMeanDose;
+            end
+            
+            if nargin >= 1 && isscalar(minMeanDose)
+                obj.parameters{1} = minMeanDose;
+            end
+        end
+        
         function cu = upperBounds(obj,n)
             cu = obj.parameters{2};
         end
@@ -21,8 +31,8 @@ classdef matRad_MinMaxMeanDose < DoseConstraints.matRad_DoseConstraint
             cl = obj.parameters{1};
         end
         %% Calculates the Constraint Function value
-        function cDose = computeDoseConstraintFunction(obj,dose)                       
-            cDose = mean(dose);        
+        function cDose = computeDoseConstraintFunction(obj,dose)
+            cDose = mean(dose);
         end
         
         %% Calculates the Constraint jacobian

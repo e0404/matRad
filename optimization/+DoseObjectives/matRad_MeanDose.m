@@ -16,6 +16,17 @@ classdef matRad_MeanDose < DoseObjectives.matRad_DoseObjective
     end
     
     methods 
+        function obj = matRad_MeanDose(penalty,dMeanRef)
+           
+            if nargin == 2 && isscalar(dMeanRef)
+                obj.parameters{1} = dMeanRef;
+            end
+            
+            if nargin >= 1 && isscalar(penalty)
+                obj.penalty = penalty;
+            end
+        end       
+        
         %% Calculates the Objective Function value
         function fDose = computeDoseObjectiveFunction(obj,dose)
             %fDose = obj.penalty * abs(mean(dose(:)) - obj.parameters{1});

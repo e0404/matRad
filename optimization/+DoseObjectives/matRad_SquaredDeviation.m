@@ -28,6 +28,16 @@ classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
     end
     
     methods 
+        function obj = matRad_SquaredDeviation(penalty,dRef)
+            if nargin == 2 && isscalar(dRef)
+                obj.parameters{1} = dRef;
+            end
+            
+            if nargin >= 1 && isscalar(penalty)
+                obj.penalty = penalty;
+            end
+        end
+        
         function fDose = computeDoseObjectiveFunction(obj,dose)
             % deviation : dose minus prefered dose
             deviation = dose - obj.parameters{1};

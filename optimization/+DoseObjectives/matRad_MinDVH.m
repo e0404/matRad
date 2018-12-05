@@ -13,7 +13,20 @@ classdef matRad_MinDVH < DoseObjectives.matRad_DoseObjective
         penalty = 1;
     end
     
-    methods 
+    methods
+        function obj = matRad_MinDVH(penalty,dRef,vMinPercent)
+            if nargin >= 3 && isscalar(vMinPercent)
+                obj.parameters{2} = vMinPercent;
+            end
+            
+            if nargin >= 2 && isscalar(dRef)
+                obj.parameters{1} = dRef;
+            end
+            
+            if nargin >= 1 && isscalar(penalty)
+                obj.penalty = penalty;
+            end
+        end        
         %% Calculates the Objective Function value
         function fDose = computeDoseObjectiveFunction(obj,dose)                       
             % get reference Volume

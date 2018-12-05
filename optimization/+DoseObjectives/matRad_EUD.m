@@ -14,6 +14,20 @@ classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
     end
     
     methods 
+        function obj = matRad_EUD(penalty,eudRef, eudExponent)
+            if nargin >= 3 && isscalar(eudExponent)
+                obj.parameters{2} = eudExponent;
+            end
+           
+            if nargin >= 2 && isscalar(eudRef)
+                obj.parameters{1} = eudRef;
+            end
+            
+            if nargin >= 1 && isscalar(penalty)
+                obj.penalty = penalty;
+            end
+        end       
+        
         %% Calculates the Objective Function value
         function fDose = computeDoseObjectiveFunction(obj,dose)                       
             % get exponent for EUD

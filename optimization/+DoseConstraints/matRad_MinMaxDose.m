@@ -17,6 +17,30 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
     end
             
     methods
+        function obj = matRad_MinMaxDose(minDose,maxDose,method)
+            if nargin < 3 || ~ischar(method)
+                method = 'approx';
+            end
+           
+            methodIx = find(strcmp(method,obj.parameterTypes{3}));
+            
+            if isempty(methodIx) || numel(methodIx) > 1
+                methodIx = 1;
+                msg = ['Dose Constraint method can only be ', strjoin(obj.parameterTypes{3},' or '), '! Using method ''', obj.parameterTypes{3}{methodIx}, '''.'];
+                warning(msg);
+            end
+            
+            obj.parameters{3} = methodIx;
+            
+            if nargin >= 2 && isscalar(maxDose)
+                obj.parameters{2} = maxDose;
+            end
+            
+            if nargin >= 1 && isscalar(minDose)
+                obj.parameters{1} = minDose;
+            end  
+        end       
+        
         function cu = upperBounds(obj,n)
             switch obj.parameters{3}
                 case 1 %logsumexp approx

@@ -14,6 +14,16 @@ classdef matRad_SquaredUnderdosing < DoseObjectives.matRad_DoseObjective
     end
     
     methods 
+        function obj = matRad_SquaredUnderdosing(penalty,dMin)
+            if nargin == 2 && isscalar(dMin)
+                obj.parameters{1} = dMin;
+            end
+            
+            if nargin >= 1 && isscalar(penalty)
+                obj.penalty = penalty;
+            end
+        end
+        
         %% Calculates the Objective Function value
         function fDose = computeDoseObjectiveFunction(obj,dose)                       
             % overdose : dose minus prefered dose

@@ -12,8 +12,22 @@ classdef matRad_MinMaxEUD < DoseConstraints.matRad_DoseConstraint
     properties
         parameters = {5,0,30};
     end
-        
+    
     methods
+        function obj = matRad_MinMaxEUD(exponent,eudMin,eudMax)
+            if nargin == 3 && isscalar(eudMax)
+                obj.parameters{3} = eudMax;
+            end
+            
+            if nargin >= 1 && isscalar(exponent)
+                obj.parameters{1} = exponent;
+            end
+            
+            if nargin >= 2 && isscalar(eudMin)
+                obj.parameters{2} = eudMin;
+            end
+        end
+        
         function cu = upperBounds(obj,n)
             cu = obj.parameters{3};
         end
@@ -21,9 +35,9 @@ classdef matRad_MinMaxEUD < DoseConstraints.matRad_DoseConstraint
             cl = obj.parameters{2};
         end
         %% Calculates the Constraint Function value
-        function cDose = computeDoseConstraintFunction(obj,dose)                       
+        function cDose = computeDoseConstraintFunction(obj,dose)
             k = obj.parameters{1};
-            cDose = mean(dose.^k)^(1/k);           
+            cDose = mean(dose.^k)^(1/k);
         end
         
         %% Calculates the Constraint jacobian

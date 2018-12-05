@@ -16,6 +16,19 @@ classdef matRad_MinMaxDVH < DoseConstraints.matRad_DoseConstraint
     end
         
     methods  
+        function obj = matRad_MinMaxDVH(dRef,vMin,vMax)
+            if nargin == 3 && isscalar(vMax)
+                obj.parameters{3} = vMax;
+            end
+           
+            if nargin >= 1 && isscalar(dRef)
+                obj.parameters{1} = dRef;
+            end
+            
+            if nargin >= 2 && isscalar(vMin)
+                obj.parameters{2} = vMin;
+            end  
+        end
         
         function cu = upperBounds(obj,n)
             cu = obj.parameters{3} / 100;

@@ -14,6 +14,20 @@ classdef matRad_MaxDVH < DoseObjectives.matRad_DoseObjective
     end
     
     methods 
+        function obj = matRad_MaxDVH(penalty,dRef,vMaxPercent)
+            if nargin >= 3 && isscalar(vMaxPercent)
+                obj.parameters{2} = vMaxPercent;
+            end
+            
+            if nargin >= 2 && isscalar(dRef)
+                obj.parameters{1} = dRef;
+            end
+            
+            if nargin >= 1 && isscalar(penalty)
+                obj.penalty = penalty;
+            end
+        end        
+        
         %% Calculates the Objective Function value
         function fDose = computeDoseObjectiveFunction(obj,dose)                       
             % get reference Volume
