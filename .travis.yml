@@ -59,3 +59,5 @@ script:
 after_failure:
   - COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) # find core file
   - gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch /usr/bin/octave-cli # print stack trace
+  - tail runtests.log
+  - tail runtests.err
