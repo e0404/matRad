@@ -67,7 +67,7 @@ else
                 d{i} = e;
             else
                 % calculate RBX x dose
-                d{i}             = zeros(dij.numOfVoxels,1);
+                d{i}             = zeros(dij.doseGrid.numOfVoxels,1);
                 d{i}(dij.ixDose) = sqrt((e(dij.ixDose)./dij.bx(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
                                     - dij.gamma(dij.ixDose);
                

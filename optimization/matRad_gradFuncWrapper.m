@@ -37,7 +37,7 @@ d = matRad_backProjection(w,dij,options);
 
 % Initializes delta
 delta      = cell(options.numOfScenarios,1);
-[delta{:}] = deal(zeros(dij.numOfVoxels,1));
+[delta{:}] = deal(zeros(dij.doseGrid.numOfVoxels,1));
 
 % compute objective function for every VOI.
 for  i = 1:size(cst,1)
@@ -101,7 +101,7 @@ for i = 1:options.numOfScenarios
 
         elseif isequal(options.bioOpt,'LEMIV_RBExD')
 
-            deltaTmp              = zeros(dij.numOfVoxels,1);
+            deltaTmp              = zeros(dij.doseGrid.numOfVoxels,1);
             scaledEffect          = d{i} + dij.gamma;
             deltaTmp(dij.ixDose)  = delta{i}(dij.ixDose)./(2*dij.bx(dij.ixDose).*scaledEffect(dij.ixDose));
             vBias                 = (deltaTmp' * dij.mAlphaDose{i})';
