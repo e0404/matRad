@@ -105,7 +105,18 @@ else
     numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 end
 
-% manipulate ct to dose grid resolution
+% take only voxels inside patient
+VctGrid = [cst{:,4}];
+VctGrid = unique(vertcat(VctGrid{:}));
+
+% receive linear indices and grid locations from the dose grid
+tmpCube    = zeros(ct.cubeDim);
+tmpCube(VctGrid) = 1;
+% interpolate cube
+VdoseGrid = find(interp3(dij.ctGrid.y,  dij.ctGrid.x,   dij.ctGrid.z,tmpCube, ...
+                       dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z)>0.5);
+
+% manipulate ct to dose grid resolution for more efficient MC simulation
 for i = 1:dij.numOfScenarios
     ct.cubeHU{i} = interp3(ct.y,ct.x',ct.z,ct.cubeHU{i}, ...
                          dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z);
@@ -236,10 +247,6 @@ VmcOptions.scoringOptions.outputOptions.dumpDose        = 2;               % out
 % export CT cube as binary file for vmc++
 matRad_exportCtVmc(ct, fullfile(phantomPath, 'matRad_CT.ct'));
 
-% take only voxels inside patient
-V = [cst{:,4}];
-V = unique(vertcat(V{:}));
-
 writeCounter                  = 0;
 readCounter                   = 0;
 maxNumOfParallelMcSimulations = 0;
@@ -349,7 +356,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                 bixelDose = bixelDose*absCalibrationFactorVmc;
 
                 % Save dose for every bixel in cell array
-                doseTmpContainer{mod(readCounter-1,numOfBixelsContainer)+1,1} = sparse(V,1,bixelDose(V),dij.numOfVoxels,1);
+                doseTmpContainer{mod(readCounter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid,1,bixelDose(VdoseGrid),dij.doseGrid.numOfVoxels,1);
                 
                 % save computation time and memory by sequentially filling the 
                 % sparse matrix dose.dij from the cell array
