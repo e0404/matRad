@@ -152,7 +152,7 @@ tmpCube    = zeros(ct.cubeDim);
 tmpCube(VctGrid) = 1;
 % interpolate cube
 VdoseGrid = find(interp3(dij.ctGrid.y,  dij.ctGrid.x,   dij.ctGrid.z,tmpCube, ...
-                       dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'nearest'));
+                         dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'nearest'));
 
 % Convert CT subscripts to coarse linear indices.
 [yCoordsV_voxDoseGrid, xCoordsV_voxDoseGrid, zCoordsV_voxDoseGrid] = ind2sub(dij.doseGrid.dimensions,VdoseGrid);
@@ -193,17 +193,16 @@ if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.b
 
         cst = matRad_setOverlapPriorities(cst);
     
+        % resizing cst to dose cube resolution 
+        cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
+                                         dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
+        % retrieve photon LQM parameter for the current dose grid voxels
+        [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
+
         for i = 1:size(cst,1)
 
             % check if cst is compatiable 
             if ~isempty(cst{i,5}) && isfield(cst{i,5},'alphaX') && isfield(cst{i,5},'betaX') 
-
-                % receive linear indices and grid locations from the dose grid
-                tmpCube                       = zeros(ct.cubeDim);
-                tmpCube(vertcat(cst{i,4}{:})) = 1;
-                % interpolate cube
-                cstCubeDoseGrid = find(interp3(dij.ctGrid.y,  dij.ctGrid.x,   dij.ctGrid.z,tmpCube, ...
-                                       dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'nearest'));
 
                 % check if base data contains alphaX and betaX
                 IdxTissue = find(ismember(machine.data(1).alphaX,cst{i,5}.alphaX) & ...
@@ -211,11 +210,8 @@ if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.b
 
                 % check consitency of biological baseData and cst settings
                 if ~isempty(IdxTissue)
-                    isInVdoseGrid = ismember(VdoseGrid,cstCubeDoseGrid);
-                    
+                    isInVdoseGrid = ismember(VdoseGrid,cst{i,4}{1});
                     vTissueIndex(isInVdoseGrid) = IdxTissue;
-                    dij.ax(VdoseGrid(isInVdoseGrid)) = cst{i,5}.alphaX;
-                    dij.bx(VdoseGrid(isInVdoseGrid)) = cst{i,5}.betaX;
                 else
                     error('biological base data and cst inconsistent\n');
                 end

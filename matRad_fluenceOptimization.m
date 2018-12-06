@@ -51,15 +51,8 @@ for i = 1:size(cst,1)
 end
 
 % resizing cst to dose cube resolution 
-for i = 1:size(cst,1)
-   for j = 1:dij.numOfScenarios
-    tmpCube              = zeros(dij.ctGrid.dimensions);
-    tmpCube(cst{i,4}{j}) = 1;
-    cst{i,4}{j}          = find(interp3(dij.ctGrid.y,dij.ctGrid.x',dij.ctGrid.z, ...
-                                             tmpCube, ...
-                                             dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'nearest'));
-   end
-end
+cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
+                                 dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
 
 % find target indices and described dose(s) for weight vector
 % initialization
@@ -115,6 +108,14 @@ if  strcmp(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMod
         
 elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
                                 && strcmp(pln.radiationMode,'carbon')
+                            
+    % retrieve photon LQM parameter
+    [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1);
+
+    if ~isequal(dij.ax(dij.ax~=0),ax(dij.ax~=0)) || ...
+       ~isequal(dij.bx(dij.bx~=0),bx(dij.bx~=0))
+         error(['Inconsistent biological parameter - please recalculate dose influence matrix']);
+    end
 
     for i = 1:size(cst,1)
         
