@@ -66,14 +66,14 @@ end
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% sequencing
-if strcmp(pln.radiationMode,'photons') && (pln.propertiesOpt.runSequencing || pln.propertiesOpt.runDAO)
+if strcmp(pln.radiationMode,'photons') && (pln.propOpt.runSequencing || pln.propOpt.runDAO)
     %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
     %resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
     resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
 end
 
 %% DAO
-if strcmp(pln.radiationMode,'photons') && pln.propertiesOpt.runDAO
+if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO
    resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
    matRad_visApertureInfo(resultGUI.apertureInfo);
 end
