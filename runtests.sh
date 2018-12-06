@@ -42,7 +42,7 @@ cd unitTest
 TESTDIR=`pwd`
 # also CD in MATLAB/Octave to make sure that startup files
 # cannot play any role in setting the path
-${Runner} ${Switches} "cd('${TESTDIR}'); matRad_runTests" > ../runtests.log 2> ../runtests.err
+${Runner} ${Switches} "cd('${TESTDIR}'); matRad_runTests" > ../runtests.log #2> ../runtests.err put stdout to log, but let it print error messages
 exitIfError $?
 cd ..
 
