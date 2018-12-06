@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/e0404/matRad.svg?branch=dev)](https://travis-ci.org/e0404/matRad)
 [![GitPitch](https://gitpitch.com/assets/badge.svg)](https://gitpitch.com/e0404/matRad/dev) 
 
 # General information
