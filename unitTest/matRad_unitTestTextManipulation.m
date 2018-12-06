@@ -34,25 +34,34 @@ if nargin < 4
     path = '../';
 end
 
-fid=fopen(filename);
-fo=fopen('tempFile.m','w');
-tline = fgetl(fid);
-
-while ischar(tline)
-    
-    if strfind(tline, string1)
-        fprintf(fo, '%s\n', string2);
-    else
-        fprintf(fo, '%s\n', tline);
-    end
-    tline = fgetl(fid);
+if ~iscell(filename)
+    filename = {filename};
 end
 
-
-fclose(fid);
-fclose(fo);
-
-
-movefile('tempFile.m', [path filename], 'f');
+for fIx = 1:numel(filename)
+    
+    currFilename = filename{fIx};
+    
+    fid=fopen([path currFilename]);
+    fo=fopen('tempFile.m','w');
+    tline = fgetl(fid);
+    
+    while ischar(tline)
+        
+        if strfind(tline, string1)
+            fprintf(fo, '%s\n', string2);
+        else
+            fprintf(fo, '%s\n', tline);
+        end
+        tline = fgetl(fid);
+    end
+    
+    
+    fclose(fid);
+    fclose(fo);
+    
+    
+    movefile('tempFile.m', [path currFilename], 'f');
+end
 end
 
