@@ -23,6 +23,18 @@ matRad_unitTestTextManipulation('matRad_calcPhotonDose.m', 'lateralCutoff = 50',
 matRad_unitTestTextManipulation('matRad_calcParticleDose.m', 'cutOffLevel          = 0.99', '       cutOffLevel          = 0.8;')
 matRad_unitTestTextManipulation('matRad_ipoptOptions.m', 'options.ipopt.max_iter', 'options.ipopt.max_iter = 10;', '../optimization/')
 
+exampleScripts = {'matRad_example1_phantom.m',...
+    'matRad_example2_photons.m',...
+    'matRad_example3_photonsDAO.m',...
+    'matRad_example5_protons.m',...
+    'matRad_example6_protonsNoise.m',...
+    'matRad_example7_carbon.m'};
+
+unitTestBixelWidth = 20;
+
+matRad_unitTestTextManipulation(exampleScripts,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)], '../examples/');
+matRad_unitTestTextManipulation('matRad.m','pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)], '../');
+
 % supressing the inherent Ocatave warnings for division by zero
 if strcmp(matRad_getEnvironment,'OCTAVE')
     warning("off", "Octave:divide-by-zero")
