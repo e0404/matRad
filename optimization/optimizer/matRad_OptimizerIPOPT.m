@@ -22,12 +22,11 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             %obj.Property1 = inputArg1 + inputArg2;
             obj.wResult = [];
             obj.resultInfo = [];
-            obj.axesHandle = gobjects(0);
+            obj.axesHandle = [];
             obj.allObjectiveFunctionValues = [];
             obj.abortRequested = false;
-        end
-        
-        function obj  = createDefaultOptimizerOptions(obj)
+            
+            %Set Default Options
             obj.options.print_level                   = 5;
             obj.options.print_user_options            = 'no';
             obj.options.print_options_documentation   = 'no';

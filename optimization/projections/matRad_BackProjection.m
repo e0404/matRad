@@ -28,8 +28,12 @@ classdef matRad_BackProjection
         end
     end
     
-    methods (Abstract)
-        d = computeResult(obj,dij,w)
+    %These should be abstract methods, however Octave can't parse them. As soon 
+    %as Octave is able to do this, they should be made abstract again 
+    methods %(Abstract)
+        function d = computeResult(obj,dij,w)
+          error('Function needs to be implemented!');
+        end
     end
 end
 

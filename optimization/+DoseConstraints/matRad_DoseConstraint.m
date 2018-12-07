@@ -28,23 +28,33 @@ classdef (Abstract) matRad_DoseConstraint
     properties (Abstract, Access = public)
         parameters          %Cell array of parameter values              
     end
-        
-    methods (Abstract)
+    
+    %These should be abstract methods, however Octave can't parse them. As soon 
+    %as Octave is able to do this, they should be made abstract again    
+    methods %(Abstract)
         %returns the constraint function(s) value(s) for a given dose
         %vector. Needs to be implemented in sub-classes.
-        cDose        = computeDoseConstraintFunction(obj,dose)
+        function cDose        = computeDoseConstraintFunction(obj,dose)
+          error('Function needs to be implemented!');
+        end
         
         %return the (dose-dependent) constraint function jacobian for a
         %given dose vector. Needs to be implemented in sub-classes.
-        cDoseJacob   = computeDoseConstraintJacobian(obj,dose)
+        function cDoseJacob   = computeDoseConstraintJacobian(obj,dose)
+          error('Function needs to be implemented!');
+        end
         
         %Returns upper bound(s) / max value(s) for constraint function(s)
         %Needs to be implemented in sub-classes.
-        cu           = upperBounds(obj,n)
+        function cu           = upperBounds(obj,n)
+          error('Function needs to be implemented!');
+        end
         
         %Returns lower bound(s) / min value(s) for constraint function(s)
         %Needs to be implemented in sub-classes.
-        cl           = lowerBounds(obj,n)                
+        function cl           = lowerBounds(obj,n)                
+          error('Function needs to be implemented!');
+        end
     end
 
     methods (Access = public)

@@ -31,12 +31,19 @@ classdef (Abstract) matRad_DoseObjective
         penalty             %Optimization penalty
     end
     
-    methods (Abstract)
+    %These should be abstract methods, however Octave can't parse them. As soon 
+    %as Octave is able to do this, they should be made abstract again
+    methods %(Abstract)
         %returns the objective function value for the given dose vector. Needs to be implemented in sub-classes.
-        fDose       = computeDoseObjectiveFunction(obj,dose) 
+        function fDose       = computeDoseObjectiveFunction(obj,dose) 
+          error('Function needs to be implemented!');
+        end
+        
         
         %returns the dose-gradient for the given dose vector. Needs to be implemented in sub-classes.
-        fDoseGrad   = computeDoseObjectiveGradient(obj,dose) 
+        function fDoseGrad   = computeDoseObjectiveGradient(obj,dose) 
+          error('Function needs to be implemented!');
+        end
     end        
     
     %Helper methods

@@ -14,9 +14,7 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
             
             obj.wResult = [];
             obj.resultInfo = [];
-        end
-        
-        function obj  = createDefaultOptimizerOptions(obj)
+            
             %createDefaultOptimizerOptions Constructs a set of default
             %options for the optimizer to use
             obj.options = optimoptions('fmincon',...
@@ -34,7 +32,7 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
                 'ScaleProblem',true,...
                 'PlotFcn',{@optimplotfval,@optimplotx,@optimplotfunccount,@optimplotconstrviolation,@optimplotstepsize,@optimplotfirstorderopt});                    
         end
-        
+                
         function obj = optimize(obj,w0,optiProb,dij,cst)
             %optimize Carries Out the optimization
             

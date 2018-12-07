@@ -8,22 +8,17 @@ classdef (Abstract) matRad_Optimizer < handle
         resultInfo
     end
     
-    methods
-        function obj = matRad_Optimizer
-            %OPTIMIZER Construct an instance of this class
-            %   Detailed explanation goes here
-            obj = createDefaultOptimizerOptions(obj);
+   
+    %These should be abstract methods, however Octave can't parse them. As soon 
+    %as Octave is able to do this, they should be made abstract again 
+    methods %(Abstract)        
+        function obj = optimize(obj,w0,optiProb,dij,cst)
+          error('Function needs to be implemented!');
         end
         
-        
-    end
-    
-    methods (Abstract)
-        obj  = createDefaultOptimizerOptions(obj)
-        
-        obj = optimize(obj,w0,optiProb,dij,cst)
-        
-        [msg,statusflag] = GetStatus(obj)
+        function [msg,statusflag] = GetStatus(obj)
+          error('Function needs to be implemented!');
+        end
     end
 end
 
