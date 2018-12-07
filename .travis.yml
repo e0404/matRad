@@ -61,3 +61,6 @@ after_failure:
   - gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch /usr/bin/octave-cli # print stack trace
   - tail runtests.log
 #  - tail runtests.err
+
+notifications:
+    slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ
