@@ -193,8 +193,8 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         end
         
         function plotFunction(obj)
-            % plot objective function output
-            if isempty(obj.axesHandle) || ~isvalid(obj.axesHandle)
+            % plot objective function output 
+            if isempty(obj.axesHandle) || ~isgraphics(obj.axesHandle,'axes')
                 hFig = figure('Name','Progress of IPOPT Optimization','NumberTitle','off','Color',[.5 .5 .5]);
                 obj.axesHandle = axes(hFig);
                 hold(obj.axesHandle,'on');
