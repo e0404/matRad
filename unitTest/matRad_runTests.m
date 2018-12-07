@@ -33,6 +33,7 @@ exampleScripts = {'matRad_example1_phantom.m',...
 unitTestBixelWidth = 20;
 
 matRad_unitTestTextManipulation(exampleScripts,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)], '../examples/');
+matRad_unitTestTextManipulation(exampleScripts,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR UNIT TESTING %%%%%%%%%%%%%%', '../examples/');
 matRad_unitTestTextManipulation('matRad.m','pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)], '../');
 
 % supressing the inherent Ocatave warnings for division by zero
