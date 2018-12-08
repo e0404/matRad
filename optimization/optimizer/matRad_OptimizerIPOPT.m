@@ -6,6 +6,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         options
         wResult
         resultInfo
+        env
     end
     
     properties (Access = private)
@@ -62,6 +63,10 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.options.hessian_approximation         = 'limited-memory';
             obj.options.limited_memory_max_history    = 6;
             obj.options.limited_memory_initialization = 'scalar2';
+            
+            % determine once if Matlab or Octave
+            obj.env = matRad_getEnvironment();
+
         end
         
         function obj = optimize(obj,w0,optiProb,dij,cst)
@@ -97,12 +102,10 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             fprintf('\nOptimzation initiating...\n');
             fprintf('Press q to terminate the optimization...\n');
             
-            %Set Callback
-            % determine if Matlab or Octave
-            [env, ~] = matRad_getEnvironment();
+            % set Callback
             
             if ~isdeployed % only if _not_ running as standalone                               
-                switch env
+                switch obj.env
                     case 'MATLAB'
                         % get handle to Matlab command window
                         mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
@@ -121,7 +124,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             [obj.wResult, obj.resultInfo] = ipopt(w0,funcs,ipoptStruct);
             
             % unset Key Pressed Callback of Matlab command window
-            if ~isdeployed && strcmp(env,'MATLAB')
+            if ~isdeployed && strcmp(obj.env,'MATLAB')
                 set(h_cw, 'KeyPressedCallback',' ');
             end
             
@@ -188,7 +191,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         
         function flag = iterFunc(obj,iter,objective,~,~)
             obj.allObjectiveFunctionValues(iter + 1) = objective;
-            obj.plotFunction();
+            if strcmp(obj.env,'MATLAB')
+                obj.plotFunction();
+            end
             flag = ~obj.abortRequested;
         end
         
@@ -236,9 +241,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         
         function abortCallbackButton(obj,~,~,~)
             obj.abortRequested = true;
-        end
-        
-        
+        end       
         
     end
 end
