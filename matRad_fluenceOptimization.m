@@ -67,14 +67,11 @@ for i = 1:size(cst,1)
         %Iterate through objectives/constraints
         fDoses = [];
         for fObjCell = cst{i,6}
-            %Check if we have a Dose dependent function
-            if isa(fObjCell{1},'DoseObjectives.matRad_DoseObjective') || isa(fObjCell{1},'DoseConstraints.matRad_DoseConstraint')
-                dParams = fObjCell{1}.getDoseParameters();
-                %Don't care for Inf constraints
-                dParams = dParams(isfinite(dParams));
-                %Add do dose list
-                fDoses = [fDoses dParams];
-            end
+            dParams = fObjCell{1}.getDoseParameters();
+            %Don't care for Inf constraints
+            dParams = dParams(isfinite(dParams));
+            %Add do dose list
+            fDoses = [fDoses dParams];
         end
                 
         
