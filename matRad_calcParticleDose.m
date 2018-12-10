@@ -32,91 +32,16 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% default: dose influence matrix computation
-if ~exist('calcDoseDirect','var')
-    calcDoseDirect = false;
-end
-
-% to guarantee downwards compatibility with data that does not have
-% ct.x/y/z
-if ~any(isfield(ct,{'x','y','z'}))
-    ct.x = ct.resolution.x*[0:ct.cubeDim(1)-1]-ct.resolution.x/2;
-    ct.y = ct.resolution.y*[0:ct.cubeDim(2)-1]-ct.resolution.y/2;
-    ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1]-ct.resolution.z/2;
-end
-
-% set grids
-if ~isfield(pln,'propDoseCalc') || ...
-   ~isfield(pln.propDoseCalc,'doseGrid') || ...
-   ~isfield(pln.propDoseCalc.doseGrid,'resolution')
-    % default values
-    dij.doseGrid.resolution.x = 2.5; % [mm]
-    dij.doseGrid.resolution.y = 2.5; % [mm]
-    dij.doseGrid.resolution.z = 3;   % [mm]
-else
-    % take values from pln strcut
-    dij.doseGrid.resolution.x = pln.propDoseCalc.doseGrid.resolution.x;
-    dij.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.y;
-    dij.doseGrid.resolution.z = pln.propDoseCalc.doseGrid.resolution.z;
-end
-
-dij.doseGrid.x = ct.x(1):dij.doseGrid.resolution.x:ct.x(end);
-dij.doseGrid.y = ct.y(1):dij.doseGrid.resolution.y:ct.y(end);
-dij.doseGrid.z = ct.z(1):dij.doseGrid.resolution.z:ct.z(end);
-
-dij.doseGrid.dimensions  = [numel(dij.doseGrid.x) numel(dij.doseGrid.y) numel(dij.doseGrid.z)];
-dij.doseGrid.numOfVoxels = prod(dij.doseGrid.dimensions);
-
-dij.ctGrid.resolution.x = ct.resolution.x;
-dij.ctGrid.resolution.y = ct.resolution.y;
-dij.ctGrid.resolution.z = ct.resolution.z;
-
-dij.ctGrid.x = ct.x;
-dij.ctGrid.y = ct.y;
-dij.ctGrid.z = ct.z;
-
-dij.ctGrid.dimensions  = [numel(dij.ctGrid.x) numel(dij.ctGrid.y) numel(dij.ctGrid.z)];
-dij.ctGrid.numOfVoxels = prod(dij.ctGrid.dimensions);
-
-% calculate rED or rSP from HU
-ct = matRad_calcWaterEqD(ct, pln);
+% init dose calc
+matRad_calcDoseInit;
 
 % initialize waitbar
 figureWait = waitbar(0,'calculate dose influence matrix for particles...');
 % prevent closure of waitbar and show busy state
 set(figureWait,'pointer','watch');
 
-% meta information for dij
-dij.numOfBeams         = pln.propStf.numOfBeams;
-dij.numOfScenarios     = 1;
-dij.numOfRaysPerBeam   = [stf(:).numOfRays];
-dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
-dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
-
-% check if full dose influence data is required
-if calcDoseDirect 
-    numOfColumnsDij           = length(stf);
-    numOfBixelsContainer = 1;
-else
-    numOfColumnsDij           = dij.totalNumOfBixels;
-    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
-end
-
-% set up arrays for book keeping
-dij.bixelNum = NaN*ones(numOfColumnsDij,1);
-dij.rayNum   = NaN*ones(numOfColumnsDij,1);
-dij.beamNum  = NaN*ones(numOfColumnsDij,1);
-
-% Allocate space for dij.physicalDose sparse matrix
-for i = 1:dij.numOfScenarios
-    dij.physicalDose{i} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
-end
-
 % helper function for energy selection
 round2 = @(a,b)round(a*10^b)/10^b;
-
-% Allocate memory for dose_temp cell array
-doseTmpContainer     = cell(numOfBixelsContainer,dij.numOfScenarios);
 
 if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
         && strcmp(pln.radiationMode,'carbon')
@@ -131,38 +56,6 @@ if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.b
 elseif isequal(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
             dij.RBE = 1.1;
             fprintf(['matRad: Using a constant RBE of 1.1 \n']);   
-end
-
-% Only take voxels inside patient at full ct resolution
-VctGrid = [cst{:,4}];
-VctGrid = unique(vertcat(VctGrid{:}));
-
-% ignore densities outside of contours
-eraseCtDensMask = ones(prod(ct.cubeDim),1);
-eraseCtDensMask(VctGrid) = 0;
-for i = 1:ct.numOfCtScen
-    ct.cube{i}(eraseCtDensMask == 1) = 0;
-end
-
-% Convert CT subscripts to linear indices.
-[yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,VctGrid);
-
-% receive linear indices and grid locations from the dose grid
-tmpCube    = zeros(ct.cubeDim);
-tmpCube(VctGrid) = 1;
-% interpolate cube
-VdoseGrid = find(interp3(dij.ctGrid.y,  dij.ctGrid.x,   dij.ctGrid.z,tmpCube, ...
-                         dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'nearest'));
-
-% Convert CT subscripts to coarse linear indices.
-[yCoordsV_voxDoseGrid, xCoordsV_voxDoseGrid, zCoordsV_voxDoseGrid] = ind2sub(dij.doseGrid.dimensions,VdoseGrid);
-
-% load machine file
-fileName = [pln.radiationMode '_' pln.machine];
-try
-   load([fileparts(mfilename('fullpath')) filesep fileName]);
-catch
-   error(['Could not find the following machine file: ' fileName ]); 
 end
 
 if isfield(pln,'propDoseCalc') && ...
@@ -184,8 +77,7 @@ if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.b
         && strcmp(pln.radiationMode,'carbon')
     
     if   isfield(machine.data,'alphaX') && isfield(machine.data,'betaX')
-        
-    
+            
         fprintf('matRad: loading biological base data... ');
         vTissueIndex = zeros(size(VdoseGrid,1),1);
         dij.ax       = zeros(dij.doseGrid.numOfVoxels,1);
@@ -236,69 +128,18 @@ elseif sum(strcmp(pln.propOpt.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0
     pln.propOpt.bioOptimization = 'none';      
 end
 
-% compute SSDs
-stf = matRad_computeSSD(stf,ct);
+% lateral cutoff for raytracing and geo calculations
+effectiveLateralCutoff = 50;
 
 fprintf('matRad: Particle dose calculation...\n');
 counter = 0;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:length(stf) % loop over all beams
-    
-    fprintf(['Beam ' num2str(i) ' of ' num2str(length(stf)) ': \n']);
-        
-    % remember beam and bixel number
-    if calcDoseDirect
-        dij.beamNum(i)    = i;
-        dij.rayNum(i)     = i;
-        dij.bixelNum(i)   = i;
-    end
-
-    bixelsPerBeam = 0;
-    
-    % convert voxel indices to real coordinates using iso center of beam i
-    xCoordsV       = xCoordsV_vox(:)      * ct.resolution.x-stf(i).isoCenter(1);
-    yCoordsV       = yCoordsV_vox(:)      * ct.resolution.y-stf(i).isoCenter(2);
-    zCoordsV       = zCoordsV_vox(:)      * ct.resolution.z-stf(i).isoCenter(3);
-    coordsV        = [xCoordsV yCoordsV zCoordsV];
-
-    xCoordsVdoseGrid = xCoordsV_voxDoseGrid(:) * dij.doseGrid.resolution.x-stf(i).isoCenter(1);
-    yCoordsVdoseGrid = yCoordsV_voxDoseGrid(:) * dij.doseGrid.resolution.y-stf(i).isoCenter(2);
-    zCoordsVdoseGrid = zCoordsV_voxDoseGrid(:) * dij.doseGrid.resolution.z-stf(i).isoCenter(3);
-    coordsVdoseGrid  = [xCoordsVdoseGrid yCoordsVdoseGrid zCoordsVdoseGrid];
-    
-    % Get Rotation Matrix
-    % Do not transpose matrix since we usage of row vectors &
-    % transformation of the coordinate system need double transpose
-
-    % rotation around Z axis (gantry)
-    rotMat_system_T = matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).couchAngle);
-
-    % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
-    rot_coordsV         = coordsV*rotMat_system_T;
-    rot_coordsVdoseGrid = coordsVdoseGrid*rotMat_system_T;
-
-    rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
-    rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
-    rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
-
-    rot_coordsVdoseGrid(:,1) = rot_coordsVdoseGrid(:,1)-stf(i).sourcePoint_bev(1);
-    rot_coordsVdoseGrid(:,2) = rot_coordsVdoseGrid(:,2)-stf(i).sourcePoint_bev(2);
-    rot_coordsVdoseGrid(:,3) = rot_coordsVdoseGrid(:,3)-stf(i).sourcePoint_bev(3);
-    
-    % Calculate radiological depth cube
-    lateralCutoffRayTracing = 50;
-    fprintf('matRad: calculate radiological depth cube...');
-    radDepthVctGrid = matRad_rayTracing(stf(i),ct,VctGrid,rot_coordsV,lateralCutoffRayTracing);
-    fprintf('done.\n');
-    
-    % interpolate radiological depth cube to dose grid resolution
-    radDepthVdoseGrid = matRad_interpRadDepth...
-        (ct,1,VctGrid,VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
-    
-    % limit rotated coordinates to positions where ray tracing is availabe
-    rot_coordsVdoseGrid = rot_coordsVdoseGrid(~isnan(radDepthVdoseGrid{1}),:);
-
+  
+    % init beam
+    matRad_calcDoseInitBeam;
+  
     % Determine lateral cutoff
     fprintf('matRad: calculate lateral cutoff...');
     cutOffLevel = .995;
@@ -444,51 +285,7 @@ for i = 1:length(stf) % loop over all beams
                     betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1}  = sparse(VdoseGrid(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.doseGrid.numOfVoxels,1);
                 end
                 
-                % save computation time and memory by sequentially filling the
-                % sparse matrix dose.dij from the cell array
-                if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
-                    
-                    if calcDoseDirect
-                        if isfield(stf(1).ray(1),'weight') && numel(stf(i).ray(j).weight) >= k
-                            
-                            % score physical dose
-                            dij.physicalDose{1}(:,i) = dij.physicalDose{1}(:,i) + stf(i).ray(j).weight(k) * doseTmpContainer{1,1};
-                            
-                            if isfield(dij,'mLETDose')
-                                dij.mLETDose{1}(:,i) = dij.mLETDose{1}(:,i) + stf(i).ray(j).weight(k) * letDoseTmpContainer{1,1};
-                            end
-                            
-                            if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
-                                && strcmp(pln.radiationMode,'carbon')
-                                
-                                % score alpha and beta matrices
-                                dij.mAlphaDose{1}(:,i)    = dij.mAlphaDose{1}(:,i) + stf(i).ray(j).weight(k) * alphaDoseTmpContainer{1,1};
-                                dij.mSqrtBetaDose{1}(:,i) = dij.mSqrtBetaDose{1}(:,i) + stf(i).ray(j).weight(k) * betaDoseTmpContainer{1,1};
-                                
-                            end
-                        else
-                            
-                            error(['No weight available for beam ' num2str(i) ', ray ' num2str(j) ', bixel ' num2str(k)]);
-                            
-                        end
-                    else
-                        
-                        dij.physicalDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
-                        
-                        if isfield(dij,'mLETDose')
-                            dij.mLETDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [letDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
-                        end
-                        
-                        if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
-                            && strcmp(pln.radiationMode,'carbon')
-                        
-                            dij.mAlphaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
-                            dij.mSqrtBetaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
-                        end
-                    
-                    end
-                end
-                
+                matRad_calcDoseFillDij;                
 
             end
             
