@@ -120,7 +120,7 @@ ompMCoptions.randomSeeds = [97 33];
 ompMCoptions.spectrumFile = [pwd filesep 'submodules' filesep 'ompMC' filesep 'spectra' filesep 'mohan6.spectrum'];
 ompMCoptions.monoEnergy = 0.1; 
 ompMCoptions.charge = 0;
-ompMCoptions.colliBounds = [-0.25 0.25 -0.25 0.25];
+ompMCoptions.colliBounds = [22.5 27.5 22.5 27.5];
 ompMCoptions.ssd = 90.0; %This has to be calculated by matRad?
                                                                     
 % start MC transport
@@ -183,14 +183,11 @@ end
 ompMCgeo.material = material;
 ompMCgeo.materialFile = materialFile;
 
-scale = 10; %cm?
+scale = 10; % to convert to cm
 
-ompMCgeo.xBounds = [(dij.doseGrid.x - dij.doseGrid.resolution.x/2) (dij.doseGrid.x(dij.doseGrid.dimensions(1)) + dij.doseGrid.resolution.x/2)] ./ scale ...
-                            - (dij.doseGrid.resolution.x * dij.doseGrid.dimensions(1))/2/scale;
-ompMCgeo.yBounds = [(dij.doseGrid.y - dij.doseGrid.resolution.y/2) (dij.doseGrid.y(dij.doseGrid.dimensions(2)) + dij.doseGrid.resolution.y/2)] ./ scale ...
-                            - (dij.doseGrid.resolution.y * dij.doseGrid.dimensions(2))/2/scale;
-ompMCgeo.zBounds = [(dij.doseGrid.z - dij.doseGrid.resolution.z/2) (dij.doseGrid.z(dij.doseGrid.dimensions(3)) + dij.doseGrid.resolution.z/2)] ./ scale ...
-                            - (dij.doseGrid.resolution.z * dij.doseGrid.dimensions(3))/2/scale;
+ompMCgeo.xBounds = dij.doseGrid.resolution.x * [0:dij.doseGrid.dimensions(1)] ./ scale;
+ompMCgeo.yBounds = dij.doseGrid.resolution.y * [0:dij.doseGrid.dimensions(2)] ./ scale;
+ompMCgeo.zBounds = dij.doseGrid.resolution.z * [0:dij.doseGrid.dimensions(3)] ./ scale;
 
 %% visualization
 if visBool
