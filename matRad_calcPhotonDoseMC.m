@@ -1,9 +1,9 @@
-function dij = matRad_calcPhotonDoseOmpMC(ct,stf,pln,cst,visBool)
+function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad ompMC monte carlo photon dose calculation wrapper
 %
 % call
-%   dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst)
+%   dij = matRad_calcPhotonDoseMc(ct,stf,pln,cst,visBool)
 %
 % input
 %   ct:                         matRad ct struct
@@ -35,28 +35,78 @@ if nargin < 5
     visBool = false;
 end
 
+% to guarantee downwards compatibility with data that does not have
+% ct.x/y/z
+if ~any(isfield(ct,{'x','y','z'}))
+    ct.x = ct.resolution.x*[0:ct.cubeDim(1)-1]-ct.resolution.x/2;
+    ct.y = ct.resolution.y*[0:ct.cubeDim(2)-1]-ct.resolution.y/2;
+    ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1]-ct.resolution.z/2;
+end
+
+% set grids
+if ~isfield(pln,'propDoseCalc') || ...
+   ~isfield(pln.propDoseCalc,'doseGrid') || ...
+   ~isfield(pln.propDoseCalc.doseGrid,'resolution')
+    % default values
+    dij.doseGrid.resolution.x = 2.5; % [mm]
+    dij.doseGrid.resolution.y = 2.5; % [mm]
+    dij.doseGrid.resolution.z = 3;   % [mm]
+else
+    % take values from pln strcut
+    dij.doseGrid.resolution.x = pln.propDoseCalc.doseGrid.resolution.x;
+    dij.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.y;
+    dij.doseGrid.resolution.z = pln.propDoseCalc.doseGrid.resolution.z;
+end
+
+dij.doseGrid.x = ct.x(1):dij.doseGrid.resolution.x:ct.x(end);
+dij.doseGrid.y = ct.y(1):dij.doseGrid.resolution.y:ct.y(end);
+dij.doseGrid.z = ct.z(1):dij.doseGrid.resolution.z:ct.z(end);
+
+dij.doseGrid.dimensions  = [numel(dij.doseGrid.x) numel(dij.doseGrid.y) numel(dij.doseGrid.z)];
+dij.doseGrid.numOfVoxels = prod(dij.doseGrid.dimensions);
+
+dij.ctGrid.resolution.x = ct.resolution.x;
+dij.ctGrid.resolution.y = ct.resolution.y;
+dij.ctGrid.resolution.z = ct.resolution.z;
+
+dij.ctGrid.x = ct.x;
+dij.ctGrid.y = ct.y;
+dij.ctGrid.z = ct.z;
+
+dij.ctGrid.dimensions  = [numel(dij.ctGrid.x) numel(dij.ctGrid.y) numel(dij.ctGrid.z)];
+dij.ctGrid.numOfVoxels = prod(dij.ctGrid.dimensions);
+
 % meta information for dij
 dij.numOfBeams         = pln.propStf.numOfBeams;
-dij.numOfVoxels        = prod(ct.cubeDim);
-dij.resolution         = ct.resolution;
-dij.dimensions         = ct.cubeDim;
 dij.numOfScenarios     = 1;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 
-numOfColumnsDij           = dij.totalNumOfBixels;
-numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
-
 % set up arrays for book keeping
-dij.bixelNum = NaN*ones(numOfColumnsDij,1);
-dij.rayNum   = NaN*ones(numOfColumnsDij,1);
-dij.beamNum  = NaN*ones(numOfColumnsDij,1);
+dij.bixelNum = NaN*ones(dij.totalNumOfBixels,1);
+dij.rayNum   = NaN*ones(dij.totalNumOfBixels,1);
+dij.beamNum  = NaN*ones(dij.totalNumOfBixels,1);
+
+% take only voxels inside patient
+VctGrid = [cst{:,4}];
+VctGrid = unique(vertcat(VctGrid{:}));
+
+% ignore densities outside of contours
+eraseCtDensMask = ones(dij.ctGrid.numOfVoxels,1);
+eraseCtDensMask(VctGrid) = 0;
+for i = 1:ct.numOfCtScen
+    ct.cubeHU{i}(eraseCtDensMask == 1) = -1024;
+end
+
+% downsample ct
+for s = 1:dij.numOfScenarios
+    HUcube{s} =  interp3(dij.ctGrid.y,  dij.ctGrid.x,   dij.ctGrid.z,ct.cubeHU{s}, ...
+                         dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'cubic');
+end
 
 %% Setup OmpMC options / parameters
-%ompMCgeo.nFields = numel(stf);
-%ompMCgeo.nBixels = [stf(:).totalNumOfBixels];
-ompMCgeo.ctRes = [ct.resolution.x ct.resolution.y ct.resolution.z];
+ompMCgeo.ctRes = [dij.doseGrid.resolution.x dij.doseGrid.resolution.y dij.doseGrid.resolution.z];
 
 %display options
 ompMCoptions.verbose = true;
@@ -87,8 +137,7 @@ ompMCoptions.relDoseThreshold = 0.01;
 % Output folders
 ompMCoptions.outputFolder = [pwd filesep 'submodules' filesep 'ompMC' filesep 'output'];
 
-
-%% Create Material Density Cube
+% Create Material Density Cube
 materialFile = [pwd filesep 'submodules' filesep 'ompMC' filesep 'data' filesep '700icru.pegs4dat'];
 material = cell(4,5);
 material{1,1} = 'AIR700ICRU';
@@ -116,9 +165,9 @@ material{4,5} = 2.088;
 for s = 1:dij.numOfScenarios
           
     % find material index
-    cubeMatIx{s} = NaN*ones(ct.cubeDim,'int32');
+    cubeMatIx{s} = NaN*ones(dij.doseGrid.dimensions,'int32');
     for i = size(material,1):-1:1
-        cubeMatIx{s}(ct.cubeHU{s} <= material{i,3}) = i;
+        cubeMatIx{s}(HUcube{s} <= material{i,3}) = i;
     end
     
     % create an artificial HU lookup table
@@ -127,7 +176,7 @@ for s = 1:dij.numOfScenarios
         hlut = [hlut;material{i,2} material{i,4};material{i,3}-1e-10 material{i,5}]; % add eps for interpolation
     end
     
-    cubeRho{s} = interp1(hlut(:,1),hlut(:,2),ct.cubeHU{s});
+    cubeRho{s} = interp1(hlut(:,1),hlut(:,2),HUcube{s});
 
 end
 
@@ -136,23 +185,12 @@ ompMCgeo.materialFile = materialFile;
 
 scale = 10; %cm?
 
-if ~isfield(ct,'x')
-    %length = (1:ct.cubeDim(1) * ct.resolution.x) - ct.resolution.x;
-    ct.x =  ct.resolution.x * [0:ct.cubeDim(1)-1] - (ct.resolution.x * ct.cubeDim(1))/2;
-    %ct.x = (ct.cubeDim(1)/2 - 1:ct.cubeDim(1));
-end
-
-if ~isfield(ct,'y')
-    ct.y =  ct.resolution.y * [0:ct.cubeDim(2)-1] - (ct.resolution.y * ct.cubeDim(2))/2;
-end
-
-if ~isfield(ct,'z')
-    ct.z =  ct.resolution.z * [0:ct.cubeDim(3)-1] - (ct.resolution.z * ct.cubeDim(3))/2;
-end
-
-ompMCgeo.xBounds = [(ct.x - ct.resolution.x*0.5) (ct.x(ct.cubeDim(1)) + ct.resolution.x)] ./ scale;
-ompMCgeo.yBounds = [(ct.y - ct.resolution.y*0.5) (ct.y(ct.cubeDim(2)) + ct.resolution.y)] ./ scale;
-ompMCgeo.zBounds = [(ct.z - ct.resolution.z*0.5) (ct.z(ct.cubeDim(3)) + ct.resolution.z)] ./ scale;
+ompMCgeo.xBounds = [(dij.doseGrid.x - dij.doseGrid.resolution.x/2) (dij.doseGrid.x(dij.doseGrid.dimensions(1)) + dij.doseGrid.resolution.x/2)] ./ scale ...
+                            - (dij.doseGrid.resolution.x * dij.doseGrid.dimensions(1))/2;
+ompMCgeo.yBounds = [(dij.doseGrid.y - dij.doseGrid.resolution.y/2) (dij.doseGrid.y(dij.doseGrid.dimensions(2)) + dij.doseGrid.resolution.y/2)] ./ scale ...
+                            - (dij.doseGrid.resolution.y * dij.doseGrid.dimensions(2))/2;
+ompMCgeo.zBounds = [(dij.doseGrid.z - dij.doseGrid.resolution.z/2) (dij.doseGrid.z(dij.doseGrid.dimensions(3)) + dij.doseGrid.resolution.z/2)] ./ scale ...
+                            - (dij.doseGrid.resolution.z * dij.doseGrid.dimensions(3))/2;
 
 %% visualization
 if visBool
@@ -185,6 +223,15 @@ if visBool
     
 end
 
+%%
+if exist('matRad_ompInterface') ~= 3
+    try
+        eval(['mex ' fileparts(mfilename('fullpath')) filesep 'submodules' filesep 'ompMC' filesep 'matRad_ompInterface.c']);
+    catch
+        error('Could not find/generate mex interface for MC dose calculation');
+    end
+end
+
 %% Create beamlet source
 numOfBixels = zeros(dij.numOfBeams, 1);
 beamSource = zeros(dij.numOfBeams, 3);
@@ -193,17 +240,22 @@ bixelCorner = zeros(dij.totalNumOfBixels,3);
 bixelSide1 = zeros(dij.totalNumOfBixels,3);
 bixelSide2 = zeros(dij.totalNumOfBixels,3);
 
+counter = 0;
+
 for i = 1:dij.numOfBeams % loop over all beams
    
     % define beam source in physical coordinate system in cm
     beamSource(i,:) = (stf(i).sourcePoint + stf(i).isoCenter)/10;
-    %fwrite(fileHandle,beamSource,'double');   
-    
-    % write number of beamlets into file
-    %fwrite(fileHandle,stf(i).numOfRays,'int');
+
     numOfBixels(i) = stf(i).numOfRays;
 
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
+        
+        counter = counter + 1;
+        
+        dij.beamNum(counter)  = i;
+        dij.rayNum(counter)   = j;
+        dij.bixelNum(counter) = j;
         
         % get bixel corner and delimiting vectors.
         % a) change coordinate system (Isocenter cs-> physical cs) and units mm -> cm
@@ -247,19 +299,19 @@ ompMCsource.zSide2 = bixelSide2(:,3);
 
 %% Call the OmpMC interface
 %initialize waitbar
-figureWait = waitbar(0,'OmpMC photon dose influence matrix calculation..');
+figureWait = waitbar(0,'calculate dose influence matrix for photons...');
+% show busy state
+set(figureWait,'pointer','watch');
+
 fprintf('matRad: OmpMC photon dose calculation... ');
 
 %run over all scenarios
 for s = 1:dij.numOfScenarios
-   
-    fprintf('Scenario %d... ',s);
-     
     ompMCgeo.isoCenter = [stf(:).isoCenter];
-    
     dij.physicalDose{s} = matRad_ompInterface(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
-
 end
+
+fprintf('matRad: done!\n');
 
 try
     % wait 0.1s for closing all waitbars
