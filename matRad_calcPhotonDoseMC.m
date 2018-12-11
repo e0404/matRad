@@ -186,11 +186,11 @@ ompMCgeo.materialFile = materialFile;
 scale = 10; %cm?
 
 ompMCgeo.xBounds = [(dij.doseGrid.x - dij.doseGrid.resolution.x/2) (dij.doseGrid.x(dij.doseGrid.dimensions(1)) + dij.doseGrid.resolution.x/2)] ./ scale ...
-                            - (dij.doseGrid.resolution.x * dij.doseGrid.dimensions(1))/2;
+                            - (dij.doseGrid.resolution.x * dij.doseGrid.dimensions(1))/2/scale;
 ompMCgeo.yBounds = [(dij.doseGrid.y - dij.doseGrid.resolution.y/2) (dij.doseGrid.y(dij.doseGrid.dimensions(2)) + dij.doseGrid.resolution.y/2)] ./ scale ...
-                            - (dij.doseGrid.resolution.y * dij.doseGrid.dimensions(2))/2;
+                            - (dij.doseGrid.resolution.y * dij.doseGrid.dimensions(2))/2/scale;
 ompMCgeo.zBounds = [(dij.doseGrid.z - dij.doseGrid.resolution.z/2) (dij.doseGrid.z(dij.doseGrid.dimensions(3)) + dij.doseGrid.resolution.z/2)] ./ scale ...
-                            - (dij.doseGrid.resolution.z * dij.doseGrid.dimensions(3))/2;
+                            - (dij.doseGrid.resolution.z * dij.doseGrid.dimensions(3))/2/scale;
 
 %% visualization
 if visBool
