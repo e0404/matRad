@@ -1,0 +1,4 @@
+[submodule "ompMC"]
+	path = submodules/ompMC
+	url = https://github.com/edoerner/ompMC.git
+	branch = feat-matRadIntegration
