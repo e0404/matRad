@@ -35,12 +35,22 @@ if nargin < 5
     visBool = false;
 end
 
+%%
+if exist('matRad_ompInterface') ~= 3
+    try
+        eval(['mex ' fileparts(mfilename('fullpath')) filesep 'submodules' filesep 'ompMC' filesep 'matRad_ompInterface.c']);
+    catch
+        error('Could not find/generate mex interface for MC dose calculation');
+    end
+end
+
+
 % to guarantee downwards compatibility with data that does not have
 % ct.x/y/z
 if ~any(isfield(ct,{'x','y','z'}))
-    ct.x = ct.resolution.x*[0:ct.cubeDim(1)-1]-ct.resolution.x/2;
-    ct.y = ct.resolution.y*[0:ct.cubeDim(2)-1]-ct.resolution.y/2;
-    ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1]-ct.resolution.z/2;
+    ct.x = ct.resolution.x*[1:ct.cubeDim(1)];
+    ct.y = ct.resolution.y*[1:ct.cubeDim(2)];
+    ct.z = ct.resolution.z*[1:ct.cubeDim(3)];
 end
 
 % set grids
@@ -101,7 +111,7 @@ end
 
 % downsample ct
 for s = 1:dij.numOfScenarios
-    HUcube{s} =  interp3(dij.ctGrid.y,  dij.ctGrid.x,   dij.ctGrid.z,ct.cubeHU{s}, ...
+    HUcube{s} =  interp3(dij.ctGrid.y,  dij.ctGrid.x',  dij.ctGrid.z,ct.cubeHU{s}, ...
                          dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'cubic');
 end
 
@@ -185,15 +195,16 @@ ompMCgeo.materialFile = materialFile;
 
 scale = 10; % to convert to cm
 
-ompMCgeo.xBounds = dij.doseGrid.resolution.x * [0:dij.doseGrid.dimensions(1)] ./ scale;
-ompMCgeo.yBounds = dij.doseGrid.resolution.y * [0:dij.doseGrid.dimensions(2)] ./ scale;
-ompMCgeo.zBounds = dij.doseGrid.resolution.z * [0:dij.doseGrid.dimensions(3)] ./ scale;
+ompMCgeo.xBounds = (dij.doseGrid.resolution.x * (0.5 + [0:dij.doseGrid.dimensions(1)])) ./ scale;
+ompMCgeo.yBounds = (dij.doseGrid.resolution.y * (0.5 + [0:dij.doseGrid.dimensions(2)])) ./ scale;
+ompMCgeo.zBounds = (dij.doseGrid.resolution.z * (0.5 + [0:dij.doseGrid.dimensions(3)])) ./ scale;
 
-%% visualization
+%% debug visualization
 if visBool
-
-    clf
+    
+    figure
     hold on
+
     axis equal
     
     % ct box
@@ -211,22 +222,13 @@ if visBool
     plot3([ctCorner2(1) ctCorner2(1)],[ctCorner1(2) ctCorner1(2)],[ctCorner1(3) ctCorner2(3)],'k' )
     plot3([ctCorner1(1) ctCorner1(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner1(3) ctCorner2(3)],'k' )
     plot3([ctCorner2(1) ctCorner2(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner1(3) ctCorner2(3)],'k' )
-    
+        
     xlabel('x [cm]')
     ylabel('y [cm]')
     zlabel('z [cm]')
 
     rotate3d on
     
-end
-
-%%
-if exist('matRad_ompInterface') ~= 3
-    try
-        eval(['mex ' fileparts(mfilename('fullpath')) filesep 'submodules' filesep 'ompMC' filesep 'matRad_ompInterface.c']);
-    catch
-        error('Could not find/generate mex interface for MC dose calculation');
-    end
 end
 
 %% Create beamlet source
@@ -293,6 +295,10 @@ ompMCsource.zSide1 = bixelSide1(:,3);
 ompMCsource.xSide2 = bixelSide2(:,1);
 ompMCsource.ySide2 = bixelSide2(:,2);
 ompMCsource.zSide2 = bixelSide2(:,3);
+
+if visBool
+    plot3(ompMCsource.xSource,ompMCsource.zSource,ompMCsource.ySource,'rx')
+end
 
 %% Call the OmpMC interface
 %initialize waitbar
