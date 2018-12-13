@@ -135,7 +135,7 @@ ompMCoptions.global_pcut = 0.010;
 ompMCoptions.relDoseThreshold = 0.01;
 
 % Output folders
-ompMCoptions.outputFolder = [pwd filesep 'submodules' filesep 'ompMC' filesep 'output'];
+ompMCoptions.outputFolder = [pwd filesep 'submodules' filesep 'ompMC' filesep 'output' filesep];
 
 % Create Material Density Cube
 materialFile = [pwd filesep 'submodules' filesep 'ompMC' filesep 'data' filesep '700icru.pegs4dat'];
