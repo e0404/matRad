@@ -1,5 +1,4 @@
 function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad QI calculation
 % 
 % call
@@ -24,8 +23,6 @@ function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
 %   Kataria et. al., J Med Phys. 2012 Oct-Dec; 37(4)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 
 % 
@@ -37,6 +34,7 @@ function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 if ~exist('refVol', 'var') || isempty(refVol)
     refVol = [2 5 50 95 98];
 end

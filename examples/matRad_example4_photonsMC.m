@@ -48,11 +48,8 @@ stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
 % Calculate dose influence matrix for unit pencil beam intensities using 
-% the VMC++ monte carlo algorithm. We define the number of photons 
-% simulated per beamlet to be 700. You can find compatible VMC++ files at
-% http://www.cerr.info/download.php which have to located in
-%  matRadrootDirectory\vmc++.
-dij = matRad_calcPhotonDoseOmpMC(ct,stf,pln,cst);
+% a Monte Carlo algorithm
+dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst);
 
 %% Inverse Optimization for IMRT
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
@@ -70,6 +67,3 @@ doseInTarget = resultGUI.physicalDose(ixTarget);
 figure
 histogram(doseInTarget);
 title('dose in target'),xlabel('[Gy]'),ylabel('#');
-
-%% Start the GUI for Visualization
-matRadGUI

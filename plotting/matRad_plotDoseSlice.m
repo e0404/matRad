@@ -1,5 +1,4 @@
 function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,plane,slice,threshold,alpha,cMap,window)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that generates a dose plot of a selected slice. The
 % function can also be used in personal matlab figures by passing the
 % corresponding axes handle
@@ -30,8 +29,6 @@ function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,pla
 %   cMap        used colormap (same as input if set)
 %   window      used window (same as input if set)
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

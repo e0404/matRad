@@ -1,5 +1,4 @@
 function interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, grid)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to interpolate a 3D ct cube to a different resolution
 %
 % call
@@ -19,8 +18,6 @@ function interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, gri
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team.
 %
@@ -32,7 +29,6 @@ function interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, gri
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 
 coordsOfFirstPixel = [origCtInfo.ImagePositionPatient];
 

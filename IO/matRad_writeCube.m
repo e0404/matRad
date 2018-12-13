@@ -1,5 +1,4 @@
 function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad wrapper for Cube export
 % 
 % call
@@ -24,8 +23,6 @@ function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)
 %                                 (default chosen by writer)
 %
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

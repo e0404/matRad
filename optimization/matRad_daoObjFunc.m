@@ -1,5 +1,4 @@
 function f = matRad_daoObjFunc(apertureInfoVect,apertureInfo,dij,cst,options)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: objective function for direct aperture optimization
 %
 % call
@@ -18,8 +17,6 @@ function f = matRad_daoObjFunc(apertureInfoVect,apertureInfo,dij,cst,options)
 % References
 %   [1] http://dx.doi.org/10.1118/1.4914863
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
