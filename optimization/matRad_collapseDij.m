@@ -36,9 +36,9 @@ dijNew.beamNum          = 1;
 dijNew.bixelNum         = 1;
 dijNew.rayNum           = 1;
 
-dijNew.numOfVoxels    = dij.numOfVoxels;
-dijNew.resolution     = dij.resolution;
-dijNew.dimensions     = dij.dimensions;
+dijNew.doseGrid = dij.doseGrid;
+dijNew.ctGrid   = dij.ctGrid;
+
 dijNew.numOfScenarios = dij.numOfScenarios;
 
 for i = 1:dij.numOfScenarios

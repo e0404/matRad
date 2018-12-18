@@ -37,8 +37,8 @@ function g = matRad_gradFuncWrapper(w,dij,cst,options)
 
 % Initializes delta
 delta         = cell(options.numOfScen,1);
-[delta{:}]    = deal(zeros(dij.numOfVoxels,1));
-delta_exp{1}  = zeros(dij.numOfVoxels,1);
+[delta{:}]    = deal(zeros(dij.doseGrid.numOfVoxels,1));
+delta_exp{1}  = zeros(dij.doseGrid.numOfVoxels,1);
 vOmega        = 0;
 
 % if composite worst case optimization is used then create a cell array for book keeping
@@ -47,7 +47,7 @@ for i = 1:size(cst,1)
       if strcmp(cst{i,6}(j).robustness,'COWC')
          f_COWC          = zeros(options.numOfScen,1);
          delta_COWC      = cell(options.numOfScen,1);
-        [delta_COWC{:}]  = deal(zeros(dij.numOfVoxels,1)); break;
+        [delta_COWC{:}]  = deal(zeros(dij.doseGrid.numOfVoxels,1)); break;
       end
   end
 end
@@ -274,7 +274,7 @@ for i = 1:options.numOfScen
 
         elseif isequal(options.quantityOpt,'RBExD')
 
-            deltaTmp              = zeros(dij.numOfVoxels,1);
+            deltaTmp              = zeros(dij.doseGrid.numOfVoxels,1);
             scaledEffect          = d{i} + dij.gamma;
             deltaTmp(dij.ixDose)  = delta{i}(dij.ixDose)./(2*dij.betaX(dij.ixDose).*scaledEffect(dij.ixDose));
             vBias                 = (deltaTmp' * dij.mAlphaDose{options.ixForOpt(i)})';

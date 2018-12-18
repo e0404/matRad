@@ -197,6 +197,11 @@ pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter
 pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
 
+% dose calculation settings
+pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
+
 % retrieve bio model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 
@@ -261,12 +266,6 @@ if param.logLevel == 1
    figure
    subplot(131),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust4D.([quantityOpt]),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);title('robust plan')
    subplot(132),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust4D.('accPhysicalDose'),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);title('robust plan dose accumulation')
-   diffDose    = resultGUIrobust4D.('accPhysicalDose')(:,:,plane)-resultGUIrobust4D.([quantityOpt])(:,:,plane);
-   maxDiffDose = max(diffDose(:));
-   doseDiffIsoLevels = linspace(0 * maxDiffDose,maxDiffDose,10);
-   
-   subplot(133),matRad_plotSliceWrapper(gca,ct,cst,1,diffDose,plane,slice,[],[],colorcube,[],[0 maxDiffDose],doseDiffIsoLevels);title('robust plan')
-
 
    % create an interactive plot to slide through individual scnearios
    f       = figure; title('individual scenarios');

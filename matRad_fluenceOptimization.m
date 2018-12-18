@@ -68,9 +68,10 @@ global matRad_Q_Pressed;
 global matRad_objective_function_value;
 
 matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
-matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
-matRad_global_d_exp             = NaN * ones(dij.numOfVoxels,1);
+matRad_global_d                 = NaN * ones(dij.doseGrid.numOfVoxels,1);
+matRad_global_d_exp             = NaN * ones(dij.doseGrid.numOfVoxels,1);
 matRad_global_Omega             = cell(size(cst,1),1);
+
 matRad_Q_Pressed                = false;
 
 matRad_objective_function_value = [];
@@ -85,12 +86,17 @@ for i = 1:size(cst,1)
     end
 end
 
+% resizing cst to dose cube resolution 
+cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,  dij.ctGrid.y,  dij.ctGrid.z,...
+                                 dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
+
 % find target indices and described dose(s) for weight vector
 % initialization
 V          = [];
 doseTarget = [];
 ixTarget   = [];
-for i=1:size(cst,1)
+
+for i = 1:size(cst,1)
     if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
         V = [V;cst{i,4}{1}];
         doseTarget = [doseTarget cst{i,6}.dose];
@@ -127,6 +133,14 @@ if  strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
         
 elseif pln.bioParam.bioOpt
     
+    % retrieve photon LQM parameter
+    [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1);
+
+    if ~isequal(dij.ax(dij.ax~=0),ax(dij.ax~=0)) || ...
+       ~isequal(dij.bx(dij.bx~=0),bx(dij.bx~=0))
+         error(['Inconsistent biological parameter - please recalculate dose influence matrix']);
+    end
+    
     for i = 1:size(cst,1)
 
         for j = 1:size(cst{i,6},2)
@@ -150,8 +164,9 @@ elseif pln.bioParam.bioOpt
     elseif isequal(pln.bioParam.quantityOpt,'RBExD')
 
            %pre-calculations
-           dij.gamma              = zeros(dij.numOfVoxels,1);   
-           dij.gamma(dij.ixDose) = dij.alphaX(dij.ixDose)./(2*dij.betaX(dij.ixDose)); 
+           dij.gamma             = zeros(dij.doseGrid.numOfVoxels,1);   
+           dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose)); 
+
             
            % calculate current in target
            CurrEffectTarget = (dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2);
@@ -206,7 +221,7 @@ end
 
 % create placeholders for expected influence matrices
 for i = 1:numel(fNames)
-   dij.([fNames{1,i} 'Exp']){1} = spalloc(prod(dij.dimensions),dij.totalNumOfBixels,1);
+   dij.([fNames{1,i} 'Exp']){1} = spalloc(prod(dij.doseGrid.numOfVoxels),dij.totalNumOfBixels,1);
 end
    
 
@@ -287,7 +302,7 @@ resultGUI.wUnsequenced = wOpt;
 if options.numOfScen > 1 || FLAG_ROB_OPT
    Cnt = 1;
    for i = find(~cellfun(@isempty,dij.physicalDose))'
-      tmpResultGUI = matRad_calcCubes(wOpt,dij,cst,i);
+      tmpResultGUI = matRad_calcCubes(wOpt,dij,i);
       resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
       Cnt = Cnt + 1;
    end      

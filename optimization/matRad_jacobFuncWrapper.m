@@ -81,13 +81,13 @@ for i = 1:size(cst,1)
                     
                     if isequal(options.quantityOpt,'physicalDose') && ~isempty(jacobVec) || isequal(options.model,'constRBE')
 
-                       DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
+                       DoseProjection          = [DoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.doseGrid.numOfVoxels,1)];
 
                     elseif isequal(options.quantityOpt,'effect') && ~isempty(jacobVec)
 
-                       mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.numOfVoxels,1)];
+                       mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,jacobVec,dij.doseGrid.numOfVoxels,1)];
                        mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
-                                                  sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*jacobVec,dij.numOfVoxels,numel(cst{i,4}{1}))];
+                                                  sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*jacobVec,dij.doseGrid.numOfVoxels,numel(cst{i,4}{1}))];
                        voxelID                 = [voxelID ;cst{i,4}{1}];
                        constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
 
@@ -97,9 +97,9 @@ for i = 1:size(cst,1)
 
                        delta = jacobVec./(2*dij.betaX(cst{i,4}{1}).*scaledEffect);
 
-                       mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,delta,dij.numOfVoxels,1)];
+                       mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,delta,dij.doseGrid.numOfVoxels,1)];
                        mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
-                                                  sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*delta,dij.numOfVoxels,numel(cst{i,4}{1}))];
+                                                  sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*delta,dij.doseGrid.numOfVoxels,numel(cst{i,4}{1}))];
                        voxelID                 = [voxelID ;cst{i,4}{1}];
                        constraintID            = [constraintID, repmat(1 + constraintID(end),1,numel(cst{i,4}{1}))];
 

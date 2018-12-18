@@ -81,7 +81,7 @@ stf = matRad_generateStf(ct,cst,pln,param);
 %%
 % Let's have a closer look on the stf.ray sub-structure which contains the 
 % actual  beam/ray geometry information. For illustration purposes we want 
-% to show ray # 100. Besides geometrical  information about the position 
+% to show the last ray. Besides geometrical  information about the position 
 % and orientation of the ray, we can also find pencil beam information. If 
 % the ray coincides with the target, pencil beams were defined along the 
 % ray from target entry to target exit. 

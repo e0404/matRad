@@ -193,6 +193,10 @@ cst{ixOAR,6}.robustness  = 'COWC';
 % cst{ixOAR,6}(2,1).robustness  = 'VWWC';
 
 resultGUIrobust = matRad_fluenceOptimization(dij,cst,pln,param);
+
+%% combine resultGUI structures
+resultGUI = matRad_appendResultGUI(resultGUI,resultGUIrobust,0,'robust');
+
 %% Visualize results
 if param.logLevel == 1
 

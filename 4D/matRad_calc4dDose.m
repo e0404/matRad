@@ -53,7 +53,7 @@ end
 % compute all phases
 for i = 1:ct.numOfCtScen
     
-    tmpResultGUI = matRad_calcCubes(totalPhaseMatrix(:,i),dij,cst,i);
+    tmpResultGUI = matRad_calcCubes(totalPhaseMatrix(:,i),dij,i);
     
     % compute physical dose for physical opt
     if strcmp(pln.bioParam.model,'none')       

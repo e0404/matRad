@@ -1,4 +1,6 @@
 function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,...
+                                                                          doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)
+
 % matRad tool function to directly plot a complete slice of a ct with dose
 % including contours and isolines.
 %

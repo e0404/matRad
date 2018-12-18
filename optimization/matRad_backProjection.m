@@ -103,9 +103,9 @@ else
                 d{i}     = e;
             elseif isequal(options.quantityOpt,'RBExD')
                 % calculate RBX x dose
-                d{i}             = zeros(dij.numOfVoxels,1);
-                d{i}(dij.ixDose) = sqrt((e(dij.ixDose)./dij.betaX(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
-                                    - dij.gamma(dij.ixDose);                 
+                d{i}             = zeros(dij.doseGrid.numOfVoxels,1);
+                d{i}(dij.ixDose) = sqrt((e(dij.ixDose)./dij.bx(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
+                                    - dij.gamma(dij.ixDose);                
             else
                error('matRad: Cannot optimze this quantity')
             end

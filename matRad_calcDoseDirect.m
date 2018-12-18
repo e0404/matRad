@@ -86,7 +86,7 @@ end
 if pln.multScen.totNumScen == 1
     % calculate cubes; use uniform weights here, weighting with actual fluence 
     % already performed in dij construction 
-    resultGUI    = matRad_calcCubes(ones(pln.propStf.numOfBeams,1),dij,cst);
+    resultGUI    = matRad_calcCubes(ones(pln.propStf.numOfBeams,1),dij,1);
     
 % calc individual scenarios    
 else    
@@ -94,7 +94,7 @@ else
    Cnt          = 1;
    ixForOpt     = find(~cellfun(@isempty, dij.physicalDose))';
    for i = ixForOpt
-      tmpResultGUI = matRad_calcCubes(ones(pln.propStf.numOfBeams,1),dij,cst,i);
+      tmpResultGUI = matRad_calcCubes(ones(pln.propStf.numOfBeams,1),dij,i);
       if i == 1
          resultGUI.([pln.bioParam.quantityVis]) = tmpResultGUI.(pln.bioParam.quantityVis);
       end
