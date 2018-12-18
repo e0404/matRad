@@ -327,7 +327,7 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
       
       % interpolate radiological depth cube to dose grid resolution
       radDepthVdoseGrid = matRad_interpRadDepth...
-         (ct,ct.numOfCtScen,VctGrid,VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
+         (ct,VctGrid,VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
       
       % limit rotated coordinates to positions where ray tracing is availabe
       rot_coordsVdoseGrid = rot_coordsVdoseGrid(~isnan(radDepthVdoseGrid{1}),:);
