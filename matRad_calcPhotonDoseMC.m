@@ -38,7 +38,7 @@ end
 %%
 if exist('matRad_ompInterface') ~= 3
     try
-        eval(['mex ' fileparts(mfilename('fullpath')) filesep 'submodules' filesep 'ompMC' filesep 'matRad_ompInterface.c']);
+        eval(['mex -largeArrayDims ' fileparts(mfilename('fullpath')) filesep 'submodules' filesep 'ompMC' filesep 'matRad_ompInterface.c']);
     catch
         error('Could not find/generate mex interface for MC dose calculation');
     end
@@ -60,7 +60,7 @@ if ~isfield(pln,'propDoseCalc') || ...
     % default values
     dij.doseGrid.resolution.x = 2.5; % [mm]
     dij.doseGrid.resolution.y = 2.5; % [mm]
-    dij.doseGrid.resolution.z = 3;   % [mm]
+    dij.doseGrid.resolution.z = 2.5;   % [mm]
 else
     % take values from pln strcut
     dij.doseGrid.resolution.x = pln.propDoseCalc.doseGrid.resolution.x;
@@ -112,7 +112,7 @@ end
 % downsample ct
 for s = 1:dij.numOfScenarios
     HUcube{s} =  interp3(dij.ctGrid.y,  dij.ctGrid.x',  dij.ctGrid.z,ct.cubeHU{s}, ...
-                         dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'cubic');
+                         dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'linear');
 end
 
 %% Setup OmpMC options / parameters
@@ -173,7 +173,17 @@ material{4,5} = 2.088;
 
 % conversion from HU to densities & materials
 for s = 1:dij.numOfScenarios
-          
+
+    % projecting out of bounds HU values where necessary
+    if max(HUcube{s}(:)) > material{end,3}
+        warning('projecting out of range HU values');
+        HUcube{s}(HUcube{s}(:) > material{end,3}) = material{end,3};
+    end
+    if min(HUcube{s}(:)) < material{1,2}
+        warning('projecting out of range HU values');
+        HUcube{s}(HUcube{s}(:) < material{1,2}) = material{1,2};
+    end
+
     % find material index
     cubeMatIx{s} = NaN*ones(dij.doseGrid.dimensions,'int32');
     for i = size(material,1):-1:1
