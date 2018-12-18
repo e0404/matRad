@@ -100,7 +100,7 @@ for i = 1:size(cst,1)
       cst{i,6}(1).mOmega = 0;
   end
 end
-dij.physicalDoseExp{1}  = spalloc(dij.numOfVoxels,dij.totalNumOfBixels,1);
+dij.physicalDoseExp{1}  = spalloc(dij.doseGrid.numOfVoxels,dij.totalNumOfBixels,1);
 
 % Set the IPOPT options.
 matRad_ipoptOptions;
@@ -151,7 +151,7 @@ apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,optApertureInfoVec);
 
 % logging final results
 fprintf('Calculating final cubes...\n');
-resultGUI = matRad_calcCubes(apertureInfo.bixelWeights,dij,cst);
+resultGUI = matRad_calcCubes(apertureInfo.bixelWeights,dij);
 
 resultGUI.w    = apertureInfo.bixelWeights;
 resultGUI.wDAO = apertureInfo.bixelWeights;
