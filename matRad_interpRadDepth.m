@@ -1,4 +1,4 @@
-function radDepthVcoarse = matRad_interpRadDepth(ct,ctScenNum,V,Vcoarse,vXgrid,vYgrid,vZgrid,radDepthV)
+function radDepthVcoarse = matRad_interpRadDepth(ct,V,Vcoarse,vXgrid,vYgrid,vZgrid,radDepthV)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % down/up sampling the radiological depth dose cubes
 % 
@@ -6,7 +6,6 @@ function radDepthVcoarse = matRad_interpRadDepth(ct,ctScenNum,V,Vcoarse,vXgrid,v
 %   [radDepthVcoarse,radDepthIxcoarse] = matRad_interpRadDepth(ct,V,radDepthIx,radDepthV,vXgrid,vYgrid,vZgrid,Vcoarse)
 % input
 %   ct:             matRad ct structure
-%   ctScenNum:      selcted CT scenario
 %   V:              linear voxel indices of the cst 
 %   Vcoarse:        linear voxel indices of the down sampled grid resolution
 %   vXgrid:         query points of now location in x dimension
@@ -35,7 +34,7 @@ function radDepthVcoarse = matRad_interpRadDepth(ct,ctScenNum,V,Vcoarse,vXgrid,v
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-for ctScen = 1:ctScenNum
+for ctScen = ct.numOfCtScen
    radDepthCube             = NaN*ones(ct.cubeDim);
    radDepthCube(V(~isnan(radDepthV{1}))) = radDepthV{ctScen}(~isnan(radDepthV{1}));
 

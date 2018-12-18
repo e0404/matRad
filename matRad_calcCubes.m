@@ -27,7 +27,7 @@ function resultGUI = matRad_calcCubes(w,dij,scenNum)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 5
+if nargin < 2
     scenNum = 1;
 end
 

@@ -82,12 +82,12 @@ cst{ixPTV,6}.robustness  = 'none';
 %% Lets create a cubic phantom
 % first define the dimensions of the organ at risk
 cubeHelper = zeros(ct.cubeDim);
-xLowOAR    = round(xDim/2 - xDim/6);
-xHighOAR   = round(xDim/2 + xDim/6);
-yLowOAR    = round(yDim/2 - yDim/6);
-yHighOAR   = round(yDim/2 + yDim/6);
-zLowOAR    = round(zDim/2 - zDim/6);
-zHighOAR   = round(zDim/2 + zDim/6);
+xLowOAR    = round(xDim/2 - xDim/4);
+xHighOAR   = round(xDim/2 + xDim/4);
+yLowOAR    = round(yDim/2 - yDim/4);
+yHighOAR   = round(yDim/2 + yDim/4);
+zLowOAR    = round(zDim/2 - zDim/4);
+zHighOAR   = round(zDim/2 + zDim/4);
 
 for x = xLowOAR:1:xHighOAR
    for y = yLowOAR:1:yHighOAR
@@ -102,7 +102,7 @@ cst{ixOAR,4}{1} = find(cubeHelper);
 
 % second the PTV
 cubeHelper = zeros(ct.cubeDim);
-radiusPTV = xDim/12;
+radiusPTV = xDim/13;
 for x = 1:xDim
    for y = 1:yDim
       for z = 1:zDim
@@ -121,8 +121,8 @@ cst{ixPTV,4}{1} = find(cubeHelper);
 vIxOAR = cst{ixOAR,4}{1};
 vIxPTV = cst{ixPTV,4}{1};
 
-ct.cubeHU{1}(vIxOAR) = 300; % assign HU of soft tissue
-ct.cubeHU{1}(vIxPTV) = 0;   % assign HU of water
+ct.cubeHU{1}(vIxOAR) = 0; % assign HU of soft tissue
+ct.cubeHU{1}(vIxPTV) = 0; % assign HU of water
 
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
@@ -169,17 +169,22 @@ pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 % retrieve 9 worst case scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'wcScen');                                         
 
+pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
+
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln,param);
 
 %% Dose Calculation
 dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
+
 %% Inverse Optimization  for IMPT based on RBE-weighted dose
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
-% 
 resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
+
 %% Trigger robust optimization
 % Make the objective to a composite worst case objective
 cst{ixPTV,6}.robustness  = 'COWC';

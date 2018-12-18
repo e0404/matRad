@@ -947,6 +947,10 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
           if ~isnumeric(ctScenNum)
              ctScenNum = 1;
           end
+          % check if there is a ct scneario available
+          if ct.numOfCtScen < ctScenNum
+             ctScenNum = 1;
+          end
        end
        
        [AxesHandlesCT_Dose(end+1),~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,plotCtCube,ctScenNum,plane,slice,ctMap,handles.dispWindow{ctIx,1});

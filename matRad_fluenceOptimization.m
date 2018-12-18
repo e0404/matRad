@@ -295,7 +295,7 @@ fprintf('Press q to terminate the optimization...\n');
 
 % calc dose and reshape from 1D vector to 2D array
 matRad_dispToConsole('Calculating final cubes...\n',param,'info');
-resultGUI = matRad_calcCubes(wOpt,dij,cst);
+resultGUI = matRad_calcCubes(wOpt,dij);
 resultGUI.wUnsequenced = wOpt;
 
 % calc individual scenarios

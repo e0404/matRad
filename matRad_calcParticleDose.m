@@ -186,7 +186,7 @@ tmpCube    = zeros(ct.cubeDim);
 tmpCube(VctGrid) = 1;
 % interpolate cube
 VdoseGrid = find(interp3(dij.ctGrid.y,dij.ctGrid.x,   dij.ctGrid.z,tmpCube, ...
-                       dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'nearest'));
+   dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'nearest'));
 
 % Convert CT subscripts to coarse linear indices.
 [yCoordsV_voxDoseGrid, xCoordsV_voxDoseGrid, zCoordsV_voxDoseGrid] = ind2sub(dij.doseGrid.dimensions,VdoseGrid);
@@ -348,6 +348,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
       rot_coordsVdoseGrid(:,2) = rot_coordsVdoseGrid(:,2)-stf(i).sourcePoint_bev(2);
       rot_coordsVdoseGrid(:,3) = rot_coordsVdoseGrid(:,3)-stf(i).sourcePoint_bev(3);
       
+      
       % Calcualte radiological depth cube
       lateralCutoffRayTracing = 50;
       matRad_dispToConsole('matRad: calculate radiological depth cube...',param,'info');
@@ -356,7 +357,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
       
       % interpolate radiological depth cube to dose grid resolution
       radDepthVdoseGrid = matRad_interpRadDepth...
-         (ct,1,VctGrid,VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
+         (ct,VctGrid,VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
       
       % limit rotated coordinates to positions where ray tracing is availabe
       rot_coordsVdoseGrid = rot_coordsVdoseGrid(~isnan(radDepthVdoseGrid{1}),:);
@@ -380,11 +381,11 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
             
             % Ray tracing for beam i and ray j
             [ix,radialDist_sq] = matRad_calcGeoDists(rot_coordsVdoseGrid, ...
-                                                     stf(i).sourcePoint_bev, ...
-                                                     stf(i).ray(j).targetPoint_bev, ...
-                                                     machine.meta.SAD, ...
-                                                     find(~isnan(radDepthVdoseGrid{1})), ...
-                                                     maxLateralCutoffDoseCalc);
+               stf(i).sourcePoint_bev, ...
+               stf(i).ray(j).targetPoint_bev, ...
+               machine.meta.SAD, ...
+               find(~isnan(radDepthVdoseGrid{1})), ...
+               maxLateralCutoffDoseCalc);
             
             radDepths = radDepthVdoseGrid{1}(ix);
             
@@ -428,7 +429,6 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                % interpolations in matRad_calcParticleDoseBixel() and avoid extrapolations.
                offsetRadDepth = machine.data(energyIx).offset - stf(i).ray(j).rangeShifter(k).eqThickness;
                
-               
                for ctScen = 1:pln.multScen.numOfCtScen
                   for rangeShiftScen = 1:pln.multScen.totNumRangeScen
                      
@@ -438,9 +438,9 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         
                         % manipulate radDepthCube for range scenarios
                         if pln.multScen.relRangeShift(rangeShiftScen) ~= 0 || pln.multScen.absRangeShift(rangeShiftScen) ~= 0
-                           radDepths = radDepths +...                                                        % original cube
+                           radDepths = radDepths +...                                                       % original cube
                               radDepthVdoseGrid{ctScen}(ix)*pln.multScen.relRangeShift(rangeShiftScen) +... % rel range shift
-                              pln.multScen.absRangeShift(rangeShiftScen);                           % absolute range shift
+                              pln.multScen.absRangeShift(rangeShiftScen);                                   % absolute range shift
                            radDepths(radDepths < 0) = 0;
                         end
                         
@@ -469,7 +469,6 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         
                         % adjust radDepth according to range shifter
                         currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
-                        
                         
                         % calculate initial focus sigma
                         sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist(stf(i).ray(j).focusIx(k),:)', ...
@@ -526,11 +525,10 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                            betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen}  = sparse(VdoseGrid(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.doseGrid.numOfVoxels,1);
                            
                         end
-
+                        
                      end
                   end
                end
-               
                
                % save computation time and memory by sequentially filling the
                % sparse matrix dose.dij from the cell array
@@ -582,9 +580,9 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         end  % shift scen
                      end % range scen
                      
-                  end % ct scen
+                     
+                  end % end % ct scen
                end
-               
             end % end bixels per ray
             
          end
@@ -604,7 +602,7 @@ end % end shift scenario loop
 % remove dose influence for voxels outside of segmentations for every ct
 % scenario
 for i = 1:pln.multScen.numOfCtScen
-                          
+   
    % generate index set to erase
    tmpIx = [];
    for j = 1:size(cst,1)
