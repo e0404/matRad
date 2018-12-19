@@ -130,8 +130,6 @@ ompMCoptions.randomSeeds = [97 33];
 ompMCoptions.spectrumFile = [pwd filesep 'submodules' filesep 'ompMC' filesep 'spectra' filesep 'mohan6.spectrum'];
 ompMCoptions.monoEnergy = 0.1; 
 ompMCoptions.charge = 0;
-ompMCoptions.colliBounds = [22.5 27.5 22.5 27.5];
-ompMCoptions.ssd = 90.0; %This has to be calculated by matRad?
                                                                     
 % start MC transport
 ompMCoptions.dataFolder = [pwd filesep 'submodules' filesep 'ompMC' filesep 'data' filesep];
@@ -289,11 +287,12 @@ for i = 1:dij.numOfBeams % loop over all beams
 end
 
 ompMCsource.nBeams = dij.numOfBeams;
+ompMCsource.iBeam = dij.beamNum(:);
 ompMCsource.xSource = beamSource(:,1);
 ompMCsource.ySource = beamSource(:,2);
 ompMCsource.zSource = beamSource(:,3);
 
-ompMCsource.nBixels = numOfBixels(:);
+ompMCsource.nBixels = sum(numOfBixels(:));
 ompMCsource.xCorner = bixelCorner(:,1);
 ompMCsource.yCorner = bixelCorner(:,2);
 ompMCsource.zCorner = bixelCorner(:,3);
@@ -316,7 +315,7 @@ figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 % show busy state
 set(figureWait,'pointer','watch');
 
-fprintf('matRad: OmpMC photon dose calculation... ');
+fprintf('matRad: OmpMC photon dose calculation... \n');
 
 %run over all scenarios
 for s = 1:dij.numOfScenarios
