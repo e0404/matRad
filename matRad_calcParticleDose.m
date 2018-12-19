@@ -248,9 +248,12 @@ if pln.bioParam.bioOpt
       vTissueIndex = zeros(size(VdoseGrid,1),1);
       dij.ax       = zeros(dij.doseGrid.numOfVoxels,1);
       dij.bx       = zeros(dij.doseGrid.numOfVoxels,1);
+      dij.abx      = zeros(dij.doseGrid.numOfVoxels,1);  % alpha beta ratio
       
       % retrieve photon LQM parameter for the current dose grid voxels
       [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
+      
+      dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
       
       for i = 1:size(cst,1)
          
@@ -517,9 +520,9 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         % save alpha_p and beta_p radiosensititvy parameter for every bixel in cell array
                         if pln.bioParam.bioOpt
                            
-                           [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(currRadDepths,machine.data(energyIx),vTissueIndex_j(currIx,:),dij.alphaX(VdoseGrid(ix(currIx))),...
-                              dij.betaX(V(ix(currIx))),...
-                              dij.abX(V(ix(currIx))));
+                           [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(currRadDepths,machine.data(energyIx),vTissueIndex_j(currIx,:),dij.ax(VdoseGrid(ix(currIx))),...
+                              dij.bx(VdoseGrid(ix(currIx))),...
+                              dij.abx(VdoseGrid(ix(currIx))));
                            
                            alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelAlpha.*bixelDose,dij.doseGrid.numOfVoxels,1);
                            betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen}  = sparse(VdoseGrid(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.doseGrid.numOfVoxels,1);

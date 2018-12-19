@@ -285,6 +285,7 @@ if param.logLevel == 1
    
    % sampling does not know on which scenario sampling should be performed
    structSel = {}; % structSel = {'PTV','OAR1'};
+   param.logLevel = 2;
    [caSamp, mSampDose, plnSamp, resultGUInomScen]          = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,[],[]);
    [cstStat, resultGUISamp, param]                         = matRad_samplingAnalysis(ct,cst,plnSamp,caSamp, mSampDose, resultGUInomScen,[]);
    

@@ -67,20 +67,18 @@ end
 
 % consider biological optimization for carbon ions
 if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
-   
-    ix = dij.bx~=0;
 
     for i = 1:length(beamInfo)  
    
        wBeam = (resultGUI.w .* beamInfo(i).logIx);
        
-       ix = dij.betaX~=0 & resultGUI.(['physicalDose', beamInfo(i).suffix])(:) > 0;
+       ix = dij.bx~=0 & resultGUI.(['physicalDose', beamInfo(i).suffix])(:) > 0;
 
        resultGUI.(['effect', beamInfo(i).suffix])       = full(dij.mAlphaDose{scenNum} * wBeam + (dij.mSqrtBetaDose{scenNum} * wBeam).^2);
        resultGUI.(['effect', beamInfo(i).suffix])       = reshape(resultGUI.(['effect', beamInfo(i).suffix]),dij.doseGrid.dimensions);
     
-       resultGUI.(['RBExDose', beamInfo(i).suffix])     = zeros(size(resultGUI.(['effect', beamInfo(i).suffix])));
-       resultGUI.(['RBExDose', beamInfo(i).suffix])(ix) = (sqrt(dij.ax(ix).^2 + 4 .* dij.bx(ix) .* resultGUI.(['effect', beamInfo(i).suffix])(ix)) - dij.ax(ix))./(2.*dij.bx(ix));
+       resultGUI.(['RBExD', beamInfo(i).suffix])        = zeros(size(resultGUI.(['effect', beamInfo(i).suffix])));
+       resultGUI.(['RBExD', beamInfo(i).suffix])(ix)    = (sqrt(dij.ax(ix).^2 + 4 .* dij.bx(ix) .* resultGUI.(['effect', beamInfo(i).suffix])(ix)) - dij.ax(ix))./(2.*dij.bx(ix));
 
        resultGUI.(['RBE', beamInfo(i).suffix])          = resultGUI.(['RBExD', beamInfo(i).suffix])./resultGUI.(['physicalDose', beamInfo(i).suffix]);
 

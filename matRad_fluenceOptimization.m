@@ -152,7 +152,7 @@ elseif pln.bioParam.bioOpt
         end
     end
     
-    dij.ixDose  = dij.betaX~=0; 
+    dij.ixDose  = dij.bx~=0; 
         
     if isequal(pln.bioParam.quantityOpt,'effect')
 

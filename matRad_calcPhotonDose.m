@@ -354,8 +354,8 @@ for ShiftScen = 1:pln.multScen.totNumShiftScen
       if ~useCustomPrimFluenceBool && ~isFieldBasedDoseCalc
          
          % Display console message.
-         fprintf(['matRad: Uniform primary photon fluence -> pre-compute kernel convolution for SSD = ' ...
-            num2str(machine.data.kernel(currSSDIx).SSD) ' mm ...\n']);
+         matRad_dispToConsole(['matRad: Uniform primary photon fluence -> pre-compute kernel convolution for SSD = ' ...
+            num2str(machine.data.kernel(currSSDIx).SSD) ' mm ...\n'],param,'info');
          
          % 2D convolution of Fluence and Kernels in fourier domain
          convMx1 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)));

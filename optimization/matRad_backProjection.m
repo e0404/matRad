@@ -86,8 +86,8 @@ else
             d_exp{1} = e_exp;
         elseif isequal(options.quantityOpt,'RBExD')
             % calculate expected RBX x dose
-            d_exp{1}             = zeros(dij.numOfVoxels,1);                 
-            d_exp{1}(dij.ixDose) = sqrt((e_exp(dij.ixDose)./dij.betaX(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
+            d_exp{1}             = zeros(dij.doseGrid.numOfVoxels,1);                 
+            d_exp{1}(dij.ixDose) = sqrt((e_exp(dij.ixDose)./dij.bx(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
                                   - dij.gamma(dij.ixDose);          
         end
        

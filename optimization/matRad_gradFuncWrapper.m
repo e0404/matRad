@@ -276,16 +276,16 @@ for i = 1:options.numOfScen
 
             deltaTmp              = zeros(dij.doseGrid.numOfVoxels,1);
             scaledEffect          = d{i} + dij.gamma;
-            deltaTmp(dij.ixDose)  = delta{i}(dij.ixDose)./(2*dij.betaX(dij.ixDose).*scaledEffect(dij.ixDose));
+            deltaTmp(dij.ixDose)  = delta{i}(dij.ixDose)./(2*dij.bx(dij.ixDose).*scaledEffect(dij.ixDose));
             vBias                 = (deltaTmp' * dij.mAlphaDose{options.ixForOpt(i)})';
             quadTerm              = dij.mSqrtBetaDose{options.ixForOpt(i)} * w;
             mPsi                  = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{options.ixForOpt(i)})';
             g                     = g + vBias + mPsi ;
             
             if i == 1
-                deltaTmp              = zeros(dij.numOfVoxels,1);
+                deltaTmp              = zeros(dij.doseGrid.numOfVoxels,1);
                 scaledEffect          = d_exp{1} + dij.gamma;
-                deltaTmp(dij.ixDose)  = delta_exp{i}(dij.ixDose)./(2*dij.betaX(dij.ixDose).*scaledEffect(dij.ixDose));
+                deltaTmp(dij.ixDose)  = delta_exp{i}(dij.ixDose)./(2*dij.bx(dij.ixDose).*scaledEffect(dij.ixDose));
                 vBias                 = (deltaTmp' * dij.mAlphaDoseExp{1})';
                 quadTerm              = dij.mSqrtBetaDoseExp{1} * w;
                 mPsi                  = (2*(delta_exp{i}.*quadTerm)'*dij.mSqrtBetaDoseExp{1})';

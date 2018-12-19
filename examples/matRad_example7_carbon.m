@@ -147,17 +147,17 @@ resultGUI_tissue = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w,param);
 if param.logLevel == 1
     plane = 3;
     doseWindow = [0 max([resultGUI_effect.RBExD(:); resultGUI_tissue.RBExD(:)])];
-
-    figure,title('original plan')
-    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_effect.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);
-    figure,title('manipulated plan')
-    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_tissue.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);
+    figure,
+    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_effect.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);title('original plan')
+    figure,
+    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_tissue.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);title('manipulated plan')
 end
 %% 
 % At this point we would like to see the absolute difference of the original optimization and the 
 % recalculation. 
 if param.logLevel == 1
     absDiffCube = resultGUI_effect.RBExD-resultGUI_tissue.RBExD;
-    figure,title('absolute difference')
-    matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
+    figure,
+    matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);title('absolute difference')
 end
+
