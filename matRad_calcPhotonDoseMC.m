@@ -287,7 +287,6 @@ for i = 1:dij.numOfBeams % loop over all beams
 end
 
 ompMCsource.nBeams = dij.numOfBeams;
-ompMCsource.iBeam = dij.beamNum(:);
 ompMCsource.xSource = beamSource(:,1);
 ompMCsource.ySource = beamSource(:,2);
 ompMCsource.zSource = beamSource(:,3);
