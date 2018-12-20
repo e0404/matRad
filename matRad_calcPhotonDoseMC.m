@@ -287,21 +287,24 @@ for i = 1:dij.numOfBeams % loop over all beams
 end
 
 ompMCsource.nBeams = dij.numOfBeams;
-ompMCsource.xSource = beamSource(:,1);
-ompMCsource.ySource = beamSource(:,2);
+ompMCsource.iBeam = dij.beamNum(:);
+
+% Switch x and y directions to match ompMC cs.
+ompMCsource.xSource = beamSource(:,2);
+ompMCsource.ySource = beamSource(:,1);
 ompMCsource.zSource = beamSource(:,3);
 
 ompMCsource.nBixels = sum(numOfBixels(:));
-ompMCsource.xCorner = bixelCorner(:,1);
-ompMCsource.yCorner = bixelCorner(:,2);
+ompMCsource.xCorner = bixelCorner(:,2);
+ompMCsource.yCorner = bixelCorner(:,1);
 ompMCsource.zCorner = bixelCorner(:,3);
 
-ompMCsource.xSide1 = bixelSide1(:,1);
-ompMCsource.ySide1 = bixelSide1(:,2);
+ompMCsource.xSide1 = bixelSide1(:,2);
+ompMCsource.ySide1 = bixelSide1(:,1);
 ompMCsource.zSide1 = bixelSide1(:,3);
 
-ompMCsource.xSide2 = bixelSide2(:,1);
-ompMCsource.ySide2 = bixelSide2(:,2);
+ompMCsource.xSide2 = bixelSide2(:,2);
+ompMCsource.ySide2 = bixelSide2(:,1);
 ompMCsource.zSide2 = bixelSide2(:,3);
 
 if visBool
