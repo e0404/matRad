@@ -1,4 +1,4 @@
-classdef (Abstract) matRad_DoseConstraint
+classdef (Abstract) matRad_DoseConstraint < matRad_DoseOptimizationFunction
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_DoseConstraint: Interface for optimization constraints.
 %   This abstract base class provides the interface of constraints for
@@ -18,17 +18,7 @@ classdef (Abstract) matRad_DoseConstraint
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    properties (Abstract, Constant)        
-        name                %Display name of the Objective. Needs to be implemented in sub-classes.
-        parameterNames      %Cell array of Display names of the parameters. Needs to be implemented in sub-classes.
-        parameterTypes      %Cell array of parameter types. Valid types are 'dose', 'numeric', or a cell list of string options. Needs to be implemented in sub-classes.
-    end
-    
-    properties (Abstract, Access = public)
-        parameters          %Cell array of parameter values              
-    end
-    
+      
     %These should be abstract methods, however Octave can't parse them. As soon 
     %as Octave is able to do this, they should be made abstract again    
     methods %(Abstract)
@@ -63,19 +53,6 @@ classdef (Abstract) matRad_DoseConstraint
         %jacobian for a given length n of the dose vector. Returns a
         %default of a jStruct
             jStruct = ones(n,1);
-        end
-  
-        function doseParams = getDoseParameters(obj)
-            %Get only the dose related parameters.
-            ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
-            doseParams = [obj.parameters{ix}];
-        end
-                
-        function obj = setDoseParameters(obj,doseParams)
-            %Set only the dose related parameters.
-            ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
-            obj.parameters(ix) = num2cell(doseParams);
-
         end
     end
 end

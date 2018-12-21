@@ -1,4 +1,4 @@
-classdef (Abstract) matRad_DoseObjective
+classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_DoseObjective: Interface for optimization objectives 
 %   This abstract base class provides the structure of optimization
@@ -18,16 +18,9 @@ classdef (Abstract) matRad_DoseObjective
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    properties (Abstract, Constant)        
-        name                %Display name of the Objective. Needs to be implemented in sub-classes.
-        parameterNames      %Cell array of Display names of the parameters. Needs to be implemented in sub-classes.
-        parameterTypes      %Cell array of parameter types. Valid types are 'dose', 'numeric', or a cell list of string options. Needs to be implemented in sub-classes.
-    end
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
     
     properties (Abstract, Access = public)
-        parameters          %Cell array of parameter values       
         penalty             %Optimization penalty
     end
     
@@ -45,21 +38,5 @@ classdef (Abstract) matRad_DoseObjective
           error('Function needs to be implemented!');
         end
     end        
-    
-    %Helper methods
-    methods (Access = public)
-        function doseParams = getDoseParameters(obj)
-            %Get only the dose related parameters.
-            ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
-            doseParams = [obj.parameters{ix}];
-        end
-        
-        function obj = setDoseParameters(obj,doseParams)
-            %Set only the dose related parameters.
-            ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
-            obj.parameters(ix) = num2cell(doseParams);
-
-        end
-    end
 end
 
