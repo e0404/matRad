@@ -120,7 +120,12 @@ end
 
 fieldNamesresultGUIparticle = fieldnames(resultGUI_particle);   
 fieldNumbresultGUIparticle = numel(fieldNamesresultGUIparticle);         
-particleRBExDName = string(fieldNamesresultGUIparticle(fieldNumbresultGUIparticle - 1));
+
+if isfield(resultGUI_particle, {'RBExD'})
+    particleRBExDName = 'RBExD';
+else
+    particleRBExDName = string(fieldNamesresultGUIparticle(fieldNumbresultGUIparticle - 1));
+end
 
 particleRBExD = resultGUI_particle.(particleRBExDName);
 photonPhysicalDose = resultGUI.movedPhotonDose;
