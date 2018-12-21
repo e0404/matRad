@@ -130,8 +130,6 @@ ompMCoptions.randomSeeds = [97 33];
 ompMCoptions.spectrumFile = [pwd filesep 'submodules' filesep 'ompMC' filesep 'spectra' filesep 'mohan6.spectrum'];
 ompMCoptions.monoEnergy = 0.1; 
 ompMCoptions.charge = 0;
-ompMCoptions.colliBounds = [22.5 27.5 22.5 27.5];
-ompMCoptions.ssd = 90.0; %This has to be calculated by matRad?
                                                                     
 % start MC transport
 ompMCoptions.dataFolder = [pwd filesep 'submodules' filesep 'ompMC' filesep 'data' filesep];
@@ -145,7 +143,7 @@ ompMCoptions.global_pcut = 0.010;
 ompMCoptions.relDoseThreshold = 0.01;
 
 % Output folders
-ompMCoptions.outputFolder = [pwd filesep 'submodules' filesep 'ompMC' filesep 'output'];
+ompMCoptions.outputFolder = [pwd filesep 'submodules' filesep 'ompMC' filesep 'output' filesep];
 
 % Create Material Density Cube
 materialFile = [pwd filesep 'submodules' filesep 'ompMC' filesep 'data' filesep '700icru.pegs4dat'];
@@ -289,21 +287,24 @@ for i = 1:dij.numOfBeams % loop over all beams
 end
 
 ompMCsource.nBeams = dij.numOfBeams;
-ompMCsource.xSource = beamSource(:,1);
-ompMCsource.ySource = beamSource(:,2);
+ompMCsource.iBeam = dij.beamNum(:);
+
+% Switch x and y directions to match ompMC cs.
+ompMCsource.xSource = beamSource(:,2);
+ompMCsource.ySource = beamSource(:,1);
 ompMCsource.zSource = beamSource(:,3);
 
-ompMCsource.nBixels = numOfBixels(:);
-ompMCsource.xCorner = bixelCorner(:,1);
-ompMCsource.yCorner = bixelCorner(:,2);
+ompMCsource.nBixels = sum(numOfBixels(:));
+ompMCsource.xCorner = bixelCorner(:,2);
+ompMCsource.yCorner = bixelCorner(:,1);
 ompMCsource.zCorner = bixelCorner(:,3);
 
-ompMCsource.xSide1 = bixelSide1(:,1);
-ompMCsource.ySide1 = bixelSide1(:,2);
+ompMCsource.xSide1 = bixelSide1(:,2);
+ompMCsource.ySide1 = bixelSide1(:,1);
 ompMCsource.zSide1 = bixelSide1(:,3);
 
-ompMCsource.xSide2 = bixelSide2(:,1);
-ompMCsource.ySide2 = bixelSide2(:,2);
+ompMCsource.xSide2 = bixelSide2(:,2);
+ompMCsource.ySide2 = bixelSide2(:,1);
 ompMCsource.zSide2 = bixelSide2(:,3);
 
 if visBool
@@ -316,7 +317,7 @@ figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 % show busy state
 set(figureWait,'pointer','watch');
 
-fprintf('matRad: OmpMC photon dose calculation... ');
+fprintf('matRad: OmpMC photon dose calculation... \n');
 
 %run over all scenarios
 for s = 1:dij.numOfScenarios
