@@ -312,11 +312,9 @@ if visBool
 end
 
 %% Call the OmpMC interface
-%initialize waitbar
-figureWait = waitbar(0,'calculate dose influence matrix for photons...');
-% show busy state
-set(figureWait,'pointer','watch');
 
+%We only need console output here, since the waitbar will be called from 
+%within the interface
 fprintf('matRad: OmpMC photon dose calculation... \n');
 
 %run over all scenarios
@@ -327,12 +325,5 @@ end
 
 fprintf('matRad: done!\n');
 
-try
-    % wait 0.1s for closing all waitbars
-    allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
-    delete(allWaitBarFigures);
-    pause(0.1);
-catch
-end
 
 end
