@@ -13,20 +13,16 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%
-% In this example we will show 
+%% In this example we will show 
 % (i) how to load patient data into matRad
 % (ii) how to setup a photon dose calculation and 
 % (iii) how to inversely optimize beamlet intensities
 % (iv) how to visually and quantitatively evaluate the result
 
+%% set matRad runtime configuration
+matRad_rc
+
 %% Patient Data Import
-% Let's begin with a clear Matlab environment. Then, import the TG119
-% phantom into your workspace. The phantom is comprised of a 'ct' and 'cst'
-% structure defining the CT images and the structure set. Make sure the 
-% matRad root directory with all its subdirectories is added to the Matlab 
-% search path.
-clc,clear,close all;
 load('TG119.mat');
 
 %%
@@ -35,8 +31,9 @@ load('TG119.mat');
 %with some meta information describing properties of the ct cube (cube 
 % dimensions, resolution, number of CT scenarios). Please note that 
 %multiple ct cubes (e.g. 4D CT) can be stored in the cell array ct.cube{}
-display(ct);
-
+if param.logLevel == 1
+    display(ct);
+end
 %%
 % The 'cst' cell array defines volumes of interests along with information 
 % required for optimization. Each row belongs to one certain volume of 
@@ -45,8 +42,9 @@ display(ct);
 % the structure. The type can be set to OAR, TARGET or IGNORED. The fourth 
 % column contains a linear index vector that lists all voxels belonging to 
 % a certain VOI.
-display(cst);
-
+if param.logLevel == 1
+    display(cst);
+end
 %%
 % The fifth column represents meta parameters for optimization. The overlap
 % priority is used to resolve ambiguities of overlapping structures (voxels 
@@ -56,9 +54,10 @@ display(cst);
 % parameter of the linear quadratic model. These parameter are required for
 % biological treatment planning using a variable RBE. Let's output the meta 
 % optimization parameter of the target, which is stored in the thrid row:
-ixTarget = 3;
-display(cst{ixTarget,5});
-
+if param.logLevel == 1
+    ixTarget = 3;
+    display(cst{ixTarget,5});
+end
 %%
 % The sixth column contains optimization information such as objectives and
 % constraints which are required to calculate the objective function value. 
@@ -66,8 +65,9 @@ display(cst{ixTarget,5});
 % individual structures. Here, we have defined a squared deviation 
 % objective making it 'expensive/costly' for the optimizer to over- and 
 % underdose the target structure (both are equally important). 
-display(cst{ixTarget,6});
-
+if param.logLevel == 1
+    display(cst{ixTarget,6});
+end
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
 % matlab structure requires input from the treatment planner and defines 
@@ -137,22 +137,25 @@ pln.multScen = matRad_multScen(ct,'nomScen');
 
 %%
 % and et voila our treatment plan structure is ready. Lets have a look:
-display(pln);
+if param.logLevel == 1
+    display(pln);
+end
 
 %% Generate Beam Geometry STF
 % The steering file struct comprises the complete beam geometry along with 
 % ray position, pencil beam positions and energies, source to axis distance (SAD) etc.
-stf = matRad_generateStf(ct,cst,pln);
+stf = matRad_generateStf(ct,cst,pln,param);
 
 %%
 % Let's display the beam geometry information of the 6th beam
-display(stf(6));
-
+if param.logLevel == 1
+    display(stf(6));
+end
 %% Dose Calculation
 % Let's generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows subsequent inverse optimization.
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
 
 %% Inverse Optimization for IMRT
 % The goal of the fluence optimization is to find a set of beamlet/pencil 
@@ -160,44 +163,48 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % the clinical objectives and constraints underlying the radiation 
 % treatment. Once the optimization has finished, trigger once the GUI to 
 % visualize the optimized dose cubes.
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
 matRadGUI;
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-figure
-imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet);
-
+if param.logLevel == 1
+    slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+    figure
+    imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet);
+end
 %% Now let's create another treatment plan but this time use a coarser beam spacing.
 % Instead of 40 degree spacing use a 50 degree geantry beam spacing
 pln.propStf.gantryAngles = [0:50:359];
 pln.propStf.couchAngles  = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.numOfBeams   = numel(pln.propStf.gantryAngles);
-stf                      = matRad_generateStf(ct,cst,pln);
+stf                      = matRad_generateStf(ct,cst,pln,param);
 pln.propStf.isoCenter    = stf.isoCenter;
-dij                      = matRad_calcPhotonDose(ct,stf,pln,cst);
-resultGUI_coarse         = matRad_fluenceOptimization(dij,cst,pln);
+dij                      = matRad_calcPhotonDose(ct,stf,pln,cst,param);
+resultGUI_coarse         = matRad_fluenceOptimization(dij,cst,pln,param);
 
 %%  Visual Comparison of results
 % Let's compare the new recalculation against the optimization result.
 % Check if you have added all subdirectories to the Matlab search path,
 % otherwise it will not find the plotting function
-plane      = 3;
-doseWindow = [0 max([resultGUI.physicalDose(:); resultGUI_coarse.physicalDose(:)])];
+if param.logLevel == 1
+    plane      = 3;
+    doseWindow = [0 max([resultGUI.physicalDose(:); resultGUI_coarse.physicalDose(:)])];
 
-figure,title('original plan - fine beam spacing')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
-figure,title('modified plan - coarse beam spacing')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_coarse.physicalDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
-
+    figure,title('original plan - fine beam spacing')
+    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+    figure,title('modified plan - coarse beam spacing')
+    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_coarse.physicalDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+end
 %% 
 % At this point we would like to see the absolute difference of the first 
 % optimization (finer beam spacing) and the second optimization (coarser 
 % beam spacing)
-absDiffCube = resultGUI.physicalDose-resultGUI_coarse.physicalDose;
-figure,title( 'fine beam spacing plan - coarse beam spacing plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
+if param.logLevel == 1
+    absDiffCube = resultGUI.physicalDose-resultGUI_coarse.physicalDose;
+    figure,title( 'fine beam spacing plan - coarse beam spacing plan')
+    matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
+end
 
 %% Obtain dose statistics
 % Two more columns will be added to the cst structure depicting the DVH and
@@ -209,7 +216,8 @@ matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 % The treatment plan using more beams should in principle result in a
 % better OAR sparing. Therefore lets have a look at the D95 of the OAR of 
 % both plans
-ixOAR = 2;
-display(qi(ixOAR).D_95);
-display(qi_coarse(ixOAR).D_95);
-
+if param.logLevel == 1
+    ixOAR = 2;
+    display(qi(ixOAR).D_95);
+    display(qi_coarse(ixOAR).D_95);
+end

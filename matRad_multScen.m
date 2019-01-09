@@ -1,5 +1,4 @@
 classdef matRad_multScen 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  matRad_multScen 
 %  This class creates all required biological model parameters according to
 % a given radiation modatlity and a given bio model identifier string. 
@@ -21,8 +20,6 @@ classdef matRad_multScen
 %   bioParam:           matRad's bioParam structure containing information
 %                       about the choosen biological model
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 
@@ -126,7 +123,7 @@ classdef matRad_multScen
                              
         % 'wcScen'  default parameters for  worst case scenarios
         numOfShiftScen_wcScen             = [2 2 2];                       % number of shifts in x y and z direction
-        shiftSize_wcScen                  = [3 3 3];                       % given in [mm]
+        shiftSize_wcScen                  = [4 4 4];                       % given in [mm]
         shiftGenType_wcScen               = 'equidistant';                 % equidistant: equidistant shifts
         shiftCombType_wcScen              = 'individual';                  % individual:  no combination of shift scenarios
         numOfRangeShiftScen_wcScen        = 2;                             % number of absolute and/or relative range scnearios.
@@ -176,20 +173,20 @@ classdef matRad_multScen
       
       % default constructor
       function this = matRad_multScen(ct,TYPE)
-          
-          if exist('TYPE','var') && ~isempty(TYPE)
-              if sum(strcmp(this.AvailableScenCreationTYPE,TYPE))>0
-                    this.TYPE = TYPE;
-              else
-                   matRad_dispToConsole(['matRad_multScen: Unknown TYPE - using the nominal scenario now'],[],'warning')
-                   this.TYPE = this.DEFAULT_TYPE;
-              end
-          else
+         
+         if exist('TYPE','var') && ~isempty(TYPE)
+            if sum(strcmp(this.AvailableScenCreationTYPE,TYPE))>0
+               this.TYPE = TYPE;
+            else
+               matRad_dispToConsole(['matRad_multScen: Unknown TYPE - using the nominal scenario now'],[],'warning')
+               this.TYPE = this.DEFAULT_TYPE;
+            end
+         else
             this.TYPE = this.DEFAULT_TYPE;
-          end
-          this      = getMultScenParam(ct,this);
-          this      = setMultScen(this);
-          this      = calcScenProb(this);
+         end
+         this      = getMultScenParam(ct,this);
+         this      = setMultScen(this);
+         this      = calcScenProb(this);
       end % end constructor
       
       % create valid instance of an object
@@ -249,7 +246,6 @@ classdef matRad_multScen
            this.includeNomScen       = this.(['includeNomScen_' this.TYPE]);  
        end
        
-       
        %%
        % creates individual treatment planning scenarios
        function this = setMultScen(this)
@@ -269,11 +265,11 @@ classdef matRad_multScen
                     isoShiftVec{3} = [0 linspace(-this.shiftSize(3), this.shiftSize(3), this.numOfShiftScen(3))];
                 case 'sampled'
                     meanP = zeros(1,3); % mean (parameter)
-                    rng('shuffle');
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     isoShiftVec{1} = [0 this.shiftSD(1) .* randn(1, this.numOfShiftScen(1)) + meanP(1)];
-                    rng('shuffle');
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     isoShiftVec{2} = [0 this.shiftSD(2) .* randn(1, this.numOfShiftScen(2)) + meanP(2)];
-                    rng('shuffle');
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     isoShiftVec{3} = [0 this.shiftSD(3) .* randn(1, this.numOfShiftScen(3)) + meanP(3)];     
                 otherwise
                     matRad_dispToConsole('did not expect that','error');
@@ -348,11 +344,11 @@ classdef matRad_multScen
                 case 'sampled'
                     % relRange
                     std = this.rangeRelSD; meanP = 0;
-                    rng('shuffle');
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     this.relRangeShift = [nomScen std .* randn(1, this.numOfRangeShiftScen) + meanP];
                     % absRange
                     std = this.rangeAbsSD; meanP = 0;
-                    rng('shuffle');
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     this.absRangeShift = [nomScen std .* randn(1, this.numOfRangeShiftScen) + meanP];
                 otherwise
                     matRad_dispToConsole('Not a valid type of generating data.','error');
@@ -453,8 +449,22 @@ classdef matRad_multScen
                switch this.scenCombType
                    case 'individual'
                        % get all setup scenarios
-                       [~,ixUnq] = unique(this.scenForProb(:,1:3),'rows','stable');
+%                        [~,ixUnq] = unique(this.scenForProb(:,1:3),'rows','stable');
+                        uq   = this.scenForProb(1,1:3);
+                       ixUnq = [1];
+                       for col  = 2: size(this.scenForProb(:,1:3),1)
+                           flag=1;
+                           for colq = 1: size(uq,1)
+                               if (sum(this.scenForProb(col,1:3) ==uq(colq,:)) == 3 )
+                                   flag=0;
+                               end
+                           end
+                           if flag
+                               ixUnq = [ixUnq; col];
+                           end
+                       end
                        this.scenMask  = false(this.numOfCtScen, length(ixUnq), this.totNumRangeScen);
+                       this.scenMask(:,1,1) = true; % ct scenarios
                        this.scenMask(1,:,1) = true; % iso shift scenarios
                        this.scenMask(1,1,:) = true; % range shift scenarios
                    case 'permuted'
@@ -477,7 +487,7 @@ classdef matRad_multScen
             % create linearalized mask where the i row points to the indexes of scenMask
             [x{1}, x{2}, x{3}] = ind2sub(size(this.scenMask),find(this.scenMask));
             this.linearMask    = cell2mat(x);
-            this.totNumScen    = size(this.scenForProb,1);
+            this.totNumScen    = sum(this.scenMask(:));
             
        end % end of setMultScen
        

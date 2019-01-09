@@ -1,5 +1,4 @@
 function dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,nCasePerBixel,numOfParallelMCSimulations,calcDoseDirect)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad vmc++ photon dose calculation wrapper
 % 
 % call
@@ -19,7 +18,18 @@ function dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,nCasePerBixel,numOfParall
 %   dij:                        matRad dij struct
 %
 % References
-%   
+%   -
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2016 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -38,11 +48,49 @@ if ~isdeployed % only if _not_ running as standalone
     addpath(fullfile(matRadRootDir,'vmc++'))
 end
 
+% to guarantee downwards compatibility with data that does not have
+% ct.x/y/z
+if ~any(isfield(ct,{'x','y','z'}))
+    ct.x = ct.resolution.x*[0:ct.cubeDim(1)-1]-ct.resolution.x/2;
+    ct.y = ct.resolution.y*[0:ct.cubeDim(2)-1]-ct.resolution.y/2;
+    ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1]-ct.resolution.z/2;
+end
+
+% set grids
+if ~isfield(pln,'propDoseCalc') || ...
+   ~isfield(pln.propDoseCalc,'doseGrid') || ...
+   ~isfield(pln.propDoseCalc.doseGrid,'resolution')
+    % default values
+    dij.doseGrid.resolution.x = 2.5; % [mm]
+    dij.doseGrid.resolution.y = 2.5; % [mm]
+    dij.doseGrid.resolution.z = 3;   % [mm]
+else
+    % take values from pln strcut
+    dij.doseGrid.resolution.x = pln.propDoseCalc.doseGrid.resolution.x;
+    dij.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.y;
+    dij.doseGrid.resolution.z = pln.propDoseCalc.doseGrid.resolution.z;
+end
+
+dij.doseGrid.x = ct.x(1):dij.doseGrid.resolution.x:ct.x(end);
+dij.doseGrid.y = ct.y(1):dij.doseGrid.resolution.y:ct.y(end);
+dij.doseGrid.z = ct.z(1):dij.doseGrid.resolution.z:ct.z(end);
+
+dij.doseGrid.dimensions  = [numel(dij.doseGrid.x) numel(dij.doseGrid.y) numel(dij.doseGrid.z)];
+dij.doseGrid.numOfVoxels = prod(dij.doseGrid.dimensions);
+
+dij.ctGrid.resolution.x = ct.resolution.x;
+dij.ctGrid.resolution.y = ct.resolution.y;
+dij.ctGrid.resolution.z = ct.resolution.z;
+
+dij.ctGrid.x = ct.x;
+dij.ctGrid.y = ct.y;
+dij.ctGrid.z = ct.z;
+
+dij.ctGrid.dimensions  = [numel(dij.ctGrid.x) numel(dij.ctGrid.y) numel(dij.ctGrid.z)];
+dij.ctGrid.numOfVoxels = prod(dij.ctGrid.dimensions);
+
 % meta information for dij
 dij.numOfBeams         = pln.propStf.numOfBeams;
-dij.numOfVoxels        = prod(ct.cubeDim);
-dij.resolution         = ct.resolution;
-dij.dimensions         = ct.cubeDim;
 dij.numOfScenarios     = 1;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
@@ -57,6 +105,33 @@ else
     numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 end
 
+% take only voxels inside patient
+VctGrid = [cst{:,4}];
+VctGrid = unique(vertcat(VctGrid{:}));
+
+% receive linear indices and grid locations from the dose grid
+tmpCube    = zeros(ct.cubeDim);
+tmpCube(VctGrid) = 1;
+% interpolate cube
+VdoseGrid = find(interp3(dij.ctGrid.y,  dij.ctGrid.x,   dij.ctGrid.z,tmpCube, ...
+                       dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z)>0.5);
+
+% manipulate ct to dose grid resolution for more efficient MC simulation
+for i = 1:dij.numOfScenarios
+    ct.cubeHU{i} = interp3(ct.y,ct.x',ct.z,ct.cubeHU{i}, ...
+                         dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z);
+end
+ct.x = dij.doseGrid.x;
+ct.y = dij.doseGrid.y;
+ct.z = dij.doseGrid.z;
+ct.resolution.x = dij.doseGrid.resolution.x;
+ct.resolution.y = dij.doseGrid.resolution.y;
+ct.resolution.z = dij.doseGrid.resolution.z;
+ct.cubeDim = dij.doseGrid.dimensions;
+
+% calculate rED or rSP from HU
+ct = matRad_calcWaterEqD(ct, pln);
+
 % set up arrays for book keeping
 dij.bixelNum = NaN*ones(numOfColumnsDij,1);
 dij.rayNum   = NaN*ones(numOfColumnsDij,1);
@@ -70,7 +145,7 @@ doseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
 
 % Allocate space for dij.physicalDose sparse matrix
 for i = 1:dij.numOfScenarios
-    dij.physicalDose{i} = spalloc(prod(ct.cubeDim),numOfColumnsDij,1);
+    dij.physicalDose{i} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
 end
 
 % set environment variables for vmc++
@@ -171,10 +246,6 @@ VmcOptions.scoringOptions.outputOptions.dumpDose        = 2;               % out
 
 % export CT cube as binary file for vmc++
 matRad_exportCtVmc(ct, fullfile(phantomPath, 'matRad_CT.ct'));
-
-% take only voxels inside patient
-V = [cst{:,4}];
-V = unique(vertcat(V{:}));
 
 writeCounter                  = 0;
 readCounter                   = 0;
@@ -285,7 +356,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                 bixelDose = bixelDose*absCalibrationFactorVmc;
 
                 % Save dose for every bixel in cell array
-                doseTmpContainer{mod(readCounter-1,numOfBixelsContainer)+1,1} = sparse(V,1,bixelDose(V),dij.numOfVoxels,1);
+                doseTmpContainer{mod(readCounter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid,1,bixelDose(VdoseGrid),dij.doseGrid.numOfVoxels,1);
                 
                 % save computation time and memory by sequentially filling the 
                 % sparse matrix dose.dij from the cell array

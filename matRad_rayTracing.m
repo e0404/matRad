@@ -1,5 +1,4 @@
-function [radDepthV,geoDistV] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function radDepthV = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
 % 
@@ -16,13 +15,10 @@ function [radDepthV,geoDistV] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCu
 %
 % output
 %   radDepthV:  radiological depth inside the patient
-%   geoDistV:   optional: geometrical distance inside the patient
 %
 % References
 %   [1] http://www.sciencedirect.com/science/article/pii/S1120179711001359
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -42,11 +38,6 @@ radDepthCube = repmat({NaN*ones(ct.cubeDim)},ct.numOfCtScen);
 % set up ray matrix direct behind last voxel
 rayMx_bev_y = max(rot_coordsV(:,2)) + max([ct.resolution.x ct.resolution.y ct.resolution.z]);
 rayMx_bev_y = rayMx_bev_y + stf.sourcePoint_bev(2);
-
-% calculate geometric distances
-if nargout > 1
-    geoDistV = sqrt(sum(rot_coordsV.^2,2));
-end
 
 % set up list with bev coordinates for calculation of radiological depth
 coords = zeros(prod(ct.cubeDim),3);

@@ -1,5 +1,4 @@
 function indices = matRad_convRtssContours2Indices(structure,ct)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to convert a polygon segmentation from an rt structure
 % set into a binary segmentation as required within matRad's cst struct
 % 
@@ -18,8 +17,6 @@ function indices = matRad_convRtssContours2Indices(structure,ct)
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

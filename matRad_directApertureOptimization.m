@@ -1,5 +1,4 @@
 function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln,param)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to run direct aperture optimization
 %
 % call
@@ -24,9 +23,7 @@ function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureIn
 % References
 %   [1] http://dx.doi.org/10.1118/1.4914863
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -44,25 +41,18 @@ function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureIn
 [env, ~] = matRad_getEnvironment();
 
 
-if ~isdeployed % only if _not_ running as standalone
+if ~isdeployed && param.logLevel == 1 % only if _not_ running as standalone
     
-    % add path for optimization functions    
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir,'optimization'))
-    addpath(fullfile(matRadRootDir,'tools'))
-    
-    if param.logLevel == 1
-        switch env
-             case 'MATLAB'
-                % get handle to Matlab command window
-                mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-                cw          = mde.getClient('Command Window');
-                xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-                h_cw        = handle(xCmdWndView,'CallbackProperties');
+    switch env
+         case 'MATLAB'
+            % get handle to Matlab command window
+            mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
+            cw          = mde.getClient('Command Window');
+            xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+            h_cw        = handle(xCmdWndView,'CallbackProperties');
 
-                % set Key Pressed Callback of Matlab command window
-                set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
-        end
+            % set Key Pressed Callback of Matlab command window
+            set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
     end
 end
 
@@ -81,7 +71,7 @@ global matRad_Q_Pressed;
 global matRad_objective_function_value;
 
 matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1); % works with bixel weights even though we do dao!
-matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
+matRad_global_d                 = NaN * ones(dij.doseGrid.numOfVoxels,1);
 matRad_Q_Pressed                = false;
 matRad_objective_function_value = [];
 
@@ -95,6 +85,10 @@ for i = 1:size(cst,1)
     end
 end
 
+% resizing cst to dose cube resolution 
+cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
+                                 dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
+
 % update aperture info vector
 apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
 
@@ -106,7 +100,7 @@ for i = 1:size(cst,1)
       cst{i,6}(1).mOmega = 0;
   end
 end
-dij.physicalDoseExp{1}  = spalloc(dij.numOfVoxels,dij.totalNumOfBixels,1);
+dij.physicalDoseExp{1}  = spalloc(dij.doseGrid.numOfVoxels,dij.totalNumOfBixels,1);
 
 % Set the IPOPT options.
 matRad_ipoptOptions;
@@ -140,7 +134,7 @@ fprintf('Press q to terminate the optimization...\n');
 [optApertureInfoVec, info] = ipopt(apertureInfo.apertureVector,funcs,options);
 
 % unset Key Pressed Callback of Matlab command window and delete waitbar
-if ~isdeployed && strcmp(env,'MATLAB')
+if ~isdeployed && strcmp(env,'MATLAB') && param.logLevel == 1
     set(h_cw, 'KeyPressedCallback',' ');
 end
 
@@ -153,11 +147,13 @@ switch env
 end
 
 % update the apertureInfoStruct and calculate bixel weights
-optResult.apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,optApertureInfoVec);
+apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,optApertureInfoVec);
 
-% override also bixel weight vector in optResult struct
-optResult.w    = optResult.apertureInfo.bixelWeights;
-optResult.wDao = optResult.apertureInfo.bixelWeights;
+% logging final results
+fprintf('Calculating final cubes...\n');
+resultGUI = matRad_calcCubes(apertureInfo.bixelWeights,dij);
 
-% calc dose and reshape from 1D vector to 3D array
-optResult.physicalDose = reshape(dij.physicalDose{1}*optResult.w,dij.dimensions);
+resultGUI.w    = apertureInfo.bixelWeights;
+resultGUI.wDAO = apertureInfo.bixelWeights;
+resultGUI.apertureInfo = apertureInfo;
+

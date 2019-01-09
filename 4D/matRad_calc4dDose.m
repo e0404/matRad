@@ -1,18 +1,18 @@
-function [resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI, totalPhaseMatrix)
 % wrapper for the whole 4D dose calculation pipeline and calculated dose
-% aacumulation
+% accumulation
 %
 % call
-%   ct = matRad_addmovement(ct, ct.motionPeriod, ct.numOfCtScen, amp)
+%   ct = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI)
 %
 % input
-%   ct :            ct cube
-%   pln:            matRad plan meta information struct
-%   dij:            matRad dij struct
-%   stf:            matRad steering information struct
-%   cst:            matRad cst struct
-%   resultGUI:      struct containing optimized fluence vector
+%   ct :             ct cube
+%   pln:             matRad plan meta information struct
+%   dij:             matRad dij struct
+%   stf:             matRad steering information struct
+%   cst:             matRad cst struct
+%   resultGUI:       struct containing optimized fluence vector
+%   totalPhaseMatrix optional intput for totalPhaseMatrix
 % output
 %   resultGUI:      structure containing phase dose, RBE weighted dose, etc
 %   timeSequence:   timing information about the irradiation
@@ -20,8 +20,6 @@ function [resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, r
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2018 the matRad development team.
@@ -35,22 +33,27 @@ function [resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, r
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% make a time sequence for when each bixel is irradiated, the sequence
-% follows the backforth spot scanning
-timeSequence = matRad_makeBixelTimeSeq(stf, resultGUI);
+if ~exist('totalPhaseMatrix','var')
+   % make a time sequence for when each bixel is irradiated, the sequence
+   % follows the backforth spot scanning
+   timeSequence = matRad_makeBixelTimeSeq(stf, resultGUI);
 
-% prepare a phase matrix
-motion = 'linear'; % the assumed motion type
-timeSequence = matRad_makePhaseMatrix(timeSequence, ct.numOfCtScen, ct.motionPeriod, motion);
+   % prepare a phase matrix
+   motion       = 'linear'; % the assumed motion type
+   timeSequence = matRad_makePhaseMatrix(timeSequence, ct.numOfCtScen, ct.motionPeriod, motion);
 
-resultGUI.bioParam = pln.bioParam;
+   resultGUI.bioParam = pln.bioParam;
 
-totalPhaseMatrix = vertcat(timeSequence.phaseMatrix);
-
+   % the total phase matrix determines what beamlet will be administered in what ct phase
+   totalPhaseMatrix   = vertcat(timeSequence.phaseMatrix);
+else
+   timeSequence = [];
+   
+end
 % compute all phases
 for i = 1:ct.numOfCtScen
     
-    tmpResultGUI = matRad_calcCubes(totalPhaseMatrix(:,i),dij,cst,i);
+    tmpResultGUI = matRad_calcCubes(totalPhaseMatrix(:,i),dij,i);
     
     % compute physical dose for physical opt
     if strcmp(pln.bioParam.model,'none')       

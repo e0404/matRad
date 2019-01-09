@@ -1,5 +1,4 @@
 function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated
 % beams with multiple static segments according to Siochi (1999)
 % International Journal of Radiation Oncology * Biology * Physics,
@@ -28,8 +27,6 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,v
 %   [1] https://www.ncbi.nlm.nih.gov/pubmed/10078655
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team.
 %
@@ -41,6 +38,7 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,v
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % if visBool not set toogle off visualization
 if nargin < 5
     visBool = 0;
@@ -162,7 +160,11 @@ resultGUI.wSequenced = sequencing.w;
 resultGUI.sequencing   = sequencing;
 resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
 
-resultGUI.physicalDose = reshape(dij.physicalDose{1} * sequencing.w,dij.dimensions);
+doseSequencedDoseGrid = reshape(dij.physicalDose{1} * sequencing.w,dij.doseGrid.dimensions);
+% interpolate to ct grid for visualiation & analysis
+resultGUI.physicalDose = interp3(dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z, ...
+                                 doseSequencedDoseGrid, ...
+                                 dij.ctGrid.y,dij.ctGrid.x',dij.ctGrid.z);
 
 % if weights exists from an former DAO remove it
 if isfield(resultGUI,'wDao')

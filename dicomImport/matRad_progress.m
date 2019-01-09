@@ -1,5 +1,4 @@
 function matRad_progress(currentIndex, totalNumberOfEvaluations)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad progress bar
 % 
 % call
@@ -17,8 +16,6 @@ function matRad_progress(currentIndex, totalNumberOfEvaluations)
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -34,7 +31,7 @@ function matRad_progress(currentIndex, totalNumberOfEvaluations)
 % If it's not the first step, erase the stuff printed before
 if (currentIndex == 1 || nargin > 2)
     fprintf('Progress: ');
-end;
+end
  
 if (currentIndex > 1 && nargin < 3)
   Length = numel(sprintf('%3.2f %%',(currentIndex-1)/totalNumberOfEvaluations*100));

@@ -1,5 +1,4 @@
 function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
 % 
@@ -18,8 +17,6 @@ function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_
 % References
 %   [1] http://iopscience.iop.org/0031-9155/41/8/005
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

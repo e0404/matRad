@@ -1,5 +1,4 @@
 function [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to import a matRad stf struct from dicom RTPLAN data
 % 
 % call
@@ -20,7 +19,6 @@ function [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
 %   -
 % Note
 % not implemented - compensator. Fixed SAD.
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

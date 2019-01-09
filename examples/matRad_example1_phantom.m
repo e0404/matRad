@@ -13,12 +13,13 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% 
-% In this example we will show
+%% In this example we will show
 % (i) how to create arbitrary ct data (resolution, ct numbers)
 % (ii) how to create a cst structure containing the volume of interests of the phantom
 % (iii) generate a treatment plan for this phantom
-clc, clear, close all
+
+%% set matRad runtime configuration
+matRad_rc
 
 %% Create a CT image series
 xDim = 200;
@@ -171,8 +172,10 @@ cst{ixPTV,4}{1} = find(cubeHelper);
 
 
 % now we have ct data and cst data for a new phantom
-display(ct);
-display(cst);
+if param.logLevel == 1
+    display(ct);
+    display(cst);
+end
 
 
 %% Assign relative electron densities
@@ -228,24 +231,27 @@ pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 pln.multScen = matRad_multScen(ct,'nomScen'); 
 
 %% Generate Beam Geometry STF
-stf = matRad_generateStf(ct,cst,pln);
+stf = matRad_generateStf(ct,cst,pln,param);
 
 %% Dose Calculation
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij = matRad_calcPhotonDose(ct,stf,pln,cst, param);
 
 %% Inverse Optimization for intensity-modulated photon therapy
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
 
 %% Plot the resulting dose slice
-plane      = 3;
-slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-doseWindow = [0 max([resultGUI.physicalDose(:)])];
+if param.logLevel == 1
+    plane      = 3;
+    slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+    doseWindow = [0 max([resultGUI.physicalDose(:)])];
 
-figure,title('phantom plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
+    figure,title('phantom plan')
+    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
+
+end
 
 
 

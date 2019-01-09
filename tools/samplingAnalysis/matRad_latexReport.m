@@ -1,5 +1,4 @@
 function param = matRad_latexReport(ct, cst, pln, nominalScenario, structureStat, doseStat, sampDose, listOfQI, param)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad uncertainty analysis report generaator function
 % 
 % call
@@ -18,8 +17,6 @@ function param = matRad_latexReport(ct, cst, pln, nominalScenario, structureStat
 %   (binary)            a pdf report will be generated and saved
 %
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 

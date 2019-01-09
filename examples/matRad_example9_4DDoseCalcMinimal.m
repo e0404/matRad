@@ -12,18 +12,17 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%
-% In this example we will show 
+%% In this example we will show 
 % (i) the structure of 4D data within matRad
 % (ii) how to perform standard treatment planning
 % (iii) how to run a dose recalculation considering interplay effects 
  
-%% Load data, add generic 4D information, and display 'moving' geometry
-% First we plan the treatment (alternatively an existent treatment plan can
-% be imported)
+%% set matRad runtime configuration
+matRad_rc
 
-clc,clear,close all
+%% Load data, add generic 4D information, and display 'moving' geometry
 load BOXPHANTOM.mat
+
 %%
 
 amplitude    = [0 3 0]; % [voxels]
@@ -62,16 +61,13 @@ pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,scenGenType);
 
-% hack multScen structure to compute dose for all scenarios
-pln.multScen.scenMask = ones(10,1);
-
 % generate steering file
 stf = matRad_generateStf(ct,cst,pln);
 
 % dose calculation
 dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
-% inverse planning for imrt
+% inverse planning for imrt on a static CT
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 

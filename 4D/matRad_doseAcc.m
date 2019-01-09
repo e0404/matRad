@@ -23,8 +23,7 @@ function dAcc = matRad_doseAcc(ct, phaseCubes, cst, accMethod)
 %   [1] http://iopscience.iop.org/0031-9155/59/21/6401/
 %   [2] http://iopscience.iop.org/0031-9155/59/1/173/
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2018 the matRad development team.

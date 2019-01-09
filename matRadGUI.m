@@ -1,5 +1,4 @@
 function varargout = matRadGUI(varargin)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad GUI
 %
 % call
@@ -22,8 +21,7 @@ function varargout = matRadGUI(varargin)
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -37,11 +35,6 @@ function varargout = matRadGUI(varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if ~isdeployed
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir,'tools'))
-end
-
 [env, versionString] = matRad_getEnvironment();
 
 % abort for octave
@@ -53,7 +46,16 @@ switch env
          return;
      otherwise
          fprintf(['not yet tested']);
- end
+end
+
+% abort if unit testing
+if ismember('unitTestBool',evalin('base','who')) && ...
+   ~isempty(evalin('base','unitTestBool')) && ...
+   evalin('base','unitTestBool')
+    fprintf('matRad GUI not used for unit testing\n');
+    return;
+end
+
         
 % Begin initialization code - DO NOT EDIT
 % set platform specific look and feel
@@ -93,26 +95,17 @@ elseif ismac
   % opengl is not supported
 end
 
-
-if ~isdeployed
-    currFolder = fileparts(mfilename('fullpath'));
-    addpath(fullfile(currFolder,'plotting'));
-    addpath(fullfile(currFolder,['plotting' filesep 'colormaps']));
-else
-    currFolder = [];
-end
-
 % Choose default command line output for matRadGUI
 handles.output = hObject;
 %show matrad logo
 axes(handles.axesLogo)
-[im, ~, alpha] = imread([currFolder filesep 'dicomImport' filesep 'matrad_logo.png']);
+[im, ~, alpha] = imread('matrad_logo.png');
 f = image(im);
 axis equal off
 set(f, 'AlphaData', alpha);
 % show dkfz logo
 axes(handles.axesDKFZ)
-[im, ~, alpha] = imread([currFolder filesep 'dicomImport' filesep 'DKFZ_Logo.png']);
+[im, ~, alpha] = imread('DKFZ_Logo.png');
 f = image(im);
 axis equal off;
 set(f, 'AlphaData', alpha);
@@ -231,10 +224,6 @@ AllVarNames = handles.AllVarNames;
 if ismember('ct',AllVarNames)
     % compute HU values
     if ~isfield(ct, 'cubeHU')
-        matRadRootDir = fileparts(mfilename('fullpath'));
-        if ~isdeployed
-            addpath(fullfile(matRadRootDir,'dicomImport'));
-        end
         ct = matRad_electronDensitiesToHU(ct);
         assignin('base','ct',ct);
     end
@@ -545,10 +534,6 @@ try
         end
     end
     handles.State = 0;
-    if ~isdeployed
-        matRadRootDir = fileparts(mfilename('fullpath'));
-        addpath(fullfile(matRadRootDir,'dicomImport'))
-    end
     matRad_importDicomGUI;
  
 catch
@@ -565,10 +550,6 @@ function btn_export_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 try
-    if ~isdeployed
-        matRadRootDir = fileparts(mfilename('fullpath'));
-        addpath(fullfile(matRadRootDir,'IO'))
-    end
     matRad_exportGUI;
 catch
     handles = showError(handles,'Could not export data'); 
@@ -955,7 +936,24 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     end
 
     if get(handles.radiobtnCT,'Value')
-        [AxesHandlesCT_Dose(end+1),~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,plotCtCube,1,plane,slice,ctMap,handles.dispWindow{ctIx,1});
+
+       % retrieve number of dose cube and check if a corresponding CT is available
+       num = regexp(handles.SelectedDisplayOption, '\d+', 'match');
+
+       if isempty(num)
+          ctScenNum = 1;
+       else
+          ctScenNum = str2num(num{1});
+          if ~isnumeric(ctScenNum)
+             ctScenNum = 1;
+          end
+          % check if there is a ct scneario available
+          if ct.numOfCtScen < ctScenNum
+             ctScenNum = 1;
+          end
+       end
+       
+       [AxesHandlesCT_Dose(end+1),~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,plotCtCube,ctScenNum,plane,slice,ctMap,handles.dispWindow{ctIx,1});
         
         % plot colorbar? If 1 the user asked for the CT
         if plotColorbarSelection == 2 && handles.cBarChanged
@@ -1039,7 +1037,7 @@ set(handles.txtMaxVal,'String',num2str(handles.dispWindow{selectIx,2}(1,2)));
 
 %% plot VOIs
 if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
-    AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,ct,1,handles.VOIPlotFlag,plane,slice,[],'LineWidth',2)];
+    AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,ct,ctScenNum,handles.VOIPlotFlag,plane,slice,[],'LineWidth',2)];
 end
 
 %% Set axis labels and plot iso center
@@ -1388,8 +1386,15 @@ set(axesFig3D,'DataAspectRatio',ratios./max(ratios));
 
 set(axesFig3D,'Ydir','reverse');
 
-upperLimits = double(ct.cubeDim).*[ct.resolution.y ct.resolution.x ct.resolution.z];
-set(axesFig3D,'xlim',[1 upperLimits(1)],'ylim',[1 upperLimits(2)],'zlim',[1 upperLimits(3)]);
+% to guarantee downwards compatibility with data that does not have
+% ct.x/y/z
+if ~any(isfield(ct,{'x','y','z'}))
+    ct.x = ct.resolution.x*[0:ct.cubeDim(1)-1]-ct.resolution.x/2;
+    ct.y = ct.resolution.y*[0:ct.cubeDim(2)-1]-ct.resolution.y/2;
+    ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1]-ct.resolution.z/2;
+end
+
+set(axesFig3D,'xlim',ct.x([1 end]),'ylim',ct.y([1 end]),'zlim',ct.z([1 end]));
 
 set(axesFig3D,'view',oldView);
 
@@ -3546,10 +3551,6 @@ resultGUI = evalin('base','resultGUI');
 
 for filename = filenames
     [~,name,~] = fileparts(filename{1});
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    if ~isdeployed
-        addpath(fullfile(matRadRootDir,'IO'))
-    end
     [cube,~] = matRad_readCube(fullfile(filepath,filename{1}));
     if ~isequal(ct.cubeDim, size(cube))
         errordlg('Dimensions of the imported cube do not match with ct','Import failed!','modal');
@@ -3580,10 +3581,6 @@ try
         end
     end
     handles.State = 0;
-    if ~isdeployed
-        matRadRootDir = fileparts(mfilename('fullpath'));
-        addpath(fullfile(matRadRootDir,'IO'))
-    end
     
     %call the gui
     uiwait(matRad_importGUI);

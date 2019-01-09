@@ -1,5 +1,4 @@
 function cst = matRad_computeVoiContours(ct,cst)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that computes all VOI contours
 %
 % call
@@ -13,8 +12,6 @@ function cst = matRad_computeVoiContours(ct,cst)
 %   cst the new cst with the column containing the precomputed contours
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -27,24 +24,29 @@ function cst = matRad_computeVoiContours(ct,cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-mask = zeros(ct.cubeDim); % create zero cube with same dimeonsions like dose cube
-for s = 1:size(cst,1)
-    cst{s,7} = cell(max(ct.cubeDim(:)),3);
-    mask(:) = 0;
-    mask(cst{s,4}{1}) = 1;    
-    for slice = 1:ct.cubeDim(1)
-        if any(any(mask(slice,:,:) > 0))
-             cst{s,7}{slice,1} = contourc(squeeze(mask(slice,:,:)),.5*[1 1]);
-        end
-    end
-    for slice = 1:ct.cubeDim(2)
-        if any(any(mask(:,slice,:) > 0))
-             cst{s,7}{slice,2} = contourc(squeeze(mask(:,slice,:)),.5*[1 1]);
-        end
-    end
-    for slice = 1:ct.cubeDim(3)
-        if any(any(mask(:,:,slice) > 0))
-             cst{s,7}{slice,3} = contourc(squeeze(mask(:,:,slice)),.5*[1 1]);
-        end
-    end
+for ctScen = 1:ct.numOfCtScen
+   
+   mask = zeros(ct.cubeDim); % create zero cube with same dimeonsions like dose cube
+   
+   for s = 1:size(cst,1)
+      cst{s,7}{1,ctScen} = cell(max(ct.cubeDim(:)),3);
+      mask(:) = 0;
+      mask(cst{s,4}{ctScen}) = 1;
+      
+      for slice = 1:ct.cubeDim(1)
+         if any(any(mask(slice,:,:) > 0))
+            cst{s,7}{1,ctScen}{slice,1} = contourc(squeeze(mask(slice,:,:)),.5*[1 1]);
+         end
+      end
+      for slice = 1:ct.cubeDim(2)
+         if any(any(mask(:,slice,:) > 0))
+            cst{s,7}{1,ctScen}{slice,2} = contourc(squeeze(mask(:,slice,:)),.5*[1 1]);
+         end
+      end
+      for slice = 1:ct.cubeDim(3)
+         if any(any(mask(:,:,slice) > 0))
+            cst{s,7}{1,ctScen}{slice,3} = contourc(squeeze(mask(:,:,slice)),.5*[1 1]);
+         end
+      end
+   end
 end

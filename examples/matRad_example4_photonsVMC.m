@@ -13,17 +13,16 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%
-% In this example we will show 
+%% In this example we will show 
 % (i) how to load patient data into matRad
 % (ii) how to setup a photon dose calculation based on the VMC++ Monte Carlo algorithm 
 % (iii) how to inversely optimize the beamlet intensities directly from command window in MATLAB. 
 % (iv) how to visualize the result
 
+%% set matRad runtime configuration
+matRad_rc
+
 %% Patient Data Import
-% Let's begin with a clear Matlab environment and import the boxphantom
-% into your workspace. 
-clc,clear,close all;
 load('BOXPHANTOM.mat');
 
 %% Treatment Plan
@@ -79,5 +78,3 @@ figure
 histogram(doseInTarget);
 title('dose in target'),xlabel('[Gy]'),ylabel('#');
 
-%% Start the GUI for Visualization
-matRadGUI

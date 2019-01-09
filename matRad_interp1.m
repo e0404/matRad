@@ -1,5 +1,4 @@
 function y = matRad_interp1(xi,yi,x)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % interpolates 1-D data (table lookup) and utilizes griddedInterpolant if
 % availabe in the used MATLAB version
 %
@@ -19,8 +18,6 @@ function y = matRad_interp1(xi,yi,x)
 % in each column, which will all be interpolated for the given query points.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -36,8 +33,6 @@ function y = matRad_interp1(xi,yi,x)
 persistent isGriddedInterpolantAvailable;
 
 if isempty(isGriddedInterpolantAvailable)
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir,'tools'))
     [env, ~] = matRad_getEnvironment();
     switch env
         case 'MATLAB'

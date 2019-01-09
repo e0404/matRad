@@ -1,5 +1,4 @@
 function [d,d_exp,Omega] = matRad_backProjection(w,dij,cst,options)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad back projection function to calculate the current dose-,effect- or
 % RBExDose- vector based on the dij struct.
 % 
@@ -16,8 +15,6 @@ function [d,d_exp,Omega] = matRad_backProjection(w,dij,cst,options)
 %   d:       dose vector, effect vector or RBExDose vector 
 %   d_exp:   expected dose vector
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 
@@ -89,8 +86,8 @@ else
             d_exp{1} = e_exp;
         elseif isequal(options.quantityOpt,'RBExD')
             % calculate expected RBX x dose
-            d_exp{1}             = zeros(dij.numOfVoxels,1);                 
-            d_exp{1}(dij.ixDose) = sqrt((e_exp(dij.ixDose)./dij.betaX(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
+            d_exp{1}             = zeros(dij.doseGrid.numOfVoxels,1);                 
+            d_exp{1}(dij.ixDose) = sqrt((e_exp(dij.ixDose)./dij.bx(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
                                   - dij.gamma(dij.ixDose);          
         end
        
@@ -106,9 +103,9 @@ else
                 d{i}     = e;
             elseif isequal(options.quantityOpt,'RBExD')
                 % calculate RBX x dose
-                d{i}             = zeros(dij.numOfVoxels,1);
-                d{i}(dij.ixDose) = sqrt((e(dij.ixDose)./dij.betaX(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
-                                    - dij.gamma(dij.ixDose);                 
+                d{i}             = zeros(dij.doseGrid.numOfVoxels,1);
+                d{i}(dij.ixDose) = sqrt((e(dij.ixDose)./dij.bx(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) ...
+                                    - dij.gamma(dij.ixDose);                
             else
                error('matRad: Cannot optimze this quantity')
             end

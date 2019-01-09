@@ -1,5 +1,4 @@
 function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,param)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dose calculation wrapper bypassing dij calculation
 % 
 % call
@@ -17,9 +16,8 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,param)
 %   resultGUI:  matRad result struct
 %
 % References
+%   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -88,18 +86,22 @@ end
 if pln.multScen.totNumScen == 1
     % calculate cubes; use uniform weights here, weighting with actual fluence 
     % already performed in dij construction 
-    resultGUI    = matRad_calcCubes(ones(pln.propStf.numOfBeams,1),dij,cst);
+    resultGUI    = matRad_calcCubes(ones(pln.propStf.numOfBeams,1),dij,1);
     
 % calc individual scenarios    
 else    
 
-    Cnt          = 1;
-    ixForOpt     = find(~cellfun(@isempty, dij.physicalDose))';
-    for i = ixForOpt
-      tmpResultGUI = matRad_calcCubes(ones(pln.propStf.numOfBeams,1),dij,cst,i);
+   Cnt          = 1;
+   ixForOpt     = find(~cellfun(@isempty, dij.physicalDose))';
+   for i = ixForOpt
+      tmpResultGUI = matRad_calcCubes(ones(pln.propStf.numOfBeams,1),dij,i);
+      if i == 1
+         resultGUI.([pln.bioParam.quantityVis]) = tmpResultGUI.(pln.bioParam.quantityVis);
+      end
       resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
       Cnt = Cnt + 1;
-    end      
+   end 
+    
 end
 
 % remember original fluence weights

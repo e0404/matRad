@@ -1,5 +1,4 @@
 function g = matRad_gradFuncWrapper(w,dij,cst,options)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad IPOPT callback: gradient function for inverse planning supporting mean dose
 % objectives, EUD objectives, squared overdosage, squared underdosage,
 % squared deviation and DVH objectives
@@ -21,8 +20,6 @@ function g = matRad_gradFuncWrapper(w,dij,cst,options)
 %   [2] http://www.sciencedirect.com/science/article/pii/S0360301601025858
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 
 % 
@@ -40,8 +37,8 @@ function g = matRad_gradFuncWrapper(w,dij,cst,options)
 
 % Initializes delta
 delta         = cell(options.numOfScen,1);
-[delta{:}]    = deal(zeros(dij.numOfVoxels,1));
-delta_exp{1}  = zeros(dij.numOfVoxels,1);
+[delta{:}]    = deal(zeros(dij.doseGrid.numOfVoxels,1));
+delta_exp{1}  = zeros(dij.doseGrid.numOfVoxels,1);
 vOmega        = 0;
 
 % if composite worst case optimization is used then create a cell array for book keeping
@@ -50,7 +47,7 @@ for i = 1:size(cst,1)
       if strcmp(cst{i,6}(j).robustness,'COWC')
          f_COWC          = zeros(options.numOfScen,1);
          delta_COWC      = cell(options.numOfScen,1);
-        [delta_COWC{:}]  = deal(zeros(dij.numOfVoxels,1)); break;
+        [delta_COWC{:}]  = deal(zeros(dij.doseGrid.numOfVoxels,1)); break;
       end
   end
 end
@@ -85,13 +82,35 @@ for  i = 1:size(cst,1)
 
                     delta{1}(cst{i,4}{1}) = delta{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
                     
+                    
+                % perform probabilistic optimization
                 elseif strcmp(cst{i,6}(j).robustness,'PROB')
+                    
+                   numContours = numel(cst{i,4});
+                   
+                   for ixScen = 1:options.numOfScen
+                      
+                      if numContours == options.numOfScen
+                          contourIndex = ixScen;
+                       else
+                          contourIndex = 1;
+                      end
+                       
+                      d_i = d{ixScen}(cst{i,4}{contourIndex});
+                      
+                      delta{ixScen}(cst{i,4}{contourIndex}) = delta{ixScen}(cst{i,4}{contourIndex}) + ...
+                         (matRad_gradFunc(d_i,cst{i,6}(j),d_ref) * options.scenProb(ixScen));
+                      
+                   end
+                 
+                % use the expectation value and the integral variance influence matrix        
+                elseif strcmp(cst{i,6}(j).robustness,'PROB_ANA')
 
-                        d_i = d_exp{1}(cst{i,4}{1});
-
-                        delta_exp{1}(cst{i,4}{1}) = delta_exp{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
-
-                        vOmega = vOmega + Omega{i};
+                   d_i = d_exp{1}(cst{i,4}{1});
+                   
+                   delta_exp{1}(cst{i,4}{1}) = delta_exp{1}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+                   
+                   vOmega = vOmega + Omega{i};
                         
                  % VWWC = voxel-wise worst case; VWWC_CONF = conformity voxel-wise worst case    
                  elseif strcmp(cst{i,6}(j).robustness,'VWWC') || strcmp(cst{i,6}(j).robustness,'VWWC_CONF')
@@ -153,18 +172,54 @@ for  i = 1:size(cst,1)
                  % composite worst case consideres ovarall the worst objective function value   
                  elseif strcmp(cst{i,6}(j).robustness,'COWC')
                    
-                       for ixScen = 1:options.numOfScen
-
-                           d_i = d{ixScen}(cst{i,4}{1});
-
-                           f_COWC(ixScen)                     = f_COWC(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
-                           delta_COWC{ixScen}(cst{i,4}{1})    = delta_COWC{ixScen}(cst{i,4}{1}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
-                       end   
+                    numContours = numel(cst{i,4});
+                    
+                    for ixScen = 1:options.numOfScen
+                       
+                       if numContours == options.numOfScen
+                          contourIndex = ixScen;
+                       else
+                          contourIndex = 1;
+                       end
+                       
+                       d_i = d{ixScen}(cst{i,4}{contourIndex});
+                       f_COWC(ixScen)                             = f_COWC(ixScen) + matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                       delta_COWC{ixScen}(cst{i,4}{contourIndex}) = delta_COWC{ixScen}(cst{i,4}{contourIndex}) + matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+                    end
                        
                  % objective-wise worst case consideres the worst individual objective function value        
                  elseif strcmp(cst{i,6}(j).robustness,'OWC')
                      
-                     matRad_dispToConsole(['not yet implemented \n'],param,'error');
+                    numContours   = numel(cst{i,4});
+                    f_OWC         = zeros(options.numOfScen,1);
+                    deltaOWC      = cell(options.numOfScen,1);
+                    [deltaOWC{:}] = deal(zeros(dij.numOfVoxels,1));
+
+                    for ixScen = 1:5
+                       
+                       if numContours == options.numOfScen
+                          contourIndex = ixScen;
+                       else
+                          contourIndex = 1;
+                       end
+                       
+                       d_i = d{ixScen}(cst{i,4}{contourIndex});
+                       
+                       f_OWC(ixScen) = matRad_objFunc(d_i,cst{i,6}(j),d_ref);
+                       
+                       deltaOWC{ixScen}(cst{i,4}{contourIndex}) = matRad_gradFunc(d_i,cst{i,6}(j),d_ref);
+                       
+                    end
+                    
+                    [~,ix] = max(f_OWC);
+                    
+                    if numContours == options.numOfScen
+                        contourIndex = ix;
+                    else
+                        contourIndex = 1;
+                    end
+                    
+                    delta{1}(cst{i,4}{contourIndex}) = delta{1}(cst{i,4}{contourIndex}) + deltaOWC{ix}(cst{i,4}{contourIndex});
                      
                  end
                 
@@ -219,18 +274,18 @@ for i = 1:options.numOfScen
 
         elseif isequal(options.quantityOpt,'RBExD')
 
-            deltaTmp              = zeros(dij.numOfVoxels,1);
+            deltaTmp              = zeros(dij.doseGrid.numOfVoxels,1);
             scaledEffect          = d{i} + dij.gamma;
-            deltaTmp(dij.ixDose)  = delta{i}(dij.ixDose)./(2*dij.betaX(dij.ixDose).*scaledEffect(dij.ixDose));
+            deltaTmp(dij.ixDose)  = delta{i}(dij.ixDose)./(2*dij.bx(dij.ixDose).*scaledEffect(dij.ixDose));
             vBias                 = (deltaTmp' * dij.mAlphaDose{options.ixForOpt(i)})';
             quadTerm              = dij.mSqrtBetaDose{options.ixForOpt(i)} * w;
             mPsi                  = (2*(delta{i}.*quadTerm)'*dij.mSqrtBetaDose{options.ixForOpt(i)})';
             g                     = g + vBias + mPsi ;
             
             if i == 1
-                deltaTmp              = zeros(dij.numOfVoxels,1);
+                deltaTmp              = zeros(dij.doseGrid.numOfVoxels,1);
                 scaledEffect          = d_exp{1} + dij.gamma;
-                deltaTmp(dij.ixDose)  = delta_exp{i}(dij.ixDose)./(2*dij.betaX(dij.ixDose).*scaledEffect(dij.ixDose));
+                deltaTmp(dij.ixDose)  = delta_exp{i}(dij.ixDose)./(2*dij.bx(dij.ixDose).*scaledEffect(dij.ixDose));
                 vBias                 = (deltaTmp' * dij.mAlphaDoseExp{1})';
                 quadTerm              = dij.mSqrtBetaDoseExp{1} * w;
                 mPsi                  = (2*(delta_exp{i}.*quadTerm)'*dij.mSqrtBetaDoseExp{1})';

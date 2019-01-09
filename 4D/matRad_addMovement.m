@@ -1,5 +1,4 @@
-function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp,visBool)
 % adds artificial sinosodal patient motion by creating a deformation vector
 % field and applying it to the ct.cube by geometric transformation
 %
@@ -12,6 +11,7 @@ function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp)
 %   motionPeriod:   the length of a whole breathing cycle (in seconds)
 %   numOfCtScen:    number of ct phases
 %   amp:            amplitude of the sinosoidal movement (in pixels)
+%   visBool         boolean flag for visualization
 %
 %   note:           1st dim --> x LPS coordinate system
 %                   2nd dim --> y LPS coordinate system
@@ -28,8 +28,6 @@ function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp)
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2018 the matRad development team.
 % 
@@ -42,6 +40,10 @@ function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if ~exist('visBool','var')
+   visBool = false;
+end
+
 % book keeping
 ct.motionPeriod = motionPeriod;
 ct.numOfCtScen = numOfCtScen;
@@ -49,6 +51,7 @@ ct.numOfCtScen = numOfCtScen;
 % set type
 ct.dvfType = 'pull'; % push or pull
 
+    
 % generate scenarios
 for i = 1:numOfCtScen
         
@@ -59,19 +62,26 @@ for i = 1:numOfCtScen
     ct.dvf{i}(:,:,:,3) = amp(3) * sin((i-1)*pi / numOfCtScen)^2;
     
     % warp ct
-    ct.cube{i}   = imwarp(ct.cube{1},   ct.dvf{i},'FillValues',0);
-    ct.cubeHU{i} = imwarp(ct.cubeHU{1}, ct.dvf{i},'FillValues',min(ct.hlut(:,2)));
+    if isfield(ct,'hlut')
+       padValue = min(ct.hlut(:,2));
+    else
+       padValue = -1024;
+    end
+    
+    ct.cubeHU{i} = imwarp(ct.cubeHU{1}, ct.dvf{i},'FillValues',padValue);
+    
+    if isfield(ct,'cube')
+       ct.cube{i}   = imwarp(ct.cube{1},   ct.dvf{i},'FillValues',0);
+    end
+    
+ 
     
     % warp cst
     for j = 1:size(cst,1)
         tmp = zeros(ct.cubeDim);
         tmp(cst{j,4}{1}) = 1;
-        tmpWarp = imwarp(tmp, ct.dvf{i});
-%         clf
-%         subplot(2,2,1)
-%         imagesc(tmp(:,:,80))
-%         subplot(2,2,2)
-%         imagesc(tmpWarp(:,:,80))
+        tmpWarp     = imwarp(tmp, ct.dvf{i});
+        
         cst{j,4}{i} = find(tmpWarp > .5);
     end
     
@@ -84,3 +94,20 @@ for i = 1:numOfCtScen
     ct.dvf{i} = permute(ct.dvf{i}, [4,1,2,3]);
     
 end
+
+
+
+if visBool
+   slice = round(ct.cubeDim(3)/2);
+   figure,
+   for i = 1:numOfCtScen
+      clf,
+      imagesc(ct.cubeHU{i}(:,:,slice))
+      pause(.5);
+   end
+end
+
+
+
+
+

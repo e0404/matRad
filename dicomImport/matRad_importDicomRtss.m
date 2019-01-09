@@ -1,5 +1,4 @@
 function structures = matRad_importDicomRtss(filename,dicomInfo,visBool)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to read the data of the selected dicomRT structure set 
 % file into a matlab struct
 % 
@@ -19,8 +18,6 @@ function structures = matRad_importDicomRtss(filename,dicomInfo,visBool)
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

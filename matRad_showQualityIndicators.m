@@ -1,5 +1,4 @@
 function matRad_showQualityIndicators(qi)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad display of quality indicators as table
 % 
 % call
@@ -15,8 +14,6 @@ function matRad_showQualityIndicators(qi)
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -28,10 +25,7 @@ function matRad_showQualityIndicators(qi)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if ~isdeployed
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir,'tools'))
-end
+
 [env, ~] = matRad_getEnvironment();
     
 % Create the column and row names in cell arrays 

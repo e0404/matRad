@@ -19,8 +19,6 @@ function matRad_calcStudy(structSel,multScen,matPatientPath,param)
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 
 % 
@@ -32,6 +30,7 @@ function matRad_calcStudy(structSel,multScen,matPatientPath,param)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 if exist('param','var')
     if ~isfield(param,'logLevel')
        param.logLevel = 4;
@@ -77,7 +76,6 @@ if isempty(matRadPath)
 else
     matRadPath = matRadPath(1:(end-8));
 end
-addpath(fullfile(matRadPath,'tools','samplingAnalysis'));
 
 % calculate RBExDose
 if ~isfield(pln, 'bioParam')

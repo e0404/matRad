@@ -1,5 +1,4 @@
 function s = matRad_shadowPlot(x, yLow, yUp, color, legendName, alphaTrans)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % shadowPlot to plot confidence bands mainly
 % 
 % call
@@ -16,8 +15,7 @@ function s = matRad_shadowPlot(x, yLow, yUp, color, legendName, alphaTrans)
 % output
 %   axesHandle
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 

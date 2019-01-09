@@ -1,5 +1,4 @@
 function [ct,cst] = matRad_importPatient(ctFile,maskFiles,hlutFilename)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad patient import from binary files (CT and masks)
 % 
 % call
@@ -18,8 +17,6 @@ function [ct,cst] = matRad_importPatient(ctFile,maskFiles,hlutFilename)
 %   cst         cst struct for use with matlab
 %
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

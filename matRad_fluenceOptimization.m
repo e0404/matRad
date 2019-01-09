@@ -1,5 +1,4 @@
 function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,param)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad inverse planning wrapper function
 % 
 % call
@@ -20,8 +19,6 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,param)
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 
@@ -46,30 +43,20 @@ end
 % determine if Matlab or Octave
 [env, ~] = matRad_getEnvironment();
 
-if ~isdeployed % only if _not_ running as standalone
-   
-   % add path for optimization functions
-   matRadRootDir = fileparts(mfilename('fullpath'));
-   addpath(fullfile(matRadRootDir,'optimization'))
-   addpath(fullfile(matRadRootDir,'tools'))
-   
-   if param.logLevel == 1
-      
-      [env, ~] = matRad_getEnvironment();
-      
-      switch env
-         case 'MATLAB'
+if ~isdeployed && param.logLevel == 1 % only if _not_ running as standalone
+
+    switch env
+        case 'MATLAB'
             % get handle to Matlab command window
             mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
             cw          = mde.getClient('Command Window');
             xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
             h_cw        = handle(xCmdWndView,'CallbackProperties');
-            
+
             % set Key Pressed Callback of Matlab command window
             set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
-      end
-      
-   end
+    end
+
 end
 
 % initialize global variables for optimizer
@@ -81,9 +68,10 @@ global matRad_Q_Pressed;
 global matRad_objective_function_value;
 
 matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
-matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
-matRad_global_d_exp             = NaN * ones(dij.numOfVoxels,1);
+matRad_global_d                 = NaN * ones(dij.doseGrid.numOfVoxels,1);
+matRad_global_d_exp             = NaN * ones(dij.doseGrid.numOfVoxels,1);
 matRad_global_Omega             = cell(size(cst,1),1);
+
 matRad_Q_Pressed                = false;
 
 matRad_objective_function_value = [];
@@ -98,12 +86,17 @@ for i = 1:size(cst,1)
     end
 end
 
+% resizing cst to dose cube resolution 
+cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,  dij.ctGrid.y,  dij.ctGrid.z,...
+                                 dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
+
 % find target indices and described dose(s) for weight vector
 % initialization
 V          = [];
 doseTarget = [];
 ixTarget   = [];
-for i=1:size(cst,1)
+
+for i = 1:size(cst,1)
     if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
         V = [V;cst{i,4}{1}];
         doseTarget = [doseTarget cst{i,6}.dose];
@@ -140,6 +133,14 @@ if  strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
         
 elseif pln.bioParam.bioOpt
     
+    % retrieve photon LQM parameter
+    [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1);
+
+    if ~isequal(dij.ax(dij.ax~=0),ax(dij.ax~=0)) || ...
+       ~isequal(dij.bx(dij.bx~=0),bx(dij.bx~=0))
+         error(['Inconsistent biological parameter - please recalculate dose influence matrix']);
+    end
+    
     for i = 1:size(cst,1)
 
         for j = 1:size(cst{i,6},2)
@@ -151,7 +152,7 @@ elseif pln.bioParam.bioOpt
         end
     end
     
-    dij.ixDose  = dij.betaX~=0; 
+    dij.ixDose  = dij.bx~=0; 
         
     if isequal(pln.bioParam.quantityOpt,'effect')
 
@@ -163,8 +164,9 @@ elseif pln.bioParam.bioOpt
     elseif isequal(pln.bioParam.quantityOpt,'RBExD')
 
            %pre-calculations
-           dij.gamma              = zeros(dij.numOfVoxels,1);   
-           dij.gamma(dij.ixDose) = dij.alphaX(dij.ixDose)./(2*dij.betaX(dij.ixDose)); 
+           dij.gamma             = zeros(dij.doseGrid.numOfVoxels,1);   
+           dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose)); 
+
             
            % calculate current in target
            CurrEffectTarget = (dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2);
@@ -208,7 +210,7 @@ FLAG_ROB_OPT   = false;
 
 for i = 1:size(cst,1)
     for j = 1:size(cst{i,6},1)
-       if strcmp(cst{i,6}(j).robustness,'PROB') && numel(linIxDIJ) > 1
+       if strcmp(cst{i,6}(j).robustness,'PROB_ANA') && numel(linIxDIJ) > 1
           FLAG_CALC_PROB = true;
        end
        if ~strcmp(cst{i,6}(j).robustness,'none') && numel(linIxDIJ) > 1
@@ -217,9 +219,9 @@ for i = 1:size(cst,1)
     end
 end
 
-% create placeholders for expected ij matrices
+% create placeholders for expected influence matrices
 for i = 1:numel(fNames)
-   dij.([fNames{1,i} 'Exp']){1} = spalloc(prod(dij.dimensions),dij.totalNumOfBixels,1);
+   dij.([fNames{1,i} 'Exp']){1} = spalloc(prod(dij.doseGrid.numOfVoxels),dij.totalNumOfBixels,1);
 end
    
 
@@ -228,24 +230,38 @@ if FLAG_CALC_PROB
     ixDij = find(~cellfun(@isempty, dij.physicalDose))'; 
     
     for i = 1:numel(fNames)
-        % create expected ij structure
+        % create expected influence structure
         dij.([fNames{1,i} 'Exp']){1} = spalloc(prod(dij.dimensions),dij.totalNumOfBixels,1);
-        % add up sparse matrices - should possess almost same sparsity pattern
-        for j = 1:pln.multScen.totNumScen
-            dij.([fNames{1,i} 'Exp']){1} = dij.([fNames{1,i} 'Exp']){1} + dij.([fNames{1,i}]){ixDij(j)} .* pln.multScen.scenProb(j);
+        
+        NumShiftRangeScen = pln.multScen.numOfRangeShiftScen; 
+        if NumShiftRangeScen==0; NumShiftRangeScen= 1;end
+        
+        % add up sparse matrices
+        for ctScen = pln.multScen.numOfCtScen
+           for rangeShitScen = 1:NumShiftRangeScen
+               dij.([fNames{1,i} 'Exp']){1} = ...
+                  dij.([fNames{1,i} 'Exp']){1} + dij.([fNames{1,i}]){ctScen,rangeShitScen} .* pln.multScen.scenProb(ctScen*rangeShitScen);
+           end
         end
     end
     
     % loop over VOIs
     for i = voiIx
-        % loop over scenarios and calculate the integral variance of each
-        % spot combination; bio bio optimization only consider std in the
-        % linear part of the biological effect
-        for j = 1:pln.multScen.totNumScen
-              cst{i,6}(1).mOmega = cst{i,6}(1).mOmega + ...
-                  ((dij.(fNames{1,1}){ixDij(j)}(cst{i,4}{1},:)' * dij.(fNames{1,1}){ixDij(j)}(cst{i,4}{1},:)) * pln.multScen.scenProb(j));
-        end
-        cst{i,6}(1).mOmega = cst{i,6}(1).mOmega - (dij.([fNames{1,1} 'Exp']){1}(cst{i,4}{1},:)' * dij.([fNames{1,1} 'Exp']){1}(cst{i,4}{1},:));
+       for j = 1:size(cst{i,6},1)
+          if isequal(cst{i,6}(j).robustness,'PROB')
+             % loop over scenarios and calculate the integral variance of beamlet combinations;
+             for ctScen = pln.multScen.numOfCtScen
+                for rangeShitScen = 1:NumShiftRangeScen
+                   cst{i,6}(j).mOmega = cst{i,6}(j).mOmega + ...
+                      (((dij.(fNames{1,1}){ctScen,rangeShitScen}(cst{i,4}{1},:)' * pln.multScen.scenProb(ctScen*rangeShitScen))*...
+                        (dij.(fNames{1,1}){ctScen,rangeShitScen}(cst{i,4}{1},:)) * pln.multScen.scenProb(ctScen*rangeShitScen)));
+                end
+             end
+             
+             cst{i,6}(j).mOmega = cst{i,6}(j).mOmega - (dij.([fNames{1,1} 'Exp']){1}(cst{i,4}{j},:)' * dij.([fNames{1,1} 'Exp']){1}(cst{i,4}{j},:));
+             
+          end
+       end
     end
 end
 
@@ -279,14 +295,14 @@ fprintf('Press q to terminate the optimization...\n');
 
 % calc dose and reshape from 1D vector to 2D array
 matRad_dispToConsole('Calculating final cubes...\n',param,'info');
-resultGUI = matRad_calcCubes(wOpt,dij,cst);
+resultGUI = matRad_calcCubes(wOpt,dij);
 resultGUI.wUnsequenced = wOpt;
 
 % calc individual scenarios
 if options.numOfScen > 1 || FLAG_ROB_OPT
    Cnt = 1;
    for i = find(~cellfun(@isempty,dij.physicalDose))'
-      tmpResultGUI = matRad_calcCubes(wOpt,dij,cst,i);
+      tmpResultGUI = matRad_calcCubes(wOpt,dij,i);
       resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
       Cnt = Cnt + 1;
    end      
