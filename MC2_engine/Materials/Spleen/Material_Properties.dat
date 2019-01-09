@@ -1,0 +1,14 @@
+Name 			Spleen
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.06000000 	 # in g/cm3 
+Electron_Density 	3.51399e+23 	 # in cm-3 
+Radiation_Length 	36.600260 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 5 	# mixture with 5 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	10.383065 
+Mixture_Component	2 	carbon		11.391129 
+Mixture_Component	3 	nitrogen	3.225806 
+Mixture_Component	4 	oxygen		74.697581 
+Mixture_Component	7 	phosphorus	0.302419 

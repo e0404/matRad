@@ -1,0 +1,14 @@
+Name 			Muscle_Skeletal
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.05000000 	 # in g/cm3 
+Electron_Density 	3.47777e+23 	 # in cm-3 
+Radiation_Length 	36.810462 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 5 	# mixture with 5 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	10.292634 
+Mixture_Component	2 	carbon		14.429869 
+Mixture_Component	3 	nitrogen	3.430878 
+Mixture_Component	4 	oxygen		71.644803 
+Mixture_Component	7 	phosphorus	0.201816 
