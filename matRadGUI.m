@@ -4339,7 +4339,7 @@ for i = 1:size(cst,1)
            %Convert to class if not
            if ~isa(obj,'matRad_DoseOptimizationFunction')
                 try
-                    obj = eval([obj.className '(obj)']);
+                    obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
                 catch
                     warning('Objective/Constraint not valid!')
                     continue;

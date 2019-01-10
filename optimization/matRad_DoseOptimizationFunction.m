@@ -53,5 +53,16 @@ classdef (Abstract) matRad_DoseOptimizationFunction
             
         end
     end
+    
+    methods (Static)
+        %Creates an optimization function from a struct
+        function obj = createInstanceFromStruct(s)
+            try
+                obj = eval([s.className '(s)']);
+            catch
+                error(['Input struct / Parameter invalid for creation of optimization function!']);
+            end
+        end
+    end
 end
 

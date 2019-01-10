@@ -50,7 +50,7 @@ for i = 1:size(cst,1)
         %objective or constraint function in the end
         if ~isa(obj,'matRad_DoseOptimizationFunction')
             try
-                obj = eval([obj.className '(obj)']);
+                obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
             catch
                 error(['cst{' num2str(i) ',6}{' num2str(j) '} is not a valid Objective/constraint! Remove or Replace and try again!']);
             end
