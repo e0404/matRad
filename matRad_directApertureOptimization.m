@@ -39,14 +39,25 @@ function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureIn
 % adjust overlap priorities
 cst = matRad_setOverlapPriorities(cst);
 
-% adjust objectives and constraints internally for fractionation 
+% check & adjust objectives and constraints internally for fractionation 
 for i = 1:size(cst,1)
     for j = 1:numel(cst{i,6})
-        %This checks if our optimization function is dose related by
-        %checking inheritance from the respective base classes
-        if isa(cst{i,6}{j},'DoseObjectives.matRad_DoseObjective') || isa(cst{i,6}{j},'DoseObjectives.matRad_DoseConstraint')
-            cst{i,6}{j} = cst{i,6}{j}.setDoseParameters(cst{i,6}{j}.getDoseParameters()/pln.numOfFractions);
+        obj = cst{i,6}{j};
+        
+        %In case it is a default saved struct, convert to object
+        %Also intrinsically checks that we have a valid optimization
+        %objective or constraint function in the end
+        if ~isa(obj,'matRad_DoseOptimizationFunction')
+            try
+                obj = eval([obj.className '(obj)']);
+            catch
+                error(['cst{' num2str(i) ',6}{' num2str(j) '} is not a valid Objective/constraint! Remove or Replace and try again!']);
+            end
         end
+        
+        obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
+        
+        cst{i,6}{j} = obj;        
     end
 end
 

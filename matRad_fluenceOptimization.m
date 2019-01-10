@@ -40,7 +40,7 @@ end
 cst  = matRad_setOverlapPriorities(cst);
 
 
-% adjust objectives and constraints internally for fractionation 
+% check & adjust objectives and constraints internally for fractionation 
 for i = 1:size(cst,1)
     for j = 1:numel(cst{i,6})
         obj = cst{i,6}{j};
@@ -52,7 +52,7 @@ for i = 1:size(cst,1)
             try
                 obj = eval([obj.className '(obj)']);
             catch
-                error(['cst{' num2str(i) ',6}{' num2str(j) '} is not a valid Objective/constraint!' newline 'Remove or Replace and try again!']);
+                error(['cst{' num2str(i) ',6}{' num2str(j) '} is not a valid Objective/constraint! Remove or Replace and try again!']);
             end
         end
         
