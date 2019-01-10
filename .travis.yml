@@ -21,7 +21,7 @@ before_install:
   - cd ..
   - mkdir IpoptMUMPS
   - cd IpoptMUMPS
-  - wget https://www.coin-or.org/download/source/Ipopt/Ipopt-3.12.10.tgz
+  - wget --no-check-certificate https://www.coin-or.org/download/source/Ipopt/Ipopt-3.12.10.tgz
   - tar -zxvf Ipopt-3.12.10.tgz
   - cd Ipopt-3.12.10/
   - export IPOPTDIR=`pwd`
@@ -61,3 +61,6 @@ after_failure:
   - gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch /usr/bin/octave-cli # print stack trace
   - tail runtests.log
 #  - tail runtests.err
+
+notifications:
+    slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ
