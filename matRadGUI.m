@@ -4336,6 +4336,16 @@ for i = 1:size(cst,1)
            
            obj = cst{i,6}{j};
            
+           %Convert to class if not
+           if ~isa(obj,'matRad_DoseOptimizationFunction')
+                try
+                    obj = eval([obj.className '(obj)']);
+                catch
+                    warning('Objective/Constraint not valid!')
+                    continue;
+                end
+           end
+               
            %VOI
            %data{Counter,1}  = cst{i,2};
            %ypos = cstPanelPos(4) - (yTopSep + cnt*lineHeight);
@@ -4435,9 +4445,9 @@ cstIndex = popupHandle.Value;
 cst = evalin('base','cst');
 %Add Standard Objective
 if strcmp(cst{cstIndex,3},'TARGET')
-    cst{cstIndex,6}{end+1} = DoseObjectives.matRad_SquaredDeviation;
+    cst{cstIndex,6}{end+1} = struct(DoseObjectives.matRad_SquaredDeviation);
 else
-    cst{cstIndex,6}{end+1} = DoseObjectives.matRad_SquaredOverdosing;
+    cst{cstIndex,6}{end+1} = struct(DoseObjectives.matRad_SquaredOverdosing);
 end
 
 assignin('base','cst',cst);
@@ -4483,6 +4493,20 @@ cst = evalin('base','cst');
 %if the third index is 0 we changed the penalty
 %if we have a popupmenu selection we use value
 %otherwise we use the edit string
+
+%{
+%obj = cst{ix(1),6}{ix(2)};
+%Convert to class if not
+if ~isa(obj,'matRad_DoseOptimizationFunction')
+    try
+        eval([obj.className '(obj)']);
+    catch
+        warning('Objective/Constraint not valid!')
+        return;
+    end
+end
+%}
+
 if ix(3) == 0
     cst{ix(1),6}{ix(2)}.penalty = str2double(hObject.String);
 elseif isequal(hObject.Style,'popupmenu')
@@ -4522,11 +4546,11 @@ if ~strcmp(currentClass,classToCreate)
     
     % Only if we have a penalty value for optimization, apply the new one
     % Maybe this check should be more exact?        
-    if isprop(newObj,'penalty') && isprop(currentObj,'penalty')
+    if (isfield(currentObj,'penalty') || isprop(currentObj,'penalty')) && isprop(newObj,'penalty')
         newObj.penalty = currentObj.penalty;
     end
     
-    cst{ix(1),6}{ix(2)} = newObj;
+    cst{ix(1),6}{ix(2)} = struct(newObj);
     
     assignin('base','cst',cst);
     
