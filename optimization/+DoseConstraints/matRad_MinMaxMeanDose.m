@@ -15,12 +15,30 @@ classdef matRad_MinMaxMeanDose < DoseConstraints.matRad_DoseConstraint
     
     methods
         function obj = matRad_MinMaxMeanDose(minMeanDose,maxMeanDose)
-            if nargin == 2 && isscalar(maxMeanDose)
-                obj.parameters{2} = maxMeanDose;
+            
+            %If we have a struct in first argument
+            if nargin == 1 && isstruct(minMeanDose)
+                inputStruct = minDose;
+                initFromStruct = true;
+            else
+                initFromStruct = false;
+                inputStruct = [];
             end
             
-            if nargin >= 1 && isscalar(minMeanDose)
-                obj.parameters{1} = minMeanDose;
+            %Call Superclass Constructor (for struct initialization)
+            obj@DoseConstraints.matRad_DoseConstraint(inputStruct);
+            
+            %now handle initialization from other parameters
+            if ~initFromStruct
+                
+                if nargin == 2 && isscalar(maxMeanDose)
+                    obj.parameters{2} = maxMeanDose;
+                end
+                
+                if nargin >= 1 && isscalar(minMeanDose)
+                    obj.parameters{1} = minMeanDose;
+                end
+                
             end
         end
         
@@ -30,6 +48,15 @@ classdef matRad_MinMaxMeanDose < DoseConstraints.matRad_DoseConstraint
         function cl = lowerBounds(obj,n)
             cl = obj.parameters{1};
         end
+        
+        %Overloads the struct function to add constraint specific
+        %parameters
+        function s = struct(obj)
+            s = struct@DoseConstraints.matRad_DoseConstraint(obj);
+            %Nothing to do here...
+        end
+        
+        
         %% Calculates the Constraint Function value
         function cDose = computeDoseConstraintFunction(obj,dose)
             cDose = mean(dose);

@@ -54,6 +54,12 @@ classdef (Abstract) matRad_DoseConstraint < matRad_DoseOptimizationFunction
         %default of a jStruct
             jStruct = ones(n,1);
         end
+        
+        %Overloads the struct function to add Objective related information
+        %to output struct
+        function s = struct(obj)
+            s = struct@matRad_DoseOptimizationFunction(obj);
+        end
     end
 end
 

@@ -14,20 +14,44 @@ classdef matRad_MinMaxDVH < DoseConstraints.matRad_DoseConstraint
         referenceScalingVal = 0.01;
         parameters = {30,0,100};
     end
-        
-    methods  
+    
+    methods
         function obj = matRad_MinMaxDVH(dRef,vMin,vMax)
-            if nargin == 3 && isscalar(vMax)
-                obj.parameters{3} = vMax;
-            end
-           
-            if nargin >= 1 && isscalar(dRef)
-                obj.parameters{1} = dRef;
+            
+            %If we have a struct in first argument
+            if nargin == 1 && isstruct(dRef)
+                inputStruct = dRef;
+                initFromStruct = true;
+            else
+                initFromStruct = false;
+                inputStruct = [];
             end
             
-            if nargin >= 2 && isscalar(vMin)
-                obj.parameters{2} = vMin;
-            end  
+            %Call Superclass Constructor (for struct initialization)
+            obj@DoseConstraints.matRad_DoseConstraint(inputStruct);
+            
+            %now handle initialization from other parameters
+            if ~initFromStruct                
+                if nargin == 3 && isscalar(vMax)
+                    obj.parameters{3} = vMax;
+                end
+                
+                if nargin >= 1 && isscalar(dRef)
+                    obj.parameters{1} = dRef;
+                end
+                
+                if nargin >= 2 && isscalar(vMin)
+                    obj.parameters{2} = vMin;
+                end
+            end
+        end
+        
+        %Overloads the struct function to add constraint specific
+        %parameters
+        function s = struct(obj)
+            s = struct@DoseConstraints.matRad_DoseConstraint(obj);
+            s.voxelScalingRatio = 1;
+            s.referenceScalingVal = 0.01;
         end
         
         function cu = upperBounds(obj,n)
@@ -82,8 +106,8 @@ classdef matRad_MinMaxDVH < DoseConstraints.matRad_DoseConstraint
             
             % calclulate DVHC scaling
             DVHCScaling = min((log(1/obj.referenceScalingVal-1))/(2*deltaDoseMax),250);
-                       
-            d_diff = dose - obj.parameters{1};   
+            
+            d_diff = dose - obj.parameters{1};
             
             cDoseJacob = (2/numel(dose))*DVHCScaling*exp(2*DVHCScaling*d_diff)./(exp(2*DVHCScaling*d_diff)+1).^2;
             

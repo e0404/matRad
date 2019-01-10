@@ -15,16 +15,31 @@ classdef matRad_MaxDVH < DoseObjectives.matRad_DoseObjective
     
     methods 
         function obj = matRad_MaxDVH(penalty,dRef,vMaxPercent)
-            if nargin >= 3 && isscalar(vMaxPercent)
-                obj.parameters{2} = vMaxPercent;
+            %If we have a struct in first argument
+            if nargin == 1 && isstruct(penalty)
+                inputStruct = penalty;
+                initFromStruct = true;
+            else
+                initFromStruct = false;
+                inputStruct = [];
             end
             
-            if nargin >= 2 && isscalar(dRef)
-                obj.parameters{1} = dRef;
-            end
+            %Call Superclass Constructor (for struct initialization)
+            obj@DoseObjectives.matRad_DoseObjective(inputStruct);
             
-            if nargin >= 1 && isscalar(penalty)
-                obj.penalty = penalty;
+            %now handle initialization from other parameters
+            if ~initFromStruct
+                if nargin >= 3 && isscalar(vMaxPercent)
+                    obj.parameters{2} = vMaxPercent;
+                end
+                
+                if nargin >= 2 && isscalar(dRef)
+                    obj.parameters{1} = dRef;
+                end
+                
+                if nargin >= 1 && isscalar(penalty)
+                    obj.penalty = penalty;
+                end
             end
         end        
         

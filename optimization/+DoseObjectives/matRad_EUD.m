@@ -13,29 +13,44 @@ classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
         penalty = 1;
     end
     
-    methods 
+    methods
         function obj = matRad_EUD(penalty,eudRef, eudExponent)
-            if nargin >= 3 && isscalar(eudExponent)
-                obj.parameters{2} = eudExponent;
-            end
-           
-            if nargin >= 2 && isscalar(eudRef)
-                obj.parameters{1} = eudRef;
+            %If we have a struct in first argument
+            if nargin == 1 && isstruct(penalty)
+                inputStruct = penalty;
+                initFromStruct = true;
+            else
+                initFromStruct = false;
+                inputStruct = [];
             end
             
-            if nargin >= 1 && isscalar(penalty)
-                obj.penalty = penalty;
+            %Call Superclass Constructor (for struct initialization)
+            obj@DoseObjectives.matRad_DoseObjective(inputStruct);
+            
+            %now handle initialization from other parameters
+            if ~initFromStruct
+                if nargin >= 3 && isscalar(eudExponent)
+                    obj.parameters{2} = eudExponent;
+                end
+                
+                if nargin >= 2 && isscalar(eudRef)
+                    obj.parameters{1} = eudRef;
+                end
+                
+                if nargin >= 1 && isscalar(penalty)
+                    obj.penalty = penalty;
+                end
             end
-        end       
+        end
         
         %% Calculates the Objective Function value
-        function fDose = computeDoseObjectiveFunction(obj,dose)                       
+        function fDose = computeDoseObjectiveFunction(obj,dose)
             % get exponent for EUD
             k = obj.parameters{2};
-
+            
             % calculate power sum
             powersum = sum(dose.^k);
-              
+            
             
             
             %Calculate objective
@@ -50,7 +65,7 @@ classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
         function fDoseGrad  = computeDoseObjectiveGradient(obj,dose)
             % get exponent for EUD
             k = obj.parameters{2};
-
+            
             % calculate power sum
             powersum = sum(dose.^k);
             %This check is not needed since dose is always positive

@@ -15,17 +15,40 @@ classdef matRad_MinMaxEUD < DoseConstraints.matRad_DoseConstraint
     
     methods
         function obj = matRad_MinMaxEUD(exponent,eudMin,eudMax)
-            if nargin == 3 && isscalar(eudMax)
-                obj.parameters{3} = eudMax;
+            %If we have a struct in first argument
+            if nargin == 1 && isstruct(exponent)
+                inputStruct = exponent;
+                initFromStruct = true;
+            else
+                initFromStruct = false;
+                inputStruct = [];
             end
             
-            if nargin >= 1 && isscalar(exponent)
-                obj.parameters{1} = exponent;
-            end
+            %Call Superclass Constructor (for struct initialization)
+            obj@DoseConstraints.matRad_DoseConstraint(inputStruct);
             
-            if nargin >= 2 && isscalar(eudMin)
-                obj.parameters{2} = eudMin;
+            %now handle initialization from other parameters
+            if ~initFromStruct
+                
+                if nargin == 3 && isscalar(eudMax)
+                    obj.parameters{3} = eudMax;
+                end
+                
+                if nargin >= 1 && isscalar(exponent)
+                    obj.parameters{1} = exponent;
+                end
+                
+                if nargin >= 2 && isscalar(eudMin)
+                    obj.parameters{2} = eudMin;
+                end
             end
+        end
+        
+        %Overloads the struct function to add constraint specific
+        %parameters
+        function s = struct(obj)
+            s = struct@DoseConstraints.matRad_DoseConstraint(obj);
+            %Nothing to do here...
         end
         
         function cu = upperBounds(obj,n)
