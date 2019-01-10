@@ -38,4 +38,4 @@ apertureInfo = optiProb.apertureInfo;
 apertureInfo = optiProb.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect);
 
 % bixel based objective function calculation
-f = optiProb.matRad_objectiveFunction@matRad_OptimizationProblem(apertureInfo.bixelWeights,dij,cst);
+f = matRad_objectiveFunction@matRad_OptimizationProblem(optiProb,apertureInfo.bixelWeights,dij,cst);

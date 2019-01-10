@@ -39,7 +39,7 @@ cu_dao = inf*ones(apertureInfo.totalNumOfLeafPairs,1);
 
 % get dosimetric bounds from cst (just like for conv opt) by call to
 % superclass method
-[cl_dos,cu_dos] = optiProb.matRad_getConstraintBounds@matRad_OptimizationProblem(cst);
+[cl_dos,cu_dos] = matRad_getConstraintBounds@matRad_OptimizationProblem(optiProb,cst);
 
 % concatenate
 cl = [cl_dao; cl_dos];

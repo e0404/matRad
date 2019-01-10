@@ -46,7 +46,7 @@ jacobStruct_dao = sparse(i,j,s, ...
     apertureInfo.totalNumOfShapes+2*apertureInfo.totalNumOfLeafPairs, ...
     2*apertureInfo.totalNumOfLeafPairs);
 
-jacobStruct_dos_bixel = optiProb.matRad_getJacobianStructure@matRad_OptimizationProblem(apertureInfo.bixelWeights,dij,cst);
+jacobStruct_dos_bixel = matRad_getJacobianStructure@matRad_OptimizationProblem(optiProb,apertureInfo.bixelWeights,dij,cst);
 % --> gives me a matrix with number of rows = num of constraints and tells
 % me in th columns if a beamlet has an influence on this constraint
 

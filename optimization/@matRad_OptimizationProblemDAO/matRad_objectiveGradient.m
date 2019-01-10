@@ -40,7 +40,7 @@ if ~isequal(apertureInfoVec,apertureInfo.apertureVector)
 end
 
 % bixel based gradient calculation
-bixelG = optiProb.matRad_objectiveGradient@matRad_OptimizationProblem(apertureInfo.bixelWeights,dij,cst);
+bixelG = matRad_objectiveGradient@matRad_OptimizationProblem(optiProb,apertureInfo.bixelWeights,dij,cst);
     
 % allocate gradient vector for aperture weights and leaf positions
 g = NaN * ones(size(apertureInfoVec,1),1);

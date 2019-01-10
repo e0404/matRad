@@ -41,7 +41,7 @@ rightLeafPos = apertureInfoVec(1+apertureInfo.totalNumOfLeafPairs+apertureInfo.t
 c_dao        = rightLeafPos - leftLeafPos;
 
 % bixel based objective function calculation
-c_dos = optiProb.matRad_constraintFunctions@matRad_OptimizationProblem(apertureInfo.bixelWeights,dij,cst);
+c_dos = matRad_constraintFunctions@matRad_OptimizationProblem(optiProb,apertureInfo.bixelWeights,dij,cst);
 
 % concatenate
 c = [c_dao; c_dos];
