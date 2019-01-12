@@ -33,10 +33,9 @@ function dij = matRad_calcParticleDoseMC2(ct,stf,pln,cst)
 
 disp("Dose influence matrix computation using MCsquare")
 % Copy MCsquare code locally
-%system('cp -pr ~/work/projs/TPS/matRad/MC2_engine/* .');
-copyfile([pwd '/MC2_engine/*'],'.');
+copyfile([pwd '/MC2/*'],'.');
 
-cleanUp = true;
+cleanUp = false;
 
 nbThreads = 4;
 nbParallel = 8;%nproc();
@@ -46,12 +45,12 @@ end
 
 % meta information for dij
 dij.numOfBeams         = pln.propStf.numOfBeams;
-dij.numOfVoxels        = pln.numOfVoxels;
+dij.numOfVoxels        = prod(ct.cubeDim);
 dij.resolution         = ct.resolution;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
-dij.dimensions         = pln.voxelDimensions;
+dij.dimensions         = ct.cubeDim;
 dij.numOfScenarios     = 1;
 dij.optimExtra.size    = 0;
 dij.optimExtra.quantity = {};
@@ -183,7 +182,7 @@ MCparameters.bixels = MCbixels;
   % MATLAB
   %save('matRad_data.mat','ct','pln','MCparameters');
 %end
-system(['C:\Users\wahln\AppData\Local\conda\conda\envs\OpenStackEnv\python.exe ' pwd '/calc_pencilBeamMCsquare.py --exportCT']);
+system(['C:\Users\localbangertm\Anaconda3\python.exe ' pwd '/calc_pencilBeamMCsquare.py --exportCT']);
 
 fprintf('matRad: Particle dose calculation using MCsquare...\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -231,7 +230,7 @@ end
 function sparseDose = computePencilDose(runNb,cleanUp,cubeDim,numOfVoxels,V,relDoseCutoff,absCalibrationFactorMC2)
 
     % MCsquare beamlet input data
-    [status, cmdout] = system(['C:\Users\wahln\AppData\Local\conda\conda\envs\OpenStackEnv\python.exe ' pwd '/calc_pencilBeamMCsquare.py --bixelNb ' num2str(runNb)]);
+    [status, cmdout] = system(['C:\Users\localbangertm\Anaconda3\python.exe ' pwd '/calc_pencilBeamMCsquare.py --bixelNb ' num2str(runNb)]);
     if status ~= 0
         error(['Simulation did not return success:' cmdout]);
     end
