@@ -1,4 +1,4 @@
-function matRad_writeMCsquareinputFiles(filename,MCsquareConfig,stf,historiesPerSpot)
+function matRad_writeMCsquareinputFiles(filename,MCsquareConfig,stf)
 
 
 %% write overall configuration file
