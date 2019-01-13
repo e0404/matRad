@@ -74,7 +74,7 @@ dij.doseGrid.x = ct.x(1):dij.doseGrid.resolution.x:ct.x(end);
 dij.doseGrid.y = ct.y(1):dij.doseGrid.resolution.y:ct.y(end);
 dij.doseGrid.z = ct.z(1):dij.doseGrid.resolution.z:ct.z(end);
 
-dij.doseGrid.dimensions  = [numel(dij.doseGrid.x) numel(dij.doseGrid.y) numel(dij.doseGrid.z)];
+dij.doseGrid.dimensions  = [numel(dij.doseGrid.y) numel(dij.doseGrid.x) numel(dij.doseGrid.z)];
 dij.doseGrid.numOfVoxels = prod(dij.doseGrid.dimensions);
 
 dij.ctGrid.resolution.x = ct.resolution.x;
@@ -85,7 +85,7 @@ dij.ctGrid.x = ct.x;
 dij.ctGrid.y = ct.y;
 dij.ctGrid.z = ct.z;
 
-dij.ctGrid.dimensions  = [numel(dij.ctGrid.x) numel(dij.ctGrid.y) numel(dij.ctGrid.z)];
+dij.ctGrid.dimensions  = [numel(dij.ctGrid.y) numel(dij.ctGrid.x) numel(dij.ctGrid.z)];
 dij.ctGrid.numOfVoxels = prod(dij.ctGrid.dimensions);
 
 % meta information for dij
@@ -108,8 +108,8 @@ VctGrid = unique(vertcat(VctGrid{:}));
 tmpCube    = zeros(ct.cubeDim);
 tmpCube(VctGrid) = 1;
 % interpolate cube
-VdoseGrid = find(interp3(dij.ctGrid.y,  dij.ctGrid.x,   dij.ctGrid.z,tmpCube, ...
-                         dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'nearest'));
+VdoseGrid = find(interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpCube, ...
+                         dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'));
 
 % ignore densities outside of contours
 eraseCtDensMask = ones(dij.ctGrid.numOfVoxels,1);
@@ -120,13 +120,13 @@ end
 
 % downsample ct
 for s = 1:dij.numOfScenarios
-    HUcube{s} =  interp3(dij.ctGrid.y,  dij.ctGrid.x',  dij.ctGrid.z,ct.cubeHU{s}, ...
-                         dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'linear');
+    HUcube{s} =  interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
+                         dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% what are you doing here, Lucas?
 nbThreads = 4;
-nbParallel = 8;%nproc();
+nbParallel = 8;
 if nbParallel > 4
   nbParallel = 2*ceil(nbParallel/nbThreads);
 end
@@ -136,7 +136,7 @@ end
 rand('state',0)
 
 % set number of particles simulated per pencil beam
-nCasePerBixel = 1000;
+nCasePerBixel = 5000;
 
 % set relative dose cutoff for storage in dose influence matrix
 relDoseCutoff = 10^(-3);
@@ -177,8 +177,8 @@ MCsquareConfig.RNG_Seed      = 1234;
 MCsquareConfig.Num_Primaries = nCasePerBixel;
 
 % write patient data
-MCsquareBinCubeResolution = [dij.doseGrid.resolution.y ...
-                             dij.doseGrid.resolution.x ...
+MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
+                             dij.doseGrid.resolution.y ...
                              dij.doseGrid.resolution.z];   
 matRad_writeMhd(HUcube{1},MCsquareBinCubeResolution,MCsquareConfig.CT_File);
 
@@ -216,7 +216,7 @@ for i = 1:numOfBixelsContainer:dij.totalNumOfBixels
     
     for runNb = i:i+nbRuns-1
         
-        matRad_writeMCsquareinputFiles(MCsquareConfigFile,MCsquareConfig,MCsquareStf(i));
+        matRad_writeMCsquareinputFiles(MCsquareConfigFile,MCsquareConfig,MCsquareStf(runNb));
 
         [status,cmdout] = system(['MCSquare_windows.exe ' MCsquareConfigFile],'-echo');
         
