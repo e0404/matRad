@@ -104,6 +104,13 @@ dij.beamNum  = NaN*ones(dij.totalNumOfBixels,1);
 VctGrid = [cst{:,4}];
 VctGrid = unique(vertcat(VctGrid{:}));
 
+% receive linear indices and grid locations from the dose grid
+tmpCube    = zeros(ct.cubeDim);
+tmpCube(VctGrid) = 1;
+% interpolate cube
+VdoseGrid = find(interp3(dij.ctGrid.y,  dij.ctGrid.x,   dij.ctGrid.z,tmpCube, ...
+                         dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'nearest'));
+
 % ignore densities outside of contours
 eraseCtDensMask = ones(dij.ctGrid.numOfVoxels,1);
 eraseCtDensMask(VctGrid) = 0;
@@ -139,7 +146,7 @@ absCalibrationFactorMC2 = 1.602176e-19 * nCasePerBixel * 1.0e+6;
 
 % Allocate space for dij.physicalDose sparse matrix
 for i = 1:dij.numOfScenarios
-    dij.physicalDose{i} = spalloc(prod(ct.cubeDim),dij.totalNumOfBixels,1);
+    dij.physicalDose{i} = spalloc(dij.doseGrid.numOfVoxels,dij.totalNumOfBixels,1);
 end
 
 % helper function for energy selection
@@ -158,7 +165,6 @@ if isequal(pln.propOpt.bioOptimization,'const_RBExD')
             fprintf(['matRad: Using a constant RBE of 1.1 \n']);
 end
 
-
 % MCsquare settings
 MCsquareConfigFile = 'MCsquareConfig.txt';
 
@@ -171,7 +177,10 @@ MCsquareConfig.RNG_Seed      = 1234;
 MCsquareConfig.Num_Primaries = nCasePerBixel;
 
 % write patient data
-matRad_writeMhd(ct.cubeHU{1},ct.resolution,MCsquareConfig.CT_File);
+MCsquareBinCubeResolution = [dij.doseGrid.resolution.y ...
+                             dij.doseGrid.resolution.x ...
+                             dij.doseGrid.resolution.z];   
+matRad_writeMhd(HUcube{1},MCsquareBinCubeResolution,MCsquareConfig.CT_File);
 
 % prepare steering for MCsquare
 counter = 1;
@@ -179,14 +188,13 @@ for i = 1:length(stf)
     for j = 1:stf(i).numOfRays
         for k = 1:stf(i).numOfBixelsPerRay(j)
             
-            dij.bixelNum(counter) = counter;
+            dij.bixelNum(counter) = k;
             dij.rayNum(counter)   = j;
             dij.beamNum(counter)  = i;
             
             MCsquareStf(counter).gantryAngle = mod(180-stf(i).gantryAngle,360);
             MCsquareStf(counter).couchAngle  = stf(i).couchAngle;
-            % müssen wir hier x und y vertauschen??????????????????
-            MCsquareStf(counter).isoCenter   = stf(i).isoCenter-[ct.resolution.x/2 ct.resolution.y/2 ct.resolution.z/2];
+            MCsquareStf(counter).isoCenter   = stf(i).isoCenter-MCsquareBinCubeResolution/2;
             MCsquareStf(counter).energy      = stf(i).ray(j).energy(k);
             MCsquareStf(counter).targetPoint = [-stf(i).ray(j).rayPos_bev(1), stf(i).ray(j).rayPos_bev(3)];
             
@@ -222,9 +230,7 @@ for i = 1:numOfBixelsContainer:dij.totalNumOfBixels
         % apply absolute calibration factor
         bixelDose = bixelDose*absCalibrationFactorMC2;
 
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
-        % DAS MUSS NOCH GEÄNDERT WERDEN INS DOSISGRID !!!!!!!!!!!!!!!
-        sparseDose = sparse(VctGrid,1,double(bixelDose(VctGrid)),dij.ctGrid.numOfVoxels,1);
+        sparseDose = sparse(VdoseGrid,1,double(bixelDose(VdoseGrid)),dij.doseGrid.numOfVoxels,1);
         
         doseTmpContainer{mod(runNb-1,numOfBixelsContainer)+1,1} = sparseDose;
         
