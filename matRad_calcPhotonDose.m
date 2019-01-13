@@ -39,7 +39,7 @@ matRad_calcDoseInit;
 
 switch env
      case 'MATLAB'
-          rng(0);
+          rng('default');
      case 'OCTAVE'
           rand('seed',0)
 end

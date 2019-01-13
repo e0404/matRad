@@ -103,9 +103,9 @@ if any(dij.ctGrid.dimensions~=dij.doseGrid.dimensions)
        if numel(resultGUI.(myFields{i})) == dij.doseGrid.numOfVoxels
            
            % interpolate!
-           resultGUI.(myFields{i}) = interp3(dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z, ...
+           resultGUI.(myFields{i}) = interp3(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, ...
                                              resultGUI.(myFields{i}), ...
-                                             dij.ctGrid.y,dij.ctGrid.x',dij.ctGrid.z,'linear',0);
+                                             dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,'linear',0);
            
        end
        
