@@ -315,8 +315,8 @@ catch
 end
 
 %% clear all data
-delete([MCsquareConfig.CT_File(end-4:end) '.mhd'])
-delete([MCsquareConfig.CT_File(end-4:end) '.raw'])
+delete([MCsquareConfig.CT_File(1:end-4) '.mhd'])
+delete([MCsquareConfig.CT_File(1:end-4) '.raw'])
 eval(['rmdir ' MCsquareConfig.Output_Directory ' s'])
 rmdir Materials s
 
