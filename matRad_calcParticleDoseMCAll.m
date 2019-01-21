@@ -126,14 +126,6 @@ end
 
 % what are you doing here, Lucas?
 nbThreads = 4;
-nbParallel = 8;
-if nbParallel > 4
-  nbParallel = 2*ceil(nbParallel/nbThreads);
-end
-
-% set consistent random seed (enables reproducibility)
-%rng(0);
-rand('state',0)
 
 % set number of particles simulated per pencil beam
 nCasePerBixel = 5000;
@@ -149,17 +141,10 @@ for i = 1:dij.numOfScenarios
     dij.physicalDose{i} = spalloc(dij.doseGrid.numOfVoxels,dij.totalNumOfBixels,1);
 end
 
-% helper function for energy selection
-round2 = @(a,b)round(a*10^b)/10^b;
-
-% Allocate memory for dose_temp cell array
-numOfBixelsContainer = nbParallel;
-
 if ~strcmp(pln.radiationMode,'protons')
     errordlg('MCsquare is only supported for protons');
 end
 
-doseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
 if isequal(pln.propOpt.bioOptimization,'const_RBExD')
             dij.RBE = 1.1;
             fprintf(['matRad: Using a constant RBE of 1.1 \n']);
@@ -183,7 +168,7 @@ MCsquareConfig.Dose_MHD_Output = false;
 % turn on sparse output
 MCsquareConfig.Dose_Sparse_Output = true;
 % set threshold of sparse matrix generation
-MCsquareConfig.Dose_Sparse_Threshold = 0.001;
+MCsquareConfig.Dose_Sparse_Threshold = relDoseCutoff;
 
 % write patient data
 MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
@@ -212,6 +197,7 @@ for i = 1:length(stf)
     end
 end
 
+% sort stf by energy
 for i = 1:length(stf)
     stfMCsquare(i).gantryAngle = mod(180-stf(i).gantryAngle,360);
     stfMCsquare(i).couchAngle  = stf(i).couchAngle;
@@ -235,74 +221,25 @@ for i = 1:length(stf)
     
 end
 
-% sort stf by energy
-
 % dont ask me why but we need the materials folder in the current folder
 copyfile MC2/Materials/ Materials/
 
-
-
 %% MC computation and dij filling
 matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare);
-
-
-% for i = 1:numOfBixelsContainer:dij.totalNumOfBixels
-%   
-%     nbRuns = numOfBixelsContainer;
-%     if (i+nbRuns)> dij.totalNumOfBixels
-%         nbRuns = dij.totalNumOfBixels-i+1;
-%     end
-%     
-%     for runNb = i:i+nbRuns-1
-%         
-%         matRad_writeMCsquareinputFiles(MCsquareConfigFile,MCsquareConfig,MCsquareStf(runNb));
-% 
-%         
-%         
-%         % Save dose for every bixel in cell array
-%         bixelDose = matRad_readMhd([pwd filesep MCsquareConfig.Output_Directory],'Dose.mhd');
-%         
-%         % apply relative dose cutoff
-%         doseCutoff                        = relDoseCutoff*max(bixelDose(:));
-%         bixelDose(bixelDose < doseCutoff) = 0;
-% 
-%         % apply absolute calibration factor
-%         bixelDose = bixelDose*absCalibrationFactorMC2;
-% 
-%         sparseDose = sparse(VdoseGrid,1,double(bixelDose(VdoseGrid)),dij.doseGrid.numOfVoxels,1);
-%         
-%         doseTmpContainer{mod(runNb-1,numOfBixelsContainer)+1,1} = sparseDose;
-%         
-%         delete(MCsquareConfig.BDL_Plan_File)
-%         delete MCsquareConfig.txt
-%         
-%     end
-%     
-%     
-%     
-%     % save computation time and memory by sequentially filling the
-%     % sparse matrix dose.dij from the cell array
-%     dij.physicalDose{1}(:,i:i+nbRuns-1) = [doseTmpContainer{1:nbRuns,1}];
-% 
-%     % Display progress and update text only 200 times
-%     if mod(i+nbRuns-1,max(1,round(dij.totalNumOfBixels/200))) == 0
-%         matRad_progress((i+nbRuns-1)/max(1,round(dij.totalNumOfBixels/200)),...
-%                         floor(dij.totalNumOfBixels/max(1,round(dij.totalNumOfBixels/200))));
-%         fprintf('\n');          
-%     end
-%     
-% end
 
 [status,cmdout] = system(['MCSquare_windows.exe ' MCsquareConfigFile],'-echo');
 
 binSparseFileHeader = Sparse_read_header([MCsquareConfig.Output_Directory filesep ...
                                             'Sparse_Dose.txt']);
-                                        
-dij.physicalDose{1} = matRad_sparseBeamletsReaderMSsquare ( ...
+                    
+mask = false(prod(binSparseFileHeader.ImageSize),1);
+mask(VdoseGrid) = true;
+
+dij.physicalDose{1} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMSsquare ( ...
                 [MCsquareConfig.Output_Directory filesep 'Sparse_Dose.bin'], ...
                 binSparseFileHeader.ImageSize, ...
                 binSparseFileHeader.NbrSpots, ...
-                true(prod(binSparseFileHeader.ImageSize),1));
+                mask);
 
 fprintf('matRad: done!\n');
 
