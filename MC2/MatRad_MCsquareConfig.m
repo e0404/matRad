@@ -64,7 +64,7 @@ classdef MatRad_MCsquareConfig
         Energy_Sparse_Output = false	% Enable/Disable the output of Energy in Sparse matrix format. Default: False
         Dose_ASCII_Output	 = false	% Enable/Disable the output of Dose in ASCII format. Default: False
         Dose_MHD_Output		 = true	% Enable/Disable the output of Dose in MHD format. Default: True
-        Dose_Sparse_Output	 = false	% Enable/Disable the output of Dose in Sparse matrix format. Default: False
+        Dose_Sparse_Output	 = true	% Enable/Disable the output of Dose in Sparse matrix format. Default: False
         LET_ASCII_Output     = false	% Enable/Disable the output of LET in ASCII format. Default: False
         LET_MHD_Output		 = false	% Enable/Disable the output of LET in MHD format. Default: False
         LET_Sparse_Output	 = false	% Enable/Disable the output of LET in Sparse matrix format. Default: False

@@ -44,6 +44,15 @@ dij.ctGrid.z = ct.z;
 dij.ctGrid.dimensions  = [numel(dij.ctGrid.y) numel(dij.ctGrid.x) numel(dij.ctGrid.z)];
 dij.ctGrid.numOfVoxels = prod(dij.ctGrid.dimensions);
 
+% adjust isocenter internally for different dose grid
+offset = [dij.doseGrid.resolution.x - dij.ctGrid.resolution.x ...
+          dij.doseGrid.resolution.y - dij.ctGrid.resolution.y ...
+          dij.doseGrid.resolution.z - dij.ctGrid.resolution.z];
+    
+for i = 1:numel(stf)
+    stf(i).isoCenter = stf(i).isoCenter + offset;
+end
+
 % calculate rED or rSP from HU
 ct = matRad_calcWaterEqD(ct, pln);
 

@@ -31,9 +31,9 @@ function dij = matRad_calcParticleDoseMCAll(ct,stf,pln,cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% disable visualiazation by default
-if nargin < 5
-    visBool = false;
+% check if valid machine
+if ~strcmp(pln.radiationMode,'protons') || ~strcmp(pln.machine,'generic_MCsquare')
+    error('wrong radiation modality and/or machine.');    
 end
 
 %% check if binaries are available
@@ -68,6 +68,11 @@ else
     dij.doseGrid.resolution.x = pln.propDoseCalc.doseGrid.resolution.x;
     dij.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.y;
     dij.doseGrid.resolution.z = pln.propDoseCalc.doseGrid.resolution.z;
+end
+
+% check if using isotropic dose grid resolution in x and y direction
+if dij.doseGrid.resolution.x ~= dij.doseGrid.resolution.y
+    error('Anisotropic resolution in x and y direction');
 end
 
 dij.doseGrid.x = ct.x(1):dij.doseGrid.resolution.x:ct.x(end);
@@ -128,7 +133,7 @@ end
 nbThreads = 4;
 
 % set number of particles simulated per pencil beam
-nCasePerBixel = 5000;
+nCasePerBixel = 10000;
 
 % set relative dose cutoff for storage in dose influence matrix
 relDoseCutoff = 10^(-3);
@@ -176,32 +181,14 @@ MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
                              dij.doseGrid.resolution.z];   
 matRad_writeMhd(HUcube{1},MCsquareBinCubeResolution,MCsquareConfig.CT_File);
 
-% prepare steering for MCsquare
-counter = 1;
-for i = 1:length(stf)
-    for j = 1:stf(i).numOfRays
-        for k = 1:stf(i).numOfBixelsPerRay(j)
+% prepare steering for MCsquare and sort stf by energy
+isoCenterOffset = [dij.doseGrid.resolution.x*1.5 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
+                - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
             
-            dij.bixelNum(counter) = k;
-            dij.rayNum(counter)   = j;
-            dij.beamNum(counter)  = i;
-            
-            tmpStf(counter).gantryAngle = mod(180-stf(i).gantryAngle,360);
-            tmpStf(counter).couchAngle  = stf(i).couchAngle;
-            tmpStf(counter).isoCenter   = stf(i).isoCenter-MCsquareBinCubeResolution/2;
-            tmpStf(counter).energy      = stf(i).ray(j).energy(k);
-            tmpStf(counter).targetPoint = [-stf(i).ray(j).rayPos_bev(1), stf(i).ray(j).rayPos_bev(3)];
-            
-            counter = counter + 1;
-        end
-    end
-end
-
-% sort stf by energy
 for i = 1:length(stf)
     stfMCsquare(i).gantryAngle = mod(180-stf(i).gantryAngle,360);
     stfMCsquare(i).couchAngle  = stf(i).couchAngle;
-    stfMCsquare(i).isoCenter   = stf(i).isoCenter-MCsquareBinCubeResolution/2;
+    stfMCsquare(i).isoCenter   = stf(i).isoCenter + isoCenterOffset;
     stfMCsquare(i).energies    = unique([stf(i).ray.energy]);
     
     % allocate empty target point container
