@@ -16,9 +16,9 @@ classdef MatRad_MCsquareConfig
         
         %%% Input files
         CT_File                     = 'Patient.mhd'				% Name of the CT file. Default: CT.mhd
-        HU_Density_Conversion_File	= 'MC2/Scanners/matRad_water/HU_Density_Conversion.txt'	% Name of the file containing HU to density conversion data. Default: HU_Density_Conversion.txt
-        HU_Material_Conversion_File	= 'MC2/Scanners/matRad_water/HU_Material_Conversion.txt'	% Name of the file containing HU to material conversion data. Default: HU_Material_Conversion.txt
-        BDL_Machine_Parameter_File  = 'MC2/BDL/BDL_matrad.txt'			% Name of the machine parameter file for the beam data library. Default: BDL.txt
+        HU_Density_Conversion_File	= 'Scanners/matRad_water/HU_Density_Conversion.txt'	% Name of the file containing HU to density conversion data. Default: HU_Density_Conversion.txt
+        HU_Material_Conversion_File	= 'Scanners/matRad_water/HU_Material_Conversion.txt'	% Name of the file containing HU to material conversion data. Default: HU_Material_Conversion.txt
+        BDL_Machine_Parameter_File  = 'BDL/BDL_matrad.txt'			% Name of the machine parameter file for the beam data library. Default: BDL.txt
         BDL_Plan_File               = 'PlanPencil.txt'			% Name of the plan file for the beam data library. Default: Plan.txt
         
         %%% Physical parameters

@@ -1,6 +1,6 @@
-function dij = matRad_calcParticleDoseMCAll(ct,stf,pln,cst)
+function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad MCsqure monte carlo photon dose calculation wrapper
+% matRad MCsqaure monte carlo photon dose calculation wrapper
 %
 % call
 %   dij = matRad_calcParticleDoseMc(ct,stf,pln,cst,visBool)
@@ -46,6 +46,14 @@ elseif isunix
 elseif ismac
     error('MCsquare binaries not available for mac OS.\n');
 end
+
+% set and change to MCsquare binary folder
+currFolder = pwd;
+fullfilename = mfilename('fullpath');
+MCsquareFolder = [fullfilename(1:find(fullfilename==filesep,1,'last')) 'submodules' filesep 'MCsquare'];
+
+% cd to MCsquare folder (necessary for binary)
+cd(MCsquareFolder);
 
 % to guarantee downwards compatibility with data that does not have
 % ct.x/y/z
@@ -208,13 +216,14 @@ for i = 1:length(stf)
     
 end
 
-% dont ask me why but we need the materials folder in the current folder
-copyfile MC2/Materials/ Materials/
-
 %% MC computation and dij filling
 matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare);
 
+
+
+% run MCsquare
 [status,cmdout] = system(['MCSquare_windows.exe ' MCsquareConfigFile],'-echo');
+
 
 binSparseFileHeader = Sparse_read_header([MCsquareConfig.Output_Directory filesep ...
                                             'Sparse_Dose.txt']);
@@ -242,6 +251,8 @@ end
 delete([MCsquareConfig.CT_File(1:end-4) '.mhd'])
 delete([MCsquareConfig.CT_File(1:end-4) '.raw'])
 eval(['rmdir ' MCsquareConfig.Output_Directory ' s'])
-rmdir Materials s
+
+% cd back
+cd(currFolder);
 
 end
