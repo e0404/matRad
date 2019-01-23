@@ -1,0 +1,3 @@
+[submodule "submodules/MCsquare"]
+	path = submodules/MCsquare
+	url = https://github.com/e0404/MCsquare.git
