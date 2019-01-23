@@ -1,22 +1,24 @@
-function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst)
+function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad MCsqaure monte carlo photon dose calculation wrapper
 %
 % call
-%   dij = matRad_calcParticleDoseMc(ct,stf,pln,cst,visBool)
+%   dij = matRad_calcParticleDoseMc(ct,stf,pln,cst,calcDoseDirect)
 %
 % input
 %   ct:                         matRad ct struct
 %   stf:                        matRad steering information struct
 %   pln:                        matRad plan meta information struct
 %   cst:                        matRad cst struct
-%   visBool:                    binary switch to enable visualization
+%   calcDoseDirect:             binary switch to enable forward dose
+%                               calcualtion
 % output
 %   dij:                        matRad dij struct
 %
 % References
 %
-%   XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX there needs to go a lot of stuff!
+%   https://www.ncbi.nlm.nih.gov/pubmed/2703656
+%   http://www.openmcsquare.org/
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -45,6 +47,10 @@ elseif isunix
     error('xxxxxxxxxxxxxx\n');
 elseif ismac
     error('MCsquare binaries not available for mac OS.\n');
+end
+
+if nargin < 5
+    calcDoseDirect = false;
 end
 
 % set and change to MCsquare binary folder
@@ -105,13 +111,12 @@ dij.ctGrid.numOfVoxels = prod(dij.ctGrid.dimensions);
 dij.numOfBeams         = pln.propStf.numOfBeams;
 dij.numOfScenarios     = 1;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
-dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
+if calcDoseDirect
+    dij.totalNumOfBixels = 1;
+else
+    dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
+end
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
-
-% set up arrays for book keeping
-dij.bixelNum = NaN*ones(dij.totalNumOfBixels,1);
-dij.rayNum   = NaN*ones(dij.totalNumOfBixels,1);
-dij.beamNum  = NaN*ones(dij.totalNumOfBixels,1);
 
 % take only voxels inside patient
 VctGrid = [cst{:,4}];
@@ -175,7 +180,7 @@ MCsquareConfig.RNG_Seed      = 1234;
 MCsquareConfig.Num_Primaries = nCasePerBixel;
 
 % turn simulation of individual beamlets
-MCsquareConfig.Beamlet_Mode = true;
+MCsquareConfig.Beamlet_Mode = ~calcDoseDirect;
 % turn of writing of full dose cube
 MCsquareConfig.Dose_MHD_Output = false;
 % turn on sparse output
@@ -202,6 +207,7 @@ for i = 1:length(stf)
     % allocate empty target point container
     for j = 1:numel(stfMCsquare(i).energies)
         stfMCsquare(i).energyLayer(j).targetPoints = [];
+        stfMCsquare(i).energyLayer(j).numOfPrimaries = [];
     end
     
     for j = 1:stf(i).numOfRays
@@ -209,6 +215,8 @@ for i = 1:length(stf)
             if any(stf(i).ray(j).energy == stfMCsquare(i).energies(k))
                 stfMCsquare(i).energyLayer(k).targetPoints = [stfMCsquare(i).energyLayer(k).targetPoints; ...
                                         -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
+                stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
+                                         stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k))];
             end
         end
                
@@ -219,22 +227,16 @@ end
 %% MC computation and dij filling
 matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare);
 
-
-
 % run MCsquare
 [status,cmdout] = system(['MCSquare_windows.exe ' MCsquareConfigFile],'-echo');
 
-
-binSparseFileHeader = Sparse_read_header([MCsquareConfig.Output_Directory filesep ...
-                                            'Sparse_Dose.txt']);
-                    
-mask = false(prod(binSparseFileHeader.ImageSize),1);
+mask = false(dij.doseGrid.numOfVoxels,1);
 mask(VdoseGrid) = true;
 
 dij.physicalDose{1} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMSsquare ( ...
                 [MCsquareConfig.Output_Directory filesep 'Sparse_Dose.bin'], ...
-                binSparseFileHeader.ImageSize, ...
-                binSparseFileHeader.NbrSpots, ...
+                dij.doseGrid.dimensions, ...
+                dij.totalNumOfBixels, ...
                 mask);
 
 fprintf('matRad: done!\n');

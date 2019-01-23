@@ -57,7 +57,7 @@ for i = 1:numOfFields
         fprintf(fileHandle,[num2str(numOfSpots) '\n']);
         fprintf(fileHandle,'####X Y Weight\n');
         for k = 1:numOfSpots
-            fprintf(fileHandle,[num2str(stf(i).energyLayer(j).targetPoints(k,:)) ' ' num2str(MCsquareConfig.Num_Primaries) '\n']);
+            fprintf(fileHandle,[num2str(stf(i).energyLayer(j).targetPoints(k,:)) ' ' num2str(stf(i).energyLayer(j).numOfPrimaries(k)) '\n']);
         end
     end        
 end
