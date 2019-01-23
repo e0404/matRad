@@ -134,9 +134,6 @@ void mexFunction(   int nlhs,   mxArray *plhs[],    int nrhs,   const mxArray *p
                     Sparse_index = mxGetIr(plhs[0]);
                 }
                 
-                if (x[FirstIndex-j-1]){
-                    Sparse_data[NbrElements] = (double)data[j];
-                    
                     // get index
                     ixMC2 = NbrVoxels - (FirstIndex-j-1);
                     
@@ -150,7 +147,9 @@ void mexFunction(   int nlhs,   mxArray *plhs[],    int nrhs,   const mxArray *p
 
                     // compute new index
                     ixMatRad = jSub + iSub*DoseGridSize[0] + kSub*NbrVoxelsSlice;
-                    
+                
+                if (x[ixMatRad-1]){
+                    Sparse_data[NbrElements] = (double)data[j];
                     Sparse_index[NbrElements] = ixMatRad;
                     // if (NbrElements>0)
                     //   if (Sparse_index[NbrElements]>Sparse_index[NbrElements-1])
