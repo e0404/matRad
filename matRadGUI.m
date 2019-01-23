@@ -295,19 +295,19 @@ handles.selectedBeam = 1;
 handles.plane = get(handles.popupPlane,'Value');
 handles.DijCalcWarning = false;
 
+planePermute = [2 1 3];
+
 % set slice slider
 if handles.State > 0
     if evalin('base','exist(''pln'',''var'')')
         currPln = evalin('base','pln');
-        if handles.plane == 1
-            currSlice = ceil(currPln.propStf.isoCenter(1,2)/ct.resolution.x);
-        elseif handles.plane == 2
-            currSlice = ceil(currPln.propStf.isoCenter(1,1)/ct.resolution.y);
-        elseif handles.plane == 3
-            currSlice = ceil(currPln.propStf.isoCenter(1,3)/ct.resolution.z);
-        end 
+        if sum(currPln.propStf.isoCenter(:)) ~= 0
+            currSlice = ceil(currPln.propStf.isoCenter(1,planePermute(handles.plane))/ct.resolution.x);
+        else 
+            currSlice = ceil(ct.cubeDim(planePermute(handles.plane))/2);
+        end
     else % no pln -> no isocenter -> use middle
-        currSlice = ceil(ct.cubeDim(handles.plane)/2);
+        currSlice = ceil(ct.cubeDim(planePermute(handles.plane))/2);
     end
     set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
             'Value',currSlice,...
