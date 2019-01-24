@@ -66,22 +66,6 @@ else % weights need to be in stf!
     end    
 end
 
-% normalize dose calculation
-totalNumOfPrimaries = 10000;
-totalWeight         = sum(w);
-
-w = round(w/totalWeight*totalNumOfPrimaries);
-
-counter = 0;
-for i = 1:size(stf,2)
-    for j = 1:stf(i).numOfRays
-        for k = 1:stf(i).numOfBixelsPerRay(j)
-            counter = counter + 1;
-            stf(i).ray(j).weight(k) = w(counter);
-        end
-    end
-end
-
 % dose calculation
 if strcmp(pln.radiationMode,'protons')
   dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,calcDoseDirect);
@@ -95,7 +79,7 @@ dij.beamNum = 1;
 
 % calculate cubes; use uniform weights here, weighting with actual fluence 
 % already performed in dij construction 
-resultGUI    = matRad_calcCubes(1,dij);
+resultGUI    = matRad_calcCubes(sum(w),dij);
 
 % remember original fluence weights
 resultGUI.w  = w; 

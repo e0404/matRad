@@ -118,6 +118,12 @@ else
 end
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 
+% book keeping
+dij.bixelNum          = NaN*ones(dij.totalNumOfBixels,1);
+dij.rayNum            = NaN*ones(dij.totalNumOfBixels,1);
+dij.beamNum           = NaN*ones(dij.totalNumOfBixels,1);
+dij.MCsquareCalcOrder = NaN*ones(dij.totalNumOfBixels,1);
+
 % take only voxels inside patient
 VctGrid = [cst{:,4}];
 VctGrid = unique(vertcat(VctGrid{:}));
@@ -151,8 +157,8 @@ nCasePerBixel = 10000;
 % set relative dose cutoff for storage in dose influence matrix
 relDoseCutoff = 10^(-3);
 % set absolute calibration factor
-% convert from sum of dose in Gy for all histories to Gy per 1e6 primaries
-absCalibrationFactorMC2 = 1.602176e-19 * nCasePerBixel * 1.0e+6;
+% convert from eV/g/primary to Gy 1e6 primaries
+absCalibrationFactorMC2 = 1.602176e-19 * 1.0e+9;
 
 % Allocate space for dij.physicalDose sparse matrix
 for i = 1:dij.numOfScenarios
@@ -197,7 +203,8 @@ matRad_writeMhd(HUcube{1},MCsquareBinCubeResolution,MCsquareConfig.CT_File);
 % prepare steering for MCsquare and sort stf by energy
 isoCenterOffset = [dij.doseGrid.resolution.x*1.5 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
                 - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
-            
+
+counter = 0;             
 for i = 1:length(stf)
     stfMCsquare(i).gantryAngle = mod(180-stf(i).gantryAngle,360);
     stfMCsquare(i).couchAngle  = stf(i).couchAngle;
@@ -206,23 +213,43 @@ for i = 1:length(stf)
     
     % allocate empty target point container
     for j = 1:numel(stfMCsquare(i).energies)
-        stfMCsquare(i).energyLayer(j).targetPoints = [];
+        stfMCsquare(i).energyLayer(j).targetPoints   = [];
         stfMCsquare(i).energyLayer(j).numOfPrimaries = [];
+        stfMCsquare(i).energyLayer(j).rayNum         = [];
+        stfMCsquare(i).energyLayer(j).bixelNum       = [];
     end
     
     for j = 1:stf(i).numOfRays
+        for k = 1:stf(i).numOfBixelsPerRay(j)
+            counter = counter + 1;
+            dij.beamNum(counter)  = i;
+            dij.rayNum(counter)   = j;
+            dij.bixelNum(counter) = k;
+        end
+        
         for k = 1:numel(stfMCsquare(i).energies)
             if any(stf(i).ray(j).energy == stfMCsquare(i).energies(k))
+                stfMCsquare(i).energyLayer(k).rayNum   = [stfMCsquare(i).energyLayer(k).rayNum j];
+                stfMCsquare(i).energyLayer(k).bixelNum = [stfMCsquare(i).energyLayer(k).bixelNum ...
+                    find(stf(i).ray(j).energy == stfMCsquare(i).energies(k))];
                 stfMCsquare(i).energyLayer(k).targetPoints = [stfMCsquare(i).energyLayer(k).targetPoints; ...
                                         -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
-                stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
+                if calcDoseDirect
+                    stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
                                          stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k))];
+                else
+                    stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
+                        MCsquareConfig.Num_Primaries];
+                end
             end
         end
                
     end
     
 end
+
+% TODO
+MCsquareOrder = 1:dij.totalNumOfBixels;
 
 %% MC computation and dij filling
 matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare);
@@ -233,11 +260,17 @@ matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare)
 mask = false(dij.doseGrid.numOfVoxels,1);
 mask(VdoseGrid) = true;
 
+% read sparse matrix
 dij.physicalDose{1} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMSsquare ( ...
                 [MCsquareConfig.Output_Directory filesep 'Sparse_Dose.bin'], ...
                 dij.doseGrid.dimensions, ...
                 dij.totalNumOfBixels, ...
                 mask);
+
+% reorder influence matrix to comply with matRad default ordering
+if MCsquareConfig.Beamlet_Mode
+    dij.physicalDose{1} = dij.physicalDose{1}(:,MCsquareOrder);            
+end        
 
 fprintf('matRad: done!\n');
 
