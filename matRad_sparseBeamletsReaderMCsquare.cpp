@@ -27,6 +27,35 @@ run with matlab: Beamlets = mexSparseBeamletsReader('Sparse_Dose.bin', [256 256 
 
 #include <fstream>
 #include <numeric>
+#include <array>
+#include <vector>
+
+//typedef std::vector<size_t> ixVec_t;
+
+//Function to reorder the vectors
+void reorder_entries(mwIndex* nonZeroIx, double* nonZeroVals, size_t numValues)
+{
+  //Create a vector for sorting
+  std::vector<size_t> sortIx(numValues);
+  std::iota(sortIx.begin(), sortIx.end(), 0); //Fills with increasing values
+  
+  //determine the order by sorting with respect to the voxel indices
+  std::sort(sortIx.begin(), sortIx.end(), [nonZeroIx](mwSize i, mwSize j) -> bool { return nonZeroIx[i] < nonZeroIx[j]; });
+  
+  //Reorder both vectors according to sortIx
+  for (int i = 0; i < numValues - 1; ++i)
+  {
+    //we need to make sure that we put the element in place without overwriting 
+    while (i != sortIx[i])
+    {
+      int alt = sortIx[i];
+      std::swap(nonZeroIx[i], nonZeroIx[alt]);
+      std::swap(nonZeroVals[i], nonZeroVals[alt]);
+      std::swap(sortIx[i], sortIx[alt]);
+    }
+  }
+}
+
 
 //#include <stdlib.h>
 //#include <stdint.h>
@@ -52,13 +81,14 @@ void mexFunction(   int nlhs,   mxArray *plhs[],    int nrhs,   const mxArray *p
     if(mxGetNumberOfElements(prhs[1]) != 3) 
 		mexErrMsgIdAndTxt( "matRad_sparseBeamletsReaderMCsquare:invalidInput", "Dose grid must be 3D");
     
-	uint32_t sizeDoseGrid[3];
+	  std::array<uint32_t,3> sizeDoseGrid;    
     sizeDoseGrid[0] = (uint32_t) *(mxGetPr(prhs[1])+0);
     sizeDoseGrid[1] = (uint32_t) *(mxGetPr(prhs[1])+1);
     sizeDoseGrid[2] = (uint32_t) *(mxGetPr(prhs[1])+2);
 	
-	uint32_t numVoxels = std::accumulate(sizeDoseGrid, sizeDoseGrid + 2, 1, std::multiplies<uint32_t>());
-	uint32_t numVoxelsSlice = sizeDoseGrid[0]*sizeDoseGrid[1];
+	  uint32_t numVoxels = std::accumulate(sizeDoseGrid.begin(), sizeDoseGrid.end(), 1, std::multiplies<uint32_t>());
+    mexPrintf("Number of voxels: %d", numVoxels);
+	  uint32_t numVoxelsSlice = sizeDoseGrid[0]*sizeDoseGrid[1];
 
 
     //Check numSpots
@@ -174,11 +204,25 @@ void mexFunction(   int nlhs,   mxArray *plhs[],    int nrhs,   const mxArray *p
             if(numReadValsTot >= nBeamletVoxels) 
                 break;
         }
-  
+        uint32_t addedVals = currentNnz - jc[runSpot]; // Number of values actually added
+        //This is were the index and value lists for the spot/column starts
+        mwIndex* ixBegin = &ix[jc[runSpot]];
+        double* valsBegin = &vals[jc[runSpot]];
+        
+        //Reorders the entries such that they are increasing in the matRAd voxel index
+        reorder_entries(ixBegin, valsBegin, addedVals);
     }
     
     jc[numSpots] = currentNnz;
     
     mxFree(data);
     file.close();
+
+    //shrink memory to fit exactly the number of elements
+    mxSetNzmax(plhs[0], currentNnz);
+    mxSetPr(plhs[0], (double *)  mxRealloc(vals, currentNnz * sizeof(double)));
+    mxSetIr(plhs[0], (mwIndex *) mxRealloc(ix  , currentNnz * sizeof(mwIndex)));
 }
+
+
+
