@@ -87,7 +87,7 @@ void mexFunction(   int nlhs,   mxArray *plhs[],    int nrhs,   const mxArray *p
     sizeDoseGrid[2] = (uint32_t) *(mxGetPr(prhs[1])+2);
 	
 	  uint32_t numVoxels = std::accumulate(sizeDoseGrid.begin(), sizeDoseGrid.end(), 1, std::multiplies<uint32_t>());
-    mexPrintf("Number of voxels: %d", numVoxels);
+    //mexPrintf("Number of voxels: %d", numVoxels);
 	  uint32_t numVoxelsSlice = sizeDoseGrid[0]*sizeDoseGrid[1];
 
 
