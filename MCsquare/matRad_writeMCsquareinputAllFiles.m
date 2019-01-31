@@ -78,11 +78,7 @@ for i = 1:numOfFields
         fprintf(fileHandle,[num2str(numOfSpots) '\n']);
         fprintf(fileHandle,'####X Y Weight\n');
         for k = 1:numOfSpots
-            if MCsquareConfig.Beamlet_Mode
-                n = MCsquareConfig.Num_Primaries;
-            else
-                n = stf(i).energyLayer(j).numOfPrimaries(k);
-            end
+            n = stf(i).energyLayer(j).numOfPrimaries(k);
             fprintf(fileHandle,[num2str(stf(i).energyLayer(j).targetPoints(k,:)) ' ' num2str(n) '\n']);
         end
     end        
