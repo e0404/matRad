@@ -152,7 +152,7 @@ end
 nbThreads = 4;
 
 % set number of particles simulated per pencil beam
-nCasePerBixel = 10000;
+nCasePerBixel = 100000;
 
 % set relative dose cutoff for storage in dose influence matrix
 relDoseCutoff = 10^(-3);
@@ -188,9 +188,9 @@ MCsquareConfig.Num_Primaries = nCasePerBixel;
 % turn simulation of individual beamlets
 MCsquareConfig.Beamlet_Mode = ~calcDoseDirect;
 % turn of writing of full dose cube
-MCsquareConfig.Dose_MHD_Output = false;
+MCsquareConfig.Dose_MHD_Output = calcDoseDirect;
 % turn on sparse output
-MCsquareConfig.Dose_Sparse_Output = true;
+MCsquareConfig.Dose_Sparse_Output = ~calcDoseDirect;
 % set threshold of sparse matrix generation
 MCsquareConfig.Dose_Sparse_Threshold = relDoseCutoff;
 
@@ -261,11 +261,18 @@ mask = false(dij.doseGrid.numOfVoxels,1);
 mask(VdoseGrid) = true;
 
 % read sparse matrix
-dij.physicalDose{1} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( ...
-                [MCsquareConfig.Output_Directory filesep 'Sparse_Dose.bin'], ...
-                dij.doseGrid.dimensions, ...
-                dij.totalNumOfBixels, ...
-                mask);
+if ~calcDoseDirect
+    dij.physicalDose{1} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( ...
+                    [MCsquareConfig.Output_Directory filesep 'Sparse_Dose.bin'], ...
+                    dij.doseGrid.dimensions, ...
+                    dij.totalNumOfBixels, ...
+                    mask);
+else
+    cube = matRad_readMhd(MCsquareConfig.Output_Directory,'Dose.mhd');
+    dij.physicalDose{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
+                                 absCalibrationFactorMC2 * cube(VdoseGrid), ...
+                                 dij.doseGrid.numOfVoxels,1);
+end
 
 % reorder influence matrix to comply with matRad default ordering
 if MCsquareConfig.Beamlet_Mode
