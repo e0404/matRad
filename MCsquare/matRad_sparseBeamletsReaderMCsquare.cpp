@@ -151,9 +151,7 @@ void mexFunction(   int nlhs,   mxArray *plhs[],    int nrhs,   const mxArray *p
         while(true) {
             file.read((char *) &numCurrentReadVals, sizeof(uint32_t));
             
-            
             file.read((char *) &ixFirst, sizeof(uint32_t));
-            ixFirst = numVoxels - ixFirst;
             
             file.read((char *) data, numCurrentReadVals * sizeof(float));
             
@@ -176,7 +174,7 @@ void mexFunction(   int nlhs,   mxArray *plhs[],    int nrhs,   const mxArray *p
                 }
                 
                 // get index
-                ixMC2 = numVoxels - (ixFirst - readIx -1);
+                ixMC2 = ixFirst + readIx;
                     
                 // get subscripts
                 kSub = ixMC2/numVoxelsSlice;
@@ -189,12 +187,9 @@ void mexFunction(   int nlhs,   mxArray *plhs[],    int nrhs,   const mxArray *p
                 // compute new index
                 ixMatRad = jSub + iSub*sizeDoseGrid[0] + kSub*numVoxelsSlice;
                 
-                if (x[ixMatRad-1]) {
+                if (x[ixMatRad]) {
                     vals[currentNnz] = (double) data[readIx];
-                    ix[currentNnz] = ixMatRad;
-                    // if (currentNnz>0)
-                    //   if (ix[currentNnz]>ix[currentNnz-1])
-                    //     mexPrintf("i = %d -> ix = %d -> value = %f \n",i,ix[currentNnz] , vals[currentNnz]);
+                    ix[currentNnz]   = ixMatRad;
                     currentNnz ++;
                 }
             }

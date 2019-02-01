@@ -36,10 +36,10 @@ for i = 1:numOfFields
     fprintf(fileHandle,[num2str(i) '\n']);
 end
 fprintf(fileHandle,'\n#TotalMetersetWeightOfAllFields\n');
-fprintf(fileHandle,[num2str(totalMetersetWeightOfAllFields) '\n\n']);
+fprintf(fileHandle,[num2str(totalMetersetWeightOfAllFields) '\n']);
     
 for i = 1:numOfFields
-    fprintf(fileHandle,'#FIELD-DESCRIPTION\n');
+    fprintf(fileHandle,'\n#FIELD-DESCRIPTION\n');
     fprintf(fileHandle,'###FieldID\n');
     fprintf(fileHandle,[num2str(i) '\n']);
     fprintf(fileHandle,'###FinalCumulativeMeterSetWeight\n');
@@ -58,12 +58,13 @@ for i = 1:numOfFields
     fprintf(fileHandle,'###NumberOfControlPoints\n');
     numOfEnergies = numel(stf(i).energies);
     fprintf(fileHandle,[num2str(numOfEnergies) '\n']);
+
+    fprintf(fileHandle,'\n#SPOTS-DESCRIPTION\n');
     for j = 1:numOfEnergies
-        fprintf(fileHandle,'#SPOTS-DESCRIPTION\n');
         fprintf(fileHandle,'####ControlPointIndex\n');
         fprintf(fileHandle,[num2str(j) '\n']);
         fprintf(fileHandle,'####SpotTunnedID\n');
-        fprintf(fileHandle,[num2str(j) '\n']);
+        fprintf(fileHandle,['1\n']);
         fprintf(fileHandle,'####CumulativeMetersetWeight\n');
         if MCsquareConfig.Beamlet_Mode
             cumulativeMetersetWeight = 1/numOfEnergies * 1/numOfFields;
