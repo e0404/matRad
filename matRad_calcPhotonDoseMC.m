@@ -1,4 +1,4 @@
-function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,visBool)
+function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad ompMC monte carlo photon dose calculation wrapper
 %
@@ -31,16 +31,29 @@ function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,visBool)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % disable visualiazation by default
-if nargin < 5
+if nargin < 6
     visBool = false;
 end
 
+if nargin < 5
+    nCasePerBixel = 5000;
+end
+
 %%
-if exist('matRad_ompInterface') ~= 3
+if exist('matRad_ompInterface') ~= 3    
     try
-        eval(['mex -largeArrayDims ' fileparts(mfilename('fullpath')) filesep 'submodules' filesep 'ompMC' filesep 'matRad_ompInterface.c']);
+        myCCompiler = mex.getCompilerConfigurations('C','Selected');
+        
+        %This needs to generalize better
+        if contains(myCCompiler.ShortName,'MSVC')
+            cFlags = '$COMPFLAGS /openmp /O2';
+        else
+            cFlags = '$COMPFLAGS -fopenmp -O2';
+        end
+        
+        eval(['mex -largeArrayDims ' fileparts(mfilename('fullpath')) filesep 'submodules' filesep 'ompMC' filesep 'matRad_ompInterface.c COMPFLAGFS="' cFlags '"']);
     catch
-        error('Could not find/generate mex interface for MC dose calculation');
+        error('Could not find/generate mex interface for MC dose calculation. Please compile it yourself (preferably with OpenMP support)');
     end
 end
 
@@ -98,6 +111,8 @@ dij.bixelNum = NaN*ones(dij.totalNumOfBixels,1);
 dij.rayNum   = NaN*ones(dij.totalNumOfBixels,1);
 dij.beamNum  = NaN*ones(dij.totalNumOfBixels,1);
 
+dij.numHistoriesPerBeamlet = nCasePerBixel;
+
 % take only voxels inside patient
 VctGrid = [cst{:,4}];
 VctGrid = unique(vertcat(VctGrid{:}));
@@ -122,7 +137,7 @@ ompMCgeo.ctRes = [dij.doseGrid.resolution.x dij.doseGrid.resolution.y dij.doseGr
 ompMCoptions.verbose = true;
 
 % start MC control          
-ompMCoptions.nHistories = 5000;
+ompMCoptions.nHistories = nCasePerBixel;
 ompMCoptions.nBatches = 10;
 ompMCoptions.randomSeeds = [97 33];
 
@@ -136,7 +151,7 @@ ompMCoptions.dataFolder = [pwd filesep 'submodules' filesep 'ompMC' filesep 'dat
 ompMCoptions.pegsFile = [pwd filesep 'submodules' filesep 'ompMC' filesep 'pegs4' filesep '700icru.pegs4dat'];
 ompMCoptions.pgs4formFile = [pwd filesep 'submodules' filesep 'ompMC' filesep 'pegs4' filesep 'pgs4form.dat'];
 
-ompMCoptions.global_ecut = 0.700;
+ompMCoptions.global_ecut = 0.7;
 ompMCoptions.global_pcut = 0.010; 
 
 % Relative Threshold for dose
@@ -240,7 +255,7 @@ if visBool
 end
 
 %% Create beamlet source
-numOfBixels = zeros(dij.numOfBeams, 1);
+numOfBixels = [stf(:).numOfRays];
 beamSource = zeros(dij.numOfBeams, 3);
 
 bixelCorner = zeros(dij.totalNumOfBixels,3);
@@ -254,8 +269,6 @@ for i = 1:dij.numOfBeams % loop over all beams
     % define beam source in physical coordinate system in cm
     beamSource(i,:) = (stf(i).sourcePoint + stf(i).isoCenter)/10;
 
-    numOfBixels(i) = stf(i).numOfRays;
-
     for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
         
         counter = counter + 1;
@@ -267,15 +280,15 @@ for i = 1:dij.numOfBeams % loop over all beams
         % get bixel corner and delimiting vectors.
         % a) change coordinate system (Isocenter cs-> physical cs) and units mm -> cm
         currCorner = (stf(i).ray(j).beamletCornersAtIso(1,:) + stf(i).isoCenter) ./ scale;
-        bixelCorner((i-1)*stf(i).numOfRays + j,:) = currCorner;
-        bixelSide1((i-1)*stf(i).numOfRays + j,:) = (stf(i).ray(j).beamletCornersAtIso(2,:) + stf(i).isoCenter) ./ scale - currCorner;
-        bixelSide2((i-1)*stf(i).numOfRays + j,:) = (stf(i).ray(j).beamletCornersAtIso(4,:) + stf(i).isoCenter) ./ scale - currCorner;
+        bixelCorner(counter,:) = currCorner;
+        bixelSide1(counter,:) = (stf(i).ray(j).beamletCornersAtIso(2,:) + stf(i).isoCenter) ./ scale - currCorner;
+        bixelSide2(counter,:) = (stf(i).ray(j).beamletCornersAtIso(4,:) + stf(i).isoCenter) ./ scale - currCorner;
         
         if visBool
             for k = 1:4
                 currCornerVis = (stf(i).ray(j).beamletCornersAtIso(k,:) + stf(i).isoCenter)/10;
                 % rays connecting source and ray corner
-                plot3([beamSource(i,1) currCornerVis(1)],[beamSource(i,2) currCornerVis(2)],[beamSource(i,3) currCornerVis(3)],'y')
+                plot3([beamSource(i,1) currCornerVis(1)],[beamSource(i,2) currCornerVis(2)],[beamSource(i,3) currCornerVis(3)],'b')
                 % connection between corners
                 lRayCorner = (stf(i).ray(j).beamletCornersAtIso(mod(k,4) + 1,:) + stf(i).isoCenter)/10;
                 plot3([lRayCorner(1) currCornerVis(1)],[lRayCorner(2) currCornerVis(2)],[lRayCorner(3) currCornerVis(3)],'r')
@@ -313,16 +326,16 @@ end
 
 %% Call the OmpMC interface
 %initialize waitbar
-figureWait = waitbar(0,'calculate dose influence matrix for photons...');
+%figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 % show busy state
-set(figureWait,'pointer','watch');
+%set(figureWait,'pointer','watch');
 
 fprintf('matRad: OmpMC photon dose calculation... \n');
 
 %run over all scenarios
 for s = 1:dij.numOfScenarios
     ompMCgeo.isoCenter = [stf(:).isoCenter];
-    dij.physicalDose{s} = matRad_ompInterface(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
+    dij.physicalDose{s} = 1e12 * matRad_ompInterface(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
 end
 
 fprintf('matRad: done!\n');
