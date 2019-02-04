@@ -40,8 +40,15 @@ if nargin < 5
 end
 
 %%
-if exist('matRad_ompInterface') ~= 3    
+if exist('matRad_ompInterface','file') ~= 3    
     try
+        disp('Compiled interface not found. Compiling the ompMC interface on the fly!');
+        %Make sure we compile in the right directory
+        cFilePath = which('matRad_ompInterface.c');
+        [ompMCFolder,~,~] = fileparts(cFilePath);
+        
+        currFolder = pwd;
+        
         myCCompiler = mex.getCompilerConfigurations('C','Selected');
         
         %This needs to generalize better
@@ -50,9 +57,16 @@ if exist('matRad_ompInterface') ~= 3
         else
             cFlags = '$COMPFLAGS -fopenmp -O2';
         end
+        cd(ompMCFolder);
         
-        eval(['mex -largeArrayDims ' fileparts(mfilename('fullpath')) filesep 'submodules' filesep 'ompMC' filesep 'matRad_ompInterface.c COMPFLAGFS="' cFlags '"']);
+        mexCall = ['mex -largeArrayDims ' fileparts(mfilename('fullpath')) filesep 'submodules' filesep 'ompMC' filesep 'matRad_ompInterface.c COMPFLAGFS="' cFlags '"'];
+        
+        disp(['Compiler call: ' mexCall]);
+        eval(mexCall);
+        
+        cd(currFolder);
     catch
+        cd(currFolder);
         error('Could not find/generate mex interface for MC dose calculation. Please compile it yourself (preferably with OpenMP support)');
     end
 end
