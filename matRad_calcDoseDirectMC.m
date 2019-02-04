@@ -3,7 +3,7 @@ function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w)
 % calculation algorithms
 % 
 % call
-%   resultGUI = matRad_calcDoseDirecMCt(ct,stf,pln,cst)
+%   resultGUI = matRad_calcDoseDirecMC(ct,stf,pln,cst,w)
 %
 % input
 %   ct:         ct cube
@@ -21,7 +21,7 @@ function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2019 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

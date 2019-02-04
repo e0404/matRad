@@ -1,4 +1,30 @@
 function cube = matRad_readMhd(folder,filename)
+% matRad mhd file reader
+% 
+% call
+%   cube = matRad_readMhd(folder,filename)
+%
+% input
+%   folder:   folder where the *raw and *mhd file are located
+%   filename: filename
+%
+% output
+%   cube:     3D array
+%
+% References
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2019 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 %% read header

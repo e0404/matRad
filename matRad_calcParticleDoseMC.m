@@ -17,12 +17,12 @@ function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,calcDoseDirect)
 %
 % References
 %
-%   https://www.ncbi.nlm.nih.gov/pubmed/2703656
+%   https://aapm.onlinelibrary.wiley.com/doi/abs/10.1118/1.4943377
 %   http://www.openmcsquare.org/
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2018 the matRad development team. 
+% Copyright 2019 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -152,10 +152,14 @@ end
 nbThreads = 4;
 
 % set number of particles simulated per pencil beam
-nCasePerBixel = 100000;
+if calcDoseDirect
+    nCasePerBixel = 1000000;
+else
+    nCasePerBixel = 100000;
+end
 
 % set relative dose cutoff for storage in dose influence matrix
-relDoseCutoff = 10^(-3);
+relDoseCutoff = 10^(-4);
 % set absolute calibration factor
 % convert from eV/g/primary to Gy 1e6 primaries
 absCalibrationFactorMC2 = 1.602176e-19 * 1.0e+9;
@@ -236,7 +240,7 @@ for i = 1:length(stf)
                                         -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
                 if calcDoseDirect
                     stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
-                                         stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k))];
+                                         round(stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k))*MCsquareConfig.Num_Primaries)];
                 else
                     stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
                         MCsquareConfig.Num_Primaries];
@@ -248,8 +252,25 @@ for i = 1:length(stf)
     
 end
 
-% TODO
-MCsquareOrder = 1:dij.totalNumOfBixels;
+% remember order
+counterMCsquare = 0;
+MCsquareOrder = NaN * ones(dij.totalNumOfBixels,1);
+for i = 1:length(stf)
+    for j = 1:numel(stfMCsquare(i).energies)
+        for k = 1:numel(stfMCsquare(i).energyLayer(j).numOfPrimaries)
+            counterMCsquare = counterMCsquare + 1;
+            ix = find(i                                         == dij.beamNum & ...
+                      stfMCsquare(i).energyLayer(j).rayNum(k)   == dij.rayNum & ...
+                      stfMCsquare(i).energyLayer(j).bixelNum(k) == dij.bixelNum);
+        
+            MCsquareOrder(ix) = counterMCsquare;
+        end
+    end
+end
+
+if any(isnan(MCsquareOrder))
+    error('Wrong order')
+end
 
 %% MC computation and dij filling
 matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare);
@@ -290,9 +311,10 @@ catch
 end
 
 %% clear all data
-delete([MCsquareConfig.CT_File(1:end-4) '.mhd'])
-delete([MCsquareConfig.CT_File(1:end-4) '.raw'])
-eval(['rmdir ' MCsquareConfig.Output_Directory ' s'])
+delete([MCsquareConfig.CT_File(1:end-4) '.*']);
+delete('currBixels.txt');
+delete('MCsquareConfig.txt');
+eval(['rmdir ' MCsquareConfig.Output_Directory ' s']);
 
 % cd back
 cd(currFolder);
