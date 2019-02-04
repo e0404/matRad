@@ -30,14 +30,18 @@ function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+tic
+
 % disable visualiazation by default
 if nargin < 6
     visBool = false;
 end
 
 if nargin < 5
-    nCasePerBixel = 5000;
+    nCasePerBixel = 100000;
 end
+
+fileFolder = fileparts(mfilename('fullpath'));
 
 %%
 if exist('matRad_ompInterface','file') ~= 3    
@@ -59,7 +63,7 @@ if exist('matRad_ompInterface','file') ~= 3
         end
         cd(ompMCFolder);
         
-        mexCall = ['mex -largeArrayDims ' fileparts(mfilename('fullpath')) filesep 'submodules' filesep 'ompMC' filesep 'matRad_ompInterface.c COMPFLAGFS="' cFlags '"'];
+        mexCall = ['mex -largeArrayDims ' fileFolder filesep 'submodules' filesep 'ompMC' filesep 'matRad_ompInterface.c COMPFLAGFS="' cFlags '"'];
         
         disp(['Compiler call: ' mexCall]);
         eval(mexCall);
@@ -156,14 +160,14 @@ ompMCoptions.nBatches = 10;
 ompMCoptions.randomSeeds = [97 33];
 
 %start source definition      
-ompMCoptions.spectrumFile = [pwd filesep 'submodules' filesep 'ompMC' filesep 'spectra' filesep 'mohan6.spectrum'];
-ompMCoptions.monoEnergy = 0.1; 
-ompMCoptions.charge = 0;
+ompMCoptions.spectrumFile = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'spectra' filesep 'mohan6.spectrum'];
+ompMCoptions.monoEnergy   = 0.1; 
+ompMCoptions.charge       = 0;
                                                                     
 % start MC transport
-ompMCoptions.dataFolder = [pwd filesep 'submodules' filesep 'ompMC' filesep 'data' filesep];
-ompMCoptions.pegsFile = [pwd filesep 'submodules' filesep 'ompMC' filesep 'pegs4' filesep '700icru.pegs4dat'];
-ompMCoptions.pgs4formFile = [pwd filesep 'submodules' filesep 'ompMC' filesep 'pegs4' filesep 'pgs4form.dat'];
+ompMCoptions.dataFolder   = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'data' filesep];
+ompMCoptions.pegsFile     = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'pegs4' filesep '700icru.pegs4dat'];
+ompMCoptions.pgs4formFile = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'pegs4' filesep 'pgs4form.dat'];
 
 ompMCoptions.global_ecut = 0.7;
 ompMCoptions.global_pcut = 0.010; 
@@ -172,10 +176,10 @@ ompMCoptions.global_pcut = 0.010;
 ompMCoptions.relDoseThreshold = 0.01;
 
 % Output folders
-ompMCoptions.outputFolder = [pwd filesep 'submodules' filesep 'ompMC' filesep 'output' filesep];
+ompMCoptions.outputFolder = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'output' filesep];
 
 % Create Material Density Cube
-materialFile = [pwd filesep 'submodules' filesep 'ompMC' filesep 'data' filesep '700icru.pegs4dat'];
+materialFile = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'data' filesep '700icru.pegs4dat'];
 material = cell(4,5);
 material{1,1} = 'AIR700ICRU';
 material{1,2} = -1024; 
@@ -352,7 +356,8 @@ for s = 1:dij.numOfScenarios
     dij.physicalDose{s} = 1e12 * matRad_ompInterface(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
 end
 
-fprintf('matRad: done!\n');
+fprintf('matRad: MC photon dose calculation done!\n');
+toc
 
 try
     % wait 0.1s for closing all waitbars
