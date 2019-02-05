@@ -57,13 +57,13 @@ if exist('matRad_ompInterface','file') ~= 3
         
         %This needs to generalize better
         if contains(myCCompiler.ShortName,'MSVC')
-            cFlags = '$COMPFLAGS /openmp /O2';
+            flags = 'COMPFLAGS="$COMPFLAGS /openmp" OPTIMFLAGS="$OPTIMFLAGS /O2"';
         else
-            cFlags = '$COMPFLAGS -fopenmp -O2';
+            flags = 'CFLAGS="$CFLAGS -fopenmp -O2" -LDFLAGS="$LDFLAGS -fopenmp"';            
         end
         cd(ompMCFolder);
         
-        mexCall = ['mex -largeArrayDims ' fileFolder filesep 'submodules' filesep 'ompMC' filesep 'matRad_ompInterface.c COMPFLAGFS="' cFlags '"'];
+        mexCall = ['mex -largeArrayDims ' flags ' matRad_ompInterface.c'];
         
         disp(['Compiler call: ' mexCall]);
         eval(mexCall);
