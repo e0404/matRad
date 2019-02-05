@@ -281,7 +281,7 @@ matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare)
 if ispc
     [status,cmdout] = system(['MCSquare_windows.exe ' MCsquareConfigFile],'-echo');
 elseif isunix
-    [status,cmdout] = system(['MCsquare_linux ' MCsquareConfigFile],'-echo');
+    [status,cmdout] = system(['./MCsquare_linux ' MCsquareConfigFile],'-echo');
 elseif ismac
     error('MCsquare binaries not available for mac OS.')
 end
