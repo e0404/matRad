@@ -35,12 +35,12 @@ load('PROSTATE.mat');
 % the most important cornerstones of your treatment plan.
 
 pln.radiationMode           = 'protons';           
-pln.machine                 = 'Generic';
+pln.machine                 = 'generic_MCsquare';
 pln.numOfFractions          = 30;
 pln.propOpt.bioOptimization = 'const_RBExD';     
 pln.propStf.gantryAngles    = [90 270];
 pln.propStf.couchAngles     = [0 0];
-pln.propStf.bixelWidth      = 3;
+pln.propStf.bixelWidth      = 30;
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO          = 0;
@@ -82,9 +82,9 @@ imagesc(resultGUI.RBExDose(:,:,slice)),colorbar, colormap(jet)
 ct_manip         = ct;
 ct_manip.cubeHU{1} = 1.035*ct_manip.cubeHU{1};
 
-%% Recalculate Plan
+%% Recalculate Plan with MC square
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
-resultGUI_noise = matRad_calcDoseDirect(ct_manip,stf,pln,cst,resultGUI.w);
+resultGUI_noise = matRad_calcDoseDirectMC(ct_manip,stf,pln,cst,resultGUI.w);
 
 %%  Visual Comparison of results
 % Let's compare the new recalculation against the optimization result.

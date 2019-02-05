@@ -276,8 +276,14 @@ end
 matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare);
 
 % run MCsquare
-[status,cmdout] = system(['MCSquare_windows.exe ' MCsquareConfigFile],'-echo');
-
+if ispc
+    [status,cmdout] = system(['MCSquare_windows.exe ' MCsquareConfigFile],'-echo');
+elseif isunix
+    [status,cmdout] = system(['MCSquare_linux ' MCsquareConfigFile],'-echo');
+elseif ismac
+    error('MCsquare binaries not available for mac OS.')
+end
+    
 mask = false(dij.doseGrid.numOfVoxels,1);
 mask(VdoseGrid) = true;
 

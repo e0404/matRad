@@ -23,8 +23,8 @@ run with matlab: Beamlets = mexSparseBeamletsReader('Sparse_Dose.bin', [256 256 
 */
 
 #include "mex.h"
-#include "matrix.h"
 
+#include <algorithm>
 #include <fstream>
 #include <numeric>
 #include <array>
