@@ -44,7 +44,9 @@ if ispc
         error('Could not find MCsquare binary.\n');
     end
 elseif isunix
-    error('xxxxxxxxxxxxxx\n');
+    if exist('MCsquare_linux') ~= 2
+        error('Could not find MCsquare binary.\n');
+    end
 elseif ismac
     error('MCsquare binaries not available for mac OS.\n');
 end
@@ -279,7 +281,7 @@ matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare)
 if ispc
     [status,cmdout] = system(['MCSquare_windows.exe ' MCsquareConfigFile],'-echo');
 elseif isunix
-    [status,cmdout] = system(['MCSquare_linux ' MCsquareConfigFile],'-echo');
+    [status,cmdout] = system(['MCsquare_linux ' MCsquareConfigFile],'-echo');
 elseif ismac
     error('MCsquare binaries not available for mac OS.')
 end
