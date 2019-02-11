@@ -373,12 +373,14 @@ end
 % show busy state
 %set(figureWait,'pointer','watch');
 
+absCalibrationFactor = 1e12 / 2.633; %Not fully validated!
+
 fprintf('matRad: OmpMC photon dose calculation... \n');
 
 %run over all scenarios
 for s = 1:dij.numOfScenarios
     ompMCgeo.isoCenter = [stf(:).isoCenter];
-    dij.physicalDose{s} = 1e12 * matRad_ompInterface(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
+    dij.physicalDose{s} = absCalibrationFactor * matRad_ompInterface(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
 end
 
 fprintf('matRad: MC photon dose calculation done!\n');
