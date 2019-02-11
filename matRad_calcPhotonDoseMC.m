@@ -53,13 +53,20 @@ if exist('matRad_ompInterface','file') ~= 3
         
         currFolder = pwd;
         
-        myCCompiler = mex.getCompilerConfigurations('C','Selected');
+        if exist ("OCTAVE_VERSION", "builtin")
+          ccName = eval('mkoctfile -p CC');
+        else
+          myCCompiler = mex.getCompilerConfigurations('C','Selected');
+          ccName = myCCompiler.ShortName;
+        end
+        
+        
         
         %This needs to generalize better
-        if contains(myCCompiler.ShortName,'MSVC')
+        if ismember(ccName,'MSVC')
             flags = 'COMPFLAGS="$COMPFLAGS /openmp" OPTIMFLAGS="$OPTIMFLAGS /O2"';
         else
-            flags = 'CFLAGS="$CFLAGS -fopenmp -O2" -LDFLAGS="$LDFLAGS -fopenmp"';            
+            flags = '-p CFLAGS="$CFLAGS -fopenmp -O2" -p LDFLAGS="$LDFLAGS -fopenmp"';            
         end
         cd(ompMCFolder);
         
