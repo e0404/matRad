@@ -79,8 +79,8 @@ end
 % to guarantee downwards compatibility with data that does not have
 % ct.x/y/z
 if ~any(isfield(ct,{'x','y','z'}))
-    ct.x = ct.resolution.x*[1:ct.cubeDim(1)];
-    ct.y = ct.resolution.y*[1:ct.cubeDim(2)];
+    ct.x = ct.resolution.x*[1:ct.cubeDim(2)];
+    ct.y = ct.resolution.y*[1:ct.cubeDim(1)];
     ct.z = ct.resolution.z*[1:ct.cubeDim(3)];
 end
 
@@ -114,7 +114,7 @@ dij.ctGrid.x = ct.x;
 dij.ctGrid.y = ct.y;
 dij.ctGrid.z = ct.z;
 
-dij.ctGrid.dimensions  = [numel(dij.ctGrid.x) numel(dij.ctGrid.y) numel(dij.ctGrid.z)];
+dij.ctGrid.dimensions  = [numel(dij.ctGrid.y) numel(dij.ctGrid.x) numel(dij.ctGrid.z)];
 dij.ctGrid.numOfVoxels = prod(dij.ctGrid.dimensions);
 
 % adjust isocenter internally for different dose grid
@@ -153,8 +153,8 @@ end
 
 % downsample ct
 for s = 1:dij.numOfScenarios
-    HUcube{s} =  interp3(dij.ctGrid.y,  dij.ctGrid.x',  dij.ctGrid.z,ct.cubeHU{s}, ...
-                         dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'linear');
+    HUcube{s} =  interp3(dij.ctGrid.x,  dij.ctGrid.y'  ,dij.ctGrid.z  ,ct.cubeHU{s}, ...
+                         dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
 end
 
 %% Setup OmpMC options / parameters
@@ -245,8 +245,8 @@ ompMCgeo.materialFile = materialFile;
 
 scale = 10; % to convert to cm
 
-ompMCgeo.xBounds = (dij.doseGrid.resolution.x * (0.5 + [0:dij.doseGrid.dimensions(2)])) ./ scale;
-ompMCgeo.yBounds = (dij.doseGrid.resolution.y * (0.5 + [0:dij.doseGrid.dimensions(1)])) ./ scale;
+ompMCgeo.xBounds = (dij.doseGrid.resolution.y * (0.5 + [0:dij.doseGrid.dimensions(1)])) ./ scale;
+ompMCgeo.yBounds = (dij.doseGrid.resolution.x * (0.5 + [0:dij.doseGrid.dimensions(2)])) ./ scale;
 ompMCgeo.zBounds = (dij.doseGrid.resolution.z * (0.5 + [0:dij.doseGrid.dimensions(3)])) ./ scale;
 
 %% debug visualization
