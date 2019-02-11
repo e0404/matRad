@@ -60,17 +60,35 @@ if exist('matRad_ompInterface','file') ~= 3
           ccName = myCCompiler.ShortName;
         end
         
-        
-        
+               
         %This needs to generalize better
-        if ismember(ccName,'MSVC')
-            flags = 'COMPFLAGS="$COMPFLAGS /openmp" OPTIMFLAGS="$OPTIMFLAGS /O2"';
+        if ~isempty(strfind(ccName,'MSVC')) %Not use contains(...) because of octave
+            flags{1,1} = 'COMPFLAGS';
+            flags{1,2} = '$COMPFLAGS /openmp';
+            flags{2,1} = 'OPTIMFLAGS';
+            flags{2,2} = '$OPTIMFLAGS /O2';
+            %flags = [optPrefix 'COMPFLAGS="$COMPFLAGS /openmp" ' optPrefix 'OPTIMFLAGS="$OPTIMFLAGS /O2"'];
         else
-            flags = '-p CFLAGS="$CFLAGS -fopenmp -O2" -p LDFLAGS="$LDFLAGS -fopenmp"';            
+            flags{1,1} = 'CFLAGS';
+            flags{1,2} = '-fopenmp -O2';
+            flags{2,1} = 'LDFLAGS';
+            flags{2,2} = '$LDFLAGS -fopenmp';
+            %flags = [optPrefix 'CFLAGS="$CFLAGS -fopenmp -O2" ' optPrefix 'LDFLAGS="$LDFLAGS -fopenmp"'];
         end
+        
+        flagstring = '';
+        
+        for flag = 1:size(flags,1)
+            if exist ("OCTAVE_VERSION", "builtin")
+                setenv(flags{flag,1},flags{flag,2});
+            else
+                flagstring = [flagstring flags{flag,1} '="' flags{flag,2} '" '];
+            end
+        end
+        
         cd(ompMCFolder);
         
-        mexCall = ['mex -largeArrayDims ' flags ' matRad_ompInterface.c'];
+        mexCall = ['mex -largeArrayDims ' flagstring ' matRad_ompInterface.c'];
         
         disp(['Compiler call: ' mexCall]);
         eval(mexCall);
