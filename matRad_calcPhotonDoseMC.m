@@ -103,7 +103,7 @@ dij.doseGrid.x = ct.x(1):dij.doseGrid.resolution.x:ct.x(end);
 dij.doseGrid.y = ct.y(1):dij.doseGrid.resolution.y:ct.y(end);
 dij.doseGrid.z = ct.z(1):dij.doseGrid.resolution.z:ct.z(end);
 
-dij.doseGrid.dimensions  = [numel(dij.doseGrid.x) numel(dij.doseGrid.y) numel(dij.doseGrid.z)];
+dij.doseGrid.dimensions  = [numel(dij.doseGrid.y) numel(dij.doseGrid.x) numel(dij.doseGrid.z)];
 dij.doseGrid.numOfVoxels = prod(dij.doseGrid.dimensions);
 
 dij.ctGrid.resolution.x = ct.resolution.x;
@@ -116,6 +116,15 @@ dij.ctGrid.z = ct.z;
 
 dij.ctGrid.dimensions  = [numel(dij.ctGrid.x) numel(dij.ctGrid.y) numel(dij.ctGrid.z)];
 dij.ctGrid.numOfVoxels = prod(dij.ctGrid.dimensions);
+
+% adjust isocenter internally for different dose grid
+offset = [dij.doseGrid.resolution.x - dij.ctGrid.resolution.x ...
+          dij.doseGrid.resolution.y - dij.ctGrid.resolution.y ...
+          dij.doseGrid.resolution.z - dij.ctGrid.resolution.z];
+    
+for i = 1:numel(stf)
+    stf(i).isoCenter = stf(i).isoCenter + offset;
+end
 
 % meta information for dij
 dij.numOfBeams         = pln.propStf.numOfBeams;
@@ -236,8 +245,8 @@ ompMCgeo.materialFile = materialFile;
 
 scale = 10; % to convert to cm
 
-ompMCgeo.xBounds = (dij.doseGrid.resolution.x * (0.5 + [0:dij.doseGrid.dimensions(1)])) ./ scale;
-ompMCgeo.yBounds = (dij.doseGrid.resolution.y * (0.5 + [0:dij.doseGrid.dimensions(2)])) ./ scale;
+ompMCgeo.xBounds = (dij.doseGrid.resolution.x * (0.5 + [0:dij.doseGrid.dimensions(2)])) ./ scale;
+ompMCgeo.yBounds = (dij.doseGrid.resolution.y * (0.5 + [0:dij.doseGrid.dimensions(1)])) ./ scale;
 ompMCgeo.zBounds = (dij.doseGrid.resolution.z * (0.5 + [0:dij.doseGrid.dimensions(3)])) ./ scale;
 
 %% debug visualization
