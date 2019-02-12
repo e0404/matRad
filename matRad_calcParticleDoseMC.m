@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,calcDoseDirect)
+function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad MCsqaure monte carlo photon dose calculation wrapper
 %
@@ -10,6 +10,7 @@ function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,calcDoseDirect)
 %   stf:                        matRad steering information struct
 %   pln:                        matRad plan meta information struct
 %   cst:                        matRad cst struct
+%   nCasePerBixel               number of histories per beamlet
 %   calcDoseDirect:             binary switch to enable forward dose
 %                               calcualtion
 % output
@@ -51,7 +52,13 @@ elseif ismac
     error('MCsquare binaries not available for mac OS.\n');
 end
 
+
 if nargin < 5
+    % set number of particles simulated per pencil beam
+    nCasePerBixel = 100000;
+end
+
+if nargin < 6
     calcDoseDirect = false;
 end
 
@@ -152,13 +159,6 @@ end
 
 % what are you doing here, Lucas?
 nbThreads = 4;
-
-% set number of particles simulated per pencil beam
-if calcDoseDirect
-    nCasePerBixel = 1000000;
-else
-    nCasePerBixel = 100000;
-end
 
 % set relative dose cutoff for storage in dose influence matrix
 relDoseCutoff = 10^(-4);
