@@ -104,8 +104,8 @@ end
 % to guarantee downwards compatibility with data that does not have
 % ct.x/y/z
 if ~any(isfield(ct,{'x','y','z'}))
-    ct.x = ct.resolution.x*[1:ct.cubeDim(1)];
-    ct.y = ct.resolution.y*[1:ct.cubeDim(2)];
+    ct.x = ct.resolution.x*[1:ct.cubeDim(2)];
+    ct.y = ct.resolution.y*[1:ct.cubeDim(1)];
     ct.z = ct.resolution.z*[1:ct.cubeDim(3)];
 end
 
@@ -128,7 +128,7 @@ dij.doseGrid.x = ct.x(1):dij.doseGrid.resolution.x:ct.x(end);
 dij.doseGrid.y = ct.y(1):dij.doseGrid.resolution.y:ct.y(end);
 dij.doseGrid.z = ct.z(1):dij.doseGrid.resolution.z:ct.z(end);
 
-dij.doseGrid.dimensions  = [numel(dij.doseGrid.x) numel(dij.doseGrid.y) numel(dij.doseGrid.z)];
+dij.doseGrid.dimensions  = [numel(dij.doseGrid.y) numel(dij.doseGrid.x) numel(dij.doseGrid.z)];
 dij.doseGrid.numOfVoxels = prod(dij.doseGrid.dimensions);
 
 dij.ctGrid.resolution.x = ct.resolution.x;
@@ -156,6 +156,15 @@ dij.beamNum  = NaN*ones(dij.totalNumOfBixels,1);
 
 dij.numHistoriesPerBeamlet = nCasePerBixel;
 
+% adjust isocenter internally for different dose grid
+offset = [dij.doseGrid.resolution.x - dij.ctGrid.resolution.x ...
+          dij.doseGrid.resolution.y - dij.ctGrid.resolution.y ...
+          dij.doseGrid.resolution.z - dij.ctGrid.resolution.z];
+    
+for i = 1:numel(stf)
+    stf(i).isoCenter = stf(i).isoCenter + offset;
+end
+
 % take only voxels inside patient
 VctGrid = [cst{:,4}];
 VctGrid = unique(vertcat(VctGrid{:}));
@@ -169,12 +178,11 @@ end
 
 % downsample ct
 for s = 1:dij.numOfScenarios
-    HUcube{s} =  interp3(dij.ctGrid.y,  dij.ctGrid.x',  dij.ctGrid.z,ct.cubeHU{s}, ...
-                         dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z,'linear');
+    HUcube{s} =  interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,  ct.cubeHU{s}, ...
+                         dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
 end
 
 %% Setup OmpMC options / parameters
-ompMCgeo.ctRes = [dij.doseGrid.resolution.x dij.doseGrid.resolution.y dij.doseGrid.resolution.z];
 
 %display options
 ompMCoptions.verbose = true;
@@ -261,8 +269,8 @@ ompMCgeo.materialFile = materialFile;
 
 scale = 10; % to convert to cm
 
-ompMCgeo.xBounds = (dij.doseGrid.resolution.x * (0.5 + [0:dij.doseGrid.dimensions(1)])) ./ scale;
-ompMCgeo.yBounds = (dij.doseGrid.resolution.y * (0.5 + [0:dij.doseGrid.dimensions(2)])) ./ scale;
+ompMCgeo.xBounds = (dij.doseGrid.resolution.y * (0.5 + [0:dij.doseGrid.dimensions(1)])) ./ scale;
+ompMCgeo.yBounds = (dij.doseGrid.resolution.x * (0.5 + [0:dij.doseGrid.dimensions(2)])) ./ scale;
 ompMCgeo.zBounds = (dij.doseGrid.resolution.z * (0.5 + [0:dij.doseGrid.dimensions(3)])) ./ scale;
 
 %% debug visualization
@@ -373,12 +381,14 @@ end
 % show busy state
 %set(figureWait,'pointer','watch');
 
+absCalibrationFactor = 1e12 / 2.633; %Not fully validated!
+
 fprintf('matRad: OmpMC photon dose calculation... \n');
 
 %run over all scenarios
 for s = 1:dij.numOfScenarios
     ompMCgeo.isoCenter = [stf(:).isoCenter];
-    dij.physicalDose{s} = 1e12 * matRad_ompInterface(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
+    dij.physicalDose{s} = absCalibrationFactor * matRad_ompInterface(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
 end
 
 fprintf('matRad: MC photon dose calculation done!\n');
