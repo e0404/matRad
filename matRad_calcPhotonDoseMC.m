@@ -76,8 +76,12 @@ if exist('matRad_ompInterface','file') ~= 3
             %flags = [optPrefix 'CFLAGS="$CFLAGS -fopenmp -O2" ' optPrefix 'LDFLAGS="$LDFLAGS -fopenmp"'];
         end
         
+        %flags = {};
+        %flagstring = '-g ';
         flagstring = '';
         
+        %For Octave, the flags will be set in the environment, while they
+        %will be parsed as string arguments in MATLAB
         for flag = 1:size(flags,1)
             if exist ("OCTAVE_VERSION", "builtin")
                 setenv(flags{flag,1},flags{flag,2});
@@ -372,7 +376,7 @@ ompMCsource.ySide2 = bixelSide2(:,1);
 ompMCsource.zSide2 = bixelSide2(:,3);
 
 if visBool
-    plot3(ompMCsource.xSource,ompMCsource.zSource,ompMCsource.ySource,'rx')
+    plot3(ompMCsource.ySource,ompMCsource.xSource,ompMCsource.zSource,'rx')
 end
 
 %% Call the OmpMC interface
