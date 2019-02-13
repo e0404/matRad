@@ -40,18 +40,58 @@ if ~strcmp(pln.radiationMode,'protons') || ~strcmp(pln.machine,'generic_MCsquare
 end
 
 %% check if binaries are available
+%Executables for simulation
 if ispc
-    if exist('MCSquare_windows.exe') ~= 2
+    if exist('MCSquare_windows.exe','file') ~= 2
         error('Could not find MCsquare binary.\n');
+    else
+        mcSquareBinary = 'MCSquare_windows.exe';
     end
 elseif isunix
-    if exist('MCsquare_linux') ~= 2
+    if exist('MCsquare_linux','file') ~= 2
         error('Could not find MCsquare binary.\n');
+    else
+        mcSquareBinary = './MCSquare_linux';
     end
 elseif ismac
     error('MCsquare binaries not available for mac OS.\n');
 end
 
+%Mex interface for import of sparse matrix
+if exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3    
+    try
+        disp('Compiled sparse reader interface not found. Compiling it on the fly!');
+        %Make sure we compile in the right directory
+        cFilePath = which('matRad_sparseBeamletsReaderMCsquare.cpp');
+        [mcSquareFolder,~,~] = fileparts(cFilePath);
+        
+        currFolder = pwd;
+        
+        if exist ("OCTAVE_VERSION", "builtin")
+          ccName = eval('mkoctfile -p CXX');
+        else
+          myCCompiler = mex.getCompilerConfigurations('C','Selected');
+          ccName = myCCompiler.ShortName;
+        end
+        
+        %flags = {};
+        flagstring = '';
+        
+        cd(mcSquareFolder);
+        
+        mexCall = ['mex -largeArrayDims ' flagstring ' matRad_sparseBeamletsReaderMCsquare.cpp'];
+        
+        disp(['Compiler call: ' mexCall]);
+        eval(mexCall);
+        
+        cd(currFolder);
+    catch
+        cd(currFolder);
+        error('Could not find/generate mex interface for reading the sparse matrix. Please compile it yourself.');
+    end
+end
+
+%% Setup
 
 if nargin < 5
     % set number of particles simulated per pencil beam
@@ -278,13 +318,7 @@ end
 matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare);
 
 % run MCsquare
-if ispc
-    [status,cmdout] = system(['MCSquare_windows.exe ' MCsquareConfigFile],'-echo');
-elseif isunix
-    [status,cmdout] = system(['./MCsquare_linux ' MCsquareConfigFile],'-echo');
-elseif ismac
-    error('MCsquare binaries not available for mac OS.')
-end
+[status,cmdout] = system([mcSquareBinary ' ' MCsquareConfigFile],'-echo');
     
 mask = false(dij.doseGrid.numOfVoxels,1);
 mask(VdoseGrid) = true;
