@@ -182,8 +182,10 @@ end
 
 % downsample ct
 for s = 1:dij.numOfScenarios
-    HUcube{s} =  interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,  ct.cubeHU{s}, ...
-                         dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
+    [xct,yct,zct] = meshgrid(dij.ctGrid.x,  dij.ctGrid.y,  dij.ctGrid.z);
+    [xd,yd,zd] = meshgrid(dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
+    HUcube{s} =  interp3(xct,yct,zct,  ct.cubeHU{s}, ...
+                         xd,yd,zd,'nearest');
 end
 
 %% Setup OmpMC options / parameters
