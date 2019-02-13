@@ -29,6 +29,7 @@ run with matlab: Beamlets = mexSparseBeamletsReader('Sparse_Dose.bin', [256 256 
 #include <numeric>
 #include <array>
 #include <vector>
+#include <cmath>
 
 //typedef std::vector<size_t> ixVec_t;
 
@@ -161,7 +162,7 @@ void mexFunction(   int nlhs,   mxArray *plhs[],    int nrhs,   const mxArray *p
                 if(currentNnz >= nnzMaxEstimate){
                     oldNnzMaxEstimate = nnzMaxEstimate;
                     percent_sparse += 0.001;
-                    nnzMaxEstimate = (mwSize) ceil((double)numVoxels * (double)numSpots * percent_sparse);
+                    nnzMaxEstimate = (mwSize) std::ceil((double)numVoxels * (double)numSpots * percent_sparse);
                     
                     if (nnzMaxEstimate <= oldNnzMaxEstimate) nnzMaxEstimate = oldNnzMaxEstimate + 1;
                     
