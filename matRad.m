@@ -13,9 +13,7 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clear
-close all
-clc
+matRad_rc
 
 % load patient data, i.e. ct, voi, cst
 

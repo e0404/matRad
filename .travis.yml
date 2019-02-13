@@ -1,6 +1,7 @@
 language: c++
 before_install:
   - sudo chmod +x runtests.sh
+  - sudo chmod +x submodules/MCsquare/MCsquare_linux
   - sudo apt-get update -qq
   - sudo apt-get install gdb # to capture backtrace of eventual failures
   # - sudo apt-get purge libopenblas-base # fixes PPA Octave 4.0 crash on Travis

@@ -39,7 +39,7 @@ matRad_calcDoseInit;
 
 switch env
      case 'MATLAB'
-          rng(0);
+          rng('default');
      case 'OCTAVE'
           rand('seed',0)
 end
@@ -226,7 +226,9 @@ for i = 1:dij.numOfBeams % loop over all beams
         if ~calcDoseDirect
            dij.beamNum(counter)  = i;
            dij.rayNum(counter)   = j;
-           dij.bixelNum(counter) = j;
+           dij.bixelNum(counter) = 1;
+        else
+            k = 1;
         end
         
         % Ray tracing for beam i and bixel j

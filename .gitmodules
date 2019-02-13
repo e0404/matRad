@@ -1,0 +1,7 @@
+[submodule "submodules/MCsquare"]
+	path = submodules/MCsquare
+	url = https://github.com/e0404/MCsquare.git
+[submodule "submodules/ompMC"]
+	path = submodules/ompMC
+	url = https://github.com/e0404/ompMC
+	branch = dev_parallel

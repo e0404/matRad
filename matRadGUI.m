@@ -295,19 +295,19 @@ handles.selectedBeam = 1;
 handles.plane = get(handles.popupPlane,'Value');
 handles.DijCalcWarning = false;
 
+planePermute = [2 1 3];
+
 % set slice slider
 if handles.State > 0
     if evalin('base','exist(''pln'',''var'')')
         currPln = evalin('base','pln');
-        if handles.plane == 1
-            currSlice = ceil(currPln.propStf.isoCenter(1,2)/ct.resolution.x);
-        elseif handles.plane == 2
-            currSlice = ceil(currPln.propStf.isoCenter(1,1)/ct.resolution.y);
-        elseif handles.plane == 3
-            currSlice = ceil(currPln.propStf.isoCenter(1,3)/ct.resolution.z);
-        end 
+        if sum(currPln.propStf.isoCenter(:)) ~= 0
+            currSlice = ceil(currPln.propStf.isoCenter(1,planePermute(handles.plane))/ct.resolution.x);
+        else 
+            currSlice = ceil(ct.cubeDim(planePermute(handles.plane))/2);
+        end
     else % no pln -> no isocenter -> use middle
-        currSlice = ceil(ct.cubeDim(handles.plane)/2);
+        currSlice = ceil(ct.cubeDim(planePermute(handles.plane))/2);
     end
     set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
             'Value',currSlice,...
@@ -627,8 +627,8 @@ RadIdentifier = contents{get(hObject,'Value')};
 contentPopUp  = get(handles.popMenuBioOpt,'String');
 switch RadIdentifier
     case 'photons'
-        set(handles.vmcFlag,'Value',0);
-        set(handles.vmcFlag,'Enable','on')
+        set(handles.mcFlag,'Value',0);
+        set(handles.mcFlag,'Enable','on')
 
         set(handles.popMenuBioOpt,'Enable','off');
         ix = find(strcmp(contentPopUp,'none'));
@@ -642,8 +642,8 @@ switch RadIdentifier
         set(handles.editSequencingLevel,'Enable','on');
         
     case 'protons'
-        set(handles.vmcFlag,'Value',0);
-        set(handles.vmcFlag,'Enable','off')
+        set(handles.mcFlag,'Value',0);
+        set(handles.mcFlag,'Enable','off')
         
         set(handles.popMenuBioOpt,'Enable','on');
         ix = find(strcmp(contentPopUp,'const_RBExD'));
@@ -658,8 +658,8 @@ switch RadIdentifier
         set(handles.editSequencingLevel,'Enable','off');
         
     case 'carbon'
-        set(handles.vmcFlag,'Value',0);
-        set(handles.vmcFlag,'Enable','off')        
+        set(handles.mcFlag,'Value',0);
+        set(handles.mcFlag,'Enable','off')        
         set(handles.popMenuBioOpt,'Enable','on');
         ix = find(strcmp(contentPopUp,'LEMIV_RBExD'));
         set(handles.popMenuBioOpt,'Value',ix);
@@ -811,14 +811,10 @@ end
 % carry out dose calculation
 try
     if strcmp(pln.radiationMode,'photons')
-        if get(handles.vmcFlag,'Value') == 0
+        if ~isfield(handles,'mcFlag') || get(handles.mcFlag,'Value') == 0
             dij = matRad_calcPhotonDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
-        elseif get(handles.vmcFlag,'Value') == 1
-            if ~isdeployed
-                dij = matRad_calcPhotonDoseVmc(evalin('base','ct'),stf,pln,evalin('base','cst'));
-            else
-                error('VMC++ not available in matRad standalone application');
-            end
+        elseif get(handles.mcFlag,'Value') == 1
+            dij = matRad_calcPhotonDoseMC(evalin('base','ct'),stf,pln,evalin('base','cst'));
         end
     elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
         dij = matRad_calcParticleDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
@@ -2942,10 +2938,10 @@ try
 
     % recalculate influence matrix
     if strcmp(pln.radiationMode,'photons')
-        if get(handles.vmcFlag,'Value') == 0
+        if get(handles.mcFlag,'Value') == 0
             dij = matRad_calcPhotonDose(ct,stf,pln,cst);
-        elseif get(handles.vmcFlag,'Value') == 1
-            dij = matRad_calcPhotonDoseVmc(evalin('base','ct'),stf,pln,evalin('base','cst'));
+        elseif get(handles.mcFlag,'Value') == 1
+            dij = matRad_calcPhotonDoseOmpMC(evalin('base','ct'),stf,pln,evalin('base','cst'));
         end
     elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
         dij = matRad_calcParticleDose(ct,stf,pln,cst);
