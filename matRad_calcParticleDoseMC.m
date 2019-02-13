@@ -51,7 +51,7 @@ elseif isunix
     if exist('MCsquare_linux','file') ~= 2
         error('Could not find MCsquare binary.\n');
     else
-        mcSquareBinary = './MCSquare_linux';
+        mcSquareBinary = './MCsquare_linux';
     end
 elseif ismac
     error('MCsquare binaries not available for mac OS.\n');
