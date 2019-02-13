@@ -77,11 +77,10 @@ if exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3
         %This needs to generalize better
         if ~isempty(strfind(ccName,'MSVC')) %Not use contains(...) because of octave
             flags{1,1} = 'COMPFLAGS';
-            flags{1,2} = '$COMPFLAGS /std=c++11';
+            flags{1,2} = '/O2';
         else
             flags{1,1} = 'CXXFLAGS';
-            flags{1,2} = '$CXXFLAGS -std=c++11';
-            %flags = [optPrefix 'CFLAGS="$CFLAGS -fopenmp -O2" ' optPrefix 'LDFLAGS="$LDFLAGS -fopenmp"'];
+            flags{1,2} = '-std=c++11 -O2';
         end
         
         %flags = {};
