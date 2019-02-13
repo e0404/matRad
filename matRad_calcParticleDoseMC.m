@@ -74,8 +74,29 @@ if exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3
           ccName = myCCompiler.ShortName;
         end
         
+        %This needs to generalize better
+        if ~isempty(strfind(ccName,'MSVC')) %Not use contains(...) because of octave
+            flags{1,1} = 'COMPFLAGS';
+            flags{1,2} = '$COMPFLAGS /std=c++11';
+        else
+            flags{1,1} = 'CXXFLAGS';
+            flags{1,2} = '$CXXFLAGS -std=c++11';
+            %flags = [optPrefix 'CFLAGS="$CFLAGS -fopenmp -O2" ' optPrefix 'LDFLAGS="$LDFLAGS -fopenmp"'];
+        end
+        
         %flags = {};
+        %flagstring = '-g ';
         flagstring = '';
+        
+        %For Octave, the flags will be set in the environment, while they
+        %will be parsed as string arguments in MATLAB
+        for flag = 1:size(flags,1)
+            if exist ("OCTAVE_VERSION", "builtin")
+                setenv(flags{flag,1},flags{flag,2});
+            else
+                flagstring = [flagstring flags{flag,1} '="' flags{flag,2} '" '];
+            end
+        end
         
         cd(mcSquareFolder);
         
