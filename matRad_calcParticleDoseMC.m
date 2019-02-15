@@ -39,6 +39,16 @@ if ~strcmp(pln.radiationMode,'protons') || ~strcmp(pln.machine,'generic_MCsquare
     error('wrong radiation modality and/or machine.');    
 end
 
+
+if nargin < 5
+    % set number of particles simulated per pencil beam
+    nCasePerBixel = 100000;
+end
+
+if nargin < 6
+    calcDoseDirect = false;
+end
+
 %% check if binaries are available
 %Executables for simulation
 if ispc
@@ -51,14 +61,14 @@ elseif isunix
     if exist('MCsquare_linux','file') ~= 2
         error('Could not find MCsquare binary.\n');
     else
-        mcSquareBinary = './MCSquare_linux';
+        mcSquareBinary = './MCsquare_linux';
     end
 elseif ismac
     error('MCsquare binaries not available for mac OS.\n');
 end
 
 %Mex interface for import of sparse matrix
-if exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3    
+if ~calcDoseDirect && exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3   
     try
         disp('Compiled sparse reader interface not found. Compiling it on the fly!');
         %Make sure we compile in the right directory
@@ -74,8 +84,28 @@ if exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3
           ccName = myCCompiler.ShortName;
         end
         
+        %This needs to generalize better
+        if ~isempty(strfind(ccName,'MSVC')) %Not use contains(...) because of octave
+            flags{1,1} = 'COMPFLAGS';
+            flags{1,2} = '/O2';
+        else
+            flags{1,1} = 'CXXFLAGS';
+            flags{1,2} = '-std=c++11 -O2';
+        end
+        
         %flags = {};
+        %flagstring = '-g ';
         flagstring = '';
+        
+        %For Octave, the flags will be set in the environment, while they
+        %will be parsed as string arguments in MATLAB
+        for flag = 1:size(flags,1)
+            if exist ("OCTAVE_VERSION", "builtin")
+                setenv(flags{flag,1},flags{flag,2});
+            else
+                flagstring = [flagstring flags{flag,1} '="' flags{flag,2} '" '];
+            end
+        end
         
         cd(mcSquareFolder);
         
@@ -91,16 +121,6 @@ if exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3
     end
 end
 
-%% Setup
-
-if nargin < 5
-    % set number of particles simulated per pencil beam
-    nCasePerBixel = 100000;
-end
-
-if nargin < 6
-    calcDoseDirect = false;
-end
 
 % set and change to MCsquare binary folder
 currFolder = pwd;
