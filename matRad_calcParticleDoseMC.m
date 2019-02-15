@@ -39,6 +39,16 @@ if ~strcmp(pln.radiationMode,'protons') || ~strcmp(pln.machine,'generic_MCsquare
     error('wrong radiation modality and/or machine.');    
 end
 
+
+if nargin < 5
+    % set number of particles simulated per pencil beam
+    nCasePerBixel = 100000;
+end
+
+if nargin < 6
+    calcDoseDirect = false;
+end
+
 %% check if binaries are available
 %Executables for simulation
 if ispc
@@ -58,7 +68,7 @@ elseif ismac
 end
 
 %Mex interface for import of sparse matrix
-if exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3    
+if ~calcDoseDirect && exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3   
     try
         disp('Compiled sparse reader interface not found. Compiling it on the fly!');
         %Make sure we compile in the right directory
@@ -111,16 +121,6 @@ if exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3
     end
 end
 
-%% Setup
-
-if nargin < 5
-    % set number of particles simulated per pencil beam
-    nCasePerBixel = 100000;
-end
-
-if nargin < 6
-    calcDoseDirect = false;
-end
 
 % set and change to MCsquare binary folder
 currFolder = pwd;

@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w)
+function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
 % matRad dose calculation wrapper bypassing dij calculation for MC dose
 % calculation algorithms
 % 
@@ -12,6 +12,7 @@ function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w)
 %   cst:        matRad cst struct
 %   w:          optional (if no weights available in stf): bixel weight
 %               vector
+%   nHistories: number of histories
 %
 % output
 %   resultGUI:  matRad result struct
@@ -33,6 +34,10 @@ function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 calcDoseDirect = true;
+
+if nargin < 6 || ~exist('nHistories')
+  nHistories = 2e4;
+end
 
 % check if weight vector is available, either in function call or in stf - otherwise dose calculation not possible
 if ~exist('w','var') && ~isfield([stf.ray],'weight')
@@ -68,7 +73,7 @@ end
 
 % dose calculation
 if strcmp(pln.radiationMode,'protons')
-  dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,calcDoseDirect);
+  dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nHistories,calcDoseDirect);
 else
     error('Forward MC only implemented for protons.');
 end
