@@ -21,7 +21,8 @@ run(['..' filesep 'matRad_rc'])
 % limiting the cutoffLevel and lateralCutoff for faster computation
 matRad_unitTestTextManipulation('matRad_calcPhotonDose.m', 'lateralCutoff = 50', 'lateralCutoff = 20;')
 matRad_unitTestTextManipulation('matRad_calcParticleDose.m', 'cutOffLevel          = 0.99', '       cutOffLevel          = 0.8;')
-matRad_unitTestTextManipulation('matRad_calcParticleDoseMC.m', '    nCasePerBixel = 1000000;', '    nCasePerBixel = 10000;')
+matRad_unitTestTextManipulation('matRad_calcParticleDoseMC.m', '    nCasePerBixel = 1000000;', '    nCasePerBixel = 100;')
+matRad_unitTestTextManipulation('matRad_calcDoseDirectMC.m', '  nHistories = 2e4;', '  nHistories = 100;')
 matRad_unitTestTextManipulation('matRad_ipoptOptions.m', 'options.ipopt.max_iter', 'options.ipopt.max_iter = 10;', '../optimization/')
 
 exampleScripts = {'matRad_example1_phantom.m',...
