@@ -83,6 +83,10 @@ if ~exist('boolPlotLegend','var') || isempty(boolPlotLegend)
    boolPlotLegend = false;
 end
 
+if ~exist('cst','var') || isempty(cst)
+   cst = [];
+end
+
 set(axesHandle,'YDir','Reverse');
 % plot ct slice
 hCt = matRad_plotCtSlice(axesHandle,ct.cubeHU,cubeIdx,plane,slice); 
@@ -100,7 +104,8 @@ else
 end
 
 %plot VOI contours
-hContour = matRad_plotVoiContourSlice(axesHandle,cst,ct.cubeHU,cubeIdx,voiSelection,plane,slice,contourColorMap,varargin{:});
+if  ~isempty(cst)
+    hContour = matRad_plotVoiContourSlice(axesHandle,cst,ct.cubeHU,cubeIdx,voiSelection,plane,slice,contourColorMap,varargin{:});
 
 if boolPlotLegend
    visibleOnSlice = (~cellfun(@isempty,hContour));
@@ -114,16 +119,22 @@ if boolPlotLegend
    set(hLegend,'Box','Off');
    set(hLegend,'TextColor',[1 1 1]);
    set(hLegend,'FontSize',12);
+
+end
+else
+    hContour = [];
 end
 
 axis(axesHandle,'tight');
 set(axesHandle,'xtick',[],'ytick',[]);
-colormap(doseColorMap);
+colormap(axesHandle,doseColorMap);
 
 matRad_plotAxisLabels(axesHandle,ct,plane,slice,[])
 
 % set axis ratio
+
 ratios = [1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
+   
 set(axesHandle,'DataAspectRatioMode','manual');
 if plane == 1 
       res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);  
