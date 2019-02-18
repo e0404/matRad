@@ -31,7 +31,7 @@ function matRad_unitTestTextManipulation(filename, string1, string2, path)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin < 4
-    path = '../';
+    path = ['..' filesep];
 end
 
 if ~iscell(filename)
