@@ -83,7 +83,7 @@ if ~isfield(pln,'propDoseCalc') || ...
    dij.doseGrid.resolution.y = 2.5; % [mm]
    dij.doseGrid.resolution.z = 3;   % [mm]
 else
-   % take values from pln strcut
+   % take values from pln struct
    dij.doseGrid.resolution.x = pln.propDoseCalc.doseGrid.resolution.x;
    dij.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.y;
    dij.doseGrid.resolution.z = pln.propDoseCalc.doseGrid.resolution.z;
@@ -161,7 +161,7 @@ for i = 1:ct.numOfCtScen
    ct.cube{i}(eraseCtDensMask == 1) = 0;
 end
 
-% ser overlap prioriites
+% set overlap priorities
 cst = matRad_setOverlapPriorities(cst);
 
 % resizing cst to dose cube resolution

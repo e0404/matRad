@@ -160,4 +160,7 @@ if param.logLevel == 1
     figure,
     matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);title('absolute difference')
 end
+%%
+% Plot both doses with absolute difference and gamma analysis
+[gammaCube,gammaPassRate,hfigure]=matRad_compareDose(resultGUI_effect.RBExD, resultGUI.RBExD, ct, cst);
 
