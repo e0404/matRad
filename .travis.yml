@@ -56,5 +56,5 @@ script:
   # Windows script
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then travis_wait 45 runtests.bat octave-cli ; fi
 
-#notifications:
-#    slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ
+notifications:
+    slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ
