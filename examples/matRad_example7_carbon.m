@@ -162,5 +162,6 @@ if param.logLevel == 1
 end
 %%
 % Plot both doses with absolute difference and gamma analysis
-[gammaCube,gammaPassRate,hfigure]=matRad_compareDose(resultGUI_effect.RBExD, resultGUI.RBExD, ct, cst,[0 1 0]);
+[gammaCube,gammaPassRate,hfigure]=matRad_compareDose(resultGUI_effect.RBExD, resultGUI.RBExD, ct, cst,[1 1 1],'on');
+
 
