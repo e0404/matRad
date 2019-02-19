@@ -34,6 +34,11 @@ function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDi
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% add path to MCsquare
+addpath([fileparts(mfilename('fullpath')) filesep 'submodules' filesep 'MCsquare']);
+% add path to MCsquare interface
+addpath([fileparts(mfilename('fullpath')) filesep 'MCsquare']);
+
 % check if valid machine
 if ~strcmp(pln.radiationMode,'protons') || ~strcmp(pln.machine,'generic_MCsquare')
     error('wrong radiation modality and/or machine.');    
