@@ -25,12 +25,19 @@
 % (vi) how to recalculated the dose considering the previously optimized pencil beam intensities
 % (vii) how to compare the two results
 
+
+
 %% Patient Data Import
 % Let's begin with a clear Matlab environment and import the liver
 % patient into your workspace.
 clc,clear,close all;
 load('LIVER.mat');
 
+%%
+% Determine where your m-file's folder is.
+folder = fileparts(which(mfilename)); 
+% Add that folder plus all subfolders to the path.
+addpath(genpath(folder));
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
 % structure requires input from the treatment planner and defines the most
@@ -132,14 +139,22 @@ resultGUI_tissue = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
 plane = 3;
 doseWindow = [0 max([resultGUI_effect.RBExDose(:); resultGUI_tissue.RBExDose(:)])];
 
-figure,title('original plan')
+figure,
 matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_effect.RBExDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
-figure,title('manipulated plan')
+title('original plan')
+figure,
 matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_tissue.RBExDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
-
+title('manipulated plan')
 %% 
 % At this point we would like to see the absolute difference of the original optimization and the 
 % recalculation. 
 absDiffCube = resultGUI_effect.RBExDose-resultGUI_tissue.RBExDose;
-figure,title('absolute difference')
+figure,
 matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
+title('absolute difference')
+%%
+% Plot both doses with absolute difference and gamma analysis
+[gammaCube,gammaPassRate,hfigure]=matRad_compareDose(resultGUI_effect.RBExDose, resultGUI.RBExDose, ct, cst,[1 1 1],'on');
+
+
+
