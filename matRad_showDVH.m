@@ -31,7 +31,7 @@ function matRad_showDVH(dvh,cst,pln,lineStyleIndicator)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
+
 if ~exist('lineStyleIndicator','var') || isempty(lineStyleIndicator)
     lineStyleIndicator = 1;
 end

@@ -25,19 +25,12 @@
 % (vi) how to recalculated the dose considering the previously optimized pencil beam intensities
 % (vii) how to compare the two results
 
-
-
 %% Patient Data Import
 % Let's begin with a clear Matlab environment and import the liver
 % patient into your workspace.
 clc,clear,close all;
 load('LIVER.mat');
 
-%%
-% Determine where your m-file's folder is.
-folder = fileparts(which(mfilename)); 
-% Add that folder plus all subfolders to the path.
-addpath(genpath(folder));
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
 % structure requires input from the treatment planner and defines the most

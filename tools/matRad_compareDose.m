@@ -93,16 +93,18 @@ if (~exist('enable','var') || isempty(enable)) || strcmp(enable,'all')
     enable = [1 1 1];
 end
 if enable(1)==0
-    gammaCube=[];
-    gammaPassRate=[];
+    gammaCube = [];
+    gammaPassRate = [];
 end
-%% Load colormap for difference
+% Load colormap for difference
 load('diffCMap.mat');
 
 %% Calculate iso-center slices and resolution
 if isempty(cst)
-    s=size(cube1);
-    isoCenter = [s(1)/2 s(2)/2 s(3)/2];
+    [~,s(1)] = max(sum(sum(cube1,1),3));
+    [~,s(2)] = max(sum(sum(cube1,2),3));
+    [~,s(3)] = max(sum(sum(cube1,1),2));
+    isoCenter = [ct.resolution.y*s(1) ct.resolution.x*s(2) ct.resolution.z*s(3)];
 else
     isoCenter = matRad_getIsoCenter(cst,ct,0);
 end
@@ -113,8 +115,10 @@ slicename = {round(isoCenter(2)./resolution(2)),round(isoCenter(1)./resolution(1
 doseWindow = [0 max([cube1(:); cube2(:)])];
 planename = {'coronal','sagittal','axial'};
 
-%% Get the gamma cube
-if enable(1)==1
+%% Colorwash images
+if enable(1) == 1
+    
+    % Get the gamma cube
     disp('Calculating gamma index cube...');
     if exist('criteria','var')
         relDoseThreshold = criteria(1); % in [%]
@@ -127,13 +131,13 @@ if enable(1)==1
     [gammaCube,gammaPassRate] = matRad_gammaIndex(cube1,cube2,resolution,criteria,[],n,localglobal,cst);
     
     
-    %%% Calculate absolute difference cube and dose windows for plots
+    % Calculate absolute difference cube and dose windows for plots
     differenceCube  = cube1-cube2;
     doseDiffWindow  = [-max(differenceCube(:)) max(differenceCube(:))];
     doseGammaWindow = [0 max(gammaCube(:))];
     
     
-    %% Plot everything
+    % Plot everything
     % Plot dose slices
     if contours == false
         cstHandle = [];
@@ -141,7 +145,7 @@ if enable(1)==1
         cstHandle = cst;
     end
     
-    for plane=1:3
+    for plane = 1:3
         disp(['Plotting ',planename{plane},' plane...']);
         
         % Initialize Figure
@@ -189,8 +193,7 @@ if enable(1)==1
         
         set(hfig.(planename{plane}).('fig'),'name',figtitle);
         
-        %% Adjusting axes
-        
+        % Adjusting axes
         matRad_plotAxisLabels(hfig.(planename{plane}).('cube1').Axes,ct,plane,slicename{plane},[],100);
         set(get(hfig.(planename{plane}).('cube1').Axes, 'title'), 'string', 'Dose 1');
         matRad_plotAxisLabels(hfig.(planename{plane}).('cube2').Axes,ct,plane,slicename{plane},[],100);
@@ -202,11 +205,11 @@ if enable(1)==1
         
     end
 end
-%% Plot profiles through isoCenter
 
-if enable(2)==1
+%% Plot profiles through isoCenter
+if enable(2) == 1
     disp('Plotting profiles...');
-    fontsize=12;
+    fontsize = 12;
     profilex{1} = cube1(:,slicename{2},slicename{3});
     profiley{1} = permute(cube1(slicename{1},slicename{2},:),[3 2 1]);
     profilez{1} = permute(cube1(slicename{1},:,slicename{3}),[2 3 1]);
@@ -215,49 +218,45 @@ if enable(2)==1
     profiley{2} = permute(cube2(slicename{1},slicename{2},:),[3 2 1]);
     profilez{2} = permute(cube2(slicename{1},:,slicename{3}),[2 3 1]);
     
-    cubes={'cube1','cube2','Dose 1','Dose 2'};
-    %%
     if exist('pln','var') && ~isempty(pln)
         if strcmp(pln.bioParam.model,'none')
-            l='Dose [Gy]';
+            yLabelString = 'Dose [Gy]';
         else
-            l='RBE x Dose [Gy(RBE)]';
+            yLabelString = 'RBE x Dose [Gy(RBE)]';
         end
     else
-        l='Dose [Gy]';
+        yLabelString = 'Dose [Gy]';
     end
-    
-    %%
     
     hfig.profiles.fig = figure('Renderer', 'painters', 'Position', [10 50 800 800]);
     set(gcf,'Color',[1 1 1]);
     
     hfig.profiles.x = subplot(2,2,1);
-    plot(profilex{1})
+    plot(profilex{1},'r')
     hold on
-    plot(profilex{2})
+    plot(profilex{2},'r--')
     xlabel('X [mm]','FontSize',fontsize)
-    ylabel(l,'FontSize',fontsize);
+    ylabel(yLabelString,'FontSize',fontsize);
     title('x-Profiles');
     legend({'Dose 1','Dose 2'},'Location','southeast')
     legend boxoff
     
     hfig.profiles.y = subplot(2,2,2);
-    plot(profiley{1})
+    plot(profiley{1},'r')
     hold on
-    plot(profiley{2})
+    plot(profiley{2},'r--')
     xlabel('Y [mm]','FontSize',fontsize)
-    ylabel(l,'FontSize',fontsize);
+    ylabel(yLabelString,'FontSize',fontsize);
     title('y-Profiles');
     legend({'Dose 1','Dose 2'},'Location','southeast')
     legend boxoff
     
     hfig.profiles.z = subplot(2,2,3);
-    plot(profiley{1})
+    plot(profilez{1},'r')
     hold on
-    plot(profiley{2})
+    plot(profilez{2},'r--')
     xlabel('Z [mm]','FontSize',fontsize)
-    ylabel(l,'FontSize',fontsize);
+    ylabel(yLabelString,'FontSize',fontsize);
     title('z-Profiles');
     legend({'Dose 1','Dose 2'},'Location','southeast')
     legend boxoff
@@ -265,12 +264,12 @@ if enable(2)==1
     set(hfig.profiles.fig,'name',['Profiles:, x=',num2str(slicename{1}),'mm, y=',num2str(slicename{2}),'mm, z=',num2str(slicename{3}),'mm']);
     
 end
-%% Calculate and plot DVH
 
-if enable(3)==1 && ~isempty(cst)
+%% Calculate and plot DVH
+if enable(3) == 1 && ~isempty(cst)
     disp('Calculating DVH...');
-    dvh1=matRad_calcDVH(cst,cube1);
-    dvh2=matRad_calcDVH(cst,cube2);
+    dvh1 = matRad_calcDVH(cst,cube1);
+    dvh2 = matRad_calcDVH(cst,cube2);
     dvhWindow = max([dvh1(1).doseGrid dvh2(1).doseGrid]);
     % Plot DVH
     disp('Plotting DVH...');
@@ -283,6 +282,7 @@ if enable(3)==1 && ~isempty(cst)
     xlim([0 dvhWindow*1.2])
     title('Dose Volume Histrogram, Dose 1: solid, Dose 2: dashed')
 end
+
 %%
 disp('Done!');
 
