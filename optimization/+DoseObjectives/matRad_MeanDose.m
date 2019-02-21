@@ -16,15 +16,30 @@ classdef matRad_MeanDose < DoseObjectives.matRad_DoseObjective
     end
     
     methods 
-        function obj = matRad_MeanDose(s,dMeanRef)
+        function obj = matRad_MeanDose(penalty,dMeanRef)
            
-            if nargin == 2 && isscalar(dMeanRef)
-                obj.parameters{1} = dMeanRef;
+            % if we have a struct in first argument
+            if nargin == 1 && isstruct(penalty)
+                inputStruct = penalty;
+                initFromStruct = true;
+            else
+                initFromStruct = false;
+                inputStruct = [];
             end
             
-            if nargin >= 1 && isscalar(s)
-                obj.penalty = s.penalty;
+            %Call Superclass Constructor (for struct initialization)
+            obj@DoseObjectives.matRad_DoseObjective(inputStruct);
+            
+            if ~initFromStruct
+                if nargin == 2 && isscalar(dMeanRef)
+                    obj.parameters{1} = dMeanRef;
+                end
+
+                if nargin >= 1 && isscalar(s)
+                    obj.penalty = penalty;
+                end
             end
+            
         end       
         
         %% Calculates the Objective Function value

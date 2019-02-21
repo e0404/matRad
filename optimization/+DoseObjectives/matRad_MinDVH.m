@@ -15,23 +15,34 @@ classdef matRad_MinDVH < DoseObjectives.matRad_DoseObjective
     
     methods
         function obj = matRad_MinDVH(penalty,dRef,vMinPercent)
-            if nargin >= 3 && isscalar(vMinPercent)
-                obj.parameters{2} = vMinPercent;
-            end
             
-            if nargin >= 2 && isscalar(dRef)
-                obj.parameters{1} = dRef;
-            end
-            
-            if nargin >= 1 && isscalar(penalty)
-                obj.penalty = penalty;
-            end
-            
+            % if we have a struct in first argument
             if nargin == 1 && isstruct(penalty)
-                obj.parameters = penalty.parameters;
-                obj.penalty = penalty.penalty;
+                inputStruct = penalty;
+                initFromStruct = true;
+            else
+                initFromStruct = false;
+                inputStruct = [];
             end
+            
+            %Call Superclass Constructor (for struct initialization)
+            obj@DoseObjectives.matRad_DoseObjective(inputStruct);
+            
+            %now handle initialization from other parameters
+            if ~initFromStruct
+                if nargin >= 3 && isscalar(vMinPercent)
+                    obj.parameters{2} = vMinPercent;
+                end
                 
+                if nargin >= 2 && isscalar(dRef)
+                    obj.parameters{1} = dRef;
+                end
+                
+                if nargin >= 1 && isscalar(penalty)
+                    obj.penalty = penalty;
+                end
+            end
+            
         end        
         %% Calculates the Objective Function value
         function fDose = computeDoseObjectiveFunction(obj,dose)                       
