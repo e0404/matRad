@@ -57,7 +57,7 @@ matRad_example2_photons
 disp('Unit test run example 3');
 matRad_example3_photonsDAO
 disp('Unit test run example 4');
-matRad_example3_photonsDAO
+matRad_example4_photonsMC
 disp('Unit test run example 5');
 matRad_example5_protons
 disp('Unit test run example 6');

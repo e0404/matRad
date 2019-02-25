@@ -18,17 +18,17 @@ classdef matRad_MinMaxMeanDose < DoseConstraints.matRad_DoseConstraint
             
             %If we have a struct in first argument
             if nargin == 1 && isstruct(minMeanDose)
-                inputStruct = minDose;
                 initFromStruct = true;
+                inputStruct = minMeanDose;
             else
                 initFromStruct = false;
                 inputStruct = [];
             end
             
-            %Call Superclass Constructor (for struct initialization)
+            % Call Superclass Constructor (for struct initialization)
             obj@DoseConstraints.matRad_DoseConstraint(inputStruct);
             
-            %now handle initialization from other parameters
+            % now handle initialization from other parameters
             if ~initFromStruct
                 
                 if nargin == 2 && isscalar(maxMeanDose)

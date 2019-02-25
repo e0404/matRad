@@ -7,7 +7,8 @@ function matRad_showDVH(dvh,cst,pln,lineStyleIndicator)
 % input
 %   result:             result struct from fluence optimization/sequencing
 %   cst:                matRad cst struct
-%   pln:                matRad pln struct
+%   pln:                matRad pln struct,
+%                       now optional, standard uses Dose [Gy]
 %   lineStyleIndicator: integer (1,2,3,4) to indicate the current linestyle
 %                       (hint: use different lineStyles to overlay
 %                       different dvhs)
@@ -78,8 +79,12 @@ box(gca,'on');
 set(gca,'LineWidth',1.5,'FontSize',fontSizeValue);
 ylabel('Volume [%]','FontSize',fontSizeValue)
 
-if strcmp(pln.propOpt.bioOptimization,'none')
-     xlabel('Dose [Gy]','FontSize',fontSizeValue);
+if exist('pln','var') && ~isempty(pln)
+    if strcmp(pln.propOpt.bioOptimization,'none')
+        xlabel('Dose [Gy]','FontSize',fontSizeValue);
+    else
+        xlabel('RBE x Dose [Gy(RBE)]','FontSize',fontSizeValue);
+    end
 else
-     xlabel('RBE x Dose [Gy(RBE)]','FontSize',fontSizeValue);
+     xlabel('Dose [Gy]','FontSize',fontSizeValue);
 end

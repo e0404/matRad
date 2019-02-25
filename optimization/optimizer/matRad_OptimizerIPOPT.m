@@ -45,7 +45,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.options.acceptable_compl_inf_tol      = 1e10; % (Acc5)
             obj.options.acceptable_obj_change_tol     = 1e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
             
-            obj.options.max_iter                      = 500;
+            obj.options.max_iter                      = 1000;
             obj.options.max_cpu_time                  = 3000;
             
             % Barrier Parameter (C.6)
@@ -66,6 +66,11 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             % determine once if Matlab or Octave
             obj.env = matRad_getEnvironment();
+            
+            % for derivate checking
+            obj.options.derivative_test              = 'first-order'; % none / first-order / second-order / only-second-order
+            obj.options.derivative_test_perturbation = 1e-6; % default 1e-8
+            obj.options.derivative_test_tol          = 1e-6;
 
         end
         

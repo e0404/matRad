@@ -132,14 +132,22 @@ resultGUI_tissue = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
 plane = 3;
 doseWindow = [0 max([resultGUI_effect.RBExDose(:); resultGUI_tissue.RBExDose(:)])];
 
-figure,title('original plan')
+figure,
 matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_effect.RBExDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
-figure,title('manipulated plan')
+title('original plan')
+figure,
 matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_tissue.RBExDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
-
+title('manipulated plan')
 %% 
 % At this point we would like to see the absolute difference of the original optimization and the 
 % recalculation. 
 absDiffCube = resultGUI_effect.RBExDose-resultGUI_tissue.RBExDose;
-figure,title('absolute difference')
+figure,
 matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
+title('absolute difference')
+%%
+% Plot both doses with absolute difference and gamma analysis
+[gammaCube,gammaPassRate,hfigure]=matRad_compareDose(resultGUI_effect.RBExDose, resultGUI.RBExDose, ct, cst,[1 1 1],'on');
+
+
+
