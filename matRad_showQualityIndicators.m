@@ -45,10 +45,17 @@ for i = 1:numel(cnames)
     end
 end
 
+qiTable = transpose(squeeze(struct2cell(qi)));
+
+% Selection of important QIs for students of the Masterclass
+ix = [3 4 1 2];
+qiTable = qiTable(:,ix);
+cnames = cnames(ix);
+
 switch env
      case 'MATLAB'
         % Create the uitable
-        table = uitable(gcf,'Data',(squeeze(struct2cell(qi)))',...
+        table = uitable(gcf,'Data',qiTable,...
                     'ColumnName',cnames,... 
                     'RowName',rnames,'ColumnWidth',{70});
 
