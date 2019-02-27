@@ -70,7 +70,7 @@ if exist('matRad_ompInterface','file') ~= 3
             %flags = [optPrefix 'COMPFLAGS="$COMPFLAGS /openmp" ' optPrefix 'OPTIMFLAGS="$OPTIMFLAGS /O2"'];
         else
             flags{1,1} = 'CFLAGS';
-            flags{1,2} = '-std=c99 -fopenmp -O2';
+            flags{1,2} = '-std=gnu99 -fopenmp -O2 -fPIC';
             flags{2,1} = 'LDFLAGS';
             flags{2,2} = '$LDFLAGS -fopenmp';
             %flags = [optPrefix 'CFLAGS="$CFLAGS -fopenmp -O2" ' optPrefix 'LDFLAGS="$LDFLAGS -fopenmp"'];
