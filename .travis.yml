@@ -34,7 +34,10 @@ before_install:
   
   # Windows Setup
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then echo "Testing matRad on Windows..." ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install mingw ; fi
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install octave.portable ; fi  
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then .\before_install_win.bat ; fi
   
 before_script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ulimit -c unlimited -S ; fi
@@ -54,7 +57,7 @@ script:
   # OSX script
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait 45 ./runtests.sh octave-cli ; fi
   # Windows script
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then travis_wait 45 runtests.bat octave-cli ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then travis_wait 45 .\runtests.bat octave-cli ; fi
 
 notifications:
     slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ
