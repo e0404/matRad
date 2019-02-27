@@ -25,11 +25,9 @@ function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-persistent env;
 
-if isempty(env)
-    [env, ~] = matRad_getEnvironment();
-end
+[env, ~] = matRad_getEnvironment();
+
 
 if nargin < 8
     mode = 'linear';
