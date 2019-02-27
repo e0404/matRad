@@ -104,8 +104,8 @@ end
 tmpCube    = zeros(ct.cubeDim);
 tmpCube(VctGrid) = 1;
 % interpolate cube
-VdoseGrid = find(interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpCube, ...
-                         dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'));
+VdoseGrid = find(matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpCube, ...
+                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'));
 
 % Convert CT subscripts to coarse linear indices.
 [yCoordsV_voxDoseGrid, xCoordsV_voxDoseGrid, zCoordsV_voxDoseGrid] = ind2sub(dij.doseGrid.dimensions,VdoseGrid);
