@@ -35,10 +35,10 @@ function cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNe
 
 for i = 1:size(cst,1)
    for j = 1:numel(cst{i,4})
-      tmpCube              = zeros([numel(vXgridOld) numel(vYgridOld) numel(vZgridOld)]);
+      tmpCube              = zeros([numel(vYgridOld) numel(vXgridOld) numel(vZgridOld)]);
       tmpCube(cst{i,4}{j}) = 1;
-      cst{i,4}{j}          = find(interp3(vYgridOld,vXgridOld,vZgridOld, ...
-                                                                tmpCube, ...
-                                          vYgridNew,vXgridNew',vZgridNew,'nearest'));
+      cst{i,4}{j}          = find(matRad_interp3(vXgridOld,vYgridOld,vZgridOld, ...
+                                                 tmpCube, ...
+                                                 vXgridNew,vYgridNew',vZgridNew,'nearest'));
    end
 end
