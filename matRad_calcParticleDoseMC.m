@@ -201,8 +201,8 @@ VctGrid = unique(vertcat(VctGrid{:}));
 tmpCube    = zeros(ct.cubeDim);
 tmpCube(VctGrid) = 1;
 % interpolate cube
-VdoseGrid = find(interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpCube, ...
-                         dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'));
+VdoseGrid = find(matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpCube, ...
+                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'));
 
 % ignore densities outside of contours
 eraseCtDensMask = ones(dij.ctGrid.numOfVoxels,1);
@@ -213,8 +213,8 @@ end
 
 % downsample ct
 for s = 1:dij.numOfScenarios
-    HUcube{s} =  interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
-                         dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
+    HUcube{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
+                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
 end
 
 % what are you doing here, Lucas?

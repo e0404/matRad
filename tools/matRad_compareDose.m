@@ -160,8 +160,6 @@ if enable(1) == 1
             hfig.(planename{plane}).('cube1').Contour,...
             hfig.(planename{plane}).('cube1').IsoDose] = ...
             matRad_plotSliceWrapper(gca,ct,cstHandle,1,cube1,plane,slicename{plane},[],[],colorcube,jet,doseWindow,[],100);
-        figtitle = get(gca,'title');
-        figtitle = figtitle.String;
         
         % Plot Dose 2
         hfig.(planename{plane}).('cube2').Axes = subplot(2,2,2);
@@ -190,8 +188,6 @@ if enable(1) == 1
             hfig.(planename{plane}).('gamma').Contour,...
             hfig.(planename{plane}).('gamma').IsoDose]=...
             matRad_plotSliceWrapper(gca,ct,cstHandle,1,gammaCube,plane,slicename{plane},[],[],colorcube,gammaCMap,doseGammaWindow,[],100);
-        
-        set(hfig.(planename{plane}).('fig'),'name',figtitle);
         
         % Adjusting axes
         matRad_plotAxisLabels(hfig.(planename{plane}).('cube1').Axes,ct,plane,slicename{plane},[],100);
