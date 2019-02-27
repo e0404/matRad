@@ -2622,7 +2622,10 @@ end
 
 pln.propStf.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
 pln.propStf.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [???]
-pln.propStf.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [???]
+%For masterclass, couch angle is automatically 0 for all beams
+pln.propStf.couchAngles     = zeros(size(pln.propStf.gantryAngles)); %parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [???]
+set(handles.editCouchAngle,'String',num2str((pln.propStf.couchAngles)));
+
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 try
     ct = evalin('base','ct');
@@ -3435,6 +3438,8 @@ function editCouchAngle_CreateFcn(hObject, ~, ~)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+%Disable for MasterClass Educational version
+set(hObject,'Enable','off');
 
 function popupRadMode_CreateFcn(hObject, ~, ~)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
