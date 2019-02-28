@@ -68,9 +68,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.env = matRad_getEnvironment();
             
             % for derivate checking
-            obj.options.derivative_test              = 'first-order'; % none / first-order / second-order / only-second-order
-            obj.options.derivative_test_perturbation = 1e-6; % default 1e-8
-            obj.options.derivative_test_tol          = 1e-6;
+            % obj.options.derivative_test              = 'first-order'; % none / first-order / second-order / only-second-order
+            % obj.options.derivative_test_perturbation = 1e-6; % default 1e-8
+            % obj.options.derivative_test_tol          = 1e-6;
 
         end
         
