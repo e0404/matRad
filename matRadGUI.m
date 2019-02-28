@@ -372,6 +372,8 @@ handles.initialGuiStart = true;
 %handle the MException object)
 handles.devMode = true;
 
+set(handles.radiobtnPlan,'value',0);
+
 handles = resetGUI(hObject, handles);
 
 %% parse variables from base workspace
@@ -400,8 +402,6 @@ if ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
 else
     handles = reloadGUI(hObject, handles);
 end
-
-set(handles.radiobtnPlan,'value',0);
 
 guidata(hObject, handles);
 
