@@ -408,6 +408,8 @@ else
     handles = reloadGUI(hObject, handles);
 end
 
+set(handles.radiobtnPlan,'value',0);
+
 guidata(hObject, handles);
 
 
@@ -597,6 +599,7 @@ getPlnFromGUI(handles);
 if handles.State > 0
     handles.State = 1;
     UpdateState(handles);
+    UpdatePlot(handles);
     guidata(hObject,handles);
 end
 
@@ -1058,6 +1061,10 @@ if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'V
     hIsoCenterCross = matRad_plotIsoCenterMarker(handles.axesFig,pln,ct,plane,slice);
 end
 
+if get(handles.radiobtnPlan,'value') == 1 && ~isempty(pln)
+    matRad_plotProjectedGantryAngles(handles.axesFig,pln,ct,plane);
+end
+
 % the following line ensures the plotting order (optional)
 % set(gca,'Children',[AxesHandlesCT_Dose hIsoCenterCross AxesHandlesIsoDose  AxesHandlesVOI ]);    
   
@@ -1265,11 +1272,9 @@ Update3DView(handles);
 function Update3DView(handles)
 
 if isfield(handles,'axesFig3D') && isfield(handles,'fig3D') && isgraphics(handles.axesFig3D) && isgraphics(handles.fig3D)
-    set(handles.radiobtnPlan,'enable','on');
     axesFig3D = handles.axesFig3D;
     fig3D = handles.fig3D;    
 else
-    set(handles.radiobtnPlan,'value',0,'enable','off');
     return
 end
 
