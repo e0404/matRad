@@ -4236,10 +4236,10 @@ cstPanelPos = getpixelposition(cstPanel);
 
 %Parameters for line height
 objHeight = 22;
-lineHeight = 25;
-fieldSep = 2;
-yTopSep = 40;
-tableViewHeight = cstPanelPos(4) - yTopSep;
+lineHeight = 25; %Height of a table line
+fieldSep = 2; %Separation between fields horizontally
+yTopSep = 40; %Separation of the first line from the top
+tableViewHeight = cstPanelPos(4) - yTopSep; %Full height of the view
 
 %Widths of the fields
 buttonW = objHeight;
@@ -4257,10 +4257,10 @@ cstVertTableScroll = findobj(cstPanel.Children,'Style','slider');
 if isempty(cstVertTableScroll)
     sliderPos = 0;
 else
-    sliderPos = cstVertTableScroll.Value;
+    sliderPos = cstVertTableScroll.Max - cstVertTableScroll.Value;
 end
-disp(num2str(sliderPos));
-ypos = @(c) cstPanelPos(4) - (yTopSep + c*lineHeight + sliderPos);
+%disp(num2str(sliderPos));
+ypos = @(c) tableViewHeight - c*lineHeight + sliderPos;
 
 delete(cstPanel.Children);
 
@@ -4404,12 +4404,15 @@ h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Position',[xPos y
 hAdd.UserData = h;
 
 %Calculate Scrollbar
-lastPos = ypos(cnt)+objHeight;
-firstPos = ypos(1);
-tableHeight = firstPos - lastPos;
+lastPos = ypos(cnt);
+firstPos = ypos(0);
+tableHeight = abs(firstPos - lastPos);
 
 exceedFac = tableHeight / tableViewHeight;
-uicontrol(cstPanel,'Style','slider','Units','normalized','Position',[0.975 0 0.025 1],'Min',0,'Max',ceil(exceedFac)*tableViewHeight,'SliderStep',[lineHeight tableViewHeight] ./ (ceil(exceedFac)*tableViewHeight),'Value',sliderPos);
+if exceedFac > 1
+    sliderFac = exceedFac - 1; 
+    uicontrol(cstPanel,'Style','slider','Units','normalized','Position',[0.975 0 0.025 1],'Min',0,'Max',ceil(sliderFac)*tableViewHeight,'SliderStep',[lineHeight tableViewHeight] ./ (ceil(sliderFac)*tableViewHeight),'Value',ceil(sliderFac)*tableViewHeight - sliderPos,'Callback',{@cstTableSlider_Callback,handles});
+end
 
 
 
@@ -4418,7 +4421,7 @@ uicontrol(cstPanel,'Style','slider','Units','normalized','Position',[0.975 0 0.0
 %set(handles.uiTable,'ColumnFormat',columnformat);
 %set(handles.uiTable,'ColumnEditable',[true true true true true true true true true true]);
 %set(handles.uiTable,'Data',data);
-
+   
 
 % --- Executes when uipanel3 is resized.
 function uipanel3_SizeChangedFcn(hObject, eventdata, handles)
@@ -4621,7 +4624,7 @@ function cstTableSlider_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-
+generateCstTable(handles,evalin('base','cst'));
 
 % --- Executes during object creation, after setting all properties.
 function cstTableSlider_CreateFcn(hObject, eventdata, handles)
