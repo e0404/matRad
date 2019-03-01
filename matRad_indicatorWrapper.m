@@ -67,6 +67,8 @@ figure,set(gcf,'Color',[1 1 1],'Units','normalized','Position',[0.1 0.1 0.3 0.8]
 subplot(2,1,1)
 matRad_showDVH(dvh,cst,pln);
 subplot(2,1,2)
+ixVoi = cellfun(@(c) c.Visible == 1,cst(:,5));
+qi = qi(ixVoi);
 matRad_showQualityIndicators(qi);
 
 
