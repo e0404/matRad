@@ -2791,19 +2791,25 @@ SelectedCube = Content{get(handles.popupDisplayOption,'Value')};
 pln = evalin('base','pln');
 resultGUI_SelectedCube.physicalDose = resultGUI.(SelectedCube);
 
-if ~strcmp(pln.propOpt.bioOptimization,'none')
-
-    %check if one of the default fields is selected
-    if sum(strcmp(SelectedCube,{'physicalDose','effect','RBE,','RBExDose','alpha','beta'})) > 0
-        resultGUI_SelectedCube.physicalDose = resultGUI.physicalDose;
+%check if one of the default fields is selected
+if sum(strcmp(SelectedCube,{'physicalDose','effect','RBE,','RBExDose','alpha','beta'})) > 0
+    resultGUI_SelectedCube.physicalDose = resultGUI.physicalDose;
+    if isfield(resultGUI,['RBExDose'])
         resultGUI_SelectedCube.RBExDose     = resultGUI.RBExDose;
     else
-        Idx    = find(SelectedCube == '_');
-        SelectedSuffix = SelectedCube(Idx(1):end);
-        resultGUI_SelectedCube.physicalDose = resultGUI.(['physicalDose' SelectedSuffix]);
+        pln.propOpt.bioOptimization = 'none';
+    end
+else
+    Idx    = find(SelectedCube == '_');
+    SelectedSuffix = SelectedCube(Idx(1):end);
+    resultGUI_SelectedCube.physicalDose = resultGUI.(['physicalDose' SelectedSuffix]);
+    if isfield(resultGUI,['RBExDose' SelectedSuffix])
         resultGUI_SelectedCube.RBExDose     = resultGUI.(['RBExDose' SelectedSuffix]);
+    else
+        pln.propOpt.bioOptimization = 'none';
     end
 end
+
 
 %adapt visibilty
 cst = evalin('base','cst');
