@@ -75,3 +75,6 @@ end
 
  % use hist for compatibility with GNU Octave
 title('dose in target'),xlabel('[Gy]'),ylabel('#');
+
+%% compute integral energy
+matRad_calcIntEnergy(dose,ct,pln);
