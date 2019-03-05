@@ -1905,7 +1905,7 @@ end
 
 set(handles.uiTable,'ColumnName',columnname);
 set(handles.uiTable,'ColumnFormat',columnformat);
-set(handles.uiTable,'ColumnEditable',[true true true true true true true true true true]);
+set(handles.uiTable,'ColumnEditable',[true true false true true true true true true true]);
 set(handles.uiTable,'Data',data);
 
 
@@ -1992,7 +1992,8 @@ if FlagValidParameters
                    boolChanged = true;
                    OldCst(m,6) = NewCst(n,4);
                    OldCst(m,3) = NewCst(n,2);
-                   OldCst{m,5}.Priority = NewCst{n,3};
+                   %OldCst{m,5}.Priority = NewCst{n,3}; %Do not alter any
+                   %priorities for masterclass
                    break;
                end 
            end
@@ -2135,12 +2136,18 @@ if ~strcmp(eventdata.NewData,eventdata.PreviousData)
               handles.DijCalcWarning = true;
          end
          
+         
          %% check if new OAR was added
          cst = evalin('base','cst');
          Idx = ~cellfun('isempty',cst(:,6));
          
          if sum(strcmp(cst(Idx,2),eventdata.NewData))==0 
              handles.DijCalcWarning = true;
+         end
+         
+         if eventdata.Indices(2) ~= 3
+             thisIx = find(cellfun(@(x) strcmp(data(eventdata.Indices(1),1),x),cst(:,2)));
+             data{eventdata.Indices(1),3} = cst{thisIx,5}.Priority;
          end
         
         
@@ -2168,6 +2175,7 @@ if eventdata.Indices(2) == 2
         
     end
 end
+
 %% if objective function was changed -> check if VOI Type still makes sense
 if eventdata.Indices(2) == 4
     ObjFunction = eventdata.NewData;
