@@ -98,8 +98,10 @@ for runVoi = 1:size(cst,1)
             referenceDose = inf;
             for runObjective = 1:numel(cst{runVoi,6})
                % check if this is an objective that penalizes underdosing 
-               if strcmp(cst{runVoi,6}(runObjective).type,'square deviation') > 0 || strcmp(cst{runVoi,6}(runObjective).type,'square underdosing') > 0
-                   referenceDose = (min(cst{runVoi,6}(runObjective).dose,referenceDose))/pln.numOfFractions;
+               obj = cst{runVoi,6}{runObjective};
+               %if strcmp(cst{runVoi,6}(runObjective).type,'square deviation') > 0 || strcmp(cst{runVoi,6}(runObjective).type,'square underdosing') > 0
+               if isa(obj,'DoseObjectives.matRad_SquaredDeviation') || isa(obj,'DoseObjectives.matRad_SquaredUnderdosing')
+                   referenceDose = (min(cst{runVoi,6}{runObjective}.getDoseParameters(),referenceDose))/pln.numOfFractions;
                end            
             end
 

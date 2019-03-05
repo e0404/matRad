@@ -43,6 +43,7 @@ pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 
 % optimization settings
+pln.propOpt.optimizer       = 'IPOPT';
 pln.propOpt.bioOptimization = 'none'; % none: physical optimization;             const_RBExD; constant RBE of 1.1;
                                       % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
 pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles

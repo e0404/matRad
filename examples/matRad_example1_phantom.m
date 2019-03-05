@@ -57,27 +57,16 @@ cst{ixOAR,5}.alphaX      = 0.1000;
 cst{ixOAR,5}.betaX       = 0.0500;
 cst{ixOAR,5}.Priority    = 2;
 cst{ixOAR,5}.Visible     = 1;
-cst{ixOAR,6}.type        = 'square overdosing';
-cst{ixOAR,6}.dose        = 30;
-cst{ixOAR,6}.penalty     = 10;
-cst{ixOAR,6}.EUD         = NaN;
-cst{ixOAR,6}.volume      = NaN;
-cst{ixOAR,6}.coverage    = NaN;
-cst{ixOAR,6}.robustness  = 'none';
+
+cst{ixOAR,6}{1} = DoseObjectives.matRad_SquaredOverdosing(10,30);
 
 cst{ixPTV,5}.TissueClass = 1;
 cst{ixPTV,5}.alphaX      = 0.1000;
 cst{ixPTV,5}.betaX       = 0.0500;
 cst{ixPTV,5}.Priority    = 1;
 cst{ixPTV,5}.Visible     = 1;
-cst{ixPTV,6}.type        = 'square deviation';
-cst{ixPTV,6}.dose        = 60;
-cst{ixPTV,6}.penalty     = 50;
-cst{ixPTV,6}.EUD         = NaN;
-cst{ixPTV,6}.volume      = NaN;
-cst{ixPTV,6}.coverage    = NaN;
-cst{ixPTV,6}.robustness  = 'none';
 
+cst{ixPTV,6}{1} = DoseObjectives.matRad_SquaredOverdosing(10,30);
 
 %% Lets create either a cubic or a spheric phantom
 
