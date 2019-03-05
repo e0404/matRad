@@ -622,7 +622,7 @@ contentPopUp  = get(handles.popMenuBioOpt,'String');
 switch RadIdentifier
     case 'photons'
         set(handles.vmcFlag,'Value',0);
-        set(handles.vmcFlag,'Enable','on')
+        set(handles.vmcFlag,'Enable','off')
 
         set(handles.popMenuBioOpt,'Enable','off');
         ix = find(strcmp(contentPopUp,'none'));
