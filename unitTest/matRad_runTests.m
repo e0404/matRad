@@ -50,7 +50,7 @@ matRad_unitTestTextManipulation(exampleScripts,'pln.propDoseCalc.doseGrid.resolu
 
 % supressing the inherent Ocatave warnings for division by zero
 if strcmp(matRad_getEnvironment,'OCTAVE')
-    warning("off", "Octave:divide-by-zero")
+    warning('off','Octave:divide-by-zero')
 end
 
 unitTestBool = true;
