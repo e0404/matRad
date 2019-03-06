@@ -167,7 +167,7 @@ pln.propStf.gantryAngles = [0:50:359];
 pln.propStf.couchAngles  = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.numOfBeams   = numel(pln.propStf.gantryAngles);
 stf                      = matRad_generateStf(ct,cst,pln);
-pln.propStf.isoCenter    = stf.isoCenter;
+pln.propStf.isoCenter    = vertcat(stf.isoCenter);
 dij                      = matRad_calcPhotonDose(ct,stf,pln,cst);
 resultGUI_coarse         = matRad_fluenceOptimization(dij,cst,pln);
 
