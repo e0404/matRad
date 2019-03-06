@@ -68,38 +68,10 @@ cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
 % update aperture info vector
 apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
 
-% Set the IPOPT options.
-%matRad_ipoptOptions;
-
-% set optimization options
-options.radMod          = pln.radiationMode;
-options.bioOpt          = pln.propOpt.bioOptimization;
-options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
-options.numOfScenarios  = dij.numOfScenarios;
-
-% set bounds on optimization variables
-%options.lb              = apertureInfo.limMx(:,1);                                          % Lower bound on the variables.
-%options.ub              = apertureInfo.limMx(:,2);                                          % Upper bound on the variables.
-%[options.cl,options.cu] = matRad_daoGetConstBounds(cst,apertureInfo,options);   % Lower and upper bounds on the constraint functions.
-
-% set callback functions.
-%funcs.objective         = @(x) matRad_daoObjFunc(x,apertureInfo,dij,cst,options);
-%funcs.constraints       = @(x) matRad_daoConstFunc(x,apertureInfo,dij,cst,options);
-%funcs.gradient          = @(x) matRad_daoGradFunc(x,apertureInfo,dij,cst,options);
-%funcs.jacobian          = @(x) matRad_daoJacobFunc(x,apertureInfo,dij,cst,options);
-%funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct(apertureInfo,dij,cst);
-%funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
-
-% Informing user to press q to terminate optimization
-% fprintf('\nOptimzation initiating...\n');
-% fprintf('Press q to terminate the optimization...\n');
-
 %Use Dose Projection only
 backProjection = matRad_DoseProjection();
 
 optiProb = matRad_OptimizationProblemDAO(backProjection,apertureInfo);
-
-%optimizer = matRad_OptimizerIPOPT;
 
 if ~isfield(pln.propOpt,'optimizer')
     pln.propOpt.optimizer = 'IPOPT';

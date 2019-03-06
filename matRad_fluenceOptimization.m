@@ -95,9 +95,6 @@ end
 ixTarget       = ixTarget(i);
 wOnes          = ones(dij.totalNumOfBixels,1);
 
-% set the IPOPT options.
-%matRad_ipoptOptions;
-
 % modified settings for photon dao
 if pln.propOpt.runDAO && strcmp(pln.radiationMode,'photons')
 %    options.ipopt.max_iter = 50;
@@ -106,14 +103,13 @@ if pln.propOpt.runDAO && strcmp(pln.radiationMode,'photons')
 end
 % calculate initial beam intensities wInit
 if  strcmp(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
+    
     % check if a constant RBE is defined - if not use 1.1
     if ~isfield(dij,'RBE')
         dij.RBE = 1.1;
     end
     bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
-    
-    
         
 elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
                                 && strcmp(pln.radiationMode,'carbon')
