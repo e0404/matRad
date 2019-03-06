@@ -41,11 +41,21 @@ unitTestBixelWidth = 20;
 
 matRad_unitTestTextManipulation(exampleScripts,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)], '../examples/');
 matRad_unitTestTextManipulation(exampleScripts,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR UNIT TESTING %%%%%%%%%%%%%%', '../examples/');
+matRad_unitTestTextManipulation(exampleScripts,'matRadGUI','%%%%%%%%%%%%%%% REMOVED matRadGUI FOR UNIT TESTING %%%%%%%%%%%%%%', '../examples/');
+matRad_unitTestTextManipulation('matRad.m','matRadGUI','%%%%%%%%%%%%%%% REMOVED matRadGUI FOR UNIT TESTING %%%%%%%%%%%%%%', '../');
 matRad_unitTestTextManipulation('matRad.m','pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)], '../');
+
+% set coarser and anisotropic dose grid for unit testing
+doseCalcResX = 5;
+doseCalcResY = 6;
+doseCalcResZ = 7;
+matRad_unitTestTextManipulation(exampleScripts,'pln.propDoseCalc.doseGrid.resolution.x',['pln.propDoseCalc.doseGrid.resolution.x = ' num2str(doseCalcResX)], '../examples/');
+matRad_unitTestTextManipulation(exampleScripts,'pln.propDoseCalc.doseGrid.resolution.y',['pln.propDoseCalc.doseGrid.resolution.y = ' num2str(doseCalcResY)], '../examples/');
+matRad_unitTestTextManipulation(exampleScripts,'pln.propDoseCalc.doseGrid.resolution.z',['pln.propDoseCalc.doseGrid.resolution.z = ' num2str(doseCalcResZ)], '../examples/');
 
 % supressing the inherent Ocatave warnings for division by zero
 if strcmp(matRad_getEnvironment,'OCTAVE')
-    warning("off", "Octave:divide-by-zero")
+    warning('off','Octave:divide-by-zero')
 end
 
 unitTestBool = true;

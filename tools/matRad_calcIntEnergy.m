@@ -44,5 +44,5 @@ convFac = 1/electronCharge;
 intDose = convFac * sum(dose(:).*ct.cube{1}(:)) ...
          * ct.resolution.x*ct.resolution.y*ct.resolution.z/1e12;
 
-fprintf(['Integral energy in dose cube = ' num2str(intDose,4) ' MeV']);
+fprintf(['Integral energy in dose cube = ' num2str(intDose,4) ' MeV\n']);
 

@@ -6,8 +6,8 @@ end
 % to guarantee downwards compatibility with data that does not have
 % ct.x/y/z
 if ~any(isfield(ct,{'x','y','z'}))
-    ct.x = ct.resolution.x*[0:ct.cubeDim(1)-1]-ct.resolution.x/2;
-    ct.y = ct.resolution.y*[0:ct.cubeDim(2)-1]-ct.resolution.y/2;
+    ct.x = ct.resolution.x*[0:ct.cubeDim(2)-1]-ct.resolution.x/2;
+    ct.y = ct.resolution.y*[0:ct.cubeDim(1)-1]-ct.resolution.y/2;
     ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1]-ct.resolution.z/2;
 end
 
