@@ -20,8 +20,8 @@ run(['..' filesep 'matRad_rc'])
 % limiting the optimization to 10 iterations for faster computation
 matRad_unitTestTextManipulation('matRad_OptimizerIPOPT.m','obj.options.max_iter','obj.options.max_iter = 10;','../optimization/optimizer/');
 % limiting the cutoffLevel and lateralCutoff for faster computation
-matRad_unitTestTextManipulation('matRad_calcPhotonDose.m', 'lateralCutoff ', 'lateralCutoff = 20;')
-matRad_unitTestTextManipulation('matRad_calcParticleDose.m', 'cutOffLevel  ', '       cutOffLevel          = 0.8;')
+matRad_unitTestTextManipulation('matRad_calcPhotonDose.m', 'lateralCutoff = ', 'lateralCutoff = 20;')
+matRad_unitTestTextManipulation('matRad_calcParticleDose.m', 'cutOffLevel = ', '       cutOffLevel          = 0.8;')
 % limit number of histories for MC to 100
 matRad_unitTestTextManipulation('matRad_calcParticleDoseMC.m', '    nCasePerBixel', '    nCasePerBixel = 100;')
 matRad_unitTestTextManipulation('matRad_calcPhotonDoseMC.m', '    nCasePerBixel', '    nCasePerBixel = 100;')
