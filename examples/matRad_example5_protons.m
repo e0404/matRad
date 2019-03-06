@@ -165,12 +165,9 @@ n               = 1;
 
 [env, ~] = matRad_getEnvironment();
 % Let's plot the gamma index histogram
-switch env
-     case 'MATLAB'
-          figure,histogram(gammaCube(gammaCube>0),100),title('gamma index histogram')
-     case 'OCTAVE'
-          figure,hist(gammaCube(gammaCube>0),100),title('gamma index histogram')
-end
+figure
+hist(gammaCube(gammaCube>0),100)
+title('gamma index histogram')
 
 
 
