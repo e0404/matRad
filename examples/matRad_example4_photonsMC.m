@@ -77,4 +77,4 @@ end
 title('dose in target'),xlabel('[Gy]'),ylabel('#');
 
 %% compute integral energy
-matRad_calcIntEnergy(dose,ct,pln);
+matRad_calcIntEnergy(resultGUI.physicalDose,ct,pln);
