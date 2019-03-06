@@ -38,6 +38,8 @@ unitTestBixelWidth = 20;
 
 matRad_unitTestTextManipulation(exampleScripts,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)], '../examples/');
 matRad_unitTestTextManipulation(exampleScripts,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR UNIT TESTING %%%%%%%%%%%%%%', '../examples/');
+matRad_unitTestTextManipulation(exampleScripts,'matRadGUI','%%%%%%%%%%%%%%% REMOVED matRadGUI FOR UNIT TESTING %%%%%%%%%%%%%%', '../examples/');
+matRad_unitTestTextManipulation('matRad.m','matRadGUI','%%%%%%%%%%%%%%% REMOVED matRadGUI FOR UNIT TESTING %%%%%%%%%%%%%%', '../');
 matRad_unitTestTextManipulation('matRad.m','pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)], '../');
 
 % set coarser and anisotropic dose grid for unit testing
