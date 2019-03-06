@@ -69,11 +69,11 @@ end
 % set up grid matrices - implicit dimension permuation (X Y Z-> Y X Z)
 % Matlab represents internally in the first matrix dimension the
 % ordinate axis and in the second matrix dimension the abscissas axis
-[ Y,  X,  Z] = meshgrid(x,y,z);
-[Yq, Xq, Zq] = meshgrid(xq,yq,zq);
+[ X,  Y,  Z] = meshgrid(x,y,z);
+[Xq, Yq, Zq] = meshgrid(xq,yq,zq);
 
 % interpolate cube - cube is now stored in Y X Z 
-interpCt.cubeIV{1} = interp3(Y,X,Z,double(origCt),Yq,Xq,Zq);
+interpCt.cubeIV{1} = interp3(X,Y,Z,double(origCt),Xq,Yq,Zq);
 
 % some meta information
 interpCt.resolution = resolution;
