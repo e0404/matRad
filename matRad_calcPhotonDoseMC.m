@@ -53,7 +53,7 @@ if exist('matRad_ompInterface','file') ~= 3
         
         currFolder = pwd;
         
-        if exist ("OCTAVE_VERSION", "builtin")
+        if exist ('OCTAVE_VERSION','builtin')
           ccName = eval('mkoctfile -p CC');
         else
           myCCompiler = mex.getCompilerConfigurations('C','Selected');
@@ -83,7 +83,7 @@ if exist('matRad_ompInterface','file') ~= 3
         %For Octave, the flags will be set in the environment, while they
         %will be parsed as string arguments in MATLAB
         for flag = 1:size(flags,1)
-            if exist ("OCTAVE_VERSION", "builtin")
+            if exist ('OCTAVE_VERSION','builtin')
                 setenv(flags{flag,1},flags{flag,2});
             else
                 flagstring = [flagstring flags{flag,1} '="' flags{flag,2} '" '];
