@@ -1,17 +1,17 @@
 function f = matRad_objectiveFunction(optiProb,w,dij,cst)
-% matRad IPOPT objectiveective function wrapper
+% matRad IPOPT objective function wrapper
 % 
 % call
-%   f = matRad_objectiveFuncWrapper(w,dij,cst,type)
+%   f = matRad_objectiveFuncWrapper(optiProb,w,dij,cst)
 %
 % input
-%   w:       beamlet/ pencil beam weight vector
-%   dij:     matRad dose influence struct
-%   cst:     matRad cst struct
-%   options: option struct defining the type of optimization
+%   optiProb: matRad optimization problem
+%   w:        beamlet/ pencil beam weight vector
+%   dij:      matRad dose influence struct
+%   cst:      matRad cst struct
 %
 % output
-%   f: objectiveective function value
+%   f: objective function value
 %
 % References
 %   -
