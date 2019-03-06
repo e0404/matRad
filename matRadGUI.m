@@ -1339,50 +1339,18 @@ end
 %camlight(hLight,'left');
 %lighting('gouraud');
 
-if ~isempty(pln)
-    set(axesFig3D,'XTick',0:50:1000);
-    set(axesFig3D,'YTick',0:50:1000);
-    set(axesFig3D,'ZTick',0:50:1000);
-    set(axesFig3D,'XTickLabel',0:50:1000);
-    set(axesFig3D,'YTickLabel',0:50:1000);
-    set(axesFig3D,'ZTickLabel',0:50:1000);
-    xlabel(axesFig3D,'x [mm]','FontSize',defaultFontSize)
-    ylabel(axesFig3D,'y [mm]','FontSize',defaultFontSize)
-    zlabel(axesFig3D,'z [mm]','FontSize',defaultFontSize)
-    %title(['axial plane z = ' num2str(ct.resolution.z*slice) ' [mm]'],'FontSize',defaultFontSize)
-    title(axesFig3D,'3D view');
-else
-    xlabel(axesFig3D,'x [voxels]','FontSize',defaultFontSize)
-    ylabel(axesFig3D,'y [voxels]','FontSize',defaultFontSize)
-    zlabel(axesFig3D,'z [voxels]','FontSize',defaultFontSize)
-    %title('axial plane','FontSize',defaultFontSize)
-    title(axesFig3D,'matRad 3D view');
-end
+xlabel(axesFig3D,'x [voxels]','FontSize',defaultFontSize)
+ylabel(axesFig3D,'y [voxels]','FontSize',defaultFontSize)
+zlabel(axesFig3D,'z [voxels]','FontSize',defaultFontSize)
+title(axesFig3D,'matRad 3D view');
 
-%if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln)
-%    hIsoCenterCross = matRad_plotIsoCenterMarker(handles.axesFig,pln,ct,plane,slice);
-%end
-
-% the following line ensures the plotting order (optional)
-% set(gca,'Children',[AxesHandlesCT_Dose hIsoCenterCross AxesHandlesIsoDose  AxesHandlesVOI ]);
-
-%set axis ratio
+% set axis ratio
 ratios = [1 1 1]; %[1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
 ratios = ratios([2 1 3]);
 set(axesFig3D,'DataAspectRatioMode','manual');
 set(axesFig3D,'DataAspectRatio',ratios./max(ratios));
 
 set(axesFig3D,'Ydir','reverse');
-
-% to guarantee downwards compatibility with data that does not have
-% ct.x/y/z
-if ~any(isfield(ct,{'x','y','z'}))
-    ct.x = ct.resolution.x*[0:ct.cubeDim(1)-1]-ct.resolution.x/2;
-    ct.y = ct.resolution.y*[0:ct.cubeDim(2)-1]-ct.resolution.y/2;
-    ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1]-ct.resolution.z/2;
-end
-
-set(axesFig3D,'xlim',ct.x([1 end]),'ylim',ct.y([1 end]),'zlim',ct.z([1 end]));
 
 set(axesFig3D,'view',oldView);
 
