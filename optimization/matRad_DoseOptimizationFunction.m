@@ -1,7 +1,20 @@
 classdef (Abstract) matRad_DoseOptimizationFunction
-    %MATRAD_DOSEOPTIMIZATIONFUNCTION This is the superclass for all
-    %objectives and constraints to enable easy one-line identification
-    
+% matRad_DoseOptimizationFunction This is the superclass for all
+% objectives and constraints to enable easy one-line identification
+%    
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2019 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     properties (Abstract, Constant)
         name                %Display name of the Objective. Needs to be implemented in sub-classes.
         parameterNames      %Cell array of Display names of the parameters. Needs to be implemented in sub-classes.
@@ -29,25 +42,24 @@ classdef (Abstract) matRad_DoseOptimizationFunction
             end
         end
         
-        %Overload the struct function to return a struct with general
-        %the objective / constraint
+        % Overload the struct function to return a struct with general
+        % the objective / constraint
         function s = struct(obj)
             s.className = class(obj);
             s.parameters = obj.parameters;
         end
     end
     
-    
-    %Helper methods
+    % Helper methods
     methods (Access = public)
         function doseParams = getDoseParameters(obj)
-            %Get only the dose related parameters.
+            % get only the dose related parameters.
             ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
             doseParams = [obj.parameters{ix}];
         end
         
         function obj = setDoseParameters(obj,doseParams)
-            %Set only the dose related parameters.
+            % set only the dose related parameters.
             ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
             obj.parameters(ix) = num2cell(doseParams);
             
@@ -55,7 +67,7 @@ classdef (Abstract) matRad_DoseOptimizationFunction
     end
     
     methods (Static)
-        %Creates an optimization function from a struct
+        % creates an optimization function from a struct
         function obj = createInstanceFromStruct(s)
             try
                 obj = eval([s.className '(s)']);

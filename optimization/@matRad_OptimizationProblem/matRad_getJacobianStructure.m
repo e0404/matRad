@@ -43,26 +43,11 @@ for i = 1:size(cst,1)
             % only perform computations for constraints	
               if isa(obj,'DoseConstraints.matRad_DoseConstraint')	
                 	
-                % if conventional opt: just add constraints of nominal dose	
-                %if strcmp(cst{i,6}{j}.robustness,'none')	
-                    %{	
-                    if isequal(cst{i,6}{j}.type, 'max dose constraint') || ...	
-                       isequal(cst{i,6}{j}.type, 'min dose constraint') || ...	
-                       isequal(cst{i,6}{j}.type, 'max mean dose constraint') || ...	
-                       isequal(cst{i,6}{j}.type, 'min mean dose constraint') || ...	
-                       isequal(cst{i,6}{j}.type, 'max EUD constraint') || ...	
-                       isequal(cst{i,6}{j}.type, 'min EUD constraint') || ...	
-                       isequal(cst{i,6}{j}.type, 'max DVH constraint') || ... 	
-                       isequal(cst{i,6}{j}.type, 'min DVH constraint')	
-                        jacobStruct = [jacobStruct; spones(mean(dij.physicalDose{1}(cst{i,4}{1},:)))];	
-                     end	
-                    %}	
-                %end	
- 	
-                %Get the jacobian structure depending on dose	
+                % get the jacobian structure depending on dose	
                 jacobDoseStruct = obj.getDoseConstraintJacobianStructure(numel(cst{i,4}{1}));	
                 nRows = size(jacobDoseStruct,2);	
-                 jacobStruct = [jacobStruct; repmat(spones(mean(dij.physicalDose{1}(cst{i,4}{1},:))),nRows,1)];	
+                jacobStruct = [jacobStruct; repmat(spones(mean(dij.physicalDose{1}(cst{i,4}{1},:))),nRows,1)];	
+                 
              end	
          end	
      end	
