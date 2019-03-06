@@ -64,11 +64,15 @@ y = doseInfo.ImagePositionPatient(2) + doseInfo.ImageOrientationPatient(5) * ...
                                        doseInfo.PixelSpacing(2) * double([0:doseInfo.Rows - 1]);
 z = [doseInfo.ImagePositionPatient(3) + doseInfo.GridFrameOffsetVector];
 
-% set up grid matrices - implicit dimension permuation (X Y Z-> Y X Z)
-% Matlab represents internally in the first matrix dimension the
-% ordinate axis and in the second matrix dimension the abscissas axis
-[ Y,  X,  Z] = meshgrid(x,y,z);
-[Yq, Xq, Zq] = meshgrid(ct.x,ct.y,ct.z);
+%% set up grid matrices - implicit dimension permuation (Y X Z-> X Y Z)
+% [X,Y,Z] = MESHGRID(xgv,ygv,zgv) replicates the grid vectors xgv, ygv, zgv 
+% to produce the coordinates of a 3D rectangular grid (X, Y, Z). 
+% (X,Y,Z) are of size numel(ygv)-by-numel(xgv)-by(numel(zgv).
+% X corresponds to the second-dimension coordinates,
+% Y corresponds to the first-dimension coordinates,
+% Z corresponds to the third-dimension coordinates,
+[ X,  Y,  Z] = meshgrid(y,x,z); 
+[Xq, Yq, Zq] = meshgrid(yq,xq,zq);
 
 % get GridScalingFactor
 gridScale = double(doseInfo.DoseGridScaling);
@@ -76,7 +80,7 @@ gridScale = double(doseInfo.DoseGridScaling);
 dose.cube = gridScale * dose.cube;
 
 % interpolation to ct grid - cube is now stored in Y X Z
-dose.cube = interp3(Y,X,Z,dose.cube,Yq,Xq,Zq,'linear',0);
+dose.cube = interp3(X,Y,Z,dose.cube,Xq,Yq,Zq,'linear',0);
 
 % write new parameters
 dose.resolution = ct.resolution;

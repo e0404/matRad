@@ -41,7 +41,7 @@ switch env
     case 'MATLAB'
         y = interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal);
     case 'OCTAVE'
-        [xqMesh,yqMesh,zqMesh] = meshgrid(xq,yq,zq);
+        [xqMesh,yqMesh,zqMesh] = meshgrid(yq,xq,zq);
         y = interp3(xi,yi,zi,x,xqMesh,yqMesh,zqMesh,mode,extrapVal);
 end
 

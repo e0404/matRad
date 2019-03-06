@@ -66,14 +66,18 @@ else
     zq = coordsOfFirstPixel(3,1):resolution.z: coordsOfFirstPixel(3,end);
 end
 
-% set up grid matrices - implicit dimension permuation (X Y Z-> Y X Z)
-% Matlab represents internally in the first matrix dimension the
-% ordinate axis and in the second matrix dimension the abscissas axis
-[ Y,  X,  Z] = meshgrid(x,y,z);
-[Yq, Xq, Zq] = meshgrid(xq,yq,zq);
+%% set up grid matrices - implicit dimension permuation (Y X Z-> X Y Z)
+% [X,Y,Z] = MESHGRID(xgv,ygv,zgv) replicates the grid vectors xgv, ygv, zgv 
+% to produce the coordinates of a 3D rectangular grid (X, Y, Z). 
+% (X,Y,Z) are of size numel(ygv)-by-numel(xgv)-by(numel(zgv).
+% X corresponds to the second-dimension coordinates,
+% Y corresponds to the first-dimension coordinates,
+% Z corresponds to the third-dimension coordinates,
+[ X,  Y,  Z] = meshgrid(y,x,z); 
+[Xq, Yq, Zq] = meshgrid(yq,xq,zq);
 
 % interpolate cube - cube is now stored in Y X Z 
-interpCt.cubeIV{1} = interp3(Y,X,Z,double(origCt),Yq,Xq,Zq);
+interpCt.cubeIV{1} = interp3(X,Y,Z,double(origCt),Xq,Yq,Zq);
 
 % some meta information
 interpCt.resolution = resolution;
