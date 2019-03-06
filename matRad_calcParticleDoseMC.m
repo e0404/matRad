@@ -77,7 +77,7 @@ if ~calcDoseDirect && exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3
         
         currFolder = pwd;
         
-        if exist ("OCTAVE_VERSION", "builtin")
+        if exist ('OCTAVE_VERSION', 'builtin')
           ccName = eval('mkoctfile -p CXX');
         else
           myCCompiler = mex.getCompilerConfigurations('C','Selected');
@@ -100,7 +100,7 @@ if ~calcDoseDirect && exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3
         %For Octave, the flags will be set in the environment, while they
         %will be parsed as string arguments in MATLAB
         for flag = 1:size(flags,1)
-            if exist ("OCTAVE_VERSION", "builtin")
+            if exist ('OCTAVE_VERSION', 'builtin')
                 setenv(flags{flag,1},flags{flag,2});
             else
                 flagstring = [flagstring flags{flag,1} '="' flags{flag,2} '" '];
@@ -147,16 +147,22 @@ if ~isfield(pln,'propDoseCalc') || ...
     dij.doseGrid.resolution.y = 2.5; % [mm]
     dij.doseGrid.resolution.z = 2.5;   % [mm]
 else
+    
+    % check if using isotropic dose grid resolution in x and y direction
+    if pln.propDoseCalc.doseGrid.resolution.x ~= pln.propDoseCalc.doseGrid.resolution.y
+        pln.propDoseCalc.doseGrid.resolution.x = mean([pln.propDoseCalc.doseGrid.resolution.x ...
+                                                       pln.propDoseCalc.doseGrid.resolution.y]);
+        pln.propDoseCalc.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.x;
+        warning(['Anisotropic resolution for dose calculation with MCsquare not possible\nUsing x = y = ' ...
+            num2str(pln.propDoseCalc.doseGrid.resolution.x) 'mm']);
+    end
+
     % take values from pln strcut
     dij.doseGrid.resolution.x = pln.propDoseCalc.doseGrid.resolution.x;
     dij.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.y;
     dij.doseGrid.resolution.z = pln.propDoseCalc.doseGrid.resolution.z;
 end
 
-% check if using isotropic dose grid resolution in x and y direction
-if dij.doseGrid.resolution.x ~= dij.doseGrid.resolution.y
-    error('Anisotropic resolution in x and y direction');
-end
 
 dij.doseGrid.x = ct.x(1):dij.doseGrid.resolution.x:ct.x(end);
 dij.doseGrid.y = ct.y(1):dij.doseGrid.resolution.y:ct.y(end);
