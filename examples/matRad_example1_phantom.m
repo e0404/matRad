@@ -58,7 +58,8 @@ cst{ixOAR,5}.betaX       = 0.0500;
 cst{ixOAR,5}.Priority    = 2;
 cst{ixOAR,5}.Visible     = 1;
 
-cst{ixOAR,6}{1} = DoseObjectives.matRad_SquaredOverdosing(10,30);
+% define objective as struct for compatibility with GNU Octave I/O
+cst{ixOAR,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(10,30));
 
 cst{ixPTV,5}.TissueClass = 1;
 cst{ixPTV,5}.alphaX      = 0.1000;
@@ -66,7 +67,8 @@ cst{ixPTV,5}.betaX       = 0.0500;
 cst{ixPTV,5}.Priority    = 1;
 cst{ixPTV,5}.Visible     = 1;
 
-cst{ixPTV,6}{1} = DoseObjectives.matRad_SquaredOverdosing(10,30);
+% define objective as struct for compatibility with GNU Octave I/O
+cst{ixPTV,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(10,30));
 
 %% Lets create either a cubic or a spheric phantom
 
