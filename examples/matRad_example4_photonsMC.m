@@ -71,12 +71,7 @@ ixTarget     = cst{2,4}{1};
 doseInTarget = resultGUI.physicalDose(ixTarget);
 figure
 [env, ~] = matRad_getEnvironment();
-switch env
-     case 'MATLAB'
-          histogram(doseInTarget);
-     case 'OCTAVE'
-          hist(doseInTarget);
-end
+hist(doseInTarget);
 
  % use hist for compatibility with GNU Octave
 title('dose in target'),xlabel('[Gy]'),ylabel('#');
