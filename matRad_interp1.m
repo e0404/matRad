@@ -33,8 +33,6 @@ function y = matRad_interp1(xi,yi,x)
 persistent isGriddedInterpolantAvailable;
 
 if isempty(isGriddedInterpolantAvailable)
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir,'tools'))
     [env, ~] = matRad_getEnvironment();
     switch env
         case 'MATLAB'

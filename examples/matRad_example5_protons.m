@@ -150,9 +150,6 @@ figure,plot(profileOrginal,'LineWidth',2),grid on,hold on,
 % indicates a successful test and a value greater than 1 illustrates a 
 % failed test.
 
-% add tools subdirectory
-addpath([fileparts(fileparts(mfilename('fullpath'))) filesep 'tools']);
-
 doseDifference  = 2;
 distToAgreement = 2;
 n               = 1;

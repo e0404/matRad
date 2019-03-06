@@ -39,10 +39,6 @@ function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContour
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if ~isdeployed
-    addpath([fileparts(fileparts(mfilename('fullpath'))) filesep 'tools']);
-end
-
 [env, ~] = matRad_getEnvironment();
 
 %% manage optional arguments

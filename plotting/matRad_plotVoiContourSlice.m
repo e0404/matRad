@@ -36,10 +36,6 @@ function [voiContourHandles] = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIn
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if ~isdeployed
-    addpath([fileparts(fileparts(mfilename('fullpath'))) filesep 'tools']);
-end
-
 [env, ~] = matRad_getEnvironment();
 
 % overwrite colormap

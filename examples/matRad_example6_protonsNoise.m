@@ -120,9 +120,6 @@ figure,plot(profileOrginal,'LineWidth',2),grid on,hold on,
 %% Quantitative Comparison of results
 % Compare the two dose cubes using a gamma-index analysis.
 
-% add tools subdirectory
-addpath([fileparts(fileparts(mfilename('fullpath'))) filesep 'tools']);
-
 doseDifference   = 2;
 distToAgreement  = 2;
 n                = 1;
