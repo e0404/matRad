@@ -27,6 +27,7 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
     %These should be abstract methods, however Octave can't parse them. As soon
     %as Octave is able to do this, they should be made abstract again
     methods %(Abstract)
+       
         %returns the objective function value for the given dose vector. Needs to be implemented in sub-classes.
         function fDose       = computeDoseObjectiveFunction(obj,dose)
             error('Function needs to be implemented!');
@@ -37,6 +38,17 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
         function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
             error('Function needs to be implemented!');
         end
+         
+    end
+    
+    methods (Access = public)
+       
+       % default constructor
+        function obj = matRad_DoseObjective(inputArg)
+            if isempty(inputArg)
+             % do nothing
+            end
+        end
         
         %Overloads the struct function to add Objective related information
         %to output struct
@@ -44,6 +56,6 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
             s = struct@matRad_DoseOptimizationFunction(obj);
             s.penalty = obj.penalty;
         end
-    end
+    end 
 end
 
