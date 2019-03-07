@@ -1907,7 +1907,7 @@ end
 
 set(handles.uiTable,'ColumnName',columnname);
 set(handles.uiTable,'ColumnFormat',columnformat);
-set(handles.uiTable,'ColumnEditable',[true true false true true true true true true true]);
+set(handles.uiTable,'ColumnEditable',[true false false true true true true true true false]);
 set(handles.uiTable,'Data',data);
 
 
@@ -2150,6 +2150,11 @@ if ~strcmp(eventdata.NewData,eventdata.PreviousData)
          if eventdata.Indices(2) ~= 3
              thisIx = find(cellfun(@(x) strcmp(data(eventdata.Indices(1),1),x),cst(:,2)));
              data{eventdata.Indices(1),3} = cst{thisIx,5}.Priority;
+         end
+         
+         if eventdata.Indices(2) ~= 2
+             thisIx = find(cellfun(@(x) strcmp(data(eventdata.Indices(1),1),x),cst(:,2)));
+             data{eventdata.Indices(1),2} = cst{thisIx,3};
          end
         
         
