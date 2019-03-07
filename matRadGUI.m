@@ -1552,9 +1552,10 @@ try
         oldNames = fieldnames(resultGUI);
         if(length(oldNames) > length(sNames))
             for j = 1:length(oldNames)
-            if strfind(oldNames{j}, 'beam')
-                resultGUI = rmfield(resultGUI, oldNames{j});
-            end
+                %Remove the beam cubes
+                if regexp(oldNames{j},'(.+)_beam(\d+)') %strfind(oldNames{j}, 'beam')
+                    resultGUI = rmfield(resultGUI, oldNames{j});
+                end
             end
         end
         for j = 1:length(sNames)
