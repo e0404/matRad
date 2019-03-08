@@ -27,7 +27,7 @@ xDim = 200;
 yDim = 200;
 zDim = 50;
 
-ct.cubeDim      = [xDim yDim zDim];
+ct.cubeDim      = [yDim xDim zDim]; % second cube dimension represents the x-coordinate
 ct.resolution.x = 2;
 ct.resolution.y = 2;
 ct.resolution.z = 3;
@@ -91,7 +91,7 @@ switch TYPE
       for x = xLowOAR:1:xHighOAR
          for y = yLowOAR:1:yHighOAR
             for z = zLowOAR:1:zHighOAR
-               cubeHelper(x,y,z) = 1;
+               cubeHelper(y,x,z) = 1;
             end
          end
       end
@@ -103,9 +103,9 @@ switch TYPE
       for x = 1:xDim
          for y = 1:yDim
             for z = 1:zDim
-               currPost = [x y z] - round([ct.cubeDim./2]);
+               currPost = [y x z] - round([ct.cubeDim./2]);
                if  sqrt(sum(currPost.^2)) < radiusOAR
-                  cubeHelper(x,y,z) = 1;
+                  cubeHelper(y,x,z) = 1;
                end
             end
          end
@@ -136,7 +136,7 @@ switch TYPE
       for x = xLowPTV:1:xHighPTV
          for y = yLowPTV:1:yHighPTV
             for z = zLowPTV:1:zHighPTV
-               cubeHelper(x,y,z) = 1;
+               cubeHelper(y,x,z) = 1;
             end
          end
       end
@@ -150,7 +150,7 @@ switch TYPE
             for z = 1:zDim
                currPost = [x y z] - round([ct.cubeDim./2]);
                if  sqrt(sum(currPost.^2)) < radiusPTV
-                  cubeHelper(x,y,z) = 1;
+                  cubeHelper(y,x,z) = 1;
                end
             end
          end
