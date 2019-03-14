@@ -24,7 +24,7 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
     
     methods
         function obj = matRad_OptimizerFmincon
-            %matRad_OptimizerFmincon Construct an instance of this class
+            %matRad_OptimizerFmincon Construct an instance of this class            
             
             obj.wResult = [];
             obj.resultInfo = [];
@@ -126,6 +126,13 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
                 statusmsg = 'No Last Optimizer Status Available!';
                 statusflag = -1;
             end
+        end
+    end
+    
+    methods (Static)    
+        function available = IsAvailable(obj)
+            %'fmincon' is a p-code file in the optimization toolbox
+            available = exist('fmincon') == 6;
         end
     end
 end

@@ -34,5 +34,11 @@ classdef (Abstract) matRad_Optimizer < handle
           error('Function needs to be implemented!');
         end
     end
+    
+    methods (Static)
+        function available = IsAvailable(obj)
+          error('Function needs to be implemented!');
+        end
+    end
 end
 

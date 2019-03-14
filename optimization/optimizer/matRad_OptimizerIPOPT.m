@@ -258,7 +258,15 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         
         function abortCallbackButton(obj,~,~,~)
             obj.abortRequested = true;
-        end       
-        
+        end        
+    end
+    
+    methods (Static)
+        function available = IsAvailable(obj)
+            type = exist('ipopt');
+            
+            %3 means mex file
+            available = type == 3;                        
+        end
     end
 end
