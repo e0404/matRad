@@ -289,6 +289,11 @@ if pln.bioParam.bioOpt
          
       end
       
+   else
+      % parametrized biological models are based on the LET
+      if ~isfield(machine.data,'LET')
+         matRad_dispToConsole('base data is incomplement - LET is missing',param,'error');
+      end
    end %  end is LEM model
    
 end
