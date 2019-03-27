@@ -209,11 +209,11 @@ if isfield(pln,'propDoseCalc') && ...
       letDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
       
       for ctScen = 1:pln.multScen.numOfCtScen
-         for shiftScen = 1:pln.multScen.numOfShiftScen
-            for rangeShiftScen = 1:pln.multScen.numOfRangeShiftScen
+         for shiftScen = 1:pln.multScen.totNumShiftScen
+            for rangeShiftScen = 1:pln.multScen.totNumRangeScen
                
                if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
-                  dij.mLETDose{ctScen,shiftScen,rangeShiftScen} = spalloc(dij.doseGrid.dimensions,numOfColumnsDij,1);
+                  dij.mLETDose{ctScen,shiftScen,rangeShiftScen} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
                end
                
             end
@@ -524,7 +524,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                            bixelLET = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths);
                            bixelLET(isnan(bixelLET)) = 0;
                            % save LET for every bixel in cell array
-                           letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelLET.*bixelDose,ddij.doseGrid.numOfVoxels,1);
+                           letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelLET.*bixelDose,dij.doseGrid.numOfVoxels,1);
                         end
                         
                         % save alpha_p and beta_p radiosensititvy parameter for every bixel in cell array

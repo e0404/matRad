@@ -43,7 +43,7 @@ pln.machine       = 'Generic';
 % for particles it is possible to also calculate the LET disutribution
 % alongside the physical dose. Therefore you need to activate the
 % corresponding option during dose calculcation
-pln.propDoseCalc.calcLET = 0;
+pln.propDoseCalc.calcLET = true;
                                        
 %%
 % Now we have to set the remaining plan parameters.
