@@ -49,11 +49,10 @@ classdef (Abstract) matRad_DoseConstraint < matRad_DoseOptimizationFunction
 
     methods (Access = public)
        
-        % default constructor
+        % default constructor of matRad_DoseConstraint
         function obj = matRad_DoseConstraint(inputArg)
-            if isempty(inputArg)
-            % do nothing
-            end
+            % superclass constructor is already called when this is line is reached
+            % additional matRad_DoseConstraint constructor specific code goes here
         end
         
         function jStruct = getDoseConstraintJacobianStructure(obj,n)
