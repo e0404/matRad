@@ -22,15 +22,7 @@
 
 		ga('create', 'UA-64247123-1', 'auto');
 
-		/* If the browser_id hasn't already been set... */
-		if (document.cookie.indexOf('browser_uuid_set=1') == -1) {
-			
-			/* Generate a UUID, and assign it to the browser_id custom dimension */
-			ga('set', 'dimension1', uuid.v4());
-			
-			/* Set a cookie so we won't override the UUID we just set */
-			document.cookie = 'browser_uuid_set=1; expires=Fri, 01 Jan 2100 12:00:00 UTC; domain=.github.io; path=/';
-		}
+		ga('set', 'userId', 'USER_ID'); // Set the user ID using signed-in user_id.
 
 		/* Assign a timestamp to the utc_millisecs custom dimension */
 		ga('set', 'dimension2', new Date().getTime());
