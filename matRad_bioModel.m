@@ -59,7 +59,7 @@ classdef matRad_bioModel
     
     % constant public properties which are visible outside of this class
     properties(Constant = true)
-        AvailableModels                 = {'none','constRBE','MCN','WED','LEM'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
+        AvailableModels                 = {'none','constRBE','MCN','WED','LEM','HEL'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
         AvailableradiationModealities   = {'photons','protons','helium','carbon'};
         AvailableQuantitiesForOpt       = {'physicalDose','effect','RBExD'};
         
@@ -104,6 +104,11 @@ classdef matRad_bioModel
         p_corrFacEntranceRBE = 0.5;   %[kev/mum]
         p_upperLETThreshold  = 30;    %[kev/mum]
         P_lowerLETThreshold  = 0.3;   %[kev/mum]
+        
+        % data driven parametrization of helium ions https://iopscience.iop.org/article/10.1088/0031-9155/61/2/888 
+        p0_HEL = 1.36938e-1;   % values refer to the quadratic exponential fit f_QE
+        p1_HEL = 9.73154e-3;
+        p2_HEL = 1.51998e-2;
         
     end
     
@@ -224,13 +229,13 @@ classdef matRad_bioModel
                                 end
                                 
                             case {'effect','RBExD'}
-                                if strcmp(this.model,'LEM')
+                                if sum(strcmp(this.model,{'LEM','HEL'})) > 0
                                     boolCHECK           = true;
                                     this.bioOpt         = true;
                                     this.quantityVis    = 'RBExD';
                                 else
-                                    matRad_dispToConsole(['matRad: Invalid biological Model: ' this.model  '; using Local Effect Model instead. \n'],[],'warning');
-                                    this.model = 'LEM';
+                                    matRad_dispToConsole(['matRad: Invalid biological Model: ' this.model  '; using "none" instead. \n'],[],'warning');
+                                    this.model = 'none';
                                 end
                                 
                             otherwise
@@ -380,69 +385,96 @@ classdef matRad_bioModel
             depths = baseDataEntry.depths + baseDataEntry.offset;
             
             switch [this.radiationMode '_' this.model]
-                
-                case {'protons_constRBE'}
-                    
-                case {'protons_LSM'}
-                    
-                    bixelLET = matRad_interp1(depths,baseDataEntry.LET,vRadDepths);
-                    bixelLET(isnan(bixelLET)) = 0;
-                    
-                    ix                 = this.p_lowerLETThreshold < bixelLET < this.p_upperLETThreshold;
-                    
-                    alpha_0            = vAlpha_x - (this.p_lamda_1_1 * this.p_corrFacEntranceRBE);
-                    bixelAlpha(ixLSM)  = alpha_0(ix) + this.p_lamda_1_1 * bixelLET;
-                    
-                    if sum(ix) < length(bixelLET)
-                        bixelAlpha(bixelLET > pln.bioParam.lowerLETThreshold) =  alpha_0(bixelLET > this.p_upperLETThreshold) + this.p_lamda_1_1 * this.p_upperLETThreshold;
-                        bixelAlpha(bixelLET < pln.bioParam.lowerLETThreshold) =  alpha_0(bixelLET < this.p_lowerLETThreshold) + this.p_lamda_1_1 * this.p_lowerLETThreshold;
-                    end
-                    
-                    bixelBeta        = vBeta_x;
-                    
-                    % TODO: assign normal tissue an RBE of 1.1
-                    
-                case {'protons_MCN'}
-                    
-                    
-                    bixelLET = matRad_interp1(depths,baseDataEntry.LET,vRadDepths);
-                    bixelLET(isnan(bixelLET)) = 0;
-                    
-                    RBEmax     = this.p0_MCN + ((this.p1_MCN * bixelLET )./ vABratio);
-                    RBEmin     = this.p2_MCN + (this.p3_MCN  * sqrt(vABratio) .* bixelLET);
-                    bixelAlpha = RBEmax    .* vAlpha_x;
-                    bixelBeta  = RBEmin.^2 .* vBeta_x;
-                    
-                case {'protons_WED'}
-                    
-                    bixelLET = matRad_interp1(depths,baseDataEntry.LET,vRadDepths);
-                    bixelLET(isnan(bixelLET)) = 0;
-                    
-                    RBEmax     = this.p0_WED + ((this.p1_WED * bixelLET )./ vABratio);
-                    RBEmin     = this.p2_WED;
-                    bixelAlpha = RBEmax    .* vAlpha_x;
-                    bixelBeta  = RBEmin.^2 .* vBeta_x;
-                    
-                case {'carbon_LEM','helium_LEM'}
-                    
-                    numOfTissueClass = size(baseDataEntry(1).alpha,2);
-                    
-                    for i = 1:numOfTissueClass
-                        bixelAlpha(mTissueClass==i) = matRad_interp1(depths,baseDataEntry.alpha(:,i),vRadDepths(mTissueClass==i));
-                        bixelBeta(mTissueClass==i)  = matRad_interp1(depths,baseDataEntry.beta(:,i), vRadDepths(mTissueClass==i));
-                    end
-                    
-                otherwise
-                    
+               
+               case {'protons_constRBE'}
+                  
+               case {'protons_LSM'}
+                  
+                  bixelLET = matRad_interp1(depths,baseDataEntry.LET,vRadDepths);
+                  bixelLET(isnan(bixelLET)) = 0;
+                  
+                  ix                 = this.p_lowerLETThreshold < bixelLET < this.p_upperLETThreshold;
+                  
+                  alpha_0            = vAlpha_x - (this.p_lamda_1_1 * this.p_corrFacEntranceRBE);
+                  bixelAlpha(ixLSM)  = alpha_0(ix) + this.p_lamda_1_1 * bixelLET;
+                  
+                  if sum(ix) < length(bixelLET)
+                     bixelAlpha(bixelLET > pln.bioParam.lowerLETThreshold) =  alpha_0(bixelLET > this.p_upperLETThreshold) + this.p_lamda_1_1 * this.p_upperLETThreshold;
+                     bixelAlpha(bixelLET < pln.bioParam.lowerLETThreshold) =  alpha_0(bixelLET < this.p_lowerLETThreshold) + this.p_lamda_1_1 * this.p_lowerLETThreshold;
+                  end
+                  
+                  bixelBeta        = vBeta_x;
+                  
+                  % TODO: assign normal tissue an RBE of 1.1
+                  
+               case {'protons_MCN'}
+                  
+                  
+                  bixelLET = matRad_interp1(depths,baseDataEntry.LET,vRadDepths);
+                  bixelLET(isnan(bixelLET)) = 0;
+                  
+                  RBEmax     = this.p0_MCN + ((this.p1_MCN * bixelLET )./ vABratio);
+                  RBEmin     = this.p2_MCN + (this.p3_MCN  * sqrt(vABratio) .* bixelLET);
+                  bixelAlpha = RBEmax    .* vAlpha_x;
+                  bixelBeta  = RBEmin.^2 .* vBeta_x;
+                  
+               case {'protons_WED'}
+                  
+                  bixelLET = matRad_interp1(depths,baseDataEntry.LET,vRadDepths);
+                  bixelLET(isnan(bixelLET)) = 0;
+                  
+                  RBEmax     = this.p0_WED + ((this.p1_WED * bixelLET )./ vABratio);
+                  RBEmin     = this.p2_WED;
+                  bixelAlpha = RBEmax    .* vAlpha_x;
+                  bixelBeta  = RBEmin.^2 .* vBeta_x;
+                  
+               case {'helium_HEL'}
+                  
+                  % data-driven RBE parametrization of helium ions
+                  % https://iopscience.iop.org/article/10.1088/0031-9155/61/2/888
+                  
+                  bixelLET = matRad_interp1(depths,baseDataEntry.LET,vRadDepths);
+                  bixelLET(isnan(bixelLET)) = 0;
+                  
+                  % quadratic fit
+                  %f_Q      = 8.53959e-4 .* bixelLET.^2;
+                  %RBEmax_Q = 1 + 2.145e-1  + vABratio.^-1 .* f_Q;
+                  % linear quadratic fit
+                  %f_LQ      = 2.91783e-1*bixelLET - 9.525e-4*bixelLET.^2;
+                  %RBEmax_LQ = 1 + ((1.42057e-1 + (vABratio.^-1)) .* f_LQ);
+                  % linear exponential fit
+                  %f_LE      = (2.965e-1 * bixelLET) .* exp(-4.90821e-3 * bixelLET);
+                  %RBEmax_LE = 1 + ((1.5384e-1  + (vABratio.^-1)) .* f_LE);
+                  
+                  % quadratic exponential fit
+                  f_QE      = (this.p1_HEL * bixelLET.^2) .* exp(-this.p2_HEL * bixelLET);
+                  RBEmax_QE = 1 + ((this.p0_HEL  + (vABratio.^-1)) .* f_QE);
+
+                  % the linear quadratic fit yielded the best fitting result
+                  RBEmax = RBEmax_QE;
+                  
+                  RBEmin = 1; % no gain in using fitted parameters over a constant value of 1
+                  
+                  bixelAlpha = RBEmax    .* vAlpha_x;
+                  bixelBeta  = RBEmin.^2 .* vBeta_x;
+                  
+               case {'carbon_LEM','helium_LEM'}
+                  
+                  numOfTissueClass = size(baseDataEntry(1).alpha,2);
+                  
+                  for i = 1:numOfTissueClass
+                     bixelAlpha(mTissueClass==i) = matRad_interp1(depths,baseDataEntry.alpha(:,i),vRadDepths(mTissueClass==i));
+                     bixelBeta(mTissueClass==i)  = matRad_interp1(depths,baseDataEntry.beta(:,i), vRadDepths(mTissueClass==i));
+                  end
+                  
+               otherwise
+                  
             end
             
         end
         
         
-        
-        
-        
-        
+
     end % end public methods
     
     
