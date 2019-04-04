@@ -22,6 +22,11 @@
 
 		ga('create', 'UA-64247123-1', 'auto');
 
+		/* Set some random user id */
+		ga('set', 'dimension1', uuid.v4());
+		/* Assign a timestamp to the utc_millisecs custom dimension */
+		ga('set', 'dimension2', new Date().getTime());
+
 		/* Send a pageview */
 		ga('send', 'pageview');
 	</script>
