@@ -48,6 +48,13 @@ classdef (Abstract) matRad_DoseConstraint < matRad_DoseOptimizationFunction
     end
 
     methods (Access = public)
+       
+        % default constructor of matRad_DoseConstraint
+        function obj = matRad_DoseConstraint(inputArg)
+            % superclass constructor is already called when this is line is reached
+            % additional matRad_DoseConstraint constructor specific code goes here
+        end
+        
         function jStruct = getDoseConstraintJacobianStructure(obj,n)
         %return the structure of the (dose-dependent) constraint function 
         %jacobian for a given length n of the dose vector. Returns a
