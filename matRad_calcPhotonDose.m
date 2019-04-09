@@ -56,7 +56,7 @@ figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 set(figureWait,'pointer','watch');
 
 % set lateral cutoff value
-lateralCutoff = 50; % [mm]
+lateralCutoff = 250; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
