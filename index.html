@@ -20,10 +20,17 @@
 		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
 		})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
+		/* a custom function to generate random int as user id */
+		function getRandomInt(max) {
+			return Math.floor(Math.random() * Math.floor(max));
+		}
+		
 		ga('create', 'UA-64247123-1', 'auto');
-
+		
+		// debug info: console.log(new Date().getTime());
+		
 		/* Set some random user id */
-		ga('set', 'dimension1', uuid.v4());
+		ga('set', 'dimension1', getRandomInt(121212121212));
 		/* Assign a timestamp to the utc_millisecs custom dimension */
 		ga('set', 'dimension2', new Date().getTime());
 
@@ -110,14 +117,13 @@
 <p>You will receive a copy of the GPL v3  and a copy of the EPL v1.0 in the file LICENSES.txt along with the compilation. If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a> and/or <a href="http://opensource.org/licenses/EPL-1.0/">http://opensource.org/licenses/EPL-1.0/</a>.</p>
       </section>
       <footer>
-
 	<p><a href="https://travis-ci.org/e0404/matRad"><img src="https://travis-ci.org/e0404/matRad.svg?branch=master" alt="DKFZ_Logo" border="0" ></a></p>
         <p>This project is maintained by <a href="https://github.com/e0404">e0404</a></p>
 	<p><a href="http://www.dkfz.de/en/medphys/optimization_algorithms/optimization_algorithms.html"><img src="images/DKFZ_Logo.svg" width="210" 	alt="DKFZ_Logo" border="0" ></a></p>
 	<p> Find out more in our <a href="https://github.com/e0404/matRad/wiki">Wiki</a></p>
         <p>Get in contact via <a href="mailto:contact@matrad.org">contact@matrad.org</a></p>
-    </div>
     <script src="javascripts/scale.fix.js"></script>
-    
+	  </footer>
+	  </div>
   </body>
 </html>
