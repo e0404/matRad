@@ -122,13 +122,11 @@
 												}
           gotoMap.onclick         = function() {
 													timeTag = new Date().getTime()
-													ga('set', 'dimension1', randId);
-													ga('set', 'dimension2', timeTag);
-													ga('set', 'dimension3', 'gotoMap')
+													ga('send', 'pageview', {'dimension1': randId, 'dimension2': timeTag, 'dimension3': 'gotoMap'});
 													console.log("time = " + timeTag/60000 + "h");
 													console.log("Random user ID = " + randId);
 													console.log("gotoMap");
-													return true;
+													return false;
 												}
           gotoWiki.onclick        = function() {
 													timeTag = new Date().getTime()
