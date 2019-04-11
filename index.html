@@ -20,22 +20,30 @@
 		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
 		})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
+		ga('create', 'UA-64247123-1', 'auto');
+
 		/* a custom function to generate random int as user id */
 		function getRandomInt(max) {
 			return Math.floor(Math.random() * Math.floor(max));
 		}
 		
-		ga('create', 'UA-64247123-1', 'auto');
-		
 		// debug info: 
 		
-		timeTag = new Date().getTime()
-		randId = getRandomInt(121212121212)
+		timeTag = new Date().getTime();
+		currClient = 12; //getRandomInt(121212121212)
 		console.log("time = " + timeTag/60000 + "h");
-		console.log("Random user ID = " + randId);
+		console.log("Random user ID = " + currClient);
+		
+		ga(function(tracker) {
+			tracker.set('dimension1',tracker.get('clientId'))
+		});
+		
+		ga(function(tracker) {
+			console.log(tracker.get('clientId'));
+		});
 		
 		/* Set some random user id */
-		ga('set', 'dimension1', randId);
+//		ga('set', 'dimension1', currClient);
 		
 		/* Assign a timestamp to the utc_millisecs custom dimension */
 		ga('set', 'dimension2', timeTag);
@@ -71,25 +79,25 @@
 
           pdfoverview.onclick     = function() {
 													timeTag = new Date().getTime()
-													ga('send', 'pageview', {'dimension1': randId, 'dimension2': timeTag, 'dimension3': 'pdfoverview'});
+													ga('send', 'pageview', {'dimension1': currClient, 'dimension2': timeTag, 'dimension3': 'pdfoverview'});
 													console.log("time = " + timeTag/60000 + "h");
-													console.log("Random user ID = " + randId);
+													console.log("Random user ID = " + currClient);
 													console.log("pdfoverview");
 													return true;
 												}
           downloadZipball.onclick = function() {
 													timeTag = new Date().getTime()
-													ga('send', 'pageview', {'dimension1': randId, 'dimension2': timeTag, 'dimension3': 'downloadZipball'});
+													ga('send', 'pageview', {'dimension1': currClient, 'dimension2': timeTag, 'dimension3': 'downloadZipball'});
 													console.log("time = " + timeTag/60000 + "h");
-													console.log("Random user ID = " + randId);
+													console.log("Random user ID = " + currClient);
 													console.log("downloadZipball");
 													return true;
 												}
           downloadTarball.onclick = function() {
 													timeTag = new Date().getTime()
-													ga('send', 'pageview', {'dimension1': randId, 'dimension2': timeTag, 'dimension3': 'downloadTarball'});
+													ga('send', 'pageview', {'dimension1': currClient, 'dimension2': timeTag, 'dimension3': 'downloadTarball'});
 													console.log("time = " + timeTag/60000 + "h");
-													console.log("Random user ID = " + randId);
+													console.log("Random user ID = " + currClient);
 													console.log("downloadTarball");
 													return true;
 												}
@@ -97,87 +105,87 @@
 													/* xxx this does not trigger */
 													timeTag = new Date().getTime()
 													console.log("time = " + timeTag/60000 + "h");
-													console.log("Random user ID = " + randId);
+													console.log("Random user ID = " + currClient);
 													console.log("brownbagYoutube");
 													return true;
 												}
           gotoGithub.onclick      = function() {
 													timeTag = new Date().getTime()
-													ga('send', 'pageview', {'dimension1': randId, 'dimension2': timeTag, 'dimension3': 'gotoGithub'});
+													ga('send', 'pageview', {'dimension1': currClient, 'dimension2': timeTag, 'dimension3': 'gotoGithub'});
 													console.log("time = " + timeTag/60000 + "h");
-													console.log("Random user ID = " + randId);
+													console.log("Random user ID = " + currClient);
 													console.log("gotoGithub");
 													return true;
 												}
           gotoMap.onclick         = function() {
 													timeTag = new Date().getTime()
-													ga('send', 'pageview', {'dimension1': randId, 'dimension2': timeTag, 'dimension3': 'gotoMap'});
+													ga('send', 'pageview', {'dimension1': currClient, 'dimension2': timeTag, 'dimension3': 'gotoMap'});
 													console.log("time = " + timeTag/60000 + "h");
-													console.log("Random user ID = " + randId);
+													console.log("Random user ID = " + currClient);
 													console.log("gotoMap");
 													return true;
 												}
           gotoWiki.onclick        = function() {
 													timeTag = new Date().getTime()
-													ga('send', 'pageview', {'dimension1': randId, 'dimension2': timeTag, 'dimension3': 'gotoWiki'});
+													ga('send', 'pageview', {'dimension1': currClient, 'dimension2': timeTag, 'dimension3': 'gotoWiki'});
 													console.log("time = " + timeTag/60000 + "h");
-													console.log("Random user ID = " + randId);
+													console.log("Random user ID = " + currClient);
 													console.log("gotoWiki");
 													return true;
 												}
           gotoMatlab.onclick      = function() {
 													timeTag = new Date().getTime()
-													ga('send', 'pageview', {'dimension1': randId, 'dimension2': timeTag, 'dimension3': 'gotoMatlab'});
+													ga('send', 'pageview', {'dimension1': currClient, 'dimension2': timeTag, 'dimension3': 'gotoMatlab'});
 													console.log("time = " + timeTag/60000 + "h");
-													console.log("Random user ID = " + randId);
+													console.log("Random user ID = " + currClient);
 													console.log("gotoMatlab");
 													return true;
 												}
           gotoDKFZ.onclick        = function() {
 													timeTag = new Date().getTime()
-													ga('send', 'pageview', {'dimension1': randId, 'dimension2': timeTag, 'dimension3': 'gotoDKFZ'});
+													ga('send', 'pageview', {'dimension1': currClient, 'dimension2': timeTag, 'dimension3': 'gotoDKFZ'});
 													console.log("time = " + timeTag/60000 + "h");
-													console.log("Random user ID = " + randId);
+													console.log("Random user ID = " + currClient);
 													console.log("gotoDKFZ");
 													return true;
 												}
           gotoE0404.onclick       = function() {
 													timeTag = new Date().getTime()
-													ga('send', 'pageview', {'dimension1': randId, 'dimension2': timeTag, 'dimension3': 'gotoE0404'});
+													ga('send', 'pageview', {'dimension1': currClient, 'dimension2': timeTag, 'dimension3': 'gotoE0404'});
 													console.log("time = " + timeTag/60000 + "h");
-													console.log("Random user ID = " + randId);
+													console.log("Random user ID = " + currClient);
 													console.log("gotoE0404");
 													return true;
 												}
           gotoAuthorlist.onclick  = function() {
 													timeTag = new Date().getTime()
-													ga('send', 'pageview', {'dimension1': randId, 'dimension2': timeTag, 'dimension3': 'gotoAuthorlist'});
+													ga('send', 'pageview', {'dimension1': currClient, 'dimension2': timeTag, 'dimension3': 'gotoAuthorlist'});
 													console.log("time = " + timeTag/60000 + "h");
-													console.log("Random user ID = " + randId);
+													console.log("Random user ID = " + currClient);
 													console.log("gotoAuthorlist");
 													return true;
 												}
           gotoLicense.onclick     = function() {
 													timeTag = new Date().getTime()
-													ga('send', 'pageview', {'dimension1': randId, 'dimension2': timeTag, 'dimension3': 'gotoLicense'});
+													ga('send', 'pageview', {'dimension1': currClient, 'dimension2': timeTag, 'dimension3': 'gotoLicense'});
 													console.log("time = " + timeTag/60000 + "h");
-													console.log("Random user ID = " + randId);
+													console.log("Random user ID = " + currClient);
 													console.log("gotoLicense");
 													return true;
 												}
           gotoIpopt.onclick       = function() {
 													timeTag = new Date().getTime()
-													ga('send', 'pageview', {'dimension1': randId, 'dimension2': timeTag, 'dimension3': 'gotoIpopt'});
+													ga('send', 'pageview', {'dimension1': currClient, 'dimension2': timeTag, 'dimension3': 'gotoIpopt'});
 													console.log("time = " + timeTag/60000 + "h");
-													console.log("Random user ID = " + randId);
+													console.log("Random user ID = " + currClient);
 													console.log("gotoIpopt");
 													return true;
 												}
           writeEmail.onclick      = function() {
 													timeTag = new Date().getTime()
-													ga('send', 'pageview', {'dimension1': randId, 'dimension2': timeTag, 'dimension3': 'writeEmail'});
+													ga('send', 'pageview', {'dimension1': currClient, 'dimension2': timeTag, 'dimension3': 'writeEmail'});
 													console.log("time = " + timeTag/60000 + "h");
-													console.log("Random user ID = " + randId);
+													console.log("Random user ID = " + currClient);
 													console.log("writeEmail");
 													return true;
 												}
