@@ -202,9 +202,7 @@
 												}
           writeEmail.onclick      = function() {
 													timeTag = new Date().getTime()
-													ga('set', 'dimension1', randId);
-													ga('set', 'dimension2', timeTag);
-													ga('set', 'dimension3', 'writeEmail')
+													ga('send', 'pageview', {'dimension1': randId, 'dimension2': timeTag, 'dimension3': 'writeEmail'});
 													console.log("time = " + timeTag/60000 + "h");
 													console.log("Random user ID = " + randId);
 													console.log("writeEmail");
