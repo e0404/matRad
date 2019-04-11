@@ -27,16 +27,192 @@
 		
 		ga('create', 'UA-64247123-1', 'auto');
 		
-		// debug info: console.log(new Date().getTime());
+		// debug info: 
+		
+		timeTag = new Date().getTime()
+		randId = getRandomInt(121212121212)
+		console.log("time = " + timeTag/60000 + "h");
+		console.log("Random user ID = " + randId);
 		
 		/* Set some random user id */
-		ga('set', 'dimension1', getRandomInt(121212121212));
+		ga('set', 'dimension1', randId);
+		
 		/* Assign a timestamp to the utc_millisecs custom dimension */
-		ga('set', 'dimension2', new Date().getTime());
+		ga('set', 'dimension2', timeTag);
 
+		/* identify action */
+		ga('set', ' dimension3','landing')
+		
 		/* Send a pageview */
 		ga('send', 'pageview');
-	</script>
+
+		console.log("ga init done");
+		
+		// implementation according to https://stackoverflow.com/questions/688196/how-to-use-a-link-to-call-javascript
+		// Wait for the page to load first
+        window.onload = function() {
+
+          //Get a reference to the link on the page
+          // with an id of "mylink"
+          var pdfoverview     = document.getElementById("pdfoverview");
+          var downloadZipball = document.getElementById("downloadZipball");
+          var downloadTarball = document.getElementById("downloadTarball");
+          var brownbagYoutube = document.getElementById("brownbagYoutube");
+          var gotoGithub      = document.getElementById("gotoGithub");
+          var gotoMap         = document.getElementById("gotoMap");
+	      var gotoWiki        = document.getElementById("gotoWiki");
+	      var gotoMatlab      = document.getElementById("gotoMatlab");
+		  var gotoDKFZ        = document.getElementById("gotoDKFZ");
+		  var gotoE0404       = document.getElementById("gotoE0404");
+		  var gotoAuthorlist  = document.getElementById("gotoAuthorlist");
+		  var gotoLicense     = document.getElementById("gotoLicense");
+		  var gotoIpopt       = document.getElementById("gotoIpopt");
+		  var writeEmail      = document.getElementById("writeEmail");
+
+          pdfoverview.onclick     = function() {
+													timeTag = new Date().getTime()
+													ga('set', 'dimension1', randId);
+													ga('set', 'dimension2', timeTag);
+													ga('set', 'dimension3', 'pdfoverview')
+													console.log("time = " + timeTag/60000 + "h");
+													console.log("Random user ID = " + randId);
+													console.log("pdfoverview");
+													return true;
+												}
+          downloadZipball.onclick = function() {
+													timeTag = new Date().getTime()
+													ga('set', 'dimension1', randId);
+													ga('set', 'dimension2', timeTag);
+													ga('set', 'dimension3', 'downloadZipball')
+													console.log("time = " + timeTag/60000 + "h");
+													console.log("Random user ID = " + randId);
+													console.log("downloadZipball");
+													return true;
+												}
+          downloadTarball.onclick = function() {
+													timeTag = new Date().getTime()
+													ga('set', 'dimension1', randId);
+													ga('set', 'dimension2', timeTag);
+													ga('set', 'dimension3', 'downloadTarball')
+													console.log("time = " + timeTag/60000 + "h");
+													console.log("Random user ID = " + randId);
+													console.log("downloadTarball");
+													return true;
+												}
+          brownbagYoutube.onclick = function() {
+													/* xxx this does not trigger */
+													timeTag = new Date().getTime()
+													ga('set', 'dimension1', randId);
+													ga('set', 'dimension2', timeTag);
+													ga('set', 'dimension3', 'brownbagYoutube')
+													console.log("time = " + timeTag/60000 + "h");
+													console.log("Random user ID = " + randId);
+													console.log("brownbagYoutube");
+													return true;
+												}
+          gotoGithub.onclick      = function() {
+													timeTag = new Date().getTime()
+													ga('set', 'dimension1', randId);
+													ga('set', 'dimension2', timeTag);
+													ga('set', 'dimension3', 'gotoGithub')
+													console.log("time = " + timeTag/60000 + "h");
+													console.log("Random user ID = " + randId);
+													console.log("gotoGithub");
+													return true;
+												}
+          gotoMap.onclick         = function() {
+													timeTag = new Date().getTime()
+													ga('set', 'dimension1', randId);
+													ga('set', 'dimension2', timeTag);
+													ga('set', 'dimension3', 'gotoMap')
+													console.log("time = " + timeTag/60000 + "h");
+													console.log("Random user ID = " + randId);
+													console.log("gotoMap");
+													return true;
+												}
+          gotoWiki.onclick        = function() {
+													timeTag = new Date().getTime()
+													ga('set', 'dimension1', randId);
+													ga('set', 'dimension2', timeTag);
+													ga('set', 'dimension3', 'gotoWiki')
+													console.log("time = " + timeTag/60000 + "h");
+													console.log("Random user ID = " + randId);
+													console.log("gotoWiki");
+													return true;
+												}
+          gotoMatlab.onclick      = function() {
+													timeTag = new Date().getTime()
+													ga('set', 'dimension1', randId);
+													ga('set', 'dimension2', timeTag);
+													ga('set', 'dimension3', 'gotoMatlab')
+													console.log("time = " + timeTag/60000 + "h");
+													console.log("Random user ID = " + randId);
+													console.log("gotoMatlab");
+													return true;
+												}
+          gotoDKFZ.onclick        = function() {
+													timeTag = new Date().getTime()
+													ga('set', 'dimension1', randId);
+													ga('set', 'dimension2', timeTag);
+													ga('set', 'dimension3', 'gotoDKFZ')
+													console.log("time = " + timeTag/60000 + "h");
+													console.log("Random user ID = " + randId);
+													console.log("gotoDKFZ");
+													return true;
+												}
+          gotoE0404.onclick       = function() {
+													timeTag = new Date().getTime()
+													ga('set', 'dimension1', randId);
+													ga('set', 'dimension2', timeTag);
+													ga('set', 'dimension3', 'gotoE0404')
+													console.log("time = " + timeTag/60000 + "h");
+													console.log("Random user ID = " + randId);
+													console.log("gotoE0404");
+													return true;
+												}
+          gotoAuthorlist.onclick  = function() {
+													timeTag = new Date().getTime()
+													ga('set', 'dimension1', randId);
+													ga('set', 'dimension2', timeTag);
+													ga('set', 'dimension3', 'gotoAuthorlist')
+													console.log("time = " + timeTag/60000 + "h");
+													console.log("Random user ID = " + randId);
+													console.log("gotoAuthorlist");
+													return true;
+												}
+          gotoLicense.onclick     = function() {
+													timeTag = new Date().getTime()
+													ga('set', 'dimension1', randId);
+													ga('set', 'dimension2', timeTag);
+													ga('set', 'dimension3', 'gotoLicense')
+													console.log("time = " + timeTag/60000 + "h");
+													console.log("Random user ID = " + randId);
+													console.log("gotoLicense");
+													return true;
+												}
+          gotoIpopt.onclick       = function() {
+													timeTag = new Date().getTime()
+													ga('set', 'dimension1', randId);
+													ga('set', 'dimension2', timeTag);
+													ga('set', 'dimension3', 'gotoIpopt')
+													console.log("time = " + timeTag/60000 + "h");
+													console.log("Random user ID = " + randId);
+													console.log("gotoIpopt");
+													return true;
+												}
+          writeEmail.onclick      = function() {
+													timeTag = new Date().getTime()
+													ga('set', 'dimension1', randId);
+													ga('set', 'dimension2', timeTag);
+													ga('set', 'dimension3', 'writeEmail')
+													console.log("time = " + timeTag/60000 + "h");
+													console.log("Random user ID = " + randId);
+													console.log("writeEmail");
+													return true;
+												}
+        }
+
+		</script>
   </head>
   <body>
     <div class="wrapper">
@@ -45,21 +221,21 @@
         <p>An open source multi-modality radiation treatment planning sytem</p>
 
         <ul>
-          <li><a href="https://github.com/e0404/matRad/zipball/master" onclick="trackOutboundLink('https://github.com/e0404/matRad/zipball/master'); return false;">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/e0404/matRad/tarball/master" onclick="trackOutboundLink('https://github.com/e0404/matRad/tarball/master'); return false;">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/e0404/matRad">View On <strong>GitHub</strong></a></li>
+          <li><a id="downloadZipball" href="https://github.com/e0404/matRad/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a id="downloadTarball" href="https://github.com/e0404/matRad/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a id="gotoGithub" href="https://github.com/e0404/matRad">View On <strong>GitHub</strong></a></li>
         </ul>
       </header>
       <section>
         <object width="428" type="image/svg+xml" data="images/matrad_hat.svg">Your browser does not support SVG</object>
 	<p></p>
-        <p><object height="12" type="image/svg+xml" data="images/matrad_blank.svg">Your browser does not support SVG</object> is an open source software for radiation treatment planning of intensity-modulated photon, proton, and carbon ion therapy. matRad is developed for educational and research purposes. It is entirely written in <a href="http://www.mathworks.com/products/matlab">MATLAB</a>.</p>
-	<p>For more information about this project check out the <a href="https://github.com/e0404/matRad/wiki/documents/matRad.pdf">matRad overview</a> or watch a recodring of the matRad webinar at the brown bag medical physics seminar at Massachusetts General Hospital.</p>
-	<iframe width="560" height="315" src="https://www.youtube.com/embed/40_n7BIqLdw" frameborder="0" allowfullscreen></iframe>.
+        <p><object height="12" type="image/svg+xml" data="images/matrad_blank.svg">Your browser does not support SVG</object> is an open source software for radiation treatment planning of intensity-modulated photon, proton, and carbon ion therapy. matRad is developed for educational and research purposes. It is entirely written in <a id="gotoMatlab" href="http://www.mathworks.com/products/matlab">MATLAB</a>.</p>
+	<p>For more information about this project check out the <a id="pdfoverview" href="https://github.com/e0404/matRad/wiki/documents/matRad.pdf">matRad overview</a> or watch a recodring of the matRad webinar at the brown bag medical physics seminar at Massachusetts General Hospital.</p>
+	<iframe id="brownbagYoutube" width="560" height="315" src="https://www.youtube.com/embed/40_n7BIqLdw" frameborder="0" allowfullscreen></iframe>.
 
 <h2><a id="funding" class="anchor" href="#funding" aria-hidden="true"></a><span style="color: #ff0000">Help us fund matRad</span></h2>
 
-<p>The sustainable development of matRad costs time. To help us make a strong case towards our funders that we should continue to allocate resources for matRad's development in the future, please <a href="mailto:contact@matrad.org?Subject=We use matRad at ..." target="_top">do email</a> us and let us know if you are using matRad in your department. We maintain a list of current user groups in a <a href="https://drive.google.com/open?id=1nG8_pE0RR5j1lp2iLLeBCeuwrO0&usp=sharing">custom google map</a>. This helps us to show the relevance of our work for the radiation oncology community. As we do not get detailed download statistics from Github, such information is very valuable to us. Thank you!</p>
+<p>The sustainable development of matRad costs time. To help us make a strong case towards our funders that we should continue to allocate resources for matRad's development in the future, please <a id="writeEmail" href="mailto:contact@matrad.org?Subject=We use matRad at ..." target="_top">do email</a> us and let us know if you are using matRad in your department. We maintain a list of current user groups in a <a id="gotoMap" href="https://drive.google.com/open?id=1nG8_pE0RR5j1lp2iLLeBCeuwrO0&usp=sharing">custom google map</a>. This helps us to show the relevance of our work for the radiation oncology community. As we do not get detailed download statistics from Github, such information is very valuable to us. Thank you!</p>
 <p>Also, if you are interested in irregular updates, please send us an <a href="mailto:contact@matrad.org?Subject=matRad newsletter" target="_top">email</a> to receive the matRad newsletter.</p>
 
 <h2><a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h2>
@@ -89,7 +265,7 @@
 <h2>
 <a id="documentation" class="anchor" href="#documentation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Documentation</h2>
 
-<p>A <a href="https://github.com/e0404/matRad/wiki">Wiki</a> documentation is under constant development.</p>
+<p>A <a id="gotoWiki" href="https://github.com/e0404/matRad/wiki">Wiki</a> documentation is under constant development.</p>
 
 <h2>
 <a id="contact" class="anchor" href="#contact" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contact</h2>
@@ -99,14 +275,14 @@
 <h2>
 <a id="development-team" class="anchor" href="#development-team" aria-hidden="true"><span class="octicon octicon-link"></span></a>Development team</h2>
 
-<p>matRad development is driven by the research group <a href="http://www.dkfz.de/radopt">Optimization Algorithms</a> within the <a href="http://www.dkfz.de/en/medphys">Division of Medical Physics in Radiation Oncology</a> at the <a href="http://www.dkfz.de">German Cancer Research Center DKFZ</a> in <a href="https://goo.gl/maps/BBo2E">Heidelberg</a>. Please see <a href="https://github.com/e0404/matRad/blob/master/AUTHORS.txt">our author list</a> for an overview of all code contributers; also beyond there are many people supporting matRad through consulting and provision of data.</p>
+<p>matRad development is driven by the research group <a id="gotoE0404" href="http://www.dkfz.de/radopt">Optimization Algorithms</a> within the <a href="http://www.dkfz.de/en/medphys">Division of Medical Physics in Radiation Oncology</a> at the <a id="gotoDKFZ" href="http://www.dkfz.de">German Cancer Research Center DKFZ</a> in <a href="https://goo.gl/maps/BBo2E">Heidelberg</a>. Please see <a id="gotoAuthorlist" href="https://github.com/e0404/matRad/blob/master/AUTHORS.txt">our author list</a> for an overview of all code contributers; also beyond there are many people supporting matRad through consulting and provision of data.</p>
 
 <p>We are actively looking for beta testers that can provide external feedback on our code and developers that would like to take an active role in the future. Do not hesitate and <a href="mailto:contact@matrad.org?Subject=matRad" target="_top">get in touch</a>.</p>
 
 <h2>
 <a id="license-and-disclaimer" class="anchor" href="#license-and-disclaimer" aria-hidden="true"><span class="octicon octicon-link"></span></a>License and disclaimer</h2>
 
-<p>matRad is offered as a compilation with the Ipopt software package for large-scale nonlinear optimization. All the elements of the compilation of matRad and Ipopt are free software. You can redistribute and/or modify matRad's source code provided as files with .m and .mat extension under the terms of the GNU GENERAL PUBLIC LICENSE Version 3 (GPL v3). You can also add to matRad the Ipopt functionality by using the precompiled mex files of the Ipopt optimizer in object code version which are licensed under the Eclipse Public License Version 1.0 (EPL v1.0), also made available for download via <a href="https://projects.coin-or.org/Ipopt">https://projects.coin-or.org/Ipopt</a>.</p>
+<p>matRad is offered as a compilation with the Ipopt software package for large-scale nonlinear optimization. All the elements of the compilation of matRad and Ipopt are free software. You can redistribute and/or modify matRad's source code provided as files with .m and .mat extension under the terms of the GNU GENERAL PUBLIC LICENSE Version 3 (GPL v3). You can also add to matRad the Ipopt functionality by using the precompiled mex files of the Ipopt optimizer in object code version which are licensed under the Eclipse Public License Version 1.0 (EPL v1.0), also made available for download via <a id="gotoIpopt" href="https://projects.coin-or.org/Ipopt">https://projects.coin-or.org/Ipopt</a>.</p>
 
 <p>In addition, we provide a matlab standalone version of the compilation of matRad and Ipopt, where the files of matRad and Ipopt are licensed under GPL v3 and EPL v1.0 respectively. The matlab standalone version is meant to be used by students for learning and practicing scientific programming.</p>
 
@@ -114,7 +290,7 @@
 
 <p>Please note that we treat the compilation of matRad and Ipopt as separate and independent works (or modules, components, programs). Therefore, to the best of our understanding, the compilation of matRad and Ipopt is subject to the "Mere Aggregation" exception in section 5 of the GNU v3 and the exemption from "Contributions" in section 1. b) ii) of the EPL v1.0. Should this interpretation turn out to be not in compliance with the applicable laws in force, we have provided you with an additional permission under GNU GPL version 3 section 7 to allow you to use the work resulting from combining matRad with Ipopt.</p>
 
-<p>You will receive a copy of the GPL v3  and a copy of the EPL v1.0 in the file LICENSES.txt along with the compilation. If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a> and/or <a href="http://opensource.org/licenses/EPL-1.0/">http://opensource.org/licenses/EPL-1.0/</a>.</p>
+<p>You will receive a copy of the GPL v3  and a copy of the EPL v1.0 in the file LICENSES.txt along with the compilation. If not, see <a id="gotoLicense" href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a> and/or <a href="http://opensource.org/licenses/EPL-1.0/">http://opensource.org/licenses/EPL-1.0/</a>.</p>
       </section>
       <footer>
 	<p><a href="https://travis-ci.org/e0404/matRad"><img src="https://travis-ci.org/e0404/matRad.svg?branch=master" alt="DKFZ_Logo" border="0" ></a></p>
