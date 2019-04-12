@@ -22,27 +22,34 @@
 
 		ga('create', 'UA-64247123-1', 'auto');
 		
-		/* Set GA clientId */
-		ga(function(tracker) {
-			tracker.set('dimension1',tracker.get('clientId'))
-		});
+		/* send custom dimensions to GA */
+		function sendCustomDims(actionString) {
 		
-		/* print GA clientId to screen */
-		ga(function(tracker) {
-			console.log("clientId = " + tracker.get('clientId'));
-		});
-				
-		/* Assign a timestamp to the utc_millisecs custom dimension */
-		timeTag = new Date().getTime();
-		ga('set', 'dimension2', timeTag);
-		console.log("time = " + timeTag + " ms");
-	
-		/* identify action */
-		ga('set', 'dimension3','landing')
+			/* Set GA clientId and print to screen */
+			ga(function(tracker) {
+				tracker.set('dimension1',tracker.get('clientId'))
+			});
+			ga(function(tracker) {
+				console.log("clientId = " + tracker.get('clientId'));
+			});
+					
+			/* Assign a timestamp to the utc_millisecs custom dimension */
+			timeTag = new Date().getTime();
+			ga('set', 'dimension2', timeTag);
+			console.log("time = " + timeTag + " ms");
 		
-		/* Send a pageview */
-		ga('send', 'pageview');
-
+			/* identify action */
+			ga('set', 'dimension3',actionString)
+			console.log('action = ' + actionString);
+			
+			/* Send a pageview */
+			ga('send', 'pageview');
+		
+			return true;
+		}
+		
+		sendCustomDims('landing');		
+		
 		console.log("ga init done");
 		
 		// implementation according to https://stackoverflow.com/questions/688196/how-to-use-a-link-to-call-javascript
