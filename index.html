@@ -21,33 +21,22 @@
 		})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
 		ga('create', 'UA-64247123-1', 'auto');
-
-		/* a custom function to generate random int as user id */
-		function getRandomInt(max) {
-			return Math.floor(Math.random() * Math.floor(max));
-		}
 		
-		// debug info: 
-		
-		timeTag = new Date().getTime();
-		currClient = 12; //getRandomInt(121212121212)
-		console.log("time = " + timeTag/60000 + "h");
-		console.log("Random user ID = " + currClient);
-		
+		/* Set GA clientId */
 		ga(function(tracker) {
 			tracker.set('dimension1',tracker.get('clientId'))
 		});
 		
+		/* print GA clientId to screen */
 		ga(function(tracker) {
-			console.log(tracker.get('clientId'));
+			console.log("clientId = " + tracker.get('clientId'));
 		});
-		
-		/* Set some random user id */
-//		ga('set', 'dimension1', currClient);
-		
+				
 		/* Assign a timestamp to the utc_millisecs custom dimension */
+		timeTag = new Date().getTime();
 		ga('set', 'dimension2', timeTag);
-
+		console.log("time = " + timeTag + " ms");
+	
 		/* identify action */
 		ga('set', 'dimension3','landing')
 		
