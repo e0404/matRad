@@ -1,5 +1,4 @@
 function [ resultGUI ] = matRad_importDicomRTDose(ct, rtDoseFiles, pln)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to import dicom RTDOSE data
 % 
 % call
@@ -18,8 +17,6 @@ function [ resultGUI ] = matRad_importDicomRTDose(ct, rtDoseFiles, pln)
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -31,7 +28,6 @@ function [ resultGUI ] = matRad_importDicomRTDose(ct, rtDoseFiles, pln)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 
 %% import and interpolate dose files
 % number of dosefiles

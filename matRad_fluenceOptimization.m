@@ -1,5 +1,4 @@
-function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 % matRad inverse planning wrapper function
 % 
 % call
@@ -13,13 +12,11 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
 % output
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
 %               biological optimization) RBE-weighted dose etc.
-%   info:       struct containing information about optimization
+%   optimizer:  Used Optimizer Object
 %
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 
@@ -39,69 +36,64 @@ if sum(strcmp(pln.propOpt.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && 
     pln.propOpt.bioOptimization = 'none';
 end
 
-% determine if Matlab or Octave
-[env, ~] = matRad_getEnvironment();
-
-if ~isdeployed % only if _not_ running as standalone
-    
-    % add path for optimization functions
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir,'optimization'))
-    addpath(fullfile(matRadRootDir,'tools'))
-
-    switch env
-         case 'MATLAB'
-           % get handle to Matlab command window
-            mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-            cw          = mde.getClient('Command Window');
-            xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-            h_cw        = handle(xCmdWndView,'CallbackProperties');
-
-            % set Key Pressed Callback of Matlab command window
-            set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
-    end
-
-end
-
-% initialize global variables for optimizer
-global matRad_global_x;
-global matRad_global_d;
-global matRad_Q_Pressed;
-global matRad_objective_function_value;
-
-matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
-matRad_global_d                 = NaN * ones(dij.numOfVoxels,1);
-matRad_Q_Pressed                = false;
-matRad_objective_function_value = [];
-  
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
 
-% adjust objectives and constraints internally for fractionation 
+
+% check & adjust objectives and constraints internally for fractionation 
 for i = 1:size(cst,1)
-    for j = 1:size(cst{i,6},1)
-       cst{i,6}(j).dose = cst{i,6}(j).dose/pln.numOfFractions;
+    for j = 1:numel(cst{i,6})
+        obj = cst{i,6}{j};
+        
+        %In case it is a default saved struct, convert to object
+        %Also intrinsically checks that we have a valid optimization
+        %objective or constraint function in the end
+        if ~isa(obj,'matRad_DoseOptimizationFunction')
+            try
+                obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
+            catch
+                error(['cst{' num2str(i) ',6}{' num2str(j) '} is not a valid Objective/constraint! Remove or Replace and try again!']);
+            end
+        end
+        
+        obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
+        
+        cst{i,6}{j} = obj;        
     end
 end
+
+% resizing cst to dose cube resolution 
+cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
+                                 dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
 
 % find target indices and described dose(s) for weight vector
 % initialization
 V          = [];
 doseTarget = [];
 ixTarget   = [];
-for i=1:size(cst,1)
+
+for i = 1:size(cst,1)
     if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
         V = [V;cst{i,4}{1}];
-        doseTarget = [doseTarget cst{i,6}.dose];
-        ixTarget   = [ixTarget i*ones(1,length([cst{i,6}.dose]))];
+        
+        %Iterate through objectives/constraints
+        fDoses = [];
+        for fObjCell = cst{i,6}
+            dParams = fObjCell{1}.getDoseParameters();
+            %Don't care for Inf constraints
+            dParams = dParams(isfinite(dParams));
+            %Add do dose list
+            fDoses = [fDoses dParams];
+        end
+                
+        
+        doseTarget = [doseTarget fDoses];
+        ixTarget   = [ixTarget i*ones(1,length(fDoses))];
     end
 end
 [doseTarget,i] = max(doseTarget);
 ixTarget       = ixTarget(i);
 wOnes          = ones(dij.totalNumOfBixels,1);
-
-% set the IPOPT options.
-matRad_ipoptOptions;
 
 % modified settings for photon dao
 if pln.propOpt.runDAO && strcmp(pln.radiationMode,'photons')
@@ -109,14 +101,9 @@ if pln.propOpt.runDAO && strcmp(pln.radiationMode,'photons')
 %    options.ipopt.acceptable_obj_change_tol     = 7e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
 
 end
-
-% set bounds on optimization variables
-options.lb              = zeros(1,dij.totalNumOfBixels);        % Lower bound on the variables.
-options.ub              = inf * ones(1,dij.totalNumOfBixels);   % Upper bound on the variables.
-funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter);
-    
 % calculate initial beam intensities wInit
 if  strcmp(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
+    
     % check if a constant RBE is defined - if not use 1.1
     if ~isfield(dij,'RBE')
         dij.RBE = 1.1;
@@ -126,23 +113,21 @@ if  strcmp(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMod
         
 elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
                                 && strcmp(pln.radiationMode,'carbon')
+                            
+    % retrieve photon LQM parameter
+    [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1);
 
-    % check if you are running a supported rad
-    dij.ax      = zeros(dij.numOfVoxels,1);
-    dij.bx      = zeros(dij.numOfVoxels,1);
+    if ~isequal(dij.ax(dij.ax~=0),ax(dij.ax~=0)) || ...
+       ~isequal(dij.bx(dij.bx~=0),bx(dij.bx~=0))
+         error(['Inconsistent biological parameter - please recalculate dose influence matrix']);
+    end
 
-    
     for i = 1:size(cst,1)
-        
-        if isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET')
-             dij.ax(cst{i,4}{1}) = cst{i,5}.alphaX;
-             dij.bx(cst{i,4}{1}) = cst{i,5}.betaX;
-        end
         
         for j = 1:size(cst{i,6},2)
             % check if prescribed doses are in a valid domain
-            if cst{i,6}(j).dose > 5 && isequal(cst{i,3},'TARGET')
-                error('Reference dose > 5Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.');
+            if any(cst{i,6}{j}.getDoseParameters() > 5) && isequal(cst{i,3},'TARGET')
+                error('Reference dose > 10 Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.');
             end
             
         end
@@ -160,7 +145,7 @@ elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt
     elseif isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')
         
            %pre-calculations
-           dij.gamma              = zeros(dij.numOfVoxels,1);   
+           dij.gamma              = zeros(dij.doseGrid.numOfVoxels,1);   
            dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose)); 
             
            % calculate current in target
@@ -185,38 +170,54 @@ options.bioOpt          = pln.propOpt.bioOptimization;
 options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
 options.numOfScenarios  = dij.numOfScenarios;
 
-% set callback functions.
-[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,options);   
-funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,options);
-funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,options);
-funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,options);
-funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,options);
-funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
+%Select Projection
 
-% Informing user to press q to terminate optimization
-fprintf('\nOptimzation initiating...\n');
-fprintf('Press q to terminate the optimization...\n');
+switch pln.propOpt.bioOptimization
+    case 'LEMIV_effect'
+        backProjection = matRad_EffectProjection;
+    case 'const_RBExD'
+        backProjection = matRad_ConstantRBEProjection;
+    case 'LEMIV_RBExD'
+        backProjection = matRad_VariableRBEProjection;
+    case 'none'
+        backProjection = matRad_DoseProjection;
+    otherwise
+        warning(['Did not recognize bioloigcal setting ''' pln.probOpt.bioOptimization '''!\nUsing physical dose optimization!']);
+        backProjection = matRad_DoseProjection;
+end
+        
 
-% Run IPOPT.
-[wOpt, info]            = ipopt(wInit,funcs,options);
+%backProjection = matRad_DoseProjection();
 
-% calc dose and reshape from 1D vector to 2D array
-fprintf('Calculating final cubes...\n');
+optiProb = matRad_OptimizationProblem(backProjection);
+
+%optimizer = matRad_OptimizerIPOPT;
+
+if ~isfield(pln.propOpt,'optimizer')
+    pln.propOpt.optimizer = 'IPOPT';
+end
+
+switch pln.propOpt.optimizer
+    case 'IPOPT'
+        optimizer = matRad_OptimizerIPOPT;
+    case 'fmincon'
+        optimizer = matRad_OptimizerFmincon;
+    otherwise
+        warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
+        optimizer = matRad_OptimizerIPOPT;
+end
+        
+%optimizer = matRad_OptimizerFmincon;
+
+optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
+
+wOpt = optimizer.wResult;
+info = optimizer.resultInfo;
+
 resultGUI = matRad_calcCubes(wOpt,dij,cst);
 resultGUI.wUnsequenced = wOpt;
-
-% unset Key Pressed Callback of Matlab command window
-if ~isdeployed && strcmp(env,'MATLAB')
-    set(h_cw, 'KeyPressedCallback',' ');
-end
-
-% clear global variables
-switch env
-     case 'MATLAB'
-        clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_Q_Pressed;
-     case 'OCTAVE'
-        clear     -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_Q_Pressed;           
-end
+resultGUI.usedOptimizer = optimizer;
+resultGUI.info = info;
 
 % unblock mex files
 clear mex

@@ -1,5 +1,4 @@
 function hlut = matRad_loadHLUT(ct, pln)
-  % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   % matRad function to load HLUT file based on the provided ct
   %
   % call
@@ -14,8 +13,6 @@ function hlut = matRad_loadHLUT(ct, pln)
   % References
   %   -
   %
-  % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
   % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %
   % Copyright 2018 the matRad development team. 

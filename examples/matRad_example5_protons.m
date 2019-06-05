@@ -70,6 +70,11 @@ pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter
 pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
 
+% dose calculation settings
+pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
+
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
 
@@ -145,9 +150,6 @@ figure,plot(profileOrginal,'LineWidth',2),grid on,hold on,
 % indicates a successful test and a value greater than 1 illustrates a 
 % failed test.
 
-% add tools subdirectory
-addpath([fileparts(fileparts(mfilename('fullpath'))) filesep 'tools']);
-
 doseDifference  = 2;
 distToAgreement = 2;
 n               = 1;
@@ -160,12 +162,9 @@ n               = 1;
 
 [env, ~] = matRad_getEnvironment();
 % Let's plot the gamma index histogram
-switch env
-     case 'MATLAB'
-          figure,histogram(gammaCube(gammaCube>0),100),title('gamma index histogram')
-     case 'OCTAVE'
-          figure,hist(gammaCube(gammaCube>0),100),title('gamma index histogram')
-end
+figure
+hist(gammaCube(gammaCube>0),100)
+title('gamma index histogram')
 
 
 

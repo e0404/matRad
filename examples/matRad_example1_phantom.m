@@ -27,7 +27,7 @@ xDim = 200;
 yDim = 200;
 zDim = 50;
 
-ct.cubeDim      = [xDim yDim zDim];
+ct.cubeDim      = [yDim xDim zDim]; % second cube dimension represents the x-coordinate
 ct.resolution.x = 2;
 ct.resolution.y = 2;
 ct.resolution.z = 3;
@@ -57,27 +57,18 @@ cst{ixOAR,5}.alphaX      = 0.1000;
 cst{ixOAR,5}.betaX       = 0.0500;
 cst{ixOAR,5}.Priority    = 2;
 cst{ixOAR,5}.Visible     = 1;
-cst{ixOAR,6}.type        = 'square overdosing';
-cst{ixOAR,6}.dose        = 30;
-cst{ixOAR,6}.penalty     = 10;
-cst{ixOAR,6}.EUD         = NaN;
-cst{ixOAR,6}.volume      = NaN;
-cst{ixOAR,6}.coverage    = NaN;
-cst{ixOAR,6}.robustness  = 'none';
+
+% define objective as struct for compatibility with GNU Octave I/O
+cst{ixOAR,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(10,30));
 
 cst{ixPTV,5}.TissueClass = 1;
 cst{ixPTV,5}.alphaX      = 0.1000;
 cst{ixPTV,5}.betaX       = 0.0500;
 cst{ixPTV,5}.Priority    = 1;
 cst{ixPTV,5}.Visible     = 1;
-cst{ixPTV,6}.type        = 'square deviation';
-cst{ixPTV,6}.dose        = 60;
-cst{ixPTV,6}.penalty     = 50;
-cst{ixPTV,6}.EUD         = NaN;
-cst{ixPTV,6}.volume      = NaN;
-cst{ixPTV,6}.coverage    = NaN;
-cst{ixPTV,6}.robustness  = 'none';
 
+% define objective as struct for compatibility with GNU Octave I/O
+cst{ixPTV,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(10,30));
 
 %% Lets create either a cubic or a spheric phantom
 
@@ -100,7 +91,7 @@ switch TYPE
       for x = xLowOAR:1:xHighOAR
          for y = yLowOAR:1:yHighOAR
             for z = zLowOAR:1:zHighOAR
-               cubeHelper(x,y,z) = 1;
+               cubeHelper(y,x,z) = 1;
             end
          end
       end
@@ -112,9 +103,9 @@ switch TYPE
       for x = 1:xDim
          for y = 1:yDim
             for z = 1:zDim
-               currPost = [x y z] - round([ct.cubeDim./2]);
+               currPost = [y x z] - round([ct.cubeDim./2]);
                if  sqrt(sum(currPost.^2)) < radiusOAR
-                  cubeHelper(x,y,z) = 1;
+                  cubeHelper(y,x,z) = 1;
                end
             end
          end
@@ -145,7 +136,7 @@ switch TYPE
       for x = xLowPTV:1:xHighPTV
          for y = yLowPTV:1:yHighPTV
             for z = zLowPTV:1:zHighPTV
-               cubeHelper(x,y,z) = 1;
+               cubeHelper(y,x,z) = 1;
             end
          end
       end
@@ -159,7 +150,7 @@ switch TYPE
             for z = 1:zDim
                currPost = [x y z] - round([ct.cubeDim./2]);
                if  sqrt(sum(currPost.^2)) < radiusPTV
-                  cubeHelper(x,y,z) = 1;
+                  cubeHelper(y,x,z) = 1;
                end
             end
          end
@@ -217,6 +208,11 @@ pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
+
+% dose calculation settings
+pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);

@@ -1,5 +1,4 @@
 function hlut = matRad_readHLUT(filename)
-  % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   % matRad function to read HLUT from filename
   %
   % call
@@ -14,8 +13,6 @@ function hlut = matRad_readHLUT(filename)
   % References
   %   -
   %
-  % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
   % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %
   % Copyright 2018 the matRad development team. 

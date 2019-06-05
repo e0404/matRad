@@ -3,7 +3,6 @@ function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter, ...
                                     sourcePoint, ...
                                     targetPoint, ...
                                     cubes)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % siddon ray tracing through three dimensional cube to calculate the
 % radiological depth according to Siddon 1985 Medical Physics
 % 
@@ -35,8 +34,6 @@ function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter, ...
 % References
 %   [1] http://www.ncbi.nlm.nih.gov/pubmed/4000088
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

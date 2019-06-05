@@ -1,5 +1,4 @@
 function isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoContours,isoLevels,plane,slice,cMap,window,varargin)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that plots isolines in 3D, by precomputed contourc data 
 % computed by matRad_computeIsoDoseContours or manually by calling 
 % contourslice itself
@@ -28,8 +27,6 @@ function isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoCo
 %   isoLineHandles: handle to the plotted isolines
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -41,10 +38,6 @@ function isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoCo
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-if ~isdeployed
-    addpath('tools')
-end
 
 [env, ~] = matRad_getEnvironment();
 
@@ -72,8 +65,8 @@ end
 
 slices = {[],[],[]};
 
-coords{1} = ct.resolution.x * double(1:ct.cubeDim(1));
-coords{2} = ct.resolution.y * double(1:ct.cubeDim(2));
+coords{1} = ct.resolution.x * double(1:ct.cubeDim(2));
+coords{2} = ct.resolution.y * double(1:ct.cubeDim(1));
 coords{3} = ct.resolution.z * double(1:ct.cubeDim(3));
 
 %slice spacing
@@ -90,8 +83,8 @@ slices{plane} = coords{plane}(sliceIndices);
 %fly
 if isempty(isoContours)
     
-    [xMesh,yMesh,zMesh] = meshgrid(coords{2},coords{1},coords{3});
-    isoLineHandles = contourslice(axesHandle,xMesh,yMesh,zMesh,doseCube,slices{[2 1 3]},isoLevels);
+    [xMesh,yMesh,zMesh] = meshgrid(coords{1},coords{2},coords{3});
+    isoLineHandles = contourslice(axesHandle,xMesh,yMesh,zMesh,doseCube,slices{[1 2 3]},isoLevels);
 else  
     axes(axesHandle);
     hold on;
