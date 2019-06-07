@@ -66,7 +66,7 @@ if exist('omc_matrad','file') ~= 3
         %This needs to generalize better
         if ~isempty(strfind(ccName,'MSVC')) %Not use contains(...) because of octave
             flags{1,1} = 'COMPFLAGS';
-            flags{1,2} = '$COMPFLAGS /openmp';
+            flags{1,2} = [srcFolder ' $COMPFLAGS /openmp'];
             flags{2,1} = 'OPTIMFLAGS';
             flags{2,2} = '$OPTIMFLAGS /O2';
             %flags = [optPrefix 'COMPFLAGS="$COMPFLAGS /openmp" ' optPrefix 'OPTIMFLAGS="$OPTIMFLAGS /O2"'];
