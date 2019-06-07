@@ -44,11 +44,11 @@ end
 fileFolder = fileparts(mfilename('fullpath'));
 
 %%
-if exist('matRad_ompInterface','file') ~= 3    
+if exist('omc_matrad','file') ~= 3    
     try
         disp('Compiled interface not found. Compiling the ompMC interface on the fly!');
         %Make sure we compile in the right directory
-        cFilePath = which('matRad_ompInterface.c');
+        cFilePath = which('omc_matrad.c');
         [ompMCFolder,~,~] = fileparts(cFilePath);
         
         currFolder = pwd;
@@ -60,6 +60,8 @@ if exist('matRad_ompInterface','file') ~= 3
           ccName = myCCompiler.ShortName;
         end
         
+	% Define src folder to include it in compilation flags
+        srcFolder = ['-I' fileFolder filesep 'submodules' filesep 'ompMC' filesep 'src'];
                
         %This needs to generalize better
         if ~isempty(strfind(ccName,'MSVC')) %Not use contains(...) because of octave
@@ -70,7 +72,7 @@ if exist('matRad_ompInterface','file') ~= 3
             %flags = [optPrefix 'COMPFLAGS="$COMPFLAGS /openmp" ' optPrefix 'OPTIMFLAGS="$OPTIMFLAGS /O2"'];
         else
             flags{1,1} = 'CFLAGS';
-            flags{1,2} = '-std=gnu99 -fopenmp -O2 -fPIC';
+            flags{1,2} = [srcFolder ' -std=gnu99 -fopenmp -O2 -fPIC'];
             flags{2,1} = 'LDFLAGS';
             flags{2,2} = '$LDFLAGS -fopenmp';
             %flags = [optPrefix 'CFLAGS="$CFLAGS -fopenmp -O2" ' optPrefix 'LDFLAGS="$LDFLAGS -fopenmp"'];
@@ -92,7 +94,7 @@ if exist('matRad_ompInterface','file') ~= 3
         
         cd(ompMCFolder);
         
-        mexCall = ['mex -largeArrayDims ' flagstring ' matRad_ompInterface.c'];
+        mexCall = ['mex -largeArrayDims ' flagstring ' omc_matrad.c'];
         
         disp(['Compiler call: ' mexCall]);
         eval(mexCall);
@@ -392,7 +394,7 @@ fprintf('matRad: OmpMC photon dose calculation... \n');
 %run over all scenarios
 for s = 1:dij.numOfScenarios
     ompMCgeo.isoCenter = [stf(:).isoCenter];
-    dij.physicalDose{s} = absCalibrationFactor * matRad_ompInterface(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
+    dij.physicalDose{s} = absCalibrationFactor * omc_matrad(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
 end
 
 fprintf('matRad: MC photon dose calculation done!\n');
