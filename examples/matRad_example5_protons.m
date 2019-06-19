@@ -43,16 +43,6 @@ pln.radiationMode = 'protons';
 pln.machine       = 'Generic';
 
 %%
-% Define the flavor of biological optimization for treatment planning along
-% with the quantity that should be used for optimization. Possible values 
-% are (none: physical optimization; const_RBExD: constant RBE of 1.1; 
-% LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of 
-% RBE-weighted dose. As we use protons, we follow here the clinical 
-% standard and use a constant relative biological effectiveness of 1.1. 
-% Therefore we set bioOptimization to const_RBExD
-pln.propOpt.bioOptimization = 'const_RBExD';
-
-%%
 % for particles it is possible to also calculate the LET disutribution
 % alongside the physical dose. Therefore you need to activate the
 % corresponding option during dose calculcation
@@ -69,8 +59,11 @@ pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter
 pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
 
-quantityOpt   = 'RBExD';     % either  physicalDose / effect / RBExD
-modelName     = 'constRBE';             % none: for photons, protons, carbon                                    constRBE: constant RBE model
+% Define the flavor of biological optimization for treatment planning along
+% with the quantity that should be used for optimization.
+
+quantityOpt   = 'RBExD';            % either  physicalDose / effect / RBExD
+modelName     = 'constRBE';         % none: for photons, protons, carbon                                    constRBE: constant RBE model
                                     % MCN: McNamara-variable RBE model for protons                          WED: Wedenberg-variable RBE model for protons 
                                     % LEM: Local Effect Model for carbon ions
 % retrieve bio model parameters
@@ -113,7 +106,7 @@ end
 % Transversal iso-center slice
 if param.logLevel == 1 && pln.propDoseCalc.calcLET
     figure
-    imagesc(resultGUI.LET(:,:,slice)),colormap(jet),colorbar,title('LET [keV/µm]')
+    imagesc(resultGUI.LET(:,:,slice)),colormap(jet),colorbar,title('LET [keV/ï¿½m]')
 end
 %%
 % Now let's simulate a patient shift in y direction for both beams

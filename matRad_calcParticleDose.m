@@ -209,11 +209,11 @@ if isfield(pln,'propDoseCalc') && ...
       letDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
       
       for ctScen = 1:pln.multScen.numOfCtScen
-         for shiftScen = 1:pln.multScen.numOfShiftScen
-            for rangeShiftScen = 1:pln.multScen.numOfRangeShiftScen
+         for shiftScen = 1:pln.multScen.totNumShiftScen
+            for rangeShiftScen = 1:pln.multScen.totNumRangeScen
                
                if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
-                  dij.mLETDose{ctScen,shiftScen,rangeShiftScen} = spalloc(dij.doseGrid.dimensions,numOfColumnsDij,1);
+                  dij.mLETDose{ctScen,shiftScen,rangeShiftScen} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
                end
                
             end
@@ -242,49 +242,59 @@ cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
 % generates tissue class matrix for biological treatment planning and alpha_x, beta_x, vectors
 if pln.bioParam.bioOpt
    
-   if isfield(machine.data,'alphaX') && isfield(machine.data,'betaX')
-      
-      fprintf('matRad: loading biological base data... ');
-      vTissueIndex = zeros(size(VdoseGrid,1),1);
-      dij.ax       = zeros(dij.doseGrid.numOfVoxels,1);
-      dij.bx       = zeros(dij.doseGrid.numOfVoxels,1);
-      dij.abx      = zeros(dij.doseGrid.numOfVoxels,1);  % alpha beta ratio
-      
-      % retrieve photon LQM parameter for the current dose grid voxels
-      [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
-      
-      dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
-      
-      for i = 1:size(cst,1)
+   vTissueIndex = zeros(size(VdoseGrid,1),1);
+   dij.ax       = zeros(dij.doseGrid.numOfVoxels,1);
+   dij.bx       = zeros(dij.doseGrid.numOfVoxels,1);
+   dij.abx      = zeros(dij.doseGrid.numOfVoxels,1);  % alpha beta ratio
+   
+   % retrieve photon LQM parameter for the current dose grid voxels
+   [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
+   
+   dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
+   
+   % only if LEM is used corresponding bio data must be available in the base data set
+   if strcmp(pln.bioParam.model,'LEM')
+      if isfield(machine.data,'alphaX') && isfield(machine.data,'betaX')
          
-         % check if cst is compatiable
-         if ~isempty(cst{i,5}) && isfield(cst{i,5},'alphaX') && isfield(cst{i,5},'betaX')
+         fprintf('matRad: loading biological base data... ');
+         
+         for i = 1:size(cst,1)
             
-            % check if base data contains alphaX and betaX
-            IdxTissue = find(ismember(machine.data(1).alphaX,cst{i,5}.alphaX) & ...
-               ismember(machine.data(1).betaX,cst{i,5}.betaX));
-            
-            % check consitency of biological baseData and cst settings
-            if ~isempty(IdxTissue)
-               isInVdoseGrid = ismember(VdoseGrid,cst{i,4}{1});
-               vTissueIndex(isInVdoseGrid) = IdxTissue;
+            % check if cst is compatiable
+            if ~isempty(cst{i,5}) && isfield(cst{i,5},'alphaX') && isfield(cst{i,5},'betaX')
+               
+               % check if base data contains alphaX and betaX
+               IdxTissue = find(ismember(machine.data(1).alphaX,cst{i,5}.alphaX) & ...
+                  ismember(machine.data(1).betaX, cst{i,5}.betaX));
+               
+               % check consistency of biological baseData and cst settings
+               if ~isempty(IdxTissue)
+                  isInVdoseGrid = ismember(VdoseGrid,cst{i,4}{1});
+                  vTissueIndex(isInVdoseGrid) = IdxTissue;
+               else
+                  matRad_dispToConsole('biological base data and cst inconsistent \n',param,'error');
+               end
+               
             else
-               matRad_dispToConsole('biological base data and cst inconsistent \n',param,'error');
+               vTissueIndex(row) = 1;
+               matRad_dispToConsole(['matRad: tissue type of ' cst{i,2} ' was set to 1  \n'],param,'info');
             end
-            
-         else
-            vTissueIndex(row) = 1;
-            matRad_dispToConsole(['matRad: tissue type of ' cst{i,2} ' was set to 1  \n'],param,'info');
          end
+         
+         matRad_dispToConsole('done. \n',param,'info');
+         
+      else
+         
+         matRad_dispToConsole('base data is incomplement - alphaX and/or betaX is missing',param,'error');
+         
       end
       
-      matRad_dispToConsole('done. \n',param,'info');
-      
    else
-      
-      matRad_dispToConsole('base data is incomplement - alphaX and/or betaX is missing',param,'error');
-      
-   end
+      % parametrized biological models are based on the LET
+      if ~isfield(machine.data,'LET')
+         matRad_dispToConsole('base data is incomplement - LET is missing',param,'error');
+      end
+   end %  end is LEM model
    
 end
 
@@ -514,7 +524,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                            bixelLET = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths);
                            bixelLET(isnan(bixelLET)) = 0;
                            % save LET for every bixel in cell array
-                           letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelLET.*bixelDose,ddij.doseGrid.numOfVoxels,1);
+                           letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelLET.*bixelDose,dij.doseGrid.numOfVoxels,1);
                         end
                         
                         % save alpha_p and beta_p radiosensititvy parameter for every bixel in cell array
