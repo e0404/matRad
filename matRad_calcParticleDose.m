@@ -199,30 +199,6 @@ catch
     matRad_dispToConsole(['Could not find the following machine file: ' fileName ],param,'error');
 end
 
-
-if isfield(pln,'propDoseCalc') && ...
-        isfield(pln.propDoseCalc,'calcLET') && ...
-        pln.propDoseCalc.calcLET
-end
-if isfield(machine.data,'LET')
-    
-    letDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
-    
-    for ctScen = 1:pln.multScen.numOfCtScen
-        for shiftScen = 1:pln.multScen.totNumShiftScen
-            for rangeShiftScen = 1:pln.multScen.totNumRangeScen
-                
-                if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
-                    dij.mLETDose{ctScen,shiftScen,rangeShiftScen} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
-                end
-                
-            end
-        end
-    end
-    
-else
-    matRad_dispToConsole('LET not available in the machine data. LET will not be calculated.',param,'warning');
-end
 % check if we do heterogeneity correction
 matRad_dispToConsole('check if we do heterogeneity correction. \n',param,'info');
 calcHeteroCorr = false;
@@ -235,12 +211,10 @@ for j = 1:size(cst,1)
     end
 end
 
-
-
 if calcHeteroCorr
     calcHeteroCorrStruct.cube = {zeros(ct.cubeDim)};
     calcHeteroCorrStruct.cubeDim = ct.cubeDim;
-    calcHeteroCorrStruct.numOfCtScen = 1;
+    calcHeteroCorrStruct.numOfCtScen = pln.multScen.numOfCtScen;
     calcHeteroCorrStruct.resolution = ct.resolution;
     
     % book keeping - this is necessary since pln is not used in optimization or
@@ -255,6 +229,30 @@ if calcHeteroCorr
                     cst{j,5}.HeterogeneityCorrection '.']);
             end
         end
+    end
+end
+
+if isfield(pln,'propDoseCalc') && ...
+        isfield(pln.propDoseCalc,'calcLET') && ...
+        pln.propDoseCalc.calcLET
+    if isfield(machine.data,'LET')
+        
+        letDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
+        
+        for ctScen = 1:pln.multScen.numOfCtScen
+            for shiftScen = 1:pln.multScen.totNumShiftScen
+                for rangeShiftScen = 1:pln.multScen.totNumRangeScen
+                    
+                    if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
+                        dij.mLETDose{ctScen,shiftScen,rangeShiftScen} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
+                    end
+                    
+                end
+            end
+        end
+        
+    else
+        matRad_dispToConsole('LET not available in the machine data. LET will not be calculated.',param,'warning');
     end
 end
 
@@ -401,12 +399,17 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
         if calcHeteroCorr
             fprintf('matRad: calculate radiological depth cube for heterogeneity correction...');
             heteroCorrDepthV = matRad_rayTracing(stf(i),calcHeteroCorrStruct,VctGrid,rot_coordsV,lateralCutoffRayTracing);
+            % HETERO interpolate hetero depth cube to dose grid resolution
+            heteroCorrDepthV = matRad_interpRadDepth...
+                (ct,VctGrid,VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,heteroCorrDepthV);
             fprintf('done.\n');
         end
         
         % interpolate radiological depth cube to dose grid resolution
         radDepthVdoseGrid = matRad_interpRadDepth...
             (ct,VctGrid,VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
+        
+        
         
         % limit rotated coordinates to positions where ray tracing is availabe
         rot_coordsVdoseGrid = rot_coordsVdoseGrid(~isnan(radDepthVdoseGrid{1}),:);
@@ -519,6 +522,9 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     
                                     % adjust radDepth according to range shifter
                                     currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
+                                    if calcHeteroCorr
+                                        currHeteroCorrDepths = heteroCorrDepths(currIx);
+                                    end
                                     
                                     % calculate initial focus sigma
                                     sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist(stf(i).ray(j).focusIx(k),:)', ...

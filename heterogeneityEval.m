@@ -3,7 +3,8 @@ matRad_rc
 p = genpath('../matRad');
 addpath(p);
 myFiles = dir(fullfile('dataImport/lowRes/*.mat'));
-lungTissue={'Lung','GTV','PTV','CTV','ITV'};
+lungTissue={'Lung','GTV','PTV','CTV','ITV'};  % automatically assign HeterogeneityCorrection to the specified.
+err = 0; % initialize Error counter
 for k = 1:length(myFiles)
     %for k = 2
     
@@ -51,30 +52,16 @@ for k = 1:length(myFiles)
     pln.sampling = false;
     
     %% Protons
-  %  try
+    try
         %% HIT Plan protons
         matRad_dispToConsole('Starting HIT calculation. \n',param,'info');
-      %  hitHomo = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+        hitHomo = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
         %%%
         hitHetero = matRad_calcDoseDirect(ct,stf,pln,cstHetero,resultGUI.w);
         
-        %protHomo = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
-        %protHetero = matRad_calcDoseDirect(ct,stf,pln,cstHetero,resultGUI.w);
-        
-        %%% compare everything and plot
-        %      close all
-        %      [qI,gammaPassRate] = matRad_compareDose(hitHomo.physicalDose,hitHetero.physicalDose,ct,cst,[1 1 1 1],'off',pln);
-        
-        %%% Save all plots in subfolder
-        %         FigList = findobj(allchild(0), 'flat', 'Type', 'figure');
-        %         for iFig = 1:length(FigList)
-        %             FigHandle = FigList(iFig);
-        %             FigName   = [myFiles(k).name(1:6),'_Fig',num2str(get(FigHandle, 'Number'))];
-        %             savefig(FigHandle, ['dataImport/Protons/', FigName, '.fig']);
-        %         end
         save(['dataImport/ResultWithPenalty/HIT/',myFiles(k).name(1:6),'.mat'])
         %      close all
-        clearvars -except pln cst cstHetero ct lungTissue myFiles k stf param
+        clearvars -except pln cst cstHetero ct lungTissue myFiles k stf param err
         
         %% Protons reoptimize
         matRad_dispToConsole('Starting proton calculation. \n',param,'info');
@@ -84,23 +71,9 @@ for k = 1:length(myFiles)
         %%%
         protHetero = matRad_calcDoseDirect(ct,stf,pln,cstHetero,protHomo.w);
         
-        %protHomo = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
-        %protHetero = matRad_calcDoseDirect(ct,stf,pln,cstHetero,resultGUI.w);
-        
-        %%% compare everything and plot
-        %       close all
-        %      [qI,gammaPassRate] = matRad_compareDose(protHomo.physicalDose,protHetero.physicalDose,ct,cst,[1 1 1 1],'off',pln);
-        
-        %%% Save all plots in subfolder
-        %         FigList = findobj(allchild(0), 'flat', 'Type', 'figure');
-        %         for iFig = 1:length(FigList)
-        %             FigHandle = FigList(iFig);
-        %             FigName   = [myFiles(k).name(1:6),'_Fig',num2str(get(FigHandle, 'Number'))];
-        %             savefig(FigHandle, ['dataImport/Protons/', FigName, '.fig']);
-        %         end
         save(['dataImport/ResultWithPenalty/Protons/',myFiles(k).name(1:6),'.mat'])
         %      close all
-        clearvars -except pln cst cstHetero ct lungTissue myFiles k stf param
+        clearvars -except pln cst cstHetero ct lungTissue myFiles k stf param err
         
         %% Carbon Ions
         %%% Change to carbons
@@ -139,11 +112,12 @@ for k = 1:length(myFiles)
         save(['dataImport/ResultWithPenalty/Carbons/',myFiles(k).name(1:6),'.mat'])
         sendPushbullet('SUCCESS',['Calculation complete for Patient',myFiles(k).name(1:6)])
         
- %   catch MException
-%        warning(['Error: Skipping Patient',myFiles(k).name(1:6),', Reason: ',MException.message]);
- %       sendPushbullet('ERROR',['Skipping Patient',myFiles(k).name(1:6),', Reason: ',MException.message])
-%    end
-    %  close all
-    clearvars -except lungTissue myFiles k param
-    
+    catch MException
+        warning(['Error: Skipping Patient',myFiles(k).name(1:6),', Reason: ',MException.message]);
+        sendPushbullet('ERROR',['Skipping Patient',myFiles(k).name(1:6),', Reason: ',MException.message])
+        err = err + 1;
+    end
+    close all
+    clearvars -except lungTissue myFiles k param err
 end
+sendPushbullet('SUCCESS',['Simulation finished with ',num2str(err),' error(s)'])
