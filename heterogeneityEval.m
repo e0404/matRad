@@ -32,7 +32,7 @@ err = 0; % initialize Error counter
 mode = 'PhysicalDose';
 dose = [60 30; 70 8; 66.41 6; 66.51 6]; % Prescribed doses and fractions for all 4 patients
 
-for k = 1:4
+for k = 1:4     % loop over all 4 patients
     
     %% Load in base data
     load(['dataImport/lowRes/',myFiles(k).name])
@@ -112,7 +112,7 @@ for k = 1:4
         %%% Change to carbons
         
         pln.radiationMode = 'carbon';
-        pln.machine = 'HIT_APM';
+        pln.machine = 'GenericAPM';
         pln.propOpt.bioOptimization = 'LEMIV_RBExD'; %'LEMIV_RBExD'; %'none'
         pln.propStf.bixelWidth = 3;
         stfCarb = matRad_generateStf(ct,cst,pln);
