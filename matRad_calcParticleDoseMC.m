@@ -34,8 +34,10 @@ function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDi
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_calcDoseInit;
+
 % check if valid machine
-if ~strcmp(pln.radiationMode,'protons') || ~strcmp(pln.machine,'generic_MCsquare')
+if ~strcmp(pln.radiationMode,'protons')% || ~strcmp(pln.machine,'generic_MCsquare')
     error('wrong radiation modality and/or machine.');    
 end
 
@@ -251,6 +253,12 @@ MCsquareConfigFile = 'MCsquareConfig.txt';
 
 MCsquareConfig = MatRad_MCsquareConfig;
 
+bdFile = [machine.meta.machine '.txt'];
+matRad_createMCsquareBaseDataFile(bdFile,machine,1);
+movefile(bdFile,[MCsquareFolder filesep 'BDL/' bdFile]);
+
+
+MCsquareConfig.BDL_Machine_Parameter_File = ['BDL/' bdFile];
 MCsquareConfig.BDL_Plan_File = 'currBixels.txt';
 MCsquareConfig.CT_File       = 'MC2patientCT.mhd';
 MCsquareConfig.Num_Threads   = nbThreads;
