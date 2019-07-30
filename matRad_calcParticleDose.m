@@ -546,19 +546,25 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     
                                     % calculate particle dose for bixel k on ray j of beam i
                                     if calcHeteroCorr
-                                        bixelDose = matRad_calcParticleDoseBixel(...
+                                        bixel = matRad_calcParticleDoseBixel(...
                                             currRadDepths, ...
                                             radialDist_sq(currIx), ...
                                             sigmaIni_sq, ...
                                             machine.data(energyIx), ...
-                                            currHeteroCorrDepths);
+                                            currHeteroCorrDepths, ...
+                                            pln.bioParam.bioOpt);
                                     else
-                                        bixelDose = matRad_calcParticleDoseBixel(...
+                                        bixel = matRad_calcParticleDoseBixel(...
                                             currRadDepths, ...
                                             radialDist_sq(currIx), ...
                                             sigmaIni_sq, ...
                                             machine.data(energyIx));
                                     end
+                                    
+                                    bixelDose = bixel.physDose;
+                                    
+                                    %bixelDose = bixel.physDose
+                                    
                                 else
                                     matRad_dispToConsole('cutoff must be a value between 0 and 1',param,'error')
                                 end
@@ -585,14 +591,22 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 % save alpha_p and beta_p radiosensititvy parameter for every bixel in cell array
                                 if pln.bioParam.bioOpt
                                     
-                                    [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(currRadDepths,machine.data(energyIx),vTissueIndex_j(currIx,:),dij.ax(VdoseGrid(ix(currIx))),...
-                                        dij.bx(VdoseGrid(ix(currIx))),...
-                                        dij.abx(VdoseGrid(ix(currIx))));
+                                    if ~isfield(bixel,'Z_Aij')
+                                        [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(radDepths(currIx),baseEntry,vTissueIndex_j(currIx,:),dij.alphaX(V(ix(currIx))),...
+                                            dij.betaX(V(ix(currIx))),...
+                                            dij.abX(V(ix(currIx))));
+                                        bixelAlphaDose =  bixel.physDose .* bixelAlpha;
+                                        bixelBetaDose  =  bixel.physDose .* sqrt(bixelBeta);
+                                    else
+                                        bixelAlphaDose =  bixel.L .* bixelDose.Z_Aij;
+                                        bixelBetaDose  =  bixel.L .* bixelDose.Z_Bij;
+                                    end
                                     
-                                    alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelAlpha.*bixelDose,dij.doseGrid.numOfVoxels,1);
-                                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen}  = sparse(VdoseGrid(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.doseGrid.numOfVoxels,1);
+                                    alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,ShiftScen,RangeShiftScen} = sparse(V(ix(currIx)),1,bixelAlphaDose,dij.numOfVoxels,1);
+                                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,ShiftScen,RangeShiftScen}  = sparse(V(ix(currIx)),1,bixelBetaDose,dij.numOfVoxels,1);
                                     
                                 end
+                                
                                 
                             end
                         end

@@ -166,9 +166,9 @@ for energyIx = vEnergiesIx
         else
         
             % calculate dose
-            dose_r = matRad_calcParticleDoseBixel(depthValues(j) + baseData.offset, radialDist_sq, largestSigmaSq4uniqueEnergies(cnt), baseData);
+            bixel_r = matRad_calcParticleDoseBixel(depthValues(j) + baseData.offset, radialDist_sq, largestSigmaSq4uniqueEnergies(cnt), baseData);
 
-            cumArea = cumsum(2*pi.*r_mid.*dose_r.*dr);
+            cumArea = cumsum(2*pi.*r_mid.*bixel_r.physDose.*dr);
             relativeTolerance = 0.5; %in [%]
             if abs((cumArea(end)./(idd(j)))-1)*100 > relativeTolerance
                 warning('LateralParticleCutOff: shell integration is wrong !')
@@ -235,8 +235,9 @@ if visBool
 
          end
 
-         mDose(:,:,kk) = reshape(matRad_calcParticleDoseBixel(radDepths(kk), radialDist_sq, sigmaIni_sq,baseData),[dimX dimX]);
-          
+         bixel_mDose = matRad_calcParticleDoseBixel(radDepths(kk), radialDist_sq, sigmaIni_sq,baseData);
+         mDose(:,:,kk) = reshape(bixel_mDose.physDose,[dimX dimX]);
+         
          [~,IX]           = min(abs((machine.data(energyIx).LatCutOff.depths + machine.data(energyIx).offset) - radDepths(kk)));
          TmpCutOff        = machine.data(energyIx).LatCutOff.CutOff(IX);    
          vXCut            = vX(vX<=TmpCutOff);
@@ -246,9 +247,9 @@ if visBool
          dr_Cut           = (vXCut(2:end) - vXCut(1:end-1))';
          radialDist_sqCut = r_mid_Cut.^2;    
          
-         dose_r_Cut       = matRad_calcParticleDoseBixel(radDepths(kk), radialDist_sqCut(:), sigmaIni_sq,baseData);
+         bixel_r_Cut       = matRad_calcParticleDoseBixel(radDepths(kk), radialDist_sqCut(:), sigmaIni_sq,baseData);
          
-         cumAreaCut = cumsum(2*pi.*r_mid_Cut.*dose_r_Cut.*dr_Cut);  
+         cumAreaCut = cumsum(2*pi.*r_mid_Cut.*bixel_r_Cut.physDose.*dr_Cut);  
          
          if ~isempty(cumAreaCut)
              vDoseInt(kk) = cumAreaCut(end);
@@ -265,9 +266,9 @@ if visBool
     end
     
     [~,peakixDepth] = max(idd); 
-    dosePeakPos = matRad_calcParticleDoseBixel(machine.data(energyIx).depths(peakixDepth), 0, sigmaIni_sq, baseData);   
+    bixelPeakPos = matRad_calcParticleDoseBixel(machine.data(energyIx).depths(peakixDepth), 0, sigmaIni_sq, baseData);   
     
-    vLevelsDose = dosePeakPos.*[0.01 0.05 0.1 0.9];
+    vLevelsDose = bixelPeakPos.physDose.*[0.01 0.05 0.1 0.9];
     doseSlice   = squeeze(mDose(midPos,:,:));
     figure,set(gcf,'Color',[1 1 1]);
     subplot(311),h=imagesc(squeeze(mDose(midPos,:,:)));hold on;

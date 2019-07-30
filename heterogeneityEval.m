@@ -29,10 +29,10 @@ lungTissue={'Lung','GTV','PTV','CTV','ITV'};  % automatically assign Heterogenei
 err = 0; % initialize Error counter
 %for k = 1:length(myFiles)
 
-mode = 'PhysicalDose';
+mode = 'RBE';
 dose = [60 30; 70 8; 66.41 6; 66.51 6]; % Prescribed doses and fractions for all 4 patients
 
-for k = 1:4     % loop over all 4 patients
+for k = 1     % loop over all 4 patients
     
     %% Load in base data
     load(['dataImport/lowRes/',myFiles(k).name])
@@ -87,33 +87,32 @@ for k = 1:4     % loop over all 4 patients
     pln.sampling = false;
     
     %% Protons
-    try
-        %% HIT Plan protons
-        matRad_dispToConsole('Starting HIT calculation. \n',param,'info');
-        hitHomo = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
-        %%%
-        hitHetero = matRad_calcDoseDirect(ct,stf,pln,cstHetero,resultGUI.w);
-        
-        save(['dataImport/Results_',mode,'/HIT/',myFiles(k).name(1:6),'.mat'])
-        clearvars -except pln cst cstHetero ct lungTissue myFiles k stf param err
-        
-        %% Protons reoptimize
-        matRad_dispToConsole('Starting proton calculation. \n',param,'info');
-        dijProt1 = matRad_calcParticleDose(ct,stf,pln,cst,param);
-        protHomo = matRad_fluenceOptimization(dijProt1,cst,pln,param);
-        clear dijProt1
-        %%%
-        protHetero = matRad_calcDoseDirect(ct,stf,pln,cstHetero,protHomo.w);
-        
-        save(['dataImport/Results_',mode,'/Protons/',myFiles(k).name(1:6),'.mat'])
-        clearvars -except pln cst cstHetero ct lungTissue myFiles k stf param err
+    %try
+%         %% HIT Plan protons
+%         matRad_dispToConsole('Starting HIT calculation. \n',param,'info');
+%         hitHomo = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+%         %%%
+%         hitHetero = matRad_calcDoseDirect(ct,stf,pln,cstHetero,resultGUI.w);
+%         
+%         save(['dataImport/Results_',mode,'/HIT/',myFiles(k).name(1:6),'.mat'])
+%         clearvars -except pln cst cstHetero ct lungTissue myFiles k stf param err
+%         
+%         %% Protons reoptimize
+%         matRad_dispToConsole('Starting proton calculation. \n',param,'info');
+%         dijProt1 = matRad_calcParticleDose(ct,stf,pln,cst,param);
+%         protHomo = matRad_fluenceOptimization(dijProt1,cst,pln,param);
+%         clear dijProt1
+%         %%%
+%         protHetero = matRad_calcDoseDirect(ct,stf,pln,cstHetero,protHomo.w);
+%         
+%         save(['dataImport/Results_',mode,'/Protons/',myFiles(k).name(1:6),'.mat'])
+%         clearvars -except pln cst cstHetero ct lungTissue myFiles k stf param err
         
         %% Carbon Ions
         %%% Change to carbons
         
         pln.radiationMode = 'carbon';
         pln.machine = 'GenericAPM';
-        pln.propOpt.bioOptimization = 'LEMIV_RBExD'; %'LEMIV_RBExD'; %'none'
         pln.propStf.bixelWidth = 3;
         stfCarb = matRad_generateStf(ct,cst,pln);
         
@@ -128,15 +127,15 @@ for k = 1:4     % loop over all 4 patients
         save(['dataImport/Results_',mode,'/Carbons/',myFiles(k).name(1:6),'.mat'])
         sendPushbullet('SUCCESS',['Calculation complete for Patient',myFiles(k).name(1:6)])
         
-    catch MException
-        warning(['Error: Skipping Patient',myFiles(k).name(1:6),', Reason: ',MException.message]);
-        sendPushbullet('ERROR',['Skipping Patient',myFiles(k).name(1:6),', Reason: ',MException.message])
-        err = err + 1;
-    end
+%    catch MException
+%        warning(['Error: Skipping Patient',myFiles(k).name(1:6),', Reason: ',MException.message]);
+%        sendPushbullet('ERROR',['Skipping Patient',myFiles(k).name(1:6),', Reason: ',MException.message])
+%       err = err + 1;
+%    end
     close all
-    clearvars -except lungTissue myFiles k param err
+    clearvars -except lungTissue myFiles k param err dose
 end
-sendPushbullet('SUCCESS',['Simulation finished with ',num2str(err),' error(s)'])
+%sendPushbullet('SUCCESS',['Simulation finished with ',num2str(err),' error(s)'])
 
 
 
