@@ -43,7 +43,8 @@ SAD = machine.meta.SAD;
 fileID = fopen(filename,'w');
 
 %Header
-fprintf(fileID,'--matRad: Beam Model for machine %s (%s)--\n',machine.meta.machine,machine.meta.dataType);
+%fprintf(fileID,'--matRad: Beam Model for machine %s (%s)--\n',machine.meta.machine,machine.meta.dataType);
+fprintf(fileID,'--UPenn beam model (double gaussian)--\n');
 fprintf(fileID,'# %s\n',machine.meta.description);
 fprintf(fileID,'# created by %s on %s\n\n',machine.meta.created_by,machine.meta.created_on);
 
