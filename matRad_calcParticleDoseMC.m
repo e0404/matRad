@@ -254,8 +254,11 @@ MCsquareConfigFile = 'MCsquareConfig.txt';
 MCsquareConfig = MatRad_MCsquareConfig;
 
 bdFile = [machine.meta.machine '.txt'];
-matRad_createMCsquareBaseDataFile(bdFile,machine,1);
-movefile(bdFile,[MCsquareFolder filesep 'BDL/' bdFile]);
+
+MCsquareBDL = MatRad_MCsquareBaseData(machine,1);
+%matRad_createMCsquareBaseDataFile(bdFile,machine,1);
+MCsquareBDL = MCsquareBDL.writeToBDLfile([MCsquareFolder filesep 'BDL' filesep bdFile]);
+%movefile(bdFile,[MCsquareFolder filesep 'BDL/' bdFile]);
 
 
 MCsquareConfig.BDL_Machine_Parameter_File = ['BDL/' bdFile];
@@ -283,6 +286,8 @@ matRad_writeMhd(HUcube{1},MCsquareBinCubeResolution,MCsquareConfig.CT_File);
 % prepare steering for MCsquare and sort stf by energy
 isoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
                 - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
+
+isoCenterOffset = -[dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2];
 
 counter = 0;             
 for i = 1:length(stf)
@@ -352,6 +357,8 @@ end
 matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare);
 
 % run MCsquare
+mcSquareCall = [mcSquareBinary ' ' MCsquareConfigFile];
+disp(['Calling Monte Carlo Engine: ' mcSquareCall]);
 [status,cmdout] = system([mcSquareBinary ' ' MCsquareConfigFile],'-echo');
     
 mask = false(dij.doseGrid.numOfVoxels,1);
