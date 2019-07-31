@@ -1,20 +1,38 @@
 classdef MatRad_MCsquareBaseData
-    %UNTITLED Summary of this class goes here
-    %   Detailed explanation goes here
+%MatRad_MCsquareBaseData Maps the matRad base data to MCsquare base data /
+%phase space file
+%
+%
+%
+% References
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2019 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties
-        machine
-        bdl_path = ''
-        nozzleToIso
-        smx
-        smy
-        dataTable
+        machine         %matRad base data machine struct
+        bdl_path = ''   %stores path to generated file
+        nozzleToIso     %Nozzle to Isocenter Distance
+        smx             %Scanning magnet X to isocenter Distance
+        smy             %Scanning magnet y to isocenter Distance
+        dataTable       %Optical beam parameters
     end
     
     methods
         function obj = MatRad_MCsquareBaseData(machine,focusIx)
-            %UNTITLED Construct an instance of this class
-            %   Detailed explanation goes here
+            %MatRad_MCsquareBaseData Construct an instance of the MCsquare
+            %Base data format using a focus index
+            
             obj.machine = machine;
             
             if isfield(machine.meta,'BAMStoIsoDist')
@@ -85,8 +103,7 @@ classdef MatRad_MCsquareBaseData
         
         
         function [obj] = writeToBDLfile(obj,filepath)
-            %METHOD1 Summary of this method goes here
-            %   Detailed explanation goes here
+            %writeToBDLfile write the base data to file "filepath"
             
             machine = obj.machine;
             
