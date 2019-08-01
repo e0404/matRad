@@ -115,7 +115,7 @@ for k = [patients]     % loop over all 4 patients
         dose.hitHomo = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
         dose.hitHetero = matRad_calcDoseDirect(ct,stf,pln,cstHetero,resultGUI.w);
         
-        mkdir(['dataImport/Results/',exportFolder,'HIT']);
+        mkdir(['dataImport/Results/',exportFolder,'/HIT/']);
         save(['dataImport/Results/',exportFolder,'/HIT/',myFiles(k).name(1:6),'.mat'])
         
     elseif contains(particleType,'Proton')        % reoptimized proton plan
@@ -125,7 +125,7 @@ for k = [patients]     % loop over all 4 patients
         clear dijProt1
         dose.protHetero = matRad_calcDoseDirect(ct,stf,pln,cstHetero,dose.protHomo.w);
         
-        mkdir(['dataImport/Results/',exportFolder,'Proton']);
+        mkdir(['dataImport/Results/',exportFolder,'/Protons/']);
         save(['dataImport/Results/',exportFolder,'/Protons/',myFiles(k).name(1:6),'.mat'])
         
     elseif contains(particleType,'Carbon')        % Carbon Ions
@@ -141,7 +141,7 @@ for k = [patients]     % loop over all 4 patients
         clear dijCarb1
         dose.carbHetero = matRad_calcDoseDirect(ct,stfCarb,pln,cstHetero,dose.carbHomo.w);
         
-        mkdir(['dataImport/Results/',exportFolder,'Carbon']);
+        mkdir(['dataImport/Results/',exportFolder,'/Carbons/']);
         save(['dataImport/Results/',exportFolder,'/Carbons/',myFiles(k).name(1:6),'.mat'])
         
     else
