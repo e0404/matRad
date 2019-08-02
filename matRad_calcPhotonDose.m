@@ -65,9 +65,9 @@ if sum(strcmp(pln.propOpt.bioOptimization,{'effect','RBExD'}))>0
 end
 disp('flag_1')
 % initialize waitbar
-figureWait = waitbar(0,'calculate dose influence matrix for photons...');
-% show busy state
-set(figureWait,'pointer','watch');
+% figureWait = waitbar(0,'calculate dose influence matrix for photons...');
+% % show busy state
+% set(figureWait,'pointer','watch');
 disp('flag_2')
 % meta information for dij
 dij.numOfBeams         = pln.propStf.numOfBeams;
