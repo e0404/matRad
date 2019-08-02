@@ -42,27 +42,30 @@ classdef MatRad_MCsquareBaseData
                 obj.nozzleToIso = 500;
             end
             
-            obj.smx = machine.meta.SAD;
-            obj.smy = machine.meta.SAD;
+            SAD = machine.meta.SAD;
+            
+            obj.smx = SAD;
+            obj.smy = SAD;
             
             dataTable.NominalEnergy = [machine.data(:).energy]';
             rowSz = size(dataTable.NominalEnergy);
             
             dataTable.MeanEnergy = dataTable.NominalEnergy; %Needs a correct value, just a dummy
-            dataTable.EnergySpread = 0.8*ones(rowSz); %Was assumed during creation of the generic base data set
+            dataTable.EnergySpread = 0.8*ones(rowSz); %Was assumed during creation of the generic base data set, need to actually save this in the data!!
             
-            dataTable.ProtonsMU = ones(rowSz)*1e6; %Needs a correct value
+            dataTable.ProtonsMU = ones(rowSz)*1e6; %Doesn't seem to be implemented in MCsquare despite in BDL file?
             
             %Calculate width & divergence at iso in sigma
             fwhmIso = machine.meta.LUT_bxWidthminFWHM(2,focusIx);
-            sigmaIso = 0.5* fwhmIso / sqrt(2*log(2));
             
-            spotDiv = sigmaIso / machine.meta.SAD;
-            
-            spotDiv = 1e-6*ones(rowSz);
-            
-            sigmaIso = arrayfun(@(s) s.sigma(1),[machine.data(:).initFocus]);
+            %interpolate sigma at nozzle exit
+            sigmaIso = arrayfun(@(s) interp1(s.dist(focusIx,:),s.sigma(focusIx,:),SAD-obj.nozzleToIso),[machine.data(:).initFocus]);
             sigmaIso = sigmaIso';
+            
+            %approximate spot divergence (not sure if this is true because of units)
+            spotDiv = arrayfun(@(s) (s.sigma(focusIx,end) - s.sigma(focusIx,1)) / (s.dist(focusIx,end) - s.dist(focusIx,1)),[machine.data(:).initFocus]);
+            spotDiv(spotDiv == 0) = 1e-9;
+            spotDiv = spotDiv';
             
             if ~isfield(machine.data,'sigma')
                 dataTable.Weight1 = ones(rowSz);%1 - [machine.data(:).weight]';

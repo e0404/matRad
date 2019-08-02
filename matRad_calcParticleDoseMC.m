@@ -232,7 +232,7 @@ nbThreads = 4;
 relDoseCutoff = 10^(-4);
 % set absolute calibration factor
 % convert from eV/g/primary to Gy 1e6 primaries
-absCalibrationFactorMC2 = 1.602176e-19 * 1.0e+9;
+absCalibrationFactorMC2 = 1.602176e-19 * 1.1252e+9;
 
 % Allocate space for dij.physicalDose sparse matrix
 for i = 1:dij.numOfScenarios
