@@ -235,8 +235,8 @@ plane      = 3;
 slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 doseWindow = [0 max([resultGUI.physicalDose(:)])];
 
-%figure,title('phantom plan')
-%matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
+figure,title('phantom plan')
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
 
 
 
