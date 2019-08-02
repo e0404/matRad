@@ -63,12 +63,12 @@ if sum(strcmp(pln.propOpt.bioOptimization,{'effect','RBExD'}))>0
     warndlg('Effect based and RBE optimization not available for photons - physical optimization is carried out instead.');
     pln.bioOptimization = 'none';
 end
-
+disp('flag_1')
 % initialize waitbar
 figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 % show busy state
 set(figureWait,'pointer','watch');
-
+disp('flag_2')
 % meta information for dij
 dij.numOfBeams         = pln.propStf.numOfBeams;
 dij.numOfVoxels        = prod(ct.cubeDim);
@@ -124,7 +124,7 @@ useCustomPrimFluenceBool = 0;
 
 % 0 if field calc is bixel based, 1 if dose calc is field based
 isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
-
+disp('flag_3')
 %% kernel convolution
 % prepare data for convolution to reduce calculation time
 fileName = [pln.radiationMode '_' pln.machine];
@@ -169,7 +169,7 @@ if ~isFieldBasedDoseCalc
         F = real(ifft2(fft2(F,gaussConvSize,gaussConvSize).*fft2(gaussFilter,gaussConvSize,gaussConvSize)));     
     end
 end
-
+disp('flag_4')
 % compute SSDs
 stf = matRad_computeSSD(stf,ct);
 
@@ -392,7 +392,7 @@ for i = 1:dij.numOfBeams % loop over all beams
         
     end
 end
-
+disp('flag_5')
 try
   % wait 0.1s for closing all waitbars
   allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar'); 

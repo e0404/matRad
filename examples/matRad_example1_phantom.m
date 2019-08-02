@@ -222,13 +222,15 @@ pln.propOpt.runSequencing = 0;
 stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
+disp('flag_0')
 dij = matRad_calcPhotonDose(ct,stf,pln,cst);
-
+disp('flag_6')
 %% Inverse Optimization for intensity-modulated photon therapy
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+disp('flag_7')
 
 %% Plot the resulting dose slice
 plane      = 3;
