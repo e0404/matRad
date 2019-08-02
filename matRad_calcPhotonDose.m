@@ -327,9 +327,9 @@ for i = 1:dij.numOfBeams % loop over all beams
                             floor(stf(i).totalNumOfBixels/max(1,round(stf(i).totalNumOfBixels/200))));
         end
         % update waitbar only 100 times
-        if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
-            waitbar(counter/dij.totalNumOfBixels);
-        end
+%         if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
+%             waitbar(counter/dij.totalNumOfBixels);
+%         end
         
         % remember beam and bixel number
         if ~calcDoseDirect
