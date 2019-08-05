@@ -44,9 +44,16 @@ end
 unitTestBool = true;
 
 disp('Unit test run example 1');
-available_graphics_toolkits()
-name = graphics_toolkit ()
-
 matRad_example1_phantom
-
-disp(name)
+disp('Unit test run example 2');
+matRad_example2_photons
+disp('Unit test run example 3');
+matRad_example3_photonsDAO
+disp('Unit test run example 5');
+matRad_example5_protons
+disp('Unit test run example 6');
+matRad_example6_protonsNoise
+disp('Unit test run example 7');
+matRad_example7_carbon
+disp('Unit test run matRad script');
+matRad
