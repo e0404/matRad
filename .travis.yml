@@ -11,6 +11,7 @@ before_install:
 # dependencies
   - sudo apt-get install octave --yes --force-yes
   - sudo apt-get install liboctave-dev --yes --force-yes
+  - sudo apt-get install gnuplot-x11
 
   - 
 script:

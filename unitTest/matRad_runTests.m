@@ -45,3 +45,8 @@ unitTestBool = true;
 
 disp('Unit test run example 1');
 available_graphics_toolkits()
+name = graphics_toolkit ()
+
+matRad_example1_phantom
+
+disp(name)
