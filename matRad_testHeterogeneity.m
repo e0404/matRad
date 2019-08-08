@@ -44,9 +44,6 @@ quantityOpt  = 'RBExD';     % options: physicalDose, effect, RBExD
 modelName    = 'LEM';             % none: for photons, protons, carbon            % constRBE: constant RBE for photons and protons 
                                    % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
                                    % LEM: Local Effect Model for carbon ions       % HEL: data-driven RBE parametrization for helium
-
-pln.heterogeneity.calcHetero = true;
-pln.heterogeneity.useDoseCurves = false;
                                    
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
@@ -60,6 +57,10 @@ pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,scenGenType);
+
+%% Select heterogeneity if needed
+pln.heterogeneity.calcHetero = true;
+pln.heterogeneity.useDoseCurves = false;
 
 %% initial visualization and change objective function settings if desired
 % matRadGUI

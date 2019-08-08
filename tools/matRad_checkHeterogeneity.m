@@ -26,13 +26,14 @@ if pln.heterogeneity.calcHetero
     matRad_dispToConsole('Heterogeneity correction enabled. \n',param,'info');
     heteroCST = false;
     for i = 1:length(cst(:,1))
-        if isfield(cst{i,5},'heterogeneityCorrection')
+        if isfield(cst{i,5},'HeterogeneityCorrection')
             heteroCST = true;
             break
         end
     end
     if ~heteroCST
-       warning('Heterogeneity correction enabled but no usable data in cst.'); 
+       warning('Heterogeneity correction enabled but no usable data in cst. Correction cannot be applied.'); 
+       pln.heterogeneity.calcHetero = false;
     end
 else
     matRad_dispToConsole('Heterogeneity correction disabled. \n',param,'info');

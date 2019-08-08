@@ -4,7 +4,7 @@ cstHetero = cst;
 % automatically assign HeterogeneityCorrection to these segmentations
 lungTissue={'Lung','GTV','PTV','CTV','ITV'};  
 
-for i = 1:length(cst)
+for i = 1:length(cst(:,1))
     if contains(cst{i,2},lungTissue)
         cstHetero{i,5}.HeterogeneityCorrection = 'Lung';
     end

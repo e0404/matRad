@@ -122,7 +122,7 @@ if isstruct(baseData.Z)
     radDepths = radDepths - baseData.offset;
     
     % add sigma if heterogeneity correction wanted
-    if ~strcmp(heteroCorrType,'none') && exist('heteroCorrDepths','var')
+    if ~strcmp(heteroCorrType,'none') && exist('heteroCorrDepths','var')      
         if  strcmp(heteroCorrType,'complete')
             [~,lungDepthAtBraggPeakIx] = min(abs(radialDist_sq+(radDepths-baseData.peakPos).^2));
             lungDepthAtBraggPeak = heteroCorrDepths(lungDepthAtBraggPeakIx);
@@ -153,8 +153,8 @@ else
     
     bixel.Z = X(:,1);
     
-    if exist('heteroCorrDepths','var') && ~strcmp(heteroCorrType,'none')	% nargin == 5
-        warning('calcParticleDoseBixel: heterogeneity correction not yet implemented for these basedata')
+    if ~strcmp(heteroCorrType,'none')
+        warning('calcParticleDoseBixel: heterogeneity correction enabled but no APM base data was loaded.')
     end
     
 end
