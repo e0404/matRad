@@ -135,10 +135,10 @@ if  strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
 elseif pln.bioParam.bioOpt
     
     % retrieve photon LQM parameter
-    [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1);
+    [alphaX,betaX] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1);
 
-    if ~isequal(dij.ax(dij.ax~=0),ax(dij.ax~=0)) || ...
-       ~isequal(dij.bx(dij.bx~=0),bx(dij.bx~=0))
+    if ~isequal(dij.alphaX(dij.alphaX~=0),alphaX(dij.alphaX~=0)) || ...
+       ~isequal(dij.betaX(dij.betaX~=0),betaX(dij.betaX~=0))
          error(['Inconsistent biological parameter - please recalculate dose influence matrix']);
     end
     
@@ -153,7 +153,7 @@ elseif pln.bioParam.bioOpt
         end
     end
     
-    dij.ixDose  = dij.bx~=0; 
+    dij.ixDose  = dij.betaX~=0; 
         
     if isequal(pln.bioParam.quantityOpt,'effect')
 
@@ -166,7 +166,7 @@ elseif pln.bioParam.bioOpt
 
            %pre-calculations
            dij.gamma             = zeros(dij.doseGrid.numOfVoxels,1);   
-           dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose)); 
+           dij.gamma(dij.ixDose) = dij.alphaX(dij.ixDose)./(2*dij.betaX(dij.ixDose)); 
 
             
            % calculate current in target

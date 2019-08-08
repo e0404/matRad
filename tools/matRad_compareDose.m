@@ -131,6 +131,7 @@ if enable(1)==1
     differenceCube  = cube1-cube2;
     doseDiffWindow  = [-max(differenceCube(:)) max(differenceCube(:))];
     doseGammaWindow = [0 max(gammaCube(:))];
+    relativeDifference = max(abs(differenceCube(:)))/max(max(abs(cube1(:))),max(abs(cube2(:))))*100;
     
     
     %% Plot everything
@@ -196,7 +197,7 @@ if enable(1)==1
         matRad_plotAxisLabels(hfig.(planename{plane}).('cube2').Axes,ct,plane,slicename{plane},[],100);
         set(get(hfig.(planename{plane}).('cube2').Axes, 'title'), 'string', 'Dose 2');
         matRad_plotAxisLabels(hfig.(planename{plane}).('diff').Axes,ct,plane,slicename{plane},[],100);
-        set(get(hfig.(planename{plane}).('diff').Axes, 'title'), 'string', 'Absolute difference');
+        set(get(hfig.(planename{plane}).('diff').Axes, 'title'), 'string', ['Absolute difference, rel=',num2str(relativeDifference),'%']);
         matRad_plotAxisLabels(hfig.(planename{plane}).('gamma').Axes,ct,plane,slicename{plane},[],100);
         set(get(hfig.(planename{plane}).('gamma').Axes, 'title'), 'string', {[num2str(gammaPassRate{1,2},5) '% of points > ' num2str(relDoseThreshold) '% pass gamma criterion (' num2str(relDoseThreshold) '% / ' num2str(dist2AgreeMm) 'mm)']; ['with ' num2str(2^n-1) ' interpolation points']});
         

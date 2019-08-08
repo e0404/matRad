@@ -1,4 +1,4 @@
-function [bixel] = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData, heteroCorrDepths, heteroCorrType, FlagBioOpt)
+function [bixel] = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData, heteroCorrDepths, heteroCorrType, heteroCorrBio, vTissueIndex)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
@@ -36,14 +36,34 @@ function [bixel] = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaI
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% function handle for calculating lateral dose
+Gauss    = @(x,mu,SqSigma) 1./(sqrt(2*pi.*SqSigma)).*exp(-((x - mu).^2./(2.*SqSigma)));
+
+% function handle for calculating depth doses
+sumGauss = @(x,mu,SqSigma,w) (1./sqrt(2*pi*ones(numel(x),1) .* SqSigma') .* ...
+    exp(-bsxfun(@minus,x,mu').^2 ./ (2* ones(numel(x),1) .* SqSigma' ))) * w;
+
 % default heterogeneity correction type
-if exist('heteroCorrDepths','var') && ~exist('heteroCorrType','var')
-    heteroCorrType = 'complete';      % complete / depthBased / voxelwise
+
+if exist('heteroCorrDepths','var') && isempty(heteroCorrDepths)
+        heteroCorrType = 'none';    
 end
 
-if ~exist('FlagBioOpt','var') 
-    FlagBioOpt = false;
+if ~exist('heteroCorrType','var') || isempty(heteroCorrType)
+        heteroCorrType = 'complete';      % complete / depthBased / voxelwise
 end
+
+if ~exist('heteroCorrBio','var') || isempty(heteroCorrBio)
+    heteroCorrBio = false;
+end
+
+if ~exist('vTissueIndex','var') || isempty(vTissueIndex)
+    vTissueIndex = 0;
+end
+
+% if heteroCorrBio == 1
+%
+% end
 
 % add potential offset
 depths = baseData.depths + baseData.offset;
@@ -63,7 +83,7 @@ if isfield(baseData,'sigma1') && ~isstruct(baseData.Z)
     % compute lateral sigmas
     sigmaSq_Narr = X(:,3).^2 + sigmaIni_sq;
     sigmaSq_Bro  = X(:,4).^2 + sigmaIni_sq;
-
+    
 elseif isfield(baseData,'sigma1') && isstruct(baseData.Z)
     
     % interpolate sigmas and weights
@@ -72,15 +92,15 @@ elseif isfield(baseData,'sigma1') && isstruct(baseData.Z)
     % compute lateral sigmas
     sigmaSq_Narr = X(:,1).^2 + sigmaIni_sq;
     sigmaSq_Bro  = X(:,3).^2 + sigmaIni_sq;
-
+    
 elseif ~isfield(baseData,'sigma1') && isstruct(baseData.Z)
-        
+    
     % interpolate depth dose and sigma
     X = matRad_interp1(depths,baseData.sigma,radDepths);
     
     %compute lateral sigma
     sigmaSq = X.^2 + sigmaIni_sq;
-        
+    
 else
     
     % interpolate depth dose and sigma
@@ -94,20 +114,20 @@ end
 %%  calculate lateral profiles
 if isfield(baseData,'sigma1')
     
-    L_Narr =  exp( -radialDist_sq ./ (2*sigmaSq_Narr))./(2*pi*sigmaSq_Narr);
+    L_Narr =  exp( -radialDist_sq ./ (2*sigmaSq_Narr))./(2*pi*sigmaSq_Narr); % Gauss
     L_Bro  =  exp( -radialDist_sq ./ (2*sigmaSq_Bro ))./(2*pi*sigmaSq_Bro );
     
-    bixel.L = baseData.LatCutOff.CompFac * ((1-X(:,2)).*L_Narr + X(:,2).*L_Bro);
-
-else 
+    bixel.L = baseData.LatCutOff.CompFac * ((1-X(:,2)).*L_Narr + X(:,2).*L_Bro); % (1-w)*L_Narr + w*L_Bro
+    
+else
     
     bixel.L = baseData.LatCutOff.CompFac * exp( -radialDist_sq ./ (2*sigmaSq)) ./(2*pi*sigmaSq);
-       
+    
 end
 
 %% calculate sigma in range direction
 if isstruct(baseData.Z)
-
+    
     % calculate depthDoses with APM
     % no offset here...
     radDepths = radDepths - baseData.offset;
@@ -135,13 +155,13 @@ if isstruct(baseData.Z)
         ellSq = ones(numel(radDepths),1)*baseData.Z.width'.^2;
     end
     
-    bixel.Z = (1./sqrt(2*pi*ellSq) .* exp(-bsxfun(@minus,baseData.Z.mean',radDepths).^2 ./ (2*ellSq)) )* baseData.Z.weight;
-        
-else 
-     
+    % bixel.Z = (1./sqrt(2*pi*ellSq) .* exp(-bsxfun(@minus,baseData.Z.mean',radDepths).^2 ./ (2*ellSq)) )* baseData.Z.weight
+    bixel.Z = sumGauss(radDepths,baseData.Z.mean,ellSq',baseData.Z.weight);
+else
+    
     bixel.Z = X(:,1);
     
-    if exist('heteroCorrDepths','var') 	% nargin == 5
+    if exist('heteroCorrDepths','var') && ~strcmp(heteroCorrType,'none')	% nargin == 5
         warning('calcParticleDoseBixel: heterogeneity correction not yet implemented for these basedata')
     end
     
@@ -150,27 +170,29 @@ end
 %% calculating the physical dose
 bixel.physDose = conversionFactor * bixel.L .* bixel.Z;
 
-%% 
-if FlagBioOpt
-    
-    % preallocate space for alpha beta
-    tissueClasses = unique(vTissueIndex);
-    bixel.Z_Aij = zeros(numel(radDepths),1);
-    bixel.Z_Bij = zeros(numel(radDepths),1);
-    
-    for i = 1:numel(tissueClasses)
+%%
+if heteroCorrBio
+    if isfield(baseData,'alphaDose')
+        % preallocate space for alpha beta
+        tissueClasses = unique(vTissueIndex);
+        bixel.Z_Aij = zeros(numel(radDepths),1);
+        bixel.Z_Bij = zeros(numel(radDepths),1);
         
-        ix = vTissueIndex == tissueClasses(i);
-        bixel.Z_Aij(ix)  = conversionFactor * baseData.LatCutOff.CompFac * ...
-            sumGauss(radDepths(ix)-baseData.offset,baseData.alphaDose(tissueClasses(i)).mean,...
-            (baseData.alphaDose(tissueClasses(i)).width).^2 + SqSigmaRangeOffset,baseData.alphaDose(tissueClasses(i)).weight);
-        
-        bixel.Z_Bij(ix)  = conversionFactor * baseData.LatCutOff.CompFac * ...
-            sumGauss(radDepths(ix)-baseData.offset,baseData.SqrtBetaDose(tissueClasses(i)).mean,...
-            (baseData.SqrtBetaDose(tissueClasses(i)).width).^2  + SqSigmaRangeOffset,baseData.SqrtBetaDose(tissueClasses(i)).weight)';
-    
+        for i = 1:numel(tissueClasses)
+            
+            ix = vTissueIndex == tissueClasses(i);
+            bixel.Z_Aij(ix)  = conversionFactor * baseData.LatCutOff.CompFac * ...
+                sumGauss(radDepths(ix)-baseData.offset,baseData.alphaDose(tissueClasses(i)).mean,...
+                (baseData.alphaDose(tissueClasses(i)).width).^2,baseData.alphaDose(tissueClasses(i)).weight);
+            
+            bixel.Z_Bij(ix)  = conversionFactor * baseData.LatCutOff.CompFac * ...
+                sumGauss(radDepths(ix)-baseData.offset,baseData.SqrtBetaDose(tissueClasses(i)).mean,...
+                (baseData.SqrtBetaDose(tissueClasses(i)).width).^2,baseData.SqrtBetaDose(tissueClasses(i)).weight)';
+            
+        end
+    else
+        error('No alpha dose defined in base data, use fitted APM file with heteroCorrBio')
     end
-    
 end
 
 % check if we have valid dose values
