@@ -37,8 +37,13 @@ if nargin < 3
     visBool = 0;
 end
 
+env = matRad_getEnvironment();
+matRad_checkEnvDicomRequirements(env);
+isOctave = strcmp(env,'OCTAVE');
+
+
 % read dicom info (this includes already all data for the rtss)
-if verLessThan('matlab','9')
+if isOctave || verLessThan('matlab','9')
     structInfo = dicominfo(filename);
 else % apply 'UseVRHeuristic' option when available to use a to help read certain 
      % noncompliant files which switch value representation (VR) modes incorrectly

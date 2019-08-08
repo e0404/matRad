@@ -41,12 +41,19 @@ if ~exist('visBool','var')
   visBool = 0;
 end
 
+env = matRad_getEnvironment();
+
+matRad_checkEnvDicomRequirements(env);
+
+isOctave = strcmp(env,'OCTAVE');
+
+
 % creation of ctInfo list
 numOfSlices = size(ctList,1);
 fprintf('\ncreating info...')
 for i = 1:numOfSlices
 
-    if verLessThan('matlab','9')
+    if isOctave ||verLessThan('matlab','9')
         tmpDicomInfo = dicominfo(ctList{i,1});
     else
         tmpDicomInfo = dicominfo(ctList{i,1},'UseDictionaryVR',true);
@@ -61,8 +68,8 @@ for i = 1:numOfSlices
     ctInfo(i).PatientPosition         = tmpDicomInfo.PatientPosition;
     ctInfo(i).Rows                    = tmpDicomInfo.Rows;
     ctInfo(i).Columns                 = tmpDicomInfo.Columns;
-    ctInfo(i).Width                   = tmpDicomInfo.Width;
-    ctInfo(i).Height                  = tmpDicomInfo.Height;
+    ctInfo(i).Width                   = tmpDicomInfo.Columns;%tmpDicomInfo.Width;
+    ctInfo(i).Height                  = tmpDicomInfo.Rows;%tmpDicomInfo.Height;
     ctInfo(i).RescaleSlope            = tmpDicomInfo.RescaleSlope;
     ctInfo(i).RescaleIntercept        = tmpDicomInfo.RescaleIntercept;
     
@@ -125,7 +132,12 @@ fprintf('reading slices...')
 origCt = zeros(ctInfo(1).Height, ctInfo(1).Width, numOfSlices);
 for i = 1:numOfSlices
     currentFilename = ctList{i};
-    [currentImage, map] = dicomread(currentFilename);
+    if isOctave
+        currentImage = dicomread(currentFilename);
+        map = [];
+    else
+        [currentImage, map] = dicomread(currentFilename);
+    end    
     origCt(:,:,i) = currentImage(:,:); % creation of the ct cube
     
     % draw current ct-slice
