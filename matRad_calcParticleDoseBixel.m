@@ -1,4 +1,4 @@
-function [bixel] = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData, heteroCorrDepths, heteroCorrType, heteroCorrBio, vTissueIndex)
+function [bixel] = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData, heteroCorrDepths, heteroCorrType, useDoseCurves, vTissueIndex)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
@@ -45,25 +45,14 @@ sumGauss = @(x,mu,SqSigma,w) (1./sqrt(2*pi*ones(numel(x),1) .* SqSigma') .* ...
 
 % default heterogeneity correction type
 
-if exist('heteroCorrDepths','var') && isempty(heteroCorrDepths)
-        heteroCorrType = 'none';    
+if ~exist('heteroCorrDepths','var') || isempty(heteroCorrDepths) || ...
+        ~exist('heteroCorrType','var') || isempty(heteroCorrType)
+    heteroCorrType = 'none';
 end
 
-if ~exist('heteroCorrType','var') || isempty(heteroCorrType)
-        heteroCorrType = 'complete';      % complete / depthBased / voxelwise
+if ~exist('heteroCorrBio','var') || isempty(useDoseCurves)
+    useDoseCurves = false;
 end
-
-if ~exist('heteroCorrBio','var') || isempty(heteroCorrBio)
-    heteroCorrBio = false;
-end
-
-if ~exist('vTissueIndex','var') || isempty(vTissueIndex)
-    vTissueIndex = 0;
-end
-
-% if heteroCorrBio == 1
-%
-% end
 
 % add potential offset
 depths = baseData.depths + baseData.offset;
@@ -133,24 +122,27 @@ if isstruct(baseData.Z)
     radDepths = radDepths - baseData.offset;
     
     % add sigma if heterogeneity correction wanted
-    if exist('heteroCorrDepths','var') && strcmp(heteroCorrType,'complete')
-        [~,lungDepthAtBraggPeakIx] = min(abs(radialDist_sq+(radDepths-baseData.peakPos).^2));
-        lungDepthAtBraggPeak = heteroCorrDepths(lungDepthAtBraggPeakIx);
-        ellSq = ones(numel(radDepths),1)* (baseData.Z.width'.^2 + matRad_getHeterogeneityCorrSigmaSq(lungDepthAtBraggPeak));
-        
-    elseif exist('heteroCorrDepths','var') && strcmp(heteroCorrType,'depthBased')
-        % lungDepthAtGaussPeakIx = zeros(baseData.Z.mean)
-        for i = 1:length(baseData.Z.mean)
-            [~,lungDepthAtGaussPeakIx(i)] = min(abs(radialDist_sq+(radDepths-baseData.Z.mean(i)).^2));
+    if ~strcmp(heteroCorrType,'none') && exist('heteroCorrDepths','var')
+        if  strcmp(heteroCorrType,'complete')
+            [~,lungDepthAtBraggPeakIx] = min(abs(radialDist_sq+(radDepths-baseData.peakPos).^2));
+            lungDepthAtBraggPeak = heteroCorrDepths(lungDepthAtBraggPeakIx);
+            ellSq = ones(numel(radDepths),1)* (baseData.Z.width'.^2 + matRad_getHeterogeneityCorrSigmaSq(lungDepthAtBraggPeak));
+            
+        elseif strcmp(heteroCorrType,'depthBased')
+            % lungDepthAtGaussPeakIx = zeros(baseData.Z.mean)
+            for i = 1:length(baseData.Z.mean)
+                [~,lungDepthAtGaussPeakIx(i)] = min(abs(radialDist_sq+(radDepths-baseData.Z.mean(i)).^2));
+            end
+            lungDepthAtGaussPeak = heteroCorrDepths(lungDepthAtGaussPeakIx);
+            for i = 1:length(baseData.Z.mean)
+                ellSq(:,i) = ones(numel(radDepths),1)* (baseData.Z.width(i)'.^2 + matRad_getHeterogeneityCorrSigmaSq(lungDepthAtGaussPeak(i)));
+            end
+            
+        elseif strcmp(heteroCorrType,'voxelwise')
+            ellSq = bsxfun(@plus, baseData.Z.width'.^2, matRad_getHeterogeneityCorrSigmaSq(heteroCorrDepths));
+        else
+            error('Error in heterogeneity correction')
         end
-        lungDepthAtGaussPeak = heteroCorrDepths(lungDepthAtGaussPeakIx);
-        for i = 1:length(baseData.Z.mean)
-            ellSq(:,i) = ones(numel(radDepths),1)* (baseData.Z.width(i)'.^2 + matRad_getHeterogeneityCorrSigmaSq(lungDepthAtGaussPeak(i)));
-        end
-        
-    elseif exist('heteroCorrDepths','var') && strcmp(heteroCorrType,'voxelwise')
-        ellSq = bsxfun(@plus, baseData.Z.width'.^2, matRad_getHeterogeneityCorrSigmaSq(heteroCorrDepths));
-        
     else
         ellSq = ones(numel(radDepths),1)*baseData.Z.width'.^2;
     end
@@ -171,7 +163,7 @@ end
 bixel.physDose = conversionFactor * bixel.L .* bixel.Z;
 
 %%
-if heteroCorrBio
+if useDoseCurves
     if isfield(baseData,'alphaDose')
         % preallocate space for alpha beta
         tissueClasses = unique(vTissueIndex);
@@ -191,7 +183,7 @@ if heteroCorrBio
             
         end
     else
-        error('No alpha dose defined in base data, use fitted APM file with heteroCorrBio')
+        error('No alpha dose defined in base data, use fitted APM file with pln.heterogeneity.useDoseCurves')
     end
 end
 

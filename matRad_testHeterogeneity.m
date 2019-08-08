@@ -45,7 +45,8 @@ modelName    = 'LEM';             % none: for photons, protons, carbon          
                                    % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
                                    % LEM: Local Effect Model for carbon ions       % HEL: data-driven RBE parametrization for helium
 
-heteroCorrBio = [];
+pln.heterogeneity.calcHetero = true;
+pln.heterogeneity.useDoseCurves = false;
                                    
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
@@ -71,7 +72,7 @@ if strcmp(pln.radiationMode,'photons')
     dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'helium') || strcmp(pln.radiationMode,'carbon')
-    dij = matRad_calcParticleDose(ct,stf,pln,cst,param,heteroCorrBio);
+    dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 
 end
 
@@ -79,10 +80,10 @@ end
 CarbHomoOff  = matRad_fluenceOptimization(dij,cst,pln,param);
 cstHetero = cst;
 cstHetero{1,5}.HeterogeneityCorrection = 'Lung';
-CarbHeteroOff = matRad_calcDoseDirect(ct,stf,pln,cstHetero,CarbHomoOff.w,param,heteroCorrBio);
+CarbHeteroOff = matRad_calcDoseDirect(ct,stf,pln,cstHetero,CarbHomoOff.w,param);
 
 clear dij heteroCorrBio
-heteroCorrBio = true;
+pln.heterogeneity.bio = true;
 stf = matRad_generateStf(ct,cst,pln);
 
 %% dose calculation
@@ -90,13 +91,13 @@ if strcmp(pln.radiationMode,'photons')
     dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'helium') || strcmp(pln.radiationMode,'carbon')
-    dij = matRad_calcParticleDose(ct,stf,pln,cst,param,heteroCorrBio);
+    dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 
 end
 
 %% inverse planning for imrt
 CarbHomoOn  = matRad_fluenceOptimization(dij,cst,pln,param);
-CarbHeteroOn = matRad_calcDoseDirect(ct,stf,pln,cstHetero,CarbHomoOn.w,param,heteroCorrBio);
+CarbHeteroOn = matRad_calcDoseDirect(ct,stf,pln,cstHetero,CarbHomoOn.w,param);
 
 
 % %% sequencing

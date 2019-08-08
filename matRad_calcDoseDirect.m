@@ -42,10 +42,6 @@ end
 
 param.calcDoseDirect = true;
 
-if ~exist('heteroCorrBio','var') || isempty(heteroCorrBio)
-    heteroCorrBio = false;
-end
-
 % check if weight vector is available, either in function call or in stf - otherwise dose calculation not possible
 if ~exist('w','var') && ~isfield([stf.ray],'weight')
      error('No weight vector available. Please provide w or add info to stf')
@@ -83,7 +79,7 @@ if strcmp(pln.radiationMode,'photons')
   dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
   %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-  dij = matRad_calcParticleDose(ct,stf,pln,cst,param,heteroCorrBio);
+  dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
 end
 
 % calc resulting dose

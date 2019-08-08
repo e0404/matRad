@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDose(ct,stf,pln,cst,param,heteroCorrBio)
+function dij = matRad_calcParticleDose(ct,stf,pln,cst,param)
 % matRad particle dose calculation wrapper
 %
 % call
@@ -47,9 +47,7 @@ else
     param.logLevel       = 1;
 end
 
-if ~exist('heteroCorrBio','var') || isempty(heteroCorrBio)
-   heteroCorrBio = false;
-end
+pln = matRad_checkHeterogeneity(pln,cst,param);
 
 % to guarantee downwards compatibility with data that does not have
 % ct.x/y/z
@@ -203,19 +201,7 @@ catch
     matRad_dispToConsole(['Could not find the following machine file: ' fileName ],param,'error');
 end
 
-% check if we do heterogeneity correction
-matRad_dispToConsole('check if we do heterogeneity correction. \n',param,'info');
-calcHeteroCorr = false;
-for j = 1:size(cst,1)
-    if isfield(cst{j,5},'HeterogeneityCorrection')
-        if strcmp(cst{j,5}.HeterogeneityCorrection,'Lung')
-            calcHeteroCorr = true;
-            break;
-        end
-    end
-end
-
-if calcHeteroCorr
+if pln.heterogeneity.calcHetero
     calcHeteroCorrStruct.cube = {zeros(ct.cubeDim)};
     calcHeteroCorrStruct.cubeDim = ct.cubeDim;
     calcHeteroCorrStruct.numOfCtScen = pln.multScen.numOfCtScen;
@@ -226,12 +212,7 @@ if calcHeteroCorr
     
     for j = 1:size(cst,1)
         if isfield(cst{j,5},'HeterogeneityCorrection')
-            if strcmp(cst{j,5}.HeterogeneityCorrection,'Lung')
-                calcHeteroCorrStruct.cube{1}(cst{j,4}{1}) = ct.cube{1}(cst{j,4}{1});
-            else
-                error(['No heterogeneity correction method implemented for ' ...
-                    cst{j,5}.HeterogeneityCorrection '.']);
-            end
+            calcHeteroCorrStruct.cube{1}(cst{j,4}{1}) = ct.cube{1}(cst{j,4}{1});
         end
     end
 end
@@ -264,7 +245,7 @@ if strcmp(pln.bioParam.model,'constRBE')
     dij.RBE = pln.bioParam.RBE;
 end
 
-% ser overlap prioriites
+% set overlap prioriites
 cst = matRad_setOverlapPriorities(cst);
 
 % resizing cst to dose cube resolution
@@ -304,8 +285,6 @@ if pln.bioParam.bioOpt
     
     % retrieve photon LQM parameter for the current dose grid voxels
     [dij.alphaX,dij.betaX] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
-    
-    
     
     dij.abX(dij.betaX>0) = dij.alphaX(dij.betaX>0)./dij.betaX(dij.betaX>0);
     
@@ -417,7 +396,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
         radDepthVctGrid = matRad_rayTracing(stf(i),ct,VctGrid,rot_coordsV,lateralCutoffRayTracing);
         matRad_dispToConsole('done. \n',param,'info');
         
-        if calcHeteroCorr
+        if pln.heterogeneity.calcHetero
             fprintf('matRad: calculate radiological depth cube for heterogeneity correction...');
             heteroCorrDepthV = matRad_rayTracing(stf(i),calcHeteroCorrStruct,VctGrid,rot_coordsV,lateralCutoffRayTracing);
             % HETERO interpolate hetero depth cube to dose grid resolution
@@ -459,15 +438,15 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     machine.meta.SAD, ...
                     find(~isnan(radDepthVdoseGrid{1})), ...
                     maxLateralCutoffDoseCalc);
-                               
-                if calcHeteroCorr
+                
+                if pln.heterogeneity.calcHetero
                     heteroCorrDepths = heteroCorrDepthV{1}(ix);
                 end
                 
                 % just use tissue classes of voxels found by ray tracer
-  %              if pln.bioParam.bioOpt
-                    vTissueIndex_j = vTissueIndex(ix,:);
-  %              end
+                %              if pln.bioParam.bioOpt
+                vTissueIndex_j = vTissueIndex(ix,:);
+                %              end
                 
                 for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
                     
@@ -541,7 +520,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     
                                     % adjust radDepth according to range shifter
                                     currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
-                                    if calcHeteroCorr
+                                    if pln.heterogeneity.calcHetero
                                         currHeteroCorrDepths = heteroCorrDepths(currIx);
                                     end
                                     
@@ -564,21 +543,21 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     end
                                     
                                     % calculate particle dose for bixel k on ray j of beam i
-                                    if calcHeteroCorr
+                                    if pln.heterogeneity.calcHetero
                                         bixel = matRad_calcParticleDoseBixel(...
                                             currRadDepths, ...
                                             radialDist_sq(currIx), ...
                                             sigmaIni_sq, ...
                                             machine.data(energyIx), ...
                                             currHeteroCorrDepths, ...
-                                            [], ...
-                                            heteroCorrBio, vTissueIndex_j(currIx));
+                                            pln.heterogeneity.type, ...
+                                            pln.heterogeneity.useDoseCurves, vTissueIndex_j(currIx));
                                     else
                                         bixel = matRad_calcParticleDoseBixel(...
                                             currRadDepths, ...
                                             radialDist_sq(currIx), ...
                                             sigmaIni_sq, ...
-                                            machine.data(energyIx),[],[],heteroCorrBio, vTissueIndex_j(currIx));
+                                            machine.data(energyIx),[],pln.heterogeneity.type,pln.heterogeneity.useDoseCurves, vTissueIndex_j(currIx));
                                     end
                                     
                                     bixelDose = bixel.physDose;

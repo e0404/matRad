@@ -61,19 +61,7 @@ for k = [patients]     % loop over all 4 patients
     pln.numOfFractions = prescribedDose(k,2);
     cst = matRad_slimCST(cst);
     cst = matRad_applyOARobjective(cst,prescribedDose(k));
-    cstHetero = cst;
-    
-    lungIx =[];
-    for i = 1:length(cst)
-        if contains(cst{i,2},lungTissue)
-            lungIx = [lungIx, i];
-        end
-    end
-    
-    for i = lungIx
-        cstHetero{i,5}.HeterogeneityCorrection = 'Lung';
-    end
-    
+    cstHetero = matRad_cstHeteroAutoassign(cst);
     
     pln.propStf.bixelWidth = 3;
     
