@@ -42,17 +42,6 @@ end
 
 [env, versionString] = matRad_getEnvironment();
 
-% abort for octave
-switch env
-     case 'MATLAB'
-         
-     case 'OCTAVE'
-         fprintf(['matRad GUI not available for ' env ' ' versionString ' \n']);
-         return;
-     otherwise
-         fprintf(['not yet tested']);
- end
-        
 % Begin initialization code - DO NOT EDIT
 % set platform specific look and feel
 if ispc
@@ -62,7 +51,28 @@ elseif isunix
 elseif ismac
     lf = 'com.apple.laf.AquaLookAndFeel';
 end
-javax.swing.UIManager.setLookAndFeel(lf);
+
+% handle environment
+switch env
+    case 'MATLAB'
+        javax.swing.UIManager.setLookAndFeel(lf);
+    case 'OCTAVE'
+        verSplit = strsplit(versionString,'.');
+        if str2double(verSplit{1}) < 5
+            fprintf('matRad GUI not supported for %s %s\n',env,versionString);
+            return;
+        else
+            warning('matRad GUI experimental for %s %s\n',env,versionString);
+        end
+    otherwise
+        warning('matRad GUI never tested for %s %s\n',env,versionString);
+end
+
+
+
+        
+
+
 
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
@@ -84,63 +94,73 @@ end
 % End initialization code - DO NOT EDIT
 
 function handles = resetGUI(hObject, handles, varargin)
-% enable opengl software rendering to visualize linewidths properly
-if ispc
-  opengl software
-elseif ismac
-  % opengl is not supported
+
+[env, versionString] = matRad_getEnvironment();
+
+if strcmp(env,'MATLAB')
+    %OpenGL only works for pc (maybe also for linux?)
+    if ispc
+        opengl software
+    end       
 end
+
+handles.guiFilePath = mfilename('fullpath');
+handles.guiFilePath = fileparts(handles.guiFilePath);
 
 % Choose default command line output for matRadGUI
 handles.output = hObject;
 %show matrad logo
 axes(handles.axesLogo)
-[im, ~, alpha] = imread('matrad_logo.png');
+[im, ~, alpha] = imread([handles.guiFilePath filesep 'gfx' filesep 'matrad_logo.png']);
 f = image(im);
 axis equal off
 set(f, 'AlphaData', alpha);
 % show dkfz logo
 axes(handles.axesDKFZ)
-[im, ~, alpha] = imread('DKFZ_Logo.png');
+[im, ~, alpha] = imread([handles.guiFilePath filesep 'gfx' filesep 'DKFZ_Logo.png']);
 f = image(im);
 axis equal off;
 set(f, 'AlphaData', alpha);
 
-% turn off the datacursormode (since it does not allow to set scrolling
-% callbacks
-handles.dcm_obj = datacursormode(handles.figure1);
-set(handles.dcm_obj,'DisplayStyle','window');
-if strcmpi(get(handles.dcm_obj,'Enable'),'on')
-  set(handles.dcm_obj,'Enable','off');
+if strcmp(env,'MATLAB')
+    % turn off the datacursormode (since it does not allow to set scrolling
+    % callbacks
+    handles.dcm_obj = datacursormode(handles.figure1);
+    set(handles.dcm_obj,'DisplayStyle','window');
+    if strcmpi(get(handles.dcm_obj,'Enable'),'on')
+        set(handles.dcm_obj,'Enable','off');
+    end
+    %Add the callback for the datacursor display
+    set(handles.dcm_obj,'UpdateFcn',@dataCursorUpdateFunction);
 end
-%Add the callback for the datacursor display
-set(handles.dcm_obj,'UpdateFcn',@dataCursorUpdateFunction);
-
 % set callback for scroll wheel function
 set(gcf,'WindowScrollWheelFcn',@matRadScrollWheelFcn);
 
-% change color of toobar but only the first time GUI is started
-if handles.initialGuiStart
-  hToolbar = findall(hObject,'tag','uitoolbar1');
-  jToolbar = get(get(hToolbar,'JavaContainer'),'ComponentPeer');
-  jToolbar.setBorderPainted(false);
-  color = java.awt.Color.gray;
-  % Remove the toolbar border, to blend into figure contents
-  jToolbar.setBackground(color);
-  % Remove the separator line between toolbar and contents
-  warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
-  jFrame = get(handle(hObject),'JavaFrame');
-  jFrame.showTopSeparator(false);
-  jtbc = jToolbar.getComponents;
-  for idx=1:length(jtbc)
-      jtbc(idx).setOpaque(false);
-      jtbc(idx).setBackground(color);
-      for childIdx = 1 : length(jtbc(idx).getComponents)
-          jtbc(idx).getComponent(childIdx-1).setBackground(color);
-      end
-  end
+if strcmp(env,'MATLAB')
+    % change color of toobar but only the first time GUI is started
+    if handles.initialGuiStart
+        hToolbar = findall(hObject,'tag','uitoolbar1');
+        jToolbar = get(get(hToolbar,'JavaContainer'),'ComponentPeer');
+        jToolbar.setBorderPainted(false);
+        color = java.awt.Color.gray;
+        % Remove the toolbar border, to blend into figure contents
+        jToolbar.setBackground(color);
+        % Remove the separator line between toolbar and contents
+        warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+        jFrame = get(handle(hObject),'JavaFrame');
+        jFrame.showTopSeparator(false);
+        jtbc = jToolbar.getComponents;
+        for idx=1:length(jtbc)
+            jtbc(idx).setOpaque(false);
+            jtbc(idx).setBackground(color);
+            for childIdx = 1 : length(jtbc(idx).getComponents)
+                jtbc(idx).getComponent(childIdx-1).setBackground(color);
+            end
+        end
+    end
 end
 
+set(handles.uipanel3,'SizeChangedFcn',@(hObject,eventdata)matRadGUI('uipanel3_SizeChangedFcn',hObject,eventdata,guidata(hObject)));
 
 set(handles.legendTable,'String',{'no data loaded'});
 % clear  VOIPlotFlag
@@ -830,9 +850,10 @@ drawnow;
 
 defaultFontSize = 8;
 currAxes            = axis(handles.axesFig);
-AxesHandlesCT_Dose  = gobjects(0);
 AxesHandlesVOI      = cell(0);
-AxesHandlesIsoDose  = gobjects(0);
+
+AxesHandlesCT_Dose  = cell(0);
+AxesHandlesIsoDose  = cell(0);
 
 if handles.State == 0
     cla reset
@@ -939,7 +960,7 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
     end
 
     if get(handles.radiobtnCT,'Value')
-        [AxesHandlesCT_Dose(end+1),~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,plotCtCube,1,plane,slice,ctMap,handles.dispWindow{ctIx,1});
+        [AxesHandlesCT_Dose{end+1},~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,plotCtCube,1,plane,slice,ctMap,handles.dispWindow{ctIx,1});
         
         % plot colorbar? If 1 the user asked for the CT
         if plotColorbarSelection == 2 && handles.cBarChanged
@@ -979,7 +1000,7 @@ if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Re
             
             if get(handles.radiobtnDose,'Value')
                 [doseHandle,~,handles.dispWindow{doseIx,1}] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,handles.CutOffLevel,handles.doseOpacity,doseMap,handles.dispWindow{doseIx,1});
-                AxesHandlesCT_Dose(end+1)         = doseHandle;
+                AxesHandlesCT_Dose{end+1}         = doseHandle;
             end            
                     
             % plot colorbar?
@@ -4154,25 +4175,33 @@ cst = updateStructureTable(handles,cst);
 
 cstPanel = handles.uipanel3;
 
-cstPanelPos = getpixelposition(cstPanel);
+
+
+cstPanelPos = get(cstPanel,'Position');
+cstPanelPosUnit = get(cstPanel,'Units');
+set(cstPanel,'Units','pixels');
+cstPanelPosPix = get(cstPanel,'Position');
+set(cstPanel,'Units',cstPanelPosUnit);
+
+aspectRatio = cstPanelPosPix(3) / cstPanelPosPix(4);
 
 %Parameters for line height
-objHeight = 22;
-lineHeight = 25; %Height of a table line
-fieldSep = 2; %Separation between fields horizontally
-yTopSep = 40; %Separation of the first line from the top
-tableViewHeight = cstPanelPos(4) - yTopSep; %Full height of the view
+objHeight = 0.095;% 22;
+lineHeight = 0.1; %25; %Height of a table line
+yTopSep = 0.12;%40; %Separation of the first line from the top
+%tableViewHeight = cstPanelPos(4) - yTopSep; %Full height of the view
+tableViewHeight = 1 - yTopSep;
 
 %Widths of the fields
-buttonW = objHeight;
-nameW = 90;
-typeW = 70;
-opW = objHeight;
-functionW = 120;
-penaltyW = 40;
-paramTitleW = 120;
-paramW = 30;
-
+buttonW = objHeight / aspectRatio; % Make button squared
+nameW = 3.5*buttonW;%60;
+typeW = 3*buttonW;%70;
+opW = buttonW;%objHeight;
+functionW = 6*buttonW;%120;
+penaltyW = 2*buttonW;%40;
+paramTitleW = 4*buttonW;%120;
+paramW = 2*buttonW;%30;
+fieldSep = 0.25*buttonW; %Separation between fields horizontally
 
 %Scrollbar
 cstVertTableScroll = findobj(cstPanel.Children,'Style','slider');
@@ -4194,23 +4223,7 @@ organTypes = {'OAR', 'TARGET'};
 %columnname = {'VOI name','VOI type','priority','obj. / const.'};%,'penalty','dose', 'EUD','volume','robustness'};
            
 %Get all Classes & classNames                   
-mpkgObjectives = meta.package.fromName('DoseObjectives');
-mpkgConstraints = meta.package.fromName('DoseConstraints');
-classList = [mpkgObjectives.ClassList; mpkgConstraints.ClassList];
-
-classList = classList(not([classList.Abstract]));
-
-%Now get the "internal" name from the properties
-classNames = cell(2,numel(classList));
-for clIx = 1:numel(classList)
-    cl = classList(clIx);
-    pList = cl.PropertyList; %Get List of all properties
-    pNameIx = arrayfun(@(p) strcmp(p.Name,'name'),pList); %get index of the "name" property
-    p = pList(pNameIx); %select name property
-    pName = p.DefaultValue; % get value / name
-    classNames(:,clIx) = {cl.Name; pName}; %Store class name and display name
-end
-
+classNames = matRad_getObjectivesAndConstraints();
 % Collect Class-File & Display Names
 %classNames = {classList.Name; p.DefaultValue};
 
@@ -4230,20 +4243,21 @@ cnt = 0;
 newline = '\n';
 
 %Setup Headlines
-xPos = 5;
-h = uicontrol(cstPanel,'Style','text','String','+/-','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Remove or add Constraint or Objective');
+xPos = 0.01; %5
+
+h = uicontrol(cstPanel,'Style','text','String','+/-','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Remove or add Constraint or Objective');
 xPos = xPos + h.Position(3) + fieldSep;
-h = uicontrol(cstPanel,'Style','text','String','VOI name','Position',[xPos ypos(cnt) nameW objHeight],'TooltipString','Name of the structure with objective/constraint');
+h = uicontrol(cstPanel,'Style','text','String','VOI name','Units','normalized','Position',[xPos ypos(cnt) nameW objHeight],'TooltipString','Name of the structure with objective/constraint');
 xPos = xPos + h.Position(3) + fieldSep;
-h = uicontrol(cstPanel,'Style','text','String','VOI type','Position',[xPos ypos(cnt) typeW objHeight],'TooltipString','Segmentation Classification');
+h = uicontrol(cstPanel,'Style','text','String','VOI type','Units','normalized','Position',[xPos ypos(cnt) typeW objHeight],'TooltipString','Segmentation Classification');
 xPos = xPos + h.Position(3) + fieldSep;
-h = uicontrol(cstPanel,'Style','text','String','OP','Position',[xPos ypos(cnt) opW objHeight],'TooltipString',['Overlap Priority' char(10) '(Smaller number overlaps higher number)']);
+h = uicontrol(cstPanel,'Style','text','String','OP','Units','normalized','Position',[xPos ypos(cnt) opW objHeight],'TooltipString',['Overlap Priority' char(10) '(Smaller number overlaps higher number)']);
 xPos = xPos + h.Position(3) + fieldSep;
-h = uicontrol(cstPanel,'Style','text','String','Function','Position',[xPos ypos(cnt) functionW objHeight],'TooltipString','Objective/Constraint function type');
+h = uicontrol(cstPanel,'Style','text','String','Function','Units','normalized','Position',[xPos ypos(cnt) functionW objHeight],'TooltipString','Objective/Constraint function type');
 xPos = xPos + h.Position(3) + fieldSep;
-h = uicontrol(cstPanel,'Style','text','String','p','Position',[xPos ypos(cnt) penaltyW objHeight],'TooltipString','Optimization penalty');
+h = uicontrol(cstPanel,'Style','text','String','p','Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight],'TooltipString','Optimization penalty');
 xPos = xPos + h.Position(3) + fieldSep;
-h = uicontrol(cstPanel,'Style','text','String','| Parameters','Position',[xPos ypos(cnt) paramTitleW objHeight],'TooltipString','List of parameters','HorizontalAlignment','left');
+h = uicontrol(cstPanel,'Style','text','String','| Parameters','Units','normalized','Position',[xPos ypos(cnt) paramTitleW objHeight],'TooltipString','List of parameters','HorizontalAlignment','left');
 xPos = xPos + h.Position(3) + fieldSep;
 cnt = cnt + 1;
 
@@ -4263,66 +4277,75 @@ for i = 1:size(cst,1)
                     continue;
                 end
            end
-               
+
            %VOI
            %data{Counter,1}  = cst{i,2};
            %ypos = cstPanelPos(4) - (yTopSep + cnt*lineHeight);
-           xPos = 5;
+           xPos = 0.01;%5;
            
            %h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Position',[xPos ypos 100 objHeight]);
            %h.Value = i;
-           h = uicontrol(cstPanel,'Style','pushbutton','String','-','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Remove Objective/Constraint','Callback',{@btObjRemove_Callback,handles},...
+           h = uicontrol(cstPanel,'Style','pushbutton','String','-','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Remove Objective/Constraint','Callback',{@btObjRemove_Callback,handles},...
                'UserData',[i,j]);
-           xPos = xPos + h.Position(3) + fieldSep;
-           h = uicontrol(cstPanel','Style','edit','String',cst{i,2},'Position',[xPos ypos(cnt) nameW objHeight],'TooltipString','Name',...
+           tmp_pos = get(h,'Position');
+           xPos = xPos + tmp_pos(3) + fieldSep;
+           h = uicontrol(cstPanel','Style','edit','String',cst{i,2},'Units','normalized','Position',[xPos ypos(cnt) nameW objHeight],'TooltipString','Name',...
                'Enable','inactive',... %Disable editing of name atm
                'UserData',[i,2],'Callback',{@editCstParams_Callback,handles}); %Callback added, however, editing is disabled atm
-           xPos = xPos + h.Position(3) + fieldSep;
-           h = uicontrol(cstPanel,'Style','popupmenu','String',organTypes','Value',find(strcmp(cst{i,3},organTypes)),'Position',[xPos ypos(cnt) typeW objHeight],'TooltipString','Segmentation Classification',...
+           tmp_pos = get(h,'Position');
+           xPos = xPos + tmp_pos(3) + fieldSep;
+           h = uicontrol(cstPanel,'Style','popupmenu','String',organTypes','Value',find(strcmp(cst{i,3},organTypes)),'Units','normalized','Position',[xPos ypos(cnt) typeW objHeight],'TooltipString','Segmentation Classification',...
                'UserData',[i,3],'Callback',{@editCstParams_Callback,handles});
-           xPos = xPos + h.Position(3) + fieldSep;
-           h = uicontrol(cstPanel,'Style','edit','String',num2str(cst{i,5}.Priority),'Position',[xPos ypos(cnt) opW objHeight],'TooltipString',['Overlap Priority' newline '(Smaller number overlaps higher number)'],...
+           tmp_pos = get(h,'Position');
+           xPos = xPos + tmp_pos(3) + fieldSep;
+           h = uicontrol(cstPanel,'Style','edit','String',num2str(cst{i,5}.Priority),'Units','normalized','Position',[xPos ypos(cnt) opW objHeight],'TooltipString',['Overlap Priority' newline '(Smaller number overlaps higher number)'],...
                'UserData',[i,5],'Callback',{@editCstParams_Callback,handles});
-           xPos = xPos + h.Position(3) + fieldSep;
+           tmp_pos = get(h,'Position');
+           xPos = xPos + tmp_pos(3) + fieldSep;
            
-           h = uicontrol(cstPanel,'Style','popupmenu','String',classNames(2,:)','Value',find(strcmp(obj.name,classNames(2,:))),'Position',[xPos ypos(cnt) functionW objHeight],'TooltipString','Select Objective/Constraint',...
+           h = uicontrol(cstPanel,'Style','popupmenu','String',classNames(2,:)','Value',find(strcmp(obj.name,classNames(2,:))),'Units','normalized','Position',[xPos ypos(cnt) functionW objHeight],'TooltipString','Select Objective/Constraint',...
                'UserData',{[i,j],classNames(1,:)},'Callback',{@changeObjFunction_Callback,handles});
-           xPos = xPos + h.Position(3) + fieldSep;
+           tmp_pos = get(h,'Position');
+           xPos = xPos + tmp_pos(3) + fieldSep;
            
            %Check if we have an objective to display penalty
            if isa(obj,'DoseObjectives.matRad_DoseObjective')
-               h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.penalty),'Position',[xPos ypos(cnt) penaltyW objHeight],'TooltipString','Objective Penalty','UserData',[i,j,0],'Callback',{@editObjParam_Callback,handles});
+               h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.penalty),'Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight],'TooltipString','Objective Penalty','UserData',[i,j,0],'Callback',{@editObjParam_Callback,handles});
            else
-               h = uicontrol(cstPanel,'Style','edit','String','----','Position',[xPos ypos(cnt) penaltyW objHeight],'Enable','off');
+               h = uicontrol(cstPanel,'Style','edit','String','----','Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight],'Enable','off');
            end
-           xPos = xPos + h.Position(3) + fieldSep;
+           tmp_pos = get(h,'Position');
+           xPos = xPos + tmp_pos(3) + fieldSep;
            
            for p = 1:numel(obj.parameterNames)
               %h = uicontrol(cstPanel,'Style','edit','String',obj.parameters{1,p},'Position',[xPos ypos(cnt) 100 objHeight],'Enable','inactive');
               %xPos = xPos + h.Position(3) + fieldSep;
-              h = text('Parent',tmpAxes,'String',['| ' obj.parameterNames{p} ':'],'VerticalAlignment','middle','units','pix','Position',[xPos ypos(cnt)+lineHeight/2],'Interpreter','tex','FontWeight','normal',...
+              h = text('Parent',tmpAxes,'String',['| ' obj.parameterNames{p} ':'],'VerticalAlignment','middle','Units','normalized','Position',[xPos ypos(cnt)+lineHeight/2],'Interpreter','tex','FontWeight','normal',...
                   'FontSize',cstPanel.FontSize,'FontName',cstPanel.FontName,'FontUnits',cstPanel.FontUnits,'FontWeight','normal');%[xPos ypos(cnt) 100 objHeight]);
-              xPos = xPos + h.Extent(3) + fieldSep;
+              tmp_pos = get(h,'Extent');
+              xPos = xPos + tmp_pos(3) + fieldSep;
               %h = annotation(cstPanel,'textbox','String',obj.parameters{1,p},'Units','pix','Position', [xPos ypos(cnt) 100 objHeight],'Interpreter','Tex');
               
               %Check if we have a cell and therefore a parameter list
               if iscell(obj.parameterTypes{p})                  
-                  h = uicontrol(cstPanel,'Style','popupmenu','String',obj.parameterTypes{p}','Value',obj.parameters{p},'TooltipString',obj.parameterNames{p},'Position',[xPos ypos(cnt) paramW*2 objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
+                  h = uicontrol(cstPanel,'Style','popupmenu','String',obj.parameterTypes{p}','Value',obj.parameters{p},'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW*2 objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
               else
-                h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{p}),'TooltipString',obj.parameterNames{p},'Position',[xPos ypos(cnt) paramW objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
+                h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{p}),'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
               end
               
-              xPos = xPos + h.Position(3) + fieldSep;
+              tmp_pos = get(h,'Extent');
+              xPos = xPos + tmp_pos(3) + fieldSep;
            end
 
            cnt = cnt +1;
        end
    end   
 end
-xPos = 5;
-hAdd = uicontrol(cstPanel,'Style','pushbutton','String','+','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Add Objective/Constraint','Callback',{@btObjAdd_Callback,handles});
-xPos = xPos + hAdd.Position(3) + fieldSep;
-h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Position',[xPos ypos(cnt) nameW objHeight]);
+xPos = 0.01; %5
+hAdd = uicontrol(cstPanel,'Style','pushbutton','String','+','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Add Objective/Constraint','Callback',{@btObjAdd_Callback,handles});
+tmp_pos = get(hAdd,'Position');
+xPos = xPos + tmp_pos(3) + fieldSep;
+h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Units','normalized','Position',[xPos ypos(cnt) nameW objHeight]);
 hAdd.UserData = h;
 
 %Calculate Scrollbar
