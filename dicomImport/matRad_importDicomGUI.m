@@ -22,7 +22,7 @@ function varargout = matRad_importDicomGUI(varargin)
 
 % Edit the above text to modify the response to help matRad_importDicomGUI
 
-% Last Modified by GUIDE v2.5 02-Jun-2017 00:45:04
+% Last Modified by GUIDE v2.5 09-Aug-2019 18:44:22
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -43,16 +43,16 @@ gui_State = struct('gui_Name',       mfilename, ...
     'gui_Singleton',  gui_Singleton, ...
     'gui_OpeningFcn', @matRad_importDicomGUI_OpeningFcn, ...
     'gui_OutputFcn',  @matRad_importDicomGUI_OutputFcn, ...
-    'gui_LayoutFcn',  [] , ...
+    'gui_LayoutFcn',  @matRad_importDicomGUI_LayoutFcn, ...
     'gui_Callback',   []);
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
 
 % if nargout
-    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+    [varargout{1:nargout}] = matRad_importDicomGUI_gui_mainFcn(gui_State, varargin{:});
 % else
-%     gui_mainfcn(gui_State, varargin{:});
+%     matRad_importDicomGUI_gui_mainFcn(gui_State, varargin{:});
 % end
 % End initialization code - DO NOT EDIT
 
@@ -69,13 +69,15 @@ function matRad_importDicomGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
 
 axes(handles.axesMatRadLogo)
-[im, ~, alpha] = imread('matrad_logo.png');
+[path,name,ext] = fileparts(mfilename('fullpath'));
+
+[im, ~, alpha] = imread([path filesep '..' filesep 'gfx/matrad_logo.png']);
 q = image(im);
 axis equal off
 set(q, 'AlphaData', alpha);
 % show dkfz logo
 axes(handles.axesDKFZLogo)
-[im, ~, alpha] = imread('DKFZ_Logo.png');
+[im, ~, alpha] = imread([path filesep '..' filesep 'gfx/matrad_logo.png']);
 p = image(im);
 axis equal off
 set(p, 'AlphaData', alpha);
@@ -736,3 +738,5 @@ else
     end
     
 end
+
+

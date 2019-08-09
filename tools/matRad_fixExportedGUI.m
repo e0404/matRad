@@ -45,6 +45,9 @@ f = regexprep(f,expr,'');
 %Tooltip property
 f = regexprep(f,'\r?\n''TooltipMode'',get\(0,''default(uipushtool|uitoggletool|uicontrol)TooltipMode''\)(,\.\.\.|\))','');
 
+%Background Colormode
+f = regexprep(f,'\r?\n''BackgroundColorMode'',get\(0,''default(uipushtool|uitoggletool|uicontrol)BackgroundColorMode''\)(,\.\.\.|\))','');
+
 %Fix remaining whitespaces
 f = regexprep(f,'(,\.\.\.)\s*?;',');');
 
@@ -70,6 +73,7 @@ guiMainFcn = out{1}{2};
 f = regexprep(f,expr,'');
 %write the functions to files
 [~,~] = mkdir([filepath filesep 'gui']);
+addpath([filepath filesep 'gui']);
 fLayoutId = fopen([filepath  filesep 'gui' filesep name '_LayoutFcn.m'],'w');
 fprintf(fLayoutId,'%s',layoutFcn);
 fclose(fLayoutId);
