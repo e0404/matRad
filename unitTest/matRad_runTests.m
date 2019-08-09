@@ -29,7 +29,8 @@ exampleScripts = {'matRad_example1_phantom.m',...
     'matRad_example5_protons.m',...
     'matRad_example6_protonsNoise.m',...
     'matRad_example7_carbon.m',...
-    'matRad_example11_helium.m'};
+    'matRad_example11_helium.m',...
+    'matRad_example12_heterogeneityCorrection.m'};
 
 unitTestBixelWidth = 20;
 
@@ -44,17 +45,23 @@ end
 
 unitTestBool = true;
 
+% running examples number i
 disp('Unit test run example 1');
-matRad_example1_phantom
+matRad_example1_phantom.m
 disp('Unit test run example 2');
-matRad_example2_photons
+matRad_example2_photons.m
 disp('Unit test run example 3');
-matRad_example3_photonsDAO
+matRad_example3_photonsDAO.m
 disp('Unit test run example 5');
-matRad_example5_protons
+matRad_example5_protons.m
 disp('Unit test run example 6');
-matRad_example6_protonsNoise
+matRad_example6_protonsNoise.m
 disp('Unit test run example 7');
-matRad_example7_carbon
+matRad_example7_carbon.m
+disp('Unit test run example 11');
+matRad_example11_helium.m
+disp('Unit test run example 12');
+matRad_example12_heterogeneityCorrection.m
+
 disp('Unit test run matRad script');
 matRad
