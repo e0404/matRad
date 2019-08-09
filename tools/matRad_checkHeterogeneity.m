@@ -1,6 +1,30 @@
-function pln = matRad_checkHeterogeneity(pln,cst,param)
+function pln = matRad_checkHeterogeneity(pln,cst)
+% script to check the consitency of heterogeneity parameters and setting 
+% default parameters for heterogeneity correction
+%
+% call
+%   pln = matRad_checkHeterogeneity(pln,cst)
+%
+% input
+%   pln:            matRad plan meta information struct
+%   cst:            matRad cst struct
+%
+% output
+%   pln:            updated matRad plan meta information struct
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2019 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Setting default parameters for heterogeneity correction
 if isfield(pln,'heterogeneity')
     if ~isfield(pln.heterogeneity,'useDoseCurves') || isempty(pln.heterogeneity.useDoseCurves)
         pln.heterogeneity.useDoseCurves = false;
@@ -23,7 +47,7 @@ else
 end
 
 if pln.heterogeneity.calcHetero
-    matRad_dispToConsole('Heterogeneity correction enabled. \n',param,'info');
+    fprintf('Heterogeneity correction enabled. \n');
     heteroCST = false;
     for i = 1:length(cst(:,1))
         if isfield(cst{i,5},'HeterogeneityCorrection')
@@ -36,6 +60,7 @@ if pln.heterogeneity.calcHetero
        pln.heterogeneity.calcHetero = false;
     end
 else
-    matRad_dispToConsole('Heterogeneity correction disabled. \n',param,'info');
+    fprintf('Heterogeneity correction disabled. \n');
 end
+
 end

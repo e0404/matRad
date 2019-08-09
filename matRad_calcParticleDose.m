@@ -47,7 +47,19 @@ else
     param.logLevel       = 1;
 end
 
+% load machine file
+fileName = [pln.radiationMode '_' pln.machine];
+try
+    load([fileparts(mfilename('fullpath')) filesep fileName]);
+catch
+    matRad_dispToConsole(['Could not find the following machine file: ' fileName ],param,'error');
+end
+
 pln = matRad_checkHeterogeneity(pln,cst,param);
+
+if isfield(pln.heterogeneity,'useOrgDepths') && pln.heterogeneity.useOrgDepths
+    machine.data = matRad_checkBaseData(machine.data);
+end
 
 % to guarantee downwards compatibility with data that does not have
 % ct.x/y/z
@@ -192,14 +204,6 @@ VdoseGrid = find(interp3(dij.ctGrid.y,dij.ctGrid.x,   dij.ctGrid.z,tmpCube, ...
 
 % Convert CT subscripts to coarse linear indices.
 [yCoordsV_voxDoseGrid, xCoordsV_voxDoseGrid, zCoordsV_voxDoseGrid] = ind2sub(dij.doseGrid.dimensions,VdoseGrid);
-
-% load machine file
-fileName = [pln.radiationMode '_' pln.machine];
-try
-    load([fileparts(mfilename('fullpath')) filesep fileName]);
-catch
-    matRad_dispToConsole(['Could not find the following machine file: ' fileName ],param,'error');
-end
 
 if pln.heterogeneity.calcHetero
     calcHeteroCorrStruct.cube = {zeros(ct.cubeDim)};

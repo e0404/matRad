@@ -122,7 +122,7 @@ if isstruct(baseData.Z)
     radDepths = radDepths - baseData.offset;
     
     % add sigma if heterogeneity correction wanted
-    if ~strcmp(heteroCorrType,'none') && exist('heteroCorrDepths','var')      
+    if ~strcmp(heteroCorrType,'none') && exist('heteroCorrDepths','var')
         if  strcmp(heteroCorrType,'complete')
             [~,lungDepthAtBraggPeakIx] = min(abs(radialDist_sq+(radDepths-baseData.peakPos).^2));
             lungDepthAtBraggPeak = heteroCorrDepths(lungDepthAtBraggPeakIx);
