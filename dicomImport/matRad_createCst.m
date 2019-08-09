@@ -47,12 +47,9 @@ for i = 1:size(structures,2)
         cst{i,5}.Priority = 1;
      
         % default objectives for targets
-        cst{i,6}(1).type       = 'square deviation';
-        cst{i,6}(1).penalty    = 800;
-        cst{i,6}(1).dose       = 30;
-        cst{i,6}(1).EUD        = NaN;
-        cst{i,6}(1).volume     = NaN;
-        cst{i,6}(1).robustness = 'none';
+        cst{i,6}{1}.type       = 'DoseObjectives.matRad_SquaredDeviation';
+        cst{i,6}{1}.penalty    = 800;
+        cst{i,6}{1}.parameters{1} = 60;
         
     else
         
@@ -60,7 +57,7 @@ for i = 1:size(structures,2)
         
         cst{i,5}.Priority = 2;
         
-        cst{i,6} = []; % define no OAR dummy objcetives   
+        %cst{i,6} = []; % define no OAR dummy objcetives   
     
     end
     

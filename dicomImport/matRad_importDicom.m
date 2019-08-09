@@ -33,7 +33,12 @@ function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[env, ~] = matRad_getEnvironment();
+env = matRad_getEnvironment();
+
+matRad_checkEnvDicomRequirements(env);
+
+isOctave = strcmp(env,'OCTAVE');
+
     
 %%
 if ~exist('dicomMetaBool','var')
@@ -52,7 +57,7 @@ resolution.y = files.resy;
 resolution.z = files.resz; % [mm] / lps coordinate system
 if files.useDoseGrid && isfield(files,'rtdose')
     % get grid from dose cube
-    if verLessThan('matlab','9')
+    if isOctave || verLessThan('matlab','9')
         doseInfo = dicominfo(files.rtdose{1,1});
     else
         doseInfo = dicominfo(files.rtdose{1,1},'UseDictionaryVR',true);
@@ -158,9 +163,11 @@ if ischar(FileName)
     switch env
     case 'MATLAB'
         clearvars -except ct cst pln stf resultGUI FileName PathName;
+        save([PathName, FileName], '-regexp', '^(?!(FileName|PathName)$).','-v7');
     case 'OCTAVE' 
         clear -x ct cst pln stf resultGUI FileName PathName;
+        save([PathName, FileName],'-v6');
     end
     % save all except FileName and PathName
-    save([PathName, FileName], '-regexp', '^(?!(FileName|PathName)$).','-v7.3');
+    
 end
