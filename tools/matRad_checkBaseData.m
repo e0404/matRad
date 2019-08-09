@@ -6,7 +6,7 @@ function baseData = matRad_checkBaseData(baseData)
 %   baseData = matRad_checkBaseData(baseData)
 %
 % input
-%   baseData        machine base data
+%   baseData:       matRad machine base data
 %
 % output
 %   baseData        updated base data with new depths if possible
@@ -28,7 +28,11 @@ if isstruct(baseData(1).Z) && isfield(baseData(1).Z,'profileORG')
     for i = 1:length(baseData)
         baseData(i).Z = baseData(i).Z.profileORG;
     end
-elseif isstruct(baseData(1).Z) && ~isfield(baseData(1).Z,'profileORG')
+elseif isstruct(baseData(1).Z) && isfield(baseData(1).Z,'doseORG')
+    for i = 1:length(baseData)
+        baseData(i).Z = baseData(i).Z.doseORG;
+    end
+elseif isstruct(baseData(1).Z) && (~isfield(baseData(1).Z,'profileORG') && ~isfield(baseData(1).Z,'doseORG'))
     warning('No original depths available in base data. Nothing changed.');
 else
     warning('Base data depths are already in the desired format.');

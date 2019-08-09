@@ -55,7 +55,7 @@ catch
     matRad_dispToConsole(['Could not find the following machine file: ' fileName ],param,'error');
 end
 
-pln = matRad_checkHeterogeneity(pln,cst,param);
+pln = matRad_checkHeterogeneity(pln,cst,machine.data(1));
 
 if isfield(pln.heterogeneity,'useOrgDepths') && pln.heterogeneity.useOrgDepths
     machine.data = matRad_checkBaseData(machine.data);

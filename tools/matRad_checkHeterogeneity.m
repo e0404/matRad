@@ -1,4 +1,4 @@
-function pln = matRad_checkHeterogeneity(pln,cst)
+function pln = matRad_checkHeterogeneity(pln,cst,baseData)
 % script to check the consitency of heterogeneity parameters and setting 
 % default parameters for heterogeneity correction
 %
@@ -8,6 +8,7 @@ function pln = matRad_checkHeterogeneity(pln,cst)
 % input
 %   pln:            matRad plan meta information struct
 %   cst:            matRad cst struct
+%   baseData:       matRad machine base data
 %
 % output
 %   pln:            updated matRad plan meta information struct
@@ -55,8 +56,8 @@ if pln.heterogeneity.calcHetero
             break
         end
     end
-    if ~heteroCST
-       warning('Heterogeneity correction enabled but no usable data in cst. Correction cannot be applied.'); 
+    if ~isstruct(baseData.Z) || ~heteroCST
+       warning('Heterogeneity correction enabled but no usable data in cst or unsuitable base data. Correction cannot be applied.'); 
        pln.heterogeneity.calcHetero = false;
     end
 else
