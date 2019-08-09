@@ -62,7 +62,14 @@ switch env
             fprintf('matRad GUI not supported for %s %s\n',env,versionString);
             return;
         else
-            warning('matRad GUI experimental for %s %s\n',env,versionString);
+            persistent octaveWarningIssued;
+            if isempty(octaveWarningIssued)
+                octaveWarningIssued = false;
+            end
+            if ~octaveWarningIssued
+                warning('matRad GUI experimental for %s %s\n',env,versionString);
+                octaveWarningIssued = true;
+            end
         end
     otherwise
         warning('matRad GUI never tested for %s %s\n',env,versionString);
@@ -79,16 +86,16 @@ gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @matRadGUI_OpeningFcn, ...
                    'gui_OutputFcn',  @matRadGUI_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
+                   'gui_LayoutFcn',  @matRadGUI_LayoutFcn, ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
 
 if nargout
-    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+    [varargout{1:nargout}] = matRadGUI_gui_mainFcn(gui_State, varargin{:});
 else
-    gui_mainfcn(gui_State, varargin{:});
+    matRadGUI_gui_mainFcn(gui_State, varargin{:});
 end
 
 % End initialization code - DO NOT EDIT
@@ -2538,7 +2545,7 @@ if nargin == 3
     else 
         meType = 'basic';
     end
-    Message = {Message,ME.getReport(meType,'hyperlinks','off')};    
+    Message = {Message,ME.message};%{Message,ME.getReport(meType,'hyperlinks','off')};    
 end
 
 if isfield(handles,'ErrorDlg')
@@ -2558,7 +2565,7 @@ if nargin == 3
     else 
         meType = 'basic';
     end
-    Message = {Message,ME.getReport(meType,'hyperlinks','off')};    
+    Message = {Message,ME.message};%{Message,ME.getReport(meType,'hyperlinks','off')};    
 end
 
 if isfield(handles,'WarnDlg')
@@ -4204,16 +4211,17 @@ paramW = 2*buttonW;%30;
 fieldSep = 0.25*buttonW; %Separation between fields horizontally
 
 %Scrollbar
-cstVertTableScroll = findobj(cstPanel.Children,'Style','slider');
+cstPanelChildren = get(cstPanel,'Children');
+cstVertTableScroll = findobj(cstPanelChildren,'Style','slider');
 if isempty(cstVertTableScroll)
     sliderPos = 0;
 else
-    sliderPos = cstVertTableScroll.Max - cstVertTableScroll.Value;
+    sliderPos = get(cstVertTableScroll,'Max') - get(cstVertTableScroll,'Value');
 end
 %disp(num2str(sliderPos));
 ypos = @(c) tableViewHeight - c*lineHeight + sliderPos;
 
-delete(cstPanel.Children);
+delete(cstPanelChildren);
 
 %Creates a dummy axis to allow for the use of textboxes instead of uicontrol to be able to use the (la)tex interpreter
 tmpAxes = axes('Parent',cstPanel,'units','normalized','position',[0 0 1 1],'visible','off');
@@ -4246,19 +4254,26 @@ newline = '\n';
 xPos = 0.01; %5
 
 h = uicontrol(cstPanel,'Style','text','String','+/-','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Remove or add Constraint or Objective');
-xPos = xPos + h.Position(3) + fieldSep;
+tmp_pos = get(h,'Position');
+xPos = xPos + tmp_pos(3) + fieldSep;
 h = uicontrol(cstPanel,'Style','text','String','VOI name','Units','normalized','Position',[xPos ypos(cnt) nameW objHeight],'TooltipString','Name of the structure with objective/constraint');
-xPos = xPos + h.Position(3) + fieldSep;
+tmp_pos = get(h,'Position');
+xPos = xPos + tmp_pos(3) + fieldSep;
 h = uicontrol(cstPanel,'Style','text','String','VOI type','Units','normalized','Position',[xPos ypos(cnt) typeW objHeight],'TooltipString','Segmentation Classification');
-xPos = xPos + h.Position(3) + fieldSep;
+tmp_pos = get(h,'Position');
+xPos = xPos + tmp_pos(3) + fieldSep;
 h = uicontrol(cstPanel,'Style','text','String','OP','Units','normalized','Position',[xPos ypos(cnt) opW objHeight],'TooltipString',['Overlap Priority' char(10) '(Smaller number overlaps higher number)']);
-xPos = xPos + h.Position(3) + fieldSep;
+tmp_pos = get(h,'Position');
+xPos = xPos + tmp_pos(3) + fieldSep;
 h = uicontrol(cstPanel,'Style','text','String','Function','Units','normalized','Position',[xPos ypos(cnt) functionW objHeight],'TooltipString','Objective/Constraint function type');
-xPos = xPos + h.Position(3) + fieldSep;
+tmp_pos = get(h,'Position');
+xPos = xPos + tmp_pos(3) + fieldSep;
 h = uicontrol(cstPanel,'Style','text','String','p','Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight],'TooltipString','Optimization penalty');
-xPos = xPos + h.Position(3) + fieldSep;
+tmp_pos = get(h,'Position');
+xPos = xPos + tmp_pos(3) + fieldSep;
 h = uicontrol(cstPanel,'Style','text','String','| Parameters','Units','normalized','Position',[xPos ypos(cnt) paramTitleW objHeight],'TooltipString','List of parameters','HorizontalAlignment','left');
-xPos = xPos + h.Position(3) + fieldSep;
+tmp_pos = get(h,'Position');
+xPos = xPos + tmp_pos(3) + fieldSep;
 cnt = cnt + 1;
 
 %Create Objectives / Constraints controls
@@ -4321,7 +4336,7 @@ for i = 1:size(cst,1)
               %h = uicontrol(cstPanel,'Style','edit','String',obj.parameters{1,p},'Position',[xPos ypos(cnt) 100 objHeight],'Enable','inactive');
               %xPos = xPos + h.Position(3) + fieldSep;
               h = text('Parent',tmpAxes,'String',['| ' obj.parameterNames{p} ':'],'VerticalAlignment','middle','Units','normalized','Position',[xPos ypos(cnt)+lineHeight/2],'Interpreter','tex','FontWeight','normal',...
-                  'FontSize',cstPanel.FontSize,'FontName',cstPanel.FontName,'FontUnits',cstPanel.FontUnits,'FontWeight','normal');%[xPos ypos(cnt) 100 objHeight]);
+                  'FontSize',get(cstPanel,'FontSize'),'FontName',get(cstPanel,'FontName'),'FontUnits',get(cstPanel,'FontUnits'),'FontWeight','normal');%[xPos ypos(cnt) 100 objHeight]);
               tmp_pos = get(h,'Extent');
               xPos = xPos + tmp_pos(3) + fieldSep;
               %h = annotation(cstPanel,'textbox','String',obj.parameters{1,p},'Units','pix','Position', [xPos ypos(cnt) 100 objHeight],'Interpreter','Tex');
@@ -4346,7 +4361,7 @@ hAdd = uicontrol(cstPanel,'Style','pushbutton','String','+','Units','normalized'
 tmp_pos = get(hAdd,'Position');
 xPos = xPos + tmp_pos(3) + fieldSep;
 h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Units','normalized','Position',[xPos ypos(cnt) nameW objHeight]);
-hAdd.UserData = h;
+set(hAdd,'UserData',h);
 
 %Calculate Scrollbar
 lastPos = ypos(cnt);
@@ -4383,8 +4398,8 @@ function btObjAdd_Callback(hObject, ~, handles)
 % hObject    handle to btnuiTableAdd (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-popupHandle = hObject.UserData;
-cstIndex = popupHandle.Value;
+popupHandle = get(hObject,'UserData');
+cstIndex = get(popupHandle,'Value');
 
 cst = evalin('base','cst');
 %Add Standard Objective
@@ -4408,7 +4423,7 @@ function btObjRemove_Callback(hObject, ~, handles)
 % hObject    handle to btnuiTableAdd (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-ix = hObject.UserData;
+ix = get(hObject,'UserData');
 
 cst = evalin('base','cst');
 %Add Standard Objective
@@ -4429,7 +4444,7 @@ function editObjParam_Callback(hObject, ~, handles)
 % hObject    handle to btnuiTableAdd (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-ix = hObject.UserData;
+ix = get(hObject,'UserData');
 
 cst = evalin('base','cst');
 %Add Standard Objective
@@ -4473,10 +4488,10 @@ function changeObjFunction_Callback(hObject, ~, handles)
 % hObject    handle to btnuiTableAdd (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-data = hObject.UserData;
+data = get(hObject,'UserData');
 ix = data{1};
 classNames = data{2};
-classToCreate = classNames{hObject.Value};
+classToCreate = classNames{get(hObject,'Value')};
 
 cst = evalin('base','cst');
 %Add Standard Objective
@@ -4514,13 +4529,16 @@ col = data(2);
 
 cst = evalin('base','cst');
 
+str = get(hObject,'String');
+val  = get(hObject,'Value');
+
 switch col
     case 2
-        cst{ix,col} = hObject.String;
+        cst{ix,col} = str;
     case 3
-        cst{ix,col} = hObject.String{hObject.Value};
+        cst{ix,col} = str{val};
     case 5
-        cst{ix,col}.Priority = uint32(str2double(hObject.String));
+        cst{ix,col}.Priority = uint32(str2double(str));
     otherwise
         warning('Wrong column assignment in GUI based cst setting');
 end
@@ -4581,4 +4599,6 @@ function cstTableSlider_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+
+
 

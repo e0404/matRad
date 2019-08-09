@@ -70,12 +70,7 @@ isoColorLevel(isoColorLevel < 0) = 0;
 isoColorLevel(isoColorLevel > 1) = 0;
 colors = squeeze(ind2rgb(uint8(cMapScale*isoColorLevel),cMap));
 
-switch env
-    case 'MATLAB'
-        isoLineHandles = gobjects(0);
-    case 'OCTAVE'
-        isoLineHandles = [];
-end
+isoLineHandles = cell(0);
 
 axes(axesHandle);
 hold on;
@@ -92,7 +87,7 @@ if any(isoContours{slice,plane}(:))
         else
             color = unique(colors,'rows'); 
         end
-        isoLineHandles(end+1) = line(isoContours{slice,plane}(1,lower+1:lower+steps),...
+        isoLineHandles{end+1} = line(isoContours{slice,plane}(1,lower+1:lower+steps),...
             isoContours{slice,plane}(2,lower+1:lower+steps),...
             'Color',color,'Parent',axesHandle,varargin{:});
         if plotLabels
