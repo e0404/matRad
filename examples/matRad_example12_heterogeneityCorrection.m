@@ -89,8 +89,8 @@ stf = matRad_generateStf(ct,cst,pln,param);
 
 pln.heterogeneity.calcHetero = true;
 pln.heterogeneity.type = 'complete'; % optional
-pln.heterogeneity.useDoseCurves = false;
-pln.heterogeneity.useOrgDepths = true;
+pln.heterogeneity.useDoseCurves = true;
+pln.heterogeneity.useOrgDepths = false;
 
 %% Dose Calculation
 % The previously set parameters will be automatically transferred into the
