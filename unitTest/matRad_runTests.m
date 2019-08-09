@@ -47,21 +47,21 @@ unitTestBool = true;
 
 % running examples number i
 disp('Unit test run example 1');
-matRad_example1_phantom.m
+matRad_example1_phantom
 disp('Unit test run example 2');
-matRad_example2_photons.m
+matRad_example2_photons
 disp('Unit test run example 3');
-matRad_example3_photonsDAO.m
+matRad_example3_photonsDAO
 disp('Unit test run example 5');
-matRad_example5_protons.m
+matRad_example5_protons
 disp('Unit test run example 6');
-matRad_example6_protonsNoise.m
+matRad_example6_protonsNoise
 disp('Unit test run example 7');
-matRad_example7_carbon.m
+matRad_example7_carbon
 disp('Unit test run example 11');
-matRad_example11_helium.m
+matRad_example11_helium
 disp('Unit test run example 12');
-matRad_example12_heterogeneityCorrection.m
+matRad_example12_heterogeneityCorrection
 
 disp('Unit test run matRad script');
 matRad
