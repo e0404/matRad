@@ -4250,21 +4250,25 @@ cnt = cnt + 1;
 %Create Objectives / Constraints controls
 for i = 1:size(cst,1)   
    if strcmp(cst(i,3),'IGNORED')~=1
+       %Compability Layer for old objective format
+       if isstruct(cst{i,6})
+           cst{i,6} = num2cell(arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{i,6}));
+       end
       for j=1:numel(cst{i,6})
            
-           if ~isstruct(cst{i,6})
-             obj = cst{i,6}{j};
-           else
-             error('Objective in old format!')
-             % write a wrapper to convert to new class based structure
-           end
+          if ~isstruct(cst{i,6})
+              obj = cst{i,6}{j};
+          else
+              %Compability layer
+              obj = cst{i,6}(j);
+          end
            
            %Convert to class if not
            if ~isa(obj,'matRad_DoseOptimizationFunction')
                 try
                     obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
-                catch
-                    warning('Objective/Constraint not valid!')
+                catch ME
+                    warning('Objective/Constraint not valid!\n%s',ME.message)
                     continue;
                 end
            end
