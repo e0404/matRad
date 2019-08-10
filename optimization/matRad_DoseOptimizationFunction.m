@@ -166,7 +166,7 @@ classdef (Abstract) matRad_DoseOptimizationFunction
                     s.className = 'DoseConstraints.matRad_MinMaxDVH';
                     s.parameters{1} = old_s.dose;
                     s.parameters{2} = old_s.volume;
-                    s.parameters{3} = 1;
+                    s.parameters{3} = 100;
                 otherwise
                     ME = MException('optimization:ObjectCreationFailed','Old versioned input struct / parameter invalid for creation of optimization function!');
                     throw(ME);
