@@ -48,6 +48,14 @@ classdef (Abstract) matRad_DoseConstraint < matRad_DoseOptimizationFunction
     end
 
     methods (Access = public)
+        
+        %returns the dose-gradient for the given dose vector. 
+        %Implementation in subclasses only required if
+        %no Hessian approximation shall be used. Will be ignored with
+        %Quasi-Newton methods
+        function fDoseHessian = computeDoseObjectiveHessian(obj,dose)
+            fDoseHessian = NaN;
+        end
        
         % default constructor of matRad_DoseConstraint
         function obj = matRad_DoseConstraint(inputArg)

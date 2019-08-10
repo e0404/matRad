@@ -77,6 +77,25 @@ classdef matRad_MaxDVH < DoseObjectives.matRad_DoseObjective
             % calculate delta
             fDoseGrad = 2 * (obj.penalty/numel(dose))*deviation;
         end
+        
+        %% Calculates the Objective Function hessian
+        function fDoseHessian   = computeDoseObjectiveHessian(obj,dose)
+            
+            n = numel(dose);
+            
+            % get reference Volume
+            refVol = obj.parameters{2}/100;
+            
+            % calc d_ref2: V(d_ref2) = refVol
+            d_ref2 = matRad_calcInversDVH(refVol,dose);
+            
+            % get indices of positive contributions
+            ix = find(dose >= obj.parameters{1} & dose <= d_ref2);                                                        
+            
+            %calculate the Hessian (diagonal)
+            fDoseHessian = sparse(ix,ix, (2 * obj.penalty / n) * ones(numel(ix),1), n,n);            
+                                    
+        end
     end
     
 end

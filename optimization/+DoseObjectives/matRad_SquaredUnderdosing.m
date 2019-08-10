@@ -62,6 +62,20 @@ classdef matRad_SquaredUnderdosing < DoseObjectives.matRad_DoseObjective
             % calculate delta
             fDoseGrad = 2 * obj.penalty/numel(dose) * underdose;
         end
+        
+        %% Calculates the Objective Function hessian
+        function fDoseHessian   = computeDoseObjectiveHessian(obj,dose)
+            
+            n = numel(dose);
+            
+            % underdose : Dose minus prefered dose
+            underdoseIx = find((dose - obj.parameters{1}) < 0);
+            
+            %calculate the Hessian (diagonal)
+            fDoseHessian = sparse(underdoseIx,underdoseIx,2*obj.penalty / n * ones(numel(underdoseIx),1),n,n);
+                                    
+        end
+        
     end
     
 end

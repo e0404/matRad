@@ -62,6 +62,19 @@ classdef matRad_SquaredOverdosing < DoseObjectives.matRad_DoseObjective
             % calculate delta
             fDoseGrad = 2 * obj.penalty/numel(dose) * overdose;
         end
+        
+        %% Calculates the Objective Function hessian
+        function fDoseHessian   = computeDoseObjectiveHessian(obj,dose)
+            
+            n = numel(dose);       
+            
+            % find overdose
+            overdoseIx = find((dose - obj.parameters{1}) > 0);
+            
+            %calculate the Hessian (diagonal)
+            fDoseHessian = sparse(overdoseIx,overdoseIx,2*obj.penalty / n * ones(numel(overdoseIx),1),n,n);
+                                    
+        end
     end
     
 end
