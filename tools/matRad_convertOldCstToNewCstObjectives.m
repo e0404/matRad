@@ -38,7 +38,7 @@ for m = 1:size(cst,1)
         %Create empty cell array in the new cst
         newCst{m,6} = cell(0);        
         %For each objective instanciate the appropriate objective object
-        for n = 1:numel(cst{m,6})
+        for n = 1:numel(cst{m,6})            
             s = matRad_DoseOptimizationFunction.convertOldOptimizationStruct(cst{m,6}(n));
             newCst{m,6}{n} = s;
         end
