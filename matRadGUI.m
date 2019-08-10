@@ -4255,6 +4255,8 @@ for i = 1:size(cst,1)
            cst{i,6} = num2cell(arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{i,6}));
        end
       for j=1:numel(cst{i,6})
+      
+           obj = cst{i,6}{j};
            
            %Convert to class if not
            if ~isa(obj,'matRad_DoseOptimizationFunction')
