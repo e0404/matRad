@@ -95,7 +95,7 @@ for i = 1:size(cst,1)
                                         
                        scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i);
 
-                       delta = jacobVec./(2*dij.betaX(cst{i,4}{1}).*scaledEffect);
+                       delta = jacobVec./(2*dij.bx(cst{i,4}{1}).*scaledEffect);
 
                        mAlphaDoseProjection    = [mAlphaDoseProjection,sparse(cst{i,4}{1},1,delta,dij.doseGrid.numOfVoxels,1)];
                        mSqrtBetaDoseProjection = [mSqrtBetaDoseProjection,...
