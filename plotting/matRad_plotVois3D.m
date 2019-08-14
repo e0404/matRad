@@ -1,5 +1,4 @@
 function patches = matRad_plotVois3D(axesHandle,ct,cst,selection,cMap)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that plots 3D structures of the volumes of interest.
 % if the 3D-data is not stored in the CT, it will be commputed on the fly
 %
@@ -19,8 +18,6 @@ function patches = matRad_plotVois3D(axesHandle,ct,cst,selection,cMap)
 % output
 %   patches     patch objects created by the matlab 3D visualization
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

@@ -1,5 +1,4 @@
 function dvh = matRad_calcDVH(cst,doseCube,dvhType,doseGrid)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dvh calculation
 % 
 % call
@@ -20,8 +19,6 @@ function dvh = matRad_calcDVH(cst,doseCube,dvhType,doseGrid)
 %   van't Riet et. al., IJROBP, 1997 Feb 1;37(3):731-6.
 %   Kataria et. al., J Med Phys. 2012 Oct-Dec; 37(4): 207�213.
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 

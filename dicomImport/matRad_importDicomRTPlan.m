@@ -1,5 +1,4 @@
 function pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to import dicom RTPLAN data
 % 
 % call
@@ -17,8 +16,6 @@ function pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

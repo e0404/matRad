@@ -1,5 +1,4 @@
 function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % multileaf collimator leaf sequencing algorithm for intensity modulated 
 % beams with multiple static segments accroding to Engel et al. 2005
 % Discrete Applied Mathematics
@@ -22,8 +21,6 @@ function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,vi
 % References
 %   [1] http://www.sciencedirect.com/science/article/pii/S0166218X05001411
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -374,7 +371,11 @@ resultGUI.wSequenced = sequencing.w;
 resultGUI.sequencing   = sequencing;
 resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
 
-resultGUI.physicalDose = reshape(dij.physicalDose{1} * sequencing.w,dij.dimensions);
+doseSequencedDoseGrid = reshape(dij.physicalDose{1} * sequencing.w,dij.doseGrid.dimensions);
+% interpolate to ct grid for visualiation & analysis
+resultGUI.physicalDose = matRad_interp3(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, ...
+                                        doseSequencedDoseGrid, ...
+                                        dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z);
 
 % if weights exists from an former DAO remove it
 if isfield(resultGUI,'wDao')

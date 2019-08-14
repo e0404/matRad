@@ -1,5 +1,4 @@
 function [doseHandle,cMap,window] = matRad_plotDoseSlice3D(axesHandle,ct,doseCube,plane,slice,threshold,alpha,cMap,window)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that generates a dose plot of a selected slice in 3D view
 %
 % call
@@ -29,8 +28,6 @@ function [doseHandle,cMap,window] = matRad_plotDoseSlice3D(axesHandle,ct,doseCub
 %   cMap        used colormap (same as input if set)
 %   window      used window (same as input if set)
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -64,18 +61,18 @@ coords{2} = ct.resolution.y * (1:ct.cubeDim(2));
 coords{3} = ct.resolution.z * (1:ct.cubeDim(3));
 
 if plane == 1  % Coronal plane
-    [xMesh,zMesh] = meshgrid(coords{1},coords{3});
-    yMesh = slice*ct.resolution.x*ones(ct.cubeDim(3),ct.cubeDim(1));
+    [xMesh,zMesh] = meshgrid(coords{2},coords{3});
+    yMesh = slice*ct.resolution.x*ones(size(xMesh));
     dose_slice = squeeze(doseCube(slice,:,:));
     dose_slice = permute(dose_slice,[2 1]);
 elseif plane == 2 % sagittal plane
-    [yMesh,zMesh] = meshgrid(coords{2},coords{3});
-    xMesh = slice*ct.resolution.y*ones(ct.cubeDim(3),ct.cubeDim(2));
+    [yMesh,zMesh] = meshgrid(coords{1},coords{3});
+    xMesh = slice*ct.resolution.y*ones(size(yMesh));
     dose_slice = squeeze(doseCube(:,slice,:));
     dose_slice = permute(dose_slice,[2 1]);
 elseif plane == 3 % Axial plane
-    [xMesh,yMesh] = meshgrid(coords{1},coords{2});
-    zMesh = slice*ct.resolution.z*ones(ct.cubeDim(2),ct.cubeDim(1)); 
+    [xMesh,yMesh] = meshgrid(coords{2},coords{1});
+    zMesh = slice*ct.resolution.z*ones(size(xMesh)); 
     dose_slice = squeeze(doseCube(:,:,slice));
 end
 

@@ -1,5 +1,4 @@
 function cst = matRad_dummyCst(ct)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to create a dummy cst struct for a ct
 % 
 % call
@@ -14,8 +13,6 @@ function cst = matRad_dummyCst(ct)
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -38,7 +35,7 @@ cst = cell(1,6);
 cst{1,1}          = 0; % first organ has number 0
 cst{1,2}          = 'dummyContour';
 cst{1,3}          = 'OAR';
-cst{1,4}{1}       = find(ct.cube{1}>0.1);        
+cst{1,4}{1}       = find(ct.cubeHU{1}>0.1);        
 cst{1,5}.Priority = 1;       
 
 % set default parameter for biological planning

@@ -1,5 +1,4 @@
 function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad wrapper function to import a predefined set of dicom files into
 % matRad's native data formats
 % 
@@ -22,8 +21,6 @@ function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -35,10 +32,6 @@ function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-if ~isdeployed
-    addpath('tools');
-end
 
 [env, ~] = matRad_getEnvironment();
     

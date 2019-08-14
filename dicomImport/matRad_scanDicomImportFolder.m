@@ -1,5 +1,4 @@
 function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to scan a folder for dicom data
 % 
 % call
@@ -17,8 +16,6 @@ function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -30,9 +27,13 @@ function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% print current status of the import script
 fprintf('Dose series matched to the different plans are displayed and could be selected.\n');
 fprintf('Rechecking of correct matching procedure is recommended.\n');
+
+global warnDlgDICOMtagShown;
+warnDlgDICOMtagShown = false;
 
 %% get all files in search directory
 
@@ -67,63 +68,29 @@ if ~isempty(fileList)
         catch
             fileList{i,2} = NaN;
         end
-        try
-            fileList{i,3} = info.PatientID;
-        catch
-            fileList{i,3} = NaN;
-        end
+        
+        fileList = parseDicomTag(fileList,info,'PatientID',i,3);
+        
         switch fileList{i,2}
             case 'CT'
-                try
-                    fileList{i,4} = info.SeriesInstanceUID;
-                catch
-                    fileList{i,4} = NaN;
-                end
-            case 'RTPLAN'
-                try
-                    fileList{i,4} = info.SOPInstanceUID;
-                catch
-                    fileList{i,4} = NaN;
-                end
-            case 'RTDOSE'
-                try
-                    fileList{i,4} = info.SOPInstanceUID;
-                catch
-                    fileList{i,4} = NaN;
-                end
-            case 'RTSTRUCT'
-                try
-                    fileList{i,4} = info.SOPInstanceUID;
-                catch
-                    fileList{i,4} = NaN;
-               end
-            otherwise
-                try
-                    fileList{i,4} = info.SeriesInstanceUID;
-                catch
-                    fileList{i,4} = NaN;
-                end
+               
+               fileList = parseDicomTag(fileList,info,'SeriesInstanceUID',i,4);
+                
+            case {'RTPLAN','RTDOSE','RTSTRUCT'}
+               
+               fileList = parseDicomTag(fileList,info,'SOPInstanceUID',i,4);
+
+           otherwise
+               
+              fileList = parseDicomTag(fileList,info,'SeriesInstanceUID',i,4);
+
         end
-        try
-            fileList{i,5} = num2str(info.SeriesNumber);
-        catch
-            fileList{i,5} = NaN;
-        end
-        try
-            fileList{i,6} = info.PatientName.FamilyName;
-        catch
-            fileList{i,6} = NaN;
-        end
-        try
-            fileList{i,7} = info.PatientName.GivenName;
-        catch
-            fileList{i,7} = NaN;
-        end
-        try
-            fileList{i,8} = info.PatientBirthDate;
-        catch
-            fileList{i,8} = NaN;
-        end
+        
+        fileList = parseDicomTag(fileList,info,'SeriesNumber',i,5);
+        fileList = parseDicomTag(fileList,info,'FamilyName',i,6);
+        fileList = parseDicomTag(fileList,info,'GivenName',i,7);
+        fileList = parseDicomTag(fileList,info,'PatientBirthDate',i,8);
+
         try
             if strcmp(info.Modality,'CT')
                 fileList{i,9} = num2str(info.PixelSpacing(1));
@@ -200,6 +167,48 @@ else
     
 end
 
+clear warnDlgDICOMtagShown;
 
 end
+
+function fileList = parseDicomTag(fileList,info,tag,row,column)
+
+global warnDlgDICOMtagShown;
+
+defaultPlaceHolder = '001';
+
+try
+   if isfield(info,tag)
+      if ~isempty(info.(tag))
+         fileList{row,column} = info.(tag);
+      else
+         fileList{row,column} = defaultPlaceHolder;
+      end
+   else
+      fileList{row,column} = defaultPlaceHolder;
+   end
+catch
+   fileList{row,column} = NaN;
+end
+
+if ~warnDlgDICOMtagShown && strcmp(fileList{row,column},defaultPlaceHolder) && (column == 3 || column == 4)
+ 
+   dlgTitle    = 'Dicom Tag import';
+   dlgQuestion = ['matRad_scanDicomImportFolder: Could not parse dicom tag: ' tag '. Using placeholder ' defaultPlaceHolder ' instead. Please check imported data carefully! Do you want to continue?'];
+   answer      = questdlg(dlgQuestion,dlgTitle,'Yes','No', 'Yes');
+   
+   warnDlgDICOMtagShown = true;
+   
+   switch answer
+      case 'No'
+         error('Inconsistency in DICOM tags')  
+   end
+   
+end
+
+
+end
+
+
+
 

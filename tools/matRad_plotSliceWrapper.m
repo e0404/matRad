@@ -1,6 +1,6 @@
 function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,...
-                                                                       doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                                                          doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)
+
 % matRad tool function to directly plot a complete slice of a ct with dose
 % including contours and isolines.
 %
@@ -39,8 +39,6 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandl
 %   hIsoDose    handle to iso dose contours
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -53,12 +51,7 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandl
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% add plotting subdirectory 
-if ~isdeployed
-    addpath([fileparts(fileparts(mfilename('fullpath'))) filesep 'plotting']);
-end
-
-%Handle the argument list
+% Handle the argument list
 if ~exist('thresh','var') || isempty(thresh)
     thresh = [];
 end
@@ -90,6 +83,10 @@ if ~exist('boolPlotLegend','var') || isempty(boolPlotLegend)
    boolPlotLegend = false;
 end
 
+if ~exist('cst','var') || isempty(cst)
+   cst = [];
+end
+
 set(axesHandle,'YDir','Reverse');
 % plot ct slice
 hCt = matRad_plotCtSlice(axesHandle,ct.cubeHU,cubeIdx,plane,slice); 
@@ -107,7 +104,8 @@ else
 end
 
 %plot VOI contours
-hContour = matRad_plotVoiContourSlice(axesHandle,cst,ct.cubeHU,cubeIdx,voiSelection,plane,slice,contourColorMap,varargin{:});
+if  ~isempty(cst)
+    hContour = matRad_plotVoiContourSlice(axesHandle,cst,ct.cubeHU,cubeIdx,voiSelection,plane,slice,contourColorMap,varargin{:});
 
 if boolPlotLegend
    visibleOnSlice = (~cellfun(@isempty,hContour));
@@ -121,16 +119,22 @@ if boolPlotLegend
    set(hLegend,'Box','Off');
    set(hLegend,'TextColor',[1 1 1]);
    set(hLegend,'FontSize',12);
+
+end
+else
+    hContour = [];
 end
 
 axis(axesHandle,'tight');
 set(axesHandle,'xtick',[],'ytick',[]);
-colormap(doseColorMap);
+colormap(axesHandle,doseColorMap);
 
 matRad_plotAxisLabels(axesHandle,ct,plane,slice,[])
 
 % set axis ratio
+
 ratios = [1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
+   
 set(axesHandle,'DataAspectRatioMode','manual');
 if plane == 1 
       res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);  

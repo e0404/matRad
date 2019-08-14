@@ -115,6 +115,12 @@ pln.propStf.bixelWidth     = 5;
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
+%% dose calculation settings
+% set resolution of dose calculation and optimization
+pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
+
 %%
 % Enable sequencing and disable direct aperture optimization (DAO) for now.
 % A DAO optimization is shown in a seperate example.
@@ -161,7 +167,7 @@ pln.propStf.gantryAngles = [0:50:359];
 pln.propStf.couchAngles  = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.numOfBeams   = numel(pln.propStf.gantryAngles);
 stf                      = matRad_generateStf(ct,cst,pln);
-pln.propStf.isoCenter    = stf.isoCenter;
+pln.propStf.isoCenter    = vertcat(stf.isoCenter);
 dij                      = matRad_calcPhotonDose(ct,stf,pln,cst);
 resultGUI_coarse         = matRad_fluenceOptimization(dij,cst,pln);
 

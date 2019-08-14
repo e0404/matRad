@@ -1,5 +1,4 @@
 function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % gamma index calculation according to http://www.ncbi.nlm.nih.gov/pubmed/9608475
 % 
 % call
@@ -31,8 +30,6 @@ function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolutio
 %   [1]  http://www.ncbi.nlm.nih.gov/pubmed/9608475
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -44,10 +41,6 @@ function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolutio
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-if ~isdeployed
-    addpath('tools')
-end
 
 [env, ~] = matRad_getEnvironment();
 
@@ -111,11 +104,7 @@ cubex2c( :, ~cut2, :) = []; % columns
 cubex2c( :, :, ~cut3) = []; % slices
 
 % pad cubes
-cubex1 = zeros([size(cubex1c,1)+2*searchX size(cubex1c,2)+2*searchY size(cubex1c,3)+2*searchZ]);
 cubex2 = zeros([size(cubex2c,1)+2*searchX size(cubex2c,2)+2*searchY size(cubex2c,3)+2*searchZ]);
-cubex1((1+searchX):(end-searchX), ...
-       (1+searchY):(end-searchY), ...
-       (1+searchZ):(end-searchZ)) = cubex1c;
 cubex2((1+searchX):(end-searchX), ...
        (1+searchY):(end-searchY), ...
        (1+searchZ):(end-searchZ)) = cubex2c;
@@ -135,7 +124,7 @@ gammaCubeSq = inf*ones(size(cubex1c));
 
 % adjust dose threshold
 if strcmp(localglobal,'local')
-    doseThreshold = cubex1 .* relDoseThreshold/100;                
+    doseThreshold = cubex1c .* relDoseThreshold/100;                
 elseif strcmp(localglobal,'global')
     doseThreshold = relDoseThreshold/100 * max(cube1(:));
 end
@@ -173,18 +162,9 @@ gammaCube                    = sqrt(gammaCubeSqx);
 
 % set values where we did not compute gamma keeping inf in the cube to zero
 gammaCube(cube1<=0 & cube2<=0) = 0;
-
-% need to modify the absDoseThreshold adding a 
-if strcmp(localglobal,'local')
-    doseThresholdX = zeros(size(cube1));
-    doseThresholdX(cut1,cut2,cut3) = doseThreshold((1+searchX):(end-searchX), ...
-                                                   (1+searchY):(end-searchY), ...
-                                                   (1+searchZ):(end-searchZ));
-    doseThreshold = doseThresholdX;
-end
   
 % compute gamma pass rate
-doseIx          = cube1 > doseThreshold | cube2 > doseThreshold;
+doseIx          = cube1 > relDoseThreshold/100*max(cube1(:)) | cube2 > relDoseThreshold/100*max(cube2(:));
 numOfPassGamma  = sum(gammaCube(doseIx) < 1);
 gammaPassRate   = 100 * numOfPassGamma / sum(doseIx(:));
 
@@ -210,7 +190,7 @@ if exist('cst','var')
 end
 
 % visualize if applicable
-if exist('slice','var')
+if exist('slice','var') && ~isempty(slice)
     figure
     set(gcf,'Color',[1 1 1]);
     imagesc(gammaCube(:,:,slice),[0 2])

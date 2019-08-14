@@ -1,5 +1,4 @@
-function [ct,cst] = matRad_importPatient(ctFile,maskFiles,HLUT)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [ct,cst] = matRad_importPatient(ctFile,maskFiles,hlutFilename)
 % matRad patient import from binary files (CT and masks)
 % 
 % call
@@ -19,8 +18,6 @@ function [ct,cst] = matRad_importPatient(ctFile,maskFiles,HLUT)
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -38,19 +35,11 @@ function [ct,cst] = matRad_importPatient(ctFile,maskFiles,HLUT)
 
 ct = struct();
 cst = cell(0,6);
-%Create dummy cst?
 
-if nargin < 3
-    ct.cube{1} = cube;
-else 
-    if isequal(HLUT,'default')
-            HLUT = [-1024.0 0.00324; ...
-            200.0   1.20000; ...
-            449.0   1.20000; ...
-            2000.0  2.49066; ...	 	
-            2048    2.53060; ...
-            3071    2.53060];
-    end
+ct.cubeHU{1} = cube;
+
+if nargin == 3
+    HLUT = matRad_readHLUT(hlutFilename);
     ct.cube{1} = interp1(HLUT(:,1),HLUT(:,2),double(cube));
     ct.hlut = HLUT;
 end
@@ -65,6 +54,9 @@ ct.numOfCtScen = 1;
 maskId = 1;
 hGlobalWaitbar = waitbar(0,'Importing Segmentations');
 set(findall(hGlobalWaitbar,'type','text'),'Interpreter','none');
+
+
+
 for f=1:numel(maskFiles)
     maskFile = maskFiles{f};
     waitbar(f/numel(maskFiles),hGlobalWaitbar,['Importing Segmentations: ' maskFiles{f}]);
@@ -93,6 +85,13 @@ for f=1:numel(maskFiles)
 end
 
 delete(hGlobalWaitbar);
+
+
+%Assign default colors
+colors = colorcube(size(cst,1));
+for i = 1:size(cst,1)
+    cst{i,5}.visibleColor = colors(i,:);
+end
 
 end
 

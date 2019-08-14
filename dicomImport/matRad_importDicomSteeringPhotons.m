@@ -1,5 +1,4 @@
 function [stf, pln] = matRad_importDicomSteeringPhotons(pln)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to import a matRad stf struct from dicom RTPLAN data
 % 
 % call
@@ -14,7 +13,6 @@ function [stf, pln] = matRad_importDicomSteeringPhotons(pln)
 %   pln             matRad pln struct
 %
 % References
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -28,6 +26,7 @@ function [stf, pln] = matRad_importDicomSteeringPhotons(pln)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 stf = struct;
 if ~isfield(pln.propStf.collimation,'Fields')
     return

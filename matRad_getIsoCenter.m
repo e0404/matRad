@@ -1,5 +1,4 @@
 function isoCenter = matRad_getIsoCenter(cst,ct,visBool)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % computes the isocenter [mm] as the joint center of gravity of all volumes
 % of interest that are labeled as target within the cst struct
 % 
@@ -17,8 +16,6 @@ function isoCenter = matRad_getIsoCenter(cst,ct,visBool)
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -45,10 +42,10 @@ noObjOrConst = all(cellfun(@isempty,cst(:,6)));
 
 % Save target indices in V variable.
 for i = 1:size(cst,1)
-    %We only let a target contribute if it has an objective/constraint or
-    %if we do not have specified objectives/constraints at all so far
+    % We only let a target contribute if it has an objective/constraint or
+    % if we do not have specified objectives/constraints at all so far
     if isequal(cst{i,3},'TARGET') && (~isempty(cst{i,6}) || noObjOrConst)
-        V = [V;vertcat(cst{i,4}{:})];
+        V = [V; cst{i,4}{1}];
     end
 end
 

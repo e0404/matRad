@@ -1,5 +1,4 @@
 function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad photon dose calculation wrapper
 % 
 % call
@@ -21,9 +20,6 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 %   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -36,27 +32,17 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% set consistent random seed (enables reproducibility)
-if ~isdeployed
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir,'tools'))
-end
+% initialize
+matRad_calcDoseInit;
+
 [env, ~] = matRad_getEnvironment();
 
 switch env
      case 'MATLAB'
-          rng(0);
+          rng('default');
      case 'OCTAVE'
           rand('seed',0)
 end
-
-% default: dose influence matrix computation
-if ~exist('calcDoseDirect','var')
-    calcDoseDirect = false;
-end
-
-% calculate rED or rSP from HU
-ct = matRad_calcWaterEqD(ct, pln);
 
 % issue warning if biological optimization not possible
 if sum(strcmp(pln.propOpt.bioOptimization,{'effect','RBExD'}))>0
@@ -69,52 +55,6 @@ figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 % show busy state
 set(figureWait,'pointer','watch');
 
-% meta information for dij
-dij.numOfBeams         = pln.propStf.numOfBeams;
-dij.numOfVoxels        = prod(ct.cubeDim);
-dij.resolution         = ct.resolution;
-dij.dimensions         = ct.cubeDim;
-dij.numOfScenarios     = 1;
-dij.numOfRaysPerBeam   = [stf(:).numOfRays];
-dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
-dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
-
-% check if full dose influence data is required
-if calcDoseDirect 
-    numOfColumnsDij           = length(stf);
-    numOfBixelsContainer = 1;
-else
-    numOfColumnsDij           = dij.totalNumOfBixels;
-    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
-end
-
-% set up arrays for book keeping
-dij.bixelNum = NaN*ones(numOfColumnsDij,1);
-dij.rayNum   = NaN*ones(numOfColumnsDij,1);
-dij.beamNum  = NaN*ones(numOfColumnsDij,1);
-
-% Allocate space for dij.physicalDose sparse matrix
-for i = 1:dij.numOfScenarios
-    dij.physicalDose{i} = spalloc(prod(ct.cubeDim),numOfColumnsDij,1);
-end
-
-% Allocate memory for dose_temp cell array
-doseTmpContainer     = cell(numOfBixelsContainer,dij.numOfScenarios);
-
-% take only voxels inside patient
-V = [cst{:,4}];
-V = unique(vertcat(V{:}));
-
-% ignore densities outside of contours
-eraseCtDensMask = ones(dij.numOfVoxels,1);
-eraseCtDensMask(V) = 0;
-for i = 1:dij.numOfScenarios
-    ct.cube{i}(eraseCtDensMask == 1) = 0;
-end
-
-% Convert CT subscripts to linear indices.
-[yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,V);
-
 % set lateral cutoff value
 lateralCutoff = 50; % [mm]
 
@@ -126,19 +66,11 @@ useCustomPrimFluenceBool = 0;
 isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
 
 %% kernel convolution
-% prepare data for convolution to reduce calculation time
-fileName = [pln.radiationMode '_' pln.machine];
-try
-   load([fileparts(mfilename('fullpath')) filesep fileName]);
-catch
-   error(['Could not find the following machine file: ' fileName ]); 
-end
-
 % set up convolution grid
 if isFieldBasedDoseCalc
     % get data from DICOM import
-    intConvResolution = pln.Collimation.convResolution; 
-    fieldWidth = pln.Collimation.fieldWidth;
+    intConvResolution = pln.propStf.collimation.convResolution; 
+    fieldWidth = pln.propStf.collimation.fieldWidth;
 else
     intConvResolution = .5; % [mm]
     fieldWidth = pln.propStf.bixelWidth;
@@ -170,9 +102,6 @@ if ~isFieldBasedDoseCalc
     end
 end
 
-% compute SSDs
-stf = matRad_computeSSD(stf,ct);
-
 % get kernel size and distances
 kernelLimit = ceil(lateralCutoff/intConvResolution);
 [kernelX, kernelZ] = meshgrid(-kernelLimit*intConvResolution: ...
@@ -193,49 +122,11 @@ effectiveLateralCutoff = lateralCutoff + fieldWidth/2;
 
 counter = 0;
 fprintf('matRad: Photon dose calculation...\n');
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams % loop over all beams
     
-    fprintf(['Beam ' num2str(i) ' of ' num2str(dij.numOfBeams) ': \n']);
-    
-    % remember beam and bixel number
-    if calcDoseDirect
-        dij.beamNum(i)    = i;
-        dij.rayNum(i)     = i;
-        dij.bixelNum(i)   = i;
-    end
-    
-    bixelsPerBeam = 0;
-
-    % convert voxel indices to real coordinates using iso center of beam i
-    xCoordsV = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
-    yCoordsV = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
-    zCoordsV = zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
-    coordsV  = [xCoordsV yCoordsV zCoordsV];
-
-    % Get Rotation Matrix
-    % Do not transpose matrix since we usage of row vectors &
-    % transformation of the coordinate system need double transpose
-
-    rotMat_system_T = matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i));
-
-    % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
-    rot_coordsV = coordsV*rotMat_system_T;
-
-    rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
-    rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
-    rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
-
-    % ray tracing
-    fprintf('matRad: calculate radiological depth cube...');
-    [radDepthV,geoDistV] = matRad_rayTracing(stf(i),ct,V,rot_coordsV,effectiveLateralCutoff);
-    fprintf('done \n');
-    
-    % get indices of voxels where ray tracing results are available
-    radDepthIx = find(~isnan(radDepthV{1}));
-    
-    % limit rotated coordinates to positions where ray tracing is availabe
-    rot_coordsV = rot_coordsV(radDepthIx,:);
+    matRad_calcDoseInitBeam;
     
     % get index of central ray or closest to the central ray
     [~,center] = min(sum(reshape([stf(i).ray.rayPos_bev],3,[]).^2));
@@ -335,15 +226,17 @@ for i = 1:dij.numOfBeams % loop over all beams
         if ~calcDoseDirect
            dij.beamNum(counter)  = i;
            dij.rayNum(counter)   = j;
-           dij.bixelNum(counter) = j;
+           dij.bixelNum(counter) = 1;
+        else
+            k = 1;
         end
         
         % Ray tracing for beam i and bixel j
-        [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = matRad_calcGeoDists(rot_coordsV, ...
+        [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = matRad_calcGeoDists(rot_coordsVdoseGrid, ...
                                                                stf(i).sourcePoint_bev, ...
                                                                stf(i).ray(j).targetPoint_bev, ...
                                                                machine.meta.SAD, ...
-                                                               radDepthIx, ...
+                                                               find(~isnan(radDepthVdoseGrid{1})), ...
                                                                effectiveLateralCutoff);
 
         % empty bixels may happen during recalculation of error
@@ -359,37 +252,23 @@ for i = 1:dij.numOfBeams % loop over all beams
                                                    Interp_kernel1,...
                                                    Interp_kernel2,...
                                                    Interp_kernel3,...
-                                                   radDepthV{1}(ix),...
-                                                   geoDistV(ix),...
+                                                   radDepthVdoseGrid{1}(ix),...
+                                                   geoDistVdoseGrid{1}(ix),...
                                                    isoLatDistsX,...
                                                    isoLatDistsZ);
                                                
         % sample dose only for bixel based dose calculation
         if ~isFieldBasedDoseCalc
-            r0   = 25;   % [mm] sample beyond the inner core
+            r0   = 20 + stf(i).bixelWidth;   % [mm] sample beyond the inner core
             Type = 'radius';
-            [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthV{1}(ix),rad_distancesSq,Type,r0);
-        end   
-        % Save dose for every bixel in cell array
-        doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(V(ix),1,bixelDose,dij.numOfVoxels,1);
-                
-        % save computation time and memory by sequentially filling the 
-        % sparse matrix dose.dij from the cell array
-        if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
-            if calcDoseDirect
-                if isfield(stf(1).ray(1),'weight')
-                    % score physical dose
-                    dij.physicalDose{1}(:,i) = dij.physicalDose{1}(:,i) + stf(i).ray(j).weight * doseTmpContainer{1,1};
-                else
-                    error(['No weight available for beam ' num2str(i) ', ray ' num2str(j)]);
-                end
-            else
-                % fill entire dose influence matrix
-                dij.physicalDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
-            end
+            [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,radDepthVdoseGrid{1}(ix),rad_distancesSq,Type,r0);
         end
         
-        
+        % Save dose for every bixel in cell array
+        doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid(ix),1,bixelDose,dij.doseGrid.numOfVoxels,1);
+
+        matRad_calcDoseFillDij;
+               
     end
 end
 

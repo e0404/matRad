@@ -1,5 +1,4 @@
 function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad indictor wrapper
 % 
 % call
@@ -23,8 +22,6 @@ function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 
@@ -67,6 +64,8 @@ figure,set(gcf,'Color',[1 1 1]);
 subplot(2,1,1)
 matRad_showDVH(dvh,cst,pln);
 subplot(2,1,2)
+ixVoi = cellfun(@(c) c.Visible == 1,cst(:,5));
+qi = qi(ixVoi);
 matRad_showQualityIndicators(qi);
 
 

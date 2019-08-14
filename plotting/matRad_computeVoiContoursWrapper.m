@@ -1,5 +1,4 @@
 function cst = matRad_computeVoiContoursWrapper(cst,ct)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad computation of VOI contours if not precomputed
 % 
 % call
@@ -15,8 +14,6 @@ function cst = matRad_computeVoiContoursWrapper(cst,ct)
 % References
 %   -
 % 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 
