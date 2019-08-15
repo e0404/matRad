@@ -44,20 +44,9 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
     methods (Access = public)
        
         % constructor of matRad_DoseObjective
-        function obj = matRad_DoseObjective(s)
-            % superclass constructor is already called when this is line is reached
-            % additional matRad_DoseObjective constructor specific code goes here
-            
-            if nargin < 1 || isempty(s) || ~isstruct(s)
-                return;
-            end
-            
-            try
-                obj.penalty = s.penalty;
-                obj.parameters = s.parameters;
-            catch ME
-                error('Wrong Initialization of %s. Error Message:\n%s',mfilename,ME.message); 
-            end
+        function obj = matRad_DoseObjective(varargin)
+            %default initialization from struct (parameters & penalty)
+            obj@matRad_DoseOptimizationFunction(varargin{:});
         end
         
         %Overloads the struct function to add Objective related information

@@ -27,18 +27,8 @@ classdef (Abstract) matRad_DoseOptimizationFunction
     
     methods
         function obj = matRad_DoseOptimizationFunction(dataStruct)
-            if nargin == 0
-                return;
-            end
-            if isstruct(dataStruct)
-                for fn = fieldnames(dataStruct)'    %enumerat fields
-                    try
-                        obj.(fn{1}) = dataStruct.(fn{1});   %and copy
-                    catch
-                        %Do Nothing here
-                        %warning('Could not copy field %s', fn{1});
-                    end
-                end
+            if nargin > 0 && ~isempty(dataStruct) && isstruct(dataStruct)
+                obj = assignCommonPropertiesFromStruct(obj,dataStruct);
             end
         end
         
@@ -63,12 +53,27 @@ classdef (Abstract) matRad_DoseOptimizationFunction
             ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
             obj.parameters(ix) = num2cell(doseParams);
             
+        end                
+    end
+    
+    methods (Access = private)
+        function obj = assignCommonPropertiesFromStruct(obj,s)
+            for fn = fieldnames(s)'    %enumerat fields
+                try
+                    obj.(fn{1}) = s.(fn{1});   %and copy
+                catch
+                    continue;
+                    %Do Nothing here
+                    %warning('Could not copy field %s', fn{1});
+                end
+            end
         end
     end
+        
     
     methods (Static)
         % creates an optimization function from a struct
-        function obj = createInstanceFromStruct(s)
+        function obj = createInstanceFromStruct(s)            
             try
                 %Check vor old version of cst objectives / cosntraints and
                 %convert if necessary
@@ -77,13 +82,21 @@ classdef (Abstract) matRad_DoseOptimizationFunction
                 end
                 
                 %Create objective / constraint from class name
-                obj = eval([s.className '(s)']);
+                obj = eval([s.className '(s)']);       
+                
+                env = matRad_getEnvironment();
+                
+                %Workaround for Octave which has a problem assigning
+                %properties in superclass
+                if strcmp(env,'OCTAVE')
+                    obj = assignCommonPropertiesFromStruct(obj,s);
+                end
                 
             catch ME
                 error(['Could not instantiate Optimization Function: ' ME.message]);
             end
         end
-        
+                
         function s = convertOldOptimizationStruct(old_s)
             %Converts old version obejctives to current format
             switch old_s.type
