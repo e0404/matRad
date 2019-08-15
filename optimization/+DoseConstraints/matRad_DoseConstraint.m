@@ -50,9 +50,19 @@ classdef (Abstract) matRad_DoseConstraint < matRad_DoseOptimizationFunction
     methods (Access = public)
        
         % default constructor of matRad_DoseConstraint
-        function obj = matRad_DoseConstraint(inputArg)
+        function obj = matRad_DoseConstraint(s)
             % superclass constructor is already called when this is line is reached
             % additional matRad_DoseConstraint constructor specific code goes here
+            
+            if nargin < 1 || isempty(s) || ~isstruct(s)
+                return;
+            end
+            
+            try
+                obj.parameters = s.parameters;
+            catch ME
+                error('Wrong Initialization of %s. Error Message:\n%s',mfilename,ME.message); 
+            end
         end
         
         function jStruct = getDoseConstraintJacobianStructure(obj,n)
