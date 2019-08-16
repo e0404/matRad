@@ -22,7 +22,7 @@ function varargout = matRad_importGUI(varargin)
 
 % Edit the above text to modify the response to help matRad_importGUI
 
-% Last Modified by GUIDE v2.5 09-Aug-2018 15:18:30
+% Last Modified by GUIDE v2.5 16-Aug-2019 14:17:53
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -43,16 +43,16 @@ gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @matRad_importGUI_OpeningFcn, ...
                    'gui_OutputFcn',  @matRad_importGUI_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
+                   'gui_LayoutFcn',  @matRad_importGUI_LayoutFcn, ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
 
 if nargout
-    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+    [varargout{1:nargout}] = matRad_importGUI_gui_mainFcn(gui_State, varargin{:});
 else
-    gui_mainfcn(gui_State, varargin{:});
+    matRad_importGUI_gui_mainFcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
 
@@ -116,6 +116,7 @@ function pushbutton_ctPath_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 [importCTFile,importCTPath,~] = uigetfile({'*.nrrd', 'NRRD-Files'}, 'Choose the CT file...');
+
 if importCTFile ~= 0
     set(handles.edit_ctPath,'String',fullfile(importCTPath,importCTFile));
     % Update handles structure
@@ -153,7 +154,6 @@ function pushbutton_addMaskPaths_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_addMaskPaths (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
 [importMaskFile,importMaskPath,~] = uigetfile({'*.nrrd', 'NRRD-Files'}, 'Choose the binary mask files...','MultiSelect','on');
 if ~isempty(importMaskFile)
     if ~iscell(importMaskFile)
@@ -250,18 +250,19 @@ handle = dialog('Position', [100 100 400 250],'WindowStyle','modal','Name','Conf
 
 %Create Table
 hTable = uitable('Parent',handle,'Units','normal','Position',[0.1 0.2 0.8 0.8]);
-hTable.Data = cst(:,2:3);
-hTable.ColumnName = {'Name','Type'};
-hTable.ColumnWidth = {150,'auto'};
-hTable.RowName = [];
-hTable.ColumnEditable = [true true];
-hTable.ColumnFormat = {'char',{'TARGET', 'OAR', 'IGNORED'}};
+set(hTable,'Data',cst(:,2:3));
+set(hTable,'ColumnName',{'Name','Type'});
+set(hTable,'ColumnWidth',{150,'auto'});
+set(hTable,'RowName',char([]));
+set(hTable,'ColumnEditable',[true true]);
+set(hTable,'ColumnFormat',{'char',{'TARGET', 'OAR', 'IGNORED'}});
 
 %Create Button
 hButton = uicontrol(handle,'Style','pushbutton','String','Confirm','Units','normal','Position',[0.7 0.05 0.2 0.1],'Callback','uiresume(gcbf)');%{@pushbutton_confirm_vois_callback});
 try
     uiwait(handle);
-    cst(:,2:3) = hTable.Data(:,:);
+    tmp = get(hTable,'Data');
+    cst(:,2:3) = tmp(:,:);
 catch
     warning('Closed checkdialog without confirmation! Using default cst information!');
 end
@@ -323,3 +324,5 @@ if importHLUTFile ~= 0
     % Update handles structure
     guidata(hObject, handles);
 end
+
+

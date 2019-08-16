@@ -22,7 +22,7 @@ function varargout = matRad_exportGUI(varargin)
 
 % Edit the above text to modify the response to help matRad_exportGUI
 
-% Last Modified by GUIDE v2.5 07-Jul-2016 14:50:05
+% Last Modified by GUIDE v2.5 16-Aug-2019 14:16:36
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -43,16 +43,16 @@ gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @matRad_exportGUI_OpeningFcn, ...
                    'gui_OutputFcn',  @matRad_exportGUI_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
+                   'gui_LayoutFcn',  @matRad_exportGUI_LayoutFcn, ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
 
 if nargout
-    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+    [varargout{1:nargout}] = matRad_exportGUI_gui_mainFcn(gui_State, varargin{:});
 else
-    gui_mainfcn(gui_State, varargin{:});
+    matRad_exportGUI_gui_mainFcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
 
@@ -254,7 +254,7 @@ function exportDir = edit_dir_export_Callback(hObject, eventdata, handles)
 exportDir = get(handles.edit_dir_export,'String');
 
 %Add filesperator
-if exportDir(end) ~= filesep;
+if exportDir(end) ~= filesep
     exportDir = [exportDir filesep];
 end
 
@@ -488,3 +488,5 @@ function checkbox_compress_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_compress
+
+
