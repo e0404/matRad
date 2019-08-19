@@ -42,8 +42,13 @@ cst  = matRad_setOverlapPriorities(cst);
 
 % check & adjust objectives and constraints internally for fractionation 
 for i = 1:size(cst,1)
+    %Compatibility Layer for old objective format
+    if isstruct(cst{i,6})
+        cst{i,6} = num2cell(arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{i,6}));
+    end
     for j = 1:numel(cst{i,6})
-        obj = cst{i,6}{j};
+        
+        obj = cst{i,6}{j};        
         
         %In case it is a default saved struct, convert to object
         %Also intrinsically checks that we have a valid optimization

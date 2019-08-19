@@ -40,6 +40,7 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' ; fi
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then bash ./before_install_win_gitbash.sh ; fi
   
+
 before_script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ulimit -c unlimited -S ; fi
   
