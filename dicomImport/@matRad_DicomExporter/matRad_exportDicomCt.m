@@ -1,17 +1,10 @@
 function obj = matRad_exportDicomCt(obj)
-% matRad function to export dicom ct data
-%
+% matRad function to export ct to dicom. Class method of
+% matRad_DicomExporter
+% 
 % call
-%   ct = matRad_exportDicomCt(ctList, resolution, dicomMetaBool, visBool)
-%
-% input
-%   dicomDir:       Directory to store dicom files
-%   ct:             matRad ct struct
-%   meta:           pre-given dicom meta data
-%
-% output
-%   status:         status from the dicomwrite function as struct array
-%
+%   matRad_DicomExporter.matRad_exportDicomCt()
+%          
 %
 % References
 %   -
@@ -28,6 +21,8 @@ function obj = matRad_exportDicomCt(obj)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+disp('Exporting DICOM CT...');
 
 %default meta
 meta.PatientID = obj.PatientID;
@@ -100,6 +95,7 @@ for i = 1:nSlices
     
      status = dicomwrite(ctSlice,fullFileName,obj.ctSliceMetas(i),'ObjectType','CT Image Storage');
      obj.ctExportStatus = obj.addStruct2StructArray(obj.ctExportStatus,status);
+     matRad_progress(i,nSlices);
 end
 
 end

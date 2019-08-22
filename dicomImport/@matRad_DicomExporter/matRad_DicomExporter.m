@@ -39,8 +39,8 @@ classdef matRad_DicomExporter < handle
         rtDoseMetas
         rtDoseExportStatus
     end
-        
-    methods 
+    
+    methods
         function obj = matRad_DicomExporter(ct,cst,pln,stf,resultGUI)
             %matRad_DicomExporter Construct an instance of this class
             %   Can be called with the structures. If no argument is given,
@@ -83,6 +83,8 @@ classdef matRad_DicomExporter < handle
         end
         
         function obj = generateDefaultDicomData(obj)
+            %generateDefaultDicomData Fill Patient & Study dicom info
+            
             date = datetime;
             dateStr = datestr(date,'yyyymmdd');
             timeStr = datestr(date,'HHMMSS');
@@ -109,11 +111,25 @@ classdef matRad_DicomExporter < handle
         obj = matRad_exportDicomRTPlan(obj)
         
         obj = matRad_exportDicomRTDoses(obj)
-            
+        
     end
     
     methods (Static)
         function sarray = addStruct2StructArray(sarray,s,i)
+            %addStruct2StructArray Helper function to assign structs
+            %   When assigning structs to a struct array, there is usually
+            %   an error. This method works around this error by assigning
+            %   a struct s to the structure array sarray field by field at
+            %   position i.
+            %
+            %call
+            %   sarray = matRad_DicomExporter.matRad_exportDicomRTStruct(sarray,s,i)
+            %
+            %Input:
+            %   sarray: structure array to add struct s to
+            %   s:      struct to add to sarray
+            %   i:      optional index. if not given, s is appended
+            
             if nargin < 3
                 i = numel(sarray)+1;
             end
@@ -125,8 +141,51 @@ classdef matRad_DicomExporter < handle
                 end
             end
         end
+        
+        function dcmName = createEmptyPersonName()
+            %createEmptyPersonName Creates a dicom name struct
+            dcmName = struct('FamilyName','','GivenName','','MiddleName','','NamePrefix','','NameSuffix','');
+        end
+        
+        function meta = assignDefaultMetaValue(meta,fn,default,displayBool)
+            %assignDefaultMetaValue Helper function to default meta values
+            %   When meta information is already given, it may not be
+            %   overwritten by a default value. This function automatically
+            %   checks for a value and optionally prints to console
+            %
+            %call
+            %   meta = matRad_DicomExporter.assignDefaultMetaValue(meta,fn,default,displayBool)
+            %
+            %Input:
+            %   meta:           structure with dicom meta information
+            %   fn:             meta fieldname
+            %   default:        default value to assign
+            %   displayBool:    optional request for console output.
+            %
+            %Output:
+            %   meta:           meta struct with default value or value
+            %                   that was already there before
+            
+            if nargin < 4
+                displayBool = true;
+            end
+            
+            if ~isfield(meta,fn)
+                meta.(fn) = default;
+                
+                if isnumeric(default)
+                    default = num2str(default);
+                elseif isstruct(default)
+                    default = '';
+                end
+                
+                if displayBool
+                    fprintf('No value set for ''%s'', using default value ''%s''\n',fn,default);
+                end
+            end
+        end
     end
     
     
- end
+end
 

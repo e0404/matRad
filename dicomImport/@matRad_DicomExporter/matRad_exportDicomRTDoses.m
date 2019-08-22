@@ -1,19 +1,9 @@
 function obj = matRad_exportDicomRTDoses(obj)
-% matRad function to exportt obj.resultGUI to dicom
+% matRad function to exportt resultGUI to dicom RT dose. Function of
+% matRad_DicomExporter
 % 
 % call
-%   matRad_exportDicomRTDoses(obj.resultGUI,ct,pln,fieldnames)
-%
-% input
-%   obj.resultGUI:      matRad obj.resultGUI struct with different beams. Note that
-%                   the summation (called plan) of the beams is named 
-%                   without subscripts, e.g. physical_Dose.
-%   ct:             matRad ct struct
-%
-% output
-%   obj.resultGUI:      matRad obj.resultGUI struct with different beams. Note that
-%                   the summation (called plan) of the beams is named 
-%                   without subscripts, e.g. physical_Dose.
+%   matRad_DicomExporter.matRad_exportDicomRTDoses()
 %
 % References
 %   -
@@ -30,6 +20,8 @@ function obj = matRad_exportDicomRTDoses(obj)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+disp('Exporting DICOM RTDose...');
 
 %% CT check
 ct = obj.ct;
@@ -50,6 +42,37 @@ TransferSyntaxUID = '1.2.840.10008.1.2.1'; %Explicit VR little endian?
 
 meta.Modality = 'RTDOSE';
 meta.DoseUnits = 'GY';
+
+%Reference
+%ID of the CT
+meta.StudyInstanceUID = obj.StudyInstanceUID;
+meta.StudyID = obj.StudyID; 
+
+%Dates & Times
+currDate = datetime;
+currDateStr = datestr(currDate,'yyyymmdd');
+currTimeStr = datestr(currDate,'HHMMSS');
+meta.InstanceCreationDate = currDateStr;
+meta.InstanceCreationTime = currTimeStr;
+meta.StudyDate = obj.StudyDate;
+meta.StudyTime = obj.StudyTime;
+meta = matRad_DicomExporter.assignDefaultMetaValue(meta,'StructureSetDate',currDateStr);
+meta = matRad_DicomExporter.assignDefaultMetaValue(meta,'StructureSetTime',currTimeStr);
+
+
+%Remaining stuff
+meta.AccessionNumber = '';
+meta.StationName = '';
+meta.ReferringPhysicianName = struct('FamilyName','','GivenName','','MiddleName','',...
+        'NamePrefix','','NameSuffix','');
+
+meta.PatientName = obj.PatientName;
+meta.PatientID = obj.PatientID;
+
+meta.PatientBirthDate = '';
+meta.PatientSex = 'O';
+meta.SoftwareVersion = '';
+
 
 resolution = ct.resolution;
 meta.PixelSpacing = [resolution.y; resolution.x];
@@ -146,6 +169,8 @@ for i = 1:numel(doseFieldNames)
     obj.rtDoseMetas = obj.addStruct2StructArray(obj.rtDoseMetas,metaCube);
     
     obj.rtDoseNames{i} = doseFieldNames{i};
+    
+    matRad_progress(i,numel(doseFieldNames));
 end
                
 
