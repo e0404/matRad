@@ -37,7 +37,7 @@ storageClass = '1.2.840.10008.5.1.4.1.1.481.2';
 meta.MediaStorageSOPClassUID = storageClass;
 meta.SOPClassUID = storageClass;
 
-TransferSyntaxUID = '1.2.840.10008.1.2.1'; %Explicit VR little endian?
+%TransferSyntaxUID = '1.2.840.10008.1.2.1'; %Explicit VR little endian?
 %meta.TransferSyntaxUID = TransferSyntaxUID;
 
 meta.Modality = 'RTDOSE';
@@ -48,32 +48,32 @@ meta.DoseUnits = 'GY';
 meta.StudyInstanceUID = obj.StudyInstanceUID;
 meta.StudyID = obj.StudyID; 
 
+
+
 %Dates & Times
-currDate = datetime;
+currDate = now;
 currDateStr = datestr(currDate,'yyyymmdd');
 currTimeStr = datestr(currDate,'HHMMSS');
 meta.InstanceCreationDate = currDateStr;
 meta.InstanceCreationTime = currTimeStr;
 meta.StudyDate = obj.StudyDate;
 meta.StudyTime = obj.StudyTime;
-meta = matRad_DicomExporter.assignDefaultMetaValue(meta,'StructureSetDate',currDateStr);
-meta = matRad_DicomExporter.assignDefaultMetaValue(meta,'StructureSetTime',currTimeStr);
+
+meta.FrameOfReferenceUID = obj.FrameOfReferenceUID;
 
 
 %Remaining stuff
 meta.AccessionNumber = '';
 meta.StationName = '';
-meta.ReferringPhysicianName = struct('FamilyName','','GivenName','','MiddleName','',...
-        'NamePrefix','','NameSuffix','');
+meta.ReferringPhysicianName = obj.dicomName();
 
 meta.PatientName = obj.PatientName;
 meta.PatientID = obj.PatientID;
 
-meta.PatientBirthDate = '';
-meta.PatientSex = 'O';
-meta.SoftwareVersion = '';
+%This RTDose series
+meta.SeriesInstanceUID = dicomuid;
 
-
+%Now image meta
 resolution = ct.resolution;
 meta.PixelSpacing = [resolution.y; resolution.x];
 meta.SliceThickness = resolution.z;
@@ -81,10 +81,11 @@ meta.SliceThickness = resolution.z;
 meta.ImagePositionPatient = [ct.x(1); ct.y(1); ct.z(1)];
 meta.ImageOrientationPatient = [1;0;0;0;1;0];
 
+
 %No (Re)scaling
-%meta.RescaleSlope = 1;
-%meta.RescaleIntercept = 0;
-%meta.RescaleType = 'US';
+meta.RescaleSlope = 1;
+meta.RescaleIntercept = 0;
+meta.RescaleType = 'US';
 
 %RTDose is stored as multiframe image
 meta.ImagesInAcquisition = ct.cubeDim(3);
@@ -112,6 +113,10 @@ if nargin < 4 || isempty(doseFieldNames)
         end
     end
 end
+
+
+
+
 
 obj.rtDoseMetas = struct([]);
 obj.rtDoseExportStatus = struct([]);
@@ -156,16 +161,29 @@ for i = 1:numel(doseFieldNames)
     metaCube = meta;
     metaCube.DoseType = doseType;
     metaCube.DoseSummationType = deliveryType;
-    metaCube.InstanceNumber = i;
+       
+    %ID of the RTDose
+    meta.SeriesInstanceUID = dicomuid;    
+    metaCube.SeriesNumber = i;
+    metaCube.InstanceNumber = 1;
     metaCube.DoseGridScaling = doseCubeFac;
+    
+    meta.SOPInstanceUID = dicomuid;
+    meta.MediaStorageSOPInstanceUID = meta.SOPInstanceUID;
     
     fileName = [obj.rtDoseFilePrefix num2str(i) '_' doseName '.dcm'];
     
-    status = dicomwrite(doseCube,fullfile(obj.dicomDir,fileName),metaCube,'CreateMode','copy','TransferSyntax',TransferSyntaxUID);    
-    
-    if ~isempty(status)
-        obj.rtDoseExportStatus = obj.addStruct2StructArray(obj.rtDoseExportStatus,status,i);
+    env = matRad_getEnvironment();
+    if strcmp(env,'OCTAVE')
+        dicomwrite(doseCube,fullfile(obj.dicomDir,fileName),metaCube);
+    else
+        status = dicomwrite(doseCube,fullfile(obj.dicomDir,fileName),metaCube,'CreateMode','copy');%,'TransferSyntax',TransferSyntaxUID);
+        if ~isempty(status)
+            obj.rtDoseExportStatus = obj.addStruct2StructArray(obj.rtDoseExportStatus,status,i);
+        end
     end
+    
+    
     obj.rtDoseMetas = obj.addStruct2StructArray(obj.rtDoseMetas,metaCube);
     
     obj.rtDoseNames{i} = doseFieldNames{i};

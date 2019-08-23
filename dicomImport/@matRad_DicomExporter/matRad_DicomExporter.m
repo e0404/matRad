@@ -38,6 +38,13 @@ classdef matRad_DicomExporter < handle
         rtDoseNames
         rtDoseMetas
         rtDoseExportStatus
+        
+        
+        %Some dictionaries
+        externalContourDict = {'EXTERNAL','BODY','PATIENT'}; %Names to identify external contours
+        targetPtvDict = {'PTV','MARGIN'};
+        targetCtvDict = {'CTV'};
+        targetGtvDict = {'GTV','TUMOR'};
     end
     
     methods
@@ -84,13 +91,15 @@ classdef matRad_DicomExporter < handle
         
         function obj = generateDefaultDicomData(obj)
             %generateDefaultDicomData Fill Patient & Study dicom info
-            
-            date = datetime;
+                        
+            date = now;
             dateStr = datestr(date,'yyyymmdd');
             timeStr = datestr(date,'HHMMSS');
             
             obj.PatientID = ['matRad_default_patient_' dateStr];
-            obj.PatientName = struct('FamilyName','','GivenName','','MiddleName','','NamePrefix','','NameSuffix','');
+            obj.PatientName = obj.dicomName();
+            
+            
             obj.StudyID = ['matRad_' dateStr];
             obj.StudyDate = dateStr;
             obj.StudyTime = timeStr;
@@ -141,12 +150,7 @@ classdef matRad_DicomExporter < handle
                 end
             end
         end
-        
-        function dcmName = createEmptyPersonName()
-            %createEmptyPersonName Creates a dicom name struct
-            dcmName = struct('FamilyName','','GivenName','','MiddleName','','NamePrefix','','NameSuffix','');
-        end
-        
+                
         function meta = assignDefaultMetaValue(meta,fn,default,displayBool)
             %assignDefaultMetaValue Helper function to default meta values
             %   When meta information is already given, it may not be
@@ -183,6 +187,36 @@ classdef matRad_DicomExporter < handle
                     fprintf('No value set for ''%s'', using default value ''%s''\n',fn,default);
                 end
             end
+        end
+        
+        function name = dicomName(family,given,middle,prefix,suffix)
+            if nargin < 5
+                suffix = '';
+            end
+            if nargin < 4
+                prefix = '';
+            end
+            if nargin < 3
+                middle = '';
+            end
+            if nargin < 2
+                given = '';
+            end
+            if nargin < 1
+                family = '';
+            end
+            
+            name.FamilyName = family;
+            name.GivenName = given;
+            name.MiddleName = middle;
+            name.NamePrefix = prefix;
+            name.NameSuffix = suffix;
+            
+            env = matRad_getEnvironment();
+            if strcmp(env,'OCTAVE')
+                name = strjoin(struct2cell(name));
+            end
+            
         end
     end
     

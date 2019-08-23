@@ -24,6 +24,8 @@ function obj = matRad_exportDicomCt(obj)
 
 disp('Exporting DICOM CT...');
 
+env = matRad_getEnvironment();
+
 %default meta
 meta.PatientID = obj.PatientID;
 meta.PatientName = obj.PatientName;
@@ -34,8 +36,32 @@ meta.StudyTime = obj.StudyTime;
 meta.StudyInstanceUID = obj.StudyInstanceUID;
 meta.FrameOfReferenceUID = obj.FrameOfReferenceUID;
 
+ClassUID = '1.2.840.10008.5.1.4.1.1.2'; %RT Structure Set
+meta.MediaStorageSOPClassUID = ClassUID;
+meta.SOPClassUID = ClassUID;
+%TransferSyntaxUID = '1.2.840.10008.1.2'; 
+%meta.TransferSyntaxUID = TransferSyntaxUID; 
+
+%Identifiers
+meta.SOPInstanceUID = dicomuid;
+meta.MediaStorageSOPInstanceUID = meta.SOPInstanceUID;
+meta.SeriesInstanceUID = dicomuid;
+meta.SeriesNumber = 1;
+meta.InstanceNumber = 1;
+
+
 obj.ctMeta.SeriesInstanceUID = dicomuid;
 meta.SeriesInstanceUID = obj.ctMeta.SeriesInstanceUID;
+
+meta.SeriesNumber = 1;
+meta.AcquisitionNumber = 1;
+meta.InstanceNumber = 1;
+
+meta.Modality = 'CT';
+meta.ReferringPhysicianName = obj.dicomName();
+meta.PatientPosition = 'HFS';
+
+
 
 ct = obj.ct;
 
@@ -77,6 +103,8 @@ fileName = 'ct_slice_';
 obj.ctSliceMetas = struct([]);
 obj.ctExportStatus = struct([]);
 
+isOctave = strcmp(env,'OCTAVE');
+
 for i = 1:nSlices
     ctSlice = ctCube(:,:,i);
     %ctSlice = permute(ctSlice,[1 2]);
@@ -92,9 +120,14 @@ for i = 1:nSlices
     obj.ctSliceMetas(i).MediaStorageSOPInstanceUID = obj.ctSliceMetas(i).SOPInstanceUID;
     
     fullFileName = fullfile(obj.dicomDir,[fileName num2str(i) '.dcm']);
-    
-     status = dicomwrite(ctSlice,fullFileName,obj.ctSliceMetas(i),'ObjectType','CT Image Storage');
-     obj.ctExportStatus = obj.addStruct2StructArray(obj.ctExportStatus,status);
+    if isOctave
+        dicomwrite(ctSlice,fullFileName,obj.ctSliceMetas(i));        
+    else
+        status = dicomwrite(ctSlice,fullFileName,obj.ctSliceMetas(i),'ObjectType','CT Image Storage');
+        obj.ctExportStatus = obj.addStruct2StructArray(obj.ctExportStatus,status);
+    end
+        
+     
      matRad_progress(i,nSlices);
 end
 

@@ -25,32 +25,38 @@ function obj = matRad_exportDicomRTStruct(obj)
 
 disp('Exporting DICOM RTStruct...');
 
+env = matRad_getEnvironment();
+isOctave = strcmp(env,'OCTAVE');
+
 %% Metadata
 %Class UID
 ClassUID = '1.2.840.10008.5.1.4.1.1.481.3'; %RT Structure Set
 meta.MediaStorageSOPClassUID = ClassUID;
 meta.SOPClassUID = ClassUID;
-TransferSyntaxUID = '1.2.840.10008.1.2.1'; %Explicit VR Little Endian - correct?
+%TransferSyntaxUID = '1.2.840.10008.1.2.1'; %Explicit VR Little Endian - correct?
 %meta.TransferSyntaxUID = TransferSyntaxUID; 
+
+%Identifiers
+meta.SOPInstanceUID = dicomuid;
+meta.MediaStorageSOPInstanceUID = meta.SOPInstanceUID;
+meta.SeriesInstanceUID = dicomuid;
+meta.SeriesNumber = 1;
+meta.InstanceNumber = 1;
 
 %Remaining Meta Data
 meta.Modality = 'RTSTRUCT';
 
-%Identifiers
-meta.SeriesNumber = 1;
-meta.InstanceNumber = 1;
-
 %Name
-meta = matRad_DicomExporter.assignDefaultMetaValue(meta,'StructureSetLabel','matRad_exported_cst');
+meta = matRad_DicomExporter.assignDefaultMetaValue(meta,'StructureSetLabel','matRad_cst');
 meta = matRad_DicomExporter.assignDefaultMetaValue(meta,'StructureSetName','matRad exported cst');
 meta = matRad_DicomExporter.assignDefaultMetaValue(meta,'ManufacturerModelName','matRad DicomExport');
 
-%ID of the CT
+%ID of the Study
 meta.StudyInstanceUID = obj.StudyInstanceUID;
 meta.StudyID = obj.StudyID; 
 
 %Dates & Times
-currDate = datetime;
+currDate = now;
 currDateStr = datestr(currDate,'yyyymmdd');
 currTimeStr = datestr(currDate,'HHMMSS');
 meta.InstanceCreationDate = currDateStr;
@@ -64,15 +70,14 @@ meta = matRad_DicomExporter.assignDefaultMetaValue(meta,'StructureSetTime',currT
 %Remaining stuff
 meta.AccessionNumber = '';
 meta.StationName = '';
-meta.ReferringPhysicianName = struct('FamilyName','','GivenName','','MiddleName','',...
-        'NamePrefix','','NameSuffix','');
+meta.ReferringPhysicianName = obj.dicomName();
 
 meta.PatientName = obj.PatientName;
 meta.PatientID = obj.PatientID;
 
-meta.PatientBirthDate = '';
-meta.PatientSex = 'O';
-meta.SoftwareVersion = '';
+%meta.PatientBirthDate = '';
+%meta.PatientSex = 'O';
+%meta.SoftwareVersion = '';
 
 ct = obj.ct;
 
@@ -96,17 +101,16 @@ end
 obj.cst = matRad_computeVoiContoursWrapper(obj.cst,ct);
 
 for i = 1:size(obj.cst,1)
-    
-    
-    
-    %Select contours in axial slices
+    fprintf('Processinging VOI ''%s''...',obj.cst{i,2});
+   %Select contours in axial slices
     contours = obj.cst{i,7}(:,3);
     contourSliceIx = find(~cellfun(@isempty,contours));    
     contourSlicePos = ct.z(contourSliceIx);
     contours = contours(contourSliceIx);
            
-    %remove the first column which holds number of points & spacing
-    contours = cellfun(@(c) c(:,2:end),contours,'UniformOutput',false);
+    %remove the first column which holds number of points & spacing, and
+    %remove the last because it is the same as the first point
+    contours = cellfun(@(c) c(:,2:end-1),contours,'UniformOutput',false);
     contours = cellfun(@(c) [ct.resolution.x; ct.resolution.y].* c + [ct.x(1) - ct.resolution.x; ct.y(1) - ct.resolution.y],contours,'UniformOutput',false);
     contours = cellfun(@(c,pos) addSlicePos(c,pos),contours,num2cell(contourSlicePos)','UniformOutput',false);    
     %contours = cellfun(@transpose,contours,'UniformOutput',false);
@@ -120,17 +124,19 @@ for i = 1:size(obj.cst,1)
     meta.StructureSetROISequence.(['Item_' num2str(i)]) = ROISequenceItem;
     
     %Contour Sequence
-    ROIContourSequenceItem.ROIDisplayColor = round(255 * obj.cst{i,5}.visibleColor');
+    if ~isOctave
+        ROIContourSequenceItem.ROIDisplayColor = int32(round(255 * obj.cst{i,5}.visibleColor'));
+    end
+
     ROIContourSequenceItem.ReferencedROINumber = i;
     
     %Now create Contour subitems
     ContourSequence = struct;
     for c = 1:numel(contours)
         ContourItem = struct;
-        ContourItem.NumberOfContourPoints = size(contours{c},1);
-        %Maybe for better compatability this should be CLOSED_PLANAR by removing the last point?
-        ContourItem.ContourGeometricType = 'OPEN_PLANAR';
+        ContourItem.ContourGeometricType = 'CLOSED_PLANAR';
         ContourItem.ContourData = contours{c}(:);
+        ContourItem.NumberOfContourPoints = size(contours{c},2);
         
         currCtSliceMeta = obj.ctSliceMetas(contourSliceIx(c));
         
@@ -152,41 +158,68 @@ for i = 1:size(obj.cst,1)
     RTROIObservationSequenceItem.ObservationNumber = i;
     RTROIObservationSequenceItem.ReferencedROINumber = i;
     RTROIObservationSequenceItem.ROIObservationLabel = obj.cst{i,2};
+        
+    
     if strcmp(obj.cst{i,3},'TARGET')
-        if contains(obj.cst{i,2},'PTV','IgnoreCase',true)
+        if ~isempty(regexpi(obj.cst{i,2},['(' strjoin(obj.targetPtvDict) ')']))
             RTROIObservationSequenceItem.ROIInterpretedType = 'PTV';
-        elseif contains(obj.cst{i,2},'GTV','IgnoreCase',true)
+            fprintf('identified target type as PTV...');
+        elseif ~isempty(regexpi(obj.cst{i,2},['(' strjoin(obj.targetGtvDict) ')']))
             RTROIObservationSequenceItem.ROIInterpretedType = 'GTV';
-        elseif contains(obj.cst{i,2},'CTV','IgnoreCase',true)
+            fprintf('identified target type as GTV...');
+        elseif ~isempty(regexpi(obj.cst{i,2},['(' strjoin(obj.targetGtvDict) ')']))
             RTROIObservationSequenceItem.ROIInterpretedType = 'CTV';
+            fprintf('identified target type as CTV...');
         else
             RTROIObservationSequenceItem.ROIInterpretedType = 'CTV';
-            fprintf('Defaulting TARGET ''%s'' to CTV!\n',obj.cst{i,2});
+            fprintf('Defaulting target type to CTV...');
         end
     else
-        if contains(obj.cst{i,2},'BODY','IgnoreCase',true) || contains(obj.cst{i,2},'EXTERNAL','IgnoreCase',true) || contains(obj.cst{i,2},'PATIENT','IgnoreCase',true)
-            fprintf('Identified structure ''%s'' as External Contour!\n',obj.cst{i,2});
+        if ~isempty(regexpi(obj.cst{i,2},['(' strjoin(obj.externalContourDict) ')']))
+            fprintf('automatically identified as External Contour...');
             RTROIObservationSequenceItem.ROIInterpretedType = 'EXTERNAL';
         else
             RTROIObservationSequenceItem.ROIInterpretedType = 'AVOIDANCE';
         end
     end
     
-    RTROIObservationSequenceItem.ROIInterpreter = struct('FamilyName','','GivenName','','MiddleName','','NamePrefix','','NameSuffix','');
+    RTROIObservationSequenceItem.ROIInterpreter = obj.dicomName();
 
     meta.RTROIObservationSequence(['Item_' num2str(i)]) = RTROIObservationSequenceItem;
     
-    matRad_progress(i,size(obj.cst,1));
+    fprintf('Done!\n');
+    %matRad_progress(i,size(obj.cst,1));
 end
 
 
+
+for i = 1:numel(obj.ctSliceMetas)
+    ImageSequenceItem.ReferencedSOPClassUID = obj.ctSliceMetas(i).SOPClassUID;
+    ImageSequenceItem.ReferencedSOPInstanceUID = obj.ctSliceMetas(i).SOPInstanceUID;
+    ContourImageSequence.(['Item_' num2str(i)]) = ImageSequenceItem;
+end
+    
+RTReferencedSeriesSequenceItem.ContourImageSequence = ContourImageSequence;
+RTReferencedSeriesSequenceItem.SeriesInstanceUID = obj.ctSliceMetas(1).SeriesInstanceUID;
+
+RTReferencedStudySequenceItem.RTReferencedSeriesSequence.Item_1 = RTReferencedSeriesSequenceItem;
+RTReferencedStudySequenceItem.ReferencedSOPInstanceUID = obj.StudyInstanceUID;
+RTReferencedStudySequenceItem.ReferencedSOPClassUID = '1.2.840.10008.3.1.2.3.2'; %Apparently this class UID is deprecated in DICOM standard - what to use instead?
+
+meta.ReferencedFrameOfReferenceSequence.Item_1.RTReferencedStudySequence.Item_1 = RTReferencedStudySequenceItem;
+meta.ReferencedFrameOfReferenceSequence.Item_1.FrameOfReferenceUID = obj.FrameOfReferenceUID;
 
 
 filename = 'RTstruct.dcm';
 filepath = obj.dicomDir;
 filename = fullfile(filepath,filename);
 
-obj.rtssExportStatus = dicomwrite([],filename,meta,'CreateMode','copy','TransferSyntax',TransferSyntaxUID);
+
+if isOctave
+	dicomwrite(int16(zeros(2)),filename,meta);
+else
+    obj.rtssExportStatus = dicomwrite([],filename,meta,'CreateMode','copy');%,'TransferSyntax',TransferSyntaxUID);
+end
 
 obj.rtssMeta = meta;
 end 
