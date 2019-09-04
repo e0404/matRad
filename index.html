@@ -66,6 +66,7 @@
           var pdfoverview     = document.getElementById("pdfoverview");
           var downloadZipball = document.getElementById("downloadZipball");
           var downloadTarball = document.getElementById("downloadTarball");
+          var downloadStandalone = document.getElementById("downloadStandalone");
           var brownbagYoutube = document.getElementById("brownbagYoutube");
           var gotoGithub      = document.getElementById("gotoGithub");
           var gotoMap         = document.getElementById("gotoMap");
@@ -88,6 +89,10 @@
 												}
           downloadTarball.onclick = function() {
 													sendCustomDims('downloadTarball');
+													return true;
+                                                }
+          downloadStandalone.onclick = function() {
+													sendCustomDims('downloadStandalone');
 													return true;
 												}
           brownbagYoutube.onclick = function() {
@@ -142,12 +147,17 @@
     <div class="wrapper">
       <header>
         <h1><object width="107" type="image/svg+xml" data="images/matrad_hat.svg">Your browser does not support SVG</object></h1>
-        <p>An open source multi-modality radiation treatment planning sytem</p>
+		<p>An open source multi-modality radiation treatment planning sytem</p>
+		
+        
+        <ul class="firstrow">
+			<li class="makeGithubButton"><a id="gotoGithub" href="https://github.com/e0404/matRad"><object width="20" type="image/svg+xml" data="images/github.svg">Your browser does not support SVG</object> &nbsp; View on <strong>GitHub</strong></a></li>
+        </ul>
 
-        <ul>
+        <ul class="secondrow">
           <li><a id="downloadZipball" href="https://github.com/e0404/matRad/zipball/master">Download <strong>ZIP File</strong></a></li>
           <li><a id="downloadTarball" href="https://github.com/e0404/matRad/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a id="gotoGithub" href="https://github.com/e0404/matRad">View On <strong>GitHub</strong></a></li>
+		  <li><a id="downloadStandalone" href="https://raw.githubusercontent.com/e0404/matRad/master/standalone/matRad_installerWin64.exe">Download <strong>Standalone</strong></a></li>
         </ul>
       </header>
       <section>

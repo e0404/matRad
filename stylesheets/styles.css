@@ -121,10 +121,28 @@ header ul {
   width:270px;
 }
 
-header li {
+header ul li.makeGithubButton {
+  width:100%;
+  float:center;
+  padding:0;
+  color:#222;
+}
+
+
+header ul li {
   width:89px;
   float:left;
   border-right:1px solid #d2d2d2;
+  height:40px;
+}
+
+header ul.firstrow a {
+  line-height:1;
+  font-size:14px;
+  color:#999;
+  display:block;
+  text-align:center;
+  padding-top:7px;
   height:40px;
 }
 
@@ -153,7 +171,12 @@ header ul li + li + li {
   width:89px;
 }
 
-header ul a strong {
+header ul.firstrow a strong {
+  font-size:14px;
+  color:#222;
+}
+
+header ul.secondrow a strong {
   font-size:14px;
   display:block;
   color:#222;
