@@ -30,9 +30,11 @@ function f = matRad_objFunc(d_i,objective,d_ref)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                
-numOfVoxels = numel(d_i);
-            
+if isfield(objective,'numOfVoxels')
+    numOfVoxels = objective.numOfVoxels;
+else
+    numOfVoxels = numel(d_i);
+end
 if isequal(objective.type, 'square underdosing') 
 
     % underdose : dose minus prefered dose
