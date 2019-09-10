@@ -43,7 +43,7 @@ load('BOXPHANTOM_LUNG.mat');
 % the depth information as a struct. For this purpose, matRad features generic base data in the file
 % 'carbon_GenericAPM.mat'; consequently the machine has to be set accordingly
 pln.radiationMode = 'carbon';            
-pln.machine       = 'GenericAPM';
+pln.machine       = 'HIT_APM';
 
 %%
 % Define the biological optimization model for treatment planning along
@@ -56,8 +56,13 @@ pln.machine       = 'GenericAPM';
 % 'LEM': local effect model 
 % As we use carbons, we use the local effect model.
 % Therefore we set modelName to LEM
+
 modelName           = 'LEM';
+%modelName           = 'constRBE';
 quantityOpt         = 'RBExD';   
+
+%modelName           = 'none';
+%quantityOpt         = 'PhysicalDose';   
 
 %%
 % The remaining plan parameters are set like in the previous example files
@@ -115,7 +120,13 @@ cstHetero = matRad_cstHeteroAutoassign(cst);
 carbHetero = matRad_calcDoseDirect(ct,stf,pln,cstHetero,carbHomo.w,param);
 
 %% Visualize differences
-matRad_compareDose(carbHomo.RBExD,carbHetero.RBExD,ct,cst,[1 0 0]);
+% matRad_compareDose(carbHomo.physicalDose,carbHetero.physicalDose,ct,cst,[1 0 0]);
+ matRad_compareDose(carbHomo.RBExD,carbHetero.RBExD,ct,cst,[1 0 0]);
 
+
+%%
+% physikalische Dosis mit & ohne heterogenitätskorrektur
+% RBExD mit und ohne heterogenitätskorrektur
+% beides für Protonen 
 
 

@@ -193,9 +193,9 @@ if enable(1)==1
         %% Adjusting axes
         
         matRad_plotAxisLabels(hfig.(planename{plane}).('cube1').Axes,ct,plane,slicename{plane},[],100);
-        set(get(hfig.(planename{plane}).('cube1').Axes, 'title'), 'string', 'Dose 1');
+        set(get(hfig.(planename{plane}).('cube1').Axes, 'title'), 'string', 'dose w/o correction');
         matRad_plotAxisLabels(hfig.(planename{plane}).('cube2').Axes,ct,plane,slicename{plane},[],100);
-        set(get(hfig.(planename{plane}).('cube2').Axes, 'title'), 'string', 'Dose 2');
+        set(get(hfig.(planename{plane}).('cube2').Axes, 'title'), 'string', 'dose with correction');
         matRad_plotAxisLabels(hfig.(planename{plane}).('diff').Axes,ct,plane,slicename{plane},[],100);
         set(get(hfig.(planename{plane}).('diff').Axes, 'title'), 'string', ['Absolute difference, rel=',num2str(relativeDifference),'%']);
         matRad_plotAxisLabels(hfig.(planename{plane}).('gamma').Axes,ct,plane,slicename{plane},[],100);
@@ -240,7 +240,7 @@ if enable(2)==1
     xlabel('X [mm]','FontSize',fontsize)
     ylabel(l,'FontSize',fontsize);
     title('x-Profiles');
-    legend({'Dose 1','Dose 2'},'Location','southeast')
+    legend({'dose w/o correction','dose with correction'},'Location','southeast')
     legend boxoff
     
     hfig.profiles.y = subplot(2,2,2);
@@ -250,7 +250,7 @@ if enable(2)==1
     xlabel('Y [mm]','FontSize',fontsize)
     ylabel(l,'FontSize',fontsize);
     title('y-Profiles');
-    legend({'Dose 1','Dose 2'},'Location','southeast')
+    legend({'dose w/o correction','dose with correction'},'Location','southeast')
     legend boxoff
     
     hfig.profiles.z = subplot(2,2,3);
@@ -260,7 +260,7 @@ if enable(2)==1
     xlabel('Z [mm]','FontSize',fontsize)
     ylabel(l,'FontSize',fontsize);
     title('z-Profiles');
-    legend({'Dose 1','Dose 2'},'Location','southeast')
+    legend({'dose w/o correction','dose with correction'},'Location','southeast')
     legend boxoff
     
     set(hfig.profiles.fig,'name',['Profiles:, x=',num2str(slicename{1}),'mm, y=',num2str(slicename{2}),'mm, z=',num2str(slicename{3}),'mm']);
