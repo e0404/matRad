@@ -76,6 +76,7 @@ matRad_Q_Pressed                = false;
 
 matRad_objective_function_value = [];
   
+    matRad_dispToConsole('Starting proton calculation. \n',param,'info');
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
 

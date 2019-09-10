@@ -1,4 +1,5 @@
-function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)
+function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData, heteroCorrDepths, heteroCorrType)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
 % 
@@ -6,10 +7,12 @@ function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_
 %   dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,SSD,focusIx,baseData)
 %
 % input
-%   radDepths:      radiological depths
-%   radialDist_sq:  squared radial distance in BEV from central ray
-%   sigmaIni_sq:    initial Gaussian sigma^2 of beam at patient surface
-%   baseData:       base data required for particle dose calculation
+%   radDepths:          radiological depths
+%   radialDist_sq:      squared radial distance in BEV from central ray
+%   sigmaIni_sq:        initial Gaussian sigma^2 of beam at patient surface
+%   baseData:           base data required for particle dose calculation
+%   heteroCorrDepths:   radiological depths for heterogeneity correction (optional)
+%   heteroCorrType:     'complete','depthBased','voxelwise' (optional)
 %
 % output
 %   dose:   particle dose at specified locations as linear vector
@@ -17,6 +20,8 @@ function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_
 % References
 %   [1] http://iopscience.iop.org/0031-9155/41/8/005
 %
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -30,13 +35,18 @@ function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% default heterogeneity correction type
+if exist('heteroCorrDepths','var') && ~exist('heteroCorrType','var')
+    heteroCorrType = 'complete';      % complete / depthBased / voxelwise
+end
+
 % add potential offset
 depths = baseData.depths + baseData.offset;
 
 % convert from MeV cm^2/g per primary to Gy mm^2 per 1e6 primaries
 conversionFactor = 1.6021766208e-02;
 
-if ~isfield(baseData,'sigma')
+if ~isfield(baseData,'sigma') && ~isstruct(baseData.Z)
     
     % interpolate depth dose, sigmas, and weights    
     X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
@@ -54,6 +64,56 @@ if ~isfield(baseData,'sigma')
     L = baseData.LatCutOff.CompFac * ((1-X(:,3)).*L_Narr + X(:,3).*L_Bro);
 
     dose = X(:,1).*L;
+	
+    if exist('heteroCorrDepths','var') 	% nargin == 5
+        warning('calcParticleDoseBixel: heterogeneity correction not yet implemented for these basedata')
+    end
+
+elseif ~isfield(baseData,'sigma') && isstruct(baseData.Z)
+
+    % interpolate sigmas and weights   
+    X = matRad_interp1(depths,[baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
+    
+    % compute lateral sigmas
+    sigmaSq_Narr = X(:,1).^2 + sigmaIni_sq;
+    sigmaSq_Bro  = X(:,3).^2 + sigmaIni_sq;
+    
+    % calculate lateral profile
+    L_Narr =  exp( -radialDist_sq ./ (2*sigmaSq_Narr))./(2*pi*sigmaSq_Narr);
+    L_Bro  =  exp( -radialDist_sq ./ (2*sigmaSq_Bro ))./(2*pi*sigmaSq_Bro );
+    L = baseData.LatCutOff.CompFac * ((1-X(:,2)).*L_Narr + X(:,2).*L_Bro);
+
+    % calculate depthDoses with APM
+    
+    % no offset here...
+    radDepths = radDepths - baseData.offset;
+    
+    % add sigma if heterogeneity correction wanted
+    if exist('heteroCorrDepths','var') && strcmp(heteroCorrType,'complete')
+        [~,lungDepthAtBraggPeakIx] = min(abs(radialDist_sq+(radDepths-baseData.peakPos).^2));
+        lungDepthAtBraggPeak = heteroCorrDepths(lungDepthAtBraggPeakIx);
+        ellSq = ones(numel(radDepths),1)* (baseData.Z.width'.^2 + matRad_getHeterogeneityCorrSigmaSq(lungDepthAtBraggPeak));
+    
+    elseif exist('heteroCorrDepths','var') && strcmp(heteroCorrType,'depthBased')
+        for i = 1:length(baseData.Z.mean)
+            [~,lungDepthAtGaussPeakIx(i)] = min(abs(radialDist_sq+(radDepths-baseData.Z.mean(i)).^2));
+        end
+        lungDepthAtGaussPeak = heteroCorrDepths(lungDepthAtGaussPeakIx);
+        for i = 1:length(baseData.Z.mean)
+            ellSq(:,i) = ones(numel(radDepths),1)* (baseData.Z.width(i)'.^2 + matRad_getHeterogeneityCorrSigmaSq(lungDepthAtGaussPeak(i)));
+        end
+        
+    elseif exist('heteroCorrDepths','var') && strcmp(heteroCorrType,'voxelwise')
+        ellSq = bsxfun(@plus, baseData.Z.width'.^2, matRad_getHeterogeneityCorrSigmaSq(heteroCorrDepths));
+    
+    else
+        ellSq = ones(numel(radDepths),1)*baseData.Z.width'.^2;
+    end
+    
+    Z = (1./sqrt(2*pi*ellSq) .* exp(-bsxfun(@minus,baseData.Z.mean',radDepths).^2 ./ (2*ellSq)) )* baseData.Z.weight;
+    
+    dose = conversionFactor * L.*Z;
+
 else
     
     % interpolate depth dose and sigma
@@ -64,7 +124,11 @@ else
     
     % calculate dose
     dose = baseData.LatCutOff.CompFac * exp( -radialDist_sq ./ (2*sigmaSq)) .* X(:,1) ./(2*pi*sigmaSq);
-    
+
+    if exist('heteroCorrDepths','var') 	% nargin == 5
+        warning('calcParticleDoseBixel: heterogeneity correction not yet implemented for these basedata')
+    end
+
  end
  
 % check if we have valid dose values
