@@ -1,19 +1,45 @@
-%% Computes Proton and Carbon dose as well as differences and quality indicators for every patient
+% Heterogeneity correction evaluation script
+%
+% Computes the dose for the HIT plan (recalc), for protons and for carbons
+% with and without heterogeneity correction. Saves the workspace for each
+% calculation as .mat file.
+%
+% Set mode parameter to PhysicalDose or RBE for the calculation and correct
+% folder assignment
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2019 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 matRad_rc
 p = genpath('../matRad');
 addpath(p);
 myFiles = dir(fullfile('dataImport/lowRes/*.mat'));
-lungTissue={'Lung','GTV','PTV','CTV','ITV'};  % automatically assign HeterogeneityCorrection to the specified.
+lungTissue={'Lung','GTV','PTV','CTV','ITV'};  % automatically assign HeterogeneityCorrection
+% to the specified segmentations.
 err = 0; % initialize Error counter
-for k = 1:length(myFiles)
-    %for k = 2
+%for k = 1:length(myFiles)
+
+mode = 'PhysicalDose';
+dose = [60 30; 70 8; 66.41 6; 66.51 6]; % Prescribed doses and fractions for all 4 patients
+
+for k = 1:4
     
     %% Load in base data
     load(['dataImport/lowRes/',myFiles(k).name])
     
-    pln.numOfFractions = 10;
+    pln.numOfFractions = dose(k,2);
     cst = matRad_slimCST(cst);
-    cst = matRad_applyOARobjective(cst);
+    cst = matRad_applyOARobjective(cst,dose(k));
     cstHetero = cst;
     
     lungIx =[];
@@ -27,7 +53,7 @@ for k = 1:length(myFiles)
         cstHetero{i,5}.HeterogeneityCorrection = 'Lung';
     end
     
-    pln.propOpt.bioOptimization = 'none'; %'LEMIV_RBExD'; %'none'
+    
     pln.propStf.bixelWidth = 3;
     
     %%
@@ -42,8 +68,17 @@ for k = 1:length(myFiles)
     % and possible quantityOpt are 'physicalDose', 'effect' or 'RBExD'.
     % As we use protons, we use a constant RBE of 1.1.
     
-    modelName    = 'none';
-    quantityOpt  = 'physicalDose';
+    if contains(mode,'Physical')
+        modelName    = 'none';
+        quantityOpt  = 'physicalDose';
+        pln.propOpt.bioOptimization = 'none'; %'LEMIV_RBExD'; %'none'
+    elseif contains(mode,'RBE')
+        modelName    = 'LEM';
+        quantityOpt  = 'RBExD';
+        pln.propOpt.bioOptimization = 'LEMIV_RBExD'; %'LEMIV_RBExD'; %'none'
+    else
+        error(['Must choose valid dose cube']);
+    end
     
     pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
     pln.multScen = matRad_multScen(ct,'wcScen');
@@ -59,8 +94,7 @@ for k = 1:length(myFiles)
         %%%
         hitHetero = matRad_calcDoseDirect(ct,stf,pln,cstHetero,resultGUI.w);
         
-        save(['dataImport/ResultWithPenalty/HIT/',myFiles(k).name(1:6),'.mat'])
-        %      close all
+        save(['dataImport/Results_',mode,'/HIT/',myFiles(k).name(1:6),'.mat'])
         clearvars -except pln cst cstHetero ct lungTissue myFiles k stf param err
         
         %% Protons reoptimize
@@ -71,8 +105,7 @@ for k = 1:length(myFiles)
         %%%
         protHetero = matRad_calcDoseDirect(ct,stf,pln,cstHetero,protHomo.w);
         
-        save(['dataImport/ResultWithPenalty/Protons/',myFiles(k).name(1:6),'.mat'])
-        %      close all
+        save(['dataImport/Results_',mode,'/Protons/',myFiles(k).name(1:6),'.mat'])
         clearvars -except pln cst cstHetero ct lungTissue myFiles k stf param err
         
         %% Carbon Ions
@@ -80,7 +113,7 @@ for k = 1:length(myFiles)
         
         pln.radiationMode = 'carbon';
         pln.machine = 'HIT_APM';
-        pln.propOpt.bioOptimization = 'none'; %'LEMIV_RBExD'; %'none'
+        pln.propOpt.bioOptimization = 'LEMIV_RBExD'; %'LEMIV_RBExD'; %'none'
         pln.propStf.bixelWidth = 3;
         stfCarb = matRad_generateStf(ct,cst,pln);
         
@@ -89,27 +122,10 @@ for k = 1:length(myFiles)
         dijCarb1 = matRad_calcParticleDose(ct,stfCarb,pln,cst);
         carbHomo = matRad_fluenceOptimization(dijCarb1,cst,pln);
         clear dijCarb1
-        %%%
-        %dijCarb2 = matRad_calcParticleDose(ct,stfCarb,pln,cstHetero);
-        %carbHetero = matRad_fluenceOptimization(dijCarb2,cstHetero,pln);
+        
         carbHetero = matRad_calcDoseDirect(ct,stfCarb,pln,cstHetero,carbHomo.w);
         
-        %%% recalc plan 1
-        %carbHetereo = matRad_calcCubes(carbHomo.w,dijCarb2,cstHetero);
-        
-        %%%
-        %      close all
-        %      [qI,gammaPassRate]=matRad_compareDose(carbHomo.physicalDose,carbHetero.physicalDose,ct,cst,[1 1 1 1],'off',pln);
-        %      matRad_plotSOBP(ct,stfCarb,carbHomo.physicalDose,carbHetero.physicalDose)
-        
-        %%% Save all plots in subfolder
-        %         FigList = findobj(allchild(0), 'flat', 'Type', 'figure');
-        %         for iFig = 1:length(FigList)
-        %             FigHandle = FigList(iFig);
-        %             FigName   = [myFiles(k).name(1:6),'_Fig',num2str(get(FigHandle, 'Number'))];
-        %             savefig(FigHandle, ['dataImport/Carbons/', FigName, '.fig']);
-        %         end
-        save(['dataImport/ResultWithPenalty/Carbons/',myFiles(k).name(1:6),'.mat'])
+        save(['dataImport/Results_',mode,'/Carbons/',myFiles(k).name(1:6),'.mat'])
         sendPushbullet('SUCCESS',['Calculation complete for Patient',myFiles(k).name(1:6)])
         
     catch MException
@@ -121,3 +137,6 @@ for k = 1:length(myFiles)
     clearvars -except lungTissue myFiles k param err
 end
 sendPushbullet('SUCCESS',['Simulation finished with ',num2str(err),' error(s)'])
+
+
+

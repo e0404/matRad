@@ -1,8 +1,8 @@
-function [cst] = matRad_applyOARobjective(cst)
+function [cst] = matRad_applyOARobjective(cst,prescDose)
 
 OAR.type = 'square overdosing';
 OAR.penalty = 400;
-OAR.dose = 21;
+OAR.dose = prescDose*0.7; % Apply 70% of prescribed dose to OARs
 OAR.EUD = NaN;
 OAR.volume = NaN;
 OAR.robustness = "none";
