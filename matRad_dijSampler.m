@@ -39,20 +39,20 @@ for i=1:size(cst,1)
     idx2 = datasample(s, list, floor(sp * numel(list)),'Replace',false );
     cst{i,4}{2} = cst{i,4}{1};                                                      % saving the original idx ... required for ray casting !!!
     cst{i,4}{1} = [idx; idx2];
-    
+   
     idxRm =  setdiff(cst{i,4}{2},cst{i,4}{1});
     
     fullmap = [ fullmap; idx; idx2];                                    % for plotting the map of selected voxels
     
-
-    dij.physicalDose{1}(idxRm,:) = 0;
-    if isfield(dij,'mAlphaDose')        
-        dij.mAlphaDose{1}(idxRm,:) = 0;
-        dij.mSqrtBetaDose{1}(idxRm,:) = 0;        
-    end
-    
 end
+ vec = zeros( numel(mVOI),1);
+ vec (fullmap)  = 1;
+tic,  dij.physicalDose{1} = ( dij.physicalDose{1} .* vec);toc
 
+     if isfield(dij,'mAlphaDose')        
+        dij.mAlphaDose{1} = dij.mAlphaDose{1}.* vec;
+        dij.mSqrtBetaDose{1} = dij.mSqrtBetaDose{1}.* vec;        
+    end
 xx = zeros(ct.cubeDim);
 xx(fullmap) =1;
 figure, imagesc(xx(:,:,80));
