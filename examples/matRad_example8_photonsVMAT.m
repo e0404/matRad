@@ -41,7 +41,7 @@ pln.machine         = 'Generic';
 pln.numOfFractions  = 30;
 
 % beam geometry settings
-pln.propStf.bixelWidth = 10;
+pln.propStf.bixelWidth = 5;
 
 % optimization settings
 pln.propOpt.bioOptimization = 'none';

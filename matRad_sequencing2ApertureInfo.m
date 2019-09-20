@@ -276,6 +276,10 @@ for i=1:size(stf,2)
     end
 end
 
+if ~isfield(pln.propOpt,'preconditioner')
+    pln.propOpt.preconditioner = false;
+end
+
 % save global data
 apertureInfo.runVMAT            = pln.propOpt.runVMAT;
 apertureInfo.preconditioner     = pln.propOpt.preconditioner;

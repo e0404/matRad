@@ -254,6 +254,10 @@ else
     resultGUI.apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
 end
 
+if ~isfield(pln.propOpt,'preconditioner')
+    pln.propOpt.preconditioner = false;
+end
+
 if pln.propOpt.preconditioner
     % calculation preconditioning factors
     resultGUI.apertureInfo = matRad_preconditionFactors(resultGUI.apertureInfo);

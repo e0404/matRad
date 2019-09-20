@@ -34,7 +34,7 @@ end
 resultGUI.w = w;
 
 for i = 1:dij.numOfBeams
-    beamInfo(i).suffix = '';
+    beamInfo(i).suffix = ['_beam' num2str(i)];
     beamInfo(i).logIx  = (dij.beamNum == i);
 end
 

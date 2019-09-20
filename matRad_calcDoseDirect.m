@@ -40,6 +40,8 @@ end
 
 % copy bixel weight vector into stf struct
 if exist('w','var')
+    %{
+    %Seems VMAT specific
     for phase = 1:ct.tumourMotion.numPhases
         if sum([stf.totalNumOfBixels]) ~= numel(w{phase})
             error('weighting does not match steering information')
@@ -53,6 +55,10 @@ if exist('w','var')
                 end
             end
         end
+    end
+    %}
+    if sum([stf.totalNumOfBixels]) ~= numel(w)
+        error('weighting does not match steering information')
     end
     counter = 0;
     for i = 1:size(stf,2)
@@ -79,7 +85,8 @@ end
 % dose calculation
 if strcmp(pln.radiationMode,'photons')
     
-    if pln.propDoseCalc.vmc
+    %This is deprecated since vmc is no longer supported (VMAT branch)
+    if isfield(pln.propDoseCalc,'vmc') && vmcpln.propDoseCalc.vmc
         dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,calcDoseDirect);
     else
         dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect);

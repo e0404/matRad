@@ -71,6 +71,14 @@ if isfield(apertureInfo,'scaleFacRx')
     apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) = apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)/apertureInfo.scaleFacRx;
 end
 
+if ~isfield(pln.propOpt,'preconditioner')
+    pln.propOpt.preconditioner = false;
+end
+
+if ~isfield(pln.propOpt,'VMAT')
+    pln.propOpt.runVMAT = false;
+end
+
 if pln.propOpt.preconditioner
     %rescale dij matrix, so that apertureWeight/bixelWidth ~= 1
     % gradient wrt weights ~ 1, gradient wrt leaf pos
