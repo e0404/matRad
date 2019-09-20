@@ -40,6 +40,7 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln,visBool)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+env = matRad_getEnvironment();
 
 % if visBool not set toogle off visualization
 if nargin < 5
@@ -129,13 +130,17 @@ for i = 1:numOfBeams
     %Save weights in fluence matrix.
     fluenceMx(indInFluenceMx) = wOfCurrBeams;
     
-    temp = zeros(size(fluenceMx));
-    for row = 1:dimOfFluenceMxZ
-        temp(row,:) = imgaussfilt(fluenceMx(row,:),1);
-    end
-    fluenceMx = temp;
-    clear temp
     
+    if strcmp(env,'MATLAB') && license('test','image_toolbox')   
+        temp = zeros(size(fluenceMx));
+        for row = 1:dimOfFluenceMxZ
+            temp(row,:) = imgaussfilt(fluenceMx(row,:),1);
+        end
+        fluenceMx = temp;
+        clear temp
+    end
+
+
     %allow for possibility to repeat sequencing with higher number of
     %levels if number of apertures is lower than required
     notFinished = 1;
