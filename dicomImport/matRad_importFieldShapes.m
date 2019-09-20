@@ -1,22 +1,20 @@
-function collimation = matRad_importFieldShapes(BeamSequence, fractionSequence)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function collimation = matRad_importFieldShapes(beamSequence, fractionSequence)
 % function to import collimator shapes from a DICOM RT plan
 % 
 % call
-%   Collimation = matRad_importFieldShapes(BeamSequence, fractionSequence)
+%   collimation = matRad_importFieldShapes(beamSequence, fractionSequence)
 %
 % input
-%   BeamSequence: struct containing the BeamSequence elements from the RT plan    
+%   beamSequence: struct containing the beamSequence elements from the RT plan    
 %   fractionSequence: struct containing the fractionGroupSequence elements from the RT plan    
 %
 % output
-%   Collimation: struct with all meta information about the collimators and
+%   collimation: struct with all meta information about the collimators and
 %   all field shape matrices 
 %
 % References
+%   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -29,6 +27,7 @@ function collimation = matRad_importFieldShapes(BeamSequence, fractionSequence)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 counter = 0;
 maximumExtent = 0;
 tmpCollimation.Fields = struct;
@@ -39,17 +38,17 @@ meta =  {'NominalBeamEnergy' 'Energy';'GantryAngle' 'GantryAngle';...
         'PatientSupportAngle' 'CouchAngle';'SourceToSurfaceDistance' 'SSD'};
 
 % extract field information
-beamSeqNames = fields(BeamSequence);
+beamSeqNames = fields(beamSequence);
 for i = 1:length(beamSeqNames)
     
-    currBeamSeq = BeamSequence.(beamSeqNames{i});
+    currBeamSeq = beamSequence.(beamSeqNames{i});
     cumWeight = 0;
     
     % get total MU applied by beam i
     tmpCollimation.beamMeterset(i) = fractionSequence.ReferencedBeamSequence.(beamSeqNames{i}).BeamMeterset;
     
     % get collimator device types 
-    currDeviceSeq = BeamSequence.(beamSeqNames{i}).BeamLimitingDeviceSequence;
+    currDeviceSeq = beamSequence.(beamSeqNames{i}).BeamLimitingDeviceSequence;
     currDeviceSeqNames = fieldnames(currDeviceSeq);
     
     % set device specific parameters

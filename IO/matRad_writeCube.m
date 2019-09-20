@@ -1,5 +1,4 @@
-function matRad_writeCube(filepath,cube,datatype,metadata)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)
 % matRad wrapper for Cube export
 % 
 % call
@@ -24,8 +23,6 @@ function matRad_writeCube(filepath,cube,datatype,metadata)
 %                                 (default chosen by writer)
 %
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -56,8 +53,9 @@ end
 %% Prepare Metadata
 %if the field is not set, we assume standard matRad x-y swap
 if ~isfield(metadata,'axisPermutation')
-    cube = permute(cube,[2 1 3]);
-    metadata.axisPermutation = [1 2 3]; %Default Matlab axis permutation
+    %cube = permute(cube,[2 1 3]); %This should be done in the writer based
+    %on the axis permutation field
+    metadata.axisPermutation = [2 1 3]; %Default Matlab axis permutation
 end
 %use the matrad coordinate system
 if ~isfield(metadata,'coordinateSystem')
@@ -90,6 +88,7 @@ switch ext
 end
 
 fprintf('File written to %s...\n',filepath);
+saved_metadata = metadata;
 
 
 end

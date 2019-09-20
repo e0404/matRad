@@ -1,5 +1,4 @@
 function ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visBool)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to import dicom ct data
 % 
 % call
@@ -22,8 +21,6 @@ function ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visB
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -230,9 +227,9 @@ end
 
 ct.timeStamp = datestr(clock);
 
-% convert to water equivalent electron densities
-fprintf('\nconversion of ct-Cube to waterEqD...');
-ct = matRad_calcWaterEqD(ct);
+% convert to Hounsfield units
+fprintf('\nconversion of ct-Cube to Hounsfield units...');
+ct = matRad_calcHU(ct);
 fprintf('finished!\n');
 
 end

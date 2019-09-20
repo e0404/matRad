@@ -1,5 +1,4 @@
 function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad QI calculation
 % 
 % call
@@ -21,10 +20,8 @@ function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
 %
 % References
 %   van't Riet et. al., IJROBP, 1997 Feb 1;37(3):731-6.
-%   Kataria et. al., J Med Phys. 2012 Oct-Dec; 37(4): 207�213.
+%   Kataria et. al., J Med Phys. 2012 Oct-Dec; 37(4)
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 
@@ -37,6 +34,7 @@ function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 if ~exist('refVol', 'var') || isempty(refVol)
     refVol = [2 5 50 95 98];
 end
@@ -100,8 +98,10 @@ for runVoi = 1:size(cst,1)
             referenceDose = inf;
             for runObjective = 1:numel(cst{runVoi,6})
                % check if this is an objective that penalizes underdosing 
-               if strcmp(cst{runVoi,6}(runObjective).type,'square deviation') > 0 || strcmp(cst{runVoi,6}(runObjective).type,'square underdosing') > 0
-                   referenceDose = (min(cst{runVoi,6}(runObjective).dose,referenceDose))/pln.numOfFractions;
+               obj = cst{runVoi,6}{runObjective};
+               %if strcmp(cst{runVoi,6}(runObjective).type,'square deviation') > 0 || strcmp(cst{runVoi,6}(runObjective).type,'square underdosing') > 0
+               if isa(obj,'DoseObjectives.matRad_SquaredDeviation') || isa(obj,'DoseObjectives.matRad_SquaredUnderdosing')
+                   referenceDose = (min(cst{runVoi,6}{runObjective}.getDoseParameters(),referenceDose))/pln.numOfFractions;
                end            
             end
 
@@ -123,8 +123,11 @@ for runVoi = 1:size(cst,1)
             end
         end
         matRad_dispToConsole(voiPrint,param,'info','%s\n')
-      else
-          matRad_dispToConsole([num2str(cst{runVoi,1}) ' ' cst{runVoi,2} ' - No dose information.\n'],param,'info') 
+    
+    else
+        
+        matRad_dispToConsole([num2str(cst{runVoi,1}) ' ' cst{runVoi,2} ' - No dose information.\n'],param,'info')
+        
     end
 end
 
@@ -142,3 +145,4 @@ for i = 1:size(cst,1)
 end
 
 end
+

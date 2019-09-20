@@ -1,5 +1,5 @@
 function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln,visBool)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % multileaf collimator leaf sequencing algorithm for intensity modulated
 % beams with multiple static segments according to Siochi (1999)
 % International Journal of Radiation Oncology * Biology * Physics,
@@ -27,8 +27,6 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln,visBool)
 % References
 %   [1] https://www.ncbi.nlm.nih.gov/pubmed/10078655
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team.
@@ -233,7 +231,7 @@ if pln.propOpt.runVMAT
     
     %matRad_daoVec2ApertureInfo will interpolate subchildren gantry
     %segments
-    resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
+    resultGUI.apertureInfo = matRad_OptimizationProblemVMAT.matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
     
     %calculate max leaf speed
     resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
@@ -249,7 +247,7 @@ else
     
     resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf,pln);
     
-    resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
+    resultGUI.apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
 end
 
 if pln.propOpt.preconditioner
@@ -262,11 +260,11 @@ resultGUI.wSequenced = sequencing.w;
 
 resultGUI.sequencing   = sequencing;
 
-options.numOfScenarios = 1;
-options.bioOpt = 'none';
-
-d = matRad_backProjection(sequencing.w,dij,options);
-resultGUI.physicalDose = reshape(d{1},dij.dimensions);
+doseSequencedDoseGrid = reshape(dij.physicalDose{1} * sequencing.w,dij.doseGrid.dimensions);
+% interpolate to ct grid for visualiation & analysis
+resultGUI.physicalDose = matRad_interp3(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, ...
+                                        doseSequencedDoseGrid, ...
+                                        dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z);
 
 % if weights exists from an former DAO remove it
 if isfield(resultGUI,'wDao')

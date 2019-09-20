@@ -1,5 +1,4 @@
 function stf = matRad_generateStf(ct,cst,pln,visMode)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad steering information generation
 %
 % call
@@ -17,8 +16,6 @@ function stf = matRad_generateStf(ct,cst,pln,visMode)
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2018 the matRad development team.
@@ -44,7 +41,7 @@ if numel(pln.propStf.gantryAngles) ~= numel(pln.propStf.couchAngles)
 end
 
 if pln.propStf.bixelWidth < 0 || ~isfinite(pln.propStf.bixelWidth)
-   error('bixel width (spot distance) needs to be a real number [mm] larger than zero.');
+    error('bixel width (spot distance) needs to be a real number [mm] larger than zero.');
 end
 
 % find all target voxels from cst cell array
@@ -57,7 +54,6 @@ end
 
 % Remove double voxels
 V = unique(V);
-
 % generate voi cube for targets
 voiTarget    = zeros(ct.cubeDim);
 voiTarget(V) = 1;
@@ -73,6 +69,9 @@ end
 if isempty(V)
     error('Could not find target.');
 end
+
+% Convert linear indices to 3D voxel coordinates
+[coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
 
 % prepare structures necessary for particles
 fileName = [pln.radiationMode '_' pln.machine];
@@ -94,15 +93,26 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     %clear machine;
 end
 
-% Convert linear indices to 3D voxel coordinates
-[coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
+% calculate rED or rSP from HU
+ct = matRad_calcWaterEqD(ct, pln);
+
+% take only voxels inside patient
+V = [cst{:,4}];
+V = unique(vertcat(V{:}));
+
+% ignore densities outside of contours
+eraseCtDensMask = ones(prod(ct.cubeDim),1);
+eraseCtDensMask(V) = 0;
+for i = 1:ct.numOfCtScen
+    ct.cube{i}(eraseCtDensMask == 1) = 0;
+end
 
 % Define steering file like struct. Prellocating for speed.
 % Preallocate with known size of array to avoid errors in VMAT-specific
 % code
 stf = struct('gantryAngle',cell(size(pln.propStf.gantryAngles)));
 
-if pln.propOpt.runVMAT || (pln.propDoseCalc.vmc && strcmp(pln.propDoseCalc.vmcOptions.source,'phsp'))
+if pln.propOpt.runVMAT || (isfield(pln.propDoseCalc,'vmc') && pln.propDoseCalc.vmc && strcmp(pln.propDoseCalc.vmcOptions.source,'phsp'))
     %Initialize master ray positions and target points with NaNs, to be
     %deleted later.  These arrays are the unions of the corresponding
     %arrays per gantry angle.  In order to do VMAT, it is easier to have
@@ -143,42 +153,42 @@ for i = 1:length(pln.propStf.gantryAngles)
     coordsAtIsoCenterPlane(:,2) = (rot_coords(:,3)*SAD)./(SAD + rot_coords(:,2));
     
     % Take unique rows values for beamlets positions. Calculate position of
-    % central ray for every bixel    
-    rayPos = unique(pln.propStf.bixelWidth*round([           coordsAtIsoCenterPlane(:,1) ... 
-                                                  zeros(size(coordsAtIsoCenterPlane,1),1) ...
-                                                             coordsAtIsoCenterPlane(:,2)]/pln.propStf.bixelWidth),'rows');
-                                                  
+    % central ray for every bixel
+    rayPos = unique(pln.propStf.bixelWidth*round([           coordsAtIsoCenterPlane(:,1) ...
+        zeros(size(coordsAtIsoCenterPlane,1),1) ...
+        coordsAtIsoCenterPlane(:,2)]/pln.propStf.bixelWidth),'rows');
+    
     % pad ray position array if resolution of target voxel grid not sufficient
     maxCtResolution = max([ct.resolution.x ct.resolution.y ct.resolution.z]);
     if pln.propStf.bixelWidth < maxCtResolution
         origRayPos = rayPos;
         for j = -floor(maxCtResolution/pln.propStf.bixelWidth):floor(maxCtResolution/pln.propStf.bixelWidth)
-            for k = -floor(maxCtResolution/pln.propStf.bixelWidth):floor(maxCtResolution/plnpropStf.bixelWidth)
+            for k = -floor(maxCtResolution/pln.propStf.bixelWidth):floor(maxCtResolution/pln.propStf.bixelWidth)
                 if abs(j)+abs(k)==0
                     continue;
-                end                
+                end
                 rayPos = [rayPos; origRayPos(:,1)+j*pln.propStf.bixelWidth origRayPos(:,2) origRayPos(:,3)+k*pln.propStf.bixelWidth];
             end
         end
-     end
-
-     % remove spaces within rows of bixels for DAO
-     if pln.propOpt.runDAO
-         % create single x,y,z vectors
-         x = rayPos(:,1);
-         y = rayPos(:,2);
-         z = rayPos(:,3);
-         uniZ = unique(z);
-         for j = 1:numel(uniZ)
-             x_loc = x(z == uniZ(j));
-             x_min = min(x_loc);
-             x_max = max(x_loc);
-             x = [x; (x_min:pln.propStf.bixelWidth:x_max)'];
-             y = [y; zeros((x_max-x_min)/pln.propStf.bixelWidth+1,1)];
-             z = [z; uniZ(j)*ones((x_max-x_min)/pln.propStf.bixelWidth+1,1)];             
-         end
-         rayPos = [x,y,z];
-     end
+    end
+    
+    % remove spaces within rows of bixels for DAO
+    if pln.propOpt.runDAO
+        % create single x,y,z vectors
+        x = rayPos(:,1);
+        y = rayPos(:,2);
+        z = rayPos(:,3);
+        uniZ = unique(z);
+        for j = 1:numel(uniZ)
+            x_loc = x(z == uniZ(j));
+            x_min = min(x_loc);
+            x_max = max(x_loc);
+            x = [x; (x_min:pln.propStf.bixelWidth:x_max)'];
+            y = [y; zeros((x_max-x_min)/pln.propStf.bixelWidth+1,1)];
+            z = [z; uniZ(j)*ones((x_max-x_min)/pln.propStf.bixelWidth+1,1)];
+        end
+        rayPos = [x,y,z];
+    end
     
     % remove double rays
     rayPos = unique(rayPos,'rows');
@@ -195,7 +205,6 @@ for i = 1:length(pln.propStf.gantryAngles)
     end
     
     if ~pln.propOpt.runVMAT
-        %If it is VMAT, we will do this later
         
         % source position in bev
         stf(i).sourcePoint_bev = [0 -SAD 0];
@@ -204,6 +213,7 @@ for i = 1:length(pln.propStf.gantryAngles)
         % transpose matrix because we are working with row vectors
         rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i)));
         
+        
         stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMat_vectors_T;
         
         % Save ray and target position in lps system.
@@ -211,6 +221,10 @@ for i = 1:length(pln.propStf.gantryAngles)
             stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMat_vectors_T;
             stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMat_vectors_T;
             if strcmp(pln.radiationMode,'photons')
+                stf(i).ray(j).beamletCornersAtIso = [rayPos(j,:) + [+stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
+                    rayPos(j,:) + [-stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
+                    rayPos(j,:) + [-stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2];...
+                    rayPos(j,:) + [+stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2]]*rotMat_vectors_T;
                 stf(i).ray(j).rayCorners_SCD = (repmat([0, machine.meta.SCD - SAD, 0],4,1)+ (machine.meta.SCD/SAD) * ...
                     [rayPos(j,:) + [+stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
                     rayPos(j,:) + [-stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
@@ -223,91 +237,71 @@ for i = 1:length(pln.propStf.gantryAngles)
         stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
         
         for j = stf(i).numOfRays:-1:1
+            
+            % ray tracing necessary to determine depth of the target
+            [~,l,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
+                ct.resolution, ...
+                stf(i).sourcePoint, ...
+                stf(i).ray(j).targetPoint, ...
+                [{ct.cube{1}} {voiTarget}]);
+            
+            % find appropriate energies for particles
+            if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
                 
-                % find appropriate energies for particles
-                if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
+                % target hit
+                if sum(rho{2}) > 0
                     
-                    % ray tracing necessary to determine depth of the target
-                    [~,l,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
-                        ct.resolution, ...
-                        stf(i).sourcePoint, ...
-                        stf(i).ray(j).targetPoint, ...
-                        [ct.cube {voiTarget}]);
+                    % compute radiological depths
+                    % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
+                    radDepths = cumsum(l .* rho{1});
                     
-                    % target hit
-                    if sum(rho{2}) > 0
-                        
-                        % compute radiological depths
-                        % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
-                        radDepths = cumsum(l .* rho{1});
-                        
-                        % find target entry & exit
-                        diff_voi    = diff([rho{2}]);
-                        targetEntry = radDepths(diff_voi == 1);
-                        targetExit  = radDepths(diff_voi == -1);
-                        
-                        if numel(targetEntry) ~= numel(targetExit)
-                            error('Inconsistency during ray tracing.');
-                        end
-                        
-                        stf(i).ray(j).energy = [];
-                        
-                        % Save energies in stf struct
-                        for k = 1:numel(targetEntry)
-                            stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
-                            % adjust spot spacing according to pln.bixelWidth when using HIT basedata
-                            %DefaultLongitudialSpotSpacing = pln.bixelWidth;  % in [mm]
-                            DefaultLongitudialSpotSpacing = 3;
-                            if strcmp(pln.machine,'HIT') && length(stf(i).ray(j).energy)>2
-                                Tolerance = 0.5;
-                                hasNext = true;
-                                CntEnergy =2;
-                                while hasNext
-                                    if abs(stf(i).ray(j).energy(CntEnergy)-stf(i).ray(j).energy(CntEnergy-1))<...
-                                            DefaultLongitudialSpotSpacing-Tolerance
-                                        stf(i).ray(j).energy(CntEnergy)=[];
-                                    else
-                                        CntEnergy = CntEnergy+1;
-                                    end
-                                    if CntEnergy == length(stf(i).ray(j).energy)
-                                        hasNext = false;
-                                    end
-                                end
-                            end
-                            
-                        end
-                        
-                        % book keeping & calculate focus index
-                        stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);
-                        currentMinimumFWHM = matRad_interp1(machine.meta.LUT_bxWidthminFWHM(1,:),...
-                            machine.meta.LUT_bxWidthminFWHM(2,:),...
-                            pln.bixelWidth);
-                        focusIx  =  ones(stf(i).numOfBixelsPerRay(j),1);
-                        [~, vEnergyIx] = min(abs(bsxfun(@minus,[machine.data.energy]',...
-                            repmat(stf(i).ray(j).energy,length([machine.data]),1))));
-                        
-                        % get for each spot the focus index
-                        for k = 1:stf(i).numOfBixelsPerRay(j)
-                            focusIx(k) = find(machine.data(vEnergyIx(k)).initFocus.SisFWHMAtIso > currentMinimumFWHM,1,'first');
-                        end
-                        
-                        stf(i).ray(j).focusIx = focusIx';
-                        
-                    else % target not hit
-                        stf(i).ray(j)               = [];
-                        stf(i).numOfBixelsPerRay(j) = [];
+                    % find target entry & exit
+                    diff_voi    = diff([rho{2}]);
+                    targetEntry = radDepths(diff_voi == 1);
+                    targetExit  = radDepths(diff_voi == -1);
+                    
+                    if numel(targetEntry) ~= numel(targetExit)
+                        error('Inconsistency during ray tracing.');
                     end
                     
-                elseif strcmp(stf(i).radiationMode,'photons')
+                    stf(i).ray(j).energy = [];
                     
-                    % book keeping for photons
-                    stf(i).ray(j).energy = machine.data.energy;
+                    % Save energies in stf struct
+                    for k = 1:numel(targetEntry)
+                        stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
+                    end
                     
-                else
-                    error('Error generating stf struct: invalid radiation modality.');
+                    % book keeping & calculate focus index
+                    stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);
+                    currentMinimumFWHM = matRad_interp1(machine.meta.LUT_bxWidthminFWHM(1,:)',...
+                        machine.meta.LUT_bxWidthminFWHM(2,:)',...
+                        pln.propStf.bixelWidth);
+                    focusIx  =  ones(stf(i).numOfBixelsPerRay(j),1);
+                    [~, vEnergyIx] = min(abs(bsxfun(@minus,[machine.data.energy]',...
+                        repmat(stf(i).ray(j).energy,length([machine.data]),1))));
+                    
+                    % get for each spot the focus index
+                    for k = 1:stf(i).numOfBixelsPerRay(j)
+                        focusIx(k) = find(machine.data(vEnergyIx(k)).initFocus.SisFWHMAtIso > currentMinimumFWHM,1,'first');
+                    end
+                    
+                    stf(i).ray(j).focusIx = focusIx';
+                    
+                else % target not hit
+                    stf(i).ray(j)               = [];
+                    stf(i).numOfBixelsPerRay(j) = [];
                 end
+                
+            elseif strcmp(stf(i).radiationMode,'photons')
+                
+                % book keeping for photons
+                stf(i).ray(j).energy = machine.data.energy;
+                
+            else
+                error('Error generating stf struct: invalid radiation modality.');
+            end
+            
         end
-        
         
         % store total number of rays for beam-i
         stf(i).numOfRays = size(stf(i).ray,2);
@@ -325,12 +319,17 @@ for i = 1:length(pln.propStf.gantryAngles)
             maxPeakPos  = machine.data(maxEnergy == availableEnergies).peakPos;
             
             % find set of energyies with adequate spacing
-            
-            if strcmp(machine.meta.machine,'Generic')
-                longitudinalSpotSpacing = 1.5; % enforce all entries to be used
+            if ~isfield(pln.propStf, 'longitudinalSpotSpacing')
+                if strcmp(machine.meta.machine,'Generic')
+                    longitudinalSpotSpacing = 1.5; % enforce all entries to be used
+                else
+                    longitudinalSpotSpacing = 3;   % default value for all other treatment machines
+                end
             else
-                longitudinalSpotSpacing = 3;   % default value for all other treatment machines
+                longitudinalSpotSpacing = pln.propStf.longitudinalSpotSpacing;
             end
+            
+            stf(i).longitudinalSpotSpacing = longitudinalSpotSpacing;
             
             tolerance              = longitudinalSpotSpacing/10;
             availablePeakPos       = [machine.data.peakPos];
@@ -348,19 +347,17 @@ for i = 1:length(pln.propStf.gantryAngles)
                 else
                     ixCurr = ixRun;
                 end
-  
-                % book keeping & calculate focus index
-                stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);
-                currentMinimumFWHM = matRad_interp1(machine.meta.LUT_bxWidthminFWHM(1,:)',...
-                                             machine.meta.LUT_bxWidthminFWHM(2,:)',...
-                                             pln.propStf.bixelWidth);
-                focusIx  =  ones(stf(i).numOfBixelsPerRay(j),1);
-                [~, vEnergyIx] = min(abs(bsxfun(@minus,[machine.data.energy]',...
-                                repmat(stf(i).ray(j).energy,length([machine.data]),1))));
-
-                % get for each spot the focus index
-                for k = 1:stf(i).numOfBixelsPerRay(j)                    
-                    focusIx(k) = find(machine.data(vEnergyIx(k)).initFocus.SisFWHMAtIso > currentMinimumFWHM,1,'first');
+                ixRun = ixRun + 1;
+            end
+            
+            for j = stf(i).numOfRays:-1:1
+                for k = stf(i).numOfBixelsPerRay(j):-1:1
+                    maskEnergy = stf(i).ray(j).energy(k) == availableEnergies;
+                    if ~useEnergyBool(maskEnergy)
+                        stf(i).ray(j).energy(k)     = [];
+                        stf(i).ray(j).focusIx(k)    = [];
+                        stf(i).numOfBixelsPerRay(j) = stf(i).numOfBixelsPerRay(j) - 1;
+                    end
                 end
                 if isempty(stf(i).ray(j).energy)
                     stf(i).ray(j) = [];
@@ -373,9 +370,10 @@ for i = 1:length(pln.propStf.gantryAngles)
         
         % save total number of bixels
         stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
-    end
+        
+    end %end no VMAT
     
-    if pln.propOpt.runVMAT || (pln.propDoseCalc.vmc && strcmp(pln.propDoseCalc.vmcOptions.source,'phsp'))
+    if pln.propOpt.runVMAT || (isfield(pln.propDoseCalc,'vmc') && pln.propDoseCalc.vmc && strcmp(pln.propDoseCalc.vmcOptions.source,'phsp'))
         % For VMAT, The following must be taken as the union of stf(:).FIELD and stf(:).FIELD:
         %ray.rayPos_bev
         %ray.targetPoint_bev
@@ -567,7 +565,7 @@ end
 
 %% vmc++
 
-if pln.propDoseCalc.vmc && strcmp(pln.propDoseCalc.vmcOptions.source,'phsp')
+if isfield(pln.propDoseCalc,'vmc') && pln.propDoseCalc.vmc && strcmp(pln.propDoseCalc.vmcOptions.source,'phsp')
     stf = matRad_bixelPhspVmc(stf,masterRayPosBEV,pln.propDoseCalc.vmcOptions);
 end
 

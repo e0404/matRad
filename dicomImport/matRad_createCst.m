@@ -1,5 +1,4 @@
 function cst = matRad_createCst(structures)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to create a cst struct upon dicom import
 % 
 % call
@@ -16,8 +15,6 @@ function cst = matRad_createCst(structures)
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -70,7 +67,10 @@ for i = 1:size(structures,2)
     cst{i,4}{1} = structures(i).indices;
     
     % set default parameter for biological planning
-    cst{i,5}.alphaX = 0.1;
-    cst{i,5}.betaX = 0.05;
+    cst{i,5}.alphaX  = 0.1;
+    cst{i,5}.betaX   = 0.05;
     cst{i,5}.Visible = 1;
+    if isfield(structures(i),'structColor') && ~isempty(structures(i).structColor)
+        cst{i,5}.visibleColor = structures(i).structColor' ./ 255;
+    end
 end

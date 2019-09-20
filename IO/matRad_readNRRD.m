@@ -1,5 +1,4 @@
 function [cube, metadata] = matRad_readNRRD(filename)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad NRRD reader
 % 
 % call
@@ -15,8 +14,6 @@ function [cube, metadata] = matRad_readNRRD(filename)
 % References
 %   [1] http://teem.sourceforge.net/nrrd/format.html5
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -192,6 +189,7 @@ if ~isempty(originFieldIx)
     for c=1:metadata.dimension
         metadata.imageOrigin(c) = originVector{c};
     end
+    %metadata.imageOrigin = transpose(metadata.imageOrigin);
 end
 
 %Coordinate system - optional
@@ -283,18 +281,23 @@ if doSwapBytes
     swapbytes(cube);
 end
 
-%first we shape the data into a cube
-cube = reshape(cube,metadata.cubeDim);
+if numel(metadata.cubeDim) > 1
+    
+    %first we shape the data into a cube
+    cube = reshape(cube,metadata.cubeDim);
+    
+    %now we have to do the permutations, 2 1 3 ... is the MATLAB default
+    %We create a transform matrix that transforms a permutation to MATLAB
+    %default
+    permutationTransformMatrix = diag(ones(metadata.dimension,1));
+    permutationTransformMatrix(1:2,1:2) = flip(permutationTransformMatrix(1:2,1:2));
+    
+    applyPermutation = permutationTransformMatrix*metadata.axisPermutation';
+    
+    cube = permute(cube,applyPermutation);
+end
 
-%now we have to do the permutations, 2 1 3 ... is the MATLAB default
-%We create a transform matrix that transforms a permutation to MATLAB
-%default
-permutationTransformMatrix = diag(ones(metadata.dimension,1));
-permutationTransformMatrix(1:2,1:2) = flip(permutationTransformMatrix(1:2,1:2));
 
-applyPermutation = permutationTransformMatrix*metadata.axisPermutation';
-
-cube = permute(cube,applyPermutation);
 
 end
 

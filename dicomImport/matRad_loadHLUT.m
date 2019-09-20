@@ -1,24 +1,21 @@
-function hlut = matRad_loadHLUT(ct)
-  % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function hlut = matRad_loadHLUT(ct, pln)
   % matRad function to load HLUT file based on the provided ct
   %
   % call
-  %   hlut = matRad_loadHLUT(ct)
+  %   hlut = matRad_loadHLUT(ct, pln)
   %
   % input
-  %   ct: unprocessed dicom ct data 
+  %   ct:   unprocessed dicom ct data 
   %
   % output
-  %   hlut:   lookup table
+  %   hlut: lookup table
   %
   % References
   %   -
   %
   % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-  % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %
-  % Copyright 2015 the matRad development team. 
+  % Copyright 2018 the matRad development team. 
   % 
   % This file is part of the matRad project. It is subject to the license 
   % terms in the LICENSE file found in the top-level directory of this 
@@ -30,16 +27,23 @@ function hlut = matRad_loadHLUT(ct)
   % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % directory with look up table files
-hlutDir = fullfile(fileparts(mfilename('fullpath')),'hlutLibrary',filesep);
+if ~isdeployed
+    hlutDir = fullfile(fileparts(mfilename('fullpath')),'hlutLibrary',filesep);
+else
+    hlutDir = [];
+end
 
 % if possible -> file standard out of dicom tags
 try
+    
+    hlutFileName = '';
+    particle     = pln.radiationMode;
     manufacturer = ct.dicomInfo.Manufacturer;
-    model = ct.dicomInfo.ManufacturerModelName;
-    convKernel = ct.dicomInfo.ConvolutionKernel;
+    model        = ct.dicomInfo.ManufacturerModelName;
+    convKernel   = ct.dicomInfo.ConvolutionKernel;
     
     hlutFileName = strcat(manufacturer, '-', model, '-ConvolutionKernel-',...
-        convKernel, '.hlut');
+        convKernel, '_', particle, '.hlut');
     
     % check whether fileNames used '-' or '_' instead of blanks
     hlutFileCell{1} = hlutFileName;
@@ -49,32 +53,27 @@ try
     % add pathname
     hlutFileCell = strcat(hlutDir,hlutFileCell);
 
-    for i = 1:3
-        existIx(i) = exist(hlutFileCell{i}, 'file') == 2;
-    end
-
+    % check if files exist
+    existIx = cellfun(@(x) exist(x,'file') == 2,hlutFileCell);
+    
     if sum(existIx) == 0
-        warnText = {['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
-            ' matRad default HLUT loaded']};
-        warndlg(warnText,'Could not load HLUT');
-        warning('matRad default HLUT loaded');
-        % load default HLUT
-        hlutFileName = strcat(hlutDir,'matRad_default.hlut');
+        produce an error to enter catch statment below :)
     else
         hlutFileName = hlutFileCell{existIx};
     end
 
 catch
-    warnText = {['Could not construct hlut file name from DICOM tags.' ...
-        ' matRad default HLUT loaded']};
-    warndlg(warnText,'Could not load HLUT');
-    warning('matRad default HLUT loaded');
-       
+    
+    warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
+                ' matRad default HLUT loaded'];
+    warning('off','backtrace')
+    warning(warnText);
+    
+    % load default HLUT
     hlutFileName = strcat(hlutDir,'matRad_default.hlut');
 
 end
 
-hlutFile = fopen(hlutFileName,'r');
-hlut = cell2mat(textscan(hlutFile,'%f %f','CollectOutput',1,'commentStyle','#'));
-fclose(hlutFile);
+hlut = matRad_readHLUT(hlutFileName);
+
 end

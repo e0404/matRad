@@ -1,5 +1,4 @@
 function matRad_writeNRRD(filename,cube,metadata)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad NRRD writer
 % 
 % call
@@ -15,8 +14,6 @@ function matRad_writeNRRD(filename,cube,metadata)
 % References
 %   [1] http://teem.sourceforge.net/nrrd/format.html5
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

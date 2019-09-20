@@ -1,5 +1,4 @@
 function [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to import a matRad stf struct from dicom RTPLAN data
 % 
 % call
@@ -20,7 +19,6 @@ function [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
 %   -
 % Note
 % not implemented - compensator. Fixed SAD.
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -59,7 +57,7 @@ end
 BeamSeq = rtPlanInfo.IonBeamSequence;
 BeamSeqNames = fieldnames(BeamSeq);
 % Number of Beams from plan
-numOfBeamsPlan = length(pln.gantryAngles);
+numOfBeamsPlan = length(pln.propStf.gantryAngles);
 
 % use only the treatment beams
 for i = 1:length(BeamSeqNames)
@@ -116,13 +114,13 @@ stf(length(BeamSeqNames)).ray = [];
 for i = 1:length(BeamSeqNames)
     currBeamSeq = BeamSeq.(BeamSeqNames{i});
     ControlPointSeq      = currBeamSeq.IonControlPointSequence;
-    stf(i).gantryAngle   = pln.gantryAngles(i);
-    stf(i).couchAngle    = pln.couchAngles(i);
-    stf(i).bixelWidth    = pln.bixelWidth;
+    stf(i).gantryAngle   = pln.propStf.gantryAngles(i);
+    stf(i).couchAngle    = pln.propStf.couchAngles(i);
+    stf(i).bixelWidth    = pln.propStf.bixelWidth;
     stf(i).radiationMode = pln.radiationMode;
     % there might be several SAD's, e.g. compensator?
     stf(i).SAD           = machine.meta.SAD;
-    stf(i).isoCenter     = pln.isoCenter(i,:);
+    stf(i).isoCenter     = pln.propStf.isoCenter(i,:);
     stf(i).sourcePoint_bev = [0 -stf(i).SAD 0];
         % now loop over ControlPointSequences
     ControlPointSeqNames = fieldnames(ControlPointSeq);
@@ -229,7 +227,7 @@ for i = 1:length(BeamSeqNames)
     bixelWidth_help1 = unique(round(1e3*bixelWidth_help(:,1))/1e3,'sorted');
     bixelWidth_help2 = unique(round(1e3*bixelWidth_help(:,2))/1e3,'sorted');
     
-    bixelWidth = unique([unique(diff(bixelWidth_help1)) unique(diff(bixelWidth_help2))]);
+    bixelWidth = unique([unique(diff(bixelWidth_help1))' unique(diff(bixelWidth_help2))']);
     
     if numel(bixelWidth) == 1
         stf(i).bixelWidth = bixelWidth;
@@ -239,7 +237,7 @@ for i = 1:length(BeamSeqNames)
     
     % coordinate transformation with rotation matrix.
     % use transpose matrix because we are working with row vectors
-    rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln.gantryAngles(i),pln.couchAngles(i)));
+    rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i)));
 
     % Rotated Source point (1st gantry, 2nd couch)
     stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMat_vectors_T;
@@ -288,9 +286,9 @@ for i = 1:length(BeamSeqNames)
 end
 
 if any(isnan([stf(:).bixelWidth])) || numel(unique([stf(:).bixelWidth])) > 1
-    pln.bixelWidth = NaN;
+    pln.propStf.bixelWidth = NaN;
 else
-    pln.bixelWidth = stf(1).bixelWidth;
+    pln.propStf.bixelWidth = stf(1).bixelWidth;
 end
 
 end

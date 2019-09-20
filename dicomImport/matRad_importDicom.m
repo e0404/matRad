@@ -1,5 +1,4 @@
 function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad wrapper function to import a predefined set of dicom files into
 % matRad's native data formats
 % 
@@ -22,8 +21,6 @@ function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -36,7 +33,6 @@ function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-addpath('tools');
 [env, ~] = matRad_getEnvironment();
     
 %%
@@ -117,7 +113,7 @@ if isfield(files,'rtplan')
             %% import steering file
             % pln output because bixelWidth is determined via the stf
             [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, files.rtplan);
-        elseif strcmp(pln.radiationMode, 'photons') && isfield(pln,'Collimation')
+        elseif strcmp(pln.radiationMode, 'photons') && isfield(pln.propStf,'collimation')
             % return correct angles in pln 
             [stf, pln] = matRad_importDicomSteeringPhotons(pln);
         else

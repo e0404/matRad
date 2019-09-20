@@ -26,7 +26,8 @@
 %% Patient Data Import
 % Let's begin with a clear Matlab environment and import the head &
 % neck patient into your workspace.
-clc,clear,close all;
+matRad_rc
+
 load('HEAD_AND_NECK.mat');
 
 %% Treatment Plan
@@ -40,7 +41,7 @@ pln.machine         = 'Generic';
 pln.numOfFractions  = 30;
 
 % beam geometry settings
-pln.propStf.bixelWidth = 5;
+pln.propStf.bixelWidth = 10;
 
 % optimization settings
 pln.propOpt.bioOptimization = 'none';
@@ -55,6 +56,14 @@ pln.propOpt.VMAToptions.machineConstraintFile = [pln.radiationMode '_' pln.machi
 pln.propOpt.VMAToptions.maxGantryAngleSpacing    = 2;      % Max gantry angle spacing for dose calculation
 pln.propOpt.VMAToptions.maxDAOGantryAngleSpacing = 4;      % Max gantry angle spacing for DAO
 pln.propOpt.VMAToptions.maxFMOGantryAngleSpacing = 28;     % Max gantry angle spacing for FMO
+
+pln.propOpt.VMAToptions.startingAngle = 0;
+pln.propOpt.VMAToptions.finishingAngle = 359;
+pln.propOpt.VMAToptions.continuousAperture = 0;
+
+pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 
 %%
 % Generate dose calculation, DAO, and FMO angles from the parameters input
@@ -86,7 +95,7 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % treatment. In VMAT, FMO is done only at the angles in the
 % initGantryAngles set. Once the optimization has finished, trigger once the GUI to
 % visualize the optimized dose cubes.
-resultGUI = matRad_fluenceOptimization(dij,cst,pln,stf);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 matRadGUI;
 
 %% Sequencing
