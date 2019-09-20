@@ -104,6 +104,10 @@ wOnes          = ones(dij.totalNumOfBixels,1);
  
 %This VMAT stuff is not clear to me why do we need it here?
 %We would need the stf only because of this part of the code...
+if ~isfield(pln.propOpt,'runVMAT')
+    pln.propOpt.runVMAT = false;
+end
+
 if pln.propOpt.runVMAT
     % loop through angles
     offset = 0;

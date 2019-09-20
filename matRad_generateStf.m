@@ -112,6 +112,10 @@ end
 % code
 stf = struct('gantryAngle',cell(size(pln.propStf.gantryAngles)));
 
+if ~isfield(pln.propOpt,'runVMAT')
+    pln.propOpt.runVMAT = false;
+end
+
 if pln.propOpt.runVMAT || (isfield(pln.propDoseCalc,'vmc') && pln.propDoseCalc.vmc && strcmp(pln.propDoseCalc.vmcOptions.source,'phsp'))
     %Initialize master ray positions and target points with NaNs, to be
     %deleted later.  These arrays are the unions of the corresponding

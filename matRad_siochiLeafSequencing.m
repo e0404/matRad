@@ -58,6 +58,10 @@ if visBool
 end
 
 offset             = 0;
+
+if ~isfield(pln.propOpt,'runVMAT')
+    pln.propOpt.runVMAT = false;
+end
 sequencing.runVMAT = pln.propOpt.runVMAT;
 
 if isfield(resultGUI,'scaleFacRx_FMO')
