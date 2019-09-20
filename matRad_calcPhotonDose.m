@@ -60,7 +60,7 @@ lateralCutoff = 50; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
-useCustomPrimFluenceBool = 0;
+useCustomPrimFluenceBool = 1;
 
 % 0 if field calc is bixel based, 1 if dose calc is field based
 isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
@@ -107,6 +107,7 @@ kernelLimit = ceil(lateralCutoff/intConvResolution);
 [kernelX, kernelZ] = meshgrid(-kernelLimit*intConvResolution: ...
                             intConvResolution: ...
                             (kernelLimit-1)*intConvResolution);
+
 
 % precalculate convoluted kernel size and distances
 kernelConvLimit = fieldLimit + gaussLimit + kernelLimit;
@@ -257,6 +258,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                                                    isoLatDistsX,...
                                                    isoLatDistsZ);
                                                
+
         % sample dose only for bixel based dose calculation
         if ~isFieldBasedDoseCalc
             r0   = 20 + stf(i).bixelWidth;   % [mm] sample beyond the inner core

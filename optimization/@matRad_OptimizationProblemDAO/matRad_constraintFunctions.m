@@ -35,13 +35,13 @@ function c = matRad_constraintFunctions(optiProb,apertureInfoVec,dij,cst)
 
 apertureInfo = optiProb.apertureInfo;
 
-% value of constraints for leaves
-leftLeafPos  = apertureInfoVec([1:apertureInfo.totalNumOfLeafPairs]+apertureInfo.totalNumOfShapes);
-rightLeafPos = apertureInfoVec(1+apertureInfo.totalNumOfLeafPairs+apertureInfo.totalNumOfShapes:end);
-c_dao        = rightLeafPos - leftLeafPos;
-
 % bixel based objective function calculation
 c_dos = matRad_constraintFunctions@matRad_OptimizationProblem(optiProb,apertureInfo.bixelWeights,dij,cst);
 
+% value of constraints for leaves
+leftLeafPos  = apertureInfoVec((1:apertureInfo.totalNumOfLeafPairs)+apertureInfo.totalNumOfShapes);
+rightLeafPos = apertureInfoVec((1+apertureInfo.totalNumOfLeafPairs+apertureInfo.totalNumOfShapes):(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2));
+c_dao        = rightLeafPos - leftLeafPos;
+
 % concatenate
-c = [c_dao; c_dos];
+c = [c_dos; c_dao];

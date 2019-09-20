@@ -62,6 +62,8 @@ dij.numOfScenarios     = 1;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
+dij.weightToMU         = 100; %sure?
+dij.scaleFactor        = 1; %needed?
 
 % check if full dose influence data is required
 if calcDoseDirect 

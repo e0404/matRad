@@ -1557,11 +1557,11 @@ try
     %% sequencing
     if strcmp(pln.radiationMode,'photons') && (pln.propOpt.runSequencing || pln.propOpt.runDAO)
     %   resultGUI = matRad_xiaLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
-    %       ,get(handles.editSequencingLevel,'Value'));
+    %       ,pln);
     %   resultGUI = matRad_engelLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
-    %       ,str2double(get(handles.editSequencingLevel,'String')));
+    %       ,pln);
         resultGUI = matRad_siochiLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
-            ,str2double(get(handles.editSequencingLevel,'String')));
+            ,pln);
         
         assignin('base','resultGUI',resultGUI);
     end
@@ -2374,6 +2374,9 @@ if strcmp(pln.radiationMode,'photons')
     set(handles.txtSequencing,'Enable','on');
     set(handles.radiobutton3Dconf,'Enable','on');
     set(handles.editSequencingLevel,'Enable','on');
+    if isfield(pln.propOpt,'numLevels')
+        set(handles.editSequencingLevel,'Value',pln.propOpt.numLevels);
+    end
 else
     set(handles.txtSequencing,'Enable','off');
     set(handles.radiobutton3Dconf,'Enable','off');
@@ -2678,6 +2681,15 @@ guidata(hObject,handles);
 
 % text box: stratification levels
 function editSequencingLevel_Callback(~, ~, ~)
+
+pln = evalin('base','pln');
+levels = str2double(get(hObject,'String'));
+
+pln.propOpt.numLevels = levels;
+
+assignin('base','pln',pln);
+guidata(hObject,handles);
+
 
 % text box: isoCenter in [mm]
 function editIsoCenter_Callback(hObject, ~, handles)

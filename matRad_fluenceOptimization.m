@@ -39,7 +39,6 @@ end
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
 
-
 % check & adjust objectives and constraints internally for fractionation 
 for i = 1:size(cst,1)
     %Compatibility Layer for old objective format
@@ -100,12 +99,33 @@ end
 ixTarget       = ixTarget(i);
 wOnes          = ones(dij.totalNumOfBixels,1);
 
-% modified settings for photon dao
-if pln.propOpt.runDAO && strcmp(pln.radiationMode,'photons')
-%    options.ipopt.max_iter = 50;
-%    options.ipopt.acceptable_obj_change_tol     = 7e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
+% determine wOnes
 
+ 
+%This VMAT stuff is not clear to me why do we need it here?
+%We would need the stf only because of this part of the code...
+if ~isfield(pln.propOpt,'runVMAT')
+    pln.propOpt.runVMAT = false;
 end
+
+if pln.propOpt.runVMAT
+    % loop through angles
+    offset = 0;
+    for i = 1:dij.numOfBeams
+        
+        rayIndices = offset+(1:dij.numOfRaysPerBeam(i));
+        if ~stf(i).propVMAT.FMOBeam
+            % if angle is not an initialization angle, do not optimize fluence
+            % in bixels
+            
+            %set wOnes to 0 (initial value)
+            wOnes(rayIndices) = 0;
+        end
+        offset = offset + dij.numOfRaysPerBeam(i);
+    end
+end
+
+
 % calculate initial beam intensities wInit
 if  strcmp(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
     
@@ -113,20 +133,22 @@ if  strcmp(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMod
     if ~isfield(dij,'RBE')
         dij.RBE = 1.1;
     end
-    bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
+    
+    bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes));
     wInit       = wOnes * bixelWeight;
-        
+    
 elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
-                                && strcmp(pln.radiationMode,'carbon')
-                            
-    % retrieve photon LQM parameter
+                                && strcmp(pln.radiationMode,'carbon')                           
+    
+                            % retrieve photon LQM parameter
     [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1);
+
 
     if ~isequal(dij.ax(dij.ax~=0),ax(dij.ax~=0)) || ...
        ~isequal(dij.bx(dij.bx~=0),bx(dij.bx~=0))
          error(['Inconsistent biological parameter - please recalculate dose influence matrix']);
     end
-
+    
     for i = 1:size(cst,1)
         
         for j = 1:size(cst{i,6},2)
@@ -163,7 +185,7 @@ elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt
            wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
     end
     
-else 
+else
     bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
     pln.propOpt.bioOptimization = 'none';
@@ -192,11 +214,7 @@ switch pln.propOpt.bioOptimization
 end
         
 
-%backProjection = matRad_DoseProjection();
-
 optiProb = matRad_OptimizationProblem(backProjection);
-
-%optimizer = matRad_OptimizerIPOPT;
 
 if ~isfield(pln.propOpt,'optimizer')
     pln.propOpt.optimizer = 'IPOPT';
@@ -211,15 +229,27 @@ switch pln.propOpt.optimizer
         warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
         optimizer = matRad_OptimizerIPOPT;
 end
-        
-%optimizer = matRad_OptimizerFmincon;
 
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 
 wOpt = optimizer.wResult;
 info = optimizer.resultInfo;
 
+fprintf('Calculating final cubes...\n');
 resultGUI = matRad_calcCubes(wOpt,dij,cst);
+
+%Should we move that to be a display option in the GUI? Or for what do we
+%need it?
+if isfield(pln,'scaleDRx') && pln.scaleDRx
+    %Scale D95 in target to RXDose
+    resultGUI.QI = matRad_calcQualityIndicators(cst,pln,resultGUI.physicalDose);
+    
+    scaleFacRx = max((pln.DRx/pln.numOfFractions)./[resultGUI.QI(pln.RxStruct).D_95]');
+    wOpt = wOpt*scaleFacRx;
+    resultGUI = matRad_calcCubes(wOpt,dij,cst,options);
+    resultGUI.scaleFacRx_FMO = scaleFacRx;
+end
+
 resultGUI.wUnsequenced = wOpt;
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;

@@ -35,11 +35,28 @@ calcDoseDirect = true;
 
 % check if weight vector is available, either in function call or in stf - otherwise dose calculation not possible
 if ~exist('w','var') && ~isfield([stf.ray],'weight')
-     error('No weight vector available. Please provide w or add info to stf')
+    error('No weight vector available. Please provide w or add info to stf')
 end
 
 % copy bixel weight vector into stf struct
 if exist('w','var')
+    %{
+    %Seems VMAT specific
+    for phase = 1:ct.tumourMotion.numPhases
+        if sum([stf.totalNumOfBixels]) ~= numel(w{phase})
+            error('weighting does not match steering information')
+        end
+        counter = 0;
+        for i = 1:size(stf,2)
+            for j = 1:stf(i).numOfRays
+                for k = 1:stf(i).numOfBixelsPerRay(j)
+                    counter = counter + 1;
+                    stf(i).ray(j).weight{phase}(k) = w{phase}(counter);
+                end
+            end
+        end
+    end
+    %}
     if sum([stf.totalNumOfBixels]) ~= numel(w)
         error('weighting does not match steering information')
     end
@@ -67,10 +84,17 @@ end
 
 % dose calculation
 if strcmp(pln.radiationMode,'photons')
-  dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect);
-  %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
+    
+    %This is deprecated since vmc is no longer supported (VMAT branch)
+    if isfield(pln.propDoseCalc,'vmc') && vmcpln.propDoseCalc.vmc
+        dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,calcDoseDirect);
+    else
+        dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect);
+    end
+    
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-  dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect);
+    
+    dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect);
 end
 
 % calculate cubes; use uniform weights here, weighting with actual fluence 
