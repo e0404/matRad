@@ -1,18 +1,26 @@
 classdef matRad_DicomExporter < handle
-    %matRad_DicomExporter matRad class to handle a dicom export
-    
+    % matRad_DicomExporter matRad class to handle a dicom export
+    %
+    %
+    % Example on how to use the matRad_DicomExport class
+    %
+    % dcmExpObj          = matRad_DicomExporter;   % create instance of matRad_DicomExporter
+    % dcmExpObj.dicomDir = 'pathAsString';         % set the output path for the Dicom export
+    % dcmExp.matRad_exportDicom();                 % run the export
+
     properties
+       
         %output folder
         dicomDir = ['.' filesep];
         
-        %MatRad Structures to export
+        % matRad structures to export
         ct = [];
         cst = [];
         stf = [];
         pln = [];
         resultGUI = [];
         
-        %Study & Patient Dicom Information
+        % Study & Patient Dicom Information
         PatientID
         PatientName
         PatientPosition
@@ -22,25 +30,24 @@ classdef matRad_DicomExporter < handle
         StudyInstanceUID
         FrameOfReferenceUID
         
-        %ct
+        % ct
         ctFilePrefix = 'ct_slice_';
         ctMeta
         ctSliceMetas
         ctExportStatus
         
-        %rtstruct
+        % rtstruct
         rtssFileName = 'RTStruct';
         rtssMeta
         rtssExportStatus
         
-        %RTdose
+        % RTdose
         rtDoseFilePrefix = 'RTDose_';
         rtDoseNames
         rtDoseMetas
         rtDoseExportStatus
         
-        
-        %Some dictionaries
+        % some dictionaries
         externalContourDict = {'EXTERNAL','BODY','PATIENT'}; %Names to identify external contours
         targetPtvDict = {'PTV','MARGIN'};
         targetCtvDict = {'CTV'};
@@ -55,9 +62,13 @@ classdef matRad_DicomExporter < handle
             if nargin == 0
                 try
                     obj.ct = evalin('base','ct');
+                catch
+                   matRad_dispToConsole('matRad_DicomExporter: Could not parse CT',[],'info');
                 end
                 try
                     obj.cst = evalin('base','cst');
+                catch
+                   matRad_dispToConsole('matRad_DicomExporter: Could not parse cst',[],'info');
                 end
                 try
                     obj.pln = evalin('base','pln');
@@ -90,25 +101,28 @@ classdef matRad_DicomExporter < handle
         end
         
         function obj = generateDefaultDicomData(obj)
-            %generateDefaultDicomData Fill Patient & Study dicom info
+            % generateDefaultDicomData Fill Patient & Study dicom info
                         
-            date = now;
+            date    = now;
             dateStr = datestr(date,'yyyymmdd');
             timeStr = datestr(date,'HHMMSS');
             
             obj.PatientID = ['matRad_default_patient_' dateStr];
             obj.PatientName = obj.dicomName();
             
-            
             obj.StudyID = ['matRad_' dateStr];
             obj.StudyDate = dateStr;
             obj.StudyTime = timeStr;
             obj.StudyInstanceUID = dicomuid;
             
-            %Coordinates
+            % coordinates
             obj.FrameOfReferenceUID = dicomuid;
-            obj.PatientPosition = 'HFS'; %matRad default coordinate system
             
+            if isfield(obj.ct.dicomInfo,'PatientPosition')
+               obj.PatientPosition = obj.ct.dicomInfo.PatientPosition;
+            else
+               obj.PatientPosition = 'HFS'; %matRad default coordinate system
+            end
         end
         
         obj = matRad_exportDicom(obj)

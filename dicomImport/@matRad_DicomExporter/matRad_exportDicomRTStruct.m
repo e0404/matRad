@@ -32,16 +32,16 @@ isOctave = strcmp(env,'OCTAVE');
 %Class UID
 ClassUID = '1.2.840.10008.5.1.4.1.1.481.3'; %RT Structure Set
 meta.MediaStorageSOPClassUID = ClassUID;
-meta.SOPClassUID = ClassUID;
+meta.SOPClassUID             = ClassUID;
 %TransferSyntaxUID = '1.2.840.10008.1.2.1'; %Explicit VR Little Endian - correct?
 %meta.TransferSyntaxUID = TransferSyntaxUID; 
 
 %Identifiers
-meta.SOPInstanceUID = dicomuid;
+meta.SOPInstanceUID             = dicomuid;
 meta.MediaStorageSOPInstanceUID = meta.SOPInstanceUID;
-meta.SeriesInstanceUID = dicomuid;
-meta.SeriesNumber = 1;
-meta.InstanceNumber = 1;
+meta.SeriesInstanceUID          = dicomuid;
+meta.SeriesNumber               = 1;
+meta.InstanceNumber             = 1;
 
 %Remaining Meta Data
 meta.Modality = 'RTSTRUCT';
@@ -53,7 +53,7 @@ meta = matRad_DicomExporter.assignDefaultMetaValue(meta,'ManufacturerModelName',
 
 %ID of the Study
 meta.StudyInstanceUID = obj.StudyInstanceUID;
-meta.StudyID = obj.StudyID; 
+meta.StudyID          = obj.StudyID; 
 
 %Dates & Times
 currDate = now;
@@ -97,21 +97,43 @@ end
 
 %meta.RescaleSlope = 1;
 %meta.RescaleIntercept = 0;    
-    
+
 obj.cst = matRad_computeVoiContoursWrapper(obj.cst,ct);
 
 for i = 1:size(obj.cst,1)
+   
     fprintf('Processinging VOI ''%s''...',obj.cst{i,2});
    %Select contours in axial slices
-    contours = obj.cst{i,7}(:,3);
-    contourSliceIx = find(~cellfun(@isempty,contours));    
+    contours        = obj.cst{i,7}(:,3);
+    contourSliceIx  = find(~cellfun(@isempty,contours));    
     contourSlicePos = ct.z(contourSliceIx);
-    contours = contours(contourSliceIx);
-           
-    %remove the first column which holds number of points & spacing, and
-    %remove the last because it is the same as the first point
-    contours = cellfun(@(c) c(:,2:end-1),contours,'UniformOutput',false);
-    contours = cellfun(@(c) [ct.resolution.x; ct.resolution.y].* c + [ct.x(1) - ct.resolution.x; ct.y(1) - ct.resolution.y],contours,'UniformOutput',false);
+    contours        = contours(contourSliceIx);
+        
+    % consider multiple contours of the same object
+    for slice = 1:numel(contours)
+       
+       tmpContour = [];
+       lower         = 1; % lower marks the beginning of a section
+       cnt           = 0;
+       
+       while lower-1 ~= size(contours{slice,1},2)
+         
+          steps = contours{slice,1}(2,lower); % number of elements of current line section
+          
+          tmpContour(:,lower-cnt:lower-cnt+steps-1) = contours{slice,1}(:,lower+1:lower+steps);
+          
+          lower = lower+steps+1;
+          cnt   = cnt + 1;
+       end
+       
+       contours{slice,1} = tmpContour;
+       
+    end
+    
+    contours = cellfun(@(c) [ct.resolution.x; ct.resolution.y].* c + [ct.x(1) - ct.resolution.x;...
+                             ct.y(1) - ct.resolution.y],contours,'UniformOutput',false);
+      
+    
     contours = cellfun(@(c,pos) addSlicePos(c,pos),contours,num2cell(contourSlicePos)','UniformOutput',false);    
     %contours = cellfun(@transpose,contours,'UniformOutput',false);
     
@@ -225,7 +247,7 @@ obj.rtssMeta = meta;
 end 
 
 function c = addSlicePos(c,slicePos)
-    nPoints = size(c,2);
+    nPoints  = size(c,2);
     slicePos = slicePos * ones(1,nPoints);
-    c(3,:) = slicePos;
+    c(3,:)   = slicePos;
 end
