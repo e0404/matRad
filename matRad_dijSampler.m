@@ -47,11 +47,13 @@ for i=1:size(cst,1)
 end
  vec = zeros( numel(mVOI),1);
  vec (fullmap)  = 1;
-tic,  dij.physicalDose{1} = ( dij.physicalDose{1} .* vec);toc
+selectionDiag = spdiags(vec, 0 , dij.ctGrid.numOfVoxels, dij.ctGrid.numOfVoxels ) ;
+
+tic,  dij.physicalDose{1} = ( dij.physicalDose{1}' * selectionDiag)';toc
 
      if isfield(dij,'mAlphaDose')        
-        dij.mAlphaDose{1} = dij.mAlphaDose{1}.* vec;
-        dij.mSqrtBetaDose{1} = dij.mSqrtBetaDose{1}.* vec;        
+        dij.mAlphaDose{1} = (dij.mAlphaDose{1}' * selectionDiag)';
+        dij.mSqrtBetaDose{1} = (dij.mSqrtBetaDose{1}' * selectionDiag)';        
     end
 xx = zeros(ct.cubeDim);
 xx(fullmap) =1;
