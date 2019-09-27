@@ -79,8 +79,11 @@ for i=1:numOfBeams
         activeLeafInd = flipud(find(apertureInfo.beam(i).isActiveLeafPair));
     end
     
-    subplotColumns = ceil(apertureInfo.beam(i).numOfShapes/2);
-    subplotLines   = ceil(apertureInfo.beam(i).numOfShapes/subplotColumns);
+    %subplotColumns = ceil(apertureInfo.beam(i).numOfShapes/2);
+    %subplotLines   = ceil(apertureInfo.beam(i).numOfShapes/subplotColumns);
+    subplotColumns = ceil(numOfShapes/2);
+    subplotLines = ceil(numOfShapes/subplotColumns);
+    
     %adjust figure position
     set(gcf,'pos',[0 0 1.8*subplotColumns 3*subplotLines])
     
