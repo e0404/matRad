@@ -44,9 +44,9 @@ end
 bixelG = matRad_objectiveGradient@matRad_OptimizationProblem(optiProb,apertureInfo.bixelWeights,dij,cst);
 
 % allocate gradient vector for aperture weights and leaf positions
-g = NaN * ones(size(apertureInfoVec,1),1);
+%g = NaN * ones(size(apertureInfoVec,1),1);
    
 % use the Jacobian calculated in daoVec2ApertureInfo.
 % should also do this for non-VMAT
-g = g+apertureInfo.bixelJApVec * bixelG;
+g = apertureInfo.bixelJApVec * bixelG;
 
