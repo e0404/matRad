@@ -1,4 +1,4 @@
-function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
+function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,stf)
 % matRad inverse planning wrapper function
 % 
 % call

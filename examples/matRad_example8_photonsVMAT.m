@@ -95,7 +95,7 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % treatment. In VMAT, FMO is done only at the angles in the
 % initGantryAngles set. Once the optimization has finished, trigger once the GUI to
 % visualize the optimized dose cubes.
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln,stf);
 matRadGUI;
 
 %% Sequencing
