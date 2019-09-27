@@ -75,7 +75,7 @@ if ~isfield(pln.propOpt,'preconditioner')
     pln.propOpt.preconditioner = false;
 end
 
-if ~isfield(pln.propOpt,'VMAT')
+if ~isfield(pln.propOpt,'runVMAT')
     pln.propOpt.runVMAT = false;
 end
 
