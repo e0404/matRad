@@ -49,104 +49,118 @@ classdef MatRad_MCsquareBaseData
             
             dataTable.NominalEnergy = [machine.data(:).energy]';
             rowSz = size(dataTable.NominalEnergy);
+            r80       = zeros(rowSz);
+            sigEnergy = zeros(rowSz);
+            
+            %problem with calculating sigmaEnegry?
+            problemSig = false;
             
             for i = 1:numel(machine.data)
-                %find position of bragg peak
-                [maxV, maxIndex] = max(machine.data(i).Z);
+                %interpolate range at 80% dose after peak.
+                [maxV, maxI] = max(machine.data(i).Z);
+                [~, r80ind] = min(abs(machine.data(i).Z(maxI:end) - 0.8 * maxV));
+                r80ind = r80ind - 1;
+                r80(i) = interp1(machine.data(i).Z(maxI + r80ind - 1:maxI + r80ind + 1), ...
+                                 machine.data(i).depths(maxI + r80ind - 1:maxI + r80ind + 1), 0.8 * maxV) ...
+                               + machine.data(i).offset;
+          
+                %find FWHM w50 of bragg peak
+                [~, d50rInd] = min(abs(machine.data(i).Z(maxI:end) - 0.5 * maxV));
+                d50rInd = d50rInd - 1;
+                d50_r = interp1(machine.data(i).Z(maxI + d50rInd - 1:maxI + d50rInd + 1), ...
+                                machine.data(i).depths(maxI + d50rInd - 1:maxI + d50rInd + 1), 0.5 * maxV);
+
+                if (machine.data(i).Z(1) < 0.4 * maxV)
+                    [~, d50lInd] = min(abs(machine.data(i).Z(1:maxI) - 0.5*maxV));
+                    d50_l = interp1(machine.data(i).Z(d50lInd - 1:d50lInd + 1), ...
+                                    machine.data(i).depths(d50lInd - 1:d50lInd + 1), 0.5 * maxV);
+                    w50 = d50_r - d50_l;
+
+                else
+                    problemSig = true;
+                    w50 = (d50_r - machine.data(i).depths(maxI)) * 2;
+                end
                 
-                %find position of 80% dose fall off position
-                [~,ix] = min(abs(machine.data(i).Z(maxIndex:end) - 0.8*maxV));
-                
-                %interpolate exact position of 80% dose fall off
-                r80(i) = interp1(machine.data(i).Z(maxIndex+ix-5:maxIndex+ix+5),machine.data(i).depths(maxIndex+ix-5:maxIndex+ix+5),0.8*maxV);
-                r80(i) = r80(i) + machine.data(i).offset;
-                
-                
-                %find and interpolate exact positions of 50% dose range
-                [~,ix] = min(abs(machine.data(i).Z(maxIndex:end) - 0.5*maxV));
-                d50_r = interp1(machine.data(i).Z(maxIndex+ix-5:maxIndex+ix+5),machine.data(i).depths(maxIndex+ix-5:maxIndex+ix+5),0.5*maxV);
-                
-                [~,ix] = min(abs(machine.data(i).Z(1:maxIndex) - 0.5*maxV));
-                d50_l = interp1(machine.data(i).Z(ix-5:ix+5),machine.data(i).depths(ix-5:ix+5),0.5*maxV);
-                
-                %calculate FWHM of bragg peak
-                w50 = abs(d50_r - d50_l);
-                
-                %calculate energy straggling according to "The physics of
-                %chared paticle therapy, M. Bangert
+                %calculate energy straggling using formulae from paper "An
+                %analytical approximation of the Bragg curve for 
+                %therapeuticproton beams" by T. Bortfeld
                 fullSigSq = (w50 / 6.14)^2;
-                sigRangeStragSq = (0.012*r80(i)^0.95)^2;
+                sigRangeStragSq = (0.012*r80(i))^2;
                 
-                sigEnergy(i) = sqrt(fullSigSq - sigRangeStragSq);
-
+                if((fullSigSq - sigRangeStragSq) > 0)
+                    sigEnergy(i) = sqrt(fullSigSq - sigRangeStragSq);
+                else
+                    sigEnergy(i) = 0.6; %set according to MCsquare documentation
+                    problemSig = true;
+                end
             end
-
             
+            if problemSig
+                warning('Calculation of FWHM of bragg peak in base data not possible! Using simple approximation for energy spread');
+            end
             
-            %dataTable.MeanEnergy = arrayfun(@(r) exp(3.464048 + 0.561372013*log(r/10) - 0.004900892*log(r/10)^2+0.001684756748*log(r/10)^3),r80'); %Energy calculated with formula in MCSquare documentation
-            dataTable.MeanEnergy =  (r80./0.022).^(1/1.77)';
-            dataTable.EnergySpread = sigEnergy'; %energy and energy spread as described in mcSquare documentation
+            dataTable.MeanEnergy = arrayfun(@(r) exp(3.464048 + 0.561372013*log(r/10) - 0.004900892*log(r/10)^2+0.001684756748*log(r/10)^3),r80')'; %Energy calculated with formula in MCSquare documentation
+            %dataTable.MeanEnergy = dataTable.MeanEnergy';
+            dataTable.EnergySpread = sigEnergy; %Energy spread as described in mcSquare documentation
             
             dataTable.ProtonsMU = ones(rowSz)*1e6; %Doesn't seem to be implemented in MCsquare despite in BDL file?
             
-            %fwhmIso = machine.meta.LUT_bxWidthminFWHM(2,focusIx);
             
-            %interpolate sigma^2 at isocenter
-            sigma0 = arrayfun(@(s) interp1(s.dist(focusIx,:),s.sigma(focusIx,:),SAD),[machine.data(:).initFocus]);
-            
-            
-            %use curve fitting for finding spot sizes
-            for i = 1:numel(machine.data)
-                sigmaxSq = machine.data(i).initFocus.sigma(focusIx,:).^2;
-                z = machine.data(i).initFocus.dist(focusIx,:) - SAD;
-                func = @(a, x) sigma0(i)^2 - 2 *a*sigma0(i) + a^2*x.^2;
-                ft = fittype(func);
-                myFit = fit(z', sigmaxSq', ft);
-                y = machine.data(i).initFocus.sigma(focusIx,:).^2;%- sigma0(i).^2;
-                spotDiv(i) = sqrt(myFit.a);
-                sigmaIso(i) = sqrt(sigma0(i)^2 + myFit.a * obj.nozzleToIso^2);
-                sigmaCorr(i) = (sigma0(i) - spotDiv(i) *obj.nozzleToIso)/ func(spotDiv(i), obj.nozzleToIso);
-            end
+            %select focus index
+            focusIndex = focusIx;
 
+            dataBDL.spotSize = zeros(numel(machine.data),1);
+            dataBDL.divergence = zeros(numel(machine.data),1);
+            dataBDL.correlation = zeros(numel(machine.data),1);
+
+
+            for i = 1:numel(machine.data)
+                %calculate geometric distances and extrapolate spot size at nozzle
+                SAD = machine.meta.SAD;
+                z     = -(machine.data(i).initFocus.dist(focusIndex,:) - SAD);
+                sigmaSq = machine.data(i).initFocus.sigma(focusIndex,:).^2;
+
+                %fit Courant-Synder equation to data
+                sigmaNull = sqrt(interp1(z,sigmaSq,0));
+                CourantSynder = fittype( @(rho,sigmaT, x) sigmaNull^2 - 2*sigmaNull*rho*sigmaT*x + sigmaT^2*x.^2, 'independent', {'x'}, 'dependent', 'y');
+
+                options = fitoptions(CourantSynder);
+                options.Lower  = [-0.99, -Inf];
+                options.Upper  = [ 0.99, Inf];
+                options.StartPoint = [0.9, 0.1];
+                options.TolFun = 1e-10;
+                options.Display = 'off';
+
+                CSfit = fit(z', sigmaSq', CourantSynder, options);
+
+                %calculate divergence, spotsize and correlation at nozzle
+                DivergenceAtNozzle = CSfit.sigmaT;
+                SpotsizeAtNozzle = sqrt(sigmaNull^2 - 2 * CSfit.rho * sigmaNull * CSfit.sigmaT * obj.nozzleToIso + CSfit.sigmaT^2 * obj.nozzleToIso^2);
+                CorrelationAtNozzle = (CSfit.rho * sigmaNull - CSfit.sigmaT * obj.nozzleToIso) / SpotsizeAtNozzle;
+
+
+                dataBDL.spotsize(i)    = SpotsizeAtNozzle;
+                dataBDL.divergence(i)  = DivergenceAtNozzle;
+                dataBDL.correlation(i) = CorrelationAtNozzle;
+            end
             
-            sigmaIso = sigmaIso';
-            spotDiv(spotDiv == 0) = 1e-20;
-            spotDiv = spotDiv';
-            sigmaCorr = sigmaCorr';
-            
-            if ~isfield(machine.data,'sigma')
+           
                 dataTable.Weight1 = ones(rowSz);
-                dataTable.SpotSize1x = sigmaIso;
-                dataTable.Divergence1x = spotDiv;
-                dataTable.Correlation1x = sigmaCorr;
-                dataTable.SpotSize1y = sigmaIso;
-                dataTable.Divergence1y = spotDiv;
-                dataTable.Correlation1y = sigmaCorr;
+                dataTable.SpotSize1x = dataBDL.spotsize';
+                dataTable.Divergence1x = dataBDL.divergence;
+                dataTable.Correlation1x = dataBDL.correlation;
+                dataTable.SpotSize1y = dataBDL.spotsize';
+                dataTable.Divergence1y = dataBDL.divergence;
+                dataTable.Correlation1y =  dataBDL.correlation;
                 
                 dataTable.Weight2 = zeros(rowSz);
-                dataTable.SpotSize2x = sigmaIso;
-                dataTable.Divergence2x = spotDiv;
-                dataTable.Correlation2x = ones(rowSz)*0;
-                dataTable.SpotSize2y = sigmaIso;
-                dataTable.Divergence2y = spotDiv;
-                dataTable.Correlation2y = ones(rowSz)*0;
-            else
-                dataTable.Weight1 = ones(rowSz);
-                dataTable.SpotSize1x = sigmaIso;
-                dataTable.Divergence1x = spotDiv;
-                dataTable.Correlation1x = ones(rowSz)*0;
-                dataTable.SpotSize1y = sigmaIso;
-                dataTable.Divergence1y = spotDiv;
-                dataTable.Correlation1y = ones(rowSz)*0;
-                
-                dataTable.Weight2 = ones(rowSz)*0;
-                dataTable.SpotSize2x = sigmaIso;
-                dataTable.Divergence2x = spotDiv;
-                dataTable.Correlation2x = ones(rowSz)*0;
-                dataTable.SpotSize2y = sigmaIso;
-                dataTable.Divergence2y = spotDiv;
-                dataTable.Correlation2y = ones(rowSz)*0;
-            end
+                dataTable.SpotSize2x = zeros(rowSz);
+                dataTable.Divergence2x = zeros(rowSz);
+                dataTable.Correlation2x = zeros(rowSz);
+                dataTable.SpotSize2y = zeros(rowSz);
+                dataTable.Divergence2y = zeros(rowSz);
+                dataTable.Correlation2y = zeros(rowSz);
+            
             
             obj.dataTable = struct2table(dataTable);
         end
