@@ -255,7 +255,7 @@ MCsquareConfig = MatRad_MCsquareConfig;
 
 bdFile = [machine.meta.machine '.txt'];
 
-MCsquareBDL = MatRad_MCsquareBaseData(machine,1);
+MCsquareBDL = MatRad_MCsquareBaseData(machine,stf);
 %matRad_createMCsquareBaseDataFile(bdFile,machine,1);
 MCsquareBDL = MCsquareBDL.writeToBDLfile([MCsquareFolder filesep 'BDL' filesep bdFile]);
 %movefile(bdFile,[MCsquareFolder filesep 'BDL/' bdFile]);

@@ -24,13 +24,13 @@ load TG119.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'HITfixedBL';
+pln.machine         = 'generic_MCsquare';
 
 pln.numOfFractions  = 30;
 
 % beam geometry settings
-pln.propStf.bixelWidth      = 50; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.longitudinalSpotSpacing = 50;
+pln.propStf.bixelWidth      = 25; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.longitudinalSpotSpacing = 25;
 pln.propStf.gantryAngles    = 0; % [?]
 pln.propStf.couchAngles     = 0; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);

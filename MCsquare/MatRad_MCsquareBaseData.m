@@ -29,7 +29,7 @@ classdef MatRad_MCsquareBaseData
     end
     
     methods
-        function obj = MatRad_MCsquareBaseData(machine,focusIx)
+        function obj = MatRad_MCsquareBaseData(machine,stf)
             %MatRad_MCsquareBaseData Construct an instance of the MCsquare
             %Base data format using a focus index
             
@@ -47,7 +47,16 @@ classdef MatRad_MCsquareBaseData
             obj.smx = SAD;
             obj.smy = SAD;
             
-            dataTable.NominalEnergy = [machine.data(:).energy]';
+            %select needed energies and according focus indices            
+            plannedEnergies     = [stf.ray(:).energy];
+            focusIndex          = [stf.ray(:).focusIx];
+            [~, ind]            = unique(plannedEnergies);
+            plannedEnergies     = plannedEnergies(ind);
+            focusIndex          = focusIndex(ind);
+            [~ ,energyIndex, ~] = intersect([machine.data(:).energy],plannedEnergies);
+            
+            
+            dataTable.NominalEnergy = plannedEnergies';
             rowSz = size(dataTable.NominalEnergy);
             r80       = zeros(rowSz);
             sigEnergy = zeros(rowSz);
@@ -55,12 +64,13 @@ classdef MatRad_MCsquareBaseData
             %problem with calculating sigmaEnegry?
             problemSig = false;
             
-            for i = 1:numel(machine.data)
+            count = 1;
+            for i = energyIndex'
                 %interpolate range at 80% dose after peak.
                 [maxV, maxI] = max(machine.data(i).Z);
                 [~, r80ind] = min(abs(machine.data(i).Z(maxI:end) - 0.8 * maxV));
                 r80ind = r80ind - 1;
-                r80(i) = interp1(machine.data(i).Z(maxI + r80ind - 1:maxI + r80ind + 1), ...
+                r80(count) = interp1(machine.data(i).Z(maxI + r80ind - 1:maxI + r80ind + 1), ...
                                  machine.data(i).depths(maxI + r80ind - 1:maxI + r80ind + 1), 0.8 * maxV) ...
                                + machine.data(i).offset;
           
@@ -85,14 +95,15 @@ classdef MatRad_MCsquareBaseData
                 %analytical approximation of the Bragg curve for 
                 %therapeuticproton beams" by T. Bortfeld
                 fullSigSq = (w50 / 6.14)^2;
-                sigRangeStragSq = (0.012*r80(i))^2;
+                sigRangeStragSq = (0.012*r80(count))^2;
                 
                 if((fullSigSq - sigRangeStragSq) > 0)
-                    sigEnergy(i) = sqrt(fullSigSq - sigRangeStragSq);
+                    sigEnergy(count) = sqrt(fullSigSq - sigRangeStragSq);
                 else
-                    sigEnergy(i) = 0.6; %set according to MCsquare documentation
+                    sigEnergy(count) = 0.6; %set according to MCsquare documentation
                     problemSig = true;
                 end
+                count = count + 1;
             end
             
             if problemSig
@@ -106,19 +117,19 @@ classdef MatRad_MCsquareBaseData
             dataTable.ProtonsMU = ones(rowSz)*1e6; %Doesn't seem to be implemented in MCsquare despite in BDL file?
             
             
-            %select focus index
-            focusIndex = focusIx;
+            
 
-            dataBDL.spotSize = zeros(numel(machine.data),1);
-            dataBDL.divergence = zeros(numel(machine.data),1);
-            dataBDL.correlation = zeros(numel(machine.data),1);
+            dataBDL.spotSize = zeros(rowSz);
+            dataBDL.divergence = zeros(rowSz);
+            dataBDL.correlation = zeros(rowSz);
 
-
-            for i = 1:numel(machine.data)
+            count = 1;
+            for i = energyIndex'
+                
                 %calculate geometric distances and extrapolate spot size at nozzle
                 SAD = machine.meta.SAD;
-                z     = -(machine.data(i).initFocus.dist(focusIndex,:) - SAD);
-                sigmaSq = machine.data(i).initFocus.sigma(focusIndex,:).^2;
+                z     = -(machine.data(i).initFocus.dist(focusIndex(count),:) - SAD);
+                sigmaSq = machine.data(i).initFocus.sigma(focusIndex(count),:).^2;
 
                 %fit Courant-Synder equation to data
                 sigmaNull = sqrt(interp1(z,sigmaSq,0));
@@ -139,9 +150,10 @@ classdef MatRad_MCsquareBaseData
                 CorrelationAtNozzle = (CSfit.rho * sigmaNull - CSfit.sigmaT * obj.nozzleToIso) / SpotsizeAtNozzle;
 
 
-                dataBDL.spotsize(i)    = SpotsizeAtNozzle;
-                dataBDL.divergence(i)  = DivergenceAtNozzle;
-                dataBDL.correlation(i) = CorrelationAtNozzle;
+                dataBDL.spotsize(count)    = SpotsizeAtNozzle;
+                dataBDL.divergence(count)  = DivergenceAtNozzle;
+                dataBDL.correlation(count) = CorrelationAtNozzle;
+                count = count + 1;
             end
             
            
