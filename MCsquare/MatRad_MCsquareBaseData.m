@@ -115,14 +115,13 @@ classdef MatRad_MCsquareBaseData
             dataTable.EnergySpread = sigEnergy; %Energy spread as described in mcSquare documentation
             
             dataTable.ProtonsMU = ones(rowSz)*1e6; %Doesn't seem to be implemented in MCsquare despite in BDL file?
-            
-            
-            
+                       
 
             dataBDL.spotSize = zeros(rowSz);
             dataBDL.divergence = zeros(rowSz);
             dataBDL.correlation = zeros(rowSz);
 
+            
             count = 1;
             for i = energyIndex'
                 
@@ -131,23 +130,31 @@ classdef MatRad_MCsquareBaseData
                 z     = -(machine.data(i).initFocus.dist(focusIndex(count),:) - SAD);
                 sigmaSq = machine.data(i).initFocus.sigma(focusIndex(count),:).^2;
 
-                %fit Courant-Synder equation to data
+                %fit Courant-Synder equation to data using ipopt
                 sigmaNull = sqrt(interp1(z,sigmaSq,0));
-                CourantSynder = fittype( @(rho,sigmaT, x) sigmaNull^2 - 2*sigmaNull*rho*sigmaT*x + sigmaT^2*x.^2, 'independent', {'x'}, 'dependent', 'y');
+                             
+                qRes = @(rho, sigmaT) (sigmaSq -  (sigmaNull^2 - 2*sigmaNull*rho*sigmaT.*z + sigmaT^2.*z.^2));
 
-                options = fitoptions(CourantSynder);
-                options.Lower  = [-0.99, -Inf];
-                options.Upper  = [ 0.99, Inf];
-                options.StartPoint = [0.9, 0.1];
-                options.TolFun = 1e-10;
-                options.Display = 'off';
-
-                CSfit = fit(z', sigmaSq', CourantSynder, options);
-
+                funcs.objective = @(x) sum(qRes(x(1), x(2)).^2);
+                funcs.gradient  = @(x) [  2 * sum(qRes(x(1), x(2)) .* (2 * sigmaNull * x(2) * z)); 
+                                          2 * sum(qRes(x(1), x(2)) .* (2 * sigmaNull * x(1) * z  - 2 * x(2) * z.^2))];     
+                            
+                options.lb = [-0.99, -Inf];
+                options.ub = [ 0.99,  Inf];
+                
+                options.ipopt.hessian_approximation = 'limited-memory';
+                options.ipopt.limited_memory_update_type = 'bfgs';
+                options.ipopt.print_level = 1;
+                
+                start = [0.9; 0.1];
+                [result, ~] = ipopt (start, funcs, options);
+                rho    = result(1);
+                sigmaT = result(2);
+                
                 %calculate divergence, spotsize and correlation at nozzle
-                DivergenceAtNozzle = CSfit.sigmaT;
-                SpotsizeAtNozzle = sqrt(sigmaNull^2 - 2 * CSfit.rho * sigmaNull * CSfit.sigmaT * obj.nozzleToIso + CSfit.sigmaT^2 * obj.nozzleToIso^2);
-                CorrelationAtNozzle = (CSfit.rho * sigmaNull - CSfit.sigmaT * obj.nozzleToIso) / SpotsizeAtNozzle;
+                DivergenceAtNozzle = sigmaT;
+                SpotsizeAtNozzle = sqrt(sigmaNull^2 - 2 * rho * sigmaNull * sigmaT * obj.nozzleToIso + sigmaT^2 * obj.nozzleToIso^2);
+                CorrelationAtNozzle = (rho * sigmaNull - sigmaT * obj.nozzleToIso) / SpotsizeAtNozzle;
 
 
                 dataBDL.spotsize(count)    = SpotsizeAtNozzle;
@@ -155,7 +162,6 @@ classdef MatRad_MCsquareBaseData
                 dataBDL.correlation(count) = CorrelationAtNozzle;
                 count = count + 1;
             end
-            
            
                 dataTable.Weight1 = ones(rowSz);
                 dataTable.SpotSize1x = dataBDL.spotsize';
