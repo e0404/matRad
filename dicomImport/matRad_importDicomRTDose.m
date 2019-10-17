@@ -40,6 +40,9 @@ for i = 1 : numDoseFiles
 end
 
 %% put dose information and dose meta information to resultGUI
+countBeamNumberPhysDose = 1;
+countBeamNumberRBExDose = 1;
+countBeamNumberOther = 1;
 for i = 1 : numDoseFiles
     itemName = strcat('Item_',num2str(i));
     doseTypeHelper      = dose.(itemName).dicomInfo.DoseType;
@@ -47,22 +50,44 @@ for i = 1 : numDoseFiles
     doseInstanceHelper  = dose.(itemName).dicomInfo.InstanceNumber;
     
     if strncmpi(doseTypeHelper,'PHYSICAL',6)
-        doseTypeHelper = 'physicalDose_';
+        doseTypeHelper = 'physicalDose';
     elseif strncmpi(doseTypeHelper,'EFFECTIVE',6)
-        doseTypeHelper = 'RBExDose_';
+        doseTypeHelper = 'RBExDose';
     end
     
-    resultName = strcat(doseTypeHelper,doseSumHelper,'_',num2str(doseInstanceHelper));
-    if strncmpi(resultName,'physicalDose_PLAN',17)
-        resultName = 'physicalDose';
-    elseif strncmpi(resultName,'RBExDose_PLAN',10)
-        resultName = 'RBExDose';
+    %If given as plan and not per fraction
+    if strcmpi(doseSumHelper,'PLAN') || strcmpi(doseSumHelper,'BEAM')
+        if exist('pln','var') 
+            dose.(itemName).cube = dose.(itemName).cube / pln.numOfFractions;
+        else
+            warning('DICOM dose given as PLAN, but no pln struct available to compute fraction dose! Assuming 1 fraction!');
+        end
     end
+        
+    if strncmpi(doseSumHelper,'BEAM',4)
+        try
+            beamNumber = dose(itemName).dicomInfo.ReferencedRTPlanSequence.ReferencedFractionGroupSequence.ReferencedBeamSequence.ReferencedBeamNumber;
+        catch
+            switch doseTypeHelper
+                case 'physicalDose'
+                    beamNumber = countBeamNumberPhysDose;
+                    countBeamNumberPhysDose = countBeamNumberPhysDose +1;
+                case 'RBExDose'
+                    beamNumber = countBeamNumberRBExDose;
+                    countBeamNumberRBExDose = countBeamNumberRBExDose + 1;
+                otherwise
+                    beamNumber = countBeamNumberOther;
+                    countBeamNumberOther = countBeamNumberOther + 1;
+            end
+        end
+        
+        beamSuffix = ['_beam' num2str(beamNumber)];
+    else
+        beamSuffix = '';
+    end
+        
     
-    % scale to fraction based dose
-    if exist('pln','var')
-        dose.(itemName).cube = dose.(itemName).cube / pln.numOfFractions;
-    end
+    resultName = strcat(doseTypeHelper,'_',num2str(doseInstanceHelper),beamSuffix);
     
     resultGUI.(resultName) = dose.(itemName).cube;
     resultGUI.doseMetaInfo.(resultName) = dose.(itemName).dicomInfo;
