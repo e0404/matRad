@@ -29,7 +29,7 @@ classdef MatRad_MCsquareBaseData
     end
     
     methods
-        function obj = MatRad_MCsquareBaseData(machine,stf)
+        function obj = MatRad_MCsquareBaseData(machine,stf,pln)
             %MatRad_MCsquareBaseData Construct an instance of the MCsquare
             %Base data format using a focus index
             
@@ -58,7 +58,7 @@ classdef MatRad_MCsquareBaseData
             
             dataTable.NominalEnergy = plannedEnergies';
             rowSz = size(dataTable.NominalEnergy);
-            r80       = zeros(rowSz);
+            meanEnergy       = zeros(rowSz);
             sigEnergy = zeros(rowSz);
             
             %problem with calculating sigmaEnegry?
@@ -66,11 +66,23 @@ classdef MatRad_MCsquareBaseData
             
             count = 1;
             for i = energyIndex'
+                
+                %look up whether MonteCarlo data have already been
+                %calculated, if so do not recalculate
+                if isfield(machine.data(i),'mcData')
+                    if (isempty(machine.data(i).mcData) == 0)
+                        meanEnergy(count) = machine.data(i).mcData.MeanEnergy;
+                        sigEnergy(count)  = machine.data(i).mcData.EnergySpread;
+                        count = count + 1;
+                        continue;
+                    end
+                end
+                                   
                 %interpolate range at 80% dose after peak.
                 [maxV, maxI] = max(machine.data(i).Z);
                 [~, r80ind] = min(abs(machine.data(i).Z(maxI:end) - 0.8 * maxV));
                 r80ind = r80ind - 1;
-                r80(count) = interp1(machine.data(i).Z(maxI + r80ind - 1:maxI + r80ind + 1), ...
+                r80 = interp1(machine.data(i).Z(maxI + r80ind - 1:maxI + r80ind + 1), ...
                                  machine.data(i).depths(maxI + r80ind - 1:maxI + r80ind + 1), 0.8 * maxV) ...
                                + machine.data(i).offset;
           
@@ -95,7 +107,7 @@ classdef MatRad_MCsquareBaseData
                 %analytical approximation of the Bragg curve for 
                 %therapeuticproton beams" by T. Bortfeld
                 fullSigSq = (w50 / 6.14)^2;
-                sigRangeStragSq = (0.012*r80(count))^2;
+                sigRangeStragSq = (0.012*r80)^2;
                 
                 if((fullSigSq - sigRangeStragSq) > 0)
                     sigEnergy(count) = sqrt(fullSigSq - sigRangeStragSq);
@@ -103,6 +115,9 @@ classdef MatRad_MCsquareBaseData
                     sigEnergy(count) = 0.6; %set according to MCsquare documentation
                     problemSig = true;
                 end
+                
+                meanEnergy(count) = exp(3.464048 + 0.561372013*log(r80/10) - 0.004900892*log(r80/10)^2+0.001684756748*log(r80/10)^3);
+                            
                 count = count + 1;
             end
             
@@ -110,20 +125,24 @@ classdef MatRad_MCsquareBaseData
                 warning('Calculation of FWHM of bragg peak in base data not possible! Using simple approximation for energy spread');
             end
             
-            dataTable.MeanEnergy = arrayfun(@(r) exp(3.464048 + 0.561372013*log(r/10) - 0.004900892*log(r/10)^2+0.001684756748*log(r/10)^3),r80')'; %Energy calculated with formula in MCSquare documentation
-            %dataTable.MeanEnergy = dataTable.MeanEnergy';
-            dataTable.EnergySpread = sigEnergy; %Energy spread as described in mcSquare documentation
-            
-            dataTable.ProtonsMU = ones(rowSz)*1e6; %Doesn't seem to be implemented in MCsquare despite in BDL file?
-                       
-
-            dataBDL.spotSize = zeros(rowSz);
-            dataBDL.divergence = zeros(rowSz);
-            dataBDL.correlation = zeros(rowSz);
-
+            divergence  = zeros(rowSz);
+            correlation = zeros(rowSz);
+            spotsize    = zeros(rowSz);
             
             count = 1;
             for i = energyIndex'
+                
+                %look up whether MonteCarlo data have already been
+                %calculated, if so do not recalculate
+                if isfield(machine.data(i),'mcData')
+                    if (isempty(machine.data(i).mcData) == 0)
+                        spotsize(count)    = machine.data(i).mcData.SpotSize1x;
+                        divergence(count)  = machine.data(i).mcData.Divergence1x;
+                        correlation(count) = machine.data(i).mcData.Correlation1x;
+                        count = count + 1;
+                        continue;
+                    end
+                end
                 
                 %calculate geometric distances and extrapolate spot size at nozzle
                 SAD = machine.meta.SAD;
@@ -156,20 +175,23 @@ classdef MatRad_MCsquareBaseData
                 SpotsizeAtNozzle = sqrt(sigmaNull^2 - 2 * rho * sigmaNull * sigmaT * obj.nozzleToIso + sigmaT^2 * obj.nozzleToIso^2);
                 CorrelationAtNozzle = (rho * sigmaNull - sigmaT * obj.nozzleToIso) / SpotsizeAtNozzle;
 
-
-                dataBDL.spotsize(count)    = SpotsizeAtNozzle;
-                dataBDL.divergence(count)  = DivergenceAtNozzle;
-                dataBDL.correlation(count) = CorrelationAtNozzle;
+                spotsize(count)    = SpotsizeAtNozzle;
+                divergence(count)  = DivergenceAtNozzle;
+                correlation(count) = CorrelationAtNozzle;
                 count = count + 1;
             end
+            
+                dataTable.MeanEnergy = meanEnergy;
+                dataTable.EnergySpread = sigEnergy;
+                dataTable.ProtonsMU = ones(rowSz)*1e6;
            
                 dataTable.Weight1 = ones(rowSz);
-                dataTable.SpotSize1x = dataBDL.spotsize';
-                dataTable.Divergence1x = dataBDL.divergence;
-                dataTable.Correlation1x = dataBDL.correlation;
-                dataTable.SpotSize1y = dataBDL.spotsize';
-                dataTable.Divergence1y = dataBDL.divergence;
-                dataTable.Correlation1y =  dataBDL.correlation;
+                dataTable.SpotSize1x = spotsize;
+                dataTable.Divergence1x = divergence;
+                dataTable.Correlation1x = correlation;
+                dataTable.SpotSize1y = spotsize;
+                dataTable.Divergence1y = divergence;
+                dataTable.Correlation1y =  correlation;
                 
                 dataTable.Weight2 = zeros(rowSz);
                 dataTable.SpotSize2x = zeros(rowSz);
@@ -179,8 +201,53 @@ classdef MatRad_MCsquareBaseData
                 dataTable.Divergence2y = zeros(rowSz);
                 dataTable.Correlation2y = zeros(rowSz);
             
+                count = 1;
+                newEntry = false;
+                for i = energyIndex'
+                    
+                    %look up whether MonteCarlo data have already been
+                    %calculated, if so do not recalculate
+                    if isfield(machine.data(i),'mcData')
+                        if (isempty(machine.data(i).mcData) == 0)
+                            count = count + 1;
+                            continue;
+                        end
+                    end
+                
+                    %write needed new entries in machine data
+                    machine.data(i).mcData.MeanEnergy    = dataTable.MeanEnergy(count); 
+                    machine.data(i).mcData.EnergySpread  = dataTable.EnergySpread(count); 
+                    machine.data(i).mcData.ProtonsMU     = dataTable.ProtonsMU(count);
+                    
+                    machine.data(i).mcData.Weight1       = dataTable.Weight1(count);
+                    machine.data(i).mcData.SpotSize1x    = dataTable.SpotSize1x(count);
+                    machine.data(i).mcData.Divergence1x  = dataTable.Divergence1x(count);
+                    machine.data(i).mcData.Correlation1x = dataTable.Correlation1x(count);
+                    machine.data(i).mcData.SpotSize1y    = dataTable.SpotSize1y(count);
+                    machine.data(i).mcData.Divergence1y  = dataTable.Divergence1y(count);
+                    machine.data(i).mcData.Correlation1y = dataTable.Correlation1y(count);
+
+                    machine.data(i).mcData.Weight2       = dataTable.Weight2(count);
+                    machine.data(i).mcData.SpotSize2x    = dataTable.SpotSize2x(count);
+                    machine.data(i).mcData.Divergence2x  = dataTable.Divergence2x(count);
+                    machine.data(i).mcData.Correlation2x = dataTable.Correlation2x(count);
+                    machine.data(i).mcData.SpotSize2y    = dataTable.SpotSize2y(count);
+                    machine.data(i).mcData.Divergence2y  = dataTable.Divergence2y(count);
+                    machine.data(i).mcData.Correlation2y = dataTable.Correlation2y(count);
+                    
+                    newEntry = true;
+
+                    count = count +1;
+                end
             
             obj.dataTable = struct2table(dataTable);
+            
+            %save new base data file if new entries were needed and
+            %calculated
+            if newEntry
+                 save(strcat('../../',pln.radiationMode, '_', pln.machine, '.mat'),'machine');
+                 fprintf(['New MonteCarlo data entries have been saved in', ' ', pln.radiationMode, '_', pln.machine, '.mat \n']);
+            end
         end
         
         

@@ -25,7 +25,7 @@ load BOXPHANTOM.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'HITfixedBL';
+pln.machine         = 'generic_MCsquare';
 
 pln.numOfFractions  = 30;
 
