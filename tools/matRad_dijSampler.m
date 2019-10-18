@@ -73,7 +73,7 @@ for i = 1:size(cst,1)
     mVOI(idx) = 0;
     list = find(mVOI);
     if ~isempty(list)
-        idx2 = list(randi([1 numel(list)],floor(voiSamplingFraction * numel(list)),1));
+        idx2 = list(randperm( numel(list),floor(voiSamplingFraction * numel(list))));
     else
         idx2 = [];
     end
