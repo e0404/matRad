@@ -33,6 +33,7 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % initialize
+tic
 matRad_calcDoseInit;
 
 [env, ~] = matRad_getEnvironment();
@@ -56,11 +57,11 @@ figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 set(figureWait,'pointer','watch');
 
 % set lateral cutoff value
-lateralCutoff = 250; % [mm]
+lateralCutoff = 150; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
-useCustomPrimFluenceBool = 0;
+useCustomPrimFluenceBool = 1;
 
 % 0 if field calc is bixel based, 1 if dose calc is field based
 isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
@@ -83,6 +84,7 @@ fieldLimit = ceil(fieldWidth/(2*intConvResolution));
                   (fieldLimit-1)*intConvResolution);    
 
 % gaussian filter to model penumbra
+% sigmaGauss = 1
 sigmaGauss = 2.123; % [mm] / see diploma thesis siggel 4.1.2
 % use 5 times sigma as the limits for the gaussian convolution
 gaussLimit = ceil(5*sigmaGauss/intConvResolution);
@@ -140,11 +142,17 @@ for i = 1:dij.numOfBeams % loop over all beams
     kernel1 = machine.data.kernel(currSSDIx).kernel1;
     kernel2 = machine.data.kernel(currSSDIx).kernel2;
     kernel3 = machine.data.kernel(currSSDIx).kernel3;
-
+    if machine.data.iNumKernel == 4
+        kernel4 = machine.data.kernel(currSSDIx).kernel4;
+    end
+    
     % Evaluate kernels for all distances, interpolate between values
     kernel1Mx = interp1(kernelPos,kernel1,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
     kernel2Mx = interp1(kernelPos,kernel2,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
     kernel3Mx = interp1(kernelPos,kernel3,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
+    if machine.data.iNumKernel == 4
+        kernel4Mx = interp1(kernelPos,kernel4,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
+    end
     
     % convolution here if no custom primary fluence and no field based dose calc
     if ~useCustomPrimFluenceBool && ~isFieldBasedDoseCalc
@@ -157,16 +165,24 @@ for i = 1:dij.numOfBeams % loop over all beams
         convMx1 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)));
         convMx2 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel2Mx,kernelConvSize,kernelConvSize)));
         convMx3 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)));
-
+        if machine.data.iNumKernel == 4
+            convMx4 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel4Mx,kernelConvSize,kernelConvSize)));
+        end
         % Creates an interpolant for kernes from vectors position X and Z
         if strcmp(env,'MATLAB')
             Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
             Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
             Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
+            if machine.data.iNumKernel == 4
+                Interp_kernel4 = griddedInterpolant(convMx_X',convMx_Z',convMx4','linear','none');
+            end
         else
             Interp_kernel1 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,'linear',NaN);
             Interp_kernel2 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,'linear',NaN);
             Interp_kernel3 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,'linear',NaN);
+            if machine.data.iNumKernel == 4
+                Interp_kernel4 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx4,x,y,'linear',NaN);
+            end
         end
     end
     
@@ -198,16 +214,29 @@ for i = 1:dij.numOfBeams % loop over all beams
             convMx1 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)) );
             convMx2 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel2Mx,kernelConvSize,kernelConvSize)) );
             convMx3 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)) );
+            if machine.data.iNumKernel == 4
+                convMx4 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel4Mx,kernelConvSize,kernelConvSize)) );
+            end
             
             % Creates an interpolant for kernes from vectors position X and Z
             if strcmp(env,'MATLAB')
                 Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
                 Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
                 Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
+                if machine.data.iNumKernel == 4
+                    Interp_kernel4 = griddedInterpolant(convMx_X',convMx_Z',convMx4','linear','none');
+                else
+                    Interp_kernel4 = 0;    
+                end
             else
                 Interp_kernel1 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,'linear',NaN);
                 Interp_kernel2 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,'linear',NaN);
                 Interp_kernel3 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,'linear',NaN);
+                if machine.data.iNumKernel == 4
+                    Interp_kernel4 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx4,x,y,'linear',NaN);
+                else
+                    Interp_kernel4 = 0;
+                end
             end
 
         end
@@ -249,14 +278,17 @@ for i = 1:dij.numOfBeams % loop over all beams
         % calculate photon dose for beam i and bixel j
         bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
                                                    machine.data.betas, ...
+                                                   machine.data.iNumKernel, ...
+                                                   machine.data.surfaceDose, ...
+                                                   machine.data.electronRangeIntensity, ...
                                                    Interp_kernel1,...
                                                    Interp_kernel2,...
                                                    Interp_kernel3,...
+                                                   Interp_kernel4,...
                                                    radDepthVdoseGrid{1}(ix),...
                                                    geoDistVdoseGrid{1}(ix),...
                                                    isoLatDistsX,...
                                                    isoLatDistsZ);
-                                               
         % sample dose only for bixel based dose calculation
         if ~isFieldBasedDoseCalc
             r0   = 20 + stf(i).bixelWidth;   % [mm] sample beyond the inner core
@@ -271,12 +303,13 @@ for i = 1:dij.numOfBeams % loop over all beams
                
     end
 end
-
+toc
 try
   % wait 0.1s for closing all waitbars
   allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar'); 
   delete(allWaitBarFigures);
   pause(0.1);
 catch
+
 end
 

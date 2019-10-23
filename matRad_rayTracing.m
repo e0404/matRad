@@ -75,7 +75,7 @@ rayMx_bev = [candidateRaysCoords_X(logical(candidateRayMx(:))) ...
 %     end
 
 % Rotation matrix. Transposed because of row vectors
-rotMat_vectors_T = transpose(matRad_getRotationMatrix(stf.gantryAngle,stf.couchAngle));
+rotMat_vectors_T = transpose(matRad_getRotationMatrix(stf.gantryAngle,stf.collimatorAngle,stf.couchAngle));
 
 % rotate ray matrix from bev to world coordinates
 rayMx_world = rayMx_bev * rotMat_vectors_T;

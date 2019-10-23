@@ -24,7 +24,7 @@ coordsVdoseGrid  = [xCoordsVdoseGrid yCoordsVdoseGrid zCoordsVdoseGrid];
 % Do not transpose matrix since we usage of row vectors &
 % transformation of the coordinate system need double transpose
 
-rotMat_system_T = matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).couchAngle);
+rotMat_system_T = matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).collimatorAngle,stf(i).couchAngle);
 
 % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
 rot_coordsV         = coordsV*rotMat_system_T;

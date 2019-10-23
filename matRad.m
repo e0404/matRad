@@ -26,7 +26,8 @@ load TG119.mat
 % meta information for treatment plan
 
 pln.radiationMode   = 'photons';     % either photons / protons / carbon
-pln.machine         = 'Generic';
+% pln.machine         = 'Generic';
+pln.machine         = 'Synergy6MV';
 
 pln.numOfFractions  = 30;
 

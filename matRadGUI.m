@@ -1101,7 +1101,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     
     % Rotate the system into the beam. 
     % passive rotation & row vector multiplication & inverted rotation requires triple matrix transpose                  
-    rotMat_system_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(handles.selectedBeam),pln.propStf.couchAngles(handles.selectedBeam)));
+    rotMat_system_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(handles.selectedBeam),pln.propStf.collimatorAngles(handles.selectedBeam),pln.propStf.couchAngles(handles.selectedBeam)));
     
     if strcmp(handles.ProfileType,'longitudinal')
         sourcePointBEV = [handles.profileOffset -SAD   0];
@@ -4568,4 +4568,3 @@ function cstTableSlider_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
-

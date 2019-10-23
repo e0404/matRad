@@ -1,5 +1,5 @@
-function dose = matRad_calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,...
-                  Interp_kernel2,Interp_kernel3,radDepths,geoDists,...
+function dose = matRad_calcPhotonDoseBixel(SAD,m,betas,iNumKernel,surfaceDose,electronRangeIntensity,Interp_kernel1,...
+                  Interp_kernel2,Interp_kernel3,Interp_kernel4,radDepths,geoDists,...
                   isoLatDistsX,isoLatDistsZ)
 % matRad photon dose calculation for an individual bixel
 % 
@@ -48,15 +48,28 @@ func_Di = @(beta,x) beta/(beta-m) * (exp(-m*x) - exp(-beta*x));
 lat1 = Interp_kernel1(isoLatDistsX,isoLatDistsZ);
 lat2 = Interp_kernel2(isoLatDistsX,isoLatDistsZ);
 lat3 = Interp_kernel3(isoLatDistsX,isoLatDistsZ);
-
+if iNumKernel == 4
+    lat4 = Interp_kernel4(isoLatDistsX,isoLatDistsZ);
+end
+% assignin('base','lat4',lat4)
+% vec4 = surfaceDose * exp(log(electronRangeIntensity) / 17 * radDepths);
+% assignin('base','vec4',vec4)
+% assignin('base','lat3',lat3)
+% vec3 = func_Di(betas(3),radDepths);
+% assignin('base','vec3',vec3)
 % now add everything together (eq 19 w/o inv sq corr -> see below)
-dose = lat1 .* func_Di(betas(1),radDepths) + ...
-       lat2 .* func_Di(betas(2),radDepths) + ...
-       lat3 .* func_Di(betas(3),radDepths);
-
+if iNumKernel == 4
+    dose = lat1 .* func_Di(betas(1),radDepths) + ...
+           lat2 .* func_Di(betas(2),radDepths) + ...
+           lat3 .* func_Di(betas(3),radDepths) + ...
+           lat4 .* (surfaceDose * exp(log(electronRangeIntensity) / 17 * radDepths));
+else
+    dose = lat1 .* func_Di(betas(1),radDepths) + ...
+           lat2 .* func_Di(betas(2),radDepths) + ...
+           lat3 .* func_Di(betas(3),radDepths);
+end       
 % inverse square correction
 dose = dose .* (SAD./geoDists(:)).^2;
-
 % check if we have valid dose values and adjust numerical instabilities
 % from fft convolution
 dose(dose < 0 & dose > -1e-14) = 0;

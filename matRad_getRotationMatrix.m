@@ -1,6 +1,6 @@
-function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)
+function rotMat = matRad_getRotationMatrix(gantryAngle,collimatorAngle,couchAngle,system)
 % matRad function to return the rotation / transformation matrix for
-% gantry and/or couch rotation. The Rotation matrix stands for a (1)
+% gantry, collimator and/or couch rotation. The Rotation matrix stands for a (1)
 % counter-clockwise, (2) active rotation in the patient coordinate system
 % that is performed on a (4) column vector (by premultiplying the matrix). 
 % Per change of one of these directions a matrix transpose of the returned 
@@ -11,16 +11,17 @@ function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)
 %  rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,type,system)
 %
 % input
-%   gantryAngle:    beam/gantry angle
-%   couchAngle:     couch angle 
+%   gantryAngle:        beam/gantry angle
+%   collimatorAngle:    collimator angle
+%   couchAngle:         couch angle 
 %
-%   system:         optional coordinate system the transformation matrix is
-%                   requested for. So far, only the default option 'LPS' is
-%                   supported (right handed system).
+%   system:             optional coordinate system the transformation matrix is
+%                       requested for. So far, only the default option 'LPS' is
+%                       supported (right handed system).
 %
 % output
-%   rotMat:         3x3 matrix that performs an active rotation around the 
-%                   patient system origin via rotMat * x
+%   rotMat:             3x3 matrix that performs an active rotation around the 
+%                       patient system origin via rotMat * x
 %
 % References
 %   https://en.wikipedia.org/wiki/Rotation_matrix (2017, Mar 1)
@@ -39,11 +40,11 @@ function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Parse arguments
-%We need at least two and max 3 input arguments
-narginchk(2,3);
+%We need at least three and max 4 input arguments
+narginchk(3,4);
 
 % Coordinate System (only LPS so far)
-if nargin < 3
+if nargin < 4
     system = 'LPS';
 end
 
@@ -56,11 +57,20 @@ switch system
         %active, counter-clockwise rotation Matrix for Gantry around z 
         %with pre-multiplication of the matrix (R*x)
         %Note: Gantry rotation is physically an active rotation of a beam 
-        %vector around the target / isocenterin the patient coordinate
+        %vector around the target / isocenter in the patient coordinate
         %system
         R_Gantry = [cosd(gantryAngle)  -sind(gantryAngle)  0; ...
             sind(gantryAngle)    cosd(gantryAngle)  0; ...
             0                            0           1];
+        
+        %active, clockwise rotation for collimator around y
+        %with pre-multiplication of the matrix (R*x)
+        %Note: Collimator rotation is physically an active rotation of a beam 
+        %vector around the target / isocenter in the patient coordinate
+        %system  
+        R_Collimator = [cosd(-collimatorAngle) 0 sind(-collimatorAngle); ...
+            0 1 0; ...
+            -sind(-collimatorAngle)    0    cosd(-collimatorAngle)];
         
         %active, counter-clockwise rotation for couch around y
         %with pre-multiplication of the matrix (R*x)
@@ -69,11 +79,12 @@ switch system
         R_Couch = [cosd(couchAngle) 0 sind(couchAngle); ...
             0 1 0; ...
             -sind(couchAngle)    0    cosd(couchAngle)];
+
     otherwise
         error('matRad only supports LPS system so far');
 end
 
-rotMat = R_Couch*R_Gantry;
+rotMat = R_Couch*R_Gantry*R_Collimator;
 
 end
 

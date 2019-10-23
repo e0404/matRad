@@ -109,22 +109,27 @@ else %We use the steering information to visualize the field contour
         beamTarget = stf(fieldIx).isoCenter;
         beamSource = stf(fieldIx).sourcePoint + stf(fieldIx).isoCenter;
         
-        rotMat = matRad_getRotationMatrix(pln.gantryAngles(fieldIx),pln.couchAngles(fieldIx));
+        rotMat = matRad_getRotationMatrix(pln.propStf.gantryAngles(fieldIx),pln.propStf.collimatorAngles(fieldIx),pln.propStf.couchAngles(fieldIx));
         
         bixelWidth = stf(fieldIx).bixelWidth;
+        assignin('base','bixelWidth',bixelWidth)
         %Accumulate ray positions in matrix
         rayPos = [stf(fieldIx).ray(:).rayPos_bev];
+        assignin('base','rayPos1',rayPos)
         rayPos = reshape(rayPos,[3 numel(rayPos)/3])';
+        assignin('base','rayPos',rayPos)
         
         %Compute a ray matrix with ones where a ray is
         %Maximum absolute values give extent in one direction
         symmMaxExtent = max([abs(min(rayPos)); abs(max(rayPos))]);
+        assignin('base','symmMaxExtent0',symmMaxExtent)
         %we want to have indices and not mm
         symmMaxExtent = symmMaxExtent ./ bixelWidth;
+        assignin('base','symmMaxExtent',symmMaxExtent)
         %now make it symmetric
-        symmMaxExtent = 2*symmMaxExtent + [1 0 1];
+        symmMaxExtent = 2*symmMaxExtent + [1 0 1 0 0];
         %extra padding of one element in each direction to handle contours right
-        symmMaxExtent = symmMaxExtent + [2 0 2];
+        symmMaxExtent = symmMaxExtent + [2 0 2 0 0];
         
         %Fill the ray matrix with ones at positions of rays
         rayMat = zeros(symmMaxExtent(1),symmMaxExtent(3));
