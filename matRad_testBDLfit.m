@@ -25,14 +25,14 @@ load BOXPHANTOM.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'generic_MCsquare';
+pln.machine         = 'HITfixedBL';
 
 pln.numOfFractions  = 30;
 
 % beam geometry settings
 pln.propStf.bixelWidth      = 50; % [mm] / also corresponds to lateral spot spacing for particles
 pln.propStf.longitudinalSpotSpacing = 50;
-pln.propStf.gantryAngles    = 0; % [?]
+pln.propStf.gantryAngles    = 0; % [?] 
 pln.propStf.couchAngles     = 0; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);

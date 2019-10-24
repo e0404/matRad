@@ -1,4 +1,4 @@
-classdef MatRad_MCsquareBaseData
+ classdef MatRad_MCsquareBaseData
 %MatRad_MCsquareBaseData Maps the matRad base data to MCsquare base data /
 %phase space file
 %
@@ -26,14 +26,30 @@ classdef MatRad_MCsquareBaseData
         smx             %Scanning magnet X to isocenter Distance
         smy             %Scanning magnet y to isocenter Distance
         dataTable       %Optical beam parameters
+        mcSquareData    %MCsquare Phase space data struct
+    end
+    
+    properties (SetAccess = private)
+        stfCompressed   
+        problemSigma
     end
     
     methods
-        function obj = MatRad_MCsquareBaseData(machine,stf,pln)
+        function obj = MatRad_MCsquareBaseData(machine,stf)
             %MatRad_MCsquareBaseData Construct an instance of the MCsquare
             %Base data format using a focus index
             
+            %stfCompressed states whether mcSquareData are calculated for
+            %all energies (false) or only for energies which exist in given
+            %stf. If function is called without stf stfCompressed = false.
+            if nargin < 2
+                obj.stfCompressed = false;
+            else
+                obj.stfCompressed = true;
+            end
+            
             obj.machine = machine;
+            obj.problemSigma = false;
             
             if isfield(machine.meta,'BAMStoIsoDist')
                 obj.nozzleToIso = machine.meta.BAMStoIsoDist;
@@ -47,211 +63,160 @@ classdef MatRad_MCsquareBaseData
             obj.smx = SAD;
             obj.smy = SAD;
             
-            %select needed energies and according focus indices            
-            plannedEnergies     = [stf.ray(:).energy];
-            focusIndex          = [stf.ray(:).focusIx];
-            [~, ind]            = unique(plannedEnergies);
-            plannedEnergies     = plannedEnergies(ind);
-            focusIndex          = focusIndex(ind);
-            [~ ,energyIndex, ~] = intersect([machine.data(:).energy],plannedEnergies);
+            obj.mcSquareData = [];
             
+            %select needed energies and according focus indices by using stf         
+            if obj.stfCompressed
+                plannedEnergies     = [stf.ray(:).energy];
+                focusIndex          = [stf.ray(:).focusIx];
+                [~, ind]            = unique(plannedEnergies);
+                plannedEnergies     = plannedEnergies(ind);
+                focusIndex          = focusIndex(ind);
+                [~ ,energyIndex, ~] = intersect([machine.data(:).energy],plannedEnergies);
             
-            dataTable.NominalEnergy = plannedEnergies';
-            rowSz = size(dataTable.NominalEnergy);
-            meanEnergy       = zeros(rowSz);
-            sigEnergy = zeros(rowSz);
-            
-            %problem with calculating sigmaEnegry?
-            problemSig = false;
-            
+            %if no stf was refered all energies are chosen, while setting
+            %the focus index for all energies to 1
+            else
+                plannedEnergies = [machine.data(:).energy];
+                focusIndex = ones(size(plannedEnergies));
+                [~ ,energyIndex, ~] = intersect([machine.data(:).energy],plannedEnergies);
+            end
+             
             count = 1;
             for i = energyIndex'
                 
-                %look up whether MonteCarlo data have already been
-                %calculated, if so do not recalculate
-                if isfield(machine.data(i),'mcData')
-                    if (isempty(machine.data(i).mcData) == 0)
-                        meanEnergy(count) = machine.data(i).mcData.MeanEnergy;
-                        sigEnergy(count)  = machine.data(i).mcData.EnergySpread;
+                %look up whether MonteCarlo data are already present in 
+                %machine file , if so do not recalculate
+                if isfield(machine.data(i),'mcSquareData')
+                    if (isempty(machine.data(i).mcSquareData) == 0)
+                        obj.mcSquareData = [obj.mcSquareData, machine.data(i).mcSquareData];
                         count = count + 1;
                         continue;
                     end
                 end
-                                   
-                %interpolate range at 80% dose after peak.
-                [maxV, maxI] = max(machine.data(i).Z);
-                [~, r80ind] = min(abs(machine.data(i).Z(maxI:end) - 0.8 * maxV));
-                r80ind = r80ind - 1;
-                r80 = interp1(machine.data(i).Z(maxI + r80ind - 1:maxI + r80ind + 1), ...
-                                 machine.data(i).depths(maxI + r80ind - 1:maxI + r80ind + 1), 0.8 * maxV) ...
-                               + machine.data(i).offset;
-          
-                %find FWHM w50 of bragg peak
-                [~, d50rInd] = min(abs(machine.data(i).Z(maxI:end) - 0.5 * maxV));
-                d50rInd = d50rInd - 1;
-                d50_r = interp1(machine.data(i).Z(maxI + d50rInd - 1:maxI + d50rInd + 1), ...
-                                machine.data(i).depths(maxI + d50rInd - 1:maxI + d50rInd + 1), 0.5 * maxV);
-
-                if (machine.data(i).Z(1) < 0.4 * maxV)
-                    [~, d50lInd] = min(abs(machine.data(i).Z(1:maxI) - 0.5*maxV));
-                    d50_l = interp1(machine.data(i).Z(d50lInd - 1:d50lInd + 1), ...
-                                    machine.data(i).depths(d50lInd - 1:d50lInd + 1), 0.5 * maxV);
-                    w50 = d50_r - d50_l;
-
-                else
-                    problemSig = true;
-                    w50 = (d50_r - machine.data(i).depths(maxI)) * 2;
-                end
                 
-                %calculate energy straggling using formulae from paper "An
-                %analytical approximation of the Bragg curve for 
-                %therapeuticproton beams" by T. Bortfeld
-                fullSigSq = (w50 / 6.14)^2;
-                sigRangeStragSq = (0.012*r80)^2;
+                %calculate mcSquareData for given energy
+                obj.mcSquareData = [obj.mcSquareData, obj.fitBeamOpticsForEnergy(i, focusIndex(count))];
                 
-                if((fullSigSq - sigRangeStragSq) > 0)
-                    sigEnergy(count) = sqrt(fullSigSq - sigRangeStragSq);
-                else
-                    sigEnergy(count) = 0.6; %set according to MCsquare documentation
-                    problemSig = true;
-                end
-                
-                meanEnergy(count) = exp(3.464048 + 0.561372013*log(r80/10) - 0.004900892*log(r80/10)^2+0.001684756748*log(r80/10)^3);
-                            
                 count = count + 1;
             end
             
-            if problemSig
+            %throw out warning if there was a problem in calculating the
+            %width of the Bragg peak in obj.fitBeamOpticsForEnergy
+            if obj.problemSigma
                 warning('Calculation of FWHM of bragg peak in base data not possible! Using simple approximation for energy spread');
             end
             
-            divergence  = zeros(rowSz);
-            correlation = zeros(rowSz);
-            spotsize    = zeros(rowSz);
-            
-            count = 1;
-            for i = energyIndex'
-                
-                %look up whether MonteCarlo data have already been
-                %calculated, if so do not recalculate
-                if isfield(machine.data(i),'mcData')
-                    if (isempty(machine.data(i).mcData) == 0)
-                        spotsize(count)    = machine.data(i).mcData.SpotSize1x;
-                        divergence(count)  = machine.data(i).mcData.Divergence1x;
-                        correlation(count) = machine.data(i).mcData.Correlation1x;
-                        count = count + 1;
-                        continue;
-                    end
-                end
-                
-                %calculate geometric distances and extrapolate spot size at nozzle
-                SAD = machine.meta.SAD;
-                z     = -(machine.data(i).initFocus.dist(focusIndex(count),:) - SAD);
-                sigmaSq = machine.data(i).initFocus.sigma(focusIndex(count),:).^2;
-
-                %fit Courant-Synder equation to data using ipopt
-                sigmaNull = sqrt(interp1(z,sigmaSq,0));
-                             
-                qRes = @(rho, sigmaT) (sigmaSq -  (sigmaNull^2 - 2*sigmaNull*rho*sigmaT.*z + sigmaT^2.*z.^2));
-
-                funcs.objective = @(x) sum(qRes(x(1), x(2)).^2);
-                funcs.gradient  = @(x) [  2 * sum(qRes(x(1), x(2)) .* (2 * sigmaNull * x(2) * z)); 
-                                          2 * sum(qRes(x(1), x(2)) .* (2 * sigmaNull * x(1) * z  - 2 * x(2) * z.^2))];     
-                            
-                options.lb = [-0.99, -Inf];
-                options.ub = [ 0.99,  Inf];
-                
-                options.ipopt.hessian_approximation = 'limited-memory';
-                options.ipopt.limited_memory_update_type = 'bfgs';
-                options.ipopt.print_level = 1;
-                
-                start = [0.9; 0.1];
-                [result, ~] = ipopt (start, funcs, options);
-                rho    = result(1);
-                sigmaT = result(2);
-                
-                %calculate divergence, spotsize and correlation at nozzle
-                DivergenceAtNozzle = sigmaT;
-                SpotsizeAtNozzle = sqrt(sigmaNull^2 - 2 * rho * sigmaNull * sigmaT * obj.nozzleToIso + sigmaT^2 * obj.nozzleToIso^2);
-                CorrelationAtNozzle = (rho * sigmaNull - sigmaT * obj.nozzleToIso) / SpotsizeAtNozzle;
-
-                spotsize(count)    = SpotsizeAtNozzle;
-                divergence(count)  = DivergenceAtNozzle;
-                correlation(count) = CorrelationAtNozzle;
-                count = count + 1;
-            end
-            
-                dataTable.MeanEnergy = meanEnergy;
-                dataTable.EnergySpread = sigEnergy;
-                dataTable.ProtonsMU = ones(rowSz)*1e6;
-           
-                dataTable.Weight1 = ones(rowSz);
-                dataTable.SpotSize1x = spotsize;
-                dataTable.Divergence1x = divergence;
-                dataTable.Correlation1x = correlation;
-                dataTable.SpotSize1y = spotsize;
-                dataTable.Divergence1y = divergence;
-                dataTable.Correlation1y =  correlation;
-                
-                dataTable.Weight2 = zeros(rowSz);
-                dataTable.SpotSize2x = zeros(rowSz);
-                dataTable.Divergence2x = zeros(rowSz);
-                dataTable.Correlation2x = zeros(rowSz);
-                dataTable.SpotSize2y = zeros(rowSz);
-                dataTable.Divergence2y = zeros(rowSz);
-                dataTable.Correlation2y = zeros(rowSz);
-            
-                count = 1;
-                newEntry = false;
-                for i = energyIndex'
-                    
-                    %look up whether MonteCarlo data have already been
-                    %calculated, if so do not recalculate
-                    if isfield(machine.data(i),'mcData')
-                        if (isempty(machine.data(i).mcData) == 0)
-                            count = count + 1;
-                            continue;
-                        end
-                    end
-                
-                    %write needed new entries in machine data
-                    machine.data(i).mcData.MeanEnergy    = dataTable.MeanEnergy(count); 
-                    machine.data(i).mcData.EnergySpread  = dataTable.EnergySpread(count); 
-                    machine.data(i).mcData.ProtonsMU     = dataTable.ProtonsMU(count);
-                    
-                    machine.data(i).mcData.Weight1       = dataTable.Weight1(count);
-                    machine.data(i).mcData.SpotSize1x    = dataTable.SpotSize1x(count);
-                    machine.data(i).mcData.Divergence1x  = dataTable.Divergence1x(count);
-                    machine.data(i).mcData.Correlation1x = dataTable.Correlation1x(count);
-                    machine.data(i).mcData.SpotSize1y    = dataTable.SpotSize1y(count);
-                    machine.data(i).mcData.Divergence1y  = dataTable.Divergence1y(count);
-                    machine.data(i).mcData.Correlation1y = dataTable.Correlation1y(count);
-
-                    machine.data(i).mcData.Weight2       = dataTable.Weight2(count);
-                    machine.data(i).mcData.SpotSize2x    = dataTable.SpotSize2x(count);
-                    machine.data(i).mcData.Divergence2x  = dataTable.Divergence2x(count);
-                    machine.data(i).mcData.Correlation2x = dataTable.Correlation2x(count);
-                    machine.data(i).mcData.SpotSize2y    = dataTable.SpotSize2y(count);
-                    machine.data(i).mcData.Divergence2y  = dataTable.Divergence2y(count);
-                    machine.data(i).mcData.Correlation2y = dataTable.Correlation2y(count);
-                    
-                    newEntry = true;
-
-                    count = count +1;
-                end
-            
-            obj.dataTable = struct2table(dataTable);
-            
-            %save new base data file if new entries were needed and
-            %calculated
-            if newEntry
-                 save(strcat('../../',pln.radiationMode, '_', pln.machine, '.mat'),'machine');
-                 fprintf(['New MonteCarlo data entries have been saved in', ' ', pln.radiationMode, '_', pln.machine, '.mat \n']);
-            end
+            obj.dataTable = struct2table(obj.mcSquareData);
         end
         
-        
-        function [obj] = writeToBDLfile(obj,filepath)
+        function mcData = fitBeamOpticsForEnergy(obj,energyIx, focusIndex)
+            %function to calculate beam optics used by mcSquare for given
+            %energy
+            
+            i = energyIx;
+
+            mcData.NominalEnergy = obj.machine.data(energyIx).energy;             
+
+            %interpolate range at 80% dose after peak.
+            [maxV, maxI] = max(obj.machine.data(i).Z);
+            [~, r80ind] = min(abs(obj.machine.data(i).Z(maxI:end) - 0.8 * maxV));
+            r80ind = r80ind - 1;
+            r80 = interp1(obj.machine.data(i).Z(maxI + r80ind - 1:maxI + r80ind + 1), ...
+                             obj.machine.data(i).depths(maxI + r80ind - 1:maxI + r80ind + 1), 0.8 * maxV) ...
+                           + obj.machine.data(i).offset;
+
+            %find FWHM w50 of bragg peak
+            [~, d50rInd] = min(abs(obj.machine.data(i).Z(maxI:end) - 0.5 * maxV));
+            d50rInd = d50rInd - 1;
+            d50_r = interp1(obj.machine.data(i).Z(maxI + d50rInd - 1:maxI + d50rInd + 1), ...
+                            obj.machine.data(i).depths(maxI + d50rInd - 1:maxI + d50rInd + 1), 0.5 * maxV);
+
+            if (obj.machine.data(i).Z(1) < 0.4 * maxV)
+                [~, d50lInd] = min(abs(obj.machine.data(i).Z(1:maxI) - 0.5*maxV));
+                d50_l = interp1(obj.machine.data(i).Z(d50lInd - 1:d50lInd + 1), ...
+                                obj.machine.data(i).depths(d50lInd - 1:d50lInd + 1), 0.5 * maxV);
+                w50 = d50_r - d50_l;
+            %if width left of peak can be determined use twice the width to
+            %the right and throw out a warning after calculation
+            else
+                obj.problemSigma = true;
+                w50 = (d50_r - obj.machine.data(i).depths(maxI)) * 2;
+            end
+
+            %calculate mean energy according to the mcSquare documentation
+            %using the 80% dose range
+            mcData.MeanEnergy = exp(3.464048 + 0.561372013*log(r80/10) - 0.004900892*log(r80/10)^2+0.001684756748*log(r80/10)^3); 
+
+            %calculate energy straggling using formulae from paper "An
+            %analytical approximation of the Bragg curve for 
+            %therapeuticproton beams" by T. Bortfeld
+            fullSigSq = (w50 / 6.14)^2;
+            sigRangeStragSq = (0.012*r80)^2;
+
+            %calculate Energy straggling using total range straggling,
+            %catch error when sqrt gives imaginary results, then set energy
+            %straggling to default value given in mcSquare documentation
+            if((fullSigSq - sigRangeStragSq) > 0)
+                mcData.EnergySpread = sqrt(fullSigSq - sigRangeStragSq);
+            else
+                mcData.EnergySpread = 0.6; 
+                obj.problemSigma = true;
+            end
+
+            %calculate geometric distances and extrapolate spot size at nozzle
+            SAD = obj.machine.meta.SAD;
+            z     = -(obj.machine.data(i).initFocus.dist(focusIndex,:) - SAD);
+            sigmaSq = obj.machine.data(i).initFocus.sigma(focusIndex,:).^2;
+
+            %fit Courant-Synder equation to data using ipopt, formulae
+            %given in mcSquare documentation
+            sigmaNull = sqrt(interp1(z,sigmaSq,0));
+
+            qRes = @(rho, sigmaT) (sigmaSq -  (sigmaNull^2 - 2*sigmaNull*rho*sigmaT.*z + sigmaT^2.*z.^2));
+
+            funcs.objective = @(x) sum(qRes(x(1), x(2)).^2);
+            funcs.gradient  = @(x) [  2 * sum(qRes(x(1), x(2)) .* (2 * sigmaNull * x(2) * z)); 
+                                      2 * sum(qRes(x(1), x(2)) .* (2 * sigmaNull * x(1) * z  - 2 * x(2) * z.^2))];     
+
+            options.lb = [-0.99, -Inf];
+            options.ub = [ 0.99,  Inf];
+
+            options.ipopt.hessian_approximation = 'limited-memory';
+            options.ipopt.limited_memory_update_type = 'bfgs';
+            options.ipopt.print_level = 1;
+
+            start = [0.9; 0.1];
+            [result, ~] = ipopt (start, funcs, options);
+            rho    = result(1);
+            sigmaT = result(2);
+
+            %calculate divergence, spotsize and correlation at nozzle
+            DivergenceAtNozzle  = sigmaT;
+            SpotsizeAtNozzle    = sqrt(sigmaNull^2 - 2 * rho * sigmaNull * sigmaT * obj.nozzleToIso + sigmaT^2 * obj.nozzleToIso^2);
+            CorrelationAtNozzle = (rho * sigmaNull - sigmaT * obj.nozzleToIso) / SpotsizeAtNozzle;
+
+            %save calcuated beam optics data in mcData
+            mcData.ProtonsMU     = 1e6;
+
+            mcData.Weight1       = 1;
+            mcData.SpotSize1x    = SpotsizeAtNozzle;
+            mcData.Divergence1x  = DivergenceAtNozzle;
+            mcData.Correlation1x = CorrelationAtNozzle;
+            mcData.SpotSize1y    = SpotsizeAtNozzle;
+            mcData.Divergence1y  = DivergenceAtNozzle;
+            mcData.Correlation1y = CorrelationAtNozzle;
+
+            mcData.Weight2       = 0;
+            mcData.SpotSize2x    = 0;
+            mcData.Divergence2x  = 0;
+            mcData.Correlation2x = 0;
+            mcData.SpotSize2y    = 0;
+            mcData.Divergence2y  = 0;
+            mcData.Correlation2y = 0;
+        end
+                          
+        function obj = writeToBDLfile(obj,filepath)
             %writeToBDLfile write the base data to file "filepath"
             
             machine = obj.machine;
@@ -277,10 +242,8 @@ classdef MatRad_MCsquareBaseData
                 
                 fprintf(fileID,'Beam parameters\n%d energies\n\n',size(obj.dataTable,1));
 
-                
                 fclose(fileID);               
-                
-                        
+                                        
                 writetable(obj.dataTable,[filepath '.tmp'],'Delimiter','\t','FileType','text');
                 
                 fileID = fopen([filepath '.tmp'],'r');
@@ -299,6 +262,26 @@ classdef MatRad_MCsquareBaseData
                 error(MException.message);
             end
         end
-    end
+          
+        function obj = saveMatradMachine(obj,name)
+            %save previously calculated mcSquareData in new baseData file
+            %with given name
+            
+            machine = obj.machine;
+            [~ ,energyIndex, ~] = intersect([obj.machine.data(:).energy], [obj.mcSquareData(:).NominalEnergy]);
+            
+            machineName = [obj.machine.meta.radiationMode, '_', name];
+            
+            count = 1;
+            for i = energyIndex'
+               
+                machine.data(i).mcSquareData = obj.mcSquareData(count);
+                
+                count = count + 1;
+            end
+            
+            save(strcat('../../', machineName, '.mat'),'machine');
+        end
+   end
 end
 
