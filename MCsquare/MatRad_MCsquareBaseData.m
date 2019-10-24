@@ -1,4 +1,4 @@
- classdef MatRad_MCsquareBaseData
+classdef MatRad_MCsquareBaseData
 %MatRad_MCsquareBaseData Maps the matRad base data to MCsquare base data /
 %phase space file
 %
@@ -95,8 +95,16 @@
                     end
                 end
                 
-                %calculate mcSquareData for given energy
-                obj.mcSquareData = [obj.mcSquareData, obj.fitBeamOpticsForEnergy(i, focusIndex(count))];
+                
+                %calculate mcSquareData for given energy and every focus
+                %index
+                tmp = [];
+                for j = 1:size(machine.data(i).initFocus.sigma,1)
+                    
+                    tmp = [tmp; obj.fitBeamOpticsForEnergy(i, j)];
+                end
+                
+                obj.mcSquareData = [obj.mcSquareData, tmp];
                 
                 count = count + 1;
             end
@@ -107,7 +115,14 @@
                 warning('Calculation of FWHM of bragg peak in base data not possible! Using simple approximation for energy spread');
             end
             
-            obj.dataTable = struct2table(obj.mcSquareData);
+            %get phase space data for selected focus indices
+            selectedData = [];
+            for i = 1:numel(focusIndex)
+                
+                selectedData = [selectedData, obj.mcSquareData(focusIndex(i), i)];
+            end
+            
+            obj.dataTable = struct2table(selectedData);
         end
         
         function mcData = fitBeamOpticsForEnergy(obj,energyIx, focusIndex)
@@ -197,7 +212,7 @@
             CorrelationAtNozzle = (rho * sigmaNull - sigmaT * obj.nozzleToIso) / SpotsizeAtNozzle;
 
             %save calcuated beam optics data in mcData
-            mcData.ProtonsMU     = 1e6;
+            mcData.ProtonsMU     = 1e2;
 
             mcData.Weight1       = 1;
             mcData.SpotSize1x    = SpotsizeAtNozzle;
@@ -275,7 +290,7 @@
             count = 1;
             for i = energyIndex'
                
-                machine.data(i).mcSquareData = obj.mcSquareData(count);
+                machine.data(i).mcSquareData = obj.mcSquareData(:,count);
                 
                 count = count + 1;
             end
