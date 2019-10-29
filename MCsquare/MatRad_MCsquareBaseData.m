@@ -24,14 +24,15 @@ classdef MatRad_MCsquareBaseData
         bdl_path = ''   %stores path to generated file
         nozzleToIso     %Nozzle to Isocenter Distance
         smx             %Scanning magnet X to isocenter Distance
-        smy             %Scanning magnet y to isocenter Distance
-        dataTable       %Optical beam parameters
+        smy             %Scanning magnet y to isocenter Distance        
         mcSquareData    %MCsquare Phase space data struct
+        selectedFocus   %array containing selected focus indices per energy
     end
     
     properties (SetAccess = private)
         stfCompressed   
         problemSigma
+        dataTable       %Optical beam parameter table used for BDL generation 
     end
     
     methods
@@ -75,8 +76,9 @@ classdef MatRad_MCsquareBaseData
                 [~ ,energyIndex, ~] = intersect([machine.data(:).energy],plannedEnergies);
             
             %if no stf was refered all energies are chosen, while setting
-            %the focus index for all energies to 1
+            %the focus index for all energies to preliminary 1
             else
+                matRad_dispToConsole('No stf provided for BDL generatio
                 plannedEnergies = [machine.data(:).energy];
                 focusIndex = ones(size(plannedEnergies));
                 [~ ,energyIndex, ~] = intersect([machine.data(:).energy],plannedEnergies);
@@ -233,6 +235,9 @@ classdef MatRad_MCsquareBaseData
                           
         function obj = writeToBDLfile(obj,filepath)
             %writeToBDLfile write the base data to file "filepath"
+            
+            %table hier erzegen
+            
             
             machine = obj.machine;
             
