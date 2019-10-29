@@ -41,7 +41,7 @@ if verLessThan('matlab','9')
 else
     planInfo = dicominfo(rtPlanFiles{1},'UseDictionaryVR',true);
 end
-assignin('base','planInfo',planInfo)
+
 % check which type of Radiation is used
 if isfield(planInfo, 'BeamSequence')
     BeamParam = 'BeamSequence';
@@ -130,8 +130,7 @@ end
 %% write parameters found to pln variable
 pln.radiationMode   = radiationMode; % either photons / protons / carbon
 pln.numOfFractions  = planInfo.FractionGroupSequence.Item_1.NumberOfFractionsPlanned;
-pln.machine         = planInfo.BeamSequence.Item_1.TreatmentMachineName + planInfo.BeamSequence.Item_1.ControlPointSequence.Item_1.NominalBeamEnergy;
-pln.machine         = strcat(planInfo.BeamSequence.Item_1.TreatmentMachineName,'_',num2str(planInfo.BeamSequence.Item_1.ControlPointSequence.Item_1.NominalBeamEnergy),'_4K');
+pln.machine         = strcat(planInfo.BeamSequence.Item_1.TreatmentMachineName,'_',num2str(planInfo.BeamSequence.Item_1.ControlPointSequence.Item_1.NominalBeamEnergy));
 
 pln.propStf.isoCenter    = isoCenter;
 pln.propStf.bixelWidth   = NaN; % [mm] / also corresponds to lateral spot spacing for particles

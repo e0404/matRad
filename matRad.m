@@ -27,7 +27,7 @@ load TG119.mat
 
 pln.radiationMode   = 'photons';     % either photons / protons / carbon
 % pln.machine         = 'Generic';
-pln.machine         = 'Synergy6MV';
+pln.machine         = 'Synergy1_6';
 
 pln.numOfFractions  = 30;
 

@@ -87,7 +87,8 @@ for i = 1 : numDoseFiles
     end
         
     
-    resultName = strcat(doseTypeHelper,'_',num2str(doseInstanceHelper),beamSuffix);
+    % resultName = strcat(doseTypeHelper,'_',num2str(doseInstanceHelper),beamSuffix);
+    resultName = strcat(doseTypeHelper,num2str(doseInstanceHelper),beamSuffix);
     
     resultGUI.(resultName) = dose.(itemName).cube;
     resultGUI.doseMetaInfo.(resultName) = dose.(itemName).dicomInfo;

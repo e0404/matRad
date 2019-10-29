@@ -84,7 +84,6 @@ fieldLimit = ceil(fieldWidth/(2*intConvResolution));
                   (fieldLimit-1)*intConvResolution);    
 
 % gaussian filter to model penumbra
-% sigmaGauss = 1
 sigmaGauss = 2.123; % [mm] / see diploma thesis siggel 4.1.2
 % use 5 times sigma as the limits for the gaussian convolution
 gaussLimit = ceil(5*sigmaGauss/intConvResolution);
