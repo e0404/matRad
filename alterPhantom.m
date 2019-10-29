@@ -2,14 +2,14 @@ matRad_rc
 
 load BOXPHANTOM
 
-ct.cubeDim = [320,320,320];
+ct.cubeDim = [400,400,400];
 
 lowX    =   1;
 lowY    =   1;
 lowZ    =   1;
-highX   = 320;
-highY   = 320;
-highZ   = 320;
+highX   = 400;
+highY   = 400;
+highZ   = 400;
 
 indices = zeros((highX-lowX+1)*(highY-lowY+1)*(highZ-lowZ+1),3);
 
@@ -29,12 +29,12 @@ index = sub2ind(ct.cubeDim,indices(:,1),indices(:,2),indices(:,3));
 cst{1,4} = {index};   
 
 
-lowX    = 140;
-lowY    = 140;
-lowZ    = 140;
-highX   = 180;
-highY   = 180;
-highZ   = 180;
+lowX    = 180;
+lowY    = 180;
+lowZ    = 180;
+highX   = 220;
+highY   = 220;
+highZ   = 220;
 
 indices = zeros((highX-lowX+1)*(highY-lowY+1)*(highZ-lowZ+1),3);
 
@@ -61,12 +61,12 @@ ct.cubeHU{1} = zeros(ct.cubeDim);
 ct.cube{1}(1,1,1) = -1024;
 
 
-ct.resolution.x = 0.5;
-ct.resolution.y = 0.5;
-ct.resolution.z = 0.5;
+ct.resolution.x = 1;
+ct.resolution.y = 1;
+ct.resolution.z = 1;
 
 pln.propStf.isoCenter       = [ct.cubeDim(1) / 2 * ct.resolution.x, ...
                                 ct.cubeDim(2) / 2 * ct.resolution.y, ...
                                 ct.cubeDim(3) / 2 * ct.resolution.z];
  
- matRadGUI
+%  matRadGUI

@@ -21,7 +21,7 @@ matRad_rc
 %load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-load BOXPHANTOMv2.mat
+load BOXPHANTOMv3.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
@@ -41,9 +41,9 @@ pln.propStf.isoCenter       = [ct.cubeDim(1) / 2 * ct.resolution.x, ...
                                 ct.cubeDim(3) / 2 * ct.resolution.z];
 
 % dose calculation settings
-pln.propDoseCalc.doseGrid.resolution.x = ct.resolution.x*3; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = ct.resolution.y*3; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = ct.resolution.z*3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.x = ct.resolution.x; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = ct.resolution.y; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = ct.resolution.z; % [mm]
 
 % optimization settings
 pln.propOpt.optimizer       = 'IPOPT';
@@ -58,13 +58,14 @@ stf.ray.energy = 110;      %50 bis 220
 
  %% dose calculation
 Ecount = 1;
-for i = 50:50:150
-    stf.ray.energy = i
+for i = 70:225
+    i
+    stf.ray.energy = i;
     dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst);
     resultGUI = matRad_calcCubes(ones(dijMC.totalNumOfBixels,1),dijMC);           
 
     IDD = sum(sum(resultGUI.physicalDose,2),3);
-    IDD = reshape(IDD,320,1);
+    IDD = reshape(IDD,400,1);
     IDD = [IDD(1); IDD];
     depthsIDD = ct.resolution.y/2 : ct.resolution.y : ct.resolution.y*ct.cubeDim(2);
 
@@ -80,8 +81,8 @@ for i = 50:50:150
 
     %% curve fitting
     resSigma = [];
-    for i = 1:320
-        profile = resultGUI.physicalDose(i,:,160);
+    for i = 1:400
+        profile = resultGUI.physicalDose(i,:,200);
 
         gauss = @(x, a, sigma) a * exp(- x.^2 / (2*sigma^2));
 
