@@ -21,11 +21,11 @@ matRad_rc
 %load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-load BOXPHANTOM.mat
+load BOXPHANTOMv2.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'HITfixedBL';
+pln.machine         = 'testMachine';
 
 pln.numOfFractions  = 30;
 
@@ -38,9 +38,9 @@ pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
 % dose calculation settings
-pln.propDoseCalc.doseGrid.resolution.x = ct.resolution.x; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = ct.resolution.y; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = ct.resolution.z; % [mm]
+pln.propDoseCalc.doseGrid.resolution.x = ct.resolution.x*3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = ct.resolution.y*3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = ct.resolution.z*3; % [mm]
 
 % optimization settings
 pln.propOpt.optimizer       = 'IPOPT';
@@ -51,6 +51,7 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
+stf.ray.energy = 100;
 
 %% dose calculation
 if strcmp(pln.radiationMode,'photons')
