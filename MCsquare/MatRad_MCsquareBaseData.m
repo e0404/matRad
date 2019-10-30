@@ -32,7 +32,8 @@ classdef MatRad_MCsquareBaseData
     properties (SetAccess = private)
         stfCompressed   
         problemSigma
-        dataTable       %Optical beam parameter table used for BDL generation 
+        dataTable       %Optical beam parameter table used for BDL generation
+        energyIndex     %Indices of calculated energies
     end
     
     methods
@@ -51,6 +52,7 @@ classdef MatRad_MCsquareBaseData
             
             obj.machine = machine;
             obj.problemSigma = false;
+            obj.selectedFocus = ones(numel(machine.data),1) * NaN;
             
             if isfield(machine.meta,'BAMStoIsoDist')
                 obj.nozzleToIso = machine.meta.BAMStoIsoDist;
@@ -73,19 +75,20 @@ classdef MatRad_MCsquareBaseData
                 [~, ind]            = unique(plannedEnergies);
                 plannedEnergies     = plannedEnergies(ind);
                 focusIndex          = focusIndex(ind);
-                [~ ,energyIndex, ~] = intersect([machine.data(:).energy],plannedEnergies);
+                [~ ,obj.energyIndex, ~] = intersect([machine.data(:).energy],plannedEnergies);
             
             %if no stf was refered all energies are chosen, while setting
             %the focus index for all energies to preliminary 1
             else
-                matRad_dispToConsole('No stf provided for BDL generatio
                 plannedEnergies = [machine.data(:).energy];
                 focusIndex = ones(size(plannedEnergies));
-                [~ ,energyIndex, ~] = intersect([machine.data(:).energy],plannedEnergies);
+                [~ ,obj.energyIndex, ~] = intersect([machine.data(:).energy],plannedEnergies);
             end
+            
+            obj.selectedFocus(obj.energyIndex) = focusIndex;
              
             count = 1;
-            for i = energyIndex'
+            for i = obj.energyIndex'
                 
                 %look up whether MonteCarlo data are already present in 
                 %machine file , if so do not recalculate
@@ -117,14 +120,6 @@ classdef MatRad_MCsquareBaseData
                 warning('Calculation of FWHM of bragg peak in base data not possible! Using simple approximation for energy spread');
             end
             
-            %get phase space data for selected focus indices
-            selectedData = [];
-            for i = 1:numel(focusIndex)
-                
-                selectedData = [selectedData, obj.mcSquareData(focusIndex(i), i)];
-            end
-            
-            obj.dataTable = struct2table(selectedData);
         end
         
         function mcData = fitBeamOpticsForEnergy(obj,energyIx, focusIndex)
@@ -236,7 +231,17 @@ classdef MatRad_MCsquareBaseData
         function obj = writeToBDLfile(obj,filepath)
             %writeToBDLfile write the base data to file "filepath"
             
-            %table hier erzegen
+            %look up focus indices
+            focusIndex = obj.selectedFocus(obj.energyIndex);
+            
+            %save mcData acording to used focus index in dataTable
+            selectedData = [];
+            for i = 1:numel(focusIndex)
+                
+                selectedData = [selectedData, obj.mcSquareData(focusIndex(i), i)];
+            end
+            
+            obj.dataTable = struct2table(selectedData);
             
             
             machine = obj.machine;
