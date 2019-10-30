@@ -18,11 +18,11 @@ matRad_rc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-load TG119.mat
+%load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-%load BOXPHANTOM
-%load BOXPHANTOMv3.mat
+load BOXPHANTOM
+%load BOXPHANTOMv2.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
@@ -32,14 +32,11 @@ pln.numOfFractions  = 30;
 
 % beam geometry settings
 pln.propStf.bixelWidth      = 50; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.longitudinalSpotSpacing = 100;
+pln.propStf.longitudinalSpotSpacing = 50;
 pln.propStf.gantryAngles    = 0; % [?] 
 pln.propStf.couchAngles     = 0; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-% pln.propStf.isoCenter       = [ct.cubeDim(1) / 2 * ct.resolution.x, ...
-%                                 0, ...%ct.cubeDim(2) / 2 * ct.resolution.y, ...
-%                                 ct.cubeDim(3) / 2 * ct.resolution.z];
                             
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = ct.resolution.x; % [mm]
@@ -62,13 +59,11 @@ if strcmp(pln.radiationMode,'photons')
     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
-    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst);
+    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,1000000);
 end
 
 resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
 resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
-
-cf = (1.6021766208 * 10)^2 * ct.resolution.z * ct.resolution.x / 4 / 1.1252;
 
 resultGUI.physicalDose_MC = resultGUI_MC.physicalDose;
 resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);

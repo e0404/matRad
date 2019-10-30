@@ -35,7 +35,6 @@ pln.propStf.longitudinalSpotSpacing = 50;
 pln.propStf.gantryAngles    = 0; % [?] 
 pln.propStf.couchAngles     = 0; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-%pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propStf.isoCenter       = [ct.cubeDim(1) / 2 * ct.resolution.x, ...
                                 0, ...%ct.cubeDim(2) / 2 * ct.resolution.y, ...
                                 ct.cubeDim(3) / 2 * ct.resolution.z];
@@ -54,44 +53,63 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
-stf.ray.energy = 110;      %50 bis 220  
 
- %% dose calculation
-Ecount = 1;
-for i = 70:225
-    i
-    stf.ray.energy = i;
-    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst);
+%% baseData fitting
+ 
+%read MC phase space data
+dataMC = readtable('BDL_matrad.txt');             
+dataMC = dataMC{11:end,:};
+tmp = [];
+for i = 1:size(dataMC,1)    
+    tmp = [tmp; strsplit(dataMC{i})];
+end
+energyMC    = str2double(tmp(:,1));
+spotMC      = str2double(tmp(:,6));
+divMC       = str2double(tmp(:,7));
+corMC       = str2double(tmp(:,8));
+  
+minEnergy =  70;
+maxEnergy = 225;
+nEnergy   = 156;  
+
+count = 1;
+for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
+
+    %assign energy to stf and run MC simulation
+    stf.ray.energy = currentEnergy;
+    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,10000000);
     resultGUI = matRad_calcCubes(ones(dijMC.totalNumOfBixels,1),dijMC);           
 
+    %extract IDD and calculate according depths/lengths for IDD and Gaussian fit
     IDD = sum(sum(resultGUI.physicalDose,2),3);
     IDD = reshape(IDD,400,1);
     IDD = [IDD(1); IDD];
-    depthsIDD = ct.resolution.y/2 : ct.resolution.y : ct.resolution.y*ct.cubeDim(2);
-
-
-    depthsGauss = depthsIDD - (depthsIDD(end)-depthsIDD(1))/2;
-
-    depthsIDD = [0, depthsIDD];
-
-    % plot(depthsIDD, IDD);
-
-    % figure;
-    % plot(depthsGauss,profile);
-
-    %% curve fitting
+    
+    depthsIDD = 0 : ct.resolution.y : ct.resolution.y * ct.cubeDim(2);
+    axisGauss = linspace( -ct.resolution.x * ct.cubeDim(1) / 2, ct.resolution.x * ct.cubeDim(1) / 2, ct.cubeDim(1));
+    
+    %calculate sigma/spotsize at isocenter using MC phase space data
+    divNozzle = interp1(energyMC,divMC,currentEnergy); 
+    corNozzle = interp1(energyMC,corMC,currentEnergy); 
+    spotNozzle = interp1(energyMC,spotMC,currentEnergy); 
+    z = 420;
+    spotIso = sqrt(spotNozzle^2 + 2 * (corNozzle*spotNozzle + divNozzle * z) * divNozzle * z - divNozzle^2*z^2);
+    
     resSigma = [];
     for i = 1:400
+    %curve fitting gaussians
+        
+        %save cast perpendicular to beam axis in profile
         profile = resultGUI.physicalDose(i,:,200);
-
         gauss = @(x, a, sigma) a * exp(- x.^2 / (2*sigma^2));
-
-        funcs.objective = @(p) sum((gauss(depthsGauss, p(1), p(2)) - profile).^2);
-
-        funcs.gradient = @(p) [ sum(2 * (p(1) * exp(-depthsGauss.^2 / (2 * p(2)^2)) - profile) ...
-                                                .* exp(-depthsGauss.^2 / (2 * p(2)^2)));
-                                sum(2 * (p(1) * exp(-depthsGauss.^2 / (2 * p(2)^2)) - profile) ...
-                                                .* p(1) .* exp(-depthsGauss.^2 / (2 * p(2)^2)) .* depthsGauss.^2 / p(2)^3)];
+        
+        %define fit parameters
+        funcs.objective = @(p) sum((gauss(axisGauss, p(1), p(2)) - profile).^2);
+        
+        funcs.gradient = @(p) [ sum(2 * (p(1) * exp(-axisGauss.^2 / (2 * p(2)^2)) - profile) ...
+                                                .* exp(-axisGauss.^2 / (2 * p(2)^2)));
+                                sum(2 * (p(1) * exp(-axisGauss.^2 / (2 * p(2)^2)) - profile) ...
+                                                .* p(1) .* exp(-axisGauss.^2 / (2 * p(2)^2)) .* axisGauss.^2 / p(2)^3)];
 
         options.lb = [0,  0];
         options.ub = [ Inf,  Inf];
@@ -100,92 +118,64 @@ for i = 70:225
         options.ipopt.limited_memory_update_type = 'bfgs';
         options.ipopt.print_level = 1;
 
+        %run fit and calculate actual sigma by squared substracting initial
+        %sigma / spotsize
         start = [1; 1];
-        [result, ~] = ipopt (start, funcs, options);
+        [fitResult, ~] = ipopt (start, funcs, options);
 
+        if(fitResult(2) > spotIso)
+            actualSigma = sqrt(fitResult(2)^2 - spotIso^2);
+        else
+            actualSigma = 0;
+        end
 
-    %     plot(depthsGauss,gauss(depthsGauss,result(1),result(2)));
-    %     hold on
-    %     scatter(depthsGauss,profile);
-    %     waitforbuttonpress
-        resSigma = [resSigma, result(2)];
+        resSigma = [resSigma, actualSigma];
     end   
 
-
-
-    resSigma = [resSigma(1), resSigma];
-    initSigma = sum(resSigma(1:10)) / 10;
-    resSigma = sqrt(resSigma.^2 - initSigma^2);
-    resSigma(imag(resSigma) > 0) = 0;              
-
-
-
+    resSigma = [0, resSigma];
+    
     %interpolate range at 80% dose after peak.
-                [maxV, maxI] = max(IDD);
-                [~, r80ind] = min(abs(IDD(maxI:end) - 0.8 * maxV));
-                r80ind = r80ind - 1;
-                r80 = interp1(IDD(maxI + r80ind - 1:maxI + r80ind + 1), ...
-                                 depthsIDD(maxI + r80ind - 1:maxI + r80ind + 1), 0.8 * maxV);
+    [maxV, maxI] = max(IDD);
+    [~, r80ind] = min(abs(IDD(maxI:end) - 0.8 * maxV));
+    r80ind = r80ind - 1;
+    r80 = interp1(IDD(maxI + r80ind - 1:maxI + r80ind + 1), ...
+                     depthsIDD(maxI + r80ind - 1:maxI + r80ind + 1), 0.8 * maxV);
 
-
+    %conversion factor for IDDs
+    cf = 1 / 1.6021766208e-02;
+    
+    %save data in machine
     machine.meta.radiationMode = 'protons';
     machine.meta.dataType = 'singleGauss';
     machine.meta.created_on = date;
-    machine.meta.created_by = 'pamede';
+    machine.meta.created_by = 'Paul Anton Meder';
     machine.meta.SAD = (2218 + 1839) / 2;
     machine.meta.BAMStoIsoDist = 420.0;
     machine.meta.machine = 'Generic';
-    machine.meta.LUT_bxWidthminFWHM = [1, Inf; initSigma, initSigma];
+    machine.meta.LUT_bxWidthminFWHM = [1, Inf; 2.3548 * spotIso, 2.3548 * spotIso];
 
 
-    machine.data(Ecount).range = r80;    
+    machine.data(count).range = r80;    
 
-    machine.data(Ecount).energy =  stf.ray.energy;
+    machine.data(count).energy =  stf.ray.energy;
 
-    machine.data(Ecount).depths = depthsIDD';
+    machine.data(count).depths = depthsIDD';
 
-    machine.data(Ecount).Z = IDD;
+    machine.data(count).Z = IDD * cf;
 
-    machine.data(Ecount).peakPos = depthsIDD(maxI);
+    machine.data(count).peakPos = depthsIDD(maxI);
 
-    machine.data(Ecount).sigma = resSigma';
+    machine.data(count).sigma = resSigma';
 
-    machine.data(Ecount).offset = 0;
+    machine.data(count).offset = 0;
 
-    machine.data(Ecount).initFocus.dist  = [0, 20000];
-    machine.data(Ecount).initFocus.sigma = [initSigma, initSigma];
-    machine.data(Ecount).initFocus.SisFWHMAtIso = 2.3548 * initSigma;
-
-    Ecount = Ecount + 1;
+    machine.data(count).initFocus.dist  = [0, 20000];
+    machine.data(count).initFocus.sigma = [spotIso, spotIso];
+    machine.data(count).initFocus.SisFWHMAtIso = 2.3548 * spotIso;
+    
+    display(['baseData Progress :', ' ', num2str(round(count/nEnergy*100)), '%']);
+    count = count + 1;
 end
-% nozzleToIso = 420.0;
-% 
-% SAD = (2218 + 1839) / 2;
-% 
-% z = nozzleToIso;
-% 
-% SpotSize1x    = 5.154355331;  
-% Divergence1x  = 0.004403330;
-% Correlation1x = 0.457081065;
-% 
-% 
-% spotsizeIso = sqrt(SpotSize1x^2 + 2 * Divergence1x * z * ...
-%     (Correlation1x * SpotSize1x - Divergence1x * z) - Divergence1x^2 * z^2);
-%                 
-% resSigma = sqrt(resSigma.^2 - spotsizeIso^2);
-% 
-% plot(resSigma)
 
-
-
-
-
-
-
-
-
-
-
-
-
-% matRadGUI;
+%save new machine
+save('protons_testMachine', 'machine');
