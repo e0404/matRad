@@ -18,15 +18,15 @@ matRad_rc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-%load TG119.mat
+load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-load BOXPHANTOM
+%load BOXPHANTOM
 %load BOXPHANTOMv2.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'testMachine';
+pln.machine         = 'MCsquareFit';
 
 pln.numOfFractions  = 30;
 
@@ -59,7 +59,7 @@ if strcmp(pln.radiationMode,'photons')
     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
-    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,1000000);
+    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,100000);
 end
 
 resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
@@ -67,5 +67,6 @@ resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
 
 resultGUI.physicalDose_MC = resultGUI_MC.physicalDose;
 resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
+resultGUI.physicalDose_relDiff = (resultGUI.physicalDose - resultGUI.physicalDose_MC) ./ (resultGUI.physicalDose_MC + 0.0001);
 
 matRadGUI;

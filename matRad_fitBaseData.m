@@ -68,7 +68,7 @@ spotMC      = str2double(tmp(:,6));
 divMC       = str2double(tmp(:,7));
 corMC       = str2double(tmp(:,8));
   
-minEnergy =  70;
+minEnergy = 157.53;
 maxEnergy = 225;
 nEnergy   = 156;  
 
@@ -77,7 +77,7 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
 
     %assign energy to stf and run MC simulation
     stf.ray.energy = currentEnergy;
-    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,10000000);
+    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,1000000);
     resultGUI = matRad_calcCubes(ones(dijMC.totalNumOfBixels,1),dijMC);           
 
     %extract IDD and calculate according depths/lengths for IDD and Gaussian fit
@@ -86,7 +86,7 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
     IDD = [IDD(1); IDD];
     
     depthsIDD = 0 : ct.resolution.y : ct.resolution.y * ct.cubeDim(2);
-    axisGauss = linspace( -ct.resolution.x * ct.cubeDim(1) / 2, ct.resolution.x * ct.cubeDim(1) / 2, ct.cubeDim(1));
+    axisGauss = linspace( -ct.resolution.x * ct.cubeDim(1) / 2, ct.resolution.x * ct.cubeDim(1) / 2, ct.cubeDim(1)) + ct.resolution.x/2;
     
     %calculate sigma/spotsize at isocenter using MC phase space data
     divNozzle = interp1(energyMC,divMC,currentEnergy); 
@@ -101,27 +101,45 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
         
         %save cast perpendicular to beam axis in profile
         profile = resultGUI.physicalDose(i,:,200);
-        gauss = @(x, a, sigma) a * exp(- x.^2 / (2*sigma^2));
+        gauss = @(x, w, sigma1, sigma2, A) A * ((1 - w) / (2 * pi * sigma1^2) * exp(- x.^2 / (2*sigma1^2)) + ...
+                                            w   / (2 * pi * sigma2^2) * exp(- x.^2 / (2*sigma2^2))); 
+        
+        
         
         %define fit parameters
-        funcs.objective = @(p) sum((gauss(axisGauss, p(1), p(2)) - profile).^2);
+        funcs.objective = @(p) sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile).^2);
         
-        funcs.gradient = @(p) [ sum(2 * (p(1) * exp(-axisGauss.^2 / (2 * p(2)^2)) - profile) ...
-                                                .* exp(-axisGauss.^2 / (2 * p(2)^2)));
-                                sum(2 * (p(1) * exp(-axisGauss.^2 / (2 * p(2)^2)) - profile) ...
-                                                .* p(1) .* exp(-axisGauss.^2 / (2 * p(2)^2)) .* axisGauss.^2 / p(2)^3)];
+        funcs.gradient = @(p) [ 2 * sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile) * p(4) .* ...  
+                                    (-1 / (2 * pi * p(2)^2) * exp(-axisGauss.^2 / (2 * p(2)^2)) + 1 / (2 * pi * p(3)^2) .* exp(-axisGauss.^2 / (2 * p(3)^2))));
+                                2 * sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile) * p(4) .* ...                                   
+                                    ((1 - p(1)) .* axisGauss.^2 / (2 * pi * p(2)^5) - (1 - p(1)) / (pi * p(2)^3)) .* exp(-axisGauss.^2 / (2 * p(2)^2)));            
+                                2 * sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile) * p(4) .* ...
+                                    (p(1) .* axisGauss.^2 / (2 * pi * p(3)^5) - p(1) / (pi *p(3)^3)) .* exp(-axisGauss.^2 / (2 * p(3)^2)));
+                                2 *        sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile) .* gauss(axisGauss, p(1), p(2), p(3), p(4)) / p(4))];
+                                
+                                
 
-        options.lb = [0,  0];
-        options.ub = [ Inf,  Inf];
+        options.lb = [0,  0, 0, 0];
+        options.ub = [ 0.5,  10, 50, Inf];
 
+%         options.ipopt.tol = 1e-12;
         options.ipopt.hessian_approximation = 'limited-memory';
         options.ipopt.limited_memory_update_type = 'bfgs';
-        options.ipopt.print_level = 1;
+%         options.ipopt.print_level = 1;
 
         %run fit and calculate actual sigma by squared substracting initial
         %sigma / spotsize
-        start = [1; 1];
+
+        start = [0.002, 5, 15, 1e-3];
         [fitResult, ~] = ipopt (start, funcs, options);
+        
+        semilogy(axisGauss, gauss(axisGauss, fitResult(1), fitResult(2), fitResult(3), fitResult(4)));
+        ylim([1e-10 1e-2]);
+        xlim([-50 50]);
+        hold on
+        scatter(axisGauss,profile);
+        hold off
+
 
         if(fitResult(2) > spotIso)
             actualSigma = sqrt(fitResult(2)^2 - spotIso^2);
@@ -178,4 +196,4 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
 end
 
 %save new machine
-save('protons_testMachine', 'machine');
+% save('protons_testMachine', 'machine');
