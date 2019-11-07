@@ -138,43 +138,15 @@ classdef MatRad_MCsquareBaseData
                              obj.machine.data(i).depths(maxI + r80ind - 1:maxI + r80ind + 1), 0.8 * maxV) ...
                            + obj.machine.data(i).offset;
 
-            %find FWHM w50 of bragg peak
-            [~, d50rInd] = min(abs(obj.machine.data(i).Z(maxI:end) - 0.5 * maxV));
-            d50rInd = d50rInd - 1;
-            d50_r = interp1(obj.machine.data(i).Z(maxI + d50rInd - 1:maxI + d50rInd + 1), ...
-                            obj.machine.data(i).depths(maxI + d50rInd - 1:maxI + d50rInd + 1), 0.5 * maxV);
+            eSpread = @(E)0.3566*(1-exp(-0.03307*(E-57.25))) .* heaviside(E-57.25);
 
-            if (obj.machine.data(i).Z(1) < 0.4 * maxV)
-                [~, d50lInd] = min(abs(obj.machine.data(i).Z(1:maxI) - 0.5*maxV));
-                d50_l = interp1(obj.machine.data(i).Z(d50lInd - 1:d50lInd + 1), ...
-                                obj.machine.data(i).depths(d50lInd - 1:d50lInd + 1), 0.5 * maxV);
-                w50 = d50_r - d50_l;
-            %if width left of peak can be determined use twice the width to
-            %the right and throw out a warning after calculation
-            else
-                obj.problemSigma = true;
-                w50 = (d50_r - obj.machine.data(i).depths(maxI)) * 2;
-            end
 
             %calculate mean energy according to the mcSquare documentation
             %using the 80% dose range
             mcData.MeanEnergy = exp(3.464048 + 0.561372013*log(r80/10) - 0.004900892*log(r80/10)^2+0.001684756748*log(r80/10)^3); 
 
-            %calculate energy straggling using formulae from paper "An
-            %analytical approximation of the Bragg curve for 
-            %therapeuticproton beams" by T. Bortfeld
-            fullSigSq = (w50 / 6.14)^2;
-            sigRangeStragSq = (0.012*r80)^2;
-
-            %calculate Energy straggling using total range straggling,
-            %catch error when sqrt gives imaginary results, then set energy
-            %straggling to default value given in mcSquare documentation
-            if((fullSigSq - sigRangeStragSq) > 0)
-                mcData.EnergySpread = sqrt(fullSigSq - sigRangeStragSq);
-            else
-                mcData.EnergySpread = 0.6; 
-                obj.problemSigma = true;
-            end
+            mcData.EnergySpread = eSpread(mcData.NominalEnergy);
+            
 
             %calculate geometric distances and extrapolate spot size at nozzle
             SAD = obj.machine.meta.SAD;
@@ -228,8 +200,9 @@ classdef MatRad_MCsquareBaseData
             mcData.Correlation2y = 0;
         end
                           
-        function obj = writeToBDLfile(obj,filepath)
+        function obj = writeToBDLfile(obj,filepath,energyspread)
             %writeToBDLfile write the base data to file "filepath"
+            
             
             %look up focus indices
             focusIndex = obj.selectedFocus(obj.energyIndex);
@@ -241,6 +214,7 @@ classdef MatRad_MCsquareBaseData
                 selectedData = [selectedData, obj.mcSquareData(focusIndex(i), i)];
             end
             
+            selectedData.EnergySpread = energyspread;
             obj.dataTable = struct2table(selectedData);
             
             
