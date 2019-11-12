@@ -25,7 +25,7 @@ load BOXPHANTOMv3.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'HITfixedBL';
+pln.machine         = 'generic_MCsquare';
 
 pln.numOfFractions  = 30;
 
@@ -51,12 +51,8 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
-load protons_HITfixedBL
-stf.ray.energy = machine.data(120).energy;
-
-eSpread = @(E)0.3566*(1-exp(-0.03307*(E-57.25))) .* heaviside(E-57.25);
-
-
+load protons_generic_MCsquare
+stf.ray.energy = machine.data(end).energy;
 
 %% dose calculation
 if strcmp(pln.radiationMode,'photons')
@@ -64,67 +60,105 @@ if strcmp(pln.radiationMode,'photons')
     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
-    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,100000000,0,eSpread(stf.ray.energy));
+    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,1000000);
 end
 
 resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
 resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
 
-
 resultGUI.physicalDose_MC = resultGUI_MC.physicalDose;
 resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
 
-
 matRadGUI;
 
-% num = 102;
+
+
+
+                      
+% num = 100;
+% array = linspace(0,4,num);
 % 
-% array = linspace(0,0.9,num);
-% sqDev = zeros(numel(machine.data), num);
-% tic
-% i = 1;
-% for e = [machine.data(1:6:end).energy]
+% count = 1;
+% for e = [machine.data(1:4:end).energy]
 % 
+%     erg{count, 1} = e;
 %     stf.ray.energy = e;
+%     [~ ,i, ~] = intersect([machine.data(:).energy], e);
 %     
 %     dij = matRad_calcParticleDose(ct,stf,pln,cst);
 %     resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
 % 
-%     count = 1;
+%     newDepths = linspace(0,machine.data(i).depths(end),numel(machine.data(i).depths) * 100);
+%     newDose   = interp1(machine.data(i).depths, machine.data(i).Z, newDepths, 'spline');
+%      
+%     machine.data(i).depths = newDepths;
+%     machine.data(i).Z      = newDose;
+%     
+%     %interpolate range at 80% dose after peak.
+%     [maxV, maxI] = max(machine.data(i).Z);
+%     [~, r80ind] = min(abs(machine.data(i).Z(maxI:end) - 0.8 * maxV));
+%  
+%     %find FWHM w50 of bragg peak
+%     [~, d50rInd] = min(abs(machine.data(i).Z(maxI:end) - 0.5 * maxV));
+%     d50rInd = d50rInd - 1;
+%     d50_r = interp1(machine.data(i).Z(maxI + d50rInd - 1:maxI + d50rInd + 1), ...
+%                             machine.data(i).depths(maxI + d50rInd - 1:maxI + d50rInd + 1), 0.5 * maxV);
+%                              
+%     array1 = machine.data(i).depths(maxI-round(d50rInd):maxI+d50rInd);
+%     array2 = machine.data(i).Z(maxI-round(d50rInd):maxI+d50rInd);  
+% 
+%     gauss = @(x, a, sigma, b) a * exp(- (x - b).^2 / (2*sigma^2));
+% 
+%     funcs.objective = @(p) sum((gauss(array1, p(1), p(2),p(3)) - array2).^2);
+% 
+%     funcs.gradient = @(p) [ sum(2 * (p(1) * exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) - array2) ...
+%                                             .* exp(- (array1 - p(3)).^2 / (2 * p(2)^2)));
+%                             sum(2 * (p(1) * exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) - array2) ...
+%                                             .* p(1) .* exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) .* (array1 - p(3)).^2 / p(2)^3)
+%                             sum(2 * (p(1) * exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) - array2) ...
+%                                             .* p(1) .* exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) .* 2 .* (array1 - p(3)) / (2 * p(2)^2))];
+% 
+% 
+%     options.lb = [0,  0, 0];
+%     options.ub = [ Inf, Inf, Inf];
+%     options.ipopt.limited_memory_update_type = 'bfgs';
+%             options.ipopt.hessian_approximation = 'limited-memory';
+%     options.ipopt.print_level = 1;
+% 
+%     start = [maxV, 2 * d50_r, machine.data(i).depths(maxI)];
+%     [fitResult, ~] = ipopt (start, funcs, options);
+%     
+%     
+%     erg{count, 2} = fitResult(2);
+%     deviation = [];
 %     
 %     for spread = array
-%         i ,count
 % 
 %         dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,1000000,0,spread);
-% 
 %         resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
-% 
 %         resultGUI.physicalDose_MC = resultGUI_MC.physicalDose;
-% 
 %         resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
-% 
-%         sqDev(i, count) = sum(sum(sum(resultGUI.physicalDose_diff.^2)));
-%         count = count + 1;
+%         
+%         deviation = [deviation, sum(sum(sum(resultGUI.physicalDose_diff.^2)))];
 %     end
 %     
-%     i = i + 1;
+%     erg{count, 3} = deviation;
+%     count = count + 1;
 % end
-% toc
 % 
-%  %%
-% best = [];
-% for t = 1:size(actual, 1)
-%     
-%     % % plot(array, sqDev);
-%     p = polyfit(array, actual(t,:), 2);
-%     %p = @(x) p(1)*x.^2 + p(2)*x + p(3);
+% %%
+% num = 100;
+% array = linspace(0,4,num);
 % 
-% %     plot(array, actual(t,:))
-% %     hold on
-% %     plot(array, p(array))
-% %     hold off
-%     best = [best, p(2)/(-2*p(1))];
+%      
 % 
-%     
+% tmp = [];
+% for i = 1:19
+% %     plot(erg{i,3})
+%     [~, index] = min(erg{i,3})
+%     tmp = [tmp, array(index)];
 % end
-% % matRadGUI;
+% 
+% scatter([erg{1:19,2}], tmp)
+% ylim([0, 0.5]);
+
