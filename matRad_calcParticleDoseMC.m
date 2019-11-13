@@ -397,10 +397,14 @@ catch
 end
 
 %% clear all data
-delete([MCsquareConfig.CT_File(1:end-4) '.*']);
-delete('currBixels.txt');
-delete('MCsquareConfig.txt');
-eval(['rmdir ' MCsquareConfig.Output_Directory ' s']);
+try
+    delete([MCsquareConfig.CT_File(1:end-4) '.*']);
+    delete('currBixels.txt');
+    delete('MCsquareConfig.txt');
+    eval(['rmdir ' MCsquareConfig.Output_Directory ' s']);
+catch
+    warning('Could not remove MCsquare output!');
+end
 
 % cd back
 cd(currFolder);

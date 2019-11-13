@@ -67,13 +67,15 @@ elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
     toc
     tic
-    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,100000);
+    %dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,100000);
+    resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),100000);
     toc
+    
 end
 
 tic
 resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
-resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
+%resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
 
 resultGUI.physicalDose_MC = resultGUI_MC.physicalDose;
 % resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
