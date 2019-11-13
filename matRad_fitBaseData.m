@@ -21,7 +21,7 @@ matRad_rc
 %load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-load BOXPHANTOMv3.mat
+load phantomTest.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
@@ -35,8 +35,8 @@ pln.propStf.longitudinalSpotSpacing = 50;
 pln.propStf.gantryAngles    = 0; % [?] 
 pln.propStf.couchAngles     = 0; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter       = [ct.cubeDim(1) / 2 * ct.resolution.x, ...
-                                0, ...%ct.cubeDim(2) / 2 * ct.resolution.y, ...
+pln.propStf.isoCenter       = [ct.cubeDim(2) / 2 * ct.resolution.y, ...
+                                ct.cubeDim(1) / 2 * ct.resolution.x, ...
                                 ct.cubeDim(3) / 2 * ct.resolution.z];
 
 % dose calculation settings
@@ -51,8 +51,11 @@ pln.propOpt.bioOptimization = 'none'; % none: physical optimization;            
 pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
+matRadGUI
+
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
+
 
 %% baseData fitting
  
@@ -68,16 +71,16 @@ spotMC      = str2double(tmp(:,6));
 divMC       = str2double(tmp(:,7));
 corMC       = str2double(tmp(:,8));
   
-minEnergy = 157.53;
+minEnergy = 224;
 maxEnergy = 225;
 nEnergy   = 156;  
 
 count = 1;
 for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
-
+    tic
     %assign energy to stf and run MC simulation
     stf.ray.energy = currentEnergy;
-    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,1000000);
+    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,10000000);
     resultGUI = matRad_calcCubes(ones(dijMC.totalNumOfBixels,1),dijMC);           
 
     %extract IDD and calculate according depths/lengths for IDD and Gaussian fit
@@ -99,46 +102,70 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
     for i = 1:400
     %curve fitting gaussians
         
+        
         %save cast perpendicular to beam axis in profile
         profile = resultGUI.physicalDose(i,:,200);
-        gauss = @(x, w, sigma1, sigma2, A) A * ((1 - w) / (2 * pi * sigma1^2) * exp(- x.^2 / (2*sigma1^2)) + ...
-                                            w   / (2 * pi * sigma2^2) * exp(- x.^2 / (2*sigma2^2))); 
-        
-        
+
+        gauss = @(x, a, sigma) a * exp(- x.^2 / (2*sigma^2));
+
         
         %define fit parameters
-        funcs.objective = @(p) sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile).^2);
+        funcs.objective = @(p) sum((gauss(axisGauss, p(1), p(2)) - profile).^2);
         
-        funcs.gradient = @(p) [ 2 * sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile) * p(4) .* ...  
-                                    (-1 / (2 * pi * p(2)^2) * exp(-axisGauss.^2 / (2 * p(2)^2)) + 1 / (2 * pi * p(3)^2) .* exp(-axisGauss.^2 / (2 * p(3)^2))));
-                                2 * sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile) * p(4) .* ...                                   
-                                    ((1 - p(1)) .* axisGauss.^2 / (2 * pi * p(2)^5) - (1 - p(1)) / (pi * p(2)^3)) .* exp(-axisGauss.^2 / (2 * p(2)^2)));            
-                                2 * sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile) * p(4) .* ...
-                                    (p(1) .* axisGauss.^2 / (2 * pi * p(3)^5) - p(1) / (pi *p(3)^3)) .* exp(-axisGauss.^2 / (2 * p(3)^2)));
-                                2 *        sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile) .* gauss(axisGauss, p(1), p(2), p(3), p(4)) / p(4))];
-                                
-                                
+        funcs.gradient = @(p) [ sum(2 * (p(1) * exp(-axisGauss.^2 / (2 * p(2)^2)) - profile) ...
+                                                .* exp(-axisGauss.^2 / (2 * p(2)^2)));
+                                sum(2 * (p(1) * exp(-axisGauss.^2 / (2 * p(2)^2)) - profile) ...
+                                                .* p(1) .* exp(-axisGauss.^2 / (2 * p(2)^2)) .* axisGauss.^2 / p(2)^3)];
 
-        options.lb = [0,  0, 0, 0];
-        options.ub = [ 0.5,  10, 50, Inf];
-
-%         options.ipopt.tol = 1e-12;
+        options.lb = [0,  0];
+        options.ub = [ Inf,  Inf];
+    
         options.ipopt.hessian_approximation = 'limited-memory';
         options.ipopt.limited_memory_update_type = 'bfgs';
-%         options.ipopt.print_level = 1;
-
+        options.ipopt.print_level = 1;
+        
         %run fit and calculate actual sigma by squared substracting initial
         %sigma / spotsize
-
-        start = [0.002, 5, 15, 1e-3];
+        start = [1; 1];
         [fitResult, ~] = ipopt (start, funcs, options);
-        
-        semilogy(axisGauss, gauss(axisGauss, fitResult(1), fitResult(2), fitResult(3), fitResult(4)));
-        ylim([1e-10 1e-2]);
-        xlim([-50 50]);
-        hold on
-        scatter(axisGauss,profile);
-        hold off
+    
+    
+    
+    
+    
+    
+% % %         %save cast perpendicular to beam axis in profile
+% % %         profile = resultGUI.physicalDose(i,:,200);
+% % %         gauss = @(x, w, sigma1, sigma2, A) A * ((1 - w) / (2 * pi * sigma1^2) * exp(- x.^2 / (2*sigma1^2)) + ...
+% % %                                             w   / (2 * pi * sigma2^2) * exp(- x.^2 / (2*sigma2^2))); 
+% % %         
+% % %         
+% % %         
+% % %         %define fit parameters
+% % %         funcs.objective = @(p) sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile).^2);
+% % %         
+% % %         funcs.gradient = @(p) [ 2 * sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile) * p(4) .* ...  
+% % %                                     (-1 / (2 * pi * p(2)^2) * exp(-axisGauss.^2 / (2 * p(2)^2)) + 1 / (2 * pi * p(3)^2) .* exp(-axisGauss.^2 / (2 * p(3)^2))));
+% % %                                 2 * sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile) * p(4) .* ...                                   
+% % %                                     ((1 - p(1)) .* axisGauss.^2 / (2 * pi * p(2)^5) - (1 - p(1)) / (pi * p(2)^3)) .* exp(-axisGauss.^2 / (2 * p(2)^2)));            
+% % %                                 2 * sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile) * p(4) .* ...
+% % %                                     (p(1) .* axisGauss.^2 / (2 * pi * p(3)^5) - p(1) / (pi *p(3)^3)) .* exp(-axisGauss.^2 / (2 * p(3)^2)));
+% % %                                 2 *        sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile) .* gauss(axisGauss, p(1), p(2), p(3), p(4)) / p(4))];
+% % %                                 
+% % %                                 
+% % % 
+% % %         options.lb = [0,  0, 0, 0];
+% % %         options.ub = [ 0.5,  10, 50, Inf];
+% % % 
+% % %         options.ipopt.hessian_approximation = 'limited-memory';
+% % %         options.ipopt.limited_memory_update_type = 'bfgs';
+% % %         options.ipopt.print_level = 1;
+% % % 
+% % %         %run fit and calculate actual sigma by squared substracting initial
+% % %         %sigma / spotsize
+% % % 
+% % %         start = [0.002, 5, 15, 1e-3];
+% % %         [fitResult, ~] = ipopt (start, funcs, options);
 
 
         if(fitResult(2) > spotIso)
@@ -193,6 +220,7 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
     
     display(['baseData Progress :', ' ', num2str(round(count/nEnergy*100)), '%']);
     count = count + 1;
+    toc
 end
 
 %save new machine

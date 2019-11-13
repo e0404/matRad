@@ -18,25 +18,30 @@ matRad_rc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-load TG119.mat
+%load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM
-%load BOXPHANTOMv2.mat
+%load BOXPHANTOM.mat
+load BOXPHANTOM_LUNG_NARROW_NEW.mat
+% load phantomTest.mat
+
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'MCsquareFit';
+pln.machine         = 'HitfixedBL';
 
 pln.numOfFractions  = 30;
 
 % beam geometry settings
-pln.propStf.bixelWidth      = 50; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.longitudinalSpotSpacing = 50;
+pln.propStf.bixelWidth      = 10; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.longitudinalSpotSpacing = 10;
 pln.propStf.gantryAngles    = 0; % [?] 
 pln.propStf.couchAngles     = 0; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+% pln.propStf.isoCenter       = [0,0,0];
+
                             
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = ct.resolution.x; % [mm]
@@ -58,15 +63,20 @@ if strcmp(pln.radiationMode,'photons')
     dij = matRad_calcPhotonDose(ct,stf,pln,cst);
     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
+    tic
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
+    toc
+    tic
     dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,100000);
+    toc
 end
 
+tic
 resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
 resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
 
 resultGUI.physicalDose_MC = resultGUI_MC.physicalDose;
-resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
-resultGUI.physicalDose_relDiff = (resultGUI.physicalDose - resultGUI.physicalDose_MC) ./ (resultGUI.physicalDose_MC + 0.0001);
-
+% resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
+% resultGUI.physicalDose_relDiff = (resultGUI.physicalDose - resultGUI.physicalDose_MC) ./ (resultGUI.physicalDose_MC + 0.0001);
+toc
 matRadGUI;
