@@ -39,17 +39,17 @@ cst{ixPTV,6}{1,1}.penalty     = 800;
  %% Input parameters
 
 %% Create a CT image series
-xDim = 700;
-yDim = 120;
-zDim = 120;
+xDim = 1100;
+yDim = 250;
+zDim = 250;
 
 cubeDim      = [xDim yDim zDim];
 ct.cube{1} = ones(cubeDim) * 1;
 ct.cube{1}(1,1,1) = 0; 
 
-ct.resolution.x = 0.5;
-ct.resolution.y = 0.5;
-ct.resolution.z = 0.5;
+ct.resolution.x = 0.32;
+ct.resolution.y = 0.32;
+ct.resolution.z = 0.32;
 
 ct.cubeDim = cubeDim;
 
@@ -57,7 +57,7 @@ ct.numOfCtScen  = 1;
 
 
 %% Lets create either a cubic or a spheric phantom
-iso = [600,60,60];
+iso = [800,125,125];
 
 % create an ct image series with zeros - it will be filled later
 ct.cubeHU{1} = ones(ct.cubeDim) * 0;
@@ -102,4 +102,4 @@ ct1 = ct;
 cst1 = cst;
 
 clearvars -except ct cst
-save('BOXPHANTOM_LUNG_NARROW_NEW.mat')
+save('BOXPHANTOM_NARROW_NEW.mat')

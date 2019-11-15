@@ -23,7 +23,7 @@ matRad_rc
 %load LIVER.mat
 %load BOXPHANTOM
 %load BOXPHANTOM.mat
-load BOXPHANTOM_LUNG_NARROW_NEW.mat
+load BOXPHANTOM_NARROW_NEW.mat
 % load phantomTest.mat
 
 
@@ -57,28 +57,38 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
+load protons_HITfixedBL
+stf.ray.energy = machine.data(end).energy;
 
 %% dose calculation
 if strcmp(pln.radiationMode,'photons')
     dij = matRad_calcPhotonDose(ct,stf,pln,cst);
     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-    tic
-    dij = matRad_calcParticleDose(ct,stf,pln,cst);
-    toc
-    tic
-    %dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,100000);
-    resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),100000);
-    toc
     
+%     dij = matRad_calcParticleDose(ct,stf,pln,cst);
+    %dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,100000);
+    resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),1000000);
+   
 end
 
-tic
-resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
+% resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
 %resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
-
 resultGUI.physicalDose_MC = resultGUI_MC.physicalDose;
 % resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
 % resultGUI.physicalDose_relDiff = (resultGUI.physicalDose - resultGUI.physicalDose_MC) ./ (resultGUI.physicalDose_MC + 0.0001);
-toc
-matRadGUI;
+
+IDD = sum(sum(resultGUI.physicalDose_MC,2),3);
+IDD = reshape(IDD,1100,1);
+IDD = [IDD(1); IDD];
+IDDnotZero = find(IDD);
+
+depthsIDD = 0 : ct.resolution.x : ct.resolution.x * ct.cubeDim(1);
+plot(depthsIDD, IDD);
+hold on
+
+IDD = IDD(IDDnotZero);
+depthsIDD = depthsIDD(IDDnotZero);
+IDD = interp1(depthsIDD, IDD, 0:0.05:depthsIDD(end), 'spline')
+plot(0:0.05:depthsIDD(end), IDD);
+

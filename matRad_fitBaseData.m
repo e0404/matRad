@@ -21,7 +21,7 @@ matRad_rc
 %load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-load phantomTest.mat
+load BOXPHANTOM_NARROW_NEW.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
@@ -36,7 +36,7 @@ pln.propStf.gantryAngles    = 0; % [?]
 pln.propStf.couchAngles     = 0; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = [ct.cubeDim(2) / 2 * ct.resolution.y, ...
-                                ct.cubeDim(1) / 2 * ct.resolution.x, ...
+                                0, ...
                                 ct.cubeDim(3) / 2 * ct.resolution.z];
 
 % dose calculation settings
@@ -51,11 +51,8 @@ pln.propOpt.bioOptimization = 'none'; % none: physical optimization;            
 pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
-matRadGUI
-
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
-
 
 %% baseData fitting
  
@@ -71,25 +68,30 @@ spotMC      = str2double(tmp(:,6));
 divMC       = str2double(tmp(:,7));
 corMC       = str2double(tmp(:,8));
   
-minEnergy = 224;
+minEnergy = 70;
 maxEnergy = 225;
-nEnergy   = 156;  
+nEnergy   = 100;  
 
 count = 1;
 for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
     tic
     %assign energy to stf and run MC simulation
     stf.ray.energy = currentEnergy;
-    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,10000000);
-    resultGUI = matRad_calcCubes(ones(dijMC.totalNumOfBixels,1),dijMC);           
+    resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),10000000);          
 
     %extract IDD and calculate according depths/lengths for IDD and Gaussian fit
     IDD = sum(sum(resultGUI.physicalDose,2),3);
-    IDD = reshape(IDD,400,1);
+    IDD = reshape(IDD,1100,1);
     IDD = [IDD(1); IDD];
+    IDDnotZero = find(IDD);
+    IDD = IDD(IDDnotZero);
     
     depthsIDD = 0 : ct.resolution.y : ct.resolution.y * ct.cubeDim(2);
-    axisGauss = linspace( -ct.resolution.x * ct.cubeDim(1) / 2, ct.resolution.x * ct.cubeDim(1) / 2, ct.cubeDim(1)) + ct.resolution.x/2;
+    depthsIDD = depthsIDD(IDDnotZero);
+    IDD = interp1(depthsIDD, IDD, 0:0.05:depthsIDD(end), 'spline');
+    depthsIDD = 0:0.05:depthsIDD(end);
+    
+    axisGauss = linspace( -ct.resolution.y * ct.cubeDim(2) / 2, ct.resolution.y * ct.cubeDim(2) / 2, ct.cubeDim(2)) + ct.resolution.y/2;
     
     %calculate sigma/spotsize at isocenter using MC phase space data
     divNozzle = interp1(energyMC,divMC,currentEnergy); 
@@ -99,7 +101,7 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
     spotIso = sqrt(spotNozzle^2 + 2 * (corNozzle*spotNozzle + divNozzle * z) * divNozzle * z - divNozzle^2*z^2);
     
     resSigma = [];
-    for i = 1:400
+    for i = 1:numel(IDDnotZero)
     %curve fitting gaussians
         
         
@@ -123,15 +125,20 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
         options.ipopt.hessian_approximation = 'limited-memory';
         options.ipopt.limited_memory_update_type = 'bfgs';
         options.ipopt.print_level = 1;
+        options.ipopt.tol = 1e-16;
         
         %run fit and calculate actual sigma by squared substracting initial
         %sigma / spotsize
-        start = [1; 1];
+        ixMid = round(numel(profile)/2);
+        start = [sum(profile(ixMid-1:ixMid+1))/3; spotIso];
         [fitResult, ~] = ipopt (start, funcs, options);
+        
     
-    
-    
-    
+        plot(axisGauss, gauss(axisGauss, fitResult(1), fitResult(2)))
+        hold on
+        plot(axisGauss, profile)
+        hold off
+        
     
     
 % % %         %save cast perpendicular to beam axis in profile
@@ -224,4 +231,4 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
 end
 
 %save new machine
-% save('protons_testMachine', 'machine');
+save('protons_testMachineFit', 'machine');
