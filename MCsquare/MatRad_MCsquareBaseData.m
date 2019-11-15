@@ -147,51 +147,64 @@ classdef MatRad_MCsquareBaseData
             d50_r = interp1(newDose(maxI + d50rInd - 1:maxI + d50rInd + 1), ...
                                     newDepths(maxI + d50rInd - 1:maxI + d50rInd + 1), 0.5 * maxV);
 
-            array1 = newDepths(maxI-round(d50rInd):maxI+d50rInd);
-            array2 = newDose(maxI-round(d50rInd):maxI+d50rInd);  
+%             array1 = newDepths(maxI-round(d50rInd):maxI+d50rInd);
+%             array2 = newDose(maxI-round(d50rInd):maxI+d50rInd);  
+% 
+%             gauss = @(x, a, sigma, b) a * exp(- (x - b).^2 / (2*sigma^2));
+% 
+%             funcs.objective = @(p) sum((gauss(array1, p(1), p(2),p(3)) - array2).^2);
+% 
+%             funcs.gradient = @(p) [ sum(2 * (p(1) * exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) - array2) ...
+%                                                     .* exp(- (array1 - p(3)).^2 / (2 * p(2)^2)));
+%                                     sum(2 * (p(1) * exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) - array2) ...
+%                                                     .* p(1) .* exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) .* (array1 - p(3)).^2 / p(2)^3)
+%                                     sum(2 * (p(1) * exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) - array2) ...
+%                                                     .* p(1) .* exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) .* 2 .* (array1 - p(3)) / (2 * p(2)^2))];
+% 
+%             options.lb = [0,  0, 0];
+%             options.ub = [ Inf, Inf, Inf];
+%             options.ipopt.limited_memory_update_type = 'bfgs';
+%             options.ipopt.hessian_approximation = 'limited-memory';
+%             options.ipopt.print_level = 1;
+% 
+%             start = [maxV, 2 * d50_r, newDepths(maxI)];
+%             [fitResult, ~] = ipopt (start, funcs, options);
+%             sigmaBragg = fitResult(2);
+%             fwhmBragg = 2.3548 * sigmaBragg; %[mm]
 
-            gauss = @(x, a, sigma, b) a * exp(- (x - b).^2 / (2*sigma^2));
-
-            funcs.objective = @(p) sum((gauss(array1, p(1), p(2),p(3)) - array2).^2);
-
-            funcs.gradient = @(p) [ sum(2 * (p(1) * exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) - array2) ...
-                                                    .* exp(- (array1 - p(3)).^2 / (2 * p(2)^2)));
-                                    sum(2 * (p(1) * exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) - array2) ...
-                                                    .* p(1) .* exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) .* (array1 - p(3)).^2 / p(2)^3)
-                                    sum(2 * (p(1) * exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) - array2) ...
-                                                    .* p(1) .* exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) .* 2 .* (array1 - p(3)) / (2 * p(2)^2))];
-
-            options.lb = [0,  0, 0];
-            options.ub = [ Inf, Inf, Inf];
-            options.ipopt.limited_memory_update_type = 'bfgs';
-            options.ipopt.hessian_approximation = 'limited-memory';
-            options.ipopt.print_level = 1;
-
-            start = [maxV, 2 * d50_r, newDepths(maxI)];
-            [fitResult, ~] = ipopt (start, funcs, options);
-            sigmaBragg = fitResult(2);
+            if (newDose(1) < 0.4 * maxV)
+                [~, d50lInd] = min(abs(newDose(1:maxI) - 0.5*maxV));
+                d50_l = interp1(newDose(d50lInd - 1:d50lInd + 1), ...
+                                newDepths(d50lInd - 1:d50lInd + 1), 0.5 * maxV);
+                w50 = d50_r - d50_l;
+            %if width left of peak can be determined use twice the width to
+            %the right and throw out a warning after calculation
+            else
+                w50 = (d50_r - obj.machine.data(i).depths(maxI)) * 2;
+            end
             
-            %{            
-            Fit to spreadData in dependence of sigmaBragg and energy:
-            x = energy; y = sigmaBragg;
-            f(x,y) = p00 + p10*x + p01*y + p20*x^2 + p11*x*y + p02*y^2
-            Coefficients (with 95% confidence bounds):
-                p00 =      0.4065  (-0.9749, 1.788)
-                p10 =   -0.006595  (-0.03623, 0.02305)
-                p01 =      0.4658  (-0.2941, 1.226)
-                p20 =   0.0001436  (8.193e-05, 0.0002052)
-                p11 =    -0.01266  (-0.02009, -0.005244)
-                p02 =      0.2373  (-0.01207, 0.4868)
-            %}
-            eSpread = @(E, sigma) 0.4065 - 0.006595 * E + 0.4658 * sigma + 0.0001436 * E^2 - 0.01266 * E * sigma + 0.2373 * sigma^2;
-
+            fwhmBragg = w50;
+            
+            
 
             %calculate mean energy according to the mcSquare documentation
             %using the 80% dose range
             mcData.MeanEnergy = exp(3.464048 + 0.561372013*log(r80/10) - 0.004900892*log(r80/10)^2+0.001684756748*log(r80/10)^3); 
 
-            mcData.EnergySpread = eSpread(mcData.NominalEnergy, sigmaBragg);
-            
+            %calculate energy straggling using formulae from paper "An
+            %analytical approximation of the Bragg curve for 
+            %therapeuticproton beams" by T. Bortfeld
+            fullSigSq = (fwhmBragg  / 6.14)^2;
+            sigRangeStragSq = (0.012 * r80)^2;
+
+            %calculate Energy straggling using total range straggling,
+            %catch error when sqrt gives imaginary results, then set energy
+            %straggling to default value given in mcSquare documentation
+            if((fullSigSq - sigRangeStragSq) > 0)
+                mcData.EnergySpread = sqrt(fullSigSq - sigRangeStragSq);
+            else
+                mcData.EnergySpread = 0.6; 
+            end            
 
             %calculate geometric distances and extrapolate spot size at nozzle
             SAD = obj.machine.meta.SAD;
@@ -226,7 +239,7 @@ classdef MatRad_MCsquareBaseData
             CorrelationAtNozzle = (rho * sigmaNull - sigmaT * obj.nozzleToIso) / SpotsizeAtNozzle;
 
             %save calcuated beam optics data in mcData
-            mcData.ProtonsMU     = 1e2;
+            mcData.ProtonsMU     = 1e6;
 
             mcData.Weight1       = 1;
             mcData.SpotSize1x    = SpotsizeAtNozzle;
@@ -245,7 +258,7 @@ classdef MatRad_MCsquareBaseData
             mcData.Correlation2y = 0;
         end
                           
-        function obj = writeToBDLfile(obj,filepath)
+        function obj = writeToBDLfile(obj,filepath, mean, spread)
             %writeToBDLfile write the base data to file "filepath"
             
             
@@ -259,6 +272,8 @@ classdef MatRad_MCsquareBaseData
                 selectedData = [selectedData, obj.mcSquareData(focusIndex(i), i)];
             end
             
+            selectedData.MeanEnergy = mean;
+            selectedData.EnergySpread = spread;
             obj.dataTable = struct2table(selectedData);
             
             

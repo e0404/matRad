@@ -21,7 +21,7 @@ matRad_rc
 %load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-load BOXPHANTOM.mat
+load BOXPHANTOMv3.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
@@ -52,19 +52,76 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
 
-%% dose calculation
-if strcmp(pln.radiationMode,'photons')
-    dij = matRad_calcPhotonDose(ct,stf,pln,cst);
-    %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
-elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
+load protons_HITfixedBL.mat
+stf.ray.energy = machine.data(241).energy;
+
+
+load protons_HITfixedBL
+                      
+num = 22;
+spreads       = linspace( 0, 0.6, num);
+energyOffsets = linspace(-3, 2.5, num);
+
+count = 1;
+for centerEnergy = [machine.data(1:18:end).energy, machine.data(end).energy]
+    
+    erg{count,1} = centerEnergy;
+    
+    stf.ray.energy = centerEnergy;
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
-    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst);
+    resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
+    ixE = 1;
+    for offset = energyOffsets
+    
+        mean = centerEnergy + offset;
+        erg{count, 2}(1,ixE) = mean;
+        
+        ixSpread = 1;
+        for spread = spreads
+            erg{count, 3}(1,ixSpread) = spread;
+            dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,1000000,0,mean,spread);
+            resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
+            resultGUI.physicalDose_MC = resultGUI_MC.physicalDose;
+
+            mcIDD  = sum(sum(resultGUI.physicalDose_MC,2),3);
+            anaIDD = sum(sum(resultGUI.physicalDose,2),3);
+            erg{count,4}(ixE,ixSpread) = sum((mcIDD - anaIDD).^2);
+            
+            
+            ixSpread = ixSpread + 1;
+        end       
+        ixE = ixE + 1;
+    end
+    count = count + 1;
 end
 
-resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
-resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
 
-resultGUI.physicalDose_MC = resultGUI_MC.physicalDose;
-resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
 
-matRadGUI;
+
+
+
+% 
+% 
+% %% dose calculation
+% if strcmp(pln.radiationMode,'photons')
+%     dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+%     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
+% elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
+%     dij = matRad_calcParticleDose(ct,stf,pln,cst);
+%     dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,1000000,0,213.25,0.45);
+% end
+% 
+% resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
+% resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
+% 
+% resultGUI.physicalDose_MC = resultGUI_MC.physicalDose;
+% mcIDD  = sum(sum(resultGUI.physicalDose_MC,2),3);
+% anaIDD = sum(sum(resultGUI.physicalDose,2),3);
+% sqDev = sum((mcIDD - anaIDD).^2);
+% 
+% plot(mcIDD)
+% hold on
+% plot(anaIDD)
+% % resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
+
+% matRadGUI;
