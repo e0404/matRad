@@ -25,7 +25,7 @@ load BOXPHANTOMv3.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'HITfixedBL';
+pln.machine         = 'HITmcSquare';
 
 pln.numOfFractions  = 30;
 
@@ -52,27 +52,24 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
 
-
-%% meanEnergy vs nomEnergy 
-p1 =   2.954e-11;      
-p2 =  -2.324e-08;  
-p3 =   7.422e-06;  
-p4 =   -0.001226;  
-p5 =      0.1178;  
-p6 =       42.65;  
-
-meanEnergy = @(x) p1 .* x.^5 + p2 .* x.^4 + p3 .* x.^3 + p4 .* x.^2 + p5 .* x + p6;
-
-
-%% spreads vs nomEnergy
-q1 =  -6.406e-12;
-q2 =   4.764e-09;
-q3 =  -1.452e-06;
-q4 =   0.0002221;
-q5 =    -0.01699;
-q6 =      0.9305;
- 
-spread = @(x) q1*x^5 + q2*x^4 + q3*x^3 + q4*x^2 + q5*x + q6;
+load protons_HITmcSquare.mat
+stf.ray.energy = machine.data(1).energy;
+% 
+% %% meanEnergy vs nomEnergy 
+% p1 =  -5.472e-05;
+% p2 =        1.03;
+% p3 =      -3.109;
+% meanEnergy = @(x) p1*x^2 + p2*x + p3;
+% 
+% %% spreads vs nomEnergy
+% q1 =  -6.406e-12;
+% q2 =   4.764e-09;
+% q3 =  -1.452e-06;
+% q4 =   0.0002221;
+% q5 =    -0.01699;
+% q6 =      0.9305;
+%  
+% spread = @(x) q1*x^5 + q2*x^4 + q3*x^3 + q4*x^2 + q5*x + q6;
       
        
 %% dose calculation
@@ -81,7 +78,7 @@ if strcmp(pln.radiationMode,'photons')
     dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
-    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,1000000,0,46.1676,0.5);
+    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,1000000);
 end
 
 resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
@@ -101,8 +98,15 @@ matRadGUI;
 
 
 
-
-
+% 
+% %% write new machine
+% 
+% for i = 1:numel(machine.data)
+%     for k = 1:4
+%         machine.data(i).mcSquareData(k).MeanEnergy   = meanEnergy(machine.data(i).mcSquareData(k).NominalEnergy);
+%         machine.data(i).mcSquareData(k).EnergySpread = spread(machine.data(i).mcSquareData(k).NominalEnergy);
+%     end
+% end
 
 
 
