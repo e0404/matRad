@@ -50,28 +50,10 @@ pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will b
 pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
 %% generate steering file
-stf = matRad_generateStf(ct,cst,pln);
-
-load protons_HITmcSquare.mat
-stf.ray.energy = machine.data(1).energy;
-% 
-% %% meanEnergy vs nomEnergy 
-% p1 =  -5.472e-05;
-% p2 =        1.03;
-% p3 =      -3.109;
-% meanEnergy = @(x) p1*x^2 + p2*x + p3;
-% 
-% %% spreads vs nomEnergy
-% q1 =  -6.406e-12;
-% q2 =   4.764e-09;
-% q3 =  -1.452e-06;
-% q4 =   0.0002221;
-% q5 =    -0.01699;
-% q6 =      0.9305;
-%  
-% spread = @(x) q1*x^5 + q2*x^4 + q3*x^3 + q4*x^2 + q5*x + q6;
+stf = matRad_generateStf(ct,cst,pln);     
       
-       
+load protons_HITmcSquare.mat
+stf.ray.energy = machine.data(end).energy;
 %% dose calculation
 if strcmp(pln.radiationMode,'photons')
     dij = matRad_calcPhotonDose(ct,stf,pln,cst);
@@ -84,73 +66,8 @@ end
 resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
 resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
 
-resultGUI.physicalDose_MC = resultGUI_MC.physicalDose;
-mcIDD  = sum(sum(resultGUI.physicalDose_MC,2),3);
-anaIDD = sum(sum(resultGUI.physicalDose,2),3);
-sqDev = sum((mcIDD - anaIDD).^2);
+resultGUI.physicalDose_MC = resultGUI_MC.physicalDose ;
 
-plot(mcIDD)
-hold on
-plot(anaIDD)
 resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
 
 matRadGUI;
-
-
-
-% 
-% %% write new machine
-% 
-% for i = 1:numel(machine.data)
-%     for k = 1:4
-%         machine.data(i).mcSquareData(k).MeanEnergy   = meanEnergy(machine.data(i).mcSquareData(k).NominalEnergy);
-%         machine.data(i).mcSquareData(k).EnergySpread = spread(machine.data(i).mcSquareData(k).NominalEnergy);
-%     end
-% end
-
-
-
-
-
-
-
-
-
-%%                       
-% num = 22;
-% spreads       = linspace( 0, 0.6, num);
-% energyOffsets = linspace(-3, 2.5, num);
-% 
-% count = 1;
-% for centerEnergy = [machine.data(1:18:end).energy, machine.data(end).energy]
-%     
-%     erg{count,1} = centerEnergy;
-%     
-%     stf.ray.energy = centerEnergy;
-%     dij = matRad_calcParticleDose(ct,stf,pln,cst);
-%     resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
-%     ixE = 1;
-%     for offset = energyOffsets
-%     
-%         mean = centerEnergy + offset;
-%         erg{count, 2}(1,ixE) = mean;
-%         
-%         ixSpread = 1;
-%         for spread = spreads
-%             erg{count, 3}(1,ixSpread) = spread;
-%             dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,1000000,0,mean,spread);
-%             resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
-%             resultGUI.physicalDose_MC = resultGUI_MC.physicalDose;
-% 
-%             mcIDD  = sum(sum(resultGUI.physicalDose_MC,2),3);
-%             anaIDD = sum(sum(resultGUI.physicalDose,2),3);
-%             erg{count,4}(ixE,ixSpread) = sum((mcIDD - anaIDD).^2);
-%             
-%             
-%             ixSpread = ixSpread + 1;
-%         end       
-%         ixE = ixE + 1;
-%     end
-%     count = count + 1;
-% end
-

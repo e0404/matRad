@@ -1,6 +1,7 @@
 classdef MatRad_MCsquareBaseData
-%MatRad_MCsquareBaseData Maps the matRad base data to MCsquare base data /
-%phase space file
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad_MCsquareBaseData Maps the matRad base data to MCsquare base data /
+% phase space file
 %
 %
 %
@@ -147,31 +148,6 @@ classdef MatRad_MCsquareBaseData
             d50_r = interp1(newDose(maxI + d50rInd - 1:maxI + d50rInd + 1), ...
                                     newDepths(maxI + d50rInd - 1:maxI + d50rInd + 1), 0.5 * maxV);
 
-%             array1 = newDepths(maxI-round(d50rInd):maxI+d50rInd);
-%             array2 = newDose(maxI-round(d50rInd):maxI+d50rInd);  
-% 
-%             gauss = @(x, a, sigma, b) a * exp(- (x - b).^2 / (2*sigma^2));
-% 
-%             funcs.objective = @(p) sum((gauss(array1, p(1), p(2),p(3)) - array2).^2);
-% 
-%             funcs.gradient = @(p) [ sum(2 * (p(1) * exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) - array2) ...
-%                                                     .* exp(- (array1 - p(3)).^2 / (2 * p(2)^2)));
-%                                     sum(2 * (p(1) * exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) - array2) ...
-%                                                     .* p(1) .* exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) .* (array1 - p(3)).^2 / p(2)^3)
-%                                     sum(2 * (p(1) * exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) - array2) ...
-%                                                     .* p(1) .* exp(- (array1 - p(3)).^2 / (2 * p(2)^2)) .* 2 .* (array1 - p(3)) / (2 * p(2)^2))];
-% 
-%             options.lb = [0,  0, 0];
-%             options.ub = [ Inf, Inf, Inf];
-%             options.ipopt.limited_memory_update_type = 'bfgs';
-%             options.ipopt.hessian_approximation = 'limited-memory';
-%             options.ipopt.print_level = 1;
-% 
-%             start = [maxV, 2 * d50_r, newDepths(maxI)];
-%             [fitResult, ~] = ipopt (start, funcs, options);
-%             sigmaBragg = fitResult(2);
-%             fwhmBragg = 2.3548 * sigmaBragg; %[mm]
-
             if (newDose(1) < 0.4 * maxV)
                 [~, d50lInd] = min(abs(newDose(1:maxI) - 0.5*maxV));
                 d50_l = interp1(newDose(d50lInd - 1:d50lInd + 1), ...
@@ -181,12 +157,11 @@ classdef MatRad_MCsquareBaseData
             %the right and throw out a warning after calculation
             else
                 w50 = (d50_r - obj.machine.data(i).depths(maxI)) * 2;
+                obj.problemSigma = true;
             end
             
             fwhmBragg = w50;
             
-            
-
             %calculate mean energy according to the mcSquare documentation
             %using the 80% dose range
             mcData.MeanEnergy = exp(3.464048 + 0.561372013*log(r80/10) - 0.004900892*log(r80/10)^2+0.001684756748*log(r80/10)^3); 
@@ -203,7 +178,8 @@ classdef MatRad_MCsquareBaseData
             if((fullSigSq - sigRangeStragSq) > 0)
                 mcData.EnergySpread = sqrt(fullSigSq - sigRangeStragSq);
             else
-                mcData.EnergySpread = 0.6; 
+                mcData.EnergySpread = 0.6;                 
+                obj.problemSigma = true;
             end            
 
             %calculate geometric distances and extrapolate spot size at nozzle
@@ -258,7 +234,7 @@ classdef MatRad_MCsquareBaseData
             mcData.Correlation2y = 0;
         end
                           
-        function obj = writeToBDLfile(obj,filepath, mean, spread)
+        function obj = writeToBDLfile(obj,filepath)
             %writeToBDLfile write the base data to file "filepath"
             
             
@@ -272,11 +248,8 @@ classdef MatRad_MCsquareBaseData
                 selectedData = [selectedData, obj.mcSquareData(focusIndex(i), i)];
             end
             
-            selectedData.MeanEnergy = mean;
-            selectedData.EnergySpread = spread;
             obj.dataTable = struct2table(selectedData);
-            
-            
+                        
             machine = obj.machine;
             
             try
