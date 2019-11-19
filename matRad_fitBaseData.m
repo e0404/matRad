@@ -68,16 +68,15 @@ spotMC      = str2double(tmp(:,6));
 divMC       = str2double(tmp(:,7));
 corMC       = str2double(tmp(:,8));
   
-minEnergy = 70;
+minEnergy = 220;
 maxEnergy = 225;
-nEnergy   = 100;  
+nEnergy   = 3;  
 
 count = 1;
 for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
-    tic
     %assign energy to stf and run MC simulation
     stf.ray.energy = currentEnergy;
-    resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),10000000);          
+    resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),1000000);          
 
     %extract IDD and calculate according depths/lengths for IDD and Gaussian fit
     IDD = sum(sum(resultGUI.physicalDose,2),3);
@@ -86,7 +85,7 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
     IDDnotZero = find(IDD);
     IDD = IDD(IDDnotZero);
     
-    depthsIDD = 0 : ct.resolution.y : ct.resolution.y * ct.cubeDim(2);
+    depthsIDD = 0 : ct.resolution.x : ct.resolution.x * ct.cubeDim(1);
     depthsIDD = depthsIDD(IDDnotZero);
     IDD = interp1(depthsIDD, IDD, 0:0.05:depthsIDD(end), 'spline');
     depthsIDD = 0:0.05:depthsIDD(end);
@@ -101,12 +100,12 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
     spotIso = sqrt(spotNozzle^2 + 2 * (corNozzle*spotNozzle + divNozzle * z) * divNozzle * z - divNozzle^2*z^2);
     
     resSigma = [];
-    for i = 1:numel(IDDnotZero)
+    for i = 1:(numel(IDDnotZero) - 1)
     %curve fitting gaussians
         
         
         %save cast perpendicular to beam axis in profile
-        profile = resultGUI.physicalDose(i,:,200);
+        profile = resultGUI.physicalDose(i,:,125);
 
         gauss = @(x, a, sigma) a * exp(- x.^2 / (2*sigma^2));
 
@@ -133,58 +132,25 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
         start = [sum(profile(ixMid-1:ixMid+1))/3; spotIso];
         [fitResult, ~] = ipopt (start, funcs, options);
         
-    
-        plot(axisGauss, gauss(axisGauss, fitResult(1), fitResult(2)))
-        hold on
-        plot(axisGauss, profile)
-        hold off
-        
-    
-    
-% % %         %save cast perpendicular to beam axis in profile
-% % %         profile = resultGUI.physicalDose(i,:,200);
-% % %         gauss = @(x, w, sigma1, sigma2, A) A * ((1 - w) / (2 * pi * sigma1^2) * exp(- x.^2 / (2*sigma1^2)) + ...
-% % %                                             w   / (2 * pi * sigma2^2) * exp(- x.^2 / (2*sigma2^2))); 
-% % %         
-% % %         
-% % %         
-% % %         %define fit parameters
-% % %         funcs.objective = @(p) sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile).^2);
-% % %         
-% % %         funcs.gradient = @(p) [ 2 * sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile) * p(4) .* ...  
-% % %                                     (-1 / (2 * pi * p(2)^2) * exp(-axisGauss.^2 / (2 * p(2)^2)) + 1 / (2 * pi * p(3)^2) .* exp(-axisGauss.^2 / (2 * p(3)^2))));
-% % %                                 2 * sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile) * p(4) .* ...                                   
-% % %                                     ((1 - p(1)) .* axisGauss.^2 / (2 * pi * p(2)^5) - (1 - p(1)) / (pi * p(2)^3)) .* exp(-axisGauss.^2 / (2 * p(2)^2)));            
-% % %                                 2 * sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile) * p(4) .* ...
-% % %                                     (p(1) .* axisGauss.^2 / (2 * pi * p(3)^5) - p(1) / (pi *p(3)^3)) .* exp(-axisGauss.^2 / (2 * p(3)^2)));
-% % %                                 2 *        sum((gauss(axisGauss, p(1), p(2), p(3), p(4)) - profile) .* gauss(axisGauss, p(1), p(2), p(3), p(4)) / p(4))];
-% % %                                 
-% % %                                 
-% % % 
-% % %         options.lb = [0,  0, 0, 0];
-% % %         options.ub = [ 0.5,  10, 50, Inf];
-% % % 
-% % %         options.ipopt.hessian_approximation = 'limited-memory';
-% % %         options.ipopt.limited_memory_update_type = 'bfgs';
-% % %         options.ipopt.print_level = 1;
-% % % 
-% % %         %run fit and calculate actual sigma by squared substracting initial
-% % %         %sigma / spotsize
-% % % 
-% % %         start = [0.002, 5, 15, 1e-3];
-% % %         [fitResult, ~] = ipopt (start, funcs, options);
-
+%         plot(axisGauss, gauss(axisGauss, fitResult(1), fitResult(2)))
+%         hold on
+%         plot(axisGauss, profile)
+%         hold off
 
         if(fitResult(2) > spotIso)
             actualSigma = sqrt(fitResult(2)^2 - spotIso^2);
         else
             actualSigma = 0;
         end
-
+        
         resSigma = [resSigma, actualSigma];
     end   
 
+    depthsSigma = 0 : ct.resolution.x : ct.resolution.x * ct.cubeDim(1);
+    depthsSigma = depthsSigma(IDDnotZero);
+    
     resSigma = [0, resSigma];
+    resSigma = interp1(depthsSigma, resSigma, depthsIDD);
     
     %interpolate range at 80% dose after peak.
     [maxV, maxI] = max(IDD);
