@@ -68,9 +68,9 @@ spotMC      = str2double(tmp(:,6));
 divMC       = str2double(tmp(:,7));
 corMC       = str2double(tmp(:,8));
   
-minEnergy = 220;
+minEnergy = 70;
 maxEnergy = 225;
-nEnergy   = 3;  
+nEnergy   = 100;  
 
 count = 1;
 for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
@@ -85,7 +85,8 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
     IDDnotZero = find(IDD);
     IDD = IDD(IDDnotZero);
     
-    depthsIDD = 0 : ct.resolution.x : ct.resolution.x * ct.cubeDim(1);
+    depthsIDD = (ct.resolution.x / 2 : ct.resolution.x : ct.resolution.x * ct.cubeDim(1)) + ct.resolution.x;
+    depthsIDD = [0, depthsIDD];
     depthsIDD = depthsIDD(IDDnotZero);
     IDD = interp1(depthsIDD, IDD, 0:0.05:depthsIDD(end), 'spline');
     depthsIDD = 0:0.05:depthsIDD(end);
@@ -131,11 +132,6 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
         ixMid = round(numel(profile)/2);
         start = [sum(profile(ixMid-1:ixMid+1))/3; spotIso];
         [fitResult, ~] = ipopt (start, funcs, options);
-        
-%         plot(axisGauss, gauss(axisGauss, fitResult(1), fitResult(2)))
-%         hold on
-%         plot(axisGauss, profile)
-%         hold off
 
         if(fitResult(2) > spotIso)
             actualSigma = sqrt(fitResult(2)^2 - spotIso^2);
@@ -146,7 +142,8 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
         resSigma = [resSigma, actualSigma];
     end   
 
-    depthsSigma = 0 : ct.resolution.x : ct.resolution.x * ct.cubeDim(1);
+    depthsSigma = (ct.resolution.x / 2 : ct.resolution.x : ct.resolution.x * ct.cubeDim(1)) + ct.resolution.x;
+    depthsSigma = [0, depthsSigma];
     depthsSigma = depthsSigma(IDDnotZero);
     
     resSigma = [0, resSigma];
@@ -179,7 +176,7 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
 
     machine.data(count).depths = depthsIDD';
 
-    machine.data(count).Z = IDD * cf;
+    machine.data(count).Z = IDD' * cf;
 
     machine.data(count).peakPos = depthsIDD(maxI);
 
@@ -193,7 +190,6 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
     
     display(['baseData Progress :', ' ', num2str(round(count/nEnergy*100)), '%']);
     count = count + 1;
-    toc
 end
 
 %save new machine
