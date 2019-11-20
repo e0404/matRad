@@ -156,7 +156,7 @@ classdef MatRad_MCsquareBaseData
             %if width left of peak can be determined use twice the width to
             %the right and throw out a warning after calculation
             else
-                w50 = (d50_r - obj.machine.data(i).depths(maxI)) * 2;
+                w50 = (d50_r - newDepths(maxI)) * 2;
                 obj.problemSigma = true;
             end
             
