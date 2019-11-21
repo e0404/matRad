@@ -45,6 +45,12 @@ end
 if nargin < 5
     % set number of particles simulated per pencil beam
     nCasePerBixel = 100000;
+else
+    if (nCasePerBixel < 1)
+        maxStatUncertainty = true;
+    else
+        maxStatUncertainty = false;
+    end
 end
 
 if nargin < 6
@@ -267,7 +273,12 @@ MCsquareConfig.BDL_Plan_File = 'currBixels.txt';
 MCsquareConfig.CT_File       = 'MC2patientCT.mhd';
 MCsquareConfig.Num_Threads   = nbThreads;
 MCsquareConfig.RNG_Seed      = 1234;
-MCsquareConfig.Num_Primaries = nCasePerBixel;
+
+if maxStatUncertainty
+    MCsquareConfig.Stat_uncertainty = nCasePerBixel;
+else
+    MCsquareConfig.Num_Primaries = nCasePerBixel;
+end
 
 % turn simulation of individual beamlets
 MCsquareConfig.Beamlet_Mode = ~calcDoseDirect;

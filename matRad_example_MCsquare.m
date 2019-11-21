@@ -18,10 +18,10 @@ matRad_rc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-%load TG119.mat
+load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-load BOXPHANTOMv3.mat
+% load BOXPHANTOMv3.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
@@ -52,15 +52,14 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);     
       
-load protons_HITmcSquare.mat
-stf.ray.energy = machine.data(end).energy;
+
 %% dose calculation
 if strcmp(pln.radiationMode,'photons')
     dij = matRad_calcPhotonDose(ct,stf,pln,cst);
     dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
-    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,1000000);
+    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,0.7);
 end
 
 resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
@@ -70,4 +69,7 @@ resultGUI.physicalDose_MC = resultGUI_MC.physicalDose ;
 
 resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
 
-matRadGUI;
+mcDose = reshape(resultGUI.physicalDose_MC, ct.cubeDim);
+anaDose = reshape(resultGUI.physicalDose, ct.cubeDim);
+
+% matRadGUI;
