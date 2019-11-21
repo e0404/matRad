@@ -156,43 +156,52 @@ void mexFunction(   int nlhs,   mxArray *plhs[],    int nrhs,   const mxArray *p
             
             file.read((char *) data, numCurrentReadVals * sizeof(float));
             
-            for(uint32_t readIx = 0; readIx < numCurrentReadVals; ++readIx){
-                
-                //If necessary reallocate space for non-zeros
-                if(currentNnz >= nnzMaxEstimate){
-                    oldNnzMaxEstimate = nnzMaxEstimate;
-                    percent_sparse += 0.001;
-                    nnzMaxEstimate = (mwSize) std::ceil((double)numVoxels * (double)numSpots * percent_sparse);
-                    
-                    if (nnzMaxEstimate <= oldNnzMaxEstimate) nnzMaxEstimate = oldNnzMaxEstimate + 1;
-                    
-                    mxSetNzmax(plhs[0], nnzMaxEstimate);
-                    mxSetPr(plhs[0], (double *) mxRealloc(vals, nnzMaxEstimate*sizeof(double)));
-                    mxSetIr(plhs[0], (mwIndex *) mxRealloc(ix, nnzMaxEstimate*sizeof(mwIndex)));
-                    
-                    vals  = mxGetPr(plhs[0]);
-                    ix = mxGetIr(plhs[0]);
-                }
-                
-                // get index
-                ixMC2 = ixFirst + readIx;
-                    
-                // get subscripts
-                kSub = ixMC2/numVoxelsSlice;
-                jSub = (ixMC2 - kSub*numVoxelsSlice)/sizeDoseGrid[1];
-                iSub = ixMC2 - jSub*sizeDoseGrid[1] - kSub*numVoxelsSlice;
-                    
-                // flip image
-                iSub = sizeDoseGrid[0] - iSub - 1;
+            for (uint32_t readIx = 0; readIx < numCurrentReadVals; ++readIx) {
 
-                // compute new index
-                ixMatRad = jSub + iSub*sizeDoseGrid[0] + kSub*numVoxelsSlice;
+              //If necessary reallocate space for non-zeros
+              if (currentNnz >= nnzMaxEstimate) {
+                oldNnzMaxEstimate = nnzMaxEstimate;
+                percent_sparse += 0.001;
+                nnzMaxEstimate = (mwSize)std::ceil((double)numVoxels * (double)numSpots * percent_sparse);
+
+                if (nnzMaxEstimate <= oldNnzMaxEstimate) nnzMaxEstimate = oldNnzMaxEstimate + 1;
+
+                mxSetNzmax(plhs[0], nnzMaxEstimate);
+                mxSetPr(plhs[0], (double *)mxRealloc(vals, nnzMaxEstimate * sizeof(double)));
+                mxSetIr(plhs[0], (mwIndex *)mxRealloc(ix, nnzMaxEstimate * sizeof(mwIndex)));
+
+                vals = mxGetPr(plhs[0]);
+                ix = mxGetIr(plhs[0]);
+              }
+
+              // get index
+              ixMC2 = ixFirst + readIx;
+
+              // get subscripts (NOTE: sizeDoseGrid is already permuted from the call within matRad)
+              kSub = ixMC2 / numVoxelsSlice;
+              jSub = (ixMC2 - kSub * numVoxelsSlice) / sizeDoseGrid[1];
+              //iSub = ixMC2 - jSub*sizeDoseGrid[1] - kSub*numVoxelsSlice;
+              iSub = (ixMC2 - kSub * numVoxelsSlice) % sizeDoseGrid[1];
+
+              // flip image (here we take the second dim because of permutation)
+              iSub = sizeDoseGrid[1] - iSub - 1;
+
+              // compute new index (now without permutation since we are in the matRad system)
+              ixMatRad = jSub + iSub*sizeDoseGrid[0] + kSub * numVoxelsSlice;
+
+              /*if (ixMatRad >= numVoxels || iSub >= sizeDoseGrid[1] || kSub >= sizeDoseGrid[2] || jSub >= sizeDoseGrid[0])
+              {
+                mexPrintf("Wrong Voxel dimension!");12ß
+                continue;
+              }
+              */
                 
                 if (x[ixMatRad]) {
                     vals[currentNnz] = (double) data[readIx];
                     ix[currentNnz]   = ixMatRad;
                     currentNnz ++;
                 }
+              
             }
             
 

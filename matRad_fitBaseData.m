@@ -76,7 +76,7 @@ count = 1;
 for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
     %assign energy to stf and run MC simulation
     stf.ray.energy = currentEnergy;
-    resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),1000000);          
+    resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),10000000);          
 
     %extract IDD and calculate according depths/lengths for IDD and Gaussian fit
     IDD = sum(sum(resultGUI.physicalDose,2),3);
@@ -194,3 +194,4 @@ end
 
 %save new machine
 save('protons_testMachineFit', 'machine');
+datetime

@@ -18,24 +18,24 @@ matRad_rc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-%load TG119.mat
+% load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM
-%load BOXPHANTOM.mat
-load BOXPHANTOM_NARROW_NEW.mat
+load BOXPHANTOM.mat
+% load BOXPHANTOM_NARROW_NEW.mat
 % load phantomTest.mat
 
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'testMachineFit';
+pln.machine         = 'matRadBDL';
 
 pln.numOfFractions  = 30;
 
 % beam geometry settings
-pln.propStf.bixelWidth      = 10; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.longitudinalSpotSpacing = 10;
+pln.propStf.bixelWidth      = 3; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.longitudinalSpotSpacing = 3;
 pln.propStf.gantryAngles    = 0; % [?] 
 pln.propStf.couchAngles     = 0; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
@@ -57,8 +57,7 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
-load protons_testMachineFit
-stf.ray.energy = machine.data(1).energy;
+
 
 %% dose calculation
 if strcmp(pln.radiationMode,'photons')
@@ -67,26 +66,29 @@ if strcmp(pln.radiationMode,'photons')
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
-%     dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,100000);
-    resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),1000000);
+    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,10000);
+%     resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),1000);
    
 end
 
 resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
 %resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
 resultGUI.physicalDose_MC = resultGUI_MC.physicalDose;
-% resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
-% resultGUI.physicalDose_relDiff = (resultGUI.physicalDose - resultGUI.physicalDose_MC) ./ (resultGUI.physicalDose_MC + 0.0001);
+resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
 
-mcIDD = sum(sum(resultGUI.physicalDose_MC,2),3);
-mcIDD = reshape(mcIDD,1100,1);
+mcDose = reshape(resultGUI.physicalDose_MC, ct.cubeDim);
+anaDose = reshape(resultGUI.physicalDose, ct.cubeDim);
 
-plot(mcIDD);
-hold on
+[gammaCube,gammaPassRateCell] = matRad_gammaIndex(mcDose,anaDose,ct.cubeDim,[2,2],round(ct.cubeDim(3)/2),0,'global',cst);
 
-anaIDD = sum(sum(resultGUI.physicalDose,2),3);
-anaIDD = reshape(anaIDD,1100,1);
-anaIDD = anaIDD * 0.32^2;
 
-plot(anaIDD);
-hold off
+% mcIDD = sum(sum(resultGUI.physicalDose_MC,2),3);
+% 
+% plot(mcIDD);
+% hold on
+% 
+% anaIDD = sum(sum(resultGUI.physicalDose,2),3);
+% anaIDD = anaIDD * 0.32^2;
+% 
+% plot(anaIDD);
+% hold off
