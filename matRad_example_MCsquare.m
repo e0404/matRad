@@ -25,7 +25,7 @@ load TG119.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'HITmcSquare';
+pln.machine         = 'generic_TOPAS_cropped';
 
 pln.numOfFractions  = 30;
 

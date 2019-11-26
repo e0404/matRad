@@ -170,15 +170,21 @@ classdef MatRad_MCsquareBaseData
             %analytical approximation of the Bragg curve for 
             %therapeuticproton beams" by T. Bortfeld
             fullSigSq = (fwhmBragg  / 6.14)^2;
-            sigRangeStragSq = (0.012 * r80)^2;
+            %sigRangeStragSq = (0.0129 * r80^0.935)^2; %Theoretical Formula
+            sigRangeStragSq = (1.374e-7 * r80^3  + 0.0001288  * r80^2 + ...
+                               0.003777 * r80    - 0.108); %TOPAS fit    
 
+
+            %mcData.RangeStragSq = sigRangeStragSq;
+            %mcData.Range = r80;
+            
             %calculate Energy straggling using total range straggling,
             %catch error when sqrt gives imaginary results, then set energy
-            %straggling to default value given in mcSquare documentation
-            if((fullSigSq - sigRangeStragSq) > 0)
+            %straggling to zero
+            if((fullSigSq - sigRangeStragSq) >= 0)
                 mcData.EnergySpread = sqrt(fullSigSq - sigRangeStragSq);
             else
-                mcData.EnergySpread = 0.6;                 
+                mcData.EnergySpread = 0;                 
                 obj.problemSigma = true;
             end            
 
