@@ -1,4 +1,16 @@
-% matRad script
+% description
+% 
+% call
+%    
+%
+% input
+%   
+%
+% output 
+%
+%  
+%
+% References
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -12,37 +24,32 @@
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 matRad_rc
 
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-% load TG119.mat
+%load TG119.mat
 %load PROSTATE.mat
 %load LIVER.mat
-%load BOXPHANTOM
-% load BOXPHANTOMv3.mat
 load BOXPHANTOM_NARROW_NEW.mat
-% load phantomTest.mat
-
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'generic';
+pln.machine         = 'HITfixedBL';
 
 pln.numOfFractions  = 30;
-
+ 
 % beam geometry settings
 pln.propStf.bixelWidth      = 50; % [mm] / also corresponds to lateral spot spacing for particles
 pln.propStf.longitudinalSpotSpacing = 50;
 pln.propStf.gantryAngles    = 0; % [?] 
 pln.propStf.couchAngles     = 0; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-% pln.propStf.isoCenter       = [0,0,0];
+pln.propStf.isoCenter       = [ct.cubeDim(2) / 2 * ct.resolution.y, ...
+                                0, ...
+                                ct.cubeDim(3) / 2 * ct.resolution.z];
 
-                            
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = ct.resolution.x; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = ct.resolution.y; % [mm]
@@ -57,53 +64,56 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
-load protons_generic
 
-stf.ray.energy = machine.data(1).energy;
-%% dose calculation
-if strcmp(pln.radiationMode,'photons')
-    dij = matRad_calcPhotonDose(ct,stf,pln,cst);
-    %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
-elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-    
-    dij = matRad_calcParticleDose(ct,stf,pln,cst);
-%     dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,100000);
-%     resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),1000);
-   
+%% baseData fitting
+ 
+%read MC phase space data
+dataMC = readtable('BDL_matrad.txt');             
+dataMC = dataMC{11:end,:};
+tmp = [];
+for i = 1:size(dataMC,1)    
+    tmp = [tmp; strsplit(dataMC{i})];
 end
+energyMC    = str2double(tmp(:,1));
+spotMC      = str2double(tmp(:,6));
+divMC       = str2double(tmp(:,7));
+corMC       = str2double(tmp(:,8));
+  
+minEnergy = 70;
+maxEnergy = 225;
+nEnergy   = 100;  
 
-resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
-% resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
+count = 1;
+tic
+for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
+    
+    % calculate sigma/spotsize at isocenter using MC phase space data
+    divNozzle = interp1(energyMC,divMC,currentEnergy); 
+    corNozzle = interp1(energyMC,corMC,currentEnergy); 
+    spotNozzle = interp1(energyMC,spotMC,currentEnergy); 
+    z = 420;
+    spotIso = sqrt(spotNozzle^2 + 2 * (corNozzle*spotNozzle + divNozzle * z) * divNozzle * z - divNozzle^2*z^2);
+    
+    %assign energy to stf and run MC simulation
+    stf.ray.energy = currentEnergy;
+    resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),10000000);          
+    
+    machine.data(count) = matRad_fitBaseData(resultGUI.physicalDose, ct.resolution, currentEnergy, spotIso);
 
-% resultGUI.physicalDose_MC = resultGUI_MC.physicalDose;
-% resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
-% 
-% mcDose = reshape(resultGUI.physicalDose_MC, ct.cubeDim);
-anaDose = reshape(resultGUI.physicalDose, ct.cubeDim);
+    disp(['baseData Progress :', ' ', num2str(round(count/nEnergy*100)), '%']);
+    count = count + 1;
+end
+toc
 
-fitData = matRad_fitBaseData(anaDose, ct.resolution, stf.ray.energy, 4.99807);
+%save data in machine
+machine.meta.radiationMode = 'protons';
+machine.meta.dataType = 'singleGauss';
+machine.meta.created_on = date;
+machine.meta.created_by = 'Paul Anton Meder';
+machine.meta.SAD = (2218 + 1839) / 2;
+machine.meta.BAMStoIsoDist = 420.0;
+machine.meta.machine = 'Generic';
+machine.meta.LUT_bxWidthminFWHM = [1, Inf; 8 ,8];
+  
 
-plot(fitData.depths, fitData.sigma)
-hold on
-% IDD = sum(sum(anaDose,2),3);
-% depthsIDD = (ct.resolution.x / 2 : ct.resolution.x : ct.resolution.x * ct.cubeDim(1));
-
-
-plot(machine.data(1).depths, machine.data(1).sigma)
-% plot(depthsIDD, IDD / (1.6021766208e-02 / ct.resolution.y / ct.resolution.z));
-hold off
-
-
-% [gammaCube,gammaPassRateCell] = matRad_gammaIndex(mcDose,anaDose,ct.cubeDim,[2,2],round(ct.cubeDim(3)/2),0,'global',cst);
-
-
-% mcIDD = sum(sum(resultGUI.physicalDose_MC,2),3);
-% 
-% plot(mcIDD);
-% hold on
-% 
-% anaIDD = sum(sum(resultGUI.physicalDose,2),3);
-% anaIDD = anaIDD * 0.32^2;
-% 
-% plot(anaIDD);
-% hold off
+datetime
