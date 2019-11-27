@@ -174,10 +174,6 @@ classdef MatRad_MCsquareBaseData
             sigRangeStragSq = (1.374e-7 * r80^3  + 0.0001288  * r80^2 + ...
                                0.003777 * r80    - 0.108); %TOPAS fit    
 
-
-            %mcData.RangeStragSq = sigRangeStragSq;
-            %mcData.Range = r80;
-            
             %calculate Energy straggling using total range straggling,
             %catch error when sqrt gives imaginary results, then set energy
             %straggling to zero

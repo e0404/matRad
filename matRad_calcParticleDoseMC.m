@@ -10,7 +10,8 @@ function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDi
 %   stf:                        matRad steering information struct
 %   pln:                        matRad plan meta information struct
 %   cst:                        matRad cst struct
-%   nCasePerBixel               number of histories per beamlet
+%   nCasePerBixel               number of histories per beamlet (nCasePerBixel > 1),
+%                               max stat uncertainity (0 < nCasePerBixel < 1)
 %   calcDoseDirect:             binary switch to enable forward dose
 %                               calcualtion
 % output
@@ -46,6 +47,8 @@ if nargin < 5
     % set number of particles simulated per pencil beam
     nCasePerBixel = 100000;
 else
+    % switch between either using max stat uncertainity or total number of
+    % cases
     if (nCasePerBixel < 1)
         maxStatUncertainty = true;
     else
@@ -261,7 +264,7 @@ MCsquareConfig = MatRad_MCsquareConfig;
 
 bdFile = [machine.meta.machine '.txt'];
 
-MCsquareBDL = MatRad_MCsquareBaseData(machine);
+MCsquareBDL = MatRad_MCsquareBaseData(machine, stf);
 %matRad_createMCsquareBaseDataFile(bdFile,machine,1);
 % MCsquareBDL = MCsquareBDL.saveMatradMachine('test');
 MCsquareBDL = MCsquareBDL.writeToBDLfile([MCsquareFolder filesep 'BDL' filesep bdFile]);
