@@ -4335,7 +4335,7 @@ for i = 1:size(cst,1)
                 h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{p}),'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
               end
               
-              tmp_pos = get(h,'Extent');
+              tmp_pos = get(h,'Position');
               xPos = xPos + tmp_pos(3) + fieldSep;
            end
 
