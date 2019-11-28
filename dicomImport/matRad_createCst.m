@@ -70,4 +70,7 @@ for i = 1:size(structures,2)
     cst{i,5}.alphaX  = 0.1;
     cst{i,5}.betaX   = 0.05;
     cst{i,5}.Visible = 1;
+    if isfield(structures(i),'structColor') && ~isempty(structures(i).structColor)
+        cst{i,5}.visibleColor = structures(i).structColor' ./ 255;
+    end
 end
