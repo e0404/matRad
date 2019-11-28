@@ -23,7 +23,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
     
     properties (Access = private)
         allObjectiveFunctionValues
+        allIterations
         axesHandle
+        plotHandle
         abortRequested
     end
     
@@ -148,6 +150,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.abortRequested = false;
             % Empty the array of stored function values
             obj.allObjectiveFunctionValues = [];
+            obj.allIterations = [];
         end
         
         function [statusmsg,statusflag] = GetStatus(obj)
@@ -208,6 +211,8 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         
         function flag = iterFunc(obj,iter,objective,~,~)
             obj.allObjectiveFunctionValues(iter + 1) = objective;
+            obj.allIterations(iter + 1) = iter;
+            
             if strcmp(obj.env,'MATLAB')
                 obj.plotFunction();
             end
@@ -216,8 +221,12 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         
         function plotFunction(obj)
             % plot objective function output 
+            x = obj.allIterations;
+            y = obj.allObjectiveFunctionValues;
             if isempty(obj.axesHandle) || ~isgraphics(obj.axesHandle,'axes')
                 hFig = figure('Name','Progress of IPOPT Optimization','NumberTitle','off','Color',[.5 .5 .5]);
+                
+                %Create Plot
                 obj.axesHandle = axes(hFig);
                 hold(obj.axesHandle,'on');
                 grid(obj.axesHandle,'on');
@@ -226,18 +235,23 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                 c.String = 'Stop';
                 c.Position(1) = 5;
                 c.Position(2) = 5;
-                c.Callback = @obj.abortCallbackButton;                
+                c.Callback = @obj.abortCallbackButton;
+                defaultFontSize = 14;
+                set(obj.axesHandle,'YScale','log');
+                title(obj.axesHandle,'Progress of Optimization','LineWidth',defaultFontSize);
+                xlabel(obj.axesHandle,'# iterations','Fontsize',defaultFontSize),ylabel(obj.axesHandle,'objective function value','Fontsize',defaultFontSize);
+                
+                %Create plot handle and link to data for faster update
+                obj.plotHandle = plot(obj.axesHandle,x,y,'xb','LineWidth',1.5,'XDataSource','x','YDataSource','y');
             else
                 hFig = obj.axesHandle.Parent;
             end
             
-            defaultFontSize = 14;
-            set(obj.axesHandle,'YScale','log');
-            title(obj.axesHandle,'Progress of Optimization','LineWidth',defaultFontSize),
-            xlabel(obj.axesHandle,'# iterations','Fontsize',defaultFontSize),ylabel(obj.axesHandle,'objective function value','Fontsize',defaultFontSize)
             
-            % draw updated axes
-            plot(obj.axesHandle,1:numel(obj.allObjectiveFunctionValues),obj.allObjectiveFunctionValues,'xb','LineWidth',1.5);
+            
+            % draw updated axes by refreshing data of the plot handle (which is linked to y and y) 
+            % in the caller workspace
+            refreshdata(obj.plotHandle,'caller');
             drawnow;
             
             % ensure to bring optimization window to front also for a re-optimization

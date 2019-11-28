@@ -18,11 +18,7 @@ classdef matRad_BackProjection
     properties (Access = private)
         wCache
         d
-    end
-    
-    properties 
-        dij
-    end
+    end   
 
     
     methods
