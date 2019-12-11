@@ -72,6 +72,11 @@ if isfield(pln,'propDoseCalc') && ...
   end
 end
 
+if ~isfield(pln.propDoseCalc, 'airOffsetCorrection') 
+    pln.propDoseCalc.airOffsetCorrection = true;
+end
+    
+    
 % generates tissue class matrix for biological optimization
 if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
         && strcmp(pln.radiationMode,'carbon')
@@ -128,6 +133,9 @@ elseif sum(strcmp(pln.propOpt.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0
     pln.propOpt.bioOptimization = 'none';      
 end
 
+
+
+
 % lateral cutoff for raytracing and geo calculations
 effectiveLateralCutoff = 50;
 
@@ -142,7 +150,7 @@ for i = 1:length(stf) % loop over all beams
   
     % Determine lateral cutoff
     fprintf('matRad: calculate lateral cutoff...');
-    cutOffLevel = .995;
+    cutOffLevel = .99999;
     visBoolLateralCutOff = 0;
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
     fprintf('done.\n');    
@@ -229,7 +237,22 @@ for i = 1:length(stf) % loop over all beams
                 end
                 
                 % adjust radDepth according to range shifter
-                currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
+                if pln.propDoseCalc.airOffsetCorrection   
+                    if ~isfield(machine.meta, 'fitAirOffset') 
+                        fitAirOffset = 0;
+                        warning('Could not find fitAirOffset. Using default value.');
+                    else
+                        fitAirOffset = machine.meta.fitAirOffset;
+                    end
+                    
+                    nozzleToSkin = ((stf(i).ray(j).SSD + machine.meta.BAMStoIsoDist) - machine.meta.SAD);
+                    dR = 0.0011 * (nozzleToSkin - fitAirOffset);
+                    currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness + dR;
+                else
+                    currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
+                end    
+                
+                
 
                 % calculate initial focus sigma
                 sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist (stf(i).ray(j).focusIx(k),:)', ...
