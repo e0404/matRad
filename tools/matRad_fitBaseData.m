@@ -1,4 +1,4 @@
-function fitData = matRad_fitBaseData(doseCube, resolution, energy, initSigma0, onAxis)
+function fitData = matRad_fitBaseData(doseCube, resolution, energy, mcData, initSigma0, onAxis)
 % fit analytical data to pencil beam stored in doseCube,
 % pencil beam in positive y direction, target per default in center of
 % plane
@@ -33,6 +33,7 @@ function fitData = matRad_fitBaseData(doseCube, resolution, energy, initSigma0, 
 % save cube dimesions
 cubeDim = size(doseCube);
 
+
 % set onAxis to default if not given
 if ~exist('onAxis','var')
     onAxis = [cubeDim(2)/2 * resolution.y, cubeDim(3)/2 * resolution.z];
@@ -60,51 +61,107 @@ for i = 1:cubeDim(2)
     end
 end
 
-resSigma = zeros(numel(IDDnotZero) - 1, 1);
-for i = 1:size(resSigma,1)
+resSigma1 = zeros(numel(IDDnotZero) - 1, 1);
+resSigma2 = zeros(numel(IDDnotZero) - 1, 1);
+resWeight = zeros(numel(IDDnotZero) - 1, 1);
+
+preSigma2 = 20;
+
+for i = 1:size(resSigma1,1)
 % curve fitting gaussians
 
     % save y-z dose slice in profile
     profile = doseCube(i,:,:);
     profile = reshape(profile, cubeDim(2), cubeDim(3));
+    profile = profile / sum(sum(profile)) / (resolution.x * resolution.y);    
     
-    gauss = @(r, a, sigma) a * exp(- r.^2 / (2*sigma^2));
+    gauss1 = @(x , sigma1) 1 / (2 * pi * sigma1^2) * exp(- x.^2 / (2*sigma1^2));
+    
+    gauss2 = @(x, w, sigma1, sigma2) (1 - w) / (2 * pi * sigma1^2) .* exp(- x.^2 / (2*sigma1^2)) + ...
+                                        w   / (2 * pi * sigma2^2) .* exp(- x.^2 / (2*sigma2^2)); 
 
-    % define fit parameters
-    funcs.objective = @(p) sum(sum((gauss(axisGauss, p(1), p(2)) - profile).^2));
+    % first single gauss fit
+    funcs1.objective = @(p) sum((gauss1(axisGauss, p(1)) - profile).^2, 'all');
+    
+    funcs1.gradient  = @(p) 2 * sum((gauss1(axisGauss, p(1)) - profile) .* ...  
+                                exp(-axisGauss.^2 ./ (2 * p(1)^2)) .* (axisGauss.^2 - 2 .* p(1)^2) ./ (2 .* pi .* p(1)^5), 'all');
+                             
+                                     
+    options1.lb =   0;
+    options1.ub = Inf;
+    options1.ipopt.hessian_approximation = 'limited-memory';
+    options1.ipopt.limited_memory_update_type = 'bfgs';
+    options1.ipopt.print_level = 1;
+    start1 = 8;
+    
+    [fitResult1, ~] = ipopt (start1, funcs1, options1);                   
+    preSigma1 = fitResult1;   
+    
+    %define fit parameters
+    funcs2.objective = @(p) sum(sum((gauss2(axisGauss, p(1), p(2), p(3)) - profile).^2));
 
-    funcs.gradient = @(p) [ sum(sum(2 * (p(1) * exp(-axisGauss.^2 / (2 * p(2)^2)) - profile) ...
-                                            .* exp(-axisGauss.^2 / (2 * p(2)^2))));
-                            sum(sum(2 * (p(1) * exp(-axisGauss.^2 / (2 * p(2)^2)) - profile) ...
-                                            .* p(1) .* exp(-axisGauss.^2 / (2 * p(2)^2)) .* axisGauss.^2 / p(2)^3))];
+    funcs2.gradient = @(p) [ 2 * sum(sum((gauss2(axisGauss, p(1), p(2), p(3)) - profile) .* ...  
+                                    (-1 / (2 * pi * p(2)^2) .* exp(-axisGauss.^2 / (2 * p(2)^2)) + 1 / (2 * pi * p(3)^2) .* exp(-axisGauss.^2 / (2 * p(3)^2)))));
+                             2 * sum(sum((gauss2(axisGauss, p(1), p(2), p(3)) - profile) .* ...                                   
+                                    (1 - p(1)) .* exp(-axisGauss.^2 / (2 * p(2)^2)) .* (axisGauss.^2 - 2 * p(2)^2) / (2 * pi * p(2)^5))); 
+                             2 * sum(sum((gauss2(axisGauss, p(1), p(2), p(3)) - profile) .* ...
+                                    p(1)       .* exp(-axisGauss.^2 / (2 * p(3)^2)) .* (axisGauss.^2 - 2 * p(3)^2) / (2 * pi * p(3)^5)))]; 
 
-    options.lb = [0,  0];
-    options.ub = [ Inf,  Inf];
+    options2.lb = [   0,   preSigma1 - 1,  preSigma1 + 1];
+    options2.ub = [ 0.2,   preSigma1 + 1,  preSigma2 + 10];
+%     options.ipopt.tol = 1e-30;
 
-    options.ipopt.hessian_approximation = 'limited-memory';
-    options.ipopt.limited_memory_update_type = 'bfgs';
-    options.ipopt.print_level = 1;
-    options.ipopt.tol = 1e-16;
+    options2.ipopt.hessian_approximation = 'limited-memory';
+    options2.ipopt.limited_memory_update_type = 'bfgs';
+    options2.ipopt.print_level = 1;
 
-    % run fit and calculate actual sigma by squared substracting initial
-    % sigma
-    start = [max(max(profile)); initSigma0];
-    [fitResult, ~] = ipopt (start, funcs, options);
+    %run fit and calculate actual sigma by squared substracting initial
+    %sigma / spotsize
 
+    start2 = [0.002, preSigma1, preSigma2];
+    [fitResult, ~] = ipopt (start2, funcs2, options2);
+    
+    preSigma2 = fitResult(3);
+    
+    if (i == 1)
+        if ~exist('initSigma0','var')
+            noInitSigma = true;
+            options.lb = 0;
+            initSigma0 = 0;
+        else
+            noInitSigma = false;
+            options.lb = initSigma0; 
+        end
+    end
+    
+    
+    if (i == 1) && noInitSigma
+        initSigma0 = fitResult(2);
+    end
+    
+    
     if(fitResult(2) > initSigma0)
         actualSigma = sqrt(fitResult(2)^2 - initSigma0^2);
     else
         actualSigma = 0;
     end
 
-    resSigma(i) = actualSigma;
+    resSigma1(i) = actualSigma;
+    resSigma2(i) = sqrt(fitResult(3)^2 - initSigma0^2);
+    resWeight(i) = fitResult(1);
 end   
 
 % interpolate sigma on depths of IDD
-resSigma = [0; resSigma];
+resSigma1 = [0;            resSigma1];
+resSigma2 = [resSigma2(1); resSigma2];
+resWeight = [resWeight(1); resWeight];
+
 depthsSigma = [0, (resolution.x / 2 : resolution.x : resolution.x * cubeDim(1))];
 depthsSigma = depthsSigma(IDDnotZero);
-resSigma = interp1(depthsSigma, resSigma, depthsIDD);
+resSigma1 = interp1(depthsSigma, resSigma1, depthsIDD);
+resSigma2 = interp1(depthsSigma, resSigma2, depthsIDD);
+resWeight = interp1(depthsSigma, resWeight, depthsIDD);
+resSigma2 = smoothdata(resSigma2, 'gaussian', 200);
 
 % interpolate range at 80% dose after peak.
 [maxV, maxI] = max(IDD);
@@ -117,15 +174,26 @@ r80 = interp1(IDD(maxI + r80ind - 1:maxI + r80ind + 1), ...
 cf = 1 / 1.6021766208e-02 * resolution.y * resolution.z;
 
 % save data in machine
-fitData.range = r80;    
 fitData.energy =  energy;
+fitData.range = r80;    
 fitData.depths = depthsIDD';
 fitData.Z = IDD' * cf;
 fitData.peakPos = depthsIDD(maxI);
-fitData.sigma = resSigma';
+fitData.weight = resWeight';
 fitData.offset = 0;
 
-fitData.initFocus.dist  = [0, 20000];
-fitData.initFocus.sigma = [initSigma0, initSigma0];
+SAD = (2218 + 1839) / 2;
+fitData.initFocus.dist  = linspace(SAD - 420, SAD + 420, 11);
+
+corIso = (mcData.corNozzle * mcData.spotNozzle + mcData.divNozzle * mcData.z) / initSigma0;   
+initSigmaZ = @(z) sqrt( initSigma0^2 - 2 * corIso * initSigma0 * mcData.divNozzle .* z + mcData.divNozzle^2 .* z.^2);
+
+
+fitData.initFocus.sigma = initSigmaZ(-(fitData.initFocus.dist - SAD));
 fitData.initFocus.SisFWHMAtIso = 2.3548 * initSigma0;
+
+fitData.sigma1 = resSigma1';
+fitData.sigma2 = resSigma2';
+
+
 end
