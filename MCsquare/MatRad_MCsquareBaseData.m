@@ -89,7 +89,9 @@ classdef MatRad_MCsquareBaseData
             obj.selectedFocus(obj.energyIndex) = focusIndex;
              
             count = 1;
-            for i = obj.energyIndex'
+            for ii = 1:numel(obj.energyIndex)
+                
+                i = obj.energyIndex(ii);
                 
                 %look up whether MonteCarlo data are already present in 
                 %machine file , if so do not recalculate
@@ -104,13 +106,23 @@ classdef MatRad_MCsquareBaseData
                 
                 %calculate mcSquareData for given energy and every focus
                 %index
-                tmp = [];
+                data = [];
+                energyData = obj.fitPhaseSpaceForEnergy(i);
+                
                 for j = 1:size(machine.data(i).initFocus.sigma,1)
                     
-                    tmp = [tmp; obj.fitBeamOpticsForEnergy(i, j)];
+                    tmp = energyData;
+                    opticsData = obj.fitBeamOpticsForEnergy(i, j);
+                    
+                    f = fieldnames(opticsData);
+                    for a = 1:length(f)
+                        tmp.(f{a}) = opticsData.(f{a});
+                    end
+
+                data = [data; tmp];
                 end
                 
-                obj.mcSquareData = [obj.mcSquareData, tmp];
+                obj.mcSquareData = [obj.mcSquareData, data];
                 
                 count = count + 1;
             end
@@ -119,18 +131,17 @@ classdef MatRad_MCsquareBaseData
             %width of the Bragg peak in obj.fitBeamOpticsForEnergy
             if obj.problemSigma
                 warning('Calculation of FWHM of bragg peak in base data not possible! Using simple approximation for energy spread');
-            end
-            
+            end           
         end
         
-        function mcData = fitBeamOpticsForEnergy(obj,energyIx, focusIndex)
-            %function to calculate beam optics used by mcSquare for given
-            %energy
+        function mcDataEnergy = fitPhaseSpaceForEnergy(obj,energyIx)
+            %function to calculate mean energy and energy spread used by 
+            %mcSquare for given energy
             
             i = energyIx;
-
-            mcData.NominalEnergy = obj.machine.data(energyIx).energy;             
-
+            
+            mcDataEnergy.NominalEnergy = obj.machine.data(i).energy;
+                       
             newDepths = linspace(0,obj.machine.data(i).depths(end),numel(obj.machine.data(i).depths) * 100);
             newDose   = interp1(obj.machine.data(i).depths, obj.machine.data(i).Z, newDepths, 'spline');       
 
@@ -164,7 +175,7 @@ classdef MatRad_MCsquareBaseData
             
             %calculate mean energy according to the mcSquare documentation
             %using the 80% dose range
-            mcData.MeanEnergy = exp(3.464048 + 0.561372013*log(r80/10) - 0.004900892*log(r80/10)^2+0.001684756748*log(r80/10)^3); 
+            mcDataEnergy.MeanEnergy = exp(3.464048 + 0.561372013*log(r80/10) - 0.004900892*log(r80/10)^2+0.001684756748*log(r80/10)^3); 
 
             %calculate energy straggling using formulae from paper "An
             %analytical approximation of the Bragg curve for 
@@ -178,11 +189,18 @@ classdef MatRad_MCsquareBaseData
             %catch error when sqrt gives imaginary results, then set energy
             %straggling to zero
             if((fullSigSq - sigRangeStragSq) >= 0)
-                mcData.EnergySpread = sqrt(fullSigSq - sigRangeStragSq);
+                mcDataEnergy.EnergySpread = sqrt(fullSigSq - sigRangeStragSq);
             else
-                mcData.EnergySpread = 0;                 
+                mcDataEnergy.EnergySpread = 0;                 
                 obj.problemSigma = true;
             end            
+        end
+            
+        function mcDataOptics = fitBeamOpticsForEnergy(obj,energyIx, focusIndex)
+            %function to calculate beam optics used by mcSquare for given
+            %energy
+            
+            i = energyIx;        
 
             %calculate geometric distances and extrapolate spot size at nozzle
             SAD = obj.machine.meta.SAD;
@@ -217,23 +235,23 @@ classdef MatRad_MCsquareBaseData
             CorrelationAtNozzle = (rho * sigmaNull - sigmaT * obj.nozzleToIso) / SpotsizeAtNozzle;
 
             %save calcuated beam optics data in mcData
-            mcData.ProtonsMU     = 1e6;
+            mcDataOptics.ProtonsMU     = 1e6;
 
-            mcData.Weight1       = 1;
-            mcData.SpotSize1x    = SpotsizeAtNozzle;
-            mcData.Divergence1x  = DivergenceAtNozzle;
-            mcData.Correlation1x = CorrelationAtNozzle;
-            mcData.SpotSize1y    = SpotsizeAtNozzle;
-            mcData.Divergence1y  = DivergenceAtNozzle;
-            mcData.Correlation1y = CorrelationAtNozzle;
+            mcDataOptics.Weight1       = 1;
+            mcDataOptics.SpotSize1x    = SpotsizeAtNozzle;
+            mcDataOptics.Divergence1x  = DivergenceAtNozzle;
+            mcDataOptics.Correlation1x = CorrelationAtNozzle;
+            mcDataOptics.SpotSize1y    = SpotsizeAtNozzle;
+            mcDataOptics.Divergence1y  = DivergenceAtNozzle;
+            mcDataOptics.Correlation1y = CorrelationAtNozzle;
 
-            mcData.Weight2       = 0;
-            mcData.SpotSize2x    = 0;
-            mcData.Divergence2x  = 0;
-            mcData.Correlation2x = 0;
-            mcData.SpotSize2y    = 0;
-            mcData.Divergence2y  = 0;
-            mcData.Correlation2y = 0;
+            mcDataOptics.Weight2       = 0;
+            mcDataOptics.SpotSize2x    = 0;
+            mcDataOptics.Divergence2x  = 0;
+            mcDataOptics.Correlation2x = 0;
+            mcDataOptics.SpotSize2y    = 0;
+            mcDataOptics.Divergence2y  = 0;
+            mcDataOptics.Correlation2y = 0;
         end
                           
         function obj = writeToBDLfile(obj,filepath)
@@ -249,9 +267,7 @@ classdef MatRad_MCsquareBaseData
                 
                 selectedData = [selectedData, obj.mcSquareData(focusIndex(i), i)];
             end
-            
-            obj.dataTable = struct2table(selectedData);
-                        
+                                    
             machine = obj.machine;
             
             try
@@ -273,21 +289,24 @@ classdef MatRad_MCsquareBaseData
                 fprintf(fileID,'SMY to Isocenter distance\n');
                 fprintf(fileID,'%.1f\n\n',obj.smy);
                 
-                fprintf(fileID,'Beam parameters\n%d energies\n\n',size(obj.dataTable,1));
+                fprintf(fileID,'Beam parameters\n%d energies\n\n',size(selectedData,2));
+                
+                fn = fieldnames(selectedData);
+                for names = 1:size(fn,1)
+                    fprintf(fileID, fn{names});
+                    fprintf(fileID, '\t');
+                end
+                fprintf(fileID, '\n');
+                
+                for k = 1:size(selectedData,2)
+                    for m = 1:numel(fn)
+                        fprintf(fileID, '%g', selectedData(k).(fn{m}));
+                        fprintf(fileID, '\t');
+                    end
+                    fprintf(fileID, '\n');
+                 end
 
-                fclose(fileID);               
-                                        
-                writetable(obj.dataTable,[filepath '.tmp'],'Delimiter','\t','FileType','text');
-                
-                fileID = fopen([filepath '.tmp'],'r');
-                tableTxt = fread(fileID);
-                fclose(fileID);
-                
-                fileID = fopen(filepath,'a');
-                fwrite(fileID,tableTxt);
-                fclose(fileID);
-                
-                delete([filepath '.tmp']);
+                fclose(fileID);                                          
                 
                 obj.bdl_path = filepath;
                 
