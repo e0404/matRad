@@ -37,6 +37,8 @@ function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDi
 
 matRad_calcDoseInit;
 
+env = matRad_getEnvironment();
+
 % check if valid machine
 if ~strcmp(pln.radiationMode,'protons')% || ~strcmp(pln.machine,'generic_MCsquare')
     error('wrong radiation modality and/or machine.');    
@@ -88,7 +90,7 @@ if ~calcDoseDirect && exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3
         
         currFolder = pwd;
         
-        if exist ('OCTAVE_VERSION', 'builtin')
+        if strcmp(env,'OCTAVE')
           ccName = eval('mkoctfile -p CXX');
         else
           myCCompiler = mex.getCompilerConfigurations('C','Selected');
@@ -407,6 +409,10 @@ try
     delete(allWaitBarFigures);
     pause(0.1);
 catch
+end
+
+if strcmp(env,'OCTAVE')
+    confirm_recursive_rmdir(0); %Tell Octave to not ask for confirmation when removing dirs recursively
 end
 
 %% clear all data
