@@ -20,7 +20,7 @@ matRad_rc
 %load HEAD_AND_NECK
 load TG119.mat
 % load PROSTATE.mat
-%load LIVER.mat
+% load LIVER.mat
 % load BOXPHANTOM
 % load BOXPHANTOMv3.mat
 % load BOXPHANTOM_NARROW_NEW.mat
@@ -42,9 +42,9 @@ pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
                             
 % dose calculation settings
-pln.propDoseCalc.doseGrid.resolution.x = ct.resolution.x; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = ct.resolution.y; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = ct.resolution.z; % [mm]
+pln.propDoseCalc.doseGrid.resolution.x = 2;%ct.resolution.x; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 2;%ct.resolution.y; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 2;%ct.resolution.z; % [mm]
 pln.propDoseCalc.airOffsetCorrection = true;
 
 % optimization settings
@@ -67,7 +67,7 @@ elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
 %     dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,1000000);
-    resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),100000);
+    resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),1000000);
    
 end
 
@@ -96,5 +96,5 @@ hold off
 
 
 
-[gammaCube,gammaPassRateCell] = matRad_gammaIndex(mcDose,anaDose,[ct.resolution.x,ct.resolution.y,ct.resolution.z],[2,2],round(ct.cubeDim(3)/2),0,'global',cst);
+[gammaCube,gammaPassRateCell] = matRad_gammaIndex(mcDose,anaDose,[ct.resolution.x,ct.resolution.y,ct.resolution.z],[2,2],round(ct.cubeDim(3)/2),3,'global',cst);
 

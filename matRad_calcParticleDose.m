@@ -72,7 +72,7 @@ if isfield(pln,'propDoseCalc') && ...
   end
 end
 
-if ~isfield(pln.propDoseCalc, 'airOffsetCorrection') 
+if isfield(pln,'propDoseCalc') && ~isfield(pln.propDoseCalc, 'airOffsetCorrection') 
     pln.propDoseCalc.airOffsetCorrection = true;
 end
     
@@ -237,7 +237,7 @@ for i = 1:length(stf) % loop over all beams
                 end
                 
                 % adjust radDepth according to range shifter
-                if pln.propDoseCalc.airOffsetCorrection   
+                if  pln.propDoseCalc.airOffsetCorrection   
                     if ~isfield(machine.meta, 'fitAirOffset') 
                         fitAirOffset = 0;
                         warning('Could not find fitAirOffset. Using default value.');
@@ -248,6 +248,9 @@ for i = 1:length(stf) % loop over all beams
                     nozzleToSkin = ((stf(i).ray(j).SSD + machine.meta.BAMStoIsoDist) - machine.meta.SAD);
                     dR = 0.0011 * (nozzleToSkin - fitAirOffset);
                     currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness + dR;
+                    
+                    %sanity check due to negative corrections
+                    currRadDepths(currRadDepths < 0) = 0;
                 else
                     currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
                 end    
