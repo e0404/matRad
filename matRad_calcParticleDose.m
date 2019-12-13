@@ -229,8 +229,31 @@ for i = 1:length(stf) % loop over all beams
                 end
                 
                 % adjust radDepth according to range shifter
-                currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
-
+                if  pln.propDoseCalc.airOffsetCorrection   
+                    if ~isfield(machine.meta, 'fitAirOffset') 
+                        fitAirOffset = 0;
+                        warning('Could not find fitAirOffset. Using default value.');
+                    else
+                        fitAirOffset = machine.meta.fitAirOffset;
+                    end
+                    
+                    if ~isfield(machine.meta, 'BAMStoIsoDist') 
+                        BAMStoIsoDist = 1000;
+                    	warning('Could not find BAMStoIsoDist. Using default value.');
+                    else
+                        BAMStoIsoDist = machine.meta.BAMStoIsoDist;
+                    end
+                    
+                    nozzleToSkin = ((stf(i).ray(j).SSD + BAMStoIsoDist) - machine.meta.SAD);
+                    dR = 0.0011 * (nozzleToSkin - fitAirOffset);
+                    currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness + dR;
+                    
+                    %sanity check due to negative corrections
+                    currRadDepths(currRadDepths < 0) = 0;
+                else
+                    currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
+                end
+                
                 % calculate initial focus sigma
                 sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist (stf(i).ray(j).focusIx(k),:)', ...
                                              machine.data(energyIx).initFocus.sigma(stf(i).ray(j).focusIx(k),:)',stf(i).ray(j).SSD);
