@@ -71,8 +71,9 @@ classdef MatRad_MCsquareBaseData
             
             %select needed energies and according focus indices by using stf         
             if obj.stfCompressed
-                plannedEnergies     = [stf.ray(:).energy];
-                focusIndex          = [stf.ray(:).focusIx];
+                tmp = [stf(:).ray];
+                plannedEnergies     = [tmp.energy];
+                focusIndex          = [tmp.focusIx];
                 [~, ind]            = unique(plannedEnergies);
                 plannedEnergies     = plannedEnergies(ind);
                 focusIndex          = focusIndex(ind);

@@ -59,6 +59,9 @@ else
     % interpolate depth dose and sigma
     X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths);
 
+    % set dose for query > tabulated depth dose values to zero
+    X(radDepths > max(depths),1) = 0;
+    
     %compute lateral sigma
     sigmaSq = X(:,2).^2 + sigmaIni_sq;
     

@@ -72,6 +72,10 @@ if isfield(pln,'propDoseCalc') && ...
   end
 end
 
+if isfield(pln,'propDoseCalc') && ~isfield(pln.propDoseCalc, 'airOffsetCorrection') 
+    pln.propDoseCalc.airOffsetCorrection = true;
+end
+
 % generates tissue class matrix for biological optimization
 if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
         && strcmp(pln.radiationMode,'carbon')
@@ -232,14 +236,14 @@ for i = 1:length(stf) % loop over all beams
                 if  pln.propDoseCalc.airOffsetCorrection   
                     if ~isfield(machine.meta, 'fitAirOffset') 
                         fitAirOffset = 0;
-                        warning('Could not find fitAirOffset. Using default value.');
+%                         warning('Could not find fitAirOffset. Using default value.');
                     else
                         fitAirOffset = machine.meta.fitAirOffset;
                     end
                     
                     if ~isfield(machine.meta, 'BAMStoIsoDist') 
                         BAMStoIsoDist = 1000;
-                    	warning('Could not find BAMStoIsoDist. Using default value.');
+%                     	warning('Could not find BAMStoIsoDist. Using default value.');
                     else
                         BAMStoIsoDist = machine.meta.BAMStoIsoDist;
                     end
