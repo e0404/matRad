@@ -160,31 +160,50 @@ classdef MatRad_MCsquareBaseData
             d50_r = interp1(newDose(maxI + d50rInd - 1:maxI + d50rInd + 1), ...
                                     newDepths(maxI + d50rInd - 1:maxI + d50rInd + 1), 0.5 * maxV);
 
-            if (newDose(1) < 0.4 * maxV)
+%             if (newDose(1) < 0.4 * maxV)
                 [~, d50lInd] = min(abs(newDose(1:maxI) - 0.5*maxV));
                 d50_l = interp1(newDose(d50lInd - 1:d50lInd + 1), ...
                                 newDepths(d50lInd - 1:d50lInd + 1), 0.5 * maxV);
-                w50 = d50_r - d50_l;
-            %if width left of peak can be determined use twice the width to
-            %the right and throw out a warning after calculation
-            else
-                w50 = (d50_r - newDepths(maxI)) * 2;
-                obj.problemSigma = true;
-            end
-            
-            fwhmBragg = w50;
-            
+%                 w50 = d50_r - d50_l;
+%             %if width left of peak can be determined use twice the width to
+%             %the right and throw out a warning after calculation
+%             else
+%                 w50 = (d50_r - newDepths(maxI)) * 2;
+%                 obj.problemSigma = true;
+%             end
+%             fwhmBragg = w50;
+
+
             %calculate mean energy according to the mcSquare documentation
             %using the 80% dose range
-            mcDataEnergy.MeanEnergy = exp(3.464048 + 0.561372013*log(r80/10) - 0.004900892*log(r80/10)^2+0.001684756748*log(r80/10)^3); 
+%             mcDataEnergy.MeanEnergy = exp(3.464048 + 0.561372013*log(r80/10) - 0.004900892*log(r80/10)^2+0.001684756748*log(r80/10)^3); 
+            mcDataEnergy.MeanEnergy = (r80 / 10 / 0.0022)^(1/1.77);
 
             %calculate energy straggling using formulae from paper "An
             %analytical approximation of the Bragg curve for 
             %therapeuticproton beams" by T. Bortfeld
-            fullSigSq = (fwhmBragg  / 6.14)^2;
-            %sigRangeStragSq = (0.0129 * r80^0.935)^2; %Theoretical Formula
-            sigRangeStragSq = (1.374e-7 * r80^3  + 0.0001288  * r80^2 + ...
-                               0.003777 * r80    - 0.108); %TOPAS fit    
+%             fullSigSq =  2.4281 * (fwhmBragg  / 6.14)^2;
+            fullSigSq1 = ((d50_r - newDepths(maxI)) / 0.62);
+            fullSigSq = ((newDepths(maxI) - d50_l) / 5.52);
+
+%             mcDataEnergy.topasFit = fullSigSq;
+%             mcDataEnergy.r80 = r80;
+            sigRangeStragSq = (0.012 * r80^0.935)^2; %Theoretical Formula
+%             mcDataEnergy.sigRF = sigRangeStragSq;
+%             sigRangeStragSq = (-3.809e-07 * r80^3  + 0.0008254  * r80^2 + ...
+%                                -0.003203  * r80    +  0.1212); %TOPAS fit  
+%             sigRangeStragSq = (-1.774e-08 * r80^3  +  4.969e-05  * r80^2 + ...
+%                                8.524e-05  * r80    + -0.003357); %TOPAS fit
+%             sigRangeStragSq = 4.941e-05 * r80^1.905;
+               
+% p1 =  -3.809e-07  (-8.797e-07, 1.179e-07)
+%        p2 =   0.0008254  (0.0005713, 0.001079)
+%        p3 =   -0.003203  (-0.04217, 0.03576)
+%        p4 =      0.1212  (-1.618, 1.86)          
+
+       
+       
+       
 
             %calculate Energy straggling using total range straggling,
             %catch error when sqrt gives imaginary results, then set energy
