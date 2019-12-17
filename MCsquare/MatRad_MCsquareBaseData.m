@@ -183,9 +183,9 @@ classdef MatRad_MCsquareBaseData
             %analytical approximation of the Bragg curve for 
             %therapeuticproton beams" by T. Bortfeld
 %             fullSigSq =  2.4281 * (fwhmBragg  / 6.14)^2;
-            fullSigSq1 = ((d50_r - newDepths(maxI)) / 0.62);
-            fullSigSq = ((newDepths(maxI) - d50_l) / 5.52);
-
+            mcfullSigSq1 = ((d50_r - r80) / 0.62)^2;
+            fullSigSq = ((r80 - d50_l) / 5.52)^2;
+            
 %             mcDataEnergy.topasFit = fullSigSq;
 %             mcDataEnergy.r80 = r80;
             sigRangeStragSq = (0.012 * r80^0.935)^2; %Theoretical Formula
