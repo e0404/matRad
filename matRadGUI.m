@@ -953,10 +953,12 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
         ctIx = selectIx;
     end
     
-    if isfield(ct, 'cube')
-        plotCtCube = ct.cube;
-    else
+    if handles.cubeHUavailable
         plotCtCube = ct.cubeHU;
+        ctLabel = 'Hounsfield Units';
+    else
+        plotCtCube = ct.cube;
+        ctLabel = 'Electron Density / WEQ';
     end
     
     ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
@@ -973,11 +975,7 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
             %Plot the colorbar
             handles.cBarHandel = matRad_plotColorbar(handles.axesFig,ctMap,handles.dispWindow{ctIx,1},'fontsize',defaultFontSize);
             %adjust lables
-            if isfield(ct,'cubeHU')
-                set(get(handles.cBarHandel,'ylabel'),'String', 'Hounsfield Units','fontsize',defaultFontSize);
-            else
-                set(get(handles.cBarHandel,'ylabel'),'String', 'Electron Density','fontsize',defaultFontSize);
-            end
+            set(get(handles.cBarHandel,'ylabel'),'String', ctLabel,'fontsize',defaultFontSize);
             % do not interprete as tex syntax
             set(get(handles.cBarHandel,'ylabel'),'interpreter','none');
         end
@@ -1250,6 +1248,7 @@ end
 zoom(handles.figure1,'reset');
 axis(handles.axesFig,'tight');
 
+
 if handles.rememberCurrAxes
     axis(currAxes);
 end
@@ -1280,7 +1279,7 @@ end
 if handles.State == 0
     return
 elseif handles.State > 0
-     AllVarNames = evalin('base','who');
+    AllVarNames = evalin('base','who');
     if  ismember('resultGUI',AllVarNames)
         Result = evalin('base','resultGUI');
     end
@@ -3552,10 +3551,10 @@ try
         ct = evalin('base','ct');
         currentMap = handles.ctColorMap;
         window = handles.dispWindow{selectionIndex,1};
-        if isfield(ct, 'cube')
-            minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
+        if handles.cubeHUavailable
+            minMax = [min(ct.cubeHU{1}(:)) max(ct.cubeHU{1}(:))];            
         else
-            minMax = [min(ct.cubeHU{1}(:)) max(ct.cubeHU{1}(:))];
+            minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
         end
         % adjust value for custom window to current
         handles.windowPresets(1).width = max(window) - min(window);
@@ -4010,6 +4009,14 @@ if ~isfield(handles,'axesFig3D') || ~isfield(handles,'axesFig3D') || ~isgraphics
     handles.fig3D = figure('Name','matRad 3D View');
     handles.axesFig3D = axes('Parent',handles.fig3D);
     view(handles.axesFig3D,3);
+    try
+        ct = evalin('base','ct');
+    
+        xlim(handles.axesFig3D,[0 ct.resolution.x*ct.cubeDim(2)]);
+        ylim(handles.axesFig3D,[0 ct.resolution.y*ct.cubeDim(1)]);
+        zlim(handles.axesFig3D,[0 ct.resolution.z*ct.cubeDim(3)]);
+    catch
+    end
 end
 %end
 
