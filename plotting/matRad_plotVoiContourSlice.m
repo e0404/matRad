@@ -1,5 +1,4 @@
 function [voiContourHandles] = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice,cMap,varargin)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function that plots the contours of the segmentations given in cst
 %
 % call
@@ -25,8 +24,6 @@ function [voiContourHandles] = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIn
 %                       visible on the current slice
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -38,10 +35,6 @@ function [voiContourHandles] = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIn
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-if ~isdeployed
-    addpath('tools')
-end
 
 [env, ~] = matRad_getEnvironment();
 

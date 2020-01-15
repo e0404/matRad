@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/e0404/matRad.svg?branch=master)](https://travis-ci.org/e0404/matRad)
+[![Build Status](https://travis-ci.org/e0404/matRad.svg?branch=dev)](https://travis-ci.org/e0404/matRad)
 [![GitPitch](https://gitpitch.com/assets/badge.svg)](https://gitpitch.com/e0404/matRad/dev) 
 
 # General information
@@ -8,6 +8,24 @@
 matRad is an open source treatment planning system for radiation therapy written in Matlab. It is meant for educational and research purposes and supports planning of intensity-modulated radiation therapy for mutliple modalities. The source code is maintained by a development team at the German Cancer Reserach Center DKFZ in Heidelberg, Germany, and other contributors around the world. We are always looking for more people willing to help improve matRad. Do not hesitate and [get in touch](mailto:matrad@dkfz.de).
 
 More information can be found on the project page  at <http://e0404.github.io/matRad/>; a wiki documentation is under constant development at <https://github.com/e0404/matRad/wiki>.
+
+If you use matRad in a scientific publication, consider citing the following paper:
+
+Wieser, Hans‐Peter, et al. "Development of the open‐source dose calculation and optimization toolkit matRad." Medical Physics 44.6 (2017): 2556-2568.
+
+BibTex entry:
+```
+@article{wieser2017development,
+  title={Development of the open-source dose calculation and optimization toolkit matRad},
+  author={Wieser, Hans-Peter and Cisternas, Eduardo and Wahl, Niklas and Ulrich, Silke and Stadler, Alexander and Mescher, Henning and M{\"u}ller, Lucas-Raphael and Klinge, Thomas and Gabrys, Hubert and Burigo, Lucas and others},
+  journal={Medical Physics},
+  volume={44},
+  number={6},
+  pages={2556--2568},
+  year={2017},
+  publisher={Wiley Online Library}
+}
+```
 
 ---
 

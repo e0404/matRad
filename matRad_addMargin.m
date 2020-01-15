@@ -1,5 +1,4 @@
 function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad add margin function
 % 
 % call
@@ -20,8 +19,6 @@ function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -41,24 +38,21 @@ elseif nargin < 4
 end
 
 % generate voi cube for patient surface/patient skin
-voiSurface      = zeros(size(mVOI));
 idx             = [cst{:,4}];
-idx             = unique(vertcat(idx{:}));
-voiSurface(idx) = 1;
-voiSurfaceIdx   = find(voiSurface);
+voiSurfaceIdx   = unique(vertcat(idx{:}));
 
 % get number of voxels which should be added in each dimension
-voxelMargins = round([vMargin.y vMargin.x vMargin.z]./[vResolution.y vResolution.x vResolution.z]);
+voxelMargins = round([vMargin.x vMargin.y vMargin.z]./[vResolution.x vResolution.y vResolution.z]);
 mVOIEnlarged = mVOI;
-NewIdx = [];
+newIdx = [];
 
-[xUpperLim,yUpperLim,zUpperLim]=size(mVOI);
+[yUpperLim,xUpperLim,zUpperLim] = size(mVOI);
 
-for Cnt = 1:max(voxelMargins)
+for cnt = 1:max(voxelMargins)
 
     % for multiple loops consider just added margin
-    NewIdx = setdiff(find(mVOIEnlarged),NewIdx);
-    [xCoord, yCoord, zCoord] = ind2sub(size(mVOIEnlarged),NewIdx);
+    newIdx = setdiff(find(mVOIEnlarged),newIdx);
+    [yCoord, xCoord, zCoord] = ind2sub(size(mVOIEnlarged),newIdx);
 
     % find indices on border and take out
     borderIx = xCoord==1 | xCoord==xUpperLim | ...
@@ -69,19 +63,19 @@ for Cnt = 1:max(voxelMargins)
     yCoord(borderIx) = [];
     zCoord(borderIx) = [];
 
-    dx = voxelMargins(1)>=Cnt;
-    dy = voxelMargins(2)>=Cnt;
-    dz = voxelMargins(3)>=Cnt;
+    dx = voxelMargins(1)>=cnt;
+    dy = voxelMargins(2)>=cnt;
+    dz = voxelMargins(3)>=cnt;
 
     for i = -1:1
         for j = -1:1
             for k = -1:1
 
-                if (abs(i)+abs(j)+abs(k) == 0) || (~bDiaElem && i+j+k > 1) % skip if diagonal elements not wanted or zero offset
+                if (abs(i)+abs(j)+abs(k) == 0) || (~bDiaElem && abs(i)+abs(j)+abs(k) > 1) % skip if diagonal elements not wanted or zero offset
                     continue;
                 end
 
-                newIx = (xCoord+i*dx) + (yCoord+j*dy-1)*size(mVOIEnlarged,1) + ...
+                newIx = (yCoord+i*dy) + (xCoord+j*dx-1)*size(mVOIEnlarged,1) + ...
                         (zCoord+k*dz-1)*size(mVOIEnlarged,1)*size(mVOIEnlarged,2);
                     
                 % check if new indices are part of voiSurfaceIdx

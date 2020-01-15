@@ -17,8 +17,6 @@ function matRad_plotPlan3D(axesHandle,pln,stf)
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
 % 
@@ -111,7 +109,7 @@ else %We use the steering information to visualize the field contour
         beamTarget = stf(fieldIx).isoCenter;
         beamSource = stf(fieldIx).sourcePoint + stf(fieldIx).isoCenter;
         
-        rotMat = matRad_getRotationMatrix(pln.gantryAngles(fieldIx),pln.couchAngles(fieldIx));
+        rotMat = matRad_getRotationMatrix(pln.propStf.gantryAngles(fieldIx),pln.propStf.couchAngles(fieldIx));
         
         bixelWidth = stf(fieldIx).bixelWidth;
         %Accumulate ray positions in matrix

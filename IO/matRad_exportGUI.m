@@ -23,7 +23,7 @@ function varargout = matRad_exportGUI(varargin)
 % Edit the above text to modify the response to help matRad_exportGUI
 
 % Last Modified by GUIDE v2.5 07-Jul-2016 14:50:05
-
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -234,7 +234,7 @@ function exportDir = pushbutton_dir_export_browse_Callback(hObject, eventdata, h
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-exportDir = uigetdir('', 'Choose the input directory...');
+exportDir = uigetdir('', 'Choose the export directory...');
 if exportDir ~= 0
     exportDir = [exportDir filesep];
     set(handles.edit_dir_export,'String',exportDir);
@@ -374,19 +374,31 @@ metadata.compress = get(handles.checkbox_compress,'Value');
 %Check if we have position information
 if isfield(ct,'dicomInfo')
     if isfield(ct.dicomInfo,'ImagePositionPatient')
-       metadata.imageOrigin = ct.dicomInfo.ImagePositionPatient;       
+       metadata.imageOrigin = ct.dicomInfo.ImagePositionPatient; 
+       if ~isrow(metadata.imageOrigin)
+           metadata.imageOrigin = transpose(metadata.imageOrigin);
+       end
     end    
 end
 
 %This is only for the waitbar to get the number of cubes you wanna save
+numExportCubes = 0;
 if (saveCT)
-    numExportCubes = 1;
+    if isfield(ct,'cubeHU')
+        numExportCubes = numExportCubes + 1;
+    end
+    
+    if isfield(ct,'cube')
+        numExportCubes = numExportCubes + 1;
+    end
     voiNames = get(handles.uitable_vois,'Data');
     voiIndices = find([voiNames{:,1}] == true);
     numExportCubes = numExportCubes + numel(voiIndices);
+ 
 else
     numExportCubes = 0;
 end
+
 if saveResults
    cubeNames = get(handles.uitable_doseCubes,'data');
    cubeIndices = find([cubeNames{:,1}] == true);
@@ -406,11 +418,19 @@ cleanUp = onCleanup(@() close(hWaitbar));
 
 %CT and Mask export
 if saveCT   
-    %Export the CT (ED suffix to clarify it is not in HU)
-    currentCube = currentCube + 1;
-    waitbar(currentCube/numExportCubes,hWaitbar,['Exporting CT (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
     
-    matRad_writeCube(fullfile(exportDir,['CT_ED' extension]),ct.cube{1},'double',metadata);
+    if isfield(ct,'cube')
+        %Export the CT (ED suffix to clarify it is not in HU)
+        currentCube = currentCube + 1;
+        waitbar(currentCube/numExportCubes,hWaitbar,['Exporting CT Intensity values (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
+        matRad_writeCube(fullfile(exportDir,['CT_ED' extension]),ct.cube{1},'double',metadata);
+    end
+    
+    if isfield(ct,'cubeHU')
+        currentCube = currentCube + 1;
+        waitbar(currentCube/numExportCubes,hWaitbar,['Exporting CT in HU (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
+        matRad_writeCube(fullfile(exportDir,['CT_HU' extension]),ct.cubeHU{1},'double',metadata);
+    end
     
     %Export VOI masks
     cst = evalin('base','cst');

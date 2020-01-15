@@ -1,5 +1,4 @@
 function interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, grid)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to interpolate a 3D ct cube to a different resolution
 %
 % call
@@ -19,8 +18,6 @@ function interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, gri
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team.
 %
@@ -32,7 +29,6 @@ function interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, gri
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 
 coordsOfFirstPixel = [origCtInfo.ImagePositionPatient];
 
@@ -73,11 +69,11 @@ end
 % set up grid matrices - implicit dimension permuation (X Y Z-> Y X Z)
 % Matlab represents internally in the first matrix dimension the
 % ordinate axis and in the second matrix dimension the abscissas axis
-[ Y,  X,  Z] = meshgrid(x,y,z);
-[Yq, Xq, Zq] = meshgrid(xq,yq,zq);
+[ X,  Y,  Z] = meshgrid(x,y,z);
+[Xq, Yq, Zq] = meshgrid(xq,yq,zq);
 
 % interpolate cube - cube is now stored in Y X Z 
-interpCt.cubeIV{1} = interp3(Y,X,Z,double(origCt),Yq,Xq,Zq);
+interpCt.cubeIV{1} = interp3(X,Y,Z,double(origCt),Xq,Yq,Zq);
 
 % some meta information
 interpCt.resolution = resolution;

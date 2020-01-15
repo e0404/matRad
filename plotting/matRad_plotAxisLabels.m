@@ -1,5 +1,4 @@
-function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdist)
 % matRad function to plot x and y labels denoting the ct dimensions according to
 % the selected plane
 %
@@ -17,8 +16,6 @@ function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize)
 %  
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 
 % 
@@ -35,13 +32,16 @@ if ~exist('defaultFontSize','var') || isempty(defaultFontSize)
     defaultFontSize = 12;
 end
 
+if ~exist('tickdist','var') || isempty(tickdist)
+    tickdist = 50;
+end
 %% Set axis labels and plot iso center
 if  plane == 3% Axial plane
     if ~isempty(ct.resolution.x) && ~isempty(ct.resolution.y)
-        set(axesHandle,'XTick',0:50/ct.resolution.x:1000);
-        set(axesHandle,'YTick',0:50/ct.resolution.y:1000);
-        set(axesHandle,'XTickLabel',0:50:1000*ct.resolution.x);
-        set(axesHandle,'YTickLabel',0:50:1000*ct.resolution.y);   
+        set(axesHandle,'XTick',0:tickdist/ct.resolution.x:1000);
+        set(axesHandle,'YTick',0:tickdist/ct.resolution.y:1000);
+        set(axesHandle,'XTickLabel',0:tickdist:1000*ct.resolution.x);
+        set(axesHandle,'YTickLabel',0:tickdist:1000*ct.resolution.y);   
         xlabel(axesHandle,'x [mm]','FontSize',defaultFontSize)
         ylabel(axesHandle,'y [mm]','FontSize',defaultFontSize)
         title(axesHandle,['axial plane z = ' num2str(ct.resolution.z*slice) ' [mm]'],'FontSize',defaultFontSize)
@@ -52,10 +52,10 @@ if  plane == 3% Axial plane
     end
 elseif plane == 2 % Sagittal plane
     if ~isempty(ct.resolution.y) && ~isempty(ct.resolution.z)
-        set(axesHandle,'XTick',0:50/ct.resolution.z:1000)
-        set(axesHandle,'YTick',0:50/ct.resolution.y:1000)
-        set(axesHandle,'XTickLabel',0:50:1000*ct.resolution.z)
-        set(axesHandle,'YTickLabel',0:50:1000*ct.resolution.y)
+        set(axesHandle,'XTick',0:tickdist/ct.resolution.z:1000)
+        set(axesHandle,'YTick',0:tickdist/ct.resolution.y:1000)
+        set(axesHandle,'XTickLabel',0:tickdist:1000*ct.resolution.z)
+        set(axesHandle,'YTickLabel',0:tickdist:1000*ct.resolution.y)
         xlabel(axesHandle,'z [mm]','FontSize',defaultFontSize);
         ylabel(axesHandle,'y [mm]','FontSize',defaultFontSize);
         title(axesHandle,['sagittal plane x = ' num2str(ct.resolution.y*slice) ' [mm]'],'FontSize',defaultFontSize)
@@ -66,10 +66,10 @@ elseif plane == 2 % Sagittal plane
     end
 elseif plane == 1 % Coronal plane
     if ~isempty(ct.resolution.x) && ~isempty(ct.resolution.z)
-        set(axesHandle,'XTick',0:50/ct.resolution.z:1000)
-        set(axesHandle,'YTick',0:50/ct.resolution.x:1000)
-        set(axesHandle,'XTickLabel',0:50:1000*ct.resolution.z)
-        set(axesHandle,'YTickLabel',0:50:1000*ct.resolution.x)
+        set(axesHandle,'XTick',0:tickdist/ct.resolution.z:1000)
+        set(axesHandle,'YTick',0:tickdist/ct.resolution.x:1000)
+        set(axesHandle,'XTickLabel',0:tickdist:1000*ct.resolution.z)
+        set(axesHandle,'YTickLabel',0:tickdist:1000*ct.resolution.x)
         xlabel(axesHandle,'z [mm]','FontSize',defaultFontSize)
         ylabel(axesHandle,'x [mm]','FontSize',defaultFontSize)
         title(axesHandle,['coronal plane y = ' num2str(ct.resolution.x*slice) ' [mm]'],'FontSize',defaultFontSize)
