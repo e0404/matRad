@@ -2896,11 +2896,14 @@ try
     
     % delete old variables to avoid confusion
     if isfield(resultGUI,'effect')
-        resultGUI = rmfield(resultGUI,'effect');
-        resultGUI = rmfield(resultGUI,'RBExDose'); 
-        resultGUI = rmfield(resultGUI,'RBE'); 
-        resultGUI = rmfield(resultGUI,'alpha'); 
-        resultGUI = rmfield(resultGUI,'beta');
+        deleteBioFields = {'effect','RBExDose','RBE','alpha','beta'};
+        for i = 1:numel(deleteBioFields)
+            try 
+                resultGUI = rmfield(resultGUI,deleteBioFields{i});
+            catch
+                warning('Unexpected missing biological dose cube ''%s''.',deleteBioFields{i});
+            end
+        end
     end
     
     % overwrite the "standard" fields
