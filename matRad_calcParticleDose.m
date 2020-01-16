@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
+function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect,fineSampling)
 % matRad particle dose calculation wrapper
 % 
 % call
@@ -12,6 +12,7 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 %   calcDoseDirect: boolian switch to bypass dose influence matrix
 %                   computation and directly calculate dose; only makes
 %                   sense in combination with matRad_calcDoseDirect.m
+%   fineSampling:   boolian switch to enable/disable fine sampling of rays
 %
 % output
 %   dij:            matRad dij struct
@@ -157,17 +158,40 @@ for i = 1:length(stf) % loop over all beams
 
             maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
 
-            % Ray tracing for beam i and ray j
-            [ix,~,~,~,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsVdoseGrid, ...
+            
+
+            if ~fineSampling
+                % Ray tracing for beam i and ray j
+                [ix,currRadialDist_sq,~,~,~,~] = matRad_calcGeoDists(rot_coordsVdoseGrid, ...
                                                      stf(i).sourcePoint_bev, ...
                                                      stf(i).ray(j).targetPoint_bev, ...
                                                      machine.meta.SAD, ...
                                                      find(~isnan(radDepthVdoseGrid{1})), ...
                                                      maxLateralCutoffDoseCalc);
+                                                 
+                                                 
+                radDepths = radDepthVdoseGrid{1}(ix);   
+            else
+                % Ray tracing for beam i and ray j
+                [ix,~,~,~,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsVdoseGrid, ...
+                                                     stf(i).sourcePoint_bev, ...
+                                                     stf(i).ray(j).targetPoint_bev, ...
+                                                     machine.meta.SAD, ...
+                                                     find(~isnan(radDepthVdoseGrid{1})), ...
+                                                     maxLateralCutoffDoseCalc);
+                                                 
+                                                 
+                % we use a function to evaluate simultaneously all the initial
+                % sigma. This function should be made faster
+                sigmaIni = matRad_calcSigmaIni(machine.data,stf(i).ray(j),stf(i).ray(j).SSD);
 
-%             radDepths = radDepthVdoseGrid{1}(ix);   
-
-
+                % Given the initial sigma of the sampling beam, this
+                % function provides the weights for the sub-pencil beams,
+                % their positions and their sigma used for dose calculation
+                [finalWeight, sigmaSub, posX, posZ, numOfSub] = ...
+                    matRad_calcWeights(sigmaIni, 8, 'circle');
+            end
+            
              
                        
             % just use tissue classes of voxels found by ray tracer
@@ -177,15 +201,7 @@ for i = 1:length(stf) % loop over all beams
             end
             
             
-            % we use a function to evaluate simultaneously all the initial
-            % sigma. This function should be made faster
-            sigmaIni = matRad_calcSigmaIni(machine.data,stf(i).ray(j),stf(i).ray(j).SSD);
-
-            % Given the initial sigma of the sampling beam, this
-            % function provides the weights for the sub-pencil beams,
-            % their positions and their sigma used for dose calculation
-            [finalWeight, sigmaSub, posX, posZ, numOfSub] = ...
-                matRad_calcWeights(sigmaIni, 8, 'circle');
+            
             
             
 
@@ -217,23 +233,23 @@ for i = 1:length(stf) % loop over all beams
                 energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
                 
                 
+                if fineSampling
+                    % project coordinates to central ray
+                    projCoords = matRad_projectOnComponents(VctGrid(ix), ct.cubeDim, stf(i).sourcePoint_bev,...
+                                    stf(i).ray(j).targetPoint_bev, stf.isoCenter,...
+                                    [ct.resolution.x ct.resolution.y ct.resolution.z],...
+                                    posX(:,k), posZ(:,k), rotMat_system_T);
 
-                % project coordinates to central ray
-                projCoords = matRad_projectOnComponents(VctGrid(ix), ct.cubeDim, stf(i).sourcePoint_bev,...
-                                stf(i).ray(j).targetPoint_bev, stf.isoCenter,...
-                                [ct.resolution.x ct.resolution.y ct.resolution.z],...
-                                posX(:,k), posZ(:,k), rotMat_system_T);
+                    % interpolate radiological depths at projected
+                    % coordinates
+                    radDepths = interp3(radDepthCubeCtGrid,projCoords(:,1,:)./ct.resolution.x,...
+                        projCoords(:,2,:)./ct.resolution.y,projCoords(:,3,:)./ct.resolution.z,'linear');
 
-                % interpolate radiological depths at projected
-                % coordinates
-                radDepths = interp3(radDepthCubeCtGrid,projCoords(:,1,:)./ct.resolution.x,...
-                    projCoords(:,2,:)./ct.resolution.y,projCoords(:,3,:)./ct.resolution.z,'linear');
-                
 
-                % compute radial distances relative to pencil beam
-                % component
-                currRadialDist_sq = reshape(bsxfun(@plus,latDistsX,posX(:,k)'),[],1,numOfSub).^2 + reshape(bsxfun(@plus,latDistsZ,posZ(:,k)'),[],1,numOfSub).^2;
-                
+                    % compute radial distances relative to pencil beam
+                    % component
+                    currRadialDist_sq = reshape(bsxfun(@plus,latDistsX,posX(:,k)'),[],1,numOfSub).^2 + reshape(bsxfun(@plus,latDistsZ,posZ(:,k)'),[],1,numOfSub).^2;
+                end
                 
                 
                 
@@ -297,59 +313,62 @@ for i = 1:length(stf) % loop over all beams
                     
                 end
                  
-                % run over components
-                for c = 1:numOfSub
+                if fineSampling
+                    % run over components
+                    for c = 1:numOfSub
 
-                    % discriminate if is the first sub-sample (the central
-                    % one) or the followings
-                    if c>1
-                        tempBixelDose = finalWeight(c,k).*matRad_calcParticleDoseBixel(...
-                            radDepths(currIx(:,:,c),1,c), ...
-                            currRadialDist_sq(currIx(:,:,c),:,c), ...
-                            sigmaSub(k)^2, ...
-                            machine.data(energyIx));
+                        % discriminate if is the first sub-sample (the central
+                        % one) or the followings
+                        if c>1
+                            tempBixelDose = finalWeight(c,k).*matRad_calcParticleDoseBixel(...
+                                radDepths(currIx(:,:,c),1,c), ...
+                                currRadialDist_sq(currIx(:,:,c),:,c), ...
+                                sigmaSub(k)^2, ...
+                                machine.data(energyIx));
 
-                        % we want to add only the contribution on the
-                        % central sub-sample
-                        [~,idxsIntoSup] = intersect(superIdx,VctGrid(ix(currIx(:,:,c))));
-                        [~,idxsIntoSft] = intersect(VctGrid(ix(currIx(:,:,c))),superIdx);
+                            % we want to add only the contribution on the
+                            % central sub-sample
+                            [~,idxsIntoSup] = intersect(superIdx,VctGrid(ix(currIx(:,:,c))));
+                            [~,idxsIntoSft] = intersect(VctGrid(ix(currIx(:,:,c))),superIdx);
 
-                        bixelDose(idxsIntoSup) = bixelDose(idxsIntoSup) + tempBixelDose(idxsIntoSft);
+                            bixelDose(idxsIntoSup) = bixelDose(idxsIntoSup) + tempBixelDose(idxsIntoSft);
 
-                    else
-                        bixelDose = finalWeight(c,k).*matRad_calcParticleDoseBixel(...
-                            radDepths(currIx(:,:,c),1,c), ...
-                            currRadialDist_sq(currIx(:,:,c),:,c), ...
-                            sigmaSub(k)^2, ...
-                            machine.data(energyIx));
+                        else
+                            bixelDose = finalWeight(c,k).*matRad_calcParticleDoseBixel(...
+                                radDepths(currIx(:,:,c),1,c), ...
+                                currRadialDist_sq(currIx(:,:,c),:,c), ...
+                                sigmaSub(k)^2, ...
+                                machine.data(energyIx));
 
-                        % need to remember the index of the central
-                        % sub-sample
-                        superIdx = VctGrid(ix(currIx(:,:,1)));
+                            % need to remember the index of the central
+                            % sub-sample
+                            superIdx = VctGrid(ix(currIx(:,:,1)));
+                        end
+
+                        % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
+                        %relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose
+                        %Type               = 'dose';
+                        %[currIx,bixelDose] = matRad_DijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
                     end
+
+                    doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(superIdx,1,bixelDose,dij.doseGrid.numOfVoxels,1);
+                else
+                    % calculate particle dose for bixel k on ray j of beam i
+                    bixelDose = matRad_calcParticleDoseBixel(...
+                        currRadDepths, ...
+                        currRadialDist_sq(currIx), ...
+                        sigmaIni_sq, ...
+                        machine.data(energyIx));                 
 
                     % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
                     %relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose
                     %Type               = 'dose';
                     %[currIx,bixelDose] = matRad_DijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
+
+                    % Save dose for every bixel in cell array
+                    doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid(ix(currIx)),1,bixelDose,dij.doseGrid.numOfVoxels,1);
                 end
                 
-                doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(superIdx,1,bixelDose,dij.doseGrid.numOfVoxels,1);
-%                 
-%                 % calculate particle dose for bixel k on ray j of beam i
-%                 bixelDose = matRad_calcParticleDoseBixel(...
-%                     currRadDepths, ...
-%                     radialDist_sq(currIx), ...
-%                     sigmaIni_sq, ...
-%                     machine.data(energyIx));                 
-%   
-%                 % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
-%                 %relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose
-%                 %Type               = 'dose';
-%                 %[currIx,bixelDose] = matRad_DijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
-%                 
-%                 % Save dose for every bixel in cell array
-%                 doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid(ix(currIx)),1,bixelDose,dij.doseGrid.numOfVoxels,1);
 
                 if isfield(dij,'mLETDose')
                   % calculate particle LET for bixel k on ray j of beam i
