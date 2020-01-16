@@ -1,4 +1,4 @@
-function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
+function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ,latDistsX,latDistsZ] = ...
           matRad_calcGeoDists(rot_coords_bev, ...
                               sourcePoint_bev, ...
                               targetPoint_bev, ...
@@ -37,6 +37,9 @@ function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
 %                       iso center plane
 %   radialDist_sq:      squared radial distance to the central ray (where the
 %                       actual computation of the radiological depth takes place)
+%   latDistsX:          lateral x-distance to the central ray
+%   latDistsZ:          lateral z-distance to the central ray
+%
 %
 % References
 %
@@ -95,14 +98,26 @@ subsetMask = rad_distancesSq ./ rot_coords_temp(:,2).^2 <= lateralCutOff^2 /SAD^
 ix = radDepthIx(subsetMask);
 
 % return radial distances squared
-if nargout > 1
-    rad_distancesSq = rad_distancesSq(subsetMask);
-end
+% if nargout > 1
+%     rad_distancesSq = rad_distancesSq(subsetMask);
+% end
+rad_distancesSq = rad_distancesSq(subsetMask);
 
 % return x & z distance
-if nargout > 2
-   isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
-   isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD; 
+% if nargout > 2
+%    isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
+%    isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD; 
+% end
+
+% compute output only when requested (save computation time)
+if nargout > 4
+    % latDists
+    latDistsX = latDistsX(subsetMask);
+    latDistsZ = latDistsZ(subsetMask);
+    isoLatDistsX    = NaN;
+    isoLatDistsZ    = NaN;
+elseif nargout > 2
+    % lateral distances projected to iso center plane
+    isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
+    isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD; 
 end
-
-

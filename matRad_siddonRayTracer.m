@@ -211,7 +211,10 @@ j(j>yNumPlanes-1) = yNumPlanes-1;
 k(k>zNumPlanes-1) = zNumPlanes-1;
 
 % Convert to linear indices
-ix = j + (i-1)*size(cubes{1},1) + (k-1)*size(cubes{1},1)*size(cubes{1},2); 
+% ix = j + (i-1)*size(cubes{1},1) + (k-1)*size(cubes{1},1)*size(cubes{1},2); 
+ix = sub2ind(size(cubes{1}),j,i,k);
+ix(isnan(ix)) = [];
+l(isinf(l)) = [];
 
 % obtains the values from cubes
 rho = cell(numel(cubes),1);
