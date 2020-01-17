@@ -15,7 +15,7 @@ vars.geoShape = "Rectangle";
 slabYs = 3;     %0:3;   % size of slab in y axis
 slabXs = 15;    %11:18; % use this to take the slab in and out of the beam
                         % as we discussed, there is no size parameter in x axis
-slabZs = 3;     %0:3;   % size of slab in z axis
+slabZs = 20;     %0:3;   % size of slab in z axis
 
 
 alignmentsX =  -35;     %-35:-10; % alignment in the beam direction(slab up and down)
