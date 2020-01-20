@@ -142,25 +142,25 @@ for i = 1:length(stf) % loop over all beams
     matRad_calcDoseInitBeam;
     imagesc(radDepthCubeCtGrid(:,:,80))
 
-    for a = 1:size(radDepthCubeCtGrid,1)
-        a
-        for b = 1:size(radDepthCubeCtGrid,2)
-            for c = 1:size(radDepthCubeCtGrid,3)
-                range = 2;
-                ixA = a-range:a+range;
-                ixB = b-range:b+range;
-                ixC = c-range:c+range;
-                ixA(ixA < 1)   = [];
-                ixA(ixA > 160) = [];  
-                ixB(ixB < 1)   = [];
-                ixB(ixB > 160) = [];
-                ixC(ixC < 1)   = [];
-                ixC(ixC > 160) = [];
-                mu = sum(sum(sum(radDepthCubeCtGrid(ixA,ixB,ixC))))/numel(radDepthCubeCtGrid(ixA,ixB,ixC));
-                deviation(a,b,c) = sqrt(sum(sum(sum((radDepthCubeCtGrid(ixA,ixB,ixC) - mu).^2)))/numel(radDepthCubeCtGrid(ixA,ixB,ixC)));
-            end
-        end
-    end
+%     for a = 1:size(radDepthCubeCtGrid,1)
+%         a
+%         for b = 1:size(radDepthCubeCtGrid,2)
+%             for c = 1:size(radDepthCubeCtGrid,3)
+%                 range = 2;
+%                 ixA = a-range:a+range;
+%                 ixB = b-range:b+range;
+%                 ixC = c-range:c+range;
+%                 ixA(ixA < 1)   = [];
+%                 ixA(ixA > 160) = [];  
+%                 ixB(ixB < 1)   = [];
+%                 ixB(ixB > 160) = [];
+%                 ixC(ixC < 1)   = [];
+%                 ixC(ixC > 160) = [];
+%                 mu = sum(sum(sum(radDepthCubeCtGrid(ixA,ixB,ixC))))/numel(radDepthCubeCtGrid(ixA,ixB,ixC));
+%                 deviation(a,b,c) = sqrt(sum(sum(sum((radDepthCubeCtGrid(ixA,ixB,ixC) - mu).^2)))/numel(radDepthCubeCtGrid(ixA,ixB,ixC)));
+%             end
+%         end
+%     end
        
         
         

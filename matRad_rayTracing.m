@@ -134,4 +134,5 @@ for i = 1:ct.numOfCtScen
     radDepthV{i} = radDepthCube{i}(V);
 end
 
-radDepthsMat = flip(radDepthCube{1},2);
+% radDepthsMat = flip(radDepthCube{1},2);
+radDepthsMat = radDepthCube{1};

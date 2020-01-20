@@ -45,6 +45,18 @@ geoDistVdoseGrid{1}= sqrt(sum(rot_coordsVdoseGrid.^2,2));
 fprintf('matRad: calculate radiological depth cube...');
 % radDepthVctGrid = matRad_rayTracing(stf(i),ct,VctGrid,rot_coordsV,effectiveLateralCutoff);
 [radDepthCubeCtGrid, radDepthVctGrid] = matRad_rayTracing(stf(i),ct,VctGrid,rot_coordsV,effectiveLateralCutoff);
+
+kernelsize = 5;
+mu5kernel = ones(kernelsize,kernelsize,kernelsize) ./ kernelsize^3;
+mu5  = convn(ct.cube{1}, mu5kernel, 'same');
+std5 = convn(ct.cube{1}.^2, mu5kernel, 'same') - mu5.^2;
+std = ct;
+std.cube = {std5};
+std.hlut = [];
+std.cubeHU = [];
+
+[cStdCtGrid, ~] = matRad_rayTracing(stf(i),std,VctGrid,rot_coordsV,effectiveLateralCutoff);
+
 fprintf('done.\n');
 
 % interpolate radiological depth cube to dose grid resolution
