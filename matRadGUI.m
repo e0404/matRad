@@ -1505,9 +1505,10 @@ try
         oldNames = fieldnames(resultGUI);
         if(length(oldNames) > length(sNames))
             for j = 1:length(oldNames)
-            if strfind(oldNames{j}, 'beam')
-                resultGUI = rmfield(resultGUI, oldNames{j});
-            end
+                %Remove the beam cubes
+                if regexp(oldNames{j},'(.+)_beam(\d+)') %strfind(oldNames{j}, 'beam')
+                    resultGUI = rmfield(resultGUI, oldNames{j});
+                end
             end
         end
         for j = 1:length(sNames)
@@ -1772,8 +1773,6 @@ if strcmp(get(hObject,'Enable') ,'on')
  
 end
 
-
-
 function Flag = getCstTable (handles)
 
 data = get(handles.uiTable,'Data');
@@ -2007,8 +2006,6 @@ if ~strcmp(eventdata.NewData,eventdata.PreviousData)
          if sum(strcmp(cst(Idx,2),eventdata.NewData))==0 
              handles.DijCalcWarning = true;
          end
-        
-        
     else
         % if table changed after a optimization was performed
         if handles.State ==3 && handles.TableChanged == false
