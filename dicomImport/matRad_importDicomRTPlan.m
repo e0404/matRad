@@ -77,15 +77,15 @@ end
 %% get information may change between beams
 % loop over beams
 gantryAngles{length(BeamSeqNames)} = [];
-collimatorAngles{length(BeamSeqNames)} = [];
 PatientSupportAngle{length(BeamSeqNames)} = [];
+collimatorAngles{length(BeamSeqNames)} = [];										   
 isoCenter = NaN*ones(length(BeamSeqNames),3);
 for i = 1:length(BeamSeqNames)   
     currBeamSeq             = BeamSequence.(BeamSeqNames{i});
     % parameters not changing are stored in the first ControlPointSequence
-    gantryAngles{i}         = currBeamSeq.(ControlParam).Item_1.GantryAngle;
-    collimatorAngles{i}     = currBeamSeq.(ControlParam).Item_1.BeamLimitingDeviceAngle;
+    gantryAngles{i}         = currBeamSeq.(ControlParam).Item_1.GantryAngle;																					
     PatientSupportAngle{i}  = currBeamSeq.(ControlParam).Item_1.PatientSupportAngle;
+	collimatorAngles{i}     = currBeamSeq.(ControlParam).Item_1.BeamLimitingDeviceAngle;
     isoCenter(i,:)          = currBeamSeq.(ControlParam).Item_1.IsocenterPosition';
 end
 
@@ -135,8 +135,8 @@ pln.machine         = strcat(planInfo.BeamSequence.Item_1.TreatmentMachineName,'
 pln.propStf.isoCenter    = isoCenter;
 pln.propStf.bixelWidth   = NaN; % [mm] / also corresponds to lateral spot spacing for particles
 pln.propStf.gantryAngles = [gantryAngles{1:length(BeamSeqNames)}];
-pln.propStf.collimatorAngles = [collimatorAngles{1:length(BeamSeqNames)}];
 pln.propStf.couchAngles  = [PatientSupportAngle{1:length(BeamSeqNames)}]; % [°]
+pln.propStf.collimatorAngles = [collimatorAngles{1:length(BeamSeqNames)}];																			
 pln.propStf.numOfBeams   = length(BeamSeqNames);
 
 

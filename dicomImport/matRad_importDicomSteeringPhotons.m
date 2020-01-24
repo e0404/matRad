@@ -35,21 +35,21 @@ end
 % get fields possessing a field weight vector greater than 0
 Fields = pln.propStf.collimation.Fields([pln.propStf.collimation.Fields(:).Weight] > 0);
 
-[UniqueComb,ia,ib] = unique( vertcat([Fields(:).GantryAngle], [Fields(:).CollimatorAngle], [Fields(:).CouchAngle])','rows');
+[UniqueComb,ia,ib] = unique( vertcat([Fields(:).GantryAngle], [Fields(:).CouchAngle], [Fields(:).CollimatorAngle])','rows');
 
 % return corret angles to pln, because some angle derivations might be 
 % only in the control point sequences
 pln.propStf.gantryAngles = UniqueComb(:,1)';
-pln.propStf.collimatorAngles = UniqueComb(:,2)';
-pln.propStf.couchAngles  = UniqueComb(:,3)';
+pln.propStf.couchAngles  = UniqueComb(:,2)';
+pln.propStf.collimatorAngles = UniqueComb(:,3)';
 
 stf = struct;
 % loop over all fields
 for i = 1:size(UniqueComb,1)
     % set necessary steering information 
     stf(i).gantryAngle  = UniqueComb(i,1);
-    stf(i).collimatorAngle  = UniqueComb(i,2);
-    stf(i).couchAngle   = UniqueComb(i,3);
+    stf(i).couchAngle   = UniqueComb(i,2);
+	stf(i).collimatorAngle  = UniqueComb(i,3);
     stf(i).isoCenter    = pln.propStf.isoCenter(i,:);
     
     % bixelWidth = 'field' as keyword for whole field dose calc
@@ -66,10 +66,13 @@ for i = 1:size(UniqueComb,1)
     
     % coordinate transformation with rotation matrix.
     % use transpose matrix because we are working with row vectors
-    rotMat_vectors_T = transpose(matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).collimatorAngle,stf(i).couchAngle));
+	if ~isfield(stf(i),'collimatorAngle')
+		rotMat_vectors_T = transpose(matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).couchAngle,stf(i).collimatorAngle));
+    else
+		rotMat_vectors_T = transpose(matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).couchAngle,stf(i).collimatorAngle));
+	end
 
-
-    % Rotated Source point (1st gantry, 2nd collimator, 3nd couch)
+    % Rotated Source point (1st gantry, 2nd couch, 3nd collimator)
     stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMat_vectors_T;
     
     % only one ray in center position

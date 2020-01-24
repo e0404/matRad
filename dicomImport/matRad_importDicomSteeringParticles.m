@@ -116,8 +116,9 @@ for i = 1:length(BeamSeqNames)
     currBeamSeq = BeamSeq.(BeamSeqNames{i});
     ControlPointSeq      	= currBeamSeq.IonControlPointSequence;
     stf(i).gantryAngle   	= pln.propStf.gantryAngles(i);
-    stf(i).collimatorAngle  = pln.propStf.collimatorAngles(i);
+															  
     stf(i).couchAngle    	= pln.propStf.couchAngles(i);
+	stf(i).collimatorAngle  = pln.propStf.collimatorAngles(i);
     stf(i).bixelWidth    	= pln.propStf.bixelWidth;
     stf(i).radiationMode 	= pln.radiationMode;
     % there might be several SAD's, e.g. compensator?
@@ -239,9 +240,13 @@ for i = 1:length(BeamSeqNames)
     
     % coordinate transformation with rotation matrix.
     % use transpose matrix because we are working with row vectors
-    rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.collimatorAngles(i),pln.propStf.couchAngles(i)));
-
-    % Rotated Source point (1st gantry, 2nd collimator, 3nd couch)
+	if ~isfield(pln.propStf,'collimatorAngles')
+		rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i)));
+    else
+		rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i),pln.propStf.collimatorAngles(i)));
+	end
+	
+    % Rotated Source point (1st gantry, 2nd couch, 3nd collimator)
     stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMat_vectors_T;
     
     % Save ray and target position in lps system.

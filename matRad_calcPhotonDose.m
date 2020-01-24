@@ -141,7 +141,7 @@ for i = 1:dij.numOfBeams % loop over all beams
     kernel1 = machine.data.kernel(currSSDIx).kernel1;
     kernel2 = machine.data.kernel(currSSDIx).kernel2;
     kernel3 = machine.data.kernel(currSSDIx).kernel3;
-    if machine.data.iNumKernel == 4
+    if isfield(machine.data.kernel,'kernel4')
         kernel4 = machine.data.kernel(currSSDIx).kernel4;
     end
     
@@ -149,7 +149,7 @@ for i = 1:dij.numOfBeams % loop over all beams
     kernel1Mx = interp1(kernelPos,kernel1,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
     kernel2Mx = interp1(kernelPos,kernel2,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
     kernel3Mx = interp1(kernelPos,kernel3,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
-    if machine.data.iNumKernel == 4
+    if isfield(machine.data.kernel,'kernel4')
         kernel4Mx = interp1(kernelPos,kernel4,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
     end
     
@@ -164,7 +164,7 @@ for i = 1:dij.numOfBeams % loop over all beams
         convMx1 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)));
         convMx2 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel2Mx,kernelConvSize,kernelConvSize)));
         convMx3 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)));
-        if machine.data.iNumKernel == 4
+        if isfield(machine.data.kernel,'kernel4')
             convMx4 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel4Mx,kernelConvSize,kernelConvSize)));
         end
         % Creates an interpolant for kernes from vectors position X and Z
@@ -172,14 +172,14 @@ for i = 1:dij.numOfBeams % loop over all beams
             Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
             Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
             Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
-            if machine.data.iNumKernel == 4
+            if isfield(machine.data.kernel,'kernel4')
                 Interp_kernel4 = griddedInterpolant(convMx_X',convMx_Z',convMx4','linear','none');
             end
         else
             Interp_kernel1 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,'linear',NaN);
             Interp_kernel2 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,'linear',NaN);
             Interp_kernel3 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,'linear',NaN);
-            if machine.data.iNumKernel == 4
+            if isfield(machine.data.kernel,'kernel4')
                 Interp_kernel4 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx4,x,y,'linear',NaN);
             end
         end
@@ -213,7 +213,7 @@ for i = 1:dij.numOfBeams % loop over all beams
             convMx1 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)) );
             convMx2 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel2Mx,kernelConvSize,kernelConvSize)) );
             convMx3 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)) );
-            if machine.data.iNumKernel == 4
+            if isfield(machine.data.kernel,'kernel4')
                 convMx4 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel4Mx,kernelConvSize,kernelConvSize)) );
             end
             
@@ -222,7 +222,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                 Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
                 Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
                 Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
-                if machine.data.iNumKernel == 4
+                if isfield(machine.data.kernel,'kernel4')
                     Interp_kernel4 = griddedInterpolant(convMx_X',convMx_Z',convMx4','linear','none');
                 else
                     Interp_kernel4 = 0;    
@@ -231,7 +231,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                 Interp_kernel1 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,'linear',NaN);
                 Interp_kernel2 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,'linear',NaN);
                 Interp_kernel3 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,'linear',NaN);
-                if machine.data.iNumKernel == 4
+                if isfield(machine.data.kernel,'kernel4')
                     Interp_kernel4 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx4,x,y,'linear',NaN);
                 else
                     Interp_kernel4 = 0;
@@ -275,11 +275,7 @@ for i = 1:dij.numOfBeams % loop over all beams
 
                 
         % calculate photon dose for beam i and bixel j
-        bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data.m,...
-                                                   machine.data.betas, ...
-                                                   machine.data.iNumKernel, ...
-                                                   machine.data.surfaceDose, ...
-                                                   machine.data.electronRangeIntensity, ...
+        bixelDose = matRad_calcPhotonDoseBixel(machine.meta.SAD,machine.data,...
                                                    Interp_kernel1,...
                                                    Interp_kernel2,...
                                                    Interp_kernel3,...

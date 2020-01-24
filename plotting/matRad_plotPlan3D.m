@@ -109,7 +109,11 @@ else %We use the steering information to visualize the field contour
         beamTarget = stf(fieldIx).isoCenter;
         beamSource = stf(fieldIx).sourcePoint + stf(fieldIx).isoCenter;
         
-        rotMat = matRad_getRotationMatrix(pln.propStf.gantryAngles(fieldIx),pln.propStf.collimatorAngles(fieldIx),pln.propStf.couchAngles(fieldIx));
+		if ~isfield(pln.propStf,'collimatorAngles')
+			rotMat = matRad_getRotationMatrix(pln.propStf.gantryAngles(fieldIx),pln.propStf.couchAngles(fieldIx));
+        else
+			rotMat = matRad_getRotationMatrix(pln.propStf.gantryAngles(fieldIx),pln.propStf.couchAngles(fieldIx),pln.propStf.collimatorAngles(fieldIx));
+        end
         
         bixelWidth = stf(fieldIx).bixelWidth;
         %Accumulate ray positions in matrix
