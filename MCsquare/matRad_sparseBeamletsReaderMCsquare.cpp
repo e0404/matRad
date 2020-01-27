@@ -31,8 +31,6 @@ run with matlab: Beamlets = mexSparseBeamletsReader('Sparse_Dose.bin', [256 256 
 #include <vector>
 #include <cmath>
 
-//typedef std::vector<size_t> ixVec_t;
-
 //Function to reorder the vectors
 void reorder_entries(mwIndex* nonZeroIx, double* nonZeroVals, size_t numValues)
 {
@@ -57,12 +55,6 @@ void reorder_entries(mwIndex* nonZeroIx, double* nonZeroVals, size_t numValues)
   }
 }
 
-
-//#include <stdlib.h>
-//#include <stdint.h>
-//#include <math.h>
-
-/*                  NbrOutputs  Outputs             NbrInputs   Inputs  */
 void mexFunction(   int nlhs,   mxArray *plhs[],    int nrhs,   const mxArray *prhs[]){
     
     if(nrhs != 4) 
@@ -88,7 +80,6 @@ void mexFunction(   int nlhs,   mxArray *plhs[],    int nrhs,   const mxArray *p
     sizeDoseGrid[2] = (uint32_t) *(mxGetPr(prhs[1])+2);
 
       uint32_t numVoxels = std::accumulate(sizeDoseGrid.begin(), sizeDoseGrid.end(), 1, std::multiplies<uint32_t>());
-    //mexPrintf("Number of voxels: %d", numVoxels);
       uint32_t numVoxelsSlice = sizeDoseGrid[0]*sizeDoseGrid[1];
 
 
@@ -179,8 +170,7 @@ void mexFunction(   int nlhs,   mxArray *plhs[],    int nrhs,   const mxArray *p
 
                 // get subscripts (NOTE: sizeDoseGrid is already permuted from the call within matRad)
                 kSub = ixMC2 / numVoxelsSlice;
-                jSub = (ixMC2 - kSub * numVoxelsSlice) / sizeDoseGrid[1];
-                //iSub = ixMC2 - jSub*sizeDoseGrid[1] - kSub*numVoxelsSlice;
+                jSub = (ixMC2 - kSub * numVoxelsSlice) / sizeDoseGrid[1];               
                 iSub = (ixMC2 - kSub * numVoxelsSlice) % sizeDoseGrid[1];
 
                 // flip image (here we take the second dim because of permutation)
