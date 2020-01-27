@@ -46,19 +46,45 @@ fprintf('matRad: calculate radiological depth cube...');
 % radDepthVctGrid = matRad_rayTracing(stf(i),ct,VctGrid,rot_coordsV,effectiveLateralCutoff);
 [radDepthCubeCtGrid, radDepthVctGrid] = matRad_rayTracing(stf(i),ct,VctGrid,rot_coordsV,effectiveLateralCutoff);
 
-kernelsize = 7;
-mu5kernel = ones(1,kernelsize,kernelsize) ./ kernelsize^2;
-mu5  = convn(ct.cube{1}, mu5kernel, 'same');
-std5 = convn(ct.cube{1}.^2, mu5kernel, 'same') - mu5.^2;
-std5(std5 < 0) = 0;
-std = ct;
-std.cube = {sqrt(std5)};
-std.hlut = [];
-std.cubeHU = [];
-meanRadDepths = convn(radDepthCubeCtGrid, mu5kernel, 'same');
+
+% kernelSize = maxKernelSize;
+% kernel = ones(1,kernelSize,kernelSize) ./ kernelSize^2;
+% mu5  = convn(ct.cube{1}, mu5kernel, 'same');
+% std5 = convn(ct.cube{1}.^2, mu5kernel, 'same') - mu5.^2;
+% std5(std5 < 0) = 0;
+% std = ct;
+% std.cube = {sqrt(std5)};
+% std.hlut = [];
+% std.cubeHU = [];
+% meanRadDepths = convn(radDepthCubeCtGrid, kernel, 'same');
+
+% test = convn(radDepthCubeCtGrid.^2, mu5kernel, 'same') - convn(radDepthCubeCtGrid, mu5kernel, 'same').^2;
+
+
+maxKernelSize = 7;
+
+for ii = 1:ct.cubeDim(1)
+    slice        = reshape(radDepthCubeCtGrid(ii,:,:),ct.cubeDim(2),ct.cubeDim(3));
+    kernelSize = round(ii/ct.cubeDim(1)* maxKernelSize);
+    kernel = ones(kernelSize,kernelSize) ./ kernelSize^2;
+    
+    tmpCstd     = sqrt(convn(slice.^2, kernel, 'same') - convn(slice, kernel, 'same').^2);
+    tmpRadDepth = convn(slice, kernel, 'same');
+    cStdCtGrid(ii,:,:)   = tmpCstd;
+    meanRadDepths(ii,:,:) = tmpRadDepth;    
+end
+% imagesc(cStdCtGrid(:,:,80))
+% figure
+% imagesc(meanRadDepths(:,:,80))
+
+% cStdCtGrid = imgaussfilt3(cStdCtGrid,1);
+cStdCtGrid(isnan(cStdCtGrid)) = 0;
+cStdVctGrid = {cStdCtGrid(VctGrid)};
 meanRadDepths = meanRadDepths(VctGrid);
 
-[cStdCtGrid, cStdVctGrid] = matRad_rayTracing(stf(i),std,VctGrid,rot_coordsV,effectiveLateralCutoff);
+    
+    
+% [cStdCtGrid, cStdVctGrid] = matRad_rayTracing(stf(i),std,VctGrid,rot_coordsV,effectiveLateralCutoff);
 
 fprintf('done.\n');
 

@@ -191,7 +191,7 @@ end
 
 % visualize if applicable
 if exist('slice','var') && ~isempty(slice)
-    figure
+%     figure
     set(gcf,'Color',[1 1 1]);
     imagesc(gammaCube(:,:,slice),[0 2])
     myColormap = matRad_getColormap('gammaIndex');
