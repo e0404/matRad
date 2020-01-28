@@ -20,10 +20,11 @@ matRad_rc
 %load HEAD_AND_NECK
 % load TG119.mat
 % load slabPhantom6.mat
-% load LungPatient1.mat
+% load SchaffnerPhantom1.mat
+load LungPatient1.mat
 % load PROSTATE.mat
 % load LIVER.mat
-load BOXPHANTOM
+% load BOXPHANTOM
 % load BOXPHANTOMv3.mat
 % load BOXPHANTOM_NARROW_NEW.mat
 % load phantomTest.mat
@@ -36,8 +37,8 @@ pln.machine         = 'matRadBDLfixed';
 pln.numOfFractions  = 30;
 
 % beam geometry settings
-pln.propStf.bixelWidth      = 300; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.longitudinalSpotSpacing = 300;
+pln.propStf.bixelWidth      = 50; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.longitudinalSpotSpacing = 50;
 pln.propStf.gantryAngles    = 0; % [?] 
 pln.propStf.couchAngles     = 0; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
@@ -61,7 +62,7 @@ stf = matRad_generateStf(ct,cst,pln);
 
  % assign new energy
 load protons_matRadBDL;
-stf.ray.energy = machine.data(44).energy;
+stf.ray.energy = machine.data(38).energy;
                             
 %% dose calculation
  % analytical dose without fine sampling
@@ -92,43 +93,47 @@ stf.ray.energy = machine.data(44).energy;
 
  % Monte Carlo dose
     tic
-    resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1), 10000000);
+    resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1), 5000000);
     resultGUI.physicalDoseMC = resultGUI_MC.physicalDose;
     mcDose      = resultGUI.physicalDoseMC;
     t4 = toc;
 
  %% plot doses
 figure
-subplot(2,2,1)
-imagesc(anaDose(38:122,38:122,round(ct.cubeDim(3)/2)));
+% subplot(2,2,1)
+imagesc(anaDose(:,:,round(ct.cubeDim(3)/2)));
 caxis([0 2e-3]);
 title('Standard dose');
 hold on 
-contour(ct.cube{1}(38:122,38:122,round(ct.cubeDim(3)/2)),3,'color','white');
+contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),2,'color','white');
 hold off
+camroll(90);
 
-subplot(2,2,2)
-imagesc(anaFsDose(38:122,38:122,round(ct.cubeDim(3)/2)));
+% subplot(2,2,2)
+figure
+imagesc(anaFsDose(:,:,round(ct.cubeDim(3)/2)));
 caxis([0 2e-3]);
 title('Fine sampling dose');
 hold on
-contour(ct.cube{1}(38:122,38:122,round(ct.cubeDim(3)/2)),3,'color','white');
+contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),3,'color','white');
 hold off
 
-subplot(2,2,3)
-imagesc(mcDose(38:122,38:122,round(ct.cubeDim(3)/2)));
+figure
+% subplot(2,2,3)
+imagesc(mcDose(:,:,round(ct.cubeDim(3)/2)));
 caxis([0 2e-3]);
 title('Monte Carlo dose');
 hold on 
-contour(ct.cube{1}(38:122,38:122,round(ct.cubeDim(3)/2)),3,'color','white');
+contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),3,'color','white');
 hold off
 
-subplot(2,2,4)
-imagesc(anaScDose(38:122,38:122,round(ct.cubeDim(3)/2)));
+figure
+% subplot(2,2,4)
+imagesc(anaScDose(:,:,round(ct.cubeDim(3)/2)));
 caxis([0 2e-3]);
 title('Std corrected dose');
 hold on 
-contour(ct.cube{1}(38:122,38:122,round(ct.cubeDim(3)/2)),3,'color','white');
+contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),3,'color','white');
 hold off
 
  %% execute gamma tests
@@ -157,3 +162,46 @@ title({[num2str(gammaPassRateCell{1,2}) '% of points > ' num2str(gammaTest(1)) '
 hold on
 contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),3,'color','white');
 hold off
+
+%% plot contour similar to schaffner et al
+
+figure
+imagesc(flip(anaDose(:,:,round(ct.cubeDim(3)/2))));
+hold on 
+contour(flip(anaDose(:,:,round(ct.cubeDim(3)/2))),10,'color','black');
+caxis([0 2e-3]);
+title('Standard dose');
+contour(flip(ct.cube{1}(:,:,round(ct.cubeDim(3)/2))),1,'color','white');
+hold off
+camroll(270);
+
+figure
+imagesc(flip(anaFsDose(:,:,round(ct.cubeDim(3)/2))));
+hold on 
+contour(flip(anaFsDose(:,:,round(ct.cubeDim(3)/2))),10,'color','black');
+caxis([0 2e-3]);
+title('Fine sampling dose');
+contour(flip(ct.cube{1}(:,:,round(ct.cubeDim(3)/2))),1,'color','white');
+hold off
+camroll(270);
+
+figure
+imagesc(flip(anaScDose(:,:,round(ct.cubeDim(3)/2))));
+hold on 
+contour(flip(anaScDose(:,:,round(ct.cubeDim(3)/2))),10,'color','black');
+caxis([0 2e-3]);
+title('Std corrected dose');
+contour(flip(ct.cube{1}(:,:,round(ct.cubeDim(3)/2))),1,'color','white');
+hold off
+camroll(270);
+
+figure
+imagesc(flip(mcDose(:,:,round(ct.cubeDim(3)/2))));
+hold on 
+contour(flip(mcDose(:,:,round(ct.cubeDim(3)/2))),10,'color','black');
+caxis([0 2e-3]);
+title('Monte Carlo dose');
+contour(flip(ct.cube{1}(:,:,round(ct.cubeDim(3)/2))),1,'color','white');
+hold off
+camroll(270);
+

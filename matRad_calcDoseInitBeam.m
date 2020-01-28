@@ -73,17 +73,12 @@ for ii = 1:ct.cubeDim(1)
     cStdCtGrid(ii,:,:)   = tmpCstd;
     meanRadDepths(ii,:,:) = tmpRadDepth;    
 end
-% imagesc(cStdCtGrid(:,:,80))
-% figure
-% imagesc(meanRadDepths(:,:,80))
 
 % cStdCtGrid = imgaussfilt3(cStdCtGrid,1);
 cStdCtGrid(isnan(cStdCtGrid)) = 0;
 cStdVctGrid = {cStdCtGrid(VctGrid)};
 meanRadDepths = meanRadDepths(VctGrid);
 
-    
-    
 % [cStdCtGrid, cStdVctGrid] = matRad_rayTracing(stf(i),std,VctGrid,rot_coordsV,effectiveLateralCutoff);
 
 fprintf('done.\n');
