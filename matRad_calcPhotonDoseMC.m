@@ -98,9 +98,9 @@ if exist('matRad_ompInterface','file') ~= 3
         eval(mexCall);
         
         cd(currFolder);
-    catch
+    catch MException
         cd(currFolder);
-        error('Could not find/generate mex interface for MC dose calculation. Please compile it yourself (preferably with OpenMP support)');
+        error('Could not find/generate mex interface for MC dose calculation.\nCause of error:\n%s\n Please compile it yourself (preferably with OpenMP support).',MException.message);
     end
 end
 
