@@ -1087,7 +1087,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     % set SAD
     fileName = [pln.radiationMode '_' pln.machine];
     try
-        load(fileName);
+        load(['basedata' filesep fileName]);
         SAD = machine.meta.SAD;
     catch
         error(['Could not find the following machine file: ' fileName ]); 
@@ -2964,7 +2964,7 @@ cst = evalin('base','cst');
 pln = evalin('base','pln');
 
 fileName = [pln.radiationMode '_' pln.machine];
-load(fileName);
+load(['basedata' filesep fileName]);
 
 % check for available cell types characterized by alphaX and betaX 
 for i = 1:size(machine.data(1).alphaX,2)
