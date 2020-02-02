@@ -57,7 +57,7 @@ if ispc
     else
         mcSquareBinary = 'MCSquare_windows.exe';
     end
-elseif isunix
+elseif isunix && ~ismac
     if exist('MCsquare_linux','file') ~= 2
         error('Could not find MCsquare binary.\n');
     else
