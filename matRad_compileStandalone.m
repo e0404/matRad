@@ -13,20 +13,63 @@ else
     error('Platform not supported')
 end
 
+
+
+FileName=['matRad' suffix '.prj'];
+xDoc = xmlread(FileName);
+
+%compile without runtime
+xDoc.getElementsByTagName('param.web.mcr').item(0).getFirstChild.setData('true');
+xDoc.getElementsByTagName('param.package.mcr').item(0).getFirstChild.setData('false');
+
+xmlwrite('matRadMac.prj',xDoc);
+
+clc
 applicationCompiler('-package',['matRad' suffix]);
 
-disp('Done');
+cmdWinDoc = com.mathworks.mde.cmdwin.CmdWinDocument.getInstance;
+% loop until 'Package finished' or 'Package failed' is found in the command window
+tic
+while toc<500
+  pause ( 2 )
+  myTxt = cmdWinDoc.getText(cmdWinDoc.getStartPosition.getOffset,cmdWinDoc.getLength);
+  %
+  if ~isempty ( strfind ( myTxt, 'Package finished' ) )
+    break
+  end
+  if ~isempty ( strfind ( myTxt, 'Package failed' ) )
+    break
+  end
+end
+
+disp('Packaged compiler without runtime');
 
 
-%% Files to be compiled separated by space
-%fileNames="matRadGUI.fig matRadGUI.m";
+%compile with runtime
+xDoc.getElementsByTagName('param.web.mcr').item(0).getFirstChild.setData('false');
+xDoc.getElementsByTagName('param.package.mcr').item(0).getFirstChild.setData('true');
+
+xmlwrite('matRadMac.prj',xDoc);
+
+clc
+applicationCompiler('-package',['matRad' suffix]);
+
+cmdWinDoc = com.mathworks.mde.cmdwin.CmdWinDocument.getInstance;
+% loop until 'Package finished' or 'Package failed' is found in the command window
+tic
+while toc<500
+  pause ( 2 )
+  myTxt = cmdWinDoc.getText(cmdWinDoc.getStartPosition.getOffset,cmdWinDoc.getLength);
+  %
+  if ~isempty ( strfind ( myTxt, 'Package finished' ) )
+    break
+  end
+  if ~isempty ( strfind ( myTxt, 'Package failed' ) )
+    break
+  end
+end
+
+disp('Packaged both compilers');
 
 
 
-
-
-%% Final command to run
-%mcc -m matRadGUI.fig matRadGUI.m
-
-% if isunix && ~ismac
-%     fname 'linux64'
