@@ -22,10 +22,10 @@ xDoc = xmlread(FileName);
 xDoc.getElementsByTagName('param.web.mcr').item(0).getFirstChild.setData('true');
 xDoc.getElementsByTagName('param.package.mcr').item(0).getFirstChild.setData('false');
 
-xmlwrite(['matRad' suffix '.prj'],xDoc);
+xmlwrite(FileName,xDoc);
 
 clc
-applicationCompiler('-package',['matRad' suffix]);
+applicationCompiler('-package',FileName);
 
 cmdWinDoc = com.mathworks.mde.cmdwin.CmdWinDocument.getInstance;
 % loop until 'Package finished' or 'Package failed' is found in the command window
@@ -49,10 +49,10 @@ disp('Packaged compiler without runtime');
 xDoc.getElementsByTagName('param.web.mcr').item(0).getFirstChild.setData('false');
 xDoc.getElementsByTagName('param.package.mcr').item(0).getFirstChild.setData('true');
 
-xmlwrite(['matRad' suffix '.prj'],xDoc);
+xmlwrite(FileName,xDoc);
 
 clc
-applicationCompiler('-package',['matRad' suffix]);
+applicationCompiler('-package',FileName);
 
 cmdWinDoc = com.mathworks.mde.cmdwin.CmdWinDocument.getInstance;
 % loop until 'Package finished' or 'Package failed' is found in the command window
