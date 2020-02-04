@@ -2,7 +2,7 @@
 
 if ismac
     suffix = 'Mac';
-    installSuffix = 'dmg';
+    installSuffix = 'app';
     % Mac platform
 elseif isunix
     suffix = 'Linux';
