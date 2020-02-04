@@ -22,7 +22,7 @@ xDoc = xmlread(FileName);
 xDoc.getElementsByTagName('param.web.mcr').item(0).getFirstChild.setData('true');
 xDoc.getElementsByTagName('param.package.mcr').item(0).getFirstChild.setData('false');
 
-xmlwrite('matRadMac.prj',xDoc);
+xmlwrite(['matRad' suffix '.prj'],xDoc);
 
 clc
 applicationCompiler('-package',['matRad' suffix]);
@@ -49,7 +49,7 @@ disp('Packaged compiler without runtime');
 xDoc.getElementsByTagName('param.web.mcr').item(0).getFirstChild.setData('false');
 xDoc.getElementsByTagName('param.package.mcr').item(0).getFirstChild.setData('true');
 
-xmlwrite('matRadMac.prj',xDoc);
+xmlwrite(['matRad' suffix '.prj'],xDoc);
 
 clc
 applicationCompiler('-package',['matRad' suffix]);
