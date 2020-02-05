@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
   <configuration build-checksum="2848777975"
                   file="/home/abbani/Dokumente/matRad/matRadLinux.prj"
@@ -49,11 +50,11 @@ ${LD_LIBRARY_PATH}:MR/v97/runtime/glnxa64:MR/v97/bin/glnxa64:MR/v97/sys/os/glnxa
       <param.user.defined.mcr.options/>
       <param.target.type>subtarget.standalone</param.target.type>
       <param.support.packages/>
-      <param.web.mcr>false</param.web.mcr>
-      <param.package.mcr>true</param.package.mcr>
+      <param.web.mcr>true</param.web.mcr>
+      <param.package.mcr>false</param.package.mcr>
       <param.no.mcr>false</param.no.mcr>
-      <param.web.mcr.name>matRad_installerLinux64</param.web.mcr.name>
-      <param.package.mcr.name>matRad_installerLinux64_wRT</param.package.mcr.name>
+      <param.web.mcr.name>matRad_installerLinux64_v_2_2</param.web.mcr.name>
+      <param.package.mcr.name>matRad_installerLinux64_wRT_v_2_2</param.package.mcr.name>
       <param.no.mcr.name>matRad_installerLinux64_noRT</param.no.mcr.name>
       <param.windows.command.prompt>false</param.windows.command.prompt>
       <param.create.log>true</param.create.log>
