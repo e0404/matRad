@@ -27,6 +27,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         axesHandle
         plotHandle
         abortRequested
+        plotFailed
     end
     
     methods
@@ -139,6 +140,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             %ipoptStruct.options = obj.options;
             obj.abortRequested = false;
+            obj.plotFailed = false;
             % Run IPOPT.
             [obj.wResult, obj.resultInfo] = ipopt(w0,funcs,ipoptStruct);
             
@@ -211,52 +213,75 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         
         function flag = iterFunc(obj,iter,objective,~,~)
             obj.allObjectiveFunctionValues(iter + 1) = objective;
-            obj.allIterations(iter + 1) = iter;
-            
-            if strcmp(obj.env,'MATLAB')
+            %We don't want the optimization to crash because of drawing
+            %errors
+            if ~obj.plotFailed
+                try            
                 obj.plotFunction();
+                catch ME
+                    %Put a warning at iteration 1 that plotting failed
+                    warning('Objective Function plotting failed and thus disabled. Message:\n%s',ME.message);
+                    obj.plotFailed = true;
+                end                
             end
             flag = ~obj.abortRequested;
         end
         
         function plotFunction(obj)
-            % plot objective function output 
+            % plot objective function output
+            y = obj.allObjectiveFunctionValues;
+            x = 1:numel(y);
+            
             x = obj.allIterations;
             y = obj.allObjectiveFunctionValues;
             if isempty(obj.axesHandle) || ~isgraphics(obj.axesHandle,'axes')
+                %Create new Fiure and store axes handle
                 hFig = figure('Name','Progress of IPOPT Optimization','NumberTitle','off','Color',[.5 .5 .5]);
-                
-                %Create Plot
-                obj.axesHandle = axes(hFig);
-                hold(obj.axesHandle,'on');
-                grid(obj.axesHandle,'on');
-                grid(obj.axesHandle,'minor');
+                hAx = axes(hFig);
+                hold(hAx,'on');
+                grid(hAx,'on');
+                grid(hAx,'minor');
+                set(hAx,'YScale','log');
+                 
+                %Add a Stop button with callback to change abort flag
                 c = uicontrol;
-                c.String = 'Stop';
-                c.Position(1) = 5;
-                c.Position(2) = 5;
-                c.Callback = @obj.abortCallbackButton;
+                cPos = get(c,'Position');
+                cPos(1) = 5;
+                cPos(2) = 5;
+                set(c,  'String','Stop',...
+                        'Position',cPos,...
+                        'Callback',@(~,~) abortCallbackButton(obj));                
+            
+                %Set up the axes scaling & labels
                 defaultFontSize = 14;
-                set(obj.axesHandle,'YScale','log');
-                title(obj.axesHandle,'Progress of Optimization','LineWidth',defaultFontSize);
-                xlabel(obj.axesHandle,'# iterations','Fontsize',defaultFontSize),ylabel(obj.axesHandle,'objective function value','Fontsize',defaultFontSize);
-                
+                set(hAx,'YScale','log');
+                title(hAx,'Progress of Optimization','LineWidth',defaultFontSize);
+                xlabel(hAx,'# iterations','Fontsize',defaultFontSize),ylabel(hAx,'objective function value','Fontsize',defaultFontSize);
+            
                 %Create plot handle and link to data for faster update
-                obj.plotHandle = plot(obj.axesHandle,x,y,'xb','LineWidth',1.5,'XDataSource','x','YDataSource','y');
-            else
-                hFig = obj.axesHandle.Parent;
+                hPlot = plot(hAx,x,y,'xb','LineWidth',1.5,'XDataSource','x','YDataSource','y');
+                obj.plotHandle = hPlot;
+                obj.axesHandle = hAx;
+                                
+            else %Figure already exists, retreive from axes handle
+                hFig = get(obj.axesHandle,'Parent');
+                hAx = obj.axesHandle;
+                hPlot = obj.plotHandle;
             end
             
-            
-            
             % draw updated axes by refreshing data of the plot handle (which is linked to y and y) 
-            % in the caller workspace
-            refreshdata(obj.plotHandle,'caller');
+            % in the caller workspace. Octave needs and works on figure handles, which
+            % is substantially (factor 10) slower, thus we check explicitly
+            switch obj.env
+                case 'OCTAVE'
+                    refreshdata(hFig,'caller');
+                otherwise
+                    refreshdata(hPlot,'caller');
+            end
             drawnow;
             
-            % ensure to bring optimization window to front also for a re-optimization
+            % ensure to bring optimization window to front
             figure(hFig);
-            
         end
         
         function abortCallbackKey(obj,~,KeyEvent)
