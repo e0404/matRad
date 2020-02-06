@@ -64,11 +64,20 @@ end
 
 
 %check if the files exist, and delete them
-if exist(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix], 'file') == 2
+if isfolder(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix]) || ...
+   rmdir(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix],'s')
+rehash
+end
+
+if isfile(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix]) 
   delete(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix]);
 end
 
-if exist(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix], 'file') == 2
+if isfolder(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix]) || ...
+    rmdir(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix],'s')
+rehash
+end
+if isfile(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix])
   delete(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix]);
 end
 
@@ -85,7 +94,8 @@ tic
 worked = false;
 while toc<500
   pause ( 2 )
-  if exist(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix], 'file') == 2
+  if isfolder(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix]) || ...
+      isfile(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix])
       worked = true;
       break
   end
@@ -108,7 +118,8 @@ tic
 worked = false;
 while toc<500
   pause ( 2 )
-  if exist(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix], 'file') == 2
+  if isfolder(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix]) || ...
+      isfile(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix])
       worked = true;
       break
   end
