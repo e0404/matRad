@@ -3555,14 +3555,17 @@ oldPos = get(handles.axesFig,'Position');
 set(new_handle(1),'units','normalized', 'Position',oldPos);
 
 if ~isfield(handles,'lastStoragePath') || exist(handles.lastStoragePath,'dir') ~= 7
-    handles.lastStoragePath = [];   
+    lastStoragePath = [];   
+else
+    lastStoragePath = handles.lastStoragePath;
 end
 
-[filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view',[handles.lastStoragePath 'screenshot.png']);
+[filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view',[lastStoragePath 'screenshot.png']);
 
-handles.lastStoragePath = pathname;
+
 
 if ~isequal(filename,0) && ~isequal(pathname,0)
+    handles.lastStoragePath = pathname;
     set(gcf, 'pointer', 'watch');
     saveas(tmpFig,fullfile(pathname,filename));
     set(gcf, 'pointer', 'arrow');
