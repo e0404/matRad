@@ -388,12 +388,55 @@ function matRadGUI_OpeningFcn(hObject, ~, handles, varargin)
 
 handles.initialGuiStart = true;
 
+p = inputParser;
+addParameter(p,'devMode',false,@(x) validateattributes(x,{'logical','numeric'},{'scalar'}));
+addParameter(p,'eduMode',true,@(x) validateattributes(x,{'logical','numeric'},{'scalar'}));
+p.KeepUnmatched = true; %No error with incorrect parameters
+
+parse(p,varargin{:});
+parsedInput = p.Results;
+
 %If devMode is true, error dialogs will include the full stack trace of the error
 %If false, only the basic error message is shown (works for errors that
 %handle the MException object)
-handles.devMode = true;
+handles.devMode = logical(parsedInput.devMode);
+if handles.devMode
+    disp('matRadGUI starting in developer mode!');
+end
+
+%Enables simple educational mode which removes certain functionality from 
+%the GUI
+handles.eduMode = logical(parsedInput.eduMode);
+if handles.eduMode
+    disp('matRadGUI starting in educational mode!');
+end
+
+%Get some values for reuse
+if isdeployed
+    handles.matRadDir = ctfroot;
+else
+    handles.matRadDir = fileparts(mfilename('fullpath'));
+end
 
 set(handles.radiobtnPlan,'value',0);
+
+
+
+if handles.eduMode
+    %Visisbility in Educational Mode
+    eduHideHandles =   {handles.radiobutton3Dconf,...
+        handles.btnRunDAO,...
+        handles.pushbutton_importFromBinary,...
+        handles.btnLoadDicom,...
+        handles.btn_export,...
+        handles.importDoseButton};
+    eduDisableHandles = {handles.editCouchAngle,handles.popUpMachine};
+    cellfun(@(h) set(h,'Visible','Off'),eduHideHandles);
+    cellfun(@(h) set(h,'Enable','Off'),eduDisableHandles);
+    
+    v = get(handles.text15,'String');
+    set(handles.text15,'String',[v ' - edu']);
+end
 
 handles = resetGUI(hObject, handles);
 
@@ -2452,6 +2495,11 @@ end
 
 pln.propStf.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
 pln.propStf.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [???]
+
+if handles.eduMode
+    set(handles.editCouchAngle,'String',num2str(zeros(size(pln.propStf.gantryAngles))));
+end
+
 pln.propStf.couchAngles     = parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [???]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 try
