@@ -413,9 +413,9 @@ end
 
 %Get some values for reuse
 if isdeployed
-    handles.matRadDir = ctfroot;
+    handles.matRadDir = '';
 else
-    handles.matRadDir = fileparts(mfilename('fullpath'));
+    handles.matRadDir = [fileparts(mfilename('fullpath')) filesep];
 end
 
 set(handles.radiobtnPlan,'value',0);
@@ -508,7 +508,7 @@ function btnLoadMat_Callback(hObject, ~, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-[FileName, FilePath] = uigetfile('*.mat');
+[FileName, FilePath] = uigetfile([handles.matRadDir '*.mat']);
 if FileName == 0 % user pressed cancel --> do nothing.
     return;
 end

@@ -123,18 +123,22 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             fprintf('Press q to terminate the optimization...\n');
             
             % set Callback
-            
-            if ~isdeployed % only if _not_ running as standalone                               
+            callbackSet = false;
+            if ~isdeployed % only if _not_ running as standalone                                               
                 switch obj.env
-                    case 'MATLAB'
-                        % get handle to Matlab command window
-                        mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-                        cw          = mde.getClient('Command Window');
-                        xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-                        h_cw        = handle(xCmdWndView,'CallbackProperties');
-                        
-                        % set Key Pressed Callback of Matlab command window
-                        set(h_cw, 'KeyPressedCallback', @(h,event) obj.abortCallbackKey(h,event));
+                    case 'MATLAB'                        
+                        try
+                            % get handle to Matlab command window
+                            mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
+                            cw          = mde.getClient('Command Window');
+                            xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+                            h_cw        = handle(xCmdWndView,'CallbackProperties');
+
+                            % set Key Pressed Callback of Matlab command window
+                            set(h_cw, 'KeyPressedCallback', @(h,event) obj.abortCallbackKey(h,event));
+                            callbackSet = true;
+                        catch
+                        end 
                 end                
             end
             
@@ -145,7 +149,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             [obj.wResult, obj.resultInfo] = ipopt(w0,funcs,ipoptStruct);
             
             % unset Key Pressed Callback of Matlab command window
-            if ~isdeployed && strcmp(obj.env,'MATLAB')
+            if callbackSet
                 set(h_cw, 'KeyPressedCallback',' ');
             end
             
@@ -217,7 +221,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             %errors
             if ~obj.plotFailed
                 try            
-                obj.plotFunction();
+                    obj.plotFunction();
                 catch ME
                     %Put a warning at iteration 1 that plotting failed
                     warning('Objective Function plotting failed and thus disabled. Message:\n%s',ME.message);
@@ -231,9 +235,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             % plot objective function output
             y = obj.allObjectiveFunctionValues;
             x = 1:numel(y);
-            
-            x = obj.allIterations;
-            y = obj.allObjectiveFunctionValues;
+
             if isempty(obj.axesHandle) || ~isgraphics(obj.axesHandle,'axes')
                 %Create new Fiure and store axes handle
                 hFig = figure('Name','Progress of IPOPT Optimization','NumberTitle','off','Color',[.5 .5 .5]);
