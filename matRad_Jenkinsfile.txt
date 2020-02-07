@@ -5,11 +5,13 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Testing..'
+                build matRadLocalTest
             }
         }
         stage('Build') {
             steps {
                 echo 'Building....'
+                build matRadLocalBuild
             }
         }
     }
