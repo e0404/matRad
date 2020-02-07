@@ -1,17 +1,19 @@
 pipeline {
     agent any
 
+    checkout scm
+
     stages {
         stage('Test') {
             steps {
                 echo 'Testing..'
-                build matRadLocalTest
+                build 'matRadLocalTest'
             }
         }
         stage('Build') {
             steps {
                 echo 'Building....'
-                build matRadLocalBuild
+                build 'matRadLocalBuild'
             }
         }
     }
