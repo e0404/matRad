@@ -10,13 +10,13 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Testing..'
-                build 'matRadLocalTest'
+                
             }
         }
         stage('Build') {
             steps {
                 echo 'Building....'
-                build 'matRadLocalBuild'
+                /Applications/MATLAB_R2012a.app -nodisplay -r "matRad_compileStandalone"
             }
         }
     }
