@@ -10,7 +10,8 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Testing..'
-                
+                sh label: '', script: 'chmod +x ./submodules/MCsquare/MCsquare_linux'
+                sh label: '', script: '/Applications/MATLAB_R2012a.app -nodisplay -r "cd unitTest; matRad_runTests"'
             }
         }
         stage('Build') {
