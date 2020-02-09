@@ -18,6 +18,7 @@ pipeline {
             steps {
                 echo 'Building....'
                 sh label: '', script: '/Applications/MATLAB_R2019a.app/bin/matlab -nodisplay -r "matRad_compileStandalone"'
+            archiveArtifacts 'standalone/for_redistribution/matRad_installer*'
             }
         }
     }
