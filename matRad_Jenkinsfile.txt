@@ -11,14 +11,14 @@ pipeline {
             steps {
                 echo 'Testing..'
                 sh label: '', script: 'chmod +x ./submodules/MCsquare/MCsquare_linux'
-                sh label: '', script: '/Applications/MATLAB_R2012a.app -nodisplay -r "cd unitTest; matRad_runTests"'
+                sh label: '', script: '/Applications/MATLAB_R2019a.app/bin/matlab -nodisplay -r "cd unitTest; matRad_runTests"'
             }
         }
         stage('Build') {
             steps {
                 echo 'Building....'
                 sh label: '', script: '/Applications/MATLAB_R2019a.app/bin/matlab -nodisplay -r "matRad_compileStandalone"'
-            archiveArtifacts 'standalone/for_redistribution/matRad_installer*'
+                archiveArtifacts '/standalone/for_redistribution/matRad_installer*'
             }
         }
     }
