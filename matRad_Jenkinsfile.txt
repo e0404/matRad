@@ -16,7 +16,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building....'
-                sh label: '', script: '/Applications/MATLAB_R2012a.app -nodisplay -r "matRad_compileStandalone"'
+                sh label: '', script: '/Applications/MATLAB_R2012a.app/bin/matlab -nodisplay -r "matRad_compileStandalone"'
             }
         }
     }
