@@ -395,6 +395,14 @@ handles.devMode = true;
 
 set(handles.radiobtnPlan,'value',0);
 
+%Alter matRad Version string
+vString = matRad_version();
+vPos = get(handles.text15,'Position');
+urlPos = get(handles.text31,'Position');
+vPos([1 3]) = urlPos([1 3]);
+set(handles.text15,'String',vString,'Position',vPos);
+set(handles.text31,'String','www.matRad.org');
+
 handles = resetGUI(hObject, handles);
 
 %% parse variables from base workspace
@@ -2818,7 +2826,23 @@ guidata(hObject,handles);
 % button: about
 function btnAbout_Callback(hObject, eventdata, handles)
 
-msgbox({'https://github.com/e0404/matRad/' 'email: matrad@dkfz.de'},'About');
+[~,matRadVer] = matRad_version;
+
+msg{1} = ['matRad ''' matRadVer.name '''']; %Name
+msg{end+1} = sprintf('v%d.%d.%d',matRadVer.major,matRadVer.minor,matRadVer.patch); %Version Number
+if isdeployed
+   msg{end+1} = 'Standalone Version';
+elseif ~isempty(matRadVer.branch) && ~isempty(matRadVer.commitID)
+    msg{end+1} = sprintf('Git: Branch %s, commit %s',matRadVer.branch,matRadVer.commitID(1:8));
+end
+
+[env,envver]  = matRad_getEnvironment();
+msg{end+1} = sprintf('Environment: %s v%s',env,envver);
+
+msg{end+1} = 'Web: www.matrad.org';
+msg{end+1} = 'E-Mail: contact@matrad.org';
+
+msgbox(msg,'About matRad');
 
 % button: close
 function figure1_CloseRequestFcn(hObject, ~, ~)

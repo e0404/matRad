@@ -16,15 +16,24 @@
 % set search path
 addpath(genpath(pwd));
 
+%clear command window and close all figures
+clc;
+close all;
+
 % clear workspace and command prompt, close all figures
-switch matRad_getEnvironment
+[env,envver] = matRad_getEnvironment();
+vString = matRad_version();
+
+fprintf('You are running matRad %s with %s %s\n',vString,env,envver);
+
+
+switch env
     case 'MATLAB'
         clearvars -except unitTestBool
     case 'OCTAVE'
         clear -x unitTestBool
 end
-clc
-close all
+
 
 % set log level accordingly if you do _not_ want to do unit testing
 if ~exist('unitTestBool','var') || ~unitTestBool
