@@ -175,6 +175,7 @@
       <file>${PROJECT_ROOT}\tools\matRad_getEnvironment.m</file>
     </fileset.resources>
     <fileset.package>
+      <file>${PROJECT_ROOT}\phantoms\ALDERSON.mat</file>
       <file>${PROJECT_ROOT}\phantoms\BOXPHANTOM.mat</file>
       <file>${PROJECT_ROOT}\phantoms\HEAD_AND_NECK.mat</file>
       <file>${PROJECT_ROOT}\phantoms\LIVER.mat</file>
