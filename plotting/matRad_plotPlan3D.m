@@ -54,7 +54,7 @@ if nargin < 3 || isempty(stf)
     fileName = [pln.radiationMode '_' pln.machine];
     %Get a SAD
     try
-        load([fileparts(mfilename('fullpath')) filesep fileName]);
+        load([fileparts(mfilename('fullpath')) filesep 'basedata' filesep fileName]);
         SAD = machine.meta.SAD;
     catch
         if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')

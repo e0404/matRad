@@ -113,7 +113,7 @@ VdoseGrid = find(matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpC
 % load base data% load machine file
 fileName = [pln.radiationMode '_' pln.machine];
 try
-   load([fileparts(mfilename('fullpath')) filesep fileName]);
+   load([fileparts(mfilename('fullpath')) filesep 'basedata' filesep fileName]);
 catch
    error(['Could not find the following machine file: ' fileName ]); 
 end
