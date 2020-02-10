@@ -153,10 +153,12 @@ handles.Modalities = {'photons','protons','carbon'};
 for i = 1:length(handles.Modalities)
   pattern = [handles.Modalities{1,i} '_*'];
   if isdeployed
-      Files = dir([ctfroot filesep 'matRad' filesep pattern]);
+      baseroot = [ctfroot filesep 'matRad'];
   else
-      Files = dir([fileparts(mfilename('fullpath')) filesep pattern]);        
+      baseroot = fileparts(mfilename('fullpath'));
   end
+  Files = dir([baseroot filesep 'basedata' filesep pattern]);
+  
   for j = 1:length(Files)
       if ~isempty(Files)
           MachineName = Files(j).name(numel(handles.Modalities{1,i})+2:end-4);
@@ -764,7 +766,7 @@ try
         handles = showWarning(handles,'number of gantryAngles != number of couchAngles'); 
     end
     %%
-    if ~checkRadiationComposition(handles);
+    if ~checkRadiationComposition(handles)
         fileName = [pln.radiationMode '_' pln.machine];
         handles = showError(handles,errordlg(['Could not find the following machine file: ' fileName ]));
         guidata(hObject,handles);
@@ -2561,10 +2563,13 @@ contents = cellstr(get(handles.popupRadMode,'String'));
 radMod = contents{get(handles.popupRadMode,'Value')};
 
 if isdeployed
-    FoundFile = dir([ctfroot filesep 'matRad' filesep radMod '_' Machine '.mat']);
+    baseroot = [ctfroot filesep 'matRad'];
 else
-    FoundFile = dir([fileparts(mfilename('fullpath')) filesep radMod '_' Machine '.mat']);    
+    baseroot = fileparts(mfilename('fullpath'));
 end
+FoundFile = dir([baseroot filesep 'basedata' filesep radMod '_' Machine '.mat']);
+
+
 if isempty(FoundFile)
     warndlg(['No base data available for machine: ' Machine]);
     flag = false;
@@ -2829,7 +2834,7 @@ selection = questdlg('Do you really want to close matRad?',...
 
 %BackgroundColor',[0.5 0.5 0.5]
  switch selection
-   case 'Yes',
+   case 'Yes'
      delete(hObject);
    case 'No'
      return
@@ -4335,7 +4340,7 @@ for i = 1:size(cst,1)
                 h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{p}),'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
               end
               
-              tmp_pos = get(h,'Extent');
+              tmp_pos = get(h,'Position');
               xPos = xPos + tmp_pos(3) + fieldSep;
            end
 
