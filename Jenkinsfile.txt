@@ -1,25 +1,46 @@
-pipeline {
-    agent any
-    stages {
-        stage('Checkout') {
-            steps {
-                echo 'Checking out source code..'
-                checkout scm
+node {
+    def osName
+    stage('Set Environment') {
+        echo 'Setting the environment..'
+        if (isUnix()) {
+            def uname = sh script: 'uname', returnStdout: true
+            if (uname.startsWith("Darwin")) {
+                osName= "Macos"
             }
-        }
-        stage('Test') {
-            steps {
-                echo 'Testing..'
+            else {
+                osName= "Linux"
+
                 sh label: '', script: 'chmod +x ./submodules/MCsquare/MCsquare_linux'
-                sh label: '', script: 'matlab -nodisplay -r "cd unitTest; matRad_runTests"'
             }
         }
-        stage('Build') {
-            steps {
-                echo 'Building....'
-                sh label: '', script: 'matlab -nodisplay -r "matRad_compileStandalone"'
-                archiveArtifacts 'standalone/for_redistribution/matRad_installer*'
-            }
+        else {
+            osName= "Windows"
         }
+
+    }
+    stage('Test') {
+        echo 'Testing..'
+        echo 'Make sure you can run matlab script from the command line'
+        if (osName == "Windows") {
+            bat label: '', script: 'matlab -nodisplay -r "cd unitTest; matRad_runTests"'
+        }
+        else {
+            sh label: '', script: 'matlab -nodisplay -r "cd unitTest; matRad_runTests"'
+        } 
+    }
+    stage('Build') {
+        echo 'Building....'
+        if (osName == "Windows") {
+            bat label: '', script: 'matlab -nodisplay -r "matRad_compileStandalone"'
+        }
+        else {
+            sh label: '', script: 'matlab -nodisplay -r "matRad_compileStandalone"'
+        } 
+    }
+    stage('Archive') {
+        echo 'Archiving....'
+        archiveArtifacts artifacts: 'standalone/for_redistribution/matRad_installer*', onlyIfSuccessful: true
+
+        copyArtifacts filter: 'standalone/for_redistribution/matRad_installer*', projectName: 'matRadJenkinsfile', selector: lastWithArtifacts(), target: '/home/abbani/Dokumente/matRad'
     }
 }
