@@ -1,4 +1,4 @@
-function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)
+function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)
 % matRad function to run direct aperture optimization
 %
 % call
@@ -90,7 +90,6 @@ end
 % Run IPOPT.
 optimizer = optimizer.optimize(apertureInfo.apertureVector,optiProb,dij,cst);
 wOpt = optimizer.wResult;
-info = optimizer.resultInfo;
 
 % update the apertureInfoStruct and calculate bixel weights
 apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo,wOpt);
