@@ -11,6 +11,7 @@ node {
                 osName= "Linux"
 
                 sh label: '', script: 'chmod +x ./submodules/MCsquare/MCsquare_linux'
+                sh label: '', script: 'chmod +x runtests.sh'
             }
         }
         else {
@@ -19,7 +20,14 @@ node {
 
     }
     stage('Test') {
-        echo 'Testing..'
+        echo 'Testing on Octave..'
+        if (osName == "Windows") {
+            bat label: '', script: './runtests.sh octave-cli'
+        }
+        else {
+            sh label: '', script: './runtests.sh octave-cli'
+        } 
+        echo 'Testing on MATLAB..'
         echo 'Make sure you can run matlab script from the command line'
         if (osName == "Windows") {
             bat label: '', script: 'matlab -nodisplay -r "cd unitTest; matRad_runTests"'
