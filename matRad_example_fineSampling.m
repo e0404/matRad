@@ -17,28 +17,29 @@ matRad_rc
 
 % load patient data, i.e. ct, voi, cst
 
-%load HEAD_AND_NECK
-% load TG119.mat
-% load slabPhantom6.mat
-% load SchaffnerPhantom1.mat
-load LungPatient1.mat
-% load PROSTATE.mat
-% load LIVER.mat
-% load BOXPHANTOM
-% load BOXPHANTOMv3.mat
-% load BOXPHANTOM_NARROW_NEW.mat
-% load phantomTest.mat
+% load PHANTOM_control.mat
+% load PHANTOM_hetSlab_entrance_10mm.mat
+% load PHANTOM_hetSlab_entrance_30mm.mat
+load PHANTOM_slab_entrance_10mm.mat
+% load PHANTOM_slab_entrance_50mm.mat
+% load PHANTOM_slab_entrance_100mm.mat
+% load PHANTOM_fineSamplingTest.mat
+% load PHANTOM_slab_mid_10mm.mat
+% load PHANTOM_wedge_entrance_30mm.mat
+% load PHANTOM_wedge_entrance_100mm.mat
+% load PHANTOM_wedge_mid_30mm.mat
 
+% load LungPatient1.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'matRadBDLfixed';
+pln.machine         = 'matRadBDL_APM';
 
 pln.numOfFractions  = 30;
 
 % beam geometry settings
-pln.propStf.bixelWidth      = 50; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.longitudinalSpotSpacing = 50;
+pln.propStf.bixelWidth      = 500; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.longitudinalSpotSpacing = 500;
 pln.propStf.gantryAngles    = 0; % [?] 
 pln.propStf.couchAngles     = 0; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
@@ -61,8 +62,8 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 stf = matRad_generateStf(ct,cst,pln);
 
  % assign new energy
-load protons_matRadBDL;
-stf.ray.energy = machine.data(38).energy;
+load protons_matRadBDL_APM;
+stf.ray.energy = machine.data(36).energy;
                             
 %% dose calculation
  % analytical dose without fine sampling
@@ -85,7 +86,7 @@ stf.ray.energy = machine.data(38).energy;
  % analytical dose with std correction
     tic
     pln.propDoseCalc.anaMode = 'stdCorr';
-    dijSC = matRad_calcParticleDose(ct,stf,pln,cst,false);
+    dijSC = matRad_calcParticleDose(ct,stf,pln,cst,false,1);
     resultGUI_SC = matRad_calcCubes(ones(sum(stf(:).totalNumOfBixels),1),dijSC);
     resultGUI.physicalDoseSC = resultGUI_SC.physicalDose;
     anaScDose   = resultGUI.physicalDoseSC;
@@ -93,115 +94,126 @@ stf.ray.energy = machine.data(38).energy;
 
  % Monte Carlo dose
     tic
-    resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1), 5000000);
+    resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1), 2000000);
     resultGUI.physicalDoseMC = resultGUI_MC.physicalDose;
     mcDose      = resultGUI.physicalDoseMC;
     t4 = toc;
 
  %% plot doses
+ 
+contourSwitch = true;
+
 figure
-% subplot(2,2,1)
+subplot(1,5,1)
 imagesc(anaDose(:,:,round(ct.cubeDim(3)/2)));
 caxis([0 2e-3]);
 title('Standard dose');
 hold on 
-contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),2,'color','white');
+contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),1,'color','white');
+if contourSwitch
+    contour(anaDose(:,:,round(ct.cubeDim(3)/2)),linspace(0,2e-3,10),'color','black');
+end
 hold off
-camroll(90);
+pbaspect([ct.cubeDim(2) ct.cubeDim(1) ct.cubeDim(3)])
 
-% subplot(2,2,2)
-figure
-imagesc(anaFsDose(:,:,round(ct.cubeDim(3)/2)));
-caxis([0 2e-3]);
-title('Fine sampling dose');
-hold on
-contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),3,'color','white');
-hold off
-
-figure
-% subplot(2,2,3)
-imagesc(mcDose(:,:,round(ct.cubeDim(3)/2)));
-caxis([0 2e-3]);
-title('Monte Carlo dose');
-hold on 
-contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),3,'color','white');
-hold off
-
-figure
-% subplot(2,2,4)
+subplot(1,5,3)
 imagesc(anaScDose(:,:,round(ct.cubeDim(3)/2)));
 caxis([0 2e-3]);
 title('Std corrected dose');
 hold on 
-contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),3,'color','white');
+contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),1,'color','white');
+if contourSwitch
+    contour(anaScDose(:,:,round(ct.cubeDim(3)/2)),linspace(0,2e-3,10),'color','black');
+end
 hold off
+pbaspect([ct.cubeDim(2) ct.cubeDim(1) ct.cubeDim(3)])
+
+subplot(1,5,2)
+imagesc(anaFsDose(:,:,round(ct.cubeDim(3)/2)));
+caxis([0 2e-3]);
+title('Fine sampling dose');
+hold on 
+contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),1,'color','white');
+if contourSwitch
+    contour(anaFsDose(:,:,round(ct.cubeDim(3)/2)),linspace(0,2e-3,10),'color','black');
+end
+hold off
+pbaspect([ct.cubeDim(2) ct.cubeDim(1) ct.cubeDim(3)])
+
+subplot(1,5,5)
+imagesc(mcDose(:,:,round(ct.cubeDim(3)/2)));
+caxis([0 2e-3]);
+title('Monte Carlo dose');
+hold on 
+contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),1,'color','white');
+if contourSwitch
+    contour(mcDose(:,:,round(ct.cubeDim(3)/2)),linspace(0,2e-3,10),'color','black');
+end
+hold off
+pbaspect([ct.cubeDim(2) ct.cubeDim(1) ct.cubeDim(3)])
+
+% tmpcStdCtGrid = imgaussfilt3(cStdCtGrid,1);
+
+% weight = arrayfun(@(d) interp1(machine.data(36).depths, (machine.data(36).Z.profileORG-machine.data(36).Z.profileORG(1))/max(machine.data(36).Z.profileORG),d), meanRadDepths);
+weight = arrayfun(@(d) (d/machine.data(36).peakPos).^5, meanRadDepths);
+weight(weight < 0) = 0;
+newCstd1 = weight .* cStdCtGrid;
+% newCstd = imgaussfilt3(newCstd1,1);
+tmpCstd = sqrt(newCstd1);
+% tmpCstd = imgaussfilt3(tmpCstd,4);
+tmpCstd = newCstd1;
+anaConvDose = matRad_sliceConvnFilter(ct, anaDose,tmpCstd);
+resultGUI.physicalDoseConv = anaConvDose; 
+
+subplot(1,5,4)
+imagesc(anaConvDose(:,:,round(ct.cubeDim(3)/2)));
+caxis([0 2e-3]);
+title('Convoluted Dose');
+hold on 
+contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),1,'color','white');
+if contourSwitch
+    contour(anaConvDose(:,:,round(ct.cubeDim(3)/2)),linspace(0,2e-3,10),'color','black');
+end
+hold off
+pbaspect([ct.cubeDim(2) ct.cubeDim(1) ct.cubeDim(3)])
+
+figure;
+subplot(1,2,1);
+imagesc(tmpCstd(:,:,25));
+subplot(1,2,2);
+imagesc(meanRadDepths(:,:,25));
+
 
  %% execute gamma tests
 gammaTest = [2, 2];
+interpolation = 1;
 figure
-subplot(2,2,3.5)
-[gammaCube1,gammaPassRateCell] = matRad_gammaIndex(anaDose,mcDose,[ct.resolution.x,ct.resolution.y,ct.resolution.z],gammaTest,round(ct.cubeDim(3)/2),3,'global',cst);
+subplot(1,4,1)
+[gammaCube1,gammaPassRateCell] = matRad_gammaIndex(anaDose,mcDose,[ct.resolution.x,ct.resolution.y,ct.resolution.z],gammaTest,round(ct.cubeDim(3)/2),interpolation,'global',cst);
 title({[num2str(gammaPassRateCell{1,2}) '% of points > ' num2str(gammaTest(1)) '% pass gamma criterion (' num2str(gammaTest(1)) '%/ ' num2str(gammaTest(2)) 'mm)'];'stadard dose'});
-% axis([38 122 38 122]);
 hold on
-contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),3,'color','white');
+contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),1,'color','white');
 hold off
 
-subplot(2,2,2)
-[gammaCube2,gammaPassRateCell] = matRad_gammaIndex(anaFsDose,mcDose,[ct.resolution.x,ct.resolution.y,ct.resolution.z],gammaTest,round(ct.cubeDim(3)/2),3,'global',cst);
-title({[num2str(gammaPassRateCell{1,2}) '% of points > ' num2str(gammaTest(1)) '% pass gamma criterion (' num2str(gammaTest(1)) '%/ ' num2str(gammaTest(2)) 'mm)'];'fine sampling dose'});
-% axis([38 122 38 122]);
-hold on
-contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),3,'color','white');
-hold off
-
-subplot(2,2,1)
-[gammaCube3,gammaPassRateCell] = matRad_gammaIndex(anaScDose,mcDose,[ct.resolution.x,ct.resolution.y,ct.resolution.z],gammaTest,round(ct.cubeDim(3)/2),3,'global',cst);
+subplot(1,4,2)
+[gammaCube3,gammaPassRateCell] = matRad_gammaIndex(anaScDose,mcDose,[ct.resolution.x,ct.resolution.y,ct.resolution.z],gammaTest,round(ct.cubeDim(3)/2),interpolation,'global',cst);
 title({[num2str(gammaPassRateCell{1,2}) '% of points > ' num2str(gammaTest(1)) '% pass gamma criterion (' num2str(gammaTest(1)) '%/ ' num2str(gammaTest(2)) 'mm)'];'std corrected dose'});
-% axis([38 122 38 122]);
 hold on
-contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),3,'color','white');
+contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),1,'color','white');
 hold off
 
-%% plot contour similar to schaffner et al
-
-figure
-imagesc(flip(anaDose(:,:,round(ct.cubeDim(3)/2))));
-hold on 
-contour(flip(anaDose(:,:,round(ct.cubeDim(3)/2))),10,'color','black');
-caxis([0 2e-3]);
-title('Standard dose');
-contour(flip(ct.cube{1}(:,:,round(ct.cubeDim(3)/2))),1,'color','white');
+subplot(1,4,3)
+[gammaCube3,gammaPassRateCell] = matRad_gammaIndex(anaConvDose,mcDose,[ct.resolution.x,ct.resolution.y,ct.resolution.z],gammaTest,round(ct.cubeDim(3)/2),interpolation,'global',cst);
+title({[num2str(gammaPassRateCell{1,2}) '% of points > ' num2str(gammaTest(1)) '% pass gamma criterion (' num2str(gammaTest(1)) '%/ ' num2str(gammaTest(2)) 'mm)'];'convoluted dose'});
+hold on
+contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),1,'color','white');
 hold off
-camroll(270);
 
-figure
-imagesc(flip(anaFsDose(:,:,round(ct.cubeDim(3)/2))));
-hold on 
-contour(flip(anaFsDose(:,:,round(ct.cubeDim(3)/2))),10,'color','black');
-caxis([0 2e-3]);
-title('Fine sampling dose');
-contour(flip(ct.cube{1}(:,:,round(ct.cubeDim(3)/2))),1,'color','white');
+subplot(1,4,4)
+[gammaCube3,gammaPassRateCell] = matRad_gammaIndex(anaFsDose,mcDose,[ct.resolution.x,ct.resolution.y,ct.resolution.z],gammaTest,round(ct.cubeDim(3)/2),interpolation,'global',cst);
+title({[num2str(gammaPassRateCell{1,2}) '% of points > ' num2str(gammaTest(1)) '% pass gamma criterion (' num2str(gammaTest(1)) '%/ ' num2str(gammaTest(2)) 'mm)'];'fine sampling dose'});
+hold on
+contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),1,'color','white');
 hold off
-camroll(270);
 
-figure
-imagesc(flip(anaScDose(:,:,round(ct.cubeDim(3)/2))));
-hold on 
-contour(flip(anaScDose(:,:,round(ct.cubeDim(3)/2))),10,'color','black');
-caxis([0 2e-3]);
-title('Std corrected dose');
-contour(flip(ct.cube{1}(:,:,round(ct.cubeDim(3)/2))),1,'color','white');
-hold off
-camroll(270);
-
-figure
-imagesc(flip(mcDose(:,:,round(ct.cubeDim(3)/2))));
-hold on 
-contour(flip(mcDose(:,:,round(ct.cubeDim(3)/2))),10,'color','black');
-caxis([0 2e-3]);
-title('Monte Carlo dose');
-contour(flip(ct.cube{1}(:,:,round(ct.cubeDim(3)/2))),1,'color','white');
-hold off
-camroll(270);
-
+    

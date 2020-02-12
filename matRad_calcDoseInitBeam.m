@@ -60,35 +60,85 @@ fprintf('matRad: calculate radiological depth cube...');
 
 % test = convn(radDepthCubeCtGrid.^2, mu5kernel, 'same') - convn(radDepthCubeCtGrid, mu5kernel, 'same').^2;
 
+[~, energyIx] =  intersect([machine.data(:).energy], stf.ray.energy);
 
-maxKernelSize = 7;
+yd = diff(machine.data(energyIx).initFocus.sigma)./diff(machine.data(energyIx).initFocus.dist);
+xd = (machine.data(energyIx).initFocus.dist(2:end)+machine.data(energyIx).initFocus.dist(1:(end-1)))/2;
 
-for ii = 1:ct.cubeDim(1)
-    slice        = reshape(radDepthCubeCtGrid(ii,:,:),ct.cubeDim(2),ct.cubeDim(3));
-    kernelSize = round(ii/ct.cubeDim(1)* maxKernelSize);
-    kernel = ones(kernelSize,kernelSize) ./ kernelSize^2;
+initSigmaConv = interp1(xd,yd,stf.ray.SSD);
+
+if strcmp(anaMode, 'stdCorr')
+    kernelSize = min(ct.cubeDim(2), ct.cubeDim(3)) + (mod(min(ct.cubeDim(2), ct.cubeDim(3)),2) -  1);
+    res = [ct.resolution.y, ct.resolution.z];
+    dist = 0;
+    for ii = 1:ct.cubeDim(1)
+        slice = reshape(radDepthCubeCtGrid(ii,:,:),ct.cubeDim(2),ct.cubeDim(3));
+        notNaN = find(~isnan(slice));
+        slice(isnan(slice)) = 0;
+        dist = sum(slice(notNaN))/ numel(slice(notNaN));
+        
+        std1(ii) = std(slice,0,'all')^2 + 1;
+        dist11(ii) = sum(1./(std1)) / 2 * pi;
+        
+        nPadd = floor(kernelSize/2);
+        paddedSlice = zeros(size(slice,1) + 2 * nPadd, size(slice,2) + 2 * nPadd);
+        paddedSlice(nPadd + 1:ct.cubeDim(2) + nPadd, nPadd + 1:ct.cubeDim(3) + nPadd) = slice;
+        
+        paddedSlice(1:nPadd, 1:nPadd) = slice(1,1);
+        paddedSlice(ct.cubeDim(2) + nPadd + 1:end, 1:nPadd) = slice(end,1);
+        paddedSlice(1:nPadd, ct.cubeDim(3) + nPadd + 1:end) = slice(1,end);
+        paddedSlice(ct.cubeDim(2) + nPadd + 1:end, ct.cubeDim(3) + nPadd + 1:end) = slice(end);
+        
+        paddedSlice(1:nPadd,nPadd + 1:ct.cubeDim(3) + nPadd) = repmat(slice(1,:),nPadd,1);
+        paddedSlice(ct.cubeDim(2) + nPadd + 1:end,nPadd + 1:ct.cubeDim(3) + nPadd) = repmat(slice(end,:),nPadd,1);
+        paddedSlice(nPadd + 1:ct.cubeDim(2) + nPadd,1:nPadd) = repmat(slice(:,1),1,nPadd);
+        paddedSlice(nPadd + 1:ct.cubeDim(2) + nPadd ,ct.cubeDim(3) + nPadd + 1:end) = repmat(slice(:,end),1,nPadd);
+
+
+
+        if isnan(dist)
+            sigma = 0;
+        else
+%             sigma = testTMP/150 * dist;
+            sigma = dist11(ii);
+        end
+        kernel = matRad_create2dimGaussKernel(kernelSize, sigma, res);
+
+        tmpCstd     = (convn(paddedSlice.^2, kernel, 'same') - convn(paddedSlice, kernel, 'same').^2);
+        tmpCstd(tmpCstd < 0) = 0;
+        tmpCstd = sqrt(tmpCstd);
+        tmpRadDepth = convn(paddedSlice, kernel, 'same');
+%         imagesc(tmpCstd);
+%         figure
+%         imagesc(tmpRadDepth);
+%         figure
+%         imagesc(slice)
+%         close all
+        cStdCtGrid(ii,:,:)   = tmpCstd((kernelSize+1)/2:size(tmpCstd,1)-(kernelSize-1)/2,(kernelSize+1)/2:size(tmpCstd,2)-(kernelSize-1)/2);
+        meanRadDepths(ii,:,:) = tmpRadDepth((kernelSize+1)/2:size(tmpRadDepth,1)-(kernelSize-1)/2,(kernelSize+1)/2:size(tmpRadDepth,2)-(kernelSize-1)/2);    
+    end
+
+    assignin('base','cStdCtGrid',cStdCtGrid);
+    assignin('base','meanRadDepths',meanRadDepths);
+    assignin('base','radDepthCubeCtGrid',radDepthCubeCtGrid);
+
     
-    tmpCstd     = sqrt(convn(slice.^2, kernel, 'same') - convn(slice, kernel, 'same').^2);
-    tmpRadDepth = convn(slice, kernel, 'same');
-    cStdCtGrid(ii,:,:)   = tmpCstd;
-    meanRadDepths(ii,:,:) = tmpRadDepth;    
+    cStdCtGrid(isnan(cStdCtGrid)) = 0;
+    cStdVctGrid = {cStdCtGrid(VctGrid)};
+    
+  
+    meanRadDepths = meanRadDepths(VctGrid);
+    
+    cSstVdoseGrid = matRad_interpRadDepth...
+    (ct,1,VctGrid,VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,cStdVctGrid);
 end
-
-% cStdCtGrid = imgaussfilt3(cStdCtGrid,1);
-cStdCtGrid(isnan(cStdCtGrid)) = 0;
-cStdVctGrid = {cStdCtGrid(VctGrid)};
-meanRadDepths = meanRadDepths(VctGrid);
-
-% [cStdCtGrid, cStdVctGrid] = matRad_rayTracing(stf(i),std,VctGrid,rot_coordsV,effectiveLateralCutoff);
 
 fprintf('done.\n');
 
 % interpolate radiological depth cube and std cube to dose grid resolution
 radDepthVdoseGrid = matRad_interpRadDepth...
     (ct,1,VctGrid,VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
-cSstVdoseGrid = matRad_interpRadDepth...
-    (ct,1,VctGrid,VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,cStdVctGrid);
- 
+
 % limit rotated coordinates to positions where ray tracing is availabe
 rot_coordsVdoseGrid = rot_coordsVdoseGrid(~isnan(radDepthVdoseGrid{1}),:);
  

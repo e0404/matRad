@@ -2,9 +2,9 @@
 matRad_rc
 
 % first vertical, second horizontal, third longitudinal
-resolution          = [1, 1, 1];
+resolution          = [1,1,1];
 cubeDim             = [150, 50, 50]; 
-slabThickness       = 30;  %[mm] 
+slabThickness       = 100;  %[mm] 
 relStoppingpower    = 1.8; %[mm]
 distToEntrance      = 5;  %80 %[mm]
 
@@ -15,27 +15,46 @@ ct.resolution.y = resolution(2);
 ct.resolution.z = resolution(3);
 ct.numOfCtScen = 1;
 ct.cube{1} = ones(cubeDim);
+% ct.cubeHU{1} = zeros(cubeDim);
 
-horStart = distToEntrance/resolution(1);
-horEnd   = (distToEntrance + slabThickness)/resolution(1);
+horStart = round(distToEntrance/resolution(1));
+horEnd   = round((distToEntrance + slabThickness)/resolution(1));
 
 %% create slab reaching half into ray
+for i = horStart:horEnd;
+    for j = 1:round(cubeDim(2)/3)
+        for k = 1:cubeDim(3)
+            ct.cube{1}(i,j,k) = relStoppingpower;
+        end
+    end
+end
+
+% distToEntrance      = 15;
+% slabThickness       = 50;  %[mm] 
+% horStart = round(distToEntrance/resolution(1));
+% horEnd   = round((distToEntrance + slabThickness)/resolution(1));
+% % create diagonal wedge in beam
 % for i = horStart:horEnd;
-%     for j = 1:round(cubeDim(2)/2)
+%     for j = 1:round(cubeDim(2)*(i - horStart) / (horEnd - horStart))
 %         for k = 1:cubeDim(3)
 %             ct.cube{1}(i,j,k) = relStoppingpower;
 %         end
 %     end
 % end
 
-%% create diagonal wedge in beam
-for i = horStart:horEnd;
-    for j = 1:round(cubeDim(2)*(i - horStart) / (horEnd - horStart))
-        for k = 1:cubeDim(3)
-            ct.cube{1}(i,j,k) = relStoppingpower;
-        end
-    end
-end
+% distToEntrance      = 90;
+% slabThickness       = 20;  %[mm] 
+% horStart = round(distToEntrance/resolution(1));
+% horEnd   = round((distToEntrance + slabThickness)/resolution(1));
+% %% create heterogenous slab
+% for i = horStart:horEnd;
+%     for j = 1:cubeDim(2)
+%         for k = 1:cubeDim(3)
+%             ct.cube{1}(i,j,k) = round(rand);
+%         end
+%     end
+% end
+
 
 
 ixOAR = 1;
@@ -75,7 +94,7 @@ cst{ixPTV,6}{1,1}.penalty     = 800;
 
 mask = ones(ct.cubeDim);
 cst{1,4}{1} = find(mask == 1);
-for i = horStart:horEnd
+for i = round(cubeDim(1)/2-10):round(cubeDim(1)/2+10)
     for j = round(cubeDim(2)*0.25):round(cubeDim(2)*0.75)
         for k = round(cubeDim(3)*0.25):round(cubeDim(3)*0.75)
             mask(i,j,k) = 2;

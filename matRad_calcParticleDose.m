@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
+function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect, testTMP)
 % matRad particle dose calculation wrapper
 % 
 % call
@@ -199,7 +199,7 @@ for i = 1:length(stf) % loop over all beams
                 % function provides the weights for the sub-pencil beams,
                 % their positions and their sigma used for dose calculation
                 [finalWeight, sigmaSub, posX, posZ, numOfSub] = ...
-                    matRad_calcWeights(sigmaIni, 8, 'circle');
+                    matRad_calcWeights(sigmaIni, 2, 'circle');
             else
                 % Ray tracing for beam i and ray j
                 [ix,currRadialDist_sq,~,~,~,~] = matRad_calcGeoDists(rot_coordsVdoseGrid, ...
