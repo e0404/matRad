@@ -131,8 +131,12 @@ for i = 1:length(pln.propStf.gantryAngles)
     % rotation with row vector coordinates, which would introduce two 
     % inversions / transpositions of the matrix, thus no changes to the
     % rotation matrix are necessary
-    rotMat_system_T = matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i));
-    
+	if ~isfield(pln.propStf,'collimatorAngles')
+		rotMat_system_T = matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i));
+    else
+		rotMat_system_T = matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i),pln.propStf.collimatorAngles(i));
+    end
+	
     rot_coords = [coordsX coordsY coordsZ]*rotMat_system_T;
     
     % project x and z coordinates to isocenter
@@ -197,8 +201,11 @@ for i = 1:length(pln.propStf.gantryAngles)
     
     % get (active) rotation matrix 
     % transpose matrix because we are working with row vectors
-    rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i)));
-    
+	if ~isfield(pln.propStf,'collimatorAngles')
+		rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i)));
+	else
+		rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i)),pln.propStf.collimatorAngles(i));
+    end
     
     stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMat_vectors_T;
     

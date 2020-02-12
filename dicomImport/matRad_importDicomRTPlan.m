@@ -78,12 +78,14 @@ end
 % loop over beams
 gantryAngles{length(BeamSeqNames)} = [];
 PatientSupportAngle{length(BeamSeqNames)} = [];
+collimatorAngles{length(BeamSeqNames)} = [];										   
 isoCenter = NaN*ones(length(BeamSeqNames),3);
 for i = 1:length(BeamSeqNames)   
     currBeamSeq             = BeamSequence.(BeamSeqNames{i});
     % parameters not changing are stored in the first ControlPointSequence
-    gantryAngles{i}         = currBeamSeq.(ControlParam).Item_1.GantryAngle;
+    gantryAngles{i}         = currBeamSeq.(ControlParam).Item_1.GantryAngle;																					
     PatientSupportAngle{i}  = currBeamSeq.(ControlParam).Item_1.PatientSupportAngle;
+	collimatorAngles{i}     = currBeamSeq.(ControlParam).Item_1.BeamLimitingDeviceAngle;
     isoCenter(i,:)          = currBeamSeq.(ControlParam).Item_1.IsocenterPosition';
 end
 
@@ -128,13 +130,13 @@ end
 %% write parameters found to pln variable
 pln.radiationMode   = radiationMode; % either photons / protons / carbon
 pln.numOfFractions  = planInfo.FractionGroupSequence.Item_1.NumberOfFractionsPlanned;
-pln.machine         = 'Generic';
-
+pln.machine         = strcat(planInfo.BeamSequence.Item_1.TreatmentMachineName,'_',num2str(planInfo.BeamSequence.Item_1.ControlPointSequence.Item_1.NominalBeamEnergy));
 
 pln.propStf.isoCenter    = isoCenter;
 pln.propStf.bixelWidth   = NaN; % [mm] / also corresponds to lateral spot spacing for particles
 pln.propStf.gantryAngles = [gantryAngles{1:length(BeamSeqNames)}];
 pln.propStf.couchAngles  = [PatientSupportAngle{1:length(BeamSeqNames)}]; % [°]
+pln.propStf.collimatorAngles = [collimatorAngles{1:length(BeamSeqNames)}];																			
 pln.propStf.numOfBeams   = length(BeamSeqNames);
 
 

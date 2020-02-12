@@ -212,6 +212,50 @@ handles.initialGuiStart = false;
 guidata(hObject, handles);  
 % eof resetGUI
 
+
+% --- Initializes the slice slider for the current ct & isocenter (or sets
+% it to default)
+function initViewSliceSlider(handles)
+% handles    structure with handles and user data (see GUIDATA)
+
+if handles.State > 0
+    ct = evalin('base', 'ct');
+    
+    %Helpers for managing the resolution and Matlab xy permutation
+    planePermute = [2 1 3];
+    ctRes = [ct.resolution.x ct.resolution.y ct.resolution.z];
+    planePermIx = planePermute(handles.plane);
+    planeDim = ct.cubeDim(handles.plane);   
+
+    %Try to select the slice from defined isocenter
+    try
+        if evalin('base','exist(''pln'',''var'')')
+            currPln = evalin('base','pln');
+            
+            if sum(currPln.propStf.isoCenter(:)) ~= 0
+                %currSlice = round((currPln.propStf.isoCenter(1,planePermIx)+ctRes(planePermix)/2)/ctRes(planePermIx))-1;
+                currSlice = round(currPln.propStf.isoCenter(1,planePermIx) / ctRes(planePermIx));
+            end
+        end
+    catch
+        currSlice = 0; %Set to zero for next if
+    end
+
+    %If no isocenter or wrong value, choose central slice
+    if currSlice < 1 || currSlice > planeDim
+        currSlice = ceil(planeDim/2);
+    end
+
+    set(handles.sliderSlice,'Min',1,'Max',planeDim,...
+        'Value',currSlice,...
+        'SliderStep',[1/(planeDim-1) 1/(planeDim-1)]);
+else
+    % reset slider when nothing is loaded
+    set(handles.sliderSlice,'Min',0,'Max',1,'Value',0,'SliderStep',[1 1]);
+end
+
+
+
 function handles = reloadGUI(hObject, handles, ct, cst)
 AllVarNames = handles.AllVarNames;
 
@@ -282,25 +326,11 @@ handles.selectedBeam = 1;
 handles.plane = get(handles.popupPlane,'Value');
 handles.DijCalcWarning = false;
 
-planePermute = [2 1 3];
-
 % set slice slider
+initViewSliceSlider(handles);
+
+% define context menu for structures
 if handles.State > 0
-    if evalin('base','exist(''pln'',''var'')')
-        currPln = evalin('base','pln');
-        if sum(currPln.propStf.isoCenter(:)) ~= 0
-            currSlice = ceil(currPln.propStf.isoCenter(1,planePermute(handles.plane))/ct.resolution.x);
-        else 
-            currSlice = ceil(ct.cubeDim(planePermute(handles.plane))/2);
-        end
-    else % no pln -> no isocenter -> use middle
-        currSlice = ceil(ct.cubeDim(planePermute(handles.plane))/2);
-    end
-    set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
-            'Value',currSlice,...
-            'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);      
-    
-    % define context menu for structures
     for i = 1:size(cst,1)
         if cst{i,5}.Visible
             handles.VOIPlotFlag(i) = true;
@@ -308,9 +338,6 @@ if handles.State > 0
             handles.VOIPlotFlag(i) = false;
         end
     end
-  else
-    % reset slider when nothing is loaded
-    set(handles.sliderSlice,'Min',0,'Max',1,'Value',0,'SliderStep',[1 1]);
 end
 
 %Initialize colormaps and windows
@@ -926,10 +953,12 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
         ctIx = selectIx;
     end
     
-    if isfield(ct, 'cube')
-        plotCtCube = ct.cube;
-    else
+    if handles.cubeHUavailable
         plotCtCube = ct.cubeHU;
+        ctLabel = 'Hounsfield Units';
+    else
+        plotCtCube = ct.cube;
+        ctLabel = 'Electron Density / WEQ';
     end
     
     ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
@@ -946,11 +975,7 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
             %Plot the colorbar
             handles.cBarHandel = matRad_plotColorbar(handles.axesFig,ctMap,handles.dispWindow{ctIx,1},'fontsize',defaultFontSize);
             %adjust lables
-            if isfield(ct,'cubeHU')
-                set(get(handles.cBarHandel,'ylabel'),'String', 'Hounsfield Units','fontsize',defaultFontSize);
-            else
-                set(get(handles.cBarHandel,'ylabel'),'String', 'Electron Density','fontsize',defaultFontSize);
-            end
+            set(get(handles.cBarHandel,'ylabel'),'String', ctLabel,'fontsize',defaultFontSize);
             % do not interprete as tex syntax
             set(get(handles.cBarHandel,'ylabel'),'interpreter','none');
         end
@@ -1044,13 +1069,13 @@ end
 ratios = [1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
 set(handles.axesFig,'DataAspectRatioMode','manual');
 if plane == 1 
-      res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);  
+      res = [ratios(3) ratios(1)]./max([ratios(3) ratios(1)]);  
       set(handles.axesFig,'DataAspectRatio',[res 1])
 elseif plane == 2 % sagittal plane
-      res = [ratios(3) ratios(1)]./max([ratios(3) ratios(1)]);  
+      res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);  
       set(handles.axesFig,'DataAspectRatio',[res 1]) 
 elseif  plane == 3 % Axial plane
-      res = [ratios(2) ratios(1)]./max([ratios(2) ratios(1)]);  
+      res = [ratios(1) ratios(2)]./max([ratios(1) ratios(2)]);  
       set(handles.axesFig,'DataAspectRatio',[res 1])
 end
 
@@ -1074,7 +1099,11 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     
     % Rotate the system into the beam. 
     % passive rotation & row vector multiplication & inverted rotation requires triple matrix transpose                  
-    rotMat_system_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(handles.selectedBeam),pln.propStf.couchAngles(handles.selectedBeam)));
+	if ~isfield(pln.propStf,'collimatorAngles')
+		rotMat_system_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(handles.selectedBeam),pln.propStf.couchAngles(handles.selectedBeam)));
+    else
+		rotMat_system_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(handles.selectedBeam),pln.propStf.couchAngles(handles.selectedBeam),pln.propStf.collimatorAngles(handles.selectedBeam)));
+    end
     
     if strcmp(handles.ProfileType,'longitudinal')
         sourcePointBEV = [handles.profileOffset -SAD   0];
@@ -1223,6 +1252,7 @@ end
 zoom(handles.figure1,'reset');
 axis(handles.axesFig,'tight');
 
+
 if handles.rememberCurrAxes
     axis(currAxes);
 end
@@ -1253,7 +1283,7 @@ end
 if handles.State == 0
     return
 elseif handles.State > 0
-     AllVarNames = evalin('base','who');
+    AllVarNames = evalin('base','who');
     if  ismember('resultGUI',AllVarNames)
         Result = evalin('base','resultGUI');
     end
@@ -1365,29 +1395,8 @@ function popupPlane_Callback(hObject, ~, handles)
 %        contents{get(hObject,'Value')} returns selected item from popupPlane
 
 % set slice slider
-handles.plane = get(handles.popupPlane,'value');
-try
-    if handles.State > 0
-        ct = evalin('base', 'ct');
-        set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
-                'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);
-        if handles.State < 3
-            set(handles.sliderSlice,'Value',round(ct.cubeDim(handles.plane)/2));
-        else
-            pln = evalin('base','pln');
-            
-            if handles.plane == 1
-                set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,2)/ct.resolution.x));
-            elseif handles.plane == 2
-                set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,1)/ct.resolution.y));
-            elseif handles.plane == 3
-                set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,3)/ct.resolution.z));
-            end
-            
-        end
-    end
-catch
-end
+handles.plane = get(hObject,'value');
+initViewSliceSlider(handles);
 
 handles.rememberCurrAxes = false;
 UpdatePlot(handles);
@@ -3546,10 +3555,10 @@ try
         ct = evalin('base','ct');
         currentMap = handles.ctColorMap;
         window = handles.dispWindow{selectionIndex,1};
-        if isfield(ct, 'cube')
-            minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
-        else
+        if handles.cubeHUavailable
             minMax = [min(ct.cubeHU{1}(:)) max(ct.cubeHU{1}(:))];
+        else
+            minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
         end
         % adjust value for custom window to current
         handles.windowPresets(1).width = max(window) - min(window);
@@ -4004,6 +4013,14 @@ if ~isfield(handles,'axesFig3D') || ~isfield(handles,'axesFig3D') || ~isgraphics
     handles.fig3D = figure('Name','matRad 3D View');
     handles.axesFig3D = axes('Parent',handles.fig3D);
     view(handles.axesFig3D,3);
+    try
+        ct = evalin('base','ct');
+
+        xlim(handles.axesFig3D,[0 ct.resolution.x*ct.cubeDim(2)]);
+        ylim(handles.axesFig3D,[0 ct.resolution.y*ct.cubeDim(1)]);
+        zlim(handles.axesFig3D,[0 ct.resolution.z*ct.cubeDim(3)]);
+    catch
+    end
 end
 %end
 
@@ -4250,16 +4267,20 @@ cnt = cnt + 1;
 %Create Objectives / Constraints controls
 for i = 1:size(cst,1)   
    if strcmp(cst(i,3),'IGNORED')~=1
+       %Compatibility Layer for old objective format
+       if isstruct(cst{i,6})
+           cst{i,6} = num2cell(arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{i,6}));
+       end
       for j=1:numel(cst{i,6})
-           
+      
            obj = cst{i,6}{j};
            
            %Convert to class if not
            if ~isa(obj,'matRad_DoseOptimizationFunction')
                 try
                     obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
-                catch
-                    warning('Objective/Constraint not valid!')
+                catch ME
+                    warning('Objective/Constraint not valid!\n%s',ME.message)
                     continue;
                 end
            end
@@ -4558,4 +4579,3 @@ function cstTableSlider_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
-
