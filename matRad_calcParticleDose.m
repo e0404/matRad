@@ -232,7 +232,9 @@ for i = 1:length(stf) % loop over all beams
                     continue;
                 end
                 
-                % adjust radDepth according to range shifter
+                % adjust radDepth according to range shifter and include
+                % correction for matRad simulating particles traveling
+                % through vacuum instead of air between nozzle and skin
                 if  pln.propDoseCalc.airOffsetCorrection   
                     if ~isfield(machine.meta, 'fitAirOffset') 
                         fitAirOffset = 0;
