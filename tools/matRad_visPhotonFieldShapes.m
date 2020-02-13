@@ -29,20 +29,31 @@ function matRad_visPhotonFieldShapes(pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if ~isfield(pln, 'propStf') || ~isfield(pln.propStf, 'collimation')
+    error(['This function only works with field shapes stemming from a DICOM ' ...
+           'photon plan import. For matRad''s native aperture info struct you ' ...
+           'may want to check out https://github.com/e0404/matRad/blob/master/matRad_visApertureInfo.m '...
+           'as shown in https://github.com/e0404/matRad/blob/master/examples/matRad_example3_photonsDAO.m']);
+end
+
 coords = [-pln.propStf.collimation.fieldWidth/2 ...
          :pln.propStf.collimation.convResolution ...
          :pln.propStf.collimation.fieldWidth/2-pln.propStf.collimation.convResolution];
 
+fieldShapeFigureHandle = figure; 
+fieldShapeAxisHandle = axes(fieldShapeFigureHandle);
+
 for i = 1: pln.propStf.collimation.numOfFields
 
-    clf
+    cla(fieldShapeAxisHandle)
     
-    imagesc(coords, coords, pln.propStf.collimation.Fields(i).Shape)
+    imagesc(fieldShapeAxisHandle, coords, coords, pln.propStf.collimation.Fields(i).Shape)
     
-    xlabel [mm]
-    ylabel [mm]
-    title(['field shape i: ' num2str(i) ' @ gantry = ' num2str(pln.propStf.collimation.Fields(i).GantryAngle) '° and couch = ' num2str(pln.propStf.collimation.Fields(i).CouchAngle) '°'])
-    axis equal tight
+    xlabel(fieldShapeAxisHandle, '[mm]')
+    ylabel(fieldShapeAxisHandle, '[mm]')
+
+    title(fieldShapeAxisHandle, ['field shape i: ' num2str(i) ' @ gantry = ' num2str(pln.propStf.collimation.Fields(i).GantryAngle) '° and couch = ' num2str(pln.propStf.collimation.Fields(i).CouchAngle) '°'])
+    axis(fieldShapeAxisHandle, 'equal', 'tight')
     
     drawnow
     pause(.1)
