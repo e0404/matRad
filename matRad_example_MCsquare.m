@@ -18,18 +18,19 @@ matRad_rc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-load TG119.mat
+% load TG119.mat
 % load PROSTATE.mat
 %load LIVER.mat
 % load BOXPHANTOM
-% load BOXPHANTOMv3.mat
+load BOXPHANTOMv3.mat
+% load PHANTOM_control.mat
 % load BOXPHANTOM_NARROW_NEW.mat
 % load phantomTest.mat
 
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'generic_TOPAS_cropped';
+pln.machine         = 'HITfixedBL';
 
 pln.numOfFractions  = 30;
 
@@ -56,46 +57,36 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
-% load protons_HITfixedBL
-% stf.ray.energy = machine.data(1).energy;
-% stf.ray.focusIx = 1;
+load protons_HITfixedBL
+stf.ray.energy = machine.data(end).energy;
 
 %% dose calculation
-if strcmp(pln.radiationMode,'photons')
-    dij = matRad_calcPhotonDose(ct,stf,pln,cst);
-    %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
-elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     
-   dij = matRad_calcParticleDose(ct,stf,pln,cst);
-    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,100000);
-%     resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),100000);
-   
-end
+dij = matRad_calcParticleDose(ct,stf,pln,cst);
+dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,1000000);
+
 
 resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
 resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
 
 resultGUI.physicalDose_MC = resultGUI_MC.physicalDose;
-% resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
+resultGUI.physicalDose = resultGUI.physicalDose;
 
 mcDose = reshape(resultGUI.physicalDose_MC, ct.cubeDim);
 anaDose = reshape(resultGUI.physicalDose, ct.cubeDim);
-% 
+
 anaIDD = sum(sum(anaDose,2),3);
 mcIDD  = sum(sum(mcDose,2),3);
 
 plot(anaIDD);
 hold on
-plot(mcIDD)
+plot(mcIDD);
 hold off
 
-% figure
-% plot(reshape(anaDose(1,125,:),250,1));
-% hold on
-% plot(reshape(mcDose(1,125,:),250,1));
-% hold off
+figure
+plot(reshape(anaDose(306,200,:),400,1));
+hold on
+plot(reshape(mcDose(306,200,:),400,1));
+hold off
 
-
-
-[gammaCube,gammaPassRateCell] = matRad_gammaIndex(mcDose,anaDose,[ct.resolution.x,ct.resolution.y,ct.resolution.z],[2,2],round(ct.cubeDim(3)/2),3,'global',cst);
-
+% [gammaCube,gammaPassRateCell] = matRad_gammaIndex(mcDose,anaDose,[ct.resolution.x,ct.resolution.y,ct.resolution.z],[2,2],round(ct.cubeDim(3)/2),0,'global',cst);
