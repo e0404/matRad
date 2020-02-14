@@ -48,15 +48,15 @@ end
 if nargin < 5
     % set number of particles simulated per pencil beam
     nCasePerBixel = 100000;
-else
-    % switch between either using max stat uncertainity or total number of
-    % cases
-    if (nCasePerBixel < 1)
-        maxStatUncertainty = true;
-    else
-        maxStatUncertainty = false;
-    end
 end
+% switch between either using max stat uncertainity or total number of
+% cases
+if (nCasePerBixel < 1)
+    maxStatUncertainty = true;
+else
+    maxStatUncertainty = false;
+end
+
 
 if nargin < 6
     calcDoseDirect = false;
@@ -377,10 +377,12 @@ matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare)
 % run MCsquare
 mcSquareCall = [mcSquareBinary ' ' MCsquareConfigFile];
 disp(['Calling Monte Carlo Engine: ' mcSquareCall]);
-[status,cmdout] = system([mcSquareBinary ' ' MCsquareConfigFile],'-echo');
-    
+[status,cmdout] = system([mcSquareBinary ' ' MCsquareConfigFile],'-echo');   
+   
 mask = false(dij.doseGrid.numOfVoxels,1);
 mask(VdoseGrid) = true;
+
+fprintf('Simulation finished!\n');
 
 % read sparse matrix
 if ~calcDoseDirect
@@ -401,7 +403,7 @@ if MCsquareConfig.Beamlet_Mode
     dij.physicalDose{1} = dij.physicalDose{1}(:,MCsquareOrder);            
 end        
 
-fprintf('matRad: done!\n');
+fprintf('MCsquare output read!\n');
 
 try
     % wait 0.1s for closing all waitbars
