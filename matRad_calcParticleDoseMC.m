@@ -49,6 +49,8 @@ if nargin < 6
     calcDoseDirect = false;
 end
 
+env = matRad_getEnvironment();
+
 %% check if binaries are available
 %Executables for simulation
 if ispc
@@ -77,7 +79,7 @@ if ~calcDoseDirect && exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3
         
         currFolder = pwd;
         
-        if exist ('OCTAVE_VERSION', 'builtin')
+        if strcmp(env,'OCTAVE')
           ccName = eval('mkoctfile -p CXX');
         else
           myCCompiler = mex.getCompilerConfigurations('C','Selected');
@@ -100,7 +102,7 @@ if ~calcDoseDirect && exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3
         %For Octave, the flags will be set in the environment, while they
         %will be parsed as string arguments in MATLAB
         for flag = 1:size(flags,1)
-            if exist ('OCTAVE_VERSION', 'builtin')
+            if exist('OCTAVE_VERSION', 'builtin')
                 setenv(flags{flag,1},flags{flag,2});
             else
                 flagstring = [flagstring flags{flag,1} '="' flags{flag,2} '" '];
@@ -382,7 +384,17 @@ end
 delete([MCsquareConfig.CT_File(1:end-4) '.*']);
 delete('currBixels.txt');
 delete('MCsquareConfig.txt');
-eval(['rmdir ' MCsquareConfig.Output_Directory ' s']);
+
+%For Octave temporarily disable confirmation for recursive rmdir
+if strcmp(env,'OCTAVE')    
+    rmdirConfirmState = confirm_recursive_rmdir(0);
+end
+rmdir(MCsquareConfig.Output_Directory,'s');
+
+%Reset to old confirmatoin state
+if strcmp(env,'OCTAVE')
+    confirm_recursive_rmdir(rmdirConfirmState);
+end
 
 % cd back
 cd(currFolder);
