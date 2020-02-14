@@ -153,10 +153,12 @@ handles.Modalities = {'photons','protons','carbon'};
 for i = 1:length(handles.Modalities)
   pattern = [handles.Modalities{1,i} '_*'];
   if isdeployed
-      Files = dir([ctfroot filesep 'matRad' filesep pattern]);
+      baseroot = [ctfroot filesep 'matRad'];
   else
-      Files = dir([fileparts(mfilename('fullpath')) filesep pattern]);        
+      baseroot = fileparts(mfilename('fullpath'));
   end
+  Files = dir([baseroot filesep 'basedata' filesep pattern]);
+  
   for j = 1:length(Files)
       if ~isempty(Files)
           MachineName = Files(j).name(numel(handles.Modalities{1,i})+2:end-4);
@@ -764,7 +766,7 @@ try
         handles = showWarning(handles,'number of gantryAngles != number of couchAngles'); 
     end
     %%
-    if ~checkRadiationComposition(handles);
+    if ~checkRadiationComposition(handles)
         fileName = [pln.radiationMode '_' pln.machine];
         handles = showError(handles,errordlg(['Could not find the following machine file: ' fileName ]));
         guidata(hObject,handles);
@@ -953,10 +955,12 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
         ctIx = selectIx;
     end
     
-    if isfield(ct, 'cube')
-        plotCtCube = ct.cube;
-    else
+    if handles.cubeHUavailable
         plotCtCube = ct.cubeHU;
+        ctLabel = 'Hounsfield Units';
+    else
+        plotCtCube = ct.cube;
+        ctLabel = 'Electron Density / WEQ';
     end
     
     ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
@@ -973,11 +977,7 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
             %Plot the colorbar
             handles.cBarHandel = matRad_plotColorbar(handles.axesFig,ctMap,handles.dispWindow{ctIx,1},'fontsize',defaultFontSize);
             %adjust lables
-            if isfield(ct,'cubeHU')
-                set(get(handles.cBarHandel,'ylabel'),'String', 'Hounsfield Units','fontsize',defaultFontSize);
-            else
-                set(get(handles.cBarHandel,'ylabel'),'String', 'Electron Density','fontsize',defaultFontSize);
-            end
+            set(get(handles.cBarHandel,'ylabel'),'String', ctLabel,'fontsize',defaultFontSize);
             % do not interprete as tex syntax
             set(get(handles.cBarHandel,'ylabel'),'interpreter','none');
         end
@@ -1087,7 +1087,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     % set SAD
     fileName = [pln.radiationMode '_' pln.machine];
     try
-        load(fileName);
+        load(['basedata' filesep fileName]);
         SAD = machine.meta.SAD;
     catch
         error(['Could not find the following machine file: ' fileName ]); 
@@ -1250,6 +1250,7 @@ end
 zoom(handles.figure1,'reset');
 axis(handles.axesFig,'tight');
 
+
 if handles.rememberCurrAxes
     axis(currAxes);
 end
@@ -1280,7 +1281,7 @@ end
 if handles.State == 0
     return
 elseif handles.State > 0
-     AllVarNames = evalin('base','who');
+    AllVarNames = evalin('base','who');
     if  ismember('resultGUI',AllVarNames)
         Result = evalin('base','resultGUI');
     end
@@ -2562,10 +2563,13 @@ contents = cellstr(get(handles.popupRadMode,'String'));
 radMod = contents{get(handles.popupRadMode,'Value')};
 
 if isdeployed
-    FoundFile = dir([ctfroot filesep 'matRad' filesep radMod '_' Machine '.mat']);
+    baseroot = [ctfroot filesep 'matRad'];
 else
-    FoundFile = dir([fileparts(mfilename('fullpath')) filesep radMod '_' Machine '.mat']);    
+    baseroot = fileparts(mfilename('fullpath'));
 end
+FoundFile = dir([baseroot filesep 'basedata' filesep radMod '_' Machine '.mat']);
+
+
 if isempty(FoundFile)
     warndlg(['No base data available for machine: ' Machine]);
     flag = false;
@@ -2830,7 +2834,7 @@ selection = questdlg('Do you really want to close matRad?',...
 
 %BackgroundColor',[0.5 0.5 0.5]
  switch selection
-   case 'Yes',
+   case 'Yes'
      delete(hObject);
    case 'No'
      return
@@ -2964,7 +2968,7 @@ cst = evalin('base','cst');
 pln = evalin('base','pln');
 
 fileName = [pln.radiationMode '_' pln.machine];
-load(fileName);
+load(['basedata' filesep fileName]);
 
 % check for available cell types characterized by alphaX and betaX 
 for i = 1:size(machine.data(1).alphaX,2)
@@ -3417,7 +3421,7 @@ try
         cst = evalin('base','cst');
         ct = evalin('base','ct');
         %setCstTable(handles,cst);
-        generateCstTable(hanles,cst);
+        generateCstTable(handles,cst);
         handles.TableChanged = false;
         set(handles.popupTypeOfPlot,'Value',1);
         
@@ -3508,14 +3512,17 @@ oldPos = get(handles.axesFig,'Position');
 set(new_handle(1),'units','normalized', 'Position',oldPos);
 
 if ~isfield(handles,'lastStoragePath') || exist(handles.lastStoragePath,'dir') ~= 7
-    handles.lastStoragePath = [];   
+    lastStoragePath = [];   
+else
+    lastStoragePath = handles.lastStoragePath;
 end
 
-[filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view',[handles.lastStoragePath 'screenshot.png']);
+[filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view',[lastStoragePath 'screenshot.png']);
 
-handles.lastStoragePath = pathname;
+
 
 if ~isequal(filename,0) && ~isequal(pathname,0)
+    handles.lastStoragePath = pathname;
     set(gcf, 'pointer', 'watch');
     saveas(tmpFig,fullfile(pathname,filename));
     set(gcf, 'pointer', 'arrow');
@@ -3552,10 +3559,10 @@ try
         ct = evalin('base','ct');
         currentMap = handles.ctColorMap;
         window = handles.dispWindow{selectionIndex,1};
-        if isfield(ct, 'cube')
-            minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
+        if handles.cubeHUavailable
+            minMax = [min(ct.cubeHU{1}(:)) max(ct.cubeHU{1}(:))];            
         else
-            minMax = [min(ct.cubeHU{1}(:)) max(ct.cubeHU{1}(:))];
+            minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
         end
         % adjust value for custom window to current
         handles.windowPresets(1).width = max(window) - min(window);
@@ -4010,6 +4017,14 @@ if ~isfield(handles,'axesFig3D') || ~isfield(handles,'axesFig3D') || ~isgraphics
     handles.fig3D = figure('Name','matRad 3D View');
     handles.axesFig3D = axes('Parent',handles.fig3D);
     view(handles.axesFig3D,3);
+    try
+        ct = evalin('base','ct');
+    
+        xlim(handles.axesFig3D,[0 ct.resolution.x*ct.cubeDim(2)]);
+        ylim(handles.axesFig3D,[0 ct.resolution.y*ct.cubeDim(1)]);
+        zlim(handles.axesFig3D,[0 ct.resolution.z*ct.cubeDim(3)]);
+    catch
+    end
 end
 %end
 
@@ -4160,37 +4175,46 @@ cst = updateStructureTable(handles,cst);
 
 cstPanel = handles.uipanel3;
 
-cstPanelPos = getpixelposition(cstPanel);
+%Get units in pixels to to calculate aspect ratio
+cstPanelPosUnit = get(cstPanel,'Units');
+set(cstPanel,'Units','pixels');
+cstPanelPosPix = get(cstPanel,'Position');
+set(cstPanel,'Units',cstPanelPosUnit);
+
+aspectRatio = cstPanelPosPix(3) / cstPanelPosPix(4);
 
 %Parameters for line height
-objHeight = 22;
-lineHeight = 25; %Height of a table line
-fieldSep = 2; %Separation between fields horizontally
-yTopSep = 40; %Separation of the first line from the top
-tableViewHeight = cstPanelPos(4) - yTopSep; %Full height of the view
+objHeight = 0.095;% 22;
+lineHeight = 0.1; %25; %Height of a table line
+yTopSep = 0.12;%40; %Separation of the first line from the top
+tableViewHeight = 1 - yTopSep; 
 
-%Widths of the fields
-buttonW = objHeight;
-nameW = 90;
-typeW = 70;
-opW = objHeight;
-functionW = 120;
-penaltyW = 40;
-paramTitleW = 120;
-paramW = 30;
+%Define the widths of the fields relatively
+buttonW = objHeight / aspectRatio; % Make button squared
+nameW = 3.5*buttonW;
+typeW = 3*buttonW;
+opW = buttonW;
+functionW = 6*buttonW;
+penaltyW = 2*buttonW;
+paramTitleW = 4*buttonW;
+paramW = 2*buttonW;
+fieldSep = 0.25*buttonW; %Separation between fields horizontally
 
 
 %Scrollbar
-cstVertTableScroll = findobj(cstPanel.Children,'Style','slider');
+%Check if a scrollbar already exists to get possible position of slider
+cstPanelChildren = get(cstPanel,'Children');
+cstVertTableScroll = findobj(cstPanelChildren,'Style','slider');
 if isempty(cstVertTableScroll)
     sliderPos = 0;
 else
-    sliderPos = cstVertTableScroll.Max - cstVertTableScroll.Value;
+    sliderPos = get(cstVertTableScroll,'Max') - get(cstVertTableScroll,'Value');
 end
-%disp(num2str(sliderPos));
+
 ypos = @(c) tableViewHeight - c*lineHeight + sliderPos;
 
-delete(cstPanel.Children);
+%Clean the whole panel for new setup
+delete(cstPanelChildren);
 
 %Creates a dummy axis to allow for the use of textboxes instead of uicontrol to be able to use the (la)tex interpreter
 tmpAxes = axes('Parent',cstPanel,'units','normalized','position',[0 0 1 1],'visible','off');
@@ -4217,40 +4241,36 @@ for clIx = 1:numel(classList)
     classNames(:,clIx) = {cl.Name; pName}; %Store class name and display name
 end
 
-% Collect Class-File & Display Names
-%classNames = {classList.Name; p.DefaultValue};
-
-%columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
-%       AllObjectiveFunction,...
-%       'numeric','numeric','numeric','numeric',{'none','WC','prob'}};
-   
-numOfObjectives = 0;
-for i = 1:size(cst,1)
-    if ~isempty(cst{i,6})
-        numOfObjectives = numOfObjectives + numel(cst{i,6});
-    end
-end
+numOfObjectives = sum(cellfun(@numel,cst(:,6)));
 
 cnt = 0;
 
 newline = '\n';
 
 %Setup Headlines
-xPos = 5;
-h = uicontrol(cstPanel,'Style','text','String','+/-','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Remove or add Constraint or Objective');
-xPos = xPos + h.Position(3) + fieldSep;
-h = uicontrol(cstPanel,'Style','text','String','VOI name','Position',[xPos ypos(cnt) nameW objHeight],'TooltipString','Name of the structure with objective/constraint');
-xPos = xPos + h.Position(3) + fieldSep;
-h = uicontrol(cstPanel,'Style','text','String','VOI type','Position',[xPos ypos(cnt) typeW objHeight],'TooltipString','Segmentation Classification');
-xPos = xPos + h.Position(3) + fieldSep;
-h = uicontrol(cstPanel,'Style','text','String','OP','Position',[xPos ypos(cnt) opW objHeight],'TooltipString',['Overlap Priority' char(10) '(Smaller number overlaps higher number)']);
-xPos = xPos + h.Position(3) + fieldSep;
-h = uicontrol(cstPanel,'Style','text','String','Function','Position',[xPos ypos(cnt) functionW objHeight],'TooltipString','Objective/Constraint function type');
-xPos = xPos + h.Position(3) + fieldSep;
-h = uicontrol(cstPanel,'Style','text','String','p','Position',[xPos ypos(cnt) penaltyW objHeight],'TooltipString','Optimization penalty');
-xPos = xPos + h.Position(3) + fieldSep;
-h = uicontrol(cstPanel,'Style','text','String','| Parameters','Position',[xPos ypos(cnt) paramTitleW objHeight],'TooltipString','List of parameters','HorizontalAlignment','left');
-xPos = xPos + h.Position(3) + fieldSep;
+xPos = 0.01; %5
+
+h = uicontrol(cstPanel,'Style','text','String','+/-','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Remove or add Constraint or Objective');
+tmp_pos = get(h,'Position');
+xPos = xPos + tmp_pos(3) + fieldSep;
+h = uicontrol(cstPanel,'Style','text','String','VOI name','Units','normalized','Position',[xPos ypos(cnt) nameW objHeight],'TooltipString','Name of the structure with objective/constraint');
+tmp_pos = get(h,'Position');
+xPos = xPos + tmp_pos(3) + fieldSep;
+h = uicontrol(cstPanel,'Style','text','String','VOI type','Units','normalized','Position',[xPos ypos(cnt) typeW objHeight],'TooltipString','Segmentation Classification');
+tmp_pos = get(h,'Position');
+xPos = xPos + tmp_pos(3) + fieldSep;
+h = uicontrol(cstPanel,'Style','text','String','OP','Units','normalized','Position',[xPos ypos(cnt) opW objHeight],'TooltipString',['Overlap Priority' char(10) '(Smaller number overlaps higher number)']);
+tmp_pos = get(h,'Position');
+xPos = xPos + tmp_pos(3) + fieldSep;
+h = uicontrol(cstPanel,'Style','text','String','Function','Units','normalized','Position',[xPos ypos(cnt) functionW objHeight],'TooltipString','Objective/Constraint function type');
+tmp_pos = get(h,'Position');
+xPos = xPos + tmp_pos(3) + fieldSep;
+h = uicontrol(cstPanel,'Style','text','String','p','Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight],'TooltipString','Optimization penalty');
+tmp_pos = get(h,'Position');
+xPos = xPos + tmp_pos(3) + fieldSep;
+h = uicontrol(cstPanel,'Style','text','String','| Parameters','Units','normalized','Position',[xPos ypos(cnt) paramTitleW objHeight],'TooltipString','List of parameters','HorizontalAlignment','left');
+tmp_pos = get(h,'Position');
+xPos = xPos + tmp_pos(3) + fieldSep;
 cnt = cnt + 1;
 
 %Create Objectives / Constraints controls
@@ -4273,87 +4293,82 @@ for i = 1:size(cst,1)
                     continue;
                 end
            end
-               
+
            %VOI
-           %data{Counter,1}  = cst{i,2};
-           %ypos = cstPanelPos(4) - (yTopSep + cnt*lineHeight);
-           xPos = 5;
+           xPos = 0.01;%5;
            
-           %h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Position',[xPos ypos 100 objHeight]);
-           %h.Value = i;
-           h = uicontrol(cstPanel,'Style','pushbutton','String','-','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Remove Objective/Constraint','Callback',{@btObjRemove_Callback,handles},...
+           h = uicontrol(cstPanel,'Style','pushbutton','String','-','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Remove Objective/Constraint','Callback',{@btObjRemove_Callback,handles},...
                'UserData',[i,j]);
-           xPos = xPos + h.Position(3) + fieldSep;
-           h = uicontrol(cstPanel','Style','edit','String',cst{i,2},'Position',[xPos ypos(cnt) nameW objHeight],'TooltipString','Name',...
+           tmp_pos = get(h,'Position');
+           xPos = xPos + tmp_pos(3) + fieldSep;
+           h = uicontrol(cstPanel','Style','edit','String',cst{i,2},'Units','normalized','Position',[xPos ypos(cnt) nameW objHeight],'TooltipString','Name',...
                'Enable','inactive',... %Disable editing of name atm
                'UserData',[i,2],'Callback',{@editCstParams_Callback,handles}); %Callback added, however, editing is disabled atm
-           xPos = xPos + h.Position(3) + fieldSep;
-           h = uicontrol(cstPanel,'Style','popupmenu','String',organTypes','Value',find(strcmp(cst{i,3},organTypes)),'Position',[xPos ypos(cnt) typeW objHeight],'TooltipString','Segmentation Classification',...
+           tmp_pos = get(h,'Position');
+           xPos = xPos + tmp_pos(3) + fieldSep;
+           h = uicontrol(cstPanel,'Style','popupmenu','String',organTypes','Value',find(strcmp(cst{i,3},organTypes)),'Units','normalized','Position',[xPos ypos(cnt) typeW objHeight],'TooltipString','Segmentation Classification',...
                'UserData',[i,3],'Callback',{@editCstParams_Callback,handles});
-           xPos = xPos + h.Position(3) + fieldSep;
-           h = uicontrol(cstPanel,'Style','edit','String',num2str(cst{i,5}.Priority),'Position',[xPos ypos(cnt) opW objHeight],'TooltipString',['Overlap Priority' newline '(Smaller number overlaps higher number)'],...
+           tmp_pos = get(h,'Position');
+           xPos = xPos + tmp_pos(3) + fieldSep;
+           h = uicontrol(cstPanel,'Style','edit','String',num2str(cst{i,5}.Priority),'Units','normalized','Position',[xPos ypos(cnt) opW objHeight],'TooltipString',['Overlap Priority' newline '(Smaller number overlaps higher number)'],...
                'UserData',[i,5],'Callback',{@editCstParams_Callback,handles});
-           xPos = xPos + h.Position(3) + fieldSep;
+           tmp_pos = get(h,'Position');
+           xPos = xPos + tmp_pos(3) + fieldSep;
            
-           h = uicontrol(cstPanel,'Style','popupmenu','String',classNames(2,:)','Value',find(strcmp(obj.name,classNames(2,:))),'Position',[xPos ypos(cnt) functionW objHeight],'TooltipString','Select Objective/Constraint',...
+           h = uicontrol(cstPanel,'Style','popupmenu','String',classNames(2,:)','Value',find(strcmp(obj.name,classNames(2,:))),'Units','normalized','Position',[xPos ypos(cnt) functionW objHeight],'TooltipString','Select Objective/Constraint',...
                'UserData',{[i,j],classNames(1,:)},'Callback',{@changeObjFunction_Callback,handles});
-           xPos = xPos + h.Position(3) + fieldSep;
+           tmp_pos = get(h,'Position');
+           xPos = xPos + tmp_pos(3) + fieldSep;
            
            %Check if we have an objective to display penalty
            if isa(obj,'DoseObjectives.matRad_DoseObjective')
-               h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.penalty),'Position',[xPos ypos(cnt) penaltyW objHeight],'TooltipString','Objective Penalty','UserData',[i,j,0],'Callback',{@editObjParam_Callback,handles});
+               h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.penalty),'Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight],'TooltipString','Objective Penalty','UserData',[i,j,0],'Callback',{@editObjParam_Callback,handles});
            else
-               h = uicontrol(cstPanel,'Style','edit','String','----','Position',[xPos ypos(cnt) penaltyW objHeight],'Enable','off');
+               h = uicontrol(cstPanel,'Style','edit','String','----','Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight],'Enable','off');
            end
-           xPos = xPos + h.Position(3) + fieldSep;
+           tmp_pos = get(h,'Position');
+           xPos = xPos + tmp_pos(3) + fieldSep;
            
+           %Iterate through parameters
            for p = 1:numel(obj.parameterNames)
-              %h = uicontrol(cstPanel,'Style','edit','String',obj.parameters{1,p},'Position',[xPos ypos(cnt) 100 objHeight],'Enable','inactive');
-              %xPos = xPos + h.Position(3) + fieldSep;
-              h = text('Parent',tmpAxes,'String',['| ' obj.parameterNames{p} ':'],'VerticalAlignment','middle','units','pix','Position',[xPos ypos(cnt)+lineHeight/2],'Interpreter','tex','FontWeight','normal',...
-                  'FontSize',cstPanel.FontSize,'FontName',cstPanel.FontName,'FontUnits',cstPanel.FontUnits,'FontWeight','normal');%[xPos ypos(cnt) 100 objHeight]);
-              xPos = xPos + h.Extent(3) + fieldSep;
-              %h = annotation(cstPanel,'textbox','String',obj.parameters{1,p},'Units','pix','Position', [xPos ypos(cnt) 100 objHeight],'Interpreter','Tex');
+              h = text('Parent',tmpAxes,'String',['| ' obj.parameterNames{p} ':'],'VerticalAlignment','middle','Units','normalized','Position',[xPos ypos(cnt)+lineHeight/2],'Interpreter','tex','FontWeight','normal',...
+                  'FontSize',get(cstPanel,'FontSize'),'FontName',get(cstPanel,'FontName'),'FontUnits',get(cstPanel,'FontUnits'),'FontWeight','normal');
+              tmp_pos = get(h,'Extent');
+              xPos = xPos + tmp_pos(3) + fieldSep;
               
               %Check if we have a cell and therefore a parameter list
               if iscell(obj.parameterTypes{p})                  
-                  h = uicontrol(cstPanel,'Style','popupmenu','String',obj.parameterTypes{p}','Value',obj.parameters{p},'TooltipString',obj.parameterNames{p},'Position',[xPos ypos(cnt) paramW*2 objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
+                  h = uicontrol(cstPanel,'Style','popupmenu','String',obj.parameterTypes{p}','Value',obj.parameters{p},'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW*2 objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
               else
-                h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{p}),'TooltipString',obj.parameterNames{p},'Position',[xPos ypos(cnt) paramW objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
+                h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{p}),'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
               end
               
-              xPos = xPos + h.Position(3) + fieldSep;
+              tmp_pos = get(h,'Position');
+              xPos = xPos + tmp_pos(3) + fieldSep;
            end
 
            cnt = cnt +1;
        end
    end   
 end
-xPos = 5;
-hAdd = uicontrol(cstPanel,'Style','pushbutton','String','+','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Add Objective/Constraint','Callback',{@btObjAdd_Callback,handles});
-xPos = xPos + hAdd.Position(3) + fieldSep;
-h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Position',[xPos ypos(cnt) nameW objHeight]);
-hAdd.UserData = h;
+xPos = 0.01; %5
+hAdd = uicontrol(cstPanel,'Style','pushbutton','String','+','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Add Objective/Constraint','Callback',{@btObjAdd_Callback,handles});
+tmp_pos = get(hAdd,'Position');
+xPos = xPos + tmp_pos(3) + fieldSep;
+h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Units','normalized','Position',[xPos ypos(cnt) nameW objHeight]);
+set(hAdd,'UserData',h);
 
-%Calculate Scrollbar
+%Calculate Scrollbar / Slider Position
 lastPos = ypos(cnt);
 firstPos = ypos(0);
 tableHeight = abs(firstPos - lastPos);
 
-exceedFac = tableHeight / tableViewHeight;
+exceedFac = tableHeight / tableViewHeight; %How much the current umber of rows exceeds the window height capacity
 if exceedFac > 1
     sliderFac = exceedFac - 1; 
     uicontrol(cstPanel,'Style','slider','Units','normalized','Position',[0.975 0 0.025 1],'Min',0,'Max',ceil(sliderFac)*tableViewHeight,'SliderStep',[lineHeight tableViewHeight] ./ (ceil(sliderFac)*tableViewHeight),'Value',ceil(sliderFac)*tableViewHeight - sliderPos,'Callback',{@cstTableSlider_Callback,handles});
 end
-
-
-
-
-%set(handles.uiTable,'ColumnName',columnname);
-%set(handles.uiTable,'ColumnFormat',columnformat);
-%set(handles.uiTable,'ColumnEditable',[true true true true true true true true true true]);
-%set(handles.uiTable,'Data',data);
-   
+ 
 
 % --- Executes when uipanel3 is resized.
 function uipanel3_SizeChangedFcn(hObject, eventdata, handles)
