@@ -76,43 +76,10 @@ if ~calcDoseDirect && exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3
         [mcSquareFolder,~,~] = fileparts(cFilePath);
         
         currFolder = pwd;
-        
-        if exist ('OCTAVE_VERSION', 'builtin')
-          ccName = eval('mkoctfile -p CXX');
-        else
-          myCCompiler = mex.getCompilerConfigurations('C','Selected');
-          ccName = myCCompiler.ShortName;
-        end
-        
-        %This needs to generalize better
-        if ~isempty(strfind(ccName,'MSVC')) %Not use contains(...) because of octave
-            flags{1,1} = 'COMPFLAGS';
-            flags{1,2} = '/O2';
-        else
-            flags{1,1} = 'CXXFLAGS';
-            flags{1,2} = '-std=c++11 -O2';
-        end
-        
-        %flags = {};
-        %flagstring = '-g ';
-        flagstring = '';
-        
-        %For Octave, the flags will be set in the environment, while they
-        %will be parsed as string arguments in MATLAB
-        for flag = 1:size(flags,1)
-            if exist ('OCTAVE_VERSION', 'builtin')
-                setenv(flags{flag,1},flags{flag,2});
-            else
-                flagstring = [flagstring flags{flag,1} '="' flags{flag,2} '" '];
-            end
-        end
-        
+       
         cd(mcSquareFolder);
         
-        mexCall = ['mex -largeArrayDims ' flagstring ' matRad_sparseBeamletsReaderMCsquare.cpp'];
-        
-        disp(['Compiler call: ' mexCall]);
-        eval(mexCall);
+        matRad_compileMCsquareSparseReader();
         
         cd(currFolder);
     catch

@@ -57,7 +57,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.options.acceptable_compl_inf_tol      = 1e10; % (Acc5)
             obj.options.acceptable_obj_change_tol     = 1e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
             
-            obj.options.max_iter                      = 1000;
+obj.options.max_iter = 10;
             obj.options.max_cpu_time                  = 3000;
             
             % Barrier Parameter (C.6)
@@ -82,7 +82,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             % for derivate checking
             % obj.options.derivative_test              = 'first-order'; % none / first-order / second-order / only-second-order
             % obj.options.derivative_test_perturbation = 1e-6; % default 1e-8
-            % obj.options.derivative_test_tol          = 1e-6;
+            % obj.options.derivative_test_tol          = 1e-6;            
 
         end
         
@@ -266,5 +266,26 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.abortRequested = true;
         end       
         
+    end
+    
+    methods (Access = private)
+        function prepareMexForOctave()
+            %Test if a working mex file for octave is there            
+            %...
+            
+            %If not get current path
+            fpath = filepath(mfilename('fullpath'));
+            
+            %Linking the correct file            
+            if ispc
+                link('ipopt.mex_octw64','ipopt.mex');
+            elseif ismac
+                link('ipopt.mex_octmac64','ipopt.mex');
+            elseif isunix
+                link('ipopt.mex_octa64','ipopt.mex');
+            else
+                error('No mex file for octave for your operating system. Compile it yourself.');
+            end
+        end
     end
 end

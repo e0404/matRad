@@ -55,7 +55,7 @@ pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
+dij = matRad_calcParticleDoseMC(ct,stf,pln,cst);
 
 %% Inverse Optimization for IMPT
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
