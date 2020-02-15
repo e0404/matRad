@@ -1,70 +1,53 @@
 %Create Standalone with and without runtime
 
-if ismac
+FileName='matRad.prj';
+xDoc = xmlread(FileName);
+
+if ismac % Mac platform
     suffix = 'Mac';
     installSuffix = 'app';
-    % Mac platform
-elseif isunix
+    xDoc.getElementsByTagName('unix').item(0).getFirstChild.setData('true');
+    xDoc.getElementsByTagName('mac').item(0).getFirstChild.setData('true');
+    xDoc.getElementsByTagName('windows').item(0).getFirstChild.setData('false');
+    xDoc.getElementsByTagName('linux').item(0).getFirstChild.setData('false');
+    xDoc.getElementsByTagName('arch').item(0).getFirstChild.setData('maci64');
+    
+elseif isunix % Linux platform
     suffix = 'Linux';
     installSuffix = 'install';
-    % Linux platform
-elseif ispc
-    suffix = 'Windows';
+    xDoc.getElementsByTagName('unix').item(0).getFirstChild.setData('true');
+    xDoc.getElementsByTagName('mac').item(0).getFirstChild.setData('false');
+    xDoc.getElementsByTagName('windows').item(0).getFirstChild.setData('false');
+    xDoc.getElementsByTagName('linux').item(0).getFirstChild.setData('true');
+    xDoc.getElementsByTagName('arch').item(0).getFirstChild.setData('glnxa64');
+    
+elseif ispc % Windows platform
+    suffix = 'Win';
     installSuffix = 'exe';
-    % Windows platform
+    xDoc.getElementsByTagName('unix').item(0).getFirstChild.setData('false');
+    xDoc.getElementsByTagName('mac').item(0).getFirstChild.setData('false');
+    xDoc.getElementsByTagName('windows').item(0).getFirstChild.setData('true');
+    xDoc.getElementsByTagName('linux').item(0).getFirstChild.setData('false');
+    xDoc.getElementsByTagName('arch').item(0).getFirstChild.setData('Win64');
 else
     error('Platform not supported')
 end
+xDoc.getElementsByTagName('param.package.mcr.name').item(0).getFirstChild.setData(filename_withRT);
 
-
-
-FileName=['matRad' suffix '.prj'];
-
-xDoc = xmlread(FileName);
+%FileName=['matRad' suffix '.prj'];
 
 %Get version and Filenames
 version= replace(xDoc.getElementsByTagName('param.version').item(0).getFirstChild.getData().toCharArray()','.','_');
-filename_webRT = xDoc.getElementsByTagName('param.web.mcr.name').item(0).getFirstChild.getData().toCharArray()';
-filename_withRT = xDoc.getElementsByTagName('param.package.mcr.name').item(0).getFirstChild.getData().toCharArray()';
-
-% add the version to the file name if it's different from the version
-%without runtime
-split_name=split(filename_webRT,'_v_');
-
-if(size(split_name,1)==2)
-    if  string(split_name(2,1)) ~= version
-        filename_webRT=[string(split_name(1,1)) '_v_' version];
-        xDoc.getElementsByTagName('param.web.mcr.name').item(0).getFirstChild.setData(filename_webRT);
-    end
-    
-else
-    %add version
-    filename_webRT=[filename_webRT '_v_' version];
-    
-    xDoc.getElementsByTagName('param.web.mcr.name').item(0).getFirstChild.setData(filename_webRT);
-
-end
-
-%with runtime
-split_name=split(filename_withRT,'_v_');
-
-if(size(split_name,1)==2)
-    if  string(split_name(2,1)) ~= version
-        filename_withRT=[string(split_name(1,1)) '_v_' version];
-        xDoc.getElementsByTagName('param.package.mcr.name').item(0).getFirstChild.setData(filename_withRT);
-    end
-    
-else
-    %add version
-    filename_withRT=[filename_withRT '_v_' version];
-    xDoc.getElementsByTagName('param.package.mcr.name').item(0).getFirstChild.setData(filename_withRT);
-
-end
-
+filename_webRT =['matRad_installer' suffix '64_v_' version];
+filename_withRT =['matRad_installer' suffix '64_wRT_v_' version];
+xDoc.getElementsByTagName('param.web.mcr.name').item(0).getFirstChild.setData(filename_webRT);
+xDoc.getElementsByTagName('param.package.mcr.name').item(0).getFirstChild.setData(filename_withRT);
+%filename_webRT = xDoc.getElementsByTagName('param.web.mcr.name').item(0).getFirstChild.getData().toCharArray()';
+%filename_withRT = xDoc.getElementsByTagName('param.package.mcr.name').item(0).getFirstChild.getData().toCharArray()';
 
 
 %check if the files exist, and delete them
-if isfolder(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix]) || ...
+if isfolder(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix])
    rmdir(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix],'s')
 rehash
 end
@@ -73,7 +56,7 @@ if isfile(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.
   delete(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix]);
 end
 
-if isfolder(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix]) || ...
+if isfolder(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix])
     rmdir(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix],'s')
 rehash
 end
