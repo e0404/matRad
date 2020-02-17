@@ -47,8 +47,8 @@ ${DYLD_LIBRARY_PATH}:MR/v96/runtime/maci64:MR/v96/sys/os/maci64:MR/v96/bin/maci6
       <param.web.mcr>true</param.web.mcr>
       <param.package.mcr>false</param.package.mcr>
       <param.no.mcr>false</param.no.mcr>
-      <param.web.mcr.name>matRad_installerMac64_v_2_2</param.web.mcr.name>
-      <param.package.mcr.name>matRad_installerMac64_wRT_v_2_2</param.package.mcr.name>
+      <param.web.mcr.name>matRad_installerLinux64_v_2_2</param.web.mcr.name>
+      <param.package.mcr.name>matRad_installerLinux64_wRT_v_2_2</param.package.mcr.name>
       <param.no.mcr.name>MyAppInstaller_app</param.no.mcr.name>
       <param.windows.command.prompt>false</param.windows.command.prompt>
       <param.create.log>true</param.create.log>
@@ -210,8 +210,8 @@ ${DYLD_LIBRARY_PATH}:MR/v96/runtime/maci64:MR/v96/sys/os/maci64:MR/v96/bin/maci6
          <file>${PROJECT_ROOT}/matRad_resizeCstToGrid.m</file>
       </fileset.depfun>
       <build-deliverables>
-         <file location="${PROJECT_ROOT}/standalone/for_testing" name="matRad.app"
-               optional="false">/Users/nelly/Documents/GitHub/matRad/standalone/for_testing/matRad.app</file>
+         <file location="${PROJECT_ROOT}/standalone/for_testing" name="matRad"
+               optional="false">/Users/nelly/Documents/GitHub/matRad/standalone/for_testing/matRad</file>
          <file location="${PROJECT_ROOT}/standalone/for_testing" name="splash.png"
                optional="false">/Users/nelly/Documents/GitHub/matRad/standalone/for_testing/splash.png</file>
          <file location="${PROJECT_ROOT}/standalone/for_testing" name="readme.txt"
@@ -226,17 +226,17 @@ ${DYLD_LIBRARY_PATH}:MR/v96/runtime/maci64:MR/v96/sys/os/maci64:MR/v96/bin/maci6
       </matlab>
       <platform>
          <unix>true</unix>
-         <mac>true</mac>
+         <mac>false</mac>
          <windows>false</windows>
          <win2k>false</win2k>
          <winxp>false</winxp>
          <vista>false</vista>
-         <linux>false</linux>
+         <linux>true</linux>
          <solaris>false</solaris>
          <osver>10.14.6</osver>
          <os32>false</os32>
          <os64>true</os64>
-         <arch>maci64</arch>
+         <arch>glnxa64</arch>
          <matlab>true</matlab>
       </platform>
   </configuration>

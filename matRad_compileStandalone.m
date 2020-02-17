@@ -32,7 +32,6 @@ elseif ispc % Windows platform
 else
     error('Platform not supported')
 end
-xDoc.getElementsByTagName('param.package.mcr.name').item(0).getFirstChild.setData(filename_withRT);
 
 %FileName=['matRad' suffix '.prj'];
 
