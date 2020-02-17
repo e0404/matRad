@@ -35,7 +35,7 @@ http://e0404.github.io/matRad/;
 a wiki documentation is under constant development at 
 https://github.com/e0404/matRad/wiki.
 
-Copyright (C) 2015 by the contributors and German Cancer Research Center
+Copyright (C) 2020 by the contributors and German Cancer Research Center
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -57,8 +57,8 @@ Ipopt (or a modified version of that library), containing parts covered
 by the terms of Eclipse Public License, Version 1.0 (EPL-1.0), the licensors of this 
 Program grant you additional permission to run, use and convey the resulting work. 
 
-Contact: Mark Bangert, E040 Research group Optimization Algorithms
-e-mail: matrad@dkfz.de
+Contact: Niklas Wahl, E040 Research Group Radiotherapy Optimization
+e-mail: contact@matRad.org
 address: 
 Division of Medical Physics in Radiation Oncology
 German Cancer Research Center
