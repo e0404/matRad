@@ -50,7 +50,7 @@ switch env
          fprintf(['matRad GUI not available for ' env ' ' versionString ' \n']);
          return;
      otherwise
-         fprintf(['not yet tested']);
+         fprintf('not yet tested');
  end
         
 % Begin initialization code - DO NOT EDIT
@@ -391,12 +391,20 @@ function matRadGUI_OpeningFcn(hObject, ~, handles, varargin)
 handles.initialGuiStart = true;
 
 p = inputParser;
-addParameter(p,'devMode',true,@(x) validateattributes(x,{'logical','numeric'},{'scalar'}));
-addParameter(p,'eduMode',false,@(x) validateattributes(x,{'logical','numeric'},{'scalar'}));
+addParameter(p,'devMode',false,@validateModeValue);
+addParameter(p,'eduMode',false,@validateModeValue);
 p.KeepUnmatched = true; %No error with incorrect parameters
 
 parse(p,varargin{:});
 parsedInput = p.Results;
+
+if ischar(parsedInput.devMode) || isstring(parsedInput.devMode)
+    parsedInput.devMode = str2double(parsedInput.devMode);
+end
+
+if ischar(parsedInput.eduMode) || isstring(parsedInput.eduMode)
+    parsedInput.eduMode = str2double(parsedInput.eduMode);
+end
 
 %If devMode is true, error dialogs will include the full stack trace of the error
 %If false, only the basic error message is shown (works for errors that
@@ -432,13 +440,23 @@ if handles.eduMode
 end
 
 
-%Alter matRad Version string
+%Alter matRad Version string positioning
 vString = matRad_version();
 vPos = get(handles.text15,'Position');
 urlPos = get(handles.text31,'Position');
-vPos([1 3]) = urlPos([1 3]);
+btnPos = get(handles.btnAbout,'Position');
+
+%vPos([1 3]) = urlPos([1 3]);
+vPos([1 3]) = [0 1];
+vPos(4) = vPos(4)*1.25;
+btnPos(2) = 0.05;
+urlPos(2) = btnPos(2)+btnPos(4)+0.05;
+vPos(2) = urlPos(2) + urlPos(4) + 0.05;
+vPos(4) = 0.98 - vPos(2);
+
+set(handles.btnAbout,'Position',btnPos);
+set(handles.text31,'String','www.matRad.org','Position',urlPos,'Enable','inactive','ButtonDownFcn', @(~,~) web('www.matrad.org','-browser'));
 set(handles.text15,'String',vString,'Position',vPos);
-set(handles.text31,'String','www.matRad.org');
 
 handles = resetGUI(hObject, handles);
 
@@ -472,6 +490,15 @@ end
 
 guidata(hObject, handles);
 
+%Validates the attributes for the command line Modes
+function validateModeValue(x)
+%When passed from OS terminal (or inline in Command Window) everything is a string 
+if isdeployed || ischar(x) || isstring(x)
+    x=str2double(x);
+end
+validateattributes(x,{'logical','numeric'},{'scalar','binary'});
+
+
 
 function Callback_StructVisibilty(source,~)
 
@@ -488,7 +515,6 @@ end
 %guidata(findobj('Name','matRadGUI'), handles);
 UpdatePlot(handles);
 
-Update
 % --- Outputs from this function are returned to the command line.
 function varargout = matRadGUI_OutputFcn(~, ~, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
@@ -2885,7 +2911,7 @@ elseif ~isempty(matRadVer.branch) && ~isempty(matRadVer.commitID)
 end
 
 [env,envver]  = matRad_getEnvironment();
-msg{end+1} = sprintf('Environment: %s v%s',env,envver);
+msg{end+1} = sprintf('Environment: %s v%s %s',env,envver,version('-release'));
 
 msg{end+1} = 'Web: www.matrad.org';
 msg{end+1} = 'E-Mail: contact@matrad.org';
