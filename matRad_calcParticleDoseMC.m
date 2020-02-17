@@ -102,7 +102,7 @@ if ~calcDoseDirect && exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3
         %For Octave, the flags will be set in the environment, while they
         %will be parsed as string arguments in MATLAB
         for flag = 1:size(flags,1)
-            if exist('OCTAVE_VERSION', 'builtin')
+            if strcmp(env,'OCTAVE')
                 setenv(flags{flag,1},flags{flag,2});
             else
                 flagstring = [flagstring flags{flag,1} '="' flags{flag,2} '" '];
