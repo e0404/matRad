@@ -89,7 +89,9 @@ if strcmp(method,'square')
     numOfSub = (2*n +1)^2;
     points   = linspace(-radius*n,radius*n,2*n +1);
     posX     = points'*ones(1,2*n +1);
-    posY     = posX';
+%     posX    = repmat(points',size(points,1),1);
+    posY     = posX'; 
+%     posY = repelem(points',size(points,2));  
 else
     dim = size(radius,2);
     numOfSub = (2^n -1)*6 +1;

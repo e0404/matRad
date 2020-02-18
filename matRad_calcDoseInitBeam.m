@@ -43,22 +43,8 @@ geoDistVdoseGrid{1}= sqrt(sum(rot_coordsVdoseGrid.^2,2));
 
 % Calculate radiological depth cube
 fprintf('matRad: calculate radiological depth cube...');
-% radDepthVctGrid = matRad_rayTracing(stf(i),ct,VctGrid,rot_coordsV,effectiveLateralCutoff);
-[radDepthCubeCtGrid, radDepthVctGrid] = matRad_rayTracing(stf(i),ct,VctGrid,rot_coordsV,effectiveLateralCutoff);
-
-
-% kernelSize = maxKernelSize;
-% kernel = ones(1,kernelSize,kernelSize) ./ kernelSize^2;
-% mu5  = convn(ct.cube{1}, mu5kernel, 'same');
-% std5 = convn(ct.cube{1}.^2, mu5kernel, 'same') - mu5.^2;
-% std5(std5 < 0) = 0;
-% std = ct;
-% std.cube = {sqrt(std5)};
-% std.hlut = [];
-% std.cubeHU = [];
-% meanRadDepths = convn(radDepthCubeCtGrid, kernel, 'same');
-
-% test = convn(radDepthCubeCtGrid.^2, mu5kernel, 'same') - convn(radDepthCubeCtGrid, mu5kernel, 'same').^2;
+radDepthVctGrid = matRad_rayTracing(stf(i),ct,VctGrid,rot_coordsV,effectiveLateralCutoff);
+% [radDepthCubeCtGrid, radDepthVctGrid] = matRad_rayTracing(stf(i),ct,VctGrid,rot_coordsV,effectiveLateralCutoff);
 
 [~, energyIx] =  intersect([machine.data(:).energy], stf.ray.energy);
 

@@ -152,7 +152,7 @@ for i = 1:length(stf) % loop over all beams
         
     % Determine lateral cutoff
     fprintf('matRad: calculate lateral cutoff...');
-    cutOffLevel = .995;
+    cutOffLevel = 1;
     visBoolLateralCutOff = 0;
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
     fprintf('done.\n');    
@@ -181,6 +181,7 @@ for i = 1:length(stf) % loop over all beams
                           
                 radDepths = meanRadDepths(ix);
                 cStds     = cSstVdoseGrid{1}(ix);
+                
             elseif strcmp(anaMode, 'fineSampling')
                 % Ray tracing for beam i and ray j
                 [ix,~,~,~,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsVdoseGrid, ...
@@ -263,116 +264,95 @@ for i = 1:length(stf) % loop over all beams
                     % interpolate radiological depths at projected
                     % coordinates
                     
-                    radDepths = interp3(radDepthCubeCtGrid,projCoords(:,1,:)./ct.resolution.x,...
+                    
+                    radDepths = interp3(reshape(radDepthVdoseGrid{1}, ct.cubeDim),projCoords(:,1,:)./ct.resolution.x,...
                         projCoords(:,2,:)./ct.resolution.y,projCoords(:,3,:)./ct.resolution.z,'linear');
-
-                    % I gotta think about this...
-                    securityOffset = 30;
-                
-                
-                    % compute radial distances relative to pencil beam
+                    
+                    %compute radial distances relative to pencil beam
                     % component
                     currRadialDist_sq = reshape(bsxfun(@plus,latDistsX,posX(:,k)'),[],1,numOfSub).^2 + reshape(bsxfun(@plus,latDistsZ,posZ(:,k)'),[],1,numOfSub).^2;
-                else
-                    securityOffset = 0;
                 end
                 
-                
-                % create offset vector to account for additional offsets modelled in the base data and a potential 
-                % range shifter. In the following, we only perform dose calculation for voxels having a radiological depth
-                % that is within the limits of the base data set (-> machine.data(i).dephts). By this means, we only allow  
-                % interpolations in matRad_calcParticleDoseBixel() and avoid extrapolations.
-                offsetRadDepth = machine.data(energyIx).offset - stf(i).ray(j).rangeShifter(k).eqThickness;
-                
-                % find depth depended lateral cut off
-                if cutOffLevel >= 1
-                    currIx = radDepths <= machine.data(energyIx).depths(end) + offsetRadDepth + securityOffset;
-                elseif cutOffLevel < 1 && cutOffLevel > 0
-                    % perform rough 2D clipping
-                    currIx = radDepths <= machine.data(energyIx).depths(end) + offsetRadDepth + securityOffset & ...
-                         currRadialDist_sq <= max(machine.data(energyIx).LatCutOff.CutOff.^2);
+                    % create offset vector to account for additional offsets modelled in the base data and a potential 
+                    % range shifter. In the following, we only perform dose calculation for voxels having a radiological depth
+                    % that is within the limits of the base data set (-> machine.data(i).dephts). By this means, we only allow  
+                    % interpolations in matRad_calcParticleDoseBixel() and avoid extrapolations.
+                    offsetRadDepth = machine.data(energyIx).offset - stf(i).ray(j).rangeShifter(k).eqThickness;
 
-                    % peform fine 2D clipping  
-                    if length(machine.data(energyIx).LatCutOff.CutOff) > 1
-                        currIx(currIx) = matRad_interp1((machine.data(energyIx).LatCutOff.depths + offsetRadDepth)',...
-                            (machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= currRadialDist_sq(currIx);
+                    % find depth depended lateral cut off
+                    if cutOffLevel >= 1
+                        currIx = radDepths <= machine.data(energyIx).depths(end) + offsetRadDepth;
+                    elseif cutOffLevel < 1 && cutOffLevel > 0
+                        % perform rough 2D clipping
+                        currIx = radDepths <= machine.data(energyIx).depths(end) + offsetRadDepth & ...
+                             currRadialDist_sq <= max(machine.data(energyIx).LatCutOff.CutOff.^2);
+
+                        % peform fine 2D clipping  
+                        if length(machine.data(energyIx).LatCutOff.CutOff) > 1
+                            currIx(currIx) = matRad_interp1((machine.data(energyIx).LatCutOff.depths + offsetRadDepth)',...
+                                (machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= currRadialDist_sq(currIx);
+                        end
+                    else
+                        error('cutoff must be a value between 0 and 1')
                     end
-                else
-                    error('cutoff must be a value between 0 and 1')
-                end
+
+                    % empty bixels may happen during recalculation of error
+                    % scenarios -> skip to next bixel
+                    if ~any(currIx)
+                        continue;
+                    end
+
+
+                    % adjust radDepth according to range shifter
+                    currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
+                    if strcmp(pln.propDoseCalc.anaMode, 'stdCorr')
+                        currCstds     = cStds(currIx);
+                    end
+
+                    % calculate initial focus sigma
+                    sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist (stf(i).ray(j).focusIx(k),:)', ...
+                                                 machine.data(energyIx).initFocus.sigma(stf(i).ray(j).focusIx(k),:)',stf(i).ray(j).SSD);
+                    sigmaIni_sq = sigmaIni^2;
+
+                    % consider range shifter for protons if applicable
+                    if stf(i).ray(j).rangeShifter(k).eqThickness > 0 && strcmp(pln.radiationMode,'protons')
+
+                        % compute!
+                        sigmaRashi = matRad_calcSigmaRashi(machine.data(energyIx).energy, ...
+                                                           stf(i).ray(j).rangeShifter(k), ...
+                                                           stf(i).ray(j).SSD);
+
+                        % add to initial sigma in quadrature
+                        sigmaIni_sq = sigmaIni_sq +  sigmaRashi^2;
+
+                    end
+               
                 
                 
-                % empty bixels may happen during recalculation of error
-                % scenarios -> skip to next bixel
-                if ~any(currIx)
-                    continue;
-                end
                 
                 
-                    
-                % adjust radDepth according to range shifter
-                currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
-                if strcmp(pln.propDoseCalc.anaMode, 'stdCorr')
-                    currCstds     = cStds(currIx);
-                end
                 
-                % calculate initial focus sigma
-                sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist (stf(i).ray(j).focusIx(k),:)', ...
-                                             machine.data(energyIx).initFocus.sigma(stf(i).ray(j).focusIx(k),:)',stf(i).ray(j).SSD);
-                sigmaIni_sq = sigmaIni^2;
                 
-                % consider range shifter for protons if applicable
-                if stf(i).ray(j).rangeShifter(k).eqThickness > 0 && strcmp(pln.radiationMode,'protons')
-                    
-                    % compute!
-                    sigmaRashi = matRad_calcSigmaRashi(machine.data(energyIx).energy, ...
-                                                       stf(i).ray(j).rangeShifter(k), ...
-                                                       stf(i).ray(j).SSD);
-                              
-                    % add to initial sigma in quadrature
-                    sigmaIni_sq = sigmaIni_sq +  sigmaRashi^2;
-                    
-                end
-                 
                 if strcmp(pln.propDoseCalc.anaMode, 'fineSampling')
+                    totalDose = zeros(ct.cubeDim(1) * ct.cubeDim(2) * ct.cubeDim(3),1);
                     % run over components
                     for c = 1:numOfSub
-
-                        % discriminate if is the first sub-sample (the central
-                        % one) or the followings
-                        if c>1
-                            tempBixelDose = finalWeight(c,k).*matRad_calcParticleDoseBixel(...
+                        tmpDose = zeros(ct.cubeDim(1) * ct.cubeDim(2) * ct.cubeDim(3),1);
+                        bixelDose = finalWeight(c,k).*matRad_calcParticleDoseBixel(...
                                 radDepths(currIx(:,:,c),1,c), ...
                                 currRadialDist_sq(currIx(:,:,c),:,c), ...
                                 sigmaSub(k)^2, ...
                                 machine.data(energyIx));
-
-                            % we want to add only the contribution on the
-                            % central sub-sample
-                            [~,idxsIntoSup] = intersect(superIdx,VctGrid(ix(currIx(:,:,c))));
-                            [~,idxsIntoSft] = intersect(VctGrid(ix(currIx(:,:,c))),superIdx);
-
-                            bixelDose(idxsIntoSup) = bixelDose(idxsIntoSup) + tempBixelDose(idxsIntoSft);
-
-                        else
-                            bixelDose = finalWeight(c,k).*matRad_calcParticleDoseBixel(...
-                                radDepths(currIx(:,:,c),1,c), ...
-                                currRadialDist_sq(currIx(:,:,c),:,c), ...
-                                sigmaSub(k)^2, ...
-                                machine.data(energyIx));
-
-                            % need to remember the index of the central
-                            % sub-sample
-                            superIdx = VctGrid(ix(currIx(:,:,1)));
-                        end
-
-                        % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
-                        %relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose
-                        %Type               = 'dose';
-                        %[currIx,bixelDose] = matRad_DijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
+                            
+                        tmpDose(find(currIx(:,:,c) == true)) = bixelDose;
+                        totalDose = totalDose + tmpDose;
+                        tmp = reshape(tmpDose,150,50,50);
+                        figure
+                        imagesc(tmp(:,:,25));
                     end
-
-                    doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(superIdx,1,bixelDose,dij.doseGrid.numOfVoxels,1);
+                    
+                doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid,1,totalDose,dij.doseGrid.numOfVoxels,1);
+                
                 elseif strcmp(pln.propDoseCalc.anaMode, 'stdCorr')
                     % calculate particle dose for bixel k on ray j of beam i
                     bixelDose = matRad_calcParticleDoseBixel(...
