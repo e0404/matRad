@@ -104,10 +104,9 @@ if strcmp(anaMode, 'stdCorr')
         meanRadDepths(ii,:,:) = tmpRadDepth((kernelSize+1)/2:size(tmpRadDepth,1)-(kernelSize-1)/2,(kernelSize+1)/2:size(tmpRadDepth,2)-(kernelSize-1)/2);    
     end
 
-    assignin('base','cStdCtGrid',cStdCtGrid);
-    assignin('base','meanRadDepths',meanRadDepths);
-    assignin('base','radDepthCubeCtGrid',radDepthCubeCtGrid);
-
+%     assignin('base','cStdCtGrid',cStdCtGrid);
+%     assignin('base','meanRadDepths',meanRadDepths);
+%     assignin('base','radDepthCubeCtGrid',radDepthCubeCtGrid);
     
     cStdCtGrid(isnan(cStdCtGrid)) = 0;
     cStdVctGrid = {cStdCtGrid(VctGrid)};

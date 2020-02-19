@@ -93,18 +93,18 @@ stf.ray.energy = machine.data(36).energy;
 %     t3 = toc;
 
  % Monte Carlo dose
-%     tic
-%     resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1), 2000000);
-%     resultGUI.physicalDoseMC = resultGUI_MC.physicalDose;
-%     mcDose      = resultGUI.physicalDoseMC;
-%     t4 = toc;
+    tic
+    resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1), 200000);
+    resultGUI.physicalDoseMC = resultGUI_MC.physicalDose;
+    mcDose      = resultGUI.physicalDoseMC;
+    t4 = toc;
 
  %% plot doses
  
 contourSwitch = true;
 
 figure
-subplot(1,2,1)
+subplot(1,3,1)
 imagesc(anaDose(:,:,round(ct.cubeDim(3)/2)));
 caxis([0 2e-3]);
 title('Standard dose');
@@ -128,7 +128,7 @@ pbaspect([ct.cubeDim(2) ct.cubeDim(1) ct.cubeDim(3)])
 % hold off
 % pbaspect([ct.cubeDim(2) ct.cubeDim(1) ct.cubeDim(3)])
 
-subplot(1,2,2)
+subplot(1,3,2)
 imagesc(anaFsDose(:,:,round(ct.cubeDim(3)/2)));
 caxis([0 2e-3]);
 title('Fine sampling dose');
@@ -140,17 +140,17 @@ end
 hold off
 pbaspect([ct.cubeDim(2) ct.cubeDim(1) ct.cubeDim(3)])
 
-% subplot(1,5,5)
-% imagesc(mcDose(:,:,round(ct.cubeDim(3)/2)));
-% caxis([0 2e-3]);
-% title('Monte Carlo dose');
-% hold on 
-% contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),1,'color','white');
-% if contourSwitch
-%     contour(mcDose(:,:,round(ct.cubeDim(3)/2)),linspace(0,2e-3,10),'color','black');
-% end
-% hold off
-% pbaspect([ct.cubeDim(2) ct.cubeDim(1) ct.cubeDim(3)])
+subplot(1,3,3)
+imagesc(mcDose(:,:,round(ct.cubeDim(3)/2)));
+caxis([0 2e-3]);
+title('Monte Carlo dose');
+hold on 
+contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),1,'color','white');
+if contourSwitch
+    contour(mcDose(:,:,round(ct.cubeDim(3)/2)),linspace(0,2e-3,10),'color','black');
+end
+hold off
+pbaspect([ct.cubeDim(2) ct.cubeDim(1) ct.cubeDim(3)])
 
 
 

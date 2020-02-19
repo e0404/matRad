@@ -200,7 +200,7 @@ for i = 1:length(stf) % loop over all beams
                 % function provides the weights for the sub-pencil beams,
                 % their positions and their sigma used for dose calculation
                 [finalWeight, sigmaSub, posX, posZ, numOfSub] = ...
-                    matRad_calcWeights(sigmaIni, 2, 'circle');
+                    matRad_calcWeights(sigmaIni, 3, 'square');
             else
                 % Ray tracing for beam i and ray j
                 [ix,currRadialDist_sq,~,~,~,~] = matRad_calcGeoDists(rot_coordsVdoseGrid, ...
@@ -346,9 +346,9 @@ for i = 1:length(stf) % loop over all beams
                             
                         tmpDose(find(currIx(:,:,c) == true)) = bixelDose;
                         totalDose = totalDose + tmpDose;
-                        tmp = reshape(tmpDose,150,50,50);
-                        figure
-                        imagesc(tmp(:,:,25));
+%                         tmp = reshape(tmpDose,150,50,50);
+%                         figure
+%                         imagesc(tmp(:,:,25));
                     end
                     
                 doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid,1,totalDose,dij.doseGrid.numOfVoxels,1);

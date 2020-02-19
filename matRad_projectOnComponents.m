@@ -53,12 +53,12 @@ sourcePoint = bsxfun(@plus,sourcePoint_bevVec * rotMat', isoCenter);
 if max(initIx) > prod(dim) || min(initIx) < 0
     error('Index exceeds matrix dimensions')
 else
-    v1 = floor(initIx./dim(1)); 
-    coord(:,2) = rem(initIx,dim(1)); coord(coord(:,2)==0, 2) = dim(1);
+    v1 = floor(initIx ./ dim(1)); 
+    coord(:,2) = rem(initIx, dim(1)); coord(coord(:,2) == 0, 2) = dim(1);
     coord(:,1) = rem(v1,dim(2)) + 1; 
-    coord(coord(:,2)==dim(1), 1) = coord(coord(:,2)==dim(1), 1) -1;
-    coord(coord(:,1)==0, 1) = dim(2);
-    coord(:,3) = floor((v1)./dim(2)) + 1;
+    coord(coord(:,2) == dim(1), 1) = coord(coord(:,2) == dim(1), 1) - 1;
+    coord(coord(:,1) == 0, 1) = dim(2);
+    coord(:,3) = floor((v1) ./ dim(2)) + 1;
 end
 
 

@@ -115,3 +115,8 @@ normSig = ones(size(posX,1),1)*X1(1,:);
 
 finalWeight = normSig .* (2.*pi.*sig.^2).^(-1) .* exp(-(posX.^2+posY.^2)./(2.*(sig.^2)));
 
+if strcmp(method,'square')
+    posX = reshape(posX, numel(posX), 1);
+    posY = reshape(posY, numel(posY), 1);
+    finalWeight = reshape(finalWeight, numel(finalWeight), 1);
+end
