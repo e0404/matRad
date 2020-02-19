@@ -57,8 +57,9 @@ if strcmp(anaMode, 'stdCorr')
     kernelSize = min(ct.cubeDim(2), ct.cubeDim(3)) + (mod(min(ct.cubeDim(2), ct.cubeDim(3)),2) -  1);
     res = [ct.resolution.y, ct.resolution.z];
     dist = 0;
+    cube = reshape(radDepthVctGrid{1}, ct.cubeDim);
     for ii = 1:ct.cubeDim(1)
-        slice = reshape(radDepthCubeCtGrid(ii,:,:),ct.cubeDim(2),ct.cubeDim(3));
+        slice = reshape(cube(ii,:,:),ct.cubeDim(2),ct.cubeDim(3));
         notNaN = find(~isnan(slice));
         slice(isnan(slice)) = 0;
         dist = sum(slice(notNaN))/ numel(slice(notNaN));
@@ -104,9 +105,9 @@ if strcmp(anaMode, 'stdCorr')
         meanRadDepths(ii,:,:) = tmpRadDepth((kernelSize+1)/2:size(tmpRadDepth,1)-(kernelSize-1)/2,(kernelSize+1)/2:size(tmpRadDepth,2)-(kernelSize-1)/2);    
     end
 
-%     assignin('base','cStdCtGrid',cStdCtGrid);
-%     assignin('base','meanRadDepths',meanRadDepths);
-%     assignin('base','radDepthCubeCtGrid',radDepthCubeCtGrid);
+    assignin('base','cStdCtGrid',cStdCtGrid);
+    assignin('base','meanRadDepths',meanRadDepths);
+    assignin('base','radDepthCubeCtGrid',cube);
     
     cStdCtGrid(isnan(cStdCtGrid)) = 0;
     cStdVctGrid = {cStdCtGrid(VctGrid)};
