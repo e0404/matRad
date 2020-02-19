@@ -82,7 +82,11 @@ obj.options.max_iter = 10;
             % for derivate checking
             % obj.options.derivative_test              = 'first-order'; % none / first-order / second-order / only-second-order
             % obj.options.derivative_test_perturbation = 1e-6; % default 1e-8
-            % obj.options.derivative_test_tol          = 1e-6;            
+            % obj.options.derivative_test_tol          = 1e-6;  
+            
+            if ~matRad_checkMexFileExists('ipopt')
+                error('IPOPT mex interface not available for %s!',obj.env);
+            end
 
         end
         
@@ -266,26 +270,5 @@ obj.options.max_iter = 10;
             obj.abortRequested = true;
         end       
         
-    end
-    
-    methods (Access = private)
-        function prepareMexForOctave()
-            %Test if a working mex file for octave is there            
-            %...
-            
-            %If not get current path
-            fpath = filepath(mfilename('fullpath'));
-            
-            %Linking the correct file            
-            if ispc
-                link('ipopt.mex_octw64','ipopt.mex');
-            elseif ismac
-                link('ipopt.mex_octmac64','ipopt.mex');
-            elseif isunix
-                link('ipopt.mex_octa64','ipopt.mex');
-            else
-                error('No mex file for octave for your operating system. Compile it yourself.');
-            end
-        end
     end
 end
