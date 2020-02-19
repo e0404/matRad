@@ -94,7 +94,7 @@ stf.ray.energy = machine.data(36).energy;
 
  % Monte Carlo dose
     tic
-    resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1), 200000);
+    resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1), 5000000);
     resultGUI.physicalDoseMC = resultGUI_MC.physicalDose;
     mcDose      = resultGUI.physicalDoseMC;
     t4 = toc;

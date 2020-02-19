@@ -200,7 +200,7 @@ for i = 1:length(stf) % loop over all beams
                 % function provides the weights for the sub-pencil beams,
                 % their positions and their sigma used for dose calculation
                 [finalWeight, sigmaSub, posX, posZ, numOfSub] = ...
-                    matRad_calcWeights(sigmaIni, 3, 'square');
+                    matRad_calcWeights(sigmaIni, 8, 'circle');
             else
                 % Ray tracing for beam i and ray j
                 [ix,currRadialDist_sq,~,~,~,~] = matRad_calcGeoDists(rot_coordsVdoseGrid, ...
@@ -266,8 +266,11 @@ for i = 1:length(stf) % loop over all beams
                     
                     
                     radDepths = interp3(reshape(radDepthVdoseGrid{1}, ct.cubeDim),projCoords(:,1,:)./ct.resolution.x,...
-                        projCoords(:,2,:)./ct.resolution.y,projCoords(:,3,:)./ct.resolution.z,'linear');
+                        projCoords(:,2,:)./ct.resolution.y,projCoords(:,3,:)./ct.resolution.z,'nearest');
                     
+                    radDepths(isnan(radDepths)) = 0;
+                        
+                        
                     %compute radial distances relative to pencil beam
                     % component
                     currRadialDist_sq = reshape(bsxfun(@plus,latDistsX,posX(:,k)'),[],1,numOfSub).^2 + reshape(bsxfun(@plus,latDistsZ,posZ(:,k)'),[],1,numOfSub).^2;
