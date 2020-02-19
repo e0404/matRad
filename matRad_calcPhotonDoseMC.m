@@ -92,10 +92,7 @@ if exist('matRad_ompInterface','file') ~= 3
         
         cd(ompMCFolder);
         
-        mexCall = ['mex -largeArrayDims ' flagstring ' matRad_ompInterface.c'];
-        
-        disp(['Compiler call: ' mexCall]);
-        eval(mexCall);
+        matRad_compileOmpMCInterface();
         
         cd(currFolder);
     catch MException
