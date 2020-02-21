@@ -33,7 +33,37 @@ else
     error('Platform not supported')
 end
 
-%FileName=['matRad' suffix '.prj'];
+%Set MATLAB root
+xDoc.getElementsByTagName('root').item(0).getFirstChild.setData(matlabroot);
+
+%Replace the file separator in the file tags
+files = xDoc.getElementsByTagName('file');
+for i=0:files.getLength - 1
+    fileName=strrep(strrep(files.item(i).getFirstChild.getData().toCharArray()','/',filesep),'\',filesep);
+    files.item(i).getFirstChild.setData(fileName);
+
+    %change the file separator in the 'location' attribute of the file tag
+    %(if it exists)
+    if hasAttributes(files.item(i))
+        location=strrep(strrep(files.item(i).getAttribute('location').toCharArray()','/',filesep),'\',filesep);
+        files.item(i).setAttribute('location',location);
+    end
+end
+
+%Replace the file separator in the attributes and children tags of configuration
+config = xDoc.getElementsByTagName('configuration');
+config.item(0).setAttribute('file',['${PROJECT_ROOT}' filesep FileName]);
+config.item(0).setAttribute('location','${PROJECT_ROOT}');
+config.item(0).setAttribute('preferred-package-location',['${PROJECT_ROOT}' filesep 'standalone' filesep 'for_redistribution']);
+
+tags = config.item(0).getChildNodes;
+
+for i=0:tags.getLength - 1
+    if ~isempty(tags.item(i).getFirstChild)
+        fileName=strrep(strrep(tags.item(i).getFirstChild.getData().toCharArray()','/',filesep),'\',filesep);
+        tags.item(i).getFirstChild.setData(java.lang.String(fileName));
+    end
+end    
 
 %Get version and Filenames
 version= replace(xDoc.getElementsByTagName('param.version').item(0).getFirstChild.getData().toCharArray()','.','_');
@@ -41,8 +71,6 @@ filename_webRT =['matRad_installer' suffix '64_v_' version];
 filename_withRT =['matRad_installer' suffix '64_wRT_v_' version];
 xDoc.getElementsByTagName('param.web.mcr.name').item(0).getFirstChild.setData(filename_webRT);
 xDoc.getElementsByTagName('param.package.mcr.name').item(0).getFirstChild.setData(filename_withRT);
-%filename_webRT = xDoc.getElementsByTagName('param.web.mcr.name').item(0).getFirstChild.getData().toCharArray()';
-%filename_withRT = xDoc.getElementsByTagName('param.package.mcr.name').item(0).getFirstChild.getData().toCharArray()';
 
 
 %check if the files exist, and delete them

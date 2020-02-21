@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="4236383462"
-                  file="/Users/nelly/Documents/GitHub/matRad/matRad.prj"
-                  location="/Users/nelly/Documents/GitHub/matRad"
+  <configuration build-checksum="4236383462" file="${PROJECT_ROOT}/matRad.prj"
+                  location="${PROJECT_ROOT}"
                   name="matRad"
-                  preferred-package-location="/Users/nelly/Documents/GitHub/matRad/standalone/for_redistribution"
+                  preferred-package-location="${PROJECT_ROOT}/standalone/for_redistribution"
                   target="target.ezdeploy.standalone"
                   target-name="Application Compiler">
       <param.appname>matRad</param.appname>
@@ -221,7 +220,7 @@ ${DYLD_LIBRARY_PATH}:MR/v96/runtime/maci64:MR/v96/sys/os/maci64:MR/v96/bin/maci6
       </build-deliverables>
       <workflow/>
       <matlab>
-         <root>/Applications/MATLAB_R2019a.app</root>
+         <root>/home/abbani/Dokumente/MATLAB</root>
          <toolboxes/>
       </matlab>
       <platform>
