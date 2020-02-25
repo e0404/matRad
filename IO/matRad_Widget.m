@@ -5,6 +5,10 @@ classdef matRad_Widget <  handle
         handles = [];   %Holds all handles in parent handle
     end
     
+    events
+        workspaceChanged
+    end
+    
     methods
         %CONSTRUCTOR
         function this = matRad_Widget(handleParent)
@@ -18,9 +22,47 @@ classdef matRad_Widget <  handle
         end
         
         %INITIALIZE FUNCTION
-        function this = initialize(this)
+        function this = initialize(this)            
         end
+        
+        function this = update(this)
+        end
+        
+        %{
+        function this = disable(this)            
+        end
+        
+        function this = enable(this)
+        end
+        %}
+        
+        function showWarning(this,Message,ME)
+                handles = this.handles;
+                if nargin == 3
+                    %Add exception message
+                    if isfield(handles,'devMode') && handles.devMode
+                        meType = 'extended';
+                    else
+                        meType = 'basic';
+                    end
+                    Message = {Message,ME.message};%{Message,ME.getReport(meType,'hyperlinks','off')};
+                end
+                
+                if isfield(handles,'ErrorDlg')
+                    if ishandle(handles.ErrorDlg)
+                        close(handles.ErrorDlg);
+                    end
+                end
+                handles.ErrorDlg = errordlg(Message);
+                
+                this.handles = handles;
+        end
+        
     end
+    
+    %methods (Abstract)
+    %    this = initialize(this);
+    %end
 
     methods (Access = protected)
         
