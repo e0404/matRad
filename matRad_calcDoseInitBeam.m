@@ -52,8 +52,20 @@ yd = diff(machine.data(energyIx).initFocus.sigma)./diff(machine.data(energyIx).i
 xd = (machine.data(energyIx).initFocus.dist(2:end)+machine.data(energyIx).initFocus.dist(1:(end-1)))/2;
 
 initSigmaConv = interp1(xd,yd,stf.ray.SSD);
+counting = 0;
 
 if strcmp(anaMode, 'stdCorr')
+    
+%     cube = reshape(radDepthVctGrid{1}, ct.cubeDim);
+%     weights = cube / 100;
+%     nConv  = matRad_sliceConvnFilter(ct, cube, weights);
+%     sqConv = matRad_sliceConvnFilter(ct, cube.^2, weights);
+% 
+%     cStd = (sqConv - nConv.^2);
+%     cStd(cStd < 0) = 0;
+%     cStdCtGrid = sqrt(cStd);
+
+
     kernelSize = min(ct.cubeDim(2), ct.cubeDim(3)) + (mod(min(ct.cubeDim(2), ct.cubeDim(3)),2) -  1);
     res = [ct.resolution.y, ct.resolution.z];
     dist = 0;
@@ -62,10 +74,12 @@ if strcmp(anaMode, 'stdCorr')
         slice = reshape(cube(ii,:,:),ct.cubeDim(2),ct.cubeDim(3));
         notNaN = find(~isnan(slice));
         slice(isnan(slice)) = 0;
-        dist = sum(slice(notNaN))/ numel(slice(notNaN));
+        distSlice = sum(slice(notNaN))/ numel(slice(notNaN));
         
-        std1(ii) = std(slice,0,'all')^2 + 1;
-        dist11(ii) = sum(1./(std1)) / 2 * pi;
+        stdSlice  = std(slice, 0, 'all');
+        counting = (stdSlice/distSlice)^-1;
+%         std1(ii) = std(slice,0,'all')^2 + 1;
+%         dist11(ii) = sum(1./(std1)) / 2 * pi;
         
         nPadd = floor(kernelSize/2);
         paddedSlice = zeros(size(slice,1) + 2 * nPadd, size(slice,2) + 2 * nPadd);
@@ -86,8 +100,8 @@ if strcmp(anaMode, 'stdCorr')
         if isnan(dist)
             sigma = 0;
         else
-%             sigma = testTMP/150 * dist;
-            sigma = dist11(ii);
+%             sigma = 3 * (dist/120)^3;
+            sigma = sqrt(counting);
         end
         kernel = matRad_create2dimGaussKernel(kernelSize, sigma, res);
 
@@ -111,8 +125,22 @@ if strcmp(anaMode, 'stdCorr')
     
     cStdCtGrid(isnan(cStdCtGrid)) = 0;
     cStdVctGrid = {cStdCtGrid(VctGrid)};
+
+%     %%%
+%     
+%     load protons_matRadBDL_APM;
+%     weight = arrayfun(@(d) interp1(machine.data(36).depths, (machine.data(36).Z.profileORG-machine.data(36).Z.profileORG(1))/max(machine.data(36).Z.profileORG),d), cube);
+%     figure
+% 	imagesc(cStdCtGrid(:,:,25));
+% %     caxis([0 12]);
+%     pbaspect([ct.cubeDim(2) ct.cubeDim(1) ct.cubeDim(3)])
+% 
+%     figure;
+%     plot(cStdCtGrid(end,10:40,25));
+% 
+%     %%%
     
-  
+    
     meanRadDepths = meanRadDepths(VctGrid);
     
     cSstVdoseGrid = matRad_interpRadDepth...

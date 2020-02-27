@@ -63,7 +63,7 @@ stf = matRad_generateStf(ct,cst,pln);
 
  % assign new energy
 load protons_matRadBDL_APM;
-stf.ray.energy = machine.data(36).energy;
+stf.ray.energy = machine.data(37).energy;
                             
 %% dose calculation
  % analytical dose without fine sampling
@@ -180,11 +180,11 @@ end
 hold off
 pbaspect([ct.cubeDim(2) ct.cubeDim(1) ct.cubeDim(3)])
 
-figure;
-subplot(1,2,1);
-imagesc(tmpCstd(:,:,25));
-subplot(1,2,2);
-imagesc(meanRadDepths(:,:,25));
+% figure;
+% subplot(1,2,1);
+% imagesc(tmpCstd(:,:,25));
+% subplot(1,2,2);
+% imagesc(meanRadDepths(:,:,25));
 
 
  %% execute gamma tests
