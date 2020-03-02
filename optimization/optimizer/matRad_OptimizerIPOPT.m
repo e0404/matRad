@@ -120,25 +120,26 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             % Informing user to press q to terminate optimization
             fprintf('\nOptimzation initiating...\n');
-            fprintf('Press q to terminate the optimization...\n');
             
             % set Callback
-            callbackSet = false;
-            if ~isdeployed % only if _not_ running as standalone                                               
+            qCallbackSet = false;
+            if ~isdeployed % only if _not_ running as standalone                               
                 switch obj.env
-                    case 'MATLAB'                        
+                    case 'MATLAB'
                         try
                             % get handle to Matlab command window
                             mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
                             cw          = mde.getClient('Command Window');
                             xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
                             h_cw        = handle(xCmdWndView,'CallbackProperties');
-
+                        
                             % set Key Pressed Callback of Matlab command window
                             set(h_cw, 'KeyPressedCallback', @(h,event) obj.abortCallbackKey(h,event));
-                            callbackSet = true;
+                            fprintf('Press q to terminate the optimization...\n');
+                            qCallbackSet = true;
                         catch
-                        end 
+                            fprintf('Manual optimization termination with q disabled.\n');
+                        end
                 end                
             end
             
@@ -149,7 +150,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             [obj.wResult, obj.resultInfo] = ipopt(w0,funcs,ipoptStruct);
             
             % unset Key Pressed Callback of Matlab command window
-            if callbackSet
+            if qCallbackSet
                 set(h_cw, 'KeyPressedCallback',' ');
             end
             

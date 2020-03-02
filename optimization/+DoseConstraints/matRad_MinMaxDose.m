@@ -165,8 +165,8 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
             elseif obj.parameters{1} <= 0 %Only max dose
                 cDose = dose_max + obj.epsilon * log( sum(exp((dose - dose_max)/obj.epsilon)));
             else %both are set sensible
-                cDose(2) = dose_max + obj.epsilon * log( sum(exp((dose - dose_max)/obj.epsilon)));
-                cDose(1) = dose_min - obj.epsilon * log( sum(exp((dose_min - dose)/obj.epsilon)));
+                cDose(2,1) = dose_max + obj.epsilon * log( sum(exp((dose - dose_max)/obj.epsilon)));
+                cDose(1,1) = dose_min - obj.epsilon * log( sum(exp((dose_min - dose)/obj.epsilon)));
             end
             
         end
