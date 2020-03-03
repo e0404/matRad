@@ -40,8 +40,8 @@ classdef matRad_PlanWidget < matRad_Widget
             if evalin('base','exist(''pln'')')
               getPlnFromWorkspace(this);
             else
-              setPlnDefaultValues();
-              updatePlnFromWorkspace();
+              setPlnDefaultValues(this);
+              updatePlnInWorkspace(this);
             end
         end
         
@@ -80,7 +80,7 @@ classdef matRad_PlanWidget < matRad_Widget
             h15 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
-                'String','Gantry Angle in °',...
+                'String','Gantry Angle in ï¿½',...
                 'Style','text',...
                 'Position',[0.032133676092545 0.752851711026616 0.176092544987147 0.0950570342205324],...
                 'BackgroundColor',[0.501960784313725 0.501960784313725 0.501960784313725],...
@@ -101,7 +101,7 @@ classdef matRad_PlanWidget < matRad_Widget
             h17 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
-                'String','Couch Angle in °',...
+                'String','Couch Angle in ï¿½',...
                 'Style','text',...
                 'Position',[0.0347043701799486 0.64638783269962 0.173521850899743 0.0950570342205324],...
                 'BackgroundColor',[0.501960784313725 0.501960784313725 0.501960784313725],...
@@ -317,7 +317,7 @@ classdef matRad_PlanWidget < matRad_Widget
               h37 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
-                'String','x',...
+                'String','5',...
                 'Style','edit',...
                 'Position',[0.553224553224553 0.0760456273764259 0.09 0.11787072243346],...
                 'BackgroundColor',[0.831372549019608 0.815686274509804 0.784313725490196],...
@@ -329,7 +329,7 @@ classdef matRad_PlanWidget < matRad_Widget
               h38 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
-                'String','y',...
+                'String','5',...
                 'Style','edit',...
                 'Position',[0.653224553224553 0.0760456273764259 0.09 0.11787072243346],...
                 'BackgroundColor',[0.831372549019608 0.815686274509804 0.784313725490196],...
@@ -341,7 +341,7 @@ classdef matRad_PlanWidget < matRad_Widget
               h39 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
-                'String','z',...
+                'String','5',...
                 'Style','edit',...
                 'Position',[0.753224553224553 0.0760456273764259 0.09 0.11787072243346],...
                 'BackgroundColor',[0.831372549019608 0.815686274509804 0.784313725490196],...
@@ -355,6 +355,25 @@ classdef matRad_PlanWidget < matRad_Widget
         end
        
         function this = setPlnDefaultValues(this)
+            
+            handles = this.handles;
+            
+            this.getMachines()
+
+            %
+            vChar = get(handles.editGantryAngle,'String');
+            if strcmp(vChar(1,1),'0') && length(vChar)==6
+              set(handles.editGantryAngle,'String','0');
+            end
+            vChar = get(handles.editCouchAngle,'String');
+            if strcmp(vChar(1,1),'0') && length(vChar)==3
+              set(handles.editCouchAngle,'String','0')
+            end
+            
+            % do not calculate / suggest isoCenter new by default
+            this.checkIsoCenter_Callback(handles.checkIsoCenter);
+            set(handles.editIsoCenter,'Enable','on');
+
         end
         
         function this = getPlnFromWorkspace(this)
@@ -414,7 +433,7 @@ classdef matRad_PlanWidget < matRad_Widget
         end
         
         %Update the workspace pln from the Widget
-        function updatePlnInWorkspace(this,handles)
+        function updatePlnInWorkspace(this)
             this.getMachines();
             handles = this.handles;
 
@@ -435,20 +454,7 @@ classdef matRad_PlanWidget < matRad_Widget
             popupMachines                       = get(handles.popUpMachine,'String');
             pln.machine                         = popupMachines{selectedMachine};
             
-            % switch optimization depending on radmode selection
-%             if get(handles.popupRadMode,'Value') == 1 | get(handles.popupRadMode,'Value') == 3
-%              set(handles.popMenuBioOpt,'Value',1);
-%              selectedOpt                           = get(handles.popMenuBioOpt,'Value');
-%              bioOptis                              = get(handles.popMenuBioOpt,'String');
-%              pln.propOpt.bioOptimization           = bioOptis{selectedOpt};
-%            
-%             elseif get(handles.popupRadMode,'Value') == 2
-%                 
-%              selectedOpt                           = get(handles.popMenuBioOpt,'Value');
-%              bioOptis                              = get(handles.popMenuBioOpt,'String');
-%              pln.propOpt.bioOptimization           = bioOptis{selectedOpt};
-%             end
-%             
+
             pln.numOfFractions          = this.parseStringAsNum(get(handles.editFraction,'String'),false);
             pln.propOpt.runSequencing   = this.parseStringAsNum(get(handles.btnRunSequencing,'Value'),false); 
             pln.propOpt.runDAO          = this.parseStringAsNum(get(handles.btnRunDAO,'Value'),false);
@@ -491,8 +497,8 @@ classdef matRad_PlanWidget < matRad_Widget
                         pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * str2num(get(handles.editIsoCenter,'String'));
                     end
                 end
-            catch
-                warning('couldnt set isocenter in getPln function')
+            catch ME
+                warning(ME.identifier,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)
             end
             
             this.switchEnables();
@@ -675,7 +681,7 @@ classdef matRad_PlanWidget < matRad_Widget
         end
         
         function popUpMachine_Callback(this, hObject, eventdata)
-            % MÖGLICHER FEHLER WEGEN VALUE WERT!
+            % Mï¿½GLICHER FEHLER WEGEN VALUE WERT!
             handles = this.handles;
              contents = cellstr(get(hObject,'String'));
 %             MachineIdentifier = contents{get(hObject,'Value')};
@@ -684,7 +690,7 @@ classdef matRad_PlanWidget < matRad_Widget
             getMachines(this);
             pln = evalin('base','pln');
             
-            % MÖGLICHEE FEHLER HIER VALUE UND GENERIC WERDEN VERGLICHEN
+            % Mï¿½GLICHEE FEHLER HIER VALUE UND GENERIC WERDEN VERGLICHEN
             if strcmp(contents(get(hObject,'Value')),'Generic')
                 try
                     AllVarNames = evalin('base','who');
@@ -699,7 +705,7 @@ classdef matRad_PlanWidget < matRad_Widget
                     end
                 catch
                 end
-            % MÖGLICHEE FEHLER HIER VALUE UND GENERIC WERDEN VERGLICHEN
+            % Mï¿½GLICHEE FEHLER HIER VALUE UND GENERIC WERDEN VERGLICHEN
             elseif strcmp(contents(get(hObject,'Value')),'generic_MCsquare')
                 try
                     AllVarNames = evalin('base','who');
@@ -904,6 +910,7 @@ classdef matRad_PlanWidget < matRad_Widget
             end
             this.handles = handles;
         end
+        
         
     end
 end

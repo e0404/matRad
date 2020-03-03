@@ -1,4 +1,4 @@
-classdef matRad_MainGUI
+classdef matRad_MainGUI < handle
     
     properties
         guiHandle
@@ -248,7 +248,8 @@ classdef matRad_MainGUI
         
         function this = updateWidgets(this,src,hEvent)
            %obj.PlanWidget.update(); 
-           disp('Workspace Changed');
+           %disp('Workspace Changed');
+           this.PlanWidget.update();
         end
         
         function matRadGUI_OpeningFcn(this, hObject, event)

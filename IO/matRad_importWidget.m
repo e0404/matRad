@@ -27,7 +27,7 @@ classdef matRad_importWidget < matRad_Widget
         function this = initialize(this)
             handles = guidata(this.widgetHandle);
             handles.output = this.widgetHandle;
-            guidata(this.widgetHandle, handles);
+            %guidata(this.widgetHandle, handles);
         end
     end
 

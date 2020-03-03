@@ -155,6 +155,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     'Tag','pushbutton_importFromBinary',...
                     'FontWeight','bold');
                 
+                this.createHandles();
+                
             end
         end
         
@@ -173,7 +175,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     return;
                 end
                 
-                handles = resetGUI(hObject, handles, varargin); ...resetGUI(hObject, handles, varargin)
+                handles = resetGUI(this, hObject, event); ...resetGUI(hObject, handles, varargin)
                 
                 try
                     
@@ -189,16 +191,16 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     
                     % read new data
                     load([FilePath FileName]);
-                    set(handles.legendTable,'String',{'no data loaded'});
-                    set(handles.popupDisplayOption,'String','no option available');
+                    %set(handles.legendTable,'String',{'no data loaded'});
+                    %set(handles.popupDisplayOption,'String','no option available');
                     
                 catch ME
-                    handles = showError(handles,'LoadMatFileFnc: Could not load *.mat file',ME);
+                    handles = showError(this,'LoadMatFileFnc: Could not load *.mat file',ME);
                     
                     %    guidata(hObject,handles);
                     
                     %UpdateState(handles);
-                    UpdatePlot(handles);
+                    %UpdatePlot(handles);
                     
                     this. handles = handles;
                     return
@@ -214,7 +216,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     assignin('base','cst',cst);
                     handles.State = 1;
                 catch ME
-                    handles = showError(handles,'LoadMatFileFnc: Could not load *.mat file',ME);
+                    handles = showError(this,'LoadMatFileFnc: Could not load *.mat file',ME);
                 end
                 
                 % check if a optimized plan was loaded
@@ -246,6 +248,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 else
                     handles = reloadGUI(hObject, handles);
                 end
+                
+                notify(this,'workspaceChanged');
                 
                 % guidata(hObject,handles);
                 this.handles = handles;
@@ -597,7 +601,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             % H78 Callback - button: refresh
             function btnRefresh_Callback(this, hObject, event)
                 handles = this.handles;
-                handles = resetGUI(hObject, handles, varargin); ...resetGUI(hObject, handles, varargin)
+                handles = resetGUI(this, hObject, event); ...resetGUI(hObject, handles, varargin)
                 %% parse variables from base workspace
                 AllVarNames = evalin('base','who');
                 handles.AllVarNames = AllVarNames;
@@ -876,7 +880,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 
                 assignin('base','resultGUI',resultGUI);
                 btnRefresh_Callback(this, hObject, eventdata)
-                this. handles = handles,
+                this. handles = handles;
             end
             
              % H83 Callback
@@ -973,7 +977,9 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 
             end
             
-            function handles = resetGUI(hObject, handles, varargin)
+            function handles = resetGUI(this, hObject, eventdata) %(hObject, handles, varargin)
+                
+                handles = this.handles;
                 
                 [env, versionString] = matRad_getEnvironment();
                 
@@ -983,31 +989,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         opengl software
                     end
                 end
+                
             end
             
-            % show error
-            function handles = showError(handles,Message,ME)
-                
-                handles = this.handles;
-                if nargin == 3
-                    %Add exception message
-                    if isfield(handles,'devMode') && handles.devMode
-                        meType = 'extended';
-                    else
-                        meType = 'basic';
-                    end
-                    Message = {Message,ME.message};%{Message,ME.getReport(meType,'hyperlinks','off')};
-                end
-                
-                if isfield(handles,'ErrorDlg')
-                    if ishandle(handles.ErrorDlg)
-                        close(handles.ErrorDlg);
-                    end
-                end
-                handles.ErrorDlg = errordlg(Message);
-            end
             
-            function handles = reloadGUI(hObject, handles, ct, cst)
+            function handles = reloadGUI(this,hObject, ct, cst)
                 
                 handles = this.handles;
                 AllVarNames = handles.AllVarNames;

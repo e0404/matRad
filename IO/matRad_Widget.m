@@ -2,7 +2,7 @@ classdef matRad_Widget <  handle
    
     properties (GetAccess = public , SetAccess = protected)
         widgetHandle    %Holds parent widget handle
-        handles = [];   %Holds all handles in parent handle
+        handles = struct([]);   %Holds all handles in parent handle
     end
     
     events
@@ -36,27 +36,52 @@ classdef matRad_Widget <  handle
         end
         %}
         
-        function showWarning(this,Message,ME)
-                handles = this.handles;
-                if nargin == 3
-                    %Add exception message
-                    if isfield(handles,'devMode') && handles.devMode
-                        meType = 'extended';
-                    else
-                        meType = 'basic';
-                    end
-                    Message = {Message,ME.message};%{Message,ME.getReport(meType,'hyperlinks','off')};
+        function handles = showError(this,Message,ME)
+            handles = this.handles;
+            if nargin == 3
+                %Add exception message
+                if isfield(handles,'devMode') && handles.devMode
+                    meType = 'extended';
+                else
+                    meType = 'basic';
                 end
-                
-                if isfield(handles,'ErrorDlg')
-                    if ishandle(handles.ErrorDlg)
-                        close(handles.ErrorDlg);
-                    end
+                Message = {Message,ME.message};%{Message,ME.getReport(meType,'hyperlinks','off')};
+            end
+            
+            if isfield(handles,'ErrorDlg')
+                if ishandle(handles.ErrorDlg)
+                    close(handles.ErrorDlg);
                 end
-                handles.ErrorDlg = errordlg(Message);
-                
-                this.handles = handles;
+            end
+            handles.ErrorDlg = errordlg(Message);
+            this.handles = handles;
         end
+        
+        function showWarning(this,Message,ME)
+            handles = this.handles;
+            if nargin == 3
+                %Add exception message
+                if isfield(handles,'devMode') && handles.devMode
+                    meType = 'extended';
+                else
+                    meType = 'basic';
+                end
+                Message = {Message,ME.message};%{Message,ME.getReport(meType,'hyperlinks','off')};
+            end
+            
+            if isfield(handles,'ErrorDlg')
+                if ishandle(handles.ErrorDlg)
+                    close(handles.ErrorDlg);
+                end
+            end
+            handles.ErrorDlg = errordlg(Message);
+            
+            this.handles = handles;
+        end
+        
+        %function notifyUpdate(this,workSpaceVariables)
+        %   notify(this,'workspaceChanged',workSpaceVariables); 
+        %end
         
     end
     
@@ -95,9 +120,9 @@ classdef matRad_Widget <  handle
                             % if this uicontrol is a proxy for external controls, replace it with
                             % that control
                             control = getappdata(this_h, 'Control');
-                            this.handles.(tag) = [prev_h control.Instance];
+                            this.handles(1).(tag) = [prev_h control.Instance];
                         else
-                            this.handles.(tag) = [prev_h this_h];
+                            this.handles(1).(tag) = [prev_h this_h];
                         end
                         
                     end % if legal tag
