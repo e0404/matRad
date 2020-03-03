@@ -8,7 +8,6 @@ classdef matRad_PlanWidget < matRad_Widget
     
     properties (Constant)
         Modalities = {'photons','protons','carbon'};
-       % Optimizations = {'none','const_RBExD','LEMIV_effect','LEMIV_RBExD'};
     end
     
     methods
@@ -16,13 +15,13 @@ classdef matRad_PlanWidget < matRad_Widget
             if nargin < 1
                 handleParent = figure(...
                     'Units','characters',...
-                    'Position',[138.4 -7.38461538461539 273.4 59.5384615384615],...
+                    'Position',[170.4 45 150.4 20.5384615384615],...
                     'Visible','on',...
                     'Color',[0.501960784313725 0.501960784313725 0.501960784313725],... 
                     'IntegerHandle','off',...
                     'Colormap',[0 0 0.5625;0 0 0.625;0 0 0.6875;0 0 0.75;0 0 0.8125;0 0 0.875;0 0 0.9375;0 0 1;0 0.0625 1;0 0.125 1;0 0.1875 1;0 0.25 1;0 0.3125 1;0 0.375 1;0 0.4375 1;0 0.5 1;0 0.5625 1;0 0.625 1;0 0.6875 1;0 0.75 1;0 0.8125 1;0 0.875 1;0 0.9375 1;0 1 1;0.0625 1 1;0.125 1 0.9375;0.1875 1 0.875;0.25 1 0.8125;0.3125 1 0.75;0.375 1 0.6875;0.4375 1 0.625;0.5 1 0.5625;0.5625 1 0.5;0.625 1 0.4375;0.6875 1 0.375;0.75 1 0.3125;0.8125 1 0.25;0.875 1 0.1875;0.9375 1 0.125;1 1 0.0625;1 1 0;1 0.9375 0;1 0.875 0;1 0.8125 0;1 0.75 0;1 0.6875 0;1 0.625 0;1 0.5625 0;1 0.5 0;1 0.4375 0;1 0.375 0;1 0.3125 0;1 0.25 0;1 0.1875 0;1 0.125 0;1 0.0625 0;1 0 0;0.9375 0 0;0.875 0 0;0.8125 0 0;0.75 0 0;0.6875 0 0;0.625 0 0;0.5625 0 0],...
                     'MenuBar','none',...
-                    'Name','matRadGUI',...
+                    'Name','MatRad Plan',...
                     'NumberTitle','off',...
                     'HandleVisibility','callback',...
                     'Tag','figure1',...
@@ -419,9 +418,6 @@ classdef matRad_PlanWidget < matRad_Widget
             ix = find(strcmp(pln.propOpt.bioOptimization,contentPopUp));
             set(handles.popMenuBioOpt,'Value',ix);
             
-            
-            %set(handles.popMenuBioOpt,'String',num2str(pln.propOpt.bioOptimization));
-
             set(handles.btnRunSequencing,'Value',pln.propOpt.runSequencing);
             set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
             
@@ -459,12 +455,10 @@ classdef matRad_PlanWidget < matRad_Widget
             pln.propOpt.runSequencing   = this.parseStringAsNum(get(handles.btnRunSequencing,'Value'),false); 
             pln.propOpt.runDAO          = this.parseStringAsNum(get(handles.btnRunDAO,'Value'),false);
 
-            %Dose Grid resolution
             pln.propDoseCalc.doseGrid.resolution.x = this.parseStringAsNum(get(handles.editDoseX,'String'),false);
             pln.propDoseCalc.doseGrid.resolution.y = this.parseStringAsNum(get(handles.editDoseY,'String'),false);
             pln.propDoseCalc.doseGrid.resolution.z = this.parseStringAsNum(get(handles.editDoseZ,'String'),false);
-                        
-            
+                  
             try
                 ct = evalin('base','ct');
                 pln.numOfVoxels     = prod(ct.cubeDim);
@@ -542,8 +536,6 @@ classdef matRad_PlanWidget < matRad_Widget
                     
                 case 'protons'                    
                     set(handles.popMenuBioOpt,'Enable','on');
-                    %ix = find(strcmp(contentPopUp,'const_RBExD'));
-                    %set(handles.popMenuBioOpt,'Value',ix);
                     set(handles.btnSetTissue,'Enable','on');
                     
                     set(handles.btnRunSequencing,'Enable','off');
@@ -555,8 +547,6 @@ classdef matRad_PlanWidget < matRad_Widget
                 case 'carbon'
                     
                     set(handles.popMenuBioOpt,'Enable','on');
-                    %ix = find(strcmp(contentPopUp,'LEMIV_RBExD'));
-                    %set(handles.popMenuBioOpt,'Value',ix);
                     set(handles.btnSetTissue,'Enable','on');
                     
                     set(handles.btnRunSequencing,'Enable','off');
@@ -582,18 +572,20 @@ classdef matRad_PlanWidget < matRad_Widget
         end
         
         function popupRadMode_Callback(this, hObject, eventdata)
-            % hObject    handle to popupRadMode (see GCBO)
-            % eventdata  reserved - to be defined in a future version of MATLAB
-            % handles    structure with handles and user data (see GUIDATA)
             handles = this.handles;
-            
-%           checkRadiationComposition(this); ...checkRadiationComposition(handles);
             contents      = cellstr(get(hObject,'String'));
             RadIdentifier = contents{get(hObject,'Value')};
             contentPopUp  = get(handles.popMenuBioOpt,'String');
-           
-            % switchcase depending on RadMode
-            %switchEnables(this);
+            
+            switch RadIdentifier
+                case 'protons'
+                     ix = find(strcmp(contentPopUp,'const_RBExD'));
+                     set(handles.popMenuBioOpt,'Value',ix);
+                     
+                case 'carbon'
+                     ix = find(strcmp(contentPopUp,'LEMIV_RBExD'));
+                     set(handles.popMenuBioOpt,'Value',ix);
+            end
             
                 pln = evalin('base','pln');
                     
@@ -810,21 +802,16 @@ classdef matRad_PlanWidget < matRad_Widget
             contentBioOpt = get(handles.popMenuBioOpt,'String');
             NewBioOptimization = contentBioOpt(get(handles.popMenuBioOpt,'Value'),:);
             
-            %if handles.State > 0
                 if (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') && strcmp(NewBioOptimization,'LEMIV_RBExD')) ||...
                         (strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD') && strcmp(NewBioOptimization,'LEMIV_effect'))
                     % do nothing - re-optimization is still possible
                 elseif ((strcmp(pln.propOpt.bioOptimization,'const_RBE') && strcmp(NewBioOptimization,'none')) ||...
                         (strcmp(pln.propOpt.bioOptimization,'none') && strcmp(NewBioOptimization,'const_RBE'))) && isequal(pln.radiationMode,'protons')
                     % do nothing - re-optimization is still possible
-                else
-                    %handles.State = 1;
                 end
-            %end
+                
             updatePlnInWorkspace(this);
-            
             %UpdateState(handles);
-            %guidata(hObject,handles);
             this.handles = handles;
         end
         
@@ -850,18 +837,14 @@ classdef matRad_PlanWidget < matRad_Widget
                 end
                 for j = 1:length(Files)
                     if ~isempty(Files)
-                        % Fehlermeldung wegen empty this.Machines
                         MachineName = Files(j).name(numel(this.Modalities{1,i})+2:end-4);
                         this.Machines{i}{j} = MachineName;
                     end
                 end
             end
             
-            %set handles
             selectedRadMod = get(handles.popupRadMode,'Value');
-            
             nMachines = numel(this.Machines{selectedRadMod});
-            
             selectedMachine = get(handles.popUpMachine,'Value');
             
             if get(handles.popUpMachine,'Value') > nMachines
@@ -869,7 +852,6 @@ classdef matRad_PlanWidget < matRad_Widget
             end
                             
             set(handles.popUpMachine,'Value',selectedMachine,'String',this.Machines{selectedRadMod});
-            
             this.handles = handles;
         end
         

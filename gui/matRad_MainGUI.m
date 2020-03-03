@@ -14,7 +14,6 @@ classdef matRad_MainGUI < handle
         StructureVisibilityWidget
         InfoWidget
         ViewingWidget
-        
         eventListeners
     end
     
@@ -22,7 +21,6 @@ classdef matRad_MainGUI < handle
     
     methods(Access = protected)
         function this = createMenuBar(this)
-          %  h1 = widgethandle;
            h1 = this.guiHandle;
            load('matRad_iconsGUI.mat');
             
@@ -108,17 +106,12 @@ classdef matRad_MainGUI < handle
     
     methods
         function obj = matRad_MainGUI()
-%             obj.guiHandle = figure;
-            %Panel for Main Widget which contains label and titel etc.
-            %How to create Pnael which has to be as big as the figure
-            %itself
-%             p0 = uipanel();
-
+            %Panel for Main Widget 
             obj.guiHandle = figure(...
                 'Units','characters',...
                 'Position',[138.4 30.38461538461539 273.4 59.5384615384615],...
                 'Visible','on',...
-                'Color',[0.501960784313725 0.501960784313725 0.501960784313725],...  'CloseRequestFcn',@(hObject,eventdata) figure1_CloseRequestFcn(this,hObject,eventdata),...
+                'Color',[0.501960784313725 0.501960784313725 0.501960784313725],...  
                 'IntegerHandle','off',...
                 'Colormap',[0 0 0.5625;0 0 0.625;0 0 0.6875;0 0 0.75;0 0 0.8125;0 0 0.875;0 0 0.9375;0 0 1;0 0.0625 1;0 0.125 1;0 0.1875 1;0 0.25 1;0 0.3125 1;0 0.375 1;0 0.4375 1;0 0.5 1;0 0.5625 1;0 0.625 1;0 0.6875 1;0 0.75 1;0 0.8125 1;0 0.875 1;0 0.9375 1;0 1 1;0.0625 1 1;0.125 1 0.9375;0.1875 1 0.875;0.25 1 0.8125;0.3125 1 0.75;0.375 1 0.6875;0.4375 1 0.625;0.5 1 0.5625;0.5625 1 0.5;0.625 1 0.4375;0.6875 1 0.375;0.75 1 0.3125;0.8125 1 0.25;0.875 1 0.1875;0.9375 1 0.125;1 1 0.0625;1 1 0;1 0.9375 0;1 0.875 0;1 0.8125 0;1 0.75 0;1 0.6875 0;1 0.625 0;1 0.5625 0;1 0.5 0;1 0.4375 0;1 0.375 0;1 0.3125 0;1 0.25 0;1 0.1875 0;1 0.125 0;1 0.0625 0;1 0 0;0.9375 0 0;0.875 0 0;0.8125 0 0;0.75 0 0;0.6875 0 0;0.625 0 0;0.5625 0 0],...
                 'MenuBar','none',...
@@ -263,17 +256,16 @@ classdef matRad_MainGUI < handle
             
             % variable to check whether GUI is opened or just refreshed / new data
             % loaded, since resetGUI needs to distinguish at one point
-            handles = this.handles;
             
+            handles = this.handles;
             handles.initialGuiStart = true;
             
             %If devMode is true, error dialogs will include the full stack trace of the error
             %If false, only the basic error message is shown (works for errors that
             %handle the MException object)
+            
             handles.devMode = true;
-            
             set(handles.radiobtnPlan,'value',0);
-            
             handles = resetGUI(hObject, handles);
             
             %% parse variables from base workspace
@@ -303,11 +295,8 @@ classdef matRad_MainGUI < handle
             else
                 handles = reloadGUI(hObject, handles);
             end
-            
-            % guidata(hObject, handles);
             this.handles = handles;
         end
-        
     end
 end
 

@@ -8,13 +8,13 @@ classdef matRad_WorkflowWidget < matRad_Widget
             if nargin < 1
                 handleParent = figure(...
                     'Units','characters',...
-                    'Position',[138.4 -7.38461538461539 273.4 59.5384615384615],...
+                    'Position',[170.4 45 150.4 20.5384615384615],...
                     'Visible','on',...
-                    'Color',[0.501960784313725 0.501960784313725 0.501960784313725],... 'CloseRequestFcn',@(hObject,eventdata) figure1_CloseRequestFcn(this,hObject,eventdata),...
+                    'Color',[0.501960784313725 0.501960784313725 0.501960784313725],... 
                     'IntegerHandle','off',...
                     'Colormap',[0 0 0.5625;0 0 0.625;0 0 0.6875;0 0 0.75;0 0 0.8125;0 0 0.875;0 0 0.9375;0 0 1;0 0.0625 1;0 0.125 1;0 0.1875 1;0 0.25 1;0 0.3125 1;0 0.375 1;0 0.4375 1;0 0.5 1;0 0.5625 1;0 0.625 1;0 0.6875 1;0 0.75 1;0 0.8125 1;0 0.875 1;0 0.9375 1;0 1 1;0.0625 1 1;0.125 1 0.9375;0.1875 1 0.875;0.25 1 0.8125;0.3125 1 0.75;0.375 1 0.6875;0.4375 1 0.625;0.5 1 0.5625;0.5625 1 0.5;0.625 1 0.4375;0.6875 1 0.375;0.75 1 0.3125;0.8125 1 0.25;0.875 1 0.1875;0.9375 1 0.125;1 1 0.0625;1 1 0;1 0.9375 0;1 0.875 0;1 0.8125 0;1 0.75 0;1 0.6875 0;1 0.625 0;1 0.5625 0;1 0.5 0;1 0.4375 0;1 0.375 0;1 0.3125 0;1 0.25 0;1 0.1875 0;1 0.125 0;1 0.0625 0;1 0 0;0.9375 0 0;0.875 0 0;0.8125 0 0;0.75 0 0;0.6875 0 0;0.625 0 0;0.5625 0 0],...
                     'MenuBar','none',...
-                    'Name','matRadGUI',...
+                    'Name','MatRad Workflow',...
                     'NumberTitle','off',...
                     'HandleVisibility','callback',...
                     'Tag','figure1',...
@@ -164,12 +164,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             
             % H74 Callback
             function btnLoadMat_Callback(this, hObject, event)
-                % hObject    handle to btnLoadMat (see GCBO)
-                % eventdata  reserved - to be defined in a future version of MATLAB
-                % handles    structure with handles and user data (see GUIDATA)
-                
                 handles = this.handles;
-                
                 [FileName, FilePath] = uigetfile('*.mat');
                 if FileName == 0 % user pressed cancel --> do nothing.
                     return;
@@ -178,7 +173,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 handles = resetGUI(this, hObject, event); ...resetGUI(hObject, handles, varargin)
                 
                 try
-                    
                     % delete existing workspace - parse variables from base workspace
                     AllVarNames = evalin('base','who');
                     RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
@@ -254,7 +248,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 % guidata(hObject,handles);
                 this.handles = handles;
                 
-                
             end
             
             % H75 Callback
@@ -323,7 +316,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     % change state from busy to normal
                     set(Figures, 'pointer', 'arrow');
                     set(InterfaceObj,'Enable','on');
-                    % guidata(hObject,handles);
                     this.handles = handles;
                     return;
                 end
@@ -372,7 +364,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     % change state from busy to normal
                     set(Figures, 'pointer', 'arrow');
                     set(InterfaceObj,'Enable','on');
-                    % guidata(hObject,handles);
                     this.handles = handles;
                     return;
                 end
@@ -380,8 +371,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 % change state from busy to normal
                 set(Figures, 'pointer', 'arrow');
                 set(InterfaceObj,'Enable','on');
-                
-                % guidata(hObject,handles);
                 this.handles = handles;
             end
             
@@ -402,7 +391,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     set(InterfaceObj,'Enable','off');
                     % wait until the table is updated
                     btnTableSave_Callback([],[],handles); %We don't need it?
-                    
                     
                     % if a critical change to the cst has been made which affects the dij matrix
                     if handles.DijCalcWarning == true
@@ -497,7 +485,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     % change state from busy to normal
                     set(Figures, 'pointer', 'arrow');
                     set(InterfaceObj,'Enable','on');
-                    % guidata(hObject,handles);
                     this.handles = handles;
                     return;
                 end
@@ -522,7 +509,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     % change state from busy to normal
                     set(Figures, 'pointer', 'arrow');
                     set(InterfaceObj,'Enable','on');
-                    %guidata(hObject,handles);
                     this.handles = handles;
                     return;
                 end
@@ -547,7 +533,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     % change state from busy to normal
                     set(Figures, 'pointer', 'arrow');
                     set(InterfaceObj,'Enable','on');
-                    % guidata(hObject,handles);
                     this.handles = handles;
                     return;
                 end
@@ -560,14 +545,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 handles.rememberCurrAxes = false;
                 handles.IsoDose.Levels   = 0;  % ensure to use default iso dose line spacing
                 handles.cBarChanged      = true;
-                
-                % guidata(hObject,handles);
                 this.handles = handles;
                 handles = updateIsoDoseLineCache(handles);
                 UpdateState(handles);
                 UpdatePlot(handles);
                 handles.rememberCurrAxes = true;
-                % guidata(hObject,handles);
                 this.handles = handles;
             end
             
@@ -587,14 +569,12 @@ classdef matRad_WorkflowWidget < matRad_Widget
                             evalin('base',['clear ', RefVarNames{i}]);
                         end
                     end
-                   % handles.State = 0;
                     matRad_importDicomWidget; % matRad_importDicomGUI;
                     
                 catch
                     handles = showError(handles,'DicomImport: Could not import data');
                 end
-               % UpdateState(handles);
-                %guidata(hObject,handles);
+               % UpdateState(handles);;
                 this.handles = handles;
             end
             
@@ -763,8 +743,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         handles.rememberCurrAxes = false;
                         UpdatePlot(handles);
                         handles.rememberCurrAxes = true;
-                        
-                        % guidata(hObject,handles);
                         this.handles = handles;
                         
                     catch ME
@@ -773,8 +751,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         % change state from busy to normal
                         set(Figures, 'pointer', 'arrow');
                         set(InterfaceObj,'Enable','on');
-                        
-                        % guidata(hObject,handles);
                         this.handles = handles;
                         return;
                         
@@ -823,7 +799,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 end
                 
                 uiwait(figDialog);
-                % guidata(hObject, handles);
                 this.handles = handles;
               %  UpdateState(handles)
                 UpdatePlot(handles)
@@ -947,7 +922,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
                             'Value',round(ct.cubeDim(handles.plane)/2),...
                             'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);
-                  %  end
+                    %end
                     
                    % if handles.State > 0
                         % define context menu for structures
@@ -972,7 +947,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                    % UpdateState(handles);
                 end
                 
-                % guidata(hObject,handles);
                 this.handles = handles;
                 
             end
