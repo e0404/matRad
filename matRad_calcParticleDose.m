@@ -210,6 +210,8 @@ for i = 1:length(stf) % loop over all beams
                                                      find(~isnan(radDepthVdoseGrid{1})), ...
                                                      maxLateralCutoffDoseCalc);
                                                  
+                assignin('base','radialDist', reshape(sqrt(currRadialDist_sq), ct.cubeDim));
+                                 
                 radDepths = radDepthVdoseGrid{1}(ix); 
             end
             
@@ -327,10 +329,13 @@ for i = 1:length(stf) % loop over all beams
 
                         % add to initial sigma in quadrature
                         sigmaIni_sq = sigmaIni_sq +  sigmaRashi^2;
+                        
 
                     end
-               
-                
+                    
+                    
+                    assignin('base','sigmaIni_sq', sigmaIni_sq);
+                    assignin('base','machine', machine);
                 
                 
                 

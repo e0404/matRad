@@ -54,7 +54,7 @@ xd = (machine.data(energyIx).initFocus.dist(2:end)+machine.data(energyIx).initFo
 initSigmaConv = interp1(xd,yd,stf.ray.SSD);
 counting = 0;
 
-if strcmp(anaMode, 'stdCorr')
+% if strcmp(anaMode, 'stdCorr')
     
 %     cube = reshape(radDepthVctGrid{1}, ct.cubeDim);
 %     weights = cube / 100;
@@ -100,8 +100,8 @@ if strcmp(anaMode, 'stdCorr')
         if isnan(dist)
             sigma = 0;
         else
-%             sigma = 3 * (dist/120)^3;
-            sigma = sqrt(counting);
+            sigma = 5 * (distSlice/150);
+%             sigma = sqrt(counting);
         end
         kernel = matRad_create2dimGaussKernel(kernelSize, sigma, res);
 
@@ -119,9 +119,9 @@ if strcmp(anaMode, 'stdCorr')
         meanRadDepths(ii,:,:) = tmpRadDepth((kernelSize+1)/2:size(tmpRadDepth,1)-(kernelSize-1)/2,(kernelSize+1)/2:size(tmpRadDepth,2)-(kernelSize-1)/2);    
     end
 
-    assignin('base','cStdCtGrid',cStdCtGrid);
+%     assignin('base','cStdCtGrid',cStdCtGrid);
     assignin('base','meanRadDepths',meanRadDepths);
-    assignin('base','radDepthCubeCtGrid',cube);
+%     assignin('base','radDepthCubeCtGrid',cube);
     
     cStdCtGrid(isnan(cStdCtGrid)) = 0;
     cStdVctGrid = {cStdCtGrid(VctGrid)};
@@ -145,7 +145,9 @@ if strcmp(anaMode, 'stdCorr')
     
     cSstVdoseGrid = matRad_interpRadDepth...
     (ct,1,VctGrid,VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,cStdVctGrid);
-end
+% end
+
+assignin('base','radDepths', reshape(radDepthVctGrid{1}, ct.cubeDim));
 
 fprintf('done.\n');
 
