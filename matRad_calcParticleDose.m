@@ -224,6 +224,8 @@ for i = 1:length(stf) % loop over all beams
                     nozzleToSkin = ((stf(i).ray(j).SSD + BAMStoIsoDist) - machine.meta.SAD);
                     dR = 0.0011 * (nozzleToSkin - fitAirOffset);
                     
+                else
+                    dR = 0;
                 end
                 % create offset vector to account for additional offsets modelled in the base data and a potential 
                 % range shifter. In the following, we only perform dose calculation for voxels having a radiological depth
