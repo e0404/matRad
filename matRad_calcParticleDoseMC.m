@@ -127,7 +127,7 @@ end
 % set and change to MCsquare binary folder
 currFolder = pwd;
 fullfilename = mfilename('fullpath');
-MCsquareFolder = [fullfilename(1:find(fullfilename==filesep,1,'last')) 'submodules' filesep 'MCsquare'];
+MCsquareFolder = [fullfilename(1:find(fullfilename==filesep,1,'last')) 'MCsquare' filesep 'bin'];
 
 % cd to MCsquare folder (necessary for binary)
 cd(MCsquareFolder);
