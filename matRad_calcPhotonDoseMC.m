@@ -60,9 +60,9 @@ if exist('omc_matrad','file') ~= 3
           ccName = myCCompiler.ShortName;
         end
         
-	% Define src folder to include it in compilation flags
+        % Define src folder to include it in compilation flags
         srcFolder = ['-I' fileFolder filesep 'submodules' filesep 'ompMC' filesep 'src'];
-               
+                       
         %This needs to generalize better
         if ~isempty(strfind(ccName,'MSVC')) %Not use contains(...) because of octave
             flags{1,1} = 'COMPFLAGS';
@@ -94,7 +94,10 @@ if exist('omc_matrad','file') ~= 3
         
         cd(ompMCFolder);
         
-        mexCall = ['mex -largeArrayDims ' flagstring ' omc_matrad.c'];
+        mexCall = ['mex -largeArrayDims ' flagstring ' omc_matrad.c '];
+        mexCall = [mexCall fileFolder filesep 'submodules' filesep 'ompMC' filesep 'src' filesep 'ompmc.c '];
+        mexCall = [mexCall fileFolder filesep 'submodules' filesep 'ompMC' filesep 'src' filesep 'omc_utilities.c '];
+        mexCall = [mexCall fileFolder filesep 'submodules' filesep 'ompMC' filesep 'src' filesep 'omc_random.c '];
         
         disp(['Compiler call: ' mexCall]);
         eval(mexCall);
