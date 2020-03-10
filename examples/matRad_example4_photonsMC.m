@@ -23,7 +23,7 @@
 %% Patient Data Import
 % Let's begin with a clear Matlab environment and import the boxphantom
 % into your workspace. 
-clc,clear,close all;
+matRad_rc
 load('BOXPHANTOM.mat');
 
 %% Treatment Plan
