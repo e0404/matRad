@@ -1,0 +1,7 @@
+Name			calcium
+Atomic_Weight		40.078
+Density			1.55		# in g/cm3
+Electron_Density	4.6578e23	# in cm-3
+Radiation_Length	16.1442		# in g/cm2
+
+Nuclear_Data		ICRU

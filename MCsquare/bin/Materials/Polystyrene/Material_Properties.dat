@@ -1,0 +1,11 @@
+Name 			Polystyrene
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.06000000 	 # in g/cm3 
+Electron_Density 	3.43219e+23 	 # in cm-3 
+Radiation_Length 	43.792544 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 2 	# mixture with 2 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	7.741800 
+Mixture_Component	2 	carbon		92.258200 

@@ -1,0 +1,7 @@
+Name			lead
+Atomic_Weight		207.22
+Density			11.34		# in g/cm3
+Electron_Density	2.7028e+24	# in cm-3
+Radiation_Length	6.3688		# in g/cm2
+
+Nuclear_Data		ICRU

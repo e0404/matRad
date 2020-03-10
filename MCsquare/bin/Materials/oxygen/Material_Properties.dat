@@ -1,0 +1,7 @@
+Name			Oxygen
+Atomic_Weight		15.9994
+Density			1.33151e-3	# in g/cm3
+Electron_Density	4.0094e20	# in cm-3
+Radiation_Length	34.2381		# in g/cm2
+
+Nuclear_Data		ICRU

@@ -1,0 +1,13 @@
+Name 			Polyurethane
+Molecular_Weight 	0.0 		 # N.C.
+Density 		0.95830000 	 # in g/cm3 
+Electron_Density 	3.03019e+23 	 # in cm-3 
+Radiation_Length 	40.854780 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 4 	# mixture with 4 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	5.160000 
+Mixture_Component	2 	carbon		65.370000 
+Mixture_Component	3 	nitrogen	8.970000 
+Mixture_Component	4 	oxygen		20.500000 
