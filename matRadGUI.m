@@ -259,7 +259,7 @@ end
 function handles = reloadGUI(hObject, handles, ct, cst)
 AllVarNames = handles.AllVarNames;
 
-if ismember('ct',AllVarNames)
+if nargin >=3 && ismember('ct',AllVarNames)
     % compute HU values
     if ~isfield(ct, 'cubeHU')
         ct = matRad_electronDensitiesToHU(ct);
@@ -273,8 +273,7 @@ if ismember('ct',AllVarNames)
 end
 
 %set plan if available - if not create one
-try 
-    
+try   
     if ismember('pln',AllVarNames) && handles.State > 0
         % check if you are working with a valid pln
         pln = evalin('base','pln');
@@ -2649,24 +2648,26 @@ try
         ct  = evalin('base','ct');
         cst = evalin('base','cst');
         %cst = setCstTable(handles,cst);
-        generateCstTable(handles,cst);
+        cst = generateCstTable(handles,cst);
         handles.State = 1;
         cst = matRad_computeVoiContoursWrapper(cst,ct);
         assignin('base','cst',cst);
+        handles = reloadGUI(hObject, handles, ct, cst);
     elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
-         handles = showError(handles,'GUI OpeningFunc: could not find cst file');
+        handles = showError(handles,'GUI OpeningFunc: could not find cst file');
+        ct  = evalin('base','ct');
+        handles = reloadGUI(hObject,handles,ct);
     elseif ~ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-         handles = showError(handles,'GUI OpeningFunc: could not find ct file');
+        handles = showError(handles,'GUI OpeningFunc: could not find ct file');
+        handles = reloadGUI(hObject, handles);
+    else
+        handles = reloadGUI(hObject, handles);
     end
-catch  
-   handles = showError(handles,'GUI OpeningFunc: Could not load ct and cst file');
-end
-
-if ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-    handles = reloadGUI(hObject, handles, ct, cst);
-else
+catch
+    handles = showError(handles,'GUI OpeningFunc: Could not load ct and cst file');
     handles = reloadGUI(hObject, handles);
 end
+
 guidata(hObject, handles);
 
 
