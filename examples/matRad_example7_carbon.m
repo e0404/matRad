@@ -28,7 +28,7 @@
 %% Patient Data Import
 % Let's begin with a clear Matlab environment and import the liver
 % patient into your workspace.
-clc,clear,close all;
+matRad_rc
 load('LIVER.mat');
 
 %% Treatment Plan
