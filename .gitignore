@@ -35,3 +35,5 @@ basedata/protons_generic_TOPAS_cropped.mat
 basedata/protons_matRadBDL_APM.mat
 basedata/protons_matRadBDLcorrected.mat
 phantoms/slabPhantom7.mat
+calculatingWeights.asv
+.gitignore
