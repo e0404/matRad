@@ -193,7 +193,7 @@ for  i = 1:size(cst,1)
                     numContours   = numel(cst{i,4});
                     f_OWC         = zeros(options.numOfScen,1);
                     deltaOWC      = cell(options.numOfScen,1);
-                    [deltaOWC{:}] = deal(zeros(dij.numOfVoxels,1));
+                    [deltaOWC{:}] = deal(zeros(dij.doseGrid.numOfVoxels,1));
 
                     for ixScen = 1:5
                        
