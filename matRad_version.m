@@ -33,14 +33,16 @@ matRadVer.major = 2;
 matRadVer.minor = 5;
 matRadVer.patch = 0;
 
+tagged = false;
+
 %Retreive branch / commit information from current git repo if applicable
 try
     %read HEAD file to point to current ref / commit
     repoGitDir = [fileparts(mfilename('fullpath')) filesep '.git'];   
     headText = fileread([repoGitDir filesep 'HEAD']);
-    
-    %Test if detached head (HEAD contains 40 hex SHA1 commit ID)
-    i = regexp(headText,'[a-f0-9]{40}');
+
+    %Test if detached head (HEAD contains 40 hex SHA1 commit ID)    
+    i = regexp(headText,'[a-f0-9]{40}', 'once');
     if ~isempty(i)
         matRadVer.branch = 'DETACHED';
         matRadVer.commitID = headText(1:40);        
@@ -53,17 +55,33 @@ try
         %Read ID from ref path
         refID = fileread([repoGitDir filesep strjoin(refParse,filesep)]);
         matRadVer.commitID = refID(1:40);
+        
+        %Check if we are on a tagged commit (i.e., release)
+        %{
+        tagRefs = dir([repoGitDir filesep 'refs' filesep 'tags']);
+        for t = 1:numel(tagRefs)
+            if ~any(strcmp(tagRefs(t).name, {'.', '..'}))
+                tagId = fileread([repoGitDir filesep 'refs' filesep 'tags' filesep tagRefs(t).name]);
+                if strcmp(tagId(1:40),matRadVer.commitID)
+                    tagged=true;
+                    break;
+                end
+            end
+        end
+        %}
+        
     end
+    
 catch
     %Git repo information could not be read, set to empty
     matRadVer.branch = [];
-    matRadVer.commitID = [];    
+    matRadVer.commitID = [];
 end
 
 %Create a readable string
 %Git path first
 gitString = '';
-if ~isempty(matRadVer.branch) && ~isempty(matRadVer.commitID)
+if ~isempty(matRadVer.branch) && ~isempty(matRadVer.commitID) && ~tagged
     gitString = sprintf(' (%s-%s)',matRadVer.branch,matRadVer.commitID(1:8));  
 end
 
