@@ -32,6 +32,9 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_cfg;
+matRad_cfg =  MatRad_Config.instance();
+
 % initialize
 matRad_calcDoseInit;
 
@@ -56,7 +59,7 @@ figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 set(figureWait,'pointer','watch');
 
 % set lateral cutoff value
-lateralCutoff = 50; % [mm]
+lateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data

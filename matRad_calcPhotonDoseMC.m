@@ -30,6 +30,9 @@ function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_cfg;
+matRad_cfg =  MatRad_Config.instance();
+
 tic
 
 % disable visualiazation by default
@@ -118,9 +121,7 @@ if ~isfield(pln,'propDoseCalc') || ...
    ~isfield(pln.propDoseCalc,'doseGrid') || ...
    ~isfield(pln.propDoseCalc.doseGrid,'resolution')
     % default values
-    dij.doseGrid.resolution.x = 2.5; % [mm]
-    dij.doseGrid.resolution.y = 2.5; % [mm]
-    dij.doseGrid.resolution.z = 2.5;   % [mm]
+    dij.doseGrid.resolution = matRad_cfg.propDoseCalc.defaultResolution;
 else
     % take values from pln strcut
     dij.doseGrid.resolution.x = pln.propDoseCalc.doseGrid.resolution.x;
@@ -210,7 +211,7 @@ ompMCoptions.global_ecut = 0.7;
 ompMCoptions.global_pcut = 0.010; 
 
 % Relative Threshold for dose
-ompMCoptions.relDoseThreshold = 0.01;
+ompMCoptions.relDoseThreshold = 1 - matRad_cfg.propDoseCalc.defaultLateralCutOff;
 
 % Output folders
 ompMCoptions.outputFolder = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'output' filesep];

@@ -59,25 +59,32 @@ classdef matRad_DicomExporter < handle
             %matRad_DicomExporter Construct an instance of this class
             %   Can be called with the structures. If no argument is given,
             %   all structures will be read from the base workspace
+            
+            global matRad_cfg;
+            matRad_cfg = MatRad_Config.instance();  
+            
             if nargin == 0
                 try
                     obj.ct = evalin('base','ct');
                 catch
-                   matRad_dispToConsole('matRad_DicomExporter: Could not parse CT',[],'info');
+                   matRad_cfg.displayToConsole('info','matRad_DicomExporter: Could not parse CT');
                 end
                 try
                     obj.cst = evalin('base','cst');
                 catch
-                   matRad_dispToConsole('matRad_DicomExporter: Could not parse cst',[],'info');
+                   matRad_cfg.displayToConsole('info','matRad_DicomExporter: Could not parse cst');
                 end
                 try
                     obj.pln = evalin('base','pln');
+                catch
                 end
                 try
                     obj.stf = evalin('base','stf');
+                catch
                 end
                 try
                     obj.resultGUI = evalin('base','resultGUI');
+                catch
                 end
             else
                 if exist('ct','var')

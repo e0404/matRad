@@ -26,7 +26,6 @@ vString = matRad_version();
 
 fprintf('You are running matRad %s with %s %s\n',vString,env,envver);
 
-
 switch env
     case 'MATLAB'
         clearvars -except unitTestBool
@@ -34,19 +33,15 @@ switch env
         clear -x unitTestBool
 end
 
+global matRad_cfg;
+matRad_cfg = MatRad_Config.instance();
 
 % set log level accordingly if you do _not_ want to do unit testing
 if ~exist('unitTestBool','var') || ~unitTestBool
-
-    param.calcDoseDirect = false;
-    param.subIx          = [];
-    param.logLevel       = 1;
-    
+    matRad_cfg.logLevel  = 4;    
 % set log level accordingly if want to do unit testing
-else
-    
-    param.calcDoseDirect = false;
-    param.subIx          = [];
-    param.logLevel       = 3;
-    
+else    
+    matRad_cfg.logLevel   = 1;
+    matRad_cfg.propDoseCalc.defaultGeometricCutOff = 20;
+    matRad_cfg.propDoseCalc.defaultLateralCutOff = 0.8;
 end

@@ -1,4 +1,4 @@
-function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
+function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
 % matRad QI calculation
 % 
 % call
@@ -35,6 +35,9 @@ function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_cfg;
+matRad_cfg = MatRad_Config.instance();
+
 if ~exist('refVol', 'var') || isempty(refVol)
     refVol = [2 5 50 95 98];
 end
@@ -43,13 +46,6 @@ if ~exist('refGy', 'var') || isempty(refGy)
     refGy = floor(linspace(0,max(doseCube(:)),6)*10)/10;
 end
 
-if exist('param','var')
-   if ~isfield(param,'logLevel')
-      param.logLevel = 1;
-   end
-else
-   param.logLevel = 1;
-end
     
 % calculate QIs per VOI
 qi = struct;
@@ -136,11 +132,11 @@ for runVoi = 1:size(cst,1)
                                    qi(runVoi).(['CI_' StringReferenceDose 'Gy']),qi(runVoi).(['HI_' StringReferenceDose 'Gy']),referenceDose);
             end
         end
-        matRad_dispToConsole(voiPrint,param,'info','%s\n')
+        matRad_cfg.displayToConsole('info',voiPrint);
     
     else
         
-        matRad_dispToConsole([num2str(cst{runVoi,1}) ' ' cst{runVoi,2} ' - No dose information.\n'],param,'info')
+        matRad_cfg.displayToConsole('info','%d %s - No dose information.',num2str(cst{runVoi,1}),cst{runVoi,2});
         
     end
 end

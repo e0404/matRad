@@ -34,6 +34,9 @@ function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDi
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_cfg;
+matRad_cfg = MatRad_Config.instance();
+
 % check if valid machine
 if ~strcmp(pln.radiationMode,'protons') || ~strcmp(pln.machine,'generic_MCsquare')
     error('wrong radiation modality and/or machine.');    
@@ -145,9 +148,7 @@ if ~isfield(pln,'propDoseCalc') || ...
    ~isfield(pln.propDoseCalc,'doseGrid') || ...
    ~isfield(pln.propDoseCalc.doseGrid,'resolution')
     % default values
-    dij.doseGrid.resolution.x = 2.5; % [mm]
-    dij.doseGrid.resolution.y = 2.5; % [mm]
-    dij.doseGrid.resolution.z = 2.5;   % [mm]
+    dij.doseGrid.resolution = matRad_cfg.propDoseCalc.defaultResolution;
 else
     
     % check if using isotropic dose grid resolution in x and y direction

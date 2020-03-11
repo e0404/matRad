@@ -32,6 +32,9 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_cfg;
+matRad_cfg =  MatRad_Config.instance();
+
 % init dose calc
 matRad_calcDoseInit;
 
@@ -129,7 +132,7 @@ elseif sum(strcmp(pln.propOpt.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0
 end
 
 % lateral cutoff for raytracing and geo calculations
-effectiveLateralCutoff = 50;
+effectiveLateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
 
 fprintf('matRad: Particle dose calculation...\n');
 counter = 0;
@@ -142,7 +145,7 @@ for i = 1:length(stf) % loop over all beams
   
     % Determine lateral cutoff
     fprintf('matRad: calculate lateral cutoff...');
-    cutOffLevel = .995;
+    cutOffLevel = matRad_cfg.propDoseCalc.defaultLateralCutOff;
     visBoolLateralCutOff = 0;
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
     fprintf('done.\n');    
