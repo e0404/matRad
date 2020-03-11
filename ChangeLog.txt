@@ -1,9 +1,10 @@
-Version 2.5 "Blaise"
+Version 2.5.0 "Blaise"
 	Second Release of matRad. Note that despite major incompatibilities with "Alan" we still chose major version number "2" to have a consistent versioning in the future.
 	we want to thank all new contributing authors (see AUTHORS.txt)
 	The new release contains:
 	- integration tests using TravisCI (with Octave, so no GUI functionalities are tested)
-	- matRad_rc script to configure matRad paths and show version
+	- matRad_rc script to configure matRad paths
+    - matRad version can now be printed with matRad_version, version correctly shown in GUI and when using matRad_rc
 	- Seven new Matlab exmaple scripts to demonstrate use of matRad 
 	- added basic interfaces to the open-source photon/proton MC engines ompMC/MCsquare
 	- Overhaul of the optimization interface using OOP and integration of the fmincon optimizer from the Mathworks toolbox
@@ -16,7 +17,6 @@ Version 2.5 "Blaise"
 	- binary import and export functionalities (script & GUI)
 	- overhauled the standalone project file
 	- standalone toolbox file for matRad
-	- matRad version can now be printed with matRad_version, version correctly shown in GUI and when using matRad_rc
 	- Dose calculation now uses generalized initialization scripts
 	- matRad_compareDose tool to compare two dose distributions with difference and gamma analysis
 	- more tools for visualisation and data analysis in the tools folder
@@ -25,6 +25,7 @@ Version 2.5 "Blaise"
 	- wrapper to allow 3D conformal planning using dij collapsing
 	- new colormap handling to allow integration of custom colormaps
 	- modularization of slice display by dedicated functions in plotting folder including generation of 3D views
+    - New gloabl configuration object (matRad_cfg <- MatRad_Config.m) to store default values and with logging interface
 	- many bug fixes and many new bugs..	
 Version 2.1 "Alan"
 	First official relase of matRad including
