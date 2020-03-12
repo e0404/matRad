@@ -38,7 +38,7 @@ if nargin < 6
 end
 
 if nargin < 5
-    nCasePerBixel = 100000;
+    nCasePerBixel = 10000;
 end
 
 fileFolder = fileparts(mfilename('fullpath'));
@@ -198,6 +198,7 @@ ompMCoptions.verbose = true;
 
 % start MC control          
 ompMCoptions.nHistories = nCasePerBixel;
+ompMCoptions.nSplit = 20;
 ompMCoptions.nBatches = 10;
 ompMCoptions.randomSeeds = [97 33];
 
