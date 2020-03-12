@@ -1,0 +1,2 @@
+i:Ts/Seed = 3
+includeFile = MCexport\beamSetup_matRad_plan_field1.txt

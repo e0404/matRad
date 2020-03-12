@@ -1,0 +1,133 @@
+i:Ts/ShowHistoryCountAtInterval = 21397
+s:Sim/PlanLabel = "simData_matRad_plan_field1_run" + Ts/Seed
+d:Sim/GantryAngle = 0.000000 deg
+d:Sim/CouchAngle = 0.000000 deg
+s:Sim/ParticleName = "proton"
+u:Sim/ParticleMass = 1.0
+i:Sim/NbThreads = 0
+d:Tf/TimelineStart = 0. ms
+d:Tf/TimelineEnd = 10 ms
+i:Tf/NumberOfSequentialTimes = 1
+dv:Tf/Beam/Spot/Times = 1 10.0 ms
+s:Tf/Beam/Energy/Function = "Step"
+dv:Tf/Beam/Energy/Times = Tf/Beam/Spot/Times ms
+dv:Tf/Beam/Energy/Values = 1 93.351000 MeV
+s:Tf/Beam/FocusFWHM/Function = "Step"
+dv:Tf/Beam/FocusFWHM/Times = Tf/Beam/Spot/Times ms
+dv:Tf/Beam/FocusFWHM/Values = 1 8.100000 mm
+s:Tf/Beam/PosX/Function = "Step"
+dv:Tf/Beam/PosX/Times = Tf/Beam/Spot/Times ms
+dv:Tf/Beam/PosX/Values = 1 -0.000000 mm
+s:Tf/Beam/PosY/Function = "Step"
+dv:Tf/Beam/PosY/Times = Tf/Beam/Spot/Times ms
+dv:Tf/Beam/PosY/Values = 1 -0.000000 mm
+s:Tf/Beam/Current/Function = "Step"
+dv:Tf/Beam/Current/Times = Tf/Beam/Spot/Times ms
+iv:Tf/Beam/Current/Values = 1 427930
+d:So/PencilBeam/BeamEnergy = Tf/Beam/Energy/Value MeV * Sim/ParticleMass
+d:Ge/Patient/TransX      = 0.500000 mm
+d:Ge/Patient/TransY      = 0.500000 mm
+d:Ge/Patient/TransZ      = 0.500000 mm
+d:Ge/Patient/RotX=0. deg
+d:Ge/Patient/RotY=0. deg
+d:Ge/Patient/RotZ=0. deg
+includeFile = .\matRad_RSPcube.txt
+###################
+
+d:Ge/Nozzle/TransZ = -1500.000000 mm
+d:Ph/Default/CutForElectron = 0.5 mm
+# BEAM
+
+u:Sim/HalfValue = 0.5
+u:Sim/SIGMA2FWHM = 2.354818
+u:Sim/FWHM2SIGMA = 0.424661
+
+i:Ma/Verbosity = 0
+i:Ts/MaxInterruptedHistories = 1000
+i:Ts/TrackingVerbosity = 0
+i:Ts/EventVerbosity = 0
+i:Ts/RunVerbosity = 0
+b:Ts/ShowCPUTime = "True"
+i:Tf/Verbosity = 0
+i:Ts/NumberOfThreads = Sim/NbThreads
+
+s:So/PencilBeam/BeamParticle = Sim/ParticleName
+d:So/PencilBeam/BeamPositionSpreadX = Tf/Beam/FocusFWHM/Value mm * Sim/FWHM2SIGMA
+d:So/PencilBeam/BeamPositionSpreadY = Tf/Beam/FocusFWHM/Value mm * Sim/FWHM2SIGMA
+i:So/PencilBeam/NumberOfHistoriesInRun = Tf/Beam/Current/Value
+u:So/PencilBeam/BeamEnergySpread = 0. #
+s:So/PencilBeam/Type = "Beam" # Beam, Isotropic, Emittance or PhaseSpace
+s:So/PencilBeam/Component = "BeamSpot"
+s:So/PencilBeam/BeamPositionDistribution = "Gaussian" # None, Flat or Gaussian
+s:So/PencilBeam/BeamPositionCutoffShape = "Ellipse" # Rectangle or Ellipse (if Flat or Gaussian)
+d:So/PencilBeam/BeamPositionCutoffX = 100. mm # X extent of position (if Flat or Gaussian)
+d:So/PencilBeam/BeamPositionCutoffY = 100. mm # Y extent of position (if Flat or Gaussian)
+s:So/PencilBeam/BeamAngularDistribution = "None" # None, Flat or Gaussian
+
+#s:Ge/World/Material="G4_AIR"
+s:Ge/World/Material="Vacuum"
+d:Ge/World/HLX=200.0 cm
+d:Ge/World/HLY=200.0 cm
+d:Ge/World/HLZ=200.0 cm
+b:Ge/World/Invisible = "TRUE"
+
+s:Ge/BeamSpot/Parent = "Nozzle"
+s:Ge/BeamSpot/Type = "Group"
+d:Ge/BeamSpot/TransX = Tf/Beam/PosX/Value mm
+d:Ge/BeamSpot/TransY = Tf/Beam/PosY/Value mm
+
+s:Ge/Nozzle/Parent = "Isocenter"
+s:Ge/Nozzle/Type = "Group"
+
+s:Ge/Isocenter/Parent = "Gantry"
+s:Ge/Isocenter/Type = "Group"
+d:Ge/Isocenter/RotX = +90. deg
+d:Ge/Isocenter/RotY = 0. deg
+d:Ge/Isocenter/RotZ = +90. deg
+
+s:Ge/Gantry/Parent = "Couch"
+s:Ge/Gantry/Type = "Group"
+d:Ge/Gantry/RotX = 0. deg
+d:Ge/Gantry/RotY = 0. deg
+d:Ge/Gantry/RotZ = -1 * Sim/GantryAngle deg
+
+s:Ge/Couch/Parent = "World"
+s:Ge/Couch/Type = "Group"
+d:Ge/Couch/TransX = 0. cm
+d:Ge/Couch/TransY = 0. cm
+d:Ge/Couch/TransZ = 0. cm
+d:Ge/Couch/RotX = 0. deg
+d:Ge/Couch/RotY = -1 * Sim/CouchAngle deg
+d:Ge/Couch/RotZ = 0. deg
+
+s:Ge/IC/Type = "TsBox"
+s:Ge/IC/Parent="Nozzle"
+#b:Ge/IC/IsParallel = "True"
+s:Ge/IC/Material=Ge/World/Material
+d:Ge/IC/HLX = 25. cm
+d:Ge/IC/HLY = 25. cm
+d:Ge/IC/HLZ = 0.001 mm * Sim/HalfValue
+d:Ge/IC/TransZ = Ge/IC/HLZ mm
+
+#d:Ph/Default/CutForElectron = 0.5 mm
+#d:Ph/Default/CutForElectron = 1 m
+#sv:Ph/Default/Modules = 7 "g4em-standard_opt3" "g4h-phy_QGSP_BIC_HP" "g4decay" "g4ion-binarycascade" "g4h-elastic_HP" "g4stopping" "g4radioactivedecay"
+sv:Ph/Default/Modules = 7 "g4em-standard_opt3" "g4h-phy_QGSP_BIC_HP" "g4decay" "g4ion-QMD" "g4h-elastic_HP" "g4stopping" "g4radioactivedecay"
+
+s:Sc/Patient/Tally_DoseToMedium/Quantity = "DoseToMedium"
+s:Sc/Patient/Tally_DoseToMedium/OutputType = "binary" # "csv" "binary" "Root" "Xml" or "DICOM"
+s:Sc/Patient/Tally_DoseToMedium/Component = "Patient"
+sv:Sc/Patient/Tally_DoseToMedium/Report = 1 "Sum"
+s:Sc/Patient/Tally_DoseToMedium/IfOutputFileAlreadyExists = "Overwrite" # "Exit" "Overwrite" or "Increment"
+b:Sc/Patient/Tally_DoseToMedium/OutputToConsole = "False"
+s:Sc/Patient/Tally_DoseToMedium/OutputFile = Sim/PlanLabel + "_physicalDose"
+
+# SCORERS
+s:Sc/IC/Quantity = "SurfaceTrackCount"
+s:Sc/IC/OutputType = "csv" # "csv" "binary" "Root" "Xml" or "DICOM"
+s:Sc/IC/Surface = "IC/ZPlusSurface"
+sv:Sc/IC/Report = 1 "Sum"
+s:Sc/IC/IfOutputFileAlreadyExists = "Overwrite" # "Exit" "Overwrite" or "Increment"
+s:Sc/IC/OutputFile = Sim/PlanLabel + "_IC"
+s:Sc/IC/OnlyIncludeParticlesOfGeneration = "Primary"
+s:Sc/IC/OnlyIncludeParticlesGoing = "In"
