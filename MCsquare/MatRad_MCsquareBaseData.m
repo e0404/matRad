@@ -257,8 +257,8 @@ classdef MatRad_MCsquareBaseData
             mcDataOptics.Correlation2y = 0;
             mcDataOptics.FWHMatIso = 2.355 * sigmaNull;
         end
-                          
-        function obj = writeToBDLfile(obj,filepath,stf)
+        
+        function obj = writeTopasData(obj,filepath,stf)
             %writeToBDLfile write the base data to file "filepath"
             
             %look up focus indices
@@ -273,55 +273,34 @@ classdef MatRad_MCsquareBaseData
                                     
             machine = obj.machine;
             
-            MCsquare = true;
-            TOPAS = false;
-            if MCsquare
-               selectedData = rmfield(selectedData, 'FWHMatIso');
+            
+            energies = [selectedData.NominalEnergy];
+            counter = 1;
+            for i = 1:stf.numOfRays
                 
-                try
-
-                    fileID = fopen(filepath,'w');
-
-                    %Header
-                    %fprintf(fileID,'--matRad: Beam Model for machine %s (%s)--\n',machine.meta.machine,machine.meta.dataType);
-                    fprintf(fileID,'--UPenn beam model (double gaussian)--\n');
-                    fprintf(fileID,'# %s\n',machine.meta.description);
-                    fprintf(fileID,'# created by %s on %s\n\n',machine.meta.created_by,machine.meta.created_on);
-
-                    fprintf(fileID,'Nozzle exit to Isocenter distance\n');
-                    fprintf(fileID,'%.1f\n\n',obj.nozzleToIso);
-
-                    fprintf(fileID,'SMX to Isocenter distance\n');
-                    fprintf(fileID,'%.1f\n\n',obj.smx);
-
-                    fprintf(fileID,'SMY to Isocenter distance\n');
-                    fprintf(fileID,'%.1f\n\n',obj.smy);
-
-                    fprintf(fileID,'Beam parameters\n%d energies\n\n',size(selectedData,2));
-
-                    fn = fieldnames(selectedData);
-                    for names = 1:size(fn,1)
-                        fprintf(fileID, fn{names});
-                        fprintf(fileID, '\t');
-                    end
-                    fprintf(fileID, '\n');
-
-                    for k = 1:size(selectedData,2)
-                        for m = 1:numel(fn)
-                            fprintf(fileID, '%g', selectedData(k).(fn{m}));
-                            fprintf(fileID, '\t');
-                        end
-                        fprintf(fileID, '\n');
-                     end
-
-                    fclose(fileID);                                          
-
-                    obj.bdl_path = filepath;
-
-                catch MException
-                    error(MException.message);
+                for j = 1:stf.numOfBixelsPerRay(i)
+                    bixelEnergy = stf.ray(i).energy(j);
+                    [~,ixTmp,~] = intersect(energies, bixelEnergy);
+                    dataTOPAS(counter).energy = selectedData(ixTmp).MeanEnergy;
+                    dataTOPAS(counter).energySpread = selectedData(ixTmp).EnergySpread;
+                    dataTOPAS(counter).posX = stf.ray(i).rayPos_bev(1);
+                    dataTOPAS(counter).posY = stf.ray(i).rayPos_bev(3);
+                    dataTOPAS(counter).spotSize = selectedData(ixTmp).SpotSize1x;
+                    dataTOPAS(counter).spotSize = selectedData(ixTmp).SpotSize1x;
+                    dataTOPAS(counter).divergence = selectedData(ixTmp).Divergence1x;
+                    dataTOPAS(counter).correlation = selectedData(ixTmp).Correlation1x;
+                    
+                    counter = counter + 1;
+                    
                 end
-            elseif TOPAS
+            end
+            
+            [~,ixSorted] = sort([dataTOPAS(:).energy])
+            dataTOPAS = dataTOPAS(ixSorted);
+            
+            
+            
+
                 try 
                     fileID = fopen('testFileTopas','w');
 
@@ -405,9 +384,72 @@ classdef MatRad_MCsquareBaseData
                 catch MException
                     error(MException.message);
                 end
-                    
             end
+        
+            
+        function obj = writeMCsquareData(obj,filepath)
+            %writeToBDLfile write the base data to file "filepath"
+            
+            %look up focus indices
+            focusIndex = obj.selectedFocus(obj.energyIndex);
+            
+            %save mcData acording to used focus index in dataTable
+            selectedData = [];
+            for i = 1:numel(focusIndex)
+                
+                selectedData = [selectedData, obj.mcSquareData(focusIndex(i), i)];
+            end
+                                    
+            machine = obj.machine;
+            
+            selectedData = rmfield(selectedData, 'FWHMatIso');
+                
+            try
+
+                fileID = fopen(filepath,'w');
+
+                %Header
+                %fprintf(fileID,'--matRad: Beam Model for machine %s (%s)--\n',machine.meta.machine,machine.meta.dataType);
+                fprintf(fileID,'--UPenn beam model (double gaussian)--\n');
+                fprintf(fileID,'# %s\n',machine.meta.description);
+                fprintf(fileID,'# created by %s on %s\n\n',machine.meta.created_by,machine.meta.created_on);
+
+                fprintf(fileID,'Nozzle exit to Isocenter distance\n');
+                fprintf(fileID,'%.1f\n\n',obj.nozzleToIso);
+
+                fprintf(fileID,'SMX to Isocenter distance\n');
+                fprintf(fileID,'%.1f\n\n',obj.smx);
+
+                fprintf(fileID,'SMY to Isocenter distance\n');
+                fprintf(fileID,'%.1f\n\n',obj.smy);
+
+                fprintf(fileID,'Beam parameters\n%d energies\n\n',size(selectedData,2));
+
+                fn = fieldnames(selectedData);
+                for names = 1:size(fn,1)
+                    fprintf(fileID, fn{names});
+                    fprintf(fileID, '\t');
+                end
+                fprintf(fileID, '\n');
+
+                for k = 1:size(selectedData,2)
+                    for m = 1:numel(fn)
+                        fprintf(fileID, '%g', selectedData(k).(fn{m}));
+                        fprintf(fileID, '\t');
+                    end
+                    fprintf(fileID, '\n');
+                 end
+
+                fclose(fileID);                                          
+
+                obj.bdl_path = filepath;
+
+            catch MException
+                error(MException.message);
+            end
+            
         end
+        
           
         function obj = saveMatradMachine(obj,name)
             %save previously calculated mcSquareData in new baseData file

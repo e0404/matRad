@@ -270,7 +270,7 @@ bdFile = [machine.meta.machine '.txt'];
 MCsquareBDL = MatRad_MCsquareBaseData(machine);
 %matRad_createMCsquareBaseDataFile(bdFile,machine,1);
 % MCsquareBDL = MCsquareBDL.saveMatradMachine('test');
-MCsquareBDL = MCsquareBDL.writeToBDLfile([MCsquareFolder filesep 'BDL' filesep bdFile], stf);
+MCsquareBDL = MCsquareBDL.writeToBDLfile([MCsquareFolder filesep 'BDL' filesep bdFile]);
 %movefile(bdFile,[MCsquareFolder filesep 'BDL/' bdFile]);
 % MCsquareBDL = MCsquareBDL.saveMatradMachine('testMachine');
 
