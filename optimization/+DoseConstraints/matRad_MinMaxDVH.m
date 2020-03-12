@@ -101,8 +101,9 @@ classdef matRad_MinMaxDVH < DoseConstraints.matRad_DoseConstraint
             
             % calculate scaling
             NoVoxels     = max(obj.voxelScalingRatio*numel(dose),10);
-            absDiffsort  = sort(abs(obj.parameters{1} - dose_sort));
-            deltaDoseMax = absDiffsort(ceil(NoVoxels/2));
+            absDiffsort  = sort(abs(obj.parameters{1} - dose_sort));                       
+            
+            deltaDoseMax = absDiffsort(min(ceil(NoVoxels/2),numel(dose)));
             
             % calclulate DVHC scaling
             DVHCScaling = min((log(1/obj.referenceScalingVal-1))/(2*deltaDoseMax),250);

@@ -66,8 +66,13 @@ classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
             % get exponent for EUD
             k = obj.parameters{2};
             
+            %numerical stability
+            dose(dose == 0) = 0.001;
+            
             % calculate power sum
             powersum = sum(dose.^k);
+                        
+            
             %This check is not needed since dose is always positive
             %if powersum > 0
             
