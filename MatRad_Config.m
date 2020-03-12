@@ -2,7 +2,7 @@ classdef MatRad_Config < handle
     %MatRad_Config MatRad Configuration
     
     properties
-        logLevel = 1;
+        logLevel = 3;
         propDoseCalc;
         messageLog = {};
         keepLog = false;
@@ -43,15 +43,13 @@ classdef MatRad_Config < handle
                     if obj.logLevel >= 2
                         warning(forwardArgs{:});
                     end
-                case{'info'}
-                    forwardArgs{1} = [forwardArgs{1} '\n'];
+                case{'info'}                    
                     if obj.logLevel >= 3
                         fprintf(forwardArgs{:});                    
                     end
-                case{'debug'}
-                    %forwardArgs{1}(end+1) = '\n';                    
+                case{'debug'}                    
                     if obj.logLevel >= 4
-                        forwardArgs{1} = ['DEBUG: ' forwardArgs{1} '\n'];
+                        forwardArgs{1} = ['DEBUG: ' forwardArgs{1}];
                         fprintf(forwardArgs{:});
                     end
                 otherwise
