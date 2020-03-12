@@ -67,15 +67,15 @@ elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
 %     dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,1000000);
-    resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),10000);
+    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,100000,0,0);
    
 end
 
 resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
-% resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
+resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
 
 resultGUI.physicalDose_MC = resultGUI_MC.physicalDose;
-% resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
+resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
 
 mcDose = reshape(resultGUI.physicalDose_MC, ct.cubeDim);
 anaDose = reshape(resultGUI.physicalDose, ct.cubeDim);
@@ -87,14 +87,3 @@ plot(anaIDD);
 hold on
 plot(mcIDD)
 hold off
-
-% figure
-% plot(reshape(anaDose(1,125,:),250,1));
-% hold on
-% plot(reshape(mcDose(1,125,:),250,1));
-% hold off
-
-
-
-[gammaCube,gammaPassRateCell] = matRad_gammaIndex(mcDose,anaDose,[ct.resolution.x,ct.resolution.y,ct.resolution.z],[2,2],round(ct.cubeDim(3)/2),3,'global',cst);
-

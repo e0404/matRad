@@ -28,6 +28,7 @@ classdef MatRad_MCsquareBaseData
         smy             %Scanning magnet y to isocenter Distance        
         mcSquareData    %MCsquare Phase space data struct
         selectedFocus   %array containing selected focus indices per energy
+        FWHMatIso       %array containing FWHM values at iscenter for every energy
     end
     
     properties (SetAccess = private)
@@ -109,7 +110,7 @@ classdef MatRad_MCsquareBaseData
                 %index
                 data = [];
                 energyData = obj.fitPhaseSpaceForEnergy(i);
-                
+                obj.FWHMatIso = [];
                 for j = 1:size(machine.data(i).initFocus.sigma,1)
                     
                     tmp = energyData;
@@ -234,6 +235,7 @@ classdef MatRad_MCsquareBaseData
             DivergenceAtNozzle  = sigmaT;
             SpotsizeAtNozzle    = sqrt(sigmaNull^2 - 2 * rho * sigmaNull * sigmaT * obj.nozzleToIso + sigmaT^2 * obj.nozzleToIso^2);
             CorrelationAtNozzle = (rho * sigmaNull - sigmaT * obj.nozzleToIso) / SpotsizeAtNozzle;
+            
 
             %save calcuated beam optics data in mcData
             mcDataOptics.ProtonsMU     = 1e6;
@@ -253,9 +255,10 @@ classdef MatRad_MCsquareBaseData
             mcDataOptics.SpotSize2y    = 0;
             mcDataOptics.Divergence2y  = 0;
             mcDataOptics.Correlation2y = 0;
+            mcDataOptics.FWHMatIso = 2.355 * sigmaNull;
         end
                           
-        function obj = writeToBDLfile(obj,filepath)
+        function obj = writeToBDLfile(obj,filepath,stf)
             %writeToBDLfile write the base data to file "filepath"
             
             %look up focus indices
@@ -270,48 +273,139 @@ classdef MatRad_MCsquareBaseData
                                     
             machine = obj.machine;
             
-            try
+            MCsquare = true;
+            TOPAS = false;
+            if MCsquare
+               selectedData = rmfield(selectedData, 'FWHMatIso');
                 
-                fileID = fopen(filepath,'w');
-                
-                %Header
-                %fprintf(fileID,'--matRad: Beam Model for machine %s (%s)--\n',machine.meta.machine,machine.meta.dataType);
-                fprintf(fileID,'--UPenn beam model (double gaussian)--\n');
-                fprintf(fileID,'# %s\n',machine.meta.description);
-                fprintf(fileID,'# created by %s on %s\n\n',machine.meta.created_by,machine.meta.created_on);
-                
-                fprintf(fileID,'Nozzle exit to Isocenter distance\n');
-                fprintf(fileID,'%.1f\n\n',obj.nozzleToIso);
-                
-                fprintf(fileID,'SMX to Isocenter distance\n');
-                fprintf(fileID,'%.1f\n\n',obj.smx);
-                
-                fprintf(fileID,'SMY to Isocenter distance\n');
-                fprintf(fileID,'%.1f\n\n',obj.smy);
-                
-                fprintf(fileID,'Beam parameters\n%d energies\n\n',size(selectedData,2));
-                
-                fn = fieldnames(selectedData);
-                for names = 1:size(fn,1)
-                    fprintf(fileID, fn{names});
-                    fprintf(fileID, '\t');
-                end
-                fprintf(fileID, '\n');
-                
-                for k = 1:size(selectedData,2)
-                    for m = 1:numel(fn)
-                        fprintf(fileID, '%g', selectedData(k).(fn{m}));
+                try
+
+                    fileID = fopen(filepath,'w');
+
+                    %Header
+                    %fprintf(fileID,'--matRad: Beam Model for machine %s (%s)--\n',machine.meta.machine,machine.meta.dataType);
+                    fprintf(fileID,'--UPenn beam model (double gaussian)--\n');
+                    fprintf(fileID,'# %s\n',machine.meta.description);
+                    fprintf(fileID,'# created by %s on %s\n\n',machine.meta.created_by,machine.meta.created_on);
+
+                    fprintf(fileID,'Nozzle exit to Isocenter distance\n');
+                    fprintf(fileID,'%.1f\n\n',obj.nozzleToIso);
+
+                    fprintf(fileID,'SMX to Isocenter distance\n');
+                    fprintf(fileID,'%.1f\n\n',obj.smx);
+
+                    fprintf(fileID,'SMY to Isocenter distance\n');
+                    fprintf(fileID,'%.1f\n\n',obj.smy);
+
+                    fprintf(fileID,'Beam parameters\n%d energies\n\n',size(selectedData,2));
+
+                    fn = fieldnames(selectedData);
+                    for names = 1:size(fn,1)
+                        fprintf(fileID, fn{names});
                         fprintf(fileID, '\t');
                     end
                     fprintf(fileID, '\n');
-                 end
 
-                fclose(fileID);                                          
-                
-                obj.bdl_path = filepath;
-                
-            catch MException
-                error(MException.message);
+                    for k = 1:size(selectedData,2)
+                        for m = 1:numel(fn)
+                            fprintf(fileID, '%g', selectedData(k).(fn{m}));
+                            fprintf(fileID, '\t');
+                        end
+                        fprintf(fileID, '\n');
+                     end
+
+                    fclose(fileID);                                          
+
+                    obj.bdl_path = filepath;
+
+                catch MException
+                    error(MException.message);
+                end
+            elseif TOPAS
+                try 
+                    fileID = fopen('testFileTopas','w');
+
+                    fprintf(fileID,'i:Ts/ShowHistoryCountAtInterval = 1500000\n');
+                    fprintf(fileID,'s:Sim/PlanLabel = "simData_matrad_plan_field1_run" + Ts/Seed\n');
+                    fprintf(fileID,'d:Sim/GantryAngle = %2.6f deg\n', stf.gantryAngle);
+                    fprintf(fileID,'d:Sim/CouchAngle = %2.6f deg\n', stf.couchAngle);
+                    fprintf(fileID,'s:Sim/ParticleName = "proton"\n');
+                    fprintf(fileID,'u:Sim/ParticleMass = 1.0\n');
+                    fprintf(fileID,'i:Sim/NbThreads = 0\n');
+                    fprintf(fileID,'d:Tf/TimelineStart = 0. ms\n');
+                    fprintf(fileID,'d:Tf/TimelineEnd = %i ms\n', 10 * size(selectedData,2));
+                    fprintf(fileID,'i:Tf/NumberOfSequentialTimes = %i\n', size(selectedData,2));
+                    fprintf(fileID,'dv:Tf/Beam/Spot/Times = %i', size(selectedData,2));
+                    for i = 1:size(selectedData,2)
+                        fprintf(fileID,' %.1f', i * 10);
+                    end
+                    fprintf(fileID,'\n');
+                    fprintf(fileID,'s:Tf/Beam/Energy/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/Energy/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'dv:Tf/Beam/Energy/Values = %i', size(selectedData,2));
+                    for i = 1:size(selectedData,2)
+                        fprintf(fileID,' %.6f', selectedData(i).MeanEnergy);
+                    end
+                    fprintf(fileID,'\n');
+                    fprintf(fileID,'s:Tf/Beam/FocusFWHM/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Times = Tf/Beam/Spot/Times ms');
+                    fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Values = %i', size(selectedData,2));
+                    for i = 1:size(selectedData,2)
+                        fprintf(fileID,' %.6f', selectedData(i).FWHMatIso);
+                    end
+                    fprintf(fileID,'\n');
+                    fprintf(fileID,'dv:Tf/Beam/AngleX/Values = %i', size(selectedData,2));
+                    for i = 1:size(selectedData,2)
+                        fprintf(fileID,' %.6f', 0);
+                    end
+                    fprintf(fileID,'\n');
+                    fprintf(fileID,'s:Tf/Beam/AngleY/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/AngleY/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'dv:Tf/Beam/AngleY/Values = %i', size(selectedData,2));
+                    for i = 1:size(selectedData,2)
+                                            fprintf(fileID,' %.6f', 0);
+                    end
+                    fprintf(fileID,'\n');
+                    fprintf(fileID,'s:Tf/Beam/PosX/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/PosX/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'dv:Tf/Beam/PosX/Values = %i', size(selectedData,2));
+                    for i = 1:size(selectedData,2)
+                                            fprintf(fileID,' %.6f', 0);
+                    end
+                    fprintf(fileID,'\n');
+                    fprintf(fileID,'s:Tf/Beam/PosY/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/PosY/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'dv:Tf/Beam/PosY/Values = %i', size(selectedData,2)); 
+                    for i = 1:size(selectedData,2)
+                                            fprintf(fileID,' %.6f', 0);
+                    end
+                    fprintf(fileID,'\n');
+                    fprintf(fileID,'s:Tf/Beam/Current/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/Current/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'iv:Tf/Beam/Current/Values = %i', size(selectedData,2)); 
+                    for i = 1:size(selectedData,2)
+                                            fprintf(fileID,' %i', 1000000);
+                    end
+                    fprintf(fileID,'\n');
+                    fprintf(fileID,'d:So/PencilBeam/BeamEnergy = Tf/Beam/Energy/Value MeV * Sim/ParticleMass\n');
+
+                    fprintf(fileID,'d:Ge/Patient/TransX      = %.6f mm\n', 61.189329);      %% needs to be fixed
+                    fprintf(fileID,'d:Ge/Patient/TransY      = %.6f mm\n', 30.323580);      %% needs to be fixed
+                    fprintf(fileID,'d:Ge/Patient/TransZ      = %.6f mm\n', -105.138052);    %% needs to be fixed
+                    fprintf(fileID,'d:Ge/Patient/RotX=0. deg\n');                           %% needs to be fixed
+                    fprintf(fileID,'d:Ge/Patient/RotY=0. deg\n');                           %% needs to be fixed
+                    fprintf(fileID,'d:Ge/Patient/RotZ=0. deg\n');                           %% needs to be fixed
+                    fprintf(fileID,'includeFile = ./matRad_RSPcube.txt\n');                  
+                    
+                    
+                    fprintf(fileID,'\n');
+                    
+                    fclose(fileID);                                          
+
+                catch MException
+                    error(MException.message);
+                end
+                    
             end
         end
           
