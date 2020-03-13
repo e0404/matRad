@@ -1251,7 +1251,7 @@ zoom(handles.figure1,'reset');
 axis(handles.axesFig,'tight');
 
 
-if handles.rememberCurrAxes
+if isfield(handles,'rememberCurrAxes') && handles.rememberCurrAxes
     axis(currAxes);
 end
 
