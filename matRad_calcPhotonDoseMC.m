@@ -390,7 +390,7 @@ end
 % show busy state
 %set(figureWait,'pointer','watch');
 
-absCalibrationFactor = nCasePerBixel / 2.633e-6; %Approximate!
+absCalibrationFactor = 1e11 / 2.633; %Approximate!
 
 fprintf('matRad: OmpMC photon dose calculation... \n');
 
