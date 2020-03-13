@@ -258,7 +258,7 @@ classdef MatRad_MCsquareBaseData
             mcDataOptics.FWHMatIso = 2.355 * sigmaNull;
         end
         
-        function obj = writeTopasData(obj,filepath,stf,w)
+        function obj = writeTopasData(obj,filepath,stf,fracHistories,w)
             %writeToBDLfile write the base data to file "filepath"
             
             %look up focus indices
@@ -288,7 +288,8 @@ classdef MatRad_MCsquareBaseData
                     dataTOPAS(counter).spotSize = selectedData(ixTmp).SpotSize1x;
                     dataTOPAS(counter).divergence = selectedData(ixTmp).Divergence1x;
                     dataTOPAS(counter).correlation = selectedData(ixTmp).Correlation1x;
-                    dataTOPAS(counter).w = w(counter);
+                    dataTOPAS(counter).current = fracHistories*round(1e6*w(counter));
+                    
                     counter = counter + 1;
                     
                 end
@@ -297,11 +298,8 @@ classdef MatRad_MCsquareBaseData
             [~,ixSorted] = sort([dataTOPAS(:).energy]);
             dataTOPAS = dataTOPAS(ixSorted);
             
-            
-            
-
                 try 
-                    fileID = fopen('testFileTopas.txt','w');
+                    fileID = fopen([filepath,'beamSetup_matRad_plan_field1.txt'],'w');
 
                     fprintf(fileID,'i:Ts/ShowHistoryCountAtInterval = 1500000\n');
                     fprintf(fileID,'s:Sim/PlanLabel = "simData_matrad_plan_field1_run" + Ts/Seed\n');
@@ -362,9 +360,7 @@ classdef MatRad_MCsquareBaseData
                     fprintf(fileID,'s:Tf/Beam/Current/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/Current/Times = Tf/Beam/Spot/Times ms\n');
                     fprintf(fileID,'iv:Tf/Beam/Current/Values = %i', stf.totalNumOfBixels); 
-                    for i = 1:stf.totalNumOfBixels
-                                            fprintf(fileID,' %i', 1000000);
-                    end
+                    fprintf(fileID,strjoin(string([dataTOPAS(:).current])));
                     fprintf(fileID,'\n');
                     fprintf(fileID,'d:So/PencilBeam/BeamEnergy = Tf/Beam/Energy/Value MeV * Sim/ParticleMass\n');
 
@@ -376,6 +372,14 @@ classdef MatRad_MCsquareBaseData
                     fprintf(fileID,'d:Ge/Patient/RotZ=0. deg\n');                           %% needs to be fixed
                     fprintf(fileID,'includeFile = ./matRad_RSPcube.txt\n');                  
                     
+                    fprintf(fileID,'###################\n\n#Beam\n');
+                    TOPAS_beamSetup = fopen(['TOPAS_beamSetup_generic_' pln.radiationMode '.txt'],'r');
+                    
+                    % copy standard values from TOPAS_beamSetup
+                    while ~feof(TOPAS_beamSetup)
+                        strLine = fgets(TOPAS_beamSetup); %# read line by line
+                        fprintf(fileID,'%s',strLine);
+                    end
                     
                     fprintf(fileID,'\n');
                     
