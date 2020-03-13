@@ -1,0 +1,77 @@
+1 hydrogen	# H
+2 carbon	# C
+3 nitrogen	# N
+4 oxygen	# O
+5 aluminium	# Al
+6 silicon	# Si
+7 phosphorus	# P
+8 calcium	# Ca
+9 iron		# Fe
+10 copper	# Cu
+11 tungsten	# W
+12 lead		# Pb
+
+
+13 Air
+14 Lung
+15 Adipose_Tissue
+16 Marrow_Yellow
+17 Water
+18 Breast
+19 Average_Soft_Tissue
+20 Gastrointestinal_Tract
+21 Lymph
+22 Marrow_Red
+23 Brain
+24 Pancreas
+25 Testis
+26 Kidney
+27 Muscle_Skeletal
+28 Ovary
+29 Thyroid
+30 Blood
+31 Heart
+32 Liver
+33 Spleen
+34 Eye_Lens
+35 Skin
+36 Cartilage
+37 Bone_Spongiosa
+38 Bone_Cortical
+
+
+39 Schneider_Air       
+40 Schneider_Lung
+41 Schneider_AT_AG_SI1    
+42 Schneider_AT_AG_SI2    
+43 Schneider_AT_AG_SI3    
+44 Schneider_AT_AG_SI4    
+45 Schneider_AT_AG_SI5    
+46 Schneider_SoftTissus   
+47 Schneider_ConnectiveTissue
+48 Schneider_Marrow_Bone01 
+49 Schneider_Marrow_Bone02 
+50 Schneider_Marrow_Bone03 
+51 Schneider_Marrow_Bone04 
+52 Schneider_Marrow_Bone05 
+53 Schneider_Marrow_Bone06 
+54 Schneider_Marrow_Bone07 
+55 Schneider_Marrow_Bone08 
+56 Schneider_Marrow_Bone09 
+57 Schneider_Marrow_Bone10 
+58 Schneider_Marrow_Bone11 
+59 Schneider_Marrow_Bone12 
+60 Schneider_Marrow_Bone13 
+61 Schneider_Marrow_Bone14 
+62 Schneider_Marrow_Bone15 
+
+63 Gammex_SB3_Bone
+64 PMMA
+65 Solid_water
+66 Lexan
+67 CFRP
+68 G10
+69 Polyurethane
+70 Polystyrene
+71 Pyrex
+72 RW3

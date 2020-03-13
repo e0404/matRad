@@ -1,0 +1,15 @@
+Name 			Blood
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.06000000 	 # in g/cm3 
+Electron_Density 	3.51080e+23 	 # in cm-3 
+Radiation_Length 	36.561320 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 6 	# mixture with 6 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	10.282258 
+Mixture_Component	2 	carbon		11.088710 
+Mixture_Component	3 	nitrogen	3.326613 
+Mixture_Component	4 	oxygen		75.100806 
+Mixture_Component	7 	phosphorus	0.100806 
+Mixture_Component	9 	iron		0.100806 

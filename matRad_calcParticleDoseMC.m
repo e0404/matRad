@@ -34,6 +34,9 @@ function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDi
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_cfg;
+matRad_cfg = MatRad_Config.instance();
+
 % check if valid machine
 if ~strcmp(pln.radiationMode,'protons') || ~strcmp(pln.machine,'generic_MCsquare')
     error('wrong radiation modality and/or machine.');    
@@ -48,6 +51,8 @@ end
 if nargin < 6
     calcDoseDirect = false;
 end
+
+env = matRad_getEnvironment();
 
 %% check if binaries are available
 %Executables for simulation
@@ -77,7 +82,7 @@ if ~calcDoseDirect && exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3
         
         currFolder = pwd;
         
-        if exist ('OCTAVE_VERSION', 'builtin')
+        if strcmp(env,'OCTAVE')
           ccName = eval('mkoctfile -p CXX');
         else
           myCCompiler = mex.getCompilerConfigurations('C','Selected');
@@ -100,7 +105,7 @@ if ~calcDoseDirect && exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3
         %For Octave, the flags will be set in the environment, while they
         %will be parsed as string arguments in MATLAB
         for flag = 1:size(flags,1)
-            if exist ('OCTAVE_VERSION', 'builtin')
+            if strcmp(env,'OCTAVE')
                 setenv(flags{flag,1},flags{flag,2});
             else
                 flagstring = [flagstring flags{flag,1} '="' flags{flag,2} '" '];
@@ -125,7 +130,7 @@ end
 % set and change to MCsquare binary folder
 currFolder = pwd;
 fullfilename = mfilename('fullpath');
-MCsquareFolder = [fullfilename(1:find(fullfilename==filesep,1,'last')) 'submodules' filesep 'MCsquare'];
+MCsquareFolder = [fullfilename(1:find(fullfilename==filesep,1,'last')) 'MCsquare' filesep 'bin'];
 
 % cd to MCsquare folder (necessary for binary)
 cd(MCsquareFolder);
@@ -143,9 +148,7 @@ if ~isfield(pln,'propDoseCalc') || ...
    ~isfield(pln.propDoseCalc,'doseGrid') || ...
    ~isfield(pln.propDoseCalc.doseGrid,'resolution')
     % default values
-    dij.doseGrid.resolution.x = 2.5; % [mm]
-    dij.doseGrid.resolution.y = 2.5; % [mm]
-    dij.doseGrid.resolution.z = 2.5;   % [mm]
+    dij.doseGrid.resolution = matRad_cfg.propDoseCalc.defaultResolution;
 else
     
     % check if using isotropic dose grid resolution in x and y direction
@@ -382,7 +385,17 @@ end
 delete([MCsquareConfig.CT_File(1:end-4) '.*']);
 delete('currBixels.txt');
 delete('MCsquareConfig.txt');
-eval(['rmdir ' MCsquareConfig.Output_Directory ' s']);
+
+%For Octave temporarily disable confirmation for recursive rmdir
+if strcmp(env,'OCTAVE')    
+    rmdirConfirmState = confirm_recursive_rmdir(0);
+end
+rmdir(MCsquareConfig.Output_Directory,'s');
+
+%Reset to old confirmatoin state
+if strcmp(env,'OCTAVE')
+    confirm_recursive_rmdir(rmdirConfirmState);
+end
 
 % cd back
 cd(currFolder);

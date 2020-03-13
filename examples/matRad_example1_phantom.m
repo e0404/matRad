@@ -20,7 +20,7 @@
 % (iii) generate a treatment plan for this phantom
 
 
-clc, clear, close all
+matRad_rc
 
 %% Create a CT image series
 xDim = 200;

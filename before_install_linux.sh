@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 sudo chmod +x runtests.sh
-sudo chmod +x submodules/MCsquare/MCsquare_linux
+sudo chmod +x MCsquare/bin/MCsquare_linux
 
 sudo apt-get update -qq
 sudo apt-get install gdb # to capture backtrace of eventual failures

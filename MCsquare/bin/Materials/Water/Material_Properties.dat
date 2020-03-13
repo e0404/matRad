@@ -1,0 +1,11 @@
+Name 			Water
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.00000000 	 # in g/cm3 
+Electron_Density 	3.34274e+23 	 # in cm-3 
+Radiation_Length 	36.082995 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 2 	# mixture with 2 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	11.189400 
+Mixture_Component	4 	oxygen		88.810600 

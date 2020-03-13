@@ -58,7 +58,7 @@ else
 end
 
 dvh = matRad_calcDVH(cst,doseCube,'cum');
-qi  = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param);
+qi  = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol);
 
 figure,set(gcf,'Color',[1 1 1]);
 subplot(2,1,1)

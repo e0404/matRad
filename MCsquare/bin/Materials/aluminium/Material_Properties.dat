@@ -1,0 +1,7 @@
+Name			aluminium
+Atomic_Weight		26.9815
+Density			2.6989		# in g/cm3
+Electron_Density	7831e20		# in cm-3
+Radiation_Length	24.0111		# in g/cm2
+
+Nuclear_Data		ICRU
