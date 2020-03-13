@@ -1,7 +1,8 @@
 classdef MatRad_MCsquareBaseData
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % matRad_MCsquareBaseData Maps the matRad base data to MCsquare base data /
-    % phase space file
+    % matRad_MCsquareBaseData calculates MonteCarlo base data and creates
+    % base data file either formatted for use by MCsquare or Topas
+    % 
     %
     %
     %
@@ -9,7 +10,7 @@ classdef MatRad_MCsquareBaseData
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % Copyright 2019 the matRad development team.
+    % Copyright 2020 the matRad development team.
     %
     % This file is part of the matRad project. It is subject to the license
     % terms in the LICENSE file found in the top-level directory of this
@@ -28,19 +29,18 @@ classdef MatRad_MCsquareBaseData
         smy             %Scanning magnet y to isocenter Distance
         mcSquareData    %MCsquare Phase space data struct
         selectedFocus   %array containing selected focus indices per energy
-        FWHMatIso       %array containing FWHM values at iscenter for every energy
     end
     
     properties (SetAccess = private)
-        stfCompressed
-        problemSigma
-        dataTable       %Optical beam parameter table used for BDL generation
+        stfCompressed   %measure whether function has additional info about
+                        %the stf
+        problemSigma    % = 1, when there was a problem calculating sigma
         energyIndex     %Indices of calculated energies
     end
     
     methods
         function obj = MatRad_MCsquareBaseData(machine,stf)
-            %MatRad_MCsquareBaseData Construct an instance of the MCsquare
+            %MatRad_MCsquareBaseData construct an instance of the MCsquare
             %Base data format using a focus index
             
             %stfCompressed states whether mcSquareData are calculated for
@@ -190,6 +190,7 @@ classdef MatRad_MCsquareBaseData
                 - 1.084418008735459e-11 * x^6 + 2.491796224784373e-09 * x^5 - 3.591462823163767e-07 * x^4 ...
                 + 3.232810400304542e-05 * x^3 - 1.584729282376364e-03 * x^2 + 5.228413840446568e-02 * x ...
                 - 6.547482267336220e-01;
+            
             % use formula deducted from Bragg Kleeman rule to calcuate
             % energy straggling given the total sigma and the range
             % straggling
@@ -255,11 +256,11 @@ classdef MatRad_MCsquareBaseData
             mcDataOptics.SpotSize2y    = 0;
             mcDataOptics.Divergence2y  = 0;
             mcDataOptics.Correlation2y = 0;
-            mcDataOptics.FWHMatIso = 2.355 * sigmaNull;
         end
         
         function obj = writeTopasData(obj,filepath,stf,fracHistories,w)
-            %writeToBDLfile write the base data to file "filepath"
+            %function that writes a data file containing stf specific data
+            %for a Monte Carlo simulation with TOPAS
             
             %look up focus indices
             focusIndex = obj.selectedFocus(obj.energyIndex);
@@ -275,6 +276,8 @@ classdef MatRad_MCsquareBaseData
                 machine = obj.machine;
                 
                 
+                %get beamlet properties for each bixel in the stf and write
+                %it into dataTOPAS
                 energies = [selectedData.NominalEnergy];
                 counter = 1;
                 for i = 1:stf(beamIdx).numOfRays
@@ -296,9 +299,11 @@ classdef MatRad_MCsquareBaseData
                     end
                 end
                 
+                %sort dataTOPA according to energy
                 [~,ixSorted] = sort([dataTOPAS(:).energy]);
                 dataTOPAS = dataTOPAS(ixSorted);
                 
+                %write TOPAS data base file
                 try
                     fileID = fopen([filepath,'beamSetup_matRad_plan_field',num2str(beamIdx),'.txt'],'w');
                     
@@ -392,14 +397,14 @@ classdef MatRad_MCsquareBaseData
             end
         end
         
-        
         function obj = writeMCsquareData(obj,filepath)
-            %writeToBDLfile write the base data to file "filepath"
+            %function that writes a data file containing Monte Carlo base
+            %data for a simulation with MCsquare
             
             %look up focus indices
             focusIndex = obj.selectedFocus(obj.energyIndex);
             
-            %save mcData acording to used focus index in dataTable
+            %save mcData acording to used focus index in selectedData
             selectedData = [];
             for i = 1:numel(focusIndex)
                 
@@ -410,6 +415,7 @@ classdef MatRad_MCsquareBaseData
             
             selectedData = rmfield(selectedData, 'FWHMatIso');
             
+            %write MCsqaure data base file
             try
                 
                 fileID = fopen(filepath,'w');
@@ -453,29 +459,27 @@ classdef MatRad_MCsquareBaseData
             catch MException
                 error(MException.message);
             end
-            
-            
-            
-            
-            function obj = saveMatradMachine(obj,name)
-                %save previously calculated mcSquareData in new baseData file
-                %with given name
-                
-                machine = obj.machine;
-                [~ ,energyIndex, ~] = intersect([obj.machine.data(:).energy], [obj.mcSquareData(:).NominalEnergy]);
-                
-                machineName = [obj.machine.meta.radiationMode, '_', name];
-                
-                count = 1;
-                for i = energyIndex'
-                    
-                    machine.data(i).mcSquareData = obj.mcSquareData(:,count);
-                    
-                    count = count + 1;
-                end
-                
-                save(strcat('../../', machineName, '.mat'),'machine');
+        end
+             
+        function obj = saveMatradMachine(obj,name)
+            %save previously calculated mcSquareData in new baseData file
+            %with given name
+
+            machine = obj.machine;
+            [~ ,energyIndex, ~] = intersect([obj.machine.data(:).energy], [obj.mcSquareData(:).NominalEnergy]);
+
+            machineName = [obj.machine.meta.radiationMode, '_', name];
+
+            count = 1;
+            for i = energyIndex'
+
+                machine.data(i).mcSquareData = obj.mcSquareData(:,count);
+
+                count = count + 1;
             end
+
+            save(strcat('../../', machineName, '.mat'),'machine');
         end
     end
+end
     
