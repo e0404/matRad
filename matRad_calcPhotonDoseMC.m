@@ -198,7 +198,7 @@ ompMCoptions.verbose = true;
 
 % start MC control          
 ompMCoptions.nHistories = nCasePerBixel;
-ompMCoptions.nBatches = 10;
+ompMCoptions.nBatches = 5;
 ompMCoptions.randomSeeds = [97 33];
 
 %start source definition      
@@ -390,14 +390,19 @@ end
 % show busy state
 %set(figureWait,'pointer','watch');
 
-absCalibrationFactor = 1e12 / 2.633; %Not fully validated!
+absCalibrationFactor = nCasePerBixel / 2.633e-6; %Approximate!
 
 fprintf('matRad: OmpMC photon dose calculation... \n');
 
 %run over all scenarios
 for s = 1:dij.numOfScenarios
     ompMCgeo.isoCenter = [stf(:).isoCenter];
-    dij.physicalDose{s} = absCalibrationFactor * omc_matrad(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
+    %[dij.physicalDose{s},dij.physicalDose_MCvar{s}] = omc_matrad(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
+    [dij.physicalDose{s}] = omc_matrad(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
+    dij.physicalDose{s} = dij.physicalDose{s} * absCalibrationFactor;
+    if isfield(dij,'physicalDose_MCvar')
+        dij.physicalDose_MCvar{s} = dij.physicalDose_MCvar{s} * absCalibrationFactor^2;
+    end
 end
 
 fprintf('matRad: MC photon dose calculation done!\n');
