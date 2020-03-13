@@ -13,28 +13,27 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% 
-% In this example we will show
+%% In this example we will show
 % (i) how to create arbitrary ct data (resolution, ct numbers)
 % (ii) how to create a cst structure containing the volume of interests of the phantom
 % (iii) generate a treatment plan for this phantom
 
-
-clc, clear, close all
+%% set matRad runtime configuration
+matRad_rc
 
 %% Create a CT image series
 xDim = 200;
 yDim = 200;
 zDim = 50;
 
-ct.cubeDim      = [yDim xDim zDim]; % second cube dimension represents the x-coordinate
+ct.cubeDim      = [xDim yDim zDim];
 ct.resolution.x = 2;
 ct.resolution.y = 2;
 ct.resolution.z = 3;
 ct.numOfCtScen  = 1;
  
 % create an ct image series with zeros - it will be filled later
-ct.cubeHU{1} = ones(ct.cubeDim) * -1000; % assign HU of Air
+ct.cubeHU{1} = ones(ct.cubeDim) * -1000;
 
 %% Create the VOI data for the phantom
 % Now we define structures a contour for the phantom and a target
@@ -57,21 +56,29 @@ cst{ixOAR,5}.alphaX      = 0.1000;
 cst{ixOAR,5}.betaX       = 0.0500;
 cst{ixOAR,5}.Priority    = 2;
 cst{ixOAR,5}.Visible     = 1;
-
-% define objective as struct for compatibility with GNU Octave I/O
-cst{ixOAR,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(10,30));
+cst{ixOAR,6}.type        = 'square overdosing';
+cst{ixOAR,6}.dose        = 30;
+cst{ixOAR,6}.penalty     = 10;
+cst{ixOAR,6}.EUD         = NaN;
+cst{ixOAR,6}.volume      = NaN;
+cst{ixOAR,6}.coverage    = NaN;
+cst{ixOAR,6}.robustness  = 'none';
 
 cst{ixPTV,5}.TissueClass = 1;
 cst{ixPTV,5}.alphaX      = 0.1000;
 cst{ixPTV,5}.betaX       = 0.0500;
 cst{ixPTV,5}.Priority    = 1;
 cst{ixPTV,5}.Visible     = 1;
+cst{ixPTV,6}.type        = 'square deviation';
+cst{ixPTV,6}.dose        = 60;
+cst{ixPTV,6}.penalty     = 50;
+cst{ixPTV,6}.EUD         = NaN;
+cst{ixPTV,6}.volume      = NaN;
+cst{ixPTV,6}.coverage    = NaN;
+cst{ixPTV,6}.robustness  = 'none';
 
-% define objective as struct for compatibility with GNU Octave I/O
-cst{ixPTV,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(10,30));
 
 %% Lets create either a cubic or a spheric phantom
-
 TYPE = 'spheric';   % either 'cubic' or 'spheric'
 
 % first the OAR
@@ -91,7 +98,7 @@ switch TYPE
       for x = xLowOAR:1:xHighOAR
          for y = yLowOAR:1:yHighOAR
             for z = zLowOAR:1:zHighOAR
-               cubeHelper(y,x,z) = 1;
+               cubeHelper(x,y,z) = 1;
             end
          end
       end
@@ -103,9 +110,9 @@ switch TYPE
       for x = 1:xDim
          for y = 1:yDim
             for z = 1:zDim
-               currPost = [y x z] - round([ct.cubeDim./2]);
+               currPost = [x y z] - round([ct.cubeDim./2]);
                if  sqrt(sum(currPost.^2)) < radiusOAR
-                  cubeHelper(y,x,z) = 1;
+                  cubeHelper(x,y,z) = 1;
                end
             end
          end
@@ -136,7 +143,7 @@ switch TYPE
       for x = xLowPTV:1:xHighPTV
          for y = yLowPTV:1:yHighPTV
             for z = zLowPTV:1:zHighPTV
-               cubeHelper(y,x,z) = 1;
+               cubeHelper(x,y,z) = 1;
             end
          end
       end
@@ -150,7 +157,7 @@ switch TYPE
             for z = 1:zDim
                currPost = [x y z] - round([ct.cubeDim./2]);
                if  sqrt(sum(currPost.^2)) < radiusPTV
-                  cubeHelper(y,x,z) = 1;
+                  cubeHelper(x,y,z) = 1;
                end
             end
          end
@@ -158,22 +165,24 @@ switch TYPE
       
 end
 
-
-
 % extract the voxel indices and save it in the cst
 cst{ixPTV,4}{1} = find(cubeHelper);
 
 
 % now we have ct data and cst data for a new phantom
-display(ct);
-display(cst);
+if param.logLevel == 1
+    display(ct);
+    display(cst);
+end
+
 
 %% Assign relative electron densities
 vIxOAR = cst{ixOAR,4}{1};
 vIxPTV = cst{ixPTV,4}{1};
 
-ct.cubeHU{1}(vIxOAR) = 1;
-ct.cubeHU{1}(vIxPTV) = 1;
+ct.cubeHU{1}(vIxOAR) = 1;  % assign HU of water
+ct.cubeHU{1}(vIxPTV) = 1;  % assign HU of water
+
 
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
@@ -190,13 +199,17 @@ pln.radiationMode = 'photons';
 pln.machine       = 'Generic';
 
 %%
-% Define the flavor of biological optimization for treatment planning along
-% with the quantity that should be used for optimization. Possible values 
-% are (none: physical dose based optimization; const_RBExD: constant RBE of 1.1; 
-% LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of 
-% RBE-weighted dose. As we use photons, we select 'none' as we want to optimize the 
-% physical dose.
-pln.propOpt.bioOptimization = 'none';                                              
+% Define the biological optimization model for treatment planning along
+% with the quantity that should be used for optimization. Possible model values 
+% are:
+% 'none':     physical optimization;
+% 'constRBE': constant RBE of 1.1; 
+% 'MCN':      McNamara-variable RBE model for protons; 
+% 'WED':      Wedenberg-variable RBE model for protons
+% 'LEM':      Local Effect Model 
+% and possible quantityOpt are 'physicalDose', 'effect' or 'RBExD'.
+modelName    = 'none';
+quantityOpt  = 'physicalDose';                                             
 
 %%
 % The remaining plan parameters are set like in the previous example files
@@ -209,30 +222,42 @@ pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter
 pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
 
-% dose calculation settings
-pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
+% retrieve bio model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
+
+% retrieve nominal scenario for dose calculation and optimziation
+pln.multScen = matRad_multScen(ct,'nomScen'); 
 
 %% Generate Beam Geometry STF
-stf = matRad_generateStf(ct,cst,pln);
+stf = matRad_generateStf(ct,cst,pln,param);
 
 %% Dose Calculation
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij = matRad_calcPhotonDose(ct,stf,pln,cst, param);
+
+%% Export dij matrix
+
+meta.delimiter = '\t';
+meta.numScen = 1;
+meta.individualFiles = false ;
+matRad_exportDij('dij.bin',dij,stf,meta);
+
 
 %% Inverse Optimization for intensity-modulated photon therapy
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
 
 %% Plot the resulting dose slice
-plane      = 3;
-slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-doseWindow = [0 max([resultGUI.physicalDose(:)])];
+if param.logLevel == 1
+    plane      = 3;
+    slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+    doseWindow = [0 max([resultGUI.physicalDose(:)])];
 
-figure,title('phantom plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
+    figure,title('phantom plan')
+    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
+
+end
 
 
 
