@@ -41,7 +41,7 @@ if nargin < 6
 end
 
 if nargin < 5
-    nCasePerBixel = 10000;
+    nCasePerBixel = 5000;
 end
 
 fileFolder = fileparts(mfilename('fullpath'));
@@ -64,7 +64,7 @@ if exist('omc_matrad','file') ~= 3
         end
         
         % Define src folder to include it in compilation flags
-        srcFolder = ['-I' fileFolder filesep 'submodules' filesep 'ompMC' filesep 'src'];
+        srcFolder = ['-I' fileFolder filesep 'ompMC' filesep 'src'];
                        
         %This needs to generalize better
         if ~isempty(strfind(ccName,'MSVC')) %Not use contains(...) because of octave
@@ -98,9 +98,9 @@ if exist('omc_matrad','file') ~= 3
         cd(ompMCFolder);
         
         mexCall = ['mex -largeArrayDims ' flagstring ' omc_matrad.c '];
-        mexCall = [mexCall fileFolder filesep 'submodules' filesep 'ompMC' filesep 'src' filesep 'ompmc.c '];
-        mexCall = [mexCall fileFolder filesep 'submodules' filesep 'ompMC' filesep 'src' filesep 'omc_utilities.c '];
-        mexCall = [mexCall fileFolder filesep 'submodules' filesep 'ompMC' filesep 'src' filesep 'omc_random.c '];
+        mexCall = [mexCall fileFolder filesep 'ompMC' filesep 'src' filesep 'ompmc.c '];
+        mexCall = [mexCall fileFolder filesep 'ompMC' filesep 'src' filesep 'omc_utilities.c '];
+        mexCall = [mexCall fileFolder filesep 'ompMC' filesep 'src' filesep 'omc_random.c '];
         
         disp(['Compiler call: ' mexCall]);
         eval(mexCall);
@@ -204,14 +204,14 @@ ompMCoptions.nBatches = 10;
 ompMCoptions.randomSeeds = [97 33];
 
 %start source definition      
-ompMCoptions.spectrumFile = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'spectra' filesep 'mohan6.spectrum'];
+ompMCoptions.spectrumFile = [fileFolder filesep 'ompMC' filesep 'spectra' filesep 'mohan6.spectrum'];
 ompMCoptions.monoEnergy   = 0.1; 
 ompMCoptions.charge       = 0;
                                                                     
 % start MC transport
-ompMCoptions.dataFolder   = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'data' filesep];
-ompMCoptions.pegsFile     = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'pegs4' filesep '700icru.pegs4dat'];
-ompMCoptions.pgs4formFile = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'pegs4' filesep 'pgs4form.dat'];
+ompMCoptions.dataFolder   = [fileFolder filesep 'ompMC' filesep 'data' filesep];
+ompMCoptions.pegsFile     = [fileFolder filesep 'ompMC' filesep 'pegs4' filesep '700icru.pegs4dat'];
+ompMCoptions.pgs4formFile = [fileFolder filesep 'ompMC' filesep 'pegs4' filesep 'pgs4form.dat'];
 
 ompMCoptions.global_ecut = 0.7;
 ompMCoptions.global_pcut = 0.010; 
@@ -220,10 +220,10 @@ ompMCoptions.global_pcut = 0.010;
 ompMCoptions.relDoseThreshold = 1 - matRad_cfg.propDoseCalc.defaultLateralCutOff;
 
 % Output folders
-ompMCoptions.outputFolder = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'output' filesep];
+ompMCoptions.outputFolder = [fileFolder filesep 'ompMC' filesep 'output' filesep];
 
 % Create Material Density Cube
-materialFile = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'data' filesep '700icru.pegs4dat'];
+materialFile = [fileFolder filesep 'ompMC' filesep 'data' filesep '700icru.pegs4dat'];
 material = cell(4,5);
 material{1,1} = 'AIR700ICRU';
 material{1,2} = -1024; 
