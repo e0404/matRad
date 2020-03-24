@@ -432,7 +432,7 @@ classdef MatRad_MCsquareBaseData
                 fprintf(fileID,'SMY to Isocenter distance\n');
                 fprintf(fileID,'%.1f\n\n',obj.smy);
                 
-                fprintf(fileID,'Beam parameters\n%d energies\n\n',stf.totalNumOfBixels);
+                fprintf(fileID,'Beam parameters\n%d energies\n\n',size(selectedData,2));
                 
                 fn = fieldnames(selectedData);
                 for names = 1:size(fn,1)
@@ -441,7 +441,7 @@ classdef MatRad_MCsquareBaseData
                 end
                 fprintf(fileID, '\n');
                 
-                for k = 1:stf.totalNumOfBixels
+                for k = 1:size(selectedData,2)
                     for m = 1:numel(fn)
                         fprintf(fileID, '%g', selectedData(k).(fn{m}));
                         fprintf(fileID, '\t');
