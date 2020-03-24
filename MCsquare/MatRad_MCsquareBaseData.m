@@ -2,7 +2,7 @@ classdef MatRad_MCsquareBaseData
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % matRad_MCsquareBaseData calculates MonteCarlo base data and creates
     % base data file either formatted for use by MCsquare or Topas
-    % 
+    %
     %
     %
     %
@@ -33,7 +33,7 @@ classdef MatRad_MCsquareBaseData
     
     properties (SetAccess = private)
         stfCompressed   %measure whether function has additional info about
-                        %the stf
+        %the stf
         problemSigma    % = 1, when there was a problem calculating sigma
         energyIndex     %Indices of calculated energies
     end
@@ -257,15 +257,20 @@ classdef MatRad_MCsquareBaseData
             mcDataOptics.Correlation2y = 0;
         end
         
-        function obj = writeTopasData(obj,filepath,stf,fracHistories,w)
+        function obj = writeTopasData(obj,filepath,ct,stf,pln,fracHistories,w,numOfRuns)
             %function that writes a data file containing stf specific data
             %for a Monte Carlo simulation with TOPAS
+            
+            if ~exist('numOfRuns','var')
+                % default: 5 runs
+                numOfRuns = 5;
+            end
             
             %look up focus indices
             focusIndex = obj.selectedFocus(obj.energyIndex);
             
-            for beamIdx = 1:length(stf)
-
+            for beamIx = 1:length(stf)
+                
                 selectedData = [];
                 for i = 1:numel(focusIndex)
                     
@@ -279,15 +284,15 @@ classdef MatRad_MCsquareBaseData
                 %it into dataTOPAS
                 energies = [selectedData.NominalEnergy];
                 counter = 1;
-                for i = 1:stf(beamIdx).numOfRays
+                for i = 1:stf(beamIx).numOfRays
                     
-                    for j = 1:stf(beamIdx).numOfBixelsPerRay(i)
-                        bixelEnergy = stf(beamIdx).ray(i).energy(j);
+                    for j = 1:stf(beamIx).numOfBixelsPerRay(i)
+                        bixelEnergy = stf(beamIx).ray(i).energy(j);
                         [~,ixTmp,~] = intersect(energies, bixelEnergy);
                         dataTOPAS(counter).energy = selectedData(ixTmp).MeanEnergy;
                         dataTOPAS(counter).energySpread = selectedData(ixTmp).EnergySpread;
-                        dataTOPAS(counter).posX = stf(beamIdx).ray(i).rayPos_bev(1);
-                        dataTOPAS(counter).posY = stf(beamIdx).ray(i).rayPos_bev(3);
+                        dataTOPAS(counter).posX = stf(beamIx).ray(i).rayPos_bev(1);
+                        dataTOPAS(counter).posY = stf(beamIx).ray(i).rayPos_bev(3);
                         dataTOPAS(counter).spotSize = selectedData(ixTmp).SpotSize1x;
                         dataTOPAS(counter).divergence = selectedData(ixTmp).Divergence1x;
                         dataTOPAS(counter).correlation = selectedData(ixTmp).Correlation1x;
@@ -304,67 +309,67 @@ classdef MatRad_MCsquareBaseData
                 
                 %write TOPAS data base file
                 try
-                    fileID = fopen([filepath,'beamSetup_matRad_plan_field',num2str(beamIdx),'.txt'],'w');
+                    fileID = fopen([filepath,'beamSetup_matRad_plan_field',num2str(beamIx),'.txt'],'w');
                     
                     fprintf(fileID,'i:Ts/ShowHistoryCountAtInterval = 1500000\n');
                     fprintf(fileID,'s:Sim/PlanLabel = "simData_matrad_plan_field1_run" + Ts/Seed\n');
-                    fprintf(fileID,'d:Sim/GantryAngle = %.6f deg\n', stf(beamIdx).gantryAngle);
-                    fprintf(fileID,'d:Sim/CouchAngle = %.6f deg\n', stf(beamIdx).couchAngle);
+                    fprintf(fileID,'d:Sim/GantryAngle = %.6f deg\n', stf(beamIx).gantryAngle);
+                    fprintf(fileID,'d:Sim/CouchAngle = %.6f deg\n', stf(beamIx).couchAngle);
                     fprintf(fileID,'s:Sim/ParticleName = "proton"\n');
                     fprintf(fileID,'u:Sim/ParticleMass = 1.0\n');
                     fprintf(fileID,'i:Sim/NbThreads = 0\n');
                     fprintf(fileID,'d:Tf/TimelineStart = 0. ms\n');
-                    fprintf(fileID,'d:Tf/TimelineEnd = %i ms\n', 10 * stf(beamIdx).totalNumOfBixels);
-                    fprintf(fileID,'i:Tf/NumberOfSequentialTimes = %i\n', stf(beamIdx).totalNumOfBixels);
-                    fprintf(fileID,'dv:Tf/Beam/Spot/Times = %i ', stf(beamIdx).totalNumOfBixels);
-                    fprintf(fileID,strjoin(string(linspace(10,stf(beamIdx).totalNumOfBixels*10,stf(beamIdx).totalNumOfBixels))));
+                    fprintf(fileID,'d:Tf/TimelineEnd = %i ms\n', 10 * stf(beamIx).totalNumOfBixels);
+                    fprintf(fileID,'i:Tf/NumberOfSequentialTimes = %i\n', stf(beamIx).totalNumOfBixels);
+                    fprintf(fileID,'dv:Tf/Beam/Spot/Times = %i ', stf(beamIx).totalNumOfBixels);
+                    fprintf(fileID,strjoin(string(linspace(10,stf(beamIx).totalNumOfBixels*10,stf(beamIx).totalNumOfBixels))));
                     fprintf(fileID,'\n');
                     fprintf(fileID,'s:Tf/Beam/Energy/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/Energy/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'dv:Tf/Beam/Energy/Values = %i ', stf(beamIdx).totalNumOfBixels);
+                    fprintf(fileID,'dv:Tf/Beam/Energy/Values = %i ', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string([dataTOPAS(:).energy])));
                     fprintf(fileID,'\n');
                     fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms');
-                    fprintf(fileID,'dv:Tf/Beam/EnergySpread/Values = %i ', stf(beamIdx).totalNumOfBixels);
+                    fprintf(fileID,'dv:Tf/Beam/EnergySpread/Values = %i ', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string([dataTOPAS(:).energySpread])));
                     fprintf(fileID,'\n');
                     fprintf(fileID,'s:Tf/Beam/Sigma/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/Sigma/Times = Tf/Beam/Spot/Times ms');
-                    fprintf(fileID,'dv:Tf/Beam/Sigma/Values = %i ', stf(beamIdx).totalNumOfBixels);
+                    fprintf(fileID,'dv:Tf/Beam/Sigma/Values = %i ', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string([dataTOPAS(:).spotSize])));
                     fprintf(fileID,'\n');
                     fprintf(fileID,'s:Tf/Beam/SigmaPrime/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/SigmaPrime/Times = Tf/Beam/Spot/Times ms');
-                    fprintf(fileID,'dv:Tf/Beam/SigmaPrime/Values = %i ', stf(beamIdx).totalNumOfBixels);
+                    fprintf(fileID,'dv:Tf/Beam/SigmaPrime/Values = %i ', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string([dataTOPAS(:).divergence])));
                     fprintf(fileID,'\n');
                     fprintf(fileID,'s:Tf/Beam/Correlation/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/Correlation/Times = Tf/Beam/Spot/Times ms');
-                    fprintf(fileID,'dv:Tf/Beam/Correlation/Values = %i ', stf(beamIdx).totalNumOfBixels);
+                    fprintf(fileID,'dv:Tf/Beam/Correlation/Values = %i ', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string([dataTOPAS(:).correlation])));
                     fprintf(fileID,'\n');
-                    fprintf(fileID,'dv:Tf/Beam/AngleX/Values = %i ', stf(beamIdx).totalNumOfBixels);
-                    fprintf(fileID,strjoin(string(num2str(zeros(stf(beamIdx).totalNumOfBixels,1),'%.6f'))));
+                    fprintf(fileID,'dv:Tf/Beam/AngleX/Values = %i ', stf(beamIx).totalNumOfBixels);
+                    fprintf(fileID,strjoin(string(num2str(zeros(stf(beamIx).totalNumOfBixels,1),'%.6f'))));
                     fprintf(fileID,'\n');
                     fprintf(fileID,'s:Tf/Beam/AngleY/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/AngleY/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'dv:Tf/Beam/AngleY/Values = %i', stf(beamIdx).totalNumOfBixels);
-                    fprintf(fileID,strjoin(string(num2str(zeros(stf(beamIdx).totalNumOfBixels,1),'%.6f'))));
+                    fprintf(fileID,'dv:Tf/Beam/AngleY/Values = %i', stf(beamIx).totalNumOfBixels);
+                    fprintf(fileID,strjoin(string(num2str(zeros(stf(beamIx).totalNumOfBixels,1),'%.6f'))));
                     fprintf(fileID,'\n');
                     fprintf(fileID,'s:Tf/Beam/PosX/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/PosX/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'dv:Tf/Beam/PosX/Values = %i', stf(beamIdx).totalNumOfBixels);
+                    fprintf(fileID,'dv:Tf/Beam/PosX/Values = %i', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string([dataTOPAS(:).posX])));
                     fprintf(fileID,'\n');
                     fprintf(fileID,'s:Tf/Beam/PosY/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/PosY/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'dv:Tf/Beam/PosY/Values = %i', stf(beamIdx).totalNumOfBixels);
+                    fprintf(fileID,'dv:Tf/Beam/PosY/Values = %i', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string([dataTOPAS(:).posY])));
                     fprintf(fileID,'\n');
                     fprintf(fileID,'s:Tf/Beam/Current/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/Current/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'iv:Tf/Beam/Current/Values = %i', stf(beamIdx).totalNumOfBixels);
+                    fprintf(fileID,'iv:Tf/Beam/Current/Values = %i', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string([dataTOPAS(:).current])));
                     fprintf(fileID,'\n');
                     fprintf(fileID,'d:So/PencilBeam/BeamEnergy = Tf/Beam/Energy/Value MeV * Sim/ParticleMass\n');
@@ -393,6 +398,30 @@ classdef MatRad_MCsquareBaseData
                 catch MException
                     error(MException.message);
                 end
+                
+                %write run scripts for TOPAS
+                try
+                    basematerial = '';
+                    if ~exist('machine') || ~isfield(machine.meta,'basematerial')
+                        warning('Base material not defined in base data. Using Water')
+                        basematerial = 'Water';
+                    else
+                        basematerial = machine.meta.basematerial;
+                    end
+                    
+                    matRad_exportCtTOPAS(ct, filepath, basematerial);
+                    
+                    for runIx = 1:numOfRuns
+                        fileID = fopen([filepath,'matRad_plan_field',num2str(beamIx),'_run',num2str(runIx),'.txt'],'w');
+                        fprintf(fileID,['i:Ts/Seed = ',num2str(runIx),'\n']);
+                        fprintf(fileID,'includeFile = MCexport\beamSetup_matRad_plan_field1.txt');
+                        fclose(fileID);
+                    end
+                    
+                catch MException
+                    error(MException.message);
+                end
+                
             end
         end
         
@@ -411,7 +440,7 @@ classdef MatRad_MCsquareBaseData
             end
             
             machine = obj.machine;
-                        
+            
             %write MCsqaure data base file
             try
                 
@@ -457,26 +486,26 @@ classdef MatRad_MCsquareBaseData
                 error(MException.message);
             end
         end
-             
+        
         function obj = saveMatradMachine(obj,name)
             %save previously calculated mcSquareData in new baseData file
             %with given name
-
+            
             machine = obj.machine;
             [~ ,energyIndex, ~] = intersect([obj.machine.data(:).energy], [obj.mcSquareData(:).NominalEnergy]);
-
+            
             machineName = [obj.machine.meta.radiationMode, '_', name];
-
+            
             count = 1;
             for i = energyIndex'
-
+                
                 machine.data(i).mcSquareData = obj.mcSquareData(:,count);
-
+                
                 count = count + 1;
             end
-
+            
             save(strcat('../../', machineName, '.mat'),'machine');
         end
     end
 end
-    
+
