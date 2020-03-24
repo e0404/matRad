@@ -110,7 +110,6 @@ classdef MatRad_MCsquareBaseData
                 %index
                 data = [];
                 energyData = obj.fitPhaseSpaceForEnergy(i);
-                obj.FWHMatIso = [];
                 for j = 1:size(machine.data(i).initFocus.sigma,1)
                     
                     tmp = energyData;
@@ -412,9 +411,7 @@ classdef MatRad_MCsquareBaseData
             end
             
             machine = obj.machine;
-            
-            selectedData = rmfield(selectedData, 'FWHMatIso');
-            
+                        
             %write MCsqaure data base file
             try
                 
