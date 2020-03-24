@@ -56,7 +56,7 @@ if exportRSPcube
   h = fopen(outfile,'w+');
 
   warning(['Using base material as ' medium])
-  fbase = fopen(['topas/materials/' medium '.txt'],'r');
+  fbase = fopen(['materials/' medium '.txt'],'r');
   while ~feof(fbase)
     strLine = fgets(fbase); %# read line by line
     fprintf(h,'%s',strLine);
