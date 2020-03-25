@@ -39,7 +39,7 @@ matRad_cfg = MatRad_Config.instance();
 
 % check if valid machine
 if ~strcmp(pln.radiationMode,'protons') || ~strcmp(pln.machine,'generic_MCsquare')
-    error('wrong radiation modality and/or machine.');    
+    matRad_cfg.dispError('Wrong radiation modality and/or machine. For now MCsquare requires machine generic_MCsquare!');    
 end
 
 
@@ -58,71 +58,32 @@ env = matRad_getEnvironment();
 %Executables for simulation
 if ispc
     if exist('MCSquare_windows.exe','file') ~= 2
-        error('Could not find MCsquare binary.\n');
+        matRad_cfg.dispError('Could not find MCsquare binary.\n');
     else
         mcSquareBinary = 'MCSquare_windows.exe';
     end
+elseif ismac
+    if exist('MCsquare_mac','file') ~= 2
+        matRad_cfg.dispError('Could not find MCsquare binary.\n');
+    else
+        mcSquareBinary = './MCsquare_mac';
+    end
+    %error('MCsquare binaries not available for mac OS.\n');
 elseif isunix
     if exist('MCsquare_linux','file') ~= 2
-        error('Could not find MCsquare binary.\n');
+        matRad_cfg.dispError('Could not find MCsquare binary.\n');
     else
         mcSquareBinary = './MCsquare_linux';
     end
-elseif ismac
-    error('MCsquare binaries not available for mac OS.\n');
 end
 
 %Mex interface for import of sparse matrix
-if ~calcDoseDirect && exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3   
+if ~calcDoseDirect && ~matRad_checkMexFileExists('matRad_sparseBeamletsReaderMCsquare')
+    matRad_cfg.dispWarning('Compiled sparse reader interface not found. Trying to compile it on the fly!');      
     try
-        disp('Compiled sparse reader interface not found. Compiling it on the fly!');
-        %Make sure we compile in the right directory
-        cFilePath = which('matRad_sparseBeamletsReaderMCsquare.cpp');
-        [mcSquareFolder,~,~] = fileparts(cFilePath);
-        
-        currFolder = pwd;
-        
-        if strcmp(env,'OCTAVE')
-          ccName = eval('mkoctfile -p CXX');
-        else
-          myCCompiler = mex.getCompilerConfigurations('C','Selected');
-          ccName = myCCompiler.ShortName;
-        end
-        
-        %This needs to generalize better
-        if ~isempty(strfind(ccName,'MSVC')) %Not use contains(...) because of octave
-            flags{1,1} = 'COMPFLAGS';
-            flags{1,2} = '/O2';
-        else
-            flags{1,1} = 'CXXFLAGS';
-            flags{1,2} = '-std=c++11 -O2';
-        end
-        
-        %flags = {};
-        %flagstring = '-g ';
-        flagstring = '';
-        
-        %For Octave, the flags will be set in the environment, while they
-        %will be parsed as string arguments in MATLAB
-        for flag = 1:size(flags,1)
-            if strcmp(env,'OCTAVE')
-                setenv(flags{flag,1},flags{flag,2});
-            else
-                flagstring = [flagstring flags{flag,1} '="' flags{flag,2} '" '];
-            end
-        end
-        
-        cd(mcSquareFolder);
-        
-        mexCall = ['mex -largeArrayDims ' flagstring ' matRad_sparseBeamletsReaderMCsquare.cpp'];
-        
-        disp(['Compiler call: ' mexCall]);
-        eval(mexCall);
-        
-        cd(currFolder);
-    catch
-        cd(currFolder);
-        error('Could not find/generate mex interface for reading the sparse matrix. Please compile it yourself.');
+        matRad_compileMCsquareSparseReader();        
+    catch MException
+        matRad_cfg.dispError('Could not find/generate mex interface for reading the sparse matrix. \nCause of error:\n%s\n Please compile it yourself.',MException.message);
     end
 end
 
@@ -156,8 +117,7 @@ else
         pln.propDoseCalc.doseGrid.resolution.x = mean([pln.propDoseCalc.doseGrid.resolution.x ...
                                                        pln.propDoseCalc.doseGrid.resolution.y]);
         pln.propDoseCalc.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.x;
-        warning(['Anisotropic resolution for dose calculation with MCsquare not possible\nUsing x = y = ' ...
-            num2str(pln.propDoseCalc.doseGrid.resolution.x) 'mm']);
+        matRad_cfg.dispWarning('Anisotropic resolution in axial plane for dose calculation with MCsquare not possible\nUsing x = y = %g mm\n',pln.propDoseCalc.doseGrid.resolution.x);
     end
 
     % take values from pln strcut
@@ -246,7 +206,7 @@ end
 
 if isequal(pln.propOpt.bioOptimization,'const_RBExD')
             dij.RBE = 1.1;
-            fprintf(['matRad: Using a constant RBE of 1.1 \n']);
+            matRad_cfg.dispInfo('matRad: Using a constant RBE of %g\n',dij.RBE);
 end
 
 % MCsquare settings
@@ -340,7 +300,7 @@ for i = 1:length(stf)
 end
 
 if any(isnan(MCsquareOrder))
-    error('Wrong order')
+    matRad_cfg.dispError('Wrong order');
 end
 
 %% MC computation and dij filling
@@ -371,7 +331,7 @@ if MCsquareConfig.Beamlet_Mode
     dij.physicalDose{1} = dij.physicalDose{1}(:,MCsquareOrder);            
 end        
 
-fprintf('matRad: done!\n');
+matRad_cfg.dispInfo('matRad: done!\n');
 
 try
     % wait 0.1s for closing all waitbars

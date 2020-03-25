@@ -57,7 +57,7 @@ for i = 1:size(cst,1)
             try
                 obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
             catch
-                error(['cst{' num2str(i) ',6}{' num2str(j) '} is not a valid Objective/constraint! Remove or Replace and try again!']);
+                matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
             end
         end
         
@@ -124,7 +124,7 @@ elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt
 
     if ~isequal(dij.ax(dij.ax~=0),ax(dij.ax~=0)) || ...
        ~isequal(dij.bx(dij.bx~=0),bx(dij.bx~=0))
-         error(['Inconsistent biological parameter - please recalculate dose influence matrix']);
+         matRad_cfg.dispError('Inconsistent biological parameter - please recalculate dose influence matrix!\n');
     end
 
     for i = 1:size(cst,1)
@@ -132,7 +132,7 @@ elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt
         for j = 1:size(cst{i,6},2)
             % check if prescribed doses are in a valid domain
             if any(cst{i,6}{j}.getDoseParameters() > 5) && isequal(cst{i,3},'TARGET')
-                error('Reference dose > 10 Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.');
+                matRad_cfg.dispError('Reference dose > 10 Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.\n');
             end
             
         end

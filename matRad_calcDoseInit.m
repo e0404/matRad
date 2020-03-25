@@ -116,7 +116,7 @@ fileName = [pln.radiationMode '_' pln.machine];
 try
    load([fileparts(mfilename('fullpath')) filesep 'basedata' filesep fileName]);
 catch
-   error(['Could not find the following machine file: ' fileName ]); 
+   matRad_cfg.dispError('Could not find the following machine file: %s\n',fileName); 
 end
 
 % compute SSDs

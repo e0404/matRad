@@ -58,7 +58,7 @@ if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.b
         
 elseif isequal(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
             dij.RBE = 1.1;
-            fprintf(['matRad: Using a constant RBE of 1.1 \n']);   
+            matRad_cfg.dispInfo('matRad: Using a constant RBE of %g\n',dij.RBE);   
 end
 
 if isfield(pln,'propDoseCalc') && ...
@@ -81,7 +81,7 @@ if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.b
     
     if   isfield(machine.data,'alphaX') && isfield(machine.data,'betaX')
             
-        fprintf('matRad: loading biological base data... ');
+        matRad_cfg.dispInfo('matRad: loading biological base data... ');
         vTissueIndex = zeros(size(VdoseGrid,1),1);
         dij.ax       = zeros(dij.doseGrid.numOfVoxels,1);
         dij.bx       = zeros(dij.doseGrid.numOfVoxels,1);
@@ -108,19 +108,19 @@ if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.b
                     isInVdoseGrid = ismember(VdoseGrid,cst{i,4}{1});
                     vTissueIndex(isInVdoseGrid) = IdxTissue;
                 else
-                    error('biological base data and cst inconsistent\n');
+                    matRad_cfg.dispError('biological base data and cst inconsistent\n');
                 end
                     
             else
                     vTissueIndex(row) = 1;
-                    fprintf(['matRad: tissue type of ' cst{i,2} ' was set to 1 \n']);          
+                    matRad_cfg.dispInfo(['matRad: tissue type of ' cst{i,2} ' was set to 1\n']);          
             end
         end
-        fprintf('done.\n');
+        matRad_cfg.dispInfo('done.\n');
 
     else
         
-        error('base data is incomplement - alphaX and/or betaX is missing');
+        matRad_cfg.dispError('base data is incomplement - alphaX and/or betaX is missing');
         
     end
     
@@ -134,7 +134,7 @@ end
 % lateral cutoff for raytracing and geo calculations
 effectiveLateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
 
-fprintf('matRad: Particle dose calculation...\n');
+matRad_cfg.dispInfo('matRad: Particle dose calculation...\n');
 counter = 0;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -144,11 +144,11 @@ for i = 1:length(stf) % loop over all beams
     matRad_calcDoseInitBeam;
   
     % Determine lateral cutoff
-    fprintf('matRad: calculate lateral cutoff...');
+    matRad_cfg.dispInfo('matRad: calculate lateral cutoff...');
     cutOffLevel = matRad_cfg.propDoseCalc.defaultLateralCutOff;
     visBoolLateralCutOff = 0;
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
-    fprintf('done.\n');    
+    matRad_cfg.dispInfo('done.\n');    
 
     for j = 1:stf(i).numOfRays % loop over all rays
 
@@ -222,7 +222,7 @@ for i = 1:length(stf) % loop over all beams
                             (machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= radialDist_sq(currIx);
                     end
                 else
-                    error('cutoff must be a value between 0 and 1')
+                    matRad_cfg.dispError('cutoff must be a value between 0 and 1')
                 end
                 
                 % empty bixels may happen during recalculation of error

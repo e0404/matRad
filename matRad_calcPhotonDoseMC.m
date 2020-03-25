@@ -46,118 +46,16 @@ end
 
 fileFolder = fileparts(mfilename('fullpath'));
 
-%%
-if exist('omc_matrad','file') ~= 3    
-    try
-        disp('Compiled interface not found. Compiling the ompMC interface on the fly!');
-        %Make sure we compile in the right directory
-        cFilePath = which('omc_matrad.c');
-        [ompMCFolder,~,~] = fileparts(cFilePath);
-        
-        currFolder = pwd;
-        
-        if exist ('OCTAVE_VERSION','builtin')
-          ccName = eval('mkoctfile -p CC');
-        else
-          myCCompiler = mex.getCompilerConfigurations('C','Selected');
-          ccName = myCCompiler.ShortName;
-        end
-        
-        % Define src folder to include it in compilation flags
-        srcFolder = ['-I' fileFolder filesep 'submodules' filesep 'ompMC' filesep 'src'];
-                       
-        %This needs to generalize better
-        if ~isempty(strfind(ccName,'MSVC')) %Not use contains(...) because of octave
-            flags{1,1} = 'COMPFLAGS';
-            flags{1,2} = [srcFolder ' $COMPFLAGS /openmp'];
-            flags{2,1} = 'OPTIMFLAGS';
-            flags{2,2} = '$OPTIMFLAGS /O2';
-            %flags = [optPrefix 'COMPFLAGS="$COMPFLAGS /openmp" ' optPrefix 'OPTIMFLAGS="$OPTIMFLAGS /O2"'];
-        else
-            flags{1,1} = 'CFLAGS';
-            flags{1,2} = [srcFolder ' -std=gnu99 -fopenmp -O2 -fPIC'];
-            flags{2,1} = 'LDFLAGS';
-            flags{2,2} = '$LDFLAGS -fopenmp';
-            %flags = [optPrefix 'CFLAGS="$CFLAGS -fopenmp -O2" ' optPrefix 'LDFLAGS="$LDFLAGS -fopenmp"'];
-        end
-        
-        %flags = {};
-        %flagstring = '-g ';
-        flagstring = '';
-        
-        %For Octave, the flags will be set in the environment, while they
-        %will be parsed as string arguments in MATLAB
-        for flag = 1:size(flags,1)
-            if exist ('OCTAVE_VERSION','builtin')
-                setenv(flags{flag,1},flags{flag,2});
-            else
-                flagstring = [flagstring flags{flag,1} '="' flags{flag,2} '" '];
-            end
-        end
-        
-        cd(ompMCFolder);
-        
-        mexCall = ['mex -largeArrayDims ' flagstring ' omc_matrad.c '];
-        mexCall = [mexCall fileFolder filesep 'submodules' filesep 'ompMC' filesep 'src' filesep 'ompmc.c '];
-        mexCall = [mexCall fileFolder filesep 'submodules' filesep 'ompMC' filesep 'src' filesep 'omc_utilities.c '];
-        mexCall = [mexCall fileFolder filesep 'submodules' filesep 'ompMC' filesep 'src' filesep 'omc_random.c '];
-        
-        disp(['Compiler call: ' mexCall]);
-        eval(mexCall);
-        
-        cd(currFolder);
-    catch
-        cd(currFolder);
-        error('Could not find/generate mex interface for MC dose calculation. Please compile it yourself (preferably with OpenMP support)');
+if ~matRad_checkMexFileExists('omc_matrad') %exist('matRad_ompInterface','file') ~= 3    
+    matRad_cfg.dispWarning('Compiled mex interface not found. Trying to compile the ompMC interface on the fly!');    
+    try        
+        matRad_compileOmpMCInterface();
+    catch MException       
+        matRad_cfg.dispError('Could not find/generate mex interface for MC dose calculation.\nCause of error:\n%s\n Please compile it yourself (preferably with OpenMP support).',MException.message);
     end
 end
 
-
-% to guarantee downwards compatibility with data that does not have
-% ct.x/y/z
-if ~any(isfield(ct,{'x','y','z'}))
-    ct.x = ct.resolution.x*[1:ct.cubeDim(2)];
-    ct.y = ct.resolution.y*[1:ct.cubeDim(1)];
-    ct.z = ct.resolution.z*[1:ct.cubeDim(3)];
-end
-
-% set grids
-if ~isfield(pln,'propDoseCalc') || ...
-   ~isfield(pln.propDoseCalc,'doseGrid') || ...
-   ~isfield(pln.propDoseCalc.doseGrid,'resolution')
-    % default values
-    dij.doseGrid.resolution = matRad_cfg.propDoseCalc.defaultResolution;
-else
-    % take values from pln strcut
-    dij.doseGrid.resolution.x = pln.propDoseCalc.doseGrid.resolution.x;
-    dij.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.y;
-    dij.doseGrid.resolution.z = pln.propDoseCalc.doseGrid.resolution.z;
-end
-
-dij.doseGrid.x = ct.x(1):dij.doseGrid.resolution.x:ct.x(end);
-dij.doseGrid.y = ct.y(1):dij.doseGrid.resolution.y:ct.y(end);
-dij.doseGrid.z = ct.z(1):dij.doseGrid.resolution.z:ct.z(end);
-
-dij.doseGrid.dimensions  = [numel(dij.doseGrid.y) numel(dij.doseGrid.x) numel(dij.doseGrid.z)];
-dij.doseGrid.numOfVoxels = prod(dij.doseGrid.dimensions);
-
-dij.ctGrid.resolution.x = ct.resolution.x;
-dij.ctGrid.resolution.y = ct.resolution.y;
-dij.ctGrid.resolution.z = ct.resolution.z;
-
-dij.ctGrid.x = ct.x;
-dij.ctGrid.y = ct.y;
-dij.ctGrid.z = ct.z;
-
-dij.ctGrid.dimensions  = [numel(dij.ctGrid.x) numel(dij.ctGrid.y) numel(dij.ctGrid.z)];
-dij.ctGrid.numOfVoxels = prod(dij.ctGrid.dimensions);
-
-% meta information for dij
-dij.numOfBeams         = pln.propStf.numOfBeams;
-dij.numOfScenarios     = 1;
-dij.numOfRaysPerBeam   = [stf(:).numOfRays];
-dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
-dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
+matRad_calcDoseInit;
 
 % set up arrays for book keeping
 dij.bixelNum = NaN*ones(dij.totalNumOfBixels,1);
@@ -166,31 +64,6 @@ dij.beamNum  = NaN*ones(dij.totalNumOfBixels,1);
 
 dij.numHistoriesPerBeamlet = nCasePerBixel;
 
-% adjust isocenter internally for different dose grid
-offset = [dij.doseGrid.resolution.x - dij.ctGrid.resolution.x ...
-          dij.doseGrid.resolution.y - dij.ctGrid.resolution.y ...
-          dij.doseGrid.resolution.z - dij.ctGrid.resolution.z];
-    
-for i = 1:numel(stf)
-    stf(i).isoCenter = stf(i).isoCenter + offset;
-end
-
-% take only voxels inside patient
-VctGrid = [cst{:,4}];
-VctGrid = unique(vertcat(VctGrid{:}));
-
-% ignore densities outside of contours
-eraseCtDensMask = ones(dij.ctGrid.numOfVoxels,1);
-eraseCtDensMask(VctGrid) = 0;
-for i = 1:ct.numOfCtScen
-    ct.cubeHU{i}(eraseCtDensMask == 1) = -1024;
-end
-
-% downsample ct
-for s = 1:dij.numOfScenarios
-    HUcube{s} =  matRad_interp3(dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,ct.cubeHU{s}, ...
-                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest');
-end
 
 %% Setup OmpMC options / parameters
 
@@ -249,13 +122,16 @@ material{4,5} = 2.088;
 % conversion from HU to densities & materials
 for s = 1:dij.numOfScenarios
 
+    HUcube{s} =  matRad_interp3(dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,ct.cubeHU{s}, ...
+                            dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest');
+    
     % projecting out of bounds HU values where necessary
     if max(HUcube{s}(:)) > material{end,3}
-        warning('projecting out of range HU values');
+        matRad_cfg.dispWarning('Projecting out of range HU values');
         HUcube{s}(HUcube{s}(:) > material{end,3}) = material{end,3};
     end
     if min(HUcube{s}(:)) < material{1,2}
-        warning('projecting out of range HU values');
+        matRad_cfg.dispWarning('Projecting out of range HU values');
         HUcube{s}(HUcube{s}(:) < material{1,2}) = material{1,2};
     end
 
@@ -394,7 +270,7 @@ end
 
 absCalibrationFactor = 1e11 / 2.633; %Approximate!
 
-fprintf('matRad: OmpMC photon dose calculation... \n');
+matRad_cfg.dispInfo('matRad: OmpMC photon dose calculation... \n');
 
 %run over all scenarios
 for s = 1:dij.numOfScenarios
@@ -407,8 +283,8 @@ for s = 1:dij.numOfScenarios
     end
 end
 
-fprintf('matRad: MC photon dose calculation done!\n');
-toc
+matRad_cfg.dispInfo('matRad: MC photon dose calculation done!\n');
+matRad_cfg.dispInfo(evalc('toc'));
 
 try
     % wait 0.1s for closing all waitbars

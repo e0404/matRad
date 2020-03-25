@@ -1,0 +1,220 @@
+<deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
+  <configuration build-checksum="4236383462" file="d:\git\matRad\matRad.prj" location="d:\git\matRad" name="matRad" preferred-package-location="d:\git\matRad\standalone\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
+    <param.appname>matRad</param.appname>
+    <param.icon>${PROJECT_ROOT}\matRad_resources\icon.ico</param.icon>
+    <param.icons>
+      <file>${PROJECT_ROOT}\matRad_resources\icon_48.png</file>
+      <file>${PROJECT_ROOT}\matRad_resources\icon_32.png</file>
+      <file>${PROJECT_ROOT}\matRad_resources\icon_24.png</file>
+      <file>${PROJECT_ROOT}\matRad_resources\icon_16.png</file>
+    </param.icons>
+    <param.version>2.2</param.version>
+    <param.authnamewatermark>matRad development team @ DKFZ</param.authnamewatermark>
+    <param.email>matRad@dkfz.de</param.email>
+    <param.company>German Cancer Research Center DKFZ</param.company>
+    <param.summary>matRad is an open source treatment planning system for radiation therapy written in Matlab.</param.summary>
+    <param.description />
+    <param.screenshot>${PROJECT_ROOT}\standalone\matRad_splashscreen.png</param.screenshot>
+    <param.guid />
+    <param.installpath.string>\matRad</param.installpath.string>
+    <param.installpath.combo>option.installpath.programfiles</param.installpath.combo>
+    <param.logo>${PROJECT_ROOT}\standalone\matRad_installscreen.png</param.logo>
+    <param.install.notes />
+    <param.intermediate>${PROJECT_ROOT}\standalone\for_testing</param.intermediate>
+    <param.output>${PROJECT_ROOT}\standalone\for_redistribution</param.output>
+    <param.user.defined.mcr.options />
+    <param.embed.ctf>true</param.embed.ctf>
+    <param.server.ctf>${PROJECT_ROOT}\standalone\for_testing\.ctf</param.server.ctf>
+    <param.server.readme>${PROJECT_ROOT}\standalone\for_testing\readme.txt</param.server.readme>
+    <param.target.type>subtarget.standalone</param.target.type>
+    <param.support.packages />
+    <param.web.mcr>true</param.web.mcr>
+    <param.package.mcr>false</param.package.mcr>
+    <param.no.mcr>false</param.no.mcr>
+    <param.web.mcr.name>matRad_installerWin64</param.web.mcr.name>
+    <param.package.mcr.name>MyAppInstaller_mcr</param.package.mcr.name>
+    <param.no.mcr.name>MyAppInstaller_app</param.no.mcr.name>
+    <param.windows.command.prompt>false</param.windows.command.prompt>
+    <param.create.log>true</param.create.log>
+    <param.log.file>matRad_consoleOutput.log</param.log.file>
+    <unset>
+      <param.description />
+      <param.guid />
+      <param.installpath.combo />
+      <param.install.notes />
+      <param.user.defined.mcr.options />
+      <param.embed.ctf />
+      <param.server.ctf />
+      <param.server.readme />
+      <param.target.type />
+      <param.support.packages />
+      <param.web.mcr />
+      <param.package.mcr />
+      <param.no.mcr />
+      <param.package.mcr.name />
+      <param.no.mcr.name />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}\matRadGUI.m</file>
+    </fileset.main>
+    <fileset.resources>
+      <file>${PROJECT_ROOT}\carbon_Generic.mat</file>
+      <file>${PROJECT_ROOT}\dicomImport\DKFZ_Logo.png</file>
+      <file>${PROJECT_ROOT}\dicomImport\hlutLibrary\matRad_default_carbon.hlut</file>
+      <file>${PROJECT_ROOT}\dicomImport\hlutLibrary\matRad_default_photons.hlut</file>
+      <file>${PROJECT_ROOT}\dicomImport\hlutLibrary\matRad_default_protons.hlut</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_calcHU.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_calcWaterEqD.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_convRtssContours2Indices.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_createCst.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_dummyCst.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_importDicom.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_importDicomCt.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_importDicomGUI.fig</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_importDicomGUI.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_importDicomRTDose.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_importDicomRTPlan.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_importDicomRtss.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_importDicomSteeringParticles.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_importDicomSteeringPhotons.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_importFieldShapes.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_interpDicomCtCube.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_interpDicomDoseCube.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_listAllFiles.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_loadHLUT.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matrad_logo.png</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_progress.m</file>
+      <file>${PROJECT_ROOT}\dicomImport\matRad_scanDicomImportFolder.m</file>
+      <file>${PROJECT_ROOT}\IO\matRad_exportGUI.fig</file>
+      <file>${PROJECT_ROOT}\IO\matRad_exportGUI.m</file>
+      <file>${PROJECT_ROOT}\IO\matRad_importGUI.fig</file>
+      <file>${PROJECT_ROOT}\IO\matRad_importGUI.m</file>
+      <file>${PROJECT_ROOT}\IO\matRad_importPatient.m</file>
+      <file>${PROJECT_ROOT}\IO\matRad_readCube.m</file>
+      <file>${PROJECT_ROOT}\IO\matRad_readNRRD.m</file>
+      <file>${PROJECT_ROOT}\IO\matRad_writeCube.m</file>
+      <file>${PROJECT_ROOT}\IO\matRad_writeMHA.m</file>
+      <file>${PROJECT_ROOT}\IO\matRad_writeNRRD.m</file>
+      <file>${PROJECT_ROOT}\IO\matRad_writeVTK.m</file>
+      <file>${PROJECT_ROOT}\matRad_addMargin.m</file>
+      <file>${PROJECT_ROOT}\matRad_calcCubes.m</file>
+      <file>${PROJECT_ROOT}\matRad_calcDVH.m</file>
+      <file>${PROJECT_ROOT}\matRad_calcGeoDists.m</file>
+      <file>${PROJECT_ROOT}\matRad_calcLateralParticleCutOff.m</file>
+      <file>${PROJECT_ROOT}\matRad_calcLQParameter.m</file>
+      <file>${PROJECT_ROOT}\matRad_calcParticleDose.m</file>
+      <file>${PROJECT_ROOT}\matRad_calcParticleDoseBixel.m</file>
+      <file>${PROJECT_ROOT}\matRad_calcPhotonDose.m</file>
+      <file>${PROJECT_ROOT}\matRad_calcPhotonDoseBixel.m</file>
+      <file>${PROJECT_ROOT}\matRad_calcPhotonDoseConf.m</file>
+      <file>${PROJECT_ROOT}\matRad_calcPhotonDoseVmc.m</file>
+      <file>${PROJECT_ROOT}\matRad_calcQualityIndicators.m</file>
+      <file>${PROJECT_ROOT}\matRad_calcRadDepthCubes.m</file>
+      <file>${PROJECT_ROOT}\matRad_calcSigmaRashi.m</file>
+      <file>${PROJECT_ROOT}\matRad_computeSSD.m</file>
+      <file>${PROJECT_ROOT}\matRad_DijSampling.m</file>
+      <file>${PROJECT_ROOT}\matRad_directApertureOptimization.m</file>
+      <file>${PROJECT_ROOT}\matRad_dispToConsole.m</file>
+      <file>${PROJECT_ROOT}\matRad_electronDensitiesToHU.m</file>
+      <file>${PROJECT_ROOT}\matRad_engelLeafSequencing.m</file>
+      <file>${PROJECT_ROOT}\matRad_fluenceOptimization.m</file>
+      <file>${PROJECT_ROOT}\matRad_generateStf.m</file>
+      <file>${PROJECT_ROOT}\matRad_getIsoCenter.m</file>
+      <file>${PROJECT_ROOT}\matRad_getRotationMatrix.m</file>
+      <file>${PROJECT_ROOT}\matRad_indicatorWrapper.m</file>
+      <file>${PROJECT_ROOT}\matRad_interp1.m</file>
+      <file>${PROJECT_ROOT}\matRad_progress.m</file>
+      <file>${PROJECT_ROOT}\matRad_rayTracing.m</file>
+      <file>${PROJECT_ROOT}\matRad_sequencing2ApertureInfo.m</file>
+      <file>${PROJECT_ROOT}\matRad_setOverlapPriorities.m</file>
+      <file>${PROJECT_ROOT}\matRad_showDVH.m</file>
+      <file>${PROJECT_ROOT}\matRad_showQualityIndicators.m</file>
+      <file>${PROJECT_ROOT}\matRad_siddonRayTracer.m</file>
+      <file>${PROJECT_ROOT}\matRad_siochiLeafSequencing.m</file>
+      <file>${PROJECT_ROOT}\matRad_visApertureInfo.m</file>
+      <file>${PROJECT_ROOT}\matRad_xiaLeafSequencing.m</file>
+      <file>${PROJECT_ROOT}\matRadGUI.fig</file>
+      <file>${PROJECT_ROOT}\matRadGUI.m</file>
+      <file>${PROJECT_ROOT}\optimization\ipopt.m</file>
+      <file>${PROJECT_ROOT}\optimization\ipopt.mexmaci64</file>
+      <file>${PROJECT_ROOT}\optimization\ipopt.mexw32</file>
+      <file>${PROJECT_ROOT}\optimization\ipopt.mexw64</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_backProjection.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_calcInversDVH.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_collapseDij.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_constFunc.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_constFuncWrapper.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_CWKeyPressedCallback.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_daoApertureInfo2Vec.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_daoConstFunc.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_daoGetConstBounds.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_daoGetJacobStruct.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_daoGradFunc.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_daoJacobFunc.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_daoObjFunc.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_daoVec2ApertureInfo.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_getConstBounds.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_getConstBoundsWrapper.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_getJacobStruct.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_gradFunc.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_gradFuncWrapper.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_IpoptIterFunc.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_ipoptOptions.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_jacobFunc.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_jacobFuncWrapper.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_objFunc.m</file>
+      <file>${PROJECT_ROOT}\optimization\matRad_objFuncWrapper.m</file>
+      <file>${PROJECT_ROOT}\photons_Generic.mat</file>
+      <file>${PROJECT_ROOT}\plotting\colormaps\colormapTemplate.txt</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_computeAllVoiSurfaces.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_computeIsoDoseContours.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_computeVoiContours.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_computeVoiContoursWrapper.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_getColormap.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotAxisLabels.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotColorbar.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotCtSlice.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotCtSlice3D.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotDoseSlice.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotDoseSlice3D.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotIsoCenterMarker.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotIsoDoseLines.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotIsoDoseLines3D.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotPlan3D.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotVoiContourSlice.m</file>
+      <file>${PROJECT_ROOT}\plotting\matRad_plotVois3D.m</file>
+      <file>${PROJECT_ROOT}\protons_Generic.mat</file>
+      <file>${PROJECT_ROOT}\tools\matRad_getEnvironment.m</file>
+      <file>${PROJECT_ROOT}\vmc++\matRad_createVmcBatchFile.m</file>
+      <file>${PROJECT_ROOT}\vmc++\matRad_createVmcInput.m</file>
+      <file>${PROJECT_ROOT}\vmc++\matRad_exportCtVmc.m</file>
+      <file>${PROJECT_ROOT}\vmc++\matRad_readDoseVmc.m</file>
+    </fileset.resources>
+    <fileset.package />
+    <build-deliverables>
+      <file location="${PROJECT_ROOT}\standalone\for_testing" name="splash.png" optional="false">d:\git\matRad\standalone\for_testing\splash.png</file>
+      <file location="${PROJECT_ROOT}\standalone\for_testing" name="readme.txt" optional="true">d:\git\matRad\standalone\for_testing\readme.txt</file>
+      <file location="${PROJECT_ROOT}\standalone\for_testing" name="matRad.exe" optional="false">d:\git\matRad\standalone\for_testing\matRad.exe</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>C:\Program Files\MATLAB\R2014a</root>
+      <toolboxes />
+    </matlab>
+    <platform>
+      <unix>false</unix>
+      <mac>false</mac>
+      <windows>true</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>6.1</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>

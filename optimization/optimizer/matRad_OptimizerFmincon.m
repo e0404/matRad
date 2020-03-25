@@ -24,7 +24,8 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
     
     methods
         function obj = matRad_OptimizerFmincon
-            %matRad_OptimizerFmincon Construct an instance of this class            
+            %matRad_OptimizerFmincon 
+            %   Construct an instance of the fmincon optimizer from the Optimization Toolbox           
             
             obj.wResult = [];
             obj.resultInfo = [];

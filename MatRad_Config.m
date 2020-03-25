@@ -3,10 +3,17 @@ classdef MatRad_Config < handle
     
     properties
         logLevel = 3;
-        propDoseCalc;
-        messageLog = {};
-        keepLog = false;
+        propDoseCalc;        
+        keepLog = false;        
         %logToFile = [];
+    end
+    
+    properties (SetAccess = private)
+        messageLog = {};
+    end
+    
+    properties (Constant)
+        matRadRoot = fileparts(mfilename('fullpath'));
     end
     
     methods (Access = private)
@@ -22,6 +29,22 @@ classdef MatRad_Config < handle
     end
     
     methods
+        function dispDebug(obj,formatSpec,varargin)
+            obj.displayToConsole('debug',formatSpec,varargin{:});
+        end
+        
+        function dispInfo(obj,formatSpec,varargin)
+            obj.displayToConsole('info',formatSpec,varargin{:});
+        end
+        
+        function dispError(obj,formatSpec,varargin)
+            obj.displayToConsole('error',formatSpec,varargin{:});
+        end
+        
+        function dispWarning(obj,formatSpec,varargin)
+            obj.displayToConsole('warning',formatSpec,varargin{:});
+        end
+        
         function displayToConsole(obj,type,formatSpec,varargin)
             if nargin < 4
                 forwardArgs = {formatSpec};
