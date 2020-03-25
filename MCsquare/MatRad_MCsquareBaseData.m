@@ -323,54 +323,78 @@ classdef MatRad_MCsquareBaseData
                     fprintf(fileID,'i:Tf/NumberOfSequentialTimes = %i\n', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,'dv:Tf/Beam/Spot/Times = %i ', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string(linspace(10,stf(beamIx).totalNumOfBixels*10,stf(beamIx).totalNumOfBixels))));
-                    fprintf(fileID,'\n');
+                    fprintf(fileID,' ms\n');
                     fprintf(fileID,'s:Tf/Beam/Energy/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/Energy/Times = Tf/Beam/Spot/Times ms\n');
                     fprintf(fileID,'dv:Tf/Beam/Energy/Values = %i ', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string([dataTOPAS(:).energy])));
-                    fprintf(fileID,'\n');
+                    fprintf(fileID,' MeV\n');
                     fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
-                    fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms');
+                    fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
                     fprintf(fileID,'dv:Tf/Beam/EnergySpread/Values = %i ', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string([dataTOPAS(:).energySpread])));
-                    fprintf(fileID,'\n');
-                    fprintf(fileID,'s:Tf/Beam/Sigma/Function = "Step"\n');
-                    fprintf(fileID,'dv:Tf/Beam/Sigma/Times = Tf/Beam/Spot/Times ms');
-                    fprintf(fileID,'dv:Tf/Beam/Sigma/Values = %i ', stf(beamIx).totalNumOfBixels);
+                    fprintf(fileID,' MeV\n');
+                    
+                    fprintf(fileID,'s:So/Example/Type           = "Emittance"\n');
+                    fprintf(fileID,'s:So/Example/Distribution   = "BiGaussian"\n');
+                    
+                    fprintf(fileID,'s:Tf/Beam/SigmaX/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/SigmaX/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'dv:Tf/Beam/SigmaX/Values = %i ', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string([dataTOPAS(:).spotSize])));
-                    fprintf(fileID,'\n');
-                    fprintf(fileID,'s:Tf/Beam/SigmaPrime/Function = "Step"\n');
-                    fprintf(fileID,'dv:Tf/Beam/SigmaPrime/Times = Tf/Beam/Spot/Times ms');
-                    fprintf(fileID,'dv:Tf/Beam/SigmaPrime/Values = %i ', stf(beamIx).totalNumOfBixels);
+                    fprintf(fileID,' mm\n');
+                    fprintf(fileID,'s:Tf/Beam/SigmaXPrime/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/SigmaXPrime/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'dv:Tf/Beam/SigmaXPrime/Values = %i ', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string([dataTOPAS(:).divergence])));
                     fprintf(fileID,'\n');
-                    fprintf(fileID,'s:Tf/Beam/Correlation/Function = "Step"\n');
-                    fprintf(fileID,'dv:Tf/Beam/Correlation/Times = Tf/Beam/Spot/Times ms');
-                    fprintf(fileID,'dv:Tf/Beam/Correlation/Values = %i ', stf(beamIx).totalNumOfBixels);
+                    fprintf(fileID,'s:Tf/Beam/CorrelationX/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/CorrelationX/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'dv:Tf/Beam/CorrelationX/Values = %i ', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string([dataTOPAS(:).correlation])));
                     fprintf(fileID,'\n');
+                    
+                    fprintf(fileID,'s:Tf/Beam/SigmaY/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/SigmaY/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'dv:Tf/Beam/SigmaY/Values = %i ', stf(beamIx).totalNumOfBixels);
+                    fprintf(fileID,strjoin(string([dataTOPAS(:).spotSize])));
+                    fprintf(fileID,' mm\n');
+                    fprintf(fileID,'s:Tf/Beam/SigmaYPrime/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/SigmaYPrime/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'dv:Tf/Beam/SigmaYPrime/Values = %i ', stf(beamIx).totalNumOfBixels);
+                    fprintf(fileID,strjoin(string([dataTOPAS(:).divergence])));
+                    fprintf(fileID,'\n');
+                    fprintf(fileID,'s:Tf/Beam/CorrelationY/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/CorrelationY/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'dv:Tf/Beam/CorrelationY/Values = %i ', stf(beamIx).totalNumOfBixels);
+                    fprintf(fileID,strjoin(string([dataTOPAS(:).correlation])));
+                    fprintf(fileID,'\n');
+                    
+                    fprintf(fileID,'s:Tf/Beam/AngleX/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/AngleX/Times = Tf/Beam/Spot/Times ms\n');
                     fprintf(fileID,'dv:Tf/Beam/AngleX/Values = %i ', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string(num2str(zeros(stf(beamIx).totalNumOfBixels,1),'%.6f'))));
-                    fprintf(fileID,'\n');
+                    fprintf(fileID,' rad\n');
                     fprintf(fileID,'s:Tf/Beam/AngleY/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/AngleY/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'dv:Tf/Beam/AngleY/Values = %i', stf(beamIx).totalNumOfBixels);
+                    fprintf(fileID,'dv:Tf/Beam/AngleY/Values = %i ', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string(num2str(zeros(stf(beamIx).totalNumOfBixels,1),'%.6f'))));
-                    fprintf(fileID,'\n');
+                    fprintf(fileID,' rad\n');
                     fprintf(fileID,'s:Tf/Beam/PosX/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/PosX/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'dv:Tf/Beam/PosX/Values = %i', stf(beamIx).totalNumOfBixels);
+                    fprintf(fileID,'dv:Tf/Beam/PosX/Values = %i ', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string([dataTOPAS(:).posX])));
-                    fprintf(fileID,'\n');
+                    fprintf(fileID,' mm\n');
                     fprintf(fileID,'s:Tf/Beam/PosY/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/PosY/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'dv:Tf/Beam/PosY/Values = %i', stf(beamIx).totalNumOfBixels);
+                    fprintf(fileID,'dv:Tf/Beam/PosY/Values = %i ', stf(beamIx).totalNumOfBixels);
                     fprintf(fileID,strjoin(string([dataTOPAS(:).posY])));
-                    fprintf(fileID,'\n');
+                    fprintf(fileID,' mm\n');
+                    
                     fprintf(fileID,'s:Tf/Beam/Current/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/Current/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'iv:Tf/Beam/Current/Values = %i', stf(beamIx).totalNumOfBixels);
-                    fprintf(fileID,strjoin(string([dataTOPAS(:).current])));
+                    fprintf(fileID,'iv:Tf/Beam/Current/Values = %i ', stf(beamIx).totalNumOfBixels);
+                    fprintf(fileID,strjoin(string(round([dataTOPAS(:).current]))));
                     fprintf(fileID,'\n');
                     fprintf(fileID,'d:So/PencilBeam/BeamEnergy = Tf/Beam/Energy/Value MeV * Sim/ParticleMass\n');
                     
@@ -414,7 +438,7 @@ classdef MatRad_MCsquareBaseData
                     for runIx = 1:numOfRuns
                         fileID = fopen([filepath,'matRad_plan_field',num2str(beamIx),'_run',num2str(runIx),'.txt'],'w');
                         fprintf(fileID,['i:Ts/Seed = ',num2str(runIx),'\n']);
-                        fprintf(fileID,'includeFile = MCexport\beamSetup_matRad_plan_field1.txt');
+                        fprintf(fileID,'includeFile = ./beamSetup_matRad_plan_field1.txt');
                         fclose(fileID);
                     end
                     
