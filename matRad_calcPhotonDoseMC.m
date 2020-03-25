@@ -44,7 +44,7 @@ end
 fileFolder = fileparts(mfilename('fullpath'));
 
 %%
-if exist('matRad_ompInterface','file') ~= 3    
+if ~matRad_checkMexFileExists('matRad_ompInterface') %exist('matRad_ompInterface','file') ~= 3    
     try
         disp('Compiled interface not found. Compiling the ompMC interface on the fly!');
         %Make sure we compile in the right directory

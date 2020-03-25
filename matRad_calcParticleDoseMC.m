@@ -58,7 +58,12 @@ if ispc
         mcSquareBinary = 'MCSquare_windows.exe';
     end
 elseif ismac
-    error('MCsquare binaries not available for mac OS.\n');
+    if exist('MCsquare_mac','file') ~= 2
+        error('Could not find MCsquare binary.\n');
+    else
+        mcSquareBinary = './MCsquare_mac';
+    end
+    %error('MCsquare binaries not available for mac OS.\n');
 elseif isunix
     if exist('MCsquare_linux','file') ~= 2
         error('Could not find MCsquare binary.\n');
@@ -68,7 +73,7 @@ elseif isunix
 end
 
 %Mex interface for import of sparse matrix
-if ~calcDoseDirect && matRad_checkMexFileExists('matRad_sparseBeamletsReaderMCsquare') %exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3   
+if ~calcDoseDirect && ~matRad_checkMexFileExists('matRad_sparseBeamletsReaderMCsquare') %exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3   
     try
         disp('Compiled sparse reader interface not found. Compiling it on the fly!');
         %Make sure we compile in the right directory
