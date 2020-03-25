@@ -34,8 +34,8 @@ pln.machine         = 'generic_TOPAS_cropped';
 pln.numOfFractions  = 30;
 
 % beam geometry settings
-pln.propStf.bixelWidth      = 20; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.longitudinalSpotSpacing = 20;
+pln.propStf.bixelWidth      = 50; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.longitudinalSpotSpacing = 50;
 pln.propStf.gantryAngles    = 0; % [?] 
 pln.propStf.couchAngles     = 0; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);

@@ -29,6 +29,7 @@ classdef MatRad_MCsquareBaseData
         smy             %Scanning magnet y to isocenter Distance
         mcSquareData    %MCsquare Phase space data struct
         selectedFocus   %array containing selected focus indices per energy
+        FWHMatIso       %array containing FWHM values at iscenter for every energy
     end
     
     properties (SetAccess = private)
@@ -110,6 +111,7 @@ classdef MatRad_MCsquareBaseData
                 %index
                 data = [];
                 energyData = obj.fitPhaseSpaceForEnergy(i);
+                obj.FWHMatIso = [];
                 for j = 1:size(machine.data(i).initFocus.sigma,1)
                     
                     tmp = energyData;
@@ -255,6 +257,7 @@ classdef MatRad_MCsquareBaseData
             mcDataOptics.SpotSize2y    = 0;
             mcDataOptics.Divergence2y  = 0;
             mcDataOptics.Correlation2y = 0;
+            mcDataOptics.FWHMatIso = 2.355 * sigmaNull;
         end
         
         function obj = writeTopasData(obj,filepath,ct,stf,pln,fracHistories,w,numOfRuns)
@@ -463,6 +466,9 @@ classdef MatRad_MCsquareBaseData
                 selectedData = [selectedData, obj.mcSquareData(focusIndex(i), i)];
             end
             
+            %remove field not needed for MCsquare base data
+            selectedData = rmfield(selectedData, 'FWHMatIso');
+                           
             machine = obj.machine;
             
             %write MCsqaure data base file
