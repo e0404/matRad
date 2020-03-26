@@ -47,7 +47,7 @@ if ~fileExists && strcmp(env,'OCTAVE') && ~noLinkOctave
     
     sysInfo = uname();
         
-    if strcmp(sysInfo.sysname,'x86_64')
+    if strcmp(sysInfo.machine,'x86_64')
         bitExt = '64';
     else
         bitExt = '32';
