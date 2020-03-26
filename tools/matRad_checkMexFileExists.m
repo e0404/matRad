@@ -22,19 +22,30 @@ function fileExists = matRad_checkMexFileExists(filename,noLinkOctave)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if nargin < 2
+    noLinkOctave = false;
+end
   
 %Explicitly check for matching mex file (id 3)
 fileExists = (exist(filename,'file') == 3);
 
-if nargin < 2
-    noLinkOctave = false;
-end
+env = matRad_getEnvironment();
 
-if ~fileExists && strcmp(matRad_getEnvironment(),'OCTAVE') && ~noLinkOctave
-    
+if ~fileExists && strcmp(env,'OCTAVE') && ~noLinkOctave
+     
+    %{  
     [~,maxArraySize] = computer();
     
     if maxArraySize > 2^31
+        bitExt = '64';
+    else
+        bitExt = '32';
+    end
+    %}
+    
+    sysInfo = uname();
+        
+    if strcmp(sysInfo.sysname,'x86_64')
         bitExt = '64';
     else
         bitExt = '32';
@@ -47,7 +58,7 @@ if ~fileExists && strcmp(matRad_getEnvironment(),'OCTAVE') && ~noLinkOctave
     elseif isunix
         systemext = 'mexocta';
     else
-        error('No mex file for octave for your operating system. Compile it yourself.');
+         matRad_cfg.dispError('Mex file ''%s'' for octave not found for your operating system. Compile it yourself.',filename);
     end
     
     octfilename = [filename '.' systemext bitExt];
@@ -68,7 +79,7 @@ if ~fileExists && strcmp(matRad_getEnvironment(),'OCTAVE') && ~noLinkOctave
         link(octfilename, [filename '.mex']);
         
         cd(currFolder);
-        warning('You use a precompiled mex with Octave. This is experimental!');
+        matRad_cfg.dispWarning('Trying to use a precompiled mex for Octave. This is experimental!');
     end
 
 end
