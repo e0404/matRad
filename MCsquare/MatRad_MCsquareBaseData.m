@@ -487,7 +487,7 @@ classdef MatRad_MCsquareBaseData
                         basematerial = machine.meta.basematerial;
                     end
                     
-                    matRad_exportCtTOPAS(ct, filepath, basematerial);
+                    rspCube = matRad_exportCtTOPAS(ct, filepath, basematerial);
                     
                     for runIx = 1:numOfRuns
                         fileID = fopen([filepath,'matRad_plan_field',num2str(beamIx),'_run',num2str(runIx),'.txt'],'w');
@@ -496,6 +496,22 @@ classdef MatRad_MCsquareBaseData
                         fclose(fileID);
                     end
                     
+                catch MException
+                    error(MException.message);
+                end
+                
+                %write MCparam file with basic parameters
+                try
+                    MCparam.nbRuns = numOfRuns;
+                    MCparam.nbFields = length(stf);
+                    MCparam.tallies = {'physicalDose'};
+                    MCparam.simLabel = 'matRad_plan';
+                    MCparam.cubeDim = ct.cubeDim;
+                    MCparam.RSP = rspCube;
+                    MCparam.voxelDimensions = ct.resolution;
+                    MCparam.nbHistories = historyCount;
+                    MCparam.nbParticles = nbParticlesTotal;
+                    save([filepath,'MCparam.mat'],'MCparam');
                 catch MException
                     error(MException.message);
                 end

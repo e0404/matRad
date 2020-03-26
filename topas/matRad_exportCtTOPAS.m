@@ -1,4 +1,4 @@
-function matRad_exportCtTOPAS(ct, runsPath, basematerial)
+function [rspCube] = matRad_exportCtTOPAS(ct, runsPath, basematerial)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad export CT RSP data for TOPAS simulation
 %
