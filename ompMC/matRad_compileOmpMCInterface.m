@@ -42,7 +42,7 @@ end
 sourceFolder = [omcFolder filesep 'src'];
 interfaceFolder = [omcFolder filesep 'ucodes' filesep 'omc_matrad'];
 
-mainFile = [interfaceFolder filesep 'omc_matRad.c'];
+mainFile = [interfaceFolder filesep 'omc_matrad.c'];
 
 addFiles = {'ompmc.c','omc_utilities.c','omc_random.c'};
 addFiles = cellfun(@(f) fullfile(sourceFolder,f),addFiles,'UniformOutput',false);

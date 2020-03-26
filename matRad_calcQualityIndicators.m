@@ -104,7 +104,7 @@ for runVoi = 1:size(cst,1)
                    try
                        obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
                    catch ME
-                       warning('Objective/Constraint not valid!\n%s',ME.message)
+                       matRad_cfg.dispWarning('Objective/Constraint not valid!\n%s',ME.message)
                        continue;
                    end
                end
@@ -132,12 +132,10 @@ for runVoi = 1:size(cst,1)
                                    qi(runVoi).(['CI_' StringReferenceDose 'Gy']),qi(runVoi).(['HI_' StringReferenceDose 'Gy']),referenceDose);
             end
         end
-        matRad_cfg.displayToConsole('info',voiPrint);
+        matRad_cfg.dispInfo(voiPrint);
     
-    else
-        
-        matRad_cfg.displayToConsole('info','%d %s - No dose information.',num2str(cst{runVoi,1}),cst{runVoi,2});
-        
+    else        
+        matRad_cfg.dispInfo('%d %s - No dose information.',cst{runVoi,1},cst{runVoi,2});        
     end
 end
 

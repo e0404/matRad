@@ -41,7 +41,8 @@ if nargin < 6
 end
 
 if nargin < 5
-    nCasePerBixel = 10000;
+    nCasePerBixel = matRad_cfg.propMC.ompMC_defaultHistories;
+    matRad_cfg.dispInfo('Using default number of Histories per Bixel: %d\n',nCasePerBixel);
 end
 
 fileFolder = fileparts(mfilename('fullpath'));
@@ -68,7 +69,7 @@ dij.numHistoriesPerBeamlet = nCasePerBixel;
 %% Setup OmpMC options / parameters
 
 %display options
-ompMCoptions.verbose = true;
+ompMCoptions.verbose = matRad_cfg.logLevel > 2 ;
 
 % start MC control          
 ompMCoptions.nHistories = nCasePerBixel;

@@ -39,9 +39,14 @@ matRad_cfg = MatRad_Config.instance();
 % set log level accordingly if you do _not_ want to do unit testing
 if ~exist('unitTestBool','var') || ~unitTestBool
     matRad_cfg.logLevel  = 4;    
-% set log level accordingly if want to do unit testing
-else    
+else  % set log level (and default parameters) accordingly if want to do unit testing
     matRad_cfg.logLevel   = 1;
+    matRad_cfg.propStf.defaultLongitudinalSpotSpacing = 20;
+    matRad_cfg.propDoseCalc.defaultResolution = struct('x',5,'y',6,'z',7); %[mm]
     matRad_cfg.propDoseCalc.defaultGeometricCutOff = 20;
     matRad_cfg.propDoseCalc.defaultLateralCutOff = 0.8;
+    matRad_cfg.propOpt.defaultMaxIter = 10;
+    matRad_cfg.propMC.ompMC_defaultHistories = 100;
+    matRad_cfg.propMC.MCsquare_defaultHistories = 100;
+    matRad_cfg.propMC.direct_defaultHistories = 100;
 end

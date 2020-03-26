@@ -4,6 +4,9 @@ classdef MatRad_Config < handle
     properties
         logLevel = 3;
         propDoseCalc;        
+        propOpt;
+        propMC;
+        propStf;
         keepLog = false;        
         %logToFile = [];
     end
@@ -19,11 +22,21 @@ classdef MatRad_Config < handle
     methods (Access = private)
         function obj = MatRad_Config()
             %MatRad_Config Construct an instance of this class
+
+            obj.propStf.defaultLongitudinalSpotSpacing = 3;
             
             obj.propDoseCalc.defaultResolution = struct('x',3,'y',3,'z',3); %[mm]
             obj.propDoseCalc.defaultLateralCutOff = 0.995; %[rel.]
             obj.propDoseCalc.defaultGeometricCutOff = 50; %[mm]
             obj.propDoseCalc.ssdDensityThreshold = 0.05; %[rel.]
+            
+            obj.propOpt.defaultMaxIter = 500;
+            
+            obj.propMC.ompMC_defaultHistories = 1e6;
+            obj.propMC.MCsquare_defaultHistories = 1e6;
+            obj.propMC.direct_defaultHistories = 2e4;
+            
+
         end
                 
     end

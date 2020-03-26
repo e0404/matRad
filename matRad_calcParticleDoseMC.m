@@ -45,7 +45,8 @@ end
 
 if nargin < 5
     % set number of particles simulated per pencil beam
-    nCasePerBixel = 100000;
+    nCasePerBixel = matRad_cfg.propMC.MCsquare_defaultHistories;
+    matRad_cfg.dispInfo('Using default number of Histories per Bixel: %d\n',nCasePerBixel);
 end
 
 if nargin < 6

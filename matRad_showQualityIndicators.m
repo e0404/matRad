@@ -56,5 +56,5 @@ try
     set(table,'units','normalized','position',pos)
     axis off
 catch ME
-    warning('The uitable function is not implemented in %s v%s.',env,vStr);
+    matRad_cfg.dispWarning('The uitable function is not implemented in %s v%s.',env,vStr);
 end
