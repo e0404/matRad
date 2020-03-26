@@ -65,6 +65,7 @@ dij.beamNum  = NaN*ones(dij.totalNumOfBixels,1);
 
 dij.numHistoriesPerBeamlet = nCasePerBixel;
 
+omcFolder = [matRad_cfg.matRadRoot filesep 'ompMC'];
 
 %% Setup OmpMC options / parameters
 
@@ -78,14 +79,14 @@ ompMCoptions.nBatches = 10;
 ompMCoptions.randomSeeds = [97 33];
 
 %start source definition      
-ompMCoptions.spectrumFile = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'spectra' filesep 'mohan6.spectrum'];
+ompMCoptions.spectrumFile = [omcFolder filesep 'spectra' filesep 'mohan6.spectrum'];
 ompMCoptions.monoEnergy   = 0.1; 
 ompMCoptions.charge       = 0;
                                                                     
 % start MC transport
-ompMCoptions.dataFolder   = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'data' filesep];
-ompMCoptions.pegsFile     = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'pegs4' filesep '700icru.pegs4dat'];
-ompMCoptions.pgs4formFile = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'pegs4' filesep 'pgs4form.dat'];
+ompMCoptions.dataFolder   = [omcFolder filesep 'data' filesep];
+ompMCoptions.pegsFile     = [omcFolder filesep 'pegs4' filesep '700icru.pegs4dat'];
+ompMCoptions.pgs4formFile = [omcFolder filesep 'pegs4' filesep 'pgs4form.dat'];
 
 ompMCoptions.global_ecut = 0.7;
 ompMCoptions.global_pcut = 0.010; 
@@ -94,10 +95,10 @@ ompMCoptions.global_pcut = 0.010;
 ompMCoptions.relDoseThreshold = 1 - matRad_cfg.propDoseCalc.defaultLateralCutOff;
 
 % Output folders
-ompMCoptions.outputFolder = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'output' filesep];
+ompMCoptions.outputFolder = [omcFolder filesep 'output' filesep];
 
 % Create Material Density Cube
-materialFile = [fileFolder filesep 'submodules' filesep 'ompMC' filesep 'data' filesep '700icru.pegs4dat'];
+materialFile = [omcFolder filesep  'data' filesep '700icru.pegs4dat'];
 material = cell(4,5);
 material{1,1} = 'AIR700ICRU';
 material{1,2} = -1024; 
