@@ -30,6 +30,8 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+
 % issue warning if biological optimization impossible
 if sum(strcmp(pln.propOpt.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose')) && strcmp(pln.radiationMode,'carbon')
     warndlg('Alpha and beta matrices for effect based and RBE optimization not available - physical optimization is carried out instead.');

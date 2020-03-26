@@ -26,6 +26,8 @@ function matRad_showQualityIndicators(qi)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+
 [env, vStr] = matRad_getEnvironment();
     
 % Create the column and row names in cell arrays 
