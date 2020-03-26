@@ -31,6 +31,8 @@ function matRad_compileOmpMCInterface(dest,omcFolder)
 global matRad_cfg; 
 matRad_cfg = MatRad_Config.instance();
 
+env = matRad_getEnvironment();
+
 if nargin < 1
     dest = fileparts(mfilename('fullpath'));
 end
@@ -56,18 +58,19 @@ else
     ccName = myCCompiler.ShortName;
 end
 
-
 %This needs to generalize better
 if ~isempty(strfind(ccName,'MSVC')) %Not use contains(...) because of octave
     flags{1,1} = 'COMPFLAGS';
-    flags{1,2} = ['/I' sourceFolder ' $COMPFLAGS /openmp'];
+    flags{1,2} = [ '/openmp'];
     flags{2,1} = 'OPTIMFLAGS';
-    flags{2,2} = '$OPTIMFLAGS /O2';
+    flags{2,2} = '/O2';
+    includestring =  ['/I' sourceFolder];   
 else
     flags{1,1} = 'CFLAGS';
-    flags{1,2} = ['-I' sourceFolder ' -std=c99 -fopenmp -O2 -fPIC'];
+    flags{1,2} = '-std=gnu99 -fopenmp -O2';
     flags{2,1} = 'LDFLAGS';
     flags{2,2} = '-fopenmp';
+    includestring =  ['-I' sourceFolder];
 end
 
 flagstring = '';
@@ -75,14 +78,20 @@ flagstring = '';
 %For Octave, the flags will be set in the environment, while they
 %will be parsed as string arguments in MATLAB
 for flag = 1:size(flags,1)
-    if exist ('OCTAVE_VERSION','builtin')
-        setenv(flags{flag,1},flags{flag,2});
+    if strcmp(env,'OCTAVE')
+        preFlagContent = eval(['mkoctfile -p ' flags{flag,1}]);
+        if ~isempty(preFlagContent)
+            preFlagContent = preFlagContent(1:end-1); %Strip newline
+        end
+        newContent = [preFlagContent ' ' flags{flag,2}];
+        setenv(flags{flag,1},newContent);
+        matRad_cfg.dispDebug('Set compiler flag %s to %s\n',flags{flag,1},newContent);
     else
-        flagstring = [flagstring flags{flag,1} '="' flags{flag,2} '" '];
+        flagstring = [flagstring flags{flag,1} '="$' flags{flag,1} ' ' flags{flag,2} '" '];
     end
 end
 
-mexCall = ['mex -largeArrayDims ' flagstring ' ' mainFile ' ' addFiles];
+mexCall = ['mex -largeArrayDims ' flagstring ' ' includestring ' ' mainFile ' ' addFiles];
 matRad_cfg.dispDebug('Compiler call: %s\n',mexCall);
 
 currDir = pwd;

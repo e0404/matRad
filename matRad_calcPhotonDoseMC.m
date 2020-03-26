@@ -66,6 +66,7 @@ dij.beamNum  = NaN*ones(dij.totalNumOfBixels,1);
 dij.numHistoriesPerBeamlet = nCasePerBixel;
 
 omcFolder = [matRad_cfg.matRadRoot filesep 'ompMC'];
+%omcFolder = [matRad_cfg.matRadRoot filesep 'submodules' filesep 'ompMC'];
 
 %% Setup OmpMC options / parameters
 
@@ -98,7 +99,6 @@ ompMCoptions.relDoseThreshold = 1 - matRad_cfg.propDoseCalc.defaultLateralCutOff
 ompMCoptions.outputFolder = [omcFolder filesep 'output' filesep];
 
 % Create Material Density Cube
-materialFile = [omcFolder filesep  'data' filesep '700icru.pegs4dat'];
 material = cell(4,5);
 material{1,1} = 'AIR700ICRU';
 material{1,2} = -1024; 
@@ -154,7 +154,6 @@ for s = 1:dij.numOfScenarios
 end
 
 ompMCgeo.material = material;
-ompMCgeo.materialFile = materialFile;
 
 scale = 10; % to convert to cm
 
