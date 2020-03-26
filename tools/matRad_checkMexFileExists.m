@@ -22,6 +22,8 @@ function fileExists = matRad_checkMexFileExists(filename,noLinkOctave)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+
 if nargin < 2
     noLinkOctave = false;
 end
