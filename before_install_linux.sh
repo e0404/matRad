@@ -46,7 +46,7 @@ sudo make test
 sudo make install
 sudo ldconfig
 
-
+sudo apt-get install gnuplot-x11
 # clone repository with IpOpt Interface
 git clone https://github.com/ebertolazzi/mexIPOPT
 

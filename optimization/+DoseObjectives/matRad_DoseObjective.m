@@ -43,10 +43,10 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
     
     methods (Access = public)
        
-       % default constructor of matRad_DoseObjective
-        function obj = matRad_DoseObjective(inputArg)
-            % superclass constructor is already called when this is line is reached
-            % additional matRad_DoseObjective constructor specific code goes here
+        % constructor of matRad_DoseObjective
+        function obj = matRad_DoseObjective(varargin)
+            %default initialization from struct (parameters & penalty)
+            obj@matRad_DoseOptimizationFunction(varargin{:});
         end
         
         %Overloads the struct function to add Objective related information

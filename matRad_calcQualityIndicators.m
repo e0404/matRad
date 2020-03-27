@@ -96,12 +96,26 @@ for runVoi = 1:size(cst,1)
 
             % loop over target objectives and get the lowest dose objective 
             referenceDose = inf;
+            
+            if isstruct(cst{runVoi,6})
+                cst{runVoi,6} = num2cell(arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{runVoi,6}));
+            end
+            
             for runObjective = 1:numel(cst{runVoi,6})
                % check if this is an objective that penalizes underdosing 
                obj = cst{runVoi,6}{runObjective};
+               if ~isa(obj,'matRad_DoseOptimizationFunction')
+                   try
+                       obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
+                   catch ME
+                       warning('Objective/Constraint not valid!\n%s',ME.message)
+                       continue;
+                   end
+               end
+               
                %if strcmp(cst{runVoi,6}(runObjective).type,'square deviation') > 0 || strcmp(cst{runVoi,6}(runObjective).type,'square underdosing') > 0
                if isa(obj,'DoseObjectives.matRad_SquaredDeviation') || isa(obj,'DoseObjectives.matRad_SquaredUnderdosing')
-                   referenceDose = (min(cst{runVoi,6}{runObjective}.getDoseParameters(),referenceDose))/pln.numOfFractions;
+                   referenceDose = (min(obj.getDoseParameters(),referenceDose))/pln.numOfFractions;
                end            
             end
 
