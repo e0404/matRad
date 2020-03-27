@@ -60,7 +60,8 @@ stf = matRad_generateStf(ct,cst,pln);
 
 %  % analytical dose with fine sampling
     tic
-    pln.propDoseCalc.fineSampling.N = 11;
+    pln.propDoseCalc.fineSampling.method = 'russo';
+    pln.propDoseCalc.fineSampling.N = 21;
     pln.propDoseCalc.fineSampling.sigmaSub = 2;
     dijFS = matRad_calcParticleDose(ct,stf,pln,cst,false);
     resultGUI_FS = matRad_calcCubes(ones(sum([stf(:).totalNumOfBixels]),1),dijFS);

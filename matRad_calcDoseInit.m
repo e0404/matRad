@@ -16,6 +16,11 @@ if isfield(pln.propDoseCalc,'fineSampling') && strcmp(pln.radiationMode, 'proton
     else
         fineSamplingSigmaSub = 1;
     end
+    if isfield(pln.propDoseCalc.fineSampling,'method')    
+        fineSamplingMethod = pln.propDoseCalc.fineSampling.method;
+    else
+        fineSamplingMethod = 'russo';
+    end
 else
     anaMode = 'standard';
 end

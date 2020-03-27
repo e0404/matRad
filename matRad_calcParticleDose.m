@@ -176,7 +176,7 @@ for i = 1:length(stf) % loop over all beams
                 for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
                     if (fineSamplingSigmaSub < sigmaIni(k)) && (fineSamplingSigmaSub > 0)
                         [finalWeight(:,k), sigmaSub(:,k), posX(:,k), posZ(:,k), numOfSub(:,k)] = ...
-                                  matRad_calcWeights(sigmaIni(k), fineSamplingSigmaSub, fineSamplingN);
+                                  matRad_calcWeights(sigmaIni(k), fineSamplingMethod, fineSamplingN, fineSamplingSigmaSub);
                     else
                         error('Problem with chosen sub beam sigma in fine sampling calculation');
                     end
