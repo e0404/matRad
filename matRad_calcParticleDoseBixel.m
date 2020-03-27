@@ -82,13 +82,8 @@ else
         %X = matRad_interp1(depths,[conversionFactor*baseData.Z.profileORG baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
         X = matRad_interp1(depths,[baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
         
-        if ~stdCorr
-            X = [conversionFactor * sumGauss(radDepths,baseData.Z.mean,baseData.Z.width.^2,baseData.Z.weight), X];
-        else
-            tmp = arrayfun(@(depth, std)  sumGauss(depth,baseData.Z.mean,baseData.Z.width.^2 + std.^2,baseData.Z.weight), radDepths, stdWER);
-            X = [conversionFactor * tmp, X];
-        end
-        
+        X = [conversionFactor * sumGauss(radDepths,baseData.Z.mean,baseData.Z.width.^2,baseData.Z.weight), X];
+ 
         % set dose for query > tabulated depth dose values to zero
         X(radDepths > max(depths),1) = 0;
 
