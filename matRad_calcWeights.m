@@ -5,8 +5,8 @@ function [finalWeight, sigmaBeamlet, posX, posY, numOfSub] = ...
 % algorithm
 %
 % call
-%   [finalWeight, sigmaBeamlet, posX, posY, numOfSub] =
-%                               matRad_calcWeights(sigmaTot, sigmaSub, N)
+%   [finalWeight, sigmaBeamlet, posX, posY, numOfSub] = ...
+%                       matRad_calcWeights(sigmaTot, method, N, sigmaSub)
 %
 % input
 %   sigmaTot:       the standard deviation of the lateral spread of the pencil
