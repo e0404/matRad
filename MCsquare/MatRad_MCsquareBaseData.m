@@ -260,7 +260,7 @@ classdef MatRad_MCsquareBaseData
             mcDataOptics.FWHMatIso = 2.355 * sigmaNull;
         end
         
-        function obj = writeTopasData(obj,filepath,ct,stf,pln,fracHistories,w,beamProfile,minRelWeight,numOfRuns)
+        function obj = writeTopasData(obj,filepath,ct,stf,pln,fracHistories,w,beamProfile,minRelWeight,numOfRuns,useOrigBaseData)
             %function that writes a data file containing stf specific data
             %for a Monte Carlo simulation with TOPAS
             % Input:
@@ -270,6 +270,12 @@ classdef MatRad_MCsquareBaseData
             if ~exist('numOfRuns','var')
                 % default: 5 runs
                 numOfRuns = 5;
+            end
+            
+            if ~exist('useOrigBaseData','var')
+                % base data of the original matRad plan will be used
+                % default: true
+                useOrigBaseData = true;
             end
             
             if ~exist('beamProfile','var')
@@ -286,19 +292,26 @@ classdef MatRad_MCsquareBaseData
                 
             %look up focus indices
             focusIndex = obj.selectedFocus(obj.energyIndex);
+            machine = obj.machine;
             
             for beamIx = 1:length(stf)
                 
-                selectedData = [];
-                for i = 1:numel(focusIndex)
-                    selectedData = [selectedData, obj.mcSquareData(focusIndex(i), i)];
+                if ~useOrigBaseData
+                    selectedData = [];
+                    for i = 1:numel(focusIndex)
+                        selectedData = [selectedData, obj.mcSquareData(focusIndex(i), i)];
+                    end
+                    energies = [selectedData.NominalEnergy];
+                else
+                    [~,ixTmp,~] = intersect([machine.data.energy], [stf.ray.energy]);
+                    for i = 1:length(ixTmp)
+                       selectedData(i) = machine.data(ixTmp(i));
+                    end
+                    energies = [selectedData.energy];
                 end
-                
-                machine = obj.machine;
-                
+                                
                 %get beamlet properties for each bixel in the stf and write
                 %it into dataTOPAS
-                energies = [selectedData.NominalEnergy];
                 currentBixel = 1;
                 cutNumOfBixel = 0;
                 nbParticlesTotal = 0;
@@ -315,19 +328,26 @@ classdef MatRad_MCsquareBaseData
                         if (voxel_nbParticles>minNbParticlesSpot)
                             
                             cutNumOfBixel = cutNumOfBixel + 1;
-                            
                             bixelEnergy = stf(beamIx).ray(rayIx).energy(bixelIx);
                             [~,ixTmp,~] = intersect(energies, bixelEnergy);
-                            dataTOPAS(cutNumOfBixel).energy = selectedData(ixTmp).MeanEnergy;
-                            dataTOPAS(cutNumOfBixel).energySpread = selectedData(ixTmp).EnergySpread;
-                            dataTOPAS(cutNumOfBixel).posX = stf(beamIx).ray(rayIx).rayPos_bev(1);
-                            dataTOPAS(cutNumOfBixel).posY = stf(beamIx).ray(rayIx).rayPos_bev(3);
-                            dataTOPAS(cutNumOfBixel).spotSize = selectedData(ixTmp).SpotSize1x;
-                            dataTOPAS(cutNumOfBixel).divergence = selectedData(ixTmp).Divergence1x;
-                            dataTOPAS(cutNumOfBixel).correlation = selectedData(ixTmp).Correlation1x;
-                            dataTOPAS(cutNumOfBixel).current = fracHistories*round(1e6*w(cutNumOfBixel));
-                            dataTOPAS(cutNumOfBixel).FWHM = selectedData(ixTmp).FWHMatIso;
                             
+                            if ~useOrigBaseData
+                                dataTOPAS(cutNumOfBixel).energy = selectedData(ixTmp).MeanEnergy;
+                                dataTOPAS(cutNumOfBixel).energySpread = selectedData(ixTmp).EnergySpread;
+                                dataTOPAS(cutNumOfBixel).posX = stf(beamIx).ray(rayIx).rayPos_bev(1);
+                                dataTOPAS(cutNumOfBixel).posY = stf(beamIx).ray(rayIx).rayPos_bev(3);
+                                dataTOPAS(cutNumOfBixel).spotSize = selectedData(ixTmp).SpotSize1x;
+                                dataTOPAS(cutNumOfBixel).divergence = selectedData(ixTmp).Divergence1x;
+                                dataTOPAS(cutNumOfBixel).correlation = selectedData(ixTmp).Correlation1x;
+                                dataTOPAS(cutNumOfBixel).current = uint32(fracHistories*voxel_nbParticles);
+                                dataTOPAS(cutNumOfBixel).focusFWHM = selectedData(ixTmp).FWHMatIso;
+                            else
+                                dataTOPAS(cutNumOfBixel).energy = selectedData(ixTmp).energy;
+                                dataTOPAS(cutNumOfBixel).posX = stf(beamIx).ray(rayIx).rayPos_bev(1);
+                                dataTOPAS(cutNumOfBixel).posY = stf(beamIx).ray(rayIx).rayPos_bev(3);
+                                dataTOPAS(cutNumOfBixel).focusFWHM = selectedData(ixTmp).initFocus.SisFWHMAtIso(stf(beamIx).ray(rayIx).focusIx(bixelIx));
+                                dataTOPAS(cutNumOfBixel).current = uint32(fracHistories*voxel_nbParticles);
+                            end
                             nbParticlesTotal = nbParticlesTotal + voxel_nbParticles;
                         end
                         
@@ -336,17 +356,36 @@ classdef MatRad_MCsquareBaseData
                     end
                 end
                 
-           
-                %sort dataTOPA according to energy
+                idx = find([dataTOPAS.current] < 1);
+                dataTOPAS(idx) = [];
+                
+                historyCount = uint32(fracHistories * nbParticlesTotal);
+                
+                while sum([dataTOPAS(:).current]) ~= historyCount
+                    % Randomly pick an index with the weigth given by the current
+                    idx = 1:length(dataTOPAS);
+                    [~,~,R] = histcounts(rand(1),cumsum([0;double(transpose([dataTOPAS(:).current]))./double(sum([dataTOPAS(:).current]))]));
+                    randIx = idx(R);
+                    
+                    if (sum([dataTOPAS(:).current]) > historyCount)
+                        if dataTOPAS(randIx).current > 1
+                            dataTOPAS(randIx).current = dataTOPAS(randIx).current-1;
+                        end
+                    else
+                        dataTOPAS(randIx).current = dataTOPAS(randIx).current+1;
+                    end
+                end
+                
+                
+                %sort dataTOPAS according to energy
                 [~,ixSorted] = sort([dataTOPAS(:).energy]);
                 dataTOPAS = dataTOPAS(ixSorted);
-                historyCount = uint32(fracHistories * nbParticlesTotal / 20);
                 
                 %write TOPAS data base file
                 try
                     fileID = fopen([filepath,'beamSetup_matRad_plan_field',num2str(beamIx),'.txt'],'w');
                     
-                    fprintf(fileID,'i:Ts/ShowHistoryCountAtInterval = %i\n',historyCount);
+                    fprintf(fileID,'i:Ts/ShowHistoryCountAtInterval = %i\n',historyCount/20);
                     fprintf(fileID,'s:Sim/PlanLabel = "simData_matrad_plan_field1_run" + Ts/Seed\n');
                     fprintf(fileID,'d:Sim/GantryAngle = %.6f deg\n', stf(beamIx).gantryAngle);
                     fprintf(fileID,'d:Sim/CouchAngle = %.6f deg\n', stf(beamIx).couchAngle);
@@ -419,7 +458,7 @@ classdef MatRad_MCsquareBaseData
                             fprintf(fileID,'s:Tf/Beam/FocusFWHM/Function = "Step"\n');
                             fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Times = Tf/Beam/Spot/Times ms\n');
                             fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,strjoin(string([dataTOPAS(:).FWHM])));
+                            fprintf(fileID,strjoin(string([dataTOPAS(:).focusFWHM])));
                             fprintf(fileID,' mm\n');
                             
                     end
