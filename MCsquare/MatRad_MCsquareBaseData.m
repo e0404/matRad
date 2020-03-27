@@ -260,78 +260,90 @@ classdef MatRad_MCsquareBaseData
             mcDataOptics.FWHMatIso = 2.355 * sigmaNull;
         end
         
-        function obj = writeTopasData(obj,filepath,ct,stf,pln,fracHistories,w,beamProfile,minRelWeight,numOfRuns,useOrigBaseData,pencilBeamScanning,electronProdCut)
+        function obj = writeTopasData(obj,ct,stf,pln,w,TopasConfig)
             %function that writes a data file containing stf specific data
             %for a Monte Carlo simulation with TOPAS
-            % Input:
-            %   beamProfile: 'simple' of 'biGaussian'
-            %
             
-            if ~exist('numOfRuns','var')
-                % default: 5 runs
-                numOfRuns = 5;
+            %set default values for the simulation, if not specified
+            if nargin < 6
+                TopasConfig = struct;
+            end
+            if ~isfield(TopasConfig,'filepath')
+                % default: 'topas/MCexport/'
+                TopasConfig.filepath = 'topas/MCexport/';
             end
             
-            if ~exist('useOrigBaseData','var')
-                % base data of the original matRad plan will be used
-                % default: true
-                useOrigBaseData = true;
+            if ~isfield(TopasConfig,'fracHistories')
+                % default: 1e-4
+                TopasConfig.fracHistories = 1e-4;
             end
             
-            if ~exist('beamProfile','var')
-                % default: 5 runs
-                beamProfile = 'simple';
-            end
-            
-            if useOrigBaseData == true && ~strcmp(beamProfile,'simple')
-                error('Original base data only usable with simple beam geometry!')
-            end
-            
-            if ~exist('pencilBeamScanning','var')
-                % default: true
-                pencilBeamScanning = 'true';
-            end
-            
-            if ~exist('electronProdCut','var')
-                % default: 0.5
-                electronProdCut = '0.5';
-            end
-            
-            if ~exist('minRelWeight','var')
+            if ~isfield(TopasConfig,'minRelWeight')
                 % default: 0.001
                 % minRelWeight = 0 means all weights are being considered
                 % can otherwise be assigned to min(w)
-                minRelWeight = 0.001;
+                TopasConfig.minRelWeight = 0.001;
+            end
+            
+            if ~isfield(TopasConfig,'numOfRuns')
+                % default: 5 runs
+                TopasConfig.numOfRuns = 5;
+            end
+            
+            if ~isfield(TopasConfig,'useOrigBaseData')
+                % base data of the original matRad plan will be used
+                % default: true
+                TopasConfig.useOrigBaseData = true;
+            end
+            
+            if ~isfield(TopasConfig,'beamProfile')
+                % default: 5 runs
+                TopasConfig.beamProfile = 'simple';
+            end
+            
+            if ~isfield(TopasConfig,'pencilBeamScanning')
+                %   beamProfile: 'simple' of 'biGaussian'
+                % default: true
+                TopasConfig.pencilBeamScanning = 'true';
+            end
+            
+            if ~isfield(TopasConfig,'electronProdCut')
+                % default: 0.5
+                TopasConfig.electronProdCut = '0.5';
+            end
+            
+            % Check if contradicting settings are being used
+            if TopasConfig.useOrigBaseData == true && ~strcmp(TopasConfig.beamProfile,'simple')
+                error('Original base data only usable with simple beam geometry!')
             end
             
             %look up focus indices
             focusIndex = obj.selectedFocus(obj.energyIndex);
-            machine = obj.machine;
             
             % NozzleAxialDistance
             nozzleAxialDistance_mm = 1500;
-            SAD_mm  = machine.meta.SAD;
-            if isfield(machine.meta,'nozzleAxialDistance')
+            SAD_mm  = obj.machine.meta.SAD;
+            if isfield( obj.machine.meta,'nozzleAxialDistance')
                 disp('Using NAD from basedata')
-                nozzleAxialDistance_mm = machine.meta.nozzleAxialDistance;
+                nozzleAxialDistance_mm =  obj.machine.meta.nozzleAxialDistance;
             else
                 disp('Using default nozzleAxialDistance')
             end
             
             for beamIx = 1:length(stf)
                 
-                if ~useOrigBaseData
+                if TopasConfig.useOrigBaseData
+                    [~,ixTmp,~] = intersect([ obj.machine.data.energy], [stf.ray.energy]);
+                    for i = 1:length(ixTmp)
+                        selectedData(i) =  obj.machine.data(ixTmp(i));
+                    end
+                    energies = [selectedData.energy];
+                else
                     selectedData = [];
                     for i = 1:numel(focusIndex)
                         selectedData = [selectedData, obj.mcSquareData(focusIndex(i), i)];
                     end
                     energies = [selectedData.NominalEnergy];
-                else
-                    [~,ixTmp,~] = intersect([machine.data.energy], [stf.ray.energy]);
-                    for i = 1:length(ixTmp)
-                        selectedData(i) = machine.data(ixTmp(i));
-                    end
-                    energies = [selectedData.energy];
                 end
                 
                 %get beamlet properties for each bixel in the stf and write
@@ -346,7 +358,7 @@ classdef MatRad_MCsquareBaseData
                         
                         voxel_nbParticles = round(1e6*w(currentBixel));
                         maxParticlesInSpot = 1e6*max(w(:));
-                        minNbParticlesSpot = round(max([minRelWeight*maxParticlesInSpot,1]));
+                        minNbParticlesSpot = round(max([TopasConfig.minRelWeight*maxParticlesInSpot,1]));
                         
                         % check whether there are (enough) particles for beam delivery
                         if (voxel_nbParticles>minNbParticlesSpot)
@@ -362,9 +374,9 @@ classdef MatRad_MCsquareBaseData
                             dataTOPAS(cutNumOfBixel).posX = -1.*voxel_x;
                             dataTOPAS(cutNumOfBixel).posY = voxel_y;
                             
-                            dataTOPAS(cutNumOfBixel).current = uint32(fracHistories*voxel_nbParticles);
+                            dataTOPAS(cutNumOfBixel).current = uint32(TopasConfig.fracHistories*voxel_nbParticles);
                             
-                            if pencilBeamScanning
+                            if TopasConfig.pencilBeamScanning
                                 % angleX corresponds to the rotation around the X axis necessary to move the spot in the Y direction
                                 % angleY corresponds to the rotation around the Y' axis necessary to move the spot in the X direction
                                 % note that Y' corresponds to the Y axis after the rotation of angleX around X axis
@@ -374,17 +386,17 @@ classdef MatRad_MCsquareBaseData
                                 dataTOPAS(cutNumOfBixel).posY = (dataTOPAS(cutNumOfBixel).posY / SAD_mm)*(SAD_mm-nozzleAxialDistance_mm);
                             end
                             
-                            if ~useOrigBaseData
+                            if TopasConfig.useOrigBaseData
+                                dataTOPAS(cutNumOfBixel).energy = selectedData(ixTmp).energy;
+                                dataTOPAS(cutNumOfBixel).focusFWHM = selectedData(ixTmp).initFocus.SisFWHMAtIso(stf(beamIx).ray(rayIx).focusIx(bixelIx));
+                                
+                            else
                                 dataTOPAS(cutNumOfBixel).energy = selectedData(ixTmp).MeanEnergy;
                                 dataTOPAS(cutNumOfBixel).energySpread = selectedData(ixTmp).EnergySpread;
                                 dataTOPAS(cutNumOfBixel).spotSize = selectedData(ixTmp).SpotSize1x;
                                 dataTOPAS(cutNumOfBixel).divergence = selectedData(ixTmp).Divergence1x;
                                 dataTOPAS(cutNumOfBixel).correlation = selectedData(ixTmp).Correlation1x;
                                 dataTOPAS(cutNumOfBixel).focusFWHM = selectedData(ixTmp);
-                            else
-                                dataTOPAS(cutNumOfBixel).energy = selectedData(ixTmp).energy;
-                                dataTOPAS(cutNumOfBixel).focusFWHM = selectedData(ixTmp).initFocus.SisFWHMAtIso(stf(beamIx).ray(rayIx).focusIx(bixelIx));
-                                
                             end
                             nbParticlesTotal = nbParticlesTotal + voxel_nbParticles;
                         end
@@ -398,7 +410,7 @@ classdef MatRad_MCsquareBaseData
                 idx = find([dataTOPAS.current] < 1);
                 dataTOPAS(idx) = [];
                 
-                historyCount = uint32(fracHistories * nbParticlesTotal);
+                historyCount = uint32(TopasConfig.fracHistories * nbParticlesTotal);
                 
                 while sum([dataTOPAS(:).current]) ~= historyCount
                     % Randomly pick an index with the weigth given by the current
@@ -421,7 +433,7 @@ classdef MatRad_MCsquareBaseData
                 dataTOPAS = dataTOPAS(ixSorted);
                 
                 %write TOPAS data base file
-                fileID = fopen([filepath,'beamSetup_matRad_plan_field',num2str(beamIx),'.txt'],'w');
+                fileID = fopen([TopasConfig.filepath,'beamSetup_matRad_plan_field',num2str(beamIx),'.txt'],'w');
                 
                 fprintf(fileID,'i:Ts/ShowHistoryCountAtInterval = %i\n',historyCount/20);
                 fprintf(fileID,'s:Sim/PlanLabel = "simData_matRad_plan_field1_run" + Ts/Seed\n');
@@ -442,7 +454,7 @@ classdef MatRad_MCsquareBaseData
                 fprintf(fileID,strjoin(string([dataTOPAS(:).energy])));
                 fprintf(fileID,' MeV\n');
                 
-                switch beamProfile
+                switch TopasConfig.beamProfile
                     case 'biGaussian'
                         fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
                         fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
@@ -492,7 +504,7 @@ classdef MatRad_MCsquareBaseData
                         fprintf(fileID,' mm\n');
                 end
                 
-                if pencilBeamScanning
+                if TopasConfig.pencilBeamScanning
                     fprintf(fileID,'s:Tf/Beam/AngleX/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/AngleX/Times = Tf/Beam/Spot/Times ms\n');
                     fprintf(fileID,'dv:Tf/Beam/AngleX/Values = %i ', cutNumOfBixel);
@@ -542,13 +554,13 @@ classdef MatRad_MCsquareBaseData
                 
                 % NozzleAxialDistance
                 fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', nozzleAxialDistance_mm);
-                if pencilBeamScanning
+                if TopasConfig.pencilBeamScanning
                     fprintf(fileID,'d:Ge/Nozzle/RotX = Tf/Beam/AngleX/Value rad\n');
                     fprintf(fileID,'d:Ge/Nozzle/RotY = Tf/Beam/AngleY/Value rad\n');
                     fprintf(fileID,'d:Ge/Nozzle/RotZ = 0.0 rad\n');
                 end
                 
-                fprintf(fileID,['d:Ph/Default/CutForElectron = ',electronProdCut,' mm\n']);
+                fprintf(fileID,['d:Ph/Default/CutForElectron = ',TopasConfig.electronProdCut,' mm\n']);
                 
                 % copy standard values from TOPAS_beamSetup
                 while ~feof(TOPAS_beamSetup)
@@ -559,29 +571,26 @@ classdef MatRad_MCsquareBaseData
                 fprintf(fileID,'\n');
                 fclose(fileID);
                 
-                
-                
                 %write run scripts for TOPAS
                 basematerial = '';
-                if ~exist('machine') || ~isfield(machine.meta,'basematerial')
+                if ~exist('machine') || ~isfield( obj.machine.meta,'basematerial')
                     warning('Base material not defined in base data. Using Water')
                     basematerial = 'Water';
                 else
-                    basematerial = machine.meta.basematerial;
+                    basematerial =  obj.machine.meta.basematerial;
                 end
                 
-                rspCube = matRad_exportCtTOPAS(ct, filepath, basematerial);
+                rspCube = matRad_exportCtTOPAS(ct, TopasConfig.filepath, basematerial);
                 
-                for runIx = 1:numOfRuns
-                    fileID = fopen([filepath,'matRad_plan_field',num2str(beamIx),'_run',num2str(runIx),'.txt'],'w');
+                for runIx = 1:TopasConfig.numOfRuns
+                    fileID = fopen([TopasConfig.filepath,'matRad_plan_field',num2str(beamIx),'_run',num2str(runIx),'.txt'],'w');
                     fprintf(fileID,['i:Ts/Seed = ',num2str(runIx),'\n']);
                     fprintf(fileID,'includeFile = ./beamSetup_matRad_plan_field1.txt');
                     fclose(fileID);
                 end
                 
-                
                 %write MCparam file with basic parameters
-                MCparam.nbRuns = numOfRuns;
+                MCparam.nbRuns = TopasConfig.numOfRuns;
                 MCparam.nbFields = length(stf);
                 MCparam.tallies = {'physicalDose'};
                 MCparam.simLabel = 'matRad_plan';
@@ -590,8 +599,7 @@ classdef MatRad_MCsquareBaseData
                 MCparam.voxelDimensions = ct.resolution;
                 MCparam.nbHistories = historyCount;
                 MCparam.nbParticles = nbParticlesTotal;
-                save([filepath,'MCparam.mat'],'MCparam');
-                
+                save([TopasConfig.filepath,'MCparam.mat'],'MCparam');
             end
         end
         
@@ -612,8 +620,6 @@ classdef MatRad_MCsquareBaseData
             %remove field not needed for MCsquare base data
             selectedData = rmfield(selectedData, 'FWHMatIso');
             
-            machine = obj.machine;
-            
             %write MCsqaure data base file
             try
                 
@@ -622,8 +628,8 @@ classdef MatRad_MCsquareBaseData
                 %Header
                 %fprintf(fileID,'--matRad: Beam Model for machine %s (%s)--\n',machine.meta.machine,machine.meta.dataType);
                 fprintf(fileID,'--UPenn beam model (double gaussian)--\n');
-                fprintf(fileID,'# %s\n',machine.meta.description);
-                fprintf(fileID,'# created by %s on %s\n\n',machine.meta.created_by,machine.meta.created_on);
+                fprintf(fileID,'# %s\n', obj.machine.meta.description);
+                fprintf(fileID,'# created by %s on %s\n\n', obj.machine.meta.created_by, obj.machine.meta.created_on);
                 
                 fprintf(fileID,'Nozzle exit to Isocenter distance\n');
                 fprintf(fileID,'%.1f\n\n',obj.nozzleToIso);
@@ -664,7 +670,6 @@ classdef MatRad_MCsquareBaseData
             %save previously calculated mcSquareData in new baseData file
             %with given name
             
-            machine = obj.machine;
             [~ ,energyIndex, ~] = intersect([obj.machine.data(:).energy], [obj.mcSquareData(:).NominalEnergy]);
             
             machineName = [obj.machine.meta.radiationMode, '_', name];
@@ -672,7 +677,7 @@ classdef MatRad_MCsquareBaseData
             count = 1;
             for i = energyIndex'
                 
-                machine.data(i).mcSquareData = obj.mcSquareData(:,count);
+                obj.machine.data(i).mcSquareData = obj.mcSquareData(:,count);
                 
                 count = count + 1;
             end
@@ -680,5 +685,6 @@ classdef MatRad_MCsquareBaseData
             save(strcat('../../', machineName, '.mat'),'machine');
         end
     end
+    
 end
 
