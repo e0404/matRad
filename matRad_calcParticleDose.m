@@ -134,23 +134,6 @@ effectiveLateralCutoff = 50;
 fprintf('matRad: Particle dose calculation...\n');
 counter = 0;
 
-% assing analytical mode
-if isfield(pln.propDoseCalc,'fineSampling')
-    anaMode = 'fineSampling';
-    if isfield(pln.propDoseCalc.fineSampling,'N')
-        fineSamplingN = pln.propDoseCalc.fineSampling.N;
-    else
-        fineSamplingN = 21;
-    end
-    if isfield(pln.propDoseCalc.fineSampling,'sigmaSub')    
-        fineSamplingSigmaSub = pln.propDoseCalc.fineSampling.sigmaSub;
-    else
-        fineSamplingSigmaSub = 1;
-    end
-else
-    anaMode = 'standard';
-end
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:length(stf) % loop over all beams
   
