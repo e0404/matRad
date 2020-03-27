@@ -386,7 +386,7 @@ classdef MatRad_MCsquareBaseData
                     fileID = fopen([filepath,'beamSetup_matRad_plan_field',num2str(beamIx),'.txt'],'w');
                     
                     fprintf(fileID,'i:Ts/ShowHistoryCountAtInterval = %i\n',historyCount/20);
-                    fprintf(fileID,'s:Sim/PlanLabel = "simData_matrad_plan_field1_run" + Ts/Seed\n');
+                    fprintf(fileID,'s:Sim/PlanLabel = "simData_matRad_plan_field1_run" + Ts/Seed\n');
                     fprintf(fileID,'d:Sim/GantryAngle = %.6f deg\n', stf(beamIx).gantryAngle);
                     fprintf(fileID,'d:Sim/CouchAngle = %.6f deg\n', stf(beamIx).couchAngle);
                     fprintf(fileID,'s:Sim/ParticleName = "proton"\n');
