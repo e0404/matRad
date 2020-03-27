@@ -17,9 +17,8 @@
 matRad_rc
 
 % load patient data, i.e. ct, voi, cst
-load LIVER
-% load TG119
-load PHANTOM_slab_entrance_100mm.mat
+% load LIVER
+load TG119
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
@@ -29,9 +28,9 @@ pln.numOfFractions  = 30;
 
 % beam geometry settings
 pln.propStf.bixelWidth      = 500; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.longitudinalSpotSpacing = 500;
-pln.propStf.gantryAngles    = 0; % [?] 
-pln.propStf.couchAngles     = 0; % [?]
+pln.propStf.longitudinalSpotSpacing = 10;
+pln.propStf.gantryAngles    = [0,90]; % [?] 
+pln.propStf.couchAngles     = [0, 0]; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
                             
@@ -51,16 +50,16 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
 
- % assign new energy
-load protons_matRadBDL_APM;
-stf.ray.energy = machine.data(37).energy;
+%  % assign new energy
+% load protons_matRadBDL_APM;
+% stf.ray.energy = machine.data(37).energy;
                             
 %% dose calculation
  % analytical dose without fine sampling
     tic
     pln.propDoseCalc.anaMode = 'standard';
     dij = matRad_calcParticleDose(ct,stf,pln,cst,false);
-    resultGUI = matRad_calcCubes(ones(sum(stf(:).totalNumOfBixels),1),dij);
+    resultGUI = matRad_calcCubes(ones(sum([stf(:).totalNumOfBixels]),1),dij);
     anaDose     = resultGUI.physicalDose;
     t1 = toc;
 
@@ -69,14 +68,14 @@ stf.ray.energy = machine.data(37).energy;
     pln.propDoseCalc.fineSampling.N = 21;
     pln.propDoseCalc.fineSampling.sigmaSub = 2;
     dijFS = matRad_calcParticleDose(ct,stf,pln,cst,false);
-    resultGUI_FS = matRad_calcCubes(ones(sum(stf(:).totalNumOfBixels),1),dijFS);
+    resultGUI_FS = matRad_calcCubes(ones(sum([stf(:).totalNumOfBixels]),1),dijFS);
     resultGUI.physicalDoseFS = resultGUI_FS.physicalDose;
     anaFsDose   = resultGUI.physicalDoseFS;
     t2 = toc;
 
  % Monte Carlo dose
     tic
-    resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1), 100000);
+    resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum([stf(:).totalNumOfBixels]),1), 100000);
     resultGUI.physicalDoseMC = resultGUI_MC.physicalDose;
     mcDose      = resultGUI.physicalDoseMC;
     t3 = toc;

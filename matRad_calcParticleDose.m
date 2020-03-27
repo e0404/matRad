@@ -196,11 +196,13 @@ for i = 1:length(stf) % loop over all beams
                 % their positions and their sigma used for dose calculation
 %                 [finalWeight, sigmaSub, posX, posZ, numOfSub] = ...
 %                     matRad_calcWeights(sigmaIni, 2, 'square');
-                if (fineSamplingSigmaSub < sigmaIni) && (fineSamplingSigmaSub > 0)
-                    [finalWeight, sigmaSub, posX, posZ, numOfSub] = ...
-                              matRad_calcWeights(sigmaIni, fineSamplingSigmaSub, fineSamplingN);
-                else
-                    error('Problem with chosen sub beam sigma in fine sampling calculation');
+                for ixRayEnergy = 1:size(sigmaIni,2)
+                    if (fineSamplingSigmaSub < sigmaIni(ixRayEnergy)) && (fineSamplingSigmaSub > 0)
+                        [finalWeight(:,ixRayEnergy), sigmaSub(:,ixRayEnergy), posX(:,ixRayEnergy), posZ(:,ixRayEnergy), numOfSub(:,ixRayEnergy)] = ...
+                                  matRad_calcWeights(sigmaIni(ixRayEnergy), fineSamplingSigmaSub, fineSamplingN);
+                    else
+                        error('Problem with chosen sub beam sigma in fine sampling calculation');
+                    end
                 end
             else
                 % Ray tracing for beam i and ray j
@@ -258,7 +260,7 @@ for i = 1:length(stf) % loop over all beams
 %                                     -posX(:,k), -posZ(:,k), rotMat_system_T);
                                 
                     projCoords = matRad_projectOnComponents(VdoseGrid(ix), size(radDepthsMat{1}), stf(i).sourcePoint_bev,...
-                                    stf(i).ray(j).targetPoint_bev, stf.isoCenter,...
+                                    stf(i).ray(j).targetPoint_bev, stf(i).isoCenter,...
                                     [dij.doseGrid.resolution.x dij.doseGrid.resolution.y dij.doseGrid.resolution.z],...
                                     -posX(:,k), -posZ(:,k), rotMat_system_T);
 
@@ -275,7 +277,7 @@ for i = 1:length(stf) % loop over all beams
                         
                     %compute radial distances relative to pencil beam
                     % component
-                    currRadialDist_sq = reshape(bsxfun(@plus,latDistsX,posX(:,k)'),[],1,numOfSub).^2 + reshape(bsxfun(@plus,latDistsZ,posZ(:,k)'),[],1,numOfSub).^2;
+                    currRadialDist_sq = reshape(bsxfun(@plus,latDistsX,posX(:,k)'),[],1,numOfSub(k)).^2 + reshape(bsxfun(@plus,latDistsZ,posZ(:,k)'),[],1,numOfSub(k)).^2;
                 end
                 
                     % create offset vector to account for additional offsets modelled in the base data and a potential 
