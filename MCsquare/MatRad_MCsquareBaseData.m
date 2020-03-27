@@ -260,7 +260,7 @@ classdef MatRad_MCsquareBaseData
             mcDataOptics.FWHMatIso = 2.355 * sigmaNull;
         end
         
-        function obj = writeTopasData(obj,filepath,ct,stf,pln,fracHistories,w,beamProfile,minRelWeight,numOfRuns,useOrigBaseData)
+        function obj = writeTopasData(obj,filepath,ct,stf,pln,fracHistories,w,beamProfile,minRelWeight,numOfRuns,useOrigBaseData,pencilBeamScanning)
             %function that writes a data file containing stf specific data
             %for a Monte Carlo simulation with TOPAS
             % Input:
@@ -283,6 +283,15 @@ classdef MatRad_MCsquareBaseData
                 beamProfile = 'simple';
             end
             
+            if useOrigBaseData == true && ~strcmp(beamProfile,'simple')
+               error('Original base data only usable with simple beam geometry!') 
+            end
+            
+            if ~exist('pencilBeamScanning','var')
+                % default: true
+                pencilBeamScanning = 'true';
+            end
+            
             if ~exist('minRelWeight','var')
                 % default: 0.001
                 % minRelWeight = 0 means all weights are being considered
@@ -294,6 +303,16 @@ classdef MatRad_MCsquareBaseData
             focusIndex = obj.selectedFocus(obj.energyIndex);
             machine = obj.machine;
             
+            % NozzleAxialDistance
+            nozzleAxialDistance_mm = 1500;
+            SAD_mm  = machine.meta.SAD;
+            if isfield(machine.meta,'nozzleAxialDistance')
+                disp('Using NAD from basedata')
+                nozzleAxialDistance_mm = machine.meta.nozzleAxialDistance;
+            else
+                disp('Using default nozzleAxialDistance')
+            end
+                        
             for beamIx = 1:length(stf)
                 
                 if ~useOrigBaseData
@@ -331,22 +350,36 @@ classdef MatRad_MCsquareBaseData
                             bixelEnergy = stf(beamIx).ray(rayIx).energy(bixelIx);
                             [~,ixTmp,~] = intersect(energies, bixelEnergy);
                             
+                            
+                            voxel_x = -stf(beamIx).ray(rayIx).rayPos_bev(3);
+                            voxel_y = stf(beamIx).ray(rayIx).rayPos_bev(1);
+                            
+                            dataTOPAS(cutNumOfBixel).posX = -1.*voxel_x;
+                            dataTOPAS(cutNumOfBixel).posY = voxel_y;
+                            
+                            dataTOPAS(cutNumOfBixel).current = uint32(fracHistories*voxel_nbParticles);
+                            
+                            if pencilBeamScanning
+                                % angleX corresponds to the rotation around the X axis necessary to move the spot in the Y direction
+                                % angleY corresponds to the rotation around the Y' axis necessary to move the spot in the X direction
+                                % note that Y' corresponds to the Y axis after the rotation of angleX around X axis
+                                dataTOPAS(cutNumOfBixel).angleX = atan(posY / SAD_mm);
+                                dataTOPAS(cutNumOfBixel).angleY = atan(-dataTOPAS(cutNumOfBixel).posX ./ (SAD_mm ./ cos(dataTOPAS(cutNumOfBixel).angleX)));
+                                dataTOPAS(cutNumOfBixel).posX = (dataTOPAS(cutNumOfBixel).posX / SAD_mm)*(SAD_mm-nozzleAxialDistance_mm);
+                                dataTOPAS(cutNumOfBixel).posY = (dataTOPAS(cutNumOfBixel).posY / SAD_mm)*(SAD_mm-nozzleAxialDistance_mm);
+                            end
+                            
                             if ~useOrigBaseData
                                 dataTOPAS(cutNumOfBixel).energy = selectedData(ixTmp).MeanEnergy;
                                 dataTOPAS(cutNumOfBixel).energySpread = selectedData(ixTmp).EnergySpread;
-                                dataTOPAS(cutNumOfBixel).posX = stf(beamIx).ray(rayIx).rayPos_bev(1);
-                                dataTOPAS(cutNumOfBixel).posY = stf(beamIx).ray(rayIx).rayPos_bev(3);
                                 dataTOPAS(cutNumOfBixel).spotSize = selectedData(ixTmp).SpotSize1x;
                                 dataTOPAS(cutNumOfBixel).divergence = selectedData(ixTmp).Divergence1x;
                                 dataTOPAS(cutNumOfBixel).correlation = selectedData(ixTmp).Correlation1x;
-                                dataTOPAS(cutNumOfBixel).current = uint32(fracHistories*voxel_nbParticles);
-                                dataTOPAS(cutNumOfBixel).focusFWHM = selectedData(ixTmp).FWHMatIso;
+                                dataTOPAS(cutNumOfBixel).focusFWHM = selectedData(ixTmp);
                             else
                                 dataTOPAS(cutNumOfBixel).energy = selectedData(ixTmp).energy;
-                                dataTOPAS(cutNumOfBixel).posX = stf(beamIx).ray(rayIx).rayPos_bev(1);
-                                dataTOPAS(cutNumOfBixel).posY = stf(beamIx).ray(rayIx).rayPos_bev(3);
                                 dataTOPAS(cutNumOfBixel).focusFWHM = selectedData(ixTmp).initFocus.SisFWHMAtIso(stf(beamIx).ray(rayIx).focusIx(bixelIx));
-                                dataTOPAS(cutNumOfBixel).current = uint32(fracHistories*voxel_nbParticles);
+                                
                             end
                             nbParticlesTotal = nbParticlesTotal + voxel_nbParticles;
                         end
@@ -356,6 +389,7 @@ classdef MatRad_MCsquareBaseData
                     end
                 end
                 
+                % discard data if the current has unphysical values
                 idx = find([dataTOPAS.current] < 1);
                 dataTOPAS(idx) = [];
                 
@@ -406,19 +440,12 @@ classdef MatRad_MCsquareBaseData
                     
                     switch beamProfile
                         case 'biGaussian'
-                            
                             fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
                             fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
                             fprintf(fileID,'dv:Tf/Beam/EnergySpread/Values = %i ', cutNumOfBixel);
                             fprintf(fileID,strjoin(string([dataTOPAS(:).energySpread])));
                             fprintf(fileID,' MeV\n');
-                            
-                            fprintf(fileID,'s:Tf/Beam/FocusFWHM/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,strjoin(string([dataTOPAS(:).FWHM])));
-                            fprintf(fileID,' mm\n');
-                            
+
                             fprintf(fileID,'s:So/Example/Type           = "Emittance"\n');
                             fprintf(fileID,'s:So/Example/Distribution   = "BiGaussian"\n');
                             
@@ -453,26 +480,27 @@ classdef MatRad_MCsquareBaseData
                             fprintf(fileID,'dv:Tf/Beam/CorrelationY/Values = %i ', cutNumOfBixel);
                             fprintf(fileID,strjoin(string([dataTOPAS(:).correlation])));
                             fprintf(fileID,'\n');
-                            
                         case 'simple'
                             fprintf(fileID,'s:Tf/Beam/FocusFWHM/Function = "Step"\n');
                             fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Times = Tf/Beam/Spot/Times ms\n');
                             fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Values = %i ', cutNumOfBixel);
                             fprintf(fileID,strjoin(string([dataTOPAS(:).focusFWHM])));
                             fprintf(fileID,' mm\n');
-                            
                     end
                     
-                    fprintf(fileID,'s:Tf/Beam/AngleX/Function = "Step"\n');
-                    fprintf(fileID,'dv:Tf/Beam/AngleX/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'dv:Tf/Beam/AngleX/Values = %i ', cutNumOfBixel);
-                    fprintf(fileID,strjoin(string(num2str(zeros(cutNumOfBixel,1),'%.6f'))));
-                    fprintf(fileID,' rad\n');
-                    fprintf(fileID,'s:Tf/Beam/AngleY/Function = "Step"\n');
-                    fprintf(fileID,'dv:Tf/Beam/AngleY/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'dv:Tf/Beam/AngleY/Values = %i ', cutNumOfBixel);
-                    fprintf(fileID,strjoin(string(num2str(zeros(cutNumOfBixel,1),'%.6f'))));
-                    fprintf(fileID,' rad\n');
+                    if pencilBeamScanning
+                        fprintf(fileID,'s:Tf/Beam/AngleX/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/AngleX/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/AngleX/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,strjoin(string([dataTOPAS(:).angleX])));
+                        fprintf(fileID,' mm\n');
+                        fprintf(fileID,'s:Tf/Beam/AngleY/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/AngleY/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/AngleY/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,strjoin(string([dataTOPAS(:).angleY])));
+                        fprintf(fileID,' mm\n');
+                    end
+                    
                     fprintf(fileID,'s:Tf/Beam/PosX/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/PosX/Times = Tf/Beam/Spot/Times ms\n');
                     fprintf(fileID,'dv:Tf/Beam/PosX/Values = %i ', cutNumOfBixel);
@@ -491,14 +519,20 @@ classdef MatRad_MCsquareBaseData
                     fprintf(fileID,'\n');
                     fprintf(fileID,'d:So/PencilBeam/BeamEnergy = Tf/Beam/Energy/Value MeV * Sim/ParticleMass\n');
                     
-                    fprintf(fileID,'d:Ge/Patient/TransX      = %.6f mm\n', 61.189329);      %% needs to be fixed
-                    fprintf(fileID,'d:Ge/Patient/TransY      = %.6f mm\n', 30.323580);      %% needs to be fixed
-                    fprintf(fileID,'d:Ge/Patient/TransZ      = %.6f mm\n', -105.138052);    %% needs to be fixed
-                    fprintf(fileID,'d:Ge/Patient/RotX=0. deg\n');                           %% needs to be fixed
-                    fprintf(fileID,'d:Ge/Patient/RotY=0. deg\n');                           %% needs to be fixed
-                    fprintf(fileID,'d:Ge/Patient/RotZ=0. deg\n');                           %% needs to be fixed
-                    fprintf(fileID,'includeFile = ./matRad_RSPcube.txt\n');
+                    if isfield(pln,'propStf')
+                        fprintf(h,'d:Ge/Patient/TransX      = %f mm\n',0.5*ct.resolution.x*(ct.cubeDim(2)+1)-pln.propStf.isoCenter(beamNb,1));
+                        fprintf(h,'d:Ge/Patient/TransY      = %f mm\n',0.5*ct.resolution.y*(ct.cubeDim(1)+1)-pln.propStf.isoCenter(beamNb,2));
+                        fprintf(h,'d:Ge/Patient/TransZ      = %f mm\n',0.5*ct.resolution.z*(ct.cubeDim(3)+1)-pln.propStf.isoCenter(beamNb,3));
+                    else
+                        fprintf(h,'d:Ge/Patient/TransX      = %f mm\n',0.5*ct.resolution.x*(ct.cubeDim(2)+1)-pln.isoCenter(beamNb,1));
+                        fprintf(h,'d:Ge/Patient/TransY      = %f mm\n',0.5*ct.resolution.y*(ct.cubeDim(1)+1)-pln.isoCenter(beamNb,2));
+                        fprintf(h,'d:Ge/Patient/TransZ      = %f mm\n',0.5*ct.resolution.z*(ct.cubeDim(3)+1)-pln.isoCenter(beamNb,3));
+                    end
+                    fprintf(h,'d:Ge/Patient/RotX=0. deg\n');
+                    fprintf(h,'d:Ge/Patient/RotY=0. deg\n');
+                    fprintf(h,'d:Ge/Patient/RotZ=0. deg\n');
                     
+                    fprintf(fileID,'includeFile = ./matRad_RSPcube.txt\n');
                     fprintf(fileID,'###################\n');
                     TOPAS_beamSetup = fopen(['TOPAS_beamSetup_generic_' pln.radiationMode '.txt'],'r');
                     
@@ -509,7 +543,6 @@ classdef MatRad_MCsquareBaseData
                     end
                     
                     fprintf(fileID,'\n');
-                    
                     fclose(fileID);
                     
                 catch MException
