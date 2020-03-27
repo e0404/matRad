@@ -1,4 +1,5 @@
-% matRad script
+% matRad example script for doing fine sampling in dose calculation and
+% comparing it to Monte Carlo simulation
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -16,20 +17,9 @@
 matRad_rc
 
 % load patient data, i.e. ct, voi, cst
-% load LIVER
-load TG119
-% load PHANTOM_control.mat
-% load PHANTOM_hetSlab_entrance_10mm.mat
-% load PHANTOM_hetSlab_entrance_30mm.mat
-% load PHANTOM_slab_entrance_10mm.mat
-% load PHANTOM_slab_entrance_50mm.mat
-% load PHANTOM_slab_entrance_100mm.mat
-% load PHANTOM_fineSamplingTest.mat
-% load PHANTOM_slab_mid_10mm.mat
-% load PHANTOM_wedge_entrance_30mm.mat
-% load PHANTOM_wedge_entrance_100mm.mat
-% load PHANTOM_wedge_mid_30mm.mat
-
+load LIVER
+% load TG119
+load PHANTOM_slab_entrance_100mm.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon

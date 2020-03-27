@@ -52,6 +52,10 @@ fprintf('done.\n');
 radDepthVdoseGrid = matRad_interpRadDepth...
     (ct,1,VctGrid,VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
 
+radDepthsMat{1} = matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, radDepthsMat{1}, ...
+                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest');
+
+
 % limit rotated coordinates to positions where ray tracing is availabe
 rot_coordsVdoseGrid = rot_coordsVdoseGrid(~isnan(radDepthVdoseGrid{1}),:);
  

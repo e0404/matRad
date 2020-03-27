@@ -1,3 +1,4 @@
+.gitignore
 LungPat.mat
 LungPatient1.mat
 polarmap.m
@@ -32,9 +33,6 @@ phantoms/slabPhantom4.mat
 phantoms/slabPhantom5.mat
 phantoms/slabPhantom6.mat
 basedata/protons_generic_TOPAS_cropped.mat
-basedata/protons_matRadBDL_APM.mat
 basedata/protons_matRadBDLcorrected.mat
 phantoms/slabPhantom7.mat
-calculatingWeights.asv
-.gitignore
 *.asv
