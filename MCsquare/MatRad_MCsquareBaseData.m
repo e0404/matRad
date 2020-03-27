@@ -260,7 +260,7 @@ classdef MatRad_MCsquareBaseData
             mcDataOptics.FWHMatIso = 2.355 * sigmaNull;
         end
         
-        function obj = writeTopasData(obj,filepath,ct,stf,pln,fracHistories,w,beamProfile,minRelWeight,numOfRuns,useOrigBaseData,pencilBeamScanning)
+        function obj = writeTopasData(obj,filepath,ct,stf,pln,fracHistories,w,beamProfile,minRelWeight,numOfRuns,useOrigBaseData,pencilBeamScanning,electronProdCut)
             %function that writes a data file containing stf specific data
             %for a Monte Carlo simulation with TOPAS
             % Input:
@@ -284,12 +284,17 @@ classdef MatRad_MCsquareBaseData
             end
             
             if useOrigBaseData == true && ~strcmp(beamProfile,'simple')
-               error('Original base data only usable with simple beam geometry!') 
+                error('Original base data only usable with simple beam geometry!')
             end
             
             if ~exist('pencilBeamScanning','var')
                 % default: true
                 pencilBeamScanning = 'true';
+            end
+            
+            if ~exist('electronProdCut','var')
+                % default: 0.5
+                electronProdCut = '0.5';
             end
             
             if ~exist('minRelWeight','var')
@@ -298,7 +303,7 @@ classdef MatRad_MCsquareBaseData
                 % can otherwise be assigned to min(w)
                 minRelWeight = 0.001;
             end
-                
+            
             %look up focus indices
             focusIndex = obj.selectedFocus(obj.energyIndex);
             machine = obj.machine;
@@ -312,7 +317,7 @@ classdef MatRad_MCsquareBaseData
             else
                 disp('Using default nozzleAxialDistance')
             end
-                        
+            
             for beamIx = 1:length(stf)
                 
                 if ~useOrigBaseData
@@ -324,17 +329,17 @@ classdef MatRad_MCsquareBaseData
                 else
                     [~,ixTmp,~] = intersect([machine.data.energy], [stf.ray.energy]);
                     for i = 1:length(ixTmp)
-                       selectedData(i) = machine.data(ixTmp(i));
+                        selectedData(i) = machine.data(ixTmp(i));
                     end
                     energies = [selectedData.energy];
                 end
-                                
+                
                 %get beamlet properties for each bixel in the stf and write
                 %it into dataTOPAS
                 currentBixel = 1;
                 cutNumOfBixel = 0;
                 nbParticlesTotal = 0;
-
+                
                 for rayIx = 1:stf(beamIx).numOfRays
                     
                     for bixelIx = 1:stf(beamIx).numOfBixelsPerRay(rayIx)
@@ -363,7 +368,7 @@ classdef MatRad_MCsquareBaseData
                                 % angleX corresponds to the rotation around the X axis necessary to move the spot in the Y direction
                                 % angleY corresponds to the rotation around the Y' axis necessary to move the spot in the X direction
                                 % note that Y' corresponds to the Y axis after the rotation of angleX around X axis
-                                dataTOPAS(cutNumOfBixel).angleX = atan(posY / SAD_mm);
+                                dataTOPAS(cutNumOfBixel).angleX = atan(dataTOPAS(cutNumOfBixel).posY / SAD_mm);
                                 dataTOPAS(cutNumOfBixel).angleY = atan(-dataTOPAS(cutNumOfBixel).posX ./ (SAD_mm ./ cos(dataTOPAS(cutNumOfBixel).angleX)));
                                 dataTOPAS(cutNumOfBixel).posX = (dataTOPAS(cutNumOfBixel).posX / SAD_mm)*(SAD_mm-nozzleAxialDistance_mm);
                                 dataTOPAS(cutNumOfBixel).posY = (dataTOPAS(cutNumOfBixel).posY / SAD_mm)*(SAD_mm-nozzleAxialDistance_mm);
@@ -416,177 +421,176 @@ classdef MatRad_MCsquareBaseData
                 dataTOPAS = dataTOPAS(ixSorted);
                 
                 %write TOPAS data base file
-                try
-                    fileID = fopen([filepath,'beamSetup_matRad_plan_field',num2str(beamIx),'.txt'],'w');
-                    
-                    fprintf(fileID,'i:Ts/ShowHistoryCountAtInterval = %i\n',historyCount/20);
-                    fprintf(fileID,'s:Sim/PlanLabel = "simData_matRad_plan_field1_run" + Ts/Seed\n');
-                    fprintf(fileID,'d:Sim/GantryAngle = %.6f deg\n', stf(beamIx).gantryAngle);
-                    fprintf(fileID,'d:Sim/CouchAngle = %.6f deg\n', stf(beamIx).couchAngle);
-                    fprintf(fileID,'s:Sim/ParticleName = "proton"\n');
-                    fprintf(fileID,'u:Sim/ParticleMass = 1.0\n');
-                    fprintf(fileID,'i:Sim/NbThreads = 0\n');
-                    fprintf(fileID,'d:Tf/TimelineStart = 0. ms\n');
-                    fprintf(fileID,'d:Tf/TimelineEnd = %i ms\n', 10 * cutNumOfBixel);
-                    fprintf(fileID,'i:Tf/NumberOfSequentialTimes = %i\n', cutNumOfBixel);
-                    fprintf(fileID,'dv:Tf/Beam/Spot/Times = %i ', cutNumOfBixel);
-                    fprintf(fileID,strjoin(string(linspace(10,cutNumOfBixel*10,cutNumOfBixel))));
-                    fprintf(fileID,' ms\n');
-                    fprintf(fileID,'s:Tf/Beam/Energy/Function = "Step"\n');
-                    fprintf(fileID,'dv:Tf/Beam/Energy/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'dv:Tf/Beam/Energy/Values = %i ', cutNumOfBixel);
-                    fprintf(fileID,strjoin(string([dataTOPAS(:).energy])));
-                    fprintf(fileID,' MeV\n');
-                    
-                    switch beamProfile
-                        case 'biGaussian'
-                            fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'dv:Tf/Beam/EnergySpread/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,strjoin(string([dataTOPAS(:).energySpread])));
-                            fprintf(fileID,' MeV\n');
-
-                            fprintf(fileID,'s:So/Example/Type           = "Emittance"\n');
-                            fprintf(fileID,'s:So/Example/Distribution   = "BiGaussian"\n');
-                            
-                            fprintf(fileID,'s:Tf/Beam/SigmaX/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/SigmaX/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'dv:Tf/Beam/SigmaX/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,strjoin(string([dataTOPAS(:).spotSize])));
-                            fprintf(fileID,' mm\n');
-                            fprintf(fileID,'s:Tf/Beam/SigmaXPrime/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/SigmaXPrime/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'dv:Tf/Beam/SigmaXPrime/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,strjoin(string([dataTOPAS(:).divergence])));
-                            fprintf(fileID,'\n');
-                            fprintf(fileID,'s:Tf/Beam/CorrelationX/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/CorrelationX/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'dv:Tf/Beam/CorrelationX/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,strjoin(string([dataTOPAS(:).correlation])));
-                            fprintf(fileID,'\n');
-                            
-                            fprintf(fileID,'s:Tf/Beam/SigmaY/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/SigmaY/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'dv:Tf/Beam/SigmaY/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,strjoin(string([dataTOPAS(:).spotSize])));
-                            fprintf(fileID,' mm\n');
-                            fprintf(fileID,'s:Tf/Beam/SigmaYPrime/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/SigmaYPrime/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'dv:Tf/Beam/SigmaYPrime/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,strjoin(string([dataTOPAS(:).divergence])));
-                            fprintf(fileID,'\n');
-                            fprintf(fileID,'s:Tf/Beam/CorrelationY/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/CorrelationY/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'dv:Tf/Beam/CorrelationY/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,strjoin(string([dataTOPAS(:).correlation])));
-                            fprintf(fileID,'\n');
-                        case 'simple'
-                            fprintf(fileID,'s:Tf/Beam/FocusFWHM/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,strjoin(string([dataTOPAS(:).focusFWHM])));
-                            fprintf(fileID,' mm\n');
-                    end
-                    
-                    if pencilBeamScanning
-                        fprintf(fileID,'s:Tf/Beam/AngleX/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/AngleX/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'dv:Tf/Beam/AngleX/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,strjoin(string([dataTOPAS(:).angleX])));
+                fileID = fopen([filepath,'beamSetup_matRad_plan_field',num2str(beamIx),'.txt'],'w');
+                
+                fprintf(fileID,'i:Ts/ShowHistoryCountAtInterval = %i\n',historyCount/20);
+                fprintf(fileID,'s:Sim/PlanLabel = "simData_matRad_plan_field1_run" + Ts/Seed\n');
+                fprintf(fileID,'d:Sim/GantryAngle = %.6f deg\n', stf(beamIx).gantryAngle);
+                fprintf(fileID,'d:Sim/CouchAngle = %.6f deg\n', stf(beamIx).couchAngle);
+                fprintf(fileID,'s:Sim/ParticleName = "proton"\n');
+                fprintf(fileID,'u:Sim/ParticleMass = 1.0\n');
+                fprintf(fileID,'i:Sim/NbThreads = 0\n');
+                fprintf(fileID,'d:Tf/TimelineStart = 0. ms\n');
+                fprintf(fileID,'d:Tf/TimelineEnd = %i ms\n', 10 * cutNumOfBixel);
+                fprintf(fileID,'i:Tf/NumberOfSequentialTimes = %i\n', cutNumOfBixel);
+                fprintf(fileID,'dv:Tf/Beam/Spot/Times = %i ', cutNumOfBixel);
+                fprintf(fileID,strjoin(string(linspace(10,cutNumOfBixel*10,cutNumOfBixel))));
+                fprintf(fileID,' ms\n');
+                fprintf(fileID,'s:Tf/Beam/Energy/Function = "Step"\n');
+                fprintf(fileID,'dv:Tf/Beam/Energy/Times = Tf/Beam/Spot/Times ms\n');
+                fprintf(fileID,'dv:Tf/Beam/Energy/Values = %i ', cutNumOfBixel);
+                fprintf(fileID,strjoin(string([dataTOPAS(:).energy])));
+                fprintf(fileID,' MeV\n');
+                
+                switch beamProfile
+                    case 'biGaussian'
+                        fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/EnergySpread/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,strjoin(string([dataTOPAS(:).energySpread])));
+                        fprintf(fileID,' MeV\n');
+                        
+                        fprintf(fileID,'s:So/Example/Type           = "Emittance"\n');
+                        fprintf(fileID,'s:So/Example/Distribution   = "BiGaussian"\n');
+                        
+                        fprintf(fileID,'s:Tf/Beam/SigmaX/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/SigmaX/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/SigmaX/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,strjoin(string([dataTOPAS(:).spotSize])));
                         fprintf(fileID,' mm\n');
-                        fprintf(fileID,'s:Tf/Beam/AngleY/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/AngleY/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'dv:Tf/Beam/AngleY/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,strjoin(string([dataTOPAS(:).angleY])));
+                        fprintf(fileID,'s:Tf/Beam/SigmaXPrime/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/SigmaXPrime/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/SigmaXPrime/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,strjoin(string([dataTOPAS(:).divergence])));
+                        fprintf(fileID,'\n');
+                        fprintf(fileID,'s:Tf/Beam/CorrelationX/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/CorrelationX/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/CorrelationX/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,strjoin(string([dataTOPAS(:).correlation])));
+                        fprintf(fileID,'\n');
+                        
+                        fprintf(fileID,'s:Tf/Beam/SigmaY/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/SigmaY/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/SigmaY/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,strjoin(string([dataTOPAS(:).spotSize])));
                         fprintf(fileID,' mm\n');
-                    end
-                    
-                    fprintf(fileID,'s:Tf/Beam/PosX/Function = "Step"\n');
-                    fprintf(fileID,'dv:Tf/Beam/PosX/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'dv:Tf/Beam/PosX/Values = %i ', cutNumOfBixel);
-                    fprintf(fileID,strjoin(string([dataTOPAS(:).posX])));
-                    fprintf(fileID,' mm\n');
-                    fprintf(fileID,'s:Tf/Beam/PosY/Function = "Step"\n');
-                    fprintf(fileID,'dv:Tf/Beam/PosY/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'dv:Tf/Beam/PosY/Values = %i ', cutNumOfBixel);
-                    fprintf(fileID,strjoin(string([dataTOPAS(:).posY])));
-                    fprintf(fileID,' mm\n');
-                    
-                    fprintf(fileID,'s:Tf/Beam/Current/Function = "Step"\n');
-                    fprintf(fileID,'dv:Tf/Beam/Current/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'iv:Tf/Beam/Current/Values = %i ', cutNumOfBixel);
-                    fprintf(fileID,strjoin(string(round([dataTOPAS(:).current]))));
-                    fprintf(fileID,'\n');
-                    fprintf(fileID,'d:So/PencilBeam/BeamEnergy = Tf/Beam/Energy/Value MeV * Sim/ParticleMass\n');
-                    
-                    if isfield(pln,'propStf')
-                        fprintf(h,'d:Ge/Patient/TransX      = %f mm\n',0.5*ct.resolution.x*(ct.cubeDim(2)+1)-pln.propStf.isoCenter(beamNb,1));
-                        fprintf(h,'d:Ge/Patient/TransY      = %f mm\n',0.5*ct.resolution.y*(ct.cubeDim(1)+1)-pln.propStf.isoCenter(beamNb,2));
-                        fprintf(h,'d:Ge/Patient/TransZ      = %f mm\n',0.5*ct.resolution.z*(ct.cubeDim(3)+1)-pln.propStf.isoCenter(beamNb,3));
-                    else
-                        fprintf(h,'d:Ge/Patient/TransX      = %f mm\n',0.5*ct.resolution.x*(ct.cubeDim(2)+1)-pln.isoCenter(beamNb,1));
-                        fprintf(h,'d:Ge/Patient/TransY      = %f mm\n',0.5*ct.resolution.y*(ct.cubeDim(1)+1)-pln.isoCenter(beamNb,2));
-                        fprintf(h,'d:Ge/Patient/TransZ      = %f mm\n',0.5*ct.resolution.z*(ct.cubeDim(3)+1)-pln.isoCenter(beamNb,3));
-                    end
-                    fprintf(h,'d:Ge/Patient/RotX=0. deg\n');
-                    fprintf(h,'d:Ge/Patient/RotY=0. deg\n');
-                    fprintf(h,'d:Ge/Patient/RotZ=0. deg\n');
-                    
-                    fprintf(fileID,'includeFile = ./matRad_RSPcube.txt\n');
-                    fprintf(fileID,'###################\n');
-                    TOPAS_beamSetup = fopen(['TOPAS_beamSetup_generic_' pln.radiationMode '.txt'],'r');
-                    
-                    % copy standard values from TOPAS_beamSetup
-                    while ~feof(TOPAS_beamSetup)
-                        strLine = fgets(TOPAS_beamSetup); %# read line by line
-                        fprintf(fileID,'%s',strLine);
-                    end
-                    
-                    fprintf(fileID,'\n');
-                    fclose(fileID);
-                    
-                catch MException
-                    error(MException.message);
+                        fprintf(fileID,'s:Tf/Beam/SigmaYPrime/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/SigmaYPrime/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/SigmaYPrime/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,strjoin(string([dataTOPAS(:).divergence])));
+                        fprintf(fileID,'\n');
+                        fprintf(fileID,'s:Tf/Beam/CorrelationY/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/CorrelationY/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/CorrelationY/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,strjoin(string([dataTOPAS(:).correlation])));
+                        fprintf(fileID,'\n');
+                    case 'simple'
+                        fprintf(fileID,'s:Tf/Beam/FocusFWHM/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,strjoin(string([dataTOPAS(:).focusFWHM])));
+                        fprintf(fileID,' mm\n');
                 end
+                
+                if pencilBeamScanning
+                    fprintf(fileID,'s:Tf/Beam/AngleX/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/AngleX/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'dv:Tf/Beam/AngleX/Values = %i ', cutNumOfBixel);
+                    fprintf(fileID,strjoin(string([dataTOPAS(:).angleX])));
+                    fprintf(fileID,' mm\n');
+                    fprintf(fileID,'s:Tf/Beam/AngleY/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/AngleY/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'dv:Tf/Beam/AngleY/Values = %i ', cutNumOfBixel);
+                    fprintf(fileID,strjoin(string([dataTOPAS(:).angleY])));
+                    fprintf(fileID,' mm\n');
+                end
+                
+                fprintf(fileID,'s:Tf/Beam/PosX/Function = "Step"\n');
+                fprintf(fileID,'dv:Tf/Beam/PosX/Times = Tf/Beam/Spot/Times ms\n');
+                fprintf(fileID,'dv:Tf/Beam/PosX/Values = %i ', cutNumOfBixel);
+                fprintf(fileID,strjoin(string([dataTOPAS(:).posX])));
+                fprintf(fileID,' mm\n');
+                fprintf(fileID,'s:Tf/Beam/PosY/Function = "Step"\n');
+                fprintf(fileID,'dv:Tf/Beam/PosY/Times = Tf/Beam/Spot/Times ms\n');
+                fprintf(fileID,'dv:Tf/Beam/PosY/Values = %i ', cutNumOfBixel);
+                fprintf(fileID,strjoin(string([dataTOPAS(:).posY])));
+                fprintf(fileID,' mm\n');
+                
+                fprintf(fileID,'s:Tf/Beam/Current/Function = "Step"\n');
+                fprintf(fileID,'dv:Tf/Beam/Current/Times = Tf/Beam/Spot/Times ms\n');
+                fprintf(fileID,'iv:Tf/Beam/Current/Values = %i ', cutNumOfBixel);
+                fprintf(fileID,strjoin(string(round([dataTOPAS(:).current]))));
+                fprintf(fileID,'\n');
+                fprintf(fileID,'d:So/PencilBeam/BeamEnergy = Tf/Beam/Energy/Value MeV * Sim/ParticleMass\n');
+                
+                if isfield(pln,'propStf')
+                    fprintf(fileID,'d:Ge/Patient/TransX      = %f mm\n',0.5*ct.resolution.x*(ct.cubeDim(2)+1)-pln.propStf.isoCenter(beamIx,1));
+                    fprintf(fileID,'d:Ge/Patient/TransY      = %f mm\n',0.5*ct.resolution.y*(ct.cubeDim(1)+1)-pln.propStf.isoCenter(beamIx,2));
+                    fprintf(fileID,'d:Ge/Patient/TransZ      = %f mm\n',0.5*ct.resolution.z*(ct.cubeDim(3)+1)-pln.propStf.isoCenter(beamIx,3));
+                else
+                    fprintf(fileID,'d:Ge/Patient/TransX      = %f mm\n',0.5*ct.resolution.x*(ct.cubeDim(2)+1)-pln.isoCenter(beamIx,1));
+                    fprintf(fileID,'d:Ge/Patient/TransY      = %f mm\n',0.5*ct.resolution.y*(ct.cubeDim(1)+1)-pln.isoCenter(beamIx,2));
+                    fprintf(fileID,'d:Ge/Patient/TransZ      = %f mm\n',0.5*ct.resolution.z*(ct.cubeDim(3)+1)-pln.isoCenter(beamIx,3));
+                end
+                fprintf(fileID,'d:Ge/Patient/RotX=0. deg\n');
+                fprintf(fileID,'d:Ge/Patient/RotY=0. deg\n');
+                fprintf(fileID,'d:Ge/Patient/RotZ=0. deg\n');
+                
+                fprintf(fileID,'includeFile = ./matRad_RSPcube.txt\n');
+                fprintf(fileID,'###################\n');
+                TOPAS_beamSetup = fopen(['TOPAS_beamSetup_generic_' pln.radiationMode '.txt'],'r');
+                
+                % NozzleAxialDistance
+                fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', nozzleAxialDistance_mm);
+                if pencilBeamScanning
+                    fprintf(fileID,'d:Ge/Nozzle/RotX = Tf/Beam/AngleX/Value rad\n');
+                    fprintf(fileID,'d:Ge/Nozzle/RotY = Tf/Beam/AngleY/Value rad\n');
+                    fprintf(fileID,'d:Ge/Nozzle/RotZ = 0.0 rad\n');
+                end
+                
+                fprintf(fileID,['d:Ph/Default/CutForElectron = ',electronProdCut,' mm\n']);
+                
+                % copy standard values from TOPAS_beamSetup
+                while ~feof(TOPAS_beamSetup)
+                    strLine = fgets(TOPAS_beamSetup); %# read line by line
+                    fprintf(fileID,'%s',strLine);
+                end
+                
+                fprintf(fileID,'\n');
+                fclose(fileID);
+                
+                
                 
                 %write run scripts for TOPAS
-                try
-                    basematerial = '';
-                    if ~exist('machine') || ~isfield(machine.meta,'basematerial')
-                        warning('Base material not defined in base data. Using Water')
-                        basematerial = 'Water';
-                    else
-                        basematerial = machine.meta.basematerial;
-                    end
-                    
-                    rspCube = matRad_exportCtTOPAS(ct, filepath, basematerial);
-                    
-                    for runIx = 1:numOfRuns
-                        fileID = fopen([filepath,'matRad_plan_field',num2str(beamIx),'_run',num2str(runIx),'.txt'],'w');
-                        fprintf(fileID,['i:Ts/Seed = ',num2str(runIx),'\n']);
-                        fprintf(fileID,'includeFile = ./beamSetup_matRad_plan_field1.txt');
-                        fclose(fileID);
-                    end
-                    
-                catch MException
-                    error(MException.message);
+                basematerial = '';
+                if ~exist('machine') || ~isfield(machine.meta,'basematerial')
+                    warning('Base material not defined in base data. Using Water')
+                    basematerial = 'Water';
+                else
+                    basematerial = machine.meta.basematerial;
                 end
                 
-                %write MCparam file with basic parameters
-                try
-                    MCparam.nbRuns = numOfRuns;
-                    MCparam.nbFields = length(stf);
-                    MCparam.tallies = {'physicalDose'};
-                    MCparam.simLabel = 'matRad_plan';
-                    MCparam.cubeDim = ct.cubeDim;
-                    MCparam.RSP = rspCube;
-                    MCparam.voxelDimensions = ct.resolution;
-                    MCparam.nbHistories = historyCount;
-                    MCparam.nbParticles = nbParticlesTotal;
-                    save([filepath,'MCparam.mat'],'MCparam');
-                catch MException
-                    error(MException.message);
+                rspCube = matRad_exportCtTOPAS(ct, filepath, basematerial);
+                
+                for runIx = 1:numOfRuns
+                    fileID = fopen([filepath,'matRad_plan_field',num2str(beamIx),'_run',num2str(runIx),'.txt'],'w');
+                    fprintf(fileID,['i:Ts/Seed = ',num2str(runIx),'\n']);
+                    fprintf(fileID,'includeFile = ./beamSetup_matRad_plan_field1.txt');
+                    fclose(fileID);
                 end
+                
+                
+                %write MCparam file with basic parameters
+                MCparam.nbRuns = numOfRuns;
+                MCparam.nbFields = length(stf);
+                MCparam.tallies = {'physicalDose'};
+                MCparam.simLabel = 'matRad_plan';
+                MCparam.cubeDim = ct.cubeDim;
+                MCparam.RSP = rspCube;
+                MCparam.voxelDimensions = ct.resolution;
+                MCparam.nbHistories = historyCount;
+                MCparam.nbParticles = nbParticlesTotal;
+                save([filepath,'MCparam.mat'],'MCparam');
                 
             end
         end
