@@ -328,25 +328,25 @@ for i = 1:length(stf) % loop over all beams
                     end
                                   
                 if strcmp(anaMode, 'fineSampling')
-                    totalDose = zeros(ct.cubeDim(1) * ct.cubeDim(2) * ct.cubeDim(3),1);
+                    totalDose = zeros(size(currIx,1),1);
                     % run over components
                     for c = 1:numOfSub
-                        tmpDose = zeros(ct.cubeDim(1) * ct.cubeDim(2) * ct.cubeDim(3),1);
+                        tmpDose = zeros(size(currIx,1),1);
                         bixelDose = finalWeight(c,k).*matRad_calcParticleDoseBixel(...
                                 radDepths(currIx(:,:,c),1,c), ...
                                 currRadialDist_sq(currIx(:,:,c),:,c), ...
                                 sigmaSub(k)^2, ...
                                 machine.data(energyIx));
-                            
-                        tmpDose(find(currIx(:,:,c) == true)) = bixelDose;
+                                                        
+                        tmpDose(currIx(:,:,c)) = bixelDose;
                         totalDose = totalDose + tmpDose;
-%                         tmp = reshape(tmpDose,150,50,50);
+%                         tmp = reshape(tmpDose,167,167,129);
 %                         figure
-%                         imagesc(tmp(:,:,25));
+%                         imagesc(tmp(:,:,65));
                     end
                     
 %                 doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid,1,totalDose,dij.doseGrid.numOfVoxels,1);
-                doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid,1,totalDose(VdoseGrid),dij.doseGrid.numOfVoxels,1);
+                doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid(ix),1,totalDose,dij.doseGrid.numOfVoxels,1);
                
                 else
                     % calculate particle dose for bixel k on ray j of beam i
