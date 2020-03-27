@@ -116,22 +116,4 @@ if contourSwitch
 end
 hold off
 pbaspect([ct.cubeDim(2) ct.cubeDim(1) ct.cubeDim(3)])
-
-
- %% execute gamma tests
-gammaTest = [2, 2];
-interpolation = 1;
-figure
-subplot(1,2,1)
-[gammaCube1,gammaPassRateCell] = matRad_gammaIndex(anaDose,mcDose,[ct.resolution.x,ct.resolution.y,ct.resolution.z],gammaTest,round(ct.cubeDim(3)/2),interpolation,'global',cst);
-title({[num2str(gammaPassRateCell{1,2}) '% of points > ' num2str(gammaTest(1)) '% pass gamma criterion (' num2str(gammaTest(1)) '%/ ' num2str(gammaTest(2)) 'mm)'];'stadard dose'});
-hold on
-contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),1,'color','white');
-hold off
-
-subplot(1,2,2)
-[gammaCube3,gammaPassRateCell] = matRad_gammaIndex(anaFsDose,mcDose,[ct.resolution.x,ct.resolution.y,ct.resolution.z],gammaTest,round(ct.cubeDim(3)/2),interpolation,'global',cst);
-title({[num2str(gammaPassRateCell{1,2}) '% of points > ' num2str(gammaTest(1)) '% pass gamma criterion (' num2str(gammaTest(1)) '%/ ' num2str(gammaTest(2)) 'mm)'];'fine sampling dose'});
-hold on
-contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),1,'color','white');
-hold off
+    

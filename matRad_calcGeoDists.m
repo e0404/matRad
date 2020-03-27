@@ -98,9 +98,6 @@ subsetMask = rad_distancesSq ./ rot_coords_temp(:,2).^2 <= lateralCutOff^2 /SAD^
 ix = radDepthIx(subsetMask);
 
 % return radial distances squared
-% if nargout > 1
-%     rad_distancesSq = rad_distancesSq(subsetMask);
-% end
 rad_distancesSq = rad_distancesSq(subsetMask);
 
 % return x & z distance

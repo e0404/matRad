@@ -1,4 +1,4 @@
-function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData, stdWER)
+function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
 % 
@@ -36,40 +36,11 @@ depths = baseData.depths + baseData.offset;
 % convert from MeV cm^2/g per primary to Gy mm^2 per 1e6 primaries
 conversionFactor = 1.6021766208e-02;
 
-if nargin < 5
-   	stdCorr = false;
-else
-    stdCorr = true;
-end
-
-
 if ~isstruct(baseData.Z)
-    if stdCorr
-        for i = 1:size(stdWER,1)
-            if stdWER(i) == 0
-                kernel(i).values = 1;
-            else
-                tmp = normpdf(-3 * stdWER(i):0.05:3 * stdWER(i),0,stdWER(i));
-                tmp = tmp / sum(tmp);
-                kernel(i).values = tmp;
-            end
-        end
-    end
-
     if ~isfield(baseData,'sigma')
-
-
-
         % interpolate depth dose, sigmas, and weights    
-        if ~stdCorr
-            X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
-        else
-            convBaseData = arrayfun(@(K) conv(conversionFactor*baseData.Z,K.values,'same'),kernel,'UniformOutput',false,'UniformOutput',false);
-            X = [];
-            for i = 1:size(radDepths)
-                X = [X; matRad_interp1(depths,[convBaseData{i} baseData.sigma1 baseData.weight baseData.sigma2],radDepths(i))];
-            end
-        end
+        X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
+
 
 
         % set dose for query > tabulated depth dose values to zero
@@ -104,7 +75,6 @@ else
     % function handle for calculating depth doses
     sumGauss = @(x,mu,SqSigma,w) (1./sqrt(2*pi*ones(numel(x),1) .* SqSigma') .* ...
         exp(-bsxfun(@minus,x,mu').^2 ./ (2* ones(numel(x),1) .* SqSigma' ))) * w;
-    
     
     if ~isfield(baseData,'sigma')
         
