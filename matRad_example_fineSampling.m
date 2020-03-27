@@ -18,20 +18,19 @@ matRad_rc
 
 % load patient data, i.e. ct, voi, cst
 % load LIVER
-% load TG119
-load PHANTOM_slab_entrance_100mm.mat
+load TG119
 
 % meta information for treatment plan
-pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'matRadBDL_APM';
+pln.radiationMode   = 'protons';     
+pln.machine         = 'matRadBDLcorrected';
 
 pln.numOfFractions  = 30;
 
 % beam geometry settings
-pln.propStf.bixelWidth      = 500; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.longitudinalSpotSpacing = 500;
-pln.propStf.gantryAngles    = [0]; % [?] 
-pln.propStf.couchAngles     = [0]; % [?]
+pln.propStf.bixelWidth      = 50; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.longitudinalSpotSpacing = 50;
+pln.propStf.gantryAngles    = [0,90]; % [?] 
+pln.propStf.couchAngles     = [0,0]; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
                             
@@ -61,7 +60,7 @@ stf = matRad_generateStf(ct,cst,pln);
 
 %  % analytical dose with fine sampling
     tic
-    pln.propDoseCalc.fineSampling.N = 21;
+    pln.propDoseCalc.fineSampling.N = 11;
     pln.propDoseCalc.fineSampling.sigmaSub = 2;
     dijFS = matRad_calcParticleDose(ct,stf,pln,cst,false);
     resultGUI_FS = matRad_calcCubes(ones(sum([stf(:).totalNumOfBixels]),1),dijFS);
@@ -85,6 +84,8 @@ subplot(1,3,1)
 imagesc(anaDose(:,:,round(ct.cubeDim(3)/2)));
 caxis([0 2e-3]);
 title('Standard dose');
+xlabel('x [mm]') 
+ylabel('y [mm]') 
 hold on 
 contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),1,'color','white');
 if contourSwitch
@@ -97,6 +98,8 @@ subplot(1,3,2)
 imagesc(anaFsDose(:,:,round(ct.cubeDim(3)/2)));
 caxis([0 2e-3]);
 title('Fine sampling dose');
+xlabel('x [mm]') 
+ylabel('y [mm]') 
 hold on 
 contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),1,'color','white');
 if contourSwitch
@@ -109,6 +112,8 @@ subplot(1,3,3)
 imagesc(mcDose(:,:,round(ct.cubeDim(3)/2)));
 caxis([0 2e-3]);
 title('Monte Carlo dose');
+xlabel('x [mm]') 
+ylabel('y [mm]') 
 hold on 
 contour(ct.cube{1}(:,:,round(ct.cubeDim(3)/2)),1,'color','white');
 if contourSwitch
