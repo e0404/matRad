@@ -18,7 +18,8 @@ matRad_rc
 
 % load patient data, i.e. ct, voi, cst
 % load LIVER
-load TG119
+% load TG119
+load PHANTOM_slab_entrance_100mm.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
@@ -28,9 +29,9 @@ pln.numOfFractions  = 30;
 
 % beam geometry settings
 pln.propStf.bixelWidth      = 500; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.longitudinalSpotSpacing = 10;
-pln.propStf.gantryAngles    = [0,90]; % [?] 
-pln.propStf.couchAngles     = [0, 0]; % [?]
+pln.propStf.longitudinalSpotSpacing = 500;
+pln.propStf.gantryAngles    = [0]; % [?] 
+pln.propStf.couchAngles     = [0]; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
                             
@@ -38,7 +39,6 @@ pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCent
 pln.propDoseCalc.doseGrid.resolution.x = ct.resolution.x; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = ct.resolution.y; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = ct.resolution.z; % [mm]
-pln.propDoseCalc.airOffsetCorrection = true;
 
 % optimization settings
 pln.propOpt.optimizer       = 'IPOPT';
@@ -50,10 +50,6 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
 
-%  % assign new energy
-% load protons_matRadBDL_APM;
-% stf.ray.energy = machine.data(37).energy;
-                            
 %% dose calculation
  % analytical dose without fine sampling
     tic
