@@ -37,3 +37,4 @@ basedata/protons_matRadBDLcorrected.mat
 phantoms/slabPhantom7.mat
 calculatingWeights.asv
 .gitignore
+*.asv
