@@ -63,11 +63,11 @@ if ~isempty(strfind(ccName,'MSVC')) %Not use contains(...) because of octave
     flags{1,1} = 'COMPFLAGS';
     flags{1,2} = [ '/openmp'];
     flags{2,1} = 'OPTIMFLAGS';
-    flags{2,2} = '/O2';
+    flags{2,2} = '/O3';
     includestring =  ['/I' sourceFolder];   
 else
     flags{1,1} = 'CFLAGS';
-    flags{1,2} = '-std=gnu99 -fopenmp -O2';
+    flags{1,2} = '-std=gnu99 -fopenmp -O3';
     flags{2,1} = 'LDFLAGS';
     flags{2,2} = '-fopenmp';
     includestring =  ['-I' sourceFolder];
