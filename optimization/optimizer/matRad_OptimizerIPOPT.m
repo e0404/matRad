@@ -51,7 +51,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             elseif matRad_cfg.logLevel <= 3
                 lvl = 5;
             else 
-                lvl = 7;
+                %There seems to be a problem with higher log levels in
+                %IPOPT!
+                lvl = 5;
             end
                 
             obj.options.print_level                   = lvl;
