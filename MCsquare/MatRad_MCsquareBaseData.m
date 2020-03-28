@@ -509,12 +509,12 @@ classdef MatRad_MCsquareBaseData
                     fprintf(fileID,'dv:Tf/Beam/AngleX/Times = Tf/Beam/Spot/Times ms\n');
                     fprintf(fileID,'dv:Tf/Beam/AngleX/Values = %i ', cutNumOfBixel);
                     fprintf(fileID,strjoin(string([dataTOPAS(:).angleX])));
-                    fprintf(fileID,' mm\n');
+                    fprintf(fileID,' rad\n');
                     fprintf(fileID,'s:Tf/Beam/AngleY/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/AngleY/Times = Tf/Beam/Spot/Times ms\n');
                     fprintf(fileID,'dv:Tf/Beam/AngleY/Values = %i ', cutNumOfBixel);
                     fprintf(fileID,strjoin(string([dataTOPAS(:).angleY])));
-                    fprintf(fileID,' mm\n');
+                    fprintf(fileID,' rad\n');
                 end
                 
                 fprintf(fileID,'s:Tf/Beam/PosX/Function = "Step"\n');

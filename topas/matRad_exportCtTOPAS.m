@@ -137,7 +137,7 @@ if exportRSPcube
       fprintf(h,'s:Ge/Patient/BaseMaterial = "%s"\n',medium);
       fprintf(h,'i:Ge/Patient/MaterialIxMax = %d\n',vecRSPlength);
       fprintf(h,'s:Ge/Patient/InputDirectory = "./"\n');
-      fprintf(h,'s:Ge/Patient/InputFile = "%s"\n',fullfile(runsPath, 'matRad_RSPcube.dat'));
+      fprintf(h,'s:Ge/Patient/InputFile = "%s"\n','matRad_RSPcube.dat'));
       fprintf(h,'s:Ge/Patient/ImagingtoMaterialConverter = "matrad"\n');
       fprintf(h,'i:Ge/Patient/NumberOfVoxelsX = %d\n',ct.cubeDim(2));
       fprintf(h,'i:Ge/Patient/NumberOfVoxelsY = %d\n',ct.cubeDim(1));
