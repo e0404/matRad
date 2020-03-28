@@ -99,6 +99,17 @@ classdef MatRad_Config < handle
             fprintf(fID,repmat(singleString,1,size(obj.messageLog,1)),obj.messageLog{:});
             fclose(fID);
         end
+        
+        %%Property set methods for checks
+        function set.logLevel(obj,newLogLevel)
+            minLevel = 1;
+            maxLevel = 4;
+            if newLogLevel >= minLevel && newLogLevel <= maxLevel
+                obj.logLevel = newLogLevel;
+            else
+                obj.dispError('Invalid log level. Value must be between %d and %d',minLevel,maxLevel);
+            end
+        end
     end
     
     methods(Static)
