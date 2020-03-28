@@ -71,7 +71,7 @@ omcFolder = [matRad_cfg.matRadRoot filesep 'ompMC'];
 %% Setup OmpMC options / parameters
 
 %display options
-ompMCoptions.verbose = matRad_cfg.logLevel > 2 ;
+ompMCoptions.verbose = matRad_cfg.logLevel - 1;
 
 % start MC control          
 ompMCoptions.nHistories = nCasePerBixel;
