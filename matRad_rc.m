@@ -36,10 +36,8 @@ end
 global matRad_cfg;
 matRad_cfg = MatRad_Config.instance();
 
-% set log level accordingly if you do _not_ want to do unit testing
-if ~exist('unitTestBool','var') || ~unitTestBool
-    matRad_cfg.logLevel  = 4;    
-else  % set log level (and default parameters) accordingly if want to do unit testing
+% set log level according to unit testing
+if exist('unitTestBool','var') && unitTestBool
     matRad_cfg.logLevel   = 1;
     matRad_cfg.propStf.defaultLongitudinalSpotSpacing = 20;
     matRad_cfg.propDoseCalc.defaultResolution = struct('x',5,'y',6,'z',7); %[mm]
