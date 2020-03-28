@@ -293,7 +293,7 @@ classdef MatRad_MCsquareBaseData
             if ~isfield(TopasConfig,'useOrigBaseData')
                 % base data of the original matRad plan will be used
                 % default: true
-                TopasConfig.useOrigBaseData = true;
+                TopasConfig.useOrigBaseData = false;
             end
             
             if ~isfield(TopasConfig,'beamProfile')
@@ -396,7 +396,7 @@ classdef MatRad_MCsquareBaseData
                                 dataTOPAS(cutNumOfBixel).spotSize = selectedData(ixTmp).SpotSize1x;
                                 dataTOPAS(cutNumOfBixel).divergence = selectedData(ixTmp).Divergence1x;
                                 dataTOPAS(cutNumOfBixel).correlation = selectedData(ixTmp).Correlation1x;
-                                dataTOPAS(cutNumOfBixel).focusFWHM = selectedData(ixTmp);
+                                dataTOPAS(cutNumOfBixel).focusFWHM = selectedData(ixTmp).FWHMatIso;
                             end
                             nbParticlesTotal = nbParticlesTotal + voxel_nbParticles;
                         end
