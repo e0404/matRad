@@ -194,6 +194,8 @@ if visBool
 end
 
 %% Create beamlet source
+useCornersSCD = false; %false -> use ISO corners
+
 numOfBixels = [stf(:).numOfRays];
 beamSource = zeros(dij.numOfBeams, 3);
 
@@ -216,20 +218,26 @@ for i = 1:dij.numOfBeams % loop over all beams
         dij.rayNum(counter)   = j;
         dij.bixelNum(counter) = j;
         
+        if useCornersSCD
+            beamletCorners = stf(i).ray(j).rayCorners_SCD;
+        else    
+            beamletCorners = stf(i).ray(j).beamletCornersAtIso;
+        end
+        
         % get bixel corner and delimiting vectors.
         % a) change coordinate system (Isocenter cs-> physical cs) and units mm -> cm
-        currCorner = (stf(i).ray(j).beamletCornersAtIso(1,:) + stf(i).isoCenter) ./ scale;
+        currCorner = (beamletCorners(1,:) + stf(i).isoCenter) ./ scale;
         bixelCorner(counter,:) = currCorner;
-        bixelSide1(counter,:) = (stf(i).ray(j).beamletCornersAtIso(2,:) + stf(i).isoCenter) ./ scale - currCorner;
-        bixelSide2(counter,:) = (stf(i).ray(j).beamletCornersAtIso(4,:) + stf(i).isoCenter) ./ scale - currCorner;
+        bixelSide1(counter,:) = (beamletCorners(2,:) + stf(i).isoCenter) ./ scale - currCorner;
+        bixelSide2(counter,:) = (beamletCorners(4,:) + stf(i).isoCenter) ./ scale - currCorner;
         
         if visBool
             for k = 1:4
-                currCornerVis = (stf(i).ray(j).beamletCornersAtIso(k,:) + stf(i).isoCenter)/10;
+                currCornerVis = (beamletCorners(k,:) + stf(i).isoCenter)/10;
                 % rays connecting source and ray corner
                 plot3([beamSource(i,1) currCornerVis(1)],[beamSource(i,2) currCornerVis(2)],[beamSource(i,3) currCornerVis(3)],'b')
                 % connection between corners
-                lRayCorner = (stf(i).ray(j).beamletCornersAtIso(mod(k,4) + 1,:) + stf(i).isoCenter)/10;
+                lRayCorner = (beamletCorners(mod(k,4) + 1,:) + stf(i).isoCenter)/10;
                 plot3([lRayCorner(1) currCornerVis(1)],[lRayCorner(2) currCornerVis(2)],[lRayCorner(3) currCornerVis(3)],'r')
             end
         end
