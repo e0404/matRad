@@ -73,7 +73,7 @@ end
 
 % dose calculation
 if strcmp(pln.radiationMode,'protons')
-  dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nHistories,calcDoseDirect);
+  dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,w,nHistories,calcDoseDirect);
 else
     error('Forward MC only implemented for protons.');
 end
