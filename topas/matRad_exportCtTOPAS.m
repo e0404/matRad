@@ -55,7 +55,6 @@ if exportRSPcube
   disp(['Writing data to ',outfile])
   h = fopen(outfile,'w+');
 
-  warning(['Using base material as ' medium])
   fbase = fopen(['materials/' medium '.txt'],'r');
   while ~feof(fbase)
     strLine = fgets(fbase); %# read line by line

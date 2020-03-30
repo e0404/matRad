@@ -298,7 +298,7 @@ classdef MatRad_MCsquareBaseData
             
             if ~isfield(TopasConfig,'beamProfile')
                 % default: 5 runs
-                TopasConfig.beamProfile = 'simple';
+                TopasConfig.beamProfile = 'biGaussian';
             end
             
             if ~isfield(TopasConfig,'pencilBeamScanning')
@@ -411,8 +411,8 @@ classdef MatRad_MCsquareBaseData
                 dataTOPAS(idx) = [];
                 
                 historyCount = uint32(TopasConfig.fracHistories * nbParticlesTotal);
-                
-                while sum([dataTOPAS(:).current]) ~= historyCount
+
+                while sum([dataTOPAS.current]) ~= historyCount
                     % Randomly pick an index with the weigth given by the current
                     idx = 1:length(dataTOPAS);
                     [~,~,R] = histcounts(rand(1),cumsum([0;double(transpose([dataTOPAS(:).current]))./double(sum([dataTOPAS(:).current]))]));
@@ -458,12 +458,9 @@ classdef MatRad_MCsquareBaseData
                     case 'biGaussian'
                         fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
                         fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'dv:Tf/Beam/EnergySpread/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'uv:Tf/Beam/EnergySpread/Values = %i ', cutNumOfBixel);
                         fprintf(fileID,strjoin(string([dataTOPAS(:).energySpread])));
-                        fprintf(fileID,' MeV\n');
-                        
-                        fprintf(fileID,'s:So/Example/Type           = "Emittance"\n');
-                        fprintf(fileID,'s:So/Example/Distribution   = "BiGaussian"\n');
+                        fprintf(fileID,'\n');
                         
                         fprintf(fileID,'s:Tf/Beam/SigmaX/Function = "Step"\n');
                         fprintf(fileID,'dv:Tf/Beam/SigmaX/Times = Tf/Beam/Spot/Times ms\n');
@@ -472,12 +469,12 @@ classdef MatRad_MCsquareBaseData
                         fprintf(fileID,' mm\n');
                         fprintf(fileID,'s:Tf/Beam/SigmaXPrime/Function = "Step"\n');
                         fprintf(fileID,'dv:Tf/Beam/SigmaXPrime/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'dv:Tf/Beam/SigmaXPrime/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'uv:Tf/Beam/SigmaXPrime/Values = %i ', cutNumOfBixel);
                         fprintf(fileID,strjoin(string([dataTOPAS(:).divergence])));
                         fprintf(fileID,'\n');
                         fprintf(fileID,'s:Tf/Beam/CorrelationX/Function = "Step"\n');
                         fprintf(fileID,'dv:Tf/Beam/CorrelationX/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'dv:Tf/Beam/CorrelationX/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'uv:Tf/Beam/CorrelationX/Values = %i ', cutNumOfBixel);
                         fprintf(fileID,strjoin(string([dataTOPAS(:).correlation])));
                         fprintf(fileID,'\n');
                         
@@ -488,12 +485,12 @@ classdef MatRad_MCsquareBaseData
                         fprintf(fileID,' mm\n');
                         fprintf(fileID,'s:Tf/Beam/SigmaYPrime/Function = "Step"\n');
                         fprintf(fileID,'dv:Tf/Beam/SigmaYPrime/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'dv:Tf/Beam/SigmaYPrime/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'uv:Tf/Beam/SigmaYPrime/Values = %i ', cutNumOfBixel);
                         fprintf(fileID,strjoin(string([dataTOPAS(:).divergence])));
                         fprintf(fileID,'\n');
                         fprintf(fileID,'s:Tf/Beam/CorrelationY/Function = "Step"\n');
                         fprintf(fileID,'dv:Tf/Beam/CorrelationY/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'dv:Tf/Beam/CorrelationY/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'uv:Tf/Beam/CorrelationY/Values = %i ', cutNumOfBixel);
                         fprintf(fileID,strjoin(string([dataTOPAS(:).correlation])));
                         fprintf(fileID,'\n');
                     case 'simple'
@@ -550,7 +547,6 @@ classdef MatRad_MCsquareBaseData
                 
                 fprintf(fileID,'includeFile = ./matRad_RSPcube.txt\n');
                 fprintf(fileID,'###################\n');
-                TOPAS_beamSetup = fopen(['TOPAS_beamSetup_generic_' pln.radiationMode '.txt'],'r');
                 
                 % NozzleAxialDistance
                 fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', nozzleAxialDistance_mm);
@@ -561,6 +557,13 @@ classdef MatRad_MCsquareBaseData
                 end
                 
                 fprintf(fileID,['d:Ph/Default/CutForElectron = ',TopasConfig.electronProdCut,' mm\n']);
+                
+                switch TopasConfig.beamProfile
+                    case 'biGaussian'
+                        TOPAS_beamSetup = fopen(['TOPAS_beamSetup_biGaussian_' pln.radiationMode '.txt'],'r');
+                    case 'simple'
+                        TOPAS_beamSetup = fopen(['TOPAS_beamSetup_generic_' pln.radiationMode '.txt'],'r');
+                end
                 
                 % copy standard values from TOPAS_beamSetup
                 while ~feof(TOPAS_beamSetup)
@@ -574,7 +577,7 @@ classdef MatRad_MCsquareBaseData
                 %write run scripts for TOPAS
                 basematerial = '';
                 if ~exist('machine') || ~isfield( obj.machine.meta,'basematerial')
-                    warning('Base material not defined in base data. Using Water')
+                    disp('Using default base material: Water')
                     basematerial = 'Water';
                 else
                     basematerial =  obj.machine.meta.basematerial;
