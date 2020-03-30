@@ -15,14 +15,14 @@ i:Ts/NumberOfThreads = Sim/NbThreads
 
 s:So/PencilBeam/BeamParticle = Sim/ParticleName
 i:So/PencilBeam/NumberOfHistoriesInRun = Tf/Beam/Current/Value
-u:So/PencilBeam/BeamEnergySpread = Tf/Beam/EnergySpread/Values
-d:So/PencilBeam/BeamEnergy = Tf/Beam/Energy/Values MeV
-d:So/PencilBeam/SigmaX = Tf/Beam/SigmaX/Values mm
-u:So/PencilBeam/SigmaXprime = Tf/Beam/SigmaXprime/Values
-u:So/PencilBeam/CorrelationX = Tf/Beam/CorrelationX/Values
-d:So/PencilBeam/SigmaY = Tf/Beam/SigmaY/Values mm
-u:So/PencilBeam/SigmaYprime = Tf/Beam/SigmaYprime/Values
-u:So/PencilBeam/CorrelationY = Tf/Beam/CorrelationY/Values
+u:So/PencilBeam/BeamEnergySpread = Tf/Beam/EnergySpread/Value
+d:So/PencilBeam/BeamEnergy = Tf/Beam/Energy/Value MeV
+d:So/PencilBeam/SigmaX = Tf/Beam/SigmaX/Value mm
+u:So/PencilBeam/SigmaXprime = Tf/Beam/SigmaXprime/Value
+u:So/PencilBeam/CorrelationX = Tf/Beam/CorrelationX/Value
+d:So/PencilBeam/SigmaY = Tf/Beam/SigmaY/Value mm
+u:So/PencilBeam/SigmaYprime = Tf/Beam/SigmaYprime/Value
+u:So/PencilBeam/CorrelationY = Tf/Beam/CorrelationY/Value
 
 s:So/PencilBeam/Type = "Emittance" # Beam, Isotropic, Emittance or PhaseSpace
 s:So/PencilBeam/Distribution = "BiGaussian" #
