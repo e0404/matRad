@@ -33,6 +33,7 @@ classdef MatRad_Config < handle
             obj.propOpt.defaultMaxIter = 500;
             
             obj.propMC.ompMC_defaultHistories = 1e6;
+            obj.propMC.ompMC_defaultOutputVariance = false;
             obj.propMC.MCsquare_defaultHistories = 1e6;
             obj.propMC.direct_defaultHistories = 2e4;
             

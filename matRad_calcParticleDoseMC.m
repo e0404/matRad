@@ -53,6 +53,10 @@ if nargin < 6
     calcDoseDirect = false;
 end
 
+if isfield(pln,'propMC') && isfield(pln.propMC,'outputVariance')
+    matRad_cfg.dispWarning('Variance scoring for MCsquare not yet supported.');
+end
+
 env = matRad_getEnvironment();
 
 %% check if binaries are available

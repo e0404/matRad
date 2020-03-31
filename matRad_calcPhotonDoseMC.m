@@ -281,11 +281,29 @@ absCalibrationFactor = 1e11 / 2.633; %Approximate!
 
 matRad_cfg.dispInfo('matRad: OmpMC photon dose calculation... \n');
 
+outputVariance = matRad_cfg.propMC.ompMC_defaultOutputVariance;
+
+if isfield(pln,'propMC') && isfield(pln.propMC,'outputVariance')
+    outputVariance = pln.propMC.outputVariance;
+end
+
+
 %run over all scenarios
 for s = 1:dij.numOfScenarios
     ompMCgeo.isoCenter = [stf(:).isoCenter];
     %[dij.physicalDose{s},dij.physicalDose_MCvar{s}] = omc_matrad(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
-    [dij.physicalDose{s}] = omc_matrad(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
+    % Run IPOPT.
+    try
+        if outputVariance
+            [dij.physicalDose{s},dij.physicalDose_MCvar{s}] = omc_matrad(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
+        else
+            [dij.physicalDose{s}] = omc_matrad(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
+        end
+    catch ME
+        errorString = [ME.message '\nThis error was thrown by the MEX-interface of ompMC.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.']
+        matRad_cfg.dispError(ME.identifier,errorString);
+    end
+    
     dij.physicalDose{s} = dij.physicalDose{s} * absCalibrationFactor;
     if isfield(dij,'physicalDose_MCvar')
         dij.physicalDose_MCvar{s} = dij.physicalDose_MCvar{s} * absCalibrationFactor^2;
