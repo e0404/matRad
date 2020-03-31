@@ -132,8 +132,8 @@ for runVoi = 1:size(cst,1)
                                    qi(runVoi).(['CI_' StringReferenceDose 'Gy']),qi(runVoi).(['HI_' StringReferenceDose 'Gy']),referenceDose);
             end
         end
-        matRad_cfg.dispInfo(voiPrint);
-    
+        %We do it this way so the percentages in the string are not interpreted as format specifiers
+        matRad_cfg.dispInfo('%s\n',voiPrint);    
     else        
         matRad_cfg.dispInfo('%d %s - No dose information.',cst{runVoi,1},cst{runVoi,2});        
     end
