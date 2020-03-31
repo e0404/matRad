@@ -30,7 +30,7 @@ function [versionString,matRadVer] = matRad_version()
 %Hardcoded version name / numbers
 matRadVer.name = 'Blaise';
 matRadVer.major = 2;
-matRadVer.minor = 5;
+matRadVer.minor = 10;
 matRadVer.patch = 0;
 
 tagged = false;
