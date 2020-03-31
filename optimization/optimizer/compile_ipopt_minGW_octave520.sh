@@ -7,14 +7,16 @@ pacman -S --noconfirm --needed wget which git
 
 # Run the following commands to create directories and get the IPOPT source. We dont need lapack and blas, since Octave comes with lapack and openblas
 
-mkdir IpoptMUMPS
-cd IpoptMUMPS
+mkdir ipopt && cd ipopt
+export IPOPTINSTALLDIR=`pwd`
+cd ..
 
+mkdir IpoptMUMPS && cd IpoptMUMPS
 export IPOPTDIR=`pwd`
 
-wget --no-check-certificate https://www.coin-or.org/download/source/Ipopt/Ipopt-3.12.10.tgz
-tar -zxvf Ipopt-3.12.10.tgz
-mv Ipopt-3.12.10/* ./
+wget --no-check-certificate https://www.coin-or.org/download/source/Ipopt/Ipopt-3.12.13.tgz
+tar -zxvf Ipopt-3.12.13.tgz
+mv Ipopt-3.12.13/* ./
 
 cd $IPOPTDIR/ThirdParty/Blas
 ./get.Blas
@@ -37,7 +39,7 @@ cp $MINGW_PREFIX/lib/gcc/$MINGW_CHOST/$GCC_VERSION/libquadmath.* /usr/lib/gcc/$M
 mkdir build
 cd build
 
-../configure --prefix=/usr/local --disable-shared --enable-static 
+../configure --prefix=$IPOPTINSTALLDIR --disable-shared --enable-static 
 make
 make install
 
@@ -49,7 +51,7 @@ cd ../..
 git clone https://github.com/ebertolazzi/mexIPOPT
 
 # and compile it.
-mkoctfile --mex -ImexIPOPT/src -I/usr/local/include/coin mexIPOPT/src/ipopt.cc mexIPOPT/src/IpoptInterfaceCommon.cc -v -DMATLAB_MEXFILE -DHAVE_CSTDDEF -DIPOPT_INTERFACE_MISSING_COPY_N -lipopt -lcoinmumps -lcoinmetis -lcoinlapack -lcoinblas  -lgfortran -L/usr/local/lib
+mkoctfile --mex -ImexIPOPT/src -I$IPOPTINSTALLDIR/include/coin mexIPOPT/src/ipopt.cc mexIPOPT/src/IpoptInterfaceCommon.cc -v -DMATLAB_MEXFILE -DHAVE_CSTDDEF -DIPOPT_INTERFACE_MISSING_COPY_N -lipopt -lcoinmumps -lcoinmetis -lcoinlapack -lcoinblas -lgfortran -L$IPOPTINSTALLDIR/lib
 
 echo "Do you wish to remove the IPOPT compilation directories?"
 select yn in "Yes" "No"; do
