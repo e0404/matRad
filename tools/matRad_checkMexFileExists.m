@@ -31,10 +31,21 @@ end
 %Explicitly check for matching mex file (id 3)
 fileExists = (exist(filename,'file') == 3);
 
-env = matRad_getEnvironment();
+%For octave we have experimental precompiled files for Octave 5 64 bit
+[env,ver] = matRad_getEnvironment();
 
-if ~fileExists && strcmp(env,'OCTAVE') && ~noLinkOctave
+if ~fileExists && strcmp(env,'OCTAVE') && ~noLinkOctave        
      
+    %Check Octave 5
+    versplit = strsplit(ver,'.');
+    isOctave5 = str2double(versplit{1}) == 5;     
+  
+    if ~isOctave5
+        fileExists = false;
+        return;
+    end
+    
+    %Check Architecture 
     [~,maxArraySize] = computer();
     
     if maxArraySize > 2^31
@@ -42,8 +53,7 @@ if ~fileExists && strcmp(env,'OCTAVE') && ~noLinkOctave
     else
         bitExt = '32';
     end
-    
-    
+       
     if ispc
         systemext = 'mexoctw';
     elseif ismac 
@@ -51,29 +61,39 @@ if ~fileExists && strcmp(env,'OCTAVE') && ~noLinkOctave
     elseif isunix
         systemext = 'mexocta';
     else
-         matRad_cfg.dispError('Mex file ''%s'' for octave not found for your operating system. Compile it yourself.',filename);
+        %No file for unknown operating system
+        fileExists = false;
+        return;
     end
     
+    %Build our octfilename
     octfilename = [filename '.' systemext bitExt];
 
-    %Check if matching octave file exists
+    %Check if matching precompiled octave file exists
     fileExists = (exist(octfilename,'file') == 2);
     
+    %If it exists, we create a link with the ending "mex" which is used by octave 
     if fileExists
+        mexFileName = [filename '.' mexext];
+      
         %Make the link in the right directory
         cFilePath = which(octfilename);
         [MexFolder,~,~] = fileparts(cFilePath);
         
-        currFolder = pwd;
-        
-        cd(MexFolder);
+        oldpath = fullfile(MexFolder,octfilename);
+        linkpath = fullfile(MexFolder,mexFileName);
         
         %Create link
-        link(octfilename, [filename '.mex']);
         
-        cd(currFolder);
-        matRad_cfg.dispWarning('Trying to use a precompiled mex for Octave. This is experimental!');
+        [status,msg] = link(oldpath,linkpath);        
+        
+        if status == 0
+            matRad_cfg.dispWarning('Trying to use a precompiled mex for Octave 5. This is experimental!');
+            fileExists = true;
+        else
+            matRad_cfg.dispWarning('Could not link existing precompiled mex file %s to %s\n',octfilename,mexFileName);
+            fileExists = false;
+        end
     end
-
 end
 
