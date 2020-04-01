@@ -982,20 +982,22 @@ in any resulting litigation.
 ompMC
 
 Information and source code of ompMC is available on https://github.com/edoerner/ompMC
-Precompiled binaries and reference data of ompMC are used within matRad. The source code 
-itself is referenced as a git submodule. Contents of the ompMC subfolder and the submodulea
-are licensed under GNU GPL v3.0 as stated in the respective LICENSE files located in these 
-folders.
+Precompiled binaries and reference data of ompMC are used within matRad. 
+The source code itself is referenced as a git submodule. Contents of the ompMC subfolder 
+and the submodule are licensed under GNU GPL v3.0 as stated in the respective LICENSE 
+files located in these folders.
 
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 MCsquare
 
-Information and source code of ompMC is available on http://openmcsquare.org and 
+MCsquare is an open-source software developed/maintained at UC Louvain, Belgium.
+Information and source code of MCsquare is available on http://openmcsquare.org and 
 https://https://gitlab.com/openmcsquare/MCsquare
-Precompiled binaries and reference data of MCsquare are used within and distributed with matRad. 
-The source code itself is referenced as a git submodule. Contents of the MCsquare subfolder and 
-the submodule are licensed under the Apache-2.0 license as stated in the respective LICENSE files 
-located in these folders.
+Precompiled binaries and reference data of MCsquare are used within and distributed with 
+matRad. 
+The source code itself is referenced as a git submodule. Contents of the MCsquare/bin 
+subfolder and the submodule are licensed under the Apache-2.0 license as stated in the 
+respective LICENSE files located in these folders.
 
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

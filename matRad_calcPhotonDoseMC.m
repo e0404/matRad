@@ -300,7 +300,7 @@ for s = 1:dij.numOfScenarios
             [dij.physicalDose{s}] = omc_matrad(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
         end
     catch ME
-        errorString = [ME.message '\nThis error was thrown by the MEX-interface of ompMC.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.']
+        errorString = [ME.message '\nThis error was thrown by the MEX-interface of ompMC.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'];
         matRad_cfg.dispError(ME.identifier,errorString);
     end
     

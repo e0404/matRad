@@ -35,7 +35,6 @@ env = matRad_getEnvironment();
 
 if ~fileExists && strcmp(env,'OCTAVE') && ~noLinkOctave
      
-    %{  
     [~,maxArraySize] = computer();
     
     if maxArraySize > 2^31
@@ -43,15 +42,7 @@ if ~fileExists && strcmp(env,'OCTAVE') && ~noLinkOctave
     else
         bitExt = '32';
     end
-    %}
     
-    sysInfo = uname();
-        
-    if strcmp(sysInfo.machine,'x86_64')
-        bitExt = '64';
-    else
-        bitExt = '32';
-    end
     
     if ispc
         systemext = 'mexoctw';
