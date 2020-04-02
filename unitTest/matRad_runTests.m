@@ -13,11 +13,17 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%Set to unit testing
-unitTestBool = true;
-
 %% Set path
-run(['..' filesep 'matRad_rc'])
+run(['..' filesep 'matRad_rc']);
+
+%% Prepare settings for testing
+global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+matRad_cfg.setDefaultPropertiesForTesting();
+
+% supressing the inherent Ocatave warnings for division by zero
+if strcmp(matRad_getEnvironment,'OCTAVE')
+    warning('off','Octave:divide-by-zero');
+end
 
 exampleScripts = {'matRad_example1_phantom.m',...
     'matRad_example2_photons.m',...
@@ -31,16 +37,7 @@ unitTestBixelWidth = 20;
 
 matRad_unitTestTextManipulation(exampleScripts,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)], '../examples/');
 matRad_unitTestTextManipulation(exampleScripts,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR UNIT TESTING %%%%%%%%%%%%%%', '../examples/');
-matRad_unitTestTextManipulation(exampleScripts,'matRadGUI','%%%%%%%%%%%%%%% REMOVED matRadGUI FOR UNIT TESTING %%%%%%%%%%%%%%', '../examples/');
-matRad_unitTestTextManipulation('matRad.m','matRadGUI','%%%%%%%%%%%%%%% REMOVED matRadGUI FOR UNIT TESTING %%%%%%%%%%%%%%', '../');
 matRad_unitTestTextManipulation('matRad.m','pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)], '../');
-
-% supressing the inherent Ocatave warnings for division by zero
-if strcmp(matRad_getEnvironment,'OCTAVE')
-    warning('off','Octave:divide-by-zero');
-end
-
-unitTestBool = true;
 
 disp('Unit test run example 1');
 matRad_example1_phantom

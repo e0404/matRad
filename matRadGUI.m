@@ -35,6 +35,13 @@ function varargout = matRadGUI(varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+
+if matRad_cfg.disableGUI
+    matRad_cfg.dispInfo('matRad GUI disabled in matRad_cfg!\n');
+    return;
+end
+
 if ~isdeployed
     matRadRootDir = fileparts(mfilename('fullpath'));
     addpath(genpath(matRadRootDir));
@@ -47,10 +54,10 @@ switch env
      case 'MATLAB'
          
      case 'OCTAVE'
-         fprintf(['matRad GUI not available for ' env ' ' versionString ' \n']);
+         matRad_cfg.dispInfo(['matRad GUI not available for ' env ' ' versionString ' \n']);
          return;
      otherwise
-         fprintf('not yet tested');
+         matRad_cfg.dispInfo('not yet tested');
  end
         
 % Begin initialization code - DO NOT EDIT

@@ -1,5 +1,22 @@
 classdef MatRad_Config < handle
-    %MatRad_Config MatRad Configuration
+    %MatRad_Config MatRad Configuration class
+    % This class is used globally through Matlab to handle default values and 
+    % logging and is declared as global matRad_cfg.
+    % Usage:
+    %   global matRad_cfg; matRad_cfg = MatRadConfig.instance();    
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2019 the matRad development team.
+    %
+    % This file is part of the matRad project. It is subject to the license
+    % terms in the LICENSE file found in the top-level directory of this
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+    % of the matRad project, including this file, may be copied, modified,
+    % propagated, or distributed except according to the terms contained in the
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties
         logLevel = 3;
@@ -7,8 +24,9 @@ classdef MatRad_Config < handle
         propOpt;
         propMC;
         propStf;
-        keepLog = false;        
-        %logToFile = [];
+        keepLog = false; 
+        
+        disableGUI = false;
     end
     
     properties (SetAccess = private)
@@ -21,28 +39,45 @@ classdef MatRad_Config < handle
     
     methods (Access = private)
         function obj = MatRad_Config()
-            %MatRad_Config Construct an instance of this class
-
-            obj.propStf.defaultLongitudinalSpotSpacing = 3;
-            
-            obj.propDoseCalc.defaultResolution = struct('x',3,'y',3,'z',3); %[mm]
-            obj.propDoseCalc.defaultLateralCutOff = 0.995; %[rel.]
-            obj.propDoseCalc.defaultGeometricCutOff = 50; %[mm]
-            obj.propDoseCalc.ssdDensityThreshold = 0.05; %[rel.]
-            
-            obj.propOpt.defaultMaxIter = 500;
-            
-            obj.propMC.ompMC_defaultHistories = 1e6;
-            obj.propMC.ompMC_defaultOutputVariance = false;
-            obj.propMC.MCsquare_defaultHistories = 1e6;
-            obj.propMC.direct_defaultHistories = 2e4;
-            
-
+            %MatRad_Config Constructs an instance of this class.             
+            %  The configuration is implemented as a singleton and used globally
+            %  Therefore its constructor is private
+            %  For instantiation, use the static MatRad_Config.instance();           
+            obj.setDefaultProperties();           
         end
                 
     end
     
     methods
+        function setDefaultProperties(obj)
+            obj.propStf.defaultLongitudinalSpotSpacing = 3;
+            
+            obj.propDoseCalc.defaultResolution = struct('x',3,'y',3,'z',3); %[mm]
+            obj.propDoseCalc.defaultLateralCutOff = 0.995; %[rel.]
+            obj.propDoseCalc.defaultGeometricCutOff = 50; %[mm]
+            obj.propDoseCalc.ssdDensityThreshold = 0.05; %[rel.]            
+            obj.propOpt.defaultMaxIter = 500;           
+            obj.propMC.ompMC_defaultHistories = 1e6;
+            obj.propMC.ompMC_defaultOutputVariance = false;
+            obj.propMC.MCsquare_defaultHistories = 1e6;
+            obj.propMC.direct_defaultHistories = 2e4;
+            obj.disableGUI = false;
+        end
+  
+        %%FOr testing
+        function setDefaultPropertiesForTesting(obj)
+            obj.logLevel   = 1;
+            obj.propStf.defaultLongitudinalSpotSpacing = 20;
+            obj.propDoseCalc.defaultResolution = struct('x',5,'y',6,'z',7); %[mm]
+            obj.propDoseCalc.defaultGeometricCutOff = 20;
+            obj.propDoseCalc.defaultLateralCutOff = 0.8;
+            obj.propOpt.defaultMaxIter = 10;
+            obj.propMC.ompMC_defaultHistories = 100;
+            obj.propMC.MCsquare_defaultHistories = 100;
+            obj.propMC.direct_defaultHistories = 100;
+            obj.disableGUI = true;
+        end  
+      
         function dispDebug(obj,formatSpec,varargin)
             obj.displayToConsole('debug',formatSpec,varargin{:});
         end
@@ -102,7 +137,7 @@ classdef MatRad_Config < handle
         end
         
         %%Property set methods for checks
-        function set.logLevel(obj,newLogLevel)
+        function set.logLevel(obj,newLogLevel)       
             minLevel = 1;
             maxLevel = 4;
             if newLogLevel >= minLevel && newLogLevel <= maxLevel
@@ -114,6 +149,7 @@ classdef MatRad_Config < handle
     end
     
     methods(Static)
+      
         function obj = instance()
             persistent uniqueInstance;
             
