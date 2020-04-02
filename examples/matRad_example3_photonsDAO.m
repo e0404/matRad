@@ -25,7 +25,9 @@
 %% Patient Data Import
 % Let's begin with a clear Matlab environment and import the head &
 % neck patient into your workspace.
-matRad_rc
+
+matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
+
 load('HEAD_AND_NECK.mat');
 
 %% Treatment Plan

@@ -19,8 +19,7 @@
 % (ii) how to create a cst structure containing the volume of interests of the phantom
 % (iii) generate a treatment plan for this phantom
 
-
-matRad_rc
+matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 
 %% Create a CT image series
 xDim = 200;

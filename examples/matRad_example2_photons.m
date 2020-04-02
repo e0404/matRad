@@ -26,7 +26,9 @@
 % structure defining the CT images and the structure set. Make sure the 
 % matRad root directory with all its subdirectories is added to the Matlab 
 % search path.
-matRad_rc
+
+matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
+
 load('TG119.mat');
 
 %%
