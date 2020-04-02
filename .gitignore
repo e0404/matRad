@@ -27,3 +27,11 @@ phantoms/slabPhantom4.mat
 phantoms/slabPhantom5.mat
 phantoms/slabPhantom6.mat
 phantoms/slabPhantom7.mat
+*.asv
+scenarios/alderson01.mat
+scenarios/alderson01MC.mat
+scenarios/liver01.mat
+scenarios/lung01.mat
+scenarios/lung01MC.mat
+scenarios/lung02.mat
+scenarios/prostate01.mat
