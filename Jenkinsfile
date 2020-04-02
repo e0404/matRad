@@ -7,10 +7,11 @@ node {
             def uname = sh script: 'uname', returnStdout: true
             if (uname.startsWith("Darwin")) {
                 osName= "Macos"
+				sh label: '', script: 'chmod +x ./submodules/MCsquare/MCsquare_mac'
+                sh label: '', script: 'chmod +x runtests.sh'
             }
             else {
                 osName= "Linux"
-
                 sh label: '', script: 'chmod +x ./submodules/MCsquare/MCsquare_linux'
                 sh label: '', script: 'chmod +x runtests.sh'
             }
@@ -20,14 +21,8 @@ node {
         }
 
     }
-    stage('Test') {
-        echo 'Testing on Octave..'
-        if (osName == "Windows") {
-            bat label: '', script: './runtests.sh octave-cli'
-        }
-        else {
-            sh label: '', script: './runtests.sh octave-cli'
-        } 
+    stage('Test with MATLAB') 
+	{
         echo 'Testing on MATLAB..'
         echo 'Make sure you can run matlab script from the command line'
         if (osName == "Windows") {
@@ -37,6 +32,18 @@ node {
             sh label: '', script: 'matlab -nodisplay -r "cd unitTest; matRad_runTests"'
         } 
     }
+	
+	stage('Test with Octave') 
+	{
+		echo 'Testing on Octave..'
+        if (osName == "Windows") {
+            bat label: '', script: './runtests.sh octave-cli'
+        }
+        else {
+            sh label: '', script: './runtests.sh octave-cli'
+        } 
+	}
+	
     stage('Build') {
         echo 'Building....'
         if (osName == "Windows") {
@@ -49,7 +56,5 @@ node {
     stage('Archive') {
         echo 'Archiving....'
         archiveArtifacts artifacts: 'standalone/for_redistribution/matRad_installer*', onlyIfSuccessful: true
-
-        copyArtifacts filter: 'standalone/for_redistribution/matRad_installer*', projectName: 'matRadJenkinsfile', selector: lastWithArtifacts(), target: '/home/abbani/Dokumente/matRad'
     }
 }
