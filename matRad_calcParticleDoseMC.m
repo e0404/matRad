@@ -57,6 +57,10 @@ if isfield(pln,'propMC') && isfield(pln.propMC,'outputVariance')
     matRad_cfg.dispWarning('Variance scoring for MCsquare not yet supported.');
 end
 
+if ~strcmp(pln.radiationMode,'protons')
+    errordlg('MCsquare is only supported for protons');
+end
+
 env = matRad_getEnvironment();
 
 %% check if binaries are available
@@ -100,6 +104,13 @@ MCsquareFolder = [fullfilename(1:find(fullfilename==filesep,1,'last')) 'MCsquare
 
 % cd to MCsquare folder (necessary for binary)
 cd(MCsquareFolder);
+
+%Check Materials
+if ~exist([MCsquareFolder filesep 'Materials'],'dir') || ~exist(fullfile(MCsquareFolder,'Materials','list.dat'),'file')
+    matRad_cfg.dispInfo('First call of MCsquare: unzipping Materials...');    
+    unzip('Materials.zip');
+    matRad_cfg.dispInfo('Done');
+end
 
 % to guarantee downwards compatibility with data that does not have
 % ct.x/y/z
@@ -205,9 +216,8 @@ for i = 1:dij.numOfScenarios
     dij.physicalDose{i} = spalloc(dij.doseGrid.numOfVoxels,dij.totalNumOfBixels,1);
 end
 
-if ~strcmp(pln.radiationMode,'protons')
-    errordlg('MCsquare is only supported for protons');
-end
+
+
 
 if isequal(pln.propOpt.bioOptimization,'const_RBExD')
             dij.RBE = 1.1;
