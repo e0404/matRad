@@ -24,22 +24,44 @@ classdef matRad_OptimizationWidget < matRad_Widget
             end
             this = this@matRad_Widget(handleParent);
         end
+       
+        function this=initialize(this)
+             this.update();
+            
+        end
         
+        function this=update(this)
+            
+            if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
+                generateCstTable(this, evalin('base','cst'));
+            else
+            end
+           
+        end
+        
+        
+        
+        function changeWorkspace(obj)
+            notify(obj, 'workspaceChanged');
+        end
     end
     
     methods (Access = protected)
         function this = createLayout(this)
             h1 = this.widgetHandle;
-            
+            set(h1,'SizeChangedFcn',@(hObject,eventdata) widget_SizeChangedFcn(this,hObject,eventdata));
+      
+            this.createHandles();
             
         end
     end
     
-    methods
-        function cst = generateCstTable(handles,cst)
+    methods(Access = private)
+        
+        function cst = generateCstTable(this,cst)
+            %cst = updateStructureTable(this,cst);
             handles = this.handles;
-            cst = updateStructureTable(handles,cst);
-            cstPanel = handles.uipanel3;
+            cstPanel = this.widgetHandle;
             
             cstPanelPos = get(cstPanel,'Position');
             cstPanelPosUnit = get(cstPanel,'Units');
@@ -84,16 +106,8 @@ classdef matRad_OptimizationWidget < matRad_Widget
             
             organTypes = {'OAR', 'TARGET'};
             
-            %columnname = {'VOI name','VOI type','priority','obj. / const.'};%,'penalty','dose', 'EUD','volume','robustness'};
-            
             %Get all Classes & classNames
             classNames = matRad_getObjectivesAndConstraints();
-            % Collect Class-File & Display Names
-            %classNames = {classList.Name; p.DefaultValue};
-            
-            %columnformat = {cst(:,2)',{'OAR','TARGET'},'numeric',...
-            %       AllObjectiveFunction,...
-            %       'numeric','numeric','numeric','numeric',{'none','WC','prob'}};
             
             numOfObjectives = 0;
             for i = 1:size(cst,1)
@@ -153,39 +167,35 @@ classdef matRad_OptimizationWidget < matRad_Widget
                             end
                         end
                         
-                        %VOI
-                        %data{Counter,1}  = cst{i,2};
-                        %ypos = cstPanelPos(4) - (yTopSep + cnt*lineHeight);
                         xPos = 0.01;%5;
                         
-                        %h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Position',[xPos ypos 100 objHeight]);
-                        %h.Value = i;
-                        h = uicontrol(cstPanel,'Style','pushbutton','String','-','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Remove Objective/Constraint','Callback',{@btObjRemove_Callback,handles},...
+                        h = uicontrol(cstPanel,'Style','pushbutton','String','-','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Remove Objective/Constraint','Callback',@(hObject,eventdata)btObjRemove_Callback(this,hObject,eventdata),...
                             'UserData',[i,j]);
                         tmp_pos = get(h,'Position');
                         xPos = xPos + tmp_pos(3) + fieldSep;
                         h = uicontrol(cstPanel','Style','edit','String',cst{i,2},'Units','normalized','Position',[xPos ypos(cnt) nameW objHeight],'TooltipString','Name',...
                             'Enable','inactive',... %Disable editing of name atm
-                            'UserData',[i,2],'Callback',{@editCstParams_Callback,handles}); %Callback added, however, editing is disabled atm
+                            'UserData',[i,2],'Callback',@(hObject,eventdata)editCstParams_Callback(this,hObject,eventdata)); %Callback added, however, editing is disabled atm
                         tmp_pos = get(h,'Position');
                         xPos = xPos + tmp_pos(3) + fieldSep;
                         h = uicontrol(cstPanel,'Style','popupmenu','String',organTypes','Value',find(strcmp(cst{i,3},organTypes)),'Units','normalized','Position',[xPos ypos(cnt) typeW objHeight],'TooltipString','Segmentation Classification',...
-                            'UserData',[i,3],'Callback',{@editCstParams_Callback,handles});
+                            'UserData',[i,3],'Callback',@(hObject,eventdata)editCstParams_Callback(this,hObject,eventdata));
                         tmp_pos = get(h,'Position');
                         xPos = xPos + tmp_pos(3) + fieldSep;
                         h = uicontrol(cstPanel,'Style','edit','String',num2str(cst{i,5}.Priority),'Units','normalized','Position',[xPos ypos(cnt) opW objHeight],'TooltipString',['Overlap Priority' newline '(Smaller number overlaps higher number)'],...
-                            'UserData',[i,5],'Callback',{@editCstParams_Callback,handles});
+                            'UserData',[i,5],'Callback',@(hObject,eventdata)editCstParams_Callback(this,hObject,eventdata));
                         tmp_pos = get(h,'Position');
                         xPos = xPos + tmp_pos(3) + fieldSep;
                         
                         h = uicontrol(cstPanel,'Style','popupmenu','String',classNames(2,:)','Value',find(strcmp(obj.name,classNames(2,:))),'Units','normalized','Position',[xPos ypos(cnt) functionW objHeight],'TooltipString','Select Objective/Constraint',...
-                            'UserData',{[i,j],classNames(1,:)},'Callback',{@changeObjFunction_Callback,handles});
+                            'UserData',{[i,j],classNames(1,:)},'Callback',@(hObject,eventdata)changeObjFunction_Callback(this,hObject,eventdata));
                         tmp_pos = get(h,'Position');
                         xPos = xPos + tmp_pos(3) + fieldSep;
                         
                         %Check if we have an objective to display penalty
                         if isa(obj,'DoseObjectives.matRad_DoseObjective')
-                            h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.penalty),'Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight],'TooltipString','Objective Penalty','UserData',[i,j,0],'Callback',{@editObjParam_Callback,handles});
+                            h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.penalty),'Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight],'TooltipString','Objective Penalty','UserData',[i,j,0],...
+                                'Callback',@(hObject,eventdata)editObjParam_Callback(this,hObject,eventdata));
                         else
                             h = uicontrol(cstPanel,'Style','edit','String','----','Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight],'Enable','off');
                         end
@@ -193,19 +203,22 @@ classdef matRad_OptimizationWidget < matRad_Widget
                         xPos = xPos + tmp_pos(3) + fieldSep;
                         
                         for p = 1:numel(obj.parameterNames)
-                            %h = uicontrol(cstPanel,'Style','edit','String',obj.parameters{1,p},'Position',[xPos ypos(cnt) 100 objHeight],'Enable','inactive');
-                            %xPos = xPos + h.Position(3) + fieldSep;
+%                             h = text('Parent',tmpAxes,'String',['| ' obj.parameterNames{p} ':'],'VerticalAlignment','middle','Units','normalized','Position',[xPos ypos(cnt)+lineHeight/2],'Interpreter','tex','FontWeight','normal',...
+%                                 'FontSize',get(cstPanel,'FontSize'),'FontName',get(cstPanel,'FontName'),'FontUnits',get(cstPanel,'FontUnits'),'FontWeight','normal');%[xPos ypos(cnt) 100 objHeight]);
+                            % there is no fontsize for cstPanel
                             h = text('Parent',tmpAxes,'String',['| ' obj.parameterNames{p} ':'],'VerticalAlignment','middle','Units','normalized','Position',[xPos ypos(cnt)+lineHeight/2],'Interpreter','tex','FontWeight','normal',...
-                                'FontSize',get(cstPanel,'FontSize'),'FontName',get(cstPanel,'FontName'),'FontUnits',get(cstPanel,'FontUnits'),'FontWeight','normal');%[xPos ypos(cnt) 100 objHeight]);
+                                'FontWeight','normal');%[xPos ypos(cnt) 100 objHeight]);
                             tmp_pos = get(h,'Extent');
                             xPos = xPos + tmp_pos(3) + fieldSep;
                             %h = annotation(cstPanel,'textbox','String',obj.parameters{1,p},'Units','pix','Position', [xPos ypos(cnt) 100 objHeight],'Interpreter','Tex');
                             
                             %Check if we have a cell and therefore a parameter list
                             if iscell(obj.parameterTypes{p})
-                                h = uicontrol(cstPanel,'Style','popupmenu','String',obj.parameterTypes{p}','Value',obj.parameters{p},'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW*2 objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
+                                h = uicontrol(cstPanel,'Style','popupmenu','String',obj.parameterTypes{p}','Value',obj.parameters{p},'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW*2 objHeight],'UserData',[i,j,p],...
+                                    'Callback',@(hObject,eventdata)editObjParam_Callback(this,hObject,eventdata));
                             else
-                                h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{p}),'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
+                                h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{p}),'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW objHeight],'UserData',[i,j,p],...
+                                    'Callback',@(hObject,eventdata)editObjParam_Callback(this,hObject,eventdata));
                             end
                             
                             tmp_pos = get(h,'Extent');
@@ -217,7 +230,8 @@ classdef matRad_OptimizationWidget < matRad_Widget
                 end
             end
             xPos = 0.01; %5
-            hAdd = uicontrol(cstPanel,'Style','pushbutton','String','+','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Add Objective/Constraint','Callback',{@btObjAdd_Callback,handles});
+            hAdd = uicontrol(cstPanel,'Style','pushbutton','String','+','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight],...
+                'TooltipString','Add Objective/Constraint','Callback',@(hObject,eventdata)btObjAdd_Callback(this,hObject,eventdata)); %{@btObjAdd_Callback,handles});
             tmp_pos = get(hAdd,'Position');
             xPos = xPos + tmp_pos(3) + fieldSep;
             h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Units','normalized','Position',[xPos ypos(cnt) nameW objHeight]);
@@ -235,8 +249,211 @@ classdef matRad_OptimizationWidget < matRad_Widget
             end
             
             this.handles = handles;
-            
         end
         
+%         function cst = updateStructureTable(this,cst)
+%                 
+%             handles = this.handles;
+%             colorAssigned = true;
+%             
+%             % check whether all structures have an assigned color
+%             for i = 1:size(cst,1)
+%                 if ~isfield(cst{i,5},'visibleColor')
+%                     colorAssigned = false;
+%                     break;
+%                 elseif isempty(cst{i,5}.visibleColor)
+%                     colorAssigned = false;
+%                     break;
+%                 end
+%             end
+%             
+%             
+%             % assign color if color assignment is not already present or inconsistent
+%             if colorAssigned == false
+%                 m = 64;
+%                 colorStep = ceil(m/size(cst,1));
+%                 colors    = colorcube(colorStep*size(cst,1));
+%                 % spread individual VOI colors in the colorcube color palette
+%                 colors    = colors(1:colorStep:end,:);
+%                 
+%                 for i = 1:size(cst,1)
+%                     cst{i,5}.visibleColor = colors(i,:);
+%                 end
+%             end
+%             
+%             this.handles= handles;
+%             changeWorkspace(this);
+%         end
+        
+%         % precompute contours of VOIs
+%         function cst = precomputeContours(this,ct,cst)
+%             mask = zeros(ct.cubeDim); % create zero cube with same dimeonsions like dose cube
+%             for s = 1:size(cst,1)
+%                 cst{s,7} = cell(max(ct.cubeDim(:)),3);
+%                 mask(:) = 0;
+%                 mask(cst{s,4}{1}) = 1;
+%                 for slice = 1:ct.cubeDim(1)
+%                     if sum(sum(mask(slice,:,:))) > 0
+%                         cst{s,7}{slice,1} = contourc(squeeze(mask(slice,:,:)),.5*[1 1]);
+%                     end
+%                 end
+%                 for slice = 1:ct.cubeDim(2)
+%                     if sum(sum(mask(:,slice,:))) > 0
+%                         cst{s,7}{slice,2} = contourc(squeeze(mask(:,slice,:)),.5*[1 1]);
+%                     end
+%                 end
+%                 for slice = 1:ct.cubeDim(3)
+%                     if sum(sum(mask(:,:,slice))) > 0
+%                         cst{s,7}{slice,3} = contourc(squeeze(mask(:,:,slice)),.5*[1 1]);
+%                     end
+%                 end
+%             end
+%         end
+
+        % --- Executes when the widget is resized.
+        function widget_SizeChangedFcn(this,hObject, eventdata)
+            % hObject    handle to h1 (see GCBO)
+            % eventdata  reserved - to be defined in a future version of MATLAB
+            % handles    structure with handles and user data (see GUIDATA)
+            
+            try
+                generateCstTable(this,evalin('base','cst'));
+            catch
+            end
+        end
+        
+        function btObjAdd_Callback(this,hObject, ~)
+            % hObject    handle to btnuiTableAdd (see GCBO)
+            % eventdata  reserved - to be defined in a future version of MATLAB
+            % handles    structure with handles and user data (see GUIDATA)
+            handles=this.handles;
+            
+            popupHandle = get(hObject,'UserData');
+            cstIndex = get(popupHandle,'Value');
+            
+            cst = evalin('base','cst');
+            %Add Standard Objective
+            if strcmp(cst{cstIndex,3},'TARGET')
+                cst{cstIndex,6}{end+1} = struct(DoseObjectives.matRad_SquaredDeviation);
+            else
+                cst{cstIndex,6}{end+1} = struct(DoseObjectives.matRad_SquaredOverdosing);
+            end
+            
+            assignin('base','cst',cst);
+            this.handles=handles;
+            changeWorkspace(this);
+            
+            generateCstTable(this,cst);
+            
+        end
+        function btObjRemove_Callback(this,hObject, ~)
+            % hObject    handle to btnuiTableAdd (see GCBO)
+            % eventdata  reserved - to be defined in a future version of MATLAB
+            % handles    structure with handles and user data (see GUIDATA)
+            handles=this.handles;
+            ix = get(hObject,'UserData');
+            
+            cst = evalin('base','cst');
+            %Add Standard Objective
+            
+            cst{ix(1),6}(ix(2)) = [];
+            
+            assignin('base','cst',cst);
+            this.handles=handles;
+            changeWorkspace(this);
+            
+            generateCstTable(this,cst);
+
+        end
+        
+        function changeObjFunction_Callback(this,hObject, ~)
+            % hObject    handle to btnuiTableAdd (see GCBO)
+            % eventdata  reserved - to be defined in a future version of MATLAB
+            % handles    structure with handles and user data (see GUIDATA)
+            handles=this.handles;
+            data = get(hObject,'UserData');
+            ix = data{1};
+            classNames = data{2};
+            classToCreate = classNames{get(hObject,'Value')};
+            
+            cst = evalin('base','cst');
+            %Add Standard Objective
+            
+            %We just check if the user really wanted to change the objective to be
+            %user-friendly
+            currentObj = cst{ix(1),6}{ix(2)};
+            currentClass = class(currentObj);
+            if ~strcmp(currentClass,classToCreate)
+                newObj = eval(classToCreate);
+                
+                % Only if we have a penalty value for optimization, apply the new one
+                % Maybe this check should be more exact?
+                if (isfield(currentObj,'penalty') || isprop(currentObj,'penalty')) && isprop(newObj,'penalty')
+                    newObj.penalty = currentObj.penalty;
+                end
+                
+                cst{ix(1),6}{ix(2)} = struct(newObj);
+                
+                assignin('base','cst',cst);
+                this.handles=handles;
+                changeWorkspace(this);
+                
+                generateCstTable(this,cst);
+            end
+        end
+        
+        function editCstParams_Callback(this,hObject,~)
+            handles=this.handles;
+            data = hObject.UserData;
+            ix = data(1);
+            col = data(2);
+            
+            cst = evalin('base','cst');
+            
+            str = get(hObject,'String');
+            val  = get(hObject,'Value');
+            
+            switch col
+                case 2
+                    cst{ix,col} = str;
+                case 3
+                    cst{ix,col} = str{val};
+                case 5
+                    cst{ix,col}.Priority = uint32(str2double(str));
+                otherwise
+                    warning('Wrong column assignment in GUI based cst setting');
+            end
+            
+            assignin('base','cst',cst);
+            this.handles=handles;
+            changeWorkspace(this);
+            
+            generateCstTable(this,cst);
+        end
+        
+        function editObjParam_Callback(this,hObject, ~)
+            % hObject    handle to btnuiTableAdd (see GCBO)
+            % eventdata  reserved - to be defined in a future version of MATLAB
+            % handles    structure with handles and user data (see GUIDATA)
+            handles=this.handles;
+            ix = get(hObject,'UserData');
+            
+            cst = evalin('base','cst');
+            
+            if ix(3) == 0
+                cst{ix(1),6}{ix(2)}.penalty = str2double(hObject.String);
+            elseif isequal(hObject.Style,'popupmenu')
+                cst{ix(1),6}{ix(2)}.parameters{ix(3)} = hObject.Value;
+            else
+                cst{ix(1),6}{ix(2)}.parameters{ix(3)} = str2double(hObject.String);
+            end
+            
+            assignin('base','cst',cst);
+            this.handles=handles;
+            changeWorkspace(this);
+            
+            generateCstTable(this,cst);
+            
+        end
     end
 end

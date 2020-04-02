@@ -40,8 +40,8 @@ classdef matRad_PlanWidget < matRad_Widget
               getPlnFromWorkspace(this);
             else
               setPlnDefaultValues(this);
-              updatePlnInWorkspace(this);
             end
+            updatePlnInWorkspace(this);
         end
         
         function changeWorkspace(obj)
@@ -176,7 +176,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'Style','edit',...
                 'Position',[0.219794344473008 0.338403041825095 0.161953727506427 0.0836501901140684],...
                 'BackgroundColor',[0.831372549019608 0.815686274509804 0.784313725490196],...
-                'Callback',@(hObject,eventdata) editIsoCenter_Callback(this,hObject,eventdata),...
+                'Callback',@(hObject,eventdata) standardCallback(this,hObject,eventdata),...
                 'Children',[],...
                 'Enable','off',...
                 'Tag','editIsoCenter',...
@@ -190,7 +190,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'Value',1,...
                 'Position',[0.38560411311054 0.338403041825095 0.0809768637532133 0.091254752851711],...
                 'BackgroundColor',[0.501960784313725 0.501960784313725 0.501960784313725],...
-                'Callback',@(hObject,eventdata) checkIsoCenter_Callback(this,hObject,eventdata),...
+                'Callback',@(hObject,eventdata) standardCallback(this,hObject,eventdata),...
                 'Tag','checkIsoCenter');
             
               h26 = uicontrol(...
@@ -231,7 +231,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'Style','edit',...
                 'Position',[0.58611825192802 0.449313655990204 0.0668380462724936 0.0836501901140685],...
                 'BackgroundColor',[0.831372549019608 0.815686274509804 0.784313725490196],...
-                'Callback',@(hObject,eventdata)editSequencingLevel_Callback(this,hObject,eventdata),...
+                'Callback',@(hObject,eventdata)standardCallback(this,hObject,eventdata),...
                 'Enable','on',...
                 'Tag','editSequencingLevel',...
                 'FontWeight','bold');
@@ -308,8 +308,8 @@ classdef matRad_PlanWidget < matRad_Widget
                 'String','3D conformal',...
                 'Style','radiobutton',...
                 'Position',[0.553224553224553 0.757869249394673 0.212121212121212 0.0847457627118644],...
-                'BackgroundColor',[0.501960784313725 0.501960784313725 0.501960784313725],...
-                'Callback',@(hObject,eventdata) radiobutton3Dconf_Callback(this,hObject,eventdata),...
+                'BackgroundColor',[0.501960784313725 0.501960784313725 0.501960784313725],...                
+                'Callback',@(hObject,eventdata) standardCallback(this,hObject,eventdata),...
                 'Enable','on',...
                 'Tag','radiobutton3Dconf' );
             
@@ -370,9 +370,10 @@ classdef matRad_PlanWidget < matRad_Widget
             end
             
             % do not calculate / suggest isoCenter new by default
-            this.checkIsoCenter_Callback(handles.checkIsoCenter);
+            %this.checkIsoCenter_Callback(handles.checkIsoCenter);
             set(handles.editIsoCenter,'Enable','on');
 
+            this.handles=handles;
         end
         
         function this = getPlnFromWorkspace(this)
@@ -412,7 +413,6 @@ classdef matRad_PlanWidget < matRad_Widget
             
             set(handles.editFraction,'String',num2str(pln.numOfFractions));
             
-            this.switchEnables();
             
             contentPopUp = get(handles.popMenuBioOpt,'String');
             ix = find(strcmp(pln.propOpt.bioOptimization,contentPopUp));
@@ -420,12 +420,14 @@ classdef matRad_PlanWidget < matRad_Widget
             
             set(handles.btnRunSequencing,'Value',pln.propOpt.runSequencing);
             set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
+            set(handles.radiobutton3Dconf,'Value',pln.propOpt.conf3D);
             
-            set(handles.editDoseX,'String',num2str(pln.propDoseCalc.doseGrid.resolution.x));
-            set(handles.editDoseY,'String',num2str(pln.propDoseCalc.doseGrid.resolution.y));
-            set(handles.editDoseZ,'String',num2str(pln.propDoseCalc.doseGrid.resolution.z));
-            
-            
+%             set(handles.editDoseX,'String',num2str(pln.propDoseCalc.doseGrid.resolution.x));
+%             set(handles.editDoseY,'String',num2str(pln.propDoseCalc.doseGrid.resolution.y));
+%             set(handles.editDoseZ,'String',num2str(pln.propDoseCalc.doseGrid.resolution.z));
+
+            this.handles=handles;
+            this.switchEnables();
         end
         
         %Update the workspace pln from the Widget
@@ -451,10 +453,6 @@ classdef matRad_PlanWidget < matRad_Widget
             pln.machine                         = popupMachines{selectedMachine};
             
 
-            pln.numOfFractions          = this.parseStringAsNum(get(handles.editFraction,'String'),false);
-            pln.propOpt.runSequencing   = this.parseStringAsNum(get(handles.btnRunSequencing,'Value'),false); 
-            pln.propOpt.runDAO          = this.parseStringAsNum(get(handles.btnRunDAO,'Value'),false);
-
             pln.propDoseCalc.doseGrid.resolution.x = this.parseStringAsNum(get(handles.editDoseX,'String'),false);
             pln.propDoseCalc.doseGrid.resolution.y = this.parseStringAsNum(get(handles.editDoseY,'String'),false);
             pln.propDoseCalc.doseGrid.resolution.z = this.parseStringAsNum(get(handles.editDoseZ,'String'),false);
@@ -479,6 +477,49 @@ classdef matRad_PlanWidget < matRad_Widget
             
             pln.propOpt.runSequencing = logical(get(handles.btnRunSequencing,'Value'));
             pln.propOpt.runDAO = logical(get(handles.btnRunDAO,'Value'));
+            pln.propOpt.conf3D = logical(get(handles.radiobutton3Dconf,'Value'));
+            
+            
+            % checkIsoCenter checkbox
+            W = evalin('base','whos');
+            doesPlnExist = ismember('pln',{W(:).name});
+            
+            if get(handles.checkIsoCenter,'Value') && doesPlnExist
+                try
+                    pln = evalin('base','pln');
+                    if ~isfield(pln.propStf,'isoCenter')
+                        pln.propStf.isoCenter = NaN;
+                    end
+                    tmpIsoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
+                    if ~isequal(tmpIsoCenter,pln.propStf.isoCenter)
+                        pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*tmpIsoCenter;
+                        handles.State = 1;
+                        %UpdateState(handles);
+                    end
+                    set(handles.editIsoCenter,'String',regexprep(num2str((round(tmpIsoCenter*10))./10), '\s+', ' '));
+                    set(handles.editIsoCenter,'Enable','off')
+                    assignin('base','pln',pln);
+                catch ME
+                    warning(ME.identifier,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)
+                end
+            else
+                set(handles.editIsoCenter,'Enable','on')
+            end
+            
+            
+            % editIsoCenter textbox
+            tmpIsoCenter = str2num(get(handles.editIsoCenter,'String'));
+            
+            if length(tmpIsoCenter) == 3
+                if sum(any(unique(pln.propStf.isoCenter,'rows')~=tmpIsoCenter))
+                    pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*tmpIsoCenter;
+                    handles.State = 1;
+                    %UpdateState(handles);
+                end
+            else
+                handles = showError(this,'EditIsoCenterCallback: Could not set iso center');
+            end
+            
             
             try
                 cst = evalin('base','cst');
@@ -495,21 +536,21 @@ classdef matRad_PlanWidget < matRad_Widget
                 warning(ME.identifier,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)
             end
             
-            this.switchEnables();
             
             handles.pln = pln;
             assignin('base','pln',pln);
             this.handles = handles;
-            notify(this,'workspaceChanged');                        
+            switchEnables(this);
+            changeWorkspace(this);                     
         end
     end
     
     methods(Access = private)
         function standardCallback(this, hObject, eventdata)
-            handles = this.handles;
+            %handles = this.handles;
             updatePlnInWorkspace(this);
             
-            this.handles = handles;
+            %this.handles = handles;
         end
         
         function switchEnables(this)
@@ -563,12 +604,14 @@ classdef matRad_PlanWidget < matRad_Widget
             else
                 set(handles.btnSetTissue,'Enable','on');
             end
+            this.handles = handles;
         end
         
         function manageRadModeSpecificDisplay(this)
             handles = this.handles;
             hObject = this.popupRadMode('hObject');
             
+            this.handles = handles;
         end
         
         function popupRadMode_Callback(this, hObject, eventdata)
@@ -579,98 +622,105 @@ classdef matRad_PlanWidget < matRad_Widget
             
             switch RadIdentifier
                 case 'protons'
-                     ix = find(strcmp(contentPopUp,'const_RBExD'));
-                     set(handles.popMenuBioOpt,'Value',ix);
-                     
-                case 'carbon'
-                     ix = find(strcmp(contentPopUp,'LEMIV_RBExD'));
-                     set(handles.popMenuBioOpt,'Value',ix);
-            end
-            
-                pln = evalin('base','pln');
+                    ix = find(strcmp(contentPopUp,'const_RBExD'));
+                    set(handles.popMenuBioOpt,'Value',ix);
                     
-                    % new radiation modality is photons -> just keep physicalDose
-                    if strcmp(contents(get(hObject,'Value')),'photons')
-                        try
-                            AllVarNames = evalin('base','who');
-                            if  ismember('resultGUI',AllVarNames)
-                                resultGUI = evalin('base','resultGUI');
-                                if isfield(resultGUI,'alpha');    resultGUI = rmfield(resultGUI,'alpha');   end
-                                if isfield(resultGUI,'beta');     resultGUI = rmfield(resultGUI,'beta');    end
-                                if isfield(resultGUI,'RBExDose'); resultGUI = rmfield(resultGUI,'RBExDose');end
-                                if isfield(resultGUI,'RBE');      resultGUI = rmfield(resultGUI,'RBE');     end
-                                assignin('base','resultGUI',resultGUI);
-                                handles = updateIsoDoseLineCache(handles);
-                            end
-                        catch
-                        end
-                    elseif strcmp(contents(get(hObject,'Value')),'protons')
-                        try
-                            AllVarNames = evalin('base','who');
-                            if  ismember('resultGUI',AllVarNames)
-                                resultGUI = evalin('base','resultGUI');
-                                if isfield(resultGUI,'alpha'); resultGUI = rmfield(resultGUI,'alpha');end
-                                if isfield(resultGUI,'beta');  resultGUI = rmfield(resultGUI,'beta'); end
-                                if isfield(resultGUI,'RBE');   resultGUI = rmfield(resultGUI,'RBE');  end
-                                assignin('base','resultGUI',resultGUI);
-                                handles = updateIsoDoseLineCache(handles);
-                            end
-                        catch
-                        end
-                    end
-                    updatePlnInWorkspace(this); 
-               this.handles = handles;
+                case 'carbon'
+                    ix = find(strcmp(contentPopUp,'LEMIV_RBExD'));
+                    set(handles.popMenuBioOpt,'Value',ix);
             end
-       
-        function editIsoCenter_Callback(this, hObject, eventdata)
-            
-            handles = this.handles;
             
             pln = evalin('base','pln');
-            tmpIsoCenter = str2num(get(hObject,'String'));
             
-            if length(tmpIsoCenter) == 3
-                if sum(any(unique(pln.propStf.isoCenter,'rows')~=tmpIsoCenter))
-                    pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*tmpIsoCenter;
-                    handles.State = 1;
-                    %UpdateState(handles);
+            % new radiation modality is photons -> just keep physicalDose
+            if strcmp(contents(get(hObject,'Value')),'photons')
+                try
+                    AllVarNames = evalin('base','who');
+                    if  ismember('resultGUI',AllVarNames)
+                        resultGUI = evalin('base','resultGUI');
+                        if isfield(resultGUI,'alpha');    resultGUI = rmfield(resultGUI,'alpha');   end
+                        if isfield(resultGUI,'beta');     resultGUI = rmfield(resultGUI,'beta');    end
+                        if isfield(resultGUI,'RBExDose'); resultGUI = rmfield(resultGUI,'RBExDose');end
+                        if isfield(resultGUI,'RBE');      resultGUI = rmfield(resultGUI,'RBE');     end
+                        assignin('base','resultGUI',resultGUI);
+                        handles = updateIsoDoseLineCache(handles);
+                    end
+                catch
                 end
-            else
-                handles = showError(handles,'EditIsoCenterCallback: Could not set iso center');
+            elseif strcmp(contents(get(hObject,'Value')),'protons')
+                try
+                    AllVarNames = evalin('base','who');
+                    if  ismember('resultGUI',AllVarNames)
+                        resultGUI = evalin('base','resultGUI');
+                        if isfield(resultGUI,'alpha'); resultGUI = rmfield(resultGUI,'alpha');end
+                        if isfield(resultGUI,'beta');  resultGUI = rmfield(resultGUI,'beta'); end
+                        if isfield(resultGUI,'RBE');   resultGUI = rmfield(resultGUI,'RBE');  end
+                        assignin('base','resultGUI',resultGUI);
+                        handles = updateIsoDoseLineCache(handles);
+                    end
+                catch
+                end
             end
-            
-            assignin('base','pln',pln);
-            
-            % guidata(hObject,handles); 
             this.handles = handles;
-           
+            updatePlnInWorkspace(this);
         end
+       
+%         function editIsoCenter_Callback(this, hObject, eventdata)
+%             
+%             handles = this.handles;
+%             
+%             
+%             pln = evalin('base','pln');
+%             tmpIsoCenter = str2num(get(hObject,'String'));
+%             
+%             if length(tmpIsoCenter) == 3
+%                 if sum(any(unique(pln.propStf.isoCenter,'rows')~=tmpIsoCenter))
+%                     pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*tmpIsoCenter;
+%                     handles.State = 1;
+%                     %UpdateState(handles);
+%                 end
+%             else
+%                 handles = showError(this,'EditIsoCenterCallback: Could not set iso center');
+%             end
+%             
+%             assignin('base','pln',pln);
+%             
+%             updatePlnInWorkspace(this);
+%             this.handles = handles;
+%            
+%         end
         
-        function checkIsoCenter_Callback(this, hObject, eventdata)
-            handles = this.handles;
-            
-            W = evalin('base','whos');
-            doesPlnExist = ismember('pln',{W(:).name});
-            
-            if get(hObject,'Value') && doesPlnExist
-                pln = evalin('base','pln');
-                if ~isfield(pln.propStf,'isoCenter')
-                    pln.propStf.isoCenter = NaN;
-                end
-                tmpIsoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
-                if ~isequal(tmpIsoCenter,pln.propStf.isoCenter)
-                    pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*tmpIsoCenter;
-                    handles.State = 1;
-                    %UpdateState(handles);
-                end
-                set(handles.editIsoCenter,'String',regexprep(num2str((round(tmpIsoCenter*10))./10), '\s+', ' '));
-                set(handles.editIsoCenter,'Enable','off')
-                assignin('base','pln',pln);
-            else
-                set(handles.editIsoCenter,'Enable','on')
-            end
-            this.handles = handles;
-        end
+%         function checkIsoCenter_Callback(this, hObject, eventdata)
+%             handles = this.handles;
+%             
+%             W = evalin('base','whos');
+%             doesPlnExist = ismember('pln',{W(:).name});
+%             
+%             if get(hObject,'Value') && doesPlnExist
+%                 try
+%                     pln = evalin('base','pln');
+%                     if ~isfield(pln.propStf,'isoCenter')
+%                         pln.propStf.isoCenter = NaN;
+%                     end
+%                     tmpIsoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
+%                     if ~isequal(tmpIsoCenter,pln.propStf.isoCenter)
+%                         pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*tmpIsoCenter;
+%                         handles.State = 1;
+%                         %UpdateState(handles);
+%                     end
+%                     set(handles.editIsoCenter,'String',regexprep(num2str((round(tmpIsoCenter*10))./10), '\s+', ' '));
+%                     set(handles.editIsoCenter,'Enable','off')
+%                     assignin('base','pln',pln);
+%                 catch ME
+%                     warning(ME.identifier,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)
+%                 end
+%             else
+%                 set(handles.editIsoCenter,'Enable','on')
+%             end
+%             
+%             updatePlnInWorkspace(this); 
+%             this.handles = handles;
+%         end
         
         function popUpMachine_Callback(this, hObject, eventdata)
             % M�GLICHER FEHLER WEGEN VALUE WERT!
@@ -678,7 +728,7 @@ classdef matRad_PlanWidget < matRad_Widget
              contents = cellstr(get(hObject,'String'));
 %             MachineIdentifier = contents{get(hObject,'Value')};
             % contentPopUp = get(handles.)
-            % checkRadiationComposition(this);
+            checkRadiationComposition(this);
             getMachines(this);
             pln = evalin('base','pln');
             
@@ -713,86 +763,84 @@ classdef matRad_PlanWidget < matRad_Widget
                 end
             end
                
-            updatePlnInWorkspace(this); 
             this.handles = handles;
+            updatePlnInWorkspace(this); 
         end
         
         function btnSetTissue_Callback(this, hObject, eventdata)
-            handles = this.handles,
-            
-            %check if patient is loaded
-           % if handles.State == 0
-               % return
-           % end
-            
-            %parse variables from base-workspace
-            cst = evalin('base','cst');
-            pln = evalin('base','pln');
-            
-            fileName = [pln.radiationMode '_' pln.machine];
-            load(fileName);
-            
-            % check for available cell types characterized by alphaX and betaX
-            for i = 1:size(machine.data(1).alphaX,2)
-                CellType{i} = [num2str(machine.data(1).alphaX(i)) ' ' num2str(machine.data(1).betaX(i))];
+            handles = this.handles;
+
+            try
+                %parse variables from base-workspace
+                cst = evalin('base','cst');
+                pln = evalin('base','pln');
+                
+                
+                fileName = [pln.radiationMode '_' pln.machine];
+                load(fileName);
+                
+                % check for available cell types characterized by alphaX and betaX
+                for i = 1:size(machine.data(1).alphaX,2)
+                    CellType{i} = [num2str(machine.data(1).alphaX(i)) ' ' num2str(machine.data(1).betaX(i))];
+                end
+                
+                %fill table data array
+                for i = 1:size(cst,1)
+                    data{i,1} = cst{i,2};
+                    data{i,2} = [num2str(cst{i,5}.alphaX) ' ' num2str(cst{i,5}.betaX)];
+                    data{i,3} = (cst{i,5}.alphaX / cst{i,5}.betaX );
+                end
+                
+                Width  = 400;
+                Height = 200 + 20*size(data,1);
+                ScreenSize = get(0,'ScreenSize');
+                % show "set tissue parameter" window
+                figHandles = get(0,'Children');
+                if ~isempty(figHandles)
+                    IdxHandle = strcmp(get(figHandles,'Name'),'Set Tissue Parameters');
+                else
+                    IdxHandle = [];
+                end
+                
+                %check if window is already exists
+                if any(IdxHandle)
+                    IdxTable = find(strcmp({figHandles(IdxHandle).Children.Type},'uitable'));
+                    set(figHandles(IdxHandle).Children(IdxTable), 'Data', []);
+                    figTissue = figHandles(IdxHandle);
+                    %set focus
+                    figure(figTissue);
+                else
+                    figTissue = figure('Name','Set Tissue Parameters','Color',[.5 .5 .5],'NumberTitle','off','Position',...
+                        [ceil(ScreenSize(3)/2) ceil(ScreenSize(4)/2) Width Height]);
+                end
+                
+                % define the tissue parameter table
+                cNames = {'VOI','alphaX betaX','alpha beta ratio'};
+                columnformat = {'char',CellType,'numeric'};
+                
+                tissueTable = uitable('Parent', figTissue,'Data', data,'ColumnEditable',[false true false],...
+                    'ColumnName',cNames, 'ColumnFormat',columnformat,'Position',[50 150 10 10]);
+                set(tissueTable,'CellEditCallback',@tissueTable_CellEditCallback);
+                % set width and height
+                currTablePos = get(tissueTable,'Position');
+                currTableExt = get(tissueTable,'Extent');
+                currTablePos(3) = currTableExt(3);
+                currTablePos(4) = currTableExt(4);
+                set(tissueTable,'Position',currTablePos);
+                
+                % define two buttons with callbacks
+                uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Save&Close',...
+                    'Position', [Width-(0.25*Width) 0.1 * Height 70 30],...
+                    'Callback', @(hpb,eventdata)SaveTissueParameters(hpb,eventdata,handles));
+                
+                uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Cancel&Close',...
+                    'Position', [Width-(0.5*Width) 0.1 * Height 80 30],...
+                    'Callback', 'close');
+            catch ME
+                warning(ME.identifier,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)
             end
-            
-            %fill table data array
-            for i = 1:size(cst,1)
-                data{i,1} = cst{i,2};
-                data{i,2} = [num2str(cst{i,5}.alphaX) ' ' num2str(cst{i,5}.betaX)];
-                data{i,3} = (cst{i,5}.alphaX / cst{i,5}.betaX );
-            end
-            
-            Width  = 400;
-            Height = 200 + 20*size(data,1);
-            ScreenSize = get(0,'ScreenSize');
-            % show "set tissue parameter" window
-            figHandles = get(0,'Children');
-            if ~isempty(figHandles)
-                IdxHandle = strcmp(get(figHandles,'Name'),'Set Tissue Parameters');
-            else
-                IdxHandle = [];
-            end
-            
-            %check if window is already exists
-            if any(IdxHandle)
-                IdxTable = find(strcmp({figHandles(IdxHandle).Children.Type},'uitable'));
-                set(figHandles(IdxHandle).Children(IdxTable), 'Data', []);
-                figTissue = figHandles(IdxHandle);
-                %set focus
-                figure(figTissue);
-            else
-                figTissue = figure('Name','Set Tissue Parameters','Color',[.5 .5 .5],'NumberTitle','off','Position',...
-                    [ceil(ScreenSize(3)/2) ceil(ScreenSize(4)/2) Width Height]);
-            end
-            
-            % define the tissue parameter table
-            cNames = {'VOI','alphaX betaX','alpha beta ratio'};
-            columnformat = {'char',CellType,'numeric'};
-            
-            tissueTable = uitable('Parent', figTissue,'Data', data,'ColumnEditable',[false true false],...
-                'ColumnName',cNames, 'ColumnFormat',columnformat,'Position',[50 150 10 10]);
-            set(tissueTable,'CellEditCallback',@tissueTable_CellEditCallback);
-            % set width and height
-            currTablePos = get(tissueTable,'Position');
-            currTableExt = get(tissueTable,'Extent');
-            currTablePos(3) = currTableExt(3);
-            currTablePos(4) = currTableExt(4);
-            set(tissueTable,'Position',currTablePos);
-            
-            % define two buttons with callbacks
-            uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Save&Close',...
-                'Position', [Width-(0.25*Width) 0.1 * Height 70 30],...
-                'Callback', @(hpb,eventdata)SaveTissueParameters(hpb,eventdata,handles));
-            
-            uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Cancel&Close',...
-                'Position', [Width-(0.5*Width) 0.1 * Height 80 30],...
-                'Callback', 'close');
-            
-           % guidata(hObject,handles);
-            %UpdateState(handles);
             this.handles = handles;
+            updatePlnInWorkspace(this);
         end
         
         function popMenuBioOpt_Callback(this, hObject, eventdata)
@@ -810,19 +858,10 @@ classdef matRad_PlanWidget < matRad_Widget
                     % do nothing - re-optimization is still possible
                 end
                 
-            updatePlnInWorkspace(this);
-            %UpdateState(handles);
             this.handles = handles;
+            updatePlnInWorkspace(this);
         end
-        
-        function radiobutton3Dconf_Callback(hObject, eventdata, handles)
-            % hObject    handle to radiobutton3Dconf (see GCBO)
-            % eventdata  reserved - to be defined in a future version of MATLAB
-            % handles    structure with handles and user data (see GUIDATA)
-            
-            % Hint: get(hObject,'Value') returns toggle state of radiobutton3Dconf
-           end 
-           
+                   
         function getMachines(this)
             %seach for availabes machines
             handles = this.handles;
@@ -855,9 +894,6 @@ classdef matRad_PlanWidget < matRad_Widget
             this.handles = handles;
         end
         
-        function editSequencingLevel_Callback(this, hObject, eventdata)
-         end
-        
         function number = parseStringAsNum(this,stringIn,isVector)
             if isnumeric(stringIn)
                 number = stringIn;
@@ -878,7 +914,7 @@ classdef matRad_PlanWidget < matRad_Widget
             flag = true;
             contents = cellstr(get(handles.popUpMachine,'String'));
             Machine = contents{get(handles.popUpMachine,'Value')};
-            contentsPopUp = cellstr(get(handles.popupRadMode,'String'));
+            contents = cellstr(get(handles.popupRadMode,'String'));
             radMod = contents{get(handles.popupRadMode,'Value')};
             
             if isdeployed

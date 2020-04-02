@@ -23,6 +23,15 @@ classdef matRad_WorkflowWidget < matRad_Widget
             end
             this = this@matRad_Widget(handleParent);
         end
+        
+        function this = initialize(this)
+            this.update();
+        end
+        
+        function this = update(this)
+            getFromWorkspace(this);
+            %updateInWorkspace(this);
+        end
        
         function changeWorkspace(obj)
             notify(obj, 'workspaceChanged');
@@ -103,7 +112,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     'Tag','btnRefresh',...
                     'FontWeight','bold' );
                 
-               h79 = uicontrol(...
+                h79 = uicontrol(...
                     'Parent',h71,...
                     'Units','normalized',...
                     'String','Recalc',...
@@ -158,9 +167,52 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 this.createHandles();
                 
             end
+            
+            function this = getFromWorkspace(this)
+                handles = this.handles;
+               
+                % no data loaded, disable the buttons
+                set(handles.txtInfo,'String','no data loaded');
+                set(handles.btnCalcDose,'Enable','off');
+                set(handles.btnOptimize ,'Enable','off');
+                set(handles.pushbutton_recalc,'Enable','off');
+                set(handles.btnSaveToGUI,'Enable','off');
+                set(handles.importDoseButton,'Enable','off');
+                set(handles.btn_export,'Enable','off');
+                   
+                if evalin('base','exist(''pln'')')
+                    
+                    if evalin('base','exist(''ct'')') && ...
+                        evalin('base','exist(''cst'')')
+                    
+                        % ct cst and pln available; ready for dose calculation
+                        set(handles.txtInfo,'String','ready for dose calculation');
+                        set(handles.btnCalcDose,'Enable','on');
+                        set(handles.btn_export,'Enable','on');
+                        
+                        if evalin('base','exist(''resultGUI'')')
+                            
+                            % plan is optimized
+                            set(handles.txtInfo,'String','plan is optimized');
+                            set(handles.btnOptimize ,'Enable','on');
+                            set(handles.pushbutton_recalc,'Enable','on');
+                            set(handles.btnSaveToGUI,'Enable','on');
+                            % resultGUI struct needs to be available to import dose
+                            % otherwise inconsistent states can be achieved
+                            set(handles.importDoseButton,'Enable','on');
+                            
+                        elseif evalin('base','exist(''dij'')')
+                            % plan is ready for optimization
+                            set(handles.txtInfo,'String','ready for optimization');
+                            set(handles.btnOptimize ,'Enable','on');
+                            set(handles.btnOptimize ,'Enable','on');
+                        end
+                    end
+                end
+                this.handles=handles;
+            end
         end
-        
-        methods
+        methods (Access = private)
             
             % H74 Callback
             function btnLoadMat_Callback(this, hObject, event)
@@ -169,8 +221,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 if FileName == 0 % user pressed cancel --> do nothing.
                     return;
                 end
-                
-                handles = resetGUI(this, hObject, event); ...resetGUI(hObject, handles, varargin)
                 
                 try
                     % delete existing workspace - parse variables from base workspace
@@ -185,30 +235,24 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     
                     % read new data
                     load([FilePath FileName]);
-                    %set(handles.legendTable,'String',{'no data loaded'});
-                    %set(handles.popupDisplayOption,'String','no option available');
                     
                 catch ME
                     handles = showError(this,'LoadMatFileFnc: Could not load *.mat file',ME);
                     
-                    %    guidata(hObject,handles);
-                    
-                    %UpdateState(handles);
-                    %UpdatePlot(handles);
-                    
-                    this. handles = handles;
+                    this.handles=handles;   
+                    getFromWorkspace(this);  
                     return
                 end
                 
                 try
-                    generateCstTable(handles,cst);
-                    handles.TableChanged = false;
-                    set(handles.popupTypeOfPlot,'Value',1);
-                    cst = matRad_computeVoiContoursWrapper(cst,ct);
+                   %cst = generateCstTable(this,cst);
+                   %handles.TableChanged = false;
+                   %set(handles.popupTypeOfPlot,'Value',1);
+                   %cst = matRad_computeVoiContoursWrapper(cst,ct);
                     
-                    assignin('base','ct',ct);
-                    assignin('base','cst',cst);
-                    handles.State = 1;
+                   assignin('base','ct',ct);
+                   assignin('base','cst',cst);
+                   
                 catch ME
                     handles = showError(this,'LoadMatFileFnc: Could not load *.mat file',ME);
                 end
@@ -223,31 +267,15 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 if exist('dij','var')
                     assignin('base','dij',dij);
                 end
-                % if exist('stf','var') && exist('dij','var')
-                %     handles.State = 2;
-                % end
                 
                 if exist('resultGUI','var')
                     assignin('base','resultGUI',resultGUI);
-                    % handles.State = 3;
-                    % handles.SelectedDisplayOption ='physicalDose';
                 end
                 
-                % recheck current workspace variables
-                AllVarNames = evalin('base','who');
-                handles.AllVarNames = AllVarNames;
-                
-                if ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-                    handles = reloadGUI(hObject, handles, ct, cst);
-                else
-                    handles = reloadGUI(hObject, handles);
-                end
-                
-                notify(this,'workspaceChanged');
-                
-                % guidata(hObject,handles);
-                this.handles = handles;
-                
+               this.handles=handles;   
+               %updateInWorkspace(this);
+               changeWorkspace(this);
+               getFromWorkspace(this); %update the buttons
             end
             
             % H75 Callback
@@ -272,47 +300,16 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     InterfaceObj = findobj(Figures,'Enable','on');
                     set(InterfaceObj,'Enable','off');
                     
-                    %pause(0.1);
-                    %uiTable_CellEditCallback(hObject,[],handles);
-                    %pause(0.3);
-                    
-                    %% get cst from table
-                    %if ~getCstTable(handles)
-                    %    return
-                    %end
+
                     % read plan from gui and save it to workspace
-                    % gets also IsoCenter from GUI if checkbox is not checked
-                    getPlnFromGUI(handles);
+                    %handles=getPlnFromGUI(this);
                     
                     % get default iso center as center of gravity of all targets if not
                     % already defined
                     pln = evalin('base','pln');
                     
-                    if length(pln.propStf.gantryAngles) ~= length(pln.propStf.couchAngles)
-                        handles = showWarning(handles,'number of gantryAngles != number of couchAngles');
-                    end
-                    %%
-                    if ~checkRadiationComposition(handles);
-                        fileName = [pln.radiationMode '_' pln.machine];
-                        handles = showError(handles,errordlg(['Could not find the following machine file: ' fileName ]));
-                        %guidata(hObject,handles);
-                        this.handles = handles;
-                        return;
-                    end
-                    
-                    %% check if isocenter is already set
-                    if ~isfield(pln.propStf,'isoCenter')
-                        handles = showWarning(handles,'no iso center set - using center of gravity based on structures defined as TARGET');
-                        pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
-                        assignin('base','pln',pln);
-                    elseif ~get(handles.checkIsoCenter,'Value')
-                        if ~strcmp(get(handles.editIsoCenter,'String'),'multiple isoCenter')
-                            pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*str2num(get(handles.editIsoCenter,'String'));
-                        end
-                    end
-                    
                 catch ME
-                    handles = showError(handles,'CalcDoseCallback: Error in preprocessing!',ME);
+                    handles = showError(this,'CalcDoseCallback: Error in preprocessing!',ME);
                     % change state from busy to normal
                     set(Figures, 'pointer', 'arrow');
                     set(InterfaceObj,'Enable','on');
@@ -323,21 +320,20 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 % generate steering file
                 try
                     currPln = evalin('base','pln');
-                    % if we run 3d conf opt -> hijack runDao to trigger computation of
-                    % connected bixels
-                    if strcmp(pln.radiationMode,'photons') && get(handles.radiobutton3Dconf,'Value')
-                        currpln.propOpt.runDAO = true;
-                    end
+%                     % if we run 3d conf opt -> hijack runDao to trigger computation of
+%                     % connected bixels
+%                     if strcmp(pln.radiationMode,'photons') && get(handles.radiobutton3Dconf,'Value')
+%                         currpln.propOpt.runDAO = true;
+%                     end
                     stf = matRad_generateStf(evalin('base','ct'),...
                         evalin('base','cst'),...
                         currPln);
                     assignin('base','stf',stf);
                 catch ME
-                    handles = showError(handles,'CalcDoseCallback: Error in steering file generation!',ME);
+                    handles = showError(this,'CalcDoseCallback: Error in steering file generation!',ME);
                     % change state from busy to normal
                     set(Figures, 'pointer', 'arrow');
                     set(InterfaceObj,'Enable','on');
-                    % guidata(hObject,handles);
                     this.handles = handles;
                     return;
                 end
@@ -352,15 +348,10 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     
                     % assign results to base worksapce
                     assignin('base','dij',dij);
-                    handles.State = 2;
-                    handles.TableChanged = false;
-                    UpdateState(handles);
-                    UpdatePlot(handles);
-                    % guidata(hObject,handles);
-                    this.handles = handles;
+                                        
                     
                 catch ME
-                    handles = showError(handles,'CalcDoseCallback: Error in dose calculation!',ME);
+                    handles = showError(this,'CalcDoseCallback: Error in dose calculation!',ME);
                     % change state from busy to normal
                     set(Figures, 'pointer', 'arrow');
                     set(InterfaceObj,'Enable','on');
@@ -372,6 +363,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 set(Figures, 'pointer', 'arrow');
                 set(InterfaceObj,'Enable','on');
                 this.handles = handles;
+                changeWorkspace(this);
+                getFromWorkspace(this);
             end
             
             % H76 Callback
@@ -390,52 +383,40 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     InterfaceObj = findobj(Figures,'Enable','on');
                     set(InterfaceObj,'Enable','off');
                     % wait until the table is updated
-                    btnTableSave_Callback([],[],handles); %We don't need it?
+                    %btnTableSave_Callback([],[],handles); %We don't need it?
                     
-                    % if a critical change to the cst has been made which affects the dij matrix
-                    if handles.DijCalcWarning == true
-                        
-                        choice = questdlg('Overlap priorites of OAR constraints have been edited, a new OAR VOI was added or a critical row constraint was deleted. A new Dij calculation might be necessary.', ...
-                            'Title','Cancel','Calculate Dij then Optimize','Optimze directly','Optimze directly');
-                        
-                        switch choice
-                            case 'Cancel'
-                                set(Figures, 'pointer', 'arrow');
-                                set(InterfaceObj,'Enable','on');
-                                % guidata(hObject,handles);
-                                this.handles = handles;
-                                
-                                return;
-                            case 'Calculate dij again and optimize'
-                                handles.DijCalcWarning = false;
-                                btnCalcDose_Callback(hObject, eventdata, handles)
-                            case 'Optimze directly'
-                                handles.DijCalcWarning = false;
-                        end
-                    end
+%                     % if a critical change to the cst has been made which affects the dij matrix
+%                     if handles.DijCalcWarning == true
+%                         
+%                         choice = questdlg('Overlap priorites of OAR constraints have been edited, a new OAR VOI was added or a critical row constraint was deleted. A new Dij calculation might be necessary.', ...
+%                             'Title','Cancel','Calculate Dij then Optimize','Optimze directly','Optimze directly');
+%                         
+%                         switch choice
+%                             case 'Cancel'
+%                                 set(Figures, 'pointer', 'arrow');
+%                                 set(InterfaceObj,'Enable','on');
+%                                 % guidata(hObject,handles);
+%                                 this.handles = handles;
+%                                 
+%                                 return;
+%                             case 'Calculate dij again and optimize'
+%                                 handles.DijCalcWarning = false;
+%                                 btnCalcDose_Callback(hObject, eventdata, handles)
+%                             case 'Optimze directly'
+%                                 handles.DijCalcWarning = false;
+%                         end
+%                     end
                     
                     pln = evalin('base','pln');
                     ct  = evalin('base','ct');
                     
                     % optimize
-                    if get(handles.radiobutton3Dconf,'Value') && strcmp(handles.Modalities{get(handles.popupRadMode,'Value')},'photons')
-                        % conformal plan if photons and 3d conformal
-                        if ~matRad_checkForConnectedBixelRows(evalin('base','stf'))
-                            error('disconnetced dose influence data in BEV - run dose calculation again with consistent settings');
-                        end
-                        [resultGUIcurrentRun,usedOptimizer] = matRad_fluenceOptimization(matRad_collapseDij(evalin('base','dij')),evalin('base','cst'),pln);
-                        resultGUIcurrentRun.w = resultGUIcurrentRun.w * ones(evalin('base','dij.totalNumOfBixels'),1);
+                    [resultGUIcurrentRun,usedOptimizer] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
+                    if pln.propOpt.conf3D && strcmp(pln.radiationMode,'photons')
+                        resultGUIcurrentRun.w = resultGUIcurrentRun.w * ones(dij.totalNumOfBixels,1);
                         resultGUIcurrentRun.wUnsequenced = resultGUIcurrentRun.w;
-                    else
-                        if pln.propOpt.runDAO
-                            if ~matRad_checkForConnectedBixelRows(evalin('base','stf'))
-                                error('disconnetced dose influence data in BEV - run dose calculation again with consistent settings');
-                            end
-                        end
-                        
-                        [resultGUIcurrentRun,usedOptimizer] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
                     end
-                    
+
                     %if resultGUI already exists then overwrite the "standard" fields
                     AllVarNames = evalin('base','who');
                     if  ismember('resultGUI',AllVarNames)
@@ -456,32 +437,32 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         resultGUI = resultGUIcurrentRun;
                     end
                     assignin('base','resultGUI',resultGUI);
+%                     
+%                     % set some values
+%                     if handles.plane == 1
+%                         set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,2)/ct.resolution.x));
+%                     elseif handles.plane == 2
+%                         set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,1)/ct.resolution.y));
+%                     elseif handles.plane == 3
+%                         set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,3)/ct.resolution.z));
+%                     end
                     
-                    % set some values
-                    if handles.plane == 1
-                        set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,2)/ct.resolution.x));
-                    elseif handles.plane == 2
-                        set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,1)/ct.resolution.y));
-                    elseif handles.plane == 3
-                        set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,3)/ct.resolution.z));
-                    end
-                    
-                    handles.State = 3;
-                    handles.SelectedDisplayOptionIdx = 1;
-                    if strcmp(pln.radiationMode,'carbon') || (strcmp(pln.radiationMode,'protons') && strcmp(pln.propOpt.bioOptimization,'const_RBExD'))
-                        handles.SelectedDisplayOption = 'RBExDose';
-                    else
-                        handles.SelectedDisplayOption = 'physicalDose';
-                    end
-                    handles.selectedBeam = 1;
+%                     handles.State = 3;
+%                     handles.SelectedDisplayOptionIdx = 1;
+%                     if strcmp(pln.radiationMode,'carbon') || (strcmp(pln.radiationMode,'protons') && strcmp(pln.propOpt.bioOptimization,'const_RBExD'))
+%                         handles.SelectedDisplayOption = 'RBExDose';
+%                     else
+%                         handles.SelectedDisplayOption = 'physicalDose';
+%                     end
+%                     handles.selectedBeam = 1;
                     % check IPOPT status and return message for GUI user if no DAO or
                     % particles
                     if ~pln.propOpt.runDAO || ~strcmp(pln.radiationMode,'photons')
-                        CheckOptimizerStatus(usedOptimizer,'Fluence')
+                        CheckOptimizerStatus(this,usedOptimizer,'Fluence')
                     end
                     
                 catch ME
-                    handles = showError(handles,'OptimizeCallback: Could not optimize!',ME);
+                    handles = showError(this,'OptimizeCallback: Could not optimize!',ME);
                     % change state from busy to normal
                     set(Figures, 'pointer', 'arrow');
                     set(InterfaceObj,'Enable','on');
@@ -494,10 +475,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     
                     %% sequencing
                     if strcmp(pln.radiationMode,'photons') && (pln.propOpt.runSequencing || pln.propOpt.runDAO)
-                        %   resultGUI = matRad_xiaLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
-                        %       ,get(handles.editSequencingLevel,'Value'));
-                        %   resultGUI = matRad_engelLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
-                        %       ,str2double(get(handles.editSequencingLevel,'String')));
                         resultGUI = matRad_siochiLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
                             ,str2double(get(handles.editSequencingLevel,'String')));
                         
@@ -505,7 +482,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     end
                     
                 catch ME
-                    handles = showError(handles,'OptimizeCallback: Could not perform sequencing',ME);
+                    handles = showError(this,'OptimizeCallback: Could not perform sequencing',ME);
                     % change state from busy to normal
                     set(Figures, 'pointer', 'arrow');
                     set(InterfaceObj,'Enable','on');
@@ -521,7 +498,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                             resultGUI.apertureInfo,resultGUI,pln);
                         assignin('base','resultGUI',resultGUI);
                         % check IPOPT status and return message for GUI user
-                        CheckOptimizerStatus(usedOptimizer,'DAO');
+                        CheckOptimizerStatus(this,usedOptimizer,'DAO');
                     end
                     
                     if strcmp(pln.radiationMode,'photons') && (pln.propOpt.runSequencing || pln.propOpt.runDAO)
@@ -529,7 +506,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     end
                     
                 catch ME
-                    handles = showError(handles,'OptimizeCallback: Could not perform direct aperture optimization',ME);
+                    handles = showError(this,'OptimizeCallback: Could not perform direct aperture optimization',ME);
                     % change state from busy to normal
                     set(Figures, 'pointer', 'arrow');
                     set(InterfaceObj,'Enable','on');
@@ -540,17 +517,18 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 % change state from busy to normal
                 set(Figures, 'pointer', 'arrow');
                 set(InterfaceObj,'Enable','on');
-                handles.dispWindow{3,1}  = [];   % reset dose ranges
-                handles.dispWindow{3,2}  = [];   % reset min max dose values
-                handles.rememberCurrAxes = false;
-                handles.IsoDose.Levels   = 0;  % ensure to use default iso dose line spacing
-                handles.cBarChanged      = true;
+%                 handles.dispWindow{3,1}  = [];   % reset dose ranges
+%                 handles.dispWindow{3,2}  = [];   % reset min max dose values
+%                 handles.rememberCurrAxes = false;
+%                 handles.IsoDose.Levels   = 0;  % ensure to use default iso dose line spacing
+%                 handles.cBarChanged      = true;
+%                 handles = updateIsoDoseLineCache(handles);
+%                 UpdatePlot(handles);
+%                 handles.rememberCurrAxes = true;
                 this.handles = handles;
-                handles = updateIsoDoseLineCache(handles);
-                UpdateState(handles);
-                UpdatePlot(handles);
-                handles.rememberCurrAxes = true;
-                this.handles = handles;
+                
+               changeWorkspace(this);
+               getFromWorkspace(this);
             end
             
             % H77 Callback
@@ -561,7 +539,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 handles = this.handles;
                 try
                     % delete existing workspace - parse variables from base workspace
-                    set(handles.popupDisplayOption,'String','no option available');
+%                     set(handles.popupDisplayOption,'String','no option available');
                     AllVarNames = evalin('base','who');
                     RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
                     for i = 1:length(RefVarNames)
@@ -569,95 +547,54 @@ classdef matRad_WorkflowWidget < matRad_Widget
                             evalin('base',['clear ', RefVarNames{i}]);
                         end
                     end
-                    matRad_importDicomWidget; % matRad_importDicomGUI;
+                    matRad_importDicomWidget;
                     
-                catch
-                    handles = showError(handles,'DicomImport: Could not import data');
+                catch ME
+                    handles = showError(this,'DicomImport: Could not import data', ME);
                 end
-               % UpdateState(handles);;
+                
                 this.handles = handles;
+                changeWorkspace(this);
+                getFromWorkspace(this);
             end
             
             % H78 Callback - button: refresh
             function btnRefresh_Callback(this, hObject, event)
-                handles = this.handles;
-                handles = resetGUI(this, hObject, event); ...resetGUI(hObject, handles, varargin)
-                %% parse variables from base workspace
-                AllVarNames = evalin('base','who');
-                handles.AllVarNames = AllVarNames;
-                try
-                    if  ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-                        ct  = evalin('base','ct');
-                        cst = evalin('base','cst');
-                        %cst = setCstTable(handles,cst);
-                        generateCstTable(handles,cst);
-                      %  handles.State = 1;
-                        cst = matRad_computeVoiContoursWrapper(cst,ct);
-                        assignin('base','cst',cst);
-                    elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
-                      %  handles = showError(handles,'GUI OpeningFunc: could not find cst file');
-                    elseif ~ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-                     %   handles = showError(handles,'GUI OpeningFunc: could not find ct file');
-                    end
-                catch
-                  % handles = showError(handles,'GUI OpeningFunc: Could not load ct and cst file');
-                end
                 
-                if ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-                   handles = initialize(this);...  handles = reloadGUI(hObject, handles, ct, cst);
-                else
-                   handles = initialize(this); ... handles = reloadGUI(hObject, handles);
-                end
-                this.handles = handles;
-            end
-            
-%             function btnRefresh_Callback(this, hObject, event)
+                getFromWorkspace(this);
 %                 handles = this.handles;
-%                % handles = resetGUI(hObject, handles);
 %                 
 %                 %% parse variables from base workspace
 %                 AllVarNames = evalin('base','who');
-%                 handles.AllVarNames = AllVarNames;
 %                 try
 %                     if  ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
 %                         ct  = evalin('base','ct');
 %                         cst = evalin('base','cst');
-%                         %cst = setCstTable(handles,cst);
-%                         generateCstTable(handles,cst);
-%                       %  handles.State = 1;
+%                         cst=generateCstTable(this,cst);
 %                         cst = matRad_computeVoiContoursWrapper(cst,ct);
 %                         assignin('base','cst',cst);
+%                         
+%                         changeWorkspace(this);
+%                         
 %                     elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
-%                         handles = showError(handles,'GUI OpeningFunc: could not find cst file');
+%                         handles = showError(this,'GUI OpeningFunc: could not find cst file');
 %                     elseif ~ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-%                      %   handles = showError(handles,'GUI OpeningFunc: could not find ct file');
+%                         handles = showError(this,'GUI OpeningFunc: could not find ct file');
 %                     end
-%                 catch
-%                   % handles = showError(handles,'GUI OpeningFunc: Could not load ct and cst file');
+%                 catch ME
+%                    handles = showError(this,'GUI OpeningFunc: Could not load ct and cst file. Reason: ', ME);
 %                 end
-%                 
-%                 if ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-%                    handles = initialize(this);...  handles = reloadGUI(hObject, handles, ct, cst);
-%                 else
-%                    handles = initialize(this); ... handles = reloadGUI(hObject, handles);
-%                 end
-%                 %guidata(hObject, handles);
+% 
 %                 this.handles = handles;
-%             end
+            end
+            
             
             % H79 Callback
             function pushbutton_recalc_Callback(this, hObject, eventdata)
                 
                 handles = this.handles;
-                % recalculation only makes sense if ...
-                if evalin('base','exist(''pln'',''var'')') && ...
-                        evalin('base','exist(''stf'',''var'')') && ...
-                        evalin('base','exist(''ct'',''var'')') && ...
-                        evalin('base','exist(''cst'',''var'')') && ...
-                        evalin('base','exist(''resultGUI'',''var'')')
                     
                     try
-                        
                         % indicate that matRad is busy
                         % change mouse pointer to hour glass
                         Figures = gcf;%findobj('type','figure');
@@ -674,17 +611,17 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         cst       = evalin('base','cst');
                         resultGUI = evalin('base','resultGUI');
                         
-                        % get weights of the selected cube
-                        Content = get(handles.popupDisplayOption,'String');
-                        SelectedCube = Content{get(handles.popupDisplayOption,'Value')};
-                        Suffix = strsplit(SelectedCube,'_');
-                        if length(Suffix)>1
-                            Suffix = ['_' Suffix{2}];
-                        else
-                            Suffix = '';
-                        end
+%                         % get weights of the selected cube
+%                         Content = get(handles.popupDisplayOption,'String');
+%                         SelectedCube = Content{get(handles.popupDisplayOption,'Value')};
+%                         Suffix = strsplit(SelectedCube,'_');
+%                         if length(Suffix)>1
+%                             Suffix = ['_' Suffix{2}];
+%                         else
+%                             Suffix = '';
+%                         end
                         
-                        if sum([stf.totalNumOfBixels]) ~= length(resultGUI.(['w' Suffix]))
+                        if sum([stf.totalNumOfBixels]) ~= length(resultGUI.w)%(['w' Suffix]))
                             warndlg('weight vector does not corresponding to current steering file');
                             return
                         end
@@ -703,7 +640,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         end
                         
                         % recalculate cubes in resultGUI
-                        resultGUIreCalc = matRad_calcCubes(resultGUI.(['w' Suffix]),dij,cst);
+                        resultGUIreCalc = matRad_calcCubes(resultGUI.w,dij,cst); %(['w' Suffix])
                         
                         % delete old variables to avoid confusion
                         if isfield(resultGUI,'effect')
@@ -724,29 +661,24 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         assignin('base','dij',dij);
                         assignin('base','resultGUI',resultGUI);
                         
-                        handles.State = 3;
                         
-                        % show physicalDose of newly computed state
-                        handles.SelectedDisplayOption = 'physicalDose';
-                        set(handles.popupDisplayOption,'Value',find(strcmp('physicalDose',Content)));
+%                         % show physicalDose of newly computed state
+%                         handles.SelectedDisplayOption = 'physicalDose';
+%                         set(handles.popupDisplayOption,'Value',find(strcmp('physicalDose',Content)));
                         
                         % change state from busy to normal
                         set(Figures, 'pointer', 'arrow');
                         set(InterfaceObj,'Enable','on');
                         
-                        handles.cBarChanged = true;
+%                         handles.cBarChanged = true;
+%                         handles = updateIsoDoseLineCache(handles);
                         
-                        handles = updateIsoDoseLineCache(handles);
-                        
-                        UpdateState(handles);
-                        
-                        handles.rememberCurrAxes = false;
-                        UpdatePlot(handles);
-                        handles.rememberCurrAxes = true;
                         this.handles = handles;
+                        changeWorkspace(this);
+                        getFromWorkspace(this);
                         
                     catch ME
-                        handles = showError(handles,'CalcDoseCallback: Error in dose recalculation!',ME);
+                        handles = showError(this,'CalcDoseCallback: Error in dose recalculation!',ME);
                         
                         % change state from busy to normal
                         set(Figures, 'pointer', 'arrow');
@@ -756,7 +688,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         
                     end
                     
-                end
             end
             
             % H80 Callback
@@ -795,13 +726,70 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     
                     uicontrol('Parent', figDialog,'Style', 'pushbutton', 'String', 'Save','FontSize',10,...
                         'Position', [0.42*Width 0.1 * Height 70 30],...
-                        'Callback', @(hpb,eventdata)SaveResultToGUI(hpb,eventdata,guidata(hpb)));
+                        'Callback', @(hpb,eventdata)SaveResultToGUI(this,hpb,eventdata));
                 end
                 
                 uiwait(figDialog);
                 this.handles = handles;
-              %  UpdateState(handles)
-                UpdatePlot(handles)
+                %changeWorkspace(this);
+                %getFromWorkspace(this);
+            end
+            
+            function SaveResultToGUI(this, ~, ~)
+                AllFigHandles = get(0,'Children');
+                ixHandle      = strcmp(get(AllFigHandles,'Name'),'Provide result name');
+                uiEdit        = get(AllFigHandles(ixHandle),'Children');
+                
+                if strcmp(get(uiEdit(2),'String'),'Please enter name here...')
+                    
+                    formatOut = 'mmddyyHHMM';
+                    Suffix = ['_' datestr(now,formatOut)];
+                else
+                    % delete special characters
+                    Suffix = get(uiEdit(2),'String');
+                    logIx = isstrprop(Suffix,'alphanum');
+                    Suffix = ['_' Suffix(logIx)];
+                end
+                
+                pln       = evalin('base','pln');
+                resultGUI = evalin('base','resultGUI');
+                
+                if isfield(resultGUI,'physicalDose')
+                    resultGUI.(['physicalDose' Suffix])  = resultGUI.physicalDose;
+                end
+                if isfield(resultGUI,'w')
+                    resultGUI.(['w' Suffix])             = resultGUI.w;
+                end
+                
+                
+                if ~strcmp(pln.propOpt.bioOptimization,'none')
+                    
+                    if isfield(resultGUI,'RBExDose')
+                        resultGUI.(['RBExDose' Suffix]) = resultGUI.RBExDose;
+                    end
+                    
+                    if strcmp(pln.radiationMode,'carbon') == 1
+                        if isfield(resultGUI,'effect')
+                            resultGUI.(['effect' Suffix])= resultGUI.effect;
+                        end
+                        
+                        if isfield(resultGUI,'RBE')
+                            resultGUI.(['RBE' Suffix]) = resultGUI.RBE;
+                        end
+                        if isfield(resultGUI,'alpha')
+                            resultGUI.(['alpha' Suffix]) = resultGUI.alpha;
+                        end
+                        if isfield(resultGUI,'beta')
+                            resultGUI.(['beta' Suffix]) = resultGUI.beta;
+                        end
+                    end
+                end
+                
+                close(AllFigHandles(ixHandle));
+                assignin('base','resultGUI',resultGUI);
+                
+                changeWorkspace(this);
+                %getFromWorkspace(this);
             end
             
             % H81 Callback
@@ -812,13 +800,10 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 % handles    structure with handles and user data (see GUIDATA)
                 
                 try
-                    % matRad_exportGUI;
                     matRad_exportWidget;
-                catch
-                    handles = showError(handles,'Could not export data');
+                catch ME
+                    handles = showError(this,'Could not export data.  Reason: ', ME);
                 end
-               % UpdateState(handles);
-                % guidata(hObject,handles);
                 this.handles = handles;
             end
             
@@ -832,30 +817,37 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 extensions{1} = '*.nrrd';
                 [filenames,filepath,~] = uigetfile(extensions,'MultiSelect','on');
                 
-                if ~iscell(filenames)
-                    tmp = filenames;
-                    filenames = cell(1);
-                    filenames{1} = tmp;
-                end
-                
-                ct = evalin('base','ct');
-                resultGUI = evalin('base','resultGUI');
-                
-                for filename = filenames
-                    [~,name,~] = fileparts(filename{1});
-                    [cube,~] = matRad_readCube(fullfile(filepath,filename{1}));
-                    if ~isequal(ct.cubeDim, size(cube))
-                        errordlg('Dimensions of the imported cube do not match with ct','Import failed!','modal');
-                        continue;
+                try
+                    if ~iscell(filenames)
+                        tmp = filenames;
+                        filenames = cell(1);
+                        filenames{1} = tmp;
                     end
-                    
-                    fieldname = ['import_' matlab.lang.makeValidName(name, 'ReplacementStyle','delete')];
-                    resultGUI.(fieldname) = cube;
+
+                    ct = evalin('base','ct');
+                    resultGUI = evalin('base','resultGUI');
+
+                    for filename = filenames
+                        [~,name,~] = fileparts(filename{1});
+                        [cube,~] = matRad_readCube(fullfile(filepath,filename{1}));
+                        if ~isequal(ct.cubeDim, size(cube))
+                            errordlg('Dimensions of the imported cube do not match with ct','Import failed!','modal');
+                            continue;
+                        end
+
+                        fieldname = ['import_' matlab.lang.makeValidName(name, 'ReplacementStyle','delete')];
+                        resultGUI.(fieldname) = cube;
+                    end
+
+                    assignin('base','resultGUI',resultGUI);
+                catch ME
+                    handles = showError(this,'Dose Import: Could not import data.  Reason: ', ME);
+                    this.handles = handles;
+                    return;
                 end
-                
-                assignin('base','resultGUI',resultGUI);
-                btnRefresh_Callback(this, hObject, eventdata)
-                this. handles = handles;
+                this.handles = handles;
+                changeWorkspace(this);
+                getFromWorkspace(this);
             end
             
              % H83 Callback
@@ -867,7 +859,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 
                 try
                     % delete existing workspace - parse variables from base workspace
-                    set(handles.popupDisplayOption,'String','no option available');
+                    %set(handles.popupDisplayOption,'String','no option available');
                     AllVarNames = evalin('base','who');
                     RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
                     for i = 1:length(RefVarNames)
@@ -875,117 +867,68 @@ classdef matRad_WorkflowWidget < matRad_Widget
                             evalin('base',['clear ', RefVarNames{i}]);
                         end
                     end
-                    handles.State = 0;
                     
                     %call the gui
-                    uiwait(matRad_importGUI);
+                    h=matRad_importWidget;
+                    uiwait(h.widgetHandle);
                     
                     %Check if we have the variables in the workspace
                     if evalin('base','exist(''cst'',''var'')') == 1 && evalin('base','exist(''ct'',''var'')') == 1
                         cst = evalin('base','cst');
                         ct = evalin('base','ct');
-                        %setCstTable(handles,cst);
-                        generateCstTable(hanles,cst);
-                        handles.TableChanged = false;
-                        set(handles.popupTypeOfPlot,'Value',1);
+                        cst = generateCstTable(this,cst);
+%                         handles.TableChanged = false;
+%                         set(handles.popupTypeOfPlot,'Value',1);
                         
                         % compute HU values
                         if ~isfield(ct, 'cubeHU')
                             ct = matRad_electronDensitiesToHU(ct);
                             assignin('base','ct',ct);
                         end
-                        if ~isfield(ct, 'cubeHU')
-                            handles.cubeHUavailable = false;
-                        else
-                            handles.cubeHUavailable = true;
-                        end
+%                         if ~isfield(ct, 'cubeHU')
+%                             handles.cubeHUavailable = false;
+%                         else
+%                             handles.cubeHUavailable = true;
+%                         end
                         
-                        % precompute contours
-                        cst = precomputeContours(ct,cst);
+%                         % precompute contours
+%                         cst = precomputeContours(this,ct,cst);
                         
                         assignin('base','ct',ct);
                         assignin('base','cst',cst);
                         
                         if evalin('base','exist(''pln'',''var'')')
                             assignin('base','pln',pln);
-                            setPln(handles);
-                        else
-                            getPlnFromGUI(handles);
-                            setPln(handles);
+%                             setPln(handles);
+%                         else
+%                             getPlnFromGUI(handles);
+%                             setPln(handles);
                         end
-                       % handles.State = 1;
                     end
                     
-                    % set slice slider
-                    handles.plane = get(handles.popupPlane,'value');
-                    %if handles.State >0
-                        set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
-                            'Value',round(ct.cubeDim(handles.plane)/2),...
-                            'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);
-                    %end
-                    
-                   % if handles.State > 0
-                        % define context menu for structures
-                        for i = 1:size(cst,1)
-                            if cst{i,5}.Visible
-                                handles.VOIPlotFlag(i) = true;
-                            else
-                                handles.VOIPlotFlag(i) = false;
-                            end
-                        end
-                    % end
-                    
-                    handles.dispWindow = cell(3,2);
-                    handles.cBarChanged = true;
-                    
-                  %  UpdateState(handles);
-                    handles.rememberCurrAxes = false;
-                    UpdatePlot(handles);
-                    handles.rememberCurrAxes = true;
-                catch
-                    handles = showError(handles,'Binary Patient Import: Could not import data');
-                   % UpdateState(handles);
+                catch ME
+                    handles = showError(this,'Binary Patient Import: Could not import data.  Reason: ', ME);
+                   	this.handles = handles;
+                    getFromWorkspace(this);
+                    return;
                 end
                 
                 this.handles = handles;
-                
+                changeWorkspace(this);
+                getFromWorkspace(this);
             end
             
-            function handles = resetGUI(this, hObject, eventdata) %(hObject, handles, varargin)
+            function CheckOptimizerStatus(this, usedOptimizer,OptCase)
                 
-                handles = this.handles;
+                [statusmsg,statusflag] = usedOptimizer.GetStatus();
                 
-                [env, versionString] = matRad_getEnvironment();
-                
-                if strcmp(env,'MATLAB')
-                    %OpenGL only works for pc (maybe also for linux?)
-                    if ispc
-                        opengl software
-                    end
+                if statusflag == 0 || statusflag == 1
+                    status = 'none';
+                else
+                    status = 'warn';
                 end
                 
-            end
-            
-            
-            function handles = reloadGUI(this,hObject, ct, cst)
-                
-                handles = this.handles;
-                AllVarNames = handles.AllVarNames;
-                
-                if ismember('ct',AllVarNames)
-                    % compute HU values
-                    if ~isfield(ct, 'cubeHU')
-                        ct = matRad_electronDensitiesToHU(ct);
-                        assignin('base','ct',ct);
-                    end
-                    if ~isfield(ct, 'cubeHU')
-                        handles.cubeHUavailable = false;
-                    else
-                        handles.cubeHUavailable = true;
-                    end
-                end
-                
-                this.handles = handles;
+                msgbox(['Optimizer finished with status ' num2str(statusflag) ' (' statusmsg ')'],'Optimizer',status,'modal');
             end
         end
     end

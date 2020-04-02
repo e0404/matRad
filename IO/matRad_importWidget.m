@@ -6,7 +6,7 @@ classdef matRad_importWidget < matRad_Widget
     
     methods
         function this = matRad_importWidget(handleParent)
-          if nargin < 1                
+            if nargin < 1
                 handleParent = figure(...
                     'PaperUnits','inches',...
                     'MenuBar','none',...
@@ -25,9 +25,13 @@ classdef matRad_importWidget < matRad_Widget
         
         %OPENING/INITIALIZE FUNKTION
         function this = initialize(this)
-            handles = guidata(this.widgetHandle);
-            handles.output = this.widgetHandle;
+%             handles = this.handles;
+%              this.handles = handles;
+%             
+            %handles = guidata(this.widgetHandle);
+            %handles.output = this.widgetHandle;
             %guidata(this.widgetHandle, handles);
+           
         end
     end
 
@@ -174,10 +178,10 @@ classdef matRad_importWidget < matRad_Widget
 
     methods 
         
-        %OUTPUT FUNKTION
-        function varargout = OutputFcn(hObject, eventdata, handles)
-            varargout{1} = handles.output;
-        end
+%         %OUTPUT FUNKTION
+%         function varargout = OutputFcn(hObject, eventdata, handles)
+%             varargout{1} = handles.output;
+%         end
         
         %CALLBACK FOR  H3 EDIT CREATE PATH
         function this = edit_ctPath_Callback(this, hObject, event)

@@ -196,7 +196,7 @@ classdef matRad_exportWidget < matRad_Widget
                 'ColumnWidth',{  20 278 },...
                 'Visible','off',...
                 'Position',[0.1 0.5 0.73 0.2],...
-                'ColumnEditable',false,...
+                'ColumnEditable',[true false],...
                 'ColumnFormat',{  'logical' 'char' },...
                 'Tag','uitable_vois');
             
@@ -210,7 +210,7 @@ classdef matRad_exportWidget < matRad_Widget
                 'RowName',blanks(0),...
                 'Position',[0.1 0.3 0.73 0.15],...
                 'Visible','off',...
-                'ColumnEditable',false,...
+                'ColumnEditable',[true false],...
                 'ColumnFormat',{  'logical' 'char' },...
                 'Tag','uitable_doseCubes',...
                 'UserData',[]);
@@ -274,93 +274,96 @@ classdef matRad_exportWidget < matRad_Widget
                 end
             end
             
-            %prepare metadata
-            ct = evalin('base','ct');
+            try 
+                %prepare metadata
+                ct = evalin('base','ct');
+
+                metadata.resolution = [ct.resolution.x ct.resolution.y ct.resolution.z];
+                metadata.compress = get(handles.checkbox_compress,'Value');
             
-            metadata.resolution = [ct.resolution.x ct.resolution.y ct.resolution.z];
-            metadata.compress = get(handles.checkbox_compress,'Value');
-            
-            %Check if we have position information
-            if isfield(ct,'dicomInfo')
-                if isfield(ct.dicomInfo,'ImagePositionPatient')
-                    metadata.imageOrigin = ct.dicomInfo.ImagePositionPatient;
-                    if ~isrow(metadata.imageOrigin)
-                        metadata.imageOrigin = transpose(metadata.imageOrigin);
+                %Check if we have position information
+                if isfield(ct,'dicomInfo')
+                    if isfield(ct.dicomInfo,'ImagePositionPatient')
+                        metadata.imageOrigin = ct.dicomInfo.ImagePositionPatient;
+                        if ~isrow(metadata.imageOrigin)
+                            metadata.imageOrigin = transpose(metadata.imageOrigin);
+                        end
                     end
                 end
-            end
             
-            %This is only for the waitbar to get the number of cubes you wanna save
-            numExportCubes = 0;
-            if (saveCT)
-                if isfield(ct,'cubeHU')
-                    numExportCubes = numExportCubes + 1;
-                end
-                
-                if isfield(ct,'cube')
-                    numExportCubes = numExportCubes + 1;
-                end
-                voiNames = get(handles.uitable_vois,'Data');
-                voiIndices = find([voiNames{:,1}] == true);
-                numExportCubes = numExportCubes + numel(voiIndices);
-                
-            else
+                %This is only for the waitbar to get the number of cubes you wanna save
                 numExportCubes = 0;
-            end
-            
-            if saveResults
-                cubeNames = get(handles.uitable_doseCubes,'data');
-                cubeIndices = find([cubeNames{:,1}] == true);
-                numExportCubes = numExportCubes + numel(cubeIndices);
-            end
-            
-            %Give an error if nothing was selected
-            if numExportCubes == 0
-                errordlg('No data was selected for export!');
-                return;
-            end
-            
-            currentCube = 0;
-            
-            hWaitbar = waitbar(0,'Exporting...','WindowStyle', 'modal');
-            cleanUp = onCleanup(@() close(hWaitbar));
-            
-            %CT and Mask export
-            if saveCT
-                
-                if isfield(ct,'cube')
-                    %Export the CT (ED suffix to clarify it is not in HU)
-                    currentCube = currentCube + 1;
-                    waitbar(currentCube/numExportCubes,hWaitbar,['Exporting CT Intensity values (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
-                    matRad_writeCube(fullfile(exportDir,['CT_ED' extension]),ct.cube{1},'double',metadata);
+                if (saveCT)
+                    if isfield(ct,'cubeHU')
+                        numExportCubes = numExportCubes + 1;
+                    end
+
+                    if isfield(ct,'cube')
+                        numExportCubes = numExportCubes + 1;
+                    end
+                    voiNames = get(handles.uitable_vois,'Data');
+                    voiIndices = find([voiNames{:,1}] == true);
+                    numExportCubes = numExportCubes + numel(voiIndices);
+
+                else
+                    numExportCubes = 0;
                 end
-                
-                if isfield(ct,'cubeHU')
-                    currentCube = currentCube + 1;
-                    waitbar(currentCube/numExportCubes,hWaitbar,['Exporting CT in HU (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
-                    matRad_writeCube(fullfile(exportDir,['CT_HU' extension]),ct.cubeHU{1},'double',metadata);
+
+                if saveResults
+                    cubeNames = get(handles.uitable_doseCubes,'data');
+                    cubeIndices = find([cubeNames{:,1}] == true);
+                    numExportCubes = numExportCubes + numel(cubeIndices);
                 end
-                
-                %Export VOI masks
-                cst = evalin('base','cst');
-                
-                for voiIx = voiIndices
-                    %Waitbar
-                    currentCube = currentCube + 1;
-                    waitbar(currentCube/numExportCubes,hWaitbar,['Exporting Segmentation Mask (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
-                    
-                    %Get the index list
-                    voiRow = find(strcmp(voiNames{voiIx,2},cst(:,2)));
-                    voiIndexList = cst{voiRow,4}{1};
-                    %Set up the full mask
-                    voiMask = zeros(ct.cubeDim);
-                    voiMask(voiIndexList) = 1;
-                    %Export...
-                    matRad_writeCube(fullfile(voiDir,[voiNames{voiIx,2} extension]),voiMask,'uint8',metadata);
-                end
-                
-            end
             
+                %Give an error if nothing was selected
+                if numExportCubes == 0
+                    errordlg('No data was selected for export!');
+                    return;
+                end
+            
+                currentCube = 0;
+
+                hWaitbar = waitbar(0,'Exporting...','WindowStyle', 'modal');
+                cleanUp = onCleanup(@() close(hWaitbar));
+
+                %CT and Mask export
+                if saveCT
+
+                    if isfield(ct,'cube')
+                        %Export the CT (ED suffix to clarify it is not in HU)
+                        currentCube = currentCube + 1;
+                        waitbar(currentCube/numExportCubes,hWaitbar,['Exporting CT Intensity values (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
+                        matRad_writeCube(fullfile(exportDir,['CT_ED' extension]),ct.cube{1},'double',metadata);
+                    end
+
+                    if isfield(ct,'cubeHU')
+                        currentCube = currentCube + 1;
+                        waitbar(currentCube/numExportCubes,hWaitbar,['Exporting CT in HU (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
+                        matRad_writeCube(fullfile(exportDir,['CT_HU' extension]),ct.cubeHU{1},'double',metadata);
+                    end
+
+                    %Export VOI masks
+                    cst = evalin('base','cst');
+
+                    for voiIx = voiIndices
+                        %Waitbar
+                        currentCube = currentCube + 1;
+                        waitbar(currentCube/numExportCubes,hWaitbar,['Exporting Segmentation Mask (' num2str(currentCube) '/' num2str(numExportCubes) ') ...']);
+
+                        %Get the index list
+                        voiRow = find(strcmp(voiNames{voiIx,2},cst(:,2)));
+                        voiIndexList = cst{voiRow,4}{1};
+                        %Set up the full mask
+                        voiMask = zeros(ct.cubeDim);
+                        voiMask(voiIndexList) = 1;
+                        %Export...
+                        matRad_writeCube(fullfile(voiDir,[voiNames{voiIx,2} extension]),voiMask,'uint8',metadata);
+                    end
+
+                end
+            catch ME
+                warning(ME.identifier,'couldn''t export! Reason: %s\n',ME.message)
+            end
             %Results Export
             if saveResults
                 results = evalin('base','resultGUI');

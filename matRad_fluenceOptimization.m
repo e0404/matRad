@@ -30,6 +30,15 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if pln.propOpt.conf3D && strcmp(pln.radiationMode,'photons') || pln.propOpt.runDAO
+    if ~matRad_checkForConnectedBixelRows(evalin('base','stf'))
+        error('disconnetced dose influence data in BEV - run dose calculation again with consistent settings');
+    end
+    if pln.propOpt.conf3D
+        matRad_collapseDij(dij);
+    end
+end
+
 % issue warning if biological optimization impossible
 if sum(strcmp(pln.propOpt.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose')) && strcmp(pln.radiationMode,'carbon')
     warndlg('Alpha and beta matrices for effect based and RBE optimization not available - physical optimization is carried out instead.');
@@ -223,6 +232,12 @@ resultGUI = matRad_calcCubes(wOpt,dij,cst);
 resultGUI.wUnsequenced = wOpt;
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
+
+% here or only in workflow?
+% if pln.propOpt.conf3D && strcmp(pln.radiationMode,'photons') 
+%     resultGUI.w = resultGUI.w * ones(dij.totalNumOfBixels,1);
+%     resultGUI.wUnsequenced = resultGUI.w;
+% end
 
 % unblock mex files
 clear mex
