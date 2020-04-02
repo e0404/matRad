@@ -1,4 +1,4 @@
-Version 2.5.0 "Blaise"
+Version 2.10.0 "Blaise"
 	Second Release of matRad. Note that despite major incompatibilities with "Alan" we still chose major version number "2" to have a consistent versioning in the future.
 	we want to thank all new contributing authors (see AUTHORS.txt)
 	The new release contains:
