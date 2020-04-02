@@ -26,7 +26,7 @@ node {
         echo 'Testing on MATLAB..'
         echo 'Make sure you can run matlab script from the command line'
         if (osName == "Windows") {
-            bat label: '', script: 'matlab -nodisplay -r "cd unitTest; matRad_runTests"'
+            bat label: '', script: 'matlab -noFigureWindow -nosplash -minimize -wait -r "cd unitTest; matRad_runTests"'
         }
         else {
             sh label: '', script: 'matlab -nodisplay -r "cd unitTest; matRad_runTests"'
