@@ -140,10 +140,10 @@ if exportRSPcube
       fprintf(h,'s:Ge/Patient/ImagingtoMaterialConverter = "matrad"\n');
       fprintf(h,'i:Ge/Patient/NumberOfVoxelsX = %d\n',ct.cubeDim(2));
       fprintf(h,'i:Ge/Patient/NumberOfVoxelsY = %d\n',ct.cubeDim(1));
-      fprintf(h,'i:Ge/Patient/NumberOfVoxelsZ = %d\n',ct.cubeDim(3));
+      fprintf(h,'iv:Ge/Patient/NumberOfVoxelsZ = 1 %d\n',ct.cubeDim(3));
       fprintf(h,'d:Ge/Patient/VoxelSizeX       = %.3f mm\n',ct.resolution.x);
       fprintf(h,'d:Ge/Patient/VoxelSizeY       = %.3f mm\n',ct.resolution.y);
-      fprintf(h,'d:Ge/Patient/VoxelSizeZ       = %.3f mm\n',ct.resolution.z);
+      fprintf(h,'dv:Ge/Patient/VoxelSizeZ       = 1 %.3f mm\n',ct.resolution.z);
       fprintf(h,'s:Ge/Patient/DataType  = "SHORT"\n');
       fclose(h);
 
