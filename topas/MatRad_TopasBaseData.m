@@ -40,6 +40,11 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 TopasConfig.fracHistories = 1e-4;
             end
             
+             if ~isfield(TopasConfig,'numOfThreads')
+                % default: 0, all available
+                TopasConfig.numOfThreads = 0;
+            end
+            
             if ~isfield(TopasConfig,'minRelWeight')
                 % default: 0.001
                 % minRelWeight = 0 means all weights are being considered
@@ -203,7 +208,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 fprintf(fileID,'d:Sim/CouchAngle = %.6f deg\n', stf(beamIx).couchAngle);
                 fprintf(fileID,'s:Sim/ParticleName = "proton"\n');
                 fprintf(fileID,'u:Sim/ParticleMass = 1.0\n');
-                fprintf(fileID,'i:Sim/NbThreads = 0\n');
+                fprintf(fileID,'i:Sim/NbThreads = %i\n', TopasConfig.numOfThreads);
                 fprintf(fileID,'d:Tf/TimelineStart = 0. ms\n');
                 fprintf(fileID,'d:Tf/TimelineEnd = %i ms\n', 10 * cutNumOfBixel);
                 fprintf(fileID,'i:Tf/NumberOfSequentialTimes = %i\n', cutNumOfBixel);
@@ -364,6 +369,8 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 MCparam.nbHistories = historyCount;
                 MCparam.nbParticles = nbParticlesTotal;
                 save([TopasConfig.filepath,'MCparam.mat'],'MCparam');
+                
+                disp('Successfully written TOPAS setup files!')
             end
         end
     end
