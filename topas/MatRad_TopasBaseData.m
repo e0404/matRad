@@ -1,4 +1,4 @@
-classdef MatRad_TopasBaseData < MatRad_MCemmitanceBaseData
+classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
     % MatRad_TopasBaseData class for calculating TOPAS base data and
     % writing it into a file, formatted for TOPAS to use
     % 
@@ -18,7 +18,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemmitanceBaseData
     methods
         function obj = MatRad_TopasBaseData(varargin)
             % Call MatRad_MCemmitanceBaseData constructor
-            obj = obj@MatRad_MCemmitanceBaseData(varargin{:}); 
+            obj = obj@MatRad_MCemittanceBaseData(varargin{:}); 
         end
         
         function obj = writeTopasData(obj,ct,stf,pln,w,TopasConfig)
@@ -30,6 +30,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemmitanceBaseData
                 TopasConfig = struct;
             end
             if ~isfield(TopasConfig,'filepath')
+                % MatRad filepath
                 % default: 'topas/MCexport/'
                 TopasConfig.filepath = 'topas/MCexport/';
             end
