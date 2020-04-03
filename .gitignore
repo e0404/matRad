@@ -35,3 +35,5 @@ scenarios/lung01.mat
 scenarios/lung01MC.mat
 scenarios/lung02.mat
 scenarios/prostate01.mat
+scenarios/slab01.mat
+scenarios/slab01MC.mat
