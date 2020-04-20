@@ -1,13 +1,25 @@
-function fileExists = matRad_checkMexFileExists(filename,noLinkOctave) 
-% Checks if a matching mex file exists, and creates a link if a matching 
-% octave mex file is found
+function fileExists = matRad_checkMexFileExists(filename,linkOctave) 
+% Checks if a matching mex file exists, and can create a link if a matching 
+% custom, system specific precompiled octave mex file is found
 %
 % call
 %   matRad_checkMexFileExists(filename)
-%
+%   matRad_checkMexFileExists(filename,linkOctave)
+% 
+% input:
+%   filename:   name of the mex file (without extension)
+%   linkOctave: (optional: default true) If set to true, the function will check 
+%               for a custom build mex file for octave with our custom extension
+%               mexoct<system>. If such a file exists, it will create a link to 
+%               the file as filename.mex since octave not uses system-specific 
+%               extensions by default. If false, the function will only check 
+%               for an existing .mex file for octave.
+% output:
+%   fileExists: true if the mex file exists (or can be linked), and false
+%               otherwise
 %
 % References
-%
+%   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -25,7 +37,7 @@ function fileExists = matRad_checkMexFileExists(filename,noLinkOctave)
 global matRad_cfg; matRad_cfg = MatRad_Config.instance();
 
 if nargin < 2
-    noLinkOctave = false;
+    linkOctave = true;
 end
   
 %Explicitly check for matching mex file (id 3)
@@ -34,7 +46,7 @@ fileExists = (exist(filename,'file') == 3);
 %For octave we have experimental precompiled files for Octave 5 64 bit
 [env,ver] = matRad_getEnvironment();
 
-if ~fileExists && strcmp(env,'OCTAVE') && ~noLinkOctave        
+if ~fileExists && strcmp(env,'OCTAVE') && linkOctave        
      
     %Check Octave 5
     versplit = strsplit(ver,'.');
