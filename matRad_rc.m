@@ -14,7 +14,10 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set search path
-addpath(genpath(pwd));
+global matRad_cfg;
+matRad_cfg = MatRad_Config.instance();
+
+addpath(genpath(matRad_cfg.matRadRoot));
 
 %clear command window and close all figures
 clc;
@@ -26,5 +29,4 @@ vString = matRad_version();
 
 fprintf('You are running matRad %s with %s %s\n',vString,env,envver);
 
-global matRad_cfg;
-matRad_cfg = MatRad_Config.instance();
+
