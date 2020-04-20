@@ -49,7 +49,7 @@ else
     ccName = myCCompiler.ShortName;
 end
 
-%This needs to generalize better
+%These settings have only been tested for MSVC and g++. You may need to adapt for other compilers
 if ~isempty(strfind(ccName,'MSVC')) %Not use contains(...) because of octave
     flags{1,1} = 'COMPFLAGS';
     flags{1,2} = '/O2';
