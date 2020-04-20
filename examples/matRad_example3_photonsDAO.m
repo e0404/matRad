@@ -51,6 +51,17 @@ pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 
+% We can also use other solver for optimization than IPOPT. matRad 
+% currently supports fmincon from the MATLAB Optimization Toolbox. First we
+% check if the fmincon-Solver is available, and if it es, we set in in the
+% pln.propOpt.optimizer vairable. Otherwise wie set to the default
+% optimizer 'IPOPT'
+if matRad_OptimizerFmincon.IsAvailable()
+    pln.propOpt.optimizer = 'fmincon';   
+else
+    pln.propOpt.optimizer = 'IPOPT';
+end
+
 %%
 % Enable sequencing and direct aperture optimization (DAO).
 pln.propOpt.runSequencing = 1;

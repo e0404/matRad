@@ -31,6 +31,7 @@ function obj = matRad_exportDicomRTPlan(obj)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-warning('Dicom Plan export not supported yet!');               
+global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+matRad_cfg.dispWarning('RTPlan export is not yet implemented...\n');            
 
 end

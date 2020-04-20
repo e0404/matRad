@@ -42,6 +42,7 @@ cst{1,5}.Priority = 1;
 cst{1,5}.alphaX   = 0.1;
 cst{1,5}.betaX    = 0.05;
 cst{1,5}.Visible  = 1;
+cst{1,5}.visibleColor = [0 0 0];
 
 % define no objcetives   
 cst{1,6}          = [];

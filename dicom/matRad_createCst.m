@@ -28,7 +28,13 @@ function cst = matRad_createCst(structures)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-cst = cell(size(structures,2),6);
+global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+
+nStructures = size(structures,2);
+cst = cell(nStructures,6);
+
+%Create set of default colors
+defaultColors = colorcube(nStructures);
 
 for i = 1:size(structures,2)
     cst{i,1} = i - 1; % first organ has number 0    
@@ -47,12 +53,10 @@ for i = 1:size(structures,2)
         cst{i,5}.Priority = 1;
      
         % default objectives for targets
-        cst{i,6}(1).type       = 'square deviation';
-        cst{i,6}(1).penalty    = 800;
-        cst{i,6}(1).dose       = 30;
-        cst{i,6}(1).EUD        = NaN;
-        cst{i,6}(1).volume     = NaN;
-        cst{i,6}(1).robustness = 'none';
+        objective = DoseObjectives.matRad_SquaredDeviation;
+        objective.penalty = 800;
+        objective.parameters = {30};  %Default reference Dose
+        cst{i,6}{1} = struct(objective);
         
     else
         
@@ -72,5 +76,8 @@ for i = 1:size(structures,2)
     cst{i,5}.Visible = 1;
     if isfield(structures(i),'structColor') && ~isempty(structures(i).structColor)
         cst{i,5}.visibleColor = structures(i).structColor' ./ 255;
+    else
+        cst{i,5}.visibleColor = defaultColors(i,:);
+        matRad_cfg.dispInfo('No color information for structure %d "%s". Assigned default color [%f %f %f]\n',i,cst{i,2},defaultColors(i,1),defaultColors(i,2),defaultColors(i,3));
     end
 end
