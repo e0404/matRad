@@ -60,7 +60,11 @@ voiTarget    = zeros(ct.cubeDim);
 voiTarget(V) = 1;
     
 % add margin
-addmarginBool = 1;
+addmarginBool = matRad_cfg.propStf.defaultAddMargin;
+if isfield(pln,'propStf') && isfield(pln.propStf,'addMargin')
+   addmarginBool = pln.propStf.addMargin; 
+end
+
 if addmarginBool
     voiTarget = matRad_addMargin(voiTarget,cst,ct.resolution,ct.resolution,true);
     V   = find(voiTarget>0);
