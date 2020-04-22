@@ -67,7 +67,7 @@ cst{ixPTV,5}.Priority    = 1;
 cst{ixPTV,5}.Visible     = 1;
 
 % define objective as struct for compatibility with GNU Octave I/O
-cst{ixPTV,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(10,30));
+cst{ixPTV,6}{1} = struct(DoseObjectives.matRad_SquaredDeviation(800,60));
 
 %% Lets create either a cubic or a spheric phantom
 
