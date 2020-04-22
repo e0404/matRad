@@ -51,6 +51,7 @@ classdef MatRad_Config < handle
     methods
         function setDefaultProperties(obj)
             obj.propStf.defaultLongitudinalSpotSpacing = 3;
+            obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
             
             obj.propDoseCalc.defaultResolution = struct('x',3,'y',3,'z',3); %[mm]
             obj.propDoseCalc.defaultLateralCutOff = 0.995; %[rel.]
@@ -68,6 +69,7 @@ classdef MatRad_Config < handle
         function setDefaultPropertiesForTesting(obj)
             obj.logLevel   = 1;
             obj.propStf.defaultLongitudinalSpotSpacing = 20;
+            obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
             obj.propDoseCalc.defaultResolution = struct('x',5,'y',6,'z',7); %[mm]
             obj.propDoseCalc.defaultGeometricCutOff = 20;
             obj.propDoseCalc.defaultLateralCutOff = 0.8;

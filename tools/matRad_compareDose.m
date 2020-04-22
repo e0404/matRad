@@ -54,9 +54,11 @@ function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, c
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+
 %% check if cubes consistent
 if ~isequal(size(cube1),size(cube2))
-    error('dose cubes must be the same size\n');
+    matRad_cfg.dispError('dose cubes must be the same size\n');
 end
 
 if ~exist('localglobal','var')
@@ -71,7 +73,7 @@ end
 if ~exist('cst','var') || isempty(cst)
     cst = [];
     skip = 1;
-    fprintf('[\bWarning: cst not specified, skipping DVH, isocenter in the center of the doseCube]\b\n');
+    matRad_cfg.dispWarning('cst not specified, skipping DVH, isocenter in the center of the doseCube');
 else
     skip = 0;
 end
@@ -115,11 +117,17 @@ slicename = {round(isoCenter(2)./resolution(2)),round(isoCenter(1)./resolution(1
 doseWindow = [0 max([cube1(:); cube2(:)])];
 planename = {'coronal','sagittal','axial'};
 
+%% Integral Energy Output
+intEnergy1 = matRad_calcIntEnergy(cube1,ct,pln);
+intEnergy2 = matRad_calcIntEnergy(cube2,ct,pln);
+
+matRad_cfg.dispInfo('Integral energy comparison: Cube 1 = %1.4g MeV, Cube 2 = %1.4g MeV, difference = %1.4g Mev\n',intEnergy1,intEnergy2,intEnergy1-intEnergy2);
+
 %% Colorwash images
 if enable(1) == 1
     
     % Get the gamma cube
-    disp('Calculating gamma index cube...');
+    matRad_cfg.dispInfo('Calculating gamma index cube...\n');
     if exist('criteria','var')
         relDoseThreshold = criteria(1); % in [%]
         dist2AgreeMm     = criteria(2); % in [mm]
@@ -204,7 +212,7 @@ end
 
 %% Plot profiles through isoCenter
 if enable(2) == 1
-    disp('Plotting profiles...');
+    matRad_cfg.dispInfo('Plotting profiles...\n');
     fontsize = 12;
     profilex{1} = cube1(:,slicename{2},slicename{3});
     profiley{1} = permute(cube1(slicename{1},slicename{2},:),[3 2 1]);
@@ -215,7 +223,7 @@ if enable(2) == 1
     profilez{2} = permute(cube2(slicename{1},:,slicename{3}),[2 3 1]);
     
     if exist('pln','var') && ~isempty(pln)
-        if strcmp(pln.bioParam.model,'none')
+        if strcmp(pln.propOpt.bioOptimization,'none')
             yLabelString = 'Dose [Gy]';
         else
             yLabelString = 'RBE x Dose [Gy(RBE)]';
@@ -263,7 +271,7 @@ end
 
 %% Calculate and plot DVH
 if enable(3) == 1 && ~isempty(cst)
-    disp('Calculating DVH...');
+    matRad_cfg.dispInfo('Calculating DVH...\n');
     dvh1 = matRad_calcDVH(cst,cube1);
     dvh2 = matRad_calcDVH(cst,cube2);
     dvhWindow = max([dvh1(1).doseGrid dvh2(1).doseGrid]);
@@ -278,8 +286,7 @@ if enable(3) == 1 && ~isempty(cst)
     xlim([0 dvhWindow*1.2])
     title('Dose Volume Histrogram, Dose 1: solid, Dose 2: dashed')
 end
-
 %%
-disp('Done!');
+matRad_cfg.dispInfo('Done!');
 
 end

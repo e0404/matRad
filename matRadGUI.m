@@ -3947,12 +3947,12 @@ cnt = cnt + 1;
 
 %Create Objectives / Constraints controls
 for i = 1:size(cst,1)   
-   if strcmp(cst(i,3),'IGNORED')~=1
-       %Compatibility Layer for old objective format
-       if isstruct(cst{i,6})
-           cst{i,6} = num2cell(arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{i,6}));
-       end
-      for j=1:numel(cst{i,6})
+    if strcmp(cst(i,3),'IGNORED')~=1
+        %Compatibility Layer for old objective format
+        if isstruct(cst{i,6})
+            cst{i,6} = arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{i,6},'UniformOutput',false);
+        end
+        for j=1:numel(cst{i,6})
       
            obj = cst{i,6}{j};
            

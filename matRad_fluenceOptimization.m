@@ -46,7 +46,7 @@ cst  = matRad_setOverlapPriorities(cst);
 for i = 1:size(cst,1)
     %Compatibility Layer for old objective format
     if isstruct(cst{i,6})
-        cst{i,6} = num2cell(arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{i,6}));
+        cst{i,6} = arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{i,6},'UniformOutput',false);
     end
     for j = 1:numel(cst{i,6})
         

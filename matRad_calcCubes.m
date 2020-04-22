@@ -67,7 +67,7 @@ end
 
 if isfield(dij,'physicalDose_MCvar')
     resultGUI.physicalDose_MCvar = reshape(full(dij.physicalDose_MCvar{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
-    resultGUI.physicalDose_MCstd = reshape(full(sqrt(dij.physicalDose_MCvar{scenNum} * (resultGUI.w .* beamInfo(i).logIx))),dij.doseGrid.dimensions);
+    resultGUI.physicalDose_MCstd = sqrt(resultGUI.physicalDose_MCvar);
     resultGUI.physicalDose_MCstdRel = resultGUI.physicalDose_MCstd ./ resultGUI.physicalDose;
 end
 
