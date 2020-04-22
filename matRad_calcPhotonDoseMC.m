@@ -272,12 +272,14 @@ if visBool
 end
 
 %% Call the OmpMC interface
-%initialize waitbar
-%figureWait = waitbar(0,'calculate dose influence matrix for photons...');
-% show busy state
-%set(figureWait,'pointer','watch');
 
-absCalibrationFactor = 1e11 / 2.633; %Approximate!
+%ompMC for matRad returns dose/history. This factor calibrates to (5x5)mm^2
+%bixels giving 1 Gy in a (5x%)cm^2 open field at 5cm depth for SSD = 900
+%which corresponds to the calibration for the analytical base data.
+absCalibrationFactor = 3.47098 * 1e10; %Approximate!
+
+%Now we have to calibrate to the the beamlet width.
+absCalibrationFactor = absCalibrationFactor * (pln.propStf.bixelWidth^2) / 5^2;
 
 matRad_cfg.dispInfo('matRad: OmpMC photon dose calculation... \n');
 
