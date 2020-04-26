@@ -15,75 +15,93 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
+    properties
+        TopasConfig     %TOPAS specific data defining simulation parameters
+    end
+    
     methods
         function obj = MatRad_TopasBaseData(varargin)
-            % Call MatRad_MCemmitanceBaseData constructor
-            obj = obj@MatRad_MCemittanceBaseData(varargin{:}); 
-        end
-        
-        function obj = writeTopasData(obj,ct,stf,pln,w,TopasConfig)
-            %function that writes a data file containing stf specific data
-            %for a Monte Carlo simulation with TOPAS
-            
-            %set default values for the simulation, if not specified
-            if nargin < 6
+            % set default values for the simulation, if not specified
+            if  nargin < 2 % input MatRad_TopasBaseData(machine)
+                TopasConfig = struct;  
+                constArguments = 1;
+            elseif nargin < 3 && isfield(varargin{2}, 'gantryAngle') % input MatRad_TopasBaseData(machine,stf)
                 TopasConfig = struct;
+                constArguments = [1,2];
+            else % input MatRad_TopasBaseData(machine,T) || (machine,stf,T)
+                TopasConfig = varargin{end};
+                if nargin == 2
+                    constArguments = 1;
+                elseif nargin == 3
+                    constArguments = [1,2];
+                end
             end
-            if ~isfield(TopasConfig,'filepath')
+            
+            % Call MatRad_MCemmitanceBaseData constructor
+            obj = obj@MatRad_MCemittanceBaseData(varargin{constArguments}); 
+            
+            obj.TopasConfig = TopasConfig;
+            
+            if ~isfield(obj.TopasConfig,'filepath')
                 % MatRad filepath
                 % default: 'topas/MCexport/'
-                TopasConfig.filepath = 'topas/MCexport/';
+                obj.TopasConfig.filepath = 'topas/MCexport/';
             end
             
-            if ~isfield(TopasConfig,'fracHistories')
+            if ~isfield(obj.TopasConfig,'fracHistories')
                 % default: 1e-4
-                TopasConfig.fracHistories = 1e-4;
+                obj.TopasConfig.fracHistories = 1e-4;
             end
             
-             if ~isfield(TopasConfig,'numOfThreads')
+             if ~isfield(obj.TopasConfig,'numOfThreads')
                 % default: 0, all available
-                TopasConfig.numOfThreads = 0;
+                obj.TopasConfig.numOfThreads = 0;
             end
             
-            if ~isfield(TopasConfig,'minRelWeight')
+            if ~isfield(obj.TopasConfig,'minRelWeight')
                 % default: 0.001
                 % minRelWeight = 0 means all weights are being considered
                 % can otherwise be assigned to min(w)
-                TopasConfig.minRelWeight = 0.001;
+                obj.TopasConfig.minRelWeight = 0.001;
             end
             
-            if ~isfield(TopasConfig,'numOfRuns')
+            if ~isfield(obj.TopasConfig,'numOfRuns')
                 % default: 5 runs
-                TopasConfig.numOfRuns = 5;
+                obj.TopasConfig.numOfRuns = 5;
             end
             
-            if ~isfield(TopasConfig,'useOrigBaseData')
+            if ~isfield(obj.TopasConfig,'useOrigBaseData')
                 % base data of the original matRad plan will be used
                 % default: true
-                TopasConfig.useOrigBaseData = false;
+                obj.TopasConfig.useOrigBaseData = false;
             end
             
-            if ~isfield(TopasConfig,'beamProfile')
+            if ~isfield(obj.TopasConfig,'beamProfile')
                 % default: 5 runs
-                TopasConfig.beamProfile = 'biGaussian';
+                obj.TopasConfig.beamProfile = 'biGaussian';
             end
             
-            if ~isfield(TopasConfig,'pencilBeamScanning')
+            if ~isfield(obj.TopasConfig,'pencilBeamScanning')
                 %   beamProfile: 'simple' of 'biGaussian'
                 % default: true
-                TopasConfig.pencilBeamScanning = 'true';
+                obj.TopasConfig.pencilBeamScanning = 'true';
             end
             
-            if ~isfield(TopasConfig,'electronProdCut')
+            if ~isfield(obj.TopasConfig,'electronProdCut')
                 % default: 0.5
-                TopasConfig.electronProdCut = '0.5';
+                obj.TopasConfig.electronProdCut = '0.5';
             end
             
             % Check if contradicting settings are being used
-            if TopasConfig.useOrigBaseData == true && ~strcmp(TopasConfig.beamProfile,'simple')
+            if obj.TopasConfig.useOrigBaseData == true && ~strcmp(obj.TopasConfig.beamProfile,'simple')
                 error('Original base data only usable with simple beam geometry!')
             end
-            
+        end
+        
+        function obj = writeTopasData(obj,ct,stf,pln,w)
+            %function that writes a data file containing stf specific data
+            %for a Monte Carlo simulation with TOPAS
+                                    
             %look up focus indices
             focusIndex = obj.selectedFocus(obj.energyIndex);
             
@@ -99,7 +117,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
             
             for beamIx = 1:length(stf)
                 
-                if TopasConfig.useOrigBaseData
+                if obj.TopasConfig.useOrigBaseData
                     [~,ixTmp,~] = intersect([ obj.machine.data.energy], [stf.ray.energy]);
                     for i = 1:length(ixTmp)
                         selectedData(i) =  obj.machine.data(ixTmp(i));
@@ -125,7 +143,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                         
                         voxel_nbParticles = round(1e6*w(currentBixel));
                         maxParticlesInSpot = 1e6*max(w(:));
-                        minNbParticlesSpot = round(max([TopasConfig.minRelWeight*maxParticlesInSpot,1]));
+                        minNbParticlesSpot = round(max([obj.TopasConfig.minRelWeight*maxParticlesInSpot,1]));
                         
                         % check whether there are (enough) particles for beam delivery
                         if (voxel_nbParticles>minNbParticlesSpot)
@@ -141,9 +159,9 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                             dataTOPAS(cutNumOfBixel).posX = -1.*voxel_x;
                             dataTOPAS(cutNumOfBixel).posY = voxel_y;
                             
-                            dataTOPAS(cutNumOfBixel).current = uint32(TopasConfig.fracHistories*voxel_nbParticles);
+                            dataTOPAS(cutNumOfBixel).current = uint32(obj.TopasConfig.fracHistories*voxel_nbParticles);
                             
-                            if TopasConfig.pencilBeamScanning
+                            if obj.TopasConfig.pencilBeamScanning
                                 % angleX corresponds to the rotation around the X axis necessary to move the spot in the Y direction
                                 % angleY corresponds to the rotation around the Y' axis necessary to move the spot in the X direction
                                 % note that Y' corresponds to the Y axis after the rotation of angleX around X axis
@@ -153,7 +171,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                                 dataTOPAS(cutNumOfBixel).posY = (dataTOPAS(cutNumOfBixel).posY / SAD_mm)*(SAD_mm-nozzleAxialDistance_mm);
                             end
                             
-                            if TopasConfig.useOrigBaseData
+                            if obj.TopasConfig.useOrigBaseData
                                 dataTOPAS(cutNumOfBixel).energy = selectedData(ixTmp).energy;
                                 dataTOPAS(cutNumOfBixel).focusFWHM = selectedData(ixTmp).initFocus.SisFWHMAtIso(stf(beamIx).ray(rayIx).focusIx(bixelIx));
                                 
@@ -177,7 +195,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 idx = find([dataTOPAS.current] < 1);
                 dataTOPAS(idx) = [];
                 
-                historyCount = uint32(TopasConfig.fracHistories * nbParticlesTotal);
+                historyCount = uint32(obj.TopasConfig.fracHistories * nbParticlesTotal);
 
                 while sum([dataTOPAS.current]) ~= historyCount
                     % Randomly pick an index with the weigth given by the current
@@ -200,7 +218,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 dataTOPAS = dataTOPAS(ixSorted);
                 
                 %write TOPAS data base file
-                fileID = fopen([TopasConfig.filepath,'beamSetup_matRad_plan_field',num2str(beamIx),'.txt'],'w');
+                fileID = fopen([obj.TopasConfig.filepath,'beamSetup_matRad_plan_field',num2str(beamIx),'.txt'],'w');
                 
                 fprintf(fileID,'i:Ts/ShowHistoryCountAtInterval = %i\n',historyCount/20);
                 fprintf(fileID,'s:Sim/PlanLabel = "simData_matRad_plan_field1_run" + Ts/Seed\n');
@@ -208,7 +226,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 fprintf(fileID,'d:Sim/CouchAngle = %.6f deg\n', stf(beamIx).couchAngle);
                 fprintf(fileID,'s:Sim/ParticleName = "proton"\n');
                 fprintf(fileID,'u:Sim/ParticleMass = 1.0\n');
-                fprintf(fileID,'i:Sim/NbThreads = %i\n', TopasConfig.numOfThreads);
+                fprintf(fileID,'i:Sim/NbThreads = %i\n', obj.TopasConfig.numOfThreads);
                 fprintf(fileID,'d:Tf/TimelineStart = 0. ms\n');
                 fprintf(fileID,'d:Tf/TimelineEnd = %i ms\n', 10 * cutNumOfBixel);
                 fprintf(fileID,'i:Tf/NumberOfSequentialTimes = %i\n', cutNumOfBixel);
@@ -221,7 +239,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 fprintf(fileID,strjoin(string([dataTOPAS.energy])));
                 fprintf(fileID,' MeV\n');
                 
-                switch TopasConfig.beamProfile
+                switch obj.TopasConfig.beamProfile
                     case 'biGaussian'
                         fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
                         fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
@@ -268,7 +286,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                         fprintf(fileID,' mm\n');
                 end
                 
-                if TopasConfig.pencilBeamScanning
+                if obj.TopasConfig.pencilBeamScanning
                     fprintf(fileID,'s:Tf/Beam/AngleX/Function = "Step"\n');
                     fprintf(fileID,'dv:Tf/Beam/AngleX/Times = Tf/Beam/Spot/Times ms\n');
                     fprintf(fileID,'dv:Tf/Beam/AngleX/Values = %i ', cutNumOfBixel);
@@ -316,15 +334,15 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 
                 % NozzleAxialDistance
                 fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', nozzleAxialDistance_mm);
-                if TopasConfig.pencilBeamScanning
+                if obj.TopasConfig.pencilBeamScanning
                     fprintf(fileID,'d:Ge/Nozzle/RotX = Tf/Beam/AngleX/Value rad\n');
                     fprintf(fileID,'d:Ge/Nozzle/RotY = Tf/Beam/AngleY/Value rad\n');
                     fprintf(fileID,'d:Ge/Nozzle/RotZ = 0.0 rad\n');
                 end
                 
-                fprintf(fileID,['d:Ph/Default/CutForElectron = ',TopasConfig.electronProdCut,' mm\n']);
+                fprintf(fileID,['d:Ph/Default/CutForElectron = ',obj.TopasConfig.electronProdCut,' mm\n']);
                 
-                switch TopasConfig.beamProfile
+                switch obj.TopasConfig.beamProfile
                     case 'biGaussian'
                         TOPAS_beamSetup = fopen(['TOPAS_beamSetup_biGaussian_' pln.radiationMode '.txt'],'r');
                     case 'simple'
@@ -349,17 +367,17 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                     basematerial =  obj.machine.meta.basematerial;
                 end
                 
-                rspCube = matRad_exportCtTOPAS(ct, TopasConfig.filepath, basematerial);
+                rspCube = matRad_exportCtTOPAS(ct, obj.TopasConfig.filepath, basematerial);
                 
-                for runIx = 1:TopasConfig.numOfRuns
-                    fileID = fopen([TopasConfig.filepath,'matRad_plan_field',num2str(beamIx),'_run',num2str(runIx),'.txt'],'w');
+                for runIx = 1:obj.TopasConfig.numOfRuns
+                    fileID = fopen([obj.TopasConfig.filepath,'matRad_plan_field',num2str(beamIx),'_run',num2str(runIx),'.txt'],'w');
                     fprintf(fileID,['i:Ts/Seed = ',num2str(runIx),'\n']);
                     fprintf(fileID,'includeFile = ./beamSetup_matRad_plan_field1.txt');
                     fclose(fileID);
                 end
                 
                 %write MCparam file with basic parameters
-                MCparam.nbRuns = TopasConfig.numOfRuns;
+                MCparam.nbRuns = obj.TopasConfig.numOfRuns;
                 MCparam.nbFields = length(stf);
                 MCparam.tallies = {'physicalDose'};
                 MCparam.simLabel = 'matRad_plan';
@@ -368,7 +386,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 MCparam.voxelDimensions = ct.resolution;
                 MCparam.nbHistories = historyCount;
                 MCparam.nbParticles = nbParticlesTotal;
-                save([TopasConfig.filepath,'MCparam.mat'],'MCparam');
+                save([obj.TopasConfig.filepath,'MCparam.mat'],'MCparam');
                 
                 disp('Successfully written TOPAS setup files!')
             end
