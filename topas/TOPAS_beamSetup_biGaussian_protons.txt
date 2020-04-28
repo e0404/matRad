@@ -76,7 +76,7 @@ d:Ge/IC/TransZ = Ge/IC/HLZ mm
 #d:Ph/Default/CutForElectron = 0.5 mm
 #d:Ph/Default/CutForElectron = 1 m
 #sv:Ph/Default/Modules = 7 "g4em-standard_opt3" "g4h-phy_QGSP_BIC_HP" "g4decay" "g4ion-binarycascade" "g4h-elastic_HP" "g4stopping" "g4radioactivedecay"
-sv:Ph/Default/Modules = 7 "g4em-standard_opt3" "g4h-phy_QGSP_BIC_HP" "g4decay" "g4ion-QMD" "g4h-elastic_HP" "g4stopping" "g4radioactivedecay"
+#sv:Ph/Default/Modules = 7 "g4em-standard_opt3" "g4h-phy_QGSP_BIC_HP" "g4decay" "g4ion-QMD" "g4h-elastic_HP" "g4stopping" "g4radioactivedecay"
 
 # SCORERS
 

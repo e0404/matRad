@@ -96,7 +96,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 % default: 0.5
                 obj.TopasConfig.electronProdCut = '0.5';
             end
-            
+                      
             % Check if contradicting settings are being used
             if obj.TopasConfig.useOrigBaseData == true && ~strcmp(obj.TopasConfig.beamProfile,'simple')
                 error('Original base data only usable with simple beam geometry!')
@@ -106,7 +106,16 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
         function obj = writeTopasData(obj,ct,stf,pln,w)
             %function that writes a data file containing stf specific data
             %for a Monte Carlo simulation with TOPAS
-                                    
+            
+            % load default modules
+            if ~isfield(obj.TopasConfig,'modules')
+                if strcmp(pln.radiationMode,'protons')
+                    obj.TopasConfig.modules = {'"g4em-standard_opt4"','"g4h-phy_QGSP_BIC_HP"','"g4decay"','"g4ion-QMD"','"g4h-elastic_HP"','"g4stopping"','"g4radioactivedecay"'};
+                else
+                    obj.TopasConfig.modules = {'"g4em-standard_opt4"','"g4h-phy_QGSP_BIC_HP"','"g4decay"','"g4h-elastic_HP"','"g4stopping"','"g4ion-inclxx"'};
+                end
+            end
+            
             %look up focus indices
             focusIndex = obj.selectedFocus(obj.energyIndex);
             
@@ -363,8 +372,12 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 fprintf(fileID,'\n');
                 fprintf(fileID,['s:Sc/Patient/Tally_DoseToMedium/OutputType = "', obj.TopasConfig.outputType ,'"\n']);
                 fprintf(fileID,'\n');
-                fclose(fileID);
+          
+                %load topas modules depending on the particle type
+                fprintf(fileID,'# MODULES\n');
+                fprintf(fileID,['sv:Ph/Default/Modules = ',num2str(length(obj.TopasConfig.modules)),' ', strjoin(obj.TopasConfig.modules) ,'\n']);
                 
+                fclose(fileID);
                 %write run scripts for TOPAS
                 basematerial = '';
                 if ~exist('machine') || ~isfield( obj.machine.meta,'basematerial')
