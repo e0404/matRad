@@ -79,7 +79,7 @@ sv:Ph/Default/Modules = 7 "g4em-standard_opt3" "g4h-phy_QGSP_BIC_HP" "g4decay" "
 # SCORERS
 
 s:Sc/Patient/Tally_DoseToMedium/Quantity = "DoseToMedium"
-s:Sc/Patient/Tally_DoseToMedium/OutputType = "binary" # "csv" "binary" "Root" "Xml" or "DICOM"
+s:Sc/Patient/Tally_DoseToMedium/OutputType = "csv" # "csv" "binary" "Root" "Xml" or "DICOM"
 s:Sc/Patient/Tally_DoseToMedium/Component = "Patient"
 sv:Sc/Patient/Tally_DoseToMedium/Report = 1 "Sum"
 s:Sc/Patient/Tally_DoseToMedium/IfOutputFileAlreadyExists = "Overwrite" # "Exit" "Overwrite" or "Increment"

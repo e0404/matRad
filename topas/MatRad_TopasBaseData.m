@@ -38,7 +38,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
             end
             
             % Call MatRad_MCemmitanceBaseData constructor
-            obj = obj@MatRad_MCemittanceBaseData(varargin{constArguments}); 
+            obj = obj@MatRad_MCemittanceBaseData(varargin{constArguments});
             
             obj.TopasConfig = TopasConfig;
             
@@ -53,9 +53,14 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 obj.TopasConfig.fracHistories = 1e-4;
             end
             
-             if ~isfield(obj.TopasConfig,'numOfThreads')
+            if ~isfield(obj.TopasConfig,'numOfThreads')
                 % default: 0, all available
                 obj.TopasConfig.numOfThreads = 0;
+            end
+            
+            if ~isfield(obj.TopasConfig,'outputType')
+                % default: csv
+                obj.TopasConfig.outputType = 'csv';
             end
             
             if ~isfield(obj.TopasConfig,'minRelWeight')
@@ -356,6 +361,8 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 end
                 
                 fprintf(fileID,'\n');
+                fprintf(fileID,['s:Sc/Patient/Tally_DoseToMedium/OutputType = "', obj.TopasConfig.outputType ,'"\n']);
+                fprintf(fileID,'\n');
                 fclose(fileID);
                 
                 %write run scripts for TOPAS
@@ -384,6 +391,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 MCparam.cubeDim = ct.cubeDim;
                 MCparam.RSP = rspCube;
                 MCparam.voxelDimensions = ct.resolution;
+                MCparam.outputType = obj.TopasConfig.outputType;
                 MCparam.nbHistories = historyCount;
                 MCparam.nbParticles = nbParticlesTotal;
                 save([obj.TopasConfig.filepath,'MCparam.mat'],'MCparam');
