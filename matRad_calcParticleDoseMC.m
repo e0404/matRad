@@ -112,112 +112,57 @@ if ~exist([MCsquareFolder filesep 'Materials'],'dir') || ~exist(fullfile(MCsquar
     matRad_cfg.dispInfo('Done');
 end
 
-% to guarantee downwards compatibility with data that does not have
-% ct.x/y/z
-if ~any(isfield(ct,{'x','y','z'}))
-    ct.x = ct.resolution.x*[1:ct.cubeDim(1)];
-    ct.y = ct.resolution.y*[1:ct.cubeDim(2)];
-    ct.z = ct.resolution.z*[1:ct.cubeDim(3)];
-end
-
-% set grids
-if ~isfield(pln,'propDoseCalc') || ...
-   ~isfield(pln.propDoseCalc,'doseGrid') || ...
-   ~isfield(pln.propDoseCalc.doseGrid,'resolution')
-    % default values
-    dij.doseGrid.resolution = matRad_cfg.propDoseCalc.defaultResolution;
-else
+% Since MCsquare 1.1 only allows similar resolution in x&y, we do some
+% extra checks on that before calling calcDoseInit. First, we make sure a
+% dose grid resolution is set in the pln struct
+if ~isfield(pln,'propDoseCalc') ...
+        || ~isfield(pln.propDoseCalc,'doseGrid') ...
+        || ~isfield(pln.propDoseCalc.doseGrid,'resolution') ...
+        || ~all(isfield(pln.propDoseCalc.doseGrid.resolution,{'x','y','z'}))
     
-    % check if using isotropic dose grid resolution in x and y direction
-    if pln.propDoseCalc.doseGrid.resolution.x ~= pln.propDoseCalc.doseGrid.resolution.y
-        pln.propDoseCalc.doseGrid.resolution.x = mean([pln.propDoseCalc.doseGrid.resolution.x ...
-                                                       pln.propDoseCalc.doseGrid.resolution.y]);
-        pln.propDoseCalc.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.x;
-        matRad_cfg.dispWarning('Anisotropic resolution in axial plane for dose calculation with MCsquare not possible\nUsing x = y = %g mm\n',pln.propDoseCalc.doseGrid.resolution.x);
-    end
-
-    % take values from pln strcut
-    dij.doseGrid.resolution.x = pln.propDoseCalc.doseGrid.resolution.x;
-    dij.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.y;
-    dij.doseGrid.resolution.z = pln.propDoseCalc.doseGrid.resolution.z;
+    %Take default values
+    pln.propDoseCalc.doseGrid.resolution = matRad_cfg.propDoseCalc.defaultResolution;
 end
 
-
-dij.doseGrid.x = ct.x(1):dij.doseGrid.resolution.x:ct.x(end);
-dij.doseGrid.y = ct.y(1):dij.doseGrid.resolution.y:ct.y(end);
-dij.doseGrid.z = ct.z(1):dij.doseGrid.resolution.z:ct.z(end);
-
-dij.doseGrid.dimensions  = [numel(dij.doseGrid.y) numel(dij.doseGrid.x) numel(dij.doseGrid.z)];
-dij.doseGrid.numOfVoxels = prod(dij.doseGrid.dimensions);
-
-dij.ctGrid.resolution.x = ct.resolution.x;
-dij.ctGrid.resolution.y = ct.resolution.y;
-dij.ctGrid.resolution.z = ct.resolution.z;
-
-dij.ctGrid.x = ct.x;
-dij.ctGrid.y = ct.y;
-dij.ctGrid.z = ct.z;
-
-dij.ctGrid.dimensions  = [numel(dij.ctGrid.y) numel(dij.ctGrid.x) numel(dij.ctGrid.z)];
-dij.ctGrid.numOfVoxels = prod(dij.ctGrid.dimensions);
-
-% meta information for dij
-dij.numOfBeams         = pln.propStf.numOfBeams;
-dij.numOfScenarios     = 1;
-dij.numOfRaysPerBeam   = [stf(:).numOfRays];
-if calcDoseDirect
-    dij.totalNumOfBixels = 1;
-else
-    dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
+% Now we check for different x/y
+if pln.propDoseCalc.doseGrid.resolution.x ~= pln.propDoseCalc.doseGrid.resolution.y
+    pln.propDoseCalc.doseGrid.resolution.x = mean([pln.propDoseCalc.doseGrid.resolution.x pln.propDoseCalc.doseGrid.resolution.y]);
+    pln.propDoseCalc.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.x;
+    matRad_cfg.dispWarning('Anisotropic resolution in axial plane for dose calculation with MCsquare not possible\nUsing average x = y = %g mm\n',pln.propDoseCalc.doseGrid.resolution.x);
 end
-dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 
-% book keeping
-dij.bixelNum          = NaN*ones(dij.totalNumOfBixels,1);
-dij.rayNum            = NaN*ones(dij.totalNumOfBixels,1);
-dij.beamNum           = NaN*ones(dij.totalNumOfBixels,1);
+%Now we can run calcDoseInit as usual
+matRad_calcDoseInit;
+
+%Issue a warning when we have more than 1 scenario
+if dij.numOfScenarios ~= 1
+    matRad_cfg.dispWarning('MCsquare is only implemented for single scenario use at the moment. Will only use the first Scenario for Monte Carlo calculation!');
+end
+
+% prefill ordering of MCsquare bixels
 dij.MCsquareCalcOrder = NaN*ones(dij.totalNumOfBixels,1);
 
-% take only voxels inside patient
-VctGrid = [cst{:,4}];
-VctGrid = unique(vertcat(VctGrid{:}));
+% We need to adjust the offset used in matRad_calcDoseInit
+mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
+                - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
+mcSquareAddIsoCenterOffset = mcSquareAddIsoCenterOffset - offset;
 
-% receive linear indices and grid locations from the dose grid
-tmpCube    = zeros(ct.cubeDim);
-tmpCube(VctGrid) = 1;
-% interpolate cube
-VdoseGrid = find(matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpCube, ...
-                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'));
-
-% ignore densities outside of contours
-eraseCtDensMask = ones(dij.ctGrid.numOfVoxels,1);
-eraseCtDensMask(VctGrid) = 0;
-for i = 1:ct.numOfCtScen
-    ct.cubeHU{i}(eraseCtDensMask == 1) = -1024;
-end
-
-% downsample ct
+% for MCsquare we explicitly downsample the ct to the dose grid (might not
+% be necessary in future MCsquare versions with separated grids)
 for s = 1:dij.numOfScenarios
     HUcube{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
                                 dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
 end
 
-% what are you doing here, Lucas?
-nbThreads = 4;
+% Explicitly setting the number of threads for MCsquare, 0 is all available
+nbThreads = 0;
 
-% set relative dose cutoff for storage in dose influence matrix
-relDoseCutoff = 10^(-4);
+% set relative dose cutoff for storage in dose influence matrix, we use the
+% default value for the lateral cutoff here
+relDoseCutoff = 1 - matRad_cfg.propDoseCalc.defaultLateralCutOff;
 % set absolute calibration factor
 % convert from eV/g/primary to Gy 1e6 primaries
 absCalibrationFactorMC2 = 1.602176e-19 * 1.0e+9;
-
-% Allocate space for dij.physicalDose sparse matrix
-for i = 1:dij.numOfScenarios
-    dij.physicalDose{i} = spalloc(dij.doseGrid.numOfVoxels,dij.totalNumOfBixels,1);
-end
-
-
-
 
 if isequal(pln.propOpt.bioOptimization,'const_RBExD')
             dij.RBE = 1.1;
@@ -250,15 +195,13 @@ MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
                              dij.doseGrid.resolution.z];   
 matRad_writeMhd(HUcube{1},MCsquareBinCubeResolution,MCsquareConfig.CT_File);
 
-% prepare steering for MCsquare and sort stf by energy
-isoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
-                - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
+
 
 counter = 0;             
 for i = 1:length(stf)
-    stfMCsquare(i).gantryAngle = mod(180-stf(i).gantryAngle,360);
+    stfMCsquare(i).gantryAngle = mod(180-stf(i).gantryAngle,360); %Different MCsquare geometry
     stfMCsquare(i).couchAngle  = stf(i).couchAngle;
-    stfMCsquare(i).isoCenter   = stf(i).isoCenter + isoCenterOffset;
+    stfMCsquare(i).isoCenter   = stf(i).isoCenter + mcSquareAddIsoCenterOffset;
     stfMCsquare(i).energies    = unique([stf(i).ray.energy]);
     
     % allocate empty target point container
@@ -315,7 +258,7 @@ for i = 1:length(stf)
 end
 
 if any(isnan(MCsquareOrder))
-    matRad_cfg.dispError('Wrong order');
+    matRad_cfg.dispError('Invalid ordering of Beamlets for MCsquare computation!');
 end
 
 %% MC computation and dij filling
