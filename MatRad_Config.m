@@ -65,7 +65,7 @@ classdef MatRad_Config < handle
             obj.disableGUI = false;
         end
   
-        %%FOr testing
+        %%For testing
         function setDefaultPropertiesForTesting(obj)
             obj.logLevel   = 1;
             obj.propStf.defaultLongitudinalSpotSpacing = 20;

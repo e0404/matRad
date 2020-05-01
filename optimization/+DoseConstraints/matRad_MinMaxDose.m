@@ -100,7 +100,8 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
                 case 2
                     cl = obj.parameters{1}*ones(n,1);
                 otherwise
-                    error(['Min/max dose constraint evaluation method not known!']);
+                    global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('Min/max dose constraint evaluation method not known!');
             end
         end
         
@@ -119,7 +120,8 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
                 case 2
                     jStruct = speye(n);
                 otherwise
-                    error(['Min/max dose constraint evaluation method not known!']);
+                    global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('Min/max dose constraint evaluation method not known!');
             end
             
         end
@@ -134,7 +136,8 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
                 case 2
                     cDose = obj.computeDoseConstraintFunctionVoxelwise(dose);
                 otherwise
-                    error(['Min/max dose constraint evaluation method not known!']);
+                    global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('Min/max dose constraint evaluation method not known!');
             end
         end
         
@@ -146,7 +149,8 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
                 case 2
                     cDoseJacob = obj.computeDoseConstraintJacobianVoxelwise(dose);
                 otherwise
-                    error(['Min/max dose constraint evaluation method ''' obj.method ''' not known!']);
+                    global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('Min/max dose constraint evaluation method not known!');
             end
         end
     end

@@ -23,10 +23,16 @@ function obj = matRad_exportDicomRTStruct(obj)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-disp('Exporting DICOM RTStruct...');
+global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+matRad_cfg.dispInfo('Exporting DICOM RTStruct...\n');
 
 env = matRad_getEnvironment();
 isOctave = strcmp(env,'OCTAVE');
+
+if isOctave
+    matRad_cfg.dispWarning('RTStruct export currently not supported by matRad running in Octave due to crashing dicomwrite! Skipping...');
+    return;
+end
 
 %% Metadata
 %Class UID

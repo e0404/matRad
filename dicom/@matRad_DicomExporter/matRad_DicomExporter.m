@@ -63,24 +63,36 @@ classdef matRad_DicomExporter < handle
             global matRad_cfg;
             matRad_cfg = MatRad_Config.instance();  
             
+            env = matRad_getEnvironment();
+            if strcmp(env,'OCTAVE')
+                %Octave needs the DICOM package
+                try
+                    pkg load dicom;
+                catch
+                    matRad_cfg.dispError('The DICOM export requires the octave-forge package "dicom"!\n');
+                end
+            end
+            
             if nargin == 0
                 try
                     obj.ct = evalin('base','ct');
                 catch
-                   matRad_cfg.displayToConsole('info','matRad_DicomExporter: Could not parse CT');
+                    matRad_cfg.dispInfo('matRad_DicomExporter: No CT found in workspace.\n');
                 end
                 try
                     obj.cst = evalin('base','cst');
                 catch
-                   matRad_cfg.displayToConsole('info','matRad_DicomExporter: Could not parse cst');
+                    matRad_cfg.dispInfo('matRad_DicomExporter: No cst found in workspace.\n');
                 end
                 try
                     obj.pln = evalin('base','pln');
                 catch
+                    matRad_cfg.dispDebug('matRad_DicomExporter: No pln found in workspace.\n');
                 end
                 try
                     obj.stf = evalin('base','stf');
                 catch
+                    matRad_cfg.dispDebug('matRad_DicomExporter: No stf found in workspace.\n');
                 end
                 try
                     obj.resultGUI = evalin('base','resultGUI');
@@ -125,7 +137,7 @@ classdef matRad_DicomExporter < handle
             % coordinates
             obj.FrameOfReferenceUID = dicomuid;
             
-            if isfield(obj.ct.dicomInfo,'PatientPosition')
+            if isfield(obj.ct,'dicomInfo') && isfield(obj.ct.dicomInfo,'PatientPosition')
                obj.PatientPosition = obj.ct.dicomInfo.PatientPosition;
             else
                obj.PatientPosition = 'HFS'; %matRad default coordinate system

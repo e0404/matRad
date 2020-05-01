@@ -7,7 +7,7 @@ Version 2.10.0 "Blaise"
     - matRad version can now be printed with matRad_version, version correctly shown in GUI and when using matRad_rc
 	- Seven new Matlab exmaple scripts to demonstrate use of matRad 
 	- added basic interfaces to the open-source photon/proton MC engines ompMC/MCsquare
-	- Overhaul of the optimization interface using OOP and integration of the fmincon optimizer from the Mathworks toolbox
+	- Overhaul of the optimization interface using OOP and integration of the fmincon optimizer from Mathworks' MATLAB Optimization toolbox
 	- Changes to the cst variable (new script to convert old to new cst structures in tools folder)
 	- separation of ct/optimization/dose calculation grids to allow different resolutions
 	- The graphical user interface can now be started in developer mode (more error information) and a simplified educational mode (some functionalities disabled, less buttons)
@@ -25,13 +25,14 @@ Version 2.10.0 "Blaise"
 	- wrapper to allow 3D conformal planning using dij collapsing
 	- new colormap handling to allow integration of custom colormaps
 	- modularization of slice display by dedicated functions in plotting folder including generation of 3D views
-    - New gloabl configuration object (matRad_cfg <- MatRad_Config.m) to store default values and with logging interface
+    - New global configuration object (matRad_cfg <- MatRad_Config.m) to store default values and with logging interface
 	- many bug fixes and many new bugs..	
 Version 2.1 "Alan"
 	First official relase of matRad including
 	- new optimizer IPOPT for constrained optimization
 	- validated ray tracing
 	- validated pencil beam particle dose calcualtion
+	- validated singular value decomposed pencil beam photon dose calculation
 	- DICOM import including dose and particle pencil beam scanning plan objects
 	- matRad standalone version
 	- improved GUI workflow

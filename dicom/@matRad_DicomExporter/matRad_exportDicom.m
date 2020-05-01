@@ -21,6 +21,10 @@ function obj = matRad_exportDicom(obj)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if ~exist(obj.dicomDir)
+    mkdir(obj.dicomDir);
+end
+
 %Name of Patient & Study
 %CT Series
 obj = matRad_exportDicomCt(obj);
@@ -38,9 +42,6 @@ end
 if ~isempty(obj.resultGUI)
     obj = matRad_exportDicomRTDoses(obj);
 end
-
-
-
 
 %Pln Series
 

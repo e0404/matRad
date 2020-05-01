@@ -14,6 +14,8 @@ sudo apt-get update --yes --force-yes
 # dependencies
 sudo apt-get install octave --yes --force-yes
 sudo apt-get install liboctave-dev --yes --force-yes
+sudo apt-get install libgdcm2-dev #for the octave dicom package
+octave --no-gui --eval "pkg install -forge dicom"
 sudo apt-get install git --yes --force-yes
 export MATRAD=`pwd`
 
