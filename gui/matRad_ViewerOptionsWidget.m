@@ -1,15 +1,17 @@
 classdef matRad_ViewerOptionsWidget < matRad_Widget
     
     properties
-        
+        viewerWidgetHandle;
+        colormapLocked;
+        windowPresets;
     end
     
     methods
-        function this = matRad_ViewerOptionsWidget(handleParent)
+        function this = matRad_ViewerOptionsWidget(handleParent,viewerWidgetHandle)
             if nargin < 1
                 handleParent = figure(...
                     'Units','characters',...
-                    'Position',[170.4 45 90.4 50.5384615384615],...
+                    'Position',[170 45 20 20],...
                     'Visible','on',...
                     'Color',[0.501960784313725 0.501960784313725 0.501960784313725],...
                     'IntegerHandle','off',...
@@ -23,8 +25,136 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                 
             end
             this = this@matRad_Widget(handleParent);
+            
+            handles=this.handles;
+            
+            if evalin('base','exist(''ct'')') && isfield(evalin('base','ct'), 'cubeHU')
+                cMapOptionsSelectList = {'None','CT (HU)','Result (i.e. dose)'};
+            else
+                cMapOptionsSelectList = {'None','CT (ED)','Result (i.e. dose)'};
+            end
+            
+            if evalin('base','exist(''resultGUI'')')
+                set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:3))
+                set(handles.popupmenu_chooseColorData,'Value',3);
+            elseif evalin('base','exist(''ct'')')
+                set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:2))
+                set(handles.popupmenu_chooseColorData,'Value',2);
+            else %no data is loaded
+                set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList{1})
+                set(handles.popupmenu_chooseColorData,'Value',1);
+            end
+            
+            % setup ct window list
+            % data and values from CERR https://github.com/adityaapte/CERR
+            windowNames = {'Custom','Full','Abd/Med', 'Head', 'Liver', 'Lung', 'Spine', 'Vrt/Bone'};
+            windowCenter = {NaN, NaN, -10, 45, 80, -500, 30, 400};
+            windowWidth = {NaN, NaN, 330, 125, 305, 1500, 300, 1500};
+            windowPresets = cell2struct([windowNames', windowCenter', windowWidth'], {'name', 'center', 'width'},2);
+            
+            
+            this.windowPresets = windowPresets;
+            
+            selectionList = {windowPresets(:).name};
+            set(handles.popupmenu_windowPreset,'String',selectionList(:));
+            set(handles.popupmenu_windowPreset,'Value',1);
+                        
+            if nargin==2
+                this.handles=handles;
+                this.viewerWidgetHandle=viewerWidgetHandle;
+            else
+                 
+                set(handles.popupmenu_chooseColorData,'Enable','off');
+                set(handles.popupmenu_windowPreset,'Enable','off');
+                set(handles.slider_windowWidth,'Enable','off');
+                set(handles.slider_windowCenter,'Enable','off');
+                set(handles.edit_windowWidth,'Enable','off');
+                set(handles.edit_windowCenter,'Enable','off');
+                set(handles.edit_windowRange,'Enable','off');
+                set(handles.popupmenu_chooseColormap,'Enable','off');
+                set(handles.checkbox_lockColormap,'Enable','off');
+                set(handles.sliderOpacity,'Enable','off');
+                set(handles.btnSetIsoDoseLevels,'Enable','off');
+                
+%                 % lock settings
+%                 set(this.handles.checkbox_lockColormap,'Value', true);
+%                 checkbox_lockColormap_Callback(this,this.handles.checkbox_lockColormap)
+%                 % additionally disable these buttons
+%                 set(this.handles.checkbox_lockColormap,'Enable','off');
+%                 set(this.handles.sliderOpacity,'Enable','off');
+%                 set(this.handles.btnSetIsoDoseLevels,'Enable','off');
+            end
+            this.handles=handles;
         end
         
+        function this = initialize(this)
+            
+        end
+        
+        function this = update(this)
+            this.UpdateColormapOptions();
+        end
+        
+        function viewerWidgetHandle=get.viewerWidgetHandle(this)
+            viewerWidgetHandle=this.viewerWidgetHandle;
+        end
+        
+        function set.viewerWidgetHandle(this,value)
+            handles=this.handles;
+            if isvalid(value)
+                this.viewerWidgetHandle=value;
+                % enable all buttons 
+                set(handles.popupmenu_chooseColorData,'Enable','on');
+                set(handles.popupmenu_windowPreset,'Enable','on');
+                set(handles.slider_windowWidth,'Enable','on');
+                set(handles.slider_windowCenter,'Enable','on');
+                set(handles.edit_windowWidth,'Enable','on');
+                set(handles.edit_windowCenter,'Enable','on');
+                set(handles.edit_windowRange,'Enable','on');
+                set(handles.popupmenu_chooseColormap,'Enable','on');
+                set(handles.checkbox_lockColormap,'Enable','on');
+                set(handles.sliderOpacity,'Enable','on');
+                set(handles.btnSetIsoDoseLevels,'Enable','on');
+                
+                %Set up the colormap selection box
+                availableColormaps = matRad_getColormap();
+                set(this.handles.popupmenu_chooseColormap,'String',availableColormaps);
+                
+                % get the default values from the viewer widget
+                currentCtMapIndex   = find(strcmp(availableColormaps,this.viewerWidgetHandle.ctColorMap));
+                currentDoseMapIndex = find(strcmp(availableColormaps,this.viewerWidgetHandle.doseColorMap));
+                
+                if evalin('base','exist(''resultGUI'')') % state 3
+                    set(handles.popupmenu_chooseColormap,'Value',currentDoseMapIndex);
+                else
+                    set(handles.popupmenu_chooseColormap,'Value',currentCtMapIndex);
+                end
+%             if handles.State >= 1
+%                 set(handles.popupmenu_chooseColormap,'Value',currentCtMapIndex);
+%             end
+%
+%             if handles.State >= 3
+%                 set(handles.popupmenu_chooseColormap,'Value',currentDoseMapIndex);
+%             end
+                
+                UpdateColormapOptions(this);
+                
+            else
+                % disable all buttons
+                set(handles.popupmenu_chooseColorData,'Enable','off');
+                set(handles.popupmenu_windowPreset,'Enable','off');
+                set(handles.slider_windowWidth,'Enable','off');
+                set(handles.slider_windowCenter,'Enable','off');
+                set(handles.edit_windowWidth,'Enable','off');
+                set(handles.edit_windowCenter,'Enable','off');
+                set(handles.edit_windowRange,'Enable','off');
+                set(handles.popupmenu_chooseColormap,'Enable','off');
+                set(handles.checkbox_lockColormap,'Enable','off');
+                set(handles.sliderOpacity,'Enable','off');
+                set(handles.btnSetIsoDoseLevels,'Enable','off');
+            end
+            this.handles=handles;
+        end
     end
     
     methods (Access = protected)
@@ -36,24 +166,50 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                 'Units','normalized',...
                 'String','min value:',...
                 'Style','text',...
-                'Position',[0.001 0.9 0.6 0.05],...
+                'HorizontalAlignment','left',...
+                'Position',[0.05 0.9 1 0.05],...
                 'BackgroundColor',[0.501960784313725 0.501960784313725 0.501960784313725],...
                 'Children',[],...
-                'Tag','text24',...
-                'FontSize',10,...
+                'Tag','txtMinVal',...
+                'FontSize',9,...
                 'FontWeight','bold' );
+            
+%             h85 = uicontrol(...
+%                 'Parent',h98,...
+%                 'Units','normalized',...
+%                 'String','',...
+%                 'Style','text',...
+%                 'Position',[0.5 0.9 0.3 0.05],...
+%                 'BackgroundColor',[0.501960784313725 0.501960784313725 0.501960784313725],...
+%                 'Children',[],...
+%                 'Tag','txtMinVal',...
+%                 'FontSize',10,...
+%                 'FontWeight','bold' );
             
             h116 = uicontrol(...
                 'Parent',h98,...
                 'Units','normalized',...
                 'String','max value:',...
                 'Style','text',...
-                'Position',[0.001 0.82 0.6 0.05],...
+                'HorizontalAlignment','left',...
+                'Position',[0.05 0.82 1 0.05],...
                 'BackgroundColor',[0.501960784313725 0.501960784313725 0.501960784313725],...
                 'Children',[],...
-                'Tag','text39',...
-                'FontSize',10,...
+                'Tag','txtMaxVal',...
+                'FontSize',9,...
                 'FontWeight','bold' );
+            
+%             h117 = uicontrol(...
+%                 'Parent',h98,...
+%                 'Units','normalized',...
+%                 'String','',...
+%                 'Style','text',...
+%                 'Position',[0.5 0.82 0.3 0.05],...
+%                 'BackgroundColor',[0.501960784313725 0.501960784313725 0.501960784313725],...
+%                 'Children',[],...
+%                 'Tag','txtMaxVal',...
+%                 'FontSize',10,...
+%                 'FontWeight','bold' );
             
             h85 = uicontrol(...
                 'Parent',h98,...
@@ -61,7 +217,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                 'String','Set IsoDose Levels',...
                 'Position',[0.05 0.73 0.85 0.06],...
                 'BackgroundColor',[0.8 0.8 0.8],...
-                'Callback',@(hObject,eventdata)matRadGUI('btnSetIsoDoseLevels_Callback',hObject,eventdata,guidata(hObject)),...
+                'Callback',@(hObject,eventdata)btnSetIsoDoseLevels_Callback(this,hObject,eventdata),...ss
                 'Children',[],...
                 'Tag','btnSetIsoDoseLevels');
             
@@ -265,6 +421,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                 'Children',[],...
                 'Tag','checkbox_lockColormap' );
             
+            this.createHandles();
         end
         
     end
@@ -272,7 +429,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
     methods
         
         % H101
-        function popupmenu_chooseColorData_Callback(hObject, eventdata, handles)
+        function popupmenu_chooseColorData_Callback(this,~, ~)
             % hObject    handle to popupmenu_chooseColorData (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -280,14 +437,16 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             % Hints: contents = cellstr(get(hObject,'String')) returns popupmenu_chooseColorData contents as cell array
             %        contents{get(hObject,'Value')} returns selected item from popupmenu_chooseColorData
             
-            %index = get(hObject,'Value') - 1;
-            handles = this.handles;
+            %             %index = get(hObject,'Value') - 1;
+            %             handles = this.handles;
+            %
+            %             %handles.cBarChanged = true;
+            %
+            %             %guidata(hObject,handles);
+            %             this.handles = handles;
+            %             UpdatePlot(handles);
             
-            handles.cBarChanged = true;
-            
-            %guidata(hObject,handles);
-            this.handles = handles;
-            UpdatePlot(handles);
+            this.viewerWidgetHandle.colorData=get(this.handles.popupmenu_chooseColorData,'Value');
         end
         
         % H102
@@ -298,21 +457,23 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             
             % Hints: get(hObject,'Value') returns position of slider
             %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-            handles = this.handles
+            handles = this.handles;
             
             newCenter      = get(hObject,'Value');
             range          = get(handles.slider_windowWidth,'Value');
             selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
             
-            handles.dispWindow{selectionIndex,1}  = [newCenter-range/2 newCenter+range/2];
-            handles.cBarChanged = true;
+            this.viewerWidgetHandle.dispWindow{selectionIndex,1}  = [newCenter-range/2 newCenter+range/2];
+            %handles.cBarChanged = true;
             
             this.handles = handles;
-            UpdatePlot(handles);
+            this.viewerWidgetHandle.UpdatePlot();
+            %UpdatePlot(handles);
+            UpdateColormapOptions(this);
         end
         
         % H 104
-        function popupmenu_chooseColormap_Callback(hObject, eventdata, handles)
+        function popupmenu_chooseColormap_Callback(this,hObject, eventdata)
             % hObject    handle to popupmenu_chooseColormap (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -329,20 +490,20 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             
             switch selectionIndex
                 case 2
-                    handles.ctColorMap = strings{index};
+                    this.viewerWidgetHandle.ctColorMap = strings{index};
                 case 3
-                    handles.doseColorMap = strings{index};
+                    this.viewerWidgetHandle.doseColorMap = strings{index};
                 otherwise
             end
             
-            handles.cBarChanged = true;
+            %handles.cBarChanged = true;
             
             this.handles = handles;
-            UpdatePlot(handles);
+            %UpdatePlot(handles);
         end
         
         % H106
-        function edit_windowRange_Callback(hObject, eventdata, handles)
+        function edit_windowRange_Callback(this, hObject, eventdata)
             % hObject    handle to edit_windowRange (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -359,21 +520,22 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                 vRange = vRange(vRange~=0);
             end
             
-            handles.dispWindow{selectionIndex,1} = sort(vRange);
-            handles.cBarChanged = true;
+            this.viewerWidgetHandle.dispWindow{selectionIndex,1} = sort(vRange);
+            %handles.cBarChanged = true;
             
             % compute new iso dose lines
             if selectionIndex > 2
-                guidata(hObject,handles);
-                handles = updateIsoDoseLineCache(handles);
+%                 guidata(hObject,handles);
+%                 handles = updateIsoDoseLineCache(handles);
+                this.viewerWidgetHandle.updateIsoDoseLineCache();
             end
             
             this.handles = handles;
-            UpdatePlot(handles);
+            %UpdatePlot(handles);
         end
         
         % H107
-        function edit_windowCenter_Callback(hObject, eventdata, handles)
+        function edit_windowCenter_Callback(this, hObject, eventdata)
             % hObject    handle to edit_windowCenter (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -386,15 +548,17 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             newCenter           = str2double(get(hObject,'String'));
             width               = get(handles.slider_windowWidth,'Value');
             selectionIndex      = get(handles.popupmenu_chooseColorData,'Value');
-            handles.dispWindow{selectionIndex,1}  = [newCenter-width/2 newCenter+width/2];
-            handles.cBarChanged = true;
+            this.viewerWidgetHandle.dispWindow{selectionIndex,1}  = [newCenter-width/2 newCenter+width/2];
+            %handles.cBarChanged = true;
             
             this.handles = handles;
-            UpdatePlot(handles);
+            this.viewerWidgetHandle.UpdatePlot();
+            % UpdatePlot(handles);
+            UpdateColormapOptions(this);
         end
         
         % H108
-        function edit_windowWidth_Callback(hObject, eventdata, handles)
+        function edit_windowWidth_Callback(this, hObject, eventdata)
             % hObject    handle to edit_windowWidth (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -406,24 +570,26 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             newWidth            = str2double(get(hObject,'String'));
             center              = get(handles.slider_windowCenter,'Value');
             selectionIndex      = get(handles.popupmenu_chooseColorData,'Value');
-            handles.dispWindow{selectionIndex,1}  = [center-newWidth/2 center+newWidth/2];
-            handles.cBarChanged = true;
+            this.viewerWidgetHandle.dispWindow{selectionIndex,1}  = [center-newWidth/2 center+newWidth/2];
+            %handles.cBarChanged = true;
             
             this.handles = handles;
-            UpdatePlot(handles);
+            this.viewerWidgetHandle.UpdatePlot();
+            %UpdatePlot(handles);
+            UpdateColormapOptions(this);
         end
         
         % H109
-        function sliderOpacity_Callback(hObject, eventdata, handles)
+        function sliderOpacity_Callback(this,hObject, eventdata)
             % hObject    handle to sliderOpacity (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
-            handles = this.handles;
+            %handles = this.handles;
             
-            handles.doseOpacity = get(hObject,'Value');
+            this.viewerWidgetHandle.doseOpacity = get(hObject,'Value');
             
-            this.handles = handles;
-            UpdatePlot(handles);
+            %this.handles = handles;
+            %UpdatePlot(handles);
             
             
         end
@@ -440,18 +606,19 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             
             selectionIndexCube      = 2; % working on ct only
             selectionIndexWindow    = get(handles.popupmenu_windowPreset,'Value');
-            newCenter               = handles.windowPresets(selectionIndexWindow).center;
-            newWidth                = handles.windowPresets(selectionIndexWindow).width;
+            newCenter               = this.windowPresets(selectionIndexWindow).center;
+            newWidth                = this.windowPresets(selectionIndexWindow).width;
             
-            handles.dispWindow{selectionIndexCube,1}  = [newCenter - newWidth/2 newCenter + newWidth/2];
-            handles.cBarChanged = true;
+            this.viewerWidgetHandle.dispWindow{selectionIndexCube,1}  = [newCenter - newWidth/2 newCenter + newWidth/2];
+            %handles.cBarChanged = true;
             this.handles = handles;
-            UpdatePlot(handles);
-            UpdateColormapOptions(handles);
+            %UpdatePlot(handles);
+            this.viewerWidgetHandle.UpdatePlot();
+            UpdateColormapOptions(this);
         end
         
         % H114
-        function slider_windowWidth_Callback(hObject, eventdata, handles)
+        function slider_windowWidth_Callback(this,hObject, eventdata)
             % hObject    handle to slider_windowWidth (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -462,16 +629,18 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             handles = this.handles;
             newWidth = get(hObject,'Value');
             center   = get(handles.slider_windowCenter,'Value');
-            selectionIndex                        = get(handles.popupmenu_chooseColorData,'Value');
-            handles.dispWindow{selectionIndex,1}  = [center-newWidth/2 center+newWidth/2];
-            handles.cBarChanged = true;
+            selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
+            this.viewerWidgetHandle.dispWindow{selectionIndex,1}  = [center-newWidth/2 center+newWidth/2];
+            %handles.cBarChanged = true;
             
             this.handles = handles;
-            UpdatePlot(handles);
+            this.viewerWidgetHandle.UpdatePlot();
+            %UpdatePlot(handles);
+            UpdateColormapOptions(this);
         end
         
         % H115 Callback
-        function checkbox_lockColormap_Callback(this, hObject, event)
+        function checkbox_lockColormap_Callback(this, hObject, ~)
             % hObject    handle to checkbox_lockColormap (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -479,9 +648,9 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             % Hint: get(hObject,'Value') returns toggle state of checkbox_lockColormap
             
             handles = this.handles;
-            handles.colormapLocked = get(hObject,'Value');
+            this.colormapLocked = get(hObject,'Value');
             
-            if handles.colormapLocked
+            if this.colormapLocked
                 state = 'Off'; %'Inactive';
             else
                 state = 'On';
@@ -500,36 +669,129 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
         end
         
         % button: set iso dose levels
-        function btnSetIsoDoseLevels_Callback(hObject, eventdata, handles)
+        function btnSetIsoDoseLevels_Callback(this,hObject, eventdata)
             handles = this.handles;
             prompt = {['Enter iso dose levels in [Gy]. Enter space-separated numbers, e.g. 1.5 2 3 4.98. Enter 0 to use default values']};
-            if isequal(handles.IsoDose.Levels,0) || ~isvector(handles.IsoDose.Levels) || any(~isnumeric(handles.IsoDose.Levels)) || any(isnan(handles.IsoDose.Levels))
+            if isequal(this.viewerWidgetHandle.IsoDose_Levels,0) || ~isvector(this.viewerWidgetHandle.IsoDose_Levels) || any(~isnumeric(this.viewerWidgetHandle.IsoDose_Levels)) || any(isnan(this.viewerWidgetHandle.IsoDose_Levels))
                 defaultLine = {'1 2 3 '};
             else
-                if isrow(handles.IsoDose.Levels)
-                    defaultLine = cellstr(num2str(handles.IsoDose.Levels,'%.2g '));
+                if isrow(this.viewerWidgetHandle.IsoDose_Levels)
+                    defaultLine = cellstr(num2str(this.viewerWidgetHandle.IsoDose_Levels,'%.2g '));
                 else
-                    defaultLine = cellstr(num2str(handles.IsoDose.Levels','%.2g '));
+                    defaultLine = cellstr(num2str(this.viewerWidgetHandle.IsoDose_Levels','%.2g '));
                 end
             end
             
             try
                 Input = inputdlg(prompt,'Set iso dose levels ', [1 70],defaultLine);
                 if ~isempty(Input)
-                    handles.IsoDose.Levels = (sort(str2num(Input{1})));
-                    if length(handles.IsoDose.Levels) == 1 && (handles.IsoDose.Levels(1) ~= 0)
-                        handles.IsoDose.Levels = [handles.IsoDose.Levels handles.IsoDose.Levels];
+                    this.viewerWidgetHandle.IsoDose_Levels = (sort(str2num(Input{1})));
+                    if length(this.viewerWidgetHandle.IsoDose_Levels) == 1 && (this.viewerWidgetHandle.IsoDose_Levels(1) ~= 0)
+                        this.viewerWidgetHandle.IsoDose_Levels = [this.viewerWidgetHandle.IsoDose_Levels this.viewerWidgetHandle.IsoDose_Levels];
                     end
-                    handles.IsoDose.NewIsoDoseFlag = true;
+                    %handles.IsoDose.NewIsoDoseFlag = true;
                 end
             catch
                 warning('Couldnt parse iso dose levels - using default values');
-                handles.IsoDose.Levels = 0;
+                this.viewerWidgetHandle.IsoDose_Levels = 0;
             end
-            handles = updateIsoDoseLineCache(handles);
-            handles.IsoDose.NewIsoDoseFlag = false;
-            %UpdatePlot(handles);
             this.handles = handles;
+            %handles = updateIsoDoseLineCache(handles);
+            %this.viewerWidgetHandle.NewIsoDoseFlag = false;
+            %UpdatePlot(handles);
+        end
+        %% Callbacks & Functions for color setting
+        function UpdateColormapOptions(this)
+            handles=this.handles;
+            if isfield(handles,'colormapLocked') && handles.colormapLocked
+                return;
+            end
+            
+            
+            selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
+            
+            if ~isempty(this.viewerWidgetHandle.dispWindow{selectionIndex,2})
+                set(handles.txtMinVal,'String',['min value: ' num2str(this.viewerWidgetHandle.dispWindow{selectionIndex,2}(1,1))]);
+                set(handles.txtMaxVal,'String',['max value: ' num2str(this.viewerWidgetHandle.dispWindow{selectionIndex,2}(1,2))]);
+            end
+            cMapSelectionIndex = get(handles.popupmenu_chooseColormap,'Value');
+            cMapStrings = get(handles.popupmenu_chooseColormap,'String');
+            
+            
+            
+%             if selectionIndex > 1
+%                 set(handles.uitoggletool8,'State','on');
+%             else
+%                 set(handles.uitoggletool8,'State','off');
+%             end
+            
+            try
+                if selectionIndex == 2
+                    ct = evalin('base','ct');
+                    currentMap = this.viewerWidgetHandle.ctColorMap;
+                    window = this.viewerWidgetHandle.dispWindow{selectionIndex,1};
+                    if isfield(ct, 'cube')
+                        minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
+                    else
+                        minMax = [min(ct.cubeHU{1}(:)) max(ct.cubeHU{1}(:))];
+                    end
+                    % adjust value for custom window to current
+                    this.windowPresets(1).width = max(window) - min(window);
+                    this.windowPresets(1).center = mean(window);
+                    % update full window information
+                    this.windowPresets(2).width = minMax(2) - minMax(1);
+                    this.windowPresets(2).center = mean(minMax);
+                elseif selectionIndex == 3
+                    result = evalin('base','resultGUI');
+                    dose = result.(this.viewerWidgetHandle.SelectedDisplayOption);
+                    currentMap = this.viewerWidgetHandle.doseColorMap;
+                    minMax = [min(dose(:)) max(dose(:))];
+                    window = this.viewerWidgetHandle.dispWindow{selectionIndex,1};
+                else
+                    window = [0 1];
+                    minMax = window;
+                    currentMap = 'bone';
+                end
+            catch
+                window = [0 1];
+                minMax = window;
+                currentMap = 'bone';
+            end
+            
+            valueRange = minMax(2) - minMax(1);
+            
+            windowWidth = window(2) - window(1);
+            windowCenter = mean(window);
+            
+            %This are some arbritrary settings to configure the sliders
+            sliderCenterMinMax = [minMax(1)-valueRange/2 minMax(2)+valueRange/2];
+            sliderWidthMinMax = [0 valueRange*2];
+            
+            %if we have selected a value outside this range, we adapt the slider
+            %windows
+            if windowCenter < sliderCenterMinMax(1)
+                sliderCenterMinMax(1) = windowCenter;
+            end
+            if windowCenter > sliderCenterMinMax(2)
+                sliderCenterMinMax(2) = windowCenter;
+            end
+            if windowWidth < sliderWidthMinMax(1)
+                sliderWidthMinMax(1) = windowWidth;
+            end
+            if windowCenter > sliderCenterMinMax(2)
+                sliderWidthMinMax(2) = windowWidth;
+            end
+            
+            
+            set(handles.edit_windowCenter,'String',num2str(windowCenter,3));
+            set(handles.edit_windowWidth,'String',num2str(windowWidth,3));
+            set(handles.edit_windowRange,'String',num2str(window,4));
+            set(handles.slider_windowCenter,'Min',sliderCenterMinMax(1),'Max',sliderCenterMinMax(2),'Value',windowCenter);
+            set(handles.slider_windowWidth,'Min',sliderWidthMinMax(1),'Max',sliderWidthMinMax(2),'Value',windowWidth);
+            
+            cMapPopupIndex = find(strcmp(currentMap,cMapStrings));
+            set(handles.popupmenu_chooseColormap,'Value',cMapPopupIndex);
+            this.handles=handles;
         end
     end
     

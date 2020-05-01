@@ -8,7 +8,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             if nargin < 1
                 handleParent = figure(...
                     'Units','characters',...
-                    'Position',[170.4 45 150.4 20.5384615384615],...
+                    'Position',[130 45 80 8],...
                     'Visible','on',...
                     'Color',[0.501960784313725 0.501960784313725 0.501960784313725],... 
                     'IntegerHandle','off',...
@@ -36,6 +36,72 @@ classdef matRad_WorkflowWidget < matRad_Widget
         function changeWorkspace(obj)
             notify(obj, 'workspaceChanged');
         end
+        
+        
+         % moved so it can be called from the toolbar button
+             % H74 Callback
+            function btnLoadMat_Callback(this, hObject, event)
+                handles = this.handles;
+                [FileName, FilePath] = uigetfile('*.mat');
+                if FileName == 0 % user pressed cancel --> do nothing.
+                    return;
+                end
+                
+                try
+                    % delete existing workspace - parse variables from base workspace
+                    AllVarNames = evalin('base','who');
+                    RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
+                    
+                    for i = 1:length(RefVarNames)
+                        if sum(ismember(AllVarNames,RefVarNames{i}))>0
+                            evalin('base',['clear ', RefVarNames{i}]);
+                        end
+                    end
+                    
+                    % read new data
+                    load([FilePath FileName]);
+                    
+                catch ME
+                    handles = showError(this,'LoadMatFileFnc: Could not load *.mat file',ME);
+                    
+                    this.handles=handles;   
+                    getFromWorkspace(this);  
+                    return
+                end
+                
+                try
+                   %cst = generateCstTable(this,cst);
+                   %handles.TableChanged = false;
+                   %set(handles.popupTypeOfPlot,'Value',1);
+                   %cst = matRad_computeVoiContoursWrapper(cst,ct);
+                    
+                   assignin('base','ct',ct);
+                   assignin('base','cst',cst);
+                   
+                catch ME
+                    handles = showError(this,'LoadMatFileFnc: Could not load *.mat file',ME);
+                end
+                
+                % check if a optimized plan was loaded
+                if exist('stf','var')
+                    assignin('base','stf',stf);
+                end
+                if exist('pln','var')
+                    assignin('base','pln',pln);
+                end
+                if exist('dij','var')
+                    assignin('base','dij',dij);
+                end
+                
+                if exist('resultGUI','var')
+                    assignin('base','resultGUI',resultGUI);
+                end
+                
+               this.handles=handles;   
+               %updateInWorkspace(this);
+               changeWorkspace(this);
+               %getFromWorkspace(this); %update the buttons
+            end
     end
     
         methods (Access = protected)
@@ -211,72 +277,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 end
                 this.handles=handles;
             end
+            
         end
         methods (Access = private)
             
-            % H74 Callback
-            function btnLoadMat_Callback(this, hObject, event)
-                handles = this.handles;
-                [FileName, FilePath] = uigetfile('*.mat');
-                if FileName == 0 % user pressed cancel --> do nothing.
-                    return;
-                end
-                
-                try
-                    % delete existing workspace - parse variables from base workspace
-                    AllVarNames = evalin('base','who');
-                    RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
-                    
-                    for i = 1:length(RefVarNames)
-                        if sum(ismember(AllVarNames,RefVarNames{i}))>0
-                            evalin('base',['clear ', RefVarNames{i}]);
-                        end
-                    end
-                    
-                    % read new data
-                    load([FilePath FileName]);
-                    
-                catch ME
-                    handles = showError(this,'LoadMatFileFnc: Could not load *.mat file',ME);
-                    
-                    this.handles=handles;   
-                    getFromWorkspace(this);  
-                    return
-                end
-                
-                try
-                   %cst = generateCstTable(this,cst);
-                   %handles.TableChanged = false;
-                   %set(handles.popupTypeOfPlot,'Value',1);
-                   %cst = matRad_computeVoiContoursWrapper(cst,ct);
-                    
-                   assignin('base','ct',ct);
-                   assignin('base','cst',cst);
-                   
-                catch ME
-                    handles = showError(this,'LoadMatFileFnc: Could not load *.mat file',ME);
-                end
-                
-                % check if a optimized plan was loaded
-                if exist('stf','var')
-                    assignin('base','stf',stf);
-                end
-                if exist('pln','var')
-                    assignin('base','pln',pln);
-                end
-                if exist('dij','var')
-                    assignin('base','dij',dij);
-                end
-                
-                if exist('resultGUI','var')
-                    assignin('base','resultGUI',resultGUI);
-                end
-                
-               this.handles=handles;   
-               %updateInWorkspace(this);
-               changeWorkspace(this);
-               getFromWorkspace(this); %update the buttons
-            end
+           
             
             % H75 Callback
             function btnCalcDose_Callback(this, hObject, eventdata)
@@ -364,7 +369,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 set(InterfaceObj,'Enable','on');
                 this.handles = handles;
                 changeWorkspace(this);
-                getFromWorkspace(this);
+                %getFromWorkspace(this);
             end
             
             % H76 Callback
@@ -528,7 +533,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 this.handles = handles;
                 
                changeWorkspace(this);
-               getFromWorkspace(this);
+               %getFromWorkspace(this);
             end
             
             % H77 Callback
@@ -555,13 +560,15 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 
                 this.handles = handles;
                 changeWorkspace(this);
-                getFromWorkspace(this);
+                %getFromWorkspace(this);
             end
             
             % H78 Callback - button: refresh
             function btnRefresh_Callback(this, hObject, event)
+                % notify so all widgets refresh
+                changeWorkspace(this);
+                %getFromWorkspace(this);
                 
-                getFromWorkspace(this);
 %                 handles = this.handles;
 %                 
 %                 %% parse variables from base workspace
@@ -675,7 +682,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         
                         this.handles = handles;
                         changeWorkspace(this);
-                        getFromWorkspace(this);
+                        %getFromWorkspace(this);
                         
                     catch ME
                         handles = showError(this,'CalcDoseCallback: Error in dose recalculation!',ME);
@@ -847,7 +854,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 end
                 this.handles = handles;
                 changeWorkspace(this);
-                getFromWorkspace(this);
+                %getFromWorkspace(this);
             end
             
              % H83 Callback
@@ -915,7 +922,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 
                 this.handles = handles;
                 changeWorkspace(this);
-                getFromWorkspace(this);
+                %getFromWorkspace(this);
             end
             
             function CheckOptimizerStatus(this, usedOptimizer,OptCase)

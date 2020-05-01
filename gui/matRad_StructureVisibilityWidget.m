@@ -9,7 +9,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             if nargin < 1
                 handleParent = figure(...
                     'Units','characters',...
-                    'Position',[250.4 45 90.4 50.5384615384615],...
+                    'Position',[250.4 45 30 15],...
                     'Visible','on',...
                     'Color',[0.501960784313725 0.501960784313725 0.501960784313725],...  
                     'IntegerHandle','off',...
@@ -25,6 +25,22 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             this = this@matRad_Widget(handleParent);
         end
         
+        function this=initialize(this)
+             this.update();
+            
+        end
+        
+        function this=update(this)
+            if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
+                updateStructureTable(this, evalin('base','cst'));
+            else
+            end
+           
+        end
+        
+        function changeWorkspace(obj)
+            notify(obj, 'workspaceChanged');
+        end
     end
     
     methods (Access = protected)
@@ -40,6 +56,8 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
                 'BackgroundColor',[0.501960784313725 0.501960784313725 0.501960784313725],...
                 'Callback',@(hObject,eventdata) legendTable_Callback(this,hObject,eventdata),...
                 'Tag','legendTable');
+            
+            this.createHandles();
         end
     end
     
@@ -76,7 +94,50 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             % update cst in workspace accordingly
             assignin('base','cst',cst)
             this.handles = handles;
-            UpdatePlot(handles)
+            changeWorkspace(this);
+            %UpdatePlot(handles)
+        end
+        
+        function cst = updateStructureTable(this,cst)
+            handles=this.handles;
+            colorAssigned = true;
+            
+            % check whether all structures have an assigned color
+            for i = 1:size(cst,1)
+                if ~isfield(cst{i,5},'visibleColor')
+                    colorAssigned = false;
+                    break;
+                elseif isempty(cst{i,5}.visibleColor)
+                    colorAssigned = false;
+                    break;
+                end
+            end
+            
+            % assign color if color assignment is not already present or inconsistent
+            if colorAssigned == false
+                m         = 64;
+                colorStep = ceil(m/size(cst,1));
+                colors    = colorcube(colorStep*size(cst,1));
+                % spread individual VOI colors in the colorcube color palette
+                colors    = colors(1:colorStep:end,:);
+                
+                for i = 1:size(cst,1)
+                    cst{i,5}.visibleColor = colors(i,:);
+                end
+            end
+            
+            for s = 1:size(cst,1)
+                handles.VOIPlotFlag(s) = cst{s,5}.Visible;
+                clr = dec2hex(round(cst{s,5}.visibleColor(:)*255),2)';
+                clr = ['#';clr(:)]';
+                if handles.VOIPlotFlag(s)
+                    tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
+                else
+                    tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
+                end
+            end
+            set(handles.legendTable,'String',tmpString);
+            this.handles = handles;
         end
     end
 end

@@ -9,7 +9,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             if nargin < 1
                 handleParent = figure(...
                     'Units','characters',...
-                    'Position',[170.4 45 150.4 35.5384615384615],...
+                    'Position',[100 45 90 15],...
                     'Visible','on',...
                     'Color',[0.501960784313725 0.501960784313725 0.501960784313725],...
                     'IntegerHandle','off',...
@@ -18,8 +18,9 @@ classdef matRad_OptimizationWidget < matRad_Widget
                     'Name','MatRad Optimization',...
                     'NumberTitle','off',...
                     'HandleVisibility','callback',...
-                    'Tag','figure1',...
-                    'PaperSize',[20.99999864 29.69999902]);
+                    'Tag','figure1');
+                    %'PaperSize',[20.99999864 29.69999902]
+                
                 
             end
             this = this@matRad_Widget(handleParent);
@@ -221,7 +222,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
                                     'Callback',@(hObject,eventdata)editObjParam_Callback(this,hObject,eventdata));
                             end
                             
-                            tmp_pos = get(h,'Extent');
+                            tmp_pos = get(h,'Position');
                             xPos = xPos + tmp_pos(3) + fieldSep;
                         end
                         
@@ -343,7 +344,8 @@ classdef matRad_OptimizationWidget < matRad_Widget
             this.handles=handles;
             changeWorkspace(this);
             
-            generateCstTable(this,cst);
+            % would need to remove
+            %generateCstTable(this,cst);
             
         end
         function btObjRemove_Callback(this,hObject, ~)
@@ -362,7 +364,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             this.handles=handles;
             changeWorkspace(this);
             
-            generateCstTable(this,cst);
+            %generateCstTable(this,cst);
 
         end
         
@@ -398,7 +400,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
                 this.handles=handles;
                 changeWorkspace(this);
                 
-                generateCstTable(this,cst);
+                %generateCstTable(this,cst);
             end
         end
         
@@ -428,7 +430,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             this.handles=handles;
             changeWorkspace(this);
             
-            generateCstTable(this,cst);
+            %generateCstTable(this,cst);
         end
         
         function editObjParam_Callback(this,hObject, ~)
@@ -452,7 +454,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             this.handles=handles;
             changeWorkspace(this);
             
-            generateCstTable(this,cst);
+            %generateCstTable(this,cst);
             
         end
     end

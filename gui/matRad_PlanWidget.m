@@ -15,7 +15,7 @@ classdef matRad_PlanWidget < matRad_Widget
             if nargin < 1
                 handleParent = figure(...
                     'Units','characters',...
-                    'Position',[170.4 45 150.4 20.5384615384615],...
+                    'Position',[100 45 85 15],...
                     'Visible','on',...
                     'Color',[0.501960784313725 0.501960784313725 0.501960784313725],... 
                     'IntegerHandle','off',...
@@ -32,7 +32,12 @@ classdef matRad_PlanWidget < matRad_Widget
         end
         
         function this = initialize(this)
-            this.update();
+            if evalin('base','exist(''pln'')')
+              getPlnFromWorkspace(this);
+            else
+              setPlnDefaultValues(this);
+            end
+            updatePlnInWorkspace(this);
         end
         
         function this = update(this)
@@ -41,7 +46,6 @@ classdef matRad_PlanWidget < matRad_Widget
             else
               setPlnDefaultValues(this);
             end
-            updatePlnInWorkspace(this);
         end
         
         function changeWorkspace(obj)
@@ -374,6 +378,7 @@ classdef matRad_PlanWidget < matRad_Widget
             set(handles.editIsoCenter,'Enable','on');
 
             this.handles=handles;
+            updatePlnInWorkspace(this);
         end
         
         function this = getPlnFromWorkspace(this)
@@ -401,8 +406,13 @@ classdef matRad_PlanWidget < matRad_Widget
             if isfield(pln.propStf,'isoCenter')
                 if size(unique(pln.propStf.isoCenter,'rows'),1) == 1
                     set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.propStf.isoCenter(1,:)*10))./10), '\s+', ' '));
-                    set(handles.editIsoCenter,'Enable','on');
                     set(handles.checkIsoCenter,'Enable','on');
+                    if get(handles.checkIsoCenter,'Value')
+                        set(handles.editIsoCenter,'Enable','off');
+                    else
+                        set(handles.editIsoCenter,'Enable','on');
+                    end
+                    
                 else
                     set(handles.editIsoCenter,'String','multiple isoCenter');
                     set(handles.editIsoCenter,'Enable','off');
@@ -422,9 +432,9 @@ classdef matRad_PlanWidget < matRad_Widget
             set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
             set(handles.radiobutton3Dconf,'Value',pln.propOpt.conf3D);
             
-%             set(handles.editDoseX,'String',num2str(pln.propDoseCalc.doseGrid.resolution.x));
-%             set(handles.editDoseY,'String',num2str(pln.propDoseCalc.doseGrid.resolution.y));
-%             set(handles.editDoseZ,'String',num2str(pln.propDoseCalc.doseGrid.resolution.z));
+            set(handles.editDoseX,'String',num2str(pln.propDoseCalc.doseGrid.resolution.x));
+            set(handles.editDoseY,'String',num2str(pln.propDoseCalc.doseGrid.resolution.y));
+            set(handles.editDoseZ,'String',num2str(pln.propDoseCalc.doseGrid.resolution.z));
 
             this.handles=handles;
             this.switchEnables();
@@ -486,14 +496,14 @@ classdef matRad_PlanWidget < matRad_Widget
             
             if get(handles.checkIsoCenter,'Value') && doesPlnExist
                 try
-                    pln = evalin('base','pln');
+                    %pln = evalin('base','pln');
                     if ~isfield(pln.propStf,'isoCenter')
                         pln.propStf.isoCenter = NaN;
                     end
                     tmpIsoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
                     if ~isequal(tmpIsoCenter,pln.propStf.isoCenter)
                         pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*tmpIsoCenter;
-                        handles.State = 1;
+                        %handles.State = 1;
                         %UpdateState(handles);
                     end
                     set(handles.editIsoCenter,'String',regexprep(num2str((round(tmpIsoCenter*10))./10), '\s+', ' '));
@@ -513,7 +523,7 @@ classdef matRad_PlanWidget < matRad_Widget
             if length(tmpIsoCenter) == 3
                 if sum(any(unique(pln.propStf.isoCenter,'rows')~=tmpIsoCenter))
                     pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*tmpIsoCenter;
-                    handles.State = 1;
+                    %handles.State = 1;
                     %UpdateState(handles);
                 end
             else
@@ -540,7 +550,7 @@ classdef matRad_PlanWidget < matRad_Widget
             handles.pln = pln;
             assignin('base','pln',pln);
             this.handles = handles;
-            switchEnables(this);
+            %switchEnables(this);
             changeWorkspace(this);                     
         end
     end

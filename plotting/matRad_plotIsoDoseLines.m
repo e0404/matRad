@@ -73,7 +73,7 @@ colors = squeeze(ind2rgb(uint8(cMapScale*isoColorLevel),cMap));
 isoLineHandles = cell(0);
 
 axes(axesHandle);
-hold on;
+hold(axesHandle,'on');
 
 %Check if there is a contour in the plane
 if any(isoContours{slice,plane}(:))
@@ -100,6 +100,6 @@ if any(isoContours{slice,plane}(:))
     end
 end
 
-hold off;
+hold(axesHandle,'off');
 
 end

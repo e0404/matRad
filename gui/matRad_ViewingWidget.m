@@ -1,7 +1,45 @@
 classdef matRad_ViewingWidget < matRad_Widget
     
     properties
+     
+        plane = 3;
+        slice = 55;
+        selectedBeam = 1;
+        profileOffset = 0;
+        typeOfPlot = 1;
+        colorData = 3;
+        doseColorMap = 'jet';
+        ctColorMap = 'bone';
+        cMapSize = 64;
+        plotCT = true;
+        plotContour = true;
+        plotIsoCenter = true;
+        plotPlan = false;
+        plotDose = true;
+        plotIsoDoseLines = true;
+        plotIsoDoseLinesLabels = true;
+        VOIPlotFlag;
+        ProfileType = 'lateral';
+        SelectedDisplayOption ='';
+        rememberCurrAxes = true;
+        %cBarChanged = true;
+        CutOffLevel= 0.01;
+        dispWindow = cell(3,2);
+        doseOpacity = 0.6;
+        IsoDose_Levels = 0;
+        NewIsoDoseFlag = true;
+        cBarHandel;
         
+    end
+    
+    properties (SetAccess=private)
+        
+        IsoDose_Contours; %only updated from within this class
+        
+    end
+    
+    events
+        plotUpdated
     end
     
     methods
@@ -22,7 +60,150 @@ classdef matRad_ViewingWidget < matRad_Widget
                     'PaperSize',[20.99999864 29.69999902]);
                 
             end
+            
             this = this@matRad_Widget(handleParent);
+
+        end
+        
+        function this=initialize(this)
+            updateIsoDoseLineCache(this);
+            update(this);
+        end
+        
+        function this=update(this)
+            UpdatePlot(this);
+            notifyPlotUpdated(this);
+        end
+        
+        function notifyPlotUpdated(obj)
+            notify(obj, 'plotUpdated');
+        end
+        
+        function set.plane(this,value)
+            this.plane=value;
+            update(this);
+        end
+        
+        function set.slice(this,value)
+            this.slice=value;
+            update(this);
+        end
+        
+        function set.selectedBeam(this,value)
+            this.selectedBeam=value;
+            update(this);
+        end
+        
+        function set.profileOffset(this,value)
+            this.profileOffset=value;
+            update(this);
+        end
+        
+        function set.typeOfPlot(this,value)
+            this.typeOfPlot=value;
+            update(this);
+        end
+        
+        function set.colorData(this,value)
+            this.colorData=value;
+            update(this);
+        end
+        
+        function set.doseColorMap(this,value)
+            this.doseColorMap=value;
+            update(this);
+        end
+        
+        function set.ctColorMap(this,value)
+            this.ctColorMap=value;
+            update(this);
+        end
+        
+        function set.cMapSize(this,value)
+            this.cMapSize=value;
+            update(this);
+        end
+        
+        function set.plotCT(this,value)
+            this.plotCT=value;
+            update(this);
+        end
+        
+        function set.plotContour(this,value)
+            this.plotContour=value;
+            update(this);
+        end
+        
+        function set.plotIsoCenter(this,value)
+            this.plotIsoCenter=value;
+            update(this);
+        end
+        
+        function set.plotPlan(this,value)
+            this.plotPlan=value;
+            update(this);
+        end
+        
+        function set.plotDose(this,value)
+            this.plotDose=value;
+            update(this);
+        end
+        
+        function set.plotIsoDoseLines(this,value)
+            this.plotIsoDoseLines=value;
+            update(this);
+        end
+        
+        function set.plotIsoDoseLinesLabels(this,value)
+            this.plotIsoDoseLinesLabels=value;
+            update(this);
+        end
+        
+%         function set.VOIPlotFlag(this,value)
+%             this.VOIPlotFlag=value;
+%             update(this);
+%         end
+        
+        function set.ProfileType(this,value)
+            this.ProfileType=value;
+            update(this);
+        end
+        
+%         function set.SelectedDisplayOption(this,value)
+%             this.SelectedDisplayOption=value;
+%             update(this);
+%         end
+        
+        
+        function set.rememberCurrAxes(this,value)
+            this.rememberCurrAxes=value;
+            update(this);
+        end
+        
+        function set.CutOffLevel(this,value)
+            this.CutOffLevel=value;
+            update(this);
+        end
+%         
+%         function set.dispWindow(this,value)
+%             this.dispWindow=value;
+%             update(this);
+%         end
+        
+        function set.doseOpacity(this,value)
+            this.doseOpacity=value;
+            update(this);
+        end
+        
+        function set.IsoDose_Levels(this,value)
+            this.IsoDose_Levels=value;
+            updateIsoDoseLineCache(this);
+            update(this);
+        end
+        
+        function set.NewIsoDoseFlag(this,value)
+            this.NewIsoDoseFlag=value;
+            update(this);
         end
         
     end
@@ -33,24 +214,17 @@ classdef matRad_ViewingWidget < matRad_Widget
             
             h89 = axes(...
                 'Parent',h88,...
-                'CameraPosition',[0.5 0.5 9.16025403784439],...
-                'CameraTarget',[0.5 0.5 0.5],...
-                'CameraViewAngle',6.60861036031192,...
-                'PlotBoxAspectRatio',[0.946917808219178 1 0.946917808219178],...
-                'FontName','CMU Serif',...
-                'Colormap',[0 0 0.5625;0 0 0.625;0 0 0.6875;0 0 0.75;0 0 0.8125;0 0 0.875;0 0 0.9375;0 0 1;0 0.0625 1;0 0.125 1;0 0.1875 1;0 0.25 1;0 0.3125 1;0 0.375 1;0 0.4375 1;0 0.5 1;0 0.5625 1;0 0.625 1;0 0.6875 1;0 0.75 1;0 0.8125 1;0 0.875 1;0 0.9375 1;0 1 1;0.0625 1 1;0.125 1 0.9375;0.1875 1 0.875;0.25 1 0.8125;0.3125 1 0.75;0.375 1 0.6875;0.4375 1 0.625;0.5 1 0.5625;0.5625 1 0.5;0.625 1 0.4375;0.6875 1 0.375;0.75 1 0.3125;0.8125 1 0.25;0.875 1 0.1875;0.9375 1 0.125;1 1 0.0625;1 1 0;1 0.9375 0;1 0.875 0;1 0.8125 0;1 0.75 0;1 0.6875 0;1 0.625 0;1 0.5625 0;1 0.5 0;1 0.4375 0;1 0.375 0;1 0.3125 0;1 0.25 0;1 0.1875 0;1 0.125 0;1 0.0625 0;1 0 0;0.9375 0 0;0.875 0 0;0.8125 0 0;0.75 0 0;0.6875 0 0;0.625 0 0;0.5625 0 0],...
                 'XTick',[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1],...
                 'XTickLabel',{  '0'; '0.1'; '0.2'; '0.3'; '0.4'; '0.5'; '0.6'; '0.7'; '0.8'; '0.9'; '1' },...
                 'YTick',[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1],...
                 'YTickLabel',{  '0'; '0.1'; '0.2'; '0.3'; '0.4'; '0.5'; '0.6'; '0.7'; '0.8'; '0.9'; '1' },...
                 'Position',[0.0718390804597701 0.0354391371340524 0.902298850574712 0.929121725731895],...
-                'ActivePositionProperty','position',...
-                'LooseInset',[0.199881557553276 0.118695547917832 0.146067292058163 0.0809287826712493],...
-                'FontSize',9.63,...
-                'SortMethod','childorder',...
-                'ButtonDownFcn',@(hObject,eventdata)axesFig_ButtonDownFcn(this,hObject,eventdata),...
-                'Tag','axesFig');
-            
+                 'SortMethod','childorder',...
+                 'Tag','axesFig'); 
+                %'ButtonDownFcn',@(hObject,eventdata)axesFig_ButtonDownFcn(this,hObject,eventdata),...
+                % 'FontSize',9.63,...  'FontName','CMU Serif',...
+            %'Colormap',[0 0 0.5625;0 0 0.625;0 0 0.6875;0 0 0.75;0 0 0.8125;0 0 0.875;0 0 0.9375;0 0 1;0 0.0625 1;0 0.125 1;0 0.1875 1;0 0.25 1;0 0.3125 1;0 0.375 1;0 0.4375 1;0 0.5 1;0 0.5625 1;0 0.625 1;0 0.6875 1;0 0.75 1;0 0.8125 1;0 0.875 1;0 0.9375 1;0 1 1;0.0625 1 1;0.125 1 0.9375;0.1875 1 0.875;0.25 1 0.8125;0.3125 1 0.75;0.375 1 0.6875;0.4375 1 0.625;0.5 1 0.5625;0.5625 1 0.5;0.625 1 0.4375;0.6875 1 0.375;0.75 1 0.3125;0.8125 1 0.25;0.875 1 0.1875;0.9375 1 0.125;1 1 0.0625;1 1 0;1 0.9375 0;1 0.875 0;1 0.8125 0;1 0.75 0;1 0.6875 0;1 0.625 0;1 0.5625 0;1 0.5 0;1 0.4375 0;1 0.375 0;1 0.3125 0;1 0.25 0;1 0.1875 0;1 0.125 0;1 0.0625 0;1 0 0;0.9375 0 0;0.875 0 0;0.8125 0 0;0.75 0 0;0.6875 0 0;0.625 0 0;0.5625 0 0],...
+                
             h90 = get(h89,'title');
             
             set(h90,...
@@ -195,16 +369,16 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'HitTest','on',...
                 'PickableParts','visible');            
             
+            this.createHandles();
         end
     end
     
     methods
-        function UpdatePlot(handles)
+        function UpdatePlot(this)
             
             handles = this.handles;
             
             %profile on;
-            
             axes(handles.axesFig);
             
             % this is necessary to prevent multiple callbacks of update plot drawing on
@@ -218,18 +392,40 @@ classdef matRad_ViewingWidget < matRad_Widget
             AxesHandlesCT_Dose  = cell(0);
             AxesHandlesIsoDose  = cell(0);
             
-            if handles.State == 0
-                cla reset
-                return
-            elseif handles.State > 0
+            if evalin('base','exist(''pln'')') && ...
+                evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
+            
                 ct  = evalin('base','ct');
                 cst = evalin('base','cst');
                 pln = evalin('base','pln');
+                
+                cst = matRad_computeVoiContoursWrapper(cst,ct);
+    
+                this.SelectedDisplayOption ='physicalDose';
+                % define context menu for structures
+                for i = 1:size(cst,1)
+                    if cst{i,5}.Visible
+                        this.VOIPlotFlag(i) = true;
+                    else
+                        this.VOIPlotFlag(i) = false;
+                    end
+                end
+
+%                 if ~isfield(ct, 'cubeHU')
+%                     handles.cubeHUavailable = false;
+%                 else
+%                     handles.cubeHUavailable = true;
+%                 end
+            else
+                this.SelectedDisplayOption ='';
+                cla(handles.axesFig, 'reset')
+                return
             end
             
-            %% state 3 indicates that a optimization has been performed
-            AllVarNames = evalin('base','who');
-            if  ismember('resultGUI',AllVarNames)
+            
+            
+            %% If resultGUI exists, then an optimization has been performed
+            if evalin('base','exist(''resultGUI'')') 
                 Result = evalin('base','resultGUI');
             end
             
@@ -266,30 +462,30 @@ classdef matRad_ViewingWidget < matRad_Widget
                         end
                     end
                     
-                    set(handles.popupDisplayOption,'String',fieldnames(Result));
-                    if sum(strcmp(handles.SelectedDisplayOption,fieldnames(Result))) == 0
-                        handles.SelectedDisplayOption = DispInfo{find([DispInfo{:,2}],1,'first'),1};
+%                     set(this.popupDisplayOption,'String',fieldnames(Result));
+                    if sum(strcmp(this.SelectedDisplayOption,fieldnames(Result))) == 0
+                        this.SelectedDisplayOption = DispInfo{find([DispInfo{:,2}],1,'first'),1};
                     end
-                    set(handles.popupDisplayOption,'Value',find(strcmp(handles.SelectedDisplayOption,fieldnames(Result))));
-                    
+%                     set(this.popupDisplayOption,'Value',find(strcmp(this.SelectedDisplayOption,fieldnames(Result))));
+%                     
                 end
             end
             
             %% set and get required variables
-            plane = get(handles.popupPlane,'Value');
-            slice = round(get(handles.sliderSlice,'Value'));
+            %plane = get(handles.popupPlane,'Value');
+            %slice = round(get(handles.sliderSlice,'Value'));
             hold(handles.axesFig,'on');
-            if get(handles.popupTypeOfPlot,'Value')==1
+            if this.typeOfPlot==1 %get(handles.popupTypeOfPlot,'Value')==1
                 set(handles.axesFig,'YDir','Reverse');
             end
             
             %% Remove colorbar?
-            plotColorbarSelection = get(handles.popupmenu_chooseColorData,'Value');
-            
-            if get(handles.popupTypeOfPlot,'Value')==2 || plotColorbarSelection == 1
-                if isfield(handles,'cBarHandel')
-                    delete(handles.cBarHandel);
-                end
+            %plotColorbarSelection = get(handles.popupmenu_chooseColorData,'Value');
+          
+            if this.typeOfPlot==2 || this.colorData == 1
+%                 if isfield(handles,'cBarHandel')
+%                     delete(handles.cBarHandel);
+%                 end
                 %The following seems to be necessary as MATLAB messes up some stuff
                 %with the handle storage
                 ch = findall(gcf,'tag','Colorbar');
@@ -298,11 +494,12 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
             end
             
-            selectIx = get(handles.popupmenu_chooseColorData,'Value');
+            %same value as plotColorbarSelection, do we need both?
+            selectIx = this.colorData; %get(handles.popupmenu_chooseColorData,'Value');
             
             cla(handles.axesFig);
             %% plot ct - if a ct cube is available and type of plot is set to 1 and not 2; 1 indicate cube plotting and 2 profile plotting
-            if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
+            if ~isempty(ct) && this.typeOfPlot==1
                 
                 if selectIx == 3
                     ctIx = 2;
@@ -316,131 +513,128 @@ classdef matRad_ViewingWidget < matRad_Widget
                     plotCtCube = ct.cubeHU;
                 end
                 
-                ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
+                ctMap = matRad_getColormap(this.ctColorMap,this.cMapSize);
                 
-                if isempty(handles.dispWindow{ctIx,2})
-                    handles.dispWindow{ctIx,2} = [min(reshape([ct.cubeHU{:}],[],1)) max(reshape([ct.cubeHU{:}],[],1))];
+                if isempty(this.dispWindow{ctIx,2})
+                    this.dispWindow{ctIx,2} = [min(reshape([ct.cubeHU{:}],[],1)) max(reshape([ct.cubeHU{:}],[],1))];
                 end
                 
-                if get(handles.radiobtnCT,'Value')
-                    [AxesHandlesCT_Dose{end+1},~,handles.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,plotCtCube,1,plane,slice,ctMap,handles.dispWindow{ctIx,1});
+                if this.plotCT %get(handles.radiobtnCT,'Value')
+                    [AxesHandlesCT_Dose{end+1},~,this.dispWindow{ctIx,1}] = matRad_plotCtSlice(handles.axesFig,plotCtCube,1,this.plane,this.slice,ctMap,this.dispWindow{ctIx,1});
                     
                     % plot colorbar? If 1 the user asked for the CT
-                    if plotColorbarSelection == 2 && handles.cBarChanged
+                    if this.colorData == 2 %&& this.cBarChanged
                         %Plot the colorbar
-                        handles.cBarHandel = matRad_plotColorbar(handles.axesFig,ctMap,handles.dispWindow{ctIx,1},'fontsize',defaultFontSize);
+                        this.cBarHandel = matRad_plotColorbar(handles.axesFig,ctMap,this.dispWindow{ctIx,1},'fontsize',defaultFontSize);
                         %adjust lables
                         if isfield(ct,'cubeHU')
-                            set(get(handles.cBarHandel,'ylabel'),'String', 'Hounsfield Units','fontsize',defaultFontSize);
+                            set(get(this.cBarHandel,'ylabel'),'String', 'Hounsfield Units','fontsize',defaultFontSize);
                         else
-                            set(get(handles.cBarHandel,'ylabel'),'String', 'Electron Density','fontsize',defaultFontSize);
+                            set(get(this.cBarHandel,'ylabel'),'String', 'Electron Density','fontsize',defaultFontSize);
                         end
                         % do not interprete as tex syntax
-                        set(get(handles.cBarHandel,'ylabel'),'interpreter','none');
+                        set(get(this.cBarHandel,'ylabel'),'interpreter','none');
                     end
                 end
             end
             
             %% plot dose cube
-            if handles.State >= 1 &&  get(handles.popupTypeOfPlot,'Value')== 1  && exist('Result','var')
-                doseMap = matRad_getColormap(handles.doseColorMap,handles.cMapSize);
+            if this.typeOfPlot== 1  && exist('Result','var') % handles.State >= 1 && 
+                doseMap = matRad_getColormap(this.doseColorMap,this.cMapSize);
                 doseIx  = 3;
                 % if the selected display option doesn't exist then simply display
                 % the first cube of the Result struct
-                if ~isfield(Result,handles.SelectedDisplayOption)
+                if ~isfield(Result,this.SelectedDisplayOption)
                     CubeNames = fieldnames(Result);
-                    handles.SelectedDisplayOption = CubeNames{1,1};
+                    this.SelectedDisplayOption = CubeNames{1,1};
                 end
                 
-                dose = Result.(handles.SelectedDisplayOption);
+                dose = Result.(this.SelectedDisplayOption);
                 
                 % dose colorwash
                 if ~isempty(dose) && ~isvector(dose)
                     
-                    if isempty(handles.dispWindow{doseIx,2})
-                        handles.dispWindow{doseIx,2} = [min(dose(:)) max(dose(:))];   % set min and max dose values
+                    if isempty(this.dispWindow{doseIx,2})
+                        this.dispWindow{doseIx,2} = [min(dose(:)) max(dose(:))];   % set min and max dose values
                     end
                     
-                    if get(handles.radiobtnDose,'Value')
-                        [doseHandle,~,handles.dispWindow{doseIx,1}] = matRad_plotDoseSlice(handles.axesFig,dose,plane,slice,handles.CutOffLevel,handles.doseOpacity,doseMap,handles.dispWindow{doseIx,1});
+                    if this.plotDose %get(handles.radiobtnDose,'Value')
+                        [doseHandle,~,this.dispWindow{doseIx,1}] = matRad_plotDoseSlice(handles.axesFig,dose,this.plane,this.slice,this.CutOffLevel,this.doseOpacity,doseMap,this.dispWindow{doseIx,1});
                         AxesHandlesCT_Dose{end+1}         = doseHandle;
                     end
                     
                     % plot colorbar?
-                    if plotColorbarSelection > 2 && handles.cBarChanged
+                    if this.colorData > 2 %&& this.cBarChanged
                         %Plot the colorbar
-                        handles.cBarHandel = matRad_plotColorbar(handles.axesFig,doseMap,handles.dispWindow{selectIx,1},'fontsize',defaultFontSize);
+                        this.cBarHandel = matRad_plotColorbar(handles.axesFig,doseMap,this.dispWindow{selectIx,1},'fontsize',defaultFontSize);
                         %adjust lables
-                        Idx = find(strcmp(handles.SelectedDisplayOption,DispInfo(:,1)));
-                        set(get(handles.cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
+                        Idx = find(strcmp(this.SelectedDisplayOption,DispInfo(:,1)));
+                        set(get(this.cBarHandel,'ylabel'),'String', [DispInfo{Idx,1} ' ' DispInfo{Idx,3} ],'fontsize',defaultFontSize);
                         % do not interprete as tex syntax
-                        set(get(handles.cBarHandel,'ylabel'),'interpreter','none');
+                        set(get(this.cBarHandel,'ylabel'),'interpreter','none');
                     end
                 end
                 
                 
                 %% plot iso dose lines
-                if get(handles.radiobtnIsoDoseLines,'Value')
-                    plotLabels = get(handles.radiobtnIsoDoseLinesLabels,'Value') == 1;
+                if this.plotIsoDoseLines %get(handles.radiobtnIsoDoseLines,'Value')
+                    plotLabels = this.plotIsoDoseLinesLabels; %get(handles.radiobtnIsoDoseLinesLabels,'Value') == 1;
                     
                     %Sanity Check for Contours, which actually should have been
                     %computed before calling UpdatePlot
-                    if ~isfield(handles.IsoDose,'Contours')
+                    if isempty(this.IsoDose_Contours) %~isfield(handles.IsoDose,'Contours')
                         try
-                            handles.IsoDose.Contours = matRad_computeIsoDoseContours(dose,handles.IsoDose.Levels);
+                            this.IsoDose_Contours = matRad_computeIsoDoseContours(dose,this.IsoDose_Levels);
                         catch
                             %If the computation didn't work, we set the field to
                             %empty, which will force matRad_plotIsoDoseLines to use
                             %matlabs contour function instead of repeating the
                             %failing computation every time
-                            handles.IsoDose.Contours = [];
+                            this.IsoDose_Contours = [];
                             warning('Could not compute isodose lines! Will try slower contour function!');
                         end
-                    end
-                    AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plotLabels,plane,slice,doseMap,handles.dispWindow{doseIx,1},'LineWidth',1.5);
+                     end
+                    AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,this.IsoDose_Contours,this.IsoDose_Levels,plotLabels,this.plane,this.slice,doseMap,this.dispWindow{doseIx,1},'LineWidth',1.5);
                 end
             end
             
-            selectIx = get(handles.popupmenu_chooseColorData,'Value');
-            set(handles.txtMinVal,'String',num2str(handles.dispWindow{selectIx,2}(1,1)));
-            set(handles.txtMaxVal,'String',num2str(handles.dispWindow{selectIx,2}(1,2)));
+%              selectIx = this.colorData; %get(handles.popupmenu_chooseColorData,'Value');
+%              set(handles.txtMinVal,'String',num2str(handles.dispWindow{selectIx,2}(1,1)));
+%              set(handles.txtMaxVal,'String',num2str(handles.dispWindow{selectIx,2}(1,2)));
             
             %% plot VOIs
-            if get(handles.radiobtnContour,'Value') && get(handles.popupTypeOfPlot,'Value')==1 && handles.State>0
-                AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,ct,1,handles.VOIPlotFlag,plane,slice,[],'LineWidth',2)];
+            if this.plotContour && this.typeOfPlot==1 && exist('cst','var') && exist('ct','var') %&& get(handles.radiobtnContour,'Value') && handles.State>0
+                AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,cst,ct,1,this.VOIPlotFlag,this.plane,this.slice,[],'LineWidth',2)];
             end
             
             %% Set axis labels and plot iso center
-            matRad_plotAxisLabels(handles.axesFig,ct,plane,slice,defaultFontSize);
+            matRad_plotAxisLabels(handles.axesFig,ct,this.plane,this.slice,defaultFontSize);
             
-            if get(handles.radioBtnIsoCenter,'Value') == 1 && get(handles.popupTypeOfPlot,'Value') == 1 && ~isempty(pln)
-                hIsoCenterCross = matRad_plotIsoCenterMarker(handles.axesFig,pln,ct,plane,slice);
+            if this.plotIsoCenter && this.typeOfPlot == 1 && ~isempty(pln) %get(handles.radioBtnIsoCenter,'Value') == 1 
+                hIsoCenterCross = matRad_plotIsoCenterMarker(handles.axesFig,pln,ct,this.plane,this.slice);
             end
-            
-            if get(handles.radiobtnPlan,'value') == 1 && ~isempty(pln)
-                matRad_plotProjectedGantryAngles(handles.axesFig,pln,ct,plane);
+             
+            if this.plotPlan && ~isempty(pln) %get(handles.radiobtnPlan,'value') == 1
+                matRad_plotProjectedGantryAngles(handles.axesFig,pln,ct,this.plane);
             end
-            
-            % the following line ensures the plotting order (optional)
-            % set(gca,'Children',[AxesHandlesCT_Dose hIsoCenterCross AxesHandlesIsoDose  AxesHandlesVOI ]);
             
             %set axis ratio
             ratios = [1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
             set(handles.axesFig,'DataAspectRatioMode','manual');
-            if plane == 1
+            if this.plane == 1
                 res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);
                 set(handles.axesFig,'DataAspectRatio',[res 1])
-            elseif plane == 2 % sagittal plane
+            elseif this.plane == 2 % sagittal plane
                 res = [ratios(3) ratios(1)]./max([ratios(3) ratios(1)]);
                 set(handles.axesFig,'DataAspectRatio',[res 1])
-            elseif  plane == 3 % Axial plane
+            elseif  this.plane == 3 % Axial plane
                 res = [ratios(2) ratios(1)]./max([ratios(2) ratios(1)]);
                 set(handles.axesFig,'DataAspectRatio',[res 1])
             end
             
             
             %% profile plot
-            if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
+            if this.typeOfPlot == 2 && exist('Result','var')
                 % set SAD
                 fileName = [pln.radiationMode '_' pln.machine];
                 try
@@ -458,14 +652,14 @@ classdef matRad_ViewingWidget < matRad_Widget
                 
                 % Rotate the system into the beam.
                 % passive rotation & row vector multiplication & inverted rotation requires triple matrix transpose
-                rotMat_system_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(handles.selectedBeam),pln.propStf.couchAngles(handles.selectedBeam)));
+                rotMat_system_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(this.selectedBeam),pln.propStf.couchAngles(this.selectedBeam)));
                 
-                if strcmp(handles.ProfileType,'longitudinal')
-                    sourcePointBEV = [handles.profileOffset -SAD   0];
-                    targetPointBEV = [handles.profileOffset  SAD   0];
-                elseif strcmp(handles.ProfileType,'lateral')
-                    sourcePointBEV = [-SAD handles.profileOffset   0];
-                    targetPointBEV = [ SAD handles.profileOffset   0];
+                if strcmp(this.ProfileType,'longitudinal')
+                    sourcePointBEV = [this.profileOffset -SAD   0];
+                    targetPointBEV = [this.profileOffset  SAD   0];
+                elseif strcmp(this.ProfileType,'lateral')
+                    sourcePointBEV = [-SAD this.profileOffset   0];
+                    targetPointBEV = [ SAD this.profileOffset   0];
                 end
                 
                 rotSourcePointBEV = sourcePointBEV * rotMat_system_T;
@@ -473,7 +667,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 
                 % perform raytracing on the central axis of the selected beam, use unit
                 % electron density for plotting against the geometrical depth
-                [~,l,rho,~,ix] = matRad_siddonRayTracer(pln.propStf.isoCenter(handles.selectedBeam,:),ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{0*ct.cubeHU{1}+1});
+                [~,l,rho,~,ix] = matRad_siddonRayTracer(pln.propStf.isoCenter(this.selectedBeam,:),ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{0*ct.cubeHU{1}+1});
                 d = [0 l .* rho{1}];
                 % Calculate accumulated d sum.
                 vX = cumsum(d(1:end-1));
@@ -493,8 +687,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                 figure(figHandles(idxHandle));
                 
                 % plot physical dose
-                Content = get(handles.popupDisplayOption,'String');
-                SelectedCube = Content{get(handles.popupDisplayOption,'Value')};
+                %Content =this.SelectedDisplayOption; %get(this.popupDisplayOption,'String');
+                SelectedCube = this.SelectedDisplayOption; %Content{get(this.popupDisplayOption,'Value')};
                 if sum(strcmp(SelectedCube,{'physicalDose','effect','RBExDose','alpha','beta','RBE'})) > 0
                     Suffix = '';
                 else
@@ -572,7 +766,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
                 
                 str = sprintf('profile plot - central axis of %d beam gantry angle %d? couch angle %d?',...
-                    handles.selectedBeam ,pln.propStf.gantryAngles(handles.selectedBeam),pln.propStf.couchAngles(handles.selectedBeam));
+                    this.selectedBeam ,pln.propStf.gantryAngles(this.selectedBeam),pln.propStf.couchAngles(this.selectedBeam));
                 h_title = title(handles.axesFig,str,'FontSize',defaultFontSize);
                 pos = get(h_title,'Position');
                 set(h_title,'Position',[pos(1)-40 pos(2) pos(3)])
@@ -601,32 +795,32 @@ classdef matRad_ViewingWidget < matRad_Widget
                 set(h,'FontSize',defaultFontSize);
                 xlabel('radiological depth [mm]','FontSize',8);
                 grid on, grid minor
-                
+            else
+                legend(handles.axesFig,'off')
             end
             
-            zoom(handles.figure1,'reset');
+            %zoom(handles.figure1,'reset');
             axis(handles.axesFig,'tight');
             
-            if handles.rememberCurrAxes
-                axis(currAxes);
+            if this.rememberCurrAxes
+                axis(handles.axesFig);%currAxes);
             end
             
             hold(handles.axesFig,'off');
             
-            handles.cBarChanged = false;
-            guidata(handles.axesFig,handles);
-            %guidata(gcf,handles);
-            if get(handles.popupTypeOfPlot,'Value')==1
-                UpdateColormapOptions(handles);
-            end
+            %this.cBarChanged = false;
             
-            Update3DView(handles);
+%             if this.typeOfPlot==1
+%                 UpdateColormapOptions(handles);
+%             end
+            
             this.handles = handles;
+            Update3DView(this);
             %profile off;
             %profile viewer;
         end
         
-        function Update3DView(handles)
+        function Update3DView(this)
             
             handles = this.handles;
             
@@ -637,34 +831,33 @@ classdef matRad_ViewingWidget < matRad_Widget
                 return
             end
             
-            if handles.State == 0
-                return
-            elseif handles.State > 0
-                AllVarNames = evalin('base','who');
-                if  ismember('resultGUI',AllVarNames)
+            
+            if evalin('base','exist(''pln'')') && ...
+                evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
+            
+                ct  = evalin('base','ct');
+                cst = evalin('base','cst');
+                pln = evalin('base','pln');
+                
+                
+                if  evalin('base','exist(''resultGUI'')')
                     Result = evalin('base','resultGUI');
                 end
                 
-                if  ismember('stf',AllVarNames)
+                if evalin('base','exist(''stf'')')
                     stf = evalin('base','stf');
                 else
                     stf = [];
                 end
-                
-                ct  = evalin('base','ct');
-                cst = evalin('base','cst');
-                pln = evalin('base','pln');
+            else
+                return
             end
+            
             
             oldView = get(axesFig3D,'View');
             
             cla(axesFig3D);
-            %delete(allchild(axesFig3D));
             
-            %test = allchild(axesFig3D);
-            
-            plane = get(handles.popupPlane,'Value');
-            slice = round(get(handles.sliderSlice,'Value'));
             defaultFontSize = 8;
             
             %Check if we need to precompute the surface data
@@ -678,47 +871,47 @@ classdef matRad_ViewingWidget < matRad_Widget
             
             %% Plot 3D structures
             hold(axesFig3D,'on');
-            if get(handles.radiobtnContour,'Value') && handles.State>0
-                voiPatches = matRad_plotVois3D(axesFig3D,ct,cst,handles.VOIPlotFlag,colorcube);
+            if this.plotContour && exist('cst','var') && exist('ct','var') %get(handles.radiobtnContour,'Value') && handles.State>0
+                voiPatches = matRad_plotVois3D(axesFig3D,ct,cst,this.VOIPlotFlag,colorcube);
             end
             
             %% plot the CT slice
-            if get(handles.radiobtnCT,'Value')
-                window = handles.dispWindow{2,1}; %(2 for ct)
-                ctMap = matRad_getColormap(handles.ctColorMap,handles.cMapSize);
-                ctHandle = matRad_plotCtSlice3D(axesFig3D,ct,1,plane,slice,ctMap,window);
+            if this.plotCT %get(handles.radiobtnCT,'Value')
+                window = this.dispWindow{2,1}; %(2 for ct)
+                ctMap = matRad_getColormap(this.ctColorMap,this.cMapSize);
+                ctHandle = matRad_plotCtSlice3D(axesFig3D,ct,1,this.plane,this.slice,ctMap,window);
             end
             
             %% plot the dose slice
             if handles.State >= 1 && exist('Result','var')
-                doseMap = matRad_getColormap(handles.doseColorMap,handles.cMapSize);
+                doseMap = matRad_getColormap(this.doseColorMap,this.cMapSize);
                 doseIx  = 3;
                 % if the selected display option doesn't exist then simply display
                 % the first cube of the Result struct
-                if ~isfield(Result,handles.SelectedDisplayOption)
+                if ~isfield(Result,this.SelectedDisplayOption)
                     CubeNames = fieldnames(Result);
-                    handles.SelectedDisplayOption = CubeNames{1,1};
+                    this.SelectedDisplayOption = CubeNames{1,1};
                 end
                 
-                dose = Result.(handles.SelectedDisplayOption);
+                dose = Result.(this.SelectedDisplayOption);
                 
                 % dose colorwash
                 if ~isempty(dose) && ~isvector(dose)
                     
-                    if isempty(handles.dispWindow{doseIx,2})
-                        handles.dispWindow{doseIx,2} = [min(dose(:)) max(dose(:))];   % set min and max dose values
+                    if isempty(this.dispWindow{doseIx,2})
+                        this.dispWindow{doseIx,2} = [min(dose(:)) max(dose(:))];   % set min and max dose values
                     end
                     
-                    if get(handles.radiobtnDose,'Value')
-                        [doseHandle,~,handles.dispWindow{doseIx,1}] = matRad_plotDoseSlice3D(axesFig3D,ct,dose,plane,slice,handles.CutOffLevel,handles.doseOpacity,doseMap,handles.dispWindow{doseIx,1});
+                    if this.plotDose %get(handles.radiobtnDose,'Value')
+                        [doseHandle,~,this.dispWindow{doseIx,1}] = matRad_plotDoseSlice3D(axesFig3D,ct,dose,this.plane,this.slice,this.CutOffLevel,this.doseOpacity,doseMap,this.dispWindow{doseIx,1});
                     end
-                    if get(handles.radiobtnIsoDoseLines,'Value')
-                        matRad_plotIsoDoseLines3D(axesFig3D,ct,dose,handles.IsoDose.Contours,handles.IsoDose.Levels,plane,slice,doseMap,handles.dispWindow{doseIx,1},'LineWidth',1.5);
+                    if this.plotIsoDoseLines %get(handles.radiobtnIsoDoseLines,'Value')
+                        matRad_plotIsoDoseLines3D(axesFig3D,ct,dose,this.IsoDose_Contours,this.IsoDose_Levels,this.plane,this.slice,doseMap,this.dispWindow{doseIx,1},'LineWidth',1.5);
                     end
                 end
             end
             
-            if get(handles.radiobtnPlan,'Value')
+            if this.plotPlan %get(handles.radiobtnPlan,'Value')
                 matRad_plotPlan3D(axesFig3D,pln,stf);
             end
             
@@ -741,6 +934,45 @@ classdef matRad_ViewingWidget < matRad_Widget
             
             set(axesFig3D,'view',oldView);
             
+            this.handles = handles;
+        end
+        
+        %Update IsodoseLines
+        function this = updateIsoDoseLineCache(this)
+            handles=this.handles;
+            
+            if evalin('base','exist(''resultGUI'')')
+                
+                resultGUI = evalin('base','resultGUI');
+                % select first cube if selected option does not exist
+                if ~isfield(resultGUI,this.SelectedDisplayOption)
+                    CubeNames = fieldnames(resultGUI);
+                    dose = resultGUI.(CubeNames{1,1});
+                else
+                    dose = resultGUI.(this.SelectedDisplayOption);
+                end
+%                 
+%                 %if function is called for the first time then set display parameters
+%                 if isempty(this.dispWindow{3,2})
+%                     this.dispWindow{3,1} = [min(dose(:)) max(dose(:))]; % set default dose range
+%                     this.dispWindow{3,2} = [min(dose(:)) max(dose(:))]; % set min max values
+%                 end
+%                 
+%                 minMaxRange = this.dispWindow{3,1};
+%                 % if upper colorrange is defined then use it otherwise 120% iso dose
+%                 upperMargin = 1;
+%                 if abs((max(dose(:)) - this.dispWindow{3,1}(1,2))) < 0.01  * max(dose(:))
+%                     upperMargin = 1.2;
+%                 end
+%                 
+%                 %this creates a loop(needed the first time a dose cube is loaded)
+%                 if (length(this.IsoDose_Levels) == 1 && this.IsoDose_Levels(1,1) == 0) || ~this.NewIsoDoseFlag
+%                     vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];
+%                     referenceDose            = (minMaxRange(1,2))/(upperMargin);
+%                     this.IsoDose_Levels   = minMaxRange(1,1) + (referenceDose-minMaxRange(1,1)) * vLevels;
+%                 end 
+                this.IsoDose_Contours = matRad_computeIsoDoseContours(dose,this.IsoDose_Levels);
+            end
             this.handles = handles;
         end
     end

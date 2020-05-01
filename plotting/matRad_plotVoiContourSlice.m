@@ -95,7 +95,7 @@ for s = 1:size(cst,1)
          if any(C(:))
             lower = 1; % lower marks the beginning of a section
             while lower-1 ~= size(C,2)
-                hold on
+                hold(axesHandle,'on') %hold on
                 steps = C(2,lower); % number of elements of current line section
                 tmpLineHandle(end+1) = line(C(1,lower+1:lower+steps),...
                     C(2,lower+1:lower+steps),...

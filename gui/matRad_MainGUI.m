@@ -2,6 +2,7 @@ classdef matRad_MainGUI < handle
     
     properties
         guiHandle
+        lastStoragePath = []
     end
     
     properties (Access = private)
@@ -61,6 +62,7 @@ classdef matRad_MainGUI < handle
                 'Parent',h60,...
                 'Tag','toolbarZoomIn',...
                 'CData',icons{4},...
+                'ClickedCallback',@(hObject, eventdata)toolbarZoomIn_ClickedCallback(this, hObject, eventdata),...
                 'Separator','on',...
                 'TooltipString','Zoom In');
             
@@ -69,6 +71,7 @@ classdef matRad_MainGUI < handle
                 'Children',[],...
                 'Tag','toolbarZoomOut',...
                 'CData',icons{5},...
+                'ClickedCallback',@(hObject, eventdata)toolbarZoomOut_ClickedCallback(this, hObject, eventdata),...
                 'Separator','on',...
                 'TooltipString','Zoom Out');
             
@@ -76,6 +79,7 @@ classdef matRad_MainGUI < handle
                 'Parent',h60,...
                 'Tag','toolbarPan',...
                 'CData',icons{6},...
+                'ClickedCallback',@(hObject, eventdata)toolbarPan_ClickedCallback(this, hObject, eventdata),...
                 'Separator','on',...
                 'TooltipString','Pan' );
             
@@ -83,6 +87,7 @@ classdef matRad_MainGUI < handle
                 'Parent',h60,...
                 'Tag','toolbarCursor',...
                 'CData',icons{7},...
+                'ClickedCallback',@(hObject, eventdata)toolbarCursor_ClickedCallback(this, hObject, eventdata),...
                 'Separator','on',...
                 'TooltipString','Data Cursor' );
             
@@ -90,6 +95,7 @@ classdef matRad_MainGUI < handle
                 'Parent',h60,...
                 'Tag','toolbarLegend',...
                 'CData',icons{8},...
+                'ClickedCallback',@(hObject, eventdata)toolbarLegend_ClickedCallback(this, hObject, eventdata),...
                 'Separator','on',...
                 'TooltipString','Insert Legend');
             
@@ -218,10 +224,13 @@ classdef matRad_MainGUI < handle
             obj.OptimizationWidget = matRad_OptimizationWidget(p3);
             obj.eventListeners.optimization = addlistener(obj.OptimizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
             
-            obj.VisualizationWidget = matRad_VisualizationWidget(p4);            
+            obj.ViewingWidget = matRad_ViewingWidget(p8);
+            obj.eventListeners.viewing = addlistener(obj.ViewingWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+            
+            obj.VisualizationWidget = matRad_VisualizationWidget(p4, obj.ViewingWidget);            
             obj.eventListeners.visualization = addlistener(obj.VisualizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
             
-            obj.ViewerOptionsWidget = matRad_ViewerOptionsWidget(p5);
+            obj.ViewerOptionsWidget = matRad_ViewerOptionsWidget(p5, obj.ViewingWidget);
             obj.eventListeners.viewerOptions = addlistener(obj.ViewerOptionsWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
             
             obj.StructureVisibilityWidget = matRad_StructureVisibilityWidget(p6);
@@ -229,8 +238,6 @@ classdef matRad_MainGUI < handle
             
             obj.InfoWidget = matRad_InfoWidget(p7); % does not need a listener
             
-            obj.ViewingWidget = matRad_ViewingWidget(p8);
-            obj.eventListeners.viewing = addlistener(obj.ViewingWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
             
             obj.LogoWidget = matRad_LogoWidget(p9); % does not need a listener
             
@@ -241,61 +248,182 @@ classdef matRad_MainGUI < handle
         
         function this = updateWidgets(this,src,hEvent)
            %obj.PlanWidget.update(); 
-           %disp('Workspace Changed');
+           disp(['Workspace Changed ' datestr(now,'HH:MM:SS.FFF')]);
            this.PlanWidget.update();
+           this.WorkflowWidget.update();
+           this.OptimizationWidget.update();
+           this.ViewingWidget.update();
+           this.ViewerOptionsWidget.update();
+           this.VisualizationWidget.update();
+           this.StructureVisibilityWidget.update();
         end
         
-        function matRadGUI_OpeningFcn(this, hObject, event)
-            %#ok<*DEFNU>
-            %#ok<*AGROW>
-            % This function has no output args, see OutputFcn.
-            % hObject    handle to figure
-            % eventdata  reserved - to be defined in a future version of MATLAB
-            % handles    structure with handles and user data (see GUIDATA)
-            % varargin   command line arguments to matRadGUI (see VARARGIN)
+%         function matRadGUI_OpeningFcn(this, hObject, event)
+%             %#ok<*DEFNU>
+%             %#ok<*AGROW>
+%             % This function has no output args, see OutputFcn.
+%             % hObject    handle to figure
+%             % eventdata  reserved - to be defined in a future version of MATLAB
+%             % handles    structure with handles and user data (see GUIDATA)
+%             % varargin   command line arguments to matRadGUI (see VARARGIN)
+%             
+%             % variable to check whether GUI is opened or just refreshed / new data
+%             % loaded, since resetGUI needs to distinguish at one point
+%             
+%             handles = this.handles;
+%             handles.initialGuiStart = true;
+%             
+%             %If devMode is true, error dialogs will include the full stack trace of the error
+%             %If false, only the basic error message is shown (works for errors that
+%             %handle the MException object)
+%             
+%             handles.devMode = true;
+%             set(handles.radiobtnPlan,'value',0);
+%             handles = resetGUI(hObject, handles);
+%             
+%             %% parse variables from base workspace
+%             AllVarNames = evalin('base','who');
+%             handles.AllVarNames = AllVarNames;
+%             try
+%                 if  ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
+%                     ct  = evalin('base','ct');
+%                     cst = evalin('base','cst');
+%                     %cst = setCstTable(handles,cst);
+%                     cst = generateCstTable(handles,cst);
+%                     handles.State = 1;
+%                     cst = matRad_computeVoiContoursWrapper(cst,ct);
+%                     assignin('base','cst',cst);
+%                     
+%                 elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
+%                     handles = showError(handles,'GUI OpeningFunc: could not find cst file');
+%                 elseif ~ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
+%                     handles = showError(handles,'GUI OpeningFunc: could not find ct file');
+%                 end
+%             catch
+%                 handles = showError(handles,'GUI OpeningFunc: Could not load ct and cst file');
+%             end
+%             
+%             if ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
+%                 handles = reloadGUI(hObject, handles, ct, cst);
+%             else
+%                 handles = reloadGUI(hObject, handles);
+%             end
+%             this.handles = handles;
+%         end
+    end
+    methods (Access= protected)
+        % toolbar load button
+        function toolbarLoad_ClickedCallback(this,hObject, eventdata)
+            this.WorkflowWidget.btnLoadMat_Callback(hObject, eventdata);
+        end
+        % toolbar save button
+        function toolbarSave_ClickedCallback(this,hObject, eventdata)
+            %handles=this.handles;
+            %btnTableSave_Callback(hObject, eventdata, handles);
             
-            % variable to check whether GUI is opened or just refreshed / new data
-            % loaded, since resetGUI needs to distinguish at one point
-            
-            handles = this.handles;
-            handles.initialGuiStart = true;
-            
-            %If devMode is true, error dialogs will include the full stack trace of the error
-            %If false, only the basic error message is shown (works for errors that
-            %handle the MException object)
-            
-            handles.devMode = true;
-            set(handles.radiobtnPlan,'value',0);
-            handles = resetGUI(hObject, handles);
-            
-            %% parse variables from base workspace
-            AllVarNames = evalin('base','who');
-            handles.AllVarNames = AllVarNames;
             try
-                if  ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-                    ct  = evalin('base','ct');
+                
+                if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')') ...
+                        && evalin('base','exist(''pln'')')
+                    ct = evalin('base','ct');
                     cst = evalin('base','cst');
-                    %cst = setCstTable(handles,cst);
-                    cst = generateCstTable(handles,cst);
-                    handles.State = 1;
-                    cst = matRad_computeVoiContoursWrapper(cst,ct);
-                    assignin('base','cst',cst);
-                    
-                elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
-                    handles = showError(handles,'GUI OpeningFunc: could not find cst file');
-                elseif ~ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-                    handles = showError(handles,'GUI OpeningFunc: could not find ct file');
+                    pln = evalin('base','pln');
+                    if evalin('base','exist(''dij'')') && evalin('base','exist(''stf'')')
+                        stf = evalin('base','stf');
+                        dij = evalin('base','dij');
+                        if evalin('base','exist(''resultGUI'')')
+                            resultGUI = evalin('base','resultGUI');
+                            uisave({'cst','ct','pln','stf','dij','resultGUI'});
+                        else
+                            uisave({'cst','ct','pln','stf','dij'});
+                        end
+                    else
+                        uisave({'cst','ct','pln'});
+                    end
                 end
             catch
-                handles = showError(handles,'GUI OpeningFunc: Could not load ct and cst file');
+                %handles = showWarning(handles,'Could not save files');
+            end
+            %this.handles=handles;
+        end
+        function uipushtool_screenshot_ClickedCallback(this,hObject, eventdata)
+            % hObject    handle to uipushtool_screenshot (see GCBO)
+            % eventdata  reserved - to be defined in a future version of MATLAB
+            % handles    structure with handles and user data (see GUIDATA)
+            
+            
+            tmpFig = figure('position',[100 100 700 600],'Visible','off','name','Current View');
+            cBarHandle = this.ViewingWidget.cBarHandel; %findobj(handles.figure1,'Type','colorbar');
+            if ~isempty(cBarHandle)
+                new_handle = copyobj([this.ViewingWidget.handles.axesFig cBarHandle],tmpFig);
+                %new_handle = copyobj([handles.axesFig cBarHandle],tmpFig);
+            else
+                new_handle = copyobj(this.ViewingWidget.handles.axesFig,tmpFig);
+                %new_handle = copyobj(handles.axesFig,tmpFig);
             end
             
-            if ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-                handles = reloadGUI(hObject, handles, ct, cst);
-            else
-                handles = reloadGUI(hObject, handles);
+            oldPos = get(this.ViewingWidget.handles.axesFig,'Position');
+            set(new_handle(1),'units','normalized', 'Position',oldPos);
+            
+            if exist(this.lastStoragePath,'dir') ~= 7 %~isfield(handles,'lastStoragePath') || exist(handles.lastStoragePath,'dir') ~= 7
+                this.lastStoragePath = [];
             end
-            this.handles = handles;
+            
+            [filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view',[this.lastStoragePath 'screenshot.png']);
+            
+            this.lastStoragePath = pathname;
+            
+            if ~isequal(filename,0) && ~isequal(pathname,0)
+                set(gcf, 'pointer', 'watch');
+                saveas(tmpFig,fullfile(pathname,filename));
+                set(gcf, 'pointer', 'arrow');
+                close(tmpFig);
+                uiwait(msgbox('Current view has been succesfully saved!'));
+            else
+                uiwait(msgbox('Aborted saving, showing figure instead!'));
+                set(tmpFig,'Visible','on');
+            end
+            
+        end
+        % --------------------------------------------------------------------
+        function uitoggletool8_ClickedCallback(this,hObject, eventdata)
+            % hObject    handle to uitoggletool8 (see GCBO)
+            % eventdata  reserved - to be defined in a future version of MATLAB
+            % handles    structure with handles and user data (see GUIDATA)
+            
+            %Check if on or off
+            val = strcmp(get(hObject,'State'),'on');
+            
+            %Now we have to apply the new selection to our colormap options panel
+            if ~val
+                newSelection = 1;
+            else
+                %Chooses the selection from the highest state
+                selections = get(this.ViewerOptionsWidget.handles.popupmenu_chooseColorData,'String'); %get(handles.popupmenu_chooseColorData,'String');
+                newSelection = numel(selections);
+            end
+            set(this.ViewerOptionsWidget.handles.popupmenu_chooseColorData,'Value',newSelection);
+            this.ViewerOptionsWidget.popupmenu_chooseColorData_Callback();
+            
+            %handles.cBarChanged = true;
+            %guidata(hObject,handles);
+        end
+        
+        function toolbarLegend_ClickedCallback(this,hObject, eventdata)
+            l = findobj (this.ViewingWidget.handles.uipanel11, 'type', 'legend');
+            set (l, 'visible', get(hObject,'State'))
+        end
+        
+        function toolbarZoomIn_ClickedCallback(this,hObject, eventdata)
+        end
+        
+        function toolbarZoomOut_ClickedCallback(this,hObject, eventdata)
+        end
+        
+        function toolbarPan_ClickedCallback(this,hObject, eventdata)
+        end
+        
+        function toolbarCursor_ClickedCallback(this,hObject, eventdata)
         end
     end
 end
