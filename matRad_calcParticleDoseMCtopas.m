@@ -21,22 +21,33 @@ topasBaseData.writeTopasData(ct,stf,pln,w);
 
 files = dir(fullfile(TopasConfig.filepath,'*.txt'));
 
+%check TOPAS version
+if ~isfield(TopasConfig,'version')
+    fid = fopen(['\\wsl$\',wslDistribution,'\home\',userName,'\topas\README.txt']);
+    topasVer = textscan(fid,'%s',3);
+    TopasConfig.version = topasVer{1,1}{3,1};
+    fclose(fid);
+end
+
 paramFiles = [];
 for k = 3:length(files)
-    paramFiles = [paramFiles,'; ../../topas/topas ',files(k).name];
+    switch TopasConfig.version
+        case '3.3'
+            paramFiles = [paramFiles,'; ../../topas/bin/topas ',files(k).name];
+        case '3.1.3'
+            paramFiles = [paramFiles,'; ../../topas/topas ',files(k).name];
+    end
 end
 if waitForSystem
 startSim = ['wsl -d ',wslDistribution,' cd ~/; source setup_env.sh; cd ~/matfiles/MCexport/',paramFiles];    
-
-% receiving data from topas
-topasDose = matRad_getWslTopasData(wslDistribution,userName,TopasConfig);
 else
 startSim = ['wsl -d ',wslDistribution,' cd ~/; source setup_env.sh; cd ~/matfiles/MCexport/',paramFiles,' &'];    
 end
 
 system(startSim)
 
-
+% receiving data from topas
+topasDose = matRad_getWslTopasData(wslDistribution,userName,ct);
 
 end
 

@@ -72,7 +72,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
             
             if ~isfield(obj.TopasConfig,'numOfRuns')
                 % default: 5 runs
-                obj.TopasConfig.numOfRuns = 5;
+                obj.TopasConfig.numOfRuns = 1;
             end
             
             if ~isfield(obj.TopasConfig,'useOrigBaseData')
@@ -405,8 +405,9 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 MCparam.RSP = rspCube;
                 MCparam.voxelDimensions = ct.resolution;
                 MCparam.outputType = obj.TopasConfig.outputType;
-                MCparam.nbHistories = historyCount;
                 MCparam.nbParticles = nbParticlesTotal;
+                MCparam.nbHistories = obj.TopasConfig.fracHistories*nbParticlesTotal;
+               
                 save([obj.TopasConfig.filepath,'MCparam.mat'],'MCparam');
                 
                 disp('Successfully written TOPAS setup files!')
