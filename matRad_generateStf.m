@@ -252,7 +252,7 @@ for i = 1:length(pln.propStf.gantryAngles)
                 targetExit  = radDepths(diff_voi == -1);
 
                 if numel(targetEntry) ~= numel(targetExit)
-                    matRad_cfg.dispError('Inconsistency during ray tracing.');
+                    matRad_cfg.dispError('Inconsistency during ray tracing. Please check correct assignment and overlap priorities of structure types OAR & TARGET.');
                 end
 
                 stf(i).ray(j).energy = [];

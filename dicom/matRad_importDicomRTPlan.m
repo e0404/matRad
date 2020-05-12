@@ -128,7 +128,7 @@ end
 %% write parameters found to pln variable
 pln.radiationMode   = radiationMode; % either photons / protons / carbon
 pln.numOfFractions  = planInfo.FractionGroupSequence.Item_1.NumberOfFractionsPlanned;
-pln.machine         = planInfo.BeamSequence.Item_1.TreatmentMachineName;
+pln.machine         = planInfo.(BeamParam).Item_1.TreatmentMachineName;
 
 pln.propStf.isoCenter    = isoCenter;
 pln.propStf.bixelWidth   = NaN; % [mm] / also corresponds to lateral spot spacing for particles

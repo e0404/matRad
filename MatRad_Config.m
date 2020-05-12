@@ -81,22 +81,32 @@ classdef MatRad_Config < handle
         end  
       
         function dispDebug(obj,formatSpec,varargin)
+			%dispDebug wrapper for debug messages forwarded to displayToConsole 
             obj.displayToConsole('debug',formatSpec,varargin{:});
         end
         
         function dispInfo(obj,formatSpec,varargin)
+			%dispInfo wrapper for standard / info output forwarded to displayToConsole 
             obj.displayToConsole('info',formatSpec,varargin{:});
         end
         
         function dispError(obj,formatSpec,varargin)
+			%dispError wrapper for error messages forwarded to displayToConsole 
             obj.displayToConsole('error',formatSpec,varargin{:});
         end
         
         function dispWarning(obj,formatSpec,varargin)
+			%dispWarning wrapper for warning messages forwarded to displayToConsole 
             obj.displayToConsole('warning',formatSpec,varargin{:});
         end
         
         function displayToConsole(obj,type,formatSpec,varargin)
+			%displayToConsole lowest-level logging function for matRad. 
+            %  input
+			%    type:			type of the log information. Needs to be one of 'error', 'warning', 'info' or 'debug'.
+			%    formatSpec: 	string to print using format specifications similar to fprintf
+			%    varargin:   	variables according to formatSpec
+			
             if nargin < 4
                 forwardArgs = {formatSpec};
             else
@@ -132,14 +142,17 @@ classdef MatRad_Config < handle
         end
         
         function obj = writeLogToFile(obj,filename)
+			%writeLogToFile writes the log kept in MatRad_Config to file.             
+            %  Note that the switch keepLog must be enabled for MatRad_Config to store all logging output.
+			
             singleString = '%s: %s\n';
             fID = fopen(filename,'w');
             fprintf(fID,repmat(singleString,1,size(obj.messageLog,1)),obj.messageLog{:});
             fclose(fID);
         end
         
-        %%Property set methods for checks
         function set.logLevel(obj,newLogLevel)       
+			%%Property set methods for logLevel 
             minLevel = 1;
             maxLevel = 4;
             if newLogLevel >= minLevel && newLogLevel <= maxLevel
@@ -153,6 +166,9 @@ classdef MatRad_Config < handle
     methods(Static)
       
         function obj = instance()
+			%instance creates a singleton instance of MatRad_Config
+            %  In MatRad_Config, the constructor is private to make sure only on global instance exists. 
+			%  Call this static functino to get or create an instance of the matRad configuration class
             persistent uniqueInstance;
             
             if isempty(uniqueInstance)

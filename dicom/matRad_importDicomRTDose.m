@@ -85,9 +85,15 @@ for i = 1 : numDoseFiles
     else
         beamSuffix = '';
     end
+    
+    if ~isempty(doseInstanceHelper)
+        instanceSuffix = ['_' num2str(doseInstanceHelper)];
+    else
+        instanceSuffix = '';
+    end
         
     
-    resultName = strcat(doseTypeHelper,'_',num2str(doseInstanceHelper),beamSuffix);
+    resultName = strcat(doseTypeHelper,instanceSuffix,beamSuffix);
     
     resultGUI.(resultName) = dose.(itemName).cube;
     resultGUI.doseMetaInfo.(resultName) = dose.(itemName).dicomInfo;
