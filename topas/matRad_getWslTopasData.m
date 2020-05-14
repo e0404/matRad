@@ -1,4 +1,4 @@
-function topasDose = matRad_getWslTopasData(wslDistribution,userName,ct)
+function topasDose = matRad_getWslTopasData(wslDistribution,userName)
 
 load(['\\wsl$\',wslDistribution,'\home\',userName,'\matfiles\MCexport\MCparam.mat']);
 topasDose.MCparam = MCparam;
@@ -9,15 +9,15 @@ for k = 1:MCparam.nbRuns
     for n = 1:length(data)
         dose{k}(data(n,1)+1,data(n,2)+1,data(n,3)+1) = data(n,4);
     end
-    topasSum = topasSum + dose{k}/MCparam.nbRuns;
+    topasSum = topasSum + dose{k};
 end
-voxelVolume = 1.0e-3*(MCparam.voxelDimensions.x*MCparam.voxelDimensions.y*MCparam.voxelDimensions.z);
 correctionFactor = double(MCparam.nbParticles) / double(MCparam.nbHistories);
 
+% correct the topas calculated dose
 topasDose.physicalDose = zeros(MCparam.cubeDim(2),MCparam.cubeDim(1),MCparam.cubeDim(3));
 topasDose.physicalDose(:) = correctionFactor(:).*topasSum(:);
 
-topasDose.physicalDose = rot90(topasDose.physicalDose,-1);
-topasDose.physicalDose = flip(topasDose.physicalDose,2);
+% switch coordinate systems from topas (x,y,z) to matlab (y,x,z)
+topasDose.physicalDose = permute(topasDose.physicalDose,[2 1 3]);
 
 end

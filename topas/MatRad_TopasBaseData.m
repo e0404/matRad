@@ -77,13 +77,14 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
             
             if ~isfield(obj.TopasConfig,'useOrigBaseData')
                 % base data of the original matRad plan will be used
-                % default: true
+                % default: false
                 obj.TopasConfig.useOrigBaseData = false;
             end
             
             if ~isfield(obj.TopasConfig,'beamProfile')
-                % default: 5 runs
+                %   beamProfile: 'simple' of 'biGaussian'
                 obj.TopasConfig.beamProfile = 'biGaussian';
+                %obj.TopasConfig.beamProfile = 'simple';
             end
             
             if ~isfield(obj.TopasConfig,'pencilBeamScanning')
@@ -106,16 +107,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
         function obj = writeTopasData(obj,ct,stf,pln,w)
             %function that writes a data file containing stf specific data
             %for a Monte Carlo simulation with TOPAS
-            
-            % load default modules
-            if ~isfield(obj.TopasConfig,'modules')
-                if strcmp(pln.radiationMode,'protons')
-                    obj.TopasConfig.modules = {'"g4em-standard_opt4"','"g4h-phy_QGSP_BIC_HP"','"g4decay"','"g4ion-QMD"','"g4h-elastic_HP"','"g4stopping"','"g4radioactivedecay"'};
-                else
-                    obj.TopasConfig.modules = {'"g4em-standard_opt4"','"g4h-phy_QGSP_BIC_HP"','"g4decay"','"g4h-elastic_HP"','"g4stopping"','"g4ion-inclxx"'};
-                end
-            end
-            
+                     
             %look up focus indices
             focusIndex = obj.selectedFocus(obj.energyIndex);
             
@@ -238,8 +230,27 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 fprintf(fileID,'s:Sim/PlanLabel = "simData_matRad_plan_field1_run" + Ts/Seed\n');
                 fprintf(fileID,'d:Sim/GantryAngle = %.6f deg\n', stf(beamIx).gantryAngle);
                 fprintf(fileID,'d:Sim/CouchAngle = %.6f deg\n', stf(beamIx).couchAngle);
-                fprintf(fileID,'s:Sim/ParticleName = "proton"\n');
-                fprintf(fileID,'u:Sim/ParticleMass = 1.0\n');
+                
+                if strcmp(pln.radiationMode,'protons')
+                    fprintf(fileID,'s:Sim/ParticleName = "proton"\n');
+                    fprintf(fileID,'u:Sim/ParticleMass = 1.0\n');
+                    % load default modules
+                    if ~isfield(obj.TopasConfig,'modules')
+                        obj.TopasConfig.modules = {'"g4em-standard_opt4"','"g4h-phy_QGSP_BIC_HP"','"g4decay"','"g4h-elastic_HP"','"g4stopping"','"g4ion-QMD"','"g4radioactivedecay"'};
+                    end
+                    
+                elseif strcmp(pln.radiationMode,'carbon')
+                    fprintf(fileID,'s:Sim/ParticleName = "GenericIon(6,12)"\n');
+                    fprintf(fileID,'u:Sim/ParticleMass = 12.0\n');
+                    % load default modules
+                    if ~isfield(obj.TopasConfig,'modules')
+                        obj.TopasConfig.modules = {'"g4em-standard_opt4"','"g4h-phy_QGSP_BIC_HP"','"g4decay"','"g4h-elastic_HP"','"g4stopping"','"g4ion-QMD"','"g4ion-inclxx"'};
+                    end
+                    
+                else
+                    error('Unvalid radiation mode!')
+                end
+                
                 fprintf(fileID,'i:Sim/NbThreads = %i\n', obj.TopasConfig.numOfThreads);
                 fprintf(fileID,'d:Tf/TimelineStart = 0. ms\n');
                 fprintf(fileID,'d:Tf/TimelineEnd = %i ms\n', 10 * cutNumOfBixel);
@@ -250,7 +261,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 fprintf(fileID,'s:Tf/Beam/Energy/Function = "Step"\n');
                 fprintf(fileID,'dv:Tf/Beam/Energy/Times = Tf/Beam/Spot/Times ms\n');
                 fprintf(fileID,'dv:Tf/Beam/Energy/Values = %i ', cutNumOfBixel);
-                fprintf(fileID,strjoin(string([dataTOPAS.energy])));
+                fprintf(fileID,strjoin(string([12*dataTOPAS.energy])));
                 fprintf(fileID,' MeV\n');
                 
                 switch obj.TopasConfig.beamProfile
@@ -327,7 +338,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 fprintf(fileID,'s:Tf/Beam/Current/Function = "Step"\n');
                 fprintf(fileID,'dv:Tf/Beam/Current/Times = Tf/Beam/Spot/Times ms\n');
                 fprintf(fileID,'iv:Tf/Beam/Current/Values = %i ', cutNumOfBixel);
-                fprintf(fileID,strjoin(string(round([dataTOPAS.current]))));
+                fprintf(fileID,strjoin(string(round([dataTOPAS.current]./obj.TopasConfig.numOfRuns))));
                 fprintf(fileID,'\n\n');
                                 
                 if isfield(pln,'propStf')
@@ -358,9 +369,9 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 
                 switch obj.TopasConfig.beamProfile
                     case 'biGaussian'
-                        TOPAS_beamSetup = fopen(['TOPAS_beamSetup_biGaussian_' pln.radiationMode '.txt'],'r');
+                        TOPAS_beamSetup = fopen('TOPAS_beamSetup_biGaussian.txt','r');
                     case 'simple'
-                        TOPAS_beamSetup = fopen(['TOPAS_beamSetup_generic_' pln.radiationMode '.txt'],'r');
+                        TOPAS_beamSetup = fopen('TOPAS_beamSetup_generic.txt','r');
                 end
                 
                 % copy standard values from TOPAS_beamSetup

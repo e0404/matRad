@@ -47,7 +47,7 @@ end
 system(startSim)
 
 % receiving data from topas
-topasDose = matRad_getWslTopasData(wslDistribution,userName,ct);
+topasDose = matRad_getWslTopasData(wslDistribution,userName);
 
 end
 
