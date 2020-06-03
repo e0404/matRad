@@ -1,5 +1,12 @@
-%Create Standalone with and without runtime
+function matRad_compileStandalone(isRelease)
 
+if nargin < 1
+    isRelease = false;
+end
+
+[versionString,versionFull] = matRad_version();
+
+%Create Standalone with and without runtime
 FileName='matRad.prj';
 xDoc = xmlread(FileName);
 
@@ -66,11 +73,29 @@ for i=0:tags.getLength - 1
 end    
 
 %Get version and Filenames
-version= replace(xDoc.getElementsByTagName('param.version').item(0).getFirstChild.getData().toCharArray()','.','_');
-filename_webRT =['matRad_installer' suffix '64_v_' version];
-filename_withRT =['matRad_installer' suffix '64_wRT_v_' version];
+%version= replace(xDoc.getElementsByTagName('param.version').item(0).getFirstChild.getData().toCharArray()','.','_');
+
+vernum = sprintf('%d.%d.%d',versionFull.major,versionFull.minor,versionFull.patch);
+
+tmp_verstr = ['v' vernum];
+if ~isRelease && ~isempty(versionFull.commitID) && ~isempty(versionFull.branch)
+    branchinfo = [versionFull.branch '-' versionFull.commitID(1:8)];
+    tmp_verstr = [tmp_verstr '_' branchinfo];
+    addDescription = ['!!!matRad development version build from branch/commit ' branchinfo '!!!'];
+    desc = xDoc.getElementsByTagName('param.description').item(0).getFirstChild.getData().toCharArray()';
+    desc = [addDescription ' ' desc];
+    xDoc.getElementsByTagName('param.description').item(0).getFirstChild.setData(desc);
+end
+
+%The Application compiler only allows major and minor version number
+vernum_appCompiler = sprintf('%d.%d',versionFull.major,versionFull.minor);
+
+filename_webRT =['matRad_installer' suffix '64_' tmp_verstr];
+filename_withRT =['matRad_installer' suffix '64_wRT_' tmp_verstr];
 xDoc.getElementsByTagName('param.web.mcr.name').item(0).getFirstChild.setData(filename_webRT);
 xDoc.getElementsByTagName('param.package.mcr.name').item(0).getFirstChild.setData(filename_withRT);
+xDoc.getElementsByTagName('param.version').item(0).getFirstChild.setData(vernum_appCompiler);
+
 
 
 %check if the files exist, and delete them
