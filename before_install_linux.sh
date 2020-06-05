@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 sudo chmod +x runtests.sh
-sudo chmod +x submodules/MCsquare/MCsquare_linux
+sudo chmod +x MCsquare/bin/MCsquare_linux
 
 sudo apt-get update -qq
 sudo apt-get install gdb # to capture backtrace of eventual failures
@@ -14,6 +14,8 @@ sudo apt-get update --yes --force-yes
 # dependencies
 sudo apt-get install octave --yes --force-yes
 sudo apt-get install liboctave-dev --yes --force-yes
+sudo apt-get install libgdcm2-dev #for the octave dicom package
+octave --no-gui --eval "pkg install -forge dicom"
 sudo apt-get install git --yes --force-yes
 export MATRAD=`pwd`
 

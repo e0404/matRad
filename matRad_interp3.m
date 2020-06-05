@@ -5,9 +5,11 @@ function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)
 %   y = matRad_interp3(xi,yi,zi,x,xq,yq,zy)
 %
 % input
-%   xi,yi,zi: grid vectors 
-%   x:        data
-%   xq,yq,zq: coordinates of quer points as a grid
+%   xi,yi,zi:   grid vectors 
+%   x:          data
+%   xq,yq,zq:   coordinates of quer points as a grid
+%   mode:       optional interpolation mode (default linear)
+%   extrapVal:  value for extrapolation
 %	
 % output
 %   y: interpolated data   
