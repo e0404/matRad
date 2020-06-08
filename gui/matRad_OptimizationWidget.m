@@ -36,6 +36,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
                 generateCstTable(this, evalin('base','cst'));
             else
+                delete(this.widgetHandle.Children);
             end
            
         end
@@ -43,7 +44,13 @@ classdef matRad_OptimizationWidget < matRad_Widget
         
         
         function changeWorkspace(obj)
-            notify(obj, 'workspaceChanged');
+            [env, ~] = matRad_getEnvironment();
+            % handle environment
+            switch env
+                case 'MATLAB'
+                    notify(obj, 'workspaceChanged');
+                case 'OCTAVE'
+            end
         end
     end
     
@@ -390,7 +397,9 @@ classdef matRad_OptimizationWidget < matRad_Widget
                 
                 % Only if we have a penalty value for optimization, apply the new one
                 % Maybe this check should be more exact?
-                if (isfield(currentObj,'penalty') || isprop(currentObj,'penalty')) && isprop(newObj,'penalty')
+                
+                %if (isfield(currentObj,'penalty') || isobject (currentObj ) && isprop(currentObj,'penalty')) && isprop(newObj,'penalty')
+                if  (isfield(currentObj,'penalty') || isa(currentObj,'DoseObjectives.matRad_DoseObjective')) &&  isa(newObj,'DoseObjectives.matRad_DoseObjective')
                     newObj.penalty = currentObj.penalty;
                 end
                 

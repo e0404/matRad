@@ -74,7 +74,7 @@ function [defName,dispName] = testForClass(potentialClassFile)
     
     
     try
-        fPath = potentialClassFile.folder;
+%        fPath = potentialClassFile.folder;
         [~,fName,~] = fileparts(potentialClassFile.name);
         fType = potentialClassFile.pkgName;
       

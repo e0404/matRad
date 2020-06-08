@@ -1,10 +1,11 @@
-function matRad_showDVH(dvh,cst,pln,lineStyleIndicator)
+function matRad_showDVH(axesHandle,dvh,cst,pln,lineStyleIndicator)
 % matRad dvh visualizaion
 % 
 % call
 %   matRad_showDVH(dvh,cst,pln,lineStyleIndicator)
 %
 % input
+%   axesHandle          handle to axes to display the DVH in
 %   result:             result struct from fluence optimization/sequencing
 %   cst:                matRad cst struct
 %   pln:                matRad pln struct,
@@ -38,7 +39,7 @@ end
 
 % create new figure and set default line style indicator if not explictly
 % specified
-hold on;
+hold(axesHandle,'on');
 
 %reduce cst
 visibleIx = cellfun(@(c) c.Visible == 1,cst(:,5));
@@ -70,7 +71,7 @@ for i = 1:numOfVois
     ix      = max([1 find(dvh(i).volumePoints>0,1,'last')]);
     currDvh = [dvh(i).doseGrid(1:ix);dvh(i).volumePoints(1:ix)];
     
-    plot(currDvh(1,:),currDvh(2,:),'LineWidth',4,'Color',colorMx(i,:), ...
+    plot(axesHandle,currDvh(1,:),currDvh(2,:),'LineWidth',4,'Color',colorMx(i,:), ...
         'LineStyle',lineStyles{lineStyleIndicator},'DisplayName',cstNames{i})
     
     maxDVHvol  = max(maxDVHvol,max(currDvh(2,:)));
@@ -78,24 +79,24 @@ for i = 1:numOfVois
 end
 
 fontSizeValue = 14;
-myLegend = legend('show','location','NorthEast');
+myLegend = legend(axesHandle,'show','location','NorthEast');
 set(myLegend,'FontSize',10,'Interpreter','none');
-legend boxoff
+legend(axesHandle,'boxoff')
 
-ylim([0 1.1*maxDVHvol]);
-xlim([0 1.2*maxDVHdose]);
+ylim(axesHandle,[0 1.1*maxDVHvol]);
+xlim(axesHandle,[0 1.2*maxDVHdose]);
 
-grid on,grid minor
-box(gca,'on');
-set(gca,'LineWidth',1.5,'FontSize',fontSizeValue);
-ylabel('Volume [%]','FontSize',fontSizeValue)
+grid(axesHandle,'on'),grid(axesHandle,'minor')
+box(axesHandle,'on'); %box(gca,'on');
+set(axesHandle,'LineWidth',1.5,'FontSize',fontSizeValue); %set(gca,'LineWidth',1.5,'FontSize',fontSizeValue);
+ylabel(axesHandle,'Volume [%]','FontSize',fontSizeValue)
 
 if exist('pln','var') && ~isempty(pln)
     if strcmp(pln.propOpt.bioOptimization,'none')
-        xlabel('Dose [Gy]','FontSize',fontSizeValue);
+        xlabel(axesHandle,'Dose [Gy]','FontSize',fontSizeValue);
     else
-        xlabel('RBE x Dose [Gy(RBE)]','FontSize',fontSizeValue);
+        xlabel(axesHandle,'RBE x Dose [Gy(RBE)]','FontSize',fontSizeValue);
     end
 else
-     xlabel('Dose [Gy]','FontSize',fontSizeValue);
+     xlabel(axesHandle,'Dose [Gy]','FontSize',fontSizeValue);
 end

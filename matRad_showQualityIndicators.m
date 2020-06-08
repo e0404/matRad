@@ -1,10 +1,11 @@
-function matRad_showQualityIndicators(qi)
+function matRad_showQualityIndicators(figHandle,qi)
 % matRad display of quality indicators as table
 % 
 % call
 %   matRad_showQualityIndicators(qi)
 %
 % input
+%   figHandle: handle to figure to display the Quality Indicators in
 %   qi: result struct from matRad_calcQualityIndicators
 %
 % output
@@ -42,14 +43,15 @@ end
 switch env
      case 'MATLAB'
         % Create the uitable
-        table = uitable(gcf,'Data',(squeeze(struct2cell(qi)))',...
+        %table = uitable(gcf,'Data',(squeeze(struct2cell(qi)))',...
+        table = uitable(figHandle.Parent,'Data',(squeeze(struct2cell(qi)))',...
                     'ColumnName',cnames,... 
                     'RowName',rnames,'ColumnWidth',{70});
 
         % Layout
-        pos = get(gca,'position');
+        pos = get(figHandle,'position'); %pos = get(gca,'position');
         set(table,'units','normalized','position',pos)
-        axis off
+        axis(figHandle,'off')
     case 'OCTAVE'
         warning('the uitable function is not yet implemented in Octave')
 end

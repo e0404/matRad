@@ -87,7 +87,7 @@ if isempty(isoContours)
     isoLineHandles = contourslice(axesHandle,xMesh,yMesh,zMesh,doseCube,slices{[1 2 3]},isoLevels);
 else  
     axes(axesHandle);
-    hold on;
+    hold(axesHandle,'on');
     
     for s = 1:numel(sliceIndices)
         currSlice = sliceIndices(s);
@@ -150,7 +150,7 @@ else
         end
     end
     
-    hold off;
+    hold(axesHandle,'off');
 end
 
 end

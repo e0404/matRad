@@ -1,11 +1,11 @@
 classdef matRad_VisualizationWidget < matRad_Widget
     
     properties
-        viewerWidgetHandle;
+        viewingWidgetHandle;
     end
     
     methods
-        function this = matRad_VisualizationWidget(handleParent,viewerWidgetHandle)
+        function this = matRad_VisualizationWidget(handleParent,viewingWidgetHandle)
             if nargin < 1
                 handleParent = figure(...
                     'Units','characters',...
@@ -26,7 +26,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
             handles=this.handles;
             
             if nargin==2
-                this.viewerWidgetHandle=viewerWidgetHandle;
+                this.viewingWidgetHandle=viewingWidgetHandle;
             else
                 set(handles.btnDVH,'Enable','off');
                 set(handles.popupDisplayOption,'Enable','off');
@@ -48,203 +48,55 @@ classdef matRad_VisualizationWidget < matRad_Widget
         
         
         function this = initialize(this)
-            handles=this.handles;
-            if evalin('base','exist(''resultGUI'')')
-                set(handles.btnDVH,'Enable','on');
-            else
-                set(handles.btnDVH,'Enable','off');
-            end
-             % enable 3D view when there is data
-            if evalin('base','exist(''ct'')')
-                set(handles.btn3Dview,'Enable','on');
-            else
-                set(handles.btn3Dview,'Enable','off');
-            end
-            this.handles=handles;
+            
         end
         
         
         
         function this = update(this)
+            %handles=this.handles;
+            this.UpdateButtonsState();
+            %this.handles=handles;
+        end
+                
+%         function viewingWidgetHandle=get.viewingWidgetHandle(this)
+%             viewingWidgetHandle=this.viewingWidgetHandle;
+%         end
+        
+        function set.viewingWidgetHandle(this,value)
             handles=this.handles;
-            if evalin('base','exist(''dij'')')
-                set(handles.popupDisplayOption,'String','physicalDose');
-                this.viewerWidgetHandle.SelectedDisplayOption ='physicalDose';
-            else
-                set(handles.popupDisplayOption,'String','no option available');
-                this.viewerWidgetHandle.SelectedDisplayOption='';
-            end
-            if evalin('base','exist(''resultGUI'')')
-                set(handles.btnDVH,'Enable','on');
-            else
-                set(handles.btnDVH,'Enable','off');
-            end
-            % enable 3D view when there is data
-            if evalin('base','exist(''ct'')')
-                set(handles.btn3Dview,'Enable','on');
-            else
-                set(handles.btn3Dview,'Enable','off');
-            end
-            
-            % update the sliders (for when the plan changes)
-            if evalin('base','exist(''pln'')') && evalin('base','exist(''ct'')') && ...
-                    evalin('base','exist(''cst'')') %if handles.State > 0
-                
-                % set slice slider limit
-                ct = evalin('base','ct');
-                set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(this.viewerWidgetHandle.plane),...
-                    'Value',round(ct.cubeDim(this.viewerWidgetHandle.plane)/2),...
-                    'SliderStep',[1/(ct.cubeDim(this.viewerWidgetHandle.plane)-1) 1/(ct.cubeDim(this.viewerWidgetHandle.plane)-1)]);
-                
-                pln = evalin('base','pln');
-                
-                if numel(pln.propStf.gantryAngles) > 1
-                    % set beam selection slider
-                    set(handles.sliderBeamSelection,'Min',this.viewerWidgetHandle.selectedBeam,'Max',pln.propStf.numOfBeams,...
-                        'Value',this.viewerWidgetHandle.selectedBeam,...
-                        'SliderStep',[1/(pln.propStf.numOfBeams-1) 1/(pln.propStf.numOfBeams-1)]);
-                end
-                
-                % set profile offset slider
-                vMinMax = [-100 100];
-                vRange = sum(abs(vMinMax));
-                
-                ct = evalin('base','ct');
-                if strcmp(get(handles.btnProfileType,'String'),'lateral')
-                    SliderStep = vRange/ct.resolution.x;
-                else
-                    SliderStep = vRange/ct.resolution.y;
-                end
-                
-                set(handles.sliderOffset,'Min',vMinMax(1),'Max',vMinMax(2),...
-                    'Value',this.viewerWidgetHandle.profileOffset,...
-                    'SliderStep',[1/SliderStep 1/SliderStep]);
-            else
-                % reset slider when no data is loaded
-                set(handles.sliderSlice,'Min',0,'Max',1,'Value',0,'SliderStep',[1 1]);
-            end
-            
-            this.handles=handles;
-        end
-        
-        function changeWorkspace(obj)
-            notify(obj, 'workspaceChanged');
-        end
-        
-        function viewerWidgetHandle=get.viewerWidgetHandle(this)
-            viewerWidgetHandle=this.viewerWidgetHandle;
-        end
-        
-        function set.viewerWidgetHandle(this,value)
-            handles=this.handles;
-            if isvalid(value)
-                this.viewerWidgetHandle=value;
+            if isa(value,'matRad_ViewingWidget')
+                this.viewingWidgetHandle=value;
                 
                 % get the default values from the viewer widget
-                %set(handles.popupDisplayOption,'Value',this.viewerWidgetHandle.SelectedDisplayOption);
-                if this.viewerWidgetHandle.SelectedDisplayOption== ""
-                    set(handles.popupDisplayOption,'String','no option available');
-                else
-                    set(handles.popupDisplayOption,'String','physicalDose');
-                end
+                %set(handles.popupDisplayOption,'Value',this.viewingWidgetHandle.SelectedDisplayOption);
+%                 if strcmp(this.viewingWidgetHandle.SelectedDisplayOption, '')
+%                     set(handles.popupDisplayOption,'String','no option available');
+%                 else
+%                     set(handles.popupDisplayOption,'String',this.viewingWidgetHandle.SelectedDisplayOption);
+%                 end
 
       
-                if strcmp(this.viewerWidgetHandle.ProfileType,'lateral')
+                if strcmp(this.viewingWidgetHandle.ProfileType,'lateral')
                     set(handles.btnProfileType,'String','longitudinal');
                 else
                     set(handles.btnProfileType,'String','lateral');
                 end
                 
-                %set(handles.btnProfileType,'String',this.viewerWidgetHandle.ProfileType);
-                set(handles.popupTypeOfPlot,'Value',this.viewerWidgetHandle.typeOfPlot);
-                set(handles.popupPlane,'Value',this.viewerWidgetHandle.plane);
-                set(handles.radiobtnContour,'Value',this.viewerWidgetHandle.plotContour);
-                set(handles.radiobtnDose,'Value',this.viewerWidgetHandle.plotDose);
-                set(handles.radiobtnIsoDoseLines,'Value',this.viewerWidgetHandle.plotIsoDoseLines);
-                set(handles.radiobtnIsoDoseLinesLabels,'Value',this.viewerWidgetHandle.plotIsoDoseLinesLabels);
-                set(handles.radioBtnIsoCenter,'Value',this.viewerWidgetHandle.plotIsoCenter);
-                set(handles.radiobtnPlan,'Value',this.viewerWidgetHandle.plotPlan);
+                %set(handles.btnProfileType,'String',this.viewingWidgetHandle.ProfileType);
+                set(handles.popupTypeOfPlot,'Value',this.viewingWidgetHandle.typeOfPlot);
+                set(handles.popupPlane,'Value',this.viewingWidgetHandle.plane);
+                set(handles.radiobtnContour,'Value',this.viewingWidgetHandle.plotContour);
+                set(handles.radiobtnDose,'Value',this.viewingWidgetHandle.plotDose);
+                set(handles.radiobtnIsoDoseLines,'Value',this.viewingWidgetHandle.plotIsoDoseLines);
+                set(handles.radiobtnIsoDoseLinesLabels,'Value',this.viewingWidgetHandle.plotIsoDoseLinesLabels);
+                set(handles.radioBtnIsoCenter,'Value',this.viewingWidgetHandle.plotIsoCenter);
+                set(handles.radiobtnPlan,'Value',this.viewingWidgetHandle.plotPlan);
                 
                 
-                if evalin('base','exist(''pln'')') && evalin('base','exist(''ct'')') && ...
-                        evalin('base','exist(''cst'')') %if handles.State > 0
-                    
-                    % set slice slider limit
-                    ct = evalin('base','ct');
-                    set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(this.viewerWidgetHandle.plane),...
-                        'Value',round(ct.cubeDim(this.viewerWidgetHandle.plane)/2),...
-                        'SliderStep',[1/(ct.cubeDim(this.viewerWidgetHandle.plane)-1) 1/(ct.cubeDim(this.viewerWidgetHandle.plane)-1)]);
-               
-                    pln = evalin('base','pln');
-                    
-                    if numel(pln.propStf.gantryAngles) > 1
-                        % set beam selection slider
-                        set(handles.sliderBeamSelection,'Min',this.viewerWidgetHandle.selectedBeam,'Max',pln.propStf.numOfBeams,...
-                            'Value',this.viewerWidgetHandle.selectedBeam,...
-                            'SliderStep',[1/(pln.propStf.numOfBeams-1) 1/(pln.propStf.numOfBeams-1)]);
-                    end
-                    
-                    % set profile offset slider
-                    vMinMax = [-100 100];
-                    vRange = sum(abs(vMinMax));
-                    
-                    ct = evalin('base','ct');
-                    if strcmp(get(handles.btnProfileType,'String'),'lateral')
-                        SliderStep = vRange/ct.resolution.x;
-                    else
-                        SliderStep = vRange/ct.resolution.y;
-                    end
-                    
-                    set(handles.sliderOffset,'Min',vMinMax(1),'Max',vMinMax(2),...
-                        'Value',this.viewerWidgetHandle.profileOffset,...
-                        'SliderStep',[1/SliderStep 1/SliderStep]);
-                else
-                    % reset slider when no data is loaded
-                    set(handles.sliderSlice,'Min',0,'Max',1,'Value',0,'SliderStep',[1 1]);   
-                end
-                %% enable and diasble buttons according to type of plot
-                % intensity plot
-                if this.viewerWidgetHandle.typeOfPlot == 1
-                    
-                    set(handles.sliderBeamSelection,'Enable','off')
-                    set(handles.sliderOffset,'Enable','off')
-                    set(handles.popupDisplayOption,'Enable','on')
-                    set(handles.btnProfileType,'Enable','off');
-                    set(handles.popupPlane,'Enable','on');
-                    set(handles.radiobtnCT,'Enable','on');
-                    set(handles.radiobtnContour,'Enable','on');
-                    set(handles.radiobtnDose,'Enable','on');
-                    set(handles.radiobtnIsoDoseLines,'Enable','on');
-                    set(handles.radiobtnIsoDoseLinesLabels,'Enable','on');
-                    set(handles.sliderSlice,'Enable','on');
-                    
-                    % profile plot
-                elseif this.viewerWidgetHandle.typeOfPlot == 2
-                    
-                    if evalin('base','exist(''pln'')')
-                        pln = evalin('base','pln');
-                        if numel(pln.propStf.gantryAngles) > 1  %if length(parseStringAsNum(get(handles.editGantryAngle,'String'),true)) > 1
-                            
-                            set(handles.sliderBeamSelection,'Enable','on');
-                        end
-                        set(handles.sliderOffset,'Enable','on');
-                     end
-                    
-                    
-                    set(handles.popupDisplayOption,'Enable','on');
-                    set(handles.btnProfileType,'Enable','on');
-                    set(handles.popupPlane,'Enable','off');
-                    set(handles.radiobtnCT,'Enable','off');
-                    set(handles.radiobtnContour,'Enable','off');
-                    set(handles.radiobtnDose,'Enable','off');
-                    set(handles.radiobtnIsoDoseLines,'Enable','off');
-                    set(handles.sliderSlice,'Enable','off');
-                    set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
-                    set(handles.btnProfileType,'Enable','on')
-                    
-                end
-                
-                
+                this.handles=handles;
+                this.UpdateButtonsState();
+              
                 
             else
                 % disable all buttons
@@ -260,13 +112,9 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
                 set(handles.radioBtnIsoCenter,'Enable','off');
                 set(handles.radiobtnPlan,'Enable','off');
+                this.handles=handles;
             end
-            this.handles=handles;
         end
-%         
-%         function changeWorkspace(obj)
-%             notify(obj, 'workspaceChanged');
-%         end
     end
     
     methods (Access = protected)
@@ -532,6 +380,159 @@ classdef matRad_VisualizationWidget < matRad_Widget
     
     methods (Access = protected)
         
+        function UpdateButtonsState(this)
+            handles=this.handles;
+            
+            % update the sliders and enable 3D view when there is data
+            if evalin('base','exist(''pln'')') && evalin('base','exist(''ct'')') && ...
+                    evalin('base','exist(''cst'')') && ~isempty(this.viewingWidgetHandle) %if handles.State > 0
+                set(handles.btn3Dview,'Enable','on');
+                 
+                % set slice slider limit
+                ct = evalin('base','ct');
+                set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(this.viewingWidgetHandle.plane),...
+                    'Value', this.viewingWidgetHandle.slice, ... %round(ct.cubeDim(this.viewingWidgetHandle.plane)/2),...
+                    'SliderStep',[1/(ct.cubeDim(this.viewingWidgetHandle.plane)-1) 1/(ct.cubeDim(this.viewingWidgetHandle.plane)-1)]);
+                
+                pln = evalin('base','pln');
+                
+                if numel(pln.propStf.gantryAngles) > 1
+                    % set beam selection slider
+                    set(handles.sliderBeamSelection,'Min',this.viewingWidgetHandle.selectedBeam,'Max',pln.propStf.numOfBeams,...
+                        'Value',this.viewingWidgetHandle.selectedBeam,...
+                        'SliderStep',[1/(pln.propStf.numOfBeams-1) 1/(pln.propStf.numOfBeams-1)]);
+                end
+                
+                % set profile offset slider
+                vMinMax = [-100 100];
+                vRange = sum(abs(vMinMax));
+                
+                ct = evalin('base','ct');
+                if strcmp(get(handles.btnProfileType,'String'),'lateral')
+                    SliderStep = vRange/ct.resolution.x;
+                else
+                    SliderStep = vRange/ct.resolution.y;
+                end
+                
+                set(handles.sliderOffset,'Min',vMinMax(1),'Max',vMinMax(2),...
+                    'Value',this.viewingWidgetHandle.profileOffset,...
+                    'SliderStep',[1/SliderStep 1/SliderStep]);
+                
+                              
+                if evalin('base','exist(''resultGUI'')')
+                    set(handles.btnDVH,'Enable','on');
+                    
+                    Result = evalin('base','resultGUI');
+                    
+                    % populate the display option popup
+                    if ~isempty(Result) && ~isempty(ct.cubeHU) %&& ~isfield(handles,'DispInfo')
+                        
+                        DispInfo = fieldnames(Result);
+                        
+                        for i = 1:size(DispInfo,1)
+                            
+                            % delete weight vectors in Result struct for plotting
+                            if isstruct(Result.(DispInfo{i,1})) || isvector(Result.(DispInfo{i,1}))
+                                Result = rmfield(Result,DispInfo{i,1});
+                                DispInfo{i,2}=false;
+                            else
+                                %second dimension indicates if it should be plotted
+                                DispInfo{i,2} = true;
+                                % determine units
+                                if strfind(DispInfo{i,1},'physicalDose')
+                                    DispInfo{i,3} = '[Gy]';
+                                elseif strfind(DispInfo{i,1},'alpha')
+                                    DispInfo{i,3} = '[Gy^{-1}]';
+                                elseif strfind(DispInfo{i,1},'beta')
+                                    DispInfo{i,3} = '[Gy^{-2}]';
+                                elseif strfind(DispInfo{i,1},'RBExD')
+                                    DispInfo{i,3} = '[Gy(RBE)]';
+                                elseif strfind(DispInfo{i,1},'LET')
+                                    DispInfo{i,3} = '[keV/um]';
+                                else
+                                    DispInfo{i,3} = '[a.u.]';
+                                end
+                                DispInfo{i,4} = [];    % optional for the future: color range for plotting
+                                DispInfo{i,5} = [];    % optional for the future: min max values
+                            end
+                        end
+                        
+                        set(handles.popupDisplayOption,'String',fieldnames(Result));
+%                         
+%                         if sum(strcmp(this.viewingWidgetHandle.SelectedDisplayOption,fieldnames(Result))) == 0
+%                             set(handles.popupDisplayOption,'Value', find([DispInfo{:,2}],1,'first'));
+%                             this.updateIsodoseLine();
+%                             content=get(handles.popupDisplayOption,'String');
+%                             this.viewingWidgetHandle.SelectedDisplayOption= content{get(handles.popupDisplayOption,'Value'),1};
+%                         else
+%                             set(handles.popupDisplayOption,'Value',find(strcmp(this.viewingWidgetHandle.SelectedDisplayOption,fieldnames(Result))));
+%                             this.updateIsodoseLine();
+%                         end
+
+                    end
+               
+                else
+                    set(handles.btnDVH,'Enable','off');
+                    if strcmp(this.viewingWidgetHandle.SelectedDisplayOption,'')
+                        set(handles.popupDisplayOption,'String','no option available');
+                    else
+                        set(handles.popupDisplayOption,'String',this.viewingWidgetHandle.SelectedDisplayOption);
+                    end
+                end
+            %% enable and diasble buttons according to type of plot
+                % intensity plot
+                if this.viewingWidgetHandle.typeOfPlot == 1
+                    
+                    set(handles.sliderBeamSelection,'Enable','off')
+                    set(handles.sliderOffset,'Enable','off')
+                    set(handles.popupDisplayOption,'Enable','on')
+                    set(handles.btnProfileType,'Enable','off');
+                    set(handles.popupPlane,'Enable','on');
+                    set(handles.radiobtnCT,'Enable','on');
+                    set(handles.radiobtnContour,'Enable','on');
+                    set(handles.radiobtnDose,'Enable','on');
+                    set(handles.radiobtnIsoDoseLines,'Enable','on');
+                    set(handles.radiobtnIsoDoseLinesLabels,'Enable','on');
+                    set(handles.sliderSlice,'Enable','on');
+                    
+                    % profile plot
+                elseif this.viewingWidgetHandle.typeOfPlot == 2
+                    
+                    if evalin('base','exist(''pln'')')
+                        pln = evalin('base','pln');
+                        if numel(pln.propStf.gantryAngles) > 1  %if length(parseStringAsNum(get(handles.editGantryAngle,'String'),true)) > 1
+                            
+                            set(handles.sliderBeamSelection,'Enable','on');
+                        end
+                        set(handles.sliderOffset,'Enable','on');
+                     end
+                    
+                    
+                    set(handles.popupDisplayOption,'Enable','on');
+                    set(handles.btnProfileType,'Enable','on');
+                    set(handles.popupPlane,'Enable','off');
+                    set(handles.radiobtnCT,'Enable','off');
+                    set(handles.radiobtnContour,'Enable','off');
+                    set(handles.radiobtnDose,'Enable','off');
+                    set(handles.radiobtnIsoDoseLines,'Enable','off');
+                    set(handles.sliderSlice,'Enable','off');
+                    set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
+                    set(handles.btnProfileType,'Enable','on')
+                    
+                end
+            else
+                % reset slider when no data is loaded
+                set(handles.sliderSlice,'Min',0,'Max',1,'Value',0,'SliderStep',[1 1]);
+                % disable 3D and DVH button
+                set(handles.btn3Dview,'Enable','off');
+                set(handles.btnDVH,'Enable','off');
+                set(handles.popupDisplayOption,'String','no option available');
+                
+            end
+            this.handles=handles;
+        end
+        
+        
          % H37 Calback
         function popupPlane_Callback(this, hObject, event)
             % hObject    handle to popupPlane (see GCBO)
@@ -544,7 +545,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
             % set slice slider
             handles = this.handles;
             
-            this.viewerWidgetHandle.plane = get(handles.popupPlane,'value');
+            this.viewingWidgetHandle.plane = get(handles.popupPlane,'value');
 %             try
 %                 if evalin('base','exist(''pln'')') && evalin('base','exist(''ct'')') && ...
 %                         evalin('base','exist(''cst'')') %if handles.State > 0
@@ -578,7 +579,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
          %45 Callback
         function popupTypeOfPlot_Callback(this, hObject, event)
             
-            this.viewerWidgetHandle.typeOfPlot=get(hObject,'Value');
+            this.viewingWidgetHandle.typeOfPlot=get(hObject,'Value');
             handles = this.handles;
             
             % intensity plot
@@ -605,18 +606,18 @@ classdef matRad_VisualizationWidget < matRad_Widget
                     if numel(pln.propStf.gantryAngles) > 1  %if length(parseStringAsNum(get(handles.editGantryAngle,'String'),true)) > 1
                         
                         set(handles.sliderBeamSelection,'Enable','on');
-                        %this.viewerWidgetHandle.selectedBeam = 1;
+                        %this.viewingWidgetHandle.selectedBeam = 1;
                         %pln = evalin('base','pln');
-%                         set(handles.sliderBeamSelection,'Min',this.viewerWidgetHandle.selectedBeam,'Max',pln.propStf.numOfBeams,...
-%                             'Value',this.viewerWidgetHandle.selectedBeam,...
+%                         set(handles.sliderBeamSelection,'Min',this.viewingWidgetHandle.selectedBeam,'Max',pln.propStf.numOfBeams,...
+%                             'Value',this.viewingWidgetHandle.selectedBeam,...
 %                             'SliderStep',[1/(pln.propStf.numOfBeams-1) 1/(pln.propStf.numOfBeams-1)],...
 %                             'Enable','on');
 %                         
 %                     else
-%                         this.viewerWidgetHandle.selectedBeam = 1;
+%                         this.viewingWidgetHandle.selectedBeam = 1;
                     end
                     
-                    %this.viewerWidgetHandle.profileOffset = get(handles.sliderOffset,'Value');
+                    %this.viewingWidgetHandle.profileOffset = get(handles.sliderOffset,'Value');
                     
 %                     vMinMax = [-100 100];
 %                     vRange = sum(abs(vMinMax));
@@ -629,7 +630,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
 %                     end
                     
 %                     set(handles.sliderOffset,'Min',vMinMax(1),'Max',vMinMax(2),...
-%                         'Value',this.viewerWidgetHandle.profileOffset,...
+%                         'Value',this.viewingWidgetHandle.profileOffset,...
 %                         'SliderStep',[1/SliderStep 1/SliderStep],...
 %                         'Enable','on');
                     set(handles.sliderOffset,'Enable','on');
@@ -650,14 +651,14 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 set(handles.btnProfileType,'Enable','on')
 %                 
 %                 if strcmp(get(handles.btnProfileType,'String'),'lateral')
-%                     this.viewerWidgetHandle.ProfileType = 'longitudinal';
+%                     this.viewingWidgetHandle.ProfileType = 'longitudinal';
 %                 else
-%                     this.viewerWidgetHandle.ProfileType = 'lateral';
+%                     this.viewingWidgetHandle.ProfileType = 'lateral';
 %                 end
                 
             end
             
-            %this.viewerWidgetHandle.cBarChanged = true;
+            %this.viewingWidgetHandle.cBarChanged = true;
             
 %             handles.rememberCurrAxes = false;
 %             cla(handles.axesFig,'reset');
@@ -669,50 +670,54 @@ classdef matRad_VisualizationWidget < matRad_Widget
         
           % 47 Callback
         function popupDisplayOption_Callback(this, hObject, event)
-            handles = this.handles;
+            this.updateIsodoseLine();
             content = get(hObject,'String');
+            if strcmp(content,'no option available')
+                return
+            end
             
-            this.viewerWidgetHandle.SelectedDisplayOption = content;%content{get(hObject,'Value'),1};
-            %this.viewerWidgetHandle.SelectedDisplayOptionIdx = get(hObject,'Value');
+            handles = this.handles;
+            this.viewingWidgetHandle.SelectedDisplayOption = content{get(hObject,'Value'),1};
+            %this.viewingWidgetHandle.SelectedDisplayOptionIdx = get(hObject,'Value');
             
 %             if ~isfield(handles,'colormapLocked') || ~handles.colormapLocked
 %                 handles.dispWindow{3,1} = []; handles.dispWindow{3,2} = [];
 %             end
             
-            %this.viewerWidgetHandle.updateIsoDoseLineCache();
+            %this.viewingWidgetHandle.updateIsoDoseLineCache();
             
-            if evalin('base','exist(''resultGUI'')')
-                
-                resultGUI = evalin('base','resultGUI');
-                % select first cube if selected option does not exist
-                if ~isfield(resultGUI,this.viewerWidgetHandle.SelectedDisplayOption)
-                    CubeNames = fieldnames(resultGUI);
-                    dose = resultGUI.(CubeNames{1,1});
-                else
-                    dose = resultGUI.(this.viewerWidgetHandle.SelectedDisplayOption);
-                end
-                
-                %if function is called for the first time then set display parameters
-                if isempty(this.viewerWidgetHandle.dispWindow{3,2})
-                    this.viewerWidgetHandle.dispWindow{3,1} = [min(dose(:)) max(dose(:))]; % set default dose range
-                    this.viewerWidgetHandle.dispWindow{3,2} = [min(dose(:)) max(dose(:))]; % set min max values
-                end
-                
-                minMaxRange = this.viewerWidgetHandle.dispWindow{3,1};
-                % if upper colorrange is defined then use it otherwise 120% iso dose
-                upperMargin = 1;
-                if abs((max(dose(:)) - this.viewerWidgetHandle.dispWindow{3,1}(1,2))) < 0.01  * max(dose(:))
-                    upperMargin = 1.2;
-                end
-                
-                %if (length(this.viewerWidgetHandle.IsoDose_Levels) == 1 && this.viewerWidgetHandle.IsoDose_Levels(1,1) == 0) || ~this.NewIsoDoseFlag
-                    vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];
-                    referenceDose            = (minMaxRange(1,2))/(upperMargin);
-                    this.viewerWidgetHandle.IsoDose_Levels   = minMaxRange(1,1) + (referenceDose-minMaxRange(1,1)) * vLevels;
-                %end 
-            end
+%             if evalin('base','exist(''resultGUI'')')
+%                 
+%                 resultGUI = evalin('base','resultGUI');
+%                 % select first cube if selected option does not exist
+%                 if ~isfield(resultGUI,this.viewingWidgetHandle.SelectedDisplayOption)
+%                     CubeNames = fieldnames(resultGUI);
+%                     dose = resultGUI.(CubeNames{1,1});
+%                 else
+%                     dose = resultGUI.(this.viewingWidgetHandle.SelectedDisplayOption);
+%                 end
+%                 
+%                 %if function is called for the first time then set display parameters
+%                 if isempty(this.viewingWidgetHandle.dispWindow{3,2})
+%                     this.viewingWidgetHandle.dispWindow{3,1} = [min(dose(:)) max(dose(:))]; % set default dose range
+%                     this.viewingWidgetHandle.dispWindow{3,2} = [min(dose(:)) max(dose(:))]; % set min max values
+%                 end
+%                 
+%                 minMaxRange = this.viewingWidgetHandle.dispWindow{3,1};
+%                 % if upper colorrange is defined then use it otherwise 120% iso dose
+%                 upperMargin = 1;
+%                 if abs((max(dose(:)) - this.viewingWidgetHandle.dispWindow{3,1}(1,2))) < 0.01  * max(dose(:))
+%                     upperMargin = 1.2;
+%                 end
+%                 
+%                 %if (length(this.viewingWidgetHandle.IsoDose_Levels) == 1 && this.viewingWidgetHandle.IsoDose_Levels(1,1) == 0) || ~this.NewIsoDoseFlag
+%                     vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];
+%                     referenceDose            = (minMaxRange(1,2))/(upperMargin);
+%                     this.viewingWidgetHandle.IsoDose_Levels   = minMaxRange(1,1) + (referenceDose-minMaxRange(1,1)) * vLevels;
+%                 %end 
+%             end
             
-            %this.viewerWidgetHandle.cBarChanged = true;
+            %this.viewingWidgetHandle.cBarChanged = true;
             
             %UpdatePlot(handles);
             this.handles = handles;
@@ -731,8 +736,8 @@ classdef matRad_VisualizationWidget < matRad_Widget
             %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
             
             handles = this.handles;
-            this.viewerWidgetHandle.selectedBeam = round(get(hObject,'Value'));
-            set(hObject, 'Value', this.viewerWidgetHandle.selectedBeam);
+            this.viewingWidgetHandle.selectedBeam = round(get(hObject,'Value'));
+            set(hObject, 'Value', this.viewingWidgetHandle.selectedBeam);
 %             handles.rememberCurrAxes = false;
 %             UpdatePlot(handles);
 %             handles.rememberCurrAxes = true;
@@ -749,11 +754,11 @@ classdef matRad_VisualizationWidget < matRad_Widget
             
            
             if strcmp(get(hObject,'Enable') ,'on')
-                if strcmp(this.viewerWidgetHandle.ProfileType,'lateral')
-                    this.viewerWidgetHandle.ProfileType = 'longitudinal';
+                if strcmp(this.viewingWidgetHandle.ProfileType,'lateral')
+                    this.viewingWidgetHandle.ProfileType = 'longitudinal';
                     set(hObject,'String','lateral');
                 else
-                    this.viewerWidgetHandle.ProfileType = 'lateral';
+                    this.viewingWidgetHandle.ProfileType = 'lateral';
                     set(hObject,'String','longitudinal');
                 end
                 
@@ -766,69 +771,70 @@ classdef matRad_VisualizationWidget < matRad_Widget
          
         % 52 Callback
         function btnDVH_Callback(this, hObject, event)
+            matRad_DVHWidget;
+%             handles = this.handles;
+%             resultGUI = evalin('base','resultGUI');
+%             Content = get(handles.popupDisplayOption,'String');
+%             
+%             SelectedCube = Content{get(handles.popupDisplayOption,'Value')};
+%             
+%             pln = evalin('base','pln');
+%             resultGUI_SelectedCube.physicalDose = resultGUI.(SelectedCube);
+%             
+%             if ~strcmp(pln.propOpt.bioOptimization,'none')
+%                 
+%                 %check if one of the default fields is selected
+%                 if sum(strcmp(SelectedCube,{'physicalDose','effect','RBE,','RBExDose','alpha','beta'})) > 0
+%                     resultGUI_SelectedCube.physicalDose = resultGUI.physicalDose;
+%                     resultGUI_SelectedCube.RBExDose     = resultGUI.RBExDose;
+%                 else
+%                     Idx    = find(SelectedCube == '_');
+%                     SelectedSuffix = SelectedCube(Idx(1):end);
+%                     resultGUI_SelectedCube.physicalDose = resultGUI.(['physicalDose' SelectedSuffix]);
+%                     resultGUI_SelectedCube.RBExDose     = resultGUI.(['RBExDose' SelectedSuffix]);
+%                 end
+%             end
+%             
+%             %adapt visibilty
+%             cst = evalin('base','cst');
+% %             for i = 1:size(cst,1)
+% %                 cst{i,5}.Visible = this.viewingWidgetHandle.VOIPlotFlag(i);
+% %             end
+%             DVHfig=figure;
+%             matRad_indicatorWrapper(DVHfig,cst,pln,resultGUI_SelectedCube);
+%             
+% %             assignin('base','cst',cst);
+%             this.handles = handles;
             
-            handles = this.handles;
-            resultGUI = evalin('base','resultGUI');
-            Content = get(handles.popupDisplayOption,'String');
-            
-            SelectedCube = Content;
-            %SelectedCube = Content{get(handles.popupDisplayOption,'Value')};
-            
-            pln = evalin('base','pln');
-            resultGUI_SelectedCube.physicalDose = resultGUI.(SelectedCube);
-            
-            if ~strcmp(pln.propOpt.bioOptimization,'none')
-                
-                %check if one of the default fields is selected
-                if sum(strcmp(SelectedCube,{'physicalDose','effect','RBE,','RBExDose','alpha','beta'})) > 0
-                    resultGUI_SelectedCube.physicalDose = resultGUI.physicalDose;
-                    resultGUI_SelectedCube.RBExDose     = resultGUI.RBExDose;
-                else
-                    Idx    = find(SelectedCube == '_');
-                    SelectedSuffix = SelectedCube(Idx(1):end);
-                    resultGUI_SelectedCube.physicalDose = resultGUI.(['physicalDose' SelectedSuffix]);
-                    resultGUI_SelectedCube.RBExDose     = resultGUI.(['RBExDose' SelectedSuffix]);
-                end
-            end
-            
-            %adapt visibilty
-            cst = evalin('base','cst');
-            for i = 1:size(cst,1)
-                cst{i,5}.Visible = this.viewerWidgetHandle.VOIPlotFlag(i);
-            end
-            
-            matRad_indicatorWrapper(cst,pln,resultGUI_SelectedCube);
-            
-            assignin('base','cst',cst);
-            this.handles = handles;
-            
-            changeWorkspace(this);
         end
         
         %H55 Callback
         function sliderOffset_Callback(this, hObject, event)
             handles = this.handles;
-            this.viewerWidgetHandle.profileOffset = get(hObject,'Value');
+            this.viewingWidgetHandle.profileOffset = get(hObject,'Value');
             %UpdatePlot(handles);
             this.handles = handles;
         end
        
         % 57 Callback
         function btn3Dview_Callback(this,hObject, event)
+            
+            matRad_3DWidget(this.viewingWidgetHandle);
+            
             % hObject    handle to btn3Dview (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
-            handles = this.handles;
-            
-            if ~isfield(handles,'axesFig3D') || ~isfield(handles,'axesFig3D') || ~isgraphics(handles.axesFig3D)
-                handles.fig3D = figure('Name','matRad 3D View');
-                handles.axesFig3D = axes('Parent',handles.fig3D);
-                view(handles.axesFig3D,3);
-            end
-            
-            %UpdatePlot(handles);
-            this.handles = handles;
-            this.viewerWidgetHandle.UpdatePlot();
+%             handles = this.handles;
+%             
+%             if ~isfield(handles,'axesFig3D') || ~isfield(handles,'axesFig3D') || ~isgraphics(handles.axesFig3D)
+%                 handles.fig3D = figure('Name','matRad 3D View');
+%                 handles.axesFig3D = axes('Parent',handles.fig3D);
+%                 view(handles.axesFig3D,3);
+%             end
+%             
+%             %UpdatePlot(handles);
+%             this.handles = handles;
+%             this.viewingWidgetHandle.UpdatePlot();
         end
        % --- Executes on button press in radiobtnContour.
        function radiobtnContour_Callback(this,hObject, ~)
@@ -838,7 +844,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
            
            % Hint: get(hObject,'Value') returns toggle state of radiobtnContour
            %UpdatePlot(handles)
-           this.viewerWidgetHandle.plotContour=get(hObject,'Value');
+           this.viewingWidgetHandle.plotContour=get(hObject,'Value');
        end
        % --- Executes on slider movement.
        function sliderSlice_Callback(this,hObject, ~)
@@ -850,7 +856,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
            %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
            %UpdatePlot(handles)
            
-           this.viewerWidgetHandle.slice= round(get(hObject,'Value'));
+           this.viewingWidgetHandle.slice= round(get(hObject,'Value'));
        end
        
        function radiobtnCT_Callback(this,hObject, ~)
@@ -860,7 +866,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
            
            % Hint: get(hObject,'Value') returns toggle state of radiobtnCT
            %UpdatePlot(handles)
-           this.viewerWidgetHandle.plotCT=get(hObject,'Value');
+           this.viewingWidgetHandle.plotCT=get(hObject,'Value');
        end
        
        % --- Executes on button press in radiobtnPlan.
@@ -871,7 +877,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
            
            % Hint: get(hObject,'Value') returns toggle state of radiobtnPlan
            %UpdatePlot(handles)
-           this.viewerWidgetHandle.plotPlan=get(hObject,'Value');
+           this.viewingWidgetHandle.plotPlan=get(hObject,'Value');
        end
        
        % --- Executes on button press in radiobtnIsoDoseLines.
@@ -883,7 +889,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
            % Hint: get(hObject,'Value') returns toggle state of radiobtnIsoDoseLines
            %UpdatePlot(handles)
            handles=this.handles;
-           this.viewerWidgetHandle.plotIsoDoseLines=get(hObject,'Value');
+           this.viewingWidgetHandle.plotIsoDoseLines=get(hObject,'Value');
 %            if get(hObject,'Value')
 %                set(handles.radiobtnIsoDoseLinesLabels,'Enable','on');
 %            else
@@ -900,13 +906,13 @@ classdef matRad_VisualizationWidget < matRad_Widget
            
            % Hint: get(hObject,'Value') returns toggle state of radiobtnDose
            %UpdatePlot(handles)
-           this.viewerWidgetHandle.plotDose=get(hObject,'Value');
+           this.viewingWidgetHandle.plotDose=get(hObject,'Value');
        end
        
        % radio button: plot isolines labels
        function radiobtnIsoDoseLinesLabels_Callback(this,hObject, ~)
            %UpdatePlot(handles);
-           this.viewerWidgetHandle.plotIsoDoseLinesLabels=get(hObject,'Value');
+           this.viewingWidgetHandle.plotIsoDoseLinesLabels=get(hObject,'Value');
        end
        
        % --- Executes on button press in radioBtnIsoCenter.
@@ -916,7 +922,42 @@ classdef matRad_VisualizationWidget < matRad_Widget
            % handles    structure with handles and user data (see GUIDATA)
            %UpdatePlot(handles)
            % Hint: get(hObject,'Value') returns toggle state of radioBtnIsoCenter
-           this.viewerWidgetHandle.plotIsoCenter=get(hObject,'Value');
+           this.viewingWidgetHandle.plotIsoCenter=get(hObject,'Value');
+       end
+       
+       function updateIsodoseLine(this)
+           this.viewingWidgetHandle.lockUpdate=true;
+           if evalin('base','exist(''resultGUI'')')
+                
+                resultGUI = evalin('base','resultGUI');
+                % select first cube if selected option does not exist
+                if ~isfield(resultGUI,get(this.handles.popupDisplayOption,'Value'))%.viewingWidgetHandle.SelectedDisplayOption)
+                    CubeNames = fieldnames(resultGUI);
+                    dose = resultGUI.(CubeNames{1,1});
+                else
+                    dose = resultGUI.get(this.handles.popupDisplayOption,'Value'); %(this.viewingWidgetHandle.SelectedDisplayOption);
+                end
+                
+                %if function is called for the first time then set display parameters
+                if isempty(this.viewingWidgetHandle.dispWindow{3,2})
+                    this.viewingWidgetHandle.dispWindow{3,1} = [min(dose(:)) max(dose(:))]; % set default dose range
+                    this.viewingWidgetHandle.dispWindow{3,2} = [min(dose(:)) max(dose(:))]; % set min max values
+                end
+                
+                minMaxRange = this.viewingWidgetHandle.dispWindow{3,1};
+                % if upper colorrange is defined then use it otherwise 120% iso dose
+                upperMargin = 1;
+                if abs((max(dose(:)) - this.viewingWidgetHandle.dispWindow{3,1}(1,2))) < 0.01  * max(dose(:))
+                    upperMargin = 1.2;
+                end
+                
+                %if (length(this.viewingWidgetHandle.IsoDose_Levels) == 1 && this.viewingWidgetHandle.IsoDose_Levels(1,1) == 0) || ~this.NewIsoDoseFlag
+                    vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];
+                    referenceDose            = (minMaxRange(1,2))/(upperMargin);
+                    this.viewingWidgetHandle.IsoDose_Levels   = minMaxRange(1,1) + (referenceDose-minMaxRange(1,1)) * vLevels;
+                %end 
+            end
+           this.viewingWidgetHandle.lockUpdate=false;
        end
     end
 end

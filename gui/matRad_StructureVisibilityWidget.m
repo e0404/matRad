@@ -34,12 +34,19 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
                 updateStructureTable(this, evalin('base','cst'));
             else
+                set(this.handles.legendTable,'String','');
             end
            
         end
         
         function changeWorkspace(obj)
-            notify(obj, 'workspaceChanged');
+           [env, ~] = matRad_getEnvironment();
+            % handle environment
+            switch env
+                case 'MATLAB'
+                    notify(obj, 'workspaceChanged');
+                case 'OCTAVE'
+            end
         end
     end
     

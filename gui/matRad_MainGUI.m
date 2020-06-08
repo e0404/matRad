@@ -226,28 +226,57 @@ classdef matRad_MainGUI < handle
             
             obj.ViewingWidget = matRad_ViewingWidget(p8);
             obj.eventListeners.viewing = addlistener(obj.ViewingWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+            obj.eventListeners.plot = addlistener(obj.ViewingWidget,'plotUpdated',@(src,hEvent) updateButtons(obj));
+
+            [env, ~] = matRad_getEnvironment();
+            % only available in MATLAB
+            if strcmp(env,'MATLAB')
+                obj.ViewingWidget.dcmHandle = datacursormode(obj.guiHandle);
+                obj.ViewingWidget.panHandle = pan(obj.guiHandle);
+                obj.ViewingWidget.zoomHandle = zoom(obj.guiHandle);
+            end
+            obj.ViewingWidget.scrollHandle =  obj.guiHandle;
             
             obj.VisualizationWidget = matRad_VisualizationWidget(p4, obj.ViewingWidget);            
             obj.eventListeners.visualization = addlistener(obj.VisualizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
             
             obj.ViewerOptionsWidget = matRad_ViewerOptionsWidget(p5, obj.ViewingWidget);
             obj.eventListeners.viewerOptions = addlistener(obj.ViewerOptionsWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-            
+                        
             obj.StructureVisibilityWidget = matRad_StructureVisibilityWidget(p6);
             obj.eventListeners.structureVisibility = addlistener(obj.StructureVisibilityWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
             
             obj.InfoWidget = matRad_InfoWidget(p7); % does not need a listener
-            
-            
+                     
             obj.LogoWidget = matRad_LogoWidget(p9); % does not need a listener
             
             obj.createMenuBar();
             
+            % update button states
+            obj.updateButtons();
             
+%             % change color of toobar the first time GUI is started
+%             hToolbar = findall(obj.guiHandle,'tag','uitoolbar1')
+%             jToolbar = get(get(hToolbar,'JavaContainer'),'ComponentPeer')
+%             jToolbar.setBorderPainted(false);
+%             color = java.awt.Color.gray;
+%             % Remove the toolbar border, to blend into figure contents
+%             jToolbar.setBackground(color);
+%             % Remove the separator line between toolbar and contents
+%             warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+%             jFrame = get(handle(obj.guiHandle),'JavaFrame');
+%             jFrame.showTopSeparator(false);
+%             jtbc = jToolbar.getComponents;
+%             for idx=1:length(jtbc)
+%                 jtbc(idx).setOpaque(false);
+%                 jtbc(idx).setBackground(color);
+%                 for childIdx = 1 : length(jtbc(idx).getComponents)
+%                     jtbc(idx).getComponent(childIdx-1).setBackground(color);
+%                 end
+%             end
         end
         
         function this = updateWidgets(this,src,hEvent)
-           %obj.PlanWidget.update(); 
            disp(['Workspace Changed ' datestr(now,'HH:MM:SS.FFF')]);
            this.PlanWidget.update();
            this.WorkflowWidget.update();
@@ -256,6 +285,38 @@ classdef matRad_MainGUI < handle
            this.ViewerOptionsWidget.update();
            this.VisualizationWidget.update();
            this.StructureVisibilityWidget.update();
+        end
+        
+        function this = updateButtons(this)
+           disp(['Plot Changed ' datestr(now,'HH:MM:SS.FFF')]);
+          
+           %set(findobj(this.guiHandle,'tag','uitoggletool8'),'State',get(this.ViewingWidget.cBarHandle,'visible'));
+           set(findobj(this.guiHandle,'tag','toolbarPan'),'State',get(this.ViewingWidget.panHandle,'Enable'));
+           set(findobj(this.guiHandle,'tag','toolbarCursor'),'State',get(this.ViewingWidget.dcmHandle,'Enable'));
+             
+           if this.ViewingWidget.plotColorBar  && ~isempty(this.ViewingWidget.cBarHandle) && isvalid(this.ViewingWidget.cBarHandle)
+               set(findobj(this.guiHandle,'tag','uitoggletool8'),'State','on')
+           else
+               set(findobj(this.guiHandle,'tag','uitoggletool8'),'State','off')
+           end
+           if this.ViewingWidget.plotLegend && ~isempty(this.ViewingWidget.legendHandle) && isvalid(this.ViewingWidget.legendHandle)
+               set(findobj(this.guiHandle,'tag','toolbarLegend'),'State',get(this.ViewingWidget.legendHandle,'visible'));
+           else
+               set(findobj(this.guiHandle,'tag','toolbarLegend'),'State','off');
+           end
+           if strcmp(get(this.ViewingWidget.zoomHandle,'Enable'),'on')
+               if strcmp(get(this.ViewingWidget.zoomHandle,'Direction'),'in')
+                   set(findobj(this.guiHandle,'tag','toolbarZoomOut'),'State','off');
+                   set(findobj(this.guiHandle,'tag','toolbarZoomIn'),'State','on');
+               else
+                   set(findobj(this.guiHandle,'tag','toolbarZoomOut'),'State','on');
+                   set(findobj(this.guiHandle,'tag','toolbarZoomIn'),'State','off');
+               end
+           else
+               set(findobj(this.guiHandle,'tag','toolbarZoomOut'),'State','off');
+               set(findobj(this.guiHandle,'tag','toolbarZoomIn'),'State','off');
+           end
+           
         end
         
 %         function matRadGUI_OpeningFcn(this, hObject, event)
@@ -319,32 +380,27 @@ classdef matRad_MainGUI < handle
         % toolbar save button
         function toolbarSave_ClickedCallback(this,hObject, eventdata)
             %handles=this.handles;
-            %btnTableSave_Callback(hObject, eventdata, handles);
+
             
-            try
-                
-                if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')') ...
-                        && evalin('base','exist(''pln'')')
-                    ct = evalin('base','ct');
-                    cst = evalin('base','cst');
-                    pln = evalin('base','pln');
-                    if evalin('base','exist(''dij'')') && evalin('base','exist(''stf'')')
-                        stf = evalin('base','stf');
-                        dij = evalin('base','dij');
-                        if evalin('base','exist(''resultGUI'')')
-                            resultGUI = evalin('base','resultGUI');
-                            uisave({'cst','ct','pln','stf','dij','resultGUI'});
-                        else
-                            uisave({'cst','ct','pln','stf','dij'});
-                        end
-                    else
-                        uisave({'cst','ct','pln'});
+            answer = questdlg('Do you wish to save the full workspace or only matRad variables?','Save','Full workspace', 'matRad variables', 'matRad variables');
+            
+            
+            switch answer
+                case 'Full workspace'
+                    uisave;
+                case 'matRad variables'
+                    variables = {'cst','ct','pln','stf','dij','resultGUI'};
+                    vExists=false(size(variables));
+                    for i= 1:numel(variables)
+                        var= char(variables(i));
+                        vExists(i) = evalin('base',['exist(''' var ''',''var'')']);
+                        if vExists(i)
+                            eval([var '=evalin(''base'',''' var ''');'])
+                        end 
                     end
-                end
-            catch
-                %handles = showWarning(handles,'Could not save files');
+                    uisave(variables(vExists));
             end
-            %this.handles=handles;
+
         end
         function uipushtool_screenshot_ClickedCallback(this,hObject, eventdata)
             % hObject    handle to uipushtool_screenshot (see GCBO)
@@ -353,7 +409,7 @@ classdef matRad_MainGUI < handle
             
             
             tmpFig = figure('position',[100 100 700 600],'Visible','off','name','Current View');
-            cBarHandle = this.ViewingWidget.cBarHandel; %findobj(handles.figure1,'Type','colorbar');
+            cBarHandle = this.ViewingWidget.cBarHandle; %findobj(handles.figure1,'Type','colorbar');
             if ~isempty(cBarHandle)
                 new_handle = copyobj([this.ViewingWidget.handles.axesFig cBarHandle],tmpFig);
                 %new_handle = copyobj([handles.axesFig cBarHandle],tmpFig);
@@ -392,38 +448,48 @@ classdef matRad_MainGUI < handle
             % handles    structure with handles and user data (see GUIDATA)
             
             %Check if on or off
-            val = strcmp(get(hObject,'State'),'on');
-            
-            %Now we have to apply the new selection to our colormap options panel
-            if ~val
-                newSelection = 1;
-            else
-                %Chooses the selection from the highest state
-                selections = get(this.ViewerOptionsWidget.handles.popupmenu_chooseColorData,'String'); %get(handles.popupmenu_chooseColorData,'String');
-                newSelection = numel(selections);
-            end
-            set(this.ViewerOptionsWidget.handles.popupmenu_chooseColorData,'Value',newSelection);
-            this.ViewerOptionsWidget.popupmenu_chooseColorData_Callback();
-            
+            this.ViewingWidget.plotColorBar = strcmp(get(hObject,'State'),'on');
+%             val = strcmp(get(hObject,'State'),'on');
+
+%             %Now we have to apply the new selection to our colormap options panel
+%             if ~val
+%                 newSelection = 1;
+%             else
+%                 %Chooses the selection from the highest state
+%                 selections = get(this.ViewerOptionsWidget.handles.popupmenu_chooseColorData,'String'); %get(handles.popupmenu_chooseColorData,'String');
+%                 newSelection = numel(selections);
+%             end
+%             set(this.ViewerOptionsWidget.handles.popupmenu_chooseColorData,'Value',newSelection);
+%             this.ViewerOptionsWidget.popupmenu_chooseColorData_Callback();
+%             
             %handles.cBarChanged = true;
             %guidata(hObject,handles);
         end
         
         function toolbarLegend_ClickedCallback(this,hObject, eventdata)
-            l = findobj (this.ViewingWidget.handles.uipanel11, 'type', 'legend');
-            set (l, 'visible', get(hObject,'State'))
+            %Check if on or off
+            this.ViewingWidget.plotLegend = strcmp(get(hObject,'State'),'on');
+           %set(this.ViewingWidget.legendHandle,'visible',get(hObject,'State'));
         end
         
         function toolbarZoomIn_ClickedCallback(this,hObject, eventdata)
+            set(this.ViewingWidget.zoomHandle,'Enable',char(get(hObject,'State')));
+            set(this.ViewingWidget.zoomHandle,'Direction','in');
+            set(findobj('tag','toolbarZoomOut'),'State','off');
         end
         
         function toolbarZoomOut_ClickedCallback(this,hObject, eventdata)
+            set(this.ViewingWidget.zoomHandle,'Enable',char(get(hObject,'State')));
+            set(this.ViewingWidget.zoomHandle,'Direction','out');
+            set(findobj('tag','toolbarZoomIn'),'State','off');
         end
         
         function toolbarPan_ClickedCallback(this,hObject, eventdata)
+           set(this.ViewingWidget.panHandle,'Enable',char(get(hObject,'State')));
         end
         
         function toolbarCursor_ClickedCallback(this,hObject, eventdata)
+           set(this.ViewingWidget.dcmHandle,'Enable',get(hObject,'State'));
         end
     end
 end

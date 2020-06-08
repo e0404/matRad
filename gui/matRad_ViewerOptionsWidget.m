@@ -1,13 +1,13 @@
 classdef matRad_ViewerOptionsWidget < matRad_Widget
     
     properties
-        viewerWidgetHandle;
+        viewingWidgetHandle;
         colormapLocked;
         windowPresets;
     end
     
     methods
-        function this = matRad_ViewerOptionsWidget(handleParent,viewerWidgetHandle)
+        function this = matRad_ViewerOptionsWidget(handleParent,viewingWidgetHandle)
             if nargin < 1
                 handleParent = figure(...
                     'Units','characters',...
@@ -28,23 +28,28 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             
             handles=this.handles;
             
-            if evalin('base','exist(''ct'')') && isfield(evalin('base','ct'), 'cubeHU')
-                cMapOptionsSelectList = {'None','CT (HU)','Result (i.e. dose)'};
-            else
-                cMapOptionsSelectList = {'None','CT (ED)','Result (i.e. dose)'};
-            end
-            
-            if evalin('base','exist(''resultGUI'')')
-                set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:3))
-                set(handles.popupmenu_chooseColorData,'Value',3);
-            elseif evalin('base','exist(''ct'')')
-                set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:2))
-                set(handles.popupmenu_chooseColorData,'Value',2);
-            else %no data is loaded
-                set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList{1})
-                set(handles.popupmenu_chooseColorData,'Value',1);
-            end
-            
+                        
+%             %Set up the colordata selection box
+%             if evalin('base','exist(''ct'')') && isfield(evalin('base','ct'), 'cubeHU')
+%                 cMapOptionsSelectList = {'None','CT (HU)','Result (i.e. dose)'};
+%             else
+%                 cMapOptionsSelectList = {'None','CT (ED)','Result (i.e. dose)'};
+%             end
+%                 
+%             if evalin('base','exist(''resultGUI'')')
+%                 set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:3))
+%                 set(handles.popupmenu_chooseColorData,'Value',3);
+%             elseif evalin('base','exist(''ct'')')
+%                 set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:2))
+%                 set(handles.popupmenu_chooseColorData,'Value',2);
+%             else %no data is loaded
+%                 set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList{1})
+%                 set(handles.popupmenu_chooseColorData,'Value',1);
+%             end
+            %Set up the colormap selection box
+            availableColormaps = matRad_getColormap();
+            set(handles.popupmenu_chooseColormap,'String',availableColormaps);
+                
             % setup ct window list
             % data and values from CERR https://github.com/adityaapte/CERR
             windowNames = {'Custom','Full','Abd/Med', 'Head', 'Liver', 'Lung', 'Spine', 'Vrt/Bone'};
@@ -61,7 +66,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                         
             if nargin==2
                 this.handles=handles;
-                this.viewerWidgetHandle=viewerWidgetHandle;
+                this.viewingWidgetHandle=viewingWidgetHandle;
             else
                  
                 set(handles.popupmenu_chooseColorData,'Enable','off');
@@ -76,13 +81,6 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                 set(handles.sliderOpacity,'Enable','off');
                 set(handles.btnSetIsoDoseLevels,'Enable','off');
                 
-%                 % lock settings
-%                 set(this.handles.checkbox_lockColormap,'Value', true);
-%                 checkbox_lockColormap_Callback(this,this.handles.checkbox_lockColormap)
-%                 % additionally disable these buttons
-%                 set(this.handles.checkbox_lockColormap,'Enable','off');
-%                 set(this.handles.sliderOpacity,'Enable','off');
-%                 set(this.handles.btnSetIsoDoseLevels,'Enable','off');
             end
             this.handles=handles;
         end
@@ -95,14 +93,14 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             this.UpdateColormapOptions();
         end
         
-        function viewerWidgetHandle=get.viewerWidgetHandle(this)
-            viewerWidgetHandle=this.viewerWidgetHandle;
-        end
+%         function viewingWidgetHandle=get.viewingWidgetHandle(this)
+%             viewingWidgetHandle=this.viewingWidgetHandle;
+%         end
         
-        function set.viewerWidgetHandle(this,value)
+        function set.viewingWidgetHandle(this,value)
             handles=this.handles;
-            if isvalid(value)
-                this.viewerWidgetHandle=value;
+            if isa(value,'matRad_ViewingWidget')
+                this.viewingWidgetHandle=value;
                 % enable all buttons 
                 set(handles.popupmenu_chooseColorData,'Enable','on');
                 set(handles.popupmenu_windowPreset,'Enable','on');
@@ -116,14 +114,13 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                 set(handles.sliderOpacity,'Enable','on');
                 set(handles.btnSetIsoDoseLevels,'Enable','on');
                 
-                %Set up the colormap selection box
+                 % get the default value from the viewer widget
+                set(handles.popupmenu_chooseColorData,'Value',this.viewingWidgetHandle.colorData);
+                
                 availableColormaps = matRad_getColormap();
-                set(this.handles.popupmenu_chooseColormap,'String',availableColormaps);
-                
-                % get the default values from the viewer widget
-                currentCtMapIndex   = find(strcmp(availableColormaps,this.viewerWidgetHandle.ctColorMap));
-                currentDoseMapIndex = find(strcmp(availableColormaps,this.viewerWidgetHandle.doseColorMap));
-                
+                currentCtMapIndex   = find(strcmp(availableColormaps,this.viewingWidgetHandle.ctColorMap));
+                currentDoseMapIndex = find(strcmp(availableColormaps,this.viewingWidgetHandle.doseColorMap));
+                            
                 if evalin('base','exist(''resultGUI'')') % state 3
                     set(handles.popupmenu_chooseColormap,'Value',currentDoseMapIndex);
                 else
@@ -446,7 +443,8 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             %             this.handles = handles;
             %             UpdatePlot(handles);
             
-            this.viewerWidgetHandle.colorData=get(this.handles.popupmenu_chooseColorData,'Value');
+            this.viewingWidgetHandle.colorData=get(this.handles.popupmenu_chooseColorData,'Value');
+            UpdateColormapOptions(this);
         end
         
         % H102
@@ -457,17 +455,21 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             
             % Hints: get(hObject,'Value') returns position of slider
             %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+            
             handles = this.handles;
             
-            newCenter      = get(hObject,'Value');
-            range          = get(handles.slider_windowWidth,'Value');
-            selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
+            if get(handles.popupmenu_chooseColorData,'Value')~=1
+                newCenter      = get(hObject,'Value');
+                range          = get(handles.slider_windowWidth,'Value');
+                selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
+                
+                this.viewingWidgetHandle.dispWindow{selectionIndex,1}  = [newCenter-range/2 newCenter+range/2];
+            end
             
-            this.viewerWidgetHandle.dispWindow{selectionIndex,1}  = [newCenter-range/2 newCenter+range/2];
+            
             %handles.cBarChanged = true;
             
             this.handles = handles;
-            this.viewerWidgetHandle.UpdatePlot();
             %UpdatePlot(handles);
             UpdateColormapOptions(this);
         end
@@ -490,9 +492,9 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             
             switch selectionIndex
                 case 2
-                    this.viewerWidgetHandle.ctColorMap = strings{index};
+                    this.viewingWidgetHandle.ctColorMap = strings{index};
                 case 3
-                    this.viewerWidgetHandle.doseColorMap = strings{index};
+                    this.viewingWidgetHandle.doseColorMap = strings{index};
                 otherwise
             end
             
@@ -500,6 +502,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             
             this.handles = handles;
             %UpdatePlot(handles);
+            this.UpdateColormapOptions;
         end
         
         % H106
@@ -514,24 +517,26 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             handles = this.handles;
             
             selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
-            vRange         = str2num(get(hObject,'String'));
-            % matlab adds a zero in the beginning when text field is changed
-            if numel(vRange) == 3
-                vRange = vRange(vRange~=0);
+            if selectionIndex~=1
+                vRange         = str2num(get(hObject,'String'));
+                % matlab adds a zero in the beginning when text field is changed
+                if numel(vRange) == 3
+                    vRange = vRange(vRange~=0);
+                end
+                
+                this.viewingWidgetHandle.dispWindow{selectionIndex,1} = sort(vRange);
+                %handles.cBarChanged = true;
+                
+                %             % compute new iso dose lines
+                %             if selectionIndex > 2
+                % %                 guidata(hObject,handles);
+                % %                 handles = updateIsoDoseLineCache(handles);
+                %                 this.viewingWidgetHandle.updateIsoDoseLineCache();
+                %             end
             end
-            
-            this.viewerWidgetHandle.dispWindow{selectionIndex,1} = sort(vRange);
-            %handles.cBarChanged = true;
-            
-            % compute new iso dose lines
-            if selectionIndex > 2
-%                 guidata(hObject,handles);
-%                 handles = updateIsoDoseLineCache(handles);
-                this.viewerWidgetHandle.updateIsoDoseLineCache();
-            end
-            
             this.handles = handles;
             %UpdatePlot(handles);
+            this.UpdateColormapOptions();
         end
         
         % H107
@@ -543,16 +548,16 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             % Hints: get(hObject,'String') returns contents of edit_windowCenter as text
             %        str2double(get(hObject,'String')) returns contents of edit_windowCenter as a double
             
+            
             handles = this.handles;
-            
-            newCenter           = str2double(get(hObject,'String'));
-            width               = get(handles.slider_windowWidth,'Value');
-            selectionIndex      = get(handles.popupmenu_chooseColorData,'Value');
-            this.viewerWidgetHandle.dispWindow{selectionIndex,1}  = [newCenter-width/2 newCenter+width/2];
-            %handles.cBarChanged = true;
-            
+            if get(handles.popupmenu_chooseColorData,'Value')~=1
+                newCenter           = str2double(get(hObject,'String'));
+                width               = get(handles.slider_windowWidth,'Value');
+                selectionIndex      = get(handles.popupmenu_chooseColorData,'Value');
+                this.viewingWidgetHandle.dispWindow{selectionIndex,1}  = [newCenter-width/2 newCenter+width/2];
+                %handles.cBarChanged = true;
+            end
             this.handles = handles;
-            this.viewerWidgetHandle.UpdatePlot();
             % UpdatePlot(handles);
             UpdateColormapOptions(this);
         end
@@ -566,15 +571,15 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             % Hints: get(hObject,'String') returns contents of edit_windowWidth as text
             %        str2double(get(hObject,'String')) returns contents of edit_windowWidth as a double
             handles = this.handles;
-            
-            newWidth            = str2double(get(hObject,'String'));
-            center              = get(handles.slider_windowCenter,'Value');
-            selectionIndex      = get(handles.popupmenu_chooseColorData,'Value');
-            this.viewerWidgetHandle.dispWindow{selectionIndex,1}  = [center-newWidth/2 center+newWidth/2];
-            %handles.cBarChanged = true;
-            
+            if get(handles.popupmenu_chooseColorData,'Value')~=1
+                newWidth            = str2double(get(hObject,'String'));
+                center              = get(handles.slider_windowCenter,'Value');
+                selectionIndex      = get(handles.popupmenu_chooseColorData,'Value');
+                this.viewingWidgetHandle.dispWindow{selectionIndex,1}  = [center-newWidth/2 center+newWidth/2];
+                %handles.cBarChanged = true;
+            end
             this.handles = handles;
-            this.viewerWidgetHandle.UpdatePlot();
+            %this.viewingWidgetHandle.UpdatePlot();
             %UpdatePlot(handles);
             UpdateColormapOptions(this);
         end
@@ -586,7 +591,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             % handles    structure with handles and user data (see GUIDATA)
             %handles = this.handles;
             
-            this.viewerWidgetHandle.doseOpacity = get(hObject,'Value');
+            this.viewingWidgetHandle.doseOpacity = get(hObject,'Value');
             
             %this.handles = handles;
             %UpdatePlot(handles);
@@ -603,17 +608,17 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             % Hints: contents = cellstr(get(hObject,'String')) returns popupmenu_windowPreset contents as cell array
             %        contents{get(hObject,'Value')} returns selected item from popupmenu_windowPreset
             handles = this.handles;
-            
-            selectionIndexCube      = 2; % working on ct only
-            selectionIndexWindow    = get(handles.popupmenu_windowPreset,'Value');
-            newCenter               = this.windowPresets(selectionIndexWindow).center;
-            newWidth                = this.windowPresets(selectionIndexWindow).width;
-            
-            this.viewerWidgetHandle.dispWindow{selectionIndexCube,1}  = [newCenter - newWidth/2 newCenter + newWidth/2];
-            %handles.cBarChanged = true;
+            if get(handles.popupmenu_chooseColorData,'Value')~=1
+                selectionIndexCube      = 2; % working on ct only
+                selectionIndexWindow    = get(handles.popupmenu_windowPreset,'Value');
+                newCenter               = this.windowPresets(selectionIndexWindow).center;
+                newWidth                = this.windowPresets(selectionIndexWindow).width;
+                
+                this.viewingWidgetHandle.dispWindow{selectionIndexCube,1}  = [newCenter - newWidth/2 newCenter + newWidth/2];
+                %handles.cBarChanged = true;
+            end
             this.handles = handles;
             %UpdatePlot(handles);
-            this.viewerWidgetHandle.UpdatePlot();
             UpdateColormapOptions(this);
         end
         
@@ -627,14 +632,14 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
             
             handles = this.handles;
-            newWidth = get(hObject,'Value');
-            center   = get(handles.slider_windowCenter,'Value');
-            selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
-            this.viewerWidgetHandle.dispWindow{selectionIndex,1}  = [center-newWidth/2 center+newWidth/2];
-            %handles.cBarChanged = true;
-            
+            if get(handles.popupmenu_chooseColorData,'Value')~=1
+                newWidth = get(hObject,'Value');
+                center   = get(handles.slider_windowCenter,'Value');
+                selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
+                this.viewingWidgetHandle.dispWindow{selectionIndex,1}  = [center-newWidth/2 center+newWidth/2];
+                %handles.cBarChanged = true;
+            end
             this.handles = handles;
-            this.viewerWidgetHandle.UpdatePlot();
             %UpdatePlot(handles);
             UpdateColormapOptions(this);
         end
@@ -672,64 +677,82 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
         function btnSetIsoDoseLevels_Callback(this,hObject, eventdata)
             handles = this.handles;
             prompt = {['Enter iso dose levels in [Gy]. Enter space-separated numbers, e.g. 1.5 2 3 4.98. Enter 0 to use default values']};
-            if isequal(this.viewerWidgetHandle.IsoDose_Levels,0) || ~isvector(this.viewerWidgetHandle.IsoDose_Levels) || any(~isnumeric(this.viewerWidgetHandle.IsoDose_Levels)) || any(isnan(this.viewerWidgetHandle.IsoDose_Levels))
+            if isequal(this.viewingWidgetHandle.IsoDose_Levels,0) || ~isvector(this.viewingWidgetHandle.IsoDose_Levels) || any(~isnumeric(this.viewingWidgetHandle.IsoDose_Levels)) || any(isnan(this.viewingWidgetHandle.IsoDose_Levels))
                 defaultLine = {'1 2 3 '};
             else
-                if isrow(this.viewerWidgetHandle.IsoDose_Levels)
-                    defaultLine = cellstr(num2str(this.viewerWidgetHandle.IsoDose_Levels,'%.2g '));
+                if isrow(this.viewingWidgetHandle.IsoDose_Levels)
+                    defaultLine = cellstr(num2str(this.viewingWidgetHandle.IsoDose_Levels,'%.2g '));
                 else
-                    defaultLine = cellstr(num2str(this.viewerWidgetHandle.IsoDose_Levels','%.2g '));
+                    defaultLine = cellstr(num2str(this.viewingWidgetHandle.IsoDose_Levels','%.2g '));
                 end
             end
             
             try
                 Input = inputdlg(prompt,'Set iso dose levels ', [1 70],defaultLine);
                 if ~isempty(Input)
-                    this.viewerWidgetHandle.IsoDose_Levels = (sort(str2num(Input{1})));
-                    if length(this.viewerWidgetHandle.IsoDose_Levels) == 1 && (this.viewerWidgetHandle.IsoDose_Levels(1) ~= 0)
-                        this.viewerWidgetHandle.IsoDose_Levels = [this.viewerWidgetHandle.IsoDose_Levels this.viewerWidgetHandle.IsoDose_Levels];
+                    this.viewingWidgetHandle.IsoDose_Levels = (sort(str2num(Input{1})));
+                    if length(this.viewingWidgetHandle.IsoDose_Levels) == 1 && (this.viewingWidgetHandle.IsoDose_Levels(1) ~= 0)
+                        this.viewingWidgetHandle.IsoDose_Levels = [this.viewingWidgetHandle.IsoDose_Levels this.viewingWidgetHandle.IsoDose_Levels];
                     end
                     %handles.IsoDose.NewIsoDoseFlag = true;
                 end
             catch
                 warning('Couldnt parse iso dose levels - using default values');
-                this.viewerWidgetHandle.IsoDose_Levels = 0;
+                this.viewingWidgetHandle.IsoDose_Levels = 0;
             end
             this.handles = handles;
             %handles = updateIsoDoseLineCache(handles);
-            %this.viewerWidgetHandle.NewIsoDoseFlag = false;
+            %this.viewingWidgetHandle.NewIsoDoseFlag = false;
             %UpdatePlot(handles);
         end
         %% Callbacks & Functions for color setting
         function UpdateColormapOptions(this)
             handles=this.handles;
+            this.viewingWidgetHandle.lockUpdate=true;
             if isfield(handles,'colormapLocked') && handles.colormapLocked
                 return;
             end
+             %Set up the colordata selection box
+            if evalin('base','exist(''ct'')') && isfield(evalin('base','ct'), 'cubeHU')
+                cMapOptionsSelectList = {'None','CT (HU)','Result (i.e. dose)'};
+                if evalin('base','exist(''resultGUI'')')
+                    set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:3))
+                    %set(handles.popupmenu_chooseColorData,'Value',3);
+                else
+                    if this.viewingWidgetHandle.colorData>2
+                        this.viewingWidgetHandle.colorData=2;
+                    end
+                    set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList(1:2))
+                    %set(handles.popupmenu_chooseColorData,'Value',2);
+                end
+            else %no data is loaded
+                if this.viewingWidgetHandle.colorData>1
+                    this.viewingWidgetHandle.colorData=1;
+                end
+                
+                cMapOptionsSelectList = {'None','CT (ED)','Result (i.e. dose)'}; 
+                set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList{1})
+                %set(handles.popupmenu_chooseColorData,'Value',1);
+            end
+            selectionIndex=this.viewingWidgetHandle.colorData;
+            set(handles.popupmenu_chooseColorData,'Value',selectionIndex);
             
+            %selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
             
-            selectionIndex = get(handles.popupmenu_chooseColorData,'Value');
-            
-            if ~isempty(this.viewerWidgetHandle.dispWindow{selectionIndex,2})
-                set(handles.txtMinVal,'String',['min value: ' num2str(this.viewerWidgetHandle.dispWindow{selectionIndex,2}(1,1))]);
-                set(handles.txtMaxVal,'String',['max value: ' num2str(this.viewerWidgetHandle.dispWindow{selectionIndex,2}(1,2))]);
+            if ~isempty(this.viewingWidgetHandle.dispWindow{selectionIndex,2})
+                set(handles.txtMinVal,'String',['min value: ' num2str(this.viewingWidgetHandle.dispWindow{selectionIndex,2}(1,1))]);
+                set(handles.txtMaxVal,'String',['max value: ' num2str(this.viewingWidgetHandle.dispWindow{selectionIndex,2}(1,2))]);
             end
             cMapSelectionIndex = get(handles.popupmenu_chooseColormap,'Value');
             cMapStrings = get(handles.popupmenu_chooseColormap,'String');
             
             
             
-%             if selectionIndex > 1
-%                 set(handles.uitoggletool8,'State','on');
-%             else
-%                 set(handles.uitoggletool8,'State','off');
-%             end
-            
             try
                 if selectionIndex == 2
                     ct = evalin('base','ct');
-                    currentMap = this.viewerWidgetHandle.ctColorMap;
-                    window = this.viewerWidgetHandle.dispWindow{selectionIndex,1};
+                    currentMap = this.viewingWidgetHandle.ctColorMap;
+                    window = this.viewingWidgetHandle.dispWindow{selectionIndex,1};
                     if isfield(ct, 'cube')
                         minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
                     else
@@ -743,10 +766,10 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                     this.windowPresets(2).center = mean(minMax);
                 elseif selectionIndex == 3
                     result = evalin('base','resultGUI');
-                    dose = result.(this.viewerWidgetHandle.SelectedDisplayOption);
-                    currentMap = this.viewerWidgetHandle.doseColorMap;
+                    dose = result.(this.viewingWidgetHandle.SelectedDisplayOption);
+                    currentMap = this.viewingWidgetHandle.doseColorMap;
                     minMax = [min(dose(:)) max(dose(:))];
-                    window = this.viewerWidgetHandle.dispWindow{selectionIndex,1};
+                    window = this.viewingWidgetHandle.dispWindow{selectionIndex,1};
                 else
                     window = [0 1];
                     minMax = window;
@@ -791,6 +814,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             
             cMapPopupIndex = find(strcmp(currentMap,cMapStrings));
             set(handles.popupmenu_chooseColormap,'Value',cMapPopupIndex);
+            this.viewingWidgetHandle.lockUpdate=false;
             this.handles=handles;
         end
     end

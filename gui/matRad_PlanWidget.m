@@ -29,15 +29,22 @@ classdef matRad_PlanWidget < matRad_Widget
                 
             end
             this = this@matRad_Widget(handleParent);
-        end
-        
-        function this = initialize(this)
+            
             if evalin('base','exist(''pln'')')
               getPlnFromWorkspace(this);
             else
               setPlnDefaultValues(this);
+              %updatePlnInWorkspace(this);
             end
-            updatePlnInWorkspace(this);
+        end
+        
+        function this = initialize(this)
+%             if evalin('base','exist(''pln'')')
+%               getPlnFromWorkspace(this);
+%             else
+%               setPlnDefaultValues(this);
+%             end
+%             updatePlnInWorkspace(this);
         end
         
         function this = update(this)
@@ -49,7 +56,13 @@ classdef matRad_PlanWidget < matRad_Widget
         end
         
         function changeWorkspace(obj)
-            notify(obj, 'workspaceChanged');
+            [env, ~] = matRad_getEnvironment();
+            % handle environment
+            switch env
+                case 'MATLAB'
+                    notify(obj, 'workspaceChanged');
+                case 'OCTAVE'
+            end
         end
     end
     
@@ -492,7 +505,7 @@ classdef matRad_PlanWidget < matRad_Widget
             
             % checkIsoCenter checkbox
             W = evalin('base','whos');
-            doesPlnExist = ismember('pln',{W(:).name});
+            doesPlnExist = ismember('pln',{W(:).name}) && evalin('base','exist(''cst'')') && evalin('base','exist(''ct'')');
             
             if get(handles.checkIsoCenter,'Value') && doesPlnExist
                 try
@@ -530,22 +543,22 @@ classdef matRad_PlanWidget < matRad_Widget
                 handles = showError(this,'EditIsoCenterCallback: Could not set iso center');
             end
             
-            
-            try
-                cst = evalin('base','cst');
-                if (sum(strcmp('TARGET',cst(:,3))) > 0 && get(handles.checkIsoCenter,'Value')) || ...
-                        (sum(strcmp('TARGET',cst(:,3))) > 0 && ~isfield(pln.propStf,'isoCenter'))
-                    pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct);
-                    set(handles.checkIsoCenter,'Value',1);
-                else
-                    if ~strcmp(get(handles.editIsoCenter,'String'),'multiple isoCenter')
-                        pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * str2num(get(handles.editIsoCenter,'String'));
+            if evalin('base','exist(''cst'')')
+                try
+                    cst = evalin('base','cst');
+                    if (sum(strcmp('TARGET',cst(:,3))) > 0 && get(handles.checkIsoCenter,'Value')) || ...
+                            (sum(strcmp('TARGET',cst(:,3))) > 0 && ~isfield(pln.propStf,'isoCenter'))
+                        pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct);
+                        set(handles.checkIsoCenter,'Value',1);
+                    else
+                        if ~strcmp(get(handles.editIsoCenter,'String'),'multiple isoCenter')
+                            pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * str2num(get(handles.editIsoCenter,'String'));
+                        end
                     end
+                catch ME
+                    warning(ME.identifier,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)
                 end
-            catch ME
-                warning(ME.identifier,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)
             end
-            
             
             handles.pln = pln;
             assignin('base','pln',pln);
@@ -653,7 +666,7 @@ classdef matRad_PlanWidget < matRad_Widget
                         if isfield(resultGUI,'RBExDose'); resultGUI = rmfield(resultGUI,'RBExDose');end
                         if isfield(resultGUI,'RBE');      resultGUI = rmfield(resultGUI,'RBE');     end
                         assignin('base','resultGUI',resultGUI);
-                        handles = updateIsoDoseLineCache(handles);
+                        %handles = updateIsoDoseLineCache(handles);
                     end
                 catch
                 end
@@ -666,7 +679,7 @@ classdef matRad_PlanWidget < matRad_Widget
                         if isfield(resultGUI,'beta');  resultGUI = rmfield(resultGUI,'beta'); end
                         if isfield(resultGUI,'RBE');   resultGUI = rmfield(resultGUI,'RBE');  end
                         assignin('base','resultGUI',resultGUI);
-                        handles = updateIsoDoseLineCache(handles);
+                        %handles = updateIsoDoseLineCache(handles);
                     end
                 catch
                 end
@@ -736,9 +749,13 @@ classdef matRad_PlanWidget < matRad_Widget
             % M�GLICHER FEHLER WEGEN VALUE WERT!
             handles = this.handles;
              contents = cellstr(get(hObject,'String'));
-%             MachineIdentifier = contents{get(hObject,'Value')};
+             MachineIdentifier = contents{get(hObject,'Value')};
             % contentPopUp = get(handles.)
-            checkRadiationComposition(this);
+            flag=checkRadiationComposition(this);
+            if ~flag
+                this.showWarning(['No base data available for machine: ' MachineIdentifier '. Selecting default machine.']);
+                set(handles.popUpMachine,'Value',1);
+            end
             getMachines(this);
             pln = evalin('base','pln');
             
@@ -753,7 +770,7 @@ classdef matRad_PlanWidget < matRad_Widget
                         if isfield(resultGUI,'RBExDose'); resultGUI = rmfield(resultGUI,'RBExDose');end
                         if isfield(resultGUI,'RBE');      resultGUI = rmfield(resultGUI,'RBE');     end
                         assignin('base','resultGUI',resultGUI);
-                        handles = updateIsoDoseLineCache(handles);
+                        %handles = updateIsoDoseLineCache(handles);
                     end
                 catch
                 end
@@ -767,7 +784,7 @@ classdef matRad_PlanWidget < matRad_Widget
                         if isfield(resultGUI,'beta');  resultGUI = rmfield(resultGUI,'beta'); end
                         if isfield(resultGUI,'RBE');   resultGUI = rmfield(resultGUI,'RBE');  end
                         assignin('base','resultGUI',resultGUI);
-                        handles = updateIsoDoseLineCache(handles);
+                        %handles = updateIsoDoseLineCache(handles);
                     end
                 catch
                 end
@@ -779,78 +796,80 @@ classdef matRad_PlanWidget < matRad_Widget
         
         function btnSetTissue_Callback(this, hObject, eventdata)
             handles = this.handles;
-
-            try
-                %parse variables from base-workspace
-                cst = evalin('base','cst');
-                pln = evalin('base','pln');
-                
-                
-                fileName = [pln.radiationMode '_' pln.machine];
-                load(fileName);
-                
-                % check for available cell types characterized by alphaX and betaX
-                for i = 1:size(machine.data(1).alphaX,2)
-                    CellType{i} = [num2str(machine.data(1).alphaX(i)) ' ' num2str(machine.data(1).betaX(i))];
+            
+            if evalin('base','exist(''cst'')') && evalin('base','exist(''pln'')') 
+                try
+                    %parse variables from base-workspace
+                    cst = evalin('base','cst');
+                    pln = evalin('base','pln');
+                    
+                    
+                    fileName = [pln.radiationMode '_' pln.machine];
+                    load(fileName);
+                    
+                    % check for available cell types characterized by alphaX and betaX
+                    for i = 1:size(machine.data(1).alphaX,2)
+                        CellType{i} = [num2str(machine.data(1).alphaX(i)) ' ' num2str(machine.data(1).betaX(i))];
+                    end
+                    
+                    %fill table data array
+                    for i = 1:size(cst,1)
+                        data{i,1} = cst{i,2};
+                        data{i,2} = [num2str(cst{i,5}.alphaX) ' ' num2str(cst{i,5}.betaX)];
+                        data{i,3} = (cst{i,5}.alphaX / cst{i,5}.betaX );
+                    end
+                    
+                    Width  = 400;
+                    Height = 200 + 20*size(data,1);
+                    ScreenSize = get(0,'ScreenSize');
+                    % show "set tissue parameter" window
+                    figHandles = get(0,'Children');
+                    if ~isempty(figHandles)
+                        IdxHandle = strcmp(get(figHandles,'Name'),'Set Tissue Parameters');
+                    else
+                        IdxHandle = [];
+                    end
+                    
+                    %check if window is already exists
+                    if any(IdxHandle)
+                        IdxTable = find(strcmp({figHandles(IdxHandle).Children.Type},'uitable'));
+                        set(figHandles(IdxHandle).Children(IdxTable), 'Data', []);
+                        figTissue = figHandles(IdxHandle);
+                        %set focus
+                        figure(figTissue);
+                    else
+                        figTissue = figure('Name','Set Tissue Parameters','Color',[.5 .5 .5],'NumberTitle','off','Position',...
+                            [ceil(ScreenSize(3)/2) ceil(ScreenSize(4)/2) Width Height]);
+                    end
+                    
+                    % define the tissue parameter table
+                    cNames = {'VOI','alphaX betaX','alpha beta ratio'};
+                    columnformat = {'char',CellType,'numeric'};
+                    
+                    tissueTable = uitable('Parent', figTissue,'Data', data,'ColumnEditable',[false true false],...
+                        'ColumnName',cNames, 'ColumnFormat',columnformat,'Position',[50 150 10 10]);
+                    set(tissueTable,'CellEditCallback',@(hObject,eventdata) tissueTable_CellEditCallback(this,hObject,eventdata));
+                    % set width and height
+                    currTablePos = get(tissueTable,'Position');
+                    currTableExt = get(tissueTable,'Extent');
+                    currTablePos(3) = currTableExt(3);
+                    currTablePos(4) = currTableExt(4);
+                    set(tissueTable,'Position',currTablePos);
+                    
+                    % define two buttons with callbacks
+                    uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Save&Close',...
+                        'Position', [Width-(0.25*Width) 0.1 * Height 70 30],...
+                        'Callback', @(hpb,eventdata)SaveTissueParameters(this,hpb,eventdata));
+                    
+                    uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Cancel&Close',...
+                        'Position', [Width-(0.5*Width) 0.1 * Height 80 30],...
+                        'Callback', 'close');
+                catch ME
+                    warning(ME.identifier,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)
                 end
-                
-                %fill table data array
-                for i = 1:size(cst,1)
-                    data{i,1} = cst{i,2};
-                    data{i,2} = [num2str(cst{i,5}.alphaX) ' ' num2str(cst{i,5}.betaX)];
-                    data{i,3} = (cst{i,5}.alphaX / cst{i,5}.betaX );
-                end
-                
-                Width  = 400;
-                Height = 200 + 20*size(data,1);
-                ScreenSize = get(0,'ScreenSize');
-                % show "set tissue parameter" window
-                figHandles = get(0,'Children');
-                if ~isempty(figHandles)
-                    IdxHandle = strcmp(get(figHandles,'Name'),'Set Tissue Parameters');
-                else
-                    IdxHandle = [];
-                end
-                
-                %check if window is already exists
-                if any(IdxHandle)
-                    IdxTable = find(strcmp({figHandles(IdxHandle).Children.Type},'uitable'));
-                    set(figHandles(IdxHandle).Children(IdxTable), 'Data', []);
-                    figTissue = figHandles(IdxHandle);
-                    %set focus
-                    figure(figTissue);
-                else
-                    figTissue = figure('Name','Set Tissue Parameters','Color',[.5 .5 .5],'NumberTitle','off','Position',...
-                        [ceil(ScreenSize(3)/2) ceil(ScreenSize(4)/2) Width Height]);
-                end
-                
-                % define the tissue parameter table
-                cNames = {'VOI','alphaX betaX','alpha beta ratio'};
-                columnformat = {'char',CellType,'numeric'};
-                
-                tissueTable = uitable('Parent', figTissue,'Data', data,'ColumnEditable',[false true false],...
-                    'ColumnName',cNames, 'ColumnFormat',columnformat,'Position',[50 150 10 10]);
-                set(tissueTable,'CellEditCallback',@tissueTable_CellEditCallback);
-                % set width and height
-                currTablePos = get(tissueTable,'Position');
-                currTableExt = get(tissueTable,'Extent');
-                currTablePos(3) = currTableExt(3);
-                currTablePos(4) = currTableExt(4);
-                set(tissueTable,'Position',currTablePos);
-                
-                % define two buttons with callbacks
-                uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Save&Close',...
-                    'Position', [Width-(0.25*Width) 0.1 * Height 70 30],...
-                    'Callback', @(hpb,eventdata)SaveTissueParameters(hpb,eventdata,handles));
-                
-                uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Cancel&Close',...
-                    'Position', [Width-(0.5*Width) 0.1 * Height 80 30],...
-                    'Callback', 'close');
-            catch ME
-                warning(ME.identifier,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)
             end
             this.handles = handles;
-            updatePlnInWorkspace(this);
+            %updatePlnInWorkspace(this);
         end
         
         function popMenuBioOpt_Callback(this, hObject, eventdata)
@@ -875,7 +894,7 @@ classdef matRad_PlanWidget < matRad_Widget
         function getMachines(this)
             %seach for availabes machines
             handles = this.handles;
-            
+            this.Machines=cell(size(this.Modalities));
             %Loop over all modalities to find machine per modalitiy
             for i = 1:length(this.Modalities)
                 pattern = [this.Modalities{1,i} '_*']; %Name pattern, e.g. photons_generic
@@ -884,6 +903,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 else
                     Files = dir([fileparts(mfilename('fullpath')) filesep '..' filesep pattern]);
                 end
+                this.Machines{i}=cell(size(Files));
                 for j = 1:length(Files)
                     if ~isempty(Files)
                         MachineName = Files(j).name(numel(this.Modalities{1,i})+2:end-4);
@@ -891,7 +911,6 @@ classdef matRad_PlanWidget < matRad_Widget
                     end
                 end
             end
-            
             selectedRadMod = get(handles.popupRadMode,'Value');
             nMachines = numel(this.Machines{selectedRadMod});
             selectedMachine = get(handles.popUpMachine,'Value');
@@ -930,15 +949,54 @@ classdef matRad_PlanWidget < matRad_Widget
             if isdeployed
                 FoundFile = dir([ctfroot filesep 'matRad' filesep radMod '_' Machine '.mat']);
             else
-                FoundFile = dir([fileparts(mfilename('fullpath')) filesep radMod '_' Machine '.mat']);
+                FoundFile = dir([fileparts(mfilename('fullpath')) filesep  '..' filesep radMod '_' Machine '.mat']);
             end
             if isempty(FoundFile)
-                this.showWarning(['No base data available for machine: ' Machine]);
+              %  this.showWarning(['No base data available for machine: ' Machine '. Selecting default machine.']);
                 flag = false;
+              %  set(handles.popUpMachine,'Value',1);
             end
             this.handles = handles;
         end
         
+        function SaveTissueParameters(this,~, ~)
+            cst = evalin('base','cst');
+            % get handle to uiTable
+            figHandles = get(0,'Children');
+            IdxHandle  = find(strcmp(get(figHandles,'Name'),'Set Tissue Parameters'));
+            % find table in window
+            
+            figHandleChildren = get(figHandles(IdxHandle),'Children');
+            IdxTable   = find(strcmp(get(figHandleChildren,'Type'),'uitable'));
+            uiTable    = figHandleChildren(IdxTable);
+            % retrieve data from uitable
+            data       = get(uiTable,'data');
+            
+            for i = 1:size(cst,1)
+                for j = 1:size(data,1)
+                    if strcmp(cst{i,2},data{j,1})
+                        alphaXBetaX = str2num(data{j,2});
+                        cst{i,5}.alphaX = alphaXBetaX(1);
+                        cst{i,5}.betaX  = alphaXBetaX(2);
+                    end
+                end
+            end
+            assignin('base','cst',cst);
+            close
+            %handles.State = 2;
+            %UpdateState(handles);
+            
+            %this.handles = handles;
+            updatePlnInWorkspace(this); 
+        end
         
+        function tissueTable_CellEditCallback(this,hObject, eventdata)
+            if eventdata.Indices(2) == 2
+                alphaXBetaX = str2num(eventdata.NewData);
+                data = get(hObject,'Data');
+                data{eventdata.Indices(1),3} = alphaXBetaX(1)/alphaXBetaX(2);
+                set(hObject,'Data',data);
+            end
+        end
     end
 end

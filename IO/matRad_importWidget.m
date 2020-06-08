@@ -32,6 +32,17 @@ classdef matRad_importWidget < matRad_Widget
             %handles.output = this.widgetHandle;
             %guidata(this.widgetHandle, handles);
            
+        end 
+        
+        function changeWorkspace(obj)
+          [env, ~] = matRad_getEnvironment();
+          % handle environment
+          switch env
+              case 'MATLAB'
+                  notify(obj, 'workspaceChanged');
+              case 'OCTAVE'
+          end
+            
         end
     end
 
@@ -277,14 +288,17 @@ classdef matRad_importWidget < matRad_Widget
             %delete(handles.figure_importDialog);
             
             this.handles = handles;
+            changeWorkspace(this);
+            delete(this.widgetHandle);
+            
         end
         
-        %CALLBACK FOR H9 PUSHBUTTON CANCEL
-        function this = pushbutton_cancel_Callback(this, hObject, event)
-           handles = this.handles;
-            delete(handles.figure_importDialog);
-            this.handles = handles;
-        end
+%         %CALLBACK FOR H9 PUSHBUTTON CANCEL
+%         function this = pushbutton_cancel_Callback(this, hObject, event)
+%            handles = this.handles;
+%             delete(handles.figure_importDialog);
+%             this.handles = handles;
+%         end
         
         %CALLBACK FOR H10 PUSHBUTTON ADD MASK FOLDERS
         function this = pushbutton_addMaskFolders_Callback(this, hObject, event)
