@@ -54,7 +54,7 @@ if nargin < 3 || isempty(stf)
     fileName = [pln.radiationMode '_' pln.machine];
     %Get a SAD
     try
-        load([fileparts(mfilename('fullpath')) filesep fileName]);
+        load([fileparts(mfilename('fullpath')) filesep 'basedata' filesep fileName]);
         SAD = machine.meta.SAD;
     catch
         if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
@@ -68,9 +68,9 @@ if nargin < 3 || isempty(stf)
     beamVector = [0 SAD 0];
    
     
-    for beamIx = 1:pln.numOfBeams
-        rotMat = matRad_getRotationMatrix(pln.gantryAngles(beamIx),pln.couchAngles(beamIx));
-        beamIsoCenter = pln.isoCenter(beamIx,:);
+    for beamIx = 1:pln.propStf.numOfBeams
+        rotMat = matRad_getRotationMatrix(pln.propStf.gantryAngles(beamIx),pln.propStf.couchAngles(beamIx));
+        beamIsoCenter = pln.propStf.isoCenter(beamIx,:);
         currBeamVector = rotMat*beamVector';        
         currBeamSource = beamIsoCenter - currBeamVector';
         currBeamOuterTarget = beamIsoCenter + currBeamVector';

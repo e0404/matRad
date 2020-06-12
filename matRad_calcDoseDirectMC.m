@@ -33,21 +33,25 @@ function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_cfg;
+matRad_cfg =  MatRad_Config.instance();
+
 calcDoseDirect = true;
 
 if nargin < 6 || ~exist('nHistories')
-  nHistories = 2e4;
+  nHistories = matRad_cfg.propMC.direct_defaultHistories;
+  matRad_cfg.dispInfo('Using default number of Histories: %d\n',nHistories);
 end
 
 % check if weight vector is available, either in function call or in stf - otherwise dose calculation not possible
 if ~exist('w','var') && ~isfield([stf.ray],'weight')
-     error('No weight vector available. Please provide w or add info to stf')
+     matRad_cfg.dispError('No weight vector available. Please provide w or add info to stf');
 end
 
 % copy bixel weight vector into stf struct
 if exist('w','var')
     if sum([stf.totalNumOfBixels]) ~= numel(w)
-        error('weighting does not match steering information')
+        matRad_cfg.dispError('weighting does not match steering information');
     end
     counter = 0;
     for i = 1:size(stf,2)
@@ -75,7 +79,7 @@ end
 if strcmp(pln.radiationMode,'protons')
   dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nHistories,calcDoseDirect);
 else
-    error('Forward MC only implemented for protons.');
+    matRad_cfg.dispError('Forward MC only implemented for protons.');
 end
 
 % hack dij struct

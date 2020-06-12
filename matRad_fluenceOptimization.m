@@ -30,6 +30,8 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+
 if pln.propOpt.conf3D && strcmp(pln.radiationMode,'photons') || pln.propOpt.runDAO
     if ~matRad_checkForConnectedBixelRows(evalin('base','stf'))
         error('disconnetced dose influence data in BEV - run dose calculation again with consistent settings');
@@ -53,7 +55,7 @@ cst  = matRad_setOverlapPriorities(cst);
 for i = 1:size(cst,1)
     %Compatibility Layer for old objective format
     if isstruct(cst{i,6})
-        cst{i,6} = num2cell(arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{i,6}));
+        cst{i,6} = arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{i,6},'UniformOutput',false);
     end
     for j = 1:numel(cst{i,6})
         
@@ -66,7 +68,7 @@ for i = 1:size(cst,1)
             try
                 obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
             catch
-                error(['cst{' num2str(i) ',6}{' num2str(j) '} is not a valid Objective/constraint! Remove or Replace and try again!']);
+                matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
             end
         end
         
@@ -133,7 +135,7 @@ elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt
 
     if ~isequal(dij.ax(dij.ax~=0),ax(dij.ax~=0)) || ...
        ~isequal(dij.bx(dij.bx~=0),bx(dij.bx~=0))
-         error(['Inconsistent biological parameter - please recalculate dose influence matrix']);
+         matRad_cfg.dispError('Inconsistent biological parameter - please recalculate dose influence matrix!\n');
     end
 
     for i = 1:size(cst,1)
@@ -141,7 +143,7 @@ elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt
         for j = 1:size(cst{i,6},2)
             % check if prescribed doses are in a valid domain
             if any(cst{i,6}{j}.getDoseParameters() > 5) && isequal(cst{i,3},'TARGET')
-                error('Reference dose > 10 Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.');
+                matRad_cfg.dispError('Reference dose > 10 Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.\n');
             end
             
         end
@@ -232,12 +234,6 @@ resultGUI = matRad_calcCubes(wOpt,dij,cst);
 resultGUI.wUnsequenced = wOpt;
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
-
-% here or only in workflow?
-% if pln.propOpt.conf3D && strcmp(pln.radiationMode,'photons') 
-%     resultGUI.w = resultGUI.w * ones(dij.totalNumOfBixels,1);
-%     resultGUI.wUnsequenced = resultGUI.w;
-% end
 
 % unblock mex files
 clear mex

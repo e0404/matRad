@@ -43,9 +43,13 @@ if exist('cMap', 'var') && ~isempty(cMap)
     cMapScale = size(cMap,1)-1;
     %determine colors
     colors = cMap(round(linspace(1,cMapScale,size(cst,1))),:);
-  else
+else
     for i = 1:size(cst,1)
-      colors(i,:) = cst{i,5}.visibleColor;
+        if isfield(cst{i,5},'visibleColor')
+            colors(i,:) = cst{i,5}.visibleColor;
+        else
+            colors(i,:) = [0 0 0];
+        end
     end
 end
 
