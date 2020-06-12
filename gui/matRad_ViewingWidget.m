@@ -71,6 +71,8 @@ classdef matRad_ViewingWidget < matRad_Widget
             end
             
             this = this@matRad_Widget(handleParent);
+            set(this.widgetHandle,'ButtonDownFcn',@(src,hEvent) update(this)); 
+            
             [env, ~] = matRad_getEnvironment();
             
             if nargin < 1
@@ -107,6 +109,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 case 'MATLAB'
                     notify(obj, 'plotUpdated');
                 case 'OCTAVE'
+                    matRad_notifyOctave(obj, 'workspaceChanged');
             end
             
         end
@@ -819,6 +822,10 @@ classdef matRad_ViewingWidget < matRad_Widget
                     l=legend(handles.axesFig,'off');
                 else
                     % store the lines as a private property
+                    empty_VOI=find(cellfun(@isempty,this.AxesHandlesVOI));
+                    if ~isempty(empty_VOI)
+                        this.VOIPlotFlag(empty_VOI)=false;
+                    end
                     l=legend(handles.axesFig, [this.AxesHandlesVOI{:}], cst{this.VOIPlotFlag,2});
                 end
             end

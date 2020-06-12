@@ -24,6 +24,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
                 
             end
             this = this@matRad_Widget(handleParent);
+            set(this.widgetHandle,'ButtonDownFcn',@(src,hEvent) update(this));  
         end
        
         function this=initialize(this)
@@ -36,7 +37,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
                 generateCstTable(this, evalin('base','cst'));
             else
-                delete(this.widgetHandle.Children);
+                delete(get(this.widgetHandle,'Children'));
             end
            
         end
@@ -50,6 +51,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
                 case 'MATLAB'
                     notify(obj, 'workspaceChanged');
                 case 'OCTAVE'
+                    matRad_notifyOctave(obj, 'workspaceChanged');
             end
         end
     end
@@ -57,8 +59,16 @@ classdef matRad_OptimizationWidget < matRad_Widget
     methods (Access = protected)
         function this = createLayout(this)
             h1 = this.widgetHandle;
-            set(h1,'SizeChangedFcn',@(hObject,eventdata) widget_SizeChangedFcn(this,hObject,eventdata));
-      
+            
+            [env, ~] = matRad_getEnvironment();
+            % handle environment
+            switch env
+                case 'MATLAB'
+                    set(h1,'SizeChangedFcn',@(hObject,eventdata) widget_SizeChangedFcn(this,hObject,eventdata));
+                case 'OCTAVE'
+                    set(h1,'resizefcn',@(hObject,eventdata) widget_SizeChangedFcn(this,hObject,eventdata));
+            end
+                        
             this.createHandles();
             
         end

@@ -22,6 +22,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 
             end
             this = this@matRad_Widget(handleParent);
+            set(this.widgetHandle,'ButtonDownFcn',@(src,hEvent) update(this));
         end
         
         function this = initialize(this)
@@ -40,6 +41,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
               case 'MATLAB'
                   notify(obj, 'workspaceChanged');
               case 'OCTAVE'
+                  matRad_notifyOctave(obj, 'workspaceChanged');
           end
             
         end
@@ -238,7 +240,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 'FontWeight','bold');
             
             this.createHandles();
-            
         end
         
         function this = getFromWorkspace(this)

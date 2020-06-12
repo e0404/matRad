@@ -216,39 +216,48 @@ classdef matRad_MainGUI < handle
             
             
             obj.WorkflowWidget = matRad_WorkflowWidget(p1);
-            obj.eventListeners.workflow = addlistener(obj.WorkflowWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-            
             obj.PlanWidget = matRad_PlanWidget(p2);
-            obj.eventListeners.plan = addlistener(obj.PlanWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-            
             obj.OptimizationWidget = matRad_OptimizationWidget(p3);
-            obj.eventListeners.optimization = addlistener(obj.OptimizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-            
             obj.ViewingWidget = matRad_ViewingWidget(p8);
-            obj.eventListeners.viewing = addlistener(obj.ViewingWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-            obj.eventListeners.plot = addlistener(obj.ViewingWidget,'plotUpdated',@(src,hEvent) updateButtons(obj));
-
-            [env, ~] = matRad_getEnvironment();
-            % only available in MATLAB
-            if strcmp(env,'MATLAB')
-                obj.ViewingWidget.dcmHandle = datacursormode(obj.guiHandle);
-                obj.ViewingWidget.panHandle = pan(obj.guiHandle);
-                obj.ViewingWidget.zoomHandle = zoom(obj.guiHandle);
-            end
-            obj.ViewingWidget.scrollHandle =  obj.guiHandle;
             
-            obj.VisualizationWidget = matRad_VisualizationWidget(p4, obj.ViewingWidget);            
-            obj.eventListeners.visualization = addlistener(obj.VisualizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-            
+           
+            obj.ViewingWidget.scrollHandle =  obj.guiHandle;            
+            obj.VisualizationWidget = matRad_VisualizationWidget(p4, obj.ViewingWidget);        
             obj.ViewerOptionsWidget = matRad_ViewerOptionsWidget(p5, obj.ViewingWidget);
-            obj.eventListeners.viewerOptions = addlistener(obj.ViewerOptionsWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-                        
-            obj.StructureVisibilityWidget = matRad_StructureVisibilityWidget(p6);
-            obj.eventListeners.structureVisibility = addlistener(obj.StructureVisibilityWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-            
+            obj.StructureVisibilityWidget = matRad_StructureVisibilityWidget(p6);           
             obj.InfoWidget = matRad_InfoWidget(p7); % does not need a listener
-                     
             obj.LogoWidget = matRad_LogoWidget(p9); % does not need a listener
+            
+            [env, ~] = matRad_getEnvironment();
+           
+            switch env
+                case 'MATLAB'                                      
+                    obj.eventListeners.workflow = addlistener(obj.WorkflowWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    obj.eventListeners.plan = addlistener(obj.PlanWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    obj.eventListeners.optimization = addlistener(obj.OptimizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    obj.eventListeners.viewing = addlistener(obj.ViewingWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    obj.eventListeners.plot = addlistener(obj.ViewingWidget,'plotUpdated',@(src,hEvent) updateButtons(obj));
+                    obj.eventListeners.visualization = addlistener(obj.VisualizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    obj.eventListeners.viewerOptions = addlistener(obj.ViewerOptionsWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    obj.eventListeners.structureVisibility = addlistener(obj.StructureVisibilityWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    
+                    % only available in MATLAB
+                    obj.ViewingWidget.dcmHandle = datacursormode(obj.guiHandle);
+                    obj.ViewingWidget.panHandle = pan(obj.guiHandle);
+                    obj.ViewingWidget.zoomHandle = zoom(obj.guiHandle);
+                    
+                case 'OCTAVE'
+                    % addlistener is not yet available in octave 
+                    obj.eventListeners.workflow = matRad_addListenerOctave(obj.WorkflowWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    obj.eventListeners.plan = matRad_addListenerOctave(obj.PlanWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    obj.eventListeners.optimization = matRad_addListenerOctave(obj.OptimizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    obj.eventListeners.viewing = matRad_addListenerOctave(obj.ViewingWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    obj.eventListeners.plot = matRad_addListenerOctave(obj.ViewingWidget,'plotUpdated',@(src,hEvent) updateButtons(obj));
+                    obj.eventListeners.visualization = matRad_addListenerOctave(obj.VisualizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    obj.eventListeners.viewerOptions = matRad_addListenerOctave(obj.ViewerOptionsWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    obj.eventListeners.structureVisibility = matRad_addListenerOctave(obj.StructureVisibilityWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    
+            end
             
             obj.createMenuBar();
             

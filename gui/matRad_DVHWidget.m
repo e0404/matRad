@@ -28,7 +28,7 @@ classdef matRad_DVHWidget < matRad_Widget
             end
             
             this = this@matRad_Widget(handleParent);
-            
+            set(this.widgetHandle,'ButtonDownFcn',@(src,hEvent) update(this));        
 
         end
         
@@ -39,6 +39,9 @@ classdef matRad_DVHWidget < matRad_Widget
         end
         
         function this=update(this)
+            if evalin('base','exist(''resultGUI'')')
+                this.showDVH();
+            end
         end
         
     end

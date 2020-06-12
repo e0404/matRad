@@ -23,6 +23,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
                 
             end
             this = this@matRad_Widget(handleParent);
+            set(this.widgetHandle,'ButtonDownFcn',@(src,hEvent) update(this));  
         end
         
         function this=initialize(this)
@@ -46,6 +47,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
                 case 'MATLAB'
                     notify(obj, 'workspaceChanged');
                 case 'OCTAVE'
+                    matRad_notifyOctave(obj, 'workspaceChanged');
             end
         end
     end
