@@ -37,6 +37,7 @@ classdef matRad_Widget <  handle
         %}
         
         function handles = showError(this,Message,ME)
+            global matRad_cfg; matRad_cfg = MatRad_Config.instance();
             handles = this.handles;
             if nargin == 3
                 %Add exception message
@@ -53,11 +54,14 @@ classdef matRad_Widget <  handle
                     close(handles.ErrorDlg);
                 end
             end
-            handles.ErrorDlg = errordlg(Message);
+            matRad_cfg.dispError(Message);
+            %handles.ErrorDlg = errordlg(Message);
             this.handles = handles;
         end
         
         function showWarning(this,Message,ME)
+            global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+            
             handles = this.handles;
             if nargin == 3
                 %Add exception message
@@ -68,15 +72,17 @@ classdef matRad_Widget <  handle
                 end
                 Message = {Message,ME.message};%{Message,ME.getReport(meType,'hyperlinks','off')};
             end
-            
-            if isfield(handles,'ErrorDlg')
-                if ishandle(handles.ErrorDlg)
-                    close(handles.ErrorDlg);
-                end
-            end
-            handles.ErrorDlg = errordlg(Message);
-            
-            this.handles = handles;
+            matRad_cfg.dispWarning(Message);
+%
+%             if isfield(handles,'ErrorDlg')
+%                 if ishandle(handles.ErrorDlg)
+%                     close(handles.ErrorDlg);
+%                 end
+%             end
+%             handles.ErrorDlg = errordlg(Message);
+%
+             this.handles = handles;         
+
         end
         
         %function notifyUpdate(this,workSpaceVariables)

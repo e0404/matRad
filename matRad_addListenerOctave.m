@@ -25,12 +25,12 @@
 
 function retval = matRad_addListenerOctave (hSource,eventName,callback)
     global eventMap;
-    %
-%     persistent warningprinted;
-%     if isempty(warningprinted)
-%         warning('')
-%         warningprinted=2;
-%     end
+    
+    persistent warningprinted;
+    if isempty(warningprinted)
+        hSource.showWarning('You are using an experimental implementation of ''addlistener'' concept for Octave');
+        warningprinted=2;
+    end
     
     newListener = struct('src',hSource,'event',eventName,'callback',callback);
     if isempty(eventMap)

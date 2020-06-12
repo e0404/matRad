@@ -28,8 +28,12 @@ function matRad_notifyOctave(hObject,eventName)
     if isempty(eventMap)
         return;
     end
-    
-    % add warning experimental notify concept for octave
+        
+    persistent warningprinted;
+    if isempty(warningprinted)
+        hObject.showWarning('You are using an experimental implementation of ''notify'' concept for Octave');
+        warningprinted=2;
+    end
     
     objHandles = {eventMap(:).src};
     
