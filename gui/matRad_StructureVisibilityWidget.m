@@ -35,7 +35,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
                 updateStructureTable(this, evalin('base','cst'));
             else
-                set(this.handles.legendTable,'String','');
+                set(this.handles.legendTable,'String','no data loaded');
             end
            
         end
@@ -64,6 +64,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
                 'Position',[0.02 0.01 0.97 0.98],...
                 'BackgroundColor',[0.501960784313725 0.501960784313725 0.501960784313725],...
                 'Callback',@(hObject,eventdata) legendTable_Callback(this,hObject,eventdata),...
+                'FontSize',8,...
                 'Tag','legendTable');
             
             this.createHandles();
@@ -78,6 +79,10 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             
             % Hints: contents = cellstr(get(hObject,'String')) returns legendTable contents as cell array
             %        contents{get(hObject,'Value')} returns selected item from legendTable
+            
+            if strcmp(get(hObject,'String'),'no data loaded')
+                return;
+            end
             
             handles = this.handles;
             cst = evalin('base','cst');

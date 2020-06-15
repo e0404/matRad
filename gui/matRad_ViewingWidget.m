@@ -27,7 +27,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         CutOffLevel= 0.01;
         dispWindow= cell(3,2);%{[],[];[0.0267,1.69207],[-1000,1040];[0,2.797],[0,2.797]}; %cell(3,2);
         doseOpacity = 0.6;
-        IsoDose_Levels = 1;
+        IsoDose_Levels=0;
         NewIsoDoseFlag = true;
         cBarHandle;
         dcmHandle;
@@ -112,6 +112,10 @@ classdef matRad_ViewingWidget < matRad_Widget
                     matRad_notifyOctave(obj, 'workspaceChanged');
             end
             
+        end
+        
+        function this=set.lockUpdate(this,value)
+            this.lockUpdate=value;
         end
         
         function set.plane(this,value)
@@ -527,10 +531,10 @@ classdef matRad_ViewingWidget < matRad_Widget
                     ctIx = selectIx;
                 end
                 
-                if isfield(ct, 'cube')
-                    plotCtCube = ct.cube;
-                else
+                if isfield(ct, 'cubeHU')
                     plotCtCube = ct.cubeHU;
+                else
+                    plotCtCube = ct.cube;
                 end
                 
                 ctMap = matRad_getColormap(this.ctColorMap,this.cMapSize);
@@ -813,7 +817,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 
                 Lines  = PlotHandles(~cellfun(@isempty,PlotHandles(:,1)),1);
                 Labels = PlotHandles(~cellfun(@isempty,PlotHandles(:,1)),2);
-                l=legend(handles.axesFig,[Lines{:}],Labels{:});
+                l=legend(handles.axesFig,[Lines{:}],Labels{:}, 'FontSize',8);
                 xlabel('radiological depth [mm]','FontSize',8);
                 grid on, grid minor
             else
@@ -821,12 +825,16 @@ classdef matRad_ViewingWidget < matRad_Widget
                 if this.typeOfPlot==2 || ~this.plotContour || isempty([this.AxesHandlesVOI{:}]) %isempty(find(this.VOIPlotFlag, 1))
                     l=legend(handles.axesFig,'off');
                 else
-                    % store the lines as a private property
+                    % display legend for nonempty VOI
                     empty_VOI=find(cellfun(@isempty,this.AxesHandlesVOI));
                     if ~isempty(empty_VOI)
                         this.VOIPlotFlag(empty_VOI)=false;
                     end
-                    l=legend(handles.axesFig, [this.AxesHandlesVOI{:}], cst{this.VOIPlotFlag,2});
+                    % in case of multiple lines per VOI, only display the legend once
+                    VOIlines=this.AxesHandlesVOI(~cellfun(@isempty,this.AxesHandlesVOI));
+                    VOIlegendlines=cellfun(@(v)v(1),VOIlines);
+
+                    l=legend(handles.axesFig, VOIlegendlines, cst{this.VOIPlotFlag,2}, 'FontSize',8);
                 end
             end
             set(l,'FontSize',defaultFontSize);
@@ -1015,6 +1023,27 @@ this.IsoDose_Contours = matRad_computeIsoDoseContours(dose,this.IsoDose_Levels);
         
         function updateValues(this)
             this.lockUpdate=true;
+            
+            if isempty(this.plane)
+                this.plane=3;
+            end
+            
+            if isempty(this.slice)
+                if evalin('base','exist(''ct'')') &&  evalin('base','exist(''pln'')')
+                    pln= evalin('base','pln');
+                    ct = evalin('base','ct');
+                    if this.plane == 1
+                        this.slice= ceil(pln.propStf.isoCenter(1,2)/ct.resolution.x);
+                    elseif this.plane == 2
+                        this.slice= ceil(pln.propStf.isoCenter(1,1)/ct.resolution.y);
+                    elseif this.plane == 3
+                        this.slice= ceil(pln.propStf.isoCenter(1,3)/ct.resolution.z);
+                    end
+                else
+                    this.slice=1;
+                end
+            end
+            
             if isempty(this.colorData)
                 if evalin('base','exist(''resultGUI'')')
                     this.colorData=3;
@@ -1024,100 +1053,94 @@ this.IsoDose_Contours = matRad_computeIsoDoseContours(dose,this.IsoDose_Levels);
                     this.colorData=1;
                 end
             end
+            if this.colorData==3
+                selectionIndex=2;
+            else
+                selectionIndex=this.colorData;
+            end
             
-             if isempty(this.plane)
-                 this.plane=3;
-             end
-             
-             
-             if evalin('base','exist(''resultGUI'')')
-                 %selectionIndex = 2;
-                 Result = evalin('base','resultGUI');
-                 
-                 this.DispInfo = fieldnames(Result);                 
-                 for i = 1:size(this.DispInfo,1)
-                     
-                     % delete weight vectors in Result struct for plotting
-                     if isstruct(Result.(this.DispInfo{i,1})) || isvector(Result.(this.DispInfo{i,1}))
-                         Result = rmfield(Result,this.DispInfo{i,1});
-                         this.DispInfo{i,2}=false;
-                     else
-                         %second dimension indicates if it should be plotted
-                         this.DispInfo{i,2} = true;
-                         % determine units
-                         if strfind(this.DispInfo{i,1},'physicalDose')
-                             this.DispInfo{i,3} = '[Gy]';
-                         elseif strfind(this.DispInfo{i,1},'alpha')
-                             this.DispInfo{i,3} = '[Gy^{-1}]';
-                         elseif strfind(this.DispInfo{i,1},'beta')
-                             this.DispInfo{i,3} = '[Gy^{-2}]';
-                         elseif strfind(this.DispInfo{i,1},'RBExD')
-                             this.DispInfo{i,3} = '[Gy(RBE)]';
-                         elseif strfind(this.DispInfo{i,1},'LET')
-                             this.DispInfo{i,3} = '[keV/um]';
-                         else
-                             this.DispInfo{i,3} = '[a.u.]';
-                         end
-                         this.DispInfo{i,4} = [];    % optional for the future: color range for plotting
-                         this.DispInfo{i,5} = [];    % optional for the future: min max values
-                     end
-                 end
-                 
-                 if sum(strcmp(this.SelectedDisplayOption,fieldnames(Result))) == 0
-                     this.SelectedDisplayOption = this.DispInfo{find([this.DispInfo{:,2}],1,'first'),1};
-                 end
-                 
-                 dose = Result.(this.SelectedDisplayOption);
-                 minMax = [min(dose(:)) max(dose(:))];
-                 
-                 if isempty(this.dispWindow{3,2})
-                     this.dispWindow{3,1} = minMax; 
-                     this.dispWindow{3,2} = minMax;
-                 end
-             elseif evalin('base','exist(''dij'')')
-                 this.SelectedDisplayOption ='physicalDose';
-             else
-                 this.SelectedDisplayOption ='';
-             end
-             
-             if evalin('base','exist(''ct'')')
-                 selectionIndex = 2;
-                 ct = evalin('base','ct');
-                 if isfield(ct, 'cube')
-                     ctCube=ct.cube{1};
-                 else
-                     ctCube=ct.cubeHU;
-                 end
-                 minMax = [min(reshape([ct.cubeHU{:}],[],1)) max(reshape([ct.cubeHU{:}],[],1))];
-                 window = [min(ctCube(:)) max(ctCube(:))];  
-                 
-                  
-                 
-                 if isempty(this.slice)
-                     if evalin('base','exist(''pln'')')
-                         pln= evalin('base','pln');
-                         if this.plane == 1
-                             this.slice= ceil(pln.propStf.isoCenter(1,2)/ct.resolution.x);
-                         elseif this.plane == 2
-                             this.slice= ceil(pln.propStf.isoCenter(1,1)/ct.resolution.y);
-                         elseif this.plane == 3
-                             this.slice= ceil(pln.propStf.isoCenter(1,3)/ct.resolution.z);
-                         end
-                     else
-                         this.slice=1;
-                     end
-                 end
-             else
-                 selectionIndex=1;
-                 minMax = [0 1];
-                 window=minMax;
-             end
-             
-             if isempty(this.dispWindow{selectionIndex,2})
-                 this.dispWindow{selectionIndex,1} = window;
-                 this.dispWindow{selectionIndex,2} = minMax;
-             end
-             
+          
+            if evalin('base','exist(''resultGUI'')')
+                Result = evalin('base','resultGUI');
+                
+                this.DispInfo = fieldnames(Result);
+                for i = 1:size(this.DispInfo,1)
+                    
+                    % delete weight vectors in Result struct for plotting
+                    if isstruct(Result.(this.DispInfo{i,1})) || isvector(Result.(this.DispInfo{i,1}))
+                        Result = rmfield(Result,this.DispInfo{i,1});
+                        this.DispInfo{i,2}=false;
+                    else
+                        %second dimension indicates if it should be plotted
+                        this.DispInfo{i,2} = true;
+                        % determine units
+                        if strfind(this.DispInfo{i,1},'physicalDose')
+                            this.DispInfo{i,3} = '[Gy]';
+                        elseif strfind(this.DispInfo{i,1},'alpha')
+                            this.DispInfo{i,3} = '[Gy^{-1}]';
+                        elseif strfind(this.DispInfo{i,1},'beta')
+                            this.DispInfo{i,3} = '[Gy^{-2}]';
+                        elseif strfind(this.DispInfo{i,1},'RBExD')
+                            this.DispInfo{i,3} = '[Gy(RBE)]';
+                        elseif strfind(this.DispInfo{i,1},'LET')
+                            this.DispInfo{i,3} = '[keV/um]';
+                        else
+                            this.DispInfo{i,3} = '[a.u.]';
+                        end
+                        this.DispInfo{i,4} = [];    % optional for the future: color range for plotting
+                        this.DispInfo{i,5} = [];    % optional for the future: min max values
+                    end
+                end
+                
+                if sum(strcmp(this.SelectedDisplayOption,fieldnames(Result))) == 0
+                    this.SelectedDisplayOption = this.DispInfo{find([this.DispInfo{:,2}],1,'first'),1};
+                end
+                
+                dose = Result.(this.SelectedDisplayOption);
+                minMax = [min(dose(:)) max(dose(:))];
+                
+                %if function is called for the first time then set display parameters
+                if  isempty(this.dispWindow{3,1}) || ~isequal(this.dispWindow{3,2},minMax)
+                    this.dispWindow{3,1} = [min(dose(:)) max(dose(:))]; % set default dose range
+                    this.dispWindow{3,2} = [min(dose(:)) max(dose(:))]; % set min max values
+                end
+                
+                minMaxRange = this.dispWindow{3,1};
+                % if upper colorrange is defined then use it otherwise 120% iso dose
+                upperMargin = 1;
+                if abs((max(dose(:)) - this.dispWindow{3,1}(1,2))) < 0.01  * max(dose(:))
+                    upperMargin = 1.2;
+                end
+                
+                if (length(this.IsoDose_Levels) == 1 && this.IsoDose_Levels(1,1) == 0)
+                    vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];
+                    referenceDose            = (minMaxRange(1,2))/(upperMargin);
+                    this.IsoDose_Levels   = minMaxRange(1,1) + (referenceDose-minMaxRange(1,1)) * vLevels;
+                end
+                this.IsoDose_Contours = matRad_computeIsoDoseContours(dose,this.IsoDose_Levels);
+                
+            end
+            
+            if evalin('base','exist(''ct'')') %selectionIndex == 2
+                ct = evalin('base','ct');
+                if isfield(ct, 'cubeHU')
+                    minMax = [min(ct.cubeHU{1}(:)) max(ct.cubeHU{1}(:))];
+                else
+                    minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
+                end
+            else
+                minMax = [0 1];
+            end
+            
+            if isempty(this.dispWindow{selectionIndex,1}) || ~isequal(this.dispWindow{selectionIndex,2},minMax)  % new data is loaded
+                this.dispWindow{selectionIndex,1} = minMax;
+                this.dispWindow{selectionIndex,2} = minMax;
+            end
+            
+            
+            if strcmp(this.SelectedDisplayOption,'') && evalin('base','exist(''dij'')')
+                this.SelectedDisplayOption ='physicalDose';
+            end
              
             this.lockUpdate=false;
         end

@@ -43,22 +43,45 @@ classdef matRad_InfoWidget < matRad_Widget
             h96 = uicontrol(...
                 'Parent',h94,...
                 'Units','normalized',...
-                'String','v3.0.0',...
+                ...%'String','v3.0.0',...
                 'Style','text',...
                 'Position',[0.227106227106227 0.752808988764045 0.523809523809524 0.191011235955056],...
                 'BackgroundColor',[0.501960784313725 0.501960784313725 0.501960784313725],...
                 'Tag','text15',...
+                'FontSize',8,...
                 'FontWeight','bold');
             
             h97 = uicontrol(...
                 'Parent',h94,...
                 'Units','normalized',...
-                'String','github.com/e0404/matRad',...
+                ...%'String','github.com/e0404/matRad',...
                 'Style','text',...
                 'Position',[0.0384615384615385 0.528089887640449 0.942307692307693 0.168539325842697],...
                 'BackgroundColor',[0.501960784313725 0.501960784313725 0.501960784313725],...
                 'Tag','text31',...
+                'FontSize',8,...
                 'FontWeight','bold' );
+            
+            this.createHandles();
+            handles=this.handles;
+            %Alter matRad Version string positioning
+            vString = matRad_version();
+            vPos = get(handles.text15,'Position');
+            urlPos = get(handles.text31,'Position');
+            btnPos = get(handles.btnAbout,'Position');
+            
+            %vPos([1 3]) = urlPos([1 3]);
+            vPos([1 3]) = [0 1];
+            vPos(4) = vPos(4)*1.25;
+            btnPos(2) = 0.05;
+            urlPos(2) = btnPos(2)+btnPos(4)+0.05;
+            vPos(2) = urlPos(2) + urlPos(4) + 0.05;
+            vPos(4) = 0.98 - vPos(2);
+            
+            set(handles.btnAbout,'Position',btnPos);
+            set(handles.text31,'String','www.matRad.org','Position',urlPos,'Enable','inactive','ButtonDownFcn', @(~,~) web('www.matrad.org','-browser'));
+            set(handles.text15,'String',vString,'Position',vPos);
+            this.handles=handles;
         end
     end
     
@@ -67,6 +90,29 @@ classdef matRad_InfoWidget < matRad_Widget
         function btnAbout_Callback(this, hObject, event)
             handles = this.handles;
             msgbox({'https://github.com/e0404/matRad/' 'email: matrad@dkfz.de'},'About');
+%             handles.eduMode = logical(parsedInput.eduMode);
+%             [~,matRadVer] = matRad_version;
+%             
+%             msg{1} = ['matRad ''' matRadVer.name '''']; %Name
+%             if handles.eduMode
+%                 msg{1} = [msg{1} ' Educational'];
+%             end
+%             msg{end+1} = sprintf('v%d.%d.%d',matRadVer.major,matRadVer.minor,matRadVer.patch); %Version Number
+%             if isdeployed
+%                 msg{end+1} = 'Standalone Version';
+%             elseif ~isempty(matRadVer.branch) && ~isempty(matRadVer.commitID)
+%                 msg{end+1} = sprintf('Git: Branch %s, commit %s',matRadVer.branch,matRadVer.commitID(1:8));
+%             end
+%             
+%             [env,envver]  = matRad_getEnvironment();
+%             msg{end+1} = sprintf('Environment: %s v%s %s',env,envver,version('-release'));
+%             
+%             msg{end+1} = 'Web: www.matrad.org';
+%             msg{end+1} = 'E-Mail: contact@matrad.org';
+%             
+%             msgbox(msg,'About matRad');
+            
+            
             this.handles = handles;
         end
     end

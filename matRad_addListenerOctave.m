@@ -38,6 +38,6 @@ function retval = matRad_addListenerOctave (hSource,eventName,callback)
     else
         eventMap(end+1) = newListener;
     end
-    
+    retval=newListener;
     
 end

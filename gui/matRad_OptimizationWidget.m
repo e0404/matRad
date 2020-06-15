@@ -120,7 +120,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             delete(cstPanelChildren);
             
             %Creates a dummy axis to allow for the use of textboxes instead of uicontrol to be able to use the (la)tex interpreter
-            tmpAxes = axes('Parent',cstPanel,'units','normalized','position',[0 0 1 1],'visible','off');
+            tmpAxes = axes('Parent',cstPanel,'units','normalized','position',[0 0 1 1],'visible','off', 'FontSize',8);
             
             organTypes = {'OAR', 'TARGET'};
             
@@ -141,25 +141,25 @@ classdef matRad_OptimizationWidget < matRad_Widget
             %Setup Headlines
             xPos = 0.01; %5
             
-            h = uicontrol(cstPanel,'Style','text','String','+/-','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Remove or add Constraint or Objective');
+            h = uicontrol(cstPanel,'Style','text','String','+/-','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight], 'FontSize',8,'TooltipString','Remove or add Constraint or Objective');
             tmp_pos = get(h,'Position');
             xPos = xPos + tmp_pos(3) + fieldSep;
-            h = uicontrol(cstPanel,'Style','text','String','VOI name','Units','normalized','Position',[xPos ypos(cnt) nameW objHeight],'TooltipString','Name of the structure with objective/constraint');
+            h = uicontrol(cstPanel,'Style','text','String','VOI name','Units','normalized','Position',[xPos ypos(cnt) nameW objHeight], 'FontSize',8,'TooltipString','Name of the structure with objective/constraint');
             tmp_pos = get(h,'Position');
             xPos = xPos + tmp_pos(3) + fieldSep;
-            h = uicontrol(cstPanel,'Style','text','String','VOI type','Units','normalized','Position',[xPos ypos(cnt) typeW objHeight],'TooltipString','Segmentation Classification');
+            h = uicontrol(cstPanel,'Style','text','String','VOI type','Units','normalized','Position',[xPos ypos(cnt) typeW objHeight], 'FontSize',8,'TooltipString','Segmentation Classification');
             tmp_pos = get(h,'Position');
             xPos = xPos + tmp_pos(3) + fieldSep;
-            h = uicontrol(cstPanel,'Style','text','String','OP','Units','normalized','Position',[xPos ypos(cnt) opW objHeight],'TooltipString',['Overlap Priority' char(10) '(Smaller number overlaps higher number)']);
+            h = uicontrol(cstPanel,'Style','text','String','OP','Units','normalized','Position',[xPos ypos(cnt) opW objHeight], 'FontSize',8,'TooltipString',['Overlap Priority' char(10) '(Smaller number overlaps higher number)']);
             tmp_pos = get(h,'Position');
             xPos = xPos + tmp_pos(3) + fieldSep;
-            h = uicontrol(cstPanel,'Style','text','String','Function','Units','normalized','Position',[xPos ypos(cnt) functionW objHeight],'TooltipString','Objective/Constraint function type');
+            h = uicontrol(cstPanel,'Style','text','String','Function','Units','normalized','Position',[xPos ypos(cnt) functionW objHeight], 'FontSize',8,'TooltipString','Objective/Constraint function type');
             tmp_pos = get(h,'Position');
             xPos = xPos + tmp_pos(3) + fieldSep;
-            h = uicontrol(cstPanel,'Style','text','String','p','Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight],'TooltipString','Optimization penalty');
+            h = uicontrol(cstPanel,'Style','text','String','p','Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight], 'FontSize',8,'TooltipString','Optimization penalty');
             tmp_pos = get(h,'Position');
             xPos = xPos + tmp_pos(3) + fieldSep;
-            h = uicontrol(cstPanel,'Style','text','String','| Parameters','Units','normalized','Position',[xPos ypos(cnt) paramTitleW objHeight],'TooltipString','List of parameters','HorizontalAlignment','left');
+            h = uicontrol(cstPanel,'Style','text','String','| Parameters','Units','normalized','Position',[xPos ypos(cnt) paramTitleW objHeight], 'FontSize',8,'TooltipString','List of parameters','HorizontalAlignment','left');
             tmp_pos = get(h,'Position');
             xPos = xPos + tmp_pos(3) + fieldSep;
             cnt = cnt + 1;
@@ -187,35 +187,35 @@ classdef matRad_OptimizationWidget < matRad_Widget
                         
                         xPos = 0.01;%5;
                         
-                        h = uicontrol(cstPanel,'Style','pushbutton','String','-','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight],'TooltipString','Remove Objective/Constraint','Callback',@(hObject,eventdata)btObjRemove_Callback(this,hObject,eventdata),...
+                        h = uicontrol(cstPanel,'Style','pushbutton','String','-','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight], 'FontSize',8,'TooltipString','Remove Objective/Constraint','Callback',@(hObject,eventdata)btObjRemove_Callback(this,hObject,eventdata),...
                             'UserData',[i,j]);
                         tmp_pos = get(h,'Position');
                         xPos = xPos + tmp_pos(3) + fieldSep;
-                        h = uicontrol(cstPanel','Style','edit','String',cst{i,2},'Units','normalized','Position',[xPos ypos(cnt) nameW objHeight],'TooltipString','Name',...
+                        h = uicontrol(cstPanel','Style','edit','String',cst{i,2},'Units','normalized','Position',[xPos ypos(cnt) nameW objHeight], 'FontSize',8,'TooltipString','Name',...
                             'Enable','inactive',... %Disable editing of name atm
                             'UserData',[i,2],'Callback',@(hObject,eventdata)editCstParams_Callback(this,hObject,eventdata)); %Callback added, however, editing is disabled atm
                         tmp_pos = get(h,'Position');
                         xPos = xPos + tmp_pos(3) + fieldSep;
-                        h = uicontrol(cstPanel,'Style','popupmenu','String',organTypes','Value',find(strcmp(cst{i,3},organTypes)),'Units','normalized','Position',[xPos ypos(cnt) typeW objHeight],'TooltipString','Segmentation Classification',...
+                        h = uicontrol(cstPanel,'Style','popupmenu','String',organTypes','Value',find(strcmp(cst{i,3},organTypes)),'Units','normalized','Position',[xPos ypos(cnt) typeW objHeight], 'FontSize',8,'TooltipString','Segmentation Classification',...
                             'UserData',[i,3],'Callback',@(hObject,eventdata)editCstParams_Callback(this,hObject,eventdata));
                         tmp_pos = get(h,'Position');
                         xPos = xPos + tmp_pos(3) + fieldSep;
-                        h = uicontrol(cstPanel,'Style','edit','String',num2str(cst{i,5}.Priority),'Units','normalized','Position',[xPos ypos(cnt) opW objHeight],'TooltipString',['Overlap Priority' newline '(Smaller number overlaps higher number)'],...
+                        h = uicontrol(cstPanel,'Style','edit','String',num2str(cst{i,5}.Priority),'Units','normalized','Position',[xPos ypos(cnt) opW objHeight], 'FontSize',8,'TooltipString',['Overlap Priority' newline '(Smaller number overlaps higher number)'],...
                             'UserData',[i,5],'Callback',@(hObject,eventdata)editCstParams_Callback(this,hObject,eventdata));
                         tmp_pos = get(h,'Position');
                         xPos = xPos + tmp_pos(3) + fieldSep;
                         
-                        h = uicontrol(cstPanel,'Style','popupmenu','String',classNames(2,:)','Value',find(strcmp(obj.name,classNames(2,:))),'Units','normalized','Position',[xPos ypos(cnt) functionW objHeight],'TooltipString','Select Objective/Constraint',...
+                        h = uicontrol(cstPanel,'Style','popupmenu','String',classNames(2,:)','Value',find(strcmp(obj.name,classNames(2,:))),'Units','normalized','Position',[xPos ypos(cnt) functionW objHeight], 'FontSize',8,'TooltipString','Select Objective/Constraint',...
                             'UserData',{[i,j],classNames(1,:)},'Callback',@(hObject,eventdata)changeObjFunction_Callback(this,hObject,eventdata));
                         tmp_pos = get(h,'Position');
                         xPos = xPos + tmp_pos(3) + fieldSep;
                         
                         %Check if we have an objective to display penalty
                         if isa(obj,'DoseObjectives.matRad_DoseObjective')
-                            h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.penalty),'Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight],'TooltipString','Objective Penalty','UserData',[i,j,0],...
+                            h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.penalty),'Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight], 'FontSize',8,'TooltipString','Objective Penalty','UserData',[i,j,0],...
                                 'Callback',@(hObject,eventdata)editObjParam_Callback(this,hObject,eventdata));
                         else
-                            h = uicontrol(cstPanel,'Style','edit','String','----','Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight],'Enable','off');
+                            h = uicontrol(cstPanel,'Style','edit','String','----','Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight], 'FontSize',8,'Enable','off');
                         end
                         tmp_pos = get(h,'Position');
                         xPos = xPos + tmp_pos(3) + fieldSep;
@@ -224,7 +224,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
 %                             h = text('Parent',tmpAxes,'String',['| ' obj.parameterNames{p} ':'],'VerticalAlignment','middle','Units','normalized','Position',[xPos ypos(cnt)+lineHeight/2],'Interpreter','tex','FontWeight','normal',...
 %                                 'FontSize',get(cstPanel,'FontSize'),'FontName',get(cstPanel,'FontName'),'FontUnits',get(cstPanel,'FontUnits'),'FontWeight','normal');%[xPos ypos(cnt) 100 objHeight]);
                             % there is no fontsize for cstPanel
-                            h = text('Parent',tmpAxes,'String',['| ' obj.parameterNames{p} ':'],'VerticalAlignment','middle','Units','normalized','Position',[xPos ypos(cnt)+lineHeight/2],'Interpreter','tex','FontWeight','normal',...
+                            h = text('Parent',tmpAxes,'String',['| ' obj.parameterNames{p} ':'],'VerticalAlignment','middle','Units','normalized','Position',[xPos ypos(cnt)+lineHeight/2],'Interpreter','tex', 'FontSize',8,'FontWeight','normal',...
                                 'FontWeight','normal');%[xPos ypos(cnt) 100 objHeight]);
                             tmp_pos = get(h,'Extent');
                             xPos = xPos + tmp_pos(3) + fieldSep;
@@ -232,10 +232,10 @@ classdef matRad_OptimizationWidget < matRad_Widget
                             
                             %Check if we have a cell and therefore a parameter list
                             if iscell(obj.parameterTypes{p})
-                                h = uicontrol(cstPanel,'Style','popupmenu','String',obj.parameterTypes{p}','Value',obj.parameters{p},'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW*2 objHeight],'UserData',[i,j,p],...
+                                h = uicontrol(cstPanel,'Style','popupmenu','String',obj.parameterTypes{p}','Value',obj.parameters{p},'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW*2 objHeight], 'FontSize',8,'UserData',[i,j,p],...
                                     'Callback',@(hObject,eventdata)editObjParam_Callback(this,hObject,eventdata));
                             else
-                                h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{p}),'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW objHeight],'UserData',[i,j,p],...
+                                h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{p}),'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW objHeight], 'FontSize',8,'UserData',[i,j,p],...
                                     'Callback',@(hObject,eventdata)editObjParam_Callback(this,hObject,eventdata));
                             end
                             
@@ -248,11 +248,11 @@ classdef matRad_OptimizationWidget < matRad_Widget
                 end
             end
             xPos = 0.01; %5
-            hAdd = uicontrol(cstPanel,'Style','pushbutton','String','+','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight],...
+            hAdd = uicontrol(cstPanel,'Style','pushbutton','String','+','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight], 'FontSize',8,...
                 'TooltipString','Add Objective/Constraint','Callback',@(hObject,eventdata)btObjAdd_Callback(this,hObject,eventdata)); %{@btObjAdd_Callback,handles});
             tmp_pos = get(hAdd,'Position');
             xPos = xPos + tmp_pos(3) + fieldSep;
-            h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Units','normalized','Position',[xPos ypos(cnt) nameW objHeight]);
+            h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Units','normalized','Position',[xPos ypos(cnt) nameW objHeight], 'FontSize',8);
             set(hAdd,'UserData',h);
             
             %Calculate Scrollbar
@@ -263,7 +263,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             exceedFac = tableHeight / tableViewHeight;
             if exceedFac > 1
                 sliderFac = exceedFac - 1;
-                uicontrol(cstPanel,'Style','slider','Units','normalized','Position',[0.975 0 0.025 1],'Min',0,'Max',ceil(sliderFac)*tableViewHeight,'SliderStep',[lineHeight tableViewHeight] ./ (ceil(sliderFac)*tableViewHeight),'Value',ceil(sliderFac)*tableViewHeight - sliderPos,'Callback',{@cstTableSlider_Callback,handles});
+                uicontrol(cstPanel,'Style','slider','Units','normalized','Position',[0.975 0 0.025 1], 'FontSize',8,'Min',0,'Max',ceil(sliderFac)*tableViewHeight,'SliderStep',[lineHeight tableViewHeight] ./ (ceil(sliderFac)*tableViewHeight),'Value',ceil(sliderFac)*tableViewHeight - sliderPos,'Callback',{@cstTableSlider_Callback,handles});
             end
             
             this.handles = handles;

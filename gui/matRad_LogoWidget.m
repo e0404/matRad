@@ -27,8 +27,14 @@ classdef matRad_LogoWidget < matRad_Widget
     
     methods (Access = protected)
         function this = createLayout(this)
-            mfile = which(mfilename);           
-            [filepath] = fileparts(mfile);
+            %mfile = which(mfilename);           
+            %[filepath] = fileparts(mfile);
+            
+            if isdeployed
+                filepath = [ctfroot filesep 'matRad'];
+            else
+                filepath = fileparts(mfilename('fullpath'));
+            end
             
             h1 = this.widgetHandle;
             
@@ -225,6 +231,7 @@ classdef matRad_LogoWidget < matRad_Widget
             set(f, 'AlphaData', alpha);
             
             
+            this.createHandles();
             %{
             h8 = get(h7,'title');
             
