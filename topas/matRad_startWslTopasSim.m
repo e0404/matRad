@@ -1,21 +1,24 @@
-function matRad_startWslTopasSim(ct,stf,pln,w,wslDistribution,userName,TopasConfig)
+function TopasConfig = matRad_startWslTopasSim(TopasConfig)
 
-if ~exist('wslDistribution','var')
-    wslDistribution = 'Ubuntu-18.04';
+if ~isfield('TopasConfig','wslDistribution')
+    TopasConfig.wslDistribution = 'Ubuntu-18.04';
 end
 
-if ~exist('userName','var')
-    userName = 'homolka';
+if ~isfield('TopasConfig','wslUserName')
+    TopasConfig.wslUserName = 'homolka';
 end
 
-TopasConfig.filepath = ['\\wsl$\',wslDistribution,'\home\',userName,'\matfiles\MCexport\'];
+if ~isfield('TopasConfig','wslTopasFolder')
+    TopasConfig.wslTopasFolder = '/matfiles/MCexport';
+end
 
-load([pln.radiationMode,'_',pln.machine]);
-topasBaseData = MatRad_TopasBaseData(machine);
-% generate Topas data at the topas installation directory
-topasBaseData.writeTopasData(ct,stf,pln,w,TopasConfig);
+TopasConfig.topasFilepath = ['\\wsl$\',TopasConfig.wslDistribution,'\home\',TopasConfig.wslUserName,TopasConfig.wslTopasFolder];
 
-startSim = ['wsl -d ',wslDistribution,' cd ~/; source setup_env.sh; cd ~/matfiles/MCexport/; startTopasSim &'];
+copyfile(TopasConfig.matRadFolder,TopasConfig.topasFilepath)
+
+
+%startSim = ['wsl -d ',wslDistribution,' cd ~/; source setup_env.sh; cd ~',topasFolder,'/; startTopasSim'];
+startSim = ['wsl -d ',TopasConfig.wslDistribution,' cd ~/; source setup_env.sh; cd ~',TopasConfig.wslTopasFolder,'/; ../../topas/topas matRad_plan_field1_run1.txt'];
 system(startSim)
 
 end

@@ -42,10 +42,11 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
             
             obj.TopasConfig = TopasConfig;
             
-            if ~isfield(obj.TopasConfig,'filepath')
+            if ~isfield(obj.TopasConfig,'matRadFolder')
                 % MatRad filepath
                 % default: 'topas/MCexport/'
-                obj.TopasConfig.filepath = 'topas/MCexport/';
+                fullfilename = mfilename('fullpath');
+                obj.TopasConfig.matRadFolder = [fullfilename(1:find(fullfilename==filesep,1,'last')) 'MCexport',filesep];
             end
             
             if ~isfield(obj.TopasConfig,'fracHistories')
@@ -78,13 +79,13 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
             if ~isfield(obj.TopasConfig,'useOrigBaseData')
                 % base data of the original matRad plan will be used
                 % default: false
-                obj.TopasConfig.useOrigBaseData = false;
+                obj.TopasConfig.useOrigBaseData = true;
             end
             
             if ~isfield(obj.TopasConfig,'beamProfile')
                 %   beamProfile: 'simple' of 'biGaussian'
-                obj.TopasConfig.beamProfile = 'biGaussian';
-                %obj.TopasConfig.beamProfile = 'simple';
+                %obj.TopasConfig.beamProfile = 'biGaussian';
+                obj.TopasConfig.beamProfile = 'simple';
             end
             
             if ~isfield(obj.TopasConfig,'pencilBeamScanning')
@@ -217,14 +218,13 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                         dataTOPAS(randIx).current = dataTOPAS(randIx).current+1;
                     end
                 end
-                
-                
+                                             
                 %sort dataTOPAS according to energy
                 [~,ixSorted] = sort([dataTOPAS(:).energy]);
                 dataTOPAS = dataTOPAS(ixSorted);
                 
                 %write TOPAS data base file
-                fileID = fopen([obj.TopasConfig.filepath,'beamSetup_matRad_plan_field',num2str(beamIx),'.txt'],'w');
+                fileID = fopen([obj.TopasConfig.matRadFolder,'beamSetup_matRad_plan_field',num2str(beamIx),'.txt'],'w');
                 
                 fprintf(fileID,'i:Ts/ShowHistoryCountAtInterval = %i\n',historyCount/20);
                 fprintf(fileID,'s:Sim/PlanLabel = "simData_matRad_plan_field1_run" + Ts/Seed\n');
@@ -261,7 +261,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 fprintf(fileID,'s:Tf/Beam/Energy/Function = "Step"\n');
                 fprintf(fileID,'dv:Tf/Beam/Energy/Times = Tf/Beam/Spot/Times ms\n');
                 fprintf(fileID,'dv:Tf/Beam/Energy/Values = %i ', cutNumOfBixel);
-                fprintf(fileID,strjoin(string([12*dataTOPAS.energy])));
+                fprintf(fileID,strjoin(string(12*[dataTOPAS.energy])));
                 fprintf(fileID,' MeV\n');
                 
                 switch obj.TopasConfig.beamProfile
@@ -398,10 +398,10 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                     basematerial =  obj.machine.meta.basematerial;
                 end
                 
-                rspCube = matRad_exportCtTOPAS(ct, obj.TopasConfig.filepath, basematerial);
+                rspCube = matRad_exportCtTOPAS(ct, obj.TopasConfig.matRadFolder, basematerial);
                 
                 for runIx = 1:obj.TopasConfig.numOfRuns
-                    fileID = fopen([obj.TopasConfig.filepath,'matRad_plan_field',num2str(beamIx),'_run',num2str(runIx),'.txt'],'w');
+                    fileID = fopen([obj.TopasConfig.matRadFolder,'matRad_plan_field',num2str(beamIx),'_run',num2str(runIx),'.txt'],'w');
                     fprintf(fileID,['i:Ts/Seed = ',num2str(runIx),'\n']);
                     fprintf(fileID,'includeFile = ./beamSetup_matRad_plan_field1.txt');
                     fclose(fileID);
@@ -419,7 +419,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 MCparam.nbParticles = nbParticlesTotal;
                 MCparam.nbHistories = obj.TopasConfig.fracHistories*nbParticlesTotal;
                
-                save([obj.TopasConfig.filepath,'MCparam.mat'],'MCparam');
+                save([obj.TopasConfig.matRadFolder,'MCparam.mat'],'MCparam');
                 
                 disp('Successfully written TOPAS setup files!')
             end

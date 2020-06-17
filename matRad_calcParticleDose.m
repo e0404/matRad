@@ -216,7 +216,7 @@ for i = 1:length(stf) % loop over all beams
                     
                     if ~isfield(machine.meta, 'BAMStoIsoDist') 
                         BAMStoIsoDist = 400;
-                    	warning('Could not find BAMStoIsoDist. Using default value.');
+                    	%warning('Could not find BAMStoIsoDist. Using default value.');
                     else
                         BAMStoIsoDist = machine.meta.BAMStoIsoDist;
                     end
