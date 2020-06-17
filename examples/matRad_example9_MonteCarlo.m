@@ -46,36 +46,17 @@ pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will b
 pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
 % select Monte Carlo engine
-%MCengine = 'MCsquare';
-MCengine = 'TOPAS';
+MCengine = 'MCsquare';
+%MCengine = 'TOPAS';
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
 
-% select one pencil beam
-for r = 1:length(stf.ray)
-    if stf.ray(r).rayPos_bev(1) == 0 && stf.ray(r).rayPos_bev(2) == 0 && stf.ray(r).rayPos_bev(3) == 0
-        break
-    end
-end
-
-stf1 = stf;
-stf1 = rmfield(stf1,'ray');
-
-stf1.ray = stf.ray(r);
-energyIx = round(numel(stf.ray(r).energy)/2);
-stf1.ray.energy = stf.ray(r).energy(energyIx);
-stf1.ray.focusIx = stf.ray(r).focusIx(energyIx);
-stf1.ray.rangeShifter = stf.ray(r).rangeShifter(energyIx);
-stf1.numOfRays = 1;
-stf1.numOfBixelsPerRay = 1;
-stf1.totalNumOfBixels = 1;
-
 %% dose calculation
-dij = matRad_calcParticleDose(ct, stf1, pln, cst);
+dij = matRad_calcParticleDose(ct, stf, pln, cst);
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
-resultGUI_MC = matRad_calcParticleDoseDirectMC(MCengine,ct,cst,stf1,pln,resultGUI.w,1e7);
+resultGUI_MC = matRad_calcParticleDoseDirectMC(MCengine,ct,cst,stf,pln,resultGUI.w,1e7);
 
 pln.bioParam.model = 'none';
 matRad_compareDose(resultGUI.physicalDose, resultGUI_MC.physicalDose, ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');
