@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
+function resultGUI = matRad_calcDoseDirectMCsquare(ct,stf,pln,cst,w,nHistories)
 % matRad dose calculation wrapper bypassing dij calculation for MC dose
 % calculation algorithms
 % 
@@ -73,7 +73,7 @@ end
 
 % dose calculation
 if strcmp(pln.radiationMode,'protons')
-  dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,w,nHistories,calcDoseDirect);
+  dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nHistories,calcDoseDirect);
 else
     error('Forward MC only implemented for protons.');
 end

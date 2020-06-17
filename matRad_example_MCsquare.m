@@ -1,8 +1,8 @@
-% matRad script
+% matRad example script 
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2020 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -16,16 +16,7 @@
 matRad_rc
 
 % load patient data, i.e. ct, voi, cst
-
-%load HEAD_AND_NECK
 load TG119.mat
-% load PROSTATE.mat
-% load LIVER.mat
-% load BOXPHANTOM
-% load BOXPHANTOMv3.mat
-% load BOXPHANTOM_NARROW_NEW.mat
-% load phantomTest.mat
-
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
@@ -34,17 +25,17 @@ pln.machine         = 'generic_TOPAS_cropped';
 pln.numOfFractions  = 30;
 
 % beam geometry settings
-pln.propStf.bixelWidth      = 50; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.longitudinalSpotSpacing = 50;
+pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.longitudinalSpotSpacing = 5;
 pln.propStf.gantryAngles    = 0; % [?] 
 pln.propStf.couchAngles     = 0; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
                             
 % dose calculation settings
-pln.propDoseCalc.doseGrid.resolution.x = 2;%ct.resolution.x; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = 2;%ct.resolution.y; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = 2;%ct.resolution.z; % [mm]
+pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 pln.propDoseCalc.airOffsetCorrection = true;
 
 % optimization settings
@@ -54,36 +45,19 @@ pln.propOpt.bioOptimization = 'none'; % none: physical optimization;            
 pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
+% select Monte Carlo engine
+MCsettings.MCengine = 'MCsquare';
+% MCsettings.MCengine = 'TOPAS';
+
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
-% load protons_mcSquareFit
-% stf.ray.energy = machine.data(1).energy;
 
 %% dose calculation
-if strcmp(pln.radiationMode,'photons')
-    dij = matRad_calcPhotonDose(ct,stf,pln,cst);
-    %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
-elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-    
-    dij = matRad_calcParticleDose(ct,stf,pln,cst);
-%     dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,1000000);
-    dijMC = matRad_calcParticleDoseMC(ct,stf,pln,cst,100000,0,0);
-   
-end
+dij = matRad_calcParticleDose(ct, stf, pln, cst);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
-resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
-resultGUI_MC = matRad_calcCubes(resultGUI.w,dijMC);
+resultGUI_MC = matRad_calcParticleDoseDirectMC(ct,stf,pln,cst,resultGUI.w,10000000,MCsettings);
 
-resultGUI.physicalDose_MC = resultGUI_MC.physicalDose;
-resultGUI.physicalDose_diff = (resultGUI.physicalDose - resultGUI.physicalDose_MC);
+pln.bioParam.model = 'none';
+matRad_compareDose(resultGUI.physicalDose, resultGUI_MC.physicalDose, ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');
 
-mcDose = reshape(resultGUI.physicalDose_MC, ct.cubeDim);
-anaDose = reshape(resultGUI.physicalDose, ct.cubeDim);
-
-anaIDD = sum(sum(anaDose,2),3);
-mcIDD  = sum(sum(mcDose,2),3);
-
-plot(anaIDD);
-hold on
-plot(mcIDD)
-hold off

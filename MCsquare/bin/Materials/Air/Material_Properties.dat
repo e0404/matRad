@@ -1,0 +1,12 @@
+Name 			Air
+Molecular_Weight 	0.0 		 # N.C.
+Density 		0.00120479 	 # in g/cm3 
+Electron_Density 	3.62183e+20 	 # in cm-3 
+Radiation_Length 	36.615902 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 3 	# mixture with 3 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	2 	carbon		0.012561 
+Mixture_Component	3 	nitrogen	76.508170 
+Mixture_Component	4 	oxygen		23.479269 

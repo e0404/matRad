@@ -1,0 +1,14 @@
+Name 			Lung
+Molecular_Weight 	0.0 		 # N.C.
+Density 		0.26000000 	 # in g/cm3 
+Electron_Density 	8.61908e+22 	 # in cm-3 
+Radiation_Length 	36.527682 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 5 	# mixture with 5 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	10.404040 
+Mixture_Component	2 	carbon		10.606061 
+Mixture_Component	3 	nitrogen	3.131313 
+Mixture_Component	4 	oxygen		75.656566 
+Mixture_Component	7 	phosphorus	0.202020 

@@ -1,0 +1,16 @@
+Name 			Bone_Spongiosa
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.18000000 	 # in g/cm3 
+Electron_Density 	3.84380e+23 	 # in cm-3 
+Radiation_Length 	34.643481 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 7 	# mixture with 7 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	8.559919 
+Mixture_Component	2 	carbon		40.684794 
+Mixture_Component	3 	nitrogen	2.819738 
+Mixture_Component	4 	oxygen		36.958711 
+Mixture_Component	7 	phosphorus	3.423968 
+Mixture_Component	8 	calcium		7.452165 
+Mixture_Component	9 	iron		0.100705 

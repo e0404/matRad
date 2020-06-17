@@ -4,7 +4,7 @@ classdef MatRad_MCsquareBaseData < MatRad_MCemittanceBaseData
     % 
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % Copyright 2019 the matRad development team.
+    % Copyright 2020 the matRad development team.
     %
     % This file is part of the matRad project. It is subject to the license
     % terms in the LICENSE file found in the top-level directory of this
@@ -17,7 +17,7 @@ classdef MatRad_MCsquareBaseData < MatRad_MCemittanceBaseData
     
     methods (Access = public)
         function obj = MatRad_MCsquareBaseData(varargin)
-            % Call MatRad_MCemmitanceBaseData constructor
+            %Call MatRad_MCemmitanceBaseData constructor
             obj = obj@MatRad_MCemittanceBaseData(varargin{:}); 
         end
         
@@ -31,7 +31,6 @@ classdef MatRad_MCsquareBaseData < MatRad_MCemittanceBaseData
             %save mcData acording to used focus index in selectedData
             selectedData = [];
             for i = 1:numel(focusIndex)
-                
                 selectedData = [selectedData, obj.monteCarloData(focusIndex(i), i)];
             end
             

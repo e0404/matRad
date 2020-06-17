@@ -1,0 +1,12 @@
+Name 			Lexan
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.20000000 	 # in g/cm3 
+Electron_Density 	3.80811e+23 	 # in cm-3 
+Radiation_Length 	41.505759 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 3 	# mixture with 3 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	5.549100 
+Mixture_Component	2 	carbon		75.575100 
+Mixture_Component	4 	oxygen		18.875800 

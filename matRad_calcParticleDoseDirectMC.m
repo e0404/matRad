@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,w,nCasePerBixel,calcDoseDirect,MCsettings)
+function resultGUI = matRad_calcParticleDoseDirectMC(ct,stf,pln,cst,w,nCasePerBixel,MCsettings)
 
 if exist('MCsettings')
     MCsettings = matRad_MCinit(pln,MCsettings);
@@ -7,9 +7,9 @@ else
 end
 
 if strcmp(MCsettings.MCengine, 'TOPAS')
-    dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,w,MCsettings);
+    resultGUI = matRad_calcParticleDoseMCtopas(ct,stf,pln,w,MCsettings);
 elseif strcmp(MCsettings.MCengine, 'MCsquare')
-    dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)
+    resultGUI = matRad_calcDoseDirectMCsquare(ct,stf,pln,cst,w,nCasePerBixel);
 else
     error('Error: Select a valid MonteCarlo engine!');
 end
