@@ -140,7 +140,7 @@ for i = 1:size(obj.cst,1)
                              ct.y(1) - ct.resolution.y],contours,'UniformOutput',false);
       
     
-    contours = cellfun(@(c,pos) addSlicePos(c,pos),contours,num2cell(contourSlicePos)','UniformOutput',false);    
+    contours = cellfun(@(c,pos) addSlicePos(c,pos),contours,num2cell(contourSlicePos),'UniformOutput',false);
     %contours = cellfun(@transpose,contours,'UniformOutput',false);
     
     %Structure Definition
@@ -153,7 +153,7 @@ for i = 1:size(obj.cst,1)
     
     %Contour Sequence
     if ~isOctave
-        ROIContourSequenceItem.ROIDisplayColor = int32(round(255 * obj.cst{i,5}.visibleColor'));
+        ROIContourSequenceItem.ROIDisplayColor = int32(round(255 * obj.cst{i,5}.visibleColor));
     end
 
     ROIContourSequenceItem.ReferencedROINumber = i;
