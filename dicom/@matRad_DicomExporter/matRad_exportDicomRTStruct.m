@@ -89,10 +89,11 @@ ct = obj.ct;
 
 %Create X Y Z vectors if not present
 if ~any(isfield(ct,{'x','y','z'}))
-    positionOffset = transpose(ct.cubeDim ./ 2);
-    ct.x = ct.resolution.x*[0:ct.cubeDim(1)-1] - positionOffset;
-    ct.y = ct.resolution.y*[0:ct.cubeDim(2)-1] - positionOffset;
-    ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1] - positionOffset;
+    %positionOffset = transpose(ct.cubeDim ./ 2);
+    positionOffset = ct.cubeDim ./ 2;
+    ct.x = ct.resolution.x*[0:ct.cubeDim(2)-1] - positionOffset(2);
+    ct.y = ct.resolution.y*[0:ct.cubeDim(1)-1] - positionOffset(1);
+    ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1] - positionOffset(3);
 end
 
 
@@ -140,7 +141,7 @@ for i = 1:size(obj.cst,1)
                              ct.y(1) - ct.resolution.y],contours,'UniformOutput',false);
       
     
-    contours = cellfun(@(c,pos) addSlicePos(c,pos),contours,num2cell(contourSlicePos),'UniformOutput',false);
+    contours = cellfun(@(c,pos) addSlicePos(c,pos),contours,num2cell(contourSlicePos)','UniformOutput',false);
     %contours = cellfun(@transpose,contours,'UniformOutput',false);
     
     %Structure Definition
