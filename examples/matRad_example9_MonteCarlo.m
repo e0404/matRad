@@ -20,13 +20,15 @@ load TG119.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'generic_TOPAS_cropped';
+%pln.machine         = 'generic_TOPAS_cropped';
+%pln.machine         = 'generic_MCsquare';
+pln.machine         = 'Generic';
 
-pln.numOfFractions  = 30;
+pln.numOfFractions  = 1;
 
 % beam geometry settings
-pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.longitudinalSpotSpacing = 5;
+pln.propStf.bixelWidth      = 50; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.longitudinalSpotSpacing = 50;
 pln.propStf.gantryAngles    = 0; % [?] 
 pln.propStf.couchAngles     = 0; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
@@ -46,18 +48,20 @@ pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will b
 pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
 % select Monte Carlo engine
-MCengine = 'MCsquare';
-%MCengine = 'TOPAS';
+%MCengine = 'MCsquare';
+MCengine = 'TOPAS';
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
 
 %% dose calculation
 dij = matRad_calcParticleDose(ct, stf, pln, cst);
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
 
-resultGUI_MC = matRad_calcParticleDoseDirectMC(MCengine,ct,cst,stf,pln,resultGUI.w,1e7);
+%% MC calculation
+resultGUI_MC = matRad_calcParticleDoseDirectMC(MCengine,ct,cst,stf,pln,resultGUI.w,1e5);
 
+%% Compare Dose
 pln.bioParam.model = 'none';
 matRad_compareDose(resultGUI.physicalDose, resultGUI_MC.physicalDose, ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');
 

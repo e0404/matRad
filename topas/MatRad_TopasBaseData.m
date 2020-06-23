@@ -261,7 +261,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 fprintf(fileID,'s:Tf/Beam/Energy/Function = "Step"\n');
                 fprintf(fileID,'dv:Tf/Beam/Energy/Times = Tf/Beam/Spot/Times ms\n');
                 fprintf(fileID,'dv:Tf/Beam/Energy/Values = %i ', cutNumOfBixel);
-                fprintf(fileID,strjoin(string(12*[dataTOPAS.energy])));
+                fprintf(fileID,strjoin(string([dataTOPAS.energy])));
                 fprintf(fileID,' MeV\n');
                 
                 switch obj.TopasConfig.beamProfile
@@ -354,7 +354,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 fprintf(fileID,'d:Ge/Patient/RotY=0. deg\n');
                 fprintf(fileID,'d:Ge/Patient/RotZ=0. deg\n');
                 
-                fprintf(fileID,'includeFile = ./matRad_RSPcube.txt\n');
+                fprintf(fileID,'includeFile = ./matRad_cube.txt\n');
                 fprintf(fileID,'###################\n');
                 
                 % NozzleAxialDistance

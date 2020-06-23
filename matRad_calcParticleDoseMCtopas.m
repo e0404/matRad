@@ -17,7 +17,8 @@ end
 
 %% read out topas simulation
 
-topasDose = matRad_getWslTopasData(TopasConfig.wslDistribution,TopasConfig.wslUserName);
+%topasDose = matRad_getWslTopasData(TopasConfig.wslDistribution,TopasConfig.wslUserName);
+topasDose = matRad_readTopasData(TopasConfig.matRadFolder);
 
 % waitForSystem = 'false';
 % 
