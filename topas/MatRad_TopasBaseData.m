@@ -234,6 +234,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 if strcmp(pln.radiationMode,'protons')
                     fprintf(fileID,'s:Sim/ParticleName = "proton"\n');
                     fprintf(fileID,'u:Sim/ParticleMass = 1.0\n');
+                    obj.TopasConfig.particleMass = 1;
                     % load default modules
                     if ~isfield(obj.TopasConfig,'modules')
                         obj.TopasConfig.modules = {'"g4em-standard_opt4"','"g4h-phy_QGSP_BIC_HP"','"g4decay"','"g4h-elastic_HP"','"g4stopping"','"g4ion-QMD"','"g4radioactivedecay"'};
@@ -247,6 +248,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                         obj.TopasConfig.modules = {'"g4em-standard_opt4"','"g4h-phy_QGSP_BIC_HP"','"g4decay"','"g4h-elastic_HP"','"g4stopping"','"g4ion-QMD"','"g4ion-inclxx"'};
                     end
                     
+                    obj.TopasConfig.particleMass = 12;
                 else
                     error('Unvalid radiation mode!')
                 end
@@ -261,7 +263,7 @@ classdef MatRad_TopasBaseData < MatRad_MCemittanceBaseData
                 fprintf(fileID,'s:Tf/Beam/Energy/Function = "Step"\n');
                 fprintf(fileID,'dv:Tf/Beam/Energy/Times = Tf/Beam/Spot/Times ms\n');
                 fprintf(fileID,'dv:Tf/Beam/Energy/Values = %i ', cutNumOfBixel);
-                fprintf(fileID,strjoin(string(12*[dataTOPAS.energy])));
+                fprintf(fileID,strjoin(string(obj.TopasConfig.particleMass*[dataTOPAS.energy])));
                 fprintf(fileID,' MeV\n');
                 
                 switch obj.TopasConfig.beamProfile
