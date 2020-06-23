@@ -81,7 +81,7 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
                 case 2 %voxelwise
                     cu = obj.parameters{2}*ones(n,1);
                 otherwise
-                    error(['Min/max dose constraint evaluation method ''' obj.method ''' not known!']);
+                    error(['Min/max dose constraint evaluation method not known!']);
             end
             %cu = [Inf; obj.parameters{2}];
         end
@@ -100,7 +100,8 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
                 case 2
                     cl = obj.parameters{1}*ones(n,1);
                 otherwise
-                    error(['Min/max dose constraint evaluation method ''' obj.method ''' not known!']);
+                    global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('Min/max dose constraint evaluation method not known!');
             end
         end
         
@@ -119,7 +120,8 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
                 case 2
                     jStruct = speye(n);
                 otherwise
-                    error(['Min/max dose constraint evaluation method ''' obj.method ''' not known!']);
+                    global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('Min/max dose constraint evaluation method not known!');
             end
             
         end
@@ -134,7 +136,8 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
                 case 2
                     cDose = obj.computeDoseConstraintFunctionVoxelwise(dose);
                 otherwise
-                    error(['Min/max dose constraint evaluation method ''' obj.method ''' not known!']);
+                    global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('Min/max dose constraint evaluation method not known!');
             end
         end
         
@@ -146,7 +149,8 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
                 case 2
                     cDoseJacob = obj.computeDoseConstraintJacobianVoxelwise(dose);
                 otherwise
-                    error(['Min/max dose constraint evaluation method ''' obj.method ''' not known!']);
+                    global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('Min/max dose constraint evaluation method not known!');
             end
         end
     end
@@ -165,8 +169,8 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
             elseif obj.parameters{1} <= 0 %Only max dose
                 cDose = dose_max + obj.epsilon * log( sum(exp((dose - dose_max)/obj.epsilon)));
             else %both are set sensible
-                cDose(2) = dose_max + obj.epsilon * log( sum(exp((dose - dose_max)/obj.epsilon)));
-                cDose(1) = dose_min - obj.epsilon * log( sum(exp((dose_min - dose)/obj.epsilon)));
+                cDose(2,1) = dose_max + obj.epsilon * log( sum(exp((dose - dose_max)/obj.epsilon)));
+                cDose(1,1) = dose_min - obj.epsilon * log( sum(exp((dose_min - dose)/obj.epsilon)));
             end
             
         end

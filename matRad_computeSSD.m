@@ -28,6 +28,9 @@ function stf = matRad_computeSSD(stf,ct,mode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_cfg;
+matRad_cfg = MatRad_Config.instance();
+
 if nargin < 3
     mode = 'first';
 end
@@ -36,7 +39,7 @@ end
 boolShowWarning = true;
 
 % set density threshold for SSD computation
-densityThreshold = 0.05;
+densityThreshold = matRad_cfg.propDoseCalc.ssdDensityThreshold;
 
 if strcmp(mode,'first')
     
@@ -52,10 +55,10 @@ if strcmp(mode,'first')
 
             if boolShowWarning
                 if isempty(ixSSD)
-                    matRad_dispToConsole('ray does not hit patient. Trying to fix afterwards...',[],'warning');
+                    matRad_cfg.displayToConsole('warning','ray does not hit patient. Trying to fix afterwards...');
                     boolShowWarning = false;
                 elseif ixSSD(1) == 1
-                    matRad_dispToConsole('Surface for SSD calculation starts directly in first voxel of CT\n',[],'warning');
+                    matRad_cfg.displayToConsole('warning','Surface for SSD calculation starts directly in first voxel of CT\n');
                     boolShowWarning = false;
                 end
             end

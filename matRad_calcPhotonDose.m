@@ -32,6 +32,9 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_cfg;
+matRad_cfg =  MatRad_Config.instance();
+
 % initialize
 matRad_calcDoseInit;
 
@@ -56,7 +59,7 @@ figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 set(figureWait,'pointer','watch');
 
 % set lateral cutoff value
-lateralCutoff = 50; % [mm]
+lateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
@@ -121,7 +124,7 @@ kernelConvSize = 2*kernelConvLimit;
 effectiveLateralCutoff = lateralCutoff + fieldWidth/2;
 
 counter = 0;
-fprintf('matRad: Photon dose calculation...\n');
+matRad_cfg.dispInfo('matRad: Photon dose calculation...\n');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:dij.numOfBeams % loop over all beams
@@ -134,7 +137,7 @@ for i = 1:dij.numOfBeams % loop over all beams
     % get correct kernel for given SSD at central ray (nearest neighbor approximation)
     [~,currSSDIx] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD));
     
-    fprintf(['                   SSD = ' num2str(machine.data.kernel(currSSDIx).SSD) 'mm                 \n']);
+    matRad_cfg.dispInfo('\t SSD = %g mm\n',num2str(machine.data.kernel(currSSDIx).SSD));
     
     kernelPos = machine.data.kernelPos;
     kernel1 = machine.data.kernel(currSSDIx).kernel1;
@@ -150,8 +153,7 @@ for i = 1:dij.numOfBeams % loop over all beams
     if ~useCustomPrimFluenceBool && ~isFieldBasedDoseCalc
         
         % Display console message.
-        fprintf(['matRad: Uniform primary photon fluence -> pre-compute kernel convolution for SSD = ' ... 
-                num2str(machine.data.kernel(currSSDIx).SSD) ' mm ...\n']);    
+        matRad_cfg.dispInfo('matRad: Uniform primary photon fluence -> pre-compute kernel convolution for SSD = %g mm ...\n',num2str(machine.data.kernel(currSSDIx).SSD));   
 
         % 2D convolution of Fluence and Kernels in fourier domain
         convMx1 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)));
