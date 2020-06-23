@@ -66,7 +66,7 @@ cst{ixPTV,5}.alphaX      = 0.1000;
 cst{ixPTV,5}.betaX       = 0.0500;
 cst{ixPTV,5}.Priority    = 1;
 cst{ixPTV,5}.Visible     = 1;
-cst{ixOAR,5}.visibleColor = [1 1 1];
+cst{ixPTV,5}.visibleColor = [1 1 1];
 
 % define objective as struct for compatibility with GNU Octave I/O
 cst{ixPTV,6}{1} = struct(DoseObjectives.matRad_SquaredDeviation(800,60));
