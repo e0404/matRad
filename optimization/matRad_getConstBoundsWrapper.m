@@ -52,7 +52,7 @@ for  i = 1:size(cst,1)
                 end
 
                 if strcmp(cst{i,6}(j).robustness,'none') || strcmp(cst{i,6}(j).robustness,'probabilistic') || strcmp(cst{i,6}(j).robustness,'VWWC') ||...
-                   strcmp(cst{i,6}(j).robustness,'COWC') || strcmp(cst{i,6}(j).robustness,'VWWC_CONF')
+                   strcmp(cst{i,6}(j).robustness,'COWC') || strcmp(cst{i,6}(j).robustness,'VWWC_CONF')|| strcmp(cst{i,6}(j).robustness,'OWC')
 
 
                     [clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param);
