@@ -1,0 +1,34 @@
+s:Ge/World/Material = Sim/WorldMaterial
+d:Ge/World/HLX=200.0 cm
+d:Ge/World/HLY=200.0 cm
+d:Ge/World/HLZ=200.0 cm
+b:Ge/World/Invisible = "TRUE"
+
+s:Ge/BeamSpot/Parent = "Nozzle"
+s:Ge/BeamSpot/Type = "Group"
+d:Ge/BeamSpot/TransX = Tf/Beam/PosX/Value mm
+d:Ge/BeamSpot/TransY = Tf/Beam/PosY/Value mm
+
+s:Ge/Nozzle/Parent = "Isocenter"
+s:Ge/Nozzle/Type = "Group"
+
+s:Ge/Isocenter/Parent = "Gantry"
+s:Ge/Isocenter/Type = "Group"
+d:Ge/Isocenter/RotX = +90. deg
+d:Ge/Isocenter/RotY = 0. deg
+d:Ge/Isocenter/RotZ = +90. deg
+
+s:Ge/Gantry/Parent = "Couch"
+s:Ge/Gantry/Type = "Group"
+d:Ge/Gantry/RotX = 0. deg
+d:Ge/Gantry/RotY = 0. deg
+d:Ge/Gantry/RotZ = -1 * Sim/GantryAngle deg
+
+s:Ge/Couch/Parent = "World"
+s:Ge/Couch/Type = "Group"
+d:Ge/Couch/TransX = 0. cm
+d:Ge/Couch/TransY = 0. cm
+d:Ge/Couch/TransZ = 0. cm
+d:Ge/Couch/RotX = 0. deg
+d:Ge/Couch/RotY = -1 * Sim/CouchAngle deg
+d:Ge/Couch/RotZ = 0. deg

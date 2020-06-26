@@ -142,11 +142,23 @@ classdef MatRad_MCemittanceBaseData
             %function to calculate mean energy and energy spread used by
             %mcSquare for given energy
             
+            %Considers air distance from nozzle to phantom surface 
+            %used in the machine data. 0 means fitted to vacuum simulations
+            %with surface at isocenter
+            if ~isfield(obj.machine.meta, 'fitAirOffset')
+                fitAirOffset = 0;
+                %               warning('Could not find fitAirOffset. Using default value (no correction / fit in vacuum).');
+            else
+                fitAirOffset = obj.machine.meta.fitAirOffset;
+            end
+            dR = 0.0011 * (obj.nozzleToIso - fitAirOffset);
+            
             i = energyIx;
             
             mcDataEnergy.NominalEnergy = obj.machine.data(i).energy;
             
             newDepths = linspace(0,obj.machine.data(i).depths(end),numel(obj.machine.data(i).depths) * 100);
+            newDepths = newDepths - obj.machine.data(i).offset - dR;
             newDose   = interp1(obj.machine.data(i).depths, obj.machine.data(i).Z, newDepths, 'spline');
             
             %find FWHM w50 of bragg peak and range of 80% does fall off
@@ -154,8 +166,8 @@ classdef MatRad_MCemittanceBaseData
             [~, r80ind] = min(abs(newDose(maxI:end) - 0.8 * maxV));
             r80ind = r80ind - 1;
             r80 = interp1(newDose(maxI + r80ind - 1:maxI + r80ind + 1), ...
-                newDepths(maxI + r80ind - 1:maxI + r80ind + 1), 0.8 * maxV) ...
-                + obj.machine.data(i).offset;
+                newDepths(maxI + r80ind - 1:maxI + r80ind + 1), 0.8 * maxV);% ...
+                % + obj.machine.data(i).offset + dR;
             
             
             [~, d50rInd] = min(abs(newDose(maxI:end) - 0.5 * maxV));

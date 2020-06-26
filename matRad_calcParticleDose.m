@@ -75,6 +75,8 @@ if isfield(pln,'propDoseCalc') && ...
   end
 end
 
+%Toggles correction of small difference of current SSD to distance used
+%in generation of base data (e.g. phantom surface at isocenter)
 if isfield(pln,'propDoseCalc') && ~isfield(pln.propDoseCalc, 'airOffsetCorrection') 
     pln.propDoseCalc.airOffsetCorrection = true;
 end
@@ -212,7 +214,7 @@ for i = 1:length(stf) % loop over all beams
                 if  pln.propDoseCalc.airOffsetCorrection   
                     if ~isfield(machine.meta, 'fitAirOffset') 
                         fitAirOffset = 0;
-%                         warning('Could not find fitAirOffset. Using default value.');
+%                         warning('Could not find fitAirOffset. Using default value (no correction / fit in vacuum).');
                     else
                         fitAirOffset = machine.meta.fitAirOffset;
                     end
@@ -234,7 +236,7 @@ for i = 1:length(stf) % loop over all beams
                 % range shifter. In the following, we only perform dose calculation for voxels having a radiological depth
                 % that is within the limits of the base data set (-> machine.data(i).dephts). By this means, we only allow  
                 % interpolations in matRad_calcParticleDoseBixel() and avoid extrapolations.
-                offsetRadDepth = machine.data(energyIx).offset - stf(i).ray(j).rangeShifter(k).eqThickness - dR;
+                offsetRadDepth = machine.data(energyIx).offset - stf(i).ray(j).rangeShifter(k).eqThickness + dR;
                 
                 % find depth depended lateral cut off
                 if cutOffLevel >= 1
@@ -266,7 +268,7 @@ for i = 1:length(stf) % loop over all beams
                     currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness + dR;
                     
                     %sanity check due to negative corrections
-                    currRadDepths(currRadDepths < 0) = 0;
+                    currRadDepths(currRadDepths < 0) = 0;                    
                 else
                     currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
                 end

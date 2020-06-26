@@ -57,26 +57,40 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultLateralCutOff = 0.995; %[rel.]
             obj.propDoseCalc.defaultGeometricCutOff = 50; %[mm]
             obj.propDoseCalc.ssdDensityThreshold = 0.05; %[rel.]            
+            
             obj.propOpt.defaultMaxIter = 500;           
+            
             obj.propMC.ompMC_defaultHistories = 1e6;
             obj.propMC.ompMC_defaultOutputVariance = false;
             obj.propMC.MCsquare_defaultHistories = 1e6;
             obj.propMC.direct_defaultHistories = 2e4;
+            %obj.propMC.default_photon_engine = 'ompMC';
+            obj.propMC.default_proton_engine = 'MCsquare';                      
+            
             obj.disableGUI = false;
+            
+            
         end
   
         %%For testing
         function setDefaultPropertiesForTesting(obj)
             obj.logLevel   = 1;
+            
             obj.propStf.defaultLongitudinalSpotSpacing = 20;
             obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
+            
             obj.propDoseCalc.defaultResolution = struct('x',5,'y',6,'z',7); %[mm]
             obj.propDoseCalc.defaultGeometricCutOff = 20;
             obj.propDoseCalc.defaultLateralCutOff = 0.8;
+            
             obj.propOpt.defaultMaxIter = 10;
+            
             obj.propMC.ompMC_defaultHistories = 100;
             obj.propMC.MCsquare_defaultHistories = 100;
             obj.propMC.direct_defaultHistories = 100;
+            %obj.propMC.default_photon_engine = 'ompMC';
+            obj.propMC.default_proton_engine = 'MCsquare'; 
+            
             obj.disableGUI = true;
         end  
       
