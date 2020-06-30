@@ -1,7 +1,7 @@
 classdef matRad_StructureVisibilityWidget < matRad_Widget
     
     properties
-        
+        env
     end
     
     methods
@@ -23,11 +23,13 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
                 
             end
             this = this@matRad_Widget(handleParent);
-            set(this.widgetHandle,'ButtonDownFcn',@(src,hEvent) update(this));  
+            
+            [this.env, ~] = matRad_getEnvironment();
+            this.update();
         end
         
         function this=initialize(this)
-             this.update();
+             
             
         end
         
@@ -41,9 +43,9 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
         end
         
         function changeWorkspace(obj)
-           [env, ~] = matRad_getEnvironment();
+           %[env, ~] = matRad_getEnvironment();
             % handle environment
-            switch env
+            switch obj.env
                 case 'MATLAB'
                     notify(obj, 'workspaceChanged');
                 case 'OCTAVE'
@@ -94,15 +96,27 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             %Get the string entries
             tmpString = get(handles.legendTable,'String');
             
+            % html not supported in octave       
             if handles.VOIPlotFlag(idx)
                 handles.VOIPlotFlag(idx) = false;
                 cst{idx,5}.Visible = false;
-                tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
+                switch this.env
+                    case 'OCTAVE'
+                        tmpString{idx} = [cst{idx,2}];
+                    otherwise
+                        tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
+                end
             elseif ~handles.VOIPlotFlag(idx)
                 handles.VOIPlotFlag(idx) = true;
                 cst{idx,5}.Visible = true;
-                tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
+                switch this.env
+                    case 'OCTAVE'
+                        tmpString{idx} = [cst{idx,2}];
+                    otherwise
+                        tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
+                end
             end
+           
             set(handles.legendTable,'String',tmpString);
             
             % update cst in workspace accordingly
@@ -144,11 +158,20 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
                 handles.VOIPlotFlag(s) = cst{s,5}.Visible;
                 clr = dec2hex(round(cst{s,5}.visibleColor(:)*255),2)';
                 clr = ['#';clr(:)]';
-                if handles.VOIPlotFlag(s)
-                    tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
-                else
-                    tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
+                % html is not supported in octave 
+                
+                switch this.env
+                    case 'OCTAVE'
+                            tmpString{s} = [cst{s,2}];
+                    otherwise
+                        if handles.VOIPlotFlag(s)
+                            tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
+                        else
+                            tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
+                        end
                 end
+                
+                
             end
             set(handles.legendTable,'String',tmpString);
             this.handles = handles;

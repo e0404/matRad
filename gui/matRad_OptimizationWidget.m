@@ -1,7 +1,6 @@
 classdef matRad_OptimizationWidget < matRad_Widget
     
     properties
-        
     end
     
     methods
@@ -24,16 +23,15 @@ classdef matRad_OptimizationWidget < matRad_Widget
                 
             end
             this = this@matRad_Widget(handleParent);
-            set(this.widgetHandle,'ButtonDownFcn',@(src,hEvent) update(this));  
+            
+            this.update();
         end
        
         function this=initialize(this)
-             this.update();
             
         end
         
         function this=update(this)
-            
             if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
                 generateCstTable(this, evalin('base','cst'));
             else
@@ -66,7 +64,8 @@ classdef matRad_OptimizationWidget < matRad_Widget
                 case 'MATLAB'
                     set(h1,'SizeChangedFcn',@(hObject,eventdata) widget_SizeChangedFcn(this,hObject,eventdata));
                 case 'OCTAVE'
-                    set(h1,'resizefcn',@(hObject,eventdata) widget_SizeChangedFcn(this,hObject,eventdata));
+                    % this creates an infinite loop in octave
+                    %set(h1,'SizeChangedFcn',@(hObject,eventdata) widget_SizeChangedFcn(this,hObject,eventdata));
             end
                         
             this.createHandles();
@@ -263,7 +262,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             exceedFac = tableHeight / tableViewHeight;
             if exceedFac > 1
                 sliderFac = exceedFac - 1;
-                uicontrol(cstPanel,'Style','slider','Units','normalized','Position',[0.975 0 0.025 1], 'FontSize',8,'Min',0,'Max',ceil(sliderFac)*tableViewHeight,'SliderStep',[lineHeight tableViewHeight] ./ (ceil(sliderFac)*tableViewHeight),'Value',ceil(sliderFac)*tableViewHeight - sliderPos,'Callback',{@cstTableSlider_Callback,handles});
+                uicontrol(cstPanel,'Style','slider','Units','normalized','Position',[0.975 0 0.025 1], 'FontSize',8,'Min',0,'Max',ceil(sliderFac)*tableViewHeight,'SliderStep',[lineHeight tableViewHeight] ./ (ceil(sliderFac)*tableViewHeight),'Value',ceil(sliderFac)*tableViewHeight - sliderPos,'Callback', @(hObject,eventdata)cstTableSlider_Callback(this,hObject,eventdata));
             end
             
             this.handles = handles;
@@ -332,8 +331,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
         function widget_SizeChangedFcn(this,hObject, eventdata)
             % hObject    handle to h1 (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
-            % handles    structure with handles and user data (see GUIDATA)
-            
+            % handles    structure with handles and user data (see GUIDATA)            
             try
                 generateCstTable(this,evalin('base','cst'));
             catch
@@ -360,10 +358,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             assignin('base','cst',cst);
             this.handles=handles;
             changeWorkspace(this);
-            
-            % would need to remove
-            %generateCstTable(this,cst);
-            
+                        
         end
         function btObjRemove_Callback(this,hObject, ~)
             % hObject    handle to btnuiTableAdd (see GCBO)
@@ -441,6 +436,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
                     cst{ix,col} = str{val};
                 case 5
                     cst{ix,col}.Priority = uint32(str2double(str));
+                    %cst{ix,col}=setfield(cst{ix,col},'Priority',uint32(str2double(str)));
                 otherwise
                     warning('Wrong column assignment in GUI based cst setting');
             end
@@ -475,6 +471,20 @@ classdef matRad_OptimizationWidget < matRad_Widget
             
             %generateCstTable(this,cst);
             
+        end
+        
+        % --- Executes on slider movement.
+        function cstTableSlider_Callback(this,~,~)
+            % hObject    handle to cstTableSlider (see GCBO)
+            % eventdata  reserved - to be defined in a future version of MATLAB
+            % handles    structure with handles and user data (see GUIDATA)
+            
+            % Hints: get(hObject,'Value') returns position of slider
+            %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+            try
+                generateCstTable(this,evalin('base','cst'));
+            catch
+            end
         end
     end
 end

@@ -27,6 +27,8 @@ classdef MatRad_Config < handle
         keepLog = false; 
         
         disableGUI = false;
+        devMode = false;
+        eduMode = false;
     end
     
     properties (SetAccess = private)
@@ -63,6 +65,8 @@ classdef MatRad_Config < handle
             obj.propMC.MCsquare_defaultHistories = 1e6;
             obj.propMC.direct_defaultHistories = 2e4;
             obj.disableGUI = false;
+            obj.devMode = false;
+            obj.eduMode = false;
         end
   
         %%For testing
@@ -78,7 +82,26 @@ classdef MatRad_Config < handle
             obj.propMC.MCsquare_defaultHistories = 100;
             obj.propMC.direct_defaultHistories = 100;
             obj.disableGUI = true;
+            obj.devMode = false;
+            obj.eduMode = false;
         end  
+        
+        %%for edu mode
+        function setDefaultPropertiesForEduMode(obj)
+            obj.logLevel   = 1;
+            obj.propStf.defaultLongitudinalSpotSpacing = 20;
+            obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
+            obj.propDoseCalc.defaultResolution = struct('x',5,'y',6,'z',7); %[mm]
+            obj.propDoseCalc.defaultGeometricCutOff = 20;
+            obj.propDoseCalc.defaultLateralCutOff = 0.8;
+            obj.propOpt.defaultMaxIter = 10;
+            obj.propMC.ompMC_defaultHistories = 100;
+            obj.propMC.MCsquare_defaultHistories = 100;
+            obj.propMC.direct_defaultHistories = 100;
+            obj.disableGUI = false;
+            obj.devMode = false;
+            obj.eduMode = false;
+        end
       
         function dispDebug(obj,formatSpec,varargin)
 			%dispDebug wrapper for debug messages forwarded to displayToConsole 

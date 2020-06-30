@@ -25,7 +25,6 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                 
             end
             this = this@matRad_Widget(handleParent);
-            set(this.widgetHandle,'ButtonDownFcn',@(src,hEvent) update(this));  
             
             handles=this.handles;
             
@@ -65,14 +64,13 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             set(handles.popupmenu_windowPreset,'String',selectionList(:));
             set(handles.popupmenu_windowPreset,'Value',1);
                         
+            this.handles=handles;
             if nargin==2
-                this.handles=handles;
                 this.viewingWidgetHandle=viewingWidgetHandle;
                 UpdateColormapOptions(this);
             else
                 UpdateButtonState(this,'off');                
             end
-            this.handles=handles;
         end
         
         function this = initialize(this)
@@ -80,14 +78,17 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
         end
         
         function this = update(this)
-            selectionIndex=get(this.handles.popupmenu_chooseColorData,'Value');
-            
-            minVal=num2str(this.viewingWidgetHandle.dispWindow{selectionIndex,2}(1,1));
-            maxVal=num2str(this.viewingWidgetHandle.dispWindow{selectionIndex,2}(1,2));
-            if isa(this.viewingWidgetHandle,'matRad_ViewingWidget') ...
-                    && (~strcmp(get(this.handles.txtMinVal,'String'),minVal) ...
-                    || ~strcmp(get(this.handles.txtMaxVal,'String'),maxVal))  %% new data is loaded
-                this.getFromViewingWidget();
+           %selectionIndex=get(this.handles.popupmenu_chooseColorData,'Value');
+
+            try
+%                 minVal=num2str(this.viewingWidgetHandle.dispWindow{selectionIndex,2}(1,1));
+%                 maxVal=num2str(this.viewingWidgetHandle.dispWindow{selectionIndex,2}(1,2));
+                if isa(this.viewingWidgetHandle,'matRad_ViewingWidget') %...
+%                         && (~strcmp(get(this.handles.txtMinVal,'String'),minVal) ...
+%                         || ~strcmp(get(this.handles.txtMaxVal,'String'),maxVal))  %% new data is loaded
+                    this.getFromViewingWidget();
+                end
+            catch
             end
             this.UpdateColormapOptions();
         end
@@ -97,7 +98,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
 %         end
         
         function set.viewingWidgetHandle(this,value)
-            handles=this.handles;
+            %handles=this.handles;
             if isa(value,'matRad_ViewingWidget')
                 this.viewingWidgetHandle=value;
                 
@@ -107,7 +108,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                 % disable all buttons
                 UpdateButtonState(this,'off'); 
             end
-            this.handles=handles;
+            %this.handles=handles;
         end
     end
     
@@ -361,7 +362,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                 'String',{  'Custom'; 'Full'; 'Abd/Med'; 'Head'; 'Liver'; 'Lung'; 'Spine'; 'Vrt/Bone' },...
                 'Style','popupmenu',...
                 'Value',1,...
-                'Position',[0.0486486486486487 0.38889932885906 0.940540540541 0.17744966442953],...
+                'Position',[0.0486486486486487 0.51 0.940540540541 0.07],...
                 'BackgroundColor',[1 1 1],...
                 'Callback',@(hObject,eventdata)popupmenu_windowPreset_Callback(this,hObject,eventdata),...
                 'Children',[],...
@@ -403,7 +404,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
     methods
         
         % H101
-        function popupmenu_chooseColorData_Callback(this,~, ~)
+        function popupmenu_chooseColorData_Callback(this,hObject, ~)
             % hObject    handle to popupmenu_chooseColorData (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -419,8 +420,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             %             %guidata(hObject,handles);
             %             this.handles = handles;
             %             UpdatePlot(handles);
-            
-            this.viewingWidgetHandle.colorData=get(this.handles.popupmenu_chooseColorData,'Value');
+            this.viewingWidgetHandle.colorData=get(hObject,'Value');
             UpdateColormapOptions(this);
         end
         
@@ -631,7 +631,9 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             
             handles = this.handles;
             this.colormapLocked = get(hObject,'Value');
-            
+            if isa(this.viewingWidgetHandle,'matRad_ViewingWidget')
+                this.viewingWidgetHandle.lockUpdate=this.colormapLocked;
+            end
             if this.colormapLocked
                 state = 'Off'; %'Inactive';
             else
@@ -688,7 +690,10 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             if this.colormapLocked
                 return;
             end
+            % save the lock state
+            lockState=this.viewingWidgetHandle.lockUpdate;
             this.viewingWidgetHandle.lockUpdate=true;
+            
              %Set up the colordata selection box
              if evalin('base','exist(''ct'')')
                  
@@ -723,6 +728,10 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                 cMapOptionsSelectList = {'None','CT (ED)','Result (i.e. dose)'}; 
                 set(handles.popupmenu_chooseColorData,'String',cMapOptionsSelectList{1})
                 %set(handles.popupmenu_chooseColorData,'Value',1);
+             end
+            % hide colorbar if no color data is chosen
+            if this.viewingWidgetHandle.colorData == 1 && this.viewingWidgetHandle.plotColorBar             
+                this.viewingWidgetHandle.plotColorBar=false;
             end
             selectionIndex=this.viewingWidgetHandle.colorData;
             set(handles.popupmenu_chooseColorData,'Value',selectionIndex);
@@ -735,7 +744,6 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             end
             cMapSelectionIndex = get(handles.popupmenu_chooseColormap,'Value');
             cMapStrings = get(handles.popupmenu_chooseColormap,'String');
-            
             
             
             try
@@ -791,10 +799,9 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             if windowWidth < sliderWidthMinMax(1)
                 sliderWidthMinMax(1) = windowWidth;
             end
-            if windowCenter > sliderCenterMinMax(2)
+            if windowWidth > sliderWidthMinMax(2)
                 sliderWidthMinMax(2) = windowWidth;
             end
-            
             
             set(handles.edit_windowCenter,'String',num2str(windowCenter,3));
             set(handles.edit_windowWidth,'String',num2str(windowWidth,3));
@@ -804,7 +811,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             
             cMapPopupIndex = find(strcmp(currentMap,cMapStrings));
             set(handles.popupmenu_chooseColormap,'Value',cMapPopupIndex);
-            this.viewingWidgetHandle.lockUpdate=false;
+            this.viewingWidgetHandle.lockUpdate=lockState;
             this.handles=handles;
         end
         

@@ -15,6 +15,15 @@ classdef matRad_Widget <  handle
             this.widgetHandle = handleParent;           
             this.createLayout();           
             this.initialize();
+            
+            [env, ~] = matRad_getEnvironment();
+            
+            % only enable in matlab
+            %strcmp(env,'MATLAB') && 
+            if strcmp(env,'MATLAB') && strcmp(get(handleParent,'type'),'figure')
+                set(this.widgetHandle,'ButtonDownFcn',@(src,hEvent) update(this));   
+                set(this.widgetHandle,'KeyPressFcn',@(src,hEvent) update(this));   
+            end
         end
 
         function set.handles(obj,handles)
@@ -37,7 +46,7 @@ classdef matRad_Widget <  handle
         %}
         
         function handles = showError(this,Message,ME)
-            global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+            matRad_cfg = MatRad_Config.instance();
             handles = this.handles;
             if nargin == 3
                 %Add exception message
@@ -60,7 +69,7 @@ classdef matRad_Widget <  handle
         end
         
         function showWarning(this,Message,ME)
-            global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+            matRad_cfg = MatRad_Config.instance();
             
             handles = this.handles;
             if nargin == 3
@@ -89,6 +98,16 @@ classdef matRad_Widget <  handle
         %   notify(this,'workspaceChanged',workSpaceVariables); 
         %end
         
+        function enableWindowCallback(this,enable)
+            
+            if strcmp(get(this.widgetHandle,'type'),'figure') && enable
+                set(this.widgetHandle,'ButtonDownFcn',@(src,hEvent) update(this));   
+                set(this.widgetHandle,'KeyPressFcn',@(src,hEvent) update(this));
+            else
+                set(this.widgetHandle,'ButtonDownFcn','');   
+                set(this.widgetHandle,'KeyPressFcn','');
+            end
+        end
     end
     
     %methods (Abstract)

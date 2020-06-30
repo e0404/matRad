@@ -112,7 +112,7 @@ classdef matRad_MainGUI < handle
     end
     
     methods
-        function obj = matRad_MainGUI()
+        function obj = matRad_MainGUI(varargin)
             %Panel for Main Widget 
             obj.guiHandle = figure(...
                 'Units','characters',...
@@ -224,10 +224,54 @@ classdef matRad_MainGUI < handle
                 'HighLightColor',[0.501960784313725 0.501960784313725 0.501960784313725],...
                 'BorderType','none');
             
+            matRad_cfg = MatRad_Config.instance();
+            
+            if matRad_cfg.disableGUI
+                matRad_cfg.dispInfo('matRad GUI disabled in matRad_cfg!\n');
+                return;
+            end
+            
+            if ~isdeployed
+                matRadRootDir = fileparts(mfilename('fullpath'));
+                addpath(genpath(matRadRootDir));
+            end
+            
+            p = inputParser;
+            addParameter(p,'devMode',false,@(x) validateModeValue(obj,x));
+            addParameter(p,'eduMode',false,@(x) validateModeValue(obj,x));
+            p.KeepUnmatched = true; %No error with incorrect parameters
+            
+            parse(p,varargin{:});
+            parsedInput = p.Results;
+            
+            if ischar(parsedInput.devMode) || isstring(parsedInput.devMode)
+                parsedInput.devMode = str2double(parsedInput.devMode);
+            end
+            
+            if ischar(parsedInput.eduMode) || isstring(parsedInput.eduMode)
+                parsedInput.eduMode = str2double(parsedInput.eduMode);
+            end
+            
+            %If devMode is true, error dialogs will include the full stack trace of the error
+            %If false, only the basic error message is shown (works for errors that
+            %handle the MException object)
+            matRad_cfg.devMode = logical(parsedInput.devMode);
+            if matRad_cfg.devMode
+                disp('matRadGUI starting in developer mode!');
+            end
+            
+            %Enables simple educational mode which removes certain functionality from
+            %the GUI
+            matRad_cfg.eduMode = logical(parsedInput.eduMode);
+            if matRad_cfg.eduMode
+                disp('matRadGUI starting in educational mode!');
+            end
+
+            
             [obj.env, ~] = matRad_getEnvironment();
             
-            obj.WorkflowWidget = matRad_WorkflowWidget(p1);
             obj.PlanWidget = matRad_PlanWidget(p2);
+            obj.WorkflowWidget = matRad_WorkflowWidget(p1);
             obj.OptimizationWidget = matRad_OptimizationWidget(p3);
             obj.ViewingWidget = matRad_ViewingWidget(p8);
             
@@ -241,14 +285,14 @@ classdef matRad_MainGUI < handle
             
             switch obj.env
                 case 'MATLAB'                                      
-                    obj.eventListeners.workflow = addlistener(obj.WorkflowWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-                    obj.eventListeners.plan = addlistener(obj.PlanWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-                    obj.eventListeners.optimization = addlistener(obj.OptimizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-                    obj.eventListeners.viewing = addlistener(obj.ViewingWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    obj.eventListeners.workflow = addlistener(obj.WorkflowWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj));
+                    obj.eventListeners.plan = addlistener(obj.PlanWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj));
+                    obj.eventListeners.optimization = addlistener(obj.OptimizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj));
+                    obj.eventListeners.viewing = addlistener(obj.ViewingWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj));
                     obj.eventListeners.plot = addlistener(obj.ViewingWidget,'plotUpdated',@(src,hEvent) updateButtons(obj));
-                    obj.eventListeners.visualization = addlistener(obj.VisualizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-                    obj.eventListeners.viewerOptions = addlistener(obj.ViewerOptionsWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-                    obj.eventListeners.structureVisibility = addlistener(obj.StructureVisibilityWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    obj.eventListeners.visualization = addlistener(obj.VisualizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj));
+                    obj.eventListeners.viewerOptions = addlistener(obj.ViewerOptionsWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj));
+                    obj.eventListeners.structureVisibility = addlistener(obj.StructureVisibilityWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj));
                     
                     % only available in MATLAB
                     obj.ViewingWidget.dcmHandle = datacursormode(obj.guiHandle);
@@ -257,14 +301,14 @@ classdef matRad_MainGUI < handle
                     
                 case 'OCTAVE'
                     % addlistener is not yet available in octave 
-                    obj.eventListeners.workflow = matRad_addListenerOctave(obj.WorkflowWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-                    obj.eventListeners.plan = matRad_addListenerOctave(obj.PlanWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-                    obj.eventListeners.optimization = matRad_addListenerOctave(obj.OptimizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-                    obj.eventListeners.viewing = matRad_addListenerOctave(obj.ViewingWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    obj.eventListeners.workflow = matRad_addListenerOctave(obj.WorkflowWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj));
+                    obj.eventListeners.plan = matRad_addListenerOctave(obj.PlanWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj));
+                    obj.eventListeners.optimization = matRad_addListenerOctave(obj.OptimizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj));
+                    obj.eventListeners.viewing = matRad_addListenerOctave(obj.ViewingWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj));
                     obj.eventListeners.plot = matRad_addListenerOctave(obj.ViewingWidget,'plotUpdated',@(src,hEvent) updateButtons(obj));
-                    obj.eventListeners.visualization = matRad_addListenerOctave(obj.VisualizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-                    obj.eventListeners.viewerOptions = matRad_addListenerOctave(obj.ViewerOptionsWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
-                    obj.eventListeners.structureVisibility = matRad_addListenerOctave(obj.StructureVisibilityWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,src,hEvent));
+                    obj.eventListeners.visualization = matRad_addListenerOctave(obj.VisualizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj));
+                    obj.eventListeners.viewerOptions = matRad_addListenerOctave(obj.ViewerOptionsWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj));
+                    obj.eventListeners.structureVisibility = matRad_addListenerOctave(obj.StructureVisibilityWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj));
                     
             end
             
@@ -273,41 +317,48 @@ classdef matRad_MainGUI < handle
             % update button states
             obj.updateButtons();
             
-            %             % change color of toobar the first time GUI is started 
-%             hToolbar = findall(obj.guiHandle,'tag','uitoolbar1')
-%             this command is not working
-%             jToolbar = get(get(hToolbar,'JavaContainer'),'ComponentPeer')
-%             jToolbar.setBorderPainted(false);
-%             color = java.awt.Color.gray;
-%             % Remove the toolbar border, to blend into figure contents
-%             jToolbar.setBackground(color);
-%             % Remove the separator line between toolbar and contents
-%             warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
-%             jFrame = get(handle(obj.guiHandle),'JavaFrame');
-%             jFrame.showTopSeparator(false);
-%             jtbc = jToolbar.getComponents;
-%             for idx=1:length(jtbc)
-%                 jtbc(idx).setOpaque(false);
-%                 jtbc(idx).setBackground(color);
-%                 for childIdx = 1 : length(jtbc(idx).getComponents)
-%                     jtbc(idx).getComponent(childIdx-1).setBackground(color);
-%                 end
-%             end
+            try
+                % change color of toobar the first time GUI is started
+                hToolbar = findall(obj.guiHandle,'tag','uitoolbar1');
+                jToolbar = get(get(hToolbar,'JavaContainer'),'ComponentPeer');
+                jToolbar.setBorderPainted(false);
+                color = java.awt.Color.gray;
+                % Remove the toolbar border, to blend into figure contents
+                jToolbar.setBackground(color);
+                % Remove the separator line between toolbar and contents
+                warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+                jFrame = get(handle(obj.guiHandle),'JavaFrame');
+                jFrame.showTopSeparator(false);
+                jtbc = jToolbar.getComponents;
+                for idx=1:length(jtbc)
+                    jtbc(idx).setOpaque(false);
+                    jtbc(idx).setBackground(color);
+                    for childIdx = 1 : length(jtbc(idx).getComponents)
+                        jtbc(idx).getComponent(childIdx-1).setBackground(color);
+                    end
+                end
+            catch
+                warning('Java properties couldn''t be set');
+            end
         end
         
-        function this = updateWidgets(this,src,hEvent)
+        function this = updateWidgets(this)
            disp(['Workspace Changed ' datestr(now,'HH:MM:SS.FFF')]);
            this.PlanWidget.update();
            this.WorkflowWidget.update();
            this.OptimizationWidget.update();
            this.ViewingWidget.update();
-           this.ViewerOptionsWidget.update();
-           this.VisualizationWidget.update();
+           %this.ViewerOptionsWidget.update();
+           %this.VisualizationWidget.update();
            this.StructureVisibilityWidget.update();
         end
         
         function this = updateButtons(this)
            disp(['Plot Changed ' datestr(now,'HH:MM:SS.FFF')]);
+           % update the visualization and viewer options widgets
+           this.ViewerOptionsWidget.update();
+           this.VisualizationWidget.update();
+           
            if strcmp(this.env,'OCTAVE')
               return
            end
@@ -512,6 +563,15 @@ classdef matRad_MainGUI < handle
         
         function toolbarCursor_ClickedCallback(this,hObject, eventdata)
            set(this.ViewingWidget.dcmHandle,'Enable',get(hObject,'State'));
+        end
+        
+        %Validates the attributes for the command line Modes
+        function validateModeValue(this,x)
+            %When passed from OS terminal (or inline in Command Window) everything is a string
+            if isdeployed || ischar(x) || isstring(x)
+                x=str2double(x);
+            end
+            validateattributes(x,{'logical','numeric'},{'scalar','binary'});
         end
     end
 end

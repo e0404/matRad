@@ -29,7 +29,6 @@ classdef matRad_PlanWidget < matRad_Widget
                 
             end
             this = this@matRad_Widget(handleParent);
-            set(this.widgetHandle,'ButtonDownFcn',@(src,hEvent) update(this));   
             
 %             if evalin('base','exist(''pln'')')
 %               getPlnFromWorkspace(this);
@@ -37,6 +36,19 @@ classdef matRad_PlanWidget < matRad_Widget
 %               setPlnDefaultValues(this);
 %             end
             update(this);
+            
+            handles=this.handles;
+            matRad_cfg = MatRad_Config.instance();
+            if matRad_cfg.eduMode
+                %Visisbility in Educational Mode
+                eduHideHandles =   {handles.radiobutton3Dconf,...
+                    handles.btnRunDAO};
+                eduDisableHandles = {handles.editCouchAngle,handles.popUpMachine};
+                cellfun(@(h) set(h,'Visible','Off'),eduHideHandles);
+                cellfun(@(h) set(h,'Enable','Off'),eduDisableHandles);
+            end
+            this.handles=handles;
+
         end
         
         function this = initialize(this)

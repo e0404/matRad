@@ -28,7 +28,6 @@ classdef matRad_3DWidget < matRad_ViewingWidget
             end
             
             this = this@matRad_ViewingWidget(handleParent);
-            set(this.widgetHandle,'ButtonDownFcn',@(src,hEvent) update(this));
             
             if nargin>=1
                this.viewingWidgetHandle=viewingWidgetHandle;

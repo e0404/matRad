@@ -89,28 +89,29 @@ classdef matRad_InfoWidget < matRad_Widget
         
         function btnAbout_Callback(this, hObject, event)
             handles = this.handles;
-            msgbox({'https://github.com/e0404/matRad/' 'email: matrad@dkfz.de'},'About');
-%             handles.eduMode = logical(parsedInput.eduMode);
-%             [~,matRadVer] = matRad_version;
-%             
-%             msg{1} = ['matRad ''' matRadVer.name '''']; %Name
-%             if handles.eduMode
-%                 msg{1} = [msg{1} ' Educational'];
-%             end
-%             msg{end+1} = sprintf('v%d.%d.%d',matRadVer.major,matRadVer.minor,matRadVer.patch); %Version Number
-%             if isdeployed
-%                 msg{end+1} = 'Standalone Version';
-%             elseif ~isempty(matRadVer.branch) && ~isempty(matRadVer.commitID)
-%                 msg{end+1} = sprintf('Git: Branch %s, commit %s',matRadVer.branch,matRadVer.commitID(1:8));
-%             end
-%             
-%             [env,envver]  = matRad_getEnvironment();
-%             msg{end+1} = sprintf('Environment: %s v%s %s',env,envver,version('-release'));
-%             
-%             msg{end+1} = 'Web: www.matrad.org';
-%             msg{end+1} = 'E-Mail: contact@matrad.org';
-%             
-%             msgbox(msg,'About matRad');
+            %msgbox({'https://github.com/e0404/matRad/' 'email: matrad@dkfz.de'},'About');
+            
+            matRad_cfg = MatRad_Config.instance();
+            [~,matRadVer] = matRad_version;
+            
+            msg{1} = ['matRad ''' matRadVer.name '''']; %Name
+            if matRad_cfg.eduMode
+                msg{1} = [msg{1} ' Educational'];
+            end
+            msg{end+1} = sprintf('v%d.%d.%d',matRadVer.major,matRadVer.minor,matRadVer.patch); %Version Number
+            if isdeployed
+                msg{end+1} = 'Standalone Version';
+            elseif ~isempty(matRadVer.branch) && ~isempty(matRadVer.commitID)
+                msg{end+1} = sprintf('Git: Branch %s, commit %s',matRadVer.branch,matRadVer.commitID(1:8));
+            end
+            
+            [env,envver]  = matRad_getEnvironment();
+            msg{end+1} = sprintf('Environment: %s v%s %s',env,envver,version('-release'));
+            
+            msg{end+1} = 'Web: www.matrad.org';
+            msg{end+1} = 'E-Mail: contact@matrad.org';
+            
+            msgbox(msg,'About matRad');
             
             
             this.handles = handles;

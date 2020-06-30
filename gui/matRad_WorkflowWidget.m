@@ -22,7 +22,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 
             end
             this = this@matRad_Widget(handleParent);
-            set(this.widgetHandle,'ButtonDownFcn',@(src,hEvent) update(this));
         end
         
         function this = initialize(this)
@@ -252,6 +251,18 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 'FontWeight','bold');
             
             this.createHandles();
+            
+             handles=this.handles;
+            matRad_cfg = MatRad_Config.instance();
+            if matRad_cfg.eduMode
+                %Visisbility in Educational Mode
+                eduHideHandles =   {handles.pushbutton_importFromBinary,...
+                    handles.btnLoadDicom,...
+                    handles.btn_export,...
+                    handles.importDoseButton};
+                cellfun(@(h) set(h,'Visible','Off'),eduHideHandles);
+            end
+            this.handles=handles;
         end
         
         function this = getFromWorkspace(this)
