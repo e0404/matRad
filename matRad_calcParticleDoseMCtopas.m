@@ -35,7 +35,7 @@ function dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nCasePerBixel,calcD
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
+global matRad_cfg;
 matRad_cfg = MatRad_Config.instance();
 
 if nargin < 5
