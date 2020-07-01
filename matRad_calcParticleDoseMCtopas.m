@@ -1,6 +1,6 @@
 function dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad TOPAS monte carlo photon dose calculation wrapper
+% matRad TOPAS Monte Carlo proton dose calculation wrapper
 %
 % call
 %   dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)
@@ -58,7 +58,7 @@ env = matRad_getEnvironment();
 matRad_calcDoseInit;
 
 % for TOPAS we explicitly downsample the ct to the dose grid (might not
-% be necessary in future MCsquare versions with separated grids)
+% be necessary in future versions with separated grids)
 for s = 1:dij.numOfScenarios
     ctResampled = ct;
     ctResampled.cubeHU{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
@@ -76,7 +76,6 @@ load([pln.radiationMode,'_',pln.machine]);
 topasConfig = MatRad_TopasConfig();
 topasBaseData = MatRad_TopasBaseData(machine);%,TopasConfig);
 
-%Collect weights
 %Collect weights
 w = zeros(sum([stf(:).totalNumOfBixels]),1);
 ct = 1;
