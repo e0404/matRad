@@ -89,7 +89,7 @@ for i = 1:length(stf)
 end
 
 
-topasConfig.workingDir = 'D:\MATLAB\matRad\topas\MCtest';
+topasConfig.workingDir = [matRad_cfg.matRadRoot filesep 'topas' filesep 'MCtest'];
 topasConfig.numHistories = nCasePerBixel;
 topasConfig.numOfRuns = 5;
 topasConfig.writeAllFiles(ctResampled,pln,stf,topasBaseData,w);
