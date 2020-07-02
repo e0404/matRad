@@ -143,6 +143,10 @@ effectiveLateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
 matRad_cfg.dispInfo('matRad: Particle dose calculation...\n');
 counter = 0;
 
+if ~isfield(pln,'propDoseCalc') && ~isfield(pln.propDoseCalc.lateralCutOff)
+    pln.propDoseCalc.lateralCutOff = matRad_cfg.propDoseCalc.defaultLateralCutOff;
+end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:length(stf) % loop over all beams
   
@@ -150,8 +154,8 @@ for i = 1:length(stf) % loop over all beams
     matRad_calcDoseInitBeam;
   
     % Determine lateral cutoff
-    matRad_cfg.dispInfo('matRad: calculate lateral cutoff...');
-    cutOffLevel = matRad_cfg.propDoseCalc.defaultLateralCutOff;
+    cutOffLevel = pln.propDoseCalc.lateralCutOff;
+    matRad_cfg.dispInfo('matRad: calculate lateral cutoff (set to %f)...',cutOffLevel);
     visBoolLateralCutOff = 0;
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
     matRad_cfg.dispInfo('done.\n');    
