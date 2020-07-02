@@ -57,7 +57,8 @@ classdef MatRad_TopasConfig < handle
         
         
         %Image
-        materialConversion = 'HUToWaterSchneider'; %'CustomWaterRSP'; 'SchneiderFull';
+        materialConversion = 'HUToWaterSchneider'; %'CustomWaterRSP';
+        %materialConversion = 'CustomWaterRSP'; 
         arrayOrdering = 'F'; %'C';
         rsp_basematerial = 'Water';
         rsp_vecLength = 10000; %Bins for RSP values when using RSP conversion with custom image converter
@@ -659,6 +660,7 @@ classdef MatRad_TopasConfig < handle
                         fprintf(fID,'i:Ge/Patient/YBins    = %d\n',ct.cubeDim(1));
                         fprintf(fID,'i:Ge/Patient/ZBins    = %d\n',ct.cubeDim(3));
                         
+                        cube = NaN;
                         % otherwise
                     else
                         
@@ -769,6 +771,7 @@ classdef MatRad_TopasConfig < handle
                     fprintf(fID,'sv:Ge/Patient/SchneiderElements = 4 "Hydrogen" "Oxygen" "Nitrogen" "Carbon"\n');
                     fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight1 = 4 0.0 0.23479269 0.76508170 0.00012561\n');
                     fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight2 = 4 0.111894 0.888106 0.0 0.0\n');
+                    fprintf(fID,'dv:Ge/Patient/SchneiderMaterialMeanExcitationEnergy = 2 85.7 78.0 eV\n');
                     
                     
                     %Write the Patient
