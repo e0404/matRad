@@ -74,7 +74,7 @@ end
 
 load([pln.radiationMode,'_',pln.machine]);
 topasConfig = MatRad_TopasConfig();
-topasBaseData = MatRad_TopasBaseData(machine);%,TopasConfig);
+topasBaseData = MatRad_TopasBaseData(machine,stf);%,TopasConfig);
 
 %Collect weights
 %Collect weights
@@ -91,7 +91,7 @@ end
 
 topasConfig.workingDir = 'D:\MATLAB\matRad\topas\MCtest';
 topasConfig.numHistories = nCasePerBixel;
-topasConfig.numOfRuns = 5;
+topasConfig.numOfRuns = matRad_cfg.propMC.topas_defaultNumBatches;
 topasConfig.writeAllFiles(ctResampled,pln,stf,topasBaseData,w);
 
 %topasConfig.parallelRuns = true;
