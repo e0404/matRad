@@ -212,30 +212,31 @@ for i = 1:length(stf) % loop over all beams
                 % find energy index in base data
                 energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
                 
-                % adjust radDepth according to range shifter and include
-                % correction for matRad simulating particles traveling
-                % through vacuum instead of air between nozzle and skin
+                % Since matRad's ray cast starts at the skin and base data
+                % is generated at soume source to phantom distance
+                % we can explicitly correct for the nozzle to air WEPL in 
+                % the current case.
                 if  pln.propDoseCalc.airOffsetCorrection   
-                    if ~isfield(machine.meta, 'fitAirOffset') 
-                        fitAirOffset = 0;
-%                         warning('Could not find fitAirOffset. Using default value (no correction / fit in vacuum).');
-                    else
-                        fitAirOffset = machine.meta.fitAirOffset;
-                    end
-                    
                     if ~isfield(machine.meta, 'BAMStoIsoDist') 
-                        BAMStoIsoDist = 400;
-                    	%warning('Could not find BAMStoIsoDist. Using default value.');
+                        BAMStoIsoDist = 1000;
+                    	matRad_cfg.dispWarning('Machine data does not contain BAMStoIsoDist. Using default value of %f mm\n.',BAMStoIsoDist);
                     else
                         BAMStoIsoDist = machine.meta.BAMStoIsoDist;
                     end
                     
+                    if ~isfield(machine.meta, 'fitAirOffset') 
+                        fitAirOffset = BAMStoIsoDist; %By default we assume that the base data was fitted to a phantom with surface at isocenter
+                        matRad_cfg.dispInfo('Asked for correction of Base Data Air Offset, but no value found. Using default BAMStoIsoDist of %f mm\n.',BAMStoIsoDist);
+                    else
+                        fitAirOffset = machine.meta.fitAirOffset;
+                    end
+
                     nozzleToSkin = ((stf(i).ray(j).SSD + BAMStoIsoDist) - machine.meta.SAD);
-                    dR = 0.0011 * (nozzleToSkin - fitAirOffset);
-                    
+                    dR = 0.0011 * (nozzleToSkin - fitAirOffset);                    
                 else
                     dR = 0;
                 end
+                
                 % create offset vector to account for additional offsets modelled in the base data and a potential 
                 % range shifter. In the following, we only perform dose calculation for voxels having a radiological depth
                 % that is within the limits of the base data set (-> machine.data(i).dephts). By this means, we only allow  
