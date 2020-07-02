@@ -76,7 +76,7 @@ classdef MatRad_TopasConfig < handle
         %Physics 
         electronProductionCut = 0.5; %in mm
         modules_protons     = {'g4em-standard_opt4','g4h-phy_QGSP_BIC_HP','g4decay','g4h-elastic_HP','g4stopping','g4ion-QMD','g4radioactivedecay'};
-        modules_GenericIon  = {'g4em-standard_opt4','g4h-phy_QGSP_BIC_HP','g4decay','g4h-elastic_HP','g4stopping','g4ion-QMD','g4ion-inclxx'};
+        modules_GenericIon  = {'g4em-standard_opt4','g4h-phy_QGSP_BIC_HP','g4decay','g4h-elastic_HP','g4stopping','g4ion-QMD','g4radioactivedecay'};
         modules_gamma       = {'g4em-standard_opt4','g4h-phy_QGSP_BIC_HP','g4decay'};
         
         %Geometry / World
