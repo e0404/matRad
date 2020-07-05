@@ -196,13 +196,13 @@ alphas_mid = .5*(alphas(1:end-1)+alphas(2:end));
 
 % eq 12
 % Calculate the voxel indices: first convert to physical coords
-i_mm = sourcePoint(1) + alphas_mid*(targetPoint(1) - sourcePoint(1));
-j_mm = sourcePoint(2) + alphas_mid*(targetPoint(2) - sourcePoint(2));
-k_mm = sourcePoint(3) + alphas_mid*(targetPoint(3) - sourcePoint(3));
+i_mm = sourcePoint(1) + alphas_mid*(targetPoint(1) - sourcePoint(1)) - xPlane_1;
+j_mm = sourcePoint(2) + alphas_mid*(targetPoint(2) - sourcePoint(2)) - yPlane_1;
+k_mm = sourcePoint(3) + alphas_mid*(targetPoint(3) - sourcePoint(3)) - zPlane_1;
 % then convert to voxel index
-i = round(i_mm/resolution.x);
-j = round(j_mm/resolution.y);
-k = round(k_mm/resolution.z);
+i = 1 + round(i_mm/resolution.x);
+j = 1 + round(j_mm/resolution.y);
+k = 1 + round(k_mm/resolution.z);
 
 % Handle numerical instabilities at the borders.
 i(i<=0) = 1; j(j<=0) = 1; k(k<=0) = 1;
