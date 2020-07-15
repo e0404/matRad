@@ -1,6 +1,6 @@
 function dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad MCsqaure monte carlo photon dose calculation wrapper
+% matRad MCsquare Monte Carlo proton dose calculation wrapper
 %
 % call
 %   dij = matRad_calcParticleDoseMc(ct,stf,pln,cst,calcDoseDirect)
@@ -13,7 +13,7 @@ function dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nCasePerBixel,calc
 %   nCasePerBixel               number of histories per beamlet (nCasePerBixel > 1),
 %                               max stat uncertainity (0 < nCasePerBixel < 1)
 %   calcDoseDirect:             binary switch to enable forward dose
-%                               calcualtion
+%                               calculation
 % output
 %   dij:                        matRad dij struct
 %
@@ -35,6 +35,7 @@ function dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nCasePerBixel,calc
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_cfg;
 matRad_cfg = MatRad_Config.instance();
 
 % check if valid machine
@@ -42,12 +43,12 @@ if ~strcmp(pln.radiationMode,'protons')
     matRad_cfg.dispError('Wrong radiation modality . MCsquare only supports protons!');    
 end
 
-
 if nargin < 5
     % set number of particles simulated per pencil beam
     nCasePerBixel = matRad_cfg.propMC.MCsquare_defaultHistories;
     matRad_cfg.dispInfo('Using default number of Histories per Bixel: %d\n',nCasePerBixel);
 end
+
 % switch between either using max stat uncertainity or total number of
 % cases
 if (nCasePerBixel < 1)
@@ -56,17 +57,12 @@ else
     maxStatUncertainty = false;
 end
 
-
 if nargin < 6
     calcDoseDirect = false;
 end
 
 if isfield(pln,'propMC') && isfield(pln.propMC,'outputVariance')
     matRad_cfg.dispWarning('Variance scoring for MCsquare not yet supported.');
-end
-
-if ~strcmp(pln.radiationMode,'protons')
-    errordlg('MCsquare is only supported for protons');
 end
 
 env = matRad_getEnvironment();
@@ -103,7 +99,6 @@ if ~calcDoseDirect && ~matRad_checkMexFileExists('matRad_sparseBeamletsReaderMCs
         matRad_cfg.dispError('Could not find/generate mex interface for reading the sparse matrix. \nCause of error:\n%s\n Please compile it yourself.',MException.message);
     end
 end
-
 
 % set and change to MCsquare binary folder
 currFolder = pwd;
@@ -219,8 +214,6 @@ MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
                              dij.doseGrid.resolution.z];   
 matRad_writeMhd(HUcube{1},MCsquareBinCubeResolution,MCsquareConfig.CT_File);
 
-
-
 isoCenterOffset = -[dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2];
 
 counter = 0;             
@@ -261,10 +254,8 @@ for i = 1:length(stf)
                         MCsquareConfig.Num_Primaries];
                 end
             end
-        end
-               
+        end    
     end
-    
 end
 
 % remember order
