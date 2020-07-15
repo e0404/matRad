@@ -146,7 +146,7 @@ classdef MatRad_TopasConfig < handle
             obj.writePatient(ct,pln);
             obj.writeStfFields(ct,stf,topasBaseData,w);                       
 
-            obj.matRad_cfg.dispInfo('Successfully written TOPAS setup files!')
+            obj.matRad_cfg.dispInfo('Successfully written TOPAS setup files!\n')
             
             obj.writeMCparam();
         end
