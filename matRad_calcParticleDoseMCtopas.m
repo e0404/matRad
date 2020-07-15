@@ -48,6 +48,10 @@ if nargin < 6
     calcDoseDirect = false;
 end
 
+if isfield(pln,'propMC') && isfield(pln.propMC,'outputVariance')
+    matRad_cfg.dispWarning('Variance scoring for TOPAS not yet supported.');
+end
+
 if ~calcDoseDirect
     matRad_cfg.dispError('matRad so far only supports direct dose calculation for TOPAS!\n');
 end
