@@ -169,7 +169,7 @@ classdef MatRad_TopasConfig < handle
            fprintf(fID,'i:Ts/TrackingVerbosity = %d\n',obj.verbosity.tracking);
            fprintf(fID,'i:Ts/EventVerbosity = %d\n',obj.verbosity.event);
            fprintf(fID,'i:Ts/RunVerbosity = %d\n',obj.verbosity.run);
-           fprintf(fID,'b:Ts/ShowCPUTime = %s\n',logicalString{obj.verbosity.cputime});
+           fprintf(fID,'b:Ts/ShowCPUTime = %s\n',logicalString{obj.verbosity.cputime + 1});
            fprintf(fID,'i:Tf/Verbosity = %d\n',obj.verbosity.timefeatures);
            fprintf(fID,'i:Ts/MaxInterruptedHistories = %d\n',obj.verbosity.maxinterruptedhistories);
            fprintf(fID,'Ts/NumberOfThreads = %d\n',obj.numThreads);
