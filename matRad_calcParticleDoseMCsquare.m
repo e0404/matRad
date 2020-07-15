@@ -86,7 +86,7 @@ elseif isunix
     if exist('MCsquare_linux','file') ~= 2
         matRad_cfg.dispError('Could not find MCsquare binary.\n');
     else
-        mcSquareBinary = './MCsquare_linux';
+        mcSquareBinary = 'chmod a+x MCsquare_linux && ./MCsquare_linux';
     end
 end
 
