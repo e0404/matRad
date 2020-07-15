@@ -87,7 +87,6 @@ for i = 1:length(stf)
     end
 end
 
-
 topasConfig.workingDir = [matRad_cfg.matRadRoot filesep 'topas' filesep 'MCtest'];
 topasConfig.numHistories = nCasePerBixel;
 topasConfig.numOfRuns = matRad_cfg.propMC.topas_defaultNumBatches;
@@ -102,14 +101,14 @@ cd(topasConfig.workingDir);
 for beamIx = 1:numel(stf)
     for runIx = 1:topasConfig.numOfRuns       
         fname = sprintf('%s_field%d_run%d',topasConfig.label,beamIx,runIx);
-        topasCall = sprintf('%s %s.txt',topasConfig.topasExecCommand,fname);
+        topasCall = sprintf('%s %s.txt > %s.out 2> %s.err',topasConfig.topasExecCommand,fname,fname,fname);
         if topasConfig.parallelRuns
             finishedFiles{runIx} = sprintf('%s.finished',fname);
             delete(finishedFiles{runIx});
             topasCall = [topasCall '; touch ' finishedFiles{runIx} ' &'];
         end
         matRad_cfg.dispInfo('Calling TOPAS: %s\n',topasCall);
-        system(topasCall);
+        [status,cmdout] = system(topasCall,'-echo');           
     end
     
     if topasConfig.parallelRuns
