@@ -15,7 +15,7 @@ for t = 1:length(MCparam.tallies)
     for f = 1:MCparam.nbFields
         topasSum = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
         for k = 1:MCparam.nbRuns
-            genFileName = sprintf('score_%s_field%d_run%d_%s',MCparam.simLabel,f,k,tname)
+            genFileName = sprintf('score_%s_field%d_run%d_%s',MCparam.simLabel,f,k,tname);
             switch MCparam.outputType
                 case 'csv'
                     genFullFile = fullfile(folder,[genFileName '.csv']);
