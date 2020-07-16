@@ -189,11 +189,21 @@ if enable(1) == 1
             hfig.(planename{plane}).('gamma').IsoDose]=...
             matRad_plotSliceWrapper(gca,ct,cstHandle,1,gammaCube,plane,slicename{plane},[],[],colorcube,gammaCMap,doseGammaWindow,[],100);
         
+        dose1name = inputname(1);
+        dose2name = inputname(2);
+        
+        if isempty(dose1name)
+            dose1name = 'Dose 1';
+        end
+        if isempty(dose2name)
+            dose1name = 'Dose 2';
+        end       
+        
         % Adjusting axes
         matRad_plotAxisLabels(hfig.(planename{plane}).('cube1').Axes,ct,plane,slicename{plane},[],100);
-        set(get(hfig.(planename{plane}).('cube1').Axes, 'title'), 'string', 'Dose 1');
+        set(get(hfig.(planename{plane}).('cube1').Axes, 'title'), 'string',dose1name);
         matRad_plotAxisLabels(hfig.(planename{plane}).('cube2').Axes,ct,plane,slicename{plane},[],100);
-        set(get(hfig.(planename{plane}).('cube2').Axes, 'title'), 'string', 'Dose 2');
+        set(get(hfig.(planename{plane}).('cube2').Axes, 'title'), 'string', dose2name);
         matRad_plotAxisLabels(hfig.(planename{plane}).('diff').Axes,ct,plane,slicename{plane},[],100);
         set(get(hfig.(planename{plane}).('diff').Axes, 'title'), 'string', 'Absolute difference');
         matRad_plotAxisLabels(hfig.(planename{plane}).('gamma').Axes,ct,plane,slicename{plane},[],100);
@@ -215,7 +225,7 @@ if enable(2) == 1
     profilez{2} = permute(cube2(slicename{1},:,slicename{3}),[2 3 1]);
     
     if exist('pln','var') && ~isempty(pln)
-        if strcmp(pln.bioParam.model,'none')
+        if strcmp(pln.propOpt.bioOptimization,'none')
             yLabelString = 'Dose [Gy]';
         else
             yLabelString = 'RBE x Dose [Gy(RBE)]';
@@ -234,7 +244,11 @@ if enable(2) == 1
     xlabel('X [mm]','FontSize',fontsize)
     ylabel(yLabelString,'FontSize',fontsize);
     title('x-Profiles');
-    legend({'Dose 1','Dose 2'},'Location','southeast')
+    if isempty(inputname(1))
+        legend({'Dose 1','Dose 2'},'Location','southeast')
+    else
+        legend({inputname(1),inputname(2)},'Location','southeast')
+    end   
     legend boxoff
     
     hfig.profiles.y = subplot(2,2,2);
@@ -244,7 +258,11 @@ if enable(2) == 1
     xlabel('Y [mm]','FontSize',fontsize)
     ylabel(yLabelString,'FontSize',fontsize);
     title('y-Profiles');
-    legend({'Dose 1','Dose 2'},'Location','southeast')
+    if isempty(inputname(1))
+        legend({'Dose 1','Dose 2'},'Location','southeast')
+    else
+        legend({inputname(1),inputname(2)},'Location','southeast')
+    end  
     legend boxoff
     
     hfig.profiles.z = subplot(2,2,3);
@@ -254,7 +272,11 @@ if enable(2) == 1
     xlabel('Z [mm]','FontSize',fontsize)
     ylabel(yLabelString,'FontSize',fontsize);
     title('z-Profiles');
-    legend({'Dose 1','Dose 2'},'Location','southeast')
+    if isempty(inputname(1))
+        legend({'Dose 1','Dose 2'},'Location','southeast')
+    else
+        legend({inputname(1),inputname(2)},'Location','southeast')
+    end  
     legend boxoff
     
     set(hfig.profiles.fig,'name',['Profiles:, x=',num2str(slicename{1}),'mm, y=',num2str(slicename{2}),'mm, z=',num2str(slicename{3}),'mm']);
