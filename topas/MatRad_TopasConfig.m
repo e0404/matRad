@@ -68,6 +68,7 @@ classdef MatRad_TopasConfig < handle
         
         
         %Scoring
+        addVolumeScorers = true
         scoreDose = true;
         scoreTrackCount = false;
         %scoreLET = true;
@@ -217,6 +218,19 @@ classdef MatRad_TopasConfig < handle
                 obj.MCparam.tallies{end+1} = 'physicalDose';
             end
                        
+            if obj.addVolumeScorers
+                fileList = dir(fullfile(obj.thisFolder,'TOPAS_scorer_volume_*.in'));
+                for fileIx=1:length(fileList)
+                    fname = fullfile(obj.thisFolder,fileList(fileIx).name);
+                    obj.matRad_cfg.dispDebug('Reading Volume Scorer from %s\n',fname);
+                    scorer = fileread(fname);
+                    fprintf(fID,'%s\n',scorer);
+                    tallyLabel = regexprep(fileList(fileIx).name,'TOPAS_scorer_volume_','');
+                    tallyLabel = regexprep(tallyLabel,'.txt.in','');
+                    obj.MCparam.tallies{end+1} = tallyLabel;
+                end
+            end
+
             if obj.scoreTrackCount
                 fname = fullfile(obj.thisFolder,obj.infilenames.surfaceScorer);
                 obj.matRad_cfg.dispDebug('Reading surface scorer from %s\n',fname);
