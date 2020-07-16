@@ -97,6 +97,18 @@ if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
     end
 end
 
+% Add non-processed MC tallies
+% Note that the tallies are already computed per beam and altogether
+if isfield(dij,'MC_tallies')
+    for f = 1:numel(dij.MC_tallies)
+        tally = dij.MC_tallies{f};
+        % skip tallies processed above
+        if ~isfield(resultGUI,tally)
+            resultGUI.(tally) = reshape(full(dij.(tally){scenNum}),dij.doseGrid.dimensions);
+        end
+    end
+end
+
 % group similar fields together
 resultGUI = orderfields(resultGUI);
 

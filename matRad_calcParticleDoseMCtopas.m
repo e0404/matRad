@@ -131,7 +131,8 @@ cd(currDir);
 %% read out volume scorers from topas simulation
 topasCubes = matRad_readTopasData(topasConfig.workingDir);
 
-fnames = fieldnames(topasCubes)
+fnames = fieldnames(topasCubes);
+dij.MC_tallies = fnames;
 for f = 1:numel(fnames)
     dij.(fnames{f}){1} = topasCubes.(fnames{f});    
 end
