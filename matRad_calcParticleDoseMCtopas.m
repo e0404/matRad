@@ -91,7 +91,6 @@ for i = 1:length(stf)
     end
 end
 
-topasConfig.workingDir = [matRad_cfg.matRadRoot filesep 'topas' filesep 'MCtest'];
 topasConfig.numHistories = nCasePerBixel;
 topasConfig.numOfRuns = matRad_cfg.propMC.topas_defaultNumBatches;
 topasConfig.writeAllFiles(ctResampled,pln,stf,topasBaseData,w);
