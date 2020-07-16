@@ -128,16 +128,10 @@ for beamIx = 1:numel(stf)
 end
 cd(currDir);
 
+%% read out volume scorers from topas simulation
+topasCubes = matRad_readTopasData(topasConfig.workingDir);
 
-
-%% read out topas simulation
-topasDose = matRad_readTopasData(topasConfig.workingDir);
-
-
-fnames = fieldnames(topasDose);
-%dij.MCparam = topasDose;
+fnames = fieldnames(topasCubes)
 for f = 1:numel(fnames)
-    dij.(fnames{f}){1} = topasDose.(fnames{f});    
+    dij.(fnames{f}){1} = topasCubes.(fnames{f});    
 end
-
-
