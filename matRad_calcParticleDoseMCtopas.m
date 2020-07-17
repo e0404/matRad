@@ -111,7 +111,12 @@ for beamIx = 1:numel(stf)
             topasCall = [topasCall '; touch ' finishedFiles{runIx} ' &'];
         end
         matRad_cfg.dispInfo('Calling TOPAS: %s\n',topasCall);
-        [status,cmdout] = system(topasCall,'-echo');           
+        [status,cmdout] = system(topasCall,'-echo');
+        if status == 0
+            matRad_cfg.dispInfo('TOPAS simulation completed succesfully\n');
+        else
+            matRad_cfg.dispError('TOPAS simulation exited with error code %d\n',status);
+        end
     end
     
     if topasConfig.parallelRuns
