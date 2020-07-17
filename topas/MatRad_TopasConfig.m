@@ -367,7 +367,10 @@ classdef MatRad_TopasConfig < handle
                 while sum([dataTOPAS.current]) ~= historyCount(beamIx)
                     % Randomly pick an index with the weigth given by the current
                     idx = 1:length(dataTOPAS);
-                    [~,~,R] = histcounts(rand(1),cumsum([0;double(transpose([dataTOPAS(:).current]))./double(sum([dataTOPAS(:).current]))]));
+                    % Note: as of Octave version 5.1.0, histcounts is not yet implemented
+                    %       using histc instead for compatibility with MATLAB and Octave
+                    %[~,~,R] = histcounts(rand(1),cumsum([0;double(transpose([dataTOPAS(:).current]))./double(sum([dataTOPAS(:).current]))]));
+                    [~,R] = histc(rand(1),cumsum([0;double(transpose([dataTOPAS(:).current]))./double(sum([dataTOPAS(:).current]))]));
                     randIx = idx(R);
                     
                     if (sum([dataTOPAS(:).current]) > historyCount(beamIx))
