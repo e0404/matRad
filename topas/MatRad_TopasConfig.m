@@ -438,7 +438,7 @@ classdef MatRad_TopasConfig < handle
                 fprintf(fileID,'dv:Tf/Beam/Spot/Times = %i ', cutNumOfBixel);
                 fprintf(fileID,num2str(linspace(10,cutNumOfBixel*10,cutNumOfBixel)));
                 fprintf(fileID,' ms\n');
-                fprintf(fileID,'uv:Tf/Beam/Spot/Values = %i %s\n',cutNumOfBixel,num2str(collectBixelIdx));
+                %fprintf(fileID,'uv:Tf/Beam/Spot/Values = %i %s\n',cutNumOfBixel,num2str(collectBixelIdx));
                 fprintf(fileID,'s:Tf/Beam/Energy/Function = "Step"\n');
                 fprintf(fileID,'dv:Tf/Beam/Energy/Times = Tf/Beam/Spot/Times ms\n');
                 fprintf(fileID,'dv:Tf/Beam/Energy/Values = %i ', cutNumOfBixel);
