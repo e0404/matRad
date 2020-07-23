@@ -208,6 +208,8 @@ MCsquareConfig.Dose_Sparse_Output = ~calcDoseDirect;
 % set threshold of sparse matrix generation
 MCsquareConfig.Dose_Sparse_Threshold = relDoseCutoff;
 
+MCsquareConfig.LET_MHD_Output = true;
+
 % write patient data
 MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
                              dij.doseGrid.resolution.y ...
@@ -303,6 +305,14 @@ else
     dij.physicalDose{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
                                  absCalibrationFactorMC2 * cube(VdoseGrid), ...
                                  dij.doseGrid.numOfVoxels,1);
+
+    if isfile(fullfile(MCsquareConfig.Output_Directory,'LET.mhd'))
+        cube = matRad_readMhd(MCsquareConfig.Output_Directory,'LET.mhd');
+        dij.LET{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
+                                    cube(VdoseGrid), ...
+                                    dij.doseGrid.numOfVoxels,1);
+        dij.MC_tallies{end+1} = 'LET';
+    end
 end
 
 % reorder influence matrix to comply with matRad default ordering
