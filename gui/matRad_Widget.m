@@ -55,7 +55,7 @@ classdef matRad_Widget <  handle
                 else
                     meType = 'basic';
                 end
-                Message = {Message,ME.message};%{Message,ME.getReport(meType,'hyperlinks','off')};
+                Message = [Message,ME.message];%{Message,ME.getReport(meType,'hyperlinks','off')};
             end
             
             if isfield(handles,'ErrorDlg')

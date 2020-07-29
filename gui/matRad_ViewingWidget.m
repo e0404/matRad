@@ -7,7 +7,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         maxSlice;
         SliceSliderStep;
         selectedBeam = 1;
-        numofBeams=1;
+        numOfBeams=1;
         profileOffset=0;
         OffsetSliderStep;
         OffsetMinMax;
@@ -155,8 +155,8 @@ classdef matRad_ViewingWidget < matRad_Widget
             UpdatePlot(this);
         end
         
-        function set.numofBeams(this,value)
-            this.numofBeams=value;
+        function set.numOfBeams(this,value)
+            this.numOfBeams=value;
             UpdatePlot(this);
         end
         
@@ -1085,7 +1085,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
                 this.maxSlice=ct.cubeDim(this.plane);
                 this.SliceSliderStep=[1/(ct.cubeDim(this.plane)-1) 1/(ct.cubeDim(this.plane)-1)];
-                this.numofBeams=pln.propStf.numOfBeams;
+                this.numOfBeams=pln.propStf.numOfBeams;
                 
                  % set profile offset slider
                 this.OffsetMinMax = [-100 100];
@@ -1190,7 +1190,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 this.slice=1;
                 this.maxSlice=1;
                 this.SliceSliderStep=[1 1];
-                this.numofBeams=1;
+                this.numOfBeams=1;
                 this.OffsetMinMax = [1 1];
                 this.profileOffset=1;
                 this.OffsetSliderStep=[1 1];

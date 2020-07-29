@@ -50,14 +50,15 @@ qi(qiEmpty) = {'-'};
 %since uitable is only available in newer octave versions, we try and catch
 try
     % Create the uitable
-    table = uitable(gcf,'Data',qi,...
+    table = uitable(figHandle,'Data',qi,...
         'ColumnName',cnames,...
         'RowName',rnames,'ColumnWidth',{70});
     
     % Layout
-    pos = get(gca,'position');
+    ax=axes(figHandle);
+    pos = get(ax,'position');
     set(table,'units','normalized','position',pos)
-    axis off
+    axis(ax,'off')
 catch ME
     matRad_cfg.dispWarning('The uitable function is not implemented in %s v%s.',env,vStr);
 end
