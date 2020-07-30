@@ -1,4 +1,4 @@
-function varargout = matRadGUI(varargin)
+function varargout = matRadGUI_prev(varargin)
 % matRad GUI
 %
 % call

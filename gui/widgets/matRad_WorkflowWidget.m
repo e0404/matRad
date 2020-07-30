@@ -70,10 +70,9 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 load([FilePath FileName]);
                 
             catch ME
-                handles = showError(this,'LoadMatFileFnc: Could not load *.mat file',ME);
-                
                 this.handles=handles;
                 getFromWorkspace(this);
+                showError(this,'LoadMatFileFnc: Could not load *.mat file',ME);                
                 return
             end
             
@@ -87,7 +86,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 assignin('base','cst',cst);
                 
             catch ME
-                handles = showError(this,'LoadMatFileFnc: Could not load *.mat file',ME);
+                showError(this,'LoadMatFileFnc: Could not load *.mat file',ME);
             end
             
             % check if a optimized plan was loaded
@@ -231,7 +230,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 'Parent',h71,...
                 'Units','normalized',...
                 'String','Import Dose',...
-                'Position',[0.738738738738738 0.392405063291139 0.178893178893179 0.145569620253165],...
+                'Position',[0.543114543114543 0.392405063291139 0.178893178893179 0.145569620253165],...
                 'BackgroundColor',[0.8 0.8 0.8],...
                 'Callback',@(hObject,eventdata) importDoseButton_Callback(this, hObject,eventdata),...
                 'Tag','importDoseButton',...
@@ -250,6 +249,17 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 'FontSize',8,...
                 'FontWeight','bold');
             
+            h84 = uicontrol(...
+                'Parent',h71,...
+                'Units','normalized',...
+                'String','Export Dicom',...
+                'Position',[0.738738738738738 0.392405063291139 0.178893178893179 0.145569620253165],...
+                'BackgroundColor',[0.8 0.8 0.8],...
+                'Callback',@(hObject,eventdata) exportDicomButton_Callback(this, hObject,eventdata),...
+                'Tag','exportDicomButton',...
+                'FontSize',8,...
+                'FontWeight','bold' );
+            
             this.createHandles();
             
              handles=this.handles;
@@ -259,6 +269,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 eduHideHandles =   {handles.pushbutton_importFromBinary,...
                     handles.btnLoadDicom,...
                     handles.btn_export,...
+                    handles.exportDicomButton,...
                     handles.importDoseButton};
                 cellfun(@(h) set(h,'Visible','Off'),eduHideHandles);
             end
@@ -276,6 +287,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             set(handles.btnSaveToGUI,'Enable','off');
             set(handles.importDoseButton,'Enable','off');
             set(handles.btn_export,'Enable','off');
+            set(handles.exportDicomButton,'Enable','off');
             
             if evalin('base','exist(''pln'')')
                 
@@ -286,23 +298,29 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     set(handles.txtInfo,'String','ready for dose calculation');
                     set(handles.btnCalcDose,'Enable','on');
                     set(handles.btn_export,'Enable','on');
+                    set(handles.exportDicomButton,'Enable','on');
                     
                     if evalin('base','exist(''resultGUI'')')
-                        
                         % plan is optimized
-                        set(handles.txtInfo,'String','plan is optimized');
-                        set(handles.btnOptimize ,'Enable','on');
-                        set(handles.pushbutton_recalc,'Enable','on');
+                        % check if dij, stf and pln match
+                        if matRad_comparePlnDijStf(evalin('base','pln'),evalin('base','stf'),evalin('base','dij'))
+                            set(handles.txtInfo,'String','plan is optimized');
+                            set(handles.btnOptimize ,'Enable','on');
+                            set(handles.pushbutton_recalc,'Enable','on');
+                        end
+                       
                         set(handles.btnSaveToGUI,'Enable','on');
                         % resultGUI struct needs to be available to import dose
                         % otherwise inconsistent states can be achieved
                         set(handles.importDoseButton,'Enable','on');
                         
-                    elseif evalin('base','exist(''dij'')')
-                        % plan is ready for optimization
-                        set(handles.txtInfo,'String','ready for optimization');
-                        set(handles.btnOptimize ,'Enable','on');
-                        set(handles.btnOptimize ,'Enable','on');
+                    elseif evalin('base','exist(''dij'')') &&  evalin('base','exist(''stf'')')
+                        % check if dij, stf and pln match
+                        if matRad_comparePlnDijStf(evalin('base','pln'),evalin('base','stf'),evalin('base','dij'))
+                            % plan is ready for optimization
+                            set(handles.txtInfo,'String','ready for optimization');
+                            set(handles.btnOptimize ,'Enable','on');
+                        end
                     end
                 end
             end
@@ -345,11 +363,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 pln = evalin('base','pln');
                 
             catch ME
-                handles = showError(this,'CalcDoseCallback: Error in preprocessing!',ME);
                 % change state from busy to normal
                 set(Figures, 'pointer', 'arrow');
                 set(InterfaceObj,'Enable','on');
                 this.handles = handles;
+                showError(this,'CalcDoseCallback: Error in preprocessing!',ME);
                 return;
             end
             
@@ -366,11 +384,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     currPln);
                 assignin('base','stf',stf);
             catch ME
-                handles = showError(this,'CalcDoseCallback: Error in steering file generation!',ME);
                 % change state from busy to normal
                 set(Figures, 'pointer', 'arrow');
                 set(InterfaceObj,'Enable','on');
                 this.handles = handles;
+                showError(this,'CalcDoseCallback: Error in steering file generation!',ME);
                 return;
             end
             
@@ -387,11 +405,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 
                 
             catch ME
-                handles = showError(this,'CalcDoseCallback: Error in dose calculation!',ME);
                 % change state from busy to normal
                 set(Figures, 'pointer', 'arrow');
                 set(InterfaceObj,'Enable','on');
                 this.handles = handles;
+                showError(this,'CalcDoseCallback: Error in dose calculation!',ME);
                 return;
             end
             
@@ -498,11 +516,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 end
                 
             catch ME
-                handles = showError(this,'OptimizeCallback: Could not optimize!',ME);
                 % change state from busy to normal
                 set(Figures, 'pointer', 'arrow');
                 set(InterfaceObj,'Enable','on');
                 this.handles = handles;
+                showError(this,'OptimizeCallback: Could not optimize!',ME);
                 return;
             end
             
@@ -518,11 +536,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 end
                 
             catch ME
-                handles = showError(this,'OptimizeCallback: Could not perform sequencing',ME);
                 % change state from busy to normal
                 set(Figures, 'pointer', 'arrow');
                 set(InterfaceObj,'Enable','on');
                 this.handles = handles;
+                showError(this,'OptimizeCallback: Could not perform sequencing',ME);
                 return;
             end
             
@@ -542,11 +560,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 end
                 
             catch ME
-                handles = showError(this,'OptimizeCallback: Could not perform direct aperture optimization',ME);
                 % change state from busy to normal
                 set(Figures, 'pointer', 'arrow');
                 set(InterfaceObj,'Enable','on');
                 this.handles = handles;
+                showError(this,'OptimizeCallback: Could not perform direct aperture optimization',ME);
                 return;
             end
             
@@ -586,7 +604,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 matRad_importDicomWidget;
                 
             catch ME
-                handles = showError(this,'DicomImport: Could not import data', ME);
+                showError(this,'DicomImport: Could not import data', ME);
             end
             
             this.handles = handles;
@@ -716,12 +734,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 %getFromWorkspace(this);
                 
             catch ME
-                handles = showError(this,'CalcDoseCallback: Error in dose recalculation!',ME);
-                
                 % change state from busy to normal
                 set(Figures, 'pointer', 'arrow');
                 set(InterfaceObj,'Enable','on');
                 this.handles = handles;
+                showError(this,'CalcDoseCallback: Error in dose recalculation!',ME);
                 return;
                 
             end
@@ -832,7 +849,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
         
         % H81 Callback
         function btn_export_Callback(this, hObject, eventdata)
-            handles = this.handles;
             % hObject    handle to btn_export (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -840,9 +856,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
             try
                 matRad_exportWidget;
             catch ME
-                handles = showError(this,'Could not export data.  Reason: ', ME);
+                showError(this,'Could not export data.  Reason: ', ME);
             end
-            this.handles = handles;
         end
         
         % H82 Callback
@@ -879,8 +894,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 
                 assignin('base','resultGUI',resultGUI);
             catch ME
-                handles = showError(this,'Dose Import: Could not import data.  Reason: ', ME);
                 this.handles = handles;
+                showError(this,'Dose Import: Could not import data.  Reason: ', ME);
                 return;
             end
             this.handles = handles;
@@ -947,15 +962,27 @@ classdef matRad_WorkflowWidget < matRad_Widget
 %                 end
                 this.handles = handles;
                 changeWorkspace(this);
-            catch ME
-                handles = showError(this,'Binary Patient Import: Could not import data.  Reason: ', ME);
+            catch ME                
                 this.handles = handles;
                 getFromWorkspace(this);
+                showError(this,'Binary Patient Import: Could not import data.  Reason: ', ME);
                 return;
             end
             
             
             %getFromWorkspace(this);
+        end
+        
+        % H84 Callback
+        function exportDicomButton_Callback(this, hObject, eventdata)
+            % hObject    handle to exportDicom (see GCBO)
+            % eventdata  reserved - to be defined in a future version of MATLAB
+            % handles    structure with handles and user data (see GUIDATA)
+            try                
+                matRad_exportDicomWidget;
+            catch ME
+                showError(this,'DicomImport: Could not export data', ME);
+            end
         end
         
         function CheckOptimizerStatus(this, usedOptimizer,OptCase)

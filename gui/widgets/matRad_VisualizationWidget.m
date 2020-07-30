@@ -415,7 +415,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 'Value', this.viewingWidgetHandle.slice, ...
                 'SliderStep',this.viewingWidgetHandle.SliceSliderStep);
             
-            if this.viewingWidgetHandle.numofBeams>1
+            if this.viewingWidgetHandle.numOfBeams>1
                 set(handles.sliderBeamSelection,'Min',1,'Max',this.viewingWidgetHandle.numOfBeams,...
                     'Value',this.viewingWidgetHandle.selectedBeam,...
                     'SliderStep',[1/(this.viewingWidgetHandle.numOfBeams-1) 1/(this.viewingWidgetHandle.numOfBeams-1)]);
@@ -548,7 +548,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
             elseif get(hObject,'Value') == 2   
                      
                 if evalin('base','exist(''pln'')') && evalin('base','exist(''ct'')')
-                    if this.viewingWidgetHandle.numofBeams>1
+                    if this.viewingWidgetHandle.numOfBeams>1
                         set(handles.sliderBeamSelection,'Enable','on');
                     end
                     set(handles.sliderOffset,'Enable','on');
@@ -685,7 +685,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
          
         % 52 Callback
         function btnDVH_Callback(this, hObject, event)
-            matRad_DVHWidget;
+            matRad_DVHStatsWidget;
 %             handles = this.handles;
 %             resultGUI = evalin('base','resultGUI');
 %             Content = get(handles.popupDisplayOption,'String');

@@ -936,9 +936,9 @@ classdef matRad_PlanWidget < matRad_Widget
                 if isdeployed
                     baseroot = [ctfroot filesep 'matRad'];
                 else
-                    baseroot = fileparts(mfilename('fullpath'));
+                    baseroot = [fileparts(mfilename('fullpath')) filesep '..'];
                 end
-                Files = dir([baseroot filesep '..' filesep 'basedata' filesep pattern]);
+                Files = dir([baseroot filesep 'basedata' filesep pattern]);
                 
                 for j = 1:length(Files)
                     if ~isempty(Files)
@@ -994,9 +994,9 @@ classdef matRad_PlanWidget < matRad_Widget
             if isdeployed
                 baseroot = [ctfroot filesep 'matRad'];
             else
-                baseroot = fileparts(mfilename('fullpath'));
+                baseroot = [fileparts(mfilename('fullpath')) filesep '..'];
             end
-            FoundFile = dir([baseroot filesep '..' filesep 'basedata' filesep  radMod '_' Machine '.mat']);
+            FoundFile = dir([baseroot filesep 'basedata' filesep  radMod '_' Machine '.mat']);
             
 %             if isdeployed
 %                 FoundFile = dir([ctfroot filesep 'matRad' filesep radMod '_' Machine '.mat']);

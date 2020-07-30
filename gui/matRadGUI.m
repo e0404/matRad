@@ -1,4 +1,4 @@
-classdef matRad_MainGUI < handle
+classdef matRadGUI < handle
     
     properties
         guiHandle
@@ -112,12 +112,11 @@ classdef matRad_MainGUI < handle
     end
     
     methods
-        function obj = matRad_MainGUI(varargin)
-
+        function obj = matRadGUI(varargin)
             %Panel for Main Widget 
             obj.guiHandle = figure(...
                 'Units','normalized',...
-                'OuterPosition',[0 0 1 1],...
+                'OuterPosition',[0 0 1 1],... %[138.4 30.38461538461539 273.4 59.5384615384615],...
                 'Visible','on',...
                 'Color',[0.501960784313725 0.501960784313725 0.501960784313725],...  
                 'IntegerHandle','off',...
@@ -126,7 +125,10 @@ classdef matRad_MainGUI < handle
                 'Name','matRadGUI',...
                 'HandleVisibility','callback',...
                 'Tag','figure1',...
-                'sizechangedfcn',@(h,evt) updateWidgets(obj));
+                'CloseRequestFcn',@(src,hEvent) figure1_CloseRequestFcn(obj,src,hEvent));
+                %'sizechangedfcn',@(h,evt) updateWidgets(obj));
+                
+            obj.guiHandle.WindowState = 'maximized';
                 
             p1 = uipanel(...
                 'Parent',obj.guiHandle,...
@@ -573,6 +575,24 @@ classdef matRad_MainGUI < handle
             end
             validateattributes(x,{'logical','numeric'},{'scalar','binary'});
         end
+        
+        % button: close
+        function figure1_CloseRequestFcn(this,hObject, ~)
+            set(0,'DefaultUicontrolBackgroundColor',[0.5 0.5 0.5]);
+            selection = questdlg('Do you really want to close matRad?',...
+                'Close matRad',...
+                'Yes','No','Yes');
+            
+            %BackgroundColor',[0.5 0.5 0.5]
+            switch selection
+                case 'Yes'
+                    delete(hObject);
+                case 'No'
+                    return
+            end
+        end
     end
+    
+    
 end
 

@@ -33,7 +33,7 @@ classdef matRad_LogoWidget < matRad_Widget
             if isdeployed
                 filepath = [ctfroot filesep 'matRad'];
             else
-                filepath = fileparts(mfilename('fullpath'));
+                filepath = [fileparts(mfilename('fullpath')) filesep '..'];
             end
             
             h1 = this.widgetHandle;
@@ -45,7 +45,7 @@ classdef matRad_LogoWidget < matRad_Widget
                 'SortMethod','childorder',...
                 'Tag','axesLogo');
             
-            [im, ~, alpha] = imread([filepath filesep '..' filesep 'gfx' filesep 'matrad_logo.png']);
+            [im, ~, alpha] = imread([filepath filesep 'gfx' filesep 'matrad_logo.png']);
             f = image(im,'Parent',h2);
             axis(h2,'image','off');
             set(f, 'AlphaData', alpha);
@@ -58,7 +58,7 @@ classdef matRad_LogoWidget < matRad_Widget
                 'SortMethod','childorder',...
                 'Tag','axesDKFZ');
            
-            [im, ~, alpha] = imread([filepath filesep '..' filesep 'gfx' filesep 'DKFZ_Logo.png']);
+            [im, ~, alpha] = imread([filepath filesep 'gfx' filesep 'DKFZ_Logo.png']);
             f = image(im,'Parent',h7);
             axis(h7,'image','off');
             set(f, 'AlphaData', alpha);
