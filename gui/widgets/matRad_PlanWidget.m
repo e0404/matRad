@@ -927,6 +927,7 @@ classdef matRad_PlanWidget < matRad_Widget
         end
                    
         function getMachines(this)
+            matRad_cfg = MatRad_Config.instance();
             %seach for availabes machines
             handles = this.handles;
             this.Machines=cell(size(this.Modalities));
@@ -936,7 +937,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 if isdeployed
                     baseroot = [ctfroot filesep 'matRad'];
                 else
-                    baseroot = [fileparts(mfilename('fullpath')) filesep '..'];
+                    baseroot = matRad_cfg.matRadRoot;
                 end
                 Files = dir([baseroot filesep 'basedata' filesep pattern]);
                 
