@@ -48,6 +48,10 @@ if nargin < 6
     calcDoseDirect = false;
 end
 
+if isfield(pln,'propMC') && isfield(pln.propMC,'outputVariance')
+    matRad_cfg.dispWarning('Variance scoring for TOPAS not yet supported.');
+end
+
 if ~calcDoseDirect
     matRad_cfg.dispError('matRad so far only supports direct dose calculation for TOPAS!\n');
 end
@@ -87,8 +91,6 @@ for i = 1:length(stf)
     end
 end
 
-
-topasConfig.workingDir = [matRad_cfg.matRadRoot filesep 'topas' filesep 'MCtest'];
 topasConfig.numHistories = nCasePerBixel;
 topasConfig.numOfRuns = matRad_cfg.propMC.topas_defaultNumBatches;
 topasConfig.writeAllFiles(ctResampled,pln,stf,topasBaseData,w);
@@ -102,14 +104,19 @@ cd(topasConfig.workingDir);
 for beamIx = 1:numel(stf)
     for runIx = 1:topasConfig.numOfRuns       
         fname = sprintf('%s_field%d_run%d',topasConfig.label,beamIx,runIx);
-        topasCall = sprintf('%s %s.txt',topasConfig.topasExecCommand,fname);
+        topasCall = sprintf('%s %s.txt > %s.out 2> %s.err',topasConfig.topasExecCommand,fname,fname,fname);
         if topasConfig.parallelRuns
             finishedFiles{runIx} = sprintf('%s.finished',fname);
             delete(finishedFiles{runIx});
             topasCall = [topasCall '; touch ' finishedFiles{runIx} ' &'];
         end
         matRad_cfg.dispInfo('Calling TOPAS: %s\n',topasCall);
-        system(topasCall);
+        [status,cmdout] = system(topasCall,'-echo');
+        if status == 0
+            matRad_cfg.dispInfo('TOPAS simulation completed succesfully\n');
+        else
+            matRad_cfg.dispError('TOPAS simulation exited with error code %d\n',status);
+        end
     end
     
     if topasConfig.parallelRuns
@@ -126,16 +133,11 @@ for beamIx = 1:numel(stf)
 end
 cd(currDir);
 
+%% read out volume scorers from topas simulation
+topasCubes = matRad_readTopasData(topasConfig.workingDir);
 
-
-%% read out topas simulation
-topasDose = matRad_readTopasData(topasConfig.workingDir);
-
-
-fnames = fieldnames(topasDose);
-%dij.MCparam = topasDose;
+fnames = fieldnames(topasCubes);
+dij.MC_tallies = fnames;
 for f = 1:numel(fnames)
-    dij.(fnames{f}){1} = topasDose.(fnames{f});    
+    dij.(fnames{f}){1} = topasCubes.(fnames{f});    
 end
-
-

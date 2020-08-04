@@ -1,6 +1,6 @@
 function dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad MCsqaure monte carlo photon dose calculation wrapper
+% matRad MCsquare Monte Carlo proton dose calculation wrapper
 %
 % call
 %   dij = matRad_calcParticleDoseMc(ct,stf,pln,cst,calcDoseDirect)
@@ -13,7 +13,7 @@ function dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nCasePerBixel,calc
 %   nCasePerBixel               number of histories per beamlet (nCasePerBixel > 1),
 %                               max stat uncertainity (0 < nCasePerBixel < 1)
 %   calcDoseDirect:             binary switch to enable forward dose
-%                               calcualtion
+%                               calculation
 % output
 %   dij:                        matRad dij struct
 %
@@ -35,6 +35,7 @@ function dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nCasePerBixel,calc
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global matRad_cfg;
 matRad_cfg = MatRad_Config.instance();
 
 % check if valid machine
@@ -42,12 +43,12 @@ if ~strcmp(pln.radiationMode,'protons')
     matRad_cfg.dispError('Wrong radiation modality . MCsquare only supports protons!');    
 end
 
-
 if nargin < 5
     % set number of particles simulated per pencil beam
     nCasePerBixel = matRad_cfg.propMC.MCsquare_defaultHistories;
     matRad_cfg.dispInfo('Using default number of Histories per Bixel: %d\n',nCasePerBixel);
 end
+
 % switch between either using max stat uncertainity or total number of
 % cases
 if (nCasePerBixel < 1)
@@ -56,17 +57,12 @@ else
     maxStatUncertainty = false;
 end
 
-
 if nargin < 6
     calcDoseDirect = false;
 end
 
 if isfield(pln,'propMC') && isfield(pln.propMC,'outputVariance')
     matRad_cfg.dispWarning('Variance scoring for MCsquare not yet supported.');
-end
-
-if ~strcmp(pln.radiationMode,'protons')
-    errordlg('MCsquare is only supported for protons');
 end
 
 env = matRad_getEnvironment();
@@ -90,7 +86,7 @@ elseif isunix
     if exist('MCsquare_linux','file') ~= 2
         matRad_cfg.dispError('Could not find MCsquare binary.\n');
     else
-        mcSquareBinary = './MCsquare_linux';
+        mcSquareBinary = 'chmod a+x MCsquare_linux && ./MCsquare_linux';
     end
 end
 
@@ -103,7 +99,6 @@ if ~calcDoseDirect && ~matRad_checkMexFileExists('matRad_sparseBeamletsReaderMCs
         matRad_cfg.dispError('Could not find/generate mex interface for reading the sparse matrix. \nCause of error:\n%s\n Please compile it yourself.',MException.message);
     end
 end
-
 
 % set and change to MCsquare binary folder
 currFolder = pwd;
@@ -213,13 +208,13 @@ MCsquareConfig.Dose_Sparse_Output = ~calcDoseDirect;
 % set threshold of sparse matrix generation
 MCsquareConfig.Dose_Sparse_Threshold = relDoseCutoff;
 
+MCsquareConfig.LET_MHD_Output = true;
+
 % write patient data
 MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
                              dij.doseGrid.resolution.y ...
                              dij.doseGrid.resolution.z];   
 matRad_writeMhd(HUcube{1},MCsquareBinCubeResolution,MCsquareConfig.CT_File);
-
-
 
 isoCenterOffset = -[dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2];
 
@@ -261,10 +256,8 @@ for i = 1:length(stf)
                         MCsquareConfig.Num_Primaries];
                 end
             end
-        end
-               
+        end    
     end
-    
 end
 
 % remember order
@@ -312,6 +305,14 @@ else
     dij.physicalDose{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
                                  absCalibrationFactorMC2 * cube(VdoseGrid), ...
                                  dij.doseGrid.numOfVoxels,1);
+
+    if isfile(fullfile(MCsquareConfig.Output_Directory,'LET.mhd'))
+        cube = matRad_readMhd(MCsquareConfig.Output_Directory,'LET.mhd');
+        dij.LET{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
+                                    cube(VdoseGrid), ...
+                                    dij.doseGrid.numOfVoxels,1);
+        dij.MC_tallies{end+1} = 'LET';
+    end
 end
 
 % reorder influence matrix to comply with matRad default ordering

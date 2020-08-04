@@ -1,4 +1,4 @@
-function [topasDose] = matRad_readTopasData(folder)
+function [topasCube] = matRad_readTopasData(folder)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 load([folder filesep 'MCparam.mat']);
@@ -15,7 +15,7 @@ for t = 1:length(MCparam.tallies)
     for f = 1:MCparam.nbFields
         topasSum = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
         for k = 1:MCparam.nbRuns
-            genFileName = sprintf('score_%s_field%d_run%d_physicalDose',MCparam.simLabel,f,k);
+            genFileName = sprintf('score_%s_field%d_run%d_%s',MCparam.simLabel,f,k,tname);
             switch MCparam.outputType
                 case 'csv'
                     genFullFile = fullfile(folder,[genFileName '.csv']);
@@ -31,14 +31,14 @@ for t = 1:length(MCparam.tallies)
         
         topasSum = correctionFactor.*topasSum;
         
-        %Field Tally / Dose
-        topasDose.([tname '_beam' num2str(f)]) = topasSum;
+        % Tally per field
+        topasCube.([tname '_beam' num2str(f)]) = topasSum;
         
-        %Sum up
+        % Accumulate over the fields
         topasTally = topasTally + topasSum;
     end
     
-    topasDose.(tname) = topasTally;
+    topasCube.(tname) = topasTally;
 end
 
 end

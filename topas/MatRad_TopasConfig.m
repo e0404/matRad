@@ -68,6 +68,7 @@ classdef MatRad_TopasConfig < handle
         
         
         %Scoring
+        addVolumeScorers = true
         scoreDose = true;
         scoreTrackCount = false;
         %scoreLET = true;
@@ -146,7 +147,7 @@ classdef MatRad_TopasConfig < handle
             obj.writePatient(ct,pln);
             obj.writeStfFields(ct,stf,topasBaseData,w);                       
 
-            obj.matRad_cfg.dispInfo('Successfully written TOPAS setup files!')
+            obj.matRad_cfg.dispInfo('Successfully written TOPAS setup files!\n')
             
             obj.writeMCparam();
         end
@@ -169,7 +170,7 @@ classdef MatRad_TopasConfig < handle
            fprintf(fID,'i:Ts/TrackingVerbosity = %d\n',obj.verbosity.tracking);
            fprintf(fID,'i:Ts/EventVerbosity = %d\n',obj.verbosity.event);
            fprintf(fID,'i:Ts/RunVerbosity = %d\n',obj.verbosity.run);
-           fprintf(fID,'b:Ts/ShowCPUTime = %s\n',logicalString{obj.verbosity.cputime});
+           fprintf(fID,'b:Ts/ShowCPUTime = %s\n',logicalString{obj.verbosity.cputime + 1});
            fprintf(fID,'i:Tf/Verbosity = %d\n',obj.verbosity.timefeatures);
            fprintf(fID,'i:Ts/MaxInterruptedHistories = %d\n',obj.verbosity.maxinterruptedhistories);
            fprintf(fID,'Ts/NumberOfThreads = %d\n',obj.numThreads);
@@ -217,6 +218,19 @@ classdef MatRad_TopasConfig < handle
                 obj.MCparam.tallies{end+1} = 'physicalDose';
             end
                        
+            if obj.addVolumeScorers
+                fileList = dir(fullfile(obj.thisFolder,'TOPAS_scorer_volume_*.in'));
+                for fileIx=1:length(fileList)
+                    fname = fullfile(obj.thisFolder,fileList(fileIx).name);
+                    obj.matRad_cfg.dispDebug('Reading Volume Scorer from %s\n',fname);
+                    scorer = fileread(fname);
+                    fprintf(fID,'%s\n',scorer);
+                    tallyLabel = regexprep(fileList(fileIx).name,'TOPAS_scorer_volume_','');
+                    tallyLabel = regexprep(tallyLabel,'.txt.in','');
+                    obj.MCparam.tallies{end+1} = tallyLabel;
+                end
+            end
+
             if obj.scoreTrackCount
                 fname = fullfile(obj.thisFolder,obj.infilenames.surfaceScorer);
                 obj.matRad_cfg.dispDebug('Reading surface scorer from %s\n',fname);
@@ -347,14 +361,17 @@ classdef MatRad_TopasConfig < handle
                 % discard data if the current has unphysical values
                 idx = find([dataTOPAS.current] < 1);
                 dataTOPAS(idx) = [];
-                obj.matRad_cfg.dispWarning('Unphyiscal Values in Beam Current!');
+                cutNumOfBixel = length(dataTOPAS(:));
                 
                 historyCount(beamIx) = uint32(obj.fracHistories * nBeamParticlesTotal(beamIx) / obj.numOfRuns);
                 
                 while sum([dataTOPAS.current]) ~= historyCount(beamIx)
                     % Randomly pick an index with the weigth given by the current
                     idx = 1:length(dataTOPAS);
-                    [~,~,R] = histcounts(rand(1),cumsum([0;double(transpose([dataTOPAS(:).current]))./double(sum([dataTOPAS(:).current]))]));
+                    % Note: as of Octave version 5.1.0, histcounts is not yet implemented
+                    %       using histc instead for compatibility with MATLAB and Octave
+                    %[~,~,R] = histcounts(rand(1),cumsum([0;double(transpose([dataTOPAS(:).current]))./double(sum([dataTOPAS(:).current]))]));
+                    [~,R] = histc(rand(1),cumsum([0;double(transpose([dataTOPAS(:).current]))./double(sum([dataTOPAS(:).current]))]));
                     randIx = idx(R);
                     
                     if (sum([dataTOPAS(:).current]) > historyCount(beamIx))
@@ -421,7 +438,7 @@ classdef MatRad_TopasConfig < handle
                 fprintf(fileID,'dv:Tf/Beam/Spot/Times = %i ', cutNumOfBixel);
                 fprintf(fileID,num2str(linspace(10,cutNumOfBixel*10,cutNumOfBixel)));
                 fprintf(fileID,' ms\n');
-                fprintf(fileID,'uv:Tf/Beam/Spot/Values = %i %s\n',cutNumOfBixel,num2str(collectBixelIdx));
+                %fprintf(fileID,'uv:Tf/Beam/Spot/Values = %i %s\n',cutNumOfBixel,num2str(collectBixelIdx));
                 fprintf(fileID,'s:Tf/Beam/Energy/Function = "Step"\n');
                 fprintf(fileID,'dv:Tf/Beam/Energy/Times = Tf/Beam/Spot/Times ms\n');
                 fprintf(fileID,'dv:Tf/Beam/Energy/Values = %i ', cutNumOfBixel);
