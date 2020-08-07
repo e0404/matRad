@@ -116,7 +116,7 @@ classdef matRadGUI < handle
             %Panel for Main Widget 
             obj.guiHandle = figure(...
                 'Units','normalized',...
-                'OuterPosition',[0 0 1 0.95],... %approximate fullscreen position
+                'Position',[0.005 0.04 0.99 0.9],... %approximate fullscreen position
                 'Visible','on',...
                 'Color',[0.501960784313725 0.501960784313725 0.501960784313725],...  
                 'IntegerHandle','off',...
@@ -126,7 +126,6 @@ classdef matRadGUI < handle
                 'HandleVisibility','callback',...
                 'Tag','figure1',...
                 'CloseRequestFcn',@(src,hEvent) figure1_CloseRequestFcn(obj,src,hEvent));
-                %'sizechangedfcn',@(h,evt) updateWidgets(obj));
             
             %WindowState not available in all versions
             if isprop(obj.guiHandle,'WindowState')
@@ -397,60 +396,7 @@ classdef matRadGUI < handle
            
         end
         
-%         function matRadGUI_OpeningFcn(this, hObject, event)
-%             %#ok<*DEFNU>
-%             %#ok<*AGROW>
-%             % This function has no output args, see OutputFcn.
-%             % hObject    handle to figure
-%             % eventdata  reserved - to be defined in a future version of MATLAB
-%             % handles    structure with handles and user data (see GUIDATA)
-%             % varargin   command line arguments to matRadGUI (see VARARGIN)
-%             
-%             % variable to check whether GUI is opened or just refreshed / new data
-%             % loaded, since resetGUI needs to distinguish at one point
-%             
-%             handles = this.handles;
-%             handles.initialGuiStart = true;
-%             
-%             %If devMode is true, error dialogs will include the full stack trace of the error
-%             %If false, only the basic error message is shown (works for errors that
-%             %handle the MException object)
-%             
-%             handles.devMode = true;
-%             set(handles.radiobtnPlan,'value',0);
-%             handles = resetGUI(hObject, handles);
-%             
-%             %% parse variables from base workspace
-%             AllVarNames = evalin('base','who');
-%             handles.AllVarNames = AllVarNames;
-%             try
-%                 if  ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-%                     ct  = evalin('base','ct');
-%                     cst = evalin('base','cst');
-%                     %cst = setCstTable(handles,cst);
-%                     cst = generateCstTable(handles,cst);
-%                     handles.State = 1;
-%                     cst = matRad_computeVoiContoursWrapper(cst,ct);
-%                     assignin('base','cst',cst);
-%                     
-%                 elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
-%                     handles = showError(handles,'GUI OpeningFunc: could not find cst file');
-%                 elseif ~ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-%                     handles = showError(handles,'GUI OpeningFunc: could not find ct file');
-%                 end
-%             catch
-%                 handles = showError(handles,'GUI OpeningFunc: Could not load ct and cst file');
-%             end
-%             
-%             if ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-%                 handles = reloadGUI(hObject, handles, ct, cst);
-%             else
-%                 handles = reloadGUI(hObject, handles);
-%             end
-%             this.handles = handles;
-%         end
-    end
-    methods (Access= protected)
+        %% Callbacks
         % toolbar load button
         function toolbarLoad_ClickedCallback(this,hObject, eventdata)
             this.WorkflowWidget.btnLoadMat_Callback(hObject, eventdata);
@@ -594,6 +540,7 @@ classdef matRadGUI < handle
                     return
             end
         end
+        
     end
     
     
