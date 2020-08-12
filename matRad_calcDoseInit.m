@@ -1,3 +1,6 @@
+global matRad_cfg;
+matRad_cfg =  MatRad_Config.instance();
+
 % default: dose influence matrix computation
 if ~exist('calcDoseDirect','var')
     calcDoseDirect = false;
@@ -16,9 +19,7 @@ if ~isfield(pln,'propDoseCalc') || ...
    ~isfield(pln.propDoseCalc,'doseGrid') || ...
    ~isfield(pln.propDoseCalc.doseGrid,'resolution')
     % default values
-    dij.doseGrid.resolution.x = 2.5; % [mm]
-    dij.doseGrid.resolution.y = 2.5; % [mm]
-    dij.doseGrid.resolution.z = 3;   % [mm]
+    dij.doseGrid.resolution = matRad_cfg.propDoseCalc.defaultResolution;
 else
     % take values from pln strcut
     dij.doseGrid.resolution.x = pln.propDoseCalc.doseGrid.resolution.x;
@@ -115,7 +116,7 @@ fileName = [pln.radiationMode '_' pln.machine];
 try
    load([fileparts(mfilename('fullpath')) filesep 'basedata' filesep fileName]);
 catch
-   error(['Could not find the following machine file: ' fileName ]); 
+   matRad_cfg.dispError('Could not find the following machine file: %s\n',fileName); 
 end
 
 % compute SSDs

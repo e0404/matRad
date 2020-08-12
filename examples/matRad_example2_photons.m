@@ -26,7 +26,9 @@
 % structure defining the CT images and the structure set. Make sure the 
 % matRad root directory with all its subdirectories is added to the Matlab 
 % search path.
-clc,clear,close all;
+
+matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
+
 load('TG119.mat');
 
 %%
@@ -204,4 +206,15 @@ matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 ixOAR = 2;
 display(qi(ixOAR).D_95);
 display(qi_coarse(ixOAR).D_95);
+
+
+%% 
+% Export the dose in binary format. matRad can write multiple formats, here we 
+% choose to export in nrrd format using the matRad_writeCube function, which 
+% chooses the appropriate subroutine from the extension. The metadata struct can
+% also store more optional parameters, but requires only the resolution to be s
+% set.
+metadata = struct('resolution',[ct.resolution.x ct.resolution.y ct.resolution.z]);
+matRad_writeCube([pwd filesep 'photonDose_example2.nrrd'],resultGUI.physicalDose,'double',metadata);
+
 
