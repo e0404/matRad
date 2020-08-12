@@ -26,6 +26,8 @@ function hlut = matRad_loadHLUT(ct, pln)
   %
   % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+  
 % directory with look up table files
 if ~isdeployed
     hlutDir = fullfile(fileparts(mfilename('fullpath')),'hlutLibrary',filesep);
@@ -67,7 +69,7 @@ catch
     warnText = ['Could not find HLUT ' hlutFileName ' in hlutLibrary folder.' ...
                 ' matRad default HLUT loaded'];
     warning('off','backtrace')
-    warning(warnText);
+    matRad_cfg.dispWarning(warnText);
     
     % load default HLUT
     hlutFileName = strcat(hlutDir,'matRad_default.hlut');
