@@ -28,9 +28,11 @@ function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 %% print current status of the import script
-fprintf('Dose series matched to the different plans are displayed and could be selected.\n');
-fprintf('Rechecking of correct matching procedure is recommended.\n');
+matRad_cfg.dispInfo('Dose series matched to the different plans are displayed and could be selected.\n');
+matRad_cfg.dispInfo('Rechecking of correct matching procedure is recommended.\n');
 
 global warnDlgDICOMtagShown;
 warnDlgDICOMtagShown = false;
@@ -39,7 +41,7 @@ warnDlgDICOMtagShown = false;
 
 % dicom import needs image processing toolbox -> check if available
 if ~license('checkout','image_toolbox')
-    error('image processing toolbox and/or corresponding licence not available');
+    matRad_cfg.dispError('image processing toolbox and/or corresponding licence not available');
 end
 
 fileList = matRad_listAllFiles(patDir);
@@ -111,7 +113,15 @@ if ~isempty(fileList)
         end
         try
             if strcmp(info.Modality,'CT')
-                fileList{i,11} = num2str(info.SliceThickness);
+                %usually the Attribute should be SliceThickness, but it
+                %seems like some data uses "SpacingBetweenSlices" instead.
+                if isfield(info,'SliceThickness') && ~isempty(info.SliceThickness)
+                    fileList{i,11} = num2str(info.SliceThickness);
+                elseif isfield(info,'SpacingBetweenSlices')
+                    fileList{i,11} = num2str(info.SpacingBetweenSlices);
+                else
+                    matRad_cfg.dispError('Could not identify spacing between slices since neither ''SliceThickness'' nor ''SpacingBetweenSlices'' are specified');
+                end
             else
                 fileList{i,11} = NaN;
             end
@@ -201,7 +211,7 @@ if ~warnDlgDICOMtagShown && strcmp(fileList{row,column},defaultPlaceHolder) && (
    
    switch answer
       case 'No'
-         error('Inconsistency in DICOM tags')  
+         matRad_cfg.dispError('Inconsistency in DICOM tags')  
    end
    
 end
