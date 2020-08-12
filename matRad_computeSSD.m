@@ -28,7 +28,7 @@ function stf = matRad_computeSSD(stf,ct,mode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg;
+
 matRad_cfg = MatRad_Config.instance();
 
 if nargin < 3

@@ -29,7 +29,7 @@ function intDose = matRad_calcIntEnergy(dose,ct,pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+matRad_cfg = MatRad_Config.instance();
 
 % make HU to RSP/electron density conversion if not available
 if ~isfield(ct,'cube')

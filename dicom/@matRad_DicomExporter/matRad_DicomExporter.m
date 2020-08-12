@@ -60,7 +60,7 @@ classdef matRad_DicomExporter < handle
             %   Can be called with the structures. If no argument is given,
             %   all structures will be read from the base workspace
             
-            global matRad_cfg;
+            
             matRad_cfg = MatRad_Config.instance();  
             
             env = matRad_getEnvironment();

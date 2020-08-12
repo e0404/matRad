@@ -36,7 +36,7 @@ function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apert
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg;
+
 matRad_cfg = MatRad_Config.instance();
 
 % adjust overlap priorities

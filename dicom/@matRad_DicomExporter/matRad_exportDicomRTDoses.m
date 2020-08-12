@@ -21,7 +21,7 @@ function obj = matRad_exportDicomRTDoses(obj)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+ matRad_cfg = MatRad_Config.instance();
 matRad_cfg.dispInfo('Exporting DICOM RTDose...\n');
 
 env = matRad_getEnvironment();

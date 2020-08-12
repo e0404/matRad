@@ -1,4 +1,4 @@
-global matRad_cfg;
+
 matRad_cfg =  MatRad_Config.instance();
 
 % default: dose influence matrix computation

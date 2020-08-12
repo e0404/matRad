@@ -17,7 +17,7 @@
 run(['..' filesep 'matRad_rc']);
 
 %% Prepare settings for testing
-global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+matRad_cfg = MatRad_Config.instance();
 matRad_cfg.setDefaultPropertiesForTesting();
 
 % supressing the inherent Ocatave warnings for division by zero

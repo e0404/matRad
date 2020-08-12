@@ -28,7 +28,7 @@ function matRad_compileOmpMCInterface(dest,omcFolder)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg; 
+ 
 matRad_cfg = MatRad_Config.instance();
 
 env = matRad_getEnvironment();

@@ -28,7 +28,7 @@ function cst = matRad_createCst(structures)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+matRad_cfg = MatRad_Config.instance();
 
 nStructures = size(structures,2);
 cst = cell(nStructures,6);

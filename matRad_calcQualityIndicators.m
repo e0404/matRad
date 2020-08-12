@@ -35,7 +35,7 @@ function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg;
+
 matRad_cfg = MatRad_Config.instance();
 
 if ~exist('refVol', 'var') || isempty(refVol)
