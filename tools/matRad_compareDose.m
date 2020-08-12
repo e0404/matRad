@@ -215,13 +215,13 @@ centerAtIsocenter = false;
 if enable(2) == 1
     matRad_cfg.dispInfo('Plotting profiles...\n');
     fontsize = 12;
-    profilex{1} = cube1(slicename{1},:,slicename{3})(:);
-    profiley{1} = cube1(:,slicename{2},slicename{3})(:);
-    profilez{1} = cube1(slicename{1},slicename{2},:)(:);
+    profilex{1} = squeeze(cube1(slicename{1},:,slicename{3}));
+    profiley{1} = squeeze(cube1(:,slicename{2},slicename{3}));
+    profilez{1} = squeeze(cube1(slicename{1},slicename{2},:));
 
-    profilex{2} = cube2(slicename{1},:,slicename{3})(:);
-    profiley{2} = cube2(:,slicename{2},slicename{3})(:);
-    profilez{2} = cube2(slicename{1},slicename{2},:)(:);
+    profilex{2} = squeeze(cube2(slicename{1},:,slicename{3}));
+    profiley{2} = squeeze(cube2(:,slicename{2},slicename{3}));
+    profilez{2} = squeeze(cube2(slicename{1},slicename{2},:));
     
     posX = resolution(1)*(1:length(profilex{1}));
     posY = resolution(2)*(1:length(profiley{1}));
