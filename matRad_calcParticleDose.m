@@ -77,7 +77,7 @@ end
 
 %Toggles correction of small difference of current SSD to distance used
 %in generation of base data (e.g. phantom surface at isocenter)
-if isfield(pln,'propDoseCalc') && ~isfield(pln.propDoseCalc, 'airOffsetCorrection') 
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc, 'airOffsetCorrection') 
     pln.propDoseCalc.airOffsetCorrection = true;
 end
 
@@ -143,7 +143,7 @@ effectiveLateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
 matRad_cfg.dispInfo('matRad: Particle dose calculation...\n');
 counter = 0;
 
-if ~isfield(pln,'propDoseCalc') && ~isfield(pln.propDoseCalc.lateralCutOff)
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'lateralCutOff')
     pln.propDoseCalc.lateralCutOff = matRad_cfg.propDoseCalc.defaultLateralCutOff;
 end
 
