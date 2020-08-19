@@ -29,6 +29,8 @@ classdef MatRad_Config < handle
         disableGUI = false;
         devMode = false;
         eduMode = false;
+        
+        gui;
     end
     
     properties (SetAccess = private)
@@ -45,7 +47,8 @@ classdef MatRad_Config < handle
             %  The configuration is implemented as a singleton and used globally
             %  Therefore its constructor is private
             %  For instantiation, use the static MatRad_Config.instance();           
-            obj.setDefaultProperties();           
+            obj.setDefaultProperties();  
+            obj.setDefaultGUIProperties();
         end
                 
     end
@@ -101,6 +104,16 @@ classdef MatRad_Config < handle
             obj.disableGUI = false;
             obj.devMode = false;
             obj.eduMode = false;
+        end
+        
+        function setDefaultGUIProperties(obj)
+           obj.gui.backgroundColor = [0.5 0.5 0.5];
+           obj.gui.elementColor = [0.75 0.75 0.75];
+           obj.gui.textColor = [0 0 0];
+           
+           obj.gui.fontSize = 8;
+           obj.gui.fontWeight = 'bold';
+           obj.gui.fontName = 'Helvetica';
         end
       
         function dispDebug(obj,formatSpec,varargin)

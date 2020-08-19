@@ -1,8 +1,8 @@
 classdef matRad_ViewingWidget < matRad_Widget
     
     properties
-        plane;
-        slice;
+        plane = 3;
+        slice = 1;
         maxSlice;
         SliceSliderStep;
         selectedBeam = 1;

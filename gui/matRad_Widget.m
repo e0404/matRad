@@ -8,7 +8,7 @@ classdef matRad_Widget <  handle
     properties
         updateLock = false;     %Property to lock updating of the widget
     end
-    
+        
     events
         %If the widget changes the workspace, this event should be emitted 
         %with notify(...). Other widgets can add listeners to update when 
@@ -38,7 +38,21 @@ classdef matRad_Widget <  handle
         end
         
         %INITIALIZE FUNCTION
-        function this = initialize(this)            
+        function this = initialize(this)
+            this.update();
+        end
+        
+        function changedWorkspace(this,varargin)
+           [env, ~] = matRad_getEnvironment();
+            % handle environment
+            switch env
+                case 'MATLAB'
+                    %the PlanWidget only changes the pln
+                    evt = matRad_WorkspaceChangedEvent(varargin{:});
+                    notify(this, 'workspaceChanged',evt);
+                case 'OCTAVE'
+                    matRad_notifyOctave(this, 'workspaceChanged');
+            end 
         end
         
         function this = update(this,evt)
@@ -172,6 +186,23 @@ classdef matRad_Widget <  handle
                end
             end            
         end
+        
+        
+        function pos = computeGridPos(this,gridPos,buttonGridSize,buttonRelSize)
+            if nargin < 4
+                buttonRelSize = [0.9 0.75];
+            end
+        
+            gridElementSize = 1./buttonGridSize;
+            buttonRelSize = buttonRelSize ./ buttonGridSize;
+            
+            buttonGridPos = (gridPos-1) ./ buttonGridSize;
+            buttonGridPos(2) = 1 - gridElementSize(2) - buttonGridPos(2);
+            offset = (gridElementSize - buttonRelSize)./2;
+            
+            pos = [buttonGridPos+offset buttonRelSize];
+        end
+        
     end
     
 end

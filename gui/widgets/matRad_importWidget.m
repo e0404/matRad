@@ -32,18 +32,7 @@ classdef matRad_importWidget < matRad_Widget
             %handles.output = this.widgetHandle;
             %guidata(this.widgetHandle, handles);
            
-        end 
-        
-        function changeWorkspace(obj)
-          [env, ~] = matRad_getEnvironment();
-          % handle environment
-          switch env
-              case 'MATLAB'
-                  notify(obj, 'workspaceChanged');
-              case 'OCTAVE'
-          end
-            
-        end
+        end         
     end
 
     methods (Access = protected)
@@ -288,7 +277,7 @@ classdef matRad_importWidget < matRad_Widget
             %delete(handles.figure_importDialog);
             
             this.handles = handles;
-            changeWorkspace(this);
+            this.changedWorkspace('ct','cst');
             delete(this.widgetHandle);
             
         end
