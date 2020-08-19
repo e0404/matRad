@@ -1,4 +1,4 @@
-function [matching, msg] = matRad_comparePlnDijStf(pln,stf,dij)
+function [allMatch, msg] = matRad_comparePlnDijStf(pln,stf,dij)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % call
@@ -11,8 +11,8 @@ function [matching, msg] = matRad_comparePlnDijStf(pln,stf,dij)
 %
 % output
 %
-%   matching:                   flag is true if they all match
-%   msg     :                   message to display
+%   allMatch:                   flag is true if they all match
+%   matching:                   message to display
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -28,14 +28,14 @@ function [matching, msg] = matRad_comparePlnDijStf(pln,stf,dij)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-matching=true;
-msg='';
+allMatch=true;
+
 
 %% compare gantry angles in dij, stf and pln
 stf_gantryAngles=[stf.gantryAngle];
 if dij.numOfBeams ~= numel(stf_gantryAngles) || dij.numOfBeams ~= numel(pln.propStf.gantryAngles) ... % different size
         || ~isempty(find(stf_gantryAngles-pln.propStf.gantryAngles, 1))  % values in stf and pln do not match
-    matching=false;
+    allMatch=false;
     msg= 'Gantry angles do not match';
     return
 end
@@ -44,21 +44,21 @@ end
 stf_couchAngles=[stf.couchAngle];
 if numel(stf_couchAngles) ~= numel(pln.propStf.couchAngles) ... % different size
         || ~isempty(find(stf_couchAngles-pln.propStf.couchAngles, 1))  % values in stf and pln do not match
-    matching=false;
+    allMatch=false;
     msg= 'Couch angles do not match';
     return
 end
 
 %% compare Bixel width in stf and pln
 if stf(1).bixelWidth ~= pln.propStf.bixelWidth
-    matching=false;
+    allMatch=false;
     msg= 'Bixel width does not match';
     return
 end
 
 %% compare radiation mode in stf and pln
 if ~strcmp(stf(1).radiationMode, pln.radiationMode)
-    matching=false;
+    allMatch=false;
     msg= 'Radiation mode does not match';
     return
 end
@@ -66,7 +66,7 @@ end
 %% compare isocenter in stf and pln for each gantry angle
 for i = 1:numel(pln.propStf.gantryAngles)
     if ~isempty(find(stf(i).isoCenter - pln.propStf.isoCenter(i,:) ,1))
-        matching=false;
+        allMatch=false;
         msg= 'Isocenter does not match';
         return
     end
@@ -77,7 +77,7 @@ stf_RaysPerBeam=[stf.numOfRays];
 if numel(stf_RaysPerBeam) ~= numel(dij.numOfRaysPerBeam) ... % different size
         || ~isempty(find(stf_RaysPerBeam-dij.numOfRaysPerBeam,1)) % different values
     msg= 'Number of rays does not match';
-    matching=false;
+    allMatch=false;
     return
 end
 

@@ -10,7 +10,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
         function this = matRad_ViewerOptionsWidget(handleParent,viewingWidgetHandle)
             if nargin < 1
                 handleParent = figure(...
-                    'Units','characters',...
+                    'Units','normalized',...
                     'Position',[170 45 20 20],...
                     'Visible','on',...
                     'Color',[0.501960784313725 0.501960784313725 0.501960784313725],...
@@ -20,8 +20,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                     'Name','MatRad Viewer Options',...
                     'NumberTitle','off',...
                     'HandleVisibility','callback',...
-                    'Tag','figure1',...
-                    'PaperSize',[20.99999864 29.69999902]);
+                    'Tag','figure1');
                 
             end
             this = this@matRad_Widget(handleParent);
@@ -632,7 +631,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             handles = this.handles;
             this.colormapLocked = get(hObject,'Value');
             if isa(this.viewingWidgetHandle,'matRad_ViewingWidget')
-                this.viewingWidgetHandle.lockUpdate=this.colormapLocked;
+                this.viewingWidgetHandle.lockColorSettings=this.colormapLocked;
             end
             if this.colormapLocked
                 state = 'Off'; %'Inactive';
@@ -691,8 +690,10 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                 return;
             end
             % save the lock state
-            lockState=this.viewingWidgetHandle.lockUpdate;
-            this.viewingWidgetHandle.lockUpdate=true;
+            updateLockState = this.viewingWidgetHandle.lockUpdate;
+            %colorSettingLockState = this.viewingWidgetHandle.lockColorSettings;
+            this.viewingWidgetHandle.lockUpdate = true;
+            %this.viewingWidgetHandle.lockColorSettings = true;
             
              %Set up the colordata selection box
              if evalin('base','exist(''ct'')')
@@ -811,7 +812,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             
             cMapPopupIndex = find(strcmp(currentMap,cMapStrings));
             set(handles.popupmenu_chooseColormap,'Value',cMapPopupIndex);
-            this.viewingWidgetHandle.lockUpdate=lockState;
+            this.viewingWidgetHandle.lockUpdate=updateLockState;
             this.handles=handles;
         end
         

@@ -1,12 +1,19 @@
 classdef matRad_Widget <  handle 
    
     properties (GetAccess = public , SetAccess = protected)
-        widgetHandle    %Holds parent widget handle
+        widgetHandle            %Holds parent widget handle
         handles = struct([]);   %Holds all handles in parent handle
     end
     
+    properties
+        updateLock = false;     %Property to lock updating of the widget
+    end
+    
     events
-        workspaceChanged
+        %If the widget changes the workspace, this event should be emitted 
+        %with notify(...). Other widgets can add listeners to update when 
+        %this event is emitted
+        workspaceChanged 
     end
     
     methods
@@ -34,17 +41,9 @@ classdef matRad_Widget <  handle
         function this = initialize(this)            
         end
         
-        function this = update(this)
+        function this = update(this,evt)
         end
-        
-        %{
-        function this = disable(this)            
-        end
-        
-        function this = enable(this)
-        end
-        %}
-        
+
         function handles = showError(this,Message,ME)
             matRad_cfg = MatRad_Config.instance();
             handles = this.handles;
@@ -110,10 +109,6 @@ classdef matRad_Widget <  handle
         end
     end
     
-    %methods (Abstract)
-    %    this = initialize(this);
-    %end
-
     methods (Access = protected)
         
         %CREATE LAYOUT FUNCTION
@@ -154,6 +149,30 @@ classdef matRad_Widget <  handle
                 end
             end % loop
         end
+        
+        %Helper function to check if update is necessary when an event is
+        %passed
+        function [doUpdate,whichVars] = checkUpdateNecessary(this,updateVars,evt)
+            if isa(evt,'matRad_WorkspaceChangedEvent')
+                changed = evt.changedVariables;
+            else 
+                changed = {};
+            end
+            
+            
+            %If changed is empty, we need an update, if not, we crosscheck
+            doUpdate = true;
+            whichVars = [];
+                        
+            if ~isempty(changed)
+               cmp = cellfun(@(str) any(strcmp(str,changed)),updateVars);
+               doUpdate = any(cmp);
+               if nargout == 2
+                   whichVars = find(cmp); %indices of variables
+               end
+            end            
+        end
     end
+    
 end
 

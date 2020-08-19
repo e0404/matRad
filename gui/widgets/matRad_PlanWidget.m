@@ -54,11 +54,20 @@ classdef matRad_PlanWidget < matRad_Widget
         function this = initialize(this)
         end
         
-        function this = update(this)
-            if evalin('base','exist(''pln'')')
-              getPlnFromWorkspace(this);
-            else
-              setPlnDefaultValues(this);
+        function this = update(this,evt)          
+            doUpdate = true;
+            if nargin == 2
+                %At pln changes and at cst/cst (for Isocenter and new settings) 
+                %we need to update
+                doUpdate = this.checkUpdateNecessary({'pln','ct','cst'},evt);
+            end
+            
+            if doUpdate
+                if evalin('base','exist(''pln'')')
+                  getPlnFromWorkspace(this);
+                else
+                  setPlnDefaultValues(this);
+                end
             end
         end
         
@@ -67,7 +76,9 @@ classdef matRad_PlanWidget < matRad_Widget
             % handle environment
             switch env
                 case 'MATLAB'
-                    notify(obj, 'workspaceChanged');
+                    %the PlanWidget only changes the pln
+                    evt = matRad_WorkspaceChangedEvent('pln');
+                    notify(obj, 'workspaceChanged',evt);
                 case 'OCTAVE'
                     matRad_notifyOctave(obj, 'workspaceChanged');
             end

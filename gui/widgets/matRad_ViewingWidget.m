@@ -1,7 +1,6 @@
 classdef matRad_ViewingWidget < matRad_Widget
     
     properties
-     
         plane;
         slice;
         maxSlice;
@@ -28,12 +27,10 @@ classdef matRad_ViewingWidget < matRad_Widget
         ProfileType = 'lateral';
         SelectedDisplayOption ='';
         SelectedDisplayAllOptions='';
-        %rememberCurrAxes = true;
-        %cBarChanged = true;
         CutOffLevel= 0.01;
         dispWindow= cell(3,2);
         doseOpacity = 0.6;
-        IsoDose_Levels=0;
+        IsoDose_Levels= [];
         NewIsoDoseFlag = true;
         cBarHandle;
         dcmHandle;
@@ -41,7 +38,8 @@ classdef matRad_ViewingWidget < matRad_Widget
         zoomHandle;
         legendHandle;
         scrollHandle;
-        lockUpdate =false;
+        lockUpdate = false;
+        lockColorSettings = false;
         %plotlegend=false;
     end
     
@@ -63,8 +61,8 @@ classdef matRad_ViewingWidget < matRad_Widget
         function this = matRad_ViewingWidget(handleParent)
             if nargin < 1
                 handleParent = figure(...
-                    'Units','characters',...
-                    'Position',[170.4 45 140.4 45.5384615384615],...
+                    'Units','normalized',...
+                    'Position',[0.3 0.2 0.4 0.6],...
                     'Visible','on',...
                     'Color',[0.501960784313725 0.501960784313725 0.501960784313725],...  'CloseRequestFcn',@(hObject,eventdata) figure1_CloseRequestFcn(this,hObject,eventdata),...
                     'IntegerHandle','off',...
@@ -73,8 +71,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                     'Name','MatRad Viewing',...
                     'NumberTitle','off',...
                     'HandleVisibility','callback',...
-                    'Tag','figure1',...
-                    'PaperSize',[20.99999864 29.69999902]);
+                    'Tag','figure1');
                 
             end
             
@@ -102,11 +99,11 @@ classdef matRad_ViewingWidget < matRad_Widget
         end
         
         function this=update(this)
-            if this.lockUpdate
-                return
+            if ~this.lockUpdate
+                updateIsoDoseLineCache(this);
+                updateValues(this);
+                UpdatePlot(this);
             end
-            updateValues(this);
-            UpdatePlot(this);
             
         end
         
@@ -177,7 +174,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         
         
         function set.typeOfPlot(this,value)
-            this.typeOfPlot=value;
+            this.typeOfPlot=value;            
             UpdatePlot(this);
         end
         
@@ -253,6 +250,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         
         function set.SelectedDisplayOption(this,value)
             this.SelectedDisplayOption=value;
+            this.updateIsoDoseLineCache();
             UpdatePlot(this);
         end
         
@@ -280,7 +278,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         function set.IsoDose_Levels(this,value)
             this.IsoDose_Levels=value;
             updateIsoDoseLineCache(this);
-            %UpdatePlot(this);
+            UpdatePlot(this);
         end
         
         function set.IsoDose_Contours(this,value)
@@ -290,6 +288,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         
         function set.NewIsoDoseFlag(this,value)
             this.NewIsoDoseFlag=value;
+            this.updateIsoDoseLineCache();
             UpdatePlot(this);
         end
         
@@ -317,7 +316,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'XTickLabel',{  '0'; '0.1'; '0.2'; '0.3'; '0.4'; '0.5'; '0.6'; '0.7'; '0.8'; '0.9'; '1' },...
                 'YTick',[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1],...
                 'YTickLabel',{  '0'; '0.1'; '0.2'; '0.3'; '0.4'; '0.5'; '0.6'; '0.7'; '0.8'; '0.9'; '1' },...
-                'Position',[0.0718390804597701 0.0354391371340524 0.902298850574712 0.929121725731895],...
+                'Position',[0.0718390804597701 0.0654391371340524 0.902298850574712 0.899121725731895],...
                  'Tag','axesFig'); 
                  %'SortMethod','childorder',...
                 %'ButtonDownFcn',@(hObject,eventdata)axesFig_ButtonDownFcn(this,hObject,eventdata),...
@@ -892,39 +891,52 @@ classdef matRad_ViewingWidget < matRad_Widget
         function this = updateIsoDoseLineCache(this)
             handles=this.handles;
             
-            if evalin('base','exist(''resultGUI'')')
-                
+            %Lock triggering an update during isoline caching
+            currLock = this.lockUpdate;
+            this.lockUpdate = true;
+            
+            if evalin('base','exist(''resultGUI'')')                             
                 resultGUI = evalin('base','resultGUI');
-%                 % select first cube if selected option does not exist
-%                 if ~isfield(resultGUI,this.SelectedDisplayOption)
-%                     CubeNames = fieldnames(resultGUI);
-%                     dose = resultGUI.(CubeNames{1,1});
-%                 else
-                 dose = resultGUI.(this.SelectedDisplayOption);
-                 this.IsoDose_Contours = matRad_computeIsoDoseContours(dose,this.IsoDose_Levels);
-%                 end
-%                 
-%                 %if function is called for the first time then set display parameters
-%                 if isempty(this.dispWindow{3,2})
-%                     this.dispWindow{3,1} = [min(dose(:)) max(dose(:))]; % set default dose range
-%                     this.dispWindow{3,2} = [min(dose(:)) max(dose(:))]; % set min max values
-%                 end
-%
-%                 minMaxRange = this.dispWindow{3,1};
-%                 % if upper colorrange is defined then use it otherwise 120% iso dose
-%                 upperMargin = 1;
-%                 if abs((max(dose(:)) - this.dispWindow{3,1}(1,2))) < 0.01  * max(dose(:))
-%                     upperMargin = 1.2;
-%                 end
-%
-%                 %this creates a loop(needed the first time a dose cube is loaded)
-%                 if (length(this.IsoDose_Levels) == 1 && this.IsoDose_Levels(1,1) == 0) || ~this.NewIsoDoseFlag
-%                     vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];
-%                     referenceDose            = (minMaxRange(1,2))/(upperMargin);
-%                     this.IsoDose_Levels   = minMaxRange(1,1) + (referenceDose-minMaxRange(1,1)) * vLevels;
-%                 end
+                % select first cube if selected option does not exist
+                if ~isfield(resultGUI,this.SelectedDisplayOption)
+                    CubeNames = fieldnames(resultGUI);
+                    cubeIx = structfun(@(s) numel(size(s)) == 3 && isnumeric(s),resultGUI);
+                    CubeNames = CubeNames(cubeIx);
+                    this.SelectedDisplayOption = CubeNames{1,1};
+                else
+                    
+                    
+                end
+                dose = resultGUI.(this.SelectedDisplayOption);
+                
+                %if function is called for the first time then set display parameters
+                if isempty(this.dispWindow{3,2})
+                    this.dispWindow{3,1} = [min(dose(:)) max(dose(:))]; % set default dose range
+                    this.dispWindow{3,2} = [min(dose(:)) max(dose(:))]; % set min max values
+                end
+                
+                minMaxRange = this.dispWindow{3,1};
+                % if upper colorrange is defined then use it otherwise 120% iso dose
+                upperMargin = 1;
+                if abs((max(dose(:)) - this.dispWindow{3,1}(1,2))) < 0.01  * max(dose(:))
+                    upperMargin = 1.2;
+                end
+                
+                %this creates a loop(needed the first time a dose cube is loaded)
+                if isempty(this.IsoDose_Levels) || ~this.NewIsoDoseFlag
+                    vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];
+                    referenceDose            = (minMaxRange(1,2))/(upperMargin);
+                    
+                    this.IsoDose_Levels   = minMaxRange(1,1) + (referenceDose-minMaxRange(1,1)) * vLevels;
+
+                end
+                
+                
+                this.IsoDose_Contours = matRad_computeIsoDoseContours(dose,this.IsoDose_Levels);
             end
             this.handles = handles;
+            
+            this.lockUpdate = currLock;
         end
         
         %% Data Cursors
@@ -1066,7 +1078,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                 pln= evalin('base','pln');
                 ct = evalin('base','ct');
                 cst = evalin('base','cst');
-                this.cst = matRad_computeVoiContoursWrapper(cst,ct);
+                cst = matRad_computeVoiContoursWrapper(cst,ct);
+                assignin('base','cst',cst);
+                this.cst = cst;
                 
                 % define context menu for structures
                 this.VOIPlotFlag=false(size(this.cst,1),1);
