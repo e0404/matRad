@@ -8,6 +8,7 @@ classdef matRad_Widget <  handle
     properties
         updateLock = false;     %Property to lock updating of the widget
     end
+
         
     events
         %If the widget changes the workspace, this event should be emitted 
@@ -48,10 +49,11 @@ classdef matRad_Widget <  handle
             switch env
                 case 'MATLAB'
                     %the PlanWidget only changes the pln
-                    evt = matRad_WorkspaceChangedEvent(varargin{:});
+                    evt = matRad_WorkspaceChangedEventData(varargin{:});
                     notify(this, 'workspaceChanged',evt);
                 case 'OCTAVE'
-                    matRad_notifyOctave(this, 'workspaceChanged');
+                    evt = matRad_WorkspaceChangedEvent(varargin{:});
+                    matRad_notifyOctave(this, 'workspaceChanged',evt);
             end 
         end
         

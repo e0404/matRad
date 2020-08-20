@@ -23,7 +23,7 @@
 % Author: nikla <nikla@LAPTOP-NIKLAS>
 % Created: 2020-06-04
 
-function matRad_notifyOctave(hObject,eventName)
+function matRad_notifyOctave(hObject,eventName,evt)
     global eventMap;
     if isempty(eventMap)
         return;
@@ -57,6 +57,9 @@ function matRad_notifyOctave(hObject,eventName)
     for runIx = 1:numel(eventIx)
         runEventIx = eventIx(runIx);
         runEvent = objEvents(runEventIx);
-        runEvent.callback(hObject);
+        if nargin < 3
+            runEvent.callback(hObject);
+        else
+            runEvent.callback(hObject,evt);
     end 
 end

@@ -1,7 +1,7 @@
 classdef matRad_WorkflowWidget < matRad_Widget
     
     properties
-    end
+    end        
     
     methods
         function this = matRad_WorkflowWidget(handleParent)
@@ -670,7 +670,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 %                         handles = updateIsoDoseLineCache(handles);
                 
                 this.handles = handles;
-                this.workspaceChanged('dij','resultGUI');
+                this.changedWorkspace('dij','resultGUI');
                 
             catch ME
                 % change state from busy to normal

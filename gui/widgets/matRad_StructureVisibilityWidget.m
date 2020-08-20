@@ -1,38 +1,24 @@
 classdef matRad_StructureVisibilityWidget < matRad_Widget
-    
-    properties
-        env
-    end
-    
+        
     methods
         function this = matRad_StructureVisibilityWidget(handleParent)
             if nargin < 1
+                matRad_cfg = MatRad_Config.instance();
                 handleParent = figure(...
                     'Units','characters',...
-                    'Position',[250.4 45 30 15],...
+                    'Position',[250.4 45 30 30],...
                     'Visible','on',...
-                    'Color',[0.501960784313725 0.501960784313725 0.501960784313725],...  
-                    'IntegerHandle','off',...
-                    'Colormap',[0 0 0.5625;0 0 0.625;0 0 0.6875;0 0 0.75;0 0 0.8125;0 0 0.875;0 0 0.9375;0 0 1;0 0.0625 1;0 0.125 1;0 0.1875 1;0 0.25 1;0 0.3125 1;0 0.375 1;0 0.4375 1;0 0.5 1;0 0.5625 1;0 0.625 1;0 0.6875 1;0 0.75 1;0 0.8125 1;0 0.875 1;0 0.9375 1;0 1 1;0.0625 1 1;0.125 1 0.9375;0.1875 1 0.875;0.25 1 0.8125;0.3125 1 0.75;0.375 1 0.6875;0.4375 1 0.625;0.5 1 0.5625;0.5625 1 0.5;0.625 1 0.4375;0.6875 1 0.375;0.75 1 0.3125;0.8125 1 0.25;0.875 1 0.1875;0.9375 1 0.125;1 1 0.0625;1 1 0;1 0.9375 0;1 0.875 0;1 0.8125 0;1 0.75 0;1 0.6875 0;1 0.625 0;1 0.5625 0;1 0.5 0;1 0.4375 0;1 0.375 0;1 0.3125 0;1 0.25 0;1 0.1875 0;1 0.125 0;1 0.0625 0;1 0 0;0.9375 0 0;0.875 0 0;0.8125 0 0;0.75 0 0;0.6875 0 0;0.625 0 0;0.5625 0 0],...
+                    'Color',matRad_cfg.gui.backgroundColor,...  
+                    'IntegerHandle','off',...                    
                     'MenuBar','none',...
                     'Name','MatRad Structure Visibility',...
                     'NumberTitle','off',...
                     'HandleVisibility','callback',...
-                    'Tag','figure1',...
-                    'PaperSize',[20.99999864 29.69999902]);
-                
+                    'Tag','figure1');
             end
             this = this@matRad_Widget(handleParent);
-            
-            [this.env, ~] = matRad_getEnvironment();
-            this.update();
         end
-        
-        function this=initialize(this)
-             
-            
-        end
-        
+  
         function this=update(this)
             if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
                 updateStructureTable(this, evalin('base','cst'));
@@ -42,21 +28,14 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
            
         end
         
-        function changeWorkspace(obj)
-           %[env, ~] = matRad_getEnvironment();
-            % handle environment
-            switch obj.env
-                case 'MATLAB'
-                    notify(obj, 'workspaceChanged');
-                case 'OCTAVE'
-                    matRad_notifyOctave(obj, 'workspaceChanged');
-            end
-        end
     end
+   
     
     methods (Access = protected)
         function this = createLayout(this)
             h86 = this.widgetHandle;
+            
+            matRad_cfg = MatRad_Config.instance();
             
             h87 = uicontrol(...
                 'Parent',h86,...
@@ -64,9 +43,12 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
                 'Style','listbox',...
                 'Value',1,...
                 'Position',[0.02 0.01 0.97 0.98],...
-                'BackgroundColor',[0.501960784313725 0.501960784313725 0.501960784313725],...
+                'BackgroundColor',matRad_cfg.gui.elementColor,...
+                'ForegroundColor',matRad_cfg.gui.textColor,...
+                'FontSize',matRad_cfg.gui.fontSize,...
+                'FontWeight',matRad_cfg.gui.fontWeight,...
+                'FontName',matRad_cfg.gui.fontName,...
                 'Callback',@(hObject,eventdata) legendTable_Callback(this,hObject,eventdata),...
-                'FontSize',8,...
                 'Tag','legendTable');
             
             this.createHandles();
@@ -96,11 +78,13 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             %Get the string entries
             tmpString = get(handles.legendTable,'String');
             
+            env = matRad_getEnvironment();
+            
             % html not supported in octave       
             if handles.VOIPlotFlag(idx)
                 handles.VOIPlotFlag(idx) = false;
                 cst{idx,5}.Visible = false;
-                switch this.env
+                switch env
                     case 'OCTAVE'
                         tmpString{idx} = [cst{idx,2}];
                     otherwise
@@ -109,7 +93,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             elseif ~handles.VOIPlotFlag(idx)
                 handles.VOIPlotFlag(idx) = true;
                 cst{idx,5}.Visible = true;
-                switch this.env
+                switch env
                     case 'OCTAVE'
                         tmpString{idx} = [cst{idx,2}];
                     otherwise
@@ -122,13 +106,14 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             % update cst in workspace accordingly
             assignin('base','cst',cst)
             this.handles = handles;
-            changeWorkspace(this);
+            this.changedWorkspace('cst');
             %UpdatePlot(handles)
         end
         
         function cst = updateStructureTable(this,cst)
             handles=this.handles;
             colorAssigned = true;
+
             
             % check whether all structures have an assigned color
             for i = 1:size(cst,1)
@@ -154,13 +139,15 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
                 end
             end
             
+            env = matRad_getEnvironment();
+            
             for s = 1:size(cst,1)
                 handles.VOIPlotFlag(s) = cst{s,5}.Visible;
                 clr = dec2hex(round(cst{s,5}.visibleColor(:)*255),2)';
                 clr = ['#';clr(:)]';
                 % html is not supported in octave 
                 
-                switch this.env
+                switch env
                     case 'OCTAVE'
                             tmpString{s} = [cst{s,2}];
                     otherwise

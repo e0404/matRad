@@ -1,20 +1,16 @@
-classdef  matRad_WorkspaceChangedEvent < handle
-    %matRad_WorkspaceChangedEvent 
-    %   Base class to store event data (no subclass yet for compatability)
-    
-    properties
-        changedVariables %Cell array with changed variable names
-    end
-    
+classdef  matRad_WorkspaceChangedEventData < matRad_WorkspaceChangedEvent & event.EventData
+    %matRad_WorkspaceChangedEventData 
+    %   EventData subclass to store changed variables when widget changes
+    %   the workspace
+
     methods
-        function obj = matRad_WorkspaceChangedEvent(varargin)
+        function obj = matRad_WorkspaceChangedEventData(varargin)
             %matRad_WorkspaceChangedEvent Construct the event
             %   varargin is the cell array of arguments (strings)
             %   containing the variable names
             
-            %obj = obj@event.EventData();
-            
-            obj.changedVariables = varargin;
+            obj = obj@event.EventData();
+            obj = obj@matRad_WorkspaceChangedEvent(varargin{:});
             
             
             %Debug:
@@ -26,7 +22,6 @@ classdef  matRad_WorkspaceChangedEvent < handle
             end
             fprintf('Changed variables: %s\n',changed);
             %}
-            
         end
 
     end
