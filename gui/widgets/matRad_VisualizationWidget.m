@@ -5,8 +5,8 @@ classdef matRad_VisualizationWidget < matRad_Widget
     end
     
     methods
-        function this = matRad_VisualizationWidget(handleParent,viewingWidgetHandle)
-            if nargin < 1
+        function this = matRad_VisualizationWidget(viewingWidgetHandle,handleParent)
+            if nargin < 2
                 matRad_cfg = MatRad_Config.instance();
                 handleParent = figure(...
                     'Units','characters',...
@@ -26,7 +26,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
             
             handles=this.handles;
             
-            if nargin==2
+            if nargin>=1
                 this.viewingWidgetHandle=viewingWidgetHandle;
             else
                 set(handles.btnDVH,'Enable','off');
@@ -489,7 +489,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
         function getFromViewingWidget(this)
             handles=this.handles;
             if strcmp(this.viewingWidgetHandle.ProfileType,'lateral')
-                set(handles.btnProfileType,'String','longitudinal');
+                set(handles.btnProfileType,'String','depth');
             else
                 set(handles.btnProfileType,'String','lateral');
             end
@@ -585,35 +585,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
             
             % set slice slider
             handles = this.handles;
-            
             this.viewingWidgetHandle.plane = get(handles.popupPlane,'value');
-%             try
-%                 if evalin('base','exist(''pln'')') && evalin('base','exist(''ct'')') && ...
-%                         evalin('base','exist(''cst'')') %if handles.State > 0
-%                     ct = evalin('base', 'ct');
-%                     set(handles.sliderSlice,'Min',1,'Max',ct.cubeDim(handles.plane),...
-%                         'SliderStep',[1/(ct.cubeDim(handles.plane)-1) 1/(ct.cubeDim(handles.plane)-1)]);
-%                     if ~evalin('base','exist(''ResultGUI'')') %handles.State < 3
-%                         set(handles.sliderSlice,'Value',round(ct.cubeDim(handles.plane)/2));
-%                     else
-%                         pln = evalin('base','pln');
-%                         
-%                         if handles.plane == 1
-%                             set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,2)/ct.resolution.x));
-%                         elseif handles.plane == 2
-%                             set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,1)/ct.resolution.y));
-%                         elseif handles.plane == 3
-%                             set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,3)/ct.resolution.z));
-%                         end
-%                         
-%                     end
-%                 end
-%             catch
-%             end
-             
-%             handles.rememberCurrAxes = false;
-%             UpdatePlot(handles);
-%             handles.rememberCurrAxes = true;
             this.handles = handles;
         end
         
@@ -658,20 +630,11 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
                   
                 set(handles.btnProfileType,'Enable','on')
-%                 
-%                 if strcmp(get(handles.btnProfileType,'String'),'lateral')
-%                     this.viewingWidgetHandle.ProfileType = 'longitudinal';
-%                 else
-%                     this.viewingWidgetHandle.ProfileType = 'lateral';
+
 %                 end
             end
             
-            %this.viewingWidgetHandle.cBarChanged = true;
-            
-%             handles.rememberCurrAxes = false;
-%             cla(handles.axesFig,'reset');
-%             UpdatePlot(handles);
-%             handles.rememberCurrAxes = true;
+
             
             this.handles = handles;
         end
@@ -686,46 +649,6 @@ classdef matRad_VisualizationWidget < matRad_Widget
             
             handles = this.handles;
             this.viewingWidgetHandle.SelectedDisplayOption = content{get(hObject,'Value'),1};
-            %this.viewingWidgetHandle.SelectedDisplayOptionIdx = get(hObject,'Value');
-            
-%             if ~isfield(handles,'colormapLocked') || ~handles.colormapLocked
-%                 handles.dispWindow{3,1} = []; handles.dispWindow{3,2} = [];
-%             end
-            
-            %this.viewingWidgetHandle.updateIsoDoseLineCache();
-            
-%             if evalin('base','exist(''resultGUI'')')
-%                 
-%                 resultGUI = evalin('base','resultGUI');
-%                 % select first cube if selected option does not exist
-%                 if ~isfield(resultGUI,this.viewingWidgetHandle.SelectedDisplayOption)
-%                     CubeNames = fieldnames(resultGUI);
-%                     dose = resultGUI.(CubeNames{1,1});
-%                 else
-%                     dose = resultGUI.(this.viewingWidgetHandle.SelectedDisplayOption);
-%                 end
-%                 
-%                 %if function is called for the first time then set display parameters
-%                 if isempty(this.viewingWidgetHandle.dispWindow{3,2})
-%                     this.viewingWidgetHandle.dispWindow{3,1} = [min(dose(:)) max(dose(:))]; % set default dose range
-%                     this.viewingWidgetHandle.dispWindow{3,2} = [min(dose(:)) max(dose(:))]; % set min max values
-%                 end
-%                 
-%                 minMaxRange = this.viewingWidgetHandle.dispWindow{3,1};
-%                 % if upper colorrange is defined then use it otherwise 120% iso dose
-%                 upperMargin = 1;
-%                 if abs((max(dose(:)) - this.viewingWidgetHandle.dispWindow{3,1}(1,2))) < 0.01  * max(dose(:))
-%                     upperMargin = 1.2;
-%                 end
-%                 
-%                 %if (length(this.viewingWidgetHandle.IsoDose_Levels) == 1 && this.viewingWidgetHandle.IsoDose_Levels(1,1) == 0) || ~this.NewIsoDoseFlag
-%                     vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];
-%                     referenceDose            = (minMaxRange(1,2))/(upperMargin);
-%                     this.viewingWidgetHandle.IsoDose_Levels   = minMaxRange(1,1) + (referenceDose-minMaxRange(1,1)) * vLevels;
-%                 %end 
-%             end
-            
-            %this.viewingWidgetHandle.cBarChanged = true;
             
             %UpdatePlot(handles);
             this.handles = handles;
@@ -778,41 +701,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
          
         % 52 Callback
         function btnDVH_Callback(this, hObject, event)
-            matRad_DVHStatsWidget;
-%             handles = this.handles;
-%             resultGUI = evalin('base','resultGUI');
-%             Content = get(handles.popupDisplayOption,'String');
-%             
-%             SelectedCube = Content{get(handles.popupDisplayOption,'Value')};
-%             
-%             pln = evalin('base','pln');
-%             resultGUI_SelectedCube.physicalDose = resultGUI.(SelectedCube);
-%             
-%             if ~strcmp(pln.propOpt.bioOptimization,'none')
-%                 
-%                 %check if one of the default fields is selected
-%                 if sum(strcmp(SelectedCube,{'physicalDose','effect','RBE,','RBExDose','alpha','beta'})) > 0
-%                     resultGUI_SelectedCube.physicalDose = resultGUI.physicalDose;
-%                     resultGUI_SelectedCube.RBExDose     = resultGUI.RBExDose;
-%                 else
-%                     Idx    = find(SelectedCube == '_');
-%                     SelectedSuffix = SelectedCube(Idx(1):end);
-%                     resultGUI_SelectedCube.physicalDose = resultGUI.(['physicalDose' SelectedSuffix]);
-%                     resultGUI_SelectedCube.RBExDose     = resultGUI.(['RBExDose' SelectedSuffix]);
-%                 end
-%             end
-%             
-%             %adapt visibilty
-%             cst = evalin('base','cst');
-% %             for i = 1:size(cst,1)
-% %                 cst{i,5}.Visible = this.viewingWidgetHandle.VOIPlotFlag(i);
-% %             end
-%             DVHfig=figure;
-%             matRad_indicatorWrapper(DVHfig,cst,pln,resultGUI_SelectedCube);
-%             
-% %             assignin('base','cst',cst);
-%             this.handles = handles;
-            
+            matRad_DVHStatsWidget();
         end
         
         %H55 Callback
@@ -822,24 +711,8 @@ classdef matRad_VisualizationWidget < matRad_Widget
         end
        
         % 57 Callback
-        function btn3Dview_Callback(this,hObject, event)
-            
+        function btn3Dview_Callback(this,hObject, event)            
             matRad_3DWidget(this.viewingWidgetHandle);
-            
-            % hObject    handle to btn3Dview (see GCBO)
-            % eventdata  reserved - to be defined in a future version of MATLAB
-            % handles    structure with handles and user data (see GUIDATA)
-%             handles = this.handles;
-%             
-%             if ~isfield(handles,'axesFig3D') || ~isfield(handles,'axesFig3D') || ~isgraphics(handles.axesFig3D)
-%                 handles.fig3D = figure('Name','matRad 3D View');
-%                 handles.axesFig3D = axes('Parent',handles.fig3D);
-%                 view(handles.axesFig3D,3);
-%             end
-%             
-%             %UpdatePlot(handles);
-%             this.handles = handles;
-%             this.viewingWidgetHandle.UpdatePlot();
         end
        % --- Executes on button press in radiobtnContour.
        function radiobtnContour_Callback(this,hObject, ~)
@@ -892,15 +765,8 @@ classdef matRad_VisualizationWidget < matRad_Widget
            % handles    structure with handles and user data (see GUIDATA)
            
            % Hint: get(hObject,'Value') returns toggle state of radiobtnIsoDoseLines
-           %UpdatePlot(handles)
-           handles=this.handles;
            this.viewingWidgetHandle.plotIsoDoseLines=get(hObject,'Value');
-%            if get(hObject,'Value')
-%                set(handles.radiobtnIsoDoseLinesLabels,'Enable','on');
-%            else
-%                set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
-%            end
-           this.handles=handles;
+
        end
        
        % --- Executes on button press in radiobtnDose.
@@ -928,42 +794,6 @@ classdef matRad_VisualizationWidget < matRad_Widget
            %UpdatePlot(handles)
            % Hint: get(hObject,'Value') returns toggle state of radioBtnIsoCenter
            this.viewingWidgetHandle.plotIsoCenter=get(hObject,'Value');
-       end
-       
-%        function updateIsodoseLine(this)
-%            lockState=this.viewingWidgetHandle.lockUpdate;
-%            this.viewingWidgetHandle.lockUpdate=true;
-%            if evalin('base','exist(''resultGUI'')')
-%                 
-%                 resultGUI = evalin('base','resultGUI');
-%                 % select first cube if selected option does not exist
-%                 if ~isfield(resultGUI,get(this.handles.popupDisplayOption,'Value'))%.viewingWidgetHandle.SelectedDisplayOption)
-%                     CubeNames = fieldnames(resultGUI);
-%                     dose = resultGUI.(CubeNames{1,1});
-%                 else
-%                     dose = resultGUI.get(this.handles.popupDisplayOption,'Value'); %(this.viewingWidgetHandle.SelectedDisplayOption);
-%                 end
-%                 
-%                 %if function is called for the first time then set display parameters
-%                 if isempty(this.viewingWidgetHandle.dispWindow{3,2})
-%                     this.viewingWidgetHandle.dispWindow{3,1} = [min(dose(:)) max(dose(:))]; % set default dose range
-%                     this.viewingWidgetHandle.dispWindow{3,2} = [min(dose(:)) max(dose(:))]; % set min max values
-%                 end
-%                 
-%                 minMaxRange = this.viewingWidgetHandle.dispWindow{3,1};
-%                 % if upper colorrange is defined then use it otherwise 120% iso dose
-%                 upperMargin = 1;
-%                 if abs((max(dose(:)) - this.viewingWidgetHandle.dispWindow{3,1}(1,2))) < 0.01  * max(dose(:))
-%                     upperMargin = 1.2;
-%                 end
-%                 
-%                 %if (length(this.viewingWidgetHandle.IsoDose_Levels) == 1 && this.viewingWidgetHandle.IsoDose_Levels(1,1) == 0) || ~this.NewIsoDoseFlag
-%                     vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];
-%                     referenceDose            = (minMaxRange(1,2))/(upperMargin);
-%                     this.viewingWidgetHandle.IsoDose_Levels   = minMaxRange(1,1) + (referenceDose-minMaxRange(1,1)) * vLevels;
-%                 %end 
-%             end
-%            this.viewingWidgetHandle.lockUpdate=lockState;
-%        end
+       end       
     end
 end

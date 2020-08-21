@@ -1,4 +1,4 @@
-function hGUI = matRad_importDicomGUI()
+function hGUI = matRad_exportDicomGUI()
 % matRad compatability function to call the dicom importwidget
 % 
 % call
@@ -21,8 +21,8 @@ function hGUI = matRad_importDicomGUI()
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargout > 0
-    hGUI = matRad_importDicomWidget();
+    hGUI = matRad_exportDicomWidget();
 else
-    matRad_importDicomWidget();
+    matRad_exportDicomWidget();
 end
 end

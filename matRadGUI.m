@@ -293,8 +293,8 @@ classdef matRadGUI < handle
             
            
             obj.ViewingWidget.scrollHandle =  obj.guiHandle;            
-            obj.VisualizationWidget = matRad_VisualizationWidget(pVisualization, obj.ViewingWidget);        
-            obj.ViewerOptionsWidget = matRad_ViewerOptionsWidget(pViewerOptions, obj.ViewingWidget);
+            obj.VisualizationWidget = matRad_VisualizationWidget(obj.ViewingWidget,pVisualization);        
+            obj.ViewerOptionsWidget = matRad_ViewerOptionsWidget(obj.ViewingWidget,pViewerOptions);
             obj.StructureVisibilityWidget = matRad_StructureVisibilityWidget(pStructureVisibility);           
             obj.InfoWidget = matRad_InfoWidget(pInfo); % does not need a listener
             obj.LogoWidget = matRad_LogoWidget(pLogo); % does not need a listener
@@ -378,19 +378,18 @@ classdef matRadGUI < handle
            %disp(['Workspace Changed ' datestr(now,'HH:MM:SS.FFF')]);
            %%Debug
            this.PlanWidget.update(evt);
-           this.WorkflowWidget.update();
-           this.OptimizationWidget.update();
-           this.ViewingWidget.update();
+           this.WorkflowWidget.update(evt);
+           this.OptimizationWidget.update(evt);
+           this.ViewingWidget.update(evt);
            %this.ViewerOptionsWidget.update();
            %this.VisualizationWidget.update();
-           this.StructureVisibilityWidget.update();
+           this.StructureVisibilityWidget.update(evt);
         end
         
         function this = updateButtons(this)
            %disp(['Plot Changed ' datestr(now,'HH:MM:SS.FFF')]); %Debug
            % update the visualization and viewer options widgets
-           this.ViewerOptionsWidget.update();
-           this.VisualizationWidget.update();
+           
            
            if strcmp(this.env,'OCTAVE')
               return
@@ -422,6 +421,9 @@ classdef matRadGUI < handle
                set(findobj(this.guiHandle,'tag','toolbarZoomOut'),'State','off');
                set(findobj(this.guiHandle,'tag','toolbarZoomIn'),'State','off');
            end
+           
+           this.ViewerOptionsWidget.update();
+           this.VisualizationWidget.update();
            
         end
         

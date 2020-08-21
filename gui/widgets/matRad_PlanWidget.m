@@ -25,8 +25,7 @@ classdef matRad_PlanWidget < matRad_Widget
                     'Name','MatRad Plan',...
                     'NumberTitle','off',...
                     'HandleVisibility','callback',...
-                    'Tag','figure1',...
-                    'PaperSize',[20.99999864 29.69999902]);
+                    'Tag','figure1');
                 
             end
             this = this@matRad_Widget(handleParent);
@@ -831,63 +830,6 @@ classdef matRad_PlanWidget < matRad_Widget
             this.handles = handles;
             updatePlnInWorkspace(this);
         end
-       
-%         function editIsoCenter_Callback(this, hObject, eventdata)
-%             
-%             handles = this.handles;
-%             
-%             
-%             pln = evalin('base','pln');
-%             tmpIsoCenter = str2num(get(hObject,'String'));
-%             
-%             if length(tmpIsoCenter) == 3
-%                 if sum(any(unique(pln.propStf.isoCenter,'rows')~=tmpIsoCenter))
-%                     pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*tmpIsoCenter;
-%                     handles.State = 1;
-%                     %UpdateState(handles);
-%                 end
-%             else
-%                 handles = showError(this,'EditIsoCenterCallback: Could not set iso center');
-%             end
-%             
-%             assignin('base','pln',pln);
-%             
-%             updatePlnInWorkspace(this);
-%             this.handles = handles;
-%            
-%         end
-        
-%         function checkIsoCenter_Callback(this, hObject, eventdata)
-%             handles = this.handles;
-%             
-%             W = evalin('base','whos');
-%             doesPlnExist = ismember('pln',{W(:).name});
-%             
-%             if get(hObject,'Value') && doesPlnExist
-%                 try
-%                     pln = evalin('base','pln');
-%                     if ~isfield(pln.propStf,'isoCenter')
-%                         pln.propStf.isoCenter = NaN;
-%                     end
-%                     tmpIsoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
-%                     if ~isequal(tmpIsoCenter,pln.propStf.isoCenter)
-%                         pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*tmpIsoCenter;
-%                         handles.State = 1;
-%                         %UpdateState(handles);
-%                     end
-%                     set(handles.editIsoCenter,'String',regexprep(num2str((round(tmpIsoCenter*10))./10), '\s+', ' '));
-%                     set(handles.editIsoCenter,'Enable','off')
-%                     assignin('base','pln',pln);
-%                 catch ME
-%                     warning(ME.identifier,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)
-%                 end
-%             else
-%                 set(handles.editIsoCenter,'Enable','on')
-%             end
-%             
-%             updatePlnInWorkspace(this); 
-%             this.handles = handles;
-%         end
         
         function popUpMachine_Callback(this, hObject, eventdata)
             % M�GLICHER FEHLER WEGEN VALUE WERT!
@@ -1046,7 +988,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 if isdeployed
                     baseroot = [ctfroot filesep 'matRad'];
                 else
-                    baseroot = matRad_cfg.matRadRoot;
+                    baseroot = matRad_cfg.matRadRoot; 
                 end
                 Files = dir([baseroot filesep 'basedata' filesep pattern]);
                 
@@ -1072,8 +1014,8 @@ classdef matRad_PlanWidget < matRad_Widget
             
             if get(handles.popUpMachine,'Value') > nMachines
                 selectedMachine = 1;
-            end
-                            
+            end            
+            
             set(handles.popUpMachine,'Value',selectedMachine,'String',this.Machines{selectedRadMod});
             this.handles = handles;
         end
