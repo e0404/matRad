@@ -32,15 +32,6 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 
 global matRad_cfg; matRad_cfg = MatRad_Config.instance();
 
-if pln.propOpt.conf3D && strcmp(pln.radiationMode,'photons') || pln.propOpt.runDAO
-    if ~matRad_checkForConnectedBixelRows(evalin('base','stf'))
-        error('disconnetced dose influence data in BEV - run dose calculation again with consistent settings');
-    end
-    if pln.propOpt.conf3D
-        matRad_collapseDij(dij);
-    end
-end
-
 % issue warning if biological optimization impossible
 if sum(strcmp(pln.propOpt.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose')) && strcmp(pln.radiationMode,'carbon')
     warndlg('Alpha and beta matrices for effect based and RBE optimization not available - physical optimization is carried out instead.');

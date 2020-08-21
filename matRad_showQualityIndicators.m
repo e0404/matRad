@@ -47,18 +47,29 @@ qi = (squeeze(struct2cell(qi)))';
 qiEmpty = cellfun(@isempty,qi);
 qi(qiEmpty) = {'-'};
 
+%Layout depending on axes type
+
+hType = get(figHandle,'Type');
+
+if ~strcmp(hType,'figure')
+    pos = get(figHandle,'position');
+    if strcmp(hType,'axes')
+        axis(figHandle,'off');
+    end
+    hF = ancestor(figHandle,'figure');
+else
+    pos = get(figHandle,'position');
+    hF = figHandle;
+end
+
 %since uitable is only available in newer octave versions, we try and catch
-try
+try    
     % Create the uitable
-    table = uitable(figHandle,'Data',qi,...
+    table = uitable(hF,'Data',qi,...
         'ColumnName',cnames,...
-        'RowName',rnames,'ColumnWidth',{70});
-    
-    % Layout
-    ax=axes(figHandle);
-    pos = get(ax,'position');
-    set(table,'units','normalized','position',pos)
-    axis(ax,'off')
+        'RowName',rnames,'ColumnWidth',{70},...
+        'units','normalized',...
+        'position',pos);
 catch ME
     matRad_cfg.dispWarning('The uitable function is not implemented in %s v%s.',env,vStr);
 end

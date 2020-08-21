@@ -1,11 +1,10 @@
-function [dvh,qi] = matRad_indicatorWrapper(figHandle,cst,pln,resultGUI,refGy,refVol,param)
+function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol)
 % matRad indictor wrapper
 % 
 % call
 %   matRad_calcIndicators(cst,pln,cube,dvhType,param,refGy,refVol,lineStyleIndicator)
 %
 % input
-%   figHandle            handle to axes to display in
 %   cst:                  matRad cst struct
 %   pln:                  matRad pln struct
 %   resultGUI:            matRad resultGUI struct
@@ -53,15 +52,13 @@ end
 dvh = matRad_calcDVH(cst,doseCube,'cum');
 qi  = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol);
 
-%figure,set(gcf,'Color',[1 1 1]);
-%set(0,'CurrentFigure',axesHandle);
-%set(axesHandle,'Color',[1 1 1]);
 
-subplotHandle1 = axes(figHandle);
-subplotHandle2 = axes(figHandle);
-subplot(2,1,1,subplotHandle1);
+matRad_cfg = MatRad_Config.instance();
+hF = figure('Color',matRad_cfg.gui.backgroundColor);
+
+subplotHandle1 = subplot(2,1,1);
 matRad_showDVH(subplotHandle1,dvh,cst,pln);
-subplot(2,1,2,subplotHandle2);
+subplotHandle2 = subplot(2,1,2);
 ixVoi = cellfun(@(c) c.Visible == 1,cst(:,5));
 qi = qi(ixVoi);
 matRad_showQualityIndicators(subplotHandle2,qi);
