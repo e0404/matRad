@@ -211,17 +211,27 @@ if enable(1) == 1
 end
 
 %% Plot profiles through isoCenter
+centerAtIsocenter = false;
 if enable(2) == 1
     matRad_cfg.dispInfo('Plotting profiles...\n');
     fontsize = 12;
-    profilex{1} = cube1(:,slicename{2},slicename{3});
-    profiley{1} = permute(cube1(slicename{1},slicename{2},:),[3 2 1]);
-    profilez{1} = permute(cube1(slicename{1},:,slicename{3}),[2 3 1]);
+    profilex{1} = squeeze(cube1(slicename{1},:,slicename{3}));
+    profiley{1} = squeeze(cube1(:,slicename{2},slicename{3}));
+    profilez{1} = squeeze(cube1(slicename{1},slicename{2},:));
+
+    profilex{2} = squeeze(cube2(slicename{1},:,slicename{3}));
+    profiley{2} = squeeze(cube2(:,slicename{2},slicename{3}));
+    profilez{2} = squeeze(cube2(slicename{1},slicename{2},:));
     
-    profilex{2} = cube2(:,slicename{2},slicename{3});
-    profiley{2} = permute(cube2(slicename{1},slicename{2},:),[3 2 1]);
-    profilez{2} = permute(cube2(slicename{1},:,slicename{3}),[2 3 1]);
-    
+    posX = resolution(1)*(1:length(profilex{1}));
+    posY = resolution(2)*(1:length(profiley{1}));
+    posZ = resolution(3)*(1:length(profilez{1}));
+    if centerAtIsocenter
+        posX = posX - isoCenter(1);
+        posY = posY - isoCenter(2);
+        posZ = posZ - isoCenter(3);
+    end
+
     if exist('pln','var') && ~isempty(pln)
         if strcmp(pln.propOpt.bioOptimization,'none')
             yLabelString = 'Dose [Gy]';
@@ -236,9 +246,9 @@ if enable(2) == 1
     set(gcf,'Color',[1 1 1]);
     
     hfig.profiles.x = subplot(2,2,1);
-    plot(profilex{1},'r')
+    plot(posX,profilex{1},'r')
     hold on
-    plot(profilex{2},'r--')
+    plot(posX,profilex{2},'r--')
     xlabel('X [mm]','FontSize',fontsize)
     ylabel(yLabelString,'FontSize',fontsize);
     title('x-Profiles');
@@ -246,9 +256,9 @@ if enable(2) == 1
     legend boxoff
     
     hfig.profiles.y = subplot(2,2,2);
-    plot(profiley{1},'r')
+    plot(posY,profiley{1},'r')
     hold on
-    plot(profiley{2},'r--')
+    plot(posY,profiley{2},'r--')
     xlabel('Y [mm]','FontSize',fontsize)
     ylabel(yLabelString,'FontSize',fontsize);
     title('y-Profiles');
@@ -256,9 +266,9 @@ if enable(2) == 1
     legend boxoff
     
     hfig.profiles.z = subplot(2,2,3);
-    plot(profilez{1},'r')
+    plot(posZ,profilez{1},'r')
     hold on
-    plot(profilez{2},'r--')
+    plot(posZ,profilez{2},'r--')
     xlabel('Z [mm]','FontSize',fontsize)
     ylabel(yLabelString,'FontSize',fontsize);
     title('z-Profiles');
