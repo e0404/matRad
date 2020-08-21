@@ -1,3 +1,4 @@
+function matRad_rc(clearWindow)
 % matRad rc script
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -13,15 +14,21 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if nargin < 1
+    clearWindow = true;
+end
+  
 % set search path
 global matRad_cfg;
 matRad_cfg = MatRad_Config.instance();
 
 addpath(genpath(matRad_cfg.matRadRoot));
 
-%clear command window and close all figures
-clc;
-close all;
+if clearWindow
+    %clear command window and close all figures
+    clc;
+    close all;
+end
 
 % clear workspace and command prompt, close all figures
 [env,envver] = matRad_getEnvironment();
