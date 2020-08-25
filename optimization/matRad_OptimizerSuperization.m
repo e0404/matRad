@@ -240,7 +240,7 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                 obj.M = A*obj.A_norm; 
             end
                                    
-            for i=1:n
+            for i=1:size(A, 2)
                 
                 A_x = x'*A(:, i);
                 res_b=b(i)-A_x;
