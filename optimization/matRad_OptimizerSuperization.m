@@ -26,7 +26,7 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
     methods
         function obj = matRad_OptimizerSuperization(pln)
             %matRad_OptimizerFmincon 
-            %   Construct an instance of the superization optimizer
+            %Construct an instance of the superization optimizer
             
             obj.wResult = [];
             obj.resultInfo = struct();
@@ -58,7 +58,6 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
          end
                 
         function obj = optimize(obj, x_0,  optiProb, dij, cst)
-            global A b c f
             
             [A, b, c] = obj.getlinearinequalities(dij ,cst);
             
@@ -75,7 +74,7 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             
             startSuper = tic; %Start timing the optimization
 
-            %Set objectiv function and gradient of objectiv function.    
+            %Set objective function and gradient of objective function.    
             f = @(x) (optiProb.matRad_objectiveFunction(x,dij,cst));
             fGrad = @(x) (optiProb.matRad_objectiveGradient(x,dij,cst));
             
@@ -149,14 +148,14 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                     
                     obj.wResult = x;
                     
-                    % Deconstruct persistent variables
+                    % Deconstruct temp variables
                     clear obj.m obj.A_norm
                     return
                 end
                 
                 n=0;
                 while n<obj.num_reductions
-                   
+                    
                     v=fGrad(x);
                                         
                     loop = true;
@@ -209,9 +208,7 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             A=A(:, idxs);
             b=b(idxs);
             c=c(idxs);
-            if isempty(b)
-                error("No Min/Max dose constraints found. Please use IPOPT!")
-            end
+          
         end
         
         function [x] = AMS_sim(obj, x, A, b, c)
@@ -260,7 +257,7 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
         
         function [res] = residual(obj, x, A, b, c)
             
-            if isempty(obj.A_norm) % Set M if not already set
+            if isempty(obj.A_norm) % Set A_norm if not already set
                 obj.A_norm = diag(sum(A.^2, 1).^-1);
             end  
             res=max(0, obj.A_norm*(x'*A-b')') + max(0, obj.A_norm*(c'-x'*A)');
