@@ -88,7 +88,7 @@ if ~isempty(fileList)
 
         end
         
-        fileList = parseDicomTag(fileList,info,'SeriesNumber',i,5);
+        fileList = parseDicomTag(fileList,info,'SeriesNumber',i,5,@seriesnum2str); %We want to make sure the series number is stored as string
         fileList = parseDicomTag(fileList,info,'FamilyName',i,6);
         fileList = parseDicomTag(fileList,info,'GivenName',i,7);
         fileList = parseDicomTag(fileList,info,'PatientBirthDate',i,8);
@@ -181,16 +181,20 @@ clear warnDlgDICOMtagShown;
 
 end
 
-function fileList = parseDicomTag(fileList,info,tag,row,column)
+function fileList = parseDicomTag(fileList,info,tag,row,column,parsefcn)
 
 global warnDlgDICOMtagShown;
 
 defaultPlaceHolder = '001';
 
+if nargin < 6
+    parsefcn = @(x) x;
+end
+
 try
    if isfield(info,tag)
       if ~isempty(info.(tag))
-         fileList{row,column} = info.(tag);
+         fileList{row,column} = parsefcn(info.(tag));
       else
          fileList{row,column} = defaultPlaceHolder;
       end
@@ -213,10 +217,14 @@ if ~warnDlgDICOMtagShown && strcmp(fileList{row,column},defaultPlaceHolder) && (
       case 'No'
          matRad_cfg.dispError('Inconsistency in DICOM tags')  
    end
-   
 end
 
+end
 
+function value = seriesnum2str(value)
+    if isnumeric(value)
+        value = num2str(value);
+    end
 end
 
 
