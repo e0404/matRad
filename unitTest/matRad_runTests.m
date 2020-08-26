@@ -50,7 +50,7 @@ matRad_unitTestTextManipulation(testScripts,'display(','%%%%%%%%%%%%%%% REMOVED 
 for testIx = 1:length(testScriptNames)
     fprintf('Running Integration Test for ''%s''\n',names{testIx});
     run(testScripts{testIx});
-    clearvars ct cst pln stf dij resultGUI; %Make sure the workspace is somewhat clean
+    clear ct cst pln stf dij resultGUI; %Make sure the workspace is somewhat clean
     delete(testScripts{testIx}); %Delete after successful run
 end
     
