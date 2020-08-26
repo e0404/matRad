@@ -33,8 +33,8 @@ classdef MatRad_Config < handle
         messageLog = {};
     end
     
-    properties (Constant)
-        matRadRoot = fileparts(mfilename('fullpath'));
+    properties (SetAccess = private)
+        matRadRoot
     end
     
     methods (Access = private)
@@ -42,7 +42,9 @@ classdef MatRad_Config < handle
             %MatRad_Config Constructs an instance of this class.             
             %  The configuration is implemented as a singleton and used globally
             %  Therefore its constructor is private
-            %  For instantiation, use the static MatRad_Config.instance();           
+            %  For instantiation, use the static MatRad_Config.instance();
+            
+            obj.matRadRoot = fileparts(mfilename('fullpath'));
             obj.setDefaultProperties();           
         end
                 
