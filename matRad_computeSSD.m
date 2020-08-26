@@ -39,7 +39,7 @@ end
 boolShowWarning = true;
 
 % set density threshold for SSD computation
-densityThreshold = matRad_cfg.propDoseCalc.ssdDensityThreshold;
+densityThreshold = matRad_cfg.propDoseCalc.defaultSsdDensityThreshold;
 
 if strcmp(mode,'first')
     
