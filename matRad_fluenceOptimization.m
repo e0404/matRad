@@ -221,7 +221,7 @@ optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 wOpt = optimizer.wResult;
 info = optimizer.resultInfo;
 
-resultGUI = matRad_calcCubes(wOpt,dij,cst);
+resultGUI = matRad_calcCubes(wOpt,dij);
 resultGUI.wUnsequenced = wOpt;
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
