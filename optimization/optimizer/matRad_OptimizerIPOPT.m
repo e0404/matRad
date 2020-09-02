@@ -35,7 +35,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             %   Construct an instance of the IPOPT optimizer (mex
             %   interface)
             
-            global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+            matRad_cfg = MatRad_Config.instance();
             
             obj.wResult = [];
             obj.resultInfo = [];
@@ -107,7 +107,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         end
         
         function obj = optimize(obj,w0,optiProb,dij,cst)
-            global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+            matRad_cfg = MatRad_Config.instance();
             
             % set optimization options            
             
@@ -237,7 +237,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         end
         
         function flag = iterFunc(obj,iter,objective,~,~)
-            global matRad_cfg; 
+             
             obj.allObjectiveFunctionValues(iter + 1) = objective;
             %We don't want the optimization to crash because of drawing
             %errors

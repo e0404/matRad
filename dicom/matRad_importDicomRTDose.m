@@ -29,6 +29,8 @@ function [ resultGUI ] = matRad_importDicomRTDose(ct, rtDoseFiles, pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 %% import and interpolate dose files
 % number of dosefiles
 numDoseFiles = size(rtDoseFiles,1);
@@ -47,7 +49,13 @@ for i = 1 : numDoseFiles
     itemName = strcat('Item_',num2str(i));
     doseTypeHelper      = dose.(itemName).dicomInfo.DoseType;
     doseSumHelper       = dose.(itemName).dicomInfo.DoseSummationType;
-    doseInstanceHelper  = dose.(itemName).dicomInfo.InstanceNumber;
+    
+    %Field is not always existing
+    if isfield(dose.(itemName).dicomInfo,'InstanceNumber')
+        doseInstanceHelper  = dose.(itemName).dicomInfo.InstanceNumber;
+    else
+        doseInstanceHelper = [];
+    end
     
     if strncmpi(doseTypeHelper,'PHYSICAL',6)
         doseTypeHelper = 'physicalDose';
@@ -60,7 +68,7 @@ for i = 1 : numDoseFiles
         if exist('pln','var') 
             dose.(itemName).cube = dose.(itemName).cube / pln.numOfFractions;
         else
-            warning('DICOM dose given as PLAN, but no pln struct available to compute fraction dose! Assuming 1 fraction!');
+            matRad_cfg.dispWarning('DICOM dose given as PLAN, but no pln struct available to compute fraction dose! Assuming 1 fraction!');
         end
     end
         

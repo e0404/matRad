@@ -14,7 +14,7 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set search path
-global matRad_cfg;
+
 matRad_cfg = MatRad_Config.instance();
 
 addpath(genpath(matRad_cfg.matRadRoot));

@@ -28,7 +28,7 @@ function stf = matRad_computeSSD(stf,ct,mode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg;
+
 matRad_cfg = MatRad_Config.instance();
 
 if nargin < 3
@@ -39,7 +39,7 @@ end
 boolShowWarning = true;
 
 % set density threshold for SSD computation
-densityThreshold = matRad_cfg.propDoseCalc.ssdDensityThreshold;
+densityThreshold = matRad_cfg.propDoseCalc.defaultSsdDensityThreshold;
 
 if strcmp(mode,'first')
     

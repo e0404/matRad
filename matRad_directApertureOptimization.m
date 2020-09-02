@@ -36,7 +36,7 @@ function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apert
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg;
+
 matRad_cfg = MatRad_Config.instance();
 
 % adjust overlap priorities
@@ -99,7 +99,7 @@ apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(aperture
 
 % logging final results
 matRad_cfg.dispInfo('Calculating final cubes...\n');
-resultGUI = matRad_calcCubes(apertureInfo.bixelWeights,dij,cst);
+resultGUI = matRad_calcCubes(apertureInfo.bixelWeights,dij);
 resultGUI.w    = apertureInfo.bixelWeights;
 resultGUI.wDAO = apertureInfo.bixelWeights;
 resultGUI.apertureInfo = apertureInfo;

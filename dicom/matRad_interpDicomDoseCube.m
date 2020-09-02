@@ -92,7 +92,8 @@ dose.dicomInfo.SliceThickness          = target_resolution.z;
 dose.dicomInfo.ImageOrientationPatient = doseInfo.ImageOrientationPatient;
 dose.dicomInfo.DoseType                = doseInfo.DoseType;
 dose.dicomInfo.DoseSummationType       = doseInfo.DoseSummationType;
-dose.dicomInfo.InstanceNumber          = doseInfo.InstanceNumber;
+%dose.dicomInfo.InstanceNumber          = doseInfo.InstanceNumber; %Not
+%always given
 dose.dicomInfo.SOPClassUID             = doseInfo.SOPClassUID;
 dose.dicomInfo.SOPInstanceUID          = doseInfo.SOPInstanceUID;
 dose.dicomInfo.ReferencedRTPlanSequence = doseInfo.ReferencedRTPlanSequence;

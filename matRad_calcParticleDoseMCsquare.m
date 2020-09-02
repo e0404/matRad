@@ -35,7 +35,7 @@ function dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nCasePerBixel,calc
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg;
+
 matRad_cfg = MatRad_Config.instance();
 
 % check if valid machine
@@ -45,7 +45,7 @@ end
 
 if nargin < 5
     % set number of particles simulated per pencil beam
-    nCasePerBixel = matRad_cfg.propMC.MCsquare_defaultHistories;
+    nCasePerBixel = matRad_cfg.propMC.particles_defaultHistories;
     matRad_cfg.dispInfo('Using default number of Histories per Bixel: %d\n',nCasePerBixel);
 end
 

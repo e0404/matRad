@@ -23,7 +23,7 @@ function obj = matRad_exportDicomRTStruct(obj)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+ matRad_cfg = MatRad_Config.instance();
 matRad_cfg.dispInfo('Exporting DICOM RTStruct...\n');
 
 env = matRad_getEnvironment();
