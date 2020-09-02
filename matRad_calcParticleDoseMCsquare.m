@@ -311,7 +311,7 @@ else
         dij.LET{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
                                     cube(VdoseGrid), ...
                                     dij.doseGrid.numOfVoxels,1);
-        dij.MC_tallies{end+1} = 'LET';
+        dij.MC_tallies{1} = 'LET';
     end
 end
 

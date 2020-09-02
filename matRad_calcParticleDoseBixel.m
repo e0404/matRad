@@ -57,7 +57,7 @@ if ~isfield(baseData,'sigma')
 else
     
     % interpolate depth dose and sigma
-    X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths);
+    X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths,'extrap');
 
     % set dose for query > tabulated depth dose values to zero
     X(radDepths > max(depths),1) = 0;

@@ -225,8 +225,8 @@ for i = 1:length(stf) % loop over all beams
                     end
                     
                     if ~isfield(machine.meta, 'fitAirOffset') 
-                        fitAirOffset = BAMStoIsoDist; %By default we assume that the base data was fitted to a phantom with surface at isocenter
-                        matRad_cfg.dispInfo('Asked for correction of Base Data Air Offset, but no value found. Using default BAMStoIsoDist of %f mm\n.',BAMStoIsoDist);
+                        fitAirOffset = 0; %By default we assume that the base data was fitted to a phantom with surface at isocenter
+                        matRad_cfg.dispInfo('Asked for correction of Base Data Air Offset, but no value found. Using default value of %f mm\n.',fitAirOffset);
                     else
                         fitAirOffset = machine.meta.fitAirOffset;
                     end
