@@ -432,9 +432,35 @@ classdef MatRad_TopasConfig < handle
                 fprintf(fileID,'d:Sim/GantryAngle = %f deg\n',stf(beamIx).gantryAngle);
                 fprintf(fileID,'d:Sim/CouchAngle = %f deg\n',stf(beamIx).couchAngle);
                 
+                % initialize time feature
                 fprintf(fileID,'d:Tf/TimelineStart = 0. ms\n');
                 fprintf(fileID,'d:Tf/TimelineEnd = %i ms\n', 10 * cutNumOfBixel);
                 fprintf(fileID,'i:Tf/NumberOfSequentialTimes = %i\n', cutNumOfBixel);
+                
+                if isfield(baseData.machine.data,'energySpectrum') && obj.useEnergySpectrum
+                    
+                    obj.matRad_cfg.dispInfo('Beam energy spectrum available\n');
+                    energySpectrum = [baseData.machine.data(:).energySpectrum];
+                    nbSpectrumPoints = length(energySpectrum(1).energy_MeVpN);
+                    
+                    [~,energyIx] = ismember([dataTOPAS.NominalEnergy],[baseData.machine.data.energy]);
+                    
+                    fprintf(fileID,'s:So/PencilBeam/BeamEnergySpectrumType = "Continuous"\n');
+                    fprintf(fileID,'dv:So/PencilBeam/BeamEnergySpectrumValues = %d %s MeV\n',nbSpectrumPoints,strtrim(sprintf('Tf/Beam/EnergySpectrum/Energy/Point%03d/Value ',1:nbSpectrumPoints)));
+                    fprintf(fileID,'uv:So/PencilBeam/BeamEnergySpectrumWeights = %d %s\n',nbSpectrumPoints,strtrim(sprintf('Tf/Beam/EnergySpectrum/Weight/Point%03d/Value ',1:nbSpectrumPoints)));
+                    points_energy = reshape([energySpectrum(energyIx).energy_MeVpN],[],length(energyIx));
+                    points_weight = reshape([energySpectrum(energyIx).weight],[],length(energyIx));
+                    for spectrumPoint=1:nbSpectrumPoints
+                        fprintf(fileID,'s:Tf/Beam/EnergySpectrum/Energy/Point%03d/Function = "Step"\n',spectrumPoint);
+                        fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Energy/Point%03d/Times = Tf/Beam/Spot/Times ms\n',spectrumPoint);
+                        fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Energy/Point%03d/Values = %d %s MeV\n',spectrumPoint,cutNumOfBixel,strtrim(sprintf('%f ',particleA*points_energy(spectrumPoint,:))));
+                        fprintf(fileID,'s:Tf/Beam/EnergySpectrum/Weight/Point%03d/Function = "Step"\n',spectrumPoint);
+                        fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Weight/Point%03d/Times = Tf/Beam/Spot/Times ms\n',spectrumPoint);
+                        fprintf(fileID,'uv:Tf/Beam/EnergySpectrum/Weight/Point%03d/Values = %d %s\n',spectrumPoint,cutNumOfBixel,strtrim(sprintf('%f ',points_weight(spectrumPoint,:))));
+                    end
+                    
+                end
+                
                 fprintf(fileID,'dv:Tf/Beam/Spot/Times = %i ', cutNumOfBixel);
                 fprintf(fileID,num2str(linspace(10,cutNumOfBixel*10,cutNumOfBixel)));
                 fprintf(fileID,' ms\n');
