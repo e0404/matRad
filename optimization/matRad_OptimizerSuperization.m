@@ -14,12 +14,12 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
         tol_violation {mustBeNumeric, mustBePositive}      = 1e-20;
         accepted_violation {mustBeNumeric, mustBePositive} = 1e-20;
         num_reductions {mustBeInteger}  = 2;
+        weighted = false;
         
     end
     
     properties (Access = private)
-    A_norm; 
-    M; % temp variable for the feasibility seeker
+    M; % temp variables for the feasibility seeker
     end
     
     
@@ -30,7 +30,6 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             
             obj.wResult = [];
             obj.resultInfo = struct();
-            obj.A_norm = [];
             obj.M = [];
             
             % Overwrite default values with values provided in pln.propOpt,
@@ -59,7 +58,13 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                 
         function obj = optimize(obj, x_0,  optiProb, dij, cst)
             
-            [A, b, c] = obj.getlinearinequalities(dij ,cst);
+            if obj.weighted
+                fprintf("Getting linear inequalities and weights from cst. \n")
+                [A, b, c, A_norm, weights] = obj.getvariables(dij ,cst);
+            else
+                fprintf("Getting linear inequalities from cst. \n")
+                [A, b, c, A_norm, ~] = obj.getvariables(dij ,cst);
+            end
             
             % Check if inequalities are present
             
@@ -68,7 +73,6 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             elseif strcmp(obj.feasibility_seeker, 'AMS_sequential') && size(A, 2)>50000
                 warning("sequential AMS does not work well for many voxels. Consider unsing simultaneous AMS.")
             end
-            
             
             fprintf("Starting optimization ... \n")
             
@@ -99,10 +103,10 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             for i=0:obj.max_iter+1
                 
                 %Calculation of performance measures
-                res = obj.residual(x, A, b, c);
+                violation = (max(0, x'*A-b')+ max(0, c'-x'*A))'./A_norm; 
                 obj.resultInfo.obj_values(i+1) = f(x);
-                obj.resultInfo.norm2_violations(i+1) = (1/n_A)*norm(res);
-                obj.resultInfo.max_violations(i+1) = norm(res, 'inf');
+                obj.resultInfo.norm2_violations(i+1) = (1/n_A)*norm(violation);
+                obj.resultInfo.max_violations(i+1) = norm(violation, 'inf');
                 obj.resultInfo.betas(i+1) = beta;
                 
                 if mod(i ,10)==0
@@ -116,19 +120,19 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                  obj.resultInfo.betas(i+1)]));
 
                 %Stopping rules
-                if (i ~= 0 ... 
-                && (obj.resultInfo.norm2_violations(i+1) < obj.accepted_violation) ...
-                && ((obj.resultInfo.obj_values(i)-obj.resultInfo.obj_values(i+1))/max(1, obj.resultInfo.obj_values(i))< obj.tol_obj))
-                    terminated = true;
-                    obj.resultInfo.stoppedby = "Acceptable_solution";
-                    fprintf('Acceptable solution found. Terminating now... \n')
-                elseif (i ~= 0  ... 
-                && ((obj.resultInfo.norm2_violations(i)-obj.resultInfo.norm2_violations(i+1))/max(1, obj.resultInfo.norm2_violations(i)) < obj.tol_violation) ...
-                && ((obj.resultInfo.obj_values(i)-obj.resultInfo.obj_values(i+1))/max(1, obj.resultInfo.obj_values(i))< obj.tol_obj))
-                    terminated = true;
-                    obj.resultInfo.stoppedby = "No_change";
-                    fprintf('No significant change in residual or objectiv function. Terminating now... \n')
-                elseif toc(startSuper) > obj.max_time
+                %if (i ~= 0 ... 
+                %&& (obj.resultInfo.norm2_violations(i+1) < obj.accepted_violation) ...
+                %&& ((obj.resultInfo.obj_values(i)-obj.resultInfo.obj_values(i+1))/max(1, obj.resultInfo.obj_values(i))< obj.tol_obj))
+                 %   terminated = true;
+                 %   obj.resultInfo.stoppedby = "Acceptable_solution";
+                 %   fprintf('Acceptable solution found. Terminating now... \n')
+                %elseif (i ~= 0  ... 
+                %&& ((obj.resultInfo.norm2_violations(i)-obj.resultInfo.norm2_violations(i+1))/max(1, obj.resultInfo.norm2_violations(i)) < obj.tol_violation) ...
+                %&& ((obj.resultInfo.obj_values(i)-obj.resultInfo.obj_values(i+1))/max(1, obj.resultInfo.obj_values(i))< obj.tol_obj))
+                %    terminated = true;
+                %    obj.resultInfo.stoppedby = "No_change";
+                %    fprintf('No significant change in residual or objectiv function. Terminating now... \n')
+                if toc(startSuper) > obj.max_time
                     terminated = true;
                     obj.resultInfo.stoppedby = "Time_exceeded";
                     fprintf('Time exceeded. Terminating now...\n')
@@ -149,7 +153,7 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                     obj.wResult = x;
                     
                     % Deconstruct temp variables
-                    clear obj.m obj.A_norm
+                    clear obj.M obj.A_norm obj.weights 
                     return
                 end
                 
@@ -170,28 +174,47 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                         end
                     end
                 end
-                
-                x = seeker(x, A, b, c);
+                if obj.weighted
+                    x = seeker(x, A, b, c, A_norm, weights);
+                else
+                    x = seeker(x, A, b, c, A_norm);
+                end
             end
 
         end
         
-        function [A, b, c] = getlinearinequalities(obj, dij,cst)
-            fprintf("Obtaining linear inequalities from cst \n")
+        function [A, b, c, A_norm, weights] = getvariables(obj, dij,cst)
+           
             b=zeros(dij.ctGrid.numOfVoxels, 1); 
             c=zeros(dij.ctGrid.numOfVoxels, 1);
+            weights = zeros(dij.ctGrid.numOfVoxels, 1);
             idxs=[];
             
             for i=1:size(cst, 1)
                for j=1:numel(cst{i, 6})
                    if strcmp(cst{i, 6}{j}.name, 'Min/Max dose constraint')
+                        
                         cl=cst{i, 6}{j}.parameters{1, 1};
                         cu=cst{i, 6}{j}.parameters{1, 2};
+                        if obj.weighted
+                            if ( strcmp(cst{i, 6}{j}.name, 'Min/Max dose constraint') && ...
+                            numel(cst{i, 6}{j}.parameters) == 4 )
+                                weight = cst{i, 6}{j}.parameters{1, 4};  
+                            elseif ( strcmp(cst{i, 6}{j}.name, 'Min/Max dose constraint') && ...
+                            numel(cst{i, 6}{j}.parameters) ~= 4 )
+                                error("Either you forgot to set weights or mixed weighted and unweighted constraints")
+                            end
+                            
+                        end
+                        
                         idx = cst{i, 4}{1, 1};
                         idxs=[idxs; idx];
                         if ~isempty(idx)
                             c(idx)=cl;
                             b(idx)=cu;
+                            if obj.weighted
+                                weights(idx) = weight;
+                            end
                        end
                    end
                end
@@ -202,65 +225,61 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             A=A(:, idxs);
             b=b(idxs);
             c=c(idxs);
+            weights = weights(idxs);
             
             %Remove all voxels that are not effected by a ray.
+            A_norm = sum(A.^2, 1);
             idxs = sum(A.^2, 1)>0;
             A=A(:, idxs);
             b=b(idxs);
             c=c(idxs);
-          
+            weights = weights(idxs);
+            A_norm = A_norm(idxs)';
+            
         end
         
-        function [x] = AMS_sim(obj, x, A, b, c)
+        function [x] = AMS_sim(obj, x, A, b, c, A_norm, weights)
             
-            L = obj.lambda; 
-            
-            if isempty(obj.M)  % Set M if not already set
-                obj.M = A*obj.A_norm; 
+            % Precalculat persistent variables
+            if isempty(obj.M) && nargin == 6
+                obj.M = obj.lambda*A./A_norm'; 
+            elseif isempty(obj.M) && nargin == 7
+                weights = obj.lambda*weights;
+                obj.M = A.*(weights./A_norm)';
             end
             
             A_x= x'*A;
             res_b=b-A_x';
             res_c=A_x'-c;
-            x=x+(L/sum(res_b<0))*obj.M(:, res_b<0)*res_b(res_b<0)-(L/sum(res_c<0))*obj.M(:, res_c<0)*res_c(res_c<0);
+            x=x+(1/sum(res_b<0))*obj.M(:, res_b<0)*res_b(res_b<0)-(1/sum(res_c<0))*obj.M(:, res_c<0)*res_c(res_c<0);
             x(x<0)=0;   
-            
         end
         
         
-        function [x] = AMS_sequential(obj, x, A, b, c)
-            
-            L = obj.lambda; 
+        function [x] = AMS_sequential(obj, x, A, b, c, A_norm, weights)
             
             % Precalculat persistent variables
-            if isempty(obj.M)
-                obj.M = A*obj.A_norm; 
+            if isempty(obj.M) && nargin == 6
+                obj.M = obj.lambda*A./A_norm'; 
+            elseif isempty(obj.M) && nargin == 7
+                weights = obj.lambda*weights;
+                obj.M = A.*(weights./A_norm)';
             end
-                                   
+                               
             for i=1:size(A, 2)
                 
                 A_x = x'*A(:, i);
                 res_b=b(i)-A_x;
                 res_c=A_x-c(i);
-                
+               
                 if res_b < 0
-                    x=x+L*(obj.M(:, i)*res_b);
+                    x=x+obj.M(:, i)*res_b;
                 elseif res_c <0
-                    x=x-L*(obj.M(:, i)*res_c);
+                    x=x-obj.M(:, i)*res_c;
                 end
-                
-            end
+             end
             
             x(x<0) = 0;
-        end
-        
-        
-        function [res] = residual(obj, x, A, b, c)
-            
-            if isempty(obj.A_norm) % Set A_norm if not already set
-                obj.A_norm = diag(sum(A.^2, 1).^-1);
-            end  
-            res=max(0, obj.A_norm*(x'*A-b')') + max(0, obj.A_norm*(c'-x'*A)');
         end
     end
         

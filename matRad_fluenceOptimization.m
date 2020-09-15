@@ -210,7 +210,9 @@ switch pln.propOpt.optimizer
     case 'fmincon'
         optimizer = matRad_OptimizerFmincon;
     case 'Superization'
-	optimizer = matRad_OptimizerSuperization(pln);
+        optimizer = matRad_OptimizerSuperization(pln);
+    case 'FS'
+        optimizer = matRad_OptimizerFS(pln);
     otherwise
         warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
         optimizer = matRad_OptimizerIPOPT;

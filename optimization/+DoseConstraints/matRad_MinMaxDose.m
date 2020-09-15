@@ -7,7 +7,7 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
     
     properties (Constant)
         name = 'Min/Max dose constraint';
-        parameterNames = {'d^{min}', 'd^{max}','method'};
+        parameterNames = {'d^{min}', 'd^{max}','method', 'penalty'};
         parameterTypes = {'dose','dose',{'approx','voxelwise'}};
     end
     
@@ -17,7 +17,7 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
     end
     
     methods
-        function obj = matRad_MinMaxDose(minDose,maxDose,method)
+        function obj = matRad_MinMaxDose(minDose,maxDose,method, penalty)
             
             %If we have a struct in first argument
             if nargin == 1 && isstruct(minDose)
@@ -47,6 +47,10 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
                 end
                 
                 obj.parameters{3} = methodIx;
+                
+                if nargin ==4 && isscalar(penalty)
+                    obj.parameters{4} = penalty;
+                end
                 
                 if nargin >= 2 && isscalar(maxDose)
                     obj.parameters{2} = maxDose;
