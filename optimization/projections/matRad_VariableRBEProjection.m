@@ -90,5 +90,12 @@ classdef matRad_VariableRBEProjection < matRad_EffectProjection
             end
         end
     end
+    
+    methods (Static)
+        function optiFunc = setBiologicalDosePrescriptions(optiFunc,~,~)
+            %Do nothing here to overwrite the behavior of the Effect
+            %projection, since we have unit GyRBE here
+        end
+    end
 end
 

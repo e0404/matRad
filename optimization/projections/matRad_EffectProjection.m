@@ -72,6 +72,14 @@ classdef matRad_EffectProjection < matRad_BackProjection
                 wGrad = vBias + mPsi;
                 wGrad = wGrad + 2 * dOmegaVgrad;
             end            
+        end        
+    end
+    
+    methods (Static)
+        function optiFunc = setBiologicalDosePrescriptions(optiFunc,alphaX,betaX)
+            doses = optiFunc.getDoseParameters();    
+            effect = alphaX*doses + betaX*doses.^2;        
+            optiFunc = optiFunc.setDoseParameters(effect);
         end
     end
 end

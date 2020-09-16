@@ -75,14 +75,8 @@ for  i = 1:size(cst,1)
             % only perform gradient computations for objectiveectives
             if isa(objective,'DoseObjectives.matRad_DoseObjective')
 
-                % if we have effect optimization, temporarily replace doses with effect
-                if isequal(optiProb.quantityOpt,'effect') && (~isequal(objective.name, 'Mean Dose') && ~isequal(objective.name, 'EUD'))
-                    doses = objective.getDoseParameters();
-                
-                    effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
-                    
-                    objective = objective.setDoseParameters(effect);
-                end
+                % rescale dose parameters to biological optimization quantity if required
+                objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
                 
                 robustness = objective.robustness;
                 

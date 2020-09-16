@@ -3,7 +3,7 @@ function resultGUI = matRad_calcCubes(w,dij,scenNum)
 % as result container and for visualization in matRad's GUI
 %
 % call
-%   resultGUI = matRad_calcCubes(w,dij,cst)
+%   resultGUI = matRad_calcCubes(w,dij,scenNum)
 %
 % input
 %   w:       bixel weight vector

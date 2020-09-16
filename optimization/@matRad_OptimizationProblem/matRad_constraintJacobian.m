@@ -69,19 +69,12 @@ for i = 1:size(cst,1)
             %if ~isempty(strfind(obj.type,'constraint'))
             if isa(obj,'DoseConstraints.matRad_DoseConstraint')
                 
-                % compute reference
-                if isequal(optiProb.quantityOpt,'effect') && ...
-                    (~isequal(obj.name, 'max mean dose constraint') && ~isequal(obj.name, 'min mean dose constraint') && ...
-                    ~isequal(obj.name, 'min EUD constraint')       && ~isequal(obj.name, 'max EUD constraint'))
-                     
-                    doses = obj.getDoseParameters();
-                
-                    effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
-                    
-                    obj = obj.setDoseParameters(effect);
-                end
+                % rescale dose parameters to biological optimization quantity if required
+                objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
                 
                 % if conventional opt: just add constraints of nominal dose
+                % we don't support constraints in scenario based
+                % optimization atm
                 %if strcmp(cst{i,6}{j}.robustness,'none')
 
                     d_i = d{scenario}(cst{i,4}{ctScen});
@@ -141,6 +134,7 @@ end
 
 % Calculate jacobian with dij projections
 for i = 1:dij.numOfScenarios
+
     % enter if statement also for protons using a constant RBE
     if isa(optiProb.BP,'matRad_DoseProjection')
         if ~isempty(DoseProjection)
@@ -152,6 +146,7 @@ for i = 1:dij.numOfScenarios
             jacobLogical          = (scenID == i);
             jacob(jacobLogical,:) = DoseProjection(:,jacobLogical)' * dij.physicalDose{i} * dij.RBE;
         end
+
     elseif isa(optiProb.BP,'matRad_EffectProjection')
         
         if ~isempty(mSqrtBetaDoseProjection) && ~isempty(mAlphaDoseProjection)

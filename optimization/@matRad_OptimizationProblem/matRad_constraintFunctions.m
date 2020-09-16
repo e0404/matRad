@@ -55,18 +55,9 @@ for  i = 1:size(cst,1)
             % only perform computations for constraints
             % if ~isempty(strfind(obj.type,'constraint'))
             if isa(obj,'DoseConstraints.matRad_DoseConstraint')
-                % if we have effect optimization, temporarily replace doses with effect
-                % Maybe we should put some switch into the classes for that
-                if isequal(optiProb.quantityOpt,'effect') && ...
-                        ~isequal(obj.name, 'max mean dose constraint') && ~isequal(obj.name, 'min mean dose constraint') && ...
-                        ~isequal(obj.name, 'min EUD constraint')       && ~isequal(obj.name, 'max EUD constraint')
-                    
-                    doses = obj.getDoseParameters();
-                    
-                    effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
-                    
-                    obj = obj.setDoseParameters(effect);
-                end
+                
+                % rescale dose parameters to biological optimization quantity if required
+                objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
                 
                 % if conventional opt: just add constraints of nominal dose
                 %if strcmp(cst{i,6}(j).robustness,'none')
@@ -78,8 +69,8 @@ for  i = 1:size(cst,1)
                 
                 
                 % if rob opt: add constraints of all dose scenarios
-            %{
-            elseif strcmp(cst{i,6}(j).robustness,'probabilistic') || strcmp(cst{i,6}(j).robustness,'VWWC') || strcmp(cst{i,6}(j).robustness,'COWC')
+                %{
+                elseif strcmp(cst{i,6}(j).robustness,'probabilistic') || strcmp(cst{i,6}(j).robustness,'VWWC') || strcmp(cst{i,6}(j).robustness,'COWC')
                 
                 for k = 1:options.numOfScenarios
                     
@@ -91,7 +82,7 @@ for  i = 1:size(cst,1)
                 
                 
             else
-            %}    
+                %}
             end
             
         end % if we are a constraint

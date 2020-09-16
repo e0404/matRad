@@ -43,7 +43,7 @@ classdef matRad_BackProjection
             obj.dOmegaV = [];
             obj.wGrad = [];            
             obj.wGradProb = [];
-        end
+        end       
         
         function obj = compute(obj,dij,w)
             if ~isequal(obj.wCache,w)
@@ -52,7 +52,6 @@ classdef matRad_BackProjection
                 obj.wCache = w;                
             end
         end
-        
         
         function obj = computeGradient(obj,dij,doseGrad,w)
             if ~isequal(obj.wGradCache,w)
@@ -68,7 +67,6 @@ classdef matRad_BackProjection
             end
         end
         
-        
         function d = GetResult(obj)
             d = obj.d;
         end
@@ -77,7 +75,7 @@ classdef matRad_BackProjection
             dExp = obj.dExp;
             dOmegaV = obj.dOmegaV;
         end
-        
+
         function wGrad = GetGradient(obj)
             wGrad = obj.wGrad;
         end
@@ -113,6 +111,7 @@ classdef matRad_BackProjection
             wGrad(obj.scenarios) = arrayfun(@(scen) projectSingleScenarioGradientProb(obj,dij,dExpGrad,dOmegaVgrad,scen,w),obj.scenarios,'UniformOutput',false);
         end
     end
+   
     
     %These should be abstract methods, however Octave can't parse them. As soon 
     %as Octave is able to do this, they should be made abstract again 
@@ -131,6 +130,13 @@ classdef matRad_BackProjection
         
         function [dExp,dOmegaV] = projectSingleScenarioGradientProb(obj,dij,dExpGrad,dOmegaVgrad,scen,w)
             %warning('');
+        end
+    end
+    
+    methods (Static)
+        function optiFunc = setBiologicalDosePrescriptions(optiFunc,alphaX,betaX)
+            %Does nothing in a usual normal setting but return the original
+            %optiFunc
         end
     end
 end

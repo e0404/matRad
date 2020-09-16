@@ -60,8 +60,12 @@ matRad_unitTestTextManipulation(testScripts,'display(','%%%%%%%%%%%%%%% REMOVED 
 %Running tests
 for testIx = 1:length(testScriptNames)
     fprintf('Running Integration Test for ''%s''\n',names{testIx});
-    run(testScripts{testIx});
-    clear ct cst pln stf dij resultGUI; %Make sure the workspace is somewhat clean
-    delete(testScripts{testIx}); %Delete after successful run
+    try
+        run(testScripts{testIx});
+        clear ct cst pln stf dij resultGUI; %Make sure the workspace is somewhat clean
+        delete(testScripts{testIx}); %Delete after successful run
+    catch ME
+        matRad_cfg.dispError('Experiencd an error during testing of %s. Error-Message:\n %s',testScripts{testIx},ME.message);
+    end
 end
     

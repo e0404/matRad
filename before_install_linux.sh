@@ -3,9 +3,9 @@
 sudo chmod +x runtests.sh
 sudo chmod +x MCsquare/bin/MCsquare_linux
 
-sudo apt-get update -qq
-sudo apt-get install gdb # to capture backtrace of eventual failures
-# - sudo apt-get purge libopenblas-base # fixes PPA Octave 4.0 crash on Travis
+sudo apt-get update -qq --yes --force-yes
+sudo apt-get install gdb --yes --force-yes # to capture backtrace of eventual failures
+# - sudo apt-get purge libopenblas-base --yes --force-yes # fixes PPA Octave 4.0 crash on Travis
 
 # add PPA repo to use latest GNU Octave release
 sudo add-apt-repository ppa:octave/stable --yes
@@ -14,7 +14,7 @@ sudo apt-get update --yes --force-yes
 # dependencies
 sudo apt-get install octave --yes --force-yes
 sudo apt-get install liboctave-dev --yes --force-yes
-sudo apt-get install libgdcm2-dev #for the octave dicom package
+sudo apt-get install libgdcm2-dev --yes --force-yes #for the octave dicom package
 octave --no-gui --eval "pkg install -forge dicom"
 sudo apt-get install git --yes --force-yes
 export MATRAD=`pwd`
@@ -48,11 +48,11 @@ sudo make test
 sudo make install
 sudo ldconfig
 
-sudo apt-get install gnuplot-x11
+sudo apt-get install gnuplot-x11 --yes --force-yes
 # clone repository with IpOpt Interface
-git clone https://github.com/ebertolazzi/mexIPOPT
+git clone -b '1.0.1' --single-branch --depth 1 https://github.com/ebertolazzi/mexIPOPT
 
 # compile interface
-mkoctfile --mex -ImexIPOPT/src -I/usr/local/include/coin mexIPOPT/src/ipopt.cc mexIPOPT/src/IpoptInterfaceCommon.cc -v -DMATLAB_MEXFILE -DHAVE_CSTDDEF -DIPOPT_INTERFACE_MISSING_COPY_N -Wl,--no-undefined -lipopt -lcoinmumps -lcoinlapack -lcoinblas -L/usr/local/lib -std=gnu++11
+mkoctfile --mex -ImexIPOPT/toolbox/src -I/usr/local/include/coin mexIPOPT/toolbox/src/ipopt.cc mexIPOPT/toolbox/src/IpoptInterfaceCommon.cc -v -DMATLAB_MEXFILE -DHAVE_CSTDDEF -DIPOPT_INTERFACE_MISSING_COPY_N -Wl,--no-undefined -lipopt -lcoinmumps -lcoinlapack -lcoinblas -L/usr/local/lib -std=gnu++11
 sudo cp ipopt* $MATRAD/optimization
 cd $MATRAD
