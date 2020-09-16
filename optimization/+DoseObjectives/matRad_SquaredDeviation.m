@@ -1,8 +1,12 @@
 classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
     % matRad_SquaredDeviation Implements a penalized least squares objective
     %   See matRad_DoseObjective for interface description
+    %
+    %   References 
+    %     -
+    %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+    %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
     % Copyright 2015 the matRad development team.

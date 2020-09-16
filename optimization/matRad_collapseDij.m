@@ -6,10 +6,10 @@ function dijNew = matRad_collapseDij(dij)
 %   dijNew = matRad_collapseDij(dij)
 %
 % input
-%   dij:            dose influence matrix
+%   dij:    dose influence matrix
 %
 % output
-%   dij:            collapsed dose influence matrix
+%   dijNew: collapsed dose influence matrix
 %
 % References
 %   -

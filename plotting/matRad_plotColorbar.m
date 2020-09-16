@@ -8,13 +8,16 @@ function cBarHandle = matRad_plotColorbar(axesHandle,cMap,window,varargin)
 %
 % input
 %   axesHandle  handle to axes the colorbar will be attached to
-%   ctCube      corresponding colormap
+%   cMap        corresponding colormap
 %   window      colormap window (corresponds to clim)
 %   varargin    additional key-value pairs that will be forwarded to the
 %               MATLAB colorbar(__) call
 %
 % output
 %   cBarHandle  handle of the colorbar object
+%
+% References
+%   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

@@ -2,7 +2,8 @@ function [ixNew,bixelDoseNew] =  matRad_DijSampling(ix,bixelDose,radDepthV,rad_d
 % matRad dij sampling function. This function samples 
 % 
 % call
-%   [ixNew,bixelDoseNew] =  matRad_DijSampling(ix,bixelDose,radDepthV,rad_distancesSq,r0)
+%   [ixNew,bixelDoseNew] =
+%   matRad_DijSampling(ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)
 %
 % input
 %   ix:               indices of voxels where we want to compute dose influence data

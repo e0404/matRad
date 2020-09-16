@@ -4,6 +4,8 @@ function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdi
 %
 % call
 %   matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize)
+%   matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,
+%   tickdist)
 %
 % input
 %   axesHandle         handle to axes the slice should be displayed in
@@ -13,7 +15,10 @@ function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdi
 %   defaultFontSize    default font size as double value
 %
 % output
-%  
+%   -
+%
+% References
+%   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

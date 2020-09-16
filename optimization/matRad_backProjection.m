@@ -13,6 +13,9 @@ function d = matRad_backProjection(w,dij,options)
 % output
 %   d:       dose vector, effect vector or RBExDose vector 
 %
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 

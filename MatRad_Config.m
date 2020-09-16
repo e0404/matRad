@@ -1,4 +1,4 @@
-classdef MatRad_Config < handle
+classdef matRad_Config < handle
     %MatRad_Config MatRad Configuration class
     % This class is used globally through Matlab to handle default values and 
     % logging and is declared as global matRad_cfg.
@@ -19,7 +19,7 @@ classdef MatRad_Config < handle
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties
-        logLevel = 3;
+        logLevel = 3;   
         propDoseCalc;        
         propOpt;
         propMC;

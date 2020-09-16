@@ -3,6 +3,7 @@ function matRad_plotPlan3D(axesHandle,pln,stf)
 % more detailed field contours in visualization of the impinging beams.
 % 
 % call
+%  rotMat = matRad_plotPlan3D(axesHandle,pln)
 %  rotMat = matRad_plotPlan3D(axesHandle,pln,stf)
 %
 % input
@@ -12,6 +13,9 @@ function matRad_plotPlan3D(axesHandle,pln,stf)
 %               not empty, the function will use the ray position  
 %               information to plot more detailed field contours than with 
 %               pln only
+%
+% output
+%   -
 %
 % References
 %   -

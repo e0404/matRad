@@ -3,13 +3,14 @@ function structures = matRad_importDicomRtss(filename,dicomInfo,visBool)
 % file into a matlab struct
 % 
 % call
+%   structures = matRad_importDicomRtss(filename,dicomInfo)
 %   structures = matRad_importDicomRtss(filename,dicomInfo,visBool)
 %
 % input
 %   filename:       name of the rtss file
 %   dicomInfo:      meta information from the dicom ct files for sanity
 %                   checks
-%   visBool:        optional: turn on/off visualization
+%   visBool:        (optional) turn on/off visualization
 %
 % output
 %   structures:     struct containing names, numbers, colors, and

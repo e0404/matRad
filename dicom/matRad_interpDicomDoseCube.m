@@ -6,7 +6,7 @@ function [ dose ] = matRad_interpDicomDoseCube( ct, currDose )
 %
 % input
 %   ct:             ct imported by the matRad_importDicomCt function
-%   currDose:   	  one (of several) dose cubes which should be interpolated
+%   currDose:       one (of several) dose cubes which should be interpolated
 %
 % output
 %   dose:           struct with different actual current dose cube and several

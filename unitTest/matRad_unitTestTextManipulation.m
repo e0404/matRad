@@ -4,15 +4,18 @@ function matRad_unitTestTextManipulation(filename, string1, string2, path)
 % used in continuous integration builds.
 %
 % call
+%   matRad_unitTestTextManipulation(filename, string1, string2)
 %   matRad_unitTestTextManipulation(filename, string1, string2, path)
 %
 % input
 %     filename: file(s) to be manipulated, pass multiple files as cell array
-%     string1: string to be changed
-%     string2: string to be replaced
-%     path: (optional) path where the function is located. default is the
-%     parent directory '../'
+%     string1:  string to be changed
+%     string2:  string to be replaced
+%     path:     (optional) path where the function is located. default is the
+%               parent directory '../'
 %
+% output
+%   -
 %
 % References
 %   -   

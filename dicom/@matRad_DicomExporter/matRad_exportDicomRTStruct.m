@@ -8,7 +8,6 @@ function obj = matRad_exportDicomRTStruct(obj)
 %
 % References
 %   -
-%   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

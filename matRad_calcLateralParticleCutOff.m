@@ -3,17 +3,20 @@ function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,
 % pristine particle beam
 % 
 % call
-%   [ machine ] = matRad_calcLateralParticleCutOff( machine,CutOffLevel,visBool )
+%   [ machine ] = matRad_calcLateralParticleCutOff( machine,cutOffLevel,stf,visBool )
 %
 % input
-%   machine:         machine base data file
-%   cutOffLevel:     cut off level - number between 0 and 1
-%   visBool:         toggle visualization (optional)
+%   machine:        machine base data file
+%   cutOffLevel:    cut off level - number between 0 and 1
+%   stf:          	matRad steering information struct
+%   visBool:     	toggle visualization (optional)
 %
 % output
-%   machine:         machine base data file including an additional field representing the lateral
+%   machine:    	machine base data file including an additional field representing the lateral
 %                    cutoff
 %   
+% References
+%   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

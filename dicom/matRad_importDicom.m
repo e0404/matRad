@@ -3,7 +3,8 @@ function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
 % matRad's native data formats
 % 
 % call
-%   [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
+% [ct, cst, pln, resultGUI] = matRad_importDicom( files )  
+% [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
 %
 % input
 %   files:          list of files to be imported (will contain cts and rt

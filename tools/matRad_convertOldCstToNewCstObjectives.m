@@ -13,6 +13,9 @@ function newCst = matRad_convertOldCstToNewCstObjectives(cst)
 %   newCst  copy of the input cst with all old objectives struct arrays 
 %           replaced by cell arrays of Objective objects
 %
+% References
+%   -
+%
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

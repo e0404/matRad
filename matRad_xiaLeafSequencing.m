@@ -4,7 +4,8 @@ function resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels,visB
 % Medical Physics
 % 
 % call
-%   resultSequencing = matRad_xiaLeafSequencing(w,stf,pln,numOfLevels,visBool)
+%   resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels)
+%   resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
 %
 % input
 %   resultGUI:          resultGUI struct to which the output data will be added, if

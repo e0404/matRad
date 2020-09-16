@@ -5,6 +5,19 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
     % use log sum exp approximation, see appendix A in
     % http://scitation.aip.org/content/aapm/journal/medphys/41/8/10.1118/1.4883837
     
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2020 the matRad development team. 
+    % 
+    % This file is part of the matRad project. It is subject to the license 
+    % terms in the LICENSE file found in the top-level directory of this 
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % of the matRad project, including this file, may be copied, modified, 
+    % propagated, or distributed except according to the terms contained in the 
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
     properties (Constant)
         name = 'Min/Max dose constraint';
         parameterNames = {'d^{min}', 'd^{max}','method'};

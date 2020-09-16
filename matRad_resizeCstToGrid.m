@@ -2,7 +2,7 @@ function cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNe
 % matRad function to resize the ct to a given resolution
 % 
 % call
-%   cst = matRad_resizeCstToDoseResolution(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNew,vYgridNew,vZgridNew)
+%   cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNew,vYgridNew,vZgridNew)
 %
 % input
 %   cst:         matRad cst struct

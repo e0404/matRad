@@ -3,7 +3,7 @@ function isoCenter = matRad_getIsoCenter(cst,ct,visBool)
 % of interest that are labeled as target within the cst struct
 % 
 % call
-%   isoCenter = matRad_getIsoCenter(cst,ct,pln,visBool)
+%   isoCenter = matRad_getIsoCenter(cst,ct,visBool)
 %
 % input
 %   cst:        matRad cst struct

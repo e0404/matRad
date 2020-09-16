@@ -4,7 +4,7 @@ function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,vi
 % Discrete Applied Mathematics
 % 
 % call
-%   resultSequencing = matRad_engelSequencing(w,stf,pln,numOfLevels,visBool)
+%   resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
 %
 % input
 %   resultGUI:          resultGUI struct to which the output data will be added, if

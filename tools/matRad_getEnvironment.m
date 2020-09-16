@@ -5,6 +5,7 @@ function [env, versionString] = matRad_getEnvironment()
 %   [env, versionString] = matRad_getEnvironment()
 %
 % input
+%   -
 %   
 % output
 %   env:            outputs either 'MATLAB' or 'OCTAVE' as string

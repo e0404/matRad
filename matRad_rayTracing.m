@@ -3,7 +3,7 @@ function radDepthV = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)
 % segmentation
 % 
 % call
-%   [radDepthV,geoDistV] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)
+%   radDepthV = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)
 %
 % input
 %   stf:           matRad steering information struct of one beam

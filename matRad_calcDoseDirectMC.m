@@ -3,16 +3,19 @@ function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
 % calculation algorithms
 % 
 % call
+%   resultGUI = matRad_calcDoseDirecMC(ct,stf,pln,cst)
 %   resultGUI = matRad_calcDoseDirecMC(ct,stf,pln,cst,w)
+%   resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,nHistories)
+%   resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
 %
 % input
 %   ct:         ct cube
 %   stf:        matRad steering information struct
 %   pln:        matRad plan meta information struct
 %   cst:        matRad cst struct
-%   w:          optional (if no weights available in stf): bixel weight
+%   w:          (optional, if no weights available in stf): bixel weight
 %               vector
-%   nHistories: number of histories
+%   nHistories: (optional) number of histories
 %
 % output
 %   resultGUI:  matRad result struct

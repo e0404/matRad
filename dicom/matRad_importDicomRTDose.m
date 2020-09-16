@@ -3,10 +3,12 @@ function [ resultGUI ] = matRad_importDicomRTDose(ct, rtDoseFiles, pln)
 % 
 % call
 %   resultGUI = matRad_importDicomRTDose(ct, rtDoseFiles)
+%   resultGUI = matRad_importDicomRTDose(ct, rtDoseFiles, pln)
 %
 % input
 %   ct:             ct imported by the matRad_importDicomCt function
 %   rtDoseFiles:   	cell array of RTDOSE Dicom files
+%   pln:            (optional) matRad pln struct
 %
 % output
 %   resultGUI:      matRad resultGUI struct with different beams. Note that

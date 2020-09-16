@@ -3,6 +3,7 @@ function resultGUI = matRad_calcCubes(w,dij,scenNum)
 % as result container and for visualization in matRad's GUI
 %
 % call
+%   resultGUI = matRad_calcCubes(w,dij)
 %   resultGUI = matRad_calcCubes(w,dij,scenNum)
 %
 % input
@@ -13,7 +14,9 @@ function resultGUI = matRad_calcCubes(w,dij,scenNum)
 % output
 %   resultGUI: matRad result struct
 %
-
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

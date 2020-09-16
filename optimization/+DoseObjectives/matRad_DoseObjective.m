@@ -1,5 +1,4 @@
 classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % matRad_DoseObjective: Interface for optimization objectives
     %   This abstract base class provides the structure of optimization
     %   objectives like mean dose, squared deviation, EUD, dose-volume etc.

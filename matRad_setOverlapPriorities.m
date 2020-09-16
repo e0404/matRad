@@ -5,15 +5,15 @@ function [cst,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)
 % 
 % call
 %   cst = matRad_considerOverlap(cst)
-%   [cst, overlapPriorityCube] = matRad_setOverlapPriorities(cst,cubeDim)
+%   [cst, overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)
 %
 % input
 %   cst:        cst file
-%   ctDim:      dimension of the ct for overlap cube claculation (optional)
+%   ctDim:      (optional) dimension of the ct for overlap cube claculation 
 %
 % output
 %   cst:                updated cst file considering overlap priorities
-%   overlapPriorityCube cube visualizing the overlap priority (optional)
+%   overlapPriorityCube:(optional) cube visualizing the overlap priority 
 %
 % References
 %   -

@@ -3,6 +3,7 @@ function patches = matRad_plotVois3D(axesHandle,ct,cst,selection,cMap)
 % if the 3D-data is not stored in the CT, it will be commputed on the fly
 %
 % call
+%   patches = matRad_plotVois3D(axesHandle,ct,cst,selection)
 %   patches = matRad_plotVois3D(axesHandle,ct,cst,selection,cMap)
 %
 % input
@@ -17,6 +18,9 @@ function patches = matRad_plotVois3D(axesHandle,ct,cst,selection,cMap)
 %
 % output
 %   patches     patch objects created by the matlab 3D visualization
+%
+% References
+%   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

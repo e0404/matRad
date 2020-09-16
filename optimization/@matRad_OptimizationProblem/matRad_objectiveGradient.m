@@ -4,13 +4,13 @@ function weightGradient = matRad_objectiveGradient(optiProb,w,dij,cst)
 % squared deviation and DVH objectives
 % 
 % call
-%   g = matRad_gradFuncWrapper(w,dij,cst,optiProb)
+%   g = matRad_gradFuncWrapper(optiProb,w,dij,cst)
 %
 % input
+%   optiProb: option struct defining the type of optimization
 %   w:       bixel weight vector
 %   dij:     dose influence matrix
 %   cst:     matRad cst struct
-%   optiProb: option struct defining the type of optimization
 %
 % output
 %   g: gradient of objective function
