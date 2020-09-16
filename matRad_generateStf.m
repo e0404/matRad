@@ -29,7 +29,7 @@ function stf = matRad_generateStf(ct,cst,pln,visMode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+matRad_cfg = MatRad_Config.instance();
 
 matRad_cfg.dispInfo('matRad: Generating stf struct... ');
 

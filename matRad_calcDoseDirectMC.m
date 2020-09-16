@@ -33,7 +33,7 @@ function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg;
+
 matRad_cfg =  MatRad_Config.instance();
 
 calcDoseDirect = true;

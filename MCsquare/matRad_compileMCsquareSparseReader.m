@@ -31,7 +31,7 @@ function matRad_compileMCsquareSparseReader(dest,sourceFolder)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg; 
+ 
 matRad_cfg = MatRad_Config.instance();
 
 if nargin < 1

@@ -34,7 +34,7 @@ function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDi
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg;
+
 matRad_cfg = MatRad_Config.instance();
 
 % check if valid machine

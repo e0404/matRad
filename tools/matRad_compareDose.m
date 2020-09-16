@@ -54,7 +54,7 @@ function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, c
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+matRad_cfg = MatRad_Config.instance();
 
 %% check if cubes consistent
 if ~isequal(size(cube1),size(cube2))
