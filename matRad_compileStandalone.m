@@ -21,6 +21,15 @@ if nargin < 1
     isRelease = false;
 end
 
+compileWithRT = false;
+compileWithoutRT = true;
+
+
+if ~compileWithRT && ~compileWithoutRT
+    error('No target specified!');
+    return;
+end
+
 [versionString,versionFull] = matRad_version();
 
 %Create Standalone with and without runtime
@@ -65,7 +74,7 @@ files = xDoc.getElementsByTagName('file');
 for i=0:files.getLength - 1
     fileName=strrep(strrep(files.item(i).getFirstChild.getData().toCharArray()','/',filesep),'\',filesep);
     files.item(i).getFirstChild.setData(fileName);
-
+    
     %change the file separator in the 'location' attribute of the file tag
     %(if it exists)
     if hasAttributes(files.item(i))
@@ -87,7 +96,7 @@ for i=0:tags.getLength - 1
         fileName=strrep(strrep(tags.item(i).getFirstChild.getData().toCharArray()','/',filesep),'\',filesep);
         tags.item(i).getFirstChild.setData(java.lang.String(fileName));
     end
-end    
+end
 
 %Get version and Filenames
 %version= replace(xDoc.getElementsByTagName('param.version').item(0).getFirstChild.getData().toCharArray()','.','_');
@@ -117,72 +126,76 @@ xDoc.getElementsByTagName('param.version').item(0).getFirstChild.setData(vernum_
 
 %check if the files exist, and delete them
 if isfolder(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix])
-   rmdir(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix],'s')
-rehash
+    rmdir(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix],'s')
+    rehash
 end
 
-if isfile(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix]) 
-  delete(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix]);
+if isfile(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix])
+    delete(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix]);
 end
 
 if isfolder(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix])
     rmdir(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix],'s')
-rehash
+    rehash
 end
 if isfile(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix])
-  delete(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix]);
+    delete(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix]);
 end
 
 %compile with runtime
-xDoc.getElementsByTagName('param.web.mcr').item(0).getFirstChild.setData('false');
-xDoc.getElementsByTagName('param.package.mcr').item(0).getFirstChild.setData('true');
-
-xmlwrite(FileName,xDoc);
-
-applicationCompiler('-package',FileName);
-
-% loop until the file is created
-tic
-worked = false;
-while toc<500
-  pause ( 2 )
-  if isfolder(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix]) || ...
-      isfile(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix])
-      worked = true;
-      break
-  end
-end
-if worked == false
-    error('Packaging Failed!');
-end
-disp('Packaged compiler with runtime');
-
-%compile without runtime
-xDoc.getElementsByTagName('param.web.mcr').item(0).getFirstChild.setData('true');
-xDoc.getElementsByTagName('param.package.mcr').item(0).getFirstChild.setData('false');
-
-xmlwrite(FileName,xDoc);
-
-applicationCompiler('-package',FileName);
-
-% loop until the file is created
-tic
-worked = false;
-while toc<500
-  pause ( 2 )
-  if isfolder(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix]) || ...
-      isfile(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix])
-      worked = true;
-      break
-  end
+if compileWithRT
+    xDoc.getElementsByTagName('param.web.mcr').item(0).getFirstChild.setData('false');
+    xDoc.getElementsByTagName('param.package.mcr').item(0).getFirstChild.setData('true');
+    
+    xmlwrite(FileName,xDoc);
+    
+    applicationCompiler('-package',FileName);
+    
+    % loop until the file is created
+    tic
+    worked = false;
+    while toc<500
+        pause ( 2 )
+        if isfolder(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix]) || ...
+                isfile(['standalone' filesep 'for_redistribution' filesep  filename_withRT '.' installSuffix])
+            worked = true;
+            break
+        end
+    end
+    if worked == false
+        error('Packaging Failed!');
+    end
+    disp('Packaged compiler with runtime');
 end
 
-if worked == false
-    error('Packaging Failed!');
+if compileWithoutRT
+    %compile without runtime
+    xDoc.getElementsByTagName('param.web.mcr').item(0).getFirstChild.setData('true');
+    xDoc.getElementsByTagName('param.package.mcr').item(0).getFirstChild.setData('false');
+    
+    xmlwrite(FileName,xDoc);
+    
+    applicationCompiler('-package',FileName);
+    
+    % loop until the file is created
+    tic
+    worked = false;
+    while toc<500
+        pause ( 2 )
+        if isfolder(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix]) || ...
+                isfile(['standalone' filesep 'for_redistribution' filesep  filename_webRT '.' installSuffix])
+            worked = true;
+            break
+        end
+    end
+    
+    if worked == false
+        error('Packaging Failed!');
+    end
+    disp('Packaged compiler without runtime');
 end
-disp('Packaged compiler without runtime');
-
-
-disp('Packaged both compilers');
-
-
+    
+ 
+disp('Done');
+    
+    

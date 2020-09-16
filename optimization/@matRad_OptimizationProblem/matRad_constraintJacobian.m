@@ -139,14 +139,23 @@ end
 % Calculate jacobian with dij projections
 for i = 1:dij.numOfScenarios
    % enter if statement also for protons using a constant RBE
-   if isa(optiProb.BP,'matRad_DoseProjection') || isa(optiProb.BP,'matRad_ConstantRBEProjection')
-
-        if ~isempty(DoseProjection)
-            
-            jacobLogical          = (scenID == i);
-            jacob(jacobLogical,:) = DoseProjection(:,jacobLogical)' * dij.physicalDose{i};
-            
-        end
+   if isa(optiProb.BP,'matRad_DoseProjection')
+       
+       if ~isempty(DoseProjection)
+           
+           jacobLogical          = (scenID == i);
+           jacob(jacobLogical,:) = DoseProjection(:,jacobLogical)' * dij.physicalDose{i};
+           
+       end
+       
+   elseif isa(optiProb.BP,'matRad_ConstantRBEProjection')
+       
+       if ~isempty(DoseProjection)
+           
+           jacobLogical          = (scenID == i);
+           jacob(jacobLogical,:) = DoseProjection(:,jacobLogical)' * dij.RBE * dij.physicalDose{i};
+           
+       end
 
     elseif isa(optiProb.BP,'matRad_EffectProjection')
 

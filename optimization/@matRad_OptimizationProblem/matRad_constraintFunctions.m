@@ -65,7 +65,7 @@ for  i = 1:size(cst,1)
                     
                     doses = obj.getDoseParameters();
                     
-                    effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses^2;
+                    effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
                     
                     obj = obj.setDoseParameters(effect);
                 end
