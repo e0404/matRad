@@ -14,47 +14,54 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Set path
-run(['..' filesep 'matRad_rc'])
+run(['..' filesep 'matRad_rc']);
 
-
-% limiting the optimization to 10 iterations for faster computation
-% limiting the cutoffLevel and lateralCutoff for faster computation
-matRad_unitTestTextManipulation('matRad_calcPhotonDose.m', 'lateralCutoff = 50', 'lateralCutoff = 20;')
-matRad_unitTestTextManipulation('matRad_calcParticleDose.m', 'cutOffLevel          = 0.99', '       cutOffLevel          = 0.8;')
-matRad_unitTestTextManipulation('matRad_ipoptOptions.m', 'options.ipopt.max_iter', 'options.ipopt.max_iter = 10;', '../optimization/')
-
-exampleScripts = {'matRad_example1_phantom.m',...
-    'matRad_example2_photons.m',...
-    'matRad_example3_photonsDAO.m',...
-    'matRad_example5_protons.m',...
-    'matRad_example6_protonsNoise.m',...
-    'matRad_example7_carbon.m',...
-    'matRad_example11_helium.m'};
-
-unitTestBixelWidth = 20;
-
-matRad_unitTestTextManipulation(exampleScripts,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)], '../examples/');
-matRad_unitTestTextManipulation(exampleScripts,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR UNIT TESTING %%%%%%%%%%%%%%', '../examples/');
-matRad_unitTestTextManipulation('matRad.m','pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)], '../');
+%% Prepare settings for testing
+matRad_cfg = MatRad_Config.instance();
+matRad_cfg.setDefaultPropertiesForTesting();
 
 % supressing the inherent Ocatave warnings for division by zero
 if strcmp(matRad_getEnvironment,'OCTAVE')
-    warning("off", "Octave:divide-by-zero")
+    warning('off','Octave:divide-by-zero');
 end
 
-unitTestBool = true;
+exampleScripts = {'../examples/matRad_example1_phantom.m',...
+    '../examples/matRad_example2_photons.m',...
+    '../examples/matRad_example3_photonsDAO.m',...
+    '../examples/matRad_example4_photonsMC.m',...
+    '../examples/matRad_example5_protons.m',...
+    '../examples/matRad_example6_protonsNoise.m',...
+    '../examples/matRad_example7_carbon.m',... 
+    '../examples/matRad_example8_protonsRobust.m',...
+    '../examples/matRad_example9_4DDoseCalcMinimal.m',... 
+    '../examples/matRad_example10_4DphotonRobust.m',...
+    '../examples/matRad_example11_helium.m',...
+    '../matRad.m',...
+    };
 
-disp('Unit test run example 1');
-matRad_example1_phantom
-disp('Unit test run example 2');
-matRad_example2_photons
-disp('Unit test run example 3');
-matRad_example3_photonsDAO
-disp('Unit test run example 5');
-matRad_example5_protons
-disp('Unit test run example 6');
-matRad_example6_protonsNoise
-disp('Unit test run example 7');
-matRad_example7_carbon
-disp('Unit test run matRad script');
-matRad
+testing_suffix = '_test';
+unitTestBixelWidth = 20;
+unitTestSpotSpacing = matRad_cfg.propStf.defaultLongitudinalSpotSpacing;
+unitTestResolution = matRad_cfg.propDoseCalc.defaultResolution;
+
+%Copy and manipulate all scripts
+[folders,names,exts] = cellfun(@fileparts,exampleScripts,'UniformOutput',false);
+testScriptNames = strcat(names,testing_suffix);    
+testScripts = cellfun(@fullfile,folders,strcat(testScriptNames,exts),'UniformOutput',false);
+status = cellfun(@copyfile,exampleScripts,testScripts);
+
+matRad_unitTestTextManipulation(testScripts,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)]);
+matRad_unitTestTextManipulation(testScripts,'pln.propStf.longitudinalSpotSpacing',['pln.propStf.longitudinalSpotSpacing = ' num2str(unitTestBixelWidth)]);
+matRad_unitTestTextManipulation(testScripts,'pln.propDoseCalc.resolution.x',['pln.propDoseCalc.resolution.x = ' num2str(unitTestResolution.x)]);
+matRad_unitTestTextManipulation(testScripts,'pln.propDoseCalc.resolution.y',['pln.propDoseCalc.resolution.y = ' num2str(unitTestResolution.y)]);
+matRad_unitTestTextManipulation(testScripts,'pln.propDoseCalc.resolution.z',['pln.propDoseCalc.resolution.z = ' num2str(unitTestResolution.z)]);
+matRad_unitTestTextManipulation(testScripts,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR TESTING %%%%%%%%%%%%%%');
+
+%Running tests
+for testIx = 1:length(testScriptNames)
+    fprintf('Running Integration Test for ''%s''\n',names{testIx});
+    run(testScripts{testIx});
+    clear ct cst pln stf dij resultGUI; %Make sure the workspace is somewhat clean
+    delete(testScripts{testIx}); %Delete after successful run
+end
+    

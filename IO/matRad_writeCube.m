@@ -12,7 +12,6 @@ function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)
 %   meta:                       meta-information in struct. 
 %                               Necessary fieldnames are:
 %                               - resolution: [x y z]
-%                               - datatype: numeric MATLAB-Datatype
 %                               Optional:
 %                               - axisPermutation (matRad default [2 1 3])
 %                               - coordinateSystem (matRad default 'LPS')

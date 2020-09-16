@@ -22,9 +22,12 @@
 % (vi) how to compare the two results
 
 %% set matRad runtime configuration
-matRad_rc
+matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 
 %% Patient Data Import
+% Let's begin with a clear Matlab environment and import the prostate
+% patient into your workspace
+
 load('PROSTATE.mat');
 
 %% Treatment Plan
@@ -72,39 +75,41 @@ pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen');
 
+% dose calculation settings
+pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
+
 %% Generate Beam Geometry STF
-stf = matRad_generateStf(ct,cst,pln,param);
+stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
 % Lets generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows for subsequent inverse optimization. 
-dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
+dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
 %% Inverse Optimization for IMPT
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the 
 % clinical objectives and constraints underlying the radiation treatment
-resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-if param.logLevel == 1
-    figure
-    imagesc(resultGUI.RBExD(:,:,slice)),colorbar,colormap(jet)
-end
+figure
+imagesc(resultGUI.RBExD(:,:,slice)),colorbar,colormap(jet)
+
 %% Plot the Resulting Beam Dose Slice
 % Let's plot the transversal iso-center dose slice of beam 1 and beam 2
 % separately 
-if param.logLevel == 1
-    figure
-    subplot(121),imagesc(resultGUI.RBExD_beam1(:,:,slice)),colorbar,colormap(jet),title('dose of beam 1')
-    subplot(122),imagesc(resultGUI.RBExD_beam2(:,:,slice)),colorbar,colormap(jet),title('dose of beam 2')
-end
+figure
+subplot(121),imagesc(resultGUI.RBExD_beam1(:,:,slice)),colorbar,colormap(jet),title('dose of beam 1')
+subplot(122),imagesc(resultGUI.RBExD_beam2(:,:,slice)),colorbar,colormap(jet),title('dose of beam 2')
 %% and the corresponding LET distribution
 % Transversal iso-center slice
-if param.logLevel == 1 && pln.propDoseCalc.calcLET
+if pln.propDoseCalc.calcLET
     figure
     imagesc(resultGUI.LET(:,:,slice)),colormap(jet),colorbar,title('LET [keV/�m]')
 end
@@ -116,42 +121,40 @@ pln.propStf.isoCenter       = reshape([stf.isoCenter],[3 pln.propStf.numOfBeams]
 
 %% Recalculate Plan
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
-resultGUI_isoShift = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w,param);
+resultGUI_isoShift = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
 
 %%  Visual Comparison of results
 % Let's compare the new recalculation against the optimization result.
-if param.logLevel == 1
-    plane = 3;
-    doseWindow = [0 max([resultGUI.RBExD(:); resultGUI_isoShift.RBExD(:)])];
+plane = 3;
+doseWindow = [0 max([resultGUI.RBExD(:); resultGUI_isoShift.RBExD(:)])];
 
-    figure,title('original plan')
-    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
-    figure,title('shifted plan')
-    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_isoShift.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+figure,title('original plan')
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+figure,title('shifted plan')
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_isoShift.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
 
-    absDiffCube = resultGUI.RBExD-resultGUI_isoShift.RBExD;
-    figure,title('absolute difference')
-    matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
+absDiffCube = resultGUI.RBExD-resultGUI_isoShift.RBExD;
+figure,title('absolute difference')
+matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 
-    % Let's plot single profiles that are perpendicular to the beam direction
-    ixProfileY = round(pln.propStf.isoCenter(1,2)./ct.resolution.y);
+% Let's plot single profiles that are perpendicular to the beam direction
+ixProfileY = round(pln.propStf.isoCenter(1,2)./ct.resolution.y);
 
-    profileOrginal = resultGUI.RBExD(:,ixProfileY,slice);
-    profileShifted = resultGUI_isoShift.RBExD(:,ixProfileY,slice);
+profileOrginal = resultGUI.RBExD(:,ixProfileY,slice);
+profileShifted = resultGUI_isoShift.RBExD(:,ixProfileY,slice);
 
-    figure,plot(profileOrginal,'LineWidth',2),grid on,hold on, 
-           plot(profileShifted,'LineWidth',2),legend({'original profile','shifted profile'}),
-           xlabel('mm'),ylabel('Gy(RBE)'),title('profile plot')
-end
+figure,plot(profileOrginal,'LineWidth',2),grid on,hold on,
+plot(profileShifted,'LineWidth',2),legend({'original profile','shifted profile'}),
+xlabel('mm'),ylabel('Gy(RBE)'),title('profile plot')
 %% Quantitative Comparison of results
 % Compare the two dose cubes using a gamma-index analysis. The gamma index
 % is a composite quality distribution equally taking into account a dose 
 % difference and a distance to agreement criterion in order to quantify
 % differences between two dose cubes. A gamma-index value of smaller than 1
 % indicates a successful test and a value greater than 1 illustrates a 
-% failed test.
+% failed test. An alternative analysis could be performed with the 
+% matRad_compareDose function, which includes the gamma test
 
-% add tools subdirectory
 doseDifference  = 2;
 distToAgreement = 2;
 n               = 1;
@@ -161,15 +164,9 @@ n               = 1;
     [ct.resolution.x, ct.resolution.y, ct.resolution.z],...
     [doseDifference distToAgreement],slice,n,'global',cst);
 
-if param.logLevel == 1
-    [env, ~] = matRad_getEnvironment();
-    % Let's plot the gamma index histogram
-    switch env
-         case 'MATLAB'
-              figure,histogram(gammaCube(gammaCube>0),100),title('gamma index histogram')
-         case 'OCTAVE'
-              figure,hist(gammaCube(gammaCube>0),100),title('gamma index histogram')
-    end
-end
+% Let's plot the gamma index histogram
+figure
+hist(gammaCube(gammaCube>0),100)
+title('gamma index histogram')
 
 

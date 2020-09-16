@@ -1,4 +1,4 @@
-function [cstStat, doseStat, param] = matRad_samplingAnalysis(ct,cst,pln,caSampRes,mSampDose,resultGUInomScen,param)
+function [cstStat, doseStat, meta] = matRad_samplingAnalysis(ct,cst,pln,caSampRes,mSampDose,resultGUInomScen,varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad uncertainty sampling analysis function
 % 
@@ -6,17 +6,25 @@ function [cstStat, doseStat, param] = matRad_samplingAnalysis(ct,cst,pln,caSampR
 %   [structureStat, doseStat] = samplingAnalysis(ct,cst,subIx,mSampDose,w)
 %
 % input
-%   ct:             ct cube
-%   cst:            matRad cst struct
-%   pln:            matRad's pln struct
-%   caSampRes       cell array of sampling results depicting plan parameter
-%   mSampDose       matrix holding the sampled doses, each row corresponds to
-%                   one dose sample
+%   ct:                 ct cube
+%   cst:                matRad cst struct
+%   pln:                matRad's pln struct
+%   caSampRes:          cell array of sampling results depicting plan 
+%                       parameter
+%   mSampDose:          matrix holding the sampled doses, each row 
+%                       corresponds to one dose sample                      
+%   resultGUInomScen:   resultGUI struct of the nominal plan
+%   varargin:           optional Name/Value pairs for additional custom
+%                       settings
+%                       - 'GammaCriterion': 1x2 vector [%  mm] 
+%                       - 'Percentiles':    vector with desired percentiles
+%                                           between (0,1)
+%   
 %
 % output
 %   cstStat         structure-wise statistics (mean, max, percentiles, ...)
 %   doseStat        dose-wise statistics (mean, max, percentiles, ...)
-%   param           contains additional information about sampling analysis
+%   meta            contains additional information about sampling analysis
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -32,21 +40,18 @@ function [cstStat, doseStat, param] = matRad_samplingAnalysis(ct,cst,pln,caSampR
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if exist('param','var')
-   if ~isfield(param,'logLevel')
-       param.logLevel = 1;
-   end
-   if ~isfield(param,'calcDoseDirect')
-      param.calcDoseDirect = false;
-   end
-else
-   param.calcDoseDirect = false;
-   param.subIx          = [];
-   param.logLevel       = 1;
-end
-
 %% check integrity of statistics
-param.sufficientStatistics = matRad_checkSampIntegrity(pln.multScen, param);
+matRad_cfg = MatRad_Config.instance();
+
+p = inputParser;
+p.addParameter('gammaCriterion',[2 2],@(g) numel(g) == 2 && isnumeric(g) && all(g > 0));
+p.addParameter('percentiles',[0.01 0.05 0.125 0.25 0.5 0.75 0.875 0.95 0.99],@(p) (isscalar(p) || isvector(p)) && isnumeric(p) && all(p > 0 & p < 1)); 
+
+parse(p,varargin{:});
+
+meta = p.Results;
+
+meta.sufficientStatistics = matRad_checkSampIntegrity(pln.multScen);
 
 ix    = pln.subIx;
 vProb = pln.multScen.scenProb;
@@ -59,7 +64,7 @@ for i = 1:size(resultGUInomScen.cst,1)
     for l = 1:numel(caSampRes)
         % check if structures still match
         if any(~strcmp(cstStat(i).name, {caSampRes(l).dvh(i).name, caSampRes(l).qi(i).name}))
-            matRad_dispToConsole('matRad: Error, wrong structure.' , param, 'error');
+            matRad_cfg.dispError('matRad: Error, wrong structure.');
         end
         cstStat(i).dvh(l).doseGrid     = caSampRes(l).dvh(i).doseGrid;
         cstStat(i).dvh(l).volumePoints = caSampRes(l).dvh(i).volumePoints;
@@ -93,20 +98,15 @@ end
 doseStat.gammaAnalysis.cube1 = doseCube;
 doseStat.gammaAnalysis.cube2 = doseStat.meanCubeW;
 doseStat.gammaAnalysis.cube2Name = 'doseStat.meanCubeW';
-if ~isfield(param, 'criteria')
-    param.criteria = [2 2];
-end
-matRad_dispToConsole(['matRad: Performing gamma index analysis with parameters', num2str(param.criteria), '[% mm] \n'],param,'info');
-doseStat.gammaAnalysis.doseAgreement = param.criteria(1);
-doseStat.gammaAnalysis.distAgreement = param.criteria(2);
 
-doseStat.gammaAnalysis.gammaCube = matRad_gammaIndex(doseCube,doseStat.meanCubeW,[ct.resolution.x ct.resolution.y ct.resolution.z],param.criteria);
+matRad_cfg.dispInfo(['matRad: Performing gamma index analysis with parameters', num2str(meta.gammaCriterion), '[% mm] \n']);
+doseStat.gammaAnalysis.doseAgreement = meta.gammaCriterion(1);
+doseStat.gammaAnalysis.distAgreement = meta.gammaCriterion(2);
+
+doseStat.gammaAnalysis.gammaCube = matRad_gammaIndex(doseCube,doseStat.meanCubeW,[ct.resolution.x ct.resolution.y ct.resolution.z],meta.gammaCriterion);
 
 %% percentiles
-if ~isfield(param, 'percentiles')
-    param.percentiles = [0.01 0.05 0.125 0.25 0.5 0.75 0.875 0.95 0.99];
-end
-percentiles     = param.percentiles;
+percentiles     = meta.percentiles;
 percentileNames = cell(numel(percentiles),1);
 % create fieldnames
 for i = 1:numel(percentiles)
@@ -209,12 +209,8 @@ end
     end
 
     % check integrity of scenario analysis (i.e. check number of scenarios)
-    function statCheck = matRad_checkSampIntegrity(multScen, param)
-        if exist('param','var') && isfield(param, 'sufficientStatistics') && ~param.sufficientStatistics
-            statCheck = false;
-            return
-        end
-        
+    function statCheck = matRad_checkSampIntegrity(multScen)
+       
         if multScen.totNumScen > 20
             totalNum = true;
         else

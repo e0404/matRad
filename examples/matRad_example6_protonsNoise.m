@@ -23,25 +23,28 @@
 % (vii) how to compare the two results
 
 %% set matRad runtime configuration
-matRad_rc
+matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 
 %% Patient Data Import
+% Let's begin with a clear Matlab environment and import the prostate 
+% patient into your workspace.
 load('PROSTATE.mat');
 
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
 % structure requires input from the treatment planner and defines 
 % the most important cornerstones of your treatment plan.
-pln.radiationMode           = 'protons';           
-pln.machine                 = 'Generic';
-pln.numOfFractions          = 30;  
-pln.propStf.gantryAngles    = [90 270];
-pln.propStf.couchAngles     = [0 0];
-pln.propStf.bixelWidth      = 5;
-pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.propOpt.runDAO          = 0;
-pln.propOpt.runSequencing   = 0;
+pln.radiationMode                   = 'protons';           
+pln.machine                         = 'generic_MCsquare'; %Use the base data fitted to MC here
+pln.numOfFractions                  = 30;  
+pln.propStf.gantryAngles            = [90 270];
+pln.propStf.couchAngles             = [0 0];
+pln.propStf.bixelWidth              = 5;
+pln.propStf.longitudinalSpotSpacing = 5;
+pln.propStf.numOfBeams              = numel(pln.propStf.gantryAngles);
+pln.propStf.isoCenter               = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propOpt.runDAO                  = 0;
+pln.propOpt.runSequencing           = 0;
 
 %%
 % Define the biological optimization model for treatment planning along
@@ -64,18 +67,29 @@ pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen');  % optimize on the nominal scenario
 
+% dose calculation settings
+pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
+
 %% Generate Beam Geometry STF
-stf = matRad_generateStf(ct,cst,pln,param);
+stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
-dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
+%We do a Monte Carlo Dose calculation here to demonstrate how long an MC
+%simulation on pencil-beam basis will take. If you just want to get through
+%the example, feel free to use analytical dose calculation instead by
+%uncommenting the first line and comment the second
+
+%dij = matRad_calcParticleDose(ct,stf,pln,cst);
+dij = matRad_calcParticleDoseMC(ct,stf,pln,cst);
 
 %% Inverse Optimization for IMPT
-resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Calculate quality indicators 
 [dvh,qi]       = matRad_indicatorWrapper(cst,pln,resultGUI);
-ixRectum       = 8;
+ixRectum       = 1;
 display(qi(ixRectum).D_5);
 
 %%
@@ -83,63 +97,40 @@ display(qi(ixRectum).D_5);
 % will be better spared. We increase the penalty and lower the threshold 
 % of the squared overdose objective function. Afterwards we re-optimize 
 % the treatment plan and evaluate dose statistics one more time.
-cst{ixRectum,6}.penalty = 500;
-cst{ixRectum,6}.dose    = 40;
-resultGUI               = matRad_fluenceOptimization(dij,cst,pln,param);
-[dvh2,qi2]              = matRad_indicatorWrapper(cst,pln,resultGUI,[],[],param);
+
+objective = cst{ixRectum,6}{1}; %This gives a struct
+objective = matRad_DoseOptimizationFunction.createInstanceFromStruct(objective); %Now we turn it into a class
+objective = objective.setDoseParameters(40); %We can simply call this function to change the/all dose parameter(s)
+cst{ixRectum,6}{1} = struct(objective); % We put it back as struct for storage & compatability
+
+cst{ixRectum,6}{1}.parameters{1} = 40;  % Change the reference dose
+cst{ixRectum,6}{1}.penalty = 500; % Change the penalty
+resultGUI               = matRad_fluenceOptimization(dij,cst,pln);
+[dvh2,qi2]              = matRad_indicatorWrapper(cst,pln,resultGUI);
+
 display(qi2(ixRectum).D_5);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-if param.logLevel == 1
-    figure
-    imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet)
-end
-%%
-% Now let's simulate a range undershoot by scaling the relative stopping power cube by 3.5% percent
+figure
+imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet)
+
+%% Add Range Uncertainty
+% Now let's manually simulate a range undershoot by scaling the relative 
+% stopping power cube by 3.5% percent. For that to happen, we need to tell 
+% matRad that it should not convert the HU-cube (ct.cubeHU) to RSP cube 
+% implicitly, but directly use the RSP cube we provide in ct.cube
+% Note that such uncertainty scenarios can also be computed by using the
+% functionalities of matRad_multScen
+
+pln.propDoseCalc.useGivenEqDensityCube = true;
 ct_manip         = ct;
-ct_manip.cubeHU{1} = 1.035*ct_manip.cubeHU{1};
+ct_manip.cube{1} = 1.035*ct_manip.cube{1};
 
-%% Recalculate Plan
+%% Recalculate Plan with MC square
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
-resultGUI_noise = matRad_calcDoseDirect(ct_manip,stf,pln,cst,resultGUI.w,param);
+resultGUI_noise = matRad_calcDoseDirectMC(ct_manip,stf,pln,cst,resultGUI.w);
 
-%%  Visual Comparison of results
-% Let's compare the new recalculation against the optimization result.
-if param.logLevel == 1
-    plane      = 3;
-    doseWindow = [0 max([resultGUI.RBExD(:); resultGUI_noise.RBExD(:)])];
-
-    figure,title('original plan')
-    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
-    figure,title('manipulated plan')
-    matRad_plotSliceWrapper(gca,ct_manip,cst,1,resultGUI_noise.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
-
-    % Let's plot single profiles along the beam direction
-    ixProfileY = round(pln.propStf.isoCenter(1,1)./ct.resolution.x);
-
-    profileOrginal = resultGUI.RBExD(:,ixProfileY,slice);
-    profileNoise   = resultGUI_noise.RBExD(:,ixProfileY,slice);
-
-    figure,plot(profileOrginal,'LineWidth',2),grid on,hold on, 
-           plot(profileNoise,'LineWidth',2),legend({'original profile','noise profile'}),
-           xlabel('mm'),ylabel('Gy(RBE)'),title('profile plot')
-end       
-%% Quantitative Comparison of results
-% Compare the two dose cubes using a gamma-index analysis.
-
-doseDifference   = 2;
-distToAgreement  = 2;
-n                = 1;
-
-[gammaCube,gammaPassRateCell] = matRad_gammaIndex(...
-    resultGUI_noise.RBExD,resultGUI.RBExD,...
-    [ct.resolution.x, ct.resolution.y, ct.resolution.z],...
-    [doseDifference distToAgreement],slice,n,'global',cst);
-
-
-
-
-
-
+%%  Visual Comparison of results using the "compareDose" helper function
+matRad_compareDose(resultGUI_noise.RBExD,resultGUI.RBExD,ct,cst);

@@ -5,13 +5,13 @@
 
 ---
 
-matRad is an open source treatment planning system for radiation therapy written in Matlab. It is meant for educational and research purposes and supports planning of intensity-modulated radiation therapy for mutliple modalities. The source code is maintained by a development team at the German Cancer Reserach Center DKFZ in Heidelberg, Germany, and other contributors around the world. We are always looking for more people willing to help improve matRad. Do not hesitate and [get in touch](mailto:matrad@dkfz.de).
+matRad is an open source treatment planning system for radiation therapy written in Matlab. It is meant for educational and research purposes and supports planning of intensity-modulated radiation therapy for mutliple modalities. The source code is maintained by a development team at the German Cancer Reserach Center DKFZ in Heidelberg, Germany, and other contributors around the world. We are always looking for more people willing to help improve matRad. Do not hesitate and [get in touch](mailto:contact@matRad.org).
 
 More information can be found on the project page  at <http://e0404.github.io/matRad/>; a wiki documentation is under constant development at <https://github.com/e0404/matRad/wiki>.
 
 If you use matRad in a scientific publication, consider citing the following paper:
 
-Wieser, Hans‐Peter, et al. "Development of the open‐source dose calculation and optimization toolkit matRad." Medical Physics 44.6 (2017): 2556-2568.
+Wieser, Hans-Peter, et al. "Development of the open-source dose calculation and optimization toolkit matRad." Medical Physics 44.6 (2017): 2556-2568.
 
 BibTex entry:
 ```
@@ -29,13 +29,14 @@ BibTex entry:
 
 ---
 
-Copyright 2017 the matRad development team. 
+Copyright 2020 the matRad development team. 
 
 matrad@dkfz.de
 
 All the elements of the compilation of matRad and Ipopt are free software. You can redistribute and/or modify matRad's source code version provided as files with .m and .mat extension under the terms of the GNU GENERAL PUBLIC LICENSE Version 3 (GPL v3). You can also add to matRad the Ipopt functionality by using the precompiled mex files of the Ipopt optimizer in object code version which are licensed under the Eclipse Public License Version 1.0 (EPL v1.0), also made available for download via https://projects.coin-or.org/Ipopt.
+matRad also contains interfaces to an open-source photon Monte Carlo dose calculation engine developed by Edgardo Doerner hosted on GitHub (http://github.com/edoerner/ompMC) and to the open-source proton Monte Carlo project MCsquare (www.openmcsquare.org) from UCLouvain, Louvain-la-Neuve, Belgium. Both interfaces are integrated into matRad as submodules.
 
-In addition, we provide a matlab standalone version of the compilation of matRad and Ipopt, where the files of matRad and Ipopt are licensed under GPL v3 and EPL v1.0 respectively. The matlab standalone version is meant to be used by students for learning and practicing scientific programming.
+In addition, we provide a matlab standalone version of the compilation of matRad and Ipopt, where the files of matRad and Ipopt are licensed under GPL v3 and EPL v1.0 respectively. The matlab standalone version is meant to be used by students for learning and practicing scientific programming and does not yet contain the interfaces to the aforementioned Monte Carlo dose calculation engines.
 
 matRad is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 

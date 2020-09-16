@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,param)
+function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)
 % matRad dose calculation wrapper bypassing dij calculation
 % 
 % call
@@ -31,26 +31,17 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,param)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if exist('param','var')
-    if ~isfield(param,'logLevel')
-       param.logLevel = 1;
-    end 
-else
-   param.subIx          = [];
-   param.logLevel       = 1;
-end
-
-param.calcDoseDirect = true;
+matRad_cfg = MatRad_Config.instance();
 
 % check if weight vector is available, either in function call or in stf - otherwise dose calculation not possible
 if ~exist('w','var') && ~isfield([stf.ray],'weight')
-     error('No weight vector available. Please provide w or add info to stf')
+     matRad_cfg.dispError('No weight vector available. Please provide w or add info to stf')
 end
 
 % copy bixel weight vector into stf struct
 if exist('w','var')
     if sum([stf.totalNumOfBixels]) ~= numel(w)
-        error('weighting does not match steering information')
+        matRad_cfg.dispError('weighting does not match steering information')
     end
     counter = 0;
     for i = 1:size(stf,2)
@@ -76,10 +67,10 @@ end
 
 % dose calculation
 if strcmp(pln.radiationMode,'photons')
-  dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
+  dij = matRad_calcPhotonDose(ct,stf,pln,cst,true);
   %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-  dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
+  dij = matRad_calcParticleDose(ct,stf,pln,cst,true);
 end
 
 % calc resulting dose

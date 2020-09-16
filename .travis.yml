@@ -1,66 +1,65 @@
-language: c++
+language: cpp
+group: travis_latest
+  
+matrix:
+  include:
+    # works on Precise and Trusty
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    - os: osx
+    - os: windows
+  allow_failures:
+    - os: windows
+    - os: osx
+      
 before_install:
-  - sudo chmod +x runtests.sh
-  - sudo apt-get update -qq
-  - sudo apt-get install gdb # to capture backtrace of eventual failures
-  # - sudo apt-get purge libopenblas-base # fixes PPA Octave 4.0 crash on Travis
+  # Linux setup
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "Testing matRad on linux..." ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then eval "${MATRIX_EVAL}" ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo chmod +x before_install_linux.sh ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo ./before_install_linux.sh; fi
+  
+  # OSX setup
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then echo "Testing matRad on Mac OSX..." ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install octave  > /dev/null ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm > /dev/null ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install libomp > /dev/null ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo chmod +x before_install_osx.sh ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo ./before_install_osx.sh; fi
+  
+  # Windows Setup
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then echo "Testing matRad on Windows..." ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install octave.portable ; fi  
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then bash ./before_install_win_gitbash.sh ; fi
+  
 
-  # add PPA repo to use latest GNU Octave release
-  - sudo add-apt-repository ppa:octave/stable --yes
-  - sudo apt-get update --yes --force-yes
-
-# dependencies
-  - sudo apt-get install octave --yes --force-yes
-  - sudo apt-get install liboctave-dev --yes --force-yes
-  - sudo apt-get install git --yes --force-yes
-  - export MATRAD=`pwd`
-
-# IpOpt in Ubuntu repo is too old
-#sudo apt-get install coinor-libipopt-dev --yes --force-yes
-# Compiling IpOpt
-  - cd ..
-  - mkdir IpoptMUMPS
-  - cd IpoptMUMPS
-  - wget https://www.coin-or.org/download/source/Ipopt/Ipopt-3.12.10.tgz
-  - tar -zxvf Ipopt-3.12.10.tgz
-  - cd Ipopt-3.12.10/
-  - export IPOPTDIR=`pwd`
-
-  - cd $IPOPTDIR/ThirdParty/Blas
-  - ./get.Blas
-  - cd $IPOPTDIR/ThirdParty/Lapack
-  - ./get.Lapack
-  - cd $IPOPTDIR/ThirdParty/Metis
-  - ./get.Metis
-  - cd $IPOPTDIR/ThirdParty/Mumps
-  - ./get.Mumps
-
-  - mkdir $IPOPTDIR/build
-  - cd $IPOPTDIR/build
-
-  - $IPOPTDIR/configure --prefix=/usr/local
-  - sudo make
-  - sudo make test
-  - sudo make install
-  - sudo ldconfig
-
-
-# clone repository with IpOpt Interface
-  - git clone https://github.com/ebertolazzi/mexIPOPT
-
-# compile interface
-  - mkoctfile --mex -ImexIPOPT/src -I/usr/local/include/coin mexIPOPT/src/ipopt.cc mexIPOPT/src/IpoptInterfaceCommon.cc -v -DMATLAB_MEXFILE -DHAVE_CSTDDEF -DIPOPT_INTERFACE_MISSING_COPY_N -Wl,--no-undefined -lipopt -lcoinmumps -lcoinlapack -lcoinblas -L/usr/local/lib -std=gnu++11
-  - sudo cp ipopt* $MATRAD/optimization
-  - cd $MATRAD
 before_script:
-  - ulimit -c unlimited -S  # enable core dumps for Octave crash debugging
-script:
-  - travis_wait 45 ./runtests.sh /usr/bin/octave 
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ulimit -c unlimited -S ; fi
+  
+  
 after_failure:
-  - COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) # find core file
-  - gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch /usr/bin/octave-cli # print stack trace
-  - tail runtests.log
-#  - tail runtests.err
+  ## Linux stack trace
+  # find core file
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) ; fi 
+  # print stack trace
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch /usr/bin/octave-cli ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tail runtests.log ; fi
+  
+script:
+  # Linux script
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis_wait 45 ./runtests.sh octave-cli ; fi
+  # OSX script
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait 45 ./runtests.sh octave-cli ; fi
+  # Windows script
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then travis_wait 45 ./runtests.sh octave-cli ; fi
 
 notifications:
     slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ

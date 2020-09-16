@@ -64,6 +64,11 @@ if isfield(dij,'mLETDose')
     end
 end
 
+if isfield(dij,'physicalDose_MCvar')
+    resultGUI.physicalDose_MCvar = reshape(full(dij.physicalDose_MCvar{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+    resultGUI.physicalDose_MCstd = sqrt(resultGUI.physicalDose_MCvar);
+    resultGUI.physicalDose_MCstdRel = resultGUI.physicalDose_MCstd ./ resultGUI.physicalDose;
+end
 
 % consider biological optimization for carbon ions
 if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
@@ -104,9 +109,9 @@ if any(dij.ctGrid.dimensions~=dij.doseGrid.dimensions)
        if numel(resultGUI.(myFields{i})) == dij.doseGrid.numOfVoxels
            
            % interpolate!
-           resultGUI.(myFields{i}) = interp3(dij.doseGrid.y,dij.doseGrid.x',dij.doseGrid.z, ...
+           resultGUI.(myFields{i}) = matRad_interp3(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, ...
                                              resultGUI.(myFields{i}), ...
-                                             dij.ctGrid.y,dij.ctGrid.x',dij.ctGrid.z);
+                                             dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,'linear',0);
            
        end
        

@@ -77,27 +77,26 @@ pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 pln.multScen = matRad_multScen(ct,'nomScen');
 
 %% Generate Beam Geometry STF
-stf = matRad_generateStf(ct,cst,pln,param);
+stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
 % Lets generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows for subsequent inverse optimization. 
-dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
+dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
 %% Inverse Optimization for IMPT
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the 
 % clinical objectives and constraints underlying the radiation treatment
-resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-if param.logLevel == 1
-    figure
-    subplot(121),imagesc(resultGUI.physicalDose(:,:,slice)),colorbar,colormap(jet),title('physical dose')
-    subplot(122),imagesc(resultGUI.RBExD(:,:,slice)),colorbar,colormap(jet),title('RBExDose')
-end
+figure
+subplot(121),imagesc(resultGUI.physicalDose(:,:,slice)),colorbar,colormap(jet),title('physical dose')
+subplot(122),imagesc(resultGUI.RBExD(:,:,slice)),colorbar,colormap(jet),title('RBExDose')
+
 
 

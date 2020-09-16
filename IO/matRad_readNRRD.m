@@ -281,18 +281,23 @@ if doSwapBytes
     swapbytes(cube);
 end
 
-%first we shape the data into a cube
-cube = reshape(cube,metadata.cubeDim);
+if numel(metadata.cubeDim) > 1
+    
+    %first we shape the data into a cube
+    cube = reshape(cube,metadata.cubeDim);
+    
+    %now we have to do the permutations, 2 1 3 ... is the MATLAB default
+    %We create a transform matrix that transforms a permutation to MATLAB
+    %default
+    permutationTransformMatrix = diag(ones(metadata.dimension,1));
+    permutationTransformMatrix(1:2,1:2) = flip(permutationTransformMatrix(1:2,1:2));
+    
+    applyPermutation = permutationTransformMatrix*metadata.axisPermutation';
+    
+    cube = permute(cube,applyPermutation);
+end
 
-%now we have to do the permutations, 2 1 3 ... is the MATLAB default
-%We create a transform matrix that transforms a permutation to MATLAB
-%default
-permutationTransformMatrix = diag(ones(metadata.dimension,1));
-permutationTransformMatrix(1:2,1:2) = flip(permutationTransformMatrix(1:2,1:2));
 
-applyPermutation = permutationTransformMatrix*metadata.axisPermutation';
-
-cube = permute(cube,applyPermutation);
 
 end
 

@@ -1,0 +1,11 @@
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: CmdLine@2
+  inputs:
+    script: 'sudo chmod +x MCsquare/bin/MCsquare_linux'
+- task: InstallMATLAB@0
+- task: RunMATLABCommand@0
+  inputs:
+    command: 'cd unitTest; matRad_runTests;'

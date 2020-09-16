@@ -31,13 +31,7 @@ function matRad_calcStudy(structSel,multScen,matPatientPath,param)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if exist('param','var')
-    if ~isfield(param,'logLevel')
-       param.logLevel = 4;
-    end   
-else
-   param.logLevel     = 4;
-end
+matRad_cfg = MatRad_Config.instance();
 
 %
 if ~isfield(param,'outputPath')
@@ -46,8 +40,8 @@ end
 
 % require minimum number of scenarios to ensure proper statistics
 if multScen.numOfRangeShiftScen + sum(multScen.numOfShiftScen) < 20
-    matRad_dispToConsole('Detected a low number of scenarios. Proceeding is not recommended.',param,'warning');
-    param.sufficientStatistics = false;
+    matRad_cfg.dispWarning('Detected a low number of scenarios. Proceeding is not recommended.');
+    meta.sufficientStatistics = false;
     pause(1);
 end
 
@@ -59,20 +53,20 @@ else
     if numel(listOfMat) == 1
       load(listOfMat.name);
     else
-       matRad_dispToConsole('Ambigous set of .mat files in the current folder (i.e. more than one possible patient or already results available).',param,'error');
+       matRad_cfg.dispError('Ambigous set of .mat files in the current folder (i.e. more than one possible patient or already results available).');
        return
     end
 end
 
 % check if nominal workspace is complete
 if ~(exist('ct','var') && exist('cst','var') && exist('stf','var') && exist('pln','var') && exist('resultGUI','var'))
-    matRad_dispToConsole('Nominal workspace for sampling is incomplete.\n',param,'error');
+    matRad_cfg.dispError('Nominal workspace for sampling is incomplete.');
 end
 
 % matRad path
 matRadPath = which('matRad.m');
 if isempty(matRadPath) 
-    matRad_dispToConsole('Please include matRad in your searchpath.',param,'error');
+    matRad_cfg.dispError('Please include matRad in your searchpath.');
 else
     matRadPath = matRadPath(1:(end-8));
 end
@@ -95,28 +89,28 @@ pln.sampling = true;
 
 %% perform calculation and save
 tic
-[caSampRes, mSampDose, pln, resultGUInomScen]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,multScen,param);
-param.computationTime = toc;
+[caSampRes, mSampDose, pln, resultGUInomScen]  = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,multScen);
+meta.computationTime = toc;
 
-param.reportPath = fullfile('report','data');
+meta.reportPath = fullfile('report','data');
 filename         = 'resultSampling';
 save(filename, '-v7.3');
 
 %% perform analysis 
 % start here loading resultSampling.mat if something went wrong during analysis or report generation
-[structureStat, doseStat, param] = matRad_samplingAnalysis(ct,cst,pln,caSampRes,mSampDose,resultGUInomScen,param);
+[structureStat, doseStat, meta] = matRad_samplingAnalysis(ct,cst,pln,caSampRes,mSampDose,resultGUInomScen);
 
 %% generate report
 listOfQI = {'mean', 'std', 'max', 'min', 'D_2', 'D_5', 'D_50', 'D_95', 'D_98'};
 
-cd(param.outputPath)
+cd(meta.outputPath)
 mkdir(fullfile('report','data'));
 mkdir(fullfile('report','data','frames'));
 mkdir(fullfile('report','data','figures'));
 copyfile(fullfile(matRadPath,'tools','samplingAnalysis','main_template.tex'),fullfile('report','main.tex'));
 
 % generate actual latex report
-matRad_latexReport(ct, cst, pln, resultGUInomScen, structureStat, doseStat, mSampDose, listOfQI, param);
+matRad_latexReport(ct, cst, pln, resultGUInomScen, structureStat, doseStat, mSampDose, listOfQI);
 
 cd('report');
 if ispc
