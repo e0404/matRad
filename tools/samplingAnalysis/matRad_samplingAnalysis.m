@@ -76,6 +76,8 @@ end
 % compute doseMatrix with columns correspond to scenarios
 
 
+[env,envver] = matRad_getEnvironment();
+
 doseStat.meanCube              = zeros(ct.cubeDim);
 doseStat.stdCube               = zeros(ct.cubeDim);
 
@@ -83,9 +85,31 @@ doseStat.meanCubeW             = zeros(ct.cubeDim);
 doseStat.stdCubeW              = zeros(ct.cubeDim);
 
 doseStat.meanCube(ix)  = mean(mSampDose,2);   
-doseStat.stdCube(ix)   = std(mSampDose,1,2);  
-doseStat.meanCubeW(ix) = (sum(mSampDose * diag(vProb),2));
-doseStat.stdCubeW(ix)  = std(mSampDose,vProb,2);
+doseStat.stdCube(ix)   = std(mSampDose,1,2);
+doseStat.meanCubeW(ix) = (sum(mSampDose * diag(vProb),2)); 
+
+%Weighting of std is not similar in Octave & Matlab
+switch env
+    case 'MATLAB'
+ 
+    doseStat.meanCubeW(ix) = (sum(mSampDose * diag(vProb),2));
+    doseStat.stdCubeW(ix)  = std(mSampDose,vProb,2);
+    case 'OCTAVE'
+    try
+        pkg load nan;
+        nanLoaded = true;
+    catch
+        nanLoaded = false;
+        matRad_cfg.dispWarning('Weighted std not possible due to missing ''nan'' package!');
+    end
+    
+    if nanLoaded
+        doseStat.stdCubeW(ix)  = std(mSampDose,[],2,vProb);
+     else
+        doseStat.stdCubeW(ix)  = doseStat.stdCube(ix);
+     end
+end
+    
 
 % gamma cube
 doseCube = resultGUInomScen.(pln.bioParam.quantityVis);
@@ -155,7 +179,7 @@ end
         dvhStat.percDVH = NaN * ones(numel(percentiles),numel(doseGrid));
         
         for j = 1:size(dvhMat,2)
-            wQ =  matRad_weightedQuantile(dvhMat(:,j), percentiles, w', false, 'none');
+            wQ =  matRad_weightedQuantile(dvhMat(:,j), percentiles, w', false);
             dvhStat.percDVH(:,j) = wQ;
         end
 
@@ -179,7 +203,7 @@ end
                 qiStatH(2).(fields{j}) = min([qiStruct(:).(fields{j})]);
                 qiStatH(3).(fields{j}) = max([qiStruct(:).(fields{j})]);
                 qiStatH(4).(fields{j}) = std([qiStruct(:).(fields{j})],w);
-                wQ = matRad_weightedQuantile([qiStruct(:).(fields{j})], percentiles, w', false, 'none');
+                wQ = matRad_weightedQuantile([qiStruct(:).(fields{j})], percentiles, w', false);
                 for k = 1:numel(wQ)
                     sIx = k + 4;
                     qiStatH(sIx).(fields{j}) = wQ(k);
@@ -190,8 +214,13 @@ end
                 end
             end
         end
-        qiStat = struct2table(qiStatH);
-        qiStat.Properties.RowNames = metric;
+        env = matRad_getEnvironment();
+        if strcmp(env,'MATLAB')
+            qiStat = struct2table(qiStatH);
+            qiStat.Properties.RowNames = metric;
+        else
+            qiStat = qiStatH;
+        end
     end % eof calcQiStat
 
     function S = wMean(X,w)
