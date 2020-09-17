@@ -54,12 +54,7 @@ classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
                 end
             end
         end
-        
-        
-        function rob = availableRobustness(obj)
-            rob = availableRobustness@DoseObjectives.matRad_DoseObjective(obj);
-            rob{end+1} = 'PROB'; %By default, no robustness is available
-        end
+                
         
         function fDose = computeDoseObjectiveFunction(obj,dose)
             % deviation : dose minus prefered dose
@@ -74,6 +69,13 @@ classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
             
             % calculate delta
             fDoseGrad = 2 * obj.penalty/numel(dose) * deviation;
+        end
+    end
+    
+    methods (Static)
+        function rob = availableRobustness()
+            rob = DoseObjectives.matRad_DoseObjective.availableRobustness();
+            rob{end+1} = 'PROB'; %By default, no robustness is available
         end
     end
     

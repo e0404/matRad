@@ -24,8 +24,8 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
         penalty                 %Optimization penalty
     end
        
-    methods
-        function rob = availableRobustness(~)
+    methods (Static)
+        function rob = availableRobustness()
             rob = {'none','STOCH','VWWC','VWWC_INV','COWC','OWC'}; %By default, no robustness is available
         end 
     end
@@ -61,8 +61,6 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
             s = struct@matRad_DoseOptimizationFunction(obj);
             s.penalty = obj.penalty;
         end
-        
-        
-    end 
+    end   
 end
 

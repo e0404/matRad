@@ -3917,6 +3917,7 @@ nameW = 3.5*buttonW;
 typeW = 3*buttonW;
 opW = buttonW;
 functionW = 6*buttonW;
+robustnessW = 0.5*functionW;
 penaltyW = 2*buttonW;
 paramTitleW = 4*buttonW;
 paramW = 2*buttonW;
@@ -3984,6 +3985,9 @@ xPos = xPos + tmp_pos(3) + fieldSep;
 h = uicontrol(cstPanel,'Style','text','String','OP','Units','normalized','Position',[xPos ypos(cnt) opW objHeight],'TooltipString',['Overlap Priority' char(10) '(Smaller number overlaps higher number)']);
 tmp_pos = get(h,'Position');
 xPos = xPos + tmp_pos(3) + fieldSep;
+h = uicontrol(cstPanel,'Style','text','String','Robustness','Units','normalized','Position',[xPos ypos(cnt) robustnessW objHeight],'TooltipString','Robustness Setting');
+tmp_pos = get(h,'Position');
+xPos = xPos + tmp_pos(3) + fieldSep;
 h = uicontrol(cstPanel,'Style','text','String','Function','Units','normalized','Position',[xPos ypos(cnt) functionW objHeight],'TooltipString','Objective/Constraint function type');
 tmp_pos = get(h,'Position');
 xPos = xPos + tmp_pos(3) + fieldSep;
@@ -4015,6 +4019,9 @@ for i = 1:size(cst,1)
                     continue;
                 end
            end
+           
+           
+                      
 
            %VOI
            xPos = 0.01;%5;
@@ -4037,6 +4044,14 @@ for i = 1:size(cst,1)
            tmp_pos = get(h,'Position');
            xPos = xPos + tmp_pos(3) + fieldSep;
            
+           robAvail = obj.availableRobustness();
+           robSetting = obj.robustness;
+           robIx = find(strcmp(robSetting,robAvail));
+           h = uicontrol(cstPanel,'Style','popupmenu','String',robAvail','Value',robIx,'Units','normalized','Position',[xPos ypos(cnt) robustnessW objHeight],'TooltipString','Select Robustness',...
+               'UserData',{i,j,'robustness'},'Callback',{@editObjParam_Callback,handles});
+           tmp_pos = get(h,'Position');
+           xPos = xPos + tmp_pos(3) + fieldSep;
+           
            h = uicontrol(cstPanel,'Style','popupmenu','String',classNames(2,:)','Value',find(strcmp(obj.name,classNames(2,:))),'Units','normalized','Position',[xPos ypos(cnt) functionW objHeight],'TooltipString','Select Objective/Constraint',...
                'UserData',{[i,j],classNames(1,:)},'Callback',{@changeObjFunction_Callback,handles});
            tmp_pos = get(h,'Position');
@@ -4044,7 +4059,7 @@ for i = 1:size(cst,1)
            
            %Check if we have an objective to display penalty
            if isa(obj,'DoseObjectives.matRad_DoseObjective')
-               h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.penalty),'Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight],'TooltipString','Objective Penalty','UserData',[i,j,0],'Callback',{@editObjParam_Callback,handles});
+               h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.penalty),'Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight],'TooltipString','Objective Penalty','UserData',{i,j,'penalty'},'Callback',{@editObjParam_Callback,handles});
            else
                h = uicontrol(cstPanel,'Style','edit','String','----','Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight],'Enable','off');
            end
@@ -4060,9 +4075,9 @@ for i = 1:size(cst,1)
               
               %Check if we have a cell and therefore a parameter list
               if iscell(obj.parameterTypes{p})                  
-                  h = uicontrol(cstPanel,'Style','popupmenu','String',obj.parameterTypes{p}','Value',obj.parameters{p},'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW*2 objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
+                  h = uicontrol(cstPanel,'Style','popupmenu','String',obj.parameterTypes{p}','Value',obj.parameters{p},'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW*2 objHeight],'UserData',{i,j,p},'Callback',{@editObjParam_Callback,handles});
               else
-                h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{p}),'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW objHeight],'UserData',[i,j,p],'Callback',{@editObjParam_Callback,handles});
+                h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{p}),'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW objHeight],'UserData',{i,j,p},'Callback',{@editObjParam_Callback,handles});
               end
               
               tmp_pos = get(h,'Position');
@@ -4150,12 +4165,22 @@ cst = evalin('base','cst');
 %if we have a popupmenu selection we use value
 %otherwise we use the edit string
 
-if ix(3) == 0
-    cst{ix(1),6}{ix(2)}.penalty = str2double(hObject.String);
+if ~isnumeric(ix{3})
+    switch ix{3}
+        case 'robustness'
+            v = hObject.Value;
+            cst{ix{1},6}{ix{2}}.robustness = hObject.String{v};
+        case 'penalty'
+            cst{ix{1},6}{ix{2}}.penalty = str2double(hObject.String);
+        otherwise
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispError('Unknown objective/constraint property %s',ix{3});
+    end
+    
 elseif isequal(hObject.Style,'popupmenu')
-    cst{ix(1),6}{ix(2)}.parameters{ix(3)} = hObject.Value;
+    cst{ix{1},6}{ix{2}}.parameters{ix{3}} = hObject.Value;
 else
-    cst{ix(1),6}{ix(2)}.parameters{ix(3)} = str2double(hObject.String);
+    cst{ix{1},6}{ix{2}}.parameters{ix{3}} = str2double(hObject.String);
 end
     
 assignin('base','cst',cst);
@@ -4186,6 +4211,8 @@ if ~strcmp(currentClass,classToCreate)
     if (isfield(currentObj,'penalty') || isprop(currentObj,'penalty')) && isprop(newObj,'penalty')
         newObj.penalty = currentObj.penalty;
     end
+    
+    
     
     cst{ix(1),6}{ix(2)} = struct(newObj);
     

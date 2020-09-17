@@ -50,11 +50,7 @@ classdef (Abstract) matRad_DoseOptimizationFunction
             else
                 matRad_cfg.dispError('Invalid robustness setting!');
             end                        
-        end
-        
-        function rob = availableRobustness(~)
-            rob = {'none'}; %By default, no robustness is available
-        end
+        end        
     end
     
     % Helper methods
@@ -111,6 +107,10 @@ classdef (Abstract) matRad_DoseOptimizationFunction
             catch ME
                 error(['Could not instantiate Optimization Function: ' ME.message]);
             end
+        end
+        
+        function rob = availableRobustness()
+            rob = {'none'}; %By default, no robustness is available
         end
                 
         function s = convertOldOptimizationStruct(old_s)
