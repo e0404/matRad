@@ -207,7 +207,7 @@ numScen = 1;doseWindow = [0 3.5];
 matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExD_' num2str(round(numScen))]),plane,slice,[],[],colorcube,[],doseWindow,[]);
 b = uicontrol('Parent',f,'Style','slider','Position',[50,5,419,23],...
     'value',numScen, 'min',1, 'max',pln.multScen.totNumScen,'SliderStep', [1/(pln.multScen.totNumScen-1) , 1/(pln.multScen.totNumScen-1)]);
-b.Callback = @(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExD_' num2str(round(es.Value))]),plane,slice,[],[],colorcube,[],doseWindow,[]);
+set(b,'Callback',@(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExD_' num2str(round(get(es,'Value')))]),plane,slice,[],[],colorcube,[],doseWindow,[]));
 
 %% Indicator calculation and show DVH and QI
 [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUIrobust);
