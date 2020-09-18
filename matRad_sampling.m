@@ -143,18 +143,7 @@ if FlagParallToolBoxLicensed
           
           % create nominal scenario
           plnSamp          = pln;
-          plnSamp.multScen = matRad_multScen(ct,'nomScen'); 
-          % pick the i-th scenario and save into plnSamp
-          plnSamp.multScen.scenForProb         = pln.multScen.scenForProb(i,:);
-          plnSamp.multScen.relRangeShift       = pln.multScen.scenForProb(i,5);
-          plnSamp.multScen.absRangeShift       = pln.multScen.scenForProb(i,4);
-          plnSamp.multScen.isoShift            = pln.multScen.scenForProb(i,1:3);
-          plnSamp.multScen.totNumShiftScen     = 1;
-          plnSamp.multScen.totNumRangeScen     = 1;
-          plnSamp.multScen.numOfCtScen         = 1;
-          plnSamp.multScen.scenMask            = 1;
-          plnSamp.multScen.linearMask          = 1;
-          plnSamp.multScen.scenProb            = 1;
+          plnSamp.multScen = pln.multScen.extractSingleNomScen(ctScenSampling,i);
           
           resultSamp                 = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w);
           sampledDose                = resultSamp.(pln.bioParam.quantityVis)(subIx);
