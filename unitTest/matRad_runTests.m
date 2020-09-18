@@ -57,6 +57,7 @@ matRad_unitTestTextManipulation(testScripts,'pln.propDoseCalc.resolution.y',['pl
 matRad_unitTestTextManipulation(testScripts,'pln.propDoseCalc.resolution.z',['pln.propDoseCalc.resolution.z = ' num2str(unitTestResolution.z)]);
 matRad_unitTestTextManipulation(testScripts,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR TESTING %%%%%%%%%%%%%%');
 
+errors = {};
 %Running tests
 for testIx = 1:length(testScriptNames)
     fprintf('Running Integration Test for ''%s''\n',names{testIx});
@@ -65,7 +66,14 @@ for testIx = 1:length(testScriptNames)
         clear ct cst pln stf dij resultGUI; %Make sure the workspace is somewhat clean
         delete(testScripts{testIx}); %Delete after successful run
     catch ME
-        matRad_cfg.dispError('Experiencd an error during testing of %s. Error-Message:\n %s',testScripts{testIx},ME.message);
+        errMsg = sprintf('Experiencd an error during testing of %s. Error-Message:\n %s',testScripts{testIx},ME.message);
+        matRad_cfg.dispWarning(errMsg);
+        errors{end+1} = errMsg;
     end
+end
+
+%Check if at least one script failed and report error
+if ~isempty(errors)
+    matRad_cfg.dispError(strjoin(errors,'\n\n============================\n\n'));
 end
     

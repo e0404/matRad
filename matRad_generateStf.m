@@ -1,4 +1,4 @@
-function stf = matRad_generateStf(ct,cst,pln,param,visMode)
+function stf = matRad_generateStf(ct,cst,pln,visMode)
 % matRad steering information generation
 % 
 % call
@@ -67,10 +67,13 @@ if isfield(pln,'propStf') && isfield(pln.propStf,'addMargin')
 end
 
 if addmarginBool
+   %Assumption for range uncertainty
+   assumeRangeMargin = pln.multScen.maxAbsRangeShift + pln.multScen.maxRelRangeShift;   
+      
    % add margin -  account for voxel resolution, the maximum shift scenario and the current bixel width.
-   margin.x  = max([ct.resolution.x max(abs(pln.multScen.isoShift(:,1))) pln.propStf.bixelWidth+1e-3]);
-   margin.y  = max([ct.resolution.y max(abs(pln.multScen.isoShift(:,2))) pln.propStf.bixelWidth+1e-3]);
-   margin.z  = max([ct.resolution.z max(abs(pln.multScen.isoShift(:,3))) pln.propStf.bixelWidth+1e-3]);
+   margin.x  = max([ct.resolution.x max(abs(pln.multScen.isoShift(:,1)) + assumeRangeMargin) pln.propStf.bixelWidth+1e-3]);
+   margin.y  = max([ct.resolution.y max(abs(pln.multScen.isoShift(:,2)) + assumeRangeMargin) pln.propStf.bixelWidth+1e-3]);
+   margin.z  = max([ct.resolution.z max(abs(pln.multScen.isoShift(:,3)) + assumeRangeMargin) pln.propStf.bixelWidth+1e-3]);
    
    voiTarget = matRad_addMargin(voiTarget,cst,ct.resolution,margin,true);
     V        = find(voiTarget>0);

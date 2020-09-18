@@ -52,10 +52,16 @@ function wQ = matRad_weightedQuantile(values, percentiles, weight, isSorted, ext
   wQ = NaN * ones(size(values,1), 2);
 
   [x,ia] = unique(wQtemp);
-  
     
   V = values(ia);
   
-  wQ = matRad_interp1(x,V,percentiles,'extrap',extraPolMethod);
+  if ~iscolumn(x)
+      x = x';
+  end
+  if ~iscolumn(V)
+      V = V';
+  end
+  
+  wQ = matRad_interp1(x,V,percentiles,extraPolMethod);
   
 end % eof

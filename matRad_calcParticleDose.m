@@ -178,13 +178,12 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
         matRad_cfg.dispInfo('\tShift scenario %d of %d: \n',shiftScen,pln.multScen.totNumShiftScen);
     end
     
-    
+    counter = 0;
     
     % compute SSDs only for first scenario
     stf = matRad_computeSSD(stf,ct);
     
     for i = 1:numel(stf) % loop over all beams
-        counter = 0;
         
         matRad_calcDoseInitBeam;
         
