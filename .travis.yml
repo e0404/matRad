@@ -24,7 +24,7 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "Testing matRad on linux..." ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then eval "${MATRIX_EVAL}" ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo chmod +x .travis/before_install_linux.sh ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo chmod +x .travis/runstests.sh ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo chmod +x .travis/runtests.sh ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo .travis/before_install_linux.sh; fi
   
   # OSX setup
