@@ -50,7 +50,10 @@ sudo ldconfig
 
 sudo apt-get install gnuplot-x11 --yes --force-yes
 # clone repository with IpOpt Interface
-git clone -b '1.1.1' --single-branch --depth 1 https://github.com/ebertolazzi/mexIPOPT
+git https://github.com/ebertolazzi/mexIPOPT
+cd mexIPOPT
+git checkout 2d72b5d1b75ece34fb78d12c54116e33efdc6d42
+cd ..
 
 # compile interface
 mkoctfile --mex -ImexIPOPT/toolbox/src -I/usr/local/include/coin mexIPOPT/toolbox/src/ipopt.cc mexIPOPT/toolbox/src/IpoptInterfaceCommon.cc -v -DMATLAB_MEXFILE -DHAVE_CSTDDEF -DIPOPT_INTERFACE_MISSING_COPY_N -Wl,--no-undefined -lipopt -lcoinmumps -lcoinlapack -lcoinblas -L/usr/local/lib -std=gnu++11
