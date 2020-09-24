@@ -50,7 +50,7 @@ sudo ldconfig
 
 sudo apt-get install gnuplot-x11 --yes --force-yes
 # clone repository with IpOpt Interface
-git https://github.com/ebertolazzi/mexIPOPT
+git clone https://github.com/ebertolazzi/mexIPOPT
 cd mexIPOPT
 git checkout 2d72b5d1b75ece34fb78d12c54116e33efdc6d42
 cd ..
