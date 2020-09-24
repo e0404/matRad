@@ -1037,7 +1037,7 @@ if ~isempty(ct) && get(handles.popupTypeOfPlot,'Value')==1
        if isempty(num)
           ctScenNum = 1;
        else
-          ctScenNum = str2num(num{1});
+          ctScenNum = str2double(num{1});
           if ~isnumeric(ctScenNum)
              ctScenNum = 1;
           end

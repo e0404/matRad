@@ -183,7 +183,7 @@ FLAG_ROB_OPT   = false;
 
 
 for i = 1:size(cst,1)
-    for j = 1:size(cst{i,6},1)
+    for j = 1:numel(cst{i,6})
        if strcmp(cst{i,6}{j}.robustness,'PROB') && numel(linIxDIJ) > 1
           FLAG_CALC_PROB = true;
        end
