@@ -43,7 +43,12 @@ switch env
     case 'MATLAB'
         y = interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal);
     case 'OCTAVE'
-        [xqMesh,yqMesh,zqMesh] = meshgrid(xq,yq,zq);
-        y = interp3(xi,yi,zi,x,xqMesh,yqMesh,zqMesh,mode,extrapVal);
+        %Octave now supports vectors in interp3, but for some reasons we
+        %need to transpose the query points
+        y = interp3(xi,yi,zi,x,xq',yq',zq',mode,extrapVal);
+        
+        %Old implementation
+        %[xqMesh,yqMesh,zqMesh] = meshgrid(xq,yq,zq);
+        %y = interp3(xi,yi,zi,x,xqMesh,yqMesh,zqMesh,mode,extrapVal);
 end
 
