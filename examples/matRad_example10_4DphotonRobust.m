@@ -125,7 +125,7 @@ motionPeriod = 5; % [s]
 [ct,cst] = matRad_addMovement(ct, cst,motionPeriod, numOfCtScen, amplitude,1);
 
 % show the deformation vector field
-slice = 25; ctPhase = 9;   % select a specific slice and and ct phase to plot the vector field
+slice = 25; % select a specific slice and to plot the vector field
 [a,xDim,yDim,zDim] = size(ct.dvf{1});
 
 [mX,mY]      = meshgrid(1:xDim,1:yDim);
@@ -138,7 +138,7 @@ for ctPhase = 1:ct.numOfCtScen
    quiver(mX,mY,yVectorField,xVectorField); title(['deformation vector field of phase ' num2str(ctPhase)]),
    set(gca,'XLim',[70 80]);set(gca,'YLim',[70 80]);
    % flip y axis to be consistent with the previous plot
-   ax = gca; ax.YDir = 'reverse';
+   ax = gca; set(ax,'YDir','reverse');
    pause(0.5);  
 end
 
@@ -272,7 +272,7 @@ doseIsoLevels = linspace(0.1 * maxDose,maxDose,10);
 matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.([quantityOpt '_' num2str(round(numScen))]),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);
 b = uicontrol('Parent',f,'Style','slider','Position',[50,5,419,23],...
     'value',numScen, 'min',1, 'max',pln.multScen.totNumScen,'SliderStep', [1/(pln.multScen.totNumScen-1) , 1/(pln.multScen.totNumScen-1)]);
-b.Callback = @(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,round(es.Value),resultGUIrobust.([quantityOpt '_' num2str(round(es.Value))]),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);
+set(b,'Callback',@(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,round(get(es,'Value')),resultGUIrobust.([quantityOpt '_' num2str(round(get(es,'Value')))]),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels));
 
 %% Indicator calculation and show DVH and QI
 [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUIrobust);

@@ -44,6 +44,8 @@ if ~exist('visBool','var')
     visBool = false;
 end
 
+matRad_cfg = MatRad_Config.instance();
+
 % book keeping
 ct.motionPeriod = motionPeriod;
 ct.numOfCtScen = numOfCtScen;
@@ -64,9 +66,13 @@ for i = 1:numOfCtScen
     
     ct.dvf{i} = zeros([ct.cubeDim, 3]);
     
-    ct.dvf{i}(:,:,:,1) = amp(1) * sin((i-1)*pi / numOfCtScen)^2; % deformation along x direction (i.e. 2nd coordinate in dose/ct)
-    ct.dvf{i}(:,:,:,2) = amp(2) * sin((i-1)*pi / numOfCtScen)^2; % deformation along y direction (i.e. 3rd coordiatie in dose/ct)
-    ct.dvf{i}(:,:,:,3) = amp(3) * sin((i-1)*pi / numOfCtScen)^2;
+    dVec = arrayfun(@(A)  A*sin((i-1)*pi / numOfCtScen)^2, amp);
+    
+    ct.dvf{i}(:,:,:,1) = dVec(1); % deformation along x direction (i.e. 2nd coordinate in dose/ct)
+    ct.dvf{i}(:,:,:,2) = dVec(2);
+    ct.dvf{i}(:,:,:,3) = dVec(3);
+    
+    matRad_cfg.dispInfo('Deforming ct phase %d with [dx,dy,dz] = [%f,%f,%f] voxels\n',i,dVec(1),dVec(2),dVec(3));
     
     % warp ct
     switch env
@@ -132,8 +138,8 @@ y = 1:size(cube,2);
 z = 1:size(cube,3);
 
 [X,Y,Z] = meshgrid(x,y,z);
-Xnew = X + vectorfield(:,:,:,2);
-Ynew = Y + vectorfield(:,:,:,1);
+Xnew = X + vectorfield(:,:,:,1);
+Ynew = Y + vectorfield(:,:,:,2);
 Znew = Z + vectorfield(:,:,:,3);
 
 newCube = interp3(X,Y,Z,cube,Xnew,Ynew,Znew,interpMethod,fillValue);
