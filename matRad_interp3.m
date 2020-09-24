@@ -42,13 +42,16 @@ end
 switch env
     case 'MATLAB'
         y = interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal);
-    case 'OCTAVE'
-        %Octave now supports vectors in interp3, but for some reasons we
-        %need to transpose the query points
-        y = interp3(xi,yi,zi,x,xq',yq',zq',mode,extrapVal);
-        
+  case 'OCTAVE'
+        %If we do a vector query with similar sizes only don't create a meshgrid
+        if isequal(size(xq),size(yq),size(zq))
+            y = interp3(xi,yi,zi,x,xq',yq',zq',mode,extrapVal);
+        else
+            %Here we require a meshgrid to force octave to return the correct size
+            %Maybe the same thing could be achieved with a reshape?
+            [xqMesh,yqMesh,zqMesh] = meshgrid(xq,yq,zq);
+            y = interp3(xi,yi,zi,x,xqMesh,yqMesh,zqMesh,mode,extrapVal);
+        end        
         %Old implementation
-        %[xqMesh,yqMesh,zqMesh] = meshgrid(xq,yq,zq);
-        %y = interp3(xi,yi,zi,x,xqMesh,yqMesh,zqMesh,mode,extrapVal);
 end
 
