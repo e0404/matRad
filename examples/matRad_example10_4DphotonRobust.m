@@ -119,8 +119,8 @@ ct.cubeHU{1}(vIxPTV) = 0;   % assign HU of water
 
 %% add motion to the phantom and artificially create a 4D CT with vector fields
 amplitude    = [5 0 0]; % [voxels]
-numOfCtScen  = 10;
-motionPeriod = 5; % [s] 
+numOfCtScen  = 5;
+motionPeriod = 2.5; % [s] 
 
 [ct,cst] = matRad_addMovement(ct, cst,motionPeriod, numOfCtScen, amplitude,1);
 
@@ -270,9 +270,13 @@ numScen = 1;
 maxDose       = max(max(resultGUIrobust.([quantityOpt '_' num2str(round(numScen))])(:,:,slice)))+0.2;
 doseIsoLevels = linspace(0.1 * maxDose,maxDose,10);
 matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.([quantityOpt '_' num2str(round(numScen))]),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);
-b = uicontrol('Parent',f,'Style','slider','Position',[50,5,419,23],...
-    'value',numScen, 'min',1, 'max',pln.multScen.totNumScen,'SliderStep', [1/(pln.multScen.totNumScen-1) , 1/(pln.multScen.totNumScen-1)]);
-set(b,'Callback',@(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,round(get(es,'Value')),resultGUIrobust.([quantityOpt '_' num2str(round(get(es,'Value')))]),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels));
+
+[env,envver] = matRad_getEnvironment();
+if strcmp(env,'MATLAB') || str2double(envver(1)) >= 5
+    b = uicontrol('Parent',f,'Style','slider','Position',[50,5,419,23],...
+        'value',numScen, 'min',1, 'max',pln.multScen.totNumScen,'SliderStep', [1/(pln.multScen.totNumScen-1) , 1/(pln.multScen.totNumScen-1)]);
+    set(b,'Callback',@(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,round(get(es,'Value')),resultGUIrobust.([quantityOpt '_' num2str(round(get(es,'Value')))]),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels));
+end
 
 %% Indicator calculation and show DVH and QI
 [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUIrobust);

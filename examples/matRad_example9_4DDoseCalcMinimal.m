@@ -26,8 +26,8 @@ load BOXPHANTOM.mat
 %%
 
 amplitude    = [0 3 0]; % [voxels]
-numOfCtScen  = 10;
-motionPeriod = 5; % [s] 
+numOfCtScen  = 5;
+motionPeriod = 2.5; % [s] 
 
 [ct,cst] = matRad_addMovement(ct, cst,motionPeriod, numOfCtScen, amplitude);
 % Set up a plan, compute dose influence on all phases, conventional optimization
