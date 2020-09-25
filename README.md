@@ -21,22 +21,25 @@ Then there’re three options for a pleasant start with matRad. Choose one or try 
 
 ## Option 1: Using the GUI
 
-For an intuitive workflow with graphical user interface, type 
+For an intuitive workflow with the graphical user interface, type 
 `matRadGUI`
-in your command window. An empty GUI should be opened. Click the *Load.mat data-Button in the Workflow-section to load a patient. Set the plan and optimization parameters, calculate the dose influence matrix and execute the fluence optimization in the GUI.
+in your command window. An empty GUI should be opened. Click the _*Load.mat_ data-Button in the Workflow-section to load a patient. Set the plan and optimization parameters, calculate the dose influence matrix and execute the fluence optimization in the GUI.
 
 ## Option 2: Using the main script
 
 If you prefer scripting, open the default script *matRad.m* from the main matRad folder:
 `edit matRad.m`
+
 Use it to learn something about the code structure and execute it section by section.
 
 You can also run the full script for an example photon plan by just typing
-`matRad`
+`matRad` in your command window.
 
 ## Option 3: Using the examples
 
-The most time consuming but also most educational approach to matRad. When in the main matRad folder, navigate to the folder *examples*. Open one of the examples given there. Execute it section by section. Move on to the next example afterwards.
+The most time consuming but also most educational approach to matRad. 
+
+When in the main matRad folder, navigate to the folder *examples*. Open one of the examples given there. Execute it section by section. Move on to the next example afterwards.
 
 # Need help?
 
@@ -46,7 +49,7 @@ If you encounter problems with matRad, please consider the following guidelines 
 
 * Please check the description of how to set up matRad and its technical documentation in the wiki.
 
-* Go through the relevant examples and see if they answer your question (see Option 3 above!)
+* Go through the relevant examples and see if they answer your question (see *Option 3* above!)
 
 * Check open and closed issues for your question.
 
