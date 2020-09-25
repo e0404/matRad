@@ -1,3 +1,10 @@
+Version 2.10.1 "Blaise" - Patch release
+	- multiple small bugfixes 
+	- code optimization for jacobian evaluation (x10-100 speedup)
+	- New option pln.propDoseCalc.useGivenEqDensityCube (default false) to directly use the literal values from ct.cube and omit HU to WEQ conversion from ct.cubeHU
+	- New option pln.propDoseCalc.ignoreOutsideDensities (default true) to disable/enable inclusion of WEPL outside the patient contour in ray-tracing
+	- Sped up TravisCI testing which now uses pre-compiled ipopt mex interface and includes testing on Matlab (fallback on AzureDevOps)	
+
 Version 2.10.0 "Blaise"
 	Second Release of matRad. Note that despite major incompatibilities with "Alan" we still chose major version number "2" to have a consistent versioning in the future.
 	we want to thank all new contributing authors (see AUTHORS.txt)
