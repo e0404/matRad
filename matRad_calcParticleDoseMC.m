@@ -23,13 +23,13 @@ function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDi
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2019 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% Copyright 2019 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -39,7 +39,7 @@ matRad_cfg = MatRad_Config.instance();
 
 % check if valid machine
 if ~strcmp(pln.radiationMode,'protons') || ~strcmp(pln.machine,'generic_MCsquare')
-    matRad_cfg.dispError('Wrong radiation modality and/or machine. For now MCsquare requires machine generic_MCsquare!');    
+    matRad_cfg.dispError('Wrong radiation modality and/or machine. For now MCsquare requires machine generic_MCsquare!');
 end
 
 
@@ -88,9 +88,9 @@ end
 
 %Mex interface for import of sparse matrix
 if ~calcDoseDirect && ~matRad_checkMexFileExists('matRad_sparseBeamletsReaderMCsquare')
-    matRad_cfg.dispWarning('Compiled sparse reader interface not found. Trying to compile it on the fly!');      
+    matRad_cfg.dispWarning('Compiled sparse reader interface not found. Trying to compile it on the fly!');
     try
-        matRad_compileMCsquareSparseReader();        
+        matRad_compileMCsquareSparseReader();
     catch MException
         matRad_cfg.dispError('Could not find/generate mex interface for reading the sparse matrix. \nCause of error:\n%s\n Please compile it yourself.',MException.message);
     end
@@ -107,7 +107,7 @@ cd(MCsquareFolder);
 
 %Check Materials
 if ~exist([MCsquareFolder filesep 'Materials'],'dir') || ~exist(fullfile(MCsquareFolder,'Materials','list.dat'),'file')
-    matRad_cfg.dispInfo('First call of MCsquare: unzipping Materials...');    
+    matRad_cfg.dispInfo('First call of MCsquare: unzipping Materials...');
     unzip('Materials.zip');
     matRad_cfg.dispInfo('Done');
 end
@@ -139,20 +139,11 @@ if dij.numOfScenarios ~= 1
     matRad_cfg.dispWarning('MCsquare is only implemented for single scenario use at the moment. Will only use the first Scenario for Monte Carlo calculation!');
 end
 
+
+
 % prefill ordering of MCsquare bixels
 dij.MCsquareCalcOrder = NaN*ones(dij.totalNumOfBixels,1);
 
-% We need to adjust the offset used in matRad_calcDoseInit
-mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
-                - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
-mcSquareAddIsoCenterOffset = mcSquareAddIsoCenterOffset - offset;
-
-% for MCsquare we explicitly downsample the ct to the dose grid (might not
-% be necessary in future MCsquare versions with separated grids)
-for s = 1:dij.numOfScenarios
-    HUcube{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
-                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
-end
 
 % Explicitly setting the number of threads for MCsquare, 0 is all available
 nbThreads = 0;
@@ -167,154 +158,200 @@ absCalibrationFactorMC2 = 1.602176e-19 * 1.0e+9;
 % book keeping - this is necessary since pln is not used in optimization or
 % matRad_calcCubes
 if strcmp(pln.bioParam.model,'constRBE')
-   dij.RBE = pln.bioParam.RBE;
+    dij.RBE = pln.bioParam.RBE;
 end
 
-% MCsquare settings
-MCsquareConfigFile = 'MCsquareConfig.txt';
+scenCount = 0;
 
-MCsquareConfig = MatRad_MCsquareConfig;
+% for MCsquare we explicitly downsample the ct to the dose grid (might not
+% be necessary in future MCsquare versions with separated grids)
+for s = 1:ct.numOfCtScen
+    HUcube{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
+        dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
+end
 
-MCsquareConfig.BDL_Plan_File = 'currBixels.txt';
-MCsquareConfig.CT_File       = 'MC2patientCT.mhd';
-MCsquareConfig.Num_Threads   = nbThreads;
-MCsquareConfig.RNG_Seed      = 1234;
-MCsquareConfig.Num_Primaries = nCasePerBixel;
-
-% turn simulation of individual beamlets
-MCsquareConfig.Beamlet_Mode = ~calcDoseDirect;
-% turn of writing of full dose cube
-MCsquareConfig.Dose_MHD_Output = calcDoseDirect;
-% turn on sparse output
-MCsquareConfig.Dose_Sparse_Output = ~calcDoseDirect;
-% set threshold of sparse matrix generation
-MCsquareConfig.Dose_Sparse_Threshold = relDoseCutoff;
-
-% write patient data
-MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
-                             dij.doseGrid.resolution.y ...
-                             dij.doseGrid.resolution.z];   
-matRad_writeMhd(HUcube{1},MCsquareBinCubeResolution,MCsquareConfig.CT_File);
-
-
-
-counter = 0;             
-for i = 1:length(stf)
-    stfMCsquare(i).gantryAngle = mod(180-stf(i).gantryAngle,360); %Different MCsquare geometry
-    stfMCsquare(i).couchAngle  = stf(i).couchAngle;
-    stfMCsquare(i).isoCenter   = stf(i).isoCenter + mcSquareAddIsoCenterOffset;
-    stfMCsquare(i).energies    = unique([stf(i).ray.energy]);
+for shiftScen = 1:pln.multScen.totNumShiftScen
     
-    % allocate empty target point container
-    for j = 1:numel(stfMCsquare(i).energies)
-        stfMCsquare(i).energyLayer(j).targetPoints   = [];
-        stfMCsquare(i).energyLayer(j).numOfPrimaries = [];
-        stfMCsquare(i).energyLayer(j).rayNum         = [];
-        stfMCsquare(i).energyLayer(j).bixelNum       = [];
+    % manipulate isocenter
+    for k = 1:length(stf)
+        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(shiftScen,:);
     end
     
-    for j = 1:stf(i).numOfRays
-        for k = 1:stf(i).numOfBixelsPerRay(j)
-            counter = counter + 1;
-            dij.beamNum(counter)  = i;
-            dij.rayNum(counter)   = j;
-            dij.bixelNum(counter) = k;
-        end
-        
-        for k = 1:numel(stfMCsquare(i).energies)
-            if any(stf(i).ray(j).energy == stfMCsquare(i).energies(k))
-                stfMCsquare(i).energyLayer(k).rayNum   = [stfMCsquare(i).energyLayer(k).rayNum j];
-                stfMCsquare(i).energyLayer(k).bixelNum = [stfMCsquare(i).energyLayer(k).bixelNum ...
-                    find(stf(i).ray(j).energy == stfMCsquare(i).energies(k))];
-                stfMCsquare(i).energyLayer(k).targetPoints = [stfMCsquare(i).energyLayer(k).targetPoints; ...
-                                        -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
-                if calcDoseDirect
-                    stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
-                                         round(stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k))*MCsquareConfig.Num_Primaries)];
-                else
-                    stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
-                        MCsquareConfig.Num_Primaries];
+    for ctScen = 1:pln.multScen.numOfCtScen
+        for rangeShiftScen = 1:pln.multScen.totNumRangeScen
+            if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
+                
+                %For direct dose calculation
+                totalWeights = 0;
+                
+                %Count the scenarios
+                scenCount = scenCount + 1;
+                
+                % We need to adjust the offset used in matRad_calcDoseInit
+                mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
+                    - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
+                mcSquareAddIsoCenterOffset = mcSquareAddIsoCenterOffset - offset;
+                
+                % MCsquare settings
+                MCsquareConfigFile = sprintf('MCsquareConfig.txt');
+                
+                MCsquareConfig = MatRad_MCsquareConfig;
+                
+                MCsquareConfig.BDL_Plan_File = 'currBixels.txt';
+                MCsquareConfig.CT_File       = 'MC2patientCT.mhd';
+                MCsquareConfig.Num_Threads   = nbThreads;
+                MCsquareConfig.RNG_Seed      = 1234;
+                MCsquareConfig.Num_Primaries = nCasePerBixel;
+                
+                % turn simulation of individual beamlets
+                MCsquareConfig.Beamlet_Mode = ~calcDoseDirect;
+                % turn of writing of full dose cube
+                MCsquareConfig.Dose_MHD_Output = calcDoseDirect;
+                % turn on sparse output
+                MCsquareConfig.Dose_Sparse_Output = ~calcDoseDirect;
+                % set threshold of sparse matrix generation
+                MCsquareConfig.Dose_Sparse_Threshold = relDoseCutoff;
+                
+                % write patient data
+                MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
+                    dij.doseGrid.resolution.y ...
+                    dij.doseGrid.resolution.z];
+                
+                matRad_writeMhd(HUcube{ctScen},MCsquareBinCubeResolution,MCsquareConfig.CT_File);
+                
+                
+                
+                counter = 0;
+                for i = 1:length(stf)
+                    stfMCsquare(i).gantryAngle = mod(180-stf(i).gantryAngle,360); %Different MCsquare geometry
+                    stfMCsquare(i).couchAngle  = stf(i).couchAngle;
+                    stfMCsquare(i).isoCenter   = stf(i).isoCenter + mcSquareAddIsoCenterOffset;
+                    stfMCsquare(i).energies    = unique([stf(i).ray.energy]);
+                    
+                    % allocate empty target point container
+                    for j = 1:numel(stfMCsquare(i).energies)
+                        stfMCsquare(i).energyLayer(j).targetPoints   = [];
+                        stfMCsquare(i).energyLayer(j).numOfPrimaries = [];
+                        stfMCsquare(i).energyLayer(j).rayNum         = [];
+                        stfMCsquare(i).energyLayer(j).bixelNum       = [];
+                    end
+                    
+                    for j = 1:stf(i).numOfRays
+                        for k = 1:stf(i).numOfBixelsPerRay(j)
+                            counter = counter + 1;
+                            dij.beamNum(counter)  = i;
+                            dij.rayNum(counter)   = j;
+                            dij.bixelNum(counter) = k;
+                        end
+                        
+                        for k = 1:numel(stfMCsquare(i).energies)
+                            if any(stf(i).ray(j).energy == stfMCsquare(i).energies(k))
+                                stfMCsquare(i).energyLayer(k).rayNum   = [stfMCsquare(i).energyLayer(k).rayNum j];
+                                stfMCsquare(i).energyLayer(k).bixelNum = [stfMCsquare(i).energyLayer(k).bixelNum ...
+                                    find(stf(i).ray(j).energy == stfMCsquare(i).energies(k))];
+                                stfMCsquare(i).energyLayer(k).targetPoints = [stfMCsquare(i).energyLayer(k).targetPoints; ...
+                                    -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
+                                if calcDoseDirect
+                                    stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
+                                        round(stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k))*MCsquareConfig.Num_Primaries)];
+                                    totalWeights = totalWeights + stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k));
+                                else
+                                    stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
+                                        MCsquareConfig.Num_Primaries];
+                                end
+                            end
+                        end
+                        
+                    end
+                    
                 end
+                
+                % remember order
+                counterMCsquare = 0;
+                MCsquareOrder = NaN * ones(dij.totalNumOfBixels,1);
+                for i = 1:length(stf)
+                    for j = 1:numel(stfMCsquare(i).energies)
+                        for k = 1:numel(stfMCsquare(i).energyLayer(j).numOfPrimaries)
+                            counterMCsquare = counterMCsquare + 1;
+                            ix = find(i                                         == dij.beamNum & ...
+                                stfMCsquare(i).energyLayer(j).rayNum(k)   == dij.rayNum & ...
+                                stfMCsquare(i).energyLayer(j).bixelNum(k) == dij.bixelNum);
+                            
+                            MCsquareOrder(ix) = counterMCsquare;
+                        end
+                    end
+                end
+                
+                if any(isnan(MCsquareOrder))
+                    matRad_cfg.dispError('Invalid ordering of Beamlets for MCsquare computation!');
+                end
+                
+                %% MC computation and dij filling
+                matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare);
+                
+                % run MCsquare
+                [status,cmdout] = system([mcSquareBinary ' ' MCsquareConfigFile],'-echo');
+                
+                mask = false(dij.doseGrid.numOfVoxels,1);
+                mask(VdoseGrid) = true;
+                
+                % read sparse matrix
+                if ~calcDoseDirect
+                    dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( ...
+                        [MCsquareConfig.Output_Directory filesep 'Sparse_Dose.bin'], ...
+                        dij.doseGrid.dimensions, ...
+                        dij.totalNumOfBixels, ...
+                        mask);
+                else
+                    cube = matRad_readMhd(MCsquareConfig.Output_Directory,'Dose.mhd');
+                    dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
+                        absCalibrationFactorMC2 * totalWeights * cube(VdoseGrid), ...
+                        dij.doseGrid.numOfVoxels,1);
+                end
+                
+                % reorder influence matrix to comply with matRad default ordering
+                if MCsquareConfig.Beamlet_Mode
+                    dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = dij.physicalDose{ctScen,shiftScen,rangeShiftScen}(:,MCsquareOrder);
+                end
+                
+                matRad_cfg.dispInfo('matRad: done!\n');
+                
+                try
+                    % wait 0.1s for closing all waitbars
+                    allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
+                    delete(allWaitBarFigures);
+                    pause(0.1);
+                catch
+                end
+                
+                delete([MCsquareConfig.CT_File(1:end-4) '.*']);
+                delete('currBixels.txt');
+                delete('MCsquareConfig.txt');
+
+                %For Octave temporarily disable confirmation for recursive rmdir
+                if strcmp(env,'OCTAVE')
+                    rmdirConfirmState = confirm_recursive_rmdir(0);
+                end
+                rmdir(MCsquareConfig.Output_Directory,'s');
+
+                %Reset to old confirmatoin state
+                if strcmp(env,'OCTAVE')
+                    confirm_recursive_rmdir(rmdirConfirmState);
+                end
+                
             end
         end
-               
     end
     
-end
-
-% remember order
-counterMCsquare = 0;
-MCsquareOrder = NaN * ones(dij.totalNumOfBixels,1);
-for i = 1:length(stf)
-    for j = 1:numel(stfMCsquare(i).energies)
-        for k = 1:numel(stfMCsquare(i).energyLayer(j).numOfPrimaries)
-            counterMCsquare = counterMCsquare + 1;
-            ix = find(i                                         == dij.beamNum & ...
-                      stfMCsquare(i).energyLayer(j).rayNum(k)   == dij.rayNum & ...
-                      stfMCsquare(i).energyLayer(j).bixelNum(k) == dij.bixelNum);
-        
-            MCsquareOrder(ix) = counterMCsquare;
-        end
+    % manipulate isocenter
+    for k = 1:length(stf)
+        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(shiftScen,:);
     end
-end
-
-if any(isnan(MCsquareOrder))
-    matRad_cfg.dispError('Invalid ordering of Beamlets for MCsquare computation!');
-end
-
-%% MC computation and dij filling
-matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare);
-
-% run MCsquare
-[status,cmdout] = system([mcSquareBinary ' ' MCsquareConfigFile],'-echo');
     
-mask = false(dij.doseGrid.numOfVoxels,1);
-mask(VdoseGrid) = true;
-
-% read sparse matrix
-if ~calcDoseDirect
-    dij.physicalDose{1} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( ...
-                    [MCsquareConfig.Output_Directory filesep 'Sparse_Dose.bin'], ...
-                    dij.doseGrid.dimensions, ...
-                    dij.totalNumOfBixels, ...
-                    mask);
-else
-    cube = matRad_readMhd(MCsquareConfig.Output_Directory,'Dose.mhd');
-    dij.physicalDose{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
-                                 absCalibrationFactorMC2 * cube(VdoseGrid), ...
-                                 dij.doseGrid.numOfVoxels,1);
-end
-
-% reorder influence matrix to comply with matRad default ordering
-if MCsquareConfig.Beamlet_Mode
-    dij.physicalDose{1} = dij.physicalDose{1}(:,MCsquareOrder);            
-end        
-
-matRad_cfg.dispInfo('matRad: done!\n');
-
-try
-    % wait 0.1s for closing all waitbars
-    allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
-    delete(allWaitBarFigures);
-    pause(0.1);
-catch
 end
 
 %% clear all data
-delete([MCsquareConfig.CT_File(1:end-4) '.*']);
-delete('currBixels.txt');
-delete('MCsquareConfig.txt');
 
-%For Octave temporarily disable confirmation for recursive rmdir
-if strcmp(env,'OCTAVE')    
-    rmdirConfirmState = confirm_recursive_rmdir(0);
-end
-rmdir(MCsquareConfig.Output_Directory,'s');
-
-%Reset to old confirmatoin state
-if strcmp(env,'OCTAVE')
-    confirm_recursive_rmdir(rmdirConfirmState);
-end
 
 % cd back
 cd(currFolder);
