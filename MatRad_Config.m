@@ -24,7 +24,9 @@ classdef MatRad_Config < handle
         propOpt;
         propMC;
         propStf;
-        keepLog = false; 
+        keepLog = false;
+        
+        defaults;
         
         disableGUI = false;
     end
@@ -67,13 +69,14 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultVoxelSubIx = []; %Allows specification of a subindex list for dose calculation, empty by default means automatic setting
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false;
             
-            
             obj.propOpt.defaultMaxIter = 500;           
             
             obj.propMC.ompMC_defaultHistories = 1e5;
             obj.propMC.ompMC_defaultOutputVariance = false;
             obj.propMC.MCsquare_defaultHistories = 1e6;
             obj.propMC.direct_defaultHistories = 2e4;
+            
+            obj.defaults.samplingScenarios = 25;
             
             obj.disableGUI = false;
         end
@@ -100,6 +103,8 @@ classdef MatRad_Config < handle
             obj.propMC.ompMC_defaultOutputVariance = true;
             obj.propMC.MCsquare_defaultHistories = 100;
             obj.propMC.direct_defaultHistories = 100;
+            
+            obj.defaults.samplingScenarios = 2;
             
             obj.disableGUI = true;
         end  

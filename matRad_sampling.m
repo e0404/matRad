@@ -52,6 +52,8 @@ if exist('multScen','var') && ~isempty(multScen)
 else
     % create random scenarios for sampling
     pln.multScen = matRad_multScen(ctSamp,'rndScen'); % 'impSamp' or 'wcSamp'
+    pln.multScen.numOfShiftScen = matRad_cfg.defaults.samplingScenarios * ones(3,1);
+    pln.multScen.numOfRangeShiftScen = matRad_cfg.defaults.samplingScenarios;    
 end
 
 matRad_cfg.dispInfo('Using %d samples in total \n',pln.multScen.totNumScen);
