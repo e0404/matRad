@@ -1,6 +1,6 @@
 classdef matRad_MaxDVH < DoseObjectives.matRad_DoseObjective
-    %MATRAD_DOSEOBJECTIVE Summary of this class goes here
-    %   Detailed explanation goes here
+    % matRad_MaxDVH Implements a penalized maximum DVH objective
+    %   See matRad_DoseObjective for interface description
     %
     % References
     %   -

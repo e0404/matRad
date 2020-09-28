@@ -1,7 +1,7 @@
  classdef matRad_MinMaxDVH < DoseConstraints.matRad_DoseConstraint
-    %MATRAD_DOSEOBJECTIVE Summary of this class goes here
-    %   Detailed explanation goes here
-    
+    % matRad_MinMaxDVH Implements a MinMaxDVH constraint
+    %   See matRad_DoseConstraint for interface description
+    %
     % References
     %   -
     %

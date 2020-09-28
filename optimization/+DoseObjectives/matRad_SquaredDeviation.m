@@ -2,7 +2,7 @@ classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
     % matRad_SquaredDeviation Implements a penalized least squares objective
     %   See matRad_DoseObjective for interface description
     %
-    %   References 
+    % References 
     %     -
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -57,7 +57,8 @@ classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
                 end
             end
         end
-        
+   
+        %% Calculates the Objective Function value
         function fDose = computeDoseObjectiveFunction(obj,dose)
             % deviation : dose minus prefered dose
             deviation = dose - obj.parameters{1};
@@ -65,6 +66,7 @@ classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
             fDose = obj.penalty/numel(dose) * (deviation'*deviation);
         end
         
+        %% Calculates the Objective Function gradient
         function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
             % deviation : Dose minus prefered dose
             deviation = dose - obj.parameters{1};

@@ -1,6 +1,6 @@
 classdef matRad_MinMaxMeanDose < DoseConstraints.matRad_DoseConstraint
-    %MATRAD_DOSEOBJECTIVE Summary of this class goes here
-    %   Detailed explanation goes here
+    % matRad_MinMaxMeanDose Implements a MinMaxMeanDose constraint
+    %   See matRad_DoseConstraint for interface description
     %
     % References
     %   -

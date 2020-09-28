@@ -1,6 +1,6 @@
 classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
-    %MATRAD_DOSEOBJECTIVE Summary of this class goes here
-    %   Detailed explanation goes here
+    % matRad_EUD Implements a penalized equivalent uniform dose objective
+    %   See matRad_DoseObjective for interface description
     %
     % References
     %   -

@@ -1,6 +1,6 @@
 classdef matRad_MeanDose < DoseObjectives.matRad_DoseObjective
-    %MATRAD_MEANDOSE Summary of this class goes here
-    %   Detailed explanation goes here
+    % matRad_MeanDose Implements a penalized MeanDose objective
+    %   See matRad_DoseObjective for interface description
     %
     % References
     %   -

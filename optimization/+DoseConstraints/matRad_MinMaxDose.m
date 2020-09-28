@@ -1,10 +1,10 @@
 classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
-    %MATRAD_DOSEOBJECTIVE Summary of this class goes here
-    %   Detailed explanation goes here
-    
+    % matRad_MinMaxDose Implements a MinMaxDose constraint
+    %   See matRad_DoseConstraint for interface description
+    %
     % use log sum exp approximation, see appendix A in
     % http://scitation.aip.org/content/aapm/journal/medphys/41/8/10.1118/1.4883837
-    
+    %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
     % Copyright 2020 the matRad development team. 

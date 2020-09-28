@@ -1,7 +1,6 @@
 classdef matRad_MinMaxEUD < DoseConstraints.matRad_DoseConstraint
-    %MATRAD_DOSEOBJECTIVE Summary of this class goes here
-    %   Detailed explanation goes here
-    
+    % matRad_MinMaxEUD Implements a MinMaxEUD constraint
+    %   See matRad_DoseConstraint for interface description
     %
     % References
     %   -
