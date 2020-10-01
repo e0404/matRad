@@ -166,9 +166,9 @@ for energyIx = vEnergiesIx
         else
         
             % calculate dose
-            dose_r = matRad_calcParticleDoseBixel(depthValues(j) + baseData.offset, radialDist_sq, largestSigmaSq4uniqueEnergies(cnt), baseData);
+            bixel_r = matRad_calcParticleDoseBixel(depthValues(j) + baseData.offset, radialDist_sq, largestSigmaSq4uniqueEnergies(cnt), baseData);
 
-            cumArea = cumsum(2*pi.*r_mid.*dose_r.*dr);
+            cumArea = cumsum(2*pi.*r_mid.*bixel_r.physDose.*dr);
             relativeTolerance = 0.5; %in [%]
             if abs((cumArea(end)./(idd(j)))-1)*100 > relativeTolerance
                 warning('LateralParticleCutOff: shell integration is wrong !')
