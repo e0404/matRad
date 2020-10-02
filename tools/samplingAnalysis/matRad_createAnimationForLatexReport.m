@@ -49,9 +49,22 @@ mRealizationsSub = mRealizations(idxIntoSubIx,:);
 
 selectIx = doseSliceIx;
 dPres = 2;
-wCovMat = weightedcov(mRealizationsSub',scenProb);
+
+scenProbs = unique(scenProb(:));
+
+if length(scenProbs) == 1 %All scenarios equally probable
+    wCovMat = cov(mRealizationsSub');
+    wCovMat = scenProbs.^2 * wCovMat; %TODO: validate
+else %weighted covariance
+    [nVoxels,nSamples] = size(mRealizationsSub);
+    wCovMat = mRealizationsSub' - repmat(scenProb' * mRealizationsSub',nSamples,1);
+    wCovMat = wCovMat' * (wCovMat .* repmat(scenProb,1,nVoxels));
+    wCovMat = 0.5 * (wCovMat + wCovMat');
+end
+
 mu = meanCube(selectIx);
 
+%Compute starting vector from confidence value
 xr = sqrt(gammaincinv(confidenceValue,numel(mu)/2)*2);
 
 
