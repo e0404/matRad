@@ -79,15 +79,19 @@ if strcmp(method,'chol')
         SIGMA = (SIGMA+V*S*V')/2;
         SIGMA = (SIGMA + SIGMA')/2;
         
+        matRad_cfg.dispInfo('Fixing Covariance matrix to be SPD: ');
+        
         %To account for numerical instabilities
         while p~=0 && nTries <= maxTries
             nTries = nTries + 1;
+            matRad_cfg.dispInfo('.');
             [SIGMAcol,p] = chol(SIGMA);
             if p~=0
                 minEigenVal = min(eig(SIGMA));
                 SIGMA = SIGMA + (-minEigenVal*nTries^2 + diag(ones(size(SIGMA,1),1)*eps(minEigenVal)));
             end
         end
+        matRad_cfg.dispInfo('\n');
     end
     
     if p~=0

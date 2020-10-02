@@ -12,6 +12,20 @@ function success = matRad_latexReport(outputPath, ct, cst, pln, nominalScenario,
 %   nominalScenario:    struct containing dose, qi and dvh of the nominal scenario
 %   structureStat:      structures which were examined (can be empty, 
 %                       when all structures were examined)
+%   doseStat:           structure containing dose statistics as returned
+%                       from matRad_samplingAnalysis
+%   sampDose:           matrix containing all sampled Doses as returned
+%                       from matRad_samplingAnalysis
+%   listOfQI:           cellstring containing list of quality indicators to
+%                       be reported
+%   
+%   Optional Name-Value Pairs:
+%   ComputationTime:        state computation time to state in the report
+%   OperatorName:           Name of the Operator generating the report
+%   SufficientStatistics:   true/false (to warn for bad statistics)
+%   PrescribedDose:         Set a prescription value. If not set, will use
+%                           the largest value found in target objectives
+%   
 
 % output
 %   (binary)            a pdf report will be generated and saved
@@ -36,12 +50,14 @@ p = inputParser;
 p.addParameter('ComputationTime',[],@(x) isscalar(x) && isnumeric(x));
 p.addParameter('OperatorName','matRad User',@(x) isstring(x) || ischar(x));
 p.addParameter('SufficientStatistics',true,@(x) isscalar(x));
+p.addParameter('PrescribedDose',[],@(x) isscalar(x) && isnumeric(x));
 
 p.parse(varargin{:});
 
 computationTime = p.Results.ComputationTime;
 operator = p.Results.OperatorName;
 sufficientStatistics = p.Results.SufficientStatistics;
+dPres = p.Results.PrescribedDose;
 
 dataPath = [outputPath filesep 'data'];
 mkdir(dataPath);
@@ -50,6 +66,15 @@ mkdir(fullfile(dataPath,'figures'));
 
 
 %% correct cst for unwanted characters and disable commonly not wanted structures
+
+doseCube = nominalScenario.(pln.bioParam.quantityVis);
+
+fillPrescription = isempty(dPres);
+
+if fillPrescription    
+    dPres = 0;
+end
+
 notVisibleStructs = {'Beekleys', 'Beekley', 'CT-Referenzpunkt'};
 for i = 1:size(cst,1)
     % use only alphanumerical characters
@@ -57,6 +82,15 @@ for i = 1:size(cst,1)
     if isempty(cst{i,4}{1}) || (sum(strcmp(cst{i,2}, notVisibleStructs)) >= 1)
         cst{i,5}.Visible = false;
     end
+    
+    if strcmp(cst{i,3},'TARGET')
+        dPres = max([dPres mean(doseCube(cst{i,4}{1}))]);
+    end
+end
+
+if fillPrescription
+    dPres = round(dPres,1);
+    matRad_cfg.dispInfo('Estimated prescribed dose to be %f\n',dPres);
 end
 
 %% check whether all qi are available
@@ -182,7 +216,7 @@ fclose(fid);
 
 
 %% plot isocentre slices (nominal, mean, std)
-doseCube = nominalScenario.(pln.bioParam.quantityVis);
+
 
 doseWindow  = [0 1.1 * max(doseCube(:))];
 stdWindow   = [0 1.1 * max(doseStat.stdCubeW(:))];
@@ -254,7 +288,7 @@ if exist('matRad_getGaussianOrbitSamples','file') == 2
     % any(w == 0) is not allowed, due to numerical reasons use insignificant w, for weights which are numerically zero
     w = pln.multScen.scenProb;
     w(w == 0) = eps(class(w));
-    matRad_createAnimationForLatexReport(confidenceValue, ct, cst, slice, doseStat.meanCubeW, sampDose, w, pln.subIx, framePath, legendColorbar);
+    matRad_createAnimationForLatexReport(confidenceValue, ct, cst, slice, doseStat.meanCubeW, sampDose, w, pln.subIx, framePath, legendColorbar,'PrescribedDose',dPres);
 
     line = cell(0);
     line =  [line; '\newcommand{\framerate}{24}'];
@@ -443,7 +477,7 @@ else
     end
 end
 
-cd(pwd);
+cd(currPath);
 
 end
 

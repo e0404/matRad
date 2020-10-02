@@ -126,6 +126,7 @@ success = matRad_latexReport([outputPath filesep reportPath],ct, cst, pln, resul
 
 if success
     open(fullfile([outputPath filesep reportPath],'main.pdf'));
+    
 else
      matRad_cfg.dispError('Report PDF can not be opened...');
 end
