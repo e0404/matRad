@@ -58,26 +58,16 @@ cst{ixOAR,5}.alphaX      = 0.1000;
 cst{ixOAR,5}.betaX       = 0.0500;
 cst{ixOAR,5}.Priority    = 2;           % overlap priority for optimization - a higher number corresponds to a lower priority
 cst{ixOAR,5}.Visible     = 1;
-cst{ixOAR,6}.type        = 'square overdosing';
-cst{ixOAR,6}.dose        = 30;
-cst{ixOAR,6}.penalty     = 10;          % penalty of the square overdose objective 
-cst{ixOAR,6}.EUD         = NaN;
-cst{ixOAR,6}.volume      = NaN;
-cst{ixOAR,6}.coverage    = NaN;
-cst{ixOAR,6}.robustness  = 'none';
+
+cst{ixOAR,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(10,30));
 
 cst{ixPTV,5}.TissueClass = 1;
 cst{ixPTV,5}.alphaX      = 0.1000;
 cst{ixPTV,5}.betaX       = 0.0500;
 cst{ixPTV,5}.Priority    = 1;           % overlap priority for optimization - a lower number corresponds to a higher priority
 cst{ixPTV,5}.Visible     = 1; 
-cst{ixPTV,6}.type        = 'square deviation';
-cst{ixPTV,6}.dose        = 60;
-cst{ixPTV,6}.penalty     = 50;          % penalty of the square deviation objective 
-cst{ixPTV,6}.EUD         = NaN;
-cst{ixPTV,6}.volume      = NaN;
-cst{ixPTV,6}.coverage    = NaN;
-cst{ixPTV,6}.robustness  = 'none';
+
+cst{ixPTV,6}{1} = struct(DoseObjectives.matRad_SquaredDeviation(50,60));
 
 %% Lets create a cubic phantom
 % first define the dimensions of the organ at risk
@@ -174,21 +164,21 @@ pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 
 %% Generate Beam Geometry STF
-stf = matRad_generateStf(ct,cst,pln,param);
+stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
-dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
+dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
 %% Inverse Optimization  for IMPT based on RBE-weighted dose
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
-resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Trigger robust optimization
 % Make the objective to a composite worst case objective
-cst{ixPTV,6}.robustness  = 'COWC';
-cst{ixOAR,6}.robustness  = 'COWC';
+cst{ixPTV,6}{1}.robustness  = 'COWC';
+cst{ixOAR,6}{1}.robustness  = 'COWC';
 
 % Create for each VOI a second objective and use 
 % voxel wise worst case optimization VWWC.
@@ -197,42 +187,46 @@ cst{ixOAR,6}.robustness  = 'COWC';
 % cst{ixPTV,6}(2,1).robustness  = 'VWWC';
 % cst{ixOAR,6}(2,1).robustness  = 'VWWC';
 
-resultGUIrobust = matRad_fluenceOptimization(dij,cst,pln,param);
+%%
+resultGUIrobust = matRad_fluenceOptimization(dij,cst,pln);
 
 %% combine resultGUI structures
 resultGUI = matRad_appendResultGUI(resultGUI,resultGUIrobust,0,'robust');
 
 %% Visualize results
-if param.logLevel == 1
 
-    plane      = 3;
-    slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+plane      = 3;
+slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 
-    figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExD_beam1      ,plane,slice,[],[],colorcube,[],[0 max(resultGUI.RBExD_beam1(:))],[]);title('conventional plan - beam1')
-    figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.RBExD_beam1,plane,slice,[],[],colorcube,[],[0 max(resultGUIrobust.RBExD_beam1(:))],[]);title('robust plan - beam1')
+figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExD_beam1      ,plane,slice,[],[],colorcube,[],[0 max(resultGUI.RBExD_beam1(:))],[]);title('conventional plan - beam1')
+figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.RBExD_beam1,plane,slice,[],[],colorcube,[],[0 max(resultGUIrobust.RBExD_beam1(:))],[]);title('robust plan - beam1')
 
-    % create an interactive plot to slide through individual scnearios
-    f = figure;title('individual scenarios');
-    numScen = 1;doseWindow = [0 3.5];
-    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExD_' num2str(round(numScen))]),plane,slice,[],[],colorcube,[],doseWindow,[]);
+% create an interactive plot to slide through individual scnearios
+f = figure;title('individual scenarios');
+numScen = 1;doseWindow = [0 3.5];
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExD_' num2str(round(numScen))]),plane,slice,[],[],colorcube,[],doseWindow,[]);
+
+[env,envver] = matRad_getEnvironment();
+if strcmp(env,'MATLAB') || str2double(envver(1)) >= 5
     b = uicontrol('Parent',f,'Style','slider','Position',[50,5,419,23],...
-       'value',numScen, 'min',1, 'max',pln.multScen.totNumScen,'SliderStep', [1/(pln.multScen.totNumScen-1) , 1/(pln.multScen.totNumScen-1)]);
-    b.Callback = @(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExD_' num2str(round(es.Value))]),plane,slice,[],[],colorcube,[],doseWindow,[]); 
-
-    %% Indicator calculation and show DVH and QI
-    [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUIrobust,[],[],param);
-    %% Perform sampling
-    % select structures to include in sampling; leave empty to sample dose for all structures
-    structSel = {}; % structSel = {'PTV','OAR1'};
-    [caSamp, mSampDose, plnSamp, resultGUInomScen]          = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel,[],param);
-    [cstStat, resultGUISamp, param]                         = matRad_samplingAnalysis(ct,cst,plnSamp,caSamp, mSampDose, resultGUInomScen,param);
-
-    [caSampRob, mSampDoseRob, plnSampRob, resultGUInomScen] = matRad_sampling(ct,stf,cst,pln,resultGUIrobust.w,structSel,[],param);
-    [cstStatRob, resultGUISampRob, paramRob]                = matRad_samplingAnalysis(ct,cst,plnSampRob,caSampRob, mSampDoseRob, resultGUInomScen,param);
-
-    figure,title('std dose cube based on sampling - conventional')
-    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUISamp.stdCube,plane,slice,[],[],colorcube,[],[0 max(resultGUISamp.stdCube(:))],[]);
-
-    figure,title('std dose cube based on sampling - robust')
-    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUISampRob.stdCube,plane,slice,[],[],colorcube,[],[0 max(resultGUISampRob.stdCube(:))],[]);
+        'value',numScen, 'min',1, 'max',pln.multScen.totNumScen,'SliderStep', [1/(pln.multScen.totNumScen-1) , 1/(pln.multScen.totNumScen-1)]);
+    set(b,'Callback',@(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExD_' num2str(round(get(es,'Value')))]),plane,slice,[],[],colorcube,[],doseWindow,[]));
 end
+
+%% Indicator calculation and show DVH and QI
+[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUIrobust);
+%% Perform sampling
+% select structures to include in sampling; leave empty to sample dose for all structures
+structSel = {}; % structSel = {'PTV','OAR1'};
+[caSamp, mSampDose, plnSamp, resultGUInomScen]          = matRad_sampling(ct,stf,cst,pln,resultGUI.w,structSel);
+[cstStat, resultGUISamp, meta]                         = matRad_samplingAnalysis(ct,cst,plnSamp,caSamp, mSampDose, resultGUInomScen);
+
+[caSampRob, mSampDoseRob, plnSampRob, resultGUInomScen] = matRad_sampling(ct,stf,cst,pln,resultGUIrobust.w,structSel);
+[cstStatRob, resultGUISampRob, metaRob]                = matRad_samplingAnalysis(ct,cst,plnSampRob,caSampRob, mSampDoseRob, resultGUInomScen);
+
+figure,title('std dose cube based on sampling - conventional')
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUISamp.stdCube,plane,slice,[],[],colorcube,[],[0 max(resultGUISamp.stdCube(:))]);
+
+figure,title('std dose cube based on sampling - robust')
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUISampRob.stdCube,plane,slice,[],[],colorcube,[],[0 max(resultGUISampRob.stdCube(:))]);
+

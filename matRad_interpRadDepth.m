@@ -39,7 +39,7 @@ for ctScen = 1:ct.numOfCtScen
    radDepthCube(V(~isnan(radDepthV{1}))) = radDepthV{ctScen}(~isnan(radDepthV{1}));
 
    % interpolate cube - cube is now stored in Y X Z 
-   coarseRadDepthCube       = (interp3(ct.y,ct.x',ct.z,radDepthCube,vYgrid,vXgrid',vZgrid));
+   coarseRadDepthCube          = matRad_interp3(ct.x,ct.y',ct.z,radDepthCube,vXgrid,vYgrid',vZgrid);
    radDepthVcoarse{ctScen}  = coarseRadDepthCube(Vcoarse);
 end
 

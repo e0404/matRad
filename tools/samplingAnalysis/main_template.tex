@@ -21,7 +21,7 @@
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\RequirePackage{luatex,shellesc}
+\RequirePackage{luatex85,shellesc}
 \documentclass[a4paper]{scrartcl}
 \usepackage[english]{babel}
 \usepackage[utf8]{inputenc}
@@ -207,55 +207,55 @@ It can be set to \textit{individual}, where one type is computed after the other
 \subsection{Slices at isoCentre}
 \begin{figure}[!b]
   \centering
-  \input{data/isoSlicePlane3_nominal.tex}
+  \input{data/figures/isoSlicePlane3_nominal.tex}
   \caption{CT and nominal dose at isocentre. Axial view.}
 \end{figure}
 
 \begin{figure}[!b]
   \centering
-  \input{data/isoSlicePlane3_stdW.tex}
+  \input{data/figures/isoSlicePlane3_stdW.tex}
   \caption{CT and standard deviation of dose at isocentre. Axial view.}
 \end{figure}
 
 \begin{figure}[!b]
   \centering
-  \input{data/isoSlicePlane3_gamma.tex}
+  \input{data/figures/isoSlicePlane3_gamma.tex}
   \caption{CT and $\gamma$ index of nominal and mean dose (\gammaDoseAgreement \%, \gammaDoseAgreement mm, global). Axial view.}
 \end{figure}
 
 \begin{figure}[!b]
   \centering
-  \input{data/isoSlicePlane1_nominal.tex}
+  \input{data/figures/isoSlicePlane1_nominal.tex}
   \caption{CT and nominal dose at isocentre. Coronal view.}
 \end{figure}
 
 \begin{figure}[!b]
   \centering
-  \input{data/isoSlicePlane1_stdW.tex}
+  \input{data/figures/isoSlicePlane1_stdW.tex}
   \caption{CT and standard deviation of dose at isocentre. Coronal view.}
 \end{figure}
 
 \begin{figure}[!b]
   \centering
-  \input{data/isoSlicePlane1_gamma.tex}
+  \input{data/figures/isoSlicePlane1_gamma.tex}
   \caption{CT and $\gamma$ index of nominal and mean dose (\gammaDoseAgreement \%, \gammaDoseAgreement mm, global). Coronal view.}
 \end{figure}
 
 \begin{figure}[!b]
   \centering
-  \input{data/isoSlicePlane2_nominal.tex}
+  \input{data/figures/isoSlicePlane2_nominal.tex}
   \caption{CT and nominal dose at isocentre. Sagittal view.}
 \end{figure}
 
 \begin{figure}[!b]
   \centering
-  \input{data/isoSlicePlane2_stdW.tex}
+  \input{data/figures/isoSlicePlane2_stdW.tex}
   \caption{CT and standard deviation of dose at isocentre. Sagittal view.}
 \end{figure}
 
 \begin{figure}[!b]
   \centering
-  \input{data/isoSlicePlane2_gamma.tex}
+  \input{data/figures/isoSlicePlane2_gamma.tex}
   \caption{CT and $\gamma$ index of nominal and mean dose (\gammaDoseAgreement \%, \gammaDoseAgreement mm, global). Sagittal view.}
 \end{figure}
 
@@ -265,7 +265,7 @@ It can be set to \textit{individual}, where one type is computed after the other
 \newpage
 \subsection{DVH and Quality Indicator}
 \begin{center}
-\input{data/nominalDVH.tex}
+\input{data/figures/nominalDVH.tex}
 \end{center}
 \input{data/nominalQI.tex}
 

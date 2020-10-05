@@ -29,20 +29,29 @@ function cBarHandle = matRad_plotColorbar(axesHandle,cMap,window,varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-v=version;
+[env,envver] = matRad_getEnvironment();
 
 colormap(axesHandle,cMap);
-caxis(window);
 
-if str2double(v(1:3))>=8.5
-    cBarHandle = colorbar(axesHandle,varargin{:});
+%sanity check to avoid a crash
+if window(1) < window(2)
+    caxis(window);
 else
-    cBarHandle = colorbar('peer',axesHandle,varargin{:});
-end
+    matRad_cfg = MatRad_Config.instance();
+    matRad_cfg.dispWarning('Unsuitable display window [%d,%d] for color axis!',window(1),window(2));
+end 
 
 
-
-
-
+switch env
+    case 'MATLAB'
+        if str2double(envver(1:3))>=8.5
+            cBarHandle = colorbar(axesHandle,varargin{:});
+        else
+            cBarHandle = colorbar('peer',axesHandle,varargin{:});
+        end
+    case 'OCTAVE'
+        cBarHandle = colorbar(axesHandle,varargin{:});
+    otherwise
+        cBarHandle = colorbar(axesHandle,varargin{:});
 end
 

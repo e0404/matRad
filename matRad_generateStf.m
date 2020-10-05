@@ -1,4 +1,4 @@
-function stf = matRad_generateStf(ct,cst,pln,param,visMode)
+function stf = matRad_generateStf(ct,cst,pln,visMode)
 % matRad steering information generation
 % 
 % call
@@ -29,29 +29,21 @@ function stf = matRad_generateStf(ct,cst,pln,param,visMode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if exist('param','var')
-    if ~isfield(param,'logLevel')
-       param.logLevel = 1;
-    end
-    
-else
-   param.calcDoseDirect = false;
-   param.subIx          = [];
-   param.logLevel       = 1;
-end
 
-matRad_dispToConsole('matRad: Generating stf struct...\n',param,'info'); 
+matRad_cfg = MatRad_Config.instance();
+
+matRad_cfg.dispInfo('matRad: Generating stf struct...\n');
 
 if nargin < 5
     visMode = 0;
 end
 
 if numel(pln.propStf.gantryAngles) ~= numel(pln.propStf.couchAngles)
-    matRad_dispToConsole('Inconsistent number of gantry and couch angles.',param,'error'); 
+    matRad_cfg.dispError('Inconsistent number of gantry and couch angles.');
 end
 
 if pln.propStf.bixelWidth < 0 || ~isfinite(pln.propStf.bixelWidth)
-   matRad_dispToConsole('bixel width (spot distance) needs to be a real number [mm] larger than zero.',param,'error'); 
+   matRad_cfg.dispError('bixel width (spot distance) needs to be a real number [mm] larger than zero.');
 end
 
 % find all target voxels from cst cell array
@@ -69,12 +61,19 @@ voiTarget    = zeros(ct.cubeDim);
 voiTarget(V) = 1;
     
 % add margin
-addmarginBool = 1;
+addmarginBool = matRad_cfg.propStf.defaultAddMargin;
+if isfield(pln,'propStf') && isfield(pln.propStf,'addMargin')
+   addmarginBool = pln.propStf.addMargin; 
+end
+
 if addmarginBool
+   %Assumption for range uncertainty
+   assumeRangeMargin = pln.multScen.maxAbsRangeShift + pln.multScen.maxRelRangeShift;   
+      
    % add margin -  account for voxel resolution, the maximum shift scenario and the current bixel width.
-   margin.x  = max([ct.resolution.x max(abs(pln.multScen.isoShift(:,1))) pln.propStf.bixelWidth+1e-3]);
-   margin.y  = max([ct.resolution.y max(abs(pln.multScen.isoShift(:,2))) pln.propStf.bixelWidth+1e-3]);
-   margin.z  = max([ct.resolution.z max(abs(pln.multScen.isoShift(:,3))) pln.propStf.bixelWidth+1e-3]);
+   margin.x  = max([ct.resolution.x max(abs(pln.multScen.isoShift(:,1)) + assumeRangeMargin) pln.propStf.bixelWidth+1e-3]);
+   margin.y  = max([ct.resolution.y max(abs(pln.multScen.isoShift(:,2)) + assumeRangeMargin) pln.propStf.bixelWidth+1e-3]);
+   margin.z  = max([ct.resolution.z max(abs(pln.multScen.isoShift(:,3)) + assumeRangeMargin) pln.propStf.bixelWidth+1e-3]);
    
    voiTarget = matRad_addMargin(voiTarget,cst,ct.resolution,margin,true);
     V        = find(voiTarget>0);
@@ -82,7 +81,7 @@ end
 
 % throw error message if no target is found
 if isempty(V)
-   matRad_dispToConsole('Could not find target.',param,'error'); 
+    matRad_cfg.dispError('Could not find target.');
 end
 
 % Convert linear indices to 3D voxel coordinates
@@ -91,10 +90,10 @@ end
 % prepare structures necessary for particles
 fileName = [pln.radiationMode '_' pln.machine];
 try
-   load([fileparts(mfilename('fullpath')) filesep fileName]);
+   load([matRad_cfg.matRadRoot filesep 'basedata' filesep fileName]);
    SAD = machine.meta.SAD;
 catch
-   matRad_dispToConsole(['Could not find the following machine file: ' fileName ],param,'error'); 
+   matRad_cfg.dispError('Could not find the following machine file: %s',fileName); 
 end
 
 if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'helium') || strcmp(pln.radiationMode,'carbon')
@@ -103,13 +102,13 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'helium') || 
     availablePeakPos  = [machine.data.peakPos] + [machine.data.offset];
     
     if sum(availablePeakPos<0)>0
-        matRad_dispToConsole('at least one available peak position is negative - inconsistent machine file',param,'error'); 
+       matRad_cfg.dispError('at least one available peak position is negative - inconsistent machine file') 
     end
     %clear machine;
 end
 
 % calculate rED or rSP from HU
-ct = matRad_calcWaterEqD(ct, pln, param);
+ct = matRad_calcWaterEqD(ct, pln);
 
 % take only voxels inside patient
 V = [cst{:,4}];
@@ -222,6 +221,10 @@ for i = 1:length(pln.propStf.gantryAngles)
         stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMat_vectors_T;
         stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMat_vectors_T;
         if strcmp(pln.radiationMode,'photons') 
+            stf(i).ray(j).beamletCornersAtIso = [rayPos(j,:) + [+stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
+                                                 rayPos(j,:) + [-stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
+                                                 rayPos(j,:) + [-stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2];...
+                                                 rayPos(j,:) + [+stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2]]*rotMat_vectors_T;
             stf(i).ray(j).rayCorners_SCD = (repmat([0, machine.meta.SCD - SAD, 0],4,1)+ (machine.meta.SCD/SAD) * ...
                                                              [rayPos(j,:) + [+stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
                                                               rayPos(j,:) + [-stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
@@ -309,7 +312,7 @@ for i = 1:length(pln.propStf.gantryAngles)
                
                
                 if numel(targetEntry) ~= numel(targetExit)
-                    matRad_dispToConsole('Inconsistency during ray tracing.',param,'error'); 
+                    matRad_cfg.dispError('Inconsistency during ray tracing. Please check correct assignment and overlap priorities of structure types OAR & TARGET.');
                 end
 
                 stf(i).ray(j).energy = [];
@@ -351,7 +354,7 @@ for i = 1:length(pln.propStf.gantryAngles)
          stf(i).ray(j).energy = machine.data.energy;
          
        else
-          matRad_dispToConsole('Error generating stf struct: invalid radiation modality.',param,'error');
+          matRad_cfg.dispError('Error generating stf struct: invalid radiation modality.');
        end
        
     end
@@ -373,11 +376,7 @@ for i = 1:length(pln.propStf.gantryAngles)
         
         % find set of energyies with adequate spacing
         if ~isfield(pln.propStf, 'longitudinalSpotSpacing')
-            if strcmp(machine.meta.machine,'Generic')
-                longitudinalSpotSpacing = 1.5; % enforce all entries to be used
-            else
-                longitudinalSpotSpacing = 3;   % default value for all other treatment machines
-            end
+            longitudinalSpotSpacing = matRad_cfg.propStf.defaultLongitudinalSpotSpacing;
         else
             longitudinalSpotSpacing = pln.propStf.longitudinalSpotSpacing;
         end
@@ -425,8 +424,8 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
     
     % Show progress
-    if param.logLevel <= 2
-          matRad_progress(i,length(pln.propStf.gantryAngles));
+    if matRad_cfg.logLevel > 1
+        matRad_progress(i,length(pln.propStf.gantryAngles));
     end
     
 

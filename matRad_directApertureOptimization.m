@@ -1,8 +1,8 @@
-function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln,param)
+function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)
 % matRad function to run direct aperture optimization
 %
 % call
-%   o[optResult,info] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln,visBool)
+%   [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)
 %
 % input
 %   dij:            matRad dij struct
@@ -12,8 +12,6 @@ function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureIn
 %                   this field is empty optResult struct will be created
 %                   (optional)
 %   pln:            matRad pln struct
-%   visBool:        plots the objective function value in dependence of the
-%                   number of iterations
 %
 % output
 %   optResult:  struct containing optimized fluence vector, dose, and
@@ -36,52 +34,31 @@ function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureIn
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
 
-% determine if Matlab or Octave
-[env, ~] = matRad_getEnvironment();
-
-
-if ~isdeployed && param.logLevel == 1 % only if _not_ running as standalone
-    
-    switch env
-         case 'MATLAB'
-            % get handle to Matlab command window
-            mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-            cw          = mde.getClient('Command Window');
-            xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-            h_cw        = handle(xCmdWndView,'CallbackProperties');
-
-            % set Key Pressed Callback of Matlab command window
-            set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
-    end
-end
-
-if exist('param','var')
-   if ~isfield(param,'logLevel')
-      param.logLevel = 1;
-   end
-else
-   param.logLevel = 1;
-end
-
-% initialize global variables for optimizer
-global matRad_global_x;
-global matRad_global_d;
-global matRad_Q_Pressed;
-global matRad_objective_function_value;
-
-matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1); % works with bixel weights even though we do dao!
-matRad_global_d                 = NaN * ones(dij.doseGrid.numOfVoxels,1);
-matRad_Q_Pressed                = false;
-matRad_objective_function_value = [];
 
 % adjust overlap priorities
 cst = matRad_setOverlapPriorities(cst);
 
-% adjust objectives _and_ constraints internally for fractionation 
+% check & adjust objectives and constraints internally for fractionation 
 for i = 1:size(cst,1)
-    for j = 1:size(cst{i,6},1)
-       cst{i,6}(j).dose = cst{i,6}(j).dose/pln.numOfFractions;
+    for j = 1:numel(cst{i,6})
+        obj = cst{i,6}{j};
+        
+        %In case it is a default saved struct, convert to object
+        %Also intrinsically checks that we have a valid optimization
+        %objective or constraint function in the end
+        if ~isa(obj,'matRad_DoseOptimizationFunction')
+            try
+                obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
+            catch
+                matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
+            end
+        end
+        
+        obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
+        
+        cst{i,6}{j} = obj;        
     end
 end
 
@@ -89,21 +66,7 @@ end
 cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
                                  dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
 
-% update aperture info vector
-apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
 
-% find VOI indicies with objective or constraint
-voiIx = [];
-for i = 1:size(cst,1)     
-  if ~isempty(cst{i,6})
-      voiIx = [voiIx i];
-      cst{i,6}(1).mOmega = 0;
-  end
-end
-dij.physicalDoseExp{1}  = spalloc(dij.doseGrid.numOfVoxels,dij.totalNumOfBixels,1);
-
-% Set the IPOPT options.
-matRad_ipoptOptions;
 
 % set optimization options
 options.ixForOpt     = 1;
@@ -113,46 +76,38 @@ options.bioOpt       = pln.bioParam.bioOpt;
 options.quantityOpt  = pln.bioParam.quantityOpt;
 options.model        = pln.bioParam.model;
 
-% set bounds on optimization variables
-options.lb              = apertureInfo.limMx(:,1);                                          % Lower bound on the variables.
-options.ub              = apertureInfo.limMx(:,2);                                          % Upper bound on the variables.
-[options.cl,options.cu] = matRad_daoGetConstBounds(cst,apertureInfo,options);   % Lower and upper bounds on the constraint functions.
+% update aperture info vector
+apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
 
-% set callback functions.
-funcs.objective         = @(x) matRad_daoObjFunc(x,apertureInfo,dij,cst,options);
-funcs.constraints       = @(x) matRad_daoConstFunc(x,apertureInfo,dij,cst,options);
-funcs.gradient          = @(x) matRad_daoGradFunc(x,apertureInfo,dij,cst,options);
-funcs.jacobian          = @(x) matRad_daoJacobFunc(x,apertureInfo,dij,cst,options);
-funcs.jacobianstructure = @( ) matRad_daoGetJacobStruct(apertureInfo,dij,cst);
-funcs.iterfunc          = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter,param);
+%Use Dose Projection only
+backProjection = matRad_DoseProjection();
 
-% Informing user to press q to terminate optimization
-fprintf('\nOptimzation initiating...\n');
-fprintf('Press q to terminate the optimization...\n');
+optiProb = matRad_OptimizationProblemDAO(backProjection,apertureInfo);
+
+if ~isfield(pln.propOpt,'optimizer')
+    pln.propOpt.optimizer = 'IPOPT';
+end
+
+switch pln.propOpt.optimizer
+    case 'IPOPT'
+        optimizer = matRad_OptimizerIPOPT;
+    case 'fmincon'
+        optimizer = matRad_OptimizerFmincon;
+    otherwise
+        matRad_cfg.dispWarning('Optimizer ''%s'' not known! Fallback to IPOPT!',pln.propOpt.optimizer);
+        optimizer = matRad_OptimizerIPOPT;
+end
 
 % Run IPOPT.
-[optApertureInfoVec, info] = ipopt(apertureInfo.apertureVector,funcs,options);
-
-% unset Key Pressed Callback of Matlab command window and delete waitbar
-if ~isdeployed && strcmp(env,'MATLAB') && param.logLevel == 1
-    set(h_cw, 'KeyPressedCallback',' ');
-end
-
-% clear global variables after optimization
-switch env
-    case 'MATLAB'
-        clearvars -global matRad_global_x matRad_global_d matRad_Q_Pressed matRad_objective_function_value;
-    case 'OCTAVE' 
-        clear -global matRad_global_x matRad_global_d matRad_Q_Pressed matRad_objective_function_value;
-end
+optimizer = optimizer.optimize(apertureInfo.apertureVector,optiProb,dij,cst);
+wOpt = optimizer.wResult;
 
 % update the apertureInfoStruct and calculate bixel weights
-apertureInfo = matRad_daoVec2ApertureInfo(apertureInfo,optApertureInfoVec);
+apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo,wOpt);
 
 % logging final results
-fprintf('Calculating final cubes...\n');
+matRad_cfg.dispInfo('Calculating final cubes...\n');
 resultGUI = matRad_calcCubes(apertureInfo.bixelWeights,dij);
-
 resultGUI.w    = apertureInfo.bixelWeights;
 resultGUI.wDAO = apertureInfo.bixelWeights;
 resultGUI.apertureInfo = apertureInfo;

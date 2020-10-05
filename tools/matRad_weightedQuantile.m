@@ -34,6 +34,11 @@ function wQ = matRad_weightedQuantile(values, percentiles, weight, isSorted, ext
   if ~(percentiles(:) >= 0 & percentiles(:) <= 1)
     error('Quantiles must not be outside [0, 1]');
   end
+  if ~exist('extraPolMethod', 'var') || isempty(extraPolMethod)
+    extraPolMethod = NaN;
+  end
+  
+  
 
   % sort values
   if ~isSorted
@@ -47,14 +52,16 @@ function wQ = matRad_weightedQuantile(values, percentiles, weight, isSorted, ext
   wQ = NaN * ones(size(values,1), 2);
 
   [x,ia] = unique(wQtemp);
-
+    
   V = values(ia);
-  F = griddedInterpolant(x, V);
-  if ~exist('extraPolMethod', 'var') || isempty(extraPolMethod)
-    F.ExtrapolationMethod = 'none';
-  else
-      F.ExtrapolationMethod = extraPolMethod;
+  
+  if ~iscolumn(x)
+      x = x';
   end
-  wQ = F(percentiles);
+  if ~iscolumn(V)
+      V = V';
+  end
+  
+  wQ = matRad_interp1(x,V,percentiles,extraPolMethod);
   
 end % eof

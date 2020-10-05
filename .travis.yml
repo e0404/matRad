@@ -1,66 +1,88 @@
-language: c++
+jobs:
+  include:
+    # works on Precise and Trusty
+    - name: "Ubuntu Octave"
+      os: linux
+      language: cpp
+      dist: focal # 20.04 -> Octave 5.2
+      services: 
+        - xvfb
+      addons:
+        apt:
+          update: true
+          packages:
+            - gdb
+            - gfortran
+            - fonts-freefont-otf
+            - gnuplot-x11
+            - libgdcm-dev
+            - octave
+            - liboctave-dev
+    - name: "Ubuntu Matlab"
+      os: linux
+      language: matlab
+      dist: focal
+    - name: "OSX Octave"
+      os: osx
+      language: cpp
+      addons:
+        homebrew:
+          update: true
+          packages: 
+            - octave
+            - llvm
+            - libomp
+    - name: "Windows Octave"
+      os: windows
+      language: cpp
+  allow_failures:
+    - os: windows
+    - os: osx
+      
 before_install:
-  - sudo chmod +x runtests.sh
-  - sudo apt-get update -qq
-  - sudo apt-get install gdb # to capture backtrace of eventual failures
-  # - sudo apt-get purge libopenblas-base # fixes PPA Octave 4.0 crash on Travis
+  # Linux setup
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Octave" ]]; then echo "Testing matRad on linux with Octave..." ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Octave" ]]; then sudo chmod +x .travis/before_install_linux.sh ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Octave" ]]; then sudo .travis/before_install_linux.sh; fi
+  
+  # Linux Matlab Setup
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Matlab" ]]; then echo "Testing matRad on linux with Matlab..." ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Matlab" ]]; then sudo chmod +x .travis/runtests.sh ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Matlab" ]]; then sudo chmod +x MCsquare/bin/MCsquare_linux ; fi
+  
+  # OSX setup
+  - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then echo "Testing matRad on Mac OSX..." ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then sudo chmod +x .travis/before_install_osx.sh ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then sudo .travis/before_install_osx.sh; fi
+  
+  # Windows Setup
+  - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then echo "Testing matRad on Windows..." ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then choco install octave.portable ; fi  
+  - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' ; fi
+  # - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then bash ./before_install_win_gitbash.sh ; fi
+  
 
-  # add PPA repo to use latest GNU Octave release
-  - sudo add-apt-repository ppa:octave/stable --yes
-  - sudo apt-get update --yes --force-yes
-
-# dependencies
-  - sudo apt-get install octave --yes --force-yes
-  - sudo apt-get install liboctave-dev --yes --force-yes
-  - sudo apt-get install git --yes --force-yes
-  - export MATRAD=`pwd`
-
-# IpOpt in Ubuntu repo is too old
-#sudo apt-get install coinor-libipopt-dev --yes --force-yes
-# Compiling IpOpt
-  - cd ..
-  - mkdir IpoptMUMPS
-  - cd IpoptMUMPS
-  - wget https://www.coin-or.org/download/source/Ipopt/Ipopt-3.12.10.tgz
-  - tar -zxvf Ipopt-3.12.10.tgz
-  - cd Ipopt-3.12.10/
-  - export IPOPTDIR=`pwd`
-
-  - cd $IPOPTDIR/ThirdParty/Blas
-  - ./get.Blas
-  - cd $IPOPTDIR/ThirdParty/Lapack
-  - ./get.Lapack
-  - cd $IPOPTDIR/ThirdParty/Metis
-  - ./get.Metis
-  - cd $IPOPTDIR/ThirdParty/Mumps
-  - ./get.Mumps
-
-  - mkdir $IPOPTDIR/build
-  - cd $IPOPTDIR/build
-
-  - $IPOPTDIR/configure --prefix=/usr/local
-  - sudo make
-  - sudo make test
-  - sudo make install
-  - sudo ldconfig
-
-
-# clone repository with IpOpt Interface
-  - git clone https://github.com/ebertolazzi/mexIPOPT
-
-# compile interface
-  - mkoctfile --mex -ImexIPOPT/src -I/usr/local/include/coin mexIPOPT/src/ipopt.cc mexIPOPT/src/IpoptInterfaceCommon.cc -v -DMATLAB_MEXFILE -DHAVE_CSTDDEF -DIPOPT_INTERFACE_MISSING_COPY_N -Wl,--no-undefined -lipopt -lcoinmumps -lcoinlapack -lcoinblas -L/usr/local/lib -std=gnu++11
-  - sudo cp ipopt* $MATRAD/optimization
-  - cd $MATRAD
 before_script:
-  - ulimit -c unlimited -S  # enable core dumps for Octave crash debugging
-script:
-  - travis_wait 45 ./runtests.sh /usr/bin/octave 
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Octave" ]]; then ulimit -c unlimited -S ; fi
+  
+  
 after_failure:
-  - COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) # find core file
-  - gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch /usr/bin/octave-cli # print stack trace
-  - tail runtests.log
-#  - tail runtests.err
+  ## Linux stack trace
+  # find core file
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Octave" ]]; then COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) ; fi 
+  # print stack trace
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Octave" ]]; then gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch /usr/bin/octave-cli ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Octave" ]]; then tail runtests.log ; fi
+  
+script:
+  # Linux Octave script
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Octave" ]]; then travis_wait 45 .travis/runtests.sh octave-cli ; fi
+  # Linux Matlab script
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Matlab" ]]; then travis_wait 45 .travis/runtests.sh matlab; fi
+  # OSX script
+  - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then travis_wait 45 .travis/runtests.sh octave-cli ; fi
+  # Windows script
+  - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then travis_wait 45 .travis/runtests.sh octave-cli ; fi
 
 notifications:
     slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ

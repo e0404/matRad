@@ -64,14 +64,15 @@ stf = matRad_generateStf(ct,cst,pln);
 
 %% dose calculation
 if strcmp(pln.radiationMode,'photons')
-    dij = matRad_calcPhotonDose(ct,stf,pln,cst,param);
-    %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
+    dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+    %dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'helium') || strcmp(pln.radiationMode,'carbon')
-    dij = matRad_calcParticleDose(ct,stf,pln,cst,param);
+    dij = matRad_calcParticleDose(ct,stf,pln,cst);
+    %dij = matRad_calcParticleDoseMC(ct,stf,pln,cst); 
 end
 
 %% inverse planning for imrt
-resultGUI  = matRad_fluenceOptimization(dij,cst,pln,param);
+resultGUI  = matRad_fluenceOptimization(dij,cst,pln);
 
 %% sequencing
 if strcmp(pln.radiationMode,'photons') && (pln.propOpt.runSequencing || pln.propOpt.runDAO)
@@ -82,7 +83,7 @@ end
 
 %% DAO
 if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO
-   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln,param);
+   resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
    matRad_visApertureInfo(resultGUI.apertureInfo);
 end
 
@@ -90,5 +91,5 @@ end
 matRadGUI
 
 %% indicator calculation and show DVH and QI
-[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,[],[],param);
+[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI);
 

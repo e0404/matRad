@@ -1,4 +1,4 @@
-function matRad_createAnimationForLatexReport(confidenceValue, ct, cst, slice, meanCube, mRealizations, scenProb, subIx, outpath, legendColorbar)
+function matRad_createAnimationForLatexReport(confidenceValue, ct, cst, slice, meanCube, mRealizations, scenProb, subIx, outpath, legendColorbar,varargin)
 % matRad function to create figures for a GIF animation
 % 
 % call
@@ -18,6 +18,12 @@ function matRad_createAnimationForLatexReport(confidenceValue, ct, cst, slice, m
 %   outpath         output path for files
 %   legendColorbar  colorbar used for the legend
 %
+%   Additional Name Value Pairs:
+%   PrescribedDose  prescription (per fraction)
+%   FramesPerSecond frames per second for the animation (default 24)
+%   Period          total period [s] for the animation (default 5)
+%   FilePrefix      default 'anim'
+%
 % output
 %
 % References
@@ -36,6 +42,19 @@ function matRad_createAnimationForLatexReport(confidenceValue, ct, cst, slice, m
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+p = inputParser;
+
+p.addParameter('PrescribedDose',[],@(x) isscalar(x) && isnumeric(x));
+p.addParameter('FramesPerSecond',24,@(x) isscalar(x) && isnumeric(x));
+p.addParameter('Period',5,@(x) isscalar(x) && isnumeric(x));
+p.addParameter('FilePrefix','anim',@ischar);
+
+p.parse(varargin{:});
+
+fps = p.Results.FramesPerSecond;
+period = p.Results.Period;
+dPres = p.Results.PrescribedDose;
+
 ctDim = size(meanCube);
 doseSlice = meanCube(:,:,slice);
 doseSliceIx = find(doseSlice) + (slice-1)*prod(ctDim(1:2));
@@ -44,20 +63,34 @@ doseSliceIx = find(doseSlice) + (slice-1)*prod(ctDim(1:2));
 assert(all(ismember(doseSliceIx, subIx)))
 assert(issorted(doseSliceIx) && issorted(subIx))
 
+if isempty(dPres)
+    dPres = 0.95 * max(doseSlice(:));
+end
+
 [~,idxIntoSubIx] = intersect(subIx, doseSliceIx);
 mRealizationsSub = mRealizations(idxIntoSubIx,:);
 
 selectIx = doseSliceIx;
-dPres = 2;
-wCovMat = weightedcov(mRealizationsSub',scenProb);
+
+scenProbs = unique(scenProb(:));
+
+if length(scenProbs) == 1 %All scenarios equally probable
+    wCovMat = cov(mRealizationsSub');
+    wCovMat = scenProbs.^2 * wCovMat; %TODO: validate
+else %weighted covariance
+    [nVoxels,nSamples] = size(mRealizationsSub);
+    wCovMat = mRealizationsSub' - repmat(scenProb' * mRealizationsSub',nSamples,1);
+    wCovMat = wCovMat' * (wCovMat .* repmat(scenProb,1,nVoxels));
+    wCovMat = 0.5 * (wCovMat + wCovMat');
+end
+
 mu = meanCube(selectIx);
 
+%Compute starting vector from confidence value
 xr = sqrt(gammaincinv(confidenceValue,numel(mu)/2)*2);
 
 
 fname = 'anim';
-fps = 24;
-period = 5;
 nFrames = period*fps;
 samples = matRad_getGaussianOrbitSamples(mu,wCovMat,nFrames,xr);
 samplesMax = max(samples(:));
@@ -70,7 +103,7 @@ set(gcf,'color','w');
 for f=1:nFrames
     sampleCube = zeros(size(meanCube));
     sampleCube(selectIx) = samples(:,f);
-    matRad_plotSliceWrapper(gca,ct,cst,1,sampleCube,3,slice,0,alpha,colorcube,jet,[0.01*dPres samplesMax],[0.1 0.25 0.6 0.9 0.95 1 1.05 1.25]'*dPres,[],legendColorbar,false);%,figXzoom,[figYzoom]);
+    matRad_plotSliceWrapper(gca,ct,cst,1,sampleCube,3,slice,0,alpha,colorcube,jet,[0.01*dPres dPres*1.3],[0.1 0.25 0.6 0.9 0.95 1 1.05 1.25]'*dPres,[],legendColorbar,false);%,figXzoom,[figYzoom]);
     F(f) = getframe(gcf);
     im = frame2im(F(f));
     [imind,cm] = rgb2ind(im,256);

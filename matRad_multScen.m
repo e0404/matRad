@@ -1,100 +1,101 @@
-classdef matRad_multScen 
-%  matRad_multScen 
-%  This class creates all required biological model parameters according to
-% a given radiation modatlity and a given bio model identifier string. 
-%
-% constructor call
-%   pln.multScen = matRad_multScen(ct,TYPE);
-%
-%   e.g. pln.multScen = matRad_multScen(ct,'nomScen');
-%
-% input
-%   ct:                 ct cube
-%   TYPE:               string to denote a scenario creation method
-%                       'nomScen'   create only the nominal scenario
-%                       'wcScen'    create worst case scenarios
-%                       'impScen'   create important/grid scenarios
-%                       'rndScen'   create random scenarios
-%
-% output
-%   bioParam:           matRad's bioParam structure containing information
-%                       about the choosen biological model
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Copyright 2017 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
-% LICENSE file.
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+classdef matRad_multScen
+    %  matRad_multScen
+    %  This class creates all required biological model parameters according to
+    % a given radiation modatlity and a given bio model identifier string.
+    %
+    % constructor call
+    %   pln.multScen = matRad_multScen(ct,TYPE,uctModel,combineScenarios);
+    %
+    %   e.g. pln.multScen = matRad_multScen(ct,'nomScen');
+    %
+    % input
+    %   ct:                 ct cube
+    %   TYPE:               string to denote a scenario creation method
+    %                       'nomScen'   create only the nominal scenario
+    %                       'wcScen'    create worst case scenarios
+    %                       'impScen'   create important/grid scenarios
+    %                       'rndScen'   create random scenarios
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2017 the matRad development team.
+    %
+    % This file is part of the matRad project. It is subject to the license
+    % terms in the LICENSE file found in the top-level directory of this
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+    % of the matRad project, including this file, may be copied, modified,
+    % propagated, or distributed except according to the terms contained in the
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     %% properties
     
     % public properties which can be changed outside this class
-    properties               
-             
-        TYPE;                   % denotes the sampling type which cen be one of the following 
-                                % 'nomScen'   create only the nominal scenario
-                                % 'wcScen'    create worst case scenarios
-                                % 'impScen'   create important/grid scenarios
-                                % 'rndScen'   create random scenarios
+    properties
+        
+        TYPE;                   % denotes the sampling type which cen be one of the following
+        % 'nomScen'   create only the nominal scenario
+        % 'wcScen'    create worst case scenarios
+        % 'impScen'   create important/grid scenarios
+        % 'rndScen'   create random scenarios
+        
+        % Uncertainty Model
+        rangeRelSD  = 3.5;                % given in %
+        rangeAbsSD  = 1;                  % given in [mm]
+        shiftSD     = [2.25 2.25 2.25];   % given in [mm]
+        wcFactor    = 1.5;                % Multiplier to compute the worst case / maximum shifts
+        
+        
+        shiftGenType;           % 'equidistant': equidistant shifts, 'sampled': sample shifts from normal distribution
+        shiftCombType;          % 'individual':  no combination of shift scenarios;       number of shift scenarios is sum(multScen.numOfShiftScen)
+        % 'combined':    combine shift scenarios;                 number of shift scenarios is numOfShiftScen
+        % 'permuted':    create every possible shift combination; number of shift scenarios is 8,27,64 .
+        
+        rangeCombType;          % 'individual':  no combination of absolute and relative range scenarios
+        % 'combined':    combine absolute and relative range scenarios
+        rangeGenType;           % 'equidistant': equidistant range shifts, 'sampled': sample range shifts from normal distribution
+        
+        scenCombType;           % 'individual':  no combination of range and setup scenarios,
+        % 'combined':    combine range and setup scenarios if their scenario number is consistent
+        % 'permuted':    create every possible combination of range and setup scenarios
+        
+        includeNomScen;         % boolean to determine if the nominal scenario should be included
+        
+        numOfShiftScen;         % number of shifts in x y and z direction
+        numOfRangeShiftScen;    % number of absolute and/or relative range scnearios.
+    end
+    
+    %These properties are accessible but not editable
+    properties (SetAccess = private)
+        
         % ct scenarios
-        numOfCtScen;            % number of imported ct scenarios                        
+        numOfCtScen = 1;            % number of imported ct scenarios
         
         % shift scenarios
-        numOfShiftScen;         % number of shifts in x y and z direction       
-        shiftSize;              % 3x1 vector to define maximal shift in [mm]  % (e.g. abdominal cases 5mm otherwise 3mm)
-        shiftGenType;           % 'equidistant': equidistant shifts, 'sampled': sample shifts from normal distribution
-        shiftCombType;          % 'individual':  no combination of shift scenarios;       number of shift scenarios is sum(multScen.numOfShiftScen) 
-                                % 'combined':    combine shift scenarios;                 number of shift scenarios is numOfShiftScen
-                                % 'permuted':    create every possible shift combination; number of shift scenarios is 8,27,64 .
-                        
-        % b) define range error scenarios                                                
-        numOfRangeShiftScen;    % number of absolute and/or relative range scnearios. 
-                                % if absolute and relative range scenarios are defined then rangeCombType defines the resulting number of range scenarios
-        maxAbsRangeShift;       % maximum absolute over and undershoot in mm   
-        maxRelRangeShift;       % maximum relative over and undershoot in % 
-        rangeCombType;          % 'individual':  no combination of absolute and relative range scenarios
-                                % 'combined':    combine absolute and relative range scenarios
-        rangeGenType;           % 'equidistant': equidistant range shifts, 'sampled': sample range shifts from normal distribution
-        scenCombType;           % 'individual':  no combination of range and setup scenarios, 
-                                % 'combined':    combine range and setup scenarios if their scenario number is consistent 
-                                % 'permuted':    create every possible combination of range and setup scenarios
-                                                 
-        includeNomScen;         % boolean to determine if the nominal scenario should be included
-         
+        
+        shiftSize;              % 3x1 vector to define maximal shift in [mm]  % (e.g. abdominal cases 5mm otherwise 3mm)        
+        
+        % b) define range error scenarios
+        
+        % if absolute and relative range scenarios are defined then rangeCombType defines the resulting number of range scenarios
+        maxAbsRangeShift;       % maximum absolute over and undershoot in mm
+        maxRelRangeShift;       % maximum relative over and undershoot in %
+        
+        
         % these parameters will be filled according to the choosen scenario type
         isoShift;
         relRangeShift;
         absRangeShift;
-            
+        
         totNumShiftScen;        % total number of shift scenarios in x,y and z direction
         totNumRangeScen;        % total number of range and absolute range scenarios
         totNumScen;             % total number of samples
         
-        scenForProb;            % matrix for probability calculation - each row denotes one scenario  
+        scenForProb;            % matrix for probability calculation - each row denotes one scenario
         scenProb;               % probability of each scenario stored in a vector
         scenMask;
         linearMask;
-        
-        rangeRelSD  = 3.5;                % given in %
-        rangeAbsSD  = 1;                  % given in [mm]   
-        shiftSD     = [2.25 2.25 2.25];   % given in [mm]
-        
-    end
-    
-    % private properties which can only be changed inside matRad_multScen
-    properties(SetAccess = private)
-        
-        DEFAULT_TYPE      = 'nomScen'; 
-        DEFAULT_probDist  = 'normDist'; % 'normDist': normal probability distrubtion or 'equalProb' for uniform probability distribution  
-        DEFAULT_TypeProp  = 'probBins'; % 'probBins': cumulative prob in bin or 'pointwise' for point probability  
-        
     end
     
     % constant properties which are visible outside of matRad_multScen
@@ -103,157 +104,340 @@ classdef matRad_multScen
         AvailableScenCreationTYPE = {'nomScen','wcScen','impScen','rndScen'};
     end
     
-    % constant private properties which are only visible within matRad_multScen
-    properties(Constant = true, Access = private)
-        
-        % default parameter for each scenario creation TYPE
+    % constant deafult properties which are only visible within matRad_multScen
+    properties (Constant = true, Access = private)
+        DEFAULT_TYPE      = 'nomScen';
+        DEFAULT_probDist  = 'normDist'; % 'normDist': normal probability distrubtion or 'equalProb' for uniform probability distribution
+        DEFAULT_TypeProp  = 'probBins'; % 'probBins': cumulative prob in bin or 'pointwise' for point probability
         
         % 'nomScen' default parameters for nominal scenario
         numOfShiftScen_nomScen            = [0 0 0];                       % number of shifts in x y and z direction
-        shiftSize_nomScen                 = [0 0 0];                       % given in [mm]
+        %shiftSize_nomScen                 = [0 0 0];                       % given in [mm]
         shiftGenType_nomScen              = 'equidistant';                 % equidistant: equidistant shifts,
         shiftCombType_nomScen             = 'individual';                  % individual:  no combination of shift scenarios;
         numOfRangeShiftScen_nomScen       = 0                              % number of absolute and/or relative range scnearios.
-        maxAbsRangeShift_nomScen          = 0;                             % maximum absolute over and undershoot in mm 
-        maxRelRangeShift_nomScen          = 0;                             % maximum relative over and undershoot in % 
+        maxAbsRangeShift_nomScen          = 0;                             % maximum absolute over and undershoot in mm
+        maxRelRangeShift_nomScen          = 0;                             % maximum relative over and undershoot in %
         rangeCombType_nomScen             = 'combined';                    % combine absolute and relative range scenarios
         rangeGenType_nomScen              = 'equidistant';                 % equidistant: equidistant range shifts,
-        scenCombType_nomScen              = 'individual';                  % individual:  no combination of range and setup scenarios, 
+        scenCombType_nomScen              = 'individual';                  % individual:  no combination of range and setup scenarios,
         includeNomScen_nomScen            = true;
-                             
+        
         % 'wcScen'  default parameters for  worst case scenarios
         numOfShiftScen_wcScen             = [2 2 2];                       % number of shifts in x y and z direction
-        shiftSize_wcScen                  = [4 4 4];                       % given in [mm]
+        %shiftSize_wcScen                  = [4 4 4];                       % given in [mm]
         shiftGenType_wcScen               = 'equidistant';                 % equidistant: equidistant shifts
         shiftCombType_wcScen              = 'individual';                  % individual:  no combination of shift scenarios
         numOfRangeShiftScen_wcScen        = 2;                             % number of absolute and/or relative range scnearios.
-        maxAbsRangeShift_wcScen           = 1;                             % maximum absolute over and undershoot in mm 
-        maxRelRangeShift_wcScen           = 3.5;                           % maximum relative over and undershoot in % 
+        maxAbsRangeShift_wcScen           = 1;                             % maximum absolute over and undershoot in mm
+        maxRelRangeShift_wcScen           = 3.5;                           % maximum relative over and undershoot in %
         rangeCombType_wcScen              = 'combined';                    % combine absolute and relative range scenarios
         rangeGenType_wcScen               = 'equidistant';                 % equidistant: equidistant range shifts
         scenCombType_wcScen               = 'individual';                  % individual:  no combination of range and setup scenarios
         includeNomScen_wcScen             = true;                          % include nominal scenario
         
-        % 'impScen'   create important/grid scenarios                       
-        numOfShiftScen_impScen            = [0 0 0];                       % number of shifts in x y and z direction
-        shiftSize_impScen                 = [0 0 0];                       % given in [mm]
+        % 'impScen'   create important/grid scenarios
+        numOfShiftScen_impScen            = [10 10 10];                       % number of shifts in x y and z direction
+        %shiftSize_impScen                 = [0 0 0];                       % given in [mm]
         shiftGenType_impScen              = 'equidistant';                 % equidistant: equidistant shifts
         shiftCombType_impScen             = 'individual';                  % individual:  no combination of shift scenarios
-        numOfRangeShiftScen_impScen       = 20;                            % number of absolute and/or relative range scnearios
-        maxAbsRangeShift_impScen          = 1;                             % maximum absolute over and undershoot in mm 
-        maxRelRangeShift_impScen          = 3.5;                           % maximum relative over and undershoot in % 
-        rangeCombType_impScen             = 'combined';                    % combine absolute and relative range scenarios             
+        numOfRangeShiftScen_impScen       = 10;                            % number of absolute and/or relative range scnearios
+        maxAbsRangeShift_impScen          = 1;                             % maximum absolute over and undershoot in mm
+        maxRelRangeShift_impScen          = 3.5;                           % maximum relative over and undershoot in %
+        rangeCombType_impScen             = 'combined';                    % combine absolute and relative range scenarios
         rangeGenType_impScen              = 'equidistant';                 % equidistant: equidistant range shifts
         scenCombType_impScen              = 'individual';                  % individual:  no combination of range and setup scenarios,
         includeNomScen_impScen            = false;                         % exclude nominal scenario
         
         % 'rndScen'   default parameters for random sampling
         numOfShiftScen_rndScen            = [25 25 25];                    % number of shifts in x y and z direction
-        shiftSize_rndScen                 = [3 3 3];                       % given in [mm]
+        %shiftSize_rndScen                 = [3 3 3];                       % given in [mm]
         shiftGenType_rndScen              = 'sampled';                     % sample shifts from normal distribution
         shiftCombType_rndScen             = 'combined';                    % individual:  no combination of shift scenarios;
         numOfRangeShiftScen_rndScen       = 25;                            % number of absolute and/or relative range scnearios.
-        maxAbsRangeShift_rndScen          = 1;                             % maximum absolute over and undershoot in mm 
-        maxRelRangeShift_rndScen          = 3.5;                           % maximum relative over and undershoot in % 
-        rangeCombType_rndScen             = 'combined';                    % combine absolute and relative range scenarios             
+        maxAbsRangeShift_rndScen          = NaN;                             % maximum absolute over and undershoot in mm
+        maxRelRangeShift_rndScen          = NaN;                           % maximum relative over and undershoot in %
+        rangeCombType_rndScen             = 'combined';                    % combine absolute and relative range scenarios
         rangeGenType_rndScen              = 'sampled';                     % sampled: sample range shifts from normal distribution
-        scenCombType_rndScen              = 'combined';                    % combine range and setup scenarios if their scenario number is consistent  
+        scenCombType_rndScen              = 'combined';                    % combine range and setup scenarios if their scenario number is consistent
         includeNomScen_rndScen            = false;                         % exclude nominal scenario
     end
     
-   %% methods
-   
-   % public methods go here
-   methods 
-       
-      %Attach a listener to a TYPE 
-      function attachListener(obj)
-         addlistener(obj,'TYPE','PostSet',@PropLis.propChange);
-      end
-      
-      % default constructor
-      function this = matRad_multScen(ct,TYPE)
-         
-         if exist('TYPE','var') && ~isempty(TYPE)
-            if sum(strcmp(this.AvailableScenCreationTYPE,TYPE))>0
-               this.TYPE = TYPE;
-            else
-               matRad_dispToConsole(['matRad_multScen: Unknown TYPE - using the nominal scenario now'],[],'warning')
-               this.TYPE = this.DEFAULT_TYPE;
-            end
-         else
-            this.TYPE = this.DEFAULT_TYPE;
-         end
-         this      = getMultScenParam(ct,this);
-         this      = setMultScen(this);
-         this      = calcScenProb(this);
-      end % end constructor
-      
-      % create valid instance of an object
-      function this = matRad_createValidInstance(this)
-          this      = setMultScen(this);
-          this      = calcScenProb(this);
-      end
-      
-      %% setters to check for valid input
-      function this = set.numOfShiftScen(this,value)
-          
-         if ~isempty(value)
-            this.numOfShiftScen = value;
-         else
-            this.numOfShiftScen = this.numOfRangeShiftScen_nomScen; 
-         end
-         
-      end
-      
-   end % end public methods 
+    properties (Access = private)
+        lockUpdate = false;
+        lockInit = false;
+    end
     
-   
-   % public static methods go here, they can be called without creating an
-   % instance of this class
-   methods(Static)    
-   
-   end % end static public methods
-   
-   
-   %private methods go here
-   methods(Access = private)
-       
-       %%
-       % set parameters according to the choosing scenario generation type
-       function this = getMultScenParam(ct,this)
-           
-           % set all parameters according to the choosen scenario creation
-           % type
-           if isempty(ct)
-                this.numOfCtScen = 1;   
-           else
-                this.numOfCtScen = ct.numOfCtScen;
-           end
-           
-           this.numOfShiftScen       = this.(['numOfShiftScen_' this.TYPE]);
-           this.shiftSize            = this.(['shiftSize_' this.TYPE]);
-           this.shiftGenType         = this.(['shiftGenType_' this.TYPE]);        
-           this.shiftCombType        = this.(['shiftCombType_' this.TYPE]);  
-           this.numOfRangeShiftScen  = this.(['numOfRangeShiftScen_' this.TYPE]);  
-           this.maxAbsRangeShift     = this.(['maxAbsRangeShift_' this.TYPE]); 
-           
-           this.maxRelRangeShift     = this.(['maxRelRangeShift_' this.TYPE]); 
-           this.rangeCombType        = this.(['rangeCombType_' this.TYPE]); 
-           this.rangeGenType         = this.(['rangeGenType_' this.TYPE]); 
-           
-           this.scenCombType         = this.(['scenCombType_' this.TYPE]); 
-           this.includeNomScen       = this.(['includeNomScen_' this.TYPE]);  
-       end
-       
-       %%
-       % creates individual treatment planning scenarios
-       function this = setMultScen(this)
-           
-            if this.includeNomScen
-               nomScen = 0;
+    %% methods
+    
+    % public methods go here
+    methods
+        
+        %Attach a listener to a TYPE
+        function attachListener(obj)
+            addlistener(obj,'TYPE','PostSet',@PropLis.propChange);
+        end
+        
+        % default constructor
+        function this = matRad_multScen(ct,TYPE)
+            
+            matRad_cfg = MatRad_Config.instance();
+            if isempty(ct)
+                this.numOfCtScen = 1;
             else
-               nomScen = [];
+                this.numOfCtScen = ct.numOfCtScen;
+            end
+            
+            this.lockInit = true;
+            if exist('TYPE','var') && ~isempty(TYPE)
+                if sum(strcmp(this.AvailableScenCreationTYPE,TYPE))>0
+                    this.TYPE = TYPE;
+                else
+                    matRad_cfg.dispWarning('matRad_multScen: Unknown TYPE - using the nominal scenario now');
+                    this.TYPE = this.DEFAULT_TYPE;
+                end
+            else
+                this.TYPE = this.DEFAULT_TYPE;
+            end
+            this.lockInit = false;
+                       
+            this      = this.initialize();
+            
+        end % end constructor
+        
+        function newInstance = extractSingleNomScen(this,ctScen,i)
+            newInstance = this;
+            newInstance.TYPE = 'nomScen';
+            newInstance.lockInit = true;
+            newInstance.lockUpdate = true;
+                        
+            newInstance.scenForProb         = this.scenForProb(i,:);
+            newInstance.relRangeShift       = this.scenForProb(i,5);
+            newInstance.absRangeShift       = this.scenForProb(i,4);
+            newInstance.isoShift            = this.scenForProb(i,1:3);
+            newInstance.totNumShiftScen     = 1;
+            newInstance.totNumRangeScen     = 1;
+            newInstance.numOfCtScen         = ctScen;
+            newInstance.scenMask            = 1;
+            newInstance.linearMask          = 1;
+            newInstance.scenProb            = 1;
+            
+            newInstance.lockInit = false;
+            newInstance.lockUpdate = false;
+        end
+        
+        % create valid instance of an object
+        function this = matRad_createValidInstance(this)
+            this      = setMultScen(this);
+            this      = calcScenProb(this);
+        end
+        
+        %% Setter functions
+        function this = set.TYPE(this,value)
+            if ischar(value) && any(strcmp(value,this.AvailableScenCreationTYPE))
+                this.TYPE = value;
+                this = this.initialize();
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid scenario TYPE!');
+            end
+        end
+        
+        function this = set.rangeRelSD(this,value)
+            if isnumeric(value) && isscalar(value) && value >= 0
+                this.rangeRelSD = value;
+                this = this.updateScenariosFromUncertainties();
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for relative range uncertainty!');
+            end
+        end
+        
+        function this = set.rangeAbsSD(this,value)
+            if isnumeric(value) && isscalar(value) && value >= 0
+                this.rangeAbsSD = value;
+                this = this.updateScenariosFromUncertainties();
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for absolute range uncertainty!');
+            end
+        end
+        
+        function this = set.shiftSD(this,value)
+            if isnumeric(value) && isvector(value) && numel(value) == 3 && all(value >= 0)
+                this.shiftSD = value;
+                this = this.updateScenariosFromUncertainties();
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for setup uncertainty!');
+            end
+        end
+        
+        function this = set.wcFactor(this,value)
+            if isnumeric(value) && isscalar(value) && value >= 0
+                this.wcFactor = value;
+                this = this.updateScenariosFromUncertainties();
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for worst case factor!');
+            end
+        end
+        
+        function this = set.numOfShiftScen(this,value)
+            if isnumeric(value) && isvector(value) && numel(value) == 3 && all(value >= 0) && all(mod(value,1) == 0)
+                this.numOfShiftScen = value;
+                this = this.updateScenariosFromUncertainties();
+            else
+               matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for shift scenario number!'); 
+            end 
+        end
+        
+        function this = set.numOfRangeShiftScen(this,value)
+            if isnumeric(value) && isscalar(value) && value >= 0 && mod(value,1) == 0
+                this.numOfRangeShiftScen = value;
+                this = this.updateScenariosFromUncertainties();
+            else
+               matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for number of range over/undershoots!'); 
+            end 
+        end
+        
+        function this = set.shiftGenType(this,value)
+            if ischar(value) && any(strcmp(value,{'equidistant','sampled'}))
+                this.shiftGenType = value;
+                this = this.updateScenariosFromUncertainties();
+            else
+               matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for shift generation type!'); 
+            end 
+        end
+        
+        function this = set.rangeGenType(this,value)
+            if ischar(value) && any(strcmp(value,{'equidistant','sampled'}))
+                this.rangeGenType = value;
+                this = this.updateScenariosFromUncertainties();
+            else
+               matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for range shift generation type!'); 
+            end 
+        end
+        
+        function this = set.shiftCombType(this,value)
+            if ischar(value) && any(strcmp(value,{'individual','combined','permuted'}))
+                this.shiftCombType = value;
+                this = this.updateScenariosFromUncertainties();
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for shift combination!'); 
+            end 
+        end
+        
+        function this = set.scenCombType(this,value)
+            if ischar(value) && any(strcmp(value,{'individual','combined','permuted'}))
+                this.scenCombType = value;
+                this = this.updateScenariosFromUncertainties();
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for scenario combination!'); 
+            end 
+        end
+        
+        function this = set.rangeCombType(this,value)
+            if ischar(value) && any(strcmp(value,{'individual','combined'}))
+                this.rangeCombType = value;
+                this = this.updateScenariosFromUncertainties();
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for absolute & relative range combination!'); 
+            end 
+        end
+        
+        function this = set.includeNomScen(this,value)
+            if isnumeric(value) || islogical(value)
+                this.includeNomScen = logical(value);
+                this = this.updateScenariosFromUncertainties();
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for inclusion of nominal scenario!'); 
+            end 
+        end
+        
+        function listAllScenarios(this)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispInfo('Listing all scenarios...\n');
+            matRad_cfg.dispInfo('\t#\txShift\tyShift\tzShift\tabsRng\trelRng\tprob.\n');
+            for s = 1:size(this.scenForProb,1)
+                str = num2str(this.scenForProb(s,:),'\t%.3f');
+                matRad_cfg.dispInfo('\t%d\t%s\t%.3f\n',s,str,this.scenProb(s));
+            end
+        end
+    end % end public methods
+    
+    %private methods go here
+    methods(Access = private)
+        %%
+        % set parameters according to the choosing scenario generation type
+        function this = initialize(this)
+            if this.lockInit
+                return;
+            end
+            
+            
+            this.lockUpdate = true;
+            
+            this.numOfShiftScen       = this.(['numOfShiftScen_' this.TYPE]);
+            this.shiftGenType         = this.(['shiftGenType_' this.TYPE]);
+            this.shiftCombType        = this.(['shiftCombType_' this.TYPE]);
+            this.numOfRangeShiftScen  = this.(['numOfRangeShiftScen_' this.TYPE]);
+            
+            this.rangeCombType        = this.(['rangeCombType_' this.TYPE]);
+            this.rangeGenType         = this.(['rangeGenType_' this.TYPE]);
+            
+            this.scenCombType         = this.(['scenCombType_' this.TYPE]);
+            this.includeNomScen       = this.(['includeNomScen_' this.TYPE]);
+            
+            this.lockUpdate = false;
+                        
+            this = this.updateScenariosFromUncertainties();            
+        end
+        
+        %%
+        function this = updateScenariosFromUncertainties(this)
+            if this.lockUpdate
+                return;
+            end
+            switch this.TYPE
+                case 'wcScen'
+                    this.shiftSize = this.shiftSD * this.wcFactor;
+                    this.maxAbsRangeShift = this.rangeAbsSD * this.wcFactor;
+                    this.maxRelRangeShift = this.rangeRelSD * this.wcFactor;
+                case 'nomScen'
+                    this.shiftSize = [0 0 0];
+                    this.maxAbsRangeShift = 0;
+                    this.maxRelRangeShift = 0;
+                case 'impScen'
+                    this.shiftSize = this.shiftSD * this.wcFactor;
+                    this.maxAbsRangeShift = this.rangeAbsSD * this.wcFactor;
+                    this.maxRelRangeShift = this.rangeRelSD * this.wcFactor;
+                case 'rndScen'
+                    this.shiftSize = [NaN NaN NaN];
+                    this.maxAbsRangeShift = this.rangeAbsSD * 3;
+                    this.maxRelRangeShift = this.rangeRelSD * 3;
+            end
+            
+            this = this.setMultScen();
+            this = this.calcScenProb();
+        end
+        
+        %%
+        % creates individual treatment planning scenarios
+        function this = setMultScen(this)
+            matRad_cfg = MatRad_Config.instance();
+            if this.includeNomScen
+                nomScen = 0;
+            else
+                nomScen = [];
             end
             
             %% calc setup shift scenarios
@@ -270,11 +454,11 @@ classdef matRad_multScen
                     if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     isoShiftVec{2} = [0 this.shiftSD(2) .* randn(1, this.numOfShiftScen(2)) + meanP(2)];
                     if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
-                    isoShiftVec{3} = [0 this.shiftSD(3) .* randn(1, this.numOfShiftScen(3)) + meanP(3)];     
+                    isoShiftVec{3} = [0 this.shiftSD(3) .* randn(1, this.numOfShiftScen(3)) + meanP(3)];
                 otherwise
-                    matRad_dispToConsole('did not expect that','error');
+                    matRad_cfg.dispError('did not expect that!');
             end
-
+            
             % create scenMaskIso for isoShifts
             numIso(1) = numel(isoShiftVec{1});
             numIso(2) = numel(isoShiftVec{2});
@@ -297,40 +481,40 @@ classdef matRad_multScen
                         end
                     else
                         this.shiftCombType = 'individual';
-                        matRad_dispToConsole('Numnber of isoShifts in every direction has to be equal in order to perform direct combination. Performing individually instead.',[],'warning');
+                        matRad_cfg.dispWarning('Numnber of isoShifts in every direction has to be equal in order to perform direct combination. Performing individually instead.');
                         % call the function itself to get a working combination
                         [this] = setMultScen(this);
                     end
                 otherwise
-                    matRad_dispToConsole('Uncaught exception. Probably TYPO.','error');
+                    matRad_cfg.dispError('Uncaught exception. Probably TYPO.','error');
             end
             
             % create list of increasing integers with referenced scenario
             [xIso, yIso, zIso] = ind2sub(size(scenMaskIso),find(scenMaskIso));
-
+            
             matchMaskIso = cell(numel(xIso),2);
             for i = 1:numel(xIso)
                 matchMaskIso{i,1} = i;
                 matchMaskIso{i,2} = [xIso(i) yIso(i) zIso(i)];
             end
-
+            
             % create isoShift vector based on the matrix and matching
             this.isoShift = zeros(size(matchMaskIso,1),3);
             if numel(isoShiftVec{1}) + numel(isoShiftVec{2}) + numel(isoShiftVec{3}) > 0
-               for i = 1:size(matchMaskIso,1)
-                   matchPos = num2cell(matchMaskIso{i,2});
-                   if ~isequal([isoShiftVec{1}(matchPos{1}) isoShiftVec{2}(matchPos{2}) isoShiftVec{3}(matchPos{3})],[0 0 0]) || i == 1
-                         this.isoShift(i,:) = [isoShiftVec{1}(matchPos{1}) isoShiftVec{2}(matchPos{2}) isoShiftVec{3}(matchPos{3})] * ...
-                                         scenMaskIso(matchPos{:});
-                   end
-               end
+                for i = 1:size(matchMaskIso,1)
+                    matchPos = num2cell(matchMaskIso{i,2});
+                    if ~isequal([isoShiftVec{1}(matchPos{1}) isoShiftVec{2}(matchPos{2}) isoShiftVec{3}(matchPos{3})],[0 0 0]) || i == 1
+                        this.isoShift(i,:) = [isoShiftVec{1}(matchPos{1}) isoShiftVec{2}(matchPos{2}) isoShiftVec{3}(matchPos{3})] * ...
+                            scenMaskIso(matchPos{:});
+                    end
+                end
             end
-                       
+            
             if ~this.includeNomScen
                 if size(this.isoShift,1)>1
-                     this.isoShift = this.isoShift(2:end,:);               % cut away the first (=nominal) scenario
+                    this.isoShift = this.isoShift(2:end,:);               % cut away the first (=nominal) scenario
                 else
-                     this.isoShift = [];
+                    this.isoShift = [];
                 end
             end
             
@@ -351,161 +535,161 @@ classdef matRad_multScen
                     if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     this.absRangeShift = [nomScen std .* randn(1, this.numOfRangeShiftScen) + meanP];
                 otherwise
-                    matRad_dispToConsole('Not a valid type of generating data.','error');
+                    matRad_cfg.dispError('Not a valid type of generating data.');
             end
             
             numOfRelRangeShift = numel(this.relRangeShift);
             numOfAbsRangeShift = numel(this.absRangeShift);
-
+            
             if ~isequal(numOfRelRangeShift,numOfAbsRangeShift)
-                matRad_dispToConsole('Number of relative and absolute range shifts must not differ.','error');
+                matRad_cfg.dispError('Number of relative and absolute range shifts must not differ.');
             else
                 this.totNumRangeScen = numOfRelRangeShift;
             end
-
+            
             this.relRangeShift = (this.relRangeShift./100);  % consider [%]
-
+            
             % check how absolute range error scenarios and relative range error scenarios should be combined
-            switch this.rangeCombType    
-               case 'individual'
-                  rangeShift = zeros(length(this.relRangeShift)*2 ,2);
-                  for i = 1:length(this.relRangeShift)
-                     rangeShift((i * 2)-1,1)  = this.absRangeShift(i);
-                     rangeShift((i * 2)  ,2)  = this.relRangeShift(i);
-                  end
-
-                  this.totNumRangeScen = (numOfRelRangeShift*2)-1;
-                  this.absRangeShift   = [this.absRangeShift zeros(1,length(this.relRangeShift(this.relRangeShift~=0)))];
-                  this.relRangeShift   = [zeros(1,length(this.relRangeShift)) this.relRangeShift(this.relRangeShift~=0)] ;
-
-               case 'combined' 
-                  rangeShift = zeros(length(this.relRangeShift),2);
-                  for i = 1:1:length(this.relRangeShift) 
-                     rangeShift(i,1) = this.absRangeShift(i);
-                     rangeShift(i,2) = this.relRangeShift(i);
-                  end
-
+            switch this.rangeCombType
+                case 'individual'
+                    rangeShift = zeros(length(this.relRangeShift)*2 ,2);
+                    for i = 1:length(this.relRangeShift)
+                        rangeShift((i * 2)-1,1)  = this.absRangeShift(i);
+                        rangeShift((i * 2)  ,2)  = this.relRangeShift(i);
+                    end
+                    
+                    this.totNumRangeScen = (numOfRelRangeShift*2)-1;
+                    this.absRangeShift   = [this.absRangeShift zeros(1,length(this.relRangeShift(this.relRangeShift~=0)))];
+                    this.relRangeShift   = [zeros(1,length(this.relRangeShift)) this.relRangeShift(this.relRangeShift~=0)] ;
+                    
+                case 'combined'
+                    rangeShift = zeros(length(this.relRangeShift),2);
+                    for i = 1:1:length(this.relRangeShift)
+                        rangeShift(i,1) = this.absRangeShift(i);
+                        rangeShift(i,2) = this.relRangeShift(i);
+                    end
+                    
                 otherwise
             end
             
             % combine setup and range scenarios according to scenCombType
             switch this.scenCombType
-
+                
                 case 'individual' % combine setup and range scenarios individually
-
-                   % range errors should come first
-                   if this.includeNomScen
-                      this.scenForProb                                = zeros(size(this.isoShift,1)-1 + size(rangeShift,1),5);
-                      this.scenForProb(1:size(rangeShift,1),4:5)      = rangeShift;
-                      this.scenForProb(size(rangeShift,1)+1:end,1:3)  = this.isoShift(2:end,:);
-                   else
-                       this.scenForProb                               = zeros(size(this.isoShift,1) + size(rangeShift,1),5);
-                       this.scenForProb(1:size(rangeShift,1),4:5)     = rangeShift;
-                       this.scenForProb(size(rangeShift,1)+1:end,1:3) = this.isoShift;
-                   end
-
+                    
+                    % range errors should come first
+                    if this.includeNomScen
+                        this.scenForProb                                = zeros(size(this.isoShift,1)-1 + size(rangeShift,1),5);
+                        this.scenForProb(1:size(rangeShift,1),4:5)      = rangeShift;
+                        this.scenForProb(size(rangeShift,1)+1:end,1:3)  = this.isoShift(2:end,:);
+                    else
+                        this.scenForProb                               = zeros(size(this.isoShift,1) + size(rangeShift,1),5);
+                        this.scenForProb(1:size(rangeShift,1),4:5)     = rangeShift;
+                        this.scenForProb(size(rangeShift,1)+1:end,1:3) = this.isoShift;
+                    end
+                    
                 case 'permuted'
-
+                    
                     this.scenForProb  = zeros(size(this.isoShift,1) * size(rangeShift,1),5);
                     Cnt = 1;
                     for i = 1:size(this.isoShift,1)
-                       for j = 1:size(rangeShift,1)
-                          this.scenForProb(Cnt,:)   = [this.isoShift(i,:) rangeShift(j,:)];
-                          Cnt = Cnt + 1;
-                       end
+                        for j = 1:size(rangeShift,1)
+                            this.scenForProb(Cnt,:)   = [this.isoShift(i,:) rangeShift(j,:)];
+                            Cnt = Cnt + 1;
+                        end
                     end
-
+                    
                 case 'combined'
-
-                   if size(this.isoShift,1) == size(rangeShift,1)  && this.totNumShiftScen > 0 && this.totNumRangeScen > 0
-                       this.scenForProb            = zeros(size(this.isoShift,1),5);
-                       this.scenForProb(1:end,1:3) = this.isoShift;
-                       this.scenForProb(1:end,4:5) = rangeShift; 
-                   else
-                       matRad_dispToConsole('number of setup and range scenarios MUST be the same \n',[],'warning');
-                       this.scenCombType = 'individual';
-                       multScen          = setMultScen(this);
-                       this.scenForProb       = multScen.scenForProb;
-                   end
+                    
+                    if size(this.isoShift,1) == size(rangeShift,1)  && this.totNumShiftScen > 0 && this.totNumRangeScen > 0
+                        this.scenForProb            = zeros(size(this.isoShift,1),5);
+                        this.scenForProb(1:end,1:3) = this.isoShift;
+                        this.scenForProb(1:end,4:5) = rangeShift;
+                    else
+                        matRad_cfg.dispWarning('number of setup and range scenarios MUST be the same \n');
+                        this.scenCombType = 'individual';
+                        multScen          = setMultScen(this);
+                        this.scenForProb       = multScen.scenForProb;
+                    end
             end
             
             % sanity check
             UniqueRowScenForProb = unique(this.scenForProb,'rows');
-
+            
             if size(UniqueRowScenForProb,1) ~= size(this.scenForProb,1) && size(UniqueRowScenForProb,1)>1
-                 matRad_dispToConsole('Some scenarios seem to be defined multiple times',[],'warning');
+                matRad_cfg.dispWarning('Some scenarios seem to be defined multiple times');
             end
-
+            
             %% setup and fill combinatorics mask
-            % 1st dim: ct scenarios, 
-            % 2nd dim: shift scenarios, 
-            % 3rd dim: range scenarios 
-            this.scenMask        = false(this.numOfCtScen, this.totNumShiftScen, this.totNumRangeScen); 
+            % 1st dim: ct scenarios,
+            % 2nd dim: shift scenarios,
+            % 3rd dim: range scenarios
+            this.scenMask        = false(this.numOfCtScen, this.totNumShiftScen, this.totNumRangeScen);
             this.scenMask(:,1,1) = true; % ct scenarios
-
+            
             % switch between combination modes here
             % only makes scence when numOfShiftScen>0 and numOfRangeShiftScen>0;
             if this.totNumShiftScen > 0 && this.totNumRangeScen > 0
-               switch this.scenCombType
-                   case 'individual'
-                       % get all setup scenarios
-%                        [~,ixUnq] = unique(this.scenForProb(:,1:3),'rows','stable');
+                switch this.scenCombType
+                    case 'individual'
+                        % get all setup scenarios
+                        %                        [~,ixUnq] = unique(this.scenForProb(:,1:3),'rows','stable');
                         uq   = this.scenForProb(1,1:3);
-                       ixUnq = [1];
-                       for col  = 2: size(this.scenForProb(:,1:3),1)
-                           flag=1;
-                           for colq = 1: size(uq,1)
-                               if (sum(this.scenForProb(col,1:3) ==uq(colq,:)) == 3 )
-                                   flag=0;
-                               end
-                           end
-                           if flag
-                               ixUnq = [ixUnq; col];
-                           end
-                       end
-                       this.scenMask  = false(this.numOfCtScen, length(ixUnq), this.totNumRangeScen);
-                       this.scenMask(:,1,1) = true; % ct scenarios
-                       this.scenMask(1,:,1) = true; % iso shift scenarios
-                       this.scenMask(1,1,:) = true; % range shift scenarios
-                   case 'permuted'
-                       this.scenMask(:,:,:) = true;
-                   case 'combined'
-                       % check if scenForProb is cubic (ignore ct scen) - if so fill diagonal
-                       if isequal(this.totNumShiftScen, this.totNumRangeScen)
-                           for i = 1:size(this.scenForProb, 1)
-                               this.scenMask(1,i,i) = true;
-                           end
-                       else
-                           this.shiftCombType = 'individual';
-                           matRad_dispToConsole('number of setup and range scenarios MUST be the same \n',[],'warning');
-                           this = setMultScen(this);
-                       end
-               end
+                        ixUnq = [1];
+                        for col  = 2: size(this.scenForProb(:,1:3),1)
+                            flag=1;
+                            for colq = 1: size(uq,1)
+                                if (sum(this.scenForProb(col,1:3) ==uq(colq,:)) == 3 )
+                                    flag=0;
+                                end
+                            end
+                            if flag
+                                ixUnq = [ixUnq; col];
+                            end
+                        end
+                        this.scenMask  = false(this.numOfCtScen, length(ixUnq), this.totNumRangeScen);
+                        this.scenMask(:,1,1) = true; % ct scenarios
+                        this.scenMask(1,:,1) = true; % iso shift scenarios
+                        this.scenMask(1,1,:) = true; % range shift scenarios
+                    case 'permuted'
+                        this.scenMask(:,:,:) = true;
+                    case 'combined'
+                        % check if scenForProb is cubic (ignore ct scen) - if so fill diagonal
+                        if isequal(this.totNumShiftScen, this.totNumRangeScen)
+                            for i = 1:size(this.scenForProb, 1)
+                                this.scenMask(1,i,i) = true;
+                            end
+                        else
+                            this.shiftCombType = 'individual';
+                            matRad_cfg.dispWarning('number of setup and range scenarios MUST be the same \n');
+                            this = setMultScen(this);
+                        end
+                end
             end
-
+            
             
             % create linearalized mask where the i row points to the indexes of scenMask
             [x{1}, x{2}, x{3}] = ind2sub(size(this.scenMask),find(this.scenMask));
             this.linearMask    = cell2mat(x);
             this.totNumScen    = sum(this.scenMask(:));
             
-       end % end of setMultScen
-       
-       
-       %%
-       % provides different ways of calculating the probability 
-       % of occurance of individual scenarios
-       function this  = calcScenProb(this)
-           
+        end % end of setMultScen
+        
+        
+        %%
+        % provides different ways of calculating the probability
+        % of occurance of individual scenarios
+        function this  = calcScenProb(this)
+            
             mu    = [0 0 0 0 0];
-            sigma = [this.shiftSD this.rangeAbsSD this.rangeRelSD/100]; 
-           
+            sigma = [this.shiftSD this.rangeAbsSD this.rangeRelSD/100];
+            
             if isequal(this.DEFAULT_probDist,'normDist')
-
+                
                 this.scenProb = 1;
-
+                
                 if isequal(this.DEFAULT_TypeProp,'probBins')
-
+                    
                     for i = 1:length(mu)
                         samplePosSorted = sort(unique(this.scenForProb(:,i)));
                         if numel(samplePosSorted) == 1 || sigma(i) == 0
@@ -514,39 +698,40 @@ classdef matRad_multScen
                         binWidth        = (samplePosSorted(2) - samplePosSorted(1));
                         lowerBinLevel   = this.scenForProb(:,i) - 0.5*binWidth;
                         upperBinLevel   = this.scenForProb(:,i) + 0.5*binWidth;
-
+                        
                         this.scenProb   = this.scenProb.*0.5.*(erf((upperBinLevel-mu(i))/(sqrt(2)*sigma(i)))-erf((lowerBinLevel-mu(i))/(sqrt(2)*sigma(i))));
                     end
-
+                    
                 elseif isequal(this.DEFAULT_TypeProp,'pointwise')
                     for i = 1:length(mu)
                         this.scenProb = this.scenProb .* (1/sqrt(2*pi*sigma(i)^2)*exp(-((this.scenForProb(:,i)-mu(i)).^2./(2*sigma(i)^2))));
                     end
                 end
-
+                
                 % normalize probabilities since we use only a subset of
-                % the 3D grid 
+                % the 3D grid
                 this.scenProb = this.scenProb./sum(this.scenProb);
-
+                
             elseif isequal(probDist,'equalProb')
-
-               numScen  = size(samplePos,1);
-               this.scenProb = repmat(1/numScen,1,numScen);
-
+                
+                numScen  = size(samplePos,1);
+                this.scenProb = repmat(1/numScen,1,numScen);
+                
             else
-                matRad_dispToConsole('Until now, only normally distributed scenarios implemented',[],'error')
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Until now, only normally distributed scenarios implemented');
             end
             
+            
+        end % end of calcScenProb
         
-       end % end of calcScenProb
-       
-       
-       
-       
-   end % end private methods
-   
-   
-   
+        
+        
+        
+    end % end private methods
+    
+    
+    
 end  % end of matRad_multScen class
 
 

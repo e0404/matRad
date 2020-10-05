@@ -26,8 +26,8 @@ load BOXPHANTOM.mat
 %%
 
 amplitude    = [0 3 0]; % [voxels]
-numOfCtScen  = 10;
-motionPeriod = 5; % [s] 
+numOfCtScen  = 5;
+motionPeriod = 2.5; % [s] 
 
 [ct,cst] = matRad_addMovement(ct, cst,motionPeriod, numOfCtScen, amplitude);
 % Set up a plan, compute dose influence on all phases, conventional optimization
@@ -61,21 +61,25 @@ pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,scenGenType);
 
+%%
 % generate steering file
 stf = matRad_generateStf(ct,cst,pln);
 
+%% 
 % dose calculation
 dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
+%% 
 % inverse planning for imrt on a static CT
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
-
+%% 
 % post processing
 % This step is necessary to remove beam spots with too few particles that
 % cannot not be delivered, dose is recalculated accordingly
 resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf) ; 
 
+%%
 % calc 4D dose
 % make sure that the correct pln, dij and stf are loeaded in the workspace
 [resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI); 

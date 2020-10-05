@@ -57,7 +57,7 @@ resultGUI.w(resultGUI.w<Imin/2) = 0;
 resultGUI.w(resultGUI.w<Imin & resultGUI.w>=Imin/2) = Imin;   
 
 % recalculate cubes!
-calcCubes = matRad_calcCubes(resultGUI.w,dij,cst,1);
+calcCubes = matRad_calcCubes(resultGUI.w,dij,1);
 
 % compare dose
 if isequal(pln.bioParam.model,'none')
@@ -115,7 +115,7 @@ if(minNrParticlesIES ~= 0)
     end % beam
    
     % recalculate cubes!
-    calcCubes = matRad_calcCubes(resultGUI.w,dij,cst,1);
+    calcCubes = matRad_calcCubes(resultGUI.w,dij,1);
 
     % compare dose
     if isequal(pln.bioParam.model,'none')

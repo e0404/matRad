@@ -1,4 +1,4 @@
-function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)
+function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol)
 % matRad indictor wrapper
 % 
 % call
@@ -49,21 +49,15 @@ if ~exist('refGy', 'var')
     refGy = [];
 end
 
-if exist('param','var')
-   if ~isfield(param,'logLevel')
-      param.logLevel = 1;
-   end
-else
-   param.logLevel = 1;
-end
-
 dvh = matRad_calcDVH(cst,doseCube,'cum');
-qi  = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param);
+qi  = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol);
 
 figure,set(gcf,'Color',[1 1 1]);
 subplot(2,1,1)
 matRad_showDVH(dvh,cst,pln);
 subplot(2,1,2)
+ixVoi = cellfun(@(c) c.Visible == 1,cst(:,5));
+qi = qi(ixVoi);
 matRad_showQualityIndicators(qi);
 
 

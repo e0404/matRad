@@ -1,4 +1,4 @@
-function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,param)
+function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 % matRad inverse planning wrapper function
 % 
 % call
@@ -14,7 +14,7 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,param)
 % output
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
 %               biological optimization) RBE-weighted dose etc.
-%   info:       struct containing information about optimization
+%   optimizer:  Used Optimizer Object
 %
 % References
 %   -
@@ -32,57 +32,35 @@ function [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln,param)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if exist('param','var')
-   if ~isfield(param,'logLevel')
-      param.logLevel = 1;
-   end
-else
-   param.logLevel = 1;
-end
+matRad_cfg = MatRad_Config.instance();
 
-% determine if Matlab or Octave
-[env, ~] = matRad_getEnvironment();
-
-if ~isdeployed && param.logLevel == 1 % only if _not_ running as standalone
-
-    switch env
-        case 'MATLAB'
-            % get handle to Matlab command window
-            mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-            cw          = mde.getClient('Command Window');
-            xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-            h_cw        = handle(xCmdWndView,'CallbackProperties');
-
-            % set Key Pressed Callback of Matlab command window
-            set(h_cw, 'KeyPressedCallback', @matRad_CWKeyPressedCallback);
-    end
-
-end
-
-% initialize global variables for optimizer
-global matRad_global_x;
-global matRad_global_d;
-global matRad_global_d_exp;
-global matRad_global_Omega;
-global matRad_Q_Pressed;
-global matRad_objective_function_value;
-
-matRad_global_x                 = NaN * ones(dij.totalNumOfBixels,1);
-matRad_global_d                 = NaN * ones(dij.doseGrid.numOfVoxels,1);
-matRad_global_d_exp             = NaN * ones(dij.doseGrid.numOfVoxels,1);
-matRad_global_Omega             = cell(size(cst,1),1);
-
-matRad_Q_Pressed                = false;
-
-matRad_objective_function_value = [];
-  
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
 
-% adjust objectives and constraints internally for fractionation 
+% check & adjust objectives and constraints internally for fractionation 
 for i = 1:size(cst,1)
-    for j = 1:size(cst{i,6},1)
-       cst{i,6}(j).dose = cst{i,6}(j).dose/pln.numOfFractions;
+    %Compatibility Layer for old objective format
+    if isstruct(cst{i,6})
+        cst{i,6} = arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{i,6},'UniformOutput',false);
+    end
+    for j = 1:numel(cst{i,6})
+        
+        obj = cst{i,6}{j};        
+        
+        %In case it is a default saved struct, convert to object
+        %Also intrinsically checks that we have a valid optimization
+        %objective or constraint function in the end
+        if ~isa(obj,'matRad_DoseOptimizationFunction')
+            try
+                obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
+            catch
+                matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
+            end
+        end
+        
+        obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
+        
+        cst{i,6}{j} = obj;        
     end
 end
 
@@ -99,28 +77,26 @@ ixTarget   = [];
 for i = 1:size(cst,1)
     if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
         V = [V;cst{i,4}{1}];
-        doseTarget = [doseTarget cst{i,6}.dose];
-        ixTarget   = [ixTarget i*ones(1,length([cst{i,6}.dose]))];
+        
+        %Iterate through objectives/constraints
+        fDoses = [];
+        for fObjCell = cst{i,6}
+            dParams = fObjCell{1}.getDoseParameters();
+            %Don't care for Inf constraints
+            dParams = dParams(isfinite(dParams));
+            %Add do dose list
+            fDoses = [fDoses dParams];
+        end
+                
+        
+        doseTarget = [doseTarget fDoses];
+        ixTarget   = [ixTarget i*ones(1,length(fDoses))];
     end
 end
 [doseTarget,i] = max(doseTarget);
 ixTarget       = ixTarget(i);
 wOnes          = ones(dij.totalNumOfBixels,1);
-
-% set the IPOPT options.
-matRad_ipoptOptions;
-
-% modified settings for photon dao
-if pln.propOpt.runDAO && strcmp(pln.radiationMode,'photons')
-%    options.ipopt.max_iter = 50;
-%    options.ipopt.acceptable_obj_change_tol     = 7e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
-end
-
-% set bounds on optimization variables
-options.lb       = zeros(1,dij.totalNumOfBixels);        % Lower bound on the variables.
-options.ub       = inf * ones(1,dij.totalNumOfBixels);   % Upper bound on the variables.
-funcs.iterfunc   = @(iter,objective,paramter) matRad_IpoptIterFunc(iter,objective,paramter,options.ipopt.max_iter,param);
-    
+   
 % calculate initial beam intensities wInit
 
 if  strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
@@ -138,15 +114,15 @@ elseif pln.bioParam.bioOpt
 
     if ~isequal(dij.ax(dij.ax~=0),ax(dij.ax~=0)) || ...
        ~isequal(dij.bx(dij.bx~=0),bx(dij.bx~=0))
-         error(['Inconsistent biological parameter - please recalculate dose influence matrix']);
+         matRad_cfg.dispError('Inconsistent biological parameter - please recalculate dose influence matrix!\n');
     end
     
     for i = 1:size(cst,1)
 
         for j = 1:size(cst{i,6},2)
             % check if prescribed doses are in a valid domain
-            if cst{i,6}(j).dose > 5 && isequal(cst{i,3},'TARGET')
-                matRad_dispToConsole('Reference dose > 5Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.',param,'error');
+            if any(cst{i,6}{j}.getDoseParameters() > 5) && isequal(cst{i,3},'TARGET')
+                matRad_cfg.dispError('Reference dose > 10 Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.\n');
             end
             
         end
@@ -182,144 +158,110 @@ else
     bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
 end
+    
 
-matRad_dispToConsole('Calculating probabilistic quantities for optimization ...\n',param,'info');
-      
-if ~pln.bioParam.bioOpt
-    fNames = {'physicalDose'};
-else
-    fNames = {'mAlphaDose','mSqrtBetaDose'};
-end
 
 %% calculate probabilistic quantities for probabilistic optimization if at least
-% one robust objective is defined
+% one robust objective is defined 
 
-linIxDIJ = find(~cellfun(@isempty,dij.physicalDose))';
-
-% find VOI indicies with objective or constraint
-voiIx = [];
-for i = 1:size(cst,1)     
-  if ~isempty(cst{i,6})
-      voiIx = [voiIx i];
-      cst{i,6}(1).mOmega = 0;
-  end
+%Check how to use 4D data
+if isfield(pln,'propOpt') && isfield(pln.propOpt,'scen4D')
+    scen4D = pln.propOpt.scen4D;
+else
+    scen4D = 1; %Use only first 4D scenario for optimization
 end
-    
+
+%If "all" provided, use all scenarios
+if isequal(scen4D,'all')
+    scen4D = 1:size(dij.physicalDose,1);
+end
+
+linIxDIJ = find(~cellfun(@isempty,dij.physicalDose(scen4D,:,:)))';
+
 FLAG_CALC_PROB = false;
 FLAG_ROB_OPT   = false;
 
+
 for i = 1:size(cst,1)
-    for j = 1:size(cst{i,6},1)
-       if strcmp(cst{i,6}(j).robustness,'PROB_ANA') && numel(linIxDIJ) > 1
+    for j = 1:numel(cst{i,6})
+       if strcmp(cst{i,6}{j}.robustness,'PROB') && numel(linIxDIJ) > 1
           FLAG_CALC_PROB = true;
        end
-       if ~strcmp(cst{i,6}(j).robustness,'none') && numel(linIxDIJ) > 1
+       if ~strcmp(cst{i,6}{j}.robustness,'none') && numel(linIxDIJ) > 1
           FLAG_ROB_OPT = true;
        end
     end
 end
 
-% create placeholders for expected influence matrices
-for i = 1:numel(fNames)
-   dij.([fNames{1,i} 'Exp']){1} = spalloc(prod(dij.doseGrid.numOfVoxels),dij.totalNumOfBixels,1);
-end
-   
-
 if FLAG_CALC_PROB
-
-    ixDij = find(~cellfun(@isempty, dij.physicalDose))'; 
-    
-    for i = 1:numel(fNames)
-        % create expected influence structure
-        dij.([fNames{1,i} 'Exp']){1} = spalloc(prod(dij.dimensions),dij.totalNumOfBixels,1);
-        
-        NumShiftRangeScen = pln.multScen.numOfRangeShiftScen; 
-        if NumShiftRangeScen==0; NumShiftRangeScen= 1;end
-        
-        % add up sparse matrices
-        for ctScen = pln.multScen.numOfCtScen
-           for rangeShitScen = 1:NumShiftRangeScen
-               dij.([fNames{1,i} 'Exp']){1} = ...
-                  dij.([fNames{1,i} 'Exp']){1} + dij.([fNames{1,i}]){ctScen,rangeShitScen} .* pln.multScen.scenProb(ctScen*rangeShitScen);
-           end
-        end
-    end
-    
-    % loop over VOIs
-    for i = voiIx
-       for j = 1:size(cst{i,6},1)
-          if isequal(cst{i,6}(j).robustness,'PROB')
-             % loop over scenarios and calculate the integral variance of beamlet combinations;
-             for ctScen = pln.multScen.numOfCtScen
-                for rangeShitScen = 1:NumShiftRangeScen
-                   cst{i,6}(j).mOmega = cst{i,6}(j).mOmega + ...
-                      (((dij.(fNames{1,1}){ctScen,rangeShitScen}(cst{i,4}{1},:)' * pln.multScen.scenProb(ctScen*rangeShitScen))*...
-                        (dij.(fNames{1,1}){ctScen,rangeShitScen}(cst{i,4}{1},:)) * pln.multScen.scenProb(ctScen*rangeShitScen)));
-                end
-             end
-             
-             cst{i,6}(j).mOmega = cst{i,6}(j).mOmega - (dij.([fNames{1,1} 'Exp']){1}(cst{i,4}{j},:)' * dij.([fNames{1,1} 'Exp']){1}(cst{i,4}{j},:));
-             
-          end
-       end
-    end
+    [dij] = matRad_calculateProbabilisticQuantities(dij,cst,pln);
 end
+
 
 % set optimization options
 if ~FLAG_ROB_OPT || FLAG_CALC_PROB     % if multiple robust objectives are defined for one structure then remove FLAG_CALC_PROB from the if clause
-   options.ixForOpt = 1;
+   ixForOpt = scen4D;
 else
-   options.ixForOpt = find(~cellfun(@isempty,dij.physicalDose))';
+   ixForOpt = linIxDIJ;
 end
 
-options.numOfScen    = numel(options.ixForOpt);
-options.scenProb     = pln.multScen.scenProb;
-options.bioOpt       = pln.bioParam.bioOpt;
-options.quantityOpt  = pln.bioParam.quantityOpt;
-options.model        = pln.bioParam.model;
+switch pln.bioParam.quantityOpt
+    case 'effect'
+        backProjection = matRad_EffectProjection;
+    case 'RBExD'
+        %Capture special case of constant RBE
+        if strcmp(pln.bioParam.model,'constRBE')
+            backProjection = matRad_ConstantRBEProjection;
+        else
+            backProjection = matRad_VariableRBEProjection;
+        end
+    case 'physicalDose'
+        backProjection = matRad_DoseProjection;
+    otherwise
+        warning(['Did not recognize bioloigcal setting ''' pln.probOpt.bioOptimization '''!\nUsing physical dose optimization!']);
+        backProjection = matRad_DoseProjection;
+end
 
-% set callback functions.
-[options.cl,options.cu] = matRad_getConstBoundsWrapper(cst,options);   
-funcs.objective         = @(x) matRad_objFuncWrapper(x,dij,cst,options);
-funcs.constraints       = @(x) matRad_constFuncWrapper(x,dij,cst,options);
-funcs.gradient          = @(x) matRad_gradFuncWrapper(x,dij,cst,options);
-funcs.jacobian          = @(x) matRad_jacobFuncWrapper(x,dij,cst,options);
-funcs.jacobianstructure = @( ) matRad_getJacobStruct(dij,cst);
+%Give scenarios used for optimization
+backProjection.scenarios = ixForOpt;
+backProjection.scenarioProb = pln.multScen.scenProb;
 
-% Informing user to press q to terminate optimization
-fprintf('\nOptimzation initiating...\n');
-fprintf('Press q to terminate the optimization...\n');
+optiProb = matRad_OptimizationProblem(backProjection);
+optiProb.quantityOpt = pln.bioParam.quantityOpt;
 
-% Run IPOPT.
-[wOpt, info]            = ipopt(wInit,funcs,options);
+if ~isfield(pln.propOpt,'optimizer')
+    pln.propOpt.optimizer = 'IPOPT';
+end
 
-% calc dose and reshape from 1D vector to 2D array
-matRad_dispToConsole('Calculating final cubes...\n',param,'info');
+switch pln.propOpt.optimizer
+    case 'IPOPT'
+        optimizer = matRad_OptimizerIPOPT;
+    case 'fmincon'
+        optimizer = matRad_OptimizerFmincon;
+    otherwise
+        warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
+        optimizer = matRad_OptimizerIPOPT;
+end
+       
+
+optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
+
+wOpt = optimizer.wResult;
+info = optimizer.resultInfo;
+
 resultGUI = matRad_calcCubes(wOpt,dij);
 resultGUI.wUnsequenced = wOpt;
+resultGUI.usedOptimizer = optimizer;
+resultGUI.info = info;
 
-% calc individual scenarios
-if options.numOfScen > 1 || FLAG_ROB_OPT
-   Cnt = 1;
-   for i = find(~cellfun(@isempty,dij.physicalDose))'
-      tmpResultGUI = matRad_calcCubes(wOpt,dij,i);
-      resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
-      Cnt = Cnt + 1;
-   end      
-end
-
-% unset Key Pressed Callback of Matlab command window
-
-if ~isdeployed && strcmp(env,'MATLAB') && param.logLevel == 1
-    set(h_cw, 'KeyPressedCallback',' ');
-end
-
-% clear global variables
-switch env
-     case 'MATLAB'
-        clearvars -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_Q_Pressed;
-     case 'OCTAVE'
-        clear     -global matRad_global_x matRad_global_d matRad_objective_function_value matRad_Q_Pressed;           
+%Robust quantities
+if FLAG_ROB_OPT || numel(ixForOpt) > 1   
+    Cnt = 1;
+    for i = find(~cellfun(@isempty,dij.physicalDose))'
+        tmpResultGUI = matRad_calcCubes(wOpt,dij,i);
+        resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
+        Cnt = Cnt + 1;
+    end
 end
 
 % unblock mex files

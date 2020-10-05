@@ -1,19 +1,29 @@
-function samples = matRad_getGaussianOrbitSamples(mu,SIGMA,nFrames,xr)
+function samples = matRad_getGaussianOrbitSamples(mu,SIGMA,nFrames,varargin)
 % matRad orbit sampling
 % 
 % call
+%   samples = matRad_getGaussianOrbitSamples(mu,SIGMA,nFrames)
 %   samples = matRad_getGaussianOrbitSamples(mu,SIGMA,nFrames,xr)
+%   samples = matRad_getGaussianOrbitSamples(___,Name,Value)
 %
 % input
 %   mu           mean vector
 %   SIGMA        covariance matrix
 %   nFrames 	 number of sample frames
-%   xr           if scalar, a radius for the sample. if vector, a starting coordiante
+%   xr           (optional) if scalar, a radius for the sample. if vector, a starting coordiante
+%     
+%   Optional Name-Value-Pairs:
+%   Method:             can be either 'chol' (default, fast) or 'eig' 
+%                       (more stable but slow)
+%   MaximumTriesChol:   number of maxim tries to make matrix PSD for
+%                       cholesky decomposition. Default is 10
+%
 %
 % output
 %
 % References
 %   [1] http://mlss.tuebingen.mpg.de/2013/Hennig_2013_Animating_Samples_from_Gaussian_Distributions.pdf
+%   [2] http://www.sciencedirect.com/science/article/pii/0024379588902236
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -28,41 +38,87 @@ function samples = matRad_getGaussianOrbitSamples(mu,SIGMA,nFrames,xr)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 4
+matRad_cfg = MatRad_Config.instance();
+
+
+p = inputParser;
+
+p.addRequired('mu',@(x) isvector(x) && isnumeric(x));
+p.addRequired('SIGMA',@(x) size(x,1) == size(x,2) && isnumeric(x));
+p.addRequired('nFrames',@(x) isscalar(x) && isnumeric(x));
+p.addOptional('xr',[],@(x) isnumeric(x) && isvector(x));
+p.addParameter('Method','chol',@(x) validatestring(x,{'chol'},{'eig'}));
+p.addParameter('MaximumTriesChol',10,@(x) isscalar(x) && isnumeric(x));
+
+p.parse(mu,SIGMA,nFrames,varargin{:});
+
+method = p.Results.Method;
+maxTries = p.Results.MaximumTriesChol;
+xr = p.Results.xr;
+
+%Get samples for standard Gaussian
+if isempty(xr)
     samples = GPanimation(numel(mu),nFrames);
 else   
     samples = GPanimation(numel(mu),nFrames,xr);
 end
 
-method = 'chol';
-
-startMag = -10;
-addMag   = 0;
-
-switch method
-    case 'chol'
-
-        [SIGMAcol,p] = chol(SIGMA);
-        if p > 0 
-            disp(['Covariance Matrix not positive definite! Trying to fix.']);
-            SIGMA = nearestSPD(SIGMA);
+%Transform Samples with mean vector and covariance matrix
+if strcmp(method,'chol')
+    matRad_cfg.dispInfo('Creating smooth samples via cholesky decomposition...\n');
+    [SIGMAcol,p] = chol(SIGMA);
+    
+    %If the cholesky decomposition doesn't work because the matrix is
+    %not positive semi-definite, we try to fix it by finding the
+    %nearest positive semidefinite matrix [2]
+    nTries = 0;
+    
+    if p~=0
+        %Equations from [2]
+        [~,S,V] = svd((SIGMA + SIGMA')/2);
+        SIGMA = (SIGMA+V*S*V')/2;
+        SIGMA = (SIGMA + SIGMA')/2;
+        
+        matRad_cfg.dispInfo('Fixing Covariance matrix to be SPD: ');
+        
+        %To account for numerical instabilities
+        while p~=0 && nTries <= maxTries
+            nTries = nTries + 1;
+            matRad_cfg.dispInfo('.');
             [SIGMAcol,p] = chol(SIGMA);
-            if p > 0
-                error('Covariance matrix could not be fixed.');
+            if p~=0
+                minEigenVal = min(eig(SIGMA));
+                SIGMA = SIGMA + (-minEigenVal*nTries^2 + diag(ones(size(SIGMA,1),1)*eps(minEigenVal)));
             end
         end
-        
+        matRad_cfg.dispInfo('\n');
+    end
+    
+    if p~=0
+        matRad_cfg.dispWarning('Covariance matrix could not be fixed to be PSD in %d tries, falling back to eigenvalue method!',maxTries);
+        method = 'eig';
+    else 
         samples = arrayfun(@(f) mu + SIGMAcol' * samples(:,f),1:nFrames,'UniformOutput',false);
         samples = cell2mat(samples);
-    case 'eig'
+    end
+end
+
+if strcmp(method,'eig')
+    matRad_cfg.dispInfo('Creating smooth samples via eigen decomposition...\n');
+    try %Try evaluation on GPU
         SIGMAgpu = gpuArray(SIGMA);
         [V,D] = eig(SIGMAgpu);
-        Q = gather(real(sqrt(complex(D)))*V);      
-        samples = arrayfun(@(f) mu + Q' * samples(:,f),1:nFrames,'UniformOutput',false);
-        
-        samples = cell2mat(samples);
-        samples = real(samples);
+        Q = gather(real(sqrt(complex(D)))*V);
+    catch
+        [V,D] = eig(SIGMA);
+        Q = real(sqrt(complex(D)))*V;
+    end
+    samples = arrayfun(@(f) mu + Q' * samples(:,f),1:nFrames,'UniformOutput',false);
+    
+    samples = cell2mat(samples);
+    samples = real(samples);
 end
+
 end
 
 

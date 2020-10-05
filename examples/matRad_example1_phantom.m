@@ -19,14 +19,14 @@
 % (iii) generate a treatment plan for this phantom
 
 %% set matRad runtime configuration
-matRad_rc
+matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 
 %% Create a CT image series
 xDim = 200;
 yDim = 200;
 zDim = 50;
 
-ct.cubeDim      = [xDim yDim zDim];
+ct.cubeDim      = [yDim xDim zDim]; % second cube dimension represents the x-coordinate
 ct.resolution.x = 2;
 ct.resolution.y = 2;
 ct.resolution.z = 3;
@@ -51,32 +51,25 @@ cst{ixPTV,2} = 'target';
 cst{ixPTV,3} = 'TARGET';
  
 % define optimization parameter for both VOIs
-cst{ixOAR,5}.TissueClass = 1;
-cst{ixOAR,5}.alphaX      = 0.1000;
-cst{ixOAR,5}.betaX       = 0.0500;
-cst{ixOAR,5}.Priority    = 2;
-cst{ixOAR,5}.Visible     = 1;
-cst{ixOAR,6}.type        = 'square overdosing';
-cst{ixOAR,6}.dose        = 30;
-cst{ixOAR,6}.penalty     = 10;
-cst{ixOAR,6}.EUD         = NaN;
-cst{ixOAR,6}.volume      = NaN;
-cst{ixOAR,6}.coverage    = NaN;
-cst{ixOAR,6}.robustness  = 'none';
+cst{ixOAR,5}.TissueClass  = 1;
+cst{ixOAR,5}.alphaX       = 0.1000;
+cst{ixOAR,5}.betaX        = 0.0500;
+cst{ixOAR,5}.Priority     = 2;
+cst{ixOAR,5}.Visible      = 1;
+cst{ixOAR,5}.visibleColor = [0 0 0];
+
+% define objective as struct for compatibility with GNU Octave I/O
+cst{ixOAR,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(10,30));
 
 cst{ixPTV,5}.TissueClass = 1;
 cst{ixPTV,5}.alphaX      = 0.1000;
 cst{ixPTV,5}.betaX       = 0.0500;
 cst{ixPTV,5}.Priority    = 1;
 cst{ixPTV,5}.Visible     = 1;
-cst{ixPTV,6}.type        = 'square deviation';
-cst{ixPTV,6}.dose        = 60;
-cst{ixPTV,6}.penalty     = 50;
-cst{ixPTV,6}.EUD         = NaN;
-cst{ixPTV,6}.volume      = NaN;
-cst{ixPTV,6}.coverage    = NaN;
-cst{ixPTV,6}.robustness  = 'none';
+cst{ixPTV,5}.visibleColor = [1 1 1];
 
+% define objective as struct for compatibility with GNU Octave I/O
+cst{ixPTV,6}{1} = struct(DoseObjectives.matRad_SquaredDeviation(800,60));
 
 %% Lets create either a cubic or a spheric phantom
 TYPE = 'spheric';   % either 'cubic' or 'spheric'
@@ -98,7 +91,7 @@ switch TYPE
       for x = xLowOAR:1:xHighOAR
          for y = yLowOAR:1:yHighOAR
             for z = zLowOAR:1:zHighOAR
-               cubeHelper(x,y,z) = 1;
+               cubeHelper(y,x,z) = 1;
             end
          end
       end
@@ -110,9 +103,9 @@ switch TYPE
       for x = 1:xDim
          for y = 1:yDim
             for z = 1:zDim
-               currPost = [x y z] - round([ct.cubeDim./2]);
+               currPost = [y x z] - round([ct.cubeDim./2]);
                if  sqrt(sum(currPost.^2)) < radiusOAR
-                  cubeHelper(x,y,z) = 1;
+                  cubeHelper(y,x,z) = 1;
                end
             end
          end
@@ -143,7 +136,7 @@ switch TYPE
       for x = xLowPTV:1:xHighPTV
          for y = yLowPTV:1:yHighPTV
             for z = zLowPTV:1:zHighPTV
-               cubeHelper(x,y,z) = 1;
+               cubeHelper(y,x,z) = 1;
             end
          end
       end
@@ -157,7 +150,7 @@ switch TYPE
             for z = 1:zDim
                currPost = [x y z] - round([ct.cubeDim./2]);
                if  sqrt(sum(currPost.^2)) < radiusPTV
-                  cubeHelper(x,y,z) = 1;
+                  cubeHelper(y,x,z) = 1;
                end
             end
          end
@@ -172,20 +165,16 @@ cst{ixPTV,4}{1} = find(cubeHelper);
 
 
 % now we have ct data and cst data for a new phantom
-if param.logLevel == 1
-    display(ct);
-    display(cst);
-end
+display(ct);
+display(cst);
 
 
 %% Assign relative electron densities
 vIxOAR = cst{ixOAR,4}{1};
 vIxPTV = cst{ixPTV,4}{1};
 
-ct.cubeHU{1}(vIxOAR) = 1;  % assign HU of water
-ct.cubeHU{1}(vIxPTV) = 1;  % assign HU of water
-
-
+ct.cubeHU{1}(vIxOAR) = 0; % assign HU of water
+ct.cubeHU{1}(vIxPTV) = 0; % assign HU of water
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
 % structure requires input from the treatment planner and defines the most
@@ -230,28 +219,39 @@ pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 % retrieve nominal scenario for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen'); 
 
+% dose calculation settings
+pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
+
 %% Generate Beam Geometry STF
-stf = matRad_generateStf(ct,cst,pln,param);
+stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
-dij = matRad_calcPhotonDose(ct,stf,pln,cst, param);
+dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 
 %% Inverse Optimization for intensity-modulated photon therapy
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
-resultGUI = matRad_fluenceOptimization(dij,cst,pln,param);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the resulting dose slice
-if param.logLevel == 1
-    plane      = 3;
-    slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-    doseWindow = [0 max([resultGUI.physicalDose(:)])];
+plane      = 3;
+slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+doseWindow = [0 max([resultGUI.physicalDose(:)])];
 
-    figure,title('phantom plan')
-    matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
-
-end
+figure,title('phantom plan')
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
 
 
+%% 
+% We export the the created phantom & dose as dicom. This is handled by the 
+% class matRad_DicomExporter. When no arguments are given, the exporter searches
+% the workspace itself for matRad-structures. The output directory can be set by
+% the property dicomDir. While the different DICOM datasets (ct, RTStruct, etc) 
+% can be exported individually, we call the wrapper to do all possible exports.
+dcmExport = matRad_DicomExporter();
+dcmExport.dicomDir = [pwd filesep 'dicomExport'];
+dcmExport.matRad_exportDicom();
 
