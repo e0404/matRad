@@ -1,17 +1,31 @@
-function param = matRad_latexReport(ct, cst, pln, nominalScenario, structureStat, doseStat, sampDose, listOfQI, param)
+function success = matRad_latexReport(outputPath, ct, cst, pln, nominalScenario, structureStat, doseStat, sampDose, listOfQI, varargin)
 % matRad uncertainty analysis report generaator function
 % 
 % call
-%   latexReport(ct, cst, pln, nominalScenario, structureStat, param)
+%   latexReport(ct, cst, pln, nominalScenario, structureStat)
 %
 % input
+%   outputPath:         where to generate the report
 %   ct:                 ct cube
 %   cst:                matRad cst struct
 %   pln:                matRad plan meta information struct
 %   nominalScenario:    struct containing dose, qi and dvh of the nominal scenario
 %   structureStat:      structures which were examined (can be empty, 
 %                       when all structures were examined)
-%   param               (optional) struct set of parameters, such as output path
+%   doseStat:           structure containing dose statistics as returned
+%                       from matRad_samplingAnalysis
+%   sampDose:           matrix containing all sampled Doses as returned
+%                       from matRad_samplingAnalysis
+%   listOfQI:           cellstring containing list of quality indicators to
+%                       be reported
+%   
+%   Optional Name-Value Pairs:
+%   ComputationTime:        state computation time to state in the report
+%   OperatorName:           Name of the Operator generating the report
+%   SufficientStatistics:   true/false (to warn for bad statistics)
+%   PrescribedDose:         Set a prescription value. If not set, will use
+%                           the largest value found in target objectives
+%   
 
 % output
 %   (binary)            a pdf report will be generated and saved
@@ -30,35 +44,37 @@ function param = matRad_latexReport(ct, cst, pln, nominalScenario, structureStat
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [y, argmin] = cutAtArgmin(x)
-  [~,argmin] = min(x);
-  y = x(1:argmin);
-end
+matRad_cfg = MatRad_Config.instance();
 
-function text = parseFromDicom(dicomStruct, field, default)
-    if ~exist('default', 'var') || isempty(default)
-        default = 'N.A.';
-    end
-    if isfield(dicomStruct, field)
-        text = dicomStruct.(field);
-    else
-        text = default;
-    end    
-end
+p = inputParser;
+p.addParameter('ComputationTime',[],@(x) isscalar(x) && isnumeric(x));
+p.addParameter('OperatorName','matRad User',@(x) isstring(x) || ischar(x));
+p.addParameter('SufficientStatistics',true,@(x) isscalar(x));
+p.addParameter('PrescribedDose',[],@(x) isscalar(x) && isnumeric(x));
 
-if exist('param','var') && ~isempty(param)
-    outputPath = param.reportPath;
-end
+p.parse(varargin{:});
 
+computationTime = p.Results.ComputationTime;
+operator = p.Results.OperatorName;
+sufficientStatistics = p.Results.SufficientStatistics;
+dPres = p.Results.PrescribedDose;
 
-%% create latex Report
-if ~exist('outputPath','var')
-    outputPath = uigetdir;
-end
-%outputPath = fullfile('tools','reportGeneration','latex','output');
+dataPath = [outputPath filesep 'data'];
+mkdir(dataPath);
+mkdir(fullfile(dataPath,'frames'));
+mkdir(fullfile(dataPath,'figures'));
 
 
 %% correct cst for unwanted characters and disable commonly not wanted structures
+
+doseCube = nominalScenario.(pln.bioParam.quantityVis);
+
+fillPrescription = isempty(dPres);
+
+if fillPrescription    
+    dPres = 0;
+end
+
 notVisibleStructs = {'Beekleys', 'Beekley', 'CT-Referenzpunkt'};
 for i = 1:size(cst,1)
     % use only alphanumerical characters
@@ -66,6 +82,15 @@ for i = 1:size(cst,1)
     if isempty(cst{i,4}{1}) || (sum(strcmp(cst{i,2}, notVisibleStructs)) >= 1)
         cst{i,5}.Visible = false;
     end
+    
+    if strcmp(cst{i,3},'TARGET')
+        dPres = max([dPres mean(doseCube(cst{i,4}{1}))]);
+    end
+end
+
+if fillPrescription
+    dPres = round(dPres,1);
+    matRad_cfg.dispInfo('Estimated prescribed dose to be %f\n',dPres);
 end
 
 %% check whether all qi are available
@@ -74,17 +99,10 @@ if  ~all(ismember(listOfQI, fieldnames(nominalScenario.qi)))
 end
 [~, ~, ixOfQIinNominal] = intersect(listOfQI, fieldnames(nominalScenario.qi), 'stable');
 
-% check param
-optionalFields = {'computationTime'};
-for i=1:numel(optionalFields)
-    if ~isfield(param, optionalFields{i})
-        param.(optionalFields{i}) = NaN;
-    end
-end
-        
+       
 %% insert standard patient information
 % issue warning for insufficient number of scenarios
-if exist('param','var') && isfield(param,'sufficientStatistics') && ~param.sufficientStatistics
+if ~sufficientStatistics
     warnMessage = 'Insufficient statistics. Handle with care.';
 else
     warnMessage = '';
@@ -126,16 +144,16 @@ line =  [line; '\newcommand{\patientFirstName}{',patientInformation.firstName,'}
 line =  [line; '\newcommand{\patientLastName}{',patientInformation.lastName,'}'];
 line =  [line; '\newcommand{\patientSex}{',patientInformation.sex,'}'];
 line =  [line; '\newcommand{\patientID}{',patientInformation.patientID,'}'];
-line =  [line; '\newcommand{\operator}{',param.operator,'}'];
+line =  [line; '\newcommand{\operator}{',operator,'}'];
 
 line =  [line; '\newcommand{\reportGenerationDate}{\today}'];
-line =  [line; '\newcommand{\computationTime}{', num2str(round(param.computationTime / 3600,2)), ' h}'];
+line =  [line; '\newcommand{\computationTime}{', num2str(round(computationTime / 3600,2)), ' h}'];
 
 line =  [line; '\newcommand{\planGantryAngles}{',planInformation.gantryAngles,'}'];
 line =  [line; '\newcommand{\planCouchAngles}{',planInformation.couchAngles,'}'];
 line =  [line; '\newcommand{\planRadiationModality}{',planInformation.modality,'}'];
 
-fid = fopen(fullfile(outputPath,'patientInformation.tex'),'w');
+fid = fopen(fullfile(dataPath,'patientInformation.tex'),'w');
 for i = 1:numel(line)
     text = regexprep(line{i},{'\','_'},{'\\\','-'});
     fprintf(fid,text);
@@ -188,7 +206,7 @@ line =  [line; '\newcommand{\shiftSD}{', num2str(pln.multScen.shiftSD), '}'];
 line =  [line; '\newcommand{\rangeAbsSD}{', num2str(pln.multScen.rangeAbsSD), '}'];
 line =  [line; '\newcommand{\rangeRelSD}{', num2str(pln.multScen.rangeRelSD), '}'];
 
-fid = fopen(fullfile(outputPath,'uncertaintyParameters.tex'),'w');
+fid = fopen(fullfile(dataPath,'uncertaintyParameters.tex'),'w');
 for i = 1:numel(line)
     text = regexprep(line{i},'\','\\\');
     fprintf(fid,text);
@@ -198,7 +216,7 @@ fclose(fid);
 
 
 %% plot isocentre slices (nominal, mean, std)
-doseCube = nominalScenario.(pln.bioParam.quantityVis);
+
 
 doseWindow  = [0 1.1 * max(doseCube(:))];
 stdWindow   = [0 1.1 * max(doseStat.stdCubeW(:))];
@@ -251,17 +269,17 @@ for plane=1:3
         end
         drawnow();
         cleanfigure();          
-        matlab2tikz(fullfile(outputPath,['isoSlicePlane', num2str(plane), '_', fileSuffix, '.tex']), 'relativeDataPath', 'data', 'showInfo', false, 'width', '\figW');
+        matlab2tikz(fullfile(dataPath,'figures',['isoSlicePlane', num2str(plane), '_', fileSuffix, '.tex']), 'relativeDataPath', ['data' filesep 'figures'], 'showInfo', false, 'width', '\figW');
         close
     end
 end
 
 %% gaussian orbit sample animation
 if exist('matRad_getGaussianOrbitSamples','file') == 2
-    param.confidenceValue = 0.5;
+    confidenceValue = 0.5;
 
     slice = round(pln.propStf.isoCenter(1,plane) / ct.resolution.z,0);            
-    outPath = fullfile(outputPath, 'frames');
+    framePath = fullfile(dataPath, 'frames');
     if isfield(nominalScenario,'RBExD')
         legendColorbar = 'RBExDose [Gy(RBE)]';
     else
@@ -270,14 +288,14 @@ if exist('matRad_getGaussianOrbitSamples','file') == 2
     % any(w == 0) is not allowed, due to numerical reasons use insignificant w, for weights which are numerically zero
     w = pln.multScen.scenProb;
     w(w == 0) = eps(class(w));
-    matRad_createAnimationForLatexReport(param.confidenceValue, ct, cst, slice, doseStat.meanCubeW, sampDose, w, pln.subIx, outPath, legendColorbar);
+    matRad_createAnimationForLatexReport(confidenceValue, ct, cst, slice, doseStat.meanCubeW, sampDose, w, pln.subIx, framePath, legendColorbar,'PrescribedDose',dPres);
 
     line = cell(0);
     line =  [line; '\newcommand{\framerate}{24}'];
     line =  [line; '\newcommand{\firstframe}{1}'];
     line =  [line; '\newcommand{\lastframe}{120}'];
 
-    fid = fopen(fullfile(outputPath,'parameters.tex'),'w');
+    fid = fopen(fullfile(dataPath,'parameters.tex'),'w');
     for i = 1:numel(line)
         text = regexprep(line{i},{'\','_'},{'\\\','-'});
         fprintf(fid,text);
@@ -307,7 +325,7 @@ for i = 1:size(cst,1)
     end
 end
 drawnow;
-matlab2tikz(fullfile(outputPath,'nominalDVH.tex'),'showInfo', false, 'width', '0.7\textwidth');
+matlab2tikz(fullfile(dataPath,'figures','nominalDVH.tex'),'showInfo', false, 'width', '0.7\textwidth');
 hold off
 close
 
@@ -349,7 +367,7 @@ latex = latexTable(input);
 
 % save LaTex code as file
 filename{i}.QI = regexprep([cst{i,2},'_QI.tex'], '\s+', '');
-fid=fopen(fullfile(outputPath,'nominalQI.tex'),'w');
+fid=fopen(fullfile(dataPath,'nominalQI.tex'),'w');
 [nrows, ~] = size(latex);
 for row = 1:nrows
     fprintf(fid,'%s\n',latex{row,:});
@@ -376,7 +394,7 @@ for i = 1:size(cst,1)
         matRad_plotDVHBand(nominalScenario.dvh(i), structureStat(i), labelDoseDVH);
         cleanfigure();
         filename{i}.DVH = regexprep([cst{i,2},'_DVH.tex'], '\s+', '');
-        matlab2tikz(fullfile(outputPath,'structures',filename{i}.DVH),'showInfo', false, 'width', '\figW', 'height', '\figH', 'extraAxisOptions', 'reverse legend');
+        matlab2tikz(fullfile(dataPath,'structures',filename{i}.DVH),'showInfo', false, 'width', '\figW', 'height', '\figH', 'extraAxisOptions', 'reverse legend');
         close
         
         % QI
@@ -396,7 +414,7 @@ for i = 1:size(cst,1)
 
         % save LaTex code as file
         filename{i}.QI = regexprep([cst{i,2},'_QI.tex'], '\s+', '');
-        fid=fopen(fullfile(outputPath,'structures',filename{i}.QI),'w');
+        fid=fopen(fullfile(dataPath,'structures',filename{i}.QI),'w');
         [nrows,~] = size(latex);
         for row = 1:nrows
             fprintf(fid,'%s\n',latex{row,:});
@@ -422,7 +440,7 @@ for i = 1:size(cst,1)
     end
 end
 
-fid = fopen(fullfile(outputPath,'structureWrapper.tex'),'w');
+fid = fopen(fullfile(dataPath,'structureWrapper.tex'),'w');
 for i = 1:numel(line)
     text = regexprep(line{i},'\','\\\');
     fprintf(fid,text);
@@ -434,4 +452,48 @@ fclose(fid);
 %% clean up
 close all
 
+
+if ispc
+    executeLatex = 'lualatex --shell-escape --interaction=nonstopmode main.tex';
+elseif isunix
+    executeLatex = '/Library/TeX/texbin/lualatex --shell-escape --interaction=nonstopmode main.tex';
+end
+
+currPath = pwd;
+cd(outputPath);
+
+response = system(executeLatex);
+if response == 127 % means not found
+    matRad_cfg.dispWarning('Could not find tex distribution. Please compile manually.');
+    success = false;
+else
+    system(executeLatex); %Execute seccond time
+        
+    if exist('main.pdf','file')
+        matRad_cfg.dispInfo('PDF generated.');
+        success = true;
+    else
+        success = false;
+    end
+end
+
+cd(currPath);
+
+end
+
+
+function [y, argmin] = cutAtArgmin(x)
+  [~,argmin] = min(x);
+  y = x(1:argmin);
+end
+
+function text = parseFromDicom(dicomStruct, field, default)
+    if ~exist('default', 'var') || isempty(default)
+        default = 'N.A.';
+    end
+    if isfield(dicomStruct, field)
+        text = dicomStruct.(field);
+    else
+        text = default;
+    end    
 end
