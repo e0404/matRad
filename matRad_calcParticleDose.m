@@ -363,7 +363,8 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                         sigmaIni_sq, ...
                                         machine.data(energyIx), ...
                                         currHeteroCorrDepths, ...
-                                        pln.heterogeneity.type);
+                                        pln.heterogeneity.type, ...
+                                        pln.heterogeneity.useDoseCurves, vTissueIndex_j(currIx));
                                 else
                                     bixelDose = matRad_calcParticleDoseBixel(...
                                         currRadDepths, ...
@@ -393,12 +394,19 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 % save alpha_p and beta_p radiosensititvy parameter for every bixel in cell array
                                 if pln.bioParam.bioOpt
                                     
+                                    if all(isfield(bixel,{'Z_Aij','Z_Bij'}))
+                                        bixelAlphaDose =  bixel.L .* bixel.Z_Aij;
+                                        bixelBetaDose  =  bixel.L .* bixel.Z_Bij;
+                                    else
                                     [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(currRadDepths,machine.data(energyIx),vTissueIndex_j(currIx,:),dij.ax(VdoseGrid(ix(currIx))),...
                                         dij.bx(VdoseGrid(ix(currIx))),...
                                         dij.abx(VdoseGrid(ix(currIx))));
+                                    bixelAlphaDose =  bixel.physDose .* bixelAlpha;
+                                    bixelBetaDose  =  bixel.physDose .* sqrt(bixelBeta);
+                                    end
                                     
-                                    alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelAlpha.*bixelDose.physDose,dij.doseGrid.numOfVoxels,1);
-                                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen}  = sparse(VdoseGrid(ix(currIx)),1,sqrt(bixelBeta).*bixelDose.physDose,dij.doseGrid.numOfVoxels,1);
+                                    alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelAlphaDose,dij.doseGrid.numOfVoxels,1);
+                                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen}  = sparse(VdoseGrid(ix(currIx)),1,bixelBetaDose,dij.doseGrid.numOfVoxels,1);
                                     
                                 end
                                 

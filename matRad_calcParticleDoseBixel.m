@@ -1,4 +1,4 @@
-function bixel = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData, heteroCorrDepths, heteroCorrType)
+function bixel = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData, heteroCorrDepths, heteroCorrType, useDoseCurves, vTissueIndex)
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
 % 
@@ -48,8 +48,6 @@ end
 if ~exist('heteroCorrBio','var') || isempty(useDoseCurves)
     useDoseCurves = false;
 end
-
-
 
 % add potential offset
 depths = baseData.depths + baseData.offset;
@@ -161,6 +159,31 @@ end
  
 %% calculating the physical dose
 bixel.physDose = conversionFactor * bixel.L .* bixel.Z;
+
+%%
+if useDoseCurves
+    if isfield(baseData,'alphaDose')
+        % preallocate space for alpha beta
+        tissueClasses = unique(vTissueIndex);
+        bixel.Z_Aij = zeros(numel(radDepths),1);
+        bixel.Z_Bij = zeros(numel(radDepths),1);
+        
+        for i = 1:numel(tissueClasses)
+            
+            ix = vTissueIndex == tissueClasses(i);
+            bixel.Z_Aij(ix)  = conversionFactor * baseData.LatCutOff.CompFac * ...
+                sumGauss(radDepths(ix)-baseData.offset,baseData.alphaDose(tissueClasses(i)).mean,...
+                (baseData.alphaDose(tissueClasses(i)).width).^2,baseData.alphaDose(tissueClasses(i)).weight);
+            
+            bixel.Z_Bij(ix)  = conversionFactor * baseData.LatCutOff.CompFac * ...
+                sumGauss(radDepths(ix)-baseData.offset,baseData.SqrtBetaDose(tissueClasses(i)).mean,...
+                (baseData.SqrtBetaDose(tissueClasses(i)).width).^2,baseData.SqrtBetaDose(tissueClasses(i)).weight)';
+            
+        end
+    else
+        error('No alpha dose defined in base data, use fitted APM file with pln.heterogeneity.useDoseCurves')
+    end
+end
 
 % check if we have valid dose values
 if any(isnan(bixel.physDose)) || any(bixel.physDose<0)
