@@ -137,7 +137,7 @@ for i = 1:dij.numOfBeams % loop over all beams
     % get correct kernel for given SSD at central ray (nearest neighbor approximation)
     [~,currSSDIx] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD));
     
-    matRad_cfg.dispInfo('\t SSD = %g mm\n',num2str(machine.data.kernel(currSSDIx).SSD));
+    matRad_cfg.dispInfo('\tSSD = %g mm\n',machine.data.kernel(currSSDIx).SSD);
     
     kernelPos = machine.data.kernelPos;
     kernel1 = machine.data.kernel(currSSDIx).kernel1;
