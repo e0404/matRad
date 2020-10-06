@@ -45,7 +45,7 @@ end
 
 if nargin < 5
     % set number of particles simulated per pencil beam
-    nCasePerBixel = matRad_cfg.propMC.MCsquare_defaultHistories;
+    nCasePerBixel = matRad_cfg.propMC.particles_defaultHistories;
     matRad_cfg.dispInfo('Using default number of Histories per Bixel: %d\n',nCasePerBixel);
 end
 
@@ -311,7 +311,7 @@ else
         dij.LET{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
                                     cube(VdoseGrid), ...
                                     dij.doseGrid.numOfVoxels,1);
-        dij.MC_tallies{end+1} = 'LET';
+        dij.MC_tallies{1} = 'LET';
     end
 end
 
