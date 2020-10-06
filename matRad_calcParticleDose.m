@@ -94,6 +94,11 @@ if isfield(pln,'propDoseCalc') && ...
     end
 end
 
+%Toggles correction of small difference of current SSD to distance used
+%in generation of base data (e.g. phantom surface at isocenter)
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc, 'airOffsetCorrection') 
+    pln.propDoseCalc.airOffsetCorrection = true;
+end
 
 % book keeping - this is necessary since pln is not used in optimization or
 % matRad_calcCubes
@@ -162,7 +167,13 @@ end
 matRad_cfg.dispInfo('matRad: Particle dose calculation... \n');
 
 % lateral cutoff for raytracing and geo calculations
-effectiveLateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'geometricCutOff')
+    effectiveLateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
+end
+
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'lateralCutOff')
+    pln.propDoseCalc.lateralCutOff = matRad_cfg.propDoseCalc.defaultLateralCutOff;
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %loop over all shift scenarios
@@ -189,7 +200,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
         
         % Determine lateral cutoff
         matRad_cfg.dispInfo('matRad: calculate lateral cutoff...');
-        cutOffLevel = matRad_cfg.propDoseCalc.defaultLateralCutOff;
+        cutOffLevel = pln.propDoseCalc.lateralCutOff;
         visBoolLateralCutOff = 0;
         machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
         matRad_cfg.dispInfo('done.\n');
@@ -211,17 +222,14 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     machine.meta.SAD, ...
                     find(~isnan(radDepthVdoseGrid{1})), ...
                     maxLateralCutoffDoseCalc);
-                
-                radDepths = radDepthVdoseGrid{1}(ix);
-                
+
                 % just use tissue classes of voxels found by ray tracer
                 if pln.bioParam.bioOpt
                     vTissueIndex_j = vTissueIndex(ix,:);
                 end
                 
                 for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
-                    
-                    
+                                    
                     counter       = counter + 1;
                     bixelsPerBeam = bixelsPerBeam + 1;
                     
@@ -248,11 +256,36 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     % find energy index in base data
                     energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
                     
+                    % Since matRad's ray cast starts at the skin and base data
+                    % is generated at soume source to phantom distance
+                    % we can explicitly correct for the nozzle to air WEPL in
+                    % the current case.
+                    if  pln.propDoseCalc.airOffsetCorrection
+                        if ~isfield(machine.meta, 'BAMStoIsoDist')
+                            BAMStoIsoDist = 1000;
+                            matRad_cfg.dispWarning('Machine data does not contain BAMStoIsoDist. Using default value of %f mm\n.',BAMStoIsoDist);
+                        else
+                            BAMStoIsoDist = machine.meta.BAMStoIsoDist;
+                        end
+                        
+                        if ~isfield(machine.meta, 'fitAirOffset')
+                            fitAirOffset = 0; %By default we assume that the base data was fitted to a phantom with surface at isocenter
+                            matRad_cfg.dispInfo('Asked for correction of Base Data Air Offset, but no value found. Using default value of %f mm\n.',fitAirOffset);
+                        else
+                            fitAirOffset = machine.meta.fitAirOffset;
+                        end
+                        
+                        nozzleToSkin = ((stf(i).ray(j).SSD + BAMStoIsoDist) - machine.meta.SAD);
+                        dR = 0.0011 * (nozzleToSkin - fitAirOffset);
+                    else
+                        dR = 0;
+                    end
+                    
                     % create offset vector to account for additional offsets modelled in the base data and a potential
                     % range shifter. In the following, we only perform dose calculation for voxels having a radiological depth
                     % that is within the limits of the base data set (-> machine.data(i).dephts). By this means, we only allow
                     % interpolations in matRad_calcParticleDoseBixel() and avoid extrapolations.
-                    offsetRadDepth = machine.data(energyIx).offset - stf(i).ray(j).rangeShifter(k).eqThickness;
+                    offsetRadDepth = machine.data(energyIx).offset - stf(i).ray(j).rangeShifter(k).eqThickness + dR;
                     
                     for ctScen = 1:pln.multScen.numOfCtScen
                         for rangeShiftScen = 1:pln.multScen.totNumRangeScen
@@ -268,6 +301,8 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                         pln.multScen.absRangeShift(rangeShiftScen);                                   % absolute range shift
                                     radDepths(radDepths < 0) = 0;
                                 end
+                                
+                                
                                 
                                 % find depth depended lateral cut off
                                 if cutOffLevel >= 1
@@ -293,8 +328,14 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     continue;
                                 end
                                 
-                                % adjust radDepth according to range shifter
-                                currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
+                                if  pln.propDoseCalc.airOffsetCorrection
+                                    currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness + dR;
+                                    
+                                    %sanity check due to negative corrections
+                                    currRadDepths(currRadDepths < 0) = 0;
+                                else
+                                    currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
+                                end
                                 
                                 % calculate initial focus sigma
                                 sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist(stf(i).ray(j).focusIx(k),:)', ...

@@ -71,18 +71,26 @@ classdef MatRad_Config < handle
             
             obj.propOpt.defaultMaxIter = 500;           
             
-            obj.propMC.ompMC_defaultHistories = 1e5;
-            obj.propMC.ompMC_defaultOutputVariance = false;
-            obj.propMC.MCsquare_defaultHistories = 1e6;
-            obj.propMC.direct_defaultHistories = 2e4;
+            obj.propMC.ompMC_defaultHistories = 1e6;
+            obj.propMC.ompMC_defaultOutputVariance = false;          
+            
+            obj.propMC.direct_defaultHistories = 1e7;
+            obj.propMC.particles_defaultHistories = 2e4;
+
+            %obj.propMC.default_photon_engine = 'ompMC';
+            obj.propMC.default_proton_engine = 'MCsquare';
+            obj.propMC.topas_defaultNumBatches = 5;
             
             obj.defaults.samplingScenarios = 25;
             
             obj.disableGUI = false;
+            
+            
         end
   
         %%For testing
         function setDefaultPropertiesForTesting(obj)
+
             obj.logLevel   = 1; %Omit output except errors
             
             obj.propStf.defaultLongitudinalSpotSpacing = 20;
@@ -91,18 +99,25 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultResolution = struct('x',5,'y',6,'z',7); %[mm]
             obj.propDoseCalc.defaultGeometricCutOff = 20;
             obj.propDoseCalc.defaultLateralCutOff = 0.8;
+
             obj.propDoseCalc.defaultSsdDensityThreshold = 0.05;
             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true;
+
             obj.propDoseCalc.defaultVoxelSubIx = []; %Allows specification of a subindex list for dose calculation, empty by default means automatic setting
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false;
-            
+
             obj.propOpt.defaultMaxIter = 10;
             
             obj.propMC.ompMC_defaultHistories = 100;
             obj.propMC.ompMC_defaultOutputVariance = true;
-            obj.propMC.MCsquare_defaultHistories = 100;
-            obj.propMC.direct_defaultHistories = 100;
+            
+            obj.propMC.particles_defaultHistories = 100;
+            obj.propMC.direct_defaultHistories = 100;           
+
+            %obj.propMC.default_photon_engine = 'ompMC';
+            obj.propMC.default_proton_engine = 'MCsquare'; 
+            obj.propMC.topas_defaultNumBatches = 5;
             
             obj.defaults.samplingScenarios = 2;
             

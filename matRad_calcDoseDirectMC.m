@@ -3,7 +3,7 @@ function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
 % calculation algorithms
 % 
 % call
-%   resultGUI = matRad_calcDoseDirecMC(ct,stf,pln,cst,w)
+%   resultGUI = matRad_calcDoseDirecMC(ct,stf,pln,cst,w,nHistories)
 %
 % input
 %   ct:         ct cube
@@ -73,11 +73,22 @@ else % weights need to be in stf!
             end
         end
     end    
-end
+end       
 
 % dose calculation
 if strcmp(pln.radiationMode,'protons')
-  dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nHistories,calcDoseDirect);
+    engines = {'TOPAS','MCsquare'};
+    if ~isfield(pln,'propMC') || ~isfield(pln.propMC,'proton_engine') || ~any(strcmp(pln.propMC.proton_engine,engines))
+        matRad_cfg.dispInfo('Using default proton MC engine "%s"\n',matRad_cfg.propMC.default_proton_engine);
+        pln.propMC.proton_engine = matRad_cfg.propMC.default_proton_engine;
+    end
+    
+    switch pln.propMC.proton_engine
+        case 'MCsquare'
+        dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nHistories,calcDoseDirect);
+        case 'TOPAS'
+        dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nHistories,calcDoseDirect);
+    end
 else
     matRad_cfg.dispError('Forward MC only implemented for protons.');
 end

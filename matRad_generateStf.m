@@ -66,27 +66,6 @@ if isfield(pln,'propStf') && isfield(pln.propStf,'addMargin')
    addmarginBool = pln.propStf.addMargin; 
 end
 
-if addmarginBool
-   %Assumption for range uncertainty
-   assumeRangeMargin = pln.multScen.maxAbsRangeShift + pln.multScen.maxRelRangeShift;   
-      
-   % add margin -  account for voxel resolution, the maximum shift scenario and the current bixel width.
-   margin.x  = max([ct.resolution.x max(abs(pln.multScen.isoShift(:,1)) + assumeRangeMargin) pln.propStf.bixelWidth+1e-3]);
-   margin.y  = max([ct.resolution.y max(abs(pln.multScen.isoShift(:,2)) + assumeRangeMargin) pln.propStf.bixelWidth+1e-3]);
-   margin.z  = max([ct.resolution.z max(abs(pln.multScen.isoShift(:,3)) + assumeRangeMargin) pln.propStf.bixelWidth+1e-3]);
-   
-   voiTarget = matRad_addMargin(voiTarget,cst,ct.resolution,margin,true);
-    V        = find(voiTarget>0);
-end
-
-% throw error message if no target is found
-if isempty(V)
-    matRad_cfg.dispError('Could not find target.');
-end
-
-% Convert linear indices to 3D voxel coordinates
-[coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
-
 % prepare structures necessary for particles
 fileName = [pln.radiationMode '_' pln.machine];
 try
@@ -100,12 +79,43 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'helium') || 
       
     availableEnergies = [machine.data.energy];
     availablePeakPos  = [machine.data.peakPos] + [machine.data.offset];
+    availableWidths   = [machine.data.initFocus];
+    availableWidths   = [availableWidths.SisFWHMAtIso];
+    maxPBwidth        = max(availableWidths) / 2.355;
+    
+    %Compute a margin to account for pencil beam width
+    pbMargin = min(maxPBwidth,pln.propStf.bixelWidth);
     
     if sum(availablePeakPos<0)>0
        matRad_cfg.dispError('at least one available peak position is negative - inconsistent machine file') 
     end
     %clear machine;
+else
+    pbMargin = pln.propStf.bixelWidth;
 end
+
+if addmarginBool
+   %Assumption for range uncertainty
+   assumeRangeMargin = pln.multScen.maxAbsRangeShift + pln.multScen.maxRelRangeShift + pbMargin;   
+      
+   % add margin -  account for voxel resolution, the maximum shift scenario and the current bixel width.
+   margin.x  = max([ct.resolution.x max(abs(pln.multScen.isoShift(:,1)) + assumeRangeMargin)]);
+   margin.y  = max([ct.resolution.y max(abs(pln.multScen.isoShift(:,2)) + assumeRangeMargin)]);
+   margin.z  = max([ct.resolution.z max(abs(pln.multScen.isoShift(:,3)) + assumeRangeMargin)]);
+   
+   voiTarget = matRad_addMargin(voiTarget,cst,ct.resolution,margin,true);
+    V        = find(voiTarget>0);
+end
+
+% throw error message if no target is found
+if isempty(V)
+    matRad_cfg.dispError('Could not find target.');
+end
+
+% Convert linear indices to 3D voxel coordinates
+[coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
+
+
 
 % calculate rED or rSP from HU
 ct = matRad_calcWaterEqD(ct, pln);
@@ -331,7 +341,8 @@ for i = 1:length(pln.propStf.gantryAngles)
                 stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);
                 currentMinimumFWHM = matRad_interp1(machine.meta.LUT_bxWidthminFWHM(1,:)',...
                                              machine.meta.LUT_bxWidthminFWHM(2,:)',...
-                                             pln.propStf.bixelWidth);
+                                             pln.propStf.bixelWidth, ...
+                                             machine.meta.LUT_bxWidthminFWHM(2,end));
                 focusIx  =  ones(stf(i).numOfBixelsPerRay(j),1);
                 [~, vEnergyIx] = min(abs(bsxfun(@minus,[machine.data.energy]',...
                                 repmat(stf(i).ray(j).energy,length([machine.data]),1))));
