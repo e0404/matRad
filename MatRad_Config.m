@@ -3,7 +3,7 @@ classdef MatRad_Config < handle
     % This class is used globally through Matlab to handle default values and 
     % logging and is declared as global matRad_cfg.
     % Usage:
-    %   global matRad_cfg; matRad_cfg = MatRad_Config.instance();    
+    %    matRad_cfg = MatRad_Config.instance();    
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
@@ -43,20 +43,27 @@ classdef MatRad_Config < handle
             %  The configuration is implemented as a singleton and used globally
             %  Therefore its constructor is private
             %  For instantiation, use the static MatRad_Config.instance();           
-            obj.setDefaultProperties();           
+            obj.reset();           
         end
                 
     end
     
     methods
+        function reset(obj)
+            obj.setDefaultProperties();
+        end
+        
         function setDefaultProperties(obj)
+            
             obj.propStf.defaultLongitudinalSpotSpacing = 3;
             obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
             
             obj.propDoseCalc.defaultResolution = struct('x',3,'y',3,'z',3); %[mm]
             obj.propDoseCalc.defaultLateralCutOff = 0.995; %[rel.]
             obj.propDoseCalc.defaultGeometricCutOff = 50; %[mm]
-            obj.propDoseCalc.ssdDensityThreshold = 0.05; %[rel.]            
+            obj.propDoseCalc.defaultSsdDensityThreshold = 0.05; %[rel.]
+            obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
+            obj.propDoseCalc.defaultIgnoreOutsideDensities = true; %Ignore densities outside of cst contours
             
             obj.propOpt.defaultMaxIter = 500;           
             
@@ -64,6 +71,7 @@ classdef MatRad_Config < handle
             obj.propMC.ompMC_defaultOutputVariance = false;
             obj.propMC.MCsquare_defaultHistories = 1e6;
             obj.propMC.direct_defaultHistories = 2e4;
+            
             %obj.propMC.default_photon_engine = 'ompMC';
             obj.propMC.default_proton_engine = 'MCsquare';
             obj.propMC.topas_defaultNumBatches = 5;
@@ -75,7 +83,8 @@ classdef MatRad_Config < handle
   
         %%For testing
         function setDefaultPropertiesForTesting(obj)
-            obj.logLevel   = 1;
+            
+            obj.logLevel   = 1; %Omit output except errors
             
             obj.propStf.defaultLongitudinalSpotSpacing = 20;
             obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
@@ -83,16 +92,22 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultResolution = struct('x',5,'y',6,'z',7); %[mm]
             obj.propDoseCalc.defaultGeometricCutOff = 20;
             obj.propDoseCalc.defaultLateralCutOff = 0.8;
+
+            obj.propDoseCalc.defaultSsdDensityThreshold = 0.05;
+            obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
+            obj.propDoseCalc.defaultIgnoreOutsideDensities = true;
             
             obj.propOpt.defaultMaxIter = 10;
             
             obj.propMC.ompMC_defaultHistories = 100;
+            obj.propMC.ompMC_defaultOutputVariance = true;
             obj.propMC.MCsquare_defaultHistories = 100;
             obj.propMC.direct_defaultHistories = 100;
+            
             %obj.propMC.default_photon_engine = 'ompMC';
             obj.propMC.default_proton_engine = 'MCsquare'; 
             obj.propMC.topas_defaultNumBatches = 5;
-            
+  
             obj.disableGUI = true;
         end  
       
