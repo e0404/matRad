@@ -64,6 +64,7 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultSsdDensityThreshold = 0.05; %[rel.]
             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true; %Ignore densities outside of cst contours
+            obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
             
             obj.propOpt.defaultMaxIter = 500;           
             
@@ -88,6 +89,7 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultSsdDensityThreshold = 0.05;
             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true;
+            obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
             
             obj.propOpt.defaultMaxIter = 10;
             

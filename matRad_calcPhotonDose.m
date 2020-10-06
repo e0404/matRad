@@ -63,7 +63,12 @@ lateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff; % [mm]
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
-useCustomPrimFluenceBool = 0;
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'useCustomPrimaryPhotonFluence')
+    useCustomPrimFluenceBool = matRad_cfg.propDoseCalc.defaultUseCustomPrimaryPhotonFluence;
+else
+    useCustomPrimFluenceBool = pln.propDoseCalc.useCustomPrimaryPhotonFluence;
+end
+
 
 % 0 if field calc is bixel based, 1 if dose calc is field based
 isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
@@ -136,8 +141,8 @@ for i = 1:dij.numOfBeams % loop over all beams
     
     % get correct kernel for given SSD at central ray (nearest neighbor approximation)
     [~,currSSDIx] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD));
-    
-    matRad_cfg.dispInfo('\tSSD = %g mm\n',machine.data.kernel(currSSDIx).SSD);
+    % Display console message.
+    matRad_cfg.dispInfo('\tSSD = %g mm ...\n',machine.data.kernel(currSSDIx).SSD);
     
     kernelPos = machine.data.kernelPos;
     kernel1 = machine.data.kernel(currSSDIx).kernel1;
@@ -153,7 +158,7 @@ for i = 1:dij.numOfBeams % loop over all beams
     if ~useCustomPrimFluenceBool && ~isFieldBasedDoseCalc
         
         % Display console message.
-        matRad_cfg.dispInfo('matRad: Uniform primary photon fluence -> pre-compute kernel convolution for SSD = %g mm ...\n',num2str(machine.data.kernel(currSSDIx).SSD));   
+        matRad_cfg.dispInfo('\tUniform primary photon fluence -> pre-compute kernel convolution...\n');   
 
         % 2D convolution of Fluence and Kernels in fourier domain
         convMx1 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)));
