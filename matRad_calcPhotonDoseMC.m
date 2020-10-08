@@ -273,13 +273,14 @@ end
 
 %% Call the OmpMC interface
 
-%ompMC for matRad returns dose/history. This factor calibrates to (5x5)mm^2
-%bixels giving 1 Gy in a (5x%)cm^2 open field at 5cm depth for SSD = 900
-%which corresponds to the calibration for the analytical base data.
-absCalibrationFactor = 3.47098 * 1e10; %Approximate!
+%ompMC for matRad returns dose/history * nHistories. 
+% This factor calibrates to 1 Gy in a %(5x5)cm^2 open field (1 bixel) at 
+% 5cm depth for SSD = 900 which corresponds to the calibration for the 
+% analytical base data.
+absCalibrationFactor = 3.49056 * 1e12; %Approximate!
 
 %Now we have to calibrate to the the beamlet width.
-absCalibrationFactor = absCalibrationFactor * (pln.propStf.bixelWidth^2) / 5^2;
+absCalibrationFactor = absCalibrationFactor * (pln.propStf.bixelWidth/50)^2;
 
 matRad_cfg.dispInfo('matRad: OmpMC photon dose calculation... \n');
 
@@ -293,9 +294,11 @@ end
 %run over all scenarios
 for s = 1:dij.numOfScenarios
     ompMCgeo.isoCenter = [stf(:).isoCenter];
-    %[dij.physicalDose{s},dij.physicalDose_MCvar{s}] = omc_matrad(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
-    % Run IPOPT.
+    
+    %Run the Monte Carlo simulation and catch  possible mex-interface
+    %issues
     try
+        %If we ask for variance, a field in the dij will be filled
         if outputVariance
             [dij.physicalDose{s},dij.physicalDose_MCvar{s}] = omc_matrad(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
         else
@@ -306,6 +309,7 @@ for s = 1:dij.numOfScenarios
         matRad_cfg.dispError(ME.identifier,errorString);
     end
     
+    %Calibrate the dose with above factor
     dij.physicalDose{s} = dij.physicalDose{s} * absCalibrationFactor;
     if isfield(dij,'physicalDose_MCvar')
         dij.physicalDose_MCvar{s} = dij.physicalDose_MCvar{s} * absCalibrationFactor^2;
