@@ -107,14 +107,14 @@ end
 if  pln.propDoseCalc.airOffsetCorrection
     if ~isfield(machine.meta, 'BAMStoIsoDist')
         BAMStoIsoDist = 1000;
-        matRad_cfg.dispWarning('\tMachine data does not contain BAMStoIsoDist. Using default value of %f mm\n.',BAMStoIsoDist);
+        matRad_cfg.dispWarning('\tMachine data does not contain BAMStoIsoDist. Using default value of %f mm.\n',BAMStoIsoDist);
     else
         BAMStoIsoDist = machine.meta.BAMStoIsoDist;
     end
     
     if ~isfield(machine.meta, 'fitAirOffset')
         fitAirOffset = 0; %By default we assume that the base data was fitted to a phantom with surface at isocenter
-        matRad_cfg.dispInfo('\tAsked for correction of Base Data Air Offset, but no value found. Using default value of %f mm\n.',fitAirOffset);
+        matRad_cfg.dispInfo('\tAsked for correction of Base Data Air Offset, but no value found. Using default value of %f mm.\n',fitAirOffset);
     else
         fitAirOffset = machine.meta.fitAirOffset;
     end
