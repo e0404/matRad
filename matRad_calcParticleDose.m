@@ -40,6 +40,9 @@ if matRad_cfg.logLevel > 1
     set(figureWait,'pointer','watch');
 end
 
+
+matRad_cfg.dispInfo('matRad: Particle dose calculation... \n');
+
 % init dose calc
 matRad_calcDoseInit;
 
@@ -90,7 +93,7 @@ if isfield(pln,'propDoseCalc') && ...
         end
         
     else
-        matRad_cfg.dispWarning('LET not available in the machine data. LET will not be calculated.');
+        matRad_cfg.dispWarning('\tLET not available in the machine data. LET will not be calculated.');
     end
 end
 
@@ -99,6 +102,24 @@ end
 if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc, 'airOffsetCorrection') 
     pln.propDoseCalc.airOffsetCorrection = true;
 end
+
+%Prepare airOffset correction
+if  pln.propDoseCalc.airOffsetCorrection
+    if ~isfield(machine.meta, 'BAMStoIsoDist')
+        BAMStoIsoDist = 1000;
+        matRad_cfg.dispWarning('\tMachine data does not contain BAMStoIsoDist. Using default value of %f mm\n.',BAMStoIsoDist);
+    else
+        BAMStoIsoDist = machine.meta.BAMStoIsoDist;
+    end
+    
+    if ~isfield(machine.meta, 'fitAirOffset')
+        fitAirOffset = 0; %By default we assume that the base data was fitted to a phantom with surface at isocenter
+        matRad_cfg.dispInfo('\tAsked for correction of Base Data Air Offset, but no value found. Using default value of %f mm\n.',fitAirOffset);
+    else
+        fitAirOffset = machine.meta.fitAirOffset;
+    end
+end
+
 
 % book keeping - this is necessary since pln is not used in optimization or
 % matRad_calcCubes
@@ -124,7 +145,7 @@ if pln.bioParam.bioOpt
     if strcmp(pln.bioParam.model,'LEM')
         if isfield(machine.data,'alphaX') && isfield(machine.data,'betaX')
             
-            fprintf('matRad: loading biological base data... ');
+            matRad_cfg.dispInfo('\tloading biological base data...');
             
             for i = 1:size(cst,1)
                 
@@ -145,11 +166,11 @@ if pln.bioParam.bioOpt
                     
                 else
                     vTissueIndex(row) = 1;
-                    matRad_cfg.dispInfo('matRad: tissue type of %s was set to 1\n',cst{i,2});
+                    matRad_cfg.dispInfo(' tissue type of %s was set to 1...',cst{i,2});
                 end
             end
             
-            matRad_cfg.dispInfo('done. \n');
+            matRad_cfg.dispInfo(' done.\n');
             
         else
             matRad_cfg.dispError('base data is incomplement - alphaX and/or betaX is missing');
@@ -158,13 +179,12 @@ if pln.bioParam.bioOpt
     else
         % parametrized biological models are based on the LET
         if ~isfield(machine.data,'LET')
-            matRad_dispToConsole('base data is incomplement - LET is missing',param,'error');
+            matRad_cfg.dispError('base data is incomplement - LET is missing');
         end
     end %  end is LEM model
     
 end
 
-matRad_cfg.dispInfo('matRad: Particle dose calculation... \n');
 
 % lateral cutoff for raytracing and geo calculations
 if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'geometricCutOff')
@@ -174,6 +194,8 @@ end
 if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'lateralCutOff')
     pln.propDoseCalc.lateralCutOff = matRad_cfg.propDoseCalc.defaultLateralCutOff;
 end
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %loop over all shift scenarios
@@ -199,7 +221,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
         matRad_calcDoseInitBeam;
         
         % Determine lateral cutoff
-        matRad_cfg.dispInfo('matRad: calculate lateral cutoff...');
+        matRad_cfg.dispInfo('\tmatRad: calculate lateral cutoff...');
         cutOffLevel = pln.propDoseCalc.lateralCutOff;
         visBoolLateralCutOff = 0;
         machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
@@ -260,21 +282,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     % is generated at soume source to phantom distance
                     % we can explicitly correct for the nozzle to air WEPL in
                     % the current case.
-                    if  pln.propDoseCalc.airOffsetCorrection
-                        if ~isfield(machine.meta, 'BAMStoIsoDist')
-                            BAMStoIsoDist = 1000;
-                            matRad_cfg.dispWarning('Machine data does not contain BAMStoIsoDist. Using default value of %f mm\n.',BAMStoIsoDist);
-                        else
-                            BAMStoIsoDist = machine.meta.BAMStoIsoDist;
-                        end
-                        
-                        if ~isfield(machine.meta, 'fitAirOffset')
-                            fitAirOffset = 0; %By default we assume that the base data was fitted to a phantom with surface at isocenter
-                            matRad_cfg.dispInfo('Asked for correction of Base Data Air Offset, but no value found. Using default value of %f mm\n.',fitAirOffset);
-                        else
-                            fitAirOffset = machine.meta.fitAirOffset;
-                        end
-                        
+                    if  pln.propDoseCalc.airOffsetCorrection                        
                         nozzleToSkin = ((stf(i).ray(j).SSD + BAMStoIsoDist) - machine.meta.SAD);
                         dR = 0.0011 * (nozzleToSkin - fitAirOffset);
                     else
