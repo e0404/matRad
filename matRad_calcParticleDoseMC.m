@@ -37,6 +37,11 @@ function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDi
 
 matRad_cfg = MatRad_Config.instance();
 
+% initialize waitbar
+figureWait = waitbar(0,'calculate dose influence matrix with MCsquare...');
+% prevent closure of waitbar and show busy state
+set(figureWait,'pointer','watch');
+
 % check if valid machine
 if ~strcmp(pln.radiationMode,'protons') || ~strcmp(pln.machine,'generic_MCsquare')
     matRad_cfg.dispError('Wrong radiation modality and/or machine. For now MCsquare requires machine generic_MCsquare!');    
@@ -59,6 +64,10 @@ end
 
 if ~strcmp(pln.radiationMode,'protons')
     errordlg('MCsquare is only supported for protons');
+end
+
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'calcLET') 
+    pln.propDoseCalc.calcLET = matRad_cfg.propDoseCalc.defaultCalcLET;
 end
 
 env = matRad_getEnvironment();
@@ -189,6 +198,11 @@ MCsquareConfig.Dose_Sparse_Output = ~calcDoseDirect;
 % set threshold of sparse matrix generation
 MCsquareConfig.Dose_Sparse_Threshold = relDoseCutoff;
 
+if pln.propDoseCalc.calcLET
+    MCsquareConfig.LET_MHD_Output		 = calcDoseDirect;
+    MCsquareConfig.LET_Sparse_Output	 = ~calcDoseDirect;
+end
+
 % write patient data
 MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
                              dij.doseGrid.resolution.y ...
@@ -273,31 +287,40 @@ mask(VdoseGrid) = true;
 % read sparse matrix
 if ~calcDoseDirect
     dij.physicalDose{1} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( ...
-                    [MCsquareConfig.Output_Directory filesep 'Sparse_Dose.bin'], ...
-                    dij.doseGrid.dimensions, ...
-                    dij.totalNumOfBixels, ...
-                    mask);
+        [MCsquareConfig.Output_Directory filesep 'Sparse_Dose.bin'], ...
+        dij.doseGrid.dimensions, ...
+        dij.totalNumOfBixels, ...
+        mask);
+                
+    if pln.propDoseCalc.calcLET
+        dij.mLETDose{1} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( ...
+            [MCsquareConfig.Output_Directory filesep 'Sparse_LET.bin'], ...
+            dij.doseGrid.dimensions, ...
+            dij.totalNumOfBixels, ...
+            mask);
+    end
+    
 else
     cube = matRad_readMhd(MCsquareConfig.Output_Directory,'Dose.mhd');
     dij.physicalDose{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
-                                 absCalibrationFactorMC2 * cube(VdoseGrid), ...
-                                 dij.doseGrid.numOfVoxels,1);
+        absCalibrationFactorMC2 * cube(VdoseGrid), ...
+        dij.doseGrid.numOfVoxels,1);
+    
+    if pln.propDoseCalc.calcLET
+        cube = matRad_readMhd(MCsquareConfig.Output_Directory,'LET.mhd');
+        dij.mLETDose{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
+            absCalibrationFactorMC2 * cube(VdoseGrid), ...
+            dij.doseGrid.numOfVoxels,1);
+    end
 end
 
 % reorder influence matrix to comply with matRad default ordering
 if MCsquareConfig.Beamlet_Mode
-    dij.physicalDose{1} = dij.physicalDose{1}(:,MCsquareOrder);            
+    dij.physicalDose{1} = dij.physicalDose{1}(:,MCsquareOrder);   
+    dij.mLETDose{1} = dij.mLETDose{1}(:,MCsquareOrder);
 end        
 
 matRad_cfg.dispInfo('matRad: done!\n');
-
-try
-    % wait 0.1s for closing all waitbars
-    allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
-    delete(allWaitBarFigures);
-    pause(0.1);
-catch
-end
 
 %% clear all data
 delete([MCsquareConfig.CT_File(1:end-4) '.*']);
@@ -317,5 +340,9 @@ end
 
 % cd back
 cd(currFolder);
+
+if ishandle(figureWait)
+    delete(figureWait);
+end
 
 end
