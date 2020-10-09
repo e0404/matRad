@@ -33,12 +33,10 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 
 matRad_cfg =  MatRad_Config.instance();
 
-if matRad_cfg.logLevel > 1
-    % initialize waitbar
-    figureWait = waitbar(0,'calculate dose influence matrix for particles...');
-    % prevent closure of waitbar and show busy state
-    set(figureWait,'pointer','watch');
-end
+% initialize waitbar
+figureWait = waitbar(0,'calculate dose influence matrix for particles...');
+% prevent closure of waitbar and show busy state
+set(figureWait,'pointer','watch');
 
 
 matRad_cfg.dispInfo('matRad: Particle dose calculation... \n');
