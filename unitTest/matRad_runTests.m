@@ -46,6 +46,7 @@ status = cellfun(@copyfile,exampleScripts,testScripts);
 matRad_unitTestTextManipulation(testScripts,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)]);
 matRad_unitTestTextManipulation(testScripts,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR TESTING %%%%%%%%%%%%%%');
 
+errors = {};
 %Running tests
 for testIx = 1:length(testScriptNames)
     fprintf('Running Integration Test for ''%s''\n',names{testIx});
