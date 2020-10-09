@@ -153,7 +153,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
         % get correct kernel for given SSD at central ray (nearest neighbor approximation)
         [~,currSSDIx] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD));
         
-        matRad_cfg.dispInfo('\tSSD = %g mm\n',num2str(machine.data.kernel(currSSDIx).SSD));
+        matRad_cfg.dispInfo('\tSSD = %g mm ...\n',machine.data.kernel(currSSDIx).SSD);
         
         kernelPos = machine.data.kernelPos;
         kernel1 = machine.data.kernel(currSSDIx).kernel1;
@@ -169,7 +169,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
         if ~useCustomPrimFluenceBool && ~isFieldBasedDoseCalc
             
             % Display console message
-            matRad_cfg.dispInfo('matRad: Uniform primary photon fluence -> pre-compute kernel convolution for SSD = %g mm ...\n',num2str(machine.data.kernel(currSSDIx).SSD));
+            matRad_cfg.dispInfo('\tUniform primary photon fluence -> pre-compute kernel convolution...\n');
             
             % 2D convolution of Fluence and Kernels in fourier domain
             convMx1 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)));
@@ -321,11 +321,7 @@ end
 % scenario
 dij = matRad_cleanDijScenarios(dij,pln,cst);
 
-try
-    % wait 0.1s for closing all waitbars
-    allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
-    delete(allWaitBarFigures);
-    pause(0.1);
-catch
+%Close Waitbar
+if ishandle(figureWait)
+    delete(figureWait);
 end
-

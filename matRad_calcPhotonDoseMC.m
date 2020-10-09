@@ -191,13 +191,14 @@ if visBool
     
 end
 
-%ompMC for matRad returns dose/history. This factor calibrates to (5x5)mm^2
-%bixels giving 1 Gy in a (5x%)cm^2 open field at 5cm depth for SSD = 900
-%which corresponds to the calibration for the analytical base data.
-absCalibrationFactor = 3.47098 * 1e10; %Approximate!
+%ompMC for matRad returns dose/history * nHistories. 
+% This factor calibrates to 1 Gy in a %(5x5)cm^2 open field (1 bixel) at 
+% 5cm depth for SSD = 900 which corresponds to the calibration for the 
+% analytical base data.
+absCalibrationFactor = 3.49056 * 1e12; %Approximate!
 
 %Now we have to calibrate to the the beamlet width.
-absCalibrationFactor = absCalibrationFactor * (pln.propStf.bixelWidth^2) / 5^2;
+absCalibrationFactor = absCalibrationFactor * (pln.propStf.bixelWidth/50)^2;
 
 outputVariance = matRad_cfg.propMC.ompMC_defaultOutputVariance;
 
@@ -304,15 +305,12 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     matRad_cfg.dispInfo('matRad: OmpMC photon dose calculation for scenario %d of %d... \n',scenCount,pln.multScen.totNumScen);
                 end
                 
-                %run over all scenarios
-
                 ompMCgeo.isoCenter = [stf(:).isoCenter];
-                %[dij.physicalDose{s},dij.physicalDose_MCvar{s}] = omc_matrad(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
-                % Run IPOPT.
                 
-                tic
-                
+                %Call the Monte Carlo simulation and catch  possible mex
+                %interface issues       
                 try
+                    %If we ask for variance, a field in the dij will be filled
                     if outputVariance
                         [dij.physicalDose{ctScen,shiftScen,rangeShiftScen},dij.physicalDose_MCvar{ctScen,shiftScen,rangeShiftScen}] = omc_matrad(cubeRho{ctScen},cubeMatIx{ctScen},ompMCgeo,ompMCsource,ompMCoptions);
                     else
@@ -320,7 +318,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     end
                 catch ME
                     errorString = [ME.message '\nThis error was thrown by the MEX-interface of ompMC.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'];
-                    matRad_cfg.dispError(ME.identifier,errorString);
+                    matRad_cfg.dispError(errorString);
                 end
                 
                 dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = dij.physicalDose{ctScen,shiftScen,rangeShiftScen} * absCalibrationFactor;
@@ -328,9 +326,9 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     dij.physicalDose_MCvar{s} = dij.physicalDose_MCvar{ctScen,shiftScen,rangeShiftScen} * absCalibrationFactor^2;
                 end
                 
-                
+                ompMCgeo.isoCenter = [stf(:).isoCenter];
+            
                 matRad_cfg.dispInfo('matRad: MC photon dose calculation done!\n');
-                matRad_cfg.dispInfo(evalc('toc'));
                 
                 try
                     % wait 0.1s for closing all waitbars
