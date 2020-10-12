@@ -25,7 +25,7 @@ function cst = matRad_computeVoiContours(ct,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 matRad_cfg = MatRad_Config.instance();
-matRad_cfg.dispInfo('Precomputing Contours for Display... ');
+matRad_cfg.dispInfo('Precomputing Contours for Display...\n');
 
 mask = zeros(ct.cubeDim); % create zero cube with same dimeonsions like dose cube
 for ctScen = 1:ct.numOfCtScen
