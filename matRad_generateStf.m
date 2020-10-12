@@ -89,8 +89,28 @@ end
 
 if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
       
+    if ~isfield(pln.propStf,'useRangeShifter') 
+        pln.propStf.useRangeShifter = false;
+    end
+    
+           
     availableEnergies = [machine.data.energy];
     availablePeakPos  = [machine.data.peakPos] + [machine.data.offset];
+        
+    if isfield(pln.propStf,'useRangeShifter')
+        %For now only a generic range shifter is used whose thickness is
+        %determined by the minimum peak width to play with
+        rangeShifterEqD = round(min(availablePeakPos)* 1.25);
+        availablePeakPosRaShi = availablePeakPos - rangeShifterEqD;
+        
+        matRad_cfg.dispWarning('Use of range shifter enabled. matRad will generate a generic range shifter with WEPL %f to enable ranges below the shortest base data entry.',rangeShifterEqD);
+    end
+    
+    if ~isfield(pln.propStf, 'longitudinalSpotSpacing')
+        longitudinalSpotSpacing = matRad_cfg.propStf.defaultLongitudinalSpotSpacing;
+    else
+        longitudinalSpotSpacing = pln.propStf.longitudinalSpotSpacing;
+    end
     
     if sum(availablePeakPos<0)>0
        matRad_cfg.dispError('at least one available peak position is negative - inconsistent machine file') 
@@ -230,11 +250,14 @@ for i = 1:length(pln.propStf.gantryAngles)
     for j = stf(i).numOfRays:-1:1
 
         % ray tracing necessary to determine depth of the target
-        [~,l,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
+        [alphas,l,rho,d12,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
                              ct.resolution, ...
                              stf(i).sourcePoint, ...
                              stf(i).ray(j).targetPoint, ...
                              [{ct.cube{1}} {voiTarget}]);
+               
+       %Used for generic range-shifter placement                  
+       ctEntryPoint = alphas(1) * d12;
 
         % find appropriate energies for particles
        if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
@@ -256,10 +279,34 @@ for i = 1:length(pln.propStf.gantryAngles)
                 end
 
                 stf(i).ray(j).energy = [];
+                stf(i).ray(j).rangeShifter = [];
 
                 % Save energies in stf struct
                 for k = 1:numel(targetEntry)
-                    stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
+                                       
+                    %If we need lower energies than available, consider
+                    %range shifter (if asked for)
+                    if targetEntry < min(availablePeakPos) && pln.propStf.useRangeShifter
+                        %Get Energies to use with range shifter to fill up
+                        %non-reachable low-range spots
+                        raShiEnergies = availableEnergies(availablePeakPosRaShi >= targetEntry(k) & min(availablePeakPos) > availablePeakPosRaShi);
+                        
+                        raShi.ID = 1;
+                        raShi.eqThickness = rangeShifterEqD;
+                        raShi.sourceRashiDistance = round(ctEntryPoint - 2*rangeShifterEqD,-1); %place a little away from entry, round to cms to reduce number of unique settings
+                        
+                        stf(i).ray(j).energy = [stf(i).ray(j).energy raShiEnergies];
+                        stf(i).ray(j).rangeShifter = [stf(i).ray(j).rangeShifter repmat(raShi,1,length(raShiEnergies))];
+                    end
+                    
+                    %Normal placement without rangeshifter
+                    newEnergies = availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k));
+                    stf(i).ray(j).energy = [stf(i).ray(j).energy newEnergies];
+                    
+                    raShi.ID = 0;
+                    raShi.eqThickness = 0;
+                    raShi.sourceRashiDistance = 0;                       
+                    stf(i).ray(j).rangeShifter = [stf(i).ray(j).rangeShifter repmat(raShi,1,length(newEnergies))];
                 end
   
                 % book keeping & calculate focus index
@@ -306,21 +353,15 @@ for i = 1:length(pln.propStf.gantryAngles)
         maxEnergy = max([stf(i).ray.energy]);
         
         % get corresponding peak position
-        availableEnergies = [machine.data.energy];
         minPeakPos  = machine.data(minEnergy == availableEnergies).peakPos;
         maxPeakPos  = machine.data(maxEnergy == availableEnergies).peakPos;
         
         % find set of energyies with adequate spacing
-        if ~isfield(pln.propStf, 'longitudinalSpotSpacing')
-            longitudinalSpotSpacing = matRad_cfg.propStf.defaultLongitudinalSpotSpacing;
-        else
-            longitudinalSpotSpacing = pln.propStf.longitudinalSpotSpacing;
-        end
+        
         
         stf(i).longitudinalSpotSpacing = longitudinalSpotSpacing;
         
         tolerance              = longitudinalSpotSpacing/10;
-        availablePeakPos       = [machine.data.peakPos];
         
         useEnergyBool = availablePeakPos >= minPeakPos & availablePeakPos <= maxPeakPos;
         
@@ -489,19 +530,7 @@ for i = 1:length(pln.propStf.gantryAngles)
         title 'lps coordinate system'
         axis([-300 300 -300 300 -300 300]);
         %pause(1);
-    end
-    
-    % include rangeshifter data if not yet available 
-    if strcmp(pln.radiationMode, 'protons') || strcmp(pln.radiationMode, 'carbon')
-        for j = 1:stf(i).numOfRays
-            for k = 1:numel(stf(i).ray(j).energy)
-                stf(i).ray(j).rangeShifter(k).ID = 0;
-                stf(i).ray(j).rangeShifter(k).eqThickness = 0;
-                stf(i).ray(j).rangeShifter(k).sourceRashiDistance = 0;
-            end
-        end
-    end
-        
+    end        
 end    
 
 end

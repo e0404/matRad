@@ -23,15 +23,16 @@ load BOXPHANTOM.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-%pln.machine         = 'generic_TOPAS_cropped';
+
 pln.machine         = 'generic_MCsquare';
+%pln.machine          = 'Generic';
 
 
 pln.numOfFractions  = 1;
 
 % beam geometry settings
-pln.propStf.bixelWidth      = 50; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.longitudinalSpotSpacing = 50;
+pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.longitudinalSpotSpacing = 2;
 pln.propStf.gantryAngles    = 0; % [?] 
 pln.propStf.couchAngles     = 0; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
@@ -43,7 +44,7 @@ pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 %pln.propDoseCalc.doseGrid.resolution = ct.resolution;
-pln.propDoseCalc.airOffsetCorrection = true;
+%pln.propDoseCalc.airOffsetCorrection = false;
 
 % optimization settings
 pln.propOpt.optimizer       = 'IPOPT';
@@ -52,21 +53,29 @@ pln.propOpt.bioOptimization = 'none'; % none: physical optimization;            
 pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
-pln.propMC.proton_engine = 'TOPAS';
-%pln.propMC.proton_engine = 'MCsquare';
+%pln.propMC.proton_engine   = 'TOPAS'; %Requires separate topas installation
+pln.propMC.proton_engine    = 'MCsquare';
+
+%Enable/Disable use of range shifter
+pln.propStf.useRangeShifter = false;  
 
 %% generate steering file
-stf = matRad_generateStf(ct,cst,pln);
+%stf = matRad_generateStf(ct,cst,pln);
+stf = matRad_generateSingeBixelStf(ct,cst,pln); %Example to create a single beamlet stf
 
 %% dose calculation
-dij = matRad_calcParticleDose(ct, stf, pln, cst);
-%resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
+
+dij = matRad_calcParticleDose(ct, stf, pln, cst); %Calculate particle dose influence matrix (dij) with analytical algorithm
+%dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,1e4); %Calculate particle dose influence matrix (dij) with MC algorithm (slow!!)
+
+
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% MC calculation
-resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.w,1e5);
+%resultGUI_recalc = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);       %Recalculate particle dose analytically
+resultGUI_recalc = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.w,1e5); %Recalculate particle dose with MC algorithm
+
 
 %% Compare Dose
-
-matRad_compareDose(resultGUI.physicalDose, resultGUI_MC.physicalDose, ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');
+matRad_compareDose(resultGUI.physicalDose, resultGUI_recalc.physicalDose, ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');
 

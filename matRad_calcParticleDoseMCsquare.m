@@ -220,10 +220,35 @@ isoCenterOffset = -[dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.
 
 counter = 0;             
 for i = 1:length(stf)
+    %Let's check if we have a unique or no range shifter, because MCsquare
+    %only allows one range shifter type per field which can be IN or OUT
+    %per spot
+    raShiField = [];
+    for j = 1:stf(i).numOfRays
+        if isfield(stf(i).ray(j),'rangeShifter')
+            raShiField = [raShiField stf(i).ray(j).rangeShifter(:).ID];
+        else
+            raShiField = [raShiField zeros(size(stf(i).ray(j).energies))];
+        end
+    end
+    raShiField = unique(raShiField); %unique range shifter
+    raShiField(raShiField == 0) = []; %no range shifter
+    if numel(raShiField) > 1
+        matRad_cfg.dispError('MCsquare does not support different range shifter IDs per field! Aborting.\n');
+    end
+    
     stfMCsquare(i).gantryAngle = mod(180-stf(i).gantryAngle,360); %Different MCsquare geometry
     stfMCsquare(i).couchAngle  = stf(i).couchAngle;
     stfMCsquare(i).isoCenter   = stf(i).isoCenter + mcSquareAddIsoCenterOffset;
     stfMCsquare(i).energies    = unique([stf(i).ray.energy]);
+    stfMCsquare(i).SAD          = stf(i).SAD;
+    if ~isempty(raShiField)
+        stfMCsquare(i).rangeShifterID = raShiField;
+        stfMCsquare(i).rangeShifterType = 'binary';
+    else
+        stfMCsquare(i).rangeShifterID = 0;
+        stfMCsquare(i).rangeShifterType = 'binary';
+    end
     
     % allocate empty target point container
     for j = 1:numel(stfMCsquare(i).energies)
@@ -242,12 +267,20 @@ for i = 1:length(stf)
         end
         
         for k = 1:numel(stfMCsquare(i).energies)
+            
+            raShis = []; %Range shifter Book keeping
+            
+            %Check if ray has a spot in the current energy layer
             if any(stf(i).ray(j).energy == stfMCsquare(i).energies(k))
+                %Set up the ray geometries and add current ray to energy
+                %layer
+                energyIx = find(stf(i).ray(j).energy == stfMCsquare(i).energies(k));
                 stfMCsquare(i).energyLayer(k).rayNum   = [stfMCsquare(i).energyLayer(k).rayNum j];
-                stfMCsquare(i).energyLayer(k).bixelNum = [stfMCsquare(i).energyLayer(k).bixelNum ...
-                    find(stf(i).ray(j).energy == stfMCsquare(i).energies(k))];
+                stfMCsquare(i).energyLayer(k).bixelNum = [stfMCsquare(i).energyLayer(k).bixelNum energyIx];
                 stfMCsquare(i).energyLayer(k).targetPoints = [stfMCsquare(i).energyLayer(k).targetPoints; ...
                                         -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
+                
+                %Number of primaries depending on beamlet-wise or field-based compuation (direct dose calculation)                    
                 if calcDoseDirect
                     stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
                                          round(stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k))*MCsquareConfig.Num_Primaries)];
@@ -255,6 +288,21 @@ for i = 1:length(stf)
                     stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
                         MCsquareConfig.Num_Primaries];
                 end
+                
+                %Now add the range shifter
+                if isempty(raShis)
+                    raShis = stf(i).ray(j).rangeShifter(energyIx);
+                else
+                    raShis(end+1) = stf(i).ray(j).rangeShifter(energyIx);
+                end
+                
+                %sanity check range shifters
+                raShiIDs = unique(raShis.ID);
+                if ~isscalar(raShiIDs)
+                    matRad_cfg.dispError('MCsquare only supports one range shifter setting (on or off) per energy! Aborting.\n');
+                end             
+                
+                stfMCsquare(i).energyLayer(k).rangeShifter = raShis(1);
             end
         end    
     end
