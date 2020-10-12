@@ -85,7 +85,7 @@ else
     dose_mask = alpha * (dose_slice < window(2) & dose_slice > window(1));
 end
 
-dose_slice = uint8(cMapScale* (dose_slice) - window(1))/(window(2)-window(1));
+dose_slice = uint8(cMapScale* (dose_slice - window(1))/(window(2)-window(1)));
 
 %This circumenvents a bug in Octave when the index in the image hase the maximum value of uint8
 if matRad_cfg.isOctave
