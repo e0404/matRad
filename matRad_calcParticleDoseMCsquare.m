@@ -216,8 +216,6 @@ MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
                              dij.doseGrid.resolution.z];   
 matRad_writeMhd(HUcube{1},MCsquareBinCubeResolution,MCsquareConfig.CT_File);
 
-isoCenterOffset = -[dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2];
-
 counter = 0;             
 for i = 1:length(stf)
     %Let's check if we have a unique or no range shifter, because MCsquare

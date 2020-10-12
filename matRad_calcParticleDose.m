@@ -71,7 +71,7 @@ if isfield(pln,'propDoseCalc') && ...
         dij.mLETDose{i} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
     end
   else
-    warndlg('LET not available in the machine data. LET will not be calculated.');
+    matRad_cfg.dispWarning('LET not available in the machine data. LET will not be calculated.');
   end
 end
 
