@@ -60,8 +60,8 @@ pln.propMC.proton_engine    = 'MCsquare';
 pln.propStf.useRangeShifter = false;  
 
 %% generate steering file
-%stf = matRad_generateStf(ct,cst,pln);
-stf = matRad_generateSingeBixelStf(ct,cst,pln); %Example to create a single beamlet stf
+stf = matRad_generateStf(ct,cst,pln);
+%stf = matRad_generateSingleBixelStf(ct,cst,pln); %Example to create a single beamlet stf
 
 %% dose calculation
 
@@ -69,11 +69,13 @@ dij = matRad_calcParticleDose(ct, stf, pln, cst); %Calculate particle dose influ
 %dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,1e4); %Calculate particle dose influence matrix (dij) with MC algorithm (slow!!)
 
 
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+%resultGUI = matRad_fluenceOptimization(dij,cst,pln); %Optimize
+resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,ones(dij.totalNumOfBixels,1)); %Use uniform weights
+
 
 %% MC calculation
 %resultGUI_recalc = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);       %Recalculate particle dose analytically
-resultGUI_recalc = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.w,1e5); %Recalculate particle dose with MC algorithm
+resultGUI_recalc = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.w,1e6); %Recalculate particle dose with MC algorithm
 
 
 %% Compare Dose
