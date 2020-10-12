@@ -286,7 +286,7 @@ for i = 1:length(pln.propStf.gantryAngles)
                                        
                     %If we need lower energies than available, consider
                     %range shifter (if asked for)
-                    if targetEntry < min(availablePeakPos) && pln.propStf.useRangeShifter
+                    if any(targetEntry < min(availablePeakPos)) && pln.propStf.useRangeShifter
                         %Get Energies to use with range shifter to fill up
                         %non-reachable low-range spots
                         raShiEnergies = availableEnergies(availablePeakPosRaShi >= targetEntry(k) & min(availablePeakPos) > availablePeakPosRaShi);
