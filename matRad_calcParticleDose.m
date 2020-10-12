@@ -79,6 +79,22 @@ end
 %in generation of base data (e.g. phantom surface at isocenter)
 if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc, 'airOffsetCorrection') 
     pln.propDoseCalc.airOffsetCorrection = true;
+    
+    if ~isfield(machine.meta, 'fitAirOffset')
+        fitAirOffset = 0; %By default we assume that the base data was fitted to a phantom with surface at isocenter
+        matRad_cfg.dispDebug('Asked for correction of Base Data Air Offset, but no value found. Using default value of %f mm.\n',fitAirOffset);
+    else
+        fitAirOffset = machine.meta.fitAirOffset;
+    end    
+else 
+    fitAirOffset = 0;
+end
+
+if ~isfield(machine.meta, 'BAMStoIsoDist')
+    BAMStoIsoDist = 1000;
+    matRad_cfg.dispWarning('Machine data does not contain BAMStoIsoDist. Using default value of %f mm\n.',BAMStoIsoDist);
+else
+    BAMStoIsoDist = machine.meta.BAMStoIsoDist;
 end
 
 % generates tissue class matrix for biological optimization
@@ -125,9 +141,7 @@ if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.b
         matRad_cfg.dispInfo('done.\n');
 
     else
-        
-        matRad_cfg.dispError('base data is incomplement - alphaX and/or betaX is missing');
-        
+        matRad_cfg.dispError('base data is incomplement - alphaX and/or betaX is missing'); 
     end
     
 % issue warning if biological optimization not possible
@@ -217,20 +231,6 @@ for i = 1:length(stf) % loop over all beams
                 % we can explicitly correct for the nozzle to air WEPL in 
                 % the current case.
                 if  pln.propDoseCalc.airOffsetCorrection   
-                    if ~isfield(machine.meta, 'BAMStoIsoDist') 
-                        BAMStoIsoDist = 1000;
-                    	matRad_cfg.dispWarning('Machine data does not contain BAMStoIsoDist. Using default value of %f mm\n.',BAMStoIsoDist);
-                    else
-                        BAMStoIsoDist = machine.meta.BAMStoIsoDist;
-                    end
-                    
-                    if ~isfield(machine.meta, 'fitAirOffset') 
-                        fitAirOffset = 0; %By default we assume that the base data was fitted to a phantom with surface at isocenter
-                        matRad_cfg.dispInfo('Asked for correction of Base Data Air Offset, but no value found. Using default value of %f mm\n.',fitAirOffset);
-                    else
-                        fitAirOffset = machine.meta.fitAirOffset;
-                    end
-
                     nozzleToSkin = ((stf(i).ray(j).SSD + BAMStoIsoDist) - machine.meta.SAD);
                     dR = 0.0011 * (nozzleToSkin - fitAirOffset);                    
                 else
@@ -241,7 +241,7 @@ for i = 1:length(stf) % loop over all beams
                 % range shifter. In the following, we only perform dose calculation for voxels having a radiological depth
                 % that is within the limits of the base data set (-> machine.data(i).dephts). By this means, we only allow  
                 % interpolations in matRad_calcParticleDoseBixel() and avoid extrapolations.
-                offsetRadDepth = machine.data(energyIx).offset - stf(i).ray(j).rangeShifter(k).eqThickness + dR;
+                offsetRadDepth = machine.data(energyIx).offset - (stf(i).ray(j).rangeShifter(k).eqThickness + dR);
                 
                 % find depth depended lateral cut off
                 if cutOffLevel >= 1
@@ -257,7 +257,7 @@ for i = 1:length(stf) % loop over all beams
                             (machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= radialDist_sq(currIx);
                     end
                 else
-                    matRad_cfg.dispError('cutoff must be a value between 0 and 1')
+                    matRad_cfg.dispError('Lateral Cut-Off must be a value between 0 and 1!')
                 end
                 
                 % empty bixels may happen during recalculation of error
@@ -266,17 +266,12 @@ for i = 1:length(stf) % loop over all beams
                     continue;
                 end
                 
-                
-                
-                
-                if  pln.propDoseCalc.airOffsetCorrection  
-                    currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness + dR;
-                    
+                currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness + dR;
+                                
+                if dR < 0  
                     %sanity check due to negative corrections
                     currRadDepths(currRadDepths < 0) = 0;                    
-                else
-                    currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
-                end
+                end                
                 
                 % calculate initial focus sigma
                 sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist (stf(i).ray(j).focusIx(k),:)', ...
