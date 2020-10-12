@@ -341,12 +341,9 @@ for i = 1:length(stf) % loop over all beams
     end
 end
 
-try
-  % wait 0.1s for closing all waitbars
-  allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar'); 
-  delete(allWaitBarFigures);
-  pause(0.1); 
-catch
+%Close Waitbar
+if ishandle(figureWait)
+    delete(figureWait);
 end
 
     

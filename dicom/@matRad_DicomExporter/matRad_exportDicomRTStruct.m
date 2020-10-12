@@ -227,17 +227,16 @@ for i = 1:numel(obj.ctSliceMetas)
     ImageSequenceItem.ReferencedSOPInstanceUID = obj.ctSliceMetas(i).SOPInstanceUID;
     ContourImageSequence.(['Item_' num2str(i)]) = ImageSequenceItem;
 end
-    
-RTReferencedSeriesSequenceItem.ContourImageSequence = ContourImageSequence;
+
 RTReferencedSeriesSequenceItem.SeriesInstanceUID = obj.ctSliceMetas(1).SeriesInstanceUID;
+RTReferencedSeriesSequenceItem.ContourImageSequence = ContourImageSequence;
 
-RTReferencedStudySequenceItem.RTReferencedSeriesSequence.Item_1 = RTReferencedSeriesSequenceItem;
-RTReferencedStudySequenceItem.ReferencedSOPInstanceUID = obj.StudyInstanceUID;
 RTReferencedStudySequenceItem.ReferencedSOPClassUID = '1.2.840.10008.3.1.2.3.2'; %Apparently this class UID is deprecated in DICOM standard - what to use instead?
+RTReferencedStudySequenceItem.ReferencedSOPInstanceUID = obj.StudyInstanceUID;
+RTReferencedStudySequenceItem.RTReferencedSeriesSequence.Item_1 = RTReferencedSeriesSequenceItem;
 
-meta.ReferencedFrameOfReferenceSequence.Item_1.RTReferencedStudySequence.Item_1 = RTReferencedStudySequenceItem;
 meta.ReferencedFrameOfReferenceSequence.Item_1.FrameOfReferenceUID = obj.FrameOfReferenceUID;
-
+meta.ReferencedFrameOfReferenceSequence.Item_1.RTReferencedStudySequence.Item_1 = RTReferencedStudySequenceItem;
 
 filename = 'RTstruct.dcm';
 filepath = obj.dicomDir;
