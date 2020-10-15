@@ -103,8 +103,9 @@ classdef MatRad_MCsquareBaseData < MatRad_MCemittanceBaseData
     
     methods (Access = private)
         function obj = getRangeShiftersFromStf(obj,stf)
-            %Matlab Magic to enable usage of unique on struct array of rang
-            raShis = [stf.ray.rangeShifter];
+            allRays = [stf.ray];
+            raShis = [allRays.rangeShifter];
+                
             [~,ix] =  unique(cell2mat(squeeze(struct2cell(raShis))'),'rows');
             
             raShis = raShis(ix);

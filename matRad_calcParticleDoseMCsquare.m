@@ -337,7 +337,7 @@ disp(['Calling Monte Carlo Engine: ' mcSquareCall]);
 mask = false(dij.doseGrid.numOfVoxels,1);
 mask(VdoseGrid) = true;
 
-fprintf('Simulation finished!\n');
+matRad_cfg.dispInfo('Simulation finished!\n');
 
 % read sparse matrix
 if ~calcDoseDirect
