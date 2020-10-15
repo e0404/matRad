@@ -61,18 +61,22 @@ elseif isequal(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiatio
             matRad_cfg.dispInfo('matRad: Using a constant RBE of %g\n',dij.RBE);   
 end
 
-if isfield(pln,'propDoseCalc') && ...
-   isfield(pln.propDoseCalc,'calcLET') && ...
-   pln.propDoseCalc.calcLET
-  if isfield(machine.data,'LET')
-    letDoseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
-    % Allocate space for dij.dosexLET sparse matrix
-    for i = 1:dij.numOfScenarios
-        dij.mLETDose{i} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'calcLET') 
+    pln.propDoseCalc.calcLET = matRad_cfg.propDoseCalc.defaultCalcLET;
+end
+    
+    
+if pln.propDoseCalc.calcLET
+    if isfield(machine.data,'LET')
+        letDoseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
+        % Allocate space for dij.dosexLET sparse matrix
+        for i = 1:dij.numOfScenarios
+            dij.mLETDose{i} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
+        end
+        matRad_cfg.dispInfo('LET computation enabled!\n');
+    else
+        matRad_cfg.dispWarning('LET not available in the machine data. LET will not be calculated.');
     end
-  else
-    matRad_cfg.dispWarning('LET not available in the machine data. LET will not be calculated.');
-  end
 end
 
 %Toggles correction of small difference of current SSD to distance used

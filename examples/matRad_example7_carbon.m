@@ -73,6 +73,9 @@ pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 
+%Let's also calculate the LET
+pln.propDoseCalc.calcLET = true;
+
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
 
@@ -103,6 +106,12 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 slice = round(pln.propStf.isoCenter(3)./ct.resolution.z);
 figure,
 imagesc(resultGUI.RBExDose (:,:,slice)),colorbar, colormap(jet);
+
+%% Let's check out the LET
+% Let's plot the transversal iso-center LET slice
+slice = round(pln.propStf.isoCenter(3)./ct.resolution.z);
+figure;
+imagesc(resultGUI.LET(:,:,slice)),colorbar, colormap(jet);
 
 %% Inverse Optimization  for IMPT based on biological effect
 % To perform a dose optimization for carbon ions we can also use the

@@ -38,6 +38,11 @@ function dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nCasePerBixel,calc
 
 matRad_cfg = MatRad_Config.instance();
 
+% initialize waitbar
+figureWait = waitbar(0,'calculate dose influence matrix with MCsquare...');
+% prevent closure of waitbar and show busy state
+set(figureWait,'pointer','watch');
+
 % check if valid machine
 if ~strcmp(pln.radiationMode,'protons')
     matRad_cfg.dispError('Wrong radiation modality . MCsquare only supports protons!');    
@@ -45,10 +50,9 @@ end
 
 if nargin < 5
     % set number of particles simulated per pencil beam
-    nCasePerBixel = matRad_cfg.propMC.particles_defaultHistories;
+    nCasePerBixel = matRad_cfg.propMC.MCsquare_defaultHistories;
     matRad_cfg.dispInfo('Using default number of Histories per Bixel: %d\n',nCasePerBixel);
 end
-
 % switch between either using max stat uncertainity or total number of
 % cases
 if (nCasePerBixel < 1)
@@ -64,6 +68,11 @@ end
 if isfield(pln,'propMC') && isfield(pln.propMC,'outputVariance')
     matRad_cfg.dispWarning('Variance scoring for MCsquare not yet supported.');
 end
+
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'calcLET') 
+    pln.propDoseCalc.calcLET = matRad_cfg.propDoseCalc.defaultCalcLET;
+end
+
 
 env = matRad_getEnvironment();
 
@@ -208,7 +217,10 @@ MCsquareConfig.Dose_Sparse_Output = ~calcDoseDirect;
 % set threshold of sparse matrix generation
 MCsquareConfig.Dose_Sparse_Threshold = relDoseCutoff;
 
-MCsquareConfig.LET_MHD_Output = true;
+if pln.propDoseCalc.calcLET
+    MCsquareConfig.LET_MHD_Output		 = calcDoseDirect;
+    MCsquareConfig.LET_Sparse_Output	 = ~calcDoseDirect;
+end
 
 % write patient data
 MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
@@ -342,29 +354,42 @@ matRad_cfg.dispInfo('Simulation finished!\n');
 % read sparse matrix
 if ~calcDoseDirect
     dij.physicalDose{1} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( ...
-                    [MCsquareConfig.Output_Directory filesep 'Sparse_Dose.bin'], ...
-                    dij.doseGrid.dimensions, ...
-                    dij.totalNumOfBixels, ...
-                    mask);
+        [MCsquareConfig.Output_Directory filesep 'Sparse_Dose.bin'], ...
+        dij.doseGrid.dimensions, ...
+        dij.totalNumOfBixels, ...
+        mask);
+                
+    if pln.propDoseCalc.calcLET
+        dij.mLETDose{1} = matRad_sparseBeamletsReaderMCsquare ( ...
+            [MCsquareConfig.Output_Directory filesep 'Sparse_LET.bin'], ...
+            dij.doseGrid.dimensions, ...
+            dij.totalNumOfBixels, ...
+            mask);
+        
+        dij.MC_tallies{1} = 'LET';
+    end
+    
 else
     cube = matRad_readMhd(MCsquareConfig.Output_Directory,'Dose.mhd');
     dij.physicalDose{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
-                                 absCalibrationFactorMC2 * cube(VdoseGrid), ...
-                                 dij.doseGrid.numOfVoxels,1);
-
-    if isfile(fullfile(MCsquareConfig.Output_Directory,'LET.mhd'))
+        absCalibrationFactorMC2 * cube(VdoseGrid), ...
+        dij.doseGrid.numOfVoxels,1);
+    
+    if pln.propDoseCalc.calcLET
         cube = matRad_readMhd(MCsquareConfig.Output_Directory,'LET.mhd');
-        dij.LET{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
-                                    cube(VdoseGrid), ...
-                                    dij.doseGrid.numOfVoxels,1);
+        dij.mLETDose{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
+            cube(VdoseGrid), ...
+            dij.doseGrid.numOfVoxels,1);
+        
         dij.MC_tallies{1} = 'LET';
     end
 end
 
 % reorder influence matrix to comply with matRad default ordering
 if MCsquareConfig.Beamlet_Mode
-    dij.physicalDose{1} = dij.physicalDose{1}(:,MCsquareOrder);            
-end        
+    dij.physicalDose{1} = dij.physicalDose{1}(:,MCsquareOrder);   
+    dij.mLETDose{1} = dij.mLETDose{1}(:,MCsquareOrder);
+end       
 
 matRad_cfg.dispInfo('matRad: done!\n');
 
@@ -398,5 +423,10 @@ end
 
 % cd back
 cd(currFolder);
+
+if ishandle(figureWait)
+    delete(figureWait);
+end
+
 
 end

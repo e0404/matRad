@@ -24,7 +24,7 @@ load BOXPHANTOM.mat
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
 
-pln.machine         = 'generic_MCsquare';
+pln.machine         = 'HITfixedBL';
 %pln.machine          = 'Generic';
 
 
@@ -56,6 +56,9 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 %pln.propMC.proton_engine   = 'TOPAS'; %Requires separate topas installation
 pln.propMC.proton_engine    = 'MCsquare';
 
+%Enable LET calculation
+pln.propDoseCalc.calcLET    = true;
+
 %Enable/Disable use of range shifter
 pln.propStf.useRangeShifter = false;  
 
@@ -70,14 +73,22 @@ dij = matRad_calcParticleDose(ct, stf, pln, cst); %Calculate particle dose influ
 
 
 %resultGUI = matRad_fluenceOptimization(dij,cst,pln); %Optimize
-resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,ones(dij.totalNumOfBixels,1)); %Use uniform weights
+resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij); %Use uniform weights
 
 
 %% MC calculation
 %resultGUI_recalc = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);       %Recalculate particle dose analytically
-resultGUI_recalc = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.w,1e6); %Recalculate particle dose with MC algorithm
-
+resultGUI_recalc = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.w,3e6); %Recalculate particle dose with MC algorithm
 
 %% Compare Dose
 matRad_compareDose(resultGUI.physicalDose, resultGUI_recalc.physicalDose, ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');
+
+%% Compare LET
+matRad_compareDose(resultGUI.LET, resultGUI_recalc.LET, ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');
+
+%% GUI
+resultGUI.physicalDose_MC = resultGUI_recalc.physicalDose;
+resultGUI.LET_MC = resultGUI_recalc.LET;
+matRadGUI
+
 
