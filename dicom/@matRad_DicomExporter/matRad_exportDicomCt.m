@@ -1,10 +1,10 @@
 function obj = matRad_exportDicomCt(obj)
 % matRad function to export ct to dicom. Class method of
 % matRad_DicomExporter
-% 
+%
 % call
 %   matRad_DicomExporter.matRad_exportDicomCt()
-%          
+%
 %
 % References
 %   -
@@ -27,8 +27,10 @@ disp('Exporting DICOM CT...');
 env = matRad_getEnvironment();
 
 %default meta
-meta.PatientID           = obj.PatientID;
 meta.PatientName         = obj.PatientName;
+meta.PatientID           = obj.PatientID;
+meta.PatientBirthDate    = obj.PatientBirthDate;
+meta.PatientSex          = obj.PatientSex;
 meta.PatientPosition     = obj.PatientPosition;
 meta.StudyID             = obj.StudyID;
 meta.StudyDate           = obj.StudyDate;
@@ -39,8 +41,8 @@ meta.FrameOfReferenceUID = obj.FrameOfReferenceUID;
 ClassUID = '1.2.840.10008.5.1.4.1.1.2'; %RT Structure Set
 meta.MediaStorageSOPClassUID = ClassUID;
 meta.SOPClassUID = ClassUID;
-%TransferSyntaxUID = '1.2.840.10008.1.2'; 
-%meta.TransferSyntaxUID = TransferSyntaxUID; 
+%TransferSyntaxUID = '1.2.840.10008.1.2';
+%meta.TransferSyntaxUID = TransferSyntaxUID;
 
 %Identifiers
 meta.SOPInstanceUID             = dicomuid;
@@ -116,20 +118,27 @@ for i = 1:nSlices
     obj.ctSliceMetas(i).SlicePositions = z(i);
     
     %Create and store unique ID
-    obj.ctSliceMetas(i).SOPInstanceUID = dicomuid;
     obj.ctSliceMetas(i).SOPClassUID    = '1.2.840.10008.5.1.4.1.1.2';
-    obj.ctSliceMetas(i).MediaStorageSOPInstanceUID = obj.ctSliceMetas(i).SOPInstanceUID;
+    %These lines DO NOT WORK since Matlab overwrites the unique ID's
+    %obj.ctSliceMetas(i).SOPInstanceUID = dicomuid;
+    %obj.ctSliceMetas(i).MediaStorageSOPInstanceUID = obj.ctSliceMetas(i).SOPInstanceUID;
     
     fullFileName = fullfile(obj.dicomDir,[fileName num2str(i) '.dcm']);
     if isOctave
-        dicomwrite(ctSlice,fullFileName,obj.ctSliceMetas(i));        
+        dicomwrite(ctSlice,fullFileName,obj.ctSliceMetas(i));
     else
         status = dicomwrite(ctSlice,fullFileName,obj.ctSliceMetas(i),'ObjectType','CT Image Storage');
         obj.ctExportStatus = obj.addStruct2StructArray(obj.ctExportStatus,status);
     end
-          
-     matRad_progress(i,nSlices);
-     
+    
+    %We need to get the info of the file just written because of Matlab's
+    %hardcoded way of generating InstanceUIDs during writing
+    tmpInfo = dicominfo(fullFileName);
+    obj.ctSliceMetas(i).SOPInstanceUID              = tmpInfo.SOPInstanceUID;
+    obj.ctSliceMetas(i).MediaStorageSOPInstanceUID  = tmpInfo.MediaStorageSOPInstanceUID;
+    
+    matRad_progress(i,nSlices);
+    
 end
 
 end
