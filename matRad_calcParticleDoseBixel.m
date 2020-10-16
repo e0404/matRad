@@ -30,6 +30,8 @@ function bixel = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg =  MatRad_Config.instance();
+
 % initialize heterogeneity correction
 % function handle for calculating lateral dose
 Gauss    = @(x,mu,SqSigma) 1./(sqrt(2*pi.*SqSigma)).*exp(-((x - mu).^2./(2.*SqSigma)));
@@ -38,15 +40,9 @@ Gauss    = @(x,mu,SqSigma) 1./(sqrt(2*pi.*SqSigma)).*exp(-((x - mu).^2./(2.*SqSi
 sumGauss = @(x,mu,SqSigma,w) (1./sqrt(2*pi*ones(numel(x),1) .* SqSigma') .* ...
     exp(-bsxfun(@minus,x,mu').^2 ./ (2* ones(numel(x),1) .* SqSigma' ))) * w;
 
-% default heterogeneity correction type
-
-if ~exist('heteroCorrDepths','var') || isempty(heteroCorrDepths) || ...
-        ~exist('heteroCorrType','var') || isempty(heteroCorrType)
-    heteroCorrType = 'none';
-end
-
-if ~exist('heteroCorrBio','var') || isempty(useDoseCurves)
-    useDoseCurves = false;
+% skip heterogeneity correction for other functions
+if nargin < 5
+    heteroCorrDepths = [];
 end
 
 % add potential offset
@@ -118,7 +114,7 @@ if isstruct(baseData.Z)
     radDepths = radDepths - baseData.offset;
     
     % add sigma if heterogeneity correction wanted
-    if ~strcmp(heteroCorrType,'none') && exist('heteroCorrDepths','var')
+    if ~isempty(heteroCorrDepths)
         switch heteroCorrType
             case 'complete'
                 [~,lungDepthAtBraggPeakIx] = min(abs(radialDist_sq+(radDepths-baseData.peakPos).^2));
@@ -151,7 +147,7 @@ else
     
     bixel.Z = X(:,1);
     
-    if ~strcmp(heteroCorrType,'none')
+    if ~isempty(heteroCorrDepths)
         warning('calcParticleDoseBixel: heterogeneity correction enabled but no APM base data was loaded.')
     end
     
@@ -161,7 +157,7 @@ end
 bixel.physDose = conversionFactor * bixel.L .* bixel.Z;
 
 %%
-if useDoseCurves
+if ~isempty(heteroCorrDepths) && useDoseCurves %modulateBioDose
     if isfield(baseData,'alphaDose')
         % preallocate space for alpha beta
         tissueClasses = unique(vTissueIndex);

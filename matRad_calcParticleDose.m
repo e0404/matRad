@@ -43,25 +43,63 @@ end
 % init dose calc
 matRad_calcDoseInit;
 
-% init lung heterogeneity correction
-pln = matRad_checkHeterogeneity(pln,cst,machine.data(1));
+if ~isfield('heterogeneity',pln)
+    pln.heterogeneity.calcHetero = false;
+else
+    if ~isfield(pln.heterogeneity,'calcHetero')
+        pln.heterogeneity.calcHetero = obj.propHeterogeneity.defaultCalcHetero;
+    end
+    if ~isfield(pln.heterogeneity,'useOriginalDepths')
+        pln.heterogeneity.useOriginalDepths = obj.propHeterogeneity.defaultUseOriginalDepths;
+    end
+    if ~isfield(pln.heterogeneity,'type')
+        pln.heterogeneity.type = obj.propHeterogeneity.defaultType;
+    end
+    if ~isfield(pln.heterogeneity,'modulateBioDose')
+        pln.heterogeneity.modulateBioDose = obj.propHeterogeneity.defaultModulateBioDose;
+    end
+end
+    
+% initialize lung heterogeneity correction
 if pln.heterogeneity.calcHetero
+    matRad_cfg.dispInfo('Heterogeneity correction enabled. \n');
+    heteroCST = false;
+    for i = 1:length(cst(:,1)) % scan cst for segmentation flagged for correction
+        if isfield(cst{i,5},'HeterogeneityCorrection')
+            heteroCST = true;
+            break
+        end
+    end
+    if ~isstruct(baseData.Z) || ~heteroCST
+       matRad_cfg.dispWarning('Heterogeneity correction enabled but no usable data in cst or unsuitable base data. Correction cannot be applied.'); 
+       pln.heterogeneity.calcHetero = false;
+    end
+else
+    matRad_cfg.dispInfo('Heterogeneity correction disabled. \n');
+end
+
+
+if pln.heterogeneity.calcHetero
+    lungVoxel = unique(cell2mat([cst{contains(cst(:,2),'lung','IgnoreCase',true),4}]')); % get all lung voxel indices
     
     calcHeteroCorrStruct.cube = {zeros(ct.cubeDim)};
+    calcHeteroCorrStruct.cube{1}(lungVoxel) = ct.cube{1}(lungVoxel);
+    
     calcHeteroCorrStruct.cubeDim = ct.cubeDim;
     calcHeteroCorrStruct.numOfCtScen = pln.multScen.numOfCtScen;
     calcHeteroCorrStruct.resolution = ct.resolution;
     
-    % book keeping - this is necessary since pln is not used in optimization or
-    % matRad_calcCubes
-    for j = 1:size(cst,1)
-        if isfield(cst{j,5},'HeterogeneityCorrection')
-            calcHeteroCorrStruct.cube{1}(cst{j,4}{1}) = ct.cube{1}(cst{j,4}{1});
-        end
-    end
-    
-    if isfield(pln.heterogeneity,'useOrgDepths') && pln.heterogeneity.useOrgDepths
+    if pln.heterogeneity.useOriginalDepths
         machine.data = matRad_checkBaseData(machine.data);
+        if isstruct(machine.data(1).Z) && isfield(machine.data(1).Z,'profileORG')
+            for i = 1:length(machine.data)
+                machine.data(i).Z = machine.data(i).Z.profileORG;
+            end
+        elseif isstruct(machine.data(1).Z) && ~isfield(machine.data(1).Z,'profileORG')
+            matRad_cfg.dispWarning('No original depths available in base data. Nothing changed.');
+        else
+            matRad_cfg.dispWarning('Base data depths are already in the desired format.');
+        end
     end
 end
 
@@ -213,12 +251,12 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
         
         % Calculate radiological depth cube for heterogeneity correction
         if pln.heterogeneity.calcHetero
-            fprintf('matRad: calculate radiological depth cube for heterogeneity correction...');
+            matRad_cfg.dispInfo('matRad: calculate radiological depth cube for heterogeneity correction...');
             heteroCorrDepthV = matRad_rayTracing(stf(i),calcHeteroCorrStruct,VctGrid,rot_coordsV,effectiveLateralCutoff);
             % HETERO interpolate hetero depth cube to dose grid resolution
             heteroCorrDepthV = matRad_interpRadDepth...
                 (ct,VctGrid,VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,heteroCorrDepthV);
-            fprintf('done.\n');
+            matRad_cfg.dispInfo('done.\n');
         end
         
         % Determine lateral cutoff
@@ -335,6 +373,8 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
                                 if pln.heterogeneity.calcHetero
                                     currHeteroCorrDepths = heteroCorrDepths(currIx);
+                                else
+                                    currHeteroCorrDepths = false;
                                 end
                                 
                                 % calculate initial focus sigma
@@ -356,22 +396,14 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 end
                                 
                                 % calculate particle dose for bixel k on ray j of beam i
-                                if pln.heterogeneity.calcHetero
-                                    bixelDose = matRad_calcParticleDoseBixel(...
-                                        currRadDepths, ...
-                                        radialDist_sq(currIx), ...
-                                        sigmaIni_sq, ...
-                                        machine.data(energyIx), ...
-                                        currHeteroCorrDepths, ...
-                                        pln.heterogeneity.type, ...
-                                        pln.heterogeneity.useDoseCurves, vTissueIndex_j(currIx));
-                                else
-                                    bixelDose = matRad_calcParticleDoseBixel(...
-                                        currRadDepths, ...
-                                        radialDist_sq(currIx), ...
-                                        sigmaIni_sq, ...
-                                        machine.data(energyIx));
-                                end
+                                bixelDose = matRad_calcParticleDoseBixel(...
+                                    currRadDepths, ...
+                                    radialDist_sq(currIx), ...
+                                    sigmaIni_sq, ...
+                                    machine.data(energyIx), ...
+                                    currHeteroCorrDepths, ...
+                                    pln.heterogeneity.type, ...
+                                    pln.heterogeneity.modulateBioDose, vTissueIndex_j(currIx));
                                 
                                 % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
                                 %relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose

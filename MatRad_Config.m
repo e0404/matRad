@@ -24,6 +24,7 @@ classdef MatRad_Config < handle
         propOpt;
         propMC;
         propStf;
+        propHeterogeneity;
         keepLog = false;
         
         defaults;
@@ -76,6 +77,11 @@ classdef MatRad_Config < handle
             obj.propMC.MCsquare_defaultHistories = 1e6;
             obj.propMC.direct_defaultHistories = 2e4;
             
+            obj.propHeterogeneity.defaultType = 'complete'; % 'depthBased','voxelwise'
+            obj.propHeterogeneity.defaultCalcHetero = true;
+            obj.propHeterogeneity.defaultUseOriginalDepths = true; % use original base data depths instead of fitted ones
+            obj.propHeterogeneity.defaultModulateBioDose = true; % use alpha beta curves for RBE
+
             obj.defaults.samplingScenarios = 25;
             
             obj.disableGUI = false;
@@ -104,6 +110,11 @@ classdef MatRad_Config < handle
             obj.propMC.MCsquare_defaultHistories = 100;
             obj.propMC.direct_defaultHistories = 100;
             
+            obj.propHeterogeneity.defaultType = 'complete'; % 'depthBased','voxelwise'
+            obj.propHeterogeneity.defaultCalcHetero = true;
+            obj.propHeterogeneity.defaultUseOriginalDepths = true; % use original base data depths instead of fitted ones
+            obj.propHeterogeneity.defaultUodulateBioDose = true; % use alpha beta curves for RBE
+
             obj.defaults.samplingScenarios = 2;
             
             obj.disableGUI = true;
