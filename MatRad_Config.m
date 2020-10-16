@@ -30,12 +30,6 @@ classdef MatRad_Config < handle
         propMC;
         propStf;
         
-        %For storing the Environment & its version
-        env;
-        envVersion;
-        isOctave; %Helper bool to check for Octave
-        isMatlab; %Helper bool to check for Matlab
-        
         %Disable GUI
         disableGUI = false;
     end
@@ -43,6 +37,12 @@ classdef MatRad_Config < handle
     properties (SetAccess = private)
         messageLog = {};
         logFileHandle;
+        
+        %For storing the Environment & its version
+        env;
+        envVersion;
+        isOctave; %Helper bool to check for Octave
+        isMatlab; %Helper bool to check for Matlab
     end
     
     properties (Constant)
