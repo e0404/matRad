@@ -23,9 +23,8 @@ function obj = matRad_exportDicomCt(obj)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 matRad_cfg = MatRad_Config.instance();
-matRad_cfg.dispInfo('Exporting DICOM CT...\n',obj.exportScenario,obj.dicomDir);
 
-env = matRad_getEnvironment();
+matRad_cfg.dispInfo('Exporting DICOM CT for scenario %s into %s...\n',obj.exportScenario,obj.dicomDir);
 
 %default meta
 meta.PatientName         = obj.PatientName;
@@ -39,7 +38,7 @@ meta.StudyTime           = obj.StudyTime;
 meta.StudyInstanceUID    = obj.StudyInstanceUID;
 meta.FrameOfReferenceUID = obj.FrameOfReferenceUID;
 
-ClassUID = '1.2.840.10008.5.1.4.1.1.2'; %RT Structure Set
+ClassUID = '1.2.840.10008.5.1.4.1.1.2'; %CT Image
 meta.MediaStorageSOPClassUID = ClassUID;
 meta.SOPClassUID = ClassUID;
 %TransferSyntaxUID = '1.2.840.10008.1.2';
@@ -106,7 +105,6 @@ fileName = 'ct_slice_';
 obj.ctSliceMetas   = struct([]);
 obj.ctExportStatus = struct([]);
 
-isOctave = strcmp(env,'OCTAVE');
 
 for i = 1:nSlices
     ctSlice = ctCube(:,:,i);
@@ -119,27 +117,28 @@ for i = 1:nSlices
     obj.ctSliceMetas(i).SlicePositions = z(i);
     
     %Create and store unique ID
-    obj.ctSliceMetas(i).SOPClassUID    = '1.2.840.10008.5.1.4.1.1.2';
-    %These lines DO NOT WORK since Matlab overwrites the unique ID's
-    %obj.ctSliceMetas(i).SOPInstanceUID = dicomuid;
-    %obj.ctSliceMetas(i).MediaStorageSOPInstanceUID = obj.ctSliceMetas(i).SOPInstanceUID;
+    obj.ctSliceMetas(i).SOPClassUID    = ClassUID;
     
     fullFileName = fullfile(obj.dicomDir,[fileName num2str(i) '.dcm']);
-    if isOctave
+    if matRad_cfg.isOctave
+        obj.ctSliceMetas(i).SOPInstanceUID = dicomuid;
+        obj.ctSliceMetas(i).MediaStorageSOPInstanceUID = obj.ctSliceMetas(i).SOPInstanceUID;
+    
         dicomwrite(ctSlice,fullFileName,obj.ctSliceMetas(i));
     else
         status = dicomwrite(ctSlice,fullFileName,obj.ctSliceMetas(i),'ObjectType','CT Image Storage');
         obj.ctExportStatus = obj.addStruct2StructArray(obj.ctExportStatus,status);
-    end
-    
-    matRad_cfg.dispDebug('\tWritten Slice %d to %s\n',i,fullFileName);
+		
+		matRad_cfg.dispDebug('\tWritten Slice %d to %s\n',i,fullFileName);
+		
+		%We need to get the info of the file just written because of Matlab's
+        %hardcoded way of generating InstanceUIDs during writing
+        tmpInfo = dicominfo(fullFileName);
+        obj.ctSliceMetas(i).SOPInstanceUID              = tmpInfo.SOPInstanceUID;
+        obj.ctSliceMetas(i).MediaStorageSOPInstanceUID  = tmpInfo.MediaStorageSOPInstanceUID;        
         
-    %We need to get the info of the file just written because of Matlab's
-    %hardcoded way of generating InstanceUIDs during writing
-    tmpInfo = dicominfo(fullFileName);
-    obj.ctSliceMetas(i).SOPInstanceUID              = tmpInfo.SOPInstanceUID;
-    obj.ctSliceMetas(i).MediaStorageSOPInstanceUID  = tmpInfo.MediaStorageSOPInstanceUID;
-    
+    end   
+
     matRad_progress(i,nSlices);
 
 end
