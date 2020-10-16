@@ -30,7 +30,6 @@ classdef MatRad_Config < handle
         propMC;
         propStf;
         propHeterogeneity;
-        keepLog = false;
         
         defaults;
         
