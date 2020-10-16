@@ -5,8 +5,10 @@ function stf = matRad_generateStfPencilBeam(pln,energyIx)
 %   stf = matRad_generateStfPencilBeam(pln,EnergyIx)
 %
 % input
-%   pln:            matRads planning struct
-%   energyIx:       index of desired energy of the machine data
+%   pln:                    matRads planning struct
+%   energyIx (optional):    index of desired energy of the machine data
+%                           warning: only optional if isocenter defined in
+%                           pln and beam/couch angles = 0;
 %
 % output
 %   stf:            matRads steering struct
@@ -26,9 +28,14 @@ function stf = matRad_generateStfPencilBeam(pln,energyIx)
 global matRad_cfg;
 matRad_cfg = MatRad_Config.instance();
 
-matRad_cfg.dispInfo('matRad: Generating stf struct...\n');
+matRad_cfg.dispInfo('matRad: Generating pencil beam ...\n');
 
 load([pln.radiationMode,'_',pln.machine]);
+
+if nargin < 2
+   % find energy closest to hit isocenter 
+   [~,energyIx] = min(abs([machine.data.peakPos]-pln.propStf.isoCenter(2)));
+end
 
 SAD = machine.meta.SAD;
 currentMinimumFWHM = matRad_interp1(machine.meta.LUT_bxWidthminFWHM(1,:)', machine.meta.LUT_bxWidthminFWHM(2,:)',pln.propStf.bixelWidth);
