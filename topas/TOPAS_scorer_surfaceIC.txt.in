@@ -1,0 +1,8 @@
+s:Sc/IC/Quantity = "SurfaceTrackCount"
+s:Sc/IC/OutputType = "csv" # "csv" "binary" "Root" "Xml" or "DICOM"
+s:Sc/IC/Surface = "IC/ZPlusSurface"
+sv:Sc/IC/Report = 1 "Sum"
+s:Sc/IC/IfOutputFileAlreadyExists = "Overwrite" # "Exit" "Overwrite" or "Increment"
+s:Sc/IC/OutputFile = Sim/ScoreLabel + "_IC"
+s:Sc/IC/OnlyIncludeParticlesOfGeneration = "Primary"
+s:Sc/IC/OnlyIncludeParticlesGoing = "In"

@@ -29,6 +29,7 @@ classdef MatRad_MCsquareConfig
         D_Max	      =	0.2;		% Maximum distance between two step (cm). Default: 0.2
         Epsilon_Max   =	0.25;		% Fractional energy loss (dE/T) per step. Default: 0.25
         Te_Min	      =	0.05;		% Threshold energy (MeV) for the production of secondary electrons (currently locally absorbed). Default: 0.05
+        Stat_uncertainty    = 0.0	% Maximum statistical uncertainty (in percent). Default: 0.0 = no maximum uncertainty (number of proton = Num_Primaries)
         % As a reference: 200 MeV protons can transfer a maximum energy of 0.5 MeV to ?-electrons which correspond to a range of 7 mm in lung tissues.
         
         %%% Input files
@@ -113,9 +114,7 @@ classdef MatRad_MCsquareConfig
     
     methods
         function obj = MatRad_MCsquareConfig()
-            %UNTITLED Construct an instance of this class
-            %   Detailed explanation goes here
-            %obj.Property1 = inputArg1 + inputArg2;
+            %MatRad_MCsquareConfig Configuration Class for MCsquare           
         end
         
         function write(obj,fid)

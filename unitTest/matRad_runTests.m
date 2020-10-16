@@ -66,7 +66,7 @@ for testIx = 1:length(testScriptNames)
         clear ct cst pln stf dij resultGUI; %Make sure the workspace is somewhat clean
         delete(testScripts{testIx}); %Delete after successful run
     catch ME
-        errMsg = sprintf('Experiencd an error during testing of %s. Error-Message:\n %s',testScripts{testIx},ME.message);
+        errMsg = sprintf('Experiencd an error during testing of %s. Error-Message:\n %s',regexprep(testScripts{testIx},'([[\]{}()=''.(),;:%%{%}!@])','\\$1'),ME.message);
         matRad_cfg.dispWarning(errMsg);
         errors{end+1} = errMsg;
     end

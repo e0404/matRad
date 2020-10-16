@@ -36,6 +36,8 @@ function [ctHandle,cMap,window] = matRad_plotCtSlice3D(axesHandle,ct,cubeIdx,pla
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 %Use default colormap?
 if nargin < 6 || isempty(cMap)
     cMap = bone(64);
@@ -47,30 +49,38 @@ end
 
 cMapScale = size(cMap,1) - 1;
 
-
 %Create the coordinates
-coords{1} = ct.resolution.x * (1:ct.cubeDim(1));
-coords{2} = ct.resolution.y * (1:ct.cubeDim(2));
+coords{1} = ct.resolution.x * (1:ct.cubeDim(2));
+coords{2} = ct.resolution.y * (1:ct.cubeDim(1));
 coords{3} = ct.resolution.z * (1:ct.cubeDim(3));
-
  
 % slice plot with surface(...), colormapping can be done by texture
 % mapping, this is why we use surface instead of slice
 if plane == 1 % Coronal plane
     [xMesh,zMesh] = meshgrid(coords{2},coords{3});
     yMesh = ctSlice*ct.resolution.x*ones(size(xMesh));
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cubeHU{cubeIdx}(ctSlice,:,:)-window(1))/(window(2) - window(1))))),cMap);
+    ctIndexed = uint8(cMapScale*(squeeze((ct.cubeHU{cubeIdx}(ctSlice,:,:)-window(1))/(window(2) - window(1)))));
 %    ct_rgb = permute(ct_rgb,[2 1 3]);
 elseif plane == 2 % sagittal plane
     [yMesh,zMesh] = meshgrid(coords{1},coords{3});
     xMesh = ctSlice*ct.resolution.y*ones(size(yMesh));
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cubeHU{cubeIdx}(:,ctSlice,:)-window(1))/(window(2) - window(1))))),cMap);
+    ctIndexed = uint8(cMapScale*(squeeze((ct.cubeHU{cubeIdx}(:,ctSlice,:)-window(1))/(window(2) - window(1)))));
 %    ct_rgb = permute(ct_rgb,[2 1 3]);
 elseif plane == 3 % Axial plane
     [xMesh,yMesh] = meshgrid(coords{2},coords{1});
     zMesh = ctSlice*ct.resolution.z*ones(size(xMesh));    
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ct.cubeHU{cubeIdx}(:,:,ctSlice)-window(1))/(window(2) - window(1))))),cMap);
+    ctIndexed = uint8(cMapScale*(squeeze((ct.cubeHU{cubeIdx}(:,:,ctSlice)-window(1))/(window(2) - window(1)))));
+else
+	matRad_cfg.dispError('Invalid plane ''%d'' selected for visualization!',plane);
 end
+
+%This circumenvents a bug in Octave when the index in the image hase the maximum value of uint8
+if matRad_cfg.isOctave
+	ctIndexed(ctIndexed == 255) = 254;
+end
+
+ct_rgb = ind2rgb(ctIndexed,cMap);
+
 ctHandle = surface('XData',xMesh, 'YData',yMesh, 'ZData',zMesh, ...
         'CData',ct_rgb, 'CDataMapping','direct', ...
         'EdgeColor','none', 'FaceColor','texturemap', 'BackFaceLighting','unlit','FaceLighting','flat','Parent',axesHandle);
