@@ -1,5 +1,8 @@
 classdef matRad_OptimizationProblemDAO < matRad_OptimizationProblem
-    %handle class to keep state easily
+    %matRad_OptimizationProblemDAO Optimization Problem for Direct Aperture 
+    % Optimization
+    % Adapts the beamlet weights, manages the aperture and adds leaf 
+    % constraints to the standard fluence optimization problem
     %
     % References
     %   -
@@ -17,12 +20,9 @@ classdef matRad_OptimizationProblemDAO < matRad_OptimizationProblem
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    %properties (Access = private)
-    %    currentDose
-    %    currentWeights
-    %end
+    
     properties
-        apertureInfo
+        apertureInfo %Structure storing the current aperture/shape information
     end    
     
     methods (Static)
