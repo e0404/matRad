@@ -18,7 +18,7 @@ fi
 if [ -z "$Switches" ] ; then
 	case "$Runner" in
 		*matlab* )
-			Switches="-nodesktop -r"
+			Switches="-batch"
 			;;
 
 		*octave* )

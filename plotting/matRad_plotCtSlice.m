@@ -42,6 +42,8 @@ function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,p
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 %Use default colormap?
 if nargin < 6 || isempty(cMap)
     cMap = bone(64);
@@ -53,15 +55,24 @@ end
 
 cMapScale = size(cMap,1) - 1;
 
+%Prepare the slice and convert it to uint8
 if plane == 1 % Coronal plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube{cubeIdx}(slice,:,:)-window(1))/(window(2) - window(1))))),cMap);
-      
+	ctIndexed = uint8(cMapScale*(squeeze((ctCube{cubeIdx}(slice,:,:)-window(1))/(window(2) - window(1)))));      
 elseif plane == 2 % sagittal plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,slice,:)-window(1))/(window(2) - window(1))))),cMap);
-       
+    ctIndexed = uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,slice,:)-window(1))/(window(2) - window(1)))));	
 elseif plane == 3 % Axial plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,:,slice)-window(1))/(window(2) - window(1))))),cMap);
+    ctIndexed = uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,:,slice)-window(1))/(window(2) - window(1)))));
+else
+	matRad_cfg.dispError('Invalid plane ''%d'' selected for visualization!',plane);
 end
+
+%This circumenvents a bug in Octave when the index in the image hase the maximum value of uint8
+if matRad_cfg.isOctave
+	ctIndexed(ctIndexed == 255) = 254;
+end
+
+ct_rgb = ind2rgb(ctIndexed,cMap);
+
 ctHandle = image('CData',ct_rgb,'Parent',axesHandle);
 
 end
