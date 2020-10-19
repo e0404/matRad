@@ -1,6 +1,6 @@
 function isoDoseContours = matRad_computeIsoDoseContours(doseCube,isoLevels)
-% matRad function that computes all isodse contours (along each dose cube
-% dimension)
+% matRad function that computes all isodse contours 
+% (along each dose cube dimension)
 %
 % call
 %   isoDoseContours = matRad_computeIsoDoseContours(doseCube,isoLevels)

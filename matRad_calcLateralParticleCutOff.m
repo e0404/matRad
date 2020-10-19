@@ -1,6 +1,6 @@
 function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,visBool)
-% matRad function to calculate a depth dependend lateral cutoff for each 
-% pristine particle beam
+% matRad function to calculate a depth dependend lateral cutoff 
+% for each pristine particle beam
 % 
 % call
 %   [ machine ] = matRad_calcLateralParticleCutOff( machine,cutOffLevel,stf,visBool )

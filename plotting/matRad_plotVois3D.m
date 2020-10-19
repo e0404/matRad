@@ -1,6 +1,6 @@
 function patches = matRad_plotVois3D(axesHandle,ct,cst,selection,cMap)
-% matRad function that plots 3D structures of the volumes of interest.
-% if the 3D-data is not stored in the CT, it will be commputed on the fly
+% matRad function that plots 3D structures of the volumes of interest
+% If the 3D-data is not stored in the CT, it will be commputed on the fly.
 %
 % call
 %   patches = matRad_plotVois3D(axesHandle,ct,cst,selection)

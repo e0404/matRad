@@ -1,6 +1,6 @@
 classdef matRad_BackProjection
-% matRad_BackProjection superclass for all backprojection algorithms used
-% within matRad optimzation processes
+% matRad_BackProjection superclass for all backprojection algorithms 
+% used within matRad optimzation processes
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

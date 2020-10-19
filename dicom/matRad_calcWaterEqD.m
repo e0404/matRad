@@ -1,6 +1,6 @@
 function ct = matRad_calcWaterEqD(ct, pln)
-% matRad function to calculate the equivalent densities from a 
-% dicom ct that originally uses intensity values
+% matRad function to calculate the equivalent densities from a dicom ct 
+% that originally uses intensity values
 %
 % call
 %   ct = matRad_calcWaterEqD(ct, pln)

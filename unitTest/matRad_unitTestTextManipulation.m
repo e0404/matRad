@@ -1,7 +1,8 @@
 function matRad_unitTestTextManipulation(filename, string1, string2, path)
-% matRad function for manipulating certain parameters in matRad pipeline
-% so that it would be less computational expensive when it's being 
-% used in continuous integration builds.
+% matRad function to decrease computational expense
+% Manipulates certain parameters in matRad pipeline so that it would be 
+% less computational expensive when it's being used in continuous 
+% integration builds.
 %
 % call
 %   matRad_unitTestTextManipulation(filename, string1, string2)

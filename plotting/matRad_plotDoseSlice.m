@@ -1,7 +1,7 @@
 function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,plane,slice,threshold,alpha,cMap,window)
-% matRad function that generates a dose plot of a selected slice. The
-% function can also be used in personal matlab figures by passing the
-% corresponding axes handle
+% matRad function that generates a dose plot of a selected slice 
+% The function can also be used in personal matlab figures by passing the
+% corresponding axes handle.
 %
 % call
 %   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold)

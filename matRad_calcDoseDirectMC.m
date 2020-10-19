@@ -1,6 +1,7 @@
 function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
-% matRad dose calculation wrapper bypassing dij calculation for MC dose
-% calculation algorithms
+% matRad function to bypass dij calculation for MC dose calculation 
+% matRad dose calculation wrapper for MC dose calculation algorithms
+% bypassing dij calculation for MC dose calculation algorithms.
 % 
 % call
 %   resultGUI = matRad_calcDoseDirecMC(ct,stf,pln,cst)

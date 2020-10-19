@@ -1,6 +1,7 @@
 function matRad_plotPlan3D(axesHandle,pln,stf)
-% matRad function to visualize a plan in 3D. Stf is optional for plotting
-% more detailed field contours in visualization of the impinging beams.
+% matRad function to visualize a plan in 3D 
+% Stf is optional for plotting more detailed field contours in 
+% visualization of the impinging beams.
 % 
 % call
 %  rotMat = matRad_plotPlan3D(axesHandle,pln)

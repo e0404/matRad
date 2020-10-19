@@ -1,6 +1,6 @@
 function structures = matRad_importDicomRtss(filename,dicomInfo,visBool)
-% matRad function to read the data of the selected dicomRT structure set 
-% file into a matlab struct
+% matRad function to read the data of the selected dicomRT structure set file 
+% into a matlab struct
 % 
 % call
 %   structures = matRad_importDicomRtss(filename,dicomInfo)

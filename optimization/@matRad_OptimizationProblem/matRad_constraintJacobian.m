@@ -1,7 +1,8 @@
 function jacob = matRad_constraintJacobian(optiProb,w,dij,cst)
-% matRad IPOPT callback: jacobian function for inverse planning supporting max dose
-% constraint, min dose constraint, min mean dose constraint, max mean dose constraint,
-% min EUD constraint, max EUD constraint, max DVH constraint, min DVH constraint 
+% matRad IPOPT callback: jacobian function for inverse planning 
+% supporting max dose constraint, min dose constraint, min mean dose constraint, 
+% max mean dose constraint, min EUD constraint, max EUD constraint, max DVH 
+% constraint, min DVH constraint 
 % 
 % call
 %   jacob = matRad_jacobFunc(optiProb,w,dij,cst)

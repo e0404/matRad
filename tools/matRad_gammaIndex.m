@@ -1,5 +1,6 @@
 function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)
-% gamma index calculation according to http://www.ncbi.nlm.nih.gov/pubmed/9608475
+% gamma index calculation 
+% according to http://www.ncbi.nlm.nih.gov/pubmed/9608475
 % 
 % call
 %   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,cst)

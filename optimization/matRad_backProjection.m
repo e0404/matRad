@@ -1,6 +1,7 @@
 function d = matRad_backProjection(w,dij,options)
-% matRad back projection function to calculate the current dose-,effect- or
-% RBExDose- vector based on the dij struct.
+% matRad back projection function 
+% to calculate the current dose-,effect- or RBExDose- vector based on the 
+% dij struct.
 % 
 % call
 %   d = matRad_backProjection(w,dij,options)

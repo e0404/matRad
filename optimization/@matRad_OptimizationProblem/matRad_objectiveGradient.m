@@ -1,7 +1,7 @@
 function weightGradient = matRad_objectiveGradient(optiProb,w,dij,cst)
-% matRad IPOPT callback: gradient function for inverse planning supporting mean dose
-% objectives, EUD objectives, squared overdosage, squared underdosage,
-% squared deviation and DVH objectives
+% matRad IPOPT callback: gradient function for inverse planning 
+% supporting mean dose objectives, EUD objectives, squared overdosage, 
+% squared underdosage, squared deviation and DVH objectives
 % 
 % call
 %   g = matRad_gradFuncWrapper(optiProb,w,dij,cst)

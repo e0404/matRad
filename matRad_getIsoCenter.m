@@ -1,6 +1,7 @@
 function isoCenter = matRad_getIsoCenter(cst,ct,visBool)
-% computes the isocenter [mm] as the joint center of gravity of all volumes
-% of interest that are labeled as target within the cst struct
+% computes the isocenter [mm] as the joint center of gravity 
+% of all volumes of interest that are labeled as target within the cst 
+% struct
 % 
 % call
 %   isoCenter = matRad_getIsoCenter(cst,ct,visBool)

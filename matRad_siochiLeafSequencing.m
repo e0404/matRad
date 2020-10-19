@@ -1,7 +1,7 @@
 function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
-% multileaf collimator leaf sequencing algorithm for intensity modulated
-% beams with multiple static segments according to Siochi (1999)
-% International Journal of Radiation Oncology * Biology * Physics,
+% multileaf collimator leaf sequencing algorithm 
+% for intensity modulated beams with multiple static segments according to 
+% Siochi (1999)International Journal of Radiation Oncology * Biology * Physics,
 % originally implemented in PLUNC (https://sites.google.com/site/planunc/)
 %
 % Implemented in matRad by Eric Christiansen, Emily Heath, and Tong Xu

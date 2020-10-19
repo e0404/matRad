@@ -1,5 +1,5 @@
 classdef matRad_DicomExporter < handle
-    % matRad_DicomExporter matRad class to handle a dicom export
+    % matRad_DicomExporter matRad class to handle a dicom export.
     %
     %
     % Example on how to use the matRad_DicomExport class

@@ -1,8 +1,8 @@
 function c = matRad_constraintFunctions(optiProb,w,dij,cst)
-
-% matRad IPOPT callback: constraint function for inverse planning supporting max dose
-% constraint, min dose constraint, min mean dose constraint, max mean dose constraint,
-% min EUD constraint, max EUD constraint, max DVH constraint, min DVH constraint 
+% matRad IPOPT callback: constraint function for inverse planning 
+% supporting max dose constraint, min dose constraint, min mean dose constraint, 
+% max mean dose constraint, min EUD constraint, max EUD constraint, 
+% max DVH constraint, min DVH constraint 
 % 
 % call
 %   c = matRad_jacobFunc(optiProb,w,dij,cst)

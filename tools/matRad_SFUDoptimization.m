@@ -1,7 +1,7 @@
 function [resultGUI] = matRad_SFUDoptimization(pln, cst, dij, ct, stf)
-%  Calculation of single field uniform dose (SFUD) optimization
-%   If provided the dij matrix is used for optimisation, otherwise single
-%   beam dijs are calculated (memory saving)
+% Calculation of single field uniform dose (SFUD) optimization
+% If provided the dij matrix is used for optimisation, otherwise single
+% beam dijs are calculated (memory saving).
 %
 % call
 %   [resultGUI] = matRad_SFUDoptimization(pln, cst, dij)

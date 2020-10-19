@@ -1,7 +1,7 @@
 function cBarHandle = matRad_plotColorbar(axesHandle,cMap,window,varargin)
-% matRad function wrapper for plotting the colorbar. This is necessary
-% since the rgb colors are manually mapped within the ct and the dose
-% plotting, and MATLAB attaches colorbars to axes.
+% matRad function wrapper for plotting the colorbar 
+% This is necessary since the rgb colors are manually mapped within the ct 
+% and the dose plotting, and MATLAB attaches colorbars to axes.
 %
 % call
 %   cBarHandle = matRad_plotColorbar(axesHandle,cMap,window,varargin)

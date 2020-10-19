@@ -1,6 +1,6 @@
 function matRad_compileMCsquareSparseReader(dest,sourceFolder)
-% Compiles the sparse mcsquare reader as mex interface for the current
-% platform
+% Compiles the sparse mcsquare reader as mex interface 
+% for the current platform
 %
 % call
 %   matRad_compileMCsquareSparseReader()

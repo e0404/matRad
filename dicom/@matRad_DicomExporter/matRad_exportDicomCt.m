@@ -1,6 +1,6 @@
 function obj = matRad_exportDicomCt(obj)
-% matRad function to export ct to dicom. Class method of
-% matRad_DicomExporter
+% matRad function to export ct to dicom. 
+% Class method of matRad_DicomExporter
 % 
 % call
 %   matRad_DicomExporter.matRad_exportDicomCt()

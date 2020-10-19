@@ -1,4 +1,4 @@
-function [ resultGUI ] = matRad_importDicomRTDose(ct, rtDoseFiles, pln)
+function [resultGUI] = matRad_importDicomRTDose(ct, rtDoseFiles, pln)
 % matRad function to import dicom RTDOSE data
 % 
 % call

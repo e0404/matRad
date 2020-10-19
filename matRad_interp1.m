@@ -1,6 +1,6 @@
 function y = matRad_interp1(xi,yi,x,extrapolation)
-% interpolates 1-D data (table lookup) and utilizes griddedInterpolant if
-% availabe in the used MATLAB version
+% interpolates 1-D data (table lookup) and utilizes griddedInterpolant 
+% if availabe in the used MATLAB version
 %
 % call
 %   y = matRad_interp1(xi,yi,x)

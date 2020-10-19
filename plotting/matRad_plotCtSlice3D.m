@@ -1,5 +1,5 @@
 function [ctHandle,cMap,window] = matRad_plotCtSlice3D(axesHandle,ct,cubeIdx,plane,ctSlice,cMap,window)
-% matRad function that generates the plot for the CT in the GUI 3D view. 
+% matRad function that generates the plot for the CT in the GUI 3D view 
 % The function can also be used in personal matlab figures by passing the
 % corresponding axes handle
 %

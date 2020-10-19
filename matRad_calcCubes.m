@@ -1,6 +1,6 @@
 function resultGUI = matRad_calcCubes(w,dij,scenNum)
-% matRad computation of all cubes for the resultGUI struct which is used
-% as result container and for visualization in matRad's GUI
+% matRad computation of all cubes for the resultGUI struct 
+% which is used as result container and for visualization in matRad's GUI
 %
 % call
 %   resultGUI = matRad_calcCubes(w,dij)

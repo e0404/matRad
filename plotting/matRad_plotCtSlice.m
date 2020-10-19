@@ -1,6 +1,6 @@
 function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,plane,slice,cMap,window)
-% matRad function that generates the plot for the CT in the GUI. The
-% function can also be used in personal matlab figures by passing the
+% matRad function that generates the plot for the CT in the GUI 
+% The function can also be used in personal matlab figures by passing the
 % corresponding axes handle
 %
 % call

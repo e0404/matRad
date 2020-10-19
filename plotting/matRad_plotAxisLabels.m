@@ -1,6 +1,6 @@
 function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdist)
-% matRad function to plot x and y labels denoting the ct dimensions according to
-% the selected plane
+% matRad function to plot x and y labels denoting the ct dimensions 
+% according to the selected plane
 %
 % call
 %   matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize)

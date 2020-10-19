@@ -1,7 +1,7 @@
 function resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
-% multileaf collimator leaf sequencing algorithm for intensity modulated 
-% beams with multiple static segments according to Xia et al. (1998)
-% Medical Physics
+% multileaf collimator leaf sequencing algorithm 
+% for intensity modulated beams with multiple static segments according to 
+% Xia et al. (1998) Medical Physics
 % 
 % call
 %   resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels)
