@@ -44,20 +44,20 @@ matRad_cfg.dispInfo('matRad: Particle dose calculation... \n');
 % init dose calc
 matRad_calcDoseInit;
 
-if ~isfield('heterogeneity',pln)
+if ~isfield(pln,'heterogeneity')
     pln.heterogeneity.calcHetero = false;
 else
     if ~isfield(pln.heterogeneity,'calcHetero')
-        pln.heterogeneity.calcHetero = obj.propHeterogeneity.defaultCalcHetero;
+        pln.heterogeneity.calcHetero = matRad_cfg.propHeterogeneity.defaultCalcHetero;
     end
     if ~isfield(pln.heterogeneity,'useOriginalDepths')
-        pln.heterogeneity.useOriginalDepths = obj.propHeterogeneity.defaultUseOriginalDepths;
+        pln.heterogeneity.useOriginalDepths = matRad_cfg.propHeterogeneity.defaultUseOriginalDepths;
     end
     if ~isfield(pln.heterogeneity,'type')
-        pln.heterogeneity.type = obj.propHeterogeneity.defaultType;
+        pln.heterogeneity.type = matRad_cfg.propHeterogeneity.defaultType;
     end
     if ~isfield(pln.heterogeneity,'modulateBioDose')
-        pln.heterogeneity.modulateBioDose = obj.propHeterogeneity.defaultModulateBioDose;
+        pln.heterogeneity.modulateBioDose = matRad_cfg.propHeterogeneity.defaultModulateBioDose;
     end
 end
     
@@ -71,7 +71,7 @@ if pln.heterogeneity.calcHetero
             break
         end
     end
-    if ~isstruct(baseData.Z) || ~heteroCST
+    if ~isstruct(machine.data(1).Z) || ~heteroCST
        matRad_cfg.dispWarning('Heterogeneity correction enabled but no usable data in cst or unsuitable base data. Correction cannot be applied.'); 
        pln.heterogeneity.calcHetero = false;
     end
@@ -445,7 +445,8 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 end
                                 
                                 % calculate particle dose for bixel k on ray j of beam i
-                                bixelDose = matRad_calcParticleDoseBixel(...
+                                if pln.heterogeneity.calcHetero
+                                    bixelDose = matRad_calcParticleDoseBixel(...
                                     currRadDepths, ...
                                     radialDist_sq(currIx), ...
                                     sigmaIni_sq, ...
@@ -453,6 +454,13 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     currHeteroCorrDepths, ...
                                     pln.heterogeneity.type, ...
                                     pln.heterogeneity.modulateBioDose, vTissueIndex_j(currIx));
+                                else
+                                    bixelDose = matRad_calcParticleDoseBixel(...
+                                    currRadDepths, ...
+                                    radialDist_sq(currIx), ...
+                                    sigmaIni_sq, ...
+                                    machine.data(energyIx));
+                                end
                                 
                                 % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
                                 %relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose
