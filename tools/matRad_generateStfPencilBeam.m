@@ -1,4 +1,4 @@
-function stf = matRad_generateStfPencilBeam(pln,energyIx)
+function stf = matRad_generateStfPencilBeam(pln,ct,energyIx)
 % function to generate very basic stf file for a single energy
 % 
 % call
@@ -32,11 +32,6 @@ matRad_cfg.dispInfo('matRad: Generating pencil beam ...\n');
 
 load([pln.radiationMode,'_',pln.machine]);
 
-if nargin < 2
-   % find energy closest to hit isocenter 
-   [~,energyIx] = min(abs([machine.data.peakPos]-pln.propStf.isoCenter(2)));
-end
-
 SAD = machine.meta.SAD;
 currentMinimumFWHM = matRad_interp1(machine.meta.LUT_bxWidthminFWHM(1,:)', machine.meta.LUT_bxWidthminFWHM(2,:)',pln.propStf.bixelWidth);
 
@@ -58,6 +53,20 @@ stf.totalNumOfBixels = 1;
 stf.sourcePoint_bev = [0,-SAD,0];
 stf.sourcePoint = stf.sourcePoint_bev*rotMat_vectors_T;
 
+stf.ray.rayPos_bev = [0,0,0];
+stf.ray.targetPoint_bev = [0,SAD,0];
+stf.ray.rayPos = stf.ray.rayPos_bev*rotMat_vectors_T;
+stf.ray.targetPoint = stf.ray.targetPoint_bev*rotMat_vectors_T;
+
+% automatic energy selection if no energy selected
+if nargin < 3
+    [~,l{1},rho{1},~,~] = matRad_siddonRayTracer(pln.propStf.isoCenter + pln.multScen.isoShift(1,:), ...
+        ct.resolution, stf.sourcePoint, stf.ray.targetPoint, [ct.cube]);
+    radDepths = cumsum(l{1} .* rho{1}{1});
+    currRadDepths = radDepths(80);
+    [~,energyIx] = min(abs([machine.data.peakPos]-currRadDepths));
+end
+
 % generate ray
 stf.ray.energy = machine.data(energyIx).energy;
 stf.ray.focusIx = find(machine.data(energyIx).initFocus.SisFWHMAtIso > currentMinimumFWHM,1,'first');
@@ -65,10 +74,5 @@ stf.ray.rangeShifter = struct;
 stf.ray.rangeShifter.ID = 0;
 stf.ray.rangeShifter.eqThickness = 0;
 stf.ray.rangeShifter.sourceRashiDistance = 0;
-
-stf.ray.rayPos_bev = [0,0,0];
-stf.ray.targetPoint_bev = [0,SAD,0];
-stf.ray.rayPos = stf.ray.rayPos_bev*rotMat_vectors_T;
-stf.ray.targetPoint = stf.ray.targetPoint_bev*rotMat_vectors_T;
 
 end
