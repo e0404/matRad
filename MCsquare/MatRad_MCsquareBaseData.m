@@ -15,16 +15,10 @@ classdef MatRad_MCsquareBaseData < MatRad_MCemittanceBaseData
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    properties 
-       rangeShifters 
-    end
-    
     methods (Access = public)
         function obj = MatRad_MCsquareBaseData(machine,stf)
             %Call MatRad_MCemmitanceBaseData constructor
-            obj = obj@MatRad_MCemittanceBaseData(machine,stf); 
-            
-            obj = obj.getRangeShiftersFromStf(stf);
+            obj = obj@MatRad_MCemittanceBaseData(machine,stf);             
         end
                 
         function obj = writeMCsquareData(obj,filepath)
@@ -99,21 +93,6 @@ classdef MatRad_MCsquareBaseData < MatRad_MCemittanceBaseData
                 error(MException.message);
             end
         end        
-    end
-    
-    methods (Access = private)
-        function obj = getRangeShiftersFromStf(obj,stf)
-            allRays = [stf.ray];
-            raShis = [allRays.rangeShifter];
-                
-            [~,ix] =  unique(cell2mat(squeeze(struct2cell(raShis))'),'rows');
-            
-            raShis = raShis(ix);
-            
-            ix = [raShis.ID] == 0;
-            
-            obj.rangeShifters = raShis(~ix);
-        end
-    end
+    end    
 end
 

@@ -31,6 +31,8 @@ classdef MatRad_MCemittanceBaseData
         monteCarloData  %MC Phase space data struct
         selectedFocus   %array containing selected focus indices per energy
         FWHMatIso       %array containing FWHM values at iscenter for every energy
+        
+        rangeShifters   %Stores range shifters
     end
     
     properties (SetAccess = private)
@@ -52,6 +54,7 @@ classdef MatRad_MCemittanceBaseData
                 obj.stfCompressed = false;
             else
                 obj.stfCompressed = true;
+                obj = obj.getRangeShiftersFromStf(stf);
             end
             
             obj.machine = machine;
@@ -304,5 +307,20 @@ classdef MatRad_MCemittanceBaseData
             save(strcat('../../', machineName, '.mat'),'machine');
         end
     end 
+    
+    methods (Access = protected)
+        function obj = getRangeShiftersFromStf(obj,stf)
+            allRays = [stf.ray];
+            raShis = [allRays.rangeShifter];
+                
+            [~,ix] =  unique(cell2mat(squeeze(struct2cell(raShis))'),'rows');
+            
+            raShis = raShis(ix);
+            
+            ix = [raShis.ID] == 0;
+            
+            obj.rangeShifters = raShis(~ix);
+        end
+    end
 end
 

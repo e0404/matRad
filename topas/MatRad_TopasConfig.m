@@ -824,6 +824,26 @@ classdef MatRad_TopasConfig < handle
                            
         end
         
+        function writeRangeShifter(obj,fID,rangeShifter)
+            pmma_rsp = 1.165;
+            
+            if isnumeric(rangeShifter.ID)
+                rsIDstr = ['RangeShifter' num2str(rangeShifter.ID)];
+            else
+                rsIDstr = ['RangeShifter' rangeShifter.ID];
+            end
+            fprintf(fID,'s:Ge/%s/Parent   = "Nozzle"\n',rsIDstr);
+            fprintf(fID,'s:Ge/%s/Type     = "TsBox"\n',rsIDstr);
+            fprintf(fID,'s:Ge/%s/Material = "Lucite"\n',rsIDstr);
+            fprintf(fID,'d:Ge/%s/HLX      = "250 mm"\n',rsIDstr);
+            fprintf(fID,'d:Ge/%s/HLY      = "250 mm"\n',rsIDstr);
+            fprintf(fID,'d:Ge/%s/HLZ      = "%f  mm"\n',rsIDstr,rangeShifter.eqThickness / pmma_rsp);
+            fpritnf(fID,'d:Ge/%s/TransX   = "2 * Tf/Beam/RangeShifterOut * Ge/%s/HLX mm"\n',rsIDstr,rsIDstr);
+            fpritnf(fID,'d:Ge/%s/TransY   = "0   mm"\n',rsIDstr);
+            fpritnf(fID,'d:Ge/%s/TransZ   = "%f mm"\n',rsIDstr,rangeShifter.sourceToRaShiDistance - sourceToNozzle);
+            
+        end
+        
         function writeMCparam(obj)
             %write MCparam file with basic parameters
               
