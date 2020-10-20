@@ -322,6 +322,8 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 % just use tissue classes of voxels found by ray tracer
                 if pln.bioParam.bioOpt
                     vTissueIndex_j = vTissueIndex(ix,:);
+                else
+                    vTissueIndex_j = zeros(size(ix));
                 end
                 
                 for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
@@ -423,7 +425,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 if pln.heterogeneity.calcHetero
                                     currHeteroCorrDepths = heteroCorrDepths(currIx);
                                 else
-                                    currHeteroCorrDepths = false;
+                                    currHeteroCorrDepths = [];
                                 end
                                     
                                 % calculate initial focus sigma
@@ -445,8 +447,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 end
                                 
                                 % calculate particle dose for bixel k on ray j of beam i
-                                if pln.heterogeneity.calcHetero
-                                    bixelDose = matRad_calcParticleDoseBixel(...
+                                bixelDose = matRad_calcParticleDoseBixel(...
                                     currRadDepths, ...
                                     radialDist_sq(currIx), ...
                                     sigmaIni_sq, ...
@@ -454,13 +455,6 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     currHeteroCorrDepths, ...
                                     pln.heterogeneity.type, ...
                                     pln.heterogeneity.modulateBioDose, vTissueIndex_j(currIx));
-                                else
-                                    bixelDose = matRad_calcParticleDoseBixel(...
-                                    currRadDepths, ...
-                                    radialDist_sq(currIx), ...
-                                    sigmaIni_sq, ...
-                                    machine.data(energyIx));
-                                end
                                 
                                 % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
                                 %relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose

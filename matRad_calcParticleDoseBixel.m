@@ -1,4 +1,4 @@
-function bixel = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData, heteroCorrDepths, heteroCorrType, useDoseCurves, vTissueIndex)
+function bixel = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData, heteroCorrDepths, heteroCorrType, modulateBioDose, vTissueIndex)
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
 % 
@@ -160,7 +160,7 @@ end
 bixel.physDose = conversionFactor * bixel.L .* bixel.Z;
 
 %%
-if ~isempty(heteroCorrDepths) && useDoseCurves %modulateBioDose
+if ~isempty(heteroCorrDepths) && modulateBioDose
     if isfield(baseData,'alphaDose')
         % preallocate space for alpha beta
         tissueClasses = unique(vTissueIndex);
