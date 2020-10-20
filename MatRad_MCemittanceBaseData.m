@@ -57,6 +57,8 @@ classdef MatRad_MCemittanceBaseData
                 obj = obj.getRangeShiftersFromStf(stf);
             end
             
+            matRad_cfg = MatRad_Config.instance();
+            
             obj.machine = machine;
             obj.problemSigma = false;
             obj.selectedFocus = ones(numel(machine.data),1) * NaN;
@@ -64,7 +66,7 @@ classdef MatRad_MCemittanceBaseData
             if isfield(machine.meta,'BAMStoIsoDist')
                 obj.nozzleToIso = machine.meta.BAMStoIsoDist;
             else
-                warning('No information on BAMS to isocenter distance. Using generic value of 500mm');
+                matRad_cfg.dispWarning('No information on BAMS to isocenter distance. Using generic value of 500mm');
                 obj.nozzleToIso = 500;
             end
             
@@ -137,7 +139,7 @@ classdef MatRad_MCemittanceBaseData
             %throw out warning if there was a problem in calculating the
             %width of the Bragg peak in obj.fitBeamOpticsForEnergy
             if obj.problemSigma
-                warning('Calculation of FWHM of bragg peak in base data not possible! Using simple approximation for energy spread');
+                matRad_cfg.dispWarning('Calculation of FWHM of bragg peak in base data not possible! Using simple approximation for energy spread');
             end
         end
         

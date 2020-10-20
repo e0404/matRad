@@ -116,7 +116,9 @@ for i = 1:numOfFields
             rangeShifter = stf(i).energyLayer(j).rangeShifter;
             if rangeShifter.ID ~= 0
                 fprintf(fileHandle,'####RangeShifterSetting\n%s\n','IN');
-                isoToRaShi = stf(i).SAD - rangeShifter.sourceRashiDistance;
+                pmma_rsp = 1.165; %TODO: hardcoded for now
+                rsWidth = rangeShifter.eqThickness / pmma_rsp;
+                isoToRaShi = stf(i).SAD - rangeShifter.sourceRashiDistance + rsWidth;
                 fprintf(fileHandle,'####IsocenterToRangeShifterDistance\n%f\n',-isoToRaShi/10); %in cm
                 fprintf(fileHandle,'####RangeShifterWaterEquivalentThickness\n%f\n',rangeShifter.eqThickness);
             else
