@@ -87,6 +87,11 @@ ctR.z = dij.doseGrid.z;
 load([pln.radiationMode,'_',pln.machine]);
 topasConfig = MatRad_TopasConfig();
 % Create Base Data
+if isstruct(machine.data(i).Z)
+    for i = 1:length(machine.data)
+        machine.data(i).Z = machine.data(i).Z.profileORG;
+    end
+end
 topasBaseData = MatRad_TopasBaseData(machine,stf);%,TopasConfig);
 
 topasConfig.numHistories = nCasePerBixel;
