@@ -387,8 +387,10 @@ end
 
 % reorder influence matrix to comply with matRad default ordering
 if MCsquareConfig.Beamlet_Mode
-    dij.physicalDose{1} = dij.physicalDose{1}(:,MCsquareOrder);   
-    dij.mLETDose{1} = dij.mLETDose{1}(:,MCsquareOrder);
+    dij.physicalDose{1} = dij.physicalDose{1}(:,MCsquareOrder);  
+    if pln.propDoseCalc.calcLET
+        dij.mLETDose{1} = dij.mLETDose{1}(:,MCsquareOrder);
+    end
 end       
 
 matRad_cfg.dispInfo('matRad: done!\n');

@@ -55,14 +55,20 @@ for testIx = 1:length(testScriptNames)
         clear ct cst pln stf dij resultGUI; %Make sure the workspace is somewhat clean
         delete(testScripts{testIx}); %Delete after successful run
     catch ME
-        errMsg = sprintf('Experiencd an error during testing of %s. Error-Message:\n %s',regexprep(testScripts{testIx},'([[\]{}()=''.(),;:%%{%}!@])','\\$1'),ME.message);
-        matRad_cfg.dispWarning(errMsg);
+        [~,scriptName] = fileparts(testScripts{testIx});
+        if matRad_cfg.isMatlab
+            message = ME.getReport();
+        else
+            message = ME.message;
+        end
+        errMsg = sprintf('Experiencd an error during testing of %s. Error-Message:\n %s',scriptName,message);
+        warning(errMsg);
         errors{end+1} = errMsg;
     end
 end
 
 %Check if at least one script failed and report error
 if ~isempty(errors)
-    matRad_cfg.dispError(strjoin(errors,'\n\n============================\n\n'));
+    error(strjoin(errors,'\n\n============================\n\n'));
 end
     
