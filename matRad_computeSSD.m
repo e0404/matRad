@@ -56,10 +56,10 @@ if strcmp(mode,'first')
 
             if boolShowWarning
                 if isempty(ixSSD)
-                    matRad_cfg.displayToConsole('warning','ray does not hit patient. Trying to fix afterwards...');
+                    matRad_cfg.dispWarning('ray does not hit patient. Trying to fix afterwards...');
                     boolShowWarning = false;
                 elseif ixSSD(1) == 1
-                    matRad_cfg.displayToConsole('warning','Surface for SSD calculation starts directly in first voxel of CT\n');
+                    matRad_cfg.dispWarning('Surface for SSD calculation starts directly in first voxel of CT!');
                     boolShowWarning = false;
                 end
             end
@@ -79,9 +79,10 @@ if strcmp(mode,'first')
         end
     end
 else
-    error('mode not defined for SSD calculation');
+    matRad_cfg.dispError('mode not defined for SSD calculation');
 end
 
+end
 
 % default setting only use first cube
 function bestSSD = matRad_closestNeighbourSSD(rayPos, SSD, currPos)
@@ -95,13 +96,8 @@ function bestSSD = matRad_closestNeighbourSSD(rayPos, SSD, currPos)
         end
     end
     if any(isempty(bestSSD))
-        error('Could not fix SSD calculation.');
+        matRad_cfg = MatRad_Config.instance();
+        matRad_cfg.dispError('Could not fix SSD calculation.');
     end
 end
 
-
-
-
-
-
-end

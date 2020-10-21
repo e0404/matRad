@@ -111,7 +111,7 @@ if enable(1)==0
     gammaPassRate = [];
 end
 % Load colormap for difference
-load('diffCMap.mat');
+diffCMap = matRad_getColormap('diffMap');
 
 %% Calculate iso-center slices and resolution
 if isempty(cst)
@@ -154,7 +154,8 @@ if enable(1) == 1
     % Calculate absolute difference cube and dose windows for plots
     differenceCube  = cube1-cube2;
     doseDiffWindow  = [-max(differenceCube(:)) max(differenceCube(:))];
-    doseGammaWindow = [0 max(gammaCube(:))];
+    %doseGammaWindow = [0 max(gammaCube(:))];
+    doseGammaWindow = [0 2]; %We choose 2 as maximum value since the gamma colormap has a sharp cut in the middle
     
     
     % Plot everything

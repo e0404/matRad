@@ -46,11 +46,23 @@ status = cellfun(@copyfile,exampleScripts,testScripts);
 matRad_unitTestTextManipulation(testScripts,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)]);
 matRad_unitTestTextManipulation(testScripts,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR TESTING %%%%%%%%%%%%%%');
 
+errors = {};
 %Running tests
 for testIx = 1:length(testScriptNames)
     fprintf('Running Integration Test for ''%s''\n',names{testIx});
-    run(testScripts{testIx});
-    clear ct cst pln stf dij resultGUI; %Make sure the workspace is somewhat clean
-    delete(testScripts{testIx}); %Delete after successful run
+    try
+        run(testScripts{testIx});
+        clear ct cst pln stf dij resultGUI; %Make sure the workspace is somewhat clean
+        delete(testScripts{testIx}); %Delete after successful run
+    catch ME
+        errMsg = sprintf('Experiencd an error during testing of %s. Error-Message:\n %s',regexprep(testScripts{testIx},'([[\]{}()=''.(),;:%%{%}!@])','\\$1'),ME.message);
+        matRad_cfg.dispWarning(errMsg);
+        errors{end+1} = errMsg;
+    end
+end
+
+%Check if at least one script failed and report error
+if ~isempty(errors)
+    matRad_cfg.dispError(strjoin(errors,'\n\n============================\n\n'));
 end
     

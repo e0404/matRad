@@ -41,11 +41,16 @@ classdef matRad_DicomExporter < handle
         PatientID
         PatientName
         PatientPosition
+        PatientBirthDate = '';
+        PatientSex = '';
         StudyID
         StudyDate
         StudyTime
         StudyInstanceUID
         FrameOfReferenceUID
+        
+        %Operator
+        OperatorsName
         
         % ct
         ctFilePrefix = 'ct_slice_';
@@ -145,6 +150,7 @@ classdef matRad_DicomExporter < handle
             
             obj.PatientID = ['matRad_default_patient_' dateStr];
             obj.PatientName = obj.dicomName();
+            obj.OperatorsName = obj.dicomName();
             
             obj.StudyID = ['matRad_' dateStr];
             obj.StudyDate = dateStr;

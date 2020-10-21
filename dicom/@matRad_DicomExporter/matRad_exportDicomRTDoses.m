@@ -51,6 +51,7 @@ meta.SOPClassUID = storageClass;
 %meta.TransferSyntaxUID = TransferSyntaxUID;
 
 meta.Modality = 'RTDOSE';
+meta.Manufacturer = '';
 meta.DoseUnits = 'GY';
 
 %Reference
@@ -70,15 +71,19 @@ meta.StudyDate = obj.StudyDate;
 meta.StudyTime = obj.StudyTime;
 
 meta.FrameOfReferenceUID = obj.FrameOfReferenceUID;
+meta.PositionReferenceIndicator = '';
 
 
 %Remaining stuff
 meta.AccessionNumber = '';
 meta.StationName = '';
+meta.OperatorsName = obj.OperatorsName;
 meta.ReferringPhysicianName = obj.dicomName();
 
 meta.PatientName = obj.PatientName;
 meta.PatientID = obj.PatientID;
+meta.PatientBirthDate = obj.PatientBirthDate;
+meta.PatientSex = obj.PatientSex;
 
 %This RTDose series
 meta.SeriesInstanceUID = dicomuid;
@@ -106,13 +111,14 @@ meta.GridFrameOffsetVector = transpose(ct.z - ct.z(1));
 try
     rtPlanUID = obj.rtPlanMeta.SOPInstanceUID;
     rtPlanClassID = obj.rtPlanMeta.SOPClassUID;
+    meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPClassUID = rtPlanClassID;
+    meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPInstanceUID = rtPlanUID;
 catch
     rtPlanUID = '';
     rtPlanClassID = '';
 end
     
-meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPClassUID = rtPlanClassID;
-meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPInstanceUID = rtPlanUID;
+
 
 if nargin < 4 || isempty(doseFieldNames)
     doseFieldNames = cell(0);

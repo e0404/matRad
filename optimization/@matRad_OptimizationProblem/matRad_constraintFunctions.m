@@ -5,7 +5,7 @@ function c = matRad_constraintFunctions(optiProb,w,dij,cst)
 % max DVH constraint, min DVH constraint 
 % 
 % call
-%   c = matRad_jacobFunc(optiProb,w,dij,cst)
+%   c = matRad_constraintFunctions(optiProb,w,dij,cst)
 %
 % input
 %   optiProb:   option struct defining the type of optimization

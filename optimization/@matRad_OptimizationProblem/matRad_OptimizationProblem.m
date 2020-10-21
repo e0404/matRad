@@ -1,5 +1,9 @@
 classdef matRad_OptimizationProblem < handle
-    %handle class to keep state easily
+    %matRad_OptimizationProblem Main Class for fluence optimization problems
+    % Describes a standard fluence optimization problem by providing the 
+    % implementation of the objective & constraint function/gradient wrappers
+    % and managing the mapping and backprojection of the respective dose-
+    % related quantity
     %
     % References
     %   -
@@ -18,14 +22,9 @@ classdef matRad_OptimizationProblem < handle
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties
-        BP
-        bioOpt = '';
+        BP              %matRad_BackProjection object for mapping & backprojection
+        bioOpt = '';    
     end
-    
-    %properties (Access = private)
-    %    currentDose
-    %    currentWeights
-    %end
     
     methods
         function obj = matRad_OptimizationProblem(backProjection)
