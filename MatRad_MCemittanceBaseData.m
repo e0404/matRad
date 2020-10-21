@@ -158,7 +158,6 @@ classdef MatRad_MCemittanceBaseData
             mcDataEnergy.NominalEnergy = obj.machine.data(i).energy;
             
             newDepths = linspace(0,obj.machine.data(i).depths(end),numel(obj.machine.data(i).depths) * 100);
-            newDepths = newDepths;
             newDose   = interp1(obj.machine.data(i).depths, obj.machine.data(i).Z, newDepths, 'spline');
             
             %find FWHM w50 of bragg peak and range of 80% does fall off
