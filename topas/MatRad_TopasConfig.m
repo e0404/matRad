@@ -146,7 +146,11 @@ classdef MatRad_TopasConfig < handle
             obj.matRad_cfg.dispInfo('Writing parameter files to %s\n',obj.workingDir);
 
             obj.writePatient(ct,pln);
-            obj.writeStfFields(ct,stf,topasBaseData,w);                       
+            if ~exist('w','var')
+               numBixels = sum([stf(:).totalNumOfBixels]);
+               w = ones(numBixels,1);
+            end
+            obj.writeStfFields(ct,stf,topasBaseData,w);     
 
             obj.matRad_cfg.dispInfo('Successfully written TOPAS setup files!\n')
             
@@ -243,13 +247,7 @@ classdef MatRad_TopasConfig < handle
         end
         
         function writeStfFields(obj,ct,stf,baseData,w)
-            
-            %snippet for future dij simulation
-            %if ~exist('w','var')
-            %    numBixels = sum([stf(:).totalNumOfBixels)];
-            %    w = ones(numBixels,1);
-            %end
-            
+                      
             %Bookkeeping
             obj.MCparam.nbFields = length(stf);
             
