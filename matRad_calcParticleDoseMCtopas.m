@@ -109,8 +109,6 @@ if calcDoseDirect
             ct = ct + rayBix;
         end
     end
-else
-    w = ones(sum([stf(:).totalNumOfBixels]),1);
 end
 
 currDir = cd;
@@ -130,8 +128,11 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 %TOPAS here)
                 ctR.cubeHU = cubeHUresampled(ctScen);
                 ctR.cube = cubeResampled(ctScen);
-                                
-                topasConfig.writeAllFiles(ctR,pln,stf,topasBaseData,w);                
+                if calcDoseDirect
+                    topasConfig.writeAllFiles(ctR,pln,stf,topasBaseData,w);
+                else
+                    topasConfig.writeAllFiles(ctR,pln,stf,topasBaseData);
+                end
                 
                 % Run simulation for current scenario
                 cd(topasConfig.workingDir);
