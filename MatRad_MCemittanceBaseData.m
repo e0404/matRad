@@ -55,7 +55,9 @@ classdef MatRad_MCemittanceBaseData
                 obj.stfCompressed = true;
             end
             
+            matRad_cfg = MatRad_Config.instance();
             obj.energyspread = matRad_cfg.propMC.defaultCarbonEnergySpread;
+            
             obj.machine = machine;
             obj.problemSigma = false;
             obj.selectedFocus = ones(numel(machine.data),1) * NaN;
