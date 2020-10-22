@@ -110,7 +110,7 @@ if calcDoseDirect
         end
     end
 else
-    w = ones(sum([stf(:).totalNumOfBixels]),1)/sum([stf(:).totalNumOfBixels]);
+    w = ones(sum([stf(:).totalNumOfBixels]),1);
 end
 
 currDir = cd;
@@ -182,7 +182,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         dij.(fnames{f}){1} = sum(w)*reshape(topasCubes.(fnames{f}),[],1);
                     else
                         for d = 1:stf(f).totalNumOfBixels
-                            dij.physicalDose{1}(:,d) = sum(w)*reshape(topasCubes.(fnames{f}){d},[],1);
+                            dij.physicalDose{1}(:,d) = reshape(topasCubes.(fnames{f}){d},[],1);
                         end
                     end
                 end
