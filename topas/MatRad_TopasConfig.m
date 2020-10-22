@@ -321,7 +321,13 @@ classdef MatRad_TopasConfig < handle
                             dataTOPAS(cutNumOfBixel).posX = -1.*voxel_x;
                             dataTOPAS(cutNumOfBixel).posY = voxel_y;
                             
-                            dataTOPAS(cutNumOfBixel).current = uint32(obj.fracHistories*nCurrentParticles / obj.numOfRuns);
+                            if obj.scoreDij
+                                % write particles directly to every beamlet for dij calculation (each bixel
+                                % calculated separately with full numParticles
+                                dataTOPAS(cutNumOfBixel).current = uint32(nCurrentParticles / obj.numOfRuns);
+                            else
+                                dataTOPAS(cutNumOfBixel).current = uint32(obj.fracHistories*nCurrentParticles / obj.numOfRuns);
+                            end
                             
                             if obj.pencilBeamScanning
                                 % angleX corresponds to the rotation around the X axis necessary to move the spot in the Y direction
