@@ -216,7 +216,9 @@ classdef MatRad_TopasConfig < handle
                 obj.matRad_cfg.dispDebug('Reading Dose Scorer from %s\n',fname);
                 scorer = fileread(fname);                
                 fprintf(fID,'%s\n',scorer);
-                obj.MCparam.tallies{end+1} = 'physicalDose';
+                if ~any(strcmp(obj.MCparam.tallies,'physicalDose'))
+                    obj.MCparam.tallies{end+1} = 'physicalDose';
+                end
             end
                        
             if obj.addVolumeScorers
