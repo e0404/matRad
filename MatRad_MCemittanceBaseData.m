@@ -31,6 +31,7 @@ classdef MatRad_MCemittanceBaseData
         monteCarloData  %MC Phase space data struct
         selectedFocus   %array containing selected focus indices per energy
         FWHMatIso       %array containing FWHM values at iscenter for every energy
+        energyspread    %custom energy spread
     end
     
     properties (SetAccess = private)
@@ -54,6 +55,7 @@ classdef MatRad_MCemittanceBaseData
                 obj.stfCompressed = true;
             end
             
+            obj.energyspread = matRad_cfg.propMC.defaultCarbonEnergySpread;
             obj.machine = machine;
             obj.problemSigma = false;
             obj.selectedFocus = ones(numel(machine.data),1) * NaN;
