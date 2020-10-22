@@ -52,7 +52,8 @@ if isfield(pln,'propMC') && isfield(pln.propMC,'outputVariance')
 end
 
 if ~calcDoseDirect
-    matRad_cfg.dispError('matRad so far only supports direct dose calculation for TOPAS!\n');
+    %     matRad_cfg.dispError('matRad so far only supports direct dose calculation for TOPAS!\n');
+    matRad_cfg.dispWarning('You have selected TOPAS dij calculation, this may take a while ^^');
 end
 
 env = matRad_getEnvironment();
@@ -98,14 +99,18 @@ topasConfig.numHistories = nCasePerBixel;
 topasConfig.numOfRuns = matRad_cfg.propMC.topas_defaultNumBatches;
 
 %Collect weights
-w = zeros(sum([stf(:).totalNumOfBixels]),1);
-ct = 1;
-for i = 1:length(stf)
-    for j = 1:stf(i).numOfRays
-        rayBix = stf(i).numOfBixelsPerRay(j);
-        w(ct:ct+rayBix-1) = stf(i).ray(j).weight;
-        ct = ct + rayBix;
+if calcDoseDirect
+    w = zeros(sum([stf(:).totalNumOfBixels]),1);
+    ct = 1;
+    for i = 1:length(stf)
+        for j = 1:stf(i).numOfRays
+            rayBix = stf(i).numOfBixelsPerRay(j);
+            w(ct:ct+rayBix-1) = stf(i).ray(j).weight;
+            ct = ct + rayBix;
+        end
     end
+else
+    w = ones(sum([stf(:).totalNumOfBixels]),1)/sum([stf(:).totalNumOfBixels]);
 end
 
 currDir = cd;
@@ -164,14 +169,24 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 cd(currDir);
                 
                 %% Simulation finished - read out volume scorers from topas simulation
-                
-                topasCubes = matRad_readTopasData(topasConfig.workingDir);
-
+                if calcDoseDirect
+                    topasCubes = matRad_readTopasData(topasConfig.workingDir);
+                else
+                    topasCubes = matRad_readTopasData(topasConfig.workingDir,dij);
+                end
+               
                 fnames = fieldnames(topasCubes);
                 dij.MC_tallies = fnames;
                 for f = 1:numel(fnames)
-                    dij.(fnames{f}){1} = sum(w)*reshape(topasCubes.(fnames{f}),[],1);
+                    if calcDoseDirect
+                        dij.(fnames{f}){1} = sum(w)*reshape(topasCubes.(fnames{f}),[],1);
+                    else
+                        for d = 1:stf(f).totalNumOfBixels
+                            dij.physicalDose{1}(:,d) = sum(w)*reshape(topasCubes.(fnames{f}){d},[],1);
+                        end
+                    end
                 end
+
             end
         end
     end

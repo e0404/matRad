@@ -1,6 +1,10 @@
-function [topasCube] = matRad_readTopasData(folder)
+function [topasCube] = matRad_readTopasData(folder,dij)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
+if exist('dij')
+    calcDoseDirect = false;
+end
+
 load([folder filesep 'MCparam.mat']);
 
 %Normalize with histories and particles/weight
@@ -8,38 +12,74 @@ correctionFactor = 1e6 / double(MCparam.nbHistoriesTotal); %double(MCparam.nbPar
 
 cubeDim = MCparam.imageCubeDim;
 
-for t = 1:length(MCparam.tallies)
-    tname = MCparam.tallies{t};  
-    topasTally = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
+if calcDoseDirect % if topas dij calculation
+    for t = 1:length(MCparam.tallies)
+        tname = MCparam.tallies{t};
+        topasTally = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
         
-    for f = 1:MCparam.nbFields
-        topasSum = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
-        for k = 1:MCparam.nbRuns
-            genFileName = sprintf('score_%s_field%d_run%d_%s',MCparam.simLabel,f,k,tname);
-            switch MCparam.outputType
-                case 'csv'
-                    genFullFile = fullfile(folder,[genFileName '.csv']);
-                    data = readCsvData(genFullFile,cubeDim);
-                case 'binary'
-                    genFullFile = fullfile(folder,[genFileName '.bin']);
-                    data = readBinData(genFullFile,cubeDim);
-                otherwise
-                    error('Not implemented!');
+        for f = 1:MCparam.nbFields
+            topasSum = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
+            for k = 1:MCparam.nbRuns
+                genFileName = sprintf('score_%s_field%d_run%d_%s',MCparam.simLabel,f,k,tname);
+                switch MCparam.outputType
+                    case 'csv'
+                        genFullFile = fullfile(folder,[genFileName '.csv']);
+                        data = readCsvData(genFullFile,cubeDim);
+                    case 'binary'
+                        genFullFile = fullfile(folder,[genFileName '.bin']);
+                        data = readBinData(genFullFile,cubeDim);
+                    otherwise
+                        error('Not implemented!');
+                end
+                topasSum = topasSum + data;
             end
-            topasSum = topasSum + data;
+            
+            topasSum = correctionFactor.*topasSum;
+            
+            % Tally per field
+            topasCube.([tname '_beam' num2str(f)]) = topasSum;
+            
+            % Accumulate over the fields
+            topasTally = topasTally + topasSum;
         end
         
-        topasSum = correctionFactor.*topasSum;
-        
-        % Tally per field
-        topasCube.([tname '_beam' num2str(f)]) = topasSum;
-        
-        % Accumulate over the fields
-        topasTally = topasTally + topasSum;
+        topasCube.(tname) = topasTally;
     end
-    
-    topasCube.(tname) = topasTally;
+else
+    for t = 1:length(MCparam.tallies)
+        tname = MCparam.tallies{t};
+        topasTally = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
+        
+        for f = 1:MCparam.nbFields
+            topasSum = cell(1,dij.totalNumOfBixels);
+            topasSum(1,:) = {zeros(cubeDim(1),cubeDim(2),cubeDim(3))};
+            for i = 1:dij.totalNumOfBixels
+                for k = 1:MCparam.nbRuns
+                    
+                    genFileName = sprintf('score_%s_field%d_run%d_%s-ray%i_bixel%i',MCparam.simLabel,f,k,tname,dij.rayNum(i),dij.bixelNum(i));
+                    switch MCparam.outputType
+                        case 'csv'
+                            genFullFile = fullfile(folder,[genFileName '.csv']);
+                            data = readCsvData(genFullFile,cubeDim);
+                        case 'binary'
+                            genFullFile = fullfile(folder,[genFileName '.bin']);
+                            data = readBinData(genFullFile,cubeDim);
+                        otherwise
+                            error('Not implemented!');
+                    end
+                    topasSum{i} = topasSum{i} + data;
+                end
+                
+                topasSum{i} = correctionFactor.*topasSum{i};
+                
+                % Tally per field
+                topasCube.([tname '_beam' num2str(f)]){i} = topasSum{i};
+            end
+        end
+    end
 end
+
+
 
 end
 

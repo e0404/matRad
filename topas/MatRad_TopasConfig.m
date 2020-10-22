@@ -32,7 +32,7 @@ classdef MatRad_TopasConfig < handle
         
         %Simulation parameters
         numThreads = 0; %number of used threads, 0 = max number of threads (= num cores)
-        numOfRuns = 5; %Default number of runs / batches
+        numOfRuns = 1; %Default number of runs / batches
         modeHistories = 'num'; %'frac';
         fracHistories = 1e-4; %Fraction of histories to compute
         numHistories = 1e6; %Number of histories to compute        
@@ -71,6 +71,7 @@ classdef MatRad_TopasConfig < handle
         addVolumeScorers = true
         scoreDose = true;
         scoreTrackCount = false;
+        scoreDij = true;
         %scoreLET = true;
         scoreReportQuantity = 'Sum'; 
         outputType = 'binary'; %'csv'; 'binary';%             
@@ -265,7 +266,7 @@ classdef MatRad_TopasConfig < handle
             switch obj.modeHistories
                 case 'num'
                     obj.fracHistories = obj.numHistories ./ sum(nParticlesTotalBixel);
-                   case 'frac'
+                case 'frac'
                     obj.numHistories = sum(nParticlesTotalBixel);
                 otherwise
                     obj.matRad_cfg.dispError('Invalid history setting!');
@@ -346,6 +347,15 @@ classdef MatRad_TopasConfig < handle
                                 dataTOPAS(cutNumOfBixel).correlation = selectedData(ixTmp).Correlation1x;
                                 dataTOPAS(cutNumOfBixel).focusFWHM = selectedData(ixTmp).FWHMatIso;
                             end
+                            
+                            if obj.scoreDij
+                                % remember beam and bixel number
+                                dataTOPAS(cutNumOfBixel).beam           = beamIx;
+                                dataTOPAS(cutNumOfBixel).ray            = rayIx;
+                                dataTOPAS(cutNumOfBixel).bixel          = bixelIx;
+                                dataTOPAS(cutNumOfBixel).totalBixel     = currentBixel;
+                            end
+                                                        
                             nBeamParticlesTotal(beamIx) = nBeamParticlesTotal(beamIx) + nCurrentParticles;
                             
                             
@@ -385,7 +395,7 @@ classdef MatRad_TopasConfig < handle
                 
                 historyCount(beamIx) = historyCount(beamIx) * obj.numOfRuns;  
 
-                
+
                 %sort dataTOPAS according to energy
                 [~,ixSorted] = sort([dataTOPAS(:).energy]);
                 dataTOPAS = dataTOPAS(ixSorted);
@@ -553,7 +563,7 @@ classdef MatRad_TopasConfig < handle
                 fprintf(fileID,'d:Ge/Patient/RotZ=0. deg\n');
                 
                 %load topas modules depending on the particle type
-                fprintf(fileID,'# MODULES\n');
+                fprintf(fileID,'\n# MODULES\n');
                 moduleString = cellfun(@(s) sprintf('"%s"',s),modules,'UniformOutput',false);
                 fprintf(fileID,'sv:Ph/Default/Modules = %d %s\n',length(modules),strjoin(moduleString,' '));
                 
@@ -566,9 +576,21 @@ classdef MatRad_TopasConfig < handle
                     fprintf(fileID,['i:Ts/Seed = ',num2str(runIx),'\n']);
                     fprintf(fileID,'includeFile = ./%s\n',fieldSetupFileName);
                     obj.writeScorers(fileID);
+                    if obj.scoreDij
+                        fprintf(fileID,'s:Tf/ImageName/Function = "Step"\n');
+                        % create time feature scorer and save with original rays and bixel names
+                        imageName = ['sv:Tf/ImageName/Values = ',num2str(cutNumOfBixel),strcat(' "ray',string([dataTOPAS.ray]))+strcat('_bixel',string([dataTOPAS.bixel]),'"')];
+                        fprintf(fileID,'%s\n',strjoin(imageName));
+                        fprintf(fileID,'dv:Tf/ImageName/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'s:Sc/Patient/Tally_DoseToMedium/SplitByTimeFeature = "ImageName"');
+                    end
                     fclose(fileID);
-                end                                
+                end
             end
+            
+
+            
+            
             
             %Bookkeeping
             obj.MCparam.nbParticlesTotal = nParticlesTotal;
