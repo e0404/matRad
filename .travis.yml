@@ -58,7 +58,6 @@ before_install:
   # Windows Setup
   - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then echo "Testing matRad on Windows..." ; fi
   - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then choco install octave.portable ; fi  
-  - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' ; fi
   # - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then bash ./before_install_win_gitbash.sh ; fi
   
 
@@ -90,6 +89,8 @@ before_cache:
 cache:
   directories:
     - $HOME/Library/Caches/Homebrew
+    - $HOME/AppData/Local/Temp/chocolatey
+    - /C/ProgramData/chocolatey/
 
 notifications:
     slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ
