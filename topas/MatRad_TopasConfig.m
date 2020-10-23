@@ -378,8 +378,11 @@ classdef MatRad_TopasConfig < handle
                 idx = find([dataTOPAS.current] < 1);
                 dataTOPAS(idx) = [];
                 cutNumOfBixel = length(dataTOPAS(:));
-                
-                historyCount(beamIx) = uint32(obj.fracHistories * nBeamParticlesTotal(beamIx) / obj.numOfRuns);
+                if obj.scoreDij
+                    historyCount(beamIx) = uint32(nBeamParticlesTotal(beamIx) / obj.numOfRuns);
+                else
+                    historyCount(beamIx) = uint32(obj.fracHistories * nBeamParticlesTotal(beamIx) / obj.numOfRuns);
+                end
                 
                 while sum([dataTOPAS.current]) ~= historyCount(beamIx)
                     % Randomly pick an index with the weigth given by the current
