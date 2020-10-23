@@ -45,24 +45,24 @@ matRad_cfg.dispInfo('matRad: Particle dose calculation... \n');
 matRad_calcDoseInit;
 
 if ~isfield(pln,'heterogeneity')
-    pln.heterogeneity.calcHetero = false;
+    pln.propHeterogeneity.calcHetero = false;
 else
-    if ~isfield(pln.heterogeneity,'calcHetero')
-        pln.heterogeneity.calcHetero = matRad_cfg.propHeterogeneity.defaultCalcHetero;
+    if ~isfield(pln.propHeterogeneity,'calcHetero')
+        pln.propHeterogeneity.calcHetero = matRad_cfg.propHeterogeneity.defaultCalcHetero;
     end
-    if ~isfield(pln.heterogeneity,'useOriginalDepths')
-        pln.heterogeneity.useOriginalDepths = matRad_cfg.propHeterogeneity.defaultUseOriginalDepths;
+    if ~isfield(pln.propHeterogeneity,'useOriginalDepths')
+        pln.propHeterogeneity.useOriginalDepths = matRad_cfg.propHeterogeneity.defaultUseOriginalDepths;
     end
-    if ~isfield(pln.heterogeneity,'type')
-        pln.heterogeneity.type = matRad_cfg.propHeterogeneity.defaultType;
+    if ~isfield(pln.propHeterogeneity,'type')
+        pln.propHeterogeneity.type = matRad_cfg.propHeterogeneity.defaultType;
     end
-    if ~isfield(pln.heterogeneity,'modulateBioDose')
-        pln.heterogeneity.modulateBioDose = matRad_cfg.propHeterogeneity.defaultModulateBioDose;
+    if ~isfield(pln.propHeterogeneity,'modulateBioDose')
+        pln.propHeterogeneity.modulateBioDose = matRad_cfg.propHeterogeneity.defaultModulateBioDose;
     end
 end
     
 % initialize lung heterogeneity correction
-if pln.heterogeneity.calcHetero
+if pln.propHeterogeneity.calcHetero
     matRad_cfg.dispInfo('Heterogeneity correction enabled. \n');
     heteroCST = false;
     for i = 1:length(cst(:,1)) % scan cst for segmentation flagged for correction
@@ -73,14 +73,14 @@ if pln.heterogeneity.calcHetero
     end
     if ~isstruct(machine.data(1).Z) || ~heteroCST
        matRad_cfg.dispWarning('Heterogeneity correction enabled but no usable data in cst or unsuitable base data. Correction cannot be applied.'); 
-       pln.heterogeneity.calcHetero = false;
+       pln.propHeterogeneity.calcHetero = false;
     end
 else
     matRad_cfg.dispInfo('Heterogeneity correction disabled. \n');
 end
 
 
-if pln.heterogeneity.calcHetero
+if pln.propHeterogeneity.calcHetero
     lungVoxel = unique(cell2mat([cst{contains(cst(:,2),'lung','IgnoreCase',true),4}]')); % get all lung voxel indices
     
     calcHeteroCorrStruct.cube = {zeros(ct.cubeDim)};
@@ -90,7 +90,7 @@ if pln.heterogeneity.calcHetero
     calcHeteroCorrStruct.numOfCtScen = pln.multScen.numOfCtScen;
     calcHeteroCorrStruct.resolution = ct.resolution;
     
-    if pln.heterogeneity.useOriginalDepths
+    if pln.propHeterogeneity.useOriginalDepths
         machine.data = matRad_checkBaseData(machine.data);
         if isstruct(machine.data(1).Z) && isfield(machine.data(1).Z,'profileORG')
             for i = 1:length(machine.data)
@@ -281,7 +281,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
         matRad_calcDoseInitBeam;
         
         % Calculate radiological depth cube for heterogeneity correction
-        if pln.heterogeneity.calcHetero
+        if pln.propHeterogeneity.calcHetero
             matRad_cfg.dispInfo('matRad: calculate radiological depth cube for heterogeneity correction...');
             heteroCorrDepthV = matRad_rayTracing(stf(i),calcHeteroCorrStruct,VctGrid,rot_coordsV,effectiveLateralCutoff);
             % HETERO interpolate hetero depth cube to dose grid resolution
@@ -315,7 +315,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     find(~isnan(radDepthVdoseGrid{1})), ...
                     maxLateralCutoffDoseCalc);
                 
-                if pln.heterogeneity.calcHetero
+                if pln.propHeterogeneity.calcHetero
                     heteroCorrDepths = heteroCorrDepthV{1}(ix);
                 end
                 
@@ -422,7 +422,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
                                 end
                                 
-                                if pln.heterogeneity.calcHetero
+                                if pln.propHeterogeneity.calcHetero
                                     currHeteroCorrDepths = heteroCorrDepths(currIx);
                                 end
                                     
@@ -445,15 +445,15 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 end
                                 
                                 % calculate particle dose for bixel k on ray j of beam i
-                                if pln.heterogeneity.calcHetero
+                                if pln.propHeterogeneity.calcHetero
                                     bixelDose = matRad_calcParticleDoseBixel(...
                                         currRadDepths, ...
                                         radialDist_sq(currIx), ...
                                         sigmaIni_sq, ...
                                         machine.data(energyIx), ...
                                         currHeteroCorrDepths, ...
-                                        pln.heterogeneity.type, ...
-                                        pln.heterogeneity.modulateBioDose, vTissueIndex_j(currIx));
+                                        pln.propHeterogeneity.type, ...
+                                        pln.propHeterogeneity.modulateBioDose, vTissueIndex_j(currIx));
                                 else
                                     bixelDose = matRad_calcParticleDoseBixel(...
                                         currRadDepths, ...
