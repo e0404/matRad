@@ -298,6 +298,6 @@ if enable(3) == 1 && ~isempty(cst)
     title('Dose Volume Histrogram, Dose 1: solid, Dose 2: dashed')
 end
 %%
-matRad_cfg.dispInfo('Done!');
+matRad_cfg.dispInfo('Done!\n');
 
 end
