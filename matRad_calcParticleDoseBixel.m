@@ -56,7 +56,7 @@ conversionFactor = 1.6021766208e-02;
 if isstruct(baseData.Z) && ~isfield(baseData,'sigma1')
     
     % interpolate depth dose and sigma
-    X = matRad_interp1(depths,baseData.sigma,radDepths);
+    X = matRad_interp1(depths,baseData.sigma,radDepths,'extrap');
     
     %compute lateral sigma
     sigmaSq = X.^2 + sigmaIni_sq;
