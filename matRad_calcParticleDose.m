@@ -44,7 +44,7 @@ matRad_cfg.dispInfo('matRad: Particle dose calculation... \n');
 % init dose calc
 matRad_calcDoseInit;
 
-if ~isfield(pln,'heterogeneity')
+if ~isfield(pln,'propHeterogeneity')
     pln.propHeterogeneity.calcHetero = false;
 else
     if ~isfield(pln.propHeterogeneity,'calcHetero')

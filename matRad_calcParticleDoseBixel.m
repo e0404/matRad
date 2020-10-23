@@ -180,7 +180,7 @@ if ~isempty(heteroCorrDepths) && modulateBioDose
             
         end
     else
-        error('No alpha dose defined in base data, use fitted APM file with pln.heterogeneity.useDoseCurves')
+        error('No alpha dose defined in base data, use fitted APM file with pln.propHeterogeneity.useDoseCurves')
     end
 end
 
