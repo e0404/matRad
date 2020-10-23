@@ -61,7 +61,7 @@ else
     end
 end
     
-% initialize lung heterogeneity correction
+% initialize lung heterogeneity correction and turn off if necessary files are missing
 if pln.propHeterogeneity.calcHetero
     matRad_cfg.dispInfo('Heterogeneity correction enabled. \n');
     heteroCST = false;
@@ -79,16 +79,21 @@ else
     matRad_cfg.dispInfo('Heterogeneity correction disabled. \n');
 end
 
-
+% initialize HeteroCorrStruct and adjust base data if needed
 if pln.propHeterogeneity.calcHetero
-    lungVoxel = unique(cell2mat([cst{contains(cst(:,2),'lung','IgnoreCase',true),4}]')); % get all lung voxel indices
     
-    calcHeteroCorrStruct.cube = {zeros(ct.cubeDim)};
-    calcHeteroCorrStruct.cube{1}(lungVoxel) = ct.cube{1}(lungVoxel);
-    
+    lungVoxel = unique(cell2mat([cst{contains(cst(:,2),'lung','IgnoreCase',true),4}]),'rows'); % get all lung voxel indices
     calcHeteroCorrStruct.cubeDim = ct.cubeDim;
     calcHeteroCorrStruct.numOfCtScen = pln.multScen.numOfCtScen;
     calcHeteroCorrStruct.resolution = ct.resolution;
+    
+    calcHeteroCorrStruct.cube = cell(1,ctScen);
+    calcHeteroCorrStruct.cube(1,:) = {zeros(ct.cubeDim)};
+    
+    for shiftScen = 1:pln.multScen.numOfCtScen
+        calcHeteroCorrStruct.cube{shiftScen}(lungVoxel(:,shiftScen)) = ct.cube{shiftScen}(lungVoxel(:,shiftScen));
+    end
+    
     
     if pln.propHeterogeneity.useOriginalDepths
         machine.data = matRad_checkBaseData(machine.data);
@@ -102,6 +107,7 @@ if pln.propHeterogeneity.calcHetero
             matRad_cfg.dispWarning('Base data depths are already in the desired format.');
         end
     end
+    
 end
 
 % helper function for energy selection
