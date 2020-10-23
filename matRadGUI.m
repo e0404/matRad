@@ -244,6 +244,8 @@ if handles.State > 0
             if sum(currPln.propStf.isoCenter(:)) ~= 0
                 %currSlice = round((currPln.propStf.isoCenter(1,planePermIx)+ctRes(planePermix)/2)/ctRes(planePermIx))-1;
                 currSlice = round(currPln.propStf.isoCenter(1,planePermIx) / ctRes(planePermIx));
+            else
+                currSlice = 0;
             end
         end
     catch
