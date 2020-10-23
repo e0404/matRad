@@ -58,6 +58,17 @@ end
 
 matRad_calcDoseInit;
 
+% gaussian filter to model penumbra from (measured) machine output / see diploma thesis siggel 4.1.2
+if isfield(machine.data,'penumbraFWHMatIso')
+    penumbraFWHM = machine.data.penumbraFWHMatIso;
+else
+    penumbraFWHM = 5;
+    matRad_cfg.dispWarning('photon machine file does not contain measured penumbra width in machine.data.penumbraFWHMatIso. Assuming 5 mm.');
+end
+
+sourceFWHM = penumbraFWHM * machine.meta.SCD/(machine.meta.SAD - machine.meta.SCD);
+sigmaGauss = sourceFWHM / sqrt(8*log(2)); % [mm] 
+
 % set up arrays for book keeping
 dij.bixelNum = NaN*ones(dij.totalNumOfBixels,1);
 dij.rayNum   = NaN*ones(dij.totalNumOfBixels,1);
@@ -80,9 +91,11 @@ ompMCoptions.nBatches = 10;
 ompMCoptions.randomSeeds = [97 33];
 
 %start source definition      
-ompMCoptions.spectrumFile = [omcFolder filesep 'spectra' filesep 'mohan6.spectrum'];
-ompMCoptions.monoEnergy   = 0.1; 
-ompMCoptions.charge       = 0;
+ompMCoptions.spectrumFile       = [omcFolder filesep 'spectra' filesep 'mohan6.spectrum'];
+ompMCoptions.monoEnergy         = 0.1; 
+ompMCoptions.charge             = 0;
+ompMCoptions.sourceGeometry     = 'gaussian';
+ompMCoptions.sourceGaussianWidth = 0.1*sigmaGauss;
                                                                     
 % start MC transport
 ompMCoptions.dataFolder   = [omcFolder filesep 'data' filesep];
@@ -194,7 +207,7 @@ if visBool
 end
 
 %% Create beamlet source
-useCornersSCD = false; %false -> use ISO corners
+useCornersSCD = true; %false -> use ISO corners
 
 numOfBixels = [stf(:).numOfRays];
 beamSource = zeros(dij.numOfBeams, 3);
