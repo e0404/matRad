@@ -17,7 +17,7 @@ jobs:
             - gnuplot-x11
             - libgdcm-dev
             - octave
-            - liboctave-dev
+            - liboctave-dev      
     - name: "Ubuntu Matlab"
       os: linux
       language: matlab
@@ -32,9 +32,16 @@ jobs:
             - octave
             - llvm
             - libomp
+      cache:
+        directories:
+          - $HOME/Library/Caches/Homebrew
     - name: "Windows Octave"
       os: windows
       language: cpp
+      cache:
+        directories:
+          - $HOME/AppData/Local/Temp/chocolatey
+          - /C/ProgramData/chocolatey/
   allow_failures:
     - os: windows
     - os: osx
@@ -85,12 +92,6 @@ script:
 
 before_cache:
   - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then brew cleanup; fi
-
-cache:
-  directories:
-    - $HOME/Library/Caches/Homebrew
-    - $HOME/AppData/Local/Temp/chocolatey
-    - /C/ProgramData/chocolatey/
 
 notifications:
     slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ
