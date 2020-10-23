@@ -319,7 +319,7 @@ for s = 1:dij.numOfScenarios
         end
     catch ME
         errorString = [ME.message '\nThis error was thrown by the MEX-interface of ompMC.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'];
-        matRad_cfg.dispError(ME.identifier,errorString);
+        matRad_cfg.dispError(errorString);
     end
     
     %Calibrate the dose with above factor
