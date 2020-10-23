@@ -1,5 +1,11 @@
-[![Build Status](https://travis-ci.org/e0404/matRad.svg?branch=master)](https://travis-ci.org/e0404/matRad)
+[![Current Release](https://img.shields.io/github/v/release/e0404/matRad)](https://github.com/e0404/matRad/releases) 
+[![Downloads](https://img.shields.io/github/downloads/e0404/matRad/total)](https://github.com/e0404/matRad/releases) 
+[![Contributors](https://img.shields.io/github/contributors/e0404/matRad)](https://github.com/e0404/matRad/graphs/contributors)
 [![GitPitch](https://gitpitch.com/assets/badge.svg)](https://gitpitch.com/e0404/matRad/master) 
+
+[![TravisCI Build Status](https://travis-ci.org/e0404/matRad.svg?branch=dev)](https://travis-ci.org/e0404/matRad)
+[![Azure Pipelines Build Status](https://dev.azure.com/e0404/matRad/_apis/build/status/e0404.matRad?branchName=dev)](https://dev.azure.com/e0404/matRad)
+
 
 # General information
 
