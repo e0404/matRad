@@ -84,5 +84,12 @@ script:
   # Windows script
   - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then travis_wait 45 .travis/runtests.sh octave-cli ; fi
 
+before_cache:
+  - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then brew cleanup; fi
+
+cache:
+  directories:
+    - $HOME/Library/Caches/Homebrew
+
 notifications:
     slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ
