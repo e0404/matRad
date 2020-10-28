@@ -2,7 +2,7 @@ function [cube, metadata] = matRad_readNRRD(filename)
 % matRad NRRD reader
 % 
 % call
-%   matRad_readNRRD(filename)
+%   [cube, metadata] = matRad_readNRRD(filename)
 %
 % input
 %   filename:   full path to nrrd file

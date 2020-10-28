@@ -9,7 +9,7 @@ function dose = matRad_calcInversDVH(volume,doseVec)
 %   doseVec:    dose vector of specific structure
 %
 % output
-%   dose: dose that corresponds to rel volume
+%   dose:       dose that corresponds to rel volume
 %
 % References
 %   -

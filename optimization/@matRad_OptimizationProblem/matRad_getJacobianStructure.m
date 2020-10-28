@@ -1,13 +1,15 @@
 function jacobStruct = matRad_getJacobianStructure(optiProb,w,dij,cst)	
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
-% matRad IPOPT callback: jacobian structure function for inverse planning supporting max dose	
-% constraint, min dose constraint, min mean dose constraint, max mean dose constraint, 	
-% min EUD constraint, max EUD constraint, max DVH constraint, min DVH constraint 	
+% matRad IPOPT callback: jacobian structure function for inverse planning 
+% supporting max dose constraint, min dose constraint, min mean dose constraint, 
+% max mean dose constraint, min EUD constraint, max EUD constraint, max DVH 
+% constraint, min DVH constraint 	
 % 	
 % call	
-%   jacobStruct = matRad_getJacobStruct(dij,cst)	
+%   jacobStruct = matRad_getJacobStruct(optiProb,w,dij,cst)	
 %	
 % input	
+%   optiProb: matRad optimization problem
+%   w:        beamlet/ pencil beam weight vector
 %   dij: dose influence matrix	
 %   cst: matRad cst struct	
 %	

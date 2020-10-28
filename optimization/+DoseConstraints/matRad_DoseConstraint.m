@@ -1,5 +1,4 @@
 classdef (Abstract) matRad_DoseConstraint < matRad_DoseOptimizationFunction
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_DoseConstraint: Interface for optimization constraints.
 %   This abstract base class provides the interface of constraints for
 %   non-linear optimization.
