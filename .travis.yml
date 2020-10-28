@@ -17,7 +17,7 @@ jobs:
             - gnuplot-x11
             - libgdcm-dev
             - octave
-            - liboctave-dev
+            - liboctave-dev      
     - name: "Ubuntu Matlab"
       os: linux
       language: matlab
@@ -32,9 +32,16 @@ jobs:
             - octave
             - llvm
             - libomp
+      cache:
+        directories:
+          - $HOME/Library/Caches/Homebrew
     - name: "Windows Octave"
       os: windows
       language: cpp
+      cache:
+        directories:
+          - $HOME/AppData/Local/Temp/chocolatey
+          - /C/ProgramData/chocolatey/
   allow_failures:
     - os: windows
     - os: osx
@@ -58,7 +65,6 @@ before_install:
   # Windows Setup
   - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then echo "Testing matRad on Windows..." ; fi
   - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then choco install octave.portable ; fi  
-  - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' ; fi
   # - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then bash ./before_install_win_gitbash.sh ; fi
   
 
@@ -83,6 +89,9 @@ script:
   - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then travis_wait 45 .travis/runtests.sh octave-cli ; fi
   # Windows script
   - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then travis_wait 45 .travis/runtests.sh octave-cli ; fi
+
+before_cache:
+  - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then brew cleanup; fi
 
 notifications:
     slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ

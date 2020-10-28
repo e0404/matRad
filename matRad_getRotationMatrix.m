@@ -1,6 +1,6 @@
 function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)
-% matRad function to return the rotation / transformation matrix for
-% gantry and/or couch rotation. The Rotation matrix stands for a (1)
+% matRad function to return the rotation / transformation matrix 
+% for gantry and/or couch rotation. The Rotation matrix stands for a (1)
 % counter-clockwise, (2) active rotation in the patient coordinate system
 % that is performed on a (4) column vector (by premultiplying the matrix). 
 % Per change of one of these directions a matrix transpose of the returned 

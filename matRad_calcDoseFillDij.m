@@ -1,5 +1,5 @@
-% save computation time and memory by sequentially filling the
-% sparse matrix dose.dij from the cell array
+% save computation time and memory 
+% by sequentially filling the sparse matrix dose.dij from the cell array
 if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
 
     if calcDoseDirect
