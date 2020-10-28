@@ -13,18 +13,18 @@ If you encounter problems with matRad, please consider the following guidelines 
 - Go through the relevant workflow examples and see if they answer your question. The workflow examples can be found in the subfolder [_examples_](https://github.com/e0404/matRad/tree/master/examples). 
 - Check open and closed issues for your question.
 
-It is very helpful for us, if you search for the error by yourself a bit before asking. You might be able to fix the error by yourself. Please keep in mind that we are no support team but researcher. 
+It is very helpful for us, if you search for the error by yourself a bit before asking. You might be able to fix the error by yourself. Please keep in mind that we are no support team but researchers that can only point you in the right direction. The biggest joy when using research software lies in figuring out details yourself, which also gives you the biggest learning effect and even might enable you to contribute something to matRad which can the be used by other researchers in the future. 
 
 ### How to report a bug and ask questions
 
-Still having problems? Use the GitHub functionalities to file a new issue, or directly fork the matRad repository and send pull requests with your own custom developments. Please take into account the given rules given below and be patient! 
+Still having problems? Use the GitHub functionalities to file a new issue, or directly fork the matRad repository and send pull requests with your own custom developments or bug fixes. Take into account the given rules given below and be patient! 
 
 - Provide the following information:
 	- OS
-	- Software environment and version (executing `[env, versionString] = matRad_getEnvironment` tells you the software environment matRad is running on) 
-	- a **minimum example** of your attempted workflow / what causes the problems
+	- Software environment and version (executing `[env, versionString] = matRad_getEnvironment` tells you the software environment matRad is running on). Also, when running `matRad_rc` (since version 2.10.0), you get full printed information about version (and branch/commit if you are working with git).
+	- a **minimum example** of your attempted workflow / what causes the problems. Did you cchange any matRad files?
 - Post only questions related to matRad.
-- Don’t write an email if you want to report a bug. Write only an email if you want to cooperate or plan a bigger project with matRad. 
+- Please don’t write an email if you want to report a bug. An issue on github is more helpful to others and will probably also speed up the process of fixing the bug.
 
 ### Adding functionalities or changing code
 
@@ -41,6 +41,7 @@ If you want to add functionalities or change code:
 	
 ### matRad programming style
 
+
 If you add or change code, follow the matRad programming style:
 
 **White space**
@@ -55,13 +56,19 @@ matRad variable names start with a lower case letter. Concatenated variable name
 
 `newVariableName = 42;`
 
+**Console output and default parameters with MatRad_Config**
+
+Since matRad 2.10.0, it uses a configuration class `MatRad_Config` to enable setting default parameters and to control the console output. The configuration class uses the "Singleton"-programming paradigm, i.e. only one instance of it exists at any time so that the default parameters and the logging mechanism stay consistent while running matRad. 
+If you write information to the console, use the respective functions within the class. The configuration object can be instantiated at any point in a function by calling ```matRad_cfg = MatRad_Config.instance();```
+
 **Absolute paths**
 
-At some points there are issues with relative paths to matRad files which are annoying (e.g. within the unit testing). The problems occur when you run certain matRad functionality and are currently not in the matRad root directory. To avoid this, we should make sure, that
+At some points there are issues with relative paths to matRad files which are annoying (e.g., within the unit testing). The problems occur when you run certain matRad functionality and are currently not in the matRad root directory. To avoid this, we should make sure, that
 
 - all references to files are absolute paths, which are created at runtime through locating the file that is executing the code (e.g. via `mfilename('fullpath')`). Alternatively, `which` could be used.
 - if something needs to be executed within a directory, also use the absolute path to `cd` into the directory. But before, use `pwd` to get the users directory and after the execution `cd` back into the directory.
-	
-## Cooperating or planning a bigger project with matRad
 
-If you want to cooperate or plan a bigger project with matRad write us an [email](mailto:contact@matRad.org).
+	
+## You want to cooperate with us on some research project?
+
+If you plan a research project that uses matRad and you would like to cooperate do not hesitate to write us an [email](mailto:contact@matRad.org).
