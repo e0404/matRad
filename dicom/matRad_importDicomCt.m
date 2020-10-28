@@ -2,7 +2,10 @@ function ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visB
 % matRad function to import dicom ct data
 % 
 % call
+%   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool)
+%   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid)
 %   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, visBool)
+%   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visBool)
 %
 % input
 %   ctList:         list of dicom ct files
@@ -14,7 +17,7 @@ function ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visB
 %
 % output
 %   ct:             matRad ct struct. Note that this 3D matlab array 
-%                   contains water euqivalen electron denisities.
+%                   contains water euqivalent electron denisities.
 %                   Hounsfield units are converted using a standard lookup
 %                   table in matRad_calcWaterEqD
 %

@@ -1,5 +1,5 @@
 function obj = matRad_exportDicomRTPlan(obj)
-% matRad function to exportt resultGUI to dicom
+% matRad function to export resultGUI to dicom.
 % 
 % call
 %   matRad_exportDicomRTDoses(resultGUI,ct,pln,fieldnames)

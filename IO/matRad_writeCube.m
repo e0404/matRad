@@ -2,14 +2,14 @@ function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)
 % matRad wrapper for Cube export
 % 
 % call
-%   matRad_writeCube(filepath,cube,meta)
+%   [saved_metadata] = matRad_writeCube(filepath,cube,meta)
 %
 % input
 %   filepath:                   full output path. needs the right extension
 %                               to choose the appropriate writer
 %   cube:                       cube that is to be written
 %   datatype:                   MATLAB numeric datatype
-%   meta:                       meta-information in struct. 
+%   metadata:                   meta-information in struct. 
 %                               Necessary fieldnames are:
 %                               - resolution: [x y z]
 %                               Optional:

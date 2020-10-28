@@ -15,6 +15,59 @@ matRad is an open source treatment planning system for radiation therapy written
 
 More information can be found on the project page  at <http://e0404.github.io/matRad/>; a wiki documentation is under constant development at <https://github.com/e0404/matRad/wiki>.
 
+# Getting Started
+
+It’s the first time you want to use matRad?
+
+First, get a local copy of matRad by download or git cloning. Having done that, we recommend you navigate into the folder in Matlab and execute 
+```
+matRad_rc
+```
+which will setup the path & configuration and tell you the current version.
+
+Then there’re three options for a pleasant start with matRad. Choose one or try out each of them.
+
+### Option 1: Using the GUI
+
+For an intuitive workflow with the graphical user interface, type 
+```
+matRadGUI
+```
+in your command window. An empty GUI should be opened. Click the _*Load.mat_ data-Button in the Workflow-section to load a patient. Set the plan and optimization parameters, calculate the dose influence matrix and execute the fluence optimization in the GUI.
+
+### Option 2: Using the main script
+
+If you prefer scripting, open the default script *matRad.m* from the main matRad folder:
+```
+edit matRad.m
+```
+Use it to learn something about the code structure and execute it section by section.
+
+You can also run the full script for an example photon plan by just typing
+```
+matRad
+``` 
+in your command window.
+
+### Option 3: Using the examples
+
+The most time consuming but also most educational approach to matRad. 
+
+When in the main matRad folder, navigate to the folder *examples*. Open one of the examples given there. Execute it section by section. Move on to the next example afterwards.
+
+# Need help?
+
+If you encounter problems with matRad, please consider the following guidelines **before** submitting issues on our github page. 
+
+* Check you are using the newest version of matRad.
+* Please check the description of how to set up matRad and its technical documentation in the [wiki](https://github.com/e0404/matRad/wiki).
+* Go through the relevant examples and see if they answer your question (see *Option 3* above!)
+* Check open and closed issues for your question.
+
+Still having problems? Then create an issue, provide a **minimum example** of your attempted workflow / what causes the problems and be patient!
+
+# Citing matRad
+
 If you use matRad in a scientific publication, consider citing the following paper:
 
 Wieser, Hans-Peter, et al. "Development of the open-source dose calculation and optimization toolkit matRad." Medical Physics 44.6 (2017): 2556-2568.
@@ -40,7 +93,7 @@ Copyright 2020 the matRad development team.
 matrad@dkfz.de
 
 All the elements of the compilation of matRad and Ipopt are free software. You can redistribute and/or modify matRad's source code version provided as files with .m and .mat extension under the terms of the GNU GENERAL PUBLIC LICENSE Version 3 (GPL v3). You can also add to matRad the Ipopt functionality by using the precompiled mex files of the Ipopt optimizer in object code version which are licensed under the Eclipse Public License Version 1.0 (EPL v1.0), also made available for download via https://projects.coin-or.org/Ipopt.
-matRad also contains interfaces to an open-source photon Monte Carlo dose calculation engine developed by Edgardo D�rner hosted on GitHub (http://github.com/edoerner/ompMC) and to the open-source proton Monte Carlo project MCsquare (www.openmcsquare.org) from UCLouvain, Louvain-la-Neuve, Belgium. Both interfaces are integrated into matRad as submodules.
+matRad also contains interfaces to an open-source photon Monte Carlo dose calculation engine developed by Edgardo Dörner hosted on GitHub (http://github.com/edoerner/ompMC) and to the open-source proton Monte Carlo project MCsquare (www.openmcsquare.org) from UCLouvain, Louvain-la-Neuve, Belgium. Both interfaces are integrated into matRad as submodules.
 
 In addition, we provide a matlab standalone version of the compilation of matRad and Ipopt, where the files of matRad and Ipopt are licensed under GPL v3 and EPL v1.0 respectively. The matlab standalone version is meant to be used by students for learning and practicing scientific programming and does not yet contain the interfaces to the aforementioned Monte Carlo dose calculation engines.
 
