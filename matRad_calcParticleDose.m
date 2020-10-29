@@ -353,7 +353,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     % compute!
                                     sigmaRashi = matRad_calcSigmaRashi(machine.data(energyIx), ...
                                         stf(i).ray(j).rangeShifter(k), ...
-                                        stf(i).ray(j).SSD{ctScen});
+                                        stf(i).ray(j).SSD);
                                     
                                     % add to initial sigma in quadrature
                                     sigmaIni_sq = sigmaIni_sq +  sigmaRashi^2;
