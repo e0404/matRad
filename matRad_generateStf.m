@@ -383,8 +383,9 @@ for i = 1:length(pln.propStf.gantryAngles)
             for k = stf(i).numOfBixelsPerRay(j):-1:1
                 maskEnergy = stf(i).ray(j).energy(k) == availableEnergies;
                 if ~useEnergyBool(maskEnergy)
-                    stf(i).ray(j).energy(k)     = [];
-                    stf(i).ray(j).focusIx(k)    = [];
+                    stf(i).ray(j).energy(k)       = [];
+                    stf(i).ray(j).focusIx(k)      = [];
+                    stf(i).ray(j).rangeShifter(k) = [];
                     stf(i).numOfBixelsPerRay(j) = stf(i).numOfBixelsPerRay(j) - 1;
                 end
             end
