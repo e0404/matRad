@@ -34,7 +34,7 @@ matRad_cfg = MatRad_Config.instance();
 
 matRad_cfg.dispInfo('matRad: Generating stf struct...\n');
 
-if nargin < 5
+if nargin < 4
     visMode = 0;
 end
 
@@ -94,7 +94,7 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'helium') || 
     if isfield(pln.propStf,'useRangeShifter')
         %For now only a generic range shifter is used whose thickness is
         %determined by the minimum peak width to play with
-        rangeShifterEqD = round(min(availablePeakPos)* 1.05);
+        rangeShifterEqD = round(min(availablePeakPos)* 1.25);
         availablePeakPosRaShi = availablePeakPos - rangeShifterEqD;
         
         matRad_cfg.dispWarning('Use of range shifter enabled. matRad will generate a generic range shifter with WEPL %f to enable ranges below the shortest base data entry.',rangeShifterEqD);
@@ -289,7 +289,7 @@ for i = 1:length(pln.propStf.gantryAngles)
                rhoVOITarget = [rhoVOITarget, rho{ShiftScen}{end}];
            end
            
-           if sum(rhoVOITarget) > 0 
+           if any(rhoVOITarget) 
 
                Counter = 0;
                
@@ -312,9 +312,17 @@ for i = 1:length(pln.propStf.gantryAngles)
                                   end
                                   
                                   % find target entry & exit
-                                  diff_voi    = diff([rho{ShiftScen}{end}]);
-                                  targetEntry(Counter,1:length(radDepths(diff_voi == 1))) = radDepths(diff_voi == 1);
-                                  targetExit(Counter,1:length(radDepths(diff_voi == -1))) = radDepths(diff_voi == -1);
+                                  diff_voi    = [diff([rho{ShiftScen}{end}])];
+                                  entryIx = find(diff_voi == 1);
+                                  exitIx = find(diff_voi == -1);
+                                  
+                                  %We approximate the interface using the
+                                  %rad depth between the last voxel before 
+                                  %and the first voxel after the interface
+                                  %This captures the case that the first
+                                  %relevant voxel is a target voxel
+                                  targetEntry(Counter,1:length(entryIx)) = (radDepths(entryIx) + radDepths(entryIx+1)) ./ 2;
+                                  targetExit(Counter,1:length(exitIx)) = (radDepths(exitIx) + radDepths(exitIx+1)) ./ 2;
                                   
                               end
                           end
