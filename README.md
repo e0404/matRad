@@ -5,7 +5,7 @@
 
 ---
 
-matRad is an open source treatment planning system for radiation therapy written in Matlab. It is meant for educational and research purposes and supports planning of intensity-modulated radiation therapy for mutliple modalities. The source code is maintained by a development team at the German Cancer Reserach Center DKFZ in Heidelberg, Germany, and other contributors around the world. We are always looking for more people willing to help improve matRad. Do not hesitate and [get in touch](mailto:contact@matRad.org).
+matRad is an open source treatment planning system for radiation therapy written in Matlab. It supports planning of intensity-modulated radiation therapy for mutliple modalities and is meant **for educational and research purposes**. **IT IS NOT SUITABLE FOR CLINICAL USE** (also see the no-warranty clause in the GPL license). The source code is maintained by a development team at the German Cancer Reserach Center - DKFZ in Heidelberg, Germany, and other contributors around the world. We are always looking for more people willing to help improve matRad. Do not hesitate and [get in touch](mailto:contact@matRad.org).
 
 More information can be found on the project page  at <http://e0404.github.io/matRad/>; a wiki documentation is under constant development at <https://github.com/e0404/matRad/wiki>.
 

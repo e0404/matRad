@@ -38,6 +38,11 @@ function dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nCasePerBixel,calc
 
 matRad_cfg = MatRad_Config.instance();
 
+% initialize waitbar
+figureWait = waitbar(0,'calculate dose influence matrix with MCsquare...');
+% prevent closure of waitbar and show busy state
+set(figureWait,'pointer','watch');
+
 % check if valid machine
 if ~strcmp(pln.radiationMode,'protons')
     matRad_cfg.dispError('Wrong radiation modality . MCsquare only supports protons!');    
@@ -45,10 +50,9 @@ end
 
 if nargin < 5
     % set number of particles simulated per pencil beam
-    nCasePerBixel = matRad_cfg.propMC.particles_defaultHistories;
+    nCasePerBixel = matRad_cfg.propMC.MCsquare_defaultHistories;
     matRad_cfg.dispInfo('Using default number of Histories per Bixel: %d\n',nCasePerBixel);
 end
-
 % switch between either using max stat uncertainity or total number of
 % cases
 if (nCasePerBixel < 1)
@@ -64,6 +68,11 @@ end
 if isfield(pln,'propMC') && isfield(pln.propMC,'outputVariance')
     matRad_cfg.dispWarning('Variance scoring for MCsquare not yet supported.');
 end
+
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'calcLET') 
+    pln.propDoseCalc.calcLET = matRad_cfg.propDoseCalc.defaultCalcLET;
+end
+
 
 env = matRad_getEnvironment();
 
@@ -206,6 +215,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 MCsquareConfig.RNG_Seed      = 1234;
                 MCsquareConfig.Num_Primaries = nCasePerBixel;
                 
+
                 % turn simulation of individual beamlets
                 MCsquareConfig.Beamlet_Mode = ~calcDoseDirect;
                 % turn of writing of full dose cube
@@ -214,6 +224,13 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 MCsquareConfig.Dose_Sparse_Output = ~calcDoseDirect;
                 % set threshold of sparse matrix generation
                 MCsquareConfig.Dose_Sparse_Threshold = relDoseCutoff;
+                
+                %Matrices for LET
+                if pln.propDoseCalc.calcLET
+                    MCsquareConfig.LET_MHD_Output		 = calcDoseDirect;
+                    MCsquareConfig.LET_Sparse_Output	 = ~calcDoseDirect;
+                end
+                
                 
                 % write patient data
                 MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
@@ -226,6 +243,32 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 
                 counter = 0;
                 for i = 1:length(stf)
+                    %Let's check if we have a unique or no range shifter, because MCsquare
+                    %only allows one range shifter type per field which can be IN or OUT
+                    %per spot
+                    raShiField = [];
+                    for j = 1:stf(i).numOfRays
+                        if isfield(stf(i).ray(j),'rangeShifter')
+                            raShiField = [raShiField stf(i).ray(j).rangeShifter(:).ID];
+                        else
+                            raShiField = [raShiField zeros(size(stf(i).ray(j).energies))];
+                        end
+                    end
+                    
+                    raShiField = unique(raShiField); %unique range shifter
+                    raShiField(raShiField == 0) = []; %no range shifter
+                    if numel(raShiField) > 1
+                        matRad_cfg.dispError('MCsquare does not support different range shifter IDs per field! Aborting.\n');
+                    end
+                    
+                    if ~isempty(raShiField)
+                        stfMCsquare(i).rangeShifterID = raShiField;
+                        stfMCsquare(i).rangeShifterType = 'binary';
+                    else
+                        stfMCsquare(i).rangeShifterID = 0;
+                        stfMCsquare(i).rangeShifterType = 'binary';
+                    end
+                    
                     stfMCsquare(i).gantryAngle = mod(180-stf(i).gantryAngle,360); %Different MCsquare geometry
                     stfMCsquare(i).couchAngle  = stf(i).couchAngle;
                     stfMCsquare(i).isoCenter   = stf(i).isoCenter + mcSquareAddIsoCenterOffset;
@@ -248,21 +291,44 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         end
                         
                         for k = 1:numel(stfMCsquare(i).energies)
-                            if any(stf(i).ray(j).energy == stfMCsquare(i).energies(k))
-                                stfMCsquare(i).energyLayer(k).rayNum   = [stfMCsquare(i).energyLayer(k).rayNum j];
-                                stfMCsquare(i).energyLayer(k).bixelNum = [stfMCsquare(i).energyLayer(k).bixelNum ...
-                                    find(stf(i).ray(j).energy == stfMCsquare(i).energies(k))];
-                                stfMCsquare(i).energyLayer(k).targetPoints = [stfMCsquare(i).energyLayer(k).targetPoints; ...
-                                    -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
-                                if calcDoseDirect
-                                    stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
-                                        round(stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k))*MCsquareConfig.Num_Primaries)];
-                                    totalWeights = totalWeights + stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k));
-                                else
-                                    stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
-                                        MCsquareConfig.Num_Primaries];
-                                end
-                            end
+                             raShis = []; %Range shifter Book keeping
+            
+                             %Check if ray has a spot in the current energy layer
+                             if any(stf(i).ray(j).energy == stfMCsquare(i).energies(k))
+                                 %Set up the ray geometries and add current ray to energy
+                                 %layer
+                                 energyIx = find(stf(i).ray(j).energy == stfMCsquare(i).energies(k));
+                                 stfMCsquare(i).energyLayer(k).rayNum   = [stfMCsquare(i).energyLayer(k).rayNum j];
+                                 stfMCsquare(i).energyLayer(k).bixelNum = [stfMCsquare(i).energyLayer(k).bixelNum energyIx];
+                                 stfMCsquare(i).energyLayer(k).targetPoints = [stfMCsquare(i).energyLayer(k).targetPoints; ...
+                                     -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
+                                 
+                                 %Number of primaries depending on beamlet-wise or field-based compuation (direct dose calculation)                    
+                                 if calcDoseDirect
+                                     stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
+                                         round(stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k))*MCsquareConfig.Num_Primaries)];
+                                     
+                                     totalWeights = totalWeights + stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k));
+                                 else
+                                     stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
+                                         MCsquareConfig.Num_Primaries];
+                                 end
+                                 
+                                 %Now add the range shifter
+                                 if isempty(raShis)
+                                     raShis = stf(i).ray(j).rangeShifter(energyIx);
+                                 else
+                                     raShis(end+1) = stf(i).ray(j).rangeShifter(energyIx);
+                                 end
+                                 
+                                 %sanity check range shifters
+                                 raShiIDs = unique(raShis.ID);
+                                 if ~isscalar(raShiIDs)
+                                     matRad_cfg.dispError('MCsquare only supports one range shifter setting (on or off) per energy! Aborting.\n');
+                                 end
+                                 
+                                 stfMCsquare(i).energyLayer(k).rangeShifter = raShis(1);
+                             end
                         end
                         
                     end
@@ -293,40 +359,57 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare);
                 
                 % run MCsquare
-                [status,cmdout] = system([mcSquareBinary ' ' MCsquareConfigFile],'-echo');
-                
+                mcSquareCall = [mcSquareBinary ' ' MCsquareConfigFile];
+                matRad_cfg.dispInfo(['Calling Monte Carlo Engine: ' mcSquareCall]);
+                [status,cmdout] = system(mcSquareCall,'-echo');
+
                 mask = false(dij.doseGrid.numOfVoxels,1);
                 mask(VdoseGrid) = true;
                 
                 % read sparse matrix
                 if ~calcDoseDirect
-                    dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( ...
+                    dij.physicalDose{1} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( ...
                         [MCsquareConfig.Output_Directory filesep 'Sparse_Dose.bin'], ...
                         dij.doseGrid.dimensions, ...
                         dij.totalNumOfBixels, ...
                         mask);
+                    
+                    if pln.propDoseCalc.calcLET
+                        dij.mLETDose{1} = matRad_sparseBeamletsReaderMCsquare ( ...
+                            [MCsquareConfig.Output_Directory filesep 'Sparse_LET.bin'], ...
+                            dij.doseGrid.dimensions, ...
+                            dij.totalNumOfBixels, ...
+                            mask);
+                        
+                        dij.MC_tallies{1} = 'LET';
+                    end
                 else
                     cube = matRad_readMhd(MCsquareConfig.Output_Directory,'Dose.mhd');
-                    dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
-                        absCalibrationFactorMC2 * totalWeights * cube(VdoseGrid), ...
+                    dij.physicalDose{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
+                        absCalibrationFactorMC2 * cube(VdoseGrid), ...
                         dij.doseGrid.numOfVoxels,1);
+                    
+                    if pln.propDoseCalc.calcLET
+                        cube = matRad_readMhd(MCsquareConfig.Output_Directory,'LET.mhd');
+                        dij.mLETDose{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
+                            cube(VdoseGrid), ...
+                            dij.doseGrid.numOfVoxels,1);
+                        
+                        dij.MC_tallies{1} = 'LET';
+                    end
                 end
                 
                 % reorder influence matrix to comply with matRad default ordering
                 if MCsquareConfig.Beamlet_Mode
-                    dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = dij.physicalDose{ctScen,shiftScen,rangeShiftScen}(:,MCsquareOrder);
+                    dij.physicalDose{1} = dij.physicalDose{1}(:,MCsquareOrder);
+                    if pln.propDoseCalc.calcLET
+                        dij.mLETDose{1} = dij.mLETDose{1}(:,MCsquareOrder);
+                    end
                 end
                 
-                matRad_cfg.dispInfo('matRad: done!\n');
+                matRad_cfg.dispInfo('Simulation finished!\n');
                 
-                try
-                    % wait 0.1s for closing all waitbars
-                    allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
-                    delete(allWaitBarFigures);
-                    pause(0.1);
-                catch
-                end
-                
+                %% Clear data
                 delete([MCsquareConfig.CT_File(1:end-4) '.*']);
                 delete('currBixels.txt');
                 delete('MCsquareConfig.txt');
@@ -349,15 +432,14 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
     % manipulate isocenter
     for k = 1:length(stf)
         stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(shiftScen,:);
-    end
-    
+    end   
 end
 
-%% clear all data
-
-
-% cd back
+%% cd back
 cd(currFolder);
 
+if ishandle(figureWait)
+    delete(figureWait);
+end
 
 end

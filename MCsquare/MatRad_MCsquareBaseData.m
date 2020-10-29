@@ -16,11 +16,11 @@ classdef MatRad_MCsquareBaseData < MatRad_MCemittanceBaseData
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     methods (Access = public)
-        function obj = MatRad_MCsquareBaseData(varargin)
+        function obj = MatRad_MCsquareBaseData(machine,stf)
             %Call MatRad_MCemmitanceBaseData constructor
-            obj = obj@MatRad_MCemittanceBaseData(varargin{:}); 
+            obj = obj@MatRad_MCemittanceBaseData(machine,stf);             
         end
-        
+                
         function obj = writeMCsquareData(obj,filepath)
             %function that writes a data file containing Monte Carlo base
             %data for a simulation with MCsquare
@@ -57,6 +57,17 @@ classdef MatRad_MCsquareBaseData < MatRad_MCemittanceBaseData
                 fprintf(fileID,'SMY to Isocenter distance\n');
                 fprintf(fileID,'%.1f\n\n',obj.smy);
                 
+                for i = 1:length(obj.rangeShifters)
+                    raShi = obj.rangeShifters(i);
+                    fprintf(fileID,'Range Shifter parameters\n');
+                    fprintf(fileID,'RS_ID = %d\n',raShi.ID);
+                    fprintf(fileID,'RS_type = binary\n');
+                    fprintf(fileID,'RS_material = 64\n'); %Material ID Hardcoded for now (PMMA)
+                    fprintf(fileID,'RS_density = 1.19\n'); %Maetiral density Hardcoded for now (PMMA)
+                    fprintf(fileID,'RS_WET = %f\n\n',raShi.eqThickness);
+                end
+                    
+                
                 fprintf(fileID,'Beam parameters\n%d energies\n\n',size(selectedData,2));
                 
                 fn = fieldnames(selectedData);
@@ -81,7 +92,7 @@ classdef MatRad_MCsquareBaseData < MatRad_MCemittanceBaseData
             catch MException
                 error(MException.message);
             end
-        end
-    end
+        end        
+    end    
 end
 

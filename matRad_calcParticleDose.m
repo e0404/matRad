@@ -70,10 +70,11 @@ if pln.bioParam.bioOpt
     
 end
 
-if isfield(pln,'propDoseCalc') && ...
-        isfield(pln.propDoseCalc,'calcLET') && ...
-        pln.propDoseCalc.calcLET
-    
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'calcLET') 
+    pln.propDoseCalc.calcLET = matRad_cfg.propDoseCalc.defaultCalcLET;
+end
+
+if  pln.propDoseCalc.calcLET
     if isfield(machine.data,'LET')
         
         letDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
@@ -89,7 +90,7 @@ if isfield(pln,'propDoseCalc') && ...
                 end
             end
         end
-        
+        matRad_cfg.dispInfo('LET computation enabled!\n');
     else
         matRad_cfg.dispWarning('\tLET not available in the machine data. LET will not be calculated.');
     end
@@ -99,25 +100,23 @@ end
 %in generation of base data (e.g. phantom surface at isocenter)
 if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc, 'airOffsetCorrection') 
     pln.propDoseCalc.airOffsetCorrection = true;
-end
-
-%Prepare airOffset correction
-if  pln.propDoseCalc.airOffsetCorrection
-    if ~isfield(machine.meta, 'BAMStoIsoDist')
-        BAMStoIsoDist = 1000;
-        matRad_cfg.dispWarning('\tMachine data does not contain BAMStoIsoDist. Using default value of %f mm.\n',BAMStoIsoDist);
-    else
-        BAMStoIsoDist = machine.meta.BAMStoIsoDist;
-    end
     
     if ~isfield(machine.meta, 'fitAirOffset')
         fitAirOffset = 0; %By default we assume that the base data was fitted to a phantom with surface at isocenter
-        matRad_cfg.dispInfo('\tAsked for correction of Base Data Air Offset, but no value found. Using default value of %f mm.\n',fitAirOffset);
+        matRad_cfg.dispDebug('Asked for correction of Base Data Air Offset, but no value found. Using default value of %f mm.\n',fitAirOffset);
     else
         fitAirOffset = machine.meta.fitAirOffset;
-    end
+    end    
+else 
+    fitAirOffset = 0;
 end
 
+if ~isfield(machine.meta, 'BAMStoIsoDist')
+    BAMStoIsoDist = 1000;
+    matRad_cfg.dispWarning('Machine data does not contain BAMStoIsoDist. Using default value of %f mm\n.',BAMStoIsoDist);
+else
+    BAMStoIsoDist = machine.meta.BAMStoIsoDist;
+end
 
 % book keeping - this is necessary since pln is not used in optimization or
 % matRad_calcCubes
@@ -179,8 +178,7 @@ if pln.bioParam.bioOpt
         if ~isfield(machine.data,'LET')
             matRad_cfg.dispError('base data is incomplement - LET is missing');
         end
-    end %  end is LEM model
-    
+    end %  end is LEM model  
 end
 
 
@@ -280,7 +278,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     % is generated at soume source to phantom distance
                     % we can explicitly correct for the nozzle to air WEPL in
                     % the current case.
-                    if  pln.propDoseCalc.airOffsetCorrection                        
+                    if  pln.propDoseCalc.airOffsetCorrection
                         nozzleToSkin = ((stf(i).ray(j).SSD + BAMStoIsoDist) - machine.meta.SAD);
                         dR = 0.0011 * (nozzleToSkin - fitAirOffset);
                     else
@@ -291,7 +289,8 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     % range shifter. In the following, we only perform dose calculation for voxels having a radiological depth
                     % that is within the limits of the base data set (-> machine.data(i).dephts). By this means, we only allow
                     % interpolations in matRad_calcParticleDoseBixel() and avoid extrapolations.
-                    offsetRadDepth = machine.data(energyIx).offset - stf(i).ray(j).rangeShifter(k).eqThickness + dR;
+                    offsetRadDepth = machine.data(energyIx).offset - (stf(i).ray(j).rangeShifter(k).eqThickness + dR);
+                    
                     
                     for ctScen = 1:pln.multScen.numOfCtScen
                         for rangeShiftScen = 1:pln.multScen.totNumRangeScen
@@ -324,7 +323,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                             (machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= radialDist_sq(currIx);
                                     end
                                 else
-                                    matRad_cfg.dispError('cutoff must be a value between 0 and 1');
+                                    matRad_cfg.dispError('Lateral Cut-Off must be a value between 0 and 1!')
                                 end
                                 
                                 % empty bixels may happen during recalculation of error

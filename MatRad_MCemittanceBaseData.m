@@ -31,6 +31,8 @@ classdef MatRad_MCemittanceBaseData
         monteCarloData  %MC Phase space data struct
         selectedFocus   %array containing selected focus indices per energy
         FWHMatIso       %array containing FWHM values at iscenter for every energy
+        
+        rangeShifters   %Stores range shifters
     end
     
     properties (SetAccess = private)
@@ -52,7 +54,10 @@ classdef MatRad_MCemittanceBaseData
                 obj.stfCompressed = false;
             else
                 obj.stfCompressed = true;
+                obj = obj.getRangeShiftersFromStf(stf);
             end
+            
+            matRad_cfg = MatRad_Config.instance();
             
             obj.machine = machine;
             obj.problemSigma = false;
@@ -61,7 +66,7 @@ classdef MatRad_MCemittanceBaseData
             if isfield(machine.meta,'BAMStoIsoDist')
                 obj.nozzleToIso = machine.meta.BAMStoIsoDist;
             else
-                warning('No information on BAMS to isocenter distance. Using generic value of 500mm');
+                matRad_cfg.dispWarning('No information on BAMS to isocenter distance. Using generic value of 500mm');
                 obj.nozzleToIso = 500;
             end
             
@@ -134,7 +139,7 @@ classdef MatRad_MCemittanceBaseData
             %throw out warning if there was a problem in calculating the
             %width of the Bragg peak in obj.fitBeamOpticsForEnergy
             if obj.problemSigma
-                warning('Calculation of FWHM of bragg peak in base data not possible! Using simple approximation for energy spread');
+                matRad_cfg.dispWarning('Calculation of FWHM of bragg peak in base data not possible! Using simple approximation for energy spread');
             end
         end
         
@@ -304,5 +309,20 @@ classdef MatRad_MCemittanceBaseData
             save(strcat('../../', machineName, '.mat'),'machine');
         end
     end 
+    
+    methods (Access = protected)
+        function obj = getRangeShiftersFromStf(obj,stf)
+            allRays = [stf.ray];
+            raShis = [allRays.rangeShifter];
+                
+            [~,ix] =  unique(cell2mat(squeeze(struct2cell(raShis))'),'rows');
+            
+            raShis = raShis(ix);
+            
+            ix = [raShis.ID] == 0;
+            
+            obj.rangeShifters = raShis(~ix);
+        end
+    end
 end
 
