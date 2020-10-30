@@ -79,7 +79,7 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln); %Optimize
 %resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij); %Use uniform weights
 
 %resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
-resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.w,1e5);
+resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.w,1e5);
 
 %% Compare Dose
 resultGUI = matRad_appendResultGUI(resultGUI,resultGUI_MC,0,'MC');
