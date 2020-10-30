@@ -55,7 +55,7 @@ if ~calcDoseDirect
     matRad_cfg.dispError('matRad so far only supports direct dose calculation for TOPAS!\n');
 end
 
-if isfield(pln.propStf,'useRangeShifter') 
+if ~isfield(pln.propStf,'useRangeShifter') 
     pln.propStf.useRangeShifter = false;
 end
 

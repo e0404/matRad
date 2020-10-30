@@ -273,6 +273,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     stfMCsquare(i).couchAngle  = stf(i).couchAngle;
                     stfMCsquare(i).isoCenter   = stf(i).isoCenter + mcSquareAddIsoCenterOffset;
                     stfMCsquare(i).energies    = unique([stf(i).ray.energy]);
+                    stfMCsquare(i).SAD         = stf(i).SAD;
                     
                     % allocate empty target point container
                     for j = 1:numel(stfMCsquare(i).energies)
@@ -291,8 +292,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         end
                         
                         for k = 1:numel(stfMCsquare(i).energies)
-                             raShis = []; %Range shifter Book keeping
-            
+                             
                              %Check if ray has a spot in the current energy layer
                              if any(stf(i).ray(j).energy == stfMCsquare(i).energies(k))
                                  %Set up the ray geometries and add current ray to energy
@@ -315,14 +315,12 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                  end
                                  
                                  %Now add the range shifter
-                                 if isempty(raShis)
-                                     raShis = stf(i).ray(j).rangeShifter(energyIx);
-                                 else
-                                     raShis(end+1) = stf(i).ray(j).rangeShifter(energyIx);
-                                 end
-                                 
+                                 raShis = stf(i).ray(j).rangeShifter(energyIx);
+                                                                  
                                  %sanity check range shifters
-                                 raShiIDs = unique(raShis.ID);
+                                 raShiIDs = unique([raShis.ID]);
+                                 %raShiIDs = raShiIDs(raShiIDs ~= 0);
+                                 
                                  if ~isscalar(raShiIDs)
                                      matRad_cfg.dispError('MCsquare only supports one range shifter setting (on or off) per energy! Aborting.\n');
                                  end
@@ -366,16 +364,18 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 mask = false(dij.doseGrid.numOfVoxels,1);
                 mask(VdoseGrid) = true;
                 
-                % read sparse matrix
+                % read output
                 if ~calcDoseDirect
+                    %Read Sparse Matrix
                     dij.physicalDose{1} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( ...
                         [MCsquareConfig.Output_Directory filesep 'Sparse_Dose.bin'], ...
                         dij.doseGrid.dimensions, ...
                         dij.totalNumOfBixels, ...
                         mask);
                     
+                    %Read sparse LET
                     if pln.propDoseCalc.calcLET
-                        dij.mLETDose{1} = matRad_sparseBeamletsReaderMCsquare ( ...
+                        dij.mLETDose{1} =  absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( ...
                             [MCsquareConfig.Output_Directory filesep 'Sparse_LET.bin'], ...
                             dij.doseGrid.dimensions, ...
                             dij.totalNumOfBixels, ...
@@ -384,16 +384,20 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         dij.MC_tallies{1} = 'LET';
                     end
                 else
+                    %Read dose cube
                     cube = matRad_readMhd(MCsquareConfig.Output_Directory,'Dose.mhd');
-                    dij.physicalDose{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
-                        absCalibrationFactorMC2 * cube(VdoseGrid), ...
-                        dij.doseGrid.numOfVoxels,1);
-                    
-                    if pln.propDoseCalc.calcLET
-                        cube = matRad_readMhd(MCsquareConfig.Output_Directory,'LET.mhd');
-                        dij.mLETDose{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
+                    dij.physicalDose{1} = absCalibrationFactorMC2 * totalWeights * ...
+                        sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
                             cube(VdoseGrid), ...
                             dij.doseGrid.numOfVoxels,1);
+                    
+                    %Read LET cube
+                    if pln.propDoseCalc.calcLET
+                        cube = matRad_readMhd(MCsquareConfig.Output_Directory,'LET.mhd');
+                        dij.mLETDose{1} = absCalibrationFactorMC2 * totalWeights * ...
+                            sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
+                                cube(VdoseGrid), ...
+                                dij.doseGrid.numOfVoxels,1);
                         
                         dij.MC_tallies{1} = 'LET';
                     end

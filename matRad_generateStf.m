@@ -91,7 +91,7 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'helium') || 
     %Compute a margin to account for pencil beam width
     pbMargin = min(maxPBwidth,pln.propStf.bixelWidth);
         
-    if isfield(pln.propStf,'useRangeShifter')
+    if pln.propStf.useRangeShifter
         %For now only a generic range shifter is used whose thickness is
         %determined by the minimum peak width to play with
         rangeShifterEqD = round(min(availablePeakPos)* 1.25);
