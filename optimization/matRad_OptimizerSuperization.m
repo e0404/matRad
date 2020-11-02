@@ -234,9 +234,13 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             b=b(idxs);
             c=c(idxs);
             weights = weights(idxs);
+            weights = weights./max(weights);
             A_norm = A_norm(idxs)';
             
         end
+        
+  
+        
         
         function [x] = AMS_sim(obj, x, A, b, c, A_norm, weights)
             
