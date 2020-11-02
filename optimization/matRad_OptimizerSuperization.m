@@ -251,7 +251,7 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             A_x= x'*A;
             res_b=b-A_x';
             res_c=A_x'-c;
-            x=x+(1/sum(res_b<0))*obj.M(:, res_b<0)*res_b(res_b<0)-(1/sum(res_c<0))*obj.M(:, res_c<0)*res_c(res_c<0);
+            x=x+(1/max(1, sum(res_b<0)))*obj.M(:, res_b<0)*res_b(res_b<0)-(1/max(1, sum(res_c<0)))*obj.M(:, res_c<0)*res_c(res_c<0);
             x(x<0)=0;   
         end
         
