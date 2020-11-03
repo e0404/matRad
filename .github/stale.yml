@@ -21,3 +21,6 @@ closeComment: >
   activity in four weeks. This happens usually when the issue has already
   been solved or it is no longer relevant. If that's not the case,
   feel free to reopen the issue.
+
+#Only use on issues for now
+only: issues
