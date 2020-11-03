@@ -71,7 +71,7 @@ classdef MatRad_TopasConfig < handle
         addVolumeScorers = true
         scoreDose = true;
         scoreTrackCount = false;
-        scoreDij = true;
+        scoreDij = false;
         %scoreLET = true;
         scoreReportQuantity = 'Sum'; 
         outputType = 'binary'; %'csv'; 'binary';%             

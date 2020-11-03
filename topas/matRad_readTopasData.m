@@ -3,6 +3,8 @@ function [topasCube] = matRad_readTopasData(folder,dij)
 %   Detailed explanation goes here
 if exist('dij')
     calcDoseDirect = false;
+else
+    calcDoseDirect = true;
 end
 
 load([folder filesep 'MCparam.mat']);

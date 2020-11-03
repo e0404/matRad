@@ -116,12 +116,12 @@ topasConfig.numOfRuns = matRad_cfg.propMC.topas_defaultNumBatches;
 %Collect weights
 if calcDoseDirect
     w = zeros(sum([stf(:).totalNumOfBixels]),1);
-    ct = 1;
+    counter = 1;
     for i = 1:length(stf)
         for j = 1:stf(i).numOfRays
             rayBix = stf(i).numOfBixelsPerRay(j);
-            w(ct:ct+rayBix-1) = stf(i).ray(j).weight;
-            ct = ct + rayBix;
+            w(counter:counter+rayBix-1) = stf(i).ray(j).weight;
+            counter = counter + rayBix;
         end
     end
 end
@@ -195,7 +195,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 dij.MC_tallies = fnames;
                 for f = 1:numel(fnames)
                     if calcDoseDirect
-                        dij.(fnames{f}){1} = sum(w)*reshape(topasCubes.(fnames{f}),[],1);
+                        dij.(fnames{f}){ctScen} = sum(w)*reshape(topasCubes.(fnames{f}),[],1);
                     else
                         for d = 1:stf(f).totalNumOfBixels
                             dij.physicalDose{1}(:,d) = reshape(topasCubes.(fnames{f}){d},[],1);

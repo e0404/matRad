@@ -113,11 +113,18 @@ else
          resultGUI.([pln.bioParam.quantityVis]) = tmpResultGUI.(pln.bioParam.quantityVis);
       end
       resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
+      resultGUI.phaseDose{1,i} = tmpResultGUI.(pln.bioParam.quantityVis);
       Cnt = Cnt + 1;
    end 
     
 end
 
+if pln.multScen.totNumScen ~= 1
+    resultGUI.accPhysicalDose = zeros(size(resultGUI.phaseDose{1}));
+    for i = 1:pln.multScen.totNumScen
+        resultGUI.accPhysicalDose = resultGUI.accPhysicalDose + resultGUI.phaseDose{i};
+    end
+end
 % remember original fluence weights
 resultGUI.w  = w; 
 
