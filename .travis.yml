@@ -94,4 +94,8 @@ before_cache:
   - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then brew cleanup; fi
 
 notifications:
-    slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ
+  slack: 
+    if: repo = e0404/matRad 
+    rooms:
+      - e0404:u5tBXbO6D1mEwzJuFZV0MmqJ
+  
