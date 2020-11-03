@@ -11,7 +11,7 @@ function matRad_visPhotonFieldShapes(pln)
 %   pln: matRad plan struct
 %
 % output
-%
+%   -
 %
 % References
 %   -

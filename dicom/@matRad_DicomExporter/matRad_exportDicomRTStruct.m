@@ -1,13 +1,12 @@
 function obj = matRad_exportDicomRTStruct(obj)
-% matRad function to export dicom RT structure set. Class method of
-% matRad_DicomExporter
+% matRad function to export dicom RT structure set. 
+% Class method of matRad_DicomExporter
 % 
 % call
 %   matRad_DicomExporter.matRad_exportDicomRTStruct()
 %          
 %
 % References
-%   -
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -51,11 +50,22 @@ meta.InstanceNumber             = 1;
 
 %Remaining Meta Data
 meta.Modality = 'RTSTRUCT';
+meta.Manufacturer = '';
+meta.ReferringPhysicianName = obj.dicomName();
+meta.OperatorsName = obj.OperatorsName;
+meta.StationName = '';
+meta = obj.assignDefaultMetaValue(meta,'ManufacturerModelName','matRad DicomExport');
+
+meta.PatientName = obj.PatientName;
+meta.PatientID = obj.PatientID;
+meta.PatientBirthDate = obj.PatientBirthDate;
+meta.PatientSex = obj.PatientSex;
 
 %Name
 meta = matRad_DicomExporter.assignDefaultMetaValue(meta,'StructureSetLabel','matRad_cst');
 meta = matRad_DicomExporter.assignDefaultMetaValue(meta,'StructureSetName','matRad exported cst');
-meta = matRad_DicomExporter.assignDefaultMetaValue(meta,'ManufacturerModelName','matRad DicomExport');
+
+
 
 %ID of the Study
 meta.StudyInstanceUID = obj.StudyInstanceUID;
@@ -75,11 +85,6 @@ meta = matRad_DicomExporter.assignDefaultMetaValue(meta,'StructureSetTime',currT
 
 %Remaining stuff
 meta.AccessionNumber = '';
-meta.StationName = '';
-meta.ReferringPhysicianName = obj.dicomName();
-
-meta.PatientName = obj.PatientName;
-meta.PatientID = obj.PatientID;
 
 %meta.PatientBirthDate = '';
 %meta.PatientSex = 'O';
@@ -145,9 +150,9 @@ for i = 1:size(obj.cst,1)
     %contours = cellfun(@transpose,contours,'UniformOutput',false);
     
     %Structure Definition
-    ROISequenceItem.ROINumber = i;
-    ROISequenceItem.ROIName = obj.cst{i,2};
+    ROISequenceItem.ROINumber = i;    
     ROISequenceItem.ReferencedFrameOfReferenceUID = obj.FrameOfReferenceUID;
+    ROISequenceItem.ROIName = obj.cst{i,2};
     ROISequenceItem.ROIGenerationAlgorithm = '';
     
     meta.StructureSetROISequence.(['Item_' num2str(i)]) = ROISequenceItem;
@@ -156,65 +161,68 @@ for i = 1:size(obj.cst,1)
     if ~isOctave
         ROIContourSequenceItem.ROIDisplayColor = int32(round(255 * obj.cst{i,5}.visibleColor));
     end
-
-    ROIContourSequenceItem.ReferencedROINumber = i;
     
     %Now create Contour subitems
     ContourSequence = struct;
     for c = 1:numel(contours)
         ContourItem = struct;
-        ContourItem.ContourGeometricType = 'CLOSED_PLANAR';
-        ContourItem.ContourData = contours{c}(:);
-        ContourItem.NumberOfContourPoints = size(contours{c},2);
         
+        %First store Image Sequence
         currCtSliceMeta = obj.ctSliceMetas(contourSliceIx(c));
-        
-        currCtSliceMeta = matRad_DicomExporter.assignDefaultMetaValue(currCtSliceMeta,'SOPClassUID','1.2.840.10008.5.1.4.1.1.2');
+        %currCtSliceMeta = matRad_DicomExporter.assignDefaultMetaValue(currCtSliceMeta,'SOPClassUID','1.2.840.10008.5.1.4.1.1.2');
         
         %Not sure about this
         ContourItem.ContourImageSequence.Item_1.ReferencedSOPClassUID = currCtSliceMeta.SOPClassUID; %We are referencing the CT
-        ContourItem.ContourImageSequence.Item_1.ReferencedSOPInstanceUID = currCtSliceMeta.SOPInstanceUID; %TODO: ID of the respective ctSlice
+        ContourItem.ContourImageSequence.Item_1.ReferencedSOPInstanceUID = currCtSliceMeta.SOPInstanceUID; %TODO: ID of the respective ctSlice        
+        
+        %Now remaing data
+        ContourItem.ContourGeometricType = 'CLOSED_PLANAR';
+        ContourItem.NumberOfContourPoints = size(contours{c},2);
+        ContourItem.ContourData = contours{c}(:);
         
         
+        %Now store Item
         ContourSequence.(['Item_' num2str(c)]) = ContourItem;
     end
     ROIContourSequenceItem.ContourSequence = ContourSequence;
+    
+    ROIContourSequenceItem.ReferencedROINumber = i;
     
     %Store to meta data
     meta.ROIContourSequence.(['Item_' num2str(i)]) = ROIContourSequenceItem;
     
     %RTROI Observation Sequence
-    RTROIObservationSequenceItem.ObservationNumber = i;
-    RTROIObservationSequenceItem.ReferencedROINumber = i;
-    RTROIObservationSequenceItem.ROIObservationLabel = obj.cst{i,2};
+    RTROIObservationsSequenceItem.ObservationNumber = i;
+    RTROIObservationsSequenceItem.ReferencedROINumber = i;
+    RTROIObservationsSequenceItem.ROIObservationLabel = obj.cst{i,2};
         
     
     if strcmp(obj.cst{i,3},'TARGET')
         if ~isempty(regexpi(obj.cst{i,2},['(' strjoin(obj.targetPtvDict) ')']))
-            RTROIObservationSequenceItem.ROIInterpretedType = 'PTV';
+            RTROIObservationsSequenceItem.RTROIInterpretedType = 'PTV';
             fprintf('identified target type as PTV...');
         elseif ~isempty(regexpi(obj.cst{i,2},['(' strjoin(obj.targetGtvDict) ')']))
-            RTROIObservationSequenceItem.ROIInterpretedType = 'GTV';
+            RTROIObservationsSequenceItem.RTROIInterpretedType = 'GTV';
             fprintf('identified target type as GTV...');
         elseif ~isempty(regexpi(obj.cst{i,2},['(' strjoin(obj.targetGtvDict) ')']))
-            RTROIObservationSequenceItem.ROIInterpretedType = 'CTV';
+            RTROIObservationsSequenceItem.RTROIInterpretedType = 'CTV';
             fprintf('identified target type as CTV...');
         else
-            RTROIObservationSequenceItem.ROIInterpretedType = 'CTV';
+            RTROIObservationsSequenceItem.RTROIInterpretedType = 'CTV';
             fprintf('Defaulting target type to CTV...');
         end
     else
         if ~isempty(regexpi(obj.cst{i,2},['(' strjoin(obj.externalContourDict) ')']))
             fprintf('automatically identified as External Contour...');
-            RTROIObservationSequenceItem.ROIInterpretedType = 'EXTERNAL';
+            RTROIObservationsSequenceItem.RTROIInterpretedType = 'EXTERNAL';
         else
-            RTROIObservationSequenceItem.ROIInterpretedType = 'AVOIDANCE';
+            RTROIObservationsSequenceItem.RTROIInterpretedType = 'AVOIDANCE';
         end
     end
     
-    RTROIObservationSequenceItem.ROIInterpreter = obj.dicomName();
+    RTROIObservationsSequenceItem.ROIInterpreter = obj.dicomName();
 
-    meta.RTROIObservationSequence(['Item_' num2str(i)]) = RTROIObservationSequenceItem;
+    meta.RTROIObservationsSequence.(['Item_' num2str(i)]) = RTROIObservationsSequenceItem;
     
     fprintf('Done!\n');
     %matRad_progress(i,size(obj.cst,1));
@@ -227,17 +235,16 @@ for i = 1:numel(obj.ctSliceMetas)
     ImageSequenceItem.ReferencedSOPInstanceUID = obj.ctSliceMetas(i).SOPInstanceUID;
     ContourImageSequence.(['Item_' num2str(i)]) = ImageSequenceItem;
 end
-    
-RTReferencedSeriesSequenceItem.ContourImageSequence = ContourImageSequence;
+
 RTReferencedSeriesSequenceItem.SeriesInstanceUID = obj.ctSliceMetas(1).SeriesInstanceUID;
+RTReferencedSeriesSequenceItem.ContourImageSequence = ContourImageSequence;
 
-RTReferencedStudySequenceItem.RTReferencedSeriesSequence.Item_1 = RTReferencedSeriesSequenceItem;
-RTReferencedStudySequenceItem.ReferencedSOPInstanceUID = obj.StudyInstanceUID;
 RTReferencedStudySequenceItem.ReferencedSOPClassUID = '1.2.840.10008.3.1.2.3.2'; %Apparently this class UID is deprecated in DICOM standard - what to use instead?
+RTReferencedStudySequenceItem.ReferencedSOPInstanceUID = obj.StudyInstanceUID;
+RTReferencedStudySequenceItem.RTReferencedSeriesSequence.Item_1 = RTReferencedSeriesSequenceItem;
 
-meta.ReferencedFrameOfReferenceSequence.Item_1.RTReferencedStudySequence.Item_1 = RTReferencedStudySequenceItem;
 meta.ReferencedFrameOfReferenceSequence.Item_1.FrameOfReferenceUID = obj.FrameOfReferenceUID;
-
+meta.ReferencedFrameOfReferenceSequence.Item_1.RTReferencedStudySequence.Item_1 = RTReferencedStudySequenceItem;
 
 filename = 'RTstruct.dcm';
 filepath = obj.dicomDir;

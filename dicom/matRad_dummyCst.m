@@ -8,7 +8,7 @@ function cst = matRad_dummyCst(ct)
 %   ct: matRad ct struct
 %
 % output
-%   cst:            matRad cst struct
+%   cst: matRad cst struct
 %
 % References
 %   -

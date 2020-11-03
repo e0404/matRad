@@ -1,18 +1,22 @@
 function matRad_unitTestTextManipulation(filename, string1, string2, path)
-% matRad function for manipulating certain parameters in matRad pipeline
-% so that it would be less computational expensive when it's being 
-% used in continuous integration builds.
+% matRad function to decrease computational expense
+% Manipulates certain parameters in matRad pipeline so that it would be 
+% less computational expensive when it's being used in continuous 
+% integration builds.
 %
 % call
+%   matRad_unitTestTextManipulation(filename, string1, string2)
 %   matRad_unitTestTextManipulation(filename, string1, string2, path)
 %
 % input
 %     filename: file(s) to be manipulated, pass multiple files as cell array
-%     string1: string to be changed
-%     string2: string to be replaced
-%     path: (optional) path where the function is located. default is the
-%     parent directory '../'
+%     string1:  string to be changed
+%     string2:  string to be replaced
+%     path:     (optional) path where the function is located. default is the
+%               parent directory '../'
 %
+% output
+%   -
 %
 % References
 %   -   
@@ -31,7 +35,7 @@ function matRad_unitTestTextManipulation(filename, string1, string2, path)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin < 4
-    path = ['..' filesep];
+    path = ['.' filesep];
 end
 
 if ~iscell(filename)

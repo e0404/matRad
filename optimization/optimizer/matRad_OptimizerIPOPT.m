@@ -12,6 +12,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
 %
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties
@@ -167,7 +170,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                 [obj.wResult, obj.resultInfo] = ipopt(w0,funcs,ipoptStruct);
             catch ME
                 errorString = [ME.message '\nThis error was thrown by the MEX-interface of IPOPT.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'];
-                matRad_cfg.dispError(ME.identifier,errorString);
+                matRad_cfg.dispError(errorString);
             end
             
             % unset Key Pressed Callback of Matlab command window
