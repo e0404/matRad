@@ -89,7 +89,7 @@ script:
   # OSX script
   - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then travis_wait 45 .travis/runtests.sh octave-cli ; fi
   # Windows script
-  - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then travis_wait 45 .travis/runtests.sh octave-cli ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then travis_wait 45 "cmd.exe //C RefreshEnv.cmd & .travis/runtests.sh octave-cli" ; fi
 
 before_cache:
   - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then brew cleanup; fi
