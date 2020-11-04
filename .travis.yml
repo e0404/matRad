@@ -29,9 +29,10 @@ jobs:
         homebrew:
           update: true
           packages: 
-            - octave
             - llvm
             - libomp
+            - gdcm
+            - octave
       cache:
         directories:
           - $HOME/Library/Caches/Homebrew
@@ -65,7 +66,7 @@ before_install:
   # Windows Setup
   - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then echo "Testing matRad on Windows..." ; fi
   - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then choco install octave.portable ; fi  
-  # - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then bash ./before_install_win_gitbash.sh ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then bash .travis/before_install_win_gitbash.sh ; fi
   
 
 before_script:
