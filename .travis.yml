@@ -29,9 +29,10 @@ jobs:
         homebrew:
           update: true
           packages: 
-            - octave
             - llvm
             - libomp
+            - gdcm
+            - octave
       cache:
         directories:
           - $HOME/Library/Caches/Homebrew
@@ -65,7 +66,7 @@ before_install:
   # Windows Setup
   - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then echo "Testing matRad on Windows..." ; fi
   - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then choco install octave.portable ; fi  
-  # - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then bash ./before_install_win_gitbash.sh ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then bash .travis/before_install_win_gitbash.sh ; fi
   
 
 before_script:
@@ -88,10 +89,14 @@ script:
   # OSX script
   - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then travis_wait 45 .travis/runtests.sh octave-cli ; fi
   # Windows script
-  - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then travis_wait 45 .travis/runtests.sh octave-cli ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then travis_wait 45 "cmd.exe //C RefreshEnv.cmd & .travis/runtests.sh octave-cli" ; fi
 
 before_cache:
   - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then brew cleanup; fi
 
 notifications:
-    slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ
+  slack: 
+    if: repo = e0404/matRad 
+    rooms:
+      - e0404:u5tBXbO6D1mEwzJuFZV0MmqJ
+  
