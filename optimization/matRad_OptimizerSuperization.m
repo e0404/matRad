@@ -122,13 +122,13 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                 %Stopping rules
                 %if (i ~= 0 ... 
                 %&& (obj.resultInfo.norm2_violations(i+1) < obj.accepted_violation) ...
-                %&& ((obj.resultInfo.obj_values(i)-obj.resultInfo.obj_values(i+1))/max(1, obj.resultInfo.obj_values(i))< obj.tol_obj))
+                %&& (abs((obj.resultInfo.obj_values(i)-obj.resultInfo.obj_values(i+1))/max(1, obj.resultInfo.obj_values(i)))< obj.tol_obj))
                  %   terminated = true;
                  %   obj.resultInfo.stoppedby = "Acceptable_solution";
                  %   fprintf('Acceptable solution found. Terminating now... \n')
                 %elseif (i ~= 0  ... 
-                %&& ((obj.resultInfo.norm2_violations(i)-obj.resultInfo.norm2_violations(i+1))/max(1, obj.resultInfo.norm2_violations(i)) < obj.tol_violation) ...
-                %&& ((obj.resultInfo.obj_values(i)-obj.resultInfo.obj_values(i+1))/max(1, obj.resultInfo.obj_values(i))< obj.tol_obj))
+                %&& (abs((obj.resultInfo.norm2_violations(i)-obj.resultInfo.norm2_violations(i+1))/max(1, obj.resultInfo.norm2_violations(i))) < obj.tol_violation) ...
+                %&& (abs((obj.resultInfo.obj_values(i)-obj.resultInfo.obj_values(i+1))/max(1, obj.resultInfo.obj_values(i))< obj.tol_obj))
                 %    terminated = true;
                 %    obj.resultInfo.stoppedby = "No_change";
                 %    fprintf('No significant change in residual or objectiv function. Terminating now... \n')
@@ -234,9 +234,13 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             b=b(idxs);
             c=c(idxs);
             weights = weights(idxs);
+            weights = weights./max(weights);
             A_norm = A_norm(idxs)';
             
         end
+        
+  
+        
         
         function [x] = AMS_sim(obj, x, A, b, c, A_norm, weights)
             
@@ -251,7 +255,7 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             A_x= x'*A;
             res_b=b-A_x';
             res_c=A_x'-c;
-            x=x+(1/sum(res_b<0))*obj.M(:, res_b<0)*res_b(res_b<0)-(1/sum(res_c<0))*obj.M(:, res_c<0)*res_c(res_c<0);
+            x=x+(1/max(1, sum(res_b<0)+sum(res_c<0)))*(obj.M(:, res_b<0)*res_b(res_b<0)+obj.M(:, res_c<0)*res_c(res_c<0));
             x(x<0)=0;   
         end
         
