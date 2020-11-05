@@ -2,18 +2,7 @@ function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, c
 % Comparison of two dose cubes in terms of gamma index, absolute and visual difference
 %
 % call
-%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct)
 %   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst)
-%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, enable)
-%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, contours)
-%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, pln)
-%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, criteria)
-%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, n)
-%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, localglobal)
-%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable)
-%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst, contours)
-%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst, pln)
-%               ...
 %   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable , contours, pln, criteria, n,localglobal)
 %
 % input
