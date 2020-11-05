@@ -2,19 +2,20 @@ function stf = matRad_computeSSD(stf,ct,mode)
 % matRad SSD calculation
 % 
 % call
+%   stf = matRad_computeSSD(stf,ct)
 %   stf = matRad_computeSSD(stf,ct,mode)
 %
 % input
-%   ct:             ct cube
-%   stf:            matRad steering information struct
-%   mode:           optional parameter specifying how to handle multiple
-%                   cubes to compute one SSD
+%   ct:     ct cube
+%   stf:    matRad steering information struct
+%   mode:   optional parameter specifying how to handle multiple
+%           cubes to compute one SSD
 % output
-%   stf:            matRad steering information struct
+%   stf:    matRad steering information struct
 %
 % References
-%
 %   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 

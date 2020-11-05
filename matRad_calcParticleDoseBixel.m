@@ -1,9 +1,9 @@
 function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)
-% matRad visualization of two-dimensional dose distributions on ct including
-% segmentation
+% matRad visualization of two-dimensional dose distributions 
+% on ct including segmentation
 % 
 % call
-%   dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,SSD,focusIx,baseData)
+%   dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)
 %
 % input
 %   radDepths:      radiological depths

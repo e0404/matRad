@@ -4,7 +4,11 @@ function isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoCo
 % contourslice itself
 %
 % call
-%   isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window)
+%   isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoContours,isoLevels,plane,slice)
+%   isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoContours,isoLevels,plane,slice,cMap)
+%   isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoContours,isoLevels,plane,slice,window)
+%   isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoContours,isoLevels,plane,slice,cMap,window)
+%   isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoContours,isoLevels,plane,slice,cMap,window, ...)
 %
 % input
 %   axesHandle  handle to axes the slice should be displayed in
@@ -25,6 +29,9 @@ function isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoCo
 %
 % output
 %   isoLineHandles: handle to the plotted isolines
+%
+% References
+%   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
