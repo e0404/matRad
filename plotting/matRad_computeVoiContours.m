@@ -48,6 +48,6 @@ for ctScen = 1:ct.numOfCtScen
                 cst{s,7}{1,ctScen}{slice,3} = contourc(squeeze(mask(:,:,slice)),.5*[1 1]);
             end
         end
-        matRad_progress(s + ctScen*size(cst,1),size(cst,1)*ct.numOfCtScen);
+        matRad_progress(s + (ctScen-1)*s,size(cst,1)*ct.numOfCtScen);
     end
 end
