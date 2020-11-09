@@ -2603,9 +2603,22 @@ try
         Suffix = '';
     end
     
-    if sum([stf.totalNumOfBixels]) ~= length(resultGUI.(['w' Suffix]))
-        warndlg('weight vector does not corresponding to current steering file');
-        return
+    wField = ['w' Suffix];
+    
+    if ~isfield(resultGUI,wField) 
+        warndlg(['No exact match found for weight vector ''' wField ''' with selected dose insance. Trying common weight vector ''w'' instead!']);
+        wField = 'w';
+    end
+    
+    %Second sanity check to exclude case with no 'w' present
+    if ~isfield(resultGUI,wField)
+        errordlg('No weight vector found for forward dose recalculation!');
+        return;
+    end
+    
+    if sum([stf.totalNumOfBixels]) ~= length(resultGUI.(wField))
+        errordlg('Selected weight vector does not correspond to current steering file (wrong number of entries/bixels!)!');
+        return;
     end
     
     % change isocenter if that was changed and do _not_ recreate steering
@@ -2622,7 +2635,7 @@ try
     end
 
     % recalculate cubes in resultGUI
-    resultGUIreCalc = matRad_calcCubes(resultGUI.(['w' Suffix]),dij,cst);
+    resultGUIreCalc = matRad_calcCubes(resultGUI.(wField),dij);
     
     % delete old variables to avoid confusion
     if isfield(resultGUI,'effect')
