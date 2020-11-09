@@ -1987,14 +1987,27 @@ guidata(handles.figure1,handles);
  
 % fill GUI elements with plan information
 function setPln(handles)
+
+matRad_cfg = MatRad_Config.instance();
+
 pln = evalin('base','pln');
 % sanity check of isoCenter
 if size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) == 1
   pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * pln.propStf.isoCenter(1,:);
 elseif size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) ~= 1
-  error('Isocenter in plan file are incosistent.');
+  matRad_cfg.dispError('Isocenter in plan file are incosistent.');
 end
-set(handles.editBixelWidth,'String',num2str(pln.propStf.bixelWidth));
+
+%Sanity check for the bixelWidth field
+bixelWidth = pln.propStf.bixelWidth;
+
+if isnumeric(bixelWidth) && isscalar(bixelWidth)
+    bixelWidth = num2str(pln.propStf.bixelWidth);
+elseif ~isnumeric(bixelWidth) && ~strcmp(bixelWidth,'field')
+    matRad_cfg.dispError('Invalid bixel width! Must be a scalar number or ''field'' for field-based dose calculation with shapes stored in stf!');
+end   
+
+set(handles.editBixelWidth,'String',bixelWidth);
 set(handles.editFraction,'String',num2str(pln.numOfFractions));
 
 if isfield(pln.propStf,'isoCenter')
@@ -2128,7 +2141,20 @@ if evalin('base','exist(''pln'',''var'')')
     pln = evalin('base','pln');
 end
 
-pln.propStf.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
+% Special parsing of bixelWidth (since it can also be "field") for imported
+% shapes
+bixelWidth = get(handles.editBixelWidth,'String'); % [mm] / also corresponds to lateral spot spacing for particles
+if strcmp(bixelWidth,'field')
+    pln.propStf.bixelWidth = bixelWidth; 
+else
+    pln.propStf.bixelWidth = parseStringAsNum(bixelWidth,false);
+    if isnan(pln.propStf.bixelWidth)
+        warndlg('Invalid bixel width! Use standard bixel width of 5mm!');
+        pln.propStf.bixelWidth = 5;
+        set(handles.editBixelWidth,'String','5');
+    end
+end
+
 pln.propStf.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [???]
 
 if handles.eduMode
@@ -2182,7 +2208,7 @@ function number = parseStringAsNum(stringIn,isVector)
 if isnumeric(stringIn)
     number = stringIn;
 else
-    number = str2num(stringIn);
+    number = str2double(stringIn);
     if isempty(number) || length(number) > 1 && ~isVector
         warndlg(['could not parse all parameters (pln, optimization parameter)']); 
         number = NaN;
