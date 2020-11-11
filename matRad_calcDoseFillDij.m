@@ -15,7 +15,7 @@ if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
                     % score physical dose
                     dij.physicalDose{ctScen,shiftScen,rangeShiftScen}(:,i) = dij.physicalDose{ctScen,shiftScen,rangeShiftScen}(:,i) + rayWeight * doseTmpContainer{1,ctScen,shiftScen,rangeShiftScen};
                     
-                    if isfield(dij,'mLETDose') && pln.sampling
+                    if isfield(dij,'mLETDose')
                         % score LETxDose matrices
                         dij.mLETDose{ctScen,shiftScen,rangeShiftScen}(:,i) = dij.mLETDose{ctScen,shiftScen,rangeShiftScen}(:,i) + rayWeight * letDoseTmpContainer{1,ctScen,shiftScen,rangeShiftScen};
                     end
