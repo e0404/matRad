@@ -1,19 +1,22 @@
 function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,visBool)
-% matRad function to calculate a depth dependend lateral cutoff for each 
-% pristine particle beam
+% matRad function to calculate a depth dependend lateral cutoff 
+% for each pristine particle beam
 % 
 % call
-%   [ machine ] = matRad_calcLateralParticleCutOff( machine,CutOffLevel,visBool )
+%   [ machine ] = matRad_calcLateralParticleCutOff( machine,cutOffLevel,stf,visBool )
 %
 % input
-%   machine:         machine base data file
-%   cutOffLevel:     cut off level - number between 0 and 1
-%   visBool:         toggle visualization (optional)
+%   machine:        machine base data file
+%   cutOffLevel:    cut off level - number between 0 and 1
+%   stf:          	matRad steering information struct
+%   visBool:     	toggle visualization (optional)
 %
 % output
-%   machine:         machine base data file including an additional field representing the lateral
+%   machine:    	machine base data file including an additional field representing the lateral
 %                    cutoff
 %   
+% References
+%   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -85,7 +88,7 @@ for i = 1:size(energySigmaLUT,1)
     if  strcmp(machine.meta.radiationMode,'protons') && rangeShifterLUT(i).eqThickness > 0  && ~strcmp(machine.meta.machine,'Generic')
 
         %get max range shift
-        sigmaRashi = matRad_calcSigmaRashi(machine.data(energyIx).energy, ...
+        sigmaRashi = matRad_calcSigmaRashi(machine.data(energyIx), ...
                                            rangeShifterLUT(i), ...
                                            energySigmaLUT(i,3));
 

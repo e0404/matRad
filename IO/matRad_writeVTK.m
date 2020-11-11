@@ -2,7 +2,7 @@ function matRad_writeVTK(filepath,cube,metadata)
 % matRad function to write vtk cubes
 % 
 % call
-%   matRad_writeVTK(cube,metadata,filename)
+%   matRad_writeVTK(filepath,cube,metadata)
 %
 % input
 %   filepath:   full filename (with extension)

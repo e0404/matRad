@@ -44,7 +44,7 @@ classdef MatRad_TopasConfig < handle
                             'material',0,...
                             'maxinterruptedhistories',1000);
         
-        minRelWeight = .0001; %Threshold for discarding beamlets. 0 means all weights are being considered, can otherwise be assigned to min(w)
+        minRelWeight = .00001; %Threshold for discarding beamlets. 0 means all weights are being considered, can otherwise be assigned to min(w)
               
         useOrigBaseData = false; % base data of the original matRad plan will be used?
         beamProfile = 'biGaussian'; %'biGaussian' (emittance); 'simple'
@@ -270,7 +270,7 @@ classdef MatRad_TopasConfig < handle
                 obj.matRad_cfg.dispError('Given number of weights (#%d) doesn''t match bixel count in stf (#%d)',numel(w), sum([stf(:).totalNumOfBixels]));
             end
             
-                       
+            nozzleToAxisDistance = baseData.nozzleToIso;           
             
             nParticlesTotalBixel = round(1e6*w);
             %nParticlesTotal = sum(nParticlesTotalBixel);
@@ -289,7 +289,11 @@ classdef MatRad_TopasConfig < handle
             nParticlesTotal = 0;
             
             for beamIx = 1:length(stf)
- 
+                
+                SAD = stf(beamIx).SAD;
+                
+                sourceToNozzleDistance = SAD - nozzleToAxisDistance;
+                
                 %Selection of base data given the energies
                 if obj.useOrigBaseData
                     [~,ixTmp,~] = intersect([ baseData.machine.data.energy], [stf.ray.energy]);
@@ -305,6 +309,26 @@ classdef MatRad_TopasConfig < handle
                     end
                     energies = [selectedData.NominalEnergy];
                 end
+                
+                %Get Range Shifters in field ifpresent
+                allRays = [stf(beamIx).ray];
+                raShis = [allRays.rangeShifter];
+                [~,ix] =  unique(cell2mat(squeeze(struct2cell(raShis))'),'rows');
+                
+                raShis = raShis(ix);
+                ix = [raShis.ID] == 0;
+                raShis = raShis(~ix);
+                
+                %Convert ID into readable string
+                for r = 1:numel(raShis)
+                    if isnumeric(raShis(r).ID)
+                        raShis(r).topasID = ['RangeShifter' num2str(raShis(r).ID)];
+                    else
+                        raShis(r).topasID = ['RangeShifter' raShis(r).ID];
+                    end
+                end
+                
+                
                 
                 %get beamlet properties for each bixel in the stf and write
                 %it into dataTOPAS
@@ -328,7 +352,6 @@ classdef MatRad_TopasConfig < handle
                             bixelEnergy = stf(beamIx).ray(rayIx).energy(bixelIx);
                             [~,ixTmp,~] = intersect(energies, bixelEnergy);
                             
-                            
                             voxel_x = -stf(beamIx).ray(rayIx).rayPos_bev(3);
                             voxel_y = stf(beamIx).ray(rayIx).rayPos_bev(1);
                             
@@ -346,13 +369,11 @@ classdef MatRad_TopasConfig < handle
                             if obj.pencilBeamScanning
                                 % angleX corresponds to the rotation around the X axis necessary to move the spot in the Y direction
                                 % angleY corresponds to the rotation around the Y' axis necessary to move the spot in the X direction
-                                % note that Y' corresponds to the Y axis after the rotation of angleX around X axis
-                                SAD = stf(beamIx).SAD;
-                                nozzleAxialDistance_mm = baseData.nozzleToIso;
+                                % note that Y' corresponds to the Y axis after the rotation of angleX around X axis                                
                                 dataTOPAS(cutNumOfBixel).angleX = atan(dataTOPAS(cutNumOfBixel).posY / SAD);
                                 dataTOPAS(cutNumOfBixel).angleY = atan(-dataTOPAS(cutNumOfBixel).posX ./ (SAD ./ cos(dataTOPAS(cutNumOfBixel).angleX)));
-                                dataTOPAS(cutNumOfBixel).posX = (dataTOPAS(cutNumOfBixel).posX / SAD)*(SAD-nozzleAxialDistance_mm);
-                                dataTOPAS(cutNumOfBixel).posY = (dataTOPAS(cutNumOfBixel).posY / SAD)*(SAD-nozzleAxialDistance_mm);
+                                dataTOPAS(cutNumOfBixel).posX = (dataTOPAS(cutNumOfBixel).posX / SAD)*(SAD-nozzleToAxisDistance);
+                                dataTOPAS(cutNumOfBixel).posY = (dataTOPAS(cutNumOfBixel).posY / SAD)*(SAD-nozzleToAxisDistance);
                             end
                             
                             if obj.useOrigBaseData
@@ -376,6 +397,18 @@ classdef MatRad_TopasConfig < handle
                                 dataTOPAS(cutNumOfBixel).totalBixel     = currentBixel;
                             end
                                                         
+                            %Add RangeShifterState
+                            if ~isempty(raShis)
+                                for r = 1:length(raShis)
+                                    if stf(beamIx).ray(rayIx).rangeShifter(bixelIx).ID == raShis(r).ID
+                                        raShiOut(r) = 0; %Range shifter is in beam path
+                                    else
+                                        raShiOut(r) = 1; %Range shifter is out of beam path / not used
+                                    end
+                                end
+                                dataTOPAS(cutNumOfBixel).raShiOut = raShiOut;
+                            end
+                            
                             nBeamParticlesTotal(beamIx) = nBeamParticlesTotal(beamIx) + nCurrentParticles;
                             
                             
@@ -556,18 +589,32 @@ classdef MatRad_TopasConfig < handle
                 fprintf(fileID,num2str([dataTOPAS.current]));
                 fprintf(fileID,'\n\n');
                 
+                %Range shifter in/out
+                if ~isempty(raShis)
+                    fprintf(fileID,'#Range Shifter States:\n');
+                    for r = 1:numel(raShis)
+                        fprintf(fileID,'s:Tf/Beam/%sOut/Function = "Step"\n',raShis(r).topasID);
+                        fprintf(fileID,'dv:Tf/Beam/%sOut/Times = Tf/Beam/Spot/Times ms\n',raShis(r).topasID);
+                        fprintf(fileID,'uv:Tf/Beam/%sOut/Values = %i ', raShis(r).topasID, cutNumOfBixel);
+                        fprintf(fileID,num2str([dataTOPAS.raShiOut]));
+                        fprintf(fileID,'\n\n');
+                    end
+                end
                 
                 
                 % NozzleAxialDistance
-                fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', nozzleAxialDistance_mm);
+                fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', nozzleToAxisDistance);
                 if obj.pencilBeamScanning
                     fprintf(fileID,'d:Ge/Nozzle/RotX = Tf/Beam/AngleX/Value rad\n');
                     fprintf(fileID,'d:Ge/Nozzle/RotY = Tf/Beam/AngleY/Value rad\n');
                     fprintf(fileID,'d:Ge/Nozzle/RotZ = 0.0 rad\n');
                 end
                 
-
-                
+                %Range Shifter Definition
+                for r = 1:numel(raShis)
+                    obj.writeRangeShifter(fileID,raShis(r),sourceToNozzleDistance);
+                end
+                                
                 switch obj.beamProfile
                     case 'biGaussian'
                         TOPAS_beamSetup = fileread('TOPAS_beamSetup_biGaussian.txt.in');
@@ -867,6 +914,24 @@ classdef MatRad_TopasConfig < handle
             obj.MCparam.imageCube = cube;
 
                            
+        end
+        
+        function writeRangeShifter(obj,fID,rangeShifter,sourceToNozzleDistance)
+            
+            %Hardcoded PMMA range shifter for now
+            pmma_rsp = 1.165;
+            rsWidth = rangeShifter.eqThickness / pmma_rsp;
+            
+            fprintf(fID,'s:Ge/%s/Parent   = "Nozzle"\n',rangeShifter.topasID);
+            fprintf(fID,'s:Ge/%s/Type     = "TsBox"\n',rangeShifter.topasID);
+            fprintf(fID,'s:Ge/%s/Material = "Lucite"\n',rangeShifter.topasID);
+            fprintf(fID,'d:Ge/%s/HLX      = 250 mm\n',rangeShifter.topasID);
+            fprintf(fID,'d:Ge/%s/HLY      = 250 mm\n',rangeShifter.topasID);
+            fprintf(fID,'d:Ge/%s/HLZ      = %f  mm\n',rangeShifter.topasID,rsWidth/2);
+            fprintf(fID,'d:Ge/%s/TransX   = 500 mm * Tf/Beam/%sOut/Value\n',rangeShifter.topasID,rangeShifter.topasID);
+            fprintf(fID,'d:Ge/%s/TransY   = 0   mm\n',rangeShifter.topasID);
+            fprintf(fID,'d:Ge/%s/TransZ   = %f mm\n',rangeShifter.topasID,rangeShifter.sourceRashiDistance - sourceToNozzleDistance);
+            
         end
         
         function writeMCparam(obj)

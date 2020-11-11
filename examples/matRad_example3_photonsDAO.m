@@ -1,4 +1,4 @@
-%% Example Photon Treatment Plan with Direct aperture optimization
+%% Example: Photon Treatment Plan with Direct aperture optimization
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

@@ -38,7 +38,7 @@ export CONTINUOUS_INTEGRATION=true
 export CI=true
 
 ## Actually run the test suite
-cd unitTest
+cd test
 TESTDIR=`pwd`
 # also CD in MATLAB/Octave to make sure that startup files
 # cannot play any role in setting the path

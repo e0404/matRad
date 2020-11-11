@@ -1,10 +1,17 @@
 function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,plane,slice,threshold,alpha,cMap,window)
-% matRad function that generates a dose plot of a selected slice. The
-% function can also be used in personal matlab figures by passing the
-% corresponding axes handle
+% matRad function that generates a dose plot of a selected slice 
+% The function can also be used in personal matlab figures by passing the
+% corresponding axes handle.
 %
 % call
-%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,ctCube,plane,slice,threshold,alpha,cMap,window)
+%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold)
+%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha)
+%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,cMap)
+%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,window)
+%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha,cMap)
+%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha,window)
+%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,cMap,window)
+%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha,cMap,window)
 %
 % input
 %   axesHandle  handle to axes the slice should be displayed in
@@ -28,6 +35,9 @@ function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,pla
 %   doseHandle: handle of the plotted dose axes
 %   cMap        used colormap (same as input if set)
 %   window      used window (same as input if set)
+%
+% References
+%   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -75,7 +85,7 @@ else
     mask = alpha * (dose_slice < window(2) & dose_slice > window(1));
 end
 
-dose_slice = uint8(cMapScale*(dose_slice - window(1))/window(2)-window(1));
+dose_slice = uint8(cMapScale*(dose_slice - window(1))/(window(2)-window(1)));
 
 %This circumenvents a bug in Octave when the index in the image hase the maximum value of uint8
 if matRad_cfg.isOctave

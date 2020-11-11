@@ -11,6 +11,9 @@ function cst = matRad_computeVoiContours(ct,cst)
 % output
 %   cst the new cst with the column containing the precomputed contours
 %
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team.
@@ -25,7 +28,7 @@ function cst = matRad_computeVoiContours(ct,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 matRad_cfg = MatRad_Config.instance();
-matRad_cfg.dispInfo('Precomputing Contours for Display... ');
+matRad_cfg.dispInfo('Precomputing Contours for Display...\n');
 
 mask = zeros(ct.cubeDim); % create zero cube with same dimeonsions like dose cube
 for ctScen = 1:ct.numOfCtScen
@@ -48,6 +51,6 @@ for ctScen = 1:ct.numOfCtScen
                 cst{s,7}{1,ctScen}{slice,3} = contourc(squeeze(mask(:,:,slice)),.5*[1 1]);
             end
         end
-        matRad_progress(s + ctScen*size(cst,1),size(cst,1)*ct.numOfCtScen);
+        matRad_progress(s + (ctScen-1)*s,size(cst,1)*ct.numOfCtScen);
     end
 end

@@ -3,6 +3,7 @@ function markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice
 %
 % call
 %   markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice)
+%   markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice,style)
 %
 % input
 %   axesHandle          handle to axes the marker should be displayed in
@@ -17,6 +18,10 @@ function markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice
 %
 % output
 %   markerHandle:       handle to the isocenter marker
+%
+% References
+%
+%   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

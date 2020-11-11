@@ -12,6 +12,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
 %
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties
@@ -74,7 +77,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.options.acceptable_obj_change_tol     = 1e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
             
             obj.options.max_iter                      = matRad_cfg.propOpt.defaultMaxIter;
-            obj.options.max_cpu_time                  = 3000;
+            obj.options.max_cpu_time                  = 7200;
             
             % Barrier Parameter (C.6)
             obj.options.mu_strategy = 'adaptive';

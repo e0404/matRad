@@ -10,13 +10,13 @@ function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apert
 %   apertureInfo:   aperture shape info struct
 %   optResult:      resultGUI struct to which the output data will be added, if
 %                   this field is empty optResult struct will be created
-%                   (optional)
+%                   
 %   pln:            matRad pln struct
 %
 % output
 %   optResult:  struct containing optimized fluence vector, dose, and
 %               shape info
-%   info:       struct containing information about optimization
+%   optimizer:  used optimizer object
 %
 % References
 %   [1] http://dx.doi.org/10.1118/1.4914863

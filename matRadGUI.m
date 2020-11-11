@@ -62,15 +62,18 @@ end
         
 % Begin initialization code - DO NOT EDIT
 % set platform specific look and feel
-if ispc
-    lf = 'com.sun.java.swing.plaf.windows.WindowsLookAndFeel';
-elseif isunix
-    lf = 'com.jgoodies.looks.plastic.Plastic3DLookAndFeel';
-elseif ismac
-    lf = 'com.apple.laf.AquaLookAndFeel';
+try
+    if ispc
+        lf = 'com.sun.java.swing.plaf.windows.WindowsLookAndFeel';
+    elseif isunix
+        lf = 'com.jgoodies.looks.plastic.Plastic3DLookAndFeel';
+    elseif ismac
+        lf = 'com.apple.laf.AquaLookAndFeel';
+    end
+    javax.swing.UIManager.setLookAndFeel(lf);
+catch ME
+    matRad_cfg.dispDebug('Could not change Java look due to %s\n',ME.message);
 end
-javax.swing.UIManager.setLookAndFeel(lf);
-
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
@@ -128,24 +131,30 @@ set(gcf,'WindowScrollWheelFcn',@matRadScrollWheelFcn);
 
 % change color of toobar but only the first time GUI is started
 if handles.initialGuiStart
-  hToolbar = findall(hObject,'tag','uitoolbar1');
-  jToolbar = get(get(hToolbar,'JavaContainer'),'ComponentPeer');
-  jToolbar.setBorderPainted(false);
-  color = java.awt.Color.gray;
-  % Remove the toolbar border, to blend into figure contents
-  jToolbar.setBackground(color);
-  % Remove the separator line between toolbar and contents
-  warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
-  jFrame = get(handle(hObject),'JavaFrame');
-  jFrame.showTopSeparator(false);
-  jtbc = jToolbar.getComponents;
-  for idx=1:length(jtbc)
-      jtbc(idx).setOpaque(false);
-      jtbc(idx).setBackground(color);
-      for childIdx = 1 : length(jtbc(idx).getComponents)
-          jtbc(idx).getComponent(childIdx-1).setBackground(color);
-      end
-  end
+    try
+        hToolbar = findall(hObject,'tag','uitoolbar1');
+        jToolbar = get(get(hToolbar,'JavaContainer'),'ComponentPeer');
+        jToolbar.setBorderPainted(false);
+        color = java.awt.Color.gray;
+        % Remove the toolbar border, to blend into figure contents
+        jToolbar.setBackground(color);
+        % Remove the separator line between toolbar and contents
+        warning('off', 'MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+        warning('off', 'MATLAB:ui:javaframe:PropertyToBeRemoved');
+        %warning('off', 'MATLAB:ui:java:JavaFrame');
+        jFrame = get(handle(hObject),'JavaFrame');
+        jFrame.showTopSeparator(false);
+        jtbc = jToolbar.getComponents;
+        for idx=1:length(jtbc)
+            jtbc(idx).setOpaque(false);
+            jtbc(idx).setBackground(color);
+            for childIdx = 1 : length(jtbc(idx).getComponents)
+                jtbc(idx).getComponent(childIdx-1).setBackground(color);
+            end
+        end
+    catch ME
+        matRad_cfg.dispDebug('Could not change Toolbar colors due to %s\n',ME.message);
+    end
 end
 
 
@@ -246,6 +255,8 @@ if handles.State > 0
             if sum(currPln.propStf.isoCenter(:)) ~= 0
                 %currSlice = round((currPln.propStf.isoCenter(1,planePermIx)+ctRes(planePermix)/2)/ctRes(planePermIx))-1;
                 currSlice = round(currPln.propStf.isoCenter(1,planePermIx) / ctRes(planePermIx));
+            else
+                currSlice = 0;
             end
         end
     catch
@@ -1363,15 +1374,33 @@ elseif handles.State > 0
         Result = evalin('base','resultGUI');
     end
     
+    ct  = evalin('base','ct');
+    cst = evalin('base','cst');
+    pln = evalin('base','pln');
+    
     if  ismember('stf',AllVarNames)
         stf = evalin('base','stf');
+        
+        %validate stf with current pln settings
+        validStf = true;
+        gantryAngles = [stf.gantryAngle];
+        validStf = isequal(gantryAngles,pln.propStf.gantryAngles) & validStf;
+        couchAngles = [stf.couchAngle];
+        validStf = isequal(couchAngles,pln.propStf.couchAngles) & validStf;
+        isoCenter = vertcat(stf.isoCenter);
+        validStf = isequal(isoCenter,pln.propStf.isoCenter) & validStf;
+        
+        if ~validStf
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispWarning('stf and pln are not consistent, using pln for geometry display!');
+            stf = [];
+        end
+        
     else
         stf = [];
     end
 
-    ct  = evalin('base','ct');
-    cst = evalin('base','cst');
-    pln = evalin('base','pln');
+    
 end
 
 oldView = get(axesFig3D,'View');
@@ -2849,30 +2878,6 @@ end
 close(AllFigHandles(ixHandle));
 assignin('base','resultGUI',resultGUI);
 
-% precompute contours of VOIs
-function cst = precomputeContours(ct,cst)
-mask = zeros(ct.cubeDim); % create zero cube with same dimeonsions like dose cube
-for s = 1:size(cst,1)
-    cst{s,7} = cell(max(ct.cubeDim(:)),3);
-    mask(:) = 0;
-    mask(cst{s,4}{1}) = 1;    
-    for slice = 1:ct.cubeDim(1)
-        if sum(sum(mask(slice,:,:))) > 0
-             cst{s,7}{slice,1} = contourc(squeeze(mask(slice,:,:)),.5*[1 1]);
-        end
-    end
-    for slice = 1:ct.cubeDim(2)
-        if sum(sum(mask(:,slice,:))) > 0
-             cst{s,7}{slice,2} = contourc(squeeze(mask(:,slice,:)),.5*[1 1]);
-        end
-    end
-    for slice = 1:ct.cubeDim(3)
-        if sum(sum(mask(:,:,slice))) > 0
-             cst{s,7}{slice,3} = contourc(squeeze(mask(:,:,slice)),.5*[1 1]);
-        end
-    end
-end
-
 %Update IsodoseLines
 function handles = updateIsoDoseLineCache(handles)
 resultGUI = evalin('base','resultGUI');
@@ -3120,7 +3125,7 @@ try
         end
         
         % precompute contours 
-        cst = precomputeContours(ct,cst);
+        cst = matRad_computeVoiContoursWrapper(ct,cst);
     
         assignin('base','ct',ct);
         assignin('base','cst',cst);

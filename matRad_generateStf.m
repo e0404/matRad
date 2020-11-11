@@ -34,7 +34,7 @@ matRad_cfg = MatRad_Config.instance();
 
 matRad_cfg.dispInfo('matRad: Generating stf struct...\n');
 
-if nargin < 5
+if nargin < 4
     visMode = 0;
 end
 
@@ -77,6 +77,11 @@ end
 
 if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'helium') || strcmp(pln.radiationMode,'carbon')
       
+    if ~isfield(pln.propStf,'useRangeShifter') 
+        pln.propStf.useRangeShifter = false;
+    end
+    
+           
     availableEnergies = [machine.data.energy];
     availablePeakPos  = [machine.data.peakPos] + [machine.data.offset];
     availableWidths   = [machine.data.initFocus];
@@ -85,6 +90,21 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'helium') || 
     
     %Compute a margin to account for pencil beam width
     pbMargin = min(maxPBwidth,pln.propStf.bixelWidth);
+        
+    if pln.propStf.useRangeShifter
+        %For now only a generic range shifter is used whose thickness is
+        %determined by the minimum peak width to play with
+        rangeShifterEqD = round(min(availablePeakPos)* 1.25);
+        availablePeakPosRaShi = availablePeakPos - rangeShifterEqD;
+        
+        matRad_cfg.dispWarning('Use of range shifter enabled. matRad will generate a generic range shifter with WEPL %f to enable ranges below the shortest base data entry.',rangeShifterEqD);
+    end
+    
+    if ~isfield(pln.propStf, 'longitudinalSpotSpacing')
+        longitudinalSpotSpacing = matRad_cfg.propStf.defaultLongitudinalSpotSpacing;
+    else
+        longitudinalSpotSpacing = pln.propStf.longitudinalSpotSpacing;
+    end
     
     if sum(availablePeakPos<0)>0
        matRad_cfg.dispError('at least one available peak position is negative - inconsistent machine file') 
@@ -249,15 +269,18 @@ for i = 1:length(pln.propStf.gantryAngles)
     for j = stf(i).numOfRays:-1:1
 
         for ShiftScen = 1:pln.multScen.totNumShiftScen
-        % ray tracing necessary to determine depth of the target
-            [~,l{ShiftScen},rho{ShiftScen},~,~] = matRad_siddonRayTracer(stf(i).isoCenter + pln.multScen.isoShift(ShiftScen,:), ...
-                             ct.resolution, ...
-                             stf(i).sourcePoint, ...
-                             stf(i).ray(j).targetPoint, ...
-                             [ct.cube {voiTarget}]);
+            % ray tracing necessary to determine depth of the target
+            [alphas,l{ShiftScen},rho{ShiftScen},d12,~] = matRad_siddonRayTracer(stf(i).isoCenter + pln.multScen.isoShift(ShiftScen,:), ...
+                ct.resolution, ...
+                stf(i).sourcePoint, ...
+                stf(i).ray(j).targetPoint, ...
+                [ct.cube {voiTarget}]);
+            
+            %Used for generic range-shifter placement
+            ctEntryPoint = alphas(1) * d12;
         end
-                      
-        % find appropriate energies for particles
+        
+       % find appropriate energies for particles
        if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'helium') || strcmp(stf(i).radiationMode,'carbon')
 
            % target hit   
@@ -266,7 +289,7 @@ for i = 1:length(pln.propStf.gantryAngles)
                rhoVOITarget = [rhoVOITarget, rho{ShiftScen}{end}];
            end
            
-           if sum(rhoVOITarget) > 0 
+           if any(rhoVOITarget) 
 
                Counter = 0;
                
@@ -289,9 +312,17 @@ for i = 1:length(pln.propStf.gantryAngles)
                                   end
                                   
                                   % find target entry & exit
-                                  diff_voi    = diff([rho{ShiftScen}{end}]);
-                                  targetEntry(Counter,1:length(radDepths(diff_voi == 1))) = radDepths(diff_voi == 1);
-                                  targetExit(Counter,1:length(radDepths(diff_voi == -1))) = radDepths(diff_voi == -1);
+                                  diff_voi    = [diff([rho{ShiftScen}{end}])];
+                                  entryIx = find(diff_voi == 1);
+                                  exitIx = find(diff_voi == -1);
+                                  
+                                  %We approximate the interface using the
+                                  %rad depth between the last voxel before 
+                                  %and the first voxel after the interface
+                                  %This captures the case that the first
+                                  %relevant voxel is a target voxel
+                                  targetEntry(Counter,1:length(entryIx)) = (radDepths(entryIx) + radDepths(entryIx+1)) ./ 2;
+                                  targetExit(Counter,1:length(exitIx)) = (radDepths(exitIx) + radDepths(exitIx+1)) ./ 2;
                                   
                               end
                           end
@@ -326,10 +357,37 @@ for i = 1:length(pln.propStf.gantryAngles)
                 end
 
                 stf(i).ray(j).energy = [];
+                stf(i).ray(j).rangeShifter = [];
 
                 % Save energies in stf struct
                 for k = 1:numel(targetEntry)
-                    stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k))];
+                                       
+                    %If we need lower energies than available, consider
+                    %range shifter (if asked for)
+                    if any(targetEntry < min(availablePeakPos)) && pln.propStf.useRangeShifter
+                        %Get Energies to use with range shifter to fill up
+                        %non-reachable low-range spots
+                        raShiEnergies = availableEnergies(availablePeakPosRaShi >= targetEntry(k) & min(availablePeakPos) > availablePeakPosRaShi);
+                        
+                        raShi.ID = 1;
+                        raShi.eqThickness = rangeShifterEqD;
+                        raShi.sourceRashiDistance = round(ctEntryPoint - 2*rangeShifterEqD,-1); %place a little away from entry, round to cms to reduce number of unique settings                        
+                        
+                        stf(i).ray(j).energy = [stf(i).ray(j).energy raShiEnergies];
+                        stf(i).ray(j).rangeShifter = [stf(i).ray(j).rangeShifter repmat(raShi,1,length(raShiEnergies))];
+                    end
+                    
+                    %Normal placement without rangeshifter
+                    newEnergies = availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k));
+                    
+                    
+                    stf(i).ray(j).energy = [stf(i).ray(j).energy newEnergies];
+                    
+                    
+                    raShi.ID = 0;
+                    raShi.eqThickness = 0;
+                    raShi.sourceRashiDistance = 0;                       
+                    stf(i).ray(j).rangeShifter = [stf(i).ray(j).rangeShifter repmat(raShi,1,length(newEnergies))];
                 end
   
                 
@@ -381,21 +439,15 @@ for i = 1:length(pln.propStf.gantryAngles)
         maxEnergy = max([stf(i).ray.energy]);
         
         % get corresponding peak position
-        availableEnergies = [machine.data.energy];
         minPeakPos  = machine.data(minEnergy == availableEnergies).peakPos;
         maxPeakPos  = machine.data(maxEnergy == availableEnergies).peakPos;
         
         % find set of energyies with adequate spacing
-        if ~isfield(pln.propStf, 'longitudinalSpotSpacing')
-            longitudinalSpotSpacing = matRad_cfg.propStf.defaultLongitudinalSpotSpacing;
-        else
-            longitudinalSpotSpacing = pln.propStf.longitudinalSpotSpacing;
-        end
+        
         
         stf(i).longitudinalSpotSpacing = longitudinalSpotSpacing;
         
         tolerance              = longitudinalSpotSpacing/10;
-        availablePeakPos       = [machine.data.peakPos];
         
         useEnergyBool = availablePeakPos >= minPeakPos & availablePeakPos <= maxPeakPos;
         
@@ -417,8 +469,9 @@ for i = 1:length(pln.propStf.gantryAngles)
             for k = stf(i).numOfBixelsPerRay(j):-1:1
                 maskEnergy = stf(i).ray(j).energy(k) == availableEnergies;
                 if ~useEnergyBool(maskEnergy)
-                    stf(i).ray(j).energy(k)     = [];
-                    stf(i).ray(j).focusIx(k)    = [];
+                    stf(i).ray(j).energy(k)         = [];
+                    stf(i).ray(j).focusIx(k)        = [];
+                    stf(i).ray(j).rangeShifter(k)   = [];
                     stf(i).numOfBixelsPerRay(j) = stf(i).numOfBixelsPerRay(j) - 1;
                 end
             end
@@ -568,18 +621,6 @@ for i = 1:length(pln.propStf.gantryAngles)
         axis([-300 300 -300 300 -300 300]);
         %pause(1);
     end
-    
-    % include rangeshifter data if not yet available 
-    if strcmp(pln.radiationMode, 'protons') || strcmp(pln.radiationMode, 'helium') || strcmp(pln.radiationMode, 'carbon')
-        for j = 1:stf(i).numOfRays
-            for k = 1:numel(stf(i).ray(j).energy)
-                stf(i).ray(j).rangeShifter(k).ID = 0;
-                stf(i).ray(j).rangeShifter(k).eqThickness = 0;
-                stf(i).ray(j).rangeShifter(k).sourceRashiDistance = 0;
-            end
-        end
-    end
-        
 end    
 
 end

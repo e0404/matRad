@@ -31,7 +31,8 @@ if size(cst,2) < 7
     cst = matRad_computeVoiContours(ct,cst);
 else
     for i = 1:size(cst,1)
-        if isempty(cst{i,7})
+        %Check integrity and if mismatch found, recompute contours
+        if isempty(cst{i,7}) || ~iscell(cst{i,7}) || length(cst{i,7}) ~= ct.numOfCtScen
             cst = matRad_computeVoiContours(ct,cst);
             break
         end

@@ -2,7 +2,7 @@ function cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNe
 % matRad function to resize the cst to a given resolution
 % 
 % call
-%   cst = matRad_resizeCstToDoseResolution(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNew,vYgridNew,vZgridNew)
+%   cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNew,vYgridNew,vZgridNew)
 %
 % input
 %   cst:         matRad cst struct
@@ -32,6 +32,8 @@ function cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNe
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+matRad_cfg.dispInfo('Resampling structure set... ');
 
 for i = 1:size(cst,1)            % loop over all structures
    for j = 1:numel(cst{i,4})     % loop over all scenarios
@@ -42,3 +44,5 @@ for i = 1:size(cst,1)            % loop over all structures
                                                  vXgridNew,vYgridNew',vZgridNew,'nearest'));
    end
 end
+
+matRad_cfg.dispInfo('done!\n');

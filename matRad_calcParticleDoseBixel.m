@@ -1,9 +1,9 @@
 function bixel = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData, heteroCorrDepths, heteroCorrType, modulateBioDose, vTissueIndex)
-% matRad visualization of two-dimensional dose distributions on ct including
-% segmentation
+% matRad visualization of two-dimensional dose distributions 
+% on ct including segmentation
 % 
 % call
-%   dose = matRad_calcParticleDoseBixel(radDepths,radialDist_sq,SSD,focusIx,baseData)
+%   dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)
 %
 % input
 %   radDepths:      radiological depths
@@ -85,7 +85,7 @@ elseif ~isstruct(baseData.Z) && isfield(baseData,'sigma1')
 else
     
     % interpolate depth dose and sigma
-    X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths,'extrap');
+    X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths);
 
     % set dose for query > tabulated depth dose values to zero
     X(radDepths > max(depths),1) = 0;

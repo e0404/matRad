@@ -30,12 +30,12 @@ pln.machine         = 'generic_MCsquare';
 pln.numOfFractions  = 1;
 
 % beam geometry settings
-pln.propStf.bixelWidth      = 50; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.longitudinalSpotSpacing = 50;
-pln.propStf.gantryAngles    = 0; % [?] 
-pln.propStf.couchAngles     = 0; % [?]
-pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propStf.bixelWidth              = 10; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.longitudinalSpotSpacing = 10;
+pln.propStf.gantryAngles            = 0; % [?] 
+pln.propStf.couchAngles             = 0; % [?]
+pln.propStf.numOfBeams              = numel(pln.propStf.gantryAngles);
+pln.propStf.isoCenter               = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 %pln.propStf.isoCenter       = [51 0 51];
                             
 % dose calculation settings
@@ -68,17 +68,22 @@ pln.propMC.proton_engine = 'MCsquare';
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
+%stf = matRad_generateSingleBixelStf(ct,cst,pln); %Example to create a single beamlet stf
 
 %% dose calculation
-dij = matRad_calcParticleDose(ct, stf, pln, cst);
-%resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+dij = matRad_calcParticleDose(ct, stf, pln, cst); %Calculate particle dose influence matrix (dij) with analytical algorithm
+%dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,1e4); %Calculate particle dose influence matrix (dij) with MC algorithm (slow!!)
 
-%% MC calculation
+
+resultGUI = matRad_fluenceOptimization(dij,cst,pln); %Optimize
+%resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij); %Use uniform weights
+
+%resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
 resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.w,1e5);
 
-resultGUI = matRad_appendResultGUI(resultGUI,resultGUI_MC,0,'MC');
-
 %% Compare Dose
-matRad_compareDose(resultGUI.physicalDose, resultGUI_MC.physicalDose, ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');
+resultGUI = matRad_appendResultGUI(resultGUI,resultGUI_MC,0,'MC');
+matRad_compareDose(resultGUI.physicalDose, resultGUI.physicalDose_MC, ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');
 
+%% GUI
+matRadGUI

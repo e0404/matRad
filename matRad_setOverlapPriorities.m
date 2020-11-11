@@ -1,19 +1,20 @@
 function [cst,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)
-% function to handle overlap priorities during fluence optimizaiton and
-% dose calculation. If you have overlapping volumes of interest you need to
-% inform matrad to which volume(s) the intersection voxels belong
+% function to handle overlap priorities 
+% during fluence optimization and dose calculation. If you have overlapping 
+% volumes of interest you need to inform matRad to which volume(s) the 
+% intersection voxels belong.
 % 
 % call
 %   cst = matRad_considerOverlap(cst)
-%   [cst, overlapPriorityCube] = matRad_setOverlapPriorities(cst,cubeDim)
+%   [cst, overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)
 %
 % input
 %   cst:        cst file
-%   ctDim:      dimension of the ct for overlap cube claculation (optional)
+%   ctDim:      (optional) dimension of the ct for overlap cube claculation 
 %
 % output
 %   cst:                updated cst file considering overlap priorities
-%   overlapPriorityCube cube visualizing the overlap priority (optional)
+%   overlapPriorityCube:(optional) cube visualizing the overlap priority 
 %
 % References
 %   -
@@ -31,10 +32,15 @@ function [cst,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
+matRad_cfg.dispInfo('Adjusting structures for overlap... ');
+
 numOfCtScenarios = unique(cellfun(@(x)numel(x),cst(:,4)));
 
+%Sanity check
 if numel(numOfCtScenarios) > 1
-    error('Inconsistent number of segmentations in cst struct.');
+    matRad_cfg.dispError('\nInconsistent number of segmentations in cst struct.');
 end  
 
 for i = 1:numOfCtScenarios
@@ -55,7 +61,7 @@ for i = 1:numOfCtScenarios
         cst{j,4}{i} = idx;
         
         if isempty(cst{j,4}{i}) && ~isempty(cst{j,6})
-            error([cst{j,2} ': Objective(s) and/or constraints for inverse planning defined ' ...
+            matRad_cfg.dispError(['\n' cst{j,2} ': Objective(s) and/or constraints for inverse planning defined ' ...
                  'but structure overlapped by structure with higher overlap priority.' ...
                  'Objective(s) will not be considered during optimization']); 
         end
@@ -70,7 +76,8 @@ if nargout == 2 && nargin == 2
         overlapPriorityCube(cst{i,4}{1}) = cst{i,5}.Priority;
     end
 end
-    
+
+matRad_cfg.dispInfo('Done!\n');
 
 end
 

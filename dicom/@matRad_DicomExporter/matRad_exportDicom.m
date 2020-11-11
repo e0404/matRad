@@ -1,6 +1,6 @@
 function obj = matRad_exportDicom(obj)
-% matRad function to export current workspace to DICOM. Function of
-% matRad_DicomExporter
+% matRad function to export current workspace to DICOM. 
+% Function of matRad_DicomExporter
 % 
 % call
 %   matRad_DicomExporter.matRad_exportDicom()
