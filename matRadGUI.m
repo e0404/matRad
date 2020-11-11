@@ -2208,7 +2208,7 @@ function number = parseStringAsNum(stringIn,isVector)
 if isnumeric(stringIn)
     number = stringIn;
 else
-    number = str2double(stringIn);
+    number = str2num(stringIn);
     if isempty(number) || length(number) > 1 && ~isVector
         warndlg(['could not parse all parameters (pln, optimization parameter)']); 
         number = NaN;
