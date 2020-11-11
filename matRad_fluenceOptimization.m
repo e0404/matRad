@@ -98,15 +98,15 @@ ixTarget       = ixTarget(i);
 wOnes          = ones(dij.totalNumOfBixels,1);
    
 % calculate initial beam intensities wInit
-
+matRad_cfg.dispInfo('Estimating initial weights... ');
 if  strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
     % check if a constant RBE is defined - if not use 1.1
     if ~isfield(dij,'RBE')
         dij.RBE = 1.1;
     end
     bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
-    wInit       = wOnes * bixelWeight;
-        
+    wInit       = bixelWeight * wOnes;
+    matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);    
 elseif pln.bioParam.bioOpt
     
     % retrieve photon LQM parameter
@@ -157,6 +157,7 @@ elseif pln.bioParam.bioOpt
 else 
     bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
+    matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);   
 end
     
 

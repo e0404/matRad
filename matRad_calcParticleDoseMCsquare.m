@@ -182,6 +182,17 @@ for s = 1:ct.numOfCtScen
         dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
 end
 
+%BDL File
+bdFile = [machine.meta.machine '.txt'];
+
+% bdFile = 'BDL_matRad.txt'; %use for baseData fit 
+MCsquareBDL = MatRad_MCsquareBaseData(machine,stf);
+%matRad_createMCsquareBaseDataFile(bdFile,machine,1);
+% MCsquareBDL = MCsquareBDL.saveMatradMachine('test');
+MCsquareBDL = MCsquareBDL.writeMCsquareData([MCsquareFolder filesep 'BDL' filesep bdFile]);
+%movefile(bdFile,[MCsquareFolder filesep 'BDL/' bdFile]);
+% MCsquareBDL = MCsquareBDL.saveMatradMachine('testMachine');
+
 for shiftScen = 1:pln.multScen.totNumShiftScen
     
     % manipulate isocenter
@@ -209,6 +220,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 
                 MCsquareConfig = MatRad_MCsquareConfig;
                 
+                MCsquareConfig.BDL_Machine_Parameter_File = ['BDL/' bdFile];
                 MCsquareConfig.BDL_Plan_File = 'currBixels.txt';
                 MCsquareConfig.CT_File       = 'MC2patientCT.mhd';
                 MCsquareConfig.Num_Threads   = nbThreads;
