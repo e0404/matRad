@@ -490,15 +490,15 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 % save alpha_p and beta_p radiosensititvy parameter for every bixel in cell array
                                 if pln.bioParam.bioOpt
                                     
-                                    if all(isfield(bixel,{'Z_Aij','Z_Bij'}))
-                                        bixelAlphaDose =  bixel.L .* bixel.Z_Aij;
-                                        bixelBetaDose  =  bixel.L .* bixel.Z_Bij;
+                                    if all(isfield(bixelDose,{'Z_Aij','Z_Bij'}))
+                                        bixelAlphaDose =  bixelDose.L .* bixelDose.Z_Aij;
+                                        bixelBetaDose  =  bixelDose.L .* bixelDose.Z_Bij;
                                     else
                                     [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(currRadDepths,machine.data(energyIx),vTissueIndex_j(currIx,:),dij.ax(VdoseGrid(ix(currIx))),...
                                         dij.bx(VdoseGrid(ix(currIx))),dij.abx(VdoseGrid(ix(currIx))));
                                     
-                                    bixelAlphaDose =  bixel.physDose .* bixelAlpha;
-                                    bixelBetaDose  =  bixel.physDose .* sqrt(bixelBeta);
+                                    bixelAlphaDose =  bixelDose.physDose .* bixelAlpha;
+                                    bixelBetaDose  =  bixelDose.physDose .* sqrt(bixelBeta);
                                     end
 
                                     bixelAlpha(isnan(bixelAlpha)) = 0;

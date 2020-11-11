@@ -72,6 +72,7 @@ classdef MatRad_TopasConfig < handle
         scoreDose = true;
         scoreTrackCount = false;
         scoreDij = false;
+        scoreRBE = false;
         %scoreLET = true;
         scoreReportQuantity = 'Sum'; 
         outputType = 'binary'; %'csv'; 'binary';%             
@@ -91,7 +92,8 @@ classdef MatRad_TopasConfig < handle
                                 
         infilenames = struct(   'geometry','TOPAS_matRad_geometry.txt.in',...                               
                                 'surfaceScorer','TOPAS_scorer_surfaceIC.txt.in',...
-                                'doseScorer','TOPAS_scorer_dose.txt.in');
+                                'doseScorer','TOPAS_scorer_dose.txt.in',...
+                                'doseScorerRBE','TOPAS_scorer_doseRBE.txt.in');
         
            
     end
@@ -132,6 +134,11 @@ classdef MatRad_TopasConfig < handle
             %Reset MCparam structure
             obj.MCparam = struct();
             obj.MCparam.tallies = {};
+            
+            if isfield(pln,'bioParam') && strcmp(pln.bioParam.quantityOpt,'RBExD')
+               obj.scoreRBE = true;
+            end
+            
             obj.MCparam.nbRuns = obj.numOfRuns;
             obj.MCparam.simLabel = obj.label;
             
@@ -216,10 +223,17 @@ classdef MatRad_TopasConfig < handle
             obj.MCparam.outputType = obj.outputType;
             
             if obj.scoreDose
-                fname = fullfile(obj.thisFolder,obj.infilenames.doseScorer);
+                if obj.scoreRBE
+                    fname = fullfile(obj.thisFolder,obj.infilenames.doseScorerRBE);
+                else
+                    fname = fullfile(obj.thisFolder,obj.infilenames.doseScorer);
+                end
                 obj.matRad_cfg.dispDebug('Reading Dose Scorer from %s\n',fname);
-                scorer = fileread(fname);                
+                scorer = fileread(fname);
                 fprintf(fID,'%s\n',scorer);
+                if obj.scoreRBE
+                   obj.MCparam.tallies = {'physicalDose','alpha','beta','RBE'}; 
+                end
                 if ~any(strcmp(obj.MCparam.tallies,'physicalDose'))
                     obj.MCparam.tallies{end+1} = 'physicalDose';
                 end

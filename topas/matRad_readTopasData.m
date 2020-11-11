@@ -14,7 +14,7 @@ correctionFactor = 1e6 / double(MCparam.nbHistoriesTotal); %double(MCparam.nbPar
 
 cubeDim = MCparam.imageCubeDim;
 
-if calcDoseDirect % if topas dij calculation
+if calcDoseDirect 
     for t = 1:length(MCparam.tallies)
         tname = MCparam.tallies{t};
         topasTally = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
@@ -47,7 +47,7 @@ if calcDoseDirect % if topas dij calculation
         
         topasCube.(tname) = topasTally;
     end
-else
+else % if topas dij calculation
     for t = 1:length(MCparam.tallies)
         tname = MCparam.tallies{t};
         topasTally = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
