@@ -17,7 +17,7 @@
 run(['..' filesep 'matRad_rc']);
 
 %% Prepare settings for testing
-global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+matRad_cfg = MatRad_Config.instance();
 matRad_cfg.setDefaultPropertiesForTesting();
 
 % supressing the inherent Ocatave warnings for division by zero
@@ -25,33 +25,50 @@ if strcmp(matRad_getEnvironment,'OCTAVE')
     warning('off','Octave:divide-by-zero');
 end
 
-exampleScripts = {'matRad_example1_phantom.m',...
-    'matRad_example2_photons.m',...
-    'matRad_example3_photonsDAO.m',...
-    'matRad_example4_photonsMC.m',...
-    'matRad_example5_protons.m',...
-    'matRad_example6_protonsNoise.m',...
-    'matRad_example7_carbon.m'};
+exampleScripts = {'../examples/matRad_example1_phantom.m',...
+    '../examples/matRad_example2_photons.m',...
+    '../examples/matRad_example3_photonsDAO.m',...
+    '../examples/matRad_example4_photonsMC.m',...
+    '../examples/matRad_example5_protons.m',...
+    '../examples/matRad_example6_protonsNoise.m',...
+    '../examples/matRad_example7_carbon.m',...
+    '../matRad.m'};
 
+testing_suffix = '_test';
 unitTestBixelWidth = 20;
 
-matRad_unitTestTextManipulation(exampleScripts,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)], '../examples/');
-matRad_unitTestTextManipulation(exampleScripts,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR TESTING %%%%%%%%%%%%%%', '../examples/');
-matRad_unitTestTextManipulation('matRad.m','pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)], '../');
+%Copy and manipulate all scripts
+[folders,names,exts] = cellfun(@fileparts,exampleScripts,'UniformOutput',false);
+testScriptNames = strcat(names,testing_suffix);    
+testScripts = cellfun(@fullfile,folders,strcat(testScriptNames,exts),'UniformOutput',false);
+status = cellfun(@copyfile,exampleScripts,testScripts);
 
-disp('Integration test run example 1');
-matRad_example1_phantom
-disp('Integration test run example 2');
-matRad_example2_photons
-disp('Integration test run example 3');
-matRad_example3_photonsDAO
-disp('Integration test run example 4');
-matRad_example4_photonsMC
-disp('Integration test run example 5');
-matRad_example5_protons
-disp('Integration test run example 6');
-matRad_example6_protonsNoise
-disp('Integration test run example 7');
-matRad_example7_carbon
-disp('Integration test run matRad script');
-matRad
+matRad_unitTestTextManipulation(testScripts,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)]);
+matRad_unitTestTextManipulation(testScripts,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR TESTING %%%%%%%%%%%%%%');
+
+errors = {};
+%Running tests
+for testIx = 1:length(testScriptNames)
+    fprintf('Running Integration Test for ''%s''\n',names{testIx});
+    try
+        run(testScripts{testIx});
+        clear ct cst pln stf dij resultGUI; %Make sure the workspace is somewhat clean
+        delete(testScripts{testIx}); %Delete after successful run
+    catch ME
+        [~,scriptName] = fileparts(testScripts{testIx});
+        if matRad_cfg.isMatlab
+            message = ME.getReport();
+        else
+            message = ME.message;
+        end
+        errMsg = sprintf('Experiencd an error during testing of %s. Error-Message:\n %s',scriptName,message);
+        warning(errMsg);
+        errors{end+1} = errMsg;
+    end
+end
+
+%Check if at least one script failed and report error
+if ~isempty(errors)
+    error(strjoin(errors,'\n\n============================\n\n'));
+end
+    

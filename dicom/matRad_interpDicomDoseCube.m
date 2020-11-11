@@ -6,7 +6,7 @@ function [ dose ] = matRad_interpDicomDoseCube( ct, currDose )
 %
 % input
 %   ct:             ct imported by the matRad_importDicomCt function
-%   currDose:   	  one (of several) dose cubes which should be interpolated
+%   currDose:       one (of several) dose cubes which should be interpolated
 %
 % output
 %   dose:           struct with different actual current dose cube and several
@@ -92,7 +92,8 @@ dose.dicomInfo.SliceThickness          = target_resolution.z;
 dose.dicomInfo.ImageOrientationPatient = doseInfo.ImageOrientationPatient;
 dose.dicomInfo.DoseType                = doseInfo.DoseType;
 dose.dicomInfo.DoseSummationType       = doseInfo.DoseSummationType;
-dose.dicomInfo.InstanceNumber          = doseInfo.InstanceNumber;
+%dose.dicomInfo.InstanceNumber          = doseInfo.InstanceNumber; %Not
+%always given
 dose.dicomInfo.SOPClassUID             = doseInfo.SOPClassUID;
 dose.dicomInfo.SOPInstanceUID          = doseInfo.SOPInstanceUID;
 dose.dicomInfo.ReferencedRTPlanSequence = doseInfo.ReferencedRTPlanSequence;

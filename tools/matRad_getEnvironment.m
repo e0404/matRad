@@ -5,6 +5,7 @@ function [env, versionString] = matRad_getEnvironment()
 %   [env, versionString] = matRad_getEnvironment()
 %
 % input
+%   -
 %   
 % output
 %   env:            outputs either 'MATLAB' or 'OCTAVE' as string
@@ -27,26 +28,11 @@ function [env, versionString] = matRad_getEnvironment()
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % reduce runtime if function is called multiple times
-persistent VERSION
 
-if isempty(VERSION)
-    isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
-    if isOctave
-        env = 'OCTAVE';
-        versionString = OCTAVE_VERSION;
-    else
-        env = 'MATLAB';
-        vData = ver(env);
-        versionString = vData.Version;
-    end
+matRad_cfg = MatRad_Config.instance();
 
-    VERSION.env = env;
-    VERSION.versionString = versionString;
-
-else
-    env = VERSION.env;
-    versionString = VERSION.versionString;
-end
+env = matRad_cfg.env;
+versionString = matRad_cfg.envVersion;
 
 end
 

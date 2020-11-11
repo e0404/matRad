@@ -2,7 +2,7 @@ function matRad_writeMHA(filepath,cube,metadata)
 % matRad function to write mha files
 % 
 % call
-%   matRad_writeMHA(cube,metadata,filename)
+%   matRad_writeMHA(filepath,cube,metadata)
 %
 % input
 %   filepath:   full filename (with extension)

@@ -1,9 +1,10 @@
 function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
-% matRad wrapper function to import a predefined set of dicom files into
-% matRad's native data formats
+% matRad wrapper function to import a predefined set of dicom files 
+% into matRad's native data formats
 % 
 % call
-%   [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
+% [ct, cst, pln, resultGUI] = matRad_importDicom( files )  
+% [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
 %
 % input
 %   files:          list of files to be imported (will contain cts and rt

@@ -7,9 +7,9 @@ function matRad_compileOmpMCInterface(dest,omcFolder)
 %   matRad_compileOmpMCInterface(dest,sourceFolder)
 %
 % input:
-%   dest:           destination for mex file. Default: location of this
-%                   file
-%   sourceFolder:   path to ompMC (optional). Default assumes its checked
+%   dest:           (optional) destination for mex file. Default: location 
+%                   of this file
+%   sourceFolder:   (optional) path to ompMC . Default assumes its checked
 %                   out in the submodules folder of matRad
 %
 % References
@@ -28,7 +28,7 @@ function matRad_compileOmpMCInterface(dest,omcFolder)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg; 
+ 
 matRad_cfg = MatRad_Config.instance();
 
 env = matRad_getEnvironment();

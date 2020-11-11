@@ -2,7 +2,10 @@ function ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visB
 % matRad function to import dicom ct data
 % 
 % call
+%   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool)
+%   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid)
 %   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, visBool)
+%   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visBool)
 %
 % input
 %   ctList:         list of dicom ct files
@@ -14,7 +17,7 @@ function ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visB
 %
 % output
 %   ct:             matRad ct struct. Note that this 3D matlab array 
-%                   contains water euqivalen electron denisities.
+%                   contains water euqivalent electron denisities.
 %                   Hounsfield units are converted using a standard lookup
 %                   table in matRad_calcWaterEqD
 %
@@ -34,7 +37,9 @@ function ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visB
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-fprintf('\nimporting ct-cube...');
+matRad_cfg = MatRad_Config.instance();
+
+matRad_cfg.dispInfo('\nimporting ct-cube...');
 
 %% processing input variables
 if ~exist('visBool','var')
@@ -43,7 +48,9 @@ end
 
 % creation of ctInfo list
 numOfSlices = size(ctList,1);
-fprintf('\ncreating info...')
+matRad_cfg.dispInfo('\ncreating info...')
+
+sliceThicknessStandard = true;
 for i = 1:numOfSlices
 
     if verLessThan('matlab','9')
@@ -66,6 +73,17 @@ for i = 1:numOfSlices
     ctInfo(i).RescaleSlope            = tmpDicomInfo.RescaleSlope;
     ctInfo(i).RescaleIntercept        = tmpDicomInfo.RescaleIntercept;
     
+    %Problem due to some CT files using non-standard SpacingBetweenSlices
+    
+    if isempty(ctInfo(i).SliceThickness)
+        %Print warning ocne
+        if sliceThicknessStandard
+            matRad_cfg.dispWarning('Non-standard use of SliceThickness Attribute (empty), trying to overwrite with SpacingBetweenSlices');
+            sliceThicknessStandard = false;
+        end
+        ctInfo(i).SliceThickness = tmpDicomInfo.SpacingBetweenSlices;
+    end
+    
     if i == 1
         completeDicom = tmpDicomInfo;
     end
@@ -83,18 +101,18 @@ ctInfo = ctInfo(indexing);
 
 %% check data set for consistency
 if size(unique([ctInfo.PixelSpacing]','rows'),1) > 1
-    error('Different pixel size in different CT slices');
+    matRad_cfg.dispError('Different pixel size in different CT slices');
 end
 
 coordsOfFirstPixel = [ctInfo.ImagePositionPatient];
 if numel(unique(coordsOfFirstPixel(1,:))) > 1 || numel(unique(coordsOfFirstPixel(2,:))) > 1
-    error('Ct slices are not aligned');
+    matRad_cfg.dispError('Ct slices are not aligned');
 end
 if sum(diff(coordsOfFirstPixel(3,:))<=0) > 0
-    error('Ct slices not monotonically increasing');
+    matRad_cfg.dispError('Ct slices not monotonically increasing');
 end
 if numel(unique([ctInfo.Rows])) > 1 || numel(unique([ctInfo.Columns])) > 1
-    error('Ct slice sizes inconsistent');
+    matRad_cfg.dispError('Ct slice sizes inconsistent');
 end
 
 
@@ -113,7 +131,7 @@ end
 % FFS     Feet First-Supine                 (supported)
 
 if isempty(regexp(ctInfo(1).PatientPosition,{'S','P'}, 'once'))
-    error(['This Patient Position is not supported by matRad.'...
+    matRad_cfg.dispError(['This Patient Position is not supported by matRad.'...
         ' As of now only ''HFS'' (Head First-Supine), ''FFS'''...
         ' (Feet First-Supine), '...    
         '''HFP'' (Head First-Prone), and ''FFP'''...
@@ -121,7 +139,7 @@ if isempty(regexp(ctInfo(1).PatientPosition,{'S','P'}, 'once'))
 end
 
 %% creation of ct-cube
-fprintf('reading slices...')
+matRad_cfg.dispInfo('reading slices...')
 origCt = zeros(ctInfo(1).Height, ctInfo(1).Width, numOfSlices);
 for i = 1:numOfSlices
     currentFilename = ctList{i};
@@ -151,7 +169,7 @@ end
 % when using the physical coordinates (ctInfo.ImagePositionPatient) to
 % arrange the  slices in z-direction, there is no more need for mirroring
 % in the z-direction
-fprintf('\nz-coordinates taken from ImagePositionPatient\n')
+matRad_cfg.dispInfo('\nz-coordinates taken from ImagePositionPatient\n')
 
 % The x- & y-direction in lps-coordinates are specified in:
 % ImageOrientationPatient
@@ -162,38 +180,38 @@ nonStandardDirection = false;
 % correct x- & y-direction
 % 
 % if xDir(1) == 1 && xDir(2) == 0 && xDir(3) == 0
-%     fprintf('x-direction OK\n')
+%     matRad_cfg.dispInfo('x-direction OK\n')
 % elseif xDir(1) == -1 && xDir(2) == 0 && xDir(3) == 0
-%     fprintf('\nMirroring x-direction...')
+%     matRad_cfg.dispInfo('\nMirroring x-direction...')
 %     origCt = flip(origCt,1);
-%     fprintf('finished!\n')
+%     matRad_cfg.dispInfo('finished!\n')
 % else
 %     nonStandardDirection = true;
 % end
 %     
 % if yDir(1) == 0 && yDir(2) == 1 && yDir(3) == 0
-%     fprintf('y-direction OK\n')
+%     matRad_cfg.dispInfo('y-direction OK\n')
 % elseif yDir(1) == 0 && yDir(2) == -1 && yDir(3) == 0
-%     fprintf('\nMirroring y-direction...')
+%     matRad_cfg.dispInfo('\nMirroring y-direction...')
 %     origCt = flip(origCt,2);
-%     fprintf('finished!\n')
+%     matRad_cfg.dispInfo('finished!\n')
 % else
 %     nonStandardDirection = true;
 % end
 
 if nonStandardDirection
-    fprintf(['Non-standard patient orientation.\n'...
+    matRad_cfg.dispInfo(['Non-standard patient orientation.\n'...
         'CT might not fit to contoured structures\n'])
 end
 
 %% interpolate cube
-fprintf('\nInterpolating CT cube...');
+matRad_cfg.dispInfo('\nInterpolating CT cube...');
 if exist('grid','var')
     ct = matRad_interpDicomCtCube(origCt, ctInfo, resolution, grid);
 else
     ct = matRad_interpDicomCtCube(origCt, ctInfo, resolution);
 end
-fprintf('finished!\n');
+matRad_cfg.dispInfo('finished!\n');
 
 %% remember some parameters of original dicom
 ct.dicomInfo.PixelSpacing            = ctInfo(1).PixelSpacing;
@@ -228,8 +246,8 @@ end
 ct.timeStamp = datestr(clock);
 
 % convert to Hounsfield units
-fprintf('\nconversion of ct-Cube to Hounsfield units...');
+matRad_cfg.dispInfo('\nconversion of ct-Cube to Hounsfield units...');
 ct = matRad_calcHU(ct);
-fprintf('finished!\n');
+matRad_cfg.dispInfo('finished!\n');
 
 end

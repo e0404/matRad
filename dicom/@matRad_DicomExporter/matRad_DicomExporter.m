@@ -1,5 +1,5 @@
 classdef matRad_DicomExporter < handle
-    % matRad_DicomExporter matRad class to handle a dicom export
+    % matRad_DicomExporter matRad class to handle a dicom export.
     %
     %
     % Example on how to use the matRad_DicomExport class
@@ -7,6 +7,23 @@ classdef matRad_DicomExporter < handle
     % dcmExpObj          = matRad_DicomExporter;   % create instance of matRad_DicomExporter
     % dcmExpObj.dicomDir = 'pathAsString';         % set the output path for the Dicom export
     % dcmExp.matRad_exportDicom();                 % run the export
+    %
+    %
+    % References
+    %   -
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2020 the matRad development team. 
+    % 
+    % This file is part of the matRad project. It is subject to the license 
+    % terms in the LICENSE file found in the top-level directory of this 
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % of the matRad project, including this file, may be copied, modified, 
+    % propagated, or distributed except according to the terms contained in the 
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties
        
@@ -24,11 +41,16 @@ classdef matRad_DicomExporter < handle
         PatientID
         PatientName
         PatientPosition
+        PatientBirthDate = '';
+        PatientSex = '';
         StudyID
         StudyDate
         StudyTime
         StudyInstanceUID
         FrameOfReferenceUID
+        
+        %Operator
+        OperatorsName
         
         % ct
         ctFilePrefix = 'ct_slice_';
@@ -60,7 +82,7 @@ classdef matRad_DicomExporter < handle
             %   Can be called with the structures. If no argument is given,
             %   all structures will be read from the base workspace
             
-            global matRad_cfg;
+            
             matRad_cfg = MatRad_Config.instance();  
             
             env = matRad_getEnvironment();
@@ -128,6 +150,7 @@ classdef matRad_DicomExporter < handle
             
             obj.PatientID = ['matRad_default_patient_' dateStr];
             obj.PatientName = obj.dicomName();
+            obj.OperatorsName = obj.dicomName();
             
             obj.StudyID = ['matRad_' dateStr];
             obj.StudyDate = dateStr;

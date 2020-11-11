@@ -1,4 +1,4 @@
-global matRad_cfg;
+
 matRad_cfg =  MatRad_Config.instance();
 
 % default: dose influence matrix computation
@@ -54,8 +54,25 @@ for i = 1:numel(stf)
     stf(i).isoCenter = stf(i).isoCenter + offset;
 end
 
+%set up HU to rED or rSP conversion
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'useGivenEqDensityCube')
+    disableHUconversion = matRad_cfg.propDoseCalc.defaultUseGivenEqDensityCube;
+else
+    disableHUconversion = pln.propDoseCalc.useGivenEqDensityCube;
+end
+
+%If we want to omit HU conversion check if we have a ct.cube ready
+if disableHUconversion && ~isfield(ct,'cube')
+    matRad_cfg.dispWarning('HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!');
+    disableHUconversion = false;
+end
+    
 % calculate rED or rSP from HU
-ct = matRad_calcWaterEqD(ct, pln);
+if disableHUconversion
+    matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
+else
+    ct = matRad_calcWaterEqD(ct, pln);
+end
 
 % meta information for dij
 dij.numOfBeams         = pln.propStf.numOfBeams;
@@ -92,10 +109,18 @@ VctGrid = [cst{:,4}];
 VctGrid = unique(vertcat(VctGrid{:}));
 
 % ignore densities outside of contours
-eraseCtDensMask = ones(prod(ct.cubeDim),1);
-eraseCtDensMask(VctGrid) = 0;
-for i = 1:ct.numOfCtScen
-    ct.cube{i}(eraseCtDensMask == 1) = 0;
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'ignoreOutsideDensities')
+    ignoreOutsideDensities = matRad_cfg.propDoseCalc.defaultIgnoreOutsideDensities;
+else
+    ignoreOutsideDensities = pln.propDoseCalc.ignoreOutsideDensities;
+end
+
+if ignoreOutsideDensities
+    eraseCtDensMask = ones(prod(ct.cubeDim),1);
+    eraseCtDensMask(VctGrid) = 0;
+    for i = 1:ct.numOfCtScen
+        ct.cube{i}(eraseCtDensMask == 1) = 0;
+    end
 end
 
 % Convert CT subscripts to linear indices.
