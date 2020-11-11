@@ -1,9 +1,9 @@
-function sigmaRashi = matRad_calcSigmaRashi(energy,rangeShifter,SSD)
+function sigmaRashi = matRad_calcSigmaRashi(bdEntry,rangeShifter,SSD)
 % calculation of additional beam broadening due to the use of range shifters 
 % (only for protons)
 % 
 % call
-%   sigmaRashi = matRad_calcSigmaRashi(energy,rangeShifter,SSD)
+%   sigmaRashi = matRad_calcSigmaRashi(bdEntry,rangeShifter,SSD)
 %
 % input
 %   bdEntry:        base data entry for energy
@@ -49,7 +49,7 @@ p = 1.77; % [1] % Exponent of range-energy relation
 if isfield(bdEntry,'range')
 	R = bdEntry.range;
 else % convert energy to range
-	
+	energy = bdEntry.energy;
 	R = alpha * (energy ^ p);
 end
 
