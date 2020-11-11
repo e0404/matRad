@@ -3,6 +3,7 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)
 % 
 % call
 %   resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst)
+%   resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)
 %
 % input
 %   ct:         ct cube

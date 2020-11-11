@@ -6,6 +6,7 @@ function hlut = matRad_loadHLUT(ct, pln)
 %
 % input
 %   ct:   unprocessed dicom ct data 
+%   pln:  matRad pln struct
 %
 % output
 %   hlut: lookup table

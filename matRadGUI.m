@@ -255,6 +255,8 @@ if handles.State > 0
             if sum(currPln.propStf.isoCenter(:)) ~= 0
                 %currSlice = round((currPln.propStf.isoCenter(1,planePermIx)+ctRes(planePermix)/2)/ctRes(planePermIx))-1;
                 currSlice = round(currPln.propStf.isoCenter(1,planePermIx) / ctRes(planePermIx));
+            else
+                currSlice = 0;
             end
         end
     catch
@@ -1372,15 +1374,33 @@ elseif handles.State > 0
         Result = evalin('base','resultGUI');
     end
     
+    ct  = evalin('base','ct');
+    cst = evalin('base','cst');
+    pln = evalin('base','pln');
+    
     if  ismember('stf',AllVarNames)
         stf = evalin('base','stf');
+        
+        %validate stf with current pln settings
+        validStf = true;
+        gantryAngles = [stf.gantryAngle];
+        validStf = isequal(gantryAngles,pln.propStf.gantryAngles) & validStf;
+        couchAngles = [stf.couchAngle];
+        validStf = isequal(couchAngles,pln.propStf.couchAngles) & validStf;
+        isoCenter = vertcat(stf.isoCenter);
+        validStf = isequal(isoCenter,pln.propStf.isoCenter) & validStf;
+        
+        if ~validStf
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispWarning('stf and pln are not consistent, using pln for geometry display!');
+            stf = [];
+        end
+        
     else
         stf = [];
     end
 
-    ct  = evalin('base','ct');
-    cst = evalin('base','cst');
-    pln = evalin('base','pln');
+    
 end
 
 oldView = get(axesFig3D,'View');

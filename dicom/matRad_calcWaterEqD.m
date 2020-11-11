@@ -1,17 +1,19 @@
-function ct = matRad_calcWaterEqD(ct, pln, param)
-% matRad function to calculate the equivalent densities from a 
-% dicom ct that originally uses intensity values
+function ct = matRad_calcWaterEqD(ct, pln)
+% matRad function to calculate the equivalent densities from a dicom ct 
+% that originally uses intensity values
 %
 % call
-%   ct = matRad_calcWaterEqD(ct)
+%   ct = matRad_calcWaterEqD(ct, pln)
 %
 % input
 %   ct: unprocessed dicom ct data which are stored as intensity values (IV)
 %
 %       HU = IV * slope + intercept
 %
+%   pln: matRad plan struct
+%
 % output
-%   ct: ct struct with cube with relative _electron_ densities 
+%   ct: ct struct with cube with relative _electron_ densities
 %
 % References
 %   -
@@ -29,27 +31,21 @@ function ct = matRad_calcWaterEqD(ct, pln, param)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if exist('param','var')
-    if ~isfield(param,'logLevel')
-       param.logLevel = 1;
-    end
-else
-   param.logLevel       = 1;
-end
-
 % load hlut
 hlut = matRad_loadHLUT(ct, pln);
-    
+
+matRad_cfg = MatRad_Config.instance();
+
 for i = 1:ct.numOfCtScen
 
     % Manual adjustments if ct data is corrupt. If some values are out of range
     % of the LUT, then these values are adjusted.
     if max(ct.cubeHU{i}(:)) > max(hlut(:,1))
-        warning('projecting out of range HU values');
+        matRad_cfg.dispWarning('projecting out of range HU values');
         ct.cubeHU{i}(ct.cubeHU{i} > max(hlut(:,1))) = max(hlut(:,1));
     end
     if min(ct.cubeHU{i}(:)) < min(hlut(:,1))
-        warning('projecting out of range HU values');
+        matRad_cfg.dispWarning('projecting out of range HU values');
         ct.cubeHU{i}(ct.cubeHU{i} < min(hlut(:,1))) = min(hlut(:,1));
     end
 

@@ -2,7 +2,7 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 % matRad inverse planning wrapper function
 % 
 % call
-%   [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
+%   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 %
 % input
 %   dij:        matRad dij struct

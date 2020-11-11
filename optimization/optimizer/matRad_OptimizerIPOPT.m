@@ -12,6 +12,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
 %
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties

@@ -1,6 +1,6 @@
 function [versionString,matRadVer] = matRad_version()
-% matRad function to get the current matRad version (and git information when 
-% used from within a repository
+% matRad function to get the current matRad version 
+% (and git information when used from within a repository
 % 
 % call
 %   [versionString,matRadVer] = matRad_version()

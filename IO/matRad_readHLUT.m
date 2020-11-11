@@ -5,10 +5,10 @@ function hlut = matRad_readHLUT(filename)
 %   hlut = matRad_readHLUT(filename)
 %
 % input
-%   filename:   hlut filename
+%   filename: hlut filename
 %
 % output
-%   hlut: lookup table
+%   hlut:     lookup table
 %
 % References
 %   -

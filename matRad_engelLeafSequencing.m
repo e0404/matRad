@@ -1,10 +1,10 @@
 function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
-% multileaf collimator leaf sequencing algorithm for intensity modulated 
-% beams with multiple static segments accroding to Engel et al. 2005
-% Discrete Applied Mathematics
+% multileaf collimator leaf sequencing algorithm 
+% for intensity modulated beams with multiple static segments accroding 
+% to Engel et al. 2005 Discrete Applied Mathematics
 % 
 % call
-%   resultSequencing = matRad_engelSequencing(w,stf,pln,numOfLevels,visBool)
+%   resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
 %
 % input
 %   resultGUI:          resultGUI struct to which the output data will be added, if
