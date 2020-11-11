@@ -204,7 +204,7 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                             numel(cst{i, 6}{j}.parameters) ~= 4 )
                                 error("Either you forgot to set weights or mixed weighted and unweighted constraints")
                             end
-                            
+                            weight = weight ./ numel(cst{i,4}{1});
                         end
                         
                         idx = cst{i, 4}{1, 1};
