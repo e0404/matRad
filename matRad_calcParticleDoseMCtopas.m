@@ -111,7 +111,7 @@ end
 topasBaseData = MatRad_TopasBaseData(machine,stf);%,TopasConfig);
 
 topasConfig.numHistories = nCasePerBixel;
-topasConfig.numOfRuns = matRad_cfg.propMC.topas_defaultNumBatches;
+% topasConfig.numOfRuns = matRad_cfg.propMC.topas_defaultNumBatches;
 
 %Collect weights
 if calcDoseDirect
