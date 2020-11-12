@@ -96,15 +96,14 @@ else
     matRad_cfg.dispError('Forward MC only implemented for protons.');
 end
 
-
-dij.numOfBeams = size(dij.physicalDose{1},2);
-dij.beamNum = 1:size(dij.physicalDose{1},2);
+%dij.numOfBeams = size(stf,2);
+dij.beamNum = [1:size(stf,2)]';
 
 % calc resulting dose
 if pln.multScen.totNumScen == 1
     % calculate cubes; use uniform weights here, weighting with actual fluence 
     % already performed in dij construction
-    resultGUI    = matRad_calcCubes(ones(size(dij.physicalDose{1},2),1),dij,1);
+    resultGUI    = matRad_calcCubes(ones(dij.numOfBeams,1),dij,1);
     
 % calc individual scenarios    
 else    

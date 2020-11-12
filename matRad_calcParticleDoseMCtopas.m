@@ -201,14 +201,27 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                
                 fnames = fieldnames(topasCubes);
                 dij.MC_tallies = fnames;
-                for f = 1:numel(fnames)
-                    if calcDoseDirect
-                        dij.(fnames{f}){ctScen} = sum(w)*reshape(topasCubes.(fnames{f}),[],1);
+                
+                if calcDoseDirect
+                    if ~isfield(topasCubes,'RBE')
+                        for f = 1:numel(fnames)
+                            dij.(fnames{f}){ctScen} = sum(w)*reshape(topasCubes.(fnames{f}),[],1);
+                        end
                     else
+                        for d = 1:length(stf)
+                            dij.physicalDose{1}(:,d) = reshape(topasCubes.(['physicalDose_beam',num2str(d)]),[],1);
+                            dij.alpha{1}(:,d) = reshape(topasCubes.(['alpha_beam',num2str(d)]),[],1);
+                            dij.beta{1}(:,d) = reshape(topasCubes.(['beta_beam',num2str(d)]),[],1);
+                            dij.RBE{1}(:,d) = reshape(topasCubes.(['RBE_beam',num2str(d)]),[],1);
+                        end
+                    end
+                else
+                    for f = 1:numel(fnames)
                         for d = 1:stf(f).totalNumOfBixels
                             dij.physicalDose{1}(:,d) = reshape(topasCubes.(fnames{f}){d},[],1);
                         end
                     end
+                end
                 end
 
             end

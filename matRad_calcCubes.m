@@ -104,21 +104,16 @@ elseif isfield(dij,'MC_tallies') && isfield(dij,'RBE')
         wBeam = (resultGUI.w .* beamInfo(i).logIx);
         
 %         ix = dij.bx~=0 & resultGUI.(['physicalDose', beamInfo(i).suffix])(:) > 0;
-                
-        resultGUI.(['RBE',  beamInfo(i).suffix])        = zeros(dij.doseGrid.dimensions);
-        resultGUI.(['alpha', beamInfo(i).suffix])        = zeros(dij.doseGrid.dimensions);
-        resultGUI.(['beta',  beamInfo(i).suffix])        = zeros(dij.doseGrid.dimensions);
+        resultGUI.(['effect', beamInfo(i).suffix])       = full(dij.physicalDose{scenNum}* beamInfo(i).logIx .* (dij.alpha{scenNum} * wBeam + (dij.beta{scenNum} * wBeam).^2));
+        resultGUI.(['effect', beamInfo(i).suffix])       = reshape(resultGUI.(['effect', beamInfo(i).suffix]),dij.doseGrid.dimensions);
         
-        resultGUI.(['RBE', beamInfo(i).suffix])          = reshape(dij.(['RBE', beamInfo(i).suffix]){scenNum},dij.doseGrid.dimensions);
-        resultGUI.(['alpha', beamInfo(i).suffix])        = reshape(dij.(['alpha', beamInfo(i).suffix]){scenNum},dij.doseGrid.dimensions);
-        resultGUI.(['beta',  beamInfo(i).suffix])        = reshape(dij.(['beta', beamInfo(i).suffix]){scenNum},dij.doseGrid.dimensions);
+        resultGUI.(['RBExD', beamInfo(i).suffix])        = full(dij.physicalDose{scenNum}.* dij.physicalDose{scenNum} *beamInfo(i).logIx);
+        resultGUI.(['RBExD', beamInfo(i).suffix])        = reshape(resultGUI.(['RBExD', beamInfo(i).suffix]),dij.doseGrid.dimensions);
         
-        resultGUI.(['effect', beamInfo(i).suffix])       = reshape(resultGUI.(['physicalDose', beamInfo(i).suffix]).*(wBeam .* resultGUI.(['alpha', beamInfo(i).suffix]) + wBeam.^2 .* resultGUI.(['beta', beamInfo(i).suffix])),dij.doseGrid.dimensions);
-        resultGUI.(['RBExD', beamInfo(i).suffix])        = reshape(resultGUI.(['physicalDose', beamInfo(i).suffix]).*resultGUI.(['RBE', beamInfo(i).suffix]),dij.doseGrid.dimensions);
+        resultGUI.(['RBE', beamInfo(i).suffix])          = reshape(dij.RBE{scenNum}* beamInfo(i).logIx,dij.doseGrid.dimensions);
+        resultGUI.(['alpha', beamInfo(i).suffix])        = reshape(dij.alpha{scenNum}* beamInfo(i).logIx,dij.doseGrid.dimensions);
+        resultGUI.(['beta', beamInfo(i).suffix])         = reshape(dij.beta{scenNum}* beamInfo(i).logIx,dij.doseGrid.dimensions);
         
-%         resultGUI.(['RBExD', beamInfo(i).suffix])        = zeros(size(resultGUI.(['effect', beamInfo(i).suffix])));
-%         resultGUI.(['RBExD', beamInfo(i).suffix])(ix)    = (sqrt(dij.ax(ix).^2 + 4 .* dij.bx(ix) .* resultGUI.(['effect', beamInfo(i).suffix])(ix)) - dij.ax(ix))./(2.*dij.bx(ix));
-
     end
 end
 
