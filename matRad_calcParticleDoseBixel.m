@@ -73,7 +73,7 @@ elseif isstruct(baseData.Z) && isfield(baseData,'sigma1')
 elseif ~isstruct(baseData.Z) && isfield(baseData,'sigma1')
     
     % interpolate depth dose, sigmas, and weights    
-    X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.weight baseData.sigma1 baseData.sigma2],radDepths,'extrap');
+    X = matRad_interp1(depths,[baseData.Z baseData.weight baseData.sigma1 baseData.sigma2],radDepths,'extrap');
     
     % set dose for query > tabulated depth dose values to zero
     X(radDepths > max(depths),1) = 0;
@@ -85,7 +85,7 @@ elseif ~isstruct(baseData.Z) && isfield(baseData,'sigma1')
 else
     
     % interpolate depth dose and sigma
-    X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths);
+    X = matRad_interp1(depths,[baseData.Z baseData.sigma],radDepths);
 
     % set dose for query > tabulated depth dose values to zero
     X(radDepths > max(depths),1) = 0;
