@@ -477,7 +477,16 @@ classdef MatRad_TopasConfig < handle
                         fprintf(fileID,'u:Sim/ParticleMass = 12.0\n');
                         
                         particleA = 12;
-                        particleZ = 16;
+                        particleZ = 6;
+                        
+                        modules = obj.modules_GenericIon;
+                        
+                    case 'helium'
+                        fprintf(fileID,'s:Sim/ParticleName = "GenericIon(2,4)"\n');
+                        fprintf(fileID,'u:Sim/ParticleMass = 4.0\n');
+                        
+                        particleA = 4;
+                        particleZ = 2;
                         
                         modules = obj.modules_GenericIon;
                     %{    
