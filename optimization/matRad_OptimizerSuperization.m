@@ -10,9 +10,9 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
         alpha {mustBeNumeric, mustBePositive, mustBeLessThan(alpha, 1)} = 0.99;
         lambda {mustBeNumeric, mustBePositive, mustBeLessThan(lambda, 200)} = 1.9;
         feasibility_seeker {mustBeMember(feasibility_seeker, {'AMS_sim', 'AMS_sequential'})} = 'AMS_sim';
-        tol_obj {mustBeNumeric, mustBePositive}            = 1e-20;
-        tol_violation {mustBeNumeric, mustBePositive}      = 1e-20;
-        accepted_violation {mustBeNumeric, mustBePositive} = 1e-20;
+        tol_obj {mustBeNumeric}            = 1e-20;
+        tol_violation {mustBeNumeric}      = 1e-20;
+        accepted_violation {mustBeNumeric} = 1e-20;
         num_reductions {mustBeInteger}  = 2;
         weighted = false;
         
@@ -255,7 +255,7 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             A_x= x'*A;
             res_b=b-A_x';
             res_c=A_x'-c;
-            x=x+(1/max(1, sum(res_b<0)+sum(res_c<0)))*(obj.M(:, res_b<0)*res_b(res_b<0)+obj.M(:, res_c<0)*res_c(res_c<0));
+            x=x+(1/max(1, sum(res_b<0)+sum(res_c<0)))*(obj.M(:, res_b<0)*res_b(res_b<0)-obj.M(:, res_c<0)*res_c(res_c<0));
             x(x<0)=0;   
         end
         
