@@ -107,7 +107,7 @@ elseif isfield(dij,'MC_tallies') && isfield(dij,'RBE')
         resultGUI.(['effect', beamInfo(i).suffix])       = full(dij.physicalDose{scenNum}* beamInfo(i).logIx .* (dij.alpha{scenNum} * wBeam + (dij.beta{scenNum} * wBeam).^2));
         resultGUI.(['effect', beamInfo(i).suffix])       = reshape(resultGUI.(['effect', beamInfo(i).suffix]),dij.doseGrid.dimensions);
         
-        resultGUI.(['RBExD', beamInfo(i).suffix])        = full(dij.physicalDose{scenNum}.* dij.physicalDose{scenNum} *beamInfo(i).logIx);
+        resultGUI.(['RBExD', beamInfo(i).suffix])        = full(dij.RBE{scenNum}.* dij.physicalDose{scenNum} *beamInfo(i).logIx);
         resultGUI.(['RBExD', beamInfo(i).suffix])        = reshape(resultGUI.(['RBExD', beamInfo(i).suffix]),dij.doseGrid.dimensions);
         
         resultGUI.(['RBE', beamInfo(i).suffix])          = reshape(dij.RBE{scenNum}* beamInfo(i).logIx,dij.doseGrid.dimensions);
