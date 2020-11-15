@@ -1,4 +1,4 @@
-% clear
+ clear
 
 % Patient Data Import
 load('BOXPHANTOM_LUNG_LARGE.mat');
@@ -11,8 +11,8 @@ pln.machine         = 'Generic';
 
 % modelName           = 'LEM';
 modelName           = 'MCN';
-% quantityOpt         = 'RBExD';
-quantityOpt         = 'physicalDose';
+quantityOpt         = 'RBExD';
+% quantityOpt         = 'physicalDose';
 
 
 pln.propOpt.bioOptimization = 'none';
@@ -67,3 +67,9 @@ figure, plot(matRad_calcIDD(resultGUI_matRad.physicalDose)), hold on,...
 legend({'matRad','MCsquare','TOPAS'},'Location','northwest')
 xlim([10 100])
 ylabel('proton physicalDose')
+%%
+figure,plot(matRad_calcIDD(resultGUI_matRad.RBE)) , hold on,...
+plot(matRad_calcIDD(resultGUI_TOPAS.RBE))
+legend({'matRad','TOPAS'},'Location','northwest')
+xlim([10 100])
+ylabel('proton RBExD')
