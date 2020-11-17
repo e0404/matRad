@@ -36,7 +36,9 @@ if calcDoseDirect
                 topasSum = topasSum + data;
             end
             
-            topasSum = correctionFactor.*topasSum;
+            if strcmp(tname,'physicalDose')
+                topasSum = correctionFactor.*topasSum;
+            end
             
             % Tally per field
             topasCube.([tname '_beam' num2str(f)]) = topasSum;
