@@ -151,6 +151,10 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 %TOPAS here)
                 ctR.cubeHU = cubeHUresampled(ctScen);
                 ctR.cube = cubeResampled(ctScen);
+                %Delete previous topas files
+                delete([topasConfig.workingDir,'score*'])
+                delete([topasConfig.workingDir,'matRad_plan*'])
+
                 if calcDoseDirect
                     topasConfig.writeAllFiles(ctR,pln,stf,topasBaseData,w);
                 else
