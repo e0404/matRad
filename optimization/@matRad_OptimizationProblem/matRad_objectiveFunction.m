@@ -148,7 +148,7 @@ for  i = 1:size(cst,1)
                         
                         % prepare min/max dose vector
                         if ~exist('d_tmp','var')
-                            d_tmp = [d{:}];
+                            d_tmp = [d{useScen}];
                         end
                                                 
                         d_Scen = d_tmp(cst{i,4}{contourIx},:);
