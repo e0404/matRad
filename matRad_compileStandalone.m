@@ -27,7 +27,7 @@ p.addParameter('compileWithoutRT',true,@islogical);         %By default we do pa
 p.addParameter('projectFile','matRad.prj',@(x) exist(x,2)); %Default template prj file
 p.addParameter('override',false,@islogical);                %If set we do not care for any argumetn but use the bare *.prj file specified
 
-p.parse();
+p.parse(varargin{:});
 
 isRelease = p.Results.isRelease;
 compileWithRT = p.Results.compileWithRT;
