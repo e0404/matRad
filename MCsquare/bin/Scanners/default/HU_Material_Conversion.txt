@@ -1,0 +1,29 @@
+# ===================
+# HU	Material label
+# ===================
+
+-1050	39		# Schneider_Air
+-950	40		# Schneider_Lung
+-120	41		# Schneider_AT_AG_SI1
+-82	42		# Schneider_AT_AG_SI2
+-52	43		# Schneider_AT_AG_SI3
+-22	44		# Schneider_AT_AG_SI4
+8	45		# Schneider_AT_AG_SI5
+19	46		# Schneider_SoftTissus
+80	47		# Schneider_ConnectiveTissue
+120	48		# Schneider_Marrow_Bone01
+200	49		# Schneider_Marrow_Bone02
+300	50		# Schneider_Marrow_Bone03
+400	51		# Schneider_Marrow_Bone04
+500	52		# Schneider_Marrow_Bone05
+600	53		# Schneider_Marrow_Bone06
+700	54		# Schneider_Marrow_Bone07
+800	55		# Schneider_Marrow_Bone08
+900	56		# Schneider_Marrow_Bone09
+1000	57		# Schneider_Marrow_Bone10
+1100	58		# Schneider_Marrow_Bone11
+1200	59		# Schneider_Marrow_Bone12
+1300	60		# Schneider_Marrow_Bone13
+1400	61		# Schneider_Marrow_Bone14
+1500	62		# Schneider_Marrow_Bone15
+

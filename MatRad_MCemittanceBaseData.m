@@ -31,6 +31,8 @@ classdef MatRad_MCemittanceBaseData
         monteCarloData  %MC Phase space data struct
         selectedFocus   %array containing selected focus indices per energy
         FWHMatIso       %array containing FWHM values at iscenter for every energy
+        
+        rangeShifters   %Stores range shifters
     end
     
     properties (SetAccess = private)
@@ -52,7 +54,10 @@ classdef MatRad_MCemittanceBaseData
                 obj.stfCompressed = false;
             else
                 obj.stfCompressed = true;
+                obj = obj.getRangeShiftersFromStf(stf);
             end
+            
+            matRad_cfg = MatRad_Config.instance();
             
             obj.machine = machine;
             obj.problemSigma = false;
@@ -61,7 +66,7 @@ classdef MatRad_MCemittanceBaseData
             if isfield(machine.meta,'BAMStoIsoDist')
                 obj.nozzleToIso = machine.meta.BAMStoIsoDist;
             else
-                warning('No information on BAMS to isocenter distance. Using generic value of 500mm');
+                matRad_cfg.dispWarning('No information on BAMS to isocenter distance. Using generic value of 500mm');
                 obj.nozzleToIso = 500;
             end
             
@@ -134,7 +139,7 @@ classdef MatRad_MCemittanceBaseData
             %throw out warning if there was a problem in calculating the
             %width of the Bragg peak in obj.fitBeamOpticsForEnergy
             if obj.problemSigma
-                warning('Calculation of FWHM of bragg peak in base data not possible! Using simple approximation for energy spread');
+                matRad_cfg.dispWarning('Calculation of FWHM of bragg peak in base data not possible! Using simple approximation for energy spread');
             end
         end
         
@@ -142,11 +147,23 @@ classdef MatRad_MCemittanceBaseData
             %function to calculate mean energy and energy spread used by
             %mcSquare for given energy
             
+            %Considers air distance from nozzle to phantom surface 
+            %used in the machine data. 0 means fitted to vacuum simulations
+            %with surface at isocenter
+            if ~isfield(obj.machine.meta, 'fitAirOffset')
+                fitAirOffset = 0;
+                %               warning('Could not find fitAirOffset. Using default value (no correction / fit in vacuum).');
+            else
+                fitAirOffset = obj.machine.meta.fitAirOffset;
+            end
+            dR = 0.0011 * (fitAirOffset);
+            
             i = energyIx;
             
             mcDataEnergy.NominalEnergy = obj.machine.data(i).energy;
             
             newDepths = linspace(0,obj.machine.data(i).depths(end),numel(obj.machine.data(i).depths) * 100);
+            newDepths = newDepths;
             newDose   = interp1(obj.machine.data(i).depths, obj.machine.data(i).Z, newDepths, 'spline');
             
             %find FWHM w50 of bragg peak and range of 80% does fall off
@@ -154,9 +171,11 @@ classdef MatRad_MCemittanceBaseData
             [~, r80ind] = min(abs(newDose(maxI:end) - 0.8 * maxV));
             r80ind = r80ind - 1;
             r80 = interp1(newDose(maxI + r80ind - 1:maxI + r80ind + 1), ...
-                newDepths(maxI + r80ind - 1:maxI + r80ind + 1), 0.8 * maxV) ...
-                + obj.machine.data(i).offset;
+                newDepths(maxI + r80ind - 1:maxI + r80ind + 1), 0.8 * maxV);% ...
+                % + obj.machine.data(i).offset + dR;
             
+            %Correct r80 with dR
+            r80 = r80 + dR + obj.machine.data(i).offset;
             
             [~, d50rInd] = min(abs(newDose(maxI:end) - 0.5 * maxV));
             d50rInd = d50rInd - 1;
@@ -210,7 +229,8 @@ classdef MatRad_MCemittanceBaseData
             %calculate geometric distances and extrapolate spot size at nozzle
             SAD = obj.machine.meta.SAD;
             z     = -(obj.machine.data(i).initFocus.dist(focusIndex,:) - SAD);
-            sigmaSq = obj.machine.data(i).initFocus.sigma(focusIndex,:).^2;
+            sigma = obj.machine.data(i).initFocus.sigma(focusIndex,:);
+            sigmaSq = sigma.^2;                        
             
             %fit Courant-Synder equation to data using ipopt, formulae
             %given in mcSquare documentation
@@ -251,6 +271,15 @@ classdef MatRad_MCemittanceBaseData
             mcDataOptics.Divergence1y  = DivergenceAtNozzle;
             mcDataOptics.Correlation1y = CorrelationAtNozzle;
             
+            visBool = false;
+            if visBool
+                figure, plot(z,sigmaSq,'x');
+                zNew = linspace(z(1),z(end),100);
+                y = sigmaNull^2 - 2*rho*sigmaNull*sigmaT * zNew + sigmaT^2 * zNew.^2;
+                hold on; plot(zNew,y);
+            end
+            
+            
             mcDataOptics.Weight2       = 0;
             mcDataOptics.SpotSize2x    = 0;
             mcDataOptics.Divergence2x  = 0;
@@ -280,5 +309,20 @@ classdef MatRad_MCemittanceBaseData
             save(strcat('../../', machineName, '.mat'),'machine');
         end
     end 
+    
+    methods (Access = protected)
+        function obj = getRangeShiftersFromStf(obj,stf)
+            allRays = [stf.ray];
+            raShis = [allRays.rangeShifter];
+                
+            [~,ix] =  unique(cell2mat(squeeze(struct2cell(raShis))'),'rows');
+            
+            raShis = raShis(ix);
+            
+            ix = [raShis.ID] == 0;
+            
+            obj.rangeShifters = raShis(~ix);
+        end
+    end
 end
 

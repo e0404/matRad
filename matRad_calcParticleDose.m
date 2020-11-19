@@ -32,6 +32,9 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+matRad_cfg =  MatRad_Config.instance();
+
 % init dose calc
 matRad_calcDoseInit;
 
@@ -55,25 +58,47 @@ if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.b
         
 elseif isequal(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
             dij.RBE = 1.1;
-            fprintf(['matRad: Using a constant RBE of 1.1 \n']);   
+            matRad_cfg.dispInfo('matRad: Using a constant RBE of %g\n',dij.RBE);   
 end
 
-if isfield(pln,'propDoseCalc') && ...
-   isfield(pln.propDoseCalc,'calcLET') && ...
-   pln.propDoseCalc.calcLET
-  if isfield(machine.data,'LET')
-    letDoseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
-    % Allocate space for dij.dosexLET sparse matrix
-    for i = 1:dij.numOfScenarios
-        dij.mLETDose{i} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'calcLET') 
+    pln.propDoseCalc.calcLET = matRad_cfg.propDoseCalc.defaultCalcLET;
+end
+    
+    
+if pln.propDoseCalc.calcLET
+    if isfield(machine.data,'LET')
+        letDoseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
+        % Allocate space for dij.dosexLET sparse matrix
+        for i = 1:dij.numOfScenarios
+            dij.mLETDose{i} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
+        end
+        matRad_cfg.dispInfo('LET computation enabled!\n');
+    else
+        matRad_cfg.dispWarning('LET not available in the machine data. LET will not be calculated.');
     end
-  else
-    warndlg('LET not available in the machine data. LET will not be calculated.');
-  end
 end
 
-if isfield(pln,'propDoseCalc') && ~isfield(pln.propDoseCalc, 'airOffsetCorrection') 
+%Toggles correction of small difference of current SSD to distance used
+%in generation of base data (e.g. phantom surface at isocenter)
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc, 'airOffsetCorrection') 
     pln.propDoseCalc.airOffsetCorrection = true;
+    
+    if ~isfield(machine.meta, 'fitAirOffset')
+        fitAirOffset = 0; %By default we assume that the base data was fitted to a phantom with surface at isocenter
+        matRad_cfg.dispDebug('Asked for correction of Base Data Air Offset, but no value found. Using default value of %f mm.\n',fitAirOffset);
+    else
+        fitAirOffset = machine.meta.fitAirOffset;
+    end    
+else 
+    fitAirOffset = 0;
+end
+
+if ~isfield(machine.meta, 'BAMStoIsoDist')
+    BAMStoIsoDist = 1000;
+    matRad_cfg.dispWarning('Machine data does not contain BAMStoIsoDist. Using default value of %f mm\n.',BAMStoIsoDist);
+else
+    BAMStoIsoDist = machine.meta.BAMStoIsoDist;
 end
 
 % generates tissue class matrix for biological optimization
@@ -82,7 +107,7 @@ if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.b
     
     if   isfield(machine.data,'alphaX') && isfield(machine.data,'betaX')
             
-        fprintf('matRad: loading biological base data... ');
+        matRad_cfg.dispInfo('matRad: loading biological base data... ');
         vTissueIndex = zeros(size(VdoseGrid,1),1);
         dij.ax       = zeros(dij.doseGrid.numOfVoxels,1);
         dij.bx       = zeros(dij.doseGrid.numOfVoxels,1);
@@ -109,20 +134,18 @@ if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.b
                     isInVdoseGrid = ismember(VdoseGrid,cst{i,4}{1});
                     vTissueIndex(isInVdoseGrid) = IdxTissue;
                 else
-                    error('biological base data and cst inconsistent\n');
+                    matRad_cfg.dispError('biological base data and cst inconsistent\n');
                 end
                     
             else
                     vTissueIndex(row) = 1;
-                    fprintf(['matRad: tissue type of ' cst{i,2} ' was set to 1 \n']);          
+                    matRad_cfg.dispInfo(['matRad: tissue type of ' cst{i,2} ' was set to 1\n']);          
             end
         end
-        fprintf('done.\n');
+        matRad_cfg.dispInfo('done.\n');
 
     else
-        
-        error('base data is incomplement - alphaX and/or betaX is missing');
-        
+        matRad_cfg.dispError('base data is incomplement - alphaX and/or betaX is missing'); 
     end
     
 % issue warning if biological optimization not possible
@@ -133,10 +156,14 @@ elseif sum(strcmp(pln.propOpt.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0
 end
 
 % lateral cutoff for raytracing and geo calculations
-effectiveLateralCutoff = 50;
+effectiveLateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
 
-fprintf('matRad: Particle dose calculation...\n');
+matRad_cfg.dispInfo('matRad: Particle dose calculation...\n');
 counter = 0;
+
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'lateralCutOff')
+    pln.propDoseCalc.lateralCutOff = matRad_cfg.propDoseCalc.defaultLateralCutOff;
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:length(stf) % loop over all beams
@@ -145,11 +172,11 @@ for i = 1:length(stf) % loop over all beams
     matRad_calcDoseInitBeam;
   
     % Determine lateral cutoff
-    fprintf('matRad: calculate lateral cutoff...');
-    cutOffLevel = .995;
+    cutOffLevel = pln.propDoseCalc.lateralCutOff;
+    matRad_cfg.dispInfo('matRad: calculate lateral cutoff (set to %f)...',cutOffLevel);
     visBoolLateralCutOff = 0;
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
-    fprintf('done.\n');    
+    matRad_cfg.dispInfo('done.\n');    
 
     for j = 1:stf(i).numOfRays % loop over all rays
 
@@ -203,35 +230,22 @@ for i = 1:length(stf) % loop over all beams
                 % find energy index in base data
                 energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
                 
-                % adjust radDepth according to range shifter and include
-                % correction for matRad simulating particles traveling
-                % through vacuum instead of air between nozzle and skin
+                % Since matRad's ray cast starts at the skin and base data
+                % is generated at soume source to phantom distance
+                % we can explicitly correct for the nozzle to air WEPL in 
+                % the current case.
                 if  pln.propDoseCalc.airOffsetCorrection   
-                    if ~isfield(machine.meta, 'fitAirOffset') 
-                        fitAirOffset = 0;
-%                         warning('Could not find fitAirOffset. Using default value.');
-                    else
-                        fitAirOffset = machine.meta.fitAirOffset;
-                    end
-                    
-                    if ~isfield(machine.meta, 'BAMStoIsoDist') 
-                        BAMStoIsoDist = 400;
-                    	%warning('Could not find BAMStoIsoDist. Using default value.');
-                    else
-                        BAMStoIsoDist = machine.meta.BAMStoIsoDist;
-                    end
-                    
                     nozzleToSkin = ((stf(i).ray(j).SSD + BAMStoIsoDist) - machine.meta.SAD);
-                    dR = 0.0011 * (nozzleToSkin - fitAirOffset);
-                    
+                    dR = 0.0011 * (nozzleToSkin - fitAirOffset);                    
                 else
                     dR = 0;
                 end
+                
                 % create offset vector to account for additional offsets modelled in the base data and a potential 
                 % range shifter. In the following, we only perform dose calculation for voxels having a radiological depth
                 % that is within the limits of the base data set (-> machine.data(i).dephts). By this means, we only allow  
                 % interpolations in matRad_calcParticleDoseBixel() and avoid extrapolations.
-                offsetRadDepth = machine.data(energyIx).offset - stf(i).ray(j).rangeShifter(k).eqThickness - dR;
+                offsetRadDepth = machine.data(energyIx).offset - (stf(i).ray(j).rangeShifter(k).eqThickness + dR);
                 
                 % find depth depended lateral cut off
                 if cutOffLevel >= 1
@@ -247,7 +261,7 @@ for i = 1:length(stf) % loop over all beams
                             (machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= radialDist_sq(currIx);
                     end
                 else
-                    error('cutoff must be a value between 0 and 1')
+                    matRad_cfg.dispError('Lateral Cut-Off must be a value between 0 and 1!')
                 end
                 
                 % empty bixels may happen during recalculation of error
@@ -256,17 +270,12 @@ for i = 1:length(stf) % loop over all beams
                     continue;
                 end
                 
-                
-                
-                
-                if  pln.propDoseCalc.airOffsetCorrection  
-                    currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness + dR;
-                    
+                currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness + dR;
+                                
+                if dR < 0  
                     %sanity check due to negative corrections
-                    currRadDepths(currRadDepths < 0) = 0;
-                else
-                    currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
-                end
+                    currRadDepths(currRadDepths < 0) = 0;                    
+                end                
                 
                 % calculate initial focus sigma
                 sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist (stf(i).ray(j).focusIx(k),:)', ...
@@ -331,12 +340,9 @@ for i = 1:length(stf) % loop over all beams
     end
 end
 
-try
-  % wait 0.1s for closing all waitbars
-  allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar'); 
-  delete(allWaitBarFigures);
-  pause(0.1); 
-catch
+%Close Waitbar
+if ishandle(figureWait)
+    delete(figureWait);
 end
 
     

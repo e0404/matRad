@@ -114,9 +114,7 @@ classdef MatRad_MCsquareConfig
     
     methods
         function obj = MatRad_MCsquareConfig()
-            %UNTITLED Construct an instance of this class
-            %   Detailed explanation goes here
-            %obj.Property1 = inputArg1 + inputArg2;
+            %MatRad_MCsquareConfig Configuration Class for MCsquare           
         end
         
         function write(obj,fid)

@@ -86,7 +86,13 @@ for i = 1:numOfFields
     fprintf(fileHandle,'###NumberOfControlPoints\n');
     numOfEnergies = numel(stf(i).energies);
     fprintf(fileHandle,[num2str(numOfEnergies) '\n']);
-
+    
+    %Range shfiter
+    if stf(i).rangeShifterID ~= 0
+        fprintf(fileHandle,'###RangeShifterID\n%d\n',stf(i).rangeShifterID);
+        fprintf(fileHandle,'###RangeShifterType\n%s\n',stf(i).rangeShifterType);
+    end
+    
     metersetOffset = 0;
     fprintf(fileHandle,'\n#SPOTS-DESCRIPTION\n');
     for j = 1:numOfEnergies
@@ -104,6 +110,22 @@ for i = 1:numOfFields
         fprintf(fileHandle,[num2str(cumulativeMetersetWeight) '\n']);
         fprintf(fileHandle,'####Energy (MeV)\n');
         fprintf(fileHandle,[num2str(stf(i).energies(j)) '\n']);
+        
+        %Range shfiter
+        if stf(i).rangeShifterID ~= 0
+            rangeShifter = stf(i).energyLayer(j).rangeShifter;
+            if rangeShifter.ID ~= 0
+                fprintf(fileHandle,'####RangeShifterSetting\n%s\n','IN');
+                pmma_rsp = 1.165; %TODO: hardcoded for now
+                rsWidth = rangeShifter.eqThickness / pmma_rsp;
+                isoToRaShi = stf(i).SAD - rangeShifter.sourceRashiDistance + rsWidth;
+                fprintf(fileHandle,'####IsocenterToRangeShifterDistance\n%f\n',-isoToRaShi/10); %in cm
+                fprintf(fileHandle,'####RangeShifterWaterEquivalentThickness\n%f\n',rangeShifter.eqThickness);
+            else
+                fprintf(fileHandle,'####RangeShifterSetting\n%s\n','OUT');
+            end
+        end
+        
         fprintf(fileHandle,'####NbOfScannedSpots\n');
         numOfSpots = size(stf(i).energyLayer(j).targetPoints,1);
         fprintf(fileHandle,[num2str(numOfSpots) '\n']);

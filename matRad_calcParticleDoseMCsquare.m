@@ -1,6 +1,6 @@
 function dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad MCsqaure monte carlo photon dose calculation wrapper
+% matRad MCsquare Monte Carlo proton dose calculation wrapper
 %
 % call
 %   dij = matRad_calcParticleDoseMc(ct,stf,pln,cst,calcDoseDirect)
@@ -13,7 +13,7 @@ function dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nCasePerBixel,calc
 %   nCasePerBixel               number of histories per beamlet (nCasePerBixel > 1),
 %                               max stat uncertainity (0 < nCasePerBixel < 1)
 %   calcDoseDirect:             binary switch to enable forward dose
-%                               calcualtion
+%                               calculation
 % output
 %   dij:                        matRad dij struct
 %
@@ -35,19 +35,23 @@ function dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nCasePerBixel,calc
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-matRad_calcDoseInit;
 
-env = matRad_getEnvironment();
+matRad_cfg = MatRad_Config.instance();
+
+% initialize waitbar
+figureWait = waitbar(0,'calculate dose influence matrix with MCsquare...');
+% prevent closure of waitbar and show busy state
+set(figureWait,'pointer','watch');
 
 % check if valid machine
-if ~strcmp(pln.radiationMode,'protons')% || ~strcmp(pln.machine,'generic_MCsquare')
-    error('wrong radiation modality and/or machine.');    
+if ~strcmp(pln.radiationMode,'protons')
+    matRad_cfg.dispError('Wrong radiation modality . MCsquare only supports protons!');    
 end
-
 
 if nargin < 5
     % set number of particles simulated per pencil beam
-    nCasePerBixel = 100000;
+    nCasePerBixel = matRad_cfg.propMC.MCsquare_defaultHistories;
+    matRad_cfg.dispInfo('Using default number of Histories per Bixel: %d\n',nCasePerBixel);
 end
 % switch between either using max stat uncertainity or total number of
 % cases
@@ -57,206 +61,124 @@ else
     maxStatUncertainty = false;
 end
 
-
 if nargin < 6
     calcDoseDirect = false;
 end
+
+if isfield(pln,'propMC') && isfield(pln.propMC,'outputVariance')
+    matRad_cfg.dispWarning('Variance scoring for MCsquare not yet supported.');
+end
+
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'calcLET') 
+    pln.propDoseCalc.calcLET = matRad_cfg.propDoseCalc.defaultCalcLET;
+end
+
+
+env = matRad_getEnvironment();
 
 %% check if binaries are available
 %Executables for simulation
 if ispc
     if exist('MCSquare_windows.exe','file') ~= 2
-        error('Could not find MCsquare binary.\n');
+        matRad_cfg.dispError('Could not find MCsquare binary.\n');
     else
         mcSquareBinary = 'MCSquare_windows.exe';
     end
+elseif ismac
+    if exist('MCsquare_mac','file') ~= 2
+        matRad_cfg.dispError('Could not find MCsquare binary.\n');
+    else
+        mcSquareBinary = './MCsquare_mac';
+    end
+    %error('MCsquare binaries not available for mac OS.\n');
 elseif isunix
     if exist('MCsquare_linux','file') ~= 2
-        error('Could not find MCsquare binary.\n');
+        matRad_cfg.dispError('Could not find MCsquare binary.\n');
     else
-        mcSquareBinary = './MCsquare_linux';
+        mcSquareBinary = 'chmod a+x MCsquare_linux && ./MCsquare_linux';
     end
-elseif ismac
-    error('MCsquare binaries not available for mac OS.\n');
 end
 
 %Mex interface for import of sparse matrix
-if ~calcDoseDirect && exist('matRad_sparseBeamletsReaderMCsquare','file') ~= 3   
+if ~calcDoseDirect && ~matRad_checkMexFileExists('matRad_sparseBeamletsReaderMCsquare')
+    matRad_cfg.dispWarning('Compiled sparse reader interface not found. Trying to compile it on the fly!');      
     try
-        disp('Compiled sparse reader interface not found. Compiling it on the fly!');
-        %Make sure we compile in the right directory
-        cFilePath = which('matRad_sparseBeamletsReaderMCsquare.cpp');
-        [mcSquareFolder,~,~] = fileparts(cFilePath);
-        
-        currFolder = pwd;
-        
-        if strcmp(env,'OCTAVE')
-          ccName = eval('mkoctfile -p CXX');
-        else
-          myCCompiler = mex.getCompilerConfigurations('C','Selected');
-          ccName = myCCompiler.ShortName;
-        end
-        
-        %This needs to generalize better
-        if ~isempty(strfind(ccName,'MSVC')) %Not use contains(...) because of octave
-            flags{1,1} = 'COMPFLAGS';
-            flags{1,2} = '/O2';
-        else
-            flags{1,1} = 'CXXFLAGS';
-            flags{1,2} = '-std=c++11 -O2';
-        end
-        
-        %flags = {};
-        %flagstring = '-g ';
-        flagstring = '';
-        
-        %For Octave, the flags will be set in the environment, while they
-        %will be parsed as string arguments in MATLAB
-        for flag = 1:size(flags,1)
-            if exist ('OCTAVE_VERSION', 'builtin')
-                setenv(flags{flag,1},flags{flag,2});
-            else
-                flagstring = [flagstring flags{flag,1} '="' flags{flag,2} '" '];
-            end
-        end
-        
-        cd(mcSquareFolder);
-        
-        mexCall = ['mex -largeArrayDims ' flagstring ' matRad_sparseBeamletsReaderMCsquare.cpp'];
-        
-        disp(['Compiler call: ' mexCall]);
-        eval(mexCall);
-        
-        cd(currFolder);
-    catch
-        cd(currFolder);
-        error('Could not find/generate mex interface for reading the sparse matrix. Please compile it yourself.');
+        matRad_compileMCsquareSparseReader();        
+    catch MException
+        matRad_cfg.dispError('Could not find/generate mex interface for reading the sparse matrix. \nCause of error:\n%s\n Please compile it yourself.',MException.message);
     end
 end
-
 
 % set and change to MCsquare binary folder
 currFolder = pwd;
 fullfilename = mfilename('fullpath');
-MCsquareFolder = [fullfilename(1:find(fullfilename==filesep,1,'last')) 'submodules' filesep 'MCsquare'];
+MCsquareFolder = [fullfilename(1:find(fullfilename==filesep,1,'last')) 'MCsquare' filesep 'bin'];
 
 % cd to MCsquare folder (necessary for binary)
 cd(MCsquareFolder);
 
-% to guarantee downwards compatibility with data that does not have
-% ct.x/y/z
-if ~any(isfield(ct,{'x','y','z'}))
-    ct.x = ct.resolution.x*[1:ct.cubeDim(1)];
-    ct.y = ct.resolution.y*[1:ct.cubeDim(2)];
-    ct.z = ct.resolution.z*[1:ct.cubeDim(3)];
+%Check Materials
+if ~exist([MCsquareFolder filesep 'Materials'],'dir') || ~exist(fullfile(MCsquareFolder,'Materials','list.dat'),'file')
+    matRad_cfg.dispInfo('First call of MCsquare: unzipping Materials...');    
+    unzip('Materials.zip');
+    matRad_cfg.dispInfo('Done');
 end
 
-% set grids
-if ~isfield(pln,'propDoseCalc') || ...
-   ~isfield(pln.propDoseCalc,'doseGrid') || ...
-   ~isfield(pln.propDoseCalc.doseGrid,'resolution')
-    % default values
-    dij.doseGrid.resolution.x = 2.5; % [mm]
-    dij.doseGrid.resolution.y = 2.5; % [mm]
-    dij.doseGrid.resolution.z = 2.5;   % [mm]
-else
+% Since MCsquare 1.1 only allows similar resolution in x&y, we do some
+% extra checks on that before calling calcDoseInit. First, we make sure a
+% dose grid resolution is set in the pln struct
+if ~isfield(pln,'propDoseCalc') ...
+        || ~isfield(pln.propDoseCalc,'doseGrid') ...
+        || ~isfield(pln.propDoseCalc.doseGrid,'resolution') ...
+        || ~all(isfield(pln.propDoseCalc.doseGrid.resolution,{'x','y','z'}))
     
-    % check if using isotropic dose grid resolution in x and y direction
-    if pln.propDoseCalc.doseGrid.resolution.x ~= pln.propDoseCalc.doseGrid.resolution.y
-        pln.propDoseCalc.doseGrid.resolution.x = mean([pln.propDoseCalc.doseGrid.resolution.x ...
-                                                       pln.propDoseCalc.doseGrid.resolution.y]);
-        pln.propDoseCalc.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.x;
-        warning(['Anisotropic resolution for dose calculation with MCsquare not possible\nUsing x = y = ' ...
-            num2str(pln.propDoseCalc.doseGrid.resolution.x) 'mm']);
-    end
-
-    % take values from pln strcut
-    dij.doseGrid.resolution.x = pln.propDoseCalc.doseGrid.resolution.x;
-    dij.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.y;
-    dij.doseGrid.resolution.z = pln.propDoseCalc.doseGrid.resolution.z;
+    %Take default values
+    pln.propDoseCalc.doseGrid.resolution = matRad_cfg.propDoseCalc.defaultResolution;
 end
 
-
-dij.doseGrid.x = ct.x(1):dij.doseGrid.resolution.x:ct.x(end);
-dij.doseGrid.y = ct.y(1):dij.doseGrid.resolution.y:ct.y(end);
-dij.doseGrid.z = ct.z(1):dij.doseGrid.resolution.z:ct.z(end);
-
-dij.doseGrid.dimensions  = [numel(dij.doseGrid.y) numel(dij.doseGrid.x) numel(dij.doseGrid.z)];
-dij.doseGrid.numOfVoxels = prod(dij.doseGrid.dimensions);
-
-dij.ctGrid.resolution.x = ct.resolution.x;
-dij.ctGrid.resolution.y = ct.resolution.y;
-dij.ctGrid.resolution.z = ct.resolution.z;
-
-dij.ctGrid.x = ct.x;
-dij.ctGrid.y = ct.y;
-dij.ctGrid.z = ct.z;
-
-dij.ctGrid.dimensions  = [numel(dij.ctGrid.y) numel(dij.ctGrid.x) numel(dij.ctGrid.z)];
-dij.ctGrid.numOfVoxels = prod(dij.ctGrid.dimensions);
-
-% meta information for dij
-dij.numOfBeams         = pln.propStf.numOfBeams;
-dij.numOfScenarios     = 1;
-dij.numOfRaysPerBeam   = [stf(:).numOfRays];
-if calcDoseDirect
-    dij.totalNumOfBixels = 1;
-else
-    dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
+% Now we check for different x/y
+if pln.propDoseCalc.doseGrid.resolution.x ~= pln.propDoseCalc.doseGrid.resolution.y
+    pln.propDoseCalc.doseGrid.resolution.x = mean([pln.propDoseCalc.doseGrid.resolution.x pln.propDoseCalc.doseGrid.resolution.y]);
+    pln.propDoseCalc.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.x;
+    matRad_cfg.dispWarning('Anisotropic resolution in axial plane for dose calculation with MCsquare not possible\nUsing average x = y = %g mm\n',pln.propDoseCalc.doseGrid.resolution.x);
 end
-dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 
-% book keeping
-dij.bixelNum          = NaN*ones(dij.totalNumOfBixels,1);
-dij.rayNum            = NaN*ones(dij.totalNumOfBixels,1);
-dij.beamNum           = NaN*ones(dij.totalNumOfBixels,1);
+%Now we can run calcDoseInit as usual
+matRad_calcDoseInit;
+
+%Issue a warning when we have more than 1 scenario
+if dij.numOfScenarios ~= 1
+    matRad_cfg.dispWarning('MCsquare is only implemented for single scenario use at the moment. Will only use the first Scenario for Monte Carlo calculation!');
+end
+
+% prefill ordering of MCsquare bixels
 dij.MCsquareCalcOrder = NaN*ones(dij.totalNumOfBixels,1);
 
-% take only voxels inside patient
-VctGrid = [cst{:,4}];
-VctGrid = unique(vertcat(VctGrid{:}));
+% We need to adjust the offset used in matRad_calcDoseInit
+mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
+                - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
+mcSquareAddIsoCenterOffset = mcSquareAddIsoCenterOffset - offset;
 
-% receive linear indices and grid locations from the dose grid
-tmpCube    = zeros(ct.cubeDim);
-tmpCube(VctGrid) = 1;
-% interpolate cube
-VdoseGrid = find(matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpCube, ...
-                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'));
-
-% ignore densities outside of contours
-eraseCtDensMask = ones(dij.ctGrid.numOfVoxels,1);
-eraseCtDensMask(VctGrid) = 0;
-for i = 1:ct.numOfCtScen
-    ct.cubeHU{i}(eraseCtDensMask == 1) = -1024;
-end
-
-% downsample ct
+% for MCsquare we explicitly downsample the ct to the dose grid (might not
+% be necessary in future MCsquare versions with separated grids)
 for s = 1:dij.numOfScenarios
     HUcube{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
                                 dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
 end
 
-% what are you doing here, Lucas?
-nbThreads = 4;
+% Explicitly setting the number of threads for MCsquare, 0 is all available
+nbThreads = 0;
 
-% set relative dose cutoff for storage in dose influence matrix
-relDoseCutoff = 10^(-4);
+% set relative dose cutoff for storage in dose influence matrix, we use the
+% default value for the lateral cutoff here
+relDoseCutoff = 1 - matRad_cfg.propDoseCalc.defaultLateralCutOff;
 % set absolute calibration factor
 % convert from eV/g/primary to Gy 1e6 primaries
 absCalibrationFactorMC2 = 1.602176e-19 * 1e+9;
 
-% Allocate space for dij.physicalDose sparse matrix
-for i = 1:dij.numOfScenarios
-    dij.physicalDose{i} = spalloc(dij.doseGrid.numOfVoxels,dij.totalNumOfBixels,1);
-end
-
-if ~strcmp(pln.radiationMode,'protons')
-    errordlg('MCsquare is only supported for protons');
-end
-
 if isequal(pln.propOpt.bioOptimization,'const_RBExD')
             dij.RBE = 1.1;
-            fprintf(['matRad: Using a constant RBE of 1.1 \n']);
+            matRad_cfg.dispInfo('matRad: Using a constant RBE of %g\n',dij.RBE);
 end
 
 % MCsquare settings
@@ -267,7 +189,7 @@ MCsquareConfig = MatRad_MCsquareConfig;
 bdFile = [machine.meta.machine '.txt'];
 
 % bdFile = 'BDL_matRad.txt'; %use for baseData fit 
-MCsquareBDL = MatRad_MCsquareBaseData(machine);
+MCsquareBDL = MatRad_MCsquareBaseData(machine,stf);
 %matRad_createMCsquareBaseDataFile(bdFile,machine,1);
 % MCsquareBDL = MCsquareBDL.saveMatradMachine('test');
 MCsquareBDL = MCsquareBDL.writeMCsquareData([MCsquareFolder filesep 'BDL' filesep bdFile]);
@@ -295,24 +217,48 @@ MCsquareConfig.Dose_Sparse_Output = ~calcDoseDirect;
 % set threshold of sparse matrix generation
 MCsquareConfig.Dose_Sparse_Threshold = relDoseCutoff;
 
+if pln.propDoseCalc.calcLET
+    MCsquareConfig.LET_MHD_Output		 = calcDoseDirect;
+    MCsquareConfig.LET_Sparse_Output	 = ~calcDoseDirect;
+end
+
 % write patient data
 MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
                              dij.doseGrid.resolution.y ...
                              dij.doseGrid.resolution.z];   
 matRad_writeMhd(HUcube{1},MCsquareBinCubeResolution,MCsquareConfig.CT_File);
 
-% prepare steering for MCsquare and sort stf by energy
-isoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
-                - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
-
-isoCenterOffset = -[dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2];
-
 counter = 0;             
 for i = 1:length(stf)
-    stfMCsquare(i).gantryAngle = mod(180-stf(i).gantryAngle,360);
+    %Let's check if we have a unique or no range shifter, because MCsquare
+    %only allows one range shifter type per field which can be IN or OUT
+    %per spot
+    raShiField = [];
+    for j = 1:stf(i).numOfRays
+        if isfield(stf(i).ray(j),'rangeShifter')
+            raShiField = [raShiField stf(i).ray(j).rangeShifter(:).ID];
+        else
+            raShiField = [raShiField zeros(size(stf(i).ray(j).energies))];
+        end
+    end
+    raShiField = unique(raShiField); %unique range shifter
+    raShiField(raShiField == 0) = []; %no range shifter
+    if numel(raShiField) > 1
+        matRad_cfg.dispError('MCsquare does not support different range shifter IDs per field! Aborting.\n');
+    end
+    
+    stfMCsquare(i).gantryAngle = mod(180-stf(i).gantryAngle,360); %Different MCsquare geometry
     stfMCsquare(i).couchAngle  = stf(i).couchAngle;
-    stfMCsquare(i).isoCenter   = stf(i).isoCenter + isoCenterOffset;
+    stfMCsquare(i).isoCenter   = stf(i).isoCenter + mcSquareAddIsoCenterOffset;
     stfMCsquare(i).energies    = unique([stf(i).ray.energy]);
+    stfMCsquare(i).SAD          = stf(i).SAD;
+    if ~isempty(raShiField)
+        stfMCsquare(i).rangeShifterID = raShiField;
+        stfMCsquare(i).rangeShifterType = 'binary';
+    else
+        stfMCsquare(i).rangeShifterID = 0;
+        stfMCsquare(i).rangeShifterType = 'binary';
+    end
     
     % allocate empty target point container
     for j = 1:numel(stfMCsquare(i).energies)
@@ -331,12 +277,20 @@ for i = 1:length(stf)
         end
         
         for k = 1:numel(stfMCsquare(i).energies)
+            
+            raShis = []; %Range shifter Book keeping
+            
+            %Check if ray has a spot in the current energy layer
             if any(stf(i).ray(j).energy == stfMCsquare(i).energies(k))
+                %Set up the ray geometries and add current ray to energy
+                %layer
+                energyIx = find(stf(i).ray(j).energy == stfMCsquare(i).energies(k));
                 stfMCsquare(i).energyLayer(k).rayNum   = [stfMCsquare(i).energyLayer(k).rayNum j];
-                stfMCsquare(i).energyLayer(k).bixelNum = [stfMCsquare(i).energyLayer(k).bixelNum ...
-                    find(stf(i).ray(j).energy == stfMCsquare(i).energies(k))];
+                stfMCsquare(i).energyLayer(k).bixelNum = [stfMCsquare(i).energyLayer(k).bixelNum energyIx];
                 stfMCsquare(i).energyLayer(k).targetPoints = [stfMCsquare(i).energyLayer(k).targetPoints; ...
                                         -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
+                
+                %Number of primaries depending on beamlet-wise or field-based compuation (direct dose calculation)                    
                 if calcDoseDirect
                     stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
                                          round(stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k))*MCsquareConfig.Num_Primaries)];
@@ -344,11 +298,24 @@ for i = 1:length(stf)
                     stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
                         MCsquareConfig.Num_Primaries];
                 end
+                
+                %Now add the range shifter
+                if isempty(raShis)
+                    raShis = stf(i).ray(j).rangeShifter(energyIx);
+                else
+                    raShis(end+1) = stf(i).ray(j).rangeShifter(energyIx);
+                end
+                
+                %sanity check range shifters
+                raShiIDs = unique(raShis.ID);
+                if ~isscalar(raShiIDs)
+                    matRad_cfg.dispError('MCsquare only supports one range shifter setting (on or off) per energy! Aborting.\n');
+                end             
+                
+                stfMCsquare(i).energyLayer(k).rangeShifter = raShis(1);
             end
-        end
-               
+        end    
     end
-    
 end
 
 % remember order
@@ -368,7 +335,7 @@ for i = 1:length(stf)
 end
 
 if any(isnan(MCsquareOrder))
-    error('Wrong order')
+    matRad_cfg.dispError('Invalid ordering of Beamlets for MCsquare computation!');
 end
 
 %% MC computation and dij filling
@@ -382,28 +349,51 @@ disp(['Calling Monte Carlo Engine: ' mcSquareCall]);
 mask = false(dij.doseGrid.numOfVoxels,1);
 mask(VdoseGrid) = true;
 
-fprintf('Simulation finished!\n');
+matRad_cfg.dispInfo('Simulation finished!\n');
 
 % read sparse matrix
 if ~calcDoseDirect
     dij.physicalDose{1} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( ...
-                    [MCsquareConfig.Output_Directory filesep 'Sparse_Dose.bin'], ...
-                    dij.doseGrid.dimensions, ...
-                    dij.totalNumOfBixels, ...
-                    mask);
+        [MCsquareConfig.Output_Directory filesep 'Sparse_Dose.bin'], ...
+        dij.doseGrid.dimensions, ...
+        dij.totalNumOfBixels, ...
+        mask);
+                
+    if pln.propDoseCalc.calcLET
+        dij.mLETDose{1} = matRad_sparseBeamletsReaderMCsquare ( ...
+            [MCsquareConfig.Output_Directory filesep 'Sparse_LET.bin'], ...
+            dij.doseGrid.dimensions, ...
+            dij.totalNumOfBixels, ...
+            mask);
+        
+        dij.MC_tallies{1} = 'LET';
+    end
+    
 else
     cube = matRad_readMhd(MCsquareConfig.Output_Directory,'Dose.mhd');
     dij.physicalDose{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
-                                 absCalibrationFactorMC2 * cube(VdoseGrid), ...
-                                 dij.doseGrid.numOfVoxels,1);
+        absCalibrationFactorMC2 * cube(VdoseGrid), ...
+        dij.doseGrid.numOfVoxels,1);
+    
+    if pln.propDoseCalc.calcLET
+        cube = matRad_readMhd(MCsquareConfig.Output_Directory,'LET.mhd');
+        dij.mLETDose{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
+            cube(VdoseGrid), ...
+            dij.doseGrid.numOfVoxels,1);
+        
+        dij.MC_tallies{1} = 'LET';
+    end
 end
 
 % reorder influence matrix to comply with matRad default ordering
 if MCsquareConfig.Beamlet_Mode
-    dij.physicalDose{1} = dij.physicalDose{1}(:,MCsquareOrder);            
-end        
+    dij.physicalDose{1} = dij.physicalDose{1}(:,MCsquareOrder);  
+    if pln.propDoseCalc.calcLET
+        dij.mLETDose{1} = dij.mLETDose{1}(:,MCsquareOrder);
+    end
+end       
 
-fprintf('MCsquare output read!\n');
+matRad_cfg.dispInfo('matRad: done!\n');
 
 try
     % wait 0.1s for closing all waitbars
@@ -421,9 +411,24 @@ end
 delete([MCsquareConfig.CT_File(1:end-4) '.*']);
 delete('currBixels.txt');
 delete('MCsquareConfig.txt');
-eval(['rmdir ' MCsquareConfig.Output_Directory ' s']);
+
+%For Octave temporarily disable confirmation for recursive rmdir
+if strcmp(env,'OCTAVE')    
+    rmdirConfirmState = confirm_recursive_rmdir(0);
+end
+rmdir(MCsquareConfig.Output_Directory,'s');
+
+%Reset to old confirmatoin state
+if strcmp(env,'OCTAVE')
+    confirm_recursive_rmdir(rmdirConfirmState);
+end
 
 % cd back
 cd(currFolder);
+
+if ishandle(figureWait)
+    delete(figureWait);
+end
+
 
 end

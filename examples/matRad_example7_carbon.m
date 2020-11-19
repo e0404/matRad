@@ -28,7 +28,9 @@
 %% Patient Data Import
 % Let's begin with a clear Matlab environment and import the liver
 % patient into your workspace.
-clc,clear,close all;
+
+matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
+
 load('LIVER.mat');
 
 %% Treatment Plan
@@ -71,6 +73,9 @@ pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 
+%Let's also calculate the LET
+pln.propDoseCalc.calcLET = true;
+
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
 
@@ -101,6 +106,12 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 slice = round(pln.propStf.isoCenter(3)./ct.resolution.z);
 figure,
 imagesc(resultGUI.RBExDose (:,:,slice)),colorbar, colormap(jet);
+
+%% Let's check out the LET
+% Let's plot the transversal iso-center LET slice
+slice = round(pln.propStf.isoCenter(3)./ct.resolution.z);
+figure;
+imagesc(resultGUI.LET(:,:,slice)),colorbar, colormap(jet);
 
 %% Inverse Optimization  for IMPT based on biological effect
 % To perform a dose optimization for carbon ions we can also use the

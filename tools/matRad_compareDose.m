@@ -54,9 +54,11 @@ function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, c
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 %% check if cubes consistent
 if ~isequal(size(cube1),size(cube2))
-    error('dose cubes must be the same size\n');
+    matRad_cfg.dispError('dose cubes must be the same size\n');
 end
 
 if ~exist('localglobal','var')
@@ -71,7 +73,7 @@ end
 if ~exist('cst','var') || isempty(cst)
     cst = [];
     skip = 1;
-    fprintf('[\bWarning: cst not specified, skipping DVH, isocenter in the center of the doseCube]\b\n');
+    matRad_cfg.dispWarning('cst not specified, skipping DVH, isocenter in the center of the doseCube');
 else
     skip = 0;
 end
@@ -97,7 +99,7 @@ if enable(1)==0
     gammaPassRate = [];
 end
 % Load colormap for difference
-load('diffCMap.mat');
+diffCMap = matRad_getColormap('diffMap');
 
 %% Calculate iso-center slices and resolution
 if isempty(cst)
@@ -115,11 +117,17 @@ slicename = {round(isoCenter(2)./resolution(2)),round(isoCenter(1)./resolution(1
 doseWindow = [0 max([cube1(:); cube2(:)])];
 planename = {'coronal','sagittal','axial'};
 
+%% Integral Energy Output
+intEnergy1 = matRad_calcIntEnergy(cube1,ct,pln);
+intEnergy2 = matRad_calcIntEnergy(cube2,ct,pln);
+
+matRad_cfg.dispInfo('Integral energy comparison: Cube 1 = %1.4g MeV, Cube 2 = %1.4g MeV, difference = %1.4g Mev\n',intEnergy1,intEnergy2,intEnergy1-intEnergy2);
+
 %% Colorwash images
 if enable(1) == 1
     
     % Get the gamma cube
-    disp('Calculating gamma index cube...');
+    matRad_cfg.dispInfo('Calculating gamma index cube...\n');
     if exist('criteria','var')
         relDoseThreshold = criteria(1); % in [%]
         dist2AgreeMm     = criteria(2); % in [mm]
@@ -134,7 +142,8 @@ if enable(1) == 1
     % Calculate absolute difference cube and dose windows for plots
     differenceCube  = cube1-cube2;
     doseDiffWindow  = [-max(differenceCube(:)) max(differenceCube(:))];
-    doseGammaWindow = [0 max(gammaCube(:))];
+    %doseGammaWindow = [0 max(gammaCube(:))];
+    doseGammaWindow = [0 2]; %We choose 2 as maximum value since the gamma colormap has a sharp cut in the middle
     
     
     % Plot everything
@@ -213,17 +222,27 @@ if enable(1) == 1
 end
 
 %% Plot profiles through isoCenter
+centerAtIsocenter = false;
 if enable(2) == 1
-    disp('Plotting profiles...');
+    matRad_cfg.dispInfo('Plotting profiles...\n');
     fontsize = 12;
-    profilex{1} = cube1(:,slicename{2},slicename{3});
-    profiley{1} = permute(cube1(slicename{1},slicename{2},:),[3 2 1]);
-    profilez{1} = permute(cube1(slicename{1},:,slicename{3}),[2 3 1]);
+    profilex{1} = squeeze(cube1(slicename{1},:,slicename{3}));
+    profiley{1} = squeeze(cube1(:,slicename{2},slicename{3}));
+    profilez{1} = squeeze(cube1(slicename{1},slicename{2},:));
+
+    profilex{2} = squeeze(cube2(slicename{1},:,slicename{3}));
+    profiley{2} = squeeze(cube2(:,slicename{2},slicename{3}));
+    profilez{2} = squeeze(cube2(slicename{1},slicename{2},:));
     
-    profilex{2} = cube2(:,slicename{2},slicename{3});
-    profiley{2} = permute(cube2(slicename{1},slicename{2},:),[3 2 1]);
-    profilez{2} = permute(cube2(slicename{1},:,slicename{3}),[2 3 1]);
-    
+    posX = resolution(1)*(1:length(profilex{1}));
+    posY = resolution(2)*(1:length(profiley{1}));
+    posZ = resolution(3)*(1:length(profilez{1}));
+    if centerAtIsocenter
+        posX = posX - isoCenter(1);
+        posY = posY - isoCenter(2);
+        posZ = posZ - isoCenter(3);
+    end
+
     if exist('pln','var') && ~isempty(pln)
         if strcmp(pln.propOpt.bioOptimization,'none')
             yLabelString = 'Dose [Gy]';
@@ -238,9 +257,9 @@ if enable(2) == 1
     set(gcf,'Color',[1 1 1]);
     
     hfig.profiles.x = subplot(2,2,1);
-    plot(profilex{1},'r')
+    plot(posX,profilex{1},'r')
     hold on
-    plot(profilex{2},'r--')
+    plot(posX,profilex{2},'r--')
     xlabel('X [mm]','FontSize',fontsize)
     ylabel(yLabelString,'FontSize',fontsize);
     title('x-Profiles');
@@ -252,9 +271,9 @@ if enable(2) == 1
     legend boxoff
     
     hfig.profiles.y = subplot(2,2,2);
-    plot(profiley{1},'r')
+    plot(posY,profiley{1},'r')
     hold on
-    plot(profiley{2},'r--')
+    plot(posY,profiley{2},'r--')
     xlabel('Y [mm]','FontSize',fontsize)
     ylabel(yLabelString,'FontSize',fontsize);
     title('y-Profiles');
@@ -266,9 +285,9 @@ if enable(2) == 1
     legend boxoff
     
     hfig.profiles.z = subplot(2,2,3);
-    plot(profilez{1},'r')
+    plot(posZ,profilez{1},'r')
     hold on
-    plot(profilez{2},'r--')
+    plot(posZ,profilez{2},'r--')
     xlabel('Z [mm]','FontSize',fontsize)
     ylabel(yLabelString,'FontSize',fontsize);
     title('z-Profiles');
@@ -285,7 +304,7 @@ end
 
 %% Calculate and plot DVH
 if enable(3) == 1 && ~isempty(cst)
-    disp('Calculating DVH...');
+    matRad_cfg.dispInfo('Calculating DVH...\n');
     dvh1 = matRad_calcDVH(cst,cube1);
     dvh2 = matRad_calcDVH(cst,cube2);
     dvhWindow = max([dvh1(1).doseGrid dvh2(1).doseGrid]);
@@ -300,8 +319,7 @@ if enable(3) == 1 && ~isempty(cst)
     xlim([0 dvhWindow*1.2])
     title('Dose Volume Histrogram, Dose 1: solid, Dose 2: dashed')
 end
-
 %%
-disp('Done!');
+matRad_cfg.dispInfo('Done!');
 
 end

@@ -28,6 +28,9 @@ function stf = matRad_computeSSD(stf,ct,mode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+matRad_cfg = MatRad_Config.instance();
+
 if nargin < 3
     mode = 'first';
 end
@@ -36,7 +39,7 @@ end
 boolShowWarning = true;
 
 % set density threshold for SSD computation
-densityThreshold = 0.05;
+densityThreshold = matRad_cfg.propDoseCalc.defaultSsdDensityThreshold;
 
 if strcmp(mode,'first')
     
@@ -52,10 +55,10 @@ if strcmp(mode,'first')
 
             if boolShowWarning
                 if isempty(ixSSD)
-                    matRad_dispToConsole('ray does not hit patient. Trying to fix afterwards...',[],'warning');
+                    matRad_cfg.dispWarning('ray does not hit patient. Trying to fix afterwards...');
                     boolShowWarning = false;
                 elseif ixSSD(1) == 1
-                    matRad_dispToConsole('Surface for SSD calculation starts directly in first voxel of CT\n',[],'warning');
+                    matRad_cfg.dispWarning('Surface for SSD calculation starts directly in first voxel of CT!');
                     boolShowWarning = false;
                 end
             end
@@ -75,9 +78,10 @@ if strcmp(mode,'first')
         end
     end
 else
-    error('mode not defined for SSD calculation');
+    matRad_cfg.dispError('mode not defined for SSD calculation');
 end
 
+end
 
 % default setting only use first cube
 function bestSSD = matRad_closestNeighbourSSD(rayPos, SSD, currPos)
@@ -91,13 +95,8 @@ function bestSSD = matRad_closestNeighbourSSD(rayPos, SSD, currPos)
         end
     end
     if any(isempty(bestSSD))
-        error('Could not fix SSD calculation.');
+        matRad_cfg = MatRad_Config.instance();
+        matRad_cfg.dispError('Could not fix SSD calculation.');
     end
 end
 
-
-
-
-
-
-end

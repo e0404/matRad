@@ -29,6 +29,8 @@ function intDose = matRad_calcIntEnergy(dose,ct,pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 % make HU to RSP/electron density conversion if not available
 if ~isfield(ct,'cube')
     ct = matRad_calcWaterEqD(ct, pln);
@@ -44,5 +46,7 @@ convFac = 1/electronCharge;
 intDose = convFac * sum(dose(:).*ct.cube{1}(:)) ...
          * ct.resolution.x*ct.resolution.y*ct.resolution.z/1e12;
 
-fprintf(['Integral energy in dose cube = ' num2str(intDose,4) ' MeV\n']);
+if nargout == 0
+    matRad_cfg.dispInfo('Integral energy in dose cube = %.4g MeV\n',intDose);
+end
 
