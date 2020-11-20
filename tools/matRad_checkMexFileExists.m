@@ -1,6 +1,6 @@
 function fileExists = matRad_checkMexFileExists(filename,linkOctave) 
-% Checks if a matching mex file exists, and can create a link if a matching 
-% custom, system specific precompiled octave mex file is found
+% Checks if a matching mex file exists, and can create a link 
+% if a matching custom, system specific precompiled octave mex file is found
 %
 % call
 %   matRad_checkMexFileExists(filename)
@@ -34,7 +34,7 @@ function fileExists = matRad_checkMexFileExists(filename,linkOctave)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+matRad_cfg = MatRad_Config.instance();
 
 if nargin < 2
     linkOctave = true;

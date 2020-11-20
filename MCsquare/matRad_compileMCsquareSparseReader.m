@@ -1,6 +1,6 @@
 function matRad_compileMCsquareSparseReader(dest,sourceFolder)
-% Compiles the sparse mcsquare reader as mex interface for the current
-% platform
+% Compiles the sparse mcsquare reader as mex interface 
+% for the current platform
 %
 % call
 %   matRad_compileMCsquareSparseReader()
@@ -8,9 +8,9 @@ function matRad_compileMCsquareSparseReader(dest,sourceFolder)
 %   matRad_compileMCsquareSparseReader(dest,sourceFolder)
 %
 % input:
-%   dest:           destination for mex file. Default: location of this
+%   dest:           (optional) destination for mex file. Default: location of this
 %                   file
-%   sourceFolder:   path to folder (optional). Default: location of this
+%   sourceFolder:   (optional) path to folder. Default: location of this
 %                   file
 %
 % References
@@ -31,7 +31,7 @@ function matRad_compileMCsquareSparseReader(dest,sourceFolder)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg; 
+ 
 matRad_cfg = MatRad_Config.instance();
 
 if nargin < 1

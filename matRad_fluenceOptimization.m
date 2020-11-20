@@ -2,7 +2,7 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 % matRad inverse planning wrapper function
 % 
 % call
-%   [resultGUI,info] = matRad_fluenceOptimization(dij,cst,pln)
+%   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 %
 % input
 %   dij:        matRad dij struct
@@ -30,7 +30,7 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+matRad_cfg = MatRad_Config.instance();
 
 % issue warning if biological optimization impossible
 if sum(strcmp(pln.propOpt.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && (~isfield(dij,'mAlphaDose') || ~isfield(dij,'mSqrtBetaDose')) && strcmp(pln.radiationMode,'carbon')
@@ -221,7 +221,7 @@ optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 wOpt = optimizer.wResult;
 info = optimizer.resultInfo;
 
-resultGUI = matRad_calcCubes(wOpt,dij,cst);
+resultGUI = matRad_calcCubes(wOpt,dij);
 resultGUI.wUnsequenced = wOpt;
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;

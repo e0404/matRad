@@ -35,7 +35,7 @@ function varargout = matRadGUI(varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+matRad_cfg = MatRad_Config.instance();
 
 if matRad_cfg.disableGUI
     matRad_cfg.dispInfo('matRad GUI disabled in matRad_cfg!\n');
@@ -244,6 +244,8 @@ if handles.State > 0
             if sum(currPln.propStf.isoCenter(:)) ~= 0
                 %currSlice = round((currPln.propStf.isoCenter(1,planePermIx)+ctRes(planePermix)/2)/ctRes(planePermIx))-1;
                 currSlice = round(currPln.propStf.isoCenter(1,planePermIx) / ctRes(planePermIx));
+            else
+                currSlice = 0;
             end
         end
     catch
@@ -1353,15 +1355,33 @@ elseif handles.State > 0
         Result = evalin('base','resultGUI');
     end
     
+    ct  = evalin('base','ct');
+    cst = evalin('base','cst');
+    pln = evalin('base','pln');
+    
     if  ismember('stf',AllVarNames)
         stf = evalin('base','stf');
+        
+        %validate stf with current pln settings
+        validStf = true;
+        gantryAngles = [stf.gantryAngle];
+        validStf = isequal(gantryAngles,pln.propStf.gantryAngles) & validStf;
+        couchAngles = [stf.couchAngle];
+        validStf = isequal(couchAngles,pln.propStf.couchAngles) & validStf;
+        isoCenter = vertcat(stf.isoCenter);
+        validStf = isequal(isoCenter,pln.propStf.isoCenter) & validStf;
+        
+        if ~validStf
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispWarning('stf and pln are not consistent, using pln for geometry display!');
+            stf = [];
+        end
+        
     else
         stf = [];
     end
 
-    ct  = evalin('base','ct');
-    cst = evalin('base','cst');
-    pln = evalin('base','pln');
+    
 end
 
 oldView = get(axesFig3D,'View');
@@ -1967,14 +1987,27 @@ guidata(handles.figure1,handles);
  
 % fill GUI elements with plan information
 function setPln(handles)
+
+matRad_cfg = MatRad_Config.instance();
+
 pln = evalin('base','pln');
 % sanity check of isoCenter
 if size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) == 1
   pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * pln.propStf.isoCenter(1,:);
 elseif size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) ~= 1
-  error('Isocenter in plan file are incosistent.');
+  matRad_cfg.dispError('Isocenter in plan file are incosistent.');
 end
-set(handles.editBixelWidth,'String',num2str(pln.propStf.bixelWidth));
+
+%Sanity check for the bixelWidth field
+bixelWidth = pln.propStf.bixelWidth;
+
+if isnumeric(bixelWidth) && isscalar(bixelWidth)
+    bixelWidth = num2str(pln.propStf.bixelWidth);
+elseif ~isnumeric(bixelWidth) && ~strcmp(bixelWidth,'field')
+    matRad_cfg.dispError('Invalid bixel width! Must be a scalar number or ''field'' for field-based dose calculation with shapes stored in stf!');
+end   
+
+set(handles.editBixelWidth,'String',bixelWidth);
 set(handles.editFraction,'String',num2str(pln.numOfFractions));
 
 if isfield(pln.propStf,'isoCenter')
@@ -2108,7 +2141,20 @@ if evalin('base','exist(''pln'',''var'')')
     pln = evalin('base','pln');
 end
 
-pln.propStf.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
+% Special parsing of bixelWidth (since it can also be "field") for imported
+% shapes
+bixelWidth = get(handles.editBixelWidth,'String'); % [mm] / also corresponds to lateral spot spacing for particles
+if strcmp(bixelWidth,'field')
+    pln.propStf.bixelWidth = bixelWidth; 
+else
+    pln.propStf.bixelWidth = parseStringAsNum(bixelWidth,false);
+    if isnan(pln.propStf.bixelWidth)
+        warndlg('Invalid bixel width! Use standard bixel width of 5mm!');
+        pln.propStf.bixelWidth = 5;
+        set(handles.editBixelWidth,'String','5');
+    end
+end
+
 pln.propStf.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [???]
 
 if handles.eduMode
@@ -2557,9 +2603,22 @@ try
         Suffix = '';
     end
     
-    if sum([stf.totalNumOfBixels]) ~= length(resultGUI.(['w' Suffix]))
-        warndlg('weight vector does not corresponding to current steering file');
-        return
+    wField = ['w' Suffix];
+    
+    if ~isfield(resultGUI,wField) 
+        warndlg(['No exact match found for weight vector ''' wField ''' with selected dose insance. Trying common weight vector ''w'' instead!']);
+        wField = 'w';
+    end
+    
+    %Second sanity check to exclude case with no 'w' present
+    if ~isfield(resultGUI,wField)
+        errordlg('No weight vector found for forward dose recalculation!');
+        return;
+    end
+    
+    if sum([stf.totalNumOfBixels]) ~= length(resultGUI.(wField))
+        errordlg('Selected weight vector does not correspond to current steering file (wrong number of entries/bixels!)!');
+        return;
     end
     
     % change isocenter if that was changed and do _not_ recreate steering
@@ -2576,7 +2635,7 @@ try
     end
 
     % recalculate cubes in resultGUI
-    resultGUIreCalc = matRad_calcCubes(resultGUI.(['w' Suffix]),dij,cst);
+    resultGUIreCalc = matRad_calcCubes(resultGUI.(wField),dij);
     
     % delete old variables to avoid confusion
     if isfield(resultGUI,'effect')

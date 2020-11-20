@@ -1,20 +1,19 @@
 function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad MCsqaure monte carlo photon dose calculation wrapper
 %
 % call
 %   dij = matRad_calcParticleDoseMc(ct,stf,pln,cst,calcDoseDirect)
 %
 % input
-%   ct:                         matRad ct struct
-%   stf:                        matRad steering information struct
-%   pln:                        matRad plan meta information struct
-%   cst:                        matRad cst struct
-%   nCasePerBixel               number of histories per beamlet
-%   calcDoseDirect:             binary switch to enable forward dose
-%                               calcualtion
+%   ct:          	matRad ct struct
+%   stf:         	atRad steering information struct
+%   pln:            matRad plan meta information struct
+%   cst:            matRad cst struct
+%   nCasePerBixel:  number of histories per beamlet
+%   calcDoseDirect: binary switch to enable forward dose
+%                   calcualtion
 % output
-%   dij:                        matRad dij struct
+%   dij:            matRad dij struct
 %
 % References
 %
@@ -34,7 +33,7 @@ function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDi
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg;
+
 matRad_cfg = MatRad_Config.instance();
 
 % check if valid machine

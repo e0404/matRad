@@ -1,8 +1,8 @@
 function [resultGUI] = matRad_SFUDoptimization(pln, cst, dij, ct, stf)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%  Calculation of single field uniform dose (SFUD) optimization
-%   If provided the dij matrix is used for optimisation, otherwise single
-%   beam dijs are calculated (memory saving)
+% Calculation of single field uniform dose (SFUD) optimization
+% If provided the dij matrix is used for optimisation, otherwise single
+% beam dijs are calculated (memory saving).
+%
 % call
 %   [resultGUI] = matRad_SFUDoptimization(pln, cst, dij)
 %   or
@@ -20,7 +20,7 @@ function [resultGUI] = matRad_SFUDoptimization(pln, cst, dij, ct, stf)
 % output
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
 %               biological optimization) RBE-weighted dose etc.
-%   (info:       struct containing information about optimization)
+%   (info:      struct containing information about optimization)
 %
 % References
 %   [1]    https://ro-journal.biomedcentral.com/articles/10.1186/s13014-016-0705-8

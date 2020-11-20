@@ -14,7 +14,7 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set search path
-global matRad_cfg;
+
 matRad_cfg = MatRad_Config.instance();
 
 addpath(genpath(matRad_cfg.matRadRoot));
@@ -27,6 +27,7 @@ close all;
 [env,envver] = matRad_getEnvironment();
 vString = matRad_version();
 
-fprintf('You are running matRad %s with %s %s\n',vString,env,envver);
+matRad_cfg.dispInfo('You are running matRad %s with %s %s\n',vString,env,envver);
+clear env envver vString;
 
 

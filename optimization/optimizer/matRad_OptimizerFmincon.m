@@ -1,7 +1,10 @@
 classdef matRad_OptimizerFmincon < matRad_Optimizer
-% matRad_OptimizerFmincon implements the interface for the fmincon
-% optimizer of the MATLAB Optiization toolbox
+% matRad_OptimizerFmincon implements the interface for the fmincon optimizer 
+% of the MATLAB Optiization toolbox
 %    
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2019 the matRad development team. 
@@ -26,7 +29,7 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
         function obj = matRad_OptimizerFmincon
             %matRad_OptimizerFmincon 
             %   Construct an instance of the fmincon optimizer from the Optimization Toolbox           
-            global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+            matRad_cfg = MatRad_Config.instance();
             
             obj.wResult = [];
             obj.resultInfo = [];

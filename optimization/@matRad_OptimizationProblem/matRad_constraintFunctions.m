@@ -1,20 +1,20 @@
 function c = matRad_constraintFunctions(optiProb,w,dij,cst)
-
-% matRad IPOPT callback: constraint function for inverse planning supporting max dose
-% constraint, min dose constraint, min mean dose constraint, max mean dose constraint,
-% min EUD constraint, max EUD constraint, max DVH constraint, min DVH constraint 
+% matRad IPOPT callback: constraint function for inverse planning 
+% supporting max dose constraint, min dose constraint, min mean dose constraint, 
+% max mean dose constraint, min EUD constraint, max EUD constraint, 
+% max DVH constraint, min DVH constraint 
 % 
 % call
-%   jacob = matRad_jacobFunc(w,dij,cst,optiProb)
+%   c = matRad_constraintFunctions(optiProb,w,dij,cst)
 %
 % input
-%   w:       bixel weight vector
-%   dij:     dose influence matrix
-%   cst:     matRad cst struct
-%   optiProb: option struct defining the type of optimization
+%   optiProb:   option struct defining the type of optimization
+%   w:          bixel weight vector
+%   dij:        dose influence matrix
+%   cst:        matRad cst struct
 %
 % output
-%   c: value of constraints
+%   c:          value of constraints
 %
 % References
 %   -
@@ -65,7 +65,7 @@ for  i = 1:size(cst,1)
                     
                     doses = obj.getDoseParameters();
                     
-                    effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses^2;
+                    effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
                     
                     obj = obj.setDoseParameters(effect);
                 end

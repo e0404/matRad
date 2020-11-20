@@ -3,6 +3,7 @@ function [ct,cst] = matRad_importPatient(ctFile,maskFiles,hlutFilename)
 % 
 % call
 %   [ct,cst] = matRad_importPatient(cubeFile,maskFiles)
+%   [ct,cst] = matRad_importPatient(cubeFile,maskFiles, hlutFilename)
 %
 % input
 %   ctFile:     path to CT file. If HLUT is not set, values are interpreted
@@ -10,7 +11,7 @@ function [ct,cst] = matRad_importPatient(ctFile,maskFiles,hlutFilename)
 %   maskFiles:  cell array with filenames to the masks
 %               if maskFiels contains a folder, all contained and
 %               recognized data files are treated as masks
-%   HLUT:       optional HLUT, (n,2) array. if set to 'default', we will
+%   hlutFilname:(optional) HLUT, (n,2) array. if set to 'default', we will
 %               use a default HLUT
 % output
 %   ct          ct struct for use with matlab

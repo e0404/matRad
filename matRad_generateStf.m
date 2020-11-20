@@ -29,7 +29,7 @@ function stf = matRad_generateStf(ct,cst,pln,visMode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+matRad_cfg = MatRad_Config.instance();
 
 matRad_cfg.dispInfo('matRad: Generating stf struct... ');
 
@@ -41,7 +41,7 @@ if numel(pln.propStf.gantryAngles) ~= numel(pln.propStf.couchAngles)
     matRad_cfg.dispError('Inconsistent number of gantry and couch angles.');
 end
 
-if pln.propStf.bixelWidth < 0 || ~isfinite(pln.propStf.bixelWidth)
+if ~isnumeric(pln.propStf.bixelWidth) || pln.propStf.bixelWidth < 0 || ~isfinite(pln.propStf.bixelWidth)
    matRad_cfg.dispError('bixel width (spot distance) needs to be a real number [mm] larger than zero.');
 end
 
