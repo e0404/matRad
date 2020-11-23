@@ -234,7 +234,7 @@ if enable(2) == 1
     end
 
     if exist('pln','var') && ~isempty(pln)
-        if strcmp(pln.bioParam.model,'none')
+        if strcmp(pln.propOpt.bioOptimization,'none')
             yLabelString = 'Dose [Gy]';
         else
             yLabelString = 'RBE x Dose [Gy(RBE)]';
