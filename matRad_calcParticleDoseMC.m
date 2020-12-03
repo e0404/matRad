@@ -161,7 +161,7 @@ nbThreads = 0;
 relDoseCutoff = 1 - matRad_cfg.propDoseCalc.defaultLateralCutOff;
 % set absolute calibration factor
 % convert from eV/g/primary to Gy 1e6 primaries
-absCalibrationFactorMC2 = 1.602176e-19 * 1.1252e+9;
+absCalibrationFactorMC2 = 1.602176e-19 * 1.0e+9;
 
 if isequal(pln.propOpt.bioOptimization,'const_RBExD')
             dij.RBE = 1.1;
@@ -173,9 +173,6 @@ MCsquareConfigFile = 'MCsquareConfig.txt';
 
 MCsquareConfig = MatRad_MCsquareConfig;
 
-bdFile = 'BDL_matrad.txt';
-
-MCsquareConfig.BDL_Machine_Parameter_File = ['BDL/' bdFile];
 MCsquareConfig.BDL_Plan_File = 'currBixels.txt';
 MCsquareConfig.CT_File       = 'MC2patientCT.mhd';
 MCsquareConfig.Num_Threads   = nbThreads;
@@ -267,8 +264,6 @@ end
 matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare);
 
 % run MCsquare
-% mcSquareCall = [mcSquareBinary ' ' MCsquareConfigFile];
-% disp(['Calling Monte Carlo Engine: ' mcSquareCall]);
 [status,cmdout] = system([mcSquareBinary ' ' MCsquareConfigFile],'-echo');
     
 mask = false(dij.doseGrid.numOfVoxels,1);
@@ -307,7 +302,6 @@ end
 delete([MCsquareConfig.CT_File(1:end-4) '.*']);
 delete('currBixels.txt');
 delete('MCsquareConfig.txt');
-
 
 %For Octave temporarily disable confirmation for recursive rmdir
 if strcmp(env,'OCTAVE')    
