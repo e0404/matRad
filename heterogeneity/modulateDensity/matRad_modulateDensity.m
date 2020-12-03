@@ -1,4 +1,4 @@
-function [ct]=matRad_modulateDensity(ct,cst,Pmod,mode)
+function [ct]=matRad_modulateDensity(ct,cst,pln,Pmod,mode)
 % matRad density modulation function
 %
 % call
@@ -34,7 +34,7 @@ function [ct]=matRad_modulateDensity(ct,cst,Pmod,mode)
 global matRad_cfg;
 matRad_cfg =  MatRad_Config.instance();
 
-if nargin < 4
+if nargin < 5
     mode = 'binominal';
 end
 
@@ -72,10 +72,6 @@ if strcmp(mode, 'binominal')
         pLung = ct.cube{1}(lungIdx) / rhoLung;
     end
     
-    
-    
-    
-
     d = Pmod/1000 ./ (1-pLung) / rhoLung; % [1] eq.8: Pmod = d*(1-pLung) * rhoLung
     D = ct.resolution.y;
     
