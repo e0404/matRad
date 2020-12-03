@@ -47,14 +47,14 @@ classdef matRad_DoseMaxiMin < DoseObjectives.matRad_DoseObjective
             %auxVar holds the current maximum dose
             %auxVar * obj.penalty - obj.parameters{1};
             %f = max([max(dose) - obj.parameters{1} , 0]) * obj.penalty;
-            f = min([obj.parameters{1} - min(dose), 0]) * obj.penalty;
+            f = max([obj.parameters{1} - min(dose), 0]) * obj.penalty;
         end
         
         function fGrad = computeDoseObjectiveGradient(obj,dose)
             fGrad = min(dose) - dose;
             ix = dose > obj.parameters{1};
             fGrad = exp(fGrad / obj.epsilon);
-            fGrad = obj.penalty/sum(fGrad) * fGrad;
+            fGrad = -obj.penalty/sum(fGrad) * fGrad;
             fGrad(ix) = 0;
         end
         

@@ -55,15 +55,15 @@ for  i = 1:size(cst,1)
             objective = cst{i,6}{j};
             
             % only perform gradient computations for objectives
-            if isa(obj,'DoseObjectives.matRad_DoseObjective')
+            if isa(objective,'DoseObjectives.matRad_DoseObjective')
                 % compute reference
                 if isa(optiProb.BP,'matRad_EffectProjection') && ~isa(optiProb.BP,'matRad_VariableRBEProjection')
                     
-                    doses = obj.getDoseParameters();
+                    doses = objective.getDoseParameters();
                     
                     effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
                     
-                    obj = obj.setDoseParameters(effect);
+                    objective = obj.setDoseParameters(effect);
                 end
                 
                 %dose in VOI
