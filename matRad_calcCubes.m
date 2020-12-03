@@ -1,9 +1,10 @@
 function resultGUI = matRad_calcCubes(w,dij,scenNum)
-% matRad computation of all cubes for the resultGUI struct which is used
-% as result container and for visualization in matRad's GUI
+% matRad computation of all cubes for the resultGUI struct 
+% which is used as result container and for visualization in matRad's GUI
 %
 % call
-%   resultGUI = matRad_calcCubes(w,dij,cst)
+%   resultGUI = matRad_calcCubes(w,dij)
+%   resultGUI = matRad_calcCubes(w,dij,scenNum)
 %
 % input
 %   w:       bixel weight vector
@@ -13,7 +14,9 @@ function resultGUI = matRad_calcCubes(w,dij,scenNum)
 % output
 %   resultGUI: matRad result struct
 %
-
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -27,7 +30,7 @@ function resultGUI = matRad_calcCubes(w,dij,scenNum)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 5
+if nargin < 3
     scenNum = 1;
 end
 
@@ -65,6 +68,11 @@ if isfield(dij,'mLETDose')
     end
 end
 
+if isfield(dij,'physicalDose_MCvar')
+    resultGUI.physicalDose_MCvar = reshape(full(dij.physicalDose_MCvar{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+    resultGUI.physicalDose_MCstd = sqrt(resultGUI.physicalDose_MCvar);
+    resultGUI.physicalDose_MCstdRel = resultGUI.physicalDose_MCstd ./ resultGUI.physicalDose;
+end
 
 % consider biological optimization for carbon ions
 if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')

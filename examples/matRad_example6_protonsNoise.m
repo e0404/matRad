@@ -26,7 +26,9 @@
 %% Patient Data Import
 % Let's begin with a clear Matlab environment and import the prostate 
 % patient into your workspace.
-clc,clear,close all;
+
+matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
+
 load('PROSTATE.mat');
 
 %% Treatment Plan
@@ -55,7 +57,7 @@ pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
+dij = matRad_calcParticleDoseMC(ct,stf,pln,cst);
 
 %% Inverse Optimization for IMPT
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);

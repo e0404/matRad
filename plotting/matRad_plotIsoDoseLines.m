@@ -4,7 +4,10 @@ function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContour
 % itself
 %
 % call
+%   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap)
+%   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,window)
 %   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window)
+%   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window, ...)
 %
 % input
 %   axesHandle  handle to axes the slice should be displayed in
@@ -26,6 +29,9 @@ function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContour
 % output
 %   isoLineHandles: handle to the plotted isolines
 %
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -39,7 +45,7 @@ function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContour
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[env, ~] = matRad_getEnvironment();
+matRad_cfg = MatRad_Config.instance();
 
 %% manage optional arguments
 %Use default colormap?
@@ -65,17 +71,19 @@ end
 
 %% Plotting
 cMapScale = size(cMap,1) - 1;
-isoColorLevel = (isoLevels - window(1))./(window(2)-window(1));
-isoColorLevel(isoColorLevel < 0) = 0;
-isoColorLevel(isoColorLevel > 1) = 0;
-colors = squeeze(ind2rgb(uint8(cMapScale*isoColorLevel),cMap));
 
-switch env
-    case 'MATLAB'
-        isoLineHandles = gobjects(0);
-    case 'OCTAVE'
-        isoLineHandles = [];
+isoColorLevel = uint8(cMapScale*(isoLevels - window(1))./(window(2)-window(1)));
+
+%This circumenvents a bug in Octave when the index in the image hase the maximum value of uint8
+if matRad_cfg.isOctave
+	isoColorLevel(isoColorLevel == 255) = 254;
+    isoLineHandles = [];
+    
+elseif matRad_cfg.isMatlab
+    isoLineHandles = gobjects(0);
 end
+
+colors = squeeze(ind2rgb(isoColorLevel,cMap));
 
 axes(axesHandle);
 hold on;

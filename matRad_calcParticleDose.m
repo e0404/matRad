@@ -2,7 +2,7 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 % matRad particle dose calculation wrapper
 % 
 % call
-%   dij = matRad_calcParticleDose(ct,stf,pln,cst)
+%   dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % input
 %   ct:             ct cube
@@ -32,6 +32,9 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+matRad_cfg =  MatRad_Config.instance();
+
 % init dose calc
 matRad_calcDoseInit;
 
@@ -55,7 +58,7 @@ if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.b
         
 elseif isequal(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
             dij.RBE = 1.1;
-            fprintf(['matRad: Using a constant RBE of 1.1 \n']);   
+            matRad_cfg.dispInfo('matRad: Using a constant RBE of %g\n',dij.RBE);   
 end
 
 if isfield(pln,'propDoseCalc') && ...
@@ -68,7 +71,7 @@ if isfield(pln,'propDoseCalc') && ...
         dij.mLETDose{i} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
     end
   else
-    warndlg('LET not available in the machine data. LET will not be calculated.');
+    matRad_cfg.dispWarning('LET not available in the machine data. LET will not be calculated.');
   end
 end
 
@@ -78,7 +81,7 @@ if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.b
     
     if   isfield(machine.data,'alphaX') && isfield(machine.data,'betaX')
             
-        fprintf('matRad: loading biological base data... ');
+        matRad_cfg.dispInfo('matRad: loading biological base data... ');
         vTissueIndex = zeros(size(VdoseGrid,1),1);
         dij.ax       = zeros(dij.doseGrid.numOfVoxels,1);
         dij.bx       = zeros(dij.doseGrid.numOfVoxels,1);
@@ -105,19 +108,19 @@ if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.b
                     isInVdoseGrid = ismember(VdoseGrid,cst{i,4}{1});
                     vTissueIndex(isInVdoseGrid) = IdxTissue;
                 else
-                    error('biological base data and cst inconsistent\n');
+                    matRad_cfg.dispError('biological base data and cst inconsistent\n');
                 end
                     
             else
                     vTissueIndex(row) = 1;
-                    fprintf(['matRad: tissue type of ' cst{i,2} ' was set to 1 \n']);          
+                    matRad_cfg.dispInfo(['matRad: tissue type of ' cst{i,2} ' was set to 1\n']);          
             end
         end
-        fprintf('done.\n');
+        matRad_cfg.dispInfo('done.\n');
 
     else
         
-        error('base data is incomplement - alphaX and/or betaX is missing');
+        matRad_cfg.dispError('base data is incomplement - alphaX and/or betaX is missing');
         
     end
     
@@ -129,9 +132,9 @@ elseif sum(strcmp(pln.propOpt.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0
 end
 
 % lateral cutoff for raytracing and geo calculations
-effectiveLateralCutoff = 50;
+effectiveLateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
 
-fprintf('matRad: Particle dose calculation...\n');
+matRad_cfg.dispInfo('matRad: Particle dose calculation...\n');
 counter = 0;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -141,11 +144,11 @@ for i = 1:length(stf) % loop over all beams
     matRad_calcDoseInitBeam;     
         
     % Determine lateral cutoff
-    fprintf('matRad: calculate lateral cutoff...');
-    cutOffLevel = 0.995;
+    matRad_cfg.dispInfo('matRad: calculate lateral cutoff...');
+    cutOffLevel = matRad_cfg.propDoseCalc.defaultLateralCutOff;
     visBoolLateralCutOff = 0;
     machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
-    fprintf('done.\n');    
+    matRad_cfg.dispInfo('done.\n');    
 
     for j = 1:stf(i).numOfRays % loop over all rays
 
@@ -226,24 +229,24 @@ for i = 1:length(stf) % loop over all beams
                 energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
                 
                 
-                if strcmp(anaMode, 'fineSampling')
+                    if strcmp(anaMode, 'fineSampling')
                     
-                    % calculate projected coordinates for fine sampling of
-                    % each beamlet
-                    projCoords = matRad_projectOnComponents(VdoseGrid(ix), size(radDepthsMat{1}), stf(i).sourcePoint_bev,...
-                                    stf(i).ray(j).targetPoint_bev, stf(i).isoCenter,...
-                                    [dij.doseGrid.resolution.x dij.doseGrid.resolution.y dij.doseGrid.resolution.z],...
-                                    -posX(:,k), -posZ(:,k), rotMat_system_T);
+                        % calculate projected coordinates for fine sampling of
+                        % each beamlet
+                        projCoords = matRad_projectOnComponents(VdoseGrid(ix), size(radDepthsMat{1}), stf(i).sourcePoint_bev,...
+                                        stf(i).ray(j).targetPoint_bev, stf(i).isoCenter,...
+                                        [dij.doseGrid.resolution.x dij.doseGrid.resolution.y dij.doseGrid.resolution.z],...
+                                        -posX(:,k), -posZ(:,k), rotMat_system_T);
 
-                    % interpolate radiological depths at projected
-                    % coordinates
-                    radDepths = interp3(radDepthsMat{1},projCoords(:,1,:)./dij.doseGrid.resolution.x,...
-                        projCoords(:,2,:)./dij.doseGrid.resolution.y,projCoords(:,3,:)./dij.doseGrid.resolution.z,'nearest');                       
-                        
-                    % compute radial distances relative to pencil beam
-                    % component
-                    currRadialDist_sq = reshape(bsxfun(@plus,latDistsX,posX(:,k)'),[],1,numOfSub(k)).^2 + reshape(bsxfun(@plus,latDistsZ,posZ(:,k)'),[],1,numOfSub(k)).^2;
-                end
+                        % interpolate radiological depths at projected
+                        % coordinates
+                        radDepths = interp3(radDepthsMat{1},projCoords(:,1,:)./dij.doseGrid.resolution.x,...
+                            projCoords(:,2,:)./dij.doseGrid.resolution.y,projCoords(:,3,:)./dij.doseGrid.resolution.z,'nearest');                       
+
+                        % compute radial distances relative to pencil beam
+                        % component
+                        currRadialDist_sq = reshape(bsxfun(@plus,latDistsX,posX(:,k)'),[],1,numOfSub(k)).^2 + reshape(bsxfun(@plus,latDistsZ,posZ(:,k)'),[],1,numOfSub(k)).^2;
+                    end
                 
                     % create offset vector to account for additional offsets modelled in the base data and a potential 
                     % range shifter. In the following, we only perform dose calculation for voxels having a radiological depth
@@ -360,12 +363,9 @@ for i = 1:length(stf) % loop over all beams
     end
 end
 
-try
-  % wait 0.1s for closing all waitbars
-  allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar'); 
-  delete(allWaitBarFigures);
-  pause(0.1); 
-catch
+%Close Waitbar
+if ishandle(figureWait)
+    delete(figureWait);
 end
 
     

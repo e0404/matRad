@@ -2,7 +2,7 @@ function [ax,bx] = matRad_getPhotonLQMParameters(cst,numVoxel,ctScen,VdoseGrid)
 % matRad function to receive the photon LQM reference parameter 
 % 
 % call
-%   cst = matRad_getPhotonLQMParameters(cst,numVoxel,ctScen,VdoseGrid)
+%   [ax,bx] = matRad_getPhotonLQMParameters(cst,numVoxel,ctScen,VdoseGrid)
 %
 % input
 %   cst:        matRad cst struct

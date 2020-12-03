@@ -13,20 +13,37 @@ classdef matRad_VariableRBEProjection < matRad_EffectProjection
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-        
+            
     methods
         function obj = matRad_VariableRBEProjection()
         end
         
-        function RBExD = computeResult(obj,dij,w)
-            %effect = computeResult@matRad_EffectProjection(obj,dij,w)
-            RBExD = cell(size(dij.mAlphaDose));
-            % calculate effect
-            for i = 1:numel(RBExD)                 
-                e = obj.computeSingleScenarioEffect(dij,w,i);
-                RBExD{i} = zeros(dij.doseGrid.numOfVoxels,1);
-                RBExD{i}(dij.ixDose) = sqrt((e(dij.ixDose)./dij.bx(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) - dij.gamma(dij.ixDose);
+        function RBExD = computeSingleScenario(obj,dij,scen,w)
+            effect = computeSingleScenario@matRad_EffectProjection(obj,dij,scen,w); %First compute effect
+            RBExD = zeros(dij.doseGrid.numOfVoxels,1);
+            RBExD(dij.ixDose) = sqrt((effect(dij.ixDose)./dij.bx(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) - dij.gamma(dij.ixDose);
+        end
+        
+        function wGrad = projectSingleScenarioGradient(obj,dij,doseGrad,scen,w)
+            if isempty(dij.mAlphaDose{scen}) || isempty(dij.mSqrtBetaDose{scen})
+                wGrad = [];
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning('Empty scenario in optimization detected! This should not happen...\n');
+            else
+                %While the dose cache should be up to date here, we ask for
+                %a computation (will skip if weights are equal to cache)
+                obj = obj.compute(dij,w);
+                
+                %Scaling vor variable RBExD
+                scaledEffect = obj.d{scen} + dij.gamma;
+                doseGradTmp = zeros(dij.doseGrid.numOfVoxels,1);
+                doseGradTmp(dij.ixDose) = doseGrad{scen}(dij.ixDose) ./ (2*dij.bx(dij.ixDose).*scaledEffect(dij.ixDose));
+                
+                %Now modify the effect computation
+                vBias = (doseGradTmp' * dij.mAlphaDose{scen})';
+                quadTerm = dij.mSqrtBetaDose{scen} * w;
+                mPsi = (2*(doseGrad{scen}.*quadTerm)' * dij.mSqrtBetaDose{scen})';
+                wGrad = vBias + mPsi;
             end
         end
     end

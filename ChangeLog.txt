@@ -1,0 +1,56 @@
+Version 2.10.1 - Patch release for "Blaise" 
+	Release with small updates, clean-ups and bugfixes    
+    - Bugfix in 3D view due to inconsistent angles in pln & stf
+    - Bugfix for using incorrect dicom UID's and wrong writing order in the dicom export
+    - Bugfix for weird colormap issue in plotting
+    - New handling of environment checking with matRad_cfg (old function is still working)
+    - Code documentation update
+    - Remove hardcoded penumbra width in photon dose calculation -> can now be stored in machine file (machine.data.penumbraFWHMatIso)
+    - Update to ompMC to use virtual Gaussian source (uses measured penumbra value) incld precompiled mex files
+    - remove useless global statements before matRad_cfg
+    - add blue/white/red difference map to colormaps (in the correct way)
+    - Updated TravisCI testing (Sped up by using pre-compiled mex interfaces and including testing with Matlab (on Ubuntu), Azure DevOps as fallback
+    - Github gimmicks added: Stalebot, Issue & PR Templates
+	- code optimization for jacobian evaluation (x10-100 speedup)
+	- New option pln.propDoseCalc.useGivenEqDensityCube (default false) to directly use the literal values from ct.cube and omit HU to WEQ conversion from ct.cubeHU
+	- New option pln.propDoseCalc.ignoreOutsideDensities (default true) to disable/enable inclusion of WEPL outside the patient contour in ray-tracing
+
+Version 2.10.0 - "Blaise"
+	Second Release of matRad. Note that despite major incompatibilities with "Alan" we still chose major version number "2" to have a consistent versioning in the future.
+	we want to thank all new contributing authors (see AUTHORS.txt)
+	The new release contains:
+	- integration tests using TravisCI (with Octave, so no GUI functionalities are tested)
+	- matRad_rc script to configure matRad paths
+    - matRad version can now be printed with matRad_version, version correctly shown in GUI and when using matRad_rc
+	- Seven new Matlab exmaple scripts to demonstrate use of matRad 
+	- added basic interfaces to the open-source photon/proton MC engines ompMC/MCsquare
+	- Overhaul of the optimization interface using OOP and integration of the fmincon optimizer from Mathworks' MATLAB Optimization toolbox
+	- Changes to the cst variable (new script to convert old to new cst structures in tools folder)
+	- separation of ct/optimization/dose calculation grids to allow different resolutions
+	- The graphical user interface can now be started in developer mode (more error information) and a simplified educational mode (some functionalities disabled, less buttons)
+	- base data and default phantoms now organized in subfolders
+	- DICOM export added (only script, dicomImport folder renamed to dicom)
+	- DICOM import GUI
+	- binary import and export functionalities (script & GUI)
+	- overhauled the standalone project file
+	- standalone toolbox file for matRad
+	- Dose calculation now uses generalized initialization scripts
+	- matRad_compareDose tool to compare two dose distributions with difference and gamma analysis
+	- more tools for visualisation and data analysis in the tools folder
+	- Possibility to define range shifter
+	- Quality indicator & DVH display wrapper scripts
+	- wrapper to allow 3D conformal planning using dij collapsing
+	- new colormap handling to allow integration of custom colormaps
+	- modularization of slice display by dedicated functions in plotting folder including generation of 3D views
+    - New global configuration object (matRad_cfg <- MatRad_Config.m) to store default values and with logging interface
+	- many bug fixes and many new bugs..	
+Version 2.1 "Alan"
+	First official relase of matRad including
+	- new optimizer IPOPT for constrained optimization
+	- validated ray tracing
+	- validated pencil beam particle dose calcualtion
+	- validated singular value decomposed pencil beam photon dose calculation
+	- DICOM import including dose and particle pencil beam scanning plan objects
+	- matRad standalone version
+	- improved GUI workflow
+	- many bug fixes and many new bugs...

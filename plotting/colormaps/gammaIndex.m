@@ -1,6 +1,9 @@
 function colorMap = gammaIndex(cMapSize)
 % matRad gamma index colormap  
-% 
+%
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
