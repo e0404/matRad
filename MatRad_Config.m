@@ -31,6 +31,7 @@ classdef MatRad_Config < handle
         propOpt;
         propMC;
         propStf;
+        propHeterogeneity;
         
         defaults;
                 
@@ -163,16 +164,24 @@ classdef MatRad_Config < handle
             
             obj.propOpt.defaultMaxIter = 500;
             
+            obj.propMC.defaultCarbonEnergySpread = 0; %[%]
+                        
             obj.propMC.ompMC_defaultHistories = 1e6;
             obj.propMC.ompMC_defaultOutputVariance = false;          
             
             obj.propMC.direct_defaultHistories = 1e7;
             obj.propMC.particles_defaultHistories = 2e4;
-
+           
             %obj.propMC.default_photon_engine = 'ompMC';
             obj.propMC.default_proton_engine = 'MCsquare';
+            obj.propMC.default_carbon_engine = 'TOPAS';
             obj.propMC.topas_defaultNumBatches = 5;
             
+            obj.propHeterogeneity.defaultType = 'complete'; % 'depthBased','voxelwise'
+            obj.propHeterogeneity.defaultCalcHetero = true;
+            obj.propHeterogeneity.defaultUseOriginalDepths = false; % use original base data depths instead of fitted ones
+            obj.propHeterogeneity.defaultModulateBioDose = false; % use alpha beta curves for RBE
+
             obj.defaults.samplingScenarios = 25;
             
             obj.disableGUI = false;
@@ -213,6 +222,11 @@ classdef MatRad_Config < handle
             obj.propMC.default_proton_engine = 'MCsquare'; 
             obj.propMC.topas_defaultNumBatches = 5;
             
+            obj.propHeterogeneity.defaultType = 'complete'; % 'depthBased','voxelwise'
+            obj.propHeterogeneity.defaultCalcHetero = true;
+            obj.propHeterogeneity.defaultUseOriginalDepths = true; % use original base data depths instead of fitted ones
+            obj.propHeterogeneity.defaultUodulateBioDose = true; % use alpha beta curves for RBE
+
             obj.defaults.samplingScenarios = 2;
             
             obj.disableGUI = true;
